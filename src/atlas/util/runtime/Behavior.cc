@@ -21,7 +21,8 @@
 using namespace eckit;
 
 namespace atlas {
-
+namespace util {
+namespace runtime {
 
 static Once<Mutex> local_mutex;
 
@@ -218,6 +219,8 @@ void Behavior::reconfigure()
 {
 }
 
+} // namespace runtime
+} // namespace util
 } // namespace atlas
 
 

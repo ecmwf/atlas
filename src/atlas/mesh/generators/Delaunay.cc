@@ -19,7 +19,8 @@
 #include "atlas/util/runtime/Log.h"
 
 namespace atlas {
-namespace meshgen {
+namespace mesh {
+namespace generators {
 
 Delaunay::Delaunay()
 {
@@ -33,7 +34,7 @@ Delaunay::Delaunay(const eckit::Parametrisation& p)
 Delaunay::~Delaunay() {
 }
 
-void Delaunay::generate(const Grid& grid, const GridDistribution& dist, Mesh& mesh) const
+void Delaunay::generate(const grid::Grid& grid, const grid::GridDistribution& dist, Mesh& mesh) const
 {
   if( dist.nb_partitions() > 1 )
   {
@@ -50,7 +51,7 @@ void Delaunay::generate(const Grid& grid, const GridDistribution& dist, Mesh& me
   }
 }
 
-void Delaunay::generate(const Grid& g, Mesh& mesh) const
+void Delaunay::generate(const grid::Grid& g, Mesh& mesh) const
 {
   mesh.createNodes(g);
 
@@ -66,6 +67,7 @@ static MeshGeneratorBuilder< Delaunay > __delaunay("Delaunay");
 }
 
 
-} // namespace meshgen
+} // namespace generators
+} // namespace mesh
 } // namespace atlas
 

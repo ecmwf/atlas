@@ -14,14 +14,20 @@
 #include "atlas/mesh/generators/MeshGenerator.h"
 
 namespace atlas {
+namespace mesh {
+    class Mesh;
+} }
 
-class Mesh;
-class Grid;
+namespace atlas {
+namespace grid {
+    class Grid;
+} }
 
-namespace meshgen {
+namespace atlas {
+namespace mesh {
+namespace generators {
 
-//------------------------------------------------------------------------------------------------------
-
+// -----------------------------------------------------------------------------
 class Delaunay : public MeshGenerator {
 
 public:
@@ -31,14 +37,19 @@ public:
 
     virtual ~Delaunay();
 
-    virtual void generate(const Grid& g, const GridDistribution&, Mesh& mesh) const;
-    virtual void generate(const Grid& g, Mesh& mesh) const;
+    virtual void generate(
+        const grid::Grid& g,
+        const grid::GridDistribution&,
+        Mesh& mesh) const;
+    virtual void generate(
+        const grid::Grid& g,
+        Mesh& mesh) const;
 
 };
+// -----------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------------------------------
-
-} // namespace meshgen
+} // namespace generators
+} // namespace mesh
 } // namespace atlas
 
 #endif

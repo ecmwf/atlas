@@ -16,7 +16,7 @@
 #include "atlas/interpolation/Vector3D.h"
 
 namespace atlas {
-namespace geometry {
+namespace interpolation {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ struct Ray {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace geometry
+}  // namespace interpolation
 }  // namespace atlas
 
 

@@ -16,8 +16,9 @@
 using eckit::FloatCompare;
 
 namespace atlas {
+namespace grid {
 
-Domain::Domain(const atlas::BoundBox& bbox) :
+Domain::Domain(const atlas::grid::BoundBox& bbox) :
     north_(bbox.north()),
     west_(bbox.west()),
     south_(bbox.south()),
@@ -115,5 +116,6 @@ void Domain::print(std::ostream& os) const
      << ")";
 }
 
-}  // namespace atlas
+} // namespace grid
+} // namespace atlas
 

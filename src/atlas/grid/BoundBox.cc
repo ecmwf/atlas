@@ -14,6 +14,7 @@ using eckit::geometry::LLBoundBox2;
 using eckit::MD5;
 
 namespace atlas {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -36,5 +37,6 @@ void BoundBox::hash(eckit::MD5& md5) const {
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace grid
 } // namespace atlas
 

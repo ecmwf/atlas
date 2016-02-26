@@ -21,6 +21,7 @@ namespace eckit {
 }
 
 namespace atlas {
+namespace util {
 class Grid;
 class Mesh;
 
@@ -156,6 +157,7 @@ extern "C"
 
 // ------------------------------------------------------------------
 
+} // namespace util
 } // namespace atlas
 
 #endif // Parametrisation_h

@@ -22,9 +22,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/runtime/Log.h"
 
-
 namespace {
-
     static eckit::Mutex *local_mutex = 0;
     static std::map<std::string, atlas::field::FieldCreatorFactory *> *m = 0;
     static pthread_once_t once = PTHREAD_ONCE_INIT;
@@ -146,8 +144,6 @@ FieldCreator *FieldCreatorFactory::build(const std::string& name, const eckit::P
 
     return (*j).second->make(param);
 }
-
-
 
 } // namespace field
 } // namespace atlas

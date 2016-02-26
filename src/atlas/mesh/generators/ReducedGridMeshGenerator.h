@@ -17,19 +17,27 @@
 namespace eckit { class Parametrisation; }
 
 namespace atlas {
-
-class Mesh;
-class GridDistribution;
-
-namespace grids { class ReducedGrid; }
-namespace meshgen { struct Region; }
-
-}
+namespace mesh {
+    class Mesh;
+} }
 
 namespace atlas {
-namespace meshgen {
+namespace grid {
+    class ReducedGrid;
+    class GridDistribution;
+} }
 
-//------------------------------------------------------------------------------------------------------
+namespace atlas {
+namespace mesh {
+namespace generators {
+    struct Region;
+} } }
+
+namespace atlas {
+namespace mesh {
+namespace generators {
+
+// -----------------------------------------------------------------------------
 
 class ReducedGridMeshGenerator : public MeshGenerator {
 
@@ -38,34 +46,52 @@ public:
   ReducedGridMeshGenerator();
   ReducedGridMeshGenerator(const eckit::Parametrisation&);
 
-  virtual void generate( const Grid&, const GridDistribution&, Mesh& ) const;
-  virtual void generate( const Grid&, Mesh& ) const;
+  virtual void generate(const grid::Grid&, const grid::GridDistribution&, Mesh&) const;
+  virtual void generate(const grid::Grid&, Mesh&) const;
   using MeshGenerator::generate;
 
 private:
 
   void configure_defaults();
 
-  void generate_region( const grids::ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region ) const;
+  void generate_region(
+    const grid::ReducedGrid&,
+    const std::vector<int>& parts,
+    int mypart,
+    Region& region) const;
 
-  void generate_mesh_new( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region, Mesh& m ) const;
+  void generate_mesh_new(
+    const grid::ReducedGrid&,
+    const std::vector<int>& parts,
+    const Region& region,
+    Mesh& m) const;
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
-  void generate_mesh_convert_to_old( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region, Mesh& m ) const;
+  void generate_mesh_convert_to_old(
+    const grid::ReducedGrid&,
+    const std::vector<int>& parts,
+    const Region& region,
+    Mesh& m ) const;
 #endif
-  void generate_mesh( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region, Mesh& m ) const;
+  void generate_mesh(
+    const grid::ReducedGrid&,
+    const std::vector<int>& parts,
+    const Region& region,
+    Mesh& m ) const;
 
-  void generate_global_element_numbering( Mesh& mesh ) const;
+  void generate_global_element_numbering(
+    Mesh& mesh ) const;
 
 public:
 
-  Metadata options;
+  util::Metadata options;
 
 };
 
-//------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-} // namespace meshgen
+} // namespace generators
+} // namespace mesh
 } // namespace atlas
 
 #endif // ReducedGridMeshGenerator_h

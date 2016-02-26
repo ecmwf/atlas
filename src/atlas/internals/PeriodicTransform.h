@@ -11,10 +11,10 @@
 #ifndef atlas_util_PeriodicTransform_h
 #define atlas_util_PeriodicTransform_h
 
-#include "atlas/private/LonLatMicroDeg.h"
+#include "atlas/internals/LonLatMicroDeg.h"
 
 namespace atlas {
-namespace util {
+namespace internals {
 
 class PeriodicTransform
 {
@@ -60,7 +60,7 @@ public:
 };
 
 
-} // namespace util
+} // namespace internals
 } // namespace atlas
 
 #endif

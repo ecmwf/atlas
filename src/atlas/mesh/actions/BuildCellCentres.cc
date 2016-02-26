@@ -14,11 +14,12 @@
 #include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/array/IndexView.h"
 
 namespace atlas {
+namespace mesh {
 namespace actions {
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
@@ -28,28 +29,28 @@ void build_cell_centres_convert_to_old(Mesh& mesh);
 void BuildCellCentres::operator()( Mesh& mesh ) const
 {
   mesh::Nodes& nodes     = mesh.nodes();
-  ArrayView<double,2> coords  ( nodes.field("xyz") );
+  util::array::ArrayView<double,2> coords  ( nodes.field("xyz") );
 
   size_t nb_cells = mesh.cells().size();
-  ArrayView<double,2> centroids ( mesh.cells().add( Field::create<double>("centre", make_shape(nb_cells,3))) );
+  util::array::ArrayView<double,2> centroids ( mesh.cells().add( field::Field::create<double>("centre", util::array::make_shape(nb_cells,3))) );
   const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
 
   for (size_t e=0; e<nb_cells; ++e)
   {
-    centroids(e,XX) = 0.;
-    centroids(e,YY) = 0.;
-    centroids(e,ZZ) = 0.;
+    centroids(e,internals::XX) = 0.;
+    centroids(e,internals::YY) = 0.;
+    centroids(e,internals::ZZ) = 0.;
     const size_t nb_nodes_per_elem = cell_node_connectivity.cols(e);
     const double average_coefficient = 1./static_cast<double>(nb_nodes_per_elem);
     for (size_t n=0; n<nb_nodes_per_elem; ++n)
     {
-      centroids(e,XX) += coords( cell_node_connectivity(e,n), XX );
-      centroids(e,YY) += coords( cell_node_connectivity(e,n), YY );
-      centroids(e,ZZ) += coords( cell_node_connectivity(e,n), ZZ );
+      centroids(e,internals::XX) += coords( cell_node_connectivity(e,n), internals::XX );
+      centroids(e,internals::YY) += coords( cell_node_connectivity(e,n), internals::YY );
+      centroids(e,internals::ZZ) += coords( cell_node_connectivity(e,n), internals::ZZ );
     }
-    centroids(e,XX) *= average_coefficient;
-    centroids(e,YY) *= average_coefficient;
-    centroids(e,ZZ) *= average_coefficient;
+    centroids(e,internals::XX) *= average_coefficient;
+    centroids(e,internals::YY) *= average_coefficient;
+    centroids(e,internals::ZZ) *= average_coefficient;
   }
 #if !DEPRECATE_OLD_FUNCTIONSPACE
   build_cell_centres_convert_to_old(mesh);
@@ -63,15 +64,15 @@ void build_cell_centres_convert_to_old(Mesh& mesh)
     ASSERT( mesh.has_function_space("quads") );
 
     mesh::Nodes& nodes     = mesh.nodes();
-    ArrayView<double,2> coords  ( nodes.field("xyz") );
+    util::array::ArrayView<double,2> coords  ( nodes.field("xyz") );
 
     if( mesh.has_function_space("triags") ) {
 
         deprecated::FunctionSpace& triags = mesh.function_space( "triags" );
-        IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
+        util::array::IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
         const size_t nb_triags = triags.shape(0);
 
-        ArrayView<double,2> triags_centres ( triags.create_field<double>("centre",3) );
+        util::array::ArrayView<double,2> triags_centres ( triags.create_field<double>("centre",3) );
 
         const double third = 1. / 3.;
         for(size_t e = 0; e < nb_triags; ++e)
@@ -80,19 +81,19 @@ void build_cell_centres_convert_to_old(Mesh& mesh)
             const size_t i1 =  triag_nodes(e,1);
             const size_t i2 =  triag_nodes(e,2);
 
-            triags_centres(e,XX) = third * ( coords(i0,XX) + coords(i1,XX) + coords(i2,XX) );
-            triags_centres(e,YY) = third * ( coords(i0,YY) + coords(i1,YY) + coords(i2,YY) );
-            triags_centres(e,ZZ) = third * ( coords(i0,ZZ) + coords(i1,ZZ) + coords(i2,ZZ) );
+            triags_centres(e,internals::XX) = third * ( coords(i0,internals::XX) + coords(i1,internals::XX) + coords(i2,internals::XX) );
+            triags_centres(e,internals::YY) = third * ( coords(i0,internals::YY) + coords(i1,internals::YY) + coords(i2,internals::YY) );
+            triags_centres(e,internals::ZZ) = third * ( coords(i0,internals::ZZ) + coords(i1,internals::ZZ) + coords(i2,internals::ZZ) );
 
         }
     }
 
     if( mesh.has_function_space("quads") ) {
         deprecated::FunctionSpace& quads  = mesh.function_space( "quads" );
-        IndexView<int,2> quads_nodes ( quads.field( "nodes" ) );
+        util::array::IndexView<int,2> quads_nodes ( quads.field( "nodes" ) );
         const size_t nb_quads = quads.shape(0);
 
-        ArrayView<double,2> quads_centres ( quads.create_field<double>("centre",3) );
+        util::array::ArrayView<double,2> quads_centres ( quads.create_field<double>("centre",3) );
 
         const double fourth = 1. / 4.;
         for(size_t e = 0; e < nb_quads; ++e)
@@ -102,14 +103,15 @@ void build_cell_centres_convert_to_old(Mesh& mesh)
             const size_t i2 =  quads_nodes(e,2);
             const size_t i3 =  quads_nodes(e,3);
 
-            quads_centres(e,XX) = fourth * ( coords(i0,XX) + coords(i1,XX) + coords(i2,XX) + coords(i3,XX) );
-            quads_centres(e,YY) = fourth * ( coords(i0,YY) + coords(i1,YY) + coords(i2,YY) + coords(i3,YY) );
-            quads_centres(e,ZZ) = fourth * ( coords(i0,ZZ) + coords(i1,ZZ) + coords(i2,ZZ) + coords(i3,ZZ) );
+            quads_centres(e,internals::XX) = fourth * ( coords(i0,internals::XX) + coords(i1,internals::XX) + coords(i2,internals::XX) + coords(i3,internals::XX) );
+            quads_centres(e,internals::YY) = fourth * ( coords(i0,internals::YY) + coords(i1,internals::YY) + coords(i2,internals::YY) + coords(i3,internals::YY) );
+            quads_centres(e,internals::ZZ) = fourth * ( coords(i0,internals::ZZ) + coords(i1,internals::ZZ) + coords(i2,internals::ZZ) + coords(i3,internals::ZZ) );
 
         }
     }
 }
 #endif
 
-} // actions
-} // atlas
+} // namespace actions
+} // namespace mesh
+} // namespace atlas

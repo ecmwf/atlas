@@ -50,18 +50,19 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/mesh/actions/BuildConvexHull3D.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/field/Field.h"
-#include "atlas/private/Parameters.h"
-#include "atlas/private/PointSet.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/internals/PointSet.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/array/IndexView.h"
 
 using namespace eckit;
 using namespace eckit::geometry;
 
-using atlas::util::PointSet;
-using atlas::util::PointIndex3;
+using atlas::internals::PointSet;
+using atlas::internals::PointIndex3;
 
 namespace atlas {
+namespace mesh {
 namespace actions {
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -78,7 +79,7 @@ static Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >
 
     std::vector<Point_3> vertices( pts.size() );
     for( size_t i = 0; i < vertices.size(); ++i )
-        vertices[i] = Point_3( pts[i](XX), pts[i](YY), pts[i](ZZ) );
+        vertices[i] = Point_3( pts[i](internals::XX), pts[i](internals::YY), pts[i](internals::ZZ) );
 
     // compute convex hull of non-collinear points
 
@@ -112,8 +113,8 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
     const size_t nb_triags = poly.size_of_facets();
     mesh.cells().add( new mesh::temporary::Triangle(), nb_triags );
     mesh::HybridElements::Connectivity& triag_nodes = mesh.cells().node_connectivity();
-    ArrayView<gidx_t,1> triag_gidx ( mesh.cells().global_index() );
-    ArrayView<int,1> triag_part    ( mesh.cells().partition() );
+    util::array::ArrayView<gidx_t,1> triag_gidx ( mesh.cells().global_index() );
+    util::array::ArrayView<int,1> triag_part    ( mesh.cells().partition() );
 
     Point3 pt;
     idx_t idx[3];
@@ -186,21 +187,21 @@ static void cgal_polyhedron_to_atlas_mesh_convert_to_old(  Mesh& mesh )
     int nquads  = 0;
     int ntriags = mesh.cells().size();
 
-    deprecated::FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", make_shape(nquads,deprecated::FunctionSpace::UNDEF_VARS) );
+    deprecated::FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", util::array::make_shape(nquads,deprecated::FunctionSpace::UNDEF_VARS) );
     quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-    IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
-    ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
-    ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
+    util::array::IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
+    util::array::ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
+    util::array::ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
 
-    deprecated::FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", make_shape(ntriags,deprecated::FunctionSpace::UNDEF_VARS) );
+    deprecated::FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", util::array::make_shape(ntriags,deprecated::FunctionSpace::UNDEF_VARS) );
     triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-    IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
-    ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
-    ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
+    util::array::IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
+    util::array::ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
+    util::array::ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
 
     const mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
-    const ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
-    const ArrayView<int,1>    cells_part(    mesh.cells().partition() );
+    const util::array::ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
+    const util::array::ArrayView<int,1>    cells_part(    mesh.cells().partition() );
 
     size_t cell_begin;
 
@@ -273,7 +274,8 @@ void BuildConvexHull3D::operator()( Mesh& mesh ) const
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // actions
-} // atlas
+} // namespace actions
+} // namespace mesh
+} // namespace atlas
 
 

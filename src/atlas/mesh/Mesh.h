@@ -18,28 +18,44 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/atlas_config.h"
-#include "atlas/private/ObjectRegistry.h"
+#include "atlas/internals/ObjectRegistry.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"
 
-//------------------------------------------------------------------------------------------------------
-
+// -----------------------------------------------------------------------------
 // Forward declarations
-namespace atlas { class Grid; }
-namespace atlas { namespace mesh { class Nodes; } }
-namespace atlas { namespace mesh { class HybridElements; } }
-namespace atlas { namespace mesh { typedef HybridElements Edges; } }
-namespace atlas { namespace mesh { typedef HybridElements Cells; } }
-namespace atlas { namespace deprecated { class FunctionSpace; } }
-namespace atlas { class GridDistribution; }
-namespace atlas { namespace mpl { class HaloExchange; } }
-namespace atlas { namespace mpl { class GatherScatter; } }
-namespace atlas { namespace mpl { class Checksum; } }
-
-//----------------------------------------------------------------------------------------------------------------------
-
+// -----------------------------------------------------------------------------
+namespace atlas {
+namespace grid {
+    class Grid;
+    class GridDistribution;
+} }
 
 namespace atlas {
+namespace mesh {
+    class Nodes;
+    class HybridElements;
+    typedef HybridElements Edges;
+    typedef HybridElements Cells;
+} }
+
+namespace atlas {
+namespace deprecated {
+    class FunctionSpace;
+} }
+
+namespace atlas {
+namespace util {
+namespace parallel {
+namespace mpl {
+    class HaloExchange;
+    class GatherScatter;
+    class Checksum;
+} } } }
+// -----------------------------------------------------------------------------
+
+namespace atlas {
+namespace mesh {
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 namespace deprecated {
@@ -79,10 +95,10 @@ namespace deprecated {
 }
 
 class Mesh : public deprecated::FunctionSpaceContainer,
-             public util::Registered<Mesh> {
+             public internals::Registered<Mesh> {
 #else
 class Mesh : public eckit::Owned,
-             public util::Registered<Mesh> {
+             public internals::Registered<Mesh> {
 #endif
 
 public: // types
@@ -91,28 +107,28 @@ public: // types
 
 public: // methods
 
-    static Mesh* create( const eckit::Parametrisation& = Config() );
-    static Mesh* create( const Grid&, const eckit::Parametrisation& = Config() );
+    static Mesh* create( const eckit::Parametrisation& = util::Config() );
+    static Mesh* create( const grid::Grid&, const eckit::Parametrisation& = util::Config() );
 
     /// @brief Construct a empty Mesh
-    explicit Mesh(const eckit::Parametrisation& = Config());
+    explicit Mesh(const eckit::Parametrisation& = util::Config());
 
     /// @brief Construct mesh from grid.
     /// The mesh is global and only has a "nodes" FunctionSpace
-    Mesh(const Grid&, const eckit::Parametrisation& = Config());
+    Mesh(const grid::Grid&, const eckit::Parametrisation& = util::Config());
 
     /// Destructor
     /// @note No need to be virtual since this is not a base class.
     ~Mesh();
 
-    Metadata& metadata() { return metadata_; }
-    const Metadata& metadata() const { return metadata_; }
+    util::Metadata& metadata() { return metadata_; }
+    const util::Metadata& metadata() const { return metadata_; }
 
     void prettyPrint(std::ostream&) const;
 
     void print(std::ostream&) const;
 
-    mesh::Nodes& createNodes(const Grid& g);
+    mesh::Nodes& createNodes(const grid::Grid& g);
 
     const mesh::Nodes& nodes() const { return *nodes_; }
           mesh::Nodes& nodes()       { return *nodes_; }
@@ -144,7 +160,7 @@ private:  // methods
 
 private: // members
 
-    Metadata   metadata_;
+    util::Metadata   metadata_;
     eckit::SharedPtr<mesh::Nodes> nodes_;
                                                       // dimensionality : 2D | 3D
                                                       //                  --------
@@ -162,10 +178,10 @@ public: // members to be removed
     void convert_new_to_old();
 #endif
     bool has_grid() const { return grid_; }
-    void set_grid( const Grid& p ) { grid_ = &p; }
-    const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
+    void set_grid( const grid::Grid& p ) { grid_ = &p; }
+    const grid::Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
 private: // members to be removed
-    const Grid* grid_;
+    const grid::Grid* grid_;
 
 };
 
@@ -178,8 +194,8 @@ private: // members to be removed
 #define deprecated_FunctionSpace deprecated::FunctionSpace
 extern "C"
 {
-	Mesh* atlas__Mesh__new ();
-	void atlas__Mesh__delete (Mesh* This);
+  Mesh* atlas__Mesh__new ();
+  void atlas__Mesh__delete (Mesh* This);
   mesh_Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes);
   void atlas__Mesh__create_function_space (Mesh* This, char* name,char* shape_func,int shape[], int shape_size, int fortran_ordering);
   deprecated_FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name);
@@ -194,6 +210,7 @@ extern "C"
 
 //----------------------------------------------------------------------------------------------------------------------
 
+} // namespace mesh
 } // namespace atlas
 
 #endif // atlas_Mesh_h

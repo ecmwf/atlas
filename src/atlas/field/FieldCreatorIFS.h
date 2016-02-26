@@ -17,7 +17,7 @@
 #include "atlas/field/FieldCreator.h"
 
 namespace eckit { class Parametrisation; }
-namespace atlas { class Field; }
+namespace atlas { namespace field { class Field; } }
 
 namespace atlas {
 namespace field {

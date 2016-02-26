@@ -18,7 +18,8 @@
 #include "eckit/memory/Builder.h"
 
 namespace atlas {
-namespace grids {
+namespace grid {
+namespace predefined {
 namespace gausslat {
 
 //------------------------------------------------------------------------------------------------------
@@ -88,7 +89,8 @@ DECLARE_GAUSSIAN_LATITUDES(8000);
 //------------------------------------------------------------------------------------------------------
 
 } // namespace gausslat
-} // namespace grids
+} // namespace predefined
+} // namespace grid
 } // namespace atlas
 
 #endif // atlas_grids_gausslat_gausslat_h

@@ -24,7 +24,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
@@ -32,12 +32,14 @@
 #include "atlas/util/array/Array.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/array/IndexView.h"
-#include "atlas/private/Bitflags.h"
+#include "atlas/internals/Bitflags.h"
 
-using atlas::util::Topology;
+using atlas::internals::Topology;
 
-using namespace atlas::io;
-using namespace atlas::meshgen;
+using namespace atlas::util::array;
+using namespace atlas::internals;
+using namespace atlas::util::io;
+using namespace atlas::mesh::generators;
 
 namespace atlas {
 namespace test {
@@ -47,7 +49,7 @@ class IsGhost
 public:
   IsGhost( const mesh::Nodes& nodes )
   {
-    part_   = ArrayView<int,1> (nodes.partition() );
+    part_   = util::array::ArrayView<int,1> (nodes.partition() );
     ridx_   = IndexView<int,1> (nodes.remote_index() );
     mypart_ = eckit::mpi::rank();
   }
@@ -60,7 +62,7 @@ public:
   }
 private:
   int mypart_;
-  ArrayView<int,1> part_;
+  util::array::ArrayView<int,1> part_;
   IndexView<int,1> ridx_;
 };
 
@@ -77,14 +79,14 @@ BOOST_AUTO_TEST_CASE( init )
 
 BOOST_AUTO_TEST_CASE( test1 )
 {
-	Mesh::Ptr m ( Mesh::create() );
+  mesh::Mesh::Ptr m ( mesh::Mesh::create() );
 
   mesh::Nodes& nodes = m->nodes();
   nodes.resize(10);
-  ArrayView<double,2> lonlat ( nodes.lonlat());
-  ArrayView<gidx_t,1> glb_idx( nodes.global_index());
-  ArrayView<int,1> part ( nodes.partition() );
-  ArrayView<int,1> flags ( nodes.field("flags") );
+  util::array::ArrayView<double,2> lonlat ( nodes.lonlat());
+  util::array::ArrayView<gidx_t,1> glb_idx( nodes.global_index());
+  util::array::ArrayView<int,1> part ( nodes.partition() );
+  util::array::ArrayView<int,1> flags ( nodes.field("flags") );
   flags = Topology::NONE;
 
   // This is typically available
@@ -110,7 +112,7 @@ BOOST_AUTO_TEST_CASE( test1 )
   lonlat(8,LON) = 360.;  lonlat(8,LAT) = 80.;    Topology::set( flags(8), Topology::BC|Topology::EAST );
   lonlat(9,LON) = 360.;  lonlat(9,LAT) =-80.;    Topology::set( flags(9), Topology::BC|Topology::EAST );
 
-  actions::build_parallel_fields(*m);
+  mesh::actions::build_parallel_fields(*m);
 
   BOOST_REQUIRE( nodes.has_field("remote_idx") );
 
@@ -126,7 +128,7 @@ BOOST_AUTO_TEST_CASE( test1 )
   BOOST_CHECK_EQUAL( loc(8) , 8 );
   BOOST_CHECK_EQUAL( loc(9) , 9 );
 
-  IsGhost is_ghost( m->nodes() );
+  test::IsGhost is_ghost( m->nodes() );
 
   switch ( eckit::mpi::rank() )
   {
@@ -156,7 +158,7 @@ BOOST_AUTO_TEST_CASE( test1 )
     break;
   }
 
-  actions::build_periodic_boundaries(*m);
+  mesh::actions::build_periodic_boundaries(*m);
 
   // points 8 and 9 are periodic slave points of points 0 and 1
   BOOST_CHECK_EQUAL( part(8), 0 );
@@ -176,15 +178,15 @@ BOOST_AUTO_TEST_CASE( test2 )
   ReducedGridMeshGenerator generate;
   generate.options.set("nb_parts",eckit::mpi::size());
   generate.options.set("part",eckit::mpi::rank());
-  Mesh* m = generate( grids::rgg::N32() );
-  actions::build_parallel_fields(*m);
+  mesh::Mesh* m = generate( grid::predefined::rgg::N32() );
+  mesh::actions::build_parallel_fields(*m);
 
   mesh::Nodes& nodes = m->nodes();
   IndexView<int,1> loc_idx ( nodes.remote_index() );
-  ArrayView<int,1> part    ( nodes.partition());
-  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  util::array::ArrayView<int,1> part    ( nodes.partition());
+  util::array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
-  IsGhost is_ghost(nodes);
+  test::IsGhost is_ghost(nodes);
 
   size_t nb_ghost = 0;
   for( size_t jnode=0; jnode<nodes.size(); ++jnode )
@@ -195,7 +197,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   if( eckit::mpi::rank() == 0 ) BOOST_CHECK_EQUAL( nb_ghost, 129 );
   if( eckit::mpi::rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 0   );
 
-  actions::build_periodic_boundaries(*m);
+  mesh::actions::build_periodic_boundaries(*m);
 
   int nb_periodic = -nb_ghost;
   for( size_t jnode=0; jnode<nodes.size(); ++jnode )

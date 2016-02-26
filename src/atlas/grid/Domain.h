@@ -26,8 +26,12 @@ namespace eckit {
 }
 
 namespace atlas {
+namespace grid {
+    class BoundBox;
+} }
 
-class BoundBox;
+namespace atlas {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -40,7 +44,7 @@ class Domain {
 public:  // methods
 
     /// Construct from a BoundBox
-    Domain(const atlas::BoundBox&);
+    Domain(const atlas::grid::BoundBox&);
 
     /// East and West are reduced to the interval [0,360[
     Domain(double north, double west, double south, double east);
@@ -91,6 +95,7 @@ private: // members
 
 //------------------------------------------------------------------------------------------------------
 
-}  // namespace atlas
+} // namespace grid
+} // namespace atlas
 
 #endif

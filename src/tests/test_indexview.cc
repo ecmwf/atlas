@@ -21,6 +21,8 @@
 #define IN_FORTRAN -1
 #endif
 
+using namespace atlas::util::array;
+
 namespace atlas {
 namespace test {
 
@@ -35,7 +37,7 @@ std::string pos(Iterator& it)
 
 BOOST_AUTO_TEST_CASE( test_array )
 {
-  ArrayT<int> array (3,1,4);
+  util::array::ArrayT<int> array (3,1,4);
   BOOST_CHECK_EQUAL( array.shape(0) , 3 );
   BOOST_CHECK_EQUAL( array.shape(1) , 1 );
   BOOST_CHECK_EQUAL( array.shape(2) , 4 );
@@ -64,17 +66,17 @@ BOOST_AUTO_TEST_CASE( test_array )
 
 BOOST_AUTO_TEST_CASE( test_arrayview_iterator )
 {
-  ArrayT<int> array(5,4,2);
+  util::array::ArrayT<int> array(5,4,2);
   size_t strides[2] = {8,1};
   size_t extents[2] = {5,2};
-  ArrayView<int>       aview(array.data(),2,extents,strides);
-  ArrayView<int> const const_aview(array);
+  util::array::ArrayView<int>       aview(array.data(),2,extents,strides);
+  util::array::ArrayView<int> const const_aview(array);
 
   std::cout << "aview.size() = " << aview.size() << std::endl;
   std::cout << "const_.size() = " << const_aview.size() << std::endl;
 
-  ArrayView<int>::iterator it;
-  ArrayView<int>::const_iterator const_it;
+  util::array::ArrayView<int>::iterator it;
+  util::array::ArrayView<int>::const_iterator const_it;
 
   int i(0);
   for(it = aview.begin(); it!=aview.end(); ++it, ++i)
@@ -91,9 +93,9 @@ BOOST_AUTO_TEST_CASE( test_arrayview_iterator )
 
 BOOST_AUTO_TEST_CASE( test_indexview_1d )
 {
-  ArrayT<int> array( 10 );
+  util::array::ArrayT<int> array( 10 );
 
-  ArrayView<int,1>       aview(array);
+  util::array::ArrayView<int,1>       aview(array);
   IndexView<int,1>       iview(array);
   const IndexView<int,1> const_iview(array);
 
@@ -132,9 +134,9 @@ BOOST_AUTO_TEST_CASE( test_indexview_1d )
 
 BOOST_AUTO_TEST_CASE( test_indexview_2d )
 {
-  ArrayT<int> array( 5, 10 );
+  util::array::ArrayT<int> array( 5, 10 );
 
-  ArrayView<int,2>       aview(array);
+  util::array::ArrayView<int,2>       aview(array);
   IndexView<int,2>       iview(array);
   const IndexView<int,2> const_iview(array);
 
@@ -175,9 +177,9 @@ BOOST_AUTO_TEST_CASE( test_indexview_2d )
 
 BOOST_AUTO_TEST_CASE( test_indexview_3d )
 {
-  ArrayT<int> array( 5, 7, 10 );
+  util::array::ArrayT<int> array( 5, 7, 10 );
 
-  ArrayView<int,3>       aview(array);
+  util::array::ArrayView<int,3>       aview(array);
   IndexView<int,3>       iview(array);
   const IndexView<int,3> const_iview(array);
 

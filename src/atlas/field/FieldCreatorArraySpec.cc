@@ -33,23 +33,23 @@ Field* FieldCreatorArraySpec::create_field( const eckit::Parametrisation& params
   else          s.assign(shape.begin(),shape.end());
 
 
-  DataType datatype = DataType::create<double>();
+  util::DataType datatype = util::DataType::create<double>();
   std::string datatype_str;
   if( params.get("datatype", datatype_str) )
   {
-    datatype = DataType(datatype_str);
+    datatype = util::DataType(datatype_str);
   }
   else
   {
-    DataType::kind_t kind(DataType::kind<double>());
+    util::DataType::kind_t kind(util::DataType::kind<double>());
     params.get("kind",kind);
-    if( ! DataType::kind_valid(kind) )
+    if( ! util::DataType::kind_valid(kind) )
     {
       std::stringstream msg;
       msg << "Could not create field. kind parameter unrecognized";
       throw eckit::Exception(msg.str());
     }
-    datatype = DataType(kind);
+    datatype = util::DataType(kind);
   }
 
   std::string name;
@@ -63,6 +63,6 @@ static FieldCreatorBuilder< FieldCreatorArraySpec > __ArraySpec("ArraySpec");
 
 // ------------------------------------------------------------------
 
-} // namespace fieldcreator
+} // namespace field
 } // namespace atlas
 

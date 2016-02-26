@@ -16,10 +16,16 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 
+namespace atlas {
+namespace mesh {
+    class Mesh;
+    class HybridElements;
+} }
 
-namespace atlas { class Mesh; }
-namespace atlas { namespace mesh { class HybridElements; } }
-namespace atlas { class FieldSet; }
+namespace atlas {
+namespace field {
+    class FieldSet;
+} }
 
 namespace atlas {
 namespace functionspace {
@@ -30,9 +36,9 @@ class Edges : public FunctionSpace
 {
 public:
 
-    Edges( Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
-    Edges( Mesh& mesh, const mesh::Halo & );
-    Edges( Mesh& mesh );
+    Edges( mesh::Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
+    Edges( mesh::Mesh& mesh, const mesh::Halo & );
+    Edges( mesh::Mesh& mesh );
 
     virtual ~Edges();
 
@@ -42,77 +48,77 @@ public:
     size_t nb_edges_global() const; // Only on MPI rank 0, will this be different from 0
     std::vector<size_t> nb_edges_global_foreach_rank() const;
 
-    const atlas::Mesh& mesh() const { return *mesh_.get(); }
-          atlas::Mesh& mesh()       { return *mesh_.get(); }
+    const mesh::Mesh& mesh() const { return *mesh_.get(); }
+          mesh::Mesh& mesh()       { return *mesh_.get(); }
 
     const mesh::HybridElements& edges() const { return edges_; }
           mesh::HybridElements& edges()       { return edges_; }
 
 
 
-// -- Local Field creation methods
+// -- Local field::Field creation methods
 
     /// @brief Create a named scalar field
-    template< typename DATATYPE > Field* createField(const std::string& name) const;
-    template< typename DATATYPE > Field* createField(const std::string& name, size_t levels) const;
+    template< typename DATATYPE > field::Field* createField(const std::string& name) const;
+    template< typename DATATYPE > field::Field* createField(const std::string& name, size_t levels) const;
 
     /// @brief Create a named scalar field
-    Field* createField(const std::string& name, DataType) const;
-    Field* createField(const std::string& name, DataType, size_t levels) const;
+    field::Field* createField(const std::string& name, util::DataType) const;
+    field::Field* createField(const std::string& name, util::DataType, size_t levels) const;
 
     /// @brief Create a named field with specified dimensions for the variables
-    template< typename DATATYPE >  Field* createField(const std::string& name, const std::vector<size_t>& variables) const;
-    template< typename DATATYPE >  Field* createField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const;
+    template< typename DATATYPE >  field::Field* createField(const std::string& name, const std::vector<size_t>& variables) const;
+    template< typename DATATYPE >  field::Field* createField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const;
 
     /// @brief Create a named field with specified dimensions for the variables
-    Field* createField(const std::string& name, DataType, const std::vector<size_t>& variables) const;
-    Field* createField(const std::string& name, DataType, size_t levels, const std::vector<size_t>& variables) const;
+    field::Field* createField(const std::string& name, util::DataType, const std::vector<size_t>& variables) const;
+    field::Field* createField(const std::string& name, util::DataType, size_t levels, const std::vector<size_t>& variables) const;
 
     /// @brief Create a named field based on other field (datatype and dimensioning)
-    Field* createField(const std::string& name, const Field&) const;
+    field::Field* createField(const std::string& name, const field::Field&) const;
 
 
 
-// -- Global Field creation methods
-
-    /// @brief Create a named global scalar field
-    template< typename DATATYPE >  Field* createGlobalField(const std::string& name) const;
-    template< typename DATATYPE >  Field* createGlobalField(const std::string& name,size_t levels) const;
+// -- Global field::Field creation methods
 
     /// @brief Create a named global scalar field
-    Field* createGlobalField(const std::string& name, DataType) const;
-    Field* createGlobalField(const std::string& name, DataType, size_t levels) const;
+    template< typename DATATYPE >  field::Field* createGlobalField(const std::string& name) const;
+    template< typename DATATYPE >  field::Field* createGlobalField(const std::string& name,size_t levels) const;
+
+    /// @brief Create a named global scalar field
+    field::Field* createGlobalField(const std::string& name, util::DataType) const;
+    field::Field* createGlobalField(const std::string& name, util::DataType, size_t levels) const;
 
     /// @brief Create a named global field with specified dimensions for the variables
-    template< typename DATATYPE >  Field* createGlobalField(const std::string& name, const std::vector<size_t>& variables) const;
-    template< typename DATATYPE >  Field* createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const;
+    template< typename DATATYPE >  field::Field* createGlobalField(const std::string& name, const std::vector<size_t>& variables) const;
+    template< typename DATATYPE >  field::Field* createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const;
 
     /// @brief Create a named field with specified dimensions for the variables
-    Field* createGlobalField(const std::string& name, DataType, const std::vector<size_t>& variables) const;
-    Field* createGlobalField(const std::string& name, DataType, size_t levels, const std::vector<size_t>& variables) const;
+    field::Field* createGlobalField(const std::string& name, util::DataType, const std::vector<size_t>& variables) const;
+    field::Field* createGlobalField(const std::string& name, util::DataType, size_t levels, const std::vector<size_t>& variables) const;
 
     /// @brief Create a named global field based on other field (datatype and dimensioning)
-    Field* createGlobalField(const std::string& name, const Field&) const;
+    field::Field* createGlobalField(const std::string& name, const field::Field&) const;
 
 
 
 // -- Parallelisation aware methods
 
-    void haloExchange( FieldSet& ) const;
-    void haloExchange( Field& ) const;
-    const mpl::HaloExchange& halo_exchange() const;
+    void haloExchange( field::FieldSet& ) const;
+    void haloExchange( field::Field& ) const;
+    const util::parallel::mpl::HaloExchange& halo_exchange() const;
 
-    void gather( const FieldSet&, FieldSet& ) const;
-    void gather( const Field&, Field& ) const;
-    const mpl::GatherScatter& gather() const;
+    void gather( const field::FieldSet&, field::FieldSet& ) const;
+    void gather( const field::Field&, field::Field& ) const;
+    const util::parallel::mpl::GatherScatter& gather() const;
 
-    void scatter( const FieldSet&, FieldSet& ) const;
-    void scatter( const Field&, Field& ) const;
-    const mpl::GatherScatter& scatter() const;
+    void scatter( const field::FieldSet&, field::FieldSet& ) const;
+    void scatter( const field::Field&, field::Field& ) const;
+    const util::parallel::mpl::GatherScatter& scatter() const;
 
-    std::string checksum( const FieldSet& ) const;
-    std::string checksum( const Field& ) const;
-    const mpl::Checksum& checksum() const;
+    std::string checksum( const field::FieldSet& ) const;
+    std::string checksum( const field::Field& ) const;
+    const util::parallel::mpl::Checksum& checksum() const;
 
 private: // methods
 
@@ -122,111 +128,114 @@ private: // methods
 
 private: // data
 
-    eckit::SharedPtr<Mesh> mesh_; // non-const because functionspace may modify mesh
+    eckit::SharedPtr<mesh::Mesh> mesh_; // non-const because functionspace may modify mesh
     mesh::HybridElements& edges_; // non-const because functionspace may modify mesh
     size_t nb_edges_;
     size_t nb_edges_global_;
 
-    eckit::SharedPtr<mpl::GatherScatter> gather_scatter_; // without ghost
-    eckit::SharedPtr<mpl::HaloExchange>  halo_exchange_;
-    eckit::SharedPtr<mpl::Checksum>      checksum_;
+    eckit::SharedPtr<util::parallel::mpl::GatherScatter> gather_scatter_; // without ghost
+    eckit::SharedPtr<util::parallel::mpl::HaloExchange>  halo_exchange_;
+    eckit::SharedPtr<util::parallel::mpl::Checksum>      checksum_;
 };
 
 // -------------------------------------------------------------------
 
 template< typename DATATYPE >
-Field* Edges::createField(const std::string& name) const
+field::Field* Edges::createField(const std::string& name) const
 {
-    return createField(name,DataType::create<DATATYPE>());
+    return createField(name,util::DataType::create<DATATYPE>());
 }
 
 template< typename DATATYPE >
-Field* Edges::createField(const std::string& name, size_t levels) const
+field::Field* Edges::createField(const std::string& name, size_t levels) const
 {
-    return createField(name,DataType::create<DATATYPE>(),levels);
+    return createField(name,util::DataType::create<DATATYPE>(),levels);
 }
 
 template< typename DATATYPE >
-Field* Edges::createField(const std::string& name,const std::vector<size_t>& variables) const
+field::Field* Edges::createField(const std::string& name,const std::vector<size_t>& variables) const
 {
-    return createField(name,DataType::create<DATATYPE>(),variables);
+    return createField(name,util::DataType::create<DATATYPE>(),variables);
 }
 
 template< typename DATATYPE >
-Field* Edges::createField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
+field::Field* Edges::createField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
 {
-    return createField(name,DataType::create<DATATYPE>(),levels,variables);
+    return createField(name,util::DataType::create<DATATYPE>(),levels,variables);
 }
 
 template< typename DATATYPE >
-Field* Edges::createGlobalField(const std::string& name) const
+field::Field* Edges::createGlobalField(const std::string& name) const
 {
-    return createGlobalField(name,DataType::create<DATATYPE>());
+    return createGlobalField(name,util::DataType::create<DATATYPE>());
 }
 
 template< typename DATATYPE >
-Field* Edges::createGlobalField(const std::string& name,size_t levels) const
+field::Field* Edges::createGlobalField(const std::string& name,size_t levels) const
 {
-    return createGlobalField(name,DataType::create<DATATYPE>(),levels);
+    return createGlobalField(name,util::DataType::create<DATATYPE>(),levels);
 }
 
 template< typename DATATYPE >
-Field* Edges::createGlobalField(const std::string& name, const std::vector<size_t>& variables) const
+field::Field* Edges::createGlobalField(const std::string& name, const std::vector<size_t>& variables) const
 {
-    return createGlobalField(name,DataType::create<DATATYPE>(),variables);
+    return createGlobalField(name,util::DataType::create<DATATYPE>(),variables);
 }
 
 template< typename DATATYPE >
-Field* Edges::createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
+field::Field* Edges::createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
 {
-    return createGlobalField(name,DataType::create<DATATYPE>(),levels,variables);
+    return createGlobalField(name,util::DataType::create<DATATYPE>(),levels,variables);
 }
 
 // -------------------------------------------------------------------------------
 #define mesh_Edges mesh::HybridElements
 #define Char char
-#define GatherScatter mpl::GatherScatter
-#define Checksum mpl::Checksum
-#define HaloExchange mpl::HaloExchange
+#define GatherScatter util::parallel::mpl::GatherScatter
+#define Checksum util::parallel::mpl::Checksum
+#define HaloExchange util::parallel::mpl::HaloExchange
+#define field_Field field::Field
+#define field_FieldSet field::FieldSet
+#define mesh_Mesh mesh::Mesh
 
 extern "C" {
 
-Edges* atlas__functionspace__Edges__new (Mesh* mesh, int halo);
-Edges* atlas__functionspace__Edges__new_mesh (Mesh* mesh);
+Edges* atlas__functionspace__Edges__new (mesh_Mesh* mesh, int halo);
+Edges* atlas__functionspace__Edges__new_mesh (mesh_Mesh* mesh);
 void atlas__functionspace__Edges__delete (Edges* This);
 int atlas__functionspace__Edges__nb_edges(const Edges* This);
-Mesh* atlas__functionspace__Edges__mesh(Edges* This);
+mesh_Mesh* atlas__functionspace__Edges__mesh(Edges* This);
 mesh_Edges* atlas__functionspace__Edges__edges(Edges* This);
-Field* atlas__functionspace__Edges__create_field (const Edges* This, const char* name, int kind);
-Field* atlas__functionspace__Edges__create_field_vars (const Edges* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
+field_Field* atlas__functionspace__Edges__create_field (const Edges* This, const char* name, int kind);
+field_Field* atlas__functionspace__Edges__create_field_vars (const Edges* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
 
-Field* atlas__functionspace__Edges__create_field_lev (const Edges* This, const char* name, int levels, int kind);
-Field* atlas__functionspace__Edges__create_field_lev_vars (const Edges* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
+field_Field* atlas__functionspace__Edges__create_field_lev (const Edges* This, const char* name, int levels, int kind);
+field_Field* atlas__functionspace__Edges__create_field_lev_vars (const Edges* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
 
 
-Field* atlas__functionspace__Edges__create_field_template (const Edges* This, const char* name, const Field* field_template);
-Field* atlas__functionspace__Edges__create_global_field (const Edges* This, const char* name, int kind);
-Field* atlas__functionspace__Edges__create_global_field_vars (const Edges* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
+field_Field* atlas__functionspace__Edges__create_field_template (const Edges* This, const char* name, const field_Field* field_template);
+field_Field* atlas__functionspace__Edges__create_global_field (const Edges* This, const char* name, int kind);
+field_Field* atlas__functionspace__Edges__create_global_field_vars (const Edges* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
 
-Field* atlas__functionspace__Edges__create_global_field_lev (const Edges* This, const char* name, int levels, int kind);
-Field* atlas__functionspace__Edges__create_global_field_lev_vars (const Edges* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
+field_Field* atlas__functionspace__Edges__create_global_field_lev (const Edges* This, const char* name, int levels, int kind);
+field_Field* atlas__functionspace__Edges__create_global_field_lev_vars (const Edges* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
 
-Field* atlas__functionspace__Edges__create_global_field_template (const Edges* This, const char* name, const Field* field_template);
+field_Field* atlas__functionspace__Edges__create_global_field_template (const Edges* This, const char* name, const field_Field* field_template);
 
-void atlas__functionspace__Edges__halo_exchange_fieldset(const Edges* This, FieldSet* fieldset);
-void atlas__functionspace__Edges__halo_exchange_field(const Edges* This, Field* field);
+void atlas__functionspace__Edges__halo_exchange_fieldset(const Edges* This, field_FieldSet* fieldset);
+void atlas__functionspace__Edges__halo_exchange_field(const Edges* This, field_Field* field);
 const HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const Edges* This);
 
-void atlas__functionspace__Edges__gather_fieldset(const Edges* This, const FieldSet* local, FieldSet* global);
-void atlas__functionspace__Edges__gather_field(const Edges* This, const Field* local, Field* global);
+void atlas__functionspace__Edges__gather_fieldset(const Edges* This, const field_FieldSet* local, field_FieldSet* global);
+void atlas__functionspace__Edges__gather_field(const Edges* This, const field_Field* local, field_Field* global);
 const GatherScatter* atlas__functionspace__Edges__get_gather(const Edges* This);
 
-void atlas__functionspace__Edges__scatter_fieldset(const Edges* This, const FieldSet* global, FieldSet* local);
-void atlas__functionspace__Edges__scatter_field(const Edges* This, const Field* global, Field* local);
+void atlas__functionspace__Edges__scatter_fieldset(const Edges* This, const field_FieldSet* global, field_FieldSet* local);
+void atlas__functionspace__Edges__scatter_field(const Edges* This, const field_Field* global, field_Field* local);
 const GatherScatter* atlas__functionspace__Edges__get_scatter(const Edges* This);
 
-void atlas__functionspace__Edges__checksum_fieldset(const Edges* This, const FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
-void atlas__functionspace__Edges__checksum_field(const Edges* This, const Field* field, Char* &checksum, int &size, int &allocated);
+void atlas__functionspace__Edges__checksum_fieldset(const Edges* This, const field_FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
+void atlas__functionspace__Edges__checksum_field(const Edges* This, const field_Field* field, Char* &checksum, int &size, int &allocated);
 const Checksum* atlas__functionspace__Edges__get_checksum(const Edges* This);
 }
 
@@ -235,6 +244,9 @@ const Checksum* atlas__functionspace__Edges__get_checksum(const Edges* This);
 #undef GatherScatter
 #undef Checksum
 #undef HaloExchange
+#undef field_Field
+#undef field_FieldSet
+#undef mesh_Mesh
 
 } // namespace functionspace
 } // namespace atlas

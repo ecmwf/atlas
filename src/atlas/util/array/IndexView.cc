@@ -16,6 +16,8 @@
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+namespace util {
+namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -26,7 +28,7 @@ IndexView <DATA_TYPE, 1 >::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( 
   strides_[0]=array.stride(0);  shape_[0]=array.shape(0);\
 } \
 template<> \
-IndexView <DATA_TYPE, 1 >::IndexView( const Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
+IndexView <DATA_TYPE, 1 >::IndexView( const field::Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
 { \
   strides_[0]=field.stride(0);  shape_[0]=field.shape(0); \
 } \
@@ -38,7 +40,7 @@ IndexView<DATA_TYPE,2>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( con
   size_ =  size_ = shape_[0]*shape_[1]; \
 } \
 template<> \
-IndexView<DATA_TYPE,2>::IndexView( const Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
+IndexView<DATA_TYPE,2>::IndexView( const field::Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
 { \
   strides_[0]=field.stride(0);       shape_[0]=field.shape(0); \
   strides_[1]=field.stride(1);       shape_[1]=field.shape(1); \
@@ -53,7 +55,7 @@ IndexView<DATA_TYPE,3>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( con
   size_ =  size_ = shape_[0]*shape_[1]*shape_[2]; \
 } \
 template<> \
-IndexView<DATA_TYPE,3>::IndexView( const Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
+IndexView<DATA_TYPE,3>::IndexView( const field::Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
 { \
   strides_[0]=field.stride(0);       shape_[0]=field.shape(0); \
   strides_[1]=field.stride(1);       shape_[1]=field.shape(1); \
@@ -70,7 +72,7 @@ IndexView<DATA_TYPE,4>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( con
   size_ =  size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3]; \
 } \
 template<> \
-IndexView<DATA_TYPE,4>::IndexView( const Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
+IndexView<DATA_TYPE,4>::IndexView( const field::Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
 { \
   strides_[0]=field.stride(0);       shape_[0]=field.shape(0); \
   strides_[1]=field.stride(1);       shape_[1]=field.shape(1); \
@@ -85,4 +87,6 @@ TEMPLATE_SPECIALIZATION(int);
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace array
+} // namespace util
 } // namespace atlas

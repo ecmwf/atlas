@@ -30,7 +30,7 @@
 /// }
 ///
 /// There is also an easier way to wrap Field and Array classes:
-/// IndexView<int,3> fieldview( Field );
+/// IndexView<int,3> fieldview( field::Field );
 /// IndexView<int,2> INDEXVIEW( Array );
 
 #ifndef atlas_IndexView_h
@@ -79,9 +79,13 @@
 
 //------------------------------------------------------------------------------------------------------
 
-namespace atlas {
+namespace atlas { namespace field { class Field; } }
 
-  class Field;
+namespace atlas {
+namespace util {
+namespace array {
+
+
   template< typename DATA_TYPE > class ArrayT;
 
 //------------------------------------------------------------------------------------------------------
@@ -153,7 +157,7 @@ public:
     strides_[0]=strides[0];       shape_[0]=shape[0];
   }
   IndexView( const ArrayT<DATA_TYPE>& array );
-  IndexView( const Field& field );
+  IndexView( const field::Field& field );
 
   DATA_TYPE operator()(size_t i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
   Index     operator()(size_t i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
@@ -206,7 +210,7 @@ public:
     size_ = shape_[0]*shape_[1];
   }
   IndexView( const ArrayT<DATA_TYPE>& array );
-  IndexView( const Field& field );
+  IndexView( const field::Field& field );
 
   DATA_TYPE operator()(size_t i, size_t j) const  { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]) FROM_FORTRAN; }
   Index     operator()(size_t i, size_t j)        { CHECK_BOUNDS_2(i,j); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]); }
@@ -269,7 +273,7 @@ public:
     size_ = shape_[0]*shape_[1]*shape_[2];
   }
   IndexView( const ArrayT<DATA_TYPE>& array );
-  IndexView( const Field& field );
+  IndexView( const field::Field& field );
 
   DATA_TYPE operator()(size_t i, size_t j, size_t k) const { CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]) FROM_FORTRAN; }
   Index     operator()(size_t i, size_t j, size_t k)       { CHECK_BOUNDS_3(i,j,k); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
@@ -318,7 +322,7 @@ public:
     size_ =  size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3];
   }
   IndexView( const ArrayT<DATA_TYPE>& array );
-  IndexView( const Field& field );
+  IndexView( const field::Field& field );
 
   DATA_TYPE operator()(size_t i, size_t j, size_t k, size_t l) const { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]) FROM_FORTRAN; }
   Index     operator()(size_t i, size_t j, size_t k, size_t l)       { CHECK_BOUNDS_4(i,j,k,l); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
@@ -347,6 +351,8 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace array
+} // namespace util
 } // namespace atlas
 
 #undef CHECK_RANK

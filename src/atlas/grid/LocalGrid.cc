@@ -20,42 +20,43 @@ using namespace eckit::geometry;
 using namespace std;
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
-//------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 LocalGrid::LocalGrid(Grid* grid, const Domain& domain)
     : Grid(domain),
       grid_(grid),
-      localPts_(0) {
-
+      localPts_(0)
+{
     ASSERT(grid);
-    ASSERT( !dynamic_cast<LocalGrid*>(grid) ); // FIXME: add support of LocalGrid of LocalGrid
-
+    ASSERT(!dynamic_cast<LocalGrid*>(grid)); // FIXME: add support of LocalGrid of LocalGrid
     cropPoints();
 }
 
+
+
 LocalGrid::~LocalGrid() {}
 
-std::string LocalGrid::shortName() const {
 
+
+std::string LocalGrid::shortName() const
+{
     if ( shortName_.empty() ) {
         shortName_ = "local." + grid_->shortName();
     }
     return shortName_;
 }
 
-void LocalGrid::hash(eckit::MD5& md5) const {
-
+void LocalGrid::hash(eckit::MD5& md5) const
+{
     md5.add("local.");
-
     grid_->hash(md5);
-
     domain().hash(md5);
 }
 
-void LocalGrid::cropPoints() {
-
+void LocalGrid::cropPoints()
+{
     std::vector<Grid::Point> gpts;
     grid_->lonlat(gpts);
 
@@ -65,15 +66,17 @@ void LocalGrid::cropPoints() {
     size_t accepted = 0;
     size_t discarded = 0;
 
-
-    for (size_t i = 0; i < gpts.size(); ++i) {
+    for (size_t i = 0; i < gpts.size(); ++i)
+    {
         const Grid::Point& p = gpts[i];
-        if ( domain_.contains(p) ) {
+        if ( domain_.contains(p) )
+        {
 //            Log::info() << "  ++ POINT " << p << std::endl;
             localPts_.push_back(p);
             ++accepted;
         }
-        else {
+        else
+        {
 //            Log::info() << " DISCARDED POINT " << p << std::endl;
             ++discarded;
         }
@@ -85,7 +88,8 @@ void LocalGrid::cropPoints() {
 
 size_t LocalGrid::npts() const { return localPts_.size(); }
 
-void LocalGrid::print(ostream& os) const {
+void LocalGrid::print(ostream& os) const
+{
     os << "LocalGrid("
        << "Domain:" << domain_
        << ",Grid:" << *grid_
@@ -95,18 +99,20 @@ void LocalGrid::print(ostream& os) const {
 
 void LocalGrid::lonlat(std::vector<Point>& pts) const { pts = localPts_; }
 
-std::string LocalGrid::gridType() const {
+std::string LocalGrid::gridType() const
+{
     std::ostringstream os;
     os << "local." << grid_->gridType();
     return os.str();
 }
 
-eckit::Properties LocalGrid::spec() const {
+eckit::Properties LocalGrid::spec() const
+{
     NOTIMP;
 }
 
 
-//------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas

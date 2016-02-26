@@ -15,6 +15,7 @@ namespace atlas {
 
 class Mesh;
 
+namespace mesh {
 namespace actions {
 
 /// Creates a 3D convex-hull on the mesh points
@@ -26,6 +27,7 @@ public:
 };
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 
 #endif

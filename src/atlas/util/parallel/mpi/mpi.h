@@ -17,9 +17,13 @@
 #include "atlas/util/parallel/mpi/Collectives.h"
 
 namespace atlas {
+namespace util {
+namespace parallel {
 namespace mpi {
 
 } // namespace mpi
+} // namespace parallel
+} // namespace util
 } // namespace atlas
 
 // ------------------------------------------------------------------

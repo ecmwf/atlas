@@ -29,8 +29,8 @@
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/private/Parameters.h"
-#include "atlas/private/Bitflags.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/internals/Bitflags.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/util/runtime/Log.h"
 #include "atlas/util/array/Array.h"
@@ -44,12 +44,13 @@
 #define DEBUG_OUTPUT 0
 
 using namespace eckit;
-using namespace atlas::grids;
+using namespace atlas::grid;
 
-using atlas::util::Topology;
+using atlas::internals::Topology;
 
 namespace atlas {
-namespace meshgen {
+namespace mesh {
+namespace generators {
 
 namespace {
 static double to_rad = M_PI/180.;
@@ -60,7 +61,7 @@ struct Region
 {
   int north;
   int south;
-  ArrayT<int> elems;
+  util::array::ArrayT<int> elems;
   int ntriags;
   int nquads;
   int nnodes;
@@ -147,30 +148,30 @@ void ReducedGridMeshGenerator::configure_defaults()
   options.set<bool>("triangulate", Resource< bool > ( "--triangulate;atlas.meshgen.triangulate", 1) );
 }
 
-void ReducedGridMeshGenerator::generate(const Grid& grid, Mesh& mesh ) const
+void ReducedGridMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
 {
-  const grids::ReducedGrid* rg = dynamic_cast<const grids::ReducedGrid*>(&grid);
+  const grid::ReducedGrid* rg = dynamic_cast<const grid::ReducedGrid*>(&grid);
   if( !rg )
     throw eckit::BadCast("ReducedGridMeshGenerator can only work with a ReducedGrid",Here());
 
   int nb_parts = options.get<size_t>("nb_parts");
 
   std::string partitioner_factory = Resource<std::string>("atlas.meshgen.partitioner",std::string("Trans"));
-  if( PartitionerFactory::has("Trans") == false ||    // No support for Trans
+  if( grid::partitioners::PartitionerFactory::has("Trans") == false ||    // No support for Trans
       rg->nlat()%2 == 1                               // Odd number of latitudes
       || nb_parts == 1  )                             // Only one part --> Trans is slower
   {
     partitioner_factory = "EqualRegions";
   }
 
-  Partitioner::Ptr partitioner( PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
+  grid::partitioners::Partitioner::Ptr partitioner( grid::partitioners::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
   GridDistribution::Ptr distribution( partitioner->distribution() );
   generate( grid, *distribution, mesh );
 }
 
-void ReducedGridMeshGenerator::generate(const Grid& grid, const GridDistribution& distribution, Mesh& mesh ) const
+void ReducedGridMeshGenerator::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
 {
-  const grids::ReducedGrid* rg = dynamic_cast<const grids::ReducedGrid*>(&grid);
+  const grid::ReducedGrid* rg = dynamic_cast<const grid::ReducedGrid*>(&grid);
   if( !rg )
     throw eckit::BadCast("Grid could not be cast to a ReducedGrid",Here());
 
@@ -256,7 +257,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
   region.north = lat_north;
   region.south = lat_south;
 
-  ArrayShape shape = make_shape(region.south-region.north, 4*rg.nlonmax(), 4);
+  util::array::ArrayShape shape = util::array::make_shape(region.south-region.north, 4*rg.nlonmax(), 4);
   // Log::info(Here())  << "allocating elems" <<  "(" << extents[0] << "," << extents[1] << "," << extents[2] << ")" << std::endl;
   region.elems.resize(shape);
   region.elems = -1;
@@ -265,7 +266,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
   region.nquads=0;
   region.ntriags=0;
 
-  ArrayView<int,3> elemview(region.elems);
+  util::array::ArrayView<int,3> elemview(region.elems);
 
   bool stagger = options.get<bool>("stagger");
   for (int jlat=lat_north; jlat<lat_south; ++jlat)
@@ -282,7 +283,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
 
     ilat = jlat-region.north;
 
-    ArrayView<int,2> lat_elems_view = elemview[ilat];
+    util::array::ArrayView<int,2> lat_elems_view = elemview[ilat];
 
     latN = jlat;
     latS = jlat+1;
@@ -441,7 +442,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
       //debug_file << "jelem = " << jelem << '\n';
 #endif
 
-      ArrayView<int,1> elem = lat_elems_view[jelem];
+      util::array::ArrayView<int,1> elem = lat_elems_view[jelem];
 
       if( try_make_quad )
       {
@@ -811,11 +812,11 @@ void ReducedGridMeshGenerator::generate_mesh_new( const ReducedGrid& rg,
   mesh.nodes().resize(nnodes);
   mesh::Nodes& nodes = mesh.nodes();
 
-  ArrayView<double,2> lonlat        ( nodes.lonlat() );
-  ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
-  ArrayView<int,   1> part          ( nodes.partition() );
-  ArrayView<int,   1> ghost         ( nodes.ghost() );
-  ArrayView<int,   1> flags         ( nodes.field("flags") );
+  util::array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
+  util::array::ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
+  util::array::ArrayView<int,   1> part          ( nodes.partition() );
+  util::array::ArrayView<int,   1> ghost         ( nodes.ghost() );
+  util::array::ArrayView<int,   1> flags         ( nodes.field("flags") );
 
   bool stagger = options.get<bool>("stagger");
 
@@ -834,8 +835,8 @@ void ReducedGridMeshGenerator::generate_mesh_new( const ReducedGrid& rg,
       double x = rg.lon(jlat,jlon);
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nlon(jlat));
 
-      lonlat(jnode,LON) = x;
-      lonlat(jnode,LAT) = y;
+      lonlat(jnode,internals::LON) = x;
+      lonlat(jnode,internals::LAT) = y;
       glb_idx(jnode)   = n+1;
       part(jnode) = parts[n];
       ghost(jnode) = 0;
@@ -860,8 +861,8 @@ void ReducedGridMeshGenerator::generate_mesh_new( const ReducedGrid& rg,
       double x = rg.lon(jlat,rg.nlon(jlat));
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nlon(jlat));
 
-      lonlat(jnode,LON) = x;
-      lonlat(jnode,LAT) = y;
+      lonlat(jnode,internals::LON) = x;
+      lonlat(jnode,internals::LAT) = y;
       glb_idx(jnode)   = periodic_glb[jlat]+1;
       part(jnode)      = part(jnode-1);
       ghost(jnode)     = 1;
@@ -878,8 +879,8 @@ void ReducedGridMeshGenerator::generate_mesh_new( const ReducedGrid& rg,
     jnorth = jnode;
     double y = 90.;
     double x = 180.;
-    lonlat(jnode,LON) = x;
-    lonlat(jnode,LAT) = y;
+    lonlat(jnode,internals::LON) = x;
+    lonlat(jnode,internals::LAT) = y;
     glb_idx(jnode)   = periodic_glb[rg.nlat()-1]+2;
     part(jnode)      = mypart;
     ghost(jnode)     = 0;
@@ -894,8 +895,8 @@ void ReducedGridMeshGenerator::generate_mesh_new( const ReducedGrid& rg,
     jsouth = jnode;
     double y = -90.;
     double x =  180.;
-    lonlat(jnode,LON) = x;
-    lonlat(jnode,LAT) = y;
+    lonlat(jnode,internals::LON) = x;
+    lonlat(jnode,internals::LAT) = y;
     glb_idx(jnode)   = periodic_glb[rg.nlat()-1]+3;
     part(jnode)      = mypart;
     ghost(jnode)     = 0;
@@ -908,8 +909,8 @@ void ReducedGridMeshGenerator::generate_mesh_new( const ReducedGrid& rg,
   mesh.cells().add( new mesh::temporary::Triangle(),      ntriags );
 
   mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
-  ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
-  ArrayView<int,1>    cells_part(    mesh.cells().partition() );
+  util::array::ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
+  util::array::ArrayView<int,1>    cells_part(    mesh.cells().partition() );
 
   /*
   Fill in connectivity tables with global node indices first
@@ -932,7 +933,7 @@ void ReducedGridMeshGenerator::generate_mesh_new( const ReducedGrid& rg,
     int ilatS = ilat+1;
     for (int jelem=0; jelem<region.nb_lat_elems[jlat]; ++jelem)
     {
-      const ArrayView<int,1> elem = ArrayView<int,3>(region.elems)[ilat][jelem];
+      const util::array::ArrayView<int,1> elem = util::array::ArrayView<int,3>(region.elems)[ilat][jelem];
 
       if(elem[2]>0 && elem[3]>0) // This is a quad
       {
@@ -1165,21 +1166,21 @@ void ReducedGridMeshGenerator::generate_mesh_convert_to_old(
   int nquads  = mesh.cells().elements(0).size();
   int ntriags = mesh.cells().elements(1).size();
 
-  deprecated::FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", make_shape(nquads,deprecated::FunctionSpace::UNDEF_VARS) );
+  deprecated::FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", util::array::make_shape(nquads,deprecated::FunctionSpace::UNDEF_VARS) );
   quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-  IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
-  ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
-  ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
+  util::array::IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
+  util::array::ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
+  util::array::ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
 
-  deprecated::FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", make_shape(ntriags,deprecated::FunctionSpace::UNDEF_VARS) );
+  deprecated::FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", util::array::make_shape(ntriags,deprecated::FunctionSpace::UNDEF_VARS) );
   triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-  IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
-  ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
-  ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
+  util::array::IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
+  util::array::ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
+  util::array::ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
 
   const mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
-  const ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
-  const ArrayView<int,1>    cells_part(    mesh.cells().partition() );
+  const util::array::ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
+  const util::array::ArrayView<int,1>    cells_part(    mesh.cells().partition() );
 
   size_t cell_begin;
 
@@ -1234,7 +1235,7 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh ) c
 
   gidx_t gid = 1+elem_displs[ eckit::mpi::rank() ];
 
-  ArrayView<gidx_t,1> glb_idx( mesh.cells().global_index() );
+  util::array::ArrayView<gidx_t,1> glb_idx( mesh.cells().global_index() );
 
   for( size_t jelem=0; jelem<mesh.cells().size(); ++jelem )
   {
@@ -1246,6 +1247,7 @@ namespace {
 static MeshGeneratorBuilder< ReducedGridMeshGenerator > __reducedgrid("ReducedGrid");
 }
 
-} // namespace meshgen
+} // namespace generators
+} // namespace mesh
 } // namespace atlas
 

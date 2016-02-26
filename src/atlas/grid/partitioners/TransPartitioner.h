@@ -14,30 +14,34 @@
 #include "atlas/grid/partitioners/Partitioner.h"
 
 namespace atlas {
-namespace grids {
-  class ReducedGrid;
-}
-namespace trans {
-  class Trans;
-}
+namespace grid { class ReducedGrid; }
+namespace grid { class GridDistribution; }
 }
 
 namespace atlas {
-namespace trans {
+namespace numerics {
+namespace trans { class Trans; }
+} }
+
+namespace atlas {
+namespace grid {
+namespace partitioners {
 
 class TransPartitioner: public Partitioner
 {
 public:
 
   /// @brief Constructor
-  TransPartitioner( const Grid& grid, const Trans& trans );
+  TransPartitioner(const grid::Grid& grid,
+                   const numerics::trans::Trans& trans);
 
   /// @brief Constructor
   /// This constructor allocates a new Trans, but without the computations
   /// of the spectral coefficients (LDGRIDONLY=TRUE)
-  TransPartitioner( const Grid& grid );
+  TransPartitioner( const grid::Grid& grid );
 
-  TransPartitioner( const Grid& grid, const size_t nb_partitions );
+  TransPartitioner(const grid::Grid& grid,
+                   const size_t nb_partitions );
 
   virtual ~TransPartitioner();
 
@@ -48,11 +52,12 @@ public:
   int nb_regions(int b) const;
 
 private:
-  mutable Trans* t_;
+  mutable numerics::trans::Trans* t_;
   bool owned_;
 };
 
-}
-}
+} // namespace partitioners
+} // namespace grid
+} // namespace atlas
 
 #endif // atlas_trans_TransPartitioner_h

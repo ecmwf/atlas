@@ -13,6 +13,7 @@
 
 namespace atlas {
 class Mesh;
+namespace mesh {
 namespace actions {
 
 void write_load_balance_report( const Mesh& mesh, std::ostream& ofs );
@@ -29,6 +30,7 @@ extern "C"
 // ------------------------------------------------------------------
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 
 #endif

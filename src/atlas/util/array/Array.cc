@@ -12,6 +12,8 @@
 #include "atlas/util/array/Array.h"
 
 namespace atlas {
+namespace util {
+namespace array {
 
 void Array::resize(const ArrayShape& _shape)
 {
@@ -134,6 +136,6 @@ template <> Array* Array::wrap(long data[], const ArrayShape& s) { return new Ar
 template <> Array* Array::wrap(float data[], const ArrayShape& s) { return new ArrayT<float>(data,s); }
 template <> Array* Array::wrap(double data[], const ArrayShape& s) { return new ArrayT<double>(data,s); }
 
-
-
+} // namespace array
+} // namespace util
 } // namespace atlas

@@ -23,7 +23,7 @@
 
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 
 class Unstructured : public Grid {
@@ -41,7 +41,7 @@ public: // methods
   Unstructured(std::vector< Point >* pts);
 
   /// Constructor taking a mesh
-  Unstructured(const Mesh& m);
+  Unstructured(const mesh::Mesh& m);
 
   virtual ~Unstructured();
 
@@ -78,6 +78,6 @@ protected:
 };
 
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas
 #endif

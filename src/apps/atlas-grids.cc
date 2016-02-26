@@ -35,7 +35,7 @@
 
 using namespace eckit;
 using namespace atlas;
-using namespace atlas::grids;
+using namespace atlas::grid;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -132,7 +132,7 @@ void AtlasGrids::run()
 {
   if( !do_run ) return;
 
-  atlas::grids::load();
+  atlas::grid::load();
 
   if( all )
   {
@@ -153,7 +153,7 @@ void AtlasGrids::run()
 
     if( !grid ) return;
 
-    Grid& g = *grid;
+    grid::Grid& g = *grid;
 
     if( info )
     {

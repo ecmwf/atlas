@@ -13,11 +13,11 @@
 
 #include "eckit/memory/Builder.h"
 #include "eckit/config/Parametrisation.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/grid/Grid.h"
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -114,7 +114,7 @@ protected:
   /// @note Domain is already set when calling setup()
   void setup( const size_t nlat, const double lats[], const long nlons[], const double lonmin[], const double lonmax[] );
   /// @note Domain is already set when calling setup()
-  void setup_lat_hemisphere( const size_t N, const double lat[], const long lon[], const AngleUnit );
+  void setup_lat_hemisphere( const size_t N, const double lat[], const long lon[], const internals::AngleUnit );
 
 protected:
 
@@ -155,7 +155,7 @@ extern "C"
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas
 
 #endif // ReducedGrid_h

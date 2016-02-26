@@ -34,32 +34,32 @@ Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) con
   params.get("nlev",nlev);
   params.get("nvar",nvar);
 
-  DataType datatype = DataType::create<double>();
+  util::DataType datatype = util::DataType::create<double>();
   std::string datatype_str;
   if( params.get("datatype", datatype_str) )
   {
-    datatype = DataType(datatype_str);
+    datatype = util::DataType(datatype_str);
   }
   else
   {
-    DataType::kind_t kind(DataType::kind<double>());
+    util::DataType::kind_t kind(util::DataType::kind<double>());
     params.get("kind",kind);
-    if( ! DataType::kind_valid(kind) )
+    if( ! util::DataType::kind_valid(kind) )
     {
       std::stringstream msg;
       msg << "Could not create field. kind parameter unrecognized";
       throw eckit::Exception(msg.str());
     }
-    datatype = DataType(kind);
+    datatype = util::DataType(kind);
   }
 
   nblk = std::ceil(static_cast<double>(ngptot)/static_cast<double>(nproma));
 
-  ArrayShape s;
+  util::array::ArrayShape s;
   bool fortran (false);
     params.get("fortran",fortran);
-  if( fortran ) s = make_shape(nproma,nlev,nvar,nblk);
-  else          s = make_shape(nblk,nvar,nlev,nproma);
+  if( fortran ) s = util::array::make_shape(nproma,nlev,nvar,nblk);
+  else          s = util::array::make_shape(nblk,nvar,nlev,nproma);
 
   std::string name;
   params.get("name",name);

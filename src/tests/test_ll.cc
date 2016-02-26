@@ -19,9 +19,9 @@
 #include "atlas/grid/LonLatGrid.h"
 
 
-using namespace atlas::io;
-using namespace atlas::meshgen;
-using namespace atlas::grids;
+using namespace atlas::util::io;
+using namespace atlas::mesh::generators;
+using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
@@ -37,7 +37,7 @@ BOOST_GLOBAL_FIXTURE( GlobalFixture );
 BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
   LonLatGrid g(11,LonLatGrid::INCLUDES_POLES);
-  Mesh m;
+  mesh::Mesh m;
   ReducedGridMeshGenerator().generate(g,m);
   Gmsh().write(m,"lonlat11.msh");
 }

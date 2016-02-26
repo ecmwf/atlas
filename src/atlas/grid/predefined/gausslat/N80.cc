@@ -3,7 +3,8 @@
 #include "atlas/grid/predefined/gausslat/gausslat.h"
 
 namespace atlas {
-namespace grids {
+namespace grid {
+namespace predefined {
 namespace gausslat {
 
 DEFINE_GAUSSIAN_LATITUDES(80,LIST(
@@ -25,7 +26,7 @@ DEFINE_GAUSSIAN_LATITUDES(80,LIST(
   5.046704420157,  3.925214568566,  2.803724702287,  1.682234825547,  0.560744942544
 ))
 
-
 } // namespace gausslat
-} // namespace grids
+} // namespace predefined
+} // namespace grid
 } // namespace atlas

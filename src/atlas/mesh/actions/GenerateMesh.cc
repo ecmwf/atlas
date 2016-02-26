@@ -15,9 +15,10 @@
 #include "atlas/util/runtime/ErrorHandling.h"
 #include "atlas/util/parallel/mpi/mpi.h"
 
-using namespace atlas::meshgen;
-using namespace atlas::grids;
+using namespace atlas::mesh::generators;
+using namespace atlas::grid;
 namespace atlas {
+namespace mesh {
 namespace actions {
 
 // ------------------------------------------------------------------
@@ -46,7 +47,7 @@ Mesh* atlas__generate_mesh (ReducedGrid* rgg)
 // ------------------------------------------------------------------
 
 
-Mesh* atlas__generate_mesh_with_distribution (ReducedGrid* rgg, GridDistribution* distribution)
+Mesh* atlas__generate_mesh_with_distribution (ReducedGrid* rgg, grid::GridDistribution* distribution)
 {
   ATLAS_ERROR_HANDLING(
         ReducedGridMeshGenerator generate;
@@ -57,6 +58,6 @@ Mesh* atlas__generate_mesh_with_distribution (ReducedGrid* rgg, GridDistribution
 
 // ------------------------------------------------------------------
 
-
 } // namespace actions
+} // namespace mesh
 } // namespace atlas

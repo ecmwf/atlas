@@ -6,6 +6,8 @@
 #include "atlas/util/runtime/LogFormat.h"
 
 namespace atlas {
+namespace util {
+namespace runtime {
 
 eckit::Channel& standard_out();
 
@@ -68,7 +70,8 @@ private:
   ChannelConfig stats_ctxt;
 };
 
-
+} // namespace runtime
+} // namespace util
 } // namespace atlas
 
 #endif // atlas_Behavior_h

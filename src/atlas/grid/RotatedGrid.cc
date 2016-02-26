@@ -19,7 +19,7 @@ using namespace eckit::geometry;
 using namespace std;
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -98,5 +98,5 @@ void RotatedGrid::print(ostream& os) const
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas

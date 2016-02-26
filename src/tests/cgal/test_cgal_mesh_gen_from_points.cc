@@ -25,8 +25,8 @@
 //------------------------------------------------------------------------------------------------------
 
 using namespace atlas;
-using namespace atlas::io;
-using namespace atlas::meshgen;
+using namespace atlas::util::io;
+using namespace atlas::mesh::generators;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ int main()
 
     // Build a mesh from grid
     Delaunay generate;
-    Mesh::Ptr mesh( generate(*grid) );
+    mesh::Mesh::Ptr mesh( generate(*grid) );
 
     Gmsh gmsh;
     gmsh.options.set<std::string>("nodes","xyz");

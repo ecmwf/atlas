@@ -18,6 +18,7 @@
 namespace atlas {
   class Mesh;
 
+namespace mesh {
 namespace actions {
 
 /*
@@ -66,6 +67,7 @@ extern "C"
 // ------------------------------------------------------------------
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 
 #endif // BuildDualMesh_h

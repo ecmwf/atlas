@@ -22,6 +22,8 @@
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+namespace util {
+namespace array {
 
 class Array : public eckit::Owned {
 public:
@@ -234,6 +236,8 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace array
+} // namespace util
 } // namespace atlas
 
 #endif

@@ -16,6 +16,7 @@
 namespace atlas {
 class Mesh;
 
+namespace mesh {
 namespace actions {
 
 void build_edges( Mesh& mesh );
@@ -34,6 +35,7 @@ extern "C"
 // ------------------------------------------------------------------
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 
 #endif // BuildEdges_h

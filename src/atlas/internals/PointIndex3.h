@@ -18,11 +18,11 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/util/io/Gmsh.h"
 
 namespace atlas {
-namespace util {
+namespace internals {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -114,11 +114,11 @@ struct ElemIndex3TreeTrait
 
 typedef PointKdTree<ElemIndex3TreeTrait>  ElemIndex3;
 
-ElemIndex3* create_element_centre_index( const atlas::Mesh& mesh );
+ElemIndex3* create_element_centre_index( const atlas::mesh::Mesh& mesh );
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // namespace util
+} // namespace internals
 } // namespace atlas
 
 #endif

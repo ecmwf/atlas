@@ -14,9 +14,9 @@
 
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/private/Bitflags.h"
+#include "atlas/internals/Bitflags.h"
 
-using atlas::util::Bitflags;
+using atlas::internals::Bitflags;
 
 namespace atlas {
 namespace test {

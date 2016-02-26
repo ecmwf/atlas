@@ -19,11 +19,12 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/util/runtime/Log.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 
 namespace atlas {
+namespace mesh {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -32,7 +33,7 @@ Mesh* Mesh::create( const eckit::Parametrisation& params )
   return new Mesh(params);
 }
 
-Mesh* Mesh::create( const Grid& grid, const eckit::Parametrisation& params )
+Mesh* Mesh::create( const grid::Grid& grid, const eckit::Parametrisation& params )
 {
   return new Mesh(grid,params);
 }
@@ -44,7 +45,7 @@ Mesh::Mesh( const eckit::Parametrisation& ):
   createElements();
 }
 
-Mesh::Mesh(const Grid& grid, const eckit::Parametrisation& ) :
+Mesh::Mesh(const grid::Grid& grid, const eckit::Parametrisation& ) :
   grid_(&grid), dimensionality_(2)
 {
   nodes_.reset( new mesh::Nodes() );
@@ -56,7 +57,7 @@ Mesh::~Mesh()
 {
 }
 
-mesh::Nodes& Mesh::createNodes(const Grid& g)
+mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
 {
   set_grid(g);
   size_t nb_nodes = g.npts();
@@ -186,7 +187,7 @@ void Mesh::convert_new_to_old()
     const mesh::Elements &elements = *elements_vec[jtype];
     const std::string& name = functionspace_names[jtype];
     size_t nb_elems = elements.size();
-    std::vector<size_t> shape = make_shape(nb_elems,deprecated::FunctionSpace::UNDEF_VARS);
+    std::vector<size_t> shape = util::array::make_shape(nb_elems,deprecated::FunctionSpace::UNDEF_VARS);
 
     if( ! has_function_space(name) )
       create_function_space("name","bla",shape);
@@ -211,31 +212,31 @@ void Mesh::convert_new_to_old()
         if( field.rank() == 1 )
         {
           if( field.datatype().kind() == DataType::KIND_REAL64 ) {
-            ArrayView<double,1> data = elements.view<double,1>(field) ;
-            ArrayView<double,1> old_data ( fs.field(fname) );
+            util::array::ArrayView<double,1> data = elements.view<double,1>(field) ;
+            util::array::ArrayView<double,1> old_data ( fs.field(fname) );
             for( size_t e=0; e<nb_elems; ++e ) old_data(e) = data(e);
           }
           if( field.datatype().kind() == DataType::KIND_REAL32 ) {
-            ArrayView<float,1> data = elements.view<float,1>(field);
-            ArrayView<float,1> old_data ( fs.field(fname) );
+            util::array::ArrayView<float,1> data = elements.view<float,1>(field);
+            util::array::ArrayView<float,1> old_data ( fs.field(fname) );
             for( size_t e=0; e<nb_elems; ++e ) old_data(e) = data(e);
           }
           if( field.datatype().kind() == DataType::KIND_INT64 ) {
-            ArrayView<long,1> data = elements.view<long,1>(field);
-            ArrayView<long,1> old_data ( fs.field(fname) );
+            util::array::ArrayView<long,1> data = elements.view<long,1>(field);
+            util::array::ArrayView<long,1> old_data ( fs.field(fname) );
             for( size_t e=0; e<nb_elems; ++e ) old_data(e) = data(e);
           }
           if( field.datatype().kind() == DataType::KIND_INT32 ) {
-            ArrayView<int,1> data = elements.view<int,1>(field);
-            ArrayView<int,1> old_data ( fs.field(fname) );
+            util::array::ArrayView<int,1> data = elements.view<int,1>(field);
+            util::array::ArrayView<int,1> old_data ( fs.field(fname) );
             for( size_t e=0; e<nb_elems; ++e ) old_data(e) = data(e);
           }
         }
         if( field.rank() == 2 )
         {
          if( field.datatype().kind() == DataType::KIND_REAL64 ) {
-            ArrayView<double,2> data = elements.view<double,2>(field);
-            ArrayView<double,2> old_data ( fs.field(fname) );
+            util::array::ArrayView<double,2> data = elements.view<double,2>(field);
+            util::array::ArrayView<double,2> old_data ( fs.field(fname) );
             for( size_t e=0; e<nb_elems; ++e ) {
               for( size_t v=0; v<field.shape(1); ++v ) {
                 old_data(e,v) = data(e,v);
@@ -243,8 +244,8 @@ void Mesh::convert_new_to_old()
             }
           }
           if( field.datatype().kind() == DataType::KIND_REAL32 ) {
-            ArrayView<float,2> data = elements.view<float,2>(field);
-            ArrayView<float,2> old_data ( fs.field(fname) );
+            util::array::ArrayView<float,2> data = elements.view<float,2>(field);
+            util::array::ArrayView<float,2> old_data ( fs.field(fname) );
             for( size_t e=0; e<nb_elems; ++e ) {
               for( size_t v=0; v<field.shape(1); ++v ) {
                 old_data(e,v) = data(e,v);
@@ -252,8 +253,8 @@ void Mesh::convert_new_to_old()
             }
           }
           if( field.datatype().kind() == DataType::KIND_INT64 ) {
-            ArrayView<long,2> data = elements.view<long,2>(field);
-            ArrayView<long,2> old_data ( fs.field(fname) );
+            util::array::ArrayView<long,2> data = elements.view<long,2>(field);
+            util::array::ArrayView<long,2> old_data ( fs.field(fname) );
             for( size_t e=0; e<nb_elems; ++e ) {
               for( size_t v=0; v<field.shape(1); ++v ) {
                 old_data(e,v) = data(e,v);
@@ -261,8 +262,8 @@ void Mesh::convert_new_to_old()
             }
           }
           if( field.datatype().kind() == DataType::KIND_INT32 ) {
-            ArrayView<int,2> data = elements.view<int,2>(field);
-            ArrayView<int,2> old_data ( fs.field(fname) );
+            util::array::ArrayView<int,2> data = elements.view<int,2>(field);
+            util::array::ArrayView<int,2> old_data ( fs.field(fname) );
             for( size_t e=0; e<nb_elems; ++e ) {
               for( size_t v=0; v<field.shape(1); ++v ) {
                 old_data(e,v) = data(e,v);
@@ -279,7 +280,7 @@ void Mesh::convert_new_to_old()
         {
           fs.create_field<int>("nodes",node_connectivity.cols());
         }
-        IndexView<int,2> old_nodes ( fs.field("nodes") );
+        util::array::IndexView<int,2> old_nodes ( fs.field("nodes") );
         for( size_t jelem=0; jelem<node_connectivity.rows(); ++jelem )
         for( size_t jnode=0; jnode<node_connectivity.cols(); ++jnode )
           old_nodes(jelem,jnode) = node_connectivity(jelem,jnode);
@@ -291,7 +292,7 @@ void Mesh::convert_new_to_old()
         {
           fs.create_field<int>("to_edge",edge_connectivity.cols());
         }
-        IndexView<int,2> old_edges ( fs.field("to_edge") );
+        util::array::IndexView<int,2> old_edges ( fs.field("to_edge") );
         for( size_t jelem=0; jelem<edge_connectivity.rows(); ++jelem )
         for( size_t jedge=0; jedge<edge_connectivity.cols(); ++jedge )
           old_edges(jelem,jedge) = edge_connectivity(jelem,jedge);
@@ -303,7 +304,7 @@ void Mesh::convert_new_to_old()
         {
           fs.create_field<int>("to_elem",cell_connectivity.cols());
         }
-        IndexView<int,2> old_cells ( fs.field("to_elem") );
+        util::array::IndexView<int,2> old_cells ( fs.field("to_elem") );
         for( size_t jelem=0; jelem<cell_connectivity.rows(); ++jelem )
         for( size_t jcell=0; jcell<cell_connectivity.cols(); ++jcell )
           old_cells(jelem,jcell) = cell_connectivity(jelem,jcell);
@@ -316,8 +317,8 @@ void Mesh::convert_new_to_old()
     const mesh::Nodes::Connectivity& node_edge_connectivity = nodes().edge_connectivity();
 
     if( ! nodes().has_field("to_edge_size") )
-      nodes().add( Field::create<int>( "to_edge_size", make_shape(nodes().size(),1) ) );
-    ArrayView<int,1> to_edge_size ( nodes().field("to_edge_size") );
+      nodes().add( Field::create<int>( "to_edge_size", util::array::make_shape(nodes().size(),1) ) );
+    util::array::ArrayView<int,1> to_edge_size ( nodes().field("to_edge_size") );
 
     // Get max_edge_cnt
     int max_edge_cnt(0);
@@ -330,8 +331,8 @@ void Mesh::convert_new_to_old()
     ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_edge_cnt, 1, MPI_INT, MPI_MAX, eckit::mpi::comm() ) );
 
     if( ! nodes().has_field("to_edge") )
-      nodes().add( Field::create<int>("to_edge",make_shape(nodes().size(),max_edge_cnt)));
-    IndexView<int,2> node_to_edge ( nodes().field("to_edge") );
+      nodes().add( Field::create<int>("to_edge",util::array::make_shape(nodes().size(),max_edge_cnt)));
+    util::array::IndexView<int,2> node_to_edge ( nodes().field("to_edge") );
 
     for( size_t jnode=0; jnode<nodes().size(); ++jnode )
     {
@@ -438,4 +439,5 @@ mesh::Cells* atlas__Mesh__cells (Mesh* This) {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+} // namespace mesh
 } // namespace atlas

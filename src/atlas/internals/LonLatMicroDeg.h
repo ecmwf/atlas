@@ -13,12 +13,12 @@
 
 #include "eckit/geometry/Point2.h"
 #include "atlas/atlas_config.h"
-#include "atlas/private/Parameters.h"
-#include "atlas/private/Functions.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/internals/Functions.h"
 #include "atlas/util/array/ArrayView.h"
 
 namespace atlas {
-namespace util {
+namespace internals {
 
 // ------------------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ public:
 // -- Constructors taking degrees
   LonLatMicroDeg( const double& lon, const double& lat )  { p[LON]=microdeg(lon);         p[LAT]=microdeg(lat); }
   LonLatMicroDeg( const double lonlat[2] )                { p[LON]=microdeg(lonlat[LON]); p[LAT]=microdeg(lonlat[LAT]); }
-  LonLatMicroDeg( const ArrayView<double,1>& lonlat )     { p[LON]=microdeg(lonlat[LON]); p[LAT]=microdeg(lonlat[LAT]); }
+  LonLatMicroDeg( const util::array::ArrayView<double,1>& lonlat )     { p[LON]=microdeg(lonlat[LON]); p[LAT]=microdeg(lonlat[LAT]); }
   LonLatMicroDeg( const eckit::geometry::Point2& lonlat ) { p[LON]=microdeg(lonlat[LON]); p[LAT]=microdeg(lonlat[LAT]); }
 
 // -- Methods
@@ -74,9 +74,9 @@ inline bool LonLatMicroDeg::operator < (const LonLatMicroDeg& other) const
 
 // ------------------------------------------------------------------------------------
 
-} // namespace util
+} // namespace internals
 } // namespace atlas
 
-#include "atlas/private/Unique.h"
+#include "atlas/internals/Unique.h"
 
 #endif

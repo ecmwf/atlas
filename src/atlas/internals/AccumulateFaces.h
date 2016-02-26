@@ -13,13 +13,13 @@
 
 #include <vector>
 #include "atlas/atlas_config.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/Parameters.h"
 
 namespace atlas { namespace mesh { class HybridElements; } }
 namespace atlas { namespace mesh { class Nodes; } }
 
 namespace atlas {
-namespace util {
+namespace internals {
 
 // currently only supports 2D meshes. Little work needed for 3D.
 void accumulate_facets(
@@ -31,7 +31,7 @@ void accumulate_facets(
     size_t &nb_inner_facets,
     idx_t  &missing_value );
 
-} // namespace util
+} // namespace internals
 } // namespace atlas
 
 #endif

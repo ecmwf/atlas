@@ -16,13 +16,12 @@
 #include "atlas/numerics/Nabla.h"
 
 namespace atlas {
-    namespace numerics {
-        namespace fvm  {
-            class Method;
-        }
-    }
-}
-namespace atlas {  class Field; }
+namespace numerics {
+namespace fvm  {
+    class Method;
+} } }
+
+namespace atlas {namespace field { class Field; } }
 
 namespace atlas {
 namespace numerics {
@@ -34,10 +33,10 @@ public:
   Nabla(const atlas::numerics::Method &, const eckit::Parametrisation &);
   virtual ~Nabla();
 
-  void gradient(const Field &scalar, Field &grad) const;
-  void divergence(const Field &vector, Field &div) const;
-  void curl(const Field &vector, Field &curl) const;
-  void laplacian(const Field &scalar, Field &laplacian) const;
+  void gradient(const field::Field &scalar, field::Field &grad) const;
+  void divergence(const field::Field &vector, field::Field &div) const;
+  void curl(const field::Field &vector, field::Field &curl) const;
+  void laplacian(const field::Field &scalar, field::Field &laplacian) const;
 
 private:
   void setup();

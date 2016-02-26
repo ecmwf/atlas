@@ -3,7 +3,8 @@
 #include "atlas/grid/predefined/rgg/rgg.h"
 
 namespace atlas {
-namespace grids {
+namespace grid {
+namespace predefined {
 namespace rgg {
 
 eckit::ConcreteBuilderT1<Grid,N4000> deprecated_builder_N4000 (N4000::grid_type_str());
@@ -4016,9 +4017,10 @@ void N4000::construct()
   };
   std::vector<double> lats(N);
   gaussian_latitudes_npole_equator(N,lats.data());
-  setup_lat_hemisphere(N,lats.data(),lon,DEG);
+  setup_lat_hemisphere(N,lats.data(),lon,internals::DEG);
 }
 
 } // namespace rgg
-} // namespace grids
+} // namespace predefined
+} // namespace grid
 } // namespace atlas

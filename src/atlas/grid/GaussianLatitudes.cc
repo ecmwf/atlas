@@ -15,17 +15,17 @@
 #include "atlas/atlas_config.h"
 #include "atlas/grid/GaussianLatitudes.h"
 #include "atlas/grid/predefined/gausslat/gausslat.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/util/runtime/Log.h"
 
 using eckit::ConcreteBuilderT0;
 using eckit::Factory;
 using eckit::ScopedPtr;
 
-using atlas::grids::gausslat::GaussianLatitudes;
+using atlas::grid::predefined::gausslat::GaussianLatitudes;
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -35,10 +35,10 @@ void predict_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
 
 namespace {
 
-void colat_to_lat_hemisphere(const size_t N, const double colat[], double lats[], const AngleUnit unit)
+void colat_to_lat_hemisphere(const size_t N, const double colat[], double lats[], const internals::AngleUnit unit)
 {
   std::copy( colat, colat+N, lats );
-  double pole = (unit == DEG ? 90. : M_PI_2);
+  double pole = (unit == internals::DEG ? 90. : M_PI_2);
 
   for(size_t i=0; i<N; ++i) {
     lats[i]=pole-lats[i];
@@ -96,7 +96,7 @@ void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
   for(size_t i=0; i<N; ++i )
   {
     z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
-    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * Constants::radiansToDegrees();
+    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * internals::Constants::radiansToDegrees();
   }
 }
 
@@ -104,7 +104,7 @@ void predict_gaussian_latitudes_hemisphere(const size_t N, double lats[])
 {
   std::vector<double> colat(N);
   predict_gaussian_colatitudes_hemisphere(N,colat.data());
-  colat_to_lat_hemisphere(N,colat.data(),lats,DEG);
+  colat_to_lat_hemisphere(N,colat.data(),lats,internals::DEG);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ namespace {
 
       //   Set North and South values using symmetry.
 
-      value = asin(root) * Constants::radianToDegrees();
+      value = asin(root) * internals::Constants::radianToDegrees();
   }
 
 
@@ -218,6 +218,6 @@ namespace {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas
 

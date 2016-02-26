@@ -14,9 +14,17 @@
 #include "atlas/atlas_defines.h"
 #include "atlas/functionspace/FunctionSpace.h"
 
-namespace atlas { namespace trans { class Trans; } }
-namespace atlas { class Field; }
-namespace atlas { class FieldSet; }
+namespace atlas {
+namespace field {
+    class Field;
+    class FieldSet;
+} }
+
+namespace atlas {
+namespace numerics {
+namespace trans {
+    class Trans;
+} } }
 
 namespace atlas {
 namespace functionspace {
@@ -29,28 +37,33 @@ public:
 
   Spectral(const size_t truncation);
 
-  Spectral(trans::Trans& );
+  Spectral(numerics::trans::Trans& );
 
   virtual ~Spectral();
 
   virtual std::string name() const { return "Spectral"; }
 
   /// @brief Create a spectral field
-  template <typename DATATYPE> Field* createField(const std::string& name) const;
-  template <typename DATATYPE> Field* createField(const std::string& name, size_t levels) const;
+  template <typename DATATYPE> field::Field* createField(
+    const std::string& name) const;
+  template <typename DATATYPE> field::Field* createField(
+    const std::string& name,
+    size_t levels) const;
 
   /// @brief Create a global spectral field
-  template <typename DATATYPE> Field* createGlobalField(const std::string& name) const;
-  template <typename DATATYPE> Field* createGlobalField(const std::string& name, size_t levels) const;
+  template <typename DATATYPE> field::Field* createGlobalField(
+    const std::string& name) const;
+  template <typename DATATYPE> field::Field* createGlobalField(
+    const std::string& name, size_t levels) const;
 
-  void gather( const FieldSet&, FieldSet& ) const;
-  void gather( const Field&, Field& ) const;
+  void gather( const field::FieldSet&, field::FieldSet& ) const;
+  void gather( const field::Field&, field::Field& ) const;
 
-  void scatter( const FieldSet&, FieldSet& ) const;
-  void scatter( const Field&, Field& ) const;
+  void scatter( const field::FieldSet&, field::FieldSet& ) const;
+  void scatter( const field::Field&, field::Field& ) const;
 
-  std::string checksum( const FieldSet& ) const;
-  std::string checksum( const Field& ) const;
+  std::string checksum( const field::FieldSet& ) const;
+  std::string checksum( const field::Field& ) const;
 
 public: // methods
 
@@ -61,35 +74,28 @@ private: // data
 
   size_t truncation_;
 
-  trans::Trans* trans_;
+  numerics::trans::Trans* trans_;
 
 };
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-#define Trans trans::Trans
+#define Trans numerics::trans::Trans
+#define field_Field field::Field
 extern "C"
 {
   Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation);
   Spectral* atlas__SpectralFunctionSpace__new__trans (Trans* trans);
   void atlas__SpectralFunctionSpace__delete (Spectral* This);
-
-  Field* atlas__SpectralFunctionSpace__create_field (const Spectral* This, const char* name);
-
-  Field* atlas__SpectralFunctionSpace__create_field_lev (const Spectral* This, const char* name, int levels);
-
-  Field* atlas__SpectralFunctionSpace__create_global_field (const Spectral* This, const char* name);
-
-  Field* atlas__SpectralFunctionSpace__create_global_field_lev (const Spectral* This, const char* name, int levels);
-
-  void atlas__SpectralFunctionSpace__gather (const Spectral* This, const Field* local, Field* global);
-
-  void atlas__SpectralFunctionSpace__scatter (const Spectral* This, const Field* global, Field* local);
-
-
+  field_Field* atlas__SpectralFunctionSpace__create_field(const Spectral* This, const char* name);
+  field_Field* atlas__SpectralFunctionSpace__create_field_lev(const Spectral* This, const char* name, int levels);
+  field_Field* atlas__SpectralFunctionSpace__create_global_field(const Spectral* This, const char* name);
+  field_Field* atlas__SpectralFunctionSpace__create_global_field_lev(const Spectral* This, const char* name, int levels);
+  void atlas__SpectralFunctionSpace__gather(const Spectral* This, const field_Field* local, field_Field* global);
+  void atlas__SpectralFunctionSpace__scatter(const Spectral* This, const field_Field* global, field_Field* local);
 }
 #undef Trans
-
+#undef field_Field
 } // namespace functionspace
 } // namespace atlas
 

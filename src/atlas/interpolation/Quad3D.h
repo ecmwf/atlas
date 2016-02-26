@@ -17,7 +17,7 @@
 #include "atlas/interpolation/Intersect.h"
 
 namespace atlas {
-namespace geometry {
+namespace interpolation {
 
 class Ray;
 
@@ -58,7 +58,7 @@ private:  // members
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace geometry
+}  // namespace interpolation
 }  // namespace atlas
 
 

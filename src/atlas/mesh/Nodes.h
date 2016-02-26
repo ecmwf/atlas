@@ -21,7 +21,7 @@
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/util/Metadata.h"
 
-namespace atlas { class Field; }
+namespace atlas { namespace field { class Field; } }
 
 namespace atlas {
 namespace mesh {
@@ -43,31 +43,31 @@ public: // methods
 
 //-- Accessors
 
-  const Field& field(const std::string& name) const;
-        Field& field(const std::string& name);
+  const field::Field& field(const std::string& name) const;
+        field::Field& field(const std::string& name);
   bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
 
-  const Field& field(size_t) const;
-        Field& field(size_t);
+  const field::Field& field(size_t) const;
+        field::Field& field(size_t);
   size_t nb_fields() const { return fields_.size(); }
 
-  const Metadata& metadata() const { return metadata_; }
-        Metadata& metadata()       { return metadata_; }
+  const util::Metadata& metadata() const { return metadata_; }
+        util::Metadata& metadata()       { return metadata_; }
 
-  const Field& global_index() const { return *global_index_; }
-        Field& global_index()       { return *global_index_; }
+  const field::Field& global_index() const { return *global_index_; }
+        field::Field& global_index()       { return *global_index_; }
 
-  const Field& remote_index() const { return *remote_index_; }
-        Field& remote_index()       { return *remote_index_; }
+  const field::Field& remote_index() const { return *remote_index_; }
+        field::Field& remote_index()       { return *remote_index_; }
 
-  const Field& partition() const { return *partition_; }
-        Field& partition()       { return *partition_; }
+  const field::Field& partition() const { return *partition_; }
+        field::Field& partition()       { return *partition_; }
 
-  const Field& lonlat() const { return *lonlat_; }
-        Field& lonlat()       { return *lonlat_; }
+  const field::Field& lonlat() const { return *lonlat_; }
+        field::Field& lonlat()       { return *lonlat_; }
 
-  const Field& ghost() const { return *ghost_; }
-        Field& ghost()       { return *ghost_; }
+  const field::Field& ghost() const { return *ghost_; }
+        field::Field& ghost()       { return *ghost_; }
 
   /// @brief Node to Edge connectivity table
   const Connectivity& edge_connectivity() const;
@@ -82,7 +82,7 @@ public: // methods
 
 // -- Modifiers
 
-  Field& add( Field* ); // Take ownership!
+  field::Field& add( field::Field* ); // Take ownership!
 
   void resize( size_t );
 
@@ -101,7 +101,7 @@ private:
 
 private:
 
-  typedef std::map< std::string, eckit::SharedPtr<Field> >  FieldMap;
+  typedef std::map< std::string, eckit::SharedPtr<field::Field> >  FieldMap;
   typedef std::map< std::string, eckit::SharedPtr<Connectivity> >  ConnectivityMap;
 
 private:
@@ -110,14 +110,14 @@ private:
   FieldMap fields_;
   ConnectivityMap connectivities_;
 
-  Metadata metadata_;
+  util::Metadata metadata_;
 
   // Cached shortcuts to specific fields in fields_
-  Field* global_index_;
-  Field* remote_index_;
-  Field* partition_;
-  Field* lonlat_;
-  Field* ghost_;
+  field::Field* global_index_;
+  field::Field* remote_index_;
+  field::Field* partition_;
+  field::Field* lonlat_;
+  field::Field* ghost_;
 
 
   Connectivity* edge_connectivity_;
@@ -147,6 +147,8 @@ inline Nodes::Connectivity& Nodes::cell_connectivity()
 
 
 #define Char char
+#define util_Metadata util::Metadata
+#define field_Field field::Field
 extern "C"
 {
 Nodes* atlas__mesh__Nodes__create();
@@ -154,23 +156,24 @@ void atlas__mesh__Nodes__delete (Nodes* This);
 size_t atlas__mesh__Nodes__size (Nodes* This);
 void atlas__mesh__Nodes__resize (Nodes* This, size_t size);
 size_t atlas__mesh__Nodes__nb_fields (Nodes* This);
-void atlas__mesh__Nodes__add (Nodes* This, Field* field);
+void atlas__mesh__Nodes__add (Nodes* This, field_Field* field);
 void atlas__mesh__Nodes__remove_field (Nodes* This, char* name);
 int atlas__mesh__Nodes__has_field (Nodes* This, char* name);
-Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name);
-Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, size_t idx);
-Metadata* atlas__mesh__Nodes__metadata(Nodes* This);
+field_Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name);
+field_Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, size_t idx);
+util_Metadata* atlas__mesh__Nodes__metadata(Nodes* This);
 void atlas__mesh__Nodes__str (Nodes* This, Char* &str, int &size);
 IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity(Nodes* This);
 IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This);
-Field* atlas__mesh__Nodes__lonlat(Nodes* This);
-Field* atlas__mesh__Nodes__global_index(Nodes* This);
-Field* atlas__mesh__Nodes__remote_index(Nodes* This);
-Field* atlas__mesh__Nodes__partition(Nodes* This);
-Field* atlas__mesh__Nodes__ghost(Nodes* This);
+field_Field* atlas__mesh__Nodes__lonlat(Nodes* This);
+field_Field* atlas__mesh__Nodes__global_index(Nodes* This);
+field_Field* atlas__mesh__Nodes__remote_index(Nodes* This);
+field_Field* atlas__mesh__Nodes__partition(Nodes* This);
+field_Field* atlas__mesh__Nodes__ghost(Nodes* This);
 }
 #undef Char
-
+#undef util_Metadata
+#undef field_Field
 //------------------------------------------------------------------------------------------------------
 
 } // namespace mesh

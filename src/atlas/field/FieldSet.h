@@ -24,6 +24,7 @@
 #include "atlas/field/Field.h"
 
 namespace atlas {
+namespace field {
 
 class FieldSet;
 
@@ -200,7 +201,7 @@ extern "C"
   Field*    atlas__FieldSet__field_by_idx  (FieldSet* This, size_t idx);
 }
 
-
+} // namespace field
 } // namespace atlas
 
 

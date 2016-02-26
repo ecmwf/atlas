@@ -21,12 +21,15 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/mpi/Exceptions.h"
 #include "eckit/exception/Exceptions.h"
-#include "atlas/private/Debug.h"
+#include "atlas/internals/Debug.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/parallel/mpi/mpi.h"
 
 namespace atlas {
+namespace util {
+namespace parallel {
 namespace mpl {
+
 
 class HaloExchange: public eckit::Owned {
 
@@ -52,7 +55,7 @@ public: // methods
   void execute( DATA_TYPE field[], size_t nb_vars ) const;
 
   template <typename DATA_TYPE, int RANK>
-  void execute( ArrayView<DATA_TYPE,RANK>& field ) const;
+  void execute( array::ArrayView<DATA_TYPE,RANK>& field ) const;
 
 private: // methods
 
@@ -81,7 +84,7 @@ private: // methods
                           size_t var_rank ) const;
 
   template<typename DATA_TYPE, int RANK>
-  void var_info( const ArrayView<DATA_TYPE,RANK>& arr,
+  void var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
                  std::vector<size_t>& varstrides,
                  std::vector<size_t>& varshape ) const;
 
@@ -367,7 +370,7 @@ void HaloExchange::execute( DATA_TYPE field[], size_t nb_vars ) const
 
 
 template<typename DATA_TYPE, int RANK>
-void HaloExchange::var_info( const ArrayView<DATA_TYPE,RANK>& arr,
+void HaloExchange::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
                              std::vector<size_t>& varstrides,
                              std::vector<size_t>& varshape ) const
 {
@@ -387,7 +390,7 @@ void HaloExchange::var_info( const ArrayView<DATA_TYPE,RANK>& arr,
 }
 
 template <typename DATA_TYPE, int RANK>
-void HaloExchange::execute( ArrayView<DATA_TYPE,RANK>& field ) const
+void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>& field ) const
 {
   if( field.shape(0) == parsize_)
   {
@@ -421,6 +424,8 @@ extern "C"
 // ------------------------------------------------------------------
 
 } // namespace mpl
+} // namespace parallel
+} // namespace util
 } // namespace atlas
 
 #endif // HaloExchange_h

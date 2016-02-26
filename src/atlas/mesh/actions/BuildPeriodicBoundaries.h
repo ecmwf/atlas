@@ -14,6 +14,7 @@
 namespace atlas {
 class Mesh;
 
+namespace mesh {
 namespace actions {
 /*
  * Make the mesh periodic
@@ -34,6 +35,7 @@ extern "C"
 // ------------------------------------------------------------------
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 
 #endif // BuildPeriodicBoundaries_h

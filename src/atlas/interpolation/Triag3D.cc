@@ -17,7 +17,7 @@
 
 
 namespace atlas {
-namespace geometry {
+namespace interpolation {
 
 Intersect Triag3D::intersects(const Ray& r, double epsilon) const {
 
@@ -70,6 +70,6 @@ double Triag3D::area() const
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace geometry
+}  // namespace interpolation
 }  // namespace atlas
 

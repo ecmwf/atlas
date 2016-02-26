@@ -24,6 +24,7 @@
 using std::string;
 
 namespace atlas {
+namespace util {
 
 Config::Config() {}
 
@@ -408,4 +409,5 @@ void atlas__Config__json(Config* This, char* &json, int &size, int &allocated)
 
 // ------------------------------------------------------------------
 
+} // namespace util
 } // namespace atlas

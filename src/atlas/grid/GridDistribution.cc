@@ -15,6 +15,7 @@
 #include "atlas/util/parallel/mpi/mpi.h"
 
 namespace atlas {
+namespace grid {
 
 GridDistribution::GridDistribution(const Grid& grid) :
   nb_partitions_(1),
@@ -24,7 +25,7 @@ GridDistribution::GridDistribution(const Grid& grid) :
   min_pts_(grid.npts())
 { }
 
-GridDistribution::GridDistribution(const Partitioner& partitioner)
+GridDistribution::GridDistribution(const partitioners::Partitioner& partitioner)
 {
   part_.resize(partitioner.grid().npts());
   partitioner.partition(part_.data());
@@ -62,4 +63,5 @@ void atlas__GridDistribution__delete(GridDistribution* This)
   delete This;
 }
 
+} // namespace grid
 } // namespace atlas

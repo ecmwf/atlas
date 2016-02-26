@@ -12,6 +12,8 @@
 #include "atlas/util/parallel/mpl/Checksum.h"
 
 namespace atlas {
+namespace util {
+namespace parallel {
 namespace mpl {
 
 Checksum::Checksum() :
@@ -128,4 +130,6 @@ void atlas__Checksum__execute_strided_double ( Checksum* This,
 /////////////////////
 
 } // namespace mpl
-} // namespace mpl
+} // namespace parallel
+} // namespace util
+} // namespace atlas

@@ -14,14 +14,14 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/private/Parameters.h"
-#include "atlas/private/PointSet.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/internals/PointSet.h"
 #include "atlas/util/array/ArrayView.h"
 
 using namespace eckit;
 
 namespace atlas {
-namespace util {
+namespace internals {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ PointSet::PointSet( const std::vector< Point >& ipts ) : npts_(ipts.size())
     build(ipts);
 }
 
-PointSet::PointSet( Mesh& mesh )
+PointSet::PointSet( mesh::Mesh& mesh )
 {
     mesh::Nodes& nodes = mesh.nodes();
 
@@ -40,7 +40,7 @@ PointSet::PointSet( Mesh& mesh )
 
 	ASSERT( nodes.has_field("xyz") );
 
-	ArrayView<double,2> coords ( nodes.field("xyz") );
+    util::array::ArrayView<double,2> coords ( nodes.field("xyz") );
 
     std::vector< PointIndex3::Value > pidx;
     pidx.reserve(npts_);
@@ -96,6 +96,6 @@ size_t PointSet::search_unique( const Point& p, size_t idx, u_int32_t n  )
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace util
+} // namespace internals
 } // namespace atlas
 

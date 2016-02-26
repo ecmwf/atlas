@@ -16,6 +16,7 @@
 namespace atlas {
   class Mesh;
 
+namespace mesh {
 namespace actions {
 
 void build_statistics( Mesh& mesh );
@@ -29,6 +30,7 @@ extern "C"
 // ------------------------------------------------------------------
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 
 #endif // BuildStatistics_h

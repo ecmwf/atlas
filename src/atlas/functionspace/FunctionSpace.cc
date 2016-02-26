@@ -18,12 +18,12 @@
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/private/Bitflags.h"
+#include "atlas/internals/Bitflags.h"
 #include "atlas/util/DataType.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 
 namespace atlas {
-
+namespace functionspace {
 namespace {
 
 void assert_shared(const eckit::Owned* owned)
@@ -66,10 +66,11 @@ eckit::SharedPtr<FunctionSpace> FunctionSpace::ptr()
   return eckit::SharedPtr<FunctionSpace>(this);
 }
 
-}
+} // namespace functionspace
+} // namespace atlas
 
 
-using atlas::util::Topology;
+using atlas::internals::Topology;
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -78,7 +79,7 @@ using atlas::util::Topology;
 #endif
 
 namespace atlas {
-
+namespace functionspace {
 namespace deprecated {
 
 template<class T>
@@ -93,13 +94,13 @@ inline std::ostream& operator<<(std::ostream& s,const std::vector<T>& v)
 FunctionSpace::FunctionSpace(const std::string& name,
                              const std::string& shape_func,
                              const std::vector<size_t>& shape,
-                             Mesh& mesh) :
+                             mesh::Mesh& mesh) :
   name_(name),
   shape_(shape),
-  gather_scatter_(new mpl::GatherScatter()),
-  fullgather_(new mpl::GatherScatter()),
-  halo_exchange_(new mpl::HaloExchange()),
-  checksum_(new mpl::Checksum()),
+  gather_scatter_(new util::parallel::mpl::GatherScatter()),
+  fullgather_(new util::parallel::mpl::GatherScatter()),
+  halo_exchange_(new util::parallel::mpl::HaloExchange()),
+  checksum_(new util::parallel::mpl::Checksum()),
   mesh_(&mesh)
 {
   //std::cout << "C++ : shape Constructor" << std::endl;
@@ -120,10 +121,10 @@ FunctionSpace::FunctionSpace(const std::string& name,
                              const std::vector<size_t>& shape) :
   name_(name),
   shape_(shape),
-  gather_scatter_(new mpl::GatherScatter()),
-  fullgather_(new mpl::GatherScatter()),
-  halo_exchange_(new mpl::HaloExchange()),
-  checksum_(new mpl::Checksum()),
+  gather_scatter_(new util::parallel::mpl::GatherScatter()),
+  fullgather_(new util::parallel::mpl::GatherScatter()),
+  halo_exchange_(new util::parallel::mpl::HaloExchange()),
+  checksum_(new util::parallel::mpl::Checksum()),
   mesh_(0)
 {
   //std::cout << "C++ : shape Constructor" << std::endl;
@@ -188,7 +189,7 @@ void FunctionSpace::resize(const std::vector<size_t>& shape)
 namespace {
 
 
-  Field* check_if_exists( const FunctionSpace& fs,
+  field::Field* check_if_exists( const FunctionSpace& fs,
                 const std::string& name,
                 const std::vector<size_t>&  shape,
                 size_t nb_vars,
@@ -204,7 +205,7 @@ namespace {
         throw eckit::Exception( msg.str(), Here() );
       }
 
-      const Field& f= fs.field(name);
+      const field::Field& f= fs.field(name);
 
       if( f.shape() != shape )
       {
@@ -215,7 +216,7 @@ namespace {
         msg << std::endl;
         throw eckit::Exception(msg.str(),Here());
       }
-      return const_cast<Field*>(&f);
+      return const_cast<field::Field*>(&f);
     }
 
     return 0;
@@ -223,9 +224,9 @@ namespace {
 
 
   template <typename T>
-  Field& on_create_field(FunctionSpace& fs, const std::string& name, size_t nb_vars, CreateBehavior b )
+  field::Field& on_create_field(FunctionSpace& fs, const std::string& name, size_t nb_vars, CreateBehavior b )
   {
-    Field* field = 0;
+    field::Field* field = 0;
 
     size_t rank = fs.shape().size();
     std::vector< size_t > field_shape(rank);
@@ -240,7 +241,7 @@ namespace {
     if( (field = check_if_exists(fs, name, field_shape, nb_vars, b )) )
       return *field;
 
-    field = Field::create<T>(name,field_shape);
+    field = field::Field::create<T>(name,field_shape);
     fs.add(field);
 
     return *field;
@@ -249,29 +250,29 @@ namespace {
 
 }
 
-Field& FunctionSpace::add( Field* field )
+field::Field& FunctionSpace::add( field::Field* field )
 {
-  fields_.insert( field->name(), Field::Ptr(field) );
+  fields_.insert( field->name(), field::Field::Ptr(field) );
   fields_.sort();
   return *field;
 }
 
-template<> Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars, CreateBehavior b )
+template<> field::Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
   return on_create_field<double>(*this,name,nb_vars,b);
 }
 
-template<> Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_vars, CreateBehavior b )
+template<> field::Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
   return on_create_field<float>(*this,name,nb_vars,b);
 }
 
-template<> Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars, CreateBehavior b )
+template<> field::Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
   return on_create_field<int>(*this,name,nb_vars,b);
 }
 
-template<> Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars, CreateBehavior b )
+template<> field::Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
   return on_create_field<long>(*this,name,nb_vars,b);
 }
@@ -294,18 +295,18 @@ void FunctionSpace::remove_field(const std::string& name)
 //  }
 }
 
-const Field& FunctionSpace::field( size_t idx ) const
+const field::Field& FunctionSpace::field( size_t idx ) const
 {
   return *fields_.at( idx );
 }
 
-Field& FunctionSpace::field( size_t idx )
+field::Field& FunctionSpace::field( size_t idx )
 {
   return *fields_.at( idx );
 }
 
 
-const Field& FunctionSpace::field(const std::string& name) const
+const field::Field& FunctionSpace::field(const std::string& name) const
 {
   if( has_field(name) )
   {
@@ -319,7 +320,7 @@ const Field& FunctionSpace::field(const std::string& name) const
   }
 }
 
-Field& FunctionSpace::field(const std::string& name)
+field::Field& FunctionSpace::field(const std::string& name)
 {
   if( has_field(name) )
   {
@@ -349,19 +350,19 @@ void FunctionSpace::parallelise(const int part[], const int remote_idx[], const 
 
 void FunctionSpace::parallelise(FunctionSpace& other_shape)
 {
-  halo_exchange_ = mpl::HaloExchange::Ptr( &other_shape.halo_exchange() );
-    gather_scatter_ = mpl::GatherScatter::Ptr( &other_shape.gather_scatter() );
+  halo_exchange_ = util::parallel::mpl::HaloExchange::Ptr( &other_shape.halo_exchange() );
+    gather_scatter_ = util::parallel::mpl::GatherScatter::Ptr( &other_shape.gather_scatter() );
 }
 
 void FunctionSpace::parallelise()
 {
-  Field& ridx = field("remote_idx");
-  Field& part = field("partition");
-  Field& gidx = field("glb_idx");
+  field::Field& ridx = field("remote_idx");
+  field::Field& part = field("partition");
+  field::Field& gidx = field("glb_idx");
 
   if( name() == "nodes")
   {
-    ArrayView<int,1> flags ( field("flags") );
+    util::array::ArrayView<int,1> flags ( field("flags") );
     std::vector<int> mask(shape(0));
     for( size_t j=0; j<mask.size(); ++j )
     {
@@ -435,7 +436,7 @@ namespace deprecated {
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 
 extern "C" {
-Metadata* atlas__deprecated__FunctionSpace__metadata (FunctionSpace* This)
+util::Metadata* atlas__deprecated__FunctionSpace__metadata (FunctionSpace* This)
 {
   ASSERT( This );
   return &This->metadata();
@@ -494,7 +495,7 @@ void atlas__deprecated__FunctionSpace__shapef (FunctionSpace* This, int* &shape,
   rank = This->shapef().size();
 }
 
-Field* atlas__deprecated__FunctionSpace__field (FunctionSpace* This, char* name) {
+field::Field* atlas__deprecated__FunctionSpace__field (FunctionSpace* This, char* name) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( return &This->field( std::string(name) ) );
   return 0;
@@ -539,7 +540,7 @@ void atlas__deprecated__FunctionSpace__gather_double (FunctionSpace* This, doubl
     This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
-mpl::HaloExchange* atlas__deprecated__FunctionSpace__halo_exchange (FunctionSpace* This) {
+util::parallel::mpl::HaloExchange* atlas__deprecated__FunctionSpace__halo_exchange (FunctionSpace* This) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( return &This->halo_exchange() );
   return 0;
@@ -567,5 +568,6 @@ void atlas__deprecated__FunctionSpace__delete (FunctionSpace* This) {
 // ------------------------------------------------------------------
 
 } // namespace deprecated
+} // namespace functionspace
 } // namespace atlas
 

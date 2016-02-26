@@ -17,10 +17,11 @@
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/atlas_config.h"
 
-namespace atlas {
+namespace atlas { namespace grid { class Grid; } }
+namespace atlas { namespace grid { namespace partitioners { class Partitioner; } } }
 
-class Grid;
-class Partitioner;
+namespace atlas {
+namespace grid {
 
 class GridDistribution: public eckit::Owned
 {
@@ -28,11 +29,11 @@ public:
   typedef eckit::SharedPtr<GridDistribution> Ptr;
 public:
 
-  GridDistribution(const Grid& grid);
+  GridDistribution(const Grid&);
 
-  GridDistribution(const Partitioner& partitioner);
+  GridDistribution(const partitioners::Partitioner&);
 
-  GridDistribution(size_t npts, int partition[], int part0=0);
+  GridDistribution(size_t npts, int partition[], int part0 = 0);
 
   virtual ~GridDistribution() {}
 
@@ -64,6 +65,7 @@ GridDistribution* atlas__GridDistribution__new(int npts, int part[], int part0);
 void atlas__GridDistribution__delete(GridDistribution* This);
 }
 
+} // namespace grid
 } // namespace atlas
 
 #endif // atlas_GridDistribution_h

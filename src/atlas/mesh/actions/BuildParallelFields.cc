@@ -20,10 +20,10 @@
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 #include "atlas/functionspace/FunctionSpace.h"
 #endif
-#include "atlas/private/Parameters.h"
-#include "atlas/private/Bitflags.h"
-#include "atlas/private/Unique.h"
-#include "atlas/private/PeriodicTransform.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/internals/Bitflags.h"
+#include "atlas/internals/Unique.h"
+#include "atlas/internals/PeriodicTransform.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/array/IndexView.h"
 #include "atlas/util/array/Array.h"
@@ -51,19 +51,20 @@
 #define OWNED_UID(UID) (UID == ownuid)
 #endif
 
-using atlas::util::Topology;
-using atlas::util::UniqueLonLat;
-using atlas::util::PeriodicTransform;
+using atlas::internals::Topology;
+using atlas::internals::UniqueLonLat;
+using atlas::internals::PeriodicTransform;
 
 namespace atlas {
+namespace mesh {
 namespace actions {
 
-Field& build_nodes_partition ( mesh::Nodes& nodes );
-Field& build_nodes_remote_idx( mesh::Nodes& nodes );
-Field& build_nodes_global_idx( mesh::Nodes& nodes );
-Field& build_edges_partition ( Mesh& mesh );
-Field& build_edges_remote_idx( Mesh& mesh );
-Field& build_edges_global_idx( Mesh& mesh );
+field::Field& build_nodes_partition ( mesh::Nodes& nodes );
+field::Field& build_nodes_remote_idx( mesh::Nodes& nodes );
+field::Field& build_nodes_global_idx( mesh::Nodes& nodes );
+field::Field& build_edges_partition ( Mesh& mesh );
+field::Field& build_edges_remote_idx( Mesh& mesh );
+field::Field& build_edges_global_idx( Mesh& mesh );
 
 // ------------------------------------------------------------------
 
@@ -122,9 +123,9 @@ void build_edges_parallel_fields( Mesh& mesh )
 
 // ------------------------------------------------------------------
 
-Field& build_nodes_global_idx( mesh::Nodes& nodes )
+field::Field& build_nodes_global_idx( mesh::Nodes& nodes )
 {
-  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  util::array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
   UniqueLonLat compute_uid(nodes);
 
@@ -148,7 +149,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   int nparts = eckit::mpi::size();
   int root = 0;
 
-  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  util::array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
   /*
    * Sorting following gidx will define global order of
@@ -165,8 +166,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
 
   // 1) Gather all global indices, together with location
-  ArrayT<uid_t> loc_id_arr(nb_nodes);
-  ArrayView<uid_t,1> loc_id(loc_id_arr);
+  util::array::ArrayT<uid_t> loc_id_arr(nb_nodes);
+  util::array::ArrayView<uid_t,1> loc_id(loc_id_arr);
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -184,8 +185,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   }
   int glb_nb_nodes = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
-  ArrayT<uid_t> glb_id_arr(glb_nb_nodes);
-  ArrayView<uid_t,1> glb_id(glb_id_arr);
+  util::array::ArrayT<uid_t> glb_id_arr(glb_nb_nodes);
+  util::array::ArrayView<uid_t,1> glb_id(glb_id_arr);
 
   ECKIT_MPI_CHECK_RESULT(
         MPI_Gatherv( loc_id.data(), nb_nodes, eckit::mpi::datatype<uid_t>(),
@@ -231,7 +232,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
 // ------------------------------------------------------------------
 
-Field& build_nodes_remote_idx( mesh::Nodes& nodes )
+field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 {
   size_t mypart = eckit::mpi::rank();
   size_t nparts = eckit::mpi::size();
@@ -245,9 +246,9 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     proc[jpart] = jpart;
   // <---------
 
-  IndexView<int,   1> ridx   ( nodes.remote_index()  );
-  ArrayView<int,   1> part   ( nodes.partition()   );
-  ArrayView<double,2> lonlat ( nodes.lonlat() );
+  util::array::IndexView<int,   1> ridx   ( nodes.remote_index()  );
+  util::array::ArrayView<int,   1> part   ( nodes.partition()   );
+  util::array::ArrayView<double,2> lonlat ( nodes.lonlat() );
   int nb_nodes = nodes.size();
 
 
@@ -291,8 +292,8 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
-    ArrayView<uid_t,2> recv_node( recv_needed[ proc[jpart] ].data(),
-        make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize) );
+    util::array::ArrayView<uid_t,2> recv_node( recv_needed[ proc[jpart] ].data(),
+        util::array::make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize) );
     for( size_t jnode=0; jnode<recv_node.shape(0); ++jnode )
     {
       uid_t uid = recv_node(jnode,0);
@@ -316,8 +317,8 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
-    ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
-        make_shape(recv_found[ proc[jpart] ].size()/2,2) );
+    util::array::ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
+        util::array::make_shape(recv_found[ proc[jpart] ].size()/2,2) );
     for( size_t jnode=0; jnode<recv_node.shape(0); ++jnode )
     {
       ridx( recv_node(jnode,0) ) = recv_node(jnode,1);
@@ -328,14 +329,14 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 
 // ------------------------------------------------------------------
 
-Field& build_nodes_partition( mesh::Nodes& nodes )
+field::Field& build_nodes_partition( mesh::Nodes& nodes )
 {
   return nodes.partition();
 }
 
 // ------------------------------------------------------------------
 
-Field& build_edges_partition_new( Mesh& mesh )
+field::Field& build_edges_partition_new( Mesh& mesh )
 {
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
@@ -344,28 +345,28 @@ Field& build_edges_partition_new( Mesh& mesh )
   size_t nparts = eckit::mpi::size();
 
   mesh::HybridElements& edges = mesh.edges();
-  ArrayView<int,1> edge_part  ( edges.partition() );
+  util::array::ArrayView<int,1> edge_part  ( edges.partition() );
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
   const mesh::HybridElements::Connectivity& edge_to_elem = edges.cell_connectivity();
 
-  ArrayView<int,1> is_pole_edge;
+  util::array::ArrayView<int,1> is_pole_edge;
   bool has_pole_edges = false;
   if( edges.has_field("is_pole_edge") )
   {
     has_pole_edges = true;
-    is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
+    is_pole_edge = util::array::ArrayView<int,1>( edges.field("is_pole_edge") );
   }
 
-  ArrayView<int,1> node_part  ( nodes.partition() );
-  ArrayView<double,2> lonlat  ( nodes.lonlat() );
-  ArrayView<int,   1> flags   ( nodes.field("flags") );
+  util::array::ArrayView<int,1> node_part  ( nodes.partition() );
+  util::array::ArrayView<double,2> lonlat  ( nodes.lonlat() );
+  util::array::ArrayView<int,   1> flags   ( nodes.field("flags") );
 #ifdef DEBUGGING_PARFIELDS
-  ArrayView<gidx_t,   1> gidx    ( nodes.global_index() );
+  util::array::ArrayView<gidx_t,   1> gidx    ( nodes.global_index() );
 #endif
 
   const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
-  ArrayView<int,1>     elem_part    ( mesh.cells().partition() );
-  ArrayView<gidx_t,1>  elem_glb_idx ( mesh.cells().global_index() );
+  util::array::ArrayView<int,1>     elem_part    ( mesh.cells().partition() );
+  util::array::ArrayView<gidx_t,1>  elem_glb_idx ( mesh.cells().global_index() );
 
   PeriodicTransform transform;
 
@@ -465,15 +466,15 @@ Field& build_edges_partition_new( Mesh& mesh )
       int pn1 = node_part( ip1 );
       int pn2 = node_part( ip2 );
 
-      centroid[LON] = 0.5*(lonlat( ip1, LON ) + lonlat( ip2, LON ) );
-      centroid[LAT] = 0.5*(lonlat( ip1, LAT ) + lonlat( ip2, LAT ) );
+      centroid[internals::LON] = 0.5*(lonlat( ip1, internals::LON ) + lonlat( ip2, internals::LON ) );
+      centroid[internals::LAT] = 0.5*(lonlat( ip1, internals::LAT ) + lonlat( ip2, internals::LAT ) );
       if( has_pole_edges && is_pole_edge(jedge) )
       {
-        centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
+        centroid[internals::LAT] = centroid[internals::LAT] > 0 ? 90. : -90.;
       }
 
       transform(centroid,periodic[jedge]);
-      uid_t uid = util::unique_lonlat(centroid);
+      uid_t uid = internals::unique_lonlat(centroid);
 
       if( size_t(edge_part(jedge)) == mypart )
       {
@@ -505,12 +506,12 @@ Field& build_edges_partition_new( Mesh& mesh )
         if( OWNED_UID(uid) )
         {
           double x1,y1, x2,y2, xe,ye;
-          x1 = lonlat(ip1,LON);
-          y1 = lonlat(ip1,LAT);
-          x2 = lonlat(ip2,LON);
-          y2 = lonlat(ip2,LAT);
-          xe = centroid[LON];
-          ye = centroid[LAT];
+          x1 = lonlat(ip1,internals::LON);
+          y1 = lonlat(ip1,internals::LAT);
+          x2 = lonlat(ip2,internals::LON);
+          y2 = lonlat(ip2,internals::LAT);
+          xe = centroid[internals::LON];
+          ye = centroid[internals::LAT];
           DEBUG( uid << " --> " << EDGE(jedge) << "   x1,y1 - x2,y2 - xe,ye " << x1<<","<<y1
                  << " - " << x2<<","<<y2<< " - " << xe <<","<<ye<< "     part " << edge_part(jedge));
         }
@@ -531,8 +532,8 @@ Field& build_edges_partition_new( Mesh& mesh )
 
     for( size_t jpart=0; jpart<nparts; ++jpart )
     {
-      ArrayView<uid_t,2> recv_edge( recv_unknown[ jpart ].data(),
-          make_shape(recv_unknown[ jpart ].size()/varsize,varsize) );
+      util::array::ArrayView<uid_t,2> recv_edge( recv_unknown[ jpart ].data(),
+          util::array::make_shape(recv_unknown[ jpart ].size()/varsize,varsize) );
       for( size_t jedge=0; jedge<recv_edge.shape(0); ++jedge )
       {
         uid_t uid      = recv_edge(jedge,0);
@@ -603,11 +604,11 @@ Field& build_edges_partition_new( Mesh& mesh )
 }
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
-Field& build_edges_partition_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
+field::Field& build_edges_partition_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
 {
   if( ! edges.has_field("partition") ) edges.create_field<int>("partition",1) ;
-  ArrayView<int,1> edge_part     ( edges.field("partition") );
-  ArrayView<int,1> new_edge_part ( edges.mesh().edges().partition() );
+  util::array::ArrayView<int,1> edge_part     ( edges.field("partition") );
+  util::array::ArrayView<int,1> new_edge_part ( edges.mesh().edges().partition() );
 
   for( size_t jedge=0; jedge<edge_part.size(); ++jedge )
     edge_part(jedge) = new_edge_part(jedge);
@@ -617,16 +618,16 @@ Field& build_edges_partition_convert_to_old( deprecated::FunctionSpace& edges, m
 #endif
 
 
-Field& build_edges_partition( Mesh& mesh )
+field::Field& build_edges_partition( Mesh& mesh )
 {
-  Field& f = build_edges_partition_new( mesh );
+  field::Field& f = build_edges_partition_new( mesh );
 #if !DEPRECATE_OLD_FUNCTIONSPACE
   build_edges_partition_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
 #endif
   return f;
 }
 
-Field& build_edges_remote_idx_new( Mesh& mesh  )
+field::Field& build_edges_remote_idx_new( Mesh& mesh  )
 {
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
@@ -636,24 +637,24 @@ Field& build_edges_remote_idx_new( Mesh& mesh  )
 
   mesh::HybridElements& edges = mesh.edges();
 
-  IndexView<int,1>       edge_ridx  ( edges.remote_index() );
+  util::array::IndexView<int,1>       edge_ridx  ( edges.remote_index() );
 
-  const ArrayView<int,1> edge_part  ( edges.partition() );
+  const util::array::ArrayView<int,1> edge_part  ( edges.partition() );
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
 
-  ArrayView<double,2> lonlat     ( nodes.lonlat() );
-  ArrayView<int,   1> flags      ( nodes.field("flags")       );
+  util::array::ArrayView<double,2> lonlat     ( nodes.lonlat() );
+  util::array::ArrayView<int,   1> flags      ( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
-  ArrayView<gidx_t,   1> gidx      ( nodes.global_index()       );
-  ArrayView<int,   1> node_part      ( nodes.partition()       );
+  util::array::ArrayView<gidx_t,   1> gidx      ( nodes.global_index()       );
+  util::array::ArrayView<int,   1> node_part      ( nodes.partition()       );
 #endif
 
-  ArrayView<int,1> is_pole_edge;
+  util::array::ArrayView<int,1> is_pole_edge;
   bool has_pole_edges = false;
   if( edges.has_field("is_pole_edge") )
   {
     has_pole_edges = true;
-    is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
+    is_pole_edge = util::array::ArrayView<int,1>( edges.field("is_pole_edge") );
   }
 
   const int nb_edges = edges.size();
@@ -671,11 +672,11 @@ Field& build_edges_remote_idx_new( Mesh& mesh  )
   {
     int ip1 = edge_nodes(jedge,0);
     int ip2 = edge_nodes(jedge,1);
-    centroid[LON] = 0.5*(lonlat( ip1, LON ) + lonlat( ip2, LON ) );
-    centroid[LAT] = 0.5*(lonlat( ip1, LAT ) + lonlat( ip2, LAT ) );
+    centroid[internals::LON] = 0.5*(lonlat( ip1, internals::LON ) + lonlat( ip2, internals::LON ) );
+    centroid[internals::LAT] = 0.5*(lonlat( ip1, internals::LAT ) + lonlat( ip2, internals::LAT ) );
     if( has_pole_edges && is_pole_edge(jedge) )
     {
-      centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
+      centroid[internals::LAT] = centroid[internals::LAT] > 0 ? 90. : -90.;
     }
 
     bool needed(false);
@@ -694,7 +695,7 @@ Field& build_edges_remote_idx_new( Mesh& mesh  )
         transform(centroid,+1);
     }
 
-    uid_t uid = util::unique_lonlat(centroid);
+    uid_t uid = internals::unique_lonlat(centroid);
     if( size_t(edge_part(jedge)) == mypart && !needed ) // All interior edges fall here
     {
       lookup[ uid ] = jedge;
@@ -734,8 +735,8 @@ Field& build_edges_remote_idx_new( Mesh& mesh  )
   std::map<uid_t,int>::iterator found;
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
-    ArrayView<uid_t,2> recv_edge( recv_needed[ jpart ].data(),
-        make_shape(recv_needed[ jpart ].size()/varsize,varsize) );
+    util::array::ArrayView<uid_t,2> recv_edge( recv_needed[ jpart ].data(),
+        util::array::make_shape(recv_needed[ jpart ].size()/varsize,varsize) );
     for( size_t jedge=0; jedge<recv_edge.shape(0); ++jedge )
     {
       uid_t recv_uid = recv_edge(jedge,0);
@@ -764,8 +765,8 @@ Field& build_edges_remote_idx_new( Mesh& mesh  )
   eckit::mpi::all_to_all( send_found, recv_found );
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
-    ArrayView<int,2> recv_edge( recv_found[ jpart ].data(),
-        make_shape(recv_found[ jpart ].size()/2,2) );
+    util::array::ArrayView<int,2> recv_edge( recv_found[ jpart ].data(),
+        util::array::make_shape(recv_found[ jpart ].size()/2,2) );
     for( size_t jedge=0; jedge<recv_edge.shape(0); ++jedge )
     {
       edge_ridx( recv_edge(jedge,0) ) = recv_edge(jedge,1);
@@ -775,11 +776,11 @@ Field& build_edges_remote_idx_new( Mesh& mesh  )
 }
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
-Field& build_edges_remote_idx_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
+field::Field& build_edges_remote_idx_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
 {
   if( ! edges.has_field("remote_idx") ) edges.create_field<int>("remote_idx",1) ;
-  IndexView<int,1> edge_ridx     ( edges.field("remote_idx") );
-  IndexView<int,1> new_edge_ridx ( edges.mesh().edges().remote_index() );
+  util::array::IndexView<int,1> edge_ridx     ( edges.field("remote_idx") );
+  util::array::IndexView<int,1> new_edge_ridx ( edges.mesh().edges().remote_index() );
 
   for( size_t jedge=0; jedge<edge_ridx.size(); ++jedge )
     edge_ridx(jedge) = new_edge_ridx(jedge);
@@ -788,9 +789,9 @@ Field& build_edges_remote_idx_convert_to_old( deprecated::FunctionSpace& edges, 
 }
 #endif
 
-Field& build_edges_remote_idx( Mesh& mesh )
+field::Field& build_edges_remote_idx( Mesh& mesh )
 {
-  Field& f = build_edges_remote_idx_new( mesh );
+  field::Field& f = build_edges_remote_idx_new( mesh );
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
   build_edges_remote_idx_convert_to_old(mesh.function_space("edges"), mesh.nodes() );
@@ -799,7 +800,7 @@ Field& build_edges_remote_idx( Mesh& mesh )
   return f;
 }
 
-Field& build_edges_global_idx_new( Mesh& mesh )
+field::Field& build_edges_global_idx_new( Mesh& mesh )
 {
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
@@ -809,17 +810,17 @@ Field& build_edges_global_idx_new( Mesh& mesh )
 
   mesh::HybridElements& edges = mesh.edges();
 
-  ArrayView<gidx_t,1> edge_gidx ( edges.global_index() );
+  util::array::ArrayView<gidx_t,1> edge_gidx ( edges.global_index() );
   edge_gidx = -1;
 
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
-  ArrayView<double,2> lonlat     ( nodes.lonlat() );
-  ArrayView<int,1> is_pole_edge;
+  util::array::ArrayView<double,2> lonlat     ( nodes.lonlat() );
+  util::array::ArrayView<int,1> is_pole_edge;
   bool has_pole_edges = false;
   if( edges.has_field("is_pole_edge") )
   {
     has_pole_edges = true;
-    is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
+    is_pole_edge = util::array::ArrayView<int,1>( edges.field("is_pole_edge") );
   }
 
   /*
@@ -834,13 +835,13 @@ Field& build_edges_global_idx_new( Mesh& mesh )
   {
     if( edge_gidx(jedge) <= 0 )
     {
-      centroid[LON] = 0.5*(lonlat( edge_nodes(jedge,0), LON ) + lonlat( edge_nodes(jedge,1), LON ) );
-      centroid[LAT] = 0.5*(lonlat( edge_nodes(jedge,0), LAT ) + lonlat( edge_nodes(jedge,1), LAT ) );
+      centroid[internals::LON] = 0.5*(lonlat( edge_nodes(jedge,0), internals::LON ) + lonlat( edge_nodes(jedge,1), internals::LON ) );
+      centroid[internals::LAT] = 0.5*(lonlat( edge_nodes(jedge,0), internals::LAT ) + lonlat( edge_nodes(jedge,1), internals::LAT ) );
       if( has_pole_edges && is_pole_edge(jedge) )
       {
-        centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
+        centroid[internals::LAT] = centroid[internals::LAT] > 0 ? 90. : -90.;
       }
-      edge_gidx(jedge) = util::unique_lonlat(centroid);
+      edge_gidx(jedge) = internals::unique_lonlat(centroid);
     }
   }
 
@@ -850,8 +851,8 @@ Field& build_edges_global_idx_new( Mesh& mesh )
   // unused //  const int ridx_base = 1;
 
   // 1) Gather all global indices, together with location
-  ArrayT<uid_t> loc_edge_id_arr(nb_edges);
-  ArrayView<uid_t,1> loc_edge_id(loc_edge_id_arr);
+  util::array::ArrayT<uid_t> loc_edge_id_arr(nb_edges);
+  util::array::ArrayView<uid_t,1> loc_edge_id(loc_edge_id_arr);
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
@@ -869,8 +870,8 @@ Field& build_edges_global_idx_new( Mesh& mesh )
   }
   int glb_nb_edges = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
-  ArrayT<uid_t> glb_edge_id_arr(glb_nb_edges);
-  ArrayView<uid_t,1> glb_edge_id(glb_edge_id_arr);
+  util::array::ArrayT<uid_t> glb_edge_id_arr(glb_nb_edges);
+  util::array::ArrayView<uid_t,1> glb_edge_id(glb_edge_id_arr);
 
   ECKIT_MPI_CHECK_RESULT(
         MPI_Gatherv( loc_edge_id.data(), nb_edges, eckit::mpi::datatype<uid_t>(),
@@ -919,11 +920,11 @@ Field& build_edges_global_idx_new( Mesh& mesh )
 }
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
-Field& build_edges_global_idx_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
+field::Field& build_edges_global_idx_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
 {
   if( ! edges.has_field("glb_idx") ) edges.create_field<gidx_t>("glb_idx",1) ;
-  ArrayView<gidx_t,1> edge_gidx     ( edges.field("glb_idx") );
-  ArrayView<gidx_t,1> new_edge_gidx ( edges.mesh().edges().global_index() );
+  util::array::ArrayView<gidx_t,1> edge_gidx     ( edges.field("glb_idx") );
+  util::array::ArrayView<gidx_t,1> new_edge_gidx ( edges.mesh().edges().global_index() );
 
   for( size_t jedge=0; jedge<edge_gidx.size(); ++jedge )
     edge_gidx(jedge) = new_edge_gidx(jedge);
@@ -932,9 +933,9 @@ Field& build_edges_global_idx_convert_to_old( deprecated::FunctionSpace& edges, 
 }
 #endif
 
-Field& build_edges_global_idx( Mesh& mesh )
+field::Field& build_edges_global_idx( Mesh& mesh )
 {
-  Field& f = build_edges_global_idx_new( mesh );
+  field::Field& f = build_edges_global_idx_new( mesh );
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
   build_edges_global_idx_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
@@ -968,5 +969,6 @@ void atlas__renumber_nodes_glb_idx (mesh::Nodes* nodes)
 
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 

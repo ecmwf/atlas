@@ -17,6 +17,8 @@
 
 namespace atlas {
   class Mesh;
+
+namespace mesh {
 namespace actions {
 
 /// @brief Enlarge each partition of the mesh with a halo of elements
@@ -35,6 +37,7 @@ extern "C"
 // ------------------------------------------------------------------
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 
 #endif // BuildHalo_h

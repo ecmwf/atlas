@@ -16,7 +16,7 @@
 using eckit::BadParameter;
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -139,5 +139,5 @@ eckit::Properties ReducedLonLatGrid::spec() const
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas

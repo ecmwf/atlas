@@ -20,12 +20,12 @@
 #include "eckit/log/Timer.h"
 #include "eckit/types/FloatCompare.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/private/PointIndex3.h"
+#include "atlas/internals/PointIndex3.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace util {
+namespace internals {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -41,7 +41,7 @@ public: // methods
 
     PointSet( const std::vector< Point >& ipts );
 
-    PointSet( atlas::Mesh& mesh );
+    PointSet( atlas::mesh::Mesh& mesh );
 
     ~PointSet(){ delete tree_; }
 
@@ -132,7 +132,7 @@ private:
 
 //---------------------------------------------------------------------------------------------------------
 
-} // namespace util
+} // namespace internals
 } // namespace atlas
 
 #endif

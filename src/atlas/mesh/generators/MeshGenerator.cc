@@ -22,7 +22,8 @@
 #include "atlas/util/runtime/Log.h"
 
 namespace atlas {
-namespace meshgen {
+namespace mesh {
+namespace generators {
 
 namespace {
 
@@ -59,28 +60,28 @@ MeshGenerator::MeshGenerator()
 MeshGenerator::~MeshGenerator() {
 }
 
-Mesh* MeshGenerator::operator()( const Grid& grid ) const
+Mesh* MeshGenerator::operator()( const grid::Grid& grid ) const
 {
   Mesh* mesh = new Mesh;
   generate(grid,*mesh);
   return mesh;
 }
 
-Mesh* MeshGenerator::operator()( const Grid& grid, const GridDistribution& distribution ) const
+Mesh* MeshGenerator::operator()( const grid::Grid& grid, const grid::GridDistribution& distribution ) const
 {
   Mesh* mesh = new Mesh;
   generate(grid,distribution,*mesh);
   return mesh;
 }
 
-Mesh* MeshGenerator::generate( const Grid& grid ) const
+Mesh* MeshGenerator::generate( const grid::Grid& grid ) const
 {
   Mesh* mesh = new Mesh;
   generate(grid,*mesh);
   return mesh;
 }
 
-Mesh* MeshGenerator::generate( const Grid& grid, const GridDistribution& distribution ) const
+Mesh* MeshGenerator::generate( const grid::Grid& grid, const grid::GridDistribution& distribution ) const
 {
   Mesh* mesh = new Mesh;
   generate(grid,distribution,*mesh);
@@ -187,7 +188,7 @@ MeshGenerator* atlas__MeshGenerator__create(const char* name, const eckit::Param
   return meshgenerator;
 }
 
-Mesh* atlas__MeshGenerator__generate__grid_griddist (const MeshGenerator* This, const Grid* grid, const GridDistribution* distribution )
+Mesh* atlas__MeshGenerator__generate__grid_griddist (const MeshGenerator* This, const grid::Grid* grid, const grid::GridDistribution* distribution )
 {
   ATLAS_ERROR_HANDLING(
     return This->generate(*grid,*distribution);
@@ -195,7 +196,7 @@ Mesh* atlas__MeshGenerator__generate__grid_griddist (const MeshGenerator* This, 
   return 0;
 }
 
-Mesh* atlas__MeshGenerator__generate__grid (const MeshGenerator* This, const Grid* grid )
+Mesh* atlas__MeshGenerator__generate__grid (const MeshGenerator* This, const grid::Grid* grid )
 {
   ATLAS_ERROR_HANDLING(
     return This->generate(*grid);
@@ -206,6 +207,7 @@ Mesh* atlas__MeshGenerator__generate__grid (const MeshGenerator* This, const Gri
 
 }
 
-} // namespace meshgen
+} // namespace generators
+} // namespace mesh
 } // namespace atlas
 

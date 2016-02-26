@@ -21,12 +21,13 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/Nodes.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/DataType.h"
 #include "atlas/util/io/PointCloud.h"
 
 namespace atlas {
+namespace util {
 namespace io {
 
 // ------------------------------------------------------------------
@@ -52,11 +53,11 @@ std::string sanitize_field_name(const std::string& s)
 // ------------------------------------------------------------------
 
 
-Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vfnames )
+mesh::Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vfnames )
 {
   const std::string msg("PointCloud::read: ");
 
-  Mesh* mesh = new Mesh;
+  mesh::Mesh* mesh = new mesh::Mesh;
 
   vfnames.clear();
 
@@ -91,7 +92,7 @@ Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vf
 
     mesh->nodes().resize(nb_pts);
     mesh::Nodes& nodes = mesh->nodes();
-    ArrayView< double, 2 > lonlat( nodes.lonlat() );
+    util::array::ArrayView< double, 2 > lonlat( nodes.lonlat() );
 
     // header, part 2:
     // determine columns' labels
@@ -108,10 +109,10 @@ Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vf
     vfnames.erase(vfnames.begin(),vfnames.begin()+2);
     nb_fld = nb_columns-2;  // always >= 0, considering previous check
 
-    std::vector< ArrayView<double,1> > fields;
+    std::vector< util::array::ArrayView<double,1> > fields;
     for (size_t j=0; j<nb_fld; ++j)
     {
-      fields.push_back( ArrayView<double,1> ( nodes.add( Field::create<double>(vfnames[j],make_shape(nb_pts,1)) ) ) );
+      fields.push_back( util::array::ArrayView<double,1> ( nodes.add( field::Field::create<double>(vfnames[j],util::array::make_shape(nb_pts,1)) ) ) );
     }
 
     size_t i,j;  // (index for node/row and field/column, out of scope to check at end of loops)
@@ -122,7 +123,7 @@ Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vf
       iss.str(line);
 
       //NOTE always expects (lon,lat) order, maybe make it configurable?
-      iss >> lonlat(i,LON) >> lonlat(i,LAT);;
+      iss >> lonlat(i,internals::LON) >> lonlat(i,internals::LAT);;
       for (j=0; iss && j<nb_fld; ++j)
         iss >> fields[j](i);
       if (j<nb_fld) {
@@ -142,13 +143,13 @@ Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vf
 }
 
 
-Mesh* PointCloud::read(const eckit::PathName& path)
+mesh::Mesh* PointCloud::read(const eckit::PathName& path)
 {
   std::vector<std::string> vfnames;
   return read(path,vfnames);
 }
 
-void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
+void PointCloud::write(const eckit::PathName& path, const mesh::Mesh& mesh)
 {
   const std::string msg("PointCloud::write: ");
 
@@ -157,23 +158,23 @@ void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
 
   const mesh::Nodes& nodes = mesh.nodes();
 
-  const ArrayView< double, 2 > lonlat(nodes.lonlat());
+  const util::array::ArrayView< double, 2 > lonlat(nodes.lonlat());
   if (!lonlat.size())
     throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
 
   // get the fields (sanitized) names and values
   // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
   std::vector< std::string > vfnames;
-  std::vector< ArrayView< double, 1 > > vfvalues;
+  std::vector< util::array::ArrayView< double, 1 > > vfvalues;
   for(size_t i=0; i<nodes.nb_fields(); ++i)
   {
-    const Field& field = nodes.field(i);
+    const field::Field& field = nodes.field(i);
     if ( field.shape(0)==lonlat.shape(0) &&
          field.shape(1)==1 &&
          field.datatype()==DataType::real64() )  // FIXME: no support for non-double types!
     {
       vfnames.push_back(sanitize_field_name(field.name()));
-      vfvalues.push_back(ArrayView< double, 1 >(field));
+      vfvalues.push_back(util::array::ArrayView< double, 1 >(field));
     }
   }
 
@@ -202,7 +203,7 @@ void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
 }
 
 
-void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::Nodes& function_space)
+void PointCloud::write(const eckit::PathName& path, const field::FieldSet& fieldset, const functionspace::Nodes& function_space)
 {
   const std::string msg("PointCloud::write: ");
 
@@ -211,23 +212,23 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, co
 
   ASSERT( fieldset.size() );
 
-  ArrayView< double, 2 > lonlat( function_space.nodes().lonlat() );
+  util::array::ArrayView< double, 2 > lonlat( function_space.nodes().lonlat() );
   if (!lonlat.size())
     throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
 
   // get the fields (sanitized) names and values
   // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
   std::vector< std::string > vfnames;
-  std::vector< ArrayView< double, 1 > > vfvalues;
+  std::vector< util::array::ArrayView< double, 1 > > vfvalues;
   for (size_t i=0; i<fieldset.size(); ++i)
   {
-    const Field& field = fieldset[i];
+    const field::Field& field = fieldset[i];
     if ( field.shape(0)==lonlat.shape(0) &&
          field.shape(1)==1 &&
          field.name()!="glb_idx" )  // FIXME: no support for non-int types!
     {
       vfnames.push_back(sanitize_field_name(field.name()));
-      vfvalues.push_back(ArrayView< double, 1 >(field));
+      vfvalues.push_back(util::array::ArrayView< double, 1 >(field));
     }
   }
 
@@ -260,7 +261,7 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, co
 
 void PointCloud::write(
     const eckit::PathName& path,
-    const std::vector< Grid::Point >& pts )
+    const std::vector< grid::Grid::Point >& pts )
 {
   DEBUG();
   std::ofstream f(path.asString().c_str());
@@ -372,20 +373,20 @@ void atlas__pointcloud__delete (PointCloud* This)
 { delete This; }
 
 
-Mesh* atlas__pointcloud__read (PointCloud* This, char* file_path)
+mesh::Mesh* atlas__pointcloud__read (PointCloud* This, char* file_path)
 { return This->read(file_path); }
 
 
-Mesh* atlas__read_pointcloud (char* file_path)
+mesh::Mesh* atlas__read_pointcloud (char* file_path)
 { return PointCloud::read(file_path); }
 
 
-void atlas__write_pointcloud_fieldset (char* file_path, const FieldSet* fieldset, const functionspace::Nodes* functionspace)
+void atlas__write_pointcloud_fieldset (char* file_path, const field::FieldSet* fieldset, const functionspace::Nodes* functionspace)
 { PointCloud::write(file_path, *fieldset, *functionspace); }
 
 
 // ------------------------------------------------------------------
 
-
 } // namespace io
+} // namespace util
 } // namespace atlas

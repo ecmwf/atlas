@@ -16,13 +16,16 @@
 #include "atlas/util/array/ArrayView.h"
 
 namespace atlas {
+namespace util {
+namespace parallel {
 namespace mpl {
 
+
 template <typename DATA_TYPE>
-class MPL_ArrayView : public ArrayView<DATA_TYPE>
+class MPL_ArrayView : public array::ArrayView<DATA_TYPE>
 {
 public:
-  typedef typename ArrayView<DATA_TYPE>::value_type       value_type;
+  typedef typename array::ArrayView<DATA_TYPE>::value_type       value_type;
 
 public:
   MPL_ArrayView();
@@ -34,11 +37,11 @@ public:
                  const size_t mpl_idxpos );
 
   template <int R>
-    MPL_ArrayView( const ArrayView<MPL_ArrayView::value_type,R>& arrview,
+    MPL_ArrayView( const array::ArrayView<MPL_ArrayView::value_type,R>& arrview,
                    const size_t mpl_idxpos[], const size_t mpl_rank );
 
   template <int R>
-     MPL_ArrayView( const ArrayView<const value_type,R>& arrview,
+     MPL_ArrayView( const array::ArrayView<const value_type,R>& arrview,
                     const size_t mpl_idxpos[], const size_t mpl_rank );
 
   int mpl_rank() const { return mpl_rank_; }
@@ -78,12 +81,12 @@ private:
 ///////////////////////////////////////////////////////////////////////////
 
 template <typename DATA_TYPE>
-MPL_ArrayView<DATA_TYPE>::MPL_ArrayView() : ArrayView<DATA_TYPE>() {}
+MPL_ArrayView<DATA_TYPE>::MPL_ArrayView() : array::ArrayView<DATA_TYPE>() {}
 
 template <typename DATA_TYPE>
 MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const size_t strides[], const size_t shape[], const size_t rank,
                const size_t mpl_idxpos[], const size_t mpl_rank ) :
-  ArrayView<DATA_TYPE>(data,rank,shape,strides)
+  array::ArrayView<DATA_TYPE>(data,rank,shape,strides)
 {
   constructor(mpl_idxpos,mpl_rank);
 }
@@ -91,25 +94,25 @@ MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const size_t str
 template <typename DATA_TYPE>
 MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const size_t strides[], const size_t shape[], const size_t rank,
                const size_t mpl_idxpos ) :
-  ArrayView<DATA_TYPE>(data,rank,shape,strides)
+  array::ArrayView<DATA_TYPE>(data,rank,shape,strides)
 {
   constructor(&mpl_idxpos,1);
 }
 
 template <typename DATA_TYPE>
 template <int R>
-MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<value_type,R>& arrview,
+MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const array::ArrayView<value_type,R>& arrview,
                const size_t mpl_idxpos[], const size_t mpl_rank ) :
-  ArrayView<DATA_TYPE>(arrview.data(),arrview.rank(),arrview.shape(),arrview.strides())
+  array::ArrayView<DATA_TYPE>(arrview.data(),arrview.rank(),arrview.shape(),arrview.strides())
 {
   constructor(mpl_idxpos,mpl_rank);
 }
 
 template <typename DATA_TYPE>
 template <int R>
-MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<const value_type,R>& arrview,
+MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const array::ArrayView<const value_type,R>& arrview,
                const size_t mpl_idxpos[], const size_t mpl_rank ) :
-  ArrayView<DATA_TYPE>(arrview.data(),arrview.rank(),arrview.shape(),arrview.strides())
+  array::ArrayView<DATA_TYPE>(arrview.data(),arrview.rank(),arrview.shape(),arrview.strides())
 {
   constructor(mpl_idxpos,mpl_rank);
 }
@@ -117,11 +120,11 @@ MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<const value_type,R>& ar
 template <typename DATA_TYPE>
 void MPL_ArrayView<DATA_TYPE>::constructor(const size_t mpl_idxpos[], const size_t mpl_rank)
 {
-  if( ArrayView<DATA_TYPE>::rank() == 1 )
+  if( array::ArrayView<DATA_TYPE>::rank() == 1 )
   {
     mpl_rank_ = 1;
-    mpl_strides_.assign(1,ArrayView<DATA_TYPE>::stride(0));
-    mpl_shape_.assign(1,ArrayView<DATA_TYPE>::shape(0));
+    mpl_strides_.assign(1, array::ArrayView<DATA_TYPE>::stride(0));
+    mpl_shape_.assign(1, array::ArrayView<DATA_TYPE>::shape(0));
     var_rank_ = 1;
     var_strides_.assign(1,1);
     var_shape_.assign(1,1);
@@ -129,7 +132,7 @@ void MPL_ArrayView<DATA_TYPE>::constructor(const size_t mpl_idxpos[], const size
   else
   {
     mpl_rank_ = mpl_rank;
-    var_rank_ = ArrayView<DATA_TYPE>::rank()-mpl_rank_;
+    var_rank_ = array::ArrayView<DATA_TYPE>::rank()-mpl_rank_;
     mpl_strides_.reserve(mpl_rank_);
     mpl_shape_.reserve(mpl_rank_);
     var_strides_.reserve(var_rank_);
@@ -138,7 +141,7 @@ void MPL_ArrayView<DATA_TYPE>::constructor(const size_t mpl_idxpos[], const size
     var_size_ = 0;
     size_t nvar(0);
     size_t nmpl(0);
-    for( size_t jpos=0; jpos<ArrayView<DATA_TYPE>::rank(); ++jpos )
+    for( size_t jpos=0; jpos<array::ArrayView<DATA_TYPE>::rank(); ++jpos )
     {
       bool isvar(true);
       for( size_t jmpl=0; jmpl<mpl_rank_; ++jmpl )
@@ -151,15 +154,15 @@ void MPL_ArrayView<DATA_TYPE>::constructor(const size_t mpl_idxpos[], const size
       }
       if( isvar )
       {
-        var_strides_.push_back(ArrayView<DATA_TYPE>::stride(jpos));
-        var_shape_.push_back(ArrayView<DATA_TYPE>::shape(jpos));
+        var_strides_.push_back(array::ArrayView<DATA_TYPE>::stride(jpos));
+        var_shape_.push_back(array::ArrayView<DATA_TYPE>::shape(jpos));
         var_size_ += var_shape_[nvar];
         ++nvar;
       }
       else
       {
-        mpl_strides_.push_back(ArrayView<DATA_TYPE>::stride(jpos));
-        mpl_shape_.push_back(ArrayView<DATA_TYPE>::shape(jpos));
+        mpl_strides_.push_back(array::ArrayView<DATA_TYPE>::stride(jpos));
+        mpl_shape_.push_back(array::ArrayView<DATA_TYPE>::shape(jpos));
         mpl_size_ += mpl_shape_[nmpl];
         ++nmpl;
       }
@@ -168,6 +171,8 @@ void MPL_ArrayView<DATA_TYPE>::constructor(const size_t mpl_idxpos[], const size
 }
 
 } // namespace mpl
+} // namespace parallel
+} // namespace util
 } // namespace atlas
 
 #endif // MPL_ArrayView_h

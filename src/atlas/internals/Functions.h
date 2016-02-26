@@ -12,14 +12,14 @@
 #define atlas_util_Functions_h
 
 namespace atlas {
-namespace util {
+namespace internals {
 
 inline int microdeg( const double& deg )
 {
   return static_cast<int>(deg*1.e6 + 0.5);
 }
 
-} // namespace util
+} // namespace private
 } // namespace atlas
 
 #endif

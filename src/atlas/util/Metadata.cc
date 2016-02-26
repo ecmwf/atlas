@@ -23,6 +23,7 @@
 using std::string;
 
 namespace atlas {
+namespace util {
 
 namespace {
 void throw_exception(const std::string& name)
@@ -130,12 +131,12 @@ template<> Metadata& Metadata::set(const std::string& name, const std::vector<si
   return *this;
 }
 
-template<> Metadata& Metadata::set(const std::string& name, const Mesh& value)
+template<> Metadata& Metadata::set(const std::string& name, const mesh::Mesh& value)
 {
   return set(name,value.id());
 }
 
-template<> Metadata& Metadata::set(const std::string& name, const Grid& value)
+template<> Metadata& Metadata::set(const std::string& name, const grid::Grid& value)
 {
   return set(name,value.id());
 }
@@ -301,16 +302,16 @@ template<> bool Metadata::get(const std::string& name, std::vector<float>& value
   return true;
 }
 
-template<> Mesh& Metadata::get(const std::string& name) const
+template<> mesh::Mesh& Metadata::get(const std::string& name) const
 {
   if( !has(name) ) throw_exception(name);
-  return Mesh::from_id(eckit::Properties::get(name));
+  return mesh::Mesh::from_id(eckit::Properties::get(name));
 }
 
-template<> Grid& Metadata::get(const std::string& name) const
+template<> grid::Grid& Metadata::get(const std::string& name) const
 {
   if( !has(name) ) throw_exception(name);
-  return Grid::from_id(eckit::Properties::get(name));
+  return grid::Grid::from_id(eckit::Properties::get(name));
 }
 
 template<> eckit::Properties Metadata::get(const std::string& name) const
@@ -477,27 +478,27 @@ void atlas__Metadata__get_array_double (Metadata* This, const char* name, double
   );
 }
 
-void atlas__Metadata__set_grid (Metadata* This, const char* name, Grid* value)
+void atlas__Metadata__set_grid (Metadata* This, const char* name, grid::Grid* value)
 {
   ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
 }
 
-void atlas__Metadata__set_mesh (Metadata* This, const char* name, Mesh* value)
+void atlas__Metadata__set_mesh (Metadata* This, const char* name, mesh::Mesh* value)
 {
   ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
 }
 
-Grid* atlas__Metadata__get_grid (Metadata* This, const char* name)
+grid::Grid* atlas__Metadata__get_grid (Metadata* This, const char* name)
 {
-  Grid* value(NULL);
-  ATLAS_ERROR_HANDLING( value = &This->get<Grid&>( std::string(name) ) );
+  grid::Grid* value(NULL);
+  ATLAS_ERROR_HANDLING( value = &This->get<grid::Grid&>( std::string(name) ) );
   return value;
 }
 
-Mesh* atlas__Metadata__get_mesh (Metadata* This, const char* name)
+mesh::Mesh* atlas__Metadata__get_mesh (Metadata* This, const char* name)
 {
-  Mesh* value(NULL);
-  ATLAS_ERROR_HANDLING( value = &This->get<Mesh&>( std::string(name) ) );
+  mesh::Mesh* value(NULL);
+  ATLAS_ERROR_HANDLING( value = &This->get<mesh::Mesh&>( std::string(name) ) );
   return value;
 }
 
@@ -531,4 +532,5 @@ void atlas__Metadata__json(Metadata* This, char* &json, int &size, int &allocate
 
 // ------------------------------------------------------------------
 
+} // namespace util
 } // namespace atlas

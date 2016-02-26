@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+namespace util {
+namespace array {
 
 template<typename T> struct remove_const          { typedef T type; };
 template<typename T> struct remove_const<T const> { typedef T type; };
@@ -63,6 +65,8 @@ public:
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace array
+} // namespace util
 } // namespace atlas
 
 #endif

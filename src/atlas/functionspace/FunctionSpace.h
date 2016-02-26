@@ -17,6 +17,7 @@
 #include "atlas/util/Config.h"
 
 namespace atlas {
+namespace functionspace {
 
 /// @brief FunctionSpace class helps to interprete Fields.
 /// @note  Abstract base class
@@ -35,6 +36,7 @@ public:
 
 inline FunctionSpace::~FunctionSpace() {}
 
+} // namespace functionspace
 } // namespace atlas
 
 
@@ -61,14 +63,15 @@ inline FunctionSpace::~FunctionSpace() {}
 #include "atlas/util/parallel/mpl/GatherScatter.h"
 #include "atlas/util/parallel/mpl/Checksum.h"
 #include "atlas/util/Metadata.h"
-#include "atlas/private/ObjectRegistry.h"
+#include "atlas/internals/ObjectRegistry.h"
 
 //------------------------------------------------------------------------------------------------------
+namespace atlas { namespace mesh { class Mesh; } }
+namespace atlas { namespace field { class Field; } }
 
 namespace atlas {
+namespace functionspace {
 
-class Mesh;
-class Field;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -82,7 +85,7 @@ enum CreateBehavior { IF_EXISTS_FAIL = 0,    /* when creating, fail if exists */
 // Horizontal nodes are always the slowest moving index
 // Then variables
 // Then levels are fastest moving index
-class FunctionSpace : public eckit::Owned, public util::Registered<FunctionSpace> {
+class FunctionSpace : public eckit::Owned, public internals::Registered<FunctionSpace> {
 
 public: // types
 
@@ -92,7 +95,7 @@ public: // types
 
 public: // methods
 
-    FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape, Mesh& mesh );
+    FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape, mesh::Mesh& mesh );
 
     /// TEMPORARY CONSTRUCTOR, JUST FOR EVOLUTIONARY STEP TO NEXT DESIGN
     FunctionSpace(const std::string& name, const std::vector<size_t>& shape );
@@ -103,15 +106,15 @@ public: // methods
 
     int index() const { return idx_; }
 
-    virtual const Field& field( size_t ) const;
-    virtual       Field& field( size_t );
-    virtual const Field& field(const std::string& name) const;
-    virtual       Field& field(const std::string& name);
+    virtual const field::Field& field( size_t ) const;
+    virtual       field::Field& field( size_t );
+    virtual const field::Field& field(const std::string& name) const;
+    virtual       field::Field& field(const std::string& name);
 
     virtual bool has_field(const std::string& name) const { return fields_.has(name); }
 
     template< typename DATA_TYPE >
-    Field& create_field(const std::string& name, size_t nb_vars, CreateBehavior b = IF_EXISTS_FAIL );
+    field::Field& create_field(const std::string& name, size_t nb_vars, CreateBehavior b = IF_EXISTS_FAIL );
 
     void remove_field(const std::string& name);
 
@@ -147,28 +150,28 @@ public: // methods
         if( dof()*nb_vars != field_size ) Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
         if( glb_dof_*nb_vars != glbfield_size ) Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
 
-        mpl::Field<DATA_TYPE const> loc_field(field_data,nb_vars);
-        mpl::Field<DATA_TYPE      > glb_field(glbfield_data,nb_vars);
+        util::parallel::mpl::field::Field<DATA_TYPE const> loc_field(field_data,nb_vars);
+        util::parallel::mpl::field::Field<DATA_TYPE      > glb_field(glbfield_data,nb_vars);
 
         gather_scatter_->gather( &loc_field, &glb_field, 1 );
     }
 
-    mpl::HaloExchange& halo_exchange() const { return *halo_exchange_; }
+    util::parallel::mpl::HaloExchange& halo_exchange() const { return *halo_exchange_; }
 
-    mpl::GatherScatter& gather_scatter() const { return *gather_scatter_; }
+    util::parallel::mpl::GatherScatter& gather_scatter() const { return *gather_scatter_; }
 
-    mpl::GatherScatter& fullgather() const { return *fullgather_; }
+    util::parallel::mpl::GatherScatter& fullgather() const { return *fullgather_; }
 
-    mpl::Checksum& checksum() const { return *checksum_; }
+    util::parallel::mpl::Checksum& checksum() const { return *checksum_; }
 
     void set_index(size_t idx) { idx_ = idx; }
 
 
-    const Metadata& metadata() const { return metadata_; }
-    Metadata& metadata() { return metadata_; }
+    const util::Metadata& metadata() const { return metadata_; }
+    util::Metadata& metadata() { return metadata_; }
 
-    const Mesh& mesh() const { ASSERT(mesh_); return *mesh_; }
-    Mesh& mesh() { ASSERT(mesh_); return *mesh_; }
+    const mesh::Mesh& mesh() const { ASSERT(mesh_); return *mesh_; }
+    mesh::Mesh& mesh() { ASSERT(mesh_); return *mesh_; }
 
     virtual size_t nb_fields() const { return fields_.size(); }
 
@@ -186,7 +189,7 @@ private:  // methods
     }
 
 public:
-    virtual Field& add( Field* field );
+    virtual field::Field& add( field::Field* field );
 
 protected:
 
@@ -202,27 +205,30 @@ private:
     std::vector<int>    shapef_; // deprecated, use shape which is reverse order
     std::vector<size_t> shape_;
 
-    eckit::DenseMap< std::string, eckit::SharedPtr<Field> > fields_;
+    eckit::DenseMap< std::string, eckit::SharedPtr<field::Field> > fields_;
 
-    mpl::GatherScatter::Ptr gather_scatter_; // without ghost
-    mpl::GatherScatter::Ptr fullgather_; // includes halo
-    mpl::HaloExchange::Ptr  halo_exchange_;
-    mpl::Checksum::Ptr      checksum_;
+    util::parallel::mpl::GatherScatter::Ptr gather_scatter_; // without ghost
+    util::parallel::mpl::GatherScatter::Ptr fullgather_; // includes halo
+    util::parallel::util::parallel::mpl::HaloExchange::Ptr  halo_exchange_;
+    util::parallel::mpl::Checksum::Ptr      checksum_;
 
-    Metadata metadata_;
+    util::Metadata metadata_;
 
-    Mesh*    mesh_;
+    mesh::Mesh*    mesh_;
 };
 #endif
 } // namespace deprecated
 
-typedef mpl::HaloExchange HaloExchange_t;
-typedef mpl::GatherScatter GatherScatter_t;
-typedef mpl::Checksum Checksum_t;
+typedef util::parallel::mpl::HaloExchange HaloExchange_t;
+typedef util::parallel::mpl::GatherScatter GatherScatter_t;
+typedef util::parallel::mpl::Checksum Checksum_t;
 
 //------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
+#define util_Metadata util::Metadata
+#define field_Field field::Field
+
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 #define DeprecatedFunctionSpace deprecated::FunctionSpace
 #else
@@ -232,7 +238,7 @@ extern "C"
 {
     void atlas__FunctionSpace__delete (FunctionSpace* This);
     const char* atlas__FunctionSpace__name (FunctionSpace* This);
-    Metadata* atlas__deprecated__FunctionSpace__metadata (DeprecatedFunctionSpace* This);
+    util_Metadata* atlas__deprecated__FunctionSpace__metadata (DeprecatedFunctionSpace* This);
     int atlas__deprecated__FunctionSpace__dof (DeprecatedFunctionSpace* This);
     int atlas__deprecated__FunctionSpace__glb_dof (DeprecatedFunctionSpace* This);
     void atlas__deprecated__FunctionSpace__create_field_int (DeprecatedFunctionSpace* This, char* name, int nb_vars);
@@ -243,7 +249,7 @@ extern "C"
     int atlas__deprecated__FunctionSpace__has_field (DeprecatedFunctionSpace* This, char* name);
     const char* atlas__deprecated__FunctionSpace__name (DeprecatedFunctionSpace* This);
     void atlas__deprecated__FunctionSpace__shapef (DeprecatedFunctionSpace* This, int* &shape, int &rank);
-    Field* atlas__deprecated__FunctionSpace__field (DeprecatedFunctionSpace* This, char* name);
+    field_Field* atlas__deprecated__FunctionSpace__field (DeprecatedFunctionSpace* This, char* name);
     void atlas__deprecated__FunctionSpace__parallelise (DeprecatedFunctionSpace* This);
     void atlas__deprecated__FunctionSpace__halo_exchange_int (DeprecatedFunctionSpace* This, int field_data[], int field_size);
     void atlas__deprecated__FunctionSpace__halo_exchange_float (DeprecatedFunctionSpace* This, float field_data[], int field_size);
@@ -256,9 +262,12 @@ extern "C"
     Checksum_t* atlas__deprecated__FunctionSpace__checksum (DeprecatedFunctionSpace* This);
 
 }
+#undef field_Field
+#undef util_Metadata
 #undef DeprecatedFunctionSpace
 //------------------------------------------------------------------------------------------------------
 
+} //namespace functionspace
 } // namespace atlas
 
 #endif // atlas_FunctionSpace_h

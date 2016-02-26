@@ -1,9 +1,9 @@
 
 #include <iostream>
-#include "atlas/private/Checksum.h"
+#include "atlas/internals/Checksum.h"
 
 namespace atlas {
-
+namespace internals {
 namespace
 {
 typedef unsigned long  uint64_t;
@@ -86,4 +86,5 @@ checksum_t checksum(const checksum_t values[], size_t size)
   return checksum(reinterpret_cast<const char*>(&values[0]),size*sizeof(checksum_t)/sizeof(char));
 }
 
-}// namespace atlas
+} // namespace internals
+} // namespace atlas

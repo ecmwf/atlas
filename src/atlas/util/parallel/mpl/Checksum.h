@@ -15,14 +15,17 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/utils/Translator.h"
-#include "atlas/private/Checksum.h"
+#include "atlas/internals/Checksum.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/runtime/Log.h"
 #include "atlas/util/parallel/mpi/mpi.h"
 #include "atlas/util/parallel/mpl/GatherScatter.h"
 
 namespace atlas {
+namespace util {
+namespace parallel {
 namespace mpl {
+
 class Checksum: public eckit::Owned {
 
 public: // types
@@ -72,10 +75,10 @@ public: // methods
   std::string execute( DATA_TYPE lfield[], const int nb_vars ) const;
 
   template <typename DATA_TYPE, int LRANK>
-  std::string execute( const ArrayView<DATA_TYPE,LRANK>& lfield ) const;
+  std::string execute( const array::ArrayView<DATA_TYPE,LRANK>& lfield ) const;
 
   template<typename DATA_TYPE, int RANK>
-  void var_info( const ArrayView<DATA_TYPE,RANK>& arr,
+  void var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
                  std::vector<int>& varstrides,
                  std::vector<int>& varextents ) const;
 
@@ -96,22 +99,26 @@ std::string Checksum::execute( const DATA_TYPE data[],
   {
     throw eckit::SeriousBug("Checksum was not setup",Here());
   }
-  std::vector<checksum_t> local_checksums(parsize_);
+  std::vector<internals::checksum_t> local_checksums(parsize_);
   int var_size = var_extents[0]*var_strides[0];
 
   for( int pp=0; pp<parsize_; ++pp )
   {
-    local_checksums[pp] = checksum(data+pp*var_size,var_size);
+    local_checksums[pp] = internals::checksum(data+pp*var_size,var_size);
   }
 
-  std::vector<checksum_t> global_checksums(gather_.glb_dof());
-  mpl::Field<checksum_t const> loc(local_checksums.data(),1);
-  mpl::Field<checksum_t> glb(global_checksums.data(),1);
+  std::vector<internals::checksum_t> global_checksums(gather_.glb_dof());
+  util::parallel::mpl::Field<internals::checksum_t const> loc(local_checksums.data(),1);
+  util::parallel::mpl::Field<internals::checksum_t> glb(global_checksums.data(),1);
   gather_.gather(&loc,&glb,1);
 
-  checksum_t glb_checksum = checksum(global_checksums.data(),global_checksums.size());
-  MPI_Bcast(&glb_checksum,1,eckit::mpi::datatype<checksum_t>(),0,eckit::mpi::comm());
-  return eckit::Translator<checksum_t,std::string>()(glb_checksum);
+  internals::checksum_t glb_checksum = internals::checksum(
+                                                global_checksums.data(),
+                                                global_checksums.size());
+
+  MPI_Bcast(&glb_checksum, 1, eckit::mpi::datatype<internals::checksum_t>(),
+            0, eckit::mpi::comm());
+  return eckit::Translator<internals::checksum_t,std::string>()(glb_checksum);
 }
 
 
@@ -125,7 +132,7 @@ std::string Checksum::execute( DATA_TYPE lfield[], const int nb_vars ) const
 
 
 template<typename DATA_TYPE, int RANK>
-void Checksum::var_info( const ArrayView<DATA_TYPE,RANK>& arr,
+void Checksum::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
                          std::vector<int>& varstrides,
                          std::vector<int>& varextents ) const
 {
@@ -145,7 +152,7 @@ void Checksum::var_info( const ArrayView<DATA_TYPE,RANK>& arr,
 }
 
 template <typename DATA_TYPE, int LRANK>
-std::string Checksum::execute( const ArrayView<DATA_TYPE,LRANK>& lfield ) const
+std::string Checksum::execute( const array::ArrayView<DATA_TYPE,LRANK>& lfield ) const
 {
   if( lfield.shape(0) == parsize_ )
   {
@@ -177,6 +184,8 @@ extern "C"
 // ------------------------------------------------------------------
 
 } // namespace mpl
+} // namespace parallel
+} // namespace util
 } // namespace atlas
 
 #endif // Checksum_h

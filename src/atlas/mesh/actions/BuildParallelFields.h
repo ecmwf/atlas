@@ -17,10 +17,13 @@
 #include "atlas/atlas_config.h"
 
 namespace atlas {
-  class Mesh;
-  namespace mesh {
+namespace mesh {
+    class Mesh;
     class Nodes;
-  }
+} }
+
+namespace atlas {
+namespace mesh {
 namespace actions {
 
 /*
@@ -65,6 +68,7 @@ extern "C"
 // ------------------------------------------------------------------
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 
 

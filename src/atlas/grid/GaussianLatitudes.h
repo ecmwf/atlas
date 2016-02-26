@@ -17,7 +17,7 @@
 #include <cstddef>
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ void gaussian_latitudes_npole_spole   (const size_t N, double[]);
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas
 
 #endif // atlas_grids_GaussianLatitudes_h

@@ -18,7 +18,7 @@
 #include "atlas/interpolation/Triag3D.h"
 
 namespace atlas {
-namespace geometry {
+namespace interpolation {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -100,6 +100,6 @@ double Quad3D::area() const
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace geometry
+}  // namespace interpolation
 }  // namespace atlas
 

@@ -26,7 +26,7 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 #include "atlas/util/parallel/mpl/Checksum.h"
@@ -34,6 +34,7 @@
 using eckit::geometry::LLPoint2;
 using eckit::geometry::lonlat_to_3d;
 namespace atlas {
+namespace mesh {
 namespace actions {
 
 static const double DEG_TO_RAD = M_PI/180.;
@@ -126,16 +127,16 @@ double quad_quality( const LLPoint2& p1, const LLPoint2& p2, const LLPoint2& p3,
 
 void build_statistics( Mesh& mesh )
 {
-  const double radius_km = Earth::radiusInMeters()*1e-3;
+  const double radius_km = internals::Earth::radiusInMeters()*1e-3;
 
   mesh::Nodes& nodes = mesh.nodes();
-  ArrayView<double,2> lonlat ( nodes.lonlat() );
+  util::array::ArrayView<double,2> lonlat ( nodes.lonlat() );
 
   if( mesh.edges().size() )
   {
     if( ! mesh.edges().has_field("arc_length") )
-      mesh.edges().add( Field::create<double>("arc_length",make_shape(mesh.edges().size())) );
-    ArrayView<double,1> dist ( mesh.edges().field("arc_length") );
+      mesh.edges().add( field::Field::create<double>("arc_length",util::array::make_shape(mesh.edges().size())) );
+    util::array::ArrayView<double,1> dist ( mesh.edges().field("arc_length") );
     const mesh::HybridElements::Connectivity &edge_nodes = mesh.edges().node_connectivity();
 
     const int nb_edges = mesh.edges().size();
@@ -143,8 +144,8 @@ void build_statistics( Mesh& mesh )
     {
       int ip1 = edge_nodes(jedge,0);
       int ip2 = edge_nodes(jedge,1);
-      LLPoint2 p1(lonlat(ip1,LON),lonlat(ip1,LAT));
-      LLPoint2 p2(lonlat(ip2,LON),lonlat(ip2,LAT));
+      LLPoint2 p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
+      LLPoint2 p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
       dist(jedge) = arc_in_rad(p1,p2)*radius_km;
     }
   }
@@ -167,8 +168,8 @@ void build_statistics( Mesh& mesh )
     if( eckit::mpi::size() == 1 )
       ofs.open( stats_path.localPath(), std::ofstream::app );
 
-    ArrayView<double,1> rho ( mesh.cells().add( Field::create<double>("stats_rho",make_shape(mesh.cells().size()) ) ) );
-    ArrayView<double,1> eta ( mesh.cells().add( Field::create<double>("stats_eta",make_shape(mesh.cells().size()) ) ) );
+    util::array::ArrayView<double,1> rho ( mesh.cells().add( field::Field::create<double>("stats_rho",util::array::make_shape(mesh.cells().size()) ) ) );
+    util::array::ArrayView<double,1> eta ( mesh.cells().add( field::Field::create<double>("stats_eta",util::array::make_shape(mesh.cells().size()) ) ) );
 
     for( size_t jtype=0; jtype<mesh.cells().nb_types(); ++jtype )
     {
@@ -184,9 +185,9 @@ void build_statistics( Mesh& mesh )
           size_t ip1 = elem_nodes(jelem,0);
           size_t ip2 = elem_nodes(jelem,1);
           size_t ip3 = elem_nodes(jelem,2);
-          LLPoint2 p1(lonlat(ip1,LON),lonlat(ip1,LAT));
-          LLPoint2 p2(lonlat(ip2,LON),lonlat(ip2,LAT));
-          LLPoint2 p3(lonlat(ip3,LON),lonlat(ip3,LAT));
+          LLPoint2 p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
+          LLPoint2 p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
+          LLPoint2 p3(lonlat(ip3,internals::LON),lonlat(ip3,internals::LAT));
 
           double l12 = arc_in_rad(p1,p2)/DEG_TO_RAD;
           double l23 = arc_in_rad(p2,p3)/DEG_TO_RAD;
@@ -220,10 +221,10 @@ void build_statistics( Mesh& mesh )
           size_t ip3 = elem_nodes(jelem,2);
           size_t ip4 = elem_nodes(jelem,3);
 
-          LLPoint2 p1(lonlat(ip1,LON),lonlat(ip1,LAT));
-          LLPoint2 p2(lonlat(ip2,LON),lonlat(ip2,LAT));
-          LLPoint2 p3(lonlat(ip3,LON),lonlat(ip3,LAT));
-          LLPoint2 p4(lonlat(ip4,LON),lonlat(ip4,LAT));
+          LLPoint2 p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
+          LLPoint2 p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
+          LLPoint2 p3(lonlat(ip3,internals::LON),lonlat(ip3,internals::LAT));
+          LLPoint2 p4(lonlat(ip4,internals::LON),lonlat(ip4,internals::LAT));
 
           eta(ielem) = quad_quality(p1,p2,p3,p4);
 
@@ -261,12 +262,12 @@ void build_statistics( Mesh& mesh )
 
   if( nodes.has_field("dual_volumes") )
   {
-    ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-    ArrayView<double,1> dual_delta_sph  ( nodes.add( Field::create<double>( "dual_delta_sph", make_shape(nodes.size(),1) ) ) );
+    util::array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
+    util::array::ArrayView<double,1> dual_delta_sph  ( nodes.add( field::Field::create<double>( "dual_delta_sph", util::array::make_shape(nodes.size(),1) ) ) );
 
     for( size_t jnode=0; jnode<nodes.size(); ++jnode )
     {
-      const double lat = lonlat(jnode,LAT)*DEG_TO_RAD;
+      const double lat = lonlat(jnode,internals::LAT)*DEG_TO_RAD;
       const double hx = radius_km*std::cos(lat)*DEG_TO_RAD;
       const double hy = radius_km*DEG_TO_RAD;
       dual_delta_sph(jnode) = std::sqrt(dual_volumes(jnode)*hx*hy);
@@ -297,5 +298,6 @@ void atlas__build_statistics ( Mesh* mesh) {
 // ------------------------------------------------------------------
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 

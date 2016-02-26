@@ -18,8 +18,7 @@
 #include "atlas/grid/ReducedGaussianGrid.h"
 
 namespace atlas {
-namespace grids {
-namespace rgg {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -47,8 +46,7 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace rgg
-} // namespace grids
+} // namespace grid
 } // namespace atlas
 
 #endif // atlas_grids_rgg_OctahedralRGG_h

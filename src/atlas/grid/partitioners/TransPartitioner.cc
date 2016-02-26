@@ -4,8 +4,8 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 #include "eckit/exception/Exceptions.h"
@@ -15,26 +15,29 @@
 #include "atlas/util/parallel/mpi/mpi.h"
 
 namespace atlas {
-namespace trans {
+namespace grid {
+namespace partitioners {
 
-TransPartitioner::TransPartitioner( const Grid& grid, const Trans& trans ) :
-  Partitioner(grid,trans.nproc()),
-  t_( const_cast<Trans*>(&trans)), owned_(false)
+TransPartitioner::TransPartitioner(const grid::Grid& grid,
+                                   const numerics::trans::Trans& trans) :
+  Partitioner(grid, trans.nproc()),
+  t_( const_cast<numerics::trans::Trans*>(&trans)), owned_(false)
 {
   ASSERT( t_ != NULL );
 }
 
-TransPartitioner::TransPartitioner( const Grid& grid ) :
+TransPartitioner::TransPartitioner(const grid::Grid& grid) :
   Partitioner(grid),
-  t_( new Trans(grid,0) ), owned_(true)
+  t_( new numerics::trans::Trans(grid,0) ), owned_(true)
 {
   ASSERT( t_ != NULL );
   ASSERT( size_t(t_->nproc()) == nb_partitions() );
 }
 
-TransPartitioner::TransPartitioner( const Grid& grid, const size_t nb_partitions ) :
-  Partitioner(grid,nb_partitions),
-  t_( new Trans(grid,0) ), owned_(true)
+TransPartitioner::TransPartitioner(const grid::Grid& grid,
+                                   const size_t nb_partitions) :
+  Partitioner(grid, nb_partitions),
+  t_( new numerics::trans::Trans(grid,0) ), owned_(true)
 {
   ASSERT( t_ != NULL );
   if( nb_partitions != size_t(t_->nproc()) )
@@ -55,18 +58,18 @@ TransPartitioner::~TransPartitioner()
 
 void TransPartitioner::partition(int part[]) const
 {
-  if( dynamic_cast<const grids::ReducedGrid*>(&grid()) == NULL )
-    throw eckit::BadCast("Grid is not a grids::ReducedGrid type. Cannot partition using IFS trans",Here());
+  if( dynamic_cast<const grid::ReducedGrid*>(&grid()) == NULL )
+    throw eckit::BadCast("Grid is not a grid::ReducedGrid type. Cannot partition using IFS trans",Here());
 
-  int nlonmax = dynamic_cast<const grids::ReducedGrid*>(&grid())->nlonmax();
+  int nlonmax = dynamic_cast<const grid::ReducedGrid*>(&grid())->nlonmax();
 
-  ArrayView<int,1> nloen       = t_->nloen();
-  ArrayView<int,1> n_regions   = t_->n_regions();
-  ArrayView<int,1> nfrstlat    = t_->nfrstlat();
-  ArrayView<int,1> nlstlat     = t_->nlstlat();
-  ArrayView<int,1> nptrfrstlat = t_->nptrfrstlat();
-  ArrayView<int,2> nsta        = t_->nsta();
-  ArrayView<int,2> nonl        = t_->nonl();
+  util::array::ArrayView<int,1> nloen       = t_->nloen();
+  util::array::ArrayView<int,1> n_regions   = t_->n_regions();
+  util::array::ArrayView<int,1> nfrstlat    = t_->nfrstlat();
+  util::array::ArrayView<int,1> nlstlat     = t_->nlstlat();
+  util::array::ArrayView<int,1> nptrfrstlat = t_->nptrfrstlat();
+  util::array::ArrayView<int,2> nsta        = t_->nsta();
+  util::array::ArrayView<int,2> nonl        = t_->nonl();
 
 
   int i(0);
@@ -114,10 +117,12 @@ int TransPartitioner::nb_regions(int b) const
   return t_->n_regions()[b];
 }
 
-}
-}
+} // namespace partitioners
+} // namespace grid
+} // namespace atlas
 
 namespace {
-  atlas::PartitionerBuilder<atlas::trans::TransPartitioner> __Trans("Trans");
+  atlas::grid::partitioners::PartitionerBuilder<
+    atlas::grid::partitioners::TransPartitioner> __Trans("Trans");
 }
 

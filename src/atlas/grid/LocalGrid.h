@@ -17,7 +17,7 @@
 #include "atlas/grid/Grid.h"
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -63,7 +63,7 @@ class LocalGrid : public Grid {
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas
 
 #endif

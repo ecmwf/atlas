@@ -28,23 +28,25 @@
 namespace {
 
     static eckit::Mutex *local_mutex = 0;
-    static std::map<std::string, atlas::PartitionerFactory *> *m = 0;
+    static std::map<std::string,
+           atlas::grid::partitioners::PartitionerFactory *> *m = 0;
     static pthread_once_t once = PTHREAD_ONCE_INIT;
 
     static void init() {
         local_mutex = new eckit::Mutex();
-        m = new std::map<std::string, atlas::PartitionerFactory *>();
+        m = new std::map<std::string,
+                         atlas::grid::partitioners::PartitionerFactory *>();
     }
 }
 
-
-
 namespace atlas {
+namespace grid {
+namespace partitioners {
 
-Partitioner::Partitioner(const Grid& grid): nb_partitions_(eckit::mpi::size()), grid_(grid)
+Partitioner::Partitioner(const grid::Grid& grid): nb_partitions_(eckit::mpi::size()), grid_(grid)
 { }
 
-Partitioner::Partitioner(const Grid& grid, const size_t nb_partitions): nb_partitions_(nb_partitions), grid_(grid)
+Partitioner::Partitioner(const grid::Grid& grid, const size_t nb_partitions): nb_partitions_(nb_partitions), grid_(grid)
 { }
 
 Partitioner::~Partitioner()
@@ -68,9 +70,9 @@ template<typename T> void load_builder() { PartitionerBuilder<T>("tmp"); }
 struct force_link {
     force_link()
     {
-        load_builder< meshgen::EqualRegionsPartitioner >();
+        load_builder< grid::partitioners::EqualRegionsPartitioner >();
 #ifdef ATLAS_HAVE_TRANS
-        load_builder< trans::TransPartitioner >();
+        load_builder< grid::partitioners::TransPartitioner >();
 #endif
     }
 };
@@ -124,7 +126,7 @@ bool PartitionerFactory::has(const std::string& name)
 
 
 
-Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid) {
+Partitioner* PartitionerFactory::build(const std::string& name, const grid::Grid& grid) {
 
     pthread_once(&once, init);
 
@@ -147,7 +149,7 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
     return (*j).second->make(grid);
 }
 
-Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid, const size_t nb_partitions ) {
+Partitioner* PartitionerFactory::build(const std::string& name, const grid::Grid& grid, const size_t nb_partitions ) {
 
     pthread_once(&once, init);
 
@@ -170,5 +172,6 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
     return (*j).second->make(grid, nb_partitions);
 }
 
-
+} // namespace partitioners
+} // namespace grid
 } // namespace atlas

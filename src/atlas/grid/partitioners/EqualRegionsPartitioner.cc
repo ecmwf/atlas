@@ -17,13 +17,14 @@
 #include "eckit/geometry/Point2.h"
 #include "atlas/grid/ReducedGrid.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/private/Functions.h"
+#include "atlas/internals/Functions.h"
 #include "atlas/util/parallel/mpi/mpi.h"
 
-using atlas::util::microdeg;
+using atlas::internals::microdeg;
 
 namespace atlas {
-namespace meshgen {
+namespace grid {
+namespace partitioners {
 
 double gamma(const double& x)
 {
@@ -386,7 +387,7 @@ void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[
   ymax[N-1]=0.5*M_PI-s_cap[s_cap.size()-2];
 }
 
-EqualRegionsPartitioner::EqualRegionsPartitioner(const Grid& grid) :
+EqualRegionsPartitioner::EqualRegionsPartitioner(const grid::Grid& grid) :
   Partitioner(grid,eckit::mpi::size()),
   N_(eckit::mpi::size())
 {
@@ -398,7 +399,7 @@ EqualRegionsPartitioner::EqualRegionsPartitioner(const Grid& grid) :
   }
 }
 
-EqualRegionsPartitioner::EqualRegionsPartitioner(const Grid& grid, int N) :
+EqualRegionsPartitioner::EqualRegionsPartitioner(const grid::Grid& grid, int N) :
   Partitioner(grid,N),
   N_(N)
 {
@@ -546,7 +547,7 @@ void EqualRegionsPartitioner::partition(int part[]) const
     std::vector<NodeInt> nodes(grid().npts());
     int n(0);
 
-    if( const grids::ReducedGrid* reduced_grid = dynamic_cast<const grids::ReducedGrid*>(&grid()) )
+    if( const grid::ReducedGrid* reduced_grid = dynamic_cast<const grid::ReducedGrid*>(&grid()) )
     {
       for(size_t jlat = 0; jlat < reduced_grid->nlat(); ++jlat)
       {
@@ -571,16 +572,18 @@ void EqualRegionsPartitioner::partition(int part[]) const
         ++n;
       }
     }
-    partition(grid().npts(),nodes.data(),part);
+    partition(grid().npts(), nodes.data(), part);
   }
 }
 
-} // namespace meshgen
+} // namespace partitioners
+} // namespace grid
 } // namespace atlas
 
-
 namespace {
-  atlas::PartitionerBuilder<atlas::meshgen::EqualRegionsPartitioner> __EqualRegions ("EqualRegions");
+    atlas::grid::partitioners::PartitionerBuilder<
+        atlas::grid::partitioners::EqualRegionsPartitioner>
+            __EqualRegions ("EqualRegions");
 }
 
 

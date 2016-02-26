@@ -15,7 +15,8 @@
 #include "atlas/grid/predefined/gausslat/gausslat.h"
 
 namespace atlas {
-namespace grids {
+namespace grid {
+namespace predefined {
 namespace gausslat {
 
 //------------------------------------------------------------------------------------------------------
@@ -68,6 +69,7 @@ void regist()
 //------------------------------------------------------------------------------------------------------
 
 } // namespace gausslat
-} // namespace grids
+} // namespace predefined
+} // namespace grid
 } // namespace atlas
 

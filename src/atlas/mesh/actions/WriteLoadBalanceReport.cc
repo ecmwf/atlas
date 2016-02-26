@@ -15,14 +15,15 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
-#include "atlas/private/IsGhost.h"
+#include "atlas/internals/IsGhost.h"
 #include "atlas/util/array/IndexView.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 #include "atlas/util/parallel/mpi/mpi.h"
 
-using atlas::util::IsGhost;
+using atlas::internals::IsGhost;
 
 namespace atlas {
+namespace mesh {
 namespace actions {
 
 void write_load_balance_report( const Mesh& mesh, const std::string& filename )
@@ -228,6 +229,6 @@ void atlas__write_load_balance_report (Mesh* mesh, char* filename)
 
 // ------------------------------------------------------------------
 
-
 } // namespace actions
+} // namespace mesh
 } // namespace atlas

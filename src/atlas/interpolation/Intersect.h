@@ -14,7 +14,7 @@
 #include <iosfwd>
 
 namespace atlas {
-namespace geometry {
+namespace interpolation {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -49,7 +49,7 @@ private:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace geometry
+}  // namespace interpolation
 }  // namespace atlas
 
 #endif

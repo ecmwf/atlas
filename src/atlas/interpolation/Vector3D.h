@@ -28,7 +28,7 @@
 #endif
 
 namespace atlas {
-namespace geometry {
+namespace interpolation {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -109,7 +109,7 @@ Vector3D operator*(double, const Vector3D &);
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace geometry
+}  // namespace interpolation
 }  // namespace atlas
 
 #endif

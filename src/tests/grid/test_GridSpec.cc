@@ -24,13 +24,13 @@
 
 #include "atlas/mpi/mpi.h"
 #include "atlas/io/Grib.h"
-#include "atlas/grids/grids.h"
+#include "atlas/grid/grid.h"
 
 using namespace std;
 using namespace eckit;
 using namespace eckit::grib;
-using namespace atlas::io;
-using namespace atlas::grids;
+using namespace atlas::util::io;
+using namespace atlas::grid;
 
 
 namespace atlas {
@@ -66,7 +66,7 @@ BOOST_FIXTURE_TEST_CASE ( test_grib_to_grid_to_gridspec, ArgsFixture ) {
     if (argc == 2) cout << argv[1];
     cout << "\n";
     BOOST_REQUIRE_MESSAGE( argc == 2, "You missed filename argument" );
-    atlas::grids::load();
+    atlas::grid::load();
     test_grib_file(argv[1]);
 }
 
@@ -116,7 +116,7 @@ static void test_grib_file(const std::string& fpath)
 
 
    // From the Spec, create another Grid, we should get back the same Grid
-   Grid::Ptr grid_created_from_spec ( Grid::create( Config(g_spec) ) );
+   Grid::Ptr grid_created_from_spec ( Grid::create( util::Config(g_spec) ) );
    BOOST_CHECK_MESSAGE(grid_created_from_spec,"Failed to create GRID from GridSpec");
    bool grid_compare = grid_created_from_grib->same(*grid_created_from_spec);
    BOOST_CHECK_MESSAGE(grid_compare,"The grids are different");

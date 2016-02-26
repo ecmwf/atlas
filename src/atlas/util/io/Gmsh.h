@@ -18,18 +18,22 @@
 #include "atlas/functionspace/ReducedGridPoint.h"
 #include "atlas/util/Metadata.h"
 
-//------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
+namespace atlas { namespace mesh { class Mesh; } }
+namespace atlas {
+namespace field {
+    class Field;
+    class FieldSet;
+} }
+
+namespace atlas { namespace util { namespace array { class Array; } } }
 
 namespace atlas {
-
-class Mesh;
-class Field;
-class Array;
-class FieldSet;
-
+namespace util {
 namespace io {
 
-//-----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 class Gmsh {
 private:
@@ -40,20 +44,20 @@ public:
 
   virtual ~Gmsh();
 
-  Mesh* read(const eckit::PathName& file_path) const;
+  mesh::Mesh* read(const eckit::PathName& file_path) const;
 
-  void read(const eckit::PathName& file_path, Mesh& mesh) const;
+  void read(const eckit::PathName& file_path, mesh::Mesh& mesh) const;
 
   /// Write mesh file
   /// Extra file with available mesh information is written to:
   ///  - filename_info.msh
-  void write(const Mesh& mesh,
+  void write(const mesh::Mesh& mesh,
              const eckit::PathName& file_path) const;
 
   /// Write fieldset to file using Nodes functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const FieldSet& fieldset,
+  void write(const field::FieldSet& fieldset,
              const functionspace::Nodes&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
@@ -61,7 +65,7 @@ public:
   /// Write fieldset to file using ReducedGridPoint functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const FieldSet& fieldset,
+  void write(const field::FieldSet& fieldset,
              const functionspace::ReducedGridPoint&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
@@ -69,7 +73,7 @@ public:
   /// Write field to file using Nodes functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const Field& field,
+  void write(const field::Field& field,
              const functionspace::Nodes&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
@@ -77,7 +81,7 @@ public:
   /// Write field to file using ReducedGridPoint functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const Field& field,
+  void write(const field::Field& field,
              const functionspace::ReducedGridPoint&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
@@ -85,7 +89,7 @@ public:
   /// Write field to file
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const Field& field,
+  void write(const field::Field& field,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
@@ -94,22 +98,32 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-#define NODESFUNCTIONSPACE functionspace::Nodes
+
 // C wrapper interfaces to C++ routines
+#define mesh_Mesh mesh::Mesh
+#define field_Field field::Field
+#define field_FieldSet field::FieldSet
+#define functionspace_Nodes functionspace::Nodes
+
 extern "C" {
 Gmsh* atlas__Gmsh__new();
 void atlas__Gmsh__delete(Gmsh* This);
-Mesh* atlas__Gmsh__read(Gmsh* This, char* file_path);
-void atlas__Gmsh__write(Gmsh* This, Mesh* mesh, char* file_path);
-Mesh* atlas__read_gmsh(char* file_path);
-void atlas__write_gmsh_mesh(Mesh* mesh, char* file_path);
-void atlas__write_gmsh_fieldset(FieldSet* fieldset, NODESFUNCTIONSPACE* function_space, char* file_path, int mode);
-void atlas__write_gmsh_field(Field* field, NODESFUNCTIONSPACE* function_space, char* file_path, int mode);
+mesh_Mesh* atlas__Gmsh__read(Gmsh* This, char* file_path);
+void atlas__Gmsh__write(Gmsh* This, mesh_Mesh* mesh, char* file_path);
+mesh_Mesh* atlas__read_gmsh(char* file_path);
+void atlas__write_gmsh_mesh(mesh_Mesh* mesh, char* file_path);
+void atlas__write_gmsh_fieldset(field_FieldSet* fieldset, functionspace_Nodes* function_space, char* file_path, int mode);
+void atlas__write_gmsh_field(field_Field* field, functionspace_Nodes* function_space, char* file_path, int mode);
 }
-#undef NODESFUNCTIONSPACE
+
+#undef field_Field
+#undef field_FieldSet
+#undef functionspace_Nodes
+#undef mesh_Mesh
 //------------------------------------------------------------------------------------------------------
 
-}  // namespace io
-}  // namespace atlas
+} // namespace io
+} // namespace util
+} // namespace atlas
 
 #endif  // Gmsh_h

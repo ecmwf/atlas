@@ -61,46 +61,46 @@ const std::string& Elements::name() const
   return hybrid_elements_->element_type(type_idx_).name();
 }
 
-template<> ArrayView<double,1> Elements::view( const Field& field ) const
+template<> util::array::ArrayView<double,1> Elements::view( const field::Field& field ) const
 { 
-  return ArrayView<double,1>( field.data<double>()+begin(), make_shape(size()) );
+  return util::array::ArrayView<double,1>( field.data<double>()+begin(), util::array::make_shape(size()) );
 }
 
-template<> ArrayView<float,1> Elements::view( const Field& field ) const
+template<> util::array::ArrayView<float,1> Elements::view( const field::Field& field ) const
 {
-  return ArrayView<float,1>( field.data<float>()+begin(), make_shape(size()) );
+  return util::array::ArrayView<float,1>( field.data<float>()+begin(), util::array::make_shape(size()) );
 }
 
-template<> ArrayView<int,1> Elements::view( const Field& field ) const
+template<> util::array::ArrayView<int,1> Elements::view( const field::Field& field ) const
 { 
-  return ArrayView<int,1>( field.data<int>()+begin(), make_shape(size()) );
+  return util::array::ArrayView<int,1>( field.data<int>()+begin(), util::array::make_shape(size()) );
 }
 
-template<> ArrayView<long,1> Elements::view( const Field& field ) const
+template<> util::array::ArrayView<long,1> Elements::view( const field::Field& field ) const
 { 
-  return ArrayView<long,1>( field.data<long>()+begin(), make_shape(size()) );
+  return util::array::ArrayView<long,1>( field.data<long>()+begin(), util::array::make_shape(size()) );
 }
 
 
 
-template<> ArrayView<double,2> Elements::view( const Field& field ) const
+template<> util::array::ArrayView<double,2> Elements::view( const field::Field& field ) const
 {
-  return ArrayView<double,2>( field.data<double>()+begin(), make_shape(size(),field.shape(1)) );
+  return util::array::ArrayView<double,2>( field.data<double>()+begin(), util::array::make_shape(size(),field.shape(1)) );
 }
 
-template<> ArrayView<float,2> Elements::view( const Field& field ) const
+template<> util::array::ArrayView<float,2> Elements::view( const field::Field& field ) const
 {
-  return ArrayView<float,2>( field.data<float>()+begin(), make_shape(size(),field.shape(1)) );
+  return util::array::ArrayView<float,2>( field.data<float>()+begin(), util::array::make_shape(size(),field.shape(1)) );
 }
 
-template<> ArrayView<int,2> Elements::view( const Field& field ) const
+template<> util::array::ArrayView<int,2> Elements::view( const field::Field& field ) const
 {
-  return ArrayView<int,2>( field.data<int>()+begin(), make_shape(size(),field.shape(1)) );
+  return util::array::ArrayView<int,2>( field.data<int>()+begin(), util::array::make_shape(size(),field.shape(1)) );
 }
 
-template<> ArrayView<long,2> Elements::view( const Field& field ) const
+template<> util::array::ArrayView<long,2> Elements::view( const field::Field& field ) const
 {
-  return ArrayView<long,2>( field.data<long>()+begin(), make_shape(size(),field.shape(1)) );
+  return util::array::ArrayView<long,2>( field.data<long>()+begin(), util::array::make_shape(size(),field.shape(1)) );
 }
 
 
@@ -174,9 +174,9 @@ int atlas__mesh__Elements__nb_fields(const Elements* This)
   return This->nb_fields();
 }
 
-Field* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx)
+field::Field* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->field(idx);
@@ -184,9 +184,9 @@ Field* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx)
   return field;
 }
 
-Field* atlas__mesh__Elements__field_by_name(Elements* This, char* name)
+field::Field* atlas__mesh__Elements__field_by_name(Elements* This, char* name)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->field(std::string(name));
@@ -194,9 +194,9 @@ Field* atlas__mesh__Elements__field_by_name(Elements* This, char* name)
   return field;
 }
 
-Field* atlas__mesh__Elements__global_index(Elements* This)
+field::Field* atlas__mesh__Elements__global_index(Elements* This)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->global_index();
@@ -205,9 +205,9 @@ Field* atlas__mesh__Elements__global_index(Elements* This)
 
 }
 
-Field* atlas__mesh__Elements__remote_index(Elements* This)
+field::Field* atlas__mesh__Elements__remote_index(Elements* This)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->remote_index();
@@ -215,9 +215,9 @@ Field* atlas__mesh__Elements__remote_index(Elements* This)
   return field;
 }
 
-Field* atlas__mesh__Elements__partition(Elements* This)
+field::Field* atlas__mesh__Elements__partition(Elements* This)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->partition();
@@ -225,9 +225,9 @@ Field* atlas__mesh__Elements__partition(Elements* This)
   return field;
 }
 
-Field* atlas__mesh__Elements__halo(Elements* This)
+field::Field* atlas__mesh__Elements__halo(Elements* This)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->halo();

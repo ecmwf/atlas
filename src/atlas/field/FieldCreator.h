@@ -17,7 +17,7 @@
 #include <string>
 #include "eckit/memory/Owned.h"
 
-namespace atlas { class Field; }
+namespace atlas { namespace field {class Field; } }
 namespace eckit { class Parametrisation; }
 
 //------------------------------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ namespace field {
  *    Field* field = Field::create(
  *         Config
  *           ("creator","ArraySpec")      // ArraySpec FieldCreator
- *           ("shape",make_shape(100,3))  // Rank 2 field with indexing [100][3]
+ *           ("shape",util::array::make_shape(100,3))  // Rank 2 field with indexing [100][3]
  *         );
  * \endcode
  */

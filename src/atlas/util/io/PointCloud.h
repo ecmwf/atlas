@@ -18,17 +18,24 @@
 namespace eckit {
   class PathName;
 }
-namespace atlas {
-  class FieldSet;
-  class Field;
-  class Grid;
-  class Mesh;
-  namespace grids { class Unstructured; }
-  namespace functionspace { class Nodes; }
-}
-
 
 namespace atlas {
+namespace field {
+    class Field;
+    class FieldSet;
+} }
+
+namespace atlas {
+namespace grid {
+    class Grid;
+    class Unstructured;
+} }
+
+namespace atlas { namespace mesh { class Mesh; } }
+namespace atlas { namespace functionspace { class Nodes; } }
+
+namespace atlas {
+namespace util {
 namespace io {
 
 /**
@@ -46,29 +53,29 @@ namespace io {
     * @param Grid data structure pointer to use
     * @return Grid data structure pointer
     */
-   static Mesh* read( const eckit::PathName& path );
+   static mesh::Mesh* read( const eckit::PathName& path );
 
    /**
     * @brief Read PointCloud file into a Mesh
     * @param path input file path
     * @param vfnames names of fields to read
-    * @return Mesh pointer
+    * @return mesh::Mesh pointer
     */
-   static Mesh* read(const eckit::PathName& path, std::vector<std::string>& vfnames );
+   static mesh::Mesh* read(const eckit::PathName& path, std::vector<std::string>& vfnames );
 
   /**
    * @brief Write Grid to PointCloud file (overwrites possibly existing file)
    * @param path output file path
    * @param grid Grid data structure
    */
-  static void write(const eckit::PathName& path, const Mesh& mesh);
+  static void write(const eckit::PathName& path, const mesh::Mesh& mesh);
 
   /**
    * @brief Write FieldSet to PointCloud file (overwrites possibly existing file)
    * @param path output file path
    * @param fieldset FieldSet data structure
    */
-  static void write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::Nodes &function_space);
+  static void write(const eckit::PathName& path, const field::FieldSet& fieldset, const functionspace::Nodes &function_space);
 
   /**
    * @brief Write lan/lon to PointCloud file (overwrites possibly existing file)
@@ -79,7 +86,7 @@ namespace io {
    */
   static void write(
       const eckit::PathName& path,
-      const std::vector< Grid::Point >& pts );
+      const std::vector< grid::Grid::Point >& pts );
 
   /**
    * @brief Write lan/lon and fields to PointCloud file (overwrites possibly existing file)
@@ -116,17 +123,26 @@ namespace io {
 
 
 // C wrapper interfaces to C++ routines
-extern "C"
+#define mesh_Mesh mesh::Mesh
+#define field_Field field::Field
+#define functionspace_FunctionSpace functionspace::FunctionSpace
+
+ extern "C"
 {
-  PointCloud*          atlas__pointcloud__new ();
-  void                 atlas__pointcloud__delete        (PointCloud* This);
-  Mesh* atlas__pointcloud__read          (PointCloud* This, char* file_path);
-  Mesh* atlas__read_pointcloud           (char* file_path);
-  void                 atlas__write_pointcloud_fieldset (char* file_path, const FieldSet* fieldset, const functionspace::Nodes* functionspace);
-  void                 atlas__write_pointcloud_field    (char* file_path, const Field* field, const functionspace::Nodes* functionspace);
+  PointCloud* atlas__pointcloud__new ();
+  void atlas__pointcloud__delete(PointCloud* This);
+  mesh_Mesh* atlas__pointcloud__read(PointCloud* This, char* file_path);
+  mesh_Mesh* atlas__read_pointcloud(char* file_path);
+  void atlas__write_pointcloud_fieldset(char* file_path, const field_Field* fieldset, const functionspace_FunctionSpace* functionspace);
+  void atlas__write_pointcloud_field(char* file_path, const field_Field* field, const functionspace_FunctionSpace* functionspace);
 }
 
+#undef mesh_Mesh
+#undef field_Field
+#undef functionspace_FunctionSpace
 
 } // namespace io
+} // namespace util
 } // namespace atlas
+
 #endif // PointCloud_h

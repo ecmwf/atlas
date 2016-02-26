@@ -269,24 +269,24 @@ util/runtime/ErrorHandling.cc
 util/runtime/ErrorHandling.cc
 )
 
-list( APPEND atlas_private_srcs
-private/AccumulateFaces.h
-private/AccumulateFaces.cc
-private/Bitflags.h
-private/Checksum.h
-private/Checksum.cc
-private/Debug.h
-private/Functions.h
-private/IsGhost.h
-private/LonLatMicroDeg.h
-private/ObjectRegistry.h
-private/Parameters.h
-private/PeriodicTransform.h
-private/PointIndex3.h
-private/PointIndex3.cc
-private/PointSet.h
-private/PointSet.cc
-private/Unique.h
+list( APPEND atlas_internals_srcs
+internals/AccumulateFaces.h
+internals/AccumulateFaces.cc
+internals/Bitflags.h
+internals/Checksum.h
+internals/Checksum.cc
+internals/Debug.h
+internals/Functions.h
+internals/IsGhost.h
+internals/LonLatMicroDeg.h
+internals/ObjectRegistry.h
+internals/Parameters.h
+internals/PeriodicTransform.h
+internals/PointIndex3.h
+internals/PointIndex3.cc
+internals/PointSet.h
+internals/PointSet.cc
+internals/Unique.h
 )
 
 
@@ -315,7 +315,7 @@ ecbuild_add_library( TARGET atlas
     ${atlas_interpolation_srcs}
     ${atlas_numerics_srcs}
     ${atlas_util_srcs}
-    ${atlas_private_srcs}
+    ${atlas_internals_srcs}
     ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
     ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
     ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h

@@ -24,6 +24,7 @@ using eckit::SharedPtr;
 using eckit::ScopedPtr;
 
 namespace atlas {
+namespace field {
 
 namespace {
 
@@ -64,12 +65,12 @@ State::State( const std::string& generator, const eckit::Parametrisation& params
   initialize(generator,params);
 }
 
-const Metadata& State::metadata() const
+const util::Metadata& State::metadata() const
 {
   return metadata_;
 }
 
-Metadata& State::metadata()
+util::Metadata& State::metadata()
 {
   return metadata_;
 }
@@ -302,7 +303,7 @@ int atlas__State__size(const State* This)
   return nb_fields;
 }
 
-Metadata* atlas__State__metadata (State* This)
+util::Metadata* atlas__State__metadata (State* This)
 {
   ASSERT( This );
   return &This->metadata();
@@ -312,6 +313,6 @@ Metadata* atlas__State__metadata (State* This)
 }
 //-----------------------------------------------------------------------------
 
-
-}  // namespace atlas
+} // namespace field
+} // namespace atlas
 

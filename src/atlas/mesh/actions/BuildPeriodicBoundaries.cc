@@ -14,21 +14,22 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/private/Parameters.h"
-#include "atlas/private/Bitflags.h"
-#include "atlas/private/LonLatMicroDeg.h"
-#include "atlas/private/PeriodicTransform.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/internals/Bitflags.h"
+#include "atlas/internals/LonLatMicroDeg.h"
+#include "atlas/internals/PeriodicTransform.h"
 #include "atlas/util/array/Array.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/array/IndexView.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 #include "atlas/util/parallel/mpi/mpi.h"
 
-using atlas::util::Topology;
-using atlas::util::LonLatMicroDeg;
-using atlas::util::PeriodicTransform;
+using atlas::internals::Topology;
+using atlas::internals::LonLatMicroDeg;
+using atlas::internals::PeriodicTransform;
 
 namespace atlas {
+namespace mesh {
 namespace actions {
 
 typedef gidx_t uid_t;
@@ -50,14 +51,14 @@ void build_periodic_boundaries( Mesh& mesh )
 
     mesh::Nodes& nodes = mesh.nodes();
 
-    ArrayView<int,1> flags( nodes.field("flags") );
-    IndexView<int,1> ridx ( nodes.remote_index() );
-    ArrayView<int,1> part ( nodes.partition() );
-    ArrayView<int,1> ghost ( nodes.ghost() );
+    util::array::ArrayView<int,1> flags( nodes.field("flags") );
+    util::array::IndexView<int,1> ridx ( nodes.remote_index() );
+    util::array::ArrayView<int,1> part ( nodes.partition() );
+    util::array::ArrayView<int,1> ghost ( nodes.ghost() );
 
     int nb_nodes = nodes.size();
 
-    ArrayView<double,2> lonlat ( nodes.lonlat() );
+    util::array::ArrayView<double,2> lonlat ( nodes.lonlat() );
 
     // Identify my master and slave nodes on own partition
     // master nodes are at x=0,  slave nodes are at x=2pi
@@ -124,10 +125,10 @@ void build_periodic_boundaries( Mesh& mesh )
       {
         found_master.reserve(master_nodes.size());
         send_slave_idx.reserve(master_nodes.size());
-        ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], make_shape(recvcounts[jproc]/3,3) );
+        util::array::ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], util::array::make_shape(recvcounts[jproc]/3,3) );
         for( size_t jnode=0; jnode<recv_slave.shape(0); ++jnode )
         {
-          LonLatMicroDeg slave( recv_slave(jnode,LON), recv_slave(jnode,LAT) );
+          LonLatMicroDeg slave( recv_slave(jnode,internals::LON), recv_slave(jnode,internals::LAT) );
           transform(slave,-1);
           uid_t slave_uid = slave.unique();
           if( master_lookup.count( slave_uid ) )
@@ -220,8 +221,7 @@ void atlas__build_periodic_boundaries ( Mesh* mesh) {
 }
 // ------------------------------------------------------------------
 
-
-
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 

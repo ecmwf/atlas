@@ -19,6 +19,7 @@
 using eckit::Factory;
 
 namespace atlas {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -47,7 +48,7 @@ Grid* Grid::create(const eckit::Parametrisation& p) {
   return NULL;
 }
 
-Grid* Grid::create(const Grid::uid_t& uid) { return grids::grid_from_uid(uid); }
+Grid* Grid::create(const Grid::uid_t& uid) { return grid::grid_from_uid(uid); }
 
 Grid::Grid() : domain_( Domain::makeGlobal() )
 {
@@ -61,7 +62,7 @@ Grid::Grid(const Domain& domain) : domain_(domain)
 
 Grid::~Grid() {}
 
-const atlas::Domain& Grid::domain() const
+const Domain& Grid::domain() const
 {
   return domain_;
 }
@@ -107,15 +108,15 @@ void Grid::fillLonLat(std::vector<double>& v) const {
     copyLonLatMemory(&v[0], size_t(sizeof(double)*v.size()));
 }
 
-void Grid::set_mesh(const Mesh& mesh)
+void Grid::set_mesh(const mesh::Mesh& mesh)
 {
-  mesh_ = eckit::SharedPtr<Mesh>( const_cast<Mesh*>(&mesh) );
+  mesh_ = eckit::SharedPtr<mesh::Mesh>(const_cast<mesh::Mesh*>(&mesh));
 }
 
-Mesh& Grid::mesh() const {
+mesh::Mesh& Grid::mesh() const {
   if( !mesh_ )
   {
-    mesh_.reset( new Mesh() );
+    mesh_.reset( new mesh::Mesh() );
     mesh_->createNodes(*this);
   }
   return *mesh_;
@@ -138,8 +139,9 @@ size_t Grid::copyLonLatMemory(double* pts, size_t size) const
     return sizePts;
 }
 
-bool Grid::same(const Grid& g) const { return uniqueId() == g.uniqueId(); }
+bool Grid::same(const grid::Grid& g) const { return uniqueId() == g.uniqueId(); }
 
 //------------------------------------------------------------------------------------------------------
 
-}  // namespace atlas
+} // namespace grid
+} // namespace atlas

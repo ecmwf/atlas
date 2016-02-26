@@ -22,10 +22,11 @@
 #include "atlas/functionspace/FunctionSpace.h"
 
 using eckit::geometry::LLPoint2;
-using atlas::grids::rgg::OctahedralRGG;
+using atlas::grid::OctahedralRGG;
 using eckit::operator<<;
 
 namespace atlas {
+namespace mesh {
 namespace actions {
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -34,12 +35,12 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
 {
     ASSERT( mesh.has_grid() );
 
-    const Grid& grid = mesh.grid();
-    const Domain& domain = grid.domain();
+    const grid::Grid& grid = mesh.grid();
+    const grid::Domain& domain = grid.domain();
 
     if( domain.global() ) return; // don't add virtual points to global domains
 
-    const Grid& octa = OctahedralRGG(16,4);
+    const grid::Grid& octa = OctahedralRGG(16,4);
 
     std::vector<LLPoint2> allPts;
     octa.lonlat(allPts);
@@ -70,15 +71,15 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
     nodes.metadata().set<size_t>("NbRealPts",nb_real_pts);
     nodes.metadata().set<size_t>("NbVirtualPts",nb_virtual_pts);
 
-    ArrayView<double,2> coords ( nodes.field("xyz") );
-    ArrayView<double,2> lonlat ( nodes.lonlat() );
-    ArrayView<gidx_t,1> gidx   ( nodes.global_index() );
+    util::array::ArrayView<double,2> coords ( nodes.field("xyz") );
+    util::array::ArrayView<double,2> lonlat ( nodes.lonlat() );
+    util::array::ArrayView<gidx_t,1> gidx   ( nodes.global_index() );
 
     for(size_t i = 0; i < nb_virtual_pts; ++i)
     {
         const size_t n = nb_real_pts + i;
-        lonlat(n,LON) = vPts[i].lon();
-        lonlat(n,LAT) = vPts[i].lat();
+        lonlat(n,internals::LON) = vPts[i].lon();
+        lonlat(n,internals::LAT) = vPts[i].lat();
         eckit::geometry::lonlat_to_3d(lonlat[n].data(),coords[n].data());
         gidx(n) = n+1;
     }
@@ -86,5 +87,6 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // actions
-} // atlas
+} // namespace actions
+} // namespace mesh
+} // namespace atlas

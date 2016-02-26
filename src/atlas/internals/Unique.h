@@ -17,13 +17,13 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/private/LonLatMicroDeg.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/LonLatMicroDeg.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/array/IndexView.h"
 
 namespace atlas {
-namespace util {
+namespace internals {
 
 // ----------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ namespace util {
   /// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
   uidx_t unique_lonlat( const double& lon, const double& lat );
   uidx_t unique_lonlat( const double lonlat[] );
-  uidx_t unique_lonlat( const ArrayView<double,1>& lonlat );
+  uidx_t unique_lonlat( const util::array::ArrayView<double,1>& lonlat );
 
   /// @brief Compute unique positive index from lon-lat coordinates in degrees.
   /// coordinates are stored in order:
@@ -69,7 +69,7 @@ namespace util {
       /// The assumption is that the elements exist in a lon-lat domain and don't
       //  degenerate to a line.
       /// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
-      uidx_t operator()( const IndexView<int,1>& elem_nodes ) const;
+      uidx_t operator()( const util::array::IndexView<int,1>& elem_nodes ) const;
 
       /// @brief Compute unique positive index of element defined by node indices.
       /// The assumption is that the elements exist in a lon-lat domain and don't
@@ -81,7 +81,7 @@ namespace util {
       void update();
     private:
       const mesh::Nodes* nodes;
-      ArrayView<double,2> lonlat;
+      util::array::ArrayView<double,2> lonlat;
   };
 
 // ----------------------------------------------------------------------------
@@ -146,7 +146,7 @@ inline uidx_t unique_lonlat( const double lonlat[] ) {
   return detail::uniqueT<uidx_t>( microdeg(lonlat[LON]), microdeg(lonlat[LAT]) );
 }
 
-inline uidx_t unique_lonlat( const ArrayView<double,1>& lonlat ) {
+inline uidx_t unique_lonlat( const util::array::ArrayView<double,1>& lonlat ) {
   return detail::uniqueT<uidx_t>( microdeg(lonlat[LON]), microdeg(lonlat[LAT]) );
 }
 
@@ -181,7 +181,7 @@ inline uidx_t UniqueLonLat::operator()( int node ) const
   return unique_lonlat( lonlat[node] );
 }
 
-inline uidx_t UniqueLonLat::operator()( const IndexView<int,1>& elem_nodes ) const
+inline uidx_t UniqueLonLat::operator()( const util::array::IndexView<int,1>& elem_nodes ) const
 {
   double centroid[2];
   centroid[LON] = 0.;
@@ -225,12 +225,12 @@ inline uidx_t UniqueLonLat::operator()( const int elem_nodes[], size_t npts ) co
 
 inline void UniqueLonLat::update()
 {
-  lonlat = ArrayView<double,2> ( nodes->lonlat() );
+  lonlat = util::array::ArrayView<double,2> ( nodes->lonlat() );
 }
 
 // ----------------------------------------------------------------------------
 
-} // namespace util
+} // namespace internals
 } // namespace atlas
 
 #endif

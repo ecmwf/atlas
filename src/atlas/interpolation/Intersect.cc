@@ -13,7 +13,7 @@
 #include <iostream>
 
 namespace atlas {
-namespace geometry {
+namespace interpolation {
 
 Intersect::Intersect() : u(0.), v(0.), t(0.), success_(false) {}
 
@@ -22,5 +22,5 @@ void Intersect::print(std::ostream& s) const
     s << "Intersect[u=" << u << ",v=" << v << ",t=" << t <<",success=" << success_ << "]";
 }
 
-}  // namespace geometry
+}  // namespace interpolation
 }  // namespace atlas

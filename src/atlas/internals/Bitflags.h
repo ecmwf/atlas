@@ -14,7 +14,7 @@
 #include <string>
 
 namespace atlas {
-namespace util {
+namespace internals {
 
 class Bitflags
 {
@@ -81,7 +81,7 @@ public:
   };
 };
 
-} // namespace util
+} // namespace internals
 } // namespace atlas
 
 #endif

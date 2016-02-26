@@ -14,7 +14,7 @@
 #include "atlas/util/runtime/ErrorHandling.h"
 
 namespace atlas {
-
+namespace field {
 //------------------------------------------------------------------------------------------------------
 
 
@@ -134,6 +134,6 @@ Field* atlas__FieldSet__field_by_idx  (FieldSet* This, size_t idx)
 }
 //-----------------------------------------------------------------------------
 
-
-}  // namespace atlas
+} // namespace field
+} // namespace atlas
 

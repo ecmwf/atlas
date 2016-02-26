@@ -20,7 +20,8 @@
 #include "atlas/grid/OctahedralRGG.h"
 
 namespace atlas {
-namespace grids {
+namespace grid {
+namespace predefined {
 namespace rgg {
 
 //------------------------------------------------------------------------------------------------------
@@ -81,7 +82,8 @@ DEFINE_GRID(N8000);
 //------------------------------------------------------------------------------------------------------
 
 } // namespace rgg
-} // namespace grids
+} // namespace predefined
+} // namespace grid
 } // namespace atlas
 
 #endif // atlas_grids_reduced_gg_reduced_gg_h

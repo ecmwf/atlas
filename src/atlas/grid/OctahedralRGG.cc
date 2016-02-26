@@ -11,8 +11,7 @@
 #include "atlas/grid/OctahedralRGG.h"
 
 namespace atlas {
-namespace grids {
-namespace rgg {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -65,6 +64,5 @@ eckit::ConcreteBuilderT1<Grid,OctahedralRGG> builder_OctahedralRGG (OctahedralRG
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace rgg
-} // namespace grids
+} // namespace grid
 } // namespace atlas

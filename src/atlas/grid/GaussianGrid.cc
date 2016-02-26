@@ -14,7 +14,7 @@
 #include "atlas/grid/GaussianLatitudes.h"
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ void GaussianGrid::setup(const size_t N)
 void GaussianGrid::setup_lat_hemisphere(const size_t N, const double lats[])
 {
   std::vector<long> nlons(N,4*N);
-  ReducedGrid::setup_lat_hemisphere(N,lats,nlons.data(),DEG);
+  ReducedGrid::setup_lat_hemisphere(N,lats,nlons.data(),internals::DEG);
 }
 
 eckit::Properties GaussianGrid::spec() const
@@ -99,5 +99,5 @@ eckit::Properties GaussianGrid::spec() const
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas

@@ -19,7 +19,7 @@ using eckit::MD5;
 using eckit::BadParameter;
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -129,7 +129,7 @@ void ReducedGrid::setup( const size_t nlat, const double lats[], const long nlon
   setup(nlat,lats,nlons,lonmin.data(),lonmax.data());
 }
 
-void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[], const AngleUnit unit)
+void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[], const internals::AngleUnit unit)
 {
   std::vector<long> nlons(2*N);
   std::copy( lon, lon+N, nlons.begin() );
@@ -137,7 +137,7 @@ void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const
   std::vector<double> lats(2*N);
   std::copy( lat, lat+N, lats.begin() );
   std::reverse_copy( lat, lat+N, lats.begin()+N );
-  double convert = (unit == RAD ? 180.*M_1_PI : 1.);
+  double convert = (unit == internals::RAD ? 180.*M_1_PI : 1.);
   for(size_t j = 0; j < N; ++j)
     lats[j] *= convert;
   for(size_t j = N; j < 2*N; ++j)
@@ -345,5 +345,5 @@ void atlas__ReducedGrid__lat__all(ReducedGrid* This, const double* &lat, int &si
   size = This->latitudes().size();
 }
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas

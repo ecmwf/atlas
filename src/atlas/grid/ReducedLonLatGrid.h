@@ -14,7 +14,7 @@
 #include "atlas/grid/ReducedGrid.h"
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -68,7 +68,7 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas
 
 #endif // atlas_grids_ReducedLonLatGrid_h

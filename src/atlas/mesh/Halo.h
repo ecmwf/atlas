@@ -13,7 +13,7 @@
 
 #include <cstddef>
 
-namespace atlas { class Mesh; }
+namespace atlas { namespace mesh { class Mesh; } }
 
 namespace atlas {
 namespace mesh {

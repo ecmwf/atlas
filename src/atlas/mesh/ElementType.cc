@@ -9,7 +9,7 @@
  */
 
 #include "atlas/mesh/ElementType.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 
 namespace atlas {

@@ -11,6 +11,8 @@
 #include "atlas/util/parallel/mpi/mpi.h"
 
 namespace atlas {
+namespace util {
+namespace parallel {
 namespace mpi {
 
 extern "C"
@@ -26,4 +28,6 @@ extern "C"
 }
 
 } // namespace mpi
-} // namepsace atlas
+} // namespace parallel
+} // namespace util
+} // namespace atlas

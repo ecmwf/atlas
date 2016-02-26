@@ -24,7 +24,7 @@
 #include "atlas/grid/predefined/rgg/rgg.h"
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 void load();
 void unload();
@@ -46,7 +46,7 @@ extern "C"
   void atlas__grids__load();
 }
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas
 
 #endif // atlas_grids_grids_h

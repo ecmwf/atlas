@@ -572,9 +572,9 @@ namespace test {
     }
 
     template< typename DATA_TYPE>
-    atlas::ArrayT<DATA_TYPE> create_field(int idx1=IDX_NOTUSED, int idx2=IDX_NOTUSED, int idx3=IDX_NOTUSED, int idx4=IDX_NOTUSED, int idx5=IDX_NOTUSED, int idx6=IDX_NOTUSED, int idx7=IDX_NOTUSED)
+    atlas::util::array::ArrayT<DATA_TYPE> create_field(int idx1=IDX_NOTUSED, int idx2=IDX_NOTUSED, int idx3=IDX_NOTUSED, int idx4=IDX_NOTUSED, int idx5=IDX_NOTUSED, int idx6=IDX_NOTUSED, int idx7=IDX_NOTUSED)
     {
-      atlas::ArrayShape shape; shape.reserve(7);
+      atlas::util::array::ArrayShape shape; shape.reserve(7);
       if( idx1!=IDX_NOTUSED ) shape.push_back(range(idx1));
       if( idx2!=IDX_NOTUSED ) shape.push_back(range(idx2));
       if( idx3!=IDX_NOTUSED ) shape.push_back(range(idx3));
@@ -582,7 +582,7 @@ namespace test {
       if( idx5!=IDX_NOTUSED ) shape.push_back(range(idx5));
       if( idx6!=IDX_NOTUSED ) shape.push_back(range(idx6));
       if( idx7!=IDX_NOTUSED ) shape.push_back(range(idx7));
-      atlas::ArrayT<DATA_TYPE> field(shape);
+      atlas::util::array::ArrayT<DATA_TYPE> field(shape);
       return field;
     }
 
@@ -728,7 +728,7 @@ namespace test {
   }
 
   template <typename DATA_TYPE>
-  IndexView<DATA_TYPE,2> make_IndexView(atlas::ArrayT<DATA_TYPE>& array, NewFunctionSpace& elements, int element_type_index)
+  IndexView<DATA_TYPE,2> make_IndexView(atlas::util::array::ArrayT<DATA_TYPE>& array, NewFunctionSpace& elements, int element_type_index)
   {
     IndexView<DATA_TYPE,2> view;
     size_t offset=0;
@@ -803,7 +803,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
   BOOST_CHECK_EQUAL( fs.nb_elements() , 4 );
 
   /// Allocate array for all connectivity across all elements
-  atlas::ArrayT<int> element_node_connectivity(fs.nb_elements(),fs.N_max());
+  atlas::util::array::ArrayT<int> element_node_connectivity(fs.nb_elements(),fs.N_max());
 
   /// Access the data across all elements
   atlas::IndexView<int,2> elem_connectivity(element_node_connectivity);
@@ -855,17 +855,17 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
   // edges.set_nodes( nodes );
   edges.add_elements("LineP0",11);
 
-  atlas::ArrayT<double> press_ifs(fs.nproma(),fs.nb_levels(),nodes.nblk());
-  atlas::ArrayT<double> press = fs.create_field<double>(IDX_LEVEL,IDX_NODE);
+  atlas::util::array::ArrayT<double> press_ifs(fs.nproma(),fs.nb_levels(),nodes.nblk());
+  atlas::util::array::ArrayT<double> press = fs.create_field<double>(IDX_LEVEL,IDX_NODE);
   BOOST_CHECK_EQUAL( press.size(), fs.nb_levels()*fs.nb_nodes() );
 
-  atlas::ArrayT<double> wind_uv = fs.create_field<double>(2,IDX_LEVEL,IDX_NODE);
+  atlas::util::array::ArrayT<double> wind_uv = fs.create_field<double>(2,IDX_LEVEL,IDX_NODE);
   BOOST_CHECK_EQUAL( wind_uv.size(), 2*fs.nb_levels()*fs.nb_nodes() );
 
   BOOST_CHECK_EQUAL( fs.nproma(), 4);
   BOOST_CHECK_EQUAL( fs.nblk(), 2);
   BOOST_CHECK_EQUAL( fs.nb_nodes(), 8);
-  atlas::ArrayT<double> wind_uv_ifs = fs.create_field<double>(IDX_NPROMA,IDX_LEVEL,2,IDX_BLK);
+  atlas::util::array::ArrayT<double> wind_uv_ifs = fs.create_field<double>(IDX_NPROMA,IDX_LEVEL,2,IDX_BLK);
   BOOST_CHECK_EQUAL( wind_uv_ifs.size(), 2*fs.nb_levels()*fs.nb_nodes() );
 
   BOOST_CHECK_EQUAL( wind_uv_ifs.rank(), 4);

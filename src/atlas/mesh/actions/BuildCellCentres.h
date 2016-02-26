@@ -15,6 +15,7 @@ namespace atlas {
 
 class Mesh;
 
+namespace mesh {
 namespace actions {
 
 /// Generates the cell centres on each cell
@@ -27,6 +28,7 @@ public:
 };
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 
 #endif

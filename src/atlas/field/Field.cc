@@ -23,6 +23,7 @@
 
 
 namespace atlas {
+namespace field {
 
 template<class T>
 inline std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
@@ -42,32 +43,38 @@ Field* Field::create(const eckit::Parametrisation& params)
     return creator->create_field(params);
   }
   else
-    throw eckit::Exception("Could not find parameter 'creator' in Parametrisation for call to Field::create()");
+    throw eckit::Exception("Could not find parameter 'creator' "
+                           "in Parametrisation for call to Field::create()");
 
   return 0;
 }
 
-Field* Field::create(const std::string& name, DataType datatype, const ArrayShape& shape)
+Field* Field::create(
+    const std::string& name,
+    util::DataType           datatype,
+    const util::array::ArrayShape&  shape)
 {
   return new Field(name,datatype,shape);
 }
 
-Field* Field::create( const std::string& name, Array* array )
+Field* Field::create( const std::string& name, util::array::Array* array )
 {
   return new Field(name,array);
 }
 
 // -------------------------------------------------------------------------
 
-Field::Field(const std::string& name, DataType datatype, const ArrayShape& shape):
-  name_(name), nb_levels_(0), functionspace_(0)
+Field::Field(
+    const std::string& name,
+    util::DataType           datatype,
+    const util::array::ArrayShape&  shape) : name_(name), nb_levels_(0), functionspace_(0)
 {
-  array_ = Array::create(datatype,shape);
+  array_ = util::array::Array::create(datatype,shape);
   array_->attach();
 }
 
 
-Field::Field(const std::string& name, Array* array):
+Field::Field(const std::string& name, util::array::Array* array):
   name_(name), nb_levels_(0), functionspace_(0)
 {
   array_ = array;
@@ -113,7 +120,7 @@ std::ostream& operator<<( std::ostream& os, const Field& f)
   return os;
 }
 
-void Field::resize(const ArrayShape& shape)
+void Field::resize(const util::array::ArrayShape& shape)
 {
     array_->resize(shape);
 }
@@ -124,9 +131,9 @@ void Field::insert(size_t idx1, size_t size1 )
 }
 
 
-void Field::set_functionspace(const FunctionSpace* functionspace)
+void Field::set_functionspace(const functionspace::FunctionSpace* functionspace)
 {
-  functionspace_ = const_cast<FunctionSpace*>(functionspace);
+  functionspace_ = const_cast<functionspace::FunctionSpace*>(functionspace);
 
   // In case functionspace is not attached, increase owners, so that
   // this field will not manage its lifetime.
@@ -144,7 +151,7 @@ template <> const float* Field::data() const
     std::stringstream msg;
     msg << "Could not cast data for field " << name()
         << " with datatype " << array_->datatype().str() << " to "
-        << DataType::str<float>();
+        << util::DataType::str<float>();
     throw eckit::BadCast(msg.str(),Here());
   }
   return 0;
@@ -162,7 +169,7 @@ template <> const double* Field::data() const
     std::stringstream msg;
     msg << "Could not cast data for field " << name()
         << " with datatype " << array_->datatype().str() << " to "
-        << DataType::str<double>();
+        << util::DataType::str<double>();
     throw eckit::BadCast(msg.str(),Here());
   }
   return 0;
@@ -180,7 +187,7 @@ template <> const int* Field::data() const
     std::stringstream msg;
     msg << "Could not cast data for field " << name()
         << " with datatype " << array_->datatype().str() << " to "
-        << DataType::str<int>();
+        << util::DataType::str<int>();
     throw eckit::BadCast(msg.str(),Here());
   }
   return 0;
@@ -198,7 +205,7 @@ template <> const long* Field::data() const
     std::stringstream msg;
     msg << "Could not cast data for field " << name()
         << " with datatype " << array_->datatype().str() << " to "
-        << DataType::str<long>();
+        << util::DataType::str<long>();
     throw eckit::BadCast(msg.str(),Here());
   }
   return 0;
@@ -295,7 +302,7 @@ int atlas__Field__levels (Field* This)
   return 0;
 }
 
-Metadata* atlas__Field__metadata (Field* This)
+util::Metadata* atlas__Field__metadata (Field* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -313,7 +320,7 @@ int atlas__Field__has_functionspace(Field* This)
   return 0;
 }
 
-FunctionSpace* atlas__Field__functionspace (Field* This)
+functionspace::FunctionSpace* atlas__Field__functionspace (Field* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -374,5 +381,6 @@ void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &f
 
 // ------------------------------------------------------------------
 
+} // namespace field
 } // namespace atlas
 

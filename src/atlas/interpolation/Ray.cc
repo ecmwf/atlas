@@ -15,7 +15,7 @@
 //----------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace geometry {
+namespace interpolation {
 
 Ray::Ray(const double *p) {
     orig = Vector3D::Map(p);
@@ -36,6 +36,6 @@ std::ostream& operator<<(std::ostream& s, const Ray& p) {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace geometry
+}  // namespace interpolation
 }  // namespace atlas
 

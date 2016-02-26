@@ -13,11 +13,11 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/private/AccumulateFaces.h"
+#include "atlas/internals/AccumulateFaces.h"
 #include "atlas/util/array/IndexView.h"
 
 namespace atlas {
-namespace util {
+namespace internals {
 
 void accumulate_facets(
     const mesh::HybridElements &cells,
@@ -130,5 +130,5 @@ void accumulate_facets(
 }
 
 
-} // namespace util
+} // namespace internals
 } // namespace atlas

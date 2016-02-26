@@ -14,13 +14,18 @@
 #include <string>
 
 namespace atlas {
+namespace field {
+    class Field;
+} }
 
-class Mesh;
-class Field;
+namespace atlas {
 namespace mesh {
+  class Mesh;
   class Nodes;
-}
+} }
 
+namespace atlas {
+namespace mesh {
 namespace actions {
 
 /// Creates a XYZ field from the (lon,lat) field
@@ -29,8 +34,8 @@ public:
 
     explicit BuildXYZField(const std::string& name = "xyz");
 
-    Field& operator()(Mesh&) const;
-    Field& operator()(mesh::Nodes&) const;
+    field::Field& operator()(Mesh&) const;
+    field::Field& operator()(mesh::Nodes&) const;
 
 private:
 
@@ -39,6 +44,7 @@ private:
 };
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 
 #endif

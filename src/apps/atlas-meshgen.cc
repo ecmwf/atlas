@@ -44,8 +44,8 @@
 
 using namespace eckit;
 using namespace atlas;
-using namespace atlas::actions;
-using namespace atlas::grids;
+using namespace atlas::mesh::actions;
+using namespace atlas::grid;
 using namespace atlas::functionspace;
 using namespace atlas::mesh;
 
@@ -143,16 +143,16 @@ private:
 void Meshgen2Gmsh::run()
 {
   if( !do_run ) return;
-  grids::load();
+  grid::load();
 
   ReducedGrid::Ptr grid;
   try{ grid = ReducedGrid::Ptr( ReducedGrid::create(key) ); }
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;
-  Mesh::Ptr mesh;
+  mesh::Mesh::Ptr mesh;
 
-  mesh = Mesh::Ptr( generate_mesh(*grid) );
+  mesh = mesh::Mesh::Ptr( generate_mesh(*grid) );
 
   build_nodes_parallel_fields(mesh->nodes());
   build_periodic_boundaries(*mesh);
@@ -181,11 +181,11 @@ void Meshgen2Gmsh::run()
   if( stats )
     build_statistics(*mesh);
 
-  atlas::io::Gmsh gmsh;
+  atlas::util::io::Gmsh gmsh;
   gmsh.options.set("info",info);
   if( surfdim == 3 )
   {
-    actions::BuildXYZField("xyz")(*mesh);
+    mesh::actions::BuildXYZField("xyz")(*mesh);
     gmsh.options.set("nodes",std::string("xyz"));
   }
   gmsh.write( *mesh, path_out );

@@ -14,7 +14,7 @@
 #include "atlas/grid/ReducedGaussianGrid.h"
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -81,7 +81,7 @@ protected:
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas
 
 #endif // atlas_grids_GaussianGrid_h

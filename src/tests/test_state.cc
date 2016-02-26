@@ -31,6 +31,8 @@
 
 // ------------------------------------------------------------------
 
+using namespace atlas::field;
+
 namespace atlas {
 namespace test {
 
@@ -40,31 +42,31 @@ namespace test {
 // ---  Declaration (in .h file)
 class MyStateGenerator : public StateGenerator {
 public:
-  MyStateGenerator( const eckit::Parametrisation& p = Config() ) : StateGenerator(p) {}
+  MyStateGenerator( const eckit::Parametrisation& p = util::Config() ) : StateGenerator(p) {}
   ~MyStateGenerator() {}
-  virtual void generate( State& state, const eckit::Parametrisation& p = Config() ) const;
+  virtual void generate( State& state, const eckit::Parametrisation& p = util::Config() ) const;
 };
 
 // ---  Implementation (in .cc file)
 void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p ) const
 {
-  const Config *params = dynamic_cast<const Config*>(&p);
+  const util::Config *params = dynamic_cast<const util::Config*>(&p);
   if( !params )
   {
-    throw eckit::Exception("Parametrisation has to be of atlas::Config type");
+    throw eckit::Exception("Parametrisation has to be of atlas::util::Config type");
   }
 
-  Config geometry;
+  util::Config geometry;
   if( ! params->get("geometry",geometry) ) {
     throw eckit::BadParameter("Could not find 'geometry' in Parametrisation",Here());
   }
 
   std::string grid_uid;
-  if( geometry.get("grid",grid_uid) )
+  if( geometry.get("grid", grid_uid) )
   {
-    eckit::ScopedPtr<Grid> grid( Grid::create( grid_uid ) );
-    if( !geometry.has("ngptot") ) {
-      geometry.set("ngptot",grid->npts());
+    eckit::ScopedPtr<grid::Grid> grid(grid::Grid::create(grid_uid));
+    if (!geometry.has("ngptot")) {
+      geometry.set("ngptot", grid->npts());
     }
   }
 
@@ -72,18 +74,18 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
     throw eckit::BadParameter("Could not find 'ngptot' in Parametrisation");
   }
 
-  std::vector<Config> fields;
+  std::vector<util::Config> fields;
   if( params->get("fields",fields) )
   {
     for( size_t i=0; i<fields.size(); ++i )
     {
-      Config fieldparams;
+      util::Config fieldparams;
       // Subsequent "set" calls can overwrite eachother, so that
       // finetuning is possible in e.g. the fields Parametrisation (such as creator, nlev, ngptot)
       fieldparams.set("creator","IFS");
       fieldparams.set(geometry);
       fieldparams.set(fields[i]);
-      state.add( Field::create( fieldparams ) );
+      state.add( field::Field::create( fieldparams ) );
 
       // debug info
       std::stringstream s;
@@ -117,9 +119,9 @@ BOOST_AUTO_TEST_CASE( state )
   State state;
   BOOST_CHECK_EQUAL( state.size() , 0 );
 
-  state.add( Field::create<double>( "myfield", make_shape(10,1) ) );
-  state.add( Field::create<double>( "", make_shape(10,2) ) );
-  state.add( Field::create<double>( "", make_shape(10,3) ) );
+  state.add( field::Field::create<double>( "myfield", util::array::make_shape(10,1) ) );
+  state.add( field::Field::create<double>( "", util::array::make_shape(10,2) ) );
+  state.add( field::Field::create<double>( "", util::array::make_shape(10,3) ) );
 
   BOOST_CHECK_EQUAL( state.size() , 3 );
   BOOST_CHECK( state.has("myfield") );
@@ -149,34 +151,34 @@ BOOST_AUTO_TEST_CASE( state_generator )
 BOOST_AUTO_TEST_CASE( state_create )
 {
 
-  Config p;
-  Config geometry;
+  util::Config p;
+  util::Config geometry;
   geometry.set("grid","O80");
   geometry.set("ngptot",350);
   geometry.set("nproma",3);
   geometry.set("nlev",5);
   p.set("geometry",geometry);
 
-  std::vector<Config> fields(5);
+  std::vector<util::Config> fields(5);
   fields[0].set("name","temperature");
-  fields[0].set("datatype",DataType::real32().str());
+  fields[0].set("datatype",util::DataType::real32().str());
 
   fields[1].set("name","wind");
   fields[1].set("nvar",2); // vector field u,v
-  fields[1].set("datatype",DataType::real64().str());
+  fields[1].set("datatype",util::DataType::real64().str());
 
   fields[2].set("name","soiltype");
-  fields[2].set("datatype",DataType::int32().str());
+  fields[2].set("datatype",util::DataType::int32().str());
   fields[2].set("nlev",1); // We can overwrite nlev from geometry here
 
   fields[3].set("name","GFL");
   fields[3].set("nvar",12); // assume 12 variables in GFL array
-  fields[3].set("datatype",DataType::real64().str());
+  fields[3].set("datatype",util::DataType::real64().str());
 
   fields[4].set("name","array");
-  fields[4].set("datatype",DataType::int64().str());
+  fields[4].set("datatype",util::DataType::int64().str());
   fields[4].set("creator","ArraySpec");
-  fields[4].set("shape",make_shape(10,2));
+  fields[4].set("shape",util::array::make_shape(10,2));
 
   p.set("fields",fields);
 
@@ -186,7 +188,7 @@ BOOST_AUTO_TEST_CASE( state_create )
   Log::info() << "json = " << json.str() << std::endl;
 
   // And we can create back parameters from json:
-  Config from_json_stream(json);
+  util::Config from_json_stream(json);
 
   // And if we have a json file, we could create Parameters from the file:
     // StateGenerater::Parameters from_json_file( eckit::PathName("file.json") );
@@ -202,16 +204,16 @@ BOOST_AUTO_TEST_CASE( state_create )
   Log::info() << state.field("soiltype")    << std::endl;
   Log::info() << state.field("GFL")         << std::endl;
 
-  ArrayView<float,4> temperature( state.field("temperature") );
+  util::array::ArrayView<float,4> temperature( state.field("temperature") );
   temperature(0,0,0,0) = 0;
 
-  ArrayView<double,4> wind( state.field("wind") );
+  util::array::ArrayView<double,4> wind( state.field("wind") );
   wind(0,0,0,0) = 0;
 
-  ArrayView<int,4> soiltype( state.field("soiltype") );
+  util::array::ArrayView<int,4> soiltype( state.field("soiltype") );
   soiltype(0,0,0,0) = 0;
 
-  ArrayView<long,2> array( state["array"] );
+  util::array::ArrayView<long,2> array( state["array"] );
   array(0,0) = 0;
 
 }

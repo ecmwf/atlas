@@ -40,7 +40,7 @@
 /// There is also an easier way to wrap Field and Array classes:
 ///
 /// Example 3:
-///     ArrayView<int,3> fieldview( Field );
+///     ArrayView<int,3> fieldview( field::Field );
 ///     ArrayView<int,2> arrayview( Array );
 ///
 /// @author Willem Deconinck
@@ -51,9 +51,13 @@
 #include <vector>
 
 namespace atlas {
+namespace util {
+namespace array {
   class Array;
   template <typename DATA_TYPE, int RANK=0> class ArrayView;
-}
+} // namespace array
+} // namespace util
+} // namespace atlas
 
 //------------------------------------------------------------------------------------------------------
 
@@ -63,6 +67,8 @@ namespace atlas {
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+namespace util {
+namespace array {
 
 template< typename DATA_TYPE >
 class ArrayView<DATA_TYPE,0>
@@ -343,6 +349,8 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace array
+} // namespace util
 } // namespace atlas
 
 #include "atlas/util/array/ArrayView_impl.h"

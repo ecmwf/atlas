@@ -15,16 +15,16 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/private/Parameters.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/util/runtime/Log.h"
 #include "atlas/util/array/ArrayView.h"
 
 using eckit::MD5;
 
 namespace atlas {
-namespace grids {
+namespace grid {
 
-Unstructured::Unstructured(const Mesh& m) :
+Unstructured::Unstructured(const mesh::Mesh& m) :
   points_ ( new std::vector< Grid::Point > (m.nodes().size() ) )
 {
   double lat_min = std::numeric_limits<double>::max();
@@ -32,19 +32,19 @@ Unstructured::Unstructured(const Mesh& m) :
   double lon_min = lat_min;
   double lon_max = lat_max;
 
-  ArrayView<double,2> lonlat (m.nodes().lonlat());
+  util::array::ArrayView<double,2> lonlat (m.nodes().lonlat());
   std::vector<Point> &p = *points_;
   const size_t npts = p.size();
 
   for( size_t n=0; n<npts; ++n) {
-      p[n].assign(lonlat(n,LON),lonlat(n,LAT));
+      p[n].assign(lonlat(n,internals::LON),lonlat(n,internals::LAT));
       lat_min = std::min( lat_min, p[n].lat() );
       lat_max = std::max( lat_max, p[n].lat() );
       lon_min = std::min( lon_min, p[n].lon() );
       lon_max = std::max( lon_max, p[n].lon() );
   }
   set_mesh(m);
-  const_cast<Mesh&>(m).set_grid(*this);
+  const_cast<mesh::Mesh&>(m).set_grid(*this);
 }
 
 
@@ -150,5 +150,5 @@ void Unstructured::print(std::ostream& os) const
 
 register_BuilderT1(Grid, Unstructured, Unstructured::grid_type_str());
 
-} // namespace grids
+} // namespace grid
 } // namespace atlas

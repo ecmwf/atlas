@@ -15,6 +15,7 @@ namespace atlas {
 
 class Mesh;
 
+namespace mesh {
 namespace actions {
 
 /// Adds virtual nodes to the mesh that aren't contained in the Grid Domain
@@ -26,6 +27,7 @@ public:
 };
 
 } // namespace actions
+} // namespace mesh
 } // namespace atlas
 
 #endif

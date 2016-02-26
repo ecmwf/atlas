@@ -20,7 +20,7 @@ using eckit::Translator;
 using eckit::Factory;
 
 namespace atlas {
-namespace grids {
+namespace grid {
   
 size_t regex_count_parens(const std::string& string)
 {
@@ -95,7 +95,7 @@ Grid* grid_from_uid(const std::string& uid)
 {
   if( Factory<Grid>::instance().exists(uid) )
   {
-    return Grid::create( Config("grid_type",uid) );
+    return Grid::create(util::Config("grid_type", uid));
   }
   else
   {
@@ -103,7 +103,7 @@ Grid* grid_from_uid(const std::string& uid)
     Regex octahedral_reduced_gaussian_grid ("^O([0-9]+)$");
     Regex regular_gaussian_grid            ("^F([0-9]+)$");
     
-    Config gridparams;
+    util::Config gridparams;
     Translator<std::string,int> to_int;
     std::vector<std::string> matches;
     if( classical_reduced_gaussian_grid.match(uid) )
@@ -113,14 +113,14 @@ Grid* grid_from_uid(const std::string& uid)
     else if( octahedral_reduced_gaussian_grid.match(uid,matches) )
     {
       int N = to_int(matches[0]);
-      gridparams.set("grid_type",rgg::OctahedralRGG::grid_type_str());
+      gridparams.set("grid_type", OctahedralRGG::grid_type_str());
       gridparams.set("N",N);
       return Grid::create( gridparams );
     }
     else if( regular_gaussian_grid.match(uid,matches) )
     {
       int N = to_int(matches[0]);
-      gridparams.set("grid_type",GaussianGrid::grid_type_str());
+      gridparams.set("grid_type", GaussianGrid::grid_type_str());
       gridparams.set("N",N);
       return Grid::create( gridparams );
     }
@@ -178,7 +178,7 @@ void load_grid()
 
 void load()
 {
-  Log::debug(2) << "Loading library [atlas::grids]" << std::endl;
+  Log::debug(2) << "Loading library [atlas::grid]" << std::endl;
 
   // We have to touch all classes we want to register for static linking.
 
@@ -189,31 +189,31 @@ void load()
   load_grid<ReducedLonLatGrid>();
   load_grid<Unstructured>();
 
-  load_grid<rgg::N16>();
-  load_grid<rgg::N24>();
-  load_grid<rgg::N32>();
-  load_grid<rgg::N48>();
-  load_grid<rgg::N64>();
-  load_grid<rgg::N80>();
-  load_grid<rgg::N96>();
-  load_grid<rgg::N128>();
-  load_grid<rgg::N160>();
-  load_grid<rgg::N200>();
-  load_grid<rgg::N256>();
-  load_grid<rgg::N320>();
-  load_grid<rgg::N400>();
-  load_grid<rgg::N512>();
-  load_grid<rgg::N576>();
-  load_grid<rgg::N640>();
-  load_grid<rgg::N800>();
-  load_grid<rgg::N1024>();
-  load_grid<rgg::N1280>();
-  load_grid<rgg::N1600>();
-  load_grid<rgg::N2000>();
-  load_grid<rgg::N4000>();
-  load_grid<rgg::N8000>();
+  load_grid<predefined::rgg::N16>();
+  load_grid<predefined::rgg::N24>();
+  load_grid<predefined::rgg::N32>();
+  load_grid<predefined::rgg::N48>();
+  load_grid<predefined::rgg::N64>();
+  load_grid<predefined::rgg::N80>();
+  load_grid<predefined::rgg::N96>();
+  load_grid<predefined::rgg::N128>();
+  load_grid<predefined::rgg::N160>();
+  load_grid<predefined::rgg::N200>();
+  load_grid<predefined::rgg::N256>();
+  load_grid<predefined::rgg::N320>();
+  load_grid<predefined::rgg::N400>();
+  load_grid<predefined::rgg::N512>();
+  load_grid<predefined::rgg::N576>();
+  load_grid<predefined::rgg::N640>();
+  load_grid<predefined::rgg::N800>();
+  load_grid<predefined::rgg::N1024>();
+  load_grid<predefined::rgg::N1280>();
+  load_grid<predefined::rgg::N1600>();
+  load_grid<predefined::rgg::N2000>();
+  load_grid<predefined::rgg::N4000>();
+  load_grid<predefined::rgg::N8000>();
 
-  load_grid<rgg::OctahedralRGG>();
+  load_grid<OctahedralRGG>();
 
 }
 
@@ -266,7 +266,7 @@ void load()
 
   void atlas__grids__load()
   {
-    atlas::grids::load();
+    atlas::grid::load();
   }
 
   void atlas__ReducedGrid__delete(ReducedGrid* This)
@@ -276,8 +276,6 @@ void load()
 
 //}
 
-
-
-} // namespace grids
+} // namespace grid
 } // namespace atlas
 

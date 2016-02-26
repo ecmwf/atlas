@@ -15,7 +15,7 @@
 #include "atlas/atlas.h"
 #include "atlas/util/parallel/mpi/mpi.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/private/Debug.h"
+#include "atlas/internals/Debug.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
@@ -37,16 +37,16 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 BOOST_AUTO_TEST_CASE( test_read_write )
 {
     using namespace atlas;
-    using namespace atlas::io;
+    using namespace atlas::util::io;
 
-    // Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
-    Mesh::Ptr mesh = test::generate_mesh(grids::rgg::N128());
+    // mesh::Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
+    mesh::Mesh::Ptr mesh = test::generate_mesh(grid::predefined::rgg::N128());
 
     Gmsh gmsh;
     gmsh.options.set("ascii",true);
     gmsh.write(*mesh,"mesh.msh");
 
-    BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh().read( "mesh.msh" ) ) );
+    BOOST_REQUIRE_NO_THROW( mesh = mesh::Mesh::Ptr( Gmsh().read( "mesh.msh" ) ) );
 }
 
 } // namespace test

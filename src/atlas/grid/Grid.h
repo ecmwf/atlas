@@ -30,15 +30,16 @@
 #include "atlas/grid/BoundBox.h"
 #include "atlas/grid/Domain.h"
 #include "atlas/util/Config.h"
-#include "atlas/private/ObjectRegistry.h"
+#include "atlas/internals/ObjectRegistry.h"
+
+namespace atlas { namespace mesh { class Mesh; } }
 
 namespace atlas {
-
-class Mesh;
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-class Grid : public eckit::Owned, public util::Registered<Grid> {
+class Grid : public eckit::Owned, public internals::Registered<Grid> {
 
  public:  // types
 
@@ -114,12 +115,12 @@ class Grid : public eckit::Owned, public util::Registered<Grid> {
 
   virtual eckit::Properties spec() const = 0;
 
-  virtual bool same(const Grid&) const;
+  virtual bool same(const grid::Grid&) const;
 
   /// @TODO: eventually remove the Mesh from the Grid
 
-  void set_mesh(const Mesh& mesh);
-  Mesh& mesh() const;
+  void set_mesh(const mesh::Mesh& mesh);
+  mesh::Mesh& mesh() const;
 
 protected:  // methods
 
@@ -140,18 +141,18 @@ protected:  // methods
 
 private:  // methods
 
-  friend std::ostream& operator<<(std::ostream& s, const Grid& p) {
+  friend std::ostream& operator<<(std::ostream& s, const grid::Grid& p) {
       p.print(s);
       return s;
   }
 
 protected:  // members
 
-  atlas::Domain domain_;
+  atlas::grid::Domain domain_;
 
 private:  // members
 
-  mutable eckit::SharedPtr<Mesh> mesh_; ///< @todo to be removed
+  mutable eckit::SharedPtr<mesh::Mesh> mesh_; ///< @todo to be removed
 
   mutable uid_t                  uid_;  ///< cache the unique ID
   mutable eckit::MD5::digest_t   hash_; ///< cache the hash
@@ -160,6 +161,7 @@ private:  // members
 
 //------------------------------------------------------------------------------------------------------
 
-}  // namespace atlas
+} // namespace grid
+} // namespace atlas
 
 #endif

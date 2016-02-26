@@ -22,8 +22,8 @@
 #endif
 
 namespace atlas {
-
-//------------------------------------------------------------------------------------------------------
+namespace mesh {
+// -----------------------------------------------------------------------------
 
 
 IrregularConnectivity::IrregularConnectivity() :
@@ -45,7 +45,7 @@ IrregularConnectivity::IrregularConnectivity() :
   callback_delete_(0)
 {}
 
-//------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 IrregularConnectivity::IrregularConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[] )
   : owns_(false),
@@ -678,5 +678,6 @@ void atlas__BlockConnectivity__data(BlockConnectivity* This, int* &data, size_t 
 
 }
 
-}  // namespace atlas
+} // namespace mesh
+} // namespace atlas
 

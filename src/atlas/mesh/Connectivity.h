@@ -30,6 +30,7 @@
 #include "atlas/util/array/IndexView.h"
 
 namespace atlas {
+namespace mesh {
 
 // Classes defined in this file:
 class IrregularConnectivity;
@@ -107,7 +108,7 @@ public:
 
   idx_t missing_value() const { return missing_value_; }
 
-  IndexView<idx_t,1> row( size_t row_idx ) const;
+  util::array::IndexView<idx_t,1> row( size_t row_idx ) const;
 
 ///-- Modifiers
 
@@ -388,10 +389,10 @@ inline void IrregularConnectivity::set( size_t row_idx, size_t col_idx, const id
   col[col_idx] = value TO_FORTRAN;
 }
 
-inline IndexView<idx_t,1> IrregularConnectivity::row( size_t row_idx ) const
+inline util::array::IndexView<idx_t,1> IrregularConnectivity::row( size_t row_idx ) const
 {
   size_t rowsize[1] = {counts_[row_idx]};
-  return IndexView<idx_t,1>(values_+displs_[row_idx],rowsize);
+  return util::array::IndexView<idx_t,1>(values_+displs_[row_idx],rowsize);
 }
 
 // -----------------------------------------------------------------------------------------------------
@@ -456,6 +457,7 @@ void atlas__BlockConnectivity__delete(BlockConnectivity* This);
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace mesh
 } // namespace atlas
 
 #endif

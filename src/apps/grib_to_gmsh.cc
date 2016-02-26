@@ -22,11 +22,11 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/filesystem/PathName.h"
 
-#include "atlas/io/Gmsh.hpp"
-#include "atlas/mesh/Mesh.hpp"
-#include "atlas/grid/Tesselation.h"
-#include "atlas/grid/GribRead.h"
-#include "atlas/grid/FieldSet.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/mesh/Mesh.h"
+//#include "atlas/grid/Tesselation.h"
+//#include "atlas/grid/GribRead.h"
+#include "atlas/field/FieldSet.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -66,15 +66,15 @@ void Grib2Gmsh::run()
     std::cout.precision(std::numeric_limits< double >::digits10);
     std::cout << std::fixed;
 
-    FieldSet::Ptr fs_inp;
+    field::FieldSet::Ptr fs_inp;
 
-    fs_inp.reset( new FieldSet( path_in ) );
+    fs_inp.reset( new field::FieldSet( path_in ) );
     if( fs_inp->empty() )
         throw UserError("Input fieldset is empty", Here());
 
     Tesselation::tesselate( fs_inp->grid() );
 
-    atlas::Gmsh::write3dsurf( fs_inp->grid().mesh(), path_out );
+    atlas::util::io::Gmsh::write3dsurf( fs_inp->grid().mesh(), path_out );
 }
 
 //------------------------------------------------------------------------------------------------------

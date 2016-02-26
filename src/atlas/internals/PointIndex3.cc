@@ -11,22 +11,22 @@
 
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/ElementType.h"
-#include "atlas/private/PointIndex3.h"
+#include "atlas/internals/PointIndex3.h"
 #include "atlas/util/array/ArrayView.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace util {
+namespace internals {
 
 //------------------------------------------------------------------------------------------------------
 
 ElemPayload make_elem_payload(size_t id, ElemPayload::ElementTypeEnum type) { return ElemPayload(id,type); }
 
-ElemIndex3* create_element_centre_index( const atlas::Mesh& mesh )
+ElemIndex3* create_element_centre_index( const atlas::mesh::Mesh& mesh )
 {
 
-    const ArrayView<double,2> centres ( mesh.cells().field( "centre" ) );
+    const util::array::ArrayView<double,2> centres ( mesh.cells().field( "centre" ) );
     const size_t ncells = mesh.cells().size();
 
     std::vector<ElemIndex3::Value> p;
@@ -43,9 +43,9 @@ ElemIndex3* create_element_centre_index( const atlas::Mesh& mesh )
     for( size_t jcell = 0; jcell < ncells; ++jcell )
     {
         p.push_back( ElemIndex3::Value(
-                         ElemIndex3::Point(centres(jcell,atlas::XX),
-                                           centres(jcell,atlas::YY),
-                                           centres(jcell,atlas::ZZ) ),
+                         ElemIndex3::Point(centres(jcell,atlas::internals::XX),
+                                           centres(jcell,atlas::internals::YY),
+                                           centres(jcell,atlas::internals::ZZ) ),
                          make_elem_payload(jcell,types[mesh.cells().type_idx(jcell)] ) ) );
     }
 
@@ -59,6 +59,6 @@ ElemIndex3* create_element_centre_index( const atlas::Mesh& mesh )
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace util
+} // namespace internals
 } // namespace atlas
 

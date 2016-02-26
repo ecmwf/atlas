@@ -25,6 +25,8 @@
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+namespace util {
+namespace array {
 
 template <typename DATA_TYPE, int RANK=0> class ArrayView_iterator;
 template <typename DATA_TYPE, int RANK=0> class ArrayView_const_iterator;
@@ -133,6 +135,8 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace array
+} // namespace util
 } // namespace atlas
 
 #endif
