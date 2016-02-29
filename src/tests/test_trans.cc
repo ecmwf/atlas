@@ -285,8 +285,6 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 
 BOOST_AUTO_TEST_CASE( test_nomesh )
 {
-
-  std::cout << "HELLO 0 " << std::endl;
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
   SharedPtr<ReducedGrid> g ( ReducedGrid::create( "O48" ) );
