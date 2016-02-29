@@ -21,7 +21,7 @@ using eckit::Factory;
 
 namespace atlas {
 namespace grid {
-  
+
 size_t regex_count_parens(const std::string& string)
 {
     size_t out = 0;
@@ -38,10 +38,10 @@ size_t regex_count_parens(const std::string& string)
     return out;
 }
 
-int regex_match_impl( const std::string& string, 
-                      const std::string& regex, 
-                      std::vector<std::string>& substr, 
-                      bool use_substr, 
+int regex_match_impl( const std::string& string,
+                      const std::string& regex,
+                      std::vector<std::string>& substr,
+                      bool use_substr,
                       bool use_case)
 {
     regex_t re;
@@ -53,7 +53,7 @@ int regex_match_impl( const std::string& string,
                                             + (use_case   ? 0 : REG_ICASE)
                                             + (use_substr ? 0 : REG_NOSUB) );
 
-    if( !compiled_ok ) 
+    if( !compiled_ok )
       printf("This regular expression didn't compile: \"%s\"", regex.c_str());
 
     int found = !regexec(&re, string.c_str(), matchcount+1, result, 0);
@@ -102,7 +102,7 @@ Grid* grid_from_uid(const std::string& uid)
     Regex classical_reduced_gaussian_grid  ("^N([0-9]+)$");
     Regex octahedral_reduced_gaussian_grid ("^O([0-9]+)$");
     Regex regular_gaussian_grid            ("^F([0-9]+)$");
-    
+
     util::Config gridparams;
     Translator<std::string,int> to_int;
     std::vector<std::string> matches;
@@ -113,7 +113,7 @@ Grid* grid_from_uid(const std::string& uid)
     else if( octahedral_reduced_gaussian_grid.match(uid,matches) )
     {
       int N = to_int(matches[0]);
-      gridparams.set("grid_type", OctahedralRGG::grid_type_str());
+      gridparams.set("grid_type", OctahedralReducedGaussianGrid::grid_type_str());
       gridparams.set("N",N);
       return Grid::create( gridparams );
     }
@@ -213,7 +213,7 @@ void load()
   load_grid<predefined::rgg::N4000>();
   load_grid<predefined::rgg::N8000>();
 
-  load_grid<OctahedralRGG>();
+  load_grid<OctahedralReducedGaussianGrid>();
 
 }
 

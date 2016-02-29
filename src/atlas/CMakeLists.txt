@@ -50,8 +50,8 @@ grid/LocalGrid.h
 grid/LocalGrid.cc
 grid/LonLatGrid.h
 grid/LonLatGrid.cc
-grid/OctahedralRGG.h
-grid/OctahedralRGG.cc
+grid/OctahedralReducedGaussianGrid.h
+grid/OctahedralReducedGaussianGrid.cc
 grid/ReducedGaussianGrid.h
 grid/ReducedGaussianGrid.cc
 grid/ReducedGrid.h

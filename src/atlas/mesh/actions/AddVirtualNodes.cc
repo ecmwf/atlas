@@ -14,7 +14,7 @@
 #include "eckit/geometry/Point3.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Domain.h"
-#include "atlas/grid/OctahedralRGG.h"
+#include "atlas/grid/OctahedralReducedGaussianGrid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/AddVirtualNodes.h"
@@ -22,7 +22,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 
 using eckit::geometry::LLPoint2;
-using atlas::grid::OctahedralRGG;
+using atlas::grid::OctahedralReducedGaussianGrid;
 using eckit::operator<<;
 
 namespace atlas {
@@ -40,7 +40,7 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
 
     if( domain.global() ) return; // don't add virtual points to global domains
 
-    const grid::Grid& octa = OctahedralRGG(16,4);
+    const grid::Grid& octa = OctahedralReducedGaussianGrid(16,4);
 
     std::vector<LLPoint2> allPts;
     octa.lonlat(allPts);

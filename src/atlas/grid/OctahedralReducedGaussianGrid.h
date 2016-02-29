@@ -11,8 +11,8 @@
 /// @author Willem Deconinck
 /// @date Jan 2014
 
-#ifndef atlas_grids_rgg_OctahedralRGG_h
-#define atlas_grids_rgg_OctahedralRGG_h
+#ifndef atlas_grids_rgg_OctahedralReducedGaussianGrid_h
+#define atlas_grids_rgg_OctahedralReducedGaussianGrid_h
 
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/ReducedGaussianGrid.h"
@@ -22,15 +22,15 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-class OctahedralRGG : public ReducedGaussianGrid {
+class OctahedralReducedGaussianGrid : public ReducedGaussianGrid {
 public:
 
-    static std::string className() { return "atlas.grids.rgg.OctahedralRGG"; }
+    static std::string className() { return "atlas.grids.rgg.OctahedralReducedGaussianGrid"; }
     static std::string grid_type_str() { return "oct"; }
 
-    OctahedralRGG(const size_t N, const size_t octahedralPoleStart = 20);
+    OctahedralReducedGaussianGrid(const size_t N, const size_t octahedralPoleStart = 20);
 
-    OctahedralRGG( const eckit::Parametrisation& arg1);
+    OctahedralReducedGaussianGrid( const eckit::Parametrisation& arg1);
 
     /// Computes the PL for the Octohedral distribution
     /// number of points at latitude closest to pole
@@ -49,4 +49,4 @@ private:
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_rgg_OctahedralRGG_h
+#endif // atlas_grids_rgg_OctahedralReducedGaussianGrid_h

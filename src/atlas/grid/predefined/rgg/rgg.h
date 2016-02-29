@@ -17,7 +17,7 @@
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/ReducedGaussianGrid.h"
 #include "atlas/grid/GaussianLatitudes.h"
-#include "atlas/grid/OctahedralRGG.h"
+#include "atlas/grid/OctahedralReducedGaussianGrid.h"
 
 namespace atlas {
 namespace grid {

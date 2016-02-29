@@ -8,14 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/grid/OctahedralRGG.h"
+#include "atlas/grid/OctahedralReducedGaussianGrid.h"
 
 namespace atlas {
 namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-std::vector<long> OctahedralRGG::computePL(const size_t N, const size_t start)
+std::vector<long> OctahedralReducedGaussianGrid::computePL(const size_t N, const size_t start)
 {
   std::vector<long> nlon(N);
   for(size_t jlat=0; jlat < N; ++jlat)
@@ -25,13 +25,13 @@ std::vector<long> OctahedralRGG::computePL(const size_t N, const size_t start)
   return nlon;
 }
 
-OctahedralRGG::OctahedralRGG(const size_t N, const size_t octahedralPoleStart)
+OctahedralReducedGaussianGrid::OctahedralReducedGaussianGrid(const size_t N, const size_t octahedralPoleStart)
 {
   construct(N,octahedralPoleStart);
   set_typeinfo();
 }
 
-OctahedralRGG::OctahedralRGG( const eckit::Parametrisation& params)
+OctahedralReducedGaussianGrid::OctahedralReducedGaussianGrid( const eckit::Parametrisation& params)
 {
     size_t N;
     params.get("N",N);
@@ -45,14 +45,14 @@ OctahedralRGG::OctahedralRGG( const eckit::Parametrisation& params)
     set_typeinfo();
 }
 
-void OctahedralRGG::construct(const size_t N, const size_t start)
+void OctahedralReducedGaussianGrid::construct(const size_t N, const size_t start)
 {
   std::vector<long> nlon = computePL(N,start);
   setup_N_hemisphere(N,nlon.data());
   ReducedGrid::N_ = nlat()/2;
 }
 
-void OctahedralRGG::set_typeinfo()
+void OctahedralReducedGaussianGrid::set_typeinfo()
 {
     std::ostringstream s;
     s << "O"<< N();
@@ -60,7 +60,7 @@ void OctahedralRGG::set_typeinfo()
     grid_type_ = ReducedGaussianGrid::grid_type_str();
 }
 
-eckit::ConcreteBuilderT1<Grid,OctahedralRGG> builder_OctahedralRGG (OctahedralRGG::grid_type_str());
+eckit::ConcreteBuilderT1<Grid,OctahedralReducedGaussianGrid> builder_OctahedralReducedGaussianGrid (OctahedralReducedGaussianGrid::grid_type_str());
 
 //------------------------------------------------------------------------------------------------------
 
