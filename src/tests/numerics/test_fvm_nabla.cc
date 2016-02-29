@@ -25,6 +25,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
+#include "atlas/util/Constants.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/field/FieldSet.h"
 
@@ -127,7 +128,7 @@ BOOST_AUTO_TEST_CASE( test_build )
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
-  const double R = internals::Earth::radiusInMeters();
+  const double R = util::Earth::radiusInMeters();
   fvm::Method fvm(*mesh,util::Config("radius",R));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
@@ -139,7 +140,7 @@ BOOST_AUTO_TEST_CASE( test_build )
 
 BOOST_AUTO_TEST_CASE( test_grad )
 {
-  const double radius = internals::Earth::radiusInMeters();
+  const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
@@ -215,7 +216,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
 
 BOOST_AUTO_TEST_CASE( test_div )
 {
-  const double radius = internals::Earth::radiusInMeters();
+  const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
@@ -245,7 +246,7 @@ BOOST_AUTO_TEST_CASE( test_div )
 
 BOOST_AUTO_TEST_CASE( test_curl )
 {
-  const double radius = internals::Earth::radiusInMeters();
+  const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
@@ -275,7 +276,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
 
 BOOST_AUTO_TEST_CASE( test_lapl )
 {
-  const double radius = internals::Earth::radiusInMeters();
+  const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );

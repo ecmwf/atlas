@@ -27,6 +27,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/internals/Parameters.h"
+#include "atlas/util/Constants.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 #include "atlas/util/parallel/mpl/Checksum.h"
@@ -127,7 +128,7 @@ double quad_quality( const LLPoint2& p1, const LLPoint2& p2, const LLPoint2& p3,
 
 void build_statistics( Mesh& mesh )
 {
-  const double radius_km = internals::Earth::radiusInMeters()*1e-3;
+  const double radius_km = util::Earth::radiusInMeters()*1e-3;
 
   mesh::Nodes& nodes = mesh.nodes();
   util::array::ArrayView<double,2> lonlat ( nodes.lonlat() );

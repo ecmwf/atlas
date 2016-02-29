@@ -16,6 +16,7 @@
 #include "atlas/grid/GaussianLatitudes.h"
 #include "atlas/grid/predefined/gausslat/gausslat.h"
 #include "atlas/internals/Parameters.h"
+#include "atlas/util/Constants.h"
 #include "atlas/util/runtime/Log.h"
 
 using eckit::ConcreteBuilderT0;
@@ -96,7 +97,7 @@ void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
   for(size_t i=0; i<N; ++i )
   {
     z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
-    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * internals::Constants::radiansToDegrees();
+    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * util::Constants::radiansToDegrees();
   }
 }
 

@@ -31,31 +31,6 @@ enum AngleUnit{ DEG=0, RAD=1 };
 
 //------------------------------------------------------------------------------------------------------
 
-/// Some usefull constants
-/// @note These could be static const constants, but then the initialization would be in the .cc
-///       which would preclude constant optimization.
-///       With C++11 constexpr the constants can be initialized in the class header.
-struct Constants
-{
-    static double radiansToDegrees() { return 180. * M_1_PI; }
-    static double degreesToRadians() { return M_PI / 180; }
-
-};
-
-//------------------------------------------------------------------------------------------------------
-
-struct Earth
-{
-    static double radiusInMeters() { return 6371229; }
-    static double radiusInKm()     { return radiusInMeters() / 1.0E3; }
-
-    static double areaInSqMeters() { return 4 * M_PI * radiusInMeters() * radiusInMeters(); }
-    static double areaInSqKm()     { return 4 * M_PI * radiusInKm() * radiusInKm(); }
-
-};
-
-//------------------------------------------------------------------------------------------------------
-
 /*===========================================================*/
 /* TO BE REMOVED SOON                                        */
 /*===========================================================*/

@@ -25,6 +25,7 @@
 //------------------------------------------------------------------------------------------------------
 
 using namespace atlas;
+using namespace atlas::grid;
 using namespace atlas::util::io;
 using namespace atlas::mesh::generators;
 

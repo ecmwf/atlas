@@ -25,6 +25,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/util/Constants.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/util/parallel/mpl/GatherScatter.h"
@@ -42,8 +43,8 @@ namespace io {
 
 namespace {
 
-static double deg = internals::Constants::radiansToDegrees();
-static double rad = internals::Constants::degreesToRadians();
+static double deg = util::Constants::radiansToDegrees();
+static double rad = util::Constants::degreesToRadians();
 
 class GmshFile : public std::ofstream {
 public:

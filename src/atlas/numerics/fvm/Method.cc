@@ -21,6 +21,7 @@
 #include "atlas/functionspace/Edges.h"
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/internals/Parameters.h"
+#include "atlas/util/Constants.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/array/IndexView.h"
@@ -49,7 +50,7 @@ Method::Method( mesh::Mesh &mesh ) :
   halo_(mesh),
   nodes_(mesh.nodes()),
   edges_(mesh.edges()),
-  radius_(internals::Earth::radiusInMeters())
+  radius_(util::Earth::radiusInMeters())
 {
   setup();
 }
@@ -59,7 +60,7 @@ Method::Method( mesh::Mesh &mesh, const mesh::Halo &halo ) :
   halo_(halo),
   nodes_(mesh.nodes()),
   edges_(mesh.edges()),
-  radius_(internals::Earth::radiusInMeters())
+  radius_(util::Earth::radiusInMeters())
 {
   setup();
 }
@@ -69,7 +70,7 @@ Method::Method( mesh::Mesh &mesh, const eckit::Parametrisation &params ) :
   halo_(Method_halo(params)),
   nodes_(mesh.nodes()),
   edges_(mesh.edges()),
-  radius_(internals::Earth::radiusInMeters())
+  radius_(util::Earth::radiusInMeters())
 {
   params.get("radius",radius_);
   setup();

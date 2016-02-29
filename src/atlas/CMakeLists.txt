@@ -232,6 +232,7 @@ interpolation/Vector3D.h
 list( APPEND atlas_util_srcs
 util/Config.h
 util/Config.cc
+util/Constants.h
 util/DataType.h
 util/Metadata.h
 util/Metadata.cc
