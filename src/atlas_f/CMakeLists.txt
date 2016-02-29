@@ -181,10 +181,6 @@ ecbuild_add_library( TARGET atlas_f
 )
 
 add_custom_target( atlas_fortran_inc SOURCES
-   atlas_module_functionspace_ReducedGridPoint_c.f
-   atlas_module_functionspace_ReducedGridPoint_i.f
-   atlas_module_functionspace_Spectral_i.f
-   atlas_module_functionspace_Spectral_c.f
    atlas_module_State_i.f
    atlas_module_State_c.f
    atlas_module_Value_i.f
