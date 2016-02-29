@@ -227,6 +227,10 @@ interpolation/Ray.cc
 interpolation/Triag3D.h
 interpolation/Triag3D.cc
 interpolation/Vector3D.h
+interpolation/PointIndex3.h
+interpolation/PointIndex3.cc
+interpolation/PointSet.h
+interpolation/PointSet.cc
 )
 
 list( APPEND atlas_util_srcs
@@ -283,10 +287,6 @@ internals/LonLatMicroDeg.h
 internals/ObjectRegistry.h
 internals/Parameters.h
 internals/PeriodicTransform.h
-internals/PointIndex3.h
-internals/PointIndex3.cc
-internals/PointSet.h
-internals/PointSet.cc
 internals/Unique.h
 )
 

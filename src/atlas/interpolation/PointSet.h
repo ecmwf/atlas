@@ -20,12 +20,12 @@
 #include "eckit/log/Timer.h"
 #include "eckit/types/FloatCompare.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/internals/PointIndex3.h"
+#include "atlas/interpolation/PointIndex3.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace internals {
+namespace interpolation {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -33,8 +33,8 @@ class PointSet {
 
 public: // types
 
-    typedef PointIndex3::Point Point;
-    typedef PointIndex3::iterator iterator;
+    typedef interpolation::PointIndex3::Point Point;
+    typedef interpolation::PointIndex3::iterator iterator;
     typedef std::map< size_t, size_t > DupStore_t;
 
 public: // methods
@@ -132,7 +132,7 @@ private:
 
 //---------------------------------------------------------------------------------------------------------
 
-} // namespace internals
+} // namespace interpolation
 } // namespace atlas
 
 #endif

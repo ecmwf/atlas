@@ -22,7 +22,7 @@
 #include "atlas/util/io/Gmsh.h"
 
 namespace atlas {
-namespace internals {
+namespace interpolation {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -118,7 +118,7 @@ ElemIndex3* create_element_centre_index( const atlas::mesh::Mesh& mesh );
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // namespace internals
+} // namespace interpolation
 } // namespace atlas
 
 #endif

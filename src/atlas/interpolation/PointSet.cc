@@ -14,14 +14,13 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/internals/PointSet.h"
+#include "atlas/interpolation/PointSet.h"
 #include "atlas/util/array/ArrayView.h"
 
 using namespace eckit;
 
 namespace atlas {
-namespace internals {
+namespace interpolation {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -96,6 +95,6 @@ size_t PointSet::search_unique( const Point& p, size_t idx, u_int32_t n  )
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace internals
+} // namespace interpolation
 } // namespace atlas
 

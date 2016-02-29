@@ -51,15 +51,15 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/internals/PointSet.h"
+#include "atlas/interpolation/PointSet.h"
 #include "atlas/util/array/ArrayView.h"
 #include "atlas/util/array/IndexView.h"
 
 using namespace eckit;
 using namespace eckit::geometry;
 
-using atlas::internals::PointSet;
-using atlas::internals::PointIndex3;
+using atlas::interpolation::PointSet;
+using atlas::interpolation::PointIndex3;
 
 namespace atlas {
 namespace mesh {
