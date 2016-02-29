@@ -13,8 +13,8 @@
 #include <iostream>
 #include <sstream>
 #include "atlas/internals/Checksum.h"
-#include "atlas/util/array/Array.h"
-#include "atlas/util/array/ArrayView.h"
+#include "atlas/array/Array.h"
+#include "atlas/array/ArrayView.h"
 #include "atlas/util/runtime/Log.h"
 #include "atlas/util/parallel/mpl/GatherScatter.h"
 
@@ -229,8 +229,8 @@ void GatherScatter::setup( const int part[],
     ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,eckit::mpi::datatype<gidx_t>(),MPI_MAX,eckit::mpi::comm()) );
   }
 
-  util::array::ArrayT<int> sendnodes(parsize_,3);
-  util::array::ArrayView<int,2> nodes(sendnodes);
+  array::ArrayT<int> sendnodes(parsize_,3);
+  array::ArrayView<int,2> nodes(sendnodes);
 
   if( include_ghost )
   {
@@ -271,7 +271,7 @@ void GatherScatter::setup( const int part[],
   // Load recvnodes in sorting structure
   size_t nb_recv_nodes = glbcnt_[myproc]/3;
   std::vector<Node> node_sort(nb_recv_nodes);
-  nodes = util::array::ArrayView<int,2> (recvnodes.data(),util::array::make_shape(nb_recv_nodes,3));
+  nodes = array::ArrayView<int,2> (recvnodes.data(),array::make_shape(nb_recv_nodes,3));
   for( size_t n=0; n<nb_recv_nodes; ++n )
   {
     node_sort[n].g = nodes(n,0);

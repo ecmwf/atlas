@@ -28,7 +28,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Constants.h"
-#include "atlas/util/array/ArrayView.h"
+#include "atlas/array/ArrayView.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 #include "atlas/util/parallel/mpl/Checksum.h"
 
@@ -131,13 +131,13 @@ void build_statistics( Mesh& mesh )
   const double radius_km = util::Earth::radiusInMeters()*1e-3;
 
   mesh::Nodes& nodes = mesh.nodes();
-  util::array::ArrayView<double,2> lonlat ( nodes.lonlat() );
+  array::ArrayView<double,2> lonlat ( nodes.lonlat() );
 
   if( mesh.edges().size() )
   {
     if( ! mesh.edges().has_field("arc_length") )
-      mesh.edges().add( field::Field::create<double>("arc_length",util::array::make_shape(mesh.edges().size())) );
-    util::array::ArrayView<double,1> dist ( mesh.edges().field("arc_length") );
+      mesh.edges().add( field::Field::create<double>("arc_length",array::make_shape(mesh.edges().size())) );
+    array::ArrayView<double,1> dist ( mesh.edges().field("arc_length") );
     const mesh::HybridElements::Connectivity &edge_nodes = mesh.edges().node_connectivity();
 
     const int nb_edges = mesh.edges().size();
@@ -169,8 +169,8 @@ void build_statistics( Mesh& mesh )
     if( eckit::mpi::size() == 1 )
       ofs.open( stats_path.localPath(), std::ofstream::app );
 
-    util::array::ArrayView<double,1> rho ( mesh.cells().add( field::Field::create<double>("stats_rho",util::array::make_shape(mesh.cells().size()) ) ) );
-    util::array::ArrayView<double,1> eta ( mesh.cells().add( field::Field::create<double>("stats_eta",util::array::make_shape(mesh.cells().size()) ) ) );
+    array::ArrayView<double,1> rho ( mesh.cells().add( field::Field::create<double>("stats_rho",array::make_shape(mesh.cells().size()) ) ) );
+    array::ArrayView<double,1> eta ( mesh.cells().add( field::Field::create<double>("stats_eta",array::make_shape(mesh.cells().size()) ) ) );
 
     for( size_t jtype=0; jtype<mesh.cells().nb_types(); ++jtype )
     {
@@ -263,8 +263,8 @@ void build_statistics( Mesh& mesh )
 
   if( nodes.has_field("dual_volumes") )
   {
-    util::array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-    util::array::ArrayView<double,1> dual_delta_sph  ( nodes.add( field::Field::create<double>( "dual_delta_sph", util::array::make_shape(nodes.size(),1) ) ) );
+    array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
+    array::ArrayView<double,1> dual_delta_sph  ( nodes.add( field::Field::create<double>( "dual_delta_sph", array::make_shape(nodes.size(),1) ) ) );
 
     for( size_t jnode=0; jnode<nodes.size(); ++jnode )
     {

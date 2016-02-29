@@ -27,7 +27,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/atlas_config.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/IndexView.h"
 
 namespace atlas {
 namespace mesh {
@@ -108,7 +108,7 @@ public:
 
   idx_t missing_value() const { return missing_value_; }
 
-  util::array::IndexView<idx_t,1> row( size_t row_idx ) const;
+  array::IndexView<idx_t,1> row( size_t row_idx ) const;
 
 ///-- Modifiers
 
@@ -389,10 +389,10 @@ inline void IrregularConnectivity::set( size_t row_idx, size_t col_idx, const id
   col[col_idx] = value TO_FORTRAN;
 }
 
-inline util::array::IndexView<idx_t,1> IrregularConnectivity::row( size_t row_idx ) const
+inline array::IndexView<idx_t,1> IrregularConnectivity::row( size_t row_idx ) const
 {
   size_t rowsize[1] = {counts_[row_idx]};
-  return util::array::IndexView<idx_t,1>(values_+displs_[row_idx],rowsize);
+  return array::IndexView<idx_t,1>(values_+displs_[row_idx],rowsize);
 }
 
 // -----------------------------------------------------------------------------------------------------

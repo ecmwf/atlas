@@ -82,7 +82,6 @@
 namespace atlas { namespace field { class Field; } }
 
 namespace atlas {
-namespace util {
 namespace array {
 
 
@@ -352,7 +351,6 @@ private:
 //------------------------------------------------------------------------------------------------------
 
 } // namespace array
-} // namespace util
 } // namespace atlas
 
 #undef CHECK_RANK

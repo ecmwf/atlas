@@ -15,8 +15,8 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/util/array/ArrayView.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
 
 namespace atlas {
 namespace mesh {
@@ -29,10 +29,10 @@ void build_cell_centres_convert_to_old(Mesh& mesh);
 void BuildCellCentres::operator()( Mesh& mesh ) const
 {
   mesh::Nodes& nodes     = mesh.nodes();
-  util::array::ArrayView<double,2> coords  ( nodes.field("xyz") );
+  array::ArrayView<double,2> coords  ( nodes.field("xyz") );
 
   size_t nb_cells = mesh.cells().size();
-  util::array::ArrayView<double,2> centroids ( mesh.cells().add( field::Field::create<double>("centre", util::array::make_shape(nb_cells,3))) );
+  array::ArrayView<double,2> centroids ( mesh.cells().add( field::Field::create<double>("centre", array::make_shape(nb_cells,3))) );
   const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
 
   for (size_t e=0; e<nb_cells; ++e)
@@ -64,15 +64,15 @@ void build_cell_centres_convert_to_old(Mesh& mesh)
     ASSERT( mesh.has_function_space("quads") );
 
     mesh::Nodes& nodes     = mesh.nodes();
-    util::array::ArrayView<double,2> coords  ( nodes.field("xyz") );
+    array::ArrayView<double,2> coords  ( nodes.field("xyz") );
 
     if( mesh.has_function_space("triags") ) {
 
         deprecated::FunctionSpace& triags = mesh.function_space( "triags" );
-        util::array::IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
+        array::IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
         const size_t nb_triags = triags.shape(0);
 
-        util::array::ArrayView<double,2> triags_centres ( triags.create_field<double>("centre",3) );
+        array::ArrayView<double,2> triags_centres ( triags.create_field<double>("centre",3) );
 
         const double third = 1. / 3.;
         for(size_t e = 0; e < nb_triags; ++e)
@@ -90,10 +90,10 @@ void build_cell_centres_convert_to_old(Mesh& mesh)
 
     if( mesh.has_function_space("quads") ) {
         deprecated::FunctionSpace& quads  = mesh.function_space( "quads" );
-        util::array::IndexView<int,2> quads_nodes ( quads.field( "nodes" ) );
+        array::IndexView<int,2> quads_nodes ( quads.field( "nodes" ) );
         const size_t nb_quads = quads.shape(0);
 
-        util::array::ArrayView<double,2> quads_centres ( quads.create_field<double>("centre",3) );
+        array::ArrayView<double,2> quads_centres ( quads.create_field<double>("centre",3) );
 
         const double fourth = 1. / 4.;
         for(size_t e = 0; e < nb_quads; ++e)

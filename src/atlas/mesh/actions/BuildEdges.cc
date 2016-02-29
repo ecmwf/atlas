@@ -28,9 +28,9 @@
 #include "atlas/internals/LonLatMicroDeg.h"
 #include "atlas/internals/Functions.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/util/array/ArrayView.h"
-#include "atlas/util/array/Array.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/Array.h"
+#include "atlas/array/IndexView.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 
 using atlas::internals::accumulate_facets;
@@ -69,7 +69,7 @@ struct Sort
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_element_to_edge_connectivity_convert_to_old( Mesh& mesh )
 {
-  std::vector< util::array::IndexView<int,2> > elem_to_edge( mesh.nb_function_spaces() );
+  std::vector< array::IndexView<int,2> > elem_to_edge( mesh.nb_function_spaces() );
   size_t etype=0;
   for( size_t func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
@@ -80,7 +80,7 @@ void build_element_to_edge_connectivity_convert_to_old( Mesh& mesh )
       if (func_space.name() == "quads")  nb_edges_per_elem = 4;
       if (func_space.name() == "triags") nb_edges_per_elem = 3;
       elem_to_edge[etype++] =
-          util::array::IndexView<int,2>(func_space.create_field<int>("to_edge",nb_edges_per_elem));
+          array::IndexView<int,2>(func_space.create_field<int>("to_edge",nb_edges_per_elem));
     }
   }
   const MultiBlockConnectivity& cell_edge_connectivity = mesh.cells().edge_connectivity();
@@ -123,11 +123,11 @@ void build_element_to_edge_connectivity_new( Mesh& mesh )
   mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
 
   bool has_pole_edges(false);
-  util::array::ArrayView<int,1> is_pole_edge;
+  array::ArrayView<int,1> is_pole_edge;
   if( mesh.edges().has_field("is_pole_edge") )
   {
     has_pole_edges = true;
-    is_pole_edge = util::array::ArrayView<int,1>( mesh.edges().field("is_pole_edge") );
+    is_pole_edge = array::ArrayView<int,1>( mesh.edges().field("is_pole_edge") );
   }
 
   // Sort edges for bit-reproducibility
@@ -173,7 +173,7 @@ void build_element_to_edge_connectivity_new( Mesh& mesh )
     {
       if( cell_edge_connectivity(jcell,jcol) == cell_edge_connectivity.missing_value() )
       {
-        const util::array::ArrayView<gidx_t,1> gidx (mesh.nodes().global_index() );
+        const array::ArrayView<gidx_t,1> gidx (mesh.nodes().global_index() );
         std::stringstream msg; msg << "Could not find edge " << jcol << " for " << mesh.cells().name(jcell) << " elem " << jcell << " with nodes ( ";
         for( size_t jnode=0; jnode<mesh.cells().node_connectivity().cols(jcell); ++jnode )
         {
@@ -241,7 +241,7 @@ void build_node_to_edge_connectivity_convert_to_old( Mesh& mesh )
   const mesh::Nodes::Connectivity& node_edge_connectivity = mesh.nodes().edge_connectivity();
 
   // Get max_edge_cnt
-  util::array::ArrayView<int,1> to_edge_size ( nodes.add( field::Field::create<int>( "to_edge_size", util::array::make_shape(nodes.size(),1) ) ) );
+  array::ArrayView<int,1> to_edge_size ( nodes.add( field::Field::create<int>( "to_edge_size", array::make_shape(nodes.size(),1) ) ) );
   int max_edge_cnt(0);
   for( size_t jnode=0; jnode<nodes.size(); ++jnode )
   {
@@ -251,7 +251,7 @@ void build_node_to_edge_connectivity_convert_to_old( Mesh& mesh )
 
   ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_edge_cnt, 1, MPI_INT, MPI_MAX, eckit::mpi::comm() ) );
 
-  util::array::IndexView<int,2> node_to_edge ( nodes.add( field::Field::create<int>("to_edge",util::array::make_shape(nodes.size(),max_edge_cnt))) );
+  array::IndexView<int,2> node_to_edge ( nodes.add( field::Field::create<int>("to_edge",array::make_shape(nodes.size(),max_edge_cnt))) );
 
   for( size_t jnode=0; jnode<nodes.size(); ++jnode )
   {
@@ -276,9 +276,9 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
 {
   enum { NORTH=0, SOUTH=1 };
 
-  util::array::ArrayView<double,2> lonlat    ( nodes.lonlat() );
-  util::array::ArrayView<int,   1> flags     ( nodes.field( "flags"       ) );
-  util::array::ArrayView<int,   1> part      ( nodes.partition() );
+  array::ArrayView<double,2> lonlat    ( nodes.lonlat() );
+  array::ArrayView<int,   1> flags     ( nodes.field( "flags"       ) );
+  array::ArrayView<int,   1> part      ( nodes.partition() );
   const size_t nb_nodes = nodes.size();
 
   double min[2], max[2];
@@ -367,10 +367,10 @@ struct ComputeUniquePoleEdgeIndex
 {
   ComputeUniquePoleEdgeIndex( const mesh::Nodes& nodes )
   {
-    lonlat = util::array::ArrayView<double,2> ( nodes.lonlat() );
+    lonlat = array::ArrayView<double,2> ( nodes.lonlat() );
   }
 
-  gidx_t operator()( const util::array::IndexView<int,1>& edge_nodes ) const
+  gidx_t operator()( const array::IndexView<int,1>& edge_nodes ) const
   {
     double centroid[2];
     centroid[internals::LON] = 0.;
@@ -390,16 +390,16 @@ struct ComputeUniquePoleEdgeIndex
     return internals::detail::unique32( internals::microdeg(centroid[internals::LON]), internals::microdeg(centroid[internals::LON]) );
   }
 
-  util::array::ArrayView<double,2> lonlat;
+  array::ArrayView<double,2> lonlat;
 };
 
 
 void build_edges_new( Mesh& mesh )
 {
   mesh::Nodes& nodes   = mesh.nodes();
-  util::array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
-  util::array::ArrayView<int,1>    part    ( nodes.partition() );
-  util::array::ArrayView<double,2> lonlat  ( nodes.lonlat() );
+  array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  array::ArrayView<int,1>    part    ( nodes.partition() );
+  array::ArrayView<double,2> lonlat  ( nodes.lonlat() );
 
   size_t nb_nodes = nodes.size();
 
@@ -418,9 +418,9 @@ void build_edges_new( Mesh& mesh )
 
   UniqueLonLat compute_uid( nodes );
 
-  util::array::IndexView<idx_t,1>  edge_ridx     ( mesh.edges().remote_index() );
-  util::array::ArrayView<int,1>    edge_part     ( mesh.edges().partition() );
-  util::array::ArrayView<gidx_t,1> edge_glb_idx  ( mesh.edges().global_index() );
+  array::IndexView<idx_t,1>  edge_ridx     ( mesh.edges().remote_index() );
+  array::ArrayView<int,1>    edge_part     ( mesh.edges().partition() );
+  array::ArrayView<gidx_t,1> edge_glb_idx  ( mesh.edges().global_index() );
 
   for( size_t edge=0; edge<nb_edges; ++edge )
   {
@@ -463,11 +463,11 @@ void build_edges_convert_to_old( Mesh& mesh )
   const size_t nb_edges = mesh.edges().size();
   if( ! mesh.has_function_space("edges") )
   {
-    mesh.create_function_space( "edges", "shapefunc", util::array::make_shape(nb_edges,deprecated::FunctionSpace::UNDEF_VARS) );
+    mesh.create_function_space( "edges", "shapefunc", array::make_shape(nb_edges,deprecated::FunctionSpace::UNDEF_VARS) );
   }
   deprecated::FunctionSpace& edges = mesh.function_space("edges");
   edges.metadata().set<long>("type",Entity::FACES);
-  edges.resize(util::array::make_shape(nb_edges,deprecated::FunctionSpace::UNDEF_VARS));
+  edges.resize(array::make_shape(nb_edges,deprecated::FunctionSpace::UNDEF_VARS));
 
   if( ! edges.has_field("nodes")      )  edges.create_field<int>("nodes",     2);
   if( ! edges.has_field("glb_idx")    )  edges.create_field<gidx_t>("glb_idx",   1);
@@ -475,15 +475,15 @@ void build_edges_convert_to_old( Mesh& mesh )
   if( ! edges.has_field("to_elem")    )  edges.create_field<int>("to_elem",   4);
   if( ! edges.has_field("remote_idx") )  edges.create_field<int>("remote_idx",1);
 
-  util::array::IndexView<int,2> edge_nodes   ( edges.field( "nodes"      ) );
-  util::array::ArrayView<gidx_t,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
-  util::array::ArrayView<int,1> edge_part    ( edges.field( "partition"  ) );
-  util::array::IndexView<int,1> edge_ridx    ( edges.field( "remote_idx" ) );
-  util::array::IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), util::array::make_shape(nb_edges,2,2) );
+  array::IndexView<int,2> edge_nodes   ( edges.field( "nodes"      ) );
+  array::ArrayView<gidx_t,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
+  array::ArrayView<int,1> edge_part    ( edges.field( "partition"  ) );
+  array::IndexView<int,1> edge_ridx    ( edges.field( "remote_idx" ) );
+  array::IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), array::make_shape(nb_edges,2,2) );
 
-  const util::array::ArrayView<gidx_t,1> edge_glb_idx_new ( mesh.edges().field( "glb_idx"    ) );
-  const util::array::ArrayView<int,1> edge_part_new    ( mesh.edges().field( "partition"  ) );
-  const util::array::IndexView<int,1> edge_ridx_new    ( mesh.edges().field( "remote_idx" ) );
+  const array::ArrayView<gidx_t,1> edge_glb_idx_new ( mesh.edges().field( "glb_idx"    ) );
+  const array::ArrayView<int,1> edge_part_new    ( mesh.edges().field( "partition"  ) );
+  const array::IndexView<int,1> edge_ridx_new    ( mesh.edges().field( "remote_idx" ) );
   const mesh::HybridElements::Connectivity&  edge_cell_connectivity = mesh.edges().cell_connectivity();
   const mesh::HybridElements::Connectivity&  edge_node_connectivity = mesh.edges().node_connectivity();
   for( size_t jedge=0; jedge<nb_edges; ++jedge )
@@ -541,14 +541,14 @@ void build_pole_edges_new( Mesh& mesh )
   edges.add(new mesh::temporary::Line(), nb_pole_edges, pole_edge_nodes.data() );
 
   if( ! edges.has_field("is_pole_edge") )
-    edges.add(field::Field::create<int>("is_pole_edge",util::array::make_shape(edges.size())));
+    edges.add(field::Field::create<int>("is_pole_edge",array::make_shape(edges.size())));
 
-  util::array::ArrayView<int,1> node_part       ( nodes.partition() );
+  array::ArrayView<int,1> node_part       ( nodes.partition() );
 
-  util::array::ArrayView<gidx_t,1> edge_glb_idx ( edges.global_index() );
-  util::array::ArrayView<int,1> edge_part       ( edges.partition() );
-  util::array::IndexView<int,1> edge_ridx       ( edges.remote_index() );
-  util::array::ArrayView<int,1> is_pole_edge    ( edges.field( "is_pole_edge" ) );
+  array::ArrayView<gidx_t,1> edge_glb_idx ( edges.global_index() );
+  array::ArrayView<int,1> edge_part       ( edges.partition() );
+  array::IndexView<int,1> edge_ridx       ( edges.remote_index() );
+  array::ArrayView<int,1> is_pole_edge    ( edges.field( "is_pole_edge" ) );
 
   mesh::HybridElements::Connectivity& edge_nodes   = edges.node_connectivity();
   IrregularConnectivity& edge_to_elem = edges.cell_connectivity();
@@ -581,23 +581,23 @@ void build_pole_edges_convert_to_old( Mesh& mesh )
   deprecated::FunctionSpace& edges = mesh.function_space("edges");
 
   size_t nb_edges = edges.shape(0);
-  edges.resize( util::array::make_shape(mesh.edges().size(), deprecated::FunctionSpace::UNDEF_VARS) );
+  edges.resize( array::make_shape(mesh.edges().size(), deprecated::FunctionSpace::UNDEF_VARS) );
 
   if( ! edges.has_field("is_pole_edge") )  edges.create_field<int>("is_pole_edge",1);
 
-  util::array::IndexView<int,2>    edge_nodes   ( edges.field( "nodes"      ) );
-  util::array::ArrayView<gidx_t,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
-  util::array::ArrayView<int,1>    edge_part    ( edges.field( "partition"  ) );
-  util::array::IndexView<int,1>    edge_ridx    ( edges.field( "remote_idx" ) );
-  util::array::ArrayView<int,1>    is_pole_edge ( edges.field( "is_pole_edge" ) );
-  util::array::IndexView<int,3>    edge_to_elem ( edges.field( "to_elem"    ).data<int>(), util::array::make_shape(mesh.edges().size(),2,2) );
+  array::IndexView<int,2>    edge_nodes   ( edges.field( "nodes"      ) );
+  array::ArrayView<gidx_t,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
+  array::ArrayView<int,1>    edge_part    ( edges.field( "partition"  ) );
+  array::IndexView<int,1>    edge_ridx    ( edges.field( "remote_idx" ) );
+  array::ArrayView<int,1>    is_pole_edge ( edges.field( "is_pole_edge" ) );
+  array::IndexView<int,3>    edge_to_elem ( edges.field( "to_elem"    ).data<int>(), array::make_shape(mesh.edges().size(),2,2) );
 
   mesh::HybridElements::Connectivity& new_edge_nodes   = mesh.edges().node_connectivity();
   mesh::HybridElements::Connectivity& new_edge_to_elem = mesh.edges().cell_connectivity();
-  util::array::ArrayView<gidx_t,1> new_edge_glb_idx ( mesh.edges().global_index() );
-  util::array::ArrayView<int,1>    new_edge_part    ( mesh.edges().partition() );
-  util::array::IndexView<int,1>    new_edge_ridx    ( mesh.edges().remote_index() );
-  util::array::ArrayView<int,1>    new_is_pole_edge ( mesh.edges().field( "is_pole_edge" ) );
+  array::ArrayView<gidx_t,1> new_edge_glb_idx ( mesh.edges().global_index() );
+  array::ArrayView<int,1>    new_edge_part    ( mesh.edges().partition() );
+  array::IndexView<int,1>    new_edge_ridx    ( mesh.edges().remote_index() );
+  array::ArrayView<int,1>    new_is_pole_edge ( mesh.edges().field( "is_pole_edge" ) );
 
 
   for(size_t edge=0; edge<nb_edges; ++edge)

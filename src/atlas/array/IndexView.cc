@@ -10,13 +10,12 @@
 
 #include <stdexcept>
 #include "atlas/field/Field.h"
-#include "atlas/util/array/Array.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/Array.h"
+#include "atlas/array/IndexView.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace util {
 namespace array {
 
 //------------------------------------------------------------------------------------------------------
@@ -88,5 +87,4 @@ TEMPLATE_SPECIALIZATION(int);
 //------------------------------------------------------------------------------------------------------
 
 } // namespace array
-} // namespace util
 } // namespace atlas

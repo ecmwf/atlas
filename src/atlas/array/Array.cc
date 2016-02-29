@@ -9,10 +9,11 @@
  */
 
 #include <iostream>
-#include "atlas/util/array/Array.h"
+#include "atlas/array/Array.h"
+
+using atlas::util::DataType;
 
 namespace atlas {
-namespace util {
 namespace array {
 
 void Array::resize(const ArrayShape& _shape)
@@ -137,5 +138,4 @@ template <> Array* Array::wrap(float data[], const ArrayShape& s) { return new A
 template <> Array* Array::wrap(double data[], const ArrayShape& s) { return new ArrayT<double>(data,s); }
 
 } // namespace array
-} // namespace util
 } // namespace atlas

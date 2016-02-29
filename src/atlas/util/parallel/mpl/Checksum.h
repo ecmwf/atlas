@@ -16,7 +16,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/utils/Translator.h"
 #include "atlas/internals/Checksum.h"
-#include "atlas/util/array/ArrayView.h"
+#include "atlas/array/ArrayView.h"
 #include "atlas/util/runtime/Log.h"
 #include "atlas/util/parallel/mpi/mpi.h"
 #include "atlas/util/parallel/mpl/GatherScatter.h"

@@ -388,7 +388,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
         /* data used to write file*/ test_vectors::nb_pts,
         /* data read from file*/     field.size() );
 
-  util::array::ArrayView< double, 1 > field_data(field);
+  array::ArrayView< double, 1 > field_data(field);
   for (size_t i=0; i<field_data.size(); ++i)
   {
     BOOST_CHECK_CLOSE( funny_formula(i), field_data(i), 0.001);  // 0.001% relative error
@@ -443,8 +443,8 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   BOOST_CHECK_NE( field.data< double >(), field_from_FieldSet.data< double >() );
   BOOST_CHECK_NE( field.data< double >(), field_from_Grid    .data< double >() );
 
-  util::array::ArrayView< double,1 > field_from_FieldSet_data(field_from_FieldSet);
-  util::array::ArrayView< double,1 > field_from_Grid_data    (field_from_Grid    );
+  array::ArrayView< double,1 > field_from_FieldSet_data(field_from_FieldSet);
+  array::ArrayView< double,1 > field_from_Grid_data    (field_from_Grid    );
   for (size_t i=0; i<test_arrays::nb_pts; ++i)
   {
     BOOST_CHECK_CLOSE( field_data(i), field_from_FieldSet_data(i), 0.001);  // 0.001% relative error

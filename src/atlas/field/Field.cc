@@ -52,12 +52,12 @@ Field* Field::create(const eckit::Parametrisation& params)
 Field* Field::create(
     const std::string& name,
     util::DataType           datatype,
-    const util::array::ArrayShape&  shape)
+    const array::ArrayShape&  shape)
 {
   return new Field(name,datatype,shape);
 }
 
-Field* Field::create( const std::string& name, util::array::Array* array )
+Field* Field::create( const std::string& name, array::Array* array )
 {
   return new Field(name,array);
 }
@@ -67,14 +67,14 @@ Field* Field::create( const std::string& name, util::array::Array* array )
 Field::Field(
     const std::string& name,
     util::DataType           datatype,
-    const util::array::ArrayShape&  shape) : name_(name), nb_levels_(0), functionspace_(0)
+    const array::ArrayShape&  shape) : name_(name), nb_levels_(0), functionspace_(0)
 {
-  array_ = util::array::Array::create(datatype,shape);
+  array_ = array::Array::create(datatype,shape);
   array_->attach();
 }
 
 
-Field::Field(const std::string& name, util::array::Array* array):
+Field::Field(const std::string& name, array::Array* array):
   name_(name), nb_levels_(0), functionspace_(0)
 {
   array_ = array;
@@ -120,7 +120,7 @@ std::ostream& operator<<( std::ostream& os, const Field& f)
   return os;
 }
 
-void Field::resize(const util::array::ArrayShape& shape)
+void Field::resize(const array::ArrayShape& shape)
 {
     array_->resize(shape);
 }

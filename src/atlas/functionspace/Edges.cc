@@ -38,33 +38,33 @@ namespace functionspace {
 namespace {
 
 template <typename T>
-util::array::ArrayView<T,3> leveled_view(const field::Field &field)
+array::ArrayView<T,3> leveled_view(const field::Field &field)
 {
   if( field.has_levels() )
-    return util::array::ArrayView<T,3> ( field.data<T>(), util::array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
+    return array::ArrayView<T,3> ( field.data<T>(), array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
   else
-    return util::array::ArrayView<T,3> ( field.data<T>(), util::array::make_shape(field.shape(0),1,field.stride(0)) );
+    return array::ArrayView<T,3> ( field.data<T>(), array::make_shape(field.shape(0),1,field.stride(0)) );
 }
 
 template <typename T>
-util::array::ArrayView<T,2> surface_view(const field::Field &field)
+array::ArrayView<T,2> surface_view(const field::Field &field)
 {
-  return util::array::ArrayView<T,2> ( field.data<T>(), util::array::make_shape(field.shape(0),field.stride(0)) );
+  return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),field.stride(0)) );
 }
 
 template <typename T>
-util::array::ArrayView<T,2> leveled_scalar_view(const field::Field &field)
+array::ArrayView<T,2> leveled_scalar_view(const field::Field &field)
 {
   if( field.has_levels() )
-    return util::array::ArrayView<T,2> ( field.data<T>(), util::array::make_shape(field.shape(0),field.shape(1)) );
+    return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),field.shape(1)) );
   else
-    return util::array::ArrayView<T,2> ( field.data<T>(), util::array::make_shape(field.shape(0),1) );
+    return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),1) );
 }
 
 template <typename T>
-util::array::ArrayView<T,1> surface_scalar_view(const field::Field &field)
+array::ArrayView<T,1> surface_scalar_view(const field::Field &field)
 {
-  return util::array::ArrayView<T,1> ( field.data<T>(), util::array::make_shape(field.size()) );
+  return array::ArrayView<T,1> ( field.data<T>(), array::make_shape(field.size()) );
 }
 
 
@@ -153,13 +153,13 @@ size_t Edges::nb_edges_global() const
 }
 
 field::Field* Edges::createField(const std::string& name,util::DataType datatype) const {
-  field::Field* field = field::Field::create(name,datatype,util::array::make_shape(nb_edges()));
+  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges()));
   field->set_functionspace(this);
   return field;
 }
 
 field::Field* Edges::createField(const std::string& name,util::DataType datatype, size_t levels) const {
-  field::Field* field = field::Field::create(name,datatype,util::array::make_shape(nb_edges(),levels));
+  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges(),levels));
   field->set_levels(levels);
   field->set_functionspace(this);
   return field;
@@ -183,7 +183,7 @@ field::Field* Edges::createField(const std::string& name, util::DataType datatyp
 }
 
 field::Field* Edges::createField(const std::string& name, const field::Field& other) const {
-  util::array::ArrayShape shape = other.shape();
+  array::ArrayShape shape = other.shape();
   shape[0] = nb_edges();
   field::Field* field = field::Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
@@ -193,13 +193,13 @@ field::Field* Edges::createField(const std::string& name, const field::Field& ot
 }
 
 field::Field* Edges::createGlobalField(const std::string& name,util::DataType datatype) const {
-  field::Field* field = field::Field::create(name,datatype,util::array::make_shape(nb_edges_global()));
+  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges_global()));
   field->set_functionspace(this);
   return field;
 }
 
 field::Field* Edges::createGlobalField(const std::string& name, util::DataType datatype, size_t levels) const {
-  field::Field* field = field::Field::create(name,datatype,util::array::make_shape(nb_edges_global(),levels));
+  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges_global(),levels));
   field->set_levels(levels);
   field->set_functionspace(this);
   return field;
@@ -223,7 +223,7 @@ field::Field* Edges::createGlobalField(const std::string& name, util::DataType d
 }
 
 field::Field* Edges::createGlobalField(const std::string& name,const field::Field& other) const {
-  util::array::ArrayShape shape = other.shape();
+  array::ArrayShape shape = other.shape();
   shape[0] = nb_edges_global();
   field::Field* field = field::Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
@@ -237,19 +237,19 @@ void Edges::haloExchange( field::FieldSet& fieldset ) const
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const field::Field& field = fieldset[f];
     if     ( field.datatype() == util::DataType::kind<int>() ) {
-      util::array::ArrayView<int,2> view(field);
+      array::ArrayView<int,2> view(field);
       halo_exchange().execute( view );
     }
     else if( field.datatype() == util::DataType::kind<long>() ) {
-      util::array::ArrayView<long,2> view(field);
+      array::ArrayView<long,2> view(field);
       halo_exchange().execute( view );
     }
     else if( field.datatype() == util::DataType::kind<float>() ) {
-      util::array::ArrayView<float,2> view(field);
+      array::ArrayView<float,2> view(field);
       halo_exchange().execute( view );
     }
     else if( field.datatype() == util::DataType::kind<double>() ) {
-      util::array::ArrayView<double,2> view(field);
+      array::ArrayView<double,2> view(field);
       halo_exchange().execute( view );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -363,9 +363,9 @@ namespace {
 template <typename T>
 std::string checksum_3d_field(const util::parallel::mpl::Checksum& checksum, const field::Field& field )
 {
-  util::array::ArrayView<T,3> values = leveled_view<T>(field);
-  util::array::ArrayT<T> surface_field ( util::array::make_shape(values.shape(0),values.shape(2) ) );
-  util::array::ArrayView<T,2> surface(surface_field);
+  array::ArrayView<T,3> values = leveled_view<T>(field);
+  array::ArrayT<T> surface_field ( array::make_shape(values.shape(0),values.shape(2) ) );
+  array::ArrayView<T,2> surface(surface_field);
   for( size_t n=0; n<values.shape(0); ++n ) {
     for( size_t j=0; j<surface.shape(1); ++j )
     {

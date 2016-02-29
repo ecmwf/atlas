@@ -17,7 +17,7 @@
 #include "eckit/memory/Owned.h"
 #include "atlas/atlas_config.h"
 #include "atlas/internals/Debug.h"
-#include "atlas/util/array/ArrayView.h"
+#include "atlas/array/ArrayView.h"
 #include "atlas/util/parallel/mpi/mpi.h"
 #include "atlas/util/parallel/mpl/MPLArrayView.h"
 

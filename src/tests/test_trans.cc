@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
     BOOST_CHECK_EQUAL( trans.ngptot(),  npts[eckit::mpi::rank()] );
     BOOST_CHECK_EQUAL( trans.ngptotmx(), *std::max_element(npts.begin(),npts.end()) );
 
-    util::array::ArrayView<int,1> n_regions ( trans.n_regions() ) ;
+    array::ArrayView<int,1> n_regions ( trans.n_regions() ) ;
     for( int j=0; j<partitioner.nb_bands(); ++j )
       BOOST_CHECK_EQUAL( n_regions[j] , partitioner.nb_regions(j) );
   }
@@ -231,9 +231,9 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   GridDistribution::Ptr eqreg_distribution( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
   mesh::Mesh::Ptr m_eqreg( generate( *g, *eqreg_distribution ) );
 
-  util::array::ArrayView<int,1> p_default( m_default->nodes().partition() );
-  util::array::ArrayView<int,1> p_trans  ( m_trans  ->nodes().partition() );
-  util::array::ArrayView<int,1> p_eqreg  ( m_eqreg  ->nodes().partition() );
+  array::ArrayView<int,1> p_default( m_default->nodes().partition() );
+  array::ArrayView<int,1> p_trans  ( m_trans  ->nodes().partition() );
+  array::ArrayView<int,1> p_eqreg  ( m_eqreg  ->nodes().partition() );
 
   BOOST_CHECK_EQUAL_COLLECTIONS( p_default.begin(), p_default.end(),
                                  p_trans  .begin(), p_trans  .end() );
@@ -298,14 +298,14 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   SharedPtr<field::Field> gpf  ( gridpoints->createField<double>("gpf") );
   SharedPtr<field::Field> gpfg ( gridpoints->createGlobalField<double>("gpf") );
 
-  util::array::ArrayView<double,1> spg (*spfg);
+  array::ArrayView<double,1> spg (*spfg);
   spg = 0.;
   spg(0) = 4.;
 
   BOOST_CHECK_NO_THROW( spectral->scatter(*spfg,*spf) );
 
   if( eckit::mpi::rank() == 0 ) {
-    util::array::ArrayView<double,1> sp (*spf);
+    array::ArrayView<double,1> sp (*spf);
     BOOST_CHECK_CLOSE( sp(0), 4., 0.001 );
     for( size_t jp=0; jp<sp.size(); ++jp ) {
       Log::debug(2) << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   BOOST_CHECK_NO_THROW( gridpoints->gather(*gpf,*gpfg) );
 
   if( eckit::mpi::rank() == 0 ) {
-    util::array::ArrayView<double,1> gpg (*gpfg);
+    array::ArrayView<double,1> gpg (*gpfg);
     for( size_t jp=0; jp<gpg.size(); ++jp ) {
       BOOST_CHECK_CLOSE( gpg(jp), 4., 0.001 );
       Log::debug(3) << "gpg("<<jp << ")   :   " << gpg(jp) << std::endl;

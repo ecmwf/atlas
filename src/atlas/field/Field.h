@@ -20,8 +20,8 @@
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/DataType.h"
-#include "atlas/util/array/ArrayUtil.h"
-#include "atlas/util/array/Array.h"
+#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/Array.h"
 #include "atlas/util/Metadata.h"
 
 namespace eckit { class Parametrisation; }
@@ -45,14 +45,14 @@ public: // Static methods
   /// @brief Create field with given name, Datatype and ArrayShape
   static Field* create(
     const std::string& name, util::DataType,
-    const util::array::ArrayShape& = util::array::ArrayShape());
+    const array::ArrayShape& = array::ArrayShape());
 
   /// @brief Create field with given name, Datatype of template and ArrayShape
   template<typename DATATYPE>
-  static Field* create( const std::string& name, const util::array::ArrayShape& = util::array::ArrayShape() );
+  static Field* create( const std::string& name, const array::ArrayShape& = array::ArrayShape() );
 
   /// @brief Create field with given name, and take ownership of given Array
-  static Field* create( const std::string& name, util::array::Array* );
+  static Field* create( const std::string& name, array::Array* );
 
   /// @brief Create field with given name, and share ownership of given Array
   /// @note nawd: Not so sure we should go this route
@@ -61,10 +61,10 @@ public: // Static methods
 private: // Private constructors to force use of static create functions
 
   /// Allocate new Array internally
-  Field(const std::string& name, util::DataType, const util::array::ArrayShape&);
+  Field(const std::string& name, util::DataType, const array::ArrayShape&);
 
   /// Transfer ownership of Array
-  Field(const std::string& name, util::array::Array* );
+  Field(const std::string& name, array::Array* );
 
   /// Share ownership of Array
   /// @note We could go this route...
@@ -76,11 +76,11 @@ public: // Destructor
 // -- Conversion
 
   /// @brief Implicit conversion to Array
-  operator const util::array::Array&() const { return *array_; }
-  operator util::array::Array&() { return *array_; }
+  operator const array::Array&() const { return *array_; }
+  operator array::Array&() { return *array_; }
   
-  const util::array::Array& array() const { return *array_; }
-        util::array::Array& array()       { return *array_; }
+  const array::Array& array() const { return *array_; }
+        array::Array& array()       { return *array_; }
 
 // -- Accessors
 
@@ -102,7 +102,7 @@ public: // Destructor
         util::Metadata& metadata()       { return metadata_; }
 
   /// @brief Resize field to given shape
-  void resize(const util::array::ArrayShape&);
+  void resize(const array::ArrayShape&);
 
   void insert(size_t idx1, size_t size1 );
 
@@ -110,10 +110,10 @@ public: // Destructor
   const std::vector<int>& shapef()  const { return array_->shapef(); }
 
   /// @brief Shape of this field (reverse order of Fortran style)
-  const util::array::ArrayShape& shape() const { return array_->shape(); }
+  const array::ArrayShape& shape() const { return array_->shape(); }
 
   /// @brief Strides of this field
-  const util::array::ArrayStrides& strides() const { return array_->strides(); }
+  const array::ArrayStrides& strides() const { return array_->strides(); }
 
   /// @brief Shape of this field associated to index 'i'
   size_t shape (size_t i) const { return array_->shape(i); }
@@ -153,7 +153,7 @@ private: // members
   std::string name_;
   size_t nb_levels_;
   util::Metadata metadata_;
-  util::array::Array* array_;
+  array::Array* array_;
   functionspace::FunctionSpace* functionspace_;
 };
 
@@ -162,7 +162,7 @@ private: // members
 template<typename DATATYPE>
 Field* Field::create(
     const std::string& name,
-    const util::array::ArrayShape& shape )
+    const array::ArrayShape& shape )
 {
     return create(name, util::DataType::create<DATATYPE>(), shape);
 }

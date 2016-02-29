@@ -59,7 +59,6 @@
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace util {
 namespace array {
 
 //------------------------------------------------------------------------------------------------------
@@ -735,7 +734,6 @@ ArrayView_const_iterator<DATA_TYPE,RANK>& ArrayView_const_iterator<DATA_TYPE,RAN
 //------------------------------------------------------------------------------------------------------
 
 } // namespace array
-} // namespace util
 } // namespace atlas
 
 #undef CHECK_RANK

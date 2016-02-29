@@ -10,10 +10,9 @@
 
 #include <algorithm>
 #include <vector>
-#include "atlas/util/array/ArrayUtil.h"
+#include "atlas/array/ArrayUtil.h"
 
 namespace atlas {
-namespace util {
 namespace array {
 
 ArraySpec::ArraySpec( const ArrayShape& _shape )
@@ -40,5 +39,4 @@ const std::vector<int>& ArraySpec::shapef() const
 }
 
 } // namespace array
-} // namespace util
 } // namespace atlas

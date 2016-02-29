@@ -51,23 +51,20 @@
 #include <vector>
 
 namespace atlas {
-namespace util {
 namespace array {
   class Array;
   template <typename DATA_TYPE, int RANK=0> class ArrayView;
 } // namespace array
-} // namespace util
 } // namespace atlas
 
 //------------------------------------------------------------------------------------------------------
 
-#include "atlas/util/array/ArrayUtil.h"
-#include "atlas/util/array/ArrayView_iterator.h"
+#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayView_iterator.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace util {
 namespace array {
 
 template< typename DATA_TYPE >
@@ -350,9 +347,8 @@ private:
 //------------------------------------------------------------------------------------------------------
 
 } // namespace array
-} // namespace util
 } // namespace atlas
 
-#include "atlas/util/array/ArrayView_impl.h"
+#include "atlas/array/ArrayView_impl.h"
 
 #endif

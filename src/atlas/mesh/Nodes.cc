@@ -20,22 +20,22 @@ namespace mesh {
 
 Nodes::Nodes(): size_(0)
 {
-  global_index_ = &add( field::Field::create<gidx_t>("glb_idx",   util::array::make_shape(size(),1)) );
-  remote_index_ = &add( field::Field::create<int   >("remote_idx",util::array::make_shape(size(),1)) );
-  partition_    = &add( field::Field::create<int   >("partition", util::array::make_shape(size(),1)) );
-  lonlat_       = &add( field::Field::create<double>("lonlat",    util::array::make_shape(size(),2)) );
-  ghost_        = &add( field::Field::create<int   >("ghost",     util::array::make_shape(size(),1)) );
+  global_index_ = &add( field::Field::create<gidx_t>("glb_idx",   array::make_shape(size(),1)) );
+  remote_index_ = &add( field::Field::create<int   >("remote_idx",array::make_shape(size(),1)) );
+  partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size(),1)) );
+  lonlat_       = &add( field::Field::create<double>("lonlat",    array::make_shape(size(),2)) );
+  ghost_        = &add( field::Field::create<int   >("ghost",     array::make_shape(size(),1)) );
 
   edge_connectivity_ = &add( "edge", new Connectivity() );
   cell_connectivity_ = &add( "cell", new Connectivity() );
 
 
-  add( field::Field::create<int>("flags", util::array::make_shape(size(),1)) );
+  add( field::Field::create<int>("flags", array::make_shape(size(),1)) );
 
 
-  util::array::ArrayView<gidx_t,1> glb_idx( global_index() );
-  util::array::ArrayView<int   ,1> part( partition() );
-  util::array::ArrayView<int   ,1> flags( field("flags") );
+  array::ArrayView<gidx_t,1> glb_idx( global_index() );
+  array::ArrayView<int   ,1> part( partition() );
+  array::ArrayView<int   ,1> flags( field("flags") );
 
   for(size_t n=0; n<size(); ++n)
   {
@@ -99,7 +99,7 @@ void Nodes::resize( size_t size )
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
     field::Field& field = *it->second;
-    util::array::ArrayShape shape = field.shape();
+    array::ArrayShape shape = field.shape();
     shape[0] = size_;
     field.resize(shape);
   }

@@ -14,7 +14,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/field/FieldCreatorIFS.h"
 #include "atlas/field/Field.h"
-#include "atlas/util/array/ArrayUtil.h"
+#include "atlas/array/ArrayUtil.h"
 #include "atlas/util/DataType.h"
 
 namespace atlas {
@@ -55,11 +55,11 @@ Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) con
 
   nblk = std::ceil(static_cast<double>(ngptot)/static_cast<double>(nproma));
 
-  util::array::ArrayShape s;
+  array::ArrayShape s;
   bool fortran (false);
     params.get("fortran",fortran);
-  if( fortran ) s = util::array::make_shape(nproma,nlev,nvar,nblk);
-  else          s = util::array::make_shape(nblk,nvar,nlev,nproma);
+  if( fortran ) s = array::make_shape(nproma,nlev,nvar,nblk);
+  else          s = array::make_shape(nblk,nvar,nlev,nproma);
 
   std::string name;
   params.get("name",name);

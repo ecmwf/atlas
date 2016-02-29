@@ -14,7 +14,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/internals/AccumulateFaces.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/IndexView.h"
 
 namespace atlas {
 namespace internals {

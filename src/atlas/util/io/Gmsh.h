@@ -27,7 +27,7 @@ namespace field {
     class FieldSet;
 } }
 
-namespace atlas { namespace util { namespace array { class Array; } } }
+namespace atlas { namespace array { class Array; } }
 
 namespace atlas {
 namespace util {

@@ -83,7 +83,7 @@ void TestField::test_constructor()
 
   mesh::Nodes& nodes  = mesh.nodes();
 
-  util::array::ArrayView<double,1> data ( nodes.add( field::Field::create<double>( sname,util::array::make_shape(nodes.size(),1) ) ) );
+  array::ArrayView<double,1> data ( nodes.add( field::Field::create<double>( sname,array::make_shape(nodes.size(),1) ) ) );
 
   for(size_t i = 0; i < ref_data.size(); i++)
     data[i] = ref_data[i];
@@ -102,7 +102,7 @@ void TestField::test_constructor()
   // iterate over the fields
   for (field::FieldSet::const_iterator it = fs.cbegin(); it != fs.cend(); ++it)
   {
-    util::array::ArrayView<double> vdata( *it );
+    array::ArrayView<double> vdata( *it );
 
     for( size_t i = 0; i < ref_data.size(); ++i )
     {
@@ -118,7 +118,7 @@ void TestField::test_fieldcreator()
 {
   field::Field::Ptr field ( field::Field::create( util::Config
                                       ("creator","ArraySpec")
-                                      ("shape",util::array::make_shape(10,2))
+                                      ("shape",array::make_shape(10,2))
                                       ("datatype",DataType::real32().str())
                                       ("name","myfield")
                                   ));
@@ -130,7 +130,7 @@ void TestField::test_fieldcreator()
 
   field::Field::Ptr arr (field::Field::create( util::Config
                                    ("creator","ArraySpec")
-                                   ("shape",util::array::make_shape(10,2))
+                                   ("shape",array::make_shape(10,2))
                                ));
   ASSERT( arr->shape(0) == 10 );
   ASSERT( arr->shape(1) == 2 );
@@ -161,7 +161,7 @@ void TestField::test_fieldcreator()
   Log::info() << std::flush;
 }
 
-void take_array(const util::array::Array& arr)
+void take_array(const array::Array& arr)
 {
   ASSERT( arr.size() == 20 );
 }
@@ -169,7 +169,7 @@ void take_array(const util::array::Array& arr)
 class TakeArray
 {
 public:
-  TakeArray(const util::array::Array& arr)
+  TakeArray(const array::Array& arr)
   {
     ASSERT( arr.size() == 20 );
   }
@@ -177,17 +177,17 @@ public:
 
 void TestField::test_implicit_conversion()
 {
-  SharedPtr<field::Field> field( field::Field::create<double>("tmp",util::array::make_shape(10,2)) );
-  const util::array::Array& const_array = *field;
-  util::array::Array& array = *field;
+  SharedPtr<field::Field> field( field::Field::create<double>("tmp",array::make_shape(10,2)) );
+  const array::Array& const_array = *field;
+  array::Array& array = *field;
 
-  util::array::ArrayView<double,2> arrv(array);
+  array::ArrayView<double,2> arrv(array);
   arrv(0,0) = 8.;
 
-  const util::array::ArrayView<double,2> carrv(const_array);
+  const array::ArrayView<double,2> carrv(const_array);
   ASSERT( carrv(0,0) == 8. );
 
-  const util::array::ArrayView<double,2> cfieldv(*field);
+  const array::ArrayView<double,2> cfieldv(*field);
   ASSERT( cfieldv(0,0) == 8. );
 
   take_array(*field);
@@ -201,11 +201,11 @@ void TestField::test_implicit_conversion()
 void TestField::test_wrap_rawdata()
 {
   std::vector<double> rawdata(20,8.);
-  SharedPtr<util::array::Array> array( util::array::Array::wrap(rawdata.data(),util::array::make_shape(10,2)) );
+  SharedPtr<array::Array> array( array::Array::wrap(rawdata.data(),array::make_shape(10,2)) );
   SharedPtr<field::Field> field( field::Field::create("wrapped",array.get()) );
   
   ASSERT( array->owners() == 2 );
-  const util::array::ArrayView<double,2> cfieldv(*field);
+  const array::ArrayView<double,2> cfieldv(*field);
   ASSERT( cfieldv(9,1) == 8. );
 }
 

@@ -27,7 +27,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/util/DataType.h"
-#include "atlas/util/array/ArrayView.h"
+#include "atlas/array/ArrayView.h"
 
 // ------------------------------------------------------------------
 
@@ -119,9 +119,9 @@ BOOST_AUTO_TEST_CASE( state )
   State state;
   BOOST_CHECK_EQUAL( state.size() , 0 );
 
-  state.add( field::Field::create<double>( "myfield", util::array::make_shape(10,1) ) );
-  state.add( field::Field::create<double>( "", util::array::make_shape(10,2) ) );
-  state.add( field::Field::create<double>( "", util::array::make_shape(10,3) ) );
+  state.add( field::Field::create<double>( "myfield", array::make_shape(10,1) ) );
+  state.add( field::Field::create<double>( "", array::make_shape(10,2) ) );
+  state.add( field::Field::create<double>( "", array::make_shape(10,3) ) );
 
   BOOST_CHECK_EQUAL( state.size() , 3 );
   BOOST_CHECK( state.has("myfield") );
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE( state_create )
   fields[4].set("name","array");
   fields[4].set("datatype",util::DataType::int64().str());
   fields[4].set("creator","ArraySpec");
-  fields[4].set("shape",util::array::make_shape(10,2));
+  fields[4].set("shape",array::make_shape(10,2));
 
   p.set("fields",fields);
 
@@ -204,16 +204,16 @@ BOOST_AUTO_TEST_CASE( state_create )
   Log::info() << state.field("soiltype")    << std::endl;
   Log::info() << state.field("GFL")         << std::endl;
 
-  util::array::ArrayView<float,4> temperature( state.field("temperature") );
+  array::ArrayView<float,4> temperature( state.field("temperature") );
   temperature(0,0,0,0) = 0;
 
-  util::array::ArrayView<double,4> wind( state.field("wind") );
+  array::ArrayView<double,4> wind( state.field("wind") );
   wind(0,0,0,0) = 0;
 
-  util::array::ArrayView<int,4> soiltype( state.field("soiltype") );
+  array::ArrayView<int,4> soiltype( state.field("soiltype") );
   soiltype(0,0,0,0) = 0;
 
-  util::array::ArrayView<long,2> array( state["array"] );
+  array::ArrayView<long,2> array( state["array"] );
   array(0,0) = 0;
 
 }

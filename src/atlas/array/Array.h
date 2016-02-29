@@ -15,20 +15,19 @@
 #include <iosfwd>
 #include <iterator>
 #include "eckit/memory/Owned.h"
-#include "atlas/util/array/ArrayUtil.h"
+#include "atlas/array/ArrayUtil.h"
 #include "atlas/util/DataType.h"
-#include "atlas/util/array/ArrayView.h"
+#include "atlas/array/ArrayView.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace util {
 namespace array {
 
 class Array : public eckit::Owned {
 public:
-  static Array* create( DataType, const ArrayShape& );
-  static Array* create( DataType );
+  static Array* create( util::DataType, const ArrayShape& );
+  static Array* create( util::DataType );
   static Array* create( const Array& );
   template <typename T> static Array* create(const ArrayShape& s);
   template <typename T> static Array* create();
@@ -40,11 +39,11 @@ public:
   template <typename T> static Array* wrap(T data[], const ArrayShape& s);
 
 public:
-  
+
   Array(){}
   Array(const ArraySpec& s) : spec_(s) {}
 
-  virtual DataType datatype() const = 0;
+  virtual util::DataType datatype() const = 0;
   virtual double bytes() const = 0;
   virtual void dump(std::ostream& os) const = 0;
 
@@ -77,7 +76,7 @@ public:
   /// @brief Access to raw data
   template <typename DATATYPE>       DATATYPE* data();
   template <typename DATATYPE> const DATATYPE* data() const;
-  
+
   void operator=( const Array &array ) { return assign(array); }
   virtual void assign( const Array& )=0;
 
@@ -92,22 +91,22 @@ private:
 };
 
 template <typename T> Array* Array::create(const ArrayShape& s)
-{ return create(DataType::create<T>(),s); }
+{ return create(util::DataType::create<T>(),s); }
 
 template <typename T> Array* Array::create()
-{ return create(DataType::create<T>()); }
+{ return create(util::DataType::create<T>()); }
 
 template <typename T> Array* Array::create(size_t size)
-{ return create(DataType::create<T>(),make_shape(size)); }
+{ return create(util::DataType::create<T>(),make_shape(size)); }
 
 template <typename T> Array* Array::create(size_t size1, size_t size2)
-{ return create(DataType::create<T>(),make_shape(size1,size2)); }
+{ return create(util::DataType::create<T>(),make_shape(size1,size2)); }
 
 template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3)
-{ return create(DataType::create<T>(),make_shape(size1,size2,size3)); }
+{ return create(util::DataType::create<T>(),make_shape(size1,size2,size3)); }
 
 template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3, size_t size4)
-{ return create(DataType::create<T>(),make_shape(size1,size2,size3,size4)); }
+{ return create(util::DataType::create<T>(),make_shape(size1,size2,size3,size4)); }
 
 //------------------------------------------------------------------------------------------------------
 
@@ -131,9 +130,9 @@ public:
   ArrayT(size_t size1, size_t size2, size_t size3): owned_(true)               { resize( make_shape(size1,size2,size3) ); }
 
   ArrayT(size_t size1, size_t size2, size_t size3, size_t size4): owned_(true) { resize( make_shape(size1,size2,size3,size4) ); }
-  
-  ArrayT(DATA_TYPE data[], const ArrayShape& shape): 
-    Array(ArraySpec(shape)), 
+
+  ArrayT(DATA_TYPE data[], const ArrayShape& shape):
+    Array(ArraySpec(shape)),
     owned_(false)
   { wrap(data); }
 
@@ -152,7 +151,7 @@ public:
   const DATA_TYPE& operator()(const ArrayIdx& idx) const                              { return view_(idx); }
         DATA_TYPE& operator()(const ArrayIdx& idx)                                    { return view_(idx); }
 
-  virtual DataType datatype() const { return DataType::create<DATA_TYPE>(); }
+  virtual util::DataType datatype() const { return util::DataType::create<DATA_TYPE>(); }
   virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
   virtual void dump(std::ostream& os) const;
 
@@ -168,7 +167,7 @@ public:
 
   template< typename RandomAccessIterator >
   void assign( RandomAccessIterator begin, RandomAccessIterator end );
-  
+
   virtual void insert_data(size_t idx1, size_t size1);
 
 private:
@@ -237,7 +236,6 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
 //------------------------------------------------------------------------------------------------------
 
 } // namespace array
-} // namespace util
 } // namespace atlas
 
 #endif

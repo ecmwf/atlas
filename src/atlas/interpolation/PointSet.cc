@@ -15,7 +15,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/PointSet.h"
-#include "atlas/util/array/ArrayView.h"
+#include "atlas/array/ArrayView.h"
 
 using namespace eckit;
 
@@ -39,7 +39,7 @@ PointSet::PointSet( mesh::Mesh& mesh )
 
 	ASSERT( nodes.has_field("xyz") );
 
-    util::array::ArrayView<double,2> coords ( nodes.field("xyz") );
+    array::ArrayView<double,2> coords ( nodes.field("xyz") );
 
     std::vector< PointIndex3::Value > pidx;
     pidx.reserve(npts_);

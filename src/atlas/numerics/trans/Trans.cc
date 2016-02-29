@@ -22,7 +22,7 @@
 #include "atlas/numerics/trans/Trans.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/internals/IsGhost.h"
-#include "atlas/util/array/Array.h"
+#include "atlas/array/Array.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 
 // anonymous namespace
@@ -310,11 +310,11 @@ void Trans::dirtrans(const functionspace::Nodes& gp,const field::FieldSet& gpfie
     throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
   }
   // Arrays Trans expects
-  util::array::ArrayT<double> rgp(nfld,ngptot());
-  util::array::ArrayT<double> rspec(nspec2(),nfld);
+  array::ArrayT<double> rgp(nfld,ngptot());
+  array::ArrayT<double> rspec(nspec2(),nfld);
 
-  util::array::ArrayView<double,2> rgpview (rgp);
-  util::array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview (rgp);
+  array::ArrayView<double,2> rspecview (rspec);
 
   // Pack gridpoints
   {
@@ -322,7 +322,7 @@ void Trans::dirtrans(const functionspace::Nodes& gp,const field::FieldSet& gpfie
     size_t f=0;
     for( size_t jfld=0; jfld<gpfields.size(); ++jfld )
     {
-      const util::array::ArrayView<double,2> gpfield ( gpfields[jfld].data<double>(), util::array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
+      const array::ArrayView<double,2> gpfield ( gpfields[jfld].data<double>(), array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
       const size_t nvars = gpfield.shape(1);
       for( size_t jvar=0; jvar<nvars; ++jvar )
       {
@@ -356,7 +356,7 @@ void Trans::dirtrans(const functionspace::Nodes& gp,const field::FieldSet& gpfie
     size_t f=0;
     for( size_t jfld=0; jfld<spfields.size(); ++jfld )
     {
-      util::array::ArrayView<double,2> spfield ( spfields[jfld].data<double>(), util::array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
+      array::ArrayView<double,2> spfield ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
 
       const size_t nvars = spfield.shape(1);
 
@@ -411,18 +411,18 @@ void Trans::dirtrans(const field::FieldSet& gpfields,
     throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
   }
   // Arrays Trans expects
-  util::array::ArrayT<double> rgp(nfld,ngptot());
-  util::array::ArrayT<double> rspec(nspec2(),nfld);
+  array::ArrayT<double> rgp(nfld,ngptot());
+  array::ArrayT<double> rspec(nspec2(),nfld);
 
-  util::array::ArrayView<double,2> rgpview (rgp);
-  util::array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview (rgp);
+  array::ArrayView<double,2> rspecview (rspec);
 
   // Pack gridpoints
   {
     size_t f=0;
     for( size_t jfld=0; jfld<gpfields.size(); ++jfld )
     {
-      const util::array::ArrayView<double,2> gpfield ( gpfields[jfld].data<double>(), util::array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
+      const array::ArrayView<double,2> gpfield ( gpfields[jfld].data<double>(), array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
       const size_t nvars = gpfield.shape(1);
       for( size_t jvar=0; jvar<nvars; ++jvar )
       {
@@ -450,7 +450,7 @@ void Trans::dirtrans(const field::FieldSet& gpfields,
     size_t f=0;
     for( size_t jfld=0; jfld<spfields.size(); ++jfld )
     {
-      util::array::ArrayView<double,2> spfield ( spfields[jfld].data<double>(), util::array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
+      array::ArrayView<double,2> spfield ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
 
       const size_t nvars = spfield.shape(1);
 
@@ -504,18 +504,18 @@ void Trans::invtrans(const Spectral& sp, const field::FieldSet& spfields,
     throw eckit::SeriousBug("invtrans: different number of gridpoint fields than spectral fields",Here());
 
   // Arrays Trans expects
-  util::array::ArrayT<double> rgp(nfld,ngptot());
-  util::array::ArrayT<double> rspec(nspec2(),nfld);
+  array::ArrayT<double> rgp(nfld,ngptot());
+  array::ArrayT<double> rspec(nspec2(),nfld);
 
-  util::array::ArrayView<double,2> rgpview (rgp);
-  util::array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview (rgp);
+  array::ArrayView<double,2> rspecview (rspec);
 
   // Pack spectral fields
   {
     int f=0;
     for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
     {
-      const util::array::ArrayView<double,2> field ( spfields[jfld].data<double>(), util::array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
+      const array::ArrayView<double,2> field ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
       const int nvars = field.shape(1);
 
       for( int jvar=0; jvar<nvars; ++jvar )
@@ -545,7 +545,7 @@ void Trans::invtrans(const Spectral& sp, const field::FieldSet& spfields,
     int f=0;
     for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
     {
-      util::array::ArrayView<double,2> field ( gpfields[jfld].data<double>(), util::array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
+      array::ArrayView<double,2> field ( gpfields[jfld].data<double>(), array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
       const size_t nvars = field.shape(1);
 
       for( size_t jvar=0; jvar<nvars; ++jvar )
@@ -611,18 +611,18 @@ void Trans::invtrans(const  field::FieldSet& spfields,
   }
 
   // Arrays Trans expects
-  util::array::ArrayT<double> rgp(nfld,ngptot());
-  util::array::ArrayT<double> rspec(nspec2(),nfld);
+  array::ArrayT<double> rgp(nfld,ngptot());
+  array::ArrayT<double> rspec(nspec2(),nfld);
 
-  util::array::ArrayView<double,2> rgpview (rgp);
-  util::array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview (rgp);
+  array::ArrayView<double,2> rspecview (rspec);
 
   // Pack spectral fields
   {
     int f=0;
     for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
     {
-      const util::array::ArrayView<double,2> field ( spfields[jfld].data<double>(), util::array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
+      const array::ArrayView<double,2> field ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
       const int nvars = field.shape(1);
 
       for( int jvar=0; jvar<nvars; ++jvar )
@@ -651,7 +651,7 @@ void Trans::invtrans(const  field::FieldSet& spfields,
     int f=0;
     for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
     {
-      util::array::ArrayView<double,2> field ( gpfields[jfld].data<double>(), util::array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
+      array::ArrayView<double,2> field ( gpfields[jfld].data<double>(), array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
       const size_t nvars = field.shape(1);
 
       for( size_t jvar=0; jvar<nvars; ++jvar )
@@ -691,14 +691,14 @@ void Trans::dirtrans_wind2vordiv(const functionspace::Nodes& gp, const field::Fi
   if( spdiv.size() == 0 ) throw eckit::SeriousBug("dirtrans: spectral divergence field is empty.");
 
   // Arrays Trans expects
-  util::array::ArrayT<double> rgp(2*nfld,ngptot());
-  util::array::ArrayView<double,2> rgpview (rgp);
+  array::ArrayT<double> rgp(2*nfld,ngptot());
+  array::ArrayView<double,2> rgpview (rgp);
 
   // Pack gridpoints
   {
     internals::IsGhost is_ghost( gp.nodes() );
     size_t f=0;
-    util::array::ArrayView<double,3> wind ( gpwind.data<double>(), util::array::make_shape(gpwind.shape(0),nfld,nwindfld/nfld) );
+    array::ArrayView<double,3> wind ( gpwind.data<double>(), array::make_shape(gpwind.shape(0),nfld,nwindfld/nfld) );
     for( size_t jcomp=0; jcomp<2; ++jcomp )
     {
       for( size_t jfld=0; jfld<nfld; ++jfld )
@@ -757,8 +757,8 @@ void Trans::invtrans_vordiv2wind(const Spectral& sp, const field::Field& spvor, 
   if( spdiv.size() == 0 ) throw eckit::SeriousBug("invtrans: spectral divergence field is empty.");
 
   // Arrays Trans expects
-  util::array::ArrayT<double> rgp(2*nfld,ngptot());
-  util::array::ArrayView<double,2> rgpview (rgp);
+  array::ArrayT<double> rgp(2*nfld,ngptot());
+  array::ArrayView<double,2> rgpview (rgp);
 
   // Do transform
   {
@@ -778,7 +778,7 @@ void Trans::invtrans_vordiv2wind(const Spectral& sp, const field::Field& spvor, 
     internals::IsGhost is_ghost( gp.nodes() );
 
     size_t f=0;
-    util::array::ArrayView<double,3> wind ( gpwind.data<double>(), util::array::make_shape(gpwind.shape(0),nfld,nwindfld/nfld) );
+    array::ArrayView<double,3> wind ( gpwind.data<double>(), array::make_shape(gpwind.shape(0),nfld,nwindfld/nfld) );
     for( size_t jcomp=0; jcomp<2; ++jcomp )
     {
       for( size_t jfld=0; jfld<nfld; ++jfld )

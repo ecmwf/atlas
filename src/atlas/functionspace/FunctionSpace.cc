@@ -362,7 +362,7 @@ void FunctionSpace::parallelise()
 
   if( name() == "nodes")
   {
-    util::array::ArrayView<int,1> flags ( field("flags") );
+    array::ArrayView<int,1> flags ( field("flags") );
     std::vector<int> mask(shape(0));
     for( size_t j=0; j<mask.size(); ++j )
     {

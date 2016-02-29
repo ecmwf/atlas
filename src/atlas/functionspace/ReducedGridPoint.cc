@@ -49,29 +49,29 @@ ReducedGridPoint::ReducedGridPoint(const grid::Grid& grid) :
     int n_regions_NS = trans_->n_regions_NS();
 
     // Number of partitions per latitude band
-    util::array::ArrayView<int,1> n_regions = trans_->n_regions();
+    array::ArrayView<int,1> n_regions = trans_->n_regions();
 
     // First latitude of latitude band
-    util::array::ArrayView<int,1> nfrstlat = trans_->nfrstlat();
+    array::ArrayView<int,1> nfrstlat = trans_->nfrstlat();
 
     // First latitude of latitude band
-    util::array::ArrayView<int,1> nlstlat = trans_->nlstlat();
+    array::ArrayView<int,1> nlstlat = trans_->nlstlat();
 
     // Index of latitude partition (note that if a partition
     // has two regions on a latitude - the index increases
     // by one (2 numbers)
-    util::array::ArrayView<int,1> nptrfrstlat = trans_->nptrfrstlat();
+    array::ArrayView<int,1> nptrfrstlat = trans_->nptrfrstlat();
 
     // Starting longitudinal point per given latitude (ja)
     // Note that it is associated to nptrfrstlat
-    util::array::ArrayView<int,2> nsta = trans_->nsta();
+    array::ArrayView<int,2> nsta = trans_->nsta();
 
     // Number of longitudinal points per given latitude (ja)
     // Note that it is associated to nptrfrstlat
-    util::array::ArrayView<int,2> nonl = trans_->nonl();
+    array::ArrayView<int,2> nonl = trans_->nonl();
 
     // Total number of longitudes per latitude
-    util::array::ArrayView<int,1> nloen = trans_->nloen();
+    array::ArrayView<int,1> nloen = trans_->nloen();
 
     size_t proc(0);
     // Loop over number of latitude bands (ja)
@@ -169,14 +169,14 @@ field::Field* ReducedGridPoint::createField<double>(
     const std::string& name) const
 {
 #ifdef ATLAS_HAVE_TRANS
-    field::Field* field = field::Field::create<double>(name, util::array::make_shape(trans_->ngptot()));
+    field::Field* field = field::Field::create<double>(name, array::make_shape(trans_->ngptot()));
     field->set_functionspace(this);
     return field;
 #else
     eckit::NotImplemented("ReducedGridPoint::createField currently relies"
                           " on ATLAS_HAVE_TRANS", Here());
 
-    field::Field* field = field::Field::create<double>(name, util::array::make_shape(grid_->npts()) );
+    field::Field* field = field::Field::create<double>(name, array::make_shape(grid_->npts()) );
     field->set_functionspace(this);
     return field;
 #endif
@@ -195,7 +195,7 @@ field::Field* ReducedGridPoint::createField<double>(
 {
 #ifdef ATLAS_HAVE_TRANS
     field::Field* field = field::Field::create<double>(
-                    name, util::array::make_shape(trans_->ngptot(), levels));
+                    name, array::make_shape(trans_->ngptot(), levels));
 
     field->set_functionspace(this);
     field->set_levels(levels);
@@ -205,7 +205,7 @@ field::Field* ReducedGridPoint::createField<double>(
                           "on ATLAS_HAVE_TRANS", Here());
 
     field::Field* field = field::Field::create<double>(
-                    name, util::array::make_shape(grid_->npts(), levels));
+                    name, array::make_shape(grid_->npts(), levels));
 
     field->set_functionspace(this);
     return field;
@@ -222,7 +222,7 @@ template <>
 field::Field* ReducedGridPoint::createGlobalField<double>(
     const std::string& name) const
 {
-    field::Field* field = field::Field::create<double>(name, util::array::make_shape(grid_->npts()));
+    field::Field* field = field::Field::create<double>(name, array::make_shape(grid_->npts()));
     field->set_functionspace(this);
     return field;
 }
@@ -239,7 +239,7 @@ field::Field* ReducedGridPoint::createGlobalField<double>(
     size_t levels) const
 {
     field::Field* field = field::Field::create<double>(
-                    name, util::array::make_shape(grid_->npts(), levels));
+                    name, array::make_shape(grid_->npts(), levels));
 
     field->set_functionspace(this);
     return field;

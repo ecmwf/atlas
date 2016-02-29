@@ -34,7 +34,7 @@ namespace field {
  *    Field* field = Field::create(
  *         Config
  *           ("creator","ArraySpec")      // ArraySpec FieldCreator
- *           ("shape",util::array::make_shape(100,3))  // Rank 2 field with indexing [100][3]
+ *           ("shape",array::make_shape(100,3))  // Rank 2 field with indexing [100][3]
  *         );
  * \endcode
  */

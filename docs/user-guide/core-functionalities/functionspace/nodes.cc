@@ -1,7 +1,7 @@
 #include "atlas/atlas.h"
 #include "atlas/grid/grids.h"
 #include "atlas/field/Field.h"
-#include "atlas/util/array/ArrayView.h"
+#include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"

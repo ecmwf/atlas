@@ -14,8 +14,8 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/Bitflags.h"
-#include "atlas/util/array/ArrayView.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
 #include "atlas/util/parallel/mpi/mpi.h"
 
 namespace atlas {
@@ -26,11 +26,11 @@ class IsGhost
 public:
   IsGhost( const mesh::Nodes& nodes )
   {
-//    part_   = util::array::ArrayView<int,1> (nodes.partition() );
-//    ridx_   = util::array::IndexView<int,1> (nodes.remote_index() );
+//    part_   = array::ArrayView<int,1> (nodes.partition() );
+//    ridx_   = array::IndexView<int,1> (nodes.remote_index() );
 //    mypart_ = eckit::mpi::rank();
-  flags_ = util::array::ArrayView<int,1> (nodes.field("flags"));
-  ghost_ = util::array::ArrayView<int,1> (nodes.ghost());
+  flags_ = array::ArrayView<int,1> (nodes.field("flags"));
+  ghost_ = array::ArrayView<int,1> (nodes.ghost());
   }
 
   bool operator()(size_t idx) const
@@ -43,10 +43,10 @@ public:
   }
 private:
 //  int mypart_;
-//  util::array::ArrayView<int,1> part_;
-//  util::array::IndexView<int,1> ridx_;
-  util::array::ArrayView<int,1> flags_;
-  util::array::ArrayView<int,1> ghost_;
+//  array::ArrayView<int,1> part_;
+//  array::IndexView<int,1> ridx_;
+  array::ArrayView<int,1> flags_;
+  array::ArrayView<int,1> ghost_;
 };
 
 } // namespace internals

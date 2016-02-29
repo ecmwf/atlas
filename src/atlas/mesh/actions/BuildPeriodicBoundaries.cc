@@ -18,9 +18,9 @@
 #include "atlas/internals/Bitflags.h"
 #include "atlas/internals/LonLatMicroDeg.h"
 #include "atlas/internals/PeriodicTransform.h"
-#include "atlas/util/array/Array.h"
-#include "atlas/util/array/ArrayView.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/Array.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 #include "atlas/util/parallel/mpi/mpi.h"
 
@@ -51,14 +51,14 @@ void build_periodic_boundaries( Mesh& mesh )
 
     mesh::Nodes& nodes = mesh.nodes();
 
-    util::array::ArrayView<int,1> flags( nodes.field("flags") );
-    util::array::IndexView<int,1> ridx ( nodes.remote_index() );
-    util::array::ArrayView<int,1> part ( nodes.partition() );
-    util::array::ArrayView<int,1> ghost ( nodes.ghost() );
+    array::ArrayView<int,1> flags( nodes.field("flags") );
+    array::IndexView<int,1> ridx ( nodes.remote_index() );
+    array::ArrayView<int,1> part ( nodes.partition() );
+    array::ArrayView<int,1> ghost ( nodes.ghost() );
 
     int nb_nodes = nodes.size();
 
-    util::array::ArrayView<double,2> lonlat ( nodes.lonlat() );
+    array::ArrayView<double,2> lonlat ( nodes.lonlat() );
 
     // Identify my master and slave nodes on own partition
     // master nodes are at x=0,  slave nodes are at x=2pi
@@ -125,7 +125,7 @@ void build_periodic_boundaries( Mesh& mesh )
       {
         found_master.reserve(master_nodes.size());
         send_slave_idx.reserve(master_nodes.size());
-        util::array::ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], util::array::make_shape(recvcounts[jproc]/3,3) );
+        array::ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], array::make_shape(recvcounts[jproc]/3,3) );
         for( size_t jnode=0; jnode<recv_slave.shape(0); ++jnode )
         {
           LonLatMicroDeg slave( recv_slave(jnode,internals::LON), recv_slave(jnode,internals::LAT) );

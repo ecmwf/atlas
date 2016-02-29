@@ -29,14 +29,14 @@
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
 #include "atlas/util/parallel/mpi/mpi.h"
-#include "atlas/util/array/Array.h"
-#include "atlas/util/array/ArrayView.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/Array.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
 #include "atlas/internals/Bitflags.h"
 
 using atlas::internals::Topology;
 
-using namespace atlas::util::array;
+using namespace atlas::array;
 using namespace atlas::internals;
 using namespace atlas::util::io;
 using namespace atlas::mesh::generators;
@@ -49,7 +49,7 @@ class IsGhost
 public:
   IsGhost( const mesh::Nodes& nodes )
   {
-    part_   = util::array::ArrayView<int,1> (nodes.partition() );
+    part_   = array::ArrayView<int,1> (nodes.partition() );
     ridx_   = IndexView<int,1> (nodes.remote_index() );
     mypart_ = eckit::mpi::rank();
   }
@@ -62,7 +62,7 @@ public:
   }
 private:
   int mypart_;
-  util::array::ArrayView<int,1> part_;
+  array::ArrayView<int,1> part_;
   IndexView<int,1> ridx_;
 };
 
@@ -83,10 +83,10 @@ BOOST_AUTO_TEST_CASE( test1 )
 
   mesh::Nodes& nodes = m->nodes();
   nodes.resize(10);
-  util::array::ArrayView<double,2> lonlat ( nodes.lonlat());
-  util::array::ArrayView<gidx_t,1> glb_idx( nodes.global_index());
-  util::array::ArrayView<int,1> part ( nodes.partition() );
-  util::array::ArrayView<int,1> flags ( nodes.field("flags") );
+  array::ArrayView<double,2> lonlat ( nodes.lonlat());
+  array::ArrayView<gidx_t,1> glb_idx( nodes.global_index());
+  array::ArrayView<int,1> part ( nodes.partition() );
+  array::ArrayView<int,1> flags ( nodes.field("flags") );
   flags = Topology::NONE;
 
   // This is typically available
@@ -183,8 +183,8 @@ BOOST_AUTO_TEST_CASE( test2 )
 
   mesh::Nodes& nodes = m->nodes();
   IndexView<int,1> loc_idx ( nodes.remote_index() );
-  util::array::ArrayView<int,1> part    ( nodes.partition());
-  util::array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  array::ArrayView<int,1> part    ( nodes.partition());
+  array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
   test::IsGhost is_ghost(nodes);
 

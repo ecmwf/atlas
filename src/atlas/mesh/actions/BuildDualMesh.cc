@@ -26,8 +26,8 @@
 #include "atlas/functionspace/Edges.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Unique.h"
-#include "atlas/util/array/ArrayView.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 #include "atlas/util/parallel/mpl/Checksum.h"
 
@@ -42,7 +42,7 @@ namespace {
 
 void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2] )
 {
-  util::array::ArrayView<double,2> lonlat( nodes.lonlat() );
+  array::ArrayView<double,2> lonlat( nodes.lonlat() );
   const int nb_nodes = nodes.size();
   min[internals::LON] =  std::numeric_limits<double>::max();
   min[internals::LAT] =  std::numeric_limits<double>::max();
@@ -80,20 +80,20 @@ inline double sqr(double a) { return a*a; }
 
 }
 
-util::array::Array* build_centroids_lonlat( const mesh::HybridElements& , const field::Field& lonlat);
+array::Array* build_centroids_lonlat( const mesh::HybridElements& , const field::Field& lonlat);
 
 void add_centroid_dual_volume_contribution(
     Mesh& mesh,
-    util::array::ArrayView<double,1>& dual_volumes );
+    array::ArrayView<double,1>& dual_volumes );
 void add_median_dual_volume_contribution_cells(
     const mesh::HybridElements& cells,
     const mesh::HybridElements& edges,
     const mesh::Nodes& nodes,
-    util::array::Array& array_dual_volumes );
+    array::Array& array_dual_volumes );
 void add_median_dual_volume_contribution_poles(
     const mesh::HybridElements& edges,
     const mesh::Nodes& nodes,
-    util::array::Array& array_dual_volumes );
+    array::Array& array_dual_volumes );
 void build_dual_normals( Mesh& mesh );
 void build_dual_normals_new( Mesh& mesh );
 void build_skewness(Mesh& mesh );
@@ -105,7 +105,7 @@ void build_median_dual_mesh_new( Mesh& mesh )
 
   mesh::Nodes& nodes   = mesh.nodes();
   mesh::HybridElements& edges = mesh.edges();
-  field::Field& dual_volumes = nodes.add( field::Field::create<double>( "dual_volumes", util::array::make_shape(nodes.size()) ) );
+  field::Field& dual_volumes = nodes.add( field::Field::create<double>( "dual_volumes", array::make_shape(nodes.size()) ) );
 
   if( ! mesh.cells().has_field("centroids_lonlat") )
     mesh.cells().add( field::Field::create("centroids_lonlat",build_centroids_lonlat(mesh.cells(),mesh.nodes().lonlat())) );
@@ -118,8 +118,8 @@ void build_median_dual_mesh_new( Mesh& mesh )
 
   build_dual_normals_new( mesh );
 
-  util::array::ArrayView<double,1> skewness ( mesh.edges().add( field::Field::create<double>("skewness",util::array::make_shape(mesh.edges().size()))) );
-  util::array::ArrayView<double,1> alpha    ( mesh.edges().add( field::Field::create<double>("alpha",util::array::make_shape(mesh.edges().size()))) );
+  array::ArrayView<double,1> skewness ( mesh.edges().add( field::Field::create<double>("skewness",array::make_shape(mesh.edges().size()))) );
+  array::ArrayView<double,1> alpha    ( mesh.edges().add( field::Field::create<double>("alpha",array::make_shape(mesh.edges().size()))) );
   skewness = 0.;
   alpha = 0.5;
 
@@ -136,8 +136,8 @@ void build_median_dual_mesh_new( Mesh& mesh )
 void build_median_dual_mesh_convert_to_old( Mesh& mesh )
 {
   deprecated::FunctionSpace&  edges = mesh.function_space("edges");
-  util::array::ArrayView<double,2> dual_normals  ( edges.create_field<double>("dual_normals",2) );
-  const util::array::ArrayView<double,2> new_dual_normals( mesh.edges().field( "dual_normals") );
+  array::ArrayView<double,2> dual_normals  ( edges.create_field<double>("dual_normals",2) );
+  const array::ArrayView<double,2> new_dual_normals( mesh.edges().field( "dual_normals") );
   for( size_t jedge=0; jedge<mesh.edges().size(); ++jedge )
   {
     dual_normals(jedge,internals::LON) = new_dual_normals(jedge,internals::LON);
@@ -158,13 +158,13 @@ void build_median_dual_mesh( Mesh& mesh )
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 
-void build_centroids( deprecated::FunctionSpace& func_space, util::array::ArrayView<double,2>& lonlat);
+void build_centroids( deprecated::FunctionSpace& func_space, array::ArrayView<double,2>& lonlat);
 
 void build_centroid_dual_mesh( Mesh& mesh )
 {
   mesh::Nodes& nodes   = mesh.nodes();
-  util::array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
-  util::array::ArrayView<double,1> dual_volumes  ( nodes.add( field::Field::create<double>( "dual_volumes", util::array::make_shape(nodes.size(),1) ) ) );
+  array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
+  array::ArrayView<double,1> dual_volumes  ( nodes.add( field::Field::create<double>( "dual_volumes", array::make_shape(nodes.size(),1) ) ) );
 
   deprecated::FunctionSpace& quads       = mesh.function_space( "quads" );
   deprecated::FunctionSpace& triags      = mesh.function_space( "triags" );
@@ -183,21 +183,21 @@ void build_centroid_dual_mesh( Mesh& mesh )
   eckit::SharedPtr<functionspace::Nodes> nodes_fs( new functionspace::Nodes(mesh,Halo(mesh)) );
   nodes_fs->haloExchange(nodes.field("dual_volumes"));
 
-  util::array::ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
+  array::ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
   edges.parallelise();
   edges.halo_exchange().execute(dual_normals);
 }
 
 
 
-void build_centroids( deprecated::FunctionSpace& func_space, util::array::ArrayView<double,2>& lonlat)
+void build_centroids( deprecated::FunctionSpace& func_space, array::ArrayView<double,2>& lonlat)
 {
   if( !func_space.has_field("centroids") )
   {
     int nb_elems = func_space.shape(0);
-    util::array::IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
+    array::IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
     int nb_nodes_per_elem = elem_nodes.shape(1);
-    util::array::ArrayView<double,2> elem_centroids( func_space.create_field<double>( "centroids", 2 ) );
+    array::ArrayView<double,2> elem_centroids( func_space.create_field<double>( "centroids", 2 ) );
     for (size_t e=0; e<nb_elems; ++e)
     {
       elem_centroids(e,internals::LON) = 0.;
@@ -219,11 +219,11 @@ void build_centroid_dual_mesh( Mesh& mesh )
 }
 #endif
 
-util::array::Array* build_centroids_lonlat( const mesh::HybridElements& elements, const field::Field& field_lonlat )
+array::Array* build_centroids_lonlat( const mesh::HybridElements& elements, const field::Field& field_lonlat )
 {
-  const util::array::ArrayView<double,2> lonlat( field_lonlat );
-  util::array::Array* array_centroids = util::array::Array::create<double>(util::array::make_shape(elements.size(),2));
-  util::array::ArrayView<double,2> centroids( *array_centroids );
+  const array::ArrayView<double,2> lonlat( field_lonlat );
+  array::Array* array_centroids = array::Array::create<double>(array::make_shape(elements.size(),2));
+  array::ArrayView<double,2> centroids( *array_centroids );
   size_t nb_elems = elements.size();
   const mesh::HybridElements::Connectivity& elem_nodes = elements.node_connectivity();
   for (size_t e=0; e<nb_elems; ++e)
@@ -247,13 +247,13 @@ void add_median_dual_volume_contribution_cells(
     const mesh::HybridElements& cells,
     const mesh::HybridElements& edges,
     const mesh::Nodes& nodes,
-    util::array::Array& array_dual_volumes )
+    array::Array& array_dual_volumes )
 {
-  util::array::ArrayView<double,1> dual_volumes( array_dual_volumes );
+  array::ArrayView<double,1> dual_volumes( array_dual_volumes );
 
-  const util::array::ArrayView<double,2> lonlat ( nodes.lonlat() );
-  const util::array::ArrayView<double,2> cell_centroids ( cells.field("centroids_lonlat") );
-  const util::array::ArrayView<double,2> edge_centroids ( edges.field("centroids_lonlat") );
+  const array::ArrayView<double,2> lonlat ( nodes.lonlat() );
+  const array::ArrayView<double,2> cell_centroids ( cells.field("centroids_lonlat") );
+  const array::ArrayView<double,2> edge_centroids ( edges.field("centroids_lonlat") );
   const mesh::HybridElements::Connectivity& cell_edge_connectivity = cells.edge_connectivity();
   const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
 
@@ -290,11 +290,11 @@ void add_median_dual_volume_contribution_cells(
 void add_median_dual_volume_contribution_poles(
     const mesh::HybridElements& edges,
     const mesh::Nodes& nodes,
-    util::array::Array& array_dual_volumes )
+    array::Array& array_dual_volumes )
 {
-  util::array::ArrayView<double,1> dual_volumes( array_dual_volumes );
-  const util::array::ArrayView<double,2> lonlat ( nodes.lonlat() );
-  const util::array::ArrayView<double,2> edge_centroids ( edges.field("centroids_lonlat") );
+  array::ArrayView<double,1> dual_volumes( array_dual_volumes );
+  const array::ArrayView<double,2> lonlat ( nodes.lonlat() );
+  const array::ArrayView<double,2> edge_centroids ( edges.field("centroids_lonlat") );
   const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
   const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
 
@@ -347,23 +347,23 @@ void add_median_dual_volume_contribution_poles(
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 void add_centroid_dual_volume_contribution(
     Mesh& mesh,
-    util::array::ArrayView<double,1>& dual_volumes )
+    array::ArrayView<double,1>& dual_volumes )
 {
   mesh::Nodes& nodes = mesh.nodes();
   deprecated::FunctionSpace& edges = mesh.function_space("edges");
-  util::array::ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
-  util::array::ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
-  util::array::IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
-  util::array::ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
-  util::array::IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
-  util::array::ArrayView<double,2> node_lonlat   ( nodes.lonlat() );
-  std::vector< util::array::ArrayView<double,2> > elem_centroids(mesh.nb_function_spaces());
+  array::ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
+  array::ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
+  array::IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
+  array::ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
+  array::IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
+  array::ArrayView<double,2> node_lonlat   ( nodes.lonlat() );
+  std::vector< array::ArrayView<double,2> > elem_centroids(mesh.nb_function_spaces());
   for(size_t f = 0; f < mesh.nb_function_spaces(); ++f)
   {
     deprecated::FunctionSpace& elements = mesh.function_space(f);
     if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
-      elem_centroids[f] = util::array::ArrayView<double,2>( elements.field("centroids") );
+      elem_centroids[f] = array::ArrayView<double,2>( elements.field("centroids") );
     }
   }
   double tol = 1.e-6;
@@ -434,20 +434,20 @@ void add_centroid_dual_volume_contribution(
 
 void build_dual_normals_new( Mesh& mesh )
 {
-  util::array::ArrayView<double,2> elem_centroids( mesh.cells().field("centroids_lonlat") );
+  array::ArrayView<double,2> elem_centroids( mesh.cells().field("centroids_lonlat") );
 
   mesh::Nodes&  nodes = mesh.nodes();
   mesh::HybridElements&  edges = mesh.edges();
   const size_t nb_edges = edges.size();
 
-  util::array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
+  array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
   double tol = 1.e-6;
 
   double xl, yl, xr, yr;
-  util::array::ArrayView<double,2> edge_centroids( edges.field("centroids_lonlat") );
-  util::array::ArrayView<double,2> dual_normals  ( edges.add( field::Field::create<double>("dual_normals",util::array::make_shape(nb_edges,2)) ) );
+  array::ArrayView<double,2> edge_centroids( edges.field("centroids_lonlat") );
+  array::ArrayView<double,2> dual_normals  ( edges.add( field::Field::create<double>("dual_normals",array::make_shape(nb_edges,2)) ) );
 
   const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
   const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
@@ -536,26 +536,26 @@ void build_dual_normals_new( Mesh& mesh )
 void build_dual_normals( Mesh& mesh )
 {
 
-  std::vector< util::array::ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
+  std::vector< array::ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
   for (size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
   {
     deprecated::FunctionSpace& func_space = mesh.function_space(func_space_idx);
     if( func_space.has_field("centroids") )
-      elem_centroids[func_space_idx] = util::array::ArrayView<double,2>( func_space.field("centroids") );
+      elem_centroids[func_space_idx] = array::ArrayView<double,2>( func_space.field("centroids") );
   }
 
   mesh::Nodes&  nodes = mesh.nodes();
-  util::array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
+  array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
   double tol = 1.e-6;
 
   double xl, yl, xr, yr;
   deprecated::FunctionSpace&  edges = mesh.function_space("edges");
-  util::array::IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
-  util::array::IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
-  util::array::ArrayView<double,2> edge_centroids( edges.field("centroids") );
-  util::array::ArrayView<double,2> dual_normals  ( edges.create_field<double>("dual_normals",2) );
+  array::IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
+  array::IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
+  array::ArrayView<double,2> edge_centroids( edges.field("centroids") );
+  array::ArrayView<double,2> dual_normals  ( edges.create_field<double>("dual_normals",2) );
   int nb_edges = edges.shape(0);
 
   std::map<int,std::vector<int> > node_to_bdry_edge;
@@ -642,12 +642,12 @@ void build_dual_normals( Mesh& mesh )
 void make_dual_normals_outward_new( Mesh& mesh )
 {
   mesh::Nodes&  nodes = mesh.nodes();
-  util::array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
+  array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
 
   mesh::HybridElements& edges = mesh.edges();
   const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
   const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
-  util::array::ArrayView<double,2> dual_normals  ( edges.field("dual_normals") );
+  array::ArrayView<double,2> dual_normals  ( edges.field("dual_normals") );
   const size_t nb_edges = edges.size();
 
   for (size_t edge=0; edge<nb_edges; ++edge)
@@ -673,12 +673,12 @@ void make_dual_normals_outward( Mesh& mesh )
 {
 
   mesh::Nodes&  nodes = mesh.nodes();
-  util::array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
+  array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
 
   deprecated::FunctionSpace&  edges = mesh.function_space("edges");
-  util::array::IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
-  util::array::IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
-  util::array::ArrayView<double,2> dual_normals  ( edges.field("dual_normals") );
+  array::IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
+  array::IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
+  array::ArrayView<double,2> dual_normals  ( edges.field("dual_normals") );
   int nb_edges = edges.shape(0);
 
   for (int edge=0; edge<nb_edges; ++edge)
@@ -705,27 +705,27 @@ void make_dual_normals_outward( Mesh& mesh )
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_skewness( Mesh& mesh )
 {
-  std::vector< util::array::ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
+  std::vector< array::ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
   for (size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
   {
     deprecated::FunctionSpace& func_space = mesh.function_space(func_space_idx);
     if( func_space.has_field("centroids") )
-      elem_centroids[func_space_idx] = util::array::ArrayView<double,2>( func_space.field("centroids") );
+      elem_centroids[func_space_idx] = array::ArrayView<double,2>( func_space.field("centroids") );
   }
 
   mesh::Nodes&  nodes = mesh.nodes();
-  util::array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
+  array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
   double tol = 1.e-6;
 
   double x1, y1, x2, y2, xc1, yc1, xc2, yc2, xi, yi;
   deprecated::FunctionSpace&  edges = mesh.function_space("edges");
-  util::array::IndexView<int   ,2> edge_to_elem  ( edges.field("to_elem"  ) );
-  util::array::IndexView<int   ,2> edge_nodes    ( edges.field("nodes"    ) );
-  util::array::ArrayView<double,2> edge_centroids( edges.field("centroids") );
-  util::array::ArrayView<double,1> skewness      ( edges.create_field<double>("skewness",1) );
-  util::array::ArrayView<double,1> alpha         ( edges.create_field<double>("alpha",1) );
+  array::IndexView<int   ,2> edge_to_elem  ( edges.field("to_elem"  ) );
+  array::IndexView<int   ,2> edge_nodes    ( edges.field("nodes"    ) );
+  array::ArrayView<double,2> edge_centroids( edges.field("centroids") );
+  array::ArrayView<double,1> skewness      ( edges.create_field<double>("skewness",1) );
+  array::ArrayView<double,1> alpha         ( edges.create_field<double>("alpha",1) );
   int nb_edges = edges.shape(0);
 
   // special ordering for bit-identical results
@@ -801,9 +801,9 @@ void build_brick_dual_mesh( Mesh& mesh )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
 
     mesh::Nodes& nodes   = mesh.nodes();
-    util::array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
-    util::array::ArrayView<double,1> dual_volumes  ( nodes.add( field::Field::create<double>("dual_volumes",util::array::make_shape(nodes.size(),1) ) ) );
-    util::array::ArrayView<gidx_t,1> gidx  ( nodes.global_index() );
+    array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
+    array::ArrayView<double,1> dual_volumes  ( nodes.add( field::Field::create<double>("dual_volumes",array::make_shape(nodes.size(),1) ) ) );
+    array::ArrayView<gidx_t,1> gidx  ( nodes.global_index() );
 
     int c=0;
     int n=0;

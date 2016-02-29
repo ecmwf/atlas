@@ -9,13 +9,12 @@
  */
 
 #include <stdexcept>
-#include "atlas/util/array/Array.h"
-#include "atlas/util/array/ArrayView.h"
+#include "atlas/array/Array.h"
+#include "atlas/array/ArrayView.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace util {
 namespace array {
 
 //------------------------------------------------------------------------------------------------------
@@ -121,5 +120,4 @@ TEMPLATE_SPECIALIZATION(double);
 //------------------------------------------------------------------------------------------------------
 
 } // namespace array
-} // namespace util
 } // namespace atlas

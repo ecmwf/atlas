@@ -71,9 +71,9 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
     nodes.metadata().set<size_t>("NbRealPts",nb_real_pts);
     nodes.metadata().set<size_t>("NbVirtualPts",nb_virtual_pts);
 
-    util::array::ArrayView<double,2> coords ( nodes.field("xyz") );
-    util::array::ArrayView<double,2> lonlat ( nodes.lonlat() );
-    util::array::ArrayView<gidx_t,1> gidx   ( nodes.global_index() );
+    array::ArrayView<double,2> coords ( nodes.field("xyz") );
+    array::ArrayView<double,2> lonlat ( nodes.lonlat() );
+    array::ArrayView<gidx_t,1> gidx   ( nodes.global_index() );
 
     for(size_t i = 0; i < nb_virtual_pts; ++i)
     {

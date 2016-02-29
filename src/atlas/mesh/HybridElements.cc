@@ -17,7 +17,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/field/Field.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/IndexView.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 
@@ -39,10 +39,10 @@ HybridElements::HybridElements() :
   elements_begin_(1,0ul),
   type_idx_()
 {
-  global_index_ = &add( field::Field::create<gidx_t>("glb_idx",   util::array::make_shape(size(),1)) );
-  remote_index_ = &add( field::Field::create<int   >("remote_idx",util::array::make_shape(size(),1)) );
-  partition_    = &add( field::Field::create<int   >("partition", util::array::make_shape(size(),1)) );
-  halo_         = &add( field::Field::create<int   >("halo",      util::array::make_shape(size(),1)) );
+  global_index_ = &add( field::Field::create<gidx_t>("glb_idx",   array::make_shape(size(),1)) );
+  remote_index_ = &add( field::Field::create<int   >("remote_idx",array::make_shape(size(),1)) );
+  partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size(),1)) );
+  halo_         = &add( field::Field::create<int   >("halo",      array::make_shape(size(),1)) );
 
   node_connectivity_ = &add( "node", new Connectivity() );
   edge_connectivity_ = &add( "edge", new Connectivity() );
@@ -73,7 +73,7 @@ void HybridElements::resize( size_t size )
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
     field::Field& field = *it->second;
-    util::array::ArrayShape shape = field.shape();
+    array::ArrayShape shape = field.shape();
     shape[0] = size_;
     field.resize(shape);
   }
@@ -309,7 +309,7 @@ void HybridElements::rebuild_from_fs()
         {
           size_t nb_connected_cells = 2;
           std::vector<idx_t> to_elem(nb_elems*2);
-          const util::array::IndexView<int,3> to_elem_field ( functionspace.field( "to_elem" ).data<int>(), util::array::make_shape(nb_elems,2,2) );
+          const array::IndexView<int,3> to_elem_field ( functionspace.field( "to_elem" ).data<int>(), array::make_shape(nb_elems,2,2) );
           for( size_t e=0; e<nb_elems; ++e )
           {
             for( size_t j=0; j<2; ++j )
@@ -356,31 +356,31 @@ void HybridElements::rebuild_from_fs()
               if( field.rank() == 1 )
               {
                 if( field.datatype().kind() == DataType::KIND_REAL64 ) {
-                  util::array::ArrayView<double,1> old_data ( field );
-                  util::array::ArrayView<double,1> new_data ( this->field(fname) );
+                  array::ArrayView<double,1> old_data ( field );
+                  array::ArrayView<double,1> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
                 }
                 if( field.datatype().kind() == DataType::KIND_REAL32 ) {
-                  util::array::ArrayView<float,1> old_data ( field );
-                  util::array::ArrayView<float,1> new_data ( this->field(fname) );
+                  array::ArrayView<float,1> old_data ( field );
+                  array::ArrayView<float,1> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
                 }
                 if( field.datatype().kind() == DataType::KIND_INT64 ) {
-                  util::array::ArrayView<long,1> old_data ( field );
-                  util::array::ArrayView<long,1> new_data ( this->field(fname) );
+                  array::ArrayView<long,1> old_data ( field );
+                  array::ArrayView<long,1> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
                 }
                 if( field.datatype().kind() == DataType::KIND_INT32 ) {
-                  util::array::ArrayView<int,1> old_data ( field );
-                  util::array::ArrayView<int,1> new_data ( this->field(fname) );
+                  array::ArrayView<int,1> old_data ( field );
+                  array::ArrayView<int,1> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
                 }
               }
               if( field.rank() == 2 )
               {
                 if( field.datatype().kind() == DataType::KIND_REAL64 ) {
-                  util::array::ArrayView<double,2> old_data ( field );
-                  util::array::ArrayView<double,2> new_data ( this->field(fname) );
+                  array::ArrayView<double,2> old_data ( field );
+                  array::ArrayView<double,2> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) {
                     for( size_t v=0; v<field.shape(1); ++v ) {
                       new_data(e + elements.begin(),v) = old_data(e,v);
@@ -388,8 +388,8 @@ void HybridElements::rebuild_from_fs()
                   }
                 }
                 if( field.datatype().kind() == DataType::KIND_REAL32 ) {
-                  util::array::ArrayView<float,2> old_data ( field );
-                  util::array::ArrayView<float,2> new_data ( this->field(fname) );
+                  array::ArrayView<float,2> old_data ( field );
+                  array::ArrayView<float,2> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) {
                     for( size_t v=0; v<field.shape(1); ++v ) {
                       new_data(e + elements.begin(),v) = old_data(e,v);
@@ -397,8 +397,8 @@ void HybridElements::rebuild_from_fs()
                   }
                 }
                 if( field.datatype().kind() == DataType::KIND_INT64 ) {
-                  util::array::ArrayView<long,2> old_data ( field );
-                  util::array::ArrayView<long,2> new_data ( this->field(fname) );
+                  array::ArrayView<long,2> old_data ( field );
+                  array::ArrayView<long,2> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) {
                     for( size_t v=0; v<field.shape(1); ++v ) {
                       new_data(e + elements.begin(),v) = old_data(e,v);
@@ -406,8 +406,8 @@ void HybridElements::rebuild_from_fs()
                   }
                 }
                 if( field.datatype().kind() == DataType::KIND_INT32 ) {
-                  util::array::ArrayView<int,2> old_data ( field );
-                  util::array::ArrayView<int,2> new_data ( this->field(fname) );
+                  array::ArrayView<int,2> old_data ( field );
+                  array::ArrayView<int,2> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) {
                     for( size_t v=0; v<field.shape(1); ++v ) {
                       new_data(e + elements.begin(),v) = old_data(e,v);
@@ -423,7 +423,7 @@ void HybridElements::rebuild_from_fs()
         if( functionspace.metadata().has("nb_owned") )
         {
           size_t nb_owned = functionspace.metadata().get<size_t>("nb_owned");
-          util::array::ArrayView<int,1> halo ( this->halo() );
+          array::ArrayView<int,1> halo ( this->halo() );
           for( size_t e=0; e<nb_owned; ++e )
             halo(elements.begin()+e) = 0;
           for( size_t e=nb_owned; e<functionspace.shape(0); ++e )
@@ -431,7 +431,7 @@ void HybridElements::rebuild_from_fs()
         }
         else
         {
-          util::array::ArrayView<int,1> halo ( this->halo() );
+          array::ArrayView<int,1> halo ( this->halo() );
           for( size_t e=0; e<functionspace.shape(0); ++e )
             halo(elements.begin()+e) = 0;
         }

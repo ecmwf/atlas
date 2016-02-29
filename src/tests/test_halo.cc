@@ -22,9 +22,9 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/util/array/IndexView.h"
-#include "atlas/util/array/ArrayView.h"
-#include "atlas/util/array/Array.h"
+#include "atlas/array/IndexView.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/Array.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
@@ -46,8 +46,8 @@ double dual_volume(mesh::Mesh& mesh)
   mesh::Nodes& nodes = mesh.nodes();
   internals::IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.size();
-  util::array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-  util::array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
+  array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   if( eckit::mpi::size() == 5 )
   {
     IndexView<int,1> ridx ( m->nodes().remote_index() );
-    util::array::util::array::ArrayView<gidx_t,1> gidx ( m->nodes().global_index() );
+    array::array::ArrayView<gidx_t,1> gidx ( m->nodes().global_index() );
 
     switch( eckit::mpi::rank() ) // with 5 tasks
     {
@@ -137,8 +137,8 @@ BOOST_AUTO_TEST_CASE( test_t63 )
 
 //  Nodes& nodes = m->nodes();
 //  FunctionSpace& edges = m->function_space("edges");
-//  util::array::util::array::ArrayView<double,1> dual_volumes  ( nodes.field( "dual_volumes" ) );
-//  util::array::util::array::ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
+//  array::array::ArrayView<double,1> dual_volumes  ( nodes.field( "dual_volumes" ) );
+//  array::array::ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
 
 //  std::string checksum;
 //  checksum = nodes.checksum()->execute(dual_volumes);

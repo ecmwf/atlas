@@ -18,8 +18,8 @@
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Bitflags.h"
-#include "atlas/util/array/ArrayView.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
 #include "atlas/util/parallel/atlas_omp.h"
 #include "atlas/util/io/Gmsh.h"
 
@@ -58,7 +58,7 @@ void Nabla::setup()
 
   const size_t nedges = edges.size();
 
-  const util::array::ArrayView<int,1> edge_is_pole ( edges.field("is_pole_edge") );
+  const array::ArrayView<int,1> edge_is_pole ( edges.field("is_pole_edge") );
 
   // Filter pole_edges out of all edges
   std::vector<size_t> tmp(nedges);
@@ -90,20 +90,20 @@ void Nabla::gradient(const field::Field& scalar_field, field::Field& grad_field)
     throw eckit::AssertionFailed("gradient field should have same number of levels",Here());
 
 
-  const util::array::ArrayView<double,2> scalar ( scalar_field.data<double>(), util::array::make_shape(nnodes,nlev)   );
-        util::array::ArrayView<double,3> grad   ( grad_field.  data<double>(), util::array::make_shape(nnodes,nlev,2) );
+  const array::ArrayView<double,2> scalar ( scalar_field.data<double>(), array::make_shape(nnodes,nlev)   );
+        array::ArrayView<double,3> grad   ( grad_field.  data<double>(), array::make_shape(nnodes,nlev,2) );
 
-  const util::array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const util::array::ArrayView<double,1> V              ( nodes.field("dual_volumes") );
-  const util::array::ArrayView<double,2> S              ( edges.field("dual_normals") );
-  const util::array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const util::array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
+  const array::ArrayView<double,1> V              ( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> S              ( edges.field("dual_normals") );
+  const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
+  const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
 
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
   const mesh::Connectivity& edge2node = edges.node_connectivity();
 
-  util::array::ArrayT<double> avgS_arr( nedges,nlev,2 );
-  util::array::ArrayView<double,3> avgS(avgS_arr);
+  array::ArrayT<double> avgS_arr( nedges,nlev,2 );
+  array::ArrayView<double,3> avgS(avgS_arr);
 
   atlas_omp_parallel
   {
@@ -169,19 +169,19 @@ void Nabla::divergence(const field::Field& vector_field, field::Field& div_field
   if( div_field.levels() != nlev )
     throw eckit::AssertionFailed("divergence field should have same number of levels",Here());
 
-  const util::array::ArrayView<double,3> vector ( vector_field.data<double>(), util::array::make_shape(nnodes,nlev,2));
-        util::array::ArrayView<double,2> div    ( div_field   .data<double>(), util::array::make_shape(nnodes,nlev)  );
+  const array::ArrayView<double,3> vector ( vector_field.data<double>(), array::make_shape(nnodes,nlev,2));
+        array::ArrayView<double,2> div    ( div_field   .data<double>(), array::make_shape(nnodes,nlev)  );
 
-  const util::array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const util::array::ArrayView<double,1> V              ( nodes.field("dual_volumes") );
-  const util::array::ArrayView<double,2> S              ( edges.field("dual_normals") );
-  const util::array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const util::array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
+  const array::ArrayView<double,1> V              ( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> S              ( edges.field("dual_normals") );
+  const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
+  const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
   const mesh::Connectivity& edge2node = edges.node_connectivity();
 
-  util::array::ArrayT<double> avgS_arr( nedges,nlev,2 );
-  util::array::ArrayView<double,3> avgS(avgS_arr);
+  array::ArrayT<double> avgS_arr( nedges,nlev,2 );
+  array::ArrayView<double,3> avgS(avgS_arr);
 
   atlas_omp_parallel
   {
@@ -247,20 +247,20 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
   if( curl_field.levels() != nlev )
     throw eckit::AssertionFailed("curl field should have same number of levels",Here());
 
-  const util::array::ArrayView<double,3> vector ( vector_field.data<double>(), util::array::make_shape(nnodes,nlev,2));
-        util::array::ArrayView<double,2> curl   ( curl_field  .data<double>(), util::array::make_shape(nnodes,nlev)  );
+  const array::ArrayView<double,3> vector ( vector_field.data<double>(), array::make_shape(nnodes,nlev,2));
+        array::ArrayView<double,2> curl   ( curl_field  .data<double>(), array::make_shape(nnodes,nlev)  );
 
-  const util::array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const util::array::ArrayView<double,1> V              ( nodes.field("dual_volumes") );
-  const util::array::ArrayView<double,2> S              ( edges.field("dual_normals") );
-  const util::array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const util::array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
+  const array::ArrayView<double,1> V              ( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> S              ( edges.field("dual_normals") );
+  const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
+  const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
 
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
   const mesh::Connectivity& edge2node = edges.node_connectivity();
 
-  util::array::ArrayT<double> avgS_arr( nedges,nlev,2 );
-  util::array::ArrayView<double,3> avgS(avgS_arr);
+  array::ArrayT<double> avgS_arr( nedges,nlev,2 );
+  array::ArrayView<double,3> avgS(avgS_arr);
 
   atlas_omp_parallel
   {
@@ -316,7 +316,7 @@ void Nabla::laplacian(const field::Field& scalar, field::Field& lapl) const
 {
   eckit::SharedPtr<field::Field> grad (
        fvm_->functionspace_nodes().createField<double>("grad",
-       scalar.levels(),util::array::make_shape(2)) );
+       scalar.levels(),array::make_shape(2)) );
   gradient(scalar,*grad);
   if( fvm_->functionspace_nodes().halo().size() < 2 )
     fvm_->functionspace_nodes().haloExchange(*grad);

@@ -33,8 +33,8 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/field/Field.h"
 #include "atlas/util/Metadata.h"
-#include "atlas/util/array/ArrayView.h"
-#include "atlas/util/array/IndexView.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/internals/Parameters.h"
@@ -86,7 +86,7 @@ double compute_lonlat_area(mesh::Mesh& mesh)
   mesh::Nodes& nodes  = mesh.nodes();
   mesh::Elements& quads  = mesh.cells().elements(0);
   mesh::Elements& triags = mesh.cells().elements(1);
-  util::array::ArrayView<double,2> lonlat  ( nodes.lonlat() );
+  array::ArrayView<double,2> lonlat  ( nodes.lonlat() );
 
   const mesh::Elements::Connectivity& quad_nodes  = quads.node_connectivity();
   const mesh::Elements::Connectivity& triag_nodes = triags.node_connectivity();
@@ -332,8 +332,8 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     DEBUG();
     m->metadata().set("part",p);
     BOOST_TEST_CHECKPOINT("generated grid " << p);
-    util::array::ArrayView<int,1> part( m->nodes().partition() );
-    util::array::ArrayView<gidx_t,1> gidx( m->nodes().global_index() );
+    array::ArrayView<int,1> part( m->nodes().partition() );
+    array::ArrayView<gidx_t,1> gidx( m->nodes().global_index() );
 
     area += test::compute_lonlat_area(*m);
     DEBUG();
@@ -378,7 +378,7 @@ DISABLE{
     }
 
     // Test if all nodes are owned
-    util::array::ArrayView<gidx_t,1> glb_idx( nodes.global_index() );
+    array::ArrayView<gidx_t,1> glb_idx( nodes.global_index() );
     for( int n=0; n<nb_nodes; ++n )
     {
       if( size_t(part(n)) == p )
@@ -464,9 +464,9 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
   cfg.set("nb_parts",8);
   SharedPtr<MeshGenerator> meshgenerator( new ReducedGridMeshGenerator(cfg) );
   SharedPtr<mesh::Mesh> mesh ( meshgenerator->generate(*grid) );
-  const util::array::ArrayView<int,1> part( mesh->nodes().partition() );
-  const util::array::ArrayView<int,1> ghost( mesh->nodes().ghost() );
-  const util::array::ArrayView<int,1> flags( mesh->nodes().field("flags") );
+  const array::ArrayView<int,1> part( mesh->nodes().partition() );
+  const array::ArrayView<int,1> ghost( mesh->nodes().ghost() );
+  const array::ArrayView<int,1> flags( mesh->nodes().field("flags") );
 
   Log::info() << "partition = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )

@@ -63,13 +63,13 @@ void TransPartitioner::partition(int part[]) const
 
   int nlonmax = dynamic_cast<const grid::ReducedGrid*>(&grid())->nlonmax();
 
-  util::array::ArrayView<int,1> nloen       = t_->nloen();
-  util::array::ArrayView<int,1> n_regions   = t_->n_regions();
-  util::array::ArrayView<int,1> nfrstlat    = t_->nfrstlat();
-  util::array::ArrayView<int,1> nlstlat     = t_->nlstlat();
-  util::array::ArrayView<int,1> nptrfrstlat = t_->nptrfrstlat();
-  util::array::ArrayView<int,2> nsta        = t_->nsta();
-  util::array::ArrayView<int,2> nonl        = t_->nonl();
+  array::ArrayView<int,1> nloen       = t_->nloen();
+  array::ArrayView<int,1> n_regions   = t_->n_regions();
+  array::ArrayView<int,1> nfrstlat    = t_->nfrstlat();
+  array::ArrayView<int,1> nlstlat     = t_->nlstlat();
+  array::ArrayView<int,1> nptrfrstlat = t_->nptrfrstlat();
+  array::ArrayView<int,2> nsta        = t_->nsta();
+  array::ArrayView<int,2> nonl        = t_->nonl();
 
 
   int i(0);

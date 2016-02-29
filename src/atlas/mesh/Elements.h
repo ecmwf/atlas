@@ -21,7 +21,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/HybridElements.h"
-#include "atlas/util/array/ArrayView.h"
+#include "atlas/array/ArrayView.h"
 
 namespace atlas { namespace mesh { class ElementType; } }
 
@@ -114,7 +114,7 @@ public:
         field::Field& halo()       { return hybrid_elements_->halo(); }
         
   template <typename DATATYPE, int RANK>
-  util::array::ArrayView<DATATYPE,RANK> view( const field::Field& ) const;
+  array::ArrayView<DATATYPE,RANK> view( const field::Field& ) const;
 
   size_t add(const size_t nb_elements);
 

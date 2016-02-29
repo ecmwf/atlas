@@ -14,7 +14,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/util/array/ArrayView.h"
+#include "atlas/array/ArrayView.h"
 
 namespace atlas {
 namespace mesh {
@@ -37,8 +37,8 @@ field::Field& BuildXYZField::operator()(mesh::Nodes& nodes) const
   if( !nodes.has_field(name_) )
   {
     size_t npts = nodes.size();
-    util::array::ArrayView<double,2> lonlat( nodes.lonlat() );
-    util::array::ArrayView<double,2> xyz   ( nodes.add( field::Field::create<double>(name_,util::array::make_shape(npts,3) ) ) );
+    array::ArrayView<double,2> lonlat( nodes.lonlat() );
+    array::ArrayView<double,2> xyz   ( nodes.add( field::Field::create<double>(name_,array::make_shape(npts,3) ) ) );
     for( size_t n=0; n<npts; ++n )
     {
       eckit::geometry::lonlat_to_3d(lonlat[n].data(),xyz[n].data());

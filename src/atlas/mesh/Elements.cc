@@ -61,46 +61,46 @@ const std::string& Elements::name() const
   return hybrid_elements_->element_type(type_idx_).name();
 }
 
-template<> util::array::ArrayView<double,1> Elements::view( const field::Field& field ) const
+template<> array::ArrayView<double,1> Elements::view( const field::Field& field ) const
 { 
-  return util::array::ArrayView<double,1>( field.data<double>()+begin(), util::array::make_shape(size()) );
+  return array::ArrayView<double,1>( field.data<double>()+begin(), array::make_shape(size()) );
 }
 
-template<> util::array::ArrayView<float,1> Elements::view( const field::Field& field ) const
+template<> array::ArrayView<float,1> Elements::view( const field::Field& field ) const
 {
-  return util::array::ArrayView<float,1>( field.data<float>()+begin(), util::array::make_shape(size()) );
+  return array::ArrayView<float,1>( field.data<float>()+begin(), array::make_shape(size()) );
 }
 
-template<> util::array::ArrayView<int,1> Elements::view( const field::Field& field ) const
+template<> array::ArrayView<int,1> Elements::view( const field::Field& field ) const
 { 
-  return util::array::ArrayView<int,1>( field.data<int>()+begin(), util::array::make_shape(size()) );
+  return array::ArrayView<int,1>( field.data<int>()+begin(), array::make_shape(size()) );
 }
 
-template<> util::array::ArrayView<long,1> Elements::view( const field::Field& field ) const
+template<> array::ArrayView<long,1> Elements::view( const field::Field& field ) const
 { 
-  return util::array::ArrayView<long,1>( field.data<long>()+begin(), util::array::make_shape(size()) );
+  return array::ArrayView<long,1>( field.data<long>()+begin(), array::make_shape(size()) );
 }
 
 
 
-template<> util::array::ArrayView<double,2> Elements::view( const field::Field& field ) const
+template<> array::ArrayView<double,2> Elements::view( const field::Field& field ) const
 {
-  return util::array::ArrayView<double,2>( field.data<double>()+begin(), util::array::make_shape(size(),field.shape(1)) );
+  return array::ArrayView<double,2>( field.data<double>()+begin(), array::make_shape(size(),field.shape(1)) );
 }
 
-template<> util::array::ArrayView<float,2> Elements::view( const field::Field& field ) const
+template<> array::ArrayView<float,2> Elements::view( const field::Field& field ) const
 {
-  return util::array::ArrayView<float,2>( field.data<float>()+begin(), util::array::make_shape(size(),field.shape(1)) );
+  return array::ArrayView<float,2>( field.data<float>()+begin(), array::make_shape(size(),field.shape(1)) );
 }
 
-template<> util::array::ArrayView<int,2> Elements::view( const field::Field& field ) const
+template<> array::ArrayView<int,2> Elements::view( const field::Field& field ) const
 {
-  return util::array::ArrayView<int,2>( field.data<int>()+begin(), util::array::make_shape(size(),field.shape(1)) );
+  return array::ArrayView<int,2>( field.data<int>()+begin(), array::make_shape(size(),field.shape(1)) );
 }
 
-template<> util::array::ArrayView<long,2> Elements::view( const field::Field& field ) const
+template<> array::ArrayView<long,2> Elements::view( const field::Field& field ) const
 {
-  return util::array::ArrayView<long,2>( field.data<long>()+begin(), util::array::make_shape(size(),field.shape(1)) );
+  return array::ArrayView<long,2>( field.data<long>()+begin(), array::make_shape(size(),field.shape(1)) );
 }
 
 

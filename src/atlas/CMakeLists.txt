@@ -233,6 +233,19 @@ interpolation/PointSet.h
 interpolation/PointSet.cc
 )
 
+list( APPEND atlas_array_srcs
+array/Array.h
+array/Array.cc
+array/ArrayUtil.h
+array/ArrayUtil.cc
+array/ArrayView_iterator.h
+array/ArrayView_impl.h
+array/IndexView.h
+array/IndexView.cc
+array/ArrayView.h
+array/ArrayView.cc
+)
+
 list( APPEND atlas_util_srcs
 util/Config.h
 util/Config.cc
@@ -240,16 +253,6 @@ util/Constants.h
 util/DataType.h
 util/Metadata.h
 util/Metadata.cc
-util/array/Array.h
-util/array/Array.cc
-util/array/ArrayUtil.h
-util/array/ArrayUtil.cc
-util/array/ArrayView_iterator.h
-util/array/ArrayView_impl.h
-util/array/IndexView.h
-util/array/IndexView.cc
-util/array/ArrayView.h
-util/array/ArrayView.cc
 util/io/Gmsh.h
 util/io/Gmsh.cc
 util/io/PointCloud.h
@@ -309,6 +312,7 @@ ecbuild_add_library( TARGET atlas
 
   SOURCES
     ${atlas_srcs}
+    ${atlas_array_srcs}
     ${atlas_grid_srcs}
     ${atlas_mesh_srcs}
     ${atlas_field_srcs}

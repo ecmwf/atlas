@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   };
   size_t triags = hybrid_elements.add( new Triangle(), 2, triangle_nodes );
 
-  hybrid_elements.add(field::Field::create<double>("surface",util::array::make_shape(hybrid_elements.size())));
+  hybrid_elements.add(field::Field::create<double>("surface",array::make_shape(hybrid_elements.size())));
 
   std::vector<idx_t> quad_nodes(4);
   quad_nodes[0] = 0;
@@ -366,7 +366,7 @@ BOOST_AUTO_TEST_CASE( conversion )
   // }
   // eckit::Log::info() << std::flush;
 
-  util::array::ArrayView<double,2> centroids( cells.field("centroids_lonlat") );
+  array::ArrayView<double,2> centroids( cells.field("centroids_lonlat") );
   for( size_t e=cells.elements(1).begin(); e<cells.elements(1).end(); ++e )
   {
     // DEBUG_VAR( centroids(e,XX) );
