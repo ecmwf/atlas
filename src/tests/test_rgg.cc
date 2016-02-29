@@ -18,34 +18,37 @@
 #include "eckit/config/ResourceMgr.h"
 #include "eckit/geometry/Point3.h"
 #include "atlas/atlas.h"
-#include "atlas/mpi/mpi.h"
+#include "atlas/util/parallel/mpi/mpi.h"
 #include "atlas/atlas_config.h"
-#include "atlas/grids/GaussianLatitudes.h"
-#include "atlas/grids/grids.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/meshgen/EqualRegionsPartitioner.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/Config.h"
-#include "atlas/Mesh.h"
+#include "atlas/grid/GaussianLatitudes.h"
+#include "atlas/grid/grids.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/util/Config.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Elements.h"
-#include "atlas/FunctionSpace.h"
-#include "atlas/Field.h"
-#include "atlas/Metadata.h"
-#include "atlas/util/ArrayView.h"
-#include "atlas/util/IndexView.h"
-#include "atlas/actions/BuildParallelFields.h"
-#include "atlas/actions/BuildXYZField.h"
-#include "atlas/Parameters.h"
-#include "atlas/Config.h"
-#include "atlas/grids/rgg/rgg.h"
-#include "atlas/util/Bitflags.h"
+#include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/field/Field.h"
+#include "atlas/util/Metadata.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
+#include "atlas/mesh/actions/BuildXYZField.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/util/Config.h"
+#include "atlas/grid/predefined/rgg/rgg.h"
+#include "atlas/internals/Bitflags.h"
 
 using namespace eckit;
 using namespace atlas;
-using namespace atlas::io;
-using namespace atlas::meshgen;
+using namespace atlas::internals;
+using namespace atlas::grid::partitioners;
+using namespace atlas::mesh::generators;
+using namespace atlas::util::io;
+
 
 #define DISABLE if(0)
 #define ENABLE if(1)
@@ -53,7 +56,7 @@ using namespace atlas::meshgen;
 namespace atlas {
 namespace test {
 
-class DebugMesh:   public grids::ReducedGaussianGrid { public: DebugMesh(); };
+class DebugMesh:   public grid::ReducedGaussianGrid { public: DebugMesh(); };
 DebugMesh::DebugMesh()
 {
   int N=5;
@@ -65,25 +68,25 @@ DebugMesh::DebugMesh()
     22,
   };
   std::vector<double> lat(N);
-  grids::gaussian_latitudes_npole_equator(N,lat.data());
-  setup_lat_hemisphere(N,lat.data(),lon,DEG);
+  grid::gaussian_latitudes_npole_equator(N,lat.data());
+  setup_lat_hemisphere(N,lat.data(),lon,internals::DEG);
 }
 
 
-class MinimalMesh:   public grids::ReducedGaussianGrid { public: MinimalMesh(int N, long lon[]); };
+class MinimalMesh:   public grid::ReducedGaussianGrid { public: MinimalMesh(int N, long lon[]); };
 MinimalMesh::MinimalMesh(int N, long lon[])
 {
   std::vector<double> lat(N);
-  grids::gaussian_latitudes_npole_equator(N,lat.data());
-  setup_lat_hemisphere(N,lat.data(),lon,DEG);
+  grid::gaussian_latitudes_npole_equator(N,lat.data());
+  setup_lat_hemisphere(N,lat.data(),lon,internals::DEG);
 }
 
-double compute_lonlat_area(Mesh& mesh)
+double compute_lonlat_area(mesh::Mesh& mesh)
 {
   mesh::Nodes& nodes  = mesh.nodes();
   mesh::Elements& quads  = mesh.cells().elements(0);
   mesh::Elements& triags = mesh.cells().elements(1);
-  ArrayView<double,2> lonlat  ( nodes.lonlat() );
+  array::ArrayView<double,2> lonlat  ( nodes.lonlat() );
 
   const mesh::Elements::Connectivity& quad_nodes  = quads.node_connectivity();
   const mesh::Elements::Connectivity& triag_nodes = triags.node_connectivity();
@@ -141,7 +144,7 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
 
 BOOST_AUTO_TEST_CASE( test_partitioner )
 {
-  grids::ReducedGrid g;
+  grid::ReducedGrid g;
 
   // 12 partitions
   {
@@ -196,8 +199,8 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 {
-  Mesh* m;
-  Config opts;
+  mesh::Mesh* m;
+  util::Config opts;
   opts.set("nb_parts",1);
   opts.set("part",0);
   ReducedGridMeshGenerator generate(opts);
@@ -243,7 +246,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     delete m;
   }
 
-  Mesh* mesh;
+  mesh::Mesh* mesh;
 
   ENABLE {
     generate.options.set("three_dimensional",false);
@@ -309,7 +312,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
           //  int nlat=10;
           //  long lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
           //  test::MinimalMesh grid(nlat,lon);
-  grids::rgg::N32 grid;
+  grid::predefined::rgg::N32 grid;
 //  RegularGrid grid(128,64);
   double max_lat = grid.lat(0);
   double check_area = 360.*2.*max_lat;
@@ -325,12 +328,12 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   {
     DEBUG_VAR(p);
     generate.options.set("part",p);
-    Mesh::Ptr m( generate( grid ) );
+    mesh::Mesh::Ptr m( generate( grid ) );
     DEBUG();
     m->metadata().set("part",p);
     BOOST_TEST_CHECKPOINT("generated grid " << p);
-    ArrayView<int,1> part( m->nodes().partition() );
-    ArrayView<gidx_t,1> gidx( m->nodes().global_index() );
+    array::ArrayView<int,1> part( m->nodes().partition() );
+    array::ArrayView<gidx_t,1> gidx( m->nodes().global_index() );
 
     area += test::compute_lonlat_area(*m);
     DEBUG();
@@ -375,7 +378,7 @@ DISABLE{
     }
 
     // Test if all nodes are owned
-    ArrayView<gidx_t,1> glb_idx( nodes.global_index() );
+    array::ArrayView<gidx_t,1> glb_idx( nodes.global_index() );
     for( int n=0; n<nb_nodes; ++n )
     {
       if( size_t(part(n)) == p )
@@ -432,7 +435,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
     -72,
     -90
   };
-  grids::ReducedGrid grid(N,lat,lon);
+  grid::ReducedGrid grid(N,lat,lon);
   ReducedGridMeshGenerator generate;
 
   bool three_dimensional = true;
@@ -440,12 +443,12 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
   generate.options.set("three_dimensional",three_dimensional);
   generate.options.set("triangulate",false);
 
-  Mesh::Ptr m (generate(grid));
+  mesh::Mesh::Ptr m (generate(grid));
 
-  actions::BuildXYZField build_xyz_field("xyz");
+  mesh::actions::BuildXYZField build_xyz_field("xyz");
   build_xyz_field(*m);
 
-  io::Gmsh gmsh;
+  util::io::Gmsh gmsh;
   if(three_dimensional)
     gmsh.options.set("nodes",std::string("xyz"));
   gmsh.write(*m,"rll.msh");
@@ -454,16 +457,16 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 
 BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
 {
-  SharedPtr<Grid> grid ( Grid::create("O8") );
+  SharedPtr<grid::Grid> grid(grid::Grid::create("O8"));
 
-  atlas::Config cfg;
+  atlas::util::Config cfg;
   cfg.set("part",1);
   cfg.set("nb_parts",8);
   SharedPtr<MeshGenerator> meshgenerator( new ReducedGridMeshGenerator(cfg) );
-  SharedPtr<Mesh> mesh ( meshgenerator->generate(*grid) );
-  const ArrayView<int,1> part( mesh->nodes().partition() );
-  const ArrayView<int,1> ghost( mesh->nodes().ghost() );
-  const ArrayView<int,1> flags( mesh->nodes().field("flags") );
+  SharedPtr<mesh::Mesh> mesh ( meshgenerator->generate(*grid) );
+  const array::ArrayView<int,1> part( mesh->nodes().partition() );
+  const array::ArrayView<int,1> ghost( mesh->nodes().ghost() );
+  const array::ArrayView<int,1> flags( mesh->nodes().field("flags") );
 
   Log::info() << "partition = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )
@@ -482,8 +485,8 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
   Log::info() << "flags     = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )
   {
-    Log::info() << util::Topology::check(flags(jnode),util::Topology::GHOST) << " ";
-    BOOST_CHECK_EQUAL( util::Topology::check(flags(jnode),util::Topology::GHOST), ghost(jnode) );
+    Log::info() << internals::Topology::check(flags(jnode),internals::Topology::GHOST) << " ";
+    BOOST_CHECK_EQUAL( internals::Topology::check(flags(jnode),internals::Topology::GHOST), ghost(jnode) );
   }
   Log::info() << "]" << std::endl;
 

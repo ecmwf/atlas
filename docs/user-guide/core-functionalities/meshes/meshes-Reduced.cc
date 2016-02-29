@@ -1,9 +1,9 @@
 #include "atlas/atlas.h"
-#include "atlas/grids/grids.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/actions/GenerateMesh.h"
-#include "atlas/actions/BuildXYZField.h"
-#include "atlas/io/Gmsh.h"
+#include "atlas/grid/grids.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/actions/GenerateMesh.h"
+#include "atlas/mesh/actions/BuildXYZField.h"
+#include "atlas/util/io/Gmsh.h"
 #include "eckit/config/Resource.h"
 
 using namespace std;

@@ -8,7 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
 #ifndef atlas_numerics_Nabla_h
 #define atlas_numerics_Nabla_h
 
@@ -16,7 +15,7 @@
 
 namespace eckit { class Parametrisation; }
 namespace atlas { namespace numerics { class Method; } }
-namespace atlas { class Field; }
+namespace atlas { namespace field { class Field; } }
 
 namespace atlas {
 namespace numerics {
@@ -31,10 +30,10 @@ public:
   Nabla(const Method &, const eckit::Parametrisation &);
   virtual ~Nabla();
 
-  virtual void gradient(const Field &scalar, Field &grad) const = 0;
-  virtual void divergence(const Field &vector, Field &div) const = 0;
-  virtual void curl(const Field &vector, Field &curl) const = 0;
-  virtual void laplacian(const Field &scalar, Field &laplacian) const = 0;
+  virtual void gradient(const field::Field &scalar, field::Field &grad) const = 0;
+  virtual void divergence(const field::Field &vector, field::Field &div) const = 0;
+  virtual void curl(const field::Field &vector, field::Field &curl) const = 0;
+  virtual void laplacian(const field::Field &scalar, field::Field &laplacian) const = 0;
 
 };
 
@@ -82,15 +81,17 @@ private:
 
 // ------------------------------------------------------------------
 #define Parametrisation eckit::Parametrisation
+#define field_Field field::Field
 extern "C" {
 
 void atlas__Nabla__delete (Nabla* This);
 Nabla* atlas__Nabla__create (const Method* method, const Parametrisation* params);
-void atlas__Nabla__gradient (const Nabla* This, const Field* scalar, Field* grad);
-void atlas__Nabla__divergence (const Nabla* This, const Field* vector, Field* div);
-void atlas__Nabla__curl (const Nabla* This, const Field* vector, Field* curl);
-void atlas__Nabla__laplacian (const Nabla* This, const Field* scalar, Field* laplacian);
+void atlas__Nabla__gradient (const Nabla* This, const field_Field* scalar, field_Field* grad);
+void atlas__Nabla__divergence (const Nabla* This, const field_Field* vector, field_Field* div);
+void atlas__Nabla__curl (const Nabla* This, const field_Field* vector, field_Field* curl);
+void atlas__Nabla__laplacian (const Nabla* This, const field_Field* scalar, field_Field* laplacian);
 }
+#undef field_Field
 #undef Parametrisation
 
 } // namespace numerics

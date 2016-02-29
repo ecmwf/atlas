@@ -47,12 +47,12 @@ void TestAction::test_execute()
     Grid* g_in = new LatLon( 4, 4, earth );
     ASSERT( g_in );
 
-    FieldSet* fs_in = new FieldSet(g_in);
+    field::FieldSet* fs_in = new field::FieldSet(g_in);
     
     Grid* g_out = new LatLon( 3, 3, earth );
     ASSERT( g_out );
     
-    FieldSet* fs_out = new FieldSet(g_out);
+    field::FieldSet* fs_out = new field::FieldSet(g_out);
     
     StringDict config;
     config["interpolator"] = "bilinear";

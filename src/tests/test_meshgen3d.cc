@@ -14,15 +14,15 @@
 #include "atlas/atlas_config.h"
 
 #include "atlas/atlas.h"
-#include "atlas/Mesh.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/grids/grids.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/mpi/mpi.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/grid/grids.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/util/parallel/mpi/mpi.h"
 
 
-using namespace atlas::io;
-using namespace atlas::meshgen;
+using namespace atlas::util::io;
+using namespace atlas::mesh::generators;
 
 namespace atlas {
 namespace test {
@@ -37,7 +37,7 @@ BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
-	Mesh::Ptr m ( Mesh::create() );
+	mesh::Mesh::Ptr m ( mesh::Mesh::create() );
 
 	ReducedGridMeshGenerator generate;
 
@@ -47,11 +47,11 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
 	generate.options.set("three_dimensional", true); ///< creates links along date-line
 	generate.options.set("include_pole", true);      ///< triangulate the pole point
 
-	m = generate( grids::rgg::N80() ); //< 2*N - 1 => N80 grid
+    m = generate( grid::predefined::rgg::N80() ); //< 2*N - 1 => N80 grid
 
 	Gmsh().write(*m,"out.msh");
 
-	//    atlas::actions::BuildXYZ(m);
+    //    atlas::mesh::actions::BuildXYZ(m);
 }
 
 } // namespace test

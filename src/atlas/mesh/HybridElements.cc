@@ -9,19 +9,17 @@
  */
 
 #include <algorithm>
-
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/atlas_config.h"
+#include "atlas/atlas_defines.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Elements.h"
-#include "atlas/Mesh.h"
-#include "atlas/Field.h"
-#include "atlas/atlas_config.h"
-#include "atlas/atlas_defines.h"
-
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/ElementType.h"
-#include "atlas/util/IndexView.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/field/Field.h"
+#include "atlas/array/IndexView.h"
+#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/util/runtime/ErrorHandling.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
@@ -41,10 +39,10 @@ HybridElements::HybridElements() :
   elements_begin_(1,0ul),
   type_idx_()
 {
-  global_index_ = &add( Field::create<gidx_t>("glb_idx",   make_shape(size(),1)) );
-  remote_index_ = &add( Field::create<int   >("remote_idx",make_shape(size(),1)) );
-  partition_    = &add( Field::create<int   >("partition", make_shape(size(),1)) );
-  halo_         = &add( Field::create<int   >("halo",      make_shape(size(),1)) );
+  global_index_ = &add( field::Field::create<gidx_t>("glb_idx",   array::make_shape(size(),1)) );
+  remote_index_ = &add( field::Field::create<int   >("remote_idx",array::make_shape(size(),1)) );
+  partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size(),1)) );
+  halo_         = &add( field::Field::create<int   >("halo",      array::make_shape(size(),1)) );
 
   node_connectivity_ = &add( "node", new Connectivity() );
   edge_connectivity_ = &add( "edge", new Connectivity() );
@@ -55,7 +53,7 @@ HybridElements::~HybridElements()
 {
 }
 
-Field& HybridElements::add( Field* field )
+field::Field& HybridElements::add( field::Field* field )
 {
   ASSERT( field != NULL );
   ASSERT( ! field->name().empty() );
@@ -65,7 +63,7 @@ Field& HybridElements::add( Field* field )
     msg << "Trying to add field '"<<field->name()<<"' to Nodes, but Nodes already has a field with this name.";
     throw eckit::Exception(msg.str(),Here());
   }
-  fields_[field->name()] = eckit::SharedPtr<Field>(field);
+  fields_[field->name()] = eckit::SharedPtr<field::Field>(field);
   return *field;
 }
 
@@ -74,8 +72,8 @@ void HybridElements::resize( size_t size )
   size_ = size;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
-    Field& field = *it->second;
-    ArrayShape shape = field.shape();
+    field::Field& field = *it->second;
+    array::ArrayShape shape = field.shape();
     shape[0] = size_;
     field.resize(shape);
   }
@@ -93,7 +91,7 @@ void HybridElements::remove_field(const std::string& name)
 }
 
 
-const Field& HybridElements::field(const std::string& name) const
+const field::Field& HybridElements::field(const std::string& name) const
 {
   if( ! has_field(name) )
   {
@@ -104,12 +102,12 @@ const Field& HybridElements::field(const std::string& name) const
   return *fields_.find(name)->second;
 }
 
-Field& HybridElements::field(const std::string& name)
+field::Field& HybridElements::field(const std::string& name)
 {
-  return const_cast<Field&>(static_cast<const HybridElements*>(this)->field(name));
+  return const_cast<field::Field&>(static_cast<const HybridElements*>(this)->field(name));
 }
 
-const Field& HybridElements::field(size_t idx) const
+const field::Field& HybridElements::field(size_t idx) const
 {
   ASSERT(idx < nb_fields());
   size_t c(0);
@@ -117,19 +115,19 @@ const Field& HybridElements::field(size_t idx) const
   {
     if( idx == c )
     {
-      const Field& field = *it->second;
+      const field::Field& field = *it->second;
       return field;
     }
     c++;
   }
   eckit::SeriousBug("Should not be here!",Here());
-  static Field* ret;
+  static field::Field* ret;
   return *ret;
 }
 
-Field& HybridElements::field(size_t idx)
+field::Field& HybridElements::field(size_t idx)
 {
-  return const_cast<Field&>(static_cast<const HybridElements*>(this)->field(idx));
+  return const_cast<field::Field&>(static_cast<const HybridElements*>(this)->field(idx));
 }
 
 
@@ -252,7 +250,7 @@ void HybridElements::insert( size_t position, size_t nb_elements )
   size_+=nb_elements;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
-    Field& field = *it->second;
+    field::Field& field = *it->second;
     field.insert(position,nb_elements);
   }
 
@@ -311,7 +309,7 @@ void HybridElements::rebuild_from_fs()
         {
           size_t nb_connected_cells = 2;
           std::vector<idx_t> to_elem(nb_elems*2);
-          const IndexView<int,3> to_elem_field ( functionspace.field( "to_elem" ).data<int>(), make_shape(nb_elems,2,2) );
+          const array::IndexView<int,3> to_elem_field ( functionspace.field( "to_elem" ).data<int>(), array::make_shape(nb_elems,2,2) );
           for( size_t e=0; e<nb_elems; ++e )
           {
             for( size_t j=0; j<2; ++j )
@@ -340,7 +338,7 @@ void HybridElements::rebuild_from_fs()
 
         for( size_t f=0; f<functionspace.nb_fields(); ++f )
         {
-          const Field& field = functionspace.field(f);
+          const field::Field& field = functionspace.field(f);
           std::string fname = field.name();
           if( ignore_connectivities.find(fname) == ignore_connectivities.end() )
           {
@@ -351,38 +349,38 @@ void HybridElements::rebuild_from_fs()
 
             if( !this->has_field(fname) )
             {
-              this->add( Field::create(fname, Array::create(field.array())) );
+              this->add( field::Field::create(fname, Array::create(field.array())) );
             }
             else
             {
               if( field.rank() == 1 )
               {
                 if( field.datatype().kind() == DataType::KIND_REAL64 ) {
-                  ArrayView<double,1> old_data ( field );
-                  ArrayView<double,1> new_data ( this->field(fname) );
+                  array::ArrayView<double,1> old_data ( field );
+                  array::ArrayView<double,1> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
                 }
                 if( field.datatype().kind() == DataType::KIND_REAL32 ) {
-                  ArrayView<float,1> old_data ( field );
-                  ArrayView<float,1> new_data ( this->field(fname) );
+                  array::ArrayView<float,1> old_data ( field );
+                  array::ArrayView<float,1> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
                 }
                 if( field.datatype().kind() == DataType::KIND_INT64 ) {
-                  ArrayView<long,1> old_data ( field );
-                  ArrayView<long,1> new_data ( this->field(fname) );
+                  array::ArrayView<long,1> old_data ( field );
+                  array::ArrayView<long,1> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
                 }
                 if( field.datatype().kind() == DataType::KIND_INT32 ) {
-                  ArrayView<int,1> old_data ( field );
-                  ArrayView<int,1> new_data ( this->field(fname) );
+                  array::ArrayView<int,1> old_data ( field );
+                  array::ArrayView<int,1> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
                 }
               }
               if( field.rank() == 2 )
               {
                 if( field.datatype().kind() == DataType::KIND_REAL64 ) {
-                  ArrayView<double,2> old_data ( field );
-                  ArrayView<double,2> new_data ( this->field(fname) );
+                  array::ArrayView<double,2> old_data ( field );
+                  array::ArrayView<double,2> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) {
                     for( size_t v=0; v<field.shape(1); ++v ) {
                       new_data(e + elements.begin(),v) = old_data(e,v);
@@ -390,8 +388,8 @@ void HybridElements::rebuild_from_fs()
                   }
                 }
                 if( field.datatype().kind() == DataType::KIND_REAL32 ) {
-                  ArrayView<float,2> old_data ( field );
-                  ArrayView<float,2> new_data ( this->field(fname) );
+                  array::ArrayView<float,2> old_data ( field );
+                  array::ArrayView<float,2> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) {
                     for( size_t v=0; v<field.shape(1); ++v ) {
                       new_data(e + elements.begin(),v) = old_data(e,v);
@@ -399,8 +397,8 @@ void HybridElements::rebuild_from_fs()
                   }
                 }
                 if( field.datatype().kind() == DataType::KIND_INT64 ) {
-                  ArrayView<long,2> old_data ( field );
-                  ArrayView<long,2> new_data ( this->field(fname) );
+                  array::ArrayView<long,2> old_data ( field );
+                  array::ArrayView<long,2> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) {
                     for( size_t v=0; v<field.shape(1); ++v ) {
                       new_data(e + elements.begin(),v) = old_data(e,v);
@@ -408,8 +406,8 @@ void HybridElements::rebuild_from_fs()
                   }
                 }
                 if( field.datatype().kind() == DataType::KIND_INT32 ) {
-                  ArrayView<int,2> old_data ( field );
-                  ArrayView<int,2> new_data ( this->field(fname) );
+                  array::ArrayView<int,2> old_data ( field );
+                  array::ArrayView<int,2> new_data ( this->field(fname) );
                   for( size_t e=0; e<nb_elems; ++e ) {
                     for( size_t v=0; v<field.shape(1); ++v ) {
                       new_data(e + elements.begin(),v) = old_data(e,v);
@@ -425,7 +423,7 @@ void HybridElements::rebuild_from_fs()
         if( functionspace.metadata().has("nb_owned") )
         {
           size_t nb_owned = functionspace.metadata().get<size_t>("nb_owned");
-          ArrayView<int,1> halo ( this->halo() );
+          array::ArrayView<int,1> halo ( this->halo() );
           for( size_t e=0; e<nb_owned; ++e )
             halo(elements.begin()+e) = 0;
           for( size_t e=nb_owned; e<functionspace.shape(0); ++e )
@@ -433,7 +431,7 @@ void HybridElements::rebuild_from_fs()
         }
         else
         {
-          ArrayView<int,1> halo ( this->halo() );
+          array::ArrayView<int,1> halo ( this->halo() );
           for( size_t e=0; e<functionspace.shape(0); ++e )
             halo(elements.begin()+e) = 0;
         }
@@ -512,9 +510,9 @@ int atlas__mesh__HybridElements__nb_types(const HybridElements* This)
   return This->nb_types();
 }
 
-Field* atlas__mesh__HybridElements__field_by_idx(HybridElements* This, size_t idx)
+field::Field* atlas__mesh__HybridElements__field_by_idx(HybridElements* This, size_t idx)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->field(idx);
@@ -522,9 +520,9 @@ Field* atlas__mesh__HybridElements__field_by_idx(HybridElements* This, size_t id
   return field;
 }
 
-Field* atlas__mesh__HybridElements__field_by_name(HybridElements* This, char* name)
+field::Field* atlas__mesh__HybridElements__field_by_name(HybridElements* This, char* name)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->field(std::string(name));
@@ -532,9 +530,9 @@ Field* atlas__mesh__HybridElements__field_by_name(HybridElements* This, char* na
   return field;
 }
 
-Field* atlas__mesh__HybridElements__global_index(HybridElements* This)
+field::Field* atlas__mesh__HybridElements__global_index(HybridElements* This)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->global_index();
@@ -543,9 +541,9 @@ Field* atlas__mesh__HybridElements__global_index(HybridElements* This)
 
 }
 
-Field* atlas__mesh__HybridElements__remote_index(HybridElements* This)
+field::Field* atlas__mesh__HybridElements__remote_index(HybridElements* This)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->remote_index();
@@ -553,9 +551,9 @@ Field* atlas__mesh__HybridElements__remote_index(HybridElements* This)
   return field;
 }
 
-Field* atlas__mesh__HybridElements__partition(HybridElements* This)
+field::Field* atlas__mesh__HybridElements__partition(HybridElements* This)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->partition();
@@ -563,9 +561,9 @@ Field* atlas__mesh__HybridElements__partition(HybridElements* This)
   return field;
 }
 
-Field* atlas__mesh__HybridElements__halo(HybridElements* This)
+field::Field* atlas__mesh__HybridElements__halo(HybridElements* This)
 {
-  Field* field(0);
+  field::Field* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
     field = &This->halo();
@@ -583,7 +581,7 @@ Elements* atlas__mesh__HybridElements__elements(HybridElements* This, size_t idx
   return elements;
 }
 
-void atlas__mesh__HybridElements__add_field(HybridElements*This, Field* field)
+void atlas__mesh__HybridElements__add_field(HybridElements*This, field::Field* field)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);

@@ -17,31 +17,34 @@
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/atlas.h"
 #include "atlas/numerics/Nabla.h"
-#include "atlas/Config.h"
-#include "atlas/Grid.h"
-#include "atlas/Mesh.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
+#include "atlas/util/Config.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/Field.h"
-#include "atlas/Parameters.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/FieldSet.h"
+#include "atlas/field/Field.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/util/Constants.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/field/FieldSet.h"
 
 using namespace eckit;
 using namespace atlas::numerics;
-using namespace atlas::meshgen;
+using namespace atlas::mesh::generators;
+using namespace atlas::internals;
+using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
 
-double dual_volume(Mesh& mesh)
+double dual_volume(mesh::Mesh& mesh)
 {
   mesh::Nodes& nodes = mesh.nodes();
   int nb_nodes = nodes.size();
-  const ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-  const ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
-  const ArrayView<int,1> is_ghost ( nodes.ghost() );
+  const array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
+  const array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  const array::ArrayView<int,1> is_ghost ( nodes.ghost() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {
@@ -57,15 +60,15 @@ double dual_volume(Mesh& mesh)
 
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
-void rotated_flow(const fvm::Method& fvm, Field& field, const double& beta)
+void rotated_flow(const fvm::Method& fvm, field::Field& field, const double& beta)
 {
   const double radius = fvm.radius();
   const double USCAL = 20.;
   const double pvel = USCAL/radius;
   const double deg2rad = M_PI/180.;
 
-  ArrayView<double,2> lonlat_deg (fvm.mesh().nodes().lonlat());
-  ArrayView<double,3> var (field);
+  array::ArrayView<double,2> lonlat_deg (fvm.mesh().nodes().lonlat());
+  array::ArrayView<double,3> var (field);
 
   size_t nnodes = fvm.mesh().nodes().size();
   for( size_t jnode=0; jnode<nnodes; ++jnode )
@@ -84,15 +87,15 @@ void rotated_flow(const fvm::Method& fvm, Field& field, const double& beta)
 
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
-void rotated_flow_magnitude(const fvm::Method& fvm, Field& field, const double& beta)
+void rotated_flow_magnitude(const fvm::Method& fvm, field::Field& field, const double& beta)
 {
   const double radius = fvm.radius();
   const double USCAL = 20.;
   const double pvel = USCAL/radius;
   const double deg2rad = M_PI/180.;
 
-  ArrayView<double,2> lonlat_deg (fvm.mesh().nodes().lonlat());
-  ArrayView<double,2> var (field);
+  array::ArrayView<double,2> lonlat_deg (fvm.mesh().nodes().lonlat());
+  array::ArrayView<double,2> var (field);
 
   size_t nnodes = fvm.mesh().nodes().size();
   for( size_t jnode=0; jnode<nnodes; ++jnode )
@@ -124,9 +127,9 @@ BOOST_AUTO_TEST_CASE( test_build )
 {
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
-  SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
-  const double R = Earth::radiusInMeters();
-  fvm::Method fvm(*mesh,Config("radius",R));
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  const double R = util::Earth::radiusInMeters();
+  fvm::Method fvm(*mesh,util::Config("radius",R));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   double spherical_area = 4.*M_PI*R*R;
@@ -137,23 +140,23 @@ BOOST_AUTO_TEST_CASE( test_build )
 
 BOOST_AUTO_TEST_CASE( test_grad )
 {
-  const double radius = Earth::radiusInMeters();
+  const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
-  SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
-  fvm::Method fvm(*mesh, Config("radius",radius));
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
+  array::ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
   size_t nnodes = mesh->nodes().size();
   size_t nlev = 1;
 
-  FieldSet fields;
+  field::FieldSet fields;
   fields.add( fvm.functionspace_nodes().createField<double>("scalar",nlev) );
   fields.add( fvm.functionspace_nodes().createField<double>("rscalar",nlev) );
-  fields.add( fvm.functionspace_nodes().createField<double>("grad",nlev,make_shape(2)) );
-  fields.add( fvm.functionspace_nodes().createField<double>("rgrad",nlev,make_shape(2)) );
+  fields.add( fvm.functionspace_nodes().createField<double>("grad",nlev,array::make_shape(2)) );
+  fields.add( fvm.functionspace_nodes().createField<double>("rgrad",nlev,array::make_shape(2)) );
   fields.add( fvm.functionspace_nodes().createField<double>("xder",nlev) );
   fields.add( fvm.functionspace_nodes().createField<double>("yder",nlev) );
   fields.add( fvm.functionspace_nodes().createField<double>("rxder",nlev) );
@@ -162,8 +165,8 @@ BOOST_AUTO_TEST_CASE( test_grad )
   //  fields.add( fvm.createField<double>("exact_yder",nlev) );
 
 //  const double deg2rad = M_PI/180.;
-//  ArrayView<double,2> var( fields["scalar"] );
-////  ArrayView<double,2> exact_yder( fields["exact_yder"] );
+//  array::ArrayView<double,2> var( fields["scalar"] );
+////  array::ArrayView<double,2> exact_yder( fields["exact_yder"] );
 //  for( size_t jnode=0; jnode< nnodes ; ++jnode )
 //  {
 //    const double y  = lonlat(jnode,LAT) * deg2rad ;
@@ -179,12 +182,12 @@ BOOST_AUTO_TEST_CASE( test_grad )
 
   nabla->gradient(fields["scalar"],fields["grad"]);
   nabla->gradient(fields["rscalar"],fields["rgrad"]);
-  ArrayView<double,2> xder( fields["xder"] );
-  ArrayView<double,2> yder( fields["yder"] );
-  ArrayView<double,2> rxder( fields["rxder"] );
-  ArrayView<double,2> ryder( fields["ryder"] );
-  const ArrayView<double,3> grad( fields["grad"] );
-  const ArrayView<double,3> rgrad( fields["rgrad"] );
+  array::ArrayView<double,2> xder( fields["xder"] );
+  array::ArrayView<double,2> yder( fields["yder"] );
+  array::ArrayView<double,2> rxder( fields["rxder"] );
+  array::ArrayView<double,2> ryder( fields["ryder"] );
+  const array::ArrayView<double,3> grad( fields["grad"] );
+  const array::ArrayView<double,3> rgrad( fields["rgrad"] );
   for( size_t jnode=0; jnode< nnodes ; ++jnode )
   {
     for(size_t jlev = 0; jlev < nlev; ++jlev) {
@@ -198,34 +201,34 @@ BOOST_AUTO_TEST_CASE( test_grad )
   // output to gmsh
   {
     fvm.functionspace_nodes().haloExchange(fields);
-    io::Gmsh().write(*mesh,grid->shortName()+".msh");
-    io::Gmsh().write(fields["scalar"],grid->shortName()+"_fields.msh");
-    io::Gmsh().write(fields["xder"],grid->shortName()+"_fields.msh",std::ios::app);
-    io::Gmsh().write(fields["yder"],grid->shortName()+"_fields.msh",std::ios::app);
-    io::Gmsh().write(fields["rscalar"],grid->shortName()+"_fields.msh",std::ios::app);
-    io::Gmsh().write(fields["rxder"],grid->shortName()+"_fields.msh",std::ios::app);
-    io::Gmsh().write(fields["ryder"],grid->shortName()+"_fields.msh",std::ios::app);
+    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
+    util::io::Gmsh().write(fields["scalar"],grid->shortName()+"_fields.msh");
+    util::io::Gmsh().write(fields["xder"],grid->shortName()+"_fields.msh",std::ios::app);
+    util::io::Gmsh().write(fields["yder"],grid->shortName()+"_fields.msh",std::ios::app);
+    util::io::Gmsh().write(fields["rscalar"],grid->shortName()+"_fields.msh",std::ios::app);
+    util::io::Gmsh().write(fields["rxder"],grid->shortName()+"_fields.msh",std::ios::app);
+    util::io::Gmsh().write(fields["ryder"],grid->shortName()+"_fields.msh",std::ios::app);
 
-    //    io::Gmsh().write(fields["exact_yder"],grid->shortName()+"_fields.msh",std::ios::app);
+    //    util::io::Gmsh().write(fields["exact_yder"],grid->shortName()+"_fields.msh",std::ios::app);
   }
 }
 
 
 BOOST_AUTO_TEST_CASE( test_div )
 {
-  const double radius = Earth::radiusInMeters();
+  const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
-  SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
-  fvm::Method fvm(*mesh, Config("radius",radius));
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
+  array::ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
-  FieldSet fields;
-  fields.add( fvm.functionspace_nodes().createField<double>("wind",nlev,make_shape(2)) );
+  field::FieldSet fields;
+  fields.add( fvm.functionspace_nodes().createField<double>("wind",nlev,array::make_shape(2)) );
   fields.add( fvm.functionspace_nodes().createField<double>("div",nlev) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
@@ -235,27 +238,27 @@ BOOST_AUTO_TEST_CASE( test_div )
   // output to gmsh
   {
     fvm.functionspace_nodes().haloExchange(fields);
-    io::Gmsh().write(*mesh,grid->shortName()+".msh");
-    io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
-    io::Gmsh().write(fields["div"],grid->shortName()+"_fields.msh",std::ios::app);
+    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
+    util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
+    util::io::Gmsh().write(fields["div"],grid->shortName()+"_fields.msh",std::ios::app);
   }
 }
 
 BOOST_AUTO_TEST_CASE( test_curl )
 {
-  const double radius = Earth::radiusInMeters();
+  const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
-  SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
-  fvm::Method fvm(*mesh, Config("radius",radius));
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
+  array::ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
-  FieldSet fields;
-  fields.add( fvm.functionspace_nodes().createField<double>("wind",nlev,make_shape(2)) );
+  field::FieldSet fields;
+  fields.add( fvm.functionspace_nodes().createField<double>("wind",nlev,array::make_shape(2)) );
   fields.add( fvm.functionspace_nodes().createField<double>("vor",nlev) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
@@ -265,26 +268,26 @@ BOOST_AUTO_TEST_CASE( test_curl )
   // output to gmsh
   {
     fvm.functionspace_nodes().haloExchange(fields);
-    io::Gmsh().write(*mesh,grid->shortName()+".msh");
-//    io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
-    io::Gmsh().write(fields["vor"],grid->shortName()+"_fields.msh",std::ios::app);
+    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
+//    util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
+    util::io::Gmsh().write(fields["vor"],grid->shortName()+"_fields.msh",std::ios::app);
   }
 }
 
 BOOST_AUTO_TEST_CASE( test_lapl )
 {
-  const double radius = Earth::radiusInMeters();
+  const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
-  SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
-  fvm::Method fvm(*mesh, Config("radius",radius));
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
+  array::ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
-  FieldSet fields;
+  field::FieldSet fields;
   fields.add( fvm.functionspace_nodes().createField<double>("scal",nlev) );
   fields.add( fvm.functionspace_nodes().createField<double>("lapl",nlev) );
 
@@ -295,9 +298,9 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   // output to gmsh
   {
     fvm.functionspace_nodes().haloExchange(fields);
-    io::Gmsh().write(*mesh,grid->shortName()+".msh");
-//    io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
-    io::Gmsh().write(fields["lapl"],grid->shortName()+"_fields.msh",std::ios::app);
+    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
+//    util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
+    util::io::Gmsh().write(fields["lapl"],grid->shortName()+"_fields.msh",std::ios::app);
   }
 }
 

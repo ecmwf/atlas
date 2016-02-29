@@ -16,19 +16,19 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/atlas.h"
-#include "atlas/Mesh.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/grids/grids.h"
+#include "atlas/grid/grids.h"
 #include "atlas/functionspace/Nodes.h"
-#include "atlas/actions/GenerateMesh.h"
-#include "atlas/actions/WriteLoadBalanceReport.h"
+#include "atlas/mesh/actions/GenerateMesh.h"
+#include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 
 //------------------------------------------------------------------------------------------------------
 
 using namespace eckit;
 using namespace atlas;
-using namespace atlas::actions;
-using namespace atlas::grids;
+using namespace atlas::mesh::actions;
+using namespace atlas::grid;
 using namespace atlas::functionspace;
 using namespace atlas::mesh;
 
@@ -106,14 +106,14 @@ private:
 void AtlasLoadbalance::run()
 {
   if( !do_run ) return;
-  grids::load();
+  grid::load();
 
   ReducedGrid::Ptr grid;
   try{ grid = ReducedGrid::Ptr( ReducedGrid::create(key) ); }
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;
-  SharedPtr<Mesh> mesh( generate_mesh(*grid) );
+  SharedPtr<mesh::Mesh> mesh( generate_mesh(*grid) );
   SharedPtr<functionspace::Nodes> nodes( new functionspace::Nodes(*mesh,Halo(halo)) );
 
 

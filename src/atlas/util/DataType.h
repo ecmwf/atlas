@@ -15,12 +15,12 @@
 
 #include <string>
 #include <sstream>
-
 #include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+namespace util {
 
 class DataType {
 public:
@@ -172,6 +172,7 @@ inline DataType DataType::create() { return DataType(DataType::kind<DATATYPE>())
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace util
 } // namespace atlas
 
 #endif

@@ -1,15 +1,15 @@
 #include "eckit/runtime/Context.h"
-#include "atlas/runtime/Log.h"
 #include "eckit/parser/StringTools.h"
 #include "eckit/config/Resource.h"
 #include "eckit/config/ResourceMgr.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "atlas/atlas.h"
-#include "atlas/runtime/Behavior.h"
-#include "atlas/grids/grids.h"
+#include "atlas/grid/grids.h"
+#include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/field/FieldCreator.h"
-#include "atlas/meshgen/MeshGenerator.h"
+#include "atlas/util/runtime/Log.h"
+#include "atlas/util/runtime/Behavior.h"
 
 using namespace eckit;
 
@@ -31,7 +31,7 @@ void atlas_init(int argc, char** argv)
     Context::instance().runName( PathName(Context::instance().argv(0)).baseName(false) );
 
 
-  Context::instance().behavior( new atlas::Behavior() );
+  Context::instance().behavior( new atlas::util::runtime::Behavior() );
   Context::instance().behavior().debug( Resource<int>("$DEBUG;--debug",0) );
 
   Context::instance().displayName( Resource<std::string>("--name;$ATLAS_DISPLAYNAME","") );
@@ -58,7 +58,7 @@ void atlas_init(int argc, char** argv)
   Context::instance().behavior().debug( Resource<int>("debug;$DEBUG;--debug",0) );
 
   Log::debug() << "Atlas program [" << Context::instance().displayName() << "]\n";
-  Log::debug() << indent();
+  Log::debug() << util::runtime::indent();
   Log::debug() << "atlas version [" << atlas_version() << "]\n";
   Log::debug() << "atlas git     [" << atlas_git_sha1()<< "]\n";
   Log::debug() << "eckit version [" << eckit_version() << "]\n";
@@ -70,15 +70,15 @@ void atlas_init(int argc, char** argv)
     Log::debug() << "Read config file " << path_it->fullName() << "\n";
   }
   Log::debug() << "Configuration read from scripts:\n";
-  Log::debug() << indent();
+  Log::debug() << util::runtime::indent();
   ResourceMgr::instance().printScript( Log::debug() );
-  Log::debug() << dedent();
+  Log::debug() << util::runtime::dedent();
 
   Log::debug() << "rundir  : " << PathName(rundir()).fullName() << "\n";
-  Log::debug() << dedent();
+  Log::debug() << util::runtime::dedent();
 
   // Load factories for static linking
-  atlas::grids::load();
+  atlas::grid::load();
 }
 
 void atlas_finalize()

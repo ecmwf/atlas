@@ -19,20 +19,20 @@
 #include "eckit/memory/Builder.h"
 
 #include "atlas/atlas.h"
-#include "atlas/Grid.h"
-#include "atlas/mpi/mpi.h"
-#include "atlas/grids/grids.h"
-#include "atlas/grids/LocalGrid.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/grid/grids.h"
+#include "atlas/grid/LocalGrid.h"
 
 
 using namespace eckit;
 using namespace atlas;
-using namespace atlas::grids;
+using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
 
-BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); atlas::grids::load(); }
+BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); atlas::grid::load(); }
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
 
   // Full Gaussian Grid
 
-  Config spec;
+  util::Config spec;
   spec.set("grid_type","regular_gg");
   spec.set("N",32);
   gridptr = Grid::Ptr( Grid::create(spec) );
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
 BOOST_AUTO_TEST_CASE( test_reduced_gg )
 {
   long nlon[] = {4,6,8};
-  grids::ReducedGaussianGrid grid(3,nlon);
+  grid::ReducedGaussianGrid grid(3,nlon);
   BOOST_CHECK_EQUAL(grid.N(),3);
   BOOST_CHECK_EQUAL(grid.nlat(),6);
   BOOST_CHECK_EQUAL(grid.npts(),8+12+16);
@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg )
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
 {
-  grids::rgg::N32 grid;
+  grid::predefined::rgg::N32 grid;
 
   BOOST_CHECK_EQUAL(grid.N(),    32);
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
   BOOST_CHECK_EQUAL(grid.gridType(),"reduced_gg");
 
   // Local grid
-  LocalGrid local( new grids::rgg::N32(), BoundBox( 90., 0., 180., 0.));
+  LocalGrid local( new grid::predefined::rgg::N32(), BoundBox( 90., 0., 180., 0.));
 //  BOOST_CHECK_EQUAL(local.nlat(), 32);
   BOOST_CHECK_EQUAL(local.npts(), 1559);
 }
@@ -139,10 +139,10 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   // Construct using builders/factories
 
   Grid::Ptr gridptr;
-  grids::LonLatGrid* ll;
+  grid::LonLatGrid* ll;
 
   // Global Grid
-  Config spec;
+  util::Config spec;
   spec.set("grid_type","regular_ll");
   spec.set("nlon",32);
   spec.set("nlat",16);
@@ -163,13 +163,13 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   gridptr = Grid::Ptr( Grid::create(spec) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
   BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_ll");
-  ll = dynamic_cast<grids::LonLatGrid*>(gridptr.get());
+  ll = dynamic_cast<grid::LonLatGrid*>(gridptr.get());
   BOOST_CHECK_EQUAL(ll->lat(0), 90.);
   BOOST_CHECK_EQUAL(ll->lat(ll->nlat()-1), 0.);
   BOOST_CHECK_EQUAL(ll->lon(0), 0.);
   BOOST_CHECK_EQUAL(ll->lon(ll->nlon()-1), 180.);
 
-  Config spec2;
+  util::Config spec2;
   spec2.set("grid_type","regular_ll");
   spec2.set("N",16);
   spec2.set<int>("poles",LonLatGrid::EXCLUDES_POLES);

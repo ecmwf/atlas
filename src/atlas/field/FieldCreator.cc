@@ -7,24 +7,22 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
+
 #include <sstream>
 #include <map>
 #include <string>
-
 #include "eckit/exception/Exceptions.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
-#include "atlas/runtime/Log.h"
-
+#include "atlas/grid/Grid.h"
 #include "atlas/field/FieldCreator.h"
 #include "atlas/field/FieldCreatorArraySpec.h"
 #include "atlas/field/FieldCreatorIFS.h"
-#include "atlas/Field.h"
-#include "atlas/Grid.h"
-#include "atlas/FunctionSpace.h"
+#include "atlas/field/Field.h"
+#include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/util/runtime/Log.h"
 
 namespace {
-
     static eckit::Mutex *local_mutex = 0;
     static std::map<std::string, atlas::field::FieldCreatorFactory *> *m = 0;
     static pthread_once_t once = PTHREAD_ONCE_INIT;
@@ -146,8 +144,6 @@ FieldCreator *FieldCreatorFactory::build(const std::string& name, const eckit::P
 
     return (*j).second->make(param);
 }
-
-
 
 } // namespace field
 } // namespace atlas

@@ -9,14 +9,14 @@
  */
 
 #include "atlas/atlas_config.h"
-#include "atlas/grids/GaussianLatitudes.h"
-#include "atlas/grids/grids.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/Mesh.h"
-#include "atlas/mpi/mpi.h"
+#include "atlas/grid/GaussianLatitudes.h"
+#include "atlas/grid/grids.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/util/parallel/mpi/mpi.h"
 
 using namespace atlas;
-using namespace atlas::grids;
+using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
@@ -29,19 +29,19 @@ public:
 TestGrid::TestGrid(int N, long lon[])
 {
   std::vector<double> lats(N);
-  grids::gaussian_latitudes_npole_equator(N,lats.data());
-  setup_lat_hemisphere(N,lats.data(),lon,DEG);
+  grid::gaussian_latitudes_npole_equator(N,lats.data());
+  setup_lat_hemisphere(N,lats.data(),lon,internals::DEG);
 }
 
-Mesh::Ptr generate_mesh( const ReducedGrid& rgg )
+mesh::Mesh::Ptr generate_mesh( const ReducedGrid& rgg )
 {
-  meshgen::ReducedGridMeshGenerator generate;
+  mesh::generators::ReducedGridMeshGenerator generate;
   generate.options.set("nb_parts",eckit::mpi::size());
   generate.options.set("part",eckit::mpi::rank());
-  return Mesh::Ptr( generate( rgg ) );
+  return mesh::Mesh::Ptr( generate( rgg ) );
 }
 
-Mesh::Ptr generate_mesh(int nlat, long lon[] )
+mesh::Mesh::Ptr generate_mesh(int nlat, long lon[] )
 {
   return generate_mesh( TestGrid(nlat,lon) );
 }

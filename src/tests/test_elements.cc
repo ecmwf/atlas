@@ -10,7 +10,7 @@
 
 #include <cmath>
 #include <string>
-#include <iterator>     // std::iterator, std::input_iterator_tag
+#include <iterator>
 
 #include "atlas/atlas_config.h"
 
@@ -24,12 +24,12 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/Field.h"
-#include "atlas/Connectivity.h"
+#include "atlas/field/Field.h"
+#include "atlas/mesh/Connectivity.h"
 
-#include "atlas/Mesh.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/Grid.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/grid/Grid.h"
 
 // ------------------------------------------------------------------
 
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   };
   size_t triags = hybrid_elements.add( new Triangle(), 2, triangle_nodes );
 
-  hybrid_elements.add(Field::create<double>("surface",make_shape(hybrid_elements.size())));
+  hybrid_elements.add(field::Field::create<double>("surface",array::make_shape(hybrid_elements.size())));
 
   std::vector<idx_t> quad_nodes(4);
   quad_nodes[0] = 0;
@@ -303,11 +303,11 @@ BOOST_AUTO_TEST_CASE( zero_elements )
 BOOST_AUTO_TEST_CASE( conversion )
 {
   long nlon[] = {4,8};
-  Grid* grid = Grid::create("N16");
-  meshgen::ReducedGridMeshGenerator generator;
+  grid::Grid* grid = Grid::create("N16");
+  mesh::generators::ReducedGridMeshGenerator generator;
   generator.options.set("angle",29.0);
   generator.options.set("triangulate",false);
-  Mesh* mesh = generator.generate(*grid);
+  mesh::Mesh* mesh = generator.generate(*grid);
   DEBUG();
   FunctionSpace* functionspace = new functionspace::EdgeBasedFiniteVolume(*mesh);
   DEBUG();
@@ -366,7 +366,7 @@ BOOST_AUTO_TEST_CASE( conversion )
   // }
   // eckit::Log::info() << std::flush;
 
-  ArrayView<double,2> centroids( cells.field("centroids_lonlat") );
+  array::ArrayView<double,2> centroids( cells.field("centroids_lonlat") );
   for( size_t e=cells.elements(1).begin(); e<cells.elements(1).end(); ++e )
   {
     // DEBUG_VAR( centroids(e,XX) );

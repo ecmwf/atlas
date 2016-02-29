@@ -18,7 +18,7 @@
 #include "atlas/numerics/Method.h"
 
 namespace eckit { class Parametrisation; }
-namespace atlas { class Mesh; }
+namespace atlas { namespace mesh { class Mesh; } }
 namespace atlas { namespace mesh { class HybridElements; } }
 namespace atlas { namespace mesh { class Nodes; } }
 
@@ -30,14 +30,14 @@ class Method : public numerics::Method {
 
 public:
 
-  Method(Mesh &, const eckit::Parametrisation &);
-  Method(Mesh &, const mesh::Halo &);
-  Method(Mesh &);
+  Method(mesh::Mesh &, const eckit::Parametrisation &);
+  Method(mesh::Mesh &, const mesh::Halo &);
+  Method(mesh::Mesh &);
 
   virtual std::string name() const { return "fvm"; }
 
-  const atlas::Mesh& mesh() const { return mesh_; }
-        atlas::Mesh& mesh()       { return mesh_; }
+  const atlas::mesh::Mesh& mesh() const { return mesh_; }
+        atlas::mesh::Mesh& mesh()       { return mesh_; }
 
   const functionspace::Nodes& functionspace_nodes() const { return *functionspace_nodes_; }
         functionspace::Nodes& functionspace_nodes()       { return *functionspace_nodes_; }
@@ -54,7 +54,7 @@ private:
 private: // data
 
     mesh::Halo             halo_;
-    Mesh                   &mesh_; // non-const because functionspace may modify mesh
+    mesh::Mesh                   &mesh_; // non-const because functionspace may modify mesh
     mesh::Nodes            &nodes_;
     mesh::HybridElements   &edges_;
     eckit::SharedPtr<functionspace::Nodes>    functionspace_nodes_;
@@ -69,15 +69,18 @@ private: // data
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 #define Parametrisation eckit::Parametrisation
+#define mesh_Mesh mesh::Mesh
 #define functionspace_Nodes functionspace::Nodes
 #define functionspace_Edges functionspace::Edges
+
 extern "C"
 {
-  Method* atlas__numerics__fvm__Method__new (Mesh* mesh, const Parametrisation* params);
+  Method* atlas__numerics__fvm__Method__new (mesh_Mesh* mesh, const Parametrisation* params);
   functionspace_Nodes* atlas__numerics__fvm__Method__functionspace_nodes (Method* This);
   functionspace_Edges* atlas__numerics__fvm__Method__functionspace_edges (Method* This);
 }
 #undef Parametrisation
+#undef mesh_Mesh
 #undef functionspace_Nodes
 #undef functionspace_Edges
 

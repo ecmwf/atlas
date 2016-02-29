@@ -1,7 +1,7 @@
 #include "atlas/atlas.h"
-#include "atlas/Field.h"
-#include "atlas/FieldSet.h"
-#include "atlas/Metadata.h"
+#include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/util/Metadata.h"
 
 using namespace std;
 using namespace atlas;

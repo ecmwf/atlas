@@ -23,11 +23,11 @@
 #include "eckit/runtime/Tool.h"
 
 #include "atlas/atlas.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/Mesh.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/Field.h"
-#include "atlas/FunctionSpace.h"
+#include "atlas/field/Field.h"
+#include "atlas/functionspace/FunctionSpace.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -64,9 +64,9 @@ void GmshLs::run()
 
     // input grid + field
 
-    atlas::Mesh::Ptr in_mesh ( atlas::Gmsh::read( in_filename ) );
+    atlas::mesh::Mesh::Ptr in_mesh ( atlas::util::io::Gmsh::read( in_filename ) );
 
-    Mesh& mesh = *in_mesh;
+    mesh::Mesh& mesh = *in_mesh;
 
     Nodes& nodes   = mesh.nodes();
 

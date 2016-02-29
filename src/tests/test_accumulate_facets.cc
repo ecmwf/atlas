@@ -14,14 +14,14 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/atlas.h"
-#include "atlas/util/AccumulateFaces.h"
+#include "atlas/internals/AccumulateFaces.h"
 
-#include "atlas/Mesh.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/Grid.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/mesh/HybridElements.h"
-#include "atlas/actions/BuildEdges.h"
-#include "atlas/util/Unique.h"
+#include "atlas/mesh/actions/BuildEdges.h"
+#include "atlas/internals/Unique.h"
 
 // ------------------------------------------------------------------
 
@@ -45,11 +45,11 @@ BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_CASE( test_accumulate_facets )
 {
-  Grid* grid = Grid::create("O2");
-  meshgen::ReducedGridMeshGenerator generator;
+  grid::Grid* grid = grid::Grid::create("O2");
+  mesh::generators::ReducedGridMeshGenerator generator;
   generator.options.set("angle",29.0);
   generator.options.set("triangulate",false);
-  Mesh* mesh = generator.generate(*grid);
+  mesh::Mesh* mesh = generator.generate(*grid);
 
   // storage for edge-to-node-connectivity shape=(nb_edges,2)
   std::vector< idx_t > edge_nodes_data;
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
   idx_t missing_value;
 
   // Accumulate facets of cells ( edges in 2D )
-  accumulate_facets(mesh->cells(),mesh->nodes(),edge_nodes_data,edge_to_cell_data,nb_edges,nb_inner_edges,missing_value);
+  internals::accumulate_facets(mesh->cells(),mesh->nodes(),edge_nodes_data,edge_to_cell_data,nb_edges,nb_inner_edges,missing_value);
 
   idx_t edge_nodes_check[] = {
   0, 21,
@@ -419,14 +419,14 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
 BOOST_AUTO_TEST_CASE( test_build_edges )
 {
   idx_t missing_value = -1;
-  Grid* grid = Grid::create("O2");
-  meshgen::ReducedGridMeshGenerator generator;
+  grid::Grid* grid = grid::Grid::create("O2");
+  mesh::generators::ReducedGridMeshGenerator generator;
   generator.options.set("angle",29.0);
   generator.options.set("triangulate",false);
-  Mesh* mesh = generator.generate(*grid);
+  mesh::Mesh* mesh = generator.generate(*grid);
 
   // Accumulate facets of cells ( edges in 2D )
-  actions::build_edges(*mesh);
+  mesh::actions::build_edges(*mesh);
 
   idx_t edge_nodes_check[] = {
   0, 21,
@@ -604,7 +604,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 
   {
   const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh->edges().node_connectivity();
-  const util::UniqueLonLat compute_uid( mesh->nodes() );
+  const internals::UniqueLonLat compute_uid( mesh->nodes() );
   for( size_t jedge=0; jedge<mesh->edges().size(); ++jedge )
   {
     if( compute_uid(edge_nodes_check[2*jedge+0]) < compute_uid(edge_nodes_check[2*jedge+1]) )
@@ -798,7 +798,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
   {
     const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh->cells().node_connectivity();
     const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh->edges().cell_connectivity();
-    const util::UniqueLonLat compute_uid( mesh->nodes() );
+    const internals::UniqueLonLat compute_uid( mesh->nodes() );
     for( size_t jedge=0; jedge<mesh->edges().size(); ++jedge )
     {
       idx_t e1 = edge_to_cell_check[2*jedge+0];
@@ -836,14 +836,14 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 
 BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
 {
-  Grid* grid = Grid::create("O2");
-  meshgen::ReducedGridMeshGenerator generator;
+  grid::Grid* grid = grid::Grid::create("O2");
+  mesh::generators::ReducedGridMeshGenerator generator;
   generator.options.set("angle",29.0);
   generator.options.set("triangulate",false);
-  Mesh* mesh = generator.generate(*grid);
+  mesh::Mesh* mesh = generator.generate(*grid);
 
   // Accumulate facets of cells ( edges in 2D )
-  actions::build_edges(*mesh);
+  mesh::actions::build_edges(*mesh);
 
   {
     const IrregularConnectivity& elem_edge_connectivity = mesh->cells().edge_connectivity();

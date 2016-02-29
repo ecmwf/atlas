@@ -12,23 +12,23 @@
 #define BOOST_TEST_MODULE atlas_test_trans
 #include "ecbuild/boost_test_framework.h"
 
-#include <algorithm>    // std::min_element, std::max_element, std::copy
+#include <algorithm>
 
 #include "eckit/config/ResourceMgr.h"
-#include "atlas/mpi/mpi.h"
+#include "atlas/util/parallel/mpi/mpi.h"
 #include "atlas/atlas.h"
-#include "atlas/trans/Trans.h"
-#include "atlas/trans/TransPartitioner.h"
-#include "atlas/grids/grids.h"
-#include "atlas/meshgen/EqualRegionsPartitioner.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/runtime/LogFormat.h"
-#include "atlas/GridDistribution.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/FieldSet.h"
-#include "atlas/Mesh.h"
+#include "atlas/numerics/trans/Trans.h"
+#include "atlas/grid/partitioners/TransPartitioner.h"
+#include "atlas/grid/grids.h"
+#include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/util/runtime/LogFormat.h"
+#include "atlas/grid/GridDistribution.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/FunctionSpace.h"
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/Nodes.h"
 #include "atlas/functionspace/ReducedGridPoint.h"
@@ -36,7 +36,7 @@
 #include "transi/trans.h"
 
 using namespace eckit;
-using namespace atlas::grids;
+using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
@@ -56,7 +56,7 @@ struct Fixture   {
 };
 
 
-void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int &nfld )
+void read_rspecg(numerics::trans::Trans& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int &nfld )
 {
   Log::info() << "read_rspecg ...\n";
   nfld = 2;
@@ -81,7 +81,7 @@ BOOST_GLOBAL_FIXTURE( Fixture );
 
 BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 {
-  BOOST_CHECK( PartitionerFactory::has("Trans") );
+  BOOST_CHECK( grid::partitioners::PartitionerFactory::has("Trans") );
 
 
   // Create grid and trans object
@@ -89,11 +89,11 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
   BOOST_CHECK_EQUAL( g->nlat() , 160 );
 
-  trans::Trans trans( *g );
+  numerics::trans::Trans trans( *g );
 
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
 
-  trans::TransPartitioner partitioner(*g,trans);
+  grid::partitioners::TransPartitioner partitioner(*g,trans);
   GridDistribution distribution( partitioner );
 
   // -------------- do checks -------------- //
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
     BOOST_CHECK_EQUAL( trans.ngptot(),  npts[eckit::mpi::rank()] );
     BOOST_CHECK_EQUAL( trans.ngptotmx(), *std::max_element(npts.begin(),npts.end()) );
 
-    ArrayView<int,1> n_regions ( trans.n_regions() ) ;
+    array::ArrayView<int,1> n_regions ( trans.n_regions() ) ;
     for( int j=0; j<partitioner.nb_bands(); ++j )
       BOOST_CHECK_EQUAL( n_regions[j] , partitioner.nb_regions(j) );
   }
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
   // Create grid and trans object
   ReducedGrid::Ptr g ( ReducedGrid::create( "N80" ) );
 
-  trans::Trans trans( *g, 0 );
+  numerics::trans::Trans trans( *g, 0 );
 
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
   BOOST_CHECK_EQUAL( trans.ngptotg() , g->npts() );
@@ -143,8 +143,8 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 
 BOOST_AUTO_TEST_CASE( test_trans_options )
 {
-  trans::Trans::Options opts;
-  opts.set_fft(trans::FFTW);
+  numerics::trans::Trans::Options opts;
+  opts.set_fft(numerics::trans::FFTW);
   opts.set_split_latitudes(false);
   opts.set_read("readfile");
 
@@ -156,15 +156,15 @@ BOOST_AUTO_TEST_CASE( test_distspec )
 {
   ReducedGrid::Ptr g ( ReducedGrid::create( "O80" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
-  meshgen::ReducedGridMeshGenerator generate;
+  mesh::generators::ReducedGridMeshGenerator generate;
   BOOST_TEST_CHECKPOINT("mesh generator created");
-  //trans::Trans trans(*g, 159 );
+  //numerics::trans::Trans trans(*g, 159 );
 
-  trans::Trans::Options p;
+  numerics::trans::Trans::Options p;
   if( eckit::mpi::size() == 1 )
     p.set_write("cached_legendre_coeffs");
   p.set_flt(false);
-  trans::Trans trans(400, 159, p);
+  numerics::trans::Trans trans(400, 159, p);
   BOOST_TEST_CHECKPOINT("Trans initialized");
   std::vector<double> rspecg;
   std::vector<int   > nfrom;
@@ -191,10 +191,10 @@ BOOST_AUTO_TEST_CASE( test_distribution )
 
   BOOST_TEST_CHECKPOINT("test_distribution");
 
-  GridDistribution::Ptr d_trans( trans::TransPartitioner(*g).distribution() );
+  GridDistribution::Ptr d_trans( grid::partitioners::TransPartitioner(*g).distribution() );
   BOOST_TEST_CHECKPOINT("trans distribution created");
 
-  GridDistribution::Ptr d_eqreg( meshgen::EqualRegionsPartitioner(*g).distribution() );
+  GridDistribution::Ptr d_eqreg( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
 
   BOOST_TEST_CHECKPOINT("eqregions distribution created");
 
@@ -218,22 +218,22 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","true");
 
-  meshgen::ReducedGridMeshGenerator generate;
-  trans::Trans trans(*g);
+  mesh::generators::ReducedGridMeshGenerator generate;
+  numerics::trans::Trans trans(*g);
 
-  Mesh::Ptr m_default( generate( *g ) );
+  mesh::Mesh::Ptr m_default( generate( *g ) );
 
   BOOST_TEST_CHECKPOINT("trans_distribution");
-  GridDistribution::Ptr trans_distribution( trans::TransPartitioner(*g).distribution() );
-  Mesh::Ptr m_trans( generate( *g, *trans_distribution ) );
+  GridDistribution::Ptr trans_distribution( grid::partitioners::TransPartitioner(*g).distribution() );
+  mesh::Mesh::Ptr m_trans( generate( *g, *trans_distribution ) );
 
   BOOST_TEST_CHECKPOINT("eqreg_distribution");
-  GridDistribution::Ptr eqreg_distribution( meshgen::EqualRegionsPartitioner(*g).distribution() );
-  Mesh::Ptr m_eqreg( generate( *g, *eqreg_distribution ) );
+  GridDistribution::Ptr eqreg_distribution( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
+  mesh::Mesh::Ptr m_eqreg( generate( *g, *eqreg_distribution ) );
 
-  ArrayView<int,1> p_default( m_default->nodes().partition() );
-  ArrayView<int,1> p_trans  ( m_trans  ->nodes().partition() );
-  ArrayView<int,1> p_eqreg  ( m_eqreg  ->nodes().partition() );
+  array::ArrayView<int,1> p_default( m_default->nodes().partition() );
+  array::ArrayView<int,1> p_trans  ( m_trans  ->nodes().partition() );
+  array::ArrayView<int,1> p_eqreg  ( m_eqreg  ->nodes().partition() );
 
   BOOST_CHECK_EQUAL_COLLECTIONS( p_default.begin(), p_default.end(),
                                  p_trans  .begin(), p_trans  .end() );
@@ -241,9 +241,9 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   BOOST_CHECK_EQUAL_COLLECTIONS( p_default.begin(), p_default.end(),
                                  p_eqreg  .begin(), p_eqreg  .end() );
 
-  //Mesh::Ptr mesh ( generate(*g, meshgen::EqualAreaPartitioner(*g).distribution() ) );
+  //mesh::Mesh::Ptr mesh ( generate(*g, mesh::generators::EqualAreaPartitioner(*g).distribution() ) );
 
-  io::Gmsh().write(*m_trans,"N16_trans.msh");
+  util::io::Gmsh().write(*m_trans,"N16_trans.msh");
 }
 
 
@@ -255,24 +255,24 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","false");
 
-  meshgen::ReducedGridMeshGenerator generate;
-  Mesh::Ptr m( generate( *g ) );
+  mesh::generators::ReducedGridMeshGenerator generate;
+  mesh::Mesh::Ptr m( generate( *g ) );
 
-  trans::Trans trans(*g,47);
+  numerics::trans::Trans trans(*g,47);
 
 
   SharedPtr<functionspace::Nodes> nodal (new functionspace::Nodes(*m));
   SharedPtr<functionspace::Spectral> spectral (new functionspace::Spectral(trans));
 
-  SharedPtr<Field> spf ( spectral->createField<double>("spf") );
-  SharedPtr<Field> gpf ( nodal->createField<double>("gpf") );
+  SharedPtr<field::Field> spf ( spectral->createField<double>("spf") );
+  SharedPtr<field::Field> gpf ( nodal->createField<double>("gpf") );
 
 
   BOOST_CHECK_NO_THROW( trans.dirtrans(*nodal,*gpf,*spectral,*spf) );
   BOOST_CHECK_NO_THROW( trans.invtrans(*spectral,*spf,*nodal,*gpf) );
 
-  FieldSet gpfields;   gpfields.add(*gpf);
-  FieldSet spfields;   spfields.add(*spf);
+  field::FieldSet gpfields;   gpfields.add(*gpf);
+  field::FieldSet spfields;   spfields.add(*spf);
 
   BOOST_CHECK_NO_THROW( trans.dirtrans(*nodal,gpfields,*spectral,spfields) );
   BOOST_CHECK_NO_THROW( trans.invtrans(*spectral,spfields,*nodal,gpfields) );
@@ -288,24 +288,24 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
   SharedPtr<ReducedGrid> g ( ReducedGrid::create( "O48" ) );
-  SharedPtr<trans::Trans> trans ( new trans::Trans(*g,47) );
+  SharedPtr<numerics::trans::Trans> trans ( new numerics::trans::Trans(*g,47) );
 
   SharedPtr<functionspace::Spectral>    spectral    (new functionspace::Spectral(*trans));
   SharedPtr<functionspace::ReducedGridPoint> gridpoints (new functionspace::ReducedGridPoint(*g));
 
-  SharedPtr<Field> spfg ( spectral->createGlobalField<double>("spf") );
-  SharedPtr<Field> spf  ( spectral->createField<double>("spf") );
-  SharedPtr<Field> gpf  ( gridpoints->createField<double>("gpf") );
-  SharedPtr<Field> gpfg ( gridpoints->createGlobalField<double>("gpf") );
+  SharedPtr<field::Field> spfg ( spectral->createGlobalField<double>("spf") );
+  SharedPtr<field::Field> spf  ( spectral->createField<double>("spf") );
+  SharedPtr<field::Field> gpf  ( gridpoints->createField<double>("gpf") );
+  SharedPtr<field::Field> gpfg ( gridpoints->createGlobalField<double>("gpf") );
 
-  ArrayView<double,1> spg (*spfg);
+  array::ArrayView<double,1> spg (*spfg);
   spg = 0.;
   spg(0) = 4.;
 
   BOOST_CHECK_NO_THROW( spectral->scatter(*spfg,*spf) );
 
   if( eckit::mpi::rank() == 0 ) {
-    ArrayView<double,1> sp (*spf);
+    array::ArrayView<double,1> sp (*spf);
     BOOST_CHECK_CLOSE( sp(0), 4., 0.001 );
     for( size_t jp=0; jp<sp.size(); ++jp ) {
       Log::debug(2) << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   BOOST_CHECK_NO_THROW( gridpoints->gather(*gpf,*gpfg) );
 
   if( eckit::mpi::rank() == 0 ) {
-    ArrayView<double,1> gpg (*gpfg);
+    array::ArrayView<double,1> gpg (*gpfg);
     for( size_t jp=0; jp<gpg.size(); ++jp ) {
       BOOST_CHECK_CLOSE( gpg(jp), 4., 0.001 );
       Log::debug(3) << "gpg("<<jp << ")   :   " << gpg(jp) << std::endl;

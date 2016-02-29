@@ -8,9 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/runtime/ErrorHandling.h"
-#include "atlas/Parameters.h"
 #include "atlas/mesh/ElementType.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/util/runtime/ErrorHandling.h"
 
 namespace atlas {
 namespace mesh {

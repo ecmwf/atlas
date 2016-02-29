@@ -1,5 +1,5 @@
 #include "atlas/atlas.h"
-#include "atlas/grids/grids.h"
+#include "atlas/grid/grids.h"
 #include "eckit/config/Resource.h"
 
 using namespace std;
