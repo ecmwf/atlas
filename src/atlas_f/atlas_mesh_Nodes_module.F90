@@ -22,7 +22,7 @@ public :: atlas_mesh_Nodes
 private
 
 !-----------------------------
-! atlas_mesh_Nodes  !
+! atlas_mesh_Nodes           !
 !-----------------------------
 
 TYPE, extends(atlas_refcounted) :: atlas_mesh_Nodes

@@ -1,6 +1,80 @@
-! (C) Copyright 2013-2015 ECMWF.
 
-! -----------------------------------------------------------------------------------------------
+module atlas_functionspace_ReducedGridPoint_module
+
+use, intrinsic :: iso_c_binding, only : c_ptr
+use atlas_c_interop, only : c_str, c_to_f_string_cptr, atlas_free
+use atlas_functionspace_module, only : atlas_FunctionSpace
+use atlas_Field_module, only: atlas_Field
+use atlas_FieldSet_module, only: atlas_FieldSet
+use atlas_Grid_module, only: atlas_Grid
+
+implicit none
+
+private :: c_ptr
+private :: c_str, c_to_f_string_cptr, atlas_free
+private :: atlas_FunctionSpace
+private :: atlas_Field
+private :: atlas_FieldSet
+private :: atlas_Grid
+
+public :: atlas_functionspace_ReducedGridPoint
+
+private
+
+!------------------------------------------------------------------------------
+TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_ReducedGridPoint
+
+! Purpose :
+! -------
+!   *atlas_functionspace_ReducedGridPoint* : Interpretes spectral fields
+
+! Methods :
+! -------
+
+! Author :
+! ------
+!   August-2015 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+
+  procedure, private :: create_field_name     => ReducedGridPoint__create_field_name
+  procedure, private :: create_field_name_lev => ReducedGridPoint__create_field_name_lev
+  generic, public :: create_field => &
+    & create_field_name, &
+    & create_field_name_lev
+
+  procedure, private :: create_glb_field_name     => ReducedGridPoint__create_glb_field_name
+  procedure, private :: create_glb_field_name_lev => ReducedGridPoint__create_glb_field_name_lev
+  generic, public :: create_global_field => &
+    & create_glb_field_name, &
+    & create_glb_field_name_lev
+
+  procedure, public :: gather => ReducedGridPoint__gather
+  procedure, public :: scatter => ReducedGridPoint__scatter
+
+  procedure, private :: checksum_fieldset => ReducedGridPoint__checksum_fieldset
+  procedure, private :: checksum_field => ReducedGridPoint__checksum_field
+  generic, public :: checksum => checksum_fieldset, checksum_field
+
+
+#ifdef FORTRAN_SUPPORTS_FINAL
+  final :: atlas_functionspace_ReducedGridPoint__final
+#endif
+
+END TYPE atlas_functionspace_ReducedGridPoint
+
+interface atlas_functionspace_ReducedGridPoint
+  module procedure ReducedGridPoint__cptr
+  module procedure ReducedGridPoint__grid
+end interface
+
+
+!------------------------------------------------------------------------------
+
+!========================================================
+contains
+!========================================================
 
 function ReducedGridPoint__cptr(cptr) result(functionspace)
   type(atlas_functionspace_ReducedGridPoint) :: functionspace
@@ -105,3 +179,6 @@ function ReducedGridPoint__checksum_field(this,field) result(checksum)
   checksum = c_to_f_string_cptr(checksum_cptr)
   if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
 end function
+
+end module atlas_functionspace_ReducedGridPoint_module
+

@@ -17,7 +17,7 @@ module fctest_atlas_error_fixture
 use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
-
+character(len=*), parameter :: filename = "fctest_error.F90"
 end module fctest_atlas_error_fixture
 
 ! -----------------------------------------------------------------------------
@@ -52,25 +52,25 @@ CHECK(atlas_noerr())
 CHECK_EQUAL(atlas_err_code(),atlas_err_noerr)
 CHECK_EQUAL(atlas_err_msg(),"")
 
-call atlas_throw_exception("reason",atlas_code_location(__FILE__,__LINE__))
+call atlas_throw_exception("reason",atlas_code_location(filename,__LINE__))
 CHECK( atlas_err() )
 CHECK_EQUAL( atlas_err_code(), atlas_err_exception )
 
-call atlas_throw_seriousbug("reason",atlas_code_location(__FILE__,__LINE__))
+call atlas_throw_seriousbug("reason",atlas_code_location(filename,__LINE__))
 CHECK_EQUAL( atlas_err_code(), atlas_err_seriousbug )
 
-call atlas_throw_usererror("reason",atlas_code_location(__FILE__,__LINE__))
+call atlas_throw_usererror("reason",atlas_code_location(filename,__LINE__))
 CHECK_EQUAL( atlas_err_code(), atlas_err_usererror )
 
 call atlas_throw_outofrange("myarray",128,100)
-call atlas_throw_outofrange("myarray",128,100,atlas_code_location(__FILE__,__LINE__))
+call atlas_throw_outofrange("myarray",128,100,atlas_code_location(filename,__LINE__))
 
 CHECK_EQUAL( atlas_err_code(), atlas_err_outofrange )
 ! call atlas_log%warning(atlas_err_msg())
 call atlas_err_clear()
 CHECK_EQUAL(atlas_err_code(),atlas_err_cleared)
 
-! call atlas_abort("I give up!!!", atlas_code_location(__FILE__,__LINE__,"test_error"))
+! call atlas_abort("I give up!!!", atlas_code_location(filename,__LINE__,"test_error"))
 ! call atlas_abort()
 
 ! if( atlas_err() ) then
@@ -78,8 +78,8 @@ CHECK_EQUAL(atlas_err_code(),atlas_err_cleared)
 !   call atlas_err_clear()
 ! endif
 
-! call atlas_throw_exception("exception from fortran",atlas_code_location(__FILE__,__LINE__))
-! call atlas_throw_notimplemented(atlas_code_location(__FILE__,__LINE__))
+! call atlas_throw_exception("exception from fortran",atlas_code_location(filename,__LINE__))
+! call atlas_throw_notimplemented(atlas_code_location(filename,__LINE__))
 
 
 END_TEST

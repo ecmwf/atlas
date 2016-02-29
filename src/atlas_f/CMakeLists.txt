@@ -139,6 +139,8 @@ ecbuild_add_library( TARGET atlas_f
         atlas_FunctionSpace_module.F90
         atlas_functionspace_Edges_module.F90
         atlas_functionspace_Nodes_module.F90
+        atlas_functionspace_ReducedGridPoint_module.F90
+        atlas_functionspace_Spectral_module.F90
         atlas_Logging_module.F90
         atlas_Error_module.F90
         atlas_Field_module.F90
@@ -147,6 +149,7 @@ ecbuild_add_library( TARGET atlas_f
         atlas_GridDistribution_module.F90
         atlas_MeshGenerator_module.F90
         atlas_Mesh_module.F90
+        atlas_Trans_module.F90
         atlas_actions_module.F90
         atlas_module.F90
         atlas_mpi_module.F90
@@ -168,6 +171,7 @@ ecbuild_add_library( TARGET atlas_f
         atlas_logging.cc
         atlas_resource.h
         atlas_resource.cc
+        atlas_resource_module.F90
         atlas_value.h
         atlas_value.cc
         ${DEPRECATED_FUNCTIONSPACE_SRC}
@@ -176,14 +180,8 @@ ecbuild_add_library( TARGET atlas_f
 )
 
 add_custom_target( atlas_fortran_inc SOURCES
-   atlas_module_functionspace_ReducedGridPoint_c.f
-   atlas_module_functionspace_ReducedGridPoint_i.f
-   atlas_module_functionspace_Spectral_i.f
-   atlas_module_functionspace_Spectral_c.f
    atlas_module_State_i.f
    atlas_module_State_c.f
-   atlas_module_Trans_i.f
-   atlas_module_Trans_c.f
    atlas_module_Value_i.f
    atlas_module_Value_c.f
 )

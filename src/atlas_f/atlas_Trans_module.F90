@@ -1,15 +1,154 @@
-! (C) Copyright 2013-2015 ECMWF.
+
+#include "atlas_f/atlas_f_defines.h"
+
+module atlas_Trans_module
 
 
+use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_double, c_f_pointer
+use atlas_c_interop, only: c_str, view1d
+use atlas_object_module, only: atlas_object
+use atlas_refcounted_module, only: atlas_refcounted
+use atlas_Grid_module, only: atlas_Grid
+use atlas_functionspace_module, only: atlas_Functionspace
+use atlas_field_module, only: atlas_Field
+use atlas_fieldset_module, only: atlas_FieldSet
+use atlas_Error_module, only: atlas_code_location, atlas_throw_usererror
+
+implicit none
+
+private :: c_ptr, c_int, c_double, c_f_pointer
+private :: c_str, view1d
+private :: atlas_refcounted
+private :: atlas_object
+private :: atlas_Grid
+private :: atlas_Field
+private :: atlas_FieldSet
+private :: atlas_FunctionSpace
+private :: atlas_code_location
+
+public :: atlas_Trans
+public :: atlas_TransParameters
+
+private
+
+!-----------------------------
+! atlas_Trans                 !
+!-----------------------------
+
+!------------------------------------------------------------------------------
+TYPE, extends(atlas_RefCounted) :: atlas_Trans
+
+! Purpose :
+! -------
+!   *Trans* : To do spectral transforms
+
+! Methods :
+! -------
+
+! Author :
+! ------
+!   12-Mar-2015 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+  procedure :: handle       => atlas_Trans__handle
+  procedure :: nproc        => atlas_Trans__nproc
+  procedure :: myproc       => atlas_Trans__myproc
+  procedure :: ndgl         => atlas_Trans__ndgl
+  procedure :: nsmax        => atlas_Trans__nsmax
+  procedure :: ngptot       => atlas_Trans__ngptot
+  procedure :: ngptotg      => atlas_Trans__ngptotg
+  procedure :: ngptotmx     => atlas_Trans__ngptotmx
+  procedure :: nspec        => atlas_Trans__nspec
+  procedure :: nspec2       => atlas_Trans__nspec2
+  procedure :: nspec2g      => atlas_Trans__nspec2g
+  procedure :: nspec2mx     => atlas_Trans__nspec2mx
+  procedure :: n_regions_NS => atlas_Trans__n_regions_NS
+  procedure :: n_regions_EW => atlas_Trans__n_regions_EW
+  procedure :: nloen        => atlas_Trans__nloen
+  procedure :: n_regions    => atlas_Trans__n_regions
+  procedure :: nfrstlat     => atlas_Trans__nfrstlat
+  procedure :: nlstlat      => atlas_Trans__nlstlat
+  procedure :: nptrfrstlat  => atlas_Trans__nptrfrstlat
+  procedure :: nsta         => atlas_Trans__nsta
+  procedure :: nonl         => atlas_Trans__nonl
+  procedure :: nmyms        => atlas_Trans__nmyms
+  procedure :: nasm0        => atlas_Trans__nasm0
+  procedure :: nump         => atlas_Trans__nump
+  procedure :: nvalue       => atlas_Trans__nvalue
+
+  procedure, private :: dirtrans_field_nodes => atlas_Trans__dirtrans_field_nodes
+  procedure, private :: dirtrans_field => atlas_Trans__dirtrans_field
+  procedure, private :: dirtrans_fieldset_nodes => atlas_Trans__dirtrans_fieldset_nodes
+  procedure, private :: dirtrans_fieldset => atlas_Trans__dirtrans_fieldset
+  procedure, public :: dirtrans_wind2vordiv => atlas_Trans__dirtrans_wind2vordiv_field
+  generic, public :: dirtrans => &
+    & dirtrans_field, &
+    & dirtrans_fieldset, &
+    & dirtrans_fieldset_nodes, &
+    & dirtrans_field_nodes
+
+  procedure, private :: invtrans_field_nodes => atlas_Trans__invtrans_field_nodes
+  procedure, private :: invtrans_field => atlas_Trans__invtrans_field
+  procedure, private :: invtrans_fieldset_nodes => atlas_Trans__invtrans_fieldset_nodes
+  procedure, private :: invtrans_fieldset => atlas_Trans__invtrans_fieldset
+  procedure, public :: invtrans_vordiv2wind => atlas_Trans__invtrans_vordiv2wind_field
+  generic, public :: invtrans => &
+    & invtrans_field, &
+    & invtrans_fieldset, &
+    & invtrans_field_nodes, &
+    & invtrans_fieldset_nodes
+
+  procedure, private :: gathspec_r1 => atlas_Trans__gathspec_r1
+  procedure, private :: gathspec_r2 => atlas_Trans__gathspec_r2
+  generic, public :: gathspec => gathspec_r1, gathspec_r2
+
+  procedure, public :: delete => atlas_Trans__delete
+  procedure, public :: copy => atlas_Trans__copy
+
+END TYPE atlas_Trans
+
+!------------------------------------------------------------------------------
+
+interface atlas_Trans
+  module procedure atlas_Trans__ctor
+end interface
+
+!------------------------------------------------------------------------------
+
+TYPE, extends(atlas_object) :: atlas_TransParameters
+
+! Purpose :
+! -------
+!   *TransParameters* : Extra information to pass to dirtrans and invtrans
+
+! Author :
+! ------
+!   20-Mar-2015 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+
+  procedure, public :: delete => atlas_TransParameters__delete
+  procedure, public :: copy => atlas_TransParameters__copy
+
+END TYPE atlas_TransParameters
+
+!------------------------------------------------------------------------------
+
+interface atlas_TransParameters
+  module procedure atlas_TransParameters__ctor
+end interface
+
+!------------------------------------------------------------------------------
+
+!========================================================
+contains
+!========================================================
 ! -----------------------------------------------------------------------------
 ! Trans routines
 
-#ifdef ATLAS_HAVE_TRANS
-#define USE_ATLAS_TRANS_C_BINDING   use atlas_trans_c_binding
-#else
-#define USE_ATLAS_TRANS_C_BINDING
-#define THROW_ERROR call te(__FILE__,__LINE__)
-#endif
+#define THROW_ERROR call te("atlas_Trans_module.F90",__LINE__)
 
 subroutine te(file,line)
   character(len=*), intent(in) :: file
@@ -19,7 +158,7 @@ subroutine te(file,line)
 end subroutine
 
 function atlas_Trans__ctor( grid, nsmax ) result(trans)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   use, intrinsic :: iso_c_binding, only: c_null_ptr
   type(atlas_Trans) :: trans
   class(atlas_Grid), intent(in) :: grid
@@ -37,7 +176,7 @@ function atlas_Trans__ctor( grid, nsmax ) result(trans)
 end function atlas_Trans__ctor
 
 function atlas_TransParameters__ctor() result(params)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   use, intrinsic :: iso_c_binding, only: c_null_ptr
   type(atlas_TransParameters) :: params
 #ifdef ATLAS_HAVE_TRANS
@@ -49,7 +188,7 @@ function atlas_TransParameters__ctor() result(params)
 end function atlas_TransParameters__ctor
 
 subroutine atlas_Trans__delete( this )
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   use, intrinsic :: iso_c_binding, only: c_null_ptr
   class(atlas_Trans), intent(inout) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -69,7 +208,7 @@ end subroutine
 
 
 subroutine atlas_TransParameters__delete( this )
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_TransParameters), intent(inout) :: this
 #ifdef ATLAS_HAVE_TRANS
   call atlas__TransParameters__delete(this%c_ptr());
@@ -85,7 +224,7 @@ subroutine atlas_TransParameters__copy(this,obj_in)
 end subroutine
 
 function atlas_Trans__handle( this ) result(handle)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: handle
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -98,7 +237,7 @@ end function
 
 
 function atlas_Trans__nproc( this ) result(nproc)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: nproc
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -111,7 +250,7 @@ end function
 
 
 function atlas_Trans__myproc( this, proc0 ) result(myproc)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: myproc
   class(atlas_Trans) :: this
   integer, intent(in) :: proc0
@@ -123,7 +262,7 @@ function atlas_Trans__myproc( this, proc0 ) result(myproc)
 end function
 
 function atlas_Trans__ndgl( this ) result(ndgl)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: ndgl
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -135,7 +274,7 @@ function atlas_Trans__ndgl( this ) result(ndgl)
 end function
 
 function atlas_Trans__nsmax( this ) result(nsmax)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: nsmax
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -146,7 +285,7 @@ function atlas_Trans__nsmax( this ) result(nsmax)
 end function
 
 function atlas_Trans__ngptot( this ) result(ngptot)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: ngptot
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -158,7 +297,7 @@ function atlas_Trans__ngptot( this ) result(ngptot)
 end function
 
 function atlas_Trans__ngptotg( this ) result(ngptotg)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: ngptotg
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -170,7 +309,7 @@ function atlas_Trans__ngptotg( this ) result(ngptotg)
 end function
 
 function atlas_Trans__ngptotmx( this ) result(ngptotmx)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: ngptotmx
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -183,7 +322,7 @@ end function
 
 
 function atlas_Trans__nspec( this ) result(nspec)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: nspec
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -194,7 +333,7 @@ function atlas_Trans__nspec( this ) result(nspec)
 end function
 
 function atlas_Trans__nspec2( this ) result(nspec2)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: nspec2
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -205,7 +344,7 @@ function atlas_Trans__nspec2( this ) result(nspec2)
 end function
 
 function atlas_Trans__nspec2g( this ) result(nspec2g)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: nspec2g
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -216,7 +355,7 @@ function atlas_Trans__nspec2g( this ) result(nspec2g)
 end function
 
 function atlas_Trans__nspec2mx( this ) result(nspec2mx)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: nspec2mx
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -228,7 +367,7 @@ end function
 
 
 function atlas_Trans__n_regions_NS( this ) result(n_regions_NS)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: n_regions_NS
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -241,7 +380,7 @@ end function
 
 
 function atlas_Trans__n_regions_EW( this ) result(n_regions_EW)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: n_regions_EW
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -253,7 +392,7 @@ function atlas_Trans__n_regions_EW( this ) result(n_regions_EW)
 end function
 
 function atlas_Trans__nump( this ) result(nump)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer :: nump
   class(atlas_Trans) :: this
 #ifdef ATLAS_HAVE_TRANS
@@ -265,7 +404,7 @@ function atlas_Trans__nump( this ) result(nump)
 end function
 
 function atlas_Trans__nloen(this) result(nloen)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer(c_int), pointer :: nloen(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nloen_c_ptr
@@ -282,7 +421,7 @@ function atlas_Trans__nloen(this) result(nloen)
 end function atlas_Trans__nloen
 
 function atlas_Trans__n_regions(this) result(n_regions)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer(c_int), pointer :: n_regions(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: n_regions_c_ptr
@@ -300,7 +439,7 @@ end function atlas_Trans__n_regions
 
 
 function atlas_Trans__nfrstlat(this) result(nfrstlat)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer(c_int), pointer :: nfrstlat(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nfrstlat_c_ptr
@@ -317,7 +456,7 @@ function atlas_Trans__nfrstlat(this) result(nfrstlat)
 end function atlas_Trans__nfrstlat
 
 function atlas_Trans__nlstlat(this) result(nlstlat)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer(c_int), pointer :: nlstlat(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nlstlat_c_ptr
@@ -335,7 +474,7 @@ end function atlas_Trans__nlstlat
 
 
 function atlas_Trans__nptrfrstlat(this) result(nptrfrstlat)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer(c_int), pointer :: nptrfrstlat(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nptrfrstlat_c_ptr
@@ -353,7 +492,7 @@ end function atlas_Trans__nptrfrstlat
 
 
 function atlas_Trans__nsta(this) result(nsta)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer(c_int), pointer :: nsta(:,:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nsta_c_ptr
@@ -371,7 +510,7 @@ function atlas_Trans__nsta(this) result(nsta)
 end function atlas_Trans__nsta
 
 function atlas_Trans__nonl(this) result(nonl)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer(c_int), pointer :: nonl(:,:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nonl_c_ptr
@@ -390,7 +529,7 @@ end function atlas_Trans__nonl
 
 
 function atlas_Trans__nmyms(this) result(nmyms)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer(c_int), pointer :: nmyms(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nmyms_c_ptr
@@ -407,7 +546,7 @@ function atlas_Trans__nmyms(this) result(nmyms)
 end function atlas_Trans__nmyms
 
 function atlas_Trans__nasm0(this) result(nasm0)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer(c_int), pointer :: nasm0(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nasm0_c_ptr
@@ -424,7 +563,7 @@ function atlas_Trans__nasm0(this) result(nasm0)
 end function atlas_Trans__nasm0
 
 function atlas_Trans__nvalue(this) result(nvalue)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   integer(c_int), pointer :: nvalue(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nvalue_c_ptr
@@ -441,11 +580,11 @@ function atlas_Trans__nvalue(this) result(nvalue)
 end function atlas_Trans__nvalue
 
 subroutine atlas_Trans__dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields, parameters)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
-  class(atlas_functionspace_Nodes), intent(in)  :: gp
+  class(atlas_FunctionSpace), intent(in)  :: gp
   class(atlas_FieldSet), intent(in)  :: gpfields
-  class(atlas_functionspace_Spectral), intent(in)  :: sp
+  class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_FieldSet), intent(inout) :: spfields
   class(atlas_TransParameters), intent(in), optional  :: parameters
 #ifdef ATLAS_HAVE_TRANS
@@ -473,7 +612,7 @@ subroutine atlas_Trans__dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields
 end subroutine atlas_Trans__dirtrans_fieldset_nodes
 
 subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: gpfields
   class(atlas_FieldSet), intent(inout) :: spfields
@@ -501,11 +640,11 @@ subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
 end subroutine atlas_Trans__dirtrans_fieldset
 
 subroutine atlas_Trans__invtrans_fieldset_nodes(this, sp, spfields, gp, gpfields, parameters)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
-  class(atlas_functionspace_Spectral), intent(in)  :: sp
+  class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_FieldSet), intent(in)  :: spfields
-  class(atlas_functionspace_Nodes), intent(in) :: gp
+  class(atlas_FunctionSpace), intent(in) :: gp
   class(atlas_FieldSet), intent(inout) :: gpfields
   class(atlas_TransParameters), intent(in), optional  :: parameters
 #ifdef ATLAS_HAVE_TRANS
@@ -533,7 +672,7 @@ subroutine atlas_Trans__invtrans_fieldset_nodes(this, sp, spfields, gp, gpfields
 end subroutine atlas_Trans__invtrans_fieldset_nodes
 
 subroutine atlas_Trans__invtrans_fieldset(this, spfields, gpfields, parameters)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: spfields
   class(atlas_FieldSet), intent(inout) :: gpfields
@@ -562,11 +701,11 @@ end subroutine atlas_Trans__invtrans_fieldset
 
 
 subroutine atlas_Trans__dirtrans_field_nodes(this, gp, gpfield, sp, spfield, parameters)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
-  class(atlas_functionspace_Nodes), intent(in)  :: gp
+  class(atlas_FunctionSpace), intent(in)  :: gp
   class(atlas_Field), intent(in)  :: gpfield
-  class(atlas_functionspace_Spectral), intent(in) :: sp
+  class(atlas_FunctionSpace), intent(in) :: sp
   class(atlas_Field), intent(inout) :: spfield
   class(atlas_TransParameters), intent(in), optional  :: parameters
 #ifdef ATLAS_HAVE_TRANS
@@ -594,7 +733,7 @@ subroutine atlas_Trans__dirtrans_field_nodes(this, gp, gpfield, sp, spfield, par
 end subroutine atlas_Trans__dirtrans_field_nodes
 
 subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: gpfield
   class(atlas_Field), intent(inout) :: spfield
@@ -622,11 +761,11 @@ subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
 end subroutine atlas_Trans__dirtrans_field
 
 subroutine atlas_Trans__dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, spdiv, parameters)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
-  type(atlas_functionspace_Nodes), intent(in)  :: gp
+  class(atlas_FunctionSpace), intent(in)  :: gp
   type(atlas_Field), intent(in)  :: gpwind
-  type(atlas_functionspace_Spectral), intent(in) :: sp
+  class(atlas_FunctionSpace), intent(in) :: sp
   type(atlas_Field), intent(inout) :: spvor
   type(atlas_Field), intent(inout) :: spdiv
   type(atlas_TransParameters), intent(in), optional  :: parameters
@@ -657,11 +796,11 @@ subroutine atlas_Trans__dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, 
 end subroutine atlas_Trans__dirtrans_wind2vordiv_field
 
 subroutine atlas_Trans__invtrans_field_nodes(this, sp, spfield, gp, gpfield, parameters)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
-  class(atlas_functionspace_Spectral), intent(in)  :: sp
+  class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_Field), intent(in)  :: spfield
-  class(atlas_functionspace_Nodes), intent(in)  :: gp
+  class(atlas_FunctionSpace), intent(in)  :: gp
   class(atlas_Field), intent(inout) :: gpfield
   class(atlas_TransParameters), intent(in), optional  :: parameters
 #ifdef ATLAS_HAVE_TRANS
@@ -689,7 +828,7 @@ subroutine atlas_Trans__invtrans_field_nodes(this, sp, spfield, gp, gpfield, par
 end subroutine atlas_Trans__invtrans_field_nodes
 
 subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: spfield
   class(atlas_Field), intent(inout) :: gpfield
@@ -718,12 +857,12 @@ end subroutine atlas_Trans__invtrans_field
 
 
 subroutine atlas_Trans__invtrans_vordiv2wind_field(this, sp, spvor, spdiv, gp, gpwind, parameters)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
-  class(atlas_functionspace_Spectral), intent(in)  :: sp
+  class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_Field), intent(in)  :: spvor
   class(atlas_Field), intent(in)  :: spdiv
-  class(atlas_functionspace_Nodes), intent(in)  :: gp
+  class(atlas_FunctionSpace), intent(in)  :: gp
   class(atlas_Field), intent(inout) :: gpwind
   class(atlas_TransParameters), intent(in), optional  :: parameters
 #ifdef ATLAS_HAVE_TRANS
@@ -754,7 +893,7 @@ end subroutine atlas_Trans__invtrans_vordiv2wind_field
 
 
 subroutine atlas_Trans__gathspec_r1(this, local, global)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:)
   real(c_double), intent(inout) :: global(:)
@@ -766,7 +905,7 @@ subroutine atlas_Trans__gathspec_r1(this, local, global)
 end subroutine atlas_Trans__gathspec_r1
 
 subroutine atlas_Trans__gathspec_r2(this, local, global)
-  USE_ATLAS_TRANS_C_BINDING
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:,:)
   real(c_double), intent(inout) :: global(:,:)
@@ -781,3 +920,7 @@ subroutine atlas_Trans__gathspec_r2(this, local, global)
   THROW_ERROR
 #endif
 end subroutine atlas_Trans__gathspec_r2
+
+! ----------------------------------------------------------------------------------------
+
+end module atlas_Trans_module

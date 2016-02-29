@@ -6,6 +6,7 @@ use atlas_numerics_Method_module, only : atlas_numerics_Method
 use atlas_Config_module, only : atlas_Config
 use atlas_Mesh_module, only : atlas_Mesh
 use atlas_functionspace_Nodes_module, only : atlas_functionspace_Nodes
+use atlas_functionspace_Edges_module, only : atlas_functionspace_Edges
 implicit none
 
 private :: atlas_RefCounted
@@ -38,7 +39,8 @@ TYPE, extends(atlas_numerics_Method) :: atlas_numerics_fvm_Method
 !------------------------------------------------------------------------------
 contains
 
-  procedure, public :: nodes_fs
+  procedure, public :: functionspace_nodes
+  procedure, public :: functionspace_edges
 
 END TYPE atlas_numerics_fvm_Method
 
@@ -76,13 +78,24 @@ function atlas_numerics_fvm_Method__mesh_config(mesh,config) result(method)
   call method%return()
 end function
 
-function nodes_fs(this)
+function functionspace_nodes(this)
   use atlas_numerics_fvm_method_c_binding
-  type(atlas_functionspace_Nodes) :: nodes_fs
+  type(atlas_functionspace_Nodes) :: functionspace_nodes
   class(atlas_numerics_fvm_Method) :: this
-  nodes_fs = atlas_functionspace_Nodes( atlas__numerics__fvm__Method__nodes_fs(this%c_ptr()) )
-  call nodes_fs%return()
+  functionspace_nodes = atlas_functionspace_Nodes( &
+    & atlas__numerics__fvm__Method__functionspace_nodes(this%c_ptr()) )
+  call functionspace_nodes%return()
 end function
+
+function functionspace_edges(this)
+  use atlas_numerics_fvm_method_c_binding
+  type(atlas_functionspace_Nodes) :: functionspace_edges
+  class(atlas_numerics_fvm_Method) :: this
+  functionspace_edges = atlas_functionspace_Edges( &
+    & atlas__numerics__fvm__Method__functionspace_edges(this%c_ptr()) )
+  call functionspace_edges%return()
+end function
+
 
 end module atlas_numerics_fvm_module
 

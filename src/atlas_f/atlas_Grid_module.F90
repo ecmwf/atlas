@@ -211,7 +211,7 @@ function ReducedGrid__nlon(this, jlat) result(nlon)
   class(atlas_ReducedGrid), intent(in) :: this
   integer                 , intent(in) :: jlat
   integer(8)                           :: nlon
-  nlon = atlas__ReducedGrid__nlon(this%c_ptr(), jlat)
+  nlon = atlas__ReducedGrid__nlon(this%c_ptr(), jlat-1)
 end function ReducedGrid__nlon
 
 function ReducedGrid__nlon__all(this) result(nlon)
@@ -236,7 +236,7 @@ function ReducedGrid__lat(this, jlat) result(lat)
   class(atlas_ReducedGrid), intent(in)  :: this
   real(c_double)                        :: lat
   integer                               :: jlat
-  lat = atlas__ReducedGrid__lat(this%c_ptr(), jlat)
+  lat = atlas__ReducedGrid__lat(this%c_ptr(), jlat-1)
 end function ReducedGrid__lat
 
 function ReducedGrid__lat__all(this) result(lat)
@@ -255,7 +255,7 @@ function ReducedGrid__lon(this, jlat, jlon) result(lon)
   real(c_double)                        :: lon
   integer                               :: jlat
   integer                               :: jlon
-  lon = atlas__ReducedGrid__lon(this%c_ptr(), jlat, jlon)
+  lon = atlas__ReducedGrid__lon(this%c_ptr(), jlat-1, jlon-1)
 end function ReducedGrid__lon
 
 function ReducedGrid__lonlat(this, jlat, jlon) result(lonlat)
@@ -264,7 +264,7 @@ function ReducedGrid__lonlat(this, jlat, jlon) result(lonlat)
   integer                 , intent(in) :: jlat
   integer                 , intent(in) :: jlon
   real(c_double)          , pointer    :: lonlat(:)
-  call atlas__ReducedGrid__lonlat(this%c_ptr(), jlat, jlon, lonlat)
+  call atlas__ReducedGrid__lonlat(this%c_ptr(), jlat-1, jlon-1, lonlat)
 end function ReducedGrid__lonlat
 
 subroutine atlas_Grid__delete(this)

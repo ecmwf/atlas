@@ -42,7 +42,7 @@ Nabla::Nabla(const numerics::Method &method, const eckit::Parametrisation &p) :
   if( ! fvm_ )
     throw eckit::BadCast("atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method",Here());
   Log::info() << "Nabla constructed for method " << fvm_->name()
-                     << " with " << fvm_->nodes_fs().nb_nodes_global() << " nodes total" << std::endl;
+                     << " with " << fvm_->functionspace_nodes().nb_nodes_global() << " nodes total" << std::endl;
 
   setup();
 
@@ -54,7 +54,7 @@ Nabla::~Nabla()
 
 void Nabla::setup()
 {
-  const mesh::Edges &edges = fvm_->edges();
+  const mesh::Edges &edges = fvm_->mesh().edges();
 
   const size_t nedges = edges.size();
 
@@ -80,8 +80,8 @@ void Nabla::gradient(const field::Field& scalar_field, field::Field& grad_field)
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 
-  mesh::Edges const &edges = fvm_->edges();
-  mesh::Nodes const &nodes = fvm_->nodes();
+  const mesh::Edges &edges = fvm_->mesh().edges();
+  const mesh::Nodes &nodes = fvm_->mesh().nodes();
 
   const size_t nnodes = nodes.size();
   const size_t nedges = edges.size();
@@ -160,8 +160,8 @@ void Nabla::divergence(const field::Field& vector_field, field::Field& div_field
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 
-  mesh::HybridElements const &edges = fvm_->edges();
-  mesh::Nodes const          &nodes = fvm_->nodes();
+  const mesh::Edges &edges = fvm_->mesh().edges();
+  const mesh::Nodes &nodes = fvm_->mesh().nodes();
 
   const size_t nnodes = nodes.size();
   const size_t nedges = edges.size();
@@ -238,8 +238,8 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 
-  mesh::HybridElements const &edges = fvm_->edges();
-  mesh::Nodes const          &nodes = fvm_->nodes();
+  const mesh::Edges &edges = fvm_->mesh().edges();
+  const mesh::Nodes &nodes = fvm_->mesh().nodes();
 
   const size_t nnodes = nodes.size();
   const size_t nedges = edges.size();
@@ -314,10 +314,12 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
 
 void Nabla::laplacian(const field::Field& scalar, field::Field& lapl) const
 {
-  eckit::SharedPtr<field::Field> grad ( fvm_->nodes_fs().createField<double>("grad",scalar.levels(),util::array::make_shape(2)) );
+  eckit::SharedPtr<field::Field> grad (
+       fvm_->functionspace_nodes().createField<double>("grad",
+       scalar.levels(),util::array::make_shape(2)) );
   gradient(scalar,*grad);
-  if( fvm_->nodes_fs().halo().size() < 2 )
-    fvm_->nodes_fs().haloExchange(*grad);
+  if( fvm_->functionspace_nodes().halo().size() < 2 )
+    fvm_->functionspace_nodes().haloExchange(*grad);
   divergence(*grad,lapl);
 }
 

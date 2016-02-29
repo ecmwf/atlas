@@ -17,9 +17,9 @@
 #include "atlas/interpolation/Quad3D.h"
 
 using eckit::geometry::Point3;
-using atlas::geometry::Quad3D;
-using atlas::geometry::Intersect;
-using atlas::geometry::Ray;
+using atlas::interpolation::Quad3D;
+using atlas::interpolation::Intersect;
+using atlas::interpolation::Ray;
 
 //----------------------------------------------------------------------------------------------------------------------
 

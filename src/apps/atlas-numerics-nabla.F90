@@ -20,7 +20,7 @@ implicit none
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Nodes) :: nodes
-  type(atlas_functionspace_Nodes) :: nodes_fs
+  type(atlas_functionspace_Nodes) :: functionspace_nodes
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_numerics_fvm_Method) :: fvm
   type(atlas_numerics_Nabla) :: nabla
@@ -158,7 +158,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !IF (LHOOK) CALL DR_HOOK('FV_GRADIENT',0,ZHOOK_HANDLE)
 
 ASSOCIATE(NFLEVG=>nlev,&
- & NODES_FS=>fvm )
+ & functionspace_nodes=>fvm )
 
 !write(0,*) 'enter fv_gradient'
 !write(0,*) 'shape pvar ',shape(pvar)
@@ -244,12 +244,12 @@ subroutine init()
   meshgenerator = atlas_ReducedGridMeshGenerator()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
   fvm  = atlas_numerics_fvm_Method(mesh,config)
-  nodes_fs = fvm%nodes_fs()
+  functionspace_nodes = fvm%functionspace_nodes()
   nabla = atlas_numerics_Nabla(fvm)
 
   ! Create a variable field and a gradient field
-  varfield = nodes_fs%create_field("var",atlas_real(c_double),nlev)
-  gradfield  = nodes_fs%create_field("grad",atlas_real(c_double),nlev,[2])
+  varfield = functionspace_nodes%create_field("var",atlas_real(c_double),nlev)
+  gradfield  = functionspace_nodes%create_field("grad",atlas_real(c_double),nlev,[2])
 
   ! Access to data
   call varfield%data(var)
@@ -274,7 +274,7 @@ subroutine finalize()
   call gradfield%final()
   call nabla%final()
   call fvm%final()
-  call nodes_fs%final()
+  call functionspace_nodes%final()
   call nodes%final()
   call mesh%final()
   call grid%final()
@@ -292,7 +292,7 @@ integer :: jiter, jouter
 real(c_double) :: timing_cpp, timing_f90, timing
 real(c_double) :: min_timing_cpp, min_timing_f90
 
-call nodes_fs%halo_exchange(varfield)
+call functionspace_nodes%halo_exchange(varfield)
 call atlas_mpi_barrier()
 timing_cpp = 1.e10
 timing_f90 = 1.e10
@@ -327,7 +327,8 @@ call atlas_log%info()
 if( nouter == 1 .or. jouter < nouter ) then
   min_timing_f90 = min(timing_f90,min_timing_f90)
 endif
-write(atlas_log%msg,*) "|timing_f90-timing_cpp| / timing_f90 = ", abs(timing_f90-timing_cpp)/timing_f90 *100 , "%"
+write(atlas_log%msg,*) "|timing_f90-timing_cpp| / timing_f90 = ", &
+  & abs(timing_f90-timing_cpp)/timing_f90 *100 , "%"
 call atlas_log%info()
 
 enddo
@@ -337,7 +338,8 @@ write(atlas_log%msg,*) "min_timing_cpp = ", min_timing_cpp
 call atlas_log%info()
 write(atlas_log%msg,*) "min_timing_f90 = ", min_timing_f90
 call atlas_log%info()
-write(atlas_log%msg,*) "|min_timing_f90-min_timing_cpp| / min_timing_f90 = ", abs(min_timing_f90-min_timing_cpp)/min_timing_f90 *100 , "%"
+write(atlas_log%msg,*) "|min_timing_f90-min_timing_cpp| / min_timing_f90 = ", &
+  & abs(min_timing_f90-min_timing_cpp)/min_timing_f90 *100 , "%"
 call atlas_log%info()
 end subroutine
 
