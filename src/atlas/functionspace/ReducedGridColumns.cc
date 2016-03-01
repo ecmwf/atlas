@@ -13,7 +13,7 @@
 #include "atlas/grid/ReducedGrid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/functionspace/ReducedGridPoint.h"
+#include "atlas/functionspace/ReducedGridColumns.h"
 #include "atlas/internals/Checksum.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 
@@ -27,7 +27,7 @@ namespace functionspace {
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
-ReducedGridPoint::ReducedGridPoint(const grid::Grid& grid) :
+ReducedGridColumns::ReducedGridColumns(const grid::Grid& grid) :
   FunctionSpace()
 {
     grid_ = dynamic_cast<const grid::ReducedGrid*>(&grid);
@@ -151,7 +151,7 @@ ReducedGridPoint::ReducedGridPoint(const grid::Grid& grid) :
 // ----------------------------------------------------------------------------
 // Destructor
 // ----------------------------------------------------------------------------
-ReducedGridPoint::~ReducedGridPoint()
+ReducedGridColumns::~ReducedGridColumns()
 {
 #ifdef ATLAS_HAVE_TRANS
     delete trans_;
@@ -165,7 +165,7 @@ ReducedGridPoint::~ReducedGridPoint()
 // Create Field
 // ----------------------------------------------------------------------------
 template <>
-field::Field* ReducedGridPoint::createField<double>(
+field::Field* ReducedGridColumns::createField<double>(
     const std::string& name) const
 {
 #ifdef ATLAS_HAVE_TRANS
@@ -173,7 +173,7 @@ field::Field* ReducedGridPoint::createField<double>(
     field->set_functionspace(this);
     return field;
 #else
-    eckit::NotImplemented("ReducedGridPoint::createField currently relies"
+    eckit::NotImplemented("ReducedGridColumns::createField currently relies"
                           " on ATLAS_HAVE_TRANS", Here());
 
     field::Field* field = field::Field::create<double>(name, array::make_shape(grid_->npts()) );
@@ -189,7 +189,7 @@ field::Field* ReducedGridPoint::createField<double>(
 // Create Field with vertical levels
 // ----------------------------------------------------------------------------
 template <>
-field::Field* ReducedGridPoint::createField<double>(
+field::Field* ReducedGridColumns::createField<double>(
     const std::string& name,
     size_t levels) const
 {
@@ -201,7 +201,7 @@ field::Field* ReducedGridPoint::createField<double>(
     field->set_levels(levels);
     return field;
 #else
-    eckit::NotImplemented("ReducedGridPoint::createField currently relies "
+    eckit::NotImplemented("ReducedGridColumns::createField currently relies "
                           "on ATLAS_HAVE_TRANS", Here());
 
     field::Field* field = field::Field::create<double>(
@@ -219,7 +219,7 @@ field::Field* ReducedGridPoint::createField<double>(
 // Create global Field
 // ----------------------------------------------------------------------------
 template <>
-field::Field* ReducedGridPoint::createGlobalField<double>(
+field::Field* ReducedGridColumns::createGlobalField<double>(
     const std::string& name) const
 {
     field::Field* field = field::Field::create<double>(name, array::make_shape(grid_->npts()));
@@ -234,7 +234,7 @@ field::Field* ReducedGridPoint::createGlobalField<double>(
 // Create global Field with vertical levels
 // ----------------------------------------------------------------------------
 template <>
-field::Field* ReducedGridPoint::createGlobalField<double>(
+field::Field* ReducedGridColumns::createGlobalField<double>(
     const std::string& name,
     size_t levels) const
 {
@@ -251,7 +251,7 @@ field::Field* ReducedGridPoint::createGlobalField<double>(
 // ----------------------------------------------------------------------------
 // Gather FieldSet
 // ----------------------------------------------------------------------------
-void ReducedGridPoint::gather(
+void ReducedGridColumns::gather(
     const field::FieldSet& local_fieldset,
     field::FieldSet& global_fieldset ) const
 {
@@ -285,7 +285,7 @@ void ReducedGridPoint::gather(
     }
 
 #else
-    eckit::NotImplemented("ReducedGridPoint::gather currently relies "
+    eckit::NotImplemented("ReducedGridColumns::gather currently relies "
                           "on ATLAS_HAVE_TRANS", Here());
 #endif
 }
@@ -296,7 +296,7 @@ void ReducedGridPoint::gather(
 // ----------------------------------------------------------------------------
 // Gather Field
 // ----------------------------------------------------------------------------
-void ReducedGridPoint::gather(
+void ReducedGridColumns::gather(
     const field::Field& local,
     field::Field& global) const
 {
@@ -313,7 +313,7 @@ void ReducedGridPoint::gather(
 // ----------------------------------------------------------------------------
 // Scatter FieldSet
 // ----------------------------------------------------------------------------
-void ReducedGridPoint::scatter(
+void ReducedGridColumns::scatter(
     const field::FieldSet& global_fieldset,
     field::FieldSet& local_fieldset) const
 {
@@ -346,7 +346,7 @@ void ReducedGridPoint::scatter(
                          glb.data<double>(), loc.data<double>());
   }
 #else
-    eckit::NotImplemented("ReducedGridPoint::scatter currently relies "
+    eckit::NotImplemented("ReducedGridColumns::scatter currently relies "
                           "on ATLAS_HAVE_TRANS", Here());
 #endif
 }
@@ -357,7 +357,7 @@ void ReducedGridPoint::scatter(
 // ----------------------------------------------------------------------------
 // Scatter Field
 // ----------------------------------------------------------------------------
-void ReducedGridPoint::scatter(
+void ReducedGridColumns::scatter(
     const field::Field& global,
     field::Field& local) const
 {
@@ -377,7 +377,7 @@ void ReducedGridPoint::scatter(
 // ----------------------------------------------------------------------------
 // Retrieve Global index from Local one
 // ----------------------------------------------------------------------------
-double ReducedGridPoint::lat(
+double ReducedGridColumns::lat(
     size_t jlat) const
 {
   return grid_->lat(jlat+first_lat_);
@@ -389,7 +389,7 @@ double ReducedGridPoint::lat(
 // ----------------------------------------------------------------------------
 // Retrieve Global index from Local one
 // ----------------------------------------------------------------------------
-double ReducedGridPoint::lon(
+double ReducedGridColumns::lon(
     size_t jlat,
     size_t jlon) const
 {
@@ -400,7 +400,7 @@ double ReducedGridPoint::lon(
 // ----------------------------------------------------------------------------
 // Checksum FieldSet
 // ----------------------------------------------------------------------------
-std::string ReducedGridPoint::checksum(
+std::string ReducedGridColumns::checksum(
     const field::FieldSet& fieldset) const
 {
     eckit::MD5 md5;
@@ -414,7 +414,7 @@ std::string ReducedGridPoint::checksum(
 // ----------------------------------------------------------------------------
 // Checksum Field
 // ----------------------------------------------------------------------------
-std::string ReducedGridPoint::checksum(
+std::string ReducedGridColumns::checksum(
     const field::Field& field) const
 {
     // FieldSet fieldset;
@@ -436,15 +436,15 @@ std::string ReducedGridPoint::checksum(
 extern "C"
 {
 
-ReducedGridPoint* atlas__functionspace__ReducedGridPoint__new__grid (const grid::Grid* grid)
+ReducedGridColumns* atlas__functionspace__ReducedGridColumns__new__grid (const grid::Grid* grid)
 {
   ATLAS_ERROR_HANDLING(
-    return new ReducedGridPoint(*grid);
+    return new ReducedGridColumns(*grid);
   );
   return 0;
 }
 
-void atlas__functionspace__ReducedGridPoint__delete (ReducedGridPoint* This)
+void atlas__functionspace__ReducedGridColumns__delete (ReducedGridColumns* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -452,7 +452,7 @@ void atlas__functionspace__ReducedGridPoint__delete (ReducedGridPoint* This)
   );
 }
 
-field::Field* atlas__functionspace__ReducedGridPoint__create_field (const ReducedGridPoint* This, const char* name)
+field::Field* atlas__functionspace__ReducedGridColumns__create_field (const ReducedGridColumns* This, const char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -461,7 +461,7 @@ field::Field* atlas__functionspace__ReducedGridPoint__create_field (const Reduce
   return 0;
 }
 
-field::Field* atlas__functionspace__ReducedGridPoint__create_field_lev (const ReducedGridPoint* This, const char* name, int levels)
+field::Field* atlas__functionspace__ReducedGridColumns__create_field_lev (const ReducedGridColumns* This, const char* name, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -470,7 +470,7 @@ field::Field* atlas__functionspace__ReducedGridPoint__create_field_lev (const Re
   return 0;
 }
 
-field::Field* atlas__functionspace__ReducedGridPoint__create_gfield (const ReducedGridPoint* This, const char* name)
+field::Field* atlas__functionspace__ReducedGridColumns__create_gfield (const ReducedGridColumns* This, const char* name)
 {
   ATLAS_ERROR_HANDLING (
     ASSERT(This);
@@ -479,7 +479,7 @@ field::Field* atlas__functionspace__ReducedGridPoint__create_gfield (const Reduc
   return 0;
 }
 
-field::Field* atlas__functionspace__ReducedGridPoint__create_gfield_lev (const ReducedGridPoint* This, const char* name, int levels)
+field::Field* atlas__functionspace__ReducedGridColumns__create_gfield_lev (const ReducedGridColumns* This, const char* name, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -488,7 +488,7 @@ field::Field* atlas__functionspace__ReducedGridPoint__create_gfield_lev (const R
   return 0;
 }
 
-void atlas__functionspace__ReducedGridPoint__gather (const ReducedGridPoint* This, const field::Field* local, field::Field* global)
+void atlas__functionspace__ReducedGridColumns__gather (const ReducedGridColumns* This, const field::Field* local, field::Field* global)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -498,7 +498,7 @@ void atlas__functionspace__ReducedGridPoint__gather (const ReducedGridPoint* Thi
   );
 }
 
-void atlas__functionspace__ReducedGridPoint__scatter (const ReducedGridPoint* This, const field::Field* global, field::Field* local)
+void atlas__functionspace__ReducedGridColumns__scatter (const ReducedGridColumns* This, const field::Field* global, field::Field* local)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -508,7 +508,7 @@ void atlas__functionspace__ReducedGridPoint__scatter (const ReducedGridPoint* Th
   );
 }
 
-void atlas__fs__ReducedGridPoint__checksum_fieldset(const ReducedGridPoint* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated)
+void atlas__fs__ReducedGridColumns__checksum_fieldset(const ReducedGridColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(fieldset);
@@ -520,7 +520,7 @@ void atlas__fs__ReducedGridPoint__checksum_fieldset(const ReducedGridPoint* This
   );
 }
 
-void atlas__fs__ReducedGridPoint__checksum_field(const ReducedGridPoint* This, const field::Field* field, char* &checksum, int &size, int &allocated)
+void atlas__fs__ReducedGridColumns__checksum_field(const ReducedGridColumns* This, const field::Field* field, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(field);

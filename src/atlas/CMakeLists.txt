@@ -186,16 +186,16 @@ field/State.cc
 )
 
 list( APPEND atlas_functionspace_srcs
-functionspace/Edges.h
-functionspace/Edges.cc
+functionspace/EdgeColumns.h
+functionspace/EdgeColumns.cc
 functionspace/FunctionSpace.h
 functionspace/FunctionSpace.cc
-functionspace/Nodes.h
-functionspace/Nodes.cc
-functionspace/NodesInterface.h
-functionspace/NodesInterface.cc
-functionspace/ReducedGridPoint.h
-functionspace/ReducedGridPoint.cc
+functionspace/NodeColumns.h
+functionspace/NodeColumns.cc
+functionspace/NodeColumnsInterface.h
+functionspace/NodeColumnsInterface.cc
+functionspace/ReducedGridColumns.h
+functionspace/ReducedGridColumns.cc
 functionspace/Spectral.h
 functionspace/Spectral.cc
 )

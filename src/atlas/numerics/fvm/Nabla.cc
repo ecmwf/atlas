@@ -42,7 +42,7 @@ Nabla::Nabla(const numerics::Method &method, const eckit::Parametrisation &p) :
   if( ! fvm_ )
     throw eckit::BadCast("atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method",Here());
   Log::info() << "Nabla constructed for method " << fvm_->name()
-                     << " with " << fvm_->functionspace_nodes().nb_nodes_global() << " nodes total" << std::endl;
+                     << " with " << fvm_->node_columns().nb_nodes_global() << " nodes total" << std::endl;
 
   setup();
 
@@ -315,11 +315,11 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
 void Nabla::laplacian(const field::Field& scalar, field::Field& lapl) const
 {
   eckit::SharedPtr<field::Field> grad (
-       fvm_->functionspace_nodes().createField<double>("grad",
+       fvm_->node_columns().createField<double>("grad",
        scalar.levels(),array::make_shape(2)) );
   gradient(scalar,*grad);
-  if( fvm_->functionspace_nodes().halo().size() < 2 )
-    fvm_->functionspace_nodes().haloExchange(*grad);
+  if( fvm_->node_columns().halo().size() < 2 )
+    fvm_->node_columns().haloExchange(*grad);
   divergence(*grad,lapl);
 }
 

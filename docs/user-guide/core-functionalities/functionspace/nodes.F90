@@ -8,8 +8,8 @@ character(len=1024)                   :: checksum
 type(atlas_ReducedGrid)               :: reducedGrid
 type(atlas_mesh)                      :: mesh
 type(atlas_meshgenerator)             :: meshgenerator
-type(atlas_functionspace_nodes)       :: fs_nodes
-type(atlas_mesh_nodes)                :: meshnodes
+type(atlas_functionspace_NodeColumns)       :: fs_nodes
+type(atlas_Nodes)                :: meshnodes
 type(atlas_Field)                     :: scalarField1
 type(atlas_Field)                     :: scalarField2
 type(atlas_Field)                     :: vectorField1
@@ -53,7 +53,7 @@ meshgenerator = atlas_reducedgridmeshgenerator()
 mesh          = meshgenerator%generate(reducedGrid)
 
 ! Generate functionspace associated to mesh
-fs_nodes      = atlas_functionspace_nodes(mesh, halo_size)
+fs_nodes      = atlas_functionspace_NodeColumns(mesh, halo_size)
 
 ! Note on field generation
 scalarField1 = fs_nodes%create_field("scalarField1", &

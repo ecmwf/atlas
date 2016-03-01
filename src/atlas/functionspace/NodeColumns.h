@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_functionspace_NodesFunctionSpace_h
-#define atlas_functionspace_NodesFunctionSpace_h
+#ifndef atlas_functionspace_NodeColumnsFunctionSpace_h
+#define atlas_functionspace_NodeColumnsFunctionSpace_h
 
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/mesh/Halo.h"
@@ -32,15 +32,15 @@ namespace functionspace {
 
 // -------------------------------------------------------------------
 
-class Nodes : public FunctionSpace
+class NodeColumns : public FunctionSpace
 {
 public:
 
-    Nodes( mesh::Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
-    Nodes( mesh::Mesh& mesh, const mesh::Halo & );
-    Nodes( mesh::Mesh& mesh );
+    NodeColumns( mesh::Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
+    NodeColumns( mesh::Mesh& mesh, const mesh::Halo & );
+    NodeColumns( mesh::Mesh& mesh );
 
-    virtual ~Nodes();
+    virtual ~NodeColumns();
 
     virtual std::string name() const { return "Nodes"; }
 
@@ -280,49 +280,49 @@ private: // data
 // -------------------------------------------------------------------
 
 template< typename DATATYPE >
-field::Field* Nodes::createField(const std::string& name) const
+field::Field* NodeColumns::createField(const std::string& name) const
 {
     return createField(name,util::DataType::create<DATATYPE>());
 }
 
 template< typename DATATYPE >
-field::Field* Nodes::createField(const std::string& name, size_t levels) const
+field::Field* NodeColumns::createField(const std::string& name, size_t levels) const
 {
     return createField(name,util::DataType::create<DATATYPE>(),levels);
 }
 
 template< typename DATATYPE >
-field::Field* Nodes::createField(const std::string& name,const std::vector<size_t>& variables) const
+field::Field* NodeColumns::createField(const std::string& name,const std::vector<size_t>& variables) const
 {
     return createField(name,util::DataType::create<DATATYPE>(),variables);
 }
 
 template< typename DATATYPE >
-field::Field* Nodes::createField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
+field::Field* NodeColumns::createField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
 {
     return createField(name,util::DataType::create<DATATYPE>(),levels,variables);
 }
 
 template< typename DATATYPE >
-field::Field* Nodes::createGlobalField(const std::string& name) const
+field::Field* NodeColumns::createGlobalField(const std::string& name) const
 {
     return createGlobalField(name,util::DataType::create<DATATYPE>());
 }
 
 template< typename DATATYPE >
-field::Field* Nodes::createGlobalField(const std::string& name,size_t levels) const
+field::Field* NodeColumns::createGlobalField(const std::string& name,size_t levels) const
 {
     return createGlobalField(name,util::DataType::create<DATATYPE>(),levels);
 }
 
 template< typename DATATYPE >
-field::Field* Nodes::createGlobalField(const std::string& name, const std::vector<size_t>& variables) const
+field::Field* NodeColumns::createGlobalField(const std::string& name, const std::vector<size_t>& variables) const
 {
     return createGlobalField(name,util::DataType::create<DATATYPE>(),variables);
 }
 
 template< typename DATATYPE >
-field::Field* Nodes::createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
+field::Field* NodeColumns::createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
 {
     return createGlobalField(name,util::DataType::create<DATATYPE>(),levels,variables);
 }
@@ -330,4 +330,4 @@ field::Field* Nodes::createGlobalField(const std::string& name, size_t levels, c
 } // namespace functionspace
 } // namespace atlas
 
-#endif // atlas_functionspace_NodesFunctionSpace_h
+#endif // atlas_functionspace_NodeColumnsFunctionSpace_h

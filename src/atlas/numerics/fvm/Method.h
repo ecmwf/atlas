@@ -13,8 +13,8 @@
 #define atlas_numerics_fvm_Method_h
 
 #include <string>
-#include "atlas/functionspace/Nodes.h"
-#include "atlas/functionspace/Edges.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/numerics/Method.h"
 
 namespace eckit { class Parametrisation; }
@@ -39,11 +39,11 @@ public:
   const atlas::mesh::Mesh& mesh() const { return mesh_; }
         atlas::mesh::Mesh& mesh()       { return mesh_; }
 
-  const functionspace::Nodes& functionspace_nodes() const { return *functionspace_nodes_; }
-        functionspace::Nodes& functionspace_nodes()       { return *functionspace_nodes_; }
+  const functionspace::NodeColumns& node_columns() const { return *node_columns_; }
+        functionspace::NodeColumns& node_columns()       { return *node_columns_; }
 
-  const functionspace::Edges& functionspace_edges() const { return *functionspace_edges_; }
-        functionspace::Edges& functionspace_edges()       { return *functionspace_edges_; }
+  const functionspace::EdgeColumns& edge_columns() const { return *edge_columns_; }
+        functionspace::EdgeColumns& edge_columns()       { return *edge_columns_; }
 
   const double& radius() const { return radius_; }
 
@@ -54,11 +54,11 @@ private:
 private: // data
 
     mesh::Halo             halo_;
-    mesh::Mesh                   &mesh_; // non-const because functionspace may modify mesh
+    mesh::Mesh             &mesh_; // non-const because functionspace may modify mesh
     mesh::Nodes            &nodes_;
     mesh::HybridElements   &edges_;
-    eckit::SharedPtr<functionspace::Nodes>    functionspace_nodes_;
-    eckit::SharedPtr<functionspace::Edges>    functionspace_edges_;
+    eckit::SharedPtr<functionspace::NodeColumns>  node_columns_;
+    eckit::SharedPtr<functionspace::EdgeColumns>  edge_columns_;
 
     double radius_;
 
@@ -70,19 +70,19 @@ private: // data
 // C wrapper interfaces to C++ routines
 #define Parametrisation eckit::Parametrisation
 #define mesh_Mesh mesh::Mesh
-#define functionspace_Nodes functionspace::Nodes
-#define functionspace_Edges functionspace::Edges
+#define functionspace_NodeColumns functionspace::NodeColumns
+#define functionspace_EdgeColumns functionspace::EdgeColumns
 
 extern "C"
 {
   Method* atlas__numerics__fvm__Method__new (mesh_Mesh* mesh, const Parametrisation* params);
-  functionspace_Nodes* atlas__numerics__fvm__Method__functionspace_nodes (Method* This);
-  functionspace_Edges* atlas__numerics__fvm__Method__functionspace_edges (Method* This);
+  functionspace_NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This);
+  functionspace_EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This);
 }
 #undef Parametrisation
 #undef mesh_Mesh
-#undef functionspace_Nodes
-#undef functionspace_Edges
+#undef functionspace_NodeColumns
+#undef functionspace_EdgeColumns
 
 } // namespace fvm
 } // namespace numerics

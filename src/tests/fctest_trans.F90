@@ -41,8 +41,8 @@ TEST( test_trans )
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
-  type(atlas_mesh_Nodes) :: nodes
-  type(atlas_functionspace_Nodes) :: nodes_fs
+  type(atlas_Nodes) :: nodes
+  type(atlas_functionspace_NodeColumns) :: nodes_fs
   type(atlas_functionspace_Spectral) :: spectral_fs
   type(atlas_Field)         :: scalarfield1, scalarfield2
   type(atlas_Field)         :: windfield
@@ -86,7 +86,7 @@ TEST( test_trans )
   FCTEST_CHECK_EQUAL( trans%nsmax(), nsmax )
 
   nodes = mesh%nodes()
-  nodes_fs = atlas_functionspace_Nodes(mesh,0)
+  nodes_fs = atlas_functionspace_NodeColumns(mesh,0)
 
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
@@ -221,7 +221,7 @@ END_TEST
 TEST( test_trans_nomesh )
   type(atlas_ReducedGrid) :: grid
   type(atlas_Trans) :: trans
-  type(atlas_functionspace_ReducedGridPoint) :: gridpoints_fs
+  type(atlas_functionspace_ReducedGridColumns) :: gridpoints_fs
   type(atlas_functionspace_Spectral) :: spectral_fs
   type(atlas_Field)         :: scalarfield1, scalarfield2
   type(atlas_Field)         :: spectralfield1, spectralfield2
@@ -240,7 +240,7 @@ TEST( test_trans_nomesh )
   grid = atlas_ReducedGrid("O24")
   trans = atlas_Trans(grid,nsmax)
 
-  gridpoints_fs = atlas_functionspace_ReducedGridPoint(grid)
+  gridpoints_fs = atlas_functionspace_ReducedGridColumns(grid)
   scalarfield1 = gridpoints_fs%create_field("scalar1",nlev)
   scalarfield2 = gridpoints_fs%create_field("scalar2")
 
@@ -314,7 +314,7 @@ END_TEST
 TEST( test_transdwarf )
 type(atlas_ReducedGrid) :: grid
 type(atlas_Trans) :: trans
-type(atlas_functionspace_ReducedGridPoint) :: gridpoints
+type(atlas_functionspace_ReducedGridColumns) :: gridpoints
 type(atlas_functionspace_Spectral) :: spectral
 type(atlas_Field) :: fieldg, field
 type(atlas_FieldSet) :: gpfields, spfields
@@ -323,7 +323,7 @@ character(len=10) :: fieldname
 
 grid = atlas_ReducedGrid("O24")
 trans = atlas_Trans(grid,23)
-gridpoints = atlas_functionspace_ReducedGridPoint(grid)
+gridpoints = atlas_functionspace_ReducedGridColumns(grid)
 spectral = atlas_functionspace_Spectral(trans)
 
 gpfields = atlas_FieldSet("gridpoint")

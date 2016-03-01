@@ -12,18 +12,18 @@
 
 ! -----------------------------------------------------------------------------
 
-module atlas_numerics_nabla_program_module
+module atlas_nabla_program_module
 use atlas_module
 use, intrinsic :: iso_c_binding, only: c_double, c_int
 implicit none
 
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
-  type(atlas_mesh_Nodes) :: nodes
-  type(atlas_functionspace_Nodes) :: functionspace_nodes
+  type(atlas_Nodes) :: nodes
+  type(atlas_functionspace_NodeColumns) :: node_columns
   type(atlas_MeshGenerator) :: meshgenerator
-  type(atlas_numerics_fvm_Method) :: fvm
-  type(atlas_numerics_Nabla) :: nabla
+  type(atlas_fvm_Method) :: fvm
+  type(atlas_Nabla) :: nabla
   type(atlas_Field) :: varfield
   type(atlas_Field) :: gradfield
   type(atlas_Config) :: config
@@ -141,8 +141,8 @@ REAL(KIND=JPRB),INTENT(IN)   :: PVAR(:,:)
 REAL(KIND=JPRB),INTENT(OUT)  :: PGRAD(:,:,:)
 
 TYPE(ATLAS_FIELD) :: LONLAT,DUAL_VOLUMES,DUAL_NORMALS,NODE2EDGE_SIGN
-TYPE(ATLAS_MESH_NODES) :: NODES
-TYPE(ATLAS_MESH_EDGES) :: EDGES
+TYPE(atlas_Nodes) :: NODES
+TYPE(ATLAS_edges) :: EDGES
 TYPE(ATLAS_CONNECTIVITY) :: EDGE2NODE, NODE2EDGE
 REAL(KIND=JPRB), POINTER :: ZLONLAT(:,:),ZDUAL_VOLUMES(:),ZDUAL_NORMALS(:,:),&
  & ZNODE2EDGE_SIGN(:,:)
@@ -158,7 +158,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !IF (LHOOK) CALL DR_HOOK('FV_GRADIENT',0,ZHOOK_HANDLE)
 
 ASSOCIATE(NFLEVG=>nlev,&
- & functionspace_nodes=>fvm )
+ & node_columns=>fvm )
 
 !write(0,*) 'enter fv_gradient'
 !write(0,*) 'shape pvar ',shape(pvar)
@@ -226,7 +226,7 @@ END SUBROUTINE FV_GRADIENT
 
 subroutine init()
   character(len=1024) :: grid_uid
-  type(atlas_mesh_Nodes) :: mesh_nodes
+  type(atlas_Nodes) :: mesh_nodes
 
   call atlas_init()
 
@@ -243,13 +243,13 @@ subroutine init()
   grid = atlas_ReducedGrid(grid_uid)
   meshgenerator = atlas_ReducedGridMeshGenerator()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
-  fvm  = atlas_numerics_fvm_Method(mesh,config)
-  functionspace_nodes = fvm%functionspace_nodes()
-  nabla = atlas_numerics_Nabla(fvm)
+  fvm  = atlas_fvm_Method(mesh,config)
+  node_columns = fvm%node_columns()
+  nabla = atlas_Nabla(fvm)
 
   ! Create a variable field and a gradient field
-  varfield = functionspace_nodes%create_field("var",atlas_real(c_double),nlev)
-  gradfield  = functionspace_nodes%create_field("grad",atlas_real(c_double),nlev,[2])
+  varfield = node_columns%create_field("var",atlas_real(c_double),nlev)
+  gradfield  = node_columns%create_field("grad",atlas_real(c_double),nlev,[2])
 
   ! Access to data
   call varfield%data(var)
@@ -274,7 +274,7 @@ subroutine finalize()
   call gradfield%final()
   call nabla%final()
   call fvm%final()
-  call functionspace_nodes%final()
+  call node_columns%final()
   call nodes%final()
   call mesh%final()
   call grid%final()
@@ -292,7 +292,7 @@ integer :: jiter, jouter
 real(c_double) :: timing_cpp, timing_f90, timing
 real(c_double) :: min_timing_cpp, min_timing_f90
 
-call functionspace_nodes%halo_exchange(varfield)
+call node_columns%halo_exchange(varfield)
 call atlas_mpi_barrier()
 timing_cpp = 1.e10
 timing_f90 = 1.e10
@@ -343,12 +343,12 @@ write(atlas_log%msg,*) "|min_timing_f90-min_timing_cpp| / min_timing_f90 = ", &
 call atlas_log%info()
 end subroutine
 
-end module atlas_numerics_nabla_program_module
+end module atlas_nabla_program_module
 
 ! -----------------------------------------------------------------------------
 
-program atlas_numerics_nabla_program
-use atlas_numerics_nabla_program_module
+program atlas_nabla_program
+use atlas_nabla_program_module
   call init()
   call run()
   call finalize()

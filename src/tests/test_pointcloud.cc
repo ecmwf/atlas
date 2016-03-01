@@ -26,7 +26,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/Unstructured.h"
 #include "atlas/util/io/PointCloud.h"
-#include "atlas/functionspace/Nodes.h"
+#include "atlas/functionspace/NodeColumns.h"
 
 
 // ------------------------------------------------------------------
@@ -404,7 +404,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   field::FieldSet fieldset;
   BOOST_CHECK_NO_THROW( fieldset.add(field) );
 
-  functionspace::Nodes functionspace(*mesh);
+  functionspace::NodeColumns functionspace(*mesh);
   BOOST_REQUIRE_NO_THROW( util::io::PointCloud::write("pointcloud_FieldSet.txt", fieldset, functionspace ) );
   BOOST_REQUIRE_NO_THROW( util::io::PointCloud::write("pointcloud_Grid.txt",     *mesh    ) );
 

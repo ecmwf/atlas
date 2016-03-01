@@ -205,7 +205,7 @@ public:
 private:
 
   mesh::Mesh::Ptr mesh;
-  SharedPtr<functionspace::Nodes> nodes_fs;
+  SharedPtr<functionspace::NodeColumns> nodes_fs;
   array::IndexView<int,2> edge2node;
 
 
@@ -346,7 +346,7 @@ void AtlasBenchmark::setup()
   build_median_dual_mesh(*mesh);
   build_node_to_edge_connectivity(*mesh);
 
-  nodes_fs.reset( new functionspace::Nodes(*mesh,mesh::Halo(*mesh)));
+  nodes_fs.reset( new functionspace::NodeColumns(*mesh,mesh::Halo(*mesh)));
 
   nnodes = mesh->nodes().size();
   nedges = mesh->edges().size();

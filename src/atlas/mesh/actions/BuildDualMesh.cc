@@ -22,8 +22,8 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/functionspace/Nodes.h"
-#include "atlas/functionspace/Edges.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Unique.h"
 #include "atlas/array/ArrayView.h"
@@ -31,7 +31,7 @@
 #include "atlas/util/runtime/ErrorHandling.h"
 #include "atlas/util/parallel/mpl/Checksum.h"
 
-using atlas::functionspace::Nodes;
+using atlas::functionspace::NodeColumns;
 using atlas::mesh::Halo;
 
 namespace atlas {
@@ -123,10 +123,10 @@ void build_median_dual_mesh_new( Mesh& mesh )
   skewness = 0.;
   alpha = 0.5;
 
-  eckit::SharedPtr<functionspace::Nodes> nodes_fs(new functionspace::Nodes(mesh, Halo(mesh)));
+  eckit::SharedPtr<functionspace::NodeColumns> nodes_fs(new functionspace::NodeColumns(mesh, Halo(mesh)));
   nodes_fs->haloExchange(nodes.field( "dual_volumes" ));
 
-  eckit::SharedPtr<functionspace::Edges> edges_fs(new functionspace::Edges(mesh, Halo(mesh)));
+  eckit::SharedPtr<functionspace::EdgeColumns> edges_fs(new functionspace::EdgeColumns(mesh, Halo(mesh)));
   edges_fs->haloExchange(edges.field( "dual_normals" ));
 
   make_dual_normals_outward_new(mesh);
@@ -180,7 +180,7 @@ void build_centroid_dual_mesh( Mesh& mesh )
 
   build_skewness( mesh );
 
-  eckit::SharedPtr<functionspace::Nodes> nodes_fs( new functionspace::Nodes(mesh,Halo(mesh)) );
+  eckit::SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,Halo(mesh)) );
   nodes_fs->haloExchange(nodes.field("dual_volumes"));
 
   array::ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
@@ -826,7 +826,7 @@ void build_brick_dual_mesh( Mesh& mesh )
 
     }
 
-    eckit::SharedPtr<functionspace::Nodes> nodes_fs( new functionspace::Nodes(mesh,Halo(mesh)) );
+    eckit::SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,Halo(mesh)) );
     nodes_fs->haloExchange(nodes.field("dual_volumes"));
   }
   else

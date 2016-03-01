@@ -14,8 +14,8 @@
 ///
 /// This file describes the HybridElements class for a Mesh.
 
-#ifndef atlas_mesh_HybridElements_H
-#define atlas_mesh_HybridElements_H
+#ifndef atlas_HybridElements_H
+#define atlas_HybridElements_H
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"

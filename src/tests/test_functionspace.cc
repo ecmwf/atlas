@@ -16,7 +16,7 @@
 #include "atlas/atlas.h"
 #include "atlas/internals/Debug.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/functionspace/Nodes.h"
+#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
   //grid.reset();
 
   DEBUG();
-  SharedPtr<functionspace::Nodes> nodes_fs( new functionspace::Nodes(mesh,mesh::Halo(1)) );
+  SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,mesh::Halo(1)) );
   DEBUG();
   size_t nb_levels = 10;
   //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
   BOOST_TEST_CHECKPOINT("Testing collectives for nodes scalar field");
   {
     const field::Field& field = *surface_scalar_field;
-    const functionspace::Nodes& fs = *nodes_fs;
+    const functionspace::NodeColumns& fs = *nodes_fs;
 
   double max;
   double min;
@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
   BOOST_TEST_CHECKPOINT("Testing collectives for nodes vector field");
   {
     const field::Field& field = *surface_vector_field;
-    const functionspace::Nodes& fs = *nodes_fs;
+    const functionspace::NodeColumns& fs = *nodes_fs;
 
     std::vector<double> max;
     std::vector<double> min;
@@ -281,7 +281,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
   BOOST_TEST_CHECKPOINT("Testing collectives for columns scalar field");
   if(1){
     const field::Field& field = *columns_scalar_field;
-    const functionspace::Nodes& fs = *nodes_fs;
+    const functionspace::NodeColumns& fs = *nodes_fs;
     double max;
     double min;
     double sum;
@@ -362,7 +362,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
   BOOST_TEST_CHECKPOINT("Testing collectives for columns vector field");
   if(1){
     const field::Field& field = *columns_vector_field;
-    const functionspace::Nodes& fs = *nodes_fs;
+    const functionspace::NodeColumns& fs = *nodes_fs;
     size_t nvar = field.stride(1);
     std::vector<double> max;
     std::vector<double> min;

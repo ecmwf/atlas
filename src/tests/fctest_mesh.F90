@@ -19,7 +19,7 @@ use atlas_grids_module
 use, intrinsic :: iso_c_binding
 implicit none
 type(atlas_Mesh) :: mesh
-type(atlas_mesh_Nodes) :: nodes
+type(atlas_Nodes) :: nodes
 
 
 type, extends(atlas_Config) :: atlas_FieldParametrisation
@@ -315,9 +315,9 @@ END_TEST
 TEST( test_meshgen )
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
-  type(atlas_mesh_Edges) :: edges
+  type(atlas_edges) :: edges
   type(atlas_Field) :: field
-  type(atlas_functionspace_Nodes) :: functionspace_nodes
+  type(atlas_functionspace_NodeColumns) :: functionspace_nodes
   type(atlas_HaloExchange) :: halo_exchange
   integer(c_int), pointer :: ridx(:)
   real(c_double), pointer :: arr1d(:), arr2d(:,:)
@@ -355,7 +355,7 @@ TEST( test_meshgen )
   call field%data(arr1d)
   call field%final()
 
-  functionspace_nodes = atlas_functionspace_Nodes(mesh,1)
+  functionspace_nodes = atlas_functionspace_NodeColumns(mesh,1)
   halo_exchange = functionspace_nodes%get_halo_exchange()
   call halo_exchange%execute(arr1d)
 
@@ -462,10 +462,10 @@ TEST( test_fv )
       type(atlas_ReducedGrid) :: grid
       type(atlas_Mesh) :: mesh
       type(atlas_GridDistribution) :: griddistribution
-      type(atlas_functionspace_Nodes) :: nodes_fs
+      type(atlas_functionspace_NodeColumns) :: nodes_fs
 
-      type(atlas_mesh_Edges) :: edges
-      type(atlas_mesh_Nodes) :: nodes
+      type(atlas_edges) :: edges
+      type(atlas_Nodes) :: nodes
 
       integer, allocatable :: nloen(:)
       integer, allocatable :: part(:)
@@ -489,7 +489,7 @@ TEST( test_fv )
       call griddistribution%final()
 
       ! Generate nodes function-space, with a given halo_size
-      nodes_fs = atlas_functionspace_Nodes(mesh,halo_size)
+      nodes_fs = atlas_functionspace_NodeColumns(mesh,halo_size)
 
       ! Create edge elements from surface elements
       call atlas_build_edges(mesh)

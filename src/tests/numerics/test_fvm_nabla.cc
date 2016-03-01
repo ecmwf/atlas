@@ -153,14 +153,14 @@ BOOST_AUTO_TEST_CASE( test_grad )
   size_t nlev = 1;
 
   field::FieldSet fields;
-  fields.add( fvm.functionspace_nodes().createField<double>("scalar",nlev) );
-  fields.add( fvm.functionspace_nodes().createField<double>("rscalar",nlev) );
-  fields.add( fvm.functionspace_nodes().createField<double>("grad",nlev,array::make_shape(2)) );
-  fields.add( fvm.functionspace_nodes().createField<double>("rgrad",nlev,array::make_shape(2)) );
-  fields.add( fvm.functionspace_nodes().createField<double>("xder",nlev) );
-  fields.add( fvm.functionspace_nodes().createField<double>("yder",nlev) );
-  fields.add( fvm.functionspace_nodes().createField<double>("rxder",nlev) );
-  fields.add( fvm.functionspace_nodes().createField<double>("ryder",nlev) );
+  fields.add( fvm.node_columns().createField<double>("scalar",nlev) );
+  fields.add( fvm.node_columns().createField<double>("rscalar",nlev) );
+  fields.add( fvm.node_columns().createField<double>("grad",nlev,array::make_shape(2)) );
+  fields.add( fvm.node_columns().createField<double>("rgrad",nlev,array::make_shape(2)) );
+  fields.add( fvm.node_columns().createField<double>("xder",nlev) );
+  fields.add( fvm.node_columns().createField<double>("yder",nlev) );
+  fields.add( fvm.node_columns().createField<double>("rxder",nlev) );
+  fields.add( fvm.node_columns().createField<double>("ryder",nlev) );
 
   //  fields.add( fvm.createField<double>("exact_yder",nlev) );
 
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
 
   // output to gmsh
   {
-    fvm.functionspace_nodes().haloExchange(fields);
+    fvm.node_columns().haloExchange(fields);
     util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
     util::io::Gmsh().write(fields["scalar"],grid->shortName()+"_fields.msh");
     util::io::Gmsh().write(fields["xder"],grid->shortName()+"_fields.msh",std::ios::app);
@@ -228,8 +228,8 @@ BOOST_AUTO_TEST_CASE( test_div )
   size_t nlev = 1;
 
   field::FieldSet fields;
-  fields.add( fvm.functionspace_nodes().createField<double>("wind",nlev,array::make_shape(2)) );
-  fields.add( fvm.functionspace_nodes().createField<double>("div",nlev) );
+  fields.add( fvm.node_columns().createField<double>("wind",nlev,array::make_shape(2)) );
+  fields.add( fvm.node_columns().createField<double>("div",nlev) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE( test_div )
 
   // output to gmsh
   {
-    fvm.functionspace_nodes().haloExchange(fields);
+    fvm.node_columns().haloExchange(fields);
     util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
     util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
     util::io::Gmsh().write(fields["div"],grid->shortName()+"_fields.msh",std::ios::app);
@@ -258,8 +258,8 @@ BOOST_AUTO_TEST_CASE( test_curl )
   size_t nlev = 1;
 
   field::FieldSet fields;
-  fields.add( fvm.functionspace_nodes().createField<double>("wind",nlev,array::make_shape(2)) );
-  fields.add( fvm.functionspace_nodes().createField<double>("vor",nlev) );
+  fields.add( fvm.node_columns().createField<double>("wind",nlev,array::make_shape(2)) );
+  fields.add( fvm.node_columns().createField<double>("vor",nlev) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
 
   // output to gmsh
   {
-    fvm.functionspace_nodes().haloExchange(fields);
+    fvm.node_columns().haloExchange(fields);
     util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
 //    util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
     util::io::Gmsh().write(fields["vor"],grid->shortName()+"_fields.msh",std::ios::app);
@@ -288,8 +288,8 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   size_t nlev = 1;
 
   field::FieldSet fields;
-  fields.add( fvm.functionspace_nodes().createField<double>("scal",nlev) );
-  fields.add( fvm.functionspace_nodes().createField<double>("lapl",nlev) );
+  fields.add( fvm.node_columns().createField<double>("scal",nlev) );
+  fields.add( fvm.node_columns().createField<double>("lapl",nlev) );
 
   rotated_flow_magnitude(fvm,fields["scal"],M_PI_2*0.75);
 
@@ -297,7 +297,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
 
   // output to gmsh
   {
-    fvm.functionspace_nodes().haloExchange(fields);
+    fvm.node_columns().haloExchange(fields);
     util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
 //    util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
     util::io::Gmsh().write(fields["lapl"],grid->shortName()+"_fields.msh",std::ios::app);

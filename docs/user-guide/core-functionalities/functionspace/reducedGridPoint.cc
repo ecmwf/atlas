@@ -6,7 +6,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/functionspace/ReducedGridPoint.h"
+#include "atlas/functionspace/ReducedGridColumns.h"
 #include "eckit/config/Resource.h"
 
 using namespace std;
@@ -33,8 +33,8 @@ int main(int argc, char *argv[])
     int const nb_nodes = reducedGrid->npts();
 
     // Generate functionspace associated to mesh
-    SharedPtr<functionspace::ReducedGridPoint>
-        fs_rgp(new functionspace::ReducedGridPoint(*reducedGrid));//, Halo(1)));
+    SharedPtr<functionspace::ReducedGridColumns>
+        fs_rgp(new functionspace::ReducedGridColumns(*reducedGrid));//, Halo(1)));
 
     /* .... */
     // Variables for scalar1 field definition

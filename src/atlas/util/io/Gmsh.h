@@ -14,8 +14,8 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include "atlas/functionspace/Nodes.h"
-#include "atlas/functionspace/ReducedGridPoint.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/ReducedGridColumns.h"
 #include "atlas/util/Metadata.h"
 
 // -----------------------------------------------------------------------------
@@ -58,15 +58,15 @@ public:
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
   void write(const field::FieldSet& fieldset,
-             const functionspace::Nodes&,
+             const functionspace::NodeColumns&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
-  /// Write fieldset to file using ReducedGridPoint functionspace
+  /// Write fieldset to file using ReducedGridColumns functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
   void write(const field::FieldSet& fieldset,
-             const functionspace::ReducedGridPoint&,
+             const functionspace::ReducedGridColumns&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
@@ -74,15 +74,15 @@ public:
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
   void write(const field::Field& field,
-             const functionspace::Nodes&,
+             const functionspace::NodeColumns&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
-  /// Write field to file using ReducedGridPoint functionspace
+  /// Write field to file using ReducedGridColumns functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
   void write(const field::Field& field,
-             const functionspace::ReducedGridPoint&,
+             const functionspace::ReducedGridColumns&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
@@ -103,7 +103,7 @@ public:
 #define mesh_Mesh mesh::Mesh
 #define field_Field field::Field
 #define field_FieldSet field::FieldSet
-#define functionspace_Nodes functionspace::Nodes
+#define functionspace_NodeColumns functionspace::NodeColumns
 
 extern "C" {
 Gmsh* atlas__Gmsh__new();
@@ -112,13 +112,13 @@ mesh_Mesh* atlas__Gmsh__read(Gmsh* This, char* file_path);
 void atlas__Gmsh__write(Gmsh* This, mesh_Mesh* mesh, char* file_path);
 mesh_Mesh* atlas__read_gmsh(char* file_path);
 void atlas__write_gmsh_mesh(mesh_Mesh* mesh, char* file_path);
-void atlas__write_gmsh_fieldset(field_FieldSet* fieldset, functionspace_Nodes* function_space, char* file_path, int mode);
-void atlas__write_gmsh_field(field_Field* field, functionspace_Nodes* function_space, char* file_path, int mode);
+void atlas__write_gmsh_fieldset(field_FieldSet* fieldset, functionspace_NodeColumns* function_space, char* file_path, int mode);
+void atlas__write_gmsh_field(field_Field* field, functionspace_NodeColumns* function_space, char* file_path, int mode);
 }
 
 #undef field_Field
 #undef field_FieldSet
-#undef functionspace_Nodes
+#undef functionspace_NodeColumns
 #undef mesh_Mesh
 //------------------------------------------------------------------------------------------------------
 

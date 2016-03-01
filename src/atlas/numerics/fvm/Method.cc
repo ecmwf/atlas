@@ -17,8 +17,8 @@
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/functionspace/Nodes.h"
-#include "atlas/functionspace/Edges.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Constants.h"
@@ -78,7 +78,7 @@ Method::Method( mesh::Mesh &mesh, const eckit::Parametrisation &params ) :
 
 void Method::setup()
 {
-  functionspace_nodes_.reset( new functionspace::Nodes(mesh(),halo_) );
+  node_columns_.reset( new functionspace::NodeColumns(mesh(),halo_) );
   if( edges_.size() == 0 )
   {
     build_edges(mesh());
@@ -142,7 +142,7 @@ void Method::setup()
       }
     }
   }
-  functionspace_edges_.reset( new functionspace::Edges(mesh()) );
+  edge_columns_.reset( new functionspace::EdgeColumns(mesh()) );
 }
 
 // ------------------------------------------------------------------------------------------
@@ -157,20 +157,20 @@ Method* atlas__numerics__fvm__Method__new (mesh::Mesh* mesh, const eckit::Parame
   return method;
 }
 
-functionspace::Nodes* atlas__numerics__fvm__Method__functionspace_nodes (Method* This)
+functionspace::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
-        return &This->functionspace_nodes();
+        return &This->node_columns();
   );
   return 0;
 }
 
-functionspace::Edges* atlas__numerics__fvm__Method__functionspace_edges (Method* This)
+functionspace::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
-        return &This->functionspace_edges();
+        return &This->edge_columns();
   );
   return 0;
 }

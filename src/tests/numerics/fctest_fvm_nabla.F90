@@ -21,11 +21,11 @@ implicit none
 
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
-  type(atlas_mesh_Nodes) :: nodes
+  type(atlas_Nodes) :: nodes
   type(atlas_MeshGenerator) :: meshgenerator
-  type(atlas_numerics_fvm_Method) :: fvm
-  type(atlas_numerics_Nabla) :: nabla
-  type(atlas_functionspace_Nodes) :: functionspace_nodes
+  type(atlas_fvm_Method) :: fvm
+  type(atlas_Nabla) :: nabla
+  type(atlas_functionspace_NodeColumns) :: node_columns
   type(atlas_Field) :: varfield
   type(atlas_Field) :: gradfield
 
@@ -147,8 +147,8 @@ REAL(KIND=JPRB),INTENT(IN)   :: PVAR(:,:)
 REAL(KIND=JPRB),INTENT(OUT)  :: PGRAD(:,:,:)
 
 TYPE(ATLAS_FIELD) :: LONLAT,DUAL_VOLUMES,DUAL_NORMALS,NODE2EDGE_SIGN
-TYPE(ATLAS_MESH_NODES) :: NODES
-TYPE(ATLAS_MESH_EDGES) :: EDGES
+TYPE(atlas_Nodes) :: NODES
+TYPE(ATLAS_edges) :: EDGES
 TYPE(ATLAS_CONNECTIVITY) :: EDGE2NODE, NODE2EDGE
 REAL(KIND=JPRB), POINTER :: ZLONLAT(:,:),ZDUAL_VOLUMES(:),ZDUAL_NORMALS(:,:),&
  & ZNODE2EDGE_SIGN(:,:)
@@ -247,13 +247,13 @@ TESTSUITE_INIT
   grid = atlas_ReducedGrid("N24")
   meshgenerator = atlas_ReducedGridMeshGenerator()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
-  fvm  = atlas_numerics_fvm_Method(mesh,config)
-  functionspace_nodes = fvm%functionspace_nodes()
-  nabla = atlas_numerics_Nabla(fvm)
+  fvm  = atlas_fvm_Method(mesh,config)
+  node_columns = fvm%node_columns()
+  nabla = atlas_Nabla(fvm)
 
   ! Create a variable field and a gradient field
-  varfield  = functionspace_nodes%create_field("var",atlas_real(c_double),nlev)
-  gradfield = functionspace_nodes%create_field("grad",atlas_real(c_double),nlev,[2])
+  varfield  = node_columns%create_field("var",atlas_real(c_double),nlev)
+  gradfield = node_columns%create_field("grad",atlas_real(c_double),nlev,[2])
 
   ! Access to data
   call varfield%data(var)
@@ -273,7 +273,7 @@ TESTSUITE_FINALIZE
   call gradfield%final()
   call nabla%final()
   call fvm%final()
-  call functionspace_nodes%final()
+  call node_columns%final()
   call nodes%final()
   call mesh%final()
   call grid%final()
@@ -286,11 +286,11 @@ END_TESTSUITE_FINALIZE
 TEST( test_fvm )
 type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
-type(atlas_numerics_fvm_Method) :: fvm
+type(atlas_fvm_Method) :: fvm
 
 grid = atlas_ReducedGrid("N24")
 mesh = atlas_generate_mesh(grid)
-fvm  = atlas_numerics_fvm_Method(mesh)
+fvm  = atlas_fvm_Method(mesh)
 
 call fvm%final()
 call mesh%final()
@@ -304,7 +304,7 @@ TEST( test_nabla )
 type(Timer_type) :: timer
 integer :: jiter, niter
 
-call functionspace_nodes%halo_exchange(varfield)
+call node_columns%halo_exchange(varfield)
 
 niter = 5
 

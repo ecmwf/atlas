@@ -14,8 +14,8 @@
 ///
 /// This file describes the Elements class for a Mesh.
 
-#ifndef atlas_mesh_Elements_H
-#define atlas_mesh_Elements_H
+#ifndef atlas_Elements_H
+#define atlas_Elements_H
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"

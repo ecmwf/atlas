@@ -35,7 +35,7 @@
 #include "atlas/util/runtime/Log.h"
 
 using namespace eckit;
-using atlas::functionspace::Nodes;
+using atlas::functionspace::NodeColumns;
 
 namespace atlas {
 namespace util {
@@ -102,7 +102,7 @@ void write_header_binary(std::ostream& out)
 
 // ----------------------------------------------------------------------------
 template< typename DATATYPE >
-void write_field_nodes(const Gmsh& gmsh, const functionspace::Nodes& function_space, const field::Field& field, std::ostream& out)
+void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& function_space, const field::Field& field, std::ostream& out)
 {
   Log::info() << "writing field " << field.name() << "..." << std::endl;
 
@@ -224,7 +224,7 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::Nodes& function_sp
 template< typename DATATYPE >
 void write_field_nodes(
     const Gmsh&                            gmsh,
-    const functionspace::ReducedGridPoint& function_space,
+    const functionspace::ReducedGridColumns& function_space,
     const field::Field&                           field,
     std::ostream&                          out)
 {
@@ -959,7 +959,7 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
     mesh_info = mesh_info.dirName()+"/"+mesh_info.baseName(false)+"_info.msh";
 
     //[next]  make NodesFunctionSpace accept const mesh
-    eckit::SharedPtr<functionspace::Nodes> function_space( new functionspace::Nodes(const_cast<mesh::Mesh&>(mesh)) );
+    eckit::SharedPtr<functionspace::NodeColumns> function_space( new functionspace::NodeColumns(const_cast<mesh::Mesh&>(mesh)) );
 
     write(nodes.partition(),*function_space,mesh_info,std::ios_base::out);
 
@@ -1010,22 +1010,20 @@ void Gmsh::write(
         throw eckit::AssertionFailed(msg.str(), Here());
     }
 
-    if (dynamic_cast<functionspace::Nodes*>(field.functionspace()))
+    if (dynamic_cast<functionspace::NodeColumns*>(field.functionspace()))
     {
-        functionspace::Nodes* functionspace =
-            dynamic_cast<functionspace
-                ::Nodes*>(field.functionspace());
+        functionspace::NodeColumns* functionspace =
+            dynamic_cast<functionspace::NodeColumns*>(field.functionspace());
 
         field::FieldSet fieldset;
         fieldset.add(field);
         write(fieldset, *functionspace, file_path, mode);
     }
     else if (dynamic_cast<functionspace
-             ::ReducedGridPoint*>(field.functionspace()))
+             ::ReducedGridColumns*>(field.functionspace()))
     {
-        functionspace::ReducedGridPoint* functionspace =
-            dynamic_cast<functionspace
-                ::ReducedGridPoint*>(field.functionspace());
+        functionspace::ReducedGridColumns* functionspace =
+            dynamic_cast<functionspace::ReducedGridColumns*>(field.functionspace());
 
         field::FieldSet fieldset;
         fieldset.add(field);
@@ -1037,8 +1035,8 @@ void Gmsh::write(
         msg << "Field ["<<field.name()
             <<"] has functionspace ["
             << field.functionspace()->name()
-            << "] but requires a [functionspace::Nodes "
-            << "or functionspace::ReducedGridPoint]";
+            << "] but requires a [functionspace::NodeColumns "
+            << "or functionspace::ReducedGridColumns]";
 
         throw eckit::AssertionFailed(msg.str(), Here());
     }
@@ -1050,7 +1048,7 @@ void Gmsh::write(
 // ----------------------------------------------------------------------------
 void Gmsh::write(
     const field::Field&                field,
-    const functionspace::Nodes& functionspace,
+    const functionspace::NodeColumns& functionspace,
     const PathName&             file_path,
     openmode                    mode) const
 {
@@ -1065,7 +1063,7 @@ void Gmsh::write(
 // ----------------------------------------------------------------------------
 void Gmsh::write(
     const field::Field&                           field,
-    const functionspace::ReducedGridPoint& functionspace,
+    const functionspace::ReducedGridColumns& functionspace,
     const PathName&                        file_path,
     openmode                               mode) const
 {
@@ -1080,7 +1078,7 @@ void Gmsh::write(
 // ----------------------------------------------------------------------------
 void Gmsh::write(
     const field::FieldSet&             fieldset,
-    const functionspace::Nodes& functionspace,
+    const functionspace::NodeColumns& functionspace,
     const PathName&             file_path,
     openmode                    mode) const
 {
@@ -1131,7 +1129,7 @@ void Gmsh::write(
 // ----------------------------------------------------------------------------
 void Gmsh::write(
     const field::FieldSet& fieldset,
-    const functionspace::ReducedGridPoint& functionspace,
+    const functionspace::ReducedGridColumns& functionspace,
     const PathName& file_path, openmode mode) const
 {
     bool is_new_file = (mode != std::ios_base::app || !file_path.exists());
@@ -1210,12 +1208,12 @@ void atlas__write_gmsh_mesh (mesh::Mesh* mesh, char* file_path) {
   writer.write( *mesh, PathName(file_path) );
 }
 
-void atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::Nodes* functionspace, char* file_path, int mode) {
+void atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::NodeColumns* functionspace, char* file_path, int mode) {
   Gmsh writer;
   writer.write( *fieldset, *functionspace, PathName(file_path) );
 }
 
-void atlas__write_gmsh_field (field::Field* field, functionspace::Nodes* functionspace, char* file_path, int mode) {
+void atlas__write_gmsh_field (field::Field* field, functionspace::NodeColumns* functionspace, char* file_path, int mode) {
   Gmsh writer;
   writer.write( *field, *functionspace, PathName(file_path) );
 }

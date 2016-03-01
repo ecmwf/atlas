@@ -17,7 +17,7 @@
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/functionspace/Edges.h"
+#include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/internals/IsGhost.h"
 #include "atlas/util/parallel/mpi/Collectives.h"
 #include "atlas/util/parallel/atlas_omp.h"
@@ -70,7 +70,7 @@ array::ArrayView<T,1> surface_scalar_view(const field::Field &field)
 
 }
 
-Edges::Edges( mesh::Mesh& mesh )
+EdgeColumns::EdgeColumns( mesh::Mesh& mesh )
   : mesh_(&mesh),
     edges_(mesh.edges()),
     nb_edges_(0),
@@ -79,7 +79,7 @@ Edges::Edges( mesh::Mesh& mesh )
   constructor();
 }
 
-Edges::Edges( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params )
+EdgeColumns::EdgeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params )
   : FunctionSpace(),
     mesh_(&mesh),
     edges_(mesh.edges()),
@@ -92,7 +92,7 @@ Edges::Edges( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisa
   constructor();
 }
 
-Edges::Edges(mesh::Mesh& mesh, const mesh::Halo &halo)
+EdgeColumns::EdgeColumns(mesh::Mesh& mesh, const mesh::Halo &halo)
   : FunctionSpace(),
     mesh_(&mesh),
     edges_(mesh.edges()),
@@ -106,7 +106,7 @@ Edges::Edges(mesh::Mesh& mesh, const mesh::Halo &halo)
 }
 
 
-void Edges::constructor()
+void EdgeColumns::constructor()
 {
   nb_edges_ = mesh().edges().size();
 
@@ -140,32 +140,32 @@ void Edges::constructor()
   nb_edges_global_ = gather_scatter_->glb_dof();
 }
 
-Edges::~Edges() {}
+EdgeColumns::~EdgeColumns() {}
 
-size_t Edges::nb_edges() const
+size_t EdgeColumns::nb_edges() const
 {
   return nb_edges_;
 }
 
-size_t Edges::nb_edges_global() const
+size_t EdgeColumns::nb_edges_global() const
 {
   return nb_edges_global_;
 }
 
-field::Field* Edges::createField(const std::string& name,util::DataType datatype) const {
+field::Field* EdgeColumns::createField(const std::string& name,util::DataType datatype) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges()));
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* Edges::createField(const std::string& name,util::DataType datatype, size_t levels) const {
+field::Field* EdgeColumns::createField(const std::string& name,util::DataType datatype, size_t levels) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges(),levels));
   field->set_levels(levels);
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* Edges::createField(const std::string& name,util::DataType datatype, const std::vector<size_t>& variables) const {
+field::Field* EdgeColumns::createField(const std::string& name,util::DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_edges());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -173,7 +173,7 @@ field::Field* Edges::createField(const std::string& name,util::DataType datatype
   return field;
 }
 
-field::Field* Edges::createField(const std::string& name, util::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
+field::Field* EdgeColumns::createField(const std::string& name, util::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_edges()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -182,7 +182,7 @@ field::Field* Edges::createField(const std::string& name, util::DataType datatyp
   return field;
 }
 
-field::Field* Edges::createField(const std::string& name, const field::Field& other) const {
+field::Field* EdgeColumns::createField(const std::string& name, const field::Field& other) const {
   array::ArrayShape shape = other.shape();
   shape[0] = nb_edges();
   field::Field* field = field::Field::create(name,other.datatype(),shape);
@@ -192,20 +192,20 @@ field::Field* Edges::createField(const std::string& name, const field::Field& ot
   return field;
 }
 
-field::Field* Edges::createGlobalField(const std::string& name,util::DataType datatype) const {
+field::Field* EdgeColumns::createGlobalField(const std::string& name,util::DataType datatype) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges_global()));
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* Edges::createGlobalField(const std::string& name, util::DataType datatype, size_t levels) const {
+field::Field* EdgeColumns::createGlobalField(const std::string& name, util::DataType datatype, size_t levels) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges_global(),levels));
   field->set_levels(levels);
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* Edges::createGlobalField(const std::string& name, util::DataType datatype, const std::vector<size_t>& variables) const {
+field::Field* EdgeColumns::createGlobalField(const std::string& name, util::DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_edges_global());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -213,7 +213,7 @@ field::Field* Edges::createGlobalField(const std::string& name, util::DataType d
   return field;
 }
 
-field::Field* Edges::createGlobalField(const std::string& name, util::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
+field::Field* EdgeColumns::createGlobalField(const std::string& name, util::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_edges_global()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -222,7 +222,7 @@ field::Field* Edges::createGlobalField(const std::string& name, util::DataType d
   return field;
 }
 
-field::Field* Edges::createGlobalField(const std::string& name,const field::Field& other) const {
+field::Field* EdgeColumns::createGlobalField(const std::string& name,const field::Field& other) const {
   array::ArrayShape shape = other.shape();
   shape[0] = nb_edges_global();
   field::Field* field = field::Field::create(name,other.datatype(),shape);
@@ -232,7 +232,7 @@ field::Field* Edges::createGlobalField(const std::string& name,const field::Fiel
   return field;
 }
 
-void Edges::haloExchange( field::FieldSet& fieldset ) const
+void EdgeColumns::haloExchange( field::FieldSet& fieldset ) const
 {
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const field::Field& field = fieldset[f];
@@ -255,19 +255,19 @@ void Edges::haloExchange( field::FieldSet& fieldset ) const
     else throw eckit::Exception("datatype not supported",Here());
   }
 }
-void Edges::haloExchange( field::Field& field ) const
+void EdgeColumns::haloExchange( field::Field& field ) const
 {
     field::FieldSet fieldset;
     fieldset.add(field);
     haloExchange(fieldset);
 }
-const util::parallel::mpl::HaloExchange& Edges::halo_exchange() const
+const util::parallel::mpl::HaloExchange& EdgeColumns::halo_exchange() const
 {
   return *halo_exchange_;
 }
 
 
-void Edges::gather( const field::FieldSet& local_fieldset, field::FieldSet& global_fieldset ) const
+void EdgeColumns::gather( const field::FieldSet& local_fieldset, field::FieldSet& global_fieldset ) const
 {
   ASSERT(local_fieldset.size() == global_fieldset.size());
 
@@ -299,7 +299,7 @@ void Edges::gather( const field::FieldSet& local_fieldset, field::FieldSet& glob
     else throw eckit::Exception("datatype not supported",Here());
   }
 }
-void Edges::gather( const field::Field& local, field::Field& global ) const
+void EdgeColumns::gather( const field::Field& local, field::Field& global ) const
 {
   field::FieldSet local_fields;
   field::FieldSet global_fields;
@@ -307,17 +307,17 @@ void Edges::gather( const field::Field& local, field::Field& global ) const
   global_fields.add(global);
   gather(local_fields,global_fields);
 }
-const util::parallel::mpl::GatherScatter& Edges::gather() const
+const util::parallel::mpl::GatherScatter& EdgeColumns::gather() const
 {
   return *gather_scatter_;
 }
-const util::parallel::mpl::GatherScatter& Edges::scatter() const
+const util::parallel::mpl::GatherScatter& EdgeColumns::scatter() const
 {
   return *gather_scatter_;
 }
 
 
-void Edges::scatter( const field::FieldSet& global_fieldset, field::FieldSet& local_fieldset ) const
+void EdgeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldSet& local_fieldset ) const
 {
   ASSERT(local_fieldset.size() == global_fieldset.size());
 
@@ -350,7 +350,7 @@ void Edges::scatter( const field::FieldSet& global_fieldset, field::FieldSet& lo
     else throw eckit::Exception("datatype not supported",Here());
   }
 }
-void Edges::scatter( const field::Field& global, field::Field& local ) const
+void EdgeColumns::scatter( const field::Field& global, field::Field& local ) const
 {
   field::FieldSet global_fields;
   field::FieldSet local_fields;
@@ -378,7 +378,7 @@ std::string checksum_3d_field(const util::parallel::mpl::Checksum& checksum, con
 }
 }
 
-std::string Edges::checksum( const field::FieldSet& fieldset ) const {
+std::string EdgeColumns::checksum( const field::FieldSet& fieldset ) const {
   eckit::MD5 md5;
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const field::Field& field=fieldset[f];
@@ -394,13 +394,13 @@ std::string Edges::checksum( const field::FieldSet& fieldset ) const {
   }
   return md5;
 }
-std::string Edges::checksum( const field::Field& field ) const {
+std::string EdgeColumns::checksum( const field::Field& field ) const {
   field::FieldSet fieldset;
   fieldset.add(field);
   return checksum(fieldset);
 }
 
-const util::parallel::mpl::Checksum& Edges::checksum() const
+const util::parallel::mpl::Checksum& EdgeColumns::checksum() const
 {
   return *checksum_;
 }
@@ -414,12 +414,12 @@ extern "C" {
 // -----------------------------------------------------------------------------------
 
 
-Edges* atlas__functionspace__Edges__new ( mesh::Mesh* mesh, int halo )
+EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh* mesh, int halo )
 {
-  Edges* edges;
+  EdgeColumns* edges;
   ATLAS_ERROR_HANDLING(
       ASSERT(mesh);
-      edges = new Edges(*mesh,mesh::Halo(halo));
+      edges = new EdgeColumns(*mesh,mesh::Halo(halo));
   );
   return edges;
 }
@@ -427,19 +427,19 @@ Edges* atlas__functionspace__Edges__new ( mesh::Mesh* mesh, int halo )
 // -----------------------------------------------------------------------------------
 
 
-Edges* atlas__functionspace__Edges__new_mesh ( mesh::Mesh* mesh )
+EdgeColumns* atlas__functionspace__Edges__new_mesh ( mesh::Mesh* mesh )
 {
-  Edges* edges;
+  EdgeColumns* edges;
   ATLAS_ERROR_HANDLING(
       ASSERT(mesh);
-      edges = new Edges(*mesh);
+      edges = new EdgeColumns(*mesh);
   );
   return edges;
 }
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__delete (Edges* This)
+void atlas__functionspace__Edges__delete (EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -449,7 +449,7 @@ void atlas__functionspace__Edges__delete (Edges* This)
 
 // -----------------------------------------------------------------------------------
 
-int atlas__functionspace__Edges__nb_edges(const Edges* This)
+int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -460,7 +460,7 @@ int atlas__functionspace__Edges__nb_edges(const Edges* This)
 
 // -----------------------------------------------------------------------------------
 
-mesh::Mesh* atlas__functionspace__Edges__mesh(Edges* This)
+mesh::Mesh* atlas__functionspace__Edges__mesh(EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -471,7 +471,7 @@ mesh::Mesh* atlas__functionspace__Edges__mesh(Edges* This)
 
 // -----------------------------------------------------------------------------------
 
-mesh::Edges* atlas__functionspace__Edges__edges(Edges* This)
+mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
       ASSERT(This);
@@ -482,7 +482,7 @@ mesh::Edges* atlas__functionspace__Edges__edges(Edges* This)
 
 // -----------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_field (const Edges* This, const char* name, int kind )
+field::Field* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -494,7 +494,7 @@ field::Field* atlas__functionspace__Edges__create_field (const Edges* This, cons
 // -----------------------------------------------------------------------------------
 
 field::Field* atlas__functionspace__Edges__create_field_vars (
-    const Edges* This,
+    const EdgeColumns* This,
     const char* name,
     int variables[],
     int variables_size,
@@ -516,7 +516,7 @@ field::Field* atlas__functionspace__Edges__create_field_vars (
 
 // -----------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_field_lev (const Edges* This, const char* name, int levels, int kind )
+field::Field* atlas__functionspace__Edges__create_field_lev (const EdgeColumns* This, const char* name, int levels, int kind )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -528,7 +528,7 @@ field::Field* atlas__functionspace__Edges__create_field_lev (const Edges* This, 
 // -----------------------------------------------------------------------------------
 
 field::Field* atlas__functionspace__Edges__create_field_lev_vars (
-    const Edges* This,
+    const EdgeColumns* This,
     const char* name,
     int levels,
     int variables[],
@@ -551,7 +551,7 @@ field::Field* atlas__functionspace__Edges__create_field_lev_vars (
 
 // -----------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_field_template (const Edges* This, const char* name, const field::Field* field_template )
+field::Field* atlas__functionspace__Edges__create_field_template (const EdgeColumns* This, const char* name, const field::Field* field_template )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -562,7 +562,7 @@ field::Field* atlas__functionspace__Edges__create_field_template (const Edges* T
 
 // -----------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_global_field (const Edges* This, const char* name, int kind )
+field::Field* atlas__functionspace__Edges__create_global_field (const EdgeColumns* This, const char* name, int kind )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -574,7 +574,7 @@ field::Field* atlas__functionspace__Edges__create_global_field (const Edges* Thi
 // -----------------------------------------------------------------------------------
 
 field::Field* atlas__functionspace__Edges__create_global_field_vars (
-    const Edges* This,
+    const EdgeColumns* This,
     const char* name,
     int variables[],
     int variables_size,
@@ -597,7 +597,7 @@ field::Field* atlas__functionspace__Edges__create_global_field_vars (
 // -----------------------------------------------------------------------------------
 
 field::Field* atlas__functionspace__Edges__create_global_field_lev (
-    const Edges* This,
+    const EdgeColumns* This,
     const char* name,
     int levels,
     int kind )
@@ -612,7 +612,7 @@ field::Field* atlas__functionspace__Edges__create_global_field_lev (
 // -----------------------------------------------------------------------------------
 
 field::Field* atlas__functionspace__Edges__create_global_field_lev_vars (
-    const Edges* This,
+    const EdgeColumns* This,
     const char* name,
     int levels,
     int variables[],
@@ -636,7 +636,7 @@ field::Field* atlas__functionspace__Edges__create_global_field_lev_vars (
 // -----------------------------------------------------------------------------------
 
 field::Field* atlas__functionspace__Edges__create_global_field_template (
-    const Edges* This,
+    const EdgeColumns* This,
     const char* name,
     const field::Field* field_template )
 {
@@ -650,7 +650,7 @@ field::Field* atlas__functionspace__Edges__create_global_field_template (
 // -----------------------------------------------------------------------------------
 
 void atlas__functionspace__Edges__halo_exchange_fieldset(
-    const Edges* This,
+    const EdgeColumns* This,
     field::FieldSet* fieldset)
 {
   ATLAS_ERROR_HANDLING(
@@ -662,7 +662,7 @@ void atlas__functionspace__Edges__halo_exchange_fieldset(
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__halo_exchange_field(const Edges* This, field::Field* field)
+void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, field::Field* field)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -673,7 +673,7 @@ void atlas__functionspace__Edges__halo_exchange_field(const Edges* This, field::
 
 // -----------------------------------------------------------------------------------
 
-const util::parallel::mpl::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const Edges* This)
+const util::parallel::mpl::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -685,7 +685,7 @@ const util::parallel::mpl::HaloExchange* atlas__functionspace__Edges__get_halo_e
 // -----------------------------------------------------------------------------------
 
 void atlas__functionspace__Edges__gather_fieldset(
-    const Edges* This,
+    const EdgeColumns* This,
     const field::FieldSet* local,
     field::FieldSet* global)
 {
@@ -699,7 +699,7 @@ void atlas__functionspace__Edges__gather_fieldset(
 // -----------------------------------------------------------------------------------
 
 void atlas__functionspace__Edges__gather_field(
-    const Edges* This,
+    const EdgeColumns* This,
     const field::Field* local,
     field::Field* global)
 {
@@ -712,7 +712,7 @@ void atlas__functionspace__Edges__gather_field(
 
 // -----------------------------------------------------------------------------------
 
-const util::parallel::mpl::GatherScatter* atlas__functionspace__Edges__get_gather(const Edges* This)
+const util::parallel::mpl::GatherScatter* atlas__functionspace__Edges__get_gather(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -722,7 +722,7 @@ const util::parallel::mpl::GatherScatter* atlas__functionspace__Edges__get_gathe
 
 // -----------------------------------------------------------------------------------
 
-const util::parallel::mpl::GatherScatter* atlas__functionspace__Edges__get_scatter(const Edges* This)
+const util::parallel::mpl::GatherScatter* atlas__functionspace__Edges__get_scatter(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -732,7 +732,7 @@ const util::parallel::mpl::GatherScatter* atlas__functionspace__Edges__get_scatt
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__scatter_fieldset(const Edges* This, const field::FieldSet* global, field::FieldSet* local)
+void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, const field::FieldSet* global, field::FieldSet* local)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -743,7 +743,7 @@ void atlas__functionspace__Edges__scatter_fieldset(const Edges* This, const fiel
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__scatter_field(const Edges* This, const field::Field* global, field::Field* local)
+void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const field::Field* global, field::Field* local)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -754,7 +754,7 @@ void atlas__functionspace__Edges__scatter_field(const Edges* This, const field::
 
 // -----------------------------------------------------------------------------------
 
-const util::parallel::mpl::Checksum* atlas__functionspace__Edges__get_checksum(const Edges* This)
+const util::parallel::mpl::Checksum* atlas__functionspace__Edges__get_checksum(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -767,7 +767,7 @@ const util::parallel::mpl::Checksum* atlas__functionspace__Edges__get_checksum(c
 
 
 void atlas__functionspace__Edges__checksum_fieldset(
-    const Edges* This,
+    const EdgeColumns* This,
     const field::FieldSet* fieldset,
     char* &checksum,
     int &size,
@@ -786,7 +786,7 @@ void atlas__functionspace__Edges__checksum_fieldset(
 // -----------------------------------------------------------------------------------
 
 void atlas__functionspace__Edges__checksum_field(
-    const Edges* This,
+    const EdgeColumns* This,
     const field::Field* field,
     char* &checksum,
     int &size,

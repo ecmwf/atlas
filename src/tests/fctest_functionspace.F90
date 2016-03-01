@@ -43,15 +43,15 @@ END_TESTSUITE_FINALIZE
 TEST( test_nodes )
 type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
-type(atlas_functionspace_Nodes) :: fs
+type(atlas_functionspace_NodeColumns) :: fs
 type(atlas_Field) :: field, template
-type(atlas_mesh_Nodes) :: nodes
+type(atlas_Nodes) :: nodes
 integer :: halo_size, nb_nodes
 halo_size = 1
 
 grid = atlas_ReducedGrid("N24")
 mesh = atlas_generate_mesh(grid)
-fs = atlas_functionspace_Nodes(mesh,halo_size)
+fs = atlas_functionspace_NodeColumns(mesh,halo_size)
 nodes = fs%nodes()
 nb_nodes = fs%nb_nodes()
 write(atlas_log%msg,*) "nb_nodes = ",nb_nodes; call atlas_log%info()
@@ -135,7 +135,7 @@ END_TEST
 TEST( test_nodescolumns )
 type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
-type(atlas_functionspace_Nodes) :: fs
+type(atlas_functionspace_NodeColumns) :: fs
 type(atlas_Field) :: field, template
 integer :: halo_size, levels
 halo_size = 1
@@ -143,7 +143,7 @@ levels = 10
 
 grid = atlas_ReducedGrid("N24")
 mesh = atlas_generate_mesh(grid)
-fs = atlas_functionspace_Nodes(mesh,halo_size)
+fs = atlas_functionspace_NodeColumns(mesh,halo_size)
 
 !levels = fs%nb_levels()
 write(atlas_log%msg,*) "nb_levels = ",levels; call atlas_log%info()
@@ -226,7 +226,7 @@ END_TEST
 TEST( test_collectives )
 type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
-type(atlas_functionspace_Nodes) :: fs2d
+type(atlas_functionspace_NodeColumns) :: fs2d
 type(atlas_Field) :: field, global, scal
 real(c_float), pointer :: scalvalues(:)
 real(c_float), pointer :: values(:,:)
@@ -241,7 +241,7 @@ levels = 10
 
 grid = atlas_ReducedGrid("N24")
 mesh = atlas_generate_mesh(grid)
-fs2d = atlas_functionspace_Nodes(mesh,halo_size)
+fs2d = atlas_functionspace_NodeColumns(mesh,halo_size)
 
 field  = fs2d%create_field("",atlas_real(c_float),[2])
 global = fs2d%create_global_field("",field)
@@ -333,9 +333,9 @@ END_TEST
 TEST( test_edges )
 type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
-type(atlas_functionspace_Edges) :: fs
+type(atlas_functionspace_EdgeColumns) :: fs
 type(atlas_Field) :: field, template
-type(atlas_mesh_Edges) :: edges
+type(atlas_edges) :: edges
 integer :: halo_size, nb_edges
 halo_size = 0
 
@@ -344,7 +344,7 @@ mesh = atlas_generate_mesh(grid)
 FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
 edges = mesh%edges()
 FCTEST_CHECK_EQUAL( edges%owners(), 3 ) ! Mesh holds 2 references (facets == edges)
-fs = atlas_functionspace_Edges(mesh)
+fs = atlas_functionspace_EdgeColumns(mesh)
 FCTEST_CHECK_EQUAL( mesh%owners(), 2 )
 FCTEST_CHECK_EQUAL( edges%owners(), 3 )
 edges = fs%edges()

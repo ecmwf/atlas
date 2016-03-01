@@ -11,8 +11,8 @@
 /// @author Willem Deconinck
 /// @date October 2015
 
-#ifndef atlas_mesh_ElementType_H
-#define atlas_mesh_ElementType_H
+#ifndef atlas_ElementType_H
+#define atlas_ElementType_H
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"

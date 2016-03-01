@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_functionspace_EdgesFunctionSpace_h
-#define atlas_functionspace_EdgesFunctionSpace_h
+#ifndef atlas_functionspace_EdgeColumnsFunctionSpace_h
+#define atlas_functionspace_EdgeColumnsFunctionSpace_h
 
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/mesh/Halo.h"
@@ -32,15 +32,15 @@ namespace functionspace {
 
 // -------------------------------------------------------------------
 
-class Edges : public FunctionSpace
+class EdgeColumns : public FunctionSpace
 {
 public:
 
-    Edges( mesh::Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
-    Edges( mesh::Mesh& mesh, const mesh::Halo & );
-    Edges( mesh::Mesh& mesh );
+    EdgeColumns( mesh::Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
+    EdgeColumns( mesh::Mesh& mesh, const mesh::Halo & );
+    EdgeColumns( mesh::Mesh& mesh );
 
-    virtual ~Edges();
+    virtual ~EdgeColumns();
 
     virtual std::string name() const { return "Edges"; }
 
@@ -141,49 +141,49 @@ private: // data
 // -------------------------------------------------------------------
 
 template< typename DATATYPE >
-field::Field* Edges::createField(const std::string& name) const
+field::Field* EdgeColumns::createField(const std::string& name) const
 {
     return createField(name,util::DataType::create<DATATYPE>());
 }
 
 template< typename DATATYPE >
-field::Field* Edges::createField(const std::string& name, size_t levels) const
+field::Field* EdgeColumns::createField(const std::string& name, size_t levels) const
 {
     return createField(name,util::DataType::create<DATATYPE>(),levels);
 }
 
 template< typename DATATYPE >
-field::Field* Edges::createField(const std::string& name,const std::vector<size_t>& variables) const
+field::Field* EdgeColumns::createField(const std::string& name,const std::vector<size_t>& variables) const
 {
     return createField(name,util::DataType::create<DATATYPE>(),variables);
 }
 
 template< typename DATATYPE >
-field::Field* Edges::createField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
+field::Field* EdgeColumns::createField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
 {
     return createField(name,util::DataType::create<DATATYPE>(),levels,variables);
 }
 
 template< typename DATATYPE >
-field::Field* Edges::createGlobalField(const std::string& name) const
+field::Field* EdgeColumns::createGlobalField(const std::string& name) const
 {
     return createGlobalField(name,util::DataType::create<DATATYPE>());
 }
 
 template< typename DATATYPE >
-field::Field* Edges::createGlobalField(const std::string& name,size_t levels) const
+field::Field* EdgeColumns::createGlobalField(const std::string& name,size_t levels) const
 {
     return createGlobalField(name,util::DataType::create<DATATYPE>(),levels);
 }
 
 template< typename DATATYPE >
-field::Field* Edges::createGlobalField(const std::string& name, const std::vector<size_t>& variables) const
+field::Field* EdgeColumns::createGlobalField(const std::string& name, const std::vector<size_t>& variables) const
 {
     return createGlobalField(name,util::DataType::create<DATATYPE>(),variables);
 }
 
 template< typename DATATYPE >
-field::Field* Edges::createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
+field::Field* EdgeColumns::createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
 {
     return createGlobalField(name,util::DataType::create<DATATYPE>(),levels,variables);
 }
@@ -200,43 +200,43 @@ field::Field* Edges::createGlobalField(const std::string& name, size_t levels, c
 
 extern "C" {
 
-Edges* atlas__functionspace__Edges__new (mesh_Mesh* mesh, int halo);
-Edges* atlas__functionspace__Edges__new_mesh (mesh_Mesh* mesh);
-void atlas__functionspace__Edges__delete (Edges* This);
-int atlas__functionspace__Edges__nb_edges(const Edges* This);
-mesh_Mesh* atlas__functionspace__Edges__mesh(Edges* This);
-mesh_Edges* atlas__functionspace__Edges__edges(Edges* This);
-field_Field* atlas__functionspace__Edges__create_field (const Edges* This, const char* name, int kind);
-field_Field* atlas__functionspace__Edges__create_field_vars (const Edges* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
+EdgeColumns* atlas__functionspace__Edges__new (mesh_Mesh* mesh, int halo);
+EdgeColumns* atlas__functionspace__Edges__new_mesh (mesh_Mesh* mesh);
+void atlas__functionspace__Edges__delete (EdgeColumns* This);
+int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This);
+mesh_Mesh* atlas__functionspace__Edges__mesh(EdgeColumns* This);
+mesh_Edges* atlas__functionspace__Edges__edges(EdgeColumns* This);
+field_Field* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind);
+field_Field* atlas__functionspace__Edges__create_field_vars (const EdgeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
 
-field_Field* atlas__functionspace__Edges__create_field_lev (const Edges* This, const char* name, int levels, int kind);
-field_Field* atlas__functionspace__Edges__create_field_lev_vars (const Edges* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
+field_Field* atlas__functionspace__Edges__create_field_lev (const EdgeColumns* This, const char* name, int levels, int kind);
+field_Field* atlas__functionspace__Edges__create_field_lev_vars (const EdgeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
 
 
-field_Field* atlas__functionspace__Edges__create_field_template (const Edges* This, const char* name, const field_Field* field_template);
-field_Field* atlas__functionspace__Edges__create_global_field (const Edges* This, const char* name, int kind);
-field_Field* atlas__functionspace__Edges__create_global_field_vars (const Edges* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
+field_Field* atlas__functionspace__Edges__create_field_template (const EdgeColumns* This, const char* name, const field_Field* field_template);
+field_Field* atlas__functionspace__Edges__create_global_field (const EdgeColumns* This, const char* name, int kind);
+field_Field* atlas__functionspace__Edges__create_global_field_vars (const EdgeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
 
-field_Field* atlas__functionspace__Edges__create_global_field_lev (const Edges* This, const char* name, int levels, int kind);
-field_Field* atlas__functionspace__Edges__create_global_field_lev_vars (const Edges* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
+field_Field* atlas__functionspace__Edges__create_global_field_lev (const EdgeColumns* This, const char* name, int levels, int kind);
+field_Field* atlas__functionspace__Edges__create_global_field_lev_vars (const EdgeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
 
-field_Field* atlas__functionspace__Edges__create_global_field_template (const Edges* This, const char* name, const field_Field* field_template);
+field_Field* atlas__functionspace__Edges__create_global_field_template (const EdgeColumns* This, const char* name, const field_Field* field_template);
 
-void atlas__functionspace__Edges__halo_exchange_fieldset(const Edges* This, field_FieldSet* fieldset);
-void atlas__functionspace__Edges__halo_exchange_field(const Edges* This, field_Field* field);
-const HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const Edges* This);
+void atlas__functionspace__Edges__halo_exchange_fieldset(const EdgeColumns* This, field_FieldSet* fieldset);
+void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, field_Field* field);
+const HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__gather_fieldset(const Edges* This, const field_FieldSet* local, field_FieldSet* global);
-void atlas__functionspace__Edges__gather_field(const Edges* This, const field_Field* local, field_Field* global);
-const GatherScatter* atlas__functionspace__Edges__get_gather(const Edges* This);
+void atlas__functionspace__Edges__gather_fieldset(const EdgeColumns* This, const field_FieldSet* local, field_FieldSet* global);
+void atlas__functionspace__Edges__gather_field(const EdgeColumns* This, const field_Field* local, field_Field* global);
+const GatherScatter* atlas__functionspace__Edges__get_gather(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__scatter_fieldset(const Edges* This, const field_FieldSet* global, field_FieldSet* local);
-void atlas__functionspace__Edges__scatter_field(const Edges* This, const field_Field* global, field_Field* local);
-const GatherScatter* atlas__functionspace__Edges__get_scatter(const Edges* This);
+void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, const field_FieldSet* global, field_FieldSet* local);
+void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const field_Field* global, field_Field* local);
+const GatherScatter* atlas__functionspace__Edges__get_scatter(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__checksum_fieldset(const Edges* This, const field_FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
-void atlas__functionspace__Edges__checksum_field(const Edges* This, const field_Field* field, Char* &checksum, int &size, int &allocated);
-const Checksum* atlas__functionspace__Edges__get_checksum(const Edges* This);
+void atlas__functionspace__Edges__checksum_fieldset(const EdgeColumns* This, const field_FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
+void atlas__functionspace__Edges__checksum_field(const EdgeColumns* This, const field_Field* field, Char* &checksum, int &size, int &allocated);
+const Checksum* atlas__functionspace__Edges__get_checksum(const EdgeColumns* This);
 }
 
 #undef mesh_Edges
@@ -251,4 +251,4 @@ const Checksum* atlas__functionspace__Edges__get_checksum(const Edges* This);
 } // namespace functionspace
 } // namespace atlas
 
-#endif // atlas_functionspace_EdgesFunctionSpace_h
+#endif // atlas_functionspace_EdgeColumnsFunctionSpace_h

@@ -30,8 +30,8 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/Spectral.h"
-#include "atlas/functionspace/Nodes.h"
-#include "atlas/functionspace/ReducedGridPoint.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/ReducedGridColumns.h"
 
 #include "transi/trans.h"
 
@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   numerics::trans::Trans trans(*g,47);
 
 
-  SharedPtr<functionspace::Nodes> nodal (new functionspace::Nodes(*m));
+  SharedPtr<functionspace::NodeColumns> nodal (new functionspace::NodeColumns(*m));
   SharedPtr<functionspace::Spectral> spectral (new functionspace::Spectral(trans));
 
   SharedPtr<field::Field> spf ( spectral->createField<double>("spf") );
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   SharedPtr<numerics::trans::Trans> trans ( new numerics::trans::Trans(*g,47) );
 
   SharedPtr<functionspace::Spectral>    spectral    (new functionspace::Spectral(*trans));
-  SharedPtr<functionspace::ReducedGridPoint> gridpoints (new functionspace::ReducedGridPoint(*g));
+  SharedPtr<functionspace::ReducedGridColumns> gridpoints (new functionspace::ReducedGridColumns(*g));
 
   SharedPtr<field::Field> spfg ( spectral->createGlobalField<double>("spf") );
   SharedPtr<field::Field> spf  ( spectral->createField<double>("spf") );

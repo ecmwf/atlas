@@ -11,16 +11,16 @@ use atlas_Field_module, only: &
     & atlas_Field
 use atlas_FieldSet_module, only: &
     & atlas_FieldSet
-use atlas_mesh_Nodes_module, only: &
-    & atlas_mesh_Nodes
+use atlas_Nodes_module, only: &
+    & atlas_Nodes
 use atlas_Mesh_module, only: &
     & atlas_Mesh
 use atlas_Grid_module, only: &
     & atlas_Grid
 use atlas_GridDistribution_module, only: &
     & atlas_GridDistribution
-use atlas_functionspace_Nodes_module, only: &
-    & atlas_functionspace_Nodes
+use atlas_functionspace_NodeColumns_module, only: &
+    & atlas_functionspace_NodeColumns
 
 implicit none
 
@@ -79,7 +79,7 @@ end subroutine atlas_write_gmsh
 subroutine atlas_write_gmsh_field(field,function_space,filename,mode)
   use atlas_gmsh_c_binding
   type(atlas_Field), intent(in) :: field
-  type(atlas_functionspace_Nodes), intent(in) :: function_space
+  type(atlas_functionspace_NodeColumns), intent(in) :: function_space
   character(len=*), intent(in) :: filename
   integer(kind(openmode)), optional :: mode
   if( present(mode) ) then
@@ -92,7 +92,7 @@ end subroutine atlas_write_gmsh_field
 subroutine atlas_write_gmsh_fieldset(fieldset,function_space,filename,mode)
   use atlas_gmsh_c_binding
   type(atlas_FieldSet), intent(in) :: fieldset
-  type(atlas_functionspace_Nodes), intent(in) :: function_space
+  type(atlas_functionspace_NodeColumns), intent(in) :: function_space
   character(len=*), intent(in) :: filename
   integer(kind(openmode)), optional :: mode
   if( present(mode) ) then
@@ -110,13 +110,13 @@ end subroutine atlas_build_parallel_fields
 
 subroutine atlas_build_nodes_parallel_fields(nodes)
   use atlas_BuildParallelFields_c_binding
-  type(atlas_mesh_Nodes), intent(inout) :: nodes
+  type(atlas_Nodes), intent(inout) :: nodes
   call atlas__build_nodes_parallel_fields(nodes%c_ptr())
 end subroutine atlas_build_nodes_parallel_fields
 
 subroutine atlas_renumber_nodes_glb_idx(nodes)
   use atlas_BuildParallelFields_c_binding
-  type(atlas_mesh_Nodes), intent(inout) :: nodes
+  type(atlas_Nodes), intent(inout) :: nodes
   call atlas__renumber_nodes_glb_idx(nodes%c_ptr())
 end subroutine atlas_renumber_nodes_glb_idx
 

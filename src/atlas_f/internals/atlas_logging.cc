@@ -1,4 +1,4 @@
-#include "atlas_f/atlas_logging.h"
+#include "atlas_f/internals/atlas_logging.h"
 #include "atlas/util/runtime/Log.h"
 #include "eckit/runtime/Context.h"
 #include "eckit/runtime/ContextBehavior.h"

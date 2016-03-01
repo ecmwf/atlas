@@ -11,8 +11,8 @@
 /// @author Willem Deconinck
 /// @date August 2015
 
-#ifndef atlas_mesh_Nodes_H
-#define atlas_mesh_Nodes_H
+#ifndef atlas_Nodes_H
+#define atlas_Nodes_H
 
 #include <map>
 #include <string>

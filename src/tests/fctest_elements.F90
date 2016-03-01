@@ -18,43 +18,43 @@ TESTSUITE(fctest_atlas_elements)
 ! -----------------------------------------------------------------------------
 
 TEST( test_elementtype )
-  use atlas_mesh_hybridelements_module
-  use atlas_mesh_ElementType_module
-  use atlas_mesh_Elements_module
+  use atlas_HybridElements_module
+  use atlas_ElementType_module
+  use atlas_Elements_module
 
   implicit none
-  type(atlas_mesh_ElementType) :: triag, quad, line
+  type(atlas_ElementType) :: triag, quad, line
 
   write(*,*) "test_elementtype"
 
-  triag = atlas_mesh_Triangle()
-  quad  = atlas_mesh_Quadrilateral()
-  line  = atlas_mesh_Line()
+  triag = atlas_Triangle()
+  quad  = atlas_Quadrilateral()
+  line  = atlas_Line()
 
 END_TEST
 
 ! -----------------------------------------------------------------------------
 
 TEST( test_hybridelements )
-  use atlas_mesh_hybridelements_module
-  use atlas_mesh_ElementType_module
-  use atlas_mesh_Elements_module
+  use atlas_HybridElements_module
+  use atlas_ElementType_module
+  use atlas_Elements_module
   use atlas_connectivity_module
   use atlas_field_module
   use, intrinsic :: iso_c_binding
 
   implicit none
-  type(atlas_mesh_Cells) :: cells
+  type(atlas_cells) :: cells
   type(atlas_MultiBlockConnectivity) :: node_connectivity
   type(atlas_Field) :: field, field2
-  type(atlas_mesh_Elements) :: elements
-  type(atlas_mesh_ElementType) :: element_type
+  type(atlas_Elements) :: elements
+  type(atlas_ElementType) :: element_type
   integer(c_int), pointer :: data(:,:)
   integer(c_size_t) :: jfield
 
   write(*,*) "test_hybridelements starting"
 
-  cells = atlas_mesh_Cells()
+  cells = atlas_cells()
   FCTEST_CHECK_EQUAL( cells%owners(), 1 )
 
   FCTEST_CHECK_EQUAL( cells%size(), 0_c_size_t )
@@ -96,7 +96,7 @@ TEST( test_hybridelements )
 
 
 
-  call cells%add( atlas_mesh_Triangle(), 5_c_size_t , &
+  call cells%add( atlas_Triangle(), 5_c_size_t , &
         &  [  1,  2  ,3, &
         &     4,  5,  6, &
         &     7,  8,  9, &
@@ -127,7 +127,7 @@ TEST( test_hybridelements )
   FCTEST_CHECK_EQUAL( data(2,5) , 14 )
   FCTEST_CHECK_EQUAL( data(3,5) , 15 )
 
-  call cells%add( atlas_mesh_Quadrilateral(), 2_c_size_t , &
+  call cells%add( atlas_Quadrilateral(), 2_c_size_t , &
         &  [  16, 17, 18, 19, &
         &     20, 21, 22, 23  ] )
 
@@ -173,31 +173,31 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_elements )
-  use atlas_mesh_hybridelements_module
-  use atlas_mesh_ElementType_module
-  use atlas_mesh_Elements_module
+  use atlas_HybridElements_module
+  use atlas_ElementType_module
+  use atlas_Elements_module
   use atlas_connectivity_module
   use atlas_field_module
   use, intrinsic :: iso_c_binding
 
   implicit none
-  type(atlas_mesh_Cells) :: cells
+  type(atlas_cells) :: cells
   type(atlas_BlockConnectivity) :: node_connectivity
-  type(atlas_mesh_Elements) :: elements
-  type(atlas_mesh_ElementType) :: element_type
+  type(atlas_Elements) :: elements
+  type(atlas_ElementType) :: element_type
   integer(c_int), pointer :: data(:,:)
 
   write(*,*) "test_elements starting"
 
-  cells = atlas_mesh_Cells()
-  call cells%add( atlas_mesh_Triangle(), 5_c_size_t , &
+  cells = atlas_cells()
+  call cells%add( atlas_Triangle(), 5_c_size_t , &
         &  [  1,  2  ,3, &
         &     4,  5,  6, &
         &     7,  8,  9, &
         &    10, 11, 12, &
         &    13, 14, 15  ] )
 
-  call cells%add( atlas_mesh_Quadrilateral(), 2_c_size_t , &
+  call cells%add( atlas_Quadrilateral(), 2_c_size_t , &
         &  [  16, 17, 18, 19, &
         &     20, 21, 22, 23  ] )
 

@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_functionspace_functionspace__ReducedGridPoint_h
-#define atlas_functionspace_functionspace__ReducedGridPoint_h
+#ifndef atlas_functionspace_functionspace__ReducedGridColumns_h
+#define atlas_functionspace_functionspace__ReducedGridColumns_h
 
 #include "atlas/atlas_defines.h"
 #include "atlas/functionspace/FunctionSpace.h"
@@ -44,15 +44,15 @@ namespace functionspace {
 
 // -------------------------------------------------------------------
 
-class ReducedGridPoint : public FunctionSpace
+class ReducedGridColumns : public FunctionSpace
 {
 public:
 
-  ReducedGridPoint( const grid::Grid& );
+  ReducedGridColumns( const grid::Grid& );
 
-  virtual ~ReducedGridPoint();
+  virtual ~ReducedGridColumns();
 
-  virtual std::string name() const { return "ReducedGridPoint"; }
+  virtual std::string name() const { return "ReducedGridColumns"; }
 
   /// @brief Create a ReducedGrid field
   template <typename DATATYPE> field::Field* createField(const std::string& name) const;
@@ -103,16 +103,16 @@ private: // data
 #define field_FieldSet field::FieldSet
 extern "C"
 {
-  ReducedGridPoint* atlas__functionspace__ReducedGridPoint__new__grid (const grid_Grid* grid);
-  void atlas__functionspace__ReducedGridPoint__delete (ReducedGridPoint* This);
-  field_Field* atlas__functionspace__ReducedGridPoint__create_field (const ReducedGridPoint* This, const char* name);
-  field_Field* atlas__functionspace__ReducedGridPoint__create_field_lev (const ReducedGridPoint* This, const char* name, int levels);
-  field_Field* atlas__functionspace__ReducedGridPoint__create_gfield (const ReducedGridPoint* This, const char* name);
-  field_Field* atlas__functionspace__ReducedGridPoint__create_gfield_lev (const ReducedGridPoint* This, const char* name, int levels);
-  void atlas__functionspace__ReducedGridPoint__gather (const ReducedGridPoint* This, const field_Field* local, field_Field* global);
-  void atlas__functionspace__ReducedGridPoint__scatter (const ReducedGridPoint* This, const field_Field* global, field_Field* local);
-  void atlas__fs__ReducedGridPoint__checksum_fieldset(const ReducedGridPoint* This, const field_FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
-  void atlas__fs__ReducedGridPoint__checksum_field(const ReducedGridPoint* This, const field_Field* field, Char* &checksum, int &size, int &allocated);
+  ReducedGridColumns* atlas__functionspace__ReducedGridColumns__new__grid (const grid_Grid* grid);
+  void atlas__functionspace__ReducedGridColumns__delete (ReducedGridColumns* This);
+  field_Field* atlas__functionspace__ReducedGridColumns__create_field (const ReducedGridColumns* This, const char* name);
+  field_Field* atlas__functionspace__ReducedGridColumns__create_field_lev (const ReducedGridColumns* This, const char* name, int levels);
+  field_Field* atlas__functionspace__ReducedGridColumns__create_gfield (const ReducedGridColumns* This, const char* name);
+  field_Field* atlas__functionspace__ReducedGridColumns__create_gfield_lev (const ReducedGridColumns* This, const char* name, int levels);
+  void atlas__functionspace__ReducedGridColumns__gather (const ReducedGridColumns* This, const field_Field* local, field_Field* global);
+  void atlas__functionspace__ReducedGridColumns__scatter (const ReducedGridColumns* This, const field_Field* global, field_Field* local);
+  void atlas__fs__ReducedGridColumns__checksum_fieldset(const ReducedGridColumns* This, const field_FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
+  void atlas__fs__ReducedGridColumns__checksum_field(const ReducedGridColumns* This, const field_Field* field, Char* &checksum, int &size, int &allocated);
 }
 
 #undef grid_Grid
@@ -124,4 +124,4 @@ extern "C"
 } // namespace functionspace
 } // namespace atlas
 
-#endif // atlas_functionspace_functionspace__ReducedGridPoint_h
+#endif // atlas_functionspace_functionspace__ReducedGridColumns_h

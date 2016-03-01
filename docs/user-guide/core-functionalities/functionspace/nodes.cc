@@ -6,7 +6,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/functionspace/Nodes.h"
+#include "atlas/functionspace/NodeColumns.h"
 #include "eckit/config/Resource.h"
 
 using namespace std;
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     int nb_levels = 10;
 
     // Generate functionspace associated to mesh
-    SharedPtr<functionspace::Nodes> fs_nodes(new functionspace::
+    SharedPtr<functionspace::NodeColumns> fs_nodes(new functionspace::
                                              Nodes(*mesh, mesh::Halo(1)));
 
     // Note on field generation

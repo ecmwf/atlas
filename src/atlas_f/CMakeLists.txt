@@ -16,7 +16,7 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/atlas_defines.h.in  atlas_f
 
 install( FILES
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_defines.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/atlas_f_mpi.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/internals/atlas_f_mpi.h
   DESTINATION
   ${INSTALL_INCLUDE_DIR}/atlas_f )
 
@@ -100,14 +100,14 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/Field.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/FieldSet.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/FunctionSpace.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h MODULE atlas_functionspace_Spectral_c_binding OUTPUT functionspace_Spectral_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/ReducedGridPoint.h MODULE atlas_functionspace_ReducedGridPoint_c_binding OUTPUT functionspace_ReducedGridPoint_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodesInterface.h MODULE atlas_functionspace_Nodes_c_binding OUTPUT functionspace_Nodes_c_binding.f90)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Edges.h MODULE atlas_functionspace_Edges_c_binding OUTPUT functionspace_Edges_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/ReducedGridColumns.h MODULE atlas_functionspace_ReducedGridColumns_c_binding OUTPUT functionspace_ReducedGridColumns_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodeColumnsInterface.h MODULE atlas_functionspace_NodeColumns_c_binding OUTPUT functionspace_NodeColumns_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeColumns.h MODULE atlas_functionspace_EdgeColumns_c_binding OUTPUT functionspace_EdgeColumns_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/trans/Trans.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h MODULE atlas_numerics_nabla_c_binding OUTPUT numerics_nabla_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Method.h MODULE atlas_numerics_method_c_binding OUTPUT numerics_method_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h MODULE atlas_numerics_fvm_method_c_binding OUTPUT numerics_fvm_method_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Method.h )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h MODULE atlas_fvm_method_c_binding OUTPUT fvm_method_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/io/Gmsh.h)
@@ -116,12 +116,12 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/parallel/mpl/HaloExchan
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/parallel/mpl/GatherScatter.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/parallel/mpl/Checksum.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/runtime/ErrorHandling.h)
-generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
-generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
-generate_fortran_bindings(FORTRAN_BINDINGS atlas_value.h)
+generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_logging.h)
+generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_resource.h)
+generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_value.h)
 
 if( ATLAS_HAVE_DEPRECATED_FUNCTIONSPACE )
-set( DEPRECATED_FUNCTIONSPACE_SRC atlas_deprecated_functionspace_module.F90 )
+set( DEPRECATED_FUNCTIONSPACE_SRC functionspace/atlas_deprecated_functionspace_module.F90 )
 endif()
 
 ### atlas fortran lib
@@ -130,58 +130,58 @@ ecbuild_add_library( TARGET atlas_f
     CONDITION CMAKE_Fortran_COMPILER_LOADED
     SOURCES
         ${FORTRAN_BINDINGS}
-        atlas_object_module.F90
-        atlas_refcounted_module.F90
-        atlas_kinds_module.F90
-        atlas_JSON_module.F90
-        atlas_Config_module.F90
-        atlas_Metadata_module.F90
-        atlas_FunctionSpace_module.F90
-        atlas_functionspace_Edges_module.F90
-        atlas_functionspace_Nodes_module.F90
-        atlas_functionspace_ReducedGridPoint_module.F90
-        atlas_functionspace_Spectral_module.F90
-        atlas_Logging_module.F90
-        atlas_Error_module.F90
-        atlas_Field_module.F90
-        atlas_FieldSet_module.F90
-        atlas_Grid_module.F90
-        atlas_GridDistribution_module.F90
-        atlas_MeshGenerator_module.F90
-        atlas_Mesh_module.F90
-        atlas_Trans_module.F90
-        atlas_actions_module.F90
         atlas_module.F90
-        atlas_mpi_module.F90
-        atlas_grids_module.F90
-        atlas_Connectivity_module.F90
-        atlas_mesh_Nodes_module.F90
-        atlas_mesh_HybridElements_module.F90
-        atlas_mesh_Elements_module.F90
-        atlas_mesh_ElementType_module.F90
-        atlas_GatherScatter_module.F90
-        atlas_Checksum_module.F90
-        atlas_HaloExchange_module.F90
-        atlas_numerics_Method_module.F90
-        atlas_numerics_fvm_module.F90
-        atlas_numerics_Nabla_module.F90
-        atlas_C_interop.F90
-        atlas_C_interop.cc
-        atlas_logging.h
-        atlas_logging.cc
-        atlas_resource.h
-        atlas_resource.cc
-        atlas_resource_module.F90
-        atlas_value.h
-        atlas_value.cc
+        util/atlas_kinds_module.F90
+        util/atlas_JSON_module.F90
+        util/atlas_Config_module.F90
+        util/atlas_Metadata_module.F90
+        util/atlas_resource_module.F90
+        util/atlas_mpi_module.F90
+        util/atlas_GatherScatter_module.F90
+        util/atlas_Checksum_module.F90
+        util/atlas_HaloExchange_module.F90
+        util/atlas_Logging_module.F90
+        util/atlas_Error_module.F90
+        functionspace/atlas_FunctionSpace_module.F90
+        functionspace/atlas_functionspace_EdgeColumns_module.F90
+        functionspace/atlas_functionspace_NodeColumns_module.F90
+        functionspace/atlas_functionspace_ReducedGridColumns_module.F90
+        functionspace/atlas_functionspace_Spectral_module.F90
+        field/atlas_Field_module.F90
+        field/atlas_FieldSet_module.F90
+        grid/atlas_Grid_module.F90
+        grid/atlas_GridDistribution_module.F90
+        grid/atlas_grids_module.F90
+        mesh/atlas_MeshGenerator_module.F90
+        mesh/atlas_Mesh_module.F90
+        mesh/atlas_Connectivity_module.F90
+        mesh/atlas_Nodes_module.F90
+        mesh/atlas_HybridElements_module.F90
+        mesh/atlas_Elements_module.F90
+        mesh/atlas_ElementType_module.F90
+        mesh/atlas_actions_module.F90
+        numerics/atlas_Trans_module.F90
+        numerics/atlas_Method_module.F90
+        numerics/atlas_fvm_module.F90
+        numerics/atlas_Nabla_module.F90
+        internals/atlas_object_module.F90
+        internals/atlas_refcounted_module.F90
+        internals/atlas_C_interop.F90
+        internals/atlas_C_interop.cc
+        internals/atlas_logging.h
+        internals/atlas_logging.cc
+        internals/atlas_resource.h
+        internals/atlas_resource.cc
+        internals/atlas_value.h
+        internals/atlas_value.cc
         ${DEPRECATED_FUNCTIONSPACE_SRC}
   PRIVATE_INCLUDES ${MPI_Fortran_INCLUDE_PATH}
   LIBS atlas ${MPI_Fortran_LIBRARIES}
 )
 
 add_custom_target( atlas_fortran_inc SOURCES
-   atlas_module_State_i.f
-   atlas_module_State_c.f
-   atlas_module_Value_i.f
-   atlas_module_Value_c.f
+   field/atlas_module_State_i.f
+   field/atlas_module_State_c.f
+   util/atlas_module_Value_i.f
+   util/atlas_module_Value_c.f
 )

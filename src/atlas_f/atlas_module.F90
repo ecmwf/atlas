@@ -97,23 +97,23 @@ use atlas_Error_module, only: &
     & atlas_err_readerror, &
     & atlas_err_writeerror, &
     & atlas_err_unknown
-use atlas_mesh_HybridElements_module, only: &
-    & atlas_mesh_HybridElements, &
-    & atlas_mesh_Cells, &
-    & atlas_mesh_Edges
-use atlas_mesh_Elements_module, only: &
-    & atlas_mesh_Elements
-use atlas_mesh_ElementType_module, only: &
-    & atlas_mesh_ElementType, &
-    & atlas_mesh_Triangle, &
-    & atlas_mesh_Quadrilateral, &
-    & atlas_mesh_Line
+use atlas_HybridElements_module, only: &
+    & atlas_HybridElements, &
+    & atlas_cells, &
+    & atlas_edges
+use atlas_Elements_module, only: &
+    & atlas_Elements
+use atlas_ElementType_module, only: &
+    & atlas_ElementType, &
+    & atlas_Triangle, &
+    & atlas_Quadrilateral, &
+    & atlas_Line
 use atlas_Connectivity_module, only: &
     & atlas_Connectivity, &
     & atlas_MultiBlockConnectivity, &
     & atlas_BlockConnectivity
-use atlas_mesh_Nodes_module, only: &
-    & atlas_mesh_Nodes
+use atlas_Nodes_module, only: &
+    & atlas_Nodes
 use atlas_HaloExchange_module, only: &
     & atlas_HaloExchange
 use atlas_GatherScatter_module, only: &
@@ -128,12 +128,12 @@ use atlas_Grid_module, only: &
     & atlas_ReducedGaussianGrid, &
     & atlas_GaussianGrid, &
     & atlas_LonLatGrid
-use atlas_functionspace_Edges_module, only: &
-    & atlas_functionspace_Edges
-use atlas_functionspace_Nodes_module, only: &
-    & atlas_functionspace_Nodes
-use atlas_functionspace_ReducedGridPoint_module, only: &
-    & atlas_functionspace_ReducedGridPoint
+use atlas_functionspace_EdgeColumns_module, only: &
+    & atlas_functionspace_EdgeColumns
+use atlas_functionspace_NodeColumns_module, only: &
+    & atlas_functionspace_NodeColumns
+use atlas_functionspace_ReducedGridColumns_module, only: &
+    & atlas_functionspace_ReducedGridColumns
 use atlas_functionspace_Spectral_module, only: &
     & atlas_functionspace_Spectral
 use atlas_Trans_module, only : &
@@ -146,12 +146,12 @@ use atlas_GridDistribution_module, only: &
 use atlas_MeshGenerator_module, only: &
     & atlas_MeshGenerator, &
     & atlas_ReducedGridMeshGenerator
-use atlas_numerics_Method_module, only: &
-    & atlas_numerics_Method
-use atlas_numerics_fvm_module, only: &
-    & atlas_numerics_fvm_Method
-use atlas_numerics_Nabla_module, only: &
-    & atlas_numerics_Nabla
+use atlas_Method_module, only: &
+    & atlas_Method
+use atlas_fvm_module, only: &
+    & atlas_fvm_Method
+use atlas_Nabla_module, only: &
+    & atlas_Nabla
 use atlas_resource_module, only: &
     & atlas_resource, &
     & atlas_resource_set
@@ -168,8 +168,8 @@ implicit none
 public
 
 
-#include "atlas_module_State_i.f"
-#include "atlas_module_Value_i.f"
+#include "field/atlas_module_State_i.f"
+#include "util/atlas_module_Value_i.f"
 
 
 ! =============================================================================
@@ -199,8 +199,8 @@ subroutine atlas_finalize()
   call atlas__atlas_finalize()
 end subroutine
 
-#include "atlas_module_State_c.f"
-#include "atlas_module_Value_c.f"
+#include "field/atlas_module_State_c.f"
+#include "util/atlas_module_Value_c.f"
 
 ! -----------------------------------------------------------------------------
 
