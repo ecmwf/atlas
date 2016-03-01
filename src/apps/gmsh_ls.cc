@@ -27,7 +27,6 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 
 //------------------------------------------------------------------------------------------------------
 

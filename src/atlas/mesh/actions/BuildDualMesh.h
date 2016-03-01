@@ -35,9 +35,7 @@ void build_median_dual_mesh( Mesh& mesh );
  * - skewness field value 1 at ip1, value -1 at ip2
  * - alpha field  value 1 at ip1, value 0 at ip2
  */
-#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_centroid_dual_mesh( Mesh& mesh );
-#endif
 
 /*
  * Build brick-dual mesh

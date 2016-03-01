@@ -263,20 +263,16 @@ void PointCloud::write(
     const eckit::PathName& path,
     const std::vector< grid::Grid::Point >& pts )
 {
-  DEBUG();
   std::ofstream f(path.asString().c_str());
   if (!f.is_open())
     throw eckit::CantOpenFile(path.asString());
-  DEBUG();
 
   // header
   f << "PointCloud\t" << pts.size() << '\t' << 2 << "\tlon\tlat\n";
-  DEBUG();
 
   // data
   for (size_t i=0; i<pts.size(); ++i)
     f << pts[i].lon() << '\t' << pts[i].lat() << '\n';
-  DEBUG();
 
   f.close();
 }

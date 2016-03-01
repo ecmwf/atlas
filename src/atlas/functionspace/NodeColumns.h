@@ -12,25 +12,43 @@
 #define atlas_functionspace_NodeColumnsFunctionSpace_h
 
 #include "eckit/memory/SharedPtr.h"
+#include "atlas/atlas_config.h"
 #include "atlas/mesh/Halo.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
+
+// ----------------------------------------------------------------------------
+// Forward declarations
 
 namespace atlas {
 namespace mesh {
     class Mesh;
     class Nodes;
-} }
+}
+}
 
 namespace atlas {
 namespace field {
     class FieldSet;
-} }
+}
+}
+
+namespace atlas {
+namespace util {
+namespace parallel {
+namespace mpl {
+    class HaloExchange;
+    class GatherScatter;
+    class Checksum;
+}
+}
+}
+}
 
 namespace atlas {
 namespace functionspace {
 
-// -------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 class NodeColumns : public FunctionSpace
 {

@@ -13,7 +13,6 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/PointSet.h"
 #include "atlas/array/ArrayView.h"
 

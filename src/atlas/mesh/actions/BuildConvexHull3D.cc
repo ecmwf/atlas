@@ -48,7 +48,6 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/actions/BuildConvexHull3D.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/interpolation/PointSet.h"
@@ -87,12 +86,6 @@ static Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >
 
     return poly;
 }
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-
-static void cgal_polyhedron_to_atlas_mesh_convert_to_old(  Mesh& mesh );
-
-#endif
 
 static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
@@ -173,48 +166,7 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
     }
 
     ASSERT( tidx == nb_triags );
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-
-    cgal_polyhedron_to_atlas_mesh_convert_to_old(mesh);
-
-#endif
 }
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-static void cgal_polyhedron_to_atlas_mesh_convert_to_old(  Mesh& mesh )
-{
-    int nquads  = 0;
-    int ntriags = mesh.cells().size();
-
-    deprecated::FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", array::make_shape(nquads,deprecated::FunctionSpace::UNDEF_VARS) );
-    quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-    array::IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
-    array::ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
-    array::ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
-
-    deprecated::FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", array::make_shape(ntriags,deprecated::FunctionSpace::UNDEF_VARS) );
-    triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-    array::IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
-    array::ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
-    array::ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
-
-    const mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
-    const array::ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
-    const array::ArrayView<int,1>    cells_part(    mesh.cells().partition() );
-
-    size_t cell_begin;
-
-    cell_begin = 0;
-    for( size_t jtriag=0; jtriag<ntriags; ++jtriag)
-    {
-      for( size_t jnode=0; jnode<3; ++jnode )
-        triag_nodes(jtriag,jnode) = node_connectivity(jtriag,jnode);
-      triag_glb_idx(jtriag) = cells_glb_idx(cell_begin+jtriag);
-      triag_part(jtriag)    = cells_part(cell_begin+jtriag);
-    }
-}
-#endif
 
 #else
 

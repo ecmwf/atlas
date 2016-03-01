@@ -16,7 +16,6 @@
 #include "atlas/atlas_config.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/internals/LonLatMicroDeg.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/array/ArrayView.h"
@@ -52,7 +51,7 @@ namespace internals {
   uidx_t unique_lonlat( const double elem_lonlat[], size_t npts );
 
   /// @brief Compute unique positive index for a element
-  /// This class is a functor initialised with the nodes functionspace
+  /// This class is a functor initialised with the nodes
   class UniqueLonLat {
     public:
 

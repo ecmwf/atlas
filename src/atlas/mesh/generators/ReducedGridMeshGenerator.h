@@ -66,13 +66,6 @@ private:
     const Region& region,
     Mesh& m) const;
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-  void generate_mesh_convert_to_old(
-    const grid::ReducedGrid&,
-    const std::vector<int>& parts,
-    const Region& region,
-    Mesh& m ) const;
-#endif
   void generate_mesh(
     const grid::ReducedGrid&,
     const std::vector<int>& parts,

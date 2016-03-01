@@ -857,26 +857,6 @@ BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
       std::cout << std::endl;
     }
   }
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-  for( size_t f=0; f<mesh->nb_function_spaces(); ++f )
-  {
-    const deprecated::FunctionSpace& fs = mesh->function_space(f);
-    if( fs.metadata().get<long>("type") == Entity::ELEMS )
-    {
-      IndexView<int,2> elem_edge_connectivity( fs.field("to_edge") );
-      for( size_t jelem=0; jelem<elem_edge_connectivity.shape(0); ++jelem )
-      {
-        std::cout << jelem << " : " ;
-        for( size_t jedge=0; jedge<elem_edge_connectivity.shape(1); ++jedge )
-        {
-           std::cout << elem_edge_connectivity(jelem,jedge) << "  ";
-        }
-        std::cout << std::endl;
-      }
-    }
-  }
-#endif
 }
 
 } // namespace test

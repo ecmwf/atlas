@@ -21,7 +21,6 @@
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/Array.h"

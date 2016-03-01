@@ -19,7 +19,6 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/AddVirtualNodes.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 
 using eckit::geometry::LLPoint2;
 using atlas::grid::OctahedralReducedGaussianGrid;

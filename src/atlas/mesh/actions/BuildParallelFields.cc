@@ -17,9 +17,6 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/field/Field.h"
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-#include "atlas/functionspace/FunctionSpace.h"
-#endif
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/internals/Unique.h"
@@ -336,7 +333,7 @@ field::Field& build_nodes_partition( mesh::Nodes& nodes )
 
 // ------------------------------------------------------------------
 
-field::Field& build_edges_partition_new( Mesh& mesh )
+field::Field& build_edges_partition( Mesh& mesh )
 {
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
@@ -603,31 +600,8 @@ field::Field& build_edges_partition_new( Mesh& mesh )
   return edges.partition();
 }
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-field::Field& build_edges_partition_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
-{
-  if( ! edges.has_field("partition") ) edges.create_field<int>("partition",1) ;
-  array::ArrayView<int,1> edge_part     ( edges.field("partition") );
-  array::ArrayView<int,1> new_edge_part ( edges.mesh().edges().partition() );
 
-  for( size_t jedge=0; jedge<edge_part.size(); ++jedge )
-    edge_part(jedge) = new_edge_part(jedge);
-
-  return edges.field("partition");
-}
-#endif
-
-
-field::Field& build_edges_partition( Mesh& mesh )
-{
-  field::Field& f = build_edges_partition_new( mesh );
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-  build_edges_partition_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
-#endif
-  return f;
-}
-
-field::Field& build_edges_remote_idx_new( Mesh& mesh  )
+field::Field& build_edges_remote_idx( Mesh& mesh  )
 {
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
@@ -775,32 +749,7 @@ field::Field& build_edges_remote_idx_new( Mesh& mesh  )
   return edges.remote_index();
 }
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-field::Field& build_edges_remote_idx_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
-{
-  if( ! edges.has_field("remote_idx") ) edges.create_field<int>("remote_idx",1) ;
-  array::IndexView<int,1> edge_ridx     ( edges.field("remote_idx") );
-  array::IndexView<int,1> new_edge_ridx ( edges.mesh().edges().remote_index() );
-
-  for( size_t jedge=0; jedge<edge_ridx.size(); ++jedge )
-    edge_ridx(jedge) = new_edge_ridx(jedge);
-
-  return edges.field("remote_idx");
-}
-#endif
-
-field::Field& build_edges_remote_idx( Mesh& mesh )
-{
-  field::Field& f = build_edges_remote_idx_new( mesh );
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-  build_edges_remote_idx_convert_to_old(mesh.function_space("edges"), mesh.nodes() );
-#endif
-
-  return f;
-}
-
-field::Field& build_edges_global_idx_new( Mesh& mesh )
+field::Field& build_edges_global_idx( Mesh& mesh )
 {
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
@@ -917,31 +866,6 @@ field::Field& build_edges_global_idx_new( Mesh& mesh )
   }
 
   return edges.global_index();
-}
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-field::Field& build_edges_global_idx_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
-{
-  if( ! edges.has_field("glb_idx") ) edges.create_field<gidx_t>("glb_idx",1) ;
-  array::ArrayView<gidx_t,1> edge_gidx     ( edges.field("glb_idx") );
-  array::ArrayView<gidx_t,1> new_edge_gidx ( edges.mesh().edges().global_index() );
-
-  for( size_t jedge=0; jedge<edge_gidx.size(); ++jedge )
-    edge_gidx(jedge) = new_edge_gidx(jedge);
-
-  return edges.field("glb_idx");
-}
-#endif
-
-field::Field& build_edges_global_idx( Mesh& mesh )
-{
-  field::Field& f = build_edges_global_idx_new( mesh );
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-  build_edges_global_idx_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
-#endif
-
-  return f;
 }
 
 // ------------------------------------------------------------------

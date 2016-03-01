@@ -16,7 +16,6 @@
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/numerics/fvm/Method.h"

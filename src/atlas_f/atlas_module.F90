@@ -159,10 +159,6 @@ use atlas_resource_module, only: &
 
 use atlas_actions_module
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-use atlas_deprecated_functionspace_module, only: atlas_deprecated_FunctionSpace
-#endif
-
 implicit none
 
 public

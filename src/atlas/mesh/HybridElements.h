@@ -20,7 +20,6 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/mesh/Connectivity.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Metadata.h"
 
 namespace atlas { namespace mesh  { class Mesh; } }
@@ -189,17 +188,6 @@ private:
   field::Field* partition_;
   field::Field* halo_;
 
-
-#if ! DEPRECATE_OLD_FUNCTIONSPACE
-
-// -- Transitional method
-private:
-  friend class atlas::Mesh;
-  Mesh* mesh_;
-  long type_;
-public:
-  void rebuild_from_fs();
-#endif
 };
 
 // -----------------------------------------------------------------------------------------------------

@@ -13,7 +13,6 @@
 #include "eckit/value/CompositeParams.h"
 
 #include "atlas/util/parallel/mpi/mpi.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/grids.h"
@@ -203,7 +202,7 @@ void TestField::test_wrap_rawdata()
   std::vector<double> rawdata(20,8.);
   SharedPtr<array::Array> array( array::Array::wrap(rawdata.data(),array::make_shape(10,2)) );
   SharedPtr<field::Field> field( field::Field::create("wrapped",array.get()) );
-  
+
   ASSERT( array->owners() == 2 );
   const array::ArrayView<double,2> cfieldv(*field);
   ASSERT( cfieldv(9,1) == 8. );

@@ -20,7 +20,6 @@
 #include "atlas/field/FieldCreatorArraySpec.h"
 #include "atlas/field/FieldCreatorIFS.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/runtime/Log.h"
 
 namespace {

@@ -28,7 +28,6 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/ReducedGridColumns.h"

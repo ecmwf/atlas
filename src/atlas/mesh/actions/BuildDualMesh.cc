@@ -21,7 +21,6 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/internals/Parameters.h"
@@ -94,13 +93,12 @@ void add_median_dual_volume_contribution_poles(
     const mesh::HybridElements& edges,
     const mesh::Nodes& nodes,
     array::Array& array_dual_volumes );
+void build_dual_normals_old( Mesh& mesh );
 void build_dual_normals( Mesh& mesh );
-void build_dual_normals_new( Mesh& mesh );
 void build_skewness(Mesh& mesh );
 void make_dual_normals_outward( Mesh& mesh );
-void make_dual_normals_outward_new( Mesh& mesh );
 
-void build_median_dual_mesh_new( Mesh& mesh )
+void build_median_dual_mesh( Mesh& mesh )
 {
 
   mesh::Nodes& nodes   = mesh.nodes();
@@ -116,7 +114,7 @@ void build_median_dual_mesh_new( Mesh& mesh )
   add_median_dual_volume_contribution_cells(mesh.cells(),mesh.edges(),mesh.nodes(),nodes.field("dual_volumes").array());
   add_median_dual_volume_contribution_poles(mesh.edges(),mesh.nodes(),nodes.field("dual_volumes").array());
 
-  build_dual_normals_new( mesh );
+  build_dual_normals( mesh );
 
   array::ArrayView<double,1> skewness ( mesh.edges().add( field::Field::create<double>("skewness",array::make_shape(mesh.edges().size()))) );
   array::ArrayView<double,1> alpha    ( mesh.edges().add( field::Field::create<double>("alpha",array::make_shape(mesh.edges().size()))) );
@@ -129,95 +127,10 @@ void build_median_dual_mesh_new( Mesh& mesh )
   eckit::SharedPtr<functionspace::EdgeColumns> edges_fs(new functionspace::EdgeColumns(mesh, Halo(mesh)));
   edges_fs->haloExchange(edges.field( "dual_normals" ));
 
-  make_dual_normals_outward_new(mesh);
-}
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-void build_median_dual_mesh_convert_to_old( Mesh& mesh )
-{
-  deprecated::FunctionSpace&  edges = mesh.function_space("edges");
-  array::ArrayView<double,2> dual_normals  ( edges.create_field<double>("dual_normals",2) );
-  const array::ArrayView<double,2> new_dual_normals( mesh.edges().field( "dual_normals") );
-  for( size_t jedge=0; jedge<mesh.edges().size(); ++jedge )
-  {
-    dual_normals(jedge,internals::LON) = new_dual_normals(jedge,internals::LON);
-    dual_normals(jedge,internals::LAT) = new_dual_normals(jedge,internals::LAT);
-  }
-}
-#endif
-
-
-void build_median_dual_mesh( Mesh& mesh )
-{
-  build_median_dual_mesh_new( mesh );
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-  build_median_dual_mesh_convert_to_old( mesh );
-#endif
+  make_dual_normals_outward(mesh);
 }
 
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-
-void build_centroids( deprecated::FunctionSpace& func_space, array::ArrayView<double,2>& lonlat);
-
-void build_centroid_dual_mesh( Mesh& mesh )
-{
-  mesh::Nodes& nodes   = mesh.nodes();
-  array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
-  array::ArrayView<double,1> dual_volumes  ( nodes.add( field::Field::create<double>( "dual_volumes", array::make_shape(nodes.size(),1) ) ) );
-
-  deprecated::FunctionSpace& quads       = mesh.function_space( "quads" );
-  deprecated::FunctionSpace& triags      = mesh.function_space( "triags" );
-  deprecated::FunctionSpace& edges       = mesh.function_space( "edges" );
-
-  build_centroids(quads,  lonlat);
-  build_centroids(triags, lonlat);
-  build_centroids(edges,  lonlat);
-
-  add_centroid_dual_volume_contribution( mesh, dual_volumes );
-
-  build_dual_normals( mesh );
-
-  build_skewness( mesh );
-
-  eckit::SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,Halo(mesh)) );
-  nodes_fs->haloExchange(nodes.field("dual_volumes"));
-
-  array::ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
-  edges.parallelise();
-  edges.halo_exchange().execute(dual_normals);
-}
-
-
-
-void build_centroids( deprecated::FunctionSpace& func_space, array::ArrayView<double,2>& lonlat)
-{
-  if( !func_space.has_field("centroids") )
-  {
-    int nb_elems = func_space.shape(0);
-    array::IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
-    int nb_nodes_per_elem = elem_nodes.shape(1);
-    array::ArrayView<double,2> elem_centroids( func_space.create_field<double>( "centroids", 2 ) );
-    for (size_t e=0; e<nb_elems; ++e)
-    {
-      elem_centroids(e,internals::LON) = 0.;
-      elem_centroids(e,internals::LAT) = 0.;
-      for (int n=0; n<nb_nodes_per_elem; ++n)
-      {
-        elem_centroids(e,internals::LON) += lonlat( elem_nodes(e,n), internals::LON );
-        elem_centroids(e,internals::LAT) += lonlat( elem_nodes(e,n), internals::LAT );
-      }
-      elem_centroids(e,internals::LON) /= static_cast<double>(nb_nodes_per_elem);
-      elem_centroids(e,internals::LAT) /= static_cast<double>(nb_nodes_per_elem);
-    }
-  }
-}
-#else
-void build_centroid_dual_mesh( Mesh& mesh )
-{
-  NOTIMP;
-}
-#endif
 
 array::Array* build_centroids_lonlat( const mesh::HybridElements& elements, const field::Field& field_lonlat )
 {
@@ -344,95 +257,8 @@ void add_median_dual_volume_contribution_poles(
 
 }
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-void add_centroid_dual_volume_contribution(
-    Mesh& mesh,
-    array::ArrayView<double,1>& dual_volumes )
-{
-  mesh::Nodes& nodes = mesh.nodes();
-  deprecated::FunctionSpace& edges = mesh.function_space("edges");
-  array::ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
-  array::ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
-  array::IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
-  array::ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
-  array::IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
-  array::ArrayView<double,2> node_lonlat   ( nodes.lonlat() );
-  std::vector< array::ArrayView<double,2> > elem_centroids(mesh.nb_function_spaces());
-  for(size_t f = 0; f < mesh.nb_function_spaces(); ++f)
-  {
-    deprecated::FunctionSpace& elements = mesh.function_space(f);
-    if( elements.metadata().get<long>("type") == Entity::ELEMS )
-    {
-      elem_centroids[f] = array::ArrayView<double,2>( elements.field("centroids") );
-    }
-  }
-  double tol = 1.e-6;
-  double min[2], max[2];
-  global_bounding_box( nodes, min, max );
 
-  int nb_edges = edges.shape(0);
-
-  // special ordering for bit-identical results
-  std::vector<Node> ordering(nb_edges);
-  for (int edge=0; edge<nb_edges; ++edge)
-  {
-    ordering[edge] = Node( internals::unique_lonlat(edge_centroids[edge]), edge );
-  }
-  std::sort( ordering.data(), ordering.data()+nb_edges );
-
-
-  for(int jedge=0; jedge<nb_edges; ++jedge)
-  {
-    int edge = ordering[jedge].i;
-    if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,2) >= 0 )
-    {
-      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),internals::LON);
-      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),internals::LAT);
-      double x1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),internals::LON);
-      double y1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),internals::LAT);
-      for( int jnode=0; jnode<2; ++jnode )
-      {
-        int node = edge_nodes(edge,jnode);
-        double x2 = node_lonlat( node, internals::LON );
-        double y2 = node_lonlat( node, internals::LAT );
-        double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
-        dual_volumes(node) += triag_area;
-      }
-    }
-    else if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,2) < 0  )
-    {
-      // This is a boundary edge
-      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),internals::LON);
-      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),internals::LAT);
-      double x1 = x0;
-      double y1 = 0;
-      double y_edge = edge_centroids(edge,internals::LAT);
-      if ( std::abs(y_edge-max[internals::LAT])<tol )
-        y1 = 90.;
-      else if ( std::abs(y_edge-min[internals::LAT])<tol )
-        y1 = -90.;
-
-      if( y1 != 0. )
-      {
-        for( int jnode=0; jnode<2; ++jnode )
-        {
-          int node = edge_nodes(edge,jnode);
-          double x2 = node_lonlat( node, internals::LON );
-          double y2 = node_lonlat( node, internals::LAT );
-          double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
-          dual_volumes(node) += triag_area;
-          double x3 = x2;
-          double y3 = y1;
-          triag_area = std::abs( x3*(y1-y2)+x1*(y2-y3)+x2*(y3-y1) )*0.5;
-          dual_volumes(node) += triag_area;
-        }
-      }
-    }
-  }
-}
-#endif
-
-void build_dual_normals_new( Mesh& mesh )
+void build_dual_normals( Mesh& mesh )
 {
   array::ArrayView<double,2> elem_centroids( mesh.cells().field("centroids_lonlat") );
 
@@ -531,7 +357,86 @@ void build_dual_normals_new( Mesh& mesh )
   }
 }
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
+
+void make_dual_normals_outward( Mesh& mesh )
+{
+  mesh::Nodes&  nodes = mesh.nodes();
+  array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
+
+  mesh::HybridElements& edges = mesh.edges();
+  const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
+  const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
+  array::ArrayView<double,2> dual_normals  ( edges.field("dual_normals") );
+  const size_t nb_edges = edges.size();
+
+  for (size_t edge=0; edge<nb_edges; ++edge)
+  {
+    if( edge_cell_connectivity(edge,0) != edge_cell_connectivity.missing_value() )
+    {
+      // Make normal point from node 1 to node 2
+      const size_t ip1 = edge_node_connectivity(edge,0);
+      const size_t ip2 = edge_node_connectivity(edge,1);
+      double dx = node_lonlat( ip2, internals::LON ) - node_lonlat( ip1, internals::LON );
+      double dy = node_lonlat( ip2, internals::LAT ) - node_lonlat( ip1, internals::LAT );
+      if( dx*dual_normals(edge,internals::LON) + dy*dual_normals(edge,internals::LAT) < 0 )
+      {
+        dual_normals(edge,internals::LON) = - dual_normals(edge,internals::LON);
+        dual_normals(edge,internals::LAT) = - dual_normals(edge,internals::LAT);
+      }
+    }
+  }
+}
+
+
+void build_brick_dual_mesh( Mesh& mesh )
+{
+  if( const grid::ReducedGrid* g = dynamic_cast<const grid::ReducedGrid*>(&mesh.grid()) )
+  {
+    if( eckit::mpi::size() != 1 )
+      throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
+
+    mesh::Nodes& nodes   = mesh.nodes();
+    array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
+    array::ArrayView<double,1> dual_volumes  ( nodes.add( field::Field::create<double>("dual_volumes",array::make_shape(nodes.size(),1) ) ) );
+    array::ArrayView<gidx_t,1> gidx  ( nodes.global_index() );
+
+    int c=0;
+    int n=0;
+    for(size_t jlat = 0; jlat < g->nlat(); ++jlat)
+    {
+      double lat = g->lat(jlat);
+      double latN = (jlat==0) ? 90. : 0.5*(lat+g->lat(jlat-1));
+      double latS = (jlat==g->nlat()-1) ? -90. : 0.5*(lat+g->lat(jlat+1));
+      double dlat = (latN-latS);
+      double dlon = 360./static_cast<double>(g->nlon(jlat));
+
+      for(size_t jlon = 0; jlon < g->nlon(jlat); ++jlon)
+      {
+        while( gidx(c) != n+1 ) c++;
+        ASSERT( lonlat(c,internals::LON) == g->lon(jlat,jlon) );
+        ASSERT( lonlat(c,internals::LAT) == lat );
+        dual_volumes(c) = dlon*dlat;
+        ++n;
+      }
+
+    }
+
+    eckit::SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,Halo(mesh)) );
+    nodes_fs->haloExchange(nodes.field("dual_volumes"));
+  }
+  else
+  {
+    throw eckit::BadCast("Cannot build_brick_dual_mesh with mesh provided grid type",Here());
+  }
+}
+
+void build_centroid_dual_mesh( Mesh& mesh )
+{
+  NOTIMP;
+  // This requires code below which has not been ported yet
+}
+
+#if TO_BE_PORTED_TO_ATLAS_V_0_6
 
 void build_dual_normals( Mesh& mesh )
 {
@@ -637,72 +542,148 @@ void build_dual_normals( Mesh& mesh )
     }
   }
 }
-#endif
 
-void make_dual_normals_outward_new( Mesh& mesh )
+void add_centroid_dual_volume_contribution(
+    Mesh& mesh,
+    array::ArrayView<double,1>& dual_volumes )
 {
-  mesh::Nodes&  nodes = mesh.nodes();
-  array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
-
-  mesh::HybridElements& edges = mesh.edges();
-  const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
-  const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
-  array::ArrayView<double,2> dual_normals  ( edges.field("dual_normals") );
-  const size_t nb_edges = edges.size();
-
-  for (size_t edge=0; edge<nb_edges; ++edge)
+  mesh::Nodes& nodes = mesh.nodes();
+  deprecated::FunctionSpace& edges = mesh.function_space("edges");
+  array::ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
+  array::ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
+  array::IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
+  array::ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
+  array::IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
+  array::ArrayView<double,2> node_lonlat   ( nodes.lonlat() );
+  std::vector< array::ArrayView<double,2> > elem_centroids(mesh.nb_function_spaces());
+  for(size_t f = 0; f < mesh.nb_function_spaces(); ++f)
   {
-    if( edge_cell_connectivity(edge,0) != edge_cell_connectivity.missing_value() )
+    deprecated::FunctionSpace& elements = mesh.function_space(f);
+    if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
-      // Make normal point from node 1 to node 2
-      const size_t ip1 = edge_node_connectivity(edge,0);
-      const size_t ip2 = edge_node_connectivity(edge,1);
-      double dx = node_lonlat( ip2, internals::LON ) - node_lonlat( ip1, internals::LON );
-      double dy = node_lonlat( ip2, internals::LAT ) - node_lonlat( ip1, internals::LAT );
-      if( dx*dual_normals(edge,internals::LON) + dy*dual_normals(edge,internals::LAT) < 0 )
-      {
-        dual_normals(edge,internals::LON) = - dual_normals(edge,internals::LON);
-        dual_normals(edge,internals::LAT) = - dual_normals(edge,internals::LAT);
-      }
+      elem_centroids[f] = array::ArrayView<double,2>( elements.field("centroids") );
     }
   }
-}
+  double tol = 1.e-6;
+  double min[2], max[2];
+  global_bounding_box( nodes, min, max );
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-void make_dual_normals_outward( Mesh& mesh )
-{
-
-  mesh::Nodes&  nodes = mesh.nodes();
-  array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
-
-  deprecated::FunctionSpace&  edges = mesh.function_space("edges");
-  array::IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
-  array::IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
-  array::ArrayView<double,2> dual_normals  ( edges.field("dual_normals") );
   int nb_edges = edges.shape(0);
 
+  // special ordering for bit-identical results
+  std::vector<Node> ordering(nb_edges);
   for (int edge=0; edge<nb_edges; ++edge)
   {
-    if( edge_to_elem(edge,0) < 0 )
-    {
+    ordering[edge] = Node( internals::unique_lonlat(edge_centroids[edge]), edge );
+  }
+  std::sort( ordering.data(), ordering.data()+nb_edges );
 
-    }
-    else
+
+  for(int jedge=0; jedge<nb_edges; ++jedge)
+  {
+    int edge = ordering[jedge].i;
+    if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,2) >= 0 )
     {
-      // Make normal point from node 1 to node 2
-      double dx = node_lonlat( edge_nodes(edge,1), internals::LON ) - node_lonlat( edge_nodes(edge,0), internals::LON );
-      double dy = node_lonlat( edge_nodes(edge,1), internals::LAT ) - node_lonlat( edge_nodes(edge,0), internals::LAT );
-      if( dx*dual_normals(edge,internals::LON) + dy*dual_normals(edge,internals::LAT) < 0 )
+      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),internals::LON);
+      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),internals::LAT);
+      double x1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),internals::LON);
+      double y1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),internals::LAT);
+      for( int jnode=0; jnode<2; ++jnode )
       {
-        dual_normals(edge,internals::LON) = - dual_normals(edge,internals::LON);
-        dual_normals(edge,internals::LAT) = - dual_normals(edge,internals::LAT);
+        int node = edge_nodes(edge,jnode);
+        double x2 = node_lonlat( node, internals::LON );
+        double y2 = node_lonlat( node, internals::LAT );
+        double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
+        dual_volumes(node) += triag_area;
+      }
+    }
+    else if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,2) < 0  )
+    {
+      // This is a boundary edge
+      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),internals::LON);
+      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),internals::LAT);
+      double x1 = x0;
+      double y1 = 0;
+      double y_edge = edge_centroids(edge,internals::LAT);
+      if ( std::abs(y_edge-max[internals::LAT])<tol )
+        y1 = 90.;
+      else if ( std::abs(y_edge-min[internals::LAT])<tol )
+        y1 = -90.;
+
+      if( y1 != 0. )
+      {
+        for( int jnode=0; jnode<2; ++jnode )
+        {
+          int node = edge_nodes(edge,jnode);
+          double x2 = node_lonlat( node, internals::LON );
+          double y2 = node_lonlat( node, internals::LAT );
+          double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
+          dual_volumes(node) += triag_area;
+          double x3 = x2;
+          double y3 = y1;
+          triag_area = std::abs( x3*(y1-y2)+x1*(y2-y3)+x2*(y3-y1) )*0.5;
+          dual_volumes(node) += triag_area;
+        }
       }
     }
   }
 }
-#endif
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
+void build_centroids( deprecated::FunctionSpace& func_space, array::ArrayView<double,2>& lonlat);
+
+void build_centroid_dual_mesh( Mesh& mesh )
+{
+  mesh::Nodes& nodes   = mesh.nodes();
+  array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
+  array::ArrayView<double,1> dual_volumes  ( nodes.add( field::Field::create<double>( "dual_volumes", array::make_shape(nodes.size(),1) ) ) );
+
+  deprecated::FunctionSpace& quads       = mesh.function_space( "quads" );
+  deprecated::FunctionSpace& triags      = mesh.function_space( "triags" );
+  deprecated::FunctionSpace& edges       = mesh.function_space( "edges" );
+
+  build_centroids(quads,  lonlat);
+  build_centroids(triags, lonlat);
+  build_centroids(edges,  lonlat);
+
+  add_centroid_dual_volume_contribution( mesh, dual_volumes );
+
+  build_dual_normals_old( mesh );
+
+  build_skewness( mesh );
+
+  eckit::SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,Halo(mesh)) );
+  nodes_fs->haloExchange(nodes.field("dual_volumes"));
+
+  array::ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
+  edges.parallelise();
+  edges.halo_exchange().execute(dual_normals);
+}
+
+
+
+void build_centroids( deprecated::FunctionSpace& func_space, array::ArrayView<double,2>& lonlat)
+{
+  if( !func_space.has_field("centroids") )
+  {
+    int nb_elems = func_space.shape(0);
+    array::IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
+    int nb_nodes_per_elem = elem_nodes.shape(1);
+    array::ArrayView<double,2> elem_centroids( func_space.create_field<double>( "centroids", 2 ) );
+    for (size_t e=0; e<nb_elems; ++e)
+    {
+      elem_centroids(e,internals::LON) = 0.;
+      elem_centroids(e,internals::LAT) = 0.;
+      for (int n=0; n<nb_nodes_per_elem; ++n)
+      {
+        elem_centroids(e,internals::LON) += lonlat( elem_nodes(e,n), internals::LON );
+        elem_centroids(e,internals::LAT) += lonlat( elem_nodes(e,n), internals::LAT );
+      }
+      elem_centroids(e,internals::LON) /= static_cast<double>(nb_nodes_per_elem);
+      elem_centroids(e,internals::LAT) /= static_cast<double>(nb_nodes_per_elem);
+    }
+  }
+}
+
 void build_skewness( Mesh& mesh )
 {
   std::vector< array::ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
@@ -793,48 +774,6 @@ void build_skewness( Mesh& mesh )
 
 
 
-void build_brick_dual_mesh( Mesh& mesh )
-{
-  if( const grid::ReducedGrid* g = dynamic_cast<const grid::ReducedGrid*>(&mesh.grid()) )
-  {
-    if( eckit::mpi::size() != 1 )
-      throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
-
-    mesh::Nodes& nodes   = mesh.nodes();
-    array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
-    array::ArrayView<double,1> dual_volumes  ( nodes.add( field::Field::create<double>("dual_volumes",array::make_shape(nodes.size(),1) ) ) );
-    array::ArrayView<gidx_t,1> gidx  ( nodes.global_index() );
-
-    int c=0;
-    int n=0;
-    for(size_t jlat = 0; jlat < g->nlat(); ++jlat)
-    {
-      double lat = g->lat(jlat);
-      double latN = (jlat==0) ? 90. : 0.5*(lat+g->lat(jlat-1));
-      double latS = (jlat==g->nlat()-1) ? -90. : 0.5*(lat+g->lat(jlat+1));
-      double dlat = (latN-latS);
-      double dlon = 360./static_cast<double>(g->nlon(jlat));
-
-      for(size_t jlon = 0; jlon < g->nlon(jlat); ++jlon)
-      {
-        while( gidx(c) != n+1 ) c++;
-        ASSERT( lonlat(c,internals::LON) == g->lon(jlat,jlon) );
-        ASSERT( lonlat(c,internals::LAT) == lat );
-        dual_volumes(c) = dlon*dlat;
-        ++n;
-      }
-
-    }
-
-    eckit::SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,Halo(mesh)) );
-    nodes_fs->haloExchange(nodes.field("dual_volumes"));
-  }
-  else
-  {
-    throw eckit::BadCast("Cannot build_brick_dual_mesh with mesh provided grid type",Here());
-  }
-}
-
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
@@ -843,11 +782,9 @@ void atlas__build_median_dual_mesh ( Mesh* mesh) {
   ATLAS_ERROR_HANDLING( build_median_dual_mesh(*mesh) );
 }
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
 void atlas__build_centroid_dual_mesh ( Mesh* mesh) {
   ATLAS_ERROR_HANDLING( build_centroid_dual_mesh(*mesh) );
 }
-#endif
 // ------------------------------------------------------------------
 
 } // namespace actions

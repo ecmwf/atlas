@@ -21,8 +21,10 @@
 #include "atlas/internals/IsGhost.h"
 #include "atlas/util/parallel/mpl/HaloExchange.h"
 #include "atlas/util/parallel/mpl/GatherScatter.h"
+#include "atlas/util/parallel/mpl/Checksum.h"
 #include "atlas/util/parallel/atlas_omp.h"
 #include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/util/runtime/Log.h"
 #include "atlas/util/parallel/mpi/Collectives.h"
 
 #ifdef ATLAS_HAVE_FORTRAN

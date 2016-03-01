@@ -21,6 +21,7 @@
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/util/runtime/Log.h"
 
 namespace {
 

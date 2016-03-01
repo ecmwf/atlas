@@ -20,7 +20,6 @@
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -32,6 +31,7 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/grid/predefined/rgg/rgg.h"
 #include "atlas/internals/IsGhost.h"
+#include "atlas/util/runtime/Log.h"
 
 using namespace atlas;
 using namespace atlas::util::io;

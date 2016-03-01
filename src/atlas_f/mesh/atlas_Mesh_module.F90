@@ -10,11 +10,6 @@ use atlas_refcounted_module, only: atlas_refcounted
 use atlas_HybridElements_module, only: atlas_cells, atlas_edges
 use atlas_Nodes_module, only: atlas_Nodes
 
-#if ! DEPRECATE_OLD_FUNCTIONSPACE
-use atlas_deprecated_FunctionSpace_module, only : atlas_deprecated_FunctionSpace, &
-    & ATLAS_FIELD_NB_VARS
-#endif
-
 implicit none
 
 private :: c_ptr
@@ -53,13 +48,6 @@ contains
   procedure, public :: delete => atlas_Mesh__delete
   procedure, public :: copy => atlas_Mesh__copy
 
-#if ! DEPRECATE_OLD_FUNCTIONSPACE
-  procedure, private :: create_function_space_nodes => Mesh__create_function_space_nodes
-  procedure, private :: create_function_space_shape => Mesh__create_function_space_shape
-  generic :: create_function_space => create_function_space_nodes, create_function_space_shape
-  procedure :: function_space => Mesh__function_space
-#endif
-
 END TYPE atlas_Mesh
 
 interface atlas_Mesh
@@ -83,41 +71,6 @@ function atlas_Mesh__ctor() result(mesh)
   type(atlas_Mesh) :: mesh
   call mesh%reset_c_ptr( atlas__Mesh__new() )
 end function atlas_Mesh__ctor
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-subroutine Mesh__create_function_space_nodes(this,name,shape_func,nb_nodes)
-  use atlas_mesh_c_binding
-  class(atlas_Mesh), intent(inout) :: this
-  character(len=*), intent(in) :: name
-  character(len=*), intent(in) :: shape_func
-  integer, intent(in) :: nb_nodes
-  integer :: shape(2)
-  integer , parameter :: fortran_ordering = 1
-  shape = (/ATLAS_FIELD_NB_VARS,nb_nodes/)
-  call atlas__Mesh__create_function_space(this%c_ptr(),c_str(name),c_str(shape_func), &
-  & shape, size(shape), fortran_ordering )
-end subroutine Mesh__create_function_space_nodes
-
-subroutine Mesh__create_function_space_shape(this,name,shape_func,shape)
-  use atlas_mesh_c_binding
-  class(atlas_Mesh), intent(inout) :: this
-  character(len=*), intent(in) :: name
-  character(len=*), intent(in) :: shape_func
-  integer, intent(in) :: shape(:)
-  integer , parameter :: fortran_ordering = 1
-  call atlas__Mesh__create_function_space(this%c_ptr(),c_str(name),c_str(shape_func), &
-  & shape, size(shape), fortran_ordering )
-end subroutine Mesh__create_function_space_shape
-
-function Mesh__function_space(this,name) result(function_space)
-  use atlas_mesh_c_binding
-  class(atlas_Mesh), intent(in) :: this
-  character(len=*), intent(in) :: name
-  type(atlas_deprecated_FunctionSpace) :: function_space
-  call function_space%reset_c_ptr( atlas__Mesh__function_space(this%c_ptr(), c_str(name) ) )
-  if( function_space%is_null() ) write(0,*) 'call abort()'
-end function Mesh__function_space
-#endif
 
 function Mesh__create_nodes(this,nb_nodes) result(nodes)
   use atlas_mesh_c_binding

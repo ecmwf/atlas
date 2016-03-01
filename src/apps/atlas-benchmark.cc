@@ -66,6 +66,8 @@
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/util/parallel/atlas_omp.h"
 #include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/util/parallel/mpl/HaloExchange.h"
+#include "atlas/util/parallel/mpl/Checksum.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/internals/IsGhost.h"

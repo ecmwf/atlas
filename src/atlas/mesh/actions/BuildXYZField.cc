@@ -13,7 +13,6 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/array/ArrayView.h"
 
 namespace atlas {

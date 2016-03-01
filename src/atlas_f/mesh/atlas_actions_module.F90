@@ -163,13 +163,11 @@ subroutine atlas_build_median_dual_mesh(mesh)
   call atlas__build_median_dual_mesh(mesh%c_ptr())
 end subroutine atlas_build_median_dual_mesh
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
 subroutine atlas_build_centroid_dual_mesh(mesh)
   use atlas_BuildDualMesh_c_binding
   type(atlas_Mesh), intent(inout) :: mesh
   call atlas__build_centroid_dual_mesh(mesh%c_ptr())
 end subroutine atlas_build_centroid_dual_mesh
-#endif
 
 subroutine atlas_write_load_balance_report(mesh,filename)
   use atlas_WriteLoadBalanceReport_c_binding

@@ -12,7 +12,6 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/internals/AccumulateFaces.h"
 #include "atlas/array/IndexView.h"
 

@@ -12,6 +12,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/util/parallel/mpi/mpi.h"
 
 namespace atlas {
 namespace mesh {

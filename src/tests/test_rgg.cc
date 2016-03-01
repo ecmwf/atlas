@@ -30,7 +30,6 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Elements.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/field/Field.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/array/ArrayView.h"
@@ -41,6 +40,7 @@
 #include "atlas/util/Config.h"
 #include "atlas/grid/predefined/rgg/rgg.h"
 #include "atlas/internals/Bitflags.h"
+#include "atlas/internals/Debug.h"
 
 using namespace eckit;
 using namespace atlas;

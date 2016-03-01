@@ -28,7 +28,6 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/util/io/Gmsh.h"
@@ -36,6 +35,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
+#include "atlas/util/parallel/mpi/mpi.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/grid/partitioners/TransPartitioner.h"
@@ -711,11 +711,11 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
 #endif
 }
 
-#define NEW_DESIGN
-void ReducedGridMeshGenerator::generate_mesh_new( const ReducedGrid& rg,
-                                                  const std::vector<int>& parts,
-                                                  const Region& region,
-                                                  Mesh& mesh ) const
+void ReducedGridMeshGenerator::generate_mesh(
+    const ReducedGrid& rg,
+    const std::vector<int>& parts,
+    const Region& region,
+    Mesh& mesh ) const
 {
   int mypart = options.get<size_t>("part");
   int nparts = options.get<size_t>("nb_parts");
@@ -1154,68 +1154,6 @@ void ReducedGridMeshGenerator::generate_mesh_new( const ReducedGrid& rg,
   }
 
   generate_global_element_numbering( mesh );
-}
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-void ReducedGridMeshGenerator::generate_mesh_convert_to_old(
-    const ReducedGrid& rg,
-    const std::vector<int>& parts,
-    const Region& region,
-    Mesh& mesh ) const
-{
-  int nquads  = mesh.cells().elements(0).size();
-  int ntriags = mesh.cells().elements(1).size();
-
-  deprecated::FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", array::make_shape(nquads,deprecated::FunctionSpace::UNDEF_VARS) );
-  quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-  array::IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
-  array::ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
-  array::ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
-
-  deprecated::FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", array::make_shape(ntriags,deprecated::FunctionSpace::UNDEF_VARS) );
-  triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-  array::IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
-  array::ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
-  array::ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
-
-  const mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
-  const array::ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
-  const array::ArrayView<int,1>    cells_part(    mesh.cells().partition() );
-
-  size_t cell_begin;
-
-  cell_begin = mesh.cells().elements(0).begin();
-  for( size_t jquad=0; jquad<nquads; ++jquad)
-  {
-    for( size_t jnode=0; jnode<4; ++jnode )
-      quad_nodes(jquad,jnode) = node_connectivity(0, jquad,jnode);
-    quad_glb_idx(jquad) = cells_glb_idx(cell_begin+jquad);
-    quad_part(jquad)    = cells_part(cell_begin+jquad);
-  }
-
-  cell_begin = mesh.cells().elements(1).begin();
-  for( size_t jtriag=0; jtriag<ntriags; ++jtriag)
-  {
-    for( size_t jnode=0; jnode<3; ++jnode )
-      triag_nodes(jtriag,jnode) = node_connectivity(1, jtriag,jnode);
-    triag_glb_idx(jtriag) = cells_glb_idx(cell_begin+jtriag);
-    triag_part(jtriag)    = cells_part(cell_begin+jtriag);
-  }
-
-}
-#endif
-
-
-
-void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
-                                             const std::vector<int>& parts,
-                                             const Region& region,
-                                             Mesh& mesh ) const
-{
-  generate_mesh_new(rg,parts,region,mesh);
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-  generate_mesh_convert_to_old(rg,parts,region,mesh);
-#endif
 }
 
 void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh ) const

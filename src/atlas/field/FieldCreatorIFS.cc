@@ -16,6 +16,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
+#include "atlas/util/runtime/Log.h"
 
 namespace atlas {
 namespace field {

@@ -13,7 +13,6 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/internals/LonLatMicroDeg.h"

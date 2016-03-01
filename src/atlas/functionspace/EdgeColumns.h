@@ -16,6 +16,9 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 
+// ----------------------------------------------------------------------------
+// Forward declarations
+
 namespace atlas {
 namespace mesh {
     class Mesh;
@@ -30,7 +33,7 @@ namespace field {
 namespace atlas {
 namespace functionspace {
 
-// -------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 class EdgeColumns : public FunctionSpace
 {

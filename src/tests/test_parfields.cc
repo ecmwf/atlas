@@ -20,7 +20,6 @@
 #include "atlas/atlas_config.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/mesh/Nodes.h"

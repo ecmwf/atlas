@@ -17,7 +17,6 @@
 #include "eckit/parser/JSONParser.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 

@@ -35,6 +35,8 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/array/Array.h"
 #include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/util/runtime/Log.h"
+#include "atlas/util/parallel/mpi/mpi.h"
 
 using atlas::internals::accumulate_facets;
 using atlas::internals::Topology;
@@ -844,10 +846,6 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
 }
 
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-void build_halo_convert_to_old( Mesh& mesh );
-#endif
-
 void build_halo(Mesh& mesh, int nb_elems )
 {
   int jhalo = 0;
@@ -878,52 +876,7 @@ void build_halo(Mesh& mesh, int nb_elems )
   }
 
   mesh.metadata().set("halo",nb_elems);
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-  if( halo_changed ) build_halo_convert_to_old(mesh);
-//  if( halo_changed ) mesh.convert_new_to_old();
-#endif
 }
-
-
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-void build_halo_convert_to_old( Mesh& mesh )
-{
-  std::vector<deprecated::FunctionSpace*> get_functionspace;
-  get_functionspace.push_back(&mesh.function_space( "quads"  ));
-  get_functionspace.push_back(&mesh.function_space( "triags" ));
-
-  for( size_t jtype=0; jtype<mesh.cells().nb_types(); ++jtype )
-  {
-    const mesh::Elements &elements = mesh.cells().elements(jtype);
-    int nelem = elements.size();
-    deprecated::FunctionSpace& fs = *get_functionspace[jtype];
-    array::ArrayShape shape = fs.shape();
-    shape[0] = nelem;
-    fs.resize(shape);
-    array::IndexView<int,2>    old_node_connectivity ( fs.field("nodes") );
-    array::ArrayView<gidx_t,1> old_glb_idx( fs.field("glb_idx") );
-    array::ArrayView<int,1>    old_part( fs.field("partition") );
-
-    const mesh::Elements::Connectivity &new_node_connectivity = elements.node_connectivity();
-    const array::ArrayView<gidx_t,1> new_glb_idx( elements.view<gidx_t,1>( mesh.cells().global_index() ) );
-    const array::ArrayView<int   ,1> new_part   ( elements.view<int,   1>( mesh.cells().partition() ) );
-
-    for( size_t jelem=0; jelem<nelem; ++jelem )
-    {
-      old_glb_idx(jelem) = new_glb_idx(jelem);
-      old_part   (jelem) = new_part   (jelem);
-      for( size_t jnode=0; jnode<new_node_connectivity.cols(); ++jnode )
-      {
-        old_node_connectivity(jelem,jnode) = new_node_connectivity(jelem,jnode);
-      }
-    }
-  }
-}
-#endif
-
-
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

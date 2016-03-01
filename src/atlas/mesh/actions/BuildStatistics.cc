@@ -25,7 +25,6 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Constants.h"
 #include "atlas/array/ArrayView.h"
