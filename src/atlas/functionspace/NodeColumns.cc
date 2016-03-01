@@ -218,20 +218,20 @@ std::string NodeColumns::checksum_name() const
   return "nodes_checksum";
 }
 
-field::Field* NodeColumns::createField(const std::string& name,util::DataType datatype) const {
+field::Field* NodeColumns::createField(const std::string& name,array::DataType datatype) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes()));
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* NodeColumns::createField(const std::string& name,util::DataType datatype, size_t levels) const {
+field::Field* NodeColumns::createField(const std::string& name,array::DataType datatype, size_t levels) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes(),levels));
   field->set_levels(levels);
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* NodeColumns::createField(const std::string& name,util::DataType datatype, const std::vector<size_t>& variables) const {
+field::Field* NodeColumns::createField(const std::string& name,array::DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -239,7 +239,7 @@ field::Field* NodeColumns::createField(const std::string& name,util::DataType da
   return field;
 }
 
-field::Field* NodeColumns::createField(const std::string& name, util::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
+field::Field* NodeColumns::createField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -258,20 +258,20 @@ field::Field* NodeColumns::createField(const std::string& name, const field::Fie
   return field;
 }
 
-field::Field* NodeColumns::createGlobalField(const std::string& name,util::DataType datatype) const {
+field::Field* NodeColumns::createGlobalField(const std::string& name,array::DataType datatype) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes_global()));
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* NodeColumns::createGlobalField(const std::string& name, util::DataType datatype, size_t levels) const {
+field::Field* NodeColumns::createGlobalField(const std::string& name, array::DataType datatype, size_t levels) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes_global(),levels));
   field->set_levels(levels);
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* NodeColumns::createGlobalField(const std::string& name, util::DataType datatype, const std::vector<size_t>& variables) const {
+field::Field* NodeColumns::createGlobalField(const std::string& name, array::DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes_global());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -279,7 +279,7 @@ field::Field* NodeColumns::createGlobalField(const std::string& name, util::Data
   return field;
 }
 
-field::Field* NodeColumns::createGlobalField(const std::string& name, util::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
+field::Field* NodeColumns::createGlobalField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes_global()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -303,19 +303,19 @@ void NodeColumns::haloExchange( field::FieldSet& fieldset ) const
   if( halo_.size() ) {
     for( size_t f=0; f<fieldset.size(); ++f ) {
       const field::Field& field = fieldset[f];
-      if     ( field.datatype() == util::DataType::kind<int>() ) {
+      if     ( field.datatype() == array::DataType::kind<int>() ) {
         array::ArrayView<int,2> view(field);
         halo_exchange().execute( view );
       }
-      else if( field.datatype() == util::DataType::kind<long>() ) {
+      else if( field.datatype() == array::DataType::kind<long>() ) {
         array::ArrayView<long,2> view(field);
         halo_exchange().execute( view );
       }
-      else if( field.datatype() == util::DataType::kind<float>() ) {
+      else if( field.datatype() == array::DataType::kind<float>() ) {
         array::ArrayView<float,2> view(field);
         halo_exchange().execute( view );
       }
-      else if( field.datatype() == util::DataType::kind<double>() ) {
+      else if( field.datatype() == array::DataType::kind<double>() ) {
         array::ArrayView<double,2> view(field);
         halo_exchange().execute( view );
       }
@@ -346,22 +346,22 @@ void NodeColumns::gather( const field::FieldSet& local_fieldset, field::FieldSet
     const field::Field& loc = local_fieldset[f];
     field::Field& glb = global_fieldset[f];
     const size_t nb_fields = 1;
-    if     ( loc.datatype() == util::DataType::kind<int>() ) {
+    if     ( loc.datatype() == array::DataType::kind<int>() ) {
       util::parallel::mpl::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
       util::parallel::mpl::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<long>() ) {
+    else if( loc.datatype() == array::DataType::kind<long>() ) {
       util::parallel::mpl::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
       util::parallel::mpl::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<float>() ) {
+    else if( loc.datatype() == array::DataType::kind<float>() ) {
       util::parallel::mpl::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
       util::parallel::mpl::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<double>() ) {
+    else if( loc.datatype() == array::DataType::kind<double>() ) {
       util::parallel::mpl::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
       util::parallel::mpl::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
@@ -397,22 +397,22 @@ void NodeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldS
     field::Field& loc = local_fieldset[f];
     const size_t nb_fields = 1;
 
-    if     ( loc.datatype() == util::DataType::kind<int>() ) {
+    if     ( loc.datatype() == array::DataType::kind<int>() ) {
       util::parallel::mpl::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
       util::parallel::mpl::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<long>() ) {
+    else if( loc.datatype() == array::DataType::kind<long>() ) {
       util::parallel::mpl::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
       util::parallel::mpl::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<float>() ) {
+    else if( loc.datatype() == array::DataType::kind<float>() ) {
       util::parallel::mpl::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
       util::parallel::mpl::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<double>() ) {
+    else if( loc.datatype() == array::DataType::kind<double>() ) {
       util::parallel::mpl::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
       util::parallel::mpl::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
@@ -452,13 +452,13 @@ std::string NodeColumns::checksum( const field::FieldSet& fieldset ) const {
   eckit::MD5 md5;
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const field::Field& field=fieldset[f];
-    if     ( field.datatype() == util::DataType::kind<int>() )
+    if     ( field.datatype() == array::DataType::kind<int>() )
       md5 << checksum_3d_field<int>(checksum(),field);
-    else if( field.datatype() == util::DataType::kind<long>() )
+    else if( field.datatype() == array::DataType::kind<long>() )
       md5 << checksum_3d_field<long>(checksum(),field);
-    else if( field.datatype() == util::DataType::kind<float>() )
+    else if( field.datatype() == array::DataType::kind<float>() )
       md5 << checksum_3d_field<float>(checksum(),field);
-    else if( field.datatype() == util::DataType::kind<double>() )
+    else if( field.datatype() == array::DataType::kind<double>() )
       md5 << checksum_3d_field<double>(checksum(),field);
     else throw eckit::Exception("datatype not supported",Here());
   }
@@ -483,13 +483,13 @@ const util::parallel::mpl::Checksum& NodeColumns::checksum() const
 //  eckit::MD5 md5;
 //  for( size_t f=0; f<fieldset.size(); ++f ) {
 //    const field::Field& field=fieldset[f];
-//    if     ( field.datatype() == util::DataType::kind<int>() )
+//    if     ( field.datatype() == array::DataType::kind<int>() )
 //      md5 << checksum.execute( field.data<int>(), field.stride(0) );
-//    else if( field.datatype() == util::DataType::kind<long>() )
+//    else if( field.datatype() == array::DataType::kind<long>() )
 //      md5 << checksum.execute( field.data<long>(), field.stride(0) );
-//    else if( field.datatype() == util::DataType::kind<float>() )
+//    else if( field.datatype() == array::DataType::kind<float>() )
 //      md5 << checksum.execute( field.data<float>(), field.stride(0) );
-//    else if( field.datatype() == util::DataType::kind<double>() )
+//    else if( field.datatype() == array::DataType::kind<double>() )
 //      md5 << checksum.execute( field.data<double>(), field.stride(0) );
 //    else throw eckit::Exception("datatype not supported",Here());
 //  }
@@ -528,32 +528,32 @@ void dispatch_sum( const NodeColumns& fs, const field::Field& field, T& result, 
 template< typename T >
 void sum( const NodeColumns& fs , const field::Field& field, T& result, size_t& N )
 {
-  if( field.datatype() == util::DataType::kind<T>() ) {
+  if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_sum(fs,field,result,N);
   }
   else
   {
     switch( field.datatype().kind() )
     {
-      case util::DataType::KIND_INT32 : {
+      case array::DataType::KIND_INT32 : {
         int tmp;
         dispatch_sum(fs,field,tmp,N);
         result = tmp;
         return;
       }
-      case util::DataType::KIND_INT64 : {
+      case array::DataType::KIND_INT64 : {
         long tmp;
         dispatch_sum(fs,field,tmp,N);
         result = tmp;
         return;
       }
-      case util::DataType::KIND_REAL32 : {
+      case array::DataType::KIND_REAL32 : {
         float tmp;
         dispatch_sum(fs,field,tmp,N);
         result = tmp;
         return;
       }
-      case util::DataType::KIND_REAL64 : {
+      case array::DataType::KIND_REAL64 : {
         double tmp;
         dispatch_sum(fs,field,tmp,N);
         result = tmp;
@@ -602,32 +602,32 @@ void dispatch_sum( const NodeColumns& fs, const field::Field& field, std::vector
 template< typename T >
 void sum( const NodeColumns& fs , const field::Field& field, std::vector<T>& result, size_t& N )
 {
-  if( field.datatype() == util::DataType::kind<T>() ) {
+  if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_sum(fs,field,result,N);
   }
   else
   {
     switch( field.datatype().kind() )
     {
-      case util::DataType::KIND_INT32 : {
+      case array::DataType::KIND_INT32 : {
         std::vector<int> tmp;
         dispatch_sum(fs,field,tmp,N);
         result.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_INT64 : {
+      case array::DataType::KIND_INT64 : {
         std::vector<long> tmp;
         dispatch_sum(fs,field,tmp,N);
         result.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL32 : {
+      case array::DataType::KIND_REAL32 : {
         std::vector<float> tmp;
         dispatch_sum(fs,field,tmp,N);
         result.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL64 : {
+      case array::DataType::KIND_REAL64 : {
         std::vector<double> tmp;
         dispatch_sum(fs,field,tmp,N);
         result.assign(tmp.begin(),tmp.end());
@@ -688,13 +688,13 @@ void sum_per_level( const NodeColumns& fs, const field::Field& field, field::Fie
   }
   switch( field.datatype().kind() )
   {
-    case util::DataType::KIND_INT32 :
+    case array::DataType::KIND_INT32 :
       return dispatch_sum_per_level<int>(fs,field,sum,N);
-    case util::DataType::KIND_INT64 :
+    case array::DataType::KIND_INT64 :
       return dispatch_sum_per_level<long>(fs,field,sum,N);
-    case util::DataType::KIND_REAL32 :
+    case array::DataType::KIND_REAL32 :
       return dispatch_sum_per_level<float>(fs,field,sum,N);
-    case util::DataType::KIND_REAL64 :
+    case array::DataType::KIND_REAL64 :
       return dispatch_sum_per_level<double>(fs,field,sum,N);
     default: throw eckit::Exception("datatype not supported",Here());
   }
@@ -739,32 +739,32 @@ void dispatch_order_independent_sum( const NodeColumns& fs , const field::Field&
 template< typename T >
 void order_independent_sum( const NodeColumns& fs , const field::Field& field, T& result, size_t& N )
 {
-  if( field.datatype() == util::DataType::kind<T>() ) {
+  if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_order_independent_sum(fs,field,result,N);
   }
   else
   {
     switch( field.datatype().kind() )
     {
-      case util::DataType::KIND_INT32 : {
+      case array::DataType::KIND_INT32 : {
         int tmp;
         dispatch_order_independent_sum(fs,field,tmp,N);
         result = tmp;
         return;
       }
-      case util::DataType::KIND_INT64 : {
+      case array::DataType::KIND_INT64 : {
         long tmp;
         dispatch_order_independent_sum(fs,field,tmp,N);
         result = tmp;
         return;
       }
-      case util::DataType::KIND_REAL32 : {
+      case array::DataType::KIND_REAL32 : {
         float tmp;
         dispatch_order_independent_sum(fs,field,tmp,N);
         result = tmp;
         return;
       }
-      case util::DataType::KIND_REAL64 : {
+      case array::DataType::KIND_REAL64 : {
         double tmp;
         dispatch_order_independent_sum(fs,field,tmp,N);
         result = tmp;
@@ -827,32 +827,32 @@ void dispatch_order_independent_sum( const NodeColumns& fs, const field::Field& 
 template< typename T >
 void order_independent_sum( const NodeColumns& fs, const field::Field& field, std::vector<T>& result, size_t& N )
 {
-  if( field.datatype() == util::DataType::kind<T>() ) {
+  if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_order_independent_sum(fs,field,result,N);
   }
   else
   {
     switch( field.datatype().kind() )
     {
-      case util::DataType::KIND_INT32 : {
+      case array::DataType::KIND_INT32 : {
           std::vector<int> tmp;
           dispatch_order_independent_sum(fs,field,tmp,N);
           result.assign(tmp.begin(),tmp.end());
           return;
       }
-      case util::DataType::KIND_INT64 : {
+      case array::DataType::KIND_INT64 : {
         std::vector<long> tmp;
         dispatch_order_independent_sum(fs,field,tmp,N);
         result.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL32 : {
+      case array::DataType::KIND_REAL32 : {
         std::vector<float> tmp;
         dispatch_order_independent_sum(fs,field,tmp,N);
         result.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL64 : {
+      case array::DataType::KIND_REAL64 : {
         std::vector<double> tmp;
         dispatch_order_independent_sum(fs,field,tmp,N);
         result.assign(tmp.begin(),tmp.end());
@@ -907,13 +907,13 @@ void order_independent_sum_per_level( const NodeColumns& fs, const field::Field&
   }
   switch( field.datatype().kind() )
   {
-    case util::DataType::KIND_INT32 :
+    case array::DataType::KIND_INT32 :
       return dispatch_order_independent_sum_per_level<int>(fs,field,sum,N);
-    case util::DataType::KIND_INT64 :
+    case array::DataType::KIND_INT64 :
       return dispatch_order_independent_sum_per_level<long>(fs,field,sum,N);
-    case util::DataType::KIND_REAL32 :
+    case array::DataType::KIND_REAL32 :
       return dispatch_order_independent_sum_per_level<float>(fs,field,sum,N);
-    case util::DataType::KIND_REAL64 :
+    case array::DataType::KIND_REAL64 :
       return dispatch_order_independent_sum_per_level<double>(fs,field,sum,N);
     default: throw eckit::Exception("datatype not supported",Here());
   }
@@ -950,32 +950,32 @@ void dispatch_minimum( const NodeColumns& fs, const field::Field& field, std::ve
 template< typename T >
 void minimum( const NodeColumns& fs, const field::Field& field, std::vector<T>& min )
 {
-  if( field.datatype() == util::DataType::kind<T>() ) {
+  if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_minimum(fs,field,min);
   }
   else
   {
     switch( field.datatype().kind() )
     {
-      case util::DataType::KIND_INT32 : {
+      case array::DataType::KIND_INT32 : {
         std::vector<int> tmp;
         dispatch_minimum(fs,field,tmp);
         min.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_INT64 : {
+      case array::DataType::KIND_INT64 : {
         std::vector<long> tmp;
         dispatch_minimum(fs,field,tmp);
         min.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL32 : {
+      case array::DataType::KIND_REAL32 : {
         std::vector<float> tmp;
         dispatch_minimum(fs,field,tmp);
         min.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL64 : {
+      case array::DataType::KIND_REAL64 : {
         std::vector<double> tmp;
         dispatch_minimum(fs,field,tmp);
         min.assign(tmp.begin(),tmp.end());
@@ -1017,32 +1017,32 @@ void dispatch_maximum( const NodeColumns& fs, const field::Field& field, std::ve
 template< typename T >
 void maximum( const NodeColumns& fs, const field::Field& field, std::vector<T>& max )
 {
-  if( field.datatype() == util::DataType::kind<T>() ) {
+  if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_maximum(fs,field,max);
   }
   else
   {
     switch( field.datatype().kind() )
     {
-      case util::DataType::KIND_INT32 : {
+      case array::DataType::KIND_INT32 : {
         std::vector<int> tmp;
         dispatch_maximum(fs,field,tmp);
         max.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_INT64 : {
+      case array::DataType::KIND_INT64 : {
         std::vector<long> tmp;
         dispatch_maximum(fs,field,tmp);
         max.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL32 : {
+      case array::DataType::KIND_REAL32 : {
         std::vector<float> tmp;
         dispatch_maximum(fs,field,tmp);
         max.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL64 : {
+      case array::DataType::KIND_REAL64 : {
         std::vector<double> tmp;
         dispatch_maximum(fs,field,tmp);
         max.assign(tmp.begin(),tmp.end());
@@ -1112,13 +1112,13 @@ void minimum_per_level( const NodeColumns& fs, const field::Field& field, field:
   }
   switch( field.datatype().kind() )
   {
-    case util::DataType::KIND_INT32 :
+    case array::DataType::KIND_INT32 :
       return dispatch_minimum_per_level<int>(fs,field,min);
-    case util::DataType::KIND_INT64 :
+    case array::DataType::KIND_INT64 :
       return dispatch_minimum_per_level<long>(fs,field,min);
-    case util::DataType::KIND_REAL32 :
+    case array::DataType::KIND_REAL32 :
       return dispatch_minimum_per_level<float>(fs,field,min);
-    case util::DataType::KIND_REAL64 :
+    case array::DataType::KIND_REAL64 :
       return dispatch_minimum_per_level<double>(fs,field,min);
     default: throw eckit::Exception("datatype not supported",Here());
   }
@@ -1167,13 +1167,13 @@ void maximum_per_level( const NodeColumns& fs, const field::Field& field, field:
   }
   switch( field.datatype().kind() )
   {
-    case util::DataType::KIND_INT32 :
+    case array::DataType::KIND_INT32 :
       return dispatch_maximum_per_level<int>(fs,field,max);
-    case util::DataType::KIND_INT64 :
+    case array::DataType::KIND_INT64 :
       return dispatch_maximum_per_level<long>(fs,field,max);
-    case util::DataType::KIND_REAL32 :
+    case array::DataType::KIND_REAL32 :
       return dispatch_maximum_per_level<float>(fs,field,max);
-    case util::DataType::KIND_REAL64 :
+    case array::DataType::KIND_REAL64 :
       return dispatch_maximum_per_level<double>(fs,field,max);
     default: throw eckit::Exception("datatype not supported",Here());
   }
@@ -1244,32 +1244,32 @@ void dispatch_minimum_and_location( const NodeColumns& fs, const field::Field& f
 template< typename T >
 void minimum_and_location( const NodeColumns& fs, const field::Field& field, std::vector<T>& min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
 {
-  if( field.datatype() == util::DataType::kind<T>() ) {
+  if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_minimum_and_location(fs,field,min,glb_idx,level);
   }
   else
   {
     switch( field.datatype().kind() )
     {
-      case util::DataType::KIND_INT32 : {
+      case array::DataType::KIND_INT32 : {
         std::vector<int> tmp;
         dispatch_minimum_and_location(fs,field,tmp,glb_idx,level);
         min.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_INT64 : {
+      case array::DataType::KIND_INT64 : {
         std::vector<long> tmp;
         dispatch_minimum_and_location(fs,field,tmp,glb_idx,level);
         min.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL32 : {
+      case array::DataType::KIND_REAL32 : {
         std::vector<float> tmp;
         dispatch_minimum_and_location(fs,field,tmp,glb_idx,level);
         min.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL64 : {
+      case array::DataType::KIND_REAL64 : {
         std::vector<double> tmp;
         dispatch_minimum_and_location(fs,field,tmp,glb_idx,level);
         min.assign(tmp.begin(),tmp.end());
@@ -1345,32 +1345,32 @@ void dispatch_maximum_and_location( const NodeColumns& fs, const field::Field& f
 template< typename T >
 void maximum_and_location( const NodeColumns& fs, const field::Field& field, std::vector<T>& max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
 {
-  if( field.datatype() == util::DataType::kind<T>() ) {
+  if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_maximum_and_location(fs,field,max,glb_idx,level);
   }
   else
   {
     switch( field.datatype().kind() )
     {
-      case util::DataType::KIND_INT32 : {
+      case array::DataType::KIND_INT32 : {
         std::vector<int> tmp;
         dispatch_maximum_and_location(fs,field,tmp,glb_idx,level);
         max.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_INT64 : {
+      case array::DataType::KIND_INT64 : {
         std::vector<long> tmp;
         dispatch_maximum_and_location(fs,field,tmp,glb_idx,level);
         max.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL32 : {
+      case array::DataType::KIND_REAL32 : {
         std::vector<float> tmp;
         dispatch_maximum_and_location(fs,field,tmp,glb_idx,level);
         max.assign(tmp.begin(),tmp.end());
         return;
       }
-      case util::DataType::KIND_REAL64 : {
+      case array::DataType::KIND_REAL64 : {
         std::vector<double> tmp;
         dispatch_maximum_and_location(fs,field,tmp,glb_idx,level);
         max.assign(tmp.begin(),tmp.end());
@@ -1503,18 +1503,18 @@ void minimum_and_location_per_level( const NodeColumns& fs, const field::Field& 
   if( field.datatype() != min.datatype() ) {
     throw eckit::Exception("field::Field and min are not of same datatype.",Here());
   }
-  if( glb_idx.datatype() != util::DataType::kind<gidx_t>() ) {
+  if( glb_idx.datatype() != array::DataType::kind<gidx_t>() ) {
     throw eckit::Exception("glb_idx field::Field is not of correct datatype",Here());
   }
   switch( field.datatype().kind() )
   {
-    case util::DataType::KIND_INT32 :
+    case array::DataType::KIND_INT32 :
       return dispatch_minimum_and_location_per_level<int>(fs,field,min,glb_idx);
-    case util::DataType::KIND_INT64 :
+    case array::DataType::KIND_INT64 :
       return dispatch_minimum_and_location_per_level<long>(fs,field,min,glb_idx);
-    case util::DataType::KIND_REAL32 :
+    case array::DataType::KIND_REAL32 :
       return dispatch_minimum_and_location_per_level<float>(fs,field,min,glb_idx);
-    case util::DataType::KIND_REAL64 :
+    case array::DataType::KIND_REAL64 :
       return dispatch_minimum_and_location_per_level<double>(fs,field,min,glb_idx);
     default: throw eckit::Exception("datatype not supported",Here());
   }
@@ -1592,18 +1592,18 @@ void maximum_and_location_per_level( const NodeColumns& fs, const field::Field& 
   if( field.datatype() != max.datatype() ) {
     throw eckit::Exception("field::Field and max are not of same datatype.",Here());
   }
-  if( glb_idx.datatype() != util::DataType::kind<gidx_t>() ) {
+  if( glb_idx.datatype() != array::DataType::kind<gidx_t>() ) {
     throw eckit::Exception("glb_idx field::Field is not of correct datatype",Here());
   }
   switch( field.datatype().kind() )
   {
-    case util::DataType::KIND_INT32 :
+    case array::DataType::KIND_INT32 :
       return dispatch_maximum_and_location_per_level<int>(fs,field,max,glb_idx);
-    case util::DataType::KIND_INT64 :
+    case array::DataType::KIND_INT64 :
       return dispatch_maximum_and_location_per_level<long>(fs,field,max,glb_idx);
-    case util::DataType::KIND_REAL32 :
+    case array::DataType::KIND_REAL32 :
       return dispatch_maximum_and_location_per_level<float>(fs,field,max,glb_idx);
-    case util::DataType::KIND_REAL64 :
+    case array::DataType::KIND_REAL64 :
       return dispatch_maximum_and_location_per_level<double>(fs,field,max,glb_idx);
     default: throw eckit::Exception("datatype not supported",Here());
   }
@@ -1644,13 +1644,13 @@ void mean_per_level( const NodeColumns& fs, const field::Field& field, field::Fi
   }
   switch( field.datatype().kind() )
   {
-    case util::DataType::KIND_INT32 :
+    case array::DataType::KIND_INT32 :
       return dispatch_mean_per_level<int>(fs,field,mean,N);
-    case util::DataType::KIND_INT64 :
+    case array::DataType::KIND_INT64 :
       return dispatch_mean_per_level<long>(fs,field,mean,N);
-    case util::DataType::KIND_REAL32 :
+    case array::DataType::KIND_REAL32 :
       return dispatch_mean_per_level<float>(fs,field,mean,N);
-    case util::DataType::KIND_REAL64 :
+    case array::DataType::KIND_REAL64 :
       return dispatch_mean_per_level<double>(fs,field,mean,N);
     default: throw eckit::Exception("datatype not supported",Here());
   }
@@ -1732,13 +1732,13 @@ void mean_and_standard_deviation_per_level( const NodeColumns& fs, const field::
   }
   switch( field.datatype().kind() )
   {
-    case util::DataType::KIND_INT32 :
+    case array::DataType::KIND_INT32 :
       return dispatch_mean_and_standard_deviation_per_level<int>(fs,field,mean,stddev,N);
-    case util::DataType::KIND_INT64 :
+    case array::DataType::KIND_INT64 :
       return dispatch_mean_and_standard_deviation_per_level<long>(fs,field,mean,stddev,N);
-    case util::DataType::KIND_REAL32 :
+    case array::DataType::KIND_REAL32 :
       return dispatch_mean_and_standard_deviation_per_level<float>(fs,field,mean,stddev,N);
-    case util::DataType::KIND_REAL64 :
+    case array::DataType::KIND_REAL64 :
       return dispatch_mean_and_standard_deviation_per_level<double>(fs,field,mean,stddev,N);
     default: throw eckit::Exception("datatype not supported",Here());
   }

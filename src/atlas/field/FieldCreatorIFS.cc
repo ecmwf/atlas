@@ -15,7 +15,7 @@
 #include "atlas/field/FieldCreatorIFS.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayUtil.h"
-#include "atlas/util/DataType.h"
+#include "atlas/array/DataType.h"
 
 namespace atlas {
 namespace field {
@@ -34,23 +34,23 @@ Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) con
   params.get("nlev",nlev);
   params.get("nvar",nvar);
 
-  util::DataType datatype = util::DataType::create<double>();
+  array::DataType datatype = array::DataType::create<double>();
   std::string datatype_str;
   if( params.get("datatype", datatype_str) )
   {
-    datatype = util::DataType(datatype_str);
+    datatype = array::DataType(datatype_str);
   }
   else
   {
-    util::DataType::kind_t kind(util::DataType::kind<double>());
+    array::DataType::kind_t kind(array::DataType::kind<double>());
     params.get("kind",kind);
-    if( ! util::DataType::kind_valid(kind) )
+    if( ! array::DataType::kind_valid(kind) )
     {
       std::stringstream msg;
       msg << "Could not create field. kind parameter unrecognized";
       throw eckit::Exception(msg.str());
     }
-    datatype = util::DataType(kind);
+    datatype = array::DataType(kind);
   }
 
   nblk = std::ceil(static_cast<double>(ngptot)/static_cast<double>(nproma));

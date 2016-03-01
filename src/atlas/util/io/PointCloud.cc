@@ -23,7 +23,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/util/DataType.h"
+#include "atlas/array/DataType.h"
 #include "atlas/util/io/PointCloud.h"
 
 namespace atlas {
@@ -171,7 +171,7 @@ void PointCloud::write(const eckit::PathName& path, const mesh::Mesh& mesh)
     const field::Field& field = nodes.field(i);
     if ( field.shape(0)==lonlat.shape(0) &&
          field.shape(1)==1 &&
-         field.datatype()==DataType::real64() )  // FIXME: no support for non-double types!
+         field.datatype()==array::DataType::real64() )  // FIXME: no support for non-double types!
     {
       vfnames.push_back(sanitize_field_name(field.name()));
       vfvalues.push_back(array::ArrayView< double, 1 >(field));

@@ -16,7 +16,7 @@
 #include <iterator>
 #include "eckit/memory/Owned.h"
 #include "atlas/array/ArrayUtil.h"
-#include "atlas/util/DataType.h"
+#include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -26,8 +26,8 @@ namespace array {
 
 class Array : public eckit::Owned {
 public:
-  static Array* create( util::DataType, const ArrayShape& );
-  static Array* create( util::DataType );
+  static Array* create( array::DataType, const ArrayShape& );
+  static Array* create( array::DataType );
   static Array* create( const Array& );
   template <typename T> static Array* create(const ArrayShape& s);
   template <typename T> static Array* create();
@@ -43,7 +43,7 @@ public:
   Array(){}
   Array(const ArraySpec& s) : spec_(s) {}
 
-  virtual util::DataType datatype() const = 0;
+  virtual array::DataType datatype() const = 0;
   virtual double bytes() const = 0;
   virtual void dump(std::ostream& os) const = 0;
 
@@ -91,22 +91,22 @@ private:
 };
 
 template <typename T> Array* Array::create(const ArrayShape& s)
-{ return create(util::DataType::create<T>(),s); }
+{ return create(array::DataType::create<T>(),s); }
 
 template <typename T> Array* Array::create()
-{ return create(util::DataType::create<T>()); }
+{ return create(array::DataType::create<T>()); }
 
 template <typename T> Array* Array::create(size_t size)
-{ return create(util::DataType::create<T>(),make_shape(size)); }
+{ return create(array::DataType::create<T>(),make_shape(size)); }
 
 template <typename T> Array* Array::create(size_t size1, size_t size2)
-{ return create(util::DataType::create<T>(),make_shape(size1,size2)); }
+{ return create(array::DataType::create<T>(),make_shape(size1,size2)); }
 
 template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3)
-{ return create(util::DataType::create<T>(),make_shape(size1,size2,size3)); }
+{ return create(array::DataType::create<T>(),make_shape(size1,size2,size3)); }
 
 template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3, size_t size4)
-{ return create(util::DataType::create<T>(),make_shape(size1,size2,size3,size4)); }
+{ return create(array::DataType::create<T>(),make_shape(size1,size2,size3,size4)); }
 
 //------------------------------------------------------------------------------------------------------
 
@@ -151,7 +151,7 @@ public:
   const DATA_TYPE& operator()(const ArrayIdx& idx) const                              { return view_(idx); }
         DATA_TYPE& operator()(const ArrayIdx& idx)                                    { return view_(idx); }
 
-  virtual util::DataType datatype() const { return util::DataType::create<DATA_TYPE>(); }
+  virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
   virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
   virtual void dump(std::ostream& os) const;
 

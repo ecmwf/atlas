@@ -1101,19 +1101,19 @@ void Gmsh::write(
         Log::info() << "writing field " << field.name()
                     << " to gmsh file " << file_path << std::endl;
 
-        if (field.datatype() == DataType::int32())
+        if (field.datatype() == array::DataType::int32())
         {
             write_field_nodes<int   >(*this,functionspace,field,file);
         }
-        else if (field.datatype() == DataType::int64())
+        else if (field.datatype() == array::DataType::int64())
         {
             write_field_nodes<long  >(*this,functionspace,field,file);
         }
-        else if (field.datatype() == DataType::real32())
+        else if (field.datatype() == array::DataType::real32())
         {
             write_field_nodes<float >(*this,functionspace,field,file);
         }
-        else if (field.datatype() == DataType::real64())
+        else if (field.datatype() == array::DataType::real64())
         {
             write_field_nodes<double>(*this,functionspace,field,file);
         }
@@ -1152,19 +1152,19 @@ void Gmsh::write(
         Log::info() << "writing field " << field.name()
                     << " to gmsh file " << file_path << std::endl;
 
-        if (field.datatype() == DataType::int32())
+        if (field.datatype() == array::DataType::int32())
         {
             write_field_nodes<int   >(*this, functionspace, field, file);
         }
-        else if (field.datatype() == DataType::int64())
+        else if (field.datatype() == array::DataType::int64())
         {
             write_field_nodes<long  >(*this, functionspace, field, file);
         }
-        else if (field.datatype() == DataType::real32())
+        else if (field.datatype() == array::DataType::real32())
         {
             write_field_nodes<float >(*this, functionspace, field, file);
         }
-        else if (field.datatype() == DataType::real64())
+        else if (field.datatype() == array::DataType::real64())
         {
             write_field_nodes<double>(*this, functionspace, field, file);
         }

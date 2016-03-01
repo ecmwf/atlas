@@ -20,7 +20,7 @@
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace util {
+namespace array {
 
 class DataType {
 public:
@@ -172,7 +172,7 @@ inline DataType DataType::create() { return DataType(DataType::kind<DATATYPE>())
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace util
+} // namespace array
 } // namespace atlas
 
 #endif

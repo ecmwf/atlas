@@ -19,7 +19,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/internals/Bitflags.h"
-#include "atlas/util/DataType.h"
+#include "atlas/array/DataType.h"
 #include "atlas/util/runtime/ErrorHandling.h"
 
 namespace atlas {

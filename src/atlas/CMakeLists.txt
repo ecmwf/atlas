@@ -244,13 +244,13 @@ array/IndexView.h
 array/IndexView.cc
 array/ArrayView.h
 array/ArrayView.cc
+array/DataType.h
 )
 
 list( APPEND atlas_util_srcs
 util/Config.h
 util/Config.cc
 util/Constants.h
-util/DataType.h
 util/Metadata.h
 util/Metadata.cc
 util/io/Gmsh.h

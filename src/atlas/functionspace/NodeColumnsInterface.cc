@@ -56,7 +56,7 @@ mesh::Nodes* atlas__NodesFunctionSpace__nodes(NodeColumns* This)
 field::Field* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind )
 {
   ASSERT(This);
-  return This->createField(std::string(name),util::DataType(kind));
+  return This->createField(std::string(name),array::DataType(kind));
 }
 
 field::Field* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
@@ -68,13 +68,13 @@ field::Field* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* T
     std::reverse_copy( variables, variables+variables_size,variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),util::DataType(kind),variables_);
+  return This->createField(std::string(name),array::DataType(kind),variables_);
 }
 
 field::Field* atlas__NodesFunctionSpace__create_field_lev (const NodeColumns* This, const char* name, int levels, int kind )
 {
   ASSERT(This);
-  return This->createField(std::string(name),util::DataType(kind),size_t(levels));
+  return This->createField(std::string(name),array::DataType(kind),size_t(levels));
 }
 
 field::Field* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind)
@@ -86,7 +86,7 @@ field::Field* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumn
     std::reverse_copy( variables, variables+variables_size,variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),util::DataType(kind),size_t(levels),variables_);
+  return This->createField(std::string(name),array::DataType(kind),size_t(levels),variables_);
 }
 
 field::Field* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field::Field* field_template )
@@ -98,7 +98,7 @@ field::Field* atlas__NodesFunctionSpace__create_field_template (const NodeColumn
 field::Field* atlas__NodesFunctionSpace__create_global_field (const NodeColumns* This, const char* name, int kind )
 {
   ASSERT(This);
-  return This->createGlobalField(std::string(name),util::DataType(kind));
+  return This->createGlobalField(std::string(name),array::DataType(kind));
 }
 
 field::Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
@@ -110,13 +110,13 @@ field::Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodeCol
     std::reverse_copy( variables, variables+variables_size, variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),util::DataType(kind),variables_);
+  return This->createGlobalField(std::string(name),array::DataType(kind),variables_);
 }
 
 field::Field* atlas__NodesFunctionSpace__create_global_field_lev (const NodeColumns* This, const char* name, int levels, int kind )
 {
   ASSERT(This);
-  return This->createGlobalField(std::string(name),util::DataType(kind),size_t(levels));
+  return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels));
 }
 
 field::Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind)
@@ -128,7 +128,7 @@ field::Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const Nod
     std::reverse_copy( variables, variables+variables_size, variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),util::DataType(kind),size_t(levels),variables_);
+  return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels),variables_);
 }
 
 field::Field* atlas__NodesFunctionSpace__create_global_field_template (const NodeColumns* This, const char* name, const field::Field* field_template )

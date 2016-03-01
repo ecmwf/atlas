@@ -19,7 +19,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/util/DataType.h"
+#include "atlas/array/DataType.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/Array.h"
 #include "atlas/util/Metadata.h"
@@ -44,7 +44,7 @@ public: // Static methods
 
   /// @brief Create field with given name, Datatype and ArrayShape
   static Field* create(
-    const std::string& name, util::DataType,
+    const std::string& name, array::DataType,
     const array::ArrayShape& = array::ArrayShape());
 
   /// @brief Create field with given name, Datatype of template and ArrayShape
@@ -61,7 +61,7 @@ public: // Static methods
 private: // Private constructors to force use of static create functions
 
   /// Allocate new Array internally
-  Field(const std::string& name, util::DataType, const array::ArrayShape&);
+  Field(const std::string& name, array::DataType, const array::ArrayShape&);
 
   /// Transfer ownership of Array
   Field(const std::string& name, array::Array* );
@@ -78,7 +78,7 @@ public: // Destructor
   /// @brief Implicit conversion to Array
   operator const array::Array&() const { return *array_; }
   operator array::Array&() { return *array_; }
-  
+
   const array::Array& array() const { return *array_; }
         array::Array& array()       { return *array_; }
 
@@ -89,7 +89,7 @@ public: // Destructor
   template <typename DATA_TYPE>       DATA_TYPE* data()        { return array_->data<DATA_TYPE>(); }
 
   /// @brief Internal data type of field
-  util::DataType datatype() const { return array_->datatype(); }
+  array::DataType datatype() const { return array_->datatype(); }
 
   /// @brief Name associated to this field
   const std::string& name() const { return name_; }
@@ -164,7 +164,7 @@ Field* Field::create(
     const std::string& name,
     const array::ArrayShape& shape )
 {
-    return create(name, util::DataType::create<DATATYPE>(), shape);
+    return create(name, array::DataType::create<DATATYPE>(), shape);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

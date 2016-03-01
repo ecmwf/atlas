@@ -31,7 +31,7 @@ namespace field {
  *         Config
  *           ("creator","ArraySpec")     // ArraySpec FieldCreator
  *           ("shape",array::make_shape(100,3))  // Rank 2 field with indexing [100][3]
- *           ("datatype",util::DataType::real64()) // Field internal data type
+ *           ("datatype",array::DataType::real64()) // Field internal data type
  *         );
  * \endcode
  */

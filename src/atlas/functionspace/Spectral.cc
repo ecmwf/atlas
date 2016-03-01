@@ -99,11 +99,11 @@ void Spectral::gather( const field::FieldSet& local_fieldset, field::FieldSet& g
 
     const field::Field& loc = local_fieldset[f];
     field::Field& glb = global_fieldset[f];
-    if( loc.datatype() != util::DataType::str<double>() )
+    if( loc.datatype() != array::DataType::str<double>() )
     {
       std::stringstream err;
       err << "Cannot gather spectral field " << loc.name() << " of datatype " << loc.datatype().str() << ".";
-      err << "Only " << util::DataType::str<double>() << " supported.";
+      err << "Only " << array::DataType::str<double>() << " supported.";
       throw eckit::BadValue(err.str());
     }
 
@@ -140,11 +140,11 @@ void Spectral::scatter( const field::FieldSet& global_fieldset, field::FieldSet&
 
     const field::Field& glb = global_fieldset[f];
     field::Field& loc = local_fieldset[f];
-    if( loc.datatype() != util::DataType::str<double>() )
+    if( loc.datatype() != array::DataType::str<double>() )
     {
       std::stringstream err;
       err << "Cannot scatter spectral field " << glb.name() << " of datatype " << glb.datatype().str() << ".";
-      err << "Only " << util::DataType::str<double>() << " supported.";
+      err << "Only " << array::DataType::str<double>() << " supported.";
       throw eckit::BadValue(err.str());
     }
 

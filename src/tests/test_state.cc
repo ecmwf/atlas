@@ -26,7 +26,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/util/DataType.h"
+#include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
 
 // ------------------------------------------------------------------
@@ -161,22 +161,22 @@ BOOST_AUTO_TEST_CASE( state_create )
 
   std::vector<util::Config> fields(5);
   fields[0].set("name","temperature");
-  fields[0].set("datatype",util::DataType::real32().str());
+  fields[0].set("datatype",array::DataType::real32().str());
 
   fields[1].set("name","wind");
   fields[1].set("nvar",2); // vector field u,v
-  fields[1].set("datatype",util::DataType::real64().str());
+  fields[1].set("datatype",array::DataType::real64().str());
 
   fields[2].set("name","soiltype");
-  fields[2].set("datatype",util::DataType::int32().str());
+  fields[2].set("datatype",array::DataType::int32().str());
   fields[2].set("nlev",1); // We can overwrite nlev from geometry here
 
   fields[3].set("name","GFL");
   fields[3].set("nvar",12); // assume 12 variables in GFL array
-  fields[3].set("datatype",util::DataType::real64().str());
+  fields[3].set("datatype",array::DataType::real64().str());
 
   fields[4].set("name","array");
-  fields[4].set("datatype",util::DataType::int64().str());
+  fields[4].set("datatype",array::DataType::int64().str());
   fields[4].set("creator","ArraySpec");
   fields[4].set("shape",array::make_shape(10,2));
 

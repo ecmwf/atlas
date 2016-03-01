@@ -11,7 +11,7 @@
 #include <iostream>
 #include "atlas/array/Array.h"
 
-using atlas::util::DataType;
+using atlas::array::DataType;
 
 namespace atlas {
 namespace array {

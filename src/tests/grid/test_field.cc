@@ -23,7 +23,7 @@
 #include "atlas/internals/Debug.h"
 #include "atlas/field/State.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/util/DataType.h"
+#include "atlas/array/DataType.h"
 
 using namespace std;
 using namespace eckit;

@@ -51,7 +51,7 @@ Field* Field::create(const eckit::Parametrisation& params)
 
 Field* Field::create(
     const std::string& name,
-    util::DataType           datatype,
+    array::DataType           datatype,
     const array::ArrayShape&  shape)
 {
   return new Field(name,datatype,shape);
@@ -66,7 +66,7 @@ Field* Field::create( const std::string& name, array::Array* array )
 
 Field::Field(
     const std::string& name,
-    util::DataType           datatype,
+    array::DataType           datatype,
     const array::ArrayShape&  shape) : name_(name), nb_levels_(0), functionspace_(0)
 {
   array_ = array::Array::create(datatype,shape);
@@ -151,7 +151,7 @@ template <> const float* Field::data() const
     std::stringstream msg;
     msg << "Could not cast data for field " << name()
         << " with datatype " << array_->datatype().str() << " to "
-        << util::DataType::str<float>();
+        << array::DataType::str<float>();
     throw eckit::BadCast(msg.str(),Here());
   }
   return 0;
@@ -169,7 +169,7 @@ template <> const double* Field::data() const
     std::stringstream msg;
     msg << "Could not cast data for field " << name()
         << " with datatype " << array_->datatype().str() << " to "
-        << util::DataType::str<double>();
+        << array::DataType::str<double>();
     throw eckit::BadCast(msg.str(),Here());
   }
   return 0;
@@ -187,7 +187,7 @@ template <> const int* Field::data() const
     std::stringstream msg;
     msg << "Could not cast data for field " << name()
         << " with datatype " << array_->datatype().str() << " to "
-        << util::DataType::str<int>();
+        << array::DataType::str<int>();
     throw eckit::BadCast(msg.str(),Here());
   }
   return 0;
@@ -205,7 +205,7 @@ template <> const long* Field::data() const
     std::stringstream msg;
     msg << "Could not cast data for field " << name()
         << " with datatype " << array_->datatype().str() << " to "
-        << util::DataType::str<long>();
+        << array::DataType::str<long>();
     throw eckit::BadCast(msg.str(),Here());
   }
   return 0;

@@ -262,12 +262,12 @@ void ReducedGridColumns::gather(
     {
         const field::Field& loc = local_fieldset[f];
         field::Field& glb = global_fieldset[f];
-        if( loc.datatype() != util::DataType::str<double>() )
+        if( loc.datatype() != array::DataType::str<double>() )
         {
             std::stringstream err;
             err << "Cannot gather ReducedGrid field " << loc.name()
                 << " of datatype " << loc.datatype().str() << ".";
-            err << "Only " << util::DataType::str<double>() << " supported.";
+            err << "Only " << array::DataType::str<double>() << " supported.";
             throw eckit::BadValue(err.str());
         }
 
@@ -324,12 +324,12 @@ void ReducedGridColumns::scatter(
     {
         const field::Field& glb = global_fieldset[f];
         field::Field& loc = local_fieldset[f];
-        if( loc.datatype() != util::DataType::str<double>() )
+        if( loc.datatype() != array::DataType::str<double>() )
         {
             std::stringstream err;
             err << "Cannot scatter ReducedGrid field " << glb.name()
                 << " of datatype " << glb.datatype().str() << ".";
-            err << "Only " << util::DataType::str<double>() << " supported.";
+            err << "Only " << array::DataType::str<double>() << " supported.";
             throw eckit::BadValue(err.str());
         }
 

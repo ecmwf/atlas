@@ -152,20 +152,20 @@ size_t EdgeColumns::nb_edges_global() const
   return nb_edges_global_;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,util::DataType datatype) const {
+field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges()));
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,util::DataType datatype, size_t levels) const {
+field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype, size_t levels) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges(),levels));
   field->set_levels(levels);
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,util::DataType datatype, const std::vector<size_t>& variables) const {
+field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_edges());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -173,7 +173,7 @@ field::Field* EdgeColumns::createField(const std::string& name,util::DataType da
   return field;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name, util::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
+field::Field* EdgeColumns::createField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_edges()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -192,20 +192,20 @@ field::Field* EdgeColumns::createField(const std::string& name, const field::Fie
   return field;
 }
 
-field::Field* EdgeColumns::createGlobalField(const std::string& name,util::DataType datatype) const {
+field::Field* EdgeColumns::createGlobalField(const std::string& name,array::DataType datatype) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges_global()));
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* EdgeColumns::createGlobalField(const std::string& name, util::DataType datatype, size_t levels) const {
+field::Field* EdgeColumns::createGlobalField(const std::string& name, array::DataType datatype, size_t levels) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges_global(),levels));
   field->set_levels(levels);
   field->set_functionspace(this);
   return field;
 }
 
-field::Field* EdgeColumns::createGlobalField(const std::string& name, util::DataType datatype, const std::vector<size_t>& variables) const {
+field::Field* EdgeColumns::createGlobalField(const std::string& name, array::DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_edges_global());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -213,7 +213,7 @@ field::Field* EdgeColumns::createGlobalField(const std::string& name, util::Data
   return field;
 }
 
-field::Field* EdgeColumns::createGlobalField(const std::string& name, util::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
+field::Field* EdgeColumns::createGlobalField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_edges_global()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
@@ -236,19 +236,19 @@ void EdgeColumns::haloExchange( field::FieldSet& fieldset ) const
 {
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const field::Field& field = fieldset[f];
-    if     ( field.datatype() == util::DataType::kind<int>() ) {
+    if     ( field.datatype() == array::DataType::kind<int>() ) {
       array::ArrayView<int,2> view(field);
       halo_exchange().execute( view );
     }
-    else if( field.datatype() == util::DataType::kind<long>() ) {
+    else if( field.datatype() == array::DataType::kind<long>() ) {
       array::ArrayView<long,2> view(field);
       halo_exchange().execute( view );
     }
-    else if( field.datatype() == util::DataType::kind<float>() ) {
+    else if( field.datatype() == array::DataType::kind<float>() ) {
       array::ArrayView<float,2> view(field);
       halo_exchange().execute( view );
     }
-    else if( field.datatype() == util::DataType::kind<double>() ) {
+    else if( field.datatype() == array::DataType::kind<double>() ) {
       array::ArrayView<double,2> view(field);
       halo_exchange().execute( view );
     }
@@ -276,22 +276,22 @@ void EdgeColumns::gather( const field::FieldSet& local_fieldset, field::FieldSet
     const field::Field& loc = local_fieldset[f];
     field::Field& glb = global_fieldset[f];
     const size_t nb_fields = 1;
-    if     ( loc.datatype() == util::DataType::kind<int>() ) {
+    if     ( loc.datatype() == array::DataType::kind<int>() ) {
       util::parallel::mpl::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
       util::parallel::mpl::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<long>() ) {
+    else if( loc.datatype() == array::DataType::kind<long>() ) {
       util::parallel::mpl::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
       util::parallel::mpl::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<float>() ) {
+    else if( loc.datatype() == array::DataType::kind<float>() ) {
       util::parallel::mpl::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
       util::parallel::mpl::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<double>() ) {
+    else if( loc.datatype() == array::DataType::kind<double>() ) {
       util::parallel::mpl::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
       util::parallel::mpl::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
@@ -327,22 +327,22 @@ void EdgeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldS
     field::Field& loc = local_fieldset[f];
     const size_t nb_fields = 1;
 
-    if     ( loc.datatype() == util::DataType::kind<int>() ) {
+    if     ( loc.datatype() == array::DataType::kind<int>() ) {
       util::parallel::mpl::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
       util::parallel::mpl::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<long>() ) {
+    else if( loc.datatype() == array::DataType::kind<long>() ) {
       util::parallel::mpl::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
       util::parallel::mpl::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<float>() ) {
+    else if( loc.datatype() == array::DataType::kind<float>() ) {
       util::parallel::mpl::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
       util::parallel::mpl::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
-    else if( loc.datatype() == util::DataType::kind<double>() ) {
+    else if( loc.datatype() == array::DataType::kind<double>() ) {
       util::parallel::mpl::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
       util::parallel::mpl::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
@@ -382,13 +382,13 @@ std::string EdgeColumns::checksum( const field::FieldSet& fieldset ) const {
   eckit::MD5 md5;
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const field::Field& field=fieldset[f];
-    if     ( field.datatype() == util::DataType::kind<int>() )
+    if     ( field.datatype() == array::DataType::kind<int>() )
       md5 << checksum_3d_field<int>(checksum(),field);
-    else if( field.datatype() == util::DataType::kind<long>() )
+    else if( field.datatype() == array::DataType::kind<long>() )
       md5 << checksum_3d_field<long>(checksum(),field);
-    else if( field.datatype() == util::DataType::kind<float>() )
+    else if( field.datatype() == array::DataType::kind<float>() )
       md5 << checksum_3d_field<float>(checksum(),field);
-    else if( field.datatype() == util::DataType::kind<double>() )
+    else if( field.datatype() == array::DataType::kind<double>() )
       md5 << checksum_3d_field<double>(checksum(),field);
     else throw eckit::Exception("datatype not supported",Here());
   }
@@ -486,7 +486,7 @@ field::Field* atlas__functionspace__Edges__create_field (const EdgeColumns* This
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createField(std::string(name),util::DataType(kind));
+    return This->createField(std::string(name),array::DataType(kind));
   );
   return 0;
 }
@@ -509,7 +509,7 @@ field::Field* atlas__functionspace__Edges__create_field_vars (
       std::reverse_copy( variables, variables+variables_size,variables_.begin() );
     else
       variables_.assign(variables,variables+variables_size);
-    return This->createField(std::string(name),util::DataType(kind),variables_);
+    return This->createField(std::string(name),array::DataType(kind),variables_);
   );
   return 0;
 }
@@ -520,7 +520,7 @@ field::Field* atlas__functionspace__Edges__create_field_lev (const EdgeColumns* 
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createField(std::string(name),util::DataType(kind),size_t(levels));
+    return This->createField(std::string(name),array::DataType(kind),size_t(levels));
   );
   return 0;
 }
@@ -544,7 +544,7 @@ field::Field* atlas__functionspace__Edges__create_field_lev_vars (
       std::reverse_copy( variables, variables+variables_size,variables_.begin() );
     else
       variables_.assign(variables,variables+variables_size);
-    return This->createField(std::string(name),util::DataType(kind),size_t(levels),variables_);
+    return This->createField(std::string(name),array::DataType(kind),size_t(levels),variables_);
   );
   return 0;
 }
@@ -566,7 +566,7 @@ field::Field* atlas__functionspace__Edges__create_global_field (const EdgeColumn
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createGlobalField(std::string(name),util::DataType(kind));
+    return This->createGlobalField(std::string(name),array::DataType(kind));
   );
   return 0;
 }
@@ -589,7 +589,7 @@ field::Field* atlas__functionspace__Edges__create_global_field_vars (
       std::reverse_copy( variables, variables+variables_size, variables_.begin() );
     else
       variables_.assign(variables,variables+variables_size);
-    return This->createGlobalField(std::string(name),util::DataType(kind),variables_);
+    return This->createGlobalField(std::string(name),array::DataType(kind),variables_);
   );
     return 0;
 }
@@ -604,7 +604,7 @@ field::Field* atlas__functionspace__Edges__create_global_field_lev (
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createGlobalField(std::string(name),util::DataType(kind),size_t(levels));
+    return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels));
   );
   return 0;
 }
@@ -628,7 +628,7 @@ field::Field* atlas__functionspace__Edges__create_global_field_lev_vars (
       std::reverse_copy( variables, variables+variables_size, variables_.begin() );
     else
       variables_.assign(variables,variables+variables_size);
-    return This->createGlobalField(std::string(name),util::DataType(kind),size_t(levels),variables_);
+    return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels),variables_);
   );
   return 0;
 }
