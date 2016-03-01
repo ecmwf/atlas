@@ -12,6 +12,7 @@
 #include <map>
 #include <string>
 #include "eckit/exception/Exceptions.h"
+#include "eckit/os/BackTrace.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "atlas/grid/Grid.h"
@@ -39,13 +40,12 @@ namespace field {
 
 namespace {
 
-template<typename T> void load_builder() { FieldCreatorBuilder<T>("tmp"); }
-
+template<typename T> void load_builder(const std::string& name) { FieldCreatorBuilder<T> tmp(name); }
 struct force_link {
     force_link()
     {
-        load_builder< FieldCreatorIFS >();
-        load_builder< FieldCreatorArraySpec >();
+        load_builder< FieldCreatorIFS >("tmp_IFS");
+        load_builder< FieldCreatorArraySpec >("tmp_ArraySpec");
     }
 };
 
@@ -72,7 +72,11 @@ FieldCreatorFactory::FieldCreatorFactory(const std::string &name):
 
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-    ASSERT(m->find(name) == m->end());
+    if( m->find(name) != m->end() )
+    {
+      std::string backtrace = eckit::BackTrace::dump();
+      throw eckit::SeriousBug("FieldCreatorFactory ["+name+"] already registered\n\nBacktrace:\n"+backtrace,Here());
+    }
     (*m)[name] = this;
 }
 
