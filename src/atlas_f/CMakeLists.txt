@@ -119,6 +119,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/runtime/ErrorHandling.h
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_value.h)
+generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
 
 
 ### atlas fortran lib
@@ -173,6 +174,8 @@ ecbuild_add_library( TARGET atlas_f
         internals/atlas_resource.cc
         internals/atlas_value.h
         internals/atlas_value.cc
+        internals/atlas_read_file.h
+        internals/atlas_read_file.cc
   PRIVATE_INCLUDES ${MPI_Fortran_INCLUDE_PATH}
   LIBS atlas ${MPI_Fortran_LIBRARIES}
 )

@@ -160,7 +160,7 @@ def C_F_binding(c_line):
             try:
                 var_type = REGEX_VAR_TYPE.search(arg).group(1)
             except AttributeError:
-                raise ParsingError, "Variable type not found " + c_line
+                raise ParsingError, "Variable type for arg ["+arg+"] not found " + c_line
 
             f_type, iso_c = iso_c_binding(arg, False)
             if iso_c not in used_types:
