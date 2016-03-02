@@ -1,5 +1,6 @@
 #include "atlas/atlas.h"
 #include "atlas/grid/grids.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
 #include "atlas/mesh/actions/GenerateMesh.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
@@ -8,8 +9,9 @@
 
 using namespace std;
 using namespace atlas;
-using namespace atlas::grids;
-using namespace atlas::meshgen;
+using namespace atlas::grid;
+using namespace atlas::mesh;
+using namespace atlas::mesh::generators;
 
 int main(int argc, char *argv[])
 {
@@ -27,7 +29,7 @@ int main(int argc, char *argv[])
     ReducedGridMeshGenerator generate_mesh;
     meshPtr = Mesh::Ptr(generate_mesh(*reducedGrid));
  
-    io::Gmsh gmsh;
+    util::io::Gmsh gmsh;
     gmsh.options.set("info", true);
     if (visualize == "3D")
     {

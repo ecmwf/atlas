@@ -10,10 +10,13 @@
 #include "eckit/config/Resource.h"
 
 using namespace std;
-using namespace atlas;
 using namespace eckit;
-using namespace atlas::grids;
-using namespace atlas::meshgen;
+using namespace atlas;
+using namespace atlas::array;
+using namespace atlas::grid;
+using namespace atlas::field;
+using namespace atlas::mesh;
+using namespace atlas::mesh::generators;
 using namespace atlas::functionspace;
 
 int main(int argc, char *argv[])
@@ -73,7 +76,7 @@ int main(int argc, char *argv[])
     }
 
     // Write mesh and field in gmsh format for visualization
-    io::Gmsh gmsh;
+    util::io::Gmsh gmsh;
     gmsh.options.set("info", true);
     gmsh.write(*mesh, "mesh.msh");
     gmsh.write(*scalarField1, *fs_rgp, "scalar1.msh");

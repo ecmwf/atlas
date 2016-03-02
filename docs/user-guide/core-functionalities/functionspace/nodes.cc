@@ -1,3 +1,5 @@
+#include "eckit/mpi/mpi.h"
+#include "eckit/config/Resource.h"
 #include "atlas/atlas.h"
 #include "atlas/grid/grids.h"
 #include "atlas/field/Field.h"
@@ -7,13 +9,15 @@
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "eckit/config/Resource.h"
 
 using namespace std;
-using namespace atlas;
 using namespace eckit;
-using namespace atlas::grids;
-using namespace atlas::meshgen;
+using namespace atlas;
+using namespace atlas::field;
+using namespace atlas::array;
+using namespace atlas::grid;
+using namespace atlas::mesh;
+using namespace atlas::mesh::generators;
 using namespace atlas::functionspace;
 
 int main(int argc, char *argv[])
@@ -36,22 +40,22 @@ int main(int argc, char *argv[])
     int nb_levels = 10;
 
     // Generate functionspace associated to mesh
-    SharedPtr<functionspace::NodeColumns> fs_nodes(new functionspace::
-                                             Nodes(*mesh, mesh::Halo(1)));
+    SharedPtr<functionspace::NodeColumns> fs_nodes(
+      new functionspace::NodeColumns(*mesh, mesh::Halo(1)));
 
     // Note on field generation
-    Field::Ptr scalarField1(fs_nodes->createField<double>
-                      ("scalar1"));
-    Field::Ptr scalarField2(fs_nodes->createField<double>
-                      ("scalar2", nb_levels));
-    Field::Ptr vectorField1(fs_nodes->createField<double>
-                      ("vector1", make_shape(2)));
-    Field::Ptr vectorField2(fs_nodes->createField<double>
-                      ("vector2", nb_levels, make_shape(2)));
-    Field::Ptr tensorField1(fs_nodes->createField<double>
-                      ("tensor1", make_shape(2,2)));
-    Field::Ptr tensorField2(fs_nodes->createField<double>
-                      ("tensor2", nb_levels, make_shape(2,2)));
+    Field::Ptr scalarField1(
+      fs_nodes->createField<double>("scalar1") );
+    Field::Ptr scalarField2(
+      fs_nodes->createField<double>("scalar2", nb_levels) );
+    Field::Ptr vectorField1(
+      fs_nodes->createField<double>("vector1", make_shape(2)) );
+    Field::Ptr vectorField2(
+      fs_nodes->createField<double>("vector2", nb_levels, make_shape(2)) );
+    Field::Ptr tensorField1(
+      fs_nodes->createField<double>("tensor1", make_shape(2,2)) );
+    Field::Ptr tensorField2(
+      fs_nodes->createField<double>("tensor2", nb_levels, make_shape(2,2)) );
     /* .... */
     // Variables for scalar1 field definition
     const double rpi = 2.0 * asin(1.0);
@@ -82,7 +86,7 @@ int main(int argc, char *argv[])
     }
 
     // Write mesh and field in gmsh format for visualization
-    io::Gmsh gmsh;
+    util::io::Gmsh gmsh;
     gmsh.options.set("info", true);
     gmsh.write(*mesh, "mesh.msh");
     gmsh.write(*scalarField1, *fs_nodes, "scalar1.msh");

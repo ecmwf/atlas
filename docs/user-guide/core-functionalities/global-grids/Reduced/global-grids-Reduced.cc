@@ -4,7 +4,7 @@
 
 using namespace std;
 using namespace atlas;
-using namespace atlas::grids;
+using namespace atlas::grid;
 
 int main(int argc, char *argv[])
 {    

@@ -5,6 +5,8 @@
 
 using namespace std;
 using namespace atlas;
+using namespace atlas::field;
+using namespace atlas::array;
 
 int main(int argc, char *argv[])
 {
