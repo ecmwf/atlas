@@ -120,9 +120,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_value.h)
 
-if( ATLAS_HAVE_DEPRECATED_FUNCTIONSPACE )
-set( DEPRECATED_FUNCTIONSPACE_SRC functionspace/atlas_deprecated_functionspace_module.F90 )
-endif()
 
 ### atlas fortran lib
 ecbuild_add_library( TARGET atlas_f
@@ -142,6 +139,7 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_HaloExchange_module.F90
         util/atlas_Logging_module.F90
         util/atlas_Error_module.F90
+        util/atlas_Value_module.F90
         functionspace/atlas_FunctionSpace_module.F90
         functionspace/atlas_functionspace_EdgeColumns_module.F90
         functionspace/atlas_functionspace_NodeColumns_module.F90
@@ -149,6 +147,7 @@ ecbuild_add_library( TARGET atlas_f
         functionspace/atlas_functionspace_Spectral_module.F90
         field/atlas_Field_module.F90
         field/atlas_FieldSet_module.F90
+        field/atlas_State_module.F90
         grid/atlas_Grid_module.F90
         grid/atlas_GridDistribution_module.F90
         grid/atlas_grids_module.F90
@@ -174,14 +173,6 @@ ecbuild_add_library( TARGET atlas_f
         internals/atlas_resource.cc
         internals/atlas_value.h
         internals/atlas_value.cc
-        ${DEPRECATED_FUNCTIONSPACE_SRC}
   PRIVATE_INCLUDES ${MPI_Fortran_INCLUDE_PATH}
   LIBS atlas ${MPI_Fortran_LIBRARIES}
-)
-
-add_custom_target( atlas_fortran_inc SOURCES
-   field/atlas_module_State_i.f
-   field/atlas_module_State_c.f
-   util/atlas_module_Value_i.f
-   util/atlas_module_Value_c.f
 )

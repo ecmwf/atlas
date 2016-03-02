@@ -46,6 +46,8 @@ use atlas_Field_module, only: &
     & atlas_logical
 use atlas_FieldSet_module, only: &
     & atlas_FieldSet
+use atlas_State_module, only: &
+    & atlas_State
 use atlas_Config_module, only: &
     & atlas_config
 use atlas_JSON_module, only: &
@@ -155,6 +157,8 @@ use atlas_Nabla_module, only: &
 use atlas_resource_module, only: &
     & atlas_resource, &
     & atlas_resource_set
+use atlas_Value_module, only: &
+    & atlas_Value
 
 
 use atlas_actions_module
@@ -162,10 +166,6 @@ use atlas_actions_module
 implicit none
 
 public
-
-
-#include "field/atlas_module_State_i.f"
-#include "util/atlas_module_Value_i.f"
 
 
 ! =============================================================================
@@ -194,9 +194,6 @@ subroutine atlas_finalize()
   use atlas_atlas_c_binding
   call atlas__atlas_finalize()
 end subroutine
-
-#include "field/atlas_module_State_c.f"
-#include "util/atlas_module_Value_c.f"
 
 ! -----------------------------------------------------------------------------
 
