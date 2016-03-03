@@ -17,6 +17,9 @@
 #include "eckit/memory/Owned.h"
 #include "atlas/array/ArrayView.h"
 
+//-----------------------------------------------------------------------------
+// Forward declarations
+
 namespace atlas {
 namespace field {
     class Field;
@@ -43,11 +46,17 @@ namespace functionspace {
 }
 }
 
+//-----------------------------------------------------------------------------
+
 namespace atlas {
 namespace numerics {
 namespace trans {
 
+//-----------------------------------------------------------------------------
+
 enum FFT { FFT992=TRANS_FFT992, FFTW=TRANS_FFTW };
+
+//-----------------------------------------------------------------------------
 
 class TransParameters : public eckit::Properties {
 public:
@@ -57,6 +66,7 @@ public:
   static const char* className() { return "atlas::trans::TransParameters"; }
 };
 
+//-----------------------------------------------------------------------------
 
 class Trans : public eckit::Owned {
 private:
@@ -384,9 +394,8 @@ private:
   mutable Trans_t trans_;
 };
 
+//-----------------------------------------------------------------------------
 
-
-// ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 #define functionspace_NodeColumns functionspace::NodeColumns
 #define functionspace_Spectral functionspace::Spectral

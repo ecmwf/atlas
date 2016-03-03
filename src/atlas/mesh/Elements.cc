@@ -62,7 +62,7 @@ const std::string& Elements::name() const
 }
 
 template<> array::ArrayView<double,1> Elements::view( const field::Field& field ) const
-{ 
+{
   return array::ArrayView<double,1>( field.data<double>()+begin(), array::make_shape(size()) );
 }
 
@@ -72,12 +72,12 @@ template<> array::ArrayView<float,1> Elements::view( const field::Field& field )
 }
 
 template<> array::ArrayView<int,1> Elements::view( const field::Field& field ) const
-{ 
+{
   return array::ArrayView<int,1>( field.data<int>()+begin(), array::make_shape(size()) );
 }
 
 template<> array::ArrayView<long,1> Elements::view( const field::Field& field ) const
-{ 
+{
   return array::ArrayView<long,1>( field.data<long>()+begin(), array::make_shape(size()) );
 }
 
@@ -109,7 +109,7 @@ template<> array::ArrayView<long,2> Elements::view( const field::Field& field ) 
 size_t Elements::add(const size_t nb_elements)
 {
   size_t position = size();
-  hybrid_elements_->insert(end(),nb_elements);
+  hybrid_elements_->insert(type_idx_,end(),nb_elements);
   return position;
 }
 

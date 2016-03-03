@@ -235,9 +235,8 @@ size_t HybridElements::elemtype_nb_edges(size_t elem_idx) const
   return element_type( type_idx(elem_idx) ).nb_edges();
 }
 
-void HybridElements::insert( size_t position, size_t nb_elements )
+void HybridElements::insert( size_t type_idx, size_t position, size_t nb_elements )
 {
-  size_t type_idx = type_idx_[std::max(0ul,position-1ul)];
   type_idx_.insert(type_idx_.begin()+position,nb_elements,type_idx);
   elements_size_[type_idx] += nb_elements;
   for( size_t jtype=type_idx+1; jtype<nb_types()+1; ++jtype )

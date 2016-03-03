@@ -108,7 +108,7 @@ public: // methods
   /// @return type_idx of the added element type
   size_t add( const Elements& );
 
-  void insert( size_t position, size_t nb_elements = 1 );
+  void insert( size_t type_idx, size_t position, size_t nb_elements = 1 );
 
   void clear();
 

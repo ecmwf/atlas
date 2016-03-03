@@ -238,7 +238,13 @@ public:
 
   /// @brief Construct connectivity table wrapping existing raw data.
   /// No resizing can be performed as data is not owned.
-  MultiBlockConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[], size_t blocks, size_t block_displs[] );
+  MultiBlockConnectivity(
+      idx_t values[],
+      size_t rows,
+      size_t displs[],
+      size_t counts[],
+      size_t blocks, size_t block_displs[],
+      size_t block_cols[] );
 
   ~MultiBlockConnectivity();
 
@@ -299,8 +305,10 @@ private:
 
 private:
   std::vector<size_t> owned_block_displs_;
+  std::vector<size_t> owned_block_cols_;
   size_t blocks_;
   size_t *block_displs_;
+  size_t *block_cols_;
   std::vector< eckit::SharedPtr<BlockConnectivity> > block_;
 };
 
