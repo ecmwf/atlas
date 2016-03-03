@@ -16,7 +16,7 @@
 #include "atlas/internals/Bitflags.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
 namespace internals {

@@ -9,12 +9,10 @@
  */
 
 #include <cstring>
-#include "atlas/util/parallel/mpl/Checksum.h"
+#include "atlas/parallel/Checksum.h"
 
 namespace atlas {
-namespace util {
 namespace parallel {
-namespace mpl {
 
 Checksum::Checksum() :
   name_()
@@ -129,7 +127,5 @@ void atlas__Checksum__execute_strided_double ( Checksum* This,
 
 /////////////////////
 
-} // namespace mpl
 } // namespace parallel
-} // namespace util
 } // namespace atlas

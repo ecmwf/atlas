@@ -20,7 +20,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/array/DataType.h"
-#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 namespace atlas {
 namespace functionspace {

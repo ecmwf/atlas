@@ -15,8 +15,8 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/ReducedGridColumns.h"
 #include "atlas/internals/Checksum.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/numerics/trans/Trans.h"

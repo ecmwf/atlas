@@ -12,7 +12,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/Spectral.h"
-#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/numerics/trans/Trans.h"

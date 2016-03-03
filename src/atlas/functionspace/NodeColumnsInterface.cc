@@ -9,7 +9,7 @@
  */
 
 #include "atlas/functionspace/NodeColumnsInterface.h"
-#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 namespace atlas {
 namespace functionspace {
@@ -152,7 +152,7 @@ void atlas__NodesFunctionSpace__halo_exchange_field(const NodeColumns* This, fie
   ATLAS_ERROR_HANDLING( This->haloExchange(*field); );
 }
 
-const util::parallel::mpl::HaloExchange* atlas__NodesFunctionSpace__get_halo_exchange(const NodeColumns* This)
+const parallel::HaloExchange* atlas__NodesFunctionSpace__get_halo_exchange(const NodeColumns* This)
 {
   ASSERT(This);
   ATLAS_ERROR_HANDLING( return &This->halo_exchange(); );
@@ -175,14 +175,14 @@ void atlas__NodesFunctionSpace__gather_field(const NodeColumns* This, const fiel
   ATLAS_ERROR_HANDLING( This->gather(*local,*global); );
 }
 
-const util::parallel::mpl::GatherScatter* atlas__NodesFunctionSpace__get_gather(const NodeColumns* This)
+const parallel::GatherScatter* atlas__NodesFunctionSpace__get_gather(const NodeColumns* This)
 {
   ASSERT(This);
   ATLAS_ERROR_HANDLING( return &This->gather(); );
   return 0;
 }
 
-const util::parallel::mpl::GatherScatter* atlas__NodesFunctionSpace__get_scatter(const NodeColumns* This)
+const parallel::GatherScatter* atlas__NodesFunctionSpace__get_scatter(const NodeColumns* This)
 {
   ASSERT(This);
   ATLAS_ERROR_HANDLING( return &This->scatter(); );
@@ -205,7 +205,7 @@ void atlas__NodesFunctionSpace__scatter_field(const NodeColumns* This, const fie
   ATLAS_ERROR_HANDLING( This->scatter(*global,*local); );
 }
 
-const util::parallel::mpl::Checksum* atlas__NodesFunctionSpace__get_checksum(const NodeColumns* This)
+const parallel::Checksum* atlas__NodesFunctionSpace__get_checksum(const NodeColumns* This)
 {
   ASSERT(This);
   ATLAS_ERROR_HANDLING( return &This->checksum(); );

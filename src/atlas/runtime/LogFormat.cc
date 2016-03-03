@@ -1,13 +1,12 @@
 #include <cmath>
 #include "eckit/log/TimeStamp.h"
 #include "eckit/log/MultiChannel.h"
-#include "atlas/util/runtime/LogFormat.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/runtime/LogFormat.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 using namespace eckit;
 
 namespace atlas {
-namespace util {
 namespace runtime {
 
 namespace {
@@ -137,7 +136,7 @@ std::ostream& operator<< (std::ostream& stream, const indent& s)
     MultiChannel::iterator it;
     for( it=ch->begin(); it!=ch->end(); ++it )
     {
-       FormattedChannel* formatted_ch = dynamic_cast<atlas::util::runtime::FormattedChannel*>(it->second.get());
+       FormattedChannel* formatted_ch = dynamic_cast<atlas::runtime::FormattedChannel*>(it->second.get());
        if( formatted_ch )
          formatted_ch->format().indent( s );
     }
@@ -155,7 +154,7 @@ std::ostream& operator<< (std::ostream& stream, const dedent& _dedent)
     MultiChannel::iterator it;
     for( it=ch->begin(); it!=ch->end(); ++it )
     {
-       FormattedChannel* formatted_ch = dynamic_cast<atlas::util::runtime::FormattedChannel*>(it->second.get());
+       FormattedChannel* formatted_ch = dynamic_cast<atlas::runtime::FormattedChannel*>(it->second.get());
        if( formatted_ch )
          formatted_ch->format().dedent();
     }
@@ -165,7 +164,6 @@ std::ostream& operator<< (std::ostream& stream, const dedent& _dedent)
 }
 
 } // namespace runtime
-} // namespace util
 } // namespace atlas
 
 

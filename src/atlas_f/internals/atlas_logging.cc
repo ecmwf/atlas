@@ -1,11 +1,11 @@
 #include "atlas_f/internals/atlas_logging.h"
-#include "atlas/util/runtime/Log.h"
 #include "eckit/runtime/Context.h"
 #include "eckit/runtime/ContextBehavior.h"
 #include "eckit/log/MultiChannel.h"
 #include "eckit/log/CallbackChannel.h"
-#include "atlas/util/runtime/LogFormat.h"
-#include "atlas/util/runtime/Behavior.h"
+#include "atlas/runtime/LogFormat.h"
+#include "atlas/runtime/Behavior.h"
+#include "atlas/runtime/Log.h"
 
 using namespace eckit;
 using namespace atlas;
@@ -33,11 +33,11 @@ private:
   int unit_;
 };
 
-class FormattedFortranUnitChannel: public util::runtime::FormattedChannel
+class FormattedFortranUnitChannel: public runtime::FormattedChannel
 {
 public:
-  FormattedFortranUnitChannel( FortranUnitChannel* fortran_unit, util::runtime::LogFormat* format ):
-    util::runtime::FormattedChannel( fortran_unit, format )
+  FormattedFortranUnitChannel( FortranUnitChannel* fortran_unit, runtime::LogFormat* format ):
+    runtime::FormattedChannel( fortran_unit, format )
   {
     fortran_unit_ = fortran_unit;
   }
@@ -105,7 +105,7 @@ MultiChannel* atlas__LogChannel_cat(int cat)
 void atlas__LogChannel__connect_stdout( MultiChannel* ch )
 {
   if( !ch->has("console") )
-    ch->add( "console" , new FormatChannel(util::runtime::standard_out(), new util::runtime::LogFormat() ) );
+    ch->add( "console" , new FormatChannel(runtime::standard_out(), new runtime::LogFormat() ) );
 }
 
 void atlas__logcat__connect_stdout (int cat)
@@ -133,7 +133,7 @@ void atlas__logcat__disconnect_stdout (int cat)
 void atlas__LogChannel__connect_stderr( MultiChannel* ch )
 {
   if( !ch->has("stderr") )
-    ch->add( "stderr" , new FormatChannel(util::runtime::standard_error(), new util::runtime::LogFormat() ) );
+    ch->add( "stderr" , new FormatChannel(runtime::standard_error(), new runtime::LogFormat() ) );
 }
 
 void atlas__logcat__connect_stderr (int cat)
@@ -162,7 +162,7 @@ void atlas__logcat__disconnect_stderr (int cat)
 void atlas__LogChannel__connect_fortran_unit (MultiChannel* ch, int unit)
 {
   FormattedFortranUnitChannel* formatted_fortran_unit =
-      new FormattedFortranUnitChannel( new FortranUnitChannel(unit), new util::runtime::LogFormat() );
+      new FormattedFortranUnitChannel( new FortranUnitChannel(unit), new runtime::LogFormat() );
 
   std::stringstream channel_name; channel_name << "fortran_unit_"<<unit;
   ch->add( channel_name.str() , formatted_fortran_unit ); // pass ownership
@@ -194,7 +194,7 @@ void atlas__LogChannel__set_prefix (MultiChannel* ch, char* prefix)
   MultiChannel::iterator it;
   for( it=ch->begin(); it!=ch->end(); ++it )
   {
-     util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(it->second.get());
+     runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(it->second.get());
      if( formatted_ch )
        formatted_ch->format().set_prefix(std::string(prefix));
   }
@@ -206,7 +206,7 @@ void atlas__LogChannel__set_prefix_stdout (MultiChannel* ch, char* prefix)
 {
   if( ch->has("console") )
   {
-    util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get("console"));
+    runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get("console"));
     if( !formatted_ch )
       throw BadCast("Cannot cast channel to atlas::FormattedChannel");
     formatted_ch->format().set_prefix(std::string(prefix));
@@ -224,9 +224,9 @@ void atlas__LogChannel__set_prefix_stderr (MultiChannel* ch, char* prefix)
 {
   if( ch->has("stderr") )
   {
-    util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get("stderr"));
+    runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get("stderr"));
     if( !formatted_ch )
-      throw BadCast("Cannot cast channel to util::runtime::FormattedChannel");
+      throw BadCast("Cannot cast channel to runtime::FormattedChannel");
     formatted_ch->format().set_prefix(std::string(prefix));
   }
 }
@@ -248,9 +248,9 @@ void atlas__LogChannel__set_prefix_fortran_unit ( MultiChannel* ch,  int unit, c
     throw BadParameter( msg.str(), Here() );
   }
 
-  util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get(channel_name.str()));
+  runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get(channel_name.str()));
   if( !formatted_ch )
-    throw BadCast("Cannot cast channel to util::runtime::FormattedChannel");
+    throw BadCast("Cannot cast channel to runtime::FormattedChannel");
   formatted_ch->format().set_prefix(prefix);
 }
 
@@ -266,7 +266,7 @@ void atlas__LogChannel__indent (MultiChannel* ch, char* indent)
   MultiChannel::iterator it;
   for( it=ch->begin(); it!=ch->end(); ++it )
   {
-     util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(it->second.get());
+     runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(it->second.get());
      if( formatted_ch )
        formatted_ch->format().indent( std::string(indent) );
   }
@@ -284,9 +284,9 @@ void atlas__LogChannel__indent_stdout (MultiChannel* ch, char* indent)
 {
   if( ch->has("console") )
   {
-    util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get("console"));
+    runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get("console"));
     if( !formatted_ch )
-      throw BadCast("Cannot cast channel to util::runtime::FormattedChannel");
+      throw BadCast("Cannot cast channel to runtime::FormattedChannel");
     formatted_ch->format().indent( std::string(indent) );
   }
 }
@@ -297,9 +297,9 @@ void atlas__LogChannel__indent_stderr (MultiChannel* ch, char* indent)
 {
   if( ch->has("stderr") )
   {
-    util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get("stderr"));
+    runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get("stderr"));
     if( !formatted_ch )
-      throw BadCast("Cannot cast channel to util::runtime::FormattedChannel");
+      throw BadCast("Cannot cast channel to runtime::FormattedChannel");
     formatted_ch->format().indent( std::string(indent) );
   }
 }
@@ -316,9 +316,9 @@ void atlas__LogChannel__indent_fortran_unit (MultiChannel* ch, int unit, char* i
     throw BadParameter( msg.str(), Here() );
   }
 
-  util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get(channel_name.str()));
+  runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get(channel_name.str()));
   if( !formatted_ch )
-    throw BadCast("Cannot cast channel to util::runtime::FormattedChannel");
+    throw BadCast("Cannot cast channel to runtime::FormattedChannel");
   formatted_ch->format().indent( std::string(indent) );
 }
 
@@ -329,7 +329,7 @@ void atlas__LogChannel__dedent (MultiChannel* ch)
   MultiChannel::iterator it;
   for( it=ch->begin(); it!=ch->end(); ++it )
   {
-     util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(it->second.get());
+     runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(it->second.get());
      if( formatted_ch )
        formatted_ch->format().dedent();
   }
@@ -346,7 +346,7 @@ void atlas__LogChannel__dedent_stdout (MultiChannel* ch)
 {
   if( ch->has("console") )
   {
-    util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get("console"));
+    runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get("console"));
     if( !formatted_ch )
       throw BadCast("Cannot cast channel to atlas::FormattedChannel");
     formatted_ch->format().dedent();
@@ -359,9 +359,9 @@ void atlas__LogChannel__dedent_stderr (MultiChannel* ch)
 {
   if( ch->has("stderr") )
   {
-    util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get("stderr"));
+    runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get("stderr"));
     if( !formatted_ch )
-      throw BadCast("Cannot cast channel to util::runtime::FormattedChannel");
+      throw BadCast("Cannot cast channel to runtime::FormattedChannel");
     formatted_ch->format().dedent();
   }
 }
@@ -378,9 +378,9 @@ void atlas__LogChannel__dedent_fortran_unit (MultiChannel* ch, int unit)
     throw BadParameter( msg.str(), Here() );
   }
 
-  util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get(channel_name.str()));
+  runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get(channel_name.str()));
   if( !formatted_ch )
-    throw BadCast("Cannot cast channel to util::runtime::FormattedChannel");
+    throw BadCast("Cannot cast channel to runtime::FormattedChannel");
   formatted_ch->format().dedent();
 }
 
@@ -391,7 +391,7 @@ void atlas__LogChannel__clear_indentation (MultiChannel* ch)
   MultiChannel::iterator it;
   for( it=ch->begin(); it!=ch->end(); ++it )
   {
-     util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(it->second.get());
+     runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(it->second.get());
      if( formatted_ch )
        formatted_ch->format().clear_indentation();
   }
@@ -408,9 +408,9 @@ void atlas__LogChannel__clear_indentation_stdout (MultiChannel* ch)
 {
   if( ch->has("console") )
   {
-    util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get("console"));
+    runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get("console"));
     if( !formatted_ch )
-      throw BadCast("Cannot cast channel to util::runtime::FormattedChannel");
+      throw BadCast("Cannot cast channel to runtime::FormattedChannel");
     formatted_ch->format().clear_indentation();
   }
 }
@@ -421,9 +421,9 @@ void atlas__LogChannel__clear_indentation_stderr (MultiChannel* ch)
 {
   if( ch->has("stderr") )
   {
-    util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get("stderr"));
+    runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get("stderr"));
     if( !formatted_ch )
-      throw BadCast("Cannot cast channel to util::runtime::FormattedChannel");
+      throw BadCast("Cannot cast channel to runtime::FormattedChannel");
     formatted_ch->format().clear_indentation();
   }
 }
@@ -440,9 +440,9 @@ void atlas__LogChannel__clear_indentation_fortran_unit (MultiChannel* ch, int un
     throw BadParameter( msg.str(), Here() );
   }
 
-  util::runtime::FormattedChannel* formatted_ch = dynamic_cast<util::runtime::FormattedChannel*>(&ch->get(channel_name.str()));
+  runtime::FormattedChannel* formatted_ch = dynamic_cast<runtime::FormattedChannel*>(&ch->get(channel_name.str()));
   if( !formatted_ch )
-    throw BadCast("Cannot cast channel to util::runtime::FormattedChannel");
+    throw BadCast("Cannot cast channel to runtime::FormattedChannel");
   formatted_ch->format().clear_indentation();
 }
 

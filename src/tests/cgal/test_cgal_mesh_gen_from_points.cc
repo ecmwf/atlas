@@ -20,7 +20,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/generators/Delaunay.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 //------------------------------------------------------------------------------------------------------
 

@@ -33,7 +33,7 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/BuildStatistics.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/grids.h"

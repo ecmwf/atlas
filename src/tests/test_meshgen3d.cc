@@ -18,7 +18,7 @@
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 
 using namespace atlas::util::io;

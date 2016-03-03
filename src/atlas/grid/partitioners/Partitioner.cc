@@ -16,8 +16,8 @@
 #include "atlas/atlas_defines.h"
 #include "atlas/grid/partitioners/Partitioner.h"
 #include "atlas/grid/GridDistribution.h"
-#include "atlas/util/runtime/Log.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/grid/partitioners/TransPartitioner.h"

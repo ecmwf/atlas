@@ -23,12 +23,22 @@ namespace atlas {
 namespace mesh {
     class Mesh;
     class HybridElements;
-} }
+}
+}
 
 namespace atlas {
 namespace field {
     class FieldSet;
-} }
+}
+}
+
+namespace atlas {
+namespace parallel {
+    class HaloExchange;
+    class GatherScatter;
+    class Checksum;
+}
+}
 
 namespace atlas {
 namespace functionspace {
@@ -109,19 +119,19 @@ public:
 
     void haloExchange( field::FieldSet& ) const;
     void haloExchange( field::Field& ) const;
-    const util::parallel::mpl::HaloExchange& halo_exchange() const;
+    const parallel::HaloExchange& halo_exchange() const;
 
     void gather( const field::FieldSet&, field::FieldSet& ) const;
     void gather( const field::Field&, field::Field& ) const;
-    const util::parallel::mpl::GatherScatter& gather() const;
+    const parallel::GatherScatter& gather() const;
 
     void scatter( const field::FieldSet&, field::FieldSet& ) const;
     void scatter( const field::Field&, field::Field& ) const;
-    const util::parallel::mpl::GatherScatter& scatter() const;
+    const parallel::GatherScatter& scatter() const;
 
     std::string checksum( const field::FieldSet& ) const;
     std::string checksum( const field::Field& ) const;
-    const util::parallel::mpl::Checksum& checksum() const;
+    const parallel::Checksum& checksum() const;
 
 private: // methods
 
@@ -136,9 +146,9 @@ private: // data
     size_t nb_edges_;
     size_t nb_edges_global_;
 
-    eckit::SharedPtr<util::parallel::mpl::GatherScatter> gather_scatter_; // without ghost
-    eckit::SharedPtr<util::parallel::mpl::HaloExchange>  halo_exchange_;
-    eckit::SharedPtr<util::parallel::mpl::Checksum>      checksum_;
+    eckit::SharedPtr<parallel::GatherScatter> gather_scatter_; // without ghost
+    eckit::SharedPtr<parallel::HaloExchange>  halo_exchange_;
+    eckit::SharedPtr<parallel::Checksum>      checksum_;
 };
 
 // -------------------------------------------------------------------
@@ -194,9 +204,9 @@ field::Field* EdgeColumns::createGlobalField(const std::string& name, size_t lev
 // -------------------------------------------------------------------------------
 #define mesh_Edges mesh::HybridElements
 #define Char char
-#define GatherScatter util::parallel::mpl::GatherScatter
-#define Checksum util::parallel::mpl::Checksum
-#define HaloExchange util::parallel::mpl::HaloExchange
+#define GatherScatter parallel::GatherScatter
+#define Checksum parallel::Checksum
+#define HaloExchange parallel::HaloExchange
 #define field_Field field::Field
 #define field_FieldSet field::FieldSet
 #define mesh_Mesh mesh::Mesh

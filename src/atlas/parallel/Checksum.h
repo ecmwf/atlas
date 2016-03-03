@@ -17,14 +17,12 @@
 #include "eckit/utils/Translator.h"
 #include "atlas/internals/Checksum.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/util/runtime/Log.h"
-#include "atlas/util/parallel/mpi/mpi.h"
-#include "atlas/util/parallel/mpl/GatherScatter.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/GatherScatter.h"
 
 namespace atlas {
-namespace util {
 namespace parallel {
-namespace mpl {
 
 class Checksum: public eckit::Owned {
 
@@ -108,8 +106,8 @@ std::string Checksum::execute( const DATA_TYPE data[],
   }
 
   std::vector<internals::checksum_t> global_checksums(gather_.glb_dof());
-  util::parallel::mpl::Field<internals::checksum_t const> loc(local_checksums.data(),1);
-  util::parallel::mpl::Field<internals::checksum_t> glb(global_checksums.data(),1);
+  parallel::Field<internals::checksum_t const> loc(local_checksums.data(),1);
+  parallel::Field<internals::checksum_t> glb(global_checksums.data(),1);
   gather_.gather(&loc,&glb,1);
 
   internals::checksum_t glb_checksum = internals::checksum(
@@ -183,9 +181,7 @@ extern "C"
 }
 // ------------------------------------------------------------------
 
-} // namespace mpl
 } // namespace parallel
-} // namespace util
 } // namespace atlas
 
 #endif // Checksum_h

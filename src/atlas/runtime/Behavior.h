@@ -3,10 +3,9 @@
 
 #include "eckit/log/Channel.h"
 #include "eckit/mpi/ParallelContextBehavior.h"
-#include "atlas/util/runtime/LogFormat.h"
+#include "atlas/runtime/LogFormat.h"
 
 namespace atlas {
-namespace util {
 namespace runtime {
 
 eckit::Channel& standard_out();
@@ -71,7 +70,6 @@ private:
 };
 
 } // namespace runtime
-} // namespace util
 } // namespace atlas
 
 #endif // atlas_Behavior_h

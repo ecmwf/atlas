@@ -18,7 +18,7 @@
 #include "eckit/config/ResourceMgr.h"
 #include "eckit/geometry/Point3.h"
 #include "atlas/atlas.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "atlas/grid/GaussianLatitudes.h"
 #include "atlas/grid/grids.h"

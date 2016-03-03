@@ -16,7 +16,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/actions/BuildConvexHull3D.h"
 #include "atlas/mesh/HybridElements.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace mesh {

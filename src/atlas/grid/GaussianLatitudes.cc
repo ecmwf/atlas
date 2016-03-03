@@ -17,7 +17,7 @@
 #include "atlas/grid/predefined/gausslat/gausslat.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Constants.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 
 using eckit::ConcreteBuilderT0;
 using eckit::Factory;

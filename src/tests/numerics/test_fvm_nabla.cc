@@ -28,7 +28,7 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 using namespace eckit;
 using namespace atlas::numerics;

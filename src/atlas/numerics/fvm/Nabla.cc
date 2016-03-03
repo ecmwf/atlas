@@ -20,9 +20,9 @@
 #include "atlas/internals/Bitflags.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/util/parallel/atlas_omp.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 
 // =======================================================
 

@@ -20,8 +20,8 @@
 #include "atlas/numerics/fvm/Nabla.h"
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/util/Config.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Log.h"
 
 namespace {
 

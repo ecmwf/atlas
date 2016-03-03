@@ -11,7 +11,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 namespace atlas {
 namespace field {

@@ -18,8 +18,8 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/State.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Log.h"
 
 using eckit::SharedPtr;
 using eckit::ScopedPtr;

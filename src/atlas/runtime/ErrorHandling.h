@@ -4,7 +4,6 @@
 #include "eckit/exception/Exceptions.h"
 
 namespace atlas {
-namespace util {
 namespace runtime {
 
 static const int atlas_err_cleared         =  1 ;
@@ -27,16 +26,16 @@ void handle_error(const eckit::Exception& exception, const int err_code);
 
 #define ATLAS_ERROR_HANDLING(STATEMENTS) \
 do { try{ STATEMENTS; } \
-catch (eckit::SeriousBug&      e ) { atlas::util::runtime::handle_error(e, atlas::util::runtime::atlas_err_seriousbug);      } \
-catch (eckit::NotImplemented&  e ) { atlas::util::runtime::handle_error(e, atlas::util::runtime::atlas_err_notimplemented);  } \
-catch (eckit::OutOfRange&      e ) { atlas::util::runtime::handle_error(e, atlas::util::runtime::atlas_err_outofrange);      } \
-catch (eckit::UserError&       e ) { atlas::util::runtime::handle_error(e, atlas::util::runtime::atlas_err_usererror);       } \
-catch (eckit::AssertionFailed& e ) { atlas::util::runtime::handle_error(e, atlas::util::runtime::atlas_err_assertionfailed); } \
-catch (eckit::BadParameter&    e ) { atlas::util::runtime::handle_error(e, atlas::util::runtime::atlas_err_badparameter);    } \
-catch (eckit::ReadError&       e ) { atlas::util::runtime::handle_error(e, atlas::util::runtime::atlas_err_readerror);       } \
-catch (eckit::WriteError&      e ) { atlas::util::runtime::handle_error(e, atlas::util::runtime::atlas_err_writeerror);      } \
-catch (eckit::Exception&       e ) { atlas::util::runtime::handle_error(e, atlas::util::runtime::atlas_err_exception);       } \
-catch (...) { atlas::util::runtime::handle_error(eckit::Exception("Unknown exception"),atlas::util::runtime::atlas_err_exception); } \
+catch (eckit::SeriousBug&      e ) { atlas::runtime::handle_error(e, atlas::runtime::atlas_err_seriousbug);      } \
+catch (eckit::NotImplemented&  e ) { atlas::runtime::handle_error(e, atlas::runtime::atlas_err_notimplemented);  } \
+catch (eckit::OutOfRange&      e ) { atlas::runtime::handle_error(e, atlas::runtime::atlas_err_outofrange);      } \
+catch (eckit::UserError&       e ) { atlas::runtime::handle_error(e, atlas::runtime::atlas_err_usererror);       } \
+catch (eckit::AssertionFailed& e ) { atlas::runtime::handle_error(e, atlas::runtime::atlas_err_assertionfailed); } \
+catch (eckit::BadParameter&    e ) { atlas::runtime::handle_error(e, atlas::runtime::atlas_err_badparameter);    } \
+catch (eckit::ReadError&       e ) { atlas::runtime::handle_error(e, atlas::runtime::atlas_err_readerror);       } \
+catch (eckit::WriteError&      e ) { atlas::runtime::handle_error(e, atlas::runtime::atlas_err_writeerror);      } \
+catch (eckit::Exception&       e ) { atlas::runtime::handle_error(e, atlas::runtime::atlas_err_exception);       } \
+catch (...) { atlas::runtime::handle_error(eckit::Exception("Unknown exception"),atlas::runtime::atlas_err_exception); } \
 } while (0)
 
 
@@ -79,7 +78,6 @@ private:
 };
 
 } // namespace runtime
-} // namespace util
 } // namespace atlas
 
 extern "C"

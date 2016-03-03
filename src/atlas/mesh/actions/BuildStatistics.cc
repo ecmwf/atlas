@@ -28,8 +28,8 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Constants.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/parallel/mpl/Checksum.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/parallel/Checksum.h"
 
 using eckit::geometry::LLPoint2;
 using eckit::geometry::lonlat_to_3d;

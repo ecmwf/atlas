@@ -8,18 +8,15 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef MPL_ArrayView_h
-#define MPL_ArrayView_h
+#ifndef internals_MPL_ArrayView_h
+#define internals_MPL_ArrayView_h
 
 #include <vector>
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array/ArrayView.h"
 
 namespace atlas {
-namespace util {
-namespace parallel {
-namespace mpl {
-
+namespace internals {
 
 template <typename DATA_TYPE>
 class MPL_ArrayView : public array::ArrayView<DATA_TYPE>
@@ -170,9 +167,7 @@ void MPL_ArrayView<DATA_TYPE>::constructor(const size_t mpl_idxpos[], const size
   }
 }
 
-} // namespace mpl
-} // namespace parallel
-} // namespace util
+} // namespace internals
 } // namespace atlas
 
-#endif // MPL_ArrayView_h
+#endif // internals_MPL_ArrayView_h

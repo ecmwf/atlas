@@ -18,8 +18,8 @@
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
 #include "atlas/mesh/generators//Delaunay.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace mesh {

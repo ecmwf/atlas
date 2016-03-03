@@ -31,11 +31,11 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/grid/partitioners/TransPartitioner.h"

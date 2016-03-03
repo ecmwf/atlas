@@ -9,7 +9,7 @@
  */
 
 #include <cmath>
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/value/Value.h"
 #include "eckit/geometry/RotateGrid.h"
 #include "atlas/grid/RotatedGrid.h"

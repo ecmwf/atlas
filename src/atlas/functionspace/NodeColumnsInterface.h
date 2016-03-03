@@ -18,9 +18,9 @@ namespace atlas {
 namespace functionspace {
 
 #define Char char
-#define GatherScatter util::parallel::mpl::GatherScatter
-#define Checksum util::parallel::mpl::Checksum
-#define HaloExchange util::parallel::mpl::HaloExchange
+#define GatherScatter parallel::GatherScatter
+#define Checksum parallel::Checksum
+#define HaloExchange parallel::HaloExchange
 #define mesh_Mesh mesh::Mesh
 #define mesh_Nodes mesh::Nodes
 #define field_FieldSet field::FieldSet

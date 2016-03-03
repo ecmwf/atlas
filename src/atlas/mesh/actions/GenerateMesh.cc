@@ -11,9 +11,9 @@
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/mesh/actions/GenerateMesh.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
-#include "atlas/util/runtime/Log.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 using namespace atlas::mesh::generators;
 using namespace atlas::grid;

@@ -12,7 +12,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/grid/partitioners/Partitioner.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
 namespace grid {

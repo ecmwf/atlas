@@ -18,8 +18,8 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1

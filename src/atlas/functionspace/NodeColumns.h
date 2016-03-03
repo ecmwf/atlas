@@ -34,14 +34,10 @@ namespace field {
 }
 
 namespace atlas {
-namespace util {
 namespace parallel {
-namespace mpl {
     class HaloExchange;
     class GatherScatter;
     class Checksum;
-}
-}
 }
 }
 
@@ -126,19 +122,19 @@ public:
 
     void haloExchange( field::FieldSet& ) const;
     void haloExchange( field::Field& ) const;
-    const util::parallel::mpl::HaloExchange& halo_exchange() const;
+    const parallel::HaloExchange& halo_exchange() const;
 
     void gather( const field::FieldSet&, field::FieldSet& ) const;
     void gather( const field::Field&, field::Field& ) const;
-    const util::parallel::mpl::GatherScatter& gather() const;
+    const parallel::GatherScatter& gather() const;
 
     void scatter( const field::FieldSet&, field::FieldSet& ) const;
     void scatter( const field::Field&, field::Field& ) const;
-    const util::parallel::mpl::GatherScatter& scatter() const;
+    const parallel::GatherScatter& scatter() const;
 
     std::string checksum( const field::FieldSet& ) const;
     std::string checksum( const field::Field& ) const;
-    const util::parallel::mpl::Checksum& checksum() const;
+    const parallel::Checksum& checksum() const;
 
     /// @brief Compute sum of scalar field
     /// @param [out] sum    Scalar value containing the sum of the full 3D field
@@ -289,9 +285,9 @@ private: // data
     size_t nb_nodes_global_;
     std::vector<size_t> nb_nodes_global_foreach_rank_;
 
-    eckit::SharedPtr<util::parallel::mpl::GatherScatter> gather_scatter_; // without ghost
-    eckit::SharedPtr<util::parallel::mpl::HaloExchange>  halo_exchange_;
-    eckit::SharedPtr<util::parallel::mpl::Checksum>      checksum_;
+    eckit::SharedPtr<parallel::GatherScatter> gather_scatter_; // without ghost
+    eckit::SharedPtr<parallel::HaloExchange>  halo_exchange_;
+    eckit::SharedPtr<parallel::Checksum>      checksum_;
 
 };
 

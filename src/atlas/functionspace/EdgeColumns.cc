@@ -19,13 +19,13 @@
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/internals/IsGhost.h"
-#include "atlas/util/parallel/mpi/Collectives.h"
-#include "atlas/util/parallel/atlas_omp.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/parallel/mpl/HaloExchange.h"
-#include "atlas/util/parallel/mpl/GatherScatter.h"
-#include "atlas/util/parallel/mpl/Checksum.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/parallel/mpi/Collectives.h"
+#include "atlas/parallel/omp/omp.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/parallel/HaloExchange.h"
+#include "atlas/parallel/GatherScatter.h"
+#include "atlas/parallel/Checksum.h"
+#include "atlas/runtime/Log.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -112,9 +112,9 @@ void EdgeColumns::constructor()
 {
   nb_edges_ = mesh().edges().size();
 
-  gather_scatter_.reset(new util::parallel::mpl::GatherScatter());
-  halo_exchange_.reset(new util::parallel::mpl::HaloExchange());
-  checksum_.reset(new util::parallel::mpl::Checksum());
+  gather_scatter_.reset(new parallel::GatherScatter());
+  halo_exchange_.reset(new parallel::HaloExchange());
+  checksum_.reset(new parallel::Checksum());
 
   const field::Field& partition    = edges().partition();
   const field::Field& remote_index = edges().remote_index();
@@ -263,7 +263,7 @@ void EdgeColumns::haloExchange( field::Field& field ) const
     fieldset.add(field);
     haloExchange(fieldset);
 }
-const util::parallel::mpl::HaloExchange& EdgeColumns::halo_exchange() const
+const parallel::HaloExchange& EdgeColumns::halo_exchange() const
 {
   return *halo_exchange_;
 }
@@ -279,23 +279,23 @@ void EdgeColumns::gather( const field::FieldSet& local_fieldset, field::FieldSet
     field::Field& glb = global_fieldset[f];
     const size_t nb_fields = 1;
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      util::parallel::mpl::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
-      util::parallel::mpl::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
+      parallel::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
+      parallel::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      util::parallel::mpl::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
-      util::parallel::mpl::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
+      parallel::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
+      parallel::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      util::parallel::mpl::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
-      util::parallel::mpl::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
+      parallel::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
+      parallel::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      util::parallel::mpl::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
-      util::parallel::mpl::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
+      parallel::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
+      parallel::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -309,11 +309,11 @@ void EdgeColumns::gather( const field::Field& local, field::Field& global ) cons
   global_fields.add(global);
   gather(local_fields,global_fields);
 }
-const util::parallel::mpl::GatherScatter& EdgeColumns::gather() const
+const parallel::GatherScatter& EdgeColumns::gather() const
 {
   return *gather_scatter_;
 }
-const util::parallel::mpl::GatherScatter& EdgeColumns::scatter() const
+const parallel::GatherScatter& EdgeColumns::scatter() const
 {
   return *gather_scatter_;
 }
@@ -330,23 +330,23 @@ void EdgeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldS
     const size_t nb_fields = 1;
 
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      util::parallel::mpl::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
-      util::parallel::mpl::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
+      parallel::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
+      parallel::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      util::parallel::mpl::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
-      util::parallel::mpl::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
+      parallel::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
+      parallel::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      util::parallel::mpl::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
-      util::parallel::mpl::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
+      parallel::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
+      parallel::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      util::parallel::mpl::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
-      util::parallel::mpl::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
+      parallel::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
+      parallel::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -363,7 +363,7 @@ void EdgeColumns::scatter( const field::Field& global, field::Field& local ) con
 
 namespace {
 template <typename T>
-std::string checksum_3d_field(const util::parallel::mpl::Checksum& checksum, const field::Field& field )
+std::string checksum_3d_field(const parallel::Checksum& checksum, const field::Field& field )
 {
   array::ArrayView<T,3> values = leveled_view<T>(field);
   array::ArrayT<T> surface_field ( array::make_shape(values.shape(0),values.shape(2) ) );
@@ -402,7 +402,7 @@ std::string EdgeColumns::checksum( const field::Field& field ) const {
   return checksum(fieldset);
 }
 
-const util::parallel::mpl::Checksum& EdgeColumns::checksum() const
+const parallel::Checksum& EdgeColumns::checksum() const
 {
   return *checksum_;
 }
@@ -675,7 +675,7 @@ void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, f
 
 // -----------------------------------------------------------------------------------
 
-const util::parallel::mpl::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const EdgeColumns* This)
+const parallel::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -714,7 +714,7 @@ void atlas__functionspace__Edges__gather_field(
 
 // -----------------------------------------------------------------------------------
 
-const util::parallel::mpl::GatherScatter* atlas__functionspace__Edges__get_gather(const EdgeColumns* This)
+const parallel::GatherScatter* atlas__functionspace__Edges__get_gather(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -724,7 +724,7 @@ const util::parallel::mpl::GatherScatter* atlas__functionspace__Edges__get_gathe
 
 // -----------------------------------------------------------------------------------
 
-const util::parallel::mpl::GatherScatter* atlas__functionspace__Edges__get_scatter(const EdgeColumns* This)
+const parallel::GatherScatter* atlas__functionspace__Edges__get_scatter(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -756,7 +756,7 @@ void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const f
 
 // -----------------------------------------------------------------------------------
 
-const util::parallel::mpl::Checksum* atlas__functionspace__Edges__get_checksum(const EdgeColumns* This)
+const parallel::Checksum* atlas__functionspace__Edges__get_checksum(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);

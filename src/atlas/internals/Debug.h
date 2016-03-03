@@ -14,8 +14,8 @@
 #include <sstream>
 #include <unistd.h>
 #include "atlas/atlas_config.h"
-#include "atlas/util/runtime/Log.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 /// DEBUG MACRO
 #define DEBUG_RANK (eckit::mpi::initialized() ? eckit::mpi::rank() : 0)

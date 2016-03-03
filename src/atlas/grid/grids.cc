@@ -13,7 +13,7 @@
 #include "eckit/utils/Translator.h"
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/grids.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 
 using eckit::Tokenizer;
 using eckit::Translator;

@@ -28,7 +28,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 
 // ------------------------------------------------------------------
 

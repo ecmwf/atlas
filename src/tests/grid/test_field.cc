@@ -8,11 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
 
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/grids.h"

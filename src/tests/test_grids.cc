@@ -20,7 +20,7 @@
 
 #include "atlas/atlas.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/grid/grids.h"
 #include "atlas/grid/LocalGrid.h"
 

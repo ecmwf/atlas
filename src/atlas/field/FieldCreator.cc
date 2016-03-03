@@ -20,7 +20,7 @@
 #include "atlas/field/FieldCreatorArraySpec.h"
 #include "atlas/field/FieldCreatorIFS.h"
 #include "atlas/field/Field.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 
 namespace {
     static eckit::Mutex *local_mutex = 0;

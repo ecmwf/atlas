@@ -19,13 +19,13 @@
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/internals/IsGhost.h"
-#include "atlas/util/parallel/mpl/HaloExchange.h"
-#include "atlas/util/parallel/mpl/GatherScatter.h"
-#include "atlas/util/parallel/mpl/Checksum.h"
-#include "atlas/util/parallel/atlas_omp.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/runtime/Log.h"
-#include "atlas/util/parallel/mpi/Collectives.h"
+#include "atlas/parallel/HaloExchange.h"
+#include "atlas/parallel/GatherScatter.h"
+#include "atlas/parallel/Checksum.h"
+#include "atlas/parallel/omp/omp.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/parallel/mpi/Collectives.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -113,14 +113,14 @@ void NodeColumns::constructor()
   mesh::actions::build_nodes_parallel_fields( mesh_.nodes() );
   mesh::actions::build_periodic_boundaries(mesh_);
 
-  gather_scatter_.reset(new util::parallel::mpl::GatherScatter());
-  halo_exchange_.reset(new util::parallel::mpl::HaloExchange());
-  checksum_.reset(new util::parallel::mpl::Checksum());
+  gather_scatter_.reset(new parallel::GatherScatter());
+  halo_exchange_.reset(new parallel::HaloExchange());
+  checksum_.reset(new parallel::Checksum());
 
   if( halo_.size() > 0)
   {
     // Create new halo-exchange
-    halo_exchange_.reset(new util::parallel::mpl::HaloExchange());
+    halo_exchange_.reset(new parallel::HaloExchange());
 
     mesh::actions::build_halo(mesh_,halo_.size());
 
@@ -145,7 +145,7 @@ void NodeColumns::constructor()
 
   {
     // Create new gather_scatter
-    gather_scatter_.reset( new util::parallel::mpl::GatherScatter() );
+    gather_scatter_.reset( new parallel::GatherScatter() );
 
     field::Field& ridx = mesh_.nodes().remote_index();
     field::Field& part = mesh_.nodes().partition();
@@ -167,7 +167,7 @@ void NodeColumns::constructor()
 
   {
     // Create new checksum
-    checksum_.reset( new util::parallel::mpl::Checksum() );
+    checksum_.reset( new parallel::Checksum() );
 
     field::Field& ridx = mesh_.nodes().remote_index();
     field::Field& part = mesh_.nodes().partition();
@@ -333,7 +333,7 @@ void NodeColumns::haloExchange( field::Field& field ) const
     haloExchange(fieldset);
   }
 }
-const util::parallel::mpl::HaloExchange& NodeColumns::halo_exchange() const
+const parallel::HaloExchange& NodeColumns::halo_exchange() const
 {
   return *halo_exchange_;;
 }
@@ -349,23 +349,23 @@ void NodeColumns::gather( const field::FieldSet& local_fieldset, field::FieldSet
     field::Field& glb = global_fieldset[f];
     const size_t nb_fields = 1;
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      util::parallel::mpl::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
-      util::parallel::mpl::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
+      parallel::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
+      parallel::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      util::parallel::mpl::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
-      util::parallel::mpl::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
+      parallel::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
+      parallel::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      util::parallel::mpl::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
-      util::parallel::mpl::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
+      parallel::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
+      parallel::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      util::parallel::mpl::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
-      util::parallel::mpl::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
+      parallel::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
+      parallel::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -379,11 +379,11 @@ void NodeColumns::gather( const field::Field& local, field::Field& global ) cons
   global_fields.add(global);
   gather(local_fields,global_fields);
 }
-const util::parallel::mpl::GatherScatter& NodeColumns::gather() const
+const parallel::GatherScatter& NodeColumns::gather() const
 {
   return *gather_scatter_;
 }
-const util::parallel::mpl::GatherScatter& NodeColumns::scatter() const
+const parallel::GatherScatter& NodeColumns::scatter() const
 {
   return *gather_scatter_;
 }
@@ -400,23 +400,23 @@ void NodeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldS
     const size_t nb_fields = 1;
 
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      util::parallel::mpl::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
-      util::parallel::mpl::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
+      parallel::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
+      parallel::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      util::parallel::mpl::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
-      util::parallel::mpl::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
+      parallel::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
+      parallel::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      util::parallel::mpl::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
-      util::parallel::mpl::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
+      parallel::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
+      parallel::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      util::parallel::mpl::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
-      util::parallel::mpl::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
+      parallel::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
+      parallel::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -433,7 +433,7 @@ void NodeColumns::scatter( const field::Field& global, field::Field& local ) con
 
 namespace {
 template <typename T>
-std::string checksum_3d_field(const util::parallel::mpl::Checksum& checksum, const field::Field& field )
+std::string checksum_3d_field(const parallel::Checksum& checksum, const field::Field& field )
 {
   array::ArrayView<T,3> values = leveled_view<T>(field);
   array::ArrayT<T> surface_field ( array::make_shape(values.shape(0),values.shape(2) ) );
@@ -472,7 +472,7 @@ std::string NodeColumns::checksum( const field::Field& field ) const {
   return checksum(fieldset);
 }
 
-const util::parallel::mpl::Checksum& NodeColumns::checksum() const
+const parallel::Checksum& NodeColumns::checksum() const
 {
   return *checksum_;
 }
@@ -480,7 +480,7 @@ const util::parallel::mpl::Checksum& NodeColumns::checksum() const
 
 
 //std::string NodesFunctionSpace::checksum( const field::FieldSet& fieldset ) const {
-//  const util::parallel::mpl::Checksum& checksum = mesh_.checksum().get(checksum_name());
+//  const parallel::Checksum& checksum = mesh_.checksum().get(checksum_name());
 
 //  eckit::MD5 md5;
 //  for( size_t f=0; f<fieldset.size(); ++f ) {

@@ -27,8 +27,8 @@
 #include "atlas/internals/Unique.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/parallel/mpl/Checksum.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/parallel/Checksum.h"
 
 using atlas::functionspace::NodeColumns;
 using atlas::mesh::Halo;

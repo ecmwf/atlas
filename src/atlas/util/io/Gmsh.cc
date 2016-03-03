@@ -28,11 +28,11 @@
 #include "atlas/util/Constants.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/util/parallel/mpl/GatherScatter.h"
+#include "atlas/parallel/GatherScatter.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 
 using namespace eckit;
 using atlas::functionspace::NodeColumns;

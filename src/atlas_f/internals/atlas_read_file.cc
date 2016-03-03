@@ -2,7 +2,7 @@
 #include "eckit/config/FileReadPolicy.h"
 #include "eckit/runtime/Context.h"
 #include "eckit/runtime/ContextBehavior.h"
-#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas_f/internals/atlas_read_file.h"
 
 extern "C"

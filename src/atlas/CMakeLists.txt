@@ -257,24 +257,23 @@ util/io/Gmsh.h
 util/io/Gmsh.cc
 util/io/PointCloud.h
 util/io/PointCloud.cc
-util/parallel/atlas_omp.h
-util/parallel/atlas_omp.cc
-util/parallel/mpi/mpi.h
-util/parallel/mpi/mpi.cc
-util/parallel/mpi/Collectives.h
-util/parallel/mpl/Checksum.h
-util/parallel/mpl/Checksum.cc
-util/parallel/mpl/HaloExchange.h
-util/parallel/mpl/HaloExchange.cc
-util/parallel/mpl/GatherScatter.h
-util/parallel/mpl/GatherScatter.cc
-util/parallel/mpl/MPLArrayView.h
-util/runtime/Behavior.h
-util/runtime/Behavior.cc
-util/runtime/LogFormat.h
-util/runtime/LogFormat.cc
-util/runtime/ErrorHandling.cc
-util/runtime/ErrorHandling.cc
+runtime/Behavior.h
+runtime/Behavior.cc
+runtime/LogFormat.h
+runtime/LogFormat.cc
+runtime/ErrorHandling.cc
+runtime/ErrorHandling.cc
+parallel/omp/omp.h
+parallel/omp/omp.cc
+parallel/mpi/mpi.h
+parallel/mpi/mpi.cc
+parallel/mpi/Collectives.h
+parallel/Checksum.h
+parallel/Checksum.cc
+parallel/HaloExchange.h
+parallel/HaloExchange.cc
+parallel/GatherScatter.h
+parallel/GatherScatter.cc
 )
 
 list( APPEND atlas_internals_srcs
@@ -291,6 +290,7 @@ internals/ObjectRegistry.h
 internals/Parameters.h
 internals/PeriodicTransform.h
 internals/Unique.h
+internals/MPLArrayView.h
 )
 
 

@@ -1,6 +1,6 @@
 #include "eckit/value/Value.h"
 #include "eckit/value/ListContent.h"
-#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 using eckit::Value;
 using eckit::ValueList;

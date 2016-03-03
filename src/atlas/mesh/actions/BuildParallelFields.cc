@@ -24,10 +24,10 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/Array.h"
-#include "atlas/util/runtime/Log.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/parallel/mpi/mpi.h"
-#include "atlas/util/parallel/mpl/GatherScatter.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/GatherScatter.h"
 
 //#define DEBUGGING_PARFIELDS
 #ifdef DEBUGGING_PARFIELDS

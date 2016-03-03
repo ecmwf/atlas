@@ -15,7 +15,7 @@
 #define BOOST_TEST_MODULE TestHalo
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "tests/TestMeshes.h"
 #include "atlas/util/io/Gmsh.h"

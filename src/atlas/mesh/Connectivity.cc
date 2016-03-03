@@ -10,7 +10,7 @@
 
 #include <limits>
 #include "atlas/mesh/Connectivity.h"
-#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/array/Array.h"
 
 #ifdef ATLAS_HAVE_FORTRAN

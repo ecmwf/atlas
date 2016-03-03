@@ -18,13 +18,11 @@
 #include "atlas/atlas_config.h"
 #include "atlas/internals/Debug.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/util/parallel/mpi/mpi.h"
-#include "atlas/util/parallel/mpl/MPLArrayView.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/internals/MPLArrayView.h"
 
 namespace atlas {
-namespace util {
 namespace parallel {
-namespace mpl {
 
 template<typename T> struct remove_const          { typedef T type; };
 template<typename T> struct remove_const<T const> { typedef T type; };
@@ -151,8 +149,8 @@ public: // methods
                const size_t root = 0 ) const;
 
   template <typename DATA_TYPE>
-  void gather( util::parallel::mpl::Field<DATA_TYPE const> lfields[],
-               util::parallel::mpl::Field<DATA_TYPE      > gfields[],
+  void gather( parallel::Field<DATA_TYPE const> lfields[],
+               parallel::Field<DATA_TYPE      > gfields[],
                const size_t nb_fields,
                const size_t root = 0 ) const;
 
@@ -162,8 +160,8 @@ public: // methods
                const size_t root = 0 ) const;
 
   template <typename DATA_TYPE>
-  void scatter( util::parallel::mpl::Field<DATA_TYPE const> gfields[],
-                util::parallel::mpl::Field<DATA_TYPE      > lfields[],
+  void scatter( parallel::Field<DATA_TYPE const> gfields[],
+                parallel::Field<DATA_TYPE      > lfields[],
                 const size_t nb_fields,
                 const size_t root = 0 ) const;
 
@@ -206,14 +204,14 @@ public: // methods
 
 private: // methods
   template< typename DATA_TYPE>
-  void pack_send_buffer( const util::parallel::mpl::Field<DATA_TYPE const>& field,
+  void pack_send_buffer( const parallel::Field<DATA_TYPE const>& field,
                          const std::vector<int>& sendmap,
                          DATA_TYPE send_buffer[] ) const;
 
   template< typename DATA_TYPE>
   void unpack_recv_buffer( const std::vector<int>& recvmap,
                            const DATA_TYPE recv_buffer[],
-                           const util::parallel::mpl::Field<DATA_TYPE>& field ) const;
+                           const parallel::Field<DATA_TYPE>& field ) const;
 
   template<typename DATA_TYPE, int RANK>
   void var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
@@ -245,8 +243,8 @@ private: // data
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename DATA_TYPE>
-void GatherScatter::gather( util::parallel::mpl::Field<DATA_TYPE const> lfields[],
-                            util::parallel::mpl::Field<DATA_TYPE> gfields[],
+void GatherScatter::gather( parallel::Field<DATA_TYPE const> lfields[],
+                            parallel::Field<DATA_TYPE> gfields[],
                             size_t nb_fields,
                             const size_t root ) const
 {
@@ -302,8 +300,8 @@ void GatherScatter::gather( const DATA_TYPE ldata[],
                             const size_t root ) const
 {
   // compatibility mode
-  mpl::MPL_ArrayView<DATA_TYPE const> lview(ldata,lstrides,lshape,lrank,lmpl_idxpos,lmpl_rank);
-  mpl::MPL_ArrayView<DATA_TYPE      > gview(gdata,gstrides,gshape,grank,gmpl_idxpos,gmpl_rank);
+  internals::MPL_ArrayView<DATA_TYPE const> lview(ldata,lstrides,lshape,lrank,lmpl_idxpos,lmpl_rank);
+  internals::MPL_ArrayView<DATA_TYPE      > gview(gdata,gstrides,gshape,grank,gmpl_idxpos,gmpl_rank);
 
   gather(lview.data(),lview.var_strides().data(),lview.var_shape().data(),lview.var_rank(),
          gview.data(),gview.var_strides().data(),gview.var_shape().data(),gview.var_rank(),
@@ -321,15 +319,15 @@ void GatherScatter::gather( const DATA_TYPE ldata[],
                             const size_t gvar_rank,
                             const size_t root ) const
 {
-  util::parallel::mpl::Field<DATA_TYPE const> lfield(ldata,lvar_strides,lvar_shape,lvar_rank);
-  util::parallel::mpl::Field<DATA_TYPE      > gfield(gdata,gvar_strides,gvar_shape,gvar_rank);
+  parallel::Field<DATA_TYPE const> lfield(ldata,lvar_strides,lvar_shape,lvar_rank);
+  parallel::Field<DATA_TYPE      > gfield(gdata,gvar_strides,gvar_shape,gvar_rank);
   gather( &lfield, &gfield, 1, root );
 }
 
 
 template <typename DATA_TYPE>
-void GatherScatter::scatter( util::parallel::mpl::Field<DATA_TYPE const> gfields[],
-                             util::parallel::mpl::Field<DATA_TYPE      > lfields[],
+void GatherScatter::scatter( parallel::Field<DATA_TYPE const> gfields[],
+                             parallel::Field<DATA_TYPE      > lfields[],
                              const size_t nb_fields,
                              const size_t root ) const
 {
@@ -385,8 +383,8 @@ void GatherScatter::scatter( const DATA_TYPE gdata[],
                              const size_t root ) const
 {
   // compatibility mode
-  mpl::MPL_ArrayView<DATA_TYPE const> gview(gdata,gstrides,gshape,grank,gmpl_idxpos,gmpl_rank);
-  mpl::MPL_ArrayView<DATA_TYPE      > lview(ldata,lstrides,lshape,lrank,lmpl_idxpos,lmpl_rank);
+  internals::MPL_ArrayView<DATA_TYPE const> gview(gdata,gstrides,gshape,grank,gmpl_idxpos,gmpl_rank);
+  internals::MPL_ArrayView<DATA_TYPE      > lview(ldata,lstrides,lshape,lrank,lmpl_idxpos,lmpl_rank);
   std::vector<size_t> gvar_strides(gmpl_rank);
   std::vector<size_t> gvar_shape(gmpl_rank);
   std::vector<size_t> lvar_strides(lmpl_rank);
@@ -401,8 +399,8 @@ void GatherScatter::scatter( const DATA_TYPE gdata[],
     lvar_strides[i] = lview.stride(i);
     lvar_shape[i] = lview.extent(i);
   }
-  util::parallel::mpl::Field<DATA_TYPE const> gfield(gdata,gvar_strides.data(),gvar_shape.data(),gview.var_rank());
-  util::parallel::mpl::Field<DATA_TYPE      > lfield(ldata,lvar_strides.data(),lvar_shape.data(),lview.var_rank());
+  parallel::Field<DATA_TYPE const> gfield(gdata,gvar_strides.data(),gvar_shape.data(),gview.var_rank());
+  parallel::Field<DATA_TYPE      > lfield(ldata,lvar_strides.data(),lvar_shape.data(),lview.var_rank());
   scatter( &gfield, &lfield, 1, root );
 }
 
@@ -417,13 +415,13 @@ void GatherScatter::scatter( const DATA_TYPE gdata[],
                              const size_t lvar_rank,
                              const size_t root ) const
 {
-  util::parallel::mpl::Field<DATA_TYPE const> gfield(gdata,gvar_strides,gvar_shape,gvar_rank);
-  util::parallel::mpl::Field<DATA_TYPE      > lfield(ldata,lvar_strides,lvar_shape,lvar_rank);
+  parallel::Field<DATA_TYPE const> gfield(gdata,gvar_strides,gvar_shape,gvar_rank);
+  parallel::Field<DATA_TYPE      > lfield(ldata,lvar_strides,lvar_shape,lvar_rank);
   scatter( &gfield, &lfield, 1, root );
 }
 
 template<typename DATA_TYPE>
-void GatherScatter::pack_send_buffer( const util::parallel::mpl::Field<DATA_TYPE const>& field,
+void GatherScatter::pack_send_buffer( const parallel::Field<DATA_TYPE const>& field,
                                       const std::vector<int>& sendmap,
                                       DATA_TYPE send_buffer[] ) const
 {
@@ -487,7 +485,7 @@ void GatherScatter::pack_send_buffer( const util::parallel::mpl::Field<DATA_TYPE
 template<typename DATA_TYPE>
 void GatherScatter::unpack_recv_buffer( const std::vector<int>& recvmap,
                                         const DATA_TYPE recv_buffer[],
-                                        const util::parallel::mpl::Field<DATA_TYPE>& field ) const
+                                        const parallel::Field<DATA_TYPE>& field ) const
 {
   const size_t recvcnt = recvmap.size();
 
@@ -583,8 +581,8 @@ void GatherScatter::gather( const array::ArrayView<DATA_TYPE,LRANK>& ldata,
 {
   if( ldata.shape(0) == parsize_ && gdata.shape(0) == glbcnt_[myproc] )
   {
-    std::vector< util::parallel::mpl::Field<DATA_TYPE const> > lfields(1, util::parallel::mpl::Field<DATA_TYPE const>(ldata) );
-    std::vector< util::parallel::mpl::Field<DATA_TYPE> >       gfields(1, util::parallel::mpl::Field<DATA_TYPE>(gdata) );
+    std::vector< parallel::Field<DATA_TYPE const> > lfields(1, parallel::Field<DATA_TYPE const>(ldata) );
+    std::vector< parallel::Field<DATA_TYPE> >       gfields(1, parallel::Field<DATA_TYPE>(gdata) );
     gather( lfields.data(), gfields.data(), 1, root );
   }
   else
@@ -604,8 +602,8 @@ void GatherScatter::scatter( const array::ArrayView<DATA_TYPE,GRANK>& gdata,
 {
   if( ldata.shape(0) == parsize_ && gdata.shape(0) == glbcnt_[myproc] )
   {
-    std::vector< util::parallel::mpl::Field<DATA_TYPE const> > gfields(1, util::parallel::mpl::Field<DATA_TYPE const>(gdata) );
-    std::vector< util::parallel::mpl::Field<DATA_TYPE> >       lfields(1, util::parallel::mpl::Field<DATA_TYPE>(ldata) );
+    std::vector< parallel::Field<DATA_TYPE const> > gfields(1, parallel::Field<DATA_TYPE const>(gdata) );
+    std::vector< parallel::Field<DATA_TYPE> >       lfields(1, parallel::Field<DATA_TYPE>(ldata) );
     scatter( gfields.data(), lfields.data(), 1, root );
   }
   else
@@ -642,9 +640,7 @@ extern "C"
 
 //typedef GatherScatter Gather;
 
-} // namespace mpl
 } // namespace parallel
-} // namespace util
 } // namespace atlas
 
 #endif // Gather_h

@@ -14,16 +14,14 @@
 #include "eckit/mpi/mpi.h"
 #include "eckit/mpi/Collectives.h"
 #include "eckit/mpi/Exceptions.h"
-#include "atlas/util/parallel/mpi/Collectives.h"
+#include "atlas/parallel/mpi/Collectives.h"
 
 namespace atlas {
-namespace util {
 namespace parallel {
 namespace mpi {
 
 } // namespace mpi
 } // namespace parallel
-} // namespace util
 } // namespace atlas
 
 // ------------------------------------------------------------------

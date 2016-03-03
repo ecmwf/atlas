@@ -10,7 +10,7 @@
 
 #define BOOST_TEST_MODULE TestIndexView
 #include "ecbuild/boost_test_framework.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"

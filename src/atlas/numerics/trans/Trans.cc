@@ -24,7 +24,7 @@
 #include "atlas/internals/Bitflags.h"
 #include "atlas/internals/IsGhost.h"
 #include "atlas/array/Array.h"
-#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 // anonymous namespace
 namespace {

@@ -13,15 +13,14 @@
 #include "eckit/thread/Mutex.h"
 #include "eckit/thread/Once.h"
 #include "eckit/thread/ThreadSingleton.h"
-#include "atlas/util/runtime/Log.h"
-#include "atlas/util/runtime/Behavior.h"
-#include "atlas/util/parallel/mpi/mpi.h"
-#include "atlas/util/runtime/LogFormat.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/runtime/Behavior.h"
+#include "atlas/runtime/LogFormat.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 using namespace eckit;
 
 namespace atlas {
-namespace util {
 namespace runtime {
 
 static Once<Mutex> local_mutex;
@@ -220,7 +219,6 @@ void Behavior::reconfigure()
 }
 
 } // namespace runtime
-} // namespace util
 } // namespace atlas
 
 

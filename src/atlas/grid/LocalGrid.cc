@@ -13,7 +13,7 @@
 #include "eckit/value/Value.h"
 #include "eckit/geometry/RotateGrid.h"
 #include "atlas/grid/LocalGrid.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 
 using namespace eckit;
 using namespace eckit::geometry;

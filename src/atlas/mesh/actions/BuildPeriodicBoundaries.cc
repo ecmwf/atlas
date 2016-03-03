@@ -20,8 +20,8 @@
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/util/runtime/ErrorHandling.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 using atlas::internals::Topology;
 using atlas::internals::LonLatMicroDeg;

@@ -15,12 +15,12 @@
 #define BOOST_TEST_MODULE TestHaloExchange
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/util/parallel/mpl/HaloExchange.h"
+#include "atlas/parallel/HaloExchange.h"
 
 /// POD: Type to test
 typedef double POD;
@@ -70,7 +70,7 @@ struct Fixture {
     }
     halo_exchange.setup(part.data(),ridx.data(),0,N);
   }
-  util::parallel::mpl::HaloExchange halo_exchange;
+  parallel::HaloExchange halo_exchange;
   std::vector<int> nb_nodes;
   std::vector<int> part;
   std::vector<int> ridx;

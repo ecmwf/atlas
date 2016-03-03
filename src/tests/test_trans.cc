@@ -15,14 +15,14 @@
 #include <algorithm>
 
 #include "eckit/config/ResourceMgr.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas.h"
 #include "atlas/numerics/trans/Trans.h"
 #include "atlas/grid/partitioners/TransPartitioner.h"
 #include "atlas/grid/grids.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
-#include "atlas/util/runtime/LogFormat.h"
+#include "atlas/runtime/LogFormat.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/field/FieldSet.h"

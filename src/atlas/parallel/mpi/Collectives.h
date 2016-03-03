@@ -11,7 +11,7 @@
 #ifndef ATLAS_MPI_COLLECTIVES_h
 #define ATLAS_MPI_COLLECTIVES_h
 
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array/ArrayView.h"
 
 

@@ -14,7 +14,7 @@
 #define BOOST_TEST_MODULE TestDistributeMesh
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas.h"
 #include "tests/TestMeshes.h"
 #include "atlas/util/io/Gmsh.h"
@@ -31,7 +31,7 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/grid/predefined/rgg/rgg.h"
 #include "atlas/internals/IsGhost.h"
-#include "atlas/util/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 
 using namespace atlas;
 using namespace atlas::util::io;

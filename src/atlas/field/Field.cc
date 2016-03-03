@@ -19,7 +19,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldCreator.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 
 namespace atlas {

@@ -15,29 +15,32 @@
 #include "atlas/functionspace/FunctionSpace.h"
 
 namespace atlas {
-namespace util {
 namespace parallel {
-namespace mpl {
     class GatherScatter;
     class Checksum;
-} } } }
+}
+}
 
 namespace atlas {
 namespace field {
     class Field;
     class FieldSet;
-} }
+}
+}
 
 namespace atlas {
 namespace grid {
     class ReducedGrid;
-} }
+}
+}
 
 namespace atlas {
 namespace numerics {
 namespace trans {
     class Trans;
-} } }
+}
+}
+}
 
 namespace atlas {
 namespace functionspace {
@@ -90,8 +93,8 @@ private: // data
 
   numerics::trans::Trans* trans_;
   const grid::ReducedGrid* grid_;
-  util::parallel::mpl::GatherScatter* gather_scatter_;
-  util::parallel::mpl::Checksum* checksum_;
+  parallel::GatherScatter* gather_scatter_;
+  parallel::Checksum* checksum_;
 
 };
 

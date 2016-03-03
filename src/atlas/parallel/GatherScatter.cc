@@ -15,13 +15,11 @@
 #include "atlas/internals/Checksum.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/util/runtime/Log.h"
-#include "atlas/util/parallel/mpl/GatherScatter.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/parallel/GatherScatter.h"
 
 namespace atlas {
-namespace util {
 namespace parallel {
-namespace mpl {
 
 namespace {
 struct IsGhostPoint
@@ -591,7 +589,6 @@ void atlas__GatherScatter__scatter_double ( GatherScatter* This,
 
 
 /////////////////////
-} // namespace mpl
+
 } // namespace parallel
-} // namespace util
 } // namespace atlas

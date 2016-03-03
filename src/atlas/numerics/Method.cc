@@ -11,7 +11,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "atlas/atlas_config.h"
 #include "atlas/numerics/Method.h"
-#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 namespace atlas {
 namespace numerics {

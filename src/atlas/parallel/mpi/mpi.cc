@@ -8,10 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
-namespace util {
 namespace parallel {
 namespace mpi {
 
@@ -29,5 +28,4 @@ extern "C"
 
 } // namespace mpi
 } // namespace parallel
-} // namespace util
 } // namespace atlas

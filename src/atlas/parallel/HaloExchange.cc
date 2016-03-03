@@ -16,12 +16,10 @@
 #include <numeric>
 #include <iostream>
 #include <sstream>
-#include "atlas/util/parallel/mpl/HaloExchange.h"
+#include "atlas/parallel/HaloExchange.h"
 
 namespace atlas {
-namespace util {
 namespace parallel {
-namespace mpl {
 
 namespace {
 struct IsGhostPoint
@@ -225,7 +223,5 @@ void atlas__HaloExchange__execute_double (HaloExchange* This, double field[], in
 
 /////////////////////
 
-} // namespace mpl
 } // namespace parallel
-} // namespace util
 } // namespace atlas

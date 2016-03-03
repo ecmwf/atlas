@@ -23,13 +23,10 @@
 #include "eckit/exception/Exceptions.h"
 #include "atlas/internals/Debug.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
-namespace util {
 namespace parallel {
-namespace mpl {
-
 
 class HaloExchange: public eckit::Owned {
 
@@ -423,9 +420,7 @@ extern "C"
 }
 // ------------------------------------------------------------------
 
-} // namespace mpl
 } // namespace parallel
-} // namespace util
 } // namespace atlas
 
 #endif // HaloExchange_h
