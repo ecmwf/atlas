@@ -17,22 +17,61 @@
 namespace atlas {
 namespace functionspace {
 
+#define FunctionspaceT_nonconst typename FunctionSpace::remove_const<FunctionSpaceT>::type
+#define FunctionspaceT_const    typename FunctionSpace::add_const<FunctionSpaceT>::type
+
 /// @brief FunctionSpace class helps to interprete Fields.
 /// @note  Abstract base class
 class FunctionSpace : public eckit::Owned
 {
+private:
+    template<typename T> struct remove_const          { typedef T type; };
+    template<typename T> struct remove_const<T const> { typedef T type; };
+
+    template<typename T> struct add_const          { typedef const typename remove_const<T>::type type; };
+    template<typename T> struct add_const<T const> { typedef const T type; };
+
 public:
     FunctionSpace() {}
     virtual ~FunctionSpace() = 0;
     virtual std::string name() const = 0;
-    eckit::SharedPtr<FunctionSpace const> shared_from_this() const;
-    eckit::SharedPtr<FunctionSpace> shared_from_this();
-    eckit::SharedPtr<FunctionSpace> ptr();
-    eckit::SharedPtr<FunctionSpace const> ptr() const;
-    eckit::SharedPtr<FunctionSpace const> cptr() const;
+    virtual operator bool() const { return true; }
+
+    template <typename FunctionSpaceT>
+    FunctionspaceT_nonconst *cast();
+
+    template <typename FunctionSpaceT>
+    FunctionspaceT_const *cast() const;
+
 };
 
 inline FunctionSpace::~FunctionSpace() {}
+
+template <typename FunctionSpaceT>
+inline FunctionspaceT_nonconst *FunctionSpace::cast()
+{
+  return dynamic_cast<FunctionspaceT_nonconst*> (this);
+}
+
+template <typename FunctionSpaceT>
+inline FunctionspaceT_const *FunctionSpace::cast() const
+{
+  return dynamic_cast<FunctionspaceT_const*> (this);
+}
+
+#undef FunctionspaceT_const
+#undef FunctionspaceT_nonconst
+//------------------------------------------------------------------------------------------------------
+
+/// @brief Dummy Functionspace class that evaluates to false
+class NoFunctionSpace : public FunctionSpace
+{
+public:
+    NoFunctionSpace() {}
+    virtual ~NoFunctionSpace() {}
+    virtual std::string name() const { return "NoFunctionSpace"; }
+    virtual operator bool() const { return false; }
+};
 
 //------------------------------------------------------------------------------------------------------
 

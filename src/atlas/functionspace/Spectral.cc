@@ -63,14 +63,14 @@ size_t Spectral::nb_spectral_coefficients_global() const {
 template <>
 field::Field* Spectral::createField<double>(const std::string& name) const {
   field::Field* field = field::Field::create<double>(name, array::make_shape(nb_spectral_coefficients()) );
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 
 template <>
 field::Field* Spectral::createField<double>(const std::string& name, size_t levels) const {
   field::Field* field = field::Field::create<double>(name, array::make_shape(nb_spectral_coefficients(),levels) );
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   field->set_levels(levels);
   return field;
 }
@@ -78,14 +78,14 @@ field::Field* Spectral::createField<double>(const std::string& name, size_t leve
 template <>
 field::Field* Spectral::createGlobalField<double>(const std::string& name) const {
   field::Field* field = field::Field::create<double>(name, array::make_shape(nb_spectral_coefficients_global()) );
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 
 template <>
 field::Field* Spectral::createGlobalField<double>(const std::string& name, size_t levels) const {
   field::Field* field = field::Field::create<double>(name, array::make_shape(nb_spectral_coefficients_global(),levels) );
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   field->set_levels(levels);
   return field;
 }

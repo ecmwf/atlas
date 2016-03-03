@@ -141,8 +141,8 @@ public: // Destructor
   void set_levels(size_t n) { nb_levels_ = n; }
   size_t levels() const { return std::max(1ul,nb_levels_); }
 
-  void set_functionspace(const functionspace::FunctionSpace*);
-  functionspace::FunctionSpace* functionspace() const { return functionspace_; }
+  void set_functionspace(const functionspace::FunctionSpace &);
+  functionspace::FunctionSpace& functionspace() const { return *functionspace_; }
 
 private: // methods
 

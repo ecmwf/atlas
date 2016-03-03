@@ -156,14 +156,14 @@ size_t EdgeColumns::nb_edges_global() const
 
 field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges()));
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 
 field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype, size_t levels) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges(),levels));
   field->set_levels(levels);
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 
@@ -171,7 +171,7 @@ field::Field* EdgeColumns::createField(const std::string& name,array::DataType d
   std::vector<size_t> shape(1,nb_edges());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 
@@ -180,7 +180,7 @@ field::Field* EdgeColumns::createField(const std::string& name, array::DataType 
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
   field->set_levels(levels);
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 
@@ -190,20 +190,20 @@ field::Field* EdgeColumns::createField(const std::string& name, const field::Fie
   field::Field* field = field::Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 
 field::Field* EdgeColumns::createGlobalField(const std::string& name,array::DataType datatype) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges_global()));
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 
 field::Field* EdgeColumns::createGlobalField(const std::string& name, array::DataType datatype, size_t levels) const {
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges_global(),levels));
   field->set_levels(levels);
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 
@@ -211,7 +211,7 @@ field::Field* EdgeColumns::createGlobalField(const std::string& name, array::Dat
   std::vector<size_t> shape(1,nb_edges_global());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 
@@ -220,7 +220,7 @@ field::Field* EdgeColumns::createGlobalField(const std::string& name, array::Dat
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
   field->set_levels(levels);
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 
@@ -230,7 +230,7 @@ field::Field* EdgeColumns::createGlobalField(const std::string& name,const field
   field::Field* field = field::Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
-  field->set_functionspace(this);
+  field->set_functionspace(*this);
   return field;
 }
 

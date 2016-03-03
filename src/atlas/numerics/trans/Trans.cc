@@ -18,6 +18,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/ReducedGridColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/numerics/trans/Trans.h"
 #include "atlas/internals/Bitflags.h"
@@ -396,7 +397,8 @@ void Trans::dirtrans(const field::FieldSet& gpfields,
   {
     const field::Field& f = gpfields[jfld];
     nfld += f.stride(0);
-    ASSERT( f.functionspace() == 0 || f.functionspace()->name() != "nodes" );
+    ASSERT( f.functionspace() == 0 ||
+            f.functionspace().cast<functionspace::ReducedGridColumns>() );
   }
 
   int trans_spnfld(0);
@@ -593,7 +595,8 @@ void Trans::invtrans(const  field::FieldSet& spfields,
   {
     const field::Field& f = gpfields[jfld];
     nfld += f.stride(0);
-    ASSERT( f.functionspace() == 0 || f.functionspace()->name() != "nodes" );
+    ASSERT( f.functionspace() == 0 ||
+            f.functionspace().cast<functionspace::ReducedGridColumns>() );
   }
 
   int nb_spectral_fields(0);

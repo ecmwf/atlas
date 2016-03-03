@@ -67,33 +67,35 @@ Field* Field::create( const std::string& name, array::Array* array )
 Field::Field(
     const std::string& name,
     array::DataType           datatype,
-    const array::ArrayShape&  shape) : name_(name), nb_levels_(0), functionspace_(0)
+    const array::ArrayShape&  shape) :
+  name_(name),
+  nb_levels_(0)
 {
+  functionspace_ = new functionspace::NoFunctionSpace();
+  functionspace_->attach();
   array_ = array::Array::create(datatype,shape);
   array_->attach();
 }
 
 
 Field::Field(const std::string& name, array::Array* array):
-  name_(name), nb_levels_(0), functionspace_(0)
+  name_(name), nb_levels_(0)
 {
+  functionspace_ = new functionspace::NoFunctionSpace();
+  functionspace_->attach();
   array_ = array;
   array_->attach();
 }
 
 Field::~Field()
 {
-  if( functionspace_ ) {
-    functionspace_->detach();
-    if( functionspace_->owners() == 0 )
-      delete functionspace_;
-  }
-  if( array_ ) {
-    array_->detach();
-    if( array_->owners() == 0 )
-      delete array_;
-  }
+  functionspace_->detach();
+  if( functionspace_->owners() == 0 )
+    delete functionspace_;
 
+  array_->detach();
+  if( array_->owners() == 0 )
+    delete array_;
 }
 
 void Field::dump(std::ostream& os) const
@@ -131,9 +133,13 @@ void Field::insert(size_t idx1, size_t size1 )
 }
 
 
-void Field::set_functionspace(const functionspace::FunctionSpace* functionspace)
+void Field::set_functionspace(const functionspace::FunctionSpace &functionspace)
 {
-  functionspace_ = const_cast<functionspace::FunctionSpace*>(functionspace);
+  functionspace_->detach();
+  if( functionspace_->owners() == 0 )
+    delete functionspace_;
+
+  functionspace_ = const_cast<functionspace::FunctionSpace*>(&functionspace);
 
   // In case functionspace is not attached, increase owners, so that
   // this field will not manage its lifetime.
@@ -324,7 +330,7 @@ functionspace::FunctionSpace* atlas__Field__functionspace (Field* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->functionspace();
+    return &This->functionspace();
   );
   return 0;
 }

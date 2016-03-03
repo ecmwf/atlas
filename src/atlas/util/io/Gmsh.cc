@@ -1010,20 +1010,19 @@ void Gmsh::write(
         throw eckit::AssertionFailed(msg.str(), Here());
     }
 
-    if (dynamic_cast<functionspace::NodeColumns*>(field.functionspace()))
+    if ( field.functionspace().cast<functionspace::NodeColumns>() )
     {
-        functionspace::NodeColumns* functionspace =
-            dynamic_cast<functionspace::NodeColumns*>(field.functionspace());
+        const functionspace::NodeColumns* functionspace =
+            field.functionspace().cast<functionspace::NodeColumns>();
 
         field::FieldSet fieldset;
         fieldset.add(field);
         write(fieldset, *functionspace, file_path, mode);
     }
-    else if (dynamic_cast<functionspace
-             ::ReducedGridColumns*>(field.functionspace()))
+    else if ( field.functionspace().cast<functionspace::ReducedGridColumns>() )
     {
-        functionspace::ReducedGridColumns* functionspace =
-            dynamic_cast<functionspace::ReducedGridColumns*>(field.functionspace());
+        const functionspace::ReducedGridColumns* functionspace =
+            field.functionspace().cast<functionspace::ReducedGridColumns>();
 
         field::FieldSet fieldset;
         fieldset.add(field);
@@ -1034,7 +1033,7 @@ void Gmsh::write(
         std::stringstream msg;
         msg << "Field ["<<field.name()
             <<"] has functionspace ["
-            << field.functionspace()->name()
+            << field.functionspace().name()
             << "] but requires a [functionspace::NodeColumns "
             << "or functionspace::ReducedGridColumns]";
 

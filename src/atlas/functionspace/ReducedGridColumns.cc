@@ -171,14 +171,14 @@ field::Field* ReducedGridColumns::createField<double>(
 {
 #ifdef ATLAS_HAVE_TRANS
     field::Field* field = field::Field::create<double>(name, array::make_shape(trans_->ngptot()));
-    field->set_functionspace(this);
+    field->set_functionspace(*this);
     return field;
 #else
     eckit::NotImplemented("ReducedGridColumns::createField currently relies"
                           " on ATLAS_HAVE_TRANS", Here());
 
     field::Field* field = field::Field::create<double>(name, array::make_shape(grid_->npts()) );
-    field->set_functionspace(this);
+    field->set_functionspace(*this);
     return field;
 #endif
 }
@@ -198,7 +198,7 @@ field::Field* ReducedGridColumns::createField<double>(
     field::Field* field = field::Field::create<double>(
                     name, array::make_shape(trans_->ngptot(), levels));
 
-    field->set_functionspace(this);
+    field->set_functionspace(*this);
     field->set_levels(levels);
     return field;
 #else
@@ -208,7 +208,7 @@ field::Field* ReducedGridColumns::createField<double>(
     field::Field* field = field::Field::create<double>(
                     name, array::make_shape(grid_->npts(), levels));
 
-    field->set_functionspace(this);
+    field->set_functionspace(*this);
     return field;
 #endif
 }
@@ -224,7 +224,7 @@ field::Field* ReducedGridColumns::createGlobalField<double>(
     const std::string& name) const
 {
     field::Field* field = field::Field::create<double>(name, array::make_shape(grid_->npts()));
-    field->set_functionspace(this);
+    field->set_functionspace(*this);
     return field;
 }
 // ----------------------------------------------------------------------------
@@ -242,7 +242,7 @@ field::Field* ReducedGridColumns::createGlobalField<double>(
     field::Field* field = field::Field::create<double>(
                     name, array::make_shape(grid_->npts(), levels));
 
-    field->set_functionspace(this);
+    field->set_functionspace(*this);
     return field;
 }
 // ----------------------------------------------------------------------------
