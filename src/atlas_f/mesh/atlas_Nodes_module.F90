@@ -12,7 +12,7 @@ use atlas_Metadata_module, only: atlas_Metadata
 implicit none
 
 private :: c_size_t, c_int, c_ptr
-private ::  c_str, c_to_f_string_cptr, atlas_free
+private :: c_str, c_to_f_string_cptr, atlas_free
 private :: atlas_refcounted
 private :: atlas_Connectivity
 private :: atlas_Field
@@ -29,7 +29,11 @@ TYPE, extends(atlas_refcounted) :: atlas_Nodes
 contains
 procedure, public :: size => atlas_Nodes__size
 procedure, public :: resize
-procedure, public :: add
+procedure, private :: add_field
+procedure, private :: add_connectivity
+generic, public :: add => &
+    & add_field, &
+    & add_connectivity
 procedure, public :: remove_field
 procedure, private :: field_by_idx_int
 procedure, private :: field_by_idx_size_t
@@ -50,6 +54,8 @@ procedure, public :: ghost
 
 procedure, public :: edge_connectivity
 procedure, public :: cell_connectivity
+
+procedure, public :: connectivity
 
 procedure, public :: delete => atlas_Nodes__delete
 procedure, public :: copy => atlas_Nodes__copy
@@ -117,11 +123,29 @@ function cell_connectivity(this) result(connectivity)
   call connectivity%return()
 end function
 
-subroutine add(this,field)
+function connectivity(this,name)
+  use atlas_nodes_c_binding
+  type(atlas_Connectivity) :: connectivity
+  class(atlas_Nodes), intent(in) :: this
+  character(len=*), intent(in) :: name
+  connectivity = atlas_Connectivity( &
+      atlas__mesh__Nodes__connectivity(this%c_ptr(),c_str(name)) )
+  call connectivity%return()
+end function
+
+subroutine add_connectivity(this,connectivity)
+  use atlas_nodes_c_binding
+  class(atlas_Nodes), intent(inout) :: this
+  type(atlas_Connectivity), intent(in) :: connectivity
+  call atlas__mesh__Nodes__add_connectivity(this%c_ptr(), connectivity%c_ptr())
+end subroutine
+
+
+subroutine add_field(this,field)
   use atlas_nodes_c_binding
   class(atlas_Nodes), intent(inout) :: this
   type(atlas_Field), intent(in) :: field
-  call atlas__mesh__Nodes__add(this%c_ptr(), field%c_ptr())
+  call atlas__mesh__Nodes__add_field(this%c_ptr(), field%c_ptr())
 end subroutine
 
 subroutine remove_field(this,name)

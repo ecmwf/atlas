@@ -26,7 +26,8 @@ namespace mesh {
 // -----------------------------------------------------------------------------
 
 
-IrregularConnectivity::IrregularConnectivity() :
+IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
+  name_(name),
   owns_(true),
   values_(0),
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
@@ -48,7 +49,8 @@ IrregularConnectivity::IrregularConnectivity() :
 // -----------------------------------------------------------------------------
 
 IrregularConnectivity::IrregularConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[] )
-  : owns_(false),
+  : name_(),
+    owns_(false),
     values_(values),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
     rows_(rows),
@@ -296,8 +298,8 @@ MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, siz
 
 //------------------------------------------------------------------------------------------------------
 
-MultiBlockConnectivity::MultiBlockConnectivity() :
-  IrregularConnectivity(),
+MultiBlockConnectivity::MultiBlockConnectivity(const std::string& name) :
+  IrregularConnectivity(name),
   blocks_(0),
   block_displs_(0),
   owned_block_displs_(1,0ul)
@@ -674,6 +676,23 @@ void atlas__BlockConnectivity__data(BlockConnectivity* This, int* &data, size_t 
   data = This->data();
   rows = This->rows();
   cols = This->cols();
+}
+
+const char* atlas__Connectivity__name (Connectivity* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->name().c_str();
+  );
+  return 0;
+}
+
+void atlas__Connectivity__rename(Connectivity* This, const char* name)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    This->rename( std::string(name) );
+  );
 }
 
 }

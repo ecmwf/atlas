@@ -77,6 +77,8 @@ public: // methods
   const Connectivity& cell_connectivity() const;
         Connectivity& cell_connectivity();
 
+  const Connectivity& connectivity(const std::string& name) const;
+        Connectivity& connectivity(const std::string& name);
 
   size_t size() const { return size_; }
 
@@ -88,7 +90,7 @@ public: // methods
 
   void remove_field(const std::string& name);
 
-  Connectivity& add( const std::string& name, Connectivity* );
+  Connectivity& add( mesh::Connectivity* );
 
 private:
 
@@ -156,7 +158,7 @@ void atlas__mesh__Nodes__delete (Nodes* This);
 size_t atlas__mesh__Nodes__size (Nodes* This);
 void atlas__mesh__Nodes__resize (Nodes* This, size_t size);
 size_t atlas__mesh__Nodes__nb_fields (Nodes* This);
-void atlas__mesh__Nodes__add (Nodes* This, field_Field* field);
+void atlas__mesh__Nodes__add_field (Nodes* This, field_Field* field);
 void atlas__mesh__Nodes__remove_field (Nodes* This, char* name);
 int atlas__mesh__Nodes__has_field (Nodes* This, char* name);
 field_Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name);
@@ -165,6 +167,8 @@ util_Metadata* atlas__mesh__Nodes__metadata(Nodes* This);
 void atlas__mesh__Nodes__str (Nodes* This, Char* &str, int &size);
 IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity(Nodes* This);
 IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This);
+IrregularConnectivity* atlas__mesh__Nodes__connectivity (Nodes* This, char* name);
+void atlas__mesh__Nodes__add_connectivity (Nodes* This, IrregularConnectivity* connectivity);
 field_Field* atlas__mesh__Nodes__lonlat(Nodes* This);
 field_Field* atlas__mesh__Nodes__global_index(Nodes* This);
 field_Field* atlas__mesh__Nodes__remote_index(Nodes* This);

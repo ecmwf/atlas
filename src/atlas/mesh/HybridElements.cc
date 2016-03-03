@@ -44,9 +44,9 @@ HybridElements::HybridElements() :
   partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size(),1)) );
   halo_         = &add( field::Field::create<int   >("halo",      array::make_shape(size(),1)) );
 
-  node_connectivity_ = &add( "node", new Connectivity() );
-  edge_connectivity_ = &add( "edge", new Connectivity() );
-  cell_connectivity_ = &add( "cell", new Connectivity() );
+  node_connectivity_ = &add( new Connectivity("node") );
+  edge_connectivity_ = &add( new Connectivity("edge") );
+  cell_connectivity_ = &add( new Connectivity("cell") );
 }
 
 HybridElements::~HybridElements()
@@ -131,9 +131,9 @@ field::Field& HybridElements::field(size_t idx)
 }
 
 
-HybridElements::Connectivity& HybridElements::add( const std::string& name, Connectivity *connectivity )
+HybridElements::Connectivity& HybridElements::add( Connectivity *connectivity )
 {
-  connectivities_[name] = connectivity;
+  connectivities_[connectivity->name()] = connectivity;
   return *connectivity;
 }
 

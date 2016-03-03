@@ -472,6 +472,9 @@ TEST( test_fv )
       integer :: halo_size = 1
 
 
+      type(atlas_Connectivity) :: node_to_node
+      type(atlas_Connectivity) :: node_to_edge
+
       allocate(nloen(36))
       nloen(1:32) = 64
 
@@ -506,6 +509,19 @@ TEST( test_fv )
       ! Generate median-dual mesh, (dual_normals, dual_volumes)
       call atlas_build_median_dual_mesh(mesh)
 
+
+      node_to_node = atlas_Connectivity("node")
+      call nodes%add(node_to_node)
+      call node_to_node%final()
+
+      node_to_node = nodes%connectivity("node")
+      FCTEST_CHECK_EQUAL( node_to_node%rows(), 0_c_size_t )
+      FCTEST_CHECK_EQUAL( node_to_node%name(),"node")
+
+      node_to_node = nodes%connectivity("node")
+      node_to_edge = nodes%connectivity("edge")
+
+      call node_to_node%final()
       call mesh%final()
       call grid%final()
       call nodes_fs%final()

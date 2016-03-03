@@ -30,9 +30,10 @@ TEST( test_connectivity )
 
   write(*,*) "test_connectivity starting"
 
-  connectivity = atlas_Connectivity()
+  connectivity = atlas_Connectivity("hybrid")
   FCTEST_CHECK_EQUAL( connectivity%owners(), 1 )
 
+  FCTEST_CHECK_EQUAL(connectivity%name(),"hybrid")
   FCTEST_CHECK_EQUAL(connectivity%rows(),0_c_size_t)
   FCTEST_CHECK_EQUAL(connectivity%missing_value(),0)
 
@@ -174,6 +175,7 @@ TEST( test_multiblockconnectivity )
   multiblock = atlas_MultiBlockConnectivity()
   FCTEST_CHECK_EQUAL( multiblock%owners(), 1 )
 
+  FCTEST_CHECK_EQUAL(multiblock%name(),"")
   FCTEST_CHECK_EQUAL(multiblock%rows(),0_c_size_t)
   FCTEST_CHECK_EQUAL(multiblock%blocks(),0_c_size_t)
 
@@ -257,7 +259,6 @@ TEST( test_multiblockconnectivity )
 END_TEST
 
 ! -----------------------------------------------------------------------------
-
 
 END_TESTSUITE
 

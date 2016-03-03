@@ -76,7 +76,7 @@ public:
 
   /// @brief Construct connectivity table that needs resizing a-posteriori
   /// Data is owned
-  IrregularConnectivity();
+  IrregularConnectivity( const std::string& name = "" );
 
   /// @brief Construct connectivity table wrapping existing raw data.
   /// No resizing can be performed as data is not owned.
@@ -85,6 +85,13 @@ public:
   ~IrregularConnectivity();
 
 //-- Accessors
+
+  /// @brief Name associated to this Connetivity
+  const std::string& name() const { return name_; }
+
+  /// @brief Rename this Connectivity
+  void rename(const std::string& name) { name_ = name; }
+
   /// @brief Number of rows in the connectivity table
   size_t rows() const { return rows_; }
 
@@ -158,6 +165,8 @@ private:
   void on_update();
 
 private:
+  std::string name_;
+
   bool owns_;
   std::vector<idx_t>  owned_values_;
   std::vector<size_t> owned_displs_;
@@ -225,7 +234,7 @@ public:
 
   /// @brief Construct connectivity table that needs resizing a-posteriori
   /// Data is owned
-  MultiBlockConnectivity();
+  MultiBlockConnectivity( const std::string& name = "" );
 
   /// @brief Construct connectivity table wrapping existing raw data.
   /// No resizing can be performed as data is not owned.
@@ -433,6 +442,8 @@ extern "C"
 {
 Connectivity* atlas__Connectivity__create();
 MultiBlockConnectivity* atlas__MultiBlockConnectivity__create();
+const char* atlas__Connectivity__name (Connectivity* This);
+void atlas__Connectivity__rename(Connectivity* This, const char* name);
 void atlas__Connectivity__delete(Connectivity* This);
 void atlas__Connectivity__displs(Connectivity* This, size_t* &displs, size_t &size);
 void atlas__Connectivity__counts(Connectivity* This, size_t* &counts, size_t &size);

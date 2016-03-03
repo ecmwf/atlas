@@ -176,7 +176,7 @@ private:
   size_t elemtype_nb_nodes(size_t elem_idx) const ;
   size_t elemtype_nb_edges(size_t elem_idx) const ;
 
-  Connectivity& add( const std::string& name, Connectivity* );
+  Connectivity& add( Connectivity* );
 
   FieldMap fields_;
   ConnectivityMap connectivities_;

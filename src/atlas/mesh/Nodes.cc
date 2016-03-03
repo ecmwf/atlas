@@ -27,8 +27,8 @@ Nodes::Nodes(): size_(0)
   lonlat_       = &add( field::Field::create<double>("lonlat",    array::make_shape(size(),2)) );
   ghost_        = &add( field::Field::create<int   >("ghost",     array::make_shape(size(),1)) );
 
-  edge_connectivity_ = &add( "edge", new Connectivity() );
-  cell_connectivity_ = &add( "cell", new Connectivity() );
+  edge_connectivity_ = &add( new Connectivity("edge") );
+  cell_connectivity_ = &add( new Connectivity("cell") );
 
 
   add( field::Field::create<int>("flags", array::make_shape(size(),1)) );
@@ -46,9 +46,9 @@ Nodes::Nodes(): size_(0)
   }
 }
 
-Nodes::Connectivity& Nodes::add( const std::string& name, Connectivity *connectivity )
+Nodes::Connectivity& Nodes::add( Connectivity *connectivity )
 {
-  connectivities_[name] = connectivity;
+  connectivities_[connectivity->name()] = connectivity;
   return *connectivity;
 }
 
@@ -143,6 +143,29 @@ void Nodes::print(std::ostream& os) const
     os << "]";
 }
 
+const IrregularConnectivity& Nodes::connectivity(const std::string& name) const
+{
+  if( (connectivities_.find(name) == connectivities_.end()) )
+  {
+    std::stringstream msg;
+    msg << "Trying to access connectivity `"<<name<<"' in Nodes, but no connectivity with this name is present in Nodes.";
+    throw eckit::Exception(msg.str(),Here());
+  }
+  return *connectivities_.find(name)->second;
+}
+IrregularConnectivity& Nodes::connectivity(const std::string& name)
+{
+  if( (connectivities_.find(name) == connectivities_.end()) )
+  {
+    std::stringstream msg;
+    msg << "Trying to access connectivity `"<<name<<"' in Nodes, but no connectivity with this name is present in Nodes.";
+    throw eckit::Exception(msg.str(),Here());
+  }
+  return *connectivities_.find(name)->second;
+}
+
+
+
 //-----------------------------------------------------------------------------
 
 extern "C" {
@@ -184,7 +207,7 @@ size_t atlas__mesh__Nodes__nb_fields (Nodes* This)
   return 0;
 }
 
-void atlas__mesh__Nodes__add (Nodes* This, field::Field* field)
+void atlas__mesh__Nodes__add_field (Nodes* This, field::Field* field)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -261,6 +284,25 @@ IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This)
   IrregularConnectivity* connectivity(0);
   ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
   return connectivity;
+}
+
+IrregularConnectivity* atlas__mesh__Nodes__connectivity (Nodes* This, char* name)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return &This->connectivity(std::string(name));
+  );
+  return 0;
+}
+
+
+void atlas__mesh__Nodes__add_connectivity (Nodes* This, IrregularConnectivity* connectivity)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(connectivity);
+    This->add(connectivity);
+  );
 }
 
 field::Field* atlas__mesh__Nodes__lonlat(Nodes* This)
