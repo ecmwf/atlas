@@ -17,7 +17,7 @@
 #include "eckit/log/BigNum.h"
 #include "eckit/memory/ScopedPtr.h"
 
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 
 #ifdef CGAL_FOUND
 // CGAL needs -DCGAL_NDEBUG to reach peak performance ...

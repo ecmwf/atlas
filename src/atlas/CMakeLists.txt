@@ -10,18 +10,18 @@
 
 ecbuild_generate_config_headers( DESTINATION ${INSTALL_INCLUDE_DIR}/atlas )
 
-configure_file( atlas_config.h.in   atlas_config.h  )
-configure_file( atlas_version.h.in  atlas_version.h )
-configure_file( atlas_defines.h.in  atlas_defines.h   )
+configure_file( internals/atlas_config.h.in   internals/atlas_config.h  )
+configure_file( internals/atlas_version.h.in  internals/atlas_version.h )
+configure_file( internals/atlas_defines.h.in  internals/atlas_defines.h   )
 
 install( FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
+  ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_defines.h
+  ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.h
   DESTINATION
-  ${INSTALL_INCLUDE_DIR}/atlas )
+  ${INSTALL_INCLUDE_DIR}/atlas/internals )
 
-configure_file( atlas_version.cc.in atlas_version.cc )
+configure_file( internals/atlas_version.cc.in internals/atlas_version.cc )
 
 ### sources
 
@@ -321,10 +321,10 @@ ecbuild_add_library( TARGET atlas
     ${atlas_numerics_srcs}
     ${atlas_util_srcs}
     ${atlas_internals_srcs}
-    ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
-    ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
-    ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
+    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_config.h
+    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_defines.h
 
   PRIVATE_INCLUDES
     "${CGAL_INCLUDE_DIRS}"

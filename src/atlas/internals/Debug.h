@@ -13,7 +13,7 @@
 
 #include <sstream>
 #include <unistd.h>
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
 

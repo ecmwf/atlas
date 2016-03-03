@@ -11,7 +11,7 @@
 /// @author Willem Deconinck
 /// @date Jan 2015
 
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/grid/predefined/gausslat/gausslat.h"
 
 namespace atlas {

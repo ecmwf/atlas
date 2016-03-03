@@ -12,7 +12,7 @@
 #include <string>
 #include <iterator>
 
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 
 #define BOOST_TEST_MODULE test_elements
 #include "ecbuild/boost_test_framework.h"

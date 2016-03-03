@@ -9,7 +9,7 @@
 #ifndef atlas_f_mpi_h
 #define atlas_f_mpi_h
 
-#include "atlas_f/atlas_f_defines.h"
+#include "atlas/atlas_f.h"
 
 #ifdef ATLAS_HAVE_MPI
 use mpi

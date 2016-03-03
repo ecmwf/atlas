@@ -10,7 +10,7 @@
 
 #include <typeinfo>
 #include "eckit/memory/Builder.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/grid/ReducedLonLatGrid.h"
 
 using eckit::BadParameter;

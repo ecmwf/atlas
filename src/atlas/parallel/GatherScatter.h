@@ -15,7 +15,7 @@
 #include <stdexcept>
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/internals/Debug.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/parallel/mpi/mpi.h"

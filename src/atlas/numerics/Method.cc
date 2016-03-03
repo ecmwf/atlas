@@ -9,7 +9,7 @@
  */
 
 #include "eckit/exception/Exceptions.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/numerics/Method.h"
 #include "atlas/runtime/ErrorHandling.h"
 

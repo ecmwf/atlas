@@ -14,7 +14,7 @@
 #include <vector>
 #include <memory>
 
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 
 #include "atlas/mesh/Mesh.h"
 #include "atlas/grid/Grid.h"

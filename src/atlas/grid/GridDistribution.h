@@ -15,7 +15,7 @@
 #include <vector>
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 
 namespace atlas { namespace grid { class Grid; } }
 namespace atlas { namespace grid { namespace partitioners { class Partitioner; } } }

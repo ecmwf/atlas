@@ -17,7 +17,7 @@
 #include "eckit/config/Configurable.h"
 #include "eckit/config/Resource.h"
 #include "eckit/geometry/Point3.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/ReducedGrid.h"
 #include "atlas/grid/GridDistribution.h"

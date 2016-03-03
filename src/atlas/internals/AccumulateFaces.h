@@ -12,7 +12,7 @@
 #define atlas_util_AccumulateFaces_h
 
 #include <vector>
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/internals/Parameters.h"
 
 namespace atlas { namespace mesh { class HybridElements; } }

@@ -11,7 +11,7 @@
 #ifndef atlas_omp_h
 #define atlas_omp_h
 
-#include "atlas/atlas_defines.h"
+#include "atlas/internals/atlas_defines.h"
 
 #ifdef ATLAS_HAVE_OMP
 #include <omp.h>

@@ -11,14 +11,13 @@ function( fortranize file )
   file( WRITE "${file}" "${result}" )
 endfunction()
 
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/atlas_defines.h.in  atlas_f_defines.h )
-  # fortranize( ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_defines.h )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/internals/atlas_defines.h.in
+                ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h )
 
 install( FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_defines.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/internals/atlas_f_mpi.h
+  ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h
   DESTINATION
-  ${INSTALL_INCLUDE_DIR}/atlas_f )
+  ${INSTALL_INCLUDE_DIR}/atlas )
 
 
 ### fortran bindings

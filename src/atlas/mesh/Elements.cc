@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/atlas_defines.h"
+#include "atlas/internals/atlas_defines.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/field/Field.h"

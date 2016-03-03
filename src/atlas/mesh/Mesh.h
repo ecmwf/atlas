@@ -17,7 +17,7 @@
 #include <vector>
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/internals/ObjectRegistry.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"

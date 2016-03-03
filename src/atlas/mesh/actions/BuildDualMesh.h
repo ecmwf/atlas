@@ -13,7 +13,7 @@
 #ifndef BuildDualMesh_h
 #define BuildDualMesh_h
 
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 
 namespace atlas {
   class Mesh;

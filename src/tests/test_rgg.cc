@@ -19,7 +19,7 @@
 #include "eckit/geometry/Point3.h"
 #include "atlas/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/grid/GaussianLatitudes.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"

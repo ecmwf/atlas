@@ -12,8 +12,8 @@
 #include <string>
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
-#include "atlas/atlas_config.h"
-#include "atlas/atlas_defines.h"
+#include "atlas/internals/atlas_config.h"
+#include "atlas/internals/atlas_defines.h"
 #include "atlas/grid/partitioners/Partitioner.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/runtime/Log.h"

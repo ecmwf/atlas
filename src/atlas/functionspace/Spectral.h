@@ -11,7 +11,7 @@
 #ifndef atlas_functionspace_SpectralFunctionSpace_h
 #define atlas_functionspace_SpectralFunctionSpace_h
 
-#include "atlas/atlas_defines.h"
+#include "atlas/internals/atlas_defines.h"
 #include "atlas/functionspace/FunctionSpace.h"
 
 namespace atlas {

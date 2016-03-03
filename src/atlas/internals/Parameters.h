@@ -13,7 +13,7 @@
 
 #include <cmath>
 #include <string>
-#include "atlas/atlas_defines.h"
+#include "atlas/internals/atlas_defines.h"
 
 //------------------------------------------------------------------------------------------------------
 

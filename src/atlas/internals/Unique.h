@@ -13,7 +13,7 @@
 
 #include <cmath>
 #include <sstream>
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/LonLatMicroDeg.h"

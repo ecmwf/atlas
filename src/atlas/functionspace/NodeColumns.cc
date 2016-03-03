@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include "eckit/utils/MD5.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"

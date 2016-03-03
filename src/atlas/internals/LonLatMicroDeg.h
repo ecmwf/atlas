@@ -12,7 +12,7 @@
 #define atlas_util_LonLatMicroDeg_h
 
 #include "eckit/geometry/Point2.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Functions.h"
 #include "atlas/array/ArrayView.h"

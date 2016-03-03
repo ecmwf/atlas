@@ -26,7 +26,7 @@
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/array/IndexView.h"
 
 namespace atlas {

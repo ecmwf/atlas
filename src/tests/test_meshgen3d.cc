@@ -11,7 +11,7 @@
 #define BOOST_TEST_MODULE TestMeshGen3D
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 
 #include "atlas/atlas.h"
 #include "atlas/mesh/Mesh.h"

@@ -16,7 +16,7 @@
 #include <iostream>
 #include <stdexcept>
 #include "eckit/memory/ScopedPtr.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"

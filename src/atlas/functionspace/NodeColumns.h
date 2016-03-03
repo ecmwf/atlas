@@ -12,7 +12,7 @@
 #define atlas_functionspace_NodeColumnsFunctionSpace_h
 
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Halo.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"

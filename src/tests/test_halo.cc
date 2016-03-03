@@ -16,7 +16,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "tests/TestMeshes.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/mesh/Mesh.h"

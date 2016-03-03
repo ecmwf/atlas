@@ -17,7 +17,7 @@
 #include "eckit/config/ResourceMgr.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/field/Field.h"
 #include "atlas/mesh/Mesh.h"

@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/grid/GaussianLatitudes.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"

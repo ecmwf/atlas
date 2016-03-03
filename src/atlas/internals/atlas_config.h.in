@@ -2,8 +2,8 @@
 #define atlas_config_h
 
 #include "atlas/atlas_ecbuild_config.h"
-#include "atlas/atlas_version.h"
-#include "atlas/atlas_defines.h"
+#include "atlas/internals/atlas_version.h"
+#include "atlas/internals/atlas_defines.h"
 
 namespace atlas {
 

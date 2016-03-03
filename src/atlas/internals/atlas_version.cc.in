@@ -1,5 +1,5 @@
 #include <string>
-#include "atlas/atlas_version.h"
+#include "atlas/internals/atlas_version.h"
 
 const char * atlas_version()     { return ATLAS_VERSION; }
 const char * atlas_version_str() { return ATLAS_VERSION_STR; }

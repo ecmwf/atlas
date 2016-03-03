@@ -15,7 +15,7 @@
 #ifndef atlas_ArrayView_impl_h
 #define atlas_ArrayView_impl_h
 
-#include "atlas/atlas_defines.h"
+#include "atlas/internals/atlas_defines.h"
 
 #ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
 #include <sstream>

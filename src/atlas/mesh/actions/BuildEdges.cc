@@ -13,7 +13,7 @@
 #include <limits>
 #include <iostream>
 #include <stdexcept>
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/Nodes.h"

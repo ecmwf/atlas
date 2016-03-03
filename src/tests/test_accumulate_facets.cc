@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 
 #define BOOST_TEST_MODULE test_accumulate_facets
 #include "ecbuild/boost_test_framework.h"

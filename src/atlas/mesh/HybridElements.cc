@@ -9,8 +9,8 @@
  */
 
 #include <algorithm>
-#include "atlas/atlas_config.h"
-#include "atlas/atlas_defines.h"
+#include "atlas/internals/atlas_config.h"
+#include "atlas/internals/atlas_defines.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Elements.h"

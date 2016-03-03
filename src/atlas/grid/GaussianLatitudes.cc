@@ -12,7 +12,7 @@
 /// @date Jan 2014
 
 #include "eckit/memory/ScopedPtr.h"
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 #include "atlas/grid/GaussianLatitudes.h"
 #include "atlas/grid/predefined/gausslat/gausslat.h"
 #include "atlas/internals/Parameters.h"

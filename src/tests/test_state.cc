@@ -11,7 +11,7 @@
 #include <cmath>
 #include <string>
 
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 
 #define BOOST_TEST_MODULE test_state
 #include "ecbuild/boost_test_framework.h"

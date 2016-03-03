@@ -12,7 +12,7 @@
 #define atlas_util_Constants_h
 
 #include <cmath>
-#include "atlas/atlas_defines.h"
+#include "atlas/internals/atlas_defines.h"
 
 //------------------------------------------------------------------------------------------------------
 
