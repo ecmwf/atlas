@@ -19,7 +19,7 @@ use atlas_grids_module
 use, intrinsic :: iso_c_binding
 implicit none
 type(atlas_Mesh) :: mesh
-type(atlas_Nodes) :: nodes
+type(atlas_mesh_Nodes) :: nodes
 
 
 type, extends(atlas_Config) :: atlas_FieldParametrisation
@@ -315,7 +315,7 @@ END_TEST
 TEST( test_meshgen )
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
-  type(atlas_edges) :: edges
+  type(atlas_mesh_Edges) :: edges
   type(atlas_Field) :: field
   type(atlas_functionspace_NodeColumns) :: functionspace_nodes
   type(atlas_HaloExchange) :: halo_exchange
@@ -464,8 +464,8 @@ TEST( test_fv )
       type(atlas_GridDistribution) :: griddistribution
       type(atlas_functionspace_NodeColumns) :: nodes_fs
 
-      type(atlas_edges) :: edges
-      type(atlas_Nodes) :: nodes
+      type(atlas_mesh_Edges) :: edges
+      type(atlas_mesh_Nodes) :: nodes
 
       integer, allocatable :: nloen(:)
       integer, allocatable :: part(:)

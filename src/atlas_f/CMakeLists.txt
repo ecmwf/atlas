@@ -154,8 +154,10 @@ ecbuild_add_library( TARGET atlas_f
         grid/atlas_grids_module.F90
         mesh/atlas_MeshGenerator_module.F90
         mesh/atlas_Mesh_module.F90
+        mesh/atlas_mesh_Nodes_module.F90
+        mesh/atlas_mesh_Edges_module.F90
+        mesh/atlas_mesh_Cells_module.F90
         mesh/atlas_Connectivity_module.F90
-        mesh/atlas_Nodes_module.F90
         mesh/atlas_HybridElements_module.F90
         mesh/atlas_Elements_module.F90
         mesh/atlas_ElementType_module.F90

@@ -11,8 +11,8 @@ use atlas_Field_module, only: &
     & atlas_Field
 use atlas_FieldSet_module, only: &
     & atlas_FieldSet
-use atlas_Nodes_module, only: &
-    & atlas_Nodes
+use atlas_mesh_Nodes_module, only: &
+    & atlas_mesh_Nodes
 use atlas_Mesh_module, only: &
     & atlas_Mesh
 use atlas_Grid_module, only: &
@@ -23,6 +23,17 @@ use atlas_functionspace_NodeColumns_module, only: &
     & atlas_functionspace_NodeColumns
 
 implicit none
+
+private :: c_str
+private :: atlas_FunctionSpace
+private :: atlas_Field
+private :: atlas_FieldSet
+private :: atlas_mesh_nodes
+private :: atlas_Mesh
+private :: atlas_Grid
+private :: atlas_GridDistribution
+private :: atlas_functionspace_NodeColumns
+
 
 public :: atlas_generate_mesh
 public :: atlas_read_gmsh
@@ -110,13 +121,13 @@ end subroutine atlas_build_parallel_fields
 
 subroutine atlas_build_nodes_parallel_fields(nodes)
   use atlas_BuildParallelFields_c_binding
-  type(atlas_Nodes), intent(inout) :: nodes
+  type(atlas_mesh_Nodes), intent(inout) :: nodes
   call atlas__build_nodes_parallel_fields(nodes%c_ptr())
 end subroutine atlas_build_nodes_parallel_fields
 
 subroutine atlas_renumber_nodes_glb_idx(nodes)
   use atlas_BuildParallelFields_c_binding
-  type(atlas_Nodes), intent(inout) :: nodes
+  type(atlas_mesh_Nodes), intent(inout) :: nodes
   call atlas__renumber_nodes_glb_idx(nodes%c_ptr())
 end subroutine atlas_renumber_nodes_glb_idx
 

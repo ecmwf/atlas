@@ -8,7 +8,7 @@ use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
 use atlas_FieldSet_module, only: atlas_FieldSet
 use atlas_Mesh_module, only: atlas_Mesh
-use atlas_Nodes_module, only: atlas_Nodes
+use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
 use atlas_GatherScatter_module, only: atlas_GatherScatter
 use atlas_HaloExchange_module, only: atlas_HaloExchange
 use atlas_Checksum_module, only: atlas_Checksum
@@ -21,7 +21,7 @@ private :: c_str, c_to_f_string_cptr, atlas_free
 private :: atlas_FunctionSpace
 private :: atlas_Field
 private :: atlas_FieldSet
-private :: atlas_Nodes
+private :: atlas_mesh_Nodes
 private :: atlas_GatherScatter
 private :: atlas_HaloExchange
 private :: atlas_Checksum
@@ -287,7 +287,7 @@ end function
 
 function nodes(this)
   use atlas_functionspace_NodeColumns_c_binding
-  type(atlas_Nodes) :: nodes
+  type(atlas_mesh_Nodes) :: nodes
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   call nodes%reset_c_ptr( atlas__NodesFunctionSpace__nodes(this%c_ptr()) )
 end function

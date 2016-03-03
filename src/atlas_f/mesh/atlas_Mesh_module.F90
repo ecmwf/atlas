@@ -7,16 +7,18 @@ module atlas_Mesh_module
 use, intrinsic :: iso_c_binding, only: c_ptr
 use atlas_c_interop, only: c_str
 use atlas_refcounted_module, only: atlas_refcounted
-use atlas_HybridElements_module, only: atlas_cells, atlas_edges
-use atlas_Nodes_module, only: atlas_Nodes
+use atlas_mesh_Cells_module, only: atlas_mesh_Cells
+use atlas_mesh_Edges_module, only: atlas_mesh_Edges
+use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
 
 implicit none
 
 private :: c_ptr
 private :: c_str
 private :: atlas_refcounted
-private :: atlas_cells, atlas_edges
-private :: atlas_Nodes
+private :: atlas_mesh_Cells
+private :: atlas_mesh_Edges
+private :: atlas_mesh_Nodes
 
 public :: atlas_Mesh
 
@@ -74,7 +76,7 @@ end function atlas_Mesh__ctor
 
 function Mesh__create_nodes(this,nb_nodes) result(nodes)
   use atlas_mesh_c_binding
-  type(atlas_Nodes) :: nodes
+  type(atlas_mesh_Nodes) :: nodes
   class(atlas_Mesh), intent(in) :: this
   integer, intent(in) :: nb_nodes
   call nodes%reset_c_ptr( atlas__Mesh__create_nodes(this%c_ptr(),nb_nodes) )
@@ -84,7 +86,7 @@ end function
 function Mesh__nodes(this) result(nodes)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(in) :: this
-  type(atlas_Nodes) :: nodes
+  type(atlas_mesh_Nodes) :: nodes
   call nodes%reset_c_ptr( atlas__Mesh__nodes(this%c_ptr()) )
   if( nodes%is_null() ) write(0,*) 'call abort()'
 end function
@@ -92,8 +94,8 @@ end function
 function Mesh__cells(this) result(cells)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(in) :: this
-  type(atlas_cells) :: cells
-  cells = atlas_cells(atlas__Mesh__cells(this%c_ptr()))
+  type(atlas_mesh_Cells) :: cells
+  cells = atlas_mesh_Cells(atlas__Mesh__cells(this%c_ptr()))
   if( cells%is_null() ) write(0,*) 'call abort()'
   call cells%return()
 end function
@@ -101,8 +103,8 @@ end function
 function Mesh__edges(this) result(edges)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(in) :: this
-  type(atlas_edges) :: edges
-  edges = atlas_edges( atlas__Mesh__Edges(this%c_ptr()) )
+  type(atlas_mesh_Edges) :: edges
+  edges = atlas_mesh_Edges( atlas__Mesh__Edges(this%c_ptr()) )
   if( edges%is_null() ) write(0,*) 'call abort()'
   call edges%return()
 end function

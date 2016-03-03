@@ -45,7 +45,7 @@ type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs
 type(atlas_Field) :: field, template
-type(atlas_Nodes) :: nodes
+type(atlas_mesh_Nodes) :: nodes
 integer :: halo_size, nb_nodes
 halo_size = 1
 
@@ -335,7 +335,7 @@ type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_EdgeColumns) :: fs
 type(atlas_Field) :: field, template
-type(atlas_edges) :: edges
+type(atlas_mesh_Edges) :: edges
 integer :: halo_size, nb_edges
 halo_size = 0
 

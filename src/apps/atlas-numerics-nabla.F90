@@ -19,7 +19,7 @@ implicit none
 
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
-  type(atlas_Nodes) :: nodes
+  type(atlas_mesh_Nodes) :: nodes
   type(atlas_functionspace_NodeColumns) :: node_columns
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_fvm_Method) :: fvm
@@ -141,8 +141,8 @@ REAL(KIND=JPRB),INTENT(IN)   :: PVAR(:,:)
 REAL(KIND=JPRB),INTENT(OUT)  :: PGRAD(:,:,:)
 
 TYPE(ATLAS_FIELD) :: LONLAT,DUAL_VOLUMES,DUAL_NORMALS,NODE2EDGE_SIGN
-TYPE(atlas_Nodes) :: NODES
-TYPE(ATLAS_edges) :: EDGES
+type(atlas_mesh_Nodes) :: NODES
+type(atlas_mesh_Edges) :: EDGES
 TYPE(ATLAS_CONNECTIVITY) :: EDGE2NODE, NODE2EDGE
 REAL(KIND=JPRB), POINTER :: ZLONLAT(:,:),ZDUAL_VOLUMES(:),ZDUAL_NORMALS(:,:),&
  & ZNODE2EDGE_SIGN(:,:)
@@ -226,7 +226,7 @@ END SUBROUTINE FV_GRADIENT
 
 subroutine init()
   character(len=1024) :: grid_uid
-  type(atlas_Nodes) :: mesh_nodes
+  type(atlas_mesh_Nodes) :: mesh_nodes
 
   call atlas_init()
 

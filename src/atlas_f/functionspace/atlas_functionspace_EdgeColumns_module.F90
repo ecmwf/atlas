@@ -7,7 +7,7 @@ use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
 use atlas_FieldSet_module, only: atlas_FieldSet
 use atlas_Mesh_module, only: atlas_Mesh
-use atlas_HybridElements_module, only: atlas_edges
+use atlas_mesh_Edges_module, only: atlas_mesh_Edges
 use atlas_GatherScatter_module, only: atlas_GatherScatter
 use atlas_HaloExchange_module, only: atlas_HaloExchange
 use atlas_Checksum_module, only: atlas_Checksum
@@ -19,7 +19,7 @@ private :: c_str, c_to_f_string_cptr, atlas_free
 private :: atlas_FunctionSpace
 private :: atlas_Field
 private :: atlas_FieldSet
-private :: atlas_edges
+private :: atlas_mesh_Edges
 private :: atlas_GatherScatter
 private :: atlas_HaloExchange
 private :: atlas_Checksum
@@ -158,7 +158,7 @@ end function
 
 function edges(this)
   use atlas_functionspace_EdgeColumns_c_binding
-  type(atlas_edges) :: edges
+  type(atlas_mesh_Edges) :: edges
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   call edges%reset_c_ptr( atlas__functionspace__Edges__edges(this%c_ptr()) )
 end function

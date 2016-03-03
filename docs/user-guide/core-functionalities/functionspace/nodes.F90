@@ -9,7 +9,7 @@ type(atlas_ReducedGrid)               :: reducedGrid
 type(atlas_mesh)                      :: mesh
 type(atlas_meshgenerator)             :: meshgenerator
 type(atlas_functionspace_NodeColumns)       :: fs_nodes
-type(atlas_Nodes)                :: meshnodes
+type(atlas_mesh_Nodes)                :: meshnodes
 type(atlas_Field)                     :: scalarField1
 type(atlas_Field)                     :: scalarField2
 type(atlas_Field)                     :: vectorField1

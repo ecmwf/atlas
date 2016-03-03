@@ -100,9 +100,11 @@ use atlas_Error_module, only: &
     & atlas_err_writeerror, &
     & atlas_err_unknown
 use atlas_HybridElements_module, only: &
-    & atlas_HybridElements, &
-    & atlas_cells, &
-    & atlas_edges
+    & atlas_HybridElements
+use atlas_mesh_Edges_module, only: &
+    & atlas_mesh_Edges
+use atlas_mesh_Cells_module, only: &
+    & atlas_mesh_Cells
 use atlas_Elements_module, only: &
     & atlas_Elements
 use atlas_ElementType_module, only: &
@@ -114,8 +116,8 @@ use atlas_Connectivity_module, only: &
     & atlas_Connectivity, &
     & atlas_MultiBlockConnectivity, &
     & atlas_BlockConnectivity
-use atlas_Nodes_module, only: &
-    & atlas_Nodes
+use atlas_mesh_Nodes_module, only: &
+    & atlas_mesh_Nodes
 use atlas_HaloExchange_module, only: &
     & atlas_HaloExchange
 use atlas_GatherScatter_module, only: &

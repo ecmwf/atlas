@@ -21,13 +21,11 @@ private :: atlas_ElementType
 private :: atlas_Elements
 
 public :: atlas_HybridElements
-public :: atlas_cells
-public :: atlas_edges
 
 private
 
 !-----------------------------
-! atlas_HybridElements  !
+! atlas_HybridElements       !
 !-----------------------------
 
 type, extends(atlas_refcounted) :: atlas_HybridElements
@@ -74,24 +72,6 @@ end type
 interface atlas_HybridElements
   module procedure atlas_HybridElements__cptr
   module procedure atlas_HybridElements__constructor
-end interface
-
-type, extends(atlas_HybridElements) :: atlas_edges
-contains
-end type
-
-interface atlas_edges
-  module procedure atlas_edges__cptr
-  module procedure atlas_edges__constructor
-end interface
-
-type, extends(atlas_HybridElements) :: atlas_cells
-contains
-end type
-
-interface atlas_cells
-  module procedure atlas_cells__cptr
-  module procedure atlas_cells__constructor
 end interface
 
 !========================================================
@@ -287,38 +267,6 @@ function elements_int(this,idx) result(elements)
   elements = atlas_Elements( atlas__mesh__HybridElements__elements(this%c_ptr(),int(idx-1,c_size_t)) )
   call elements%return()
 end function
-
-! ----------------------------------------------------------------------------------------
-
-function atlas_cells__cptr(cptr) result(this)
-  use atlas_hybridelements_c_binding
-  type(atlas_cells) :: this
-  type(c_ptr), intent(in) :: cptr
-  call this%reset_c_ptr( cptr )
-end function
-
-function atlas_cells__constructor() result(this)
-  use atlas_hybridelements_c_binding
-  type(atlas_cells) :: this
-  call this%reset_c_ptr( atlas__mesh__HybridElements__create() )
-end function
-
-! ----------------------------------------------------------------------------------------
-
-function atlas_edges__cptr(cptr) result(this)
-  use atlas_hybridelements_c_binding
-  type(atlas_edges) :: this
-  type(c_ptr), intent(in) :: cptr
-  call this%reset_c_ptr( cptr )
-end function
-
-function atlas_edges__constructor() result(this)
-  use atlas_hybridelements_c_binding
-  type(atlas_edges) :: this
-  call this%reset_c_ptr( atlas__mesh__HybridElements__create() )
-end function
-
-! ----------------------------------------------------------------------------------------
 
 end module atlas_HybridElements_module
 
