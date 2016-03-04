@@ -378,18 +378,45 @@ void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet&
 
 
 
-void Trans::dirtrans( const field::Field& gpfield,
-                            field::Field& spfield,
-                      const TransParameters& context) const
+void Trans::dirtrans(
+    const field::Field& gpfield,
+          field::Field& spfield,
+    const TransParameters& context) const
 {
-  field::FieldSet gpfields; gpfields.add(gpfield);
-  field::FieldSet spfields; spfields.add(spfield);
-  dirtrans(gpfields,spfields,context);
+  ASSERT( gpfield.functionspace() == 0 ||
+          gpfield.functionspace().cast<functionspace::ReducedGridColumns>() );
+  ASSERT( spfield.functionspace() == 0 ||
+          spfield.functionspace().cast<functionspace::Spectral>() );
+  if ( gpfield.stride(0) != spfield.stride(0) )
+  {
+    throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
+  }
+  if ( gpfield.shape(0) != ngptot() )
+  {
+    throw eckit::SeriousBug("dirtrans: slowest moving index must be ngptot",Here());
+  }
+  const int nfld = gpfield.stride(0);
+
+  array::ArrayView<double,2> rgp   (gpfield);
+  array::ArrayView<double,2> rspec (spfield);
+
+  // Do transform
+  {
+    struct ::DirTrans_t transform = ::new_dirtrans(&trans_);
+    transform.nscalar    = nfld;
+    transform.rgp        = rgp.data();
+    transform.rspscalar  = rspec.data();
+    transform.ngpblks    = rgp.shape(0);
+    transform.nproma     = 1;
+    TRANS_CHECK( ::trans_dirtrans(&transform) );
+  }
 }
 
 
-void Trans::dirtrans(const field::FieldSet& gpfields,
-                           field::FieldSet& spfields, const TransParameters& context) const
+void Trans::dirtrans(
+    const field::FieldSet& gpfields,
+          field::FieldSet& spfields,
+    const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
@@ -466,7 +493,6 @@ void Trans::dirtrans(const field::FieldSet& gpfields,
       }
     }
   }
-
 }
 
 // --------------------------------------------------------------------------------------------
@@ -576,9 +602,33 @@ void Trans::invtrans(const  field::Field& spfield,
                             field::Field& gpfield,
                      const TransParameters& context) const
 {
-  field::FieldSet spfields; spfields.add(spfield);
-  field::FieldSet gpfields; gpfields.add(gpfield);
-  invtrans(spfields,gpfields,context);
+  ASSERT( gpfield.functionspace() == 0 ||
+          gpfield.functionspace().cast<functionspace::ReducedGridColumns>() );
+  ASSERT( spfield.functionspace() == 0 ||
+          spfield.functionspace().cast<functionspace::Spectral>() );
+  if ( gpfield.stride(0) != spfield.stride(0) )
+  {
+    throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
+  }
+  if ( gpfield.shape(0) != ngptot() )
+  {
+    throw eckit::SeriousBug("dirtrans: slowest moving index must be ngptot",Here());
+  }
+  const int nfld = gpfield.stride(0);
+
+  array::ArrayView<double,2> rgp   (gpfield);
+  array::ArrayView<double,2> rspec (spfield);
+
+  // Do transform
+  {
+    struct ::InvTrans_t transform = ::new_invtrans(&trans_);
+    transform.nscalar    = nfld;
+    transform.rgp        = rgp.data();
+    transform.rspscalar  = rspec.data();
+    transform.ngpblks    = rgp.shape(0);
+    transform.nproma     = 1;
+    TRANS_CHECK( ::trans_invtrans(&transform) );
+  }
 }
 
 
@@ -667,8 +717,6 @@ void Trans::invtrans(const  field::FieldSet& spfields,
       }
     }
   }
-
-
 }
 
 // -----------------------------------------------------------------------------------------------
