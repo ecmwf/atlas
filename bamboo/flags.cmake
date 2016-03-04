@@ -16,4 +16,4 @@
 set(CMAKE_Fortran_FLAGS "-ffree-line-length-none" CACHE STRING "Fortran compiler flags")
 
 SET(ENABLE_MPI      OFF  CACHE BOOL "Disable MPI")
-SET(ENABLE_SANDBOX  ON   CACHE BOOL "Enable sandbox")
+SET(ENABLE_SANDBOX  OFF  CACHE BOOL "Disable sandbox")
