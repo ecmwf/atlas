@@ -1,7 +1,7 @@
 
-#include "atlas_f/atlas_f_defines.h"
+#include "atlas/atlas_f.h"
 
-program example_fortran 
+program example_fortran
 use atlas_module
 #ifdef ATLAS_HAVE_OMP
 use omp_lib
