@@ -72,6 +72,8 @@ if( ATLAS_HAVE_FORTRAN )
 
 endif()
 
+ecbuild_add_fortran_flags( -ffree-line-length-none ) # only added if Fortran is loaded and compiler recognises
+
 ### MPI ...
 
 ecbuild_add_option( FEATURE MPI
@@ -122,7 +124,6 @@ endif()
 #  ecbuild_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
 #endif()
 #ecbuild_add_cxx_flags( "${OMP_CXX_FLAGS}" )
-
 
 ### trans ...
 
