@@ -50,6 +50,13 @@ using namespace atlas::mesh::generators;
 using namespace atlas::util::io;
 
 
+namespace atlas {
+namespace grid {
+  void compute_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
+  void predict_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
+}
+}
+
 #define DISABLE if(0)
 #define ENABLE if(1)
 
@@ -194,6 +201,36 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
     BOOST_CHECK_EQUAL( partitioner.nb_regions(7), 11 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(8),  6 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(9),  1 );
+  }
+}
+
+
+BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
+{
+  std::vector< double > factory_latitudes;
+  std::vector< double > computed_latitudes;
+  std::vector< double > predicted_latitudes;
+
+
+  size_t size_test_N = 19;
+  size_t test_N[] = {16,24,32,48,64,80,96,128,160,
+                     200,256,320,400,512,576,640,
+                     800,1024,1280,1600,2000,4000,8000};
+
+  for( size_t i=0; i<size_test_N; ++i )
+  {
+    size_t N = test_N[i];
+    Log::info() << "Testing gaussian latitude " << N << std::endl;
+    factory_latitudes.resize(N);
+    computed_latitudes.resize(N);
+    grid::gaussian_latitudes_npole_equator (N, factory_latitudes.data());
+    grid::compute_gaussian_latitudes_hemisphere(N, computed_latitudes.data());
+    //predicted_latitudes.resize(N);
+    //grid::predict_gaussian_latitudes_hemisphere(N, predicted_latitudes.data());
+    for( size_t i=0; i<N; ++i )
+    {
+      BOOST_CHECK_CLOSE( computed_latitudes[i] , factory_latitudes[i], 0.0000001 );
+    }
   }
 }
 

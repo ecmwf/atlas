@@ -11,6 +11,8 @@
 /// @author Willem Deconinck
 /// @date Jan 2014
 
+#include <limits>
+
 #include "eckit/memory/ScopedPtr.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/GaussianLatitudes.h"
@@ -18,6 +20,7 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Constants.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/array/Array.h"
 
 using eckit::ConcreteBuilderT0;
 using eckit::Factory;
@@ -31,8 +34,9 @@ namespace grid {
 //----------------------------------------------------------------------------------------------------------------------
 
 void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[]);
-
 void predict_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
+void compute_gaussian_colatitudes_hemisphere(const size_t N, double colat[]);
+void compute_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
 
 namespace {
 
@@ -61,21 +65,7 @@ void gaussian_latitudes_npole_equator(const size_t N, double lats[])
   }
   else
   {
-#if 1
-
-    Log::warning() << "Unfortunately, computation of the gaussian latitudes depends at the moment on grib_api.\n"
-                   << "Atlas was built without grib_api support (via eckit)\n"
-                   << "Resorting to use predicted latitudes instead (accuracy of 2 decimals)" << std::endl;
-
-    predict_gaussian_latitudes_hemisphere(N,lats);
-
-#else
-    Log::warning() << "Using grib_api to compute gaussian latitudes..." << std::endl;
-    std::vector<double> lats2(2*N);
-    grib_get_gaussian_latitudes(N, lats2.data());
-    for(size_t jlat=0; jlat<N; ++jlat )
-      lats[jlat] = lats2[jlat];
-#endif
+    compute_gaussian_latitudes_hemisphere(N,lats);
   }
 }
 
@@ -110,112 +100,169 @@ void predict_gaussian_latitudes_hemisphere(const size_t N, double lats[])
 
 //----------------------------------------------------------------------------------------------------------------------
 
-// TODO: evaluate this, and possibly use
-#if 0
+
 namespace {
 
-  void initialGaussianLatitudes(size_t resolution, std::vector<double>& lats);
-  void refineGaussianLatitude(size_t resolution, double& value);
-  void gaussian(size_t resolution, std::vector<double>& lats);
+void cpledn(int kn, int kodd, const double pfn[], double px, double &pxn, double &pxmod )
+{
+  //Routine to perform a single Newton iteration step to find
+  //                the zero of the ordinary Legendre polynomial of degree N
 
+  //        Explicit arguments :
+  //        --------------------
+  //          KN       :  Degree of the Legendre polynomial              (in)
+  //          KODD     :  odd or even number of latitudes                (in)
+  //          PFN      :  Fourier coefficients of series expansion       (in)
+  //                      for the ordinary Legendre polynomials
+  //          PX       :  abcissa where the computations are performed   (in)
+  //          KFLAG    :  When KFLAG.EQ.1 computes the weights           (in)
+  //          PW       :  Weight of the quadrature at PXN                (out)
+  //          PXN      :  new abscissa (Newton iteration)                (out)
+  //          PXMOD    :  PXN-PX                                         (out)
 
-  void gaussian(size_t resolution, std::vector<double>& lats)
+  double zdlx, zdlk,zdlkm1, zdlkm2, zdlldn, zdlxn, zdlmod;
+  int ik;
+
+  zdlx = px;
+  zdlk = 0.;
+  if( kodd==0 ) zdlk=0.5*pfn[0];
+  zdlxn = 0.;
+  zdlldn = 0.;
+  ik=1;
+
+  for( int jn=2-kodd; jn<=kn; jn+=2 )
   {
-      lats.resize(resolution);
+    // normalised ordinary Legendre polynomial == \overbar{P_n}^0
+    zdlk+= pfn[ik]*std::cos( static_cast<double>(jn)*zdlx );
+    // normalised derivative == d/d\theta(\overbar{P_n}^0)
+    zdlldn -= pfn[ik]*static_cast<double>(jn)*std::sin( static_cast<double>(jn)*zdlx );
+    ++ik;
+  }
+  // Newton method
+  zdlmod = -zdlk/zdlldn;
+  zdlxn = zdlx+zdlmod;
+  pxn = zdlxn;
+  pxmod = zdlmod;
+}
 
-      // get first guess
-      initialGaussianLatitudes(resolution, lats);
+void gawl(double pfn[], double &pl, double peps, int kn, int& kiter, double &pmod)
+{
+  //**** *GAWL * - Routine to perform the Newton loop
 
-      // refine these values
-      for (size_t i = 0; i < lats.size(); ++i)
-          refineGaussianLatitude(resolution, lats[i]);
+  //     Purpose.
+  //     --------
+  //           Find 0 of Legendre polynomial with Newton loop
+  //**   Interface.
+  //     ----------
+  //        *CALL* *GAWL(PFN,PL,PW,PEPS,KN,KITER,PMOD)
+
+  //        Explicit arguments :
+  //        --------------------
+  // PFN    Fourier coefficients of series expansion
+  //        for the ordinary Legendre polynomials     (in)
+  // PL     Gaussian latitude                         (inout)
+  // PW     Gaussian weight                           (out)
+  // PEPS   0 of the machine                          (in)
+  // KN     Truncation                                (in)
+  // KITER  Number of iterations                      (out)
+  // PMOD   Last modification                         (inout)
+
+  int iflag, itemax, jter, iodd;
+  double zw, zx, zxn;
+
+  //*       1. Initialization.
+  //           ---------------
+
+  itemax = 20;
+  zx = pl;
+  iflag = 0;
+  iodd = kn % 2;  // mod(kn,2)
+
+  //*       2. Newton iteration.
+  //           -----------------
+
+  for( int jter=1;jter<=itemax+1; ++jter)
+  {
+    kiter = jter;
+    cpledn(kn,iodd,pfn,zx,zxn,pmod);
+    zx = zxn;
+    if( iflag == 1 ) break;
+    if( std::abs(pmod) <= peps*1000. )
+      iflag = 1;
+  }
+  pl = zxn;
+}
+
+}
+
+void compute_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
+{
+  Log::info() << "Atlas computing Gaussian latitudes for N " << N << "\n";
+  double z;
+  for(size_t i=0; i<N; ++i )
+  {
+    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
+    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) );
   }
 
-  void refineGaussianLatitude(size_t resolution, double& value)
+  int kdgl = 2*N;
+  array::ArrayT<double> zfn(kdgl+1,kdgl+1);
+  std::vector<double> zzfn(N+1);
+  std::vector<double> zmod(kdgl);
+  std::vector<int> iter(kdgl);
+  double zfnn;
+  int iodd;
+  int ik;
+  double zeps;
+
+  for( size_t n=0; n<zfn.size(); ++n )
+    zfn.data()[n] = 0.;
+
+
+  // Belousov, Swarztrauber use zfn(0,0)=std::sqrt(2.)
+  // IFS normalisation chosen to be 0.5*Integral(Pnm**2) = 1
+  zfn(0,0) = 2.;
+  for( int jn=1; jn<=kdgl; ++jn )
   {
-      // NB code only tested on positive (Northern) hemisphere
-      //
-      static const double convval = 1.0 - ((2.0 / M_PI)*(2.0 / M_PI)) * 0.25;
-      static const double convergeance_precision = 1.0e-14;
-
-      const size_t nlat = 2 * resolution;
-
-      double root = cos(value / sqrt( ((((double)(nlat))+0.5)*(((double)(nlat))+0.5)) + convval) );
-
-      double conv = 1.0;
-      double mem1, mem2, legfonc;
-
-      // Newton Iteration
-      while(fabs(conv) > convergeance_precision)
-      {
-          mem2 = 1.0;
-          mem1 = root;
-
-          //  Compute Legendre polynomial
-          for(size_t legi = 0; legi < nlat; legi++)
-          {
-              legfonc = ( (2.0 * (legi +1.0) - 1.0) * root * mem1 - legi * mem2) / ((double)(legi+1.0));
-              mem2 = mem1;
-              mem1 = legfonc;
-          }
-
-          //  Perform Newton iteration
-          conv = legfonc / ((((double)(nlat)) * (mem2 - root * legfonc) ) / (1.0 - (root *root)));
-          root -= conv;
-
-          //  Routine fails if no convergence after JPMAXITER iterations.
-      }
-
-      //   Set North and South values using symmetry.
-
-      value = asin(root) * internals::Constants::radianToDegrees();
+    zfnn = zfn(0,0);
+    for( int jgl=1;jgl<=jn; ++jgl)
+    {
+      zfnn *= std::sqrt(1.-0.25/(static_cast<double>(jgl*jgl)));
+    }
+    iodd = jn % 2;
+    zfn(jn,jn)=zfnn;
+    for( int jgl=2; jgl<=jn-iodd; jgl+=2 )
+    {
+      zfn(jn,jn-jgl) = zfn(jn,jn-jgl+2) *
+          static_cast<double>  ((jgl-1)*(2*jn-jgl+2)) /
+          static_cast<double>  (jgl*(2*jn-jgl+1));
+    }
   }
 
+  iodd = kdgl % 2;
+  ik = iodd;
 
-  void initialGaussianLatitudes(size_t resolution, std::vector<double>& lats)
+  for( int jgl=iodd; jgl<=kdgl; jgl+=2 )
   {
-
-      // Computes initial approximations for Gaussian latitudes
-      // return zeroes of the Bessel function
-
-      static const double zeroes[] =  {     2.4048255577E0,   5.5200781103E0,
-                  8.6537279129E0,   11.7915344391E0,  14.9309177086E0,
-                  18.0710639679E0,  21.2116366299E0,  24.3524715308E0,
-                  27.4934791320E0,  30.6346064684E0,  33.7758202136E0,
-                  36.9170983537E0,  40.0584257646E0,  43.1997917132E0,
-                  46.3411883717E0,  49.4826098974E0,  52.6240518411E0,
-                  55.7655107550E0,  58.9069839261E0,  62.0484691902E0,
-                  65.1899648002E0,  68.3314693299E0,  71.4729816036E0,
-                  74.6145006437E0,  77.7560256304E0,  80.8975558711E0,
-                  84.0390907769E0,  87.1806298436E0,  90.3221726372E0,
-                  93.4637187819E0,  96.6052679510E0,  99.7468198587E0,
-                  102.8883742542E0, 106.0299309165E0, 109.1714896498E0,
-                  112.3130502805E0, 115.4546126537E0, 118.5961766309E0,
-                  121.7377420880E0, 124.8793089132E0, 128.0208770059E0,
-                  131.1624462752E0, 134.3040166383E0, 137.4455880203E0,
-                  140.5871603528E0, 143.7287335737E0, 146.8703076258E0,
-                  150.0118824570E0, 153.1534580192E0, 156.2950342685E0 };
-
-      ASSERT(sizeof(zeroes) > 0);
-
-      const size_t nz = sizeof(zeroes) / sizeof(zeroes[0]);
-
-      lats.resize(resolution);
-
-      for(size_t i = 0; i < lats.size(); i++)
-      {
-          if(i < nz)
-              lats[i] = zeroes[i];
-          else
-          {
-              ASSERT(i > 0);
-              lats[i] = lats[i-1] + M_PI;
-          }
-      }
+    zzfn[ik] = zfn(kdgl,jgl);
+    ++ik;
   }
 
-} // anonymous namespace
-#endif
+  zeps = std::numeric_limits<double>::epsilon();
+  for( int jgl=0; jgl<N; ++jgl )
+  {
+    // refine colat first gues here via Newton's method
+    gawl(zzfn.data(),colat[jgl],zeps,kdgl,iter[jgl],zmod[jgl]);
+    colat[jgl] *= util::Constants::radiansToDegrees();
+  }
+}
+
+void compute_gaussian_latitudes_hemisphere(const size_t N, double lats[])
+{
+  std::vector<double> colat(N);
+  compute_gaussian_colatitudes_hemisphere(N,colat.data());
+  colat_to_lat_hemisphere(N,colat.data(),lats,internals::DEG);
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 
