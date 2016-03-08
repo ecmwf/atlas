@@ -52,7 +52,7 @@ using namespace atlas::util::io;
 
 namespace atlas {
 namespace grid {
-  void compute_gaussian_latitudes_npole_equator(const size_t N, double lat[]);
+  void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], double weights[]);
 }
 }
 
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
 {
   std::vector< double > factory_latitudes;
   std::vector< double > computed_latitudes;
-  std::vector< double > predicted_latitudes;
+  std::vector< double > computed_weights;
 
 
   size_t size_test_N = 19;
@@ -222,12 +222,16 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
     Log::info() << "Testing gaussian latitude " << N << std::endl;
     factory_latitudes.resize(N);
     computed_latitudes.resize(N);
+    computed_weights.resize(N);
     grid::gaussian_latitudes_npole_equator (N, factory_latitudes.data());
-    grid::compute_gaussian_latitudes_npole_equator(N, computed_latitudes.data());
+    grid::compute_gaussian_quadrature_npole_equator(N, computed_latitudes.data(), computed_weights.data());
+    double wsum=0;
     for( size_t i=0; i<N; ++i )
     {
       BOOST_CHECK_CLOSE( computed_latitudes[i] , factory_latitudes[i], 0.0000001 );
+      wsum += computed_weights[i];
     }
+    BOOST_CHECK_CLOSE( wsum*2. , 1. , 0.0000001 );
   }
 }
 
