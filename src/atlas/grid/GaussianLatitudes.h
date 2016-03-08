@@ -19,12 +19,23 @@
 namespace atlas {
 namespace grid {
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-void gaussian_latitudes_npole_equator (const size_t N, double[]);
-void gaussian_latitudes_npole_spole   (const size_t N, double[]);
+/// @brief Compute gaussian latitudes between North pole and equator
+/// @param N         [in]  Number of latitudes between pole and equator
+///                        (Gaussian N number)
+/// @param latitudes [out] latitudes in degrees
+void gaussian_latitudes_npole_equator (const size_t N, double latitudes[]);
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+/// @brief Compute gaussian latitudes between North pole and South pole
+/// @param N         [in]  Number of latitudes between pole and equator
+///                        (Gaussian N number)
+/// @param latitudes [out] latitudes in degrees
+void gaussian_latitudes_npole_spole   (const size_t N, double latitudes[]);
+
+//-----------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace atlas

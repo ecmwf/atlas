@@ -27,32 +27,16 @@ using eckit::Factory;
 using eckit::ScopedPtr;
 
 using atlas::grid::predefined::gausslat::GaussianLatitudes;
+using atlas::array::ArrayT;
 
 namespace atlas {
 namespace grid {
 
-//----------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[]);
-void predict_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
-void compute_gaussian_colatitudes_hemisphere(const size_t N, double colat[]);
-void compute_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
+void compute_gaussian_latitudes_npole_equator(const size_t N, double lat[]);
 
-namespace {
-
-void colat_to_lat_hemisphere(const size_t N, const double colat[], double lats[], const internals::AngleUnit unit)
-{
-  std::copy( colat, colat+N, lats );
-  double pole = (unit == internals::DEG ? 90. : M_PI_2);
-
-  for(size_t i=0; i<N; ++i) {
-    lats[i]=pole-lats[i];
-  }
-}
-
-} //  anonymous namespace
-
-//----------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 void gaussian_latitudes_npole_equator(const size_t N, double lats[])
 {
@@ -60,17 +44,17 @@ void gaussian_latitudes_npole_equator(const size_t N, double lats[])
   std::string Nstr = Nstream.str();
   if( Factory<GaussianLatitudes>::instance().exists(Nstr) )
   {
-    ScopedPtr<GaussianLatitudes> gl ( Factory<GaussianLatitudes>::instance().get(Nstr).create() );
+    ScopedPtr<GaussianLatitudes> gl (
+          Factory<GaussianLatitudes>::instance().get(Nstr).create() );
     gl->assign(lats,N);
   }
   else
   {
-    compute_gaussian_latitudes_hemisphere(N,lats);
+    compute_gaussian_latitudes_npole_equator(N,lats);
   }
 }
 
-
-
+//-----------------------------------------------------------------------------
 
 void gaussian_latitudes_npole_spole(const size_t N, double lats[])
 {
@@ -81,29 +65,31 @@ void gaussian_latitudes_npole_spole(const size_t N, double lats[])
     }
 }
 
-void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
+//-----------------------------------------------------------------------------
+
+namespace { // Anonymous namespace
+
+//-----------------------------------------------------------------------------
+
+void colat_to_lat(const size_t N, const double colat[], double lats[])
 {
-  double z;
-  for(size_t i=0; i<N; ++i )
-  {
-    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
-    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * util::Constants::radiansToDegrees();
+  std::copy( colat, colat+N, lats );
+  const double pole = 90.;
+
+  for(size_t i=0; i<N; ++i) {
+    lats[i]=pole-lats[i];
   }
 }
 
-void predict_gaussian_latitudes_hemisphere(const size_t N, double lats[])
-{
-  std::vector<double> colat(N);
-  predict_gaussian_colatitudes_hemisphere(N,colat.data());
-  colat_to_lat_hemisphere(N,colat.data(),lats,internals::DEG);
-}
+//-----------------------------------------------------------------------------
 
-//----------------------------------------------------------------------------------------------------------------------
-
-
-namespace {
-
-void cpledn(int kn, int kodd, const double pfn[], double px, double &pxn, double &pxmod )
+void cpledn(
+    int kn,
+    int kodd,
+    const double pfn[],
+    double px,
+    double &pxn,
+    double &pxmod )
 {
   //Routine to perform a single Newton iteration step to find
   //                the zero of the ordinary Legendre polynomial of degree N
@@ -115,8 +101,6 @@ void cpledn(int kn, int kodd, const double pfn[], double px, double &pxn, double
   //          PFN      :  Fourier coefficients of series expansion       (in)
   //                      for the ordinary Legendre polynomials
   //          PX       :  abcissa where the computations are performed   (in)
-  //          KFLAG    :  When KFLAG.EQ.1 computes the weights           (in)
-  //          PW       :  Weight of the quadrature at PXN                (out)
   //          PXN      :  new abscissa (Newton iteration)                (out)
   //          PXMOD    :  PXN-PX                                         (out)
 
@@ -145,7 +129,15 @@ void cpledn(int kn, int kodd, const double pfn[], double px, double &pxn, double
   pxmod = zdlmod;
 }
 
-void gawl(double pfn[], double &pl, double peps, int kn, int& kiter, double &pmod)
+//-----------------------------------------------------------------------------
+
+void gawl(
+    double pfn[],
+    double &pl,
+    double peps,
+    int kn,
+    int& kiter,
+    double &pmod )
 {
   //**** *GAWL * - Routine to perform the Newton loop
 
@@ -161,7 +153,6 @@ void gawl(double pfn[], double &pl, double peps, int kn, int& kiter, double &pmo
   // PFN    Fourier coefficients of series expansion
   //        for the ordinary Legendre polynomials     (in)
   // PL     Gaussian latitude                         (inout)
-  // PW     Gaussian weight                           (out)
   // PEPS   0 of the machine                          (in)
   // KN     Truncation                                (in)
   // KITER  Number of iterations                      (out)
@@ -193,9 +184,13 @@ void gawl(double pfn[], double &pl, double peps, int kn, int& kiter, double &pmo
   pl = zxn;
 }
 
-}
+//-----------------------------------------------------------------------------
 
-void compute_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
+} //  anonymous namespace
+
+//-----------------------------------------------------------------------------
+
+void compute_gaussian_colatitudes_npole_equator(const size_t N, double colat[])
 {
   Log::info() << "Atlas computing Gaussian latitudes for N " << N << "\n";
   double z;
@@ -205,8 +200,10 @@ void compute_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
     colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) );
   }
 
+  // At this point, colat contains first guess of colatitudes in  radians
+
   int kdgl = 2*N;
-  array::ArrayT<double> zfn(kdgl+1,kdgl+1);
+  ArrayT<double> zfn(kdgl+1,kdgl+1);
   std::vector<double> zzfn(N+1);
   std::vector<double> zmod(kdgl);
   std::vector<int> iter(kdgl);
@@ -214,10 +211,6 @@ void compute_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
   int iodd;
   int ik;
   double zeps;
-
-  for( size_t n=0; n<zfn.size(); ++n )
-    zfn.data()[n] = 0.;
-
 
   // Belousov, Swarztrauber use zfn(0,0)=std::sqrt(2.)
   // IFS normalisation chosen to be 0.5*Integral(Pnm**2) = 1
@@ -257,14 +250,16 @@ void compute_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
   }
 }
 
-void compute_gaussian_latitudes_hemisphere(const size_t N, double lats[])
+//-----------------------------------------------------------------------------
+
+void compute_gaussian_latitudes_npole_equator(const size_t N, double lats[])
 {
   std::vector<double> colat(N);
-  compute_gaussian_colatitudes_hemisphere(N,colat.data());
-  colat_to_lat_hemisphere(N,colat.data(),lats,internals::DEG);
+  compute_gaussian_colatitudes_npole_equator(N,colat.data());
+  colat_to_lat(N,colat.data(),lats);
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace atlas

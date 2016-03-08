@@ -52,8 +52,7 @@ using namespace atlas::util::io;
 
 namespace atlas {
 namespace grid {
-  void compute_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
-  void predict_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
+  void compute_gaussian_latitudes_npole_equator(const size_t N, double lat[]);
 }
 }
 
@@ -224,9 +223,7 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
     factory_latitudes.resize(N);
     computed_latitudes.resize(N);
     grid::gaussian_latitudes_npole_equator (N, factory_latitudes.data());
-    grid::compute_gaussian_latitudes_hemisphere(N, computed_latitudes.data());
-    //predicted_latitudes.resize(N);
-    //grid::predict_gaussian_latitudes_hemisphere(N, predicted_latitudes.data());
+    grid::compute_gaussian_latitudes_npole_equator(N, computed_latitudes.data());
     for( size_t i=0; i<N; ++i )
     {
       BOOST_CHECK_CLOSE( computed_latitudes[i] , factory_latitudes[i], 0.0000001 );
