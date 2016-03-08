@@ -75,7 +75,7 @@ void GaussianGrid::setup(const size_t N)
 void GaussianGrid::setup_lat_hemisphere(const size_t N, const double lats[])
 {
   std::vector<long> nlons(N,4*N);
-  ReducedGrid::setup_lat_hemisphere(N,lats,nlons.data(),internals::DEG);
+  ReducedGrid::setup_lat_hemisphere(N,lats,nlons.data());
 }
 
 eckit::Properties GaussianGrid::spec() const

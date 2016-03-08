@@ -129,7 +129,7 @@ void ReducedGrid::setup( const size_t nlat, const double lats[], const long nlon
   setup(nlat,lats,nlons,lonmin.data(),lonmax.data());
 }
 
-void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[], const internals::AngleUnit unit)
+void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[])
 {
   std::vector<long> nlons(2*N);
   std::copy( lon, lon+N, nlons.begin() );
@@ -137,11 +137,8 @@ void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const
   std::vector<double> lats(2*N);
   std::copy( lat, lat+N, lats.begin() );
   std::reverse_copy( lat, lat+N, lats.begin()+N );
-  double convert = (unit == internals::RAD ? 180.*M_1_PI : 1.);
-  for(size_t j = 0; j < N; ++j)
-    lats[j] *= convert;
   for(size_t j = N; j < 2*N; ++j)
-    lats[j] *= -convert;
+    lats[j] *= -1.;
   setup(2*N,lats.data(),nlons.data());
 }
 

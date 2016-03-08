@@ -30,7 +30,7 @@ TestGrid::TestGrid(int N, long lon[])
 {
   std::vector<double> lats(N);
   grid::gaussian_latitudes_npole_equator(N,lats.data());
-  setup_lat_hemisphere(N,lats.data(),lon,internals::DEG);
+  setup_lat_hemisphere(N,lats.data(),lon);
 }
 
 mesh::Mesh::Ptr generate_mesh( const ReducedGrid& rgg )

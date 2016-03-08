@@ -75,7 +75,7 @@ DebugMesh::DebugMesh()
   };
   std::vector<double> lat(N);
   grid::gaussian_latitudes_npole_equator(N,lat.data());
-  setup_lat_hemisphere(N,lat.data(),lon,internals::DEG);
+  setup_lat_hemisphere(N,lat.data(),lon);
 }
 
 
@@ -84,7 +84,7 @@ MinimalMesh::MinimalMesh(int N, long lon[])
 {
   std::vector<double> lat(N);
   grid::gaussian_latitudes_npole_equator(N,lat.data());
-  setup_lat_hemisphere(N,lat.data(),lon,internals::DEG);
+  setup_lat_hemisphere(N,lat.data(),lon);
 }
 
 double compute_lonlat_area(mesh::Mesh& mesh)

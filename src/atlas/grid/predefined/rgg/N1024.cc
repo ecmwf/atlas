@@ -1042,7 +1042,7 @@ void N1024::construct()
 
   std::vector<double> lats(N);
   gaussian_latitudes_npole_equator(N,lats.data());
-  setup_lat_hemisphere(N,lats.data(),lon,internals::DEG);
+  setup_lat_hemisphere(N,lats.data(),lon);
 }
 
 } // namespace rgg
