@@ -153,16 +153,7 @@ void Meshgen2Gmsh::run()
 
   mesh = mesh::Mesh::Ptr( generate_mesh(*grid) );
 
-  build_nodes_parallel_fields(mesh->nodes());
-  build_periodic_boundaries(*mesh);
-
-  if( halo )
-  {
-    build_halo(*mesh,halo);
-    renumber_nodes_glb_idx(mesh->nodes());
-  }
-
-  SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh,Halo(mesh)) );
+  SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh,Halo(halo)) );
   nodes_fs->checksum(mesh->nodes().lonlat());
 
   Log::info() << "  checksum lonlat : " << nodes_fs->checksum(mesh->nodes().lonlat()) << std::endl;

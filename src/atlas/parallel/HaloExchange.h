@@ -397,6 +397,8 @@ void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>& field ) const
   }
   else
   {
+    Log::error() << "Passed field with rank " << RANK << " and shape(0) " << field.shape(0) << std::endl;
+    Log::error() << "parsize_ = " << parsize_ << std::endl;
     NOTIMP; // Need to implement with parallel ranks > 1
   }
 }
