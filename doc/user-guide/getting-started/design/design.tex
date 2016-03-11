@@ -1,0 +1,327 @@
+\chapter{Design}
+\label{chap:structure}
+The flowchart presented in the introduction of this document 
+represents the macro components making up the design of \Atlas
+and reflects closely the capabilities of \Atlas. We subdivide this 
+chapter in various sections, each of them representing one 
+of the components in \fig{fig:intro-schematics}. The order in 
+which these components will be presented starts from the grid 
+and closes with the numerics. Note that some simple examples 
+are provided as part of this user-guide in \parte{p:core-functionalities}.
+
+
+\section{Grid}
+%
+The Grid object forms the base class of a hierarchical inheritance tree 
+as shown in \fig{fig:grids}. A Grid implementation may be structured or
+unstructured. The Grid base class interface gives the capability to 
+list the coordinates representing the points of a given grid, and how many
+points exist in a given grid. It has no knowledge of any domain decomposition
+or parallelisation in general.
+The grids that \Atlas constructs can be \textit{global} or 
+\textit{local}. The \textit{GlobalGrid} type represents a complete
+spherical grid, whereas the \textit{LocalGrid} type represents a limited 
+area of the sphere. Both global and local grids can be either 
+structured or unstructured. In \fig{fig:grids} we show the 
+various derived classes of the Grid class.
+%
+\begin{figure}[htb]
+\centering
+\includegraphics[scale=0.3]{imgs/grids.png}
+\label{fig:grids}
+\caption{Grid class hierarchy. Dashed classes are not currently implemented.}
+\end{figure}
+%
+Focussing on the Global grid classification, there exist several
+possible implementations, such as the following derived types: 
+\begin{itemize}
+  \setlength\itemsep{0.4em}
+  \item Unstructured --- No structure is present in the grid
+  \item IcosahedralGrid --- The grid can be defined through the vertices of
+        a regular triangulation of a icosahedron, projected on the sphere.
+  \item ReducedGrid --- The grid is defined by having a uniform distribution
+        in zonal direction (constant $\Delta\lambda$ on each latitude). No
+        assumption is made on the location of latitudes.
+\end{itemize}
+The ReducedGrid serves as the base class for three additional derived types:
+\begin{itemize}
+  \setlength\itemsep{0.4em}
+  \item ReducedGaussianGrid --- The grid's latitude distribution follows the
+        roots of Legendre polynomials. These grids are typically referred to
+        by a $N$ number, describing the number of latitudes between a pole and
+        the equator.
+  \item LonLatGrid --- The grid's latitude distribution is uniform, and contains
+        the poles and the Greenwich meridian
+  \item StaggeredLonLatGrid --- The grid is the dual or staggered version of
+        the LonLatGrid.
+\end{itemize}
+The ReducedGaussianGrid, in turn, can serve as the base class for 
+\begin{itemize}
+  \item GaussianGrid --- also referred to as \emph{full} Gaussian grid. As the
+        full Gaussian Grid can be interpreted as a ReducedGaussianGrid with a
+        constant number of points on each latitude.
+  \item OctahedralReducedGaussianGrid --- The number of points on each latitude
+        can be inferred from triangulating a regular octahedron, projected to
+        sphere. Certain modifications are required such as modifying the
+        latitude locations to the roots of the Legendre polynomials.
+\end{itemize}
+
+We note that the object-oriented construction of the Grid 
+object allows one to add any other grid that might be of 
+interest without disrupting the existing grid workflow.
+
+
+\section{Mesh} \label{s:mesh}
+%
+The \emph{Mesh} object describes how grid points are connected via lines,
+essentially forming elements such as triangles, quadrilaterals, \ldots~
+Furthermore, the \emph{Mesh} can be distributed across MPI tasks, called
+partitions.
+%
+A \emph{Mesh} object has no inherent notion of structure. Therefore, 
+the nodes and elements in a mesh partition, even if originating from
+a structured grid could be in any order, and should be treated as such.
+A \emph{Mesh} is composed of \emph{Nodes}, \emph{Cells}, and \emph{Edges}.
+These components each contain information stored in \emph{Field}s and 
+\emph{Connectivity} tables. In \fig{fig:mesh} we show the composition
+of a \emph{Mesh} object. Due to the distributed nature of the mesh,
+three specific fields are required in the \emph{Nodes}, \emph{Cells}
+and \emph{Edges}, i.e.~the \inltc{global\_index}, \inltc{remote\_index},
+and \inltc{partition}. More on parallelisation is presented in
+section~\ref{s:parallelisation}.
+%
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{imgs/mesh.pdf}
+\caption{Mesh object composition \label{fig:mesh}}
+\end{figure}
+%
+\begin{warningbox}
+Note that a mesh is not equal to a grid. The grid describes globally the list
+of points without elements and connectivities, while a mesh is a list of nodes
+with specific connectivity rules, forming elements, and is distributed among
+MPI tasks. Note also that, in \Atlas, the number of points of a grid is
+generally different from the number of nodes of a mesh.
+\end{warningbox}
+
+\subsection{Nodes}
+%
+The \emph{Nodes} contains a \emph{Field} called \inltc{lonlat} which contains
+the coordinates of the nodes on the sphere in longitude and latitude
+degrees. Apart from the \inltc{lonlat} field, any \emph{Field} which relates
+to the mesh nodes can be stored in the \emph{Nodes} object. The \emph{Nodes}
+therefore can also be seen as a specialised \emph{FieldSet}
+(see section~\ref{s:field-fieldset}).\\
+%
+Also stored in the \emph{Nodes} object are connectivity tables relating the
+mesh nodes to edges and/or elements present in the mesh. These tables are
+only allocated upon request.
+
+\subsection{Elements and Connectivity}
+%
+As depicted in \fig{fig:elements}, the \emph{Cells} and \emph{Edges} classes
+derive from a class \emph{HybridElements}. The reason for the naming
+\emph{hybrid} refers to the possibility of having groups of elements with
+different element types present under the same umbrella. One group of elements
+sharing the same \emph{ElementType} is accessible through the \emph{Elements}
+class. The \emph{HybridElements} class on the other hand offers access to all
+elements irrespective of their \emph{ElementType}. It could be advantageous for
+an algorithm to loop over \emph{Elements} corresponding to one
+\emph{ElementType}, and apply specialised instructions in a nested loop
+applicable to all elements of that specific \emph{ElementType}.\\
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{imgs/elements.pdf}
+\caption{Class diagram related to the mesh \emph{Edges} and \emph{Cells}
+\label{fig:elements}}
+\end{figure}
+Because of grouping of elements per \emph{ElementType}, \emph{Connectivity}
+tables that e.g.~relate elements to nodes have the appearance of blocks. To
+clarify, imagine 2 triangular elements and 3 quadrilateral elements. The table
+of connectivities represented by the \emph{MultiBlockConnectivity} class would
+have the form:\\[10pt]
+\begin{minipage}{\textwidth}
+\begin{verbatim}
+                    element 1:    x  x  x
+                    element 2:    x  x  x
+                    element 3:    x  x  x  x
+                    element 4:    x  x  x  x
+                    element 5:    x  x  x  x
+\end{verbatim}
+\end{minipage}\\[10pt]
+This \emph{MultiBlockConnectivity} table, can also be interpreted by two \emph{BlockConnectivity} tables:\\[10pt]
+\begin{minipage}{\textwidth}
+\begin{verbatim}
+            block1, element 1:    x  x  x
+            block1, element 2:    x  x  x
+                                 
+            block2, element 1:    x  x  x  x
+            block2, element 2:    x  x  x  x
+            block2, element 3:    x  x  x  x
+\end{verbatim}
+\end{minipage}\\[10pt]
+Multiple \emph{BlockConnectivity} tables share exactly the same memory as the
+one \emph{MultiBlockConnectivity} which is stored in the \emph{HybridElements}.
+The \emph{Elements} objects, which are also stored in the \emph{HybridElements}
+and each hold a \emph{BlockConnectivity}, therefore don't occupy any 
+significant memory.
+
+\subsection{Mesh generation}
+%
+The mesh is constructed using the class \emph{MeshGenerator} which can generate
+a mesh taking as input a \emph{Grid}, and and optionally a
+\emph{GridDistribution}. The \emph{GridDistribution} describes for each grid
+point which MPI task or partition the point belongs to. If the
+\emph{GridDistribution} is not given, the \emph{MeshGenerator} will internally
+create a temporary \emph{GridDistribution} internally. More on this can be
+found in section~\ref{s:parallelisation}.
+The \emph{MeshGenerator} base class can have several concrete implementations.
+Depending on the \emph{Grid} type used, some concrete implementations may not
+be available. For \emph{ReducedGrid} types, the \emph{ReducedGridMeshGenerator}
+is available. This mesh generator is very fast as it can take advantage of the
+structured nature of a \emph{ReducedGrid}. For any \emph{Grid}, a slower
+\emph{Delaunay} triangulation is also available.\\
+%
+Figure~\ref{fig:meshgen} shows the usage and class diagram of the
+\emph{MeshGenerator}.
+%
+\begin{figure}
+\centering
+\includegraphics[scale=0.25]{imgs/mesh1.png}
+\caption{Mesh generation workflow, and \emph{MeshGenerator} class diagram
+\label{fig:meshgen}}
+\end{figure}
+
+
+\section{Field and FieldSet} \label{s:field-fieldset}
+%
+\emph{Field} objects encapsulate given fields, such as the temperature 
+or the pressure, and they can be grouped into FieldSets.
+The class diagram of the field object is depicted in \fig{fig:field}.
+%
+\begin{figure}
+\centering
+\includegraphics[scale=0.25]{imgs/field.png}
+\label{fig:field}
+\caption{Field and FieldSet object composition}
+\end{figure}
+%
+In particular the \emph{Field} object is composed of 
+the \emph{Array} object which contains the actual field data, and the
+\emph{Metadata} object which contains descriptions of the field.
+A \emph{Field} also contains a reference to a \emph{FunctionSpace} object, 
+described section~\ref{s:functionspace}.
+
+\section{FunctionSpace} \label{s:functionspace}
+%
+The \emph{FunctionSpace} defines how a \emph{Field} is represented on the
+domain. There exist a variety of possible function spaces. Examples include 
+\emph{functionspace::Spectral}, \emph{functionspace::ReducedGridColumns}, \emph{functionspace::NodeColumns}, and \emph{functionspace::EdgeColumns}.
+These are illustrated in the \emph{FunctionSpace} class inheritance diagram in \fig{fig:functionspace}.
+\begin{itemize}
+  \item \emph{functionspace::Spectral} describes the discretisation in terms of         spherical harmonics. The parallelisation (gathering and scattering) in
+        spectral space is delegated to a \emph{Trans} object ( in turn
+        delegating to the IFS trans library)
+  \item \emph{functionspace::ReducedGridColumns} describes the discretisation
+        of distributed fields on a \emph{ReducedGrid}. At the moment the
+        \emph{ReducedGrid} must be a \emph{ReducedGaussianGrid} for parallel
+         usage as a \emph{Trans} object is responsible for the parallelisation.
+        In a future release this will be generalised to use a 
+        \emph{GatherScatter} object instead, which does not rely on having a 
+        \emph{ReducedGaussianGrid}.\\
+        \emph{Field}s described using this function space may also be defined  
+        to have levels.
+  \item \emph{functionspace::NodeColumns} describes the discretisation of fields
+        with values colocated in the nodes of a \emph{Mesh}, and may have
+        multiple levels defined in a vertical direction. These fields may have
+        parallel halo's defined. A \emph{HaloExchange} object and
+        \emph{GatherScatter} object are responsible for parallelisation.
+  \item \emph{functionspace::EdgeColumns} describes the discretisation of fields
+        with values colocated in the edge-centres of a \emph{Mesh}, and may have
+        multiple levels defined in a vertical direction. These fields may have
+        parallel halo's defined. A \emph{HaloExchange} object and
+        \emph{GatherScatter} object are responsible for parallelisation.
+\end{itemize}
+%
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{imgs/functionspace.pdf}
+\caption{FunctionSpace object diagram \label{fig:functionspace}}
+\end{figure}
+%
+\section{Numerics}
+%
+Apart from serving as a framework for constructing a flexible data structure,
+\Atlas also provides some numerical algorithms such as gradient, divergence,
+curl, and laplacian operators.
+%
+The gradient, divergence, curl and laplacian operators are bundled in a
+abstract \emph{Nabla} class, of which a concrete implementation can
+instantiated with a \emph{Method} object. This is illustrated in
+\fig{fig:numerics}. Here a concrete \emph{fvm::Nabla} is constructed using a
+concrete \emph{fvm::Method}. These concrete classes implement a median-dual
+finite volume method. The \emph{fvm::Method} internally uses two
+\emph{FunctionSpace}s, i.e. a \emph{functionspace::NodeColumns}, and a
+\emph{functionspace::EdgeColumns}, required to interprete \emph{Field}s
+residing in nodes and edge-centres. For more information on the median-dual
+Finite Volume Method, see section~\ref{s:fvm}.
+%
+\begin{figure}
+\centering
+\includegraphics[scale=0.5]{imgs/numerics.pdf}
+\caption{Class diagram for the \emph{fvm::Nabla} operator
+\label{fig:numerics}}
+\end{figure}
+%
+\section{Parallelisation} \label{s:parallelisation}
+%
+As described section~\ref{s:mesh} and shown in \fig{fig:mesh}, the \emph{Nodes},
+\emph{Cells}, and \emph{Edges} contain three fields related to parallelisation:
+\begin{itemize}
+  \item \inltc{global\_index} --- This \emph{Field} contains for each
+        node or element in the mesh partition a unique global index
+        or ID as if the mesh was not distributed. 
+        This global index is independent of the number of partitions
+        the mesh is distributed in.
+  \item \inltc{partition} --- This \emph{Field} contains for each node
+        or element the partition index that has ownership of the node
+        or element. Nodes or elements whose partition does not match
+        the partition index of the mesh partition are also called
+        ghost nodes or ghost elements respectively. These ghost entities
+        merely exist to facilitate stencil operations or to complete
+        e.g. a mesh element.
+   \item \inltc{remote\_index} --- This \emph{Field} contains for each
+        node or element the local index in the mesh partition with index
+        given by the \inltc{partition} field.
+\end{itemize}
+With the knowledge of \inltc{partition} and \inltc{remote\_index}, we now
+know for each element or node which partition owns it, and at which location.
+Usually the user has not to be aware of these three fields as they are
+more required for \Atlas' internal parallelisation capabilities.\\
+%
+\Atlas has two parallel communication pattern classes that can be setup to
+store how data can be sent and received between MPI tasks.
+\begin{itemize}
+\item The \emph{GatherScatter} class stores the communication pattern of 
+gathering all data to one MPI task, and the inverse, scattering or distributing 
+all data from one MPI task to all MPI tasks.
+\item The \emph{HaloExchange} class stores the communication pattern of sending 
+and receiving data to nearest neighbour (in domain decomposition sense) MPI 
+tasks, typically required in exchanging small halo's of ghost entities 
+surrounding a domain partition.
+\end{itemize}
+%
+\subsection{fvm: Median-dual Finite Volume Method}
+\label{s:fvm}
+TODO
+
+\section{Utilities}
+%
+A number of utilities is also available with the library. These include 
+pre- and post-processing tools, mpi communication, error and exception 
+handling, runtime behaviour, etc.
+
+\subsection{Logging} \label{s:utilities-logging}
+TODO
+
+

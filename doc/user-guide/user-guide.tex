@@ -369,6 +369,9 @@ outer sep=0,fill=red!05,text=black]{\small\texttt{#1}};}
 outer sep=0,draw=yellow!10,fill=yellow!10]{\texttt{#1}};}
 \fi
 
+% double-dash
+\newcommand \ddash{-\hspace{0.07em}-}
+
 % Atlas
 \newcommand{\Atlas}{{\em Atlas}\xspace}
 
@@ -522,7 +525,8 @@ pdfauthor={I am the Author}
 %%%-------------------------------------------------------------------------------
 
 \author{ECMWF, Shinfield Park, Reading, UK\newline}
-\title{Atlas: A flexible parallel software framework for NWP data-structures}
+\title{Atlas \\[15pt]
+{\Large A Flexible Parallel Framework \\ for Earth System Modelling }\\ }
 \date{\today}
 
 
@@ -557,7 +561,7 @@ pdfauthor={I am the Author}
 \part{Getting Started}
 \label{p:start}
 \import{getting-started/installation/}{installation.tex}
-\import{getting-started/structure/}{structure.tex}	
+\import{getting-started/design/}{design.tex}	
 
 
 

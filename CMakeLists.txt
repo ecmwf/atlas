@@ -233,13 +233,13 @@ endif()
 
 ############################################################################################
 # documentation
-ecbuild_add_option( FEATURE DOCUMENTATION
+ecbuild_add_option( FEATURE DOCS
                     DESCRIPTION "Atlas documentation"
                     DEFAULT OFF
                     REQUIRED_PACKAGES "Latex" )
 
-if(ATLAS_HAVE_DOCUMENTATION)
-    add_subdirectory( docs )
+if(ATLAS_HAVE_DOCS)
+    add_subdirectory( doc )
 endif()
 
 ############################################################################################
