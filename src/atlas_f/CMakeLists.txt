@@ -98,15 +98,25 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/State.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/Field.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/FieldSet.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/FunctionSpace.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h MODULE atlas_functionspace_Spectral_c_binding OUTPUT functionspace_Spectral_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/ReducedGridColumns.h MODULE atlas_functionspace_ReducedGridColumns_c_binding OUTPUT functionspace_ReducedGridColumns_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodeColumnsInterface.h MODULE atlas_functionspace_NodeColumns_c_binding OUTPUT functionspace_NodeColumns_c_binding.f90)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeColumns.h MODULE atlas_functionspace_EdgeColumns_c_binding OUTPUT functionspace_EdgeColumns_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h
+    MODULE    atlas_functionspace_Spectral_c_binding
+    OUTPUT    functionspace_Spectral_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/ReducedGridColumns.h
+    MODULE    atlas_functionspace_ReducedGridColumns_c_binding
+    OUTPUT    functionspace_ReducedGridColumns_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodeColumnsInterface.h
+    MODULE    atlas_functionspace_NodeColumns_c_binding
+    OUTPUT    functionspace_NodeColumns_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeColumns.h
+    MODULE    atlas_functionspace_EdgeColumns_c_binding
+    OUTPUT    functionspace_EdgeColumns_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/trans/Trans.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Method.h )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h MODULE atlas_fvm_method_c_binding OUTPUT fvm_method_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h
+    MODULE    atlas_fvm_method_c_binding
+    OUTPUT    fvm_method_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/io/Gmsh.h)
@@ -133,10 +143,6 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_Config_module.F90
         util/atlas_Metadata_module.F90
         util/atlas_resource_module.F90
-        util/atlas_mpi_module.F90
-        util/atlas_GatherScatter_module.F90
-        util/atlas_Checksum_module.F90
-        util/atlas_HaloExchange_module.F90
         util/atlas_Logging_module.F90
         util/atlas_Error_module.F90
         util/atlas_Value_module.F90
@@ -161,10 +167,14 @@ ecbuild_add_library( TARGET atlas_f
         mesh/atlas_Elements_module.F90
         mesh/atlas_ElementType_module.F90
         mesh/atlas_actions_module.F90
-        numerics/atlas_Trans_module.F90
         numerics/atlas_Method_module.F90
         numerics/atlas_fvm_module.F90
         numerics/atlas_Nabla_module.F90
+        parallel/atlas_mpi_module.F90
+        parallel/atlas_GatherScatter_module.F90
+        parallel/atlas_Checksum_module.F90
+        parallel/atlas_HaloExchange_module.F90
+        trans/atlas_Trans_module.F90
         internals/atlas_object_module.F90
         internals/atlas_refcounted_module.F90
         internals/atlas_C_interop.F90

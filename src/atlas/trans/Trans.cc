@@ -20,7 +20,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/ReducedGridColumns.h"
 #include "atlas/functionspace/Spectral.h"
-#include "atlas/numerics/trans/Trans.h"
+#include "atlas/trans/Trans.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/internals/IsGhost.h"
 #include "atlas/array/Array.h"
@@ -47,7 +47,6 @@ using atlas::functionspace::NodeColumns;
 using atlas::functionspace::Spectral;
 
 namespace atlas {
-namespace numerics {
 namespace trans {
 
 Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
@@ -1388,5 +1387,4 @@ void atlas__TransParameters__delete (TransParameters* This)
 }
 
 } // namespace trans
-} // namespace numerics
 } // namespace atlas

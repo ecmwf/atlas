@@ -35,10 +35,8 @@ namespace grid {
 }
 
 namespace atlas {
-namespace numerics {
 namespace trans {
     class Trans;
-}
 }
 }
 
@@ -91,7 +89,7 @@ private: // data
   std::vector<size_t> nlon_;
   std::vector<size_t> first_lon_;
 
-  numerics::trans::Trans* trans_;
+  trans::Trans* trans_;
   const grid::ReducedGrid* grid_;
   parallel::GatherScatter* gather_scatter_;
   parallel::Checksum* checksum_;

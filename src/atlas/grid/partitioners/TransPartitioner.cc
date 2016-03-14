@@ -11,7 +11,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "atlas/grid/ReducedGrid.h"
 #include "atlas/grid/partitioners/TransPartitioner.h"
-#include "atlas/numerics/trans/Trans.h"
+#include "atlas/trans/Trans.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
@@ -19,16 +19,16 @@ namespace grid {
 namespace partitioners {
 
 TransPartitioner::TransPartitioner(const grid::Grid& grid,
-                                   const numerics::trans::Trans& trans) :
+                                   const trans::Trans& trans) :
   Partitioner(grid, trans.nproc()),
-  t_( const_cast<numerics::trans::Trans*>(&trans)), owned_(false)
+  t_( const_cast<trans::Trans*>(&trans)), owned_(false)
 {
   ASSERT( t_ != NULL );
 }
 
 TransPartitioner::TransPartitioner(const grid::Grid& grid) :
   Partitioner(grid),
-  t_( new numerics::trans::Trans(grid,0) ), owned_(true)
+  t_( new trans::Trans(grid,0) ), owned_(true)
 {
   ASSERT( t_ != NULL );
   ASSERT( size_t(t_->nproc()) == nb_partitions() );
@@ -37,7 +37,7 @@ TransPartitioner::TransPartitioner(const grid::Grid& grid) :
 TransPartitioner::TransPartitioner(const grid::Grid& grid,
                                    const size_t nb_partitions) :
   Partitioner(grid, nb_partitions),
-  t_( new numerics::trans::Trans(grid,0) ), owned_(true)
+  t_( new trans::Trans(grid,0) ), owned_(true)
 {
   ASSERT( t_ != NULL );
   if( nb_partitions != size_t(t_->nproc()) )

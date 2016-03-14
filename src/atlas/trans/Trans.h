@@ -49,7 +49,6 @@ namespace functionspace {
 //-----------------------------------------------------------------------------
 
 namespace atlas {
-namespace numerics {
 namespace trans {
 
 //-----------------------------------------------------------------------------
@@ -462,7 +461,6 @@ extern "C"
 // ------------------------------------------------------------------
 
 } // namespace trans
-} // namespace numerics
 } // namespace atlas
 
 

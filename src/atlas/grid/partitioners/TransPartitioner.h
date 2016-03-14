@@ -14,14 +14,18 @@
 #include "atlas/grid/partitioners/Partitioner.h"
 
 namespace atlas {
-namespace grid { class ReducedGrid; }
-namespace grid { class GridDistribution; }
+namespace grid {
+class ReducedGrid;
+class GridDistribution;
+}
 }
 
 namespace atlas {
-namespace numerics {
-namespace trans { class Trans; }
-} }
+namespace trans {
+class Trans;
+}
+}
+
 
 namespace atlas {
 namespace grid {
@@ -33,7 +37,7 @@ public:
 
   /// @brief Constructor
   TransPartitioner(const grid::Grid& grid,
-                   const numerics::trans::Trans& trans);
+                   const trans::Trans& trans);
 
   /// @brief Constructor
   /// This constructor allocates a new Trans, but without the computations
@@ -52,7 +56,7 @@ public:
   int nb_regions(int b) const;
 
 private:
-  mutable numerics::trans::Trans* t_;
+  mutable trans::Trans* t_;
   bool owned_;
 };
 

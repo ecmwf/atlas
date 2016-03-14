@@ -15,7 +15,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/numerics/trans/Trans.h"
+#include "atlas/trans/Trans.h"
 #endif
 
 namespace atlas {
@@ -30,7 +30,7 @@ Spectral::Spectral(const size_t truncation)
 {
 }
 
-Spectral::Spectral(numerics::trans::Trans& trans)
+Spectral::Spectral(trans::Trans& trans)
   : FunctionSpace(),
 #ifdef ATLAS_HAVE_TRANS
     truncation_(trans.nsmax()),
@@ -196,7 +196,7 @@ Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation)
   return 0;
 }
 
-Spectral* atlas__SpectralFunctionSpace__new__trans (numerics::trans::Trans* trans)
+Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans)
 {
   ATLAS_ERROR_HANDLING(
     return new Spectral(*trans);

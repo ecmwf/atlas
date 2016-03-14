@@ -24,7 +24,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/grid/ReducedGaussianGrid.h"
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/numerics/trans/Trans.h"
+#include "atlas/trans/Trans.h"
 #endif
 using namespace eckit;
 using namespace atlas::functionspace;
@@ -483,7 +483,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
 
 BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
 {
-  numerics::trans::Trans trans(80,159);
+  trans::Trans trans(80,159);
   size_t nb_levels(10);
 
   size_t nspec2 = trans.nspec2();
@@ -519,7 +519,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
 }
 BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
 {
-  numerics::trans::Trans trans(80,159);
+  trans::Trans trans(80,159);
   size_t nb_levels(10);
 
   size_t nspec2g = trans.nspec2g();

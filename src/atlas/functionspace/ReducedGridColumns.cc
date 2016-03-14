@@ -19,7 +19,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/numerics/trans/Trans.h"
+#include "atlas/trans/Trans.h"
 #endif
 
 namespace atlas {
@@ -39,7 +39,7 @@ ReducedGridColumns::ReducedGridColumns(const grid::Grid& grid) :
     }
 
 #ifdef ATLAS_HAVE_TRANS
-    trans_ = new numerics::trans::Trans(*grid_);
+    trans_ = new trans::Trans(*grid_);
 
     npts_ = trans_->ngptot();
 

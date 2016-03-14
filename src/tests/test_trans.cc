@@ -17,7 +17,7 @@
 #include "eckit/config/ResourceMgr.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas.h"
-#include "atlas/numerics/trans/Trans.h"
+#include "atlas/trans/Trans.h"
 #include "atlas/grid/partitioners/TransPartitioner.h"
 #include "atlas/grid/grids.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
@@ -55,7 +55,7 @@ struct Fixture   {
 };
 
 
-void read_rspecg(numerics::trans::Trans& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int &nfld )
+void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int &nfld )
 {
   Log::info() << "read_rspecg ...\n";
   nfld = 2;
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
   BOOST_CHECK_EQUAL( g->nlat() , 160 );
 
-  numerics::trans::Trans trans( *g );
+  trans::Trans trans( *g );
 
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
 
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
   // Create grid and trans object
   ReducedGrid::Ptr g ( ReducedGrid::create( "N80" ) );
 
-  numerics::trans::Trans trans( *g, 0 );
+  trans::Trans trans( *g, 0 );
 
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
   BOOST_CHECK_EQUAL( trans.ngptotg() , g->npts() );
@@ -142,8 +142,8 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 
 BOOST_AUTO_TEST_CASE( test_trans_options )
 {
-  numerics::trans::Trans::Options opts;
-  opts.set_fft(numerics::trans::FFTW);
+  trans::Trans::Options opts;
+  opts.set_fft(trans::FFTW);
   opts.set_split_latitudes(false);
   opts.set_read("readfile");
 
@@ -157,13 +157,13 @@ BOOST_AUTO_TEST_CASE( test_distspec )
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   mesh::generators::ReducedGridMeshGenerator generate;
   BOOST_TEST_CHECKPOINT("mesh generator created");
-  //numerics::trans::Trans trans(*g, 159 );
+  //trans::Trans trans(*g, 159 );
 
-  numerics::trans::Trans::Options p;
+  trans::Trans::Options p;
   if( eckit::mpi::size() == 1 )
     p.set_write("cached_legendre_coeffs");
   p.set_flt(false);
-  numerics::trans::Trans trans(400, 159, p);
+  trans::Trans trans(400, 159, p);
   BOOST_TEST_CHECKPOINT("Trans initialized");
   std::vector<double> rspecg;
   std::vector<int   > nfrom;
@@ -218,7 +218,7 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","true");
 
   mesh::generators::ReducedGridMeshGenerator generate;
-  numerics::trans::Trans trans(*g);
+  trans::Trans trans(*g);
 
   mesh::Mesh::Ptr m_default( generate( *g ) );
 
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   mesh::generators::ReducedGridMeshGenerator generate;
   mesh::Mesh::Ptr m( generate( *g ) );
 
-  numerics::trans::Trans trans(*g,47);
+  trans::Trans trans(*g,47);
 
 
   SharedPtr<functionspace::NodeColumns> nodal (new functionspace::NodeColumns(*m));
@@ -287,7 +287,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
   SharedPtr<ReducedGrid> g ( ReducedGrid::create( "O48" ) );
-  SharedPtr<numerics::trans::Trans> trans ( new numerics::trans::Trans(*g,47) );
+  SharedPtr<trans::Trans> trans ( new trans::Trans(*g,47) );
 
   SharedPtr<functionspace::Spectral>    spectral    (new functionspace::Spectral(*trans));
   SharedPtr<functionspace::ReducedGridColumns> gridpoints (new functionspace::ReducedGridColumns(*g));

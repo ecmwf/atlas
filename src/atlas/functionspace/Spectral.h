@@ -18,13 +18,14 @@ namespace atlas {
 namespace field {
     class Field;
     class FieldSet;
-} }
+}
+}
 
 namespace atlas {
-namespace numerics {
 namespace trans {
     class Trans;
-} } }
+}
+}
 
 namespace atlas {
 namespace functionspace {
@@ -37,7 +38,7 @@ public:
 
   Spectral(const size_t truncation);
 
-  Spectral(numerics::trans::Trans& );
+  Spectral(trans::Trans& );
 
   virtual ~Spectral();
 
@@ -74,13 +75,13 @@ private: // data
 
   size_t truncation_;
 
-  numerics::trans::Trans* trans_;
+  trans::Trans* trans_;
 
 };
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-#define Trans numerics::trans::Trans
+#define Trans trans::Trans
 #define field_Field field::Field
 extern "C"
 {

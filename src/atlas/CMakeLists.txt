@@ -212,8 +212,8 @@ numerics/fvm/Nabla.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
-  numerics/trans/Trans.h
-  numerics/trans/Trans.cc
+  trans/Trans.h
+  trans/Trans.cc
 )
 endif()
 
