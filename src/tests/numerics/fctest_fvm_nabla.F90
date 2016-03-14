@@ -285,11 +285,13 @@ END_TESTSUITE_FINALIZE
 
 TEST( test_fvm )
 type(atlas_ReducedGrid) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_fvm_Method) :: fvm
 
 grid = atlas_ReducedGrid("N24")
-mesh = atlas_generate_mesh(grid)
+meshgenerator = atlas_ReducedGridMeshGenerator()
+mesh = meshgenerator%generate(grid)
 fvm  = atlas_fvm_Method(mesh)
 
 call fvm%final()

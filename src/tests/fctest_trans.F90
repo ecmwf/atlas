@@ -39,6 +39,7 @@ END_TESTSUITE_FINALIZE
 
 TEST( test_trans )
   type(atlas_ReducedGrid) :: grid
+  type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
   type(atlas_mesh_Nodes) :: nodes
@@ -66,7 +67,9 @@ TEST( test_trans )
 
   FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 
-  mesh = atlas_generate_mesh(grid)
+  meshgenerator = atlas_ReducedGridMeshGenerator()
+  mesh = meshgenerator%generate(grid)
+  call meshgenerator%final()
 
   FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
 

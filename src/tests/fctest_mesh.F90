@@ -314,6 +314,7 @@ END_TEST
 
 TEST( test_meshgen )
   type(atlas_ReducedGrid) :: grid
+  type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Edges) :: edges
   type(atlas_Field) :: field
@@ -326,8 +327,10 @@ TEST( test_meshgen )
   write(*,*) "test_meshgen starting"
 
   grid = atlas_ReducedGrid("N24")
-  mesh = atlas_generate_mesh(grid)
+  meshgenerator = atlas_ReducedGridMeshGenerator()
+  mesh = meshgenerator%generate(grid)
   nodes = mesh%nodes()
+  call meshgenerator%final()
 
 !  call atlas_generate_reduced_gaussian_grid(rgg,"T63")
   call atlas_build_parallel_fields(mesh)
@@ -372,6 +375,7 @@ END_TEST
 TEST( test_griddistribution )
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
+  type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_GridDistribution) :: griddistribution
 
   integer, allocatable :: part(:)
@@ -390,8 +394,8 @@ TEST( test_griddistribution )
   enddo
 
   griddistribution = atlas_GridDistribution(part, part0=1)
-
-  mesh = atlas_generate_mesh(grid,griddistribution)
+  meshgenerator = atlas_ReducedGridMeshGenerator()
+  mesh = meshgenerator%generate(grid,griddistribution)
   call griddistribution%final()
 
   call atlas_write_gmsh(mesh,"testf3.msh")
@@ -432,7 +436,7 @@ END_TEST
 
 
 TEST( test_fieldcreation )
-  use fctest_atlas_Mesh_fixture , only : FieldParams => atlas_FieldParametrisation
+  use fcta_Mesh_fixture , only : FieldParams => atlas_FieldParametrisation
   type(atlas_ReducedGrid) :: grid
   type(atlas_Field) :: field
   type(atlas_FieldParametrisation) :: params
@@ -461,6 +465,7 @@ END_TEST
 TEST( test_fv )
       type(atlas_ReducedGrid) :: grid
       type(atlas_Mesh) :: mesh
+      type(atlas_MeshGenerator) :: meshgenerator
       type(atlas_GridDistribution) :: griddistribution
       type(atlas_functionspace_NodeColumns) :: nodes_fs
 
@@ -488,7 +493,8 @@ TEST( test_fv )
       griddistribution = atlas_GridDistribution(part, part0=1)
 
       ! Generate mesh with given grid and distribution
-      mesh = atlas_generate_mesh(grid,griddistribution)
+      meshgenerator = atlas_ReducedGridMeshGenerator()
+      mesh = meshgenerator%generate(grid,griddistribution)
       call griddistribution%final()
 
       ! Generate nodes function-space, with a given halo_size

@@ -146,6 +146,7 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_Logging_module.F90
         util/atlas_Error_module.F90
         util/atlas_Value_module.F90
+        util/atlas_io_module.F90
         functionspace/atlas_FunctionSpace_module.F90
         functionspace/atlas_functionspace_EdgeColumns_module.F90
         functionspace/atlas_functionspace_NodeColumns_module.F90
@@ -166,7 +167,7 @@ ecbuild_add_library( TARGET atlas_f
         mesh/atlas_HybridElements_module.F90
         mesh/atlas_Elements_module.F90
         mesh/atlas_ElementType_module.F90
-        mesh/atlas_actions_module.F90
+        mesh/atlas_mesh_actions_module.F90
         numerics/atlas_Method_module.F90
         numerics/atlas_fvm_module.F90
         numerics/atlas_Nabla_module.F90

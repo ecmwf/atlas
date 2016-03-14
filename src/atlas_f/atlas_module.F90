@@ -161,9 +161,22 @@ use atlas_resource_module, only: &
     & atlas_resource_set
 use atlas_Value_module, only: &
     & atlas_Value
-
-
-use atlas_actions_module
+use atlas_mesh_actions_module, only: &
+    & atlas_build_parallel_fields, &
+    & atlas_build_nodes_parallel_fields, &
+    & atlas_build_edges_parallel_fields, &
+    & atlas_build_periodic_boundaries, &
+    & atlas_build_halo, &
+    & atlas_build_edges, &
+    & atlas_build_pole_edges, &
+    & atlas_build_node_to_edge_connectivity, &
+    & atlas_build_median_dual_mesh, &
+    & atlas_write_load_balance_report
+use atlas_io_module, only: &
+    & atlas_read_gmsh, &
+    & atlas_write_gmsh, &
+    & atlas_write_gmsh_field, &
+    & atlas_write_gmsh_fieldset
 
 implicit none
 

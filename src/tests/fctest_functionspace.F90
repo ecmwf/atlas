@@ -42,6 +42,7 @@ END_TESTSUITE_FINALIZE
 
 TEST( test_nodes )
 type(atlas_ReducedGrid) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs
 type(atlas_Field) :: field, template
@@ -50,7 +51,9 @@ integer :: halo_size, nb_nodes
 halo_size = 1
 
 grid = atlas_ReducedGrid("N24")
-mesh = atlas_generate_mesh(grid)
+meshgenerator = atlas_ReducedGridMeshGenerator()
+mesh = meshgenerator%generate(grid)
+call meshgenerator%final()
 fs = atlas_functionspace_NodeColumns(mesh,halo_size)
 nodes = fs%nodes()
 nb_nodes = fs%nb_nodes()
@@ -134,6 +137,7 @@ END_TEST
 
 TEST( test_nodescolumns )
 type(atlas_ReducedGrid) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs
 type(atlas_Field) :: field, template
@@ -142,7 +146,9 @@ halo_size = 1
 levels = 10
 
 grid = atlas_ReducedGrid("N24")
-mesh = atlas_generate_mesh(grid)
+meshgenerator = atlas_ReducedGridMeshGenerator()
+mesh = meshgenerator%generate(grid)
+call meshgenerator%final()
 fs = atlas_functionspace_NodeColumns(mesh,halo_size)
 
 !levels = fs%nb_levels()
@@ -225,6 +231,7 @@ END_TEST
 
 TEST( test_collectives )
 type(atlas_ReducedGrid) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs2d
 type(atlas_Field) :: field, global, scal
@@ -240,7 +247,9 @@ halo_size = 1
 levels = 10
 
 grid = atlas_ReducedGrid("N24")
-mesh = atlas_generate_mesh(grid)
+meshgenerator = atlas_ReducedGridMeshGenerator()
+mesh = meshgenerator%generate(grid)
+call meshgenerator%final()
 fs2d = atlas_functionspace_NodeColumns(mesh,halo_size)
 
 field  = fs2d%create_field("",atlas_real(c_float),[2])
@@ -332,6 +341,7 @@ END_TEST
 
 TEST( test_edges )
 type(atlas_ReducedGrid) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_EdgeColumns) :: fs
 type(atlas_Field) :: field, template
@@ -340,7 +350,8 @@ integer :: halo_size, nb_edges
 halo_size = 0
 
 grid = atlas_ReducedGrid("N24")
-mesh = atlas_generate_mesh(grid)
+meshgenerator = atlas_ReducedGridMeshGenerator()
+mesh = meshgenerator%generate(grid)
 FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
 edges = mesh%edges()
 FCTEST_CHECK_EQUAL( edges%owners(), 3 ) ! Mesh holds 2 references (facets == edges)
