@@ -13,16 +13,16 @@
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_error_fixture
+module fcta_error_fxt
 use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
 character(len=*), parameter :: filename = "fctest_error.F90"
-end module fctest_atlas_error_fixture
+end module fcta_error_fxt
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_error,fctest_atlas_error_fixture)
+TESTSUITE_WITH_FIXTURE(fcta_error,fcta_error_fxt)
 
 ! -----------------------------------------------------------------------------
 TESTSUITE_INIT

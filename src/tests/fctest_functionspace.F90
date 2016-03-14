@@ -13,18 +13,18 @@
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_FunctionSpace_Fixture
+module fcta_FunctionSpace_fxt
 use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
 
 contains
 
-end module fctest_atlas_FunctionSpace_Fixture
+end module
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_FunctionSpace,fctest_atlas_FunctionSpace_Fixture)
+TESTSUITE_WITH_FIXTURE(fcta_FunctionSpace,fcta_FunctionSpace_fxt)
 
 ! -----------------------------------------------------------------------------
 

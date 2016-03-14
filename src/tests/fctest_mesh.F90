@@ -13,7 +13,7 @@
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_Mesh_fixture
+module fcta_Mesh_fixture
 use atlas_module
 use atlas_grids_module
 use, intrinsic :: iso_c_binding
@@ -54,11 +54,11 @@ function atlas_FieldConfig__ctor(creator,ngptot,nproma,nlev,nvar,kind,datatype,s
   call params%set("fortran",.True.) ! Let know that parameters have fortran style
 end function
 
-end module fctest_atlas_Mesh_fixture
+end module fcta_Mesh_fixture
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_Mesh,fctest_atlas_Mesh_fixture)
+TESTSUITE_WITH_FIXTURE(fctest_atlas_Mesh,fcta_Mesh_fixture)
 
 ! -----------------------------------------------------------------------------
 

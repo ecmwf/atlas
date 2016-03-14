@@ -13,12 +13,12 @@
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_logging_fixture
+module fcta_logging_fxt
 use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
 
-end module fctest_atlas_logging_fixture
+end module fcta_logging_fxt
 
 ! -----------------------------------------------------------------------------
 

@@ -13,15 +13,15 @@
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_resource_fixture
+module fcta_resource_fixture
 use atlas_module
 implicit none
 
-end module fctest_atlas_resource_fixture
+end module fcta_resource_fixture
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_resource,fctest_atlas_resource_fixture)
+TESTSUITE_WITH_FIXTURE(fctest_atlas_resource,fcta_resource_fixture)
 
 ! -----------------------------------------------------------------------------
 TESTSUITE_INIT

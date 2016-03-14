@@ -10,7 +10,7 @@
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_refcounting_fixture
+module fcta_refcounting_fxt
 use atlas_refcounted_module, only: atlas_RefCounted
 use fctest
 implicit none
@@ -79,11 +79,11 @@ subroutine consume_obj(obj)
   call obj%final()
 end subroutine
 
-end module fctest_atlas_refcounting_fixture
+end module fcta_refcounting_fxt
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_refcounting,fctest_atlas_refcounting_fixture)
+TESTSUITE_WITH_FIXTURE(fctest_atlas_refcounting,fcta_refcounting_fxt)
 
 ! -----------------------------------------------------------------------------
 
