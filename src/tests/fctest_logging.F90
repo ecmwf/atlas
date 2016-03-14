@@ -22,7 +22,7 @@ end module fcta_logging_fxt
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_logging,fctest_atlas_logging_fixture)
+TESTSUITE_WITH_FIXTURE(fctest_atlas_logging,fcta_logging_fxt)
 
 ! -----------------------------------------------------------------------------
 TESTSUITE_INIT
