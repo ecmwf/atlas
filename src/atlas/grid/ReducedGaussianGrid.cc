@@ -100,7 +100,20 @@ eckit::Properties ReducedGaussianGrid::spec() const
   return grid_spec;
 }
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+extern "C" {
+
+ReducedGrid* atlas__new_reduced_gaussian_grid(int nlon[], int nlat)
+{
+  std::vector<long> nlon_vector;
+  nlon_vector.assign(nlon,nlon+nlat);
+  return new ReducedGaussianGrid(nlat,nlon_vector.data());
+}
+
+}
+
+//-----------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace atlas

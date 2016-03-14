@@ -142,6 +142,12 @@ protected:
 
 extern "C"
 {
+  void atlas__ReducedGrid__delete(ReducedGrid* This);
+  ReducedGrid* atlas__new_reduced_grid(char* identifier);
+  ReducedGrid* atlas__ReducedGrid__constructor(int nlat, double lat[], int nlon[]);
+  ReducedGrid* atlas__new_gaussian_grid(int N);
+  ReducedGrid* atlas__new_lonlat_grid(int nlon, int nlat);
+  ReducedGrid* atlas__new_reduced_gaussian_grid(int nlon[], int nlat);
   int    atlas__ReducedGrid__nlat     (ReducedGrid* This);
   int    atlas__ReducedGrid__nlon     (ReducedGrid* This, int &jlat);
   void   atlas__ReducedGrid__nlon__all(ReducedGrid* This, const int* &nlon, int &size);

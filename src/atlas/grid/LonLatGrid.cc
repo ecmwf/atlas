@@ -237,7 +237,16 @@ eckit::Properties LonLatGrid::spec() const
   return grid_spec;
 }
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+extern "C" {
+ReducedGrid* atlas__new_lonlat_grid(int nlon, int nlat)
+{
+  return new LonLatGrid(static_cast<size_t>(nlon),static_cast<size_t>(nlat));
+}
+}
+
+//-----------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace atlas

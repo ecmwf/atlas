@@ -136,6 +136,7 @@ END TYPE atlas_LonLatGrid
 
 interface atlas_ReducedGrid
   module procedure atlas_ReducedGrid__ctor_id
+  module procedure atlas_ReducedGrid__ctor
 end interface
 
 interface atlas_GaussianGrid
@@ -158,28 +159,36 @@ contains
 ! ReducedGrid routines
 
 function atlas_ReducedGrid__ctor_id(identifier) result(grid)
-  use atlas_grids_c_binding
+  use atlas_reducedgrid_c_binding
   type(atlas_ReducedGrid) :: grid
   character(len=*), intent(in) :: identifier
   call grid%reset_c_ptr( atlas__new_reduced_grid(c_str(identifier)) )
 end function atlas_ReducedGrid__ctor_id
 
+function atlas_ReducedGrid__ctor(lats,nlon) result(grid)
+  use atlas_reducedgrid_c_binding
+  type(atlas_ReducedGrid) :: grid
+  real(c_double), intent(in) :: lats(:)
+  integer, intent(in) :: nlon(:)
+  call grid%reset_c_ptr( atlas__ReducedGrid__constructor(size(nlon),lats,nlon) )
+end function atlas_ReducedGrid__ctor
+
 function atlas_GaussianGrid__ctor(N) result(grid)
-  use atlas_grids_c_binding
+  use atlas_reducedgrid_c_binding
   type(atlas_GaussianGrid) :: grid
   integer, intent(in) :: N
   call grid%reset_c_ptr( atlas__new_gaussian_grid(N) )
 end function atlas_GaussianGrid__ctor
 
 function atlas_ReducedGaussianGrid__ctor(nlon) result(grid)
-  use atlas_grids_c_binding
+  use atlas_reducedgrid_c_binding
   type(atlas_ReducedGaussianGrid) :: grid
   integer, intent(in) :: nlon(:)
   call grid%reset_c_ptr( atlas__new_reduced_gaussian_grid(nlon,size(nlon)) )
 end function atlas_ReducedGaussianGrid__ctor
 
 function atlas_LonLatGrid__ctor(nlon,nlat) result(grid)
-  use atlas_grids_c_binding
+  use atlas_reducedgrid_c_binding
   type(atlas_LonLatGrid) :: grid
   integer, intent(in) :: nlon, nlat
   call grid%reset_c_ptr( atlas__new_lonlat_grid(nlon,nlat) )
@@ -268,7 +277,7 @@ function ReducedGrid__lonlat(this, jlat, jlon) result(lonlat)
 end function ReducedGrid__lonlat
 
 subroutine atlas_Grid__delete(this)
-  use atlas_grids_c_binding
+  use atlas_reducedgrid_c_binding
   class(atlas_Grid), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__ReducedGrid__delete(this%c_ptr())

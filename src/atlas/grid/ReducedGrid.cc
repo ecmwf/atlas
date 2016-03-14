@@ -342,5 +342,23 @@ void atlas__ReducedGrid__lat__all(ReducedGrid* This, const double* &lat, int &si
   size = This->latitudes().size();
 }
 
+
+ReducedGrid* atlas__new_reduced_grid(char* identifier)
+{
+  return ReducedGrid::create( std::string(identifier) );
+}
+
+ReducedGrid* atlas__ReducedGrid__constructor(int nlat, double lats[], int nlon[])
+{
+  std::vector<long> nlon_vector;
+  nlon_vector.assign(nlon,nlon+nlat);
+  return new ReducedGrid(nlat,lats,nlon_vector.data());
+}
+
+void atlas__ReducedGrid__delete(ReducedGrid* This)
+{
+  delete This;
+}
+
 } // namespace grid
 } // namespace atlas

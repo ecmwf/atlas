@@ -462,6 +462,25 @@ TEST( test_fieldcreation )
   call grid%final()
 END_TEST
 
+
+TEST( test_reducedgrid )
+      type(atlas_ReducedGrid) :: grid
+      type(atlas_Mesh) :: mesh
+      type(atlas_MeshGenerator) :: meshgenerator
+      integer, parameter :: nlat = 6
+      real(c_double) :: lats(nlat)
+      integer(c_int) :: nlon(nlat)
+      lats = [80.,40.,30.,-30.,-60.,-75.]
+      nlon = [4,16,32,32,16,4]
+      grid = atlas_ReducedGrid(lats,nlon)
+      meshgenerator = atlas_ReducedGridMeshGenerator()
+      mesh = meshgenerator%generate(grid)
+      call atlas_write_gmsh(mesh,"test_reducedgrid.msh")
+      call meshgenerator%final()
+      call grid%final()
+      call mesh%final()
+END_TEST
+
 TEST( test_fv )
       type(atlas_ReducedGrid) :: grid
       type(atlas_Mesh) :: mesh

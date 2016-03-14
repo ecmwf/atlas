@@ -97,7 +97,16 @@ eckit::Properties GaussianGrid::spec() const
   return grid_spec;
 }
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+extern "C" {
+ReducedGrid* atlas__new_gaussian_grid ( int N )
+{
+  return new GaussianGrid(N);
+}
+}
+
+//-----------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace atlas
