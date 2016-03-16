@@ -8,6 +8,7 @@
 #include "eckit/config/Resource.h"
 
 using namespace std;
+using namespace eckit;
 using namespace atlas;
 using namespace atlas::grid;
 using namespace atlas::mesh;
@@ -17,26 +18,22 @@ int main(int argc, char *argv[])
 {
     atlas_init(argc, argv);
 
-    string gridID, visualize;
-    gridID    = eckit::Resource<string>("--grid"     ,
-                                        string("N32"));
-    visualize = eckit::Resource<string>("--visualize",
-                                        string("2D"));
+    string gridID    = Resource<string>("--grid"     , string("N32"));
+    string visualize = Resource<string>("--visualize", string("2D") );
 
-    ReducedGrid::Ptr reducedGrid(ReducedGrid::create(gridID));
+    SharedPtr<ReducedGrid> reducedGrid( ReducedGrid::create(gridID) );
 
-    Mesh::Ptr meshPtr;
-    ReducedGridMeshGenerator generate_mesh;
-    meshPtr = Mesh::Ptr(generate_mesh(*reducedGrid));
+    ReducedGridMeshGenerator meshgenerator;
+    SharedPtr<Mesh> mesh( meshgenerator.generate(*reducedGrid) );
  
     util::io::Gmsh gmsh;
     gmsh.options.set("info", true);
     if (visualize == "3D")
     {
-        actions::BuildXYZField("xyz")(*meshPtr);
+        actions::BuildXYZField("xyz")(*mesh);
         gmsh.options.set("nodes", std::string("xyz"));
     }
-    gmsh.write(*meshPtr, "mesh.msh");
+    gmsh.write(*mesh, "mesh.msh");
     
     atlas_finalize();
 

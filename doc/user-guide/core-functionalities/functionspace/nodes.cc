@@ -1,6 +1,7 @@
 #include "eckit/mpi/mpi.h"
 #include "eckit/config/Resource.h"
 #include "atlas/atlas.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/grid/grids.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
@@ -18,7 +19,6 @@ using namespace atlas::array;
 using namespace atlas::grid;
 using namespace atlas::mesh;
 using namespace atlas::mesh::generators;
-using namespace atlas::functionspace;
 
 int main(int argc, char *argv[])
 {
@@ -26,11 +26,11 @@ int main(int argc, char *argv[])
     
     // Generate global reduced grid
     string gridID = Resource<string>("--grid", string("N32"));
-    ReducedGrid::Ptr reducedGrid(ReducedGrid::create(gridID));
+    SharedPtr<ReducedGrid> grid( ReducedGrid::create(gridID) );
 
     // Generate mesh associated to reduced grid
-    ReducedGridMeshGenerator generate_mesh;
-    Mesh::Ptr mesh = Mesh::Ptr(generate_mesh(*reducedGrid));
+    ReducedGridMeshGenerator meshgenerator;
+    SharedPtr<Mesh> mesh ( meshgenerator.generate(*grid) );
 
     // Number of nodes in the mesh
     // (different from number of points on a grid!)
@@ -44,18 +44,20 @@ int main(int argc, char *argv[])
       new functionspace::NodeColumns(*mesh, mesh::Halo(1)));
 
     // Note on field generation
-    Field::Ptr scalarField1(
+    SharedPtr<Field> field_scalar1(
       fs_nodes->createField<double>("scalar1") );
-    Field::Ptr scalarField2(
+    SharedPtr<Field> field_scalar2(
       fs_nodes->createField<double>("scalar2", nb_levels) );
-    Field::Ptr vectorField1(
+    SharedPtr<Field> field_vector1(
       fs_nodes->createField<double>("vector1", make_shape(2)) );
-    Field::Ptr vectorField2(
-      fs_nodes->createField<double>("vector2", nb_levels, make_shape(2)) );
-    Field::Ptr tensorField1(
+    SharedPtr<Field> field_vector2(
+      fs_nodes->createField<double>("vector2", nb_levels, 
+                                               make_shape(2)) );
+    SharedPtr<Field> field_tensor1(
       fs_nodes->createField<double>("tensor1", make_shape(2,2)) );
-    Field::Ptr tensorField2(
-      fs_nodes->createField<double>("tensor2", nb_levels, make_shape(2,2)) );
+    SharedPtr<Field> field_tensor2(
+      fs_nodes->createField<double>("tensor2", nb_levels, 
+                                               make_shape(2,2)) );
     /* .... */
     // Variables for scalar1 field definition
     const double rpi = 2.0 * asin(1.0);
@@ -66,9 +68,8 @@ int main(int argc, char *argv[])
     double  zdist, zlon, zlat;
 
     // Retrieve lonlat field to calculate scalar1 function
-    ArrayView <double,1> scalar1(*scalarField1);
-    ArrayView <double,2> lonlat = ArrayView<double,2>(
-                                    mesh->nodes().lonlat());
+    ArrayView <double,1> scalar1(*field_scalar1);
+    ArrayView <double,2> lonlat ( mesh->nodes().lonlat() );
     for (int jnode = 0; jnode < nb_nodes; ++jnode)
     {
         zlon = lonlat(jnode,0) * deg2rad;
@@ -89,43 +90,40 @@ int main(int argc, char *argv[])
     util::io::Gmsh gmsh;
     gmsh.options.set("info", true);
     gmsh.write(*mesh, "mesh.msh");
-    gmsh.write(*scalarField1, *fs_nodes, "scalar1.msh");
+    gmsh.write(*field_scalar1, *fs_nodes, "scalar1.msh");
     /* .... */
     // Halo exchange
-    fs_nodes->haloExchange(*scalarField1);
-    std::string checksum = fs_nodes->checksum(*scalarField1);
-    if (eckit::mpi::rank() == 0) cout << checksum << endl;
+    fs_nodes->haloExchange(*field_scalar1);
+    std::string checksum = fs_nodes->checksum(*field_scalar1);
+    Log::info() << checksum << endl;
 
     // Create a global field
-    Field::Ptr globalField(fs_nodes->createGlobalField(
-                               "global", *scalarField1));
+    SharedPtr<Field> field_global(
+       fs_nodes->createGlobalField("global", *field_scalar1) );
     // Gather operation
-    fs_nodes->gather(*scalarField1, *globalField);
+    fs_nodes->gather(*field_scalar1, *field_global);
 
-    if (eckit::mpi::rank() == 0)
-    {
-        cout << "local nodes         = "
-             << fs_nodes->nb_nodes()  << endl;
-        cout << "grid points          = "
-             << reducedGrid->npts()   << endl;
-        cout << "globalField.shape(0) = "
-             << globalField->shape(0) << endl;
-    }
+    Log::info() << "local nodes         = "
+                << fs_nodes->nb_nodes()  << endl;
+    Log::info() << "grid points          = "
+                << grid->npts()   << endl;
+    Log::info() << "field_global.shape(0) = "
+                << field_global->shape(0) << endl;
 
     // Scatter operation
-    fs_nodes->scatter(*globalField, *scalarField1);
+    fs_nodes->scatter(*field_global, *field_scalar1);
 
     // Halo exchange and checksum
-    fs_nodes->haloExchange(*scalarField1);
-    checksum = fs_nodes->checksum(*scalarField1);
-    if (eckit::mpi::rank() == 0) cout << checksum << endl;
+    fs_nodes->haloExchange(*field_scalar1);
+    checksum = fs_nodes->checksum(*field_scalar1);
+    Log::info() << checksum << endl;
 
     // FieldSet checksum
     FieldSet fields;
-    fields.add(*scalarField1);
-    fields.add(*globalField);
+    fields.add(*field_scalar1);
+    fields.add(*field_global);
     checksum = fs_nodes->checksum(fields);
-    if (eckit::mpi::rank() == 0) cout << checksum << endl;
+    Log::info() << checksum << endl;
     /* .... */
     // Operations
     size_t N;
@@ -133,36 +131,36 @@ int main(int argc, char *argv[])
     double min, max, sum, mean, stddev;
 
     // Minimum and maximum
-    fs_nodes->minimum(*scalarField1, min);
-    fs_nodes->maximum(*scalarField1, max);
+    fs_nodes->minimum(*field_scalar1, min);
+    fs_nodes->maximum(*field_scalar1, max);
     Log::info() << "min: " << min << endl;
     Log::info() << "max: " << max << endl;
 
     // Minimum and maximum + location
-    fs_nodes->minimumAndLocation(*scalarField1, min, gidx_min);
-    fs_nodes->maximumAndLocation(*scalarField1, max, gidx_max);
+    fs_nodes->minimumAndLocation(*field_scalar1, min, gidx_min);
+    fs_nodes->maximumAndLocation(*field_scalar1, max, gidx_max);
     Log::info() << "min: "        << min << ",  "
                 << "global_id = " << gidx_min << endl;
     Log::info() << "max: "        << max << ",  "
                 << "global_id = " << gidx_max << endl;
 
     // Summation
-    fs_nodes->sum(*scalarField1, sum, N);
+    fs_nodes->sum(*field_scalar1, sum, N);
     Log::info() << "sum: "         << sum
                 << ", nb_nodes = " << N << endl;
 
     // Order independent (from partitioning) summation
-    fs_nodes->orderIndependentSum(*scalarField1, sum, N);
+    fs_nodes->orderIndependentSum(*field_scalar1, sum, N);
     Log::info() << "oi_sum: "      << sum
                 << ", nb_nodes = " << N << endl;
 
     // Average over number of nodes
-    fs_nodes->mean(*scalarField1, mean, N);
+    fs_nodes->mean(*field_scalar1, mean, N);
     Log::info() << "mean: " << mean << ", nb_nodes = " << N << endl;
 
     // Average and standard deviation over number of nodes
     fs_nodes->meanAndStandardDeviation(
-                *scalarField1, mean, stddev, N);
+                *field_scalar1, mean, stddev, N);
     Log::info() << "mean = "         << mean   << ",  "
                 << "std_deviation: " << stddev << ",  "
                 << "nb_nodes: "      << N      << endl;

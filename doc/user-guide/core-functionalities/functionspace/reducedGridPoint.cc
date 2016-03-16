@@ -17,7 +17,6 @@ using namespace atlas::grid;
 using namespace atlas::field;
 using namespace atlas::mesh;
 using namespace atlas::mesh::generators;
-using namespace atlas::functionspace;
 
 int main(int argc, char *argv[])
 {
@@ -25,19 +24,14 @@ int main(int argc, char *argv[])
 
     // Generate global reduced grid
     string gridID = Resource<string>("--grid", string("N32"));
-    ReducedGrid::Ptr reducedGrid(ReducedGrid::create(gridID));
+    SharedPtr<ReducedGrid> grid (ReducedGrid::create(gridID));
 
-    // Generate mesh associated to reduced grid
-    ReducedGridMeshGenerator generate_mesh;
-    Mesh::Ptr mesh = Mesh::Ptr(generate_mesh(*reducedGrid));
+    // Number of points in the grid
+    int const nb_nodes = grid->npts();
 
-    // Number of nodes in the mesh
-    // (different from number of points on a grid!)
-    int const nb_nodes = reducedGrid->npts();
-
-    // Generate functionspace associated to mesh
+    // Generate functionspace associated to grid
     SharedPtr<functionspace::ReducedGridColumns>
-        fs_rgp(new functionspace::ReducedGridColumns(*reducedGrid));//, Halo(1)));
+        fs_rgp(new functionspace::ReducedGridColumns(*grid));
 
     /* .... */
     // Variables for scalar1 field definition
@@ -51,8 +45,8 @@ int main(int argc, char *argv[])
 
 
     // Calculate scalar function
-    Field::Ptr scalarField1(fs_rgp->createField<double>("scalar1"));
-    ArrayView <double,1> scalar1(*scalarField1);
+    SharedPtr<Field> field_scalar1(fs_rgp->createField<double>("scalar1"));
+    ArrayView <double,1> scalar1(*field_scalar1);
 
     for (int jlat = 0; jlat < fs_rgp->nlat(); ++jlat)
     {
@@ -71,15 +65,19 @@ int main(int argc, char *argv[])
             {
                 scalar1(jnode) = 0.5 * (1. + cos(rpi*zdist/zrad));
             }
-            jnode = jnode+1;
+            ++jnode;
         }
     }
 
-    // Write mesh and field in gmsh format for visualization
+    // Generate mesh associated to reduced grid
+    ReducedGridMeshGenerator meshgenerator;
+    SharedPtr<Mesh> mesh (meshgenerator.generate(*grid));
+
+    // Write mesh and field in gmsh format for visualization        
     util::io::Gmsh gmsh;
     gmsh.options.set("info", true);
     gmsh.write(*mesh, "mesh.msh");
-    gmsh.write(*scalarField1, *fs_rgp, "scalar1.msh");
+    gmsh.write(*field_scalar1, "scalar1.msh");
     /* .... */
 
     atlas_finalize();

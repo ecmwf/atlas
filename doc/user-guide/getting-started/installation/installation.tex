@@ -177,7 +177,7 @@ three recommended options:\\
 With the following, we can specify which optimisation to use for the
 installation of all projects.
 \begin{lstlisting}[style=BashStyle]
-BUILT_TYPE=RELEASE
+BUILD_TYPE=RELEASE
 \end{lstlisting}
 %
 We can now proceed to the download and install
@@ -526,7 +526,7 @@ and executables.
  In particular, we need to create the following 
 cmake file
 %
-\begin{lstlisting}[style=XMLStyle]
+\begin{lstlisting}[style=CMakeStyle]
 # File: CMakeLists.txt
 cmake_minimum_required(VERSION 2.8.4 FATAL_ERROR)
 project(usage_example)
@@ -723,7 +723,7 @@ The second possibility is to use a cmake file that uses some
 ecbuild macros. In particular, we need to create the following 
 cmake file:
 %
-\begin{lstlisting}[style=XMLStyle]
+\begin{lstlisting}[style=CMakeStyle]
 # File: CMakeLists.txt
 cmake_minimum_required(VERSION 2.8.4 FATAL_ERROR)
 project(usage_example)
@@ -731,8 +731,8 @@ project(usage_example)
 include(ecbuild_system NO_POLICY_SCOPE)
 ecbuild_requires_macro_version(1.9)
 ecbuild_declare_project()
-ecbuild_enable_fortran(REQUIRED MODULE_DIRECTORY 
-                                ${CMAKE_BINARY_DIR}/module)
+ecbuild_enable_fortran(MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module
+                       REQUIRED)
 ecbuild_use_package(PROJECT atlas REQUIRED)
 ecbuild_add_executable(TARGET  atlas_f-usage_example
                        SOURCES hello-world.F90 

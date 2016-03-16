@@ -128,7 +128,7 @@ will also change, permitting the identification of a possible unwanted
 data corruption. Note also that when printing to the screen this identifier,
 we access the MPI rank through \inltc{eckit}.
 
-On line 8, we define a global field, \inltc{globalField}. 
+On line 8, we define a global field, \inltc{field\_global}. 
 This, even if the job we are running is parallel, is defined on one task 
 only. A global field can be particularly useful for input/output purposes!
 Note also that the construction of the global field is based on the existing 
@@ -137,8 +137,8 @@ the scalar field, with the only exception that it is defined on one task
 only.
 
 On line 11, we apply the \inltc{gather} operation to the global field.
-Note that the first argument is the input (in our case \inltc{scalarField1}),
-while the second argument is the output (in our case \inltc{globalField}).
+Note that the first argument is the input (in our case \inltc{field\_scalar1}),
+while the second argument is the output (in our case \inltc{field\_global}).
 
 We successively print to the screen the number of local mesh nodes 
 per parallel partition, the number of points of the grid and the 
@@ -149,7 +149,7 @@ On line 24, we perform the opposite of the gather operation,
 first argument is the input and the second the output.
 
 From line 27 to 29, we perform an additional \inltc{HaloExchange}, 
-and check the integrity of our \inltc{scalarField1} after all the 
+and check the integrity of our \inltc{field\_scalar1} after all the 
 operations performed using it! 
 Finally, from line 32 to 36, we show how \inltc{checksum} can be applied 
 also to the \inltc{FieldSet} object.
@@ -164,7 +164,7 @@ style=CStyle, label=code-nodes-C-3, firstline=89,lastline=125]{nodes.cc}
 In \lista{code-nodes-C-4}, we show some simple operations that 
 can be performed using the \inltc{nodes} function space. Specifically, 
 on lines 8 and 9 we compute the minimum and maximum values of our 
-\inltc{scalarField1} - note that the function space knows about 
+\inltc{field\_scalar1} - note that the function space knows about 
 the parallelisation, therefore there is no need to do anything 
 else to obtain the correct minimum and maximum values. This will
 also be true for the other operations described below.
@@ -233,7 +233,7 @@ to gmsh file scalar1.msh
 de6c4b5f15bde3b75e3fe927a0e4904c
 local nodes         = 70912
 grid points          = 70144
-globalField.shape(0) = 70144
+field_global.shape(0) = 70144
 de6c4b5f15bde3b75e3fe927a0e4904c
 9d3b18735c8f114cf4f033204db73e78
 [0] (2016-02-11 T 19:24:05) (I) -- min: 0
@@ -251,11 +251,11 @@ In the first few lines, we note that the code informs us that it is
 writing the mesh into gmsh format as well as the field in gmsh format.
 Successively, we print the first \inltc{checksum}, that is a string, 
 the number of local (to partition) nodes, the total number of grid 
-points and the number of entries present in \inltc{globalField}. 
+points and the number of entries present in \inltc{field\_global}. 
 Note how, for this non-parallel example the number of mesh points 
 differs from the number of grid points as mentioned earlier. We 
 then print the other two \inltc{checksum}, the first of them is 
-identical to the one printed previously - i.e. \inltc{scalarField1} 
+identical to the one printed previously - i.e. \inltc{field\_scalar1} 
 has not been corrupted! - while the second is different since it 
 refers to a different object - i.e. it refer to \inltc{FieldSet}.
 Finally, on the last few lines we plot the various minimum, maximum, 
@@ -276,7 +276,7 @@ You can now try to generate different meshes and run it in parallel!
 The \lista{code-nodes-F-1} shows how to construct the function space 
 \inltc{nodes} starting from a mesh. In the first few lines, we define 
 the variables needed for this example - note in particular the definition 
-of \inltf{atlas\_functionspace\_nodes} and \inltf{atlas\_mesh\_nodes}.
+of \inltf{atlas\_functionspace\_NodeColumns} and \inltf{atlas\_mesh\_Nodes}.
 We then create a reduced grid (see lines 48 and 49) and the associated 
 mesh (see lines 52 and 53).
 On line 45 we initialize the library as usual, while, on line 56, 
@@ -325,7 +325,7 @@ On lines 4 and 5, we define the number of nodes of the mesh using
 the \inltf{nodes} function space object.
 
 On line 8, we initialize the pointer \inltf{scalar1} associated
-to the two-dimensional \inltf{scalarField1} object defined in 
+to the two-dimensional \inltf{field\_scalar1} object defined in 
 \lista{code-nodes-C-1}.
 On lines 9 and 10, we extract the implicitly defined \inltc{lonlat} 
 object - this step is particularly important since allows us 
@@ -364,7 +364,7 @@ will also change, permitting the identification of a possible unwanted
 data corruption. Note also that when printing to the screen this identifier,
 we access the MPI rank through the \inltf{atlas\_mpi\_rank()} function.
 
-On line 11, we define a global field, \inltf{globalField}. 
+On line 11, we define a global field, \inltf{field\_global}. 
 This, even if the job we are running is parallel, is defined on one task 
 only. A global field can be particularly useful for input/output purposes!
 Note also that the construction of the global field is based on the existing 
@@ -373,8 +373,8 @@ the scalar field, with the only exception that it is defined on one task
 only.
 
 On line 14, we apply the \inltf{gather} operation to the global field.
-Note that the first argument is the input (in our case \inltf{scalarField1}),
-while the second argument is the output (in our case \inltf{globalField}).
+Note that the first argument is the input (in our case \inltf{field\_scalar1}),
+while the second argument is the output (in our case \inltf{field\_global}).
 
 We successively print to the screen the number of local mesh nodes 
 per parallel partition, the number of points of the grid and the 
@@ -385,7 +385,7 @@ On line 22, we perform the opposite of the gather operation,
 first argument is the input and the second is the output.
 
 On lines 25 and 26, we perform an additional \inltf{halo\_exchange}, 
-and check the integrity of our \inltf{scalarField1} after 
+and check the integrity of our \inltf{field\_scalar1} after 
 all the operations performed using it! 
 Finally, from line 33 to 35, we show how \inltf{checksum} 
 can be applied also to an \inltf{atlas\_FieldSet} object.
@@ -400,7 +400,7 @@ style=FStyle, label=code-nodes-F-3, firstline=99,lastline=137]{nodes.F90}
 In \lista{code-nodes-F-4}, we show some simple operations that 
 can be performed using the \inltf{nodes} function space. Specifically, 
 on lines 5 and 6 we compute the minimum and maximum values of our 
-\inltf{scalarField1} - note that the function space knows about 
+\inltf{field\_scalar1} - note that the function space knows about 
 the parallelisation, therefore there is no need to do anything 
 else to obtain the correct minimum and maximum values. This will
 also be true for the other operations described below.
@@ -467,15 +467,15 @@ MeshGeneratorFactory [ReducedGrid]
 [0] (2016-02-12 T 15:41:34) (I) -- writing mesh \ 
 to gmsh file mesh.msh
 [0] (2016-02-12 T 15:41:34) (I) -- writing field \ 
-scalarField1 to gmsh file scalar1.msh
+field_scalar1 to gmsh file scalar1.msh
 [0] (2016-02-12 T 15:41:34) (I) -- writing field \
-scalarField1...
-de6c4b5f15bde3b75e3fe927a0e4904c                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+field_scalar1...
+de6c4b5f15bde3b75e3fe927a0e4904c
 local nodes          =        70912
 grid points          =        70144
-globalField.shape(1) =        70144
-de6c4b5f15bde3b75e3fe927a0e4904c                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-9d3b18735c8f114cf4f033204db73e78                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+field_global.shape(1) =        70144
+de6c4b5f15bde3b75e3fe927a0e4904c
+9d3b18735c8f114cf4f033204db73e78
 [0] (2016-02-12 T 15:41:34) (I) --  min =    0.0000000000000000 \      
 max =   0.99981015482709013
 [0] (2016-02-12 T 15:41:34) (I) --  min =    0.0000000000000000 \ 
@@ -494,11 +494,11 @@ In the first few lines, we note that the code informs us that it is
 writing the mesh into gmsh format as well as the field in gmsh format.
 Successively, we print the first \inltf{checksum}, that is a string, 
 the number of local (to partition) nodes, the total number of grid 
-points and the number of entries present in \inltf{globalField}. 
+points and the number of entries present in \inltf{field\_global}. 
 Note how, for this non-parallel example the number of mesh points 
 differs from the number of grid points as mentioned earlier. We 
 then print the other two \inltf{checksum}, the first of them is 
-identical to the one printed previously - i.e. \inltf{scalarField1} 
+identical to the one printed previously - i.e. \inltf{field\_scalar1} 
 has not been corrupted! - while the second is different since it 
 refers to a different object - i.e. it refer to \inltf{atlas\_FieldSet}.
 Finally, on the last few lines we plot the various minimum, maximum, 

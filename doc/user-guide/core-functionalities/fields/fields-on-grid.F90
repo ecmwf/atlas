@@ -1,8 +1,9 @@
 program main
 
+use, intrinsic :: iso_c_binding, only : c_double
 use atlas_module
 
-integer, parameter              :: wp = 8
+integer, parameter              :: wp = c_double
 real(wp), parameter             :: rpi = 2.0_wp * asin(1.0_wp)
 real(wp), parameter             :: deg2rad = rpi / 180.
 real(wp)                        :: zlatc = 0._wp * rpi
@@ -11,26 +12,27 @@ real(wp)                        :: zrad  = 2._wp * rpi / 9._wp
 real(wp)                        :: zdist, zlon, zlat
 
 integer                         :: jnode
-character(len=1024)             :: gridID
-type(atlas_ReducedGrid)         :: reducedGrid
-type(atlas_Field)               :: pressureField
+character(len=1024)             :: string
+character(len=32)               :: gridID
+type(atlas_ReducedGrid)         :: grid
+type(atlas_Field)               :: field_pressure
 real(wp), pointer               :: pressure(:)
 
 call atlas_init()
 
 call atlas_resource("--grid", "N32", gridID)
-reducedGrid = atlas_ReducedGrid(gridID)
+grid = atlas_ReducedGrid(gridID)
 
-pressureField = atlas_Field("pressure", atlas_real(wp), &
-                            & [reducedGrid%npts()])
-call pressureField%data(pressure)
+field_pressure = atlas_Field("pressure", atlas_real(wp), &
+                            & [grid%npts()])
+call field_pressure%data(pressure)
 
 jnode = 1
-do jlat=1,reducedGrid%nlat()
-  zlat = reducedGrid%lat(jlat)
+do jlat=1,grid%nlat()
+  zlat = grid%lat(jlat)
   zlat = zlat * deg2rad
-  do jlon=1,reducedGrid%nlon(jlat)
-    zlon = reducedGrid%lon(jlat,jlon)
+  do jlon=1,grid%nlon(jlat)
+    zlon = grid%lon(jlat,jlon)
     zlon = zlon * deg2rad
 
     zdist = 2._wp * sqrt((cos(zlat) * sin((zlon - zlonc) / 2))**2 + &
@@ -44,13 +46,16 @@ do jlat=1,reducedGrid%nlat()
   enddo
 enddo
 
-write(6, *) "============================================="
-write(6, *) "memory pressureField = ", &
-            & pressureField%bytes()/1000000000., "GB"
-write(6, *) "============================================="
+write(string, *) "===================================================="
+call atlas_log%info(string)
+write(string, *) "memory field_pressure = ", &
+            & field_pressure%bytes()/1000000000., "GB"
+call atlas_log%info(string)
+write(string, *) "===================================================="
+call atlas_log%info(string)
 
-call reducedGrid  %final()
-call pressureField%final()
+call grid%final()
+call field_pressure%final()
 
 call atlas_finalize()
 
