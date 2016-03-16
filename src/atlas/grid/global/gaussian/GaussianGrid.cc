@@ -10,8 +10,8 @@
 
 #include <typeinfo>
 #include "eckit/memory/Builder.h"
-#include "atlas/grid/GaussianGrid.h"
-#include "atlas/grid/GaussianLatitudes.h"
+#include "atlas/grid/global/gaussian/GaussianGrid.h"
+#include "atlas/grid/global/gaussian/GaussianLatitudes.h"
 
 namespace atlas {
 namespace grid {

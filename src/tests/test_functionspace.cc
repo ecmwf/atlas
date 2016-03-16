@@ -22,7 +22,7 @@
 #include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/ReducedGaussianGrid.h"
+#include "atlas/grid/global/gaussian/ReducedGaussianGrid.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
 #endif

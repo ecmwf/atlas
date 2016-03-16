@@ -24,7 +24,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/grid/Unstructured.h"
+#include "atlas/grid/global/Unstructured.h"
 #include "atlas/util/io/PointCloud.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/parallel/mpi/mpi.h"

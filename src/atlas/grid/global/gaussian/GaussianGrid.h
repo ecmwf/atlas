@@ -11,7 +11,7 @@
 #ifndef atlas_grids_GaussianGrid_h
 #define atlas_grids_GaussianGrid_h
 
-#include "atlas/grid/ReducedGaussianGrid.h"
+#include "atlas/grid/global/gaussian/ReducedGaussianGrid.h"
 
 namespace atlas {
 namespace grid {

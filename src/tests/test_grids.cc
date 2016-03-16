@@ -22,7 +22,6 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/grid/grids.h"
-#include "atlas/grid/LocalGrid.h"
 
 
 using namespace eckit;
@@ -54,11 +53,6 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 8192);
   BOOST_CHECK_EQUAL(grid.gridType(),"regular_gg");
-
-  // Local grid
-  LocalGrid local( new GaussianGrid(32), BoundBox( 90., 0., 180., 0.));
-//  BOOST_CHECK_EQUAL(local.nlat(), 32);
-  BOOST_CHECK_EQUAL(local.npts(), 2080);
 
   // Construct using builders/factories
 
@@ -103,10 +97,6 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
   BOOST_CHECK_EQUAL(grid.npts(), 6114);
   BOOST_CHECK_EQUAL(grid.gridType(),"reduced_gg");
 
-  // Local grid
-  LocalGrid local( new grid::predefined::rgg::N32(), BoundBox( 90., 0., 180., 0.));
-//  BOOST_CHECK_EQUAL(local.nlat(), 32);
-  BOOST_CHECK_EQUAL(local.npts(), 1559);
 }
 
 BOOST_AUTO_TEST_CASE( test_regular_ll )
@@ -125,16 +115,6 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(grid.lon(0), 0.);
   BOOST_CHECK_EQUAL(grid.lon(grid.nlon()-1), 360.-360./32.);
 
-  // Local grid
-  LocalGrid local( new LonLatGrid(nlon,nlat,LonLatGrid::EXCLUDES_POLES), BoundBox( 90., 0., 180., 0.));
-
-//  BOOST_CHECK_EQUAL(local.lat(0), 90.-0.5*(180./16.));
-//  BOOST_CHECK_EQUAL(local.lat(grid.nlat()-1),+0.5*(180./16.));
-//  BOOST_CHECK_EQUAL(local.lon(0), 0. );
-//  BOOST_CHECK_EQUAL(local.lon(grid.nlon()-1), 180.);
-
-//  BOOST_CHECK_EQUAL(local.nlat(), 8);
-  BOOST_CHECK_EQUAL(local.npts(), 136);
 
   // Construct using builders/factories
 
@@ -170,12 +150,11 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(ll->lon(ll->nlon()-1), 180.);
 
   util::Config spec2;
-  spec2.set("grid_type","regular_ll");
-  spec2.set("N",16);
-  spec2.set<int>("poles",LonLatGrid::EXCLUDES_POLES);
+  spec2.set("grid_type","global_lonlat_shifted");
+  spec2.set("N",8);
   gridptr = Grid::Ptr( Grid::create(spec2) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
-  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_ll");
+  BOOST_CHECK_EQUAL(gridptr->gridType(),"global_lonlat_shifted");
 
   LonLatGrid ll_poles(90.,90.,LonLatGrid::INCLUDES_POLES);
   BOOST_CHECK_EQUAL( ll_poles.nlat(), 3);

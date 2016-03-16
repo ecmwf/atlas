@@ -19,7 +19,7 @@
 #include "eckit/geometry/Point3.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/ReducedGrid.h"
+#include "atlas/grid/global/ReducedGrid.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"

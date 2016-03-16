@@ -10,7 +10,7 @@
 
 #include <limits>
 #include "eckit/memory/Builder.h"
-#include "atlas/grid/Unstructured.h"
+#include "atlas/grid/global/Unstructured.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"

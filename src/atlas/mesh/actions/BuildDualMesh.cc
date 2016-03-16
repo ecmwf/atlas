@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/ReducedGrid.h"
+#include "atlas/grid/global/ReducedGrid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"

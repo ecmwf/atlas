@@ -78,7 +78,7 @@ endfunction()
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/grids.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/ReducedGrid.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/global/ReducedGrid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/GridDistribution.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Mesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Nodes.h)

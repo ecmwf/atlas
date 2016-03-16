@@ -15,12 +15,16 @@
 #define atlas_grids_grids_h
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GaussianGrid.h"
-#include "atlas/grid/LonLatGrid.h"
-#include "atlas/grid/ReducedGaussianGrid.h"
-#include "atlas/grid/ReducedGrid.h"
-#include "atlas/grid/ReducedLonLatGrid.h"
-#include "atlas/grid/Unstructured.h"
+#include "atlas/grid/global/gaussian/GaussianGrid.h"
+#include "atlas/grid/global/lonlat/LonLatGrid.h"
+#include "atlas/grid/global/lonlat/Shifted.h"
+#include "atlas/grid/global/lonlat/ShiftedLon.h"
+#include "atlas/grid/global/lonlat/ShiftedLat.h"
+#include "atlas/grid/global/gaussian/ReducedGaussianGrid.h"
+#include "atlas/grid/global/gaussian/OctahedralReducedGaussianGrid.h"
+#include "atlas/grid/global/ReducedGrid.h"
+#include "atlas/grid/global/lonlat/ReducedLonLatGrid.h"
+#include "atlas/grid/global/Unstructured.h"
 #include "atlas/grid/predefined/rgg/rgg.h"
 
 namespace atlas {

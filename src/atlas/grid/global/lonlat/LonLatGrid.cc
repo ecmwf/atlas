@@ -11,7 +11,7 @@
 #include <typeinfo>
 #include "eckit/memory/Builder.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/LonLatGrid.h"
+#include "atlas/grid/global/lonlat/LonLatGrid.h"
 
 using eckit::BadParameter;
 using eckit::Params;
@@ -92,11 +92,17 @@ void LonLatGrid::setup(const eckit::Parametrisation& p)
 
   if( p.get("N",N_ ) ) // --> global grid (2*N x N)
   {
-    nlat = N_;
+
     if( poles )
-      nlon = 2*(N_-1);
+    {
+      nlat = 2*N_+1;
+      nlon = 4*N_;
+    }
     else
-      nlon = 2*N_;
+    {
+      nlat = 2*N_;
+      nlon = 4*N_;
+    }
     setup(nlon,nlat,poles);
   }
   else

@@ -102,6 +102,10 @@ Grid* grid_from_uid(const std::string& uid)
     Regex classical_reduced_gaussian_grid  ("^N([0-9]+)$");
     Regex octahedral_reduced_gaussian_grid ("^O([0-9]+)$");
     Regex regular_gaussian_grid            ("^F([0-9]+)$");
+    Regex regular_lonlat_grid              ("^L([0-9]+)$");
+    Regex shifted_lonlat_grid              ("^S([0-9]+)$");
+    Regex shifted_lon_grid                 ("^Slon([0-9]+)$");
+    Regex shifted_lat_grid                 ("^Slat([0-9]+)$");
 
     util::Config gridparams;
     Translator<std::string,int> to_int;
@@ -121,6 +125,35 @@ Grid* grid_from_uid(const std::string& uid)
     {
       int N = to_int(matches[0]);
       gridparams.set("grid_type", GaussianGrid::grid_type_str());
+      gridparams.set("N",N);
+      return Grid::create( gridparams );
+    }
+    else if( regular_lonlat_grid.match(uid,matches) )
+    {
+      int N = to_int(matches[0]);
+      gridparams.set("grid_type", LonLatGrid::grid_type_str());
+      gridparams.set("N",N);
+      gridparams.set("poles",true);
+      return Grid::create( gridparams );
+    }
+    else if( shifted_lonlat_grid.match(uid,matches) )
+    {
+      int N = to_int(matches[0]);
+      gridparams.set("grid_type", global::lonlat::Shifted::grid_type_str());
+      gridparams.set("N",N);
+      return Grid::create( gridparams );
+    }
+    else if( shifted_lon_grid.match(uid,matches) )
+    {
+      int N = to_int(matches[0]);
+      gridparams.set("grid_type", global::lonlat::ShiftedLon::grid_type_str());
+      gridparams.set("N",N);
+      return Grid::create( gridparams );
+    }
+    else if( shifted_lat_grid.match(uid,matches) )
+    {
+      int N = to_int(matches[0]);
+      gridparams.set("grid_type", global::lonlat::ShiftedLat::grid_type_str());
       gridparams.set("N",N);
       return Grid::create( gridparams );
     }

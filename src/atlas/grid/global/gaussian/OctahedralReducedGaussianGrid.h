@@ -15,7 +15,7 @@
 #define atlas_grids_rgg_OctahedralReducedGaussianGrid_h
 
 #include "eckit/memory/Builder.h"
-#include "atlas/grid/ReducedGaussianGrid.h"
+#include "atlas/grid/global/gaussian/ReducedGaussianGrid.h"
 
 namespace atlas {
 namespace grid {
