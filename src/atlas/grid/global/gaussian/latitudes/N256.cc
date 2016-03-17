@@ -4,8 +4,9 @@
 
 namespace atlas {
 namespace grid {
-namespace predefined {
-namespace gausslat {
+namespace global {
+namespace gaussian {
+namespace latitudes {
 
 DEFINE_GAUSSIAN_LATITUDES(256,LIST(
  89.731148618413, 89.382873896334, 89.032542423790, 88.681746243591, 88.330773788807,
@@ -62,7 +63,8 @@ DEFINE_GAUSSIAN_LATITUDES(256,LIST(
   0.175609672524
 ))
 
-} // namespace gausslat
-} // namespace predefined
+} // namespace latitudes
+} // namespace gaussian
+} // namespace global
 } // namespace grid
 } // namespace atlas

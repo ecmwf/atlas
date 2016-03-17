@@ -103,7 +103,7 @@ DECLARE_POINTS_PER_LATITUDE(8000);
 
 namespace atlas {
 namespace grid {
-namespace predefined {
+namespace global {
 namespace rgg {
 
 //------------------------------------------------------------------------------------------------------
@@ -164,7 +164,7 @@ DEFINE_GRID(N8000);
 //------------------------------------------------------------------------------------------------------
 
 } // namespace rgg
-} // namespace predefined
+} // namespace global
 } // namespace grid
 } // namespace atlas
 

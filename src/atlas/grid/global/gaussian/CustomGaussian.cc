@@ -77,7 +77,7 @@ void CustomGaussian::setup_N_hemisphere( const size_t N, const long nlons[] )
 {
   // hemisphere
   std::vector<double> lats (N);
-  gaussian_latitudes_npole_equator(N,lats.data());
+  latitudes::gaussian_latitudes_npole_equator(N,lats.data());
   ReducedGrid::setup_lat_hemisphere(N,lats.data(),nlons);
 }
 

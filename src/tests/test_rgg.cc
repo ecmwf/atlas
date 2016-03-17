@@ -52,7 +52,13 @@ using namespace atlas::util::io;
 
 namespace atlas {
 namespace grid {
+namespace global {
+namespace gaussian {
+namespace latitudes {
   void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], double weights[]);
+}
+}
+}
 }
 }
 
@@ -74,7 +80,7 @@ DebugMesh::DebugMesh()
     22,
   };
   std::vector<double> lat(N);
-  grid::gaussian_latitudes_npole_equator(N,lat.data());
+  grid::global::gaussian::latitudes::gaussian_latitudes_npole_equator(N,lat.data());
   setup_lat_hemisphere(N,lat.data(),lon);
 }
 
@@ -83,7 +89,7 @@ class MinimalMesh:   public grid::ReducedGaussianGrid { public: MinimalMesh(int 
 MinimalMesh::MinimalMesh(int N, long lon[])
 {
   std::vector<double> lat(N);
-  grid::gaussian_latitudes_npole_equator(N,lat.data());
+  grid::global::gaussian::latitudes::gaussian_latitudes_npole_equator(N,lat.data());
   setup_lat_hemisphere(N,lat.data(),lon);
 }
 
@@ -223,8 +229,8 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
     factory_latitudes.resize(N);
     computed_latitudes.resize(N);
     computed_weights.resize(N);
-    grid::gaussian_latitudes_npole_equator (N, factory_latitudes.data());
-    grid::compute_gaussian_quadrature_npole_equator(N, computed_latitudes.data(), computed_weights.data());
+    grid::global::gaussian::latitudes::gaussian_latitudes_npole_equator (N, factory_latitudes.data());
+    grid::global::gaussian::latitudes::compute_gaussian_quadrature_npole_equator(N, computed_latitudes.data(), computed_weights.data());
     double wsum=0;
     for( size_t i=0; i<N; ++i )
     {

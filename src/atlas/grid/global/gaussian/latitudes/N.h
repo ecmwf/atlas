@@ -11,16 +11,17 @@
 /// @author Willem Deconinck
 /// @date Nov 2014
 
-#ifndef atlas_grids_gausslat_gausslat_h
-#define atlas_grids_gausslat_gausslat_h
+#ifndef atlas_grids_global_gaussian_latitudes_N_h
+#define atlas_grids_global_gaussian_latitudes_N_h
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/Builder.h"
 
 namespace atlas {
 namespace grid {
-namespace predefined {
-namespace gausslat {
+namespace global {
+namespace gaussian {
+namespace latitudes {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -86,11 +87,12 @@ DECLARE_GAUSSIAN_LATITUDES(8000);
 
 #undef DECLARE_GAUSSIAN_LATITUDES
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-} // namespace gausslat
-} // namespace predefined
+} // namespace latitudes
+} // namespace gaussian
+} // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_gausslat_gausslat_h
+#endif // atlas_grids_global_gaussian_latitudes_N_h

@@ -57,7 +57,7 @@ RegularGaussian::RegularGaussian( const size_t N )
 void RegularGaussian::setup(const size_t N)
 {
   std::vector<double> lats (N);
-  gaussian_latitudes_npole_equator(N,lats.data());
+  latitudes::gaussian_latitudes_npole_equator(N,lats.data());
   setup_lat_hemisphere(N,lats.data());
 }
 

@@ -108,7 +108,8 @@ void AtlasGaussianLatitudes::run()
   std::vector<double> lats (2*N);
 
   try {
-    atlas::grid::gaussian_latitudes_npole_spole(N,lats.data());
+    atlas::grid::global::gaussian::latitudes::
+      gaussian_latitudes_npole_spole(N,lats.data());
   }
   catch( eckit::NotImplemented& err )
   {

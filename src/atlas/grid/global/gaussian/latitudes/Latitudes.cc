@@ -26,11 +26,13 @@ using eckit::ConcreteBuilderT0;
 using eckit::Factory;
 using eckit::ScopedPtr;
 
-using atlas::grid::predefined::gausslat::GaussianLatitudes;
 using atlas::array::ArrayT;
 
 namespace atlas {
 namespace grid {
+namespace global {
+namespace gaussian {
+namespace latitudes {
 
 //-----------------------------------------------------------------------------
 
@@ -310,7 +312,9 @@ void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], do
 
 //-----------------------------------------------------------------------------
 
-
+} // namespace latitudes
+} // namespace gaussian
+} // namespace global
 } // namespace grid
 } // namespace atlas
 

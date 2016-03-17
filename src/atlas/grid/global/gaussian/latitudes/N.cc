@@ -16,10 +16,11 @@
 
 namespace atlas {
 namespace grid {
-namespace predefined {
-namespace gausslat {
+namespace global {
+namespace gaussian {
+namespace latitudes {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 void GaussianLatitudes::assign(double lats[], const size_t size) const
 {
@@ -66,10 +67,11 @@ void regist()
   load<N8000>();
 }
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-} // namespace gausslat
-} // namespace predefined
+} // namespace latitudes
+} // namespace gaussian
+} // namespace global
 } // namespace grid
 } // namespace atlas
 
