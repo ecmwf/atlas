@@ -22,41 +22,17 @@ namespace atlas {
 namespace grid {
 namespace global {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 register_BuilderT1(Grid, CustomStructured, CustomStructured::grid_type_str());
 
-CustomStructured* CustomStructured::create(const eckit::Parametrisation& p) {
-
-  CustomStructured* grid = dynamic_cast<CustomStructured*>(Grid::create(p));
-  if (!grid) throw BadParameter("Grid is not a reduced grid", Here());
-  return grid;
-
+std::string CustomStructured::className()
+{ 
+  return "atlas.global.CustomStructured";
 }
 
-CustomStructured* CustomStructured::create(const std::string& uid)
-{
-  CustomStructured* grid = dynamic_cast<CustomStructured*>( Grid::create(uid) );
-  if( !grid )
-    throw BadParameter("Grid "+uid+" is not a reduced grid",Here());
-  return grid;
-}
-
-//CustomStructured* CustomStructured::create(const eckit::Properties& g)
-//{
-//  CustomStructured* grid = dynamic_cast<CustomStructured*>( Grid::create(g) );
-//  if( !grid )
-//    throw BadParameter("Grid is not a reduced grid",Here());
-//  return grid;
-//}
-
-std::string CustomStructured::className() { return "atlas.CustomStructured"; }
-
-CustomStructured::CustomStructured(const Domain& d) : Grid(d), N_(0)
-{
-}
-
-CustomStructured::CustomStructured(const eckit::Parametrisation& params) : N_(0)
+CustomStructured::CustomStructured(const eckit::Parametrisation& params)
+  : ReducedGrid()
 {
   setup(params);
 
@@ -77,106 +53,40 @@ void CustomStructured::setup(const eckit::Parametrisation& params)
 
   params.get("N",N_);
 
-  setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
+  ReducedGrid::setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
 }
 
-CustomStructured::CustomStructured(size_t nlat, const double lats[], const long nlons[], const Domain& d)
-  : Grid(d)
+CustomStructured::CustomStructured(
+    size_t nlat,
+    const double lats[],
+    const long nlons[])
+  : ReducedGrid(Domain::makeGlobal())
 {
-  setup(nlat,lats,nlons);
+  ReducedGrid::setup(nlat,lats,nlons);
 }
 
-void CustomStructured::setup( const size_t nlat, const double lats[], const long nlons[], const double lonmin[], const double lonmax[] )
+CustomStructured::CustomStructured(
+    size_t nlat,
+    const double lats[],
+    const long nlons[],
+    const double lonmin[] )
+  : ReducedGrid(Domain::makeGlobal())
 {
-  ASSERT(nlat > 1);  // can't have a grid with just one latitude
-
-  nlons_.assign(nlons,nlons+nlat);
-
-  lat_.assign(lats,lats+nlat);
-
-  lonmin_.assign(lonmin,lonmin+nlat);
-  lonmax_.assign(lonmax,lonmax+nlat);
-
-  npts_ = 0;
-  nlonmax_ = 0;
-  double lon_min(1000), lon_max(-1000);
-
-  for(size_t jlat = 0; jlat < nlat; ++jlat)
-  {
-    //ASSERT( nlon(jlat) > 1 ); // can't have grid with just one longitude
-    nlonmax_ = std::max(nlon(jlat),nlonmax_);
-
-    lon_min = std::min(lon_min,lonmin_[jlat]);
-    lon_max = std::max(lon_max,lonmax_[jlat]);
-
-    npts_ += nlons_[jlat];
-  }
-
-  bounding_box_ = BoundBox(lat_[0]/*north*/, lat_[nlat-1]/*south*/, lon_max/*east*/, lon_min/*west*/ );
+  setup(nlat,lats,nlons,lonmin);
 }
 
-
-void CustomStructured::setup( const size_t nlat, const double lats[], const long nlons[] )
+void CustomStructured::setup(
+    const size_t nlat,
+    const double lats[],
+    const long nlon[],
+    const double lonmin[] )
 {
-  std::vector<double> lonmin(nlat,0.);
   std::vector<double> lonmax(nlat);
-  for(size_t jlat = 0; jlat < nlat; ++jlat)
+  for( size_t jlat=0; jlat<nlat; ++jlat )
   {
-    if( nlons[jlat] )
-      lonmax[jlat] = 360.-360./static_cast<double>(nlons[jlat]);
-    else
-      lonmax[jlat] = 0.;
+    lonmax[jlat] = lonmin[jlat] + 360. - 360./static_cast<double>(nlon[jlat]);
   }
-  setup(nlat,lats,nlons,lonmin.data(),lonmax.data());
-}
-
-void CustomStructured::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[])
-{
-  std::vector<long> nlons(2*N);
-  std::copy( lon, lon+N, nlons.begin() );
-  std::reverse_copy( lon, lon+N, nlons.begin()+N );
-  std::vector<double> lats(2*N);
-  std::copy( lat, lat+N, lats.begin() );
-  std::reverse_copy( lat, lat+N, lats.begin()+N );
-  for(size_t j = N; j < 2*N; ++j)
-    lats[j] *= -1.;
-  setup(2*N,lats.data(),nlons.data());
-}
-
-size_t CustomStructured::N() const
-{
-  if( N_==0 )
-  {
-    throw eckit::Exception("N cannot be returned because grid of type "+gridType()+
-                           " is not based on a global grid.", Here() );
-  }
-  return N_;
-}
-
-BoundBox CustomStructured::boundingBox() const
-{
-  return bounding_box_;
-}
-
-size_t CustomStructured::npts() const { return npts_; }
-
-void CustomStructured::lonlat( std::vector<Point>& pts ) const
-{
-  pts.resize(npts());
-  int c(0);
-  for(size_t jlat = 0; jlat < nlat(); ++jlat)
-  {
-    double y = lat(jlat);
-    for(size_t jlon = 0; jlon < nlon(jlat); ++jlon)
-    {
-      pts[c++].assign(lon(jlat,jlon),y);
-    }
-  }
-}
-
-std::string CustomStructured::gridType() const
-{
-  return grid_type_;
+  ReducedGrid::setup(nlat,lats,nlon,lonmin,lonmax.data());
 }
 
 eckit::Properties CustomStructured::spec() const
@@ -189,6 +99,7 @@ eckit::Properties CustomStructured::spec() const
 
   grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
   grid_spec.set("npts_per_lat",eckit::makeVectorValue(npts_per_lat()));
+  grid_spec.set("first_longitude_per_latitude",eckit::makeVectorValue(lonmin_));
 
   BoundBox bbox = boundingBox();
   grid_spec.set("bbox_s", bbox.min().lat());
@@ -202,96 +113,18 @@ eckit::Properties CustomStructured::spec() const
   return grid_spec;
 }
 
-size_t CustomStructured::nlat() const
+extern "C" 
 {
-  return lat_.size();
-}
 
-size_t CustomStructured::nlon(size_t jlat) const
+ReducedGrid* atlas__ReducedGrid__constructor(int nlat, double lats[], int nlon[])
 {
-  return nlons_[jlat];
+  std::vector<long> nlon_vector;
+  nlon_vector.assign(nlon,nlon+nlat);
+  return new CustomStructured(nlat,lats,nlon_vector.data());
 }
 
-size_t CustomStructured::nlonmax() const
-{
-  return nlonmax_;
 }
 
-const std::vector<long>&  CustomStructured::points_per_latitude() const
-{
-  return nlons_;
-}
-
-const std::vector<int>&  CustomStructured::npts_per_lat() const
-{
-  if(nlons_int_.size() == 0) {
-    nlons_int_.assign(nlons_.begin(), nlons_.end());
-  }
-  return nlons_int_;
-}
-
-double CustomStructured::lon(const size_t jlat, const size_t jlon) const
-{
-  return lonmin_[jlat] + (double)jlon * (lonmax_[jlat]-lonmin_[jlat]) / ( (double)nlon(jlat) - 1. );
-}
-
-double CustomStructured::lat(const size_t jlat) const
-{
-  return lat_[jlat];
-}
-
-void CustomStructured::lonlat( const size_t jlat, const size_t jlon, double crd[] ) const
-{
-  crd[0] = lon(jlat,jlon);
-  crd[1] = lat(jlat);
-}
-
-std::string CustomStructured::getOptimalMeshGenerator() const
-{
-    return "CustomStructured";
-}
-
-size_t CustomStructured::copyLonLatMemory(double* pts, size_t size) const
-{
-    size_t sizePts = 2*npts();
-
-    ASSERT(size >= sizePts);
-
-    for(size_t c = 0, jlat=0; jlat<nlat(); ++jlat )
-    {
-      double y = lat(jlat);
-      for( size_t jlon=0; jlon<nlon(jlat); ++jlon )
-      {
-        pts[c++] = lon(jlat,jlon);
-        pts[c++] = y;
-      }
-    }
-    return sizePts;
-}
-
-void CustomStructured::print(std::ostream& os) const
-{
-    os << "CustomStructured(Name:" << shortName() << ")";
-}
-
-const std::vector<double>& CustomStructured::latitudes() const
-{
-  return lat_;
-}
-
-std::string CustomStructured::shortName() const {
-  ASSERT(!shortName_.empty());
-  return shortName_;
-}
-
-void CustomStructured::hash(eckit::MD5& md5) const {
-  // Through inheritance the grid_type_str() might differ while still being same grid
-      //md5.add(grid_type_str());
-
-  md5.add(latitudes().data(),    sizeof(double)*latitudes().size());
-  md5.add(npts_per_lat().data(), sizeof(int)*npts_per_lat().size());
-  bounding_box_.hash(md5);
-}
 
 } // namespace global
 } // namespace grid

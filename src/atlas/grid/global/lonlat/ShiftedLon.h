@@ -20,19 +20,23 @@ namespace lonlat {
 
 //------------------------------------------------------------------------------
 
-class ShiftedLon: public ReducedLonLatGrid {
+class ShiftedLon: public LonLat {
 
 public:
 
   static std::string grid_type_str();
 
-  ShiftedLon();
-
   /// @brief Constructor
   ShiftedLon( const eckit::Parametrisation& );
 
   /// @brief Constructor
-  ShiftedLon( const size_t N );
+  ShiftedLon( const long N );
+
+  /// @brief Constructor
+  ShiftedLon( const long nlon, const long nlat );
+
+  /// @brief Constructor
+  ShiftedLon( const double &londeg, const double &latdeg );
 
   static std::string className();
 
@@ -45,11 +49,11 @@ public:
 protected:
 
   void setup( const eckit::Parametrisation& p);
-  void setup( const size_t N );
+  void setup( const long N );
   void setup( const double londeg, const double latdeg );
-  void setup( const size_t nlon, const size_t nlat );
+  void setup( const long nlon, const long nlat );
 
-  void set_typeinfo();
+  virtual void set_typeinfo();
 };
 
 //------------------------------------------------------------------------------

@@ -65,7 +65,7 @@ public:
 
   virtual std::string gridType() const;
 
-  virtual eckit::Properties spec() const;
+  virtual eckit::Properties spec() const = 0;
 
   /// number of latitudes in hemisphere
   virtual size_t N() const;

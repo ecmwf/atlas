@@ -11,9 +11,9 @@
 #include <typeinfo>
 #include "eckit/memory/Builder.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/global/lonlat/CustomLonLat.h"
+#include "atlas/grid/global/lonlat/ReducedLonLat.h"
 
-using eckit::BadParameter;
+using namespace eckit;
 
 namespace atlas {
 namespace grid {
@@ -22,56 +22,47 @@ namespace lonlat {
 
 //------------------------------------------------------------------------------------------------------
 
-register_BuilderT1(Grid,CustomLonLat,CustomLonLat::grid_type_str());
+register_BuilderT1(Grid,ReducedLonLat,ReducedLonLat::grid_type_str());
 
-std::string CustomLonLat::grid_type_str()
+std::string ReducedLonLat::grid_type_str()
 {
-  return "custom_lonlat";
+  return "reduced_lonlat";
 }
 
-std::string CustomLonLat::className()
+std::string ReducedLonLat::className()
 {
-  return "atlas.grid.global.lonlat.CustomLonLat";
+  return "atlas.grid.global.lonlat.ReducedLonLat";
 }
 
-void CustomLonLat::set_typeinfo()
+void ReducedLonLat::set_typeinfo()
 {
   std::stringstream s;
-  s << "custom_lonlat.N" << N();
+  s << "reduced_lonlat";
   shortName_ = s.str();
   grid_type_ = grid_type_str();
 }
 
-CustomLonLat::CustomLonLat()
-  : ReducedGrid()
+ReducedLonLat::ReducedLonLat( const size_t nlat, const long nlon[], bool poles)
+ : LonLat()
 {
-}
-
-CustomLonLat::CustomLonLat( const size_t nlat, const long nlons[], bool poles, const Domain& domain)
- : ReducedGrid(domain)
-{
-  ReducedGrid::N_ = nlat;
   poles_ = poles;
-  setup(nlat,nlons,poles_);
+  setup(nlat,nlon,poles_);
   set_typeinfo();
 }
 
-CustomLonLat::CustomLonLat( const eckit::Parametrisation& params )
+ReducedLonLat::ReducedLonLat( const eckit::Parametrisation& params ) : LonLat()
 {
   setup(params);
   set_typeinfo();
 }
 
-void CustomLonLat::setup( const eckit::Parametrisation& params )
+void ReducedLonLat::setup( const eckit::Parametrisation& params )
 {
   if( ! params.has("nlat") )         throw BadParameter("N missing in Params",Here());
   if( ! params.has("npts_per_lat") ) throw BadParameter("npts_per_lat missing in Params",Here());
 
   size_t nlat;
   params.get("nlat",nlat);
-
-  N_ = nlat;
-  params.get("N",N_);
 
   poles_ = defaults::poles();
   params.get("poles",poles_);
@@ -83,39 +74,42 @@ void CustomLonLat::setup( const eckit::Parametrisation& params )
   }
   else
   {
-    std::vector<long> nlons;
-    params.get("npts_per_lat",nlons);
-    setup(nlat,nlons.data(),poles_);
+    std::vector<long> nlon;
+    params.get("npts_per_lat",nlon);
+    setup(nlat,nlon.data(),poles_);
   }
+
+  params.get("N",N_);
+
 }
 
-void CustomLonLat::setup( const size_t nlat, const long nlons[], bool poles )
+void ReducedLonLat::setup( const size_t nlat, const long nlon[], bool poles )
 {
   std::vector<double> lats (nlat);
 
-  double delta = domain_.north() - domain_.south();
+  double delta = 180.;
   double latmax;
 
   if( poles )
   {
     delta = delta / static_cast<double>(nlat-1);
-    latmax = domain_.north();
+    latmax = 90.;
   }
   else
   {
     delta = delta / static_cast<double>(nlat);
-    latmax = domain_.north() - 0.5*delta;
+    latmax = 90. - 0.5*delta;
   }
 
   for(size_t jlat = 0; jlat < nlat; ++jlat)
   {
     lats[jlat] = latmax - static_cast<double>(jlat)*delta;
   }
-  ReducedGrid::setup(lats.size(),lats.data(),nlons);
+  ReducedGrid::setup(lats.size(),lats.data(),nlon);
 }
 
 
-eckit::Properties CustomLonLat::spec() const
+eckit::Properties ReducedLonLat::spec() const
 {
   eckit::Properties grid_spec;
 
@@ -126,8 +120,7 @@ eckit::Properties CustomLonLat::spec() const
 
   grid_spec.set("npts_per_lat",eckit::makeVectorValue(npts_per_lat()));
 
-  if( nlat() != N() )
-    grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
+  grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
 
   BoundBox bbox = boundingBox();
   grid_spec.set("bbox_s", bbox.min().lat());

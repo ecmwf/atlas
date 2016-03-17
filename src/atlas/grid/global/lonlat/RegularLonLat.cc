@@ -21,7 +21,7 @@ namespace grid {
 namespace global {
 namespace lonlat {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 register_BuilderT1(Grid,RegularLonLat,RegularLonLat::grid_type_str());
 
@@ -48,30 +48,30 @@ void RegularLonLat::set_typeinfo()
 }
 
 RegularLonLat::RegularLonLat(const eckit::Parametrisation& p)
-  : ReducedLonLatGrid()
+  : LonLat()
 {
   setup(p);
   set_typeinfo();
 }
 
-RegularLonLat::RegularLonLat( const size_t nlon, const size_t nlat )
- : ReducedLonLatGrid()
+RegularLonLat::RegularLonLat( const long nlon, const long nlat )
+ : LonLat()
 {
   setup(nlon,nlat);
   set_typeinfo();
 }
 
-RegularLonLat::RegularLonLat( const size_t N )
- : ReducedLonLatGrid()
+RegularLonLat::RegularLonLat( const long N )
+ : LonLat()
 {
-  size_t nlon = 4*N;
-  size_t nlat = 2*N+1;
+  long nlon = 4*N;
+  long nlat = 2*N+1;
   setup(nlon,nlat);
   set_typeinfo();
 }
 
 RegularLonLat::RegularLonLat( const double &londeg, const double &latdeg )
- : ReducedLonLatGrid()
+ : LonLat()
 {
   setup(londeg,latdeg);
   set_typeinfo();
@@ -80,7 +80,7 @@ RegularLonLat::RegularLonLat( const double &londeg, const double &latdeg )
 
 void RegularLonLat::setup(const eckit::Parametrisation& p)
 {
-  size_t nlon, nlat;
+  long nlon, nlat;
 
   if( p.get("N",N_ ) )
   {
@@ -109,7 +109,7 @@ void RegularLonLat::setup(const eckit::Parametrisation& p)
   }
 }
 
-void RegularLonLat::setup( const size_t nlon, const size_t nlat )
+void RegularLonLat::setup( const long nlon, const long nlat )
 {
   double latmin = -90.;
   double latmax = +90.;
@@ -140,8 +140,8 @@ void RegularLonLat::setup( const double londeg, const double latdeg )
   double Llat = 180.;
   double nlon_real = Llon/londeg + 1.;
   double nlat_real = Llat/latdeg + 1.;
-  size_t nlon = static_cast<size_t>(nlon_real);
-  size_t nlat = static_cast<size_t>(nlat_real);
+  long nlon = static_cast<long>(nlon_real);
+  long nlat = static_cast<long>(nlat_real);
   if( nlon_real - nlon > 0. )
   {
     std::stringstream msg;
@@ -181,7 +181,7 @@ eckit::Properties RegularLonLat::spec() const
 extern "C" {
 ReducedGrid* atlas__new_lonlat_grid(int nlon, int nlat)
 {
-  return new RegularLonLat(static_cast<size_t>(nlon),static_cast<size_t>(nlat));
+  return new RegularLonLat(static_cast<long>(nlon),static_cast<long>(nlat));
 }
 }
 

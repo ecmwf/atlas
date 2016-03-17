@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_grids_RegularLonLat_h
-#define atlas_grids_RegularLonLat_h
+#ifndef atlas_grids_global_lonlat_RegularLonLat_h
+#define atlas_grids_global_lonlat_RegularLonLat_h
 
 #include "atlas/grid/global/lonlat/LonLat.h"
 
@@ -18,7 +18,7 @@ namespace grid {
 namespace global {
 namespace lonlat {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /// @brief Regular LonLat Grid
 ///
@@ -26,7 +26,7 @@ namespace lonlat {
 /// equidistant distribution of latitudes and longitudes.
 /// Longitude is the X-direction (first  index in C)
 /// Latitude  is the Y-direction (second index in C)
-class RegularLonLat: public ReducedLonLatGrid {
+class RegularLonLat: public LonLat {
 
 public:
 
@@ -44,7 +44,7 @@ public:
   ///   dlat = 180/(nlat-1)
   ///   Longitudes: [0  :  dlon :  360-dlon ]
   ///   Latitudes:  [90 : -dlat : -90       ]
-  RegularLonLat( const size_t nlon, const size_t nlat );
+  RegularLonLat( const long nlon, const long nlat );
 
   /// @brief Constructor, global grid
   ///
@@ -57,7 +57,7 @@ public:
   /// nlon = 4*N
   /// nlat = 2*N+1
   /// londeg = latdeg = 90/N
-  RegularLonLat( const size_t N );
+  RegularLonLat( const long N );
 
   static std::string className();
 
@@ -71,15 +71,15 @@ protected:
 
   void setup( const eckit::Parametrisation& p);
   void setup( const double londeg, const double latdeg );
-  void setup( const size_t nlon, const size_t nlat );
-  void set_typeinfo();
+  void setup( const long nlon, const long nlat );
+  virtual void set_typeinfo();
 };
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 } // namespace lonlat
 } // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_RegularLonLat_h
+#endif // atlas_grids_global_lonlat_RegularLonLat_h

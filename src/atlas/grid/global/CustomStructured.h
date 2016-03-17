@@ -14,13 +14,13 @@
 #include "eckit/memory/Builder.h"
 #include "eckit/config/Parametrisation.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/global/Structured.h"
 
 namespace atlas {
 namespace grid {
 namespace global {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /// @brief Reduced Grid
 ///
@@ -30,116 +30,35 @@ namespace global {
 /// This means any full grid and reduced grid, both regular, gaussian or other
 /// such distribution can be represented with this class
 
-class CustomStructured: public Grid {
-public:
-
-  typedef eckit::SharedPtr<CustomStructured> Ptr;
-
-  static CustomStructured* create( const eckit::Parametrisation& );
-  static CustomStructured* create( const eckit::Properties& );
-  static CustomStructured* create( const std::string& shortName );
-
+class CustomStructured: public ReducedGrid {
 public:
 
   static std::string className();
   static std::string grid_type_str() { return "custom_structured"; }
 
-  /// FIXME: CustomStructured should not be instantiatable.
-  ///        Only leaf classes should be instantiatable.
-  ///        This constructor should be used only by derived types
-  ///    nawd: Disagree. Custom grids could be devised this way, especially
-  ///          useful for research.
-  CustomStructured(const Domain& d = Domain::makeGlobal());
-
   CustomStructured( const eckit::Parametrisation& );
 
-  CustomStructured( size_t nlat,
-               const double lats[],
-               const long npts_per_lat[],
-               const Domain& d = Domain::makeGlobal());
+  CustomStructured(
+    size_t nlat,
+    const double lats[],
+    const long   nlon[] );
 
-  virtual BoundBox boundingBox() const;
-
-  virtual size_t npts() const;
-
-  virtual void lonlat( std::vector<Point>& ) const;
-
-  virtual std::string gridType() const;
+  CustomStructured(
+    size_t nlat,
+    const double lats[],
+    const long   nlon[],
+    const double lonmin[] );
 
   virtual eckit::Properties spec() const;
 
-  /// number of latitudes in hemisphere
-  virtual size_t N() const;
+private:
 
-  size_t nlat() const;
-
-  size_t nlon( size_t jlat ) const;
-
-  size_t nlonmax() const;
-
-  // Note that this is not the same type as the constructor
-  // We return vector<int> for the fortran
-  const std::vector<long>& points_per_latitude() const;
-  const std::vector<int>& npts_per_lat() const;
-
-  const std::vector<double>& latitudes() const;
-
-  double lon( const size_t jlat, const size_t jlon ) const;
-
-  double lat( const size_t jlat ) const;
-
-  void lonlat( const size_t jlat, const size_t jlon, double crd[] ) const;
-
-private: // methods
-
-  virtual std::string getOptimalMeshGenerator() const;
-
-  virtual size_t copyLonLatMemory(double* pts, size_t size) const;
-
-  virtual void print(std::ostream&) const;
-
-  /// Human readable name
-  /// May not be unique, especially when reduced gauss grids have the same N numbers
-  /// but different distribution of latitude points
-  virtual std::string shortName() const;
-
-protected:
-
-  /// Hash of the PL array
-  virtual void hash(eckit::MD5&) const;
-
-  /// @note Domain is already set when calling setup()
   void setup(const eckit::Parametrisation& );
-  /// @note Domain is already set when calling setup()
-  void setup( const size_t nlat, const double lats[], const long npts_per_lat[] );
-  /// @note Domain is already set when calling setup()
-  void setup( const size_t nlat, const double lats[], const long nlons[], const double lonmin[], const double lonmax[] );
-  /// @note Domain is already set when calling setup()
-  void setup_lat_hemisphere( const size_t N, const double lat[], const long lon[] );
-
-protected:
-
-  size_t              N_;
-  size_t              nlonmax_;
-
-  size_t              npts_;          ///<! Total number of unique points in the grid
-
-  std::string         grid_type_;
-
-  std::string         shortName_;
-
-  std::vector<double> lat_;    ///<! Latitude values
-  std::vector<long>   nlons_;  ///<! Number of points per latitude
-  mutable std::vector<int>    nlons_int_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)
-
-  std::vector<double> lonmin_; ///<! Value of minimum longitude per latitude [default=0]
-  std::vector<double> lonmax_; ///<! Value of maximum longitude per latitude [default=~360 (one increment smaller)]
-
-  BoundBox            bounding_box_;  ///<! bounding box cache
-
+  void setup( const size_t nlat, const double lats[], const long nlons[],
+              const double lonmin[] );
 };
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 } // namespace global
 } // namespace grid

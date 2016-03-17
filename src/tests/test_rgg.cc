@@ -68,7 +68,7 @@ namespace latitudes {
 namespace atlas {
 namespace test {
 
-class DebugMesh:   public grid::global::gaussian::CustomGaussian { public: DebugMesh(); };
+class DebugMesh:   public grid::global::gaussian::ReducedGaussian { public: DebugMesh(); };
 DebugMesh::DebugMesh()
 {
   int N=5;
@@ -85,7 +85,7 @@ DebugMesh::DebugMesh()
 }
 
 
-class MinimalMesh:   public grid::global::gaussian::CustomGaussian { public: MinimalMesh(int N, long lon[]); };
+class MinimalMesh:   public grid::global::gaussian::ReducedGaussian { public: MinimalMesh(int N, long lon[]); };
 MinimalMesh::MinimalMesh(int N, long lon[])
 {
   std::vector<double> lat(N);
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
 
 BOOST_AUTO_TEST_CASE( test_partitioner )
 {
-  grid::ReducedGrid g;
+  grid::global::lonlat::ShiftedLonLat g(4l,2l);
 
   // 12 partitions
   {
@@ -479,7 +479,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
     -72,
     -90
   };
-  grid::ReducedGrid grid(N,lat,lon);
+  grid::global::CustomStructured grid(N,lat,lon);
   ReducedGridMeshGenerator generate;
 
   bool three_dimensional = true;

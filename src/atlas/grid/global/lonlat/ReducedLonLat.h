@@ -8,17 +8,17 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_grids_global_lonlat_CustomLonLat_h
-#define atlas_grids_global_lonlat_CustomLonLat_h
+#ifndef atlas_grids_global_lonlat_ReducedLonLat_h
+#define atlas_grids_global_lonlat_ReducedLonLat_h
 
-#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/global/lonlat/LonLat.h"
 
 namespace atlas {
 namespace grid {
 namespace global {
 namespace lonlat {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /// @brief Reduced LonLat Grid
 ///
@@ -30,7 +30,7 @@ namespace lonlat {
 ///   N   = number of latitudes in hemisphere
 ///   npts_per_lat[] = number of points on each latitude
 
-class CustomLonLat: public ReducedGrid {
+class ReducedLonLat: public LonLat {
 
 public:
   enum {EXCLUDES_POLES=0, INCLUDES_POLES=1};
@@ -38,19 +38,17 @@ public:
 private:
 
   struct defaults {
-    // By default LonLat grids have the pole excluded
-    static bool poles() { return EXCLUDES_POLES; }
+    // By default ReducedLonLat grids have the pole included
+    static bool poles() { return INCLUDES_POLES; }
   };
 
 public:
 
   static std::string grid_type_str();
 
-  CustomLonLat();
+  ReducedLonLat( const eckit::Parametrisation& );
 
-  CustomLonLat( const eckit::Parametrisation& );
-
-  CustomLonLat( const size_t nlat, const long npts_per_lat[], bool poles = defaults::poles(), const Domain& domain = Domain::makeGlobal() );
+  ReducedLonLat( const size_t nlat, const long nlon[], bool poles = defaults::poles() );
 
   static std::string className();
 
@@ -59,7 +57,7 @@ public:
 protected:
 
   void setup( const eckit::Parametrisation& );
-  void setup( const size_t N, const long npts_per_lat[], bool poles=defaults::poles() );
+  void setup( const size_t nlat, const long nlon[], bool poles=defaults::poles() );
   void set_typeinfo();
 
 private:
@@ -68,11 +66,11 @@ private:
 
 };
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 } // namespace lonlat
 } // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_global_lonlat_CustomLonLat_h
+#endif // atlas_grids_ReducedLonLatGrid_h

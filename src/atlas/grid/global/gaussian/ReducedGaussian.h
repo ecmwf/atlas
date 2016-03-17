@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_grids_global_gaussian_CustomGaussian_h
-#define atlas_grids_global_gaussian_CustomGaussian_h
+#ifndef atlas_grids_global_gaussian_ReducedGaussian_h
+#define atlas_grids_global_gaussian_ReducedGaussian_h
 
 #include "atlas/grid/global/gaussian/Gaussian.h"
 
@@ -31,14 +31,14 @@ namespace gaussian {
 ///   N   = number of latitudes in hemisphere
 ///   npts_per_lat[] = number of points on each latitude
 
-class CustomGaussian: public Gaussian {
+class ReducedGaussian: public Gaussian {
 public:
 
-  static std::string grid_type_str() { return "custom_gaussian"; }
+  static std::string grid_type_str() { return "reduced_gaussian"; }
 
-  CustomGaussian( const eckit::Parametrisation& );
+  ReducedGaussian( const eckit::Parametrisation& );
 
-  CustomGaussian( const size_t N, const long npts_per_lat[] );
+  ReducedGaussian( const size_t N, const long npts_per_lat[] );
 
   static std::string className();
 
@@ -46,7 +46,7 @@ public:
 
 protected:
 
-  CustomGaussian() : Gaussian() {}
+  ReducedGaussian() : Gaussian() {}
 
   void setup( const eckit::Parametrisation& );
   void setup_N_hemisphere( const size_t N, const long npts_per_lat[] );
@@ -61,4 +61,4 @@ protected:
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_global_gaussian_CustomGaussian_h
+#endif // atlas_grids_global_gaussian_ReducedGaussian_h

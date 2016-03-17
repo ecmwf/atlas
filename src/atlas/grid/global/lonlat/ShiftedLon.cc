@@ -55,13 +55,7 @@ void ShiftedLon::set_typeinfo()
 
 //------------------------------------------------------------------------------
 
-ShiftedLon::ShiftedLon() : ReducedLonLatGrid()
-{
-}
-
-//------------------------------------------------------------------------------
-
-ShiftedLon::ShiftedLon(const eckit::Parametrisation& p)
+ShiftedLon::ShiftedLon(const eckit::Parametrisation& p) : LonLat()
 {
   setup(p);
   set_typeinfo();
@@ -69,7 +63,7 @@ ShiftedLon::ShiftedLon(const eckit::Parametrisation& p)
 
 //------------------------------------------------------------------------------
 
-ShiftedLon::ShiftedLon( const size_t N )
+ShiftedLon::ShiftedLon( const long N ) : LonLat()
 {
   setup(N);
   set_typeinfo();
@@ -77,9 +71,25 @@ ShiftedLon::ShiftedLon( const size_t N )
 
 //------------------------------------------------------------------------------
 
+ShiftedLon::ShiftedLon( const long nlon, const long nlat ) : LonLat()
+{
+  setup(nlon,nlat);
+  set_typeinfo();
+}
+
+//------------------------------------------------------------------------------
+
+ShiftedLon::ShiftedLon( const double &londeg, const double &latdeg ) : LonLat()
+{
+  setup(londeg,latdeg);
+  set_typeinfo();
+}
+
+//------------------------------------------------------------------------------
+
 void ShiftedLon::setup(const eckit::Parametrisation& p)
 {
-  size_t nlon, nlat;
+  long nlon, nlat;
 
   if( p.get("N",N_ ) ) // --> global grid (2*N x N)
   {
@@ -107,7 +117,7 @@ void ShiftedLon::setup(const eckit::Parametrisation& p)
 
 //------------------------------------------------------------------------------
 
-void ShiftedLon::setup( const size_t N )
+void ShiftedLon::setup( const long N )
 {
   double delta = 90./static_cast<double>(N);
   std::vector<double> lats(2*N+1);
@@ -128,7 +138,7 @@ void ShiftedLon::setup( const size_t N )
 
 //------------------------------------------------------------------------------
 
-void ShiftedLon::setup( const size_t nlon, const size_t nlat )
+void ShiftedLon::setup( const long nlon, const long nlat )
 {
   double latmin = -90.;
   double latmax = +90.;
@@ -160,8 +170,8 @@ void ShiftedLon::setup( const double londeg, const double latdeg )
   double Llat = 180.;
   double nlon_real = Llon/londeg + 1.;
   double nlat_real = Llat/latdeg + 1.;
-  size_t nlon = static_cast<size_t>(nlon_real);
-  size_t nlat = static_cast<size_t>(nlat_real);
+  long nlon = static_cast<long>(nlon_real);
+  long nlat = static_cast<long>(nlat_real);
   if( nlon_real - nlon > 0. )
   {
     std::stringstream msg;

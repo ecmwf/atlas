@@ -23,7 +23,7 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-register_BuilderT1(Grid, ReducedGrid, ReducedGrid::grid_type_str());
+// register_BuilderT1(Grid, ReducedGrid, ReducedGrid::grid_type_str());
 
 ReducedGrid* ReducedGrid::create(const eckit::Parametrisation& p) {
 
@@ -173,28 +173,28 @@ std::string ReducedGrid::gridType() const
   return grid_type_;
 }
 
-eckit::Properties ReducedGrid::spec() const
-{
-  eckit::Properties grid_spec;
-
-  grid_spec.set("grid_type",gridType());
-
-  grid_spec.set("nlat",nlat());
-
-  grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
-  grid_spec.set("npts_per_lat",eckit::makeVectorValue(npts_per_lat()));
-
-  BoundBox bbox = boundingBox();
-  grid_spec.set("bbox_s", bbox.min().lat());
-  grid_spec.set("bbox_w", bbox.min().lon());
-  grid_spec.set("bbox_n", bbox.max().lat());
-  grid_spec.set("bbox_e", bbox.max().lon());
-
-  if( N_ != 0 )
-    grid_spec.set("N", N_ );
-
-  return grid_spec;
-}
+// eckit::Properties ReducedGrid::spec() const
+// {
+//   eckit::Properties grid_spec;
+//
+//   grid_spec.set("grid_type",gridType());
+//
+//   grid_spec.set("nlat",nlat());
+//
+//   grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
+//   grid_spec.set("npts_per_lat",eckit::makeVectorValue(npts_per_lat()));
+//
+//   BoundBox bbox = boundingBox();
+//   grid_spec.set("bbox_s", bbox.min().lat());
+//   grid_spec.set("bbox_w", bbox.min().lon());
+//   grid_spec.set("bbox_n", bbox.max().lat());
+//   grid_spec.set("bbox_e", bbox.max().lon());
+//
+//   if( N_ != 0 )
+//     grid_spec.set("N", N_ );
+//
+//   return grid_spec;
+// }
 
 size_t ReducedGrid::nlat() const
 {
@@ -341,13 +341,6 @@ void atlas__ReducedGrid__lat__all(ReducedGrid* This, const double* &lat, int &si
 ReducedGrid* atlas__new_reduced_grid(char* identifier)
 {
   return ReducedGrid::create( std::string(identifier) );
-}
-
-ReducedGrid* atlas__ReducedGrid__constructor(int nlat, double lats[], int nlon[])
-{
-  std::vector<long> nlon_vector;
-  nlon_vector.assign(nlon,nlon+nlat);
-  return new ReducedGrid(nlat,lats,nlon_vector.data());
 }
 
 void atlas__ReducedGrid__delete(ReducedGrid* This)

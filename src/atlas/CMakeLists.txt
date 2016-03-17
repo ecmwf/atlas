@@ -50,8 +50,8 @@ grid/global/CustomStructured.h
 grid/global/CustomStructured.cc
 grid/global/gaussian/Gaussian.h
 grid/global/gaussian/Gaussian.cc
-grid/global/gaussian/CustomGaussian.h
-grid/global/gaussian/CustomGaussian.cc
+grid/global/gaussian/ReducedGaussian.h
+grid/global/gaussian/ReducedGaussian.cc
 grid/global/gaussian/ClassicGaussian.h
 grid/global/gaussian/ClassicGaussian.cc
 grid/global/gaussian/OctahedralGaussian.h
@@ -62,8 +62,8 @@ grid/global/gaussian/latitudes/Latitudes.h
 grid/global/gaussian/latitudes/Latitudes.cc
 grid/global/lonlat/LonLat.h
 grid/global/lonlat/LonLat.cc
-grid/global/lonlat/CustomLonLat.h
-grid/global/lonlat/CustomLonLat.cc
+grid/global/lonlat/ReducedLonLat.h
+grid/global/lonlat/ReducedLonLat.cc
 grid/global/lonlat/RegularLonLat.h
 grid/global/lonlat/RegularLonLat.cc
 grid/global/lonlat/ShiftedLonLat.h

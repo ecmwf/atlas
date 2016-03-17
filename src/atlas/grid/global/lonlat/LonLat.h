@@ -8,15 +8,17 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_grids_ReducedLonLatGrid_h
-#define atlas_grids_ReducedLonLatGrid_h
+#ifndef atlas_grids_global_lonlat_LonLat_h
+#define atlas_grids_global_lonlat_LonLat_h
 
 #include "atlas/grid/global/Structured.h"
 
 namespace atlas {
 namespace grid {
+namespace global {
+namespace lonlat {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /// @brief Reduced LonLat Grid
 ///
@@ -28,47 +30,27 @@ namespace grid {
 ///   N   = number of latitudes in hemisphere
 ///   npts_per_lat[] = number of points on each latitude
 
-class ReducedLonLatGrid: public ReducedGrid {
-
-public:
-  enum {EXCLUDES_POLES=0, INCLUDES_POLES=1};
-
-private:
-
-  struct defaults {
-    // By default LonLat grids have the pole excluded
-    static bool poles() { return EXCLUDES_POLES; }
-  };
+class LonLat: public ReducedGrid {
 
 public:
 
   static std::string grid_type_str();
 
-  ReducedLonLatGrid();
-
-  ReducedLonLatGrid( const eckit::Parametrisation& );
-
-  ReducedLonLatGrid( const size_t nlat, const long npts_per_lat[], bool poles = defaults::poles(), const Domain& domain = Domain::makeGlobal() );
+  LonLat();
 
   static std::string className();
 
-  virtual eckit::Properties spec() const;
-
 protected:
 
-  void setup( const eckit::Parametrisation& );
-  void setup( const size_t N, const long npts_per_lat[], bool poles=defaults::poles() );
-  void set_typeinfo();
-
-private:
-
-  bool poles_;
+  virtual void set_typeinfo() = 0;
 
 };
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
+} // namespace lonlat
+} // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_ReducedLonLatGrid_h
+#endif // atlas_grids_global_lonlat_LonLat_h
