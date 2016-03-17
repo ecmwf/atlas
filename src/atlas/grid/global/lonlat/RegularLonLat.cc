@@ -38,7 +38,11 @@ std::string RegularLonLat::className()
 void RegularLonLat::set_typeinfo()
 {
   std::stringstream s;
-  s << "L." << nlon() << "x" << nlat();
+  if( N() ) {
+    s << "L" << N();
+  } else {
+    s << "L" << nlon() << "x" << nlat();
+  }
   shortName_ = s.str();
   grid_type_ = grid_type_str();
 }
@@ -122,7 +126,10 @@ void RegularLonLat::setup( const size_t nlon, const size_t nlat )
     lats[jlat] = latmax - static_cast<double>(jlat)*latdeg;
   }
 
-  ReducedGrid::N_ = nlat/2;
+  if( (nlat-1)%2 == 0 && nlon==2*(nlat-1) )
+  {
+    ReducedGrid::N_ = (nlat-1)/2;
+  }
   ReducedGrid::setup(nlat,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
 }
 

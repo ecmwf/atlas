@@ -144,11 +144,6 @@ void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const
 
 size_t ReducedGrid::N() const
 {
-  if( N_==0 )
-  {
-    throw eckit::Exception("N cannot be returned because grid of type "+gridType()+
-                           " is not based on a global grid.", Here() );
-  }
   return N_;
 }
 

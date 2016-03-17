@@ -106,6 +106,10 @@ Grid* grid_from_uid(const std::string& uid)
     Regex shifted_lonlat_grid              ("^S([0-9]+)$");
     Regex shifted_lon_grid                 ("^Slon([0-9]+)$");
     Regex shifted_lat_grid                 ("^Slat([0-9]+)$");
+    Regex regular_lonlat_grid_x            ("^L([0-9]+)x([0-9]+)$");
+    Regex shifted_lonlat_grid_x            ("^S([0-9]+)x([0-9]+)$");
+    Regex shifted_lon_grid_x               ("^Slon([0-9]+)x([0-9]+)$");
+    Regex shifted_lat_grid_x               ("^Slat([0-9]+)x([0-9]+)$");
 
     util::Config gridparams;
     Translator<std::string,int> to_int;
@@ -142,7 +146,6 @@ Grid* grid_from_uid(const std::string& uid)
       int N = to_int(matches[0]);
       gridparams.set("grid_type", global::lonlat::RegularLonLat::grid_type_str());
       gridparams.set("N",N);
-      gridparams.set("poles",true);
       return Grid::create( gridparams );
     }
     else if( shifted_lonlat_grid.match(uid,matches) )
@@ -166,17 +169,49 @@ Grid* grid_from_uid(const std::string& uid)
       gridparams.set("N",N);
       return Grid::create( gridparams );
     }
+    else if( regular_lonlat_grid_x.match(uid,matches) )
+    {
+      int nlon = to_int(matches[0]);
+      int nlat = to_int(matches[1]);
+      gridparams.set("grid_type", global::lonlat::RegularLonLat::grid_type_str());
+      gridparams.set("nlon",nlon);
+      gridparams.set("nlat",nlat);
+      return Grid::create( gridparams );
+    }
+    else if( shifted_lonlat_grid_x.match(uid,matches) )
+    {
+      int nlon = to_int(matches[0]);
+      int nlat = to_int(matches[1]);
+      gridparams.set("grid_type", global::lonlat::ShiftedLonLat::grid_type_str());
+      gridparams.set("nlon",nlon);
+      gridparams.set("nlat",nlat);
+      return Grid::create( gridparams );
+    }
+    else if( shifted_lon_grid_x.match(uid,matches) )
+    {
+      int nlon = to_int(matches[0]);
+      int nlat = to_int(matches[1]);
+      gridparams.set("grid_type", global::lonlat::ShiftedLon::grid_type_str());
+      gridparams.set("nlon",nlon);
+      gridparams.set("nlat",nlat);
+      return Grid::create( gridparams );
+    }
+    else if( shifted_lat_grid_x.match(uid,matches) )
+    {
+      int nlon = to_int(matches[0]);
+      int nlat = to_int(matches[1]);
+      gridparams.set("grid_type", global::lonlat::ShiftedLat::grid_type_str());
+      gridparams.set("nlon",nlon);
+      gridparams.set("nlat",nlat);
+      return Grid::create( gridparams );
+    }
     else
     {
       Tokenizer tokenize(".");
       std::vector<std::string> tokens;
       tokenize(uid,tokens);
       std::string grid_type = tokens[0];
-      if( grid_type == "L" )  grid_type = global::lonlat::RegularLonLat::grid_type_str();
-      if( grid_type == "gg" ) grid_type = global::gaussian::RegularGaussian::grid_type_str();
-      if( grid_type == "rgg") grid_type = global::gaussian::ClassicGaussian::grid_type_str();
-
-      else if( tokens.size() > 1)
+      if( tokens.size() > 1)
       {
         gridparams.set("grid_type",grid_type);
         if( tokens[1][0] == 'N' )

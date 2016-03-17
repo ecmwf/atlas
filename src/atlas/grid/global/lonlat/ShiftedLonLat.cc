@@ -44,7 +44,11 @@ std::string ShiftedLonLat::className()
 void ShiftedLonLat::set_typeinfo()
 {
   std::stringstream s;
-  s << "S" << N();
+  if( N() ) {
+    s << "S" << N();
+  } else {
+    s << "S" << nlon() << "x" << nlat();
+  }
   shortName_ = s.str();
   grid_type_ = grid_type_str();
 }
@@ -135,6 +139,7 @@ void ShiftedLonLat::setup( const size_t N )
     lats[jlat] = latmax - static_cast<double>(jlat)*delta;
   }
 
+  ReducedGrid::N_ = N;
   ReducedGrid::setup(2*N,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
 }
 
@@ -175,7 +180,10 @@ void ShiftedLonLat::setup(const size_t nlon, const size_t nlat)
     lats[jlat] = latmax - static_cast<double>(jlat)*latdeg;
   }
 
-  ReducedGrid::N_ = nlat/2;
+  if( nlat%2 == 0 && nlon==2*nlat )
+  {
+    ReducedGrid::N_ = nlat/2;
+  }
   ReducedGrid::setup(nlat,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
 }
 
