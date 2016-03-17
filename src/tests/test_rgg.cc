@@ -68,7 +68,7 @@ namespace latitudes {
 namespace atlas {
 namespace test {
 
-class DebugMesh:   public grid::ReducedGaussianGrid { public: DebugMesh(); };
+class DebugMesh:   public grid::global::gaussian::CustomGaussian { public: DebugMesh(); };
 DebugMesh::DebugMesh()
 {
   int N=5;
@@ -85,7 +85,7 @@ DebugMesh::DebugMesh()
 }
 
 
-class MinimalMesh:   public grid::ReducedGaussianGrid { public: MinimalMesh(int N, long lon[]); };
+class MinimalMesh:   public grid::global::gaussian::CustomGaussian { public: MinimalMesh(int N, long lon[]); };
 MinimalMesh::MinimalMesh(int N, long lon[])
 {
   std::vector<double> lat(N);

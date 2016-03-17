@@ -81,11 +81,11 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
 BOOST_AUTO_TEST_CASE( test_reduced_gg )
 {
   long nlon[] = {4,6,8};
-  grid::ReducedGaussianGrid grid(3,nlon);
+  grid::global::gaussian::CustomGaussian grid(3,nlon);
   BOOST_CHECK_EQUAL(grid.N(),3);
   BOOST_CHECK_EQUAL(grid.nlat(),6);
   BOOST_CHECK_EQUAL(grid.npts(),8+12+16);
-  BOOST_CHECK_EQUAL(grid.gridType(),"gaussian");
+  BOOST_CHECK_EQUAL(grid.gridType(),"custom_gaussian");
 }
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
   BOOST_CHECK_EQUAL(grid.N(),    32);
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 6114);
-  BOOST_CHECK_EQUAL(grid.gridType(),"gaussian");
+  BOOST_CHECK_EQUAL(grid.gridType(),"classic_gaussian");
 
 }
 

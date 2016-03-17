@@ -54,13 +54,11 @@ namespace gaussian {
 /// ==================================================================================
 /// Area: Do we check the area.
 /// Area: Can we assume area is multiple of the grids ?
-class RegularGaussian: public ReducedGaussianGrid {
+class RegularGaussian: public Gaussian {
 
 public:
 
   static std::string grid_type_str() { return "regular_gaussian"; }
-
-  RegularGaussian();
 
   RegularGaussian( const eckit::Parametrisation& );
 
@@ -70,15 +68,15 @@ public:
 
   virtual eckit::Properties spec() const;
 
-  int nlon() const { return ReducedGaussianGrid::nlon(0); }
+  int nlon() const { return ReducedGrid::nlon(0); }
 
-  double lon( const size_t jlon ) const { return ReducedGaussianGrid::lon(0,jlon); }
+  double lon( const size_t jlon ) const { return ReducedGrid::lon(0,jlon); }
 
 protected:
 
   void setup(const size_t N);
   void setup_lat_hemisphere(const size_t N, const double lats[]);
-  void set_typeinfo();
+  virtual void set_typeinfo();
 };
 
 //------------------------------------------------------------------------------------------------------

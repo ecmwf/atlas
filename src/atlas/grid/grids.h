@@ -21,6 +21,7 @@
 #include "atlas/grid/global/lonlat/ShiftedLon.h"
 #include "atlas/grid/global/lonlat/ShiftedLat.h"
 #include "atlas/grid/global/gaussian/Gaussian.h"
+#include "atlas/grid/global/gaussian/CustomGaussian.h"
 #include "atlas/grid/global/gaussian/ClassicGaussian.h"
 #include "atlas/grid/global/gaussian/OctahedralGaussian.h"
 #include "atlas/grid/global/Structured.h"

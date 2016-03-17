@@ -28,13 +28,15 @@ std::vector<long> OctahedralGaussian::computePL(const size_t N)
   return nlon;
 }
 
-OctahedralGaussian::OctahedralGaussian(const size_t N)
+OctahedralGaussian::OctahedralGaussian(const size_t N) :
+  Gaussian()
 {
   construct(N);
   set_typeinfo();
 }
 
-OctahedralGaussian::OctahedralGaussian( const eckit::Parametrisation& params)
+OctahedralGaussian::OctahedralGaussian( const eckit::Parametrisation& params) :
+  Gaussian()
 {
     size_t N;
     params.get("N",N);

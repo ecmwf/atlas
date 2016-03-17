@@ -35,11 +35,8 @@ void RegularGaussian::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-RegularGaussian::RegularGaussian() : ReducedGaussianGrid()
-{
-}
-
-RegularGaussian::RegularGaussian(const eckit::Parametrisation& params)
+RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
+  Gaussian()
 {
   if( ! params.get("N",N_) ) throw eckit::BadParameter("N missing in Params",Here());
 
@@ -47,7 +44,8 @@ RegularGaussian::RegularGaussian(const eckit::Parametrisation& params)
   set_typeinfo();
 }
 
-RegularGaussian::RegularGaussian( const size_t N )
+RegularGaussian::RegularGaussian( const size_t N ) :
+  Gaussian()
 {
   ReducedGrid::N_ = N;
   setup(N);

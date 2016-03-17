@@ -37,7 +37,7 @@ void ClassicGaussian::set_typeinfo()
 }
 
 ClassicGaussian::ClassicGaussian( const size_t N )
-  : ReducedGaussianGrid()
+  : Gaussian()
 {
   ReducedGrid::N_ = N;
   std::vector<long> nlon(N);
@@ -47,7 +47,7 @@ ClassicGaussian::ClassicGaussian( const size_t N )
 }
 
 ClassicGaussian::ClassicGaussian(const eckit::Parametrisation& params)
-  : ReducedGaussianGrid()
+  : Gaussian()
 {
   if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
   size_t N;

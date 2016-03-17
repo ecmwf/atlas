@@ -24,7 +24,7 @@ namespace gaussian {
 
 //------------------------------------------------------------------------------------------------------
 
-class OctahedralGaussian: public ReducedGaussianGrid {
+class OctahedralGaussian: public Gaussian {
 public:
 
     static std::string className() { return "atlas.grids.global.gaussian.OctahedralGaussian"; }
@@ -42,7 +42,7 @@ private:
 
     void construct(const size_t N);
 
-    void set_typeinfo();
+    virtual void set_typeinfo();
 
 };
 

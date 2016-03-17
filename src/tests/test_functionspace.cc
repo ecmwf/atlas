@@ -22,7 +22,7 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/global/gaussian/Gaussian.h"
+#include "atlas/grid/global/gaussian/CustomGaussian.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
 #endif
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
 
   size_t nlat = 2;
   long nlon[] = {4,8};
-  ScopedPtr<grid::Grid> grid( new grid::ReducedGaussianGrid( nlat, nlon ) );
+  ScopedPtr<grid::Grid> grid( new grid::global::gaussian::CustomGaussian( nlat, nlon ) );
 
   mesh::Mesh mesh;
   mesh::generators::ReducedGridMeshGenerator generator;

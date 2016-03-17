@@ -174,9 +174,9 @@ Grid* grid_from_uid(const std::string& uid)
       std::string grid_type = tokens[0];
       if( grid_type == "ll" ) grid_type = LonLatGrid::grid_type_str();
       if( grid_type == "gg" ) grid_type = global::gaussian::RegularGaussian::grid_type_str();
-      if( grid_type == "rgg") grid_type = ReducedGaussianGrid::grid_type_str();
+      if( grid_type == "rgg") grid_type = global::gaussian::ClassicGaussian::grid_type_str();
 
-      if( grid_type == ReducedGaussianGrid::grid_type_str() )
+      if( grid_type == global::gaussian::ClassicGaussian::grid_type_str() )
       {
         throw eckit::BadParameter("Grid ["+uid+"] does not exist.",Here());
       }
@@ -225,7 +225,7 @@ void load()
   // We have to touch all classes we want to register for static linking.
 
   load_grid<ReducedGrid>();
-  load_grid<ReducedGaussianGrid>();
+  load_grid<global::gaussian::CustomGaussian>();
   load_grid<global::gaussian::RegularGaussian>();
   load_grid<global::gaussian::ClassicGaussian>();
   load_grid<global::gaussian::OctahedralGaussian>();

@@ -15,12 +15,14 @@
 
 namespace atlas {
 namespace grid {
+namespace global {
+namespace gaussian {
 
 //------------------------------------------------------------------------------------------------------
 
-/// @brief Reduced Gaussian Grid
+/// @brief (Reduced) Gaussian Grid
 ///
-/// This grid is a special case of the class ReducedGrid, in which
+/// This grid is a special case of the class Structured, in which
 /// the latitudes are distributed according to the roots of the
 /// Legendre Polynomials, and a equidistant distribution in zonal
 /// direction, which reduce in number going closer towards poles,
@@ -29,14 +31,14 @@ namespace grid {
 ///   N   = number of latitudes in hemisphere
 ///   npts_per_lat[] = number of points on each latitude
 
-class ReducedGaussianGrid: public ReducedGrid {
+class Gaussian: public ReducedGrid {
 public:
 
   static std::string grid_type_str() { return "gaussian"; }
 
-  ReducedGaussianGrid( const eckit::Parametrisation& );
+//  Gaussian( const eckit::Parametrisation& );
 
-  ReducedGaussianGrid( const size_t N, const long npts_per_lat[], const Domain& d = Domain::makeGlobal() );
+//  Gaussian( const size_t N, const long npts_per_lat[] );
 
   static std::string className();
 
@@ -45,16 +47,18 @@ public:
 protected:
 
   /// to be used only by derived types
-  ReducedGaussianGrid();
+  Gaussian();
 
   void setup( const eckit::Parametrisation& );
   void setup_N_hemisphere( const size_t N, const long npts_per_lat[] );
-  void set_typeinfo();
+  virtual void set_typeinfo() = 0;
 
 };
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace gaussian
+} // namespace global
 } // namespace grid
 } // namespace atlas
 

@@ -35,12 +35,8 @@ void CustomGaussian::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-CustomGaussian::CustomGaussian()
-{
-}
-
-CustomGaussian::CustomGaussian( const size_t N, const long nlons[], const Domain& d)
-  : ReducedGrid(d)
+CustomGaussian::CustomGaussian( const size_t N, const long nlons[] )
+  : Gaussian()
 {
   ReducedGrid::N_ = N;
 
@@ -49,6 +45,7 @@ CustomGaussian::CustomGaussian( const size_t N, const long nlons[], const Domain
 }
 
 CustomGaussian::CustomGaussian(const eckit::Parametrisation& params)
+  : Gaussian()
 {
   setup(params);
   set_typeinfo();
