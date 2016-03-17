@@ -58,7 +58,7 @@ class RegularGaussian: public ReducedGaussianGrid {
 
 public:
 
-  static std::string grid_type_str() { return "regular_gg"; }
+  static std::string grid_type_str() { return "regular_gaussian"; }
 
   RegularGaussian();
 

@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   BOOST_CHECK_EQUAL(grid.N(), 32);
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 8192);
-  BOOST_CHECK_EQUAL(grid.gridType(),"regular_gg");
+  BOOST_CHECK_EQUAL(grid.gridType(),"regular_gaussian");
 
   // Construct using builders/factories
 
@@ -61,11 +61,11 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   // Full Gaussian Grid
 
   util::Config spec;
-  spec.set("grid_type","regular_gg");
+  spec.set("grid_type","regular_gaussian");
   spec.set("N",32);
   gridptr = Grid::Ptr( Grid::create(spec) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 8192);
-  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gg");
+  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gaussian");
 
   // Add bounding box to spec
   BoundBox bbox( 90., 0., 180., 0.);
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg )
   BOOST_CHECK_EQUAL(grid.N(),3);
   BOOST_CHECK_EQUAL(grid.nlat(),6);
   BOOST_CHECK_EQUAL(grid.npts(),8+12+16);
-  BOOST_CHECK_EQUAL(grid.gridType(),"reduced_gg");
+  BOOST_CHECK_EQUAL(grid.gridType(),"gaussian");
 }
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
   BOOST_CHECK_EQUAL(grid.N(),    32);
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 6114);
-  BOOST_CHECK_EQUAL(grid.gridType(),"reduced_gg");
+  BOOST_CHECK_EQUAL(grid.gridType(),"gaussian");
 
 }
 
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(grid.nlon(), nlon);
   BOOST_CHECK_EQUAL(grid.nlat(), nlat);
   BOOST_CHECK_EQUAL(grid.npts(), 512);
-  BOOST_CHECK_EQUAL(grid.gridType(),"regular_ll");
+  BOOST_CHECK_EQUAL(grid.gridType(),"regular_lonlat");
   BOOST_CHECK_EQUAL(grid.lat(0), 90.-0.5*(180./16.));
   BOOST_CHECK_EQUAL(grid.lat(grid.nlat()-1), -90.+0.5*(180./16.));
   BOOST_CHECK_EQUAL(grid.lon(0), 0.);
@@ -123,13 +123,13 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
 
   // Global Grid
   util::Config spec;
-  spec.set("grid_type","regular_ll");
+  spec.set("grid_type","regular_lonlat");
   spec.set("nlon",32);
   spec.set("nlat",16);
   spec.set<int>("poles",LonLatGrid::EXCLUDES_POLES);
   gridptr = Grid::Ptr( Grid::create(spec) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
-  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_ll");
+  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_lonlat");
 
   // Add bounding box to spec --> This will not create a cropped version of previous (global) one,
   // but rather creates a new (32x16) grid within given bounding box... This is somewhat
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
 
   gridptr = Grid::Ptr( Grid::create(spec) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
-  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_ll");
+  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_lonlat");
   ll = dynamic_cast<grid::LonLatGrid*>(gridptr.get());
   BOOST_CHECK_EQUAL(ll->lat(0), 90.);
   BOOST_CHECK_EQUAL(ll->lat(ll->nlat()-1), 0.);
@@ -150,11 +150,11 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(ll->lon(ll->nlon()-1), 180.);
 
   util::Config spec2;
-  spec2.set("grid_type","global_lonlat_shifted");
+  spec2.set("grid_type","shifted_lonlat");
   spec2.set("N",8);
   gridptr = Grid::Ptr( Grid::create(spec2) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
-  BOOST_CHECK_EQUAL(gridptr->gridType(),"global_lonlat_shifted");
+  BOOST_CHECK_EQUAL(gridptr->gridType(),"shifted_lonlat");
 
   LonLatGrid ll_poles(90.,90.,LonLatGrid::INCLUDES_POLES);
   BOOST_CHECK_EQUAL( ll_poles.nlat(), 3);

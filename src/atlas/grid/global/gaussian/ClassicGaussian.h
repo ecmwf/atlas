@@ -8,13 +8,15 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_grids_ReducedGaussianGrid_h
-#define atlas_grids_ReducedGaussianGrid_h
+#ifndef atlas_grids_global_gaussian_ClassicGaussian_h
+#define atlas_grids_global_gaussian_ClassicGaussian_h
 
-#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/global/gaussian/Gaussian.h"
 
 namespace atlas {
 namespace grid {
+namespace global {
+namespace gaussian {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -29,33 +31,31 @@ namespace grid {
 ///   N   = number of latitudes in hemisphere
 ///   npts_per_lat[] = number of points on each latitude
 
-class ReducedGaussianGrid: public ReducedGrid {
+class ClassicGaussian: public ReducedGaussianGrid {
 public:
 
-  static std::string grid_type_str() { return "gaussian"; }
+  static std::string grid_type_str() { return "classic_gaussian"; }
 
-  ReducedGaussianGrid( const eckit::Parametrisation& );
+  ClassicGaussian( const eckit::Parametrisation& );
 
-  ReducedGaussianGrid( const size_t N, const long npts_per_lat[], const Domain& d = Domain::makeGlobal() );
+  ClassicGaussian( const size_t N, const long npts_per_lat[], const Domain& d = Domain::makeGlobal() );
 
   static std::string className();
-
-  virtual eckit::Properties spec() const;
 
 protected:
 
   /// to be used only by derived types
-  ReducedGaussianGrid();
+  ClassicGaussian();
 
-  void setup( const eckit::Parametrisation& );
-  void setup_N_hemisphere( const size_t N, const long npts_per_lat[] );
   void set_typeinfo();
 
 };
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace gaussian
+} // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_ReducedGaussianGrid_h
+#endif // atlas_grids_global_gaussian_ClassicGaussian_h

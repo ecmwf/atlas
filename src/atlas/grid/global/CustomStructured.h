@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef ReducedGrid_h
-#define ReducedGrid_h
+#ifndef atlas_grid_global_CustomStructured_h
+#define atlas_grid_global_CustomStructured_h
 
 #include "eckit/memory/Builder.h"
 #include "eckit/config/Parametrisation.h"
@@ -18,6 +18,7 @@
 
 namespace atlas {
 namespace grid {
+namespace global {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -29,30 +30,30 @@ namespace grid {
 /// This means any full grid and reduced grid, both regular, gaussian or other
 /// such distribution can be represented with this class
 
-class ReducedGrid: public Grid {
+class CustomStructured: public Grid {
 public:
 
-  typedef eckit::SharedPtr<ReducedGrid> Ptr;
+  typedef eckit::SharedPtr<CustomStructured> Ptr;
 
-  static ReducedGrid* create( const eckit::Parametrisation& );
-  static ReducedGrid* create( const eckit::Properties& );
-  static ReducedGrid* create( const std::string& shortName );
+  static CustomStructured* create( const eckit::Parametrisation& );
+  static CustomStructured* create( const eckit::Properties& );
+  static CustomStructured* create( const std::string& shortName );
 
 public:
 
   static std::string className();
-  static std::string grid_type_str() { return "structured"; }
+  static std::string grid_type_str() { return "custom_structured"; }
 
-  /// FIXME: ReducedGrid should not be instantiatable.
+  /// FIXME: CustomStructured should not be instantiatable.
   ///        Only leaf classes should be instantiatable.
   ///        This constructor should be used only by derived types
   ///    nawd: Disagree. Custom grids could be devised this way, especially
   ///          useful for research.
-  ReducedGrid(const Domain& d = Domain::makeGlobal());
+  CustomStructured(const Domain& d = Domain::makeGlobal());
 
-  ReducedGrid( const eckit::Parametrisation& );
+  CustomStructured( const eckit::Parametrisation& );
 
-  ReducedGrid( size_t nlat,
+  CustomStructured( size_t nlat,
                const double lats[],
                const long npts_per_lat[],
                const Domain& d = Domain::makeGlobal());
@@ -140,28 +141,8 @@ protected:
 
 //------------------------------------------------------------------------------------------------------
 
-extern "C"
-{
-  void atlas__ReducedGrid__delete(ReducedGrid* This);
-  ReducedGrid* atlas__new_reduced_grid(char* identifier);
-  ReducedGrid* atlas__ReducedGrid__constructor(int nlat, double lat[], int nlon[]);
-  ReducedGrid* atlas__new_gaussian_grid(int N);
-  ReducedGrid* atlas__new_lonlat_grid(int nlon, int nlat);
-  ReducedGrid* atlas__new_reduced_gaussian_grid(int nlon[], int nlat);
-  int    atlas__ReducedGrid__nlat     (ReducedGrid* This);
-  int    atlas__ReducedGrid__nlon     (ReducedGrid* This, int &jlat);
-  void   atlas__ReducedGrid__nlon__all(ReducedGrid* This, const int* &nlon, int &size);
-  int    atlas__ReducedGrid__nlonmax  (ReducedGrid* This);
-  int    atlas__ReducedGrid__npts     (ReducedGrid* This);
-  double atlas__ReducedGrid__lat      (ReducedGrid* This, int jlat);
-  double atlas__ReducedGrid__lon      (ReducedGrid* This, int jlat, int jlon);
-  void   atlas__ReducedGrid__lonlat   (ReducedGrid* This, int jlat, int jlon, double crd[]);
-  void   atlas__ReducedGrid__lat__all (ReducedGrid* This, const double* &lats, int &size);
-}
-
-//------------------------------------------------------------------------------------------------------
-
+} // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // ReducedGrid_h
+#endif // atlas_grid_global_CustomStructured_h

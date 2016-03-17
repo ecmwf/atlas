@@ -25,8 +25,8 @@ namespace grid {
 class OctahedralReducedGaussianGrid : public ReducedGaussianGrid {
 public:
 
-    static std::string className() { return "atlas.grids.rgg.OctahedralReducedGaussianGrid"; }
-    static std::string grid_type_str() { return "oct"; }
+    static std::string className() { return "atlas.grids.global.gaussian.OctahedralGaussian"; }
+    static std::string grid_type_str() { return "octahedral_gaussian"; }
 
     OctahedralReducedGaussianGrid(const size_t N, const size_t octahedralPoleStart = 20);
 

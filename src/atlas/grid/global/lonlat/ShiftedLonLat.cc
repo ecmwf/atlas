@@ -29,7 +29,7 @@ register_BuilderT1(Grid,ShiftedLonLat,ShiftedLonLat::grid_type_str());
 
 std::string ShiftedLonLat::grid_type_str()
 {
-  return "global_lonlat_shifted";
+  return "shifted_lonlat";
 }
 
 //------------------------------------------------------------------------------

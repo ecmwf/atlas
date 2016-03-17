@@ -25,12 +25,12 @@ register_BuilderT1(Grid,LonLatGrid,LonLatGrid::grid_type_str());
 
 std::string LonLatGrid::grid_type_str()
 {
-  return "regular_ll";
+  return "regular_lonlat";
 }
 
 std::string LonLatGrid::className()
 {
-  return "atlas.grid.LonLatGrid";
+  return "atlas.grid.global.lonlat.RegularLonLat";
 }
 
 void LonLatGrid::set_typeinfo()

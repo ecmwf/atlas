@@ -46,16 +46,24 @@ grid/global/Unstructured.h
 grid/global/Unstructured.cc
 grid/global/Structured.h
 grid/global/Structured.cc
-grid/global/gaussian/OctahedralGaussian.h
-grid/global/gaussian/OctahedralGaussian.cc
+grid/global/CustomStructured.h
+grid/global/CustomStructured.cc
 grid/global/gaussian/Gaussian.h
 grid/global/gaussian/Gaussian.cc
+grid/global/gaussian/CustomGaussian.h
+grid/global/gaussian/CustomGaussian.cc
+grid/global/gaussian/ClassicGaussian.h
+grid/global/gaussian/ClassicGaussian.cc
+grid/global/gaussian/OctahedralGaussian.h
+grid/global/gaussian/OctahedralGaussian.cc
 grid/global/gaussian/RegularGaussian.h
 grid/global/gaussian/RegularGaussian.cc
 grid/global/gaussian/latitudes/Latitudes.h
 grid/global/gaussian/latitudes/Latitudes.cc
 grid/global/lonlat/LonLat.h
 grid/global/lonlat/LonLat.cc
+grid/global/lonlat/CustomLonLat.h
+grid/global/lonlat/CustomLonLat.cc
 grid/global/lonlat/RegularLonLat.h
 grid/global/lonlat/RegularLonLat.cc
 grid/global/lonlat/ShiftedLonLat.h
@@ -64,8 +72,6 @@ grid/global/lonlat/ShiftedLon.h
 grid/global/lonlat/ShiftedLon.cc
 grid/global/lonlat/ShiftedLat.h
 grid/global/lonlat/ShiftedLat.cc
-grid/unused/RotatedGrid.h
-grid/unused/RotatedGrid.cc
 grid/global/gaussian/latitudes/N.h
 grid/global/gaussian/latitudes/N.cc
 grid/global/gaussian/latitudes/N16.cc    # TL31
@@ -115,6 +121,8 @@ grid/global/gaussian/classic/N1600.cc  # TL3199
 grid/global/gaussian/classic/N2000.cc  # TL3999
 grid/global/gaussian/classic/N4000.cc  # TL7999
 grid/global/gaussian/classic/N8000.cc  # TL15999
+#grid/unused/RotatedGrid.h
+#grid/unused/RotatedGrid.cc
 grid/partitioners/EqualRegionsPartitioner.h
 grid/partitioners/EqualRegionsPartitioner.cc
 grid/partitioners/Partitioner.h

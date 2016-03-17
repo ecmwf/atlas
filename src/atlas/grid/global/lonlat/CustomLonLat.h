@@ -8,35 +8,49 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_grids_ReducedGaussianGrid_h
-#define atlas_grids_ReducedGaussianGrid_h
+#ifndef atlas_grids_global_lonlat_CustomLonLat_h
+#define atlas_grids_global_lonlat_CustomLonLat_h
 
 #include "atlas/grid/global/Structured.h"
 
 namespace atlas {
 namespace grid {
+namespace global {
+namespace lonlat {
 
 //------------------------------------------------------------------------------------------------------
 
-/// @brief Reduced Gaussian Grid
+/// @brief Reduced LonLat Grid
 ///
-/// This grid is a special case of the class ReducedGrid, in which
-/// the latitudes are distributed according to the roots of the
-/// Legendre Polynomials, and a equidistant distribution in zonal
+/// This grid is a special case of the class ReducedGrid, with
+/// equidistant distribution of latitudes, and a equidistant distribution in zonal
 /// direction, which reduce in number going closer towards poles,
 /// essentially making the grid more uniform on the sphere
 /// It can be constructed with following definition:
 ///   N   = number of latitudes in hemisphere
 ///   npts_per_lat[] = number of points on each latitude
 
-class ReducedGaussianGrid: public ReducedGrid {
+class CustomLonLat: public ReducedGrid {
+
+public:
+  enum {EXCLUDES_POLES=0, INCLUDES_POLES=1};
+
+private:
+
+  struct defaults {
+    // By default LonLat grids have the pole excluded
+    static bool poles() { return EXCLUDES_POLES; }
+  };
+
 public:
 
-  static std::string grid_type_str() { return "gaussian"; }
+  static std::string grid_type_str();
 
-  ReducedGaussianGrid( const eckit::Parametrisation& );
+  CustomLonLat();
 
-  ReducedGaussianGrid( const size_t N, const long npts_per_lat[], const Domain& d = Domain::makeGlobal() );
+  CustomLonLat( const eckit::Parametrisation& );
+
+  CustomLonLat( const size_t nlat, const long npts_per_lat[], bool poles = defaults::poles(), const Domain& domain = Domain::makeGlobal() );
 
   static std::string className();
 
@@ -44,18 +58,21 @@ public:
 
 protected:
 
-  /// to be used only by derived types
-  ReducedGaussianGrid();
-
   void setup( const eckit::Parametrisation& );
-  void setup_N_hemisphere( const size_t N, const long npts_per_lat[] );
+  void setup( const size_t N, const long npts_per_lat[], bool poles=defaults::poles() );
   void set_typeinfo();
+
+private:
+
+  bool poles_;
 
 };
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace lonlat
+} // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_ReducedGaussianGrid_h
+#endif // atlas_grids_global_lonlat_CustomLonLat_h
