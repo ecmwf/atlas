@@ -96,6 +96,8 @@ void ReducedGrid::setup( const size_t nlat, const double lats[], const long nlon
   lonmin_.assign(lonmin,lonmin+nlat);
   lonmax_.assign(lonmax,lonmax+nlat);
 
+  lon_inc_.resize(nlat);
+  
   npts_ = 0;
   nlonmax_ = 0;
   double lon_min(1000), lon_max(-1000);
@@ -107,6 +109,7 @@ void ReducedGrid::setup( const size_t nlat, const double lats[], const long nlon
 
     lon_min = std::min(lon_min,lonmin_[jlat]);
     lon_max = std::max(lon_max,lonmax_[jlat]);
+    lon_inc_[jlat] = (lonmax_[jlat] - lonmin_[jlat])/(nlons_[jlat]-1);
 
     npts_ += nlons_[jlat];
   }
@@ -196,25 +199,6 @@ std::string ReducedGrid::gridType() const
 //   return grid_spec;
 // }
 
-size_t ReducedGrid::nlat() const
-{
-  return lat_.size();
-}
-
-size_t ReducedGrid::nlon(size_t jlat) const
-{
-  return nlons_[jlat];
-}
-
-size_t ReducedGrid::nlonmax() const
-{
-  return nlonmax_;
-}
-
-const std::vector<long>&  ReducedGrid::points_per_latitude() const
-{
-  return nlons_;
-}
 
 const std::vector<int>&  ReducedGrid::npts_per_lat() const
 {
@@ -222,22 +206,6 @@ const std::vector<int>&  ReducedGrid::npts_per_lat() const
     nlons_int_.assign(nlons_.begin(), nlons_.end());
   }
   return nlons_int_;
-}
-
-double ReducedGrid::lon(const size_t jlat, const size_t jlon) const
-{
-  return lonmin_[jlat] + (double)jlon * (lonmax_[jlat]-lonmin_[jlat]) / ( (double)nlon(jlat) - 1. );
-}
-
-double ReducedGrid::lat(const size_t jlat) const
-{
-  return lat_[jlat];
-}
-
-void ReducedGrid::lonlat( const size_t jlat, const size_t jlon, double crd[] ) const
-{
-  crd[0] = lon(jlat,jlon);
-  crd[1] = lat(jlat);
 }
 
 std::string ReducedGrid::getOptimalMeshGenerator() const

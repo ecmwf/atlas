@@ -19,7 +19,7 @@
 namespace atlas {
 namespace grid {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /// @brief Reduced Grid
 ///
@@ -136,10 +136,51 @@ protected:
 
   BoundBox            bounding_box_;  ///<! bounding box cache
 
+private:
+  std::vector<double> lon_inc_; ///<! Value of longitude increment
+
 };
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
+inline size_t ReducedGrid::nlat() const
+{
+  return lat_.size();
+}
+
+inline size_t ReducedGrid::nlon(size_t jlat) const
+{
+  return nlons_[jlat];
+}
+
+inline size_t ReducedGrid::nlonmax() const
+{
+  return nlonmax_;
+}
+
+inline const std::vector<long>&  ReducedGrid::points_per_latitude() const
+{
+  return nlons_;
+}
+
+inline double ReducedGrid::lon(const size_t jlat, const size_t jlon) const
+{
+  return lonmin_[jlat] + (double)jlon * (lonmax_[jlat]-lonmin_[jlat]) / ( (double)nlon(jlat) - 1. );
+}
+
+inline double ReducedGrid::lat(const size_t jlat) const
+{
+  return lat_[jlat];
+}
+
+inline void ReducedGrid::lonlat( const size_t jlat, const size_t jlon, double crd[] ) const
+{
+  crd[0] = lon(jlat,jlon);
+  crd[1] = lat(jlat);
+}
+
+
+//------------------------------------------------------------------------------
 extern "C"
 {
   void atlas__ReducedGrid__delete(ReducedGrid* This);
@@ -159,7 +200,7 @@ extern "C"
   void   atlas__ReducedGrid__lat__all (ReducedGrid* This, const double* &lats, int &size);
 }
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace atlas
