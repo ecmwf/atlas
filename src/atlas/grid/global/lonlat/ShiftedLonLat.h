@@ -34,6 +34,12 @@ public:
   /// @brief Constructor
   ShiftedLonLat( const size_t N );
 
+  /// @brief Constructor
+  ShiftedLonLat( const size_t nlon, const size_t nlat );
+
+  /// @brief Constructor
+  ShiftedLonLat( const double &londeg, const double &latdeg );
+
   static std::string className();
 
   virtual eckit::Properties spec() const;
@@ -46,6 +52,9 @@ protected:
 
   void setup( const eckit::Parametrisation& p);
   void setup( const size_t N );
+  void setup( const size_t nlon, const size_t nlat );
+  void setup( const double londeg, const double latdeg );
+
   void set_typeinfo();
 };
 

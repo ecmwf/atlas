@@ -36,10 +36,10 @@ BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
-  LonLatGrid g(11,LonLatGrid::INCLUDES_POLES);
+  global::lonlat::RegularLonLat g(5);
   mesh::Mesh m;
   ReducedGridMeshGenerator().generate(g,m);
-  Gmsh().write(m,"lonlat11.msh");
+  Gmsh().write(m,"L5.msh");
 }
 
 } // namespace test

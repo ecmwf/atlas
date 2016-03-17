@@ -72,12 +72,13 @@ Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p
   if( !reduced )
     throw eckit::BadCast("Grid is not a grid::ReducedGrid type. Cannot partition using IFS trans",Here());
 
-  const grid::LonLatGrid* lonlat = dynamic_cast<const grid::LonLatGrid*>(reduced);
+  const grid::global::lonlat::RegularLonLat* regularlonlat
+      = dynamic_cast<const grid::global::lonlat::RegularLonLat*>(reduced);
   const grid::global::lonlat::ShiftedLonLat* shiftedlonlat
       = dynamic_cast<const grid::global::lonlat::ShiftedLonLat*>(reduced);
 
-  if( lonlat )
-    ctor_lonlat( lonlat->nlon(), lonlat->nlat(), nsmax, p );
+  if( regularlonlat )
+    ctor_lonlat( regularlonlat->nlon(), regularlonlat->nlat(), nsmax, p );
   else if( shiftedlonlat )
     ctor_lonlat( shiftedlonlat->nlon(), shiftedlonlat->nlat(), nsmax, p );
   else

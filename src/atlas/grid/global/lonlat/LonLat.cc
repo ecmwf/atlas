@@ -41,7 +41,7 @@ void ReducedLonLatGrid::set_typeinfo()
 }
 
 ReducedLonLatGrid::ReducedLonLatGrid()
-  : ReducedGrid()
+  : ReducedGrid(Domain::makeGlobal())
 {
 }
 

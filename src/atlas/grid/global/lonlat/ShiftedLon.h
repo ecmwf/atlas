@@ -46,6 +46,9 @@ protected:
 
   void setup( const eckit::Parametrisation& p);
   void setup( const size_t N );
+  void setup( const double londeg, const double latdeg );
+  void setup( const size_t nlon, const size_t nlat );
+
   void set_typeinfo();
 };
 

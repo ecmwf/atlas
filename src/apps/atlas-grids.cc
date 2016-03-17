@@ -173,22 +173,29 @@ void AtlasGrids::run()
                   << grid->nlat() << std::endl;
       Log::info() << "   number of longitudes (max):         "
                   << grid->nlonmax() << std::endl;
+
       deg = (grid->lat(0)-grid->lat(grid->nlat()-1))/(grid->nlat()-1);
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution N-S:         "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
-      deg = 360./grid->npts_per_lat()[grid->nlat()/2];
+
+
+      deg = 360./static_cast<double>(grid->npts_per_lat()[grid->nlat()/2]);
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W equator: "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
-      deg =  360.*std::cos(grid->lat(grid->nlat()/4)*M_PI/180.)/grid->npts_per_lat()[grid->nlat()/4];
+
+      deg =  360.*std::cos(grid->lat(grid->nlat()/4)*M_PI/180.)/
+             static_cast<double>(grid->npts_per_lat()[grid->nlat()/4]);
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W midlat:  "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
-      deg = 360.*std::cos(grid->lat(0)*M_PI/180.)/grid->npts_per_lat()[0];
+
+      deg = 360.*std::cos(grid->lat(0)*M_PI/180.)/static_cast<double>(grid->npts_per_lat()[0]);
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W pole:    "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
+
       Log::info() << "   spectral truncation -- linear:      "
                   << grid->nlat() - 1 << std::endl;
       Log::info() << "   spectral truncation -- quadratic:   "

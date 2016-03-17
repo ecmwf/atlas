@@ -140,7 +140,7 @@ Grid* grid_from_uid(const std::string& uid)
     else if( regular_lonlat_grid.match(uid,matches) )
     {
       int N = to_int(matches[0]);
-      gridparams.set("grid_type", LonLatGrid::grid_type_str());
+      gridparams.set("grid_type", global::lonlat::RegularLonLat::grid_type_str());
       gridparams.set("N",N);
       gridparams.set("poles",true);
       return Grid::create( gridparams );
@@ -172,14 +172,10 @@ Grid* grid_from_uid(const std::string& uid)
       std::vector<std::string> tokens;
       tokenize(uid,tokens);
       std::string grid_type = tokens[0];
-      if( grid_type == "ll" ) grid_type = LonLatGrid::grid_type_str();
+      if( grid_type == "L" )  grid_type = global::lonlat::RegularLonLat::grid_type_str();
       if( grid_type == "gg" ) grid_type = global::gaussian::RegularGaussian::grid_type_str();
       if( grid_type == "rgg") grid_type = global::gaussian::ClassicGaussian::grid_type_str();
 
-      if( grid_type == global::gaussian::ClassicGaussian::grid_type_str() )
-      {
-        throw eckit::BadParameter("Grid ["+uid+"] does not exist.",Here());
-      }
       else if( tokens.size() > 1)
       {
         gridparams.set("grid_type",grid_type);
@@ -200,7 +196,6 @@ Grid* grid_from_uid(const std::string& uid)
             int nlat = to_int(lonlat[1]);
             gridparams.set("nlon",nlon);
             gridparams.set("nlat",nlat);
-            if( nlat%2 == 1 ) gridparams.set("poles",true);
           }
         }
       }
@@ -229,8 +224,8 @@ void load()
   load_grid<global::gaussian::RegularGaussian>();
   load_grid<global::gaussian::ClassicGaussian>();
   load_grid<global::gaussian::OctahedralGaussian>();
-  load_grid<LonLatGrid>();
   load_grid<ReducedLonLatGrid>();
+  load_grid<global::lonlat::RegularLonLat>();
   load_grid<global::lonlat::ShiftedLonLat>();
   load_grid<global::lonlat::ShiftedLon>();
   load_grid<global::lonlat::ShiftedLat>();

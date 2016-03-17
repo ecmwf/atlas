@@ -51,12 +51,6 @@ void ShiftedLat::set_typeinfo()
 
 //------------------------------------------------------------------------------
 
-ShiftedLat::ShiftedLat() : ReducedLonLatGrid()
-{
-}
-
-//------------------------------------------------------------------------------
-
 ShiftedLat::ShiftedLat(const eckit::Parametrisation& p)
 {
   setup(p);
@@ -73,6 +67,22 @@ ShiftedLat::ShiftedLat( const size_t N )
 
 //------------------------------------------------------------------------------
 
+ShiftedLat::ShiftedLat( const size_t nlon, const size_t nlat )
+{
+  setup(nlon,nlat);
+  set_typeinfo();
+}
+
+//------------------------------------------------------------------------------
+
+ShiftedLat::ShiftedLat( const double &londeg, const double &latdeg )
+{
+  setup(londeg,latdeg);
+  set_typeinfo();
+}
+
+//------------------------------------------------------------------------------
+
 void ShiftedLat::setup(const eckit::Parametrisation& p)
 {
   size_t nlon, nlat;
@@ -83,7 +93,22 @@ void ShiftedLat::setup(const eckit::Parametrisation& p)
   }
   else
   {
-    throw BadParameter("\"N\" value missing.",Here());
+    if( !p.has("nlon") && !p.has("lon_inc") ) throw BadParameter("nlon or lon_inc missing in Params",Here());
+    if( !p.has("nlat") && !p.has("lat_inc") ) throw BadParameter("nlat or lat_inc missing in Params",Here());
+
+    double lon_inc, lat_inc;
+    if (p.get("nlon",nlon) && p.get("nlat",nlat))
+    {
+      setup(nlon,nlat);
+    }
+    else if (p.get("lon_inc",lon_inc) && p.get("lat_inc",lat_inc))
+    {
+      setup(lon_inc,lat_inc);
+    }
+    else
+    {
+      throw BadParameter("Bad combination of parameters");
+    }
   }
 }
 
@@ -104,7 +129,54 @@ void ShiftedLat::setup( const size_t N )
     lats[jlat] = latmax - static_cast<double>(jlat)*delta;
   }
 
+  ReducedGrid::N_ = N;
   ReducedGrid::setup(2*N,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
+}
+
+//------------------------------------------------------------------------------
+
+void ShiftedLat::setup(const size_t nlon, const size_t nlat)
+{
+  double londeg = 360./static_cast<double>(nlon);
+  double latdeg = 180./static_cast<double>(nlat);
+
+  std::vector<double> lats(nlat);
+  std::vector<long>   nlons(nlat,nlon);
+  std::vector<double> lonmin(nlat,0.);
+  std::vector<double> lonmax(nlon,360.-londeg);
+
+  double latmax = 90.-0.5*latdeg;
+
+  for( size_t jlat=0; jlat<nlat; ++jlat )
+  {
+    lats[jlat] = latmax - static_cast<double>(jlat)*latdeg;
+  }
+
+  ReducedGrid::N_ = nlat/2;
+  ReducedGrid::setup(nlat,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
+}
+
+void ShiftedLat::setup( const double londeg, const double latdeg )
+{
+  double Llon = 360.-londeg;
+  double Llat = 180.-latdeg;
+  double nlon_real = Llon/londeg + 1.;
+  double nlat_real = Llat/latdeg + 1.;
+  size_t nlon = static_cast<size_t>(nlon_real);
+  size_t nlat = static_cast<size_t>(nlat_real);
+  if( nlon_real - nlon > 0. )
+  {
+    std::stringstream msg;
+    msg << Llon << " is not divisible by londeg " << londeg << " --> nlon = " << nlon_real;
+    throw BadParameter(msg.str(),Here());
+  }
+  if( nlat_real - nlat > 0. )
+  {
+    std::stringstream msg;
+    msg << Llat << " is not divisible by latdeg " << latdeg << " --> nlat = " << nlat_real;
+    throw BadParameter(msg.str(),Here());
+  }
+  setup(nlon,nlat);
 }
 
 //------------------------------------------------------------------------------

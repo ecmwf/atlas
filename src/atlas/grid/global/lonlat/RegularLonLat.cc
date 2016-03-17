@@ -18,193 +18,119 @@ using eckit::Params;
 
 namespace atlas {
 namespace grid {
+namespace global {
+namespace lonlat {
 
 //------------------------------------------------------------------------------------------------------
 
-register_BuilderT1(Grid,LonLatGrid,LonLatGrid::grid_type_str());
+register_BuilderT1(Grid,RegularLonLat,RegularLonLat::grid_type_str());
 
-std::string LonLatGrid::grid_type_str()
+std::string RegularLonLat::grid_type_str()
 {
   return "regular_lonlat";
 }
 
-std::string LonLatGrid::className()
+std::string RegularLonLat::className()
 {
   return "atlas.grid.global.lonlat.RegularLonLat";
 }
 
-void LonLatGrid::set_typeinfo()
+void RegularLonLat::set_typeinfo()
 {
   std::stringstream s;
-  s << "ll." << nlon() << "x" << nlat();
+  s << "L." << nlon() << "x" << nlat();
   shortName_ = s.str();
   grid_type_ = grid_type_str();
 }
 
-LonLatGrid::LonLatGrid() : ReducedLonLatGrid()
-{
-}
-
-LonLatGrid::LonLatGrid(const eckit::Parametrisation& p)
+RegularLonLat::RegularLonLat(const eckit::Parametrisation& p)
+  : ReducedLonLatGrid()
 {
   setup(p);
   set_typeinfo();
 }
 
-LonLatGrid::LonLatGrid( const size_t nlon, const size_t nlat, const BoundBox& bbox )
+RegularLonLat::RegularLonLat( const size_t nlon, const size_t nlat )
+ : ReducedLonLatGrid()
 {
-  setup(nlon,nlat,bbox);
+  setup(nlon,nlat);
   set_typeinfo();
 }
 
-LonLatGrid::LonLatGrid( const size_t nlon, const size_t nlat, TYPE poles )
+RegularLonLat::RegularLonLat( const size_t N )
+ : ReducedLonLatGrid()
 {
-  setup(nlon,nlat,poles);
+  size_t nlon = 4*N;
+  size_t nlat = 2*N+1;
+  setup(nlon,nlat);
   set_typeinfo();
 }
 
-LonLatGrid::LonLatGrid( const size_t nlat, TYPE poles )
+RegularLonLat::RegularLonLat( const double &londeg, const double &latdeg )
+ : ReducedLonLatGrid()
 {
-  int nlon = 2*nlat;
-  setup(nlon,nlat,poles);
-  set_typeinfo();
-}
-
-LonLatGrid::LonLatGrid( const double londeg, const double latdeg, TYPE poles )
-{
-  setup(londeg,latdeg,poles);
-  set_typeinfo();
-}
-
-LonLatGrid::LonLatGrid( const double londeg, const double latdeg, const BoundBox& bbox )
-{
-  setup(londeg,latdeg,bbox);
+  setup(londeg,latdeg);
   set_typeinfo();
 }
 
 
-void LonLatGrid::setup(const eckit::Parametrisation& p)
+void RegularLonLat::setup(const eckit::Parametrisation& p)
 {
   size_t nlon, nlat;
 
-  bool poles(defaults::poles());
-  p.get("poles",poles);
-
-  if( p.get("N",N_ ) ) // --> global grid (2*N x N)
+  if( p.get("N",N_ ) )
   {
-
-    if( poles )
-    {
-      nlat = 2*N_+1;
-      nlon = 4*N_;
-    }
-    else
-    {
-      nlat = 2*N_;
-      nlon = 4*N_;
-    }
-    setup(nlon,nlat,poles);
+    nlat = 2*N_+1;
+    nlon = 4*N_;
+    setup(nlon,nlat);
   }
   else
   {
     if( !p.has("nlon") && !p.has("lon_inc") ) throw BadParameter("nlon or lon_inc missing in Params",Here());
     if( !p.has("nlat") && !p.has("lat_inc") ) throw BadParameter("nlat or lat_inc missing in Params",Here());
 
-    bool bbox_present = p.has("bbox_n") && p.has("bbox_s") && p.has("bbox_e") && p.has("bbox_w");
-    if( bbox_present ) // --> limited area grid
+    double lon_inc, lat_inc;
+    if (p.get("nlon",nlon) && p.get("nlat",nlat))
     {
-      double bbox_n, bbox_s, bbox_e, bbox_w;
-      p.get("bbox_n",bbox_n);
-      p.get("bbox_s",bbox_s);
-      p.get("bbox_e",bbox_e);
-      p.get("bbox_w",bbox_w);
-      BoundBox bbox(bbox_n,bbox_s,bbox_e,bbox_w);
-
-      double lon_inc, lat_inc;
-      if (p.get("nlon",nlon) && p.get("nlat",nlat))
-      {
-        setup(nlon,nlat,bbox);
-      }
-      else if (p.get("lon_inc",lon_inc) && p.get("lat_inc",lat_inc))
-      {
-        setup(lon_inc,lat_inc,bbox);
-      }
-      else
-      {
-        throw BadParameter("Bad combination of parameters");
-      }
+      setup(nlon,nlat);
     }
-    else // --> global grid (nlon x nlat)
+    else if (p.get("lon_inc",lon_inc) && p.get("lat_inc",lat_inc))
     {
-      double lon_inc, lat_inc;
-      if (p.get("nlon",nlon) && p.get("nlat",nlat))
-      {
-        setup(nlon,nlat,poles);
-      }
-      else if (p.get("lon_inc",lon_inc) && p.get("lat_inc",lat_inc))
-      {
-        setup(lon_inc,lat_inc,poles);
-      }
-      else
-      {
-        throw BadParameter("Bad combination of parameters");
-      }
+      setup(lon_inc,lat_inc);
+    }
+    else
+    {
+      throw BadParameter("Bad combination of parameters");
     }
   }
 }
 
-void LonLatGrid::setup( const size_t nlon, const size_t nlat, const BoundBox& bbox )
+void RegularLonLat::setup( const size_t nlon, const size_t nlat )
 {
+  double latmin = -90.;
+  double latmax = +90.;
+  double londeg = 360./static_cast<double>(nlon);
+  double latdeg = (latmax-latmin)/static_cast<double>(nlat-1);
+
   std::vector<double> lats(nlat);
   std::vector<long>   nlons(nlat,nlon);
-  std::vector<double> lonmin(nlat,bbox.min().lon());
-  std::vector<double> lonmax(nlat,bbox.max().lon());
-
-  double latmin = bbox.min().lat();
-  double latmax = bbox.max().lat();
-
-  double delta = (latmax-latmin)/static_cast<double>(nlat-1);
+  std::vector<double> lonmin(nlat,0.);
+  std::vector<double> lonmax(nlat,360.-londeg);
 
   for( size_t jlat=0; jlat<nlat; ++jlat )
   {
-    lats[jlat] = latmax - static_cast<double>(jlat)*delta;
+    lats[jlat] = latmax - static_cast<double>(jlat)*latdeg;
   }
 
+  ReducedGrid::N_ = nlat/2;
   ReducedGrid::setup(nlat,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
 }
 
-void LonLatGrid::setup( const size_t nlon, const size_t nlat, bool poles )
+
+void RegularLonLat::setup( const double londeg, const double latdeg )
 {
-    double londelta = 360./static_cast<double>(nlon);
-    double latdelta = 180./static_cast<double>(nlat);
-
-    BoundBox bbox = poles ?
-                        BoundBox( 90.,-90, 360.-londelta, 0. ) :
-                        BoundBox( 90.-0.5*latdelta, -90+0.5*latdelta, 360.-londelta, 0. );
-
-    setup(nlon,nlat,bbox);
-}
-
-
-void LonLatGrid::setup( const double londeg, const double latdeg, bool poles )
-{
-  if( poles)
-  {
-    BoundBox bbox(90.,-90.,360.-londeg,0.);
-    setup(londeg,latdeg,bbox);
-  }
-  else
-  {
-    BoundBox bbox(90.-0.5*latdeg,-90.+0.5*latdeg,360.-londeg,0.);
-    setup(londeg,latdeg,bbox);
-  }
-}
-
-
-void LonLatGrid::setup( const double londeg, const double latdeg, const BoundBox& bbox )
-{
-  double Llon = (bbox.max().lon()-bbox.min().lon());
-  double Llat = (bbox.max().lat()-bbox.min().lat());
+  double Llon = 360.-londeg;
+  double Llat = 180.;
   double nlon_real = Llon/londeg + 1.;
   double nlat_real = Llat/latdeg + 1.;
   size_t nlon = static_cast<size_t>(nlon_real);
@@ -221,11 +147,11 @@ void LonLatGrid::setup( const double londeg, const double latdeg, const BoundBox
     msg << Llat << " is not divisible by latdeg " << latdeg << " --> nlat = " << nlat_real;
     throw BadParameter(msg.str(),Here());
   }
-  setup(nlon,nlat,bbox);
+  setup(nlon,nlat);
 }
 
 
-eckit::Properties LonLatGrid::spec() const
+eckit::Properties RegularLonLat::spec() const
 {
   eckit::Properties grid_spec;
 
@@ -248,11 +174,13 @@ eckit::Properties LonLatGrid::spec() const
 extern "C" {
 ReducedGrid* atlas__new_lonlat_grid(int nlon, int nlat)
 {
-  return new LonLatGrid(static_cast<size_t>(nlon),static_cast<size_t>(nlat));
+  return new RegularLonLat(static_cast<size_t>(nlon),static_cast<size_t>(nlat));
 }
 }
 
 //-----------------------------------------------------------------------------
 
+} // namespace lonlat
+} // namespace global
 } // namespace grid
 } // namespace atlas
