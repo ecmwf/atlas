@@ -11,34 +11,36 @@
 /// @author Willem Deconinck
 /// @date Jan 2014
 
-#ifndef atlas_grids_rgg_OctahedralReducedGaussianGrid_h
-#define atlas_grids_rgg_OctahedralReducedGaussianGrid_h
+#ifndef atlas_grids_global_gaussian_OctahedralGaussian_h
+#define atlas_grids_global_gaussian_OctahedralGaussian_h
 
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/global/gaussian/Gaussian.h"
 
 namespace atlas {
 namespace grid {
+namespace global {
+namespace gaussian {
 
 //------------------------------------------------------------------------------------------------------
 
-class OctahedralReducedGaussianGrid : public ReducedGaussianGrid {
+class OctahedralGaussian: public ReducedGaussianGrid {
 public:
 
     static std::string className() { return "atlas.grids.global.gaussian.OctahedralGaussian"; }
     static std::string grid_type_str() { return "octahedral_gaussian"; }
 
-    OctahedralReducedGaussianGrid(const size_t N, const size_t octahedralPoleStart = 20);
+    OctahedralGaussian(const size_t N);
 
-    OctahedralReducedGaussianGrid( const eckit::Parametrisation& arg1);
+    OctahedralGaussian( const eckit::Parametrisation& arg1);
 
     /// Computes the PL for the Octohedral distribution
     /// number of points at latitude closest to pole
-    static std::vector<long> computePL(const size_t N, const size_t start);
+    static std::vector<long> computePL(const size_t N);
 
 private:
 
-    void construct(const size_t N, const size_t start);
+    void construct(const size_t N);
 
     void set_typeinfo();
 
@@ -46,7 +48,9 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace gaussian
+} // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_rgg_OctahedralReducedGaussianGrid_h
+#endif // atlas_grids_global_gaussian_OctahedralGaussian_h

@@ -21,7 +21,7 @@
 #include "atlas/field/Field.h"
 
 using eckit::geometry::LLPoint2;
-using atlas::grid::OctahedralReducedGaussianGrid;
+using atlas::grid::global::gaussian::OctahedralGaussian;
 using eckit::operator<<;
 
 namespace atlas {
@@ -39,7 +39,7 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
 
     if( domain.global() ) return; // don't add virtual points to global domains
 
-    const grid::Grid& octa = OctahedralReducedGaussianGrid(16,4);
+    const grid::Grid& octa = OctahedralGaussian(16);
 
     std::vector<LLPoint2> allPts;
     octa.lonlat(allPts);

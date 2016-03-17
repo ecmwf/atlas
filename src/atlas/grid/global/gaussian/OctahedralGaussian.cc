@@ -12,11 +12,14 @@
 
 namespace atlas {
 namespace grid {
+namespace global {
+namespace gaussian {
 
 //------------------------------------------------------------------------------------------------------
 
-std::vector<long> OctahedralReducedGaussianGrid::computePL(const size_t N, const size_t start)
+std::vector<long> OctahedralGaussian::computePL(const size_t N)
 {
+  const size_t start = 20;
   std::vector<long> nlon(N);
   for(size_t jlat=0; jlat < N; ++jlat)
   {
@@ -25,44 +28,40 @@ std::vector<long> OctahedralReducedGaussianGrid::computePL(const size_t N, const
   return nlon;
 }
 
-OctahedralReducedGaussianGrid::OctahedralReducedGaussianGrid(const size_t N, const size_t octahedralPoleStart)
+OctahedralGaussian::OctahedralGaussian(const size_t N)
 {
-  construct(N,octahedralPoleStart);
+  construct(N);
   set_typeinfo();
 }
 
-OctahedralReducedGaussianGrid::OctahedralReducedGaussianGrid( const eckit::Parametrisation& params)
+OctahedralGaussian::OctahedralGaussian( const eckit::Parametrisation& params)
 {
     size_t N;
     params.get("N",N);
-
-    size_t octahedralPoleStart = 20;
-    if(params.has("OctahedralPoleStart")) {
-        params.get("OctahedralPoleStart",octahedralPoleStart);
-    }
-
-    construct(N,octahedralPoleStart);
+    construct(N);
     set_typeinfo();
 }
 
-void OctahedralReducedGaussianGrid::construct(const size_t N, const size_t start)
+void OctahedralGaussian::construct(const size_t N)
 {
-  std::vector<long> nlon = computePL(N,start);
+  std::vector<long> nlon = computePL(N);
   setup_N_hemisphere(N,nlon.data());
   ReducedGrid::N_ = nlat()/2;
 }
 
-void OctahedralReducedGaussianGrid::set_typeinfo()
+void OctahedralGaussian::set_typeinfo()
 {
     std::ostringstream s;
     s << "O"<< N();
     shortName_ = s.str();
-    grid_type_ = ReducedGaussianGrid::grid_type_str();
+    grid_type_ = grid_type_str();
 }
 
-eckit::ConcreteBuilderT1<Grid,OctahedralReducedGaussianGrid> builder_OctahedralReducedGaussianGrid (OctahedralReducedGaussianGrid::grid_type_str());
+eckit::ConcreteBuilderT1<Grid,OctahedralGaussian> builder_OctahedralGaussian (OctahedralGaussian::grid_type_str());
 
 //------------------------------------------------------------------------------------------------------
 
+} // namspace gaussian
+} // namespace global
 } // namespace grid
 } // namespace atlas

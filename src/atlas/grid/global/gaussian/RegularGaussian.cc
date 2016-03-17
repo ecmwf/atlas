@@ -43,20 +43,7 @@ RegularGaussian::RegularGaussian(const eckit::Parametrisation& params)
 {
   if( ! params.get("N",N_) ) throw eckit::BadParameter("N missing in Params",Here());
 
-  if( ! params.has("latitudes") )
-  {
-    setup(N_);
-  }
-  else
-  {
-    std::vector<long>    nlons(2*N_,4*N_);
-    std::vector<double> lat;
-
-    params.get("latitudes",lat);
-    ASSERT(lat.size() == 2*N_);
-    ReducedGrid::setup(lat.size(),lat.data(),nlons.data());
-  }
-
+  setup(N_);
   set_typeinfo();
 }
 
@@ -86,7 +73,6 @@ eckit::Properties RegularGaussian::spec() const
   grid_spec.set("grid_type",grid_type_str());
 
   grid_spec.set("N", N() );
-  grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
 
   grid_spec.set("nlat",nlat());
 

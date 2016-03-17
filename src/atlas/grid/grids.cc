@@ -126,7 +126,7 @@ Grid* grid_from_uid(const std::string& uid)
     else if( octahedral_reduced_gaussian_grid.match(uid,matches) )
     {
       int N = to_int(matches[0]);
-      gridparams.set("grid_type", OctahedralReducedGaussianGrid::grid_type_str());
+      gridparams.set("grid_type", global::gaussian::OctahedralGaussian::grid_type_str());
       gridparams.set("N",N);
       return Grid::create( gridparams );
     }
@@ -228,7 +228,7 @@ void load()
   load_grid<ReducedGaussianGrid>();
   load_grid<global::gaussian::RegularGaussian>();
   load_grid<global::gaussian::ClassicGaussian>();
-  load_grid<OctahedralReducedGaussianGrid>();
+  load_grid<global::gaussian::OctahedralGaussian>();
   load_grid<LonLatGrid>();
   load_grid<ReducedLonLatGrid>();
   load_grid<global::lonlat::ShiftedLonLat>();
