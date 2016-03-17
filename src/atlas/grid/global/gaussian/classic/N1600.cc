@@ -4,16 +4,11 @@
 
 namespace atlas {
 namespace grid {
-namespace predefined {
-namespace rgg {
+namespace global {
+namespace gaussian {
+namespace classic {
 
-eckit::ConcreteBuilderT1<Grid,N1600> deprecated_builder_N1600 (N1600::grid_type_str());
-eckit::ConcreteBuilderT1<Grid,N1600> builder_N1600 ("N1600");
-
-void N1600::construct()
-{
-  int N=1600;
-  long lon[] = {
+DEFINE_POINTS_PER_LATITUDE(1600, LIST(
     18,
     25,
     32,
@@ -1614,13 +1609,10 @@ void N1600::construct()
   6400,
   6400,
   6400
-  };
-  std::vector<double> lats(N);
-  gaussian_latitudes_npole_equator(N,lats.data());
-  setup_lat_hemisphere(N,lats.data(),lon);
-}
+))
 
-} // namespace rgg
-} // namespace predefined
+} // namespace classic
+} // namespace gaussian
+} // namespace global
 } // namespace grid
 } // namespace atlas

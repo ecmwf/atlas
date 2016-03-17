@@ -12,7 +12,8 @@
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/global/gaussian/ClassicGaussian.h"
 #include "atlas/grid/global/gaussian/latitudes/Latitudes.h"
-
+#include "atlas/grid/global/gaussian/classic/PointsPerLatitude.h"
+#include "atlas/internals/Debug.h"
 namespace atlas {
 namespace grid {
 namespace global {
@@ -35,19 +36,26 @@ void ClassicGaussian::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-ClassicGaussian::ClassicGaussian()
+ClassicGaussian::ClassicGaussian( const size_t N )
+  : ReducedGaussianGrid()
 {
-}
-
-ClassicGaussian::ClassicGaussian( const size_t N, const long nlons[], const Domain& d)
-  : ReducedGaussianGrid(N,nlons,d)
-{
+  ReducedGrid::N_ = N;
+  std::vector<long> nlon(N);
+  classic::points_per_latitude_npole_equator(N,nlon.data());
+  setup_N_hemisphere(N,nlon.data());
   set_typeinfo();
 }
 
 ClassicGaussian::ClassicGaussian(const eckit::Parametrisation& params)
-  : ReducedGaussianGrid(params)
+  : ReducedGaussianGrid()
 {
+  if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
+  size_t N;
+  params.get("N",N);
+  ReducedGrid::N_ = N;
+  std::vector<long> nlon(N);
+  classic::points_per_latitude_npole_equator(N,nlon.data());
+  setup_N_hemisphere(N,nlon.data());
   set_typeinfo();
 }
 

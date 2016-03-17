@@ -97,7 +97,10 @@ grid/global/gaussian/latitudes/N1600.cc  # TL3199
 grid/global/gaussian/latitudes/N2000.cc  # TL3999
 grid/global/gaussian/latitudes/N4000.cc  # TL7999
 grid/global/gaussian/latitudes/N8000.cc  # TL15999
+grid/global/gaussian/classic/PointsPerLatitude.h
+grid/global/gaussian/classic/PointsPerLatitude.cc
 grid/global/gaussian/classic/N.h
+grid/global/gaussian/classic/N.cc
 grid/global/gaussian/classic/N16.cc    # TL31
 grid/global/gaussian/classic/N24.cc    # TL47
 grid/global/gaussian/classic/N32.cc    # TL63

@@ -40,7 +40,8 @@ BOOST_AUTO_TEST_CASE( test_read_write )
     using namespace atlas::util::io;
 
     // mesh::Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
-    mesh::Mesh::Ptr mesh = test::generate_mesh(grid::predefined::rgg::N128());
+    mesh::Mesh::Ptr mesh = test::generate_mesh(
+       grid::global::gaussian::ClassicGaussian(128) );
 
     Gmsh gmsh;
     gmsh.options.set("ascii",true);

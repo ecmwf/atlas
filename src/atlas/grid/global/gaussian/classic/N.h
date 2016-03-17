@@ -9,12 +9,95 @@
  */
 
 /// @author Willem Deconinck
-/// @date Nov 2014
+/// @date Mar 2016
 
-#ifndef atlas_grids_reduced_gg_reduced_gg_h
-#define atlas_grids_reduced_gg_reduced_gg_h
+#ifndef atlas_grids_global_gaussian_classic_N_h
+#define atlas_grids_global_gaussian_classic_N_h
 
 #include "eckit/memory/Builder.h"
+#include "eckit/memory/Owned.h"
+
+namespace atlas {
+namespace grid {
+namespace global {
+namespace gaussian {
+namespace classic {
+
+class PointsPerLatitude : public eckit::Owned
+{
+public:
+  typedef eckit::BuilderT0<PointsPerLatitude> builder_t;
+
+  static std::string className()
+    { return "atlas.global.gaussian.classic.PointsPerLatitude"; }
+
+  /// @pre nlats has enough allocated memory to store the latitudes
+  /// @param size of lats vector
+  void assign(long nlon[], const size_t size) const;
+
+  /// @post resizes the vector to the number of latitutes
+  void assign(std::vector<long>& nlon) const;
+
+  size_t N() const { return nlon_.size(); }
+
+protected:
+
+  std::vector<long> nlon_;
+
+};
+
+//-----------------------------------------------------------------------------
+
+#define DECLARE_POINTS_PER_LATITUDE(NUMBER) \
+  class N##NUMBER : public PointsPerLatitude { public: N##NUMBER(); };
+
+#define LIST(...) __VA_ARGS__
+#define DEFINE_POINTS_PER_LATITUDE(NUMBER,NLON) \
+  eckit::ConcreteBuilderT0<PointsPerLatitude,N##NUMBER> builder_N##NUMBER(#NUMBER); \
+  \
+  N##NUMBER::N##NUMBER()\
+  {\
+    size_t N = NUMBER;\
+    long nlon[] = {NLON} ;\
+    nlon_.assign(nlon,nlon+N);\
+  }\
+
+//-----------------------------------------------------------------------------
+
+DECLARE_POINTS_PER_LATITUDE(16);
+DECLARE_POINTS_PER_LATITUDE(24);
+DECLARE_POINTS_PER_LATITUDE(32);
+DECLARE_POINTS_PER_LATITUDE(48);
+DECLARE_POINTS_PER_LATITUDE(64);
+DECLARE_POINTS_PER_LATITUDE(80);
+DECLARE_POINTS_PER_LATITUDE(96);
+DECLARE_POINTS_PER_LATITUDE(128);
+DECLARE_POINTS_PER_LATITUDE(160);
+DECLARE_POINTS_PER_LATITUDE(200);
+DECLARE_POINTS_PER_LATITUDE(256);
+DECLARE_POINTS_PER_LATITUDE(320);
+DECLARE_POINTS_PER_LATITUDE(400);
+DECLARE_POINTS_PER_LATITUDE(512);
+DECLARE_POINTS_PER_LATITUDE(576);
+DECLARE_POINTS_PER_LATITUDE(640);
+DECLARE_POINTS_PER_LATITUDE(800);
+DECLARE_POINTS_PER_LATITUDE(1024);
+DECLARE_POINTS_PER_LATITUDE(1280);
+DECLARE_POINTS_PER_LATITUDE(1600);
+DECLARE_POINTS_PER_LATITUDE(2000);
+DECLARE_POINTS_PER_LATITUDE(4000);
+DECLARE_POINTS_PER_LATITUDE(8000);
+
+#undef DECLARE_POINTS_PER_LATITUDE
+
+//-----------------------------------------------------------------------------
+
+} // namespace classic
+} // namespace gaussian
+} // namespace global
+} // namespace grid
+} // namespace atlas
+
 #include "atlas/grid/global/gaussian/Gaussian.h"
 #include "atlas/grid/global/gaussian/latitudes/Latitudes.h"
 
@@ -85,4 +168,4 @@ DEFINE_GRID(N8000);
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_reduced_gg_reduced_gg_h
+#endif // atlas_grids_global_gaussian_classic_N_h

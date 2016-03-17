@@ -20,7 +20,7 @@ namespace gaussian {
 
 //------------------------------------------------------------------------------------------------------
 
-/// @brief Reduced Gaussian Grid
+/// @brief Classic Reduced Gaussian Grid
 ///
 /// This grid is a special case of the class ReducedGrid, in which
 /// the latitudes are distributed according to the roots of the
@@ -38,14 +38,11 @@ public:
 
   ClassicGaussian( const eckit::Parametrisation& );
 
-  ClassicGaussian( const size_t N, const long npts_per_lat[], const Domain& d = Domain::makeGlobal() );
+  ClassicGaussian( const size_t N );
 
   static std::string className();
 
 protected:
-
-  /// to be used only by derived types
-  ClassicGaussian();
 
   void set_typeinfo();
 

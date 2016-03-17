@@ -350,7 +350,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
           //  int nlat=10;
           //  long lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
           //  test::MinimalMesh grid(nlat,lon);
-  grid::predefined::rgg::N32 grid;
+  grid::global::gaussian::ClassicGaussian grid(32);
 //  RegularGrid grid(128,64);
   double max_lat = grid.lat(0);
   double check_area = 360.*2.*max_lat;

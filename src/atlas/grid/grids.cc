@@ -14,7 +14,7 @@
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/grids.h"
 #include "atlas/runtime/Log.h"
-
+#include "atlas/internals/Debug.h"
 using eckit::Tokenizer;
 using eckit::Translator;
 using eckit::Factory;
@@ -110,9 +110,18 @@ Grid* grid_from_uid(const std::string& uid)
     util::Config gridparams;
     Translator<std::string,int> to_int;
     std::vector<std::string> matches;
-    if( classical_reduced_gaussian_grid.match(uid) )
+    if( classical_reduced_gaussian_grid.match(uid,matches) )
     {
-      throw eckit::BadParameter("Grid ["+uid+"] does not exist.",Here());
+      try {
+        int N = to_int(matches[0]);
+        gridparams.set("grid_type", global::gaussian::ClassicGaussian::grid_type_str());
+        gridparams.set("N",N);
+        return Grid::create( gridparams );
+      }
+      catch( const eckit::BadParameter& e ) {
+        throw eckit::BadParameter("Grid ["+uid+"] does not exist.\n"+e.what(),Here());
+      }
+      return 0;
     }
     else if( octahedral_reduced_gaussian_grid.match(uid,matches) )
     {
@@ -216,40 +225,16 @@ void load()
   // We have to touch all classes we want to register for static linking.
 
   load_grid<ReducedGrid>();
-  load_grid<global::gaussian::RegularGaussian>();
   load_grid<ReducedGaussianGrid>();
+  load_grid<global::gaussian::RegularGaussian>();
+  load_grid<global::gaussian::ClassicGaussian>();
+  load_grid<OctahedralReducedGaussianGrid>();
   load_grid<LonLatGrid>();
   load_grid<ReducedLonLatGrid>();
   load_grid<global::lonlat::ShiftedLonLat>();
   load_grid<global::lonlat::ShiftedLon>();
   load_grid<global::lonlat::ShiftedLat>();
   load_grid<Unstructured>();
-
-  load_grid<predefined::rgg::N16>();
-  load_grid<predefined::rgg::N24>();
-  load_grid<predefined::rgg::N32>();
-  load_grid<predefined::rgg::N48>();
-  load_grid<predefined::rgg::N64>();
-  load_grid<predefined::rgg::N80>();
-  load_grid<predefined::rgg::N96>();
-  load_grid<predefined::rgg::N128>();
-  load_grid<predefined::rgg::N160>();
-  load_grid<predefined::rgg::N200>();
-  load_grid<predefined::rgg::N256>();
-  load_grid<predefined::rgg::N320>();
-  load_grid<predefined::rgg::N400>();
-  load_grid<predefined::rgg::N512>();
-  load_grid<predefined::rgg::N576>();
-  load_grid<predefined::rgg::N640>();
-  load_grid<predefined::rgg::N800>();
-  load_grid<predefined::rgg::N1024>();
-  load_grid<predefined::rgg::N1280>();
-  load_grid<predefined::rgg::N1600>();
-  load_grid<predefined::rgg::N2000>();
-  load_grid<predefined::rgg::N4000>();
-  load_grid<predefined::rgg::N8000>();
-
-  load_grid<OctahedralReducedGaussianGrid>();
 
 }
 

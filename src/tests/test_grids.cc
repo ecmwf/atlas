@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg )
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
 {
-  grid::predefined::rgg::N32 grid;
+  grid::global::gaussian::ClassicGaussian grid(32);
 
   BOOST_CHECK_EQUAL(grid.N(),    32);
   BOOST_CHECK_EQUAL(grid.nlat(), 64);

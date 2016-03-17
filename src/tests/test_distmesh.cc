@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
       // test::TestGrid grid(5,lon);
 
       //  GG grid(120,60);
-  grid::predefined::rgg::N16 grid;
+  grid::global::gaussian::ClassicGaussian grid(16);
 
 
   generate.options.set("nb_parts", eckit::mpi::size());
