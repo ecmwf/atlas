@@ -11,7 +11,7 @@
 #include <typeinfo>
 #include "eckit/memory/Builder.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/global/lonlat/Shifted.h"
+#include "atlas/grid/global/lonlat/ShiftedLonLat.h"
 
 using eckit::BadParameter;
 using eckit::Params;
@@ -23,25 +23,25 @@ namespace lonlat {
 
 //------------------------------------------------------------------------------
 
-register_BuilderT1(Grid,Shifted,Shifted::grid_type_str());
+register_BuilderT1(Grid,ShiftedLonLat,ShiftedLonLat::grid_type_str());
 
 //------------------------------------------------------------------------------
 
-std::string Shifted::grid_type_str()
+std::string ShiftedLonLat::grid_type_str()
 {
   return "global_lonlat_shifted";
 }
 
 //------------------------------------------------------------------------------
 
-std::string Shifted::className()
+std::string ShiftedLonLat::className()
 {
-  return "atlas.grid.global.lonlat.Shifted";
+  return "atlas.grid.global.lonlat.ShiftedLonLat";
 }
 
 //------------------------------------------------------------------------------
 
-void Shifted::set_typeinfo()
+void ShiftedLonLat::set_typeinfo()
 {
   std::stringstream s;
   s << "S" << N();
@@ -51,13 +51,13 @@ void Shifted::set_typeinfo()
 
 //------------------------------------------------------------------------------
 
-Shifted::Shifted() : ReducedLonLatGrid()
+ShiftedLonLat::ShiftedLonLat() : ReducedLonLatGrid()
 {
 }
 
 //------------------------------------------------------------------------------
 
-Shifted::Shifted(const eckit::Parametrisation& p)
+ShiftedLonLat::ShiftedLonLat(const eckit::Parametrisation& p)
 {
   setup(p);
   set_typeinfo();
@@ -65,7 +65,7 @@ Shifted::Shifted(const eckit::Parametrisation& p)
 
 //------------------------------------------------------------------------------
 
-Shifted::Shifted( const size_t N )
+ShiftedLonLat::ShiftedLonLat( const size_t N )
 {
   setup(N);
   set_typeinfo();
@@ -73,7 +73,7 @@ Shifted::Shifted( const size_t N )
 
 //------------------------------------------------------------------------------
 
-void Shifted::setup(const eckit::Parametrisation& p)
+void ShiftedLonLat::setup(const eckit::Parametrisation& p)
 {
   size_t nlon, nlat;
 
@@ -89,7 +89,7 @@ void Shifted::setup(const eckit::Parametrisation& p)
 
 //------------------------------------------------------------------------------
 
-void Shifted::setup( const size_t N )
+void ShiftedLonLat::setup( const size_t N )
 {
   double delta = 90./static_cast<double>(N);
   std::vector<double> lats(2*N);
@@ -109,7 +109,7 @@ void Shifted::setup( const size_t N )
 
 //------------------------------------------------------------------------------
 
-eckit::Properties Shifted::spec() const
+eckit::Properties ShiftedLonLat::spec() const
 {
   eckit::Properties grid_spec;
 

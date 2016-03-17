@@ -19,10 +19,10 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/global/gaussian/ReducedGaussianGrid.h"
+#include "atlas/grid/global/gaussian/Gaussian.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
 #endif

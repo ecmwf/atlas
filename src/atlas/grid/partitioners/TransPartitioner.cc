@@ -9,7 +9,7 @@
  */
 
 #include "eckit/exception/Exceptions.h"
-#include "atlas/grid/global/ReducedGrid.h"
+#include "atlas/grid/global/Structured.h"
 #include "atlas/grid/partitioners/TransPartitioner.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/parallel/mpi/mpi.h"

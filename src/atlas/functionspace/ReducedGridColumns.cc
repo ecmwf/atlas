@@ -10,7 +10,7 @@
 
 #include "eckit/utils/MD5.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/global/ReducedGrid.h"
+#include "atlas/grid/global/Structured.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/ReducedGridColumns.h"

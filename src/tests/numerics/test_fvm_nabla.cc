@@ -20,7 +20,7 @@
 #include "atlas/util/Config.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"

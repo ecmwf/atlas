@@ -21,7 +21,7 @@
 #include "atlas/grid/partitioners/TransPartitioner.h"
 #include "atlas/grid/grids.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/runtime/LogFormat.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/util/io/Gmsh.h"

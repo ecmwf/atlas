@@ -124,7 +124,7 @@ Grid* grid_from_uid(const std::string& uid)
     else if( regular_gaussian_grid.match(uid,matches) )
     {
       int N = to_int(matches[0]);
-      gridparams.set("grid_type", GaussianGrid::grid_type_str());
+      gridparams.set("grid_type", global::gaussian::RegularGaussian::grid_type_str());
       gridparams.set("N",N);
       return Grid::create( gridparams );
     }
@@ -139,7 +139,7 @@ Grid* grid_from_uid(const std::string& uid)
     else if( shifted_lonlat_grid.match(uid,matches) )
     {
       int N = to_int(matches[0]);
-      gridparams.set("grid_type", global::lonlat::Shifted::grid_type_str());
+      gridparams.set("grid_type", global::lonlat::ShiftedLonLat::grid_type_str());
       gridparams.set("N",N);
       return Grid::create( gridparams );
     }
@@ -164,7 +164,7 @@ Grid* grid_from_uid(const std::string& uid)
       tokenize(uid,tokens);
       std::string grid_type = tokens[0];
       if( grid_type == "ll" ) grid_type = LonLatGrid::grid_type_str();
-      if( grid_type == "gg" ) grid_type = GaussianGrid::grid_type_str();
+      if( grid_type == "gg" ) grid_type = global::gaussian::RegularGaussian::grid_type_str();
       if( grid_type == "rgg") grid_type = ReducedGaussianGrid::grid_type_str();
 
       if( grid_type == ReducedGaussianGrid::grid_type_str() )
@@ -216,10 +216,13 @@ void load()
   // We have to touch all classes we want to register for static linking.
 
   load_grid<ReducedGrid>();
-  load_grid<GaussianGrid>();
+  load_grid<global::gaussian::RegularGaussian>();
   load_grid<ReducedGaussianGrid>();
   load_grid<LonLatGrid>();
   load_grid<ReducedLonLatGrid>();
+  load_grid<global::lonlat::ShiftedLonLat>();
+  load_grid<global::lonlat::ShiftedLon>();
+  load_grid<global::lonlat::ShiftedLat>();
   load_grid<Unstructured>();
 
   load_grid<predefined::rgg::N16>();

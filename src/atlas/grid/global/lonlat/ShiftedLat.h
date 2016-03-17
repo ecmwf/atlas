@@ -11,7 +11,7 @@
 #ifndef atlas_grids_global_lonlat_ShiftedLat_h
 #define atlas_grids_global_lonlat_ShiftedLat_h
 
-#include "atlas/grid/global/lonlat/ReducedLonLatGrid.h"
+#include "atlas/grid/global/lonlat/LonLat.h"
 
 namespace atlas {
 namespace grid {

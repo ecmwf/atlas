@@ -11,7 +11,7 @@
 #include <typeinfo>
 #include "eckit/memory/Builder.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/global/lonlat/LonLatGrid.h"
+#include "atlas/grid/global/lonlat/RegularLonLat.h"
 
 using eckit::BadParameter;
 using eckit::Params;

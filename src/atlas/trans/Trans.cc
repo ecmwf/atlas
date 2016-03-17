@@ -10,9 +10,9 @@
 
 #include "eckit/parser/JSON.h"
 #include "eckit/exception/Exceptions.h"
-#include "atlas/grid/global/ReducedGrid.h"
-#include "atlas/grid/global/lonlat/LonLatGrid.h"
-#include "atlas/grid/global/lonlat/Shifted.h"
+#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/global/lonlat/RegularLonLat.h"
+#include "atlas/grid/global/lonlat/ShiftedLonLat.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/FieldSet.h"
@@ -73,8 +73,8 @@ Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p
     throw eckit::BadCast("Grid is not a grid::ReducedGrid type. Cannot partition using IFS trans",Here());
 
   const grid::LonLatGrid* lonlat = dynamic_cast<const grid::LonLatGrid*>(reduced);
-  const grid::global::lonlat::Shifted* shiftedlonlat
-      = dynamic_cast<const grid::global::lonlat::Shifted*>(reduced);
+  const grid::global::lonlat::ShiftedLonLat* shiftedlonlat
+      = dynamic_cast<const grid::global::lonlat::ShiftedLonLat*>(reduced);
 
   if( lonlat )
     ctor_lonlat( lonlat->nlon(), lonlat->nlat(), nsmax, p );

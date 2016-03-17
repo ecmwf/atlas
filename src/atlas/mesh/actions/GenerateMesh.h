@@ -11,7 +11,7 @@
 #ifndef atlas_GenerateMesh_h
 #define atlas_GenerateMesh_h
 
-#include "atlas/grid/global/ReducedGrid.h"
+#include "atlas/grid/global/Structured.h"
 #include "atlas/mesh/Mesh.h"
 
 namespace atlas {

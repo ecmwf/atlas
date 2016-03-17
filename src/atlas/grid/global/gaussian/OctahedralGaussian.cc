@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/grid/global/gaussian/OctahedralReducedGaussianGrid.h"
+#include "atlas/grid/global/gaussian/OctahedralGaussian.h"
 
 namespace atlas {
 namespace grid {

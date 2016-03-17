@@ -15,8 +15,8 @@
 #define atlas_grids_reduced_gg_reduced_gg_h
 
 #include "eckit/memory/Builder.h"
-#include "atlas/grid/global/gaussian/ReducedGaussianGrid.h"
-#include "atlas/grid/global/gaussian/GaussianLatitudes.h"
+#include "atlas/grid/global/gaussian/Gaussian.h"
+#include "atlas/grid/global/gaussian/Latitudes.h"
 
 namespace atlas {
 namespace grid {

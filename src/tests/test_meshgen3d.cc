@@ -17,7 +17,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/grid/grids.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 

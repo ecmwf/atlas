@@ -165,12 +165,7 @@ void AtlasGrids::run()
                   << g.shortName() << std::endl;
       Log::info() << "   uid:                                "
                   << g.uniqueId() << std::endl;
-      if( grid->gridType() == GaussianGrid::grid_type_str() )
-      {
-        Log::info() << "   N number:                           "
-                    << dynamic_cast<GaussianGrid*>(grid.get())->N() << std::endl;
-      }
-      if( grid->gridType() == ReducedGaussianGrid::grid_type_str() )
+      if( dynamic_cast<ReducedGaussianGrid*>(grid.get()) )
       {
         Log::info() << "   N number:                           "
                     << dynamic_cast<ReducedGaussianGrid*>(grid.get())->N() << std::endl;

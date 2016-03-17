@@ -15,7 +15,7 @@
 
 #include "eckit/memory/ScopedPtr.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/global/gaussian/GaussianLatitudes.h"
+#include "atlas/grid/global/gaussian/Latitudes.h"
 #include "atlas/grid/predefined/gausslat/gausslat.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Constants.h"

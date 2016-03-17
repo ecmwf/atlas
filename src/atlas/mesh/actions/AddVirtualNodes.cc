@@ -14,7 +14,7 @@
 #include "eckit/geometry/Point3.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Domain.h"
-#include "atlas/grid/global/gaussian/OctahedralReducedGaussianGrid.h"
+#include "atlas/grid/global/gaussian/OctahedralGaussian.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/AddVirtualNodes.h"

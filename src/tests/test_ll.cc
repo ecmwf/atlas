@@ -13,10 +13,10 @@
 
 #include "atlas/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/grid/global/lonlat/LonLatGrid.h"
+#include "atlas/grid/global/lonlat/RegularLonLat.h"
 
 
 using namespace atlas::util::io;

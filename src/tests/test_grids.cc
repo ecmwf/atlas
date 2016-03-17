@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE( test_factory )
 BOOST_AUTO_TEST_CASE( test_regular_gg )
 {
   // Constructor for N=32
-  GaussianGrid grid(32);
+  global::gaussian::RegularGaussian grid(32);
 
   BOOST_CHECK_EQUAL(grid.N(), 32);
   BOOST_CHECK_EQUAL(grid.nlat(), 64);

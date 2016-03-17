@@ -15,7 +15,7 @@
 #include <functional>
 #include <algorithm>
 #include "eckit/geometry/Point2.h"
-#include "atlas/grid/global/ReducedGrid.h"
+#include "atlas/grid/global/Structured.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/internals/Functions.h"
 #include "atlas/parallel/mpi/mpi.h"

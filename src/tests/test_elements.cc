@@ -28,7 +28,7 @@
 #include "atlas/mesh/Connectivity.h"
 
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/Grid.h"
 
 // ------------------------------------------------------------------

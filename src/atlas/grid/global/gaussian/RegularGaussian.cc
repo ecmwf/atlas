@@ -10,22 +10,24 @@
 
 #include <typeinfo>
 #include "eckit/memory/Builder.h"
-#include "atlas/grid/global/gaussian/GaussianGrid.h"
-#include "atlas/grid/global/gaussian/GaussianLatitudes.h"
+#include "atlas/grid/global/gaussian/RegularGaussian.h"
+#include "atlas/grid/global/gaussian/Latitudes.h"
 
 namespace atlas {
 namespace grid {
+namespace global {
+namespace gaussian {
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-register_BuilderT1(Grid, GaussianGrid,GaussianGrid::grid_type_str());
+register_BuilderT1(Grid, RegularGaussian,RegularGaussian::grid_type_str());
 
-std::string GaussianGrid::className()
+std::string RegularGaussian::className()
 {
-  return "atlas.grid.GaussianGrid";
+  return "atlas.grid.global.gaussian.RegularGaussian";
 }
 
-void GaussianGrid::set_typeinfo()
+void RegularGaussian::set_typeinfo()
 {
   std::stringstream s;
   s << "F"<< N();
@@ -33,11 +35,11 @@ void GaussianGrid::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-GaussianGrid::GaussianGrid() : ReducedGaussianGrid()
+RegularGaussian::RegularGaussian() : ReducedGaussianGrid()
 {
 }
 
-GaussianGrid::GaussianGrid(const eckit::Parametrisation& params)
+RegularGaussian::RegularGaussian(const eckit::Parametrisation& params)
 {
   if( ! params.get("N",N_) ) throw eckit::BadParameter("N missing in Params",Here());
 
@@ -58,27 +60,27 @@ GaussianGrid::GaussianGrid(const eckit::Parametrisation& params)
   set_typeinfo();
 }
 
-GaussianGrid::GaussianGrid( const size_t N )
+RegularGaussian::RegularGaussian( const size_t N )
 {
   ReducedGrid::N_ = N;
   setup(N);
   set_typeinfo();
 }
 
-void GaussianGrid::setup(const size_t N)
+void RegularGaussian::setup(const size_t N)
 {
   std::vector<double> lats (N);
   gaussian_latitudes_npole_equator(N,lats.data());
   setup_lat_hemisphere(N,lats.data());
 }
 
-void GaussianGrid::setup_lat_hemisphere(const size_t N, const double lats[])
+void RegularGaussian::setup_lat_hemisphere(const size_t N, const double lats[])
 {
   std::vector<long> nlons(N,4*N);
   ReducedGrid::setup_lat_hemisphere(N,lats,nlons.data());
 }
 
-eckit::Properties GaussianGrid::spec() const
+eckit::Properties RegularGaussian::spec() const
 {
   eckit::Properties grid_spec;
   grid_spec.set("grid_type",grid_type_str());
@@ -102,11 +104,13 @@ eckit::Properties GaussianGrid::spec() const
 extern "C" {
 ReducedGrid* atlas__new_gaussian_grid ( int N )
 {
-  return new GaussianGrid(N);
+  return new RegularGaussian(N);
 }
 }
 
 //-----------------------------------------------------------------------------
 
+} // namespace gaussian
+} // namespace global
 } // namespace grid
 } // namespace atlas

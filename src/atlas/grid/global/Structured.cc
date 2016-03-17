@@ -12,7 +12,7 @@
 #include <string>
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
-#include "atlas/grid/global/ReducedGrid.h"
+#include "atlas/grid/global/Structured.h"
 
 using eckit::Factory;
 using eckit::MD5;

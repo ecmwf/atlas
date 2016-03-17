@@ -17,7 +17,7 @@
 #include "atlas/internals/AccumulateFaces.h"
 
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/BuildEdges.h"

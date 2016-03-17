@@ -8,13 +8,15 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_grids_GaussianGrid_h
-#define atlas_grids_GaussianGrid_h
+#ifndef atlas_grids_global_gaussian_RegularGaussian_h
+#define atlas_grids_global_gaussian_RegularGaussian_h
 
-#include "atlas/grid/global/gaussian/ReducedGaussianGrid.h"
+#include "atlas/grid/global/gaussian/Gaussian.h"
 
 namespace atlas {
 namespace grid {
+namespace global {
+namespace gaussian {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -52,17 +54,17 @@ namespace grid {
 /// ==================================================================================
 /// Area: Do we check the area.
 /// Area: Can we assume area is multiple of the grids ?
-class GaussianGrid: public ReducedGaussianGrid {
+class RegularGaussian: public ReducedGaussianGrid {
 
 public:
 
   static std::string grid_type_str() { return "regular_gg"; }
 
-  GaussianGrid();
+  RegularGaussian();
 
-  GaussianGrid( const eckit::Parametrisation& );
+  RegularGaussian( const eckit::Parametrisation& );
 
-  GaussianGrid( const size_t N );
+  RegularGaussian( const size_t N );
 
   static std::string className();
 
@@ -81,7 +83,9 @@ protected:
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace gaussian
+} // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_GaussianGrid_h
+#endif // atlas_grids_global_gaussian_RegularGaussian_h

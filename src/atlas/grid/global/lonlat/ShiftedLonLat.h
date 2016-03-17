@@ -8,10 +8,10 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_grids_global_lonlat_Shifted_h
-#define atlas_grids_global_lonlat_Shifted_h
+#ifndef atlas_grids_global_lonlat_ShiftedLonLat_h
+#define atlas_grids_global_lonlat_ShiftedLonLat_h
 
-#include "atlas/grid/global/lonlat/ReducedLonLatGrid.h"
+#include "atlas/grid/global/lonlat/LonLat.h"
 
 namespace atlas {
 namespace grid {
@@ -20,19 +20,19 @@ namespace lonlat {
 
 //------------------------------------------------------------------------------
   
-class Shifted: public ReducedLonLatGrid {
+class ShiftedLonLat: public ReducedLonLatGrid {
 
 public:
 
   static std::string grid_type_str();
 
-  Shifted();
+  ShiftedLonLat();
 
   /// @brief Constructor
-  Shifted( const eckit::Parametrisation& );
+  ShiftedLonLat( const eckit::Parametrisation& );
 
   /// @brief Constructor
-  Shifted( const size_t N );
+  ShiftedLonLat( const size_t N );
 
   static std::string className();
 
@@ -56,4 +56,4 @@ protected:
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_global_lonlat_Shifted_h
+#endif // atlas_grids_global_lonlat_ShiftedLonLat_h
