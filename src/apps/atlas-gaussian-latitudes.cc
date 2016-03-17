@@ -23,7 +23,7 @@
 #include "eckit/runtime/Context.h"
 
 #include "atlas/atlas.h"
-#include "atlas/grid/global/gaussian/Latitudes.h"
+#include "atlas/grid/global/gaussian/latitudes/Latitudes.h"
 
 //------------------------------------------------------------------------------------------------------
 

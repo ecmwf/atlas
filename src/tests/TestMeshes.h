@@ -9,7 +9,7 @@
  */
 
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/global/gaussian/Latitudes.h"
+#include "atlas/grid/global/gaussian/latitudes/Latitudes.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/mesh/Mesh.h"

@@ -20,7 +20,7 @@
 #include "atlas/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/global/gaussian/Latitudes.h"
+#include "atlas/grid/global/gaussian/latitudes/Latitudes.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
@@ -38,7 +38,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Config.h"
-#include "atlas/grid/predefined/rgg/rgg.h"
+#include "atlas/grid/global/gaussian/classic/N.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/internals/Debug.h"
 

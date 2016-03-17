@@ -25,7 +25,7 @@
 #include "atlas/grid/global/Structured.h"
 #include "atlas/grid/global/lonlat/LonLat.h"
 #include "atlas/grid/global/Unstructured.h"
-#include "atlas/grid/predefined/rgg/rgg.h"
+#include "atlas/grid/global/gaussian/classic/N.h"
 
 namespace atlas {
 namespace grid {

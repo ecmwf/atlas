@@ -11,7 +11,7 @@
 #include <typeinfo>
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/global/gaussian/RegularGaussian.h"
-#include "atlas/grid/global/gaussian/Latitudes.h"
+#include "atlas/grid/global/gaussian/latitudes/Latitudes.h"
 
 namespace atlas {
 namespace grid {

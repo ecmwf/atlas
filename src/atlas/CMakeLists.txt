@@ -52,8 +52,8 @@ grid/global/gaussian/Gaussian.h
 grid/global/gaussian/Gaussian.cc
 grid/global/gaussian/RegularGaussian.h
 grid/global/gaussian/RegularGaussian.cc
-grid/global/gaussian/Latitudes.h
-grid/global/gaussian/Latitudes.cc
+grid/global/gaussian/latitudes/Latitudes.h
+grid/global/gaussian/latitudes/Latitudes.cc
 grid/global/lonlat/LonLat.h
 grid/global/lonlat/LonLat.cc
 grid/global/lonlat/RegularLonLat.h
@@ -66,55 +66,55 @@ grid/global/lonlat/ShiftedLat.h
 grid/global/lonlat/ShiftedLat.cc
 grid/unused/RotatedGrid.h
 grid/unused/RotatedGrid.cc
-grid/predefined/gausslat/gausslat.h
-grid/predefined/gausslat/gausslat.cc
-grid/predefined/gausslat/N16.cc    # TL31
-grid/predefined/gausslat/N24.cc    # TL47
-grid/predefined/gausslat/N32.cc    # TL63
-grid/predefined/gausslat/N48.cc    # TL95
-grid/predefined/gausslat/N64.cc    # TL127
-grid/predefined/gausslat/N80.cc    # TL159
-grid/predefined/gausslat/N96.cc    # TL191
-grid/predefined/gausslat/N128.cc   # TL255
-grid/predefined/gausslat/N160.cc   # TL319
-grid/predefined/gausslat/N200.cc   # TL399
-grid/predefined/gausslat/N256.cc   # TL511
-grid/predefined/gausslat/N320.cc   # TL639
-grid/predefined/gausslat/N400.cc   # TL799
-grid/predefined/gausslat/N512.cc   # TL1023
-grid/predefined/gausslat/N576.cc   # TL1151
-grid/predefined/gausslat/N640.cc   # TL1279
-grid/predefined/gausslat/N800.cc   # TL1599
-grid/predefined/gausslat/N1024.cc  # TL2047
-grid/predefined/gausslat/N1280.cc  # TL2559
-grid/predefined/gausslat/N1600.cc  # TL3199
-grid/predefined/gausslat/N2000.cc  # TL3999
-grid/predefined/gausslat/N4000.cc  # TL7999
-grid/predefined/gausslat/N8000.cc  # TL15999
-grid/predefined/rgg/rgg.h
-grid/predefined/rgg/N16.cc    # TL31
-grid/predefined/rgg/N24.cc    # TL47
-grid/predefined/rgg/N32.cc    # TL63
-grid/predefined/rgg/N48.cc    # TL95
-grid/predefined/rgg/N64.cc    # TL127
-grid/predefined/rgg/N80.cc    # TL159
-grid/predefined/rgg/N96.cc    # TL191
-grid/predefined/rgg/N128.cc   # TL255
-grid/predefined/rgg/N160.cc   # TL319
-grid/predefined/rgg/N200.cc   # TL399
-grid/predefined/rgg/N256.cc   # TL511
-grid/predefined/rgg/N320.cc   # TL639
-grid/predefined/rgg/N400.cc   # TL799
-grid/predefined/rgg/N512.cc   # TL1023
-grid/predefined/rgg/N576.cc   # TL1151
-grid/predefined/rgg/N640.cc   # TL1279
-grid/predefined/rgg/N800.cc   # TL1599
-grid/predefined/rgg/N1024.cc  # TL2047
-grid/predefined/rgg/N1280.cc  # TL2559
-grid/predefined/rgg/N1600.cc  # TL3199
-grid/predefined/rgg/N2000.cc  # TL3999
-grid/predefined/rgg/N4000.cc  # TL7999
-grid/predefined/rgg/N8000.cc  # TL15999
+grid/global/gaussian/latitudes/N.h
+grid/global/gaussian/latitudes/N.cc
+grid/global/gaussian/latitudes/N16.cc    # TL31
+grid/global/gaussian/latitudes/N24.cc    # TL47
+grid/global/gaussian/latitudes/N32.cc    # TL63
+grid/global/gaussian/latitudes/N48.cc    # TL95
+grid/global/gaussian/latitudes/N64.cc    # TL127
+grid/global/gaussian/latitudes/N80.cc    # TL159
+grid/global/gaussian/latitudes/N96.cc    # TL191
+grid/global/gaussian/latitudes/N128.cc   # TL255
+grid/global/gaussian/latitudes/N160.cc   # TL319
+grid/global/gaussian/latitudes/N200.cc   # TL399
+grid/global/gaussian/latitudes/N256.cc   # TL511
+grid/global/gaussian/latitudes/N320.cc   # TL639
+grid/global/gaussian/latitudes/N400.cc   # TL799
+grid/global/gaussian/latitudes/N512.cc   # TL1023
+grid/global/gaussian/latitudes/N576.cc   # TL1151
+grid/global/gaussian/latitudes/N640.cc   # TL1279
+grid/global/gaussian/latitudes/N800.cc   # TL1599
+grid/global/gaussian/latitudes/N1024.cc  # TL2047
+grid/global/gaussian/latitudes/N1280.cc  # TL2559
+grid/global/gaussian/latitudes/N1600.cc  # TL3199
+grid/global/gaussian/latitudes/N2000.cc  # TL3999
+grid/global/gaussian/latitudes/N4000.cc  # TL7999
+grid/global/gaussian/latitudes/N8000.cc  # TL15999
+grid/global/gaussian/classic/N.h
+grid/global/gaussian/classic/N16.cc    # TL31
+grid/global/gaussian/classic/N24.cc    # TL47
+grid/global/gaussian/classic/N32.cc    # TL63
+grid/global/gaussian/classic/N48.cc    # TL95
+grid/global/gaussian/classic/N64.cc    # TL127
+grid/global/gaussian/classic/N80.cc    # TL159
+grid/global/gaussian/classic/N96.cc    # TL191
+grid/global/gaussian/classic/N128.cc   # TL255
+grid/global/gaussian/classic/N160.cc   # TL319
+grid/global/gaussian/classic/N200.cc   # TL399
+grid/global/gaussian/classic/N256.cc   # TL511
+grid/global/gaussian/classic/N320.cc   # TL639
+grid/global/gaussian/classic/N400.cc   # TL799
+grid/global/gaussian/classic/N512.cc   # TL1023
+grid/global/gaussian/classic/N576.cc   # TL1151
+grid/global/gaussian/classic/N640.cc   # TL1279
+grid/global/gaussian/classic/N800.cc   # TL1599
+grid/global/gaussian/classic/N1024.cc  # TL2047
+grid/global/gaussian/classic/N1280.cc  # TL2559
+grid/global/gaussian/classic/N1600.cc  # TL3199
+grid/global/gaussian/classic/N2000.cc  # TL3999
+grid/global/gaussian/classic/N4000.cc  # TL7999
+grid/global/gaussian/classic/N8000.cc  # TL15999
 grid/partitioners/EqualRegionsPartitioner.h
 grid/partitioners/EqualRegionsPartitioner.cc
 grid/partitioners/Partitioner.h

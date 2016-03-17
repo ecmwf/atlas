@@ -29,7 +29,7 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/grid/predefined/rgg/rgg.h"
+#include "atlas/grid/global/gaussian/classic/N.h"
 #include "atlas/internals/IsGhost.h"
 #include "atlas/runtime/Log.h"
 
