@@ -19,8 +19,9 @@
 
 namespace atlas {
 namespace grid {
+namespace deprecated {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /// RotatedGrid is a grid where the poles are shifted
 ///
@@ -93,8 +94,9 @@ class RotatedGrid : public Grid {
     mutable std::string  shortName_;
 };
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
+} // namespace deprecated
 } // namespace grid
 } // namespace atlas
 

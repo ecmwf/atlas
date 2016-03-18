@@ -12,7 +12,7 @@
 #include "atlas/runtime/Log.h"
 #include "eckit/value/Value.h"
 #include "eckit/geometry/RotateGrid.h"
-#include "atlas/grid/unused/RotatedGrid.h"
+#include "atlas/grid/deprecated/RotatedGrid.h"
 
 using namespace eckit;
 using namespace eckit::geometry;
@@ -20,8 +20,9 @@ using namespace std;
 
 namespace atlas {
 namespace grid {
+namespace deprecated {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 RotatedGrid::RotatedGrid(Grid *grid,
                          double south_pole_latitude,
@@ -96,7 +97,8 @@ void RotatedGrid::print(ostream& os) const
        << "," << *grid_ << ")";
 }
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
+} // namespace deprecated
 } // namespace grid
 } // namespace atlas

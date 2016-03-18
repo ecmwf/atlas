@@ -126,8 +126,10 @@ grid/global/gaussian/classic/N1600.cc  # TL3199
 grid/global/gaussian/classic/N2000.cc  # TL3999
 grid/global/gaussian/classic/N4000.cc  # TL7999
 grid/global/gaussian/classic/N8000.cc  # TL15999
-#grid/unused/RotatedGrid.h
-#grid/unused/RotatedGrid.cc
+grid/deprecated/LocalGrid.h
+grid/deprecated/LocalGrid.cc
+grid/deprecated/RotatedGrid.h
+grid/deprecated/RotatedGrid.cc
 grid/partitioners/EqualRegionsPartitioner.h
 grid/partitioners/EqualRegionsPartitioner.cc
 grid/partitioners/Partitioner.h
