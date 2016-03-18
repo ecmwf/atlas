@@ -18,7 +18,7 @@ namespace grid {
 namespace global {
 namespace gaussian {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /// @brief Regular Gaussian Grid
 ///
@@ -75,7 +75,6 @@ public:
 protected:
 
   void setup(const size_t N);
-  void setup_lat_hemisphere(const size_t N, const double lats[]);
   virtual void set_typeinfo();
 };
 

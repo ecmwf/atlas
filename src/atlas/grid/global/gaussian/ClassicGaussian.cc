@@ -8,18 +8,16 @@
  * does it submit to any jurisdiction.
  */
 
-#include <typeinfo>
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/global/gaussian/ClassicGaussian.h"
-#include "atlas/grid/global/gaussian/latitudes/Latitudes.h"
 #include "atlas/grid/global/gaussian/classic/PointsPerLatitude.h"
-#include "atlas/internals/Debug.h"
+
 namespace atlas {
 namespace grid {
 namespace global {
 namespace gaussian {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 register_BuilderT1(Grid,ClassicGaussian,ClassicGaussian::grid_type_str());
 

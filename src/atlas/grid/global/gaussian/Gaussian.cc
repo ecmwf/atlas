@@ -20,6 +20,36 @@ namespace gaussian {
 
 //------------------------------------------------------------------------------
 
+void Gaussian::LatitudesNorthPoleToEquator(const size_t N, double latitudes[])
+{
+  global::gaussian::latitudes::gaussian_latitudes_npole_equator(N,latitudes);
+}
+
+//------------------------------------------------------------------------------
+
+void Gaussian::LatitudesNorthPoleToSouthPole(const size_t N, double latitudes[])
+{
+  global::gaussian::latitudes::gaussian_latitudes_npole_spole(N,latitudes);
+}
+
+//------------------------------------------------------------------------------
+
+void Gaussian::QuadratureNorthPoleToEquator(const size_t N, double weights[])
+{
+  std::vector<double> lats(N);
+  latitudes::gaussian_quadrature_npole_equator(N,lats.data(),weights);
+}
+
+//------------------------------------------------------------------------------
+
+void Gaussian::QuadratureNorthPoleToSouthPole(const size_t N, double weights[])
+{
+  std::vector<double> lats(2*N);
+  latitudes::gaussian_quadrature_npole_equator(N,lats.data(),weights);
+}
+
+//------------------------------------------------------------------------------
+  
 std::string Gaussian::className()
 {
   return "atlas.grid.global.gaussian.Gaussian";
@@ -53,7 +83,7 @@ void Gaussian::setup_N_hemisphere( const size_t N, const long nlons[] )
 {
   // hemisphere
   std::vector<double> lats (N);
-  global::gaussian::latitudes::gaussian_latitudes_npole_equator(N,lats.data());
+  LatitudesNorthPoleToEquator(N,lats.data());
   Structured::setup_lat_hemisphere(N,lats.data(),nlons);
 }
 

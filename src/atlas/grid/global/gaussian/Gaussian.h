@@ -18,7 +18,7 @@ namespace grid {
 namespace global {
 namespace gaussian {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /// @brief (Reduced) Gaussian Grid
 ///
@@ -32,7 +32,40 @@ namespace gaussian {
 ///   npts_per_lat[] = number of points on each latitude
 
 class Gaussian: public Structured {
+
 public:
+
+  /// @brief Compute gaussian latitudes between North pole and equator
+  /// @param N         [in]  Number of latitudes between pole and equator
+  ///                        (Gaussian N number)
+  /// @param latitudes [out] latitudes in degrees
+  static void LatitudesNorthPoleToEquator(const size_t N, double latitudes[]);
+
+
+  /// @brief Compute gaussian latitudes between North pole and South pole
+  /// @param N         [in]  Number of latitudes between pole and equator
+  ///                        (Gaussian N number)
+  /// @param latitudes [out] latitudes in degrees  (size 2*N)
+  static void LatitudesNorthPoleToSouthPole(const size_t N, double latitudes[]);
+
+  /// @brief Compute gaussian quadrature weights
+  ///        between North pole and equator
+  /// @param N         [in]  Number of latitudes between pole and equator
+  ///                        (Gaussian N number)
+  /// @param weights   [out] quadrature weights
+  /// @note Weights are normalized so that their sum equals 0.5 between
+  ///       pole and equator, or 1. from pole to pole
+  static void QuadratureNorthPoleToEquator (const size_t N, double weights[]);
+
+  /// @brief Compute gaussian quadrature weights
+  ///        between North pole and South pole
+  /// @param N         [in]  Number of latitudes between pole and equator
+  ///                        (Gaussian N number)
+  /// @param weights   [out] quadrature weights   (size 2*N)
+  /// @note Weights are normalized so that their sum equals 0.5 between
+  ///       pole and equator, or 1. from pole to pole
+  static void QuadratureNorthPoleToSouthPole (const size_t N, double weights[]);
+
 
   static std::string grid_type_str() { return "gaussian"; }
 

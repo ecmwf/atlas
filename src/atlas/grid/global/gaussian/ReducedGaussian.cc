@@ -11,7 +11,6 @@
 #include <typeinfo>
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/global/gaussian/ReducedGaussian.h"
-#include "atlas/grid/global/gaussian/latitudes/Latitudes.h"
 
 namespace atlas {
 namespace grid {
@@ -68,14 +67,6 @@ void ReducedGaussian::setup( const eckit::Parametrisation& params )
   {
     Structured::setup(params);
   }
-}
-
-void ReducedGaussian::setup_N_hemisphere( const size_t N, const long nlons[] )
-{
-  // hemisphere
-  std::vector<double> lats (N);
-  latitudes::gaussian_latitudes_npole_equator(N,lats.data());
-  Structured::setup_lat_hemisphere(N,lats.data(),nlons);
 }
 
 eckit::Properties ReducedGaussian::spec() const

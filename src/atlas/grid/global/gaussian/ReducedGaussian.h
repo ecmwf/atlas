@@ -49,7 +49,6 @@ protected:
   ReducedGaussian() : Gaussian() {}
 
   void setup( const eckit::Parametrisation& );
-  void setup_N_hemisphere( const size_t N, const long npts_per_lat[] );
   virtual void set_typeinfo();
 
 };
