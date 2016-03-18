@@ -313,7 +313,7 @@ TEST( test_fieldset )
 END_TEST
 
 TEST( test_meshgen )
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_grid_Structured) :: grid
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Edges) :: edges
@@ -326,8 +326,8 @@ TEST( test_meshgen )
 
   write(*,*) "test_meshgen starting"
 
-  grid = atlas_ReducedGrid("N24")
-  meshgenerator = atlas_ReducedGridMeshGenerator()
+  grid = atlas_grid_Structured("N24")
+  meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid)
   nodes = mesh%nodes()
   call meshgenerator%final()
@@ -373,7 +373,7 @@ TEST( test_meshgen )
 END_TEST
 
 TEST( test_griddistribution )
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_grid_Structured) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_GridDistribution) :: griddistribution
@@ -381,9 +381,9 @@ TEST( test_griddistribution )
   integer, allocatable :: part(:)
   integer :: jnode
 
-  grid = atlas_ReducedGrid("O16")
-  !grid = atlas_ReducedGrid("ll.128x64")
-  !grid = atlas_LonLatGrid(128,64)
+  grid = atlas_grid_Structured("O16")
+  !grid = atlas_grid_Structured("ll.128x64")
+  !grid = atlas_grid_ShiftedLonLat(128,64)
 
   allocate( part(grid%npts()) )
   do jnode=1,grid%npts()/3
@@ -394,7 +394,7 @@ TEST( test_griddistribution )
   enddo
 
   griddistribution = atlas_GridDistribution(part, part0=1)
-  meshgenerator = atlas_ReducedGridMeshGenerator()
+  meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid,griddistribution)
   call griddistribution%final()
 
@@ -437,7 +437,7 @@ END_TEST
 
 TEST( test_fieldcreation )
   use fcta_Mesh_fixture , only : FieldParams => atlas_FieldParametrisation
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_grid_Structured) :: grid
   type(atlas_Field) :: field
   type(atlas_FieldParametrisation) :: params
 
@@ -445,7 +445,7 @@ TEST( test_fieldcreation )
   write(0,*) field%name(), field%size()
   call field%final()
 
-  grid = atlas_ReducedGrid("O80")
+  grid = atlas_grid_Structured("O80")
   params = atlas_FieldParametrisation(creator="IFS",nproma=1024,ngptot=grid%npts(),nlev=137,nvar=1,kind=4)
   field = atlas_Field(params)
   call params%final()
@@ -464,7 +464,7 @@ END_TEST
 
 
 TEST( test_reducedgrid )
-      type(atlas_ReducedGrid) :: grid
+      type(atlas_grid_Structured) :: grid
       type(atlas_Mesh) :: mesh
       type(atlas_MeshGenerator) :: meshgenerator
       integer, parameter :: nlat = 6
@@ -472,8 +472,8 @@ TEST( test_reducedgrid )
       integer(c_int) :: nlon(nlat)
       lats = [80.,40.,30.,-30.,-60.,-75.]
       nlon = [4,16,32,32,16,4]
-      grid = atlas_ReducedGrid(lats,nlon)
-      meshgenerator = atlas_ReducedGridMeshGenerator()
+      grid = atlas_grid_Structured(lats,nlon)
+      meshgenerator = atlas_meshgenerator_Structured()
       mesh = meshgenerator%generate(grid)
       call atlas_write_gmsh(mesh,"test_reducedgrid.msh")
       call meshgenerator%final()
@@ -482,7 +482,7 @@ TEST( test_reducedgrid )
 END_TEST
 
 TEST( test_fv )
-      type(atlas_ReducedGrid) :: grid
+      type(atlas_grid_Structured) :: grid
       type(atlas_Mesh) :: mesh
       type(atlas_MeshGenerator) :: meshgenerator
       type(atlas_GridDistribution) :: griddistribution
@@ -504,7 +504,7 @@ TEST( test_fv )
 
       ! Create a new Reduced Gaussian Grid based on a nloen array
       call atlas_log%info("Creating grid")
-      grid = atlas_ReducedGaussianGrid( nloen(1:32) )
+      grid = atlas_grid_ReducedGaussian( nloen(1:32) )
 
       ! Grid distribution: all points belong to partition 1
       allocate( part(grid%npts()) )
@@ -512,7 +512,7 @@ TEST( test_fv )
       griddistribution = atlas_GridDistribution(part, part0=1)
 
       ! Generate mesh with given grid and distribution
-      meshgenerator = atlas_ReducedGridMeshGenerator()
+      meshgenerator = atlas_meshgenerator_Structured()
       mesh = meshgenerator%generate(grid,griddistribution)
       call griddistribution%final()
 

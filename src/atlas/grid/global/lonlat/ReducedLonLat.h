@@ -33,22 +33,12 @@ namespace lonlat {
 class ReducedLonLat: public LonLat {
 
 public:
-  enum {EXCLUDES_POLES=0, INCLUDES_POLES=1};
-
-private:
-
-  struct defaults {
-    // By default ReducedLonLat grids have the pole included
-    static bool poles() { return INCLUDES_POLES; }
-  };
-
-public:
 
   static std::string grid_type_str();
 
   ReducedLonLat( const eckit::Parametrisation& );
 
-  ReducedLonLat( const size_t nlat, const long nlon[], bool poles = defaults::poles() );
+  ReducedLonLat( const size_t nlat, const long nlon[], const Shift& = Shift::NONE );
 
   static std::string className();
 
@@ -57,12 +47,8 @@ public:
 protected:
 
   void setup( const eckit::Parametrisation& );
-  void setup( const size_t nlat, const long nlon[], bool poles=defaults::poles() );
+  void setup( const size_t nlat, const long nlon[], const Shift& = Shift::NONE );
   void set_typeinfo();
-
-private:
-
-  bool poles_;
 
 };
 

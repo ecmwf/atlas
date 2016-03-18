@@ -46,8 +46,6 @@ public:
 
   Structured();
 
-  // Structured( const eckit::Parametrisation& );
-
   virtual BoundBox boundingBox() const;
 
   virtual size_t npts() const;
@@ -67,10 +65,11 @@ public:
 
   size_t nlonmax() const;
 
+  size_t nlonmin() const;
+
   // Note that this is not the same type as the constructor
   // We return vector<int> for the fortran
   const std::vector<long>& points_per_latitude() const;
-  const std::vector<int>& npts_per_lat() const;
 
   const std::vector<double>& latitudes() const;
 
@@ -79,6 +78,8 @@ public:
   double lat( const size_t jlat ) const;
 
   void lonlat( const size_t jlat, const size_t jlon, double crd[] ) const;
+    
+  bool reduced() const { return nlonmax() != nlonmin(); }
 
 private: // methods
 
@@ -110,6 +111,7 @@ protected:
 protected:
 
   size_t              N_;
+  size_t              nlonmin_;
   size_t              nlonmax_;
 
   size_t              npts_;          ///<! Total number of unique points in the grid
@@ -120,7 +122,6 @@ protected:
 
   std::vector<double> lat_;    ///<! Latitude values
   std::vector<long>   nlons_;  ///<! Number of points per latitude
-  mutable std::vector<int>    nlons_int_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)
 
   std::vector<double> lonmin_; ///<! Value of minimum longitude per latitude [default=0]
   std::vector<double> lonmax_; ///<! Value of maximum longitude per latitude [default=~360 (one increment smaller)]
@@ -130,6 +131,12 @@ protected:
 private:
   std::vector<double> lon_inc_; ///<! Value of longitude increment
 
+//---  For Fortran, to be REMOVED
+private :
+  mutable std::vector<int>    nlons_int_;  ///<! Number of points per latitude
+                                   // (int32 type for Fortran interoperability)
+public :
+  const std::vector<int>& npts_per_lat() const;
 };
 
 //------------------------------------------------------------------------------
@@ -142,6 +149,11 @@ inline size_t Structured::nlat() const
 inline size_t Structured::nlon(size_t jlat) const
 {
   return nlons_[jlat];
+}
+
+inline size_t Structured::nlonmin() const
+{
+  return nlonmin_;
 }
 
 inline size_t Structured::nlonmax() const

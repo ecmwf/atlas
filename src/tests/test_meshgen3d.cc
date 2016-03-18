@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
 	mesh::Mesh::Ptr m ( mesh::Mesh::create() );
 
-	ReducedGridMeshGenerator generate;
+	mesh::generators::Structured generate;
 
 	// generate.options.set("nb_parts",1); // default = 1
 	// generate.options.set("part",    0); // default = 0

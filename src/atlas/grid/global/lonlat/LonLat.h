@@ -20,7 +20,33 @@ namespace lonlat {
 
 //------------------------------------------------------------------------------
 
-/// @brief Reduced LonLat Grid
+class Shift {
+public:
+  enum Bits {
+    NONE     = 0,
+    LON      = (1<<2),
+    LAT      = (1<<3)
+  };
+  Shift() { bits_ = NONE; }
+  Shift( Bits bits ) { bits_ = static_cast<int>(bits); }
+  Shift( int  bits ) { bits_ = bits; }
+  Shift( bool shift_lon, bool shift_lat )
+  { 
+    bits_ = NONE;
+    if( shift_lon ) bits_ |= LON;
+    if( shift_lon ) bits_ |= LAT;
+  }
+
+  bool lat() const    { return (bits_ & LAT) == bits_; }
+  bool lon() const    { return (bits_ & LON) == bits_; }
+  bool lonlat() const { return (bits_ & (LON|LAT)) == bits_; }
+  operator bool() const { return (bits_ != 0); }
+
+private:
+  int bits_;
+};
+
+/// @brief (Reduced) LonLat Grid
 ///
 /// This grid is a special case of the class ReducedGrid, with
 /// equidistant distribution of latitudes, and a equidistant distribution in zonal
@@ -36,14 +62,21 @@ public:
 
   static std::string grid_type_str();
 
-  LonLat();
+  LonLat(const Shift&);
 
   static std::string className();
+  
+  const Shift& shifted() const { return shift_; }
+
+  bool regular() const { return shift_; }
 
 protected:
 
   virtual void set_typeinfo() = 0;
 
+protected:
+  
+  Shift shift_;
 };
 
 //------------------------------------------------------------------------------

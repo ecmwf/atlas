@@ -56,7 +56,8 @@ void ShiftedLat::set_typeinfo()
 
 //------------------------------------------------------------------------------
 
-ShiftedLat::ShiftedLat(const eckit::Parametrisation& p) : LonLat()
+ShiftedLat::ShiftedLat(const eckit::Parametrisation& p)
+  : LonLat(Shift::LAT)
 {
   setup(p);
   set_typeinfo();
@@ -64,7 +65,8 @@ ShiftedLat::ShiftedLat(const eckit::Parametrisation& p) : LonLat()
 
 //------------------------------------------------------------------------------
 
-ShiftedLat::ShiftedLat( const long N ) : LonLat()
+ShiftedLat::ShiftedLat( const long N )
+  : LonLat(Shift::LAT)
 {
   setup(N);
   set_typeinfo();
@@ -72,7 +74,8 @@ ShiftedLat::ShiftedLat( const long N ) : LonLat()
 
 //------------------------------------------------------------------------------
 
-ShiftedLat::ShiftedLat( const long nlon, const long nlat ) : LonLat()
+ShiftedLat::ShiftedLat( const long nlon, const long nlat )
+  : LonLat(Shift::LAT)
 {
   setup(nlon,nlat);
   set_typeinfo();
@@ -80,7 +83,8 @@ ShiftedLat::ShiftedLat( const long nlon, const long nlat ) : LonLat()
 
 //------------------------------------------------------------------------------
 
-ShiftedLat::ShiftedLat( const double &londeg, const double &latdeg ) : LonLat()
+ShiftedLat::ShiftedLat( const double &londeg, const double &latdeg )
+  : LonLat(Shift::LAT)
 {
   setup(londeg,latdeg);
   set_typeinfo();

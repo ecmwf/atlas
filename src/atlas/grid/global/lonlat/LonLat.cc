@@ -32,8 +32,8 @@ std::string LonLat::className()
   return "atlas.grid.global.lonlat.LonLat";
 }
 
-LonLat::LonLat()
-  : Structured()
+LonLat::LonLat(const Shift& shift)
+  : Structured(), shift_(shift)
 {
 }
 

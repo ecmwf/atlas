@@ -38,7 +38,7 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_trans )
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_grid_Structured) :: grid
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
@@ -63,11 +63,11 @@ TEST( test_trans )
   nlev=10
   nsmax = 21
 
-  grid = atlas_ReducedGrid("O24")
+  grid = atlas_grid_Structured("O24")
 
   FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 
-  meshgenerator = atlas_ReducedGridMeshGenerator()
+  meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid)
   call meshgenerator%final()
 
@@ -222,7 +222,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_trans_nomesh )
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_grid_Structured) :: grid
   type(atlas_Trans) :: trans
   type(atlas_functionspace_ReducedGridColumns) :: gridpoints_fs
   type(atlas_functionspace_Spectral) :: spectral_fs
@@ -240,7 +240,7 @@ TEST( test_trans_nomesh )
   nlev=10
   nsmax = 21
 
-  grid = atlas_ReducedGrid("O24")
+  grid = atlas_grid_Structured("O24")
   trans = atlas_Trans(grid,nsmax)
 
   gridpoints_fs = atlas_functionspace_ReducedGridColumns(grid)
@@ -315,7 +315,7 @@ TEST( test_trans_nomesh )
 END_TEST
 
 TEST( test_transdwarf )
-type(atlas_ReducedGrid) :: grid
+type(atlas_grid_Structured) :: grid
 type(atlas_Trans) :: trans
 type(atlas_functionspace_ReducedGridColumns) :: gridpoints
 type(atlas_functionspace_Spectral) :: spectral
@@ -324,7 +324,7 @@ type(atlas_FieldSet) :: gpfields, spfields
 integer :: jfld, nfld
 character(len=10) :: fieldname
 
-grid = atlas_ReducedGrid("O24")
+grid = atlas_grid_Structured("O24")
 trans = atlas_Trans(grid,23)
 gridpoints = atlas_functionspace_ReducedGridColumns(grid)
 spectral = atlas_functionspace_Spectral(trans)

@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
   ScopedPtr<grid::Grid> grid( new grid::global::gaussian::ReducedGaussian( nlat, nlon ) );
 
   mesh::Mesh mesh;
-  mesh::generators::ReducedGridMeshGenerator generator;
+  mesh::generators::Structured generator;
   //generator.options.set("three_dimensional",true);
   generator.generate(*grid,mesh);
 

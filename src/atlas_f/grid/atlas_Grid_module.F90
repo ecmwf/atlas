@@ -13,10 +13,10 @@ private :: c_str
 private :: atlas_refcounted
 
 public :: atlas_Grid
-public :: atlas_ReducedGrid
-public :: atlas_ReducedGaussianGrid
-public :: atlas_GaussianGrid
-public :: atlas_LonLatGrid
+public :: atlas_grid_Structured
+public :: atlas_grid_ReducedGaussian
+public :: atlas_grid_RegularGaussian
+public :: atlas_grid_ShiftedLonLat
 
 private
 
@@ -47,11 +47,11 @@ END TYPE atlas_Grid
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(atlas_Grid) :: atlas_ReducedGrid
+TYPE, extends(atlas_Grid) :: atlas_grid_Structured
 
 ! Purpose :
 ! -------
-!   *atlas_ReducedGrid* : Object Grid specifications for Reduced Grids
+!   *atlas_grid_Structured* : Object Grid specifications for Reduced Grids
 
 ! Methods :
 ! -------
@@ -73,15 +73,15 @@ contains
   generic   :: lat      => lat_idx, lat_all
   procedure :: lon      => ReducedGrid__lon
   procedure :: lonlat   => ReducedGrid__lonlat
-END TYPE atlas_ReducedGrid
+END TYPE atlas_grid_Structured
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(atlas_ReducedGrid) :: atlas_ReducedGaussianGrid
+TYPE, extends(atlas_grid_Structured) :: atlas_grid_ReducedGaussian
 
 ! Purpose :
 ! -------
-!   *atlas_ReducedGaussianGrid* : Object Grid specifications for Reduced Gaussian Grids
+!   *atlas_grid_ReducedGaussian* : Object Grid specifications for Reduced Gaussian Grids
 
 ! Methods :
 ! -------
@@ -92,15 +92,15 @@ TYPE, extends(atlas_ReducedGrid) :: atlas_ReducedGaussianGrid
 
 !------------------------------------------------------------------------------
 contains
-END TYPE atlas_ReducedGaussianGrid
+END TYPE atlas_grid_ReducedGaussian
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(atlas_ReducedGrid) :: atlas_GaussianGrid
+TYPE, extends(atlas_grid_Structured) :: atlas_grid_RegularGaussian
 
 ! Purpose :
 ! -------
-!   *atlas_GaussianGrid* : Object Grid specifications for Regular Gaussian Grids
+!   *atlas_grid_RegularGaussian* : Object Grid specifications for Regular Gaussian Grids
 
 ! Methods :
 ! -------
@@ -111,15 +111,15 @@ TYPE, extends(atlas_ReducedGrid) :: atlas_GaussianGrid
 
 !------------------------------------------------------------------------------
 contains
-END TYPE atlas_GaussianGrid
+END TYPE atlas_grid_RegularGaussian
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(atlas_ReducedGrid) :: atlas_LonLatGrid
+TYPE, extends(atlas_grid_Structured) :: atlas_grid_ShiftedLonLat
 
 ! Purpose :
 ! -------
-!   *atlas_LonLatGrid* : Object Grid specifications for LonLat Grids
+!   *atlas_grid_ShiftedLonLat* : Object Grid specifications for LonLat Grids
 
 ! Methods :
 ! -------
@@ -130,25 +130,25 @@ TYPE, extends(atlas_ReducedGrid) :: atlas_LonLatGrid
 
 !------------------------------------------------------------------------------
 contains
-END TYPE atlas_LonLatGrid
+END TYPE atlas_grid_ShiftedLonLat
 
 !------------------------------------------------------------------------------
 
-interface atlas_ReducedGrid
-  module procedure atlas_ReducedGrid__ctor_id
-  module procedure atlas_ReducedGrid__ctor
+interface atlas_grid_Structured
+  module procedure atlas_grid_Structured__ctor_id
+  module procedure atlas_grid_Structured__ctor
 end interface
 
-interface atlas_GaussianGrid
-  module procedure atlas_GaussianGrid__ctor
+interface atlas_grid_RegularGaussian
+  module procedure atlas_grid_RegularGaussian__ctor
 end interface
 
-interface atlas_ReducedGaussianGrid
-  module procedure atlas_ReducedGaussianGrid__ctor
+interface atlas_grid_ReducedGaussian
+  module procedure atlas_grid_ReducedGaussian__ctor
 end interface
 
-interface atlas_LonLatGrid
-  module procedure atlas_LonLatGrid__ctor
+interface atlas_grid_ShiftedLonLat
+  module procedure atlas_grid_ShiftedLonLat__ctor
 end interface
 
 !------------------------------------------------------------------------------
@@ -158,74 +158,74 @@ contains
 ! -----------------------------------------------------------------------------
 ! ReducedGrid routines
 
-function atlas_ReducedGrid__ctor_id(identifier) result(grid)
-  use atlas_reducedgrid_c_binding
-  type(atlas_ReducedGrid) :: grid
+function atlas_grid_Structured__ctor_id(identifier) result(grid)
+  use atlas_grid_global_Structured_c_binding
+  type(atlas_grid_Structured) :: grid
   character(len=*), intent(in) :: identifier
   call grid%reset_c_ptr( atlas__new_reduced_grid(c_str(identifier)) )
-end function atlas_ReducedGrid__ctor_id
+end function atlas_grid_Structured__ctor_id
 
-function atlas_ReducedGrid__ctor(lats,nlon) result(grid)
-  use atlas_reducedgrid_c_binding
-  type(atlas_ReducedGrid) :: grid
+function atlas_grid_Structured__ctor(lats,nlon) result(grid)
+  use atlas_grid_global_Structured_c_binding
+  type(atlas_grid_Structured) :: grid
   real(c_double), intent(in) :: lats(:)
   integer, intent(in) :: nlon(:)
   call grid%reset_c_ptr( atlas__ReducedGrid__constructor(size(nlon),lats,nlon) )
-end function atlas_ReducedGrid__ctor
+end function atlas_grid_Structured__ctor
 
-function atlas_GaussianGrid__ctor(N) result(grid)
-  use atlas_reducedgrid_c_binding
-  type(atlas_GaussianGrid) :: grid
+function atlas_grid_RegularGaussian__ctor(N) result(grid)
+  use atlas_grid_global_Structured_c_binding
+  type(atlas_grid_RegularGaussian) :: grid
   integer, intent(in) :: N
   call grid%reset_c_ptr( atlas__new_gaussian_grid(N) )
-end function atlas_GaussianGrid__ctor
+end function atlas_grid_RegularGaussian__ctor
 
-function atlas_ReducedGaussianGrid__ctor(nlon) result(grid)
-  use atlas_reducedgrid_c_binding
-  type(atlas_ReducedGaussianGrid) :: grid
+function atlas_grid_ReducedGaussian__ctor(nlon) result(grid)
+  use atlas_grid_global_Structured_c_binding
+  type(atlas_grid_ReducedGaussian) :: grid
   integer, intent(in) :: nlon(:)
   call grid%reset_c_ptr( atlas__new_reduced_gaussian_grid(nlon,size(nlon)) )
-end function atlas_ReducedGaussianGrid__ctor
+end function atlas_grid_ReducedGaussian__ctor
 
-function atlas_LonLatGrid__ctor(nlon,nlat) result(grid)
-  use atlas_reducedgrid_c_binding
-  type(atlas_LonLatGrid) :: grid
+function atlas_grid_ShiftedLonLat__ctor(nlon,nlat) result(grid)
+  use atlas_grid_global_Structured_c_binding
+  type(atlas_grid_ShiftedLonLat) :: grid
   integer, intent(in) :: nlon, nlat
   call grid%reset_c_ptr( atlas__new_lonlat_grid(nlon,nlat) )
-end function atlas_LonLatGrid__ctor
+end function atlas_grid_ShiftedLonLat__ctor
 
 function atlas_Grid__npts(this) result(npts)
-  use atlas_reducedgrid_c_binding
+  use atlas_grid_global_Structured_c_binding
   class(atlas_Grid), intent(in) :: this
   integer :: npts
   npts = atlas__ReducedGrid__npts(this%c_ptr())
 end function atlas_Grid__npts
 
 function ReducedGrid__N(this) result(N)
-  use atlas_reducedgrid_c_binding
-  class(atlas_ReducedGrid), intent(in) :: this
+  use atlas_grid_global_Structured_c_binding
+  class(atlas_grid_Structured), intent(in) :: this
   integer :: N
   N = atlas__ReducedGrid__nlat(this%c_ptr())/2
 end function ReducedGrid__N
 
 function ReducedGrid__nlat(this) result(nlat)
-  use atlas_reducedgrid_c_binding
-  class(atlas_ReducedGrid), intent(in) :: this
+  use atlas_grid_global_Structured_c_binding
+  class(atlas_grid_Structured), intent(in) :: this
   integer :: nlat
   nlat = atlas__ReducedGrid__nlat(this%c_ptr())
 end function ReducedGrid__nlat
 
 function ReducedGrid__nlon(this, jlat) result(nlon)
-  use atlas_reducedgrid_c_binding
-  class(atlas_ReducedGrid), intent(in) :: this
+  use atlas_grid_global_Structured_c_binding
+  class(atlas_grid_Structured), intent(in) :: this
   integer                 , intent(in) :: jlat
   integer(8)                           :: nlon
   nlon = atlas__ReducedGrid__nlon(this%c_ptr(), jlat-1)
 end function ReducedGrid__nlon
 
 function ReducedGrid__nlon__all(this) result(nlon)
-  use atlas_reducedgrid_c_binding
-  class(atlas_ReducedGrid), intent(in) :: this
+  use atlas_grid_global_Structured_c_binding
+  class(atlas_grid_Structured), intent(in) :: this
   integer, pointer                     :: nlon(:)
   type   (c_ptr)                       :: nlon_c_ptr
   integer(c_int)                       :: nlon_size
@@ -234,23 +234,23 @@ function ReducedGrid__nlon__all(this) result(nlon)
 end function ReducedGrid__nlon__all
 
 function ReducedGrid__nlonmax(this) result(nlonmax)
-  use atlas_reducedgrid_c_binding
-  class(atlas_ReducedGrid), intent(in)  :: this
+  use atlas_grid_global_Structured_c_binding
+  class(atlas_grid_Structured), intent(in)  :: this
   integer                               :: nlonmax
   nlonmax = atlas__ReducedGrid__nlonmax(this%c_ptr())
 end function ReducedGrid__nlonmax
 
 function ReducedGrid__lat(this, jlat) result(lat)
-  use atlas_reducedgrid_c_binding
-  class(atlas_ReducedGrid), intent(in)  :: this
+  use atlas_grid_global_Structured_c_binding
+  class(atlas_grid_Structured), intent(in)  :: this
   real(c_double)                        :: lat
   integer                               :: jlat
   lat = atlas__ReducedGrid__lat(this%c_ptr(), jlat-1)
 end function ReducedGrid__lat
 
 function ReducedGrid__lat__all(this) result(lat)
-  use atlas_reducedgrid_c_binding
-  class(atlas_ReducedGrid), intent(in) :: this
+  use atlas_grid_global_Structured_c_binding
+  class(atlas_grid_Structured), intent(in) :: this
   real   (c_double)       , pointer    :: lat(:)
   type   (c_ptr)                       :: lat_c_ptr
   integer(c_int)                       :: lat_size
@@ -259,8 +259,8 @@ function ReducedGrid__lat__all(this) result(lat)
 end function ReducedGrid__lat__all
 
 function ReducedGrid__lon(this, jlat, jlon) result(lon)
-  use atlas_reducedgrid_c_binding
-  class(atlas_ReducedGrid), intent(in)  :: this
+  use atlas_grid_global_Structured_c_binding
+  class(atlas_grid_Structured), intent(in)  :: this
   real(c_double)                        :: lon
   integer                               :: jlat
   integer                               :: jlon
@@ -268,8 +268,8 @@ function ReducedGrid__lon(this, jlat, jlon) result(lon)
 end function ReducedGrid__lon
 
 function ReducedGrid__lonlat(this, jlat, jlon) result(lonlat)
-  use atlas_reducedgrid_c_binding
-  class(atlas_ReducedGrid), intent(in) :: this
+  use atlas_grid_global_Structured_c_binding
+  class(atlas_grid_Structured), intent(in) :: this
   integer                 , intent(in) :: jlat
   integer                 , intent(in) :: jlon
   real(c_double)          , pointer    :: lonlat(:)
@@ -277,7 +277,7 @@ function ReducedGrid__lonlat(this, jlat, jlon) result(lonlat)
 end function ReducedGrid__lonlat
 
 subroutine atlas_Grid__delete(this)
-  use atlas_reducedgrid_c_binding
+  use atlas_grid_global_Structured_c_binding
   class(atlas_Grid), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__ReducedGrid__delete(this%c_ptr())

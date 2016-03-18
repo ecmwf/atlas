@@ -335,7 +335,7 @@ void AtlasBenchmark::setup()
 
   stringstream gridname; gridname << "N"<<N;
   SharedPtr<global::Structured> grid( global::Structured::create(gridname.str()) );
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
+  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
   mesh.reset( meshgenerator->generate(*grid) );
 
   build_nodes_parallel_fields(mesh->nodes());

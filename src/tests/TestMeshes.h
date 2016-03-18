@@ -24,7 +24,7 @@ namespace test {
 
 mesh::Mesh::Ptr generate_mesh( const global::Structured& rgg )
 {
-  mesh::generators::ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   generate.options.set("nb_parts",eckit::mpi::size());
   generate.options.set("part",eckit::mpi::rank());
   return mesh::Mesh::Ptr( generate( rgg ) );

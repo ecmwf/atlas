@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE( test1 )
 
 BOOST_AUTO_TEST_CASE( test2 )
 {
-  ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   generate.options.set("nb_parts",eckit::mpi::size());
   generate.options.set("part",eckit::mpi::rank());
   mesh::Mesh* m = generate(

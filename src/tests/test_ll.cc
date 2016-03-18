@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
   global::lonlat::RegularLonLat g(5);
   mesh::Mesh m;
-  ReducedGridMeshGenerator().generate(g,m);
+  mesh::generators::Structured().generate(g,m);
   Gmsh().write(m,"L5.msh");
 }
 

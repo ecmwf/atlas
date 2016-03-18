@@ -48,21 +48,21 @@ void RegularLonLat::set_typeinfo()
 }
 
 RegularLonLat::RegularLonLat(const eckit::Parametrisation& p)
-  : LonLat()
+  : LonLat(Shift::NONE)
 {
   setup(p);
   set_typeinfo();
 }
 
 RegularLonLat::RegularLonLat( const long nlon, const long nlat )
- : LonLat()
+ : LonLat(Shift::NONE)
 {
   setup(nlon,nlat);
   set_typeinfo();
 }
 
 RegularLonLat::RegularLonLat( const long N )
- : LonLat()
+ : LonLat(Shift::NONE)
 {
   long nlon = 4*N;
   long nlat = 2*N+1;
@@ -71,7 +71,7 @@ RegularLonLat::RegularLonLat( const long N )
 }
 
 RegularLonLat::RegularLonLat( const double &londeg, const double &latdeg )
- : LonLat()
+ : LonLat(Shift::NONE)
 {
   setup(londeg,latdeg);
   set_typeinfo();
@@ -174,15 +174,6 @@ eckit::Properties RegularLonLat::spec() const
   grid_spec.set("bbox_e", bbox.max().lon());
 
   return grid_spec;
-}
-
-//-----------------------------------------------------------------------------
-
-extern "C" {
-Structured* atlas__new_lonlat_grid(int nlon, int nlat)
-{
-  return new RegularLonLat(static_cast<long>(nlon),static_cast<long>(nlat));
-}
 }
 
 //-----------------------------------------------------------------------------

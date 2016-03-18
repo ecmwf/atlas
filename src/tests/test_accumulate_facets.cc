@@ -46,7 +46,7 @@ BOOST_GLOBAL_FIXTURE( GlobalFixture );
 BOOST_AUTO_TEST_CASE( test_accumulate_facets )
 {
   grid::Grid* grid = grid::Grid::create("O2");
-  mesh::generators::ReducedGridMeshGenerator generator;
+  mesh::generators::Structured generator;
   generator.options.set("angle",29.0);
   generator.options.set("triangulate",false);
   mesh::Mesh* mesh = generator.generate(*grid);
@@ -420,7 +420,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 {
   idx_t missing_value = -1;
   grid::Grid* grid = grid::Grid::create("O2");
-  mesh::generators::ReducedGridMeshGenerator generator;
+  mesh::generators::Structured generator;
   generator.options.set("angle",29.0);
   generator.options.set("triangulate",false);
   mesh::Mesh* mesh = generator.generate(*grid);
@@ -837,7 +837,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
 {
   grid::Grid* grid = grid::Grid::create("O2");
-  mesh::generators::ReducedGridMeshGenerator generator;
+  mesh::generators::Structured generator;
   generator.options.set("angle",29.0);
   generator.options.set("triangulate",false);
   mesh::Mesh* mesh = generator.generate(*grid);

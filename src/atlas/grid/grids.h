@@ -38,11 +38,6 @@ void unload();
 
 Grid* grid_from_uid(const std::string& uid);
 
-// ReducedGrid* new_reduced_grid(const std::string& identifier);
-// ReducedGrid* new_reduced_gaussian_grid(const std::vector<int>& nlon);
-// ReducedGrid* new_gaussian_grid(int N);
-// ReducedGrid* new_lonlat_grid(int nlon, int nlat);
-
 extern "C"
 {
   void atlas__grids__load();

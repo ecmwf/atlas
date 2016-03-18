@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef ReducedGridMeshGenerator_h
-#define ReducedGridMeshGenerator_h
+#ifndef Structured_h
+#define Structured_h
 
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/util/Metadata.h"
@@ -41,12 +41,12 @@ namespace generators {
 
 // -----------------------------------------------------------------------------
 
-class ReducedGridMeshGenerator : public MeshGenerator {
+class Structured : public MeshGenerator {
 
 public:
 
-  ReducedGridMeshGenerator();
-  ReducedGridMeshGenerator(const eckit::Parametrisation&);
+  Structured();
+  Structured(const eckit::Parametrisation&);
 
   virtual void generate(const grid::Grid&, const grid::GridDistribution&, Mesh&) const;
   virtual void generate(const grid::Grid&, Mesh&) const;
@@ -89,4 +89,4 @@ public:
 } // namespace mesh
 } // namespace atlas
 
-#endif // ReducedGridMeshGenerator_h
+#endif // Structured_h

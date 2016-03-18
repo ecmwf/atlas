@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE( test_distspec )
 {
   SharedPtr<global::Structured> g ( global::Structured::create( "O80" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
-  mesh::generators::ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   BOOST_TEST_CHECKPOINT("mesh generator created");
   //trans::Trans trans(*g, 159 );
 
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","true");
 
-  mesh::generators::ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   trans::Trans trans(*g);
 
   mesh::Mesh::Ptr m_default( generate( *g ) );
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","false");
 
-  mesh::generators::ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   mesh::Mesh::Ptr m( generate( *g ) );
 
   trans::Trans trans(*g,47);

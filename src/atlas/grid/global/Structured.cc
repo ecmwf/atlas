@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include <limits>
 #include <typeinfo>
 #include <string>
 #include "eckit/memory/Builder.h"
@@ -86,12 +87,14 @@ void Structured::setup( const size_t nlat, const double lats[], const long nlons
   
   npts_ = 0;
   nlonmax_ = 0;
+  nlonmin_ = std::numeric_limits<size_t>::max();
   double lon_min(1000), lon_max(-1000);
 
   for(size_t jlat = 0; jlat < nlat; ++jlat)
   {
     //ASSERT( nlon(jlat) > 1 ); // can't have grid with just one longitude
     nlonmax_ = std::max(nlon(jlat),nlonmax_);
+    nlonmin_ = std::min(nlon(jlat),nlonmin_);
 
     lon_min = std::min(lon_min,lonmin_[jlat]);
     lon_max = std::max(lon_max,lonmax_[jlat]);
@@ -189,7 +192,7 @@ const std::vector<int>&  Structured::npts_per_lat() const
 
 std::string Structured::getOptimalMeshGenerator() const
 {
-    return "ReducedGrid";
+    return "Structured";
 }
 
 //------------------------------------------------------------------------------

@@ -55,7 +55,8 @@ void ShiftedLonLat::set_typeinfo()
 
 //------------------------------------------------------------------------------
 
-ShiftedLonLat::ShiftedLonLat(const eckit::Parametrisation& p) : LonLat()
+ShiftedLonLat::ShiftedLonLat(const eckit::Parametrisation& p)
+  : LonLat(Shift::LON|Shift::LAT)
 {
   setup(p);
   set_typeinfo();
@@ -63,7 +64,8 @@ ShiftedLonLat::ShiftedLonLat(const eckit::Parametrisation& p) : LonLat()
 
 //------------------------------------------------------------------------------
 
-ShiftedLonLat::ShiftedLonLat( const long N ) : LonLat()
+ShiftedLonLat::ShiftedLonLat( const long N )
+  : LonLat(Shift::LON|Shift::LAT)
 {
   setup(N);
   set_typeinfo();
@@ -71,7 +73,8 @@ ShiftedLonLat::ShiftedLonLat( const long N ) : LonLat()
 
 //------------------------------------------------------------------------------
 
-ShiftedLonLat::ShiftedLonLat( const long nlon, const long nlat ) : LonLat()
+ShiftedLonLat::ShiftedLonLat( const long nlon, const long nlat )
+  : LonLat(Shift::LON|Shift::LAT)
 {
   setup(nlon,nlat);
   set_typeinfo();
@@ -80,7 +83,7 @@ ShiftedLonLat::ShiftedLonLat( const long nlon, const long nlat ) : LonLat()
 //------------------------------------------------------------------------------
 
 ShiftedLonLat::ShiftedLonLat( const double &londeg, const double &latdeg )
-  : LonLat()
+  : LonLat(Shift::LON|Shift::LAT)
 {
   setup(londeg,latdeg);
   set_typeinfo();
@@ -206,6 +209,16 @@ void ShiftedLonLat::setup( const double londeg, const double latdeg )
 }
 
 //------------------------------------------------------------------------------
+
+extern "C" {
+Structured* atlas__new_lonlat_grid(int nlon, int nlat)
+{
+  return new ShiftedLonLat(static_cast<long>(nlon),static_cast<long>(nlat));
+}
+}
+
+//-----------------------------------------------------------------------------
+
 
 } // namespace global
 } // namespace lonlat

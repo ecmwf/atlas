@@ -20,7 +20,7 @@ namespace grid {
 namespace global {
 namespace lonlat {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 register_BuilderT1(Grid,ReducedLonLat,ReducedLonLat::grid_type_str());
 
@@ -42,15 +42,18 @@ void ReducedLonLat::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-ReducedLonLat::ReducedLonLat( const size_t nlat, const long nlon[], bool poles)
- : LonLat()
+ReducedLonLat::ReducedLonLat( 
+    const size_t nlat,
+    const long nlon[],
+    const Shift& shift )
+ : LonLat(Shift::NONE)
 {
-  poles_ = poles;
-  setup(nlat,nlon,poles_);
+  setup(nlat,nlon,shift);
   set_typeinfo();
 }
 
-ReducedLonLat::ReducedLonLat( const eckit::Parametrisation& params ) : LonLat()
+ReducedLonLat::ReducedLonLat( const eckit::Parametrisation& params )
+  : LonLat(Shift::NONE)
 {
   setup(params);
   set_typeinfo();
@@ -63,34 +66,33 @@ void ReducedLonLat::setup( const eckit::Parametrisation& params )
 
   size_t nlat;
   params.get("nlat",nlat);
+  
+  bool shift_lon = false;
+  bool shift_lat = false;
+  params.get("shift_lon",shift_lon);
+  params.get("shift_lat",shift_lat);
 
-  poles_ = defaults::poles();
-  params.get("poles",poles_);
+  shift_ = Shift(shift_lon,shift_lat);
 
-
-  if( params.has("latitudes") )
-  {
-    Structured::setup(params);
-  }
-  else
-  {
-    std::vector<long> nlon;
-    params.get("npts_per_lat",nlon);
-    setup(nlat,nlon.data(),poles_);
-  }
+  std::vector<long> nlon;
+  params.get("npts_per_lat",nlon);
+  setup(nlat,nlon.data(),shift_);
 
   params.get("N",N_);
-
 }
 
-void ReducedLonLat::setup( const size_t nlat, const long nlon[], bool poles )
+void ReducedLonLat::setup( 
+    const size_t nlat, 
+    const long nlon[],
+    const Shift& shift )
 {
+  shift_ = shift;
   std::vector<double> lats (nlat);
 
   double delta = 180.;
   double latmax;
 
-  if( poles )
+  if( shifted().lat() == false )
   {
     delta = delta / static_cast<double>(nlat-1);
     latmax = 90.;
@@ -127,12 +129,13 @@ eckit::Properties ReducedLonLat::spec() const
   grid_spec.set("bbox_w", bbox.min().lon());
   grid_spec.set("bbox_n", bbox.max().lat());
   grid_spec.set("bbox_e", bbox.max().lon());
-  grid_spec.set("poles",poles_);
+  grid_spec.set("shift_lon",shifted().lon());
+  grid_spec.set("shift_lat",shifted().lat());
 
   return grid_spec;
 }
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 } // namespace lonlat
 } // namespace global

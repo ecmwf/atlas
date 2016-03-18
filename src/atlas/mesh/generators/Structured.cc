@@ -70,13 +70,13 @@ struct Region
   std::vector<int> nb_lat_elems;
 };
 
-ReducedGridMeshGenerator::ReducedGridMeshGenerator()
+Structured::Structured()
 {
   configure_defaults();
 }
 
 
-ReducedGridMeshGenerator::ReducedGridMeshGenerator(const eckit::Parametrisation& p)
+Structured::Structured(const eckit::Parametrisation& p)
 {
   configure_defaults();
 
@@ -114,7 +114,7 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator(const eckit::Parametrisation&
 }
 
 
-void ReducedGridMeshGenerator::configure_defaults()
+void Structured::configure_defaults()
 {
   // This option creates a point at the pole when true
   options.set("include_pole",bool( Resource<bool>("--include_pole;atlas.meshgen.include_pole", false ) ) );
@@ -148,11 +148,11 @@ void ReducedGridMeshGenerator::configure_defaults()
   options.set<bool>("triangulate", Resource< bool > ( "--triangulate;atlas.meshgen.triangulate", false) );
 }
 
-void ReducedGridMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
+void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
 {
   const grid::global::Structured* rg = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !rg )
-    throw eckit::BadCast("ReducedGridMeshGenerator can only work with a ReducedGrid",Here());
+    throw eckit::BadCast("Structured can only work with a ReducedGrid",Here());
 
   int nb_parts = options.get<size_t>("nb_parts");
 
@@ -169,7 +169,7 @@ void ReducedGridMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) con
   generate( grid, *distribution, mesh );
 }
 
-void ReducedGridMeshGenerator::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
+void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
 {
   const grid::global::Structured* rg = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !rg )
@@ -193,7 +193,7 @@ void ReducedGridMeshGenerator::generate(const grid::Grid& grid, const grid::Grid
 }
 
 
-void ReducedGridMeshGenerator::generate_region(const global::Structured& rg,
+void Structured::generate_region(const global::Structured& rg,
                                                const std::vector<int>& parts,
                                                int mypart,
                                                Region& region) const
@@ -711,7 +711,7 @@ void ReducedGridMeshGenerator::generate_region(const global::Structured& rg,
 #endif
 }
 
-void ReducedGridMeshGenerator::generate_mesh(
+void Structured::generate_mesh(
     const global::Structured& rg,
     const std::vector<int>& parts,
     const Region& region,
@@ -1156,7 +1156,7 @@ void ReducedGridMeshGenerator::generate_mesh(
   generate_global_element_numbering( mesh );
 }
 
-void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh ) const
+void Structured::generate_global_element_numbering( Mesh& mesh ) const
 {
   int loc_nb_elems = mesh.cells().size();
   std::vector<int> elem_counts( eckit::mpi::size() );
@@ -1182,7 +1182,7 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh ) c
 }
 
 namespace {
-static MeshGeneratorBuilder< ReducedGridMeshGenerator > __reducedgrid("ReducedGrid");
+static MeshGeneratorBuilder< Structured > __reducedgrid("Structured");
 }
 
 } // namespace generators

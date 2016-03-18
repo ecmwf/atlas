@@ -20,7 +20,7 @@ namespace gaussian {
 
 //------------------------------------------------------------------------------
 
-/// @brief (Reduced) Gaussian Grid
+/// @brief Abstract (Reduced) Gaussian Grid
 ///
 /// This grid is a special case of the class Structured, in which
 /// the latitudes are distributed according to the roots of the
@@ -68,10 +68,6 @@ public:
 
 
   static std::string grid_type_str() { return "gaussian"; }
-
-//  Gaussian( const eckit::Parametrisation& );
-
-//  Gaussian( const size_t N, const long npts_per_lat[] );
 
   static std::string className();
 

@@ -128,10 +128,10 @@ use atlas_Mesh_module, only: &
     & atlas_Mesh
 use atlas_Grid_module, only: &
     & atlas_Grid, &
-    & atlas_ReducedGrid, &
-    & atlas_ReducedGaussianGrid, &
-    & atlas_GaussianGrid, &
-    & atlas_LonLatGrid
+    & atlas_grid_Structured, &
+    & atlas_grid_ReducedGaussian, &
+    & atlas_grid_RegularGaussian, &
+    & atlas_grid_ShiftedLonLat
 use atlas_functionspace_EdgeColumns_module, only: &
     & atlas_functionspace_EdgeColumns
 use atlas_functionspace_NodeColumns_module, only: &
@@ -149,7 +149,7 @@ use atlas_GridDistribution_module, only: &
     & atlas_GridDistribution
 use atlas_MeshGenerator_module, only: &
     & atlas_MeshGenerator, &
-    & atlas_ReducedGridMeshGenerator
+    & atlas_meshgenerator_Structured
 use atlas_Method_module, only: &
     & atlas_Method
 use atlas_fvm_module, only: &

@@ -19,7 +19,7 @@ use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
 
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_grid_Structured) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Nodes) :: nodes
   type(atlas_MeshGenerator) :: meshgenerator
@@ -244,8 +244,8 @@ TESTSUITE_INIT
   call config%set("radius",1.0)
 
   ! Setup
-  grid = atlas_ReducedGrid("N24")
-  meshgenerator = atlas_ReducedGridMeshGenerator()
+  grid = atlas_grid_Structured("N24")
+  meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
   fvm  = atlas_fvm_Method(mesh,config)
   node_columns = fvm%node_columns()
@@ -284,13 +284,13 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_fvm )
-type(atlas_ReducedGrid) :: grid
+type(atlas_grid_Structured) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_fvm_Method) :: fvm
 
-grid = atlas_ReducedGrid("N24")
-meshgenerator = atlas_ReducedGridMeshGenerator()
+grid = atlas_grid_Structured("N24")
+meshgenerator = atlas_meshgenerator_Structured()
 mesh = meshgenerator%generate(grid)
 fvm  = atlas_fvm_Method(mesh)
 

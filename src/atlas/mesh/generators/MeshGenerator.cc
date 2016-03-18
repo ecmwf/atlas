@@ -41,7 +41,7 @@ namespace {
     struct force_link {
         force_link()
         {
-            load_builder<ReducedGridMeshGenerator>();
+            load_builder<mesh::generators::Structured>();
             load_builder<Delaunay>();
         }
     };

@@ -247,7 +247,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
   util::Config opts;
   opts.set("nb_parts",1);
   opts.set("part",0);
-  ReducedGridMeshGenerator generate(opts);
+  mesh::generators::Structured generate(opts);
 //  generate.options.set("nb_parts",1);
 //  generate.options.set("part",    0);
 DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
@@ -347,7 +347,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
   BOOST_CHECK( PartitionerFactory::has("EqualRegions") );
   eckit::ResourceMgr::instance().set("atlas.meshgen.partitioner","EqualRegions");
-  ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   generate.options.set("nb_parts",20);
   generate.options.set("include_pole",false);
   generate.options.set("three_dimensional",false);
@@ -480,7 +480,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
     -90
   };
   grid::global::CustomStructured grid(N,lat,lon);
-  ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
 
   bool three_dimensional = true;
 
@@ -506,7 +506,7 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
   atlas::util::Config cfg;
   cfg.set("part",1);
   cfg.set("nb_parts",8);
-  SharedPtr<MeshGenerator> meshgenerator( new ReducedGridMeshGenerator(cfg) );
+  SharedPtr<MeshGenerator> meshgenerator( new mesh::generators::Structured(cfg) );
   SharedPtr<mesh::Mesh> mesh ( meshgenerator->generate(*grid) );
   const array::ArrayView<int,1> part( mesh->nodes().partition() );
   const array::ArrayView<int,1> ghost( mesh->nodes().ghost() );
