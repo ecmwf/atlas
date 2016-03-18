@@ -150,7 +150,7 @@ void ReducedGridMeshGenerator::configure_defaults()
 
 void ReducedGridMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
 {
-  const grid::ReducedGrid* rg = dynamic_cast<const grid::ReducedGrid*>(&grid);
+  const grid::global::Structured* rg = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !rg )
     throw eckit::BadCast("ReducedGridMeshGenerator can only work with a ReducedGrid",Here());
 
@@ -171,7 +171,7 @@ void ReducedGridMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) con
 
 void ReducedGridMeshGenerator::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
 {
-  const grid::ReducedGrid* rg = dynamic_cast<const grid::ReducedGrid*>(&grid);
+  const grid::global::Structured* rg = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !rg )
     throw eckit::BadCast("Grid could not be cast to a ReducedGrid",Here());
 
@@ -193,7 +193,7 @@ void ReducedGridMeshGenerator::generate(const grid::Grid& grid, const grid::Grid
 }
 
 
-void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
+void ReducedGridMeshGenerator::generate_region(const global::Structured& rg,
                                                const std::vector<int>& parts,
                                                int mypart,
                                                Region& region) const
@@ -712,7 +712,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
 }
 
 void ReducedGridMeshGenerator::generate_mesh(
-    const ReducedGrid& rg,
+    const global::Structured& rg,
     const std::vector<int>& parts,
     const Region& region,
     Mesh& mesh ) const

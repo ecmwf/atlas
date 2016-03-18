@@ -16,7 +16,9 @@
 
 namespace atlas {
 namespace grid {
-class ReducedGrid;
+namespace global {
+class Structured;
+}
 class GridDistribution;
 }
 namespace mesh {
@@ -28,12 +30,12 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
-mesh::Mesh* generate_mesh (const grid::ReducedGrid& rgg);
+mesh::Mesh* generate_mesh (const grid::global::Structured& rgg);
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-#define REDUCEDGRID grid::ReducedGrid
+#define REDUCEDGRID grid::global::Structured
 #define grid_GridDistribution grid::GridDistribution
 #define mesh_Mesh mesh::Mesh
 extern "C"

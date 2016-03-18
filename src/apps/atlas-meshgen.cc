@@ -144,14 +144,14 @@ void Meshgen2Gmsh::run()
   if( !do_run ) return;
   grid::load();
 
-  ReducedGrid::Ptr grid;
-  try{ grid = ReducedGrid::Ptr( ReducedGrid::create(key) ); }
+  SharedPtr<global::Structured> grid;
+  try{ grid.reset( global::Structured::create(key) ); }
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;
-  mesh::Mesh::Ptr mesh;
+  SharedPtr<mesh::Mesh> mesh;
 
-  mesh = mesh::Mesh::Ptr( generate_mesh(*grid) );
+  mesh.reset( generate_mesh(*grid) );
 
   SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh,Halo(halo)) );
   nodes_fs->checksum(mesh->nodes().lonlat());

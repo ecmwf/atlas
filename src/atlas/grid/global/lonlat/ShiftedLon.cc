@@ -132,8 +132,8 @@ void ShiftedLon::setup( const long N )
     lats[jlat] = latmax - static_cast<double>(jlat)*delta;
   }
 
-  ReducedGrid::N_ = N;
-  ReducedGrid::setup(2*N+1,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
+  Structured::N_ = N;
+  Structured::setup(2*N+1,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
 }
 
 //------------------------------------------------------------------------------
@@ -157,9 +157,9 @@ void ShiftedLon::setup( const long nlon, const long nlat )
 
   if( (nlat-1)%2 == 0 && nlon==2*(nlat-1) )
   {
-    ReducedGrid::N_ = (nlat-1)/2;
+    Structured::N_ = (nlat-1)/2;
   }
-  ReducedGrid::setup(nlat,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
+  Structured::setup(nlat,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
 }
 
 //------------------------------------------------------------------------------

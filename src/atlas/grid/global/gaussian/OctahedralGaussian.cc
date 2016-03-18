@@ -48,7 +48,7 @@ void OctahedralGaussian::construct(const size_t N)
 {
   std::vector<long> nlon = computePL(N);
   setup_N_hemisphere(N,nlon.data());
-  ReducedGrid::N_ = nlat()/2;
+  Structured::N_ = nlat()/2;
 }
 
 void OctahedralGaussian::set_typeinfo()

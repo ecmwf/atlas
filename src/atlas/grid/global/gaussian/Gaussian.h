@@ -31,7 +31,7 @@ namespace gaussian {
 ///   N   = number of latitudes in hemisphere
 ///   npts_per_lat[] = number of points on each latitude
 
-class Gaussian: public ReducedGrid {
+class Gaussian: public Structured {
 public:
 
   static std::string grid_type_str() { return "gaussian"; }

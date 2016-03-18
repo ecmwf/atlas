@@ -52,7 +52,7 @@ namespace trans {
 
 Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
 {
-  const grid::ReducedGrid* reduced = dynamic_cast<const grid::ReducedGrid*>(&grid);
+  const grid::global::Structured* reduced = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !reduced )
     throw eckit::BadCast("Grid is not a grid::ReducedGrid type. Cannot partition using IFS trans",Here());
   size_t nsmax = 0;
@@ -68,7 +68,7 @@ Trans::Trans(const size_t N, const Trans::Options& p)
 
 Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p )
 {
-  const grid::ReducedGrid* reduced = dynamic_cast<const grid::ReducedGrid*>(&grid);
+  const grid::global::Structured* reduced = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !reduced )
     throw eckit::BadCast("Grid is not a grid::ReducedGrid type. Cannot partition using IFS trans",Here());
 

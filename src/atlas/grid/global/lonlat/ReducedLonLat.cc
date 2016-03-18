@@ -70,7 +70,7 @@ void ReducedLonLat::setup( const eckit::Parametrisation& params )
 
   if( params.has("latitudes") )
   {
-    ReducedGrid::setup(params);
+    Structured::setup(params);
   }
   else
   {
@@ -105,7 +105,7 @@ void ReducedLonLat::setup( const size_t nlat, const long nlon[], bool poles )
   {
     lats[jlat] = latmax - static_cast<double>(jlat)*delta;
   }
-  ReducedGrid::setup(lats.size(),lats.data(),nlon);
+  Structured::setup(lats.size(),lats.data(),nlon);
 }
 
 

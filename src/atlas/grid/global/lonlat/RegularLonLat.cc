@@ -128,9 +128,9 @@ void RegularLonLat::setup( const long nlon, const long nlat )
 
   if( (nlat-1)%2 == 0 && nlon==2*(nlat-1) )
   {
-    ReducedGrid::N_ = (nlat-1)/2;
+    Structured::N_ = (nlat-1)/2;
   }
-  ReducedGrid::setup(nlat,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
+  Structured::setup(nlat,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
 }
 
 
@@ -179,7 +179,7 @@ eckit::Properties RegularLonLat::spec() const
 //-----------------------------------------------------------------------------
 
 extern "C" {
-ReducedGrid* atlas__new_lonlat_grid(int nlon, int nlat)
+Structured* atlas__new_lonlat_grid(int nlon, int nlat)
 {
   return new RegularLonLat(static_cast<long>(nlon),static_cast<long>(nlat));
 }

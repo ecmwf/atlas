@@ -39,7 +39,7 @@ void ClassicGaussian::set_typeinfo()
 ClassicGaussian::ClassicGaussian( const size_t N )
   : Gaussian()
 {
-  ReducedGrid::N_ = N;
+  Structured::N_ = N;
   std::vector<long> nlon(N);
   classic::points_per_latitude_npole_equator(N,nlon.data());
   setup_N_hemisphere(N,nlon.data());
@@ -52,7 +52,7 @@ ClassicGaussian::ClassicGaussian(const eckit::Parametrisation& params)
   if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
   size_t N;
   params.get("N",N);
-  ReducedGrid::N_ = N;
+  Structured::N_ = N;
   std::vector<long> nlon(N);
   classic::points_per_latitude_npole_equator(N,nlon.data());
   setup_N_hemisphere(N,nlon.data());

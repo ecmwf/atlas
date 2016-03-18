@@ -31,7 +31,7 @@ namespace functionspace {
 ReducedGridColumns::ReducedGridColumns(const grid::Grid& grid) :
   FunctionSpace()
 {
-    grid_ = dynamic_cast<const grid::ReducedGrid*>(&grid);
+    grid_ = dynamic_cast<const grid::global::Structured*>(&grid);
     if (grid_ == NULL)
     {
       throw eckit::BadCast("Grid is not a grid::ReducedGrid type. "
@@ -44,7 +44,7 @@ ReducedGridColumns::ReducedGridColumns(const grid::Grid& grid) :
     npts_ = trans_->ngptot();
 
     // Maximum number of global points in the longitude direction
-    int nlonmax = dynamic_cast<const grid::ReducedGrid*>(&grid)->nlonmax();
+    int nlonmax = dynamic_cast<const grid::global::Structured*>(&grid)->nlonmax();
 
     // Number of latitude bands
     int n_regions_NS = trans_->n_regions_NS();

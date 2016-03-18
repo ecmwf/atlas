@@ -26,7 +26,7 @@ std::string Gaussian::className()
 }
 
 Gaussian::Gaussian() :
-  ReducedGrid( Domain::makeGlobal() )
+  Structured( Domain::makeGlobal() )
 {
 }
 
@@ -50,7 +50,7 @@ void Gaussian::setup( const eckit::Parametrisation& params )
   if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
   size_t N;
   params.get("N",N);
-  ReducedGrid::N_ = N;
+  Structured::N_ = N;
 
   if( ! params.has("latitudes") )
   {
@@ -60,7 +60,7 @@ void Gaussian::setup( const eckit::Parametrisation& params )
   }
   else
   {
-    ReducedGrid::setup(params);
+    Structured::setup(params);
   }
 }
 
@@ -69,7 +69,7 @@ void Gaussian::setup_N_hemisphere( const size_t N, const long nlons[] )
   // hemisphere
   std::vector<double> lats (N);
   global::gaussian::latitudes::gaussian_latitudes_npole_equator(N,lats.data());
-  ReducedGrid::setup_lat_hemisphere(N,lats.data(),nlons);
+  Structured::setup_lat_hemisphere(N,lats.data(),nlons);
 }
 
 eckit::Properties Gaussian::spec() const

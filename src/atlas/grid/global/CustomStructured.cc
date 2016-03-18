@@ -32,7 +32,7 @@ std::string CustomStructured::className()
 }
 
 CustomStructured::CustomStructured(const eckit::Parametrisation& params)
-  : ReducedGrid()
+  : Structured()
 {
   setup(params);
 
@@ -53,16 +53,16 @@ void CustomStructured::setup(const eckit::Parametrisation& params)
 
   params.get("N",N_);
 
-  ReducedGrid::setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
+  Structured::setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
 }
 
 CustomStructured::CustomStructured(
     size_t nlat,
     const double lats[],
     const long nlons[])
-  : ReducedGrid(Domain::makeGlobal())
+  : Structured(Domain::makeGlobal())
 {
-  ReducedGrid::setup(nlat,lats,nlons);
+  Structured::setup(nlat,lats,nlons);
 }
 
 CustomStructured::CustomStructured(
@@ -70,7 +70,7 @@ CustomStructured::CustomStructured(
     const double lats[],
     const long nlons[],
     const double lonmin[] )
-  : ReducedGrid(Domain::makeGlobal())
+  : Structured(Domain::makeGlobal())
 {
   setup(nlat,lats,nlons,lonmin);
 }
@@ -86,7 +86,7 @@ void CustomStructured::setup(
   {
     lonmax[jlat] = lonmin[jlat] + 360. - 360./static_cast<double>(nlon[jlat]);
   }
-  ReducedGrid::setup(nlat,lats,nlon,lonmin,lonmax.data());
+  Structured::setup(nlat,lats,nlon,lonmin,lonmax.data());
 }
 
 eckit::Properties CustomStructured::spec() const
@@ -116,7 +116,7 @@ eckit::Properties CustomStructured::spec() const
 extern "C" 
 {
 
-ReducedGrid* atlas__ReducedGrid__constructor(int nlat, double lats[], int nlon[])
+Structured* atlas__ReducedGrid__constructor(int nlat, double lats[], int nlon[])
 {
   std::vector<long> nlon_vector;
   nlon_vector.assign(nlon,nlon+nlat);

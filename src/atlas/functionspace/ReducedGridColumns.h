@@ -30,7 +30,9 @@ namespace field {
 
 namespace atlas {
 namespace grid {
-    class ReducedGrid;
+namespace global {
+    class Structured;
+}
 }
 }
 
@@ -79,7 +81,7 @@ public:
   std::string checksum( const field::FieldSet& ) const;
   std::string checksum( const field::Field& ) const;
 
-  const grid::ReducedGrid& grid() const { return *grid_; }
+  const grid::global::Structured& grid() const { return *grid_; }
 
 private: // data
 
@@ -90,7 +92,7 @@ private: // data
   std::vector<size_t> first_lon_;
 
   trans::Trans* trans_;
-  const grid::ReducedGrid* grid_;
+  const grid::global::Structured* grid_;
   parallel::GatherScatter* gather_scatter_;
   parallel::Checksum* checksum_;
 

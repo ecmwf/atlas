@@ -20,22 +20,23 @@ using eckit::BadParameter;
 
 namespace atlas {
 namespace grid {
+namespace global {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 // register_BuilderT1(Grid, ReducedGrid, ReducedGrid::grid_type_str());
 
-ReducedGrid* ReducedGrid::create(const eckit::Parametrisation& p) {
+Structured* Structured::create(const eckit::Parametrisation& p) {
 
-  ReducedGrid* grid = dynamic_cast<ReducedGrid*>(Grid::create(p));
+  Structured* grid = dynamic_cast<Structured*>(Grid::create(p));
   if (!grid) throw BadParameter("Grid is not a reduced grid", Here());
   return grid;
 
 }
 
-ReducedGrid* ReducedGrid::create(const std::string& uid)
+Structured* Structured::create(const std::string& uid)
 {
-  ReducedGrid* grid = dynamic_cast<ReducedGrid*>( Grid::create(uid) );
+  Structured* grid = dynamic_cast<Structured*>( Grid::create(uid) );
   if( !grid )
     throw BadParameter("Grid "+uid+" is not a reduced grid",Here());
   return grid;
@@ -49,13 +50,13 @@ ReducedGrid* ReducedGrid::create(const std::string& uid)
 //  return grid;
 //}
 
-std::string ReducedGrid::className() { return "atlas.ReducedGrid"; }
+std::string Structured::className() { return "atlas.ReducedGrid"; }
 
-ReducedGrid::ReducedGrid(const Domain& d) : Grid(d), N_(0)
+Structured::Structured(const Domain& d) : Grid(d), N_(0)
 {
 }
 
-ReducedGrid::ReducedGrid(const eckit::Parametrisation& params) : N_(0)
+Structured::Structured(const eckit::Parametrisation& params) : N_(0)
 {
   setup(params);
 
@@ -64,7 +65,7 @@ ReducedGrid::ReducedGrid(const eckit::Parametrisation& params) : N_(0)
   //if( ! params.has("hash") ) throw BadParameter("hash missing in Params",Here());
 }
 
-void ReducedGrid::setup(const eckit::Parametrisation& params)
+void Structured::setup(const eckit::Parametrisation& params)
 {
   eckit::ValueList list;
 
@@ -79,13 +80,13 @@ void ReducedGrid::setup(const eckit::Parametrisation& params)
   setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
 }
 
-ReducedGrid::ReducedGrid(size_t nlat, const double lats[], const long nlons[], const Domain& d)
+Structured::Structured(size_t nlat, const double lats[], const long nlons[], const Domain& d)
   : Grid(d)
 {
   setup(nlat,lats,nlons);
 }
 
-void ReducedGrid::setup( const size_t nlat, const double lats[], const long nlons[], const double lonmin[], const double lonmax[] )
+void Structured::setup( const size_t nlat, const double lats[], const long nlons[], const double lonmin[], const double lonmax[] )
 {
   ASSERT(nlat > 1);  // can't have a grid with just one latitude
 
@@ -118,7 +119,7 @@ void ReducedGrid::setup( const size_t nlat, const double lats[], const long nlon
 }
 
 
-void ReducedGrid::setup( const size_t nlat, const double lats[], const long nlons[] )
+void Structured::setup( const size_t nlat, const double lats[], const long nlons[] )
 {
   std::vector<double> lonmin(nlat,0.);
   std::vector<double> lonmax(nlat);
@@ -132,7 +133,7 @@ void ReducedGrid::setup( const size_t nlat, const double lats[], const long nlon
   setup(nlat,lats,nlons,lonmin.data(),lonmax.data());
 }
 
-void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[])
+void Structured::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[])
 {
   std::vector<long> nlons(2*N);
   std::copy( lon, lon+N, nlons.begin() );
@@ -145,19 +146,19 @@ void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const
   setup(2*N,lats.data(),nlons.data());
 }
 
-size_t ReducedGrid::N() const
+size_t Structured::N() const
 {
   return N_;
 }
 
-BoundBox ReducedGrid::boundingBox() const
+BoundBox Structured::boundingBox() const
 {
   return bounding_box_;
 }
 
-size_t ReducedGrid::npts() const { return npts_; }
+size_t Structured::npts() const { return npts_; }
 
-void ReducedGrid::lonlat( std::vector<Point>& pts ) const
+void Structured::lonlat( std::vector<Point>& pts ) const
 {
   pts.resize(npts());
   int c(0);
@@ -171,7 +172,7 @@ void ReducedGrid::lonlat( std::vector<Point>& pts ) const
   }
 }
 
-std::string ReducedGrid::gridType() const
+std::string Structured::gridType() const
 {
   return grid_type_;
 }
@@ -200,7 +201,7 @@ std::string ReducedGrid::gridType() const
 // }
 
 
-const std::vector<int>&  ReducedGrid::npts_per_lat() const
+const std::vector<int>&  Structured::npts_per_lat() const
 {
   if(nlons_int_.size() == 0) {
     nlons_int_.assign(nlons_.begin(), nlons_.end());
@@ -208,12 +209,12 @@ const std::vector<int>&  ReducedGrid::npts_per_lat() const
   return nlons_int_;
 }
 
-std::string ReducedGrid::getOptimalMeshGenerator() const
+std::string Structured::getOptimalMeshGenerator() const
 {
     return "ReducedGrid";
 }
 
-size_t ReducedGrid::copyLonLatMemory(double* pts, size_t size) const
+size_t Structured::copyLonLatMemory(double* pts, size_t size) const
 {
     size_t sizePts = 2*npts();
 
@@ -231,22 +232,22 @@ size_t ReducedGrid::copyLonLatMemory(double* pts, size_t size) const
     return sizePts;
 }
 
-void ReducedGrid::print(std::ostream& os) const
+void Structured::print(std::ostream& os) const
 {
     os << "ReducedGrid(Name:" << shortName() << ")";
 }
 
-const std::vector<double>& ReducedGrid::latitudes() const
+const std::vector<double>& Structured::latitudes() const
 {
   return lat_;
 }
 
-std::string ReducedGrid::shortName() const {
+std::string Structured::shortName() const {
   ASSERT(!shortName_.empty());
   return shortName_;
 }
 
-void ReducedGrid::hash(eckit::MD5& md5) const {
+void Structured::hash(eckit::MD5& md5) const {
   // Through inheritance the grid_type_str() might differ while still being same grid
       //md5.add(grid_type_str());
 
@@ -255,66 +256,71 @@ void ReducedGrid::hash(eckit::MD5& md5) const {
   bounding_box_.hash(md5);
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-int atlas__ReducedGrid__nlat(ReducedGrid* This)
+extern "C" {
+
+int atlas__ReducedGrid__nlat(Structured* This)
 {
   return This->nlat();
 }
 
 
-int atlas__ReducedGrid__nlon(ReducedGrid* This, int &jlat)
+int atlas__ReducedGrid__nlon(Structured* This, int &jlat)
 {
   return This->nlon(jlat);
 }
 
-void atlas__ReducedGrid__nlon__all(ReducedGrid* This, const int* &nlons, int &size)
+void atlas__ReducedGrid__nlon__all(Structured* This, const int* &nlons, int &size)
 {
   nlons = This->npts_per_lat().data();
   size  = This->npts_per_lat().size();
 }
 
-int atlas__ReducedGrid__nlonmax(ReducedGrid* This)
+int atlas__ReducedGrid__nlonmax(Structured* This)
 {
   return This->nlonmax();
 }
 
-int atlas__ReducedGrid__npts(ReducedGrid* This)
+int atlas__ReducedGrid__npts(Structured* This)
 {
   return This->npts();
 }
 
-double atlas__ReducedGrid__lat(ReducedGrid* This,int jlat)
+double atlas__ReducedGrid__lat(Structured* This,int jlat)
 {
   return This->lat(jlat);
 }
 
-double atlas__ReducedGrid__lon(ReducedGrid* This,int jlat,int jlon)
+double atlas__ReducedGrid__lon(Structured* This,int jlat,int jlon)
 {
   return This->lon(jlat, jlon);
 }
 
-void atlas__ReducedGrid__lonlat(ReducedGrid* This, int jlat, int jlon, double crd[])
+void atlas__ReducedGrid__lonlat(Structured* This, int jlat, int jlon, double crd[])
 {
   This->lonlat(jlat, jlon, crd);
 }
 
-void atlas__ReducedGrid__lat__all(ReducedGrid* This, const double* &lat, int &size)
+void atlas__ReducedGrid__lat__all(Structured* This, const double* &lat, int &size)
 {
   lat  = This->latitudes().data();
   size = This->latitudes().size();
 }
 
 
-ReducedGrid* atlas__new_reduced_grid(char* identifier)
+Structured* atlas__new_reduced_grid(char* identifier)
 {
-  return ReducedGrid::create( std::string(identifier) );
+  return Structured::create( std::string(identifier) );
 }
 
-void atlas__ReducedGrid__delete(ReducedGrid* This)
+void atlas__ReducedGrid__delete(Structured* This)
 {
   delete This;
 }
 
+}
+
+} // namespace global
 } // namespace grid
 } // namespace atlas

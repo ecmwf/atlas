@@ -47,7 +47,7 @@ RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
 RegularGaussian::RegularGaussian( const size_t N ) :
   Gaussian()
 {
-  ReducedGrid::N_ = N;
+  Structured::N_ = N;
   setup(N);
   set_typeinfo();
 }
@@ -62,7 +62,7 @@ void RegularGaussian::setup(const size_t N)
 void RegularGaussian::setup_lat_hemisphere(const size_t N, const double lats[])
 {
   std::vector<long> nlons(N,4*N);
-  ReducedGrid::setup_lat_hemisphere(N,lats,nlons.data());
+  Structured::setup_lat_hemisphere(N,lats,nlons.data());
 }
 
 eckit::Properties RegularGaussian::spec() const
@@ -86,7 +86,7 @@ eckit::Properties RegularGaussian::spec() const
 //-----------------------------------------------------------------------------
 
 extern "C" {
-ReducedGrid* atlas__new_gaussian_grid ( int N )
+Structured* atlas__new_gaussian_grid ( int N )
 {
   return new RegularGaussian(N);
 }

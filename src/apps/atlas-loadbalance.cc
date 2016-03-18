@@ -108,8 +108,8 @@ void AtlasLoadbalance::run()
   if( !do_run ) return;
   grid::load();
 
-  ReducedGrid::Ptr grid;
-  try{ grid = ReducedGrid::Ptr( ReducedGrid::create(key) ); }
+  SharedPtr<global::Structured> grid;
+  try{ grid.reset( global::Structured::create(key) ); }
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;

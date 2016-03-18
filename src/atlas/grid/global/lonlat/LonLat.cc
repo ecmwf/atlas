@@ -33,7 +33,7 @@ std::string LonLat::className()
 }
 
 LonLat::LonLat()
-  : ReducedGrid(Domain::makeGlobal())
+  : Structured(Domain::makeGlobal())
 {
 }
 

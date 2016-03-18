@@ -68,9 +68,9 @@ public:
 
   virtual eckit::Properties spec() const;
 
-  int nlon() const { return ReducedGrid::nlon(0); }
+  int nlon() const { return Structured::nlon(0); }
 
-  double lon( const size_t jlon ) const { return ReducedGrid::lon(0,jlon); }
+  double lon( const size_t jlon ) const { return Structured::lon(0,jlon); }
 
 protected:
 

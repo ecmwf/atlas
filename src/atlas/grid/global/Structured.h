@@ -18,6 +18,7 @@
 
 namespace atlas {
 namespace grid {
+namespace global {
 
 //------------------------------------------------------------------------------
 
@@ -29,14 +30,14 @@ namespace grid {
 /// This means any full grid and reduced grid, both regular, gaussian or other
 /// such distribution can be represented with this class
 
-class ReducedGrid: public Grid {
+class Structured: public Grid {
 public:
 
-  typedef eckit::SharedPtr<ReducedGrid> Ptr;
+  typedef eckit::SharedPtr<Structured> Ptr;
 
-  static ReducedGrid* create( const eckit::Parametrisation& );
-  static ReducedGrid* create( const eckit::Properties& );
-  static ReducedGrid* create( const std::string& shortName );
+  static Structured* create( const eckit::Parametrisation& );
+  static Structured* create( const eckit::Properties& );
+  static Structured* create( const std::string& shortName );
 
 public:
 
@@ -48,11 +49,11 @@ public:
   ///        This constructor should be used only by derived types
   ///    nawd: Disagree. Custom grids could be devised this way, especially
   ///          useful for research.
-  ReducedGrid(const Domain& d = Domain::makeGlobal());
+  Structured(const Domain& d = Domain::makeGlobal());
 
-  ReducedGrid( const eckit::Parametrisation& );
+  Structured( const eckit::Parametrisation& );
 
-  ReducedGrid( size_t nlat,
+  Structured( size_t nlat,
                const double lats[],
                const long npts_per_lat[],
                const Domain& d = Domain::makeGlobal());
@@ -143,37 +144,37 @@ private:
 
 //------------------------------------------------------------------------------
 
-inline size_t ReducedGrid::nlat() const
+inline size_t Structured::nlat() const
 {
   return lat_.size();
 }
 
-inline size_t ReducedGrid::nlon(size_t jlat) const
+inline size_t Structured::nlon(size_t jlat) const
 {
   return nlons_[jlat];
 }
 
-inline size_t ReducedGrid::nlonmax() const
+inline size_t Structured::nlonmax() const
 {
   return nlonmax_;
 }
 
-inline const std::vector<long>&  ReducedGrid::points_per_latitude() const
+inline const std::vector<long>&  Structured::points_per_latitude() const
 {
   return nlons_;
 }
 
-inline double ReducedGrid::lon(const size_t jlat, const size_t jlon) const
+inline double Structured::lon(const size_t jlat, const size_t jlon) const
 {
   return lonmin_[jlat] + (double)jlon * (lonmax_[jlat]-lonmin_[jlat]) / ( (double)nlon(jlat) - 1. );
 }
 
-inline double ReducedGrid::lat(const size_t jlat) const
+inline double Structured::lat(const size_t jlat) const
 {
   return lat_[jlat];
 }
 
-inline void ReducedGrid::lonlat( const size_t jlat, const size_t jlon, double crd[] ) const
+inline void Structured::lonlat( const size_t jlat, const size_t jlon, double crd[] ) const
 {
   crd[0] = lon(jlat,jlon);
   crd[1] = lat(jlat);
@@ -183,25 +184,26 @@ inline void ReducedGrid::lonlat( const size_t jlat, const size_t jlon, double cr
 //------------------------------------------------------------------------------
 extern "C"
 {
-  void atlas__ReducedGrid__delete(ReducedGrid* This);
-  ReducedGrid* atlas__new_reduced_grid(char* identifier);
-  ReducedGrid* atlas__ReducedGrid__constructor(int nlat, double lat[], int nlon[]);
-  ReducedGrid* atlas__new_gaussian_grid(int N);
-  ReducedGrid* atlas__new_lonlat_grid(int nlon, int nlat);
-  ReducedGrid* atlas__new_reduced_gaussian_grid(int nlon[], int nlat);
-  int    atlas__ReducedGrid__nlat     (ReducedGrid* This);
-  int    atlas__ReducedGrid__nlon     (ReducedGrid* This, int &jlat);
-  void   atlas__ReducedGrid__nlon__all(ReducedGrid* This, const int* &nlon, int &size);
-  int    atlas__ReducedGrid__nlonmax  (ReducedGrid* This);
-  int    atlas__ReducedGrid__npts     (ReducedGrid* This);
-  double atlas__ReducedGrid__lat      (ReducedGrid* This, int jlat);
-  double atlas__ReducedGrid__lon      (ReducedGrid* This, int jlat, int jlon);
-  void   atlas__ReducedGrid__lonlat   (ReducedGrid* This, int jlat, int jlon, double crd[]);
-  void   atlas__ReducedGrid__lat__all (ReducedGrid* This, const double* &lats, int &size);
+  void atlas__ReducedGrid__delete(Structured* This);
+  Structured* atlas__new_reduced_grid(char* identifier);
+  Structured* atlas__ReducedGrid__constructor(int nlat, double lat[], int nlon[]);
+  Structured* atlas__new_gaussian_grid(int N);
+  Structured* atlas__new_lonlat_grid(int nlon, int nlat);
+  Structured* atlas__new_reduced_gaussian_grid(int nlon[], int nlat);
+  int    atlas__ReducedGrid__nlat     (Structured* This);
+  int    atlas__ReducedGrid__nlon     (Structured* This, int &jlat);
+  void   atlas__ReducedGrid__nlon__all(Structured* This, const int* &nlon, int &size);
+  int    atlas__ReducedGrid__nlonmax  (Structured* This);
+  int    atlas__ReducedGrid__npts     (Structured* This);
+  double atlas__ReducedGrid__lat      (Structured* This, int jlat);
+  double atlas__ReducedGrid__lon      (Structured* This, int jlat, int jlon);
+  void   atlas__ReducedGrid__lonlat   (Structured* This, int jlat, int jlon, double crd[]);
+  void   atlas__ReducedGrid__lat__all (Structured* This, const double* &lats, int &size);
 }
 
 //------------------------------------------------------------------------------
 
+} // namespace global
 } // namespace grid
 } // namespace atlas
 

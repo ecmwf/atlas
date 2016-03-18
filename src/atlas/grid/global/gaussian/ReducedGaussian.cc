@@ -38,7 +38,7 @@ void ReducedGaussian::set_typeinfo()
 ReducedGaussian::ReducedGaussian( const size_t N, const long nlons[] )
   : Gaussian()
 {
-  ReducedGrid::N_ = N;
+  Structured::N_ = N;
 
   setup_N_hemisphere(N,nlons);
   set_typeinfo();
@@ -56,7 +56,7 @@ void ReducedGaussian::setup( const eckit::Parametrisation& params )
   if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
   size_t N;
   params.get("N",N);
-  ReducedGrid::N_ = N;
+  Structured::N_ = N;
 
   if( ! params.has("latitudes") )
   {
@@ -66,7 +66,7 @@ void ReducedGaussian::setup( const eckit::Parametrisation& params )
   }
   else
   {
-    ReducedGrid::setup(params);
+    Structured::setup(params);
   }
 }
 
@@ -75,7 +75,7 @@ void ReducedGaussian::setup_N_hemisphere( const size_t N, const long nlons[] )
   // hemisphere
   std::vector<double> lats (N);
   latitudes::gaussian_latitudes_npole_equator(N,lats.data());
-  ReducedGrid::setup_lat_hemisphere(N,lats.data(),nlons);
+  Structured::setup_lat_hemisphere(N,lats.data(),nlons);
 }
 
 eckit::Properties ReducedGaussian::spec() const
@@ -103,7 +103,7 @@ eckit::Properties ReducedGaussian::spec() const
 
 extern "C" {
 
-ReducedGrid* atlas__new_reduced_gaussian_grid(int nlon[], int nlat)
+Structured* atlas__new_reduced_gaussian_grid(int nlon[], int nlat)
 {
   std::vector<long> nlon_vector;
   nlon_vector.assign(nlon,nlon+nlat);

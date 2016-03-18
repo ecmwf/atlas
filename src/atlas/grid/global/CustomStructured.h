@@ -30,7 +30,7 @@ namespace global {
 /// This means any full grid and reduced grid, both regular, gaussian or other
 /// such distribution can be represented with this class
 
-class CustomStructured: public ReducedGrid {
+class CustomStructured: public Structured {
 public:
 
   static std::string className();

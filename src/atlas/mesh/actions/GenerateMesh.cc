@@ -23,7 +23,7 @@ namespace actions {
 
 // ------------------------------------------------------------------
 
-Mesh* generate_mesh (const ReducedGrid& rgg)
+Mesh* generate_mesh (const global::Structured& rgg)
 {
   Log::info() << "Deprecated function [generate_mesh] used.\n"
               << "Consider using ReducedGridMeshGenerator directly."
@@ -38,7 +38,7 @@ Mesh* generate_mesh (const ReducedGrid& rgg)
 // ------------------------------------------------------------------
 
 
-Mesh* atlas__generate_mesh (ReducedGrid* rgg)
+Mesh* atlas__generate_mesh (global::Structured* rgg)
 {
   ATLAS_ERROR_HANDLING( return generate_mesh(*rgg); );
   return NULL;
@@ -47,7 +47,7 @@ Mesh* atlas__generate_mesh (ReducedGrid* rgg)
 // ------------------------------------------------------------------
 
 
-Mesh* atlas__generate_mesh_with_distribution (ReducedGrid* rgg, grid::GridDistribution* distribution)
+Mesh* atlas__generate_mesh_with_distribution (global::Structured* rgg, grid::GridDistribution* distribution)
 {
   ATLAS_ERROR_HANDLING(
         ReducedGridMeshGenerator generate;

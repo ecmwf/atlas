@@ -22,7 +22,7 @@ using namespace atlas::grid::global::gaussian;
 namespace atlas {
 namespace test {
 
-mesh::Mesh::Ptr generate_mesh( const ReducedGrid& rgg )
+mesh::Mesh::Ptr generate_mesh( const global::Structured& rgg )
 {
   mesh::generators::ReducedGridMeshGenerator generate;
   generate.options.set("nb_parts",eckit::mpi::size());

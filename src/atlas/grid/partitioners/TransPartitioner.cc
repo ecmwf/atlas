@@ -58,10 +58,10 @@ TransPartitioner::~TransPartitioner()
 
 void TransPartitioner::partition(int part[]) const
 {
-  if( dynamic_cast<const grid::ReducedGrid*>(&grid()) == NULL )
+  if( dynamic_cast<const grid::global::Structured*>(&grid()) == NULL )
     throw eckit::BadCast("Grid is not a grid::ReducedGrid type. Cannot partition using IFS trans",Here());
 
-  int nlonmax = dynamic_cast<const grid::ReducedGrid*>(&grid())->nlonmax();
+  int nlonmax = dynamic_cast<const grid::global::Structured*>(&grid())->nlonmax();
 
   array::ArrayView<int,1> nloen       = t_->nloen();
   array::ArrayView<int,1> n_regions   = t_->n_regions();

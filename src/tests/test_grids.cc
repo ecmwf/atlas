@@ -35,9 +35,9 @@ BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); atlas::grid::load(); }
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
-  ReducedGrid::Ptr reducedgrid( ReducedGrid::create("N80") );
+  SharedPtr<global::Structured> reducedgrid( global::Structured::create("N80") );
 
-  Grid::Ptr grid ( Grid::create("N24") );
+  SharedPtr<Grid> grid ( Grid::create("N24") );
 
   std::cout << "reducedgrid->nlat() = " << reducedgrid->nlat() << std::endl;
   std::cout << "grid->npts() = " << grid->npts() << std::endl;

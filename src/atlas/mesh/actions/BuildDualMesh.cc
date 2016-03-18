@@ -390,7 +390,7 @@ void make_dual_normals_outward( Mesh& mesh )
 
 void build_brick_dual_mesh( Mesh& mesh )
 {
-  if( const grid::ReducedGrid* g = dynamic_cast<const grid::ReducedGrid*>(&mesh.grid()) )
+  if( const grid::global::Structured* g = dynamic_cast<const grid::global::Structured*>(&mesh.grid()) )
   {
     if( eckit::mpi::size() != 1 )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());

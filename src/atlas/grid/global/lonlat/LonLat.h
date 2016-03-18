@@ -30,7 +30,7 @@ namespace lonlat {
 ///   N   = number of latitudes in hemisphere
 ///   npts_per_lat[] = number of points on each latitude
 
-class LonLat: public ReducedGrid {
+class LonLat: public Structured {
 
 public:
 
