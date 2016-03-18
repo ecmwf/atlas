@@ -22,6 +22,22 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
+  add_fctest( TARGET atlas_fctest_meshgen
+    MPI             1
+    LINKER_LANGUAGE Fortran
+    CONDITION       ON
+    SOURCES         fctest_meshgen.F90
+    LIBS            atlas_f
+  )
+  
+  add_fctest( TARGET atlas_fctest_griddistribution
+    MPI             1
+    LINKER_LANGUAGE Fortran
+    CONDITION       ON
+    SOURCES         fctest_griddistribution.F90
+    LIBS            atlas_f
+  )
+
   add_fctest( TARGET atlas_fctest_connectivity
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_connectivity.F90

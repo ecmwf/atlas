@@ -38,23 +38,23 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_ReducedGridColumns
 !------------------------------------------------------------------------------
 contains
 
-  procedure, private :: create_field_name     => ReducedGridColumns__create_field_name
-  procedure, private :: create_field_name_lev => ReducedGridColumns__create_field_name_lev
+  procedure, private :: create_field_name
+  procedure, private :: create_field_name_lev
   generic, public :: create_field => &
     & create_field_name, &
     & create_field_name_lev
 
-  procedure, private :: create_glb_field_name     => ReducedGridColumns__create_glb_field_name
-  procedure, private :: create_glb_field_name_lev => ReducedGridColumns__create_glb_field_name_lev
+  procedure, private :: create_glb_field_name
+  procedure, private :: create_glb_field_name_lev
   generic, public :: create_global_field => &
     & create_glb_field_name, &
     & create_glb_field_name_lev
 
-  procedure, public :: gather => ReducedGridColumns__gather
-  procedure, public :: scatter => ReducedGridColumns__scatter
+  procedure, public :: gather
+  procedure, public :: scatter
 
-  procedure, private :: checksum_fieldset => ReducedGridColumns__checksum_fieldset
-  procedure, private :: checksum_field => ReducedGridColumns__checksum_field
+  procedure, private :: checksum_fieldset
+  procedure, private :: checksum_field
   generic, public :: checksum => checksum_fieldset, checksum_field
 
 
@@ -99,7 +99,7 @@ function ReducedGridColumns__grid(grid) result(functionspace)
   call functionspace%return()
 end function
 
-function ReducedGridColumns__create_field_name(this,name) result(field)
+function create_field_name(this,name) result(field)
   use atlas_functionspace_ReducedGridColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_ReducedGridColumns) :: this
@@ -108,7 +108,7 @@ function ReducedGridColumns__create_field_name(this,name) result(field)
   call field%return()
 end function
 
-function ReducedGridColumns__create_field_name_lev(this,name,levels) result(field)
+function create_field_name_lev(this,name,levels) result(field)
   use atlas_functionspace_ReducedGridColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_ReducedGridColumns), intent(in) :: this
@@ -118,7 +118,7 @@ function ReducedGridColumns__create_field_name_lev(this,name,levels) result(fiel
   call field%return()
 end function
 
-function ReducedGridColumns__create_glb_field_name(this,name) result(field)
+function create_glb_field_name(this,name) result(field)
   use atlas_functionspace_ReducedGridColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_ReducedGridColumns) :: this
@@ -127,7 +127,7 @@ function ReducedGridColumns__create_glb_field_name(this,name) result(field)
   call field%return()
 end function
 
-function ReducedGridColumns__create_glb_field_name_lev(this,name,levels) result(field)
+function create_glb_field_name_lev(this,name,levels) result(field)
   use atlas_functionspace_ReducedGridColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_ReducedGridColumns), intent(in) :: this
@@ -137,7 +137,7 @@ function ReducedGridColumns__create_glb_field_name_lev(this,name,levels) result(
   call field%return()
 end function
 
-subroutine ReducedGridColumns__gather(this,local,global)
+subroutine gather(this,local,global)
   use atlas_functionspace_ReducedGridColumns_c_binding
   class(atlas_functionspace_ReducedGridColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: local
@@ -145,7 +145,7 @@ subroutine ReducedGridColumns__gather(this,local,global)
   call atlas__functionspace__ReducedGridColumns__gather(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
-subroutine ReducedGridColumns__scatter(this,global,local)
+subroutine scatter(this,global,local)
   use atlas_functionspace_ReducedGridColumns_c_binding
   class(atlas_functionspace_ReducedGridColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: global
@@ -153,7 +153,7 @@ subroutine ReducedGridColumns__scatter(this,global,local)
   call atlas__functionspace__ReducedGridColumns__scatter(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
-function ReducedGridColumns__checksum_fieldset(this,fieldset) result(checksum)
+function checksum_fieldset(this,fieldset) result(checksum)
   use atlas_functionspace_ReducedGridColumns_c_binding
   character(len=:), allocatable :: checksum
   class(atlas_functionspace_ReducedGridColumns), intent(in) :: this
@@ -168,7 +168,7 @@ function ReducedGridColumns__checksum_fieldset(this,fieldset) result(checksum)
 end function
 
 
-function ReducedGridColumns__checksum_field(this,field) result(checksum)
+function checksum_field(this,field) result(checksum)
   use atlas_functionspace_ReducedGridColumns_c_binding
   character(len=:), allocatable :: checksum
   class(atlas_functionspace_ReducedGridColumns), intent(in) :: this
