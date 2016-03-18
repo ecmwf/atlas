@@ -42,6 +42,8 @@ grid/GridDistribution.h
 grid/GridDistribution.cc
 grid/grids.h
 grid/grids.cc
+grid/global/Global.h
+grid/global/Global.cc
 grid/global/Unstructured.h
 grid/global/Unstructured.cc
 grid/global/Structured.h

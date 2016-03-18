@@ -24,8 +24,6 @@ namespace global {
 
 //------------------------------------------------------------------------------
 
-// register_BuilderT1(Grid, ReducedGrid, ReducedGrid::grid_type_str());
-
 Structured* Structured::create(const eckit::Parametrisation& p) {
 
   Structured* grid = dynamic_cast<Structured*>(Grid::create(p));
@@ -33,6 +31,8 @@ Structured* Structured::create(const eckit::Parametrisation& p) {
   return grid;
 
 }
+
+//------------------------------------------------------------------------------
 
 Structured* Structured::create(const std::string& uid)
 {
@@ -42,28 +42,17 @@ Structured* Structured::create(const std::string& uid)
   return grid;
 }
 
-//ReducedGrid* ReducedGrid::create(const eckit::Properties& g)
-//{
-//  ReducedGrid* grid = dynamic_cast<ReducedGrid*>( Grid::create(g) );
-//  if( !grid )
-//    throw BadParameter("Grid is not a reduced grid",Here());
-//  return grid;
-//}
+//------------------------------------------------------------------------------
 
-std::string Structured::className() { return "atlas.ReducedGrid"; }
+std::string Structured::className() { return "atlas.grid.global.Structured"; }
 
-Structured::Structured(const Domain& d) : Grid(d), N_(0)
+//------------------------------------------------------------------------------
+
+Structured::Structured() : Global(), N_(0)
 {
 }
 
-Structured::Structured(const eckit::Parametrisation& params) : N_(0)
-{
-  setup(params);
-
-  if( ! params.get("grid_type",grid_type_) ) throw BadParameter("grid_type missing in Params",Here());
-  if( ! params.get("shortName",shortName_) ) throw BadParameter("shortName missing in Params",Here());
-  //if( ! params.has("hash") ) throw BadParameter("hash missing in Params",Here());
-}
+//------------------------------------------------------------------------------
 
 void Structured::setup(const eckit::Parametrisation& params)
 {
@@ -80,11 +69,7 @@ void Structured::setup(const eckit::Parametrisation& params)
   setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
 }
 
-Structured::Structured(size_t nlat, const double lats[], const long nlons[], const Domain& d)
-  : Grid(d)
-{
-  setup(nlat,lats,nlons);
-}
+//------------------------------------------------------------------------------
 
 void Structured::setup( const size_t nlat, const double lats[], const long nlons[], const double lonmin[], const double lonmax[] )
 {
@@ -118,6 +103,7 @@ void Structured::setup( const size_t nlat, const double lats[], const long nlons
   bounding_box_ = BoundBox(lat_[0]/*north*/, lat_[nlat-1]/*south*/, lon_max/*east*/, lon_min/*west*/ );
 }
 
+//------------------------------------------------------------------------------
 
 void Structured::setup( const size_t nlat, const double lats[], const long nlons[] )
 {
@@ -133,6 +119,8 @@ void Structured::setup( const size_t nlat, const double lats[], const long nlons
   setup(nlat,lats,nlons,lonmin.data(),lonmax.data());
 }
 
+//------------------------------------------------------------------------------
+
 void Structured::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[])
 {
   std::vector<long> nlons(2*N);
@@ -146,17 +134,25 @@ void Structured::setup_lat_hemisphere(const size_t N, const double lat[], const 
   setup(2*N,lats.data(),nlons.data());
 }
 
+//------------------------------------------------------------------------------
+
 size_t Structured::N() const
 {
   return N_;
 }
+
+//------------------------------------------------------------------------------
 
 BoundBox Structured::boundingBox() const
 {
   return bounding_box_;
 }
 
+//------------------------------------------------------------------------------
+
 size_t Structured::npts() const { return npts_; }
+
+//------------------------------------------------------------------------------
 
 void Structured::lonlat( std::vector<Point>& pts ) const
 {
@@ -172,34 +168,14 @@ void Structured::lonlat( std::vector<Point>& pts ) const
   }
 }
 
+//------------------------------------------------------------------------------
+
 std::string Structured::gridType() const
 {
   return grid_type_;
 }
 
-// eckit::Properties ReducedGrid::spec() const
-// {
-//   eckit::Properties grid_spec;
-//
-//   grid_spec.set("grid_type",gridType());
-//
-//   grid_spec.set("nlat",nlat());
-//
-//   grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
-//   grid_spec.set("npts_per_lat",eckit::makeVectorValue(npts_per_lat()));
-//
-//   BoundBox bbox = boundingBox();
-//   grid_spec.set("bbox_s", bbox.min().lat());
-//   grid_spec.set("bbox_w", bbox.min().lon());
-//   grid_spec.set("bbox_n", bbox.max().lat());
-//   grid_spec.set("bbox_e", bbox.max().lon());
-//
-//   if( N_ != 0 )
-//     grid_spec.set("N", N_ );
-//
-//   return grid_spec;
-// }
-
+//------------------------------------------------------------------------------
 
 const std::vector<int>&  Structured::npts_per_lat() const
 {
@@ -209,10 +185,14 @@ const std::vector<int>&  Structured::npts_per_lat() const
   return nlons_int_;
 }
 
+//------------------------------------------------------------------------------
+
 std::string Structured::getOptimalMeshGenerator() const
 {
     return "ReducedGrid";
 }
+
+//------------------------------------------------------------------------------
 
 size_t Structured::copyLonLatMemory(double* pts, size_t size) const
 {
@@ -232,20 +212,28 @@ size_t Structured::copyLonLatMemory(double* pts, size_t size) const
     return sizePts;
 }
 
+//------------------------------------------------------------------------------
+
 void Structured::print(std::ostream& os) const
 {
     os << "ReducedGrid(Name:" << shortName() << ")";
 }
+
+//------------------------------------------------------------------------------
 
 const std::vector<double>& Structured::latitudes() const
 {
   return lat_;
 }
 
+//------------------------------------------------------------------------------
+
 std::string Structured::shortName() const {
   ASSERT(!shortName_.empty());
   return shortName_;
 }
+
+//------------------------------------------------------------------------------
 
 void Structured::hash(eckit::MD5& md5) const {
   // Through inheritance the grid_type_str() might differ while still being same grid
@@ -320,6 +308,8 @@ void atlas__ReducedGrid__delete(Structured* This)
 }
 
 }
+
+//------------------------------------------------------------------------------
 
 } // namespace global
 } // namespace grid

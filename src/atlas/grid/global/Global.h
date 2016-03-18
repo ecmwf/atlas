@@ -8,38 +8,35 @@
  * does it submit to any jurisdiction.
  */
 
-#include <typeinfo>
-#include "eckit/memory/Builder.h"
-#include "atlas/internals/atlas_config.h"
-#include "atlas/grid/global/lonlat/LonLat.h"
+#ifndef atlas_grid_global_Global_h
+#define atlas_grid_global_Global_h
 
-using eckit::BadParameter;
+#include "atlas/grid/Grid.h"
 
 namespace atlas {
 namespace grid {
 namespace global {
-namespace lonlat {
 
 //------------------------------------------------------------------------------
 
-std::string LonLat::grid_type_str()
-{
-  return "reduced_lonlat";
-}
+/// @brief Global Grid
+///
+/// This class is a base class for all grids that are global (on the sphere)
 
-std::string LonLat::className()
-{
-  return "atlas.grid.global.lonlat.LonLat";
-}
+class Global: public Grid {
+public:
 
-LonLat::LonLat()
-  : Structured()
-{
-}
+  static std::string className();
+  static std::string grid_type_str() { return "global"; }
+
+  Global();
+
+};
 
 //------------------------------------------------------------------------------
 
-} // namespace lonlat
 } // namespace global
 } // namespace grid
 } // namespace atlas
+
+#endif // atlas_grid_global_Global_h

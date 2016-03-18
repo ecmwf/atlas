@@ -254,7 +254,7 @@ void load()
 
   // We have to touch all classes we want to register for static linking.
 
-  // load_grid<ReducedGrid>();
+  load_grid<global::Unstructured>();
   load_grid<global::CustomStructured>();
   load_grid<global::gaussian::ReducedGaussian>();
   load_grid<global::gaussian::RegularGaussian>();
@@ -265,7 +265,6 @@ void load()
   load_grid<global::lonlat::ShiftedLonLat>();
   load_grid<global::lonlat::ShiftedLon>();
   load_grid<global::lonlat::ShiftedLat>();
-  load_grid<Unstructured>();
 
 }
 

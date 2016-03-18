@@ -8,9 +8,10 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_Unstructured_H
-#define atlas_Unstructured_H
+#ifndef atlas_grid_global_Unstructured_H
+#define atlas_grid_global_Unstructured_H
 
+/// @author Willem Deconinck
 /// @author Tiago Quintino
 /// @author Pedro Maciel
 /// @date January 2015
@@ -19,20 +20,20 @@
 #include <vector>
 
 #include "eckit/memory/ScopedPtr.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/global/Global.h"
 
 
 namespace atlas {
 namespace grid {
+namespace global {
 
-
-class Unstructured : public Grid {
+class Unstructured : public Global {
 
 public: // methods
 
   static std::string grid_type_str() { return "unstructured"; }
 
-  static std::string className() { return "atlas.grid.Unstructured"; }
+  static std::string className() { return "atlas.grid.global.Unstructured"; }
 
   /// Constructor taking a list of parameters
   Unstructured(const eckit::Parametrisation& p);
@@ -77,7 +78,8 @@ protected:
 
 };
 
-
+} // namespace global
 } // namespace grid
 } // namespace atlas
-#endif
+
+#endif // atlas_grid_global_Unstructured_H

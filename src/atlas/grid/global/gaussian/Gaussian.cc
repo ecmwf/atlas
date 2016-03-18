@@ -18,7 +18,7 @@ namespace grid {
 namespace global {
 namespace gaussian {
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 std::string Gaussian::className()
 {
@@ -26,24 +26,9 @@ std::string Gaussian::className()
 }
 
 Gaussian::Gaussian() :
-  Structured( Domain::makeGlobal() )
+  Structured()
 {
 }
-
-//Gaussian::Gaussian( const size_t N, const long nlons[] )
-//  : ReducedGrid(Domain::makeGlobal())
-//{
-//  ReducedGrid::N_ = N;
-
-//  setup_N_hemisphere(N,nlons);
-//  set_typeinfo();
-//}
-
-//Gaussian::Gaussian(const eckit::Parametrisation& params)
-//{
-//  setup(params);
-//  set_typeinfo();
-//}
 
 void Gaussian::setup( const eckit::Parametrisation& params )
 {

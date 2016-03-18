@@ -60,7 +60,7 @@ CustomStructured::CustomStructured(
     size_t nlat,
     const double lats[],
     const long nlons[])
-  : Structured(Domain::makeGlobal())
+  : Structured()
 {
   Structured::setup(nlat,lats,nlons);
 }
@@ -70,7 +70,7 @@ CustomStructured::CustomStructured(
     const double lats[],
     const long nlons[],
     const double lonmin[] )
-  : Structured(Domain::makeGlobal())
+  : Structured()
 {
   setup(nlat,lats,nlons,lonmin);
 }

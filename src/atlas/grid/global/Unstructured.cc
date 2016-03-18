@@ -22,8 +22,10 @@ using eckit::MD5;
 
 namespace atlas {
 namespace grid {
+namespace global {
 
 Unstructured::Unstructured(const mesh::Mesh& m) :
+  Global(),
   points_ ( new std::vector< Grid::Point > (m.nodes().size() ) )
 {
   double lat_min = std::numeric_limits<double>::max();
@@ -47,12 +49,14 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
 }
 
 
-Unstructured::Unstructured(const eckit::Parametrisation& p)
+Unstructured::Unstructured(const eckit::Parametrisation& p):
+  Global()
 {
     NOTIMP;
 }
 
 Unstructured::Unstructured( std::vector< Point > *pts ) :
+    Global(),
     points_(pts) {
     const std::vector<Point> &p = *points_;
     const size_t npts = p.size();
@@ -149,5 +153,6 @@ void Unstructured::print(std::ostream& os) const
 
 register_BuilderT1(Grid, Unstructured, Unstructured::grid_type_str());
 
+} // namespace global
 } // namespace grid
 } // namespace atlas

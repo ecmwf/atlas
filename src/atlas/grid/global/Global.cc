@@ -8,38 +8,26 @@
  * does it submit to any jurisdiction.
  */
 
-#include <typeinfo>
-#include "eckit/memory/Builder.h"
-#include "atlas/internals/atlas_config.h"
-#include "atlas/grid/global/lonlat/LonLat.h"
-
-using eckit::BadParameter;
+#include <string>
+#include "atlas/grid/global/Global.h"
 
 namespace atlas {
 namespace grid {
 namespace global {
-namespace lonlat {
 
 //------------------------------------------------------------------------------
 
-std::string LonLat::grid_type_str()
-{
-  return "reduced_lonlat";
-}
+std::string Global::className() { return "atlas.grid.global.Global"; }
 
-std::string LonLat::className()
-{
-  return "atlas.grid.global.lonlat.LonLat";
-}
+//------------------------------------------------------------------------------
 
-LonLat::LonLat()
-  : Structured()
+Global::Global()
+  : Grid(Domain::makeGlobal())
 {
 }
 
 //------------------------------------------------------------------------------
 
-} // namespace lonlat
 } // namespace global
 } // namespace grid
 } // namespace atlas

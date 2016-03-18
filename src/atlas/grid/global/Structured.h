@@ -14,7 +14,7 @@
 #include "eckit/memory/Builder.h"
 #include "eckit/config/Parametrisation.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/global/Global.h"
 
 namespace atlas {
 namespace grid {
@@ -30,7 +30,7 @@ namespace global {
 /// This means any full grid and reduced grid, both regular, gaussian or other
 /// such distribution can be represented with this class
 
-class Structured: public Grid {
+class Structured: public Global {
 public:
 
   typedef eckit::SharedPtr<Structured> Ptr;
@@ -44,19 +44,9 @@ public:
   static std::string className();
   static std::string grid_type_str() { return "structured"; }
 
-  /// FIXME: ReducedGrid should not be instantiatable.
-  ///        Only leaf classes should be instantiatable.
-  ///        This constructor should be used only by derived types
-  ///    nawd: Disagree. Custom grids could be devised this way, especially
-  ///          useful for research.
-  Structured(const Domain& d = Domain::makeGlobal());
+  Structured();
 
-  Structured( const eckit::Parametrisation& );
-
-  Structured( size_t nlat,
-               const double lats[],
-               const long npts_per_lat[],
-               const Domain& d = Domain::makeGlobal());
+  // Structured( const eckit::Parametrisation& );
 
   virtual BoundBox boundingBox() const;
 
