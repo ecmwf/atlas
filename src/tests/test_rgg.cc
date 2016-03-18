@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
 
 BOOST_AUTO_TEST_CASE( test_partitioner )
 {
-  grid::global::lonlat::ShiftedLonLat g(4l,2l);
+  grid::global::lonlat::ShiftedLonLat g(4,2);
 
   // 12 partitions
   {

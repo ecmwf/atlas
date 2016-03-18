@@ -30,10 +30,13 @@ public:
   ShiftedLon( const eckit::Parametrisation& );
 
   /// @brief Constructor
-  ShiftedLon( const long N );
+  ShiftedLon( const size_t N );
 
   /// @brief Constructor
-  ShiftedLon( const long nlon, const long nlat );
+  ShiftedLon( const int nlon, const int nlat );
+
+  /// @brief Constructor
+  ShiftedLon( const size_t nlon, const size_t nlat );
 
   /// @brief Constructor
   ShiftedLon( const double &londeg, const double &latdeg );
@@ -49,9 +52,9 @@ public:
 protected:
 
   void setup( const eckit::Parametrisation& p);
-  void setup( const long N );
+  void setup( const size_t N );
   void setup( const double londeg, const double latdeg );
-  void setup( const long nlon, const long nlat );
+  void setup( const size_t nlon, const size_t nlat );
 
   virtual void set_typeinfo();
 };

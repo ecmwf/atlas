@@ -96,7 +96,7 @@ eckit::Properties Gaussian::spec() const
   grid_spec.set("nlat",nlat());
   grid_spec.set("N", N() );
 
-  grid_spec.set("npts_per_lat",eckit::makeVectorValue(npts_per_lat()));
+  grid_spec.set("npts_per_lat",eckit::makeVectorValue(pl()));
   grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
 
   BoundBox bbox = boundingBox();

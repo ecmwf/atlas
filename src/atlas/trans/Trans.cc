@@ -56,14 +56,14 @@ Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
   if( !reduced )
     throw eckit::BadCast("Grid is not a grid::ReducedGrid type. Cannot partition using IFS trans",Here());
   size_t nsmax = 0;
-  ctor_rgg(reduced->nlat(),reduced->npts_per_lat().data(), nsmax, p);
+  ctor_rgg(reduced->nlat(),reduced->pl().data(), nsmax, p);
 }
 
 Trans::Trans(const size_t N, const Trans::Options& p)
 {
   size_t nsmax = 0;
-  std::vector<int> npts_per_lat(2*N,4*N);
-  ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
+  std::vector<long> pl(2*N,4*N);
+  ctor_rgg(pl.size(),pl.data(), nsmax, p);
 }
 
 Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p )
@@ -84,21 +84,14 @@ Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p
       throw eckit::BadParameter("Cannot transform a shifted lat or shifted lon grid");
   }
   else
-    ctor_rgg(reduced->nlat(),reduced->npts_per_lat().data(), nsmax, p);
+    ctor_rgg(reduced->nlat(),reduced->pl().data(), nsmax, p);
 }
 
 
 Trans::Trans(const size_t N, const size_t nsmax, const Trans::Options& p)
 {
-  std::vector<int> npts_per_lat(2*N,4*N);
-  ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
-}
-
-Trans::Trans( const std::vector<size_t>& npts_per_lat, const size_t nsmax, const Trans::Options& p )
-{
-  std::vector<int> nloen;
-  nloen.assign(npts_per_lat.begin(),npts_per_lat.end());
-  ctor_rgg(nloen.size(),nloen.data(), nsmax, p);
+  std::vector<long> pl(2*N,4*N);
+  ctor_rgg(pl.size(),pl.data(), nsmax, p);
 }
 
 Trans::~Trans()
@@ -106,10 +99,13 @@ Trans::~Trans()
   ::trans_delete(&trans_);
 }
 
-void Trans::ctor_rgg(const size_t ndgl, const int nloen[], size_t nsmax, const Trans::Options& p )
+void Trans::ctor_rgg(const size_t nlat, const long pl[], size_t nsmax, const Trans::Options& p )
 {
+  std::vector<int> nloen(nlat);
+  for( size_t jlat=0; jlat<nlat; ++jlat )
+    nloen[jlat] = pl[jlat];
   TRANS_CHECK(::trans_new(&trans_));
-  TRANS_CHECK(::trans_set_resol(&trans_,ndgl,nloen));
+  TRANS_CHECK(::trans_set_resol(&trans_,nlat,nloen.data()));
   TRANS_CHECK(::trans_set_trunc(&trans_,nsmax));
   TRANS_CHECK(::trans_set_cache(&trans_,p.cache(),p.cachesize()));
 

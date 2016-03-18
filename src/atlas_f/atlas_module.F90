@@ -129,9 +129,13 @@ use atlas_Mesh_module, only: &
 use atlas_Grid_module, only: &
     & atlas_Grid, &
     & atlas_grid_Structured, &
+    & atlas_grid_CustomStructured, &
     & atlas_grid_ReducedGaussian, &
     & atlas_grid_RegularGaussian, &
-    & atlas_grid_ShiftedLonLat
+    & atlas_grid_RegularLonLat, &
+    & atlas_grid_ShiftedLonLat, &
+    & atlas_grid_ShiftedLon, &
+    & atlas_grid_ShiftedLat
 use atlas_functionspace_EdgeColumns_module, only: &
     & atlas_functionspace_EdgeColumns
 use atlas_functionspace_NodeColumns_module, only: &

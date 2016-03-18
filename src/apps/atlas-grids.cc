@@ -180,18 +180,18 @@ void AtlasGrids::run()
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
 
 
-      deg = 360./static_cast<double>(grid->npts_per_lat()[grid->nlat()/2]);
+      deg = 360./static_cast<double>(grid->nlon(grid->nlat()/2));
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W equator: "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
 
       deg =  360.*std::cos(grid->lat(grid->nlat()/4)*M_PI/180.)/
-             static_cast<double>(grid->npts_per_lat()[grid->nlat()/4]);
+             static_cast<double>(grid->nlon(grid->nlat()/4));
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W midlat:  "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
 
-      deg = 360.*std::cos(grid->lat(0)*M_PI/180.)/static_cast<double>(grid->npts_per_lat()[0]);
+      deg = 360.*std::cos(grid->lat(0)*M_PI/180.)/static_cast<double>(grid->nlon(0));
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W pole:    "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;

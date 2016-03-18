@@ -67,9 +67,7 @@ public:
 
   size_t nlonmin() const;
 
-  // Note that this is not the same type as the constructor
-  // We return vector<int> for the fortran
-  const std::vector<long>& points_per_latitude() const;
+  const std::vector<long>& pl() const;
 
   const std::vector<double>& latitudes() const;
 
@@ -130,13 +128,6 @@ protected:
 
 private:
   std::vector<double> lon_inc_; ///<! Value of longitude increment
-
-//---  For Fortran, to be REMOVED
-private :
-  mutable std::vector<int>    nlons_int_;  ///<! Number of points per latitude
-                                   // (int32 type for Fortran interoperability)
-public :
-  const std::vector<int>& npts_per_lat() const;
 };
 
 //------------------------------------------------------------------------------
@@ -161,7 +152,7 @@ inline size_t Structured::nlonmax() const
   return nlonmax_;
 }
 
-inline const std::vector<long>&  Structured::points_per_latitude() const
+inline const std::vector<long>&  Structured::pl() const
 {
   return nlons_;
 }
@@ -186,21 +177,30 @@ inline void Structured::lonlat( const size_t jlat, const size_t jlon, double crd
 //------------------------------------------------------------------------------
 extern "C"
 {
-  void atlas__ReducedGrid__delete(Structured* This);
-  Structured* atlas__new_reduced_grid(char* identifier);
-  Structured* atlas__ReducedGrid__constructor(int nlat, double lat[], int nlon[]);
-  Structured* atlas__new_gaussian_grid(int N);
-  Structured* atlas__new_lonlat_grid(int nlon, int nlat);
-  Structured* atlas__new_reduced_gaussian_grid(int nlon[], int nlat);
-  int    atlas__ReducedGrid__nlat     (Structured* This);
-  int    atlas__ReducedGrid__nlon     (Structured* This, int &jlat);
-  void   atlas__ReducedGrid__nlon__all(Structured* This, const int* &nlon, int &size);
-  int    atlas__ReducedGrid__nlonmax  (Structured* This);
-  int    atlas__ReducedGrid__npts     (Structured* This);
-  double atlas__ReducedGrid__lat      (Structured* This, int jlat);
-  double atlas__ReducedGrid__lon      (Structured* This, int jlat, int jlon);
-  void   atlas__ReducedGrid__lonlat   (Structured* This, int jlat, int jlon, double crd[]);
-  void   atlas__ReducedGrid__lat__all (Structured* This, const double* &lats, int &size);
+  void atlas__grid__global__Structured__delete(Structured* This);
+  Structured* atlas__grid__global__Structured(char* identifier);
+  Structured* atlas__grid__global__CustomStructured_int(size_t nlat, double lat[], int nlon[]);
+  Structured* atlas__grid__global__CustomStructured_long(size_t nlat, double lat[], long nlon[]);
+  Structured* atlas__grid__global__gaussian__RegularGaussian(size_t N);
+  Structured* atlas__grid__global__gaussian__ReducedGaussian_int(size_t N, int nlon[]);
+  Structured* atlas__grid__global__gaussian__ReducedGaussian_long(size_t N, long nlon[]);
+  Structured* atlas__grid__global__lonlat__RegularLonLat(size_t nlon, size_t nlat);
+  Structured* atlas__grid__global__lonlat__ShiftedLonLat(size_t nlon, size_t nlat);
+  Structured* atlas__grid__global__lonlat__ShiftedLon(size_t nlon, size_t nlat);
+  Structured* atlas__grid__global__lonlat__ShiftedLat(size_t nlon, size_t nlat);
+
+  void      atlas__grid__global__Structured__pl       (Structured* This, const long* &pl, size_t &size);
+  size_t    atlas__grid__global__Structured__N        (Structured* This);
+  size_t    atlas__grid__global__Structured__nlat     (Structured* This);
+  size_t    atlas__grid__global__Structured__nlon     (Structured* This, size_t jlat);
+  size_t    atlas__grid__global__Structured__nlonmin  (Structured* This);
+  size_t    atlas__grid__global__Structured__nlonmax  (Structured* This);
+  size_t    atlas__grid__global__Structured__npts     (Structured* This);
+  double atlas__grid__global__Structured__lat       (Structured* This, size_t jlat);
+  double atlas__grid__global__Structured__lon       (Structured* This, size_t jlat, size_t jlon);
+  void   atlas__grid__global__Structured__lonlat    (Structured* This, size_t jlat, size_t jlon, double crd[]);
+  void   atlas__grid__global__Structured__latitudes (Structured* This, const double* &lats, size_t &size);
+  int    atlas__grid__global__Structured__reduced   (Structured* This);  
 }
 
 //------------------------------------------------------------------------------

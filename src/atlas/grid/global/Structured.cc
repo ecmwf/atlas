@@ -180,16 +180,6 @@ std::string Structured::gridType() const
 
 //------------------------------------------------------------------------------
 
-const std::vector<int>&  Structured::npts_per_lat() const
-{
-  if(nlons_int_.size() == 0) {
-    nlons_int_.assign(nlons_.begin(), nlons_.end());
-  }
-  return nlons_int_;
-}
-
-//------------------------------------------------------------------------------
-
 std::string Structured::getOptimalMeshGenerator() const
 {
     return "Structured";
@@ -242,8 +232,8 @@ void Structured::hash(eckit::MD5& md5) const {
   // Through inheritance the grid_type_str() might differ while still being same grid
       //md5.add(grid_type_str());
 
-  md5.add(latitudes().data(),    sizeof(double)*latitudes().size());
-  md5.add(npts_per_lat().data(), sizeof(int)*npts_per_lat().size());
+  md5.add(latitudes().data(), sizeof(double)*latitudes().size());
+  md5.add(pl().data(), sizeof(long)*nlat());
   bounding_box_.hash(md5);
 }
 
@@ -251,61 +241,75 @@ void Structured::hash(eckit::MD5& md5) const {
 
 extern "C" {
 
-int atlas__ReducedGrid__nlat(Structured* This)
+size_t atlas__grid__global__Structured__N(Structured* This)
+{
+  return This->N();
+}
+
+size_t atlas__grid__global__Structured__nlat(Structured* This)
 {
   return This->nlat();
 }
 
-
-int atlas__ReducedGrid__nlon(Structured* This, int &jlat)
+size_t atlas__grid__global__Structured__nlon(Structured* This, size_t jlat)
 {
   return This->nlon(jlat);
 }
 
-void atlas__ReducedGrid__nlon__all(Structured* This, const int* &nlons, int &size)
+void atlas__grid__global__Structured__pl(Structured* This, const long* &nlons, size_t &size)
 {
-  nlons = This->npts_per_lat().data();
-  size  = This->npts_per_lat().size();
+  nlons = This->pl().data();
+  size  = This->pl().size();
 }
 
-int atlas__ReducedGrid__nlonmax(Structured* This)
+size_t atlas__grid__global__Structured__nlonmax(Structured* This)
 {
   return This->nlonmax();
 }
 
-int atlas__ReducedGrid__npts(Structured* This)
+size_t atlas__grid__global__Structured__nlonmin(Structured* This)
+{
+  return This->nlonmin();
+}
+
+size_t atlas__grid__global__Structured__npts(Structured* This)
 {
   return This->npts();
 }
 
-double atlas__ReducedGrid__lat(Structured* This,int jlat)
+double atlas__grid__global__Structured__lat(Structured* This,size_t jlat)
 {
   return This->lat(jlat);
 }
 
-double atlas__ReducedGrid__lon(Structured* This,int jlat,int jlon)
+double atlas__grid__global__Structured__lon(Structured* This,size_t jlat,size_t jlon)
 {
   return This->lon(jlat, jlon);
 }
 
-void atlas__ReducedGrid__lonlat(Structured* This, int jlat, int jlon, double crd[])
+void atlas__grid__global__Structured__lonlat(Structured* This, size_t jlat, size_t jlon, double crd[])
 {
   This->lonlat(jlat, jlon, crd);
 }
 
-void atlas__ReducedGrid__lat__all(Structured* This, const double* &lat, int &size)
+void atlas__grid__global__Structured__latitudes(Structured* This, const double* &lat, size_t &size)
 {
   lat  = This->latitudes().data();
   size = This->latitudes().size();
 }
 
+int atlas__grid__global__Structured__reduced  (Structured* This)
+{
+  return This->reduced();
+}
 
-Structured* atlas__new_reduced_grid(char* identifier)
+
+Structured* atlas__grid__global__Structured(char* identifier)
 {
   return Structured::create( std::string(identifier) );
 }
 
-void atlas__ReducedGrid__delete(Structured* This)
+void atlas__grid__global__Structured__delete(Structured* This)
 {
   delete This;
 }

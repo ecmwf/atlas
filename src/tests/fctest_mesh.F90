@@ -21,39 +21,6 @@ implicit none
 type(atlas_Mesh) :: mesh
 type(atlas_mesh_Nodes) :: nodes
 
-
-type, extends(atlas_Config) :: atlas_FieldParametrisation
-endtype
-
-interface atlas_FieldParametrisation
-  module procedure atlas_FieldConfig__ctor
-end interface
-
-contains
-
-function atlas_FieldConfig__ctor(creator,ngptot,nproma,nlev,nvar,kind,datatype,shape) result(params)
-  use atlas_Config_c_binding
-  type(atlas_FieldParametrisation) :: params
-  character(len=*), optional, intent(in) :: creator
-  integer, optional, intent(in) :: ngptot
-  integer, optional, intent(in) :: nproma
-  integer, optional, intent(in) :: nlev
-  integer, optional, intent(in) :: nvar
-  integer, optional, intent(in) :: kind
-  character(len=*), optional, intent(in) :: datatype
-  integer, optional, intent(in) :: shape(:)
-  call params%reset_c_ptr( atlas__Config__new() )
-  if( present(creator)   ) call params%set("creator"   ,creator  )
-  if( present(ngptot)    ) call params%set("ngptot"    ,ngptot   )
-  if( present(nproma)    ) call params%set("nproma"    ,nproma   )
-  if( present(nlev)      ) call params%set("nlev"      ,nlev     )
-  if( present(nvar)      ) call params%set("nvar"      ,nvar     )
-  if( present(kind)      ) call params%set("kind"      ,kind     )
-  if( present(datatype)  ) call params%set("datatype"  ,datatype )
-  if( present(shape)     ) call params%set("shape"     ,shape    )
-  call params%set("fortran",.True.) ! Let know that parameters have fortran style
-end function
-
 end module fcta_Mesh_fixture
 
 ! -----------------------------------------------------------------------------
@@ -435,34 +402,6 @@ TEST( test_parametrisation )
 END_TEST
 
 
-TEST( test_fieldcreation )
-  use fcta_Mesh_fixture , only : FieldParams => atlas_FieldParametrisation
-  type(atlas_grid_Structured) :: grid
-  type(atlas_Field) :: field
-  type(atlas_FieldParametrisation) :: params
-
-  field = atlas_Field(FieldParams(creator="ArraySpec",shape=[10,137,1,30]))
-  write(0,*) field%name(), field%size()
-  call field%final()
-
-  grid = atlas_grid_Structured("O80")
-  params = atlas_FieldParametrisation(creator="IFS",nproma=1024,ngptot=grid%npts(),nlev=137,nvar=1,kind=4)
-  field = atlas_Field(params)
-  call params%final()
-
-  write(0,*) field%name(), field%size(), field%shape(), field%datatype(), field%bytes()
-  call field%final()
-
-! Idea:
-!   field = atlas_Field([ &
-!      & atlas_Param("creator","ArraySpec"),&
-!      & atlas_Param("shape",[10,137,1,30]),&
-!      & atlas_Param("kind","real64") ])
-
-  call grid%final()
-END_TEST
-
-
 TEST( test_reducedgrid )
       type(atlas_grid_Structured) :: grid
       type(atlas_Mesh) :: mesh
@@ -472,7 +411,7 @@ TEST( test_reducedgrid )
       integer(c_int) :: nlon(nlat)
       lats = [80.,40.,30.,-30.,-60.,-75.]
       nlon = [4,16,32,32,16,4]
-      grid = atlas_grid_Structured(lats,nlon)
+      grid = atlas_grid_CustomStructured(lats,nlon)
       meshgenerator = atlas_meshgenerator_Structured()
       mesh = meshgenerator%generate(grid)
       call atlas_write_gmsh(mesh,"test_reducedgrid.msh")
@@ -504,7 +443,7 @@ TEST( test_fv )
 
       ! Create a new Reduced Gaussian Grid based on a nloen array
       call atlas_log%info("Creating grid")
-      grid = atlas_grid_ReducedGaussian( nloen(1:32) )
+      grid = atlas_grid_ReducedGaussian( int(32,c_long), nloen(1:32) )
 
       ! Grid distribution: all points belong to partition 1
       allocate( part(grid%npts()) )

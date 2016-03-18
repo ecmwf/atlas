@@ -98,7 +98,7 @@ eckit::Properties CustomStructured::spec() const
   grid_spec.set("nlat",nlat());
 
   grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
-  grid_spec.set("npts_per_lat",eckit::makeVectorValue(npts_per_lat()));
+  grid_spec.set("npts_per_lat",eckit::makeVectorValue(pl()));
   grid_spec.set("first_longitude_per_latitude",eckit::makeVectorValue(lonmin_));
 
   BoundBox bbox = boundingBox();
@@ -116,13 +116,16 @@ eckit::Properties CustomStructured::spec() const
 extern "C" 
 {
 
-Structured* atlas__ReducedGrid__constructor(int nlat, double lats[], int nlon[])
+Structured* atlas__grid__global__CustomStructured_int(size_t nlat, double lats[], int nlon[])
 {
   std::vector<long> nlon_vector;
   nlon_vector.assign(nlon,nlon+nlat);
   return new CustomStructured(nlat,lats,nlon_vector.data());
 }
-
+Structured* atlas__grid__global__CustomStructured_long(size_t nlat, double lats[], long nlon[])
+{
+  return new CustomStructured(nlat,lats,nlon);
+}
 }
 
 

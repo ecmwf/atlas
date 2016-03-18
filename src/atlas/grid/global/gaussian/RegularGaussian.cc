@@ -78,10 +78,12 @@ eckit::Properties RegularGaussian::spec() const
 //-----------------------------------------------------------------------------
 
 extern "C" {
-Structured* atlas__new_gaussian_grid ( int N )
+  
+Structured* atlas__grid__global__gaussian__RegularGaussian(size_t N)
 {
   return new RegularGaussian(N);
 }
+
 }
 
 //-----------------------------------------------------------------------------

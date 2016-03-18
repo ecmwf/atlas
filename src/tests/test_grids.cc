@@ -102,8 +102,8 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
 BOOST_AUTO_TEST_CASE( test_regular_ll )
 {
   // Constructor for N=8
-  long nlon = 32;
-  long nlat = 16;
+  size_t nlon = 32;
+  size_t nlat = 16;
   global::lonlat::ShiftedLat grid(nlon,nlat);
 
   BOOST_CHECK_EQUAL(grid.nlon(), nlon);

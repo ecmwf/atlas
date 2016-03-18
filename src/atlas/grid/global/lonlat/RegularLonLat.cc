@@ -54,18 +54,26 @@ RegularLonLat::RegularLonLat(const eckit::Parametrisation& p)
   set_typeinfo();
 }
 
-RegularLonLat::RegularLonLat( const long nlon, const long nlat )
+RegularLonLat::RegularLonLat( const int nlon, const int nlat )
+ : LonLat(Shift::NONE)
+{
+  setup( (size_t)nlon, (size_t)nlat );
+  set_typeinfo();
+}
+
+RegularLonLat::RegularLonLat( const size_t nlon, const size_t nlat )
  : LonLat(Shift::NONE)
 {
   setup(nlon,nlat);
   set_typeinfo();
 }
 
-RegularLonLat::RegularLonLat( const long N )
+
+RegularLonLat::RegularLonLat( const size_t N )
  : LonLat(Shift::NONE)
 {
-  long nlon = 4*N;
-  long nlat = 2*N+1;
+  size_t nlon = 4*N;
+  size_t nlat = 2*N+1;
   setup(nlon,nlat);
   set_typeinfo();
 }
@@ -80,7 +88,7 @@ RegularLonLat::RegularLonLat( const double &londeg, const double &latdeg )
 
 void RegularLonLat::setup(const eckit::Parametrisation& p)
 {
-  long nlon, nlat;
+  size_t nlon, nlat;
 
   if( p.get("N",N_ ) )
   {
@@ -109,7 +117,7 @@ void RegularLonLat::setup(const eckit::Parametrisation& p)
   }
 }
 
-void RegularLonLat::setup( const long nlon, const long nlat )
+void RegularLonLat::setup( const size_t nlon, const size_t nlat )
 {
   double latmin = -90.;
   double latmax = +90.;
@@ -140,8 +148,8 @@ void RegularLonLat::setup( const double londeg, const double latdeg )
   double Llat = 180.;
   double nlon_real = Llon/londeg + 1.;
   double nlat_real = Llat/latdeg + 1.;
-  long nlon = static_cast<long>(nlon_real);
-  long nlat = static_cast<long>(nlat_real);
+  size_t nlon = static_cast<size_t>(nlon_real);
+  size_t nlat = static_cast<size_t>(nlat_real);
   if( nlon_real - nlon > 0. )
   {
     std::stringstream msg;
@@ -174,6 +182,18 @@ eckit::Properties RegularLonLat::spec() const
   grid_spec.set("bbox_e", bbox.max().lon());
 
   return grid_spec;
+}
+
+//-----------------------------------------------------------------------------
+
+extern "C" 
+{
+  
+Structured* atlas__grid__global__lonlat__RegularLonLat(size_t nlon, size_t nlat)
+{
+  return new RegularLonLat(nlon,nlat);
+}
+
 }
 
 //-----------------------------------------------------------------------------

@@ -78,7 +78,7 @@ eckit::Properties ReducedGaussian::spec() const
   grid_spec.set("nlat",nlat());
   grid_spec.set("N", N() );
 
-  grid_spec.set("npts_per_lat",eckit::makeVectorValue(npts_per_lat()));
+  grid_spec.set("npts_per_lat",eckit::makeVectorValue(pl()));
   grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
 
   BoundBox bbox = boundingBox();
@@ -94,11 +94,15 @@ eckit::Properties ReducedGaussian::spec() const
 
 extern "C" {
 
-Structured* atlas__new_reduced_gaussian_grid(int nlon[], int nlat)
+Structured* atlas__grid__global__gaussian__ReducedGaussian_int(size_t N, int nlon[])
 {
   std::vector<long> nlon_vector;
-  nlon_vector.assign(nlon,nlon+nlat);
-  return new ReducedGaussian(nlat,nlon_vector.data());
+  nlon_vector.assign(nlon,nlon+N);
+  return new ReducedGaussian(N,nlon_vector.data());
+}
+Structured* atlas__grid__global__gaussian__ReducedGaussian_long(size_t N, long nlon[])
+{
+  return new ReducedGaussian(N,nlon);
 }
 
 }

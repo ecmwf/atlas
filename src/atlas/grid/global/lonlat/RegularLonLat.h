@@ -44,20 +44,28 @@ public:
   ///   dlat = 180/(nlat-1)
   ///   Longitudes: [0  :  dlon :  360-dlon ]
   ///   Latitudes:  [90 : -dlat : -90       ]
-  RegularLonLat( const long nlon, const long nlat );
+  explicit RegularLonLat( const int nlon, const int nlat );
+
+  /// @brief Constructor, global grid
+  ///
+  ///   dlon = 360/nlon
+  ///   dlat = 180/(nlat-1)
+  ///   Longitudes: [0  :  dlon :  360-dlon ]
+  ///   Latitudes:  [90 : -dlat : -90       ]
+  explicit RegularLonLat( const size_t nlon, const size_t nlat );
 
   /// @brief Constructor, global grid
   ///
   ///   Longitudes: [0  :  londeg :  360-londeg ]
   ///   Latitudes:  [90 : -latdeg : -90         ]
-  RegularLonLat( const double &londeg, const double &latdeg );
+  explicit RegularLonLat( const double &londeg, const double &latdeg );
 
   /// @brief Constructor, global grid
   ///
   /// nlon = 4*N
   /// nlat = 2*N+1
   /// londeg = latdeg = 90/N
-  RegularLonLat( const long N );
+  RegularLonLat( const size_t N );
 
   static std::string className();
 
@@ -71,7 +79,7 @@ protected:
 
   void setup( const eckit::Parametrisation& p);
   void setup( const double londeg, const double latdeg );
-  void setup( const long nlon, const long nlat );
+  void setup( const size_t nlon, const size_t nlat );
   virtual void set_typeinfo();
 };
 
