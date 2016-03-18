@@ -42,7 +42,7 @@ void ReducedLonLat::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-ReducedLonLat::ReducedLonLat( 
+ReducedLonLat::ReducedLonLat(
     const size_t nlat,
     const long nlon[],
     const Shift& shift )
@@ -66,7 +66,7 @@ void ReducedLonLat::setup( const eckit::Parametrisation& params )
 
   size_t nlat;
   params.get("nlat",nlat);
-  
+
   bool shift_lon = false;
   bool shift_lat = false;
   params.get("shift_lon",shift_lon);
@@ -81,8 +81,8 @@ void ReducedLonLat::setup( const eckit::Parametrisation& params )
   params.get("N",N_);
 }
 
-void ReducedLonLat::setup( 
-    const size_t nlat, 
+void ReducedLonLat::setup(
+    const size_t nlat,
     const long nlon[],
     const Shift& shift )
 {

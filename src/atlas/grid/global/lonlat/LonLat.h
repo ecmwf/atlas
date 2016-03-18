@@ -31,18 +31,19 @@ public:
   Shift( Bits bits ) { bits_ = static_cast<int>(bits); }
   Shift( int  bits ) { bits_ = bits; }
   Shift( bool shift_lon, bool shift_lat )
-  { 
+  {
     bits_ = NONE;
     if( shift_lon ) bits_ |= LON;
     if( shift_lon ) bits_ |= LAT;
   }
 
-  bool lat() const    { return (bits_ & LAT) == bits_; }
-  bool lon() const    { return (bits_ & LON) == bits_; }
-  bool lonlat() const { return (bits_ & (LON|LAT)) == bits_; }
-  operator bool() const { return (bits_ != 0); }
+  bool lat() const      { return check(LAT);     }
+  bool lon() const      { return check(LON);     }
+  bool lonlat() const   { return check(LON|LAT); }
+  operator bool() const { return (bits_ != 0);  }
 
 private:
+  bool check(int b) const { return (bits_ & b) == b; }
   int bits_;
 };
 
@@ -65,7 +66,7 @@ public:
   LonLat(const Shift&);
 
   static std::string className();
-  
+
   const Shift& shifted() const { return shift_; }
 
   bool regular() const { return shift_; }
@@ -75,7 +76,7 @@ protected:
   virtual void set_typeinfo() = 0;
 
 protected:
-  
+
   Shift shift_;
 };
 
