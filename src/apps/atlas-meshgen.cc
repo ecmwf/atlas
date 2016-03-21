@@ -64,7 +64,7 @@ public:
 
     std::string help_str =
         "NAME\n"
-        "       atlas-meshgen - Mesh generator for ReducedGrid compatible meshes\n"
+        "       atlas-meshgen - Mesh generator for Structured compatible meshes\n"
         "\n"
         "SYNOPSIS\n"
         "       atlas-meshgen GRID [OPTION]... [--help] \n"

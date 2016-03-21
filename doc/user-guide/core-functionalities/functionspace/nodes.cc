@@ -7,7 +7,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/functionspace/NodeColumns.h"
 
@@ -16,20 +16,20 @@ using namespace eckit;
 using namespace atlas;
 using namespace atlas::field;
 using namespace atlas::array;
-using namespace atlas::grid;
+using namespace atlas::grid::global;
 using namespace atlas::mesh;
-using namespace atlas::mesh::generators;
+
 
 int main(int argc, char *argv[])
 {
     atlas_init(argc, argv);
-    
+
     // Generate global reduced grid
     string gridID = Resource<string>("--grid", string("N32"));
-    SharedPtr<ReducedGrid> grid( ReducedGrid::create(gridID) );
+    SharedPtr<Structured> grid( Structured::create(gridID) );
 
-    // Generate mesh associated to reduced grid
-    ReducedGridMeshGenerator meshgenerator;
+    // Generate mesh associated to structured grid
+    mesh::generators::Structured meshgenerator;
     SharedPtr<Mesh> mesh ( meshgenerator.generate(*grid) );
 
     // Number of nodes in the mesh
@@ -51,12 +51,12 @@ int main(int argc, char *argv[])
     SharedPtr<Field> field_vector1(
       fs_nodes->createField<double>("vector1", make_shape(2)) );
     SharedPtr<Field> field_vector2(
-      fs_nodes->createField<double>("vector2", nb_levels, 
+      fs_nodes->createField<double>("vector2", nb_levels,
                                                make_shape(2)) );
     SharedPtr<Field> field_tensor1(
       fs_nodes->createField<double>("tensor1", make_shape(2,2)) );
     SharedPtr<Field> field_tensor2(
-      fs_nodes->createField<double>("tensor2", nb_levels, 
+      fs_nodes->createField<double>("tensor2", nb_levels,
                                                make_shape(2,2)) );
     /* .... */
     // Variables for scalar1 field definition

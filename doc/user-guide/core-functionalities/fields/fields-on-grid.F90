@@ -14,17 +14,16 @@ real(wp)                        :: zdist, zlon, zlat
 integer                         :: jnode
 character(len=1024)             :: string
 character(len=32)               :: gridID
-type(atlas_ReducedGrid)         :: grid
+type(atlas_grid_Structured)     :: grid
 type(atlas_Field)               :: field_pressure
 real(wp), pointer               :: pressure(:)
 
 call atlas_init()
 
 call atlas_resource("--grid", "N32", gridID)
-grid = atlas_ReducedGrid(gridID)
+grid = atlas_grid_Structured(gridID)
 
-field_pressure = atlas_Field("pressure", atlas_real(wp), &
-                            & [grid%npts()])
+field_pressure = atlas_Field("pressure", atlas_real(wp), [grid%npts()])
 call field_pressure%data(pressure)
 
 jnode = 1

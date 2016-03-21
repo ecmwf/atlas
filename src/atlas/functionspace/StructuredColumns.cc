@@ -13,7 +13,7 @@
 #include "atlas/grid/global/Structured.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/functionspace/ReducedGridColumns.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/internals/Checksum.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -28,13 +28,13 @@ namespace functionspace {
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
-ReducedGridColumns::ReducedGridColumns(const grid::Grid& grid) :
+StructuredColumns::StructuredColumns(const grid::Grid& grid) :
   FunctionSpace()
 {
     grid_ = dynamic_cast<const grid::global::Structured*>(&grid);
     if (grid_ == NULL)
     {
-      throw eckit::BadCast("Grid is not a grid::ReducedGrid type. "
+      throw eckit::BadCast("Grid is not a grid::Structured type. "
                            "Cannot partition using IFS trans", Here());
     }
 
@@ -152,7 +152,7 @@ ReducedGridColumns::ReducedGridColumns(const grid::Grid& grid) :
 // ----------------------------------------------------------------------------
 // Destructor
 // ----------------------------------------------------------------------------
-ReducedGridColumns::~ReducedGridColumns()
+StructuredColumns::~StructuredColumns()
 {
 #ifdef ATLAS_HAVE_TRANS
     delete trans_;
@@ -166,7 +166,7 @@ ReducedGridColumns::~ReducedGridColumns()
 // Create Field
 // ----------------------------------------------------------------------------
 template <>
-field::Field* ReducedGridColumns::createField<double>(
+field::Field* StructuredColumns::createField<double>(
     const std::string& name) const
 {
 #ifdef ATLAS_HAVE_TRANS
@@ -174,7 +174,7 @@ field::Field* ReducedGridColumns::createField<double>(
     field->set_functionspace(*this);
     return field;
 #else
-    eckit::NotImplemented("ReducedGridColumns::createField currently relies"
+    eckit::NotImplemented("StructuredColumns::createField currently relies"
                           " on ATLAS_HAVE_TRANS", Here());
 
     field::Field* field = field::Field::create<double>(name, array::make_shape(grid_->npts()) );
@@ -190,7 +190,7 @@ field::Field* ReducedGridColumns::createField<double>(
 // Create Field with vertical levels
 // ----------------------------------------------------------------------------
 template <>
-field::Field* ReducedGridColumns::createField<double>(
+field::Field* StructuredColumns::createField<double>(
     const std::string& name,
     size_t levels) const
 {
@@ -202,7 +202,7 @@ field::Field* ReducedGridColumns::createField<double>(
     field->set_levels(levels);
     return field;
 #else
-    eckit::NotImplemented("ReducedGridColumns::createField currently relies "
+    eckit::NotImplemented("StructuredColumns::createField currently relies "
                           "on ATLAS_HAVE_TRANS", Here());
 
     field::Field* field = field::Field::create<double>(
@@ -220,7 +220,7 @@ field::Field* ReducedGridColumns::createField<double>(
 // Create global Field
 // ----------------------------------------------------------------------------
 template <>
-field::Field* ReducedGridColumns::createGlobalField<double>(
+field::Field* StructuredColumns::createGlobalField<double>(
     const std::string& name) const
 {
     field::Field* field = field::Field::create<double>(name, array::make_shape(grid_->npts()));
@@ -235,7 +235,7 @@ field::Field* ReducedGridColumns::createGlobalField<double>(
 // Create global Field with vertical levels
 // ----------------------------------------------------------------------------
 template <>
-field::Field* ReducedGridColumns::createGlobalField<double>(
+field::Field* StructuredColumns::createGlobalField<double>(
     const std::string& name,
     size_t levels) const
 {
@@ -252,7 +252,7 @@ field::Field* ReducedGridColumns::createGlobalField<double>(
 // ----------------------------------------------------------------------------
 // Gather FieldSet
 // ----------------------------------------------------------------------------
-void ReducedGridColumns::gather(
+void StructuredColumns::gather(
     const field::FieldSet& local_fieldset,
     field::FieldSet& global_fieldset ) const
 {
@@ -266,7 +266,7 @@ void ReducedGridColumns::gather(
         if( loc.datatype() != array::DataType::str<double>() )
         {
             std::stringstream err;
-            err << "Cannot gather ReducedGrid field " << loc.name()
+            err << "Cannot gather Structured field " << loc.name()
                 << " of datatype " << loc.datatype().str() << ".";
             err << "Only " << array::DataType::str<double>() << " supported.";
             throw eckit::BadValue(err.str());
@@ -286,7 +286,7 @@ void ReducedGridColumns::gather(
     }
 
 #else
-    eckit::NotImplemented("ReducedGridColumns::gather currently relies "
+    eckit::NotImplemented("StructuredColumns::gather currently relies "
                           "on ATLAS_HAVE_TRANS", Here());
 #endif
 }
@@ -297,7 +297,7 @@ void ReducedGridColumns::gather(
 // ----------------------------------------------------------------------------
 // Gather Field
 // ----------------------------------------------------------------------------
-void ReducedGridColumns::gather(
+void StructuredColumns::gather(
     const field::Field& local,
     field::Field& global) const
 {
@@ -314,7 +314,7 @@ void ReducedGridColumns::gather(
 // ----------------------------------------------------------------------------
 // Scatter FieldSet
 // ----------------------------------------------------------------------------
-void ReducedGridColumns::scatter(
+void StructuredColumns::scatter(
     const field::FieldSet& global_fieldset,
     field::FieldSet& local_fieldset) const
 {
@@ -328,7 +328,7 @@ void ReducedGridColumns::scatter(
         if( loc.datatype() != array::DataType::str<double>() )
         {
             std::stringstream err;
-            err << "Cannot scatter ReducedGrid field " << glb.name()
+            err << "Cannot scatter Structured field " << glb.name()
                 << " of datatype " << glb.datatype().str() << ".";
             err << "Only " << array::DataType::str<double>() << " supported.";
             throw eckit::BadValue(err.str());
@@ -347,7 +347,7 @@ void ReducedGridColumns::scatter(
                          glb.data<double>(), loc.data<double>());
   }
 #else
-    eckit::NotImplemented("ReducedGridColumns::scatter currently relies "
+    eckit::NotImplemented("StructuredColumns::scatter currently relies "
                           "on ATLAS_HAVE_TRANS", Here());
 #endif
 }
@@ -358,7 +358,7 @@ void ReducedGridColumns::scatter(
 // ----------------------------------------------------------------------------
 // Scatter Field
 // ----------------------------------------------------------------------------
-void ReducedGridColumns::scatter(
+void StructuredColumns::scatter(
     const field::Field& global,
     field::Field& local) const
 {
@@ -378,7 +378,7 @@ void ReducedGridColumns::scatter(
 // ----------------------------------------------------------------------------
 // Retrieve Global index from Local one
 // ----------------------------------------------------------------------------
-double ReducedGridColumns::lat(
+double StructuredColumns::lat(
     size_t jlat) const
 {
   return grid_->lat(jlat+first_lat_);
@@ -390,7 +390,7 @@ double ReducedGridColumns::lat(
 // ----------------------------------------------------------------------------
 // Retrieve Global index from Local one
 // ----------------------------------------------------------------------------
-double ReducedGridColumns::lon(
+double StructuredColumns::lon(
     size_t jlat,
     size_t jlon) const
 {
@@ -401,7 +401,7 @@ double ReducedGridColumns::lon(
 // ----------------------------------------------------------------------------
 // Checksum FieldSet
 // ----------------------------------------------------------------------------
-std::string ReducedGridColumns::checksum(
+std::string StructuredColumns::checksum(
     const field::FieldSet& fieldset) const
 {
     eckit::MD5 md5;
@@ -415,7 +415,7 @@ std::string ReducedGridColumns::checksum(
 // ----------------------------------------------------------------------------
 // Checksum Field
 // ----------------------------------------------------------------------------
-std::string ReducedGridColumns::checksum(
+std::string StructuredColumns::checksum(
     const field::Field& field) const
 {
     // FieldSet fieldset;
@@ -437,15 +437,15 @@ std::string ReducedGridColumns::checksum(
 extern "C"
 {
 
-ReducedGridColumns* atlas__functionspace__ReducedGridColumns__new__grid (const grid::Grid* grid)
+StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid::Grid* grid)
 {
   ATLAS_ERROR_HANDLING(
-    return new ReducedGridColumns(*grid);
+    return new StructuredColumns(*grid);
   );
   return 0;
 }
 
-void atlas__functionspace__ReducedGridColumns__delete (ReducedGridColumns* This)
+void atlas__functionspace__StructuredColumns__delete (StructuredColumns* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -453,7 +453,7 @@ void atlas__functionspace__ReducedGridColumns__delete (ReducedGridColumns* This)
   );
 }
 
-field::Field* atlas__functionspace__ReducedGridColumns__create_field (const ReducedGridColumns* This, const char* name)
+field::Field* atlas__functionspace__StructuredColumns__create_field (const StructuredColumns* This, const char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -462,7 +462,7 @@ field::Field* atlas__functionspace__ReducedGridColumns__create_field (const Redu
   return 0;
 }
 
-field::Field* atlas__functionspace__ReducedGridColumns__create_field_lev (const ReducedGridColumns* This, const char* name, int levels)
+field::Field* atlas__functionspace__StructuredColumns__create_field_lev (const StructuredColumns* This, const char* name, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -471,7 +471,7 @@ field::Field* atlas__functionspace__ReducedGridColumns__create_field_lev (const 
   return 0;
 }
 
-field::Field* atlas__functionspace__ReducedGridColumns__create_gfield (const ReducedGridColumns* This, const char* name)
+field::Field* atlas__functionspace__StructuredColumns__create_gfield (const StructuredColumns* This, const char* name)
 {
   ATLAS_ERROR_HANDLING (
     ASSERT(This);
@@ -480,7 +480,7 @@ field::Field* atlas__functionspace__ReducedGridColumns__create_gfield (const Red
   return 0;
 }
 
-field::Field* atlas__functionspace__ReducedGridColumns__create_gfield_lev (const ReducedGridColumns* This, const char* name, int levels)
+field::Field* atlas__functionspace__StructuredColumns__create_gfield_lev (const StructuredColumns* This, const char* name, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -489,7 +489,7 @@ field::Field* atlas__functionspace__ReducedGridColumns__create_gfield_lev (const
   return 0;
 }
 
-void atlas__functionspace__ReducedGridColumns__gather (const ReducedGridColumns* This, const field::Field* local, field::Field* global)
+void atlas__functionspace__StructuredColumns__gather (const StructuredColumns* This, const field::Field* local, field::Field* global)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -499,7 +499,7 @@ void atlas__functionspace__ReducedGridColumns__gather (const ReducedGridColumns*
   );
 }
 
-void atlas__functionspace__ReducedGridColumns__scatter (const ReducedGridColumns* This, const field::Field* global, field::Field* local)
+void atlas__functionspace__StructuredColumns__scatter (const StructuredColumns* This, const field::Field* global, field::Field* local)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -509,7 +509,7 @@ void atlas__functionspace__ReducedGridColumns__scatter (const ReducedGridColumns
   );
 }
 
-void atlas__fs__ReducedGridColumns__checksum_fieldset(const ReducedGridColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated)
+void atlas__fs__StructuredColumns__checksum_fieldset(const StructuredColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(fieldset);
@@ -521,7 +521,7 @@ void atlas__fs__ReducedGridColumns__checksum_fieldset(const ReducedGridColumns* 
   );
 }
 
-void atlas__fs__ReducedGridColumns__checksum_field(const ReducedGridColumns* This, const field::Field* field, char* &checksum, int &size, int &allocated)
+void atlas__fs__StructuredColumns__checksum_field(const StructuredColumns* This, const field::Field* field, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(field);

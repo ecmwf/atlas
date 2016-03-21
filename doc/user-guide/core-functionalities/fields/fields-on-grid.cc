@@ -9,7 +9,7 @@ using namespace eckit;
 using namespace atlas;
 using namespace atlas::array;
 using namespace atlas::field;
-using namespace atlas::grid;
+using namespace atlas::grid::global;
 
 int main(int argc, char *argv[])
 {
@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
     string gridID;
     gridID = Resource<string>("--grid", string("N32"));
-    SharedPtr<ReducedGrid> grid(ReducedGrid::create(gridID));
+    SharedPtr<Structured> grid(Structured::create(gridID));
     int const nb_nodes = grid->npts();
 
     SharedPtr<Field> field_pressure(

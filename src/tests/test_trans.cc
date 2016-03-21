@@ -30,7 +30,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/functionspace/ReducedGridColumns.h"
+#include "atlas/functionspace/StructuredColumns.h"
 
 #include "transi/trans.h"
 
@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   SharedPtr<trans::Trans> trans ( new trans::Trans(*g,47) );
 
   SharedPtr<functionspace::Spectral>    spectral    (new functionspace::Spectral(*trans));
-  SharedPtr<functionspace::ReducedGridColumns> gridpoints (new functionspace::ReducedGridColumns(*g));
+  SharedPtr<functionspace::StructuredColumns> gridpoints (new functionspace::StructuredColumns(*g));
 
   SharedPtr<field::Field> spfg ( spectral->createGlobalField<double>("spf") );
   SharedPtr<field::Field> spf  ( spectral->createField<double>("spf") );

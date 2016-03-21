@@ -22,7 +22,7 @@ namespace lonlat {
 
 /// @brief Regular LonLat Grid
 ///
-/// This grid is a special case of the class ReducedGrid, with
+/// This grid is a special case of the class Structured, with
 /// equidistant distribution of latitudes and longitudes.
 /// Longitude is the X-direction (first  index in C)
 /// Latitude  is the Y-direction (second index in C)

@@ -22,7 +22,7 @@ namespace gaussian {
 
 /// @brief Regular Gaussian Grid
 ///
-/// This grid is a special case of the class ReducedGrid, in which
+/// This grid is a special case of the class Structured, in which
 /// the latitudes are distributed according to the roots of the
 /// Legendre Polynomials, and a equidistant distribution in zonal
 /// direction, equal for every latitude.

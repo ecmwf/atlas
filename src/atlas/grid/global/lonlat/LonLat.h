@@ -49,7 +49,7 @@ private:
 
 /// @brief (Reduced) LonLat Grid
 ///
-/// This grid is a special case of the class ReducedGrid, with
+/// This grid is a special case of the class Structured, with
 /// equidistant distribution of latitudes, and a equidistant distribution in zonal
 /// direction, which reduce in number going closer towards poles,
 /// essentially making the grid more uniform on the sphere

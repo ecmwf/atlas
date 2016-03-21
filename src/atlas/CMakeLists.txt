@@ -215,8 +215,8 @@ functionspace/NodeColumns.h
 functionspace/NodeColumns.cc
 functionspace/NodeColumnsInterface.h
 functionspace/NodeColumnsInterface.cc
-functionspace/ReducedGridColumns.h
-functionspace/ReducedGridColumns.cc
+functionspace/StructuredColumns.h
+functionspace/StructuredColumns.cc
 functionspace/Spectral.h
 functionspace/Spectral.cc
 )

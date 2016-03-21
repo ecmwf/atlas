@@ -19,7 +19,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/functionspace/ReducedGridColumns.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/internals/Bitflags.h"
@@ -54,7 +54,7 @@ Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
 {
   const grid::global::Structured* reduced = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !reduced )
-    throw eckit::BadCast("Grid is not a grid::ReducedGrid type. Cannot partition using IFS trans",Here());
+    throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
   size_t nsmax = 0;
   ctor_rgg(reduced->nlat(),reduced->pl().data(), nsmax, p);
 }
@@ -70,7 +70,7 @@ Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p
 {
   const grid::global::Structured* reduced = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !reduced )
-    throw eckit::BadCast("Grid is not a grid::ReducedGrid type. Cannot partition using IFS trans",Here());
+    throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 
   const grid::global::lonlat::LonLat* lonlat
       = dynamic_cast<const grid::global::lonlat::LonLat*>(reduced);
@@ -388,7 +388,7 @@ void Trans::dirtrans(
     const TransParameters& context) const
 {
   ASSERT( gpfield.functionspace() == 0 ||
-          gpfield.functionspace().cast<functionspace::ReducedGridColumns>() );
+          gpfield.functionspace().cast<functionspace::StructuredColumns>() );
   ASSERT( spfield.functionspace() == 0 ||
           spfield.functionspace().cast<functionspace::Spectral>() );
   if ( gpfield.stride(0) != spfield.stride(0) )
@@ -429,7 +429,7 @@ void Trans::dirtrans(
     const field::Field& f = gpfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.functionspace() == 0 ||
-            f.functionspace().cast<functionspace::ReducedGridColumns>() );
+            f.functionspace().cast<functionspace::StructuredColumns>() );
   }
 
   int trans_spnfld(0);
@@ -607,7 +607,7 @@ void Trans::invtrans(const  field::Field& spfield,
                      const TransParameters& context) const
 {
   ASSERT( gpfield.functionspace() == 0 ||
-          gpfield.functionspace().cast<functionspace::ReducedGridColumns>() );
+          gpfield.functionspace().cast<functionspace::StructuredColumns>() );
   ASSERT( spfield.functionspace() == 0 ||
           spfield.functionspace().cast<functionspace::Spectral>() );
   if ( gpfield.stride(0) != spfield.stride(0) )
@@ -650,7 +650,7 @@ void Trans::invtrans(const  field::FieldSet& spfields,
     const field::Field& f = gpfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.functionspace() == 0 ||
-            f.functionspace().cast<functionspace::ReducedGridColumns>() );
+            f.functionspace().cast<functionspace::StructuredColumns>() );
   }
 
   int nb_spectral_fields(0);

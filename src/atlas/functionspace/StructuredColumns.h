@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_functionspace_functionspace__ReducedGridColumns_h
-#define atlas_functionspace_functionspace__ReducedGridColumns_h
+#ifndef atlas_functionspace_functionspace__StructuredColumns_h
+#define atlas_functionspace_functionspace__StructuredColumns_h
 
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/functionspace/FunctionSpace.h"
@@ -47,21 +47,21 @@ namespace functionspace {
 
 // -------------------------------------------------------------------
 
-class ReducedGridColumns : public FunctionSpace
+class StructuredColumns : public FunctionSpace
 {
 public:
 
-  ReducedGridColumns( const grid::Grid& );
+  StructuredColumns( const grid::Grid& );
 
-  virtual ~ReducedGridColumns();
+  virtual ~StructuredColumns();
 
-  virtual std::string name() const { return "ReducedGridColumns"; }
+  virtual std::string name() const { return "StructuredColumns"; }
 
-  /// @brief Create a ReducedGrid field
+  /// @brief Create a Structured field
   template <typename DATATYPE> field::Field* createField(const std::string& name) const;
   template <typename DATATYPE> field::Field* createField(const std::string& name, size_t levels) const;
 
-  /// @brief Create a global ReducedGrid field
+  /// @brief Create a global Structured field
   template <typename DATATYPE> field::Field* createGlobalField(const std::string& name) const;
   template <typename DATATYPE> field::Field* createGlobalField(const std::string& name, size_t levels) const;
 
@@ -106,16 +106,16 @@ private: // data
 #define field_FieldSet field::FieldSet
 extern "C"
 {
-  ReducedGridColumns* atlas__functionspace__ReducedGridColumns__new__grid (const grid_Grid* grid);
-  void atlas__functionspace__ReducedGridColumns__delete (ReducedGridColumns* This);
-  field_Field* atlas__functionspace__ReducedGridColumns__create_field (const ReducedGridColumns* This, const char* name);
-  field_Field* atlas__functionspace__ReducedGridColumns__create_field_lev (const ReducedGridColumns* This, const char* name, int levels);
-  field_Field* atlas__functionspace__ReducedGridColumns__create_gfield (const ReducedGridColumns* This, const char* name);
-  field_Field* atlas__functionspace__ReducedGridColumns__create_gfield_lev (const ReducedGridColumns* This, const char* name, int levels);
-  void atlas__functionspace__ReducedGridColumns__gather (const ReducedGridColumns* This, const field_Field* local, field_Field* global);
-  void atlas__functionspace__ReducedGridColumns__scatter (const ReducedGridColumns* This, const field_Field* global, field_Field* local);
-  void atlas__fs__ReducedGridColumns__checksum_fieldset(const ReducedGridColumns* This, const field_FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
-  void atlas__fs__ReducedGridColumns__checksum_field(const ReducedGridColumns* This, const field_Field* field, Char* &checksum, int &size, int &allocated);
+  StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid_Grid* grid);
+  void atlas__functionspace__StructuredColumns__delete (StructuredColumns* This);
+  field_Field* atlas__functionspace__StructuredColumns__create_field (const StructuredColumns* This, const char* name);
+  field_Field* atlas__functionspace__StructuredColumns__create_field_lev (const StructuredColumns* This, const char* name, int levels);
+  field_Field* atlas__functionspace__StructuredColumns__create_gfield (const StructuredColumns* This, const char* name);
+  field_Field* atlas__functionspace__StructuredColumns__create_gfield_lev (const StructuredColumns* This, const char* name, int levels);
+  void atlas__functionspace__StructuredColumns__gather (const StructuredColumns* This, const field_Field* local, field_Field* global);
+  void atlas__functionspace__StructuredColumns__scatter (const StructuredColumns* This, const field_Field* global, field_Field* local);
+  void atlas__fs__StructuredColumns__checksum_fieldset(const StructuredColumns* This, const field_FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
+  void atlas__fs__StructuredColumns__checksum_field(const StructuredColumns* This, const field_Field* field, Char* &checksum, int &size, int &allocated);
 }
 
 #undef grid_Grid
@@ -127,4 +127,4 @@ extern "C"
 } // namespace functionspace
 } // namespace atlas
 
-#endif // atlas_functionspace_functionspace__ReducedGridColumns_h
+#endif // atlas_functionspace_functionspace__StructuredColumns_h

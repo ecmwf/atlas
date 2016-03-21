@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef ReducedGrid_h
-#define ReducedGrid_h
+#ifndef Structured_h
+#define Structured_h
 
 #include "eckit/memory/Builder.h"
 #include "eckit/config/Parametrisation.h"
@@ -209,4 +209,4 @@ extern "C"
 } // namespace grid
 } // namespace atlas
 
-#endif // ReducedGrid_h
+#endif // Structured_h

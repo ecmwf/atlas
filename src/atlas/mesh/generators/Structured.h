@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef Structured_h
-#define Structured_h
+#ifndef atlas_mesh_generators_Structured_h
+#define atlas_mesh_generators_Structured_h
 
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/util/Metadata.h"
@@ -89,4 +89,4 @@ public:
 } // namespace mesh
 } // namespace atlas
 
-#endif // Structured_h
+#endif // atlas_mesh_generators_Structured_h

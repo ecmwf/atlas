@@ -4,19 +4,19 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/functionspace/ReducedGridColumns.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "eckit/config/Resource.h"
 
 using namespace std;
 using namespace eckit;
 using namespace atlas;
 using namespace atlas::array;
-using namespace atlas::grid;
+using namespace atlas::grid::global;
 using namespace atlas::field;
 using namespace atlas::mesh;
-using namespace atlas::mesh::generators;
+
 
 int main(int argc, char *argv[])
 {
@@ -24,14 +24,14 @@ int main(int argc, char *argv[])
 
     // Generate global reduced grid
     string gridID = Resource<string>("--grid", string("N32"));
-    SharedPtr<ReducedGrid> grid (ReducedGrid::create(gridID));
+    SharedPtr<Structured> grid (Structured::create(gridID));
 
     // Number of points in the grid
     int const nb_nodes = grid->npts();
 
     // Generate functionspace associated to grid
-    SharedPtr<functionspace::ReducedGridColumns>
-        fs_rgp(new functionspace::ReducedGridColumns(*grid));
+    SharedPtr<functionspace::StructuredColumns>
+        fs_rgp(new functionspace::StructuredColumns(*grid));
 
     /* .... */
     // Variables for scalar1 field definition
@@ -70,10 +70,10 @@ int main(int argc, char *argv[])
     }
 
     // Generate mesh associated to reduced grid
-    ReducedGridMeshGenerator meshgenerator;
+    mesh::generators::Structured meshgenerator;
     SharedPtr<Mesh> mesh (meshgenerator.generate(*grid));
 
-    // Write mesh and field in gmsh format for visualization        
+    // Write mesh and field in gmsh format for visualization
     util::io::Gmsh gmsh;
     gmsh.options.set("info", true);
     gmsh.write(*mesh, "mesh.msh");

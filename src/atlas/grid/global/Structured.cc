@@ -209,7 +209,7 @@ size_t Structured::copyLonLatMemory(double* pts, size_t size) const
 
 void Structured::print(std::ostream& os) const
 {
-    os << "ReducedGrid(Name:" << shortName() << ")";
+    os << "Structured(Name:" << shortName() << ")";
 }
 
 //------------------------------------------------------------------------------

@@ -140,8 +140,8 @@ use atlas_functionspace_EdgeColumns_module, only: &
     & atlas_functionspace_EdgeColumns
 use atlas_functionspace_NodeColumns_module, only: &
     & atlas_functionspace_NodeColumns
-use atlas_functionspace_ReducedGridColumns_module, only: &
-    & atlas_functionspace_ReducedGridColumns
+use atlas_functionspace_StructuredColumns_module, only: &
+    & atlas_functionspace_StructuredColumns
 use atlas_functionspace_Spectral_module, only: &
     & atlas_functionspace_Spectral
 use atlas_Trans_module, only : &

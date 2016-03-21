@@ -106,8 +106,10 @@ END TYPE atlas_Field
 interface atlas_Field
   module procedure atlas_Field__cptr
   module procedure atlas_Field__create
-  module procedure atlas_Field__create_name_kind_shape
-  module procedure atlas_Field__create_kind_shape
+  module procedure atlas_Field__create_name_kind_shape_int32
+  module procedure atlas_Field__create_name_kind_shape_int64
+  module procedure atlas_Field__create_kind_shape_int32
+  module procedure atlas_Field__create_kind_shape_int64
 end interface
 
 ! ----------------------------------------------------
@@ -193,12 +195,12 @@ function atlas_Field__create(params) result(field)
   call field%return()
 end function
 
-function atlas_Field__create_name_kind_shape(name,kind,shape) result(field)
+function atlas_Field__create_name_kind_shape_int32(name,kind,shape) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
-  integer, intent(in) :: shape(:)
+  integer(c_int), intent(in) :: shape(:)
 
   type(atlas_Config) :: params
 
@@ -214,11 +216,51 @@ function atlas_Field__create_name_kind_shape(name,kind,shape) result(field)
   call field%return()
 end function
 
-function atlas_Field__create_kind_shape(kind,shape) result(field)
+function atlas_Field__create_name_kind_shape_int64(name,kind,shape) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  integer, intent(in) :: kind
+  integer(c_long), intent(in) :: shape(:)
+
+  type(atlas_Config) :: params
+
+  params = atlas_Config()
+  call params%set("creator","ArraySpec")
+  call params%set("shape",shape)
+  call params%set("fortran",.True.)
+  call params%set("datatype",atlas_data_type(kind))
+  call params%set("name",name)
+
+  field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
+  call params%final()
+  call field%return()
+end function
+
+function atlas_Field__create_kind_shape_int32(kind,shape) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  integer(c_int), intent(in) :: kind
+  integer, intent(in) :: shape(:)
+
+  type(atlas_Config) :: params
+
+  params = atlas_Config()
+  call params%set("creator","ArraySpec")
+  call params%set("shape",shape)
+  call params%set("fortran",.True.)
+  call params%set("datatype",atlas_data_type(kind))
+
+  field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
+  call params%final()
+  call field%return()
+end function
+
+function atlas_Field__create_kind_shape_int64(kind,shape) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   integer, intent(in) :: kind
-  integer, intent(in) :: shape(:)
+  integer(c_long), intent(in) :: shape(:)
 
   type(atlas_Config) :: params
 

@@ -6,15 +6,15 @@
 using namespace std;
 using namespace eckit;
 using namespace atlas;
-using namespace atlas::grid;
+using namespace atlas::grid::global;
 
 int main(int argc, char *argv[])
-{    
+{
     atlas_init(argc, argv);
 
     string gridID = Resource<string>( "--grid", string("N32") );
 
-    SharedPtr<ReducedGrid> grid(ReducedGrid::create(gridID));
+    SharedPtr<Structured> grid(Structured::create(gridID));
 
     Log::info() << "nlat   = " << grid->nlat()  << endl;
     Log::info() << "nlon   = " << grid->nlon(0) << endl;

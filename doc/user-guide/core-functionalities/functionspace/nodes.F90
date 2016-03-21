@@ -6,7 +6,7 @@ integer, parameter                    :: wp = c_double
 character(len=1024)                   :: string
 character(len=1024)                   :: gridID
 character(len=32)                     :: checksum
-type(atlas_ReducedGrid)               :: grid
+type(atlas_grid_Structured)               :: grid
 type(atlas_mesh)                      :: mesh
 type(atlas_meshgenerator)             :: meshgenerator
 type(atlas_functionspace_NodeColumns) :: fs_nodes
@@ -47,10 +47,10 @@ call atlas_init()
 
 ! Generate global reduced grid
 call atlas_resource("--grid", "N32", gridID)
-grid = atlas_ReducedGrid(gridID)
+grid = atlas_grid_Structured(gridID)
 
 ! Generate mesh associated to reduced grid
-meshgenerator = atlas_reducedgridmeshgenerator()
+meshgenerator = atlas_meshgenerator_Structured()
 mesh          = meshgenerator%generate(grid)
 
 ! Generate functionspace associated to mesh

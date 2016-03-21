@@ -152,7 +152,7 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
 {
   const grid::global::Structured* rg = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !rg )
-    throw eckit::BadCast("Structured can only work with a ReducedGrid",Here());
+    throw eckit::BadCast("Structured can only work with a Structured",Here());
 
   int nb_parts = options.get<size_t>("nb_parts");
 
@@ -173,7 +173,7 @@ void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& 
 {
   const grid::global::Structured* rg = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !rg )
-    throw eckit::BadCast("Grid could not be cast to a ReducedGrid",Here());
+    throw eckit::BadCast("Grid could not be cast to a Structured",Here());
 
   if( grid.npts() != distribution.partition().size() )
   {
@@ -1182,7 +1182,7 @@ void Structured::generate_global_element_numbering( Mesh& mesh ) const
 }
 
 namespace {
-static MeshGeneratorBuilder< Structured > __reducedgrid("Structured");
+static MeshGeneratorBuilder< Structured > __Structured("Structured");
 }
 
 } // namespace generators
