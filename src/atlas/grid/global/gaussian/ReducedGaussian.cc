@@ -37,8 +37,6 @@ void ReducedGaussian::set_typeinfo()
 ReducedGaussian::ReducedGaussian( const size_t N, const long nlons[] )
   : Gaussian()
 {
-  Structured::N_ = N;
-
   setup_N_hemisphere(N,nlons);
   set_typeinfo();
 }
@@ -55,54 +53,25 @@ void ReducedGaussian::setup( const eckit::Parametrisation& params )
   if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
   size_t N;
   params.get("N",N);
-  Structured::N_ = N;
 
-  if( ! params.has("latitudes") )
-  {
-    std::vector<long> nlons;
-    params.get("npts_per_lat",nlons);
-    setup_N_hemisphere(N,nlons.data());
-  }
-  else
-  {
-    Structured::setup(params);
-  }
-}
-
-eckit::Properties ReducedGaussian::spec() const
-{
-  eckit::Properties grid_spec;
-
-  grid_spec.set("grid_type", grid_type_str() );
-
-  grid_spec.set("nlat",nlat());
-  grid_spec.set("N", N() );
-
-  grid_spec.set("npts_per_lat",eckit::makeVectorValue(pl()));
-  grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
-
-  BoundBox bbox = boundingBox();
-  grid_spec.set("bbox_s", bbox.min().lat());
-  grid_spec.set("bbox_w", bbox.min().lon());
-  grid_spec.set("bbox_n", bbox.max().lat());
-  grid_spec.set("bbox_e", bbox.max().lon());
-
-  return grid_spec;
+  std::vector<long> pl;
+  params.get("pl",pl);
+  setup_N_hemisphere(N,pl.data());
 }
 
 //-----------------------------------------------------------------------------
 
 extern "C" {
 
-Structured* atlas__grid__global__gaussian__ReducedGaussian_int(size_t N, int nlon[])
+Structured* atlas__grid__global__gaussian__ReducedGaussian_int(size_t N, int pl[])
 {
-  std::vector<long> nlon_vector;
-  nlon_vector.assign(nlon,nlon+N);
-  return new ReducedGaussian(N,nlon_vector.data());
+  std::vector<long> pl_vector;
+  pl_vector.assign(pl,pl+N);
+  return new ReducedGaussian(N,pl_vector.data());
 }
-Structured* atlas__grid__global__gaussian__ReducedGaussian_long(size_t N, long nlon[])
+Structured* atlas__grid__global__gaussian__ReducedGaussian_long(size_t N, long pl[])
 {
-  return new ReducedGaussian(N,nlon);
+  return new ReducedGaussian(N,pl);
 }
 
 }

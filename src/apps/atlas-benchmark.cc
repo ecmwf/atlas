@@ -52,7 +52,6 @@
 #include "atlas/atlas.h"
 #include "atlas/array/Array.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/mesh/actions/GenerateMesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/mesh/actions/BuildHalo.h"

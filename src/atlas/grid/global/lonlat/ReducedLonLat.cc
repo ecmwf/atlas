@@ -62,7 +62,7 @@ ReducedLonLat::ReducedLonLat( const eckit::Parametrisation& params )
 void ReducedLonLat::setup( const eckit::Parametrisation& params )
 {
   if( ! params.has("nlat") )         throw BadParameter("N missing in Params",Here());
-  if( ! params.has("npts_per_lat") ) throw BadParameter("npts_per_lat missing in Params",Here());
+  if( ! params.has("pl") ) throw BadParameter("npts_per_lat missing in Params",Here());
 
   size_t nlat;
   params.get("nlat",nlat);
@@ -75,7 +75,7 @@ void ReducedLonLat::setup( const eckit::Parametrisation& params )
   shift_ = Shift(shift_lon,shift_lat);
 
   std::vector<long> nlon;
-  params.get("npts_per_lat",nlon);
+  params.get("pl",nlon);
   setup(nlat,nlon.data(),shift_);
 
   params.get("N",N_);
@@ -115,12 +115,13 @@ eckit::Properties ReducedLonLat::spec() const
 {
   eckit::Properties grid_spec;
 
-  grid_spec.set("grid_type", grid_type_str() );
+  grid_spec.set("grid_type", gridType() );
+  grid_spec.set("short_name",shortName());
 
   grid_spec.set("N", N() );
   grid_spec.set("nlat", nlat() );
 
-  grid_spec.set("npts_per_lat",eckit::makeVectorValue(pl()));
+  grid_spec.set("pl",eckit::makeVectorValue(pl()));
 
   grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
 

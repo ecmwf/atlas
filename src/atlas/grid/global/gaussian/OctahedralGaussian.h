@@ -34,11 +34,12 @@ public:
 
     OctahedralGaussian( const eckit::Parametrisation& arg1);
 
+
+private:
+
     /// Computes the PL for the Octohedral distribution
     /// number of points at latitude closest to pole
     static std::vector<long> computePL(const size_t N);
-
-private:
 
     void construct(const size_t N);
 

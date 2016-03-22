@@ -78,8 +78,7 @@ protected:
   /// to be used only by derived types
   Gaussian();
 
-  void setup( const eckit::Parametrisation& );
-  void setup_N_hemisphere( const size_t N, const long npts_per_lat[] );
+  void setup_N_hemisphere( const size_t N, const long pl[] );
   virtual void set_typeinfo() = 0;
 
 };

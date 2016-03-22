@@ -14,6 +14,7 @@
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
 #include "atlas/grid/global/Structured.h"
+#include "atlas/internals/Debug.h"
 
 using eckit::Factory;
 using eckit::MD5;
@@ -55,36 +56,17 @@ Structured::Structured() : Global(), N_(0)
 
 //------------------------------------------------------------------------------
 
-void Structured::setup(const eckit::Parametrisation& params)
-{
-  eckit::ValueList list;
-
-  std::vector<long> npts_per_lat;
-  std::vector<double> latitudes;
-
-  if( ! params.get("npts_per_lat",npts_per_lat) ) throw BadParameter("npts_per_lat missing in Params",Here());
-  if( ! params.get("latitudes",latitudes) ) throw BadParameter("latitudes missing in Params",Here());
-
-  params.get("N",N_);
-
-  setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
-}
-
-//------------------------------------------------------------------------------
-
-void Structured::setup( const size_t nlat, const double lats[], const long nlons[], const double lonmin[], const double lonmax[] )
+void Structured::setup( const size_t nlat, const double lats[], const long pl[], const double lonmin[] )
 {
   ASSERT(nlat > 1);  // can't have a grid with just one latitude
 
-  nlons_.assign(nlons,nlons+nlat);
+  pl_.assign(pl,pl+nlat);
 
   lat_.assign(lats,lats+nlat);
 
   lonmin_.assign(lonmin,lonmin+nlat);
-  lonmax_.assign(lonmax,lonmax+nlat);
-
   lon_inc_.resize(nlat);
-  
+
   npts_ = 0;
   nlonmax_ = 0;
   nlonmin_ = std::numeric_limits<size_t>::max();
@@ -92,49 +74,45 @@ void Structured::setup( const size_t nlat, const double lats[], const long nlons
 
   for(size_t jlat = 0; jlat < nlat; ++jlat)
   {
-    //ASSERT( nlon(jlat) > 1 ); // can't have grid with just one longitude
-    nlonmax_ = std::max(nlon(jlat),nlonmax_);
-    nlonmin_ = std::min(nlon(jlat),nlonmin_);
+    lon_inc_[jlat] = 0.;
+    if( pl_[jlat] )
+      lon_inc_[jlat] = 360./static_cast<double>(pl_[jlat]);
+
 
     lon_min = std::min(lon_min,lonmin_[jlat]);
-    lon_max = std::max(lon_max,lonmax_[jlat]);
-    lon_inc_[jlat] = (lonmax_[jlat] - lonmin_[jlat])/(nlons_[jlat]-1);
+    lon_max = std::max(lon_max,lonmin_[jlat]+(pl_[jlat]-1l)*lon_inc_[jlat]);
+    nlonmax_ = std::max( (size_t) pl_[jlat],nlonmax_);
+    nlonmin_ = std::min( (size_t) pl_[jlat],nlonmin_);
 
-    npts_ += nlons_[jlat];
+    npts_ += pl_[jlat];
   }
-
+  try {
   bounding_box_ = BoundBox(lat_[0]/*north*/, lat_[nlat-1]/*south*/, lon_max/*east*/, lon_min/*west*/ );
+  }
+  catch( eckit::BadParameter& e ) {}
 }
 
 //------------------------------------------------------------------------------
 
-void Structured::setup( const size_t nlat, const double lats[], const long nlons[] )
+void Structured::setup( const size_t nlat, const double lats[], const long pl[] )
 {
   std::vector<double> lonmin(nlat,0.);
-  std::vector<double> lonmax(nlat);
-  for(size_t jlat = 0; jlat < nlat; ++jlat)
-  {
-    if( nlons[jlat] )
-      lonmax[jlat] = 360.-360./static_cast<double>(nlons[jlat]);
-    else
-      lonmax[jlat] = 0.;
-  }
-  setup(nlat,lats,nlons,lonmin.data(),lonmax.data());
+  setup(nlat,lats,pl,lonmin.data());
 }
 
 //------------------------------------------------------------------------------
 
 void Structured::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[])
 {
-  std::vector<long> nlons(2*N);
-  std::copy( lon, lon+N, nlons.begin() );
-  std::reverse_copy( lon, lon+N, nlons.begin()+N );
+  std::vector<long> pl(2*N);
+  std::copy( lon, lon+N, pl.begin() );
+  std::reverse_copy( lon, lon+N, pl.begin()+N );
   std::vector<double> lats(2*N);
   std::copy( lat, lat+N, lats.begin() );
   std::reverse_copy( lat, lat+N, lats.begin()+N );
   for(size_t j = N; j < 2*N; ++j)
     lats[j] *= -1.;
-  setup(2*N,lats.data(),nlons.data());
+  setup(2*N,lats.data(),pl.data());
 }
 
 //------------------------------------------------------------------------------

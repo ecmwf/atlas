@@ -21,10 +21,14 @@ namespace gaussian {
 
 register_BuilderT1(Grid,ClassicGaussian,ClassicGaussian::grid_type_str());
 
+//------------------------------------------------------------------------------
+
 std::string ClassicGaussian::className()
 {
   return "atlas.grid.global.gaussian.ClassicGaussian";
 }
+
+//------------------------------------------------------------------------------
 
 void ClassicGaussian::set_typeinfo()
 {
@@ -34,23 +38,25 @@ void ClassicGaussian::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
+//------------------------------------------------------------------------------
+
 ClassicGaussian::ClassicGaussian( const size_t N )
   : Gaussian()
 {
-  Structured::N_ = N;
   std::vector<long> nlon(N);
   classic::points_per_latitude_npole_equator(N,nlon.data());
   setup_N_hemisphere(N,nlon.data());
   set_typeinfo();
 }
 
+//------------------------------------------------------------------------------
+
 ClassicGaussian::ClassicGaussian(const eckit::Parametrisation& params)
   : Gaussian()
 {
-  if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
   size_t N;
-  params.get("N",N);
-  Structured::N_ = N;
+  if( ! params.get("N",N) )
+    throw eckit::BadParameter("N missing in Params",Here());
   std::vector<long> nlon(N);
   classic::points_per_latitude_npole_equator(N,nlon.data());
   setup_N_hemisphere(N,nlon.data());

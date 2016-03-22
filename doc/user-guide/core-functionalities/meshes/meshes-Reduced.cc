@@ -2,7 +2,6 @@
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/mesh/actions/GenerateMesh.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/util/io/Gmsh.h"
 #include "eckit/config/Resource.h"

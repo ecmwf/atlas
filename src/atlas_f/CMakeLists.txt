@@ -93,7 +93,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildPeriodicBo
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildHalo.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildEdges.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildDualMesh.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/GenerateMesh.h)
+#generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/GenerateMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/WriteLoadBalanceReport.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/generators/MeshGenerator.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/State.h)

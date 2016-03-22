@@ -49,55 +49,43 @@ void Gaussian::QuadratureNorthPoleToSouthPole(const size_t N, double weights[])
 }
 
 //------------------------------------------------------------------------------
-  
+
 std::string Gaussian::className()
 {
   return "atlas.grid.global.gaussian.Gaussian";
 }
+
+//------------------------------------------------------------------------------
 
 Gaussian::Gaussian() :
   Structured()
 {
 }
 
-void Gaussian::setup( const eckit::Parametrisation& params )
+//------------------------------------------------------------------------------
+
+void Gaussian::setup_N_hemisphere( const size_t N, const long pl[] )
 {
-  if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
-  size_t N;
-  params.get("N",N);
   Structured::N_ = N;
-
-  if( ! params.has("latitudes") )
-  {
-    std::vector<long> nlons;
-    params.get("npts_per_lat",nlons);
-    setup_N_hemisphere(N,nlons.data());
-  }
-  else
-  {
-    Structured::setup(params);
-  }
-}
-
-void Gaussian::setup_N_hemisphere( const size_t N, const long nlons[] )
-{
   // hemisphere
   std::vector<double> lats (N);
   LatitudesNorthPoleToEquator(N,lats.data());
-  Structured::setup_lat_hemisphere(N,lats.data(),nlons);
+  Structured::setup_lat_hemisphere(N,lats.data(),pl);
 }
+
+//------------------------------------------------------------------------------
 
 eckit::Properties Gaussian::spec() const
 {
   eckit::Properties grid_spec;
 
-  grid_spec.set("grid_type", grid_type_str() );
+  grid_spec.set("grid_type", gridType() );
+  grid_spec.set("short_name",shortName());
 
   grid_spec.set("nlat",nlat());
   grid_spec.set("N", N() );
 
-  grid_spec.set("npts_per_lat",eckit::makeVectorValue(pl()));
-  grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
+  grid_spec.set("pl",eckit::makeVectorValue(pl()));
 
   BoundBox bbox = boundingBox();
   grid_spec.set("bbox_s", bbox.min().lat());

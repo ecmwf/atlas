@@ -76,34 +76,27 @@ public:
   double lat( const size_t jlat ) const;
 
   void lonlat( const size_t jlat, const size_t jlon, double crd[] ) const;
-    
+
   bool reduced() const { return nlonmax() != nlonmin(); }
-
-private: // methods
-
-  virtual std::string getOptimalMeshGenerator() const;
-
-  virtual size_t copyLonLatMemory(double* pts, size_t size) const;
-
-  virtual void print(std::ostream&) const;
 
   /// Human readable name
   /// May not be unique, especially when reduced gauss grids have the same N numbers
   /// but different distribution of latitude points
   virtual std::string shortName() const;
 
-protected:
+  virtual std::string getOptimalMeshGenerator() const;
+
+protected: // methods
+
+  virtual size_t copyLonLatMemory(double* pts, size_t size) const;
+
+  virtual void print(std::ostream&) const;
 
   /// Hash of the PL array
   virtual void hash(eckit::MD5&) const;
 
-  /// @note Domain is already set when calling setup()
-  void setup(const eckit::Parametrisation& );
-  /// @note Domain is already set when calling setup()
-  void setup( const size_t nlat, const double lats[], const long npts_per_lat[] );
-  /// @note Domain is already set when calling setup()
-  void setup( const size_t nlat, const double lats[], const long nlons[], const double lonmin[], const double lonmax[] );
-  /// @note Domain is already set when calling setup()
+  void setup( const size_t nlat, const double lats[], const long pl[] );
+  void setup( const size_t nlat, const double lats[], const long pl[], const double lonmin[] );
   void setup_lat_hemisphere( const size_t N, const double lat[], const long lon[] );
 
 protected:
@@ -119,10 +112,9 @@ protected:
   std::string         shortName_;
 
   std::vector<double> lat_;    ///<! Latitude values
-  std::vector<long>   nlons_;  ///<! Number of points per latitude
+  std::vector<long>   pl_;     ///<! Number of points per latitude
 
   std::vector<double> lonmin_; ///<! Value of minimum longitude per latitude [default=0]
-  std::vector<double> lonmax_; ///<! Value of maximum longitude per latitude [default=~360 (one increment smaller)]
 
   BoundBox            bounding_box_;  ///<! bounding box cache
 
@@ -139,7 +131,7 @@ inline size_t Structured::nlat() const
 
 inline size_t Structured::nlon(size_t jlat) const
 {
-  return nlons_[jlat];
+  return pl_[jlat];
 }
 
 inline size_t Structured::nlonmin() const
@@ -154,12 +146,12 @@ inline size_t Structured::nlonmax() const
 
 inline const std::vector<long>&  Structured::pl() const
 {
-  return nlons_;
+  return pl_;
 }
 
 inline double Structured::lon(const size_t jlat, const size_t jlon) const
 {
-  return lonmin_[jlat] + (double)jlon * (lonmax_[jlat]-lonmin_[jlat]) / ( (double)nlon(jlat) - 1. );
+  return lonmin_[jlat] + (double)jlon * lon_inc_[jlat];;
 }
 
 inline double Structured::lat(const size_t jlat) const
@@ -181,6 +173,8 @@ extern "C"
   Structured* atlas__grid__global__Structured(char* identifier);
   Structured* atlas__grid__global__CustomStructured_int(size_t nlat, double lat[], int nlon[]);
   Structured* atlas__grid__global__CustomStructured_long(size_t nlat, double lat[], long nlon[]);
+  Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lat[], int nlon[], double lonmin[]);
+  Structured* atlas__grid__global__CustomStructured_lonmin_long(size_t nlat, double lat[], long nlon[], double lonmin[]);
   Structured* atlas__grid__global__gaussian__RegularGaussian(size_t N);
   Structured* atlas__grid__global__gaussian__ReducedGaussian_int(size_t N, int nlon[]);
   Structured* atlas__grid__global__gaussian__ReducedGaussian_long(size_t N, long nlon[]);
@@ -200,7 +194,7 @@ extern "C"
   double atlas__grid__global__Structured__lon       (Structured* This, size_t jlat, size_t jlon);
   void   atlas__grid__global__Structured__lonlat    (Structured* This, size_t jlat, size_t jlon, double crd[]);
   void   atlas__grid__global__Structured__latitudes (Structured* This, const double* &lats, size_t &size);
-  int    atlas__grid__global__Structured__reduced   (Structured* This);  
+  int    atlas__grid__global__Structured__reduced   (Structured* This);
 }
 
 //------------------------------------------------------------------------------

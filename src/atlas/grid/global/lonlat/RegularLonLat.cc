@@ -138,7 +138,7 @@ void RegularLonLat::setup( const size_t nlon, const size_t nlat )
   {
     Structured::N_ = (nlat-1)/2;
   }
-  Structured::setup(nlat,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
+  Structured::setup(nlat,lats.data(),nlons.data(),lonmin.data());
 }
 
 
@@ -170,7 +170,8 @@ eckit::Properties RegularLonLat::spec() const
 {
   eckit::Properties grid_spec;
 
-  grid_spec.set("grid_type",grid_type_str() );
+  grid_spec.set("grid_type",gridType() );
+  grid_spec.set("short_name",shortName());
 
   grid_spec.set("nlon", nlon() );
   grid_spec.set("nlat", nlat() );
@@ -186,9 +187,9 @@ eckit::Properties RegularLonLat::spec() const
 
 //-----------------------------------------------------------------------------
 
-extern "C" 
+extern "C"
 {
-  
+
 Structured* atlas__grid__global__lonlat__RegularLonLat(size_t nlon, size_t nlat)
 {
   return new RegularLonLat(nlon,nlat);

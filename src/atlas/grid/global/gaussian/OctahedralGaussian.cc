@@ -20,12 +20,12 @@ namespace gaussian {
 std::vector<long> OctahedralGaussian::computePL(const size_t N)
 {
   const size_t start = 20;
-  std::vector<long> nlon(N);
+  std::vector<long> pl(N);
   for(size_t jlat=0; jlat < N; ++jlat)
   {
-    nlon[jlat] = start + 4*jlat;
+    pl[jlat] = start + 4*jlat;
   }
-  return nlon;
+  return pl;
 }
 
 OctahedralGaussian::OctahedralGaussian(const size_t N) :
@@ -46,9 +46,8 @@ OctahedralGaussian::OctahedralGaussian( const eckit::Parametrisation& params) :
 
 void OctahedralGaussian::construct(const size_t N)
 {
-  std::vector<long> nlon = computePL(N);
-  setup_N_hemisphere(N,nlon.data());
-  Structured::N_ = nlat()/2;
+  std::vector<long> pl = computePL(N);
+  setup_N_hemisphere(N,pl.data());
 }
 
 void OctahedralGaussian::set_typeinfo()

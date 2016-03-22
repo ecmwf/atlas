@@ -102,11 +102,12 @@ ShiftedLon::ShiftedLon( const double &londeg, const double &latdeg )
 
 void ShiftedLon::setup(const eckit::Parametrisation& p)
 {
-  size_t nlon, nlat;
+  size_t nlon, nlat, N(0);
+  p.get("N",N);
 
-  if( p.get("N",N_ ) ) // --> global grid (2*N x N)
+  if( N > 0 )
   {
-    setup(N_);
+    setup(N);
   }
   else
   {
@@ -146,7 +147,7 @@ void ShiftedLon::setup( const size_t N )
   }
 
   Structured::N_ = N;
-  Structured::setup(2*N+1,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
+  Structured::setup(2*N+1,lats.data(),nlons.data(),lonmin.data());
 }
 
 //------------------------------------------------------------------------------
@@ -172,7 +173,7 @@ void ShiftedLon::setup( const size_t nlon, const size_t nlat )
   {
     Structured::N_ = (nlat-1)/2;
   }
-  Structured::setup(nlat,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
+  Structured::setup(nlat,lats.data(),nlons.data(),lonmin.data());
 }
 
 //------------------------------------------------------------------------------
@@ -206,8 +207,12 @@ eckit::Properties ShiftedLon::spec() const
 {
   eckit::Properties grid_spec;
 
-  grid_spec.set("grid_type",grid_type_str() );
+  grid_spec.set("grid_type",gridType() );
+  grid_spec.set("short_name",shortName());
+
   grid_spec.set("N", N() );
+  grid_spec.set("nlon", nlon() );
+  grid_spec.set("nlat", nlat() );
 
   BoundBox bbox = boundingBox();
   grid_spec.set("bbox_s", bbox.min().lat());
@@ -220,9 +225,9 @@ eckit::Properties ShiftedLon::spec() const
 
 //------------------------------------------------------------------------------
 
-extern "C" 
+extern "C"
 {
-  
+
 Structured* atlas__grid__global__lonlat__ShiftedLon(size_t nlon, size_t nlat)
 {
   return new ShiftedLon(nlon,nlat);

@@ -296,6 +296,30 @@ function atlas_grid_CustomStructured__ctor_int64(lats,nlon) result(grid)
   call grid%reset_c_ptr( atlas__grid__global__CustomStructured_long(nlat,lats,nlon) )
 end function atlas_grid_CustomStructured__ctor_int64
 
+function atlas_grid_CustomStructured__ctor_lonmin_int32(lats,nlon,lonmin) result(grid)
+  use atlas_grid_global_Structured_c_binding
+  type(atlas_grid_CustomStructured) :: grid
+  real(c_double), intent(in) :: lats(:)
+  integer(c_int), intent(in) :: nlon(:)
+  real(c_double), intent(in) :: lonmin(:)
+  integer(c_size_t) :: nlat
+  nlat = size(nlon)
+  call grid%reset_c_ptr( atlas__grid__global__CustomStructured_lonmin_int(nlat,lats,nlon,lonmin) )
+end function
+
+function atlas_grid_CustomStructured__ctor_lonmin_int64(lats,nlon,lonmin) result(grid)
+  use atlas_grid_global_Structured_c_binding
+  type(atlas_grid_CustomStructured) :: grid
+  real(c_double),  intent(in) :: lats(:)
+  integer(c_long), intent(in) :: nlon(:)
+  real(c_double),  intent(in) :: lonmin(:)
+  integer(c_size_t) :: nlat
+  nlat = size(nlon)
+  call grid%reset_c_ptr( atlas__grid__global__CustomStructured_lonmin_long(nlat,lats,nlon,lonmin) )
+end function
+
+
+
 !-----------------------------------------------------------------------------
 
 function atlas_grid_RegularGaussian__ctor_int32(N) result(grid)

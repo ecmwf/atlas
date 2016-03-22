@@ -38,11 +38,9 @@ public:
 
   ReducedGaussian( const eckit::Parametrisation& );
 
-  ReducedGaussian( const size_t N, const long npts_per_lat[] );
+  ReducedGaussian( const size_t N, const long pl[] );
 
   static std::string className();
-
-  virtual eckit::Properties spec() const;
 
 protected:
 

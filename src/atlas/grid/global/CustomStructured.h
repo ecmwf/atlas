@@ -54,8 +54,6 @@ public:
 private:
 
   void setup(const eckit::Parametrisation& );
-  void setup( const size_t nlat, const double lats[], const long nlons[],
-              const double lonmin[] );
 };
 
 //------------------------------------------------------------------------------

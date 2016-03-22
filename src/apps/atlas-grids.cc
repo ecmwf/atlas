@@ -63,7 +63,7 @@ public:
         "       Browse catalogue of grids\n"
         "\n"
         "       GRID: unique identifier for grid \n"
-        "           Example values: rgg.N80, gg.N40, ll.128x64\n"
+        "           Example values: N80, F40, O24, L32\n"
         "\n"
         "       -a        List all grids. The names are the GRID argument\n"
         "\n"

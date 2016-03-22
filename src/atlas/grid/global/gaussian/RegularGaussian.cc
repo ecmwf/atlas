@@ -37,30 +37,31 @@ void RegularGaussian::set_typeinfo()
 RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
   Gaussian()
 {
-  if( ! params.get("N",N_) ) throw eckit::BadParameter("N missing in Params",Here());
+  size_t N;
+  if( ! params.get("N",N) ) throw eckit::BadParameter("N missing in Params",Here());
 
-  setup(N_);
+  setup(N);
   set_typeinfo();
 }
 
 RegularGaussian::RegularGaussian( const size_t N ) :
   Gaussian()
 {
-  Structured::N_ = N;
   setup(N);
   set_typeinfo();
 }
 
 void RegularGaussian::setup(const size_t N)
 {
-  std::vector<long> nlons(N,4*N);
-  setup_N_hemisphere(N,nlons.data());
+  std::vector<long> pl(N,4*N);
+  Gaussian::setup_N_hemisphere(N,pl.data());
 }
 
 eckit::Properties RegularGaussian::spec() const
 {
   eckit::Properties grid_spec;
   grid_spec.set("grid_type",grid_type_str());
+  grid_spec.set("short_name",shortName());
 
   grid_spec.set("N", N() );
 
@@ -78,7 +79,7 @@ eckit::Properties RegularGaussian::spec() const
 //-----------------------------------------------------------------------------
 
 extern "C" {
-  
+
 Structured* atlas__grid__global__gaussian__RegularGaussian(size_t N)
 {
   return new RegularGaussian(N);

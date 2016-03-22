@@ -23,6 +23,7 @@ namespace actions {
 
 // ------------------------------------------------------------------
 
+namespace {
 Mesh* generate_mesh (const global::Structured& rgg)
 {
   Log::info() << "Deprecated function [generate_mesh] used.\n"
@@ -33,6 +34,7 @@ Mesh* generate_mesh (const global::Structured& rgg)
   generate.options.set( "nb_parts", eckit::mpi::size() );
   generate.options.set( "part"    , eckit::mpi::rank() );
   return generate(rgg);
+}
 }
 
 // ------------------------------------------------------------------
