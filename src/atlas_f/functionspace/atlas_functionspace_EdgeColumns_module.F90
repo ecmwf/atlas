@@ -103,8 +103,8 @@ contains
 END TYPE atlas_functionspace_EdgeColumns
 
 interface atlas_functionspace_EdgeColumns
-  module procedure atlas_functionspace_EdgeColumns__cptr
-  module procedure atlas_functionspace_EdgeColumns__mesh_halo
+  module procedure constructor__cptr
+  module procedure constructor__mesh_halo
 end interface
 
 !------------------------------------------------------------------------------
@@ -113,22 +113,22 @@ end interface
 contains
 !========================================================
 
-function atlas_functionspace_EdgeColumns__cptr(cptr) result(functionspace)
+function constructor__cptr(cptr) result(functionspace)
   type(atlas_functionspace_EdgeColumns) :: functionspace
   type(c_ptr), intent(in) :: cptr
   call functionspace%reset_c_ptr( cptr )
 end function
 
-function atlas_functionspace_EdgeColumns__mesh_halo(mesh,halo) result(function_space)
+function constructor__mesh_halo(mesh,halo) result(function_space)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_functionspace_EdgeColumns) :: function_space
   type(atlas_Mesh), intent(inout) :: mesh
   integer, intent(in), optional :: halo
   if( present(halo) ) then
-    function_space = atlas_functionspace_EdgeColumns__cptr( &
+    function_space = constructor__cptr( &
       & atlas__functionspace__Edges__new(mesh%c_ptr(),halo) )
   else
-    function_space = atlas_functionspace_EdgeColumns__cptr( &
+    function_space = constructor__cptr( &
       & atlas__functionspace__Edges__new_mesh(mesh%c_ptr()) )
   endif
   call function_space%return()

@@ -108,6 +108,8 @@ END TYPE atlas_grid_CustomStructured
 interface atlas_grid_CustomStructured
   module procedure atlas_grid_CustomStructured__ctor_int32
   module procedure atlas_grid_CustomStructured__ctor_int64
+  module procedure atlas_grid_CustomStructured__ctor_lonmin_int32
+  module procedure atlas_grid_CustomStructured__ctor_lonmin_int64
 end interface
 
 !------------------------------------------------------------------------------
