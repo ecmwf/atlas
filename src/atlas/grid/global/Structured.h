@@ -167,10 +167,12 @@ inline void Structured::lonlat( const size_t jlat, const size_t jlon, double crd
 
 
 //------------------------------------------------------------------------------
+#define CONFIG eckit::Parametrisation
 extern "C"
 {
   void atlas__grid__global__Structured__delete(Structured* This);
   Structured* atlas__grid__global__Structured(char* identifier);
+  Structured* atlas__grid__global__Structured__config(CONFIG* conf);
   Structured* atlas__grid__global__CustomStructured_int(size_t nlat, double lat[], int nlon[]);
   Structured* atlas__grid__global__CustomStructured_long(size_t nlat, double lat[], long nlon[]);
   Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lat[], int nlon[], double lonmin[]);
@@ -196,7 +198,7 @@ extern "C"
   void   atlas__grid__global__Structured__latitudes (Structured* This, const double* &lats, size_t &size);
   int    atlas__grid__global__Structured__reduced   (Structured* This);
 }
-
+#undef CONFIG
 //------------------------------------------------------------------------------
 
 } // namespace global

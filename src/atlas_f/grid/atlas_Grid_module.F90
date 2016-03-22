@@ -5,6 +5,7 @@ module atlas_Grid_module
 use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_long, c_double, c_size_t, c_f_pointer
 use atlas_c_interop, only: c_str
 use atlas_refcounted_module, only: atlas_refcounted
+use atlas_Config_module, only: atlas_Config
 
 implicit none
 
@@ -21,6 +22,7 @@ public :: atlas_grid_RegularLonLat
 public :: atlas_grid_ShiftedLonLat
 public :: atlas_grid_ShiftedLon
 public :: atlas_grid_ShiftedLat
+public :: atlas_Config
 
 private
 
@@ -81,6 +83,7 @@ END TYPE atlas_grid_Structured
 
 interface atlas_grid_Structured
   module procedure atlas_grid_Structured__ctor_id
+  module procedure atlas_grid_Structured__ctor_config
 end interface
 
 !------------------------------------------------------------------------------
@@ -272,7 +275,14 @@ function atlas_grid_Structured__ctor_id(identifier) result(grid)
   type(atlas_grid_Structured) :: grid
   character(len=*), intent(in) :: identifier
   call grid%reset_c_ptr( atlas__grid__global__Structured(c_str(identifier)) )
-end function atlas_grid_Structured__ctor_id
+end function
+
+function atlas_grid_Structured__ctor_config(config) result(grid)
+  use atlas_grid_global_Structured_c_binding
+  type(atlas_grid_Structured) :: grid
+  type(atlas_Config), intent(in) :: config
+  call grid%reset_c_ptr( atlas__grid__global__Structured__config(config%c_ptr()) )
+end function
 
 !-----------------------------------------------------------------------------
 
@@ -284,7 +294,7 @@ function atlas_grid_CustomStructured__ctor_int32(lats,nlon) result(grid)
   integer(c_size_t) :: nlat
   nlat = size(nlon)
   call grid%reset_c_ptr( atlas__grid__global__CustomStructured_int(nlat,lats,nlon) )
-end function atlas_grid_CustomStructured__ctor_int32
+end function
 
 function atlas_grid_CustomStructured__ctor_int64(lats,nlon) result(grid)
   use atlas_grid_global_Structured_c_binding
@@ -294,7 +304,7 @@ function atlas_grid_CustomStructured__ctor_int64(lats,nlon) result(grid)
   integer(c_size_t) :: nlat
   nlat = size(nlon)
   call grid%reset_c_ptr( atlas__grid__global__CustomStructured_long(nlat,lats,nlon) )
-end function atlas_grid_CustomStructured__ctor_int64
+end function
 
 function atlas_grid_CustomStructured__ctor_lonmin_int32(lats,nlon,lonmin) result(grid)
   use atlas_grid_global_Structured_c_binding
@@ -327,14 +337,14 @@ function atlas_grid_RegularGaussian__ctor_int32(N) result(grid)
   type(atlas_grid_RegularGaussian) :: grid
   integer(c_int), intent(in) :: N
   call grid%reset_c_ptr( atlas__grid__global__gaussian__RegularGaussian(int(N,c_size_t)) )
-end function atlas_grid_RegularGaussian__ctor_int32
+end function
 
 function atlas_grid_RegularGaussian__ctor_int64(N) result(grid)
   use atlas_grid_global_Structured_c_binding
   type(atlas_grid_RegularGaussian) :: grid
   integer(c_long), intent(in) :: N
   call grid%reset_c_ptr( atlas__grid__global__gaussian__RegularGaussian(int(N,c_size_t)) )
-end function atlas_grid_RegularGaussian__ctor_int64
+end function
 
 !-----------------------------------------------------------------------------
 
@@ -345,7 +355,7 @@ function atlas_grid_ReducedGaussian__ctor_int32(N,nlon) result(grid)
   integer(c_int), intent(in)  :: nlon(:)
   call grid%reset_c_ptr( &
     & atlas__grid__global__gaussian__ReducedGaussian_int(int(N,c_size_t),nlon) )
-end function atlas_grid_ReducedGaussian__ctor_int32
+end function
 
 function atlas_grid_ReducedGaussian__ctor_int64(N,nlon) result(grid)
   use atlas_grid_global_Structured_c_binding
@@ -354,7 +364,7 @@ function atlas_grid_ReducedGaussian__ctor_int64(N,nlon) result(grid)
   integer(c_long), intent(in)  :: nlon(:)
   call grid%reset_c_ptr( &
     & atlas__grid__global__gaussian__ReducedGaussian_long(int(N,c_size_t),nlon) )
-end function atlas_grid_ReducedGaussian__ctor_int64
+end function
 
 !-----------------------------------------------------------------------------
 
@@ -363,14 +373,14 @@ function atlas_grid_RegularLonLat__ctor_int32(nlon,nlat) result(grid)
   type(atlas_grid_RegularLonLat) :: grid
   integer(c_int), intent(in) :: nlon, nlat
   call grid%reset_c_ptr( atlas__grid__global__lonlat__RegularLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
-end function atlas_grid_RegularLonLat__ctor_int32
+end function
 
 function atlas_grid_RegularLonLat__ctor_int64(nlon,nlat) result(grid)
   use atlas_grid_global_Structured_c_binding
   type(atlas_grid_RegularLonLat) :: grid
   integer(c_long), intent(in) :: nlon, nlat
   call grid%reset_c_ptr( atlas__grid__global__lonlat__RegularLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
-end function atlas_grid_RegularLonLat__ctor_int64
+end function
 
 !-----------------------------------------------------------------------------
 
@@ -379,14 +389,14 @@ function atlas_grid_ShiftedLonLat__ctor_int32(nlon,nlat) result(grid)
   type(atlas_grid_ShiftedLonLat) :: grid
   integer(c_int), intent(in) :: nlon, nlat
   call grid%reset_c_ptr( atlas__grid__global__lonlat__ShiftedLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
-end function atlas_grid_ShiftedLonLat__ctor_int32
+end function
 
 function atlas_grid_ShiftedLonLat__ctor_int64(nlon,nlat) result(grid)
   use atlas_grid_global_Structured_c_binding
   type(atlas_grid_ShiftedLonLat) :: grid
   integer(c_long), intent(in) :: nlon, nlat
   call grid%reset_c_ptr( atlas__grid__global__lonlat__ShiftedLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
-end function atlas_grid_ShiftedLonLat__ctor_int64
+end function
 
 !-----------------------------------------------------------------------------
 
@@ -395,14 +405,14 @@ function atlas_grid_ShiftedLon__ctor_int32(nlon,nlat) result(grid)
   type(atlas_grid_ShiftedLon) :: grid
   integer(c_int), intent(in) :: nlon, nlat
   call grid%reset_c_ptr( atlas__grid__global__lonlat__ShiftedLon(int(nlon,c_size_t),int(nlat,c_size_t)) )
-end function atlas_grid_ShiftedLon__ctor_int32
+end function
 
 function atlas_grid_ShiftedLon__ctor_int64(nlon,nlat) result(grid)
   use atlas_grid_global_Structured_c_binding
   type(atlas_grid_ShiftedLon) :: grid
   integer(c_long), intent(in) :: nlon, nlat
   call grid%reset_c_ptr( atlas__grid__global__lonlat__ShiftedLon(int(nlon,c_size_t),int(nlat,c_size_t)) )
-end function atlas_grid_ShiftedLon__ctor_int64
+end function
 
 !-----------------------------------------------------------------------------
 
@@ -412,7 +422,7 @@ function atlas_grid_ShiftedLat__ctor_int32(nlon,nlat) result(grid)
   integer(c_int), intent(in) :: nlon, nlat
   call grid%reset_c_ptr( &
     & atlas__grid__global__lonlat__ShiftedLat(int(nlon,c_size_t),int(nlat,c_size_t)))
-end function atlas_grid_ShiftedLat__ctor_int32
+end function
 
 function atlas_grid_ShiftedLat__ctor_int64(nlon,nlat) result(grid)
   use atlas_grid_global_Structured_c_binding
@@ -420,7 +430,7 @@ function atlas_grid_ShiftedLat__ctor_int64(nlon,nlat) result(grid)
   integer(c_long), intent(in) :: nlon, nlat
   call grid%reset_c_ptr( &
     & atlas__grid__global__lonlat__ShiftedLat(int(nlon,c_size_t),int(nlat,c_size_t)))
-end function atlas_grid_ShiftedLat__ctor_int64
+end function
 
 
 ! -----------------------------------------------------------------------------
@@ -431,21 +441,21 @@ function atlas_Grid__npts(this) result(npts)
   class(atlas_Grid), intent(in) :: this
   integer(c_long) :: npts
   npts = atlas__grid__global__Structured__npts(this%c_ptr())
-end function atlas_Grid__npts
+end function
 
 function Structured__N(this) result(N)
   use atlas_grid_global_Structured_c_binding
   class(atlas_grid_Structured), intent(in) :: this
   integer(c_long) :: N
   N = atlas__grid__global__Structured__N(this%c_ptr())
-end function Structured__N
+end function
 
 function Structured__nlat(this) result(nlat)
   use atlas_grid_global_Structured_c_binding
   class(atlas_grid_Structured), intent(in) :: this
   integer(c_long) :: nlat
   nlat = atlas__grid__global__Structured__nlat(this%c_ptr())
-end function Structured__nlat
+end function
 
 
 function Structured__nlon(this, jlat) result(nlon)
@@ -465,7 +475,7 @@ function Structured__reduced(this) result(reduced)
   else
     reduced = .false.
   endif
-end function Structured__reduced
+end function
 
 function Structured__pl(this) result(nlon)
   use atlas_grid_global_Structured_c_binding
@@ -537,7 +547,7 @@ subroutine atlas_Grid__delete(this)
     call atlas__grid__global__Structured__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
-end subroutine atlas_Grid__delete
+end subroutine
 
 
 

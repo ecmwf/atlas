@@ -287,6 +287,11 @@ Structured* atlas__grid__global__Structured(char* identifier)
   return Structured::create( std::string(identifier) );
 }
 
+Structured* atlas__grid__global__Structured__config(eckit::Parametrisation* conf)
+{
+  return Structured::create(*conf);
+}
+
 void atlas__grid__global__Structured__delete(Structured* This)
 {
   delete This;
