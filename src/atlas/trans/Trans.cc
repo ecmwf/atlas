@@ -10,15 +10,16 @@
 
 #include "eckit/parser/JSON.h"
 #include "eckit/exception/Exceptions.h"
-#include "atlas/grid/ReducedGrid.h"
-#include "atlas/grid/LonLatGrid.h"
+#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/global/lonlat/RegularLonLat.h"
+#include "atlas/grid/global/lonlat/ShiftedLonLat.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/functionspace/ReducedGridColumns.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/internals/Bitflags.h"
@@ -51,45 +52,46 @@ namespace trans {
 
 Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
 {
-  const grid::ReducedGrid* reduced = dynamic_cast<const grid::ReducedGrid*>(&grid);
+  const grid::global::Structured* reduced = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !reduced )
-    throw eckit::BadCast("Grid is not a grid::ReducedGrid type. Cannot partition using IFS trans",Here());
+    throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
   size_t nsmax = 0;
-  ctor_rgg(reduced->nlat(),reduced->npts_per_lat().data(), nsmax, p);
+  ctor_rgg(reduced->nlat(),reduced->pl().data(), nsmax, p);
 }
 
 Trans::Trans(const size_t N, const Trans::Options& p)
 {
   size_t nsmax = 0;
-  std::vector<int> npts_per_lat(2*N,4*N);
-  ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
+  std::vector<long> pl(2*N,4*N);
+  ctor_rgg(pl.size(),pl.data(), nsmax, p);
 }
 
 Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p )
 {
-  const grid::ReducedGrid* reduced = dynamic_cast<const grid::ReducedGrid*>(&grid);
+  const grid::global::Structured* reduced = dynamic_cast<const grid::global::Structured*>(&grid);
   if( !reduced )
-    throw eckit::BadCast("Grid is not a grid::ReducedGrid type. Cannot partition using IFS trans",Here());
+    throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 
-  const grid::LonLatGrid* lonlat = dynamic_cast<const grid::LonLatGrid*>(reduced);
-  if( lonlat )
-    ctor_lonlat( lonlat->nlon(), lonlat->nlat(), nsmax, p );
+  const grid::global::lonlat::LonLat* lonlat
+      = dynamic_cast<const grid::global::lonlat::LonLat*>(reduced);
+
+  if( lonlat  )
+  {
+    if( lonlat->reduced() ) throw eckit::BadParameter("Cannot transform a reduced lonlat grid");
+    if( lonlat->shifted().lonlat() && !lonlat->shifted() )
+      ctor_lonlat( lonlat->nlonmax(), lonlat->nlat(), nsmax, p );
+    else
+      throw eckit::BadParameter("Cannot transform a shifted lat or shifted lon grid");
+  }
   else
-    ctor_rgg(reduced->nlat(),reduced->npts_per_lat().data(), nsmax, p);
+    ctor_rgg(reduced->nlat(),reduced->pl().data(), nsmax, p);
 }
 
 
 Trans::Trans(const size_t N, const size_t nsmax, const Trans::Options& p)
 {
-  std::vector<int> npts_per_lat(2*N,4*N);
-  ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
-}
-
-Trans::Trans( const std::vector<size_t>& npts_per_lat, const size_t nsmax, const Trans::Options& p )
-{
-  std::vector<int> nloen;
-  nloen.assign(npts_per_lat.begin(),npts_per_lat.end());
-  ctor_rgg(nloen.size(),nloen.data(), nsmax, p);
+  std::vector<long> pl(2*N,4*N);
+  ctor_rgg(pl.size(),pl.data(), nsmax, p);
 }
 
 Trans::~Trans()
@@ -97,10 +99,13 @@ Trans::~Trans()
   ::trans_delete(&trans_);
 }
 
-void Trans::ctor_rgg(const size_t ndgl, const int nloen[], size_t nsmax, const Trans::Options& p )
+void Trans::ctor_rgg(const size_t nlat, const long pl[], size_t nsmax, const Trans::Options& p )
 {
+  std::vector<int> nloen(nlat);
+  for( size_t jlat=0; jlat<nlat; ++jlat )
+    nloen[jlat] = pl[jlat];
   TRANS_CHECK(::trans_new(&trans_));
-  TRANS_CHECK(::trans_set_resol(&trans_,ndgl,nloen));
+  TRANS_CHECK(::trans_set_resol(&trans_,nlat,nloen.data()));
   TRANS_CHECK(::trans_set_trunc(&trans_,nsmax));
   TRANS_CHECK(::trans_set_cache(&trans_,p.cache(),p.cachesize()));
 
@@ -383,7 +388,7 @@ void Trans::dirtrans(
     const TransParameters& context) const
 {
   ASSERT( gpfield.functionspace() == 0 ||
-          gpfield.functionspace().cast<functionspace::ReducedGridColumns>() );
+          gpfield.functionspace().cast<functionspace::StructuredColumns>() );
   ASSERT( spfield.functionspace() == 0 ||
           spfield.functionspace().cast<functionspace::Spectral>() );
   if ( gpfield.stride(0) != spfield.stride(0) )
@@ -424,7 +429,7 @@ void Trans::dirtrans(
     const field::Field& f = gpfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.functionspace() == 0 ||
-            f.functionspace().cast<functionspace::ReducedGridColumns>() );
+            f.functionspace().cast<functionspace::StructuredColumns>() );
   }
 
   int trans_spnfld(0);
@@ -602,7 +607,7 @@ void Trans::invtrans(const  field::Field& spfield,
                      const TransParameters& context) const
 {
   ASSERT( gpfield.functionspace() == 0 ||
-          gpfield.functionspace().cast<functionspace::ReducedGridColumns>() );
+          gpfield.functionspace().cast<functionspace::StructuredColumns>() );
   ASSERT( spfield.functionspace() == 0 ||
           spfield.functionspace().cast<functionspace::Spectral>() );
   if ( gpfield.stride(0) != spfield.stride(0) )
@@ -645,7 +650,7 @@ void Trans::invtrans(const  field::FieldSet& spfields,
     const field::Field& f = gpfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.functionspace() == 0 ||
-            f.functionspace().cast<functionspace::ReducedGridColumns>() );
+            f.functionspace().cast<functionspace::StructuredColumns>() );
   }
 
   int nb_spectral_fields(0);

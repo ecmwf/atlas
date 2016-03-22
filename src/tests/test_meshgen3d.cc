@@ -17,7 +17,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/grid/grids.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
 	mesh::Mesh::Ptr m ( mesh::Mesh::create() );
 
-	ReducedGridMeshGenerator generate;
+	mesh::generators::Structured generate;
 
 	// generate.options.set("nb_parts",1); // default = 1
 	// generate.options.set("part",    0); // default = 0
@@ -47,7 +47,9 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
 	generate.options.set("three_dimensional", true); ///< creates links along date-line
 	generate.options.set("include_pole", true);      ///< triangulate the pole point
 
-    m = generate( grid::predefined::rgg::N80() ); //< 2*N - 1 => N80 grid
+    m = generate(
+          grid::global::gaussian::ClassicGaussian(80)
+        ); //< 2*N - 1 => N80 grid
 
 	Gmsh().write(*m,"out.msh");
 

@@ -29,7 +29,7 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/grid/predefined/rgg/rgg.h"
+#include "atlas/grid/global/gaussian/classic/N.h"
 #include "atlas/internals/IsGhost.h"
 #include "atlas/runtime/Log.h"
 
@@ -70,7 +70,7 @@ BOOST_GLOBAL_FIXTURE( MPIFixture );
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {
   // Every task builds full mesh
-  mesh::generators::ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   generate.options.set("nb_parts",1);
   generate.options.set("part",0);
 
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
       // test::TestGrid grid(5,lon);
 
       //  GG grid(120,60);
-  grid::predefined::rgg::N16 grid;
+  grid::global::gaussian::ClassicGaussian grid(16);
 
 
   generate.options.set("nb_parts", eckit::mpi::size());

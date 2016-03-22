@@ -11,12 +11,14 @@
 #ifndef atlas_GenerateMesh_h
 #define atlas_GenerateMesh_h
 
-#include "atlas/grid/ReducedGrid.h"
+#include "atlas/grid/global/Structured.h"
 #include "atlas/mesh/Mesh.h"
 
 namespace atlas {
 namespace grid {
-class ReducedGrid;
+namespace global {
+class Structured;
+}
 class GridDistribution;
 }
 namespace mesh {
@@ -28,22 +30,22 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
-mesh::Mesh* generate_mesh (const grid::ReducedGrid& rgg);
+//mesh::Mesh* generate_mesh (const grid::global::Structured& grid);
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-#define REDUCEDGRID grid::ReducedGrid
+#define STRUCTUREDGRID grid::global::Structured
 #define grid_GridDistribution grid::GridDistribution
 #define mesh_Mesh mesh::Mesh
 extern "C"
 {
-  mesh_Mesh* atlas__generate_mesh (REDUCEDGRID* rgg);
-  mesh_Mesh* atlas__generate_mesh_with_distribution (REDUCEDGRID* rgg, grid_GridDistribution* distribution);
+  mesh_Mesh* atlas__generate_mesh (STRUCTUREDGRID* grid);
+  mesh_Mesh* atlas__generate_mesh_with_distribution (STRUCTUREDGRID* grid, grid_GridDistribution* distribution);
 }
 
 #undef grid_GridDistribution
-#undef REDUCEDGRID
+#undef STRUCTUREDGRID
 
 // ------------------------------------------------------------------
 

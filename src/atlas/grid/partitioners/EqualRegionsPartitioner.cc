@@ -15,7 +15,7 @@
 #include <functional>
 #include <algorithm>
 #include "eckit/geometry/Point2.h"
-#include "atlas/grid/ReducedGrid.h"
+#include "atlas/grid/global/Structured.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/internals/Functions.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -547,7 +547,8 @@ void EqualRegionsPartitioner::partition(int part[]) const
     std::vector<NodeInt> nodes(grid().npts());
     int n(0);
 
-    if( const grid::ReducedGrid* reduced_grid = dynamic_cast<const grid::ReducedGrid*>(&grid()) )
+    if( const grid::global::Structured* reduced_grid = 
+      dynamic_cast<const grid::global::Structured*>(&grid()) )
     {
       for(size_t jlat = 0; jlat < reduced_grid->nlat(); ++jlat)
       {

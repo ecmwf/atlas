@@ -25,7 +25,7 @@
 #include "eckit/geometry/Point3.h"
 #include "atlas/atlas.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/mesh/actions/GenerateMesh.h"
+#include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -37,6 +37,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/grids.h"
+#include "atlas/util/Config.h"
 #include "atlas/functionspace/NodeColumns.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -64,7 +65,7 @@ public:
 
     std::string help_str =
         "NAME\n"
-        "       atlas-meshgen - Mesh generator for ReducedGrid compatible meshes\n"
+        "       atlas-meshgen - Mesh generator for Structured compatible meshes\n"
         "\n"
         "SYNOPSIS\n"
         "       atlas-meshgen GRID [OPTION]... [--help] \n"
@@ -72,7 +73,7 @@ public:
         "DESCRIPTION\n"
         "\n"
         "       GRID: unique identifier for grid \n"
-        "           Example values: rgg.N80, rgg.TL159, gg.N40, ll.128x64\n"
+        "           Example values: N80, F40, O24, L32\n"
         "\n"
         "       -o       Output file for mesh\n"
         "\n"
@@ -111,6 +112,8 @@ public:
     surfdim    = Resource< int > ( "--surfdim", 2 );
     brick      = Resource< int > ( "--brick", false );
 
+    path_in = Resource<std::string> ( "-i", "" );
+
     path_out = Resource<std::string> ( "-o", "" );
     if( path_out.asString().empty() && do_run )
       throw UserError(Here(),"missing output filename, parameter -o");
@@ -134,6 +137,7 @@ private:
   std::vector<long> reg_nlon_nlat;
   std::vector<long> fgg_nlon_nlat;
   std::vector<long> rgg_nlon;
+  PathName path_in;
   PathName path_out;
 };
 
@@ -144,15 +148,36 @@ void Meshgen2Gmsh::run()
   if( !do_run ) return;
   grid::load();
 
-  ReducedGrid::Ptr grid;
-  try{ grid = ReducedGrid::Ptr( ReducedGrid::create(key) ); }
-  catch( eckit::BadParameter& err ){}
+  SharedPtr<global::Structured> grid;
+  if( key.size() )
+  {
+    try{ grid.reset( global::Structured::create(key) ); }
+    catch( eckit::BadParameter& e ){}
+  }
+  else if( path_in.path().size() )
+  {
+    Log::info() << "Creating grid from file " << path_in << std::endl;
+    try{ grid.reset( global::Structured::create( atlas::util::Config(path_in) ) ); }
+    catch( eckit::BadParameter& e ){}
+  }
+  else
+  {
+    Log::error() << "No grid specified." << std::endl;
+  }
 
   if( !grid ) return;
-  mesh::Mesh::Ptr mesh;
-
-  mesh = mesh::Mesh::Ptr( generate_mesh(*grid) );
-
+  SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
+      mesh::generators::MeshGenerator::create("Structured") );
+SharedPtr<mesh::Mesh> mesh;
+  try {
+  mesh.reset( meshgenerator->generate(*grid) );
+  }
+  catch ( eckit::BadParameter& e)
+  {
+    Log::error() << e.what() << std::endl;
+    Log::error() << e.callStack() << std::endl;
+    throw e;
+  }
   SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh,Halo(halo)) );
   nodes_fs->checksum(mesh->nodes().lonlat());
 

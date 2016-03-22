@@ -124,9 +124,6 @@ public:
   /// @brief Constructor given grid and spectral truncation
   Trans( const grid::Grid& g, const size_t nsmax, const Options& = Options() );
 
-  /// @brief Constructor given npts_per_lat (aka PL array) and spectral truncation
-  Trans( const std::vector<size_t>& npts_per_lat, const size_t nsmax, const Options& = Options() );
-
   /// @brief Constructor given Gaussian N number and spectral truncation
   ///        This is equivalent to a (regular) Gaussian grid with N number
   Trans( const size_t N, const size_t nsmax, const Options& = Options() );
@@ -384,7 +381,7 @@ public:
 
 private:
 
-  void ctor_rgg(const size_t ndgl, const int nloen[], size_t nsmax, const Options& );
+  void ctor_rgg(const size_t nlat, const long pl[], size_t nsmax, const Options& );
 
   void ctor_lonlat(const size_t nlon, const size_t nlat, size_t nsmax, const Options& );
 

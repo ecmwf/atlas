@@ -16,7 +16,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/mesh/generators//Delaunay.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
@@ -41,7 +41,7 @@ namespace {
     struct force_link {
         force_link()
         {
-            load_builder<ReducedGridMeshGenerator>();
+            load_builder<mesh::generators::Structured>();
             load_builder<Delaunay>();
         }
     };

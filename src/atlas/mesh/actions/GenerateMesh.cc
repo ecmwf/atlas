@@ -10,7 +10,7 @@
 
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/mesh/actions/GenerateMesh.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -23,22 +23,24 @@ namespace actions {
 
 // ------------------------------------------------------------------
 
-Mesh* generate_mesh (const ReducedGrid& rgg)
+namespace {
+Mesh* generate_mesh (const global::Structured& rgg)
 {
   Log::info() << "Deprecated function [generate_mesh] used.\n"
-              << "Consider using ReducedGridMeshGenerator directly."
+              << "Consider using mesh::generators::Structured directly."
               << std::endl;
 
-  ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   generate.options.set( "nb_parts", eckit::mpi::size() );
   generate.options.set( "part"    , eckit::mpi::rank() );
   return generate(rgg);
+}
 }
 
 // ------------------------------------------------------------------
 
 
-Mesh* atlas__generate_mesh (ReducedGrid* rgg)
+Mesh* atlas__generate_mesh (global::Structured* rgg)
 {
   ATLAS_ERROR_HANDLING( return generate_mesh(*rgg); );
   return NULL;
@@ -47,10 +49,10 @@ Mesh* atlas__generate_mesh (ReducedGrid* rgg)
 // ------------------------------------------------------------------
 
 
-Mesh* atlas__generate_mesh_with_distribution (ReducedGrid* rgg, grid::GridDistribution* distribution)
+Mesh* atlas__generate_mesh_with_distribution (global::Structured* rgg, grid::GridDistribution* distribution)
 {
   ATLAS_ERROR_HANDLING(
-        ReducedGridMeshGenerator generate;
+        mesh::generators::Structured generate;
         return generate(*rgg, *distribution);
   );
   return NULL;

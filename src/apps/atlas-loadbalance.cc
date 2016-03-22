@@ -20,7 +20,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/grids.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/mesh/actions/GenerateMesh.h"
+#include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/parallel/mpi/mpi.h"
 //------------------------------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ public:
         "DESCRIPTION\n"
         "\n"
         "       GRID: unique identifier for grid \n"
-        "           Example values: rgg.N80, rgg.TL159, gg.N40, ll.128x64\n"
+        "           Example values: N80, F40, O24, L32\n"
         "\n"
         "       --halo       Output file for mesh\n"
         "\n"
@@ -108,12 +108,15 @@ void AtlasLoadbalance::run()
   if( !do_run ) return;
   grid::load();
 
-  ReducedGrid::Ptr grid;
-  try{ grid = ReducedGrid::Ptr( ReducedGrid::create(key) ); }
+  SharedPtr<global::Structured> grid;
+  try{ grid.reset( global::Structured::create(key) ); }
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;
-  SharedPtr<mesh::Mesh> mesh( generate_mesh(*grid) );
+  SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
+      mesh::generators::MeshGenerator::create("Structured") );
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+
   SharedPtr<functionspace::NodeColumns> nodes( new functionspace::NodeColumns(*mesh,Halo(halo)) );
 
 

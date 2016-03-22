@@ -23,7 +23,7 @@
 #include "eckit/runtime/Context.h"
 
 #include "atlas/atlas.h"
-#include "atlas/grid/GaussianLatitudes.h"
+#include "atlas/grid/global/gaussian/Gaussian.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -99,7 +99,7 @@ private:
   bool do_run;
 };
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 void AtlasGaussianLatitudes::run()
 {
@@ -108,7 +108,8 @@ void AtlasGaussianLatitudes::run()
   std::vector<double> lats (2*N);
 
   try {
-    atlas::grid::gaussian_latitudes_npole_spole(N,lats.data());
+    atlas::grid::global::gaussian::Gaussian::
+      LatitudesNorthPoleToSouthPole(N,lats.data());
   }
   catch( eckit::NotImplemented& err )
   {
@@ -137,7 +138,7 @@ void AtlasGaussianLatitudes::run()
   }
 }
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 int main( int argc, char **argv )
 {

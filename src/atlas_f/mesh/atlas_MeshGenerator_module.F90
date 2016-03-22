@@ -21,7 +21,7 @@ private :: atlas_Mesh
 private :: atlas_Config
 
 public :: atlas_MeshGenerator
-public :: atlas_ReducedGridMeshGenerator
+public :: atlas_meshgenerator_Structured
 
 private
 
@@ -56,8 +56,8 @@ interface atlas_MeshGenerator
   module procedure atlas_MeshGenerator__name_config
 end interface
 
-interface atlas_ReducedGridMeshGenerator
-  module procedure atlas_ReducedGridMeshGenerator__config
+interface atlas_meshgenerator_Structured
+  module procedure atlas_meshgenerator_Structured__config
 end interface
 
 !------------------------------------------------------------------------------
@@ -90,16 +90,16 @@ function atlas_MeshGenerator__name_config(name,config) result(MeshGenerator)
   call meshgenerator%return()
 end function
 
-function atlas_ReducedGridMeshGenerator__config(config) result(meshgenerator)
+function atlas_meshgenerator_Structured__config(config) result(meshgenerator)
   use atlas_MeshGenerator_c_binding
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str("ReducedGrid"),config%c_ptr()))
+    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str("Structured"),config%c_ptr()))
   else
     opt_config = atlas_Config()
-    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str("ReducedGrid"),opt_config%c_ptr()))
+    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str("Structured"),opt_config%c_ptr()))
     call opt_config%final()
   endif
   call meshgenerator%return()

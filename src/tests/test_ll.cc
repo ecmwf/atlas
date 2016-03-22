@@ -13,10 +13,10 @@
 
 #include "atlas/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/grid/LonLatGrid.h"
+#include "atlas/grid/global/lonlat/RegularLonLat.h"
 
 
 using namespace atlas::util::io;
@@ -36,10 +36,10 @@ BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
-  LonLatGrid g(11,LonLatGrid::INCLUDES_POLES);
+  global::lonlat::RegularLonLat g(5);
   mesh::Mesh m;
-  ReducedGridMeshGenerator().generate(g,m);
-  Gmsh().write(m,"lonlat11.msh");
+  mesh::generators::Structured().generate(g,m);
+  Gmsh().write(m,"L5.msh");
 }
 
 } // namespace test

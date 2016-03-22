@@ -37,7 +37,7 @@ static void checkSizeOfPoint()
 
 Grid* Grid::create(const eckit::Parametrisation& p) {
   std::string shortName;
-  if (p.get("shortName",shortName)) {
+  if (p.get("short_name",shortName)) {
     if (Factory<Grid>::instance().exists(shortName)) {
       return Factory<Grid>::instance().get(shortName).create(p);
     }

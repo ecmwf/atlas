@@ -15,7 +15,9 @@
 
 namespace atlas {
 namespace grid {
-class ReducedGrid;
+namespace global {
+class Structured;
+}
 class GridDistribution;
 }
 }

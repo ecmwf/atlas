@@ -9,33 +9,22 @@
  */
 
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/GaussianLatitudes.h"
 #include "atlas/grid/grids.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
+#include "atlas/grid/global/gaussian/ReducedGaussian.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 using namespace atlas;
 using namespace atlas::grid;
+using namespace atlas::grid::global::gaussian;
 
 namespace atlas {
 namespace test {
 
-class TestGrid: public ReducedGrid {
-public:
-  TestGrid(int N, long lon[]);
-};
-
-TestGrid::TestGrid(int N, long lon[])
+mesh::Mesh::Ptr generate_mesh( const global::Structured& rgg )
 {
-  std::vector<double> lats(N);
-  grid::gaussian_latitudes_npole_equator(N,lats.data());
-  setup_lat_hemisphere(N,lats.data(),lon);
-}
-
-mesh::Mesh::Ptr generate_mesh( const ReducedGrid& rgg )
-{
-  mesh::generators::ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   generate.options.set("nb_parts",eckit::mpi::size());
   generate.options.set("part",eckit::mpi::rank());
   return mesh::Mesh::Ptr( generate( rgg ) );
@@ -43,7 +32,7 @@ mesh::Mesh::Ptr generate_mesh( const ReducedGrid& rgg )
 
 mesh::Mesh::Ptr generate_mesh(int nlat, long lon[] )
 {
-  return generate_mesh( TestGrid(nlat,lon) );
+  return generate_mesh( ReducedGaussian(nlat,lon) );
 }
 
 

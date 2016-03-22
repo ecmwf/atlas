@@ -15,13 +15,20 @@
 #define atlas_grids_grids_h
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GaussianGrid.h"
-#include "atlas/grid/LonLatGrid.h"
-#include "atlas/grid/ReducedGaussianGrid.h"
-#include "atlas/grid/ReducedGrid.h"
-#include "atlas/grid/ReducedLonLatGrid.h"
-#include "atlas/grid/Unstructured.h"
-#include "atlas/grid/predefined/rgg/rgg.h"
+#include "atlas/grid/global/lonlat/ReducedLonLat.h"
+#include "atlas/grid/global/lonlat/RegularLonLat.h"
+#include "atlas/grid/global/lonlat/ShiftedLonLat.h"
+#include "atlas/grid/global/lonlat/ShiftedLon.h"
+#include "atlas/grid/global/lonlat/ShiftedLat.h"
+#include "atlas/grid/global/gaussian/Gaussian.h"
+#include "atlas/grid/global/gaussian/ReducedGaussian.h"
+#include "atlas/grid/global/gaussian/RegularGaussian.h"
+#include "atlas/grid/global/gaussian/ClassicGaussian.h"
+#include "atlas/grid/global/gaussian/OctahedralGaussian.h"
+#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/global/CustomStructured.h"
+#include "atlas/grid/global/lonlat/LonLat.h"
+#include "atlas/grid/global/Unstructured.h"
 
 namespace atlas {
 namespace grid {
@@ -30,11 +37,6 @@ void load();
 void unload();
 
 Grid* grid_from_uid(const std::string& uid);
-
-ReducedGrid* new_reduced_grid(const std::string& identifier);
-ReducedGrid* new_reduced_gaussian_grid(const std::vector<int>& nlon);
-ReducedGrid* new_gaussian_grid(int N);
-ReducedGrid* new_lonlat_grid(int nlon, int nlat);
 
 extern "C"
 {

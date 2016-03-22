@@ -26,7 +26,7 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/grids.h"
-#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/mesh/generators/Structured.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
@@ -174,10 +174,11 @@ BOOST_AUTO_TEST_CASE( test1 )
 
 BOOST_AUTO_TEST_CASE( test2 )
 {
-  ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   generate.options.set("nb_parts",eckit::mpi::size());
   generate.options.set("part",eckit::mpi::rank());
-  mesh::Mesh* m = generate( grid::predefined::rgg::N32() );
+  mesh::Mesh* m = generate(
+      grid::global::gaussian::ClassicGaussian(32) );
   mesh::actions::build_parallel_fields(*m);
 
   mesh::Nodes& nodes = m->nodes();

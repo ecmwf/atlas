@@ -1,13 +1,15 @@
 #include "atlas/atlas.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/grid/grids.h"
 #include "atlas/field/Field.h"
 #include "eckit/config/Resource.h"
 
 using namespace std;
+using namespace eckit;
 using namespace atlas;
 using namespace atlas::array;
 using namespace atlas::field;
-using namespace atlas::grid;
+using namespace atlas::grid::global;
 
 int main(int argc, char *argv[])
 {
@@ -22,21 +24,21 @@ int main(int argc, char *argv[])
     double  zdist, zlon, zlat;
 
     string gridID;
-    gridID = eckit::Resource<string>("--grid", string("N32"));
-    ReducedGrid::Ptr reducedGrid(ReducedGrid::create(gridID));
-    int const nb_nodes = reducedGrid->npts();
+    gridID = Resource<string>("--grid", string("N32"));
+    SharedPtr<Structured> grid(Structured::create(gridID));
+    int const nb_nodes = grid->npts();
 
-    Field::Ptr pressureField(Field::create<double>
-                             ("pressure", make_shape(nb_nodes)));
+    SharedPtr<Field> field_pressure(
+      Field::create<double>("pressure", make_shape(nb_nodes)));
 
-    ArrayView <double,1> pressure(*pressureField);
-    for (int jlat =0; jlat < reducedGrid->nlat(); ++jlat)
+    ArrayView <double,1> pressure(*field_pressure);
+    for (int jlat =0; jlat < grid->nlat(); ++jlat)
     {
-        zlat = reducedGrid->lat(jlat);
+        zlat = grid->lat(jlat);
         zlat = zlat * deg2rad;
-        for (int jlon =0; jlon < reducedGrid->nlon(jlat); ++jlon)
+        for (int jlon =0; jlon < grid->nlon(jlat); ++jlon)
         {
-            zlon = reducedGrid->lon(jlat, jlon);
+            zlon = grid->lon(jlat, jlon);
             zlon = zlon * deg2rad;
             zdist = 2.0 * sqrt((cos(zlat) * sin((zlon-zlonc)/2)) *
                               (cos(zlat) * sin((zlon-zlonc)/2)) +
@@ -51,10 +53,10 @@ int main(int argc, char *argv[])
         }
     }
 
-    cout << "=========================================="  << endl;
-    cout << "memory pressureField = "
-         << (*pressureField).bytes()/1000000000  << " GB" << endl;
-    cout << "=========================================="  << endl;
+    Log::info() << "==========================================" << endl;
+    Log::info() << "memory field_pressure = "
+                << field_pressure->bytes() * 1.e-9 << " GB"      << endl;
+    Log::info() << "==========================================" << endl;
 
     atlas_finalize();
 

@@ -1,23 +1,24 @@
 program main
-use iso_c_binding
+use, intrinsic :: iso_c_binding, only: c_double
 use atlas_module
 implicit none
-integer, parameter                    :: wp = C_DOUBLE
+integer, parameter                    :: wp = c_double
+character(len=1024)                   :: string
 character(len=1024)                   :: gridID
-character(len=1024)                   :: checksum
-type(atlas_ReducedGrid)               :: reducedGrid
+character(len=32)                     :: checksum
+type(atlas_grid_Structured)               :: grid
 type(atlas_mesh)                      :: mesh
 type(atlas_meshgenerator)             :: meshgenerator
-type(atlas_functionspace_NodeColumns)       :: fs_nodes
+type(atlas_functionspace_NodeColumns) :: fs_nodes
 type(atlas_mesh_Nodes)                :: meshnodes
-type(atlas_Field)                     :: scalarField1
-type(atlas_Field)                     :: scalarField2
-type(atlas_Field)                     :: vectorField1
-type(atlas_Field)                     :: vectorField2
-type(atlas_Field)                     :: tensorField1
-type(atlas_Field)                     :: tensorField2
+type(atlas_Field)                     :: field_scalar1
+type(atlas_Field)                     :: field_scalar2
+type(atlas_Field)                     :: field_vector1
+type(atlas_Field)                     :: field_vector2
+type(atlas_Field)                     :: field_tensor1
+type(atlas_Field)                     :: field_tensor2
 type(atlas_Field)                     :: lonlatField
-type(atlas_Field)                     :: globalField
+type(atlas_Field)                     :: field_global
 type(atlas_FieldSet)                  :: fields
 integer                               :: nb_nodes, jnode
 integer                               :: nb_levels = 10
@@ -46,27 +47,27 @@ call atlas_init()
 
 ! Generate global reduced grid
 call atlas_resource("--grid", "N32", gridID)
-reducedGrid = atlas_ReducedGrid(gridID)
+grid = atlas_grid_Structured(gridID)
 
 ! Generate mesh associated to reduced grid
-meshgenerator = atlas_reducedgridmeshgenerator()
-mesh          = meshgenerator%generate(reducedGrid)
+meshgenerator = atlas_meshgenerator_Structured()
+mesh          = meshgenerator%generate(grid)
 
 ! Generate functionspace associated to mesh
 fs_nodes      = atlas_functionspace_NodeColumns(mesh, halo_size)
 
 ! Note on field generation
-scalarField1 = fs_nodes%create_field("scalarField1", &
+field_scalar1 = fs_nodes%create_field("scalar1", &
                & atlas_real(wp))
-scalarField2 = fs_nodes%create_field("scalarField2", &
+field_scalar2 = fs_nodes%create_field("scalar2", &
                atlas_real(wp), nb_levels)
-vectorField1 = fs_nodes%create_field("vectorField1", &
+field_vector1 = fs_nodes%create_field("vector1", &
                & atlas_real(wp), [2])
-vectorField2 = fs_nodes%create_field("vectorField2", &
+field_vector2 = fs_nodes%create_field("vector2", &
                atlas_real(wp), nb_levels, [2])
-tensorField1 = fs_nodes%create_field("tensorField1", &
+field_tensor1 = fs_nodes%create_field("tensor1", &
                & atlas_real(wp), [2,2])
-tensorField2 = fs_nodes%create_field("tensorField2", &
+field_tensor2 = fs_nodes%create_field("tensor2", &
                atlas_real(wp), nb_levels, [2,2])
 !........!
 ! Number of nodes in the mesh
@@ -75,7 +76,7 @@ meshnodes     = fs_nodes%nodes()
 nb_nodes      = fs_nodes%nb_nodes()
 
 ! Retrieve lonlat field to calculate scalar1 function
-call scalarField1%data(scalar1)
+call field_scalar1%data(scalar1)
 lonlatField = meshnodes%lonlat()
 call lonlatField%data(lonlat)
 
@@ -95,92 +96,93 @@ enddo
 
 ! Write mesh and field in gmsh format for visualization
 call atlas_write_gmsh      (mesh, "mesh.msh")
-call atlas_write_gmsh_field(scalarField1, fs_nodes, "scalar1.msh")
+call atlas_write_gmsh_field(field_scalar1, fs_nodes, "scalar1.msh")
 !........!
 ! Halo exchange
-call fs_nodes%halo_exchange(scalarField1)
+call fs_nodes%halo_exchange(field_scalar1)
 
-checksum = fs_nodes%checksum(scalarField1)
-if (atlas_mpi_rank() == 0) then
-  write(6, *) checksum
-endif
+checksum = fs_nodes%checksum(field_scalar1)
+write(string, *) checksum
+call atlas_log%info(string)
 
 ! Create a global field
-globalField = fs_nodes%create_global_field("global", scalarField1)
+field_global = fs_nodes%create_global_field("global", field_scalar1)
 
 ! Gather operation
-call fs_nodes%gather(scalarField1, globalField);
-if (atlas_mpi_rank() == 0) then
-  write(6, *) "local nodes          = ", fs_nodes%nb_nodes()
-  write(6, *) "grid points          = ", reducedGrid%npts()
-  write(6, *) "globalField.shape(1) = ", globalField%shape(1)
-endif
+call fs_nodes%gather(field_scalar1, field_global);
+
+write(string, *) "local nodes          = ", fs_nodes%nb_nodes()
+call atlas_log%info(string)
+
+write(string, *) "grid points          = ", grid%npts()
+call atlas_log%info(string)
+
+write(string, *) "field_global.shape(1) = ", field_global%shape(1)
+call atlas_log%info(string)
 
 ! Scatter operation
-call fs_nodes%scatter(globalField, scalarField1)
+call fs_nodes%scatter(field_global, field_scalar1)
 
 ! Halo exchange and checksum
-call fs_nodes%halo_exchange(scalarField1);
-checksum = fs_nodes%checksum(scalarField1);
-if (atlas_mpi_rank() == 0) then
-  write(6, *) checksum
-endif
+call fs_nodes%halo_exchange(field_scalar1);
+checksum = fs_nodes%checksum(field_scalar1);
+write(string, *) checksum
+call atlas_log%info(string)
 
 ! FieldSet checksum
 fields = atlas_FieldSet("")
-call fields%add(scalarField1);
-call fields%add(globalField);
+call fields%add(field_scalar1);
+call fields%add(field_global);
 checksum = fs_nodes%checksum(fields);
-if (atlas_mpi_rank() == 0) then
-  write(6, *) checksum;
-endif
+write(string, *) checksum
+call atlas_log%info(string)
 !........!
 ! Operations
 
 ! Minimum and maximum
-call fs_nodes%minimum(scalarField1, minimum)
-call fs_nodes%maximum(scalarField1, maximum)
-write(atlas_log%msg, *) "min = ",minimum, " max = ", maximum;
-call atlas_log%info()
+call fs_nodes%minimum(field_scalar1, minimum)
+call fs_nodes%maximum(field_scalar1, maximum)
+write(string, *) "min = ",minimum, " max = ", maximum;
+call atlas_log%info(string)
 
 
 ! Minimum and maximum + location
-call fs_nodes%minimum_and_location(scalarField1, minimum, glb_idx)
-write(atlas_log%msg,*) "min = ",minimum, " gidx = ", glb_idx
-call atlas_log%info()
-call fs_nodes%maximum_and_location(scalarField1, maximum, glb_idx)
-write(atlas_log%msg,*) "max = ",maximum, " gidx = ", glb_idx
-call atlas_log%info()
+call fs_nodes%minimum_and_location(field_scalar1, minimum, glb_idx)
+write(string,*) "min = ",minimum, " gidx = ", glb_idx
+call atlas_log%info(string)
+call fs_nodes%maximum_and_location(field_scalar1, maximum, glb_idx)
+write(string,*) "max = ",maximum, " gidx = ", glb_idx
+call atlas_log%info(string)
 
 ! Summation and order indipedent summation
-call fs_nodes%sum(scalarField1, sum)
-call fs_nodes%order_independent_sum(scalarField1, oisum)
-write(atlas_log%msg,*) "sum = ", sum, " oisum = ", oisum
-call atlas_log%info()
+call fs_nodes%sum(field_scalar1, sum)
+call fs_nodes%order_independent_sum(field_scalar1, oisum)
+write(string,*) "sum = ", sum, " oisum = ", oisum
+call atlas_log%info(string)
 
 ! Average over number of nodes
-call fs_nodes%mean(scalarField1, mean)
-write(atlas_log%msg,*) "mean = ", mean
-call atlas_log%info()
+call fs_nodes%mean(field_scalar1, mean)
+write(string,*) "mean = ", mean
+call atlas_log%info(string)
 
 ! Average and standard deviation over number of nodes
 call fs_nodes%mean_and_standard_deviation(&
-                & scalarField1, mean, stddev)
-write(atlas_log%msg,*) "mean = ", mean
-call atlas_log%info()
-write(atlas_log%msg,*) "stddev = ", stddev
-call atlas_log%info()
+                & field_scalar1, mean, stddev)
+write(string,*) "mean = ", mean
+call atlas_log%info(string)
+write(string,*) "stddev = ", stddev
+call atlas_log%info(string)
 
-call reducedGrid %final()
+call grid        %final()
 call mesh        %final()
 call fs_nodes    %final()
-call scalarField1%final()
-call scalarField2%final()
-call vectorField1%final()
-call vectorField2%final()
-call tensorField1%final()
-call tensorField2%final()
-call globalField %final()
+call field_scalar1%final()
+call field_scalar2%final()
+call field_vector1%final()
+call field_vector2%final()
+call field_tensor1%final()
+call field_tensor2%final()
+call field_global %final()
 call fields      %final()
 
 call atlas_finalize()

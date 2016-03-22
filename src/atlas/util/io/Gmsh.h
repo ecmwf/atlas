@@ -15,7 +15,7 @@
 #include <iostream>
 #include <vector>
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/functionspace/ReducedGridColumns.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/util/Metadata.h"
 
 // -----------------------------------------------------------------------------
@@ -62,11 +62,11 @@ public:
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
-  /// Write fieldset to file using ReducedGridColumns functionspace
+  /// Write fieldset to file using StructuredColumns functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
   void write(const field::FieldSet& fieldset,
-             const functionspace::ReducedGridColumns&,
+             const functionspace::StructuredColumns&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
@@ -78,11 +78,11 @@ public:
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
-  /// Write field to file using ReducedGridColumns functionspace
+  /// Write field to file using StructuredColumns functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
   void write(const field::Field& field,
-             const functionspace::ReducedGridColumns&,
+             const functionspace::StructuredColumns&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 

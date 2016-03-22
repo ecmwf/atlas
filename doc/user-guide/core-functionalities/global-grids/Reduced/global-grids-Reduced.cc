@@ -1,33 +1,32 @@
 #include "atlas/atlas.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/grid/grids.h"
 #include "eckit/config/Resource.h"
 
 using namespace std;
+using namespace eckit;
 using namespace atlas;
-using namespace atlas::grid;
+using namespace atlas::grid::global;
 
 int main(int argc, char *argv[])
-{    
+{
     atlas_init(argc, argv);
 
-    string gridID;
-    gridID = eckit::Resource<string>("--grid", string("N32"));
+    string gridID = Resource<string>( "--grid", string("N32") );
 
-    ReducedGrid::Ptr reducedGrid(ReducedGrid::create(gridID));
+    SharedPtr<Structured> grid(Structured::create(gridID));
 
-    cout << "nlat   = " << reducedGrid->nlat()  << endl;
-    cout << "nlon   = " << reducedGrid->nlon(0) << endl;
-    cout << "npts   = " << reducedGrid->npts()  << endl;
+    Log::info() << "nlat   = " << grid->nlat()  << endl;
+    Log::info() << "nlon   = " << grid->nlon(0) << endl;
+    Log::info() << "npts   = " << grid->npts()  << endl;
 
-    double crdLat, crdLon, crdLonLat[2];
-    crdLat = reducedGrid->lat(0);
-    crdLon = reducedGrid->lon(0, 1);
-    reducedGrid->lonlat(0, 1, crdLonLat);
+    double lonlat[2];
+    grid->lonlat(0, 1, lonlat);
 
-    cout << "lat    = " << crdLat << endl;
-    cout << "lon    = " << crdLon << endl;
-    cout << "lonlat = " << crdLonLat[0] << "  "
-                        << crdLonLat[1] << endl;
+    Log::info() << "lat    = " << grid->lat(0)   << endl;
+    Log::info() << "lon    = " << grid->lon(0,1) << endl;
+    Log::info() << "lonlat = " << lonlat[0] << "  "
+                               << lonlat[1] << endl;
 
     atlas_finalize();
     return 0;

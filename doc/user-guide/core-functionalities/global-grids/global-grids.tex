@@ -108,8 +108,8 @@ The command-line string (i.e. the key) must be contained
 in the predefined keys for reduced grid generation as specified 
 before. If the user uses a non-existent keyword, it will 
 appear an error message.
-The reduced-grid object, \inltc{reducedGrid}, is 
-a \inltc{ReducedGrid::Ptr} type and it will allow 
+The reduced-grid object, \inltc{grid}, is 
+a \inltc{ReducedGrid} type and it will allow 
 us to access some useful information about the grid.  
 
 It is now possible to run this simple program by using one 
@@ -124,9 +124,9 @@ following command line
 This will generate an octahedral reduced Gaussian grid with 
 32 latitudes on one emisphere (i.e. 64 latitudes in total).
 Note that we used the additional command-line argument 
-\inltc{--grid} and then specified the key identifier 
+\inlsh{\ddash{grid}} and then specified the key identifier 
 for the grid. This behaviour is what we have specified 
-on line 14 through the \inltc{Resource} object.
+on line 14 through the \inltc{Resource} method.
 
 The output to the screen of the code we just executed 
 contains some useful information regarding the grid. 
@@ -134,7 +134,7 @@ contains some useful information regarding the grid.
 In particular, the first three numbers represent the 
 number of latitudes, longitudes and points of the reduced
 grid, respectively. Note that we can directly access them 
-through the \inltc{reducedGrid} object (see lines 18, 19, 20).
+through the \inltc{grid} object (see lines 19, 20, 21).
 \begin{tipbox}
 For the number of latitudes and points we do not need to provide
 any argument to the function retrieving the information. On the 
@@ -150,10 +150,10 @@ respectively. Note again how these information can be directly
 accessed through the object \inltc{reducedGrid}. 
 Also, for retrieving a given latitude coordinate it is just 
 necessary to specify one index that refers to that particular 
-latitude (see line 23). On the other hand, for a given longitude 
+latitude (see line 26). On the other hand, for a given longitude 
 we need to provide both the index of the latitude and the index 
 of the longitude, since the longitude may depend on the latitude 
-(see line 24 and 25).
+(see line 27 and 24).
 
 You can now play with the command-line argument to generate 
 different types of global reduced grid using the keys introduced 
@@ -184,7 +184,7 @@ The command-line string (i.e. the key) must be contained
 in the predefined keys for reduced grid generation as specified 
 before. If the user uses a non-existent keyword, it will 
 appear an error message.
-The reduced-grid object, \inltc{reducedGrid}, is 
+The reduced-grid object, \inltc{grid}, is 
 an \inltc{atlas\_ReducedGrid} type and it will allow 
 us to access some useful information about the grid.  
 
@@ -194,16 +194,16 @@ identifies an \Atlas predefined grid. For instance, we
 can execute the following command line 
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_f-global-grids-Reduced "O32"
+./atlas_f-global-grids-Reduced --grid O32
 \end{lstlisting}
 % 
 This will generate an octahedral reduced Gaussian grid 
 with 32 latitudes on one emisphere (i.e. 64 latitudes 
 in total).
 Note that we used the additional command-line argument 
-\inltc{--grid} and then specified the key identifier 
+\inlsh{\ddash{grid}} and then specified the key identifier 
 for the grid. This behaviour is what we have specified 
-on line 10 through the \inltc{atlas\_resource} object.
+on line 10 through the \inltc{atlas\_resource} method.
 
 The output to the screen of the code we just executed 
 contains some useful information regarding the grid.
@@ -211,7 +211,7 @@ contains some useful information regarding the grid.
 In particular, the first three numbers represent the 
 number of latitudes, longitudes and points of the reduced
 grid, respectively. Note that we can directly access them 
-through the \inltc{reducedGrid} object (see lines 14, 15, 16).
+through the \inltc{grid} object (see lines 14, 17, 20).
 %
 \begin{tipbox}
 For the number of latitudes and points we do not need to provide
@@ -225,13 +225,13 @@ for more details on how a reduced grid is constructed).
 The last two numbers represent the coordinates of a given 
 latitude and longitude, respectively. Note again how these 
 information can be directly accessed through the object 
-\inltc{reducedGrid}. 
+\inltc{grid}. 
 Also, for retrieving a given latitude coordinate it is just 
 necessary to specify one index that refers to that particular 
 latitude (see line 23). On the other hand, for a given longitude 
 we need to provide both the index of the latitude and the index 
 of the longitude, since the longitude may depend on the latitude 
-(see line 20 and 21).
+(see line 26).
 
 You can now play with the command-line argument to generate 
 different types of global reduced grid using the keys introduced 

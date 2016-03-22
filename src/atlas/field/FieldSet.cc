@@ -19,7 +19,7 @@ namespace field {
 
 
 FieldSet::FieldSet(const std::string &name) :
-  name_(name.length()? name : "untitled")
+  name_()
 {}
 
 
@@ -31,7 +31,12 @@ void FieldSet::add(const Field& field)
 
 void FieldSet::add(const Field* field)
 {
-  index_[field->name()] = fields_.size();
+  if( field->name().size() ) {
+    index_[field->name()] = fields_.size();
+  } else {
+    std::stringstream name; name << name_ << "["<<fields_.size()<<"]";
+    index_[name.str()] = fields_.size();
+  }
   fields_.push_back( eckit::SharedPtr<Field>(const_cast<Field*>(field)) );
 }
 

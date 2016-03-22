@@ -21,7 +21,7 @@ line argument. In particular, we use the third-party
 \textit{eckit} object called \inltc{Resource} to define 
 the command-line behaviour as done in the previous chapter. 
 We have also added an additional command line argument 
-called \inlsh{-\,-visualize}. This will allow us to 
+called \inlsh{\ddash{visualize}}. This will allow us to 
 visualize the mesh either in 2D or 3D. 
 %
 \lstinputlisting[caption=Generating a mesh starting from a grid 
@@ -31,21 +31,22 @@ Once defined the command-line behaviour, we first create
 a global reduced-grid object (see line 24). For more 
 details on how to create a grid see \chap{chap:global-grids}.
 
-We successively create a mesh object, \inltc{meshPtr} 
-that is a \inltc{Mesh::Ptr} type. We then create a 
+We then create a 
 \inltc{ReducedGridMeshGenerator} object called \inltc{generate\_mesh}
 that will allow us to generate the mesh starting from
-a reduced grid. We finally create the mesh on line 28.
+a reduced grid.
+We successively create a mesh object, \inltc{mesh} 
+of the \inltc{Mesh} type on line 27 using the mesh generator.
 
 In this simple example we took the freedom to add a few 
 lines to show how to visualize the mesh in Gmsh. In particular, 
-on line 30 we define a Gmsh object called \inltc{gmsh} that 
-will be used to generate a Gmsh output. On line 31 we specify 
+on line 29 we define a Gmsh object called \inltc{gmsh} that 
+will be used to generate a Gmsh output. On line 30 we specify 
 that we want to have some information regarding the mesh - this 
 is achieved by defining as \inltc{true} the tag \inltc{"info"}.
-Between line 32 and 36, we add two additional lines to visualize 
+Between line 31 and 35, we add two additional lines to visualize 
 the mesh in 3D if required on the command-line.
-Finally, on line 37 we write the mesh and save it into \inltc{mesh.msh}.
+Finally, on line 36 we write the mesh and save it into \inltc{mesh.msh}.
 Note that the file containing the information on the mesh 
 just created is called \inltc{mesh\_info.msh}.
 

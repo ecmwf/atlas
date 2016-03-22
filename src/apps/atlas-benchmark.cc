@@ -52,7 +52,6 @@
 #include "atlas/atlas.h"
 #include "atlas/array/Array.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/mesh/actions/GenerateMesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -334,9 +333,9 @@ void AtlasBenchmark::setup()
   grid::load();
 
   stringstream gridname; gridname << "N"<<N;
-  ReducedGrid::Ptr grid( ReducedGrid::create(gridname.str()) );
-  MeshGenerator::Ptr meshgenerator ( MeshGenerator::create("ReducedGrid") );
-  mesh = mesh::Mesh::Ptr ( meshgenerator->generate(*grid) );
+  SharedPtr<global::Structured> grid( global::Structured::create(gridname.str()) );
+  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
+  mesh.reset( meshgenerator->generate(*grid) );
 
   build_nodes_parallel_fields(mesh->nodes());
   build_periodic_boundaries(*mesh);

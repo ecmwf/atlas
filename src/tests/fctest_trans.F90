@@ -38,7 +38,7 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_trans )
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_grid_Structured) :: grid
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
@@ -63,11 +63,11 @@ TEST( test_trans )
   nlev=10
   nsmax = 21
 
-  grid = atlas_ReducedGrid("O24")
+  grid = atlas_grid_Structured("O24")
 
   FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 
-  meshgenerator = atlas_ReducedGridMeshGenerator()
+  meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid)
   call meshgenerator%final()
 
@@ -83,9 +83,9 @@ TEST( test_trans )
 !  FCTEST_CHECK_EQUAL( trans%owners(), 1 )
   FCTEST_CHECK_EQUAL( trans%nproc(), 1 )
   FCTEST_CHECK_EQUAL( trans%myproc(proc0=1), 1 )
-  FCTEST_CHECK_EQUAL( trans%ndgl(), grid%nlat() )
-  FCTEST_CHECK_EQUAL( trans%ngptot(), grid%npts() )
-  FCTEST_CHECK_EQUAL( trans%ngptotg(), grid%npts() )
+  FCTEST_CHECK_EQUAL( trans%ndgl(), int(grid%nlat()) )
+  FCTEST_CHECK_EQUAL( trans%ngptot(), int(grid%npts()) )
+  FCTEST_CHECK_EQUAL( trans%ngptotg(), int(grid%npts()) )
   FCTEST_CHECK_EQUAL( trans%nsmax(), nsmax )
 
   nodes = mesh%nodes()
@@ -222,9 +222,9 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_trans_nomesh )
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_grid_Structured) :: grid
   type(atlas_Trans) :: trans
-  type(atlas_functionspace_ReducedGridColumns) :: gridpoints_fs
+  type(atlas_functionspace_StructuredColumns) :: gridpoints_fs
   type(atlas_functionspace_Spectral) :: spectral_fs
   type(atlas_Field)         :: scalarfield1, scalarfield2
   type(atlas_Field)         :: spectralfield1, spectralfield2
@@ -240,10 +240,10 @@ TEST( test_trans_nomesh )
   nlev=10
   nsmax = 21
 
-  grid = atlas_ReducedGrid("O24")
+  grid = atlas_grid_Structured("O24")
   trans = atlas_Trans(grid,nsmax)
 
-  gridpoints_fs = atlas_functionspace_ReducedGridColumns(grid)
+  gridpoints_fs = atlas_functionspace_StructuredColumns(grid)
   scalarfield1 = gridpoints_fs%create_field("scalar1",nlev)
   scalarfield2 = gridpoints_fs%create_field("scalar2")
 
@@ -315,18 +315,18 @@ TEST( test_trans_nomesh )
 END_TEST
 
 TEST( test_transdwarf )
-type(atlas_ReducedGrid) :: grid
+type(atlas_grid_Structured) :: grid
 type(atlas_Trans) :: trans
-type(atlas_functionspace_ReducedGridColumns) :: gridpoints
+type(atlas_functionspace_StructuredColumns) :: gridpoints
 type(atlas_functionspace_Spectral) :: spectral
 type(atlas_Field) :: fieldg, field
 type(atlas_FieldSet) :: gpfields, spfields
 integer :: jfld, nfld
 character(len=10) :: fieldname
 
-grid = atlas_ReducedGrid("O24")
+grid = atlas_grid_Structured("O24")
 trans = atlas_Trans(grid,23)
-gridpoints = atlas_functionspace_ReducedGridColumns(grid)
+gridpoints = atlas_functionspace_StructuredColumns(grid)
 spectral = atlas_functionspace_Spectral(trans)
 
 gpfields = atlas_FieldSet("gridpoint")

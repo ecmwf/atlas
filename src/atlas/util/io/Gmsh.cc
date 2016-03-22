@@ -224,7 +224,7 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& funct
 template< typename DATATYPE >
 void write_field_nodes(
     const Gmsh&                            gmsh,
-    const functionspace::ReducedGridColumns& function_space,
+    const functionspace::StructuredColumns& function_space,
     const field::Field&                           field,
     std::ostream&                          out)
 {
@@ -1019,10 +1019,10 @@ void Gmsh::write(
         fieldset.add(field);
         write(fieldset, *functionspace, file_path, mode);
     }
-    else if ( field.functionspace().cast<functionspace::ReducedGridColumns>() )
+    else if ( field.functionspace().cast<functionspace::StructuredColumns>() )
     {
-        const functionspace::ReducedGridColumns* functionspace =
-            field.functionspace().cast<functionspace::ReducedGridColumns>();
+        const functionspace::StructuredColumns* functionspace =
+            field.functionspace().cast<functionspace::StructuredColumns>();
 
         field::FieldSet fieldset;
         fieldset.add(field);
@@ -1035,7 +1035,7 @@ void Gmsh::write(
             <<"] has functionspace ["
             << field.functionspace().name()
             << "] but requires a [functionspace::NodeColumns "
-            << "or functionspace::ReducedGridColumns]";
+            << "or functionspace::StructuredColumns]";
 
         throw eckit::AssertionFailed(msg.str(), Here());
     }
@@ -1062,7 +1062,7 @@ void Gmsh::write(
 // ----------------------------------------------------------------------------
 void Gmsh::write(
     const field::Field&                           field,
-    const functionspace::ReducedGridColumns& functionspace,
+    const functionspace::StructuredColumns& functionspace,
     const PathName&                        file_path,
     openmode                               mode) const
 {
@@ -1128,7 +1128,7 @@ void Gmsh::write(
 // ----------------------------------------------------------------------------
 void Gmsh::write(
     const field::FieldSet& fieldset,
-    const functionspace::ReducedGridColumns& functionspace,
+    const functionspace::StructuredColumns& functionspace,
     const PathName& file_path, openmode mode) const
 {
     bool is_new_file = (mode != std::ios_base::app || !file_path.exists());

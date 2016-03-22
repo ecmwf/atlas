@@ -41,7 +41,7 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_nodes )
-type(atlas_ReducedGrid) :: grid
+type(atlas_grid_Structured) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs
@@ -50,8 +50,8 @@ type(atlas_mesh_Nodes) :: nodes
 integer :: halo_size, nb_nodes
 halo_size = 1
 
-grid = atlas_ReducedGrid("N24")
-meshgenerator = atlas_ReducedGridMeshGenerator()
+grid = atlas_grid_Structured("N24")
+meshgenerator = atlas_meshgenerator_Structured()
 mesh = meshgenerator%generate(grid)
 call meshgenerator%final()
 fs = atlas_functionspace_NodeColumns(mesh,halo_size)
@@ -136,7 +136,7 @@ END_TEST
 
 
 TEST( test_nodescolumns )
-type(atlas_ReducedGrid) :: grid
+type(atlas_grid_Structured) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs
@@ -145,8 +145,8 @@ integer :: halo_size, levels
 halo_size = 1
 levels = 10
 
-grid = atlas_ReducedGrid("N24")
-meshgenerator = atlas_ReducedGridMeshGenerator()
+grid = atlas_grid_Structured("N24")
+meshgenerator = atlas_meshgenerator_Structured()
 mesh = meshgenerator%generate(grid)
 call meshgenerator%final()
 fs = atlas_functionspace_NodeColumns(mesh,halo_size)
@@ -230,7 +230,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_collectives )
-type(atlas_ReducedGrid) :: grid
+type(atlas_grid_Structured) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs2d
@@ -246,8 +246,8 @@ integer(ATLAS_KIND_GIDX), allocatable :: glb_idxv (:)
 halo_size = 1
 levels = 10
 
-grid = atlas_ReducedGrid("N24")
-meshgenerator = atlas_ReducedGridMeshGenerator()
+grid = atlas_grid_Structured("N24")
+meshgenerator = atlas_meshgenerator_Structured()
 mesh = meshgenerator%generate(grid)
 call meshgenerator%final()
 fs2d = atlas_functionspace_NodeColumns(mesh,halo_size)
@@ -340,7 +340,7 @@ END_TEST
 
 
 TEST( test_edges )
-type(atlas_ReducedGrid) :: grid
+type(atlas_grid_Structured) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_EdgeColumns) :: fs
@@ -349,8 +349,8 @@ type(atlas_mesh_Edges) :: edges
 integer :: halo_size, nb_edges
 halo_size = 0
 
-grid = atlas_ReducedGrid("N24")
-meshgenerator = atlas_ReducedGridMeshGenerator()
+grid = atlas_grid_Structured("N24")
+meshgenerator = atlas_meshgenerator_Structured()
 mesh = meshgenerator%generate(grid)
 FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
 edges = mesh%edges()

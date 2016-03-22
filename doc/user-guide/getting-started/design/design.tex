@@ -249,30 +249,6 @@ These are illustrated in the \emph{FunctionSpace} class inheritance diagram in \
 \caption{FunctionSpace object diagram \label{fig:functionspace}}
 \end{figure}
 %
-\section{Numerics}
-%
-Apart from serving as a framework for constructing a flexible data structure,
-\Atlas also provides some numerical algorithms such as gradient, divergence,
-curl, and laplacian operators.
-%
-The gradient, divergence, curl and laplacian operators are bundled in a
-abstract \emph{Nabla} class, of which a concrete implementation can
-instantiated with a \emph{Method} object. This is illustrated in
-\fig{fig:numerics}. Here a concrete \emph{fvm::Nabla} is constructed using a
-concrete \emph{fvm::Method}. These concrete classes implement a median-dual
-finite volume method. The \emph{fvm::Method} internally uses two
-\emph{FunctionSpace}s, i.e. a \emph{functionspace::NodeColumns}, and a
-\emph{functionspace::EdgeColumns}, required to interprete \emph{Field}s
-residing in nodes and edge-centres. For more information on the median-dual
-Finite Volume Method, see section~\ref{s:fvm}.
-%
-\begin{figure}
-\centering
-\includegraphics[scale=0.5]{imgs/numerics.pdf}
-\caption{Class diagram for the \emph{fvm::Nabla} operator
-\label{fig:numerics}}
-\end{figure}
-%
 \section{Parallelisation} \label{s:parallelisation}
 %
 As described section~\ref{s:mesh} and shown in \fig{fig:mesh}, the \emph{Nodes},
@@ -311,17 +287,48 @@ tasks, typically required in exchanging small halo's of ghost entities
 surrounding a domain partition.
 \end{itemize}
 %
-\subsection{fvm: Median-dual Finite Volume Method}
-\label{s:fvm}
-TODO
-
+\section{Numerics}
+%
+Apart from serving as a framework for constructing a flexible data structure,
+\Atlas also provides some numerical algorithms such as gradient, divergence,
+curl, and laplacian operators.
+%
+The gradient, divergence, curl and laplacian operators are bundled in a
+abstract \emph{Nabla} class, of which a concrete implementation can be
+instantiated with a \emph{Method} object. This is illustrated in
+\fig{fig:numerics}. Here a concrete \emph{fvm::Nabla} is constructed using a
+concrete \emph{fvm::Method}. These concrete classes implement a median-dual
+finite volume method. The \emph{fvm::Method} internally uses two
+\emph{FunctionSpace}s, i.e. a \emph{functionspace::NodeColumns}, and a
+\emph{functionspace::EdgeColumns}, required to interprete \emph{Field}s
+residing in nodes and edge-centres. For more information on the median-dual
+Finite Volume Method, see section~\ref{s:fvm}.
+%
+\begin{figure}
+\centering
+\includegraphics[scale=0.5]{imgs/numerics.pdf}
+\caption{Class diagram for the \emph{fvm::Nabla} operator
+\label{fig:numerics}}
+\end{figure}
+%
 \section{Utilities}
 %
-A number of utilities is also available with the library. These include 
-pre- and post-processing tools, mpi communication, error and exception 
+A number of utilities is also available \Atlas. These include 
+emph{Mesh}
+writing, mpi communication, error and exception 
 handling, runtime behaviour, etc.
+%
+
+\subsection{Configuration}
+
 
 \subsection{Logging} \label{s:utilities-logging}
 TODO
+
+\chapter{Theory}
+\section{fvm: Median-dual Finite Volume Method}
+\label{s:fvm}
+TODO
+
 
 
