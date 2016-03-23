@@ -59,24 +59,45 @@ contains
   procedure, private :: create_field_name_kind_vars
   procedure, private :: create_field_name_kind_lev_vars
   procedure, private :: create_field_name_template
+  procedure, private :: create_field_kind
+  procedure, private :: create_field_kind_lev
+  procedure, private :: create_field_kind_vars
+  procedure, private :: create_field_kind_lev_vars
+  procedure, private :: create_field_template
+
   generic, public :: create_field => &
     & create_field_name_kind, &
     & create_field_name_kind_lev, &
     & create_field_name_kind_vars, &
     & create_field_name_kind_lev_vars, &
-    & create_field_name_template
+    & create_field_name_template, &
+    & create_field_kind, &
+    & create_field_kind_lev, &
+    & create_field_kind_vars, &
+    & create_field_kind_lev_vars, &
+    & create_field_template
 
   procedure, private :: create_glb_field_name_kind
   procedure, private :: create_glb_field_name_kind_lev
   procedure, private :: create_glb_field_name_kind_vars
   procedure, private :: create_glb_field_name_kind_lev_vars
   procedure, private :: create_glb_field_name_template
+  procedure, private :: create_glb_field_kind
+  procedure, private :: create_glb_field_kind_lev
+  procedure, private :: create_glb_field_kind_vars
+  procedure, private :: create_glb_field_kind_lev_vars
+  procedure, private :: create_glb_field_template
   generic, public :: create_global_field => &
     & create_glb_field_name_kind, &
     & create_glb_field_name_kind_lev, &
     & create_glb_field_name_kind_vars, &
     & create_glb_field_name_kind_lev_vars, &
-    & create_glb_field_name_template
+    & create_glb_field_name_template, &
+    & create_glb_field_kind, &
+    & create_glb_field_kind_lev, &
+    & create_glb_field_kind_vars, &
+    & create_glb_field_kind_lev_vars, &
+    & create_glb_field_template
 
   procedure, private :: halo_exchange_fieldset
   procedure, private :: halo_exchange_field
@@ -233,8 +254,8 @@ contains
 END TYPE atlas_functionspace_NodeColumns
 
 interface atlas_functionspace_NodeColumns
-  module procedure atlas_functionspace_NodeColumns__cptr
-  module procedure atlas_functionspace_NodeColumns__mesh_halo
+  module procedure constructor__cptr
+  module procedure constructor__mesh_halo
 end interface
 
 !------------------------------------------------------------------------------
@@ -243,26 +264,30 @@ end interface
 contains
 !========================================================
 
-function atlas_functionspace_NodeColumns__cptr(cptr) result(functionspace)
+function constructor__cptr(cptr) result(functionspace)
   type(atlas_functionspace_NodeColumns) :: functionspace
   type(c_ptr), intent(in) :: cptr
   call functionspace%reset_c_ptr( cptr )
 end function
 
-function atlas_functionspace_NodeColumns__mesh_halo(mesh,halo) result(function_space)
+!------------------------------------------------------------------------------
+
+function constructor__mesh_halo(mesh,halo) result(function_space)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_functionspace_NodeColumns) :: function_space
   type(atlas_Mesh), intent(inout) :: mesh
   integer, intent(in), optional :: halo
   if( present(halo) ) then
-    function_space = atlas_functionspace_NodeColumns__cptr( &
+    function_space = constructor__cptr( &
       & atlas__NodesFunctionSpace__new(mesh%c_ptr(),halo) )
   else
-    function_space = atlas_functionspace_NodeColumns__cptr( &
+    function_space = constructor__cptr( &
       & atlas__NodesFunctionSpace__new_mesh(mesh%c_ptr()) )
   endif
   call function_space%return()
 end function
+
+!------------------------------------------------------------------------------
 
 #ifdef FORTRAN_SUPPORTS_FINAL
 subroutine atlas_functionspace_NodeColumns__final(this)
@@ -271,12 +296,16 @@ subroutine atlas_functionspace_NodeColumns__final(this)
 end subroutine
 #endif
 
+!------------------------------------------------------------------------------
+
 function nb_nodes(this)
   use atlas_functionspace_NodeColumns_c_binding
   integer :: nb_nodes
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   nb_nodes = atlas__NodesFunctionSpace__nb_nodes(this%c_ptr())
 end function
+
+!------------------------------------------------------------------------------
 
 function mesh(this)
   use atlas_functionspace_NodeColumns_c_binding
@@ -285,12 +314,16 @@ function mesh(this)
   call mesh%reset_c_ptr( atlas__NodesFunctionSpace__mesh(this%c_ptr()) )
 end function
 
+!------------------------------------------------------------------------------
+
 function nodes(this)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_mesh_Nodes) :: nodes
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   call nodes%reset_c_ptr( atlas__NodesFunctionSpace__nodes(this%c_ptr()) )
 end function
+
+!------------------------------------------------------------------------------
 
 function create_field_name_kind(this,name,kind) result(field)
   use atlas_functionspace_NodeColumns_c_binding
@@ -302,6 +335,8 @@ function create_field_name_kind(this,name,kind) result(field)
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
+
 function create_field_name_kind_lev(this,name,kind,levels) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
@@ -312,6 +347,8 @@ function create_field_name_kind_lev(this,name,kind,levels) result(field)
   field = atlas_Field( atlas__NodesFunctionSpace__create_field_lev(this%c_ptr(),c_str(name),levels,kind) )
   call field%return()
 end function
+
+!------------------------------------------------------------------------------
 
 function create_field_name_kind_vars(this,name,kind,vars) result(field)
   use atlas_functionspace_NodeColumns_c_binding
@@ -325,6 +362,8 @@ function create_field_name_kind_vars(this,name,kind,vars) result(field)
     & this%c_ptr(),c_str(name),vars,size(vars),fortran_ordering,kind) )
   call field%return()
 end function
+
+!------------------------------------------------------------------------------
 
 function create_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
   use atlas_functionspace_NodeColumns_c_binding
@@ -340,6 +379,8 @@ function create_field_name_kind_lev_vars(this,name,kind,levels,vars) result(fiel
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
+
 function create_field_name_template(this,name,template) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
@@ -351,6 +392,7 @@ function create_field_name_template(this,name,template) result(field)
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
 
 function create_glb_field_name_kind_lev(this,name,kind) result(field)
   use atlas_functionspace_NodeColumns_c_binding
@@ -362,6 +404,8 @@ function create_glb_field_name_kind_lev(this,name,kind) result(field)
     & this%c_ptr(),c_str(name),kind) )
   call field%return()
 end function
+
+!------------------------------------------------------------------------------
 
 function create_glb_field_name_kind(this,name,kind,levels) result(field)
   use atlas_functionspace_NodeColumns_c_binding
@@ -375,6 +419,7 @@ function create_glb_field_name_kind(this,name,kind,levels) result(field)
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
 
 function create_glb_field_name_kind_vars(this,name,kind,vars) result(field)
   use atlas_functionspace_NodeColumns_c_binding
@@ -388,6 +433,8 @@ function create_glb_field_name_kind_vars(this,name,kind,vars) result(field)
     & this%c_ptr(),c_str(name),vars,size(vars),fortran_ordering,kind) )
   call field%return()
 end function
+
+!------------------------------------------------------------------------------
 
 function create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
   use atlas_functionspace_NodeColumns_c_binding
@@ -403,6 +450,8 @@ function create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars) result(
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
+
 function create_glb_field_name_template(this,name,template) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
@@ -414,12 +463,147 @@ function create_glb_field_name_template(this,name,template) result(field)
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
+!------------------------------------------------------------------------------!------------------------------------------------------------------------------!------------------------------------------------------------------------------
+
+function create_field_kind(this,kind) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  integer, intent(in) :: kind
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field(this%c_ptr(),c_str(""),kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_field_kind_lev(this,kind,levels) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  integer, intent(in) :: kind
+  integer, intent(in) :: levels
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_lev(this%c_ptr(),c_str(""),levels,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_field_kind_vars(this,kind,vars) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  integer, intent(in) :: vars(:)
+  integer, intent(in) :: kind
+  integer, parameter :: fortran_ordering = 1
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_vars( &
+    & this%c_ptr(),c_str(""),vars,size(vars),fortran_ordering,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_field_kind_lev_vars(this,kind,levels,vars) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  integer, intent(in) :: kind
+  integer, intent(in) :: levels
+  integer, intent(in) :: vars(:)
+  integer, parameter :: fortran_ordering = 1
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_lev_vars( &
+    & this%c_ptr(),c_str(""),levels,vars,size(vars),fortran_ordering,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_field_template(this,template) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: template
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_template( &
+    & this%c_ptr(),c_str(""),template%c_ptr()) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_glb_field_kind_lev(this,kind) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  integer, intent(in) :: kind
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field( &
+    & this%c_ptr(),c_str(""),kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_glb_field_kind(this,kind,levels) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  integer, intent(in) :: levels
+  integer, intent(in) :: kind
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev( &
+    & this%c_ptr(),c_str(""),levels,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_glb_field_kind_vars(this,kind,vars) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  integer, intent(in) :: vars(:)
+  integer, intent(in) :: kind
+  integer, parameter :: fortran_ordering = 1
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_vars( &
+    & this%c_ptr(),c_str(""),vars,size(vars),fortran_ordering,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_glb_field_kind_lev_vars(this,kind,levels,vars) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  integer, intent(in) :: vars(:)
+  integer, intent(in) :: levels
+  integer, intent(in) :: kind
+  integer, parameter :: fortran_ordering = 1
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev_vars( &
+    & this%c_ptr(),c_str(""),levels,vars,size(vars),fortran_ordering,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_glb_field_template(this,template) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: template
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_template( &
+    & this%c_ptr(),c_str(""),template%c_ptr()) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------!------------------------------------------------------------------------------!------------------------------------------------------------------------------!------------------------------------------------------------------------------
+
 subroutine halo_exchange_fieldset(this,fieldset)
   use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_FieldSet), intent(inout) :: fieldset
   call atlas__NodesFunctionSpace__halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine halo_exchange_field(this,field)
   use atlas_functionspace_NodeColumns_c_binding
@@ -428,6 +612,8 @@ subroutine halo_exchange_field(this,field)
   call atlas__NodesFunctionSpace__halo_exchange_field(this%c_ptr(),field%c_ptr())
 end subroutine
 
+!------------------------------------------------------------------------------
+
 function get_gather(this) result(gather)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_GatherScatter) :: gather
@@ -435,12 +621,16 @@ function get_gather(this) result(gather)
   call gather%reset_c_ptr( atlas__NodesFunctioNSpace__get_gather(this%c_ptr()) )
 end function
 
+!------------------------------------------------------------------------------
+
 function get_scatter(this) result(gather)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_GatherScatter) :: gather
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   call gather%reset_c_ptr( atlas__NodesFunctioNSpace__get_scatter(this%c_ptr()) )
 end function
+
+!------------------------------------------------------------------------------
 
 subroutine gather_fieldset(this,local,global)
   use atlas_functionspace_NodeColumns_c_binding
@@ -450,6 +640,8 @@ subroutine gather_fieldset(this,local,global)
   call atlas__NodesFunctionSpace__gather_fieldset(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine gather_field(this,local,global)
   use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -457,6 +649,8 @@ subroutine gather_field(this,local,global)
   type(atlas_Field), intent(inout) :: global
   call atlas__NodesFunctionSpace__gather_field(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine scatter_fieldset(this,global,local)
   use atlas_functionspace_NodeColumns_c_binding
@@ -466,6 +660,8 @@ subroutine scatter_fieldset(this,global,local)
   call atlas__NodesFunctionSpace__scatter_fieldset(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine scatter_field(this,global,local)
   use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -474,6 +670,8 @@ subroutine scatter_field(this,global,local)
   call atlas__NodesFunctionSpace__scatter_field(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
+!------------------------------------------------------------------------------
+
 function get_halo_exchange(this) result(halo_exchange)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_HaloExchange) :: halo_exchange
@@ -481,12 +679,16 @@ function get_halo_exchange(this) result(halo_exchange)
   call halo_exchange%reset_c_ptr( atlas__NodesFunctioNSpace__get_halo_exchange(this%c_ptr()) )
 end function
 
+!------------------------------------------------------------------------------
+
 function get_checksum(this) result(checksum)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Checksum) :: checksum
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   call checksum%reset_c_ptr( atlas__NodesFunctioNSpace__get_checksum(this%c_ptr()) )
 end function
+
+!------------------------------------------------------------------------------
 
 function checksum_fieldset(this,fieldset) result(checksum)
   use atlas_functionspace_NodeColumns_c_binding
@@ -501,6 +703,7 @@ function checksum_fieldset(this,fieldset) result(checksum)
   if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
 end function
 
+!------------------------------------------------------------------------------
 
 function checksum_field(this,field) result(checksum)
   use atlas_functionspace_NodeColumns_c_binding
@@ -515,6 +718,7 @@ function checksum_field(this,field) result(checksum)
   if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
 end function
 
+!------------------------------------------------------------------------------
 
 subroutine minimum_real32_r0(this,field,minimum)
 use atlas_functionspace_NodeColumns_c_binding
@@ -523,6 +727,8 @@ use atlas_functionspace_NodeColumns_c_binding
   real(c_float), intent(out) :: minimum
   call atlas__NodesFunctionSpace__min_float(this%c_ptr(),field%c_ptr(),minimum)
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine minimum_real32_r1(this,field,minimum)
 use atlas_functionspace_NodeColumns_c_binding
@@ -539,6 +745,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(min_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maximum_real32_r0(this,field,maximum)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -546,6 +754,8 @@ use atlas_functionspace_NodeColumns_c_binding
   real(c_float), intent(out) :: maximum
   call atlas__NodesFunctionSpace__max_float(this%c_ptr(),field%c_ptr(),maximum)
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine maximum_real32_r1(this,field,maximum)
 use atlas_functionspace_NodeColumns_c_binding
@@ -562,6 +772,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(max_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloc_real32_r0(this,field,minimum,location)
 use atlas_functionspace_NodeColumns_c_binding
@@ -574,6 +785,8 @@ use atlas_functionspace_NodeColumns_c_binding
   location = loc
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloc_real32_r0(this,field,maximum,location)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -585,6 +798,7 @@ use atlas_functionspace_NodeColumns_c_binding
   location = loc
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloc_real32_r1(this,field,minimum,location)
 use atlas_functionspace_NodeColumns_c_binding
@@ -607,6 +821,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloc_real32_r1(this,field,maximum,location)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -628,6 +844,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine sum_real32_r0(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -639,6 +856,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__sum_float(this%c_ptr(),field%c_ptr(),sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine sum_real32_r1(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -658,6 +877,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine order_independent_sum_real32_r0(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -668,6 +889,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__oisum_float(this%c_ptr(),field%c_ptr(),sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine order_independent_sum_real32_r1(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -687,6 +910,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine mean_real32_r0(this,field,mean,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -697,6 +922,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__mean_float(this%c_ptr(),field%c_ptr(),mean,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine mean_real32_r1(this,field,mean,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -716,6 +943,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine mean_and_stddev_real32_r0(this,field,mean,stddev,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -727,6 +956,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__mean_and_stddev_float(this%c_ptr(),field%c_ptr(),mean,stddev,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_real32_r1(this,field,mean,stddev,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -751,7 +982,7 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-
+!------------------------------------------------------------------------------
 
 subroutine minimum_real64_r0(this,field,minimum)
 use atlas_functionspace_NodeColumns_c_binding
@@ -760,6 +991,8 @@ use atlas_functionspace_NodeColumns_c_binding
   real(c_double), intent(out) :: minimum
   call atlas__NodesFunctionSpace__min_double(this%c_ptr(),field%c_ptr(),minimum)
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine minimum_real64_r1(this,field,minimum)
 use atlas_functionspace_NodeColumns_c_binding
@@ -776,6 +1009,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(min_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maximum_real64_r0(this,field,maximum)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -783,6 +1018,8 @@ use atlas_functionspace_NodeColumns_c_binding
   real(c_double), intent(out) :: maximum
   call atlas__NodesFunctionSpace__max_double(this%c_ptr(),field%c_ptr(),maximum)
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine maximum_real64_r1(this,field,maximum)
 use atlas_functionspace_NodeColumns_c_binding
@@ -799,6 +1036,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(max_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloc_real64_r0(this,field,minimum,location)
 use atlas_functionspace_NodeColumns_c_binding
@@ -811,6 +1049,8 @@ use atlas_functionspace_NodeColumns_c_binding
   location = loc
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloc_real64_r0(this,field,maximum,location)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -822,6 +1062,7 @@ use atlas_functionspace_NodeColumns_c_binding
   location = loc
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloc_real64_r1(this,field,minimum,location)
 use atlas_functionspace_NodeColumns_c_binding
@@ -844,6 +1085,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloc_real64_r1(this,field,maximum,location)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -865,7 +1108,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
-
+!------------------------------------------------------------------------------
 
 subroutine sum_real64_r0(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -877,6 +1120,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__sum_double(this%c_ptr(),field%c_ptr(),sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine sum_real64_r1(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -896,6 +1141,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine order_independent_sum_real64_r0(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -906,6 +1153,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__oisum_double(this%c_ptr(),field%c_ptr(),sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine order_independent_sum_real64_r1(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -925,6 +1174,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine mean_real64_r0(this,field,mean,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -935,6 +1186,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__mean_double(this%c_ptr(),field%c_ptr(),mean,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine mean_real64_r1(this,field,mean,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -954,6 +1207,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine mean_and_stddev_real64_r0(this,field,mean,stddev,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -965,6 +1220,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__mean_and_stddev_double(this%c_ptr(),field%c_ptr(),mean,stddev,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_real64_r1(this,field,mean,stddev,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -989,6 +1246,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine minimum_int64_r0(this,field,minimum)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -996,6 +1255,8 @@ use atlas_functionspace_NodeColumns_c_binding
   integer(c_long), intent(out) :: minimum
   call atlas__NodesFunctionSpace__min_long(this%c_ptr(),field%c_ptr(),minimum)
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine minimum_int64_r1(this,field,minimum)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1012,6 +1273,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(min_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maximum_int64_r0(this,field,maximum)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1019,6 +1282,8 @@ use atlas_functionspace_NodeColumns_c_binding
   integer(c_long), intent(out) :: maximum
   call atlas__NodesFunctionSpace__max_long(this%c_ptr(),field%c_ptr(),maximum)
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine maximum_int64_r1(this,field,maximum)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1035,6 +1300,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(max_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloc_int64_r0(this,field,minimum,location)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1047,6 +1313,8 @@ use atlas_functionspace_NodeColumns_c_binding
   location = loc
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloc_int64_r0(this,field,maximum,location)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1058,6 +1326,7 @@ use atlas_functionspace_NodeColumns_c_binding
   location = loc
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloc_int64_r1(this,field,minimum,location)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1080,6 +1349,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloc_int64_r1(this,field,maximum,location)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1101,6 +1372,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine sum_int64_r0(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1112,6 +1384,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__sum_long(this%c_ptr(),field%c_ptr(),sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine sum_int64_r1(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1131,6 +1405,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine mean_int64_r0(this,field,mean,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1141,6 +1417,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__mean_long(this%c_ptr(),field%c_ptr(),mean,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine mean_int64_r1(this,field,mean,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1160,6 +1438,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine mean_and_stddev_int64_r0(this,field,mean,stddev,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1171,6 +1451,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__mean_and_stddev_long(this%c_ptr(),field%c_ptr(),mean,stddev,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_int64_r1(this,field,mean,stddev,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1195,6 +1477,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine minimum_int32_r0(this,field,minimum)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1202,6 +1486,8 @@ use atlas_functionspace_NodeColumns_c_binding
   integer(c_int), intent(out) :: minimum
   call atlas__NodesFunctionSpace__min_int(this%c_ptr(),field%c_ptr(),minimum)
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine minimum_int32_r1(this,field,minimum)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1218,6 +1504,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(min_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maximum_int32_r0(this,field,maximum)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1225,6 +1513,8 @@ use atlas_functionspace_NodeColumns_c_binding
   integer(c_int), intent(out) :: maximum
   call atlas__NodesFunctionSpace__max_int(this%c_ptr(),field%c_ptr(),maximum)
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine maximum_int32_r1(this,field,maximum)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1241,6 +1531,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(max_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloc_int32_r0(this,field,minimum,location)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1253,6 +1544,8 @@ use atlas_functionspace_NodeColumns_c_binding
   location = loc
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloc_int32_r0(this,field,maximum,location)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1264,6 +1557,7 @@ use atlas_functionspace_NodeColumns_c_binding
   location = loc
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloc_int32_r1(this,field,minimum,location)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1286,6 +1580,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloc_int32_r1(this,field,maximum,location)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1307,6 +1603,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine sum_int32_r0(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1318,6 +1615,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__sum_int(this%c_ptr(),field%c_ptr(),sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine sum_int32_r1(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1337,6 +1636,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine mean_int32_r0(this,field,mean,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1347,6 +1648,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__mean_int(this%c_ptr(),field%c_ptr(),mean,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine mean_int32_r1(this,field,mean,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1366,6 +1669,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine mean_and_stddev_int32_r0(this,field,mean,stddev,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1377,6 +1682,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__mean_and_stddev_int(this%c_ptr(),field%c_ptr(),mean,stddev,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_int32_r1(this,field,mean,stddev,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1401,6 +1708,7 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloclev_real32_r0(this,field,minimum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1416,6 +1724,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(level) ) level = opt_lev
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloclev_real32_r0(this,field,maximum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1430,6 +1740,7 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(level) ) level = opt_lev
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloclev_real32_r1(this,field,minimum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1460,6 +1771,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloclev_real32_r1(this,field,maximum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1489,6 +1802,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine minloclev_real64_r0(this,field,minimum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1502,6 +1817,8 @@ use atlas_functionspace_NodeColumns_c_binding
   location = loc
   if( present(level) ) level = opt_lev
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine maxloclev_real64_r0(this,field,maximum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1517,6 +1834,7 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(level) ) level = opt_lev
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloclev_real64_r1(this,field,minimum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1547,6 +1865,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloclev_real64_r1(this,field,maximum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1576,6 +1896,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloclev_int64_r0(this,field,minimum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1591,6 +1912,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(level) ) level = opt_lev
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloclev_int64_r0(this,field,maximum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1605,6 +1928,7 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(level) ) level = opt_lev
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloclev_int64_r1(this,field,minimum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1635,6 +1959,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloclev_int64_r1(this,field,maximum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1664,6 +1990,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine minloclev_int32_r0(this,field,minimum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1675,6 +2003,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__minloclev_int(this%c_ptr(),field%c_ptr(),minimum,loc,level)
   location = loc
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine maxloclev_int32_r0(this,field,maximum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1688,6 +2018,7 @@ use atlas_functionspace_NodeColumns_c_binding
   location = loc
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine minloclev_int32_r1(this,field,minimum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1716,6 +2047,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine maxloclev_int32_r1(this,field,maximum,location,level)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1743,6 +2076,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine minloc_per_level(this,field,minimum,location)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1751,6 +2086,8 @@ use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field), intent(out) :: location
   call atlas__NodesFunctionSpace__minloc_per_level(this%c_ptr(),field%c_ptr(),minimum%c_ptr(),location%c_ptr())
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine maxloc_per_level(this,field,maximum,location)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1761,6 +2098,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__maxloc_per_level(this%c_ptr(),field%c_ptr(),maximum%c_ptr(),location%c_ptr())
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine minimum_per_level(this,field,minimum)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1768,6 +2107,8 @@ use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field), intent(out) :: minimum
   call atlas__NodesFunctionSpace__min_per_level(this%c_ptr(),field%c_ptr(),minimum%c_ptr())
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine maximum_per_level(this,field,maximum)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1777,6 +2118,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__max_per_level(this%c_ptr(),field%c_ptr(),maximum%c_ptr())
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine sum_per_level(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1789,6 +2131,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine order_independent_sum_per_level(this,field,sum,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1800,6 +2144,8 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine mean_per_level(this,field,mean,N)
 use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -1810,6 +2156,8 @@ use atlas_functionspace_NodeColumns_c_binding
   call atlas__NodesFunctionSpace__mean_per_level(this%c_ptr(),field%c_ptr(),mean%c_ptr(),opt_N)
   if( present(N) ) N = opt_N
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_per_level(this,field,mean,stddev,N)
 use atlas_functionspace_NodeColumns_c_binding
@@ -1824,7 +2172,7 @@ use atlas_functionspace_NodeColumns_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-! -----------------------------------------------------------------------------------------------
+!------------------------------------------------------------------------------
 
 end module atlas_functionspace_NodeColumns_module
 

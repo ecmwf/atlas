@@ -56,24 +56,45 @@ contains
   procedure, private :: create_field_name_kind_vars
   procedure, private :: create_field_name_kind_lev_vars
   procedure, private :: create_field_name_template
+  procedure, private :: create_field_kind
+  procedure, private :: create_field_kind_lev
+  procedure, private :: create_field_kind_vars
+  procedure, private :: create_field_kind_lev_vars
+  procedure, private :: create_field_template
+
   generic, public :: create_field => &
     & create_field_name_kind, &
     & create_field_name_kind_lev, &
     & create_field_name_kind_vars, &
     & create_field_name_kind_lev_vars, &
-    & create_field_name_template
+    & create_field_name_template, &
+    & create_field_kind, &
+    & create_field_kind_lev, &
+    & create_field_kind_vars, &
+    & create_field_kind_lev_vars, &
+    & create_field_template
 
   procedure, private :: create_glb_field_name_kind
   procedure, private :: create_glb_field_name_kind_lev
   procedure, private :: create_glb_field_name_kind_vars
   procedure, private :: create_glb_field_name_kind_lev_vars
   procedure, private :: create_glb_field_name_template
+  procedure, private :: create_glb_field_kind
+  procedure, private :: create_glb_field_kind_lev
+  procedure, private :: create_glb_field_kind_vars
+  procedure, private :: create_glb_field_kind_lev_vars
+  procedure, private :: create_glb_field_template
   generic, public :: create_global_field => &
     & create_glb_field_name_kind, &
     & create_glb_field_name_kind_lev, &
     & create_glb_field_name_kind_vars, &
     & create_glb_field_name_kind_lev_vars, &
-    & create_glb_field_name_template
+    & create_glb_field_name_template, &
+    & create_glb_field_kind, &
+    & create_glb_field_kind_lev, &
+    & create_glb_field_kind_vars, &
+    & create_glb_field_kind_lev_vars, &
+    & create_glb_field_template
 
   procedure, private :: halo_exchange_fieldset
   procedure, private :: halo_exchange_field
@@ -119,6 +140,8 @@ function constructor__cptr(cptr) result(functionspace)
   call functionspace%reset_c_ptr( cptr )
 end function
 
+!------------------------------------------------------------------------------
+
 function constructor__mesh_halo(mesh,halo) result(function_space)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_functionspace_EdgeColumns) :: function_space
@@ -134,6 +157,7 @@ function constructor__mesh_halo(mesh,halo) result(function_space)
   call function_space%return()
 end function
 
+!------------------------------------------------------------------------------
 
 #ifdef FORTRAN_SUPPORTS_FINAL
 subroutine atlas_functionspace_EdgeColumns__final(this)
@@ -142,12 +166,16 @@ subroutine atlas_functionspace_EdgeColumns__final(this)
 end subroutine
 #endif
 
+!------------------------------------------------------------------------------
+
 function nb_edges(this)
   use atlas_functionspace_EdgeColumns_c_binding
   integer :: nb_edges
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   nb_edges = atlas__functionspace__Edges__nb_edges(this%c_ptr())
 end function
+
+!------------------------------------------------------------------------------
 
 function mesh(this)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -156,12 +184,16 @@ function mesh(this)
   call mesh%reset_c_ptr( atlas__functionspace__Edges__mesh(this%c_ptr()) )
 end function
 
+!------------------------------------------------------------------------------
+
 function edges(this)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_mesh_Edges) :: edges
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   call edges%reset_c_ptr( atlas__functionspace__Edges__edges(this%c_ptr()) )
 end function
+
+!------------------------------------------------------------------------------
 
 function create_field_name_kind(this,name,kind) result(field)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -173,6 +205,8 @@ function create_field_name_kind(this,name,kind) result(field)
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
+
 function create_field_name_kind_lev(this,name,kind,levels) result(field)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_Field) :: field
@@ -183,6 +217,8 @@ function create_field_name_kind_lev(this,name,kind,levels) result(field)
   field = atlas_Field( atlas__functionspace__Edges__create_field_lev(this%c_ptr(),c_str(name),levels,kind) )
   call field%return()
 end function
+
+!------------------------------------------------------------------------------
 
 function create_field_name_kind_vars(this,name,kind,vars) result(field)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -196,6 +232,8 @@ function create_field_name_kind_vars(this,name,kind,vars) result(field)
     & this%c_ptr(),c_str(name),vars,size(vars),fortran_ordering,kind) )
   call field%return()
 end function
+
+!------------------------------------------------------------------------------
 
 function create_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -211,6 +249,8 @@ function create_field_name_kind_lev_vars(this,name,kind,levels,vars) result(fiel
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
+
 function create_field_name_template(this,name,template) result(field)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_Field) :: field
@@ -222,6 +262,7 @@ function create_field_name_template(this,name,template) result(field)
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
 
 function create_glb_field_name_kind_lev(this,name,kind) result(field)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -233,6 +274,8 @@ function create_glb_field_name_kind_lev(this,name,kind) result(field)
     & this%c_ptr(),c_str(name),kind) )
   call field%return()
 end function
+
+!------------------------------------------------------------------------------
 
 function create_glb_field_name_kind(this,name,kind,levels) result(field)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -246,6 +289,7 @@ function create_glb_field_name_kind(this,name,kind,levels) result(field)
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
 
 function create_glb_field_name_kind_vars(this,name,kind,vars) result(field)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -259,6 +303,8 @@ function create_glb_field_name_kind_vars(this,name,kind,vars) result(field)
     & this%c_ptr(),c_str(name),vars,size(vars),fortran_ordering,kind) )
   call field%return()
 end function
+
+!------------------------------------------------------------------------------
 
 function create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -274,6 +320,8 @@ function create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars) result(
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
+
 function create_glb_field_name_template(this,name,template) result(field)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_Field) :: field
@@ -285,12 +333,146 @@ function create_glb_field_name_template(this,name,template) result(field)
   call field%return()
 end function
 
+!------------------------------------------------------------------------------
+
+function create_field_kind(this,kind) result(field)
+  use atlas_functionspace_EdgeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_EdgeColumns), intent(in) :: this
+  integer, intent(in) :: kind
+  field = atlas_Field( atlas__functionspace__Edges__create_field(this%c_ptr(),c_str(""),kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_field_kind_lev(this,kind,levels) result(field)
+  use atlas_functionspace_EdgeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_EdgeColumns), intent(in) :: this
+  integer, intent(in) :: kind
+  integer, intent(in) :: levels
+  field = atlas_Field( atlas__functionspace__Edges__create_field_lev(this%c_ptr(),c_str(""),levels,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_field_kind_vars(this,kind,vars) result(field)
+  use atlas_functionspace_EdgeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_EdgeColumns), intent(in) :: this
+  integer, intent(in) :: vars(:)
+  integer, intent(in) :: kind
+  integer, parameter :: fortran_ordering = 1
+  field = atlas_Field( atlas__functionspace__Edges__create_field_vars( &
+    & this%c_ptr(),c_str(""),vars,size(vars),fortran_ordering,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_field_kind_lev_vars(this,kind,levels,vars) result(field)
+  use atlas_functionspace_EdgeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_EdgeColumns), intent(in) :: this
+  integer, intent(in) :: kind
+  integer, intent(in) :: levels
+  integer, intent(in) :: vars(:)
+  integer, parameter :: fortran_ordering = 1
+  field = atlas_Field( atlas__functionspace__Edges__create_field_lev_vars( &
+    & this%c_ptr(),c_str(""),levels,vars,size(vars),fortran_ordering,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_field_template(this,template) result(field)
+  use atlas_functionspace_EdgeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_EdgeColumns), intent(in) :: this
+  type(atlas_Field) :: template
+  field = atlas_Field( atlas__functionspace__Edges__create_field_template( &
+    & this%c_ptr(),c_str(""),template%c_ptr()) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_glb_field_kind_lev(this,kind) result(field)
+  use atlas_functionspace_EdgeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_EdgeColumns), intent(in) :: this
+  integer, intent(in) :: kind
+  field = atlas_Field( atlas__functionspace__Edges__create_global_field( &
+    & this%c_ptr(),c_str(""),kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_glb_field_kind(this,kind,levels) result(field)
+  use atlas_functionspace_EdgeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_EdgeColumns), intent(in) :: this
+  integer, intent(in) :: levels
+  integer, intent(in) :: kind
+  field = atlas_Field( atlas__functionspace__Edges__create_global_field_lev( &
+    & this%c_ptr(),c_str(""),levels,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_glb_field_kind_vars(this,kind,vars) result(field)
+  use atlas_functionspace_EdgeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_EdgeColumns), intent(in) :: this
+  integer, intent(in) :: vars(:)
+  integer, intent(in) :: kind
+  integer, parameter :: fortran_ordering = 1
+  field = atlas_Field( atlas__functionspace__Edges__create_global_field_vars( &
+    & this%c_ptr(),c_str(""),vars,size(vars),fortran_ordering,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_glb_field_kind_lev_vars(this,kind,levels,vars) result(field)
+  use atlas_functionspace_EdgeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_EdgeColumns), intent(in) :: this
+  integer, intent(in) :: vars(:)
+  integer, intent(in) :: levels
+  integer, intent(in) :: kind
+  integer, parameter :: fortran_ordering = 1
+  field = atlas_Field( atlas__functionspace__Edges__create_global_field_lev_vars( &
+    & this%c_ptr(),c_str(""),levels,vars,size(vars),fortran_ordering,kind) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function create_glb_field_template(this,template) result(field)
+  use atlas_functionspace_EdgeColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_EdgeColumns), intent(in) :: this
+  type(atlas_Field) :: template
+  field = atlas_Field( atlas__functionspace__Edges__create_global_field_template( &
+    & this%c_ptr(),c_str(""),template%c_ptr()) )
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
+
 subroutine halo_exchange_fieldset(this,fieldset)
   use atlas_functionspace_EdgeColumns_c_binding
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   type(atlas_FieldSet), intent(inout) :: fieldset
   call atlas__functionspace__Edges__halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
 end subroutine
+
+!------------------------------------------------------------------------------
 
 subroutine halo_exchange_field(this,field)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -299,6 +481,8 @@ subroutine halo_exchange_field(this,field)
   call atlas__functionspace__Edges__halo_exchange_field(this%c_ptr(),field%c_ptr())
 end subroutine
 
+!------------------------------------------------------------------------------
+
 function get_gather(this) result(gather)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_GatherScatter) :: gather
@@ -306,12 +490,16 @@ function get_gather(this) result(gather)
   call gather%reset_c_ptr( atlas__functionspace__Edges__get_gather(this%c_ptr()) )
 end function
 
+!------------------------------------------------------------------------------
+
 function get_scatter(this) result(gather)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_GatherScatter) :: gather
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   call gather%reset_c_ptr( atlas__functionspace__Edges__get_scatter(this%c_ptr()) )
 end function
+
+!------------------------------------------------------------------------------
 
 subroutine gather_fieldset(this,local,global)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -321,6 +509,8 @@ subroutine gather_fieldset(this,local,global)
   call atlas__functionspace__Edges__gather_fieldset(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
+!------------------------------------------------------------------------------
+
 subroutine gather_field(this,local,global)
   use atlas_functionspace_EdgeColumns_c_binding
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
@@ -329,6 +519,7 @@ subroutine gather_field(this,local,global)
   call atlas__functionspace__Edges__gather_field(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine scatter_fieldset(this,global,local)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -338,6 +529,7 @@ subroutine scatter_fieldset(this,global,local)
   call atlas__functionspace__Edges__scatter_fieldset(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
+!------------------------------------------------------------------------------
 
 subroutine scatter_field(this,global,local)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -347,12 +539,16 @@ subroutine scatter_field(this,global,local)
   call atlas__functionspace__Edges__scatter_field(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
+!------------------------------------------------------------------------------
+
 function get_halo_exchange(this) result(halo_exchange)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_HaloExchange) :: halo_exchange
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   call halo_exchange%reset_c_ptr( atlas__functionspace__Edges__get_halo_exchange(this%c_ptr()) )
 end function
+
+!------------------------------------------------------------------------------
 
 function get_checksum(this) result(checksum)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -361,6 +557,7 @@ function get_checksum(this) result(checksum)
   call checksum%reset_c_ptr( atlas__functionspace__Edges__get_checksum(this%c_ptr()) )
 end function
 
+!------------------------------------------------------------------------------
 
 function checksum_fieldset(this,fieldset) result(checksum)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -375,6 +572,7 @@ function checksum_fieldset(this,fieldset) result(checksum)
   if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
 end function
 
+!------------------------------------------------------------------------------
 
 function checksum_field(this,field) result(checksum)
   use atlas_functionspace_EdgeColumns_c_binding
@@ -389,6 +587,7 @@ function checksum_field(this,field) result(checksum)
   if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
 end function
 
+!------------------------------------------------------------------------------
 
 end module atlas_functionspace_EdgeColumns_module
 
