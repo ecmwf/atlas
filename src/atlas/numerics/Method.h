@@ -26,11 +26,6 @@ public:
     Method() {}
     virtual ~Method() = 0;
     virtual std::string name() const = 0;
-    eckit::SharedPtr<Method const> shared_from_this() const;
-    eckit::SharedPtr<Method> shared_from_this();
-    eckit::SharedPtr<Method> ptr();
-    eckit::SharedPtr<Method const> ptr() const;
-    eckit::SharedPtr<Method const> cptr() const;
 };
 
 inline Method::~Method() {}

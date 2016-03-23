@@ -15,47 +15,6 @@
 
 namespace atlas {
 namespace numerics {
-namespace {
-
-void assert_shared(const eckit::Owned* owned)
-{
-  if( owned->owners() == 0 )
-  {
-    throw eckit::SeriousBug("Cannot create shared_ptr from stack allocated or scoped_ptr",Here());
-  }
-}
-
-}
-
-eckit::SharedPtr<Method const> Method::shared_from_this() const
-{
-  assert_shared(this);
-  return eckit::SharedPtr<Method const>(this);
-}
-
-eckit::SharedPtr<Method> Method::shared_from_this()
-{
-  assert_shared(this);
-  return eckit::SharedPtr<Method>(this);
-}
-
-eckit::SharedPtr<Method const> Method::ptr() const
-{
-  assert_shared(this);
-  return eckit::SharedPtr<Method const>(this);
-}
-
-eckit::SharedPtr<Method const> Method::cptr() const
-{
-  ASSERT(owners()!=0);
-  return eckit::SharedPtr<Method const>(this);
-}
-
-eckit::SharedPtr<Method> Method::ptr()
-{
-  ASSERT(owners()!=0);
-  return eckit::SharedPtr<Method>(this);
-}
 
 //----------------------------------------------------------------------------------------------------------------------
 
