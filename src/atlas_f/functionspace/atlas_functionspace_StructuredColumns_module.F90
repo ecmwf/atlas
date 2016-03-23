@@ -1,7 +1,7 @@
 
 module atlas_functionspace_StructuredColumns_module
 
-use, intrinsic :: iso_c_binding, only : c_ptr
+use, intrinsic :: iso_c_binding, only : c_ptr, c_int
 use atlas_c_interop, only : c_str, c_to_f_string_cptr, atlas_free
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
@@ -10,7 +10,7 @@ use atlas_Grid_module, only: atlas_Grid
 
 implicit none
 
-private :: c_ptr
+private :: c_ptr, c_int
 private :: c_str, c_to_f_string_cptr, atlas_free
 private :: atlas_FunctionSpace
 private :: atlas_Field
@@ -38,17 +38,25 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_StructuredColumns
 !------------------------------------------------------------------------------
 contains
 
-  procedure, private :: create_field_name
-  procedure, private :: create_field_name_lev
+  procedure, private :: create_field_name_kind
+  procedure, private :: create_field_name_kind_lev
+  procedure, private :: create_field_kind
+  procedure, private :: create_field_kind_lev
   generic, public :: create_field => &
-    & create_field_name, &
-    & create_field_name_lev
+    & create_field_name_kind, &
+    & create_field_name_kind_lev, &
+    & create_field_kind, &
+    & create_field_kind_lev
 
-  procedure, private :: create_glb_field_name
-  procedure, private :: create_glb_field_name_lev
+  procedure, private :: create_glb_field_name_kind
+  procedure, private :: create_glb_field_name_kind_lev
+  procedure, private :: create_glb_field_kind
+  procedure, private :: create_glb_field_kind_lev
   generic, public :: create_global_field => &
-    & create_glb_field_name, &
-    & create_glb_field_name_lev
+    & create_glb_field_name_kind, &
+    & create_glb_field_name_kind_lev, &
+    & create_glb_field_kind, &
+    & create_glb_field_kind_lev
 
   procedure, public :: gather
   procedure, public :: scatter
@@ -99,41 +107,83 @@ function StructuredColumns__grid(grid) result(functionspace)
   call functionspace%return()
 end function
 
-function create_field_name(this,name) result(field)
+function create_field_name_kind(this,name,kind) result(field)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_StructuredColumns) :: this
   character(len=*), intent(in) :: name
-  field = atlas_Field( atlas__functionspace__StructuredColumns__create_field(this%c_ptr(),c_str(name)) )
+  integer(c_int), intent(in) :: kind
+  field = atlas_Field( atlas__fs__StructuredColumns__create_field_name_kind(this%c_ptr(),c_str(name),kind) )
   call field%return()
 end function
 
-function create_field_name_lev(this,name,levels) result(field)
+function create_field_name_kind_lev(this,name,kind,levels) result(field)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   character(len=*), intent(in) :: name
+  integer(c_int), intent(in) :: kind
   integer, intent(in) :: levels
-  field = atlas_Field( atlas__functionspace__StructuredColumns__create_field_lev(this%c_ptr(),c_str(name),levels) )
+  field = atlas_Field( atlas__fs__StructuredColumns__create_field_name_kind_lev(this%c_ptr(),c_str(name),kind,levels) )
   call field%return()
 end function
 
-function create_glb_field_name(this,name) result(field)
+function create_glb_field_name_kind(this,name,kind) result(field)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_StructuredColumns) :: this
   character(len=*), intent(in) :: name
-  field = atlas_Field( atlas__functionspace__StructuredColumns__create_gfield(this%c_ptr(),c_str(name)) )
+  integer(c_int), intent(in) :: kind
+  field = atlas_Field( atlas__fs__StructuredColumns__create_gfield_name_kind(this%c_ptr(),c_str(name),kind) )
   call field%return()
 end function
 
-function create_glb_field_name_lev(this,name,levels) result(field)
+function create_glb_field_name_kind_lev(this,name,kind,levels) result(field)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   character(len=*), intent(in) :: name
+  integer(c_int), intent(in) :: kind
   integer, intent(in) :: levels
-  field = atlas_Field( atlas__functionspace__StructuredColumns__create_gfield_lev(this%c_ptr(),c_str(name),levels) )
+  field = atlas_Field( atlas__fs__StructuredColumns__create_gfield_name_kind_lev(this%c_ptr(),c_str(name),kind,levels) )
+  call field%return()
+end function
+
+function create_field_kind(this,kind) result(field)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_StructuredColumns) :: this
+  integer(c_int), intent(in) :: kind
+  field = atlas_Field( atlas__fs__StructuredColumns__create_field_name_kind(this%c_ptr(),c_str(""),kind) )
+  call field%return()
+end function
+
+function create_field_kind_lev(this,kind,levels) result(field)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  integer(c_int), intent(in) :: kind
+  integer, intent(in) :: levels
+  field = atlas_Field( atlas__fs__StructuredColumns__create_field_name_kind_lev(this%c_ptr(),c_str(""),kind,levels) )
+  call field%return()
+end function
+
+function create_glb_field_kind(this,kind) result(field)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_StructuredColumns) :: this
+  integer(c_int), intent(in) :: kind
+  field = atlas_Field( atlas__fs__StructuredColumns__create_gfield_name_kind(this%c_ptr(),c_str(""),kind) )
+  call field%return()
+end function
+
+function create_glb_field_kind_lev(this,kind,levels) result(field)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  integer(c_int), intent(in) :: kind
+  integer, intent(in) :: levels
+  field = atlas_Field( atlas__fs__StructuredColumns__create_gfield_name_kind_lev(this%c_ptr(),c_str(""),kind,levels) )
   call field%return()
 end function
 

@@ -212,37 +212,41 @@ void atlas__SpectralFunctionSpace__delete (Spectral* This)
   );
 }
 
-field::Field* atlas__SpectralFunctionSpace__create_field (const Spectral* This, const char* name)
+field::Field* atlas__fs__Spectral__create_field_name_kind (const Spectral* This, const char* name, int kind)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
+    ASSERT( kind == array::DataType::KIND_REAL64 );
     return This->createField<double>(std::string(name));
   );
   return 0;
 }
 
-field::Field* atlas__SpectralFunctionSpace__create_field_lev (const Spectral* This, const char* name, int levels)
+field::Field* atlas__fs__Spectral__create_field_name_kind_lev (const Spectral* This, const char* name, int kind, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
+    ASSERT( kind == array::DataType::KIND_REAL64 );
     return This->createField<double>(std::string(name),levels);
   );
   return 0;
 }
 
-field::Field* atlas__SpectralFunctionSpace__create_global_field (const Spectral* This, const char* name)
+field::Field* atlas__fs__Spectral__create_global_field_name_kind (const Spectral* This, const char* name, int kind)
 {
   ATLAS_ERROR_HANDLING (
     ASSERT(This);
+    ASSERT( kind == array::DataType::KIND_REAL64 );
     return This->createGlobalField<double>(std::string(name));
   );
   return 0;
 }
 
-field::Field* atlas__SpectralFunctionSpace__create_global_field_lev (const Spectral* This, const char* name, int levels)
+field::Field* atlas__fs__Spectral__create_global_field_name_kind_lev (const Spectral* This, const char* name, int kind, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
+    ASSERT( kind == array::DataType::KIND_REAL64 );
     return This->createGlobalField<double>(std::string(name),levels);
   );
   return 0;

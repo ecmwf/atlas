@@ -102,10 +102,10 @@ TEST( test_trans )
   spectral_fs = atlas_functionspace_Spectral(trans)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  spectralfield1 = spectral_fs%create_field("spectral1",nlev)
+  spectralfield1 = spectral_fs%create_field("spectral1",atlas_real(c_double),nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  spectralfield2 = spectral_fs%create_field("spectral2")
+  spectralfield2 = spectral_fs%create_field("spectral2",atlas_real(c_double))
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
   call scalarfield1%data(scal1)
@@ -161,12 +161,12 @@ TEST( test_trans )
   call windfield%data(wind)
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
-  vorfield = spectral_fs%create_field("vorticity",nlev)
+  vorfield = spectral_fs%create_field("vorticity",atlas_real(c_double),nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
   call vorfield%data(vor)
 
-  divfield =  spectral_fs%create_field("divergence",nlev)
+  divfield =  spectral_fs%create_field("divergence",atlas_real(c_double),nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
   call divfield%data(div)
@@ -187,7 +187,7 @@ TEST( test_trans )
 
   call trans%invtrans_vordiv2wind(spectral_fs,vorfield,divfield,nodes_fs,windfield)
 
-  glb_vorfield = spectral_fs%create_global_field("vorticity",nlev)
+  glb_vorfield = spectral_fs%create_global_field("vorticity",atlas_real(c_double),nlev)
   call spectral_fs%gather(vorfield,glb_vorfield)
   call spectral_fs%scatter(glb_vorfield,vorfield)
 
@@ -244,12 +244,12 @@ TEST( test_trans_nomesh )
   trans = atlas_Trans(grid,nsmax)
 
   gridpoints_fs = atlas_functionspace_StructuredColumns(grid)
-  scalarfield1 = gridpoints_fs%create_field("scalar1",nlev)
-  scalarfield2 = gridpoints_fs%create_field("scalar2")
+  scalarfield1 = gridpoints_fs%create_field("scalar1",atlas_real(c_double),nlev)
+  scalarfield2 = gridpoints_fs%create_field("scalar2",atlas_real(c_double))
 
   spectral_fs = atlas_functionspace_Spectral(trans)
-  spectralfield1 = spectral_fs%create_field("spectral1",nlev)
-  spectralfield2 = spectral_fs%create_field("spectral2")
+  spectralfield1 = spectral_fs%create_field("spectral1",atlas_real(c_double),nlev)
+  spectralfield2 = spectral_fs%create_field("spectral2",atlas_real(c_double))
 
   call scalarfield1%data(scal1)
   call scalarfield2%data(scal2)
@@ -334,10 +334,8 @@ spfields = atlas_FieldSet("spectral")
 
 nfld=10
 do jfld=1,nfld
-  write(fieldname,'(I0)') jfld
-
-  fieldg = gridpoints%create_global_field(fieldname)
-  field  = gridpoints%create_field(fieldname)
+  fieldg = gridpoints%create_global_field(atlas_real(c_double))
+  field  = gridpoints%create_field(atlas_real(c_double))
 
   ! Read global field data
   ! ...
@@ -345,7 +343,7 @@ do jfld=1,nfld
   call gridpoints%scatter(fieldg,field)
 
   call gpfields%add( field )
-  call spfields%add( spectral%create_field(fieldname) )
+  call spfields%add( spectral%create_field(atlas_real(c_double)) )
 
   FCTEST_CHECK_EQUAL( field%owners(), 2 )
 enddo

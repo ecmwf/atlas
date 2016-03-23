@@ -58,10 +58,10 @@ public:
     const std::string& name, size_t levels) const;
 
   void gather( const field::FieldSet&, field::FieldSet& ) const;
-  void gather( const field::Field&, field::Field& ) const;
+  void gather( const field::Field&,    field::Field& ) const;
 
   void scatter( const field::FieldSet&, field::FieldSet& ) const;
-  void scatter( const field::Field&, field::Field& ) const;
+  void scatter( const field::Field&,    field::Field& ) const;
 
   std::string checksum( const field::FieldSet& ) const;
   std::string checksum( const field::Field& ) const;
@@ -88,10 +88,10 @@ extern "C"
   Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation);
   Spectral* atlas__SpectralFunctionSpace__new__trans (Trans* trans);
   void atlas__SpectralFunctionSpace__delete (Spectral* This);
-  field_Field* atlas__SpectralFunctionSpace__create_field(const Spectral* This, const char* name);
-  field_Field* atlas__SpectralFunctionSpace__create_field_lev(const Spectral* This, const char* name, int levels);
-  field_Field* atlas__SpectralFunctionSpace__create_global_field(const Spectral* This, const char* name);
-  field_Field* atlas__SpectralFunctionSpace__create_global_field_lev(const Spectral* This, const char* name, int levels);
+  field_Field* atlas__fs__Spectral__create_field_name_kind(const Spectral* This, const char* name, int kind);
+  field_Field* atlas__fs__Spectral__create_field_name_kind_lev(const Spectral* This, const char* name, int kind, int levels);
+  field_Field* atlas__fs__Spectral__create_global_field_name_kind(const Spectral* This, const char* name, int kind);
+  field_Field* atlas__fs__Spectral__create_global_field_name_kind_lev(const Spectral* This, const char* name, int kind, int levels);
   void atlas__SpectralFunctionSpace__gather(const Spectral* This, const field_Field* local, field_Field* global);
   void atlas__SpectralFunctionSpace__scatter(const Spectral* This, const field_Field* global, field_Field* local);
 }

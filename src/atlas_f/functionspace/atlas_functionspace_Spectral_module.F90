@@ -38,17 +38,26 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_Spectral
 !------------------------------------------------------------------------------
 contains
 
-  procedure, private :: create_field_name
-  procedure, private :: create_field_name_lev
+  procedure, private :: create_field_name_kind
+  procedure, private :: create_field_name_kind_lev
+  procedure, private :: create_field_kind
+  procedure, private :: create_field_kind_lev
   generic, public :: create_field => &
-    & create_field_name, &
-    & create_field_name_lev
+    & create_field_name_kind, &
+    & create_field_name_kind_lev, &
+    & create_field_kind, &
+    & create_field_kind_lev
+    
 
-  procedure, private :: create_glb_field_name
-  procedure, private :: create_glb_field_name_lev
+  procedure, private :: create_glb_field_name_kind
+  procedure, private :: create_glb_field_name_kind_lev
+  procedure, private :: create_glb_field_kind
+  procedure, private :: create_glb_field_kind_lev
   generic, public :: create_global_field => &
-    & create_glb_field_name, &
-    & create_glb_field_name_lev
+    & create_glb_field_name_kind, &
+    & create_glb_field_name_kind_lev, &
+    & create_glb_field_kind, &
+    & create_glb_field_kind_lev
 
   procedure, public :: gather
   procedure, public :: scatter
@@ -103,41 +112,83 @@ function atlas_functionspace_Spectral__trans(trans) result(functionspace)
   call functionspace%return()
 end function
 
-function create_field_name(this,name) result(field)
+function create_field_name_kind(this,name,kind) result(field)
   use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral) :: this
   character(len=*), intent(in) :: name
-  field = atlas_Field( atlas__SpectralFunctionSpace__create_field(this%c_ptr(),c_str(name)) )
+  integer(c_int), intent(in) :: kind
+  field = atlas_Field( atlas__fs__Spectral__create_field_name_kind(this%c_ptr(),c_str(name),kind) )
   call field%return()
 end function
 
-function create_field_name_lev(this,name,levels) result(field)
+function create_field_name_kind_lev(this,name,kind,levels) result(field)
   use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral), intent(in) :: this
   character(len=*), intent(in) :: name
+  integer(c_int), intent(in) :: kind
   integer, intent(in) :: levels
-  field = atlas_Field( atlas__SpectralFunctionSpace__create_field_lev(this%c_ptr(),c_str(name),levels) )
+  field = atlas_Field( atlas__fs__Spectral__create_field_name_kind_lev(this%c_ptr(),c_str(name),kind,levels) )
   call field%return()
 end function
 
-function create_glb_field_name(this,name) result(field)
+function create_glb_field_name_kind(this,name,kind) result(field)
   use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral) :: this
   character(len=*), intent(in) :: name
-  field = atlas_Field( atlas__SpectralFunctionSpace__create_global_field(this%c_ptr(),c_str(name)) )
+  integer(c_int), intent(in) :: kind
+  field = atlas_Field( atlas__fs__Spectral__create_global_field_name_kind(this%c_ptr(),c_str(name),kind) )
   call field%return()
 end function
 
-function create_glb_field_name_lev(this,name,levels) result(field)
+function create_glb_field_name_kind_lev(this,name,kind,levels) result(field)
   use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral), intent(in) :: this
   character(len=*), intent(in) :: name
+  integer(c_int), intent(in) :: kind
   integer, intent(in) :: levels
-  field = atlas_Field( atlas__SpectralFunctionSpace__create_global_field_lev(this%c_ptr(),c_str(name),levels) )
+  field = atlas_Field( atlas__fs__Spectral__create_global_field_name_kind_lev(this%c_ptr(),c_str(name),kind,levels) )
+  call field%return()
+end function
+
+function create_field_kind(this,kind) result(field)
+  use atlas_functionspace_spectral_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_Spectral) :: this
+  integer(c_int), intent(in) :: kind
+  field = atlas_Field( atlas__fs__Spectral__create_field_name_kind(this%c_ptr(),c_str(""),kind) )
+  call field%return()
+end function
+
+function create_field_kind_lev(this,kind,levels) result(field)
+  use atlas_functionspace_spectral_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  integer(c_int), intent(in) :: kind
+  integer, intent(in) :: levels
+  field = atlas_Field( atlas__fs__Spectral__create_field_name_kind_lev(this%c_ptr(),c_str(""),kind,levels) )
+  call field%return()
+end function
+
+function create_glb_field_kind(this,kind) result(field)
+  use atlas_functionspace_spectral_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_Spectral) :: this
+  integer(c_int), intent(in) :: kind
+  field = atlas_Field( atlas__fs__Spectral__create_global_field_name_kind(this%c_ptr(),c_str(""),kind) )
+  call field%return()
+end function
+
+function create_glb_field_kind_lev(this,kind,levels) result(field)
+  use atlas_functionspace_spectral_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  integer(c_int), intent(in) :: kind
+  integer, intent(in) :: levels
+  field = atlas_Field( atlas__fs__Spectral__create_global_field_name_kind_lev(this%c_ptr(),c_str(""),kind,levels) )
   call field%return()
 end function
 

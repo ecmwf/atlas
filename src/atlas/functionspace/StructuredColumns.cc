@@ -165,19 +165,20 @@ StructuredColumns::~StructuredColumns()
 // ----------------------------------------------------------------------------
 // Create Field
 // ----------------------------------------------------------------------------
-template <>
-field::Field* StructuredColumns::createField<double>(
-    const std::string& name) const
+field::Field* StructuredColumns::createField(const std::string& name, array::DataType datatype ) const
 {
 #ifdef ATLAS_HAVE_TRANS
-    field::Field* field = field::Field::create<double>(name, array::make_shape(trans_->ngptot()));
+    field::Field* field = field::Field::create(name, datatype, array::make_shape(trans_->ngptot()));
     field->set_functionspace(*this);
     return field;
 #else
-    eckit::NotImplemented("StructuredColumns::createField currently relies"
-                          " on ATLAS_HAVE_TRANS", Here());
-
-    field::Field* field = field::Field::create<double>(name, array::make_shape(grid_->npts()) );
+    if( eckit::mpi::size() > 0 )
+    {
+        throw eckit::NotImplemented(
+          "StructuredColumns::createField currently relies"
+          " on ATLAS_HAVE_TRANS for parallel fields", Here());
+    }
+    field::Field* field = field::Field::create(name, datatype, array::make_shape(grid_->npts()) );
     field->set_functionspace(*this);
     return field;
 #endif
@@ -189,9 +190,8 @@ field::Field* StructuredColumns::createField<double>(
 // ----------------------------------------------------------------------------
 // Create Field with vertical levels
 // ----------------------------------------------------------------------------
-template <>
-field::Field* StructuredColumns::createField<double>(
-    const std::string& name,
+field::Field* StructuredColumns::createField(
+    const std::string& name, array::DataType datatype,
     size_t levels) const
 {
 #ifdef ATLAS_HAVE_TRANS
@@ -202,9 +202,12 @@ field::Field* StructuredColumns::createField<double>(
     field->set_levels(levels);
     return field;
 #else
-    eckit::NotImplemented("StructuredColumns::createField currently relies "
-                          "on ATLAS_HAVE_TRANS", Here());
-
+    if( eckit::mpi::size() > 0 )
+    {
+        throw eckit::NotImplemented(
+          "StructuredColumns::createField currently relies"
+          " on ATLAS_HAVE_TRANS for parallel fields", Here());
+    }
     field::Field* field = field::Field::create<double>(
                     name, array::make_shape(grid_->npts(), levels));
 
@@ -219,14 +222,18 @@ field::Field* StructuredColumns::createField<double>(
 // ----------------------------------------------------------------------------
 // Create global Field
 // ----------------------------------------------------------------------------
-template <>
-field::Field* StructuredColumns::createGlobalField<double>(
-    const std::string& name) const
+field::Field* StructuredColumns::createGlobalField(
+    const std::string& name,
+    array::DataType datatype ) const
 {
-    field::Field* field = field::Field::create<double>(name, array::make_shape(grid_->npts()));
+    field::Field* field = field::Field::create(
+      name,
+      datatype,
+      array::make_shape(grid_->npts()) );
     field->set_functionspace(*this);
     return field;
 }
+
 // ----------------------------------------------------------------------------
 
 
@@ -234,13 +241,15 @@ field::Field* StructuredColumns::createGlobalField<double>(
 // ----------------------------------------------------------------------------
 // Create global Field with vertical levels
 // ----------------------------------------------------------------------------
-template <>
-field::Field* StructuredColumns::createGlobalField<double>(
-    const std::string& name,
+field::Field* StructuredColumns::createGlobalField(
+    const std::string& name, 
+    array::DataType datatype,
     size_t levels) const
 {
-    field::Field* field = field::Field::create<double>(
-                    name, array::make_shape(grid_->npts(), levels));
+    field::Field* field = field::Field::create(
+      name,
+      datatype,
+      array::make_shape(grid_->npts(), levels) );
 
     field->set_functionspace(*this);
     return field;
@@ -453,38 +462,38 @@ void atlas__functionspace__StructuredColumns__delete (StructuredColumns* This)
   );
 }
 
-field::Field* atlas__functionspace__StructuredColumns__create_field (const StructuredColumns* This, const char* name)
+field::Field* atlas__fs__StructuredColumns__create_field_name_kind (const StructuredColumns* This, const char* name, int kind)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createField<double>(std::string(name));
+    return This->createField(std::string(name),array::DataType(kind));
   );
   return 0;
 }
 
-field::Field* atlas__functionspace__StructuredColumns__create_field_lev (const StructuredColumns* This, const char* name, int levels)
+field::Field* atlas__fs__StructuredColumns__create_field_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createField<double>(std::string(name),levels);
+    return This->createField(std::string(name),array::DataType(kind),levels);
   );
   return 0;
 }
 
-field::Field* atlas__functionspace__StructuredColumns__create_gfield (const StructuredColumns* This, const char* name)
+field::Field* atlas__fs__StructuredColumns__create_gfield_name_kind (const StructuredColumns* This, const char* name, int kind)
 {
   ATLAS_ERROR_HANDLING (
     ASSERT(This);
-    return This->createGlobalField<double>(std::string(name));
+    return This->createGlobalField(std::string(name),array::DataType(kind));
   );
   return 0;
 }
 
-field::Field* atlas__functionspace__StructuredColumns__create_gfield_lev (const StructuredColumns* This, const char* name, int levels)
+field::Field* atlas__fs__StructuredColumns__create_gfield_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createGlobalField<double>(std::string(name),levels);
+    return This->createGlobalField(std::string(name),array::DataType(kind),levels);
   );
   return 0;
 }

@@ -58,10 +58,14 @@ public:
   virtual std::string name() const { return "StructuredColumns"; }
 
   /// @brief Create a Structured field
+  field::Field* createField(const std::string& name, array::DataType ) const;
+  field::Field* createField(const std::string& name, array::DataType, size_t levels ) const;
   template <typename DATATYPE> field::Field* createField(const std::string& name) const;
   template <typename DATATYPE> field::Field* createField(const std::string& name, size_t levels) const;
 
   /// @brief Create a global Structured field
+  field::Field* createGlobalField(const std::string& name, array::DataType ) const;
+  field::Field* createGlobalField(const std::string& name, array::DataType, size_t levels ) const;
   template <typename DATATYPE> field::Field* createGlobalField(const std::string& name) const;
   template <typename DATATYPE> field::Field* createGlobalField(const std::string& name, size_t levels) const;
 
@@ -99,6 +103,38 @@ private: // data
 };
 
 // -------------------------------------------------------------------
+// inline methods
+
+template <typename DATATYPE>
+inline field::Field* StructuredColumns::createField(
+    const std::string& name) const
+{
+  return createField(name,array::DataType::create<DATATYPE>());
+}
+
+template <typename DATATYPE>
+inline field::Field* StructuredColumns::createField(
+    const std::string& name, size_t levels) const
+{
+  return createField(name,array::DataType::create<DATATYPE>(),levels);
+}
+
+template <typename DATATYPE>
+inline field::Field* StructuredColumns::createGlobalField(
+    const std::string& name) const
+{
+  return createGlobalField(name,array::DataType::create<DATATYPE>());
+}
+
+template <typename DATATYPE>
+inline field::Field* StructuredColumns::createGlobalField(
+    const std::string& name, size_t levels) const
+{
+  return createGlobalField(name,array::DataType::create<DATATYPE>(),levels);
+}
+
+
+// -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 #define Char char
 #define grid_Grid grid::Grid
@@ -108,10 +144,11 @@ extern "C"
 {
   StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid_Grid* grid);
   void atlas__functionspace__StructuredColumns__delete (StructuredColumns* This);
-  field_Field* atlas__functionspace__StructuredColumns__create_field (const StructuredColumns* This, const char* name);
-  field_Field* atlas__functionspace__StructuredColumns__create_field_lev (const StructuredColumns* This, const char* name, int levels);
-  field_Field* atlas__functionspace__StructuredColumns__create_gfield (const StructuredColumns* This, const char* name);
-  field_Field* atlas__functionspace__StructuredColumns__create_gfield_lev (const StructuredColumns* This, const char* name, int levels);
+  field_Field* atlas__fs__StructuredColumns__create_field_name_kind (const StructuredColumns* This, const char* name, int kind);
+  field_Field* atlas__fs__StructuredColumns__create_field_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels);
+  field_Field* atlas__fs__StructuredColumns__create_gfield_name_kind (const StructuredColumns* This, const char* name, int kind);
+  field_Field* atlas__fs__StructuredColumns__create_gfield_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels);
+
   void atlas__functionspace__StructuredColumns__gather (const StructuredColumns* This, const field_Field* local, field_Field* global);
   void atlas__functionspace__StructuredColumns__scatter (const StructuredColumns* This, const field_Field* global, field_Field* local);
   void atlas__fs__StructuredColumns__checksum_fieldset(const StructuredColumns* This, const field_FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
