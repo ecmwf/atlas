@@ -33,8 +33,6 @@ module atlas_module
 
 !------------------------------------------------------------------------------
 
-use atlas_object_module, only: atlas_object
-use atlas_refcounted_module, only: atlas_refcounted
 use atlas_mpi_module
 
 use atlas_FunctionSpace_module, only: &
