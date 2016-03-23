@@ -29,14 +29,14 @@ set   ( ${PROJECT_NAME}_VERSION_STR  ${ATLASVER} )
 
 include( ecbuild_system NO_POLICY_SCOPE )
 
-ecbuild_requires_macro_version( 1.9 )
+ecbuild_requires_macro_version( 2.0 )
 
 ###############################################################################
 # project
 
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
-ecbuild_use_package( PROJECT eckit VERSION 0.10 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 0.11 REQUIRED )
 
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
@@ -117,19 +117,12 @@ else()
   ecbuild_enable_ompstubs()
 endif()
 
-
-#if( ATLAS_HAVE_FORTRAN )
-#  ecbuild_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
-#endif()
-#ecbuild_add_cxx_flags( "${OMP_CXX_FLAGS}" )
-
-
 ### trans ...
 
 ecbuild_add_option(
     FEATURE TRANS
     DESCRIPTION "atlas: Support for spectral transforms"
-    REQUIRED_PACKAGES "PROJECT transi VERSION 0.3.0 QUIET" )
+    REQUIRED_PACKAGES "PROJECT transi VERSION 0.3.2 QUIET" )
 
 ### tesselation ...
 
@@ -181,7 +174,7 @@ ecbuild_add_option( FEATURE SANDBOX
                     DEFAULT OFF
                     DESCRIPTION "Build the sandbox stuff" )
 
-############################################################################################
+################################################################################
 # export package info
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
@@ -202,13 +195,13 @@ foreach( _tpl ${ATLAS_TPLS} )
   list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
 
-############################################################################################
+################################################################################
 # sources
 
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
 add_subdirectory( src )
 
-############################################################################################
+################################################################################
 # pkg-config
 
 set( ATLAS_URL "https://software.ecmwf.int/wiki/display/ATLAS" )
@@ -231,7 +224,7 @@ if( ATLAS_HAVE_FORTRAN )
   )
 endif()
 
-############################################################################################
+################################################################################
 # documentation
 ecbuild_add_option( FEATURE DOCS
                     DESCRIPTION "Atlas documentation"
@@ -242,7 +235,7 @@ if(ATLAS_HAVE_DOCS)
     add_subdirectory( doc )
 endif()
 
-############################################################################################
+################################################################################
 # finalize
 
 add_custom_target( atlas-readme SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/README.md )
