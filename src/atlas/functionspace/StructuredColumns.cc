@@ -172,7 +172,7 @@ field::Field* StructuredColumns::createField(const std::string& name, array::Dat
     field->set_functionspace(*this);
     return field;
 #else
-    if( eckit::mpi::size() > 0 )
+    if( eckit::mpi::size() > 1 )
     {
         throw eckit::NotImplemented(
           "StructuredColumns::createField currently relies"
@@ -202,7 +202,7 @@ field::Field* StructuredColumns::createField(
     field->set_levels(levels);
     return field;
 #else
-    if( eckit::mpi::size() > 0 )
+    if( eckit::mpi::size() > 1 )
     {
         throw eckit::NotImplemented(
           "StructuredColumns::createField currently relies"
