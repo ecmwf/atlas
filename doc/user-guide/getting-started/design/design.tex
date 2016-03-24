@@ -27,43 +27,71 @@ various derived classes of the Grid class.
 %
 \begin{figure}[htb]
 \centering
-\includegraphics[scale=0.3]{imgs/grids.png}
+\includegraphics[width=\textwidth]{imgs/grids.pdf}
 \label{fig:grids}
-\caption{Grid class hierarchy. Dashed classes are not currently implemented.}
+\caption{Grid class hierarchy.}
 \end{figure}
 %
 Focussing on the Global grid classification, there exist several
-possible implementations, such as the following derived types: 
+possible sub classifications, such as the following derived types: 
 \begin{itemize}
   \setlength\itemsep{0.4em}
   \item Unstructured --- No structure is present in the grid
-  \item IcosahedralGrid --- The grid can be defined through the vertices of
-        a regular triangulation of a icosahedron, projected on the sphere.
-  \item ReducedGrid --- The grid is defined by having a uniform distribution
-        in zonal direction (constant $\Delta\lambda$ on each latitude). No
-        assumption is made on the location of latitudes.
+  \item Structured --- The grid has a structured distribution of latitudes, and on each latitude a uniform distribution in zonal direction (constant $\Delta\lambda$ for one latitude). No assumption is made on the location of latitudes, or the first longitude value on one latitude.
 \end{itemize}
-The ReducedGrid serves as the base class for three additional derived types:
+The Structured serves as the base class for three additional derived types:
 \begin{itemize}
   \setlength\itemsep{0.4em}
-  \item ReducedGaussianGrid --- The grid's latitude distribution follows the
-        roots of Legendre polynomials. These grids are typically referred to
-        by a $N$ number, describing the number of latitudes between a pole and
-        the equator.
-  \item LonLatGrid --- The grid's latitude distribution is uniform, and contains
-        the poles and the Greenwich meridian
+  \item CustomStructured --- To instantiate a customised Structured grid,
+        you have to use the CustomStructured concrete class. Any of the
+        following grids could be expressed as a CustomStructured grid as well.
+  \item Gaussian --- The grid's latitude distribution follows the
+        roots of Legendre polynomials. The resolutions of these grids are
+        usually expressed by a number, describing the number of latitudes
+        between a pole and the equator.
+  \item LonLat --- The grid's latitude distribution is uniform.
   \item StaggeredLonLatGrid --- The grid is the dual or staggered version of
         the LonLatGrid.
 \end{itemize}
-The ReducedGaussianGrid, in turn, can serve as the base class for 
+The Gaussian grid, in turn, serves as the base class for 
 \begin{itemize}
-  \item GaussianGrid --- also referred to as \emph{full} Gaussian grid. As the
-        full Gaussian Grid can be interpreted as a ReducedGaussianGrid with a
-        constant number of points on each latitude.
-  \item OctahedralReducedGaussianGrid --- The number of points on each latitude
+  \item RegularGaussian --- also referred to as \emph{full} Gaussian grid.
+        This Gaussian grid has a constant number of points on each latitude, 
+        equal to $4\ N$, with $N$ the Gaussian number or number of latitudes
+        between pole and equator.
+  \item ClassicGaussian --- The number of points on each latitude is computed
+        by optimisations involving the orthogonality of associated Legendre
+        polynomials. This is a costly computations. Hence these tables have been
+        pre-computed for resolutions that have been used in the past at ECMWF.
+  \item OctahedralGaussian --- The number of points on each latitude
         can be inferred from triangulating a regular octahedron, projected to
         sphere. Certain modifications are required such as modifying the
         latitude locations to the roots of the Legendre polynomials.
+  \item ReducedGaussian --- The number of points on each latitude can be 
+        configured by the user.
+\end{itemize}
+The LonLat grid class, in turn, serves as the base class for 
+\begin{itemize}
+  \item RegularLonLat --- This grid has a constant number of points on each
+        latitude, and includes typically the pole and the equatorial latitudes,
+        and the Greenwich meridian.
+  \item ShiftedLonLat --- This grid has a constant number of points on each
+        latitude, but is shifted half of a longitude increment and half of a
+        latitude increment compared to the RegularLonLat grid. This grid can
+        also be referred to as the dual grid of the RegularLonLat grid. It does
+        not include pole and equatorial latitudes, and not the Greenwich 
+        meridian.
+  \item ShiftedLat --- This grid has a constant number of points on each
+        latitude, but is shifted half of a latitude increment. It does
+        not include pole and equatorial latitudes, but includes the Greenwich
+        meridian.
+  \item ShiftedLon --- This grid has a constant number of points on each
+        latitude, but is shifted half of a longitude increment compared to the
+        RegularLonLat grid. It includes pole and equatorial latitudes, but not 
+        the Greenwich meridian.
+  \item ReducedLonLat --- The number of points on each latitude can be 
+        configured by the user. Typically these grids include the pole
+        latitudes, and the Greenwich meridian.
 \end{itemize}
 
 We note that the object-oriented construction of the Grid 
