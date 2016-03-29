@@ -60,9 +60,10 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
     1,5,3,
     1,5,2
   };
-  size_t triags = hybrid_elements.add( new Triangle(), 2, triangle_nodes );
 
-  BOOST_CHECK_EQUAL( triags , 2 );
+  size_t triags_type_idx = hybrid_elements.add( new Triangle(), 2, triangle_nodes );
+
+  BOOST_CHECK_EQUAL( triags_type_idx , 0 );
 
   hybrid_elements.add(field::Field::create<double>("surface",array::make_shape(hybrid_elements.size())));
 
@@ -71,9 +72,10 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   quad_nodes[1] = 1;
   quad_nodes[2] = 2;
   quad_nodes[3] = 3;
-  size_t quads = hybrid_elements.add( new Quadrilateral(), 1, quad_nodes );
 
-  BOOST_CHECK_EQUAL( quads , quad_nodes.size() );
+  size_t quads_type_idx = hybrid_elements.add( new Quadrilateral(), 1, quad_nodes );
+
+  BOOST_CHECK_EQUAL( quads_type_idx , 1 );
 
   {
     const HybridElements::Connectivity& connectivity = hybrid_elements.node_connectivity();
