@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   };
   size_t triags = hybrid_elements.add( new Triangle(), 2, triangle_nodes );
 
-  BOOST_CHECK_EQUAL( triags , triangle_nodes.size() );
+  BOOST_CHECK_EQUAL( triags , 2 );
 
   hybrid_elements.add(field::Field::create<double>("surface",array::make_shape(hybrid_elements.size())));
 
