@@ -212,7 +212,10 @@ void legpol_quadrature(
   // PMOD   Last modification                         (inout)
 
   int iflag, itemax;
-  double zx, zw, zxn;
+
+  double zx  = 0;
+  double zw  = 0;
+  double zxn = 0;
 
   //*       1. Initialization.
   //           ---------------
@@ -239,6 +242,10 @@ void legpol_quadrature(
     if( std::abs(pmod) <= zeps*1000. )
       iflag = 1;
   }
+
+  /// @todo What happens to zw if no convergence and iflag is never set?
+  ///       Should we not raise an error or throw exception?
+
   pl = zxn;
   pw = zw;
 }
