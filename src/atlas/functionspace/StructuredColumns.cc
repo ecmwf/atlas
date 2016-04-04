@@ -102,39 +102,44 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
             ++proc;
         }
     }
-    exit_outer_loop:
+    exit_outer_loop: ;
 
 
-    int localLatID;
-    int localLonID;
-    proc = 0;
-
-    // Loop over number of latitude bands (ja)
-    for (size_t ja = 0; ja < n_regions_NS; ++ja)
+#if 0
+    // COMPILED OUT
     {
-        // Loop over number of longitude bands (jb)
-        for (size_t jb = 0; jb < n_regions[ja]; ++jb)
-        {
-            if (proc == eckit::mpi::rank())
-            {
-                // Loop over latitude points of lat band (ja) and lon band (jb)
-                for (int jglat = nfrstlat[ja]-1; jglat < nlstlat[ja]; ++jglat)
-                {
-                    int globalLatID = localLatID + nfrstlat[ja];
-                    size_t igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
+        int localLatID;
+        int localLonID;
+        proc = 0;
 
-                    // Loop over longitude points of given latitude point
-                    // of lat band (ja) and lon band (jb) and
-                    for (int jglon = nsta(jb,igl)-1;
-                         jglon < nsta(jb,igl)+nonl(jb,igl)-1; ++jglon)
+        // Loop over number of latitude bands (ja)
+        for (size_t ja = 0; ja < n_regions_NS; ++ja)
+        {
+            // Loop over number of longitude bands (jb)
+            for (size_t jb = 0; jb < n_regions[ja]; ++jb)
+            {
+                if (proc == eckit::mpi::rank())
+                {
+                    // Loop over latitude points of lat band (ja) and lon band (jb)
+                    for (int jglat = nfrstlat[ja]-1; jglat < nlstlat[ja]; ++jglat)
                     {
-                        int globalLonID = nsta(jb,igl) + localLonID;
+                        int globalLatID = localLatID + nfrstlat[ja];
+                        size_t igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
+
+                        // Loop over longitude points of given latitude point
+                        // of lat band (ja) and lon band (jb) and
+                        for (int jglon = nsta(jb,igl)-1;
+                             jglon < nsta(jb,igl)+nonl(jb,igl)-1; ++jglon)
+                        {
+                            int globalLonID = nsta(jb,igl) + localLonID;
+                        }
                     }
                 }
+                ++proc;
             }
-            ++proc;
         }
     }
+#endif
 #else
     npts_ = grid_->npts();
     nlat_ = grid_->nlat();
@@ -242,7 +247,7 @@ field::Field* StructuredColumns::createGlobalField(
 // Create global Field with vertical levels
 // ----------------------------------------------------------------------------
 field::Field* StructuredColumns::createGlobalField(
-    const std::string& name, 
+    const std::string& name,
     array::DataType datatype,
     size_t levels) const
 {
