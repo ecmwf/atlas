@@ -360,9 +360,9 @@ public:
     eckit::mpi::all_to_all(send.node_lonlat,   recv.node_lonlat);
     eckit::mpi::all_to_all(send.elem_glb_idx,  recv.elem_glb_idx);
     eckit::mpi::all_to_all(send.elem_nodes_id, recv.elem_nodes_id);
-    eckit::mpi::all_to_all(send.elem_nodes_displs, recv.elem_nodes_displs);
     eckit::mpi::all_to_all(send.elem_part,     recv.elem_part);
     eckit::mpi::all_to_all(send.elem_type,     recv.elem_type);
+    eckit::mpi::all_to_all(send.elem_nodes_displs, recv.elem_nodes_displs);
   }
 
 
@@ -454,17 +454,17 @@ public:
     buf.elem_part    [p].resize(nb_elems);
     buf.elem_type    [p].resize(nb_elems);
     buf.elem_nodes_id[p].resize(nb_elem_nodes);
-    buf.elem_nodes_displs[p].resize(nb_elems+1,0);
+    buf.elem_nodes_displs[p].resize(nb_elems);
     size_t jelemnode(0);
     for( size_t jelem=0; jelem<nb_elems; ++jelem )
     {
+      buf.elem_nodes_displs[p][jelem] = jelemnode;
       size_t ielem = elems[jelem];
       buf.elem_glb_idx[p][jelem] = compute_uid( elem_nodes->row(ielem) );
       buf.elem_part   [p][jelem] = elem_part(ielem);
       buf.elem_type   [p][jelem] = mesh.cells().type_idx(ielem);
       for( size_t jnode=0; jnode<elem_nodes->cols(ielem); ++jnode )
         buf.elem_nodes_id[p][jelemnode++] = compute_uid( (*elem_nodes)(ielem,jnode) );
-      buf.elem_nodes_displs[p][jelem+1] = jelemnode;
     }
   }
 
@@ -517,10 +517,11 @@ public:
     buf.elem_part    [p].resize(nb_elems);
     buf.elem_type    [p].resize(nb_elems);
     buf.elem_nodes_id[p].resize(nb_elem_nodes);
-    buf.elem_nodes_displs[p].resize(nb_elems+1,0);
+    buf.elem_nodes_displs[p].resize(nb_elems);
     size_t jelemnode(0);
     for( size_t jelem=0; jelem<nb_elems; ++jelem )
     {
+      buf.elem_nodes_displs[p][jelem] = jelemnode;
       size_t ielem = elems[jelem];
       buf.elem_part   [p][jelem] = elem_part(ielem);
       buf.elem_type   [p][jelem] = mesh.cells().type_idx(ielem);
@@ -533,7 +534,6 @@ public:
         crds[jnode*2+internals::LON] = crd[internals::LON];
         crds[jnode*2+internals::LAT] = crd[internals::LAT];
       }
-      buf.elem_nodes_displs[p][jelem+1] = jelemnode;
       // Global index of element is based on UID of destination
       buf.elem_glb_idx[p][jelem] = internals::unique_lonlat( crds.data(), elem_nodes->cols(ielem) );
     }
@@ -823,9 +823,6 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
     std::vector<int>  found_bdry_elems;
     std::set< uid_t > found_bdry_nodes_uid;
-
-    bool debug=false;
-    if( jpart == 7 ) debug=true;
 
     accumulate_elements(helper.mesh,recv_bdry_nodes_uid,
                         helper.uid2node,
