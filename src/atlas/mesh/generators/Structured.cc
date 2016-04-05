@@ -178,7 +178,7 @@ void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& 
   if( grid.npts() != distribution.partition().size() )
   {
     std::stringstream msg;
-    msg << "Number of points in grid ("<<grid.npts()<<") different from"
+    msg << "Number of points in grid ("<<grid.npts()<<") different from "
            "number of points in grid distribution ("<<distribution.partition().size()<<")";
     throw eckit::AssertionFailed(msg.str(),Here());
   }

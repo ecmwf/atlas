@@ -149,6 +149,13 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_CLOSE( ll_nopoles.lon(1), 90. , 1.e-5);
 }
 
+BOOST_AUTO_TEST_CASE( test_reducedgaussian )
+{
+  global::gaussian::ClassicGaussian N640(640);
+  BOOST_CHECK_EQUAL(N640.npts(),2140702);
+  global::gaussian::ReducedGaussian custom(N640.N(),N640.pl().data());
+  BOOST_CHECK_EQUAL(N640.npts(),custom.npts());
+}
 
 BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
 
