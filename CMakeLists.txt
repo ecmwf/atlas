@@ -195,6 +195,9 @@ foreach( _tpl ${ATLAS_TPLS} )
   list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
 
+ecbuild_debug_var( ATLAS_EXTRA_LIBRARIES )
+
+
 ################################################################################
 # sources
 

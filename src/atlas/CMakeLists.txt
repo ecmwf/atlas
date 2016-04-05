@@ -321,6 +321,11 @@ internals/MPLArrayView.h
 ecbuild_debug_var(CGAL_LIBRARIES)
 ecbuild_debug_var(CGAL_INCLUDE_DIRS)
 
+if( NOT ATLAS_HAVE_TRANS )
+  unset( TRANSI_INCLUDE_DIRS )
+  unset( TRANSI_LIBRARIES )
+endif()
+
 ecbuild_add_library( TARGET atlas
 
   AUTO_VERSION
