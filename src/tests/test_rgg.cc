@@ -397,7 +397,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
 
     mesh::Nodes& nodes = m->nodes();
-    int nb_nodes = nodes.size();
+    size_t nb_nodes = nodes.size();
 
     // Test if all nodes are connected
     {
@@ -406,10 +406,10 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
       const mesh::HybridElements::Connectivity& cell_node_connectivity = m->cells().node_connectivity();
       for( size_t jelem=0; jelem<m->cells().size(); ++jelem )
       {
-        for( int jnode=0; jnode<cell_node_connectivity.cols(jelem); ++jnode )
+        for( size_t jnode=0; jnode<cell_node_connectivity.cols(jelem); ++jnode )
           node_elem_connections[ cell_node_connectivity(jelem,jnode) ]++;
       }
-      for( int jnode=0; jnode<nb_nodes; ++jnode )
+      for( size_t jnode=0; jnode<nb_nodes; ++jnode )
       {
         if( node_elem_connections[jnode] == 0 )
         {
@@ -423,7 +423,7 @@ DISABLE{
 
     // Test if all nodes are owned
     array::ArrayView<gidx_t,1> glb_idx( nodes.global_index() );
-    for( int n=0; n<nb_nodes; ++n )
+    for( size_t n=0; n<nb_nodes; ++n )
     {
       if( size_t(part(n)) == p )
       {
