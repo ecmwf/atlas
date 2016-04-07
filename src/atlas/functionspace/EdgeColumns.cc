@@ -407,6 +407,7 @@ const parallel::Checksum& EdgeColumns::checksum() const
   return *checksum_;
 }
 
+
 // -----------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------
@@ -495,6 +496,35 @@ field::Field* atlas__functionspace__Edges__create_field (const EdgeColumns* This
 
 // -----------------------------------------------------------------------------------
 
+namespace {
+void reverse_copy(const int variables[], const int size, std::vector<size_t> &reverse)
+{
+  int r=size;
+  for( int i=0; i<size; ++i)
+  {
+    reverse[--r] = static_cast<size_t>(variables[i]);
+  }
+}
+
+void copy(const int variables[], const int size, std::vector<size_t> &cpy)
+{
+  for( int i=0; i<size; ++i)
+  {
+    cpy[i] = static_cast<size_t>(variables[i]);
+  }
+}
+
+std::vector<size_t> variables_to_vector( const int variables[], const int size, bool fortran_ordering )
+{
+  std::vector<size_t> vec(size);
+  if (fortran_ordering)
+    reverse_copy(variables,size,vec);
+  else
+    copy(variables,size,vec);
+  return vec;
+}
+}
+
 field::Field* atlas__functionspace__Edges__create_field_vars (
     const EdgeColumns* This,
     const char* name,
@@ -503,15 +533,14 @@ field::Field* atlas__functionspace__Edges__create_field_vars (
     int fortran_ordering,
     int kind)
 {
+
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(variables_size);
-    std::vector<size_t> variables_(variables_size);
-    if( fortran_ordering )
-      std::reverse_copy( variables, variables+variables_size,variables_.begin() );
-    else
-      variables_.assign(variables,variables+variables_size);
-    return This->createField(std::string(name),array::DataType(kind),variables_);
+    return This->createField(
+      std::string(name),
+      array::DataType(kind),
+      variables_to_vector(variables,variables_size,fortran_ordering) );
   );
   return 0;
 }
@@ -541,12 +570,11 @@ field::Field* atlas__functionspace__Edges__create_field_lev_vars (
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(variables_size);
-    std::vector<size_t> variables_(variables_size);
-    if( fortran_ordering )
-      std::reverse_copy( variables, variables+variables_size,variables_.begin() );
-    else
-      variables_.assign(variables,variables+variables_size);
-    return This->createField(std::string(name),array::DataType(kind),size_t(levels),variables_);
+    return This->createField(
+      std::string(name),
+      array::DataType(kind),
+      size_t(levels),
+      variables_to_vector(variables,variables_size,fortran_ordering) );
   );
   return 0;
 }
@@ -586,14 +614,12 @@ field::Field* atlas__functionspace__Edges__create_global_field_vars (
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(variables_size);
-    std::vector<size_t> variables_(variables_size);
-    if( fortran_ordering )
-      std::reverse_copy( variables, variables+variables_size, variables_.begin() );
-    else
-      variables_.assign(variables,variables+variables_size);
-    return This->createGlobalField(std::string(name),array::DataType(kind),variables_);
+    return This->createGlobalField(
+      std::string(name),
+      array::DataType(kind),
+      variables_to_vector(variables,variables_size,fortran_ordering) );
   );
-    return 0;
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
@@ -625,12 +651,11 @@ field::Field* atlas__functionspace__Edges__create_global_field_lev_vars (
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(variables_size);
-    std::vector<size_t> variables_(variables_size);
-    if( fortran_ordering )
-      std::reverse_copy( variables, variables+variables_size, variables_.begin() );
-    else
-      variables_.assign(variables,variables+variables_size);
-    return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels),variables_);
+    return This->createGlobalField(
+      std::string(name),
+      array::DataType(kind),
+      size_t(levels),
+      variables_to_vector(variables,variables_size,fortran_ordering) );
   );
   return 0;
 }
@@ -648,6 +673,7 @@ field::Field* atlas__functionspace__Edges__create_global_field_template (
   );
   return 0;
 }
+
 
 // -----------------------------------------------------------------------------------
 
@@ -807,7 +833,6 @@ void atlas__functionspace__Edges__checksum_field(
 }
 
 // -----------------------------------------------------------------------------------
-
 
 
 
