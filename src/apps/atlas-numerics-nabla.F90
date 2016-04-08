@@ -150,7 +150,7 @@ INTEGER(KIND=JPIM),POINTER :: IEDGE2NODE(:,:)
 INTEGER(KIND=JPIM),POINTER :: INODE2EDGE(:)
 INTEGER(KIND=JPIM) :: INODE2EDGE_SIZE
 INTEGER(KIND=JPIM) :: JNODE,JEDGE,JLEV,INEDGES,IP1,IP2,IEDGE,INODES
-REAL(KIND=JPRB) :: ZAVG,ZSIGN,ZMETRIC_X,ZMETRIC_Y
+REAL(KIND=JPRB) :: ZAVG,ZSIGN,ZMETRIC_X,ZMETRIC_Y,ZSCALE
 REAL(KIND=JPRB), ALLOCATABLE :: ZAVG_S(:,:,:)
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !     ------------------------------------------------------------------
@@ -178,6 +178,8 @@ CALL DUAL_NORMALS%DATA(ZDUAL_NORMALS)
 CALL NODE2EDGE_SIGN%DATA(ZNODE2EDGE_SIGN)
 
 INEDGES = SIZE(ZDUAL_NORMALS)/2
+ZSCALE = RPI/180.0_JPRB * RPI/180.0_JPRB * RA
+
 ALLOCATE(ZAVG_S(2,NFLEVG,INEDGES))
 !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(JEDGE,IP1,IP2,JLEV,ZAVG)
 DO JEDGE=1,INEDGES
@@ -185,8 +187,8 @@ DO JEDGE=1,INEDGES
   IP2 = IEDGE2NODE(2,JEDGE)
   DO JLEV=1,NFLEVG
     ZAVG = (PVAR(JLEV,IP1)+PVAR(JLEV,IP2)) * 0.5_JPRB
-    ZAVG_S(1,JLEV,JEDGE) = ZDUAL_NORMALS(1,JEDGE)*ZAVG
-    ZAVG_S(2,JLEV,JEDGE) = ZDUAL_NORMALS(2,JEDGE)*ZAVG
+    ZAVG_S(1,JLEV,JEDGE) = ZDUAL_NORMALS(1,JEDGE)*RPI/180.0_JPRB * ZAVG
+    ZAVG_S(2,JLEV,JEDGE) = ZDUAL_NORMALS(2,JEDGE)*RPI/180.0_JPRB * ZAVG
   ENDDO
 ENDDO
 !$OMP END PARALLEL DO
@@ -207,8 +209,8 @@ DO JNODE=1,INODES
       PGRAD(2,JLEV,JNODE) =  PGRAD(2,JLEV,JNODE)+ZSIGN*ZAVG_S(2,JLEV,IEDGE)
     ENDDO
   ENDDO
-  ZMETRIC_X = RA/ZDUAL_VOLUMES(JNODE)
-  ZMETRIC_Y = ZMETRIC_X*COS(ZLONLAT(2,JNODE)*RPI/180.0)
+  ZMETRIC_Y = 1._JPRB/(ZDUAL_VOLUMES(JNODE)*ZSCALE)
+  ZMETRIC_X = ZMETRIC_Y/COS(ZLONLAT(2,JNODE)*RPI/180.0_JPRB)
   DO JLEV=1,NFLEVG
     PGRAD(1,JLEV,JNODE) = PGRAD(1,JLEV,JNODE)*ZMETRIC_X
     PGRAD(2,JLEV,JNODE) = PGRAD(2,JLEV,JNODE)*ZMETRIC_Y
@@ -238,6 +240,7 @@ subroutine init()
 
   config = atlas_Config()
   call config%set("radius",1.0)
+  if( .not.config%get("radius",RA) ) RA = 1.0
 
   ! Setup
   grid = atlas_grid_Structured(grid_uid)
@@ -255,8 +258,6 @@ subroutine init()
   call varfield%data(var)
   call gradfield%data(grad)
   var(:,:) = 0.
-
-  if( .not.config%get("radius",RA) ) RA = 1.0
 
   mesh_nodes = mesh%nodes()
   write(atlas_log%msg,*) "Mesh has locally ",mesh_nodes%size(), " nodes"
@@ -303,8 +304,8 @@ do jouter=1,nouter
 ! Compute the gradient
 timing = 1.e10
 do jiter = 1,niter
-	call timer%start()
-	call nabla%gradient(varfield,gradfield)
+    call timer%start()
+    call nabla%gradient(varfield,gradfield)
     timing = min(timing,timer%elapsed())
 enddo
 timing_cpp = timing

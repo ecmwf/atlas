@@ -94,9 +94,12 @@ void Method::setup()
 
       const mesh::Connectivity &node_edge_connectivity = nodes_.edge_connectivity();
       const mesh::Connectivity &edge_node_connectivity = edges_.node_connectivity();
-      nodes_.add(
-            field::Field::create<double>("node2edge_sign",
-            array::make_shape(nnodes,node_edge_connectivity.maxcols()) ) );
+      if( ! nodes_.has_field("node2edge_sign") )
+      {
+        nodes_.add(
+              field::Field::create<double>("node2edge_sign",
+              array::make_shape(nnodes,node_edge_connectivity.maxcols()) ) );
+      }
       array::ArrayView<double,2> node2edge_sign( nodes_.field("node2edge_sign") );
 
       atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
@@ -118,7 +121,7 @@ void Method::setup()
     }
 
     // Metrics
-    {
+    if (0) {
       const size_t nedges = edges_.size();
       const array::ArrayView<double,2> lonlat_deg( nodes_.lonlat() );
       array::ArrayView<double,1> dual_volumes ( nodes_.field("dual_volumes") );
