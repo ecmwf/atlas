@@ -268,14 +268,14 @@ to generate as many fields/field sets as you want!
 \label{sect:grid-fields}
 
 \subsection{C++ version}
-The \lista{code-fields-C} shows how to construct one field
+The \lista{code-fields-on-grid-C} shows how to construct one field
 on a given grid. To see how to create a generic field and 
 a field set and how to use some additional functionalities 
 related to fields, please refer to \sect{sect:standalone-fields}
 above. 
 %
 \lstinputlisting[caption=Generating a field on a given grid 
-using C++, style=CStyle, label=code-fields-C]{fields-on-grid.cc}
+using C++, style=CStyle, label=code-fields-on-grid-C]{fields-on-grid.cc}
 %
 On the first few lines of the code, we include the necessary 
 header files for this example. In particular, we include 
@@ -285,7 +285,7 @@ and define some constants needed to define the function
 we are going to implement later in the code. 
 
 We then create 
-a \inltc{reducedGrid} object and a \inltc{Field} object.
+a \inltc{grid} object and a \inltc{field} object.
 Note that we used a command-line argument to decide 
 what grid to use (see \chap{chap:global-grids} for 
 more details on how to create global grids).
@@ -336,19 +336,19 @@ memory footprint of the pressure field.
 
 
 \subsection{Fortran version}
-The \lista{code-fields-F} shows how to construct one field
+The \lista{code-fields-on-grid-F} shows how to construct one field
 on a given grid. To see how to create a generic field and 
 a field set and how to use some additional functionalities 
 related to fields, please refer to \sect{sect:standalone-fields}
 above. 
 %
 \lstinputlisting[caption=Generating a field on a given grid 
-using Fortran, style=FStyle, label=code-fields-F]{fields-on-grid.F90}
+using Fortran, style=FStyle, label=code-fields-on-grid-F]{fields-on-grid.F90}
 %
 On the first few lines of the code, we define the variables
 needed for this program. In particular, we define some constants 
 needed for the function we are going to implement later in the 
-code and we declare an \inltf{atlas\_ReducedGrid} object and 
+code and we declare an \inltf{atlas\_grid\_Structured} grid object and 
 an \inltf{atlas\_Field} object.
 
 On lines 21 and 22 we define the grid using a command-line key 

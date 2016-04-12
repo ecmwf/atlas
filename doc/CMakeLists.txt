@@ -2,21 +2,21 @@ add_subdirectory(user-guide)
 
 list( APPEND DOC_CODE_TARGETS 
   atlas_c-hello-world
-  atlas_c-global-grids-Reduced
-  atlas_c-meshes-Reduced
+  atlas_c-global-grids-Structured
+  atlas_c-meshes-Structured
   atlas_c-fields
   atlas_c-fields-on-grid
-  atlas_c-nodes
-  atlas_c-reducedGridPoint
+  atlas_c-NodeColumns
+  atlas_c-StructuredColumns
 )
 if( ATLAS_HAVE_FORTRAN )
   list( APPEND DOC_CODE_TARGETS 
     atlas_f-hello-world
-    atlas_f-global-grids-Reduced
-    atlas_f-meshes-Reduced
+    atlas_f-global-grids-Structured
+    atlas_f-meshes-Structured
     atlas_f-fields
     atlas_f-fields-on-grid
-    atlas_f-nodes
+    atlas_f-NodeColumns
   )
 endif()
 

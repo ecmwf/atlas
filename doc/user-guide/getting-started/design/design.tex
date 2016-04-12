@@ -50,8 +50,6 @@ The Structured serves as the base class for three additional derived types:
         usually expressed by a number, describing the number of latitudes
         between a pole and the equator.
   \item LonLat --- The grid's latitude distribution is uniform.
-  \item StaggeredLonLatGrid --- The grid is the dual or staggered version of
-        the LonLatGrid.
 \end{itemize}
 The Gaussian grid, in turn, serves as the base class for 
 \begin{itemize}
@@ -205,10 +203,11 @@ create a temporary \emph{GridDistribution} internally. More on this can be
 found in section~\ref{s:parallelisation}.
 The \emph{MeshGenerator} base class can have several concrete implementations.
 Depending on the \emph{Grid} type used, some concrete implementations may not
-be available. For \emph{ReducedGrid} types, the \emph{ReducedGridMeshGenerator}
-is available. This mesh generator is very fast as it can take advantage of the
-structured nature of a \emph{ReducedGrid}. For any \emph{Grid}, a slower
-\emph{Delaunay} triangulation is also available.\\
+be available. For \emph{Structured} grid types, the
+\emph{mesh::generators::Structured} is available. This mesh generator is very
+fast as it can take advantage of the structured nature of a \emph{Structured}
+grid. For any \emph{Grid}, a slower \emph{Delaunay} triangulation is also
+available.\\
 %
 Figure~\ref{fig:meshgen} shows the usage and class diagram of the
 \emph{MeshGenerator}.
@@ -244,19 +243,19 @@ described section~\ref{s:functionspace}.
 %
 The \emph{FunctionSpace} defines how a \emph{Field} is represented on the
 domain. There exist a variety of possible function spaces. Examples include 
-\emph{functionspace::Spectral}, \emph{functionspace::ReducedGridColumns}, \emph{functionspace::NodeColumns}, and \emph{functionspace::EdgeColumns}.
+\emph{functionspace::Spectral}, \emph{functionspace::StructuredColumns}, \emph{functionspace::NodeColumns}, and \emph{functionspace::EdgeColumns}.
 These are illustrated in the \emph{FunctionSpace} class inheritance diagram in \fig{fig:functionspace}.
 \begin{itemize}
   \item \emph{functionspace::Spectral} describes the discretisation in terms of         spherical harmonics. The parallelisation (gathering and scattering) in
         spectral space is delegated to a \emph{Trans} object ( in turn
         delegating to the IFS trans library)
-  \item \emph{functionspace::ReducedGridColumns} describes the discretisation
-        of distributed fields on a \emph{ReducedGrid}. At the moment the
-        \emph{ReducedGrid} must be a \emph{ReducedGaussianGrid} for parallel
-         usage as a \emph{Trans} object is responsible for the parallelisation.
+  \item \emph{functionspace::StructuredColumns} describes the discretisation
+        of distributed fields on a \emph{Structured} grid. At the moment the
+        \emph{Structured} must be a \emph{Gaussian} grid for parallel
+        usage as a \emph{Trans} object is responsible for the parallelisation.
         In a future release this will be generalised to use a 
         \emph{GatherScatter} object instead, which does not rely on having a 
-        \emph{ReducedGaussianGrid}.\\
+        \emph{Gaussian} grid.\\
         \emph{Field}s described using this function space may also be defined  
         to have levels.
   \item \emph{functionspace::NodeColumns} describes the discretisation of fields

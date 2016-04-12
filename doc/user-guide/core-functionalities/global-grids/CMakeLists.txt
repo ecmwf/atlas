@@ -1,2 +1,2 @@
-add_subdirectory(Reduced)
+add_subdirectory(Structured)
 

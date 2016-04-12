@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 {
     atlas_init(argc, argv);
 
-    // Generate global reduced grid
+    // Generate global classic reduced Gaussian grid
     string gridID = Resource<string>("--grid", string("N32"));
     SharedPtr<Structured> grid( Structured::create(gridID) );
 
