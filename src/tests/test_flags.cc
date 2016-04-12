@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,11 +9,14 @@
  */
 
 #define BOOST_TEST_MODULE TestFlags
+
+#include <iostream>
+
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/util/Bitflags.h"
+#include "atlas/internals/Bitflags.h"
 
-using atlas::util::Bitflags;
+using atlas::internals::Bitflags;
 
 namespace atlas {
 namespace test {

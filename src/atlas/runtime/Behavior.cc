@@ -1,6 +1,5 @@
-#include <typeinfo>  // std::bad_cast
+#include <typeinfo>
 #include <unistd.h>
-#include "eckit/log/Log.h"
 #include "eckit/log/ChannelBuffer.h"
 #include "eckit/log/CallbackChannel.h"
 #include "eckit/log/MultiChannel.h"
@@ -14,15 +13,15 @@
 #include "eckit/thread/Mutex.h"
 #include "eckit/thread/Once.h"
 #include "eckit/thread/ThreadSingleton.h"
-
+#include "atlas/runtime/Log.h"
 #include "atlas/runtime/Behavior.h"
-#include "atlas/mpi/mpi.h"
 #include "atlas/runtime/LogFormat.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 using namespace eckit;
 
 namespace atlas {
-
+namespace runtime {
 
 static Once<Mutex> local_mutex;
 
@@ -219,6 +218,7 @@ void Behavior::reconfigure()
 {
 }
 
+} // namespace runtime
 } // namespace atlas
 
 

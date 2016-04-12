@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2014 ECMWF.
+# (C) Copyright 1996-2016 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,294 +10,354 @@
 
 ecbuild_generate_config_headers( DESTINATION ${INSTALL_INCLUDE_DIR}/atlas )
 
-configure_file( atlas_config.h.in   atlas_config.h  )
-configure_file( atlas_version.h.in  atlas_version.h )
-configure_file( atlas_defines.h.in  atlas_defines.h   )
+configure_file( internals/atlas_config.h.in   internals/atlas_config.h  )
+configure_file( internals/atlas_version.h.in  internals/atlas_version.h )
+configure_file( internals/atlas_defines.h.in  internals/atlas_defines.h   )
 
 install( FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
+  ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_defines.h
+  ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.h
   DESTINATION
-  ${INSTALL_INCLUDE_DIR}/atlas )
+  ${INSTALL_INCLUDE_DIR}/atlas/internals )
 
-configure_file( atlas_version.cc.in atlas_version.cc )
+configure_file( internals/atlas_version.cc.in internals/atlas_version.cc )
 
 ### sources
 
-list( APPEND atlas_mpl_srcs
-mpi/mpi.h
-mpi/mpi.cc
-mpi/Collectives.h
-mpl/MPLArrayView.h
-mpl/Checksum.h
-mpl/Checksum.cc
-mpl/HaloExchange.h
-mpl/HaloExchange.cc
-mpl/GatherScatter.h
-mpl/GatherScatter.cc
-)
-
-list( APPEND atlas_io_srcs
-io/Gmsh.h
-io/Gmsh.cc
-io/PointCloud.h
-io/PointCloud.cc
-# to be abstracted into a plugin
-io/Grib.cc
-io/Grib.h
-)
-
-list( APPEND atlas_util_srcs
-util/AccumulateFaces.h
-util/AccumulateFaces.cc
-util/ArrayUtil.h
-util/ArrayUtil.cc
-util/ArrayView.h
-util/ArrayView.cc
-util/ArrayView_iterator.h
-util/ArrayView_impl.h
-util/Bitflags.h
-util/Checksum.h
-util/Checksum.cc
-util/DataType.h
-util/Debug.h
-util/Functions.h
-util/IndexView.h
-util/IndexView.cc
-util/IsGhost.h
-util/LonLatMicroDeg.h
-util/ObjectRegistry.h
-util/PeriodicTransform.h
-util/Unique.h
-util/PointIndex3.cc
-util/PointIndex3.h
-util/PointSet.cc
-util/PointSet.h
-)
-
-list( APPEND atlas_Meshgen_srcs
-meshgen/Delaunay.cc
-meshgen/Delaunay.h
-meshgen/EqualRegionsPartitioner.cc
-meshgen/EqualRegionsPartitioner.h
-meshgen/MeshGenerator.cc
-meshgen/MeshGenerator.h
-meshgen/ReducedGridMeshGenerator.cc
-meshgen/ReducedGridMeshGenerator.h
-)
-
-list( APPEND atlas_actions_srcs
-actions/AddVirtualNodes.cc
-actions/AddVirtualNodes.h
-actions/BuildDualMesh.h
-actions/BuildDualMesh.cc
-actions/BuildEdges.h
-actions/BuildEdges.cc
-actions/BuildHalo.h
-actions/BuildHalo.cc
-actions/BuildParallelFields.h
-actions/BuildParallelFields.cc
-actions/BuildPeriodicBoundaries.h
-actions/BuildPeriodicBoundaries.cc
-actions/BuildStatistics.h
-actions/BuildStatistics.cc
-actions/BuildXYZField.h
-actions/BuildXYZField.cc
-actions/BuildCellCentres.h
-actions/BuildCellCentres.cc
-actions/BuildConvexHull3D.h
-actions/BuildConvexHull3D.cc
-actions/DistributeMesh.h
-actions/DistributeMesh.cc
-actions/GenerateMesh.h
-actions/GenerateMesh.cc
-actions/WriteLoadBalanceReport.h
-actions/WriteLoadBalanceReport.cc
-)
-
-if( ATLAS_HAVE_TRANS )
-  list( APPEND atlas_trans_srcs
-  trans/Trans.h
-  trans/Trans.cc
-  trans/TransPartitioner.h
-  trans/TransPartitioner.cc
-  )
-endif()
-
-list( APPEND atlas_grids_srcs
-grids/grids.h
-grids/grids.cc
-grids/GaussianGrid.cc
-grids/GaussianGrid.h
-grids/GaussianLatitudes.h
-grids/GaussianLatitudes.cc
-grids/LonLatGrid.cc
-grids/LonLatGrid.h
-grids/LocalGrid.cc
-grids/LocalGrid.h
-grids/PolarStereoGraphic.cc
-grids/PolarStereoGraphic.h
-grids/ReducedGaussianGrid.cc
-grids/ReducedGaussianGrid.h
-grids/ReducedGrid.h
-grids/ReducedGrid.cc
-grids/ReducedLonLatGrid.cc
-grids/ReducedLonLatGrid.h
-grids/RotatedGrid.cc
-grids/RotatedGrid.h
-grids/Unstructured.cc
-grids/Unstructured.h
-grids/gausslat/gausslat.h
-grids/gausslat/gausslat.cc
-grids/gausslat/N16.cc    # TL31
-grids/gausslat/N24.cc    # TL47
-grids/gausslat/N32.cc    # TL63
-grids/gausslat/N48.cc    # TL95
-grids/gausslat/N64.cc    # TL127
-grids/gausslat/N80.cc    # TL159
-grids/gausslat/N96.cc    # TL191
-grids/gausslat/N128.cc   # TL255
-grids/gausslat/N160.cc   # TL319
-grids/gausslat/N200.cc   # TL399
-grids/gausslat/N256.cc   # TL511
-grids/gausslat/N320.cc   # TL639
-grids/gausslat/N400.cc   # TL799
-grids/gausslat/N512.cc   # TL1023
-grids/gausslat/N576.cc   # TL1151
-grids/gausslat/N640.cc   # TL1279
-grids/gausslat/N800.cc   # TL1599
-grids/gausslat/N1024.cc  # TL2047
-grids/gausslat/N1280.cc  # TL2559
-grids/gausslat/N1600.cc  # TL3199
-grids/gausslat/N2000.cc  # TL3999
-grids/gausslat/N4000.cc  # TL7999
-grids/gausslat/N8000.cc  # TL15999
-grids/rgg/rgg.h
-grids/rgg/N16.cc    # TL31
-grids/rgg/N24.cc    # TL47
-grids/rgg/N32.cc    # TL63
-grids/rgg/N48.cc    # TL95
-grids/rgg/N64.cc    # TL127
-grids/rgg/N80.cc    # TL159
-grids/rgg/N96.cc    # TL191
-grids/rgg/N128.cc   # TL255
-grids/rgg/N160.cc   # TL319
-grids/rgg/N200.cc   # TL399
-grids/rgg/N256.cc   # TL511
-grids/rgg/N320.cc   # TL639
-grids/rgg/N400.cc   # TL799
-grids/rgg/N512.cc   # TL1023
-grids/rgg/N576.cc   # TL1151
-grids/rgg/N640.cc   # TL1279
-grids/rgg/N800.cc   # TL1599
-grids/rgg/N1024.cc  # TL2047
-grids/rgg/N1280.cc  # TL2559
-grids/rgg/N1600.cc  # TL3199
-grids/rgg/N2000.cc  # TL3999
-grids/rgg/N4000.cc  # TL7999
-grids/rgg/N8000.cc  # TL15999
-grids/rgg/OctahedralRGG.h
-grids/rgg/OctahedralRGG.cc
-)
-
-list( APPEND atlas_geometry_srcs
-geometry/Quad3D.h
-geometry/Quad3D.cc
-geometry/Triag3D.h
-geometry/Triag3D.cc
-geometry/Intersect.h
-geometry/Intersect.cc
-geometry/Ray.h
-geometry/Ray.cc
-)
 
 list( APPEND atlas_srcs
 atlas.h
 atlas.cc
-atlas_omp.h
-atlas_omp.cc
-Array.h
-Array.cc
-BoundBox.h
-BoundBox.cc
-Config.h
-Config.cc
-Domain.h
-Domain.cc
-runtime/Behavior.h
-runtime/Behavior.cc
-runtime/LogFormat.h
-runtime/LogFormat.cc
-runtime/ErrorHandling.cc
-runtime/ErrorHandling.cc
-Field.cc
-Field.h
-FieldSet.cc
-FieldSet.h
-FunctionSpace.cc
-FunctionSpace.h
-Grid.cc
-Grid.h
-GridDistribution.cc
-GridDistribution.h
-Mesh.cc
-Mesh.h
-Metadata.cc
-Metadata.h
-mesh/Nodes.cc
+)
+
+list( APPEND atlas_grid_srcs
+grid/BoundBox.h
+grid/BoundBox.cc
+grid/Domain.h
+grid/Domain.cc
+grid/Grid.h
+grid/Grid.cc
+grid/GridDistribution.h
+grid/GridDistribution.cc
+grid/grids.h
+grid/grids.cc
+grid/global/Global.h
+grid/global/Global.cc
+grid/global/Unstructured.h
+grid/global/Unstructured.cc
+grid/global/Structured.h
+grid/global/Structured.cc
+grid/global/CustomStructured.h
+grid/global/CustomStructured.cc
+grid/global/gaussian/Gaussian.h
+grid/global/gaussian/Gaussian.cc
+grid/global/gaussian/ReducedGaussian.h
+grid/global/gaussian/ReducedGaussian.cc
+grid/global/gaussian/ClassicGaussian.h
+grid/global/gaussian/ClassicGaussian.cc
+grid/global/gaussian/OctahedralGaussian.h
+grid/global/gaussian/OctahedralGaussian.cc
+grid/global/gaussian/RegularGaussian.h
+grid/global/gaussian/RegularGaussian.cc
+grid/global/gaussian/latitudes/Latitudes.h
+grid/global/gaussian/latitudes/Latitudes.cc
+grid/global/lonlat/LonLat.h
+grid/global/lonlat/LonLat.cc
+grid/global/lonlat/ReducedLonLat.h
+grid/global/lonlat/ReducedLonLat.cc
+grid/global/lonlat/RegularLonLat.h
+grid/global/lonlat/RegularLonLat.cc
+grid/global/lonlat/ShiftedLonLat.h
+grid/global/lonlat/ShiftedLonLat.cc
+grid/global/lonlat/ShiftedLon.h
+grid/global/lonlat/ShiftedLon.cc
+grid/global/lonlat/ShiftedLat.h
+grid/global/lonlat/ShiftedLat.cc
+grid/global/gaussian/latitudes/N.h
+grid/global/gaussian/latitudes/N.cc
+grid/global/gaussian/latitudes/N16.cc    # TL31
+grid/global/gaussian/latitudes/N24.cc    # TL47
+grid/global/gaussian/latitudes/N32.cc    # TL63
+grid/global/gaussian/latitudes/N48.cc    # TL95
+grid/global/gaussian/latitudes/N64.cc    # TL127
+grid/global/gaussian/latitudes/N80.cc    # TL159
+grid/global/gaussian/latitudes/N96.cc    # TL191
+grid/global/gaussian/latitudes/N128.cc   # TL255
+grid/global/gaussian/latitudes/N160.cc   # TL319
+grid/global/gaussian/latitudes/N200.cc   # TL399
+grid/global/gaussian/latitudes/N256.cc   # TL511
+grid/global/gaussian/latitudes/N320.cc   # TL639
+grid/global/gaussian/latitudes/N400.cc   # TL799
+grid/global/gaussian/latitudes/N512.cc   # TL1023
+grid/global/gaussian/latitudes/N576.cc   # TL1151
+grid/global/gaussian/latitudes/N640.cc   # TL1279
+grid/global/gaussian/latitudes/N800.cc   # TL1599
+grid/global/gaussian/latitudes/N1024.cc  # TL2047
+grid/global/gaussian/latitudes/N1280.cc  # TL2559
+grid/global/gaussian/latitudes/N1600.cc  # TL3199
+grid/global/gaussian/latitudes/N2000.cc  # TL3999
+grid/global/gaussian/latitudes/N4000.cc  # TL7999
+grid/global/gaussian/latitudes/N8000.cc  # TL15999
+grid/global/gaussian/classic/PointsPerLatitude.h
+grid/global/gaussian/classic/PointsPerLatitude.cc
+grid/global/gaussian/classic/N.h
+grid/global/gaussian/classic/N.cc
+grid/global/gaussian/classic/N16.cc    # TL31
+grid/global/gaussian/classic/N24.cc    # TL47
+grid/global/gaussian/classic/N32.cc    # TL63
+grid/global/gaussian/classic/N48.cc    # TL95
+grid/global/gaussian/classic/N64.cc    # TL127
+grid/global/gaussian/classic/N80.cc    # TL159
+grid/global/gaussian/classic/N96.cc    # TL191
+grid/global/gaussian/classic/N128.cc   # TL255
+grid/global/gaussian/classic/N160.cc   # TL319
+grid/global/gaussian/classic/N200.cc   # TL399
+grid/global/gaussian/classic/N256.cc   # TL511
+grid/global/gaussian/classic/N320.cc   # TL639
+grid/global/gaussian/classic/N400.cc   # TL799
+grid/global/gaussian/classic/N512.cc   # TL1023
+grid/global/gaussian/classic/N576.cc   # TL1151
+grid/global/gaussian/classic/N640.cc   # TL1279
+grid/global/gaussian/classic/N800.cc   # TL1599
+grid/global/gaussian/classic/N1024.cc  # TL2047
+grid/global/gaussian/classic/N1280.cc  # TL2559
+grid/global/gaussian/classic/N1600.cc  # TL3199
+grid/global/gaussian/classic/N2000.cc  # TL3999
+grid/global/gaussian/classic/N4000.cc  # TL7999
+grid/global/gaussian/classic/N8000.cc  # TL15999
+grid/local/Local.h
+grid/local/Local.cc
+grid/deprecated/LocalGrid.h
+grid/deprecated/LocalGrid.cc
+grid/deprecated/RotatedGrid.h
+grid/deprecated/RotatedGrid.cc
+grid/partitioners/EqualRegionsPartitioner.h
+grid/partitioners/EqualRegionsPartitioner.cc
+grid/partitioners/Partitioner.h
+grid/partitioners/Partitioner.cc
+)
+if( ATLAS_HAVE_TRANS )
+list( APPEND atlas_grid_srcs
+  grid/partitioners/TransPartitioner.h
+  grid/partitioners/TransPartitioner.cc
+)
+endif()
+
+list( APPEND atlas_mesh_srcs
+mesh/Connectivity.h
+mesh/Connectivity.cc
+mesh/Elements.h
+mesh/Elements.cc
+mesh/ElementType.h
+mesh/ElementType.cc
+mesh/Halo.h
+mesh/Halo.cc
+mesh/HybridElements.h
+mesh/HybridElements.cc
+mesh/Mesh.h
+mesh/Mesh.cc
 mesh/Nodes.h
-Parameters.h
-Partitioner.cc
-Partitioner.h
-State.h
-State.cc
+mesh/Nodes.cc
+mesh/actions/AddVirtualNodes.h
+mesh/actions/AddVirtualNodes.cc
+mesh/actions/BuildDualMesh.h
+mesh/actions/BuildDualMesh.cc
+mesh/actions/BuildEdges.h
+mesh/actions/BuildEdges.cc
+mesh/actions/BuildHalo.h
+mesh/actions/BuildHalo.cc
+mesh/actions/BuildParallelFields.h
+mesh/actions/BuildParallelFields.cc
+mesh/actions/BuildPeriodicBoundaries.h
+mesh/actions/BuildPeriodicBoundaries.cc
+mesh/actions/BuildStatistics.h
+mesh/actions/BuildStatistics.cc
+mesh/actions/BuildXYZField.h
+mesh/actions/BuildXYZField.cc
+mesh/actions/BuildCellCentres.h
+mesh/actions/BuildCellCentres.cc
+mesh/actions/BuildConvexHull3D.h
+mesh/actions/BuildConvexHull3D.cc
+mesh/actions/GenerateMesh.h
+mesh/actions/GenerateMesh.cc
+mesh/actions/WriteLoadBalanceReport.h
+mesh/actions/WriteLoadBalanceReport.cc
+mesh/generators/Delaunay.h
+mesh/generators/Delaunay.cc
+mesh/generators/MeshGenerator.cc
+mesh/generators/MeshGenerator.h
+mesh/generators/Structured.h
+mesh/generators/Structured.cc
+)
+
+list( APPEND atlas_field_srcs
+field/Field.h
+field/Field.cc
 field/FieldCreator.h
 field/FieldCreator.cc
 field/FieldCreatorArraySpec.h
 field/FieldCreatorArraySpec.cc
 field/FieldCreatorIFS.h
 field/FieldCreatorIFS.cc
-functionspace/Nodes.h
-functionspace/Nodes.cc
-functionspace/NodesInterface.h
-functionspace/NodesInterface.cc
-functionspace/EdgeBasedFiniteVolume.h
-functionspace/EdgeBasedFiniteVolume.cc
+field/FieldSet.h
+field/FieldSet.cc
+field/State.h
+field/State.cc
+)
+
+list( APPEND atlas_functionspace_srcs
+functionspace/EdgeColumns.h
+functionspace/EdgeColumns.cc
+functionspace/FunctionSpace.h
+functionspace/FunctionSpace.cc
+functionspace/NodeColumns.h
+functionspace/NodeColumns.cc
+functionspace/NodeColumnsInterface.h
+functionspace/NodeColumnsInterface.cc
+functionspace/StructuredColumns.h
+functionspace/StructuredColumns.cc
 functionspace/Spectral.h
 functionspace/Spectral.cc
 )
 
 list( APPEND atlas_numerics_srcs
+numerics/Method.h
+numerics/Method.cc
 numerics/Nabla.h
 numerics/Nabla.cc
-numerics/nabla/EdgeBasedFiniteVolume.h
-numerics/nabla/EdgeBasedFiniteVolume.cc
+numerics/fvm/Method.h
+numerics/fvm/Method.cc
+numerics/fvm/Nabla.h
+numerics/fvm/Nabla.cc
 )
+if( ATLAS_HAVE_TRANS )
+list( APPEND atlas_numerics_srcs
+  trans/Trans.h
+  trans/Trans.cc
+)
+endif()
+
+list( APPEND atlas_interpolation_srcs
+interpolation/Intersect.h
+interpolation/Intersect.cc
+interpolation/Quad3D.h
+interpolation/Quad3D.cc
+interpolation/Ray.h
+interpolation/Ray.cc
+interpolation/Triag3D.h
+interpolation/Triag3D.cc
+interpolation/Vector3D.h
+interpolation/PointIndex3.h
+interpolation/PointIndex3.cc
+interpolation/PointSet.h
+interpolation/PointSet.cc
+)
+
+list( APPEND atlas_array_srcs
+array/Array.h
+array/Array.cc
+array/ArrayUtil.h
+array/ArrayUtil.cc
+array/ArrayView_iterator.h
+array/ArrayView_impl.h
+array/IndexView.h
+array/IndexView.cc
+array/ArrayView.h
+array/ArrayView.cc
+array/DataType.h
+)
+
+list( APPEND atlas_util_srcs
+util/Config.h
+util/Config.cc
+util/Constants.h
+util/Metadata.h
+util/Metadata.cc
+util/io/Gmsh.h
+util/io/Gmsh.cc
+util/io/PointCloud.h
+util/io/PointCloud.cc
+runtime/Behavior.h
+runtime/Behavior.cc
+runtime/LogFormat.h
+runtime/LogFormat.cc
+runtime/ErrorHandling.cc
+runtime/ErrorHandling.cc
+parallel/omp/omp.h
+parallel/omp/omp.cc
+parallel/mpi/mpi.h
+parallel/mpi/mpi.cc
+parallel/mpi/Collectives.h
+parallel/Checksum.h
+parallel/Checksum.cc
+parallel/HaloExchange.h
+parallel/HaloExchange.cc
+parallel/GatherScatter.h
+parallel/GatherScatter.cc
+)
+
+list( APPEND atlas_internals_srcs
+internals/AccumulateFaces.h
+internals/AccumulateFaces.cc
+internals/Bitflags.h
+internals/Checksum.h
+internals/Checksum.cc
+internals/Debug.h
+internals/Functions.h
+internals/IsGhost.h
+internals/LonLatMicroDeg.h
+internals/ObjectRegistry.h
+internals/Parameters.h
+internals/PeriodicTransform.h
+internals/Unique.h
+internals/MPLArrayView.h
+)
+
 
 
 ### atlas c++ library
 
+ecbuild_debug_var(CGAL_LIBRARIES)
+ecbuild_debug_var(CGAL_INCLUDE_DIRS)
+
+if( NOT ATLAS_HAVE_TRANS )
+  unset( TRANSI_INCLUDE_DIRS )
+  unset( TRANSI_LIBRARIES )
+endif()
+
 ecbuild_add_library( TARGET atlas
+
   AUTO_VERSION
+
+  LINKER_LANGUAGE CXX
+
   INSTALL_HEADERS ALL
+
   HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
+
   SOURCES
-  ${atlas_srcs}
-  ${atlas_util_srcs}
-  ${atlas_io_srcs}
-  ${atlas_mpl_srcs}
-  ${atlas_Meshgen_srcs}
-  ${atlas_geometry_srcs}
-  ${atlas_actions_srcs}
-  ${atlas_grids_srcs}
-  ${atlas_trans_srcs}
-  ${atlas_numerics_srcs}
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-  INCLUDES "${CGAL_INCLUDE_DIRS}"  ${TRANSI_INCLUDE_DIRS}
-  LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" ${TRANSI_LIBRARIES} )
+    ${atlas_srcs}
+    ${atlas_array_srcs}
+    ${atlas_grid_srcs}
+    ${atlas_mesh_srcs}
+    ${atlas_field_srcs}
+    ${atlas_functionspace_srcs}
+    ${atlas_interpolation_srcs}
+    ${atlas_numerics_srcs}
+    ${atlas_util_srcs}
+    ${atlas_internals_srcs}
+    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_config.h
+    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_defines.h
 
+  PRIVATE_INCLUDES
+    "${CGAL_INCLUDE_DIRS}"
+    "${TRANSI_INCLUDE_DIRS}"
 
+  LIBS
+    eckit_geometry
+    "${ECKIT_MPI_LIBRARIES}"
+    "${CGAL_LIBRARIES}"
+    "${TRANSI_LIBRARIES}" )

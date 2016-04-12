@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -15,29 +15,30 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/config/ResourceMgr.h"
-#include "atlas/actions/BuildParallelFields.h"
-#include "atlas/actions/BuildPeriodicBoundaries.h"
-#include "atlas/atlas_config.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/Field.h"
-#include "atlas/FunctionSpace.h"
-#include "atlas/Mesh.h"
-#include "atlas/Metadata.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
+#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
+#include "atlas/internals/atlas_config.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/field/Field.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/util/Metadata.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/Parameters.h"
-#include "atlas/meshgen/EqualRegionsPartitioner.h"
-#include "atlas/grids/grids.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/mpi/mpi.h"
-#include "atlas/Array.h"
-#include "atlas/util/ArrayView.h"
-#include "atlas/util/IndexView.h"
-#include "atlas/util/Bitflags.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/grids.h"
+#include "atlas/mesh/generators/Structured.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/array/Array.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
+#include "atlas/internals/Bitflags.h"
 
-using atlas::util::Topology;
+using atlas::internals::Topology;
 
-using namespace atlas::io;
-using namespace atlas::meshgen;
+using namespace atlas::array;
+using namespace atlas::internals;
+using namespace atlas::util::io;
+using namespace atlas::mesh::generators;
 
 namespace atlas {
 namespace test {
@@ -47,7 +48,7 @@ class IsGhost
 public:
   IsGhost( const mesh::Nodes& nodes )
   {
-    part_   = ArrayView<int,1> (nodes.partition() );
+    part_   = array::ArrayView<int,1> (nodes.partition() );
     ridx_   = IndexView<int,1> (nodes.remote_index() );
     mypart_ = eckit::mpi::rank();
   }
@@ -60,7 +61,7 @@ public:
   }
 private:
   int mypart_;
-  ArrayView<int,1> part_;
+  array::ArrayView<int,1> part_;
   IndexView<int,1> ridx_;
 };
 
@@ -77,15 +78,14 @@ BOOST_AUTO_TEST_CASE( init )
 
 BOOST_AUTO_TEST_CASE( test1 )
 {
-	Mesh::Ptr m ( Mesh::create() );
-
-	m->createNodes(10);
+  mesh::Mesh::Ptr m ( mesh::Mesh::create() );
 
   mesh::Nodes& nodes = m->nodes();
-  ArrayView<double,2> lonlat ( nodes.lonlat());
-  ArrayView<gidx_t,1> glb_idx( nodes.global_index());
-  ArrayView<int,1> part ( nodes.partition() );
-  ArrayView<int,1> flags ( nodes.field("flags") );
+  nodes.resize(10);
+  array::ArrayView<double,2> lonlat ( nodes.lonlat());
+  array::ArrayView<gidx_t,1> glb_idx( nodes.global_index());
+  array::ArrayView<int,1> part ( nodes.partition() );
+  array::ArrayView<int,1> flags ( nodes.field("flags") );
   flags = Topology::NONE;
 
   // This is typically available
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE( test1 )
   lonlat(8,LON) = 360.;  lonlat(8,LAT) = 80.;    Topology::set( flags(8), Topology::BC|Topology::EAST );
   lonlat(9,LON) = 360.;  lonlat(9,LAT) =-80.;    Topology::set( flags(9), Topology::BC|Topology::EAST );
 
-  actions::build_parallel_fields(*m);
+  mesh::actions::build_parallel_fields(*m);
 
   BOOST_REQUIRE( nodes.has_field("remote_idx") );
 
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE( test1 )
   BOOST_CHECK_EQUAL( loc(8) , 8 );
   BOOST_CHECK_EQUAL( loc(9) , 9 );
 
-  IsGhost is_ghost( m->nodes() );
+  test::IsGhost is_ghost( m->nodes() );
 
   switch ( eckit::mpi::rank() )
   {
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE( test1 )
     break;
   }
 
-  actions::build_periodic_boundaries(*m);
+  mesh::actions::build_periodic_boundaries(*m);
 
   // points 8 and 9 are periodic slave points of points 0 and 1
   BOOST_CHECK_EQUAL( part(8), 0 );
@@ -174,18 +174,19 @@ BOOST_AUTO_TEST_CASE( test1 )
 
 BOOST_AUTO_TEST_CASE( test2 )
 {
-  ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   generate.options.set("nb_parts",eckit::mpi::size());
   generate.options.set("part",eckit::mpi::rank());
-  Mesh* m = generate( grids::rgg::N32() );
-  actions::build_parallel_fields(*m);
+  mesh::Mesh* m = generate(
+      grid::global::gaussian::ClassicGaussian(32) );
+  mesh::actions::build_parallel_fields(*m);
 
   mesh::Nodes& nodes = m->nodes();
   IndexView<int,1> loc_idx ( nodes.remote_index() );
-  ArrayView<int,1> part    ( nodes.partition());
-  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  array::ArrayView<int,1> part    ( nodes.partition());
+  array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
-  IsGhost is_ghost(nodes);
+  test::IsGhost is_ghost(nodes);
 
   size_t nb_ghost = 0;
   for( size_t jnode=0; jnode<nodes.size(); ++jnode )
@@ -196,7 +197,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   if( eckit::mpi::rank() == 0 ) BOOST_CHECK_EQUAL( nb_ghost, 129 );
   if( eckit::mpi::rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 0   );
 
-  actions::build_periodic_boundaries(*m);
+  mesh::actions::build_periodic_boundaries(*m);
 
   int nb_periodic = -nb_ghost;
   for( size_t jnode=0; jnode<nodes.size(); ++jnode )

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -23,7 +23,7 @@
 #include "eckit/runtime/Context.h"
 
 #include "atlas/atlas.h"
-#include "atlas/grids/GaussianLatitudes.h"
+#include "atlas/grid/global/gaussian/Gaussian.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -99,7 +99,7 @@ private:
   bool do_run;
 };
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 void AtlasGaussianLatitudes::run()
 {
@@ -108,7 +108,8 @@ void AtlasGaussianLatitudes::run()
   std::vector<double> lats (2*N);
 
   try {
-    atlas::grids::gaussian_latitudes_npole_spole(N,lats.data());
+    atlas::grid::global::gaussian::Gaussian::
+      LatitudesNorthPoleToSouthPole(N,lats.data());
   }
   catch( eckit::NotImplemented& err )
   {
@@ -137,11 +138,10 @@ void AtlasGaussianLatitudes::run()
   }
 }
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 int main( int argc, char **argv )
 {
   AtlasGaussianLatitudes tool(argc,argv);
-  tool.start();
-  return 0;
+  return tool.start();
 }

@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2015 ECMWF.
+! (C) Copyright 1996-2016 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -9,20 +9,20 @@
 ! C++ / Fortran Interfaces to the logging facilities
 ! @author Willem Deconinck
 
-#include "fctest/fctest.h"
+#include "fckit/fctest.h"
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_logging_fixture
+module fcta_logging_fxt
 use atlas_module
-use iso_c_binding
+use, intrinsic :: iso_c_binding
 implicit none
 
-end module fctest_atlas_logging_fixture
+end module fcta_logging_fxt
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_logging,fctest_atlas_logging_fixture)
+TESTSUITE_WITH_FIXTURE(fctest_atlas_logging,fcta_logging_fxt)
 
 ! -----------------------------------------------------------------------------
 TESTSUITE_INIT

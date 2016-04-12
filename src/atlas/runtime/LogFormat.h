@@ -7,6 +7,7 @@
 #include "eckit/log/FormatChannel.h"
 
 namespace atlas {
+namespace runtime {
 
 class LogFormat : public eckit::FormatBuffer {
 public:
@@ -54,7 +55,7 @@ public:
         LogFormat& format()       { return *format_; };
 
 private:
-  std::ostream* channel_;
+  // std::ostream* channel_;
   LogFormat* format_;
 };
 
@@ -78,7 +79,7 @@ public:
 std::ostream& operator<< ( std::ostream& stream, const indent& );
 std::ostream& operator<< ( std::ostream& stream, const dedent& );
 
-
+} // namespace runtime
 } // namespace atlas
 
 #endif // atlas_LogFormat_h

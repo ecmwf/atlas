@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -11,18 +11,18 @@
 #define BOOST_TEST_MODULE TestMeshGen3D
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/atlas_config.h"
+#include "atlas/internals/atlas_config.h"
 
 #include "atlas/atlas.h"
-#include "atlas/Mesh.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/grids/grids.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/mpi/mpi.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/grid/grids.h"
+#include "atlas/mesh/generators/Structured.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 
-using namespace atlas::io;
-using namespace atlas::meshgen;
+using namespace atlas::util::io;
+using namespace atlas::mesh::generators;
 
 namespace atlas {
 namespace test {
@@ -33,13 +33,13 @@ struct GlobalFixture {
     ~GlobalFixture() { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( GlobalFixture )
+BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
-	Mesh::Ptr m ( Mesh::create() );
+	mesh::Mesh::Ptr m ( mesh::Mesh::create() );
 
-	ReducedGridMeshGenerator generate;
+	mesh::generators::Structured generate;
 
 	// generate.options.set("nb_parts",1); // default = 1
 	// generate.options.set("part",    0); // default = 0
@@ -47,11 +47,13 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
 	generate.options.set("three_dimensional", true); ///< creates links along date-line
 	generate.options.set("include_pole", true);      ///< triangulate the pole point
 
-	m = generate( grids::rgg::N80() ); //< 2*N - 1 => N80 grid
+    m = generate(
+          grid::global::gaussian::ClassicGaussian(80)
+        ); //< 2*N - 1 => N80 grid
 
 	Gmsh().write(*m,"out.msh");
 
-	//    atlas::actions::BuildXYZ(m);
+    //    atlas::mesh::actions::BuildXYZ(m);
 }
 
 } // namespace test

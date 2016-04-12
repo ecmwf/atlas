@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2015 ECMWF.
+! (C) Copyright 1996-2016 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -9,13 +9,13 @@
 ! C++ / Fortran Interfaces to the State Datastructure
 ! @author Willem Deconinck
 
-#include "fctest/fctest.h"
+#include "fckit/fctest.h"
 
 ! -----------------------------------------------------------------------------
 
 module fctest_atlas_State_Fixture
 use atlas_module
-use iso_c_binding
+use, intrinsic :: iso_c_binding
 implicit none
 
 contains
@@ -82,8 +82,8 @@ temperature_field = state%field("temperature")
 pressure_field = state%field("pressure")
 
 ! If you want to edit the field, access the data
-call temperature_field%access_data(temperature)
-call pressure_field%access_data(pressure)
+call temperature_field%data(temperature)
+call pressure_field%data(pressure)
 
 temperature(:,:) = 273.15_c_double
 pressure(:,:,:) = 10000._c_double
@@ -109,7 +109,6 @@ TEST( test_state_factory )
 type(atlas_State) :: state
 type(atlas_Field) :: field
 type(atlas_mesh) :: mesh
-type(atlas_FunctionSpace) :: nodes
 
 ! Create a new state
 state = atlas_State()

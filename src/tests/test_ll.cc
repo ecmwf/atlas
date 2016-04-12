@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,16 +12,16 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/atlas.h"
-#include "atlas/mpi/mpi.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/Mesh.h"
-#include "atlas/grids/LonLatGrid.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/mesh/generators/Structured.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/grid/global/lonlat/RegularLonLat.h"
 
 
-using namespace atlas::io;
-using namespace atlas::meshgen;
-using namespace atlas::grids;
+using namespace atlas::util::io;
+using namespace atlas::mesh::generators;
+using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
@@ -32,14 +32,14 @@ struct GlobalFixture {
     ~GlobalFixture() { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( GlobalFixture )
+BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
-  LonLatGrid g(11,LonLatGrid::INCLUDES_POLES);
-  Mesh m;
-  ReducedGridMeshGenerator().generate(g,m);
-  Gmsh().write(m,"lonlat11.msh");
+  global::lonlat::RegularLonLat g(5);
+  mesh::Mesh m;
+  mesh::generators::Structured().generate(g,m);
+  Gmsh().write(m,"L5.msh");
 }
 
 } // namespace test

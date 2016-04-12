@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -16,20 +16,21 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/atlas.h"
-#include "atlas/Mesh.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/grids/grids.h"
-#include "atlas/functionspace/Nodes.h"
-#include "atlas/actions/GenerateMesh.h"
-#include "atlas/actions/WriteLoadBalanceReport.h"
-
+#include "atlas/grid/grids.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/mesh/generators/MeshGenerator.h"
+#include "atlas/mesh/actions/WriteLoadBalanceReport.h"
+#include "atlas/parallel/mpi/mpi.h"
 //------------------------------------------------------------------------------------------------------
 
 using namespace eckit;
 using namespace atlas;
-using namespace atlas::actions;
-using namespace atlas::grids;
+using namespace atlas::mesh::actions;
+using namespace atlas::grid;
 using namespace atlas::functionspace;
+using namespace atlas::mesh;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -55,7 +56,7 @@ public:
         "DESCRIPTION\n"
         "\n"
         "       GRID: unique identifier for grid \n"
-        "           Example values: rgg.N80, rgg.TL159, gg.N40, ll.128x64\n"
+        "           Example values: N80, F40, O24, L32\n"
         "\n"
         "       --halo       Output file for mesh\n"
         "\n"
@@ -105,15 +106,18 @@ private:
 void AtlasLoadbalance::run()
 {
   if( !do_run ) return;
-  grids::load();
+  grid::load();
 
-  ReducedGrid::Ptr grid;
-  try{ grid = ReducedGrid::Ptr( ReducedGrid::create(key) ); }
+  SharedPtr<global::Structured> grid;
+  try{ grid.reset( global::Structured::create(key) ); }
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;
-  SharedPtr<Mesh> mesh( generate_mesh(*grid) );
-  SharedPtr<functionspace::Nodes> nodes( new functionspace::Nodes(*mesh,Halo(halo)) );
+  SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
+      mesh::generators::MeshGenerator::create("Structured") );
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+
+  SharedPtr<functionspace::NodeColumns> nodes( new functionspace::NodeColumns(*mesh,Halo(halo)) );
 
 
   if( output.size() )
@@ -138,6 +142,5 @@ void AtlasLoadbalance::run()
 int main( int argc, char **argv )
 {
   AtlasLoadbalance tool(argc,argv);
-  tool.start();
-  return 0;
+  return tool.start();
 }

@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2015 ECMWF.
+! (C) Copyright 1996-2016 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -9,19 +9,19 @@
 ! C++ / Fortran Interfaces to the Mesh Datastructure
 ! @author Willem Deconinck
 
-#include "fctest/fctest.h"
+#include "fckit/fctest.h"
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_resource_fixture
+module fcta_resource_fixture
 use atlas_module
 implicit none
 
-end module fctest_atlas_resource_fixture
+end module fcta_resource_fixture
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_resource,fctest_atlas_resource_fixture)
+TESTSUITE_WITH_FIXTURE(fctest_atlas_resource,fcta_resource_fixture)
 
 ! -----------------------------------------------------------------------------
 TESTSUITE_INIT

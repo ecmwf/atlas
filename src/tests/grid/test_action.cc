@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 
 #include "eckit/grid/Grid.h"
@@ -47,12 +47,12 @@ void TestAction::test_execute()
     Grid* g_in = new LatLon( 4, 4, earth );
     ASSERT( g_in );
 
-    FieldSet* fs_in = new FieldSet(g_in);
+    field::FieldSet* fs_in = new field::FieldSet(g_in);
     
     Grid* g_out = new LatLon( 3, 3, earth );
     ASSERT( g_out );
     
-    FieldSet* fs_out = new FieldSet(g_out);
+    field::FieldSet* fs_out = new field::FieldSet(g_out);
     
     StringDict config;
     config["interpolator"] = "bilinear";

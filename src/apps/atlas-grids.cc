@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -28,14 +28,14 @@
 #include "eckit/parser/Tokenizer.h"
 
 #include "atlas/atlas.h"
-#include "atlas/grids/grids.h"
+#include "atlas/grid/grids.h"
 
 
 //------------------------------------------------------------------------------------------------------
 
 using namespace eckit;
 using namespace atlas;
-using namespace atlas::grids;
+using namespace atlas::grid;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -63,7 +63,7 @@ public:
         "       Browse catalogue of grids\n"
         "\n"
         "       GRID: unique identifier for grid \n"
-        "           Example values: rgg.N80, gg.N40, ll.128x64\n"
+        "           Example values: N80, F40, O24, L32\n"
         "\n"
         "       -a        List all grids. The names are the GRID argument\n"
         "\n"
@@ -132,7 +132,7 @@ void AtlasGrids::run()
 {
   if( !do_run ) return;
 
-  atlas::grids::load();
+  atlas::grid::load();
 
   if( all )
   {
@@ -147,13 +147,13 @@ void AtlasGrids::run()
 
   if( !key.empty() )
   {
-    ReducedGrid::Ptr grid;
-    try{ grid = ReducedGrid::Ptr( ReducedGrid::create(key) ); }
+    SharedPtr<global::Structured> grid;
+    try{ grid.reset(global::Structured::create(key) ); }
     catch( eckit::BadParameter& err ){}
 
     if( !grid ) return;
 
-    Grid& g = *grid;
+    grid::Grid& g = *grid;
 
     if( info )
     {
@@ -165,38 +165,37 @@ void AtlasGrids::run()
                   << g.shortName() << std::endl;
       Log::info() << "   uid:                                "
                   << g.uniqueId() << std::endl;
-      if( grid->gridType() == GaussianGrid::grid_type_str() )
-      {
-        Log::info() << "   N number:                           "
-                    << dynamic_cast<GaussianGrid*>(grid.get())->N() << std::endl;
-      }
-      if( grid->gridType() == ReducedGaussianGrid::grid_type_str() )
-      {
-        Log::info() << "   N number:                           "
-                    << dynamic_cast<ReducedGaussianGrid*>(grid.get())->N() << std::endl;
-      }
+      Log::info() << "   N number:                           "
+                  << grid->N() << std::endl;
       Log::info() << "   number of points:                   "
                   << grid->npts() << std::endl;
       Log::info() << "   number of latitudes (N-S):          "
                   << grid->nlat() << std::endl;
       Log::info() << "   number of longitudes (max):         "
                   << grid->nlonmax() << std::endl;
+
       deg = (grid->lat(0)-grid->lat(grid->nlat()-1))/(grid->nlat()-1);
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution N-S:         "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
-      deg = 360./grid->npts_per_lat()[grid->nlat()/2];
+
+
+      deg = 360./static_cast<double>(grid->nlon(grid->nlat()/2));
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W equator: "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
-      deg =  360.*std::cos(grid->lat(grid->nlat()/4)*M_PI/180.)/grid->npts_per_lat()[grid->nlat()/4];
+
+      deg =  360.*std::cos(grid->lat(grid->nlat()/4)*M_PI/180.)/
+             static_cast<double>(grid->nlon(grid->nlat()/4));
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W midlat:  "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
-      deg = 360.*std::cos(grid->lat(0)*M_PI/180.)/grid->npts_per_lat()[0];
+
+      deg = 360.*std::cos(grid->lat(0)*M_PI/180.)/static_cast<double>(grid->nlon(0));
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W pole:    "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
+
       Log::info() << "   spectral truncation -- linear:      "
                   << grid->nlat() - 1 << std::endl;
       Log::info() << "   spectral truncation -- quadratic:   "
@@ -237,6 +236,5 @@ void AtlasGrids::run()
 int main( int argc, char **argv )
 {
   AtlasGrids tool(argc,argv);
-  tool.start();
-  return 0;
+  return tool.start();
 }

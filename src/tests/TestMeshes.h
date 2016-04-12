@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,42 +8,31 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/atlas_config.h"
-#include "atlas/grids/GaussianLatitudes.h"
-#include "atlas/grids/grids.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/Mesh.h"
-#include "atlas/mpi/mpi.h"
+#include "atlas/internals/atlas_config.h"
+#include "atlas/grid/grids.h"
+#include "atlas/mesh/generators/Structured.h"
+#include "atlas/grid/global/gaussian/ReducedGaussian.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 using namespace atlas;
-using namespace atlas::grids;
+using namespace atlas::grid;
+using namespace atlas::grid::global::gaussian;
 
 namespace atlas {
 namespace test {
 
-class TestGrid: public ReducedGrid {
-public:
-  TestGrid(int N, long lon[]);
-};
-
-TestGrid::TestGrid(int N, long lon[])
+mesh::Mesh::Ptr generate_mesh( const global::Structured& rgg )
 {
-  std::vector<double> lats(N);
-  grids::gaussian_latitudes_npole_equator(N,lats.data());
-  setup_lat_hemisphere(N,lats.data(),lon,DEG);
-}
-
-Mesh::Ptr generate_mesh( const ReducedGrid& rgg )
-{
-  meshgen::ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   generate.options.set("nb_parts",eckit::mpi::size());
   generate.options.set("part",eckit::mpi::rank());
-  return Mesh::Ptr( generate( rgg ) );
+  return mesh::Mesh::Ptr( generate( rgg ) );
 }
 
-Mesh::Ptr generate_mesh(int nlat, long lon[] )
+mesh::Mesh::Ptr generate_mesh(int nlat, long lon[] )
 {
-  return generate_mesh( TestGrid(nlat,lon) );
+  return generate_mesh( ReducedGaussian(nlat,lon) );
 }
 
 

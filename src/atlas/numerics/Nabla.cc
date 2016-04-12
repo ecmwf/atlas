@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,18 +10,18 @@
 
 #include <map>
 #include <string>
-
-#include "atlas/atlas_config.h"
-#include "atlas/atlas_defines.h"
-
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
-
-#include "atlas/runtime/ErrorHandling.h"
-#include "atlas/FunctionSpace.h"
+#include "atlas/internals/atlas_config.h"
+#include "atlas/internals/atlas_defines.h"
 #include "atlas/numerics/Nabla.h"
-#include "atlas/numerics/nabla/EdgeBasedFiniteVolume.h"
+#include "atlas/numerics/Method.h"
+#include "atlas/numerics/fvm/Nabla.h"
+#include "atlas/numerics/fvm/Method.h"
+#include "atlas/util/Config.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Log.h"
 
 namespace {
 
@@ -39,8 +39,7 @@ namespace {
 namespace atlas {
 namespace numerics {
 
-Nabla::Nabla(const next::FunctionSpace &fs, const eckit::Parametrisation &p) :
-  fs_(fs), config_(p)
+Nabla::Nabla(const Method &method, const eckit::Parametrisation &p)
 {
 }
 
@@ -48,14 +47,14 @@ Nabla::~Nabla()
 {
 }
 
-Nabla* Nabla::create(const next::FunctionSpace &fs)
+Nabla* Nabla::create(const Method &method)
 {
-  return Nabla::create(fs,Config());
+  return Nabla::create(method,util::Config());
 }
 
-Nabla* Nabla::create(const next::FunctionSpace &fs, const eckit::Parametrisation &p)
+Nabla* Nabla::create(const Method &method, const eckit::Parametrisation &p)
 {
-  return NablaFactory::build(fs,p);
+  return NablaFactory::build(method,p);
 }
 
 namespace {
@@ -65,7 +64,7 @@ template<typename T> void load_builder() { NablaBuilder<T>("tmp"); }
 struct force_link {
     force_link()
     {
-      load_builder< nabla::EdgeBasedFiniteVolume >();
+      load_builder< fvm::Nabla >();
     }
 };
 
@@ -118,7 +117,7 @@ bool NablaFactory::has(const std::string& name)
 
 
 
-Nabla* NablaFactory::build(const next::FunctionSpace& fs, const eckit::Parametrisation& p) {
+Nabla* NablaFactory::build(const Method& method, const eckit::Parametrisation& p) {
 
     pthread_once(&once, init);
 
@@ -126,19 +125,19 @@ Nabla* NablaFactory::build(const next::FunctionSpace& fs, const eckit::Parametri
 
     static force_link static_linking;
 
-    std::map<std::string, NablaFactory *>::const_iterator j = m->find(fs.name());
+    std::map<std::string, NablaFactory *>::const_iterator j = m->find(method.name());
 
-    eckit::Log::debug() << "Looking for NablaFactory [" << fs.name() << "]" << '\n';
+    Log::debug() << "Looking for NablaFactory [" << method.name() << "]" << '\n';
 
     if (j == m->end()) {
-        eckit::Log::error() << "No NablaFactory for [" << fs.name() << "]" << '\n';
-        eckit::Log::error() << "NablaFactories are:" << '\n';
+        Log::error() << "No NablaFactory for [" << method.name() << "]" << '\n';
+        Log::error() << "NablaFactories are:" << '\n';
         for (j = m->begin() ; j != m->end() ; ++j)
-            eckit::Log::error() << "   " << (*j).first << '\n';
-        throw eckit::SeriousBug(std::string("No NablaFactory called ") + fs.name());
+            Log::error() << "   " << (*j).first << '\n';
+        throw eckit::SeriousBug(std::string("No NablaFactory called ") + method.name());
     }
 
-    return (*j).second->make(fs,p);
+    return (*j).second->make(method,p);
 }
 
 extern "C" {
@@ -151,18 +150,18 @@ void atlas__Nabla__delete(Nabla* This)
   );
 }
 
-Nabla* atlas__Nabla__create (const next::FunctionSpace* functionspace, const eckit::Parametrisation* params)
+Nabla* atlas__Nabla__create (const Method* method, const eckit::Parametrisation* params)
 {
   Nabla* nabla(0);
   ATLAS_ERROR_HANDLING(
-    ASSERT(functionspace);
+    ASSERT(method);
     ASSERT(params);
-    nabla = Nabla::create(*functionspace,*params);
+    nabla = Nabla::create(*method,*params);
   );
   return nabla;
 }
 
-void atlas__Nabla__gradient (const Nabla* This, const Field* scalar, Field* grad)
+void atlas__Nabla__gradient (const Nabla* This, const field::Field* scalar, field::Field* grad)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -172,7 +171,7 @@ void atlas__Nabla__gradient (const Nabla* This, const Field* scalar, Field* grad
   );
 }
 
-void atlas__Nabla__divergence (const Nabla* This, const Field* vector, Field* div)
+void atlas__Nabla__divergence (const Nabla* This, const field::Field* vector, field::Field* div)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -182,7 +181,7 @@ void atlas__Nabla__divergence (const Nabla* This, const Field* vector, Field* di
   );
 }
 
-void atlas__Nabla__curl (const Nabla* This, const Field* vector, Field* curl)
+void atlas__Nabla__curl (const Nabla* This, const field::Field* vector, field::Field* curl)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -192,7 +191,7 @@ void atlas__Nabla__curl (const Nabla* This, const Field* vector, Field* curl)
   );
 }
 
-void atlas__Nabla__laplacian (const Nabla* This, const Field* scalar, Field* laplacian)
+void atlas__Nabla__laplacian (const Nabla* This, const field::Field* scalar, field::Field* laplacian)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);

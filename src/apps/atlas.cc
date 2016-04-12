@@ -13,6 +13,10 @@
 #include "eckit/config/Resource.h"
 #include "atlas/atlas.h"
 
+#ifdef ATLAS_HAVE_TRANS
+#include "transi/version.h"
+#endif
+
 //-----------------------------------------------------------------------------
 
 using namespace eckit;
@@ -72,9 +76,9 @@ void Version::run()
     bool feature_fortran(false);
     bool feature_MPI(false);
     bool feature_OpenMP(false);
-    bool feature_Grib(false);
     bool feature_Trans(false);
     bool feature_Tesselation(false);
+    bool feature_BoundsChecking(false);
 #ifdef ATLAS_HAVE_FORTRAN
       feature_fortran = true;
 #endif
@@ -84,24 +88,34 @@ void Version::run()
 #ifdef ATLAS_HAVE_OMP
       feature_OpenMP = true;
 #endif
-#ifdef ECKIT_HAVE_GRIB
-      feature_Grib = true;
-#endif
 #ifdef ATLAS_HAVE_TRANS
       feature_Trans = true;
 #endif
 #ifdef ATLAS_HAVE_TESSELATION
       feature_Tesselation = true;
 #endif
-      Log::info() << "  Features:" << std::endl;
-    Log::info() << "    Fortran     : " << print(feature_fortran) << std::endl
-                << "    MPI         : " << print(feature_MPI) << std::endl
-                << "    OpenMP      : " << print(feature_OpenMP) << std::endl
-                << "    Grib        : " << print(feature_Grib) << std::endl
-                << "    Trans       : " << print(feature_Trans) << std::endl
-                << "    Tesselation : " << print(feature_Tesselation) << std::endl
-                << "    gidx_t      : " << ATLAS_BITS_GLOBAL << " bit integer" << std::endl
-                << std::flush;
+#ifdef ATLAS_HAVE_BOUNDSCHECKING
+      feature_BoundsChecking = true;
+#endif
+    Log::info() << "  Features:" << std::endl;
+    Log::info() << "    Fortran        : " << print(feature_fortran) << std::endl
+                << "    MPI            : " << print(feature_MPI) << std::endl
+                << "    OpenMP         : " << print(feature_OpenMP) << std::endl
+                << "    BoundsChecking : " << print(feature_BoundsChecking) << std::endl
+                << "    Trans          : " << print(feature_Trans) << std::endl
+                << "    Tesselation    : " << print(feature_Tesselation) << std::endl
+                << "    gidx_t         : " << ATLAS_BITS_GLOBAL << " bit integer" << std::endl
+                << std::endl;
+
+    Log::info() << "  Dependencies: " << std::endl;
+
+    Log::info() << "    eckit version  (" << atlas__eckit_version() << "), "
+                << "git-sha1 "<< atlas__eckit_git_sha1_abbrev(7) << std::endl;
+#ifdef ATLAS_HAVE_TRANS
+    Log::info() << "    transi version (" << transi_version() << "), "
+                << "git-sha1 "<< transi_git_sha1_abbrev(7) << std::endl;
+#endif
+
     return;
   }
   else if( Resource<bool>("--help",false) )
@@ -145,8 +159,7 @@ using namespace atlas;
 
 int main(int argc,char **argv)
 {
-    Version app(argc,argv);
-    app.start();
-    return 0;
+    Version tool(argc,argv);
+    return tool.start();
 }
 

@@ -1,12 +1,13 @@
 #include <cmath>
-
 #include "eckit/log/TimeStamp.h"
 #include "eckit/log/MultiChannel.h"
 #include "atlas/runtime/LogFormat.h"
-#include "atlas/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
+
 using namespace eckit;
 
 namespace atlas {
+namespace runtime {
 
 namespace {
 
@@ -110,14 +111,14 @@ std::string LogFormat::parsed_prefix() const
 
 FormattedChannel::FormattedChannel( std::ostream* channel, LogFormat* format ) :
   FormatChannel( channel, format ),
-  channel_(channel),
+  // channel_(channel),
   format_(format)
 {
 }
 
 FormattedChannel::FormattedChannel( std::ostream& channel, LogFormat* format ) :
   FormatChannel( channel, format ),
-  channel_(&channel),
+  // channel_(&channel),
   format_(format)
 {
 }
@@ -135,7 +136,7 @@ std::ostream& operator<< (std::ostream& stream, const indent& s)
     MultiChannel::iterator it;
     for( it=ch->begin(); it!=ch->end(); ++it )
     {
-       FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());
+       FormattedChannel* formatted_ch = dynamic_cast<atlas::runtime::FormattedChannel*>(it->second.get());
        if( formatted_ch )
          formatted_ch->format().indent( s );
     }
@@ -153,7 +154,7 @@ std::ostream& operator<< (std::ostream& stream, const dedent& _dedent)
     MultiChannel::iterator it;
     for( it=ch->begin(); it!=ch->end(); ++it )
     {
-       FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());
+       FormattedChannel* formatted_ch = dynamic_cast<atlas::runtime::FormattedChannel*>(it->second.get());
        if( formatted_ch )
          formatted_ch->format().dedent();
     }
@@ -162,8 +163,7 @@ std::ostream& operator<< (std::ostream& stream, const dedent& _dedent)
   return stream;
 }
 
-
-
+} // namespace runtime
 } // namespace atlas
 
 

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,27 +8,26 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
 
-#include "atlas/mpi/mpi.h"
-#include "atlas/FunctionSpace.h"
-#include "atlas/Grid.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/grids/grids.h"
-#include "atlas/FieldSet.h"
-#include "atlas/meshgen/Delaunay.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/util/Debug.h"
-#include "atlas/State.h"
-#include "atlas/Mesh.h"
-#include "atlas/util/DataType.h"
+#include "atlas/grid/grids.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/mesh/generators/Delaunay.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/internals/Debug.h"
+#include "atlas/field/State.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/array/DataType.h"
 
 using namespace std;
 using namespace eckit;
 using namespace atlas;
-using namespace atlas::meshgen;
+using namespace atlas::mesh::generators;
 
 //-----------------------------------------------------------------------------
 
@@ -49,6 +48,7 @@ public:
     void test_constructor();
     void test_fieldcreator();
     void test_implicit_conversion();
+    void test_wrap_rawdata();
 };
 
 //-----------------------------------------------------------------------------
@@ -59,13 +59,13 @@ void TestField::test_constructor()
 
   BoundBox earth ( Grid::Point(0.,-90.), Grid::Point(359.999999,90.) );
 
-  Grid::Ptr g (new atlas::grids::LonLatGrid( 20ul, 10ul, earth ) );
+  Grid::Ptr g (new atlas::grid::LonLatGrid( 20ul, 10ul, earth ) );
 //  Grid::Ptr g (Grid::create("O6"));
 
   ASSERT( g );
 
   // Build a mesh from grid
-  Mesh mesh(*g);
+  mesh::Mesh mesh(*g);
 
   ASSERT( mesh.grid().same( *g ) );
 
@@ -82,12 +82,12 @@ void TestField::test_constructor()
 
   mesh::Nodes& nodes  = mesh.nodes();
 
-  ArrayView<double,1> data ( nodes.add( Field::create<double>( sname,make_shape(nodes.size(),1) ) ) );
+  array::ArrayView<double,1> data ( nodes.add( field::Field::create<double>( sname,array::make_shape(nodes.size(),1) ) ) );
 
   for(size_t i = 0; i < ref_data.size(); i++)
     data[i] = ref_data[i];
 
-  Field::Ptr f ( &nodes.field( sname ) );
+  field::Field::Ptr f ( &nodes.field( sname ) );
 
   ASSERT( f );
 
@@ -95,13 +95,13 @@ void TestField::test_constructor()
 
   ASSERT( f.owners() == 2 );
 
-  atlas::FieldSet fs;
+  atlas::field::FieldSet fs;
   fs.add(*f);
 
   // iterate over the fields
-  for (FieldSet::const_iterator it = fs.cbegin(); it != fs.cend(); ++it)
+  for (field::FieldSet::const_iterator it = fs.cbegin(); it != fs.cend(); ++it)
   {
-    ArrayView<double> vdata( *it );
+    array::ArrayView<double> vdata( *it );
 
     for( size_t i = 0; i < ref_data.size(); ++i )
     {
@@ -115,9 +115,9 @@ void TestField::test_constructor()
 
 void TestField::test_fieldcreator()
 {
-  Field::Ptr field ( Field::create( Config
+  field::Field::Ptr field ( field::Field::create( util::Config
                                       ("creator","ArraySpec")
-                                      ("shape",make_shape(10,2))
+                                      ("shape",array::make_shape(10,2))
                                       ("datatype",DataType::real32().str())
                                       ("name","myfield")
                                   ));
@@ -127,23 +127,23 @@ void TestField::test_fieldcreator()
 
   Grid::Ptr g (Grid::create("O6"));
 
-  Field::Ptr arr (Field::create( Config
+  field::Field::Ptr arr (field::Field::create( util::Config
                                    ("creator","ArraySpec")
-                                   ("shape",make_shape(10,2))
+                                   ("shape",array::make_shape(10,2))
                                ));
   ASSERT( arr->shape(0) == 10 );
   ASSERT( arr->shape(1) == 2 );
   ASSERT( arr->datatype() == DataType::real64() );
 
 
-  Config ifs_parameters;
+  util::Config ifs_parameters;
   ifs_parameters
       ("creator","IFS")
       ("nlev",137)
       ("nproma",10)
       ("ngptot",g->npts());
 
-  Field::Ptr ifs (Field::create( Config
+  field::Field::Ptr ifs (field::Field::create( util::Config
                                     (ifs_parameters)
                                     ("name","myfield")
                                     ("datatype",DataType::int32().str())
@@ -156,11 +156,11 @@ void TestField::test_fieldcreator()
   ASSERT( ifs->shape(2) == 137 );
   ASSERT( ifs->shape(3) == 10 );
 
-  eckit::Log::debug() << std::flush;
-  eckit::Log::info() << std::flush;
+  Log::debug() << std::flush;
+  Log::info() << std::flush;
 }
 
-void take_array(const Array& arr)
+void take_array(const array::Array& arr)
 {
   ASSERT( arr.size() == 20 );
 }
@@ -168,7 +168,7 @@ void take_array(const Array& arr)
 class TakeArray
 {
 public:
-  TakeArray(const Array& arr)
+  TakeArray(const array::Array& arr)
   {
     ASSERT( arr.size() == 20 );
   }
@@ -176,26 +176,37 @@ public:
 
 void TestField::test_implicit_conversion()
 {
-  SharedPtr<Field> field( Field::create<double>("tmp",make_shape(10,2)) );
-  const Array& const_array = *field;
-  Array& array = *field;
+  SharedPtr<field::Field> field( field::Field::create<double>("tmp",array::make_shape(10,2)) );
+  const array::Array& const_array = *field;
+  array::Array& array = *field;
 
-  ArrayView<double,2> arrv(array);
+  array::ArrayView<double,2> arrv(array);
   arrv(0,0) = 8.;
 
-  const ArrayView<double,2> carrv(const_array);
+  const array::ArrayView<double,2> carrv(const_array);
   ASSERT( carrv(0,0) == 8. );
 
-  const ArrayView<double,2> cfieldv(*field);
+  const array::ArrayView<double,2> cfieldv(*field);
   ASSERT( cfieldv(0,0) == 8. );
 
   take_array(*field);
   TakeArray ta(*field);
 
-  const Field& f = *field;
+  const field::Field& f = *field;
   TakeArray cta(f);
 }
 
+
+void TestField::test_wrap_rawdata()
+{
+  std::vector<double> rawdata(20,8.);
+  SharedPtr<array::Array> array( array::Array::wrap(rawdata.data(),array::make_shape(10,2)) );
+  SharedPtr<field::Field> field( field::Field::create("wrapped",array.get()) );
+
+  ASSERT( array->owners() == 2 );
+  const array::ArrayView<double,2> cfieldv(*field);
+  ASSERT( cfieldv(9,1) == 8. );
+}
 
 
 //-----------------------------------------------------------------------------
@@ -206,6 +217,7 @@ void TestField::run()
     test_constructor();
     test_fieldcreator();
     test_implicit_conversion();
+    test_wrap_rawdata();
     eckit::mpi::finalize();
 }
 
@@ -218,8 +230,6 @@ void TestField::run()
 
 int main(int argc,char **argv)
 {
-	atlas::test::TestField mytest(argc,argv);
-    mytest.start();
-    return 0;
+    atlas::test::TestField t(argc,argv);
+    return t.start();
 }
-

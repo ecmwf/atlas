@@ -1,11 +1,12 @@
 #ifndef atlas_Behavior_h
 #define atlas_Behavior_h
 
-#include "eckit/mpi/ParallelContextBehavior.h"
 #include "eckit/log/Channel.h"
+#include "eckit/mpi/ParallelContextBehavior.h"
 #include "atlas/runtime/LogFormat.h"
 
 namespace atlas {
+namespace runtime {
 
 eckit::Channel& standard_out();
 
@@ -68,7 +69,7 @@ private:
   ChannelConfig stats_ctxt;
 };
 
-
+} // namespace runtime
 } // namespace atlas
 
 #endif // atlas_Behavior_h

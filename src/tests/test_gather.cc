@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,17 +10,18 @@
 
 #include <sstream>
 #include <algorithm>
+#include <cmath>
 
 #define BOOST_TEST_MODULE TestGather
 #include "ecbuild/boost_test_framework.h"
 #include "eckit/utils/Translator.h"
-#include "atlas/mpi/mpi.h"
-#include "atlas/atlas_config.h"
-#include "atlas/Array.h"
-#include "atlas/util/ArrayView.h"
-#include "atlas/util/IndexView.h"
-#include "atlas/mpl/GatherScatter.h"
-#include "atlas/util/Debug.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/internals/atlas_config.h"
+#include "atlas/array/Array.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
+#include "atlas/parallel/GatherScatter.h"
+#include "atlas/internals/Debug.h"
 
 /// POD: Type to test
 typedef double POD;
@@ -71,7 +72,7 @@ struct Fixture {
     gather_scatter.setup(part.data(),ridx.data(),0,gidx.data(),9,Nl);
     Ng = gather_scatter.glb_dof();
   }
-  mpl::GatherScatter gather_scatter;
+  parallel::GatherScatter gather_scatter;
   std::vector<int> nb_nodes;
   std::vector<int> part;
   std::vector<int> ridx;
@@ -81,7 +82,7 @@ struct Fixture {
 };
 
 
-BOOST_GLOBAL_FIXTURE( MPIFixture )
+BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank0, Fixture )
 {
@@ -105,11 +106,11 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank0, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
 {
-  ArrayT<POD> loc(Nl,2);
-  ArrayT<POD> glb(Ng,2);
-  ArrayT<POD> glb1(Ng,1);
-  ArrayT<POD> glb2(Ng,1);
-  ArrayView<POD,2> locv(loc);
+  array::ArrayT<POD> loc(Nl,2);
+  array::ArrayT<POD> glb(Ng,2);
+  array::ArrayT<POD> glb1(Ng,1);
+  array::ArrayT<POD> glb2(Ng,1);
+  array::ArrayView<POD,2> locv(loc);
   for( int j=0; j<Nl; ++j ) {
     locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
     locv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
@@ -163,11 +164,11 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
 {
-  ArrayT<POD> loc(Nl,2);
-  ArrayT<POD> glb(Ng,2);
-  ArrayT<POD> glb1(Ng,1);
-  ArrayT<POD> glb2(Ng,1);
-  ArrayView<POD,2> locv(loc);
+  array::ArrayT<POD> loc(Nl,2);
+  array::ArrayT<POD> glb(Ng,2);
+  array::ArrayT<POD> glb1(Ng,1);
+  array::ArrayT<POD> glb2(Ng,1);
+  array::ArrayView<POD,2> locv(loc);
   for( int j=0; j<Nl; ++j ) {
     locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
     locv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
@@ -186,8 +187,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
   size_t glb_mpl_idxpos[] = {0};
   size_t glb_mpl_rank = 1;
   size_t root = 0;
-  mpl::MPL_ArrayView<POD> lview(loc.data(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
-  mpl::MPL_ArrayView<POD> gview(glb.data(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
+  internals::MPL_ArrayView<POD> lview(loc.data(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
+  internals::MPL_ArrayView<POD> gview(glb.data(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
 
   BOOST_CHECK_EQUAL(lview.var_rank(),1);
   BOOST_CHECK_EQUAL(lview.var_stride(0),1);
@@ -227,7 +228,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
     size_t root = 0;
-    mpl::MPL_ArrayView<POD> lview(loc.data(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
+    internals::MPL_ArrayView<POD> lview(loc.data(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
     BOOST_CHECK_EQUAL(lview.var_rank(),1);
     BOOST_CHECK_EQUAL(lview.var_stride(0),2);
     BOOST_CHECK_EQUAL(lview.var_shape(0),1);
@@ -235,7 +236,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
     BOOST_CHECK_EQUAL(lview.mpl_stride(0),2);
     BOOST_CHECK_EQUAL(lview.mpl_shape(0),Nl);
 
-    mpl::MPL_ArrayView<POD> gview(glb1.data(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
+    internals::MPL_ArrayView<POD> gview(glb1.data(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
     BOOST_CHECK_EQUAL(gview.var_rank(),1);
     BOOST_CHECK_EQUAL(gview.var_stride(0),1);
     BOOST_CHECK_EQUAL(gview.var_shape(0),1);
@@ -281,15 +282,15 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
 {
-  ArrayT<POD> loc(Nl,3,2);
-  ArrayT<POD> glb(Ng,3,2);
-  ArrayT<POD> glbx1(Ng,3);
-  ArrayT<POD> glbx2(Ng,3);
-  ArrayT<POD> glb1x(Ng,2);
-  ArrayT<POD> glb2x(Ng,2);
-  ArrayT<POD> glb32(Ng);
+  array::ArrayT<POD> loc(Nl,3,2);
+  array::ArrayT<POD> glb(Ng,3,2);
+  array::ArrayT<POD> glbx1(Ng,3);
+  array::ArrayT<POD> glbx2(Ng,3);
+  array::ArrayT<POD> glb1x(Ng,2);
+  array::ArrayT<POD> glb2x(Ng,2);
+  array::ArrayT<POD> glb32(Ng);
 
-  ArrayView<POD,3> locv(loc);
+  array::ArrayView<POD,3> locv(loc);
   for(int p = 0; p < Nl; ++p)
   {
     for(int i = 0; i < 3; ++i)
@@ -491,11 +492,11 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank0_ArrayView, Fixture )
 {
-  ArrayT<POD> loc(Nl);
-  ArrayT<POD> glb(Ng);
+  array::ArrayT<POD> loc(Nl);
+  array::ArrayT<POD> glb(Ng);
 
-  ArrayView<POD,1> locv(loc);
-  ArrayView<POD,1> glbv(glb);
+  array::ArrayView<POD,1> locv(loc);
+  array::ArrayView<POD,1> glbv(glb);
   for(int p = 0; p < Nl; ++p)
   {
     locv(p) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*10 );
@@ -523,11 +524,11 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank0_ArrayView, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank1_ArrayView, Fixture )
 {
-  ArrayT<POD> loc(Nl,2);
-  ArrayT<POD> glb(Ng,2);
+  array::ArrayT<POD> loc(Nl,2);
+  array::ArrayT<POD> glb(Ng,2);
 
-  ArrayView<POD,2> locv(loc);
-  ArrayView<POD,2> glbv(glb);
+  array::ArrayView<POD,2> locv(loc);
+  array::ArrayView<POD,2> glbv(glb);
   for(int p = 0; p < Nl; ++p)
   {
     locv(p,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*10 );
@@ -557,11 +558,11 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_ArrayView, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank2_ArrayView, Fixture )
 {
-  ArrayT<POD> loc(Nl,3,2);
-  ArrayT<POD> glb(Ng,3,2);
+  array::ArrayT<POD> loc(Nl,3,2);
+  array::ArrayT<POD> glb(Ng,3,2);
 
-  ArrayView<POD,3> locv(loc);
-  ArrayView<POD,3> glbv(glb);
+  array::ArrayView<POD,3> locv(loc);
+  array::ArrayView<POD,3> glbv(glb);
   for(int p = 0; p < Nl; ++p)
   {
     for(int i = 0; i < 3; ++i)
@@ -593,11 +594,11 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2_ArrayView, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_scatter_rank2_ArrayView, Fixture )
 {
-  ArrayT<POD> loc(Nl,3,2);
-  ArrayT<POD> glb(Ng,3,2);
+  array::ArrayT<POD> loc(Nl,3,2);
+  array::ArrayT<POD> glb(Ng,3,2);
 
-  ArrayView<POD,3> locv(loc);
-  ArrayView<POD,3> glbv(glb);
+  array::ArrayView<POD,3> locv(loc);
+  array::ArrayView<POD,3> glbv(glb);
   if( eckit::mpi::rank() == 0 )
   {
     POD glb_c[] = { -1,1, -10,10, -100,100,

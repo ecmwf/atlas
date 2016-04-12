@@ -8,15 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-
 #ifndef atlas_numerics_Nabla_h
 #define atlas_numerics_Nabla_h
 
 #include "eckit/memory/Owned.h"
 
 namespace eckit { class Parametrisation; }
-namespace atlas { namespace next { class FunctionSpace; } }
-namespace atlas { class Field; }
+namespace atlas { namespace numerics { class Method; } }
+namespace atlas { namespace field { class Field; } }
 
 namespace atlas {
 namespace numerics {
@@ -24,21 +23,17 @@ namespace numerics {
 class Nabla : public eckit::Owned {
 public:
 
-  static Nabla* create(const next::FunctionSpace &);
-  static Nabla* create(const next::FunctionSpace &, const eckit::Parametrisation &);
+  static Nabla* create(const Method &);
+  static Nabla* create(const Method &, const eckit::Parametrisation &);
 
 public:
-  Nabla(const next::FunctionSpace &, const eckit::Parametrisation &);
+  Nabla(const Method &, const eckit::Parametrisation &);
   virtual ~Nabla();
 
-  virtual void gradient(const Field &scalar, Field &grad) const = 0;
-  virtual void divergence(const Field &vector, Field &div) const = 0;
-  virtual void curl(const Field &vector, Field &curl) const = 0;
-  virtual void laplacian(const Field &scalar, Field &laplacian) const = 0;
-
-private:
-  const next::FunctionSpace& fs_;
-  const eckit::Parametrisation& config_;
+  virtual void gradient(const field::Field &scalar, field::Field &grad) const = 0;
+  virtual void divergence(const field::Field &vector, field::Field &div) const = 0;
+  virtual void curl(const field::Field &vector, field::Field &curl) const = 0;
+  virtual void laplacian(const field::Field &scalar, field::Field &laplacian) const = 0;
 
 };
 
@@ -51,7 +46,7 @@ public:
      * \brief build Nabla with factory key, constructor arguments
      * \return Nabla
      */
-    static Nabla* build(const next::FunctionSpace &, const eckit::Parametrisation &);
+    static Nabla* build(const Method &, const eckit::Parametrisation &);
 
     /*!
      * \brief list all registered field creators
@@ -60,7 +55,7 @@ public:
     static bool has(const std::string& name);
 
 private:
-    virtual Nabla* make(const next::FunctionSpace &, const eckit::Parametrisation &) = 0 ;
+    virtual Nabla* make(const Method &, const eckit::Parametrisation &) = 0 ;
 
 protected:
     NablaFactory(const std::string&);
@@ -79,24 +74,24 @@ public:
     NablaBuilder(const std::string& name) : NablaFactory(name) {}
 
 private:
-    virtual Nabla* make(const next::FunctionSpace & fs, const eckit::Parametrisation & p) {
-        return new T(fs,p);
+    virtual Nabla* make(const Method &method, const eckit::Parametrisation &p) {
+        return new T(method,p);
     }
 };
 
 // ------------------------------------------------------------------
-#define NextFunctionSpace next::FunctionSpace
 #define Parametrisation eckit::Parametrisation
+#define field_Field field::Field
 extern "C" {
 
 void atlas__Nabla__delete (Nabla* This);
-Nabla* atlas__Nabla__create (const NextFunctionSpace* functionspace, const Parametrisation* params);
-void atlas__Nabla__gradient (const Nabla* This, const Field* scalar, Field* grad);
-void atlas__Nabla__divergence (const Nabla* This, const Field* vector, Field* div);
-void atlas__Nabla__curl (const Nabla* This, const Field* vector, Field* curl);
-void atlas__Nabla__laplacian (const Nabla* This, const Field* scalar, Field* laplacian);
+Nabla* atlas__Nabla__create (const Method* method, const Parametrisation* params);
+void atlas__Nabla__gradient (const Nabla* This, const field_Field* scalar, field_Field* grad);
+void atlas__Nabla__divergence (const Nabla* This, const field_Field* vector, field_Field* div);
+void atlas__Nabla__curl (const Nabla* This, const field_Field* vector, field_Field* curl);
+void atlas__Nabla__laplacian (const Nabla* This, const field_Field* scalar, field_Field* laplacian);
 }
-#undef NextFunctionSpace
+#undef field_Field
 #undef Parametrisation
 
 } // namespace numerics

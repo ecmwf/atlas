@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,9 +12,9 @@
 #include <sstream>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Parametrisation.h"
-#include "atlas/Field.h"
+#include "atlas/field/Field.h"
 #include "atlas/field/FieldCreatorArraySpec.h"
-#include "atlas/util/DataType.h"
+#include "atlas/array/DataType.h"
 
 namespace atlas {
 namespace field {
@@ -33,23 +33,23 @@ Field* FieldCreatorArraySpec::create_field( const eckit::Parametrisation& params
   else          s.assign(shape.begin(),shape.end());
 
 
-  DataType datatype = DataType::create<double>();
+  array::DataType datatype = array::DataType::create<double>();
   std::string datatype_str;
   if( params.get("datatype", datatype_str) )
   {
-    datatype = DataType(datatype_str);
+    datatype = array::DataType(datatype_str);
   }
   else
   {
-    DataType::kind_t kind(DataType::kind<double>());
+    array::DataType::kind_t kind(array::DataType::kind<double>());
     params.get("kind",kind);
-    if( ! DataType::kind_valid(kind) )
+    if( ! array::DataType::kind_valid(kind) )
     {
       std::stringstream msg;
       msg << "Could not create field. kind parameter unrecognized";
       throw eckit::Exception(msg.str());
     }
-    datatype = DataType(kind);
+    datatype = array::DataType(kind);
   }
 
   std::string name;
@@ -63,6 +63,6 @@ static FieldCreatorBuilder< FieldCreatorArraySpec > __ArraySpec("ArraySpec");
 
 // ------------------------------------------------------------------
 
-} // namespace fieldcreator
+} // namespace field
 } // namespace atlas
 

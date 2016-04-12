@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2015 ECMWF.
+! (C) Copyright 1996-2016 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -9,22 +9,22 @@
 ! C++ / Fortran Interfaces to the State Datastructure
 ! @author Willem Deconinck
 
-#include "fctest/fctest.h"
+#include "fckit/fctest.h"
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_FunctionSpace_Fixture
+module fcta_FunctionSpace_fxt
 use atlas_module
-use iso_c_binding
+use, intrinsic :: iso_c_binding
 implicit none
 
 contains
 
-end module fctest_atlas_FunctionSpace_Fixture
+end module
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_FunctionSpace,fctest_atlas_FunctionSpace_Fixture)
+TESTSUITE_WITH_FIXTURE(fcta_FunctionSpace,fcta_FunctionSpace_fxt)
 
 ! -----------------------------------------------------------------------------
 
@@ -41,17 +41,20 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_nodes )
-type(atlas_ReducedGrid) :: grid
+type(atlas_grid_Structured) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
-type(atlas_functionspace_Nodes) :: fs
+type(atlas_functionspace_NodeColumns) :: fs
 type(atlas_Field) :: field, template
 type(atlas_mesh_Nodes) :: nodes
 integer :: halo_size, nb_nodes
 halo_size = 1
 
-grid = atlas_ReducedGrid("N24")
-mesh = atlas_generate_mesh(grid)
-fs = atlas_functionspace_Nodes(mesh,halo_size)
+grid = atlas_grid_Structured("N24")
+meshgenerator = atlas_meshgenerator_Structured()
+mesh = meshgenerator%generate(grid)
+call meshgenerator%final()
+fs = atlas_functionspace_NodeColumns(mesh,halo_size)
 nodes = fs%nodes()
 nb_nodes = fs%nb_nodes()
 write(atlas_log%msg,*) "nb_nodes = ",nb_nodes; call atlas_log%info()
@@ -133,17 +136,20 @@ END_TEST
 
 
 TEST( test_nodescolumns )
-type(atlas_ReducedGrid) :: grid
+type(atlas_grid_Structured) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
-type(atlas_functionspace_Nodes) :: fs
+type(atlas_functionspace_NodeColumns) :: fs
 type(atlas_Field) :: field, template
 integer :: halo_size, levels
 halo_size = 1
 levels = 10
 
-grid = atlas_ReducedGrid("N24")
-mesh = atlas_generate_mesh(grid)
-fs = atlas_functionspace_Nodes(mesh,halo_size)
+grid = atlas_grid_Structured("N24")
+meshgenerator = atlas_meshgenerator_Structured()
+mesh = meshgenerator%generate(grid)
+call meshgenerator%final()
+fs = atlas_functionspace_NodeColumns(mesh,halo_size)
 
 !levels = fs%nb_levels()
 write(atlas_log%msg,*) "nb_levels = ",levels; call atlas_log%info()
@@ -224,9 +230,10 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_collectives )
-type(atlas_ReducedGrid) :: grid
+type(atlas_grid_Structured) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
-type(atlas_functionspace_Nodes) :: fs2d
+type(atlas_functionspace_NodeColumns) :: fs2d
 type(atlas_Field) :: field, global, scal
 real(c_float), pointer :: scalvalues(:)
 real(c_float), pointer :: values(:,:)
@@ -239,9 +246,11 @@ integer(ATLAS_KIND_GIDX), allocatable :: glb_idxv (:)
 halo_size = 1
 levels = 10
 
-grid = atlas_ReducedGrid("N24")
-mesh = atlas_generate_mesh(grid)
-fs2d = atlas_functionspace_Nodes(mesh,halo_size)
+grid = atlas_grid_Structured("N24")
+meshgenerator = atlas_meshgenerator_Structured()
+mesh = meshgenerator%generate(grid)
+call meshgenerator%final()
+fs2d = atlas_functionspace_NodeColumns(mesh,halo_size)
 
 field  = fs2d%create_field("",atlas_real(c_float),[2])
 global = fs2d%create_global_field("",field)
@@ -254,8 +263,8 @@ call fs2d%gather(field,global)
 call fs2d%halo_exchange(field)
 call fs2d%scatter(global,field)
 
-call field%access_data(values)
-call scal%access_data(scalvalues)
+call field%data(values)
+call scal%data(scalvalues)
 values = 2.
 scalvalues = 2.
 
@@ -311,7 +320,7 @@ call fs2d%gather(field,global)
 call fs2d%halo_exchange(field)
 call fs2d%scatter(global,field)
 
-call field%access_data(values3d)
+call field%data(values3d)
 values3d = 2.
 
 call atlas_log%info(fs2d%checksum(field))
@@ -323,6 +332,111 @@ call mesh%final()
 call grid%final()
 
 END_TEST
+
+
+
+
+! -----------------------------------------------------------------------------
+
+
+TEST( test_edges )
+type(atlas_grid_Structured) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
+type(atlas_Mesh) :: mesh
+type(atlas_functionspace_EdgeColumns) :: fs
+type(atlas_Field) :: field, template
+type(atlas_mesh_Edges) :: edges
+integer :: halo_size, nb_edges
+halo_size = 0
+
+grid = atlas_grid_Structured("N24")
+meshgenerator = atlas_meshgenerator_Structured()
+mesh = meshgenerator%generate(grid)
+FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
+edges = mesh%edges()
+FCTEST_CHECK_EQUAL( edges%owners(), 3 ) ! Mesh holds 2 references (facets == edges)
+fs = atlas_functionspace_EdgeColumns(mesh)
+FCTEST_CHECK_EQUAL( mesh%owners(), 2 )
+FCTEST_CHECK_EQUAL( edges%owners(), 3 )
+edges = fs%edges()
+FCTEST_CHECK_EQUAL( edges%owners(), 3 )
+nb_edges = fs%nb_edges()
+write(atlas_log%msg,*) "nb_edges = ",nb_edges; call atlas_log%info()
+
+field = fs%create_field("",atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field("field",atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field("",atlas_real(c_float),(/2/))
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_field("field",atlas_integer(c_int),(/2,2/))
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+template = field
+
+field = fs%create_field("",template)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_field("field",template)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+call field%final()
+call template%final()
+
+
+field = fs%create_global_field("",atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_global_field("field",atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_global_field("",atlas_real(c_float),(/2/))
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_global_field("field",atlas_integer(c_int),(/2,2/))
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+template = field
+
+field = fs%create_global_field("",template)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_global_field("field",template)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+call field%final()
+call template%final()
+
+call fs%final()
+call edges%final()
+call mesh%final()
+call grid%final()
+
+END_TEST
+
 
 ! -----------------------------------------------------------------------------
 

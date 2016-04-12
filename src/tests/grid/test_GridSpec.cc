@@ -24,13 +24,13 @@
 
 #include "atlas/mpi/mpi.h"
 #include "atlas/io/Grib.h"
-#include "atlas/grids/grids.h"
+#include "atlas/grid/grid.h"
 
 using namespace std;
 using namespace eckit;
 using namespace eckit::grib;
-using namespace atlas::io;
-using namespace atlas::grids;
+using namespace atlas::util::io;
+using namespace atlas::grid;
 
 
 namespace atlas {
@@ -49,14 +49,14 @@ struct MPIFixture {
     ~MPIFixture() { eckit::mpi::finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( MPIFixture )
+BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 BOOST_AUTO_TEST_SUITE( TestGridSpec )
 
 // Allow access to the argc/argv inside of boost test
 struct ArgsFixture {
-   ArgsFixture(): argc(boost::framework::master_test_suite().argc),
-                   argv(boost::framework::master_test_suite().argv){}
+   ArgsFixture(): argc(boost::unit_test::framework::master_test_suite().argc),
+                  argv(boost::unit_test::framework::master_test_suite().argv){}
    int argc;
    char **argv;
 };
@@ -66,7 +66,7 @@ BOOST_FIXTURE_TEST_CASE ( test_grib_to_grid_to_gridspec, ArgsFixture ) {
     if (argc == 2) cout << argv[1];
     cout << "\n";
     BOOST_REQUIRE_MESSAGE( argc == 2, "You missed filename argument" );
-    atlas::grids::load();
+    atlas::grid::load();
     test_grib_file(argv[1]);
 }
 
@@ -116,7 +116,7 @@ static void test_grib_file(const std::string& fpath)
 
 
    // From the Spec, create another Grid, we should get back the same Grid
-   Grid::Ptr grid_created_from_spec ( Grid::create( Config(g_spec) ) );
+   Grid::Ptr grid_created_from_spec ( Grid::create( util::Config(g_spec) ) );
    BOOST_CHECK_MESSAGE(grid_created_from_spec,"Failed to create GRID from GridSpec");
    bool grid_compare = grid_created_from_grib->same(*grid_created_from_spec);
    BOOST_CHECK_MESSAGE(grid_compare,"The grids are different");
@@ -138,7 +138,7 @@ static void test_grib_file(const std::string& fpath)
 
       if (read_from_grib) {
          // Create on the fly, this will compute no of pts per latitude on the fly
-         ReducedGaussianGrid reducedgg(read_from_grib->N(),read_from_grib->points_per_latitude().data());
+         ReducedGaussianGrid reducedgg(read_from_grib->N(),read_from_grib->nlon().data());
          BOOST_CHECK_MESSAGE(read_from_grib->npts_per_lat() == reducedgg.npts_per_lat(),"Pts per latitide read from grib, different to computed pts per latitude");
       }
    }

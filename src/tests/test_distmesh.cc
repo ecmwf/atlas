@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -14,41 +14,40 @@
 #define BOOST_TEST_MODULE TestDistributeMesh
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas.h"
 #include "tests/TestMeshes.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/Mesh.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/FunctionSpace.h"
-#include "atlas/util/IndexView.h"
-#include "atlas/util/ArrayView.h"
-#include "atlas/actions/BuildHalo.h"
-#include "atlas/actions/BuildParallelFields.h"
-#include "atlas/actions/BuildPeriodicBoundaries.h"
-#include "atlas/actions/BuildEdges.h"
-#include "atlas/actions/BuildDualMesh.h"
-#include "atlas/actions/DistributeMesh.h"
-#include "atlas/actions/WriteLoadBalanceReport.h"
-#include "atlas/Parameters.h"
-#include "atlas/grids/rgg/rgg.h"
-#include "atlas/util/IsGhost.h"
+#include "atlas/array/IndexView.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/mesh/actions/BuildHalo.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
+#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
+#include "atlas/mesh/actions/BuildEdges.h"
+#include "atlas/mesh/actions/BuildDualMesh.h"
+#include "atlas/mesh/actions/WriteLoadBalanceReport.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/grid/global/gaussian/classic/N.h"
+#include "atlas/internals/IsGhost.h"
+#include "atlas/runtime/Log.h"
 
 using namespace atlas;
-using namespace atlas::io;
-using namespace atlas::meshgen;
+using namespace atlas::util::io;
+using namespace atlas::mesh::generators;
 using namespace atlas::util;
 
 namespace atlas {
 namespace test {
 
-double dual_volume(Mesh& mesh)
+double dual_volume(mesh::Mesh& mesh)
 {
   mesh::Nodes& nodes = mesh.nodes();
-  IsGhost is_ghost_node(nodes);
+  internals::IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.size();
-  ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
+  array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {
@@ -66,12 +65,12 @@ struct MPIFixture {
     ~MPIFixture()  { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( MPIFixture )
+BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {
   // Every task builds full mesh
-  meshgen::ReducedGridMeshGenerator generate;
+  mesh::generators::Structured generate;
   generate.options.set("nb_parts",1);
   generate.options.set("part",0);
 
@@ -79,28 +78,28 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
       // test::TestGrid grid(5,lon);
 
       //  GG grid(120,60);
-  grids::rgg::N16 grid;
+  grid::global::gaussian::ClassicGaussian grid(16);
 
 
   generate.options.set("nb_parts", eckit::mpi::size());
   generate.options.set("part", eckit::mpi::rank());
 
-  Mesh::Ptr m( generate( grid ) );
+  mesh::Mesh::Ptr m( generate( grid ) );
 
-  Mesh::Id meshid = m->id();
+  mesh::Mesh::Id meshid = m->id();
 
-      //  Mesh::Ptr m( Gmsh::read("unstr.msh") );
+      //  mesh::Mesh::Ptr m( Gmsh::read("unstr.msh") );
 
 //  actions::distribute_mesh(*m);
 
-  actions::build_parallel_fields(*m);
-  actions::build_periodic_boundaries(*m);
-  actions::build_halo(*m,1);
-  //actions::renumber_nodes_glb_idx(m->nodes());
-  actions::build_edges(*m);
-  actions::build_pole_edges(*m);
-  actions::build_edges_parallel_fields(m->function_space("edges"),m->nodes());
-  actions::build_median_dual_mesh(*m);
+  mesh::actions::build_parallel_fields(*m);
+  mesh::actions::build_periodic_boundaries(*m);
+  mesh::actions::build_halo(*m,1);
+  //mesh::actions::renumber_nodes_glb_idx(m->nodes());
+  mesh::actions::build_edges(*m);
+  mesh::actions::build_pole_edges(*m);
+  mesh::actions::build_edges_parallel_fields(*m);
+  mesh::actions::build_median_dual_mesh(*m);
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 360.*180., 0.0001 );
   double difference = 360.*180. - test::dual_volume(*m);
   if( difference > 1e-8 )
@@ -111,38 +110,38 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   std::stringstream filename; filename << "N32_dist.msh";
   Gmsh().write(*m,filename.str());
 
-  actions::write_load_balance_report(*m,"load_balance.dat");
+  mesh::actions::write_load_balance_report(*m,"load_balance.dat");
 
-  Mesh& mesh1 = Mesh::from_id(meshid);
+  mesh::Mesh& mesh1 = mesh::Mesh::from_id(meshid);
   BOOST_CHECK(mesh1.grid().same(grid));
 
 
 
-  const ArrayView<int,1> part( m->nodes().partition() );
-  const ArrayView<int,1> ghost( m->nodes().ghost() );
-  const ArrayView<int,1> flags( m->nodes().field("flags") );
+  const array::ArrayView<int,1> part( m->nodes().partition() );
+  const array::ArrayView<int,1> ghost( m->nodes().ghost() );
+  const array::ArrayView<int,1> flags( m->nodes().field("flags") );
 
-  eckit::Log::info() << "partition = [ ";
+  Log::info() << "partition = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )
   {
-    eckit::Log::info() << part(jnode) << " ";
+    Log::info() << part(jnode) << " ";
   }
-  eckit::Log::info() << "]" << std::endl;
+  Log::info() << "]" << std::endl;
 
-  eckit::Log::info() << "ghost     = [ ";
+  Log::info() << "ghost     = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )
   {
-    eckit::Log::info() << ghost(jnode) << " ";
+    Log::info() << ghost(jnode) << " ";
   }
-  eckit::Log::info() << "]" << std::endl;
+  Log::info() << "]" << std::endl;
 
-  eckit::Log::info() << "flags     = [ ";
+  Log::info() << "flags     = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )
   {
-    eckit::Log::info() << util::Topology::check(flags(jnode),util::Topology::GHOST) << " ";
-    BOOST_CHECK_EQUAL( util::Topology::check(flags(jnode),util::Topology::GHOST), ghost(jnode) );
+    Log::info() << internals::Topology::check(flags(jnode),internals::Topology::GHOST) << " ";
+    BOOST_CHECK_EQUAL( internals::Topology::check(flags(jnode),internals::Topology::GHOST), ghost(jnode) );
   }
-  eckit::Log::info() << "]" << std::endl;
+  Log::info() << "]" << std::endl;
 
 }
 

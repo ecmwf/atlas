@@ -5,12 +5,6 @@ ecbuild_add_executable(
   LIBS        atlas )
 
 ecbuild_add_executable(
-  TARGET      grib_to_gmsh
-  SOURCES     grib_to_gmsh.cc
-  LIBS        atlas
-  CONDITION   HAVE_GRID AND HAVE_GRIB )
-
-ecbuild_add_executable(
   TARGET      gmsh_ls
   SOURCES     gmsh_ls.cc
   LIBS        atlas
@@ -21,10 +15,10 @@ ecbuild_add_executable(
   SOURCES     atlas-meshgen.cc
   LIBS        atlas )
 
-  ecbuild_add_executable(
-    TARGET      atlas-loadbalance
-    SOURCES     atlas-loadbalance.cc
-    LIBS        atlas )
+ecbuild_add_executable(
+  TARGET      atlas-loadbalance
+  SOURCES     atlas-loadbalance.cc
+  LIBS        atlas )
 
 ecbuild_add_executable(
   TARGET      atlas-gmsh-extract
@@ -45,3 +39,10 @@ ecbuild_add_executable(
   TARGET      atlas-benchmark
   SOURCES     atlas-benchmark.cc
   LIBS        atlas )
+
+ecbuild_add_executable(
+  TARGET      atlas-numerics-nabla
+  SOURCES     atlas-numerics-nabla.F90
+  LIBS        atlas_f
+  CONDITION   HAVE_FORTRAN )
+

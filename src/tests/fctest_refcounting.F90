@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2015 ECMWF.
+! (C) Copyright 1996-2016 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -6,19 +6,19 @@
 ! does it submit to any jurisdiction.
 
 
-#include "fctest/fctest.h"
+#include "fckit/fctest.h"
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_refcounting_fixture
+module fcta_refcounting_fxt
 use atlas_refcounted_module, only: atlas_RefCounted
-use atlas_module, only: atlas__Mesh__delete, atlas__Mesh__new
 use fctest
 implicit none
 
 type, extends(atlas_RefCounted) :: RefObj
 contains
   procedure :: delete => RefObj__delete
+  procedure :: copy => RefObj__copy
 endtype
 
 interface RefObj
@@ -36,6 +36,7 @@ function create_obj(id) result(obj)
 end function
 
 function RefObj__constructor(id) result(obj)
+  use atlas_mesh_c_binding
   type(RefObj) :: obj
   integer :: id
   write(0,*) "constructing obj ", id
@@ -44,11 +45,19 @@ function RefObj__constructor(id) result(obj)
 end function
 
 subroutine RefObj__delete(this)
+  use atlas_mesh_c_binding
   class(RefObj), intent(inout) :: this
   write(0,*) "deleting obj"!,this%id
   if( .not. this%is_null() ) call atlas__Mesh__delete(this%c_ptr())
   call this%reset_c_ptr()
   write(0,*) "deleting obj"!,this%id, "done"
+end subroutine
+
+
+subroutine RefObj__copy(this,obj_in)
+  class(RefObj), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+  write(0,*) "copy obj"
 end subroutine
 
 subroutine consume_new_obj(obj)
@@ -70,11 +79,11 @@ subroutine consume_obj(obj)
   call obj%final()
 end subroutine
 
-end module fctest_atlas_refcounting_fixture
+end module fcta_refcounting_fxt
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_refcounting,fctest_atlas_refcounting_fixture)
+TESTSUITE_WITH_FIXTURE(fctest_atlas_refcounting,fcta_refcounting_fxt)
 
 ! -----------------------------------------------------------------------------
 

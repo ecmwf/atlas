@@ -1,12 +1,14 @@
 #include "eckit/log/CodeLocation.h"
 #include "eckit/os/BackTrace.h"
-#include "atlas/runtime/ErrorHandling.h"
 #include "eckit/config/Resource.h"
-#include "atlas/mpi/mpi.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 using namespace atlas;
 
 namespace atlas {
+namespace runtime {
 
 Error::Error()
 {
@@ -57,7 +59,7 @@ void handle_error(const eckit::Exception& exception, const int err_code)
 
   if( Error::instance().aborts() )
   {
-    eckit::Log::error() << msg.str() << std::endl;
+    Log::error() << msg.str() << std::endl;
     MPI_Abort(eckit::mpi::comm(), err_code);
   }
   if( Error::instance().throws() )
@@ -67,11 +69,11 @@ void handle_error(const eckit::Exception& exception, const int err_code)
 
 }
 
-}
+} // namespace runtime
+} // namespace atlas
 
 using eckit::CodeLocation;
 using eckit::Exception;
-using eckit::Log;
 using eckit::BackTrace;
 using eckit::Exception;
 using eckit::NotImplemented;
@@ -83,38 +85,38 @@ using eckit::SeriousBug;
 
 void atlas__Error_set_aborts (int on_off)
 {
-  Error::instance().set_aborts(on_off);
+  atlas::runtime::Error::instance().set_aborts(on_off);
 }
 
 void atlas__Error_set_throws (int on_off)
 {
-  Error::instance().set_throws(on_off);
+  atlas::runtime::Error::instance().set_throws(on_off);
 }
 
 void atlas__Error_set_backtrace (int on_off)
 {
-  Error::instance().set_backtrace(on_off);
+  atlas::runtime::Error::instance().set_backtrace(on_off);
 }
 
 void atlas__Error_success ()
 {
-  Error::instance().set_code(atlas_err_noerr);
-  Error::instance().set_msg(std::string());
+  atlas::runtime::Error::instance().set_code(atlas::runtime::atlas_err_noerr);
+  atlas::runtime::Error::instance().set_msg(std::string());
 }
 
 void atlas__Error_clear ()
 {
-  Error::instance().clear();
+  atlas::runtime::Error::instance().clear();
 }
 
 int atlas__Error_code()
 {
-  return Error::instance().code();
+  return atlas::runtime::Error::instance().code();
 }
 
 char* atlas__Error_msg()
 {
-  return const_cast<char*>(Error::instance().msg().c_str());
+  return const_cast<char*>(atlas::runtime::Error::instance().msg().c_str());
 }
 
 template< typename EXCEPTION>
@@ -133,37 +135,37 @@ EXCEPTION create_exception(char* msg, char* file, int line, char* function)
 void atlas__throw_exception(char* msg, char* file, int line, char* function)
 {
   Exception exception ( create_exception<Exception>(msg,file,line,function) );
-  handle_error(exception,atlas_err_exception);
+  atlas::runtime::handle_error(exception, atlas::runtime::atlas_err_exception);
 }
 
 void atlas__throw_notimplemented (char* msg, char* file, int line, char* function)
 {
   NotImplemented exception ( create_exception<NotImplemented>(msg,file,line,function) );
-  handle_error(exception,atlas_err_notimplemented);
+  atlas::runtime::handle_error(exception, atlas::runtime::atlas_err_notimplemented);
 }
 
 void atlas__throw_outofrange (char* msg, char* file, int line, char* function)
 {
   OutOfRange exception ( create_exception<OutOfRange>(msg,file,line,function) );
-  handle_error(exception,atlas_err_outofrange);
+  atlas::runtime::handle_error(exception, atlas::runtime::atlas_err_outofrange);
 }
 
 void atlas__throw_usererror (char* msg, char* file, int line, char* function)
 {
   UserError exception ( create_exception<UserError>(msg,file,line,function) );
-  handle_error(exception,atlas_err_usererror);
+  atlas::runtime::handle_error(exception, atlas::runtime::atlas_err_usererror);
 }
 
 void atlas__throw_assertionfailed (char* msg, char* file, int line, char* function)
 {
   AssertionFailed exception ( create_exception<AssertionFailed>(msg,file,line,function) );
-  handle_error(exception,atlas_err_assertionfailed);
+  atlas::runtime::handle_error(exception, atlas::runtime::atlas_err_assertionfailed);
 }
 
 void atlas__throw_seriousbug (char* msg, char* file, int line, char* function)
 {
   SeriousBug exception ( create_exception<SeriousBug>(msg,file,line,function) );
-  handle_error(exception,atlas_err_seriousbug);
+  atlas::runtime::handle_error(exception, atlas::runtime::atlas_err_seriousbug);
 }
 
 void atlas__abort(char* msg, char* file, int line, char* function )

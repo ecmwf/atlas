@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -17,7 +17,7 @@
 #include "atlas/field/FieldCreator.h"
 
 namespace eckit { class Parametrisation; }
-namespace atlas { class Field; }
+namespace atlas { namespace field { class Field; } }
 
 namespace atlas {
 namespace field {
@@ -25,13 +25,13 @@ namespace field {
 // ------------------------------------------------------------------
 
 /*!
- * \brief Field creator using ArrayShape parametrisation
+ * \brief Field creator using array::ArrayShape parametrisation
  * \code{.cpp}
  *    Field* field = Field::create(
  *         Config
  *           ("creator","ArraySpec")     // ArraySpec FieldCreator
- *           ("shape",make_shape(100,3))  // Rank 2 field with indexing [100][3]
- *           ("datatype",DataType::real64()) // Field internal data type
+ *           ("shape",array::make_shape(100,3))  // Rank 2 field with indexing [100][3]
+ *           ("datatype",array::DataType::real64()) // Field internal data type
  *         );
  * \endcode
  */

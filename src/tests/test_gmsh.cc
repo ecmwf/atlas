@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -13,15 +13,15 @@
 
 #include "tests/TestMeshes.h"
 #include "atlas/atlas.h"
-#include "atlas/mpi/mpi.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/util/Debug.h"
-#include "atlas/Mesh.h"
-#include "atlas/actions/BuildParallelFields.h"
-#include "atlas/actions/BuildPeriodicBoundaries.h"
-#include "atlas/actions/BuildHalo.h"
-#include "atlas/actions/BuildEdges.h"
-#include "atlas/actions/BuildDualMesh.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/internals/Debug.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
+#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
+#include "atlas/mesh/actions/BuildHalo.h"
+#include "atlas/mesh/actions/BuildEdges.h"
+#include "atlas/mesh/actions/BuildDualMesh.h"
 
 namespace atlas {
 namespace test {
@@ -32,21 +32,22 @@ struct AtlasFixture {
     ~AtlasFixture() { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture )
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_read_write )
 {
     using namespace atlas;
-    using namespace atlas::io;
+    using namespace atlas::util::io;
 
-    // Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
-    Mesh::Ptr mesh = test::generate_mesh(grids::rgg::N128());
+    // mesh::Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
+    mesh::Mesh::Ptr mesh = test::generate_mesh(
+       grid::global::gaussian::ClassicGaussian(128) );
 
     Gmsh gmsh;
     gmsh.options.set("ascii",true);
     gmsh.write(*mesh,"mesh.msh");
 
-    BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh().read( "mesh.msh" ) ) );
+    BOOST_REQUIRE_NO_THROW( mesh = mesh::Mesh::Ptr( Gmsh().read( "mesh.msh" ) ) );
 }
 
 } // namespace test

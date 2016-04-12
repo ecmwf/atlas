@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 1996-2016 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -13,13 +13,13 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/geometry/Point3.h"
-#include "atlas/geometry/Quad3D.h"
+#include "atlas/interpolation/Ray.h"
+#include "atlas/interpolation/Quad3D.h"
 
 using eckit::geometry::Point3;
-using eckit::geometry::points_equal;
-using atlas::geometry::Quad3D;
-using atlas::geometry::Intersect;
-using atlas::geometry::Ray;
+using atlas::interpolation::Quad3D;
+using atlas::interpolation::Intersect;
+using atlas::interpolation::Ray;
 
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -12,4 +12,5 @@
 #set(CMAKE_Fortran_LINK_FLAGS  "-L/usr/local/apps/gcc/4.8.1/LP64/lib/gcc/x86_64-suse-linux/4.8.1/")
 #link_directories("/usr/local/apps/gcc/4.8.1/LP64/lib/gcc/x86_64-suse-linux/4.8.1/")
 
-SET(ENABLE_MPI  OFF   CACHE BOOL "Disable MPI")
+SET(ENABLE_MPI      OFF  CACHE BOOL "Disable MPI")
+SET(ENABLE_SANDBOX  OFF  CACHE BOOL "Disable sandbox")

@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2014 ECMWF.
+# (C) Copyright 1996-2016 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -6,18 +6,19 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-set( BOOST_UNIT_TEST_FRAMEWORK_LINKED OFF )
 
-ecbuild_add_test( TARGET atlas_test_nabla_EdgeBasedFiniteVolume
+ecbuild_add_test( TARGET atlas_test_fvm_nabla
   BOOST
-  SOURCES   test_nabla_EdgeBasedFiniteVolume.cc
+  MPI       1
+  SOURCES   test_fvm_nabla.cc
   LIBS      atlas
 )
 
 if( HAVE_FCTEST)
-  add_fctest( TARGET atlas_fctest_nabla_EdgeBasedFiniteVolume
+  add_fctest( TARGET atlas_fctest_fvm_nabla
     LINKER_LANGUAGE Fortran
-    SOURCES         fctest_nabla_EdgeBasedFiniteVolume.F90
+    MPI             1
+    SOURCES         fctest_fvm_nabla.F90
     LIBS            atlas_f
   )
 endif()

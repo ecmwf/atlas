@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2015 ECMWF.
+! (C) Copyright 1996-2016 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -9,7 +9,7 @@
 ! C++ / Fortran Interfaces to the Mesh Datastructure
 ! @author Willem Deconinck
 
-#include "fctest/fctest.h"
+#include "fckit/fctest.h"
 
 ! -----------------------------------------------------------------------------
 
@@ -24,6 +24,7 @@ end module fctest_atlas_Config_fixture
 TESTSUITE_WITH_FIXTURE(fctest_atlas_Config,fctest_atlas_Config_fixture)
 
 ! -----------------------------------------------------------------------------
+
 TESTSUITE_INIT
   call atlas_init()
 END_TESTSUITE_INIT
@@ -133,6 +134,8 @@ TEST( test_parametrisation )
 
 END_TEST
 
+! -----------------------------------------------------------------------------
+
 TEST(test_parametrisation_json_string)
  type(atlas_Config) :: params
  type(atlas_Config), allocatable :: records(:)
@@ -206,6 +209,29 @@ TEST(test_parametrisation_json_file)
  call params%final()
 
 END_TEST
+
+! -----------------------------------------------------------------------------
+
+TEST(test_json_file)
+ type(atlas_JSON) :: json
+ type(atlas_Config) :: config
+
+ ! Write a json file
+ OPEN (UNIT=9 , FILE="fctest_parametrisation.json", STATUS='REPLACE')
+ write(9,'(A)') '{"location":{"city":"Reading","company":"ECMWF","street":"Shinfield Road"},'//&
+ &'"records":[{"age":42,"name":"Anne"},{"age":36,"name":"Bob"}]}'
+ CLOSE(9)
+
+ json = atlas_JSON( atlas_PathName("fctest_parametrisation.json") )
+ 
+ call atlas_log%info("json = "//json%str())
+ 
+ config = atlas_Config( json )
+ 
+ call atlas_log%info("config = "//config%json())
+
+END_TEST
+
 ! -----------------------------------------------------------------------------
 
 END_TESTSUITE
