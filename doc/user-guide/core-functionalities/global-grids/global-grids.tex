@@ -13,8 +13,7 @@ divide the various global grids available in the following
 macro areas:
 %
 \begin{itemize}
-\item Icosahedral grids,
-\item Reduced grids,
+\item Structured grids,
 \item Unstructured grids.
 \end{itemize} 
 %
@@ -22,18 +21,12 @@ and we will specify the keys needed to automatically generate
 a given grid in both C++ and Fortran. Note that it is also possible 
 to create a grid manually, however this approach is not currently 
 explained in this document.
-It is also important to remark that for the first two macro typologies 
-of grids, icosahedral and reduced, the memory footprint is negligible 
-since the information regarding the points are not stored but are computed
-at runtime when requested.
+It is also important to remark that for the Structured grids, the memory
+footprint is negligible since the information regarding the points are not 
+stored but are computed at runtime when requested.
 The last typology, unstructured, has instead a non-negligible memory 
 footprint since in this case the points are effectively stored in memory.
 
-
-
-\section{Icosahedral Grids}
-The key identifying an icosahedral grid is ...
- 
 \subsection{C++ version}
 Coming soon ...
 
@@ -42,10 +35,10 @@ Coming soon ...
 
 
 
-\section{Reduced Grids}
-There exists various subsets of reduced grids in \Atlas.
-All of them can be constructed using the same constructor
-called \inltc{ReducedGrid}. In particular, we need to pass 
+\section{Structured Grids}
+There exists various subsets of structured grids in \Atlas.
+All of them can be constructed using the same method
+called \inltc{Structured::create()}. In particular, we need to pass 
 a predefined key identifying the grid we want to create 
 to the constructor in order to generate the object grid. 
 This object, in turn, contains various methods that allows 
@@ -53,26 +46,26 @@ the user to retrieve the number of points of the generated
 grid, the number of longitudes and latitudes, and the 
 coordinates a given longitude and latitude.
 
-The predefined keys existing in \Atlas for reduced grids 
+The predefined keys existing in \Atlas for Gaussian grids 
 are reported in the following:
 %
 \begin{itemize}
-\item Reduced Gaussian grid --- \inltc{N\#},
-\item Gaussian grid --- \inltc{F\#},
+\item Classic reduced Gaussian grid --- \inltc{N\#},
+\item Regular Gaussian grid --- \inltc{F\#},
 \item Octahedral reduced Gaussian grid --- \inltc{O\#},
 \end{itemize}
 %
 where \inltc{\#} represents the number of latitudes 
-in one emisphere.
+in one hemisphere.
 %
 \begin{itemize}
-\item LonLatGrid --- \inltc{ll.\#$\times$\#}
-\item StaggeredLonLatGrid --- \inltc{sll.\#$\times$\#}
+\item RegularLonLat --- \inltc{L\#} or \inltc{L\#$\times$\#}
+\item ShiftedLonLat --- \inltc{S\#} or \inltc{S\#$\times$\#}
 \end{itemize}
 %
-where the first \inltc{\#} represents the total number 
-of longitudes, while the second specifies the total number 
-of latitudes from pole to pole.
+where in the alternative key, the first \inltc{\#} represents the total number 
+of longitudes, while the second \inltc{\#} specifies the total number of 
+latitudes from pole to pole.
 
 In the next two subsections we will present two simple 
 examples, the first in C++ and the second in Fortran, 
@@ -81,35 +74,33 @@ just outlined. We will also show how to retrieve some
 useful information regarding the grid generated.
 
 \subsection{C++ version}
-The \lista{Reduced-C} shows how to construct a generic 
-reduced grid that can be specified as a command line 
-argument. In particular, we use the third-party \textit{eckit} 
-object called \inltc{Resource} to define the command-line 
+The \lista{Structured-C} shows how to construct a generic 
+structured grid that can be specified as a command line 
+argument. In particular, we use the
+\inltc{eckit::Resource} object to define the command-line 
 behaviour (see line 14 of the listing below). Note that 
 it is necessary to include the eckit header file called 
-\inltc{Resource.h} (see line 3) in order to be able to 
-use the \textit{eckit} \inltc{Resource} object. 
-For using \inltc{Resource}, we need the eckit namespace 
-\inltc{eckit::Resource} as well as the type of command-line 
-argument we intend to pass - in this case a string.
+\inltc{eckit/config/Resource.h} (see line 3) in order to be able to 
+use the \inltc{eckit::Resource} object. A default value for the grid resource 
+is specified if no command line argument is provided.
 
 %
 \lstinputlisting[caption=Generating a Gaussian grid with 
-\Atlas using C++, style=CStyle, label=Reduced-C]{global-grids-Reduced.cc}
+\Atlas using C++, style=CStyle, label=Structured-C]{global-grids-Structured.cc}
 %
 Once defined the command-line behaviour, we create the global 
-reduced-grid object (see line 16). In particular, we call the 
-reduced-grid constructor passing the command-line string (that 
+grid object (see line 16). In particular, we call the 
+grid constructor passing the command-line string (that 
 represents the key of the grid we want to create) to it.
 The default value is set to \inltc{N32}, that represents 
-a reduced Gaussian grid with 32 latitudes in one emisphere 
+a classic reduced Gaussian grid with 32 latitudes in one hemisphere 
 (i.e. 64 latitudes in total).  
 The command-line string (i.e. the key) must be contained 
 in the predefined keys for reduced grid generation as specified 
-before. If the user uses a non-existent keyword, it will 
+before. If the user uses a non-existent keyword, there will 
 appear an error message.
-The reduced-grid object, \inltc{grid}, is 
-a \inltc{ReducedGrid} type and it will allow 
+The grid object, \inltc{grid}, is 
+a \inltc{Structured} type and it will allow 
 us to access some useful information about the grid.  
 
 It is now possible to run this simple program by using one 
@@ -118,11 +109,11 @@ an \Atlas predefined grid. For instance, we can execute the
 following command line
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-global-grids-Reduced --grid O32
+./atlas_c-global-grids-Structured --grid O32
 \end{lstlisting}
 % 
 This will generate an octahedral reduced Gaussian grid with 
-32 latitudes on one emisphere (i.e. 64 latitudes in total).
+32 latitudes on one hemisphere (i.e. 64 latitudes in total).
 Note that we used the additional command-line argument 
 \inlsh{\ddash{grid}} and then specified the key identifier 
 for the grid. This behaviour is what we have specified 
@@ -132,7 +123,7 @@ The output to the screen of the code we just executed
 contains some useful information regarding the grid. 
 
 In particular, the first three numbers represent the 
-number of latitudes, longitudes and points of the reduced
+number of latitudes, longitudes and points of the structured
 grid, respectively. Note that we can directly access them 
 through the \inltc{grid} object (see lines 19, 20, 21).
 \begin{tipbox}
@@ -141,13 +132,13 @@ any argument to the function retrieving the information. On the
 other hand, for the number of longitudes we do need to additionally 
 provide the index of a specific latitude, since the number of 
 longitudes may depend on the latitude (see \chap{chap:structure} 
-for more details on how a reduced grid is constructed). 
+for more details on how a structured grid is constructed). 
 \end{tipbox}
 
 The last three numbers represent the coordinates of a given 
 latitude, longitude and both longitude and latitude together, 
 respectively. Note again how these information can be directly 
-accessed through the object \inltc{reducedGrid}. 
+accessed through the object \inltc{grid}. 
 Also, for retrieving a given latitude coordinate it is just 
 necessary to specify one index that refers to that particular 
 latitude (see line 26). On the other hand, for a given longitude 
@@ -156,12 +147,12 @@ of the longitude, since the longitude may depend on the latitude
 (see line 27 and 24).
 
 You can now play with the command-line argument to generate 
-different types of global reduced grid using the keys introduced 
+different types of global structured grid using the keys introduced 
 at the beginning of this section!
 
 \subsection{Fortran version}
-The \lista{Reduced-F} shows how to construct a generic 
-reduced grid that can be specified as a command line 
+The \lista{Structured-F} shows how to construct a generic 
+structured grid that can be specified as a command line 
 argument. In particular, we use the third-party \textit{eckit} 
 object called \inltc{atlas\_resource} (the Fortran interface 
 for the eckit \inltc{Resource} object is defined in \Atlas) 
@@ -170,22 +161,22 @@ listing below).
 
 %
 \lstinputlisting[caption=Generating a Gaussian grid with \Atlas 
-using Fortran, style=FStyle, label=Reduced-F]{global-grids-Reduced.F90}
+using Fortran, style=FStyle, label=Structured-F]{global-grids-Structured.F90}
 %
 
 Once defined the command-line behaviour, we create the global 
-reduced-grid object (see line 12). In particular, we call 
-the reduced-grid constructor passing the command-line string 
+grid object (see line 12). In particular, we call 
+the grid constructor passing the command-line string 
 (that represents the key of the grid we want to create) to 
 it. The default value is set to \inltc{N32}, that represents 
-a reduced Gaussian grid with 32 latitudes in one emisphere 
+a classic reduced Gaussian grid with 32 latitudes in one emisphere 
 (i.e. 64 latitudes in total).  
 The command-line string (i.e. the key) must be contained 
-in the predefined keys for reduced grid generation as specified 
+in the predefined keys for structured grid generation as specified 
 before. If the user uses a non-existent keyword, it will 
 appear an error message.
-The reduced-grid object, \inltc{grid}, is 
-an \inltc{atlas\_ReducedGrid} type and it will allow 
+The grid object, \inltc{grid}, is 
+an \inltc{atlas\_grid\_Structured} type and it will allow 
 us to access some useful information about the grid.  
 
 It is now possible to run this simple program by using 
@@ -194,7 +185,7 @@ identifies an \Atlas predefined grid. For instance, we
 can execute the following command line 
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_f-global-grids-Reduced --grid O32
+./atlas_f-global-grids-Structured --grid O32
 \end{lstlisting}
 % 
 This will generate an octahedral reduced Gaussian grid 
@@ -209,8 +200,8 @@ The output to the screen of the code we just executed
 contains some useful information regarding the grid.
 
 In particular, the first three numbers represent the 
-number of latitudes, longitudes and points of the reduced
-grid, respectively. Note that we can directly access them 
+number of latitudes, longitudes and points of the grid,
+respectively. Note that we can directly access them 
 through the \inltc{grid} object (see lines 14, 17, 20).
 %
 \begin{tipbox}
@@ -219,7 +210,7 @@ any argument to the function retrieving the information. On the
 other hand, for the number of longitudes we do need to additionally 
 provide the index of a specific latitude, since the number of 
 longitudes may depend on the latitude (see \chap{chap:structure} 
-for more details on how a reduced grid is constructed). 
+for more details on how a structured grid is constructed). 
 \end{tipbox}
 %
 The last two numbers represent the coordinates of a given 
@@ -234,7 +225,7 @@ of the longitude, since the longitude may depend on the latitude
 (see line 26).
 
 You can now play with the command-line argument to generate 
-different types of global reduced grid using the keys introduced 
+different types of global structured grid using the keys introduced 
 at the beginning of this section!
 
 

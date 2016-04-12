@@ -25,16 +25,16 @@ called \inlsh{\ddash{visualize}}. This will allow us to
 visualize the mesh either in 2D or 3D. 
 %
 \lstinputlisting[caption=Generating a mesh starting from a grid 
-in \Atlas using C++, style=CStyle, label=code-meshes-C]{meshes-Reduced.cc}
+in \Atlas using C++, style=CStyle, label=code-meshes-C]{meshes-Structured.cc}
 %
 Once defined the command-line behaviour, we first create 
-a global reduced-grid object (see line 24). For more 
+a global structured grid object (see line 24). For more 
 details on how to create a grid see \chap{chap:global-grids}.
 
 We then create a 
-\inltc{ReducedGridMeshGenerator} object called \inltc{generate\_mesh}
+\inltc{mesh::generators::Structured} object called \inltc{generate\_mesh}
 that will allow us to generate the mesh starting from
-a reduced grid.
+a structured grid.
 We successively create a mesh object, \inltc{mesh} 
 of the \inltc{Mesh} type on line 27 using the mesh generator.
 
@@ -57,7 +57,7 @@ type we want (either 2D or 3D), respectively. For instance,
 we can execute the following command line
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-meshes-Reduced --grid O32 --visualize 3D
+./atlas_c-meshes-Structured --grid O32 --visualize 3D
 \end{lstlisting}
 % 
 This will produce an octahedral reduced Gaussian mesh 
@@ -74,7 +74,7 @@ We can re-run the executable file in order to obtain
 a 2D representation as follows:
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-meshes-Reduced --grid O32 --visualize 2D
+./atlas_c-meshes-Structured --grid O32 --visualize 2D
 \end{lstlisting}
 % 
 This will produce a representation of the mesh like 
@@ -89,7 +89,7 @@ the one depicted on the right side of \fig{fig:meshes}.
 \end{figure}
 %
 You can now play with the command-line argument to generate 
-different types of global reduced meshes using the keys 
+different types of global structured meshes using the keys 
 introduced in \chap{chap:global-grids}!
 
 
@@ -104,14 +104,14 @@ the command-line behaviour as done in the previous chapter.
  
 %
 \lstinputlisting[caption=Generating a mesh starting from a grid 
-in \Atlas using Fortran, style=FStyle, label=code-meshes-F]{meshes-Reduced.F90}
+in \Atlas using Fortran, style=FStyle, label=code-meshes-F]{meshes-Structured.F90}
 %
 Once defined the command-line behaviour, we first create 
-a global reduced-grid object (see line 13). For more 
+a global structured grid object (see line 13). For more 
 details on how to create a grid see \chap{chap:global-grids}.
 
 We successively create the mesh object on line 15 and 16.
-In particular, we first define a \inltc{reducedgridmeshgenerator} 
+In particular, we first define a \inltc{atlas\_meshgenerator\_Structured} 
 object that is then used to effectively generate the mesh object 
 \inltc{mesh} that is an \inltc{atlas\_mesh} type.
 
@@ -128,22 +128,22 @@ identifies an \Atlas predefined grid. For instance,
 we can execute the following command line
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-meshes-Reduced --grid O32
+./atlas_c-meshes-Structured --grid O32
 \end{lstlisting}
 % 
 This will produce an octahedral reduced Gaussian mesh 
 (stored in mesh.msh) with 32 latitudes on one emisphere 
 (i.e. 64 latitudes in total).
 If we visualize it in Gmsh, we will obtain something similar
-to \fig{fig:meshes}.
+to \fig{fig:meshes-f}.
 %
 \begin{figure}%
 \centering
 \includegraphics[width=0.5\textwidth]{imgs/O32-2D.png}
 \caption{Mesh visualised in Gmsh}%
-\label{fig:meshes}%
+\label{fig:meshes-f}%
 \end{figure}
 %
 You can now play with the command-line argument to generate 
-different types of global reduced meshes using the keys 
+different types of meshes for global grids using the keys 
 introduced in \chap{chap:global-grids}!

@@ -39,13 +39,13 @@ using namespace atlas::grid;
 namespace atlas {
 namespace test {
 
-double dual_volume(mesh::Mesh& mesh)
+double dual_volume(const mesh::Mesh& mesh)
 {
-  mesh::Nodes& nodes = mesh.nodes();
+  const mesh::Nodes& nodes = mesh.nodes();
   int nb_nodes = nodes.size();
   const array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
   const array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
-  const array::ArrayView<int,1> is_ghost ( nodes.ghost() );
+  const array::ArrayView<int,1>    is_ghost ( nodes.ghost() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {
@@ -126,21 +126,23 @@ BOOST_AUTO_TEST_CASE( test_factory )
 
 BOOST_AUTO_TEST_CASE( test_build )
 {
-  SharedPtr<Grid> grid ( Grid::create("O32") );
+  Log::info() << "test_build" << std::endl;
+  SharedPtr<Grid> grid ( Grid::create("O200") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
   const double R = util::Earth::radiusInMeters();
   fvm::Method fvm(*mesh,util::Config("radius",R));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  double spherical_area = 4.*M_PI*R*R;
-  BOOST_CHECK_CLOSE(dual_volume(*mesh),spherical_area,0.001*spherical_area);
+  double spherical_area = 360.*180.;
+  BOOST_CHECK_CLOSE(dual_volume(*mesh),spherical_area,5.0);
 
 }
 
 
 BOOST_AUTO_TEST_CASE( test_grad )
 {
+  Log::info() << "test_grad" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );
@@ -217,6 +219,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
 
 BOOST_AUTO_TEST_CASE( test_div )
 {
+  Log::info() << "test_div" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );
@@ -247,6 +250,7 @@ BOOST_AUTO_TEST_CASE( test_div )
 
 BOOST_AUTO_TEST_CASE( test_curl )
 {
+  Log::info() << "test_curl" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );
@@ -277,6 +281,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
 
 BOOST_AUTO_TEST_CASE( test_lapl )
 {
+  Log::info() << "test_lapl" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   SharedPtr<Grid> grid ( Grid::create("O32") );

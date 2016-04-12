@@ -9,16 +9,16 @@ objects that will be presented in this chapter are the
 following three:
 %
 \begin{itemize}
-\item \inltc{Nodes}: It relates a given field to the underlying 
+\item \inltc{NodeColumns}: It relates a given field to the underlying 
 mesh, thus enabling the field to parallel communication. 
 It also allows some simple operations on the Field, such 
 as calculating minimum and maximum values, going from a 
 local (to a parallel partition) to a global indexing and 
 viceversa, etc.
-\item \inltc{ReducedGridPoint}: It relates 
-a given field to the underlying reduced grid, thus enabling 
+\item \inltc{StructuredColumns}: It relates 
+a given field to the underlying structured grid, thus enabling 
 the field to parallel communication. It also allows similar 
-operations as the \inltc{Nodes} function space, such as going 
+operations as the \inltc{NodeColumns} function space, such as going 
 from a local to a global indexing and viceversa.
 \item \inltc{Spectral}: It allows the spectral representation 
 of a Field (no relation to a grid or a mesh here!). The 
@@ -29,7 +29,7 @@ library.
 For each of the function spaces presented in the following, 
 we show both the C++ and Fortran version. 
 
-\section{Nodes}
+\section{NodeColumns}
 For this example, given the length of the code, we divide the code
 listings into four different pieces, each of which will highlight 
 different functionalities of the function space.
@@ -41,8 +41,9 @@ different functionalities of the function space.
 \item \underline{Construction of Fields}\\[0.5em]
 %
 The \lista{code-nodes-C-1} shows how to construct the function space 
-\inltc{nodes} starting from a mesh. In particular, we first initialize 
-the \Atlas library and we define a global reduced grid (see lines 
+\inltc{nodes} of type \inltc{NodeColumns} starting from a mesh.
+In particular, we first initialize 
+the \Atlas library and we define a global structured grid (see lines 
 21, 24 and 25). Using this grid, we then construct the mesh (see 
 lines 28 and 29) and we get the number of nodes of the mesh (see line 
 33). On line 36, we define another integer that is used to construct 
@@ -75,8 +76,8 @@ two tensor fields, the first two-dimensional and the second three-dimensional.
 The same observations done before for scalar and vector fields hold 
 also in this case.
 %
-\lstinputlisting[caption=Functionspace nodes usage (1) using C++, 
-style=CStyle, label=code-nodes-C-1, firstline=1,lastline=55]{nodes.cc}
+\lstinputlisting[caption=Functionspace NodeColumns usage (1) using C++, 
+style=CStyle, label=code-nodes-C-1, firstline=1,lastline=55]{NodeColumns.cc}
 %
 %
 \item \underline{Definition/visualization of a scalar Field}\\[0.5em]
@@ -109,8 +110,8 @@ of nodes of a mesh!
 From line 31 to 34, we finally write the mesh and the field in a gmsh 
 format, so that we can visualize it!
 %
-\lstinputlisting[caption=Functionspace nodes usage (2) using C++, 
-style=CStyle, label=code-nodes-C-2, firstline=55,lastline=89]{nodes.cc}
+\lstinputlisting[caption=Functionspace NodeColumns usage (2) using C++, 
+style=CStyle, label=code-nodes-C-2, firstline=55,lastline=89]{NodeColumns.cc}
 %
 %
 \item \underline{Parallel management}\\[0.5em]
@@ -156,7 +157,7 @@ also to the \inltc{FieldSet} object.
 
 %
 \lstinputlisting[caption=Functionspace nodes usage (3) using C++, 
-style=CStyle, label=code-nodes-C-3, firstline=89,lastline=125]{nodes.cc}
+style=CStyle, label=code-nodes-C-3, firstline=89,lastline=125]{NodeColumns.cc}
 %
 %
 \item \underline{Simple operations}\\[0.5em]
@@ -187,11 +188,11 @@ It is also important to observe that we have used a different
 approach than \inltc{cout} to print the values of the quantities 
 just calculated to the screen. In particular, we used the 
 \inltc{Log::Info()} utility of \Atlas, that will be better 
-explained in \parte{p:utilities}, of this user-guide.
+explained in section \parte{s:utilities-logging}, of this user-guide.
 On line 42, we finalize the library as usual.
 %
 \lstinputlisting[caption=Functionspace nodes usage (4) using C++, 
-style=CStyle, label=code-nodes-C-4, firstline=125,lastline=166]{nodes.cc}
+style=CStyle, label=code-nodes-C-4, firstline=125,lastline=166]{NodeColumns.cc}
 %
 \end{description}
 %
@@ -201,7 +202,7 @@ identifies an \Atlas predefined grid.  For instance,
 we can execute the following command line
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-nodes --grid O128
+./atlas_c-NodeColumns --grid O128
 \end{lstlisting}
 % 
 This will produce an octahedral reduced Gaussian grid 
@@ -277,7 +278,7 @@ The \lista{code-nodes-F-1} shows how to construct the function space
 \inltc{nodes} starting from a mesh. In the first few lines, we define 
 the variables needed for this example - note in particular the definition 
 of \inltf{atlas\_functionspace\_NodeColumns} and \inltf{atlas\_mesh\_Nodes}.
-We then create a reduced grid (see lines 48 and 49) and the associated 
+We then create a structured grid (see lines 48 and 49) and the associated 
 mesh (see lines 52 and 53).
 On line 45 we initialize the library as usual, while, on line 56, 
 we define the \inltf{nodes} function space - note that we pass two 
@@ -308,8 +309,8 @@ two tensor fields, the first two-dimensional and the second three-dimensional.
 The same observations done before for scalar and vector fields hold 
 also in this case.
 %
-\lstinputlisting[caption=Functionspace nodes usage (1) using Fortran, 
-style=FStyle, label=code-nodes-F-1, firstline=1,lastline=71]{nodes.F90}
+\lstinputlisting[caption=Functionspace atlas\_functionspace\_NodeColumns usage (1) using Fortran, 
+style=FStyle, label=code-nodes-F-1, firstline=1,lastline=71]{NodeColumns.F90}
 %
 %
 \item \underline{Definition/visualization of a scalar Field}\\[0.5em]
@@ -345,8 +346,8 @@ the number of nodes of a mesh!
 On lines 27 and 28, we finally write the mesh and the field 
 in a gmsh format, so that we can visualize it!
 %
-\lstinputlisting[caption=Functionspace nodes usage (2) using Fortran, 
-style=FStyle, label=code-nodes-F-2, firstline=71,lastline=99]{nodes.F90}
+\lstinputlisting[caption=Functionspace atlas\_functionspace\_NodeColumns usage (2) using Fortran, 
+style=FStyle, label=code-nodes-F-2, firstline=71,lastline=99]{NodeColumns.F90}
 %
 %
 \item \underline{Parallel management}\\[0.5em]
@@ -391,8 +392,8 @@ Finally, from line 33 to 35, we show how \inltf{checksum}
 can be applied also to an \inltf{atlas\_FieldSet} object.
 
 %
-\lstinputlisting[caption=Functionspace nodes usage (3) using Fortran, 
-style=FStyle, label=code-nodes-F-3, firstline=99,lastline=137]{nodes.F90}
+\lstinputlisting[caption=Functionspace atlas\_functionspace\_NodeColumns usage (3) using Fortran, 
+style=FStyle, label=code-nodes-F-3, firstline=99,lastline=137]{NodeColumns.F90}
 %
 %
 \item \underline{Simple operations}\\[0.5em]
@@ -423,14 +424,14 @@ It is also important to observe that we have used a different
 approach than the standard \inltc{write} to print the values 
 of the quantities just calculated to the screen. In particular, 
 we used the \inltf{atlas\_log} utility of \Atlas, that will 
-be better explained in \parte{p:utilities}, of this user-guide.
+be better explained in section \parte{s:utilities-logging}, of this user-guide.
 
 Note also that from line 38 to line 48, we destroy all the objects
 of created in the program in order to release the memory and on 
 line 50 we finalize the \Atlas library.
 %
-\lstinputlisting[caption=Functionspace nodes usage (4) using Fortran, 
-style=FStyle, label=code-nodes-F-4, firstline=137,lastline=188]{nodes.F90}
+\lstinputlisting[caption=Functionspace atlas\_functionspace\_NodeColumns usage (4) using Fortran, 
+style=FStyle, label=code-nodes-F-4, firstline=137,lastline=188]{NodeColumns.F90}
 %
 \end{description}
 %
@@ -440,7 +441,7 @@ identifies an \Atlas predefined grid.  For instance,
 we can execute the following command line
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_f-nodes --grid O128
+./atlas_f-NodeColumns --grid O128
 \end{lstlisting}
 % 
 This will produce an octahedral reduced Gaussian grid 
@@ -463,7 +464,7 @@ It will also print to the screen the following output:
 %
 \begin{lstlisting}[style=BashStyle]
 [0] (2016-02-12 T 15:41:33) (I) -- Looking for \ 
-MeshGeneratorFactory [ReducedGrid]
+MeshGeneratorFactory [Structured]
 [0] (2016-02-12 T 15:41:34) (I) -- writing mesh \ 
 to gmsh file mesh.msh
 [0] (2016-02-12 T 15:41:34) (I) -- writing field \ 
@@ -509,6 +510,6 @@ Note the additional verbosity of the \inltf{atlas\_log} \Atlas utility!
 You can now try to generate different meshes and run it in parallel!
 
 
-\section{ReducedGridPoint}
+\section{StructuredColumns}
 \section{Spectral}
 

@@ -34,6 +34,7 @@ namespace fvm {
 
 namespace {
 static NablaBuilder< Nabla > __fvm_nabla("fvm");
+
 }
 
 Nabla::Nabla(const numerics::Method &method, const eckit::Parametrisation &p) :
@@ -95,8 +96,8 @@ void Nabla::gradient(const field::Field& scalar_field, field::Field& grad_field)
         array::ArrayView<double,3> grad   ( grad_field.  data<double>(), array::make_shape(nnodes,nlev,2) );
 
   const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const array::ArrayView<double,1> V              ( nodes.field("dual_volumes") );
-  const array::ArrayView<double,2> S              ( edges.field("dual_normals") );
+  const array::ArrayView<double,1> dual_volumes   ( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> dual_normals   ( edges.field("dual_normals") );
   const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
   const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
 
@@ -105,6 +106,8 @@ void Nabla::gradient(const field::Field& scalar_field, field::Field& grad_field)
 
   array::ArrayT<double> avgS_arr( nedges,nlev,2 );
   array::ArrayView<double,3> avgS(avgS_arr);
+
+  const double scale = deg2rad*deg2rad*radius;
 
   atlas_omp_parallel
   {
@@ -117,8 +120,8 @@ void Nabla::gradient(const field::Field& scalar_field, field::Field& grad_field)
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
         double avg = ( scalar(ip1,jlev) + scalar(ip2,jlev) ) * 0.5;
-        avgS(jedge,jlev,internals::LON) = S(jedge,internals::LON)*avg;
-        avgS(jedge,jlev,internals::LAT) = S(jedge,internals::LAT)*avg;
+        avgS(jedge,jlev,internals::LON) = dual_normals(jedge,internals::LON)*deg2rad*avg;
+        avgS(jedge,jlev,internals::LAT) = dual_normals(jedge,internals::LAT)*deg2rad*avg;
       }
     }
 
@@ -142,8 +145,8 @@ void Nabla::gradient(const field::Field& scalar_field, field::Field& grad_field)
         }
       }
       const double y  = lonlat_deg(jnode,internals::LAT) * deg2rad;
-      const double metric_x = radius/V(jnode);
-      const double metric_y = metric_x*std::cos(y);
+      const double metric_y = 1./(dual_volumes(jnode)*scale);
+      const double metric_x = metric_y/std::cos(y);
       #pragma ivdep
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
@@ -174,8 +177,8 @@ void Nabla::divergence(const field::Field& vector_field, field::Field& div_field
         array::ArrayView<double,2> div    ( div_field   .data<double>(), array::make_shape(nnodes,nlev)  );
 
   const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const array::ArrayView<double,1> V              ( nodes.field("dual_volumes") );
-  const array::ArrayView<double,2> S              ( edges.field("dual_normals") );
+  const array::ArrayView<double,1> dual_volumes   ( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> dual_normals   ( edges.field("dual_normals") );
   const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
   const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
@@ -184,12 +187,14 @@ void Nabla::divergence(const field::Field& vector_field, field::Field& div_field
   array::ArrayT<double> avgS_arr( nedges,nlev,2 );
   array::ArrayView<double,3> avgS(avgS_arr);
 
+  const double scale = deg2rad*deg2rad*radius;
+
   atlas_omp_parallel
   {
     atlas_omp_for( size_t jedge=0; jedge<nedges; ++jedge )
     {
-      int ip1 = edge2node(jedge,0);
-      int ip2 = edge2node(jedge,1);
+      size_t ip1 = edge2node(jedge,0);
+      size_t ip2 = edge2node(jedge,1);
       double y1  = lonlat_deg(ip1,internals::LAT) * deg2rad;
       double y2  = lonlat_deg(ip2,internals::LAT) * deg2rad;
       double cosy1 = std::cos(y1);
@@ -203,9 +208,13 @@ void Nabla::divergence(const field::Field& vector_field, field::Field& div_field
           (      vector(ip1,jlev,internals::LON) +       vector(ip2,jlev,internals::LON) ) * 0.5,
           (cosy1*vector(ip1,jlev,internals::LAT) + cosy2*vector(ip2,jlev,internals::LAT) ) * 0.5 * pbc // (force cos(y)=0 at pole)
         };
-        avgS(jedge,jlev,internals::LON) = S(jedge,internals::LON)*avg[internals::LON];  // 0 at pole by construction of S
-        avgS(jedge,jlev,internals::LAT) = S(jedge,internals::LAT)*avg[internals::LAT];  // 0 at pole by construction of pbc
-        // We don't need the cross terms for divergence, i.e.  S(jedge,internals::LON)*avg[internals::LAT] / S(jedge,internals::LAT)*avg[internals::LON]
+        avgS(jedge,jlev,internals::LON) = dual_normals(jedge,internals::LON)*deg2rad*avg[internals::LON];
+              // above = 0 at pole by construction of S
+        avgS(jedge,jlev,internals::LAT) = dual_normals(jedge,internals::LAT)*deg2rad*avg[internals::LAT];
+              // above = 0 at pole by construction of pbc
+        // We don't need the cross terms for divergence,
+        //    i.e.      dual_normals(jedge,internals::LON)*deg2rad*avg[internals::LAT]
+        //        and   dual_normals(jedge,internals::LAT)*deg2rad*avg[internals::LON]
       }
     }
 
@@ -224,7 +233,8 @@ void Nabla::divergence(const field::Field& vector_field, field::Field& div_field
           div(jnode,jlev) += add*(avgS(iedge,jlev,internals::LON)+avgS(iedge,jlev,internals::LAT));
         }
       }
-      double metric = radius/V(jnode);
+      const double y = lonlat_deg(jnode,internals::LAT) * deg2rad;
+      double metric = 1./(dual_volumes(jnode)*scale*std::cos(y));
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
         div(jnode,jlev) *= metric;
@@ -252,8 +262,8 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
         array::ArrayView<double,2> curl   ( curl_field  .data<double>(), array::make_shape(nnodes,nlev)  );
 
   const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const array::ArrayView<double,1> V              ( nodes.field("dual_volumes") );
-  const array::ArrayView<double,2> S              ( edges.field("dual_normals") );
+  const array::ArrayView<double,1> dual_volumes   ( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> dual_normals   ( edges.field("dual_normals") );
   const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
   const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
 
@@ -263,12 +273,14 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
   array::ArrayT<double> avgS_arr( nedges,nlev,2 );
   array::ArrayView<double,3> avgS(avgS_arr);
 
+  const double scale = deg2rad*deg2rad*radius*radius;
+
   atlas_omp_parallel
   {
     atlas_omp_for( size_t jedge=0; jedge<nedges; ++jedge )
     {
-      int ip1 = edge2node(jedge,0);
-      int ip2 = edge2node(jedge,1);
+      size_t ip1 = edge2node(jedge,0);
+      size_t ip2 = edge2node(jedge,1);
       double y1  = lonlat_deg(ip1,internals::LAT) * deg2rad;
       double y2  = lonlat_deg(ip2,internals::LAT) * deg2rad;
       double rcosy1 = radius*std::cos(y1);
@@ -282,9 +294,13 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
           (rcosy1*vector(ip1,jlev,internals::LON) + rcosy2*vector(ip2,jlev,internals::LON) ) * 0.5 * pbc, // (force R*cos(y)=0 at pole)
           (radius*vector(ip1,jlev,internals::LAT) + radius*vector(ip2,jlev,internals::LAT) ) * 0.5
         };
-        avgS(jedge,jlev,internals::LON) = S(jedge,internals::LAT)*avg[internals::LON]; // 0 at pole by construction of pbc
-        avgS(jedge,jlev,internals::LAT) = S(jedge,internals::LON)*avg[internals::LAT]; // 0 at pole by construction of S
-        // We don't need the non-cross terms for curl, i.e.  S(jedge,internals::LON)*avg[internals::LON] / S(jedge,internals::LAT)*avg[internals::LAT]
+        avgS(jedge,jlev,internals::LON) = dual_normals(jedge,internals::LAT)*deg2rad*avg[internals::LON];
+            // above = 0 at pole by construction of pbc
+        avgS(jedge,jlev,internals::LAT) = dual_normals(jedge,internals::LON)*deg2rad*avg[internals::LAT];
+            // above = 0 at pole by construction of S
+        // We don't need the non-cross terms for curl, i.e.
+        //          dual_normals(jedge,internals::LON)*deg2rad*avg[internals::LON]
+        //   and    dual_normals(jedge,internals::LAT)*deg2rad*avg[internals::LAT]
       }
     }
 
@@ -296,14 +312,15 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
       }
       for( size_t jedge=0; jedge<node2edge.cols(jnode); ++jedge )
       {
-        int iedge = node2edge(jnode,jedge);
+        size_t iedge = node2edge(jnode,jedge);
         double add = node2edge_sign(jnode,jedge);
         for(size_t jlev = 0; jlev < nlev; ++jlev)
         {
           curl(jnode,jlev) += add*(avgS(iedge,jlev,internals::LAT)-avgS(iedge,jlev,internals::LON));
         }
       }
-      double metric = 1./V(jnode);
+      double y  = lonlat_deg(jnode,internals::LAT) * deg2rad;
+      double metric = 1./(dual_volumes(jnode)*scale*std::cos(y));
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
         curl(jnode,jlev) *= metric;
@@ -315,9 +332,10 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
 
 void Nabla::laplacian(const field::Field& scalar, field::Field& lapl) const
 {
-  eckit::SharedPtr<field::Field> grad (
-       fvm_->node_columns().createField<double>("grad",
-       scalar.levels(),array::make_shape(2)) );
+  eckit::SharedPtr<field::Field> grad ( fvm_->node_columns().createField<double>(
+       "grad",
+       scalar.levels(),
+       array::make_shape(2) ) );
   gradient(scalar,*grad);
   if( fvm_->node_columns().halo().size() < 2 )
     fvm_->node_columns().haloExchange(*grad);
