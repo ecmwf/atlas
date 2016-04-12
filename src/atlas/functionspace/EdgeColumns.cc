@@ -407,95 +407,6 @@ const parallel::Checksum& EdgeColumns::checksum() const
   return *checksum_;
 }
 
-
-// -----------------------------------------------------------------------------------
-// -----------------------------------------------------------------------------------
-// -----------------------------------------------------------------------------------
-extern "C" {
-// -----------------------------------------------------------------------------------
-// -----------------------------------------------------------------------------------
-// -----------------------------------------------------------------------------------
-
-
-EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh* mesh, int halo )
-{
-  EdgeColumns* edges;
-  ATLAS_ERROR_HANDLING(
-      ASSERT(mesh);
-      edges = new EdgeColumns(*mesh,mesh::Halo(halo));
-  );
-  return edges;
-}
-
-// -----------------------------------------------------------------------------------
-
-
-EdgeColumns* atlas__functionspace__Edges__new_mesh ( mesh::Mesh* mesh )
-{
-  EdgeColumns* edges;
-  ATLAS_ERROR_HANDLING(
-      ASSERT(mesh);
-      edges = new EdgeColumns(*mesh);
-  );
-  return edges;
-}
-
-// -----------------------------------------------------------------------------------
-
-void atlas__functionspace__Edges__delete (EdgeColumns* This)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    delete(This);
-  );
-}
-
-// -----------------------------------------------------------------------------------
-
-int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return This->nb_edges();
-  );
-  return 0;
-}
-
-// -----------------------------------------------------------------------------------
-
-mesh::Mesh* atlas__functionspace__Edges__mesh(EdgeColumns* This)
-{
-  ATLAS_ERROR_HANDLING(
-        ASSERT(This);
-        return &This->mesh();
-  );
-  return 0;
-}
-
-// -----------------------------------------------------------------------------------
-
-mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This)
-{
-  ATLAS_ERROR_HANDLING(
-      ASSERT(This);
-      return &This->edges();
-  );
-  return 0;
-}
-
-// -----------------------------------------------------------------------------------
-
-field::Field* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind )
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return This->createField(std::string(name),array::DataType(kind));
-  );
-  return 0;
-}
-
-// -----------------------------------------------------------------------------------
-
 namespace {
 void reverse_copy(const int variables[], const int size, std::vector<size_t> &reverse)
 {
@@ -524,6 +435,93 @@ std::vector<size_t> variables_to_vector( const int variables[], const int size, 
   return vec;
 }
 }
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+extern "C" {
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
+
+EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh* mesh, int halo )
+{
+  EdgeColumns* edges;
+  ATLAS_ERROR_HANDLING(
+      ASSERT(mesh);
+      edges = new EdgeColumns(*mesh,mesh::Halo(halo));
+  );
+  return edges;
+}
+
+//------------------------------------------------------------------------------
+
+EdgeColumns* atlas__functionspace__Edges__new_mesh ( mesh::Mesh* mesh )
+{
+  EdgeColumns* edges;
+  ATLAS_ERROR_HANDLING(
+      ASSERT(mesh);
+      edges = new EdgeColumns(*mesh);
+  );
+  return edges;
+}
+
+//------------------------------------------------------------------------------
+
+void atlas__functionspace__Edges__delete (EdgeColumns* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    delete(This);
+  );
+}
+
+//------------------------------------------------------------------------------
+
+int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->nb_edges();
+  );
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+
+mesh::Mesh* atlas__functionspace__Edges__mesh(EdgeColumns* This)
+{
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        return &This->mesh();
+  );
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+
+mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This)
+{
+  ATLAS_ERROR_HANDLING(
+      ASSERT(This);
+      return &This->edges();
+  );
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+
+field::Field* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind )
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->createField(std::string(name),array::DataType(kind));
+  );
+  return 0;
+}
+
+//------------------------------------------------------------------------------
 
 field::Field* atlas__functionspace__Edges__create_field_vars (
     const EdgeColumns* This,
