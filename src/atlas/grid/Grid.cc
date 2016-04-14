@@ -27,7 +27,7 @@ static void checkSizeOfPoint()
 {
     // compilen time check support C++11
     #if __cplusplus >= 201103L
-        static_assert( sizeof(Grid::Point)==2*double, "Grid requires size of Point to be 2*double" );
+        static_assert( sizeof(Grid::Point)==2*sizeof(double), "Grid requires size of Point to be 2*double" );
     #endif
 
     // runtime check
