@@ -82,7 +82,6 @@ GatherScatter::GatherScatter() :
 {
   myproc = eckit::mpi::rank();
   nproc  = eckit::mpi::size();
-  root_   = 0;
 }
 
 GatherScatter::GatherScatter(const std::string& name) :
@@ -91,7 +90,6 @@ GatherScatter::GatherScatter(const std::string& name) :
 {
   myproc = eckit::mpi::rank();
   nproc  = eckit::mpi::size();
-  root_   = 0;
 }
 
 
@@ -164,31 +162,22 @@ void GatherScatter::setup( const int part[],
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
+  loccnt_ = glbcounts_[myproc];
 
 
   glbmap_.clear(); glbmap_.resize(glbcnt_);
-  std::vector<int> needed(glbcnt_);
+  locmap_.clear(); locmap_.resize(loccnt_);
   std::vector<int> idx(nproc,0);
   for( size_t n=0; n<node_sort.size(); ++n )
   {
     size_t jproc = node_sort[n].p;
-    needed [ glbdispls_[jproc]+idx[jproc] ] = node_sort[n].i; // index on sending proc
     glbmap_[ glbdispls_[jproc]+idx[jproc] ] = n;
+
+    if( jproc == myproc )
+      locmap_[idx[jproc]] = node_sort[n].i;
+
     ++idx[jproc];
   }
-
-  // Get loccnt_
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Scatter( glbcounts_.data(), 1, MPI_INT,
-                     &loccnt_,          1, MPI_INT,
-                     root_, eckit::mpi::comm()) );
-
-  locmap_.resize(loccnt_);
-
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
-                      MPI_INT, locmap_.data(), loccnt_,
-                      MPI_INT, root_, eckit::mpi::comm() ) );
 
   is_setup_ = true;
 }

@@ -228,7 +228,6 @@ private: // data
 
   int nproc;
   int myproc;
-  int root_;
 
   bool is_setup_;
 
