@@ -95,10 +95,6 @@ GatherScatter::GatherScatter(const std::string& name) :
 }
 
 
-
-
-
-
 void GatherScatter::setup( const int part[],
                            const int remote_idx[], const int base,
                            const gidx_t glb_idx[], const int mask[], const size_t parsize )
@@ -201,186 +197,16 @@ void GatherScatter::setup( const int part[],
 
 void GatherScatter::setup( const int part[],
                            const int remote_idx[], const int base,
-                           const gidx_t glb_idx[], const gidx_t max_glb_idx,
-                           const size_t parsize, const bool include_ghost )
+                           const gidx_t glb_idx[],
+                           const size_t parsize )
 {
-  parsize_ = parsize;
-
-  loccounts_.resize(nproc); loccounts_.assign(nproc,0);
-  glbcounts_.resize(nproc); glbcounts_.assign(nproc,0);
-  locdispls_.resize(nproc); locdispls_.assign(nproc,0);
-  glbdispls_.resize(nproc); glbdispls_.assign(nproc,0);
-  glbcnt_.resize(nproc); glbcnt_.assign(nproc,0);
-
-  gidx_t maxgid = max_glb_idx;
-  if(max_glb_idx<0)
+  std::vector<int> mask(parsize);
+  IsGhostPoint is_ghost(part,remote_idx,base,parsize);
+  for (size_t jj = 0; jj < parsize; ++jj)
   {
-    IsGhostPoint is_ghost(part,remote_idx,base,parsize_);
-    maxgid = -1;
-    for (size_t jj = 0; jj < parsize_; ++jj)
-    {
-      if ( !is_ghost(jj) || include_ghost )
-      {
-        maxgid = std::max(maxgid,glb_idx[jj]);
-      }
-    }
-    ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,eckit::mpi::datatype<gidx_t>(),MPI_MAX,eckit::mpi::comm()) );
+    mask[jj] =  is_ghost(jj) ? 1 : 0;
   }
-
-  array::ArrayT<int> sendnodes(parsize_,3);
-  array::ArrayView<int,2> nodes(sendnodes);
-
-  if( include_ghost )
-  {
-    for( size_t n=0; n<parsize_; ++n )
-    {
-      nodes(n,0) = glb_idx[n];
-      nodes(n,1) = myproc;
-      nodes(n,2) = n;
-    }
-  }
-  else
-  {
-    for( size_t n=0; n<parsize_; ++n )
-    {
-      nodes(n,0) = glb_idx[n];
-      nodes(n,1) = part[n];
-      nodes(n,2) = remote_idx[n]-base;
-    }
-
-  }
-
-  loccnt_ = nodes.size();
-  ECKIT_MPI_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
-                     glbcounts_.data(), 1, MPI_INT,
-                     root_, eckit::mpi::comm() ) );
-  glbcnt_[myproc] = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
-
-  glbdispls_[0]=0;
-  for (int jproc = 1; jproc < nproc; ++jproc) // start at 1
-  {
-    glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
-  }
-  std::vector<int> recvnodes(glbcnt_[myproc]);
-  ECKIT_MPI_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, MPI_INT,
-                                 recvnodes.data(), glbcounts_.data(), glbdispls_.data(), MPI_INT,
-                      root_, eckit::mpi::comm()) );
-
-  // Load recvnodes in sorting structure
-  size_t nb_recv_nodes = glbcnt_[myproc]/3;
-  std::vector<Node> node_sort(nb_recv_nodes);
-  nodes = array::ArrayView<int,2> (recvnodes.data(),array::make_shape(nb_recv_nodes,3));
-  for( size_t n=0; n<nb_recv_nodes; ++n )
-  {
-    node_sort[n].g = nodes(n,0);
-    node_sort[n].p = nodes(n,1);
-    node_sort[n].i = nodes(n,2);
-  }
-
-  recvnodes.clear();
-
-  // Sort on "g" member, remove nodes with g larger than max_glb_idx, and remove duplicates
-  std::sort(node_sort.begin(), node_sort.end());
-  node_sort.erase( std::upper_bound ( node_sort.begin(), node_sort.end(), maxgid ), node_sort.end() );
-  node_sort.erase( std::unique( node_sort.begin(), node_sort.end() ), node_sort.end() );
-
-
-//    if ( myproc == root_ )
-//    {
-//      std::vector<gidx_t> gnodes(node_sort.size());
-//      for( int i=0; i<node_sort.size(); ++i)
-//      {
-//        gnodes[i] = node_sort[i].g;
-////        if(!include_ghost)
-////        {
-////        //std::cout << "gnodes["<<i<<"] = " << gnodes[i] << std::endl;
-////        ASSERT( gnodes[i] == i+1 );
-////        }
-//      }
-//      //Log::info() << "checksum glb_idx[0:"<<node_sort.size()<<"] = " << internals::checksum(gnodes.data(),gnodes.size()) << std::endl;
-//    }
-
-//  if ( myproc == root )
-//  {
-//    std::cout << myproc << "  :  node_sort  = ";
-//    for( int i=0; i< node_sort.size(); ++i)
-//      std::cout << node_sort[i].g << " ";
-//    std::cout << std::endl;
-//  }
-
-  // Assemble list to ask needed
-  glbcounts_.assign(nproc,0);
-  glbdispls_.assign(nproc,0);
-  for(size_t n = 0; n < node_sort.size(); ++n)
-  {
-    ++glbcounts_[node_sort[n].p] ;
-  }
-  glbdispls_[0]=0;
-
-  for (int jproc = 1; jproc < nproc; ++jproc) // start at 1
-  {
-    glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
-  }
-  glbcnt_[myproc] = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
-
-
-  glbmap_.clear(); glbmap_.resize(glbcnt_[myproc]);
-  std::vector<int> needed(glbcnt_[myproc]);
-  std::vector<int> idx(nproc,0);
-  for( size_t n=0; n<node_sort.size(); ++n )
-  {
-    size_t jproc = node_sort[n].p;
-    needed[ glbdispls_[jproc]+idx[jproc] ] = node_sort[n].i; // index on sending proc
-    glbmap_[glbdispls_[jproc]+idx[jproc]] = n;
-    ++idx[jproc];
-  }
-
-//  if ( myproc == root ) std::cout << "needed = ";
-//  for( int n=0; n<glbcnt_[myproc]; ++n )
-//  {
-//    if( myproc == root ) std::cout << needed[n] << " " ;
-//  }
-//  if( myproc == root ) std::cout << std::endl;
-
-
-
-
-//  std::cout << myproc << "  :  glbcounts_  = ";
-//  for( int i=0; i< nproc; ++i)
-//    std::cout << glbcounts_[i] << " ";
-//  std::cout << std::endl;
-//  std::cout << myproc << "  :  glbdispls_  = ";
-//  for( int i=0; i< nproc; ++i)
-//    std::cout << glbdispls_[i] << " ";
-//  std::cout << std::endl;
-
-  // Get loccnt_
-  ECKIT_MPI_CHECK_RESULT( MPI_Scatter( glbcounts_.data(), 1, MPI_INT,
-                                 &loccnt_,     1, MPI_INT,
-                                 root_, eckit::mpi::comm()) );
-
-//  DEBUG_VAR_SYNC(loccnt_);
-  locmap_.resize(loccnt_);
-
-  ECKIT_MPI_CHECK_RESULT( MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
-                                  MPI_INT, locmap_.data(), loccnt_,
-                                  MPI_INT, root_, eckit::mpi::comm() ) );
-
-
-//   std::cout << myproc << "  :  locmap_  = ";
-//   for( int i=0; i< loccnt_; ++i)
-//     std::cout << locmap_[i] << " ";
-//   std::cout << std::endl;
-
-
-//  for( int i=0; i<glbcnt_[myproc]; ++i )
-//  {
-//    ASSERT( node_sort[i].g == i+1 );
-//  }
-
-  eckit::mpi::broadcast(glbcnt_,root_);
-
-  is_setup_ = true;
+  setup( part, remote_idx, base, glb_idx, mask.data(), parsize );
 }
 
 /////////////////////
@@ -395,35 +221,35 @@ void atlas__GatherScatter__delete ( GatherScatter* This) {
 
 void atlas__GatherScatter__setup32 ( GatherScatter* This,  int part[],
                                      int remote_idx[], int base,
-                                     int glb_idx[], int max_glb_idx,
+                                     int glb_idx[],
                                      int parsize )
 {
 #if ATLAS_BITS_GLOBAL==32
-  This->setup(part,remote_idx,base,glb_idx,max_glb_idx,parsize);
+  This->setup(part,remote_idx,base,glb_idx,parsize);
 #else
   std::vector<gidx_t> glb_idx_convert(parsize);
   for(int j = 0; j < parsize; ++j)
   {
     glb_idx_convert[j] = glb_idx[j];
   }
-  This->setup(part,remote_idx,base,glb_idx_convert.data(),max_glb_idx,parsize);
+  This->setup(part,remote_idx,base,glb_idx_convert.data(),parsize);
 #endif
 }
 
 void atlas__GatherScatter__setup64 ( GatherScatter* This,  int part[],
                                      int remote_idx[], int base,
-                                     long glb_idx[], long max_glb_idx,
+                                     long glb_idx[],
                                      int parsize )
 {
 #if ATLAS_BITS_GLOBAL==64
-  This->setup(part,remote_idx,base,glb_idx,max_glb_idx,parsize);
+  This->setup(part,remote_idx,base,glb_idx,parsize);
 #else
   std::vector<gidx_t> glb_idx_convert(parsize);
   for( size_t j=0; j<parsize; ++j )
   {
     glb_idx_convert[j] = glb_idx[j];
   }
-  This->setup(part,remote_idx,base,glb_idx_convert.data(),max_glb_idx,parsize);
+  This->setup(part,remote_idx,base,glb_idx_convert.data(),parsize);
 #endif
 }
 

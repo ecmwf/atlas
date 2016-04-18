@@ -129,14 +129,12 @@ void EdgeColumns::constructor()
         partition.data<int>(),
         remote_index.data<int>(),REMOTE_IDX_BASE,
         edges_.global_index().data<gidx_t>(),
-        -1,
         nb_edges_);
 
   checksum_->setup(
         partition.data<int>(),
         remote_index.data<int>(),REMOTE_IDX_BASE,
         global_index.data<gidx_t>(),
-        -1,
         nb_edges_);
 
   nb_edges_global_ = gather_scatter_->glb_dof();

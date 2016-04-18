@@ -106,8 +106,8 @@ public: // methods
   ///                              halo values in output when TRUE
   void setup( const int part[],
               const int remote_idx[], const int base,
-              const gidx_t glb_idx[], const gidx_t max_glb_idx,
-              const size_t parsize, const bool include_ghost = false );
+              const gidx_t glb_idx[],
+              const size_t parsize );
 
 
   /// @brief Setup
@@ -542,17 +542,6 @@ void GatherScatter::unpack_recv_buffer( const std::vector<int>& recvmap,
 }
 
 
-//template <typename DATA_TYPE>
-//void GatherScatter::gather( const DATA_TYPE ldata[],
-//                            DATA_TYPE gdata[],
-//                            const int nb_vars ) const
-//{
-//  int strides[] = {1};
-//  int shape[] = {nb_vars};
-//  gather( ldata, strides, shape, 1,
-//           gdata, strides, shape, 1 );
-//}
-
 
 template<typename DATA_TYPE, int RANK>
 void GatherScatter::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
@@ -623,8 +612,8 @@ extern "C"
 {
   GatherScatter* atlas__GatherScatter__new ();
   void atlas__GatherScatter__delete (GatherScatter* This);
-  void atlas__GatherScatter__setup32 (GatherScatter* This, int part[], int remote_idx[], int base, int glb_idx[], int max_glb_idx, int parsize);
-  void atlas__GatherScatter__setup64 (GatherScatter* This, int part[], int remote_idx[], int base, long glb_idx[], long max_glb_idx, int parsize);
+  void atlas__GatherScatter__setup32 (GatherScatter* This, int part[], int remote_idx[], int base, int glb_idx[],  int parsize);
+  void atlas__GatherScatter__setup64 (GatherScatter* This, int part[], int remote_idx[], int base, long glb_idx[], int parsize);
   int atlas__GatherScatter__glb_dof (GatherScatter* This);
   void atlas__GatherScatter__gather_int (GatherScatter* This, int ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank, int gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank);
   void atlas__GatherScatter__gather_long (GatherScatter* This, long ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank, long gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank);

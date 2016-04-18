@@ -69,7 +69,7 @@ struct Fixture {
         break;
       }
     }
-    gather_scatter.setup(part.data(),ridx.data(),0,gidx.data(),9,Nl);
+    gather_scatter.setup(part.data(),ridx.data(),0,gidx.data(),Nl);
     Ng = gather_scatter.glb_dof();
   }
   parallel::GatherScatter gather_scatter;
