@@ -137,7 +137,8 @@ void EdgeColumns::constructor()
         global_index.data<gidx_t>(),
         nb_edges_);
 
-  nb_edges_global_ = gather_scatter_->glb_dof();
+  size_t root = 0;
+  nb_edges_global_ = eckit::mpi::rank() == root ? gather_scatter_->glb_dof() : 0;
 }
 
 EdgeColumns::~EdgeColumns() {}

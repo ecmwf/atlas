@@ -181,9 +181,9 @@ void NodeColumns::constructor()
     checksum_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),nb_nodes_);
   }
 
-  nb_nodes_global_ = gather_scatter_->glb_dof();
-  const std::vector<int>& glb_dofs = gather_scatter_->glb_dofs();
-  nb_nodes_global_foreach_rank_.assign( glb_dofs.begin(), glb_dofs.end() );
+  nb_nodes_global_foreach_rank_.assign(eckit::mpi::size(),0);
+  nb_nodes_global_foreach_rank_[0] = gather_scatter_->glb_dof();
+  nb_nodes_global_ = nb_nodes_global_foreach_rank_[eckit::mpi::rank()];
 }
 
 NodeColumns::~NodeColumns() {}

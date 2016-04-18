@@ -93,6 +93,8 @@ std::string Checksum::execute( const DATA_TYPE data[],
                                const int var_extents[],
                                const int var_rank ) const
 {
+  size_t root = 0;
+
   if( ! is_setup_ )
   {
     throw eckit::SeriousBug("Checksum was not setup",Here());
@@ -105,7 +107,7 @@ std::string Checksum::execute( const DATA_TYPE data[],
     local_checksums[pp] = internals::checksum(data+pp*var_size,var_size);
   }
 
-  std::vector<internals::checksum_t> global_checksums(gather_.glb_dof());
+  std::vector<internals::checksum_t> global_checksums( eckit::mpi::rank() == root ? gather_.glb_dof() : 0 );
   parallel::Field<internals::checksum_t const> loc(local_checksums.data(),1);
   parallel::Field<internals::checksum_t> glb(global_checksums.data(),1);
   gather_.gather(&loc,&glb,1);
@@ -115,7 +117,7 @@ std::string Checksum::execute( const DATA_TYPE data[],
                                                 global_checksums.size());
 
   MPI_Bcast(&glb_checksum, 1, eckit::mpi::datatype<internals::checksum_t>(),
-            0, eckit::mpi::comm());
+            root, eckit::mpi::comm());
   return eckit::Translator<internals::checksum_t,std::string>()(glb_checksum);
 }
 

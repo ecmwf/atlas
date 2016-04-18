@@ -70,7 +70,7 @@ struct Fixture {
       }
     }
     gather_scatter.setup(part.data(),ridx.data(),0,gidx.data(),Nl);
-    Ng = gather_scatter.glb_dof();
+    Ng = eckit::mpi::rank() == 0 ? gather_scatter.glb_dof() : 0;
   }
   parallel::GatherScatter gather_scatter;
   std::vector<int> nb_nodes;
