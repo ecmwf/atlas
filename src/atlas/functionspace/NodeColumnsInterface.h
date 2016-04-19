@@ -41,13 +41,13 @@ field_Field* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumns
 
 
 field_Field* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field_Field* field_template);
-field_Field* atlas__NodesFunctionSpace__create_global_field (const NodeColumns* This, const char* name, int kind);
-field_Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
+field_Field* atlas__NodesFunctionSpace__create_global_field (const NodeColumns* This, const char* name, int kind, int owner);
+field_Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, int owner);
 
-field_Field* atlas__NodesFunctionSpace__create_global_field_lev (const NodeColumns* This, const char* name, int levels, int kind);
-field_Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
+field_Field* atlas__NodesFunctionSpace__create_global_field_lev (const NodeColumns* This, const char* name, int levels, int kind, int owner);
+field_Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, int owner);
 
-field_Field* atlas__NodesFunctionSpace__create_global_field_template (const NodeColumns* This, const char* name, const field_Field* field_template);
+field_Field* atlas__NodesFunctionSpace__create_global_field_template (const NodeColumns* This, const char* name, const field_Field* field_template, int owner);
 
 void atlas__NodesFunctionSpace__halo_exchange_fieldset(const NodeColumns* This, field_FieldSet* fieldset);
 void atlas__NodesFunctionSpace__halo_exchange_field(const NodeColumns* This, field_Field* field);

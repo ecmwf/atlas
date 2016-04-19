@@ -325,7 +325,7 @@ end function
 
 !------------------------------------------------------------------------------
 
-function create_field_name_kind(this,name,kind) result(field)
+function create_field_name_kind(this,name,kind,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -337,7 +337,7 @@ end function
 
 !------------------------------------------------------------------------------
 
-function create_field_name_kind_lev(this,name,kind,levels) result(field)
+function create_field_name_kind_lev(this,name,kind,levels,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -350,7 +350,7 @@ end function
 
 !------------------------------------------------------------------------------
 
-function create_field_name_kind_vars(this,name,kind,vars) result(field)
+function create_field_name_kind_vars(this,name,kind,vars,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -365,7 +365,7 @@ end function
 
 !------------------------------------------------------------------------------
 
-function create_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
+function create_field_name_kind_lev_vars(this,name,kind,levels,vars,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -381,7 +381,7 @@ end function
 
 !------------------------------------------------------------------------------
 
-function create_field_name_template(this,name,template) result(field)
+function create_field_name_template(this,name,template,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -394,20 +394,24 @@ end function
 
 !------------------------------------------------------------------------------
 
-function create_glb_field_name_kind_lev(this,name,kind) result(field)
+function create_glb_field_name_kind(this,name,kind) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
+!  integer(c_int), optional :: owner
+  integer(c_int) :: opt_owner
+  opt_owner = 0
+!  if( present(owner) ) opt_owner = owner
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field( &
-    & this%c_ptr(),c_str(name),kind) )
+    & this%c_ptr(),c_str(name),kind,opt_owner) )
   call field%return()
 end function
 
 !------------------------------------------------------------------------------
 
-function create_glb_field_name_kind(this,name,kind,levels) result(field)
+function create_glb_field_name_kind_lev(this,name,kind,levels) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -436,7 +440,7 @@ end function
 
 !------------------------------------------------------------------------------
 
-function create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
+function create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -445,21 +449,29 @@ function create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars) result(
   integer, intent(in) :: levels
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
+  integer(c_int), optional :: owner
+  integer(c_int) :: opt_owner
+  opt_owner = 0
+  if( present(owner) ) opt_owner = owner
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev_vars( &
-    & this%c_ptr(),c_str(name),levels,vars,size(vars),fortran_ordering,kind) )
+    & this%c_ptr(),c_str(name),levels,vars,size(vars),fortran_ordering,kind,opt_owner) )
   call field%return()
 end function
 
 !------------------------------------------------------------------------------
 
-function create_glb_field_name_template(this,name,template) result(field)
+function create_glb_field_name_template(this,name,template,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: template
+  integer(c_int), optional :: owner
+  integer(c_int) :: opt_owner
+  opt_owner = 0
+  if( present(owner) ) opt_owner = owner
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_template( &
-    & this%c_ptr(),c_str(name),template%c_ptr()) )
+    & this%c_ptr(),c_str(name),template%c_ptr(), opt_owner) )
   call field%return()
 end function
 
@@ -530,46 +542,58 @@ end function
 
 !------------------------------------------------------------------------------
 
-function create_glb_field_kind_lev(this,kind) result(field)
+function create_glb_field_kind(this,kind) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   integer, intent(in) :: kind
+!  integer(c_int), optional :: owner
+  integer(c_int) :: opt_owner
+  opt_owner = 0
+!  if( present(owner) ) opt_owner = owner
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field( &
-    & this%c_ptr(),c_str(""),kind) )
+    & this%c_ptr(),c_str(""),kind,opt_owner) )
   call field%return()
 end function
 
 !------------------------------------------------------------------------------
 
-function create_glb_field_kind(this,kind,levels) result(field)
+function create_glb_field_kind_lev(this,kind,levels,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   integer, intent(in) :: levels
   integer, intent(in) :: kind
+  integer(c_int), optional :: owner
+  integer(c_int) :: opt_owner
+  opt_owner = 0
+  if( present(owner) ) opt_owner = owner
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev( &
-    & this%c_ptr(),c_str(""),levels,kind) )
+    & this%c_ptr(),c_str(""),levels,kind,opt_owner) )
   call field%return()
 end function
 
 !------------------------------------------------------------------------------
 
-function create_glb_field_kind_vars(this,kind,vars) result(field)
+function create_glb_field_kind_vars(this,kind,vars,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   integer, intent(in) :: vars(:)
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
+  integer(c_int), optional :: owner
+  integer(c_int) :: opt_owner
+  opt_owner = 0
+  if( present(owner) ) opt_owner = owner
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_vars( &
-    & this%c_ptr(),c_str(""),vars,size(vars),fortran_ordering,kind) )
+    & this%c_ptr(),c_str(""),vars,size(vars),fortran_ordering,kind,opt_owner) )
   call field%return()
 end function
 
 !------------------------------------------------------------------------------
 
-function create_glb_field_kind_lev_vars(this,kind,levels,vars) result(field)
+function create_glb_field_kind_lev_vars(this,kind,levels,vars,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
@@ -577,20 +601,28 @@ function create_glb_field_kind_lev_vars(this,kind,levels,vars) result(field)
   integer, intent(in) :: levels
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
+  integer(c_int), optional :: owner
+  integer(c_int) :: opt_owner
+  opt_owner = 0
+  if( present(owner) ) opt_owner = owner
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev_vars( &
-    & this%c_ptr(),c_str(""),levels,vars,size(vars),fortran_ordering,kind) )
+    & this%c_ptr(),c_str(""),levels,vars,size(vars),fortran_ordering,kind,opt_owner) )
   call field%return()
 end function
 
 !------------------------------------------------------------------------------
 
-function create_glb_field_template(this,template) result(field)
+function create_glb_field_template(this,template,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: template
+  integer(c_int), optional :: owner
+  integer(c_int) :: opt_owner
+  opt_owner = 0
+  if( present(owner) ) opt_owner = owner
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_template( &
-    & this%c_ptr(),c_str(""),template%c_ptr()) )
+    & this%c_ptr(),c_str(""),template%c_ptr(),opt_owner) )
   call field%return()
 end function
 

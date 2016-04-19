@@ -95,13 +95,13 @@ field::Field* atlas__NodesFunctionSpace__create_field_template (const NodeColumn
   return This->createField(std::string(name),*field_template);
 }
 
-field::Field* atlas__NodesFunctionSpace__create_global_field (const NodeColumns* This, const char* name, int kind )
+field::Field* atlas__NodesFunctionSpace__create_global_field (const NodeColumns* This, const char* name, int kind, int owner )
 {
   ASSERT(This);
   return This->createGlobalField(std::string(name),array::DataType(kind));
 }
 
-field::Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
+field::Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, int owner)
 {
   ASSERT(This);
   ASSERT(variables_size);
@@ -113,13 +113,13 @@ field::Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodeCol
   return This->createGlobalField(std::string(name),array::DataType(kind),variables_);
 }
 
-field::Field* atlas__NodesFunctionSpace__create_global_field_lev (const NodeColumns* This, const char* name, int levels, int kind )
+field::Field* atlas__NodesFunctionSpace__create_global_field_lev (const NodeColumns* This, const char* name, int levels, int kind, int owner )
 {
   ASSERT(This);
   return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels));
 }
 
-field::Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind)
+field::Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, int owner)
 {
   ASSERT(This);
   ASSERT(variables_size);
@@ -131,7 +131,7 @@ field::Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const Nod
   return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels),variables_);
 }
 
-field::Field* atlas__NodesFunctionSpace__create_global_field_template (const NodeColumns* This, const char* name, const field::Field* field_template )
+field::Field* atlas__NodesFunctionSpace__create_global_field_template (const NodeColumns* This, const char* name, const field::Field* field_template, int owner )
 {
   ASSERT(This);
   return This->createGlobalField(std::string(name),*field_template);

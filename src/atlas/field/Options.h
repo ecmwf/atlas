@@ -27,9 +27,9 @@ namespace field {
 class global : public util::Config
 {
 public:
-  global(bool _global=true,size_t _owner=0)
+  global(size_t _owner=0)
   {
-    set("global",_global);
+    set("global",true);
     set("owner",_owner);
   }
 };

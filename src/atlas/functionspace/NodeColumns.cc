@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdarg>
 #include "eckit/utils/MD5.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
@@ -26,13 +27,13 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/Collectives.h"
+#include "eckit/os/BackTrace.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
 #else
 #define REMOTE_IDX_BASE 0
 #endif
-
 
 namespace atlas {
 namespace functionspace {
@@ -77,8 +78,7 @@ NodeColumns::NodeColumns( mesh::Mesh& mesh )
     nodes_(mesh_.nodes()),
     halo_(0),
     nb_nodes_(0),
-    nb_nodes_global_(0),
-    nb_nodes_global_foreach_rank_()
+    nb_nodes_global_(0)
 {
   constructor();
 }
@@ -89,8 +89,7 @@ NodeColumns::NodeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit:
     nodes_(mesh_.nodes()),
     halo_(halo),
     nb_nodes_(0),
-    nb_nodes_global_(0),
-    nb_nodes_global_foreach_rank_()
+    nb_nodes_global_(0)
 {
   constructor();
 }
@@ -101,8 +100,7 @@ NodeColumns::NodeColumns(mesh::Mesh& mesh, const mesh::Halo &halo)
     nodes_(mesh_.nodes()),
     halo_(halo),
     nb_nodes_(0),
-    nb_nodes_global_(0),
-    nb_nodes_global_foreach_rank_()
+    nb_nodes_global_(0)
 {
   constructor();
 }
@@ -181,9 +179,7 @@ void NodeColumns::constructor()
     checksum_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),nb_nodes_);
   }
 
-  nb_nodes_global_foreach_rank_.assign(eckit::mpi::size(),0);
-  nb_nodes_global_foreach_rank_[0] = gather_scatter_->glb_dof();
-  nb_nodes_global_ = nb_nodes_global_foreach_rank_[eckit::mpi::rank()];
+  nb_nodes_global_ = gather_scatter_->glb_dof();
 }
 
 NodeColumns::~NodeColumns() {}
@@ -196,12 +192,6 @@ size_t NodeColumns::nb_nodes() const
 size_t NodeColumns::nb_nodes_global() const
 {
   return nb_nodes_global_;
-}
-
-
-std::vector<size_t> NodeColumns::nb_nodes_global_foreach_rank() const
-{
-  return nb_nodes_global_foreach_rank_;
 }
 
 std::string NodeColumns::halo_name() const
@@ -220,83 +210,216 @@ std::string NodeColumns::checksum_name() const
   return "nodes_checksum";
 }
 
-field::Field* NodeColumns::createField(const std::string& name,array::DataType datatype) const {
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes()));
+
+size_t NodeColumns::config_nb_nodes(const eckit::Parametrisation& config) const
+{
+  size_t size = nb_nodes();
+  bool global(false);
+  if( config.get("global",global) )
+  {
+    if( global )
+    {
+      size_t owner(0);
+      config.get("owner",owner);
+      size = (eckit::mpi::rank() == owner ? nb_nodes_global() : 0);
+    }
+  }
+  return size;
+}
+
+namespace {
+void set_field_metadata(const eckit::Parametrisation& config, field::Field& field)
+{
+  bool global(false);
+  if( config.get("global",global) )
+  {
+    if( global )
+    {
+      size_t owner(0);
+      config.get("owner",owner);
+      field.metadata().set("owner",owner);
+    }
+  }
+  field.metadata().set("global",global);
+}
+}
+
+
+array::DataType NodeColumns::config_datatype(const eckit::Parametrisation& config) const
+{
+  array::DataType::kind_t kind;
+  if( ! config.get("datatype",kind) ) throw eckit::AssertionFailed("datatype missing",Here());
+  return array::DataType(kind);
+}
+
+std::string NodeColumns::config_name(const eckit::Parametrisation& config) const
+{
+  std::string name;
+  config.get("name",name);
+  return name;
+}
+
+size_t NodeColumns::config_levels(const eckit::Parametrisation& config) const
+{
+  size_t levels(0);
+  config.get("levels",levels);
+  return levels;
+}
+
+
+field::Field* NodeColumns::createField(
+    const std::string& name,
+    array::DataType datatype,
+    const eckit::Parametrisation& config ) const
+{
+  size_t nb_nodes = config_nb_nodes(config);
+  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes));
   field->set_functionspace(*this);
+  set_field_metadata(config,*field);
   return field;
 }
 
-field::Field* NodeColumns::createField(const std::string& name,array::DataType datatype, size_t levels) const {
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes(),levels));
+field::Field* NodeColumns::createField(
+    const std::string& name,
+    array::DataType datatype,
+    size_t levels,
+    const eckit::Parametrisation& config) const
+{
+  size_t nb_nodes = config_nb_nodes(config);
+  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes,levels));
   field->set_levels(levels);
   field->set_functionspace(*this);
+  set_field_metadata(config,*field);
   return field;
 }
 
-field::Field* NodeColumns::createField(const std::string& name,array::DataType datatype, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_nodes());
+field::Field* NodeColumns::createField(
+    const std::string& name,
+    array::DataType datatype,
+    const std::vector<size_t>& variables,
+    const eckit::Parametrisation& config ) const
+{
+  size_t nb_nodes = config_nb_nodes(config);
+  std::vector<size_t> shape(1,nb_nodes);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
   field->set_functionspace(*this);
+  set_field_metadata(config,*field);
   return field;
 }
 
-field::Field* NodeColumns::createField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_nodes()); shape.push_back(levels);
+field::Field* NodeColumns::createField(
+    const std::string& name,
+    array::DataType datatype,
+    size_t levels,
+    const std::vector<size_t>& variables,
+    const eckit::Parametrisation& config ) const
+{
+  size_t nb_nodes = config_nb_nodes(config);
+  std::vector<size_t> shape(1,nb_nodes); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
   field->set_levels(levels);
   field->set_functionspace(*this);
+  set_field_metadata(config,*field);
   return field;
 }
 
-field::Field* NodeColumns::createField(const std::string& name, const field::Field& other) const {
+field::Field* NodeColumns::createField(
+    const std::string& name,
+    const field::Field& other,
+    const eckit::Parametrisation& config ) const
+{
   array::ArrayShape shape = other.shape();
-  shape[0] = nb_nodes();
+  shape[0] = config_nb_nodes(config);
   field::Field* field = field::Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
   field->set_functionspace(*this);
+  set_field_metadata(config,*field);
   return field;
 }
 
+field::Field* NodeColumns::createField(
+    const eckit::Parametrisation& config ) const
+{
+  size_t nb_nodes = config_nb_nodes(config);
+  field::Field* field = field::Field::create("",array::DataType::create<double>(),array::make_shape(nb_nodes));
+  field->set_functionspace(*this);
+  set_field_metadata(config,*field);
+  return field;
+}
+
+namespace {
+void print_warning(const eckit::CodeLocation& here)
+{
+
+  Log::warning()
+      << "  " << here << '\n'
+      << "  Function createGlobalField is deprecated. Please use createField and pass \n"
+      << "  the extra argument \n"
+      << "      atlas::field::global() \n"
+      << "  with owner a mpi rank"
+      << std::endl;
+  Log::debug()
+      << eckit::BackTrace::dump()
+      << std::endl;
+}
+
+}
+
 field::Field* NodeColumns::createGlobalField(const std::string& name,array::DataType datatype) const {
+  print_warning(Here());
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes_global()));
   field->set_functionspace(*this);
+  field->metadata().set("global",true);
+  field->metadata().set("owner",0);
   return field;
 }
 
 field::Field* NodeColumns::createGlobalField(const std::string& name, array::DataType datatype, size_t levels) const {
+  print_warning(Here());
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes_global(),levels));
   field->set_levels(levels);
   field->set_functionspace(*this);
+  field->metadata().set("global",true);
+  field->metadata().set("owner",0);
   return field;
 }
 
 field::Field* NodeColumns::createGlobalField(const std::string& name, array::DataType datatype, const std::vector<size_t>& variables) const {
+  print_warning(Here());
   std::vector<size_t> shape(1,nb_nodes_global());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
   field->set_functionspace(*this);
+  field->metadata().set("global",true);
+  field->metadata().set("owner",0);
   return field;
 }
 
 field::Field* NodeColumns::createGlobalField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
+  print_warning(Here());
   std::vector<size_t> shape(1,nb_nodes_global()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
   field->set_levels(levels);
   field->set_functionspace(*this);
+  field->metadata().set("global",true);
+  field->metadata().set("owner",0);
   return field;
 }
 
 field::Field* NodeColumns::createGlobalField(const std::string& name,const field::Field& other) const {
+  print_warning(Here());
   array::ArrayShape shape = other.shape();
   shape[0] = nb_nodes_global();
   field::Field* field = field::Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
   field->set_functionspace(*this);
+  field->metadata().set("global",true);
+  field->metadata().set("owner",0);
   return field;
 }
 
@@ -348,25 +471,27 @@ void NodeColumns::gather( const field::FieldSet& local_fieldset, field::FieldSet
     const field::Field& loc = local_fieldset[f];
     field::Field& glb = global_fieldset[f];
     const size_t nb_fields = 1;
+    size_t root(0);
+    glb.metadata().get("owner",root);
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
       parallel::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
       parallel::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
-      gather().gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
       parallel::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
       parallel::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
-      gather().gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
       parallel::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
       parallel::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
-      gather().gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
       parallel::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
       parallel::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
-      gather().gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }
@@ -398,26 +523,28 @@ void NodeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldS
     const field::Field& glb = global_fieldset[f];
     field::Field& loc = local_fieldset[f];
     const size_t nb_fields = 1;
+    size_t root(0);
+    glb.metadata().get("owner",root);
 
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
       parallel::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
       parallel::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
-      scatter().scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
       parallel::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
       parallel::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
-      scatter().scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
       parallel::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
       parallel::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
-      scatter().scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
       parallel::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
       parallel::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
-      scatter().scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }
@@ -438,7 +565,7 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const field::F
   array::ArrayView<T,3> values = leveled_view<T>(field);
   array::ArrayT<T> surface_field ( array::make_shape(values.shape(0),values.shape(2) ) );
   array::ArrayView<T,2> surface(surface_field);
-  for( size_t n=0; n<values.shape(0); ++n ) {
+  atlas_omp_for( size_t n=0; n<values.shape(0); ++n ) {
     for( size_t j=0; j<surface.shape(1); ++j )
     {
       surface(n,j) = 0.;
@@ -524,7 +651,7 @@ void dispatch_sum( const NodeColumns& fs, const field::Field& field, T& result, 
     }
   }
   eckit::mpi::all_reduce(local_sum,result,eckit::mpi::sum());
-  N = fs.nb_nodes_global_foreach_rank()[0] * arr.shape(1);
+  N = fs.nb_nodes_global() * arr.shape(1);
 }
 
 template< typename T >
@@ -598,7 +725,7 @@ void dispatch_sum( const NodeColumns& fs, const field::Field& field, std::vector
     }
   }
   eckit::mpi::all_reduce(local_sum,result,eckit::mpi::sum());
-  N = fs.nb_nodes_global_foreach_rank()[0] * arr.shape(1);
+  N = fs.nb_nodes_global() * arr.shape(1);
 }
 
 template< typename T >
@@ -680,7 +807,7 @@ void dispatch_sum_per_level( const NodeColumns& fs, const field::Field& field, f
     }
   }
   eckit::mpi::all_reduce(sum_per_level.data(),sum.size(),eckit::mpi::sum());
-  N = fs.nb_nodes_global_foreach_rank()[0];
+  N = fs.nb_nodes_global();
 }
 
 void sum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& sum, size_t& N )
@@ -707,11 +834,11 @@ template< typename DATATYPE >
 void dispatch_order_independent_sum_2d( const NodeColumns& fs , const field::Field& field, DATATYPE& result, size_t& N )
 {
   size_t root = 0;
-  field::Field::Ptr global( fs.createGlobalField("global",field) );
+  field::Field::Ptr global( fs.createField("global",field, field::global() ) );
   fs.gather(field,*global);
   result = std::accumulate(global->data<DATATYPE>(),global->data<DATATYPE>()+global->size(),0.);
   eckit::mpi::broadcast(result,root);
-  N = fs.nb_nodes_global_foreach_rank()[0];
+  N = fs.nb_nodes_global();
 }
 
 template< typename T >
@@ -780,11 +907,13 @@ void order_independent_sum( const NodeColumns& fs , const field::Field& field, T
 template< typename DATATYPE >
 void dispatch_order_independent_sum_2d( const NodeColumns& fs, const field::Field& field, std::vector<DATATYPE>& result, size_t& N )
 {
+  DEBUG();
   size_t nvar = field.stride(0);
   result.resize(nvar);
   for( size_t j=0; j<nvar; ++j ) result[j] = 0.;
-  size_t root = 0;
-  field::Field::Ptr global( fs.createGlobalField("global",field) );
+  DEBUG();
+  field::Field::Ptr global( fs.createField("global",field, field::global() ) );
+  DEBUG();
   fs.gather(field,*global);
   if( eckit::mpi::rank() == 0 ) {
     const array::ArrayView<DATATYPE,2> glb( global->data<DATATYPE>(), array::make_shape(global->shape(0),global->stride(0)) );
@@ -794,8 +923,9 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const field::Fiel
       }
     }
   }
+  size_t root = global->metadata().get<size_t>("owner");
   eckit::mpi::broadcast(result,root);
-  N = fs.nb_nodes_global_foreach_rank()[0];
+  N = fs.nb_nodes_global();
 }
 
 template< typename T >
@@ -882,7 +1012,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const fiel
   Log::info() << sumfield << std::endl;
 
   size_t root = 0;
-  field::Field::Ptr global( fs.createGlobalField("global",field) );
+  field::Field::Ptr global( fs.createField("global",field,field::global()) );
 
   Log::info() << *global << std::endl;
 
@@ -899,7 +1029,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const fiel
     }
   }
   eckit::mpi::broadcast(sumfield.data<T>(),sumfield.size(),root);
-  N = fs.nb_nodes_global_foreach_rank()[0];
+  N = fs.nb_nodes_global();
 }
 
 void order_independent_sum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& sum, size_t& N )

@@ -28,6 +28,7 @@
 #endif
 using namespace eckit;
 using namespace atlas::functionspace;
+using namespace atlas::util;
 
 namespace atlas {
 namespace test {
@@ -40,7 +41,7 @@ struct AtlasFixture {
 
 BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
-BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
+BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 {
   //ScopedPtr<grid::Grid> grid( Grid::create("O2") );
 
@@ -136,12 +137,16 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
 
   Log::info() << nodes_fs->checksum(*field) << std::endl;
 
-  field::Field::Ptr glb_field( nodes_fs->createGlobalField("partition",*field) );
+  size_t root = eckit::mpi::size()-1;
+  field::Field::Ptr glb_field( nodes_fs->createField("partition",*field,field::global(root)) );
   nodes_fs->gather(*field,*glb_field);
 
   Log::info() << "local points = " << nodes_fs->nb_nodes() << std::endl;
   Log::info() << "grid points = " << grid->npts() << std::endl;
   Log::info() << "glb_field.shape(0) = " << glb_field->shape(0) << std::endl;
+
+  BOOST_CHECK_EQUAL( glb_field->metadata().get<bool>("global"), true );
+  BOOST_CHECK_EQUAL( glb_field->metadata().get<int>("owner"),  root );
 
   //glb_field->dump( Log::info() );
 
@@ -435,6 +440,9 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
   }
 
 
+
+  SharedPtr<field::Field> tmp (
+        nodes_fs->createField( field::datatypeT<double>() | field::global(0) | field::levels(10) | field::name("tmp") ) );
 
 }
 
