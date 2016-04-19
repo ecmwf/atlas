@@ -204,6 +204,7 @@ field/FieldSet.h
 field/FieldSet.cc
 field/State.h
 field/State.cc
+field/Options.h
 )
 
 list( APPEND atlas_functionspace_srcs

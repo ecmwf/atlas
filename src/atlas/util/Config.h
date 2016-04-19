@@ -52,12 +52,18 @@ public:
 
   /// @brief Operator that sets a key-value pair.
   /// This is useful for chaining. Together with above constructor:
-  /// Parametrisation
+  /// Config
   ///   ("key1",value1)
   ///   ("key2",value2)
   ///   ("key3",value3);
   template<typename ValueT>
-  Config& operator()(const std::string& name, const ValueT& value);
+  Config operator()(const std::string& name, const ValueT& value);
+  Config operator()(const Config &c) { return set(c); }
+
+
+  // Overload operators to merge two Config objects.
+  Config operator&&(const Config& other) const;
+  Config operator|(const Config& other) const;
 
   /// @brief Set a key-value parameter
   template<typename ValueT>
@@ -98,24 +104,25 @@ private:
 // ------------------------------------------------------------------
 
 template<typename ValueT>
-Config::Config(const std::string& name, const ValueT& value)
+inline Config::Config(const std::string& name, const ValueT& value)
 {
   delegate_.set(name,value);
 }
 
 template<typename ValueT>
-Config& Config::operator()(const std::string& name, const ValueT& value)
+inline Config Config::operator()(const std::string& name, const ValueT& value)
 {
   set(name,value);
   return *this;
 }
 
 template<typename ValueT>
-Config& Config::set(const std::string& name, const ValueT& value)
+inline Config& Config::set(const std::string& name, const ValueT& value)
 {
   delegate_.set(name,value);
   return *this;
 }
+
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
@@ -156,6 +163,26 @@ extern "C"
 #undef Char
 
 // ------------------------------------------------------------------
+
+class NoConfig: public eckit::Parametrisation {
+
+public: // methods
+
+    /// Destructor redundant but fixes sanity compiler warnings
+    virtual ~NoConfig() {}
+
+    virtual bool has(const std::string& name) const { return false; }
+
+    virtual bool get(const std::string& name, std::string& value) const { return false; }
+    virtual bool get(const std::string& name, bool& value) const { return false; }
+    virtual bool get(const std::string& name, long& value) const { return false; }
+    virtual bool get(const std::string& name, size_t& value) const { return false; }
+    virtual bool get(const std::string& name, double& value) const { return false; }
+
+    virtual bool get(const std::string& name, std::vector<long>& value) const { return false; }
+    virtual bool get(const std::string& name, std::vector<double>& value) const { return false; }
+
+};
 
 } // namespace util
 } // namespace atlas
