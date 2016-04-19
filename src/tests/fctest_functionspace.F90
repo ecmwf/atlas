@@ -375,12 +375,12 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("",atlas_real(c_float),(/2/))
+field = fs%create_field("",atlas_real(c_float),[2])
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",atlas_integer(c_int),(/2,2/))
+field = fs%create_field("field",atlas_integer(c_int),[2,2])
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
@@ -409,12 +409,12 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_global_field("",atlas_real(c_float),(/2/))
+field = fs%create_global_field("",atlas_real(c_float),[2])
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_global_field("field",atlas_integer(c_int),(/2,2/))
+field = fs%create_global_field("field",atlas_integer(c_int),[2,2])
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
