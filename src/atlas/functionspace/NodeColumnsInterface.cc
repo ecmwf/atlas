@@ -53,88 +53,51 @@ mesh::Nodes* atlas__NodesFunctionSpace__nodes(NodeColumns* This)
   return &This->nodes();
 }
 
-field::Field* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind )
+field::Field* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind, const eckit::Parametrisation* options )
 {
   ASSERT(This);
-  return This->createField(std::string(name),array::DataType(kind));
+  ASSERT(options);
+  return This->createField(std::string(name),array::DataType(kind),*options);
 }
 
-field::Field* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
+field::Field* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options)
 {
   ASSERT(This);
+  ASSERT(options);
   ASSERT(variables_size);
   std::vector<size_t> variables_(variables_size);
   if( fortran_ordering )
     std::reverse_copy( variables, variables+variables_size,variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),array::DataType(kind),variables_);
+  return This->createField(std::string(name),array::DataType(kind),variables_,*options);
 }
 
-field::Field* atlas__NodesFunctionSpace__create_field_lev (const NodeColumns* This, const char* name, int levels, int kind )
+field::Field* atlas__NodesFunctionSpace__create_field_lev (const NodeColumns* This, const char* name, int levels, int kind, const eckit::Parametrisation* options )
 {
   ASSERT(This);
-  return This->createField(std::string(name),array::DataType(kind),size_t(levels));
+  ASSERT(options);
+  return This->createField(std::string(name),array::DataType(kind),size_t(levels),*options);
 }
 
-field::Field* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind)
+field::Field* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options )
 {
   ASSERT(This);
+  ASSERT(options);
   ASSERT(variables_size);
   std::vector<size_t> variables_(variables_size);
   if( fortran_ordering )
     std::reverse_copy( variables, variables+variables_size,variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),array::DataType(kind),size_t(levels),variables_);
+  return This->createField(std::string(name),array::DataType(kind),size_t(levels),variables_, *options);
 }
 
-field::Field* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field::Field* field_template )
+field::Field* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field::Field* field_template, const eckit::Parametrisation* options )
 {
   ASSERT(This);
-  return This->createField(std::string(name),*field_template);
-}
-
-field::Field* atlas__NodesFunctionSpace__create_global_field (const NodeColumns* This, const char* name, int kind, int owner )
-{
-  ASSERT(This);
-  return This->createGlobalField(std::string(name),array::DataType(kind));
-}
-
-field::Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, int owner)
-{
-  ASSERT(This);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),array::DataType(kind),variables_);
-}
-
-field::Field* atlas__NodesFunctionSpace__create_global_field_lev (const NodeColumns* This, const char* name, int levels, int kind, int owner )
-{
-  ASSERT(This);
-  return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels));
-}
-
-field::Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, int owner)
-{
-  ASSERT(This);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels),variables_);
-}
-
-field::Field* atlas__NodesFunctionSpace__create_global_field_template (const NodeColumns* This, const char* name, const field::Field* field_template, int owner )
-{
-  ASSERT(This);
-  return This->createGlobalField(std::string(name),*field_template);
+  ASSERT(options);
+  return This->createField(std::string(name),*field_template,*options);
 }
 
 
