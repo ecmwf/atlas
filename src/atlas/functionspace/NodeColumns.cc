@@ -907,13 +907,10 @@ void order_independent_sum( const NodeColumns& fs , const field::Field& field, T
 template< typename DATATYPE >
 void dispatch_order_independent_sum_2d( const NodeColumns& fs, const field::Field& field, std::vector<DATATYPE>& result, size_t& N )
 {
-  DEBUG();
   size_t nvar = field.stride(0);
   result.resize(nvar);
   for( size_t j=0; j<nvar; ++j ) result[j] = 0.;
-  DEBUG();
   field::Field::Ptr global( fs.createField("global",field, field::global() ) );
-  DEBUG();
   fs.gather(field,*global);
   if( eckit::mpi::rank() == 0 ) {
     const array::ArrayView<DATATYPE,2> glb( global->data<DATATYPE>(), array::make_shape(global->shape(0),global->stride(0)) );
