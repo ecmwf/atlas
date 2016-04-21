@@ -251,13 +251,16 @@ void write_field_nodes(
     //    field.global_index(), *gidx_glb);
     //array::ArrayView<gidx_t,1> gidx = array::ArrayView<gidx_t,1>(*gidx_glb);
 
-    field_glb = function_space.createGlobalField<double>("glb_field");
-    function_space.gather(field, *field_glb);
-    data = array::ArrayView<DATATYPE,2>(
-      field_glb->data<DATATYPE>(),
-      array::make_shape(field_glb->shape(0),
-      field_glb->stride(0)));
-
+    if( eckit::mpi::size() > 1 )
+    {
+      field_glb = function_space.createGlobalField<double>("glb_field");
+      function_space.gather(field, *field_glb);
+      data = array::ArrayView<DATATYPE,2>(
+        field_glb->data<DATATYPE>(),
+        array::make_shape(field_glb->shape(0),
+        field_glb->stride(0)));
+    }
+    
     int ndata = data.shape(0);
 
     std::vector<long> lev;
