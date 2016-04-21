@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include "eckit/utils/MD5.h"
+#include "eckit/os/BackTrace.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/HybridElements.h"
@@ -69,6 +70,20 @@ array::ArrayView<T,1> surface_scalar_view(const field::Field &field)
   return array::ArrayView<T,1> ( field.data<T>(), array::make_shape(field.size()) );
 }
 
+void print_warning(const eckit::CodeLocation& here)
+{
+
+  Log::warning()
+      << "  " << here << '\n'
+      << "  Function createGlobalField is deprecated. Please use createField and pass \n"
+      << "  the extra argument \n"
+      << "      atlas::field::global() \n"
+      << "  with owner a mpi rank"
+      << std::endl;
+  Log::debug()
+      << eckit::BackTrace::dump()
+      << std::endl;
+}
 
 }
 

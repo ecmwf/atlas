@@ -187,7 +187,7 @@ TEST( test_trans )
 
   call trans%invtrans_vordiv2wind(spectral_fs,vorfield,divfield,nodes_fs,windfield)
 
-  glb_vorfield = spectral_fs%create_global_field("vorticity",atlas_real(c_double),nlev)
+  glb_vorfield = spectral_fs%create_field("vorticity",atlas_real(c_double),nlev,global=.true.)
   call spectral_fs%gather(vorfield,glb_vorfield)
   call spectral_fs%scatter(glb_vorfield,vorfield)
 
