@@ -13,7 +13,6 @@
 #include <stdexcept>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/memory/ScopedPtr.h"
-#include "eckit/types/Types.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
@@ -99,13 +98,32 @@ void Field::dump(std::ostream& os) const
   array_->dump(os);
 }
 
+namespace {
+
+template< typename T >
+std::string vector_to_str(const std::vector<T>& t)
+{
+  std::stringstream s;
+  s << '[';
+  for(size_t i = 0; i < t.size(); i++) {
+      if (i != 0)
+          s << ',';
+      s << t[i];
+  }
+  s << ']';
+  return s.str();
+}
+
+
+}
+
 void Field::print(std::ostream& os) const
 {
   os << "Field[name=" << name()
      << ",datatype=" << datatype().str()
      << ",size=" << size()
-     << ",shape=" << shape()
-     << ",strides=" << strides()
+     << ",shape=" << vector_to_str( shape() )
+     << ",strides=" << vector_to_str( strides() )
      << ",bytes=" << bytes()
      << ",metadata=" << metadata()
      << "]";
