@@ -473,6 +473,7 @@ void NodeColumns::gather( const field::FieldSet& local_fieldset, field::FieldSet
     const size_t nb_fields = 1;
     size_t root(0);
     glb.metadata().get("owner",root);
+
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
       parallel::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
       parallel::Field<int      > glb_field(glb.data<int>(),glb.stride(0));

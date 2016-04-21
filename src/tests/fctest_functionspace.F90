@@ -397,34 +397,34 @@ call field%final()
 call template%final()
 
 
-field = fs%create_global_field("",atlas_real(c_float))
+field = fs%create_field(atlas_real(c_float),global=.true.)
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_global_field("field",atlas_real(c_float))
+field = fs%create_field("field",atlas_real(c_float),global=.true.)
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_global_field("",atlas_real(c_float),[2])
+field = fs%create_field(atlas_real(c_float),[2],global=.true.)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_global_field("field",atlas_integer(c_int),[2,2])
+field = fs%create_field("field",atlas_integer(c_int),[2,2],global=.true.)
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
 
-field = fs%create_global_field("",template)
+field = fs%create_field(template,global=.true.)
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_global_field("field",template)
+field = fs%create_field("field",template,global=.true.)
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()

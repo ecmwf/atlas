@@ -333,27 +333,27 @@ private: // data
 template< typename DATATYPE >
 field::Field* NodeColumns::createField(
     const std::string& name,
-    const eckit::Parametrisation& config) const
+    const eckit::Parametrisation& options) const
 {
-    return createField(name,array::DataType::create<DATATYPE>(),config);
+    return createField(name,array::DataType::create<DATATYPE>(),options);
 }
 
 template< typename DATATYPE >
 field::Field* NodeColumns::createField(
     const std::string& name,
     size_t levels,
-    const eckit::Parametrisation& config) const
+    const eckit::Parametrisation& options) const
 {
-    return createField(name,array::DataType::create<DATATYPE>(),levels,config);
+    return createField(name,array::DataType::create<DATATYPE>(),levels,options);
 }
 
 template< typename DATATYPE >
 field::Field* NodeColumns::createField(
     const std::string& name,
     const std::vector<size_t>& variables,
-    const eckit::Parametrisation& config) const
+    const eckit::Parametrisation& options) const
 {
-    return createField(name,array::DataType::create<DATATYPE>(),variables,config);
+    return createField(name,array::DataType::create<DATATYPE>(),variables,options);
 }
 
 template< typename DATATYPE >
@@ -361,9 +361,9 @@ field::Field* NodeColumns::createField(
     const std::string& name,
     size_t levels,
     const std::vector<size_t>& variables,
-    const eckit::Parametrisation& config) const
+    const eckit::Parametrisation& options) const
 {
-    return createField(name,array::DataType::create<DATATYPE>(),levels,variables,config);
+    return createField(name,array::DataType::create<DATATYPE>(),levels,variables,options);
 }
 
 template< typename DATATYPE >
