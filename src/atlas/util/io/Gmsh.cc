@@ -15,7 +15,7 @@
 #include <limits>
 #include "eckit/filesystem/PathName.h"
 #include "eckit/exception/Exceptions.h"
-#include "eckit/config/Resource.h";
+#include "eckit/config/Resource.h"
 #include "eckit/runtime/Context.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
