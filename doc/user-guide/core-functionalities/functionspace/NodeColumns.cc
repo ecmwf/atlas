@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 
     // Create a global field
     SharedPtr<Field> field_global(
-       fs_nodes->createGlobalField("global", *field_scalar1) );
+       fs_nodes->createField("global", *field_scalar1, field::global() ) );
     // Gather operation
     fs_nodes->gather(*field_scalar1, *field_global);
 

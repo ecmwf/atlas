@@ -117,11 +117,11 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& funct
   field::Field::Ptr data_glb;
   if( gather )
   {
-    gidx_glb.reset( function_space.createGlobalField( "gidx_glb", function_space.nodes().global_index() ) );
+    gidx_glb.reset( function_space.createField( "gidx_glb", function_space.nodes().global_index(), field::global() ) );
     function_space.gather(function_space.nodes().global_index(),*gidx_glb);
     gidx = array::ArrayView<gidx_t,1>( *gidx_glb );
 
-    data_glb.reset( function_space.createGlobalField( "glb_field",field ) );
+    data_glb.reset( function_space.createField( "glb_field",field, field::global() ) );
     function_space.gather(field,*data_glb);
     data = array::ArrayView<DATATYPE,2>( data_glb->data<DATATYPE>(), array::make_shape(data_glb->shape(0),data_glb->stride(0)) );
   }

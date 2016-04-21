@@ -71,7 +71,7 @@ public:
 
 
 
-// -- Local Field creation methods
+// -- Field creation methods
 
     /// @brief Create a named scalar field
     template< typename DATATYPE > field::Field* createField(
@@ -126,27 +126,6 @@ public:
         const eckit::Parametrisation& = util::NoConfig()) const;
 
     field::Field* createField(const eckit::Parametrisation&) const;
-
-// -- Global field::Field creation methods
-
-    /// @brief Create a named global scalar field
-    template< typename DATATYPE >  field::Field* createGlobalField(const std::string& name) const;
-    template< typename DATATYPE >  field::Field* createGlobalField(const std::string& name,size_t levels) const;
-
-    /// @brief Create a named global scalar field
-    field::Field* createGlobalField(const std::string& name, array::DataType) const;
-    field::Field* createGlobalField(const std::string& name, array::DataType, size_t levels) const;
-
-    /// @brief Create a named global field with specified dimensions for the variables
-    template< typename DATATYPE >  field::Field* createGlobalField(const std::string& name, const std::vector<size_t>& variables) const;
-    template< typename DATATYPE >  field::Field* createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const;
-
-    /// @brief Create a named field with specified dimensions for the variables
-    field::Field* createGlobalField(const std::string& name, array::DataType, const std::vector<size_t>& variables) const;
-    field::Field* createGlobalField(const std::string& name, array::DataType, size_t levels, const std::vector<size_t>& variables) const;
-
-    /// @brief Create a named global field based on other field (datatype and dimensioning)
-    field::Field* createGlobalField(const std::string& name, const field::Field&) const;
 
 // -- Parallelisation aware methods
 
@@ -364,30 +343,6 @@ field::Field* NodeColumns::createField(
     const eckit::Parametrisation& options) const
 {
     return createField(name,array::DataType::create<DATATYPE>(),levels,variables,options);
-}
-
-template< typename DATATYPE >
-field::Field* NodeColumns::createGlobalField(const std::string& name) const
-{
-    return createGlobalField(name,array::DataType::create<DATATYPE>());
-}
-
-template< typename DATATYPE >
-field::Field* NodeColumns::createGlobalField(const std::string& name,size_t levels) const
-{
-    return createGlobalField(name,array::DataType::create<DATATYPE>(),levels);
-}
-
-template< typename DATATYPE >
-field::Field* NodeColumns::createGlobalField(const std::string& name, const std::vector<size_t>& variables) const
-{
-    return createGlobalField(name,array::DataType::create<DATATYPE>(),variables);
-}
-
-template< typename DATATYPE >
-field::Field* NodeColumns::createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
-{
-    return createGlobalField(name,array::DataType::create<DATATYPE>(),levels,variables);
 }
 
 } // namespace functionspace
