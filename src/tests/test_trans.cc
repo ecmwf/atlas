@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   SharedPtr<field::Field> spfg ( spectral->createField<double>("spf",field::global()) );
   SharedPtr<field::Field> spf  ( spectral->createField<double>("spf") );
   SharedPtr<field::Field> gpf  ( gridpoints->createField<double>("gpf") );
-  SharedPtr<field::Field> gpfg ( gridpoints->createGlobalField<double>("gpf") );
+  SharedPtr<field::Field> gpfg ( gridpoints->createField<double>("gpf", field::global()) );
 
   array::ArrayView<double,1> spg (*spfg);
   if( eckit::mpi::rank() == 0 ) {

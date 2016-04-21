@@ -334,7 +334,7 @@ spfields = atlas_FieldSet("spectral")
 
 nfld=10
 do jfld=1,nfld
-  fieldg = gridpoints%create_global_field(atlas_real(c_double))
+  fieldg = gridpoints%create_field(atlas_real(c_double),global=.true.)
   field  = gridpoints%create_field(atlas_real(c_double))
 
   ! Read global field data

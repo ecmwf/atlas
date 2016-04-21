@@ -253,7 +253,7 @@ void write_field_nodes(
 
     if( eckit::mpi::size() > 1 )
     {
-      field_glb = function_space.createGlobalField<double>("glb_field");
+      field_glb = function_space.createField<double>("glb_field",field::global());
       function_space.gather(field, *field_glb);
       data = array::ArrayView<DATATYPE,2>(
         field_glb->data<DATATYPE>(),
