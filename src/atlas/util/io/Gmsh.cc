@@ -260,7 +260,7 @@ void write_field_nodes(
         array::make_shape(field_glb->shape(0),
         field_glb->stride(0)));
     }
-    
+
     int ndata = data.shape(0);
 
     std::vector<long> lev;
@@ -1048,7 +1048,7 @@ void Gmsh::write(
 
 
 // ----------------------------------------------------------------------------
-void Gmsh::write(
+void Gmsh::write_delegate(
     const field::Field&                field,
     const functionspace::NodeColumns& functionspace,
     const PathName&             file_path,
@@ -1056,14 +1056,14 @@ void Gmsh::write(
 {
   field::FieldSet fieldset;
   fieldset.add(field);
-  write(fieldset, functionspace, file_path, mode);
+  write_delegate(fieldset, functionspace, file_path, mode);
 }
 // ----------------------------------------------------------------------------
 
 
 
 // ----------------------------------------------------------------------------
-void Gmsh::write(
+void Gmsh::write_delegate(
     const field::Field&                           field,
     const functionspace::StructuredColumns& functionspace,
     const PathName&                        file_path,
@@ -1071,14 +1071,14 @@ void Gmsh::write(
 {
     field::FieldSet fieldset;
     fieldset.add(field);
-    write(fieldset, functionspace, file_path, mode);
+    write_delegate(fieldset, functionspace, file_path, mode);
 }
 // ----------------------------------------------------------------------------
 
 
 
 // ----------------------------------------------------------------------------
-void Gmsh::write(
+void Gmsh::write_delegate(
     const field::FieldSet&             fieldset,
     const functionspace::NodeColumns& functionspace,
     const PathName&             file_path,
@@ -1129,7 +1129,7 @@ void Gmsh::write(
 
 
 // ----------------------------------------------------------------------------
-void Gmsh::write(
+void Gmsh::write_delegate(
     const field::FieldSet& fieldset,
     const functionspace::StructuredColumns& functionspace,
     const PathName& file_path, openmode mode) const
@@ -1187,13 +1187,13 @@ void Gmsh::write(
   openmode mode) const
 {
   if( dynamic_cast<const functionspace::NodeColumns*>(&funcspace) )
-    write( 
+    write_delegate(
       fieldset,
       dynamic_cast<const functionspace::NodeColumns&>(funcspace),
       file_path,
       mode);
   else if( dynamic_cast<const functionspace::StructuredColumns*>(&funcspace) )
-    write( 
+    write_delegate(
       fieldset,
       dynamic_cast<const functionspace::StructuredColumns&>(funcspace),
       file_path,
@@ -1206,11 +1206,24 @@ void Gmsh::write(
 // ----------------------------------------------------------------------------
 void Gmsh::write(
   const field::Field& field,
-  const functionspace::FunctionSpace&,
+  const functionspace::FunctionSpace& funcspace,
   const eckit::PathName& file_path,
   openmode mode) const
 {
-    
+  if( dynamic_cast<const functionspace::NodeColumns*>(&funcspace) )
+    write_delegate(
+      field,
+      dynamic_cast<const functionspace::NodeColumns&>(funcspace),
+      file_path,
+      mode);
+  else if( dynamic_cast<const functionspace::StructuredColumns*>(&funcspace) )
+    write_delegate(
+      field,
+      dynamic_cast<const functionspace::StructuredColumns&>(funcspace),
+      file_path,
+      mode);
+  else
+    NOTIMP;
 }
 // ----------------------------------------------------------------------------
 
