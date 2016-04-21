@@ -19,7 +19,7 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
@@ -108,7 +108,7 @@ template <typename T> Array* Array::create(size_t size1, size_t size2, size_t si
 template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3, size_t size4)
 { return create(array::DataType::create<T>(),make_shape(size1,size2,size3,size4)); }
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 template< typename DATA_TYPE >
 class ArrayT : public Array  {
@@ -233,7 +233,7 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
   view_ = ArrayView<DATA_TYPE>( *this );
 }
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 } // namespace array
 } // namespace atlas

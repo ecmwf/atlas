@@ -54,6 +54,30 @@ public:
   void write(const mesh::Mesh& mesh,
              const eckit::PathName& file_path) const;
 
+ /// Write field to file
+ ///  Depending on argument "mode", the fields will be appended,
+ ///  or existing file will be overwritten
+ void write(const field::Field& field,
+            const eckit::PathName& file_path,
+            openmode mode = std::ios::out) const;
+
+  /// Write fieldset to file using FunctionSpace
+  ///  Depending on argument "mode", the fields will be appended,
+  ///  or existing file will be overwritten
+  void write(const field::FieldSet& fieldset,
+             const functionspace::FunctionSpace&,
+             const eckit::PathName& file_path,
+             openmode mode = std::ios::out) const;
+
+  /// Write field to file using Functionspace
+  ///  Depending on argument "mode", the fields will be appended,
+  ///  or existing file will be overwritten
+  void write(const field::Field& field,
+             const functionspace::FunctionSpace&,
+             const eckit::PathName& file_path,
+             openmode mode = std::ios::out) const;
+
+private:
   /// Write fieldset to file using Nodes functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
@@ -86,13 +110,6 @@ public:
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
-  /// Write field to file
-  ///  Depending on argument "mode", the fields will be appended,
-  ///  or existing file will be overwritten
-  void write(const field::Field& field,
-             const eckit::PathName& file_path,
-             openmode mode = std::ios::out) const;
-
 public:
   Metadata options;
 };
@@ -103,7 +120,7 @@ public:
 #define mesh_Mesh mesh::Mesh
 #define field_Field field::Field
 #define field_FieldSet field::FieldSet
-#define functionspace_NodeColumns functionspace::NodeColumns
+#define functionspace_FunctionSpace functionspace::FunctionSpace
 
 extern "C" {
 Gmsh* atlas__Gmsh__new();
@@ -112,8 +129,8 @@ mesh_Mesh* atlas__Gmsh__read(Gmsh* This, char* file_path);
 void atlas__Gmsh__write(Gmsh* This, mesh_Mesh* mesh, char* file_path);
 mesh_Mesh* atlas__read_gmsh(char* file_path);
 void atlas__write_gmsh_mesh(mesh_Mesh* mesh, char* file_path);
-void atlas__write_gmsh_fieldset(field_FieldSet* fieldset, functionspace_NodeColumns* function_space, char* file_path, int mode);
-void atlas__write_gmsh_field(field_Field* field, functionspace_NodeColumns* function_space, char* file_path, int mode);
+void atlas__write_gmsh_fieldset(field_FieldSet* fieldset, functionspace_FunctionSpace* function_space, char* file_path, int mode);
+void atlas__write_gmsh_field(field_Field* field, functionspace_FunctionSpace* function_space, char* file_path, int mode);
 }
 
 #undef field_Field

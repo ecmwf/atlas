@@ -15,7 +15,7 @@
 #include <limits>
 #include "eckit/filesystem/PathName.h"
 #include "eckit/exception/Exceptions.h"
-#include "eckit/config/Resource.h"
+#include "eckit/config/Resource.h";
 #include "eckit/runtime/Context.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -109,7 +109,7 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& funct
   bool gather( gmsh.options.get<bool>("gather") );
   bool binary( !gmsh.options.get<bool>("ascii") );
   int nlev  = field.levels();
-  int ndata = field.shape(0);
+  int ndata = function_space.nb_nodes();
   int nvars = field.stride(0)/nlev;
   array::ArrayView<gidx_t,1> gidx ( function_space.nodes().global_index() );
   array::ArrayView<DATATYPE,2> data ( field.data<DATATYPE>(), array::make_shape(field.shape(0),field.stride(0)) );
@@ -229,7 +229,6 @@ void write_field_nodes(
     std::ostream&                          out)
 {
     Log::info() << "writing field " << field.name() << "..." << std::endl;
-
     //bool gather(gmsh.options.get<bool>("gather"));
     bool binary(!gmsh.options.get<bool>("ascii"));
 
@@ -243,7 +242,7 @@ void write_field_nodes(
                                           field.stride(0)));
 
     field::Field::Ptr gidx_glb;
-    field::Field::Ptr data_glb;
+    field::Field::Ptr field_glb;
 
     //gidx_glb.reset(function_space.createGlobalField(
     //    "gidx_glb", function_space.nodes().global_index()));
@@ -252,13 +251,14 @@ void write_field_nodes(
     //    field.global_index(), *gidx_glb);
     //array::ArrayView<gidx_t,1> gidx = array::ArrayView<gidx_t,1>(*gidx_glb);
 
-    data_glb = function_space.createGlobalField<double>("glb_field");
-    function_space.gather(field, *data_glb);
-    data = array::ArrayView<DATATYPE,2>(data_glb->data<DATATYPE>(),
-                                 array::make_shape(data_glb->shape(0),
-                                            data_glb->stride(0)));
+    field_glb = function_space.createGlobalField<double>("glb_field");
+    function_space.gather(field, *field_glb);
+    data = array::ArrayView<DATATYPE,2>(
+      field_glb->data<DATATYPE>(),
+      array::make_shape(field_glb->shape(0),
+      field_glb->stride(0)));
 
-    int ndata = data_glb->shape(0);
+    int ndata = data.shape(0);
 
     std::vector<long> lev;
     std::vector<long> gmsh_levels;
@@ -342,12 +342,12 @@ void write_field_nodes(
             }
             else
             {
+                ASSERT(jlev*nvars <= data.shape(1));
                 if (nvars == 1)
                 {
                     for (int n = 0; n < ndata; ++n)
                     {
-                        ASSERT(jlev*nvars < data_glb->shape(1));
-                        ASSERT(n < data_glb->shape(0));
+                        ASSERT(n < data.shape(0));
                         out << n+1 << " "
                             << data(n, jlev*nvars+0) << "\n";
                     }
@@ -1176,7 +1176,40 @@ void Gmsh::write(
 // ----------------------------------------------------------------------------
 
 
+// ----------------------------------------------------------------------------
+void Gmsh::write(
+  const field::FieldSet& fieldset,
+  const functionspace::FunctionSpace& funcspace,
+  const eckit::PathName& file_path,
+  openmode mode) const
+{
+  if( dynamic_cast<const functionspace::NodeColumns*>(&funcspace) )
+    write( 
+      fieldset,
+      dynamic_cast<const functionspace::NodeColumns&>(funcspace),
+      file_path,
+      mode);
+  else if( dynamic_cast<const functionspace::StructuredColumns*>(&funcspace) )
+    write( 
+      fieldset,
+      dynamic_cast<const functionspace::StructuredColumns&>(funcspace),
+      file_path,
+      mode);
+  else
+    NOTIMP;
+}
+// ----------------------------------------------------------------------------
 
+// ----------------------------------------------------------------------------
+void Gmsh::write(
+  const field::Field& field,
+  const functionspace::FunctionSpace&,
+  const eckit::PathName& file_path,
+  openmode mode) const
+{
+    
+}
+// ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
@@ -1207,12 +1240,12 @@ void atlas__write_gmsh_mesh (mesh::Mesh* mesh, char* file_path) {
   writer.write( *mesh, PathName(file_path) );
 }
 
-void atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::NodeColumns* functionspace, char* file_path, int mode) {
+void atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
   Gmsh writer;
   writer.write( *fieldset, *functionspace, PathName(file_path) );
 }
 
-void atlas__write_gmsh_field (field::Field* field, functionspace::NodeColumns* functionspace, char* file_path, int mode) {
+void atlas__write_gmsh_field (field::Field* field, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
   Gmsh writer;
   writer.write( *field, *functionspace, PathName(file_path) );
 }
