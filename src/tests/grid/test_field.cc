@@ -27,6 +27,7 @@
 using namespace std;
 using namespace eckit;
 using namespace atlas;
+using namespace atlas::grid;
 using namespace atlas::mesh::generators;
 
 //-----------------------------------------------------------------------------
@@ -57,10 +58,7 @@ void TestField::test_constructor()
 {
   // create a grid
 
-  BoundBox earth ( Grid::Point(0.,-90.), Grid::Point(359.999999,90.) );
-
-  Grid::Ptr g (new atlas::grid::LonLatGrid( 20ul, 10ul, earth ) );
-//  Grid::Ptr g (Grid::create("O6"));
+  Grid::Ptr g (new atlas::grid::global::lonlat::RegularLonLat( 20ul, 10ul ) );
 
   ASSERT( g );
 
@@ -118,11 +116,11 @@ void TestField::test_fieldcreator()
   field::Field::Ptr field ( field::Field::create( util::Config
                                       ("creator","ArraySpec")
                                       ("shape",array::make_shape(10,2))
-                                      ("datatype",DataType::real32().str())
+                                      ("datatype",array::DataType::real32().str())
                                       ("name","myfield")
                                   ));
 
-  ASSERT( field->datatype() == DataType::real32() );
+  ASSERT( field->datatype() == array::DataType::real32() );
   ASSERT( field->name() == "myfield" );
 
   Grid::Ptr g (Grid::create("O6"));
@@ -133,20 +131,20 @@ void TestField::test_fieldcreator()
                                ));
   ASSERT( arr->shape(0) == 10 );
   ASSERT( arr->shape(1) == 2 );
-  ASSERT( arr->datatype() == DataType::real64() );
+  ASSERT( arr->datatype() == array::DataType::real64() );
 
 
-  util::Config ifs_parameters;
-  ifs_parameters
+  util::Config ifs_parameters = util::Config
       ("creator","IFS")
       ("nlev",137)
       ("nproma",10)
       ("ngptot",g->npts());
 
+  Log::info() << "Creating IFS field " << std::endl;
   field::Field::Ptr ifs (field::Field::create( util::Config
                                     (ifs_parameters)
                                     ("name","myfield")
-                                    ("datatype",DataType::int32().str())
+                                    ("datatype",array::DataType::int32().str())
                                     ("nvar",8)
                                ));
 

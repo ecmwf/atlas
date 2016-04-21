@@ -6,13 +6,17 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-add_subdirectory( util )
-add_subdirectory( parallel )
-add_subdirectory( grid )
-add_subdirectory( mesh )
-add_subdirectory( functionspace )
-add_subdirectory( io )
-add_subdirectory( numerics )
-add_subdirectory( trans )
-add_subdirectory( interpolation )
 
+ecbuild_add_test( TARGET atlas_test_haloexchange
+  BOOST
+  MPI      3
+  SOURCES  test_haloexchange.cc
+  LIBS     atlas
+)
+
+ecbuild_add_test( TARGET atlas_test_gather
+  BOOST
+  MPI      3
+  SOURCES  test_gather.cc
+  LIBS     atlas
+)

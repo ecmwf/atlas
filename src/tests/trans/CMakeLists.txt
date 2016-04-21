@@ -1,0 +1,35 @@
+# (C) Copyright 1996-2016 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
+
+if( HAVE_FCTEST )
+
+  if( ATLAS_HAVE_TRANS )
+    add_fctest( TARGET atlas_fctest_trans
+      MPI             1
+      LINKER_LANGUAGE Fortran
+      SOURCES         fctest_trans.F90
+      LIBS            atlas_f
+    )
+  endif()
+
+endif()
+
+ecbuild_add_test( TARGET atlas_test_trans
+  BOOST
+  MPI      4
+  SOURCES   test_trans.cc
+  CONDITION HAVE_TRANS
+  LIBS      atlas
+)
+
+ecbuild_add_test( TARGET atlas_test_trans_serial
+  BOOST
+  SOURCES   test_trans.cc
+  CONDITION HAVE_TRANS AND NOT HAVE_MPI
+  LIBS      atlas
+)
