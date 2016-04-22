@@ -17,8 +17,9 @@ namespace mesh {
 
 //------------------------------------------------------------------------------
 
-static ElementType* create( const std::string& )
+ElementType* ElementType::create( const std::string& )
 {
+  NOTIMP;
   return 0;
 }
 

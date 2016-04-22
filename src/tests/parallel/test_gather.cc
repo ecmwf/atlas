@@ -78,7 +78,7 @@ struct Fixture {
   std::vector<gidx_t> gidx;
 
   int Nl;
-  int root;
+  size_t root;
 
   int Ng() { return eckit::mpi::rank() == root ? gather_scatter.glb_dof() : 0; }
 };

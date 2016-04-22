@@ -589,7 +589,7 @@ void Structured::generate_region(const global::Structured& rg,
         // and ipS1=ipS1;
 
       }
-      else // make triangle up
+      else if( try_make_triangle_up ) // make triangle up
       {
         // triangle without ip4
 #if DEBUG_OUTPUT
@@ -670,6 +670,10 @@ void Structured::generate_region(const global::Structured& rg,
         ipS1=ipS2;
         // and ipN1=ipN1;
 
+      }
+      else
+      {
+        throw eckit::SeriousBug("Could not detect which element to create", Here());
       }
       ipN2 = std::min(endN,ipN1+1);
       ipS2 = std::min(endS,ipS1+1);

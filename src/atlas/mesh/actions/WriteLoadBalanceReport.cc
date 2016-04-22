@@ -46,8 +46,8 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
 
 void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 {
-  int npart = eckit::mpi::size();
-  int root = 0;
+  size_t npart = eckit::mpi::size();
+  size_t root = 0;
 
   std::vector<int> nb_total_nodes(npart,0);
   std::vector<int> nb_owned_nodes(npart,0);
@@ -105,7 +105,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
     size_t nb_edges = mesh.edges().size();
     int nowned(0);
     int nghost(0);
-    for( int j=0; j<nb_edges; ++j )
+    for( size_t j=0; j<nb_edges; ++j )
     {
       if( is_ghost(edge_nodes(j,0)) )
         ++nghost;
@@ -201,7 +201,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
     ofs << std::setw(idt) << "gedges";
     }
     ofs << "\n";
-    for( int jpart=0; jpart<npart; ++jpart )
+    for( size_t jpart=0; jpart<npart; ++jpart )
     {
       ofs << std::setw(6)  << jpart;
       ofs << std::setw(idt) << nb_total_nodes[jpart];

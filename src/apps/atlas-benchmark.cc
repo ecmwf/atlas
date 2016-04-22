@@ -390,7 +390,7 @@ void AtlasBenchmark::setup()
   node2edge_sign = array::ArrayView<double,2> ( mesh->nodes().add(
       field::Field::create<double>("to_edge_sign",array::make_shape(nnodes,node2edge.maxcols()) ) ) );
 
-  atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
+  atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
   {
     for(size_t jedge = 0; jedge < node2edge.cols(jnode); ++jedge)
     {
@@ -446,7 +446,7 @@ void AtlasBenchmark::iteration()
   const mesh::Connectivity& node2edge = mesh->nodes().edge_connectivity();
   const mesh::Connectivity& edge2node = mesh->edges().node_connectivity();
 
-  atlas_omp_parallel_for( int jedge=0; jedge<nedges; ++jedge )
+  atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
   {
     int ip1 = edge2node(jedge,0);
     int ip2 = edge2node(jedge,1);
@@ -459,16 +459,16 @@ void AtlasBenchmark::iteration()
     }
   }
 
-  atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
+  atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
   {
     for(size_t jlev = 0; jlev < nlev; ++jlev )
     {
       grad(jnode,jlev,internals::LON) = 0.;
       grad(jnode,jlev,internals::LAT) = 0.;
     }
-    for( int jedge=0; jedge<node2edge.cols(jnode); ++jedge )
+    for( size_t jedge=0; jedge<node2edge.cols(jnode); ++jedge )
     {
-      int iedge = node2edge(jnode,jedge);
+      size_t iedge = node2edge(jnode,jedge);
       double add = node2edge_sign(jnode,jedge);
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
@@ -496,7 +496,7 @@ void AtlasBenchmark::iteration()
   double dzi = 1./dz;
   double dzi_2 = 0.5*dzi;
 
-  atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
+  atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
   {
     if( nlev > 2 )
     {

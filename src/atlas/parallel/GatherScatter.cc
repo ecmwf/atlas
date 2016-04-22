@@ -123,7 +123,7 @@ void GatherScatter::setup( const int part[],
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
 
   glbdispls_[0]=0;
-  for (int jproc = 1; jproc < nproc; ++jproc) // start at 1
+  for (size_t jproc = 1; jproc < nproc; ++jproc) // start at 1
   {
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }
@@ -157,7 +157,7 @@ void GatherScatter::setup( const int part[],
   }
   glbdispls_[0]=0;
 
-  for (int jproc = 1; jproc < nproc; ++jproc) // start at 1
+  for (size_t jproc = 1; jproc < nproc; ++jproc) // start at 1
   {
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }

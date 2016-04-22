@@ -103,15 +103,12 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
     // Note that it is associated to nptrfrstlat
     array::ArrayView<int,2> nonl = trans_->nonl();
 
-    // Total number of longitudes per latitude
-    array::ArrayView<int,1> nloen = trans_->nloen();
-
     size_t proc(0);
     // Loop over number of latitude bands (ja)
-    for (size_t ja = 0; ja < n_regions_NS; ++ja)
+    for (int ja = 0; ja < n_regions_NS; ++ja)
     {
         // Loop over number of longitude bands (jb)
-        for (size_t jb = 0; jb < n_regions[ja]; ++jb)
+        for (int jb = 0; jb < n_regions[ja]; ++jb)
         {
             if (proc == eckit::mpi::rank())
             {

@@ -340,7 +340,7 @@ void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet&
             ++n;
           }
         }
-        ASSERT( n == ngptot() );
+        ASSERT( (int)n == ngptot() );
         ++f;
       }
     }
@@ -367,7 +367,7 @@ void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet&
 
       for( size_t jvar=0; jvar<nvars; ++jvar )
       {
-        for( size_t jwave=0; jwave<nspec2(); ++jwave )
+        for( int jwave=0; jwave<nspec2(); ++jwave )
         {
           spfield(jwave,jvar) = rspecview(jwave,f);
         }
@@ -395,7 +395,7 @@ void Trans::dirtrans(
   {
     throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
   }
-  if ( gpfield.shape(0) != ngptot() )
+  if ( (int)gpfield.shape(0) != ngptot() )
   {
     throw eckit::SeriousBug("dirtrans: slowest moving index must be ngptot",Here());
   }
@@ -489,7 +489,7 @@ void Trans::dirtrans(
 
       for( size_t jvar=0; jvar<nvars; ++jvar )
       {
-        for( size_t jwave=0; jwave<nspec2(); ++jwave )
+        for( int jwave=0; jwave<nspec2(); ++jwave )
         {
           spfield(jwave,jvar) = rspecview(jwave,f);
         }
@@ -614,7 +614,7 @@ void Trans::invtrans(const  field::Field& spfield,
   {
     throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
   }
-  if ( gpfield.shape(0) != ngptot() )
+  if ( (int)gpfield.shape(0) != ngptot() )
   {
     throw eckit::SeriousBug("dirtrans: slowest moving index must be ngptot",Here());
   }

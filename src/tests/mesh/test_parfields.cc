@@ -56,7 +56,7 @@ public:
   bool operator()(size_t idx) const
   {
     if( part_[idx] != mypart_ ) return true;
-    if( ridx_[idx] != idx     ) return true;
+    if( ridx_[idx] != (int)idx     ) return true;
     return false;
   }
 private:

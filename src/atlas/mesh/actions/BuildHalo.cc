@@ -108,9 +108,6 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
 {
   std::set<int> bdry_nodes_set;
 
-  mesh::Nodes& nodes       = mesh.nodes();
-
-  size_t nb_nodes = nodes.size();
   std::vector< idx_t > facet_nodes_data;
   std::vector< idx_t > connectivity_facet_to_elem;
   size_t nb_facets(0);
@@ -687,11 +684,11 @@ public:
       {
         for(size_t e = 0; e < elems[jpart].size(); ++e)
         {
-          int jelem = elems[jpart][e];
+          size_t jelem = elems[jpart][e];
           elem_type_glb_idx(new_elems_pos+new_elem)   = buf.elem_glb_idx[jpart][jelem];
           elem_type_part   (new_elems_pos+new_elem)   = buf.elem_part[jpart][jelem];
           elem_type_halo   (new_elems_pos+new_elem)   = 1;
-          for( int n=0; n<node_connectivity.cols(); ++n )
+          for( size_t n=0; n<node_connectivity.cols(); ++n )
             node_connectivity.set(new_elems_pos+new_elem,n ,  uid2node[ buf.elem_nodes_id[jpart][ buf.elem_nodes_displs[jpart][jelem]+n] ] );
           ++new_elem;
         }
@@ -848,7 +845,6 @@ void build_halo(Mesh& mesh, int nb_elems )
   int jhalo = 0;
   mesh.metadata().get("halo",jhalo);
 
-  bool halo_changed = false;
   for( ; jhalo<nb_elems; ++jhalo )
   {
     size_t nb_nodes_before_halo_increase = mesh.nodes().size();
@@ -868,8 +864,6 @@ void build_halo(Mesh& mesh, int nb_elems )
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<jhalo+1<<"]";
     mesh.metadata().set(ss.str(),mesh.nodes().size());
-
-    halo_changed = true;
   }
 
   mesh.metadata().set("halo",nb_elems);

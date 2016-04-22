@@ -170,16 +170,18 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 
 #else
 
-struct Polyhedron_3 {};
+struct Polyhedron_3 {
+  size_t size_of_vertices() const { return 0; }
+};
 
 static Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
 {
-	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
+  throw NotImplemented( "CGAL package not found -- Delaunay triangulation is disabled", Here() );
 }
 
 static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
-	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
+  throw NotImplemented( "CGAL package not found -- Delaunay triangulation is disabled", Here() );
 }
 
 #endif
@@ -205,7 +207,6 @@ void BuildConvexHull3D::operator()( Mesh& mesh ) const
 //    std::cout << "unique pts " << ipts.size() << std::endl;
 //    std::cout << "duplicates " << points.duplicates().size() << std::endl;
 
-#ifdef CGAL_FOUND
 
     // define polyhedron to hold convex hull
 
@@ -217,11 +218,6 @@ void BuildConvexHull3D::operator()( Mesh& mesh ) const
 
     cgal_polyhedron_to_atlas_mesh( mesh, *poly, points );
 
-#else
-
-        throw NotImplemented( "CGAL package not found -- Delaunay triangulation is disabled", Here() );
-
-#endif
 }
 
 //----------------------------------------------------------------------------------------------------------------------

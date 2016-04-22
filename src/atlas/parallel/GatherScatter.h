@@ -226,8 +226,8 @@ private: // data
   std::vector<int>  locmap_;
   std::vector<int>  glbmap_;
 
-  int nproc;
-  int myproc;
+  size_t nproc;
+  size_t myproc;
 
   bool is_setup_;
 

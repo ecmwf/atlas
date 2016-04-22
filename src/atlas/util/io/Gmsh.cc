@@ -925,7 +925,7 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
             {
               data[0] = elems_glb_idx(elem);
               data[4] = elems_partition(elem);
-              for( int n=0; n<node_connectivity.cols(); ++n )
+              for( size_t n=0; n<node_connectivity.cols(); ++n )
                 data[5+n] = glb_idx(node_connectivity(elem,n));
               file.write(reinterpret_cast<const char*>(&data), datasize );
             }
@@ -940,7 +940,7 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
             if( include_ghost || !elems_halo(elem) )
             {
               file << elems_glb_idx(elem) << elem_info << elems_partition(+elem);
-              for( int n=0; n<node_connectivity.cols(); ++n ) {
+              for( size_t n=0; n<node_connectivity.cols(); ++n ) {
                 file << " " << glb_idx(node_connectivity(elem,n));
               }
               file << "\n";

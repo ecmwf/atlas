@@ -114,7 +114,7 @@ void legpol_newton_iteration(
   //          PXN      :  new abscissa (Newton iteration)                (out)
   //          PXMOD    :  PXN-PX                                         (out)
 
-  double zdlx, zdlk,zdlkm1, zdlkm2, zdlldn, zdlxn, zdlmod;
+  double zdlx, zdlk, zdlldn, zdlxn, zdlmod;
   int ik;
   int kodd = kn % 2;  // mod(kn,2)
 
@@ -161,13 +161,11 @@ void legpol_weight(
   //          PXN      :  new abscissa (Newton iteration)                (out)
   //          PXMOD    :  PXN-PX                                         (out)
 
-  double zdlx, zdlk, zdlldn;
+  double zdlx, zdlldn;
   int ik;
   int kodd = kn % 2;
 
   zdlx = px;
-  zdlk = 0.;
-  if( kodd==0 ) zdlk=0.5*pfn[0];
   zdlldn = 0.;
   ik=1;
 
@@ -307,7 +305,7 @@ void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], do
   }
 
   const double pole = 90.;
-  for( int jgl=0; jgl<N; ++jgl )
+  for( size_t jgl=0; jgl<N; ++jgl )
   {
     // refine colat first guess here via Newton's method
     legpol_quadrature(kdgl,zzfn.data(),lats[jgl],weights[jgl],iter[jgl],zmod[jgl]);

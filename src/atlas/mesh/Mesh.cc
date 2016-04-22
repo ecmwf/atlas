@@ -42,7 +42,7 @@ Mesh* Mesh::create( const grid::Grid& grid, const eckit::Parametrisation& params
 //-----------------------------------------------------------------------------
 
 Mesh::Mesh( const eckit::Parametrisation& ):
-  grid_(NULL), dimensionality_(2)
+  dimensionality_(2), grid_(NULL)
 {
   nodes_.reset( new mesh::Nodes() );
   createElements();
@@ -51,7 +51,7 @@ Mesh::Mesh( const eckit::Parametrisation& ):
 //-----------------------------------------------------------------------------
 
 Mesh::Mesh(const grid::Grid& grid, const eckit::Parametrisation& ) :
-  grid_(&grid), dimensionality_(2)
+   dimensionality_(2), grid_(&grid)
 {
   nodes_.reset( new mesh::Nodes() );
   createNodes(grid);
