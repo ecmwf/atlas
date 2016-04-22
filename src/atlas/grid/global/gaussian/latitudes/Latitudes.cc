@@ -240,9 +240,13 @@ void legpol_quadrature(
     if( std::abs(pmod) <= zeps*1000. )
       iflag = 1;
   }
-
-  /// @todo What happens to zw if no convergence and iflag is never set?
-  ///       Should we not raise an error or throw exception?
+  if( iflag != 1 )
+  {
+    std::stringstream s;
+    s << "Could not converge gaussian latitude to accuracy ["<<zeps*1000<<"]\n";
+    s << "after " << itemax << " iterations. Consequently also failed to compute quadrature weight.";
+    throw eckit::Exception(s.str(),Here());
+  }
 
   pl = zxn;
   pw = zw;
