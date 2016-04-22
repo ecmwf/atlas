@@ -150,8 +150,12 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   //glb_field->dump( Log::info() );
 
+  if( eckit::mpi::rank() == root )
+    glb_field->metadata().set("test_broadcast",123);
+
   arr = -1;
   nodes_fs->scatter(*glb_field,*field);
+  BOOST_CHECK_EQUAL( field->metadata().get<int>("test_broadcast"), 123 );
   nodes_fs->haloExchange(*field);
   //field->dump( Log::info() );
 

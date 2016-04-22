@@ -377,8 +377,44 @@ void Metadata::broadcast(Metadata& dest, const size_t root)
     &buffer[0],buffer_size, eckit::mpi::datatype<char>(),
     root,eckit::mpi::comm() ) );
 
-  // Fill in in case dest != this or rank != root
-  if( &dest != this || eckit::mpi::rank() != root )
+
+  if( not (&dest==this && eckit::mpi::rank() == root ) )
+  {
+    std::stringstream s;
+    s << buffer;
+    eckit::JSONParser parser( s );
+    dest.set( eckit::Properties( parser.parse() ) );
+  }
+}
+
+void Metadata::broadcast(Metadata& dest) const
+{
+  size_t root = 0;
+  get( "owner", root );
+  broadcast(dest,root);
+}
+
+void Metadata::broadcast(Metadata& dest, const size_t root) const
+{
+  std::string buffer;
+  int buffer_size;
+  if( eckit::mpi::rank() == root )
+  {
+    std::stringstream s;
+    eckit::JSON json(s);
+    json << *this;
+    buffer = s.str();
+    buffer_size = buffer.size();
+  }
+  eckit::mpi::broadcast(buffer_size,root);
+  if( eckit::mpi::rank() != root )
+    buffer.resize(buffer_size);
+
+  ECKIT_MPI_CHECK_RESULT( MPI_Bcast(
+    &buffer[0],buffer_size, eckit::mpi::datatype<char>(),
+    root,eckit::mpi::comm() ) );
+
+  // Fill in dest
   {
     std::stringstream s;
     s << buffer;

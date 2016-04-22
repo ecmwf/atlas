@@ -475,8 +475,12 @@ void NodeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldS
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
+
+    glb.metadata().broadcast(loc.metadata(),root);
+    loc.metadata().set("global",false);
   }
 }
+
 void NodeColumns::scatter( const field::Field& global, field::Field& local ) const
 {
   field::FieldSet global_fields;

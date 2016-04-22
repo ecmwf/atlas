@@ -52,6 +52,8 @@ public:
   void broadcast(const size_t root);
   void broadcast(Metadata&);
   void broadcast(Metadata&, const size_t root);
+  void broadcast(Metadata&) const;
+  void broadcast(Metadata&, const size_t root) const;
 };
 
 // ------------------------------------------------------------------
