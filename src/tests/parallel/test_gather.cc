@@ -94,7 +94,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank0, Fixture )
     std::vector<POD> glb(Ng());
 
     for( int j=0; j<Nl; ++j ) {
-      loc[j] = (size_t(part[j]) != eckit::mpi::rank() ? root : gidx[j]*10 );
+      loc[j] = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
     }
 
     size_t strides[] = {1};
@@ -119,8 +119,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
     array::ArrayT<POD> glb2(Ng(),1);
     array::ArrayView<POD,2> locv(loc);
     for( int j=0; j<Nl; ++j ) {
-      locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? root : gidx[j]*10 );
-      locv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? root : gidx[j]*100);
+      locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
+      locv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
     }
 
     // Gather complete field
@@ -180,8 +180,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
     array::ArrayT<POD> glb2(Ng(),1);
     array::ArrayView<POD,2> locv(loc);
     for( int j=0; j<Nl; ++j ) {
-      locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? root : gidx[j]*10 );
-      locv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? root : gidx[j]*100);
+      locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
+      locv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
     }
 
     // Gather complete field
@@ -305,8 +305,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
     {
       for(int i = 0; i < 3; ++i)
       {
-        locv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? root : -gidx[p]*std::pow(10,i) );
-        locv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? root :  gidx[p]*std::pow(10,i) );
+        locv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
+        locv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
       }
     }
 
@@ -507,7 +507,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank0_ArrayView, Fixture )
     array::ArrayView<POD,1> glbv(glb);
     for(int p = 0; p < Nl; ++p)
     {
-      locv(p) = (size_t(part[p]) != eckit::mpi::rank() ? root :  gidx[p]*10 );
+      locv(p) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*10 );
     }
 
     // Gather complete field
@@ -542,8 +542,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_ArrayView, Fixture )
     array::ArrayView<POD,2> glbv(glb);
     for(int p = 0; p < Nl; ++p)
     {
-      locv(p,0) = (size_t(part[p]) != eckit::mpi::rank() ? root : -gidx[p]*10 );
-      locv(p,1) = (size_t(part[p]) != eckit::mpi::rank() ? root :  gidx[p]*10 );
+      locv(p,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*10 );
+      locv(p,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*10 );
     }
 
     // Gather complete field
@@ -581,8 +581,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2_ArrayView, Fixture )
     {
       for(int i = 0; i < 3; ++i)
       {
-        locv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? root : -gidx[p]*std::pow(10,i) );
-        locv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? root :  gidx[p]*std::pow(10,i) );
+        locv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
+        locv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
       }
     }
 
