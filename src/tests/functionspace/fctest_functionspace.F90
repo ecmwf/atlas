@@ -235,6 +235,7 @@ type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs2d
 type(atlas_Field) :: field, global, scal
+type(atlas_Metadata) :: metadata
 real(c_float), pointer :: scalvalues(:)
 real(c_float), pointer :: values(:,:)
 real(c_float), pointer :: values3d(:,:,:,:)
@@ -243,6 +244,7 @@ real(c_float), allocatable :: minimumv(:), maximumv(:), sumv(:), oisumv(:), mean
 integer :: halo_size, levels
 integer(ATLAS_KIND_GIDX) :: glb_idx
 integer(ATLAS_KIND_GIDX), allocatable :: glb_idxv (:)
+integer(c_int) :: test_broadcast
 halo_size = 1
 levels = 10
 
@@ -261,8 +263,16 @@ write(atlas_log%msg,*) "global: rank",global%rank()," shape [",global%shape(),"]
 
 call fs2d%gather(field,global)
 call fs2d%halo_exchange(field)
-call fs2d%scatter(global,field)
 
+metadata = global%metadata()
+if( atlas_mpi_rank() == 0 ) then
+  call metadata%set("test_broadcast",123)
+endif
+
+call fs2d%scatter(global,field)
+metadata = field%metadata()
+call metadata%get("test_broadcast",test_broadcast)
+FCTEST_CHECK_EQUAL( test_broadcast, 123 )
 call field%data(values)
 call scal%data(scalvalues)
 values = 2.

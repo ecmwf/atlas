@@ -361,6 +361,8 @@ void StructuredColumns::scatter(
         }
         trans_->distgrid(nfrom.size(), nfrom.data(),
                          glb.data<double>(), loc.data<double>());
+        glb.metadata().broadcast(loc.metadata(),root);
+        loc.metadata().set("global",false);
   }
 #else
     eckit::NotImplemented("StructuredColumns::scatter currently relies "

@@ -48,6 +48,12 @@ public:
 
   friend std::ostream& operator<<(std::ostream& s, const Metadata& v) { v.print(s);  return s; }
 
+  void broadcast();
+  void broadcast(const size_t root);
+  void broadcast(Metadata&);
+  void broadcast(Metadata&, const size_t root);
+  void broadcast(Metadata&) const;
+  void broadcast(Metadata&, const size_t root) const;
 };
 
 // ------------------------------------------------------------------

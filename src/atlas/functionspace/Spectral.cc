@@ -188,6 +188,8 @@ void Spectral::scatter( const field::FieldSet& global_fieldset, field::FieldSet&
       for( size_t i=0; i<nfrom.size(); ++i ) nfrom[i] = root+1;
     }
     trans_->distspec(nfrom.size(),nfrom.data(),glb.data<double>(),loc.data<double>());
+    glb.metadata().broadcast(loc.metadata(),root);
+    loc.metadata().set("global",false);
 #else
     throw eckit::Exception("Cannot scatter spectral fields because Atlas has not been compiled with TRANS support.");
 #endif
