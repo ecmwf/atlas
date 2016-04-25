@@ -64,27 +64,27 @@ void atlas__log_set_debug (int level)
 
 void atlas__log_debug(int lvl, char *msg, int endl, int flush)
 {
-  Log::debug(lvl) << msg;
+  atlas::Log::debug(lvl) << msg;
   if( endl )
-    Log::debug(lvl) << std::endl;
+    atlas::Log::debug(lvl) << std::endl;
   else if ( flush )
-    Log::debug(lvl) << std::flush;
+    atlas::Log::debug(lvl) << std::flush;
 }
 
 void atlas__log_cat(int cat, int lvl, char *msg, int endl, int flush)
 {
-  Log::channel(cat,lvl) << msg;
+  atlas::Log::channel(cat,lvl) << msg;
   if( endl )
-    Log::channel(cat,lvl) << std::endl;
+    atlas::Log::channel(cat,lvl) << std::endl;
   else if ( flush )
-  Log::channel(cat,lvl) << std::flush;
+  atlas::Log::channel(cat,lvl) << std::flush;
 }
 
 // ----------------------------------------------------------------------------
 
 MultiChannel& atlas__get_log_channel(int cat)
 {
-  Channel& ch = Log::channel(cat);
+  Channel& ch = atlas::Log::channel(cat);
   MultiChannel* mc = dynamic_cast< MultiChannel* > (&ch);
   if( !mc )
     throw BadCast("Channel is not a MultiChannel,"
