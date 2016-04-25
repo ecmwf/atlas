@@ -158,6 +158,7 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& funct
       out << step << "\n";
       if     ( nvars == 1 ) out << nvars << "\n";
       else if( nvars <= 3 ) out << 3     << "\n";
+      else if( nvars <= 9 ) out << 9     << "\n";
       out << ndata << "\n";
       out << eckit::mpi::rank() << "\n";
 
@@ -182,6 +183,44 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& funct
             for( int v=0; v<nvars; ++v)
               value[v] = data(n,jlev*nvars+v);
             out.write(reinterpret_cast<const char*>(&value),sizeof(double)*3);
+          }
+        }
+        else if( nvars <= 9 )
+        {
+          double value[9] = {
+            0,0,0,
+            0,0,0,
+            0,0,0
+          };
+          if( nvars == 4 )
+          {
+            for( size_t n = 0; n < ndata; ++n )
+            {
+              out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
+              for( int i=0; i<2; ++i )
+              {
+                for( int j=0; j<2; ++j )
+                {
+                  value[i*3+j] = data(n,jlev*nvars+i*2+j);
+                }
+              }
+              out.write(reinterpret_cast<const char*>(&value),sizeof(double)*9);
+            }
+          }
+          if( nvars == 9 )
+          {
+            for( size_t n = 0; n < ndata; ++n )
+            {
+              out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
+              for( int i=0; i<3; ++i )
+              {
+                for( int j=0; j<3; ++j )
+                {
+                  value[i*3+j] = data(n,jlev*nvars+i*3+j);
+                }
+              }
+              out.write(reinterpret_cast<const char*>(&value),sizeof(double)*9);
+            }
           }
         }
         out << "\n";
@@ -210,7 +249,39 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& funct
             out << "\n";
           }
         }
+        else if( nvars <= 9 )
+        {
+          std::vector<DATATYPE> data_vec(9,0.);
 
+          if( nvars == 4 )
+          {
+            for( size_t n = 0; n < ndata; ++n ) {
+              for( int i=0; i<2; ++i ) {
+                for( int j=0; j<2; ++j ) {
+                  data_vec[i*3+j] = data(n,jlev*nvars+i*2+j);
+                }
+              }
+              out << gidx(n);
+              for( int v=0; v<9; ++v)
+                out << " " << data_vec[v];
+              out << "\n";
+            }
+          }
+          if( nvars == 9 )
+          {
+            for( size_t n = 0; n < ndata; ++n ) {
+              for( int i=0; i<2; ++i ) {
+                for( int j=0; j<2; ++j ) {
+                  data_vec[i*3+j] = data(n,jlev*nvars+i*2+j);
+                }
+              }
+              out << gidx(n);
+              for( int v=0; v<9; ++v)
+                out << " " << data_vec[v];
+              out << "\n";
+            }
+          }
+        }
       }
       out << "$EndNodeData\n";
     }
