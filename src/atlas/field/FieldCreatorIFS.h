@@ -46,7 +46,7 @@ class FieldCreatorIFS: public FieldCreator
 public:
   FieldCreatorIFS() {}
   FieldCreatorIFS(const eckit::Parametrisation&) {}
-  virtual Field* create_field( const eckit::Parametrisation& ) const;
+  virtual Field* createField( const eckit::Parametrisation& ) const;
 };
 
 // ------------------------------------------------------------------

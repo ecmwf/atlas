@@ -34,7 +34,7 @@ Field* Field::create(const eckit::Parametrisation& params)
   {
     eckit::ScopedPtr<field::FieldCreator> creator
         (field::FieldCreatorFactory::build(creator_factory,params) );
-    return creator->create_field(params);
+    return creator->createField(params);
   }
   else
     throw eckit::Exception("Could not find parameter 'creator' "
@@ -237,6 +237,58 @@ template <> long* Field::data()
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+
+Field* atlas__Field__wrap_int_shapef(const char* name, int data[], int rank, int shapef[])
+{
+  ATLAS_ERROR_HANDLING(
+    array::ArrayShape shape(rank);
+    size_t jf = rank-1;
+    for( int j=0; j<rank; ++j ) { shape[j] = shapef[jf--]; }
+    Field* field = Field::wrap(std::string(name),data,shape);
+    ASSERT(field);
+    return field;
+  );
+  return 0;
+}
+
+Field* atlas__Field__wrap_long_shapef(const char* name, long data[], int rank, int shapef[])
+{
+  ATLAS_ERROR_HANDLING(
+    array::ArrayShape shape(rank);
+    size_t jf = rank-1;
+    for( int j=0; j<rank; ++j ) { shape[j] = shapef[jf--]; }
+    Field* field = Field::wrap(std::string(name),data,shape);
+    ASSERT(field);
+    return field;
+  );
+  return 0;
+}
+
+Field* atlas__Field__wrap_float_shapef(const char* name, float data[], int rank, int shapef[])
+{
+  ATLAS_ERROR_HANDLING(
+    array::ArrayShape shape(rank);
+    size_t jf = rank-1;
+    for( int j=0; j<rank; ++j ) { shape[j] = shapef[jf--]; }
+    Field* field = Field::wrap(std::string(name),data,shape);
+    ASSERT(field);
+    return field;
+  );
+  return 0;
+}
+
+Field* atlas__Field__wrap_double_shapef(const char* name, double data[], int rank, int shapef[])
+{
+  ATLAS_ERROR_HANDLING(
+    array::ArrayShape shape(rank);
+    size_t jf = rank-1;
+    for( int j=0; j<rank; ++j ) { shape[j] = shapef[jf--]; }
+    Field* field = Field::wrap(std::string(name),data,shape);
+    ASSERT(field);
+    return field;
+  );
+  return 0;
+}
 
 Field* atlas__Field__create(eckit::Parametrisation* params)
 {

@@ -49,7 +49,8 @@ public:
     void test_constructor();
     void test_fieldcreator();
     void test_implicit_conversion();
-    void test_wrap_rawdata();
+    void test_wrap_rawdata_through_array();
+    void test_wrap_rawdata_direct();
 };
 
 //-----------------------------------------------------------------------------
@@ -195,7 +196,7 @@ void TestField::test_implicit_conversion()
 }
 
 
-void TestField::test_wrap_rawdata()
+void TestField::test_wrap_rawdata_through_array()
 {
   std::vector<double> rawdata(20,8.);
   SharedPtr<array::Array> array( array::Array::wrap(rawdata.data(),array::make_shape(10,2)) );
@@ -206,6 +207,18 @@ void TestField::test_wrap_rawdata()
   ASSERT( cfieldv(9,1) == 8. );
 }
 
+void TestField::test_wrap_rawdata_direct()
+{
+  std::vector<double> rawdata(20,8.);
+  SharedPtr<field::Field> field( field::Field::wrap("wrapped",rawdata.data(),array::make_shape(10,2)));
+
+  ASSERT( field->array().owners() == 1 );
+  const array::ArrayView<double,2> cfieldv(*field);
+  ASSERT( cfieldv(9,1) == 8. );
+}
+
+
+
 
 //-----------------------------------------------------------------------------
 
@@ -215,7 +228,8 @@ void TestField::run()
     test_constructor();
     test_fieldcreator();
     test_implicit_conversion();
-    test_wrap_rawdata();
+    test_wrap_rawdata_through_array();
+    test_wrap_rawdata_direct();
     eckit::mpi::finalize();
 }
 

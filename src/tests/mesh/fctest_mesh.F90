@@ -108,6 +108,7 @@ END_TEST
 
 ! -----------------------------------------------------------------------------
 
+
 TEST( test_field_metadata )
 implicit none
 
@@ -213,6 +214,37 @@ implicit none
   field = field
   write(0,*) "Owners = ", field%owners()
   call field%final()
+END_TEST
+
+! -----------------------------------------------------------------------------
+
+TEST( test_field_wrapdata)
+implicit none
+
+  real(c_double), allocatable :: existing_data(:,:,:)
+  real(c_double), pointer :: data(:,:,:)
+  type(atlas_Field) :: field
+  integer(c_int) :: N=20
+  integer(c_int) :: j
+  write(0,*) "test_field_wrapdata"
+  allocate( existing_data(2,10,N) )
+
+  ! Work with fields from here
+  field = atlas_Field("wrapped",existing_data)
+  FCTEST_CHECK_EQUAL( field%shape(1) , 2  )
+  FCTEST_CHECK_EQUAL( field%shape(2) , 10 )
+  FCTEST_CHECK_EQUAL( field%shape(3) , N  )
+  call field%data(data)
+  do j=1,N
+    data(1,1,j) = j
+  enddo
+  call field%final()
+  ! ... until here
+
+  ! Existing data is not deleted
+  do j=1,N
+    FCTEST_CHECK_EQUAL( existing_data(1,1,j), real(j,c_double) )
+  enddo
 END_TEST
 
 ! -----------------------------------------------------------------------------

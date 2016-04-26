@@ -58,6 +58,10 @@ public: // Static methods
   /// @note nawd: Not so sure we should go this route
   /// static Field* create( const std::string& name, const eckit::SharedPtr<Array>& );
 
+  /// @brief Create field by wrapping existing data, Datatype of template and ArrayShape
+  template<typename DATATYPE>
+  static Field* wrap( const std::string& name, DATATYPE *data, const array::ArrayShape& );
+
 private: // Private constructors to force use of static create functions
 
   /// Allocate new Array internally
@@ -167,6 +171,16 @@ Field* Field::create(
     return create(name, array::DataType::create<DATATYPE>(), shape);
 }
 
+template<typename DATATYPE>
+Field* Field::wrap(
+    const std::string& name,
+    DATATYPE *data,
+    const array::ArrayShape& shape)
+{
+  return create(name, array::Array::wrap(data,shape));
+}
+
+
 //----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
@@ -177,6 +191,10 @@ Field* Field::create(
 
 extern "C"
 {
+  Field* atlas__Field__wrap_int_shapef(const char* name, int data[], int rank, int shapef[]);
+  Field* atlas__Field__wrap_long_shapef(const char* name, long data[], int rank, int shapef[]);
+  Field* atlas__Field__wrap_float_shapef(const char* name, float data[], int rank, int shapef[]);
+  Field* atlas__Field__wrap_double_shapef(const char* name, double data[], int rank, int shapef[]);
   Field* atlas__Field__create(Parametrisation* params);
   void atlas__Field__delete (Field* This);
   const char* atlas__Field__name (Field* This);

@@ -40,7 +40,7 @@ class FieldCreatorArraySpec: public FieldCreator
 public:
   FieldCreatorArraySpec() {}
   FieldCreatorArraySpec(const eckit::Parametrisation&) {}
-  virtual Field* create_field( const eckit::Parametrisation& ) const;
+  virtual Field* createField( const eckit::Parametrisation& ) const;
 };
 
 // ------------------------------------------------------------------

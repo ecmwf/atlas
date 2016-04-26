@@ -21,7 +21,7 @@
 namespace atlas {
 namespace field {
 
-Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) const
+Field* FieldCreatorIFS::createField( const eckit::Parametrisation& params ) const
 {
   size_t ngptot;
   size_t nblk;

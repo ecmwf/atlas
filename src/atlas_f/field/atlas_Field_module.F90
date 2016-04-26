@@ -110,6 +110,22 @@ interface atlas_Field
   module procedure atlas_Field__create_name_kind_shape_int64
   module procedure atlas_Field__create_kind_shape_int32
   module procedure atlas_Field__create_kind_shape_int64
+  module procedure atlas_Field__wrap_name_kind_shape_int32_r1
+  module procedure atlas_Field__wrap_name_kind_shape_int32_r2
+  module procedure atlas_Field__wrap_name_kind_shape_int32_r3
+  module procedure atlas_Field__wrap_name_kind_shape_int32_r4
+  module procedure atlas_Field__wrap_name_kind_shape_int64_r1
+  module procedure atlas_Field__wrap_name_kind_shape_int64_r2
+  module procedure atlas_Field__wrap_name_kind_shape_int64_r3
+  module procedure atlas_Field__wrap_name_kind_shape_int64_r4
+  module procedure atlas_Field__wrap_name_kind_shape_real32_r1
+  module procedure atlas_Field__wrap_name_kind_shape_real32_r2
+  module procedure atlas_Field__wrap_name_kind_shape_real32_r3
+  module procedure atlas_Field__wrap_name_kind_shape_real32_r4
+  module procedure atlas_Field__wrap_name_kind_shape_real64_r1
+  module procedure atlas_Field__wrap_name_kind_shape_real64_r2
+  module procedure atlas_Field__wrap_name_kind_shape_real64_r3
+  module procedure atlas_Field__wrap_name_kind_shape_real64_r4
 end interface
 
 ! ----------------------------------------------------
@@ -274,6 +290,202 @@ function atlas_Field__create_kind_shape_int64(kind,shape) result(field)
   call params%final()
   call field%return()
 end function
+
+
+function atlas_Field__wrap_name_kind_shape_int32_r1(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  integer(c_int), intent(in) :: data(:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(1))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_int32_r2(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  integer(c_int), intent(in) :: data(:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(2))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_int32_r3(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  integer(c_int), intent(in) :: data(:,:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(3))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_int32_r4(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  integer(c_int), intent(in) :: data(:,:,:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(4))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_int64_r1(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  integer(c_long), intent(in) :: data(:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(1))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_int64_r2(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  integer(c_long), intent(in) :: data(:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(2))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_int64_r3(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  integer(c_long), intent(in) :: data(:,:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(3))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_int64_r4(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  integer(c_long), intent(in) :: data(:,:,:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(4))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+
+function atlas_Field__wrap_name_kind_shape_real32_r1(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  real(c_float), intent(in) :: data(:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(1))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_real32_r2(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  real(c_float), intent(in) :: data(:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(2))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_real32_r3(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  real(c_float), intent(in) :: data(:,:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(3))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_real32_r4(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  real(c_float), intent(in) :: data(:,:,:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(4))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_real64_r1(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  real(c_double), intent(in) :: data(:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(1))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_real64_r2(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  real(c_double), intent(in) :: data(:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(2))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_real64_r3(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  real(c_double), intent(in) :: data(:,:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(3))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+function atlas_Field__wrap_name_kind_shape_real64_r4(name,data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  real(c_double), intent(in) :: data(:,:,:,:)
+  integer(c_int), allocatable :: shapef(:)
+  allocate(shapef(4))
+  shapef = shape(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_shapef(name,data,size(shapef),shapef) )
+  call field%return()
+end function
+
+
 
 #ifdef FORTRAN_SUPPORTS_FINAL
 subroutine atlas_Field__final(this)
