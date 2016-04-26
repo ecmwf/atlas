@@ -1,7 +1,7 @@
 
 module atlas_mpi_module
-#include "atlas_f/internals/atlas_f_mpi.h"
 use atlas_mpi_c_binding
+#include "atlas_f/internals/atlas_f_mpi.h"
 public
 contains
 
