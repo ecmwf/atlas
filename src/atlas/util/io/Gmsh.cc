@@ -104,12 +104,12 @@ void write_header_binary(std::ostream& out)
 template< typename DATATYPE >
 void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& function_space, const field::Field& field, std::ostream& out)
 {
-  Log::info() << "writing field " << field.name() << "..." << std::endl;
+  Log::info() << "writing field " << field.name() << " defined in NodeColumns..." << std::endl;
 
   bool gather( gmsh.options.get<bool>("gather") );
   bool binary( !gmsh.options.get<bool>("ascii") );
   int nlev  = field.levels();
-  int ndata = function_space.nb_nodes();
+  int ndata = std::min(function_space.nb_nodes(),field.shape(0));
   int nvars = field.stride(0)/nlev;
   array::ArrayView<gidx_t,1> gidx ( function_space.nodes().global_index() );
   array::ArrayView<DATATYPE,2> data ( field.data<DATATYPE>(), array::make_shape(field.shape(0),field.stride(0)) );
