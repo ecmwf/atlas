@@ -715,6 +715,16 @@ void Structured::generate_region(const global::Structured& rg,
 #endif
 }
 
+
+namespace {
+struct GhostNode {
+  GhostNode(int _jlat, int _jlon, int _jnode) { jlat = _jlat; jlon=_jlon; jnode=_jnode; }
+  int jlat;
+  int jlon;
+  int jnode;
+};
+}
+
 void Structured::generate_mesh(
     const global::Structured& rg,
     const std::vector<int>& parts,
@@ -824,6 +834,59 @@ void Structured::generate_mesh(
 
   bool stagger = options.get<bool>("stagger");
 
+
+  std::vector< GhostNode > ghost_nodes;
+  ghost_nodes.reserve( nnodes );
+  std::vector<int> node_numbering(nnodes,-1);
+  {
+    int node_number=0;
+    int jnode=0;
+    l=0;
+    for( int jlat = region.north; jlat <= region.south; ++jlat )
+    {
+      int ilat=jlat-region.north;
+      offset_loc[ilat]=l;
+      l+=region.lat_end[jlat]-region.lat_begin[jlat]+1;
+
+      for( int jlon=region.lat_begin[jlat]; jlon<=region.lat_end[jlat]; ++jlon )
+      {
+        n = offset_glb[jlat] + jlon;
+        if( parts[n] == mypart ) {
+          node_numbering[jnode] = node_number;
+          ++node_number;
+        }
+        else {
+          ghost_nodes.push_back( GhostNode(jlat,jlon,jnode));
+        }
+        ++jnode;
+      }
+      if(!three_dimensional && size_t(region.lat_end[jlat]) == rg.nlon(jlat) - 1) // add periodic point
+      {
+        ++l;
+        part(jnode)      = part(jnode-1);
+        ghost(jnode)     = 1;
+        ghost_nodes.push_back( GhostNode(jlat,rg.nlon(jlat),jnode) );
+        ++jnode;
+      }
+    }
+    for( size_t jghost=0; jghost<ghost_nodes.size(); ++jghost )
+    {
+      node_numbering[ ghost_nodes[jghost].jnode ] = node_number;
+      ++node_number;
+    }
+    if (include_north_pole)
+    {
+      node_numbering[ jnode ] = jnode;
+      ++jnode;
+    }
+    if (include_south_pole)
+    {
+      node_numbering[ jnode ] = jnode;
+      ++jnode;
+    }
+    ASSERT( jnode == nnodes );
+  }
+
   int jnode=0;
   l=0;
   for(int jlat = region.north; jlat <= region.south; ++jlat)
@@ -835,44 +898,49 @@ void Structured::generate_mesh(
     double y = rg.lat(jlat);
     for( int jlon=region.lat_begin[jlat]; jlon<=region.lat_end[jlat]; ++jlon )
     {
+      int inode = jnode;
       n = offset_glb[jlat] + jlon;
+
       double x = rg.lon(jlat,jlon);
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nlon(jlat));
 
-      lonlat(jnode,internals::LON) = x;
-      lonlat(jnode,internals::LAT) = y;
-      glb_idx(jnode)   = n+1;
-      part(jnode) = parts[n];
-      ghost(jnode) = 0;
-      Topology::reset(flags(jnode));
-      if( jlat == 0 && !include_north_pole)
-        Topology::set(flags(jnode),Topology::BC|Topology::NORTH);
-      if( size_t(jlat) == rg.nlat()-1 && !include_south_pole)
-        Topology::set(flags(jnode),Topology::BC|Topology::SOUTH);
-      if( jlon == 0 && !three_dimensional)
-        Topology::set(flags(jnode),Topology::BC|Topology::WEST);
-      if( part(jnode) != mypart ) {
-        Topology::set(flags(jnode),Topology::GHOST);
-        ghost(jnode) = 1;
+      lonlat(inode,internals::LON) = x;
+      lonlat(inode,internals::LAT) = y;
+      glb_idx(inode)   = n+1;
+      part(inode) = parts[n];
+      ghost(inode) = 0;
+      Topology::reset(flags(inode));
+      if( jlat == 0 && !include_north_pole) {
+        Topology::set(flags(inode),Topology::BC|Topology::NORTH);
       }
-
-      //Log::info() << "meshgen " << std::setw(2) << glb_idx(jnode) << " ghost = " << Topology::check(flags(jnode),Topology::GHOST) << std::endl;
+      if( size_t(jlat) == rg.nlat()-1 && !include_south_pole) {
+        Topology::set(flags(inode),Topology::BC|Topology::SOUTH);
+      }
+      if( jlon == 0 && !three_dimensional) {
+        Topology::set(flags(inode),Topology::BC|Topology::WEST);
+      }
+      if( part(inode) != mypart ) {
+        Topology::set(flags(inode),Topology::GHOST);
+        ghost(inode) = 1;
+      }
       ++jnode;
     }
     if(!three_dimensional && size_t(region.lat_end[jlat]) == rg.nlon(jlat) - 1) // add periodic point
     {
+      int inode = jnode;
+      int inode_left = jnode-1;
       ++l;
       double x = rg.lon(jlat,rg.nlon(jlat));
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nlon(jlat));
 
-      lonlat(jnode,internals::LON) = x;
-      lonlat(jnode,internals::LAT) = y;
-      glb_idx(jnode)   = periodic_glb[jlat]+1;
-      part(jnode)      = part(jnode-1);
-      ghost(jnode)     = 1;
-      Topology::reset(flags(jnode));
-      Topology::set(flags(jnode),Topology::BC|Topology::EAST);
-      Topology::set(flags(jnode),Topology::GHOST);
+      lonlat(inode,internals::LON) = x;
+      lonlat(inode,internals::LAT) = y;
+      glb_idx(inode)   = periodic_glb[jlat]+1;
+      part(inode)      = part(inode_left);
+      ghost(inode)     = 1;
+      Topology::reset(flags(inode));
+      Topology::set(flags(inode),Topology::BC|Topology::EAST);
+      Topology::set(flags(inode),Topology::GHOST);
       ++jnode;
     }
   };
@@ -880,32 +948,34 @@ void Structured::generate_mesh(
   int jnorth=-1;
   if (include_north_pole)
   {
+    int inode = jnode;
     jnorth = jnode;
     double y = 90.;
     double x = 180.;
-    lonlat(jnode,internals::LON) = x;
-    lonlat(jnode,internals::LAT) = y;
-    glb_idx(jnode)   = periodic_glb[rg.nlat()-1]+2;
-    part(jnode)      = mypart;
-    ghost(jnode)     = 0;
-    Topology::reset(flags(jnode));
-    Topology::set(flags(jnode),Topology::NORTH);
+    lonlat(inode,internals::LON) = x;
+    lonlat(inode,internals::LAT) = y;
+    glb_idx(inode)   = periodic_glb[rg.nlat()-1]+2;
+    part(inode)      = mypart;
+    ghost(inode)     = 0;
+    Topology::reset(flags(inode));
+    Topology::set(flags(inode),Topology::NORTH);
     ++jnode;
   }
 
   int jsouth=-1;
   if (include_south_pole)
   {
+    int inode = jnode;
     jsouth = jnode;
     double y = -90.;
     double x =  180.;
-    lonlat(jnode,internals::LON) = x;
-    lonlat(jnode,internals::LAT) = y;
-    glb_idx(jnode)   = periodic_glb[rg.nlat()-1]+3;
-    part(jnode)      = mypart;
-    ghost(jnode)     = 0;
-    Topology::reset(flags(jnode));
-    Topology::set(flags(jnode),Topology::SOUTH);
+    lonlat(inode,internals::LON) = x;
+    lonlat(inode,internals::LAT) = y;
+    glb_idx(inode)   = periodic_glb[rg.nlat()-1]+3;
+    part(inode)      = mypart;
+    ghost(inode)     = 0;
+    Topology::reset(flags(inode));
+    Topology::set(flags(inode),Topology::SOUTH);
     ++jnode;
   }
 
@@ -939,7 +1009,7 @@ void Structured::generate_mesh(
     {
       const array::ArrayView<int,1> elem = array::ArrayView<int,3>(region.elems)[ilat][jelem];
 
-      if(elem[2]>0 && elem[3]>0) // This is a quad
+      if(elem[2]>=0 && elem[3]>=0) // This is a quad
       {
         jcell = quad_begin + jquad++;
         quad_nodes[0] = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
