@@ -111,6 +111,10 @@ Structured::Structured(const eckit::Parametrisation& p)
   bool triangulate;
   if( p.get("triangulate",triangulate) )
     options.set("triangulate",triangulate);
+
+  bool ghost_at_end;
+  if( p.get("ghost_at_end",ghost_at_end) )
+    options.set("ghost_at_end",ghost_at_end);
 }
 
 
@@ -146,6 +150,8 @@ void Structured::configure_defaults()
   options.set<double>("angle", Resource< double > ( "atlas.meshgen.angle", 0. ) );
 
   options.set<bool>("triangulate", Resource< bool > ( "--triangulate;atlas.meshgen.triangulate", false) );
+
+  options.set<bool>("ghost_at_end", true );
 }
 
 void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
@@ -715,6 +721,16 @@ void Structured::generate_region(const global::Structured& rg,
 #endif
 }
 
+
+namespace {
+struct GhostNode {
+  GhostNode(int _jlat, int _jlon, int _jnode) { jlat = _jlat; jlon=_jlon; jnode=_jnode; }
+  int jlat;
+  int jlon;
+  int jnode;
+};
+}
+
 void Structured::generate_mesh(
     const global::Structured& rg,
     const std::vector<int>& parts,
@@ -824,6 +840,65 @@ void Structured::generate_mesh(
 
   bool stagger = options.get<bool>("stagger");
 
+
+  std::vector<int> node_numbering(nnodes,-1);
+  if( options.get<bool>("ghost_at_end") )
+  {
+    std::vector< GhostNode > ghost_nodes;
+    ghost_nodes.reserve( nnodes );
+    int node_number=0;
+    int jnode=0;
+    l=0;
+    for( int jlat = region.north; jlat <= region.south; ++jlat )
+    {
+      int ilat=jlat-region.north;
+      offset_loc[ilat]=l;
+      l+=region.lat_end[jlat]-region.lat_begin[jlat]+1;
+
+      for( int jlon=region.lat_begin[jlat]; jlon<=region.lat_end[jlat]; ++jlon )
+      {
+        n = offset_glb[jlat] + jlon;
+        if( parts[n] == mypart ) {
+          node_numbering[jnode] = node_number;
+          ++node_number;
+        }
+        else {
+          ghost_nodes.push_back( GhostNode(jlat,jlon,jnode));
+        }
+        ++jnode;
+      }
+      if(!three_dimensional && size_t(region.lat_end[jlat]) == rg.nlon(jlat) - 1) // add periodic point
+      {
+        ++l;
+        part(jnode)      = part(jnode-1);
+        ghost(jnode)     = 1;
+        ghost_nodes.push_back( GhostNode(jlat,rg.nlon(jlat),jnode) );
+        ++jnode;
+      }
+    }
+    for( size_t jghost=0; jghost<ghost_nodes.size(); ++jghost )
+    {
+      node_numbering[ ghost_nodes[jghost].jnode ] = node_number;
+      ++node_number;
+    }
+    if (include_north_pole)
+    {
+      node_numbering[ jnode ] = jnode;
+      ++jnode;
+    }
+    if (include_south_pole)
+    {
+      node_numbering[ jnode ] = jnode;
+      ++jnode;
+    }
+    ASSERT( jnode == nnodes );
+  }
+  else // No renumbering
+  {
+    for( int jnode=0; jnode<nnodes; ++jnode )
+      node_numbering[jnode] = jnode;
+  }
+
   int jnode=0;
   l=0;
   for(int jlat = region.north; jlat <= region.south; ++jlat)
@@ -835,44 +910,49 @@ void Structured::generate_mesh(
     double y = rg.lat(jlat);
     for( int jlon=region.lat_begin[jlat]; jlon<=region.lat_end[jlat]; ++jlon )
     {
+      int inode = node_numbering[jnode];
       n = offset_glb[jlat] + jlon;
+
       double x = rg.lon(jlat,jlon);
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nlon(jlat));
 
-      lonlat(jnode,internals::LON) = x;
-      lonlat(jnode,internals::LAT) = y;
-      glb_idx(jnode)   = n+1;
-      part(jnode) = parts[n];
-      ghost(jnode) = 0;
-      Topology::reset(flags(jnode));
-      if( jlat == 0 && !include_north_pole)
-        Topology::set(flags(jnode),Topology::BC|Topology::NORTH);
-      if( size_t(jlat) == rg.nlat()-1 && !include_south_pole)
-        Topology::set(flags(jnode),Topology::BC|Topology::SOUTH);
-      if( jlon == 0 && !three_dimensional)
-        Topology::set(flags(jnode),Topology::BC|Topology::WEST);
-      if( part(jnode) != mypart ) {
-        Topology::set(flags(jnode),Topology::GHOST);
-        ghost(jnode) = 1;
+      lonlat(inode,internals::LON) = x;
+      lonlat(inode,internals::LAT) = y;
+      glb_idx(inode)   = n+1;
+      part(inode) = parts[n];
+      ghost(inode) = 0;
+      Topology::reset(flags(inode));
+      if( jlat == 0 && !include_north_pole) {
+        Topology::set(flags(inode),Topology::BC|Topology::NORTH);
       }
-
-      //Log::info() << "meshgen " << std::setw(2) << glb_idx(jnode) << " ghost = " << Topology::check(flags(jnode),Topology::GHOST) << std::endl;
+      if( size_t(jlat) == rg.nlat()-1 && !include_south_pole) {
+        Topology::set(flags(inode),Topology::BC|Topology::SOUTH);
+      }
+      if( jlon == 0 && !three_dimensional) {
+        Topology::set(flags(inode),Topology::BC|Topology::WEST);
+      }
+      if( part(inode) != mypart ) {
+        Topology::set(flags(inode),Topology::GHOST);
+        ghost(inode) = 1;
+      }
       ++jnode;
     }
     if(!three_dimensional && size_t(region.lat_end[jlat]) == rg.nlon(jlat) - 1) // add periodic point
     {
+      int inode = node_numbering[jnode];
+      int inode_left = node_numbering[jnode-1];
       ++l;
       double x = rg.lon(jlat,rg.nlon(jlat));
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nlon(jlat));
 
-      lonlat(jnode,internals::LON) = x;
-      lonlat(jnode,internals::LAT) = y;
-      glb_idx(jnode)   = periodic_glb[jlat]+1;
-      part(jnode)      = part(jnode-1);
-      ghost(jnode)     = 1;
-      Topology::reset(flags(jnode));
-      Topology::set(flags(jnode),Topology::BC|Topology::EAST);
-      Topology::set(flags(jnode),Topology::GHOST);
+      lonlat(inode,internals::LON) = x;
+      lonlat(inode,internals::LAT) = y;
+      glb_idx(inode)   = periodic_glb[jlat]+1;
+      part(inode)      = part(inode_left);
+      ghost(inode)     = 1;
+      Topology::reset(flags(inode));
+      Topology::set(flags(inode),Topology::BC|Topology::EAST);
+      Topology::set(flags(inode),Topology::GHOST);
       ++jnode;
     }
   };
@@ -880,32 +960,34 @@ void Structured::generate_mesh(
   int jnorth=-1;
   if (include_north_pole)
   {
+    int inode = node_numbering[jnode];
     jnorth = jnode;
     double y = 90.;
     double x = 180.;
-    lonlat(jnode,internals::LON) = x;
-    lonlat(jnode,internals::LAT) = y;
-    glb_idx(jnode)   = periodic_glb[rg.nlat()-1]+2;
-    part(jnode)      = mypart;
-    ghost(jnode)     = 0;
-    Topology::reset(flags(jnode));
-    Topology::set(flags(jnode),Topology::NORTH);
+    lonlat(inode,internals::LON) = x;
+    lonlat(inode,internals::LAT) = y;
+    glb_idx(inode)   = periodic_glb[rg.nlat()-1]+2;
+    part(inode)      = mypart;
+    ghost(inode)     = 0;
+    Topology::reset(flags(inode));
+    Topology::set(flags(inode),Topology::NORTH);
     ++jnode;
   }
 
   int jsouth=-1;
   if (include_south_pole)
   {
+    int inode = node_numbering[jnode];
     jsouth = jnode;
     double y = -90.;
     double x =  180.;
-    lonlat(jnode,internals::LON) = x;
-    lonlat(jnode,internals::LAT) = y;
-    glb_idx(jnode)   = periodic_glb[rg.nlat()-1]+3;
-    part(jnode)      = mypart;
-    ghost(jnode)     = 0;
-    Topology::reset(flags(jnode));
-    Topology::set(flags(jnode),Topology::SOUTH);
+    lonlat(inode,internals::LON) = x;
+    lonlat(inode,internals::LAT) = y;
+    glb_idx(inode)   = periodic_glb[rg.nlat()-1]+3;
+    part(inode)      = mypart;
+    ghost(inode)     = 0;
+    Topology::reset(flags(inode));
+    Topology::set(flags(inode),Topology::SOUTH);
     ++jnode;
   }
 
@@ -939,18 +1021,18 @@ void Structured::generate_mesh(
     {
       const array::ArrayView<int,1> elem = array::ArrayView<int,3>(region.elems)[ilat][jelem];
 
-      if(elem[2]>0 && elem[3]>0) // This is a quad
+      if(elem[2]>=0 && elem[3]>=0) // This is a quad
       {
         jcell = quad_begin + jquad++;
-        quad_nodes[0] = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
-        quad_nodes[1] = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
-        quad_nodes[2] = offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS];
-        quad_nodes[3] = offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN];
+        quad_nodes[0] = node_numbering[ offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN] ];
+        quad_nodes[1] = node_numbering[ offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS] ];
+        quad_nodes[2] = node_numbering[ offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS] ];
+        quad_nodes[3] = node_numbering[ offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN] ];
 
         if( three_dimensional )
         {
-          if (size_t(elem[2]) == rg.nlon(jlatS)) quad_nodes[2] = offset_loc[ilatS];
-          if (size_t(elem[3]) == rg.nlon(jlatN)) quad_nodes[3] = offset_loc[ilatN];
+          if (size_t(elem[2]) == rg.nlon(jlatS)) quad_nodes[2] = node_numbering[ offset_loc[ilatS] ];
+          if (size_t(elem[3]) == rg.nlon(jlatN)) quad_nodes[3] = node_numbering[ offset_loc[ilatN] ];
         }
 
         node_connectivity.set( jcell, quad_nodes );
@@ -962,24 +1044,24 @@ void Structured::generate_mesh(
         jcell = triag_begin + jtriag++;
         if(elem[3]<0) // This is a triangle pointing up
         {
-          triag_nodes[0] = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
-          triag_nodes[1] = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
-          triag_nodes[2] = offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS];
+          triag_nodes[0] = node_numbering[ offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN] ];
+          triag_nodes[1] = node_numbering[ offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS] ];
+          triag_nodes[2] = node_numbering[ offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS] ];
           if( three_dimensional )
           {
-            if (size_t(elem[0]) == rg.nlon(jlatN)) triag_nodes[0] = offset_loc[ilatN];
-            if (size_t(elem[2]) == rg.nlon(jlatS)) triag_nodes[2] = offset_loc[ilatS];
+            if (size_t(elem[0]) == rg.nlon(jlatN)) triag_nodes[0] = node_numbering[ offset_loc[ilatN] ];
+            if (size_t(elem[2]) == rg.nlon(jlatS)) triag_nodes[2] = node_numbering[ offset_loc[ilatS] ];
           }
         }
         else // This is a triangle pointing down
         {
-          triag_nodes[0] = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
-          triag_nodes[1] = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
-          triag_nodes[2] = offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN];
+          triag_nodes[0] = node_numbering[ offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN] ];
+          triag_nodes[1] = node_numbering[ offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS] ];
+          triag_nodes[2] = node_numbering[ offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN] ];
           if( three_dimensional )
           {
-            if (size_t(elem[1]) == rg.nlon(jlatS)) triag_nodes[1] = offset_loc[ilatS];
-            if (size_t(elem[3]) == rg.nlon(jlatN)) triag_nodes[2] = offset_loc[ilatN];
+            if (size_t(elem[1]) == rg.nlon(jlatS)) triag_nodes[1] = node_numbering[ offset_loc[ilatS] ];
+            if (size_t(elem[3]) == rg.nlon(jlatN)) triag_nodes[2] = node_numbering[ offset_loc[ilatN] ];
           }
         }
         node_connectivity.set( jcell, triag_nodes );
@@ -998,9 +1080,9 @@ void Structured::generate_mesh(
       jcell = triag_begin + jtriag++;
       size_t ip3 = ip2+1;
       if( three_dimensional && ip3 == rg.nlon(0) ) ip3 = 0;
-      triag_nodes[0] = jnorth           + ip1;
-      triag_nodes[1] = offset_loc[ilat] + ip2;
-      triag_nodes[2] = offset_loc[ilat] + ip3;
+      triag_nodes[0] = node_numbering[ jnorth           + ip1 ];
+      triag_nodes[1] = node_numbering[ offset_loc[ilat] + ip2 ];
+      triag_nodes[2] = node_numbering[ offset_loc[ilat] + ip3 ];
       node_connectivity.set( jcell, triag_nodes );
       cells_glb_idx(jcell) = jcell+1;
       cells_part(jcell) = mypart;
@@ -1018,9 +1100,9 @@ void Structured::generate_mesh(
     ip1 = 0;
     ip2 = 1;
     ip3 = rg.nlon(0)-1;
-    triag_nodes[0] = offset_loc[ilat] + ip1;
-    triag_nodes[1] = offset_loc[ilat] + ip2;
-    triag_nodes[2] = offset_loc[ilat] + ip3;
+    triag_nodes[0] = node_numbering[ offset_loc[ilat] + ip1 ];
+    triag_nodes[1] = node_numbering[ offset_loc[ilat] + ip2 ];
+    triag_nodes[2] = node_numbering[ offset_loc[ilat] + ip3 ];
     node_connectivity.set( jcell, triag_nodes );
     cells_glb_idx(jcell) = jcell+1;
     cells_part(jcell) = mypart;
@@ -1037,9 +1119,9 @@ void Structured::generate_mesh(
       ip1 = q1;
       ip2 = q3;
       ip3 = q4;
-      triag_nodes[0] = offset_loc[ilat] + ip1;
-      triag_nodes[1] = offset_loc[ilat] + ip2;
-      triag_nodes[2] = offset_loc[ilat] + ip3;
+      triag_nodes[0] = node_numbering[ offset_loc[ilat] + ip1 ];
+      triag_nodes[1] = node_numbering[ offset_loc[ilat] + ip2 ];
+      triag_nodes[2] = node_numbering[ offset_loc[ilat] + ip3 ];
       node_connectivity.set( jcell, triag_nodes );
       cells_glb_idx(jcell) = jcell+1;
       cells_part(jcell) = mypart;
@@ -1049,9 +1131,9 @@ void Structured::generate_mesh(
       ip1 = q1;
       ip2 = q2;
       ip3 = q3;
-      triag_nodes[0] = offset_loc[ilat] + ip1;
-      triag_nodes[1] = offset_loc[ilat] + ip2;
-      triag_nodes[2] = offset_loc[ilat] + ip3;
+      triag_nodes[0] = node_numbering[ offset_loc[ilat] + ip1 ];
+      triag_nodes[1] = node_numbering[ offset_loc[ilat] + ip2 ];
+      triag_nodes[2] = node_numbering[ offset_loc[ilat] + ip3 ];
       node_connectivity.set( jcell, triag_nodes );
       cells_glb_idx(jcell) = jcell+1;
       cells_part(jcell) = mypart;
@@ -1064,9 +1146,9 @@ void Structured::generate_mesh(
     ip1 = q1;
     ip2 = q1+1;
     ip3 = q4;
-    triag_nodes[0] = offset_loc[ilat] + ip1;
-    triag_nodes[1] = offset_loc[ilat] + ip2;
-    triag_nodes[2] = offset_loc[ilat] + ip3;
+    triag_nodes[0] = node_numbering[ offset_loc[ilat] + ip1 ];
+    triag_nodes[1] = node_numbering[ offset_loc[ilat] + ip2 ];
+    triag_nodes[2] = node_numbering[ offset_loc[ilat] + ip3 ];
     node_connectivity.set( jcell, triag_nodes );
     cells_glb_idx(jcell) = jcell+1;
     cells_part(jcell) = mypart;
@@ -1081,11 +1163,11 @@ void Structured::generate_mesh(
     {
       jcell = triag_begin + jtriag++;
       int ip3 = ip2-1;
-      triag_nodes[0] = jsouth           + ip1;
-      triag_nodes[1] = offset_loc[ilat] + ip2;
-      triag_nodes[2] = offset_loc[ilat] + ip3;
+      triag_nodes[0] = node_numbering[ jsouth           + ip1 ];
+      triag_nodes[1] = node_numbering[ offset_loc[ilat] + ip2 ];
+      triag_nodes[2] = node_numbering[ offset_loc[ilat] + ip3 ];
       if( three_dimensional && ip2 == rg.nlon(jlat) )
-        triag_nodes[1] = offset_loc[ilat] + 0;
+        triag_nodes[1] = node_numbering[ offset_loc[ilat] + 0 ];
       node_connectivity.set( jcell, triag_nodes );
       cells_glb_idx(jcell) = jcell+1;
       cells_part(jcell) = mypart;
@@ -1103,9 +1185,9 @@ void Structured::generate_mesh(
     ip1 = 0;
     ip2 = 1;
     ip3 = rg.nlon(0)-1;
-    triag_nodes[0] = offset_loc[ilat] + ip1;
-    triag_nodes[2] = offset_loc[ilat] + ip2;
-    triag_nodes[1] = offset_loc[ilat] + ip3;
+    triag_nodes[0] = node_numbering[ offset_loc[ilat] + ip1 ];
+    triag_nodes[2] = node_numbering[ offset_loc[ilat] + ip2 ];
+    triag_nodes[1] = node_numbering[ offset_loc[ilat] + ip3 ];
     node_connectivity.set( jcell, triag_nodes );
     cells_glb_idx(jcell) = jcell+1;
     cells_part(jcell) = mypart;
@@ -1122,9 +1204,9 @@ void Structured::generate_mesh(
       ip1 = q1;
       ip2 = q3;
       ip3 = q4;
-      triag_nodes[0] = offset_loc[ilat] + ip1;
-      triag_nodes[2] = offset_loc[ilat] + ip2;
-      triag_nodes[1] = offset_loc[ilat] + ip3;
+      triag_nodes[0] = node_numbering[ offset_loc[ilat] + ip1 ];
+      triag_nodes[2] = node_numbering[ offset_loc[ilat] + ip2 ];
+      triag_nodes[1] = node_numbering[ offset_loc[ilat] + ip3 ];
       node_connectivity.set( jcell, triag_nodes );
       cells_glb_idx(jcell) = jcell+1;
       cells_part(jcell) = mypart;
@@ -1134,9 +1216,9 @@ void Structured::generate_mesh(
       ip1 = q1;
       ip2 = q2;
       ip3 = q3;
-      triag_nodes[0] = offset_loc[ilat] + ip1;
-      triag_nodes[2] = offset_loc[ilat] + ip2;
-      triag_nodes[1] = offset_loc[ilat] + ip3;
+      triag_nodes[0] = node_numbering[ offset_loc[ilat] + ip1 ];
+      triag_nodes[2] = node_numbering[ offset_loc[ilat] + ip2 ];
+      triag_nodes[1] = node_numbering[ offset_loc[ilat] + ip3 ];
       node_connectivity.set( jcell, triag_nodes );
       cells_glb_idx(jcell) = jcell+1;
       cells_part(jcell) = mypart;
@@ -1149,9 +1231,9 @@ void Structured::generate_mesh(
     ip1 = q1;
     ip2 = q1+1;
     ip3 = q4;
-    triag_nodes[0] = offset_loc[ilat] + ip1;
-    triag_nodes[2] = offset_loc[ilat] + ip2;
-    triag_nodes[1] = offset_loc[ilat] + ip3;
+    triag_nodes[0] = node_numbering[ offset_loc[ilat] + ip1 ];
+    triag_nodes[2] = node_numbering[ offset_loc[ilat] + ip2 ];
+    triag_nodes[1] = node_numbering[ offset_loc[ilat] + ip3 ];
     node_connectivity.set( jcell, triag_nodes );
     cells_glb_idx(jcell) = jcell+1;
     cells_part(jcell) = mypart;
