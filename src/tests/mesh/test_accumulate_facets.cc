@@ -49,6 +49,7 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
   mesh::generators::Structured generator;
   generator.options.set("angle",29.0);
   generator.options.set("triangulate",false);
+  generator.options.set("ghost_at_end",false);
   mesh::Mesh* mesh = generator.generate(*grid);
 
   // storage for edge-to-node-connectivity shape=(nb_edges,2)
@@ -423,6 +424,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
   mesh::generators::Structured generator;
   generator.options.set("angle",29.0);
   generator.options.set("triangulate",false);
+  generator.options.set("ghost_at_end",false);
   mesh::Mesh* mesh = generator.generate(*grid);
 
   // Accumulate facets of cells ( edges in 2D )
@@ -840,6 +842,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
   mesh::generators::Structured generator;
   generator.options.set("angle",29.0);
   generator.options.set("triangulate",false);
+  generator.options.set("ghost_at_end",false);
   mesh::Mesh* mesh = generator.generate(*grid);
 
   // Accumulate facets of cells ( edges in 2D )
