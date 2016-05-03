@@ -124,6 +124,7 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& funct
     data_glb.reset( function_space.createField( "glb_field",field, field::global() ) );
     function_space.gather(field,*data_glb);
     data = array::ArrayView<DATATYPE,2>( data_glb->data<DATATYPE>(), array::make_shape(data_glb->shape(0),data_glb->stride(0)) );
+    ndata = std::min(function_space.nb_nodes_global(),data.shape(0));
   }
 
   std::vector<long> lev;
