@@ -249,13 +249,15 @@ function atlas_Config__get_logical(this, name, value) result(found)
   integer :: value_int
   integer :: found_int
   found_int = atlas__Config__get_int(this%c_ptr(),c_str(name), value_int )
-  if (value_int > 0) then
-    value = .True.
-  else
-    value = .False.
-  end if
   found = .False.
   if (found_int == 1) found = .True.
+  if (found) then
+    if (value_int > 0) then
+      value = .True.
+    else
+      value = .False.
+    end if
+  endif
 end function atlas_Config__get_logical
 
 function atlas_Config__get_int32(this, name, value) result(found)

@@ -303,7 +303,7 @@ int atlas__Config__get_config_list (Config* This, const char* name, Config** &va
 
 int atlas__Config__get_int (Config* This, const char* name, int& value)
 {
-  long long_value;
+  long long_value = value;
   ATLAS_ERROR_HANDLING ( if( ! This->get(std::string(name),long_value) )  return false; );
   ASSERT( int(long_value) == long_value );
   value = long_value;
