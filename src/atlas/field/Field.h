@@ -58,6 +58,10 @@ public: // Static methods
   /// @note nawd: Not so sure we should go this route
   /// static Field* create( const std::string& name, const eckit::SharedPtr<Array>& );
 
+  /// @brief Create field by wrapping existing data, Datatype of template and ArraySpec
+  template<typename DATATYPE>
+  static Field* wrap( const std::string& name, DATATYPE *data, const array::ArraySpec& );
+
   /// @brief Create field by wrapping existing data, Datatype of template and ArrayShape
   template<typename DATATYPE>
   static Field* wrap( const std::string& name, DATATYPE *data, const array::ArrayShape& );
@@ -112,6 +116,9 @@ public: // Destructor
 
   /// @brief Shape of this field in Fortran style (reverse order of C style)
   const std::vector<int>& shapef()  const { return array_->shapef(); }
+
+  /// @brief Strides of this field in Fortran style (reverse order of C style)
+  const std::vector<int>& stridesf()  const { return array_->stridesf(); }
 
   /// @brief Shape of this field (reverse order of Fortran style)
   const array::ArrayShape& shape() const { return array_->shape(); }
@@ -175,6 +182,15 @@ template<typename DATATYPE>
 Field* Field::wrap(
     const std::string& name,
     DATATYPE *data,
+    const array::ArraySpec& spec)
+{
+  return create(name, array::Array::wrap(data,spec));
+}
+
+template<typename DATATYPE>
+Field* Field::wrap(
+    const std::string& name,
+    DATATYPE *data,
     const array::ArrayShape& shape)
 {
   return create(name, array::Array::wrap(data,shape));
@@ -191,10 +207,10 @@ Field* Field::wrap(
 
 extern "C"
 {
-  Field* atlas__Field__wrap_int_shapef(const char* name, int data[], int rank, int shapef[]);
-  Field* atlas__Field__wrap_long_shapef(const char* name, long data[], int rank, int shapef[]);
-  Field* atlas__Field__wrap_float_shapef(const char* name, float data[], int rank, int shapef[]);
-  Field* atlas__Field__wrap_double_shapef(const char* name, double data[], int rank, int shapef[]);
+  Field* atlas__Field__wrap_int_specf(const char* name, int data[], int rank, int shapef[], int stridesf[]);
+  Field* atlas__Field__wrap_long_specf(const char* name, long data[], int rank, int shapef[], int stridesf[]);
+  Field* atlas__Field__wrap_float_specf(const char* name, float data[], int rank, int shapef[], int stridesf[]);
+  Field* atlas__Field__wrap_double_specf(const char* name, double data[], int rank, int shapef[], int stridesf[]);
   Field* atlas__Field__create(Parametrisation* params);
   void atlas__Field__delete (Field* This);
   const char* atlas__Field__name (Field* This);
@@ -205,10 +221,10 @@ extern "C"
   int atlas__Field__levels (Field* This);
   double atlas__Field__bytes (Field* This);
   void atlas__Field__shapef (Field* This, int* &shape, int &rank);
-  void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_shapef, int &rank);
-  void atlas__Field__data_shapef_long (Field* This, long* &field_data, int* &field_shapef, int &rank);
-  void atlas__Field__data_shapef_float (Field* This, float* &field_data, int* &field_shapef, int &rank);
-  void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_shapef, int &rank);
+  void atlas__Field__data_int_specf (Field* This, int* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__data_long_specf (Field* This, long* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__data_float_specf (Field* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__data_double_specf (Field* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
   util_Metadata* atlas__Field__metadata (Field* This);
   functionspace_FunctionSpace* atlas__Field__functionspace (Field* This);
 }

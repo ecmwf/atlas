@@ -238,56 +238,80 @@ template <> long* Field::data()
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-Field* atlas__Field__wrap_int_shapef(const char* name, int data[], int rank, int shapef[])
+Field* atlas__Field__wrap_int_specf(const char* name, int data[], int rank, int shapef[], int stridesf[])
 {
   ATLAS_ERROR_HANDLING(
     array::ArrayShape shape(rank);
+    array::ArrayStrides strides(rank);
     size_t jf = rank-1;
-    for( int j=0; j<rank; ++j ) { shape[j] = shapef[jf--]; }
-    Field* field = Field::wrap(std::string(name),data,shape);
+    for( int j=0; j<rank; ++j )
+    {
+      shape  [j] = shapef  [jf];
+      strides[j] = stridesf[jf];
+      --jf;
+    }
+    Field* field = Field::wrap(std::string(name),data,array::ArraySpec(shape,strides));
     ASSERT(field);
     return field;
   );
   return 0;
 }
 
-Field* atlas__Field__wrap_long_shapef(const char* name, long data[], int rank, int shapef[])
+Field* atlas__Field__wrap_long_specf(const char* name, long data[], int rank, int shapef[], int stridesf[])
 {
   ATLAS_ERROR_HANDLING(
     array::ArrayShape shape(rank);
+    array::ArrayStrides strides(rank);
     size_t jf = rank-1;
-    for( int j=0; j<rank; ++j ) { shape[j] = shapef[jf--]; }
-    Field* field = Field::wrap(std::string(name),data,shape);
+    for( int j=0; j<rank; ++j )
+    {
+      shape  [j] = shapef  [jf];
+      strides[j] = stridesf[jf];
+      --jf;
+    }
+    Field* field = Field::wrap(std::string(name),data,array::ArraySpec(shape,strides));
     ASSERT(field);
     return field;
   );
   return 0;
 }
 
-Field* atlas__Field__wrap_float_shapef(const char* name, float data[], int rank, int shapef[])
+Field* atlas__Field__wrap_float_specf(const char* name, float data[], int rank, int shapef[], int stridesf[])
 {
   ATLAS_ERROR_HANDLING(
     array::ArrayShape shape(rank);
+    array::ArrayStrides strides(rank);
     size_t jf = rank-1;
-    for( int j=0; j<rank; ++j ) { shape[j] = shapef[jf--]; }
-    Field* field = Field::wrap(std::string(name),data,shape);
+    for( int j=0; j<rank; ++j )
+    {
+      shape  [j] = shapef  [jf];
+      strides[j] = stridesf[jf];
+      --jf;
+    }
+    Field* field = Field::wrap(std::string(name),data,array::ArraySpec(shape,strides));
     ASSERT(field);
     return field;
   );
   return 0;
 }
 
-Field* atlas__Field__wrap_double_shapef(const char* name, double data[], int rank, int shapef[])
+Field* atlas__Field__wrap_double_specf(const char* name, double data[], int rank, int shapef[], int stridesf[])
 {
+  Field* field(0);
   ATLAS_ERROR_HANDLING(
     array::ArrayShape shape(rank);
+    array::ArrayStrides strides(rank);
     size_t jf = rank-1;
-    for( int j=0; j<rank; ++j ) { shape[j] = shapef[jf--]; }
-    Field* field = Field::wrap(std::string(name),data,shape);
+    for( int j=0; j<rank; ++j )
+    {
+      shape  [j] = shapef  [jf];
+      strides[j] = stridesf[jf];
+      --jf;
+    }
+    field = Field::wrap(std::string(name),data,array::ArraySpec(shape,strides));
     ASSERT(field);
-    return field;
   );
-  return 0;
+  return field;
 }
 
 Field* atlas__Field__create(eckit::Parametrisation* params)
@@ -410,42 +434,46 @@ void atlas__Field__shapef (Field* This, int* &shape, int &rank)
   );
 }
 
-void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_bounds, int &rank)
+void atlas__Field__data_int_specf (Field* This, int* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    field_data = &This->data<int>()[0];
-    field_bounds = const_cast<int*>(&(This->shapef()[0]));
+    data = &This->data<int>()[0];
+    shapef = const_cast<int*>(This->shapef().data());
+    stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
   );
 }
 
-void atlas__Field__data_shapef_long (Field* This, long* &field_data, int* &field_bounds, int &rank)
+void atlas__Field__data_long_specf (Field* This, long* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    field_data = &This->data<long>()[0];
-    field_bounds = const_cast<int*>(&(This->shapef()[0]));
+    data = &This->data<long>()[0];
+    shapef = const_cast<int*>(This->shapef().data());
+    stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
   );
 }
 
-void atlas__Field__data_shapef_float (Field* This, float* &field_data, int* &field_bounds, int &rank)
+void atlas__Field__data_float_specf (Field* This, float* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    field_data = &This->data<float>()[0];
-    field_bounds = const_cast<int*>(&(This->shapef()[0]));
+    data = &This->data<float>()[0];
+    shapef = const_cast<int*>(This->shapef().data());
+    stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
   );
 }
 
-void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_bounds, int &rank)
+void atlas__Field__data_double_specf (Field* This, double* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    field_data = &This->data<double>()[0];
-    field_bounds = const_cast<int*>(&(This->shapef()[0]));
+    data = &This->data<double>()[0];
+    shapef = const_cast<int*>(This->shapef().data());
+    stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
   );
 }

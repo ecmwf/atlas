@@ -2,7 +2,7 @@
 module atlas_field_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
-use atlas_c_interop, only: c_to_f_string_cptr, atlas_free
+use atlas_c_interop, only: c_to_f_string_cptr, atlas_free, strides, view1d
 use atlas_refcounted_module, only : atlas_RefCounted
 use atlas_Config_module, only : atlas_Config
 use atlas_Logging_module, only : atlas_log
@@ -101,6 +101,9 @@ contains
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_Field__final
 #endif
+
+  procedure, public :: access_experiment
+
 END TYPE atlas_Field
 
 interface atlas_Field
@@ -137,6 +140,13 @@ integer, private, parameter :: ATLAS_KIND_REAL64 =  8
 ! ----------------------------------------------------
 
 
+interface array_c_to_f
+  module procedure array_c_to_f_real64_r1
+  module procedure array_c_to_f_real64_r2
+  module procedure array_c_to_f_real64_r3
+  module procedure array_c_to_f_real64_r4
+end interface
+
 !------------------------------------------------------------------------------
 
 !========================================================
@@ -144,6 +154,139 @@ contains
 !========================================================
 
 
+subroutine array_c_to_f_real64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_fptr)
+  type(c_ptr), intent(in) :: array_cptr
+  integer(c_int), intent(in) :: rank
+  type(c_ptr), intent(in) :: shape_cptr
+  type(c_ptr), intent(in) :: strides_cptr
+  real(c_double), pointer, intent(out) :: array_fptr(:)
+  real(c_double), pointer :: tmp(:,:)
+  integer, pointer :: shape(:)
+  integer, pointer :: strides(:)
+  integer :: eshape(0:1)
+  integer :: accumulated, factor, j
+
+  if( rank /= 1 ) call atlas_abort("Rank mismatch")
+
+  call c_f_pointer ( shape_cptr,   shape ,   [rank] )
+  call c_f_pointer ( strides_cptr, strides , [rank] )
+
+  eshape(0)=1
+  accumulated = 1
+  do j=1,rank
+    accumulated = accumulated*shape(j)
+    factor = shape(j)*strides(j)/accumulated
+    eshape(j-1) = eshape(j-1)*factor
+    eshape(j)   = shape(j)
+    accumulated = accumulated*factor
+  enddo
+  call c_f_pointer ( array_cptr , tmp , shape=eshape )
+  array_fptr => tmp(1,1:shape(1))
+end subroutine
+
+subroutine array_c_to_f_real64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_fptr)
+  type(c_ptr), intent(in) :: array_cptr
+  integer(c_int), intent(in) :: rank
+  type(c_ptr), intent(in) :: shape_cptr
+  type(c_ptr), intent(in) :: strides_cptr
+  real(c_double), pointer, intent(out) :: array_fptr(:,:)
+  real(c_double), pointer :: tmp(:,:,:)
+  integer, pointer :: shape(:)
+  integer, pointer :: strides(:)
+  integer :: eshape(0:2)
+  integer :: accumulated, factor, j
+
+  if( rank /= 2 ) call atlas_abort("Rank mismatch")
+
+  call c_f_pointer ( shape_cptr,   shape ,   [rank] )
+  call c_f_pointer ( strides_cptr, strides , [rank] )
+
+  eshape(0)=1
+  accumulated = 1
+  do j=1,rank
+    accumulated = accumulated*shape(j)
+    factor = shape(j)*strides(j)/accumulated
+    eshape(j-1) = eshape(j-1)*factor
+    eshape(j)   = shape(j)
+    accumulated = accumulated*factor
+  enddo
+  call c_f_pointer ( array_cptr , tmp , shape=eshape )
+  array_fptr => tmp(1,1:shape(1),1:shape(2))
+end subroutine
+
+
+subroutine array_c_to_f_real64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_fptr)
+  type(c_ptr), intent(in) :: array_cptr
+  integer(c_int), intent(in) :: rank
+  type(c_ptr), intent(in) :: shape_cptr
+  type(c_ptr), intent(in) :: strides_cptr
+  real(c_double), pointer, intent(out) :: array_fptr(:,:,:)
+  real(c_double), pointer :: tmp(:,:,:,:)
+  integer, pointer :: shape(:)
+  integer, pointer :: strides(:)
+  integer :: eshape(0:3)
+  integer :: accumulated, factor, j
+
+  if( rank /= 3 ) call atlas_abort("Rank mismatch")
+
+  call c_f_pointer ( shape_cptr,   shape ,   [rank] )
+  call c_f_pointer ( strides_cptr, strides , [rank] )
+
+  eshape(0)=1
+  accumulated = 1
+  do j=1,rank
+    accumulated = accumulated*shape(j)
+    factor = shape(j)*strides(j)/accumulated
+    eshape(j-1) = eshape(j-1)*factor
+    eshape(j)   = shape(j)
+    accumulated = accumulated*factor
+  enddo
+  call c_f_pointer ( array_cptr , tmp , shape=eshape )
+  array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3))
+end subroutine
+
+
+subroutine array_c_to_f_real64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_fptr)
+  type(c_ptr), intent(in) :: array_cptr
+  integer(c_int), intent(in) :: rank
+  type(c_ptr), intent(in) :: shape_cptr
+  type(c_ptr), intent(in) :: strides_cptr
+  real(c_double), pointer, intent(out) :: array_fptr(:,:,:,:)
+  real(c_double), pointer :: tmp(:,:,:,:,:)
+  integer, pointer :: shape(:)
+  integer, pointer :: strides(:)
+  integer :: eshape(0:4)
+  integer :: accumulated, factor, j
+
+  if( rank /= 4 ) call atlas_abort("Rank mismatch")
+
+  call c_f_pointer ( shape_cptr,   shape ,   [rank] )
+  call c_f_pointer ( strides_cptr, strides , [rank] )
+
+  eshape(0)=1
+  accumulated = 1
+  do j=1,rank
+    accumulated = accumulated*shape(j)
+    factor = shape(j)*strides(j)/accumulated
+    eshape(j-1) = eshape(j-1)*factor
+    eshape(j)   = shape(j)
+    accumulated = accumulated*factor
+  enddo
+  call c_f_pointer ( array_cptr , tmp , shape=eshape )
+  array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3),1:shape(4))
+end subroutine
+
+subroutine access_experiment(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:,:,:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_double_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call array_c_to_f(field_c_ptr,rank,shapef_c_ptr,stridesf_c_ptr, field)
+end subroutine
 
 integer function atlas_real(kind)
   integer :: kind
@@ -297,10 +440,11 @@ function atlas_Field__wrap_name_kind_shape_int32_r1(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_int), intent(in) :: data(:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(1))
+  integer(c_int) :: shapef(1)
+  integer(c_int) :: stridesf(1)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,view1d(data),size(shapef),shapef, stridesf) )
   call field%return()
 end function
 
@@ -309,10 +453,11 @@ function atlas_Field__wrap_name_kind_shape_int32_r2(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_int), intent(in) :: data(:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(2))
+  integer(c_int) :: shapef(2)
+  integer(c_int) :: stridesf(2)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,view1d(data),size(shapef),shapef, stridesf) )
   call field%return()
 end function
 
@@ -321,10 +466,11 @@ function atlas_Field__wrap_name_kind_shape_int32_r3(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_int), intent(in) :: data(:,:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(3))
+  integer(c_int) :: shapef(3)
+  integer(c_int) :: stridesf(3)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,view1d(data),size(shapef),shapef, stridesf) )
   call field%return()
 end function
 
@@ -333,10 +479,11 @@ function atlas_Field__wrap_name_kind_shape_int32_r4(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_int), intent(in) :: data(:,:,:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(4))
+  integer(c_int) :: shapef(4)
+  integer(c_int) :: stridesf(4)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,view1d(data),size(shapef),shapef, stridesf) )
   call field%return()
 end function
 
@@ -345,10 +492,11 @@ function atlas_Field__wrap_name_kind_shape_int64_r1(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_long), intent(in) :: data(:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(1))
+  integer(c_int) :: shapef(1)
+  integer(c_int) :: stridesf(1)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,view1d(data),size(shapef),shapef, stridesf) )
   call field%return()
 end function
 
@@ -357,10 +505,11 @@ function atlas_Field__wrap_name_kind_shape_int64_r2(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_long), intent(in) :: data(:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(2))
+  integer(c_int) :: shapef(2)
+  integer(c_int) :: stridesf(2)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,view1d(data),size(shapef),shapef, stridesf) )
   call field%return()
 end function
 
@@ -369,10 +518,11 @@ function atlas_Field__wrap_name_kind_shape_int64_r3(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_long), intent(in) :: data(:,:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(3))
+  integer(c_int) :: shapef(3)
+  integer(c_int) :: stridesf(3)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,view1d(data),size(shapef),shapef, stridesf) )
   call field%return()
 end function
 
@@ -381,10 +531,11 @@ function atlas_Field__wrap_name_kind_shape_int64_r4(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_long), intent(in) :: data(:,:,:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(4))
+  integer(c_int) :: shapef(4)
+  integer(c_int) :: stridesf(4)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,view1d(data),size(shapef),shapef, stridesf) )
   call field%return()
 end function
 
@@ -394,10 +545,11 @@ function atlas_Field__wrap_name_kind_shape_real32_r1(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_float), intent(in) :: data(:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(1))
+  integer(c_int) :: shapef(1)
+  integer(c_int) :: stridesf(1)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,view1d(data),size(shapef),shapef,stridesf) )
   call field%return()
 end function
 
@@ -406,10 +558,11 @@ function atlas_Field__wrap_name_kind_shape_real32_r2(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_float), intent(in) :: data(:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(2))
+  integer(c_int) :: shapef(2)
+  integer(c_int) :: stridesf(2)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,view1d(data),size(shapef),shapef,stridesf) )
   call field%return()
 end function
 
@@ -418,10 +571,11 @@ function atlas_Field__wrap_name_kind_shape_real32_r3(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_float), intent(in) :: data(:,:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(3))
+  integer(c_int) :: shapef(3)
+  integer(c_int) :: stridesf(3)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,view1d(data),size(shapef),shapef,stridesf) )
   call field%return()
 end function
 
@@ -430,10 +584,11 @@ function atlas_Field__wrap_name_kind_shape_real32_r4(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_float), intent(in) :: data(:,:,:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(4))
+  integer(c_int) :: shapef(4)
+  integer(c_int) :: stridesf(4)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,view1d(data),size(shapef),shapef,stridesf) )
   call field%return()
 end function
 
@@ -442,10 +597,11 @@ function atlas_Field__wrap_name_kind_shape_real64_r1(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_double), intent(in) :: data(:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(1))
+  integer(c_int) :: shapef(1)
+  integer(c_int) :: stridesf(1)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,view1d(data),size(shapef),shapef,stridesf) )
   call field%return()
 end function
 
@@ -454,10 +610,11 @@ function atlas_Field__wrap_name_kind_shape_real64_r2(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_double), intent(in) :: data(:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(2))
+  integer(c_int) :: shapef(2)
+  integer(c_int) :: stridesf(2)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,view1d(data),size(shapef),shapef,stridesf) )
   call field%return()
 end function
 
@@ -466,10 +623,11 @@ function atlas_Field__wrap_name_kind_shape_real64_r3(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_double), intent(in) :: data(:,:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(3))
+  integer(c_int) :: shapef(3)
+  integer(c_int) :: stridesf(3)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,view1d(data),size(shapef),shapef,stridesf) )
   call field%return()
 end function
 
@@ -478,10 +636,11 @@ function atlas_Field__wrap_name_kind_shape_real64_r4(name,data) result(field)
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_double), intent(in) :: data(:,:,:,:)
-  integer(c_int), allocatable :: shapef(:)
-  allocate(shapef(4))
+  integer(c_int) :: shapef(4)
+  integer(c_int) :: stridesf(4)
   shapef = shape(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_shapef(name,data,size(shapef),shapef) )
+  stridesf = strides(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,view1d(data),size(shapef),shapef,stridesf) )
   call field%return()
 end function
 
@@ -615,16 +774,17 @@ subroutine Field__access_data1_logical32(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   logical, pointer, intent(out) :: field(:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
   integer :: field_size, jbound
-  call atlas__Field__data_shapef_int(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call atlas__Field__data_int_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
   field_size = 1
-  do jbound=1,field_rank
-    field_size = field_size * field_bounds(jbound)
+  do jbound=1,rank
+    field_size = field_size * shapef(jbound)
   end do
   call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
 end subroutine Field__access_data1_logical32
@@ -633,26 +793,28 @@ subroutine Field__access_data2_logical32(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   logical, pointer, intent(out) :: field(:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_int(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_int_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef(rank-1:rank) )
 end subroutine Field__access_data2_logical32
 
 subroutine Field__access_data3_logical32(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   logical, pointer, intent(out) :: field(:,:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_int(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_int_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef(rank-2:rank) )
 end subroutine Field__access_data3_logical32
 
 !--
@@ -660,16 +822,17 @@ subroutine Field__access_data1_int32(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer, pointer, intent(out) :: field(:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
   integer :: field_size, jbound
-  call atlas__Field__data_shapef_int(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call atlas__Field__data_int_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
   field_size = 1
-  do jbound=1,field_rank
-    field_size = field_size * field_bounds(jbound)
+  do jbound=1,rank
+    field_size = field_size * shapef(jbound)
   end do
   call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
 end subroutine Field__access_data1_int32
@@ -678,42 +841,45 @@ subroutine Field__access_data2_int32(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer, pointer, intent(out) :: field(:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_int(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_int_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef(rank-1:rank) )
 end subroutine Field__access_data2_int32
 
 subroutine Field__access_data3_int32(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer, pointer, intent(out) :: field(:,:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_int(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_int_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef(rank-2:rank) )
 end subroutine Field__access_data3_int32
 
 subroutine Field__access_data1_int64(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
   integer :: field_size, jbound
-  call atlas__Field__data_shapef_long(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call atlas__Field__data_long_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
   field_size = 1
-  do jbound=1,field_rank
-    field_size = field_size * field_bounds(jbound)
+  do jbound=1,rank
+    field_size = field_size * shapef(jbound)
   end do
   call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
 end subroutine Field__access_data1_int64
@@ -722,42 +888,45 @@ subroutine Field__access_data2_int64(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_long(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_long_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef(rank-1:rank) )
 end subroutine Field__access_data2_int64
 
 subroutine Field__access_data3_int64(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:,:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_long(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_long_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef(rank-2:rank) )
 end subroutine Field__access_data3_int64
 
 subroutine Field__access_data1_real32(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
   integer :: field_size, jbound
-  call atlas__Field__data_shapef_float(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call atlas__Field__data_float_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
   field_size = 1
-  do jbound=1,field_rank
-    field_size = field_size * field_bounds(jbound)
+  do jbound=1,rank
+    field_size = field_size * shapef(jbound)
   end do
   call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
 end subroutine Field__access_data1_real32
@@ -766,57 +935,61 @@ subroutine Field__access_data2_real32(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_float(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_float_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef(rank-1:rank) )
 end subroutine Field__access_data2_real32
 
 subroutine Field__access_data3_real32(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_float(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_float_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef(rank-2:rank) )
 end subroutine Field__access_data3_real32
 
 subroutine Field__access_data4_real32(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:,:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_float(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  if( field_rank /= 4 ) call atlas_abort("data is not of rank 4", &
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_float_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  if( rank /= 4 ) call atlas_abort("data is not of rank 4", &
 & atlas_code_location(filename,__LINE__))
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds )
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef )
 end subroutine Field__access_data4_real32
 
 subroutine Field__access_data1_real64(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
   integer :: field_size, jbound
-  call atlas__Field__data_shapef_double(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call atlas__Field__data_double_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
   field_size = 1
-  do jbound=1,field_rank
-    field_size = field_size * field_bounds(jbound)
+  do jbound=1,rank
+    field_size = field_size * shapef(jbound)
   end do
   call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
 end subroutine Field__access_data1_real64
@@ -825,77 +998,86 @@ subroutine Field__access_data2_real64(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
+  integer, pointer :: stridesf(:)
+  integer, pointer :: fieldr1(:), fieldr2(:,:), fieldr3(:,:,:), fieldr4(:,:,:,:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_double(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_double_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( stridesf_c_ptr , stridesf , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef(rank-1:rank) )
 end subroutine Field__access_data2_real64
 
 subroutine Field__access_data3_real64(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_double(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_double_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef(rank-2:rank) )
 end subroutine Field__access_data3_real64
 
 subroutine Field__access_data4_real64(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:,:)
-  integer, pointer :: field_bounds(:)
+  integer, pointer :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_double(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  if( field_rank /= 4 ) call atlas_abort("data is not of rank 4", &
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_double_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  if( rank /= 4 ) call atlas_abort("data is not of rank 4", &
 & atlas_code_location(filename,__LINE__))
-  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds )
+  call C_F_POINTER ( shapef_c_ptr , shapef , (/rank/) )
+  call C_F_POINTER ( field_c_ptr , field , shapef )
 end subroutine Field__access_data4_real64
 
-subroutine Field__access_data2_real64_bounds(this, field, field_bounds)
+subroutine Field__access_data2_real64_bounds(this, field, shapef)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:)
-  integer, intent(in) :: field_bounds(:)
+  integer, intent(in) :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_double(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_c_ptr , field , field_bounds )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_double_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( field_c_ptr , field , shapef )
 end subroutine Field__access_data2_real64_bounds
 
-subroutine Field__access_data3_real64_bounds(this, field, field_bounds)
+subroutine Field__access_data3_real64_bounds(this, field, shapef)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:)
-  integer, intent(in) :: field_bounds(:)
+  integer, intent(in) :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_double(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_c_ptr , field , field_bounds )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_double_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( field_c_ptr , field , shapef )
 end subroutine Field__access_data3_real64_bounds
 
-subroutine Field__access_data4_real64_bounds(this, field, field_bounds)
+subroutine Field__access_data4_real64_bounds(this, field, shapef)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:,:)
-  integer, intent(in) :: field_bounds(:)
+  integer, intent(in) :: shapef(:)
   type(c_ptr) :: field_c_ptr
-  type(c_ptr) :: field_bounds_c_ptr
-  integer(c_int) :: field_rank
-  call atlas__Field__data_shapef_double(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
-  call C_F_POINTER ( field_c_ptr , field , field_bounds )
+  type(c_ptr) :: shapef_c_ptr
+  type(c_ptr) :: stridesf_c_ptr
+  integer(c_int) :: rank
+  call atlas__Field__data_double_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call C_F_POINTER ( field_c_ptr , field , shapef )
 end subroutine Field__access_data4_real64_bounds
 
 end module atlas_field_module

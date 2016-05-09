@@ -231,6 +231,8 @@ implicit none
 
   ! Work with fields from here
   field = atlas_Field("wrapped",existing_data)
+  FCTEST_CHECK_EQUAL( field%rank()   , 3  )
+  FCTEST_CHECK_EQUAL( field%size()   , 2*10*N )
   FCTEST_CHECK_EQUAL( field%shape(1) , 2  )
   FCTEST_CHECK_EQUAL( field%shape(2) , 10 )
   FCTEST_CHECK_EQUAL( field%shape(3) , N  )
@@ -245,6 +247,54 @@ implicit none
   do j=1,N
     FCTEST_CHECK_EQUAL( existing_data(1,1,j), real(j,c_double) )
   enddo
+END_TEST
+
+! -----------------------------------------------------------------------------
+
+TEST( test_field_wrapdataslice)
+implicit none
+
+  real(c_double), allocatable :: existing_data(:,:,:,:)
+  real(c_double), pointer :: data(:,:,:)
+  type(atlas_Field) :: field
+  integer(c_int) :: i,j,k,l
+  write(0,*) "test_field_wrapdataslice"
+  allocate( existing_data(4,3,2,5) )
+
+  do i=1,4
+    do j=1,3
+      do k=1,2
+        do l=1,5
+          existing_data(i,j,k,l) = 1000*i+100*j+10*k+l
+        enddo
+      enddo
+    enddo
+  enddo
+
+  ! Work with fields from here
+  !field = atlas_Field("wrapped",existing_data(:,:,:,:))
+  field = atlas_Field("wrapped",existing_data(:,:,1,:))
+  FCTEST_CHECK_EQUAL( field%rank()   , 3  )
+  FCTEST_CHECK_EQUAL( field%size()   , 4*3*5 )
+  FCTEST_CHECK_EQUAL( field%shape(1) , 4  )
+  FCTEST_CHECK_EQUAL( field%shape(2) , 3  )
+  FCTEST_CHECK_EQUAL( field%shape(3) , 5  )
+
+  call field%access_experiment(data)
+
+  write(0,*) "Shape of field = ",shape(data)
+
+  k=1
+  do i=1,4
+    do j=1,3
+      do l=1,5
+        FCTEST_CHECK_EQUAL(data(i,j,l) , real(1000*i+100*j+10*k+l,c_double) )
+      enddo
+    enddo
+  enddo
+
+  call field%final()
+
 END_TEST
 
 ! -----------------------------------------------------------------------------

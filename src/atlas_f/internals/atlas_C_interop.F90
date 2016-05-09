@@ -16,6 +16,7 @@ public atlas_free
 public atlas_compare_equal
 public view1d
 public stride
+public strides
 public get_c_arguments
 public c_to_f_string_str
 public c_to_f_string_cptr
@@ -35,12 +36,15 @@ INTERFACE view1d
   module procedure view1d_int32_rank1
   module procedure view1d_int32_rank2
   module procedure view1d_int32_rank3
+  module procedure view1d_int32_rank4
   module procedure view1d_int64_rank1
   module procedure view1d_int64_rank2
   module procedure view1d_int64_rank3
+  module procedure view1d_int64_rank4
   module procedure view1d_real32_rank1
   module procedure view1d_real32_rank2
   module procedure view1d_real32_rank3
+  module procedure view1d_real32_rank4
   module procedure view1d_real64_rank1
   module procedure view1d_real64_rank2
   module procedure view1d_real64_rank3
@@ -48,20 +52,42 @@ INTERFACE view1d
 end interface view1d
 
 INTERFACE stride
+  module procedure stride_int32_r1_dim
+  module procedure stride_int32_r2_dim
+  module procedure stride_int32_r3_dim
+  module procedure stride_int32_r4_dim
+  module procedure stride_int64_r1_dim
+  module procedure stride_int64_r2_dim
+  module procedure stride_int64_r3_dim
+  module procedure stride_int64_r4_dim
+  module procedure stride_real32_r1_dim
+  module procedure stride_real32_r2_dim
+  module procedure stride_real32_r3_dim
+  module procedure stride_real32_r4_dim
+  module procedure stride_real64_r1_dim
+  module procedure stride_real64_r2_dim
+  module procedure stride_real64_r3_dim
+  module procedure stride_real64_r4_dim
+end interface stride
+
+INTERFACE strides
   module procedure stride_int32_r1
   module procedure stride_int32_r2
   module procedure stride_int32_r3
+  module procedure stride_int32_r4
   module procedure stride_int64_r1
   module procedure stride_int64_r2
   module procedure stride_int64_r3
+  module procedure stride_int64_r4
   module procedure stride_real32_r1
   module procedure stride_real32_r2
   module procedure stride_real32_r3
+  module procedure stride_real32_r4
   module procedure stride_real64_r1
   module procedure stride_real64_r2
   module procedure stride_real64_r3
   module procedure stride_real64_r4
-end interface stride
+end interface strides
 
 interface
   subroutine atlas_free(ptr) bind(C)
@@ -237,6 +263,19 @@ function view1d_int32_rank3(array) result( view )
   endif
 end function view1d_int32_rank3
 
+function view1d_int32_rank4(array) result( view )
+  integer(c_int), intent(in), target :: array(:,:,:,:)
+  type(c_ptr) :: array_c_ptr
+  integer(c_int), pointer :: view(:)
+  if( size(array) > 0 ) then
+    array_c_ptr = c_loc_int32(array(1,1,1,1))
+    call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_int32
+  endif
+end function view1d_int32_rank4
+
+
 function view1d_int64_rank1(array) result( view )
   integer(c_long), intent(in), target :: array(:)
   type(c_ptr) :: array_c_ptr
@@ -273,6 +312,19 @@ function view1d_int64_rank3(array) result( view )
   endif
 end function view1d_int64_rank3
 
+function view1d_int64_rank4(array) result( view )
+  integer(c_long), intent(in), target :: array(:,:,:,:)
+  type(c_ptr) :: array_c_ptr
+  integer(c_long), pointer :: view(:)
+  if( size(array) > 0 ) then
+    array_c_ptr = c_loc_int64(array(1,1,1,1))
+    call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_int64
+  endif
+end function view1d_int64_rank4
+
+
 function view1d_real32_rank1(array) result( view )
   real(c_float), intent(in), target :: array(:)
   type(c_ptr) :: array_c_ptr
@@ -290,13 +342,6 @@ function view1d_real32_rank2(array) result( view )
   type(c_ptr) :: array_c_ptr
   real(c_float), pointer :: view(:)
   if( size(array) > 0 ) then
-
-#ifndef  __GFORTRAN__
-    if( .not. is_contiguous(array) ) then
-      write(0,*) "ERROR: array is not contiguous in view1d"
-      write(0,*) 'call abort()'
-    end if
-#endif
     array_c_ptr = c_loc_real32(array(1,1))
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
   else
@@ -316,6 +361,18 @@ function view1d_real32_rank3(array) result( view )
     view => zero_length_array_real32
   endif
 end function view1d_real32_rank3
+
+function view1d_real32_rank4(array) result( view )
+  real(c_float), intent(in), target :: array(:,:,:,:)
+  type(c_ptr) :: array_c_ptr
+  real(c_float), pointer :: view(:)
+  if( size(array) > 0 ) then
+    array_c_ptr = c_loc_real32(array(1,1,1,1))
+    call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_real32
+  endif
+end function view1d_real32_rank4
 
 function view1d_real64_rank1(array) result( view )
   real(c_double), intent(in), target :: array(:)
@@ -368,15 +425,15 @@ end function view1d_real64_rank4
 ! ------------------------------------------------------------
 ! stride interface
 
-function stride_int32_r1(arr,dim) result( stride )
+function stride_int32_r1_dim(arr,dim) result( stride )
   integer :: arr(:)
   integer :: dim
   integer :: stride
   stride = 1
   if (dim == 1 .AND. ubound(arr,1) > 1) stride = (loc(arr(2))-loc(arr(1)))/4
-end function stride_int32_r1
+end function stride_int32_r1_dim
 
-function stride_int32_r2(arr,dim) result( stride )
+function stride_int32_r2_dim(arr,dim) result( stride )
   integer :: arr(:,:)
   integer :: dim
   integer :: stride
@@ -387,9 +444,9 @@ function stride_int32_r2(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_int32_r2
+end function stride_int32_r2_dim
 
-function stride_int32_r3(arr,dim) result( stride )
+function stride_int32_r3_dim(arr,dim) result( stride )
   integer :: arr(:,:,:)
   integer :: dim
   integer :: stride
@@ -401,9 +458,9 @@ function stride_int32_r3(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_int32_r3
+end function stride_int32_r3_dim
 
-function stride_int32_r4(arr,dim) result( stride )
+function stride_int32_r4_dim(arr,dim) result( stride )
   integer :: arr(:,:,:,:)
   integer :: dim
   integer :: stride
@@ -416,18 +473,18 @@ function stride_int32_r4(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_int32_r4
+end function stride_int32_r4_dim
 
 
-function stride_int64_r1(arr,dim) result( stride )
+function stride_int64_r1_dim(arr,dim) result( stride )
   integer(c_long) :: arr(:)
   integer :: dim
   integer :: stride
   stride = 1
   if (dim == 1 .AND. ubound(arr,1) > 1) stride = (loc(arr(2))-loc(arr(1)))/4
-end function stride_int64_r1
+end function stride_int64_r1_dim
 
-function stride_int64_r2(arr,dim) result( stride )
+function stride_int64_r2_dim(arr,dim) result( stride )
   integer(c_long) :: arr(:,:)
   integer :: dim
   integer :: stride
@@ -438,9 +495,9 @@ function stride_int64_r2(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_int64_r2
+end function stride_int64_r2_dim
 
-function stride_int64_r3(arr,dim) result( stride )
+function stride_int64_r3_dim(arr,dim) result( stride )
   integer(c_long) :: arr(:,:,:)
   integer :: dim
   integer :: stride
@@ -452,9 +509,9 @@ function stride_int64_r3(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_int64_r3
+end function stride_int64_r3_dim
 
-function stride_int64_r4(arr,dim) result( stride )
+function stride_int64_r4_dim(arr,dim) result( stride )
   integer(c_long) :: arr(:,:,:,:)
   integer :: dim
   integer :: stride
@@ -467,10 +524,10 @@ function stride_int64_r4(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_int64_r4
+end function stride_int64_r4_dim
 
 
-function stride_real32_r1(arr,dim) result( stride )
+function stride_real32_r1_dim(arr,dim) result( stride )
   real(c_float) :: arr(:)
   integer :: dim
   integer :: stride
@@ -480,9 +537,9 @@ function stride_real32_r1(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_real32_r1
+end function stride_real32_r1_dim
 
-function stride_real32_r2(arr,dim) result( stride )
+function stride_real32_r2_dim(arr,dim) result( stride )
   real(c_float) :: arr(:,:)
   integer :: dim
   integer :: stride
@@ -493,9 +550,9 @@ function stride_real32_r2(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_real32_r2
+end function stride_real32_r2_dim
 
-function stride_real32_r3(arr,dim) result( stride )
+function stride_real32_r3_dim(arr,dim) result( stride )
   real(c_float) :: arr(:,:,:)
   integer :: dim
   integer :: stride
@@ -507,9 +564,9 @@ function stride_real32_r3(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_real32_r3
+end function stride_real32_r3_dim
 
-function stride_real32_r4(arr,dim) result( stride )
+function stride_real32_r4_dim(arr,dim) result( stride )
   real(c_float) :: arr(:,:,:,:)
   integer :: dim
   integer :: stride
@@ -522,9 +579,9 @@ function stride_real32_r4(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_real32_r4
+end function stride_real32_r4_dim
 
-function stride_real64_r1(arr,dim) result( stride )
+function stride_real64_r1_dim(arr,dim) result( stride )
   real(c_double) :: arr(:)
   integer :: dim
   integer :: stride
@@ -534,9 +591,9 @@ function stride_real64_r1(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_real64_r1
+end function stride_real64_r1_dim
 
-function stride_real64_r2(arr,dim) result( stride )
+function stride_real64_r2_dim(arr,dim) result( stride )
   real(c_double) :: arr(:,:)
   integer :: dim
   integer :: stride
@@ -547,9 +604,9 @@ function stride_real64_r2(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_real64_r2
+end function stride_real64_r2_dim
 
-function stride_real64_r3(arr,dim) result( stride )
+function stride_real64_r3_dim(arr,dim) result( stride )
   real(c_double) :: arr(:,:,:)
   integer :: dim
   integer :: stride
@@ -561,9 +618,9 @@ function stride_real64_r3(arr,dim) result( stride )
   else
     stride = 0
   endif
-end function stride_real64_r3
+end function stride_real64_r3_dim
 
-function stride_real64_r4(arr,dim) result( stride )
+function stride_real64_r4_dim(arr,dim) result( stride )
   real(c_double) :: arr(:,:,:,:)
   integer :: dim
   integer :: stride
@@ -576,6 +633,129 @@ function stride_real64_r4(arr,dim) result( stride )
   else
     stride = 0
   endif
+end function stride_real64_r4_dim
+
+! ------------------------------------------------------------
+! stride interface
+
+function stride_int32_r1(arr) result( stride_ )
+  integer(c_int) :: arr(:)
+  integer :: stride_(1)
+  stride_(1) = stride_int32_r1_dim(arr,1)
+end function stride_int32_r1
+
+function stride_int32_r2(arr) result( stride_ )
+  integer(c_int) :: arr(:,:)
+  integer :: stride_(2)
+  stride_(1) = stride_int32_r2_dim(arr,1)
+  stride_(2) = stride_int32_r2_dim(arr,2)
+end function stride_int32_r2
+
+function stride_int32_r3(arr) result( stride_ )
+  integer(c_int) :: arr(:,:,:)
+  integer :: stride_(3)
+  stride_(1) = stride_int32_r3_dim(arr,1)
+  stride_(2) = stride_int32_r3_dim(arr,2)
+  stride_(3) = stride_int32_r3_dim(arr,3)
+end function stride_int32_r3
+
+function stride_int32_r4(arr) result( stride_ )
+  integer(c_int) :: arr(:,:,:,:)
+  integer :: stride_(4)
+  stride_(1) = stride_int32_r4_dim(arr,1)
+  stride_(2) = stride_int32_r4_dim(arr,2)
+  stride_(3) = stride_int32_r4_dim(arr,3)
+  stride_(4) = stride_int32_r4_dim(arr,4)
+end function stride_int32_r4
+
+function stride_int64_r1(arr) result( stride_ )
+  integer(c_long) :: arr(:)
+  integer :: stride_(1)
+  stride_(1) = stride_int64_r1_dim(arr,1)
+end function stride_int64_r1
+
+function stride_int64_r2(arr) result( stride_ )
+  integer(c_long) :: arr(:,:)
+  integer :: stride_(2)
+  stride_(1) = stride_int64_r2_dim(arr,1)
+  stride_(2) = stride_int64_r2_dim(arr,2)
+end function stride_int64_r2
+
+function stride_int64_r3(arr) result( stride_ )
+  integer(c_long) :: arr(:,:,:)
+  integer :: stride_(3)
+  stride_(1) = stride_int64_r3_dim(arr,1)
+  stride_(2) = stride_int64_r3_dim(arr,2)
+  stride_(3) = stride_int64_r3_dim(arr,3)
+end function stride_int64_r3
+
+function stride_int64_r4(arr) result( stride_ )
+  integer(c_long) :: arr(:,:,:,:)
+  integer :: stride_(4)
+  stride_(1) = stride_int64_r4_dim(arr,1)
+  stride_(2) = stride_int64_r4_dim(arr,2)
+  stride_(3) = stride_int64_r4_dim(arr,3)
+  stride_(4) = stride_int64_r4_dim(arr,4)
+end function stride_int64_r4
+
+function stride_real32_r1(arr) result( stride_ )
+  real(c_float) :: arr(:)
+  integer :: stride_(1)
+  stride_(1) = stride_real32_r1_dim(arr,1)
+end function stride_real32_r1
+
+function stride_real32_r2(arr) result( stride_ )
+  real(c_float) :: arr(:,:)
+  integer :: stride_(2)
+  stride_(1) = stride_real32_r2_dim(arr,1)
+  stride_(2) = stride_real32_r2_dim(arr,2)
+end function stride_real32_r2
+
+function stride_real32_r3(arr) result( stride_ )
+  real(c_float) :: arr(:,:,:)
+  integer :: stride_(3)
+  stride_(1) = stride_real32_r3_dim(arr,1)
+  stride_(2) = stride_real32_r3_dim(arr,2)
+  stride_(3) = stride_real32_r3_dim(arr,3)
+end function stride_real32_r3
+
+function stride_real32_r4(arr) result( stride_ )
+  real(c_float) :: arr(:,:,:,:)
+  integer :: stride_(4)
+  stride_(1) = stride_real32_r4_dim(arr,1)
+  stride_(2) = stride_real32_r4_dim(arr,2)
+  stride_(3) = stride_real32_r4_dim(arr,3)
+  stride_(4) = stride_real32_r4_dim(arr,4)
+end function stride_real32_r4
+
+function stride_real64_r1(arr) result( stride_ )
+  real(c_double) :: arr(:)
+  integer :: stride_(1)
+  stride_(1) = stride_real64_r1_dim(arr,1)
+end function stride_real64_r1
+
+function stride_real64_r2(arr) result( stride_ )
+  real(c_double) :: arr(:,:)
+  integer :: stride_(2)
+  stride_(1) = stride_real64_r2_dim(arr,1)
+  stride_(2) = stride_real64_r2_dim(arr,2)
+end function stride_real64_r2
+
+function stride_real64_r3(arr) result( stride_ )
+  real(c_double) :: arr(:,:,:)
+  integer :: stride_(3)
+  stride_(1) = stride_real64_r3_dim(arr,1)
+  stride_(2) = stride_real64_r3_dim(arr,2)
+  stride_(3) = stride_real64_r3_dim(arr,3)
+end function stride_real64_r3
+
+function stride_real64_r4(arr) result( stride_ )
+  real(c_double) :: arr(:,:,:,:)
+  integer :: stride_(4)
+  stride_(1) = stride_real64_r4_dim(arr,1)
+  stride_(2) = stride_real64_r4_dim(arr,2)
+  stride_(3) = stride_real64_r4_dim(arr,3)
+  stride_(4) = stride_real64_r4_dim(arr,4)
 end function stride_real64_r4
 
 end module

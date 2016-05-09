@@ -15,6 +15,7 @@
 #include <iosfwd>
 #include <iterator>
 #include "eckit/memory/Owned.h"
+#include "eckit/exception/Exceptions.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
@@ -36,7 +37,8 @@ public:
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3);
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3, size_t size4);
 
-  template <typename T> static Array* wrap(T data[], const ArrayShape& s);
+  template <typename T> static Array* wrap(T data[], const ArraySpec&);
+  template <typename T> static Array* wrap(T data[], const ArrayShape&);
 
 public:
 
@@ -72,6 +74,10 @@ public:
   const ArrayShape& shape() const { return spec_.shape(); }
 
   const std::vector<int>& shapef() const { return spec_.shapef(); }
+
+  const std::vector<int>& stridesf() const { return spec_.stridesf(); }
+
+  bool contiguous() const { return spec_.contiguous(); }
 
   /// @brief Access to raw data
   template <typename DATATYPE>       DATATYPE* data();
@@ -130,6 +136,11 @@ public:
   ArrayT(size_t size1, size_t size2, size_t size3): owned_(true)               { resize( make_shape(size1,size2,size3) ); }
 
   ArrayT(size_t size1, size_t size2, size_t size3, size_t size4): owned_(true) { resize( make_shape(size1,size2,size3,size4) ); }
+
+  ArrayT(DATA_TYPE data[], const ArraySpec& spec):
+    Array(spec),
+    owned_(false)
+  { wrap(data); }
 
   ArrayT(DATA_TYPE data[], const ArrayShape& shape):
     Array(ArraySpec(shape)),
@@ -213,6 +224,7 @@ template< typename DATA_TYPE>
 template< typename RandomAccessIterator >
 void ArrayT<DATA_TYPE>::assign( RandomAccessIterator begin, RandomAccessIterator end )
 {
+  if( not contiguous() ) NOTIMP;
   if( std::distance(begin,end) != size() ) {
     throw eckit::SeriousBug("Size doesn't match");
   }
@@ -225,6 +237,7 @@ void ArrayT<DATA_TYPE>::assign( RandomAccessIterator begin, RandomAccessIterator
 template< typename DATA_TYPE>
 void ArrayT<DATA_TYPE>::assign( const Array& other )
 {
+  if( not contiguous() or not other.contiguous()) NOTIMP;
   resize( other.shape() );
   ASSERT( datatype().kind() == other.datatype().kind() );
   const DATA_TYPE* other_data = other.data<DATA_TYPE>();

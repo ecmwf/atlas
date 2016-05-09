@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <vector>
+#include "eckit/exception/Exceptions.h"
 #include "atlas/array/ArrayUtil.h"
 
 namespace atlas {
@@ -26,7 +27,24 @@ ArraySpec::ArraySpec( const ArrayShape& _shape )
   }
   rank_ = shape_.size();
   size_ = shape_[0]*strides_[0];
+  contiguous_ = true;
 };
+
+ArraySpec::ArraySpec( const ArrayShape& _shape, const ArrayStrides& _strides )
+{
+  if( _shape.size() != _strides.size() )
+    throw eckit::BadParameter("dimensions of shape and stride don't match", Here());
+
+  shape_=_shape;
+  strides_=_strides;
+  rank_ = shape_.size();
+  size_ = 1;
+  for( size_t n=0; n<rank_; ++n )
+  {
+    size_ *= shape_[n];
+  }
+  contiguous_ = (size_ == shape_[0]*strides_[0] ? true : false);
+}
 
 const std::vector<int>& ArraySpec::shapef() const
 {
@@ -37,6 +55,17 @@ const std::vector<int>& ArraySpec::shapef() const
   }
   return shapef_;
 }
+
+const std::vector<int>& ArraySpec::stridesf() const
+{
+  if( stridesf_.empty() )
+  {
+    stridesf_.resize(strides().size());
+    std::reverse_copy( strides().begin(), strides().end(), stridesf_.begin() );
+  }
+  return stridesf_;
+}
+
 
 } // namespace array
 } // namespace atlas
