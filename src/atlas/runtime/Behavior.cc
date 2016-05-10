@@ -23,6 +23,10 @@ using namespace eckit;
 namespace atlas {
 namespace runtime {
 
+namespace {
+enum { DIRECT_FILE_READ_POLICY=0, PARALLEL_FILE_READ_POLICY=1 };
+}
+
 static Once<Mutex> local_mutex;
 
 template< typename TYPE >
@@ -131,6 +135,25 @@ struct CreateStatsChannel : CreateChannel {};
 
 Behavior::Behavior() : ParallelContextBehavior()
 {
+  // Read Policy
+  const char* read_policy = ::getenv("ATLAS_FILE_READ_POLICY");
+  read_policy_ = PARALLEL_FILE_READ_POLICY;
+  if( read_policy )
+  {
+    if(
+        std::string(read_policy) == "direct" ||
+        std::string(read_policy) == "DIRECT" ||
+        std::string(read_policy) == "0" ) {
+      read_policy_ = DIRECT_FILE_READ_POLICY;
+    }
+    else if(
+        std::string(read_policy) == "parallel" ||
+        std::string(read_policy) == "PARALLEL" ||
+        std::string(read_policy) == "1" ) {
+      read_policy_ = PARALLEL_FILE_READ_POLICY;
+    }
+  }
+
   // Console format
   char p[6];
   std::sprintf(p, "%05zu",eckit::mpi::rank());
@@ -216,7 +239,25 @@ Channel& Behavior::channel(int cat)
 /// Configuration
 void Behavior::reconfigure()
 {
+  Log::debug(2) << "File read policy: " << read_policy_ << std::endl;
 }
+
+
+
+eckit::FileReadPolicy Behavior::fileReadPolicy()
+{
+  switch( read_policy_ )
+  {
+    case PARALLEL_FILE_READ_POLICY:
+      return eckit::mpi::ParallelContextBehavior::fileReadPolicy();
+    case DIRECT_FILE_READ_POLICY:
+      return eckit::StandardBehavior::fileReadPolicy();
+    default:
+      throw eckit::BadParameter("Unrecognised read policy", Here());
+  }
+  return eckit::StandardBehavior::fileReadPolicy();
+}
+
 
 } // namespace runtime
 } // namespace atlas
