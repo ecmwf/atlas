@@ -1,3 +1,13 @@
+#:setvar ranks [1,2,3,4]
+#:setvar dim   ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
+#:setvar ftypes ['integer(c_int)','integer(c_long)','real(c_float)','real(c_double)', 'logical']
+#:setvar ctypes ['int','long','float','double', 'int']
+#:setvar dtypes ['int32', 'int64', 'real32', 'real64', 'logical32']
+#:setvar types list(zip(dtypes,ftypes,ctypes))
+
+#:def atlas_abort(string)
+atlas_abort("${string}$",atlas_code_location("${_FILE_}$",${_LINE_}$))
+#:enddef
 
 module atlas_field_module
 
@@ -6,7 +16,7 @@ use atlas_c_interop, only: c_to_f_string_cptr, atlas_free, strides, view1d
 use atlas_refcounted_module, only : atlas_RefCounted
 use atlas_Config_module, only : atlas_Config
 use atlas_Logging_module, only : atlas_log
-use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange
+use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange, atlas_throw_assertionfailed
 implicit none
 
 private :: c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
@@ -102,7 +112,20 @@ contains
   final :: atlas_Field__final
 #endif
 
-  procedure, public :: access_experiment
+  #:for rank in ranks
+  #:for dtype in dtypes
+  procedure, private :: access_data_${dtype}$_r${rank}$
+  #:endfor
+  #:endfor
+  generic, public :: access_data => &
+    #:for rank in ranks
+    #:for dtype in dtypes
+      & access_data_${dtype}$_r${rank}$, &
+    #:endfor
+    #:endfor
+      & dummy
+  
+  procedure, private :: dummy
 
 END TYPE atlas_Field
 
@@ -141,32 +164,35 @@ integer, private, parameter :: ATLAS_KIND_REAL64 =  8
 
 
 interface array_c_to_f
-  module procedure array_c_to_f_real64_r1
-  module procedure array_c_to_f_real64_r2
-  module procedure array_c_to_f_real64_r3
-  module procedure array_c_to_f_real64_r4
+        #:for rank in ranks
+        #:for dtype in dtypes
+  module procedure array_c_to_f_${dtype}$_r${rank}$
+        #:endfor
+        #:endfor
 end interface
+!-------------------------------------------------------------------------------
 
-!------------------------------------------------------------------------------
 
 !========================================================
 contains
 !========================================================
 
-
-subroutine array_c_to_f_real64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_fptr)
+           #:for rank  in ranks
+           #:for dtype,ftype,ctype in types
+!-------------------------------------------------------------------------------
+subroutine array_c_to_f_${dtype}$_r${rank}$(array_cptr,rank,shape_cptr,strides_cptr,array_fptr)
   type(c_ptr), intent(in) :: array_cptr
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:)
-  real(c_double), pointer :: tmp(:,:)
+  ${ftype}$, pointer, intent(out) :: array_fptr(${dim[rank]}$)
+  ${ftype}$, pointer :: tmp(${dim[rank+1]}$)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:1)
+  integer :: eshape(0:${rank}$)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch")
+  if( rank /= ${rank}$ ) call ${atlas_abort("Rank mismatch")}$
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -181,112 +207,38 @@ subroutine array_c_to_f_real64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
     accumulated = accumulated*factor
   enddo
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
-  array_fptr => tmp(1,1:shape(1))
+  #{if rank == 1}# array_fptr => tmp(1,1:shape(1)) #{endif}#
+  #{if rank == 2}# array_fptr => tmp(1,1:shape(1),1:shape(2)) #{endif}#
+  #{if rank == 3}# array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3)) #{endif}#
+  #{if rank == 4}# array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3),1:shape(4)) #{endif}#
 end subroutine
+!-------------------------------------------------------------------------------
 
-subroutine array_c_to_f_real64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_fptr)
-  type(c_ptr), intent(in) :: array_cptr
-  integer(c_int), intent(in) :: rank
-  type(c_ptr), intent(in) :: shape_cptr
-  type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:,:)
-  real(c_double), pointer :: tmp(:,:,:)
-  integer, pointer :: shape(:)
-  integer, pointer :: strides(:)
-  integer :: eshape(0:2)
-  integer :: accumulated, factor, j
+#:endfor
+#:endfor
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch")
-
-  call c_f_pointer ( shape_cptr,   shape ,   [rank] )
-  call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/accumulated
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
-  enddo
-  call c_f_pointer ( array_cptr , tmp , shape=eshape )
-  array_fptr => tmp(1,1:shape(1),1:shape(2))
-end subroutine
-
-
-subroutine array_c_to_f_real64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_fptr)
-  type(c_ptr), intent(in) :: array_cptr
-  integer(c_int), intent(in) :: rank
-  type(c_ptr), intent(in) :: shape_cptr
-  type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:,:,:)
-  real(c_double), pointer :: tmp(:,:,:,:)
-  integer, pointer :: shape(:)
-  integer, pointer :: strides(:)
-  integer :: eshape(0:3)
-  integer :: accumulated, factor, j
-
-  if( rank /= 3 ) call atlas_abort("Rank mismatch")
-
-  call c_f_pointer ( shape_cptr,   shape ,   [rank] )
-  call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/accumulated
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
-  enddo
-  call c_f_pointer ( array_cptr , tmp , shape=eshape )
-  array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3))
-end subroutine
-
-
-subroutine array_c_to_f_real64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_fptr)
-  type(c_ptr), intent(in) :: array_cptr
-  integer(c_int), intent(in) :: rank
-  type(c_ptr), intent(in) :: shape_cptr
-  type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:,:,:,:)
-  real(c_double), pointer :: tmp(:,:,:,:,:)
-  integer, pointer :: shape(:)
-  integer, pointer :: strides(:)
-  integer :: eshape(0:4)
-  integer :: accumulated, factor, j
-
-  if( rank /= 4 ) call atlas_abort("Rank mismatch")
-
-  call c_f_pointer ( shape_cptr,   shape ,   [rank] )
-  call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/accumulated
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
-  enddo
-  call c_f_pointer ( array_cptr , tmp , shape=eshape )
-  array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3),1:shape(4))
-end subroutine
-
-subroutine access_experiment(this, field)
+!-------------------------------------------------------------------------------
+#:for rank  in ranks
+#:for dtype,ftype,ctype in types
+subroutine access_data_${dtype}$_r${rank}$(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:)
+  ${ftype}$, pointer, intent(out) :: field(${dim[rank]}$)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: shapef_c_ptr
   type(c_ptr) :: stridesf_c_ptr
   integer(c_int) :: rank
-  call atlas__Field__data_double_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
+  call atlas__Field__data_${ctype}$_specf(this%c_ptr(), field_c_ptr, rank, shapef_c_ptr, stridesf_c_ptr)
   call array_c_to_f(field_c_ptr,rank,shapef_c_ptr,stridesf_c_ptr, field)
 end subroutine
+!-------------------------------------------------------------------------------
+#:endfor
+#:endfor
+subroutine dummy(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+end subroutine
+
 
 integer function atlas_real(kind)
   integer :: kind

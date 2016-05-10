@@ -271,8 +271,6 @@ implicit none
     enddo
   enddo
 
-  ! Work with fields from here
-  !field = atlas_Field("wrapped",existing_data(:,:,:,:))
   field = atlas_Field("wrapped",existing_data(:,:,1,:))
   FCTEST_CHECK_EQUAL( field%rank()   , 3  )
   FCTEST_CHECK_EQUAL( field%size()   , 4*3*5 )
@@ -280,7 +278,7 @@ implicit none
   FCTEST_CHECK_EQUAL( field%shape(2) , 3  )
   FCTEST_CHECK_EQUAL( field%shape(3) , 5  )
 
-  call field%access_experiment(data)
+  call field%access_data(data)
 
   write(0,*) "Shape of field = ",shape(data)
 

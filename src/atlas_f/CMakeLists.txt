@@ -22,30 +22,6 @@ install( FILES
 
 ### fortran bindings
 
-#function(generate_fortran_bindings output filename)
-#    get_filename_component(base ${filename} NAME_WE)
-#    set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
-#    set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${base}_c_binding.f90)
-#    set(${output} ${${output}} ${outfile} PARENT_SCOPE)
-#    add_custom_command(
-#        OUTPUT ${outfile}
-#        COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
-#        DEPENDS ${filename} )
-#    set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
-#endfunction()
-
-#function(generate_fortran_bindings_custom_output output filename outfile)
-#    get_filename_component(base ${filename} NAME_WE)
-#    set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
-#    set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${outfile})
-#    set(${output} ${${output}} ${outfile} PARENT_SCOPE)
-#    add_custom_command(
-#        OUTPUT ${outfile}
-#        COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
-#        DEPENDS ${filename} )
-#    set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
-#endfunction()
-
 function(generate_fortran_bindings output filename)
 
   set( options "" )
@@ -73,6 +49,30 @@ function(generate_fortran_bindings output filename)
         COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
         DEPENDS ${filename} )
   endif()
+  set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
+endfunction()
+
+function(preprocess_fypp output filename)
+
+  set( options "" )
+  set( single_value_args OUTPUT )
+  set( multi_value_args "" )
+  cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
+
+  get_filename_component(base ${filename} NAME_WE)
+  set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
+  set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${base}_fypp.F90)
+  # set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${filename})
+
+  if( _PAR_OUTPUT )
+    set(outfile ${_PAR_OUTPUT})
+  endif()
+  set(${output} ${${output}} ${outfile} PARENT_SCOPE)
+
+  add_custom_command(
+    OUTPUT ${outfile}
+    COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/fypp -l 132 -p ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${outfile}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} )
   set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()
 
@@ -132,6 +132,8 @@ generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_value.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
 
+preprocess_fypp( atlas_f_src field/atlas_Field_module.F90 )
+ecbuild_debug_var( atlas_f_src )
 
 ### atlas fortran lib
 ecbuild_add_library( TARGET atlas_f
@@ -139,6 +141,7 @@ ecbuild_add_library( TARGET atlas_f
     CONDITION CMAKE_Fortran_COMPILER_LOADED
     SOURCES
         ${FORTRAN_BINDINGS}
+        ${atlas_f_src}
         atlas_module.F90
         util/atlas_kinds_module.F90
         util/atlas_JSON_module.F90
@@ -154,7 +157,7 @@ ecbuild_add_library( TARGET atlas_f
         functionspace/atlas_functionspace_NodeColumns_module.F90
         functionspace/atlas_functionspace_StructuredColumns_module.F90
         functionspace/atlas_functionspace_Spectral_module.F90
-        field/atlas_Field_module.F90
+        # field/atlas_Field_module.F90
         field/atlas_FieldSet_module.F90
         field/atlas_State_module.F90
         grid/atlas_Grid_module.F90
