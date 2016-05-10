@@ -112,19 +112,19 @@ contains
   final :: atlas_Field__final
 #endif
 
-  #:for rank in ranks
-  #:for dtype in dtypes
+#:for rank in ranks
+#:for dtype in dtypes
   procedure, private :: access_data_${dtype}$_r${rank}$
-  #:endfor
-  #:endfor
+#:endfor
+#:endfor
   generic, public :: access_data => &
-    #:for rank in ranks
-    #:for dtype in dtypes
+#:for rank in ranks
+#:for dtype in dtypes
       & access_data_${dtype}$_r${rank}$, &
-    #:endfor
-    #:endfor
+#:endfor
+#:endfor
       & dummy
-  
+
   procedure, private :: dummy
 
 END TYPE atlas_Field
@@ -136,22 +136,12 @@ interface atlas_Field
   module procedure atlas_Field__create_name_kind_shape_int64
   module procedure atlas_Field__create_kind_shape_int32
   module procedure atlas_Field__create_kind_shape_int64
-  module procedure atlas_Field__wrap_name_kind_shape_int32_r1
-  module procedure atlas_Field__wrap_name_kind_shape_int32_r2
-  module procedure atlas_Field__wrap_name_kind_shape_int32_r3
-  module procedure atlas_Field__wrap_name_kind_shape_int32_r4
-  module procedure atlas_Field__wrap_name_kind_shape_int64_r1
-  module procedure atlas_Field__wrap_name_kind_shape_int64_r2
-  module procedure atlas_Field__wrap_name_kind_shape_int64_r3
-  module procedure atlas_Field__wrap_name_kind_shape_int64_r4
-  module procedure atlas_Field__wrap_name_kind_shape_real32_r1
-  module procedure atlas_Field__wrap_name_kind_shape_real32_r2
-  module procedure atlas_Field__wrap_name_kind_shape_real32_r3
-  module procedure atlas_Field__wrap_name_kind_shape_real32_r4
-  module procedure atlas_Field__wrap_name_kind_shape_real64_r1
-  module procedure atlas_Field__wrap_name_kind_shape_real64_r2
-  module procedure atlas_Field__wrap_name_kind_shape_real64_r3
-  module procedure atlas_Field__wrap_name_kind_shape_real64_r4
+
+#:for rank in ranks
+#:for dtype in dtypes[:-1]  #! skip logical types
+  module procedure atlas_Field__wrap_name_kind_shape_${dtype}$_r${rank}$
+#:endfor
+#:endfor
 end interface
 
 ! ----------------------------------------------------
@@ -164,11 +154,11 @@ integer, private, parameter :: ATLAS_KIND_REAL64 =  8
 
 
 interface array_c_to_f
-        #:for rank in ranks
-        #:for dtype in dtypes
+#:for rank in ranks
+#:for dtype in dtypes
   module procedure array_c_to_f_${dtype}$_r${rank}$
-        #:endfor
-        #:endfor
+#:endfor
+#:endfor
 end interface
 !-------------------------------------------------------------------------------
 
@@ -387,214 +377,25 @@ function atlas_Field__create_kind_shape_int64(kind,shape) result(field)
 end function
 
 
-function atlas_Field__wrap_name_kind_shape_int32_r1(name,data) result(field)
+#:for rank in ranks
+#:for dtype, ftype, ctype in types[:-1]  #! skip logical types
+function atlas_Field__wrap_name_kind_shape_${dtype}$_r${rank}$(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
-  integer(c_int), intent(in) :: data(:)
-  integer(c_int) :: shapef(1)
-  integer(c_int) :: stridesf(1)
+  ${ftype}$, intent(in) :: data(${dim[rank]}$)
+  integer(c_int) :: shapef(${rank}$)
+  integer(c_int) :: stridesf(${rank}$)
+  ${ftype}$, pointer :: data1d(:)
   shapef = shape(data)
   stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,view1d(data),size(shapef),shapef, stridesf) )
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_${ctype}$_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
+#:endfor
+#:endfor
 
-function atlas_Field__wrap_name_kind_shape_int32_r2(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  integer(c_int), intent(in) :: data(:,:)
-  integer(c_int) :: shapef(2)
-  integer(c_int) :: stridesf(2)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,view1d(data),size(shapef),shapef, stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_int32_r3(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  integer(c_int), intent(in) :: data(:,:,:)
-  integer(c_int) :: shapef(3)
-  integer(c_int) :: stridesf(3)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,view1d(data),size(shapef),shapef, stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_int32_r4(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  integer(c_int), intent(in) :: data(:,:,:,:)
-  integer(c_int) :: shapef(4)
-  integer(c_int) :: stridesf(4)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,view1d(data),size(shapef),shapef, stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_int64_r1(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  integer(c_long), intent(in) :: data(:)
-  integer(c_int) :: shapef(1)
-  integer(c_int) :: stridesf(1)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,view1d(data),size(shapef),shapef, stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_int64_r2(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  integer(c_long), intent(in) :: data(:,:)
-  integer(c_int) :: shapef(2)
-  integer(c_int) :: stridesf(2)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,view1d(data),size(shapef),shapef, stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_int64_r3(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  integer(c_long), intent(in) :: data(:,:,:)
-  integer(c_int) :: shapef(3)
-  integer(c_int) :: stridesf(3)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,view1d(data),size(shapef),shapef, stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_int64_r4(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  integer(c_long), intent(in) :: data(:,:,:,:)
-  integer(c_int) :: shapef(4)
-  integer(c_int) :: stridesf(4)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,view1d(data),size(shapef),shapef, stridesf) )
-  call field%return()
-end function
-
-
-function atlas_Field__wrap_name_kind_shape_real32_r1(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  real(c_float), intent(in) :: data(:)
-  integer(c_int) :: shapef(1)
-  integer(c_int) :: stridesf(1)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,view1d(data),size(shapef),shapef,stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_real32_r2(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  real(c_float), intent(in) :: data(:,:)
-  integer(c_int) :: shapef(2)
-  integer(c_int) :: stridesf(2)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,view1d(data),size(shapef),shapef,stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_real32_r3(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  real(c_float), intent(in) :: data(:,:,:)
-  integer(c_int) :: shapef(3)
-  integer(c_int) :: stridesf(3)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,view1d(data),size(shapef),shapef,stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_real32_r4(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  real(c_float), intent(in) :: data(:,:,:,:)
-  integer(c_int) :: shapef(4)
-  integer(c_int) :: stridesf(4)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,view1d(data),size(shapef),shapef,stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_real64_r1(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  real(c_double), intent(in) :: data(:)
-  integer(c_int) :: shapef(1)
-  integer(c_int) :: stridesf(1)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,view1d(data),size(shapef),shapef,stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_real64_r2(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  real(c_double), intent(in) :: data(:,:)
-  integer(c_int) :: shapef(2)
-  integer(c_int) :: stridesf(2)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,view1d(data),size(shapef),shapef,stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_real64_r3(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  real(c_double), intent(in) :: data(:,:,:)
-  integer(c_int) :: shapef(3)
-  integer(c_int) :: stridesf(3)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,view1d(data),size(shapef),shapef,stridesf) )
-  call field%return()
-end function
-
-function atlas_Field__wrap_name_kind_shape_real64_r4(name,data) result(field)
-  use atlas_field_c_binding
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  real(c_double), intent(in) :: data(:,:,:,:)
-  integer(c_int) :: shapef(4)
-  integer(c_int) :: stridesf(4)
-  shapef = shape(data)
-  stridesf = strides(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,view1d(data),size(shapef),shapef,stridesf) )
-  call field%return()
-end function
 
 
 
@@ -721,6 +522,8 @@ function Field__shape_idx(this,idx) result(shape_val)
 & atlas_code_location(filename,__LINE__))
   shape_val = shape_f_ptr(idx)
 end function Field__shape_idx
+
+
 
 subroutine Field__access_data1_logical32(this, field)
   use atlas_field_c_binding
