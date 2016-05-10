@@ -271,7 +271,7 @@ implicit none
     enddo
   enddo
 
-  field = atlas_Field("wrapped",existing_data(:,:,1,:))
+  field = atlas_Field(existing_data(:,:,1,:))
   FCTEST_CHECK_EQUAL( field%rank()   , 3  )
   FCTEST_CHECK_EQUAL( field%size()   , 4*3*5 )
   FCTEST_CHECK_EQUAL( field%shape(1) , 4  )

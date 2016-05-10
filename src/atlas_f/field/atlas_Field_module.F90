@@ -12,15 +12,15 @@ atlas_abort("${string}$",atlas_code_location("${_FILE_}$",${_LINE_}$))
 module atlas_field_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
-use atlas_c_interop, only: c_to_f_string_cptr, atlas_free, strides, view1d
+use atlas_c_interop, only: c_to_f_string_cptr, atlas_free, strides, view1d, c_str
 use atlas_refcounted_module, only : atlas_RefCounted
 use atlas_Config_module, only : atlas_Config
 use atlas_Logging_module, only : atlas_log
-use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange, atlas_throw_assertionfailed
+use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange
 implicit none
 
 private :: c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
-private :: c_to_f_string_cptr, atlas_free
+private :: c_to_f_string_cptr, atlas_free, c_str
 private :: atlas_RefCounted, atlas_Config, atlas_log, atlas_code_location, atlas_abort, atlas_throw_outofrange
 
 public :: atlas_Field
@@ -101,7 +101,8 @@ interface atlas_Field
 
 #:for rank in ranks
 #:for dtype in dtypes[:-1]  #! skip logical types
-  module procedure atlas_Field__wrap_name_kind_shape_${dtype}$_r${rank}$
+  module procedure atlas_Field__wrap_${dtype}$_r${rank}$
+  module procedure atlas_Field__wrap_name_${dtype}$_r${rank}$
 #:endfor
 #:endfor
 end interface
@@ -372,7 +373,7 @@ end function
 
 #:for rank in ranks
 #:for dtype, ftype, ctype in types[:-1]  #! skip logical types
-function atlas_Field__wrap_name_kind_shape_${dtype}$_r${rank}$(name,data) result(field)
+function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -384,6 +385,19 @@ function atlas_Field__wrap_name_kind_shape_${dtype}$_r${rank}$(name,data) result
   stridesf = strides(data)
   data1d => view1d(data)
   field = atlas_Field__cptr( atlas__Field__wrap_${ctype}$_specf(name,data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_${dtype}$_r${rank}$(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  ${ftype}$, intent(in) :: data(${dim[rank]}$)
+  integer(c_int) :: shapef(${rank}$)
+  integer(c_int) :: stridesf(${rank}$)
+  ${ftype}$, pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_${ctype}$_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 #:endfor

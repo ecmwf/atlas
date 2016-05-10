@@ -3,15 +3,15 @@
 module atlas_field_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
-use atlas_c_interop, only: c_to_f_string_cptr, atlas_free, strides, view1d
+use atlas_c_interop, only: c_to_f_string_cptr, atlas_free, strides, view1d, c_str
 use atlas_refcounted_module, only : atlas_RefCounted
 use atlas_Config_module, only : atlas_Config
 use atlas_Logging_module, only : atlas_log
-use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange, atlas_throw_assertionfailed
+use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange
 implicit none
 
 private :: c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
-private :: c_to_f_string_cptr, atlas_free
+private :: c_to_f_string_cptr, atlas_free, c_str
 private :: atlas_RefCounted, atlas_Config, atlas_log, atlas_code_location, atlas_abort, atlas_throw_outofrange
 
 public :: atlas_Field
@@ -158,22 +158,38 @@ interface atlas_Field
   module procedure atlas_Field__create_kind_shape_int32
   module procedure atlas_Field__create_kind_shape_int64
 
-  module procedure atlas_Field__wrap_name_kind_shape_int32_r1
-  module procedure atlas_Field__wrap_name_kind_shape_int64_r1
-  module procedure atlas_Field__wrap_name_kind_shape_real32_r1
-  module procedure atlas_Field__wrap_name_kind_shape_real64_r1
-  module procedure atlas_Field__wrap_name_kind_shape_int32_r2
-  module procedure atlas_Field__wrap_name_kind_shape_int64_r2
-  module procedure atlas_Field__wrap_name_kind_shape_real32_r2
-  module procedure atlas_Field__wrap_name_kind_shape_real64_r2
-  module procedure atlas_Field__wrap_name_kind_shape_int32_r3
-  module procedure atlas_Field__wrap_name_kind_shape_int64_r3
-  module procedure atlas_Field__wrap_name_kind_shape_real32_r3
-  module procedure atlas_Field__wrap_name_kind_shape_real64_r3
-  module procedure atlas_Field__wrap_name_kind_shape_int32_r4
-  module procedure atlas_Field__wrap_name_kind_shape_int64_r4
-  module procedure atlas_Field__wrap_name_kind_shape_real32_r4
-  module procedure atlas_Field__wrap_name_kind_shape_real64_r4
+  module procedure atlas_Field__wrap_int32_r1
+  module procedure atlas_Field__wrap_name_int32_r1
+  module procedure atlas_Field__wrap_int64_r1
+  module procedure atlas_Field__wrap_name_int64_r1
+  module procedure atlas_Field__wrap_real32_r1
+  module procedure atlas_Field__wrap_name_real32_r1
+  module procedure atlas_Field__wrap_real64_r1
+  module procedure atlas_Field__wrap_name_real64_r1
+  module procedure atlas_Field__wrap_int32_r2
+  module procedure atlas_Field__wrap_name_int32_r2
+  module procedure atlas_Field__wrap_int64_r2
+  module procedure atlas_Field__wrap_name_int64_r2
+  module procedure atlas_Field__wrap_real32_r2
+  module procedure atlas_Field__wrap_name_real32_r2
+  module procedure atlas_Field__wrap_real64_r2
+  module procedure atlas_Field__wrap_name_real64_r2
+  module procedure atlas_Field__wrap_int32_r3
+  module procedure atlas_Field__wrap_name_int32_r3
+  module procedure atlas_Field__wrap_int64_r3
+  module procedure atlas_Field__wrap_name_int64_r3
+  module procedure atlas_Field__wrap_real32_r3
+  module procedure atlas_Field__wrap_name_real32_r3
+  module procedure atlas_Field__wrap_real64_r3
+  module procedure atlas_Field__wrap_name_real64_r3
+  module procedure atlas_Field__wrap_int32_r4
+  module procedure atlas_Field__wrap_name_int32_r4
+  module procedure atlas_Field__wrap_int64_r4
+  module procedure atlas_Field__wrap_name_int64_r4
+  module procedure atlas_Field__wrap_real32_r4
+  module procedure atlas_Field__wrap_name_real32_r4
+  module procedure atlas_Field__wrap_real64_r4
+  module procedure atlas_Field__wrap_name_real64_r4
 end interface
 
 ! ----------------------------------------------------
@@ -227,8 +243,8 @@ subroutine array_c_to_f_int32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -263,8 +279,8 @@ subroutine array_c_to_f_int64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -299,8 +315,8 @@ subroutine array_c_to_f_real32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -335,8 +351,8 @@ subroutine array_c_to_f_real64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -371,8 +387,8 @@ subroutine array_c_to_f_logical32_r1(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -407,8 +423,8 @@ subroutine array_c_to_f_int32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -443,8 +459,8 @@ subroutine array_c_to_f_int64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -479,8 +495,8 @@ subroutine array_c_to_f_real32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -515,8 +531,8 @@ subroutine array_c_to_f_real64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -551,8 +567,8 @@ subroutine array_c_to_f_logical32_r2(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -587,8 +603,8 @@ subroutine array_c_to_f_int32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -623,8 +639,8 @@ subroutine array_c_to_f_int64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -659,8 +675,8 @@ subroutine array_c_to_f_real32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -695,8 +711,8 @@ subroutine array_c_to_f_real64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -731,8 +747,8 @@ subroutine array_c_to_f_logical32_r3(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -767,8 +783,8 @@ subroutine array_c_to_f_int32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -803,8 +819,8 @@ subroutine array_c_to_f_int64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -839,8 +855,8 @@ subroutine array_c_to_f_real32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -875,8 +891,8 @@ subroutine array_c_to_f_real64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -911,8 +927,8 @@ subroutine array_c_to_f_logical32_r4(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("/home/rd/nawd/dev/develop/atlas/src/atlas_f/field/atlas_Fie&
-      &ld_module.F90",147))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("/tmp/nawd/src/dev/atlas/src/atlas_f/field/atlas_Field_modul&
+      &e.F90",148))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -1641,7 +1657,7 @@ end function
 
 !-------------------------------------------------------------------------------
 
-function atlas_Field__wrap_name_kind_shape_int32_r1(name,data) result(field)
+function atlas_Field__wrap_name_int32_r1(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1655,7 +1671,20 @@ function atlas_Field__wrap_name_kind_shape_int32_r1(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_int64_r1(name,data) result(field)
+function atlas_Field__wrap_int32_r1(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  integer(c_int), intent(in) :: data(:)
+  integer(c_int) :: shapef(1)
+  integer(c_int) :: stridesf(1)
+  integer(c_int), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_int64_r1(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1669,7 +1698,20 @@ function atlas_Field__wrap_name_kind_shape_int64_r1(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_real32_r1(name,data) result(field)
+function atlas_Field__wrap_int64_r1(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  integer(c_long), intent(in) :: data(:)
+  integer(c_int) :: shapef(1)
+  integer(c_int) :: stridesf(1)
+  integer(c_long), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_real32_r1(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1683,7 +1725,20 @@ function atlas_Field__wrap_name_kind_shape_real32_r1(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_real64_r1(name,data) result(field)
+function atlas_Field__wrap_real32_r1(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  real(c_float), intent(in) :: data(:)
+  integer(c_int) :: shapef(1)
+  integer(c_int) :: stridesf(1)
+  real(c_float), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_real64_r1(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1697,7 +1752,20 @@ function atlas_Field__wrap_name_kind_shape_real64_r1(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_int32_r2(name,data) result(field)
+function atlas_Field__wrap_real64_r1(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  real(c_double), intent(in) :: data(:)
+  integer(c_int) :: shapef(1)
+  integer(c_int) :: stridesf(1)
+  real(c_double), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_int32_r2(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1711,7 +1779,20 @@ function atlas_Field__wrap_name_kind_shape_int32_r2(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_int64_r2(name,data) result(field)
+function atlas_Field__wrap_int32_r2(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  integer(c_int), intent(in) :: data(:,:)
+  integer(c_int) :: shapef(2)
+  integer(c_int) :: stridesf(2)
+  integer(c_int), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_int64_r2(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1725,7 +1806,20 @@ function atlas_Field__wrap_name_kind_shape_int64_r2(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_real32_r2(name,data) result(field)
+function atlas_Field__wrap_int64_r2(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  integer(c_long), intent(in) :: data(:,:)
+  integer(c_int) :: shapef(2)
+  integer(c_int) :: stridesf(2)
+  integer(c_long), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_real32_r2(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1739,7 +1833,20 @@ function atlas_Field__wrap_name_kind_shape_real32_r2(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_real64_r2(name,data) result(field)
+function atlas_Field__wrap_real32_r2(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  real(c_float), intent(in) :: data(:,:)
+  integer(c_int) :: shapef(2)
+  integer(c_int) :: stridesf(2)
+  real(c_float), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_real64_r2(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1753,7 +1860,20 @@ function atlas_Field__wrap_name_kind_shape_real64_r2(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_int32_r3(name,data) result(field)
+function atlas_Field__wrap_real64_r2(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  real(c_double), intent(in) :: data(:,:)
+  integer(c_int) :: shapef(2)
+  integer(c_int) :: stridesf(2)
+  real(c_double), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_int32_r3(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1767,7 +1887,20 @@ function atlas_Field__wrap_name_kind_shape_int32_r3(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_int64_r3(name,data) result(field)
+function atlas_Field__wrap_int32_r3(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  integer(c_int), intent(in) :: data(:,:,:)
+  integer(c_int) :: shapef(3)
+  integer(c_int) :: stridesf(3)
+  integer(c_int), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_int64_r3(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1781,7 +1914,20 @@ function atlas_Field__wrap_name_kind_shape_int64_r3(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_real32_r3(name,data) result(field)
+function atlas_Field__wrap_int64_r3(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  integer(c_long), intent(in) :: data(:,:,:)
+  integer(c_int) :: shapef(3)
+  integer(c_int) :: stridesf(3)
+  integer(c_long), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_real32_r3(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1795,7 +1941,20 @@ function atlas_Field__wrap_name_kind_shape_real32_r3(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_real64_r3(name,data) result(field)
+function atlas_Field__wrap_real32_r3(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  real(c_float), intent(in) :: data(:,:,:)
+  integer(c_int) :: shapef(3)
+  integer(c_int) :: stridesf(3)
+  real(c_float), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_real64_r3(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1809,7 +1968,20 @@ function atlas_Field__wrap_name_kind_shape_real64_r3(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_int32_r4(name,data) result(field)
+function atlas_Field__wrap_real64_r3(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  real(c_double), intent(in) :: data(:,:,:)
+  integer(c_int) :: shapef(3)
+  integer(c_int) :: stridesf(3)
+  real(c_double), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_int32_r4(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1823,7 +1995,20 @@ function atlas_Field__wrap_name_kind_shape_int32_r4(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_int64_r4(name,data) result(field)
+function atlas_Field__wrap_int32_r4(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  integer(c_int), intent(in) :: data(:,:,:,:)
+  integer(c_int) :: shapef(4)
+  integer(c_int) :: stridesf(4)
+  integer(c_int), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_int64_r4(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1837,7 +2022,20 @@ function atlas_Field__wrap_name_kind_shape_int64_r4(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_real32_r4(name,data) result(field)
+function atlas_Field__wrap_int64_r4(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  integer(c_long), intent(in) :: data(:,:,:,:)
+  integer(c_int) :: shapef(4)
+  integer(c_int) :: stridesf(4)
+  integer(c_long), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_real32_r4(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1851,7 +2049,20 @@ function atlas_Field__wrap_name_kind_shape_real32_r4(name,data) result(field)
   field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
-function atlas_Field__wrap_name_kind_shape_real64_r4(name,data) result(field)
+function atlas_Field__wrap_real32_r4(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  real(c_float), intent(in) :: data(:,:,:,:)
+  integer(c_int) :: shapef(4)
+  integer(c_int) :: stridesf(4)
+  real(c_float), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_name_real64_r4(name,data) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1863,6 +2074,19 @@ function atlas_Field__wrap_name_kind_shape_real64_r4(name,data) result(field)
   stridesf = strides(data)
   data1d => view1d(data)
   field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,data1d,size(shapef),shapef, stridesf) )
+  call field%return()
+end function
+function atlas_Field__wrap_real64_r4(data) result(field)
+  use atlas_field_c_binding
+  type(atlas_Field) :: field
+  real(c_double), intent(in) :: data(:,:,:,:)
+  integer(c_int) :: shapef(4)
+  integer(c_int) :: stridesf(4)
+  real(c_double), pointer :: data1d(:)
+  shapef = shape(data)
+  stridesf = strides(data)
+  data1d => view1d(data)
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 
