@@ -21,11 +21,11 @@ namespace mesh {
 
 Nodes::Nodes(): size_(0)
 {
-  global_index_ = &add( field::Field::create<gidx_t>("glb_idx",   array::make_shape(size(),1)) );
-  remote_index_ = &add( field::Field::create<int   >("remote_idx",array::make_shape(size(),1)) );
-  partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size(),1)) );
+  global_index_ = &add( field::Field::create<gidx_t>("glb_idx",   array::make_shape(size())) );
+  remote_index_ = &add( field::Field::create<int   >("remote_idx",array::make_shape(size())) );
+  partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size())) );
   lonlat_       = &add( field::Field::create<double>("lonlat",    array::make_shape(size(),2)) );
-  ghost_        = &add( field::Field::create<int   >("ghost",     array::make_shape(size(),1)) );
+  ghost_        = &add( field::Field::create<int   >("ghost",     array::make_shape(size())) );
 
   edge_connectivity_ = &add( new Connectivity("edge") );
   cell_connectivity_ = &add( new Connectivity("cell") );

@@ -172,9 +172,9 @@ END_TEST
 TEST( test_field_size )
 implicit none
 
-  integer, pointer :: fdata_int(:)
-  real(c_float),  pointer :: fdata_real32(:)
-  real(c_double), pointer :: fdata_real64(:)
+  integer, pointer :: fdata_int(:,:)
+  real(c_float),  pointer :: fdata_real32(:,:)
+  real(c_double), pointer :: fdata_real64(:,:)
   type(atlas_Field) :: field
 
   write(*,*) "test_field_size starting"
@@ -278,7 +278,7 @@ implicit none
   FCTEST_CHECK_EQUAL( field%shape(2) , 3  )
   FCTEST_CHECK_EQUAL( field%shape(3) , 5  )
 
-  call field%access_data(data)
+  call field%data(data)
 
   write(0,*) "Shape of field = ",shape(data)
 

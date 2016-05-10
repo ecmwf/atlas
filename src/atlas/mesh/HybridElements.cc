@@ -39,10 +39,10 @@ HybridElements::HybridElements() :
   elements_begin_(1,0ul),
   type_idx_()
 {
-  global_index_ = &add( field::Field::create<gidx_t>("glb_idx",   array::make_shape(size(),1)) );
-  remote_index_ = &add( field::Field::create<int   >("remote_idx",array::make_shape(size(),1)) );
-  partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size(),1)) );
-  halo_         = &add( field::Field::create<int   >("halo",      array::make_shape(size(),1)) );
+  global_index_ = &add( field::Field::create<gidx_t>("glb_idx",   array::make_shape(size())) );
+  remote_index_ = &add( field::Field::create<int   >("remote_idx",array::make_shape(size())) );
+  partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size())) );
+  halo_         = &add( field::Field::create<int   >("halo",      array::make_shape(size())) );
 
   node_connectivity_ = &add( new Connectivity("node") );
   edge_connectivity_ = &add( new Connectivity("edge") );
