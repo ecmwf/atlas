@@ -106,7 +106,7 @@ write(string, *) checksum
 call atlas_log%info(string)
 
 ! Create a global field
-field_global = fs_nodes%create_global_field("global", field_scalar1)
+field_global = fs_nodes%create_field("global", field_scalar1, global=.true.)
 
 ! Gather operation
 call fs_nodes%gather(field_scalar1, field_global);
