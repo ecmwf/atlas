@@ -53,9 +53,10 @@ function(generate_fortran_bindings output filename)
 endfunction()
 
 set( PYTHON_VERSION "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH}")
-if( PYTHON_VERSION VERSION_LESS 2.7.9 )
+set( PYTHON_REQUIRED_VERSION 2.7.8 )
+if( PYTHON_VERSION VERSION_LESS ${PYTHON_REQUIRED_VERSION} )
   ecbuild_warn("Python version ${PYTHON_VERSION} is inadequate to use Fortran preprocessor 'fypp'."
-          "Required version is 2.7.9. No problem, previously preprocessed files will be used."
+          "Required version is ${PYTHON_REQUIRED_VERSION}. No problem, previously preprocessed files will be used."
           "Just be aware that these will not be updated." )
 
   function(preprocess_fypp output filename)
