@@ -223,7 +223,7 @@ end subroutine
 function eckit_version()
   use atlas_atlas_c_binding
   use atlas_c_interop
-  character(len=5) :: eckit_version
+  character(len=40) :: eckit_version
   eckit_version = c_to_f_string_cptr(atlas__eckit_version())
 end function eckit_version
 
@@ -249,7 +249,7 @@ end function eckit_git_sha1_abbrev
 function atlas_version()
   use atlas_c_interop
   use atlas_atlas_c_binding
-  character(len=5) :: atlas_version
+  character(len=40) :: atlas_version
   atlas_version = c_to_f_string_cptr(atlas__atlas_version())
 end function atlas_version
 

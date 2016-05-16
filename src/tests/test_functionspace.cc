@@ -32,11 +32,6 @@ using namespace atlas::functionspace;
 namespace atlas {
 namespace test {
 
-template<class T>
-inline std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
-    return eckit::__print_list(s, v);
-}
-
 struct AtlasFixture {
     AtlasFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
                                  boost::unit_test::framework::master_test_suite().argv); }

@@ -64,6 +64,8 @@ void atlas_init(int argc, char** argv)
   Log::debug() << "eckit version [" << eckit_version() << "]\n";
   Log::debug() << "eckit git     [" << eckit_git_sha1()<< "]\n";
 
+  Context::instance().behavior().reconfigure();
+
   std::vector<PathName>::iterator path_it;
   for( path_it = config_files.begin(); path_it!=config_files.end(); ++path_it )
   {

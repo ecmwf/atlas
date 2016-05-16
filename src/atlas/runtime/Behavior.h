@@ -60,6 +60,8 @@ public:
   /// Configuration
   virtual void reconfigure();
 
+  virtual eckit::FileReadPolicy fileReadPolicy();
+
 private:
 
   ChannelConfig debug_ctxt;
@@ -67,6 +69,8 @@ private:
   ChannelConfig warn_ctxt;
   ChannelConfig error_ctxt;
   ChannelConfig stats_ctxt;
+
+  int read_policy_;
 };
 
 } // namespace runtime
