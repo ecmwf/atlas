@@ -93,8 +93,8 @@ Structured::Structured(const eckit::Parametrisation& p)
     options.set("unique_pole",unique_pole);
 
   bool three_dimensional;
-  if( p.get("three_dimensional",three_dimensional) )
-    options.set("three_dimensional",three_dimensional);
+  if( p.get("3d",three_dimensional) )
+    options.set("3d",three_dimensional);
 
   size_t nb_parts;
   if( p.get("nb_parts",nb_parts) )
@@ -128,12 +128,12 @@ void Structured::configure_defaults()
 
   // This option disregards multiple poles in grid (e.g. lonlat up to poles) and connects elements
   // to the first node only. Note this option will only be looked at in case other option
-  // "three_dimensional"==true
+  // "3d"==true
   options.set("unique_pole", bool(Resource<bool>("--unique_pole;atlas.meshgen.unique_pole",true ) ) );
 
   // This option creates elements that connect east to west at greenwich meridian
   // when true, instead of creating periodic ghost-points at east boundary when false
-  options.set("three_dimensional",bool(Resource<bool>("--three_dimensional;atlas.meshgen.three_dimensional",false ) ));
+  options.set("3d",bool(Resource<bool>("--three_dimensional;atlas.meshgen.three_dimensional",false ) ));
 
   // This option sets number of parts the mesh will be split in
   options.set("nb_parts",eckit::mpi::size());
@@ -206,7 +206,7 @@ void Structured::generate_region(const global::Structured& rg,
 {
   double max_angle          = options.get<double>("angle");
   bool   triangulate_quads  = options.get<bool>("triangulate");
-  bool   three_dimensional  = options.get<bool>("three_dimensional");
+  bool   three_dimensional  = options.get<bool>("3d");
   bool   has_north_pole = rg.lat(0) == 90;
   bool   has_south_pole = rg.lat(rg.nlat()-1) == -90;
   bool   unique_pole        = options.get<bool>("unique_pole") && three_dimensional && has_north_pole && has_south_pole;
@@ -746,7 +746,7 @@ void Structured::generate_mesh(
 
   bool include_north_pole = (mypart == 0       ) && options.get<bool>("include_pole") && !has_north_pole;
   bool include_south_pole = (mypart == nparts-1) && options.get<bool>("include_pole") && !has_south_pole;
-  bool three_dimensional  = options.get<bool>("three_dimensional");
+  bool three_dimensional  = options.get<bool>("3d");
   bool patch_north_pole   = (mypart == 0       ) && options.get<bool>("patch_pole") && three_dimensional
                             && !has_north_pole && rg.nlon(1) > 0;
   bool patch_south_pole   = (mypart == nparts-1) && options.get<bool>("patch_pole") && three_dimensional

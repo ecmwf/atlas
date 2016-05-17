@@ -17,30 +17,35 @@
 #include <vector>
 #include <memory>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/config/Resource.h"
-#include "eckit/runtime/Tool.h"
-#include "eckit/filesystem/PathName.h"
-#include "eckit/parser/Tokenizer.h"
-#include "eckit/geometry/Point3.h"
 #include "atlas/atlas.h"
-#include "atlas/util/io/Gmsh.h"
-#include "atlas/mesh/generators/MeshGenerator.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/grid/grids.h"
+#include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
-#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/mesh/actions/BuildDualMesh.h"
+#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/mesh/actions/BuildStatistics.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/grid/grids.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
-#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/util/io/Gmsh.h"
+#include "eckit/exception/Exceptions.h"
+#include "eckit/filesystem/PathName.h"
+#include "eckit/geometry/Point3.h"
+#include "eckit/mpi/ParallelContextBehavior.h"
+#include "eckit/option/CmdArgs.h"
+#include "eckit/option/Separator.h"
+#include "eckit/option/SimpleOption.h"
+#include "eckit/parser/Tokenizer.h"
+#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Tool.h"
 
-//------------------------------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 
 using namespace eckit;
 using namespace atlas;
@@ -48,10 +53,17 @@ using namespace atlas::mesh::actions;
 using namespace atlas::grid;
 using namespace atlas::functionspace;
 using namespace atlas::mesh;
+using namespace eckit::option;
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
+void usage(const std::string& tool)
+{
+  Log::info() << "usage: " << tool << " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT [--help]" << std::endl;
+}
 
 class Meshgen2Gmsh : public eckit::Tool {
+  typedef std::vector<eckit::option::Option *> Options;
 
   virtual void run();
 
@@ -59,7 +71,43 @@ public:
 
   Meshgen2Gmsh(int argc,char **argv): eckit::Tool(argc,argv)
   {
-    bool help = Resource< bool >("--help",false);
+    Context::instance().behavior( new eckit::mpi::ParallelContextBehavior() );
+    
+    if( argc == 1 )
+    {
+      usage( name() );
+      do_run = false;
+      return;
+    }
+
+    Options options;
+    options.push_back( new SimpleOption<bool>("help","Print this help") );
+    options.push_back( new SimpleOption<std::string>("grid.name","Grid unique identifier\n"
+      "           Example values: N80, F40, O24, L32") );
+    options.push_back( new SimpleOption<PathName>("grid.json","Grid described by json file") );
+    options.push_back( new SimpleOption<double>("angle","Maximum element-edge slant deviation from meridian in degrees. \n"
+      "           Value range between 0 and 30\n"
+      "               0: Mostly triangular, with only perfect quads\n"
+      "              30: Mostly skewed quads with only triags when skewness becomes too large\n"
+      "              -1: Only triangles") );
+
+    options.push_back( new SimpleOption<bool>("3d","Output mesh as sphere, and generate mesh connecting East and West in case serial") );
+    options.push_back( new SimpleOption<bool>("include_pole","Include pole point") );
+    options.push_back( new SimpleOption<bool>("patch_pole","Patch poles with elements.") );
+    options.push_back( new SimpleOption<bool>("ghost","Output ghost elements") );
+    options.push_back( new Separator("Advanced") );
+    options.push_back( new SimpleOption<long>("halo","Halo size") );
+    options.push_back( new SimpleOption<bool>("edges","Build edge datastructure") );
+    options.push_back( new SimpleOption<bool>("brick","Build brick dual mesh") );
+    options.push_back( new SimpleOption<bool>("stats","Write statistics file") );
+    options.push_back( new SimpleOption<bool>("info","Write Info") );
+    
+    std::stringstream options_str;
+    for( Options::const_iterator it = options.begin(); it!= options.end(); ++it ) {
+      options_str << "    " << (**it) << "\n\n";
+    }
+    
+    CmdArgs args(&usage, options);
 
     do_run = true;
 
@@ -68,80 +116,94 @@ public:
         "       atlas-meshgen - Mesh generator for Structured compatible meshes\n"
         "\n"
         "SYNOPSIS\n"
-        "       atlas-meshgen GRID [OPTION]... [--help] \n"
+        "       atlas-meshgen (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT [--help] \n"
         "\n"
         "DESCRIPTION\n"
         "\n"
-        "       GRID: unique identifier for grid \n"
-        "           Example values: N80, F40, O24, L32\n"
-        "\n"
-        "       -o       Output file for mesh\n"
+          +options_str.str()+
         "\n"
         "AUTHOR\n"
         "       Written by Willem Deconinck.\n"
         "\n"
         "ECMWF                        November 2014"
         ;
+    
+    bool help=false;
+    args.get("help",help);
     if( help )
     {
-      Log::info() << help_str << std::endl;
+      if( eckit::mpi::rank() == 0 )
+        Log::info() << help_str << std::endl;
       do_run = false;
-    }
-
-    if( argc == 1 )
-    {
-      Log::info() << "usage: atlas-meshgen GRID [OPTION]... [--help]" << std::endl;
-      do_run = false;
+      return;
     }
 
     atlas_init(argc,argv);
 
+
     key = "";
-    for( int i=0; i<argc; ++i )
-    {
-      if( i==1 && argv[i][0] != '-' )
-      {
-        key = std::string(argv[i]);
-      }
-    }
+    args.get("grid.name",key);
 
-    edges      = Resource< bool> ( "--edges", false );
-    stats      = Resource< bool> ( "--stats", false );
-    info       = Resource< bool> ( "--info", false );
-    halo       = Resource< int > ( "--halo", 0 );
-    surfdim    = Resource< int > ( "--surfdim", 2 );
-    brick      = Resource< int > ( "--brick", false );
+    edges = false;
+    args.get("edges",edges);
+    stats = false;
+    args.get("stats",stats);
+    info = false;
+    args.get("info",info);
+    halo       = 0;
+    args.get("halo",halo);
+    bool dim_3d=false;
+    args.get("3d",dim_3d);
+    surfdim    = dim_3d ? 3 : 2;
+    brick = false;
+    args.get("brick",brick);
+    ghost = false;
+    args.get("ghost",ghost);
 
-    path_in = Resource<std::string> ( "-i", "" );
+    std::string path_in_str = "";
+    if( args.get("grid.json",path_in_str) ) path_in = path_in_str;
+      
+    if( args.count() )
+      path_out = args(0);
+    else
+      path_out = "mesh.msh";
 
-    path_out = Resource<std::string> ( "-o", "" );
-    if( path_out.asString().empty() && do_run )
-      throw UserError(Here(),"missing output filename, parameter -o");
+    if( path_in.asString().empty() && key.empty() && do_run )
+      Log::info() << "missing argument --grid.name or --grid.json" << std::endl;
 
     if( edges )
-      halo = std::max(halo,1);
+      halo = std::max(halo,1l);
 
+    meshgenerator_config = args.get();
+    if( eckit::mpi::size() > 1 )
+      meshgenerator_config.set("3d",false);
   }
 
 private:
 
   bool do_run;
   std::string key;
-  int halo;
+  long halo;
   bool edges;
   bool brick;
   bool stats;
   bool info;
   int surfdim;
+  bool with_pole;
+  bool stitch_pole;
+  bool ghost;
   std::string identifier;
   std::vector<long> reg_nlon_nlat;
   std::vector<long> fgg_nlon_nlat;
   std::vector<long> rgg_nlon;
   PathName path_in;
   PathName path_out;
+  
+  eckit::LocalConfiguration meshgenerator_config;
+  
 };
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 void Meshgen2Gmsh::run()
 {
@@ -167,8 +229,10 @@ void Meshgen2Gmsh::run()
 
   if( !grid ) return;
   SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
-      mesh::generators::MeshGenerator::create("Structured") );
-SharedPtr<mesh::Mesh> mesh;
+      mesh::generators::MeshGenerator::create("Structured",meshgenerator_config) );
+  
+  
+  SharedPtr<mesh::Mesh> mesh;
   try {
   mesh.reset( meshgenerator->generate(*grid) );
   }
@@ -179,9 +243,9 @@ SharedPtr<mesh::Mesh> mesh;
     throw e;
   }
   SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh,Halo(halo)) );
-  nodes_fs->checksum(mesh->nodes().lonlat());
-
-  Log::info() << "  checksum lonlat : " << nodes_fs->checksum(mesh->nodes().lonlat()) << std::endl;
+  // nodes_fs->checksum(mesh->nodes().lonlat());
+  // Log::info() << "  checksum lonlat : " << nodes_fs->checksum(mesh->nodes().lonlat()) << std::endl;
+  
   if( edges )
   {
     build_edges(*mesh);
@@ -198,16 +262,18 @@ SharedPtr<mesh::Mesh> mesh;
 
   atlas::util::io::Gmsh gmsh;
   gmsh.options.set("info",info);
+  gmsh.options.set("ghost",ghost);
   if( surfdim == 3 )
   {
     mesh::actions::BuildXYZField("xyz")(*mesh);
     gmsh.options.set("nodes",std::string("xyz"));
   }
+  Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid->shortName() << "\"" << std::endl;
   gmsh.write( *mesh, path_out );
   atlas_finalize();
 }
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 int main( int argc, char **argv )
 {

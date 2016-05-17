@@ -104,7 +104,7 @@ void write_header_binary(std::ostream& out)
 template< typename DATATYPE >
 void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& function_space, const field::Field& field, std::ostream& out)
 {
-  Log::info() << "writing field " << field.name() << " defined in NodeColumns..." << std::endl;
+  Log::debug() << "writing field " << field.name() << " defined in NodeColumns..." << std::endl;
 
   bool gather( gmsh.options.get<bool>("gather") );
   bool binary( !gmsh.options.get<bool>("ascii") );
@@ -300,7 +300,7 @@ void write_field_nodes(
     const field::Field&                           field,
     std::ostream&                          out)
 {
-    Log::info() << "writing field " << field.name() << "..." << std::endl;
+    Log::debug() << "writing field " << field.name() << "..." << std::endl;
     //bool gather(gmsh.options.get<bool>("gather"));
     bool binary(!gmsh.options.get<bool>("ascii"));
 
@@ -882,7 +882,7 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
 
   ASSERT(surfdim == 2 || surfdim == 3);
 
-  Log::info() << "writing mesh to gmsh file " << file_path << std::endl;
+  Log::debug() << "writing mesh to gmsh file " << file_path << std::endl;
 
   bool binary = !options.get<bool>("ascii");
 
@@ -1172,7 +1172,7 @@ void Gmsh::write_delegate(
     for(size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx)
     {
         const field::Field& field = fieldset[field_idx];
-        Log::info() << "writing field " << field.name()
+        Log::debug() << "writing field " << field.name()
                     << " to gmsh file " << file_path << std::endl;
 
         if (field.datatype() == array::DataType::int32())
@@ -1223,7 +1223,7 @@ void Gmsh::write_delegate(
     for (size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx)
     {
         const field::Field& field = fieldset[field_idx];
-        Log::info() << "writing field " << field.name()
+        Log::debug() << "writing field " << field.name()
                     << " to gmsh file " << file_path << std::endl;
 
         if (field.datatype() == array::DataType::int32())
