@@ -20,6 +20,7 @@
 #include "atlas/atlas.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/grids.h"
+#include "atlas/internals/AtlasTool.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -62,54 +63,41 @@ void usage(const std::string& tool)
   Log::info() << "usage: " << tool << " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT [--help]" << std::endl;
 }
 
-class Meshgen2Gmsh : public eckit::Tool {
-  typedef std::vector<eckit::option::Option *> Options;
+class Meshgen2Gmsh : public AtlasTool {
 
-  virtual void run();
+  virtual void execute(const Args& args);
+  virtual int numberOfPositionalArguments() { return 1; }
+  virtual int minimimumPositionalArguments() { return 0; }
+  virtual std::string briefDescription() {
+    return "Mesh generator for Structured compatible meshes";
+  }
+  virtual std::string usage() {
+    return name() + " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT [--help]";
+  }
 
 public:
 
-  Meshgen2Gmsh(int argc,char **argv): eckit::Tool(argc,argv)
+  Meshgen2Gmsh(int argc,char **argv): AtlasTool(argc,argv)
   {
-    Context::instance().behavior( new eckit::mpi::ParallelContextBehavior() );
-    
-    if( argc == 1 )
-    {
-      usage( name() );
-      do_run = false;
-      return;
-    }
+    add_option( new SimpleOption<std::string>("grid.name","Grid unique identifier\n"
+      +indent()+"     Example values: N80, F40, O24, L32") );
+    add_option( new SimpleOption<PathName>("grid.json","Grid described by json file") );
+    add_option( new SimpleOption<double>("angle","Maximum element-edge slant deviation from meridian in degrees. \n"
+      +indent()+"     Value range between 0 and 30\n"
+      +indent()+"         0: Mostly triangular, with only perfect quads\n"
+      +indent()+"        30: Mostly skewed quads with only triags when skewness becomes too large\n"
+      +indent()+"        -1: Only triangles") );
 
-    Options options;
-    options.push_back( new SimpleOption<bool>("help","Print this help") );
-    options.push_back( new SimpleOption<std::string>("grid.name","Grid unique identifier\n"
-      "           Example values: N80, F40, O24, L32") );
-    options.push_back( new SimpleOption<PathName>("grid.json","Grid described by json file") );
-    options.push_back( new SimpleOption<double>("angle","Maximum element-edge slant deviation from meridian in degrees. \n"
-      "           Value range between 0 and 30\n"
-      "               0: Mostly triangular, with only perfect quads\n"
-      "              30: Mostly skewed quads with only triags when skewness becomes too large\n"
-      "              -1: Only triangles") );
-
-    options.push_back( new SimpleOption<bool>("3d","Output mesh as sphere, and generate mesh connecting East and West in case serial") );
-    options.push_back( new SimpleOption<bool>("include_pole","Include pole point") );
-    options.push_back( new SimpleOption<bool>("patch_pole","Patch poles with elements.") );
-    options.push_back( new SimpleOption<bool>("ghost","Output ghost elements") );
-    options.push_back( new Separator("Advanced") );
-    options.push_back( new SimpleOption<long>("halo","Halo size") );
-    options.push_back( new SimpleOption<bool>("edges","Build edge datastructure") );
-    options.push_back( new SimpleOption<bool>("brick","Build brick dual mesh") );
-    options.push_back( new SimpleOption<bool>("stats","Write statistics file") );
-    options.push_back( new SimpleOption<bool>("info","Write Info") );
-    
-    std::stringstream options_str;
-    for( Options::const_iterator it = options.begin(); it!= options.end(); ++it ) {
-      options_str << "    " << (**it) << "\n\n";
-    }
-    
-    CmdArgs args(&usage, options);
-
-    do_run = true;
+    add_option( new SimpleOption<bool>("3d","Output mesh as sphere, and generate mesh connecting East and West in case serial") );
+    add_option( new SimpleOption<bool>("include_pole","Include pole point") );
+    add_option( new SimpleOption<bool>("patch_pole","Patch poles with elements.") );
+    add_option( new SimpleOption<bool>("ghost","Output ghost elements") );
+    add_option( new Separator("Advanced") );
+    add_option( new SimpleOption<long>("halo","Halo size") );
+    add_option( new SimpleOption<bool>("edges","Build edge datastructure") );
+    add_option( new SimpleOption<bool>("brick","Build brick dual mesh") );
+    add_option( new SimpleOption<bool>("stats","Write statistics file") );
+    add_option( new SimpleOption<bool>("info","Write Info") );
 
     std::string help_str =
         "NAME\n"
@@ -120,68 +108,29 @@ public:
         "\n"
         "DESCRIPTION\n"
         "\n"
-          +options_str.str()+
+//          +options_str.str()+
         "\n"
         "AUTHOR\n"
         "       Written by Willem Deconinck.\n"
         "\n"
         "ECMWF                        November 2014"
         ;
-    
-    bool help=false;
-    args.get("help",help);
-    if( help )
-    {
-      if( eckit::mpi::rank() == 0 )
-        Log::info() << help_str << std::endl;
-      do_run = false;
-      return;
-    }
 
-    atlas_init(argc,argv);
+//    bool help=false;
+//    args.get("help",help);
+//    if( help )
+//    {
+//      if( eckit::mpi::rank() == 0 )
+//        Log::info() << help_str << std::endl;
+//      do_run = false;
+//      return;
+//    }
 
-
-    key = "";
-    args.get("grid.name",key);
-
-    edges = false;
-    args.get("edges",edges);
-    stats = false;
-    args.get("stats",stats);
-    info = false;
-    args.get("info",info);
-    halo       = 0;
-    args.get("halo",halo);
-    bool dim_3d=false;
-    args.get("3d",dim_3d);
-    surfdim    = dim_3d ? 3 : 2;
-    brick = false;
-    args.get("brick",brick);
-    ghost = false;
-    args.get("ghost",ghost);
-
-    std::string path_in_str = "";
-    if( args.get("grid.json",path_in_str) ) path_in = path_in_str;
-      
-    if( args.count() )
-      path_out = args(0);
-    else
-      path_out = "mesh.msh";
-
-    if( path_in.asString().empty() && key.empty() && do_run )
-      Log::info() << "missing argument --grid.name or --grid.json" << std::endl;
-
-    if( edges )
-      halo = std::max(halo,1l);
-
-    meshgenerator_config = args.get();
-    if( eckit::mpi::size() > 1 )
-      meshgenerator_config.set("3d",false);
+//    atlas_init(argc,argv);
   }
 
 private:
 
-  bool do_run;
   std::string key;
   long halo;
   bool edges;
@@ -198,16 +147,57 @@ private:
   std::vector<long> rgg_nlon;
   PathName path_in;
   PathName path_out;
-  
+
   eckit::LocalConfiguration meshgenerator_config;
-  
+
 };
 
 //------------------------------------------------------------------------------
 
-void Meshgen2Gmsh::run()
+void Meshgen2Gmsh::execute(const Args& args)
 {
-  if( !do_run ) return;
+  key = "";
+  args.get("grid.name",key);
+
+  edges = false;
+  args.get("edges",edges);
+  stats = false;
+  args.get("stats",stats);
+  info = false;
+  args.get("info",info);
+  halo       = 0;
+  args.get("halo",halo);
+  bool dim_3d=false;
+  args.get("3d",dim_3d);
+  surfdim    = dim_3d ? 3 : 2;
+  brick = false;
+  args.get("brick",brick);
+  ghost = false;
+  args.get("ghost",ghost);
+
+  std::string path_in_str = "";
+  if( args.get("grid.json",path_in_str) ) path_in = path_in_str;
+
+  if( args.count() )
+    path_out = args(0);
+  else
+    path_out = "mesh.msh";
+
+  if( path_in_str.empty() && key.empty() ) {
+    Log::warning() << "missing argument --grid.name or --grid.json" << std::endl;
+    Log::warning() << "Usage: " << usage() << std::endl;
+    return;
+  }
+
+
+  if( edges )
+    halo = std::max(halo,1l);
+
+  meshgenerator_config = args.get();
+  if( eckit::mpi::size() > 1 )
+    meshgenerator_config.set("3d",false);
+
+
   grid::load();
 
   SharedPtr<global::Structured> grid;
@@ -230,8 +220,8 @@ void Meshgen2Gmsh::run()
   if( !grid ) return;
   SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
       mesh::generators::MeshGenerator::create("Structured",meshgenerator_config) );
-  
-  
+
+
   SharedPtr<mesh::Mesh> mesh;
   try {
   mesh.reset( meshgenerator->generate(*grid) );
@@ -245,7 +235,7 @@ void Meshgen2Gmsh::run()
   SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh,Halo(halo)) );
   // nodes_fs->checksum(mesh->nodes().lonlat());
   // Log::info() << "  checksum lonlat : " << nodes_fs->checksum(mesh->nodes().lonlat()) << std::endl;
-  
+
   if( edges )
   {
     build_edges(*mesh);

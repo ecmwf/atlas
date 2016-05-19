@@ -11,7 +11,6 @@
 #include <vector>
 #include "eckit/memory/Factory.h"
 #include "eckit/memory/Builder.h"
-#include "eckit/config/Resource.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/Mesh.h"

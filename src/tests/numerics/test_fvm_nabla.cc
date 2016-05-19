@@ -115,7 +115,8 @@ static std::string griduid() { return "Slat80"; }
 struct AtlasFixture {
     AtlasFixture()
     {
-      atlas_init();
+      atlas_init(boost::unit_test::framework::master_test_suite().argc,
+                 boost::unit_test::framework::master_test_suite().argv);
     }
     ~AtlasFixture() { atlas_finalize(); }
 };

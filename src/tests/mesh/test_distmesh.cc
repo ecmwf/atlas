@@ -61,7 +61,11 @@ double dual_volume(mesh::Mesh& mesh)
 }
 
 struct MPIFixture {
-     MPIFixture()  { atlas_init(); }
+     MPIFixture()  {
+       atlas_init(
+             boost::unit_test::framework::master_test_suite().argc,
+             boost::unit_test::framework::master_test_suite().argv);
+     }
     ~MPIFixture()  { atlas_finalize(); }
 };
 

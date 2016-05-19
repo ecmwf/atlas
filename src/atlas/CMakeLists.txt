@@ -299,6 +299,8 @@ parallel/GatherScatter.cc
 )
 
 list( APPEND atlas_internals_srcs
+internals/AtlasTool.h
+internals/AtlasTool.cc
 internals/AccumulateFaces.h
 internals/AccumulateFaces.cc
 internals/Bitflags.h
