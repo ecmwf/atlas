@@ -19,34 +19,14 @@ namespace output {
 
 // -----------------------------------------------------------------------------
 
-  class GmshFileStream : public std::ofstream {
-  public:
-    static std::string parallelPathName(const PathName& path,int part = eckit::mpi::rank())
-    {
-      std::stringstream s;
-      // s << path.dirName() << "/" << path.baseName(false) << "_p" << part << ".msh";
-      s << path.asString() << ".p"<<part;
-      return s.str();
-    }
-    GmshFileStream(const PathName& file_path, const char* mode, int part = eckit::mpi::rank())
-    {
-      PathName par_path(file_path);
-      std::ios_base::openmode omode;
-      if     ( std::string(mode)=="w" )  omode = std::ios_base::out;
-      else if( std::string(mode)=="a" )  omode = std::ios_base::app;
-      if (eckit::mpi::rank() == 0) {
-        PathName par_path(file_path);
-        std::ofstream par_file(par_path.localPath(), std::ios_base::out);
-        for(size_t p = 0; p < eckit::mpi::size(); ++p) {
-          par_file << "Merge \"" << parallelPathName(file_path,p) << "\";" << std::endl;
-        }
-        par_file.close();
-      }
-      PathName path( parallelPathName(file_path,part) );
-      std::ofstream::open(path.localPath(), omode);
-    }
-  };
-  
+class GmshFileStream : public std::ofstream {
+public:
+  static std::string parallelPathName(const PathName& path,int part = eckit::mpi::rank());
+  GmshFileStream(const PathName& file_path, const char* mode, int part = eckit::mpi::rank());
+};
+
+// -----------------------------------------------------------------------------
+
 class Gmsh : public Output {
 
 public:
@@ -57,7 +37,7 @@ public:
 
     Gmsh(Stream&);
     Gmsh(Stream&, const eckit::Parametrisation&);
-    
+
     Gmsh(const PathName&, const std::string& mode);
     Gmsh(const PathName&, const std::string& mode, const eckit::Parametrisation&);
 
@@ -94,7 +74,7 @@ public:
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
 public:
-  
+
   struct Configuration {
     bool binary;
     double radius;
@@ -108,9 +88,9 @@ public:
     std::string file;
     std::string openmode;
   };
-  
+
 private:
-  
+
   Configuration config_;
 
   void defaults();

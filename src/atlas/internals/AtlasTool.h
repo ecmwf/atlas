@@ -22,9 +22,15 @@
 #include "eckit/mpi/ParallelContextBehavior.h"
 #include "eckit/option/CmdArgs.h"
 #include "eckit/option/SimpleOption.h"
+#include "eckit/option/Separator.h"
 #include "atlas/internals/Debug.h"
 
 //--------------------------------------------------------------------------------
+
+using eckit::option::SimpleOption;
+using eckit::option::Separator;
+using eckit::option::CmdArgs;
+using eckit::option::Option;
 
 namespace atlas {
 
@@ -35,11 +41,13 @@ static void usage( const std::string& name )
 
 class AtlasTool : public eckit::Tool {
 
+
 protected:
 
   typedef std::vector<eckit::option::Option *> Options;
   typedef eckit::option::CmdArgs Args;
 
+  virtual bool serial() { return false; }
   virtual std::string indent() { return "      "; }
   virtual std::string briefDescription() { return ""; }
   virtual std::string longDescription() { return ""; }
@@ -114,7 +122,8 @@ protected:
     if( env_debug ) debug = ::atol(env_debug);
     args.get("debug",debug);
 
-    eckit::Context::instance().behavior( new atlas::runtime::Behavior() );
+    if( not serial() )
+      eckit::Context::instance().behavior( new atlas::runtime::Behavior() );
     eckit::Context::instance().debug(debug);
 
     atlas_init();
@@ -129,8 +138,8 @@ public:
   AtlasTool(int argc,char **argv): eckit::Tool(argc,argv)
   {
     eckit::Context::instance().behavior( new eckit::mpi::ParallelContextBehavior() );
-    add_option( new eckit::option::SimpleOption<bool>("help","Print this help") );
-    add_option( new eckit::option::SimpleOption<long>("debug","Debug level") );
+    add_option( new SimpleOption<bool>("help","Print this help") );
+    add_option( new SimpleOption<long>("debug","Debug level") );
   }
 
 private:

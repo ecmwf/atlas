@@ -39,9 +39,6 @@
 #include "eckit/filesystem/PathName.h"
 #include "eckit/geometry/Point3.h"
 #include "eckit/mpi/ParallelContextBehavior.h"
-#include "eckit/option/CmdArgs.h"
-#include "eckit/option/Separator.h"
-#include "eckit/option/SimpleOption.h"
 #include "eckit/parser/Tokenizer.h"
 #include "eckit/runtime/Context.h"
 #include "eckit/runtime/Tool.h"
@@ -55,21 +52,19 @@ using namespace atlas::mesh::actions;
 using namespace atlas::grid;
 using namespace atlas::functionspace;
 using namespace atlas::mesh;
-using namespace eckit::option;
 using atlas::util::Config;
 
 //------------------------------------------------------------------------------
 
 void usage(const std::string& tool)
 {
-  Log::info() << "usage: " << tool << " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT  [--help,-h] [--debug]" << std::endl;
+  Log::info() << "usage: " << tool
+              << " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT  [--help,-h] [--debug]" << std::endl;
 }
 
 class Meshgen2Gmsh : public AtlasTool {
 
   virtual void execute(const Args& args);
-  virtual int numberOfPositionalArguments() { return 1; }
-  virtual int minimimumPositionalArguments() { return 0; }
   virtual std::string briefDescription() {
     return "Mesh generator for Structured compatible meshes";
   }
@@ -79,28 +74,7 @@ class Meshgen2Gmsh : public AtlasTool {
 
 public:
 
-  Meshgen2Gmsh(int argc,char **argv): AtlasTool(argc,argv)
-  {
-    add_option( new SimpleOption<std::string>("grid.name","Grid unique identifier\n"
-      +indent()+"     Example values: N80, F40, O24, L32") );
-    add_option( new SimpleOption<PathName>("grid.json","Grid described by json file") );
-    add_option( new SimpleOption<double>("angle","Maximum element-edge slant deviation from meridian in degrees. \n"
-      +indent()+"     Value range between 0 and 30\n"
-      +indent()+"         0: Mostly triangular, with only perfect quads\n"
-      +indent()+"        30: Mostly skewed quads with only triags when skewness becomes too large\n"
-      +indent()+"        -1: Only triangles") );
-
-    add_option( new SimpleOption<bool>("3d","Output mesh as sphere, and generate mesh connecting East and West in case serial") );
-    add_option( new SimpleOption<bool>("include_pole","Include pole point") );
-    add_option( new SimpleOption<bool>("patch_pole","Patch poles with elements.") );
-    add_option( new SimpleOption<bool>("ghost","Output ghost elements") );
-    add_option( new Separator("Advanced") );
-    add_option( new SimpleOption<long>("halo","Halo size") );
-    add_option( new SimpleOption<bool>("edges","Build edge datastructure") );
-    add_option( new SimpleOption<bool>("brick","Build brick dual mesh") );
-    add_option( new SimpleOption<bool>("stats","Write statistics file") );
-    add_option( new SimpleOption<bool>("info","Write Info") );
-  }
+  Meshgen2Gmsh(int argc,char **argv);
 
 private:
 
@@ -114,6 +88,7 @@ private:
   bool with_pole;
   bool stitch_pole;
   bool ghost;
+  bool binary;
   std::string identifier;
   std::vector<long> reg_nlon_nlat;
   std::vector<long> fgg_nlon_nlat;
@@ -125,7 +100,33 @@ private:
 
 };
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+Meshgen2Gmsh::Meshgen2Gmsh(int argc,char **argv): AtlasTool(argc,argv)
+{
+  add_option( new SimpleOption<std::string>("grid.name","Grid unique identifier\n"
+    +indent()+"     Example values: N80, F40, O24, L32") );
+  add_option( new SimpleOption<PathName>("grid.json","Grid described by json file") );
+  add_option( new SimpleOption<double>("angle","Maximum element-edge slant deviation from meridian in degrees. \n"
+    +indent()+"     Value range between 0 and 30\n"
+    +indent()+"         0: Mostly triangular, with only perfect quads\n"
+    +indent()+"        30: Mostly skewed quads with only triags when skewness becomes too large\n"
+    +indent()+"        -1: Only triangles") );
+
+  add_option( new SimpleOption<bool>("3d","Output mesh as sphere, and generate mesh connecting East and West in case serial") );
+  add_option( new SimpleOption<bool>("include_pole","Include pole point") );
+  add_option( new SimpleOption<bool>("patch_pole","Patch poles with elements.") );
+  add_option( new SimpleOption<bool>("ghost","Output ghost elements") );
+  add_option( new Separator("Advanced") );
+  add_option( new SimpleOption<long>("halo","Halo size") );
+  add_option( new SimpleOption<bool>("edges","Build edge datastructure") );
+  add_option( new SimpleOption<bool>("brick","Build brick dual mesh") );
+  add_option( new SimpleOption<bool>("stats","Write statistics file") );
+  add_option( new SimpleOption<bool>("info","Write Info") );
+  add_option( new SimpleOption<bool>("binary","Write binary file") );
+}
+
+//-----------------------------------------------------------------------------
 
 void Meshgen2Gmsh::execute(const Args& args)
 {
@@ -147,6 +148,8 @@ void Meshgen2Gmsh::execute(const Args& args)
   args.get("brick",brick);
   ghost = false;
   args.get("ghost",ghost);
+  binary = false;
+  args.get("binary",binary);
 
   std::string path_in_str = "";
   if( args.get("grid.json",path_in_str) ) path_in = path_in_str;
@@ -169,9 +172,6 @@ void Meshgen2Gmsh::execute(const Args& args)
   meshgenerator_config = args.get();
   if( eckit::mpi::size() > 1 || edges )
     meshgenerator_config.set("3d",false);
-
-
-  grid::load();
 
   SharedPtr<global::Structured> grid;
   if( key.size() )
@@ -230,6 +230,7 @@ void Meshgen2Gmsh::execute(const Args& args)
     ("ghost",ghost)
     ("nodes",surfdim == 3 ? "xyz" : "lonlat" )
     ("edges",edges )
+    ("binary",binary )
   );
   Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid->shortName() << "\"" << std::endl;
   gmsh.output( *mesh );

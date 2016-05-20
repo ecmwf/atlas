@@ -58,15 +58,10 @@ BOOST_AUTO_TEST_CASE( test_gmsh_output )
        grid::global::gaussian::ClassicGaussian(128) );
 
   atlas::output::GmshFileStream file("bs.msh","w");
-  output::Output::Ptr output ( 
-    output::Output::create("gmsh",file,util::Config
+  output::Gmsh gmsh ( "test_gmsh_output.msh", util::Config
       ("binary",true)
-      ("file","test_gmsh_output.msh") ) );
-  output->output(*mesh);
-  
-  output->output(*mesh, util::Config
-      ("file","test_gmsh_output2.msh"));
-  
+      ("file","test_gmsh_output.msh") );
+  gmsh.output(*mesh);
 }
 
 } // namespace test
