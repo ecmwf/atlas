@@ -22,6 +22,8 @@
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
+#include "atlas/output/Output.h"
+#include "atlas/output/Gmsh.h"
 
 namespace atlas {
 namespace test {
@@ -48,6 +50,23 @@ BOOST_AUTO_TEST_CASE( test_read_write )
     gmsh.write(*mesh,"mesh.msh");
 
     BOOST_REQUIRE_NO_THROW( mesh = mesh::Mesh::Ptr( Gmsh().read( "mesh.msh" ) ) );
+}
+
+BOOST_AUTO_TEST_CASE( test_gmsh_output )
+{
+  mesh::Mesh::Ptr mesh = test::generate_mesh(
+       grid::global::gaussian::ClassicGaussian(128) );
+
+  atlas::output::GmshFileStream file("bs.msh","w");
+  output::Output::Ptr output ( 
+    output::Output::create("gmsh",file,util::Config
+      ("binary",true)
+      ("file","test_gmsh_output.msh") ) );
+  output->output(*mesh);
+  
+  output->output(*mesh, util::Config
+      ("file","test_gmsh_output2.msh"));
+  
 }
 
 } // namespace test

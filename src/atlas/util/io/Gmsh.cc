@@ -1025,7 +1025,6 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
   if( binary ) file << "\n";
   file << "$EndElements\n";
   file << std::flush;
-  file.close();
 
   // Optional mesh information file
   if( options.has("info") && options.get<bool>("info") )
@@ -1068,6 +1067,7 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
     //[next]   }
     //[next] }
   }
+  file.close();
 
 }
 

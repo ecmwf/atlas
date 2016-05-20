@@ -31,6 +31,7 @@
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/io/Gmsh.h"
@@ -55,6 +56,7 @@ using namespace atlas::grid;
 using namespace atlas::functionspace;
 using namespace atlas::mesh;
 using namespace eckit::option;
+using atlas::util::Config;
 
 //------------------------------------------------------------------------------
 
@@ -98,35 +100,6 @@ public:
     add_option( new SimpleOption<bool>("brick","Build brick dual mesh") );
     add_option( new SimpleOption<bool>("stats","Write statistics file") );
     add_option( new SimpleOption<bool>("info","Write Info") );
-
-    std::string help_str =
-        "NAME\n"
-        "       atlas-meshgen - Mesh generator for Structured compatible meshes\n"
-        "\n"
-        "SYNOPSIS\n"
-        "       atlas-meshgen (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT [--help] \n"
-        "\n"
-        "DESCRIPTION\n"
-        "\n"
-//          +options_str.str()+
-        "\n"
-        "AUTHOR\n"
-        "       Written by Willem Deconinck.\n"
-        "\n"
-        "ECMWF                        November 2014"
-        ;
-
-//    bool help=false;
-//    args.get("help",help);
-//    if( help )
-//    {
-//      if( eckit::mpi::rank() == 0 )
-//        Log::info() << help_str << std::endl;
-//      do_run = false;
-//      return;
-//    }
-
-//    atlas_init(argc,argv);
   }
 
 private:
@@ -194,7 +167,7 @@ void Meshgen2Gmsh::execute(const Args& args)
     halo = std::max(halo,1l);
 
   meshgenerator_config = args.get();
-  if( eckit::mpi::size() > 1 )
+  if( eckit::mpi::size() > 1 || edges )
     meshgenerator_config.set("3d",false);
 
 
@@ -233,8 +206,6 @@ void Meshgen2Gmsh::execute(const Args& args)
     throw e;
   }
   SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh,Halo(halo)) );
-  // nodes_fs->checksum(mesh->nodes().lonlat());
-  // Log::info() << "  checksum lonlat : " << nodes_fs->checksum(mesh->nodes().lonlat()) << std::endl;
 
   if( edges )
   {
@@ -250,17 +221,18 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( stats )
     build_statistics(*mesh);
 
-  atlas::util::io::Gmsh gmsh;
-  gmsh.options.set("info",info);
-  gmsh.options.set("ghost",ghost);
   if( surfdim == 3 )
-  {
     mesh::actions::BuildXYZField("xyz")(*mesh);
-    gmsh.options.set("nodes",std::string("xyz"));
-  }
+
+  std::stringstream file;
+  atlas::output::Gmsh gmsh( path_out , Config
+    ("info",info)
+    ("ghost",ghost)
+    ("nodes",surfdim == 3 ? "xyz" : "lonlat" )
+    ("edges",edges )
+  );
   Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid->shortName() << "\"" << std::endl;
-  gmsh.write( *mesh, path_out );
-  atlas_finalize();
+  gmsh.output( *mesh );
 }
 
 //------------------------------------------------------------------------------

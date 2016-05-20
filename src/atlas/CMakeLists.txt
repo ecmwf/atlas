@@ -191,6 +191,13 @@ mesh/generators/Structured.h
 mesh/generators/Structured.cc
 )
 
+list( APPEND atlas_output_srcs
+output/Output.h
+output/Output.cc
+output/Gmsh.h
+output/Gmsh.cc
+)
+
 list( APPEND atlas_field_srcs
 field/Field.h
 field/Field.cc
@@ -348,6 +355,7 @@ ecbuild_add_library( TARGET atlas
     ${atlas_functionspace_srcs}
     ${atlas_interpolation_srcs}
     ${atlas_numerics_srcs}
+    ${atlas_output_srcs}
     ${atlas_util_srcs}
     ${atlas_internals_srcs}
     ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.h
