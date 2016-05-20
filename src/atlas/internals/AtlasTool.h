@@ -43,7 +43,7 @@ protected:
   virtual std::string indent() { return "      "; }
   virtual std::string briefDescription() { return ""; }
   virtual std::string longDescription() { return ""; }
-  virtual std::string usage() { return name() + " [OPTION]... [--help] [--debug]"; }
+  virtual std::string usage() { return name() + " [OPTION]... [--help,-h] [--debug]"; }
 
 
   void add_option( eckit::option::Option* option )
@@ -75,11 +75,29 @@ protected:
     out << std::flush;
   }
 
-  virtual int numberOfPositionalArguments() { return 0; }
+  virtual int numberOfPositionalArguments() { return -1; }
   virtual int minimumPositionalArguments() { return 0; }
+
+  bool handle_help()
+  {
+    for( int i=1; i<eckit::Context::instance().argc(); ++i )
+    {
+      if( eckit::Context::instance().argv(i) == "--help" ||
+          eckit::Context::instance().argv(i) == "-h"     )
+      {
+        if( eckit::mpi::rank() == 0 )
+          help();
+        return true;
+      }
+    }
+    return false;
+  }
 
   virtual void run()
   {
+    if( handle_help() )
+      return;
+
     if( eckit::Context::instance().argc()-1 < minimumPositionalArguments() )
     {
       Log::info() << "Usage: " << usage() << std::endl;
@@ -90,14 +108,6 @@ protected:
         opts,
         numberOfPositionalArguments(),
         minimumPositionalArguments());
-    bool _help(false);
-    args.get("help",_help);
-    if( _help )
-    {
-      if( eckit::mpi::rank() == 0 )
-        help();
-      return;
-    }
 
     long debug(0);
     const char* env_debug = ::getenv("DEBUG");
