@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "eckit/runtime/Context.h"
 #include "eckit/parser/StringTools.h"
 #include "eckit/config/Resource.h"
@@ -110,7 +111,14 @@ void atlas_init(int argc, char** argv)
       Context::instance().setup(argc, argv);
     if( Context::instance().argc() > 0 )
       Context::instance().runName( PathName(Context::instance().argv(0)).baseName(false) );
+    
+    long debug(0);
+    const char* env_debug = ::getenv("DEBUG");
+    if( env_debug ) debug = ::atol(env_debug);
+    // args.get("debug",debug);
+
     Context::instance().behavior( new atlas::runtime::Behavior() );
+    Context::instance().debug(debug);
   }
   atlas_init();
 }
