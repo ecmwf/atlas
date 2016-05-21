@@ -20,6 +20,7 @@
 
 // -----------------------------------------------------------------------------
 
+namespace mir { namespace method { class FiniteElement;} }
 namespace atlas { namespace mesh { class Mesh; } }
 namespace atlas {
 namespace field {
@@ -29,13 +30,20 @@ namespace field {
 
 namespace atlas { namespace array { class Array; } }
 
+namespace atlas { namespace util { namespace io { class GmshFortranInterface; } } }
+namespace atlas { namespace output { class Gmsh; } }
+
 namespace atlas {
 namespace util {
 namespace io {
+  
 
 // -----------------------------------------------------------------------------
 
 class Gmsh {
+  friend class output::Gmsh;
+  friend class GmshFortranInterface;
+  // friend class ::mir::method::FiniteElement;
 private:
   typedef std::ios_base::openmode openmode;
 
@@ -43,6 +51,8 @@ public:
   Gmsh();
 
   virtual ~Gmsh();
+
+private:
 
   mesh::Mesh* read(const eckit::PathName& file_path) const;
 
@@ -142,7 +152,8 @@ void atlas__write_gmsh_field(field_Field* field, functionspace_FunctionSpace* fu
 #undef field_FieldSet
 #undef functionspace_NodeColumns
 #undef mesh_Mesh
-//------------------------------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
 
 } // namespace io
 } // namespace util

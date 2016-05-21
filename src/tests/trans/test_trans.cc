@@ -14,25 +14,25 @@
 
 #include <algorithm>
 
-#include "eckit/config/ResourceMgr.h"
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas.h"
-#include "atlas/trans/Trans.h"
-#include "atlas/grid/partitioners/TransPartitioner.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/Spectral.h"
+#include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/grid/GridDistribution.h"
 #include "atlas/grid/grids.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/partitioners/TransPartitioner.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/runtime/LogFormat.h"
-#include "atlas/grid/GridDistribution.h"
-#include "atlas/util/io/Gmsh.h"
-#include "atlas/field/FieldSet.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/functionspace/Spectral.h"
-#include "atlas/functionspace/NodeColumns.h"
-#include "atlas/functionspace/StructuredColumns.h"
-
+#include "atlas/output/Gmsh.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/LogFormat.h"
+#include "atlas/trans/Trans.h"
+#include "eckit/config/ResourceMgr.h"
 #include "transi/trans.h"
+
 
 using namespace eckit;
 using namespace atlas::grid;
@@ -242,7 +242,7 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
 
   //mesh::Mesh::Ptr mesh ( generate(*g, mesh::generators::EqualAreaPartitioner(*g).distribution() ) );
 
-  util::io::Gmsh().write(*m_trans,"N16_trans.msh");
+  output::Gmsh("N16_trans.msh").write(*m_trans);
 }
 
 

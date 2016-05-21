@@ -17,9 +17,9 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas.h"
 #include "tests/TestMeshes.h"
-#include "atlas/util/io/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -34,7 +34,7 @@
 #include "atlas/runtime/Log.h"
 
 using namespace atlas;
-using namespace atlas::util::io;
+using namespace atlas::output;
 using namespace atlas::mesh::generators;
 using namespace atlas::util;
 
@@ -92,8 +92,6 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 
   mesh::Mesh::Id meshid = m->id();
 
-      //  mesh::Mesh::Ptr m( Gmsh::read("unstr.msh") );
-
 //  actions::distribute_mesh(*m);
 
   mesh::actions::build_parallel_fields(*m);
@@ -111,8 +109,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
     std::cout << "difference = " << difference << std::endl;
   }
 
-  std::stringstream filename; filename << "N32_dist.msh";
-  Gmsh().write(*m,filename.str());
+  Gmsh("N32_dist.msh").write(*m);
 
   mesh::actions::write_load_balance_report(*m,"load_balance.dat");
 

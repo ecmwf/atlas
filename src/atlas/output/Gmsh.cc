@@ -19,6 +19,8 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/io/Gmsh.h"
+#include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/actions/BuildXYZField.h"
 
 using atlas::field::Field;
 using atlas::field::FieldSet;
@@ -44,19 +46,29 @@ std::string GmshFileStream::parallelPathName(const PathName& path,int part)
 GmshFileStream::GmshFileStream(const PathName& file_path, const char* mode, int part)
 {
   PathName par_path(file_path);
-  std::ios_base::openmode omode;
+  std::ios_base::openmode omode = std::ios_base::out;
   if     ( std::string(mode)=="w" )  omode = std::ios_base::out;
   else if( std::string(mode)=="a" )  omode = std::ios_base::app;
-  if (eckit::mpi::rank() == 0) {
-    PathName par_path(file_path);
-    std::ofstream par_file(par_path.localPath(), std::ios_base::out);
-    for(size_t p = 0; p < eckit::mpi::size(); ++p) {
-      par_file << "Merge \"" << parallelPathName(file_path,p) << "\";" << std::endl;
-    }
-    par_file.close();
+  
+  if( part<0 || eckit::mpi::size() == 1 )
+  {
+    std::ofstream::open(file_path.localPath(), omode);
   }
-  PathName path( parallelPathName(file_path,part) );
-  std::ofstream::open(path.localPath(), omode);
+  else 
+  {
+    if (eckit::mpi::rank() == 0)
+    {
+      PathName par_path(file_path);
+      std::ofstream par_file(par_path.localPath(), std::ios_base::out);
+      for(size_t p = 0; p < eckit::mpi::size(); ++p)
+      {
+        par_file << "Merge \"" << parallelPathName(file_path,p) << "\";" << std::endl;
+      }
+      par_file.close();
+    }
+    PathName path( parallelPathName(file_path,part) );
+    std::ofstream::open(path.localPath(), omode);
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -74,6 +86,8 @@ void Gmsh::defaults()
   config_.file = "output.msh";
   config_.info = false;
   config_.openmode = "w";
+  config_.coordinates = "lonlat";
+  config_.serial = false;
 }
 
 // -----------------------------------------------------------------------------
@@ -94,7 +108,9 @@ void merge(Gmsh::Configuration& present, const eckit::Parametrisation& update)
   update.get("levels",present.levels);
   update.get("file",present.file);
   update.get("info",present.info);
+  update.get("serial",present.serial);
   update.get("openmode",present.openmode);
+  update.get("coordinates",present.coordinates);
 }
 
 // -----------------------------------------------------------------------------
@@ -111,6 +127,8 @@ util::io::Gmsh writer(const Gmsh::Configuration& c)
   gmsh.options.set("radius",c.radius);
   gmsh.options.set("levels",c.levels);
   gmsh.options.set("info",c.info);
+  gmsh.options.set("nodes",c.coordinates);
+  gmsh.options.set("serial",c.serial);
   return gmsh;
 }
 
@@ -190,40 +208,50 @@ Gmsh::~Gmsh()
 
 // -----------------------------------------------------------------------------
 
-void Gmsh::output(
+void Gmsh::write(
         const mesh::Mesh& mesh,
         const eckit::Parametrisation& config) const
 {
   Gmsh::Configuration c = config_;
   merge(c,config);
+  
+  if( c.coordinates == "xyz" and not mesh.nodes().has_field("xyz") )
+  {
+      Log::debug() << "Building xyz representation for nodes" << std::endl;
+      mesh::actions::BuildXYZField("xyz")(const_cast<mesh::Mesh&>(mesh));
+  }
+
   writer(c).write(mesh,c.file);
+  config_.openmode = "a";
 }
 
 // -----------------------------------------------------------------------------
 
-void Gmsh::output(
+void Gmsh::write(
     const field::Field& field,
     const eckit::Parametrisation& config ) const
 {
   Gmsh::Configuration c = config_;
   merge(c,config);
   writer(c).write(field,c.file,openmode(c));
+  config_.openmode = "a";
 }
 
 // -----------------------------------------------------------------------------
 
-void Gmsh::output(
+void Gmsh::write(
     const field::FieldSet& fields,
     const eckit::Parametrisation& config) const
 {
   Gmsh::Configuration c = config_;
   merge(c,config);
   writer(c).write(fields,fields.field(0).functionspace(),c.file,openmode(c));
+  config_.openmode = "a";
 }
 
 // -----------------------------------------------------------------------------
 
-void Gmsh::output(
+void Gmsh::write(
     const field::Field& field,
     const functionspace::FunctionSpace& functionspace,
     const eckit::Parametrisation& config) const
@@ -231,11 +259,12 @@ void Gmsh::output(
   Gmsh::Configuration c = config_;
   merge(c,config);
   writer(c).write(field,functionspace,c.file,openmode(c));
+  config_.openmode = "a";
 }
 
 // -----------------------------------------------------------------------------
 
-void Gmsh::output(
+void Gmsh::write(
     const field::FieldSet& fields,
     const functionspace::FunctionSpace& functionspace,
     const eckit::Parametrisation& config) const
@@ -243,6 +272,7 @@ void Gmsh::output(
   Gmsh::Configuration c = config_;
   merge(c,config);
   writer(c).write(fields,functionspace,c.file,openmode(c));
+  config_.openmode = "a";
 }
 
 // -----------------------------------------------------------------------------

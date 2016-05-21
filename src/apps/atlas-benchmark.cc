@@ -38,41 +38,38 @@
 #include <vector>
 #include <memory>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/config/Resource.h"
-#include "eckit/runtime/Tool.h"
-#include "eckit/runtime/Context.h"
-#include "eckit/filesystem/PathName.h"
-#include "eckit/memory/Factory.h"
-#include "eckit/memory/Builder.h"
-#include "eckit/parser/JSON.h"
-#include "eckit/log/Timer.h"
-#include "eckit/option/CmdArgs.h"
-#include "eckit/option/SimpleOption.h"
-#include "eckit/mpi/ParallelContextBehavior.h"
-
-
-#include "atlas/atlas.h"
 #include "atlas/array/Array.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/array/IndexView.h"
+#include "atlas/atlas.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/grid/grids.h"
+#include "atlas/internals/Bitflags.h"
+#include "atlas/internals/IsGhost.h"
+#include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
-#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/mesh/actions/BuildDualMesh.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
-#include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
-#include "atlas/grid/grids.h"
-#include "atlas/util/io/Gmsh.h"
-#include "atlas/parallel/omp/omp.h"
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/parallel/HaloExchange.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
+#include "atlas/internals/AtlasTool.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/parallel/Checksum.h"
-#include "atlas/internals/Bitflags.h"
-#include "atlas/array/IndexView.h"
-#include "atlas/internals/IsGhost.h"
+#include "atlas/parallel/HaloExchange.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
+#include "eckit/config/Resource.h"
+#include "eckit/exception/Exceptions.h"
+#include "eckit/filesystem/PathName.h"
+#include "eckit/log/Timer.h"
+#include "eckit/memory/Builder.h"
+#include "eckit/memory/Factory.h"
+#include "eckit/mpi/ParallelContextBehavior.h"
+#include "eckit/parser/JSON.h"
+#include "eckit/runtime/Context.h"
+
 
 //------------------------------------------------------------------------------------------------------
 
@@ -92,18 +89,20 @@ using std::numeric_limits;
 using atlas::internals::Topology;
 using atlas::internals::IsGhost;
 
-using namespace eckit;
 using namespace eckit::option;
 using namespace atlas;
 using namespace atlas::grid;
 using namespace atlas::mesh::actions;
 using namespace atlas::functionspace;
 using namespace atlas::mesh::generators;
+using atlas::AtlasTool;
+using eckit::Timer;
+using eckit::SharedPtr;
 
 
 namespace {
   void usage(const std::string& tool) {
-    atlas::Log::info() << "Usage: "<<tool<<" [OPTIONS]..." << std::endl;
+    Log::info() << "Usage: "<<tool<<" [OPTIONS]..." << std::endl;
   }
 
 }
@@ -142,78 +141,46 @@ struct TimerStats
   int cnt;
 };
 
-class AtlasBenchmark: public Tool {
+class AtlasBenchmark: public AtlasTool {
 
-  virtual void run();
+  virtual void execute(const Args& args);
 
 public:
 
-  AtlasBenchmark(int argc,char **argv): Tool(argc,argv), do_run(true)
+  AtlasBenchmark(int argc,char **argv): AtlasTool(argc,argv)
   {
-    eckit::Context::instance().behavior(new eckit::mpi::ParallelContextBehavior());
-
-    Options options;
-    options.push_back( new SimpleOption<bool>("help","Print this help") );
-    options.push_back( new SimpleOption<std::string>("grid","Grid unique identifier") );
-    options.push_back( new SimpleOption<size_t>("nlev","Vertical resolution: Number of levels") );
-    options.push_back( new SimpleOption<size_t>("niter","Number of iterations") );
-    options.push_back( new SimpleOption<size_t>("omp","Number of OpenMP threads per MPI task") );
-    options.push_back( new SimpleOption<bool>("progress","Show progress bar instead of intermediate timings") );
-    options.push_back( new SimpleOption<bool>("output","Write output in gmsh format") );
-    options.push_back( new SimpleOption<long>("exclude","Exclude number of iterations in statistics (default=1)") );
-
-    stringstream options_str;
-    for( Options::const_iterator it = options.begin(); it!= options.end(); ++it ) {
-      options_str << "    " << (**it) << "\n\n";
-    }
-
-    CmdArgs args(&usage, options);
-
-    nlev = 137;
-    args.get("nlev",nlev);
-    gridname = "N64";
-    args.get("grid",gridname);
-    niter = 100;
-    args.get("niter",niter);
-    omp_threads = -1;
-    args.get("omp",omp_threads);
-    progress = false;
-    args.get("progress",progress);
-    exclude = niter==1?0:1;
-    args.get("exclude",exclude);
-    output = false;
-    args.get("output",output);
-    bool help(false);
-    args.get("help",help);
-
-    iteration_timer = TimerStats("iteration");
-    haloexchange_timer = TimerStats("halo-exchange");
-
-    if( help )
-    {
-      stringstream help_str;
-      help_str <<
-          "NAME\n"
-          "       atlas-benchmark - Benchmark parallel performance\n"
-          "\n"
-          "SYNOPSIS\n"
-          "       atlas-benchmark [OPTIONS]...\n"
-          "\n"
-          "DESCRIPTION\n"
-          "       Parallel performance of gradient computation using\n"
-          "       Green-Gauss theorem on median-dual mesh based on\n"
-          "       IFS reduced Gaussian grid\n"
-          "\n"
-          "OPTIONS\n"
-          "\n"
-      << options_str.str();
-
-      if( eckit::mpi::rank()==0 )
-      {
-        atlas::Log::info() << help_str.str() << std::flush;
-      }
-      do_run = false;
-    }
+    add_option( new SimpleOption<std::string>("grid","Grid unique identifier") );
+    add_option( new SimpleOption<size_t>("nlev","Vertical resolution: Number of levels") );
+    add_option( new SimpleOption<size_t>("niter","Number of iterations") );
+    add_option( new SimpleOption<size_t>("omp","Number of OpenMP threads per MPI task") );
+    add_option( new SimpleOption<bool>("progress","Show progress bar instead of intermediate timings") );
+    add_option( new SimpleOption<bool>("output","Write output in gmsh format") );
+    add_option( new SimpleOption<long>("exclude","Exclude number of iterations in statistics (default=1)") );
+    // if( help )
+  //   {
+  //     stringstream help_str;
+  //     help_str <<
+  //         "NAME\n"
+  //         "       atlas-benchmark - Benchmark parallel performance\n"
+  //         "\n"
+  //         "SYNOPSIS\n"
+  //         "       atlas-benchmark [OPTIONS]...\n"
+  //         "\n"
+  //         "DESCRIPTION\n"
+  //         "       Parallel performance of gradient computation using\n"
+  //         "       Green-Gauss theorem on median-dual mesh based on\n"
+  //         "       IFS reduced Gaussian grid\n"
+  //         "\n"
+  //         "OPTIONS\n"
+  //         "\n"
+  //     << options_str.str();
+  //
+  //     if( eckit::mpi::rank()==0 )
+  //     {
+  //       Log::info() << help_str.str() << std::flush;
+  //     }
+  //     do_run = false;
+  //   }
   }
 
   void setup();
@@ -256,9 +223,6 @@ private:
   TimerStats haloexchange_timer;
   size_t iter;
   bool progress;
-  bool do_run;
-
-  typedef std::vector<Option *> Options;
 
 public:
   int exit_code;
@@ -267,40 +231,55 @@ public:
 
 //------------------------------------------------------------------------------------------------------
 
-void AtlasBenchmark::run()
+void AtlasBenchmark::execute(const Args& args)
 {
-  if( !do_run )
-    return;
+  nlev = 137;
+  args.get("nlev",nlev);
+  gridname = "N64";
+  args.get("grid",gridname);
+  niter = 100;
+  args.get("niter",niter);
+  omp_threads = -1;
+  args.get("omp",omp_threads);
+  progress = false;
+  args.get("progress",progress);
+  exclude = niter==1?0:1;
+  args.get("exclude",exclude);
+  output = false;
+  args.get("output",output);
+  bool help(false);
+  args.get("help",help);
 
-  atlas_init();
+  iteration_timer = TimerStats("iteration");
+  haloexchange_timer = TimerStats("halo-exchange");
 
   if( omp_threads > 0 )
     omp_set_num_threads(omp_threads);
 
-  atlas::Log::info() << "atlas-benchmark\n" << endl;
-  atlas::Log::info() << "Atlas:" << endl;
-  atlas::Log::info() << "  version:  ["<< atlas_version() << "]" << endl;
-  atlas::Log::info() << "  git:      ["<< atlas_git_sha1() << "]" << endl;
-  atlas::Log::info() << endl;
-  atlas::Log::info() << "Configuration:" << endl;
-  atlas::Log::info() << "  grid: " << gridname << endl;
-  atlas::Log::info() << "  nlev: " << nlev << endl;
-  atlas::Log::info() << "  niter: " << niter << endl;
-  atlas::Log::info() << endl;
-  atlas::Log::info() << "  MPI tasks: "<<eckit::mpi::size()<<endl;
-  atlas::Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
-  atlas::Log::info() << endl;
+  Log::info() << "atlas-benchmark\n" << endl;
+  Log::info() << "Atlas:" << endl;
+  Log::info() << "  version:  ["<< atlas_version() << "]" << endl;
+  Log::info() << "  git:      ["<< atlas_git_sha1() << "]" << endl;
+  Log::info() << endl;
+  Log::info() << "Configuration:" << endl;
+  Log::info() << "  grid: " << gridname << endl;
+  Log::info() << "  nlev: " << nlev << endl;
+  Log::info() << "  niter: " << niter << endl;
+  Log::info() << endl;
+  Log::info() << "  MPI tasks: "<<eckit::mpi::size()<<endl;
+  Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
+  Log::info() << endl;
 
-  atlas::Log::info() << "Timings:" << endl;
+  Log::info() << "Timings:" << endl;
 
   setup();
 
-  atlas::Log::info() << "  Executing " << niter << " iterations: \n";
+  Log::info() << "  Executing " << niter << " iterations: \n";
   if( progress )
   {
-    atlas::Log::info() << "      0%   10   20   30   40   50   60   70   80   90   100%\n";
-    atlas::Log::info() << "      |----|----|----|----|----|----|----|----|----|----|\n";
-    atlas::Log::info() << "      " << std::flush;
+    Log::info() << "      0%   10   20   30   40   50   60   70   80   90   100%\n";
+    Log::info() << "      |----|----|----|----|----|----|----|----|----|----|\n";
+    Log::info() << "      " << std::flush;
   }
   unsigned int tic=0;
   for( iter=0; iter<niter; ++iter )
@@ -310,45 +289,43 @@ void AtlasBenchmark::run()
       unsigned int tics_needed = static_cast<unsigned int>(static_cast<double>(iter)/static_cast<double>(niter-1)*50.0);
       while( tic <= tics_needed )
       {
-        atlas::Log::info() << '*' << std::flush;
+        Log::info() << '*' << std::flush;
         ++tic;
       }
       if ( iter == niter-1 )
       {
-        if ( tic < 51 ) atlas::Log::info() << '*';
-          atlas::Log::info() << endl;
+        if ( tic < 51 ) Log::info() << '*';
+          Log::info() << endl;
       }
     }
     iteration();
   }
 
 
-  atlas::Log::info() << "Iteration timer Statistics:\n"
+  Log::info() << "Iteration timer Statistics:\n"
               << "  min: " << setprecision(5) << fixed << iteration_timer.min
               << "  max: " << setprecision(5) << fixed << iteration_timer.max
               << "  avg: " << setprecision(5) << fixed << iteration_timer.avg << endl;
-  atlas::Log::info() << "Communication timer Statistics:\n"
+  Log::info() << "Communication timer Statistics:\n"
               << "  min: " << setprecision(5) << fixed << haloexchange_timer.min
               << "  max: " << setprecision(5) << fixed << haloexchange_timer.max
               << "  avg: " << setprecision(5) << fixed << haloexchange_timer.avg
               << " ( "<< setprecision(2) << haloexchange_timer.avg/iteration_timer.avg*100. << "% )" << endl;
 
-  atlas::Log::info() << endl;
-  atlas::Log::info() << "Results:" << endl;
+  Log::info() << endl;
+  Log::info() << "Results:" << endl;
 
   double res = result();
 
-  atlas::Log::info() << endl;
+  Log::info() << endl;
   exit_code = verify( res );
-
-  atlas_finalize();
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::setup()
 {
-  Timer timer( "setup", atlas::Log::debug());
+  Timer timer( "setup", Log::debug());
 
   grid::load();
 
@@ -441,7 +418,7 @@ void AtlasBenchmark::setup()
   }
 
 
-  atlas::Log::info() << "  setup: " << timer.elapsed() << endl;
+  Log::info() << "  setup: " << timer.elapsed() << endl;
 
 }
 
@@ -449,7 +426,7 @@ void AtlasBenchmark::setup()
 
 void AtlasBenchmark::iteration()
 {
-  Timer t("iteration", atlas::Log::debug(5));
+  Timer t("iteration", Log::debug(5));
 
   eckit::ScopedPtr<array::Array> avgS_arr( array::Array::create<double>(nedges,nlev,2) );
   array::ArrayView<double,3> avgS(*avgS_arr);
@@ -526,7 +503,7 @@ void AtlasBenchmark::iteration()
 
   // halo-exchange
   eckit::mpi::barrier();
-  Timer halo("halo-exchange", atlas::Log::debug(5));
+  Timer halo("halo-exchange", Log::debug(5));
   nodes_fs->halo_exchange().execute(grad);
   eckit::mpi::barrier();
   t.stop();
@@ -540,7 +517,7 @@ void AtlasBenchmark::iteration()
 
   if( !progress )
   {
-    atlas::Log::info() << setw(6) << iter+1
+    Log::info() << setw(6) << iter+1
                 << "    total: " << fixed << setprecision(5) << t.elapsed()
                 << "    communication: " << setprecision(5) << halo.elapsed()
                 << " ( "<< setprecision(2) << fixed << setw(3)
@@ -586,25 +563,18 @@ double AtlasBenchmark::result()
   ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,eckit::mpi::datatype<double>(),MPI_SUM,eckit::mpi::comm()) );
   norm = std::sqrt(norm);
 
-  atlas::Log::info() << "  checksum: " << nodes_fs->checksum().execute( grad ) << endl;
-  atlas::Log::info() << "  maxval: " << setw(13) << setprecision(6) << scientific << maxval << endl;
-  atlas::Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
-  atlas::Log::info() << "  norm:   " << setw(13) << setprecision(6) << scientific << norm << endl;
+  Log::info() << "  checksum: " << nodes_fs->checksum().execute( grad ) << endl;
+  Log::info() << "  maxval: " << setw(13) << setprecision(6) << scientific << maxval << endl;
+  Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
+  Log::info() << "  norm:   " << setw(13) << setprecision(6) << scientific << norm << endl;
 
   if( output )
   {
-    util::io::Gmsh gmsh;
-    std::vector<size_t> levels;
-    levels.push_back(0);
-    gmsh.options.set("levels",levels);
-    gmsh.write(
-          mesh->nodes().field("field"),
-          "benchmark.gmsh",
-          std::ios_base::out );
-    gmsh.write(
-          mesh->nodes().field("grad"),
-          "benchmark.gmsh",
-          std::ios_base::app);
+    std::vector<long> levels( 1, 0 );
+    atlas::output::Gmsh gmsh( "benchmark.msh", util::Config("levels",levels) );
+    gmsh.write( *mesh );
+    gmsh.write( mesh->nodes().field("field") );
+    gmsh.write( mesh->nodes().field("grad") );
   }
   return norm;
 }
@@ -613,7 +583,7 @@ int AtlasBenchmark::verify(const double& norm)
 {
   if( nlev != 137 )
   {
-    atlas::Log::warning() << "Results cannot be verified with nlev != 137" << endl;
+    Log::warning() << "Results cannot be verified with nlev != 137" << endl;
     return 1;
   }
   std::map<std::string,double> norms;
@@ -642,13 +612,13 @@ int AtlasBenchmark::verify(const double& norm)
 
   if( norms.count(gridname) == 0 )
   {
-    atlas::Log::warning() << "Results cannot be verified with grid "<< gridname << '\n';
-    atlas::Log::warning() << "Valid grids: \n";
+    Log::warning() << "Results cannot be verified with grid "<< gridname << '\n';
+    Log::warning() << "Valid grids: \n";
     for( std::map<std::string,double>::const_iterator it=norms.begin(); it!=norms.end(); ++it)
     {
-      atlas::Log::warning() << "    -  " << it->first << "\n";
+      Log::warning() << "    -  " << it->first << "\n";
     }
-    atlas::Log::warning() << std::flush;
+    Log::warning() << std::flush;
 
     return 1;
   }
@@ -656,11 +626,11 @@ int AtlasBenchmark::verify(const double& norm)
   double diff = (norm-norms[gridname])/norms[gridname];
   if( diff < 0.01 )
   {
-    atlas::Log::info() << "Results are verified and correct.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
+    Log::info() << "Results are verified and correct.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
     return 0;
   }
 
-  atlas::Log::info() << "Results are wrong.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
+  Log::info() << "Results are wrong.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
   return 1;
 }
 

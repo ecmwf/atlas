@@ -60,13 +60,15 @@ public:
         std::ofstream par_file(par_path.localPath(), std::ios_base::out);
         for(size_t p = 0; p < eckit::mpi::size(); ++p) {
           PathName loc_path(file_path);
-          loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
+          // loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
+          loc_path = loc_path.baseName(false) + ".msh.p" + to_str(p);
           par_file << "Merge \"" << loc_path << "\";" << std::endl;
         }
         par_file.close();
       }
       PathName path(file_path);
-      path = path.dirName() + "/" + path.baseName(false) + "_p" + to_str(part) + ".msh";
+      // path = path.dirName() + "/" + path.baseName(false) + "_p" + to_str(part) + ".msh";
+      path = path.dirName() + "/" + path.baseName(false) + ".msh.p"+to_str(part);
       std::ofstream::open(path.localPath(), mode);
     }
   }
@@ -1299,6 +1301,56 @@ void Gmsh::write(
 }
 // ----------------------------------------------------------------------------
 
+
+class GmshFortranInterface
+{
+public:
+#define mesh_Mesh mesh::Mesh
+#define field_Field field::Field
+#define field_FieldSet field::FieldSet
+#define functionspace_FunctionSpace functionspace::FunctionSpace
+  static mesh_Mesh* atlas__Gmsh__read(Gmsh* This, char* file_path);
+  static void atlas__Gmsh__write(Gmsh* This, mesh_Mesh* mesh, char* file_path);
+  static mesh_Mesh* atlas__read_gmsh(char* file_path);
+  static void atlas__write_gmsh_mesh(mesh_Mesh* mesh, char* file_path);
+  static void atlas__write_gmsh_fieldset(field_FieldSet* fieldset, functionspace_FunctionSpace* function_space, char* file_path, int mode);
+  static void atlas__write_gmsh_field(field_Field* field, functionspace_FunctionSpace* function_space, char* file_path, int mode);    
+#undef field_Field
+#undef field_FieldSet
+#undef functionspace_NodeColumns
+#undef mesh_Mesh
+};
+
+mesh::Mesh* GmshFortranInterface::atlas__Gmsh__read (Gmsh* This, char* file_path) {
+  return This->read( PathName(file_path) );
+}
+
+void GmshFortranInterface::atlas__Gmsh__write (Gmsh* This, mesh::Mesh* mesh, char* file_path) {
+  This->write( *mesh, PathName(file_path) );
+}
+
+mesh::Mesh* GmshFortranInterface::atlas__read_gmsh (char* file_path)
+{
+  return Gmsh().read(PathName(file_path));
+}
+
+void GmshFortranInterface::atlas__write_gmsh_mesh (mesh::Mesh* mesh, char* file_path) {
+  Gmsh writer;
+  writer.write( *mesh, PathName(file_path) );
+}
+
+void GmshFortranInterface::atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
+  Gmsh writer;
+  writer.write( *fieldset, *functionspace, PathName(file_path) );
+}
+
+void GmshFortranInterface::atlas__write_gmsh_field (field::Field* field, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
+  Gmsh writer;
+  writer.write( *field, *functionspace, PathName(file_path) );
+}
+
+extern "C" {
+
 // ----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 // ----------------------------------------------------------------------------
@@ -1311,31 +1363,29 @@ void atlas__Gmsh__delete (Gmsh* This) {
 }
 
 mesh::Mesh* atlas__Gmsh__read (Gmsh* This, char* file_path) {
-  return This->read( PathName(file_path) );
+  return GmshFortranInterface::atlas__Gmsh__read(This,file_path);
 }
 
 void atlas__Gmsh__write (Gmsh* This, mesh::Mesh* mesh, char* file_path) {
-  This->write( *mesh, PathName(file_path) );
+  return GmshFortranInterface::atlas__Gmsh__write(This,mesh,file_path);
 }
 
-mesh::Mesh* atlas__read_gmsh (char* file_path)
-{
-  return Gmsh().read(PathName(file_path));
+mesh::Mesh* atlas__read_gmsh (char* file_path) {
+  return GmshFortranInterface::atlas__read_gmsh(file_path);
 }
 
 void atlas__write_gmsh_mesh (mesh::Mesh* mesh, char* file_path) {
-  Gmsh writer;
-  writer.write( *mesh, PathName(file_path) );
+  return GmshFortranInterface::atlas__write_gmsh_mesh(mesh,file_path);
 }
 
 void atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
-  Gmsh writer;
-  writer.write( *fieldset, *functionspace, PathName(file_path) );
+  return GmshFortranInterface::atlas__write_gmsh_fieldset(fieldset,functionspace,file_path,mode);
 }
 
 void atlas__write_gmsh_field (field::Field* field, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
-  Gmsh writer;
-  writer.write( *field, *functionspace, PathName(file_path) );
+  return GmshFortranInterface::atlas__write_gmsh_field(field,functionspace,file_path,mode);
+}
+
 }
 // ----------------------------------------------------------------------------
 

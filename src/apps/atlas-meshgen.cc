@@ -84,7 +84,6 @@ private:
   bool brick;
   bool stats;
   bool info;
-  int surfdim;
   bool with_pole;
   bool stitch_pole;
   bool ghost;
@@ -143,7 +142,6 @@ void Meshgen2Gmsh::execute(const Args& args)
   args.get("halo",halo);
   bool dim_3d=false;
   args.get("3d",dim_3d);
-  surfdim    = dim_3d ? 3 : 2;
   brick = false;
   args.get("brick",brick);
   ghost = false;
@@ -221,19 +219,15 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( stats )
     build_statistics(*mesh);
 
-  if( surfdim == 3 )
-    mesh::actions::BuildXYZField("xyz")(*mesh);
-
-  std::stringstream file;
   atlas::output::Gmsh gmsh( path_out , Config
     ("info",info)
     ("ghost",ghost)
-    ("nodes",surfdim == 3 ? "xyz" : "lonlat" )
+    ("coordinates", dim_3d ? "xyz" : "lonlat" )
     ("edges",edges )
     ("binary",binary )
   );
   Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid->shortName() << "\"" << std::endl;
-  gmsh.output( *mesh );
+  gmsh.write( *mesh );
 }
 
 //------------------------------------------------------------------------------

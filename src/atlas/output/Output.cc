@@ -166,51 +166,51 @@ Output* atlas__Output__create(const char* factory_key, Stream* stream, const eck
   return Output;
 }
 
-void atlas__Output__output_mesh(const Output* This, const Mesh* mesh, const Parametrisation* params)
+void atlas__Output__write_mesh(const Output* This, const Mesh* mesh, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(mesh);
     ASSERT(params);
-    This->output(*mesh,*params);
+    This->write(*mesh,*params);
   );
 }
-void atlas__Output__output_fieldset(const Output* This, const FieldSet* fieldset, const Parametrisation* params)
+void atlas__Output__write_fieldset(const Output* This, const FieldSet* fieldset, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(fieldset);
     ASSERT(params);
-    This->output(*fieldset,*params);
+    This->write(*fieldset,*params);
   );
 }
-void atlas__Output__output_field(const Output* This, const Field* field, const Parametrisation* params)
+void atlas__Output__write_field(const Output* This, const Field* field, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(field);
     ASSERT(params);
-    This->output(*field,*params);
+    This->write(*field,*params);
   );
 }
-void atlas__Output__output_fieldset_fs(const Output* This, const FieldSet* fieldset, const FunctionSpace* functionspace, const Parametrisation* params)
+void atlas__Output__write_fieldset_fs(const Output* This, const FieldSet* fieldset, const FunctionSpace* functionspace, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(fieldset);
     ASSERT(functionspace);
     ASSERT(params);
-    This->output(*fieldset,*functionspace,*params);
+    This->write(*fieldset,*functionspace,*params);
   );
 }
-void atlas__Output__output_field_fs(const Output* This, const Field* field, const FunctionSpace* functionspace, const Parametrisation* params)
+void atlas__Output__write_field_fs(const Output* This, const Field* field, const FunctionSpace* functionspace, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(field);
     ASSERT(functionspace);
     ASSERT(params);
-    This->output(*field,*functionspace,*params);
+    This->write(*field,*functionspace,*params);
   );
 }
 

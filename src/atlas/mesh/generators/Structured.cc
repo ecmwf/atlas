@@ -30,7 +30,6 @@
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Bitflags.h"
-#include "atlas/util/io/Gmsh.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"

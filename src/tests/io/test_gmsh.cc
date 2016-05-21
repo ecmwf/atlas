@@ -36,21 +36,6 @@ struct AtlasFixture {
 
 BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
-BOOST_AUTO_TEST_CASE( test_read_write )
-{
-    using namespace atlas;
-    using namespace atlas::util::io;
-
-    // mesh::Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
-    mesh::Mesh::Ptr mesh = test::generate_mesh(
-       grid::global::gaussian::ClassicGaussian(128) );
-
-    Gmsh gmsh;
-    gmsh.options.set("ascii",true);
-    gmsh.write(*mesh,"mesh.msh");
-
-    BOOST_REQUIRE_NO_THROW( mesh = mesh::Mesh::Ptr( Gmsh().read( "mesh.msh" ) ) );
-}
 
 BOOST_AUTO_TEST_CASE( test_gmsh_output )
 {
@@ -61,7 +46,7 @@ BOOST_AUTO_TEST_CASE( test_gmsh_output )
   output::Gmsh gmsh ( "test_gmsh_output.msh", util::Config
       ("binary",true)
       ("file","test_gmsh_output.msh") );
-  gmsh.output(*mesh);
+  gmsh.write(*mesh);
 }
 
 } // namespace test

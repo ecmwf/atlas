@@ -18,7 +18,6 @@
 #include "atlas/grid/grids.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/mesh/generators/Delaunay.h"
-#include "atlas/util/io/Gmsh.h"
 #include "atlas/internals/Debug.h"
 #include "atlas/field/State.h"
 #include "atlas/mesh/Mesh.h"

@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_output_Gmsh_h
-#define atlas_output_Gmsh_h
+#ifndef atlas_write_Gmsh_h
+#define atlas_write_Gmsh_h
 
 #include "atlas/output/Output.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -47,28 +47,28 @@ public:
     virtual ~Gmsh();
 
     /// Write mesh file
-    virtual void output(
+    virtual void write(
         const mesh::Mesh&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write field to file
-    virtual void output(
+    virtual void write(
         const field::Field&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write fieldset to file using FunctionSpace
-    virtual void output(
+    virtual void write(
         const field::FieldSet&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write field to file using Functionspace
-    virtual void output(
+    virtual void write(
         const field::Field&,
         const functionspace::FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write fieldset to file using FunctionSpace
-    virtual void output(
+    virtual void write(
         const field::FieldSet&,
         const functionspace::FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
@@ -83,6 +83,8 @@ public:
     bool gather;
     bool ghost;
     bool info;
+    bool serial;
+    std::string coordinates;
     std::vector<long> levels;
     std::string nodes;
     std::string file;
@@ -91,7 +93,7 @@ public:
 
 private:
 
-  Configuration config_;
+  mutable Configuration config_;
 
   void defaults();
 };

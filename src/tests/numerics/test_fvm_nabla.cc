@@ -13,22 +13,24 @@
 
 #include <cmath>
 #include <iostream>
+
+#include "atlas/atlas.h"
+#include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/mesh/generators/Structured.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
+#include "atlas/numerics/fvm/Method.h"
+#include "atlas/numerics/Nabla.h"
+#include "atlas/output/Gmsh.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/util/Config.h"
+#include "atlas/util/Constants.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/atlas.h"
-#include "atlas/numerics/Nabla.h"
-#include "atlas/util/Config.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/Structured.h"
-#include "atlas/numerics/fvm/Method.h"
-#include "atlas/mesh/Nodes.h"
-#include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/util/Constants.h"
-#include "atlas/util/io/Gmsh.h"
-#include "atlas/field/FieldSet.h"
-#include "atlas/parallel/mpi/mpi.h"
+
 
 using namespace eckit;
 using namespace atlas::numerics;
@@ -208,15 +210,14 @@ BOOST_AUTO_TEST_CASE( test_grad )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
-    util::io::Gmsh().write(fields["scalar"],grid->shortName()+"_fields.msh");
-    util::io::Gmsh().write(fields["xder"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["yder"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["rscalar"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["rxder"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["ryder"],grid->shortName()+"_fields.msh",std::ios::app);
-
-    //    util::io::Gmsh().write(fields["exact_yder"],grid->shortName()+"_fields.msh",std::ios::app);
+    output::Gmsh(grid->shortName()+".msh").write(*mesh);
+    output::Gmsh gmsh_fields(grid->shortName()+"_fields.msh");
+    gmsh_fields.write(fields["scalar"]);
+    gmsh_fields.write(fields["xder"]);
+    gmsh_fields.write(fields["yder"]);
+    gmsh_fields.write(fields["rscalar"]);
+    gmsh_fields.write(fields["rxder"]);
+    gmsh_fields.write(fields["ryder"]);
   }
 }
 
@@ -246,9 +247,9 @@ BOOST_AUTO_TEST_CASE( test_div )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
-    util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["div"],grid->shortName()+"_fields.msh",std::ios::app);
+    output::Gmsh gmsh (grid->shortName()+"_fields.msh","a");
+    gmsh.write(fields["wind"]);
+    gmsh.write(fields["div"]);
   }
 }
 
@@ -305,16 +306,15 @@ BOOST_AUTO_TEST_CASE( test_curl )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
-//    util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["vor"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["windX"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["windXgradX"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["windXgradY"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["windY"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["windYgradX"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["windYgradY"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["windgrad"],grid->shortName()+"_fields.msh",std::ios::app);
+    output::Gmsh gmsh(grid->shortName()+"_fields.msh","a");
+    gmsh.write(fields["vor"]);
+    gmsh.write(fields["windX"]);
+    gmsh.write(fields["windXgradX"]);
+    gmsh.write(fields["windXgradY"]);
+    gmsh.write(fields["windY"]);
+    gmsh.write(fields["windYgradX"]);
+    gmsh.write(fields["windYgradY"]);
+    gmsh.write(fields["windgrad"]);
   }
 
 
@@ -348,9 +348,8 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
-//    util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["lapl"],grid->shortName()+"_fields.msh",std::ios::app);
+    output::Gmsh gmsh(grid->shortName()+"_fields.msh","a");
+    gmsh.write(fields["lapl"]);
   }
 }
 

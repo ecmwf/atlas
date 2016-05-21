@@ -35,6 +35,11 @@ namespace field {
 } }
 
 namespace atlas {
+namespace functionspace {
+    class FunctionSpace;
+} }
+
+namespace atlas {
 namespace output {
   
 typedef std::ostream Stream;
@@ -57,28 +62,28 @@ public:
     virtual ~Output();
 
     /// Write mesh file
-    virtual void output(
+    virtual void write(
         const mesh::Mesh&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
     /// Write field to file
-    virtual void output(
+    virtual void write(
         const field::Field&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
     /// Write fieldset to file using FunctionSpace
-    virtual void output(
+    virtual void write(
         const field::FieldSet&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
     /// Write field to file using Functionspace
-    virtual void output(
+    virtual void write(
         const field::Field&,
         const functionspace::FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
     /// Write fieldset to file using FunctionSpace
-    virtual void output(
+    virtual void write(
         const field::FieldSet&,
         const functionspace::FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
@@ -143,11 +148,11 @@ class OutputBuilder : public OutputFactory {
 extern "C" {
 void atlas__Output__delete(Output* This);
 Output* atlas__Output__create(const char* factory_key, Stream* stream, const Parametrisation* params);
-void atlas__Output__output_mesh(const Output* This, const Mesh* mesh, const Parametrisation* params);
-void atlas__Output__output_fieldset(const Output* This, const FieldSet* fieldset, const Parametrisation* params);
-void atlas__Output__output_field(const Output* This, const Field* field, const Parametrisation* params);
-void atlas__Output__output_fieldset_fs(const Output* This, const FieldSet* fieldset, const FunctionSpace* functionspace, const Parametrisation* params);
-void atlas__Output__output_field_fs(const Output* This, const Field* field, const FunctionSpace* functionspace, const Parametrisation* params);
+void atlas__Output__write_mesh(const Output* This, const Mesh* mesh, const Parametrisation* params);
+void atlas__Output__write_fieldset(const Output* This, const FieldSet* fieldset, const Parametrisation* params);
+void atlas__Output__write_field(const Output* This, const Field* field, const Parametrisation* params);
+void atlas__Output__write_fieldset_fs(const Output* This, const FieldSet* fieldset, const FunctionSpace* functionspace, const Parametrisation* params);
+void atlas__Output__write_field_fs(const Output* This, const Field* field, const FunctionSpace* functionspace, const Parametrisation* params);
 }
 
 #undef FieldSet

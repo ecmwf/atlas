@@ -24,7 +24,7 @@
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/util/Config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -35,7 +35,6 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Config.h"
 #include "atlas/grid/global/gaussian/classic/N.h"
@@ -47,8 +46,6 @@ using namespace atlas;
 using namespace atlas::internals;
 using namespace atlas::grid::partitioners;
 using namespace atlas::mesh::generators;
-using namespace atlas::util::io;
-
 
 namespace atlas {
 namespace grid {
@@ -304,7 +301,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 
     double max_lat = test::MinimalMesh(nlat,lon).lat(0);
     BOOST_CHECK_CLOSE( test::compute_lonlat_area(*mesh), 2.*M_PI*2.*max_lat, 1e-8 );
-    Gmsh().write(*mesh,"minimal2.msh");
+    output::Gmsh("minimal2.msh").write(*mesh);
     delete mesh;
   }
   // 3 latitudes
@@ -315,7 +312,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( mesh->nodes().size(), 42 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 28 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(),  8 );
-    Gmsh().write(*mesh,"minimal3.msh");
+    output::Gmsh("minimal3.msh").write(*mesh);
     delete mesh;
   }
   // 4 latitudes
@@ -326,7 +323,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( mesh->nodes().size(), 64 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 46 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(), 12 );
-    Gmsh().write(*mesh,"minimal4.msh");
+    output::Gmsh("minimal4.msh").write(*mesh);
     delete mesh;
   }
   // 5 latitudes WIP
@@ -337,7 +334,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( mesh->nodes().size(), 166 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 134 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(),  32 );
-    Gmsh().write(*mesh,"minimal5.msh");
+    output::Gmsh("minimal5.msh").write(*mesh);
     delete mesh;
   }
 }
@@ -392,8 +389,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     }
     DEBUG();
 
-        std::stringstream filename; filename << "T63.msh";
-        Gmsh().write(*m,filename.str());
+    output::Gmsh("T63.msh").write(*m);
 
 
     mesh::Nodes& nodes = m->nodes();
@@ -489,13 +485,10 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 
   mesh::Mesh::Ptr m (generate(grid));
 
-  mesh::actions::BuildXYZField build_xyz_field("xyz");
-  build_xyz_field(*m);
-
-  util::io::Gmsh gmsh;
-  if(three_dimensional)
-    gmsh.options.set("nodes",std::string("xyz"));
-  gmsh.write(*m,"rll.msh");
+  util::Config options;
+  if( three_dimensional ) options.set("coordinates","xyz");
+  output::Gmsh gmsh("rll.msh",options);
+  gmsh.write(*m);
 
 }
 

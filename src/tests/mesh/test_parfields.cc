@@ -18,7 +18,7 @@
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/field/Field.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/Metadata.h"
@@ -37,7 +37,7 @@ using atlas::internals::Topology;
 
 using namespace atlas::array;
 using namespace atlas::internals;
-using namespace atlas::util::io;
+using namespace atlas::output;
 using namespace atlas::mesh::generators;
 
 namespace atlas {
@@ -72,8 +72,6 @@ private:
 BOOST_AUTO_TEST_CASE( init )
 {
   eckit::mpi::init();
-  eckit::ResourceMgr::instance().set("atlas.meshgen.angle","27.5");
-  eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","false");
 }
 
 BOOST_AUTO_TEST_CASE( test1 )
@@ -174,9 +172,10 @@ BOOST_AUTO_TEST_CASE( test1 )
 
 BOOST_AUTO_TEST_CASE( test2 )
 {
-  mesh::generators::Structured generate;
-  generate.options.set("nb_parts",eckit::mpi::size());
-  generate.options.set("part",eckit::mpi::rank());
+  util::Config meshgen_options;
+  meshgen_options.set("angle",27.5);
+  meshgen_options.set("triangulate",false);
+  mesh::generators::Structured generate(meshgen_options);
   mesh::Mesh* m = generate(
       grid::global::gaussian::ClassicGaussian(32) );
   mesh::actions::build_parallel_fields(*m);
@@ -208,8 +207,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   if( eckit::mpi::rank() == 0 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
   if( eckit::mpi::rank() == 1 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
 
-  std::stringstream filename; filename << "periodic.msh";
-  Gmsh().write(*m,filename.str());
+  Gmsh("periodic.msh").write(*m);
   delete m;
 }
 
