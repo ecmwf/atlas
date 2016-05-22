@@ -58,6 +58,7 @@ TEST( test_griddist )
   implicit none
   type(atlas_grid_Structured) :: grid
   type(atlas_Mesh) :: mesh
+  type(atlas_Output) :: gmsh
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_GridDistribution) :: griddistribution
 
@@ -81,7 +82,8 @@ TEST( test_griddist )
   mesh = meshgenerator%generate(grid,griddistribution)
   call griddistribution%final()
 
-  call atlas_write_gmsh(mesh,"testf3.msh")
+  gmsh = atlas_output_Gmsh("testf3.msh")
+  call gmsh%write(mesh)
 
   deallocate(part)
 END_TEST

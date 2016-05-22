@@ -183,13 +183,12 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_Logging_module.F90
         util/atlas_Error_module.F90
         util/atlas_Value_module.F90
-        util/atlas_io_module.F90
+        output/atlas_output_module.F90
         functionspace/atlas_FunctionSpace_module.F90
         functionspace/atlas_functionspace_EdgeColumns_module.F90
         functionspace/atlas_functionspace_NodeColumns_module.F90
         functionspace/atlas_functionspace_StructuredColumns_module.F90
         functionspace/atlas_functionspace_Spectral_module.F90
-        # field/atlas_Field_module.F90
         field/atlas_FieldSet_module.F90
         field/atlas_State_module.F90
         grid/atlas_Grid_module.F90
