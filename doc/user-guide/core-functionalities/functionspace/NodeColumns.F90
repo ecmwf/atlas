@@ -9,6 +9,7 @@ character(len=32)                     :: checksum
 type(atlas_grid_Structured)               :: grid
 type(atlas_mesh)                      :: mesh
 type(atlas_meshgenerator)             :: meshgenerator
+type(atlas_Output)                    :: gmsh
 type(atlas_functionspace_NodeColumns) :: fs_nodes
 type(atlas_mesh_Nodes)                :: meshnodes
 type(atlas_Field)                     :: field_scalar1
@@ -95,8 +96,10 @@ do jnode=1,nb_nodes
 enddo
 
 ! Write mesh and field in gmsh format for visualization
-call atlas_write_gmsh      (mesh, "mesh.msh")
-call atlas_write_gmsh_field(field_scalar1, fs_nodes, "scalar1.msh")
+gmsh = atlas_output_Gmsh("mesh.msh")
+call gmsh%write(mesh)
+gmsh = atlas_output_Gmsh("scalar1.msh")
+call gmsh%write(field_scalar1)
 !........!
 ! Halo exchange
 call fs_nodes%halo_exchange(field_scalar1)

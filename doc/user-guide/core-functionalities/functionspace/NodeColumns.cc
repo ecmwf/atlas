@@ -8,7 +8,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/functionspace/NodeColumns.h"
 
 using namespace std;
@@ -87,10 +87,11 @@ int main(int argc, char *argv[])
     }
 
     // Write mesh and field in gmsh format for visualization
-    util::io::Gmsh gmsh;
-    gmsh.options.set("info", true);
-    gmsh.write(*mesh, "mesh.msh");
-    gmsh.write(*field_scalar1, *fs_nodes, "scalar1.msh");
+    output::Gmsh output_mesh("mesh.msh");
+    output_mesh.write(*mesh);
+    output::Gmsh output_fields("scalar1.msh");
+    output_fields.write(*field_scalar1);
+
     /* .... */
     // Halo exchange
     fs_nodes->haloExchange(*field_scalar1);

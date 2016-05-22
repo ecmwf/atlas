@@ -3,7 +3,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/Gmsh.h"
 #include "eckit/config/Resource.h"
 
 using namespace std;
@@ -24,14 +24,9 @@ int main(int argc, char *argv[])
     mesh::generators::Structured meshgenerator;
     SharedPtr<Mesh> mesh( meshgenerator.generate(*Structured) );
 
-    util::io::Gmsh gmsh;
-    gmsh.options.set("info", true);
-    if (visualize == "3D")
-    {
-        actions::BuildXYZField("xyz")(*mesh);
-        gmsh.options.set("nodes", std::string("xyz"));
-    }
-    gmsh.write(*mesh, "mesh.msh");
+    output::Gmsh gmsh("mesh.msh", util::Config
+      ("coordinates", visualize=="3D"?"xyz":"lonlat") );
+    gmsh.write(*mesh);
 
     atlas_finalize();
 
