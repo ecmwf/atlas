@@ -11,16 +11,17 @@
 #include <map>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
-#include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/mesh/actions/BuildXYZField.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/actions/BuildXYZField.h"
+#include "eckit/exception/Exceptions.h"
 
 using atlas::field::Field;
 using atlas::field::FieldSet;
@@ -276,6 +277,22 @@ void Gmsh::write(
 }
 
 // -----------------------------------------------------------------------------
+
+extern "C" {
+  
+Gmsh* atlas__output__Gmsh__create_pathname_mode(const char* pathname, const char* mode)
+{
+  Gmsh* gmsh(0);
+  ATLAS_ERROR_HANDLING( gmsh = new Gmsh(std::string(pathname),std::string(mode) ) );
+  return gmsh;
+}
+Gmsh* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, const char* mode, const Parametrisation* params)
+{
+  Gmsh* gmsh(0);
+  ATLAS_ERROR_HANDLING( gmsh = new Gmsh(std::string(pathname),std::string(mode), *params ) );
+  return gmsh;
+}
+}
 
 namespace {
 static OutputBuilder< Gmsh > __gmsh("gmsh");

@@ -25,9 +25,9 @@ public :: atlas_meshgenerator_Structured
 
 private
 
-!-----------------------------
-! atlas_Mesh                 !
-!-----------------------------
+!-----------------------------!
+! atlas_MeshGenerator         !
+!-----------------------------!
 
 !------------------------------------------------------------------------------
 TYPE, extends(atlas_RefCounted) :: atlas_MeshGenerator

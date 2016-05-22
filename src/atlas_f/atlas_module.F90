@@ -179,7 +179,9 @@ use atlas_io_module, only: &
     & atlas_read_gmsh, &
     & atlas_write_gmsh, &
     & atlas_write_gmsh_field, &
-    & atlas_write_gmsh_fieldset
+    & atlas_write_gmsh_fieldset, &
+    & atlas_Output, &
+    & atlas_output_Gmsh
 
 implicit none
 

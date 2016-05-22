@@ -100,6 +100,19 @@ private:
 
 // -----------------------------------------------------------------------------
 
+#define Parametrisation eckit::Parametrisation
+
+extern "C" {
+  
+Gmsh* atlas__output__Gmsh__create_pathname_mode(const char* pathname, const char* mode);
+Gmsh* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, const char* mode, const Parametrisation* params);
+
+}
+
+#undef Parametrisation
+
+// -----------------------------------------------------------------------------
+
 } // namespace output
 } // namespace atlas
 
