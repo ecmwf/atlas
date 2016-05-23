@@ -8,11 +8,20 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_write_Gmsh_h
-#define atlas_write_Gmsh_h
+#ifndef atlas_output_Gmsh_h
+#define atlas_output_Gmsh_h
 
 #include "atlas/output/Output.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/util/Config.h"
+
+namespace atlas {
+namespace util {
+namespace io {
+class Gmsh;
+}
+}
+}
 
 namespace atlas {
 namespace output {
@@ -23,6 +32,7 @@ class GmshFileStream : public std::ofstream {
 public:
   static std::string parallelPathName(const PathName& path,int part = eckit::mpi::rank());
   GmshFileStream(const PathName& file_path, const char* mode, int part = eckit::mpi::rank());
+
 };
 
 // -----------------------------------------------------------------------------
@@ -77,21 +87,22 @@ public:
 
   struct Configuration {
     bool binary;
-    double radius;
     bool edges;
     bool elements;
     bool gather;
     bool ghost;
     bool info;
-    bool serial;
-    std::string coordinates;
     std::vector<long> levels;
     std::string nodes;
     std::string file;
     std::string openmode;
+    std::string coordinates;
   };
 
+  static void setGmshConfiguration(util::io::Gmsh&, const Configuration& );
+
 private:
+
 
   mutable Configuration config_;
 

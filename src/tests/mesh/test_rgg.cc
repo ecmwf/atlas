@@ -15,7 +15,6 @@
 #define BOOST_TEST_MODULE TestRGG
 #include "ecbuild/boost_test_framework.h"
 
-#include "eckit/config/ResourceMgr.h"
 #include "eckit/geometry/Point3.h"
 #include "atlas/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -241,16 +240,19 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 {
   mesh::Mesh* m;
-  util::Config opts;
-  opts.set("nb_parts",1);
-  opts.set("part",0);
-  mesh::generators::Structured generate(opts);
+  util::Config default_opts;
+  default_opts.set("nb_parts",1);
+  default_opts.set("part",0);
 //  generate.options.set("nb_parts",1);
 //  generate.options.set("part",    0);
 DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   ENABLE {
-    generate.options.set("three_dimensional",true);
-    generate.options.set("include_pole",false);
+
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",true)
+          ("include_pole",false)
+          );
     m = generate( atlas::test::DebugMesh() );
     BOOST_CHECK_EQUAL( m->nodes().size(), 156 );
     BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
@@ -262,8 +264,11 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
 
   ENABLE {
-    generate.options.set("three_dimensional",false);
-    generate.options.set("include_pole",false);
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",false)
+          ("include_pole",false)
+          );
     m = generate( atlas::test::DebugMesh() );
     BOOST_CHECK_EQUAL( m->nodes().size(), 166 );
     BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
@@ -275,8 +280,11 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
 
   ENABLE {
-    generate.options.set("three_dimensional",true);
-    generate.options.set("include_pole",true);
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",true)
+          ("include_pole",true)
+          );
     m = generate( atlas::test::DebugMesh() );
     BOOST_CHECK_EQUAL( m->nodes().size(), 158 );
     BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
@@ -290,8 +298,11 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   mesh::Mesh* mesh;
 
   ENABLE {
-    generate.options.set("three_dimensional",false);
-    generate.options.set("include_pole",false);
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",false)
+          ("include_pole",false)
+          );
     int nlat=2;
     long lon[] = { 4, 6 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
@@ -306,6 +317,11 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
   // 3 latitudes
   ENABLE {
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",false)
+          ("include_pole",false)
+          );
     int nlat=3;
     long lon[] = { 4, 6, 8 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
@@ -317,6 +333,11 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
   // 4 latitudes
   ENABLE {
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",false)
+          ("include_pole",false)
+          );
     int nlat=4;
     long lon[] = { 4, 6, 8, 10 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
@@ -328,6 +349,11 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
   // 5 latitudes WIP
   ENABLE {
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",false)
+          ("include_pole",false)
+          );
     int nlat=5;
     long lon[] = { 6, 10, 18, 22, 22 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
@@ -343,12 +369,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
   BOOST_CHECK( PartitionerFactory::has("EqualRegions") );
-  eckit::ResourceMgr::instance().set("atlas.meshgen.partitioner","EqualRegions");
-  mesh::generators::Structured generate;
-  generate.options.set("nb_parts",20);
-  generate.options.set("include_pole",false);
-  generate.options.set("three_dimensional",false);
-
+  size_t nb_parts = 20;
           //  Alternative grid for debugging
           //  int nlat=10;
           //  long lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
@@ -365,10 +386,17 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
   std::vector<int> all_owned    ( grid.npts()+grid.nlat()+1, -1 );
 
-  for(size_t p = 0; p < generate.options.get<size_t>("nb_parts"); ++p)
+  for(size_t p = 0; p < nb_parts; ++p)
   {
     DEBUG_VAR(p);
-    generate.options.set("part",p);
+
+    mesh::generators::Structured generate ( util::Config
+           ("partitioner","EqualRegions")
+           ("nb_parts",nb_parts)
+           ("part",p)
+           ("include_pole",false)
+           ("3d",false) );
+
     mesh::Mesh::Ptr m( generate( grid ) );
     DEBUG();
     m->metadata().set("part",p);
@@ -380,7 +408,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     DEBUG();
 
     DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
-    if( generate.options.get<size_t>("nb_parts") == 20 )
+    if( nb_parts == 20 )
     {
       BOOST_CHECK_EQUAL( m->nodes().size(), nodes[p]  );
       BOOST_CHECK_EQUAL( m->cells().elements(0).size(), quads[p]  );
@@ -448,6 +476,7 @@ DISABLE{
 
 BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 {
+  DEBUG();
   int N=11;
   long lon[] = {
     2,  //90
@@ -476,12 +505,12 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
     -90
   };
   grid::global::CustomStructured grid(N,lat,lon);
-  mesh::generators::Structured generate;
 
   bool three_dimensional = true;
 
-  generate.options.set("three_dimensional",three_dimensional);
-  generate.options.set("triangulate",false);
+  mesh::generators::Structured generate( util::Config
+        ("3d",three_dimensional)
+        ("triangulate",false) );
 
   mesh::Mesh::Ptr m (generate(grid));
 
@@ -494,6 +523,8 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 
 BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
 {
+  DEBUG();
+
   SharedPtr<grid::Grid> grid(grid::Grid::create("O8"));
 
   atlas::util::Config cfg;

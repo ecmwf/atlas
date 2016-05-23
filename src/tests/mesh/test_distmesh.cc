@@ -74,9 +74,10 @@ BOOST_GLOBAL_FIXTURE( MPIFixture );
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {
   // Every task builds full mesh
+//  mesh::generators::Structured generate( util::Config
+//      ("nb_parts",1)
+//      ("part",0) );
   mesh::generators::Structured generate;
-  generate.options.set("nb_parts",1);
-  generate.options.set("part",0);
 
       // long lon[] = {4,6,8,8,8};
       // test::TestGrid grid(5,lon);
@@ -84,9 +85,6 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
       //  GG grid(120,60);
   grid::global::gaussian::ClassicGaussian grid(16);
 
-
-  generate.options.set("nb_parts", eckit::mpi::size());
-  generate.options.set("part", eckit::mpi::rank());
 
   mesh::Mesh::Ptr m( generate( grid ) );
 

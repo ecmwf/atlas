@@ -50,12 +50,12 @@ GmshFileStream::GmshFileStream(const PathName& file_path, const char* mode, int 
   std::ios_base::openmode omode = std::ios_base::out;
   if     ( std::string(mode)=="w" )  omode = std::ios_base::out;
   else if( std::string(mode)=="a" )  omode = std::ios_base::app;
-  
+
   if( part<0 || eckit::mpi::size() == 1 )
   {
     std::ofstream::open(file_path.localPath(), omode);
   }
-  else 
+  else
   {
     if (eckit::mpi::rank() == 0)
     {
@@ -82,13 +82,11 @@ void Gmsh::defaults()
   config_.ghost = false;
   config_.elements = true;
   config_.edges = false;
-  config_.radius = 1.0;
   config_.levels.clear();
   config_.file = "output.msh";
   config_.info = false;
   config_.openmode = "w";
   config_.coordinates = "lonlat";
-  config_.serial = false;
 }
 
 // -----------------------------------------------------------------------------
@@ -105,11 +103,9 @@ void merge(Gmsh::Configuration& present, const eckit::Parametrisation& update)
   update.get("ghost",present.ghost);
   update.get("elements",present.elements);
   update.get("edges",present.edges);
-  update.get("radius",present.radius);
   update.get("levels",present.levels);
   update.get("file",present.file);
   update.get("info",present.info);
-  update.get("serial",present.serial);
   update.get("openmode",present.openmode);
   update.get("coordinates",present.coordinates);
 }
@@ -119,17 +115,7 @@ void merge(Gmsh::Configuration& present, const eckit::Parametrisation& update)
 util::io::Gmsh writer(const Gmsh::Configuration& c)
 {
   util::io::Gmsh gmsh;
-  gmsh.options.set("ascii", not c.binary);
-  gmsh.options.set("nodes",c.nodes);
-  gmsh.options.set("gather",c.gather);
-  gmsh.options.set("ghost",c.ghost);
-  gmsh.options.set("elements",c.elements);
-  gmsh.options.set("edges",c.edges);
-  gmsh.options.set("radius",c.radius);
-  gmsh.options.set("levels",c.levels);
-  gmsh.options.set("info",c.info);
-  gmsh.options.set("nodes",c.coordinates);
-  gmsh.options.set("serial",c.serial);
+  Gmsh::setGmshConfiguration(gmsh,c);
   return gmsh;
 }
 
@@ -147,6 +133,21 @@ std::ios_base::openmode openmode(const Gmsh::Configuration& c)
 // -----------------------------------------------------------------------------
 
 } // anonymous namespace
+
+// -----------------------------------------------------------------------------
+
+void Gmsh::setGmshConfiguration(util::io::Gmsh& gmsh, const Gmsh::Configuration& c)
+{
+  gmsh.options.set("ascii", not c.binary);
+  gmsh.options.set("nodes",c.nodes);
+  gmsh.options.set("gather",c.gather);
+  gmsh.options.set("ghost",c.ghost);
+  gmsh.options.set("elements",c.elements);
+  gmsh.options.set("edges",c.edges);
+  gmsh.options.set("levels",c.levels);
+  gmsh.options.set("info",c.info);
+  gmsh.options.set("nodes",c.coordinates);
+}
 
 // -----------------------------------------------------------------------------
 
@@ -215,7 +216,7 @@ void Gmsh::write(
 {
   Gmsh::Configuration c = config_;
   merge(c,config);
-  
+
   if( c.coordinates == "xyz" and not mesh.nodes().has_field("xyz") )
   {
       Log::debug() << "Building xyz representation for nodes" << std::endl;

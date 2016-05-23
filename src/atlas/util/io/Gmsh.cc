@@ -15,8 +15,7 @@
 #include <limits>
 #include "eckit/filesystem/PathName.h"
 #include "eckit/exception/Exceptions.h"
-#include "eckit/config/Resource.h"
-#include "eckit/runtime/Context.h"
+#include "eckit/utils/Translator.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/ElementType.h"
@@ -104,12 +103,12 @@ void write_header_binary(std::ostream& out)
 
 // ----------------------------------------------------------------------------
 template< typename DATATYPE >
-void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& function_space, const field::Field& field, std::ostream& out)
+void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeColumns& function_space, const field::Field& field, std::ostream& out)
 {
   Log::debug() << "writing field " << field.name() << " defined in NodeColumns..." << std::endl;
 
-  bool gather( gmsh.options.get<bool>("gather") );
-  bool binary( !gmsh.options.get<bool>("ascii") );
+  bool gather( gmsh_options.get<bool>("gather") );
+  bool binary( !gmsh_options.get<bool>("ascii") );
   int nlev  = field.levels();
   int ndata = std::min(function_space.nb_nodes(),field.shape(0));
   int nvars = field.stride(0)/nlev;
@@ -131,7 +130,7 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& funct
 
   std::vector<long> lev;
   std::vector<long> gmsh_levels;
-  gmsh.options.get("levels",gmsh_levels);
+  gmsh_options.get("levels",gmsh_levels);
   if( gmsh_levels.empty() || nlev == 1 )
   {
     lev.resize(nlev);
@@ -297,14 +296,14 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodeColumns& funct
 // ----------------------------------------------------------------------------
 template< typename DATATYPE >
 void write_field_nodes(
-    const Gmsh&                            gmsh,
+    const Metadata&                            gmsh_options,
     const functionspace::StructuredColumns& function_space,
     const field::Field&                           field,
     std::ostream&                          out)
 {
     Log::debug() << "writing field " << field.name() << "..." << std::endl;
-    //bool gather(gmsh.options.get<bool>("gather"));
-    bool binary(!gmsh.options.get<bool>("ascii"));
+    //bool gather(gmsh_options.get<bool>("gather"));
+    bool binary(!gmsh_options.get<bool>("ascii"));
 
     int nlev  = field.levels();
     int nvars = field.stride(0) / nlev;
@@ -339,7 +338,7 @@ void write_field_nodes(
 
     std::vector<long> lev;
     std::vector<long> gmsh_levels;
-    gmsh.options.get("levels", gmsh_levels);
+    gmsh_options.get("levels", gmsh_levels);
 
     if (gmsh_levels.empty() || nlev == 1)
     {
@@ -458,11 +457,11 @@ void write_field_nodes(
 // ----------------------------------------------------------------------------
 #if 0
 template< typename DATA_TYPE >
-void write_field_elems(const Gmsh& gmsh, const FunctionSpace& function_space, const field::Field& field, std::ostream& out)
+void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& function_space, const field::Field& field, std::ostream& out)
 {
   Log::info() << "writing field " << field.name() << "..." << std::endl;
-  bool gather( gmsh.options.get<bool>("gather") );
-  bool binary( !gmsh.options.get<bool>("ascii") );
+  bool gather( gmsh_options.get<bool>("gather") );
+  bool binary( !gmsh_options.get<bool>("ascii") );
   int nlev = field.metadata().has("nb_levels") ? field.metadata().get<size_t>("nb_levels") : 1;
   int ndata = field.shape(0);
   int nvars = field.shape(1)/nlev;
@@ -601,28 +600,25 @@ void swap_bytes(char *array, int size, int n)
 Gmsh::Gmsh()
 {
   // which field holds the Nodes
-  options.set<std::string>("nodes", Resource<std::string>("atlas.gmsh.nodes", "lonlat"));
+  options.set<std::string>("nodes", "lonlat");
 
   // Gather fields to one proc before writing
-  options.set<bool>("gather",  Resource<bool>("atlas.gmsh.gather",  false));
+  options.set<bool>("gather", false);
 
   // Output of ghost nodes / elements
-  options.set<bool>("ghost",   Resource<bool>("atlas.gmsh.ghost",   false));
+  options.set<bool>("ghost", false);
 
   // ASCII format (true) or binary (false)
-  options.set<bool>("ascii",   Resource<bool>("atlas.gmsh.ascii",   true ));
+  options.set<bool>("ascii", true );
 
   // Output of elements
-  options.set<bool>("elements",Resource<bool>("atlas.gmsh.elements",true ));
+  options.set<bool>("elements", true);
 
   // Output of edges
-  options.set<bool>("edges",   Resource<bool>("atlas.gmsh.edges",   true ));
-
-  // Radius of the planet
-  options.set<double>("radius",   Resource<bool>("atlas.gmsh.radius", 1.0 ));
+  options.set<bool>("edges", true );
 
   // Levels of fields to use
-  options.set< std::vector<long> >("levels", Resource< std::vector<long> >("atlas.gmsh.levels", std::vector<long>() ) );
+  options.set< std::vector<long> >("levels", std::vector<long>() );
 }
 
 Gmsh::~Gmsh()
@@ -1179,19 +1175,19 @@ void Gmsh::write_delegate(
 
         if (field.datatype() == array::DataType::int32())
         {
-            write_field_nodes<int   >(*this,functionspace,field,file);
+            write_field_nodes<int   >(options,functionspace,field,file);
         }
         else if (field.datatype() == array::DataType::int64())
         {
-            write_field_nodes<long  >(*this,functionspace,field,file);
+            write_field_nodes<long  >(options,functionspace,field,file);
         }
         else if (field.datatype() == array::DataType::real32())
         {
-            write_field_nodes<float >(*this,functionspace,field,file);
+            write_field_nodes<float >(options,functionspace,field,file);
         }
         else if (field.datatype() == array::DataType::real64())
         {
-            write_field_nodes<double>(*this,functionspace,field,file);
+            write_field_nodes<double>(options,functionspace,field,file);
         }
 
         file << std::flush;
@@ -1230,19 +1226,19 @@ void Gmsh::write_delegate(
 
         if (field.datatype() == array::DataType::int32())
         {
-            write_field_nodes<int   >(*this, functionspace, field, file);
+            write_field_nodes<int   >(options, functionspace, field, file);
         }
         else if (field.datatype() == array::DataType::int64())
         {
-            write_field_nodes<long  >(*this, functionspace, field, file);
+            write_field_nodes<long  >(options, functionspace, field, file);
         }
         else if (field.datatype() == array::DataType::real32())
         {
-            write_field_nodes<float >(*this, functionspace, field, file);
+            write_field_nodes<float >(options, functionspace, field, file);
         }
         else if (field.datatype() == array::DataType::real64())
         {
-            write_field_nodes<double>(*this, functionspace, field, file);
+            write_field_nodes<double>(options, functionspace, field, file);
         }
 
         file << std::flush;
@@ -1314,7 +1310,7 @@ public:
   static mesh_Mesh* atlas__read_gmsh(char* file_path);
   static void atlas__write_gmsh_mesh(mesh_Mesh* mesh, char* file_path);
   static void atlas__write_gmsh_fieldset(field_FieldSet* fieldset, functionspace_FunctionSpace* function_space, char* file_path, int mode);
-  static void atlas__write_gmsh_field(field_Field* field, functionspace_FunctionSpace* function_space, char* file_path, int mode);    
+  static void atlas__write_gmsh_field(field_Field* field, functionspace_FunctionSpace* function_space, char* file_path, int mode);
 #undef field_Field
 #undef field_FieldSet
 #undef functionspace_NodeColumns

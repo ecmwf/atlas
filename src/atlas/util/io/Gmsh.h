@@ -36,7 +36,7 @@ namespace atlas { namespace output { class Gmsh; } }
 namespace atlas {
 namespace util {
 namespace io {
-  
+
 
 // -----------------------------------------------------------------------------
 
@@ -86,11 +86,11 @@ private:
              const functionspace::FunctionSpace&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
-             
-             
-             
-             
-             
+
+
+
+
+
 
 private:
   /// Write fieldset to file using Nodes functionspace
@@ -125,7 +125,7 @@ private:
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
-public:
+private:
   Metadata options;
 };
 

@@ -15,7 +15,6 @@
 #include <vector>
 #include "eckit/runtime/Context.h"
 #include "eckit/config/Configurable.h"
-#include "eckit/config/Resource.h"
 #include "eckit/geometry/Point3.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
@@ -92,7 +91,7 @@ Structured::Structured(const eckit::Parametrisation& p)
     options.set("unique_pole",unique_pole);
 
   bool three_dimensional;
-  if( p.get("3d",three_dimensional) )
+  if( p.get("three_dimensional",three_dimensional) || p.get("3d",three_dimensional) )
     options.set("3d",three_dimensional);
 
   size_t nb_parts;
@@ -114,43 +113,55 @@ Structured::Structured(const eckit::Parametrisation& p)
   bool ghost_at_end;
   if( p.get("ghost_at_end",ghost_at_end) )
     options.set("ghost_at_end",ghost_at_end);
+
+  std::string partitioner;
+  if( p.get("partitioner",partitioner) )
+  {
+    if( not grid::partitioners::PartitionerFactory::has(partitioner) ) {
+      Log::warning() << "Atlas does not have support for partitioner " << partitioner << ". "
+                     << "Defaulting to use partitioner EqualRegions" << std::endl;
+      partitioner = "EqualRegions";
+    }
+    options.set("partitioner",partitioner);
+  }
 }
 
 
 void Structured::configure_defaults()
 {
   // This option creates a point at the pole when true
-  options.set("include_pole",bool( Resource<bool>("--include_pole;atlas.meshgen.include_pole", false ) ) );
+  options.set( "include_pole", false );
 
   // This option sets the part that will be generated
-  options.set("patch_pole", bool(Resource<bool>("--patch_pole;atlas.meshgen.patch_pole",false ) ) );
+  options.set( "patch_pole", false );
 
   // This option disregards multiple poles in grid (e.g. lonlat up to poles) and connects elements
   // to the first node only. Note this option will only be looked at in case other option
   // "3d"==true
-  options.set("unique_pole", bool(Resource<bool>("--unique_pole;atlas.meshgen.unique_pole",true ) ) );
+  options.set( "unique_pole", true );
 
   // This option creates elements that connect east to west at greenwich meridian
   // when true, instead of creating periodic ghost-points at east boundary when false
-  options.set("3d",bool(Resource<bool>("--three_dimensional;atlas.meshgen.three_dimensional",false ) ));
+  options.set( "3d", false );
 
   // This option sets number of parts the mesh will be split in
-  options.set("nb_parts",eckit::mpi::size());
+  options.set( "nb_parts", eckit::mpi::size() );
 
   // This option sets the part that will be generated
-  options.set("part",eckit::mpi::rank());
+  options.set( "part", eckit::mpi::rank() );
 
   // Experimental option. The result is a non-standard Reduced Gaussian Grid, with a ragged Greenwich line
-  options.set("stagger", bool( Resource<bool>("--stagger;meshgen.stagger", false ) ) );
+  options.set("stagger", false );
 
   // This option sets the maximum angle deviation for a quadrilateral element
   // angle = 30  -->  minimises number of triangles
   // angle = 0   -->  maximises number of triangles
-  options.set<double>("angle", Resource< double > ( "atlas.meshgen.angle", 0. ) );
+  options.set<double>("angle", 0. );
 
-  options.set<bool>("triangulate", Resource< bool > ( "--triangulate;atlas.meshgen.triangulate", false) );
+  options.set<bool>("triangulate", false );
 
   options.set<bool>("ghost_at_end", true );
+
 }
 
 void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
@@ -159,15 +170,12 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
   if( !rg )
     throw eckit::BadCast("Structured can only work with a Structured",Here());
 
-  int nb_parts = options.get<size_t>("nb_parts");
+  size_t nb_parts = options.get<size_t>("nb_parts");
 
-  std::string partitioner_factory = Resource<std::string>("atlas.meshgen.partitioner",std::string("Trans"));
-  if( grid::partitioners::PartitionerFactory::has("Trans") == false ||    // No support for Trans
-      rg->nlat()%2 == 1                               // Odd number of latitudes
-      || nb_parts == 1  )                             // Only one part --> Trans is slower
-  {
-    partitioner_factory = "EqualRegions";
-  }
+  std::string partitioner_factory = "Trans";
+  options.get("partitioner",partitioner_factory);
+  if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
+  if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
 
   grid::partitioners::Partitioner::Ptr partitioner( grid::partitioners::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
   GridDistribution::Ptr distribution( partitioner->distribution() );
