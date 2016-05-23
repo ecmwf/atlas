@@ -24,38 +24,6 @@ std::string rundir()
   return cwd;
 }
 
-namespace deprecated {
-
-// This is to support PantaRhei
-void read_resources()
-{
-  Context::instance().displayName( Resource<std::string>("--name;$ATLAS_DISPLAYNAME","") );
-
-  std::vector<PathName> config_files;
-
-  PathName atlas_config_path ( Resource<std::string>("atlas.configfile;$ATLAS_CONFIGFILE;--atlas_conf","atlas.cfg") );
-  if( ResourceMgr::instance().appendConfig( atlas_config_path ) )
-    config_files.push_back( atlas_config_path );
-
-  PathName runname_config_path (
-    Resource<std::string>("$"+StringTools::upper(Context::instance().runName())+"_CONFIGFILE",
-                          Context::instance().runName()+".cfg") );
-  if( ResourceMgr::instance().appendConfig( runname_config_path ) )
-    config_files.push_back( runname_config_path );
-
-  if( Context::instance().displayName() != Context::instance().runName() )
-  {
-    PathName displayname_config_path(
-      Resource<std::string>(
-         "$"+StringTools::upper(Context::instance().displayName())+"_CONFIGFILE;--conf",
-         Context::instance().displayName()+".cfg") );
-    if( ResourceMgr::instance().appendConfig( displayname_config_path ) )
-      config_files.push_back( displayname_config_path );
-  }
-}
-
-} // namespace deprecated
-
 // ----------------------------------------------------------------------------
 
 void atlas_info( std::ostream& out )
@@ -94,10 +62,9 @@ void atlas_init()
 void atlas_init(const eckit::Parametrisation&)
 {
   atlas_info( Log::debug() );
+
   // Load factories for static linking
   atlas::grid::load();
-
-  deprecated::read_resources();
 }
 
 // ----------------------------------------------------------------------------
@@ -111,7 +78,7 @@ void atlas_init(int argc, char** argv)
       Context::instance().setup(argc, argv);
     if( Context::instance().argc() > 0 )
       Context::instance().runName( PathName(Context::instance().argv(0)).baseName(false) );
-    
+
     long debug(0);
     const char* env_debug = ::getenv("DEBUG");
     if( env_debug ) debug = ::atol(env_debug);
