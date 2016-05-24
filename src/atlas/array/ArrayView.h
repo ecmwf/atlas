@@ -219,9 +219,9 @@ public:
         DATA_TYPE& operator()(const ArrayIdx& idx);
   const ArrayView<DATA_TYPE,1> operator[](size_t i) const;
         ArrayView<DATA_TYPE,1> operator[](size_t i);
-  void operator=(const DATA_TYPE& scalar);
   const ArrayView<DATA_TYPE,1> at(size_t i) const;
-        ArrayView<DATA_TYPE,1> at(size_t i);  void operator=(const DATA_TYPE& scalar);
+        ArrayView<DATA_TYPE,1> at(size_t i);
+  void operator=(const DATA_TYPE& scalar);
 
 // -- Accessors
   const DATA_TYPE* data() const;
