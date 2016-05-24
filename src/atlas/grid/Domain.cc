@@ -63,7 +63,10 @@ bool Domain::contains(double lon, double lat) const
            FloatCompare<double>::isApproximatelyGreaterOrEqual(east_, lon);
 }
 
-Domain Domain::makeGlobal() { return Domain(90.,0.,-90.,360.); }
+const Domain& Domain::makeGlobal() {
+    static Domain global(90.,0.,-90.,360.);
+    return global;
+}
 
 bool Domain::global() const
 {

@@ -62,7 +62,7 @@ public:  // methods
 
     void print(std::ostream&) const;
 
-    static Domain makeGlobal();
+    static const Domain& makeGlobal();
 
     double north() const { return north_; }
     double west() const { return west_; }
