@@ -106,6 +106,7 @@ public: // methods
     const mesh::HybridElements& peaks() const { return *peaks_; }
           mesh::HybridElements& peaks()       { return *peaks_; }
 
+    bool generated() const;
 
 private:  // methods
 

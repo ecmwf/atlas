@@ -105,6 +105,11 @@ void Mesh::createElements()
   ASSERT( edges_.owners() == 2 );
 }
 
+bool Mesh::generated() const {
+  return ! (cells_->size() == 0 && facets_->size() == 0 && ridges_->size() == 0 && peaks_->size() == 0);
+}
+
+
 //-----------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
