@@ -47,7 +47,7 @@ public:  // methods
     Domain(const atlas::grid::BoundBox&);
 
     /// East and West are reduced to the interval [0,360[
-    Domain(double north, double west, double south, double east);
+    Domain(double north = 90, double west = 0, double south = -90, double east = 360);
 
     ~Domain(); // make it virtual once is a virtual base
 
@@ -62,7 +62,7 @@ public:  // methods
 
     void print(std::ostream&) const;
 
-    static const Domain& makeGlobal();
+    static Domain makeGlobal();
 
     double north() const { return north_; }
     double west() const { return west_; }
