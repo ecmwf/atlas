@@ -780,6 +780,8 @@ void Structured::generate_mesh(
   else if (patch_south_pole) {
     ntriags += rg.nlon(rg.nlat()-1)-2;
   }
+  
+  size_t node_numbering_size = nnodes;
   if (three_dimensional) {
     for(size_t jlat = 0; jlat < rg.nlat(); ++jlat)
     {
@@ -798,6 +800,7 @@ void Structured::generate_mesh(
   DEBUG_VAR(nnodes);
   DEBUG_VAR(ntriags);
   DEBUG_VAR(nquads);
+  DEBUG_VAR(options.get<bool>("ghost_at_end"));
 #endif
 
 
@@ -847,8 +850,7 @@ void Structured::generate_mesh(
 
   bool stagger = options.get<bool>("stagger");
 
-
-  std::vector<int> node_numbering(nnodes,-1);
+  std::vector<int> node_numbering(node_numbering_size,-1);
   if( options.get<bool>("ghost_at_end") )
   {
     std::vector< GhostNode > ghost_nodes;
