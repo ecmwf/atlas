@@ -67,6 +67,11 @@ const Domain& Grid::domain() const
   return domain_;
 }
 
+
+void Grid::domain(const Domain& domain) {
+  domain_ = domain;
+}
+
 Grid::uid_t Grid::uniqueId() const {
   if (uid_.empty()) {
     std::ostringstream s;

@@ -90,6 +90,9 @@ class Grid : public eckit::Owned, public internals::Registered<Grid> {
   /// @return area which contains the grid
   virtual const Domain& domain() const;
 
+  /// Set the domain
+  virtual void domain(const Domain& domain);
+
   /// @return number of grid points
   /// @note This methods should have constant access time, if necessary derived
   //        classes should compute it at construction
