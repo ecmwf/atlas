@@ -73,7 +73,6 @@ Unstructured::Unstructured( std::vector< Point > *pts ) :
         lon_max = std::max( lon_max, p[n].lon() );
     }
 
-    bound_box_ = BoundBox( Point(lon_min, lat_min), Point(lon_max, lat_max) );
 }
 
 
@@ -101,12 +100,8 @@ void Unstructured::hash(eckit::MD5 &md5) const {
         md5 << p.lon() << p.lat();
     }
 
-    bound_box_.hash(md5);
 }
 
-BoundBox Unstructured::boundingBox() const {
-    return bound_box_;
-}
 
 
 size_t Unstructured::npts() const {
@@ -131,11 +126,6 @@ eckit::Properties Unstructured::spec() const {
 
     cached_spec_->set("grid_type",gridType());
 
-    BoundBox bbox = boundingBox();
-    cached_spec_->set("bbox_s", bbox.min().lat());
-    cached_spec_->set("bbox_w", bbox.min().lon());
-    cached_spec_->set("bbox_n", bbox.max().lat());
-    cached_spec_->set("bbox_e", bbox.max().lon());
 
     std::vector<double> coords;
     coords.resize(2*npts());

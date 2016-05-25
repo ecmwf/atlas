@@ -67,13 +67,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   BOOST_CHECK_EQUAL(gridptr->npts(), 8192);
   BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gaussian");
 
-  // Add bounding box to spec
-  BoundBox bbox( 90., 0., 180., 0.);
-  spec.set("bbox_s", bbox.min().lat());
-  spec.set("bbox_w", bbox.min().lon());
-  spec.set("bbox_n", bbox.max().lat());
-  spec.set("bbox_e", bbox.max().lon());
-  gridptr = Grid::Ptr( Grid::create(spec) );
+
 
 }
 

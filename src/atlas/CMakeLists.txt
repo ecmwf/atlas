@@ -32,8 +32,6 @@ atlas.cc
 )
 
 list( APPEND atlas_grid_srcs
-grid/BoundBox.h
-grid/BoundBox.cc
 grid/Domain.h
 grid/Domain.cc
 grid/Grid.h
@@ -128,8 +126,6 @@ grid/global/gaussian/classic/N4000.cc  # TL7999
 grid/global/gaussian/classic/N8000.cc  # TL15999
 grid/local/Local.h
 grid/local/Local.cc
-grid/deprecated/LocalGrid.h
-grid/deprecated/LocalGrid.cc
 grid/deprecated/RotatedGrid.h
 grid/deprecated/RotatedGrid.cc
 grid/partitioners/EqualRegionsPartitioner.h

@@ -64,7 +64,6 @@ class RotatedGrid : public Grid {
 
     virtual ~RotatedGrid();
 
-    virtual BoundBox boundingBox() const;
     virtual size_t npts() const;
 
     virtual void lonlat( std::vector<Point>& ) const;

@@ -90,12 +90,6 @@ eckit::MD5::digest_t Grid::hash() const {
   return hash_;
 }
 
-BoundBox Grid::boundingBox() const
-{
-    NOTIMP;
-    return BoundBox();
-}
-
 void Grid::fillLonLat(double array[], size_t arraySize) const
 {
     const size_t size = npts()*2;

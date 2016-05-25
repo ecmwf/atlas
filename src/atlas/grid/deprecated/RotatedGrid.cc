@@ -58,9 +58,6 @@ void RotatedGrid::hash(eckit::MD5& md5) const {
   md5.add(south_pole_rotation_angle_);
 }
 
-BoundBox RotatedGrid::boundingBox() const {
-    NOTIMP;
-}
 
 size_t RotatedGrid::npts() const {
     return grid_->npts();

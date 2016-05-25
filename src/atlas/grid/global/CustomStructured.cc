@@ -94,11 +94,6 @@ eckit::Properties CustomStructured::spec() const
   grid_spec.set("pl",        eckit::makeVectorValue(pl()));
   grid_spec.set("lon_min",   eckit::makeVectorValue(lonmin_));
 
-  BoundBox bbox = boundingBox();
-  grid_spec.set("bbox_s", bbox.min().lat());
-  grid_spec.set("bbox_w", bbox.min().lon());
-  grid_spec.set("bbox_n", bbox.max().lat());
-  grid_spec.set("bbox_e", bbox.max().lon());
 
   if( N() != 0 )
     grid_spec.set("N", N() );

@@ -11,21 +11,11 @@
 #include "eckit/utils/MD5.h"
 #include "eckit/types/FloatCompare.h"
 #include "atlas/grid/Domain.h"
-#include "atlas/grid/BoundBox.h"
 
 using eckit::FloatCompare;
 
 namespace atlas {
 namespace grid {
-
-Domain::Domain(const atlas::grid::BoundBox& bbox) :
-    north_(bbox.north()),
-    west_(bbox.west()),
-    south_(bbox.south()),
-    east_(bbox.east())
-{
-    normalise();
-}
 
 Domain::Domain(double north, double west, double south, double east) :
   north_(north),

@@ -46,8 +46,6 @@ public:
 
   Structured();
 
-  virtual BoundBox boundingBox() const;
-
   virtual size_t npts() const;
 
   virtual void lonlat( std::vector<Point>& ) const;
@@ -115,8 +113,6 @@ protected:
   std::vector<long>   pl_;     ///<! Number of points per latitude
 
   std::vector<double> lonmin_; ///<! Value of minimum longitude per latitude [default=0]
-
-  BoundBox            bounding_box_;  ///<! bounding box cache
 
 private:
   std::vector<double> lon_inc_; ///<! Value of longitude increment

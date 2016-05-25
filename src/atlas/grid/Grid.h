@@ -27,7 +27,6 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/utils/MD5.h"
-#include "atlas/grid/BoundBox.h"
 #include "atlas/grid/Domain.h"
 #include "atlas/util/Config.h"
 #include "atlas/internals/ObjectRegistry.h"
@@ -81,11 +80,6 @@ class Grid : public eckit::Owned, public internals::Registered<Grid> {
   /// @returns the hash of the information that makes this Grid unique
   eckit::MD5::digest_t hash() const;
 
-  ///< @todo not necessary?
-
-  /// @return bounding box of all lonlat points,
-  /// @note this function will compute brute-force the minmax lonlat values over all the points
-  virtual BoundBox boundingBox() const;
 
   /// @return area which contains the grid
   virtual const Domain& domain() const;
