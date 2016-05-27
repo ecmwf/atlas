@@ -25,21 +25,21 @@
 namespace atlas {
 namespace mesh {
 
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 Mesh* Mesh::create( const eckit::Parametrisation& params )
 {
   return new Mesh(params);
 }
 
-//-----------------------------------------------------------------------------
+
 
 Mesh* Mesh::create( const grid::Grid& grid, const eckit::Parametrisation& params )
 {
   return new Mesh(grid,params);
 }
 
-//-----------------------------------------------------------------------------
+
 
 Mesh::Mesh( const eckit::Parametrisation& ):
   dimensionality_(2), grid_(NULL)
@@ -48,7 +48,7 @@ Mesh::Mesh( const eckit::Parametrisation& ):
   createElements();
 }
 
-//-----------------------------------------------------------------------------
+
 
 Mesh::Mesh(const grid::Grid& grid, const eckit::Parametrisation& ) :
    dimensionality_(2), grid_(&grid)
@@ -58,13 +58,11 @@ Mesh::Mesh(const grid::Grid& grid, const eckit::Parametrisation& ) :
   createElements();
 }
 
-//-----------------------------------------------------------------------------
 
 Mesh::~Mesh()
 {
 }
 
-//-----------------------------------------------------------------------------
 
 mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
 {
@@ -75,19 +73,15 @@ mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
   return nodes();
 }
 
-//-----------------------------------------------------------------------------
 
 void Mesh::prettyPrint(std::ostream& os) const
 {
 }
 
-//-----------------------------------------------------------------------------
-
 void Mesh::print(std::ostream& os) const
 {
 }
 
-//-----------------------------------------------------------------------------
 
 void Mesh::createElements()
 {
@@ -109,8 +103,7 @@ bool Mesh::generated() const {
   return ! (cells_->size() == 0 && facets_->size() == 0 && ridges_->size() == 0 && peaks_->size() == 0);
 }
 
-
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
 

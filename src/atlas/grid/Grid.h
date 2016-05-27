@@ -114,11 +114,6 @@ class Grid : public eckit::Owned, public internals::Registered<Grid> {
 
   virtual bool same(const grid::Grid&) const;
 
-  /// @TODO: eventually remove the Mesh from the Grid
-
-  void set_mesh(const mesh::Mesh& mesh);
-  mesh::Mesh& mesh() const;
-
 protected:  // methods
 
   /// Fill provided memory buffer with the grid points, as (lon,lat) values
@@ -148,8 +143,6 @@ protected:  // members
   atlas::grid::Domain domain_;
 
 private:  // members
-
-  mutable eckit::SharedPtr<mesh::Mesh> mesh_; ///< @todo to be removed
 
   mutable uid_t                  uid_;  ///< cache the unique ID
   mutable eckit::MD5::digest_t   hash_; ///< cache the hash

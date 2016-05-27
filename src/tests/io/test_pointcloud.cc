@@ -30,7 +30,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 
 namespace {
@@ -144,8 +144,8 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file )
   BOOST_REQUIRE(grid);
 
   BOOST_CHECK_EQUAL(grid->npts(),test_arrays::nb_pts);
-  BOOST_CHECK_EQUAL(grid->mesh().nodes().has_field("f_1"), true);
-  BOOST_CHECK_EQUAL(grid->mesh().nodes().has_field("f3"),  true);
+  BOOST_CHECK_EQUAL(mesh->nodes().has_field("f_1"), true);
+  BOOST_CHECK_EQUAL(mesh->nodes().has_field("f3"),  true);
 }
 
 
@@ -165,8 +165,8 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_rows )
   BOOST_REQUIRE(grid);
 
   BOOST_CHECK_EQUAL(grid->npts(),test_arrays::nb_pts-2);
-  BOOST_CHECK_EQUAL(grid->mesh().nodes().has_field("f_1"), true);
-  BOOST_CHECK_EQUAL(grid->mesh().nodes().has_field("f3"),  true);
+  BOOST_CHECK_EQUAL(mesh->nodes().has_field("f_1"), true);
+  BOOST_CHECK_EQUAL(mesh->nodes().has_field("f3"),  true);
 }
 
 
@@ -183,8 +183,8 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_columns_1 )
   BOOST_REQUIRE(grid);
 
   BOOST_CHECK_EQUAL(grid->npts(),test_arrays::nb_pts);
-  BOOST_CHECK_EQUAL(grid->mesh().nodes().has_field("f_1"), true);
-  BOOST_CHECK_EQUAL(grid->mesh().nodes().has_field("f3"),  false);
+  BOOST_CHECK_EQUAL(mesh->nodes().has_field("f_1"), true);
+  BOOST_CHECK_EQUAL(mesh->nodes().has_field("f3"),  false);
 }
 
 
@@ -201,8 +201,8 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_columns_2 )
   BOOST_REQUIRE(grid);
 
   BOOST_CHECK_EQUAL(grid->npts(),test_arrays::nb_pts);
-  BOOST_CHECK_EQUAL(grid->mesh().nodes().has_field("f_1"), false);
-  BOOST_CHECK_EQUAL(grid->mesh().nodes().has_field("f3"),  false);
+  BOOST_CHECK_EQUAL(mesh->nodes().has_field("f_1"), false);
+  BOOST_CHECK_EQUAL(mesh->nodes().has_field("f3"),  false);
 }
 
 
@@ -375,7 +375,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
 
   BOOST_CHECK_EQUAL(grid->npts(),test_vectors::nb_pts);
 
-  mesh::Nodes& nodes = grid->mesh().nodes();
+  mesh::Nodes& nodes = mesh->nodes();
   BOOST_CHECK_EQUAL(nodes.has_field("my_super_field"),       true);
   BOOST_CHECK_EQUAL(nodes.has_field("_StRaNgE_FiElD_NaMe_"), false);
 
@@ -431,16 +431,16 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
 
   // (header section)
   BOOST_CHECK_EQUAL(grid_from_FieldSet->npts(),                                                     test_arrays::nb_pts);
-  BOOST_CHECK_EQUAL(grid_from_FieldSet->mesh().nodes().has_field("my_super_field"),       true );
-  BOOST_CHECK_EQUAL(grid_from_FieldSet->mesh().nodes().has_field("_StRaNgE_FiElD_NaMe_"), false);
+  BOOST_CHECK_EQUAL(mesh_from_FieldSet->nodes().has_field("my_super_field"),       true );
+  BOOST_CHECK_EQUAL(mesh_from_FieldSet->nodes().has_field("_StRaNgE_FiElD_NaMe_"), false);
 
   BOOST_CHECK_EQUAL(grid_from_Grid    ->npts(),                                                     test_arrays::nb_pts);
-  BOOST_CHECK_EQUAL(grid_from_Grid    ->mesh().nodes().has_field("my_super_field"),       true );
-  BOOST_CHECK_EQUAL(grid_from_Grid    ->mesh().nodes().has_field("_StRaNgE_FiElD_NaMe_"), false);
+  BOOST_CHECK_EQUAL(mesh_from_FieldSet->nodes().has_field("my_super_field"),       true );
+  BOOST_CHECK_EQUAL(mesh_from_FieldSet->nodes().has_field("_StRaNgE_FiElD_NaMe_"), false);
 
   // (data section: guarantee data are from different places, to make checks useful)
-  const field::Field& field_from_FieldSet(grid_from_FieldSet->mesh().nodes().field("my_super_field"));
-  const field::Field& field_from_Grid    (grid_from_Grid    ->mesh().nodes().field("my_super_field"));
+  const field::Field& field_from_FieldSet(mesh_from_FieldSet->nodes().field("my_super_field"));
+  const field::Field& field_from_Grid    (mesh_from_FieldSet->nodes().field("my_super_field"));
   BOOST_CHECK_NE( field.data< double >(), field_from_FieldSet.data< double >() );
   BOOST_CHECK_NE( field.data< double >(), field_from_Grid    .data< double >() );
 
