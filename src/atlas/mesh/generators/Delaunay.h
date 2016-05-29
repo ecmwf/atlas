@@ -15,41 +15,42 @@
 
 namespace atlas {
 namespace mesh {
-    class Mesh;
-} }
+class Mesh;
+}
+}
 
 namespace atlas {
 namespace grid {
-    class Grid;
-} }
+class Grid;
+}
+}
 
 namespace atlas {
 namespace mesh {
 namespace generators {
 
-// -----------------------------------------------------------------------------
-class Delaunay : public MeshGenerator {
+//----------------------------------------------------------------------------------------------------------------------
 
+class Delaunay : public MeshGenerator {
 public:
 
-    Delaunay();
-    Delaunay(const eckit::Parametrisation& p);
+  Delaunay();
+  Delaunay(const eckit::Parametrisation& p);
 
-    virtual ~Delaunay();
+  virtual ~Delaunay();
 
-    virtual void generate(
-        const grid::Grid& g,
-        const grid::GridDistribution&,
-        Mesh& mesh) const;
-    virtual void generate(
-        const grid::Grid& g,
-        Mesh& mesh) const;
+private: // methods
 
+  virtual void hash(eckit::MD5&) const;
+
+  virtual void generate(const grid::Grid& g, const grid::GridDistribution&, Mesh& mesh) const;
+  virtual void generate(const grid::Grid& g, Mesh& mesh) const;
 };
-// -----------------------------------------------------------------------------
 
-} // namespace generators
-} // namespace mesh
-} // namespace atlas
+//----------------------------------------------------------------------------------------------------------------------
+
+}  // namespace generators
+}  // namespace mesh
+}  // namespace atlas
 
 #endif
