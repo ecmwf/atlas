@@ -44,8 +44,6 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
       lon_min = std::min( lon_min, p[n].lon() );
       lon_max = std::max( lon_max, p[n].lon() );
   }
-  set_mesh(m);
-  const_cast<mesh::Mesh&>(m).set_grid(*this);
 }
 
 

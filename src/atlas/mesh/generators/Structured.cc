@@ -205,7 +205,6 @@ void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& 
   generate_region(*rg,distribution,mypart,region);
 
   generate_mesh(*rg,distribution,region,mesh);
-  mesh.set_grid(*rg);
 }
 
 

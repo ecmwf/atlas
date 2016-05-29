@@ -25,69 +25,59 @@
 namespace atlas {
 namespace mesh {
 
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 Mesh* Mesh::create( const eckit::Parametrisation& params )
 {
   return new Mesh(params);
 }
 
-//-----------------------------------------------------------------------------
+
 
 Mesh* Mesh::create( const grid::Grid& grid, const eckit::Parametrisation& params )
 {
   return new Mesh(grid,params);
 }
 
-//-----------------------------------------------------------------------------
+
 
 Mesh::Mesh( const eckit::Parametrisation& ):
-  dimensionality_(2), grid_(NULL)
+  dimensionality_(2)
 {
   nodes_.reset( new mesh::Nodes() );
   createElements();
 }
 
-//-----------------------------------------------------------------------------
-
 Mesh::Mesh(const grid::Grid& grid, const eckit::Parametrisation& ) :
-   dimensionality_(2), grid_(&grid)
+   dimensionality_(2)
 {
   nodes_.reset( new mesh::Nodes() );
   createNodes(grid);
   createElements();
 }
 
-//-----------------------------------------------------------------------------
 
 Mesh::~Mesh()
 {
 }
 
-//-----------------------------------------------------------------------------
 
 mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
 {
-  set_grid(g);
   size_t nb_nodes = g.npts();
   nodes().resize(nb_nodes);
   g.fillLonLat(nodes().lonlat().data<double>(), nb_nodes*2);
   return nodes();
 }
 
-//-----------------------------------------------------------------------------
-
 void Mesh::prettyPrint(std::ostream& os) const
 {
 }
-
-//-----------------------------------------------------------------------------
 
 void Mesh::print(std::ostream& os) const
 {
 }
 
-//-----------------------------------------------------------------------------
 
 void Mesh::createElements()
 {
@@ -109,8 +99,7 @@ bool Mesh::generated() const {
   return ! (cells_->size() == 0 && facets_->size() == 0 && ridges_->size() == 0 && peaks_->size() == 0);
 }
 
-
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
 

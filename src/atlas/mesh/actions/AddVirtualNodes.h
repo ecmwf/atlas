@@ -13,18 +13,25 @@
 
 namespace atlas {
 
-class Mesh;
+namespace grid { class Grid; }
 
 namespace mesh {
+
+class Mesh;
+
 namespace actions {
+
+//----------------------------------------------------------------------------------------------------------------------
 
 /// Adds virtual nodes to the mesh that aren't contained in the Grid Domain
 class AddVirtualNodes {
 public:
 
-    void operator()(Mesh&) const;
+    void operator()(const atlas::grid::Grid&, atlas::mesh::Mesh&) const;
 
 };
+
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace actions
 } // namespace mesh

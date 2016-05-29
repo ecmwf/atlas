@@ -71,7 +71,7 @@ public: // methods
     static Mesh* create( const grid::Grid&, const eckit::Parametrisation& = util::Config() );
 
     /// @brief Construct a mesh from a Stream (serialization)
-//    explicit Mesh(Stream&);
+    //  explicit Mesh(Stream&);
 
     /// @brief Construct a empty Mesh
     explicit Mesh(const eckit::Parametrisation& = util::Config());
@@ -136,14 +136,6 @@ private: // members
     eckit::SharedPtr<mesh::HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
 
     size_t dimensionality_;
-
-public: // members to be removed
-    bool has_grid() const { return grid_; }
-    void set_grid( const grid::Grid& p ) { grid_ = &p; }
-    const grid::Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
-private: // members to be removed
-    const grid::Grid* grid_;
-
 };
 
 //----------------------------------------------------------------------------------------------------------------------

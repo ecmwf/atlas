@@ -75,10 +75,8 @@ void Delaunay::generate(const grid::Grid& g, Mesh& mesh) const
     gidx(jnode) = jnode+1;
 
   actions::BuildXYZField()(mesh);
-  actions::AddVirtualNodes()(mesh);    ///< does nothing if global domain
+  actions::AddVirtualNodes()(g, mesh);    ///< does nothing if global domain
   actions::BuildConvexHull3D()(mesh);
-
-  mesh.set_grid(g);
 }
 
 namespace {

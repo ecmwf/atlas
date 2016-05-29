@@ -107,19 +107,19 @@ void Grid::fillLonLat(std::vector<double>& v) const {
     copyLonLatMemory(&v[0], size_t(sizeof(double)*v.size()));
 }
 
-void Grid::set_mesh(const mesh::Mesh& mesh)
-{
-  mesh_ = eckit::SharedPtr<mesh::Mesh>(const_cast<mesh::Mesh*>(&mesh));
-}
+//void Grid::set_mesh(const mesh::Mesh& mesh)
+//{
+//  mesh_ = eckit::SharedPtr<mesh::Mesh>(const_cast<mesh::Mesh*>(&mesh));
+//}
 
-mesh::Mesh& Grid::mesh() const {
-  if( !mesh_ )
-  {
-    mesh_.reset( new mesh::Mesh() );
-    mesh_->createNodes(*this);
-  }
-  return *mesh_;
-}
+//mesh::Mesh& Grid::mesh() const {
+//  if( !mesh_ )
+//  {
+//    mesh_.reset( new mesh::Mesh() );
+//    mesh_->createNodes(*this);
+//  }
+//  return *mesh_;
+//}
 
 size_t Grid::copyLonLatMemory(double* pts, size_t size) const
 {

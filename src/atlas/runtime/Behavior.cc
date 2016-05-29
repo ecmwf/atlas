@@ -1,5 +1,6 @@
 #include <typeinfo>
 #include <unistd.h>
+
 #include "eckit/log/ChannelBuffer.h"
 #include "eckit/log/CallbackChannel.h"
 #include "eckit/log/MultiChannel.h"

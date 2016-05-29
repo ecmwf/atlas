@@ -20,6 +20,7 @@
 #include <vector>
 #include <cmath>
 #include <string>
+
 #include "eckit/exception/Exceptions.h"
 #include "eckit/value/Properties.h"
 #include "eckit/geometry/Point2.h"
@@ -27,6 +28,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/utils/MD5.h"
+
 #include "atlas/grid/Domain.h"
 #include "atlas/util/Config.h"
 #include "atlas/internals/ObjectRegistry.h"
@@ -36,7 +38,7 @@ namespace atlas { namespace mesh { class Mesh; } }
 namespace atlas {
 namespace grid {
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 class Grid : public eckit::Owned, public internals::Registered<Grid> {
 
@@ -114,11 +116,6 @@ class Grid : public eckit::Owned, public internals::Registered<Grid> {
 
   virtual bool same(const grid::Grid&) const;
 
-  /// @TODO: eventually remove the Mesh from the Grid
-
-  void set_mesh(const mesh::Mesh& mesh);
-  mesh::Mesh& mesh() const;
-
 protected:  // methods
 
   /// Fill provided memory buffer with the grid points, as (lon,lat) values
@@ -149,14 +146,12 @@ protected:  // members
 
 private:  // members
 
-  mutable eckit::SharedPtr<mesh::Mesh> mesh_; ///< @todo to be removed
-
   mutable uid_t                  uid_;  ///< cache the unique ID
   mutable eckit::MD5::digest_t   hash_; ///< cache the hash
 
 };
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace atlas

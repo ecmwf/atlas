@@ -105,9 +105,9 @@ protected:
 
   size_t              npts_;          ///<! Total number of unique points in the grid
 
-  std::string         grid_type_;
+  std::string         grid_type_; ///< to be removed -- only instantiate leaf classees
 
-  std::string         shortName_;
+  std::string         shortName_; ///< to be removed -- only instantiate leaf classees
 
   std::vector<double> lat_;    ///<! Latitude values
   std::vector<long>   pl_;     ///<! Number of points per latitude
