@@ -13,8 +13,10 @@
 
 #include <iosfwd>
 #include <string>
+
 #include "eckit/memory/Owned.h"
 #include "eckit/config/Parametrisation.h"
+
 #include "atlas/util/Config.h"
 
 namespace atlas {
@@ -32,7 +34,7 @@ namespace atlas {
 namespace mesh {
 namespace generators {
 
-// -----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 class MeshGenerator : public eckit::Owned {
 
@@ -59,10 +61,11 @@ public:
 
 };
 
-
+//----------------------------------------------------------------------------------------------------------------------
 
 class MeshGeneratorFactory {
-  public:
+public:
+
     /*!
      * \brief build MeshGenerator with factory key, and default options
      * \return mesh generator
@@ -81,18 +84,20 @@ class MeshGeneratorFactory {
      */
     static void list(std::ostream &);
 
-  private:
+private:
+
     std::string name_;
     virtual MeshGenerator* make() = 0 ;
     virtual MeshGenerator* make(const eckit::Parametrisation&) = 0 ;
 
-  protected:
+protected:
 
     MeshGeneratorFactory(const std::string&);
     virtual ~MeshGeneratorFactory();
 
 };
 
+//----------------------------------------------------------------------------------------------------------------------
 
 template<class T>
 class MeshGeneratorBuilder : public MeshGeneratorFactory {
@@ -106,7 +111,7 @@ class MeshGeneratorBuilder : public MeshGeneratorFactory {
     MeshGeneratorBuilder(const std::string& name) : MeshGeneratorFactory(name) {}
 };
 
-// -----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 #define Parametrisation eckit::Parametrisation
 #define grid_Grid grid::Grid
@@ -122,6 +127,8 @@ Mesh* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid
 #undef grid_Grid
 #undef grid_GridDistribution
 #undef Parametrisation
+
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace generators
 } // namespace mesh
