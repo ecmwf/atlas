@@ -42,16 +42,14 @@ Mesh* Mesh::create( const grid::Grid& grid, const eckit::Parametrisation& params
 
 
 Mesh::Mesh( const eckit::Parametrisation& ):
-  dimensionality_(2), grid_(NULL)
+  dimensionality_(2)
 {
   nodes_.reset( new mesh::Nodes() );
   createElements();
 }
 
-
-
 Mesh::Mesh(const grid::Grid& grid, const eckit::Parametrisation& ) :
-   dimensionality_(2), grid_(&grid)
+   dimensionality_(2)
 {
   nodes_.reset( new mesh::Nodes() );
   createNodes(grid);
@@ -66,13 +64,11 @@ Mesh::~Mesh()
 
 mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
 {
-  set_grid(g);
   size_t nb_nodes = g.npts();
   nodes().resize(nb_nodes);
   g.fillLonLat(nodes().lonlat().data<double>(), nb_nodes*2);
   return nodes();
 }
-
 
 void Mesh::prettyPrint(std::ostream& os) const
 {

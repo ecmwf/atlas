@@ -20,6 +20,7 @@
 #include <vector>
 #include <cmath>
 #include <string>
+
 #include "eckit/exception/Exceptions.h"
 #include "eckit/value/Properties.h"
 #include "eckit/geometry/Point2.h"
@@ -27,6 +28,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/utils/MD5.h"
+
 #include "atlas/grid/Domain.h"
 #include "atlas/util/Config.h"
 #include "atlas/internals/ObjectRegistry.h"
@@ -36,7 +38,7 @@ namespace atlas { namespace mesh { class Mesh; } }
 namespace atlas {
 namespace grid {
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 class Grid : public eckit::Owned, public internals::Registered<Grid> {
 
@@ -149,7 +151,7 @@ private:  // members
 
 };
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace atlas
