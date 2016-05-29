@@ -177,6 +177,12 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
   generate( grid, *distribution, mesh );
 }
 
+void Structured::hash(MD5& md5) const
+{
+    md5.add("Structured");
+    options.hash(md5);
+}
+
 void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
 {
   const grid::global::Structured* rg = dynamic_cast<const grid::global::Structured*>(&grid);

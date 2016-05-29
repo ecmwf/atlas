@@ -14,7 +14,9 @@
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
+#include "eckit/utils/MD5.h"
 
+#include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/generators/Structured.h"

@@ -39,7 +39,7 @@ namespace atlas {
 namespace mesh {
 namespace generators {
 
-// -----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 class Structured : public MeshGenerator {
 
@@ -50,9 +50,12 @@ public:
 
   virtual void generate(const grid::Grid&, const grid::GridDistribution&, Mesh&) const;
   virtual void generate(const grid::Grid&, Mesh&) const;
+
   using MeshGenerator::generate;
 
 private:
+
+  virtual void hash(eckit::MD5&) const;
 
   void configure_defaults();
 
@@ -83,7 +86,7 @@ public:
 
 };
 
-// -----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace generators
 } // namespace mesh

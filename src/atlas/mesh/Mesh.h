@@ -15,16 +15,17 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/internals/ObjectRegistry.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"
 
-// -----------------------------------------------------------------------------
-// Forward declarations
-// -----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
+
 namespace atlas {
 namespace grid {
     class Grid;
@@ -52,7 +53,8 @@ namespace mpl {
     class GatherScatter;
     class Checksum;
 } } } }
-// -----------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace mesh {
@@ -67,6 +69,9 @@ public: // methods
 
     static Mesh* create( const eckit::Parametrisation& = util::Config() );
     static Mesh* create( const grid::Grid&, const eckit::Parametrisation& = util::Config() );
+
+    /// @brief Construct a mesh from a Stream (serialization)
+//    explicit Mesh(Stream&);
 
     /// @brief Construct a empty Mesh
     explicit Mesh(const eckit::Parametrisation& = util::Config());

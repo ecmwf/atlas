@@ -19,6 +19,8 @@
 
 #include "atlas/util/Config.h"
 
+namespace eckit { class MD5; }
+
 namespace atlas {
 namespace mesh {
     class Mesh;
@@ -42,6 +44,7 @@ public:
 
   typedef eckit::SharedPtr<MeshGenerator> Ptr;
   typedef atlas::util::Config Parameters;
+
   static MeshGenerator* create(const std::string &, const eckit::Parametrisation & = Parameters());
 
 public:
@@ -49,6 +52,8 @@ public:
     MeshGenerator();
 
     virtual ~MeshGenerator();
+
+    virtual void hash(eckit::MD5&) const = 0;
 
     virtual void generate( const grid::Grid&, const grid::GridDistribution&, Mesh& ) const =0;
     virtual void generate( const grid::Grid&, Mesh& ) const =0;
