@@ -128,6 +128,7 @@ private:  // methods
 private: // members
 
     util::Metadata   metadata_;
+
     eckit::SharedPtr<mesh::Nodes> nodes_;
                                                       // dimensionality : 2D | 3D
                                                       //                  --------

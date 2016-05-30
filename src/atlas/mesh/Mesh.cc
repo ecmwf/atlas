@@ -39,13 +39,12 @@ Mesh* Mesh::create( const grid::Grid& grid, const eckit::Parametrisation& params
     return new Mesh(grid,params);
 }
 
-Mesh::Mesh(eckit::Stream&)
+Mesh::Mesh(eckit::Stream& s)
 {
     NOTIMP;
 }
 
-void Mesh::encode(eckit::Stream& s) const
-{
+void Mesh::encode(eckit::Stream& s) const {
     NOTIMP;
 }
 
