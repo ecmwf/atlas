@@ -70,15 +70,18 @@ public: // methods
     static Mesh* create( const eckit::Parametrisation& = util::Config() );
     static Mesh* create( const grid::Grid&, const eckit::Parametrisation& = util::Config() );
 
-    /// @brief Construct a mesh from a Stream (serialization)
-    //  explicit Mesh(Stream&);
-
     /// @brief Construct a empty Mesh
     explicit Mesh(const eckit::Parametrisation& = util::Config());
 
     /// @brief Construct mesh from grid.
     /// The mesh is global and only has a "nodes" FunctionSpace
     Mesh(const grid::Grid&, const eckit::Parametrisation& = util::Config());
+
+    /// @brief Construct a mesh from a Stream (serialization)
+    explicit Mesh(eckit::Stream&);
+
+    /// @brief Serialization to Stream
+    void encode(eckit::Stream& s) const;
 
     /// Destructor
     /// @note No need to be virtual since this is not a base class.

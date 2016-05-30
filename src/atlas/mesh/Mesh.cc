@@ -36,10 +36,18 @@ Mesh* Mesh::create( const eckit::Parametrisation& params )
 
 Mesh* Mesh::create( const grid::Grid& grid, const eckit::Parametrisation& params )
 {
-  return new Mesh(grid,params);
+    return new Mesh(grid,params);
 }
 
+Mesh::Mesh(eckit::Stream&)
+{
+    NOTIMP;
+}
 
+void Mesh::encode(eckit::Stream& s) const
+{
+    NOTIMP;
+}
 
 Mesh::Mesh( const eckit::Parametrisation& ):
   dimensionality_(2)

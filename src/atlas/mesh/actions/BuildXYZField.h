@@ -28,6 +28,8 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
+//----------------------------------------------------------------------------------------------------------------------
+
 /// Creates a XYZ field from the (lon,lat) field
 class BuildXYZField {
 public:
@@ -42,6 +44,8 @@ private:
     std::string name_;
 
 };
+
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace actions
 } // namespace mesh
