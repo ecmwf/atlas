@@ -36,6 +36,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/internals/Debug.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/grid/partitioners/TransPartitioner.h"
@@ -239,7 +240,6 @@ void Structured::generate_region(const global::Structured& rg,
   n=rg.npts()-1;
   int lat_south=-1;
   for( int jlat=rg.nlat()-1; jlat>=0; --jlat) {
-    //Log::info() << jlat << std::setw(5) << rg.nlon(jlat) << std::endl;
     for( int jlon=rg.nlon(jlat)-1; jlon>=0; --jlon) {
       if( parts.at(n) == mypart ) {
         lat_south=jlat;
@@ -273,7 +273,7 @@ void Structured::generate_region(const global::Structured& rg,
   region.south = lat_south;
 
   array::ArrayShape shape = array::make_shape(region.south-region.north, 4*rg.nlonmax(), 4);
-  // Log::info(Here())  << "allocating elems" <<  "(" << extents.at(0) << "," << extents.at(1) << "," << extents.at(2) << ")" << std::endl;
+
   region.elems.resize(shape);
   region.elems = -1;
 
@@ -287,8 +287,7 @@ void Structured::generate_region(const global::Structured& rg,
   for (int jlat=lat_north; jlat<lat_south; ++jlat)
   {
 //    std::stringstream filename; filename << "/tmp/debug/"<<jlat;
-//    std::ofstream debug_file;
-//    debug_file.open(filename.str().c_str(), std::ios_base::out);
+
     size_t ilat, latN, latS;
     size_t ipN1, ipN2, ipS1, ipS2;
     double xN1, xN2, yN, xS1, xS2, yS;
@@ -327,7 +326,7 @@ void Structured::generate_region(const global::Structured& rg,
 
 #if DEBUG_OUTPUT
     Log::info(Here())  << "=================\n";
-    //debug_file  << "=================\n";
+    Log::info(Here())  << "latN, latS : " << latN << ", " << latS << '\n';
 #endif
 
     while (true)
@@ -372,7 +371,6 @@ void Structured::generate_region(const global::Structured& rg,
 
 #if DEBUG_OUTPUT
       Log::info(Here())  << "-------\n";
-      //debug_file << "-------\n";
 #endif
       // Log::info(Here())  << "  access  " << region.elems.stride(0)*(jlat-region.north) + region.elems.stride(1)*jelem + 5 << std::endl;
 //      Log::info(Here())  << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2 << ")  " << std::endl;
@@ -454,7 +452,6 @@ void Structured::generate_region(const global::Structured& rg,
 
 #if DEBUG_OUTPUT
       DEBUG_VAR(jelem);
-      //debug_file << "jelem = " << jelem << '\n';
 #endif
 
       array::ArrayView<int,1> elem = lat_elems_view.at(jelem);
@@ -465,8 +462,6 @@ void Structured::generate_region(const global::Structured& rg,
 #if DEBUG_OUTPUT
         Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << '\n';
         Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << '\n';
-        //debug_file << "          " << ipN1 << "  " << ipN2 << '\n';
-        //debug_file << "          " << ipS1 << "  " << ipS2 << '\n';
 #endif
         elem.at(0) = ipN1;
         elem.at(1) = ipS1;
@@ -525,6 +520,12 @@ void Structured::generate_region(const global::Structured& rg,
           region.lat_end.at(latN) = std::max<int>(region.lat_end.at(latN), ipN2);
           region.lat_end.at(latS) = std::max<int>(region.lat_end.at(latS), ipS2);
         }
+        else
+        {
+#if DEBUG_OUTPUT
+          Log::info(Here()) << "Quad belongs to other partition" << std::endl;
+#endif
+        }
         ipN1=ipN2;
         ipS1=ipS2;
       }
@@ -534,8 +535,6 @@ void Structured::generate_region(const global::Structured& rg,
 #if DEBUG_OUTPUT
         Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << '\n';
         Log::info(Here())  << "          " << ipS1 << '\n';
-        //debug_file  << "          " << ipN1 << "  " << ipN2 << '\n';
-        //debug_file  << "          " << ipS1 << '\n';
 #endif
         elem.at(0) = ipN1;
         elem.at(1) = ipS1;
@@ -600,6 +599,12 @@ void Structured::generate_region(const global::Structured& rg,
           region.lat_end.at(latN) = std::max<int>(region.lat_end.at(latN), ipN2);
           region.lat_end.at(latS) = std::max<int>(region.lat_end.at(latS), ipS1);
         }
+        else
+        {
+#if DEBUG_OUTPUT
+          Log::info(Here()) << "Triag belongs to other partition" << std::endl;
+#endif
+        }
         ipN1=ipN2;
         // and ipS1=ipS1;
 
@@ -610,8 +615,6 @@ void Structured::generate_region(const global::Structured& rg,
 #if DEBUG_OUTPUT
         Log::info(Here())  << "          " << ipN1 << '\n';
         Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << '\n';
-        //debug_file  << "          " << ipN1 << '\n';
-        //debug_file  << "          " << ipS1 << "  " << ipS2 << '\n';
 #endif
         elem.at(0) = ipN1;
         elem.at(1) = ipS1;
@@ -682,6 +685,12 @@ void Structured::generate_region(const global::Structured& rg,
           region.lat_end.at(latN) = std::max<int>(region.lat_end.at(latN), ipN1);
           region.lat_end.at(latS) = std::max<int>(region.lat_end.at(latS), ipS2);
         }
+        else
+        {
+#if DEBUG_OUTPUT
+          Log::info(Here()) << "Triag belongs to other partition" << std::endl;
+#endif
+        }
         ipS1=ipS2;
         // and ipN1=ipN1;
 
@@ -694,6 +703,15 @@ void Structured::generate_region(const global::Structured& rg,
       ipS2 = std::min(endS,ipS1+1);
     }
     region.nb_lat_elems.at(jlat) = jelem;
+#if DEBUG_OUTPUT
+    DEBUG_VAR(region.nb_lat_elems.at(jlat));
+#endif
+    if( region.nb_lat_elems.at(jlat) == 0 && latN == size_t(region.north) ) {
+      ++region.north;
+    }
+    if( region.nb_lat_elems.at(jlat) == 0 && latS == size_t(region.south) ) {
+      --region.south;
+    }
     region.lat_end.at(latN) = std::min(region.lat_end.at(latN), int(rg.nlon(latN)-1));
     region.lat_end.at(latS) = std::min(region.lat_end.at(latS), int(rg.nlon(latS)-1));
     if( yN == 90 && unique_pole )
@@ -701,8 +719,11 @@ void Structured::generate_region(const global::Structured& rg,
     if( yS == -90 && unique_pole )
       region.lat_end.at(latS) = rg.nlon(latS)-1;
 
-    //debug_file.close();
-
+    if( region.nb_lat_elems.at(jlat) > 0 )
+    {
+      region.lat_end.at(latN) = std::max(region.lat_end.at(latN), region.lat_begin.at(latN));
+      region.lat_end.at(latS) = std::max(region.lat_end.at(latS), region.lat_begin.at(latS));
+    }
   } // for jlat
 
 //  Log::info(Here())  << "nb_triags = " << region.ntriags << std::endl;
@@ -711,7 +732,7 @@ void Structured::generate_region(const global::Structured& rg,
 
   int nb_region_nodes = 0;
 
-  for( int jlat=lat_north; jlat<=lat_south; ++jlat ) {
+  for( int jlat=region.north; jlat<=region.south; ++jlat ) {
     region.lat_begin.at(jlat) = std::max( 0, region.lat_begin.at(jlat) );
     nb_region_nodes += region.lat_end.at(jlat)-region.lat_begin.at(jlat)+1;
 
@@ -785,7 +806,7 @@ void Structured::generate_mesh(
   else if (patch_south_pole) {
     ntriags += rg.nlon(rg.nlat()-1)-2;
   }
-  
+
   size_t node_numbering_size = nnodes;
   if (three_dimensional) {
     for(size_t jlat = 0; jlat < rg.nlat(); ++jlat)
@@ -863,12 +884,20 @@ void Structured::generate_mesh(
     int node_number=0;
     int jnode=0;
     l=0;
+    ASSERT( region.south >= region.north );
     for( int jlat = region.north; jlat <= region.south; ++jlat )
     {
       int ilat=jlat-region.north;
       offset_loc.at(ilat)=l;
       l+=region.lat_end.at(jlat)-region.lat_begin.at(jlat)+1;
 
+
+      if( region.lat_end.at(jlat) < region.lat_begin.at(jlat) )
+      {
+        DEBUG_VAR(jlat);
+        DEBUG_VAR(region.lat_begin[jlat]);
+        DEBUG_VAR(region.lat_end[jlat]);
+      }
       for( int jlon=region.lat_begin.at(jlat); jlon<=region.lat_end.at(jlat); ++jlon )
       {
         n = offset_glb.at(jlat) + jlon;
