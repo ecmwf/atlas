@@ -65,6 +65,11 @@ contains
   procedure :: levels => Field__levels
   procedure :: kind => Field__kind
   generic :: shape => shape_array, shape_idx
+
+  procedure :: rename
+  procedure :: set_levels
+  procedure :: set_functionspace
+
   procedure, public :: delete => atlas_Field__delete
   procedure, public :: copy => atlas_Field__copy
 #ifdef FORTRAN_SUPPORTS_FINAL
@@ -555,6 +560,35 @@ function Field__shape_idx(this,idx) result(shape_val)
 end function Field__shape_idx
 
 !-------------------------------------------------------------------------------
+
+subroutine set_levels(this,nb_levels)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  integer, intent(in) :: nb_levels
+  call atlas__field__set_levels(this%c_ptr(),nb_levels)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine rename(this,name)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  character(len=*), intent(in) :: name
+  call atlas__field__rename(this%c_ptr(),c_str(name))
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine set_functionspace(this,functionspace)
+  use atlas_field_c_binding
+  use atlas_functionspace_module
+  class(atlas_Field), intent(inout) :: this
+  class(atlas_FunctionSpace), intent(in) :: functionspace
+  call atlas__field__set_functionspace(this%c_ptr(),functionspace%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
 
 end module atlas_field_module
 

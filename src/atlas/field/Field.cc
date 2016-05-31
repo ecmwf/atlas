@@ -61,24 +61,25 @@ Field* Field::create( const std::string& name, array::Array* array )
 Field::Field(
     const std::string& name,
     array::DataType           datatype,
-    const array::ArrayShape&  shape) :
-  name_(name),
-  nb_levels_(0)
+    const array::ArrayShape&  shape)
 {
   functionspace_ = new functionspace::NoFunctionSpace();
   functionspace_->attach();
   array_ = array::Array::create(datatype,shape);
   array_->attach();
+  rename(name);
+  set_levels(0);
 }
 
 
-Field::Field(const std::string& name, array::Array* array):
-  name_(name), nb_levels_(0)
+Field::Field(const std::string& name, array::Array* array)
 {
   functionspace_ = new functionspace::NoFunctionSpace();
   functionspace_->attach();
   array_ = array;
   array_->attach();
+  rename(name);
+  set_levels(0);
 }
 
 Field::~Field()
@@ -115,6 +116,12 @@ std::string vector_to_str(const std::vector<T>& t)
 }
 
 
+}
+
+const std::string& Field::name() const
+{
+  name_ = metadata().get<std::string>("name");
+  return name_;
 }
 
 void Field::print(std::ostream& os) const
@@ -477,6 +484,32 @@ void atlas__Field__data_double_specf (Field* This, double* &data, int &rank, int
     rank = This->shapef().size();
   );
 }
+
+void atlas__Field__rename(Field* This, const char* name)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    This->rename( std::string(name) );
+  );
+}
+
+void atlas__Field__set_levels(Field* This, int levels)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    This->set_levels(levels);
+  );
+}
+
+void atlas__Field__set_functionspace(Field* This, const functionspace::FunctionSpace* functionspace)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(functionspace);
+    This->set_functionspace(*functionspace);
+  );
+}
+
 
 // ------------------------------------------------------------------
 
