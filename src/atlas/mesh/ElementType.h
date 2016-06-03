@@ -61,7 +61,7 @@ namespace temporary {
   public:
     enum { DIMENSIONALITY=2 };
     enum { FACES=1 };
-    virtual size_t nb_faces() { return FACES; }
+    virtual size_t nb_faces() const { return FACES; }
   };
   
   class Edge: public ElementType
@@ -70,8 +70,8 @@ namespace temporary {
     enum { DIMENSIONALITY=1 };
     enum { FACES=0 };
     enum { EDGES=1 };
-    virtual size_t nb_faces()   { return FACES; }
-    virtual size_t nb_edges()   { return EDGES; }
+    virtual size_t nb_faces()   const { return FACES; }
+    virtual size_t nb_edges()   const { return EDGES; }
   };
   
   class Vertex: public ElementType
@@ -81,9 +81,9 @@ namespace temporary {
     enum { FACES=0 };
     enum { EDGES=0 };
     enum { VERTICES=1 };
-    virtual size_t nb_faces()    { return FACES;    }
-    virtual size_t nb_edges()    { return EDGES;    }
-    virtual size_t nb_vertices() { return VERTICES; }
+    virtual size_t nb_faces()    const { return FACES;    }
+    virtual size_t nb_edges()    const { return EDGES;    }
+    virtual size_t nb_vertices() const { return VERTICES; }
   };
 
 class Quadrilateral : public Face
