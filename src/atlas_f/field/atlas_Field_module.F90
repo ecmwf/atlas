@@ -6,7 +6,7 @@
 #:setvar types list(zip(dtypes,ftypes,ctypes))
 
 #:def atlas_abort(string)
-atlas_abort("${string}$",atlas_code_location("${_FILE_}$",${_LINE_}$))
+atlas_abort("${string}$",atlas_code_location("atlas_Field_module.F90",${_LINE_}$))
 #:enddef
 
 module atlas_field_module
@@ -223,7 +223,7 @@ integer function atlas_real(kind)
   else if (kind == c_float) then
     atlas_real = ATLAS_KIND_REAL32
   else
-    call atlas_abort("Unsupported real kind")
+    call ${atlas_abort("Unsupported real kind")}$
   end if
 end function
 
@@ -238,7 +238,7 @@ integer function atlas_integer(kind)
     else if (kind == c_long) then
       atlas_integer = ATLAS_KIND_INT64
     else
-      call atlas_abort("Unsupported real kind")
+      call ${atlas_abort("Unsupported real kind")}$
     end if
   end if
 end function
@@ -264,8 +264,7 @@ function atlas_data_type(kind)
   else if( kind == ATLAS_KIND_REAL64 ) then
     atlas_data_type = "real64"
   else
-    call atlas_abort("cannot convert kind to data_type", &
-& atlas_code_location(filename,__LINE__))
+    call ${atlas_abort("cannot convert kind to data_type")}$
   endif
 end function
 
