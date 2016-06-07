@@ -243,8 +243,6 @@ void Behavior::reconfigure()
   Log::debug(2) << "File read policy: " << read_policy_ << std::endl;
 }
 
-
-
 eckit::FileReadPolicy Behavior::fileReadPolicy()
 {
   switch( read_policy_ )
@@ -258,7 +256,6 @@ eckit::FileReadPolicy Behavior::fileReadPolicy()
   }
   return eckit::StandardBehavior::fileReadPolicy();
 }
-
 
 } // namespace runtime
 } // namespace atlas
