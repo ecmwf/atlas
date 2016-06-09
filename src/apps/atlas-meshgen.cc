@@ -56,7 +56,7 @@ using atlas::util::Config;
 
 //------------------------------------------------------------------------------
 
-void usage(const std::string& tool)
+static void usage(const std::string& tool)
 {
   Log::info() << "usage: " << tool
               << " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT  [--help,-h] [--debug]" << std::endl;
@@ -94,8 +94,6 @@ private:
   std::vector<long> rgg_nlon;
   PathName path_in;
   PathName path_out;
-
-  eckit::LocalConfiguration meshgenerator_config;
 
 };
 
@@ -167,7 +165,7 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( edges )
     halo = std::max(halo,1l);
 
-  meshgenerator_config = args.get();
+  eckit::LocalConfiguration meshgenerator_config( args );
   if( eckit::mpi::size() > 1 || edges )
     meshgenerator_config.set("3d",false);
 
