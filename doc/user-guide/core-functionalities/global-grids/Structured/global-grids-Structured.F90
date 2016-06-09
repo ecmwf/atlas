@@ -7,7 +7,7 @@ character(len=1024)     :: gridID
 type(atlas_grid_Structured) :: grid
 call atlas_init()
 
-call atlas_resource("--grid", "N32", gridID)
+gridID = "O32"
 
 grid = atlas_grid_Structured(gridID)
 

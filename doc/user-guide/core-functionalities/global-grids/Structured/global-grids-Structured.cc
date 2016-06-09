@@ -1,7 +1,6 @@
 #include "atlas/atlas.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/grid/grids.h"
-#include "eckit/config/Resource.h"
 
 using namespace std;
 using namespace eckit;
@@ -12,7 +11,7 @@ int main(int argc, char *argv[])
 {
     atlas_init(argc, argv);
 
-    string gridID = Resource<string>( "--grid", string("N32") );
+    string gridID = "O32";
 
     SharedPtr<Structured> grid(Structured::create(gridID));
 

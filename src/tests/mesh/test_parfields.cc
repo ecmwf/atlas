@@ -14,7 +14,6 @@
 #define BOOST_TEST_MODULE TestBuildParallelFields
 #include "ecbuild/boost_test_framework.h"
 
-#include "eckit/config/ResourceMgr.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/internals/atlas_config.h"

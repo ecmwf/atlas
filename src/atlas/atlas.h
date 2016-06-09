@@ -18,10 +18,6 @@ void atlas_init(const eckit::Parametrisation&);
 void atlas_info(std::ostream&);
 void atlas_finalize();
 
-namespace deprecated {
-  void read_resources();
-}
-
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C"

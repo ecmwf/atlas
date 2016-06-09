@@ -4,7 +4,6 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/output/Gmsh.h"
-#include "eckit/config/Resource.h"
 
 using namespace std;
 using namespace eckit;
@@ -16,8 +15,8 @@ int main(int argc, char *argv[])
 {
     atlas_init(argc, argv);
 
-    string gridID    = Resource<string>("--grid"     , string("N32"));
-    string visualize = Resource<string>("--visualize", string("2D") );
+    string gridID    = "O32";
+    string visualize = "2D"; // Or "3D"
 
     SharedPtr<Structured> Structured( Structured::create(gridID) );
 

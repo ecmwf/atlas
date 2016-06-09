@@ -16,13 +16,7 @@ for this example.
 
 \section{C++ version}
 The \lista{code-meshes-C} shows how to construct a mesh 
-starting from a grid that can be specified as a command 
-line argument. In particular, we use the third-party 
-\textit{eckit} object called \inltc{Resource} to define 
-the command-line behaviour as done in the previous chapter. 
-We have also added an additional command line argument 
-called \inlsh{\ddash{visualize}}. This will allow us to 
-visualize the mesh either in 2D or 3D. 
+starting from a grid.
 %
 \lstinputlisting[caption=Generating a mesh starting from a grid 
 in \Atlas using C++, style=CStyle, label=code-meshes-C]{meshes-Structured.cc}
@@ -57,7 +51,7 @@ type we want (either 2D or 3D), respectively. For instance,
 we can execute the following command line
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-meshes-Structured --grid O32 --visualize 3D
+./atlas_c-meshes-Structured
 \end{lstlisting}
 % 
 This will produce an octahedral reduced Gaussian mesh 
@@ -97,16 +91,12 @@ introduced in \chap{chap:global-grids}!
 
 \section{Fortran version}
 The \lista{code-meshes-C} shows how to construct a mesh 
-starting from a grid that can be specified as a command 
-line argument. In particular, we use the third-party 
-\textit{eckit} object called \inltc{Resource} to define 
-the command-line behaviour as done in the previous chapter. 
- 
+starting from a grid.
 %
 \lstinputlisting[caption=Generating a mesh starting from a grid 
 in \Atlas using Fortran, style=FStyle, label=code-meshes-F]{meshes-Structured.F90}
 %
-Once defined the command-line behaviour, we first create 
+We first create 
 a global structured grid object (see line 13). For more 
 details on how to create a grid see \chap{chap:global-grids}.
 
@@ -128,7 +118,7 @@ identifies an \Atlas predefined grid. For instance,
 we can execute the following command line
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-meshes-Structured --grid O32
+./atlas_c-meshes-Structured
 \end{lstlisting}
 % 
 This will produce an octahedral reduced Gaussian mesh 

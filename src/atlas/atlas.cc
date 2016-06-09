@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include "eckit/runtime/Context.h"
 #include "eckit/parser/StringTools.h"
-#include "eckit/config/Resource.h"
-#include "eckit/config/ResourceMgr.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "atlas/atlas.h"

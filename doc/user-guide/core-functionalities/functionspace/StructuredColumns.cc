@@ -7,7 +7,6 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "eckit/config/Resource.h"
 
 using namespace std;
 using namespace eckit;
@@ -23,7 +22,7 @@ int main(int argc, char *argv[])
     atlas_init(argc, argv);
 
     // Generate global reduced grid
-    string gridID = Resource<string>("--grid", string("N32"));
+    string gridID = "N32";
     SharedPtr<Structured> grid (Structured::create(gridID));
 
     // Number of points in the grid

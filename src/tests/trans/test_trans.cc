@@ -30,7 +30,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/LogFormat.h"
 #include "atlas/trans/Trans.h"
-#include "eckit/config/ResourceMgr.h"
 #include "transi/trans.h"
 
 
@@ -154,8 +153,7 @@ BOOST_AUTO_TEST_CASE( test_trans_options )
 BOOST_AUTO_TEST_CASE( test_distspec )
 {
   SharedPtr<global::Structured> g ( global::Structured::create( "O80" ) );
-  eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
-  mesh::generators::Structured generate;
+  mesh::generators::Structured generate( atlas::util::Config("angle",0) );
   BOOST_TEST_CHECKPOINT("mesh generator created");
   //trans::Trans trans(*g, 159 );
 
@@ -214,10 +212,10 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
 {
   BOOST_TEST_CHECKPOINT("test_generate_mesh");
   SharedPtr<global::Structured> g ( global::Structured::create( "O80" ) );
-  eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
-  eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","true");
-
-  mesh::generators::Structured generate;
+  mesh::generators::Structured generate( atlas::util::Config
+    ("angle",0)
+    ("triangulate",true)
+  );
   trans::Trans trans(*g);
 
   mesh::Mesh::Ptr m_default( generate( *g ) );
@@ -251,10 +249,10 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
   SharedPtr<global::Structured> g ( global::Structured::create( "O48" ) );
-  eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
-  eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","false");
-
-  mesh::generators::Structured generate;
+  mesh::generators::Structured generate( atlas::util::Config
+    ("angle",0)
+    ("triangulate",false)
+  );
   mesh::Mesh::Ptr m( generate( *g ) );
 
   trans::Trans trans(*g,47);

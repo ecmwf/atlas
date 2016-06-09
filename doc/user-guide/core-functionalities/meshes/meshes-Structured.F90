@@ -9,7 +9,7 @@ type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Output) :: gmsh
 call atlas_init()
 
-call atlas_resource("--grid", "N32", gridID)
+gridID = "O32"
 
 Structured = atlas_grid_Structured(gridID)
 

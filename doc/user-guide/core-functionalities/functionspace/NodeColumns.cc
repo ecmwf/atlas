@@ -1,5 +1,4 @@
 #include "eckit/mpi/mpi.h"
-#include "eckit/config/Resource.h"
 #include "atlas/atlas.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/grid/grids.h"
@@ -25,7 +24,7 @@ int main(int argc, char *argv[])
     atlas_init(argc, argv);
 
     // Generate global classic reduced Gaussian grid
-    string gridID = Resource<string>("--grid", string("N32"));
+    string gridID = "N32";
     SharedPtr<Structured> grid( Structured::create(gridID) );
 
     // Generate mesh associated to structured grid

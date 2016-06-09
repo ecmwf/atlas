@@ -47,7 +47,7 @@ real(wp)            :: zdist, zlon, zlat;
 call atlas_init()
 
 ! Generate global classic reduced Gaussian grid
-call atlas_resource("--grid", "N32", gridID)
+gridID = "N32"
 grid = atlas_grid_Structured(gridID)
 
 ! Generate mesh associated to structured grid

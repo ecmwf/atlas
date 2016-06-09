@@ -68,21 +68,13 @@ just outlined. We will also show how to retrieve some
 useful information regarding the grid generated.
 
 \subsection{C++ version}
-The \lista{Structured-C} shows how to construct a generic 
-structured grid that can be specified as a command line 
-argument. In particular, we use the
-\inltc{eckit::Resource} object to define the command-line 
-behaviour (see line 14 of the listing below). Note that 
-it is necessary to include the eckit header file called 
-\inltc{eckit/config/Resource.h} (see line 3) in order to be able to 
-use the \inltc{eckit::Resource} object. A default value for the grid resource 
-is specified if no command line argument is provided.
-
+The \lista{Structured-C} shows how to construct a generic
+structured grid.
 %
 \lstinputlisting[caption=Generating a Gaussian grid with 
 \Atlas using C++, style=CStyle, label=Structured-C]{global-grids-Structured.cc}
 %
-Once defined the command-line behaviour, we create the global 
+We create the global 
 grid object (see line 16). In particular, we call the 
 grid constructor passing the command-line string (that 
 represents the key of the grid we want to create) to it.
@@ -103,15 +95,11 @@ an \Atlas predefined grid. For instance, we can execute the
 following command line
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-global-grids-Structured --grid O32
+./atlas_c-global-grids-Structured
 \end{lstlisting}
 % 
 This will generate an octahedral reduced Gaussian grid with 
 32 latitudes on one hemisphere (i.e. 64 latitudes in total).
-Note that we used the additional command-line argument 
-\inlsh{\ddash{grid}} and then specified the key identifier 
-for the grid. This behaviour is what we have specified 
-on line 14 through the \inltc{Resource} method.
 
 The output to the screen of the code we just executed 
 contains some useful information regarding the grid. 
@@ -146,29 +134,20 @@ at the beginning of this section!
 
 \subsection{Fortran version}
 The \lista{Structured-F} shows how to construct a generic 
-structured grid that can be specified as a command line 
-argument. In particular, we use the third-party \textit{eckit} 
-object called \inltc{atlas\_resource} (the Fortran interface 
-for the eckit \inltc{Resource} object is defined in \Atlas) 
-to define the command-line behaviour (see line 10 of the 
-listing below). 
+structured grid.
 
 %
 \lstinputlisting[caption=Generating a Gaussian grid with \Atlas 
 using Fortran, style=FStyle, label=Structured-F]{global-grids-Structured.F90}
 %
 
-Once defined the command-line behaviour, we create the global 
+We create the global 
 grid object (see line 12). In particular, we call 
 the grid constructor passing the command-line string 
 (that represents the key of the grid we want to create) to 
 it. The default value is set to \inltc{N32}, that represents 
 a classic reduced Gaussian grid with 32 latitudes in one emisphere 
 (i.e. 64 latitudes in total).  
-The command-line string (i.e. the key) must be contained 
-in the predefined keys for structured grid generation as specified 
-before. If the user uses a non-existent keyword, it will 
-appear an error message.
 The grid object, \inltc{grid}, is 
 an \inltc{atlas\_grid\_Structured} type and it will allow 
 us to access some useful information about the grid.  
@@ -179,16 +158,12 @@ identifies an \Atlas predefined grid. For instance, we
 can execute the following command line 
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_f-global-grids-Structured --grid O32
+./atlas_f-global-grids-Structured
 \end{lstlisting}
 % 
 This will generate an octahedral reduced Gaussian grid 
 with 32 latitudes on one emisphere (i.e. 64 latitudes 
 in total).
-Note that we used the additional command-line argument 
-\inlsh{\ddash{grid}} and then specified the key identifier 
-for the grid. This behaviour is what we have specified 
-on line 10 through the \inltc{atlas\_resource} method.
 
 The output to the screen of the code we just executed 
 contains some useful information regarding the grid.
