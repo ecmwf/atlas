@@ -30,11 +30,8 @@ namespace actions {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void AddVirtualNodes::operator()( Mesh& mesh ) const
+void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh) const
 {
-    ASSERT( mesh.has_grid() );
-
-    const grid::Grid& grid = mesh.grid();
     const grid::Domain& domain = grid.domain();
 
     if( domain.global() ) return; // don't add virtual points to global domains

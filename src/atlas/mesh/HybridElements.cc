@@ -120,9 +120,7 @@ const field::Field& HybridElements::field(size_t idx) const
     }
     c++;
   }
-  eckit::SeriousBug("Should not be here!",Here());
-  static field::Field* ret;
-  return *ret;
+  throw eckit::SeriousBug("Should not be here!",Here());
 }
 
 field::Field& HybridElements::field(size_t idx)

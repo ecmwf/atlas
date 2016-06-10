@@ -18,9 +18,6 @@
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/util/Metadata.h"
 
-// -----------------------------------------------------------------------------
-
-namespace mir { namespace method { class FiniteElement;} }
 namespace atlas { namespace mesh { class Mesh; } }
 namespace atlas {
 namespace field {
@@ -37,22 +34,25 @@ namespace atlas {
 namespace util {
 namespace io {
 
-
-// -----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 class Gmsh {
-  friend class output::Gmsh;
-  friend class GmshFortranInterface;
-  // friend class ::mir::method::FiniteElement;
-private:
+
+public: // members
+
+  Metadata options;
+
+private: // types
+
   typedef std::ios_base::openmode openmode;
 
-public:
+public: // methods
+
   Gmsh();
 
-  virtual ~Gmsh();
+  ~Gmsh();
 
-private:
+public:
 
   mesh::Mesh* read(const eckit::PathName& file_path) const;
 
@@ -93,6 +93,7 @@ private:
 
 
 private:
+
   /// Write fieldset to file using Nodes functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
@@ -125,11 +126,9 @@ private:
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
-private:
-  Metadata options;
 };
 
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
 #define mesh_Mesh mesh::Mesh
@@ -153,7 +152,7 @@ void atlas__write_gmsh_field(field_Field* field, functionspace_FunctionSpace* fu
 #undef functionspace_NodeColumns
 #undef mesh_Mesh
 
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace io
 } // namespace util

@@ -45,7 +45,7 @@ Nabla::Nabla(const numerics::Method &method, const eckit::Parametrisation &p) :
   fvm_ = dynamic_cast<const fvm::Method *>(&method);
   if( ! fvm_ )
     throw eckit::BadCast("atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method",Here());
-  Log::info() << "Nabla constructed for method " << fvm_->name()
+  Log::debug() << "Nabla constructed for method " << fvm_->name()
                      << " with " << fvm_->node_columns().nb_nodes_global() << " nodes total" << std::endl;
 
   setup();
@@ -84,14 +84,18 @@ void Nabla::gradient(const field::Field &field, field::Field &grad_field) const
   {
     if( field.rank() == 2 )
       return gradient_of_scalar(field,grad_field);
-    if( field.rank() == 3 )
+    if( field.rank() == 3 && field.shape(2) == 1 )
+      return gradient_of_scalar(field,grad_field);
+    if( field.rank() == 3 && field.shape(2) > 1 )
       return gradient_of_vector(field,grad_field);
   }
   else
   {
     if( field.rank() == 1 )
       return gradient_of_scalar(field,grad_field);
-    if( field.rank() == 2 )
+    if( field.rank() == 2 && field.shape(1) == 1 )
+      return gradient_of_scalar(field,grad_field);
+    if( field.rank() == 2 && field.shape(1) > 1 )
       return gradient_of_vector(field,grad_field);
   }
   throw eckit::SeriousBug("Cannot figure out if field is a scalar or vector field",Here());
@@ -99,6 +103,7 @@ void Nabla::gradient(const field::Field &field, field::Field &grad_field) const
 
 void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& grad_field) const
 {
+  Log::debug() << "Compute gradient of scalar field " << scalar_field.name() << " with fvm method" << std::endl;
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 
@@ -181,6 +186,7 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
 
 void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &grad_field) const
 {
+  Log::debug() << "Compute gradient of vector field " << vector_field.name() << " with fvm method" << std::endl;
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 

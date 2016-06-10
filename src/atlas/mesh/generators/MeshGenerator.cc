@@ -14,16 +14,21 @@
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
+#include "eckit/utils/MD5.h"
+
+#include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/mesh/generators//Delaunay.h"
+#include "atlas/mesh/generators/Delaunay.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace mesh {
 namespace generators {
+
+//----------------------------------------------------------------------------------------------------------------------
 
 namespace {
 
@@ -47,6 +52,8 @@ namespace {
     };
 
 }
+
+//----------------------------------------------------------------------------------------------------------------------
 
 MeshGenerator* MeshGenerator::create(const std::string &key, const eckit::Parametrisation &params)
 {
@@ -88,6 +95,7 @@ Mesh* MeshGenerator::generate( const grid::Grid& grid, const grid::GridDistribut
   return mesh;
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 
 MeshGeneratorFactory::MeshGeneratorFactory(const std::string &name):
     name_(name) {
@@ -168,6 +176,8 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string& name, const eckit:
     return (*j).second->make(param);
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
 extern "C" {
 
 void atlas__MeshGenerator__delete(MeshGenerator* This)
@@ -204,8 +214,9 @@ Mesh* atlas__MeshGenerator__generate__grid (const MeshGenerator* This, const gri
   return 0;
 }
 
-
 }
+
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace generators
 } // namespace mesh

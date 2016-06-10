@@ -87,10 +87,7 @@ void Structured::setup( const size_t nlat, const double lats[], const long pl[],
 
     npts_ += pl_[jlat];
   }
-  try {
-  bounding_box_ = BoundBox(lat_[0]/*north*/, lat_[nlat-1]/*south*/, lon_max/*east*/, lon_min/*west*/ );
-  }
-  catch( eckit::BadParameter& e ) {}
+
 }
 
 //------------------------------------------------------------------------------
@@ -124,12 +121,6 @@ size_t Structured::N() const
 }
 
 //------------------------------------------------------------------------------
-
-BoundBox Structured::boundingBox() const
-{
-  return bounding_box_;
-}
-
 //------------------------------------------------------------------------------
 
 size_t Structured::npts() const { return npts_; }
@@ -213,7 +204,7 @@ void Structured::hash(eckit::MD5& md5) const {
 
   md5.add(latitudes().data(), sizeof(double)*latitudes().size());
   md5.add(pl().data(), sizeof(long)*nlat());
-  bounding_box_.hash(md5);
+  domain_.hash(md5);
 }
 
 //------------------------------------------------------------------------------

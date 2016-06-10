@@ -209,7 +209,7 @@ void Meshgen2Gmsh::execute(const Args& args)
     build_pole_edges(*mesh);
     build_edges_parallel_fields(*mesh);
     if( brick )
-      build_brick_dual_mesh(*mesh);
+      build_brick_dual_mesh(*grid, *mesh);
     else
       build_median_dual_mesh(*mesh);
   }

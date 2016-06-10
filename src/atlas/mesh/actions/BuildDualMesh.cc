@@ -14,6 +14,7 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/global/Structured.h"
 #include "atlas/mesh/Mesh.h"
@@ -388,9 +389,9 @@ void make_dual_normals_outward( Mesh& mesh )
 }
 
 
-void build_brick_dual_mesh( Mesh& mesh )
+void build_brick_dual_mesh(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh)
 {
-  if( const grid::global::Structured* g = dynamic_cast<const grid::global::Structured*>(&mesh.grid()) )
+  if( const grid::global::Structured* g = dynamic_cast<const grid::global::Structured*>(&grid) )
   {
     if( eckit::mpi::size() != 1 )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());

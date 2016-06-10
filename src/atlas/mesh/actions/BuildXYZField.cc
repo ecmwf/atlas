@@ -9,6 +9,7 @@
  */
 
 #include "eckit/geometry/Point3.h"
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"

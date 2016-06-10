@@ -87,11 +87,6 @@ eckit::Properties Gaussian::spec() const
 
   grid_spec.set("pl",eckit::makeVectorValue(pl()));
 
-  BoundBox bbox = boundingBox();
-  grid_spec.set("bbox_s", bbox.min().lat());
-  grid_spec.set("bbox_w", bbox.min().lon());
-  grid_spec.set("bbox_n", bbox.max().lat());
-  grid_spec.set("bbox_e", bbox.max().lon());
 
   return grid_spec;
 }

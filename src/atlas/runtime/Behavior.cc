@@ -1,5 +1,6 @@
 #include <typeinfo>
 #include <unistd.h>
+
 #include "eckit/log/ChannelBuffer.h"
 #include "eckit/log/CallbackChannel.h"
 #include "eckit/log/MultiChannel.h"
@@ -261,8 +262,6 @@ void Behavior::reconfigure()
   Log::debug(2) << "File read policy: " << read_policy_ << std::endl;
 }
 
-
-
 eckit::FileReadPolicy Behavior::fileReadPolicy()
 {
   switch( read_policy_ )
@@ -276,7 +275,6 @@ eckit::FileReadPolicy Behavior::fileReadPolicy()
   }
   return eckit::StandardBehavior::fileReadPolicy();
 }
-
 
 } // namespace runtime
 } // namespace atlas

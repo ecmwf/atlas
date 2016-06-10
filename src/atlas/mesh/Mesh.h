@@ -15,16 +15,17 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/internals/ObjectRegistry.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"
 
-// -----------------------------------------------------------------------------
-// Forward declarations
-// -----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
+
 namespace atlas {
 namespace grid {
     class Grid;
@@ -52,7 +53,8 @@ namespace mpl {
     class GatherScatter;
     class Checksum;
 } } } }
-// -----------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace mesh {
@@ -74,6 +76,12 @@ public: // methods
     /// @brief Construct mesh from grid.
     /// The mesh is global and only has a "nodes" FunctionSpace
     Mesh(const grid::Grid&, const eckit::Parametrisation& = util::Config());
+
+    /// @brief Construct a mesh from a Stream (serialization)
+    explicit Mesh(eckit::Stream&);
+
+    /// @brief Serialization to Stream
+    void encode(eckit::Stream& s) const;
 
     /// Destructor
     /// @note No need to be virtual since this is not a base class.
@@ -106,6 +114,7 @@ public: // methods
     const mesh::HybridElements& peaks() const { return *peaks_; }
           mesh::HybridElements& peaks()       { return *peaks_; }
 
+    bool generated() const;
 
 private:  // methods
 
@@ -119,6 +128,7 @@ private:  // methods
 private: // members
 
     util::Metadata   metadata_;
+
     eckit::SharedPtr<mesh::Nodes> nodes_;
                                                       // dimensionality : 2D | 3D
                                                       //                  --------
@@ -130,14 +140,6 @@ private: // members
     eckit::SharedPtr<mesh::HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
 
     size_t dimensionality_;
-
-public: // members to be removed
-    bool has_grid() const { return grid_; }
-    void set_grid( const grid::Grid& p ) { grid_ = &p; }
-    const grid::Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
-private: // members to be removed
-    const grid::Grid* grid_;
-
 };
 
 //----------------------------------------------------------------------------------------------------------------------

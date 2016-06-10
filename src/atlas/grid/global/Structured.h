@@ -46,8 +46,6 @@ public:
 
   Structured();
 
-  virtual BoundBox boundingBox() const;
-
   virtual size_t npts() const;
 
   virtual void lonlat( std::vector<Point>& ) const;
@@ -107,16 +105,14 @@ protected:
 
   size_t              npts_;          ///<! Total number of unique points in the grid
 
-  std::string         grid_type_;
+  std::string         grid_type_; ///< to be removed -- only instantiate leaf classees
 
-  std::string         shortName_;
+  std::string         shortName_; ///< to be removed -- only instantiate leaf classees
 
   std::vector<double> lat_;    ///<! Latitude values
   std::vector<long>   pl_;     ///<! Number of points per latitude
 
   std::vector<double> lonmin_; ///<! Value of minimum longitude per latitude [default=0]
-
-  BoundBox            bounding_box_;  ///<! bounding box cache
 
 private:
   std::vector<double> lon_inc_; ///<! Value of longitude increment

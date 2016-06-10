@@ -65,8 +65,6 @@ void TestField::test_constructor()
   // Build a mesh from grid
   mesh::Mesh mesh(*g);
 
-  ASSERT( mesh.grid().same( *g ) );
-
   // create some reference data for testing
 
   std::vector<double> ref_data;

@@ -17,9 +17,11 @@
 
 #include "atlas/internals/atlas_defines.h"
 
-#ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
 #include <sstream>
 #include <eckit/exception/Exceptions.h>
+
+#ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
+
 
 #define CHECK_RANK(R)\
   if(rank()!=R) { std::ostringstream msg; msg << "ArrayView  rank mismatch: rank()="<<rank()<< " != " << R; throw eckit::OutOfRange(msg.str(),Here()); }
@@ -55,6 +57,10 @@
 #define CHECK_BOUNDS_4(i,j,k,l)
 #define CHECK_BOUNDS_5(i,j,k,l,m)
 #endif
+
+
+#define CHECK_BOUNDS_1_FORCE(i)\
+  if(i>=shape_[0]) {std::ostringstream msg; msg << "ArrayView(i) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }
 
 //------------------------------------------------------------------------------------------------------
 
@@ -260,6 +266,12 @@ template <typename DATA_TYPE>
 inline DATA_TYPE& ArrayView<DATA_TYPE,1>::operator[](size_t i)       { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
 
 template <typename DATA_TYPE>
+inline const DATA_TYPE& ArrayView<DATA_TYPE,1>::at(size_t i) const { CHECK_BOUNDS_1_FORCE(i); return *(data_+strides_[0]*i); }
+
+template <typename DATA_TYPE>
+inline DATA_TYPE& ArrayView<DATA_TYPE,1>::at(size_t i)       { CHECK_BOUNDS_1_FORCE(i); return *(data_+strides_[0]*i); }
+
+template <typename DATA_TYPE>
 inline DATA_TYPE* ArrayView<DATA_TYPE,1>::data()        { return data_; }
 
 template <typename DATA_TYPE>
@@ -369,6 +381,12 @@ template <typename DATA_TYPE>
 inline ArrayView<DATA_TYPE,1>       ArrayView<DATA_TYPE,2>::operator[](size_t i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
 
 template <typename DATA_TYPE>
+inline const ArrayView<DATA_TYPE,1> ArrayView<DATA_TYPE,2>::at(size_t i) const { CHECK_BOUNDS_1_FORCE(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+
+template <typename DATA_TYPE>
+inline ArrayView<DATA_TYPE,1>       ArrayView<DATA_TYPE,2>::at(size_t i)       { CHECK_BOUNDS_1_FORCE(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+
+template <typename DATA_TYPE>
 inline DATA_TYPE*       ArrayView<DATA_TYPE,2>::data()            { return data_; }
 
 template <typename DATA_TYPE>
@@ -476,6 +494,13 @@ inline const ArrayView<DATA_TYPE,2> ArrayView<DATA_TYPE,3>::operator[](size_t i)
 
 template <typename DATA_TYPE>
 inline ArrayView<DATA_TYPE,2>       ArrayView<DATA_TYPE,3>::operator[](size_t i)       { CHECK_BOUNDS_1(i);return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+
+template <typename DATA_TYPE>
+inline const ArrayView<DATA_TYPE,2> ArrayView<DATA_TYPE,3>::at(size_t i) const { CHECK_BOUNDS_1_FORCE(i); return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i,shape_+1, strides_+1 ); }
+
+template <typename DATA_TYPE>
+inline ArrayView<DATA_TYPE,2>       ArrayView<DATA_TYPE,3>::at(size_t i)       { CHECK_BOUNDS_1_FORCE(i);return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+
 
 template <typename DATA_TYPE>
 inline DATA_TYPE*       ArrayView<DATA_TYPE,3>::data()            { return data_; }
@@ -743,5 +768,5 @@ ArrayView_const_iterator<DATA_TYPE,RANK>& ArrayView_const_iterator<DATA_TYPE,RAN
 #undef CHECK_BOUNDS_3
 #undef CHECK_BOUNDS_4
 #undef CHECK_BOUNDS_5
-
+#undef CHECK_BOUNDS_1_FORCE
 #endif

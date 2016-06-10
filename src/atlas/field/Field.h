@@ -100,10 +100,10 @@ public: // Destructor
   array::DataType datatype() const { return array_->datatype(); }
 
   /// @brief Name associated to this field
-  const std::string& name() const { return name_; }
+  const std::string& name() const;
 
   /// @brief Rename this field
-  void rename(const std::string& name) { name_ = name; }
+  void rename(const std::string& name) { metadata().set("name",name); }
 
   /// @brief Access to metadata associated to this field
   const util::Metadata& metadata() const { return metadata_; }
@@ -148,9 +148,9 @@ public: // Destructor
   void dump(std::ostream& os) const;
 
   /// Metadata that is more intrinsic to the Field, and queried often
-  bool has_levels() const { return nb_levels_!= 0; }
-  void set_levels(size_t n) { nb_levels_ = n; }
-  size_t levels() const { return std::max(1ul,nb_levels_); }
+  bool has_levels() const { return metadata().get<size_t>("levels")!= 0; }
+  void set_levels(size_t n) { metadata().set("levels",n); }
+  size_t levels() const { return std::max(1ul,metadata().get<size_t>("levels")); }
 
   void set_functionspace(const functionspace::FunctionSpace &);
   functionspace::FunctionSpace& functionspace() const { return *functionspace_; }
@@ -161,8 +161,7 @@ private: // methods
 
 private: // members
 
-  std::string name_;
-  size_t nb_levels_;
+  mutable std::string name_;
   util::Metadata metadata_;
   array::Array* array_;
   functionspace::FunctionSpace* functionspace_;
@@ -227,6 +226,9 @@ extern "C"
   void atlas__Field__data_double_specf (Field* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
   util_Metadata* atlas__Field__metadata (Field* This);
   functionspace_FunctionSpace* atlas__Field__functionspace (Field* This);
+  void atlas__Field__rename(Field* This, const char* name);
+  void atlas__Field__set_levels(Field* This, int levels);
+  void atlas__Field__set_functionspace(Field* This, const functionspace_FunctionSpace* functionspace);
 }
 #undef Parametrisation
 #undef functionspace_FunctionSpace

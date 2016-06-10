@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
   size_t nlev = 1;
 
   field::FieldSet fields;
-  fields.add( fvm.node_columns().createField<double>("scalar",nlev) );
+  fields.add( fvm.node_columns().createField<double>("scalar",nlev,array::make_shape(1)) );
   fields.add( fvm.node_columns().createField<double>("rscalar",nlev) );
   fields.add( fvm.node_columns().createField<double>("grad",nlev,array::make_shape(2)) );
   fields.add( fvm.node_columns().createField<double>("rgrad",nlev,array::make_shape(2)) );

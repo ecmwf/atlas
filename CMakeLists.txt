@@ -241,8 +241,15 @@ endif()
 ################################################################################
 # finalize
 
-add_custom_target( atlas-readme SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/README.md )
+ecbuild_add_resources(
+    TARGET atlas-others
+    SOURCES_PACK
+        README.md
+        LICENSE
+)
+
 ecbuild_install_project( NAME Atlas )
+
 if( ATLAS_HAVE_FORTRAN )
     install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR} DESTINATION ${INSTALL_INCLUDE_DIR} )
 endif()

@@ -8,12 +8,15 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/mesh/generators/Delaunay.h"
+
 #include "eckit/geometry/Point3.h"
+#include "eckit/utils/MD5.h"
+
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
-#include "atlas/mesh/generators//Delaunay.h"
 #include "atlas/mesh/actions/AddVirtualNodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/actions/BuildConvexHull3D.h"
@@ -25,6 +28,8 @@ namespace atlas {
 namespace mesh {
 namespace generators {
 
+//----------------------------------------------------------------------------------------------------------------------
+
 Delaunay::Delaunay()
 {
 }
@@ -35,6 +40,13 @@ Delaunay::Delaunay(const eckit::Parametrisation& p)
 
 
 Delaunay::~Delaunay() {
+}
+
+void Delaunay::hash(eckit::MD5& md5) const
+{
+    md5.add("Delaunay");
+
+    // no other settings
 }
 
 void Delaunay::generate(const grid::Grid& grid, const grid::GridDistribution& dist, Mesh& mesh) const
@@ -57,22 +69,21 @@ void Delaunay::generate(const grid::Grid& grid, const grid::GridDistribution& di
 void Delaunay::generate(const grid::Grid& g, Mesh& mesh) const
 {
   mesh.createNodes(g);
-  
+
   array::ArrayView<gidx_t,1> gidx( mesh.nodes().global_index() );
   for( size_t jnode=0; jnode<mesh.nodes().size(); ++ jnode )
     gidx(jnode) = jnode+1;
 
   actions::BuildXYZField()(mesh);
-  actions::AddVirtualNodes()(mesh);    ///< does nothing if global domain
+  actions::AddVirtualNodes()(g, mesh);    ///< does nothing if global domain
   actions::BuildConvexHull3D()(mesh);
-
-  mesh.set_grid(g);
 }
 
 namespace {
 static MeshGeneratorBuilder< Delaunay > __delaunay("Delaunay");
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace generators
 } // namespace mesh
