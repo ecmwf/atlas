@@ -5,8 +5,6 @@
 #include "eckit/log/CallbackChannel.h"
 #include "eckit/log/MultiChannel.h"
 #include "eckit/log/FileChannel.h"
-#include "eckit/config/Resource.h"
-#include "eckit/config/ResourceMgr.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/thread/ThreadSingleton.h"
@@ -14,6 +12,7 @@
 #include "eckit/thread/Mutex.h"
 #include "eckit/thread/Once.h"
 #include "eckit/thread/ThreadSingleton.h"
+#include "eckit/utils/Translator.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Behavior.h"
 #include "atlas/runtime/LogFormat.h"
@@ -83,12 +82,32 @@ Channel& logfile( const CreateLogFile& alloc)
   return x.instance();
 }
 
+namespace { // anonymous
+template <typename T>
+static bool get_env(const std::string& var,T& val){
+  const char* env = ::getenv(var.c_str());
+  if( env ) {
+    std::string val_str = env;
+    val = eckit::Translator<std::string,T>()(val_str);
+    return true;
+  }
+  return false;
+}
+} // namespace anonymous
+
 ChannelConfig::ChannelConfig()
 {
-  int logfile_rank = Resource<int>("atlas.logfile_task;$ATLAS_LOGFILE_TASK;--logfile_task",-1);
-  logfile_path    = Resource<std::string>("atlas.logfile;$ATLAS_LOGFILE;--logfile","");
+  int logfile_rank = -1;
+  get_env("ATLAS_LOGFILE_TASK",logfile_rank);
+  
+  logfile_path = "";
+  get_env("ATLAS_LOGFILE",logfile_path);
+  
   logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || size_t(logfile_rank) == eckit::mpi::rank() );
-  console_rank = Resource<int>("atlas.console_task;$ATLAS_CONSOLE_TASK;--console_task",0);
+
+  console_rank = 0;
+  get_env("ATLAS_CONSOLE_TASK",console_rank);
+
   console_enabled = true;
   console_format = new LogFormat();
   logfile_format = new LogFormat();

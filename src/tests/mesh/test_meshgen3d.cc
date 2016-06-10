@@ -15,13 +15,13 @@
 
 #include "atlas/atlas.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 
-using namespace atlas::util::io;
+using namespace atlas::output;
 using namespace atlas::mesh::generators;
 
 namespace atlas {
@@ -39,21 +39,20 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
 	mesh::Mesh::Ptr m ( mesh::Mesh::create() );
 
-	mesh::generators::Structured generate;
 
-	// generate.options.set("nb_parts",1); // default = 1
-	// generate.options.set("part",    0); // default = 0
+  util::Config opts;
+  opts.set("3d", true); ///< creates links along date-line
+  opts.set("include_pole", true);      ///< triangulate the pole point
+  mesh::generators::Structured generate(opts);
 
-	generate.options.set("three_dimensional", true); ///< creates links along date-line
-	generate.options.set("include_pole", true);      ///< triangulate the pole point
+  // opts.set("nb_parts",1); // default = 1
+  // opts.set("part",    0); // default = 0
 
     m = generate(
-          grid::global::gaussian::ClassicGaussian(80)
-        ); //< 2*N - 1 => N80 grid
+          grid::global::gaussian::ClassicGaussian(24)
+        ); //< 2*N - 1 => N24 grid
 
-	Gmsh().write(*m,"out.msh");
-
-    //    atlas::mesh::actions::BuildXYZ(m);
+	Gmsh("out.msh", util::Config("coordinates","xyz") ).write(*m);
 }
 
 } // namespace test

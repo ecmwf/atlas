@@ -19,3 +19,15 @@ ecbuild_add_test( TARGET atlas_test_pointcloud
   SOURCES   test_pointcloud.cc
   LIBS      atlas
 )
+
+if( HAVE_FCTEST )
+
+add_fctest( TARGET atlas_fctest_gmsh
+  # MPI             1
+  LINKER_LANGUAGE Fortran
+  CONDITION       ON
+  SOURCES         fctest_gmsh.F90
+  LIBS            atlas_f
+)
+
+endif()

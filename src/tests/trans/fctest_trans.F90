@@ -76,7 +76,6 @@ TEST( test_trans )
   trans = atlas_Trans(grid,nsmax)
 
   FCTEST_CHECK( .not. trans%is_null() )
-  !call atlas_write_gmsh(mesh,"testf3.msh")
   !FCTEST_CHECK_EQUAL( trans%owners(), 1 )
   !FCTEST_CHECK_EQUAL( trans%owners(), 1 )
 !  FCTEST_CHECK_EQUAL( trans%owners(), 1 )

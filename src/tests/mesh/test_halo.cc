@@ -18,7 +18,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/internals/atlas_config.h"
 #include "tests/TestMeshes.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/array/IndexView.h"
@@ -33,7 +33,7 @@
 #include "atlas/internals/IsGhost.h"
 
 
-using namespace atlas::util::io;
+using namespace atlas::output;
 using namespace atlas::util;
 using namespace atlas::mesh::generators;
 
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
 
   std::stringstream filename; filename << "small_halo_p" << eckit::mpi::rank() << ".msh";
-  Gmsh().write(*m,filename.str());
+  Gmsh(filename.str()).write(*m);
 }
 #endif
 
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE( test_t63 )
   mesh::actions::renumber_nodes_glb_idx(m->nodes());
 
   std::stringstream filename; filename << "T63_halo.msh";
-  Gmsh().write(*m,filename.str());
+  Gmsh(filename.str()).write(*m);
 
 //  BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
 

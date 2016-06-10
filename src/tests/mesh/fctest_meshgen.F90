@@ -39,6 +39,7 @@ END_TESTSUITE_FINALIZE
 !  type(atlas_grid_Structured) :: grid
 !  type(atlas_Mesh) :: mesh
 !  type(atlas_MeshGenerator) :: meshgenerator
+!   type(atlas_Output) :: gmsh
 !  integer, parameter :: nlat = 7
 !  real(c_double) :: lats(nlat)
 !  real(c_double) :: lon_min(nlat)
@@ -49,7 +50,8 @@ END_TESTSUITE_FINALIZE
 !  grid = atlas_grid_CustomStructured(lats,pl,lon_min)
 !  meshgenerator = atlas_meshgenerator_Structured()
 !  mesh = meshgenerator%generate(grid)
-!  call atlas_write_gmsh(mesh,"test_custom_structured1.msh")
+! gmsh = atlas_output_Gmsh("test_custom_structured1.msh")
+! call gmsh%write(mesh)
 !  call meshgenerator%final()
 !  call grid%final()
 !  call mesh%final()
@@ -66,7 +68,7 @@ END_TESTSUITE_FINALIZE
 !  type(atlas_grid_Structured) :: grid
 !  type(atlas_Mesh) :: mesh
 !  type(atlas_MeshGenerator) :: meshgenerator
-
+!   type(atlas_Output) :: gmsh
 !  conf = atlas_Config( )
 !  call conf%set("grid_type","custom_structured")
 !  call conf%set("nlat",7)
@@ -77,7 +79,8 @@ END_TESTSUITE_FINALIZE
 !  grid = atlas_grid_Structured(conf)
 !  meshgenerator = atlas_meshgenerator_Structured()
 !  mesh = meshgenerator%generate(grid)
-!  call atlas_write_gmsh(mesh,"test_custom_structured2.msh")
+! gmsh = atlas_output_Gmsh("test_custom_structured2.msh")
+! call gmsh%write(mesh)
 !  call meshgenerator%final()
 !  call grid%final()
 !  call mesh%final()
@@ -94,7 +97,7 @@ END_TESTSUITE_FINALIZE
 !  type(atlas_grid_Structured) :: grid
 !  type(atlas_Mesh) :: mesh
 !  type(atlas_MeshGenerator) :: meshgenerator
-
+!   type(atlas_Output) :: gmsh
 
 ! ! Write a json file
 ! OPEN (UNIT=9 , FILE="custom.json", STATUS='REPLACE')
@@ -112,7 +115,8 @@ END_TESTSUITE_FINALIZE
 !  grid = atlas_grid_Structured(conf)
 !  meshgenerator = atlas_meshgenerator_Structured()
 !  mesh = meshgenerator%generate(grid)
-!  call atlas_write_gmsh(mesh,"test_custom_structured3.msh")
+! gmsh = atlas_output_Gmsh("test_custom_structured3.msh")
+! call gmsh%write(mesh)
 !  call meshgenerator%final()
 !  call grid%final()
 !  call mesh%final()
@@ -131,6 +135,7 @@ TEST( test_meshgen )
   type(atlas_Field) :: field
   type(atlas_functionspace_NodeColumns) :: functionspace_nodes
   type(atlas_HaloExchange) :: halo_exchange
+  type(atlas_Output) :: gmsh
   integer(c_int), pointer :: ridx(:)
   real(c_double), pointer :: arr1d(:), arr2d(:,:)
   integer :: i, nnodes, nghost
@@ -179,7 +184,8 @@ TEST( test_meshgen )
   call field%data(arr2d)
   call field%final()
 
-  call atlas_write_gmsh(mesh,"testf2.msh")
+  gmsh = atlas_output_Gmsh("testf2.msh")
+  call gmsh%write(mesh)
 
   call atlas_write_load_balance_report(mesh,"N24_loadbalance.dat")
 END_TEST

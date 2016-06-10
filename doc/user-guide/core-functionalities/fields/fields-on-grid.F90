@@ -20,7 +20,7 @@ real(wp), pointer               :: pressure(:)
 
 call atlas_init()
 
-call atlas_resource("--grid", "N32", gridID)
+gridID = "N32"
 grid = atlas_grid_Structured(gridID)
 
 field_pressure = atlas_Field("pressure", atlas_real(wp), [grid%npts()])

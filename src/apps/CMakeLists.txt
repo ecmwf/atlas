@@ -5,12 +5,6 @@ ecbuild_add_executable(
   LIBS        atlas )
 
 ecbuild_add_executable(
-  TARGET      gmsh_ls
-  SOURCES     gmsh_ls.cc
-  LIBS        atlas
-  CONDITION   HAVE_GRID )
-
-ecbuild_add_executable(
   TARGET      atlas-meshgen
   SOURCES     atlas-meshgen.cc
   LIBS        atlas )

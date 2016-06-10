@@ -17,9 +17,9 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas.h"
 #include "tests/TestMeshes.h"
-#include "atlas/util/io/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -34,7 +34,7 @@
 #include "atlas/runtime/Log.h"
 
 using namespace atlas;
-using namespace atlas::util::io;
+using namespace atlas::output;
 using namespace atlas::mesh::generators;
 using namespace atlas::util;
 
@@ -61,7 +61,11 @@ double dual_volume(mesh::Mesh& mesh)
 }
 
 struct MPIFixture {
-     MPIFixture()  { atlas_init(); }
+     MPIFixture()  {
+       atlas_init(
+             boost::unit_test::framework::master_test_suite().argc,
+             boost::unit_test::framework::master_test_suite().argv);
+     }
     ~MPIFixture()  { atlas_finalize(); }
 };
 
@@ -70,9 +74,10 @@ BOOST_GLOBAL_FIXTURE( MPIFixture );
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {
   // Every task builds full mesh
+//  mesh::generators::Structured generate( util::Config
+//      ("nb_parts",1)
+//      ("part",0) );
   mesh::generators::Structured generate;
-  generate.options.set("nb_parts",1);
-  generate.options.set("part",0);
 
       // long lon[] = {4,6,8,8,8};
       // test::TestGrid grid(5,lon);
@@ -81,14 +86,9 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   grid::global::gaussian::ClassicGaussian grid(16);
 
 
-  generate.options.set("nb_parts", eckit::mpi::size());
-  generate.options.set("part", eckit::mpi::rank());
-
   mesh::Mesh::Ptr m( generate( grid ) );
 
   mesh::Mesh::Id meshid = m->id();
-
-      //  mesh::Mesh::Ptr m( Gmsh::read("unstr.msh") );
 
 //  actions::distribute_mesh(*m);
 
@@ -107,8 +107,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
     std::cout << "difference = " << difference << std::endl;
   }
 
-  std::stringstream filename; filename << "N32_dist.msh";
-  Gmsh().write(*m,filename.str());
+  Gmsh("N32_dist.msh").write(*m);
 
   mesh::actions::write_load_balance_report(*m,"load_balance.dat");
 

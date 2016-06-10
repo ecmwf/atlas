@@ -1,11 +1,21 @@
 #ifndef atlas_atlas_h
 #define atlas_atlas_h
 
+#include <iosfwd>
 #include "atlas/internals/atlas_config.h"
+#include "eckit/config/Parametrisation.h"
+
+namespace eckit
+{
+  class Parametrisation;
+}
 
 namespace atlas {
 
-void atlas_init(int argc=0, char **argv=0);
+void atlas_init(int argc, char **argv);
+void atlas_init();
+void atlas_init(const eckit::Parametrisation&);
+void atlas_info(std::ostream&);
 void atlas_finalize();
 
 // ------------------------------------------------------------------

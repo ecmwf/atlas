@@ -12,7 +12,6 @@
 #include <vector>
 #include <memory>
 #include <iostream>
-#include "eckit/config/Resource.h"
 #include "eckit/log/Timer.h"
 #include "eckit/log/BigNum.h"
 #include "eckit/memory/ScopedPtr.h"

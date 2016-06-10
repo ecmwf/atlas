@@ -17,9 +17,11 @@
 #include <vector>
 #include <memory>
 
+#include "atlas/atlas.h"
+#include "atlas/grid/grids.h"
+#include "atlas/internals/AtlasTool.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Resource.h"
-#include "eckit/runtime/Tool.h"
 #include "eckit/runtime/Context.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/memory/Factory.h"
@@ -27,98 +29,50 @@
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/Tokenizer.h"
 
-#include "atlas/atlas.h"
-#include "atlas/grid/grids.h"
-
-
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 using namespace eckit;
 using namespace atlas;
 using namespace atlas::grid;
 
-//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-class AtlasGrids : public eckit::Tool {
+class AtlasGrids : public AtlasTool {
 
-  virtual void run();
+  virtual bool serial() { return true; }
+  virtual void execute(const Args& args);
+  virtual std::string briefDescription() {
+    return "Catalogue of available built-in grids";
+  }
+  virtual std::string usage() {
+    return name() + " GRID [OPTION]... [--help,-h]";
+  }
+  virtual std::string longDescription() {
+    return "Catalogue of available built-in grids\n"
+           "\n"
+           "       Browse catalogue of grids\n"
+           "\n"
+           "       GRID: unique identifier for grid \n"
+           "           Example values: N80, F40, O24, L32\n";
+  }
 
 public:
 
-  AtlasGrids(int argc,char **argv): eckit::Tool(argc,argv)
+  AtlasGrids(int argc,char **argv): AtlasTool(argc,argv)
   {
-    //atlas_init(argc,argv);
-    do_run = false;
+    add_option( new SimpleOption<bool>("list","List all grids. The names are possible values for the GRID argument") );
 
-    bool help = Resource< bool >("--help",false);
+    add_option( new SimpleOption<bool>("info","List information about GRID") );
 
-    std::string help_str =
-        "NAME\n"
-        "       atlas-grids - Catalogue of available built-in grids\n"
-        "\n"
-        "SYNOPSIS\n"
-        "       atlas-grids GRID [OPTION]... [--help] \n"
-        "\n"
-        "DESCRIPTION\n"
-        "       Browse catalogue of grids\n"
-        "\n"
-        "       GRID: unique identifier for grid \n"
-        "           Example values: N80, F40, O24, L32\n"
-        "\n"
-        "       -a        List all grids. The names are the GRID argument\n"
-        "\n"
-        "       -i        List information about GRID\n"
-        "\n"
-        "       --json    Export json\n"
-        "\n"
-        "       --rtable  Export IFS rtable\n"
-        "\n"
-        "AUTHOR\n"
-        "       Written by Willem Deconinck.\n"
-        "\n"
-        "ECMWF                        November 2014"
-        ;
+    add_option( new SimpleOption<bool>("json","Export json") );
 
-    if( help )
-    {
-      std::cout << help_str << std::endl;
-      return;
-    }
-
-    key = "";
-    for( int i=0; i<argc; ++i )
-    {
-      if( i==1 && argv[i][0] != '-' )
-      {
-        key = std::string(argv[i]);
-      }
-    }
-
-    info = Resource< bool >("-i",false);
-    if( info && !key.empty() ) do_run = true;
-
-    json = Resource< bool >("--json",false);
-    if( json && !key.empty() ) do_run = true;
-
-    rtable = Resource< bool >("--rtable",false);
-    if( rtable && !key.empty() ) do_run = true;
-
-    all = false;
-    if( do_run == false && key.empty() )
-    {
-      all = true;
-      do_run = true;
-    }
-    if( !key.empty() && do_run == false )
-    {
-      Log::error() << "Option wrong or missing after '" << key << "'" << std::endl;
-    }
+    add_option( new SimpleOption<bool>("rtable","Export IFS rtable") );
 
   }
 
 private:
 
-  bool all;
+  bool list;
   std::string key;
   bool info;
   bool json;
@@ -128,13 +82,33 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-void AtlasGrids::run()
+void AtlasGrids::execute(const Args& args)
 {
-  if( !do_run ) return;
+  key = "";
+  if( args.count() ) key = args(0);
 
-  atlas::grid::load();
+  info = false;
+  args.get("info",info);
 
-  if( all )
+  if( info && !key.empty() ) do_run = true;
+
+  json = false;
+  args.get("json",json);
+  if( json && !key.empty() ) do_run = true;
+
+  rtable = false;
+  args.get("rtable",rtable);
+  if( rtable && !key.empty() ) do_run = true;
+
+  list = false;
+  args.get("list",list);
+  if( list) do_run = true;
+
+  if( !key.empty() && do_run == false )
+  {
+    Log::error() << "Option wrong or missing after '" << key << "'" << std::endl;
+  }
+  if( list )
   {
     std::vector<std::string> keys = Factory<Grid>::instance().keys();
     Log::info() << "usage: atlas-grids GRID [OPTION]... [--help]\n" << std::endl;
@@ -223,7 +197,6 @@ void AtlasGrids::run()
       std::cout << stream.str() << std::endl;
     }
   }
-  //atlas_finalize();
 }
 
 //------------------------------------------------------------------------------------------------------

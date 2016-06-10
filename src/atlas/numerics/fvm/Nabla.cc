@@ -21,7 +21,6 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/parallel/omp/omp.h"
-#include "atlas/util/io/Gmsh.h"
 #include "atlas/runtime/Log.h"
 
 // =======================================================

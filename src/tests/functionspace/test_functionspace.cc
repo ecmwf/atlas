@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   mesh::Mesh mesh;
   mesh::generators::Structured generator;
-  //generator.options.set("three_dimensional",true);
+  //generator.options.set("3d",true);
   generator.generate(*grid,mesh);
 
   //grid.reset();

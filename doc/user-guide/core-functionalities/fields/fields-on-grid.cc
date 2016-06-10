@@ -2,7 +2,6 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/grid/grids.h"
 #include "atlas/field/Field.h"
-#include "eckit/config/Resource.h"
 
 using namespace std;
 using namespace eckit;
@@ -23,8 +22,8 @@ int main(int argc, char *argv[])
     const double zrad  = 2.0 * rpi / 9.0;
     double  zdist, zlon, zlat;
 
-    string gridID;
-    gridID = Resource<string>("--grid", string("N32"));
+    string gridID = "N32";
+
     SharedPtr<Structured> grid(Structured::create(gridID));
     int const nb_nodes = grid->npts();
 

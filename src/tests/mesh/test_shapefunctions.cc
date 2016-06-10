@@ -19,7 +19,6 @@
 
 // #include "tests/TestMeshes.h"
 #include "atlas/mpi/mpi.h"
-// #include "atlas/io/Gmsh.h"
 #include "atlas/util/Debug.h"
 // #include "atlas/Mesh.h"
 #include "atlas/Array.h"

@@ -124,6 +124,10 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildDualMesh.h
 #generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/GenerateMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/WriteLoadBalanceReport.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/generators/MeshGenerator.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Output.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Gmsh.h
+  MODULE    atlas_output_gmsh_c_binding
+  OUTPUT    outout_Gmsh_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/State.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/Field.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/FieldSet.h)
@@ -179,13 +183,12 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_Logging_module.F90
         util/atlas_Error_module.F90
         util/atlas_Value_module.F90
-        util/atlas_io_module.F90
+        output/atlas_output_module.F90
         functionspace/atlas_FunctionSpace_module.F90
         functionspace/atlas_functionspace_EdgeColumns_module.F90
         functionspace/atlas_functionspace_NodeColumns_module.F90
         functionspace/atlas_functionspace_StructuredColumns_module.F90
         functionspace/atlas_functionspace_Spectral_module.F90
-        # field/atlas_Field_module.F90
         field/atlas_FieldSet_module.F90
         field/atlas_State_module.F90
         grid/atlas_Grid_module.F90

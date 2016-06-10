@@ -5,9 +5,8 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "eckit/config/Resource.h"
 
 using namespace std;
 using namespace eckit;
@@ -23,7 +22,7 @@ int main(int argc, char *argv[])
     atlas_init(argc, argv);
 
     // Generate global reduced grid
-    string gridID = Resource<string>("--grid", string("N32"));
+    string gridID = "N32";
     SharedPtr<Structured> grid (Structured::create(gridID));
 
     // Number of points in the grid
@@ -73,11 +72,16 @@ int main(int argc, char *argv[])
     mesh::generators::Structured meshgenerator;
     SharedPtr<Mesh> mesh (meshgenerator.generate(*grid));
 
-    // Write mesh and field in gmsh format for visualization
-    util::io::Gmsh gmsh;
-    gmsh.options.set("info", true);
-    gmsh.write(*mesh, "mesh.msh");
-    gmsh.write(*field_scalar1, "scalar1.msh");
+    // Write mesh
+    {
+      output::Gmsh gmsh("mesh.msh");
+      gmsh.write(*mesh);
+    }
+    // Write field
+    {
+      output::Gmsh gmsh("scalar1.msh");
+      gmsh.write(*field_scalar1);
+    }
     /* .... */
 
     atlas_finalize();

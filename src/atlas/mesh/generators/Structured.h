@@ -80,7 +80,7 @@ private:
   void generate_global_element_numbering(
     Mesh& mesh ) const;
 
-public:
+private:
 
   util::Metadata options;
 

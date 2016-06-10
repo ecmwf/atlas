@@ -22,6 +22,8 @@
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
+#include "atlas/output/Output.h"
+#include "atlas/output/Gmsh.h"
 
 namespace atlas {
 namespace test {
@@ -34,20 +36,17 @@ struct AtlasFixture {
 
 BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
-BOOST_AUTO_TEST_CASE( test_read_write )
-{
-    using namespace atlas;
-    using namespace atlas::util::io;
 
-    // mesh::Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
-    mesh::Mesh::Ptr mesh = test::generate_mesh(
+BOOST_AUTO_TEST_CASE( test_gmsh_output )
+{
+  mesh::Mesh::Ptr mesh = test::generate_mesh(
        grid::global::gaussian::ClassicGaussian(128) );
 
-    Gmsh gmsh;
-    gmsh.options.set("ascii",true);
-    gmsh.write(*mesh,"mesh.msh");
-
-    BOOST_REQUIRE_NO_THROW( mesh = mesh::Mesh::Ptr( Gmsh().read( "mesh.msh" ) ) );
+  atlas::output::GmshFileStream file("bs.msh","w");
+  output::Gmsh gmsh ( "test_gmsh_output.msh", util::Config
+      ("binary",true)
+      ("file","test_gmsh_output.msh") );
+  gmsh.write(*mesh);
 }
 
 } // namespace test

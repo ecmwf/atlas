@@ -15,7 +15,6 @@
 #define BOOST_TEST_MODULE TestRGG
 #include "ecbuild/boost_test_framework.h"
 
-#include "eckit/config/ResourceMgr.h"
 #include "eckit/geometry/Point3.h"
 #include "atlas/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -24,7 +23,7 @@
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/util/Config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -35,7 +34,6 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Config.h"
 #include "atlas/grid/global/gaussian/classic/N.h"
@@ -47,8 +45,6 @@ using namespace atlas;
 using namespace atlas::internals;
 using namespace atlas::grid::partitioners;
 using namespace atlas::mesh::generators;
-using namespace atlas::util::io;
-
 
 namespace atlas {
 namespace grid {
@@ -244,16 +240,19 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 {
   mesh::Mesh* m;
-  util::Config opts;
-  opts.set("nb_parts",1);
-  opts.set("part",0);
-  mesh::generators::Structured generate(opts);
+  util::Config default_opts;
+  default_opts.set("nb_parts",1);
+  default_opts.set("part",0);
 //  generate.options.set("nb_parts",1);
 //  generate.options.set("part",    0);
 DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   ENABLE {
-    generate.options.set("three_dimensional",true);
-    generate.options.set("include_pole",false);
+
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",true)
+          ("include_pole",false)
+          );
     m = generate( atlas::test::DebugMesh() );
     BOOST_CHECK_EQUAL( m->nodes().size(), 156 );
     BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
@@ -265,8 +264,11 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
 
   ENABLE {
-    generate.options.set("three_dimensional",false);
-    generate.options.set("include_pole",false);
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",false)
+          ("include_pole",false)
+          );
     m = generate( atlas::test::DebugMesh() );
     BOOST_CHECK_EQUAL( m->nodes().size(), 166 );
     BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
@@ -278,8 +280,11 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
 
   ENABLE {
-    generate.options.set("three_dimensional",true);
-    generate.options.set("include_pole",true);
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",true)
+          ("include_pole",true)
+          );
     m = generate( atlas::test::DebugMesh() );
     BOOST_CHECK_EQUAL( m->nodes().size(), 158 );
     BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
@@ -293,8 +298,11 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   mesh::Mesh* mesh;
 
   ENABLE {
-    generate.options.set("three_dimensional",false);
-    generate.options.set("include_pole",false);
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",false)
+          ("include_pole",false)
+          );
     int nlat=2;
     long lon[] = { 4, 6 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
@@ -304,40 +312,55 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 
     double max_lat = test::MinimalMesh(nlat,lon).lat(0);
     BOOST_CHECK_CLOSE( test::compute_lonlat_area(*mesh), 2.*M_PI*2.*max_lat, 1e-8 );
-    Gmsh().write(*mesh,"minimal2.msh");
+    output::Gmsh("minimal2.msh").write(*mesh);
     delete mesh;
   }
   // 3 latitudes
   ENABLE {
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",false)
+          ("include_pole",false)
+          );
     int nlat=3;
     long lon[] = { 4, 6, 8 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
     BOOST_CHECK_EQUAL( mesh->nodes().size(), 42 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 28 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(),  8 );
-    Gmsh().write(*mesh,"minimal3.msh");
+    output::Gmsh("minimal3.msh").write(*mesh);
     delete mesh;
   }
   // 4 latitudes
   ENABLE {
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",false)
+          ("include_pole",false)
+          );
     int nlat=4;
     long lon[] = { 4, 6, 8, 10 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
     BOOST_CHECK_EQUAL( mesh->nodes().size(), 64 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 46 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(), 12 );
-    Gmsh().write(*mesh,"minimal4.msh");
+    output::Gmsh("minimal4.msh").write(*mesh);
     delete mesh;
   }
   // 5 latitudes WIP
   ENABLE {
+    mesh::generators::Structured generate(
+          default_opts
+          ("3d",false)
+          ("include_pole",false)
+          );
     int nlat=5;
     long lon[] = { 6, 10, 18, 22, 22 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
     BOOST_CHECK_EQUAL( mesh->nodes().size(), 166 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 134 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(),  32 );
-    Gmsh().write(*mesh,"minimal5.msh");
+    output::Gmsh("minimal5.msh").write(*mesh);
     delete mesh;
   }
 }
@@ -346,12 +369,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
   BOOST_CHECK( PartitionerFactory::has("EqualRegions") );
-  eckit::ResourceMgr::instance().set("atlas.meshgen.partitioner","EqualRegions");
-  mesh::generators::Structured generate;
-  generate.options.set("nb_parts",20);
-  generate.options.set("include_pole",false);
-  generate.options.set("three_dimensional",false);
-
+  size_t nb_parts = 20;
           //  Alternative grid for debugging
           //  int nlat=10;
           //  long lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
@@ -368,10 +386,17 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
   std::vector<int> all_owned    ( grid.npts()+grid.nlat()+1, -1 );
 
-  for(size_t p = 0; p < generate.options.get<size_t>("nb_parts"); ++p)
+  for(size_t p = 0; p < nb_parts; ++p)
   {
     DEBUG_VAR(p);
-    generate.options.set("part",p);
+
+    mesh::generators::Structured generate ( util::Config
+           ("partitioner","EqualRegions")
+           ("nb_parts",nb_parts)
+           ("part",p)
+           ("include_pole",false)
+           ("3d",false) );
+
     mesh::Mesh::Ptr m( generate( grid ) );
     DEBUG();
     m->metadata().set("part",p);
@@ -383,7 +408,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     DEBUG();
 
     DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
-    if( generate.options.get<size_t>("nb_parts") == 20 )
+    if( nb_parts == 20 )
     {
       BOOST_CHECK_EQUAL( m->nodes().size(), nodes[p]  );
       BOOST_CHECK_EQUAL( m->cells().elements(0).size(), quads[p]  );
@@ -392,8 +417,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     }
     DEBUG();
 
-        std::stringstream filename; filename << "T63.msh";
-        Gmsh().write(*m,filename.str());
+    output::Gmsh("T63.msh").write(*m);
 
 
     mesh::Nodes& nodes = m->nodes();
@@ -452,6 +476,7 @@ DISABLE{
 
 BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 {
+  DEBUG();
   int N=11;
   long lon[] = {
     2,  //90
@@ -480,27 +505,26 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
     -90
   };
   grid::global::CustomStructured grid(N,lat,lon);
-  mesh::generators::Structured generate;
 
   bool three_dimensional = true;
 
-  generate.options.set("three_dimensional",three_dimensional);
-  generate.options.set("triangulate",false);
+  mesh::generators::Structured generate( util::Config
+        ("3d",three_dimensional)
+        ("triangulate",false) );
 
   mesh::Mesh::Ptr m (generate(grid));
 
-  mesh::actions::BuildXYZField build_xyz_field("xyz");
-  build_xyz_field(*m);
-
-  util::io::Gmsh gmsh;
-  if(three_dimensional)
-    gmsh.options.set("nodes",std::string("xyz"));
-  gmsh.write(*m,"rll.msh");
+  util::Config options;
+  if( three_dimensional ) options.set("coordinates","xyz");
+  output::Gmsh gmsh("rll.msh",options);
+  gmsh.write(*m);
 
 }
 
 BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
 {
+  DEBUG();
+
   SharedPtr<grid::Grid> grid(grid::Grid::create("O8"));
 
   atlas::util::Config cfg;

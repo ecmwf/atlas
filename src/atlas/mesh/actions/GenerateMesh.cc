@@ -31,8 +31,6 @@ Mesh* generate_mesh (const global::Structured& rgg)
               << std::endl;
 
   mesh::generators::Structured generate;
-  generate.options.set( "nb_parts", eckit::mpi::size() );
-  generate.options.set( "part"    , eckit::mpi::rank() );
   return generate(rgg);
 }
 }

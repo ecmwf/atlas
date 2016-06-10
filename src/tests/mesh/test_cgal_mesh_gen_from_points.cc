@@ -19,15 +19,15 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/generators/Delaunay.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 //------------------------------------------------------------------------------
 
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::util::io;
 using namespace atlas::mesh::generators;
+using namespace atlas::output;
 
 //------------------------------------------------------------------------------
 
@@ -46,9 +46,8 @@ int main()
     Delaunay generate;
     mesh::Mesh::Ptr mesh( generate(*grid) );
 
-    Gmsh gmsh;
-    gmsh.options.set<std::string>("nodes","xyz");
-    gmsh.write(*mesh, std::string("earth.msh") );
+    Gmsh gmsh("earth.msh", util::Config("coordinates","xyz") );
+    gmsh.write(*mesh);
 
     eckit::mpi::finalize();
 
