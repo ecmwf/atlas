@@ -52,6 +52,10 @@ class StructuredColumns : public FunctionSpace
 {
 public:
 
+    typedef eckit::SharedPtr<StructuredColumns> Ptr;
+
+public:
+
   StructuredColumns( const grid::Grid& );
 
   virtual ~StructuredColumns();

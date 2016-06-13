@@ -37,6 +37,10 @@ class Spectral : public FunctionSpace
 {
 public:
 
+    typedef eckit::SharedPtr<Spectral> Ptr;
+
+public:
+
   Spectral(const size_t truncation);
 
   Spectral(trans::Trans& );
