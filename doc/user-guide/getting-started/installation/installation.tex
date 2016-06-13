@@ -394,7 +394,50 @@ section we show a simple example on how to create a simple
 program to initialize and finalize the library.
 
 
+\section{Inspecting your \Atlas installation} \label{s:inspect}
+Once installation of atlas is complete, an executable called "atlas"
+can be found in \inlsh{\$INSTALL/bin/atlas}. Executing 
+\begin{lstlisting}[style=BashStyle]
+>>> $INSTALL/bin/atlas --version
+0.7.0
 
+>>> $INSTALL/bin/atlas --git
+2d683ab4aa0c
+
+>>> $INSTALL/bin/atlas --info
+atlas version (0.7.0), git-sha1 2d683ab
+
+  Build:
+    build type      : Release
+    timestamp       : 20160215122606
+    op. system      : Darwin-14.5.0 (macosx.64)
+    processor       : x86_64
+    c compiler      : Clang 7.0.2.7000181
+      flags         :  -O3 -DNDEBUG
+    c++ compiler    : Clang 7.0.2.7000181
+      flags         :  -O3 -DNDEBUG
+    fortran compiler: GNU 5.2.0
+      flags         :  -fno-openmp -O3 -funroll-all-loops -finline-functions
+
+  Features:
+    Fortran        : ON
+    MPI            : ON
+    OpenMP         : OFF
+    BoundsChecking : OFF
+    Trans          : ON
+    Tesselation    : ON
+    gidx_t         : 64 bit integer
+
+  Dependencies: 
+    eckit version  (0.12.3), git-sha1 7b76818
+    transi version (0.3.2), git-sha1 bf33f60
+\end{lstlisting}
+%
+gives you information respectively on the macro version,
+a more detailed git-version-controlled identifier, and finally 
+a more complete view on all the features that Atlas has been compiled with,
+as well as compiler and compile flag information.
+Also printed is the versions of used dependencies such as eckit and transi.
 
 \section{Using \Atlas in your project}
 \label{s:using}
@@ -717,7 +760,7 @@ This will compile our hello-world.F90 file and it will automatically
 link all the static and dynamic libraries required by the program. 
 The executable, as mentioned, is generated into the folder bin.
 %
-\item \underline{Cmake/ecbuild}\\[0.5em]
+\item \underline{CMake/ecbuild}\\[0.5em]
 %
 The second possibility is to use a cmake file that uses some 
 ecbuild macros. In particular, we need to create the following 
@@ -798,12 +841,13 @@ we obtain the output
 [0] (2016-03-09 T 15:27:00) (I) -- Hello world!
 \end{lstlisting}
 %
-However, by adding \inlsh{\ddash{debug}} to the command line,
+However, by setting the environment variable \inlsh{DEBUG=1},
 also debug information is printed.
 In particular, if we type:
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-hello-world --debug
+export DEBUG=1
+./atlas_c-hello-world
 \end{lstlisting}
 %
 we should obtain something similar to the following output:

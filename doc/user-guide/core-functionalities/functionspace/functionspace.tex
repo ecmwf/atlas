@@ -51,9 +51,9 @@ three-dimensional fields if necessary. Specifically, this integer
 is intended to constitute the number of vertical levels required. 
 Finally, on lines 39 and 40, we define the function space \inltc{nodes}.
 Note that we pass two arguments here: the first is the mesh, while the 
-second is the halo. An halo is defined as an extra-layer of ghost elements
+second is the halo. A halo is defined as an extra layer of ghost elements
 that is required, for instance, to calculated derivatives when a larger 
-stencil is needed. In this case, we just asked for one extra-layer of 
+stencil is needed. In this case, we just asked for one extra layer of 
 ghost elements (i.e. \inltc{Halo(1)}). 
 Using the function space \inltc{nodes} just generated, we create 
 various fields to highlight the different existing possibilities.
@@ -283,9 +283,9 @@ mesh (see lines 52 and 53).
 On line 45 we initialize the library as usual, while, on line 56, 
 we define the \inltf{nodes} function space - note that we pass two 
 arguments here: the first is the mesh, while the second is the halo. 
-An halo is defined as an extra-layer of ghost elements that is required, 
+A halo is defined as an extra layer of ghost elements that is required, 
 for instance, to calculate derivatives when a larger stencil is needed. 
-In this case, we just asked for one extra-layer of ghost elements (i.e. 
+In this case, we just asked for one extra layer of ghost elements (i.e. 
 \inltf{halo\_size = 1}). 
 
 Using the function space \inltf{nodes} just generated, we create 

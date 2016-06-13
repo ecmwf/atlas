@@ -8,29 +8,34 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/functionspace/StructuredColumns.h"
 
-using namespace std;
-using namespace eckit;
-using namespace atlas;
-using namespace atlas::array;
-using namespace atlas::grid::global;
-using namespace atlas::field;
-using namespace atlas::mesh;
-
+using atlas::array::ArrayView;
+// using atlas::array::make_shape;
+using atlas::atlas_finalize;
+using atlas::atlas_init;
+using atlas::field::Field;
+// using atlas::field::FieldSet;
+// using atlas::field::global;
+using atlas::functionspace::StructuredColumns;
+// using atlas::gidx_t;
+using atlas::grid::Grid;
+// using atlas::Log;
+// using atlas::mesh::Halo;
+using atlas::mesh::Mesh;
+using atlas::output::Gmsh;
 
 int main(int argc, char *argv[])
 {
     atlas_init(argc, argv);
 
     // Generate global reduced grid
-    string gridID = "N32";
-    SharedPtr<Structured> grid (Structured::create(gridID));
+    Grid::Ptr grid (Grid::create( "N32" ));
 
     // Number of points in the grid
     int const nb_nodes = grid->npts();
 
     // Generate functionspace associated to grid
-    SharedPtr<functionspace::StructuredColumns>
-        fs_rgp(new functionspace::StructuredColumns(*grid));
+    StructuredColumns::Ptr
+        fs_rgp(new StructuredColumns(*grid));
 
     /* .... */
     // Variables for scalar1 field definition
@@ -44,7 +49,7 @@ int main(int argc, char *argv[])
 
 
     // Calculate scalar function
-    SharedPtr<Field> field_scalar1(fs_rgp->createField<double>("scalar1"));
+    Field::Ptr field_scalar1(fs_rgp->createField<double>("scalar1"));
     ArrayView <double,1> scalar1(*field_scalar1);
 
     for (int jlat = 0; jlat < fs_rgp->nlat(); ++jlat)
@@ -68,21 +73,16 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Generate mesh associated to reduced grid
-    mesh::generators::Structured meshgenerator;
-    SharedPtr<Mesh> mesh (meshgenerator.generate(*grid));
-
-    // Write mesh
-    {
-      output::Gmsh gmsh("mesh.msh");
-      gmsh.write(*mesh);
-    }
     // Write field
     {
-      output::Gmsh gmsh("scalar1.msh");
+      // Generate visualisation mesh associated to grid
+      atlas::mesh::generators::Structured meshgenerator;
+      Mesh::Ptr mesh (meshgenerator.generate(*grid));
+      
+      Gmsh gmsh("scalar1.msh");
+      gmsh.write(*mesh);
       gmsh.write(*field_scalar1);
     }
-    /* .... */
 
     atlas_finalize();
     return 0;

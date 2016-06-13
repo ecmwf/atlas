@@ -75,11 +75,11 @@ structured grid.
 \Atlas using C++, style=CStyle, label=Structured-C]{global-grids-Structured.cc}
 %
 We create the global 
-grid object (see line 16). In particular, we call the 
+grid object (see line 14). In particular, we call the 
 grid constructor passing the command-line string (that 
 represents the key of the grid we want to create) to it.
-The default value is set to \inltc{N32}, that represents 
-a classic reduced Gaussian grid with 32 latitudes in one hemisphere 
+The default value is set to \inltc{O32}, that represents 
+a octahedral reduced Gaussian grid with 32 latitudes in one hemisphere 
 (i.e. 64 latitudes in total).  
 The command-line string (i.e. the key) must be contained 
 in the predefined keys for reduced grid generation as specified 
@@ -121,16 +121,12 @@ The last three numbers represent the coordinates of a given
 latitude, longitude and both longitude and latitude together, 
 respectively. Note again how these information can be directly 
 accessed through the object \inltc{grid}. 
-Also, for retrieving a given latitude coordinate it is just 
+Also, for retrieving a given latitude coordinate it is only 
 necessary to specify one index that refers to that particular 
-latitude (see line 26). On the other hand, for a given longitude 
+latitude (see line 23). On the other hand, for a given longitude 
 we need to provide both the index of the latitude and the index 
 of the longitude, since the longitude may depend on the latitude 
-(see line 27 and 24).
-
-You can now play with the command-line argument to generate 
-different types of global structured grid using the keys introduced 
-at the beginning of this section!
+(see line 21 and 24).
 
 \subsection{Fortran version}
 The \lista{Structured-F} shows how to construct a generic 
@@ -142,20 +138,17 @@ using Fortran, style=FStyle, label=Structured-F]{global-grids-Structured.F90}
 %
 
 We create the global 
-grid object (see line 12). In particular, we call 
+grid object (see line 9). In particular, we call 
 the grid constructor passing the command-line string 
 (that represents the key of the grid we want to create) to 
-it. The default value is set to \inltc{N32}, that represents 
-a classic reduced Gaussian grid with 32 latitudes in one emisphere 
+it. The default value is set to \inltc{O32}, that represents 
+a octahedral reduced Gaussian grid with 32 latitudes in one hemisphere 
 (i.e. 64 latitudes in total).  
 The grid object, \inltc{grid}, is 
 an \inltc{atlas\_grid\_Structured} type and it will allow 
 us to access some useful information about the grid.  
 
-It is now possible to run this simple program by using 
-one command-line argument representing the keyword that 
-identifies an \Atlas predefined grid. For instance, we 
-can execute the following command line 
+It is now possible to run this simple program with the following command line 
 %
 \begin{lstlisting}[style=BashStyle]
 ./atlas_f-global-grids-Structured
@@ -171,7 +164,7 @@ contains some useful information regarding the grid.
 In particular, the first three numbers represent the 
 number of latitudes, longitudes and points of the grid,
 respectively. Note that we can directly access them 
-through the \inltc{grid} object (see lines 14, 17, 20).
+through the \inltc{grid} object (see lines 11, 14, 17).
 %
 \begin{tipbox}
 For the number of latitudes and points we do not need to provide
@@ -186,14 +179,14 @@ The last two numbers represent the coordinates of a given
 latitude and longitude, respectively. Note again how these 
 information can be directly accessed through the object 
 \inltc{grid}. 
-Also, for retrieving a given latitude coordinate it is just 
+Also, for retrieving a given latitude coordinate it is only 
 necessary to specify one index that refers to that particular 
-latitude (see line 23). On the other hand, for a given longitude 
+latitude (see line 20). On the other hand, for a given longitude 
 we need to provide both the index of the latitude and the index 
 of the longitude, since the longitude may depend on the latitude 
-(see line 26).
+(see line 23).
 
-You can now play with the command-line argument to generate 
+You can now play with line 9 to generate 
 different types of global structured grid using the keys introduced 
 at the beginning of this section!
 
