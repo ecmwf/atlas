@@ -55,8 +55,8 @@ void ShiftedLonLat::set_typeinfo()
 
 //------------------------------------------------------------------------------
 
-ShiftedLonLat::ShiftedLonLat(const eckit::Parametrisation& p)
-  : LonLat(Shift::LON|Shift::LAT)
+ShiftedLonLat::ShiftedLonLat(const eckit::Parametrisation& p) :
+    LonLat(Shift::LON|Shift::LAT,Domain::makeGlobal())
 {
   setup(p);
   set_typeinfo();
@@ -64,8 +64,8 @@ ShiftedLonLat::ShiftedLonLat(const eckit::Parametrisation& p)
 
 //------------------------------------------------------------------------------
 
-ShiftedLonLat::ShiftedLonLat( const size_t N )
-  : LonLat(Shift::LON|Shift::LAT)
+ShiftedLonLat::ShiftedLonLat(const size_t N) :
+    LonLat(Shift::LON|Shift::LAT,Domain::makeGlobal())
 {
   setup(N);
   set_typeinfo();
@@ -73,8 +73,8 @@ ShiftedLonLat::ShiftedLonLat( const size_t N )
 
 //------------------------------------------------------------------------------
 
-ShiftedLonLat::ShiftedLonLat( const int nlon, const int nlat )
-  : LonLat(Shift::LON|Shift::LAT)
+ShiftedLonLat::ShiftedLonLat( const int nlon, const int nlat ) :
+    LonLat(Shift::LON|Shift::LAT,Domain::makeGlobal())
 {
   setup( (size_t)nlon, (size_t)nlat );
   set_typeinfo();
@@ -82,8 +82,8 @@ ShiftedLonLat::ShiftedLonLat( const int nlon, const int nlat )
 
 //------------------------------------------------------------------------------
 
-ShiftedLonLat::ShiftedLonLat( const size_t nlon, const size_t nlat )
-  : LonLat(Shift::LON|Shift::LAT)
+ShiftedLonLat::ShiftedLonLat( const size_t nlon, const size_t nlat ) :
+    LonLat(Shift::LON|Shift::LAT,Domain::makeGlobal())
 {
   setup(nlon,nlat);
   set_typeinfo();
@@ -91,8 +91,8 @@ ShiftedLonLat::ShiftedLonLat( const size_t nlon, const size_t nlat )
 
 //------------------------------------------------------------------------------
 
-ShiftedLonLat::ShiftedLonLat( const double &londeg, const double &latdeg )
-  : LonLat(Shift::LON|Shift::LAT)
+ShiftedLonLat::ShiftedLonLat( const double &londeg, const double &latdeg ) :
+    LonLat(Shift::LON|Shift::LAT,Domain::makeGlobal())
 {
   setup(londeg,latdeg);
   set_typeinfo();

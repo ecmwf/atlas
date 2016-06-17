@@ -44,7 +44,7 @@ public:
   static std::string className();
   static std::string grid_type_str() { return "structured"; }
 
-  Structured();
+  Structured( const Domain& dom=Domain::makeGlobal() );
 
   virtual size_t npts() const;
 

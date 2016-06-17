@@ -26,10 +26,11 @@ namespace global {
 class Global: public Grid {
 public:
 
-  static std::string className();
-  static std::string grid_type_str() { return "global"; }
+    static std::string className();
 
-  Global();
+    static std::string grid_type_str() { return "global"; }
+
+    Global( const Domain& dom=Domain::makeGlobal() );
 
 };
 

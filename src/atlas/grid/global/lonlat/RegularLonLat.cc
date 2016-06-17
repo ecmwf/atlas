@@ -47,30 +47,30 @@ void RegularLonLat::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-RegularLonLat::RegularLonLat(const eckit::Parametrisation& p)
-  : LonLat(Shift::NONE)
+RegularLonLat::RegularLonLat( const eckit::Parametrisation& p )
+  : LonLat(Shift::NONE,Domain::makeGlobal())
 {
   setup(p);
   set_typeinfo();
 }
 
-RegularLonLat::RegularLonLat( const int nlon, const int nlat )
- : LonLat(Shift::NONE)
+RegularLonLat::RegularLonLat( const int nlon, const int nlat, const Domain& dom )
+ : LonLat(Shift::NONE,dom)
 {
   setup( (size_t)nlon, (size_t)nlat );
   set_typeinfo();
 }
 
-RegularLonLat::RegularLonLat( const size_t nlon, const size_t nlat )
- : LonLat(Shift::NONE)
+RegularLonLat::RegularLonLat( const size_t nlon, const size_t nlat, const Domain& dom )
+ : LonLat(Shift::NONE,dom)
 {
   setup(nlon,nlat);
   set_typeinfo();
 }
 
 
-RegularLonLat::RegularLonLat( const size_t N )
- : LonLat(Shift::NONE)
+RegularLonLat::RegularLonLat( const size_t N, const Domain& dom )
+ : LonLat(Shift::NONE,dom)
 {
   size_t nlon = 4*N;
   size_t nlat = 2*N+1;
@@ -78,8 +78,8 @@ RegularLonLat::RegularLonLat( const size_t N )
   set_typeinfo();
 }
 
-RegularLonLat::RegularLonLat( const double &londeg, const double &latdeg )
- : LonLat(Shift::NONE)
+RegularLonLat::RegularLonLat( const double &londeg, const double &latdeg, const Domain& dom )
+ : LonLat(Shift::NONE,dom)
 {
   setup(londeg,latdeg);
   set_typeinfo();

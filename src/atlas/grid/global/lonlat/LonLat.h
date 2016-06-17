@@ -47,7 +47,7 @@ private:
   int bits_;
 };
 
-/// @brief (Reduced) LonLat Grid
+/// @brief (Structured) LonLat Grid
 ///
 /// This grid is a special case of the class Structured, with
 /// equidistant distribution of latitudes, and a equidistant distribution in zonal
@@ -58,26 +58,26 @@ private:
 ///   npts_per_lat[] = number of points on each latitude
 
 class LonLat: public Structured {
-
 public:
 
-  static std::string grid_type_str();
+    static std::string grid_type_str();
 
-  LonLat(const Shift&);
+    LonLat(const Shift&, const Domain& dom=Domain::makeGlobal());
 
-  static std::string className();
+    static std::string className();
 
-  const Shift& shifted() const { return shift_; }
+    const Shift& shifted() const { return shift_; }
 
-  bool regular() const { return shift_; }
-
-protected:
-
-  virtual void set_typeinfo() = 0;
+    bool regular() const { return shift_; }
 
 protected:
 
-  Shift shift_;
+    virtual void set_typeinfo() = 0;
+
+protected:
+
+    Shift shift_;
+
 };
 
 //------------------------------------------------------------------------------

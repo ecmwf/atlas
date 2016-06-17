@@ -8,23 +8,20 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/grid/Grid.h"
+
 #include <vector>
 #include "eckit/memory/Factory.h"
 #include "eckit/memory/Builder.h"
-#include "atlas/grid/Grid.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/Mesh.h"
-
-using eckit::Factory;
 
 namespace atlas {
 namespace grid {
 
-//------------------------------------------------------------------------------------------------------
 
-static void checkSizeOfPoint()
-{
-    // compilen time check support C++11
+static void checkSizeOfPoint() {
+    // compile time check support C++11
     #if __cplusplus >= 201103L
         static_assert( sizeof(Grid::Point)==2*sizeof(double), "Grid requires size of Point to be 2*double" );
     #endif
@@ -35,41 +32,27 @@ static void checkSizeOfPoint()
 
 
 Grid* Grid::create(const eckit::Parametrisation& p) {
-  std::string shortName;
-  if (p.get("short_name",shortName)) {
-    if (Factory<Grid>::instance().exists(shortName)) {
-      return Factory<Grid>::instance().get(shortName).create(p);
+    eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
+
+    std::string shortName;
+    if (p.get("short_name",shortName) && fact.exists(shortName)) {
+        return fact.get(shortName).create(p);
     }
-  }
-  std::string gridType;
-  if( p.get("grid_type",gridType) )
-    return Factory<Grid>::instance().get(gridType).create(p);
-  return NULL;
+    std::string gridType;
+    if (p.get("grid_type",gridType) && fact.exists(gridType)) {
+        return fact.get(gridType).create(p);
+    }
+    return NULL;
 }
 
 Grid* Grid::create(const Grid::uid_t& uid) { return grid::grid_from_uid(uid); }
 
-Grid::Grid() : domain_( Domain::makeGlobal() )
-{
-    checkSizeOfPoint();
-}
-
-Grid::Grid(const Domain& domain) : domain_(domain)
-{
+Grid::Grid(const Domain& domain) :
+    domain_(domain) {
     checkSizeOfPoint();
 }
 
 Grid::~Grid() {}
-
-const Domain& Grid::domain() const
-{
-  return domain_;
-}
-
-
-void Grid::domain(const Domain& domain) {
-  domain_ = domain;
-}
 
 Grid::uid_t Grid::uniqueId() const {
   if (uid_.empty()) {
@@ -89,15 +72,13 @@ eckit::MD5::digest_t Grid::hash() const {
   return hash_;
 }
 
-void Grid::fillLonLat(double array[], size_t arraySize) const
-{
+void Grid::fillLonLat(double array[], size_t arraySize) const {
     const size_t size = npts()*2;
     ASSERT(arraySize >= size);
     copyLonLatMemory(array, size_t(sizeof(double)*size));
 }
 
-std::string Grid::getOptimalMeshGenerator() const
-{
+std::string Grid::getOptimalMeshGenerator() const {
     return "Delaunay";
 }
 
@@ -120,8 +101,7 @@ void Grid::fillLonLat(std::vector<double>& v) const {
 //  return *mesh_;
 //}
 
-size_t Grid::copyLonLatMemory(double* pts, size_t size) const
-{
+size_t Grid::copyLonLatMemory(double* pts, size_t size) const {
     std::vector<Grid::Point> gpts;
     lonlat(gpts);
 
@@ -139,7 +119,6 @@ size_t Grid::copyLonLatMemory(double* pts, size_t size) const
 
 bool Grid::same(const grid::Grid& g) const { return uniqueId() == g.uniqueId(); }
 
-//------------------------------------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace atlas

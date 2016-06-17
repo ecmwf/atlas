@@ -55,8 +55,8 @@ void ShiftedLon::set_typeinfo()
 
 //------------------------------------------------------------------------------
 
-ShiftedLon::ShiftedLon(const eckit::Parametrisation& p)
-  : LonLat(Shift::LON)
+ShiftedLon::ShiftedLon(const eckit::Parametrisation& p) :
+    LonLat(Shift::LON,Domain::makeGlobal())
 {
   setup(p);
   set_typeinfo();
@@ -64,8 +64,8 @@ ShiftedLon::ShiftedLon(const eckit::Parametrisation& p)
 
 //------------------------------------------------------------------------------
 
-ShiftedLon::ShiftedLon( const size_t N )
-  : LonLat(Shift::LON)
+ShiftedLon::ShiftedLon( const size_t N ) :
+    LonLat(Shift::LON,Domain::makeGlobal())
 {
   setup(N);
   set_typeinfo();
@@ -73,8 +73,8 @@ ShiftedLon::ShiftedLon( const size_t N )
 
 //------------------------------------------------------------------------------
 
-ShiftedLon::ShiftedLon( const int nlon, const int nlat )
-  : LonLat(Shift::LON)
+ShiftedLon::ShiftedLon( const int nlon, const int nlat ) :
+    LonLat(Shift::LON,Domain::makeGlobal())
 {
   setup( (size_t)nlon, (size_t)nlat );
   set_typeinfo();
@@ -82,8 +82,8 @@ ShiftedLon::ShiftedLon( const int nlon, const int nlat )
 
 //------------------------------------------------------------------------------
 
-ShiftedLon::ShiftedLon( const size_t nlon, const size_t nlat )
-  : LonLat(Shift::LON)
+ShiftedLon::ShiftedLon( const size_t nlon, const size_t nlat ) :
+    LonLat(Shift::LON,Domain::makeGlobal())
 {
   setup( (size_t)nlon, (size_t) nlat);
   set_typeinfo();
@@ -91,8 +91,8 @@ ShiftedLon::ShiftedLon( const size_t nlon, const size_t nlat )
 
 //------------------------------------------------------------------------------
 
-ShiftedLon::ShiftedLon( const double &londeg, const double &latdeg )
-  : LonLat(Shift::LON)
+ShiftedLon::ShiftedLon( const double &londeg, const double &latdeg ) :
+    LonLat(Shift::LON,Domain::makeGlobal())
 {
   setup(londeg,latdeg);
   set_typeinfo();

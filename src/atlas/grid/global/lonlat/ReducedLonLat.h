@@ -38,7 +38,7 @@ public:
 
   ReducedLonLat( const eckit::Parametrisation& );
 
-  ReducedLonLat( const size_t nlat, const long nlon[], const Shift& = Shift::NONE );
+  ReducedLonLat( const size_t nlat, const long nlon[], const Domain& dom=Domain::makeGlobal() );
 
   static std::string className();
 
@@ -47,7 +47,7 @@ public:
 protected:
 
   void setup( const eckit::Parametrisation& );
-  void setup( const size_t nlat, const long nlon[], const Shift& = Shift::NONE );
+  void setup( const size_t nlat, const long nlon[] );
   void set_typeinfo();
 
 };

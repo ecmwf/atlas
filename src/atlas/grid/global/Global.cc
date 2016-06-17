@@ -21,8 +21,8 @@ std::string Global::className() { return "atlas.grid.global.Global"; }
 
 //------------------------------------------------------------------------------
 
-Global::Global()
-  : Grid(Domain::makeGlobal())
+Global::Global(const Domain& dom) :
+    Grid(dom)
 {
 }
 

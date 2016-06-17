@@ -36,7 +36,7 @@ public:
   ///
   ///   - RegularLonLat(nlon,nlat)
   ///   - RegularLonLat(londeg,latdeg)
-  RegularLonLat( const eckit::Parametrisation& );
+  RegularLonLat(const eckit::Parametrisation&);
 
   /// @brief Constructor, global grid
   ///
@@ -44,7 +44,7 @@ public:
   ///   dlat = 180/(nlat-1)
   ///   Longitudes: [0  :  dlon :  360-dlon ]
   ///   Latitudes:  [90 : -dlat : -90       ]
-  explicit RegularLonLat( const int nlon, const int nlat );
+  explicit RegularLonLat( const int nlon, const int nlat, const Domain& dom=Domain::makeGlobal() );
 
   /// @brief Constructor, global grid
   ///
@@ -52,20 +52,20 @@ public:
   ///   dlat = 180/(nlat-1)
   ///   Longitudes: [0  :  dlon :  360-dlon ]
   ///   Latitudes:  [90 : -dlat : -90       ]
-  explicit RegularLonLat( const size_t nlon, const size_t nlat );
+  explicit RegularLonLat( const size_t nlon, const size_t nlat, const Domain& dom=Domain::makeGlobal() );
 
   /// @brief Constructor, global grid
   ///
   ///   Longitudes: [0  :  londeg :  360-londeg ]
   ///   Latitudes:  [90 : -latdeg : -90         ]
-  explicit RegularLonLat( const double &londeg, const double &latdeg );
+  explicit RegularLonLat( const double &londeg, const double &latdeg, const Domain& dom=Domain::makeGlobal() );
 
   /// @brief Constructor, global grid
   ///
   /// nlon = 4*N
   /// nlat = 2*N+1
   /// londeg = latdeg = 90/N
-  RegularLonLat( const size_t N );
+  RegularLonLat( const size_t N, const Domain& dom=Domain::makeGlobal() );
 
   static std::string className();
 

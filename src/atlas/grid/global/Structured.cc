@@ -51,13 +51,15 @@ std::string Structured::className() { return "atlas.grid.global.Structured"; }
 
 //------------------------------------------------------------------------------
 
-Structured::Structured() : Global(), N_(0)
+Structured::Structured(const Domain& dom) :
+    Global(dom),
+    N_(0)
 {
 }
 
 //------------------------------------------------------------------------------
 
-void Structured::setup( const size_t nlat, const double lats[], const long pl[], const double lonmin[] )
+void Structured::setup(const size_t nlat, const double lats[], const long pl[], const double lonmin[] )
 {
   ASSERT(nlat > 1);  // can't have a grid with just one latitude
 

@@ -42,18 +42,15 @@ void ReducedLonLat::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-ReducedLonLat::ReducedLonLat(
-    const size_t nlat,
-    const long nlon[],
-    const Shift& shift )
- : LonLat(Shift::NONE)
+ReducedLonLat::ReducedLonLat( const size_t nlat, const long nlon[], const Domain& dom ) :
+   LonLat(Shift::NONE,dom)
 {
-  setup(nlat,nlon,shift);
+  setup(nlat,nlon);
   set_typeinfo();
 }
 
-ReducedLonLat::ReducedLonLat( const eckit::Parametrisation& params )
-  : LonLat(Shift::NONE)
+ReducedLonLat::ReducedLonLat( const eckit::Parametrisation& params ) :
+    LonLat(Shift::NONE,Domain::makeGlobal())
 {
   setup(params);
   set_typeinfo();
@@ -67,26 +64,15 @@ void ReducedLonLat::setup( const eckit::Parametrisation& params )
   size_t nlat;
   params.get("nlat",nlat);
 
-  bool shift_lon = false;
-  bool shift_lat = false;
-  params.get("shift_lon",shift_lon);
-  params.get("shift_lat",shift_lat);
-
-  shift_ = Shift(shift_lon,shift_lat);
-
   std::vector<long> nlon;
   params.get("pl",nlon);
-  setup(nlat,nlon.data(),shift_);
+  setup(nlat,nlon.data());
 
   params.get("N",N_);
 }
 
-void ReducedLonLat::setup(
-    const size_t nlat,
-    const long nlon[],
-    const Shift& shift )
+void ReducedLonLat::setup( const size_t nlat, const long nlon[] )
 {
-  shift_ = shift;
   std::vector<double> lats (nlat);
 
   double delta = 180.;
