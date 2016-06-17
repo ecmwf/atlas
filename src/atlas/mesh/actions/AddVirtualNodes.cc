@@ -34,7 +34,7 @@ void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mes
 {
     const grid::Domain& domain = grid.domain();
 
-    if( domain.global() ) return; // don't add virtual points to global domains
+    if( domain.isGlobal() ) return; // don't add virtual points to global domains
 
     const grid::Grid& octa = OctahedralGaussian(16);
 
