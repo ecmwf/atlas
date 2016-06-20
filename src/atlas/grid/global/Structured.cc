@@ -70,16 +70,18 @@ void Structured::setup(const size_t nlat, const double lats[], const long pl[], 
   lonmin_.assign(lonmin,lonmin+nlat);
   lon_inc_.resize(nlat);
 
-  npts_ = 0;
+  npts_    = 0;
   nlonmax_ = 0;
   nlonmin_ = std::numeric_limits<size_t>::max();
   double lon_min(1000), lon_max(-1000);
 
+  const double ew = domain_.east()  - domain_.west() ;
+  const bool isPeriodicEastWest = domain_.isPeriodicEastWest();
+
   for(size_t jlat = 0; jlat < nlat; ++jlat)
   {
-    lon_inc_[jlat] = 0.;
-    if( pl_[jlat] )
-      lon_inc_[jlat] = 360./static_cast<double>(pl_[jlat]);
+    const double ndiv = static_cast<double>(pl_[jlat] + (isPeriodicEastWest? 0:-1));
+    lon_inc_[jlat] = pl_[jlat]? ew/ndiv : 0.;
 
 
     lon_min = std::min(lon_min,lonmin_[jlat]);

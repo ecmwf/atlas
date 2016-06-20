@@ -119,50 +119,48 @@ void RegularLonLat::setup(const eckit::Parametrisation& p)
 
 void RegularLonLat::setup( const size_t nlon, const size_t nlat )
 {
-  double latmin = -90.;
-  double latmax = +90.;
-  double londeg = 360./static_cast<double>(nlon);
-  double latdeg = (latmax-latmin)/static_cast<double>(nlat-1);
+    const double latdeg = (domain_.north()-domain_.south())/static_cast<double>(nlat-1);
+    const double latmax = domain_.north();
+    std::vector<double> lats(nlat);
 
-  std::vector<double> lats(nlat);
-  std::vector<long>   nlons(nlat,nlon);
-  std::vector<double> lonmin(nlat,0.);
-  std::vector<double> lonmax(nlat,360.-londeg);
+    std::vector<long>   nlons(nlat,nlon);
+    std::vector<double> lonmin(nlat,domain_.west());
 
-  for( size_t jlat=0; jlat<nlat; ++jlat )
-  {
-    lats[jlat] = latmax - static_cast<double>(jlat)*latdeg;
-  }
+    for( size_t jlat=0; jlat<nlat; ++jlat )
+    {
+        lats[jlat] = latmax - static_cast<double>(jlat)*latdeg;
+    }
 
-  if( (nlat-1)%2 == 0 && nlon==2*(nlat-1) )
-  {
-    Structured::N_ = (nlat-1)/2;
-  }
-  Structured::setup(nlat,lats.data(),nlons.data(),lonmin.data());
+    if( (nlat-1)%2 == 0 && nlon==2*(nlat-1) )
+    {
+        Structured::N_ = (nlat-1)/2;
+    }
+    Structured::setup(nlat,lats.data(),nlons.data(),lonmin.data());
 }
 
 
 void RegularLonLat::setup( const double londeg, const double latdeg )
 {
-  double Llon = 360.-londeg;
-  double Llat = 180.;
-  double nlon_real = Llon/londeg + 1.;
-  double nlat_real = Llat/latdeg + 1.;
-  size_t nlon = static_cast<size_t>(nlon_real);
-  size_t nlat = static_cast<size_t>(nlat_real);
-  if( nlon_real - nlon > 0. )
-  {
+    double nlon_real = (domain_.east() -domain_.west() )/londeg + (domain_.isPeriodicEastWest()? 0:1);
+    double nlat_real = (domain_.north()-domain_.south())/latdeg + 1;
+
+    size_t nlon = static_cast<size_t>(nlon_real);
+    size_t nlat = static_cast<size_t>(nlat_real);
+
     std::stringstream msg;
-    msg << Llon << " is not divisible by londeg " << londeg << " --> nlon = " << nlon_real;
-    throw BadParameter(msg.str(),Here());
-  }
-  if( nlat_real - nlat > 0. )
-  {
-    std::stringstream msg;
-    msg << Llat << " is not divisible by latdeg " << latdeg << " --> nlat = " << nlat_real;
-    throw BadParameter(msg.str(),Here());
-  }
-  setup(nlon,nlat);
+    if( nlon_real - nlon > 0. )
+    {
+        msg << "Domain range W/E (" << domain_.west() << '/' << domain_.east() << ") is not integer-divisible by londeg " << londeg << '\n';
+    }
+    if( nlat_real - nlat > 0. )
+    {
+        msg << "Domain range N/S (" << domain_.north() << '/' << domain_.south() << ") is not integer-divisible by latdeg " << latdeg << '\n';
+    }
+    if( !msg.str().empty() )
+    {
+        throw BadParameter(msg.str(),Here());
+    }
+    setup(nlon,nlat);
 }
 
 
