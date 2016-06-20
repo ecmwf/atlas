@@ -781,16 +781,21 @@ void Structured::generate_mesh(
   int nparts = options.get<size_t>("nb_parts");
   int n, l;
 
-  bool has_north_pole = rg.lat(0) == 90 && rg.nlon(0) > 0;
-  bool has_south_pole = rg.lat(rg.nlat()-1) == -90 && rg.nlon(rg.nlat()-1) > 0;
-
-  bool include_north_pole = (mypart == 0       ) && options.get<bool>("include_pole") && !has_north_pole;
-  bool include_south_pole = (mypart == nparts-1) && options.get<bool>("include_pole") && !has_south_pole;
+  bool include_north_pole = (mypart == 0       ) && options.get<bool>("include_pole") && !rg.domain().includesPoleNorth();
+  bool include_south_pole = (mypart == nparts-1) && options.get<bool>("include_pole") && !rg.domain().includesPoleSouth();
   bool three_dimensional  = options.get<bool>("3d");
-  bool patch_north_pole   = (mypart == 0       ) && options.get<bool>("patch_pole") && three_dimensional
-                            && !has_north_pole && rg.nlon(1) > 0;
-  bool patch_south_pole   = (mypart == nparts-1) && options.get<bool>("patch_pole") && three_dimensional
-                            && !has_south_pole && rg.nlon(rg.nlat()-2) > 0;
+  bool patch_north_pole = (mypart == 0)
+          && options.get<bool>("patch_pole")
+          && three_dimensional
+          && !rg.domain().includesPoleNorth()
+          && rg.domain().isPeriodicEastWest()
+          && rg.nlon(1) > 0;
+  bool patch_south_pole = (mypart == nparts-1)
+          && options.get<bool>("patch_pole")
+          && three_dimensional
+          && !rg.domain().includesPoleSouth()
+          && rg.domain().isPeriodicEastWest()
+          && rg.nlon(rg.nlat()-2) > 0;
 
   if( three_dimensional && nparts != 1 )
     throw BadParameter("Cannot generate three_dimensional mesh in parallel",Here());
