@@ -94,6 +94,9 @@ public:
     /// Checks if the point is contained in the domain
     bool contains(double lon, double lat) const;
 
+    /// Normalises the longitude of a query point
+    double normalise(double lon) const;
+
     /// Output to stream
     void print(std::ostream&) const;
 
@@ -111,6 +114,16 @@ public:
     // -- Class methods
     // None
 
+    // -- Friends
+
+    /// Comparison
+    friend bool operator==(const Domain& a, const Domain& b) {
+        return a.north_ == b.north_
+            && a.west_  == b.west_
+            && a.south_ == b.south_
+            && a.east_  == b.east_;
+    }
+
 private:
 
     // -- Members
@@ -125,9 +138,6 @@ private:
 
     /// Normalises the constructor input
     void normalise();
-
-    /// Normalises the longitude of a query point
-    double normalise(double lon) const;
 
     // -- Overridden methods
     // None
