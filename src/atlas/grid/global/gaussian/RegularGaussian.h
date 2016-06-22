@@ -62,7 +62,7 @@ public:
 
   RegularGaussian( const eckit::Parametrisation& );
 
-  RegularGaussian( const size_t N );
+  RegularGaussian( const size_t N, const Domain& dom=Domain::makeGlobal() );
 
   static std::string className();
 

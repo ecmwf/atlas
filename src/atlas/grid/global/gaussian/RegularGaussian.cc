@@ -44,8 +44,8 @@ RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
   set_typeinfo();
 }
 
-RegularGaussian::RegularGaussian( const size_t N ) :
-  Gaussian()
+RegularGaussian::RegularGaussian(const size_t N, const Domain& dom) :
+  Gaussian(dom)
 {
   setup(N);
   set_typeinfo();

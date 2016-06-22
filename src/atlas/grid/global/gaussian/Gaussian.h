@@ -76,7 +76,7 @@ public:
 protected:
 
   /// to be used only by derived types
-  Gaussian();
+  Gaussian(const Domain& dom=Domain::makeGlobal());
 
   void setup_N_hemisphere( const size_t N, const long pl[] );
   virtual void set_typeinfo() = 0;
