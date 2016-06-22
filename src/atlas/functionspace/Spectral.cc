@@ -288,6 +288,27 @@ void atlas__SpectralFunctionSpace__scatter (const Spectral* This, const field::F
   );
 }
 
+void atlas__SpectralFunctionSpace__gather_fieldset (const Spectral* This, const field::FieldSet* local, field::FieldSet* global)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(global);
+    ASSERT(local);
+    This->gather(*local,*global);
+  );
+}
+
+void atlas__SpectralFunctionSpace__scatter_fieldset (const Spectral* This, const field::FieldSet* global, field::FieldSet* local)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(global);
+    ASSERT(local);
+    This->scatter(*global,*local);
+  );
+}
+
+
 }
 
 } // namespace functionspace
