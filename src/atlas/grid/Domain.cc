@@ -32,7 +32,8 @@ void Domain::hash(eckit::MD5& md5) const {
 
 
 bool Domain::isEmpty() const {
-    return cmp::isStrictlyGreater(north_,south_) && cmp::isStrictlyGreater(east_,west_);
+    return !cmp::isStrictlyGreater(north_,south_)
+        || !cmp::isStrictlyGreater(east_,west_);
 }
 
 

@@ -37,15 +37,21 @@ public:
 
     // -- Contructors
 
-    /// ctor (copy)
-    Domain(const Domain& other) :
-      north_(other.north_), west_(other.west_), south_(other.south_), east_(other.east_) {
-        normalise();
-    }
-
     /// ctor using coordinates
     Domain(double north=90, double west=0, double south=-90, double east=360) :
       north_(north), west_(west), south_(south), east_(east) {
+        normalise();
+    }
+
+    /// ctor (default)
+    Domain() :
+      north_(90), west_(0), south_(-90), east_(360) {
+        normalise();
+    }
+
+    /// ctor (copy)
+    Domain(const Domain& other) :
+      north_(other.north_), west_(other.west_), south_(other.south_), east_(other.east_) {
         normalise();
     }
 
@@ -63,6 +69,14 @@ public:
     Domain& operator=(const Domain& other) {
         north_=other.north_; west_=other.west_; south_=other.south_; east_=other.east_;
         return *this;
+    }
+
+    /// Comparison
+    bool operator==(const Domain& other) {
+        return north_ == other.north_
+            && west_  == other.west_
+            && south_ == other.south_
+            && east_  == other.east_;
     }
 
     // -- Methods
@@ -93,6 +107,9 @@ public:
 
     /// Checks if the point is contained in the domain
     bool contains(double lon, double lat) const;
+
+    /// Normalises the longitude of a query point
+    double normalise(double lon) const;
 
     /// Output to stream
     void print(std::ostream&) const;
@@ -125,9 +142,6 @@ private:
 
     /// Normalises the constructor input
     void normalise();
-
-    /// Normalises the longitude of a query point
-    double normalise(double lon) const;
 
     // -- Overridden methods
     // None
