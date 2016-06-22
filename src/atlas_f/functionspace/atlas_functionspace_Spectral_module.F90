@@ -50,8 +50,14 @@ contains
     & create_field_kind, &
     & create_field_kind_lev
 
-  procedure, public :: gather
-  procedure, public :: scatter
+  procedure, private :: gather_field
+  procedure, private :: scatter_field
+  procedure, private :: gather_fieldset
+  procedure, private :: scatter_fieldset
+
+  generic, public :: gather  =>  gather_field,  gather_fieldset
+  generic, public :: scatter => scatter_field, scatter_fieldset
+
 
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_functionspace_Spectral__final
@@ -195,7 +201,7 @@ function create_field_kind_lev(this,kind,levels,global,owner) result(field)
   call options%final()
 end function
 
-subroutine gather(this,local,global)
+subroutine gather_field(this,local,global)
   use atlas_functionspace_spectral_c_binding
   class(atlas_functionspace_Spectral), intent(in) :: this
   type(atlas_Field), intent(in) :: local
@@ -203,12 +209,28 @@ subroutine gather(this,local,global)
   call atlas__SpectralFunctionSpace__gather(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
-subroutine scatter(this,global,local)
+subroutine scatter_field(this,global,local)
   use atlas_functionspace_spectral_c_binding
   class(atlas_functionspace_Spectral), intent(in) :: this
   type(atlas_Field), intent(in) :: global
   type(atlas_Field), intent(inout) :: local
   call atlas__SpectralFunctionSpace__scatter(this%c_ptr(),global%c_ptr(),local%c_ptr())
+end subroutine
+
+subroutine gather_fieldset(this,local,global)
+  use atlas_functionspace_spectral_c_binding
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  type(atlas_FieldSet), intent(in) :: local
+  type(atlas_FieldSet), intent(inout) :: global
+  call atlas__SpectralFunctionSpace__gather_fieldset(this%c_ptr(),local%c_ptr(),global%c_ptr())
+end subroutine
+
+subroutine scatter_fieldset(this,global,local)
+  use atlas_functionspace_spectral_c_binding
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  type(atlas_FieldSet), intent(in) :: global
+  type(atlas_FieldSet), intent(inout) :: local
+  call atlas__SpectralFunctionSpace__scatter_fieldset(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
 end module atlas_functionspace_Spectral_module
