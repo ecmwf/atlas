@@ -73,27 +73,17 @@ void ReducedLonLat::setup( const eckit::Parametrisation& params )
 
 void ReducedLonLat::setup( const size_t nlat, const long nlon[] )
 {
-  std::vector<double> lats (nlat);
+    ASSERT(nlat>=2);
+    std::vector<double> lats(nlat);
 
-  double delta = 180.;
-  double latmax;
+    const double delta  = (domain_.north() - domain_.south()) / static_cast<double>(nlat - (shifted().lat()? 0:1));
+    const double latmax =  domain_.north() - (shifted().lat()? 0.5*delta : 0.);
 
-  if( shifted().lat() == false )
-  {
-    delta = delta / static_cast<double>(nlat-1);
-    latmax = 90.;
-  }
-  else
-  {
-    delta = delta / static_cast<double>(nlat);
-    latmax = 90. - 0.5*delta;
-  }
+    for(size_t jlat=0; jlat<nlat; ++jlat) {
+        lats[jlat] = latmax - static_cast<double>(jlat)*delta;
+    }
 
-  for(size_t jlat = 0; jlat < nlat; ++jlat)
-  {
-    lats[jlat] = latmax - static_cast<double>(jlat)*delta;
-  }
-  Structured::setup(lats.size(),lats.data(),nlon);
+    Structured::setup(lats.size(),lats.data(),nlon);
 }
 
 
