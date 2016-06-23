@@ -98,7 +98,7 @@ void Structured::setup(const size_t nlat, const double lats[], const long pl[], 
 
 void Structured::setup( const size_t nlat, const double lats[], const long pl[] )
 {
-  std::vector<double> lonmin(nlat,0.);
+  std::vector<double> lonmin(nlat,domain_.west());
   setup(nlat,lats,pl,lonmin.data());
 }
 
