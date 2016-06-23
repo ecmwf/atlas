@@ -38,7 +38,7 @@ public:
     // -- Contructors
 
     /// ctor using coordinates
-    Domain(double north=90, double west=0, double south=-90, double east=360) :
+    Domain(double north, double west, double south, double east) :
       north_(north), west_(west), south_(south), east_(east) {
         normalise();
     }
