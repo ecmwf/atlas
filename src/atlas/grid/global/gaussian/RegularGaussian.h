@@ -60,11 +60,11 @@ public:
 
   static std::string grid_type_str() { return "regular_gaussian"; }
 
+  static std::string className() { return "atlas.grid.global.gaussian.RegularGaussian"; }
+
   RegularGaussian( const eckit::Parametrisation& );
 
-  RegularGaussian( const size_t N, const Domain& dom=Domain::makeGlobal() );
-
-  static std::string className();
+  RegularGaussian( const size_t& N, const Domain& dom=Domain::makeGlobal() );
 
   virtual eckit::Properties spec() const;
 
@@ -74,8 +74,14 @@ public:
 
 protected:
 
-  void setup(const size_t N);
+  virtual void setup(const size_t& N, const Domain&);
+
   virtual void set_typeinfo();
+
+  size_t Ni_;
+
+  size_t Nj_;
+
 };
 
 //------------------------------------------------------------------------------------------------------
