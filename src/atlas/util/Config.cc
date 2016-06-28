@@ -36,7 +36,8 @@ Config::Config(std::istream& stream, const std::string &format )
     throw eckit::Exception("Not Implemented: Only json format is supported");
   }
 
-  eckit::JSONParser parser( stream );
+  bool accept_comments = true;
+  eckit::JSONParser parser( stream, accept_comments );
   set( eckit::Properties( parser.parse() ) );
 }
 
@@ -51,7 +52,8 @@ Config::Config( const eckit::PathName& path )
     if (!file.is_open()) {
       throw eckit::Exception("Unable to open json file "+std::string(path),Here());
     }
-    eckit::JSONParser parser( file );
+    bool accept_comments = true;
+    eckit::JSONParser parser( file, accept_comments );
     set( eckit::Properties( parser.parse() ) );
     file.close();
   }
