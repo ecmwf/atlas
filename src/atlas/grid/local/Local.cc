@@ -8,26 +8,32 @@
  * does it submit to any jurisdiction.
  */
 
+
 #include <string>
 #include "atlas/grid/local/Local.h"
+
 
 namespace atlas {
 namespace grid {
 namespace local {
 
-//------------------------------------------------------------------------------
 
-std::string Local::className() { return "atlas.grid.local.Local"; }
-
-//------------------------------------------------------------------------------
-
-Local::Local(const Domain& d)
-  : Grid(d)
-{
+std::string Local::className() {
+    return "atlas.grid.local.Local";
 }
 
-//------------------------------------------------------------------------------
 
-} // namespace local
-} // namespace grid
-} // namespace atlas
+std::string Local::grid_type_str() {
+    return "local";
+}
+
+
+Local::Local(const Domain& d) :
+    Grid(d) {
+}
+
+
+}  // namespace local
+}  // namespace grid
+}  // namespace atlas
+

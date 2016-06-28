@@ -26,33 +26,29 @@ namespace classic {
 
 //-----------------------------------------------------------------------------
 
-void points_per_latitude_npole_equator (const size_t N, long nlon[])
-{
-  std::stringstream Nstream; Nstream << N;
-  std::string Nstr = Nstream.str();
-  if( Factory<PointsPerLatitude>::instance().exists(Nstr) )
-  {
-    ScopedPtr<PointsPerLatitude> pl (
-          Factory<PointsPerLatitude>::instance().get(Nstr).create() );
-    pl->assign(nlon,N);
-  }
-  else
-  {
-    throw eckit::BadParameter(
-          "gaussian::classic::PointsPerLatitude not available for N"+Nstr,
-          Here());
-  }
+void points_per_latitude_npole_equator (const size_t N, long nlon[]) {
+    std::stringstream Nstream;
+    Nstream << N;
+    std::string Nstr = Nstream.str();
+    if( Factory<PointsPerLatitude>::instance().exists(Nstr) ) {
+        ScopedPtr<PointsPerLatitude> pl (
+            Factory<PointsPerLatitude>::instance().get(Nstr).create() );
+        pl->assign(nlon,N);
+    } else {
+        throw eckit::BadParameter(
+            "gaussian::classic::PointsPerLatitude not available for N"+Nstr,
+            Here());
+    }
 }
 
 //-----------------------------------------------------------------------------
 
-void points_per_latitude_npole_spole   (const size_t N, long nlon[])
-{
-  points_per_latitude_npole_equator(N,nlon);
-  size_t end = 2*N-1;
-  for(size_t jlat=0; jlat<N; ++jlat) {
-      nlon[end--] = -nlon[jlat];
-  }
+void points_per_latitude_npole_spole   (const size_t N, long nlon[]) {
+    points_per_latitude_npole_equator(N,nlon);
+    size_t end = 2*N-1;
+    for(size_t jlat=0; jlat<N; ++jlat) {
+        nlon[end--] = -nlon[jlat];
+    }
 }
 
 //-----------------------------------------------------------------------------

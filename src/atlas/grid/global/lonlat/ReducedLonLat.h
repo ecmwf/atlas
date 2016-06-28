@@ -8,55 +8,59 @@
  * does it submit to any jurisdiction.
  */
 
+
 #ifndef atlas_grids_global_lonlat_ReducedLonLat_h
 #define atlas_grids_global_lonlat_ReducedLonLat_h
 
 #include "atlas/grid/global/lonlat/LonLat.h"
+
 
 namespace atlas {
 namespace grid {
 namespace global {
 namespace lonlat {
 
-//------------------------------------------------------------------------------
 
-/// @brief Reduced LonLat Grid
-///
-/// This grid is a special case of the class Structured, with
-/// equidistant distribution of latitudes, and a equidistant distribution in zonal
-/// direction, which reduce in number going closer towards poles,
-/// essentially making the grid more uniform on the sphere
-/// It can be constructed with following definition:
-///   N   = number of latitudes in hemisphere
-///   npts_per_lat[] = number of points on each latitude
-
+/**
+ * @brief Reduced LonLat Grid
+ *
+ * This grid is a special case of the class Structured, with
+ * equidistant distribution of latitudes, and a equidistant distribution in zonal
+ * direction, which reduce in number going closer towards poles,
+ * essentially making the grid more uniform on the sphere
+ * It can be constructed with following definition:
+ *   N   = number of latitudes in hemisphere
+ *   npts_per_lat[] = number of points on each latitude
+ */
 class ReducedLonLat: public LonLat {
 
-public:
+  public:
 
-  static std::string grid_type_str();
+    static std::string grid_type_str();
 
-  ReducedLonLat( const eckit::Parametrisation& );
+    ReducedLonLat(const eckit::Parametrisation&);
 
-  ReducedLonLat( const size_t nlat, const long nlon[], const Domain& dom=Domain::makeGlobal() );
+    ReducedLonLat(const size_t nlat, const long nlon[], const Domain& dom=Domain::makeGlobal());
 
-  static std::string className();
+    static std::string className();
 
-  virtual eckit::Properties spec() const;
+    virtual eckit::Properties spec() const;
 
-protected:
+  protected:
 
-  void setup( const eckit::Parametrisation& );
-  void setup( const size_t nlat, const long nlon[] );
-  void set_typeinfo();
+    void setup(const eckit::Parametrisation&);
+
+    void setup(const size_t nlat, const long nlon[]);
+
+    void set_typeinfo();
 
 };
 
-//------------------------------------------------------------------------------
 
 } // namespace lonlat
 } // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_ReducedLonLatGrid_h
+
+#endif

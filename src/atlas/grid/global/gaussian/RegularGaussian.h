@@ -58,7 +58,8 @@ namespace gaussian {
  * Area: Can we assume area is multiple of the grids ?
  */
 class RegularGaussian: public Gaussian {
-public:
+
+  public:
 
     static std::string grid_type_str();
 
@@ -78,7 +79,7 @@ public:
         return Structured::lon(0,jlon);
     }
 
-protected:
+  protected:
 
     virtual void setup(const size_t& N, const Domain&);
 

@@ -8,20 +8,32 @@
  * does it submit to any jurisdiction.
  */
 
+
+#include "atlas/grid/global/Unstructured.h"
+
 #include <limits>
 #include "eckit/memory/Builder.h"
-#include "atlas/grid/global/Unstructured.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
+#include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/array/ArrayView.h"
 
 
 namespace atlas {
 namespace grid {
 namespace global {
+
+
+std::string Unstructured::grid_type_str() {
+    return "unstructured";
+}
+
+
+std::string Unstructured::className() {
+    return "atlas.grid.global.Unstructured";
+}
 
 
 Unstructured::Unstructured(const mesh::Mesh& m) :

@@ -11,8 +11,9 @@
 /// @author Willem Deconinck
 /// @date Jan 2015
 
-#include "atlas/internals/atlas_config.h"
+
 #include "atlas/grid/global/gaussian/latitudes/N.h"
+
 
 namespace atlas {
 namespace grid {
@@ -20,58 +21,59 @@ namespace global {
 namespace gaussian {
 namespace latitudes {
 
-//------------------------------------------------------------------------------
 
-void GaussianLatitudes::assign(double lats[], const size_t size) const
-{
+std::string GaussianLatitudes::className() {
+    return "GaussianLatitudes";
+}
+
+
+void GaussianLatitudes::assign(double lats[], const size_t size) const {
     ASSERT( size >= lats_.size() );
     for(size_t jlat=0; jlat < lats_.size(); ++jlat)
         lats[jlat] = lats_[jlat];
 }
 
-void GaussianLatitudes::assign(std::vector<double>& lats) const
-{
+
+void GaussianLatitudes::assign(std::vector<double>& lats) const {
     lats = lats_;
 }
 
+
 template<typename CONCRETE>
-void load()
-{
-  eckit::ConcreteBuilderT0<GaussianLatitudes,CONCRETE> builder("tmp");
+void load() {
+    eckit::ConcreteBuilderT0<GaussianLatitudes,CONCRETE> builder("tmp");
 }
 
-void regist()
-{
-  load<N16>();
-  load<N24>();
-  load<N32>();
-  load<N48>();
-  load<N64>();
-  load<N80>();
-  load<N96>();
-  load<N128>();
-  load<N160>();
-  load<N200>();
-  load<N256>();
-  load<N320>();
-  load<N400>();
-  load<N512>();
-  load<N576>();
-  load<N640>();
-  load<N800>();
-  load<N1024>();
-  load<N1280>();
-  load<N1600>();
-  load<N2000>();
-  load<N4000>();
-  load<N8000>();
+
+void regist() {
+    load<N16>();
+    load<N24>();
+    load<N32>();
+    load<N48>();
+    load<N64>();
+    load<N80>();
+    load<N96>();
+    load<N128>();
+    load<N160>();
+    load<N200>();
+    load<N256>();
+    load<N320>();
+    load<N400>();
+    load<N512>();
+    load<N576>();
+    load<N640>();
+    load<N800>();
+    load<N1024>();
+    load<N1280>();
+    load<N1600>();
+    load<N2000>();
+    load<N4000>();
+    load<N8000>();
 }
 
-//------------------------------------------------------------------------------
 
-} // namespace latitudes
-} // namespace gaussian
-} // namespace global
-} // namespace grid
-} // namespace atlas
-
+}  // namespace latitudes
+}  // namespace gaussian
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas

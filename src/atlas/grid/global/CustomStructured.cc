@@ -31,7 +31,7 @@ std::string CustomStructured::grid_type_str() {
 
 
 CustomStructured::CustomStructured(const eckit::Parametrisation& params) :
-    Structured() {
+    Structured(Domain::makeGlobal()) {
     setup(params);
 
     //if( ! params.get("short_name",shortName_) ) throw eckit::BadParameter("short_name missing in Params",Here());
@@ -62,20 +62,22 @@ void CustomStructured::setup(const eckit::Parametrisation& params) {
 
 
 CustomStructured::CustomStructured(
-        size_t nlat,
-        const double lats[],
-        const long nlons[] ) :
-    Structured() {
+    size_t nlat,
+    const double lats[],
+    const long nlons[],
+    const Domain& dom ) :
+    Structured(dom) {
     Structured::setup(nlat,lats,nlons);
 }
 
 
 CustomStructured::CustomStructured(
-        size_t nlat,
-        const double latitudes[],
-        const long pl[],
-        const double lonmin[] ) :
-    Structured() {
+    size_t nlat,
+    const double latitudes[],
+    const long pl[],
+    const double lonmin[],
+    const Domain& dom ) :
+    Structured(dom) {
     Structured::setup(nlat,latitudes,pl,lonmin);
 }
 
@@ -102,28 +104,28 @@ eckit::Properties CustomStructured::spec() const {
 extern "C" {
 
 
-Structured* atlas__grid__global__CustomStructured_int(size_t nlat, double lats[], int pl[]) {
-    std::vector<long> pl_vector;
-    pl_vector.assign(pl,pl+nlat);
-    return new CustomStructured(nlat,lats,pl_vector.data());
-}
+    Structured* atlas__grid__global__CustomStructured_int(size_t nlat, double lats[], int pl[]) {
+        std::vector<long> pl_vector;
+        pl_vector.assign(pl,pl+nlat);
+        return new CustomStructured(nlat,lats,pl_vector.data(),Domain::makeGlobal());
+    }
 
 
-Structured* atlas__grid__global__CustomStructured_long(size_t nlat, double lats[], long pl[]) {
-    return new CustomStructured(nlat,lats,pl);
-}
+    Structured* atlas__grid__global__CustomStructured_long(size_t nlat, double lats[], long pl[]) {
+        return new CustomStructured(nlat,lats,pl,Domain::makeGlobal());
+    }
 
 
-Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lats[], int pl[], double lonmin[]) {
-    std::vector<long> pl_vector;
-    pl_vector.assign(pl,pl+nlat);
-    return new CustomStructured(nlat,lats,pl_vector.data(),lonmin);
-}
+    Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lats[], int pl[], double lonmin[]) {
+        std::vector<long> pl_vector;
+        pl_vector.assign(pl,pl+nlat);
+        return new CustomStructured(nlat,lats,pl_vector.data(),lonmin,Domain::makeGlobal());
+    }
 
 
-Structured* atlas__grid__global__CustomStructured_lonmin_long(size_t nlat, double lats[], long pl[], double lonmin[]) {
-    return new CustomStructured(nlat,lats,pl,lonmin);
-}
+    Structured* atlas__grid__global__CustomStructured_lonmin_long(size_t nlat, double lats[], long pl[], double lonmin[]) {
+        return new CustomStructured(nlat,lats,pl,lonmin,Domain::makeGlobal());
+    }
 
 
 }

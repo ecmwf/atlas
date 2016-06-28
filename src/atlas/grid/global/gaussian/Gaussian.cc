@@ -8,91 +8,82 @@
  * does it submit to any jurisdiction.
  */
 
+
+#include "atlas/grid/global/gaussian/Gaussian.h"
+
 #include <typeinfo>
 #include "eckit/memory/Builder.h"
-#include "atlas/grid/global/gaussian/Gaussian.h"
 #include "atlas/grid/global/gaussian/latitudes/Latitudes.h"
+
 
 namespace atlas {
 namespace grid {
 namespace global {
 namespace gaussian {
 
-//------------------------------------------------------------------------------
 
-void Gaussian::LatitudesNorthPoleToEquator(const size_t N, double latitudes[])
-{
-  global::gaussian::latitudes::gaussian_latitudes_npole_equator(N,latitudes);
+void Gaussian::LatitudesNorthPoleToEquator(const size_t N, double latitudes[]) {
+    global::gaussian::latitudes::gaussian_latitudes_npole_equator(N,latitudes);
 }
 
-//------------------------------------------------------------------------------
 
-void Gaussian::LatitudesNorthPoleToSouthPole(const size_t N, double latitudes[])
-{
-  global::gaussian::latitudes::gaussian_latitudes_npole_spole(N,latitudes);
+void Gaussian::LatitudesNorthPoleToSouthPole(const size_t N, double latitudes[]) {
+    global::gaussian::latitudes::gaussian_latitudes_npole_spole(N,latitudes);
 }
 
-//------------------------------------------------------------------------------
 
-void Gaussian::QuadratureNorthPoleToEquator(const size_t N, double weights[])
-{
-  std::vector<double> lats(N);
-  latitudes::gaussian_quadrature_npole_equator(N,lats.data(),weights);
+void Gaussian::QuadratureNorthPoleToEquator(const size_t N, double weights[]) {
+    std::vector<double> lats(N);
+    latitudes::gaussian_quadrature_npole_equator(N,lats.data(),weights);
 }
 
-//------------------------------------------------------------------------------
 
-void Gaussian::QuadratureNorthPoleToSouthPole(const size_t N, double weights[])
-{
-  std::vector<double> lats(2*N);
-  latitudes::gaussian_quadrature_npole_equator(N,lats.data(),weights);
+void Gaussian::QuadratureNorthPoleToSouthPole(const size_t N, double weights[]) {
+    std::vector<double> lats(2*N);
+    latitudes::gaussian_quadrature_npole_equator(N,lats.data(),weights);
 }
 
-//------------------------------------------------------------------------------
 
-std::string Gaussian::className()
-{
-  return "atlas.grid.global.gaussian.Gaussian";
+std::string Gaussian::grid_type_str() {
+    return "gaussian";
 }
 
-//------------------------------------------------------------------------------
+
+std::string Gaussian::className() {
+    return "atlas.grid.global.gaussian.Gaussian";
+}
+
 
 Gaussian::Gaussian(const Domain& dom) :
-  Structured(dom)
-{
+    Structured(dom) {
 }
 
-//------------------------------------------------------------------------------
 
-void Gaussian::setup_N_hemisphere( const size_t N, const long pl[] )
-{
-  Structured::N_ = N;
-  // hemisphere
-  std::vector<double> lats (N);
-  LatitudesNorthPoleToEquator(N,lats.data());
-  Structured::setup_lat_hemisphere(N,lats.data(),pl);
+void Gaussian::setup_N_hemisphere(const size_t N, const long pl[]) {
+    Structured::N_ = N;
+    // hemisphere
+    std::vector<double> lats (N);
+    LatitudesNorthPoleToEquator(N,lats.data());
+    Structured::setup_lat_hemisphere(N,lats.data(),pl);
 }
 
-//------------------------------------------------------------------------------
 
-eckit::Properties Gaussian::spec() const
-{
-  eckit::Properties grid_spec;
+eckit::Properties Gaussian::spec() const {
+    eckit::Properties grid_spec;
 
-  grid_spec.set("grid_type", gridType() );
-  grid_spec.set("short_name",shortName());
+    grid_spec.set("grid_type", gridType() );
+    grid_spec.set("short_name",shortName());
 
-  grid_spec.set("nlat",nlat());
-  grid_spec.set("N", N() );
+    grid_spec.set("nlat",nlat());
+    grid_spec.set("N", N() );
 
-  grid_spec.set("pl",eckit::makeVectorValue(pl()));
+    grid_spec.set("pl",eckit::makeVectorValue(pl()));
 
-  return grid_spec;
+    return grid_spec;
 }
 
-//-----------------------------------------------------------------------------
 
-} // namespace gaussian
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace gaussian
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas

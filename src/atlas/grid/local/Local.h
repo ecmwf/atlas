@@ -8,35 +8,39 @@
  * does it submit to any jurisdiction.
  */
 
+
 #ifndef atlas_grid_local_Local_h
 #define atlas_grid_local_Local_h
 
 #include "atlas/grid/Grid.h"
 
+
 namespace atlas {
 namespace grid {
 namespace local {
 
-//------------------------------------------------------------------------------
 
-/// @brief Local Grid
-///
-/// This class is a base class for all grids that are local (on the sphere)
-
+/**
+ * @brief Local Grid
+ * This class is a base class for all grids that are local (on the sphere)
+ */
 class Local: public Grid {
-public:
 
-  static std::string className();
-  static std::string grid_type_str() { return "local"; }
+  public:
 
-  Local(const Domain& domain);
+    static std::string className();
+
+    static std::string grid_type_str();
+
+    Local(const Domain&);
 
 };
 
-//------------------------------------------------------------------------------
 
-} // namespace local
-} // namespace grid
-} // namespace atlas
+}  // namespace local
+}  // namespace grid
+}  // namespace atlas
 
-#endif // atlas_grid_local_Local_h
+
+#endif
+

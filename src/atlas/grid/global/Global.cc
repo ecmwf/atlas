@@ -8,26 +8,32 @@
  * does it submit to any jurisdiction.
  */
 
+
 #include <string>
 #include "atlas/grid/global/Global.h"
+
 
 namespace atlas {
 namespace grid {
 namespace global {
 
-//------------------------------------------------------------------------------
 
-std::string Global::className() { return "atlas.grid.global.Global"; }
-
-//------------------------------------------------------------------------------
-
-Global::Global(const Domain& dom) :
-    Grid(dom)
-{
+std::string Global::className() {
+    return "atlas.grid.global.Global";
 }
 
-//------------------------------------------------------------------------------
 
-} // namespace global
-} // namespace grid
-} // namespace atlas
+std::string Global::grid_type_str() {
+    return "global";
+}
+
+
+Global::Global(const Domain& dom) :
+    Grid(dom) {
+}
+
+
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
+

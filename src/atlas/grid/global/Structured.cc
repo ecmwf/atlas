@@ -53,6 +53,10 @@ Structured::Structured(const Domain& dom) :
 }
 
 
+Structured::~Structured() {
+}
+
+
 void Structured::setup(const size_t nlat, const double lats[], const long pl[]) {
     std::vector<double> lonmin(nlat,domain_.west());
     setup(nlat,lats,pl,lonmin.data());
@@ -60,10 +64,10 @@ void Structured::setup(const size_t nlat, const double lats[], const long pl[]) 
 
 
 void Structured::setup(
-        const size_t nlat,
-        const double lats[],
-        const long pl[],
-        const double lonmin[] ) {
+    const size_t nlat,
+    const double lats[],
+    const long pl[],
+    const double lonmin[] ) {
     ASSERT(nlat>1);  // can't have a grid with just one latitude
 
     pl_.assign(pl,pl+nlat);
@@ -159,137 +163,137 @@ void Structured::hash(eckit::MD5& md5) const {
 extern "C" {
 
 
-size_t atlas__grid__global__Structured__N(Structured* This) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    size_t atlas__grid__global__Structured__N(Structured* This) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             return This->N();
-    );
-    return 0;
-}
+        );
+        return 0;
+    }
 
 
-size_t atlas__grid__global__Structured__nlat(Structured* This) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    size_t atlas__grid__global__Structured__nlat(Structured* This) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             return This->nlat();
-    );
-    return 0;
-}
+        );
+        return 0;
+    }
 
 
-size_t atlas__grid__global__Structured__nlon(Structured* This, size_t jlat) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    size_t atlas__grid__global__Structured__nlon(Structured* This, size_t jlat) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             return This->nlon(jlat);
-    );
-    return 0;
-}
+        );
+        return 0;
+    }
 
 
-void atlas__grid__global__Structured__pl(Structured* This, const long* &nlons, size_t &size) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    void atlas__grid__global__Structured__pl(Structured* This, const long* &nlons, size_t &size) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             nlons = This->pl().data();
-    size  = This->pl().size();
-    );
-}
+            size  = This->pl().size();
+        );
+    }
 
 
-size_t atlas__grid__global__Structured__nlonmax(Structured* This) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    size_t atlas__grid__global__Structured__nlonmax(Structured* This) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             return This->nlonmax();
-    );
-    return 0;
-}
+        );
+        return 0;
+    }
 
 
-size_t atlas__grid__global__Structured__nlonmin(Structured* This) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    size_t atlas__grid__global__Structured__nlonmin(Structured* This) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             return This->nlonmin();
-    );
-    return 0;
-}
+        );
+        return 0;
+    }
 
 
-size_t atlas__grid__global__Structured__npts(Structured* This) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    size_t atlas__grid__global__Structured__npts(Structured* This) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             return This->npts();
-    );
-    return 0;
-}
+        );
+        return 0;
+    }
 
 
-double atlas__grid__global__Structured__lat(Structured* This,size_t jlat) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    double atlas__grid__global__Structured__lat(Structured* This,size_t jlat) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             return This->lat(jlat);
-    );
-    return 0.;
-}
+        );
+        return 0.;
+    }
 
 
-double atlas__grid__global__Structured__lon(Structured* This,size_t jlat,size_t jlon) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    double atlas__grid__global__Structured__lon(Structured* This,size_t jlat,size_t jlon) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             return This->lon(jlat, jlon);
-    );
-    return 0.;
-}
+        );
+        return 0.;
+    }
 
 
-void atlas__grid__global__Structured__lonlat(Structured* This, size_t jlat, size_t jlon, double crd[]) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    void atlas__grid__global__Structured__lonlat(Structured* This, size_t jlat, size_t jlon, double crd[]) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             This->lonlat(jlat, jlon, crd);
-    );
-}
+        );
+    }
 
 
-void atlas__grid__global__Structured__latitudes(Structured* This, const double* &lat, size_t &size) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    void atlas__grid__global__Structured__latitudes(Structured* This, const double* &lat, size_t &size) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             lat  = This->latitudes().data();
-    size = This->latitudes().size();
-    );
-}
+            size = This->latitudes().size();
+        );
+    }
 
 
-int atlas__grid__global__Structured__reduced(Structured* This) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
+    int atlas__grid__global__Structured__reduced(Structured* This) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
             return This->reduced();
-    );
-    return 1;
-}
+        );
+        return 1;
+    }
 
 
-Structured* atlas__grid__global__Structured(char* identifier) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( identifier );
+    Structured* atlas__grid__global__Structured(char* identifier) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( identifier );
             return Structured::create( std::string(identifier) );
-    );
-    return 0;
-}
+        );
+        return 0;
+    }
 
 
-Structured* atlas__grid__global__Structured__config(eckit::Parametrisation* conf) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( conf );
+    Structured* atlas__grid__global__Structured__config(eckit::Parametrisation* conf) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( conf );
             return Structured::create(*conf);
-    );
-    return 0;
-}
+        );
+        return 0;
+    }
 
 
-void atlas__grid__global__Structured__delete(Structured* This) {
-    ATLAS_ERROR_HANDLING(
-                ASSERT( This );
-            );
-    delete This;
-}
+    void atlas__grid__global__Structured__delete(Structured* This) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
+        );
+        delete This;
+    }
 
 
 }

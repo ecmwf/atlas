@@ -11,10 +11,12 @@
 /// @author Willem Deconinck
 /// @date Jan 2014
 
+
 #ifndef atlas_grids_global_gaussian_latitudes_Latitudes_h
 #define atlas_grids_global_gaussian_latitudes_Latitudes_h
 
 #include <cstddef>
+
 
 namespace atlas {
 namespace grid {
@@ -22,50 +24,47 @@ namespace global {
 namespace gaussian {
 namespace latitudes {
 
-//-----------------------------------------------------------------------------
 
-/// @brief Compute gaussian latitudes between North pole and equator
-/// @param N         [in]  Number of latitudes between pole and equator
-///                        (Gaussian N number)
-/// @param latitudes [out] latitudes in degrees
-void gaussian_latitudes_npole_equator (const size_t N, double latitudes[]);
+/**
+ * @brief Compute gaussian latitudes between North pole and equator
+ * @param N         [in]  Number of latitudes between pole and equator (Gaussian N number)
+ * @param latitudes [out] latitudes in degrees
+ */
+void gaussian_latitudes_npole_equator(const size_t N, double latitudes[]);
 
-//-----------------------------------------------------------------------------
 
-/// @brief Compute gaussian latitudes and quadrature weights
-///        between North pole and equator
-/// @param N         [in]  Number of latitudes between pole and equator
-///                        (Gaussian N number)
-/// @param latitudes [out] latitudes in degrees
-/// @param weights   [out] quadrature weights
-void gaussian_quadrature_npole_equator (const size_t N, double latitudes[],
-                                                        double weights[]);
+/**
+ * @brief Compute gaussian latitudes and quadrature weights between North pole and equator
+ * @param N         [in]  Number of latitudes between pole and equator (Gaussian N number)
+ * @param latitudes [out] latitudes in degrees
+ * @param weights   [out] quadrature weights
+ */
+void gaussian_quadrature_npole_equator(const size_t N, double latitudes[], double weights[]);
 
-//-----------------------------------------------------------------------------
 
-/// @brief Compute gaussian latitudes between North pole and South pole
-/// @param N         [in]  Number of latitudes between pole and equator
-///                        (Gaussian N number)
-/// @param latitudes [out] latitudes in degrees  (size 2*N)
-void gaussian_latitudes_npole_spole   (const size_t N, double latitudes[]);
+/**
+ * @brief Compute gaussian latitudes between North pole and South pole
+ * @param N         [in]  Number of latitudes between pole and equator (Gaussian N number)
+ * @param latitudes [out] latitudes in degrees  (size 2*N)
+ */
+void gaussian_latitudes_npole_spole(const size_t N, double latitudes[]);
 
-//-----------------------------------------------------------------------------
 
-/// @brief Compute gaussian latitudes and quadrature weights
-///        between North pole and South pole
-/// @param N         [in]  Number of latitudes between pole and equator
-///                        (Gaussian N number)
-/// @param latitudes [out] latitudes in degrees (size 2*N)
-/// @param weights   [out] quadrature weights   (size 2*N)
-void gaussian_quadrature_npole_spole (const size_t N, double latitudes[],
-                                                      double weights[]);
+/**
+ * @brief Compute gaussian latitudes and quadrature weights between North pole and South pole
+ * @param N         [in]  Number of latitudes between pole and equator (Gaussian N number)
+ * @param latitudes [out] latitudes in degrees (size 2*N)
+ * @param weights   [out] quadrature weights   (size 2*N)
+ */
+void gaussian_quadrature_npole_spole (const size_t N, double latitudes[], double weights[]);
 
-//-----------------------------------------------------------------------------
 
-} // namespace latitudes
-} // namespace gaussian
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace latitudes
+}  // namespace gaussian
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
 
-#endif // atlas_grids_global_gaussian_latitudes_Latitudes_h
+
+#endif
+

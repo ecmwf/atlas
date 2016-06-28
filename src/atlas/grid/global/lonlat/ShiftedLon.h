@@ -8,62 +8,63 @@
  * does it submit to any jurisdiction.
  */
 
+
 #ifndef atlas_grids_global_lonlat_ShiftedLon_h
 #define atlas_grids_global_lonlat_ShiftedLon_h
 
 #include "atlas/grid/global/lonlat/LonLat.h"
+
 
 namespace atlas {
 namespace grid {
 namespace global {
 namespace lonlat {
 
-//------------------------------------------------------------------------------
 
 class ShiftedLon: public LonLat {
 
-public:
+  public:
 
-  static std::string grid_type_str();
+    static std::string grid_type_str();
 
-  /// @brief Constructor
-  ShiftedLon( const eckit::Parametrisation& );
+    ShiftedLon(const eckit::Parametrisation&);
 
-  /// @brief Constructor
-  ShiftedLon( const size_t N );
+    ShiftedLon(const size_t N);
 
-  /// @brief Constructor
-  ShiftedLon( const int nlon, const int nlat );
+    ShiftedLon(const int nlon, const int nlat);
 
-  /// @brief Constructor
-  ShiftedLon( const size_t nlon, const size_t nlat );
+    ShiftedLon(const size_t nlon, const size_t nlat);
 
-  /// @brief Constructor
-  ShiftedLon( const double &londeg, const double &latdeg );
+    ShiftedLon(const double &londeg, const double &latdeg);
 
-  static std::string className();
+    static std::string className();
 
-  virtual eckit::Properties spec() const;
+    virtual eckit::Properties spec() const;
 
-  size_t nlon() const { return Structured::nlon(0); }
+    size_t nlon() const {
+        return Structured::nlon(0);
+    }
 
-  double lon( const size_t jlon ) const { return Structured::lon(0,jlon); }
+    double lon(const size_t jlon) const {
+        return Structured::lon(0,jlon);
+    }
 
-protected:
+  protected:
 
-  void setup( const eckit::Parametrisation& p);
-  void setup( const size_t N );
-  void setup( const double londeg, const double latdeg );
-  void setup( const size_t nlon, const size_t nlat );
+    void setup(const eckit::Parametrisation&);
+    void setup(const size_t N);
+    void setup(const double londeg, const double latdeg);
+    void setup(const size_t nlon, const size_t nlat);
 
-  virtual void set_typeinfo();
+    virtual void set_typeinfo();
+
 };
 
-//------------------------------------------------------------------------------
 
 } // namespace lonlat
 } // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_global_lonlat_ShiftedLon_h
+
+#endif

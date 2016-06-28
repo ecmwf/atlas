@@ -11,39 +11,51 @@
 /// @author Willem Deconinck
 /// @date Nov 2014
 
+
 #ifndef atlas_grids_grids_h
 #define atlas_grids_grids_h
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/global/lonlat/ReducedLonLat.h"
-#include "atlas/grid/global/lonlat/RegularLonLat.h"
-#include "atlas/grid/global/lonlat/ShiftedLonLat.h"
-#include "atlas/grid/global/lonlat/ShiftedLon.h"
-#include "atlas/grid/global/lonlat/ShiftedLat.h"
+#include "atlas/grid/global/CustomStructured.h"
+#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/global/Unstructured.h"
+#include "atlas/grid/global/gaussian/ClassicGaussian.h"
 #include "atlas/grid/global/gaussian/Gaussian.h"
+#include "atlas/grid/global/gaussian/OctahedralGaussian.h"
 #include "atlas/grid/global/gaussian/ReducedGaussian.h"
 #include "atlas/grid/global/gaussian/RegularGaussian.h"
-#include "atlas/grid/global/gaussian/ClassicGaussian.h"
-#include "atlas/grid/global/gaussian/OctahedralGaussian.h"
-#include "atlas/grid/global/Structured.h"
-#include "atlas/grid/global/CustomStructured.h"
 #include "atlas/grid/global/lonlat/LonLat.h"
-#include "atlas/grid/global/Unstructured.h"
+#include "atlas/grid/global/lonlat/ReducedLonLat.h"
+#include "atlas/grid/global/lonlat/RegularLonLat.h"
+#include "atlas/grid/global/lonlat/ShiftedLat.h"
+#include "atlas/grid/global/lonlat/ShiftedLon.h"
+#include "atlas/grid/global/lonlat/ShiftedLonLat.h"
+
 
 namespace atlas {
 namespace grid {
 
+
 void load();
+
+
 void unload();
 
 Grid* grid_from_uid(const std::string& uid);
 
-extern "C"
-{
-  void atlas__grids__load();
+
+extern "C" {
+
+
+    void atlas__grids__load();
+
+
 }
 
-} // namespace grid
-} // namespace atlas
 
-#endif // atlas_grids_grids_h
+}  // namespace grid
+}  // namespace atlas
+
+
+#endif
+

@@ -33,7 +33,7 @@ void Domain::hash(eckit::MD5& md5) const {
 
 bool Domain::isEmpty() const {
     return !cmp::isStrictlyGreater(north_,south_)
-        || !cmp::isStrictlyGreater(east_,west_);
+           || !cmp::isStrictlyGreater(east_,west_);
 }
 
 
@@ -51,17 +51,29 @@ void Domain::normalise() {
     ASSERT(north_ <= 90 && south_ >= -90);
     ASSERT(north_ >= south_);
 
-    while (east_ >  360)  { east_ -= 360; west_ -= 360; }
-    while (east_ < -180)  { east_ += 360; west_ += 360; }
-    while (east_ < west_) { east_ += 360; }
+    while (east_ >  360)  {
+        east_ -= 360;
+        west_ -= 360;
+    }
+    while (east_ < -180)  {
+        east_ += 360;
+        west_ += 360;
+    }
+    while (east_ < west_) {
+        east_ += 360;
+    }
 
     ASSERT(west_ <= east_);
 }
 
 
 double Domain::normalise(double lon) const {
-    while (lon > east_) { lon -= 360; }
-    while (lon < west_) { lon += 360; }
+    while (lon > east_) {
+        lon -= 360;
+    }
+    while (lon < west_) {
+        lon += 360;
+    }
     return lon;
 }
 

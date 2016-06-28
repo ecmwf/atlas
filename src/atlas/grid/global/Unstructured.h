@@ -8,17 +8,17 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_grid_global_Unstructured_H
-#define atlas_grid_global_Unstructured_H
-
 /// @author Willem Deconinck
 /// @author Tiago Quintino
 /// @author Pedro Maciel
 /// @date January 2015
 
+
+#ifndef atlas_grid_global_Unstructured_H
+#define atlas_grid_global_Unstructured_H
+
 #include <cstddef>
 #include <vector>
-
 #include "eckit/memory/ScopedPtr.h"
 #include "atlas/grid/global/Global.h"
 
@@ -27,13 +27,14 @@ namespace atlas {
 namespace grid {
 namespace global {
 
+
 class Unstructured : public Global {
 
-public: // methods
+  public: // methods
 
-    static std::string grid_type_str() { return "unstructured"; }
+    static std::string grid_type_str();
 
-    static std::string className() { return "atlas.grid.global.Unstructured"; }
+    static std::string className();
 
     /// Constructor taking a list of parameters
     Unstructured(const eckit::Parametrisation& p);
@@ -50,11 +51,13 @@ public: // methods
 
     virtual void lonlat(std::vector< Point >&) const;
 
-    virtual std::string gridType() const { return grid_type_str(); }
+    virtual std::string gridType() const {
+        return grid_type_str();
+    }
 
     virtual eckit::Properties spec() const;
 
-private: // methods
+  private: // methods
 
     virtual void print(std::ostream&) const;
 
@@ -64,7 +67,7 @@ private: // methods
     /// Hash of the lonlat array + BoundingBox
     virtual void hash(eckit::MD5&) const;
 
-protected:
+  protected:
 
     /// Storage of coordinate points
     eckit::ScopedPtr< std::vector< Point > > points_;
@@ -77,8 +80,10 @@ protected:
 
 };
 
-} // namespace global
-} // namespace grid
-} // namespace atlas
 
-#endif // atlas_grid_global_Unstructured_H
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
+
+
+#endif

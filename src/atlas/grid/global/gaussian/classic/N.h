@@ -11,11 +11,13 @@
 /// @author Willem Deconinck
 /// @date Mar 2016
 
+
 #ifndef atlas_grids_global_gaussian_classic_N_h
 #define atlas_grids_global_gaussian_classic_N_h
 
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
+
 
 namespace atlas {
 namespace grid {
@@ -23,30 +25,32 @@ namespace global {
 namespace gaussian {
 namespace classic {
 
-class PointsPerLatitude : public eckit::Owned
-{
-public:
-  typedef eckit::BuilderT0<PointsPerLatitude> builder_t;
 
-  static std::string className()
-    { return "atlas.global.gaussian.classic.PointsPerLatitude"; }
+class PointsPerLatitude : public eckit::Owned {
 
-  /// @pre nlats has enough allocated memory to store the latitudes
-  /// @param size of lats vector
-  void assign(long nlon[], const size_t size) const;
+  public:
 
-  /// @post resizes the vector to the number of latitutes
-  void assign(std::vector<long>& nlon) const;
+    typedef eckit::BuilderT0<PointsPerLatitude> builder_t;
 
-  size_t N() const { return nlon_.size(); }
+    static std::string className();
 
-protected:
+    /// @pre nlats has enough allocated memory to store the latitudes
+    /// @param size of lats vector
+    void assign(long nlon[], const size_t size) const;
 
-  std::vector<long> nlon_;
+    /// @post resizes the vector to the number of latitutes
+    void assign(std::vector<long>& nlon) const;
+
+    size_t N() const {
+        return nlon_.size();
+    }
+
+  protected:
+
+    std::vector<long> nlon_;
 
 };
 
-//-----------------------------------------------------------------------------
 
 #define DECLARE_POINTS_PER_LATITUDE(NUMBER) \
   class N##NUMBER : public PointsPerLatitude { public: N##NUMBER(); };
@@ -60,9 +64,7 @@ protected:
     size_t N = NUMBER;\
     long nlon[] = {NLON} ;\
     nlon_.assign(nlon,nlon+N);\
-  }\
-
-//-----------------------------------------------------------------------------
+  }
 
 DECLARE_POINTS_PER_LATITUDE(16);
 DECLARE_POINTS_PER_LATITUDE(24);
@@ -90,12 +92,12 @@ DECLARE_POINTS_PER_LATITUDE(8000);
 
 #undef DECLARE_POINTS_PER_LATITUDE
 
-//-----------------------------------------------------------------------------
 
-} // namespace classic
-} // namespace gaussian
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace classic
+}  // namespace gaussian
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
 
-#endif // atlas_grids_global_gaussian_classic_N_h
+
+#endif

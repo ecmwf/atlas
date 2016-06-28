@@ -8,86 +8,87 @@
  * does it submit to any jurisdiction.
  */
 
+
 #ifndef atlas_grids_ReducedGaussianGrid_h
 #define atlas_grids_ReducedGaussianGrid_h
 
 #include "atlas/grid/global/Structured.h"
+
 
 namespace atlas {
 namespace grid {
 namespace global {
 namespace gaussian {
 
-//------------------------------------------------------------------------------
 
-/// @brief Abstract (Reduced) Gaussian Grid
-///
-/// This grid is a special case of the class Structured, in which
-/// the latitudes are distributed according to the roots of the
-/// Legendre Polynomials, and a equidistant distribution in zonal
-/// direction, which reduce in number going closer towards poles,
-/// essentially making the grid more uniform on the sphere
-/// It can be constructed with following definition:
-///   N   = number of latitudes in hemisphere
-///   npts_per_lat[] = number of points on each latitude
-
+/**
+ * @brief Abstract (Reduced) Gaussian Grid
+ *
+ * This grid is a special case of the class Structured, in which
+ * the latitudes are distributed according to the roots of the
+ * Legendre Polynomials, and a equidistant distribution in zonal
+ * direction, which reduce in number going closer towards poles,
+ * essentially making the grid more uniform on the sphere
+ * It can be constructed with following definition:
+ *   N   = number of latitudes in hemisphere
+ *   npts_per_lat[] = number of points on each latitude
+ */
 class Gaussian: public Structured {
 
-public:
+  public:
 
-  /// @brief Compute gaussian latitudes between North pole and equator
-  /// @param N         [in]  Number of latitudes between pole and equator
-  ///                        (Gaussian N number)
-  /// @param latitudes [out] latitudes in degrees
-  static void LatitudesNorthPoleToEquator(const size_t N, double latitudes[]);
+    /**
+     * @brief Compute gaussian latitudes between North pole and equator
+     * @param N         [in]  Number of latitudes between pole and equator (Gaussian N number)
+     * @param latitudes [out] latitudes in degrees
+     */
+    static void LatitudesNorthPoleToEquator(const size_t N, double latitudes[]);
 
+    /**
+     * @brief Compute gaussian latitudes between North pole and South pole
+     * @param N         [in]  Number of latitudes between pole and equator (Gaussian N number)
+     * @param latitudes [out] latitudes in degrees  (size 2*N)
+     */
+    static void LatitudesNorthPoleToSouthPole(const size_t N, double latitudes[]);
 
-  /// @brief Compute gaussian latitudes between North pole and South pole
-  /// @param N         [in]  Number of latitudes between pole and equator
-  ///                        (Gaussian N number)
-  /// @param latitudes [out] latitudes in degrees  (size 2*N)
-  static void LatitudesNorthPoleToSouthPole(const size_t N, double latitudes[]);
+    /**
+     * @brief Compute gaussian quadrature weights between North pole and equator
+     * @param N         [in]  Number of latitudes between pole and equator (Gaussian N number)
+     * @param weights   [out] quadrature weights
+     * @note Weights are normalized so that their sum equals 0.5 between pole and equator, or 1. from pole to pole
+     */
+    static void QuadratureNorthPoleToEquator (const size_t N, double weights[]);
 
-  /// @brief Compute gaussian quadrature weights
-  ///        between North pole and equator
-  /// @param N         [in]  Number of latitudes between pole and equator
-  ///                        (Gaussian N number)
-  /// @param weights   [out] quadrature weights
-  /// @note Weights are normalized so that their sum equals 0.5 between
-  ///       pole and equator, or 1. from pole to pole
-  static void QuadratureNorthPoleToEquator (const size_t N, double weights[]);
+    /**
+     * @brief Compute gaussian quadrature weights between North pole and South pole
+     * @param N         [in]  Number of latitudes between pole and equator (Gaussian N number)
+     * @param weights   [out] quadrature weights   (size 2*N)
+     * @note Weights are normalized so that their sum equals 0.5 between pole and equator, or 1. from pole to pole
+     */
+    static void QuadratureNorthPoleToSouthPole (const size_t N, double weights[]);
 
-  /// @brief Compute gaussian quadrature weights
-  ///        between North pole and South pole
-  /// @param N         [in]  Number of latitudes between pole and equator
-  ///                        (Gaussian N number)
-  /// @param weights   [out] quadrature weights   (size 2*N)
-  /// @note Weights are normalized so that their sum equals 0.5 between
-  ///       pole and equator, or 1. from pole to pole
-  static void QuadratureNorthPoleToSouthPole (const size_t N, double weights[]);
+    static std::string grid_type_str();
 
+    static std::string className();
 
-  static std::string grid_type_str() { return "gaussian"; }
+    virtual eckit::Properties spec() const;
 
-  static std::string className();
+  protected:
 
-  virtual eckit::Properties spec() const;
+    /// to be used only by derived types
+    Gaussian(const Domain& dom=Domain::makeGlobal());
 
-protected:
+    void setup_N_hemisphere(const size_t N, const long pl[]);
 
-  /// to be used only by derived types
-  Gaussian(const Domain& dom=Domain::makeGlobal());
-
-  void setup_N_hemisphere( const size_t N, const long pl[] );
-  virtual void set_typeinfo() = 0;
+    virtual void set_typeinfo() = 0;
 
 };
 
-//------------------------------------------------------------------------------------------------------
 
-} // namespace gaussian
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace gaussian
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
 
-#endif // atlas_grids_ReducedGaussianGrid_h
+
+#endif

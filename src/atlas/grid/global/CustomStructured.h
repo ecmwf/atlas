@@ -33,7 +33,7 @@ namespace global {
  * such distribution can be represented with this class
  */
 class CustomStructured: public Structured {
-public:
+  public:
 
     static std::string className();
 
@@ -42,19 +42,21 @@ public:
     CustomStructured(const eckit::Parametrisation&);
 
     CustomStructured(
-            size_t nlat,
-            const double lats[],
-            const long   nlon[] );
+        size_t nlat,
+        const double lats[],
+        const long   nlon[],
+        const Domain& dom=Domain::makeGlobal() );
 
     CustomStructured(
-            size_t nlat,
-            const double lats[],
-            const long   nlon[],
-            const double lonmin[] );
+        size_t nlat,
+        const double lats[],
+        const long   nlon[],
+        const double lonmin[],
+        const Domain& dom=Domain::makeGlobal() );
 
     virtual eckit::Properties spec() const;
 
-private:
+  private:
 
     void setup(const eckit::Parametrisation&);
 
@@ -64,4 +66,6 @@ private:
 }  // namespace global
 }  // namespace grid
 }  // namespace atlas
+
+
 #endif

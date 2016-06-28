@@ -8,71 +8,67 @@
  * does it submit to any jurisdiction.
  */
 
-#include <typeinfo>
-#include "eckit/memory/Builder.h"
-#include "atlas/internals/atlas_config.h"
+
 #include "atlas/grid/global/lonlat/ReducedLonLat.h"
 
-using namespace eckit;
 
 namespace atlas {
 namespace grid {
 namespace global {
 namespace lonlat {
 
-//------------------------------------------------------------------------------
 
 register_BuilderT1(Grid,ReducedLonLat,ReducedLonLat::grid_type_str());
 
-std::string ReducedLonLat::grid_type_str()
-{
-  return "reduced_lonlat";
+
+std::string ReducedLonLat::grid_type_str() {
+    return "reduced_lonlat";
 }
 
-std::string ReducedLonLat::className()
-{
-  return "atlas.grid.global.lonlat.ReducedLonLat";
+
+std::string ReducedLonLat::className() {
+    return "atlas.grid.global.lonlat.ReducedLonLat";
 }
 
-void ReducedLonLat::set_typeinfo()
-{
-  std::stringstream s;
-  s << "reduced_lonlat";
-  shortName_ = s.str();
-  grid_type_ = grid_type_str();
+
+void ReducedLonLat::set_typeinfo() {
+    std::stringstream s;
+    s << "reduced_lonlat";
+    shortName_ = s.str();
+    grid_type_ = grid_type_str();
 }
 
-ReducedLonLat::ReducedLonLat( const size_t nlat, const long nlon[], const Domain& dom ) :
-   LonLat(Shift::NONE,dom)
-{
-  setup(nlat,nlon);
-  set_typeinfo();
+
+ReducedLonLat::ReducedLonLat(const size_t nlat, const long nlon[], const Domain& dom) :
+    LonLat(Shift::NONE,dom) {
+    setup(nlat,nlon);
+    set_typeinfo();
 }
 
-ReducedLonLat::ReducedLonLat( const eckit::Parametrisation& params ) :
-    LonLat(Shift::NONE,Domain::makeGlobal())
-{
-  setup(params);
-  set_typeinfo();
+
+ReducedLonLat::ReducedLonLat(const eckit::Parametrisation& params) :
+    LonLat(Shift::NONE,Domain::makeGlobal()) {
+    setup(params);
+    set_typeinfo();
 }
 
-void ReducedLonLat::setup( const eckit::Parametrisation& params )
-{
-  if( ! params.has("nlat") )         throw BadParameter("N missing in Params",Here());
-  if( ! params.has("pl") ) throw BadParameter("npts_per_lat missing in Params",Here());
 
-  size_t nlat;
-  params.get("nlat",nlat);
+void ReducedLonLat::setup(const eckit::Parametrisation& params) {
+    if (!params.has("nlat"))  throw eckit::BadParameter("N missing in Params",Here());
+    if (!params.has("pl"))    throw eckit::BadParameter("npts_per_lat missing in Params",Here());
 
-  std::vector<long> nlon;
-  params.get("pl",nlon);
-  setup(nlat,nlon.data());
+    size_t nlat;
+    params.get("nlat",nlat);
 
-  params.get("N",N_);
+    std::vector<long> nlon;
+    params.get("pl",nlon);
+    setup(nlat,nlon.data());
+
+    params.get("N",N_);
 }
 
-void ReducedLonLat::setup( const size_t nlat, const long nlon[] )
-{
+
+void ReducedLonLat::setup(const size_t nlat, const long nlon[]) {
     ASSERT(nlat>=2);
     std::vector<double> lats(nlat);
 
@@ -87,27 +83,21 @@ void ReducedLonLat::setup( const size_t nlat, const long nlon[] )
 }
 
 
-eckit::Properties ReducedLonLat::spec() const
-{
-  eckit::Properties grid_spec;
+eckit::Properties ReducedLonLat::spec() const {
+    eckit::Properties grid_spec;
 
-  grid_spec.set("grid_type", gridType() );
-  grid_spec.set("short_name",shortName());
+    grid_spec.set("grid_type",  gridType() );
+    grid_spec.set("short_name", shortName());
+    grid_spec.set("N",          N() );
+    grid_spec.set("nlat",       nlat() );
+    grid_spec.set("pl",         eckit::makeVectorValue(pl()));
+    grid_spec.set("latitudes",  eckit::makeVectorValue(latitudes()));
+    grid_spec.set("shift_lon",  shifted().lon());
+    grid_spec.set("shift_lat",  shifted().lat());
 
-  grid_spec.set("N", N() );
-  grid_spec.set("nlat", nlat() );
-
-  grid_spec.set("pl",eckit::makeVectorValue(pl()));
-
-  grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
-
-  grid_spec.set("shift_lon",shifted().lon());
-  grid_spec.set("shift_lat",shifted().lat());
-
-  return grid_spec;
+    return grid_spec;
 }
 
-//------------------------------------------------------------------------------
 
 } // namespace lonlat
 } // namespace global

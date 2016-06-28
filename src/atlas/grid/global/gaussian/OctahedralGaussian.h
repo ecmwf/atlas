@@ -11,31 +11,33 @@
 /// @author Willem Deconinck
 /// @date Jan 2014
 
+
 #ifndef atlas_grids_global_gaussian_OctahedralGaussian_h
 #define atlas_grids_global_gaussian_OctahedralGaussian_h
 
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/global/gaussian/Gaussian.h"
 
+
 namespace atlas {
 namespace grid {
 namespace global {
 namespace gaussian {
 
-//------------------------------------------------------------------------------
 
 class OctahedralGaussian: public Gaussian {
-public:
 
-    static std::string className() { return "atlas.grids.global.gaussian.OctahedralGaussian"; }
-    static std::string grid_type_str() { return "octahedral_gaussian"; }
+  public:
+
+    static std::string className();
+    static std::string grid_type_str();
 
     OctahedralGaussian(const size_t N);
 
     OctahedralGaussian( const eckit::Parametrisation& arg1);
 
 
-private:
+  private:
 
     /// Computes the PL for the Octohedral distribution
     /// number of points at latitude closest to pole
@@ -47,11 +49,11 @@ private:
 
 };
 
-//------------------------------------------------------------------------------
 
-} // namespace gaussian
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace gaussian
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
 
-#endif // atlas_grids_global_gaussian_OctahedralGaussian_h
+
+#endif

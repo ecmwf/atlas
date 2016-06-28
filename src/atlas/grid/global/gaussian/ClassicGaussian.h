@@ -8,51 +8,55 @@
  * does it submit to any jurisdiction.
  */
 
+
 #ifndef atlas_grids_global_gaussian_ClassicGaussian_h
 #define atlas_grids_global_gaussian_ClassicGaussian_h
 
 #include "atlas/grid/global/gaussian/Gaussian.h"
+
 
 namespace atlas {
 namespace grid {
 namespace global {
 namespace gaussian {
 
-//------------------------------------------------------------------------------
 
-/// @brief Classic Reduced Gaussian Grid
-///
-/// This grid is a special case of the class Structured, in which
-/// the latitudes are distributed according to the roots of the
-/// Legendre Polynomials, and a equidistant distribution in zonal
-/// direction, which reduce in number going closer towards poles,
-/// essentially making the grid more uniform on the sphere
-/// It can be constructed with following definition:
-///   N   = number of latitudes in hemisphere
-///   npts_per_lat[] = number of points on each latitude
 
+/**
+ * @brief Classic Reduced Gaussian Grid
+ *
+ * This grid is a special case of the class Structured, in which
+ * the latitudes are distributed according to the roots of the
+ * Legendre Polynomials, and a equidistant distribution in zonal
+ * direction, which reduce in number going closer towards poles,
+ * essentially making the grid more uniform on the sphere
+ * It can be constructed with following definition:
+ *   N   = number of latitudes in hemisphere
+ *   npts_per_lat[] = number of points on each latitude
+ */
 class ClassicGaussian: public Gaussian {
-public:
 
-  static std::string grid_type_str() { return "classic_gaussian"; }
+  public:
 
-  ClassicGaussian( const eckit::Parametrisation& );
+    static std::string grid_type_str();
 
-  ClassicGaussian( const size_t N );
+    static std::string className();
 
-  static std::string className();
+    ClassicGaussian(const eckit::Parametrisation&);
 
-protected:
+    ClassicGaussian(const size_t N);
 
-  virtual void set_typeinfo();
+  protected:
+
+    virtual void set_typeinfo();
 
 };
 
-//------------------------------------------------------------------------------------------------------
 
-} // namespace gaussian
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace gaussian
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
 
-#endif // atlas_grids_global_gaussian_ClassicGaussian_h
+
+#endif

@@ -8,57 +8,78 @@
  * does it submit to any jurisdiction.
  */
 
+
 #ifndef atlas_grids_global_lonlat_LonLat_h
 #define atlas_grids_global_lonlat_LonLat_h
 
 #include "atlas/grid/global/Structured.h"
+
 
 namespace atlas {
 namespace grid {
 namespace global {
 namespace lonlat {
 
-//------------------------------------------------------------------------------
 
 class Shift {
-public:
-  enum Bits {
-    NONE     = 0,
-    LON      = (1<<2),
-    LAT      = (1<<3)
-  };
-  Shift() { bits_ = NONE; }
-  Shift( Bits bits ) { bits_ = static_cast<int>(bits); }
-  Shift( int  bits ) { bits_ = bits; }
-  Shift( bool shift_lon, bool shift_lat )
-  {
-    bits_ = NONE;
-    if( shift_lon ) bits_ |= LON;
-    if( shift_lon ) bits_ |= LAT;
-  }
 
-  bool lat() const      { return check(LAT);     }
-  bool lon() const      { return check(LON);     }
-  bool lonlat() const   { return check(LON|LAT); }
-  operator bool() const { return (bits_ != 0);  }
+  public:
+    enum Bits {
+        NONE     = 0,
+        LON      = (1<<2),
+        LAT      = (1<<3)
+    };
+    Shift() {
+        bits_ = NONE;
+    }
+    Shift(Bits bits) {
+        bits_ = static_cast<int>(bits);
+    }
+    Shift(int  bits) {
+        bits_ = bits;
+    }
+    Shift(bool shift_lon, bool shift_lat) {
+        bits_ = NONE;
+        if (shift_lon) bits_ |= LON;
+        if (shift_lon) bits_ |= LAT;
+    }
 
-private:
-  bool check(int b) const { return (bits_ & b) == b; }
-  int bits_;
+    bool lat() const      {
+        return check(LAT);
+    }
+    bool lon() const      {
+        return check(LON);
+    }
+    bool lonlat() const   {
+        return check(LON|LAT);
+    }
+    operator bool() const {
+        return (bits_ != 0);
+    }
+
+  private:
+    bool check(int b) const {
+        return (bits_ & b) == b;
+    }
+    int bits_;
+
 };
 
-/// @brief (Structured) LonLat Grid
-///
-/// This grid is a special case of the class Structured, with
-/// equidistant distribution of latitudes, and a equidistant distribution in zonal
-/// direction, which reduce in number going closer towards poles,
-/// essentially making the grid more uniform on the sphere
-/// It can be constructed with following definition:
-///   N   = number of latitudes in hemisphere
-///   npts_per_lat[] = number of points on each latitude
 
+/**
+ * @brief (Structured) LonLat Grid
+ *
+ * This grid is a special case of the class Structured, with
+ * equidistant distribution of latitudes, and a equidistant distribution in zonal
+ * direction, which reduce in number going closer towards poles,
+ * essentially making the grid more uniform on the sphere
+ * It can be constructed with following definition:
+ * * N   = number of latitudes in hemisphere
+ * * npts_per_lat[] = number of points on each latitude
+ */
 class LonLat: public Structured {
-public:
+
+  public:
 
     static std::string grid_type_str();
 
@@ -66,25 +87,29 @@ public:
 
     static std::string className();
 
-    const Shift& shifted() const { return shift_; }
+    const Shift& shifted() const {
+        return shift_;
+    }
 
-    bool regular() const { return shift_; }
+    bool regular() const {
+        return shift_;
+    }
 
-protected:
+  protected:
 
     virtual void set_typeinfo() = 0;
 
-protected:
+  protected:
 
     Shift shift_;
 
 };
 
-//------------------------------------------------------------------------------
 
 } // namespace lonlat
 } // namespace global
 } // namespace grid
 } // namespace atlas
 
-#endif // atlas_grids_global_lonlat_LonLat_h
+
+#endif

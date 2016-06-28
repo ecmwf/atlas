@@ -11,11 +11,13 @@
 /// @author Willem Deconinck
 /// @date Nov 2014
 
+
 #ifndef atlas_grids_global_gaussian_latitudes_N_h
 #define atlas_grids_global_gaussian_latitudes_N_h
 
-#include "eckit/memory/Owned.h"
 #include "eckit/memory/Builder.h"
+#include "eckit/memory/Owned.h"
+
 
 namespace atlas {
 namespace grid {
@@ -23,29 +25,32 @@ namespace global {
 namespace gaussian {
 namespace latitudes {
 
-//------------------------------------------------------------------------------------------------------
 
-class GaussianLatitudes : public eckit::Owned
-{
-public:
-  typedef eckit::BuilderT0<GaussianLatitudes> builder_t;
+class GaussianLatitudes : public eckit::Owned {
 
-  static std::string className() { return "GaussianLatitudes"; }
+  public:
 
-  /// @pre nlats has enough allocated memory to store the latitudes
-  /// @param size of lats vector
-  void assign(double lats[], const size_t size) const;
+    typedef eckit::BuilderT0<GaussianLatitudes> builder_t;
 
-  /// @post resizes the vector to the number of latitutes
-  void assign(std::vector<double>& lats) const;
+    static std::string className();
 
-  size_t N() const { return lats_.size(); }
+    /// @pre nlats has enough allocated memory to store the latitudes
+    /// @param size of lats vector
+    void assign(double lats[], const size_t size) const;
 
-protected:
+    /// @post resizes the vector to the number of latitutes
+    void assign(std::vector<double>& lats) const;
 
-  std::vector<double> lats_;
+    size_t N() const {
+        return lats_.size();
+    }
+
+  protected:
+
+    std::vector<double> lats_;
 
 };
+
 
 #define DECLARE_GAUSSIAN_LATITUDES(NUMBER) \
   class N##NUMBER : public GaussianLatitudes { public: N##NUMBER(); };
@@ -87,12 +92,12 @@ DECLARE_GAUSSIAN_LATITUDES(8000);
 
 #undef DECLARE_GAUSSIAN_LATITUDES
 
-//------------------------------------------------------------------------------
 
-} // namespace latitudes
-} // namespace gaussian
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace latitudes
+}  // namespace gaussian
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
 
-#endif // atlas_grids_global_gaussian_latitudes_N_h
+
+#endif

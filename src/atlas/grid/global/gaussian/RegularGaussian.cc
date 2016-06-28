@@ -51,13 +51,10 @@ RegularGaussian::RegularGaussian(const size_t& N, const Domain& dom) :
 
 eckit::Properties RegularGaussian::spec() const {
     eckit::Properties grid_spec;
-
     grid_spec.set("grid_type", grid_type_str());
     grid_spec.set("short_name", shortName());
-
     grid_spec.set("N", N());
     grid_spec.set("nlat", nlat());
-
     return grid_spec;
 }
 

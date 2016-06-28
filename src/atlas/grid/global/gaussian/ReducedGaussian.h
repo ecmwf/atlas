@@ -8,54 +8,58 @@
  * does it submit to any jurisdiction.
  */
 
+
 #ifndef atlas_grids_global_gaussian_ReducedGaussian_h
 #define atlas_grids_global_gaussian_ReducedGaussian_h
 
 #include "atlas/grid/global/gaussian/Gaussian.h"
+
 
 namespace atlas {
 namespace grid {
 namespace global {
 namespace gaussian {
 
-//------------------------------------------------------------------------------------------------------
 
-/// @brief Reduced Gaussian Grid
-///
-/// This grid is a special case of the class Structured, in which
-/// the latitudes are distributed according to the roots of the
-/// Legendre Polynomials, and a equidistant distribution in zonal
-/// direction, which reduce in number going closer towards poles,
-/// essentially making the grid more uniform on the sphere
-/// It can be constructed with following definition:
-///   N   = number of latitudes in hemisphere
-///   npts_per_lat[] = number of points on each latitude
-
+/**
+ * @brief Reduced Gaussian Grid
+ *
+ * This grid is a special case of the class Structured, in which
+ * the latitudes are distributed according to the roots of the
+ * Legendre Polynomials, and a equidistant distribution in zonal
+ * direction, which reduce in number going closer towards poles,
+ * essentially making the grid more uniform on the sphere
+ * It can be constructed with following definition:
+ * * N   = number of latitudes in hemisphere
+ * * npts_per_lat[] = number of points on each latitude
+ */
 class ReducedGaussian: public Gaussian {
-public:
 
-  static std::string grid_type_str() { return "reduced_gaussian"; }
+  public:
 
-  ReducedGaussian( const eckit::Parametrisation& );
+    static std::string grid_type_str();
 
-  ReducedGaussian( const size_t N, const long pl[] );
+    static std::string className();
 
-  static std::string className();
+    ReducedGaussian(const eckit::Parametrisation&);
 
-protected:
+    ReducedGaussian(const size_t N, const long pl[]);
 
-  ReducedGaussian() : Gaussian() {}
+  protected:
 
-  void setup( const eckit::Parametrisation& );
-  virtual void set_typeinfo();
+    ReducedGaussian() : Gaussian() {}
+
+    void setup(const eckit::Parametrisation&);
+
+    virtual void set_typeinfo();
 
 };
 
-//------------------------------------------------------------------------------------------------------
 
-} // namespace gaussian
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace gaussian
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
 
-#endif // atlas_grids_global_gaussian_ReducedGaussian_h
+
+#endif

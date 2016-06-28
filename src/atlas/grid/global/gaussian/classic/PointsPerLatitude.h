@@ -11,10 +11,12 @@
 /// @author Willem Deconinck
 /// @date Mar 2016
 
+
 #ifndef atlas_grids_global_gaussian_classic_PointsPerLatitude_h
 #define atlas_grids_global_gaussian_classic_PointsPerLatitude_h
 
 #include <cstddef>
+
 
 namespace atlas {
 namespace grid {
@@ -22,28 +24,29 @@ namespace global {
 namespace gaussian {
 namespace classic {
 
-//-----------------------------------------------------------------------------
 
-/// @brief Compute points per latitude between North pole and equator
-/// @param N    [in]  Number of latitudes between pole and equator
-///                        (Gaussian N number)
-/// @param nlon [out] points per latitude
+/**
+ * @brief Compute points per latitude between North pole and equator
+ * @param N    [in]  Number of latitudes between pole and equator (Gaussian N number)
+ * @param nlon [out] points per latitude
+ */
 void points_per_latitude_npole_equator (const size_t N, long nlon[]);
 
-//-----------------------------------------------------------------------------
 
-/// @brief Compute points per latitude between North pole and South pole
-/// @param N    [in]  Number of latitudes between pole and equator
-///                        (Gaussian N number)
-/// @param nlon [out] points per latitude  (size 2*N)
+/**
+ * @brief Compute points per latitude between North pole and South pole
+ * @param N    [in]  Number of latitudes between pole and equator (Gaussian N number)
+ * @param nlon [out] points per latitude  (size 2*N)
+ */
 void points_per_latitude_npole_spole   (const size_t N, long nlon[]);
 
-//-----------------------------------------------------------------------------
 
-} // namespace classic
-} // namespace gaussian
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace classic
+}  // namespace gaussian
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
 
-#endif // atlas_grids_global_gaussian_classic_PointsPerLatitude_h
+
+#endif
+

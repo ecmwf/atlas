@@ -23,7 +23,7 @@ namespace global {
 
 
 /**
- * @brief Reduced Grid
+ * @brief Structured Grid
  *
  * This class is a base class for all grids that can be described by
  * constant latitudes with a uniform distribution of points per latitude
@@ -32,7 +32,7 @@ namespace global {
  * such distribution can be represented with this class
  */
 class Structured: public Global {
-public:
+  public:
 
     typedef eckit::SharedPtr<Structured> Ptr;
 
@@ -40,15 +40,17 @@ public:
 
     static Structured* create(const std::string& shortName);
 
-public:
+  public:
 
     static std::string className();
 
     static std::string grid_type_str();
 
-public:
+  public:
 
     Structured(const Domain& dom=Domain::makeGlobal());
+
+    virtual ~Structured();
 
     virtual size_t npts() const {
         return npts_;
@@ -120,7 +122,7 @@ public:
         return nlonmax() != nlonmin();
     }
 
-protected: // methods
+  protected: // methods
 
     virtual size_t copyLonLatMemory(double* pts, size_t size) const;
 
@@ -135,7 +137,7 @@ protected: // methods
 
     void setup_lat_hemisphere(const size_t N, const double lat[], const long lon[]);
 
-protected:
+  protected:
 
     /// Number of latitudes in hemisphere
     size_t N_;
@@ -167,51 +169,51 @@ protected:
     /// Value of maximum longitude per latitude [default=0]
     std::vector<double> lonmax_;
 
-private:
+  private:
 
     /// Value of longitude increment
     std::vector<double> lon_inc_;
 
 };
 
-// --------------------------------------------------------------------
 
 #define CONFIG eckit::Parametrisation
 extern "C"
 {
-void atlas__grid__global__Structured__delete(Structured* This);
-Structured* atlas__grid__global__Structured(char* identifier);
-Structured* atlas__grid__global__Structured__config(CONFIG* conf);
-Structured* atlas__grid__global__CustomStructured_int(size_t nlat, double lat[], int nlon[]);
-Structured* atlas__grid__global__CustomStructured_long(size_t nlat, double lat[], long nlon[]);
-Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lat[], int nlon[], double lonmin[]);
-Structured* atlas__grid__global__CustomStructured_lonmin_long(size_t nlat, double lat[], long nlon[], double lonmin[]);
-Structured* atlas__grid__global__gaussian__RegularGaussian(size_t N);
-Structured* atlas__grid__global__gaussian__ReducedGaussian_int(size_t N, int nlon[]);
-Structured* atlas__grid__global__gaussian__ReducedGaussian_long(size_t N, long nlon[]);
-Structured* atlas__grid__global__lonlat__RegularLonLat(size_t nlon, size_t nlat);
-Structured* atlas__grid__global__lonlat__ShiftedLonLat(size_t nlon, size_t nlat);
-Structured* atlas__grid__global__lonlat__ShiftedLon(size_t nlon, size_t nlat);
-Structured* atlas__grid__global__lonlat__ShiftedLat(size_t nlon, size_t nlat);
+    void atlas__grid__global__Structured__delete(Structured* This);
+    Structured* atlas__grid__global__Structured(char* identifier);
+    Structured* atlas__grid__global__Structured__config(CONFIG* conf);
+    Structured* atlas__grid__global__CustomStructured_int(size_t nlat, double lat[], int nlon[]);
+    Structured* atlas__grid__global__CustomStructured_long(size_t nlat, double lat[], long nlon[]);
+    Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lat[], int nlon[], double lonmin[]);
+    Structured* atlas__grid__global__CustomStructured_lonmin_long(size_t nlat, double lat[], long nlon[], double lonmin[]);
+    Structured* atlas__grid__global__gaussian__RegularGaussian(size_t N);
+    Structured* atlas__grid__global__gaussian__ReducedGaussian_int(size_t N, int nlon[]);
+    Structured* atlas__grid__global__gaussian__ReducedGaussian_long(size_t N, long nlon[]);
+    Structured* atlas__grid__global__lonlat__RegularLonLat(size_t nlon, size_t nlat);
+    Structured* atlas__grid__global__lonlat__ShiftedLonLat(size_t nlon, size_t nlat);
+    Structured* atlas__grid__global__lonlat__ShiftedLon(size_t nlon, size_t nlat);
+    Structured* atlas__grid__global__lonlat__ShiftedLat(size_t nlon, size_t nlat);
 
-void   atlas__grid__global__Structured__pl        (Structured* This, const long* &pl, size_t &size);
-size_t atlas__grid__global__Structured__N         (Structured* This);
-size_t atlas__grid__global__Structured__nlat      (Structured* This);
-size_t atlas__grid__global__Structured__nlon      (Structured* This, size_t jlat);
-size_t atlas__grid__global__Structured__nlonmin   (Structured* This);
-size_t atlas__grid__global__Structured__nlonmax   (Structured* This);
-size_t atlas__grid__global__Structured__npts      (Structured* This);
-double atlas__grid__global__Structured__lat       (Structured* This, size_t jlat);
-double atlas__grid__global__Structured__lon       (Structured* This, size_t jlat, size_t jlon);
-void   atlas__grid__global__Structured__lonlat    (Structured* This, size_t jlat, size_t jlon, double crd[]);
-void   atlas__grid__global__Structured__latitudes (Structured* This, const double* &lats, size_t &size);
-int    atlas__grid__global__Structured__reduced   (Structured* This);
+    void   atlas__grid__global__Structured__pl        (Structured* This, const long* &pl, size_t &size);
+    size_t atlas__grid__global__Structured__N         (Structured* This);
+    size_t atlas__grid__global__Structured__nlat      (Structured* This);
+    size_t atlas__grid__global__Structured__nlon      (Structured* This, size_t jlat);
+    size_t atlas__grid__global__Structured__nlonmin   (Structured* This);
+    size_t atlas__grid__global__Structured__nlonmax   (Structured* This);
+    size_t atlas__grid__global__Structured__npts      (Structured* This);
+    double atlas__grid__global__Structured__lat       (Structured* This, size_t jlat);
+    double atlas__grid__global__Structured__lon       (Structured* This, size_t jlat, size_t jlon);
+    void   atlas__grid__global__Structured__lonlat    (Structured* This, size_t jlat, size_t jlon, double crd[]);
+    void   atlas__grid__global__Structured__latitudes (Structured* This, const double* &lats, size_t &size);
+    int    atlas__grid__global__Structured__reduced   (Structured* This);
 }
 #undef CONFIG
 
 
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
 
-#endif // Structured_h
+
+#endif

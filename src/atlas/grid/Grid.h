@@ -13,6 +13,7 @@
 /// @author Pedro Maciel
 /// @date Jan 2015
 
+
 #ifndef atlas_Grid_H
 #define atlas_Grid_H
 
@@ -28,7 +29,13 @@
 #include "atlas/internals/ObjectRegistry.h"
 #include "atlas/util/Config.h"
 
-namespace atlas { namespace mesh { class Mesh; } }
+
+namespace atlas {
+namespace mesh {
+class Mesh;
+}
+}
+
 
 namespace atlas {
 namespace grid {
@@ -36,7 +43,7 @@ namespace grid {
 
 class Grid : public eckit::Owned, public internals::Registered<Grid> {
 
-public:  // types
+  public:  // types
 
     typedef eckit::BuilderT1<Grid> builder_t;
     typedef const eckit::Parametrisation& ARG1;
@@ -46,11 +53,12 @@ public:  // types
     typedef eckit::geometry::LLPoint2 Point; // must be sizeof(double)*2
     typedef std::string uid_t;
 
-public:  // methods
+  public:  // methods
 
-    static std::string className() { return "atlas.Grid"; }
+    static std::string className();
 
     static Grid* create(const eckit::Parametrisation&);
+
     static Grid* create(const Grid::uid_t& shortName);
 
     /// Constructor
@@ -58,7 +66,9 @@ public:  // methods
 
     virtual ~Grid();
 
-    Ptr self() { return Ptr(this); } ///< @todo not necessary?
+    Ptr self() {
+        return Ptr(this);    ///< @todo not necessary?
+    }
 
     /// Human readable name (may not be unique)
     virtual std::string shortName() const = 0;
@@ -75,7 +85,9 @@ public:  // methods
 
 
     /// @return area represented by the grid
-    const Domain& domain() const { return domain_; }
+    const Domain& domain() const {
+        return domain_;
+    }
 
     /// @return number of grid points
     /// @note This methods should have constant access time, if necessary derived
@@ -104,7 +116,7 @@ public:  // methods
 
     virtual bool same(const grid::Grid&) const;
 
-protected:  // methods
+  protected:  // methods
 
     /// Fill provided memory buffer with the grid points, as (lon,lat) values
     /// This implementation in the base Grid class is not optimal as it incurs in double copy
@@ -121,18 +133,18 @@ protected:  // methods
 
     virtual void print(std::ostream&) const = 0;
 
-private:  // methods
+  private:  // methods
 
     friend std::ostream& operator<<(std::ostream& s, const grid::Grid& p) {
         p.print(s);
         return s;
     }
 
-protected:  // members
+  protected:  // members
 
     Domain domain_;  ///< Area represented by the grid
 
-private:  // members
+  private:  // members
 
     mutable uid_t                  uid_;  ///< cache the unique ID
     mutable eckit::MD5::digest_t   hash_; ///< cache the hash
@@ -140,7 +152,9 @@ private:  // members
 };
 
 
-} // namespace grid
-} // namespace atlas
+}  // namespace grid
+}  // namespace atlas
+
 
 #endif
+

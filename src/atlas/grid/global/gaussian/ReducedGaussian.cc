@@ -8,75 +8,82 @@
  * does it submit to any jurisdiction.
  */
 
+
+#include "atlas/grid/global/gaussian/ReducedGaussian.h"
+
 #include <typeinfo>
 #include "eckit/memory/Builder.h"
-#include "atlas/grid/global/gaussian/ReducedGaussian.h"
+
 
 namespace atlas {
 namespace grid {
 namespace global {
 namespace gaussian {
 
-//------------------------------------------------------------------------------------------------------
 
 register_BuilderT1(Grid,ReducedGaussian,ReducedGaussian::grid_type_str());
 
-std::string ReducedGaussian::className()
-{
-  return "atlas.grid.global.gaussian.ReducedGaussian";
+
+std::string ReducedGaussian::grid_type_str() {
+    return "reduced_gaussian";
 }
 
-void ReducedGaussian::set_typeinfo()
-{
-  std::stringstream s;
-  s << "reduced_gaussian.N" << N();
-  shortName_ = s.str();
-  grid_type_ = grid_type_str();
+
+std::string ReducedGaussian::className() {
+    return "atlas.grid.global.gaussian.ReducedGaussian";
 }
 
-ReducedGaussian::ReducedGaussian( const size_t N, const long nlons[] )
-  : Gaussian()
-{
-  setup_N_hemisphere(N,nlons);
-  set_typeinfo();
+
+ReducedGaussian::ReducedGaussian(const size_t N, const long nlons[]) :
+    Gaussian() {
+    setup_N_hemisphere(N,nlons);
+    set_typeinfo();
 }
 
-ReducedGaussian::ReducedGaussian(const eckit::Parametrisation& params)
-  : Gaussian()
-{
-  setup(params);
-  set_typeinfo();
+
+ReducedGaussian::ReducedGaussian(const eckit::Parametrisation& params) :
+    Gaussian() {
+    setup(params);
+    set_typeinfo();
 }
 
-void ReducedGaussian::setup( const eckit::Parametrisation& params )
-{
-  if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
-  size_t N;
-  params.get("N",N);
 
-  std::vector<long> pl;
-  params.get("pl",pl);
-  setup_N_hemisphere(N,pl.data());
+void ReducedGaussian::setup( const eckit::Parametrisation& params ) {
+    if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
+    size_t N;
+    params.get("N",N);
+
+    std::vector<long> pl;
+    params.get("pl",pl);
+    setup_N_hemisphere(N,pl.data());
 }
 
-//-----------------------------------------------------------------------------
+
+void ReducedGaussian::set_typeinfo() {
+    std::stringstream s;
+    s << "reduced_gaussian.N" << N();
+    shortName_ = s.str();
+    grid_type_ = grid_type_str();
+}
+
 
 extern "C" {
 
-Structured* atlas__grid__global__gaussian__ReducedGaussian_int(size_t N, int pl[])
-{
-  std::vector<long> pl_vector;
-  pl_vector.assign(pl,pl+N);
-  return new ReducedGaussian(N,pl_vector.data());
-}
-Structured* atlas__grid__global__gaussian__ReducedGaussian_long(size_t N, long pl[])
-{
-  return new ReducedGaussian(N,pl);
-}
+
+    Structured* atlas__grid__global__gaussian__ReducedGaussian_int(size_t N, int pl[]) {
+        std::vector<long> pl_vector;
+        pl_vector.assign(pl,pl+N);
+        return new ReducedGaussian(N,pl_vector.data());
+    }
+
+
+    Structured* atlas__grid__global__gaussian__ReducedGaussian_long(size_t N, long pl[]) {
+        return new ReducedGaussian(N,pl);
+    }
+
 
 }
 
-//-----------------------------------------------------------------------------
 
 } // namespace gaussian
 } // namespace global

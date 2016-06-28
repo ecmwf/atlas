@@ -49,13 +49,13 @@ std::string RotatedGrid::shortName() const {
 
 void RotatedGrid::hash(eckit::MD5& md5) const {
 
-  md5.add("rotated.");
+    md5.add("rotated.");
 
-  grid_->hash(md5);
+    grid_->hash(md5);
 
-  md5.add(south_pole_longitude_);
-  md5.add(south_pole_latitude_);
-  md5.add(south_pole_rotation_angle_);
+    md5.add(south_pole_longitude_);
+    md5.add(south_pole_latitude_);
+    md5.add(south_pole_rotation_angle_);
 }
 
 
@@ -85,8 +85,7 @@ eckit::Properties RotatedGrid::spec() const {
     NOTIMP;
 }
 
-void RotatedGrid::print(ostream& os) const
-{
+void RotatedGrid::print(ostream& os) const {
     os << "Rotated("
        << "south_pole_latitude:" << south_pole_latitude_
        << ",south_pole_longitude:" << south_pole_longitude_
