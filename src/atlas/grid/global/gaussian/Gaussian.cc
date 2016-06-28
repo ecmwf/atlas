@@ -87,7 +87,6 @@ eckit::Properties Gaussian::spec() const
 
   grid_spec.set("pl",eckit::makeVectorValue(pl()));
 
-
   return grid_spec;
 }
 

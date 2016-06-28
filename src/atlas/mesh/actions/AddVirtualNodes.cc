@@ -8,21 +8,26 @@
  * does it submit to any jurisdiction.
  */
 
+
+#include "atlas/mesh/actions/AddVirtualNodes.h"
+
 #include "eckit/exception/Exceptions.h"
-#include "eckit/types/Types.h"
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
-#include "atlas/grid/Grid.h"
+#include "eckit/types/Types.h"
+#include "atlas/field/Field.h"
 #include "atlas/grid/Domain.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/grid/global/gaussian/OctahedralGaussian.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/actions/AddVirtualNodes.h"
-#include "atlas/field/Field.h"
+
 
 using eckit::geometry::LLPoint2;
 using atlas::grid::global::gaussian::OctahedralGaussian;
 using eckit::operator<<;
+
 
 namespace atlas {
 namespace mesh {

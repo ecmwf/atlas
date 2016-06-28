@@ -11,9 +11,6 @@
 
 #include "atlas/grid/global/gaussian/RegularGaussian.h"
 
-#include <typeinfo>
-#include "eckit/memory/Builder.h"
-#include "eckit/types/FloatCompare.h"
 #include "atlas/grid/global/gaussian/latitudes/Latitudes.h"
 
 
@@ -26,11 +23,13 @@ namespace gaussian {
 register_BuilderT1(Grid, RegularGaussian,RegularGaussian::grid_type_str());
 
 
-void RegularGaussian::set_typeinfo() {
-    std::stringstream s;
-    s << "F"<< N();
-    shortName_ = s.str();
-    grid_type_ = grid_type_str();
+std::string RegularGaussian::grid_type_str() {
+    return "regular_gaussian";
+}
+
+
+std::string RegularGaussian::className() {
+    return "atlas.grid.global.gaussian.RegularGaussian";
 }
 
 
@@ -53,11 +52,11 @@ RegularGaussian::RegularGaussian(const size_t& N, const Domain& dom) :
 eckit::Properties RegularGaussian::spec() const {
     eckit::Properties grid_spec;
 
-    grid_spec.set("grid_type",grid_type_str());
-    grid_spec.set("short_name",shortName());
+    grid_spec.set("grid_type", grid_type_str());
+    grid_spec.set("short_name", shortName());
 
-    grid_spec.set("N", N() );
-    grid_spec.set("nlat",nlat());
+    grid_spec.set("N", N());
+    grid_spec.set("nlat", nlat());
 
     return grid_spec;
 }
@@ -106,11 +105,18 @@ void RegularGaussian::setup(const size_t& N, const Domain& dom) {
 }
 
 
-extern "C" {
-Structured* atlas__grid__global__gaussian__RegularGaussian(size_t N)
-{
-  return new RegularGaussian(N);
+void RegularGaussian::set_typeinfo() {
+    std::stringstream s;
+    s << "F"<< N();
+    shortName_ = s.str();
+    grid_type_ = grid_type_str();
 }
+
+
+extern "C" {
+    Structured* atlas__grid__global__gaussian__RegularGaussian(size_t N) {
+        return new RegularGaussian(N);
+    }
 }
 
 

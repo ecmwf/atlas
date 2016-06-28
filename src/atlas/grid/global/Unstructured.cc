@@ -18,44 +18,45 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/array/ArrayView.h"
 
-using eckit::MD5;
 
 namespace atlas {
 namespace grid {
 namespace global {
 
+
 Unstructured::Unstructured(const mesh::Mesh& m) :
-  Global(),
-  points_ ( new std::vector< Grid::Point > (m.nodes().size() ) )
-{
-  double lat_min = std::numeric_limits<double>::max();
-  double lat_max = std::numeric_limits<double>::min();
-  double lon_min = lat_min;
-  double lon_max = lat_max;
+    Global(),
+    points_ ( new std::vector< Grid::Point > (m.nodes().size() ) ) {
 
-  array::ArrayView<double,2> lonlat (m.nodes().lonlat());
-  std::vector<Point> &p = *points_;
-  const size_t npts = p.size();
+    double lat_min = std::numeric_limits<double>::max();
+    double lat_max = std::numeric_limits<double>::min();
+    double lon_min = lat_min;
+    double lon_max = lat_max;
 
-  for( size_t n=0; n<npts; ++n) {
-      p[n].assign(lonlat(n,internals::LON),lonlat(n,internals::LAT));
-      lat_min = std::min( lat_min, p[n].lat() );
-      lat_max = std::max( lat_max, p[n].lat() );
-      lon_min = std::min( lon_min, p[n].lon() );
-      lon_max = std::max( lon_max, p[n].lon() );
-  }
+    array::ArrayView<double,2> lonlat (m.nodes().lonlat());
+    std::vector<Point> &p = *points_;
+    const size_t npts = p.size();
+
+    for( size_t n=0; n<npts; ++n) {
+        p[n].assign(lonlat(n,internals::LON),lonlat(n,internals::LAT));
+        lat_min = std::min( lat_min, p[n].lat() );
+        lat_max = std::max( lat_max, p[n].lat() );
+        lon_min = std::min( lon_min, p[n].lon() );
+        lon_max = std::max( lon_max, p[n].lon() );
+    }
 }
 
 
 Unstructured::Unstructured(const eckit::Parametrisation& p):
-  Global()
-{
+    Global() {
     NOTIMP;
 }
 
-Unstructured::Unstructured( std::vector< Point > *pts ) :
+
+Unstructured::Unstructured(std::vector<Point>* pts) :
     Global(),
     points_(pts) {
+
     const std::vector<Point> &p = *points_;
     const size_t npts = p.size();
 
@@ -70,7 +71,6 @@ Unstructured::Unstructured( std::vector< Point > *pts ) :
         lon_min = std::min( lon_min, p[n].lon() );
         lon_max = std::max( lon_max, p[n].lon() );
     }
-
 }
 
 
@@ -87,9 +87,10 @@ Grid::uid_t Unstructured::shortName() const {
     return shortName_;
 }
 
-void Unstructured::hash(eckit::MD5 &md5) const {
 
+void Unstructured::hash(eckit::MD5 &md5) const {
     ASSERT(points_);
+
     const std::vector< Point > &pts = *points_;
     md5.add(&pts[0], sizeof(Point)*pts.size());
 
@@ -101,11 +102,11 @@ void Unstructured::hash(eckit::MD5 &md5) const {
 }
 
 
-
 size_t Unstructured::npts() const {
     ASSERT(points_);
     return points_->size();
 }
+
 
 void Unstructured::lonlat(std::vector<Grid::Point>& crds) const {
     ASSERT(points_);
@@ -116,6 +117,7 @@ void Unstructured::lonlat(std::vector<Grid::Point>& crds) const {
             (*points_)[i].lat() );
 }
 
+
 eckit::Properties Unstructured::spec() const {
     if (cached_spec_)
         return *cached_spec_;
@@ -123,7 +125,6 @@ eckit::Properties Unstructured::spec() const {
     cached_spec_.reset( new eckit::Properties );
 
     cached_spec_->set("grid_type",gridType());
-
 
     std::vector<double> coords;
     coords.resize(2*npts());
@@ -134,12 +135,14 @@ eckit::Properties Unstructured::spec() const {
     return *cached_spec_;
 }
 
-void Unstructured::print(std::ostream& os) const
-{
+
+void Unstructured::print(std::ostream& os) const {
     os << "Unstructured(Npts:" << npts() << ")";
 }
 
+
 register_BuilderT1(Grid, Unstructured, Unstructured::grid_type_str());
+
 
 } // namespace global
 } // namespace grid

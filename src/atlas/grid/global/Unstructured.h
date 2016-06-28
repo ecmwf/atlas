@@ -31,46 +31,49 @@ class Unstructured : public Global {
 
 public: // methods
 
-  static std::string grid_type_str() { return "unstructured"; }
+    static std::string grid_type_str() { return "unstructured"; }
 
-  static std::string className() { return "atlas.grid.global.Unstructured"; }
+    static std::string className() { return "atlas.grid.global.Unstructured"; }
 
-  /// Constructor taking a list of parameters
-  Unstructured(const eckit::Parametrisation& p);
+    /// Constructor taking a list of parameters
+    Unstructured(const eckit::Parametrisation& p);
 
-  /// Constructor taking a list of points
-  Unstructured(std::vector< Point >* pts);
+    /// Constructor taking a list of points
+    Unstructured(std::vector< Point >* pts);
 
-  /// Constructor taking a mesh
-  Unstructured(const mesh::Mesh& m);
+    /// Constructor taking a mesh
+    Unstructured(const mesh::Mesh& m);
 
-  virtual ~Unstructured();
+    virtual ~Unstructured();
 
-  virtual size_t npts() const;
+    virtual size_t npts() const;
 
-  virtual void lonlat(std::vector< Point >&) const;
+    virtual void lonlat(std::vector< Point >&) const;
 
-  virtual std::string gridType() const { return grid_type_str(); }
+    virtual std::string gridType() const { return grid_type_str(); }
 
-  virtual eckit::Properties spec() const;
+    virtual eckit::Properties spec() const;
 
 private: // methods
 
-  virtual void print(std::ostream&) const;
+    virtual void print(std::ostream&) const;
 
-  /// Human readable name
-  virtual std::string shortName() const;
+    /// Human readable name
+    virtual std::string shortName() const;
 
-  /// Hash of the lonlat array + BoundBox
-  virtual void hash(eckit::MD5&) const;
+    /// Hash of the lonlat array + BoundingBox
+    virtual void hash(eckit::MD5&) const;
 
 protected:
 
-  eckit::ScopedPtr< std::vector< Point > > points_;  ///< storage of coordinate points
+    /// Storage of coordinate points
+    eckit::ScopedPtr< std::vector< Point > > points_;
 
-  mutable std::string shortName_;      ///< cache for the shortName
+    /// Cache for the shortName
+    mutable std::string shortName_;
 
-  mutable eckit::ScopedPtr<eckit::Properties> cached_spec_;  ///< cache for the spec since may be quite heavy to compute
+    /// Cache for the spec since may be quite heavy to compute
+    mutable eckit::ScopedPtr<eckit::Properties> cached_spec_;
 
 };
 
