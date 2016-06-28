@@ -80,7 +80,7 @@ void RegularGaussian::setup(const size_t& N, const Domain& dom) {
                 ++ Ni_;
         }
     }
-    ASSERT(0<Ni_ && Ni_<N*4);
+    ASSERT(0<Ni_ && Ni_<=N*4);
 
     Nj_ = N*2;
     if (!dom.includesPoleNorth() || !dom.includesPoleSouth()) {
@@ -95,7 +95,7 @@ void RegularGaussian::setup(const size_t& N, const Domain& dom) {
                 ++ Nj_;
         }
     }
-    ASSERT(0<Nj_ && Nj_<N*2);
+    ASSERT(0<Nj_ && Nj_<=N*2);
 
     // set internal Structured/Gaussian
     std::vector<long> pl(Nj_,Ni_);
