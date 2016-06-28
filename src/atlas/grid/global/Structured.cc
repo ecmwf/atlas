@@ -106,14 +106,19 @@ void Structured::setup( const size_t nlat, const double lats[], const long pl[] 
 
 void Structured::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[])
 {
+  // construct pl (assuming global domain)
   std::vector<long> pl(2*N);
   std::copy( lon, lon+N, pl.begin() );
   std::reverse_copy( lon, lon+N, pl.begin()+N );
+
+  // construct latitudess (assuming global domain)
   std::vector<double> lats(2*N);
   std::copy( lat, lat+N, lats.begin() );
   std::reverse_copy( lat, lat+N, lats.begin()+N );
   for(size_t j = N; j < 2*N; ++j)
     lats[j] *= -1.;
+
+  // common setup
   setup(2*N,lats.data(),pl.data());
 }
 
@@ -124,7 +129,6 @@ size_t Structured::N() const
   return N_;
 }
 
-//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
 size_t Structured::npts() const { return npts_; }
