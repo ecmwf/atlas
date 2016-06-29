@@ -123,7 +123,6 @@ void Spectral::gather( const field::FieldSet& local_fieldset, field::FieldSet& g
   for( size_t f=0; f<local_fieldset.size(); ++f ) {
 
     const field::Field& loc = local_fieldset[f];
-    field::Field& glb = global_fieldset[f];
     if( loc.datatype() != array::DataType::str<double>() )
     {
       std::stringstream err;
@@ -133,6 +132,7 @@ void Spectral::gather( const field::FieldSet& local_fieldset, field::FieldSet& g
     }
 
 #ifdef ATLAS_HAVE_TRANS
+    field::Field& glb = global_fieldset[f];
     size_t root=0;
     glb.metadata().get("owner",root);
     ASSERT( loc.shape(0) == nb_spectral_coefficients() );

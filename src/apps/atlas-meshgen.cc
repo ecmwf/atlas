@@ -56,12 +56,6 @@ using atlas::util::Config;
 
 //------------------------------------------------------------------------------
 
-static void usage(const std::string& tool)
-{
-  Log::info() << "usage: " << tool
-              << " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT  [--help,-h] [--debug]" << std::endl;
-}
-
 class Meshgen2Gmsh : public AtlasTool {
 
   virtual void execute(const Args& args);
