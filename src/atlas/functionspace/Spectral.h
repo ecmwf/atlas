@@ -37,6 +37,10 @@ class Spectral : public FunctionSpace
 {
 public:
 
+    typedef eckit::SharedPtr<Spectral> Ptr;
+
+public:
+
   Spectral(const size_t truncation);
 
   Spectral(trans::Trans& );
@@ -84,6 +88,7 @@ private: // data
 // C wrapper interfaces to C++ routines
 #define Trans trans::Trans
 #define field_Field field::Field
+#define field_FieldSet field::FieldSet
 #define Options eckit::Parametrisation
 extern "C"
 {
@@ -93,10 +98,13 @@ extern "C"
   field_Field* atlas__fs__Spectral__create_field_name_kind(const Spectral* This, const char* name, int kind, const Options* options);
   field_Field* atlas__fs__Spectral__create_field_name_kind_lev(const Spectral* This, const char* name, int kind, int levels, const Options* options);
   void atlas__SpectralFunctionSpace__gather(const Spectral* This, const field_Field* local, field_Field* global);
+  void atlas__SpectralFunctionSpace__gather_fieldset(const Spectral* This, const field_FieldSet* local, field_FieldSet* global);
   void atlas__SpectralFunctionSpace__scatter(const Spectral* This, const field_Field* global, field_Field* local);
+  void atlas__SpectralFunctionSpace__scatter_fieldset(const Spectral* This, const field_FieldSet* global, field_FieldSet* local);
 }
 #undef Trans
 #undef field_Field
+#undef field_FieldSet
 #undef Options
 } // namespace functionspace
 } // namespace atlas

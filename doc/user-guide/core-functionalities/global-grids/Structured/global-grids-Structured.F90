@@ -1,15 +1,12 @@
 program main
-
 use atlas_module
-
-character(len=1024)     :: string
-character(len=1024)     :: gridID
+implicit none
+character(len=1024)         :: string
 type(atlas_grid_Structured) :: grid
+
 call atlas_init()
 
-gridID = "O32"
-
-grid = atlas_grid_Structured(gridID)
+grid = atlas_grid_Structured( "O32" )
 
 write(string, "(A,I0)") "nlat = ", grid%nlat()
 call atlas_log%info(string)

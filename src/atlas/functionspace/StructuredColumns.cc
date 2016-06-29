@@ -282,7 +282,7 @@ void StructuredColumns::gather(
         }
 
         size_t root(0);
-        glb.metadata().get("ownder",root);
+        glb.metadata().get("owner",root);
         std::vector<int> nto(1,root+1);
         if( loc.rank() > 1 )
         {
@@ -346,7 +346,7 @@ void StructuredColumns::scatter(
         }
 
         size_t root(0);
-        glb.metadata().get("ownder",root);
+        glb.metadata().get("owner",root);
         std::vector<int> nfrom(1,root+1);
         if( loc.rank() > 1 )
         {

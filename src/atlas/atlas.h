@@ -3,8 +3,8 @@
 
 #include <iosfwd>
 #include "atlas/internals/atlas_config.h"
-#include "eckit/config/Parametrisation.h"
 
+// Forward declarations
 namespace eckit
 {
   class Parametrisation;

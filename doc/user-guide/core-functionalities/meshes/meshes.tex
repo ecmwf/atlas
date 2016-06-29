@@ -55,7 +55,7 @@ we can execute the following command line
 \end{lstlisting}
 % 
 This will produce an octahedral reduced Gaussian mesh 
-(stored in mesh.msh) with 32 latitudes on one emisphere 
+(stored in mesh.msh) with 32 latitudes on one hemisphere 
 (i.e. 64 latitudes in total). It will also produce an 
 additional file, called \inltc{mesh\_info.msh}, containing
 some information regarding the mesh.
@@ -101,9 +101,9 @@ a global structured grid object (see line 13). For more
 details on how to create a grid see \chap{chap:global-grids}.
 
 We successively create the mesh object on line 15 and 16.
-In particular, we first define a \inltc{atlas\_meshgenerator\_Structured} 
+In particular, we first define a \inltc{atlas\_Meshgenerator} 
 object that is then used to effectively generate the mesh object 
-\inltc{mesh} that is an \inltc{atlas\_mesh} type.
+\inltc{mesh} that is an \inltc{atlas\_Mesh} type.
 
 In this simple example we took the freedom to add just one line 
 line to visualize the mesh in Gmsh. In particular, on line 17 
@@ -122,7 +122,7 @@ we can execute the following command line
 \end{lstlisting}
 % 
 This will produce an octahedral reduced Gaussian mesh 
-(stored in mesh.msh) with 32 latitudes on one emisphere 
+(stored in mesh.msh) with 32 latitudes on one hemisphere 
 (i.e. 64 latitudes in total).
 If we visualize it in Gmsh, we will obtain something similar
 to \fig{fig:meshes-f}.
