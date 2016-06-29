@@ -68,14 +68,14 @@ Trans::Trans(const size_t N, const Trans::Options& p)
 
 Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p )
 {
-  const grid::global::Structured* reduced = dynamic_cast<const grid::global::Structured*>(&grid);
-  if( !reduced )
+  const grid::global::Structured* structured = dynamic_cast<const grid::global::Structured*>(&grid);
+  if( !structured )
     throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 
   const grid::global::lonlat::LonLat* lonlat
-      = dynamic_cast<const grid::global::lonlat::LonLat*>(reduced);
+      = dynamic_cast<const grid::global::lonlat::LonLat*>(structured);
 
-  if( lonlat  )
+  if( lonlat && nsmax > 0 )
   {
     if( lonlat->reduced() ) throw eckit::BadParameter("Cannot transform a reduced lonlat grid");
     if( lonlat->shifted().lonlat() && !lonlat->shifted() )
@@ -84,7 +84,7 @@ Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p
       throw eckit::BadParameter("Cannot transform a shifted lat or shifted lon grid");
   }
   else
-    ctor_rgg(reduced->nlat(),reduced->pl().data(), nsmax, p);
+    ctor_rgg(structured->nlat(),structured->pl().data(), nsmax, p);
 }
 
 
