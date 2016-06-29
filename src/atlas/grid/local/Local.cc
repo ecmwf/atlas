@@ -28,12 +28,10 @@ std::string Local::grid_type_str() {
 }
 
 
-Local::Local(const Domain& d) :
-    Grid(d) {
+Local::Local(const Domain& dom) : Grid(dom) {
 }
 
 
 }  // namespace local
 }  // namespace grid
 }  // namespace atlas
-

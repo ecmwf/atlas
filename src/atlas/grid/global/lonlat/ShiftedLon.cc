@@ -11,10 +11,6 @@
 
 #include "atlas/grid/global/lonlat/ShiftedLon.h"
 
-//#include <typeinfo>
-//#include "eckit/memory/Builder.h"
-//#include "atlas/internals/atlas_config.h"
-
 
 namespace atlas {
 namespace grid {
@@ -50,131 +46,42 @@ void ShiftedLon::set_typeinfo() {
 ShiftedLon::ShiftedLon(const eckit::Parametrisation& p) :
     LonLat(Shift::LON,Domain::makeGlobal()) {
     setup(p);
-    set_typeinfo();
 }
 
 
 ShiftedLon::ShiftedLon(const size_t N) :
     LonLat(Shift::LON,Domain::makeGlobal()) {
-    setup(N);
-    set_typeinfo();
-}
-
-
-ShiftedLon::ShiftedLon(const int nlon, const int nlat) :
-    LonLat(Shift::LON,Domain::makeGlobal()) {
-    setup( (size_t)nlon, (size_t)nlat );
-    set_typeinfo();
+    LonLat::setup(N,domain());
 }
 
 
 ShiftedLon::ShiftedLon(const size_t nlon, const size_t nlat) :
     LonLat(Shift::LON,Domain::makeGlobal()) {
-    setup( (size_t)nlon, (size_t) nlat);
-    set_typeinfo();
-}
-
-
-ShiftedLon::ShiftedLon(const double &londeg, const double &latdeg) :
-    LonLat(Shift::LON,Domain::makeGlobal()) {
-    setup(londeg,latdeg);
-    set_typeinfo();
+    LonLat::setup(nlon, nlat, domain());
 }
 
 
 void ShiftedLon::setup(const eckit::Parametrisation& p) {
     size_t nlon, nlat, N(0);
-    p.get("N",N);
-
-    if( N > 0 ) {
-        setup(N);
-    } else {
-        if( !p.has("nlon") && !p.has("lon_inc") ) throw eckit::BadParameter("nlon or lon_inc missing in Params",Here());
-        if( !p.has("nlat") && !p.has("lat_inc") ) throw eckit::BadParameter("nlat or lat_inc missing in Params",Here());
-
-        double lon_inc, lat_inc;
-        if (p.get("nlon",nlon) && p.get("nlat",nlat)) {
-            setup(nlon,nlat);
-        } else if (p.get("lon_inc",lon_inc) && p.get("lat_inc",lat_inc)) {
-            setup(lon_inc,lat_inc);
-        } else {
-            throw eckit::BadParameter("Bad combination of parameters");
-        }
+    if (p.get("N",N)) {
+        LonLat::setup(N, domain_);
     }
-}
-
-
-void ShiftedLon::setup( const size_t N ) {
-    double delta = 90./static_cast<double>(N);
-    std::vector<double> lats(2*N+1);
-    std::vector<long>   nlons(2*N+1,4*N);
-    std::vector<double> lonmin(2*N+1,0.+0.5*delta);
-    std::vector<double> lonmax(2*N+1,360.-0.5*delta);
-
-    double latmax = 90.;
-
-    for( size_t jlat=0; jlat<2*N+1; ++jlat ) {
-        lats[jlat] = latmax - static_cast<double>(jlat)*delta;
+    else if (p.get("nlon",nlon) && p.get("nlat",nlat)) {
+        LonLat::setup(nlon, nlat, domain_);
     }
-
-    Structured::N_ = N;
-    Structured::setup(2*N+1,lats.data(),nlons.data(),lonmin.data());
-}
-
-
-void ShiftedLon::setup( const size_t nlon, const size_t nlat ) {
-    double latmin = -90.;
-    double latmax = +90.;
-    double londeg = 360./static_cast<double>(nlon);
-    double latdeg = (latmax-latmin)/static_cast<double>(nlat-1);
-
-    std::vector<double> lats(nlat);
-    std::vector<long>   nlons(nlat,nlon);
-    std::vector<double> lonmin(nlat,0.5*londeg);
-    std::vector<double> lonmax(nlat,360.-0.5*londeg);
-
-    for( size_t jlat=0; jlat<nlat; ++jlat ) {
-        lats[jlat] = latmax - static_cast<double>(jlat)*latdeg;
+    else {
+        throw eckit::BadParameter("Params (nlon,nlat) or N missing",Here());
     }
-
-    if( (nlat-1)%2 == 0 && nlon==2*(nlat-1) ) {
-        Structured::N_ = (nlat-1)/2;
-    }
-    Structured::setup(nlat,lats.data(),nlons.data(),lonmin.data());
-}
-
-
-void ShiftedLon::setup( const double londeg, const double latdeg ) {
-    double Llon = 360.-londeg;
-    double Llat = 180.;
-    double nlon_real = Llon/londeg + 1.;
-    double nlat_real = Llat/latdeg + 1.;
-    size_t nlon = static_cast<size_t>(nlon_real);
-    size_t nlat = static_cast<size_t>(nlat_real);
-    if( nlon_real - nlon > 0. ) {
-        std::stringstream msg;
-        msg << Llon << " is not divisible by londeg " << londeg << " --> nlon = " << nlon_real;
-        throw eckit::BadParameter(msg.str(),Here());
-    }
-    if( nlat_real - nlat > 0. ) {
-        std::stringstream msg;
-        msg << Llat << " is not divisible by latdeg " << latdeg << " --> nlat = " << nlat_real;
-        throw eckit::BadParameter(msg.str(),Here());
-    }
-    setup(nlon,nlat);
 }
 
 
 eckit::Properties ShiftedLon::spec() const {
     eckit::Properties grid_spec;
-
-    grid_spec.set("grid_type",gridType() );
-    grid_spec.set("short_name",shortName());
-
-    grid_spec.set("N", N() );
-    grid_spec.set("nlon", nlon() );
-    grid_spec.set("nlat", nlat() );
-
+    grid_spec.set("grid_type",  gridType());
+    grid_spec.set("short_name", shortName());
+    grid_spec.set("N",          N());
+    grid_spec.set("nlon",       nlon());
+    grid_spec.set("nlat",       nlat());
     return grid_spec;
 }
 

@@ -30,6 +30,7 @@ class OctahedralGaussian: public Gaussian {
   public:
 
     static std::string className();
+
     static std::string grid_type_str();
 
     OctahedralGaussian(const size_t N);

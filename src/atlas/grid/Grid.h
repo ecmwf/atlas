@@ -27,7 +27,6 @@
 #include "eckit/value/Properties.h"
 #include "atlas/grid/Domain.h"
 #include "atlas/internals/ObjectRegistry.h"
-#include "atlas/util/Config.h"
 
 
 namespace atlas {
@@ -43,13 +42,11 @@ namespace grid {
 
 class Grid : public eckit::Owned, public internals::Registered<Grid> {
 
-  public:  // types
+  public:  // types (FIXME: remove some)
 
     typedef eckit::BuilderT1<Grid> builder_t;
     typedef const eckit::Parametrisation& ARG1;
-
     typedef eckit::SharedPtr<Grid> Ptr;
-
     typedef eckit::geometry::LLPoint2 Point; // must be sizeof(double)*2
     typedef std::string uid_t;
 
@@ -61,9 +58,10 @@ class Grid : public eckit::Owned, public internals::Registered<Grid> {
 
     static Grid* create(const Grid::uid_t& shortName);
 
-    /// Constructor
-    Grid( const Domain& dom=Domain::makeGlobal() );
+    /// ctor (default)
+    Grid(const Domain& dom=Domain::makeGlobal());
 
+    /// dtor
     virtual ~Grid();
 
     Ptr self() {
@@ -82,7 +80,6 @@ class Grid : public eckit::Owned, public internals::Registered<Grid> {
 
     /// @returns the hash of the information that makes this Grid unique
     eckit::MD5::digest_t hash() const;
-
 
     /// @return area represented by the grid
     const Domain& domain() const {
@@ -142,12 +139,16 @@ class Grid : public eckit::Owned, public internals::Registered<Grid> {
 
   protected:  // members
 
-    Domain domain_;  ///< Area represented by the grid
+    /// Area represented by the grid
+    Domain domain_;
 
   private:  // members
 
-    mutable uid_t                  uid_;  ///< cache the unique ID
-    mutable eckit::MD5::digest_t   hash_; ///< cache the hash
+    /// Cache the unique ID
+    mutable uid_t uid_;
+
+    /// Cache the hash
+    mutable eckit::MD5::digest_t hash_;
 
 };
 
@@ -157,4 +158,3 @@ class Grid : public eckit::Owned, public internals::Registered<Grid> {
 
 
 #endif
-

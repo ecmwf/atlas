@@ -21,7 +21,6 @@ namespace global {
 namespace gaussian {
 
 
-
 /**
  * @brief Classic Reduced Gaussian Grid
  *

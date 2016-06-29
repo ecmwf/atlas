@@ -8,19 +8,19 @@
  * does it submit to any jurisdiction.
  */
 
+
+#include "atlas/grid/grids.h"
+
 #include <regex.h>
 #include "eckit/parser/Tokenizer.h"
 #include "eckit/utils/Translator.h"
-#include "eckit/memory/Builder.h"
-#include "atlas/grid/grids.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/internals/Debug.h"
-using eckit::Tokenizer;
-using eckit::Translator;
-using eckit::Factory;
+#include "atlas/util/Config.h"
+
 
 namespace atlas {
 namespace grid {
+
 
 size_t regex_count_parens(const std::string& string) {
     size_t out = 0;
@@ -91,7 +91,7 @@ class Regex {
 //=====================================================
 
 Grid* grid_from_uid(const std::string& uid) {
-    if( Factory<Grid>::instance().exists(uid) ) {
+    if (eckit::Factory<Grid>::instance().exists(uid)) {
         return Grid::create(util::Config("grid_type", uid));
     } else {
         Regex classical_gaussian  ("^[Nn]([0-9]+)$");
@@ -107,7 +107,7 @@ Grid* grid_from_uid(const std::string& uid) {
         Regex shifted_lat_x       ("^[Ss][Ll][Aa][Tt]([0-9]+)x([0-9]+)$");
 
         util::Config gridparams;
-        Translator<std::string,int> to_int;
+        eckit::Translator<std::string,int> to_int;
         std::vector<std::string> matches;
         if( classical_gaussian.match(uid,matches) ) {
             try {
@@ -178,7 +178,7 @@ Grid* grid_from_uid(const std::string& uid) {
             gridparams.set("nlat",nlat);
             return Grid::create( gridparams );
         } else {
-            Tokenizer tokenize(".");
+            eckit::Tokenizer tokenize(".");
             std::vector<std::string> tokens;
             tokenize(uid,tokens);
             std::string grid_type = tokens[0];
@@ -190,7 +190,7 @@ Grid* grid_from_uid(const std::string& uid) {
                     gridparams.set("N",N);
                 } else {
                     std::vector<std::string> lonlat;
-                    Tokenizer tokenize_lonlat("x");
+                    eckit::Tokenizer tokenize_lonlat("x");
                     tokenize_lonlat(tokens[1],lonlat);
                     if( lonlat.size() > 1 ) {
                         int nlon = to_int(lonlat[0]);
@@ -241,6 +241,7 @@ extern "C"
     }
 
 }
+
 
 } // namespace grid
 } // namespace atlas

@@ -16,8 +16,12 @@
 #include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
-namespace grid { class Grid; }
-namespace grid { class GridDistribution; }
+namespace grid {
+class Grid;
+}
+namespace grid {
+class GridDistribution;
+}
 }
 
 namespace atlas {
@@ -25,29 +29,31 @@ namespace grid {
 namespace partitioners {
 
 class Partitioner : public eckit::Owned {
-public:
+  public:
 
-  typedef eckit::SharedPtr<Partitioner> Ptr;
+    typedef eckit::SharedPtr<Partitioner> Ptr;
 
-public:
+  public:
 
-  Partitioner(const grid::Grid& grid);
-  Partitioner(const grid::Grid& grid, const size_t nb_partitions);
-  virtual ~Partitioner();
+    Partitioner(const grid::Grid& grid);
+    Partitioner(const grid::Grid& grid, const size_t nb_partitions);
+    virtual ~Partitioner();
 
-  virtual void partition( int part[] ) const = 0;
+    virtual void partition( int part[] ) const = 0;
 
-  virtual GridDistribution* distribution() const;
+    virtual GridDistribution* distribution() const;
 
-public:
+  public:
 
-  size_t nb_partitions() const;
-  const grid::Grid& grid() const { return grid_; }
+    size_t nb_partitions() const;
+    const grid::Grid& grid() const {
+        return grid_;
+    }
 
-private:
+  private:
 
-  size_t nb_partitions_;
-  const grid::Grid& grid_;
+    size_t nb_partitions_;
+    const grid::Grid& grid_;
 };
 
 
@@ -82,12 +88,12 @@ class PartitionerFactory {
 
 template<class T>
 class PartitionerBuilder : public PartitionerFactory {
-  virtual Partitioner* make(const grid::Grid& grid) {
-      return new T(grid);
-  }
-  virtual Partitioner* make(const grid::Grid& grid, const size_t nb_partitions) {
-      return new T(grid, nb_partitions);
-  }
+    virtual Partitioner* make(const grid::Grid& grid) {
+        return new T(grid);
+    }
+    virtual Partitioner* make(const grid::Grid& grid, const size_t nb_partitions) {
+        return new T(grid, nb_partitions);
+    }
   public:
     PartitionerBuilder(const std::string& name) : PartitionerFactory(name) {}
 };

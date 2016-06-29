@@ -76,12 +76,7 @@ class Domain {
     }
 
     /// Comparison
-    bool operator==(const Domain& other) {
-        return north_ == other.north_
-            && west_  == other.west_
-            && south_ == other.south_
-            && east_  == other.east_;
-    }
+    bool operator==(const Domain& other);
 
     // -- Methods
 
@@ -152,7 +147,7 @@ class Domain {
     // -- Class methods
     // None
 
-  private:
+  protected:
 
     // -- Members
 
@@ -161,6 +156,26 @@ class Domain {
     double west_;
     double south_;
     double east_;
+
+    // -- Methods
+    // None
+
+    // -- Overridden methods
+    // None
+
+    // -- Class members
+    // None
+
+    // -- Class methods
+    // None
+
+    // -- Friends
+    // None
+
+  private:
+
+    // -- Members
+    // None
 
     // -- Methods
 
@@ -191,6 +206,4 @@ class Domain {
 }  // namespace atlas
 
 
-
 #endif
-

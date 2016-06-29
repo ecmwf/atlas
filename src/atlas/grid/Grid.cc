@@ -13,7 +13,6 @@
 
 #include <vector>
 #include "eckit/memory/Factory.h"
-#include "eckit/memory/Builder.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/Mesh.h"
 
@@ -130,4 +129,3 @@ bool Grid::same(const grid::Grid& g) const {
 
 }  // namespace grid
 }  // namespace atlas
-

@@ -32,75 +32,34 @@ atlas.cc
 )
 
 list( APPEND atlas_grid_srcs
-grid/Domain.h
 grid/Domain.cc
-grid/Grid.h
+grid/Domain.h
 grid/Grid.cc
-grid/GridDistribution.h
+grid/Grid.h
 grid/GridDistribution.cc
-grid/grids.h
-grid/grids.cc
-grid/global/Global.h
-grid/global/Global.cc
-grid/global/Unstructured.h
-grid/global/Unstructured.cc
-grid/global/Structured.h
-grid/global/Structured.cc
-grid/global/CustomStructured.h
+grid/GridDistribution.h
+grid/deprecated/RotatedGrid.cc
+grid/deprecated/RotatedGrid.h
 grid/global/CustomStructured.cc
-grid/global/gaussian/Gaussian.h
-grid/global/gaussian/Gaussian.cc
-grid/global/gaussian/ReducedGaussian.h
-grid/global/gaussian/ReducedGaussian.cc
-grid/global/gaussian/ClassicGaussian.h
+grid/global/CustomStructured.h
+grid/global/Global.cc
+grid/global/Global.h
+grid/global/Structured.cc
+grid/global/Structured.h
+grid/global/Unstructured.cc
+grid/global/Unstructured.h
 grid/global/gaussian/ClassicGaussian.cc
-grid/global/gaussian/OctahedralGaussian.h
+grid/global/gaussian/ClassicGaussian.h
+grid/global/gaussian/Gaussian.cc
+grid/global/gaussian/Gaussian.h
 grid/global/gaussian/OctahedralGaussian.cc
-grid/global/gaussian/RegularGaussian.h
+grid/global/gaussian/OctahedralGaussian.h
+grid/global/gaussian/ReducedGaussian.cc
+grid/global/gaussian/ReducedGaussian.h
 grid/global/gaussian/RegularGaussian.cc
-grid/global/gaussian/latitudes/Latitudes.h
-grid/global/gaussian/latitudes/Latitudes.cc
-grid/global/lonlat/LonLat.h
-grid/global/lonlat/LonLat.cc
-grid/global/lonlat/ReducedLonLat.h
-grid/global/lonlat/ReducedLonLat.cc
-grid/global/lonlat/RegularLonLat.h
-grid/global/lonlat/RegularLonLat.cc
-grid/global/lonlat/ShiftedLonLat.h
-grid/global/lonlat/ShiftedLonLat.cc
-grid/global/lonlat/ShiftedLon.h
-grid/global/lonlat/ShiftedLon.cc
-grid/global/lonlat/ShiftedLat.h
-grid/global/lonlat/ShiftedLat.cc
-grid/global/gaussian/latitudes/N.h
-grid/global/gaussian/latitudes/N.cc
-grid/global/gaussian/latitudes/N16.cc    # TL31
-grid/global/gaussian/latitudes/N24.cc    # TL47
-grid/global/gaussian/latitudes/N32.cc    # TL63
-grid/global/gaussian/latitudes/N48.cc    # TL95
-grid/global/gaussian/latitudes/N64.cc    # TL127
-grid/global/gaussian/latitudes/N80.cc    # TL159
-grid/global/gaussian/latitudes/N96.cc    # TL191
-grid/global/gaussian/latitudes/N128.cc   # TL255
-grid/global/gaussian/latitudes/N160.cc   # TL319
-grid/global/gaussian/latitudes/N200.cc   # TL399
-grid/global/gaussian/latitudes/N256.cc   # TL511
-grid/global/gaussian/latitudes/N320.cc   # TL639
-grid/global/gaussian/latitudes/N400.cc   # TL799
-grid/global/gaussian/latitudes/N512.cc   # TL1023
-grid/global/gaussian/latitudes/N576.cc   # TL1151
-grid/global/gaussian/latitudes/N640.cc   # TL1279
-grid/global/gaussian/latitudes/N800.cc   # TL1599
-grid/global/gaussian/latitudes/N1024.cc  # TL2047
-grid/global/gaussian/latitudes/N1280.cc  # TL2559
-grid/global/gaussian/latitudes/N1600.cc  # TL3199
-grid/global/gaussian/latitudes/N2000.cc  # TL3999
-grid/global/gaussian/latitudes/N4000.cc  # TL7999
-grid/global/gaussian/latitudes/N8000.cc  # TL15999
-grid/global/gaussian/classic/PointsPerLatitude.h
-grid/global/gaussian/classic/PointsPerLatitude.cc
-grid/global/gaussian/classic/N.h
+grid/global/gaussian/RegularGaussian.h
 grid/global/gaussian/classic/N.cc
+grid/global/gaussian/classic/N.h
 grid/global/gaussian/classic/N16.cc    # TL31
 grid/global/gaussian/classic/N24.cc    # TL47
 grid/global/gaussian/classic/N32.cc    # TL63
@@ -124,14 +83,55 @@ grid/global/gaussian/classic/N1600.cc  # TL3199
 grid/global/gaussian/classic/N2000.cc  # TL3999
 grid/global/gaussian/classic/N4000.cc  # TL7999
 grid/global/gaussian/classic/N8000.cc  # TL15999
-grid/local/Local.h
+grid/global/gaussian/classic/PointsPerLatitude.cc
+grid/global/gaussian/classic/PointsPerLatitude.h
+grid/global/gaussian/latitudes/Latitudes.cc
+grid/global/gaussian/latitudes/Latitudes.h
+grid/global/gaussian/latitudes/N.cc
+grid/global/gaussian/latitudes/N.h
+grid/global/gaussian/latitudes/N16.cc    # TL31
+grid/global/gaussian/latitudes/N24.cc    # TL47
+grid/global/gaussian/latitudes/N32.cc    # TL63
+grid/global/gaussian/latitudes/N48.cc    # TL95
+grid/global/gaussian/latitudes/N64.cc    # TL127
+grid/global/gaussian/latitudes/N80.cc    # TL159
+grid/global/gaussian/latitudes/N96.cc    # TL191
+grid/global/gaussian/latitudes/N128.cc   # TL255
+grid/global/gaussian/latitudes/N160.cc   # TL319
+grid/global/gaussian/latitudes/N200.cc   # TL399
+grid/global/gaussian/latitudes/N256.cc   # TL511
+grid/global/gaussian/latitudes/N320.cc   # TL639
+grid/global/gaussian/latitudes/N400.cc   # TL799
+grid/global/gaussian/latitudes/N512.cc   # TL1023
+grid/global/gaussian/latitudes/N576.cc   # TL1151
+grid/global/gaussian/latitudes/N640.cc   # TL1279
+grid/global/gaussian/latitudes/N800.cc   # TL1599
+grid/global/gaussian/latitudes/N1024.cc  # TL2047
+grid/global/gaussian/latitudes/N1280.cc  # TL2559
+grid/global/gaussian/latitudes/N1600.cc  # TL3199
+grid/global/gaussian/latitudes/N2000.cc  # TL3999
+grid/global/gaussian/latitudes/N4000.cc  # TL7999
+grid/global/gaussian/latitudes/N8000.cc  # TL15999
+grid/global/lonlat/LonLat.cc
+grid/global/lonlat/LonLat.h
+grid/global/lonlat/ReducedLonLat.cc
+grid/global/lonlat/ReducedLonLat.h
+grid/global/lonlat/RegularLonLat.cc
+grid/global/lonlat/RegularLonLat.h
+grid/global/lonlat/ShiftedLat.cc
+grid/global/lonlat/ShiftedLat.h
+grid/global/lonlat/ShiftedLon.cc
+grid/global/lonlat/ShiftedLon.h
+grid/global/lonlat/ShiftedLonLat.cc
+grid/global/lonlat/ShiftedLonLat.h
+grid/grids.cc
+grid/grids.h
 grid/local/Local.cc
-grid/deprecated/RotatedGrid.h
-grid/deprecated/RotatedGrid.cc
-grid/partitioners/EqualRegionsPartitioner.h
+grid/local/Local.h
 grid/partitioners/EqualRegionsPartitioner.cc
-grid/partitioners/Partitioner.h
+grid/partitioners/EqualRegionsPartitioner.h
 grid/partitioners/Partitioner.cc
+grid/partitioners/Partitioner.h
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_grid_srcs

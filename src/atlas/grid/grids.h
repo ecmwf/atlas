@@ -41,6 +41,7 @@ void load();
 
 void unload();
 
+
 Grid* grid_from_uid(const std::string& uid);
 
 
@@ -58,4 +59,3 @@ extern "C" {
 
 
 #endif
-

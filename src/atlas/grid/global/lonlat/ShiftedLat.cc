@@ -55,112 +55,30 @@ ShiftedLat::ShiftedLat(const eckit::Parametrisation& p) :
 
 ShiftedLat::ShiftedLat(const size_t N) :
     LonLat(Shift::LAT,Domain::makeGlobal()) {
-    setup(N);
-    set_typeinfo();
-}
-
-
-ShiftedLat::ShiftedLat(const int nlon, const int nlat) :
-    LonLat(Shift::LAT,Domain::makeGlobal()) {
-    setup((size_t)nlon, (size_t)nlat);
-    set_typeinfo();
+    LonLat::setup(N,domain());
 }
 
 
 ShiftedLat::ShiftedLat(const size_t nlon, const size_t nlat) :
     LonLat(Shift::LAT,Domain::makeGlobal()) {
-    setup(nlon,nlat);
-    set_typeinfo();
-}
-
-
-ShiftedLat::ShiftedLat( const double &londeg, const double &latdeg ) :
-    LonLat(Shift::LAT,Domain::makeGlobal()) {
-    setup(londeg,latdeg);
+    LonLat::setup(nlon,nlat,domain());
     set_typeinfo();
 }
 
 
 void ShiftedLat::setup(const eckit::Parametrisation& p) {
+    // set nlon and nlat
     size_t nlon, nlat, N(0);
-    p.get("N",N);
 
-    if( N > 0 ) {
-        setup(N);
-    } else {
-        if( !p.has("nlon") && !p.has("lon_inc") ) throw eckit::BadParameter("nlon or lon_inc missing in Params",Here());
-        if( !p.has("nlat") && !p.has("lat_inc") ) throw eckit::BadParameter("nlat or lat_inc missing in Params",Here());
-
-        double lon_inc, lat_inc;
-        if (p.get("nlon",nlon) && p.get("nlat",nlat)) {
-            setup(nlon,nlat);
-        } else if (p.get("lon_inc",lon_inc) && p.get("lat_inc",lat_inc)) {
-            setup(lon_inc,lat_inc);
-        } else {
-            throw eckit::BadParameter("Bad combination of parameters");
-        }
+    if (p.get("N",N)) {
+        LonLat::setup(N,domain_);
     }
-}
-
-
-void ShiftedLat::setup( const size_t N ) {
-    double delta = 90./static_cast<double>(N);
-    std::vector<double> lats(2*N);
-    std::vector<long>   nlons(2*N,4*N);
-    std::vector<double> lonmin(2*N,0.);
-    std::vector<double> lonmax(2*N,360.-delta);
-
-    double latmax = 90.-0.5*delta;
-
-    for( size_t jlat=0; jlat<2*N; ++jlat ) {
-        lats[jlat] = latmax - static_cast<double>(jlat)*delta;
+    else if (p.get("nlon", nlon) && p.get("nlat", nlat)) {
+        LonLat::setup(nlon, nlat, domain_);
     }
-
-    Structured::N_ = N;
-    Structured::setup(2*N,lats.data(),nlons.data(),lonmin.data());
-}
-
-
-void ShiftedLat::setup(const size_t nlon, const size_t nlat) {
-    double londeg = 360./static_cast<double>(nlon);
-    double latdeg = 180./static_cast<double>(nlat);
-
-    std::vector<double> lats(nlat);
-    std::vector<long>   nlons(nlat,nlon);
-    std::vector<double> lonmin(nlat,0.);
-    std::vector<double> lonmax(nlon,360.-londeg);
-
-    double latmax = 90.-0.5*latdeg;
-
-    for( size_t jlat=0; jlat<nlat; ++jlat ) {
-        lats[jlat] = latmax - static_cast<double>(jlat)*latdeg;
+    else {
+        throw eckit::BadParameter("Params (nlon,nlat) or N missing", Here());
     }
-
-    if( nlat%2 == 0 && nlon==2*nlat ) {
-        Structured::N_ = nlat/2;
-    }
-    Structured::setup(nlat,lats.data(),nlons.data(),lonmin.data());
-}
-
-
-void ShiftedLat::setup( const double londeg, const double latdeg ) {
-    double Llon = 360.-londeg;
-    double Llat = 180.-latdeg;
-    double nlon_real = Llon/londeg + 1.;
-    double nlat_real = Llat/latdeg + 1.;
-    size_t nlon = static_cast<size_t>(nlon_real);
-    size_t nlat = static_cast<size_t>(nlat_real);
-    if( nlon_real - nlon > 0. ) {
-        std::stringstream msg;
-        msg << Llon << " is not divisible by londeg " << londeg << " --> nlon = " << nlon_real;
-        throw eckit::BadParameter(msg.str(),Here());
-    }
-    if( nlat_real - nlat > 0. ) {
-        std::stringstream msg;
-        msg << Llat << " is not divisible by latdeg " << latdeg << " --> nlat = " << nlat_real;
-        throw eckit::BadParameter(msg.str(),Here());
-    }
-    setup(nlon,nlat);
 }
 
 

@@ -83,9 +83,9 @@ class LonLat: public Structured {
 
     static std::string grid_type_str();
 
-    LonLat(const Shift&, const Domain& dom=Domain::makeGlobal());
-
     static std::string className();
+
+    LonLat(const Shift&, const Domain& dom=Domain::makeGlobal());
 
     const Shift& shifted() const {
         return shift_;
@@ -96,6 +96,12 @@ class LonLat: public Structured {
     }
 
   protected:
+
+    void setup(const size_t N, const Domain&);
+
+    void setup(const size_t nlon, const size_t nlat, const Domain&);
+
+    void setup(const long pl[], const size_t nlat, const Domain&);
 
     virtual void set_typeinfo() = 0;
 

@@ -11,17 +11,17 @@
 #ifndef atlas_actions_AddVirtualNodes_h
 #define atlas_actions_AddVirtualNodes_h
 
+
 namespace atlas {
-
+namespace mesh { class Mesh; }
 namespace grid { class Grid; }
+}
 
+
+namespace atlas {
 namespace mesh {
-
-class Mesh;
-
 namespace actions {
 
-//----------------------------------------------------------------------------------------------------------------------
 
 /// Adds virtual nodes to the mesh that aren't contained in the Grid Domain
 class AddVirtualNodes {
@@ -31,11 +31,10 @@ public:
 
 };
 
-//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace actions
 } // namespace mesh
 } // namespace atlas
 
-#endif
 
+#endif

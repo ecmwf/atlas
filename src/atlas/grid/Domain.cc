@@ -11,6 +11,7 @@
 
 #include "atlas/grid/Domain.h"
 
+#include <algorithm>
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/MD5.h"
 
@@ -21,6 +22,13 @@ namespace grid {
 
 typedef eckit::FloatCompare<double> cmp;
 
+
+bool Domain::operator==(const Domain& other) {
+    return cmp::isApproximatelyEqual(north_, other.north_)
+        && cmp::isApproximatelyEqual(west_,  other.west_)
+        && cmp::isApproximatelyEqual(south_, other.south_)
+        && cmp::isApproximatelyEqual(east_,  other.east_);
+}
 
 
 void Domain::hash(eckit::MD5& md5) const {
@@ -33,7 +41,7 @@ void Domain::hash(eckit::MD5& md5) const {
 
 bool Domain::isEmpty() const {
     return !cmp::isStrictlyGreater(north_,south_)
-           || !cmp::isStrictlyGreater(east_,west_);
+        || !cmp::isStrictlyGreater(east_,west_);
 }
 
 
@@ -47,15 +55,39 @@ bool Domain::contains(double lon, double lat) const {
 }
 
 
+#if 0
+Domain Domain::intersect(const Domain& other) const {
+    return !intersects(other)? makeEmpty()
+           : Domain(
+               std::min(n, other.n),
+               std::min(w, other.w),
+               std::max(s, other.s),
+               std::max(e, other.e) );
+}
+
+
+bool Domain::intersects(const Domain& other) const {
+    ASSERT(other.n >= other.s);
+    ASSERT(other.w <= other.e);
+
+    // strict comparisons ensure resulting areas have 2-dimensionality
+    return  cmp::isStrictlyGreater(e, other.w) &&
+            cmp::isStrictlyGreater(other.e, w) &&
+            cmp::isStrictlyGreater(s, other.n) &&
+            cmp::isStrictlyGreater(other.s, n);
+}
+#endif
+
+
 void Domain::normalise() {
     ASSERT(north_ <= 90 && south_ >= -90);
     ASSERT(north_ >= south_);
 
-    while (east_ >  360)  {
+    while (east_ >  360) {
         east_ -= 360;
         west_ -= 360;
     }
-    while (east_ < -180)  {
+    while (east_ < -180) {
         east_ += 360;
         west_ += 360;
     }
@@ -84,10 +116,11 @@ void Domain::print(std::ostream& os) const {
         << ",W:" << west_
         << ",S:" << south_
         << ",E:" << east_
+        << ",isGlobal=" << isGlobal()
+        << ",isEmpty="  << isEmpty()
         << "]";
 }
 
 
 } // namespace grid
 } // namespace atlas
-

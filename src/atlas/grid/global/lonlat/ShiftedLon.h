@@ -31,11 +31,7 @@ class ShiftedLon: public LonLat {
 
     ShiftedLon(const size_t N);
 
-    ShiftedLon(const int nlon, const int nlat);
-
     ShiftedLon(const size_t nlon, const size_t nlat);
-
-    ShiftedLon(const double &londeg, const double &latdeg);
 
     static std::string className();
 
@@ -52,19 +48,16 @@ class ShiftedLon: public LonLat {
   protected:
 
     void setup(const eckit::Parametrisation&);
-    void setup(const size_t N);
-    void setup(const double londeg, const double latdeg);
-    void setup(const size_t nlon, const size_t nlat);
 
     virtual void set_typeinfo();
 
 };
 
 
-} // namespace lonlat
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace lonlat
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
 
 
 #endif

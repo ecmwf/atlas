@@ -111,9 +111,13 @@ void RegularGaussian::set_typeinfo() {
 
 
 extern "C" {
+
+
     Structured* atlas__grid__global__gaussian__RegularGaussian(size_t N) {
-        return new RegularGaussian(N);
+        return new RegularGaussian(N, Domain::makeGlobal());
     }
+
+
 }
 
 

@@ -24,7 +24,7 @@ namespace local {
  * @brief Local Grid
  * This class is a base class for all grids that are local (on the sphere)
  */
-class Local: public Grid {
+class Local : public Grid {
 
   public:
 
@@ -32,7 +32,7 @@ class Local: public Grid {
 
     static std::string grid_type_str();
 
-    Local(const Domain&);
+    Local(const Domain& dom);
 
 };
 
@@ -43,4 +43,3 @@ class Local: public Grid {
 
 
 #endif
-

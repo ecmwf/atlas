@@ -35,45 +35,22 @@ class RegularLonLat: public LonLat {
 
     static std::string grid_type_str();
 
+    static std::string className();
+
     /**
      * @brief Constructor, parametrizable
      */
     RegularLonLat(const eckit::Parametrisation&);
 
     /**
-     * @brief Constructor, global grid
-     * dlon = 360/nlon
-     * dlat = 180/(nlat-1)
-     * Longitudes: [0  :  dlon :  360-dlon ]
-     * Latitudes:  [90 : -dlat : -90       ]
+     * @brief Constructor, grid over a domain
      */
-    explicit RegularLonLat(const int nlon, const int nlat, const Domain& dom=Domain::makeGlobal());
+    RegularLonLat(const size_t nlon, const size_t nlat, const Domain& dom=Domain::makeGlobal());
 
     /**
-     * @brief Constructor, global grid
-     * dlon = 360/nlon
-     * dlat = 180/(nlat-1)
-     * Longitudes: [0  :  dlon :  360-dlon ]
-     * Latitudes:  [90 : -dlat : -90       ]
-     */
-    explicit RegularLonLat(const size_t nlon, const size_t nlat, const Domain& dom=Domain::makeGlobal());
-
-    /**
-     * @brief Constructor, global grid
-     * Longitudes: [0  :  londeg :  360-londeg ]
-     * Latitudes:  [90 : -latdeg : -90         ]
-     */
-    explicit RegularLonLat(const double &londeg, const double &latdeg, const Domain& dom=Domain::makeGlobal());
-
-    /**
-     * @brief Constructor, global grid
-     * nlon = 4*N
-     * nlat = 2*N+1
-     * londeg = latdeg = 90/N
+     * @brief Constructor, global over a domain specified by N
      */
     RegularLonLat(const size_t N, const Domain& dom=Domain::makeGlobal());
-
-    static std::string className();
 
     virtual eckit::Properties spec() const;
 
@@ -88,10 +65,6 @@ class RegularLonLat: public LonLat {
   protected:
 
     void setup(const eckit::Parametrisation&);
-
-    void setup(const double londeg, const double latdeg);
-
-    void setup(const size_t nlon, const size_t nlat);
 
     virtual void set_typeinfo();
 

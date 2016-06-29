@@ -50,8 +50,6 @@ class ReducedLonLat: public LonLat {
 
     void setup(const eckit::Parametrisation&);
 
-    void setup(const size_t nlat, const long nlon[]);
-
     void set_typeinfo();
 
 };
