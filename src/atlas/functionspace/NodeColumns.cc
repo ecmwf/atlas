@@ -574,7 +574,7 @@ void dispatch_sum( const NodeColumns& fs, const field::Field& field, T& result, 
   const internals::IsGhost is_ghost(fs.nodes());
   const array::ArrayView<T,2> arr = leveled_scalar_view<T>( field );
   T local_sum = 0;
-  const size_t npts = arr.shape(0);
+  const size_t npts = std::min(arr.shape(0),fs.nb_nodes());
   atlas_omp_pragma( omp parallel for default(shared) reduction(+:local_sum) )
   for( size_t n=0; n<npts; ++n ) {
     if( ! is_ghost(n) ) {
@@ -1725,7 +1725,7 @@ void mean_and_standard_deviation( const NodeColumns& fs, const field::Field& fie
   array::ArrayView<T,2> squared_diff = leveled_scalar_view<T>( *squared_diff_field );
   array::ArrayView<T,2> values = leveled_scalar_view<T>( field );
 
-  const size_t npts = values.shape(0);
+  const size_t npts = std::min(values.shape(0),fs.nb_nodes());
   atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
     for( size_t l=0; l<values.shape(1); ++l ) {
       squared_diff(n,l) = sqr( values(n,l) - mu );
