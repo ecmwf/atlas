@@ -116,6 +116,12 @@ Structured::Structured(const eckit::Parametrisation& p)
     options.set("ghost_at_end",ghost_at_end);
 
   std::string partitioner;
+  if( partitioners::PartitionerFactory::has("Trans") )
+    partitioner = "Trans";
+  else
+    partitioner = "EqualRegions";
+  options.set("partitioner",partitioner);
+
   if( p.get("partitioner",partitioner) )
   {
     if( not grid::partitioners::PartitionerFactory::has(partitioner) ) {
