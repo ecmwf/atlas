@@ -58,8 +58,10 @@ Structured::~Structured() {
 
 
 void Structured::setup(const size_t nlat, const double lats[], const long pl[]) {
-    std::vector<double> lonmin(nlat,domain_.west());
-    setup(nlat,lats,pl,lonmin.data());
+    std::vector<double>
+        lonmin(nlat,domain_.west()),
+        lonmax(nlat,domain_.east());
+    setup(nlat,lats,pl,lonmin.data(),lonmax.data());
 }
 
 
@@ -67,26 +69,28 @@ void Structured::setup(
     const size_t nlat,
     const double lats[],
     const long pl[],
-    const double lonmin[] ) {
+    const double lonmin[],
+    const double lonmax[] ) {
     ASSERT(nlat>1);  // can't have a grid with just one latitude
 
     pl_.assign(pl,pl+nlat);
     lat_.assign(lats,lats+nlat);
     lonmin_.assign(lonmin,lonmin+nlat);
+    lonmax_.assign(lonmax,lonmax+nlat);
     lon_inc_.resize(nlat);
 
     npts_ = 0;
     nlonmax_ = 0;
     nlonmin_ = std::numeric_limits<size_t>::max();
+    nlonmax_ = std::numeric_limits<size_t>::min();
     double lon_min(1000), lon_max(-1000);
 
-    const double ew = domain_.east() - domain_.west() ;
     const bool isPeriodicEastWest = domain_.isPeriodicEastWest();
 
     for (size_t jlat = 0; jlat < nlat; ++jlat) {
+        const double ew   = lonmax_[jlat] - lonmin_[jlat];
         const double ndiv = static_cast<double>(pl_[jlat] + (isPeriodicEastWest? 0:-1));
         lon_inc_[jlat] = pl_[jlat]? ew/ndiv : 0.;
-
 
         lon_min = std::min(lon_min,lonmin_[jlat]);
         lon_max = std::max(lon_max,lonmin_[jlat]+(pl_[jlat]-1l)*lon_inc_[jlat]);

@@ -133,7 +133,7 @@ class Structured : public Grid {
 
     void setup(const size_t nlat, const double lats[], const long pl[]);
 
-    void setup(const size_t nlat, const double lats[], const long pl[], const double lonmin[]);
+    void setup(const size_t nlat, const double lats[], const long pl[], const double lonmin[], const double lonmax[]);
 
     void setup_lat_hemisphere(const size_t N, const double lat[], const long lon[]);
 
@@ -185,8 +185,8 @@ extern "C"
     Structured* atlas__grid__global__Structured__config(CONFIG* conf);
     Structured* atlas__grid__global__CustomStructured_int(size_t nlat, double lat[], int nlon[]);
     Structured* atlas__grid__global__CustomStructured_long(size_t nlat, double lat[], long nlon[]);
-    Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lat[], int nlon[], double lonmin[]);
-    Structured* atlas__grid__global__CustomStructured_lonmin_long(size_t nlat, double lat[], long nlon[], double lonmin[]);
+    Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lat[], int nlon[], double lonmin[], double lonmax[]);
+    Structured* atlas__grid__global__CustomStructured_lonmin_long(size_t nlat, double lat[], long nlon[], double lonmin[], double lonmax[]);
     Structured* atlas__grid__global__gaussian__RegularGaussian(size_t N);
     Structured* atlas__grid__global__gaussian__ReducedGaussian_int(size_t N, int nlon[]);
     Structured* atlas__grid__global__gaussian__ReducedGaussian_long(size_t N, long nlon[]);

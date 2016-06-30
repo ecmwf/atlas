@@ -52,6 +52,7 @@ class CustomStructured: public Structured {
         const double lats[],
         const long   nlon[],
         const double lonmin[],
+        const double lonmax[],
         const Domain& dom=Domain::makeGlobal() );
 
     virtual eckit::Properties spec() const;

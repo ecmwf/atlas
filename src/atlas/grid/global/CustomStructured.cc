@@ -45,6 +45,7 @@ void CustomStructured::setup(const eckit::Parametrisation& params) {
     std::vector<long> pl;
     std::vector<double> latitudes;
     std::vector<double> lonmin;
+    std::vector<double> lonmax;
 
     if( ! params.get("pl",pl) )
         throw eckit::BadParameter("pl missing in Params",Here());
@@ -54,10 +55,12 @@ void CustomStructured::setup(const eckit::Parametrisation& params) {
     // Optionally specify N identifier
     params.get("N",Structured::N_);
 
-    if (params.get("lon_min",lonmin) )
-        Structured::setup(latitudes.size(),latitudes.data(),pl.data(),lonmin.data());
-    else
+    if (params.get("lon_min",lonmin) && params.get("lon_max",lonmax)) {
+        Structured::setup(latitudes.size(),latitudes.data(),pl.data(),lonmin.data(),lonmax.data());
+    }
+    else {
         Structured::setup(latitudes.size(),latitudes.data(),pl.data());
+    }
 }
 
 
@@ -76,9 +79,10 @@ CustomStructured::CustomStructured(
     const double latitudes[],
     const long pl[],
     const double lonmin[],
+    const double lonmax[],
     const Domain& dom ) :
     Structured(dom) {
-    Structured::setup(nlat,latitudes,pl,lonmin);
+    Structured::setup(nlat,latitudes,pl,lonmin,lonmax);
 }
 
 
@@ -116,15 +120,15 @@ extern "C" {
     }
 
 
-    Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lats[], int pl[], double lonmin[]) {
+    Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lats[], int pl[], double lonmin[], double lonmax[]) {
         std::vector<long> pl_vector;
         pl_vector.assign(pl,pl+nlat);
-        return new CustomStructured(nlat,lats,pl_vector.data(),lonmin,Domain::makeGlobal());
+        return new CustomStructured(nlat,lats,pl_vector.data(),lonmin,lonmax,Domain::makeGlobal());
     }
 
 
-    Structured* atlas__grid__global__CustomStructured_lonmin_long(size_t nlat, double lats[], long pl[], double lonmin[]) {
-        return new CustomStructured(nlat,lats,pl,lonmin,Domain::makeGlobal());
+    Structured* atlas__grid__global__CustomStructured_lonmin_long(size_t nlat, double lats[], long pl[], double lonmin[], double lonmax[]) {
+        return new CustomStructured(nlat,lats,pl,lonmin,lonmax,Domain::makeGlobal());
     }
 
 
