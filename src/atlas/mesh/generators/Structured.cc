@@ -18,7 +18,7 @@
 #include "eckit/geometry/Point3.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/Structured.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -43,7 +43,6 @@
 #define DEBUG_OUTPUT 0
 
 using namespace eckit;
-using namespace atlas::grid;
 
 using atlas::internals::Topology;
 
@@ -169,7 +168,7 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
 {
     ASSERT(!mesh.generated());
 
-  const grid::global::Structured* rg = dynamic_cast<const grid::global::Structured*>(&grid);
+  const grid::Structured* rg = dynamic_cast<const grid::Structured*>(&grid);
   if( !rg )
     throw eckit::BadCast("Structured can only work with a Structured",Here());
 
@@ -181,7 +180,7 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
   if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
 
   grid::partitioners::Partitioner::Ptr partitioner( grid::partitioners::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
-  GridDistribution::Ptr distribution( partitioner->distribution() );
+  grid::GridDistribution::Ptr distribution( partitioner->distribution() );
   generate( grid, *distribution, mesh );
 }
 
@@ -195,7 +194,7 @@ void Structured::hash(MD5& md5) const
 
 void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
 {
-  const grid::global::Structured* rg = dynamic_cast<const grid::global::Structured*>(&grid);
+  const grid::Structured* rg = dynamic_cast<const grid::Structured*>(&grid);
   if( !rg )
     throw eckit::BadCast("Grid could not be cast to a Structured",Here());
 
@@ -218,10 +217,7 @@ void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& 
 }
 
 
-void Structured::generate_region(const global::Structured& rg,
-                                               const std::vector<int>& parts,
-                                               int mypart,
-                                               Region& region) const
+void Structured::generate_region(const grid::Structured& rg, const std::vector<int>& parts, int mypart, Region& region) const
 {
   double max_angle          = options.get<double>("angle");
   bool   triangulate_quads  = options.get<bool>("triangulate");
@@ -770,11 +766,7 @@ struct GhostNode {
 };
 }
 
-void Structured::generate_mesh(
-    const global::Structured& rg,
-    const std::vector<int>& parts,
-    const Region& region,
-    Mesh& mesh ) const
+void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int>& parts, const Region& region, Mesh& mesh) const
 {
 
   ASSERT(!mesh.generated());

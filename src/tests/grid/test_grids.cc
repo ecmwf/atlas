@@ -25,9 +25,6 @@
 #include "eckit/memory/Factory.h"
 
 
-using namespace atlas;
-
-
 namespace atlas {
 namespace test {
 
@@ -35,7 +32,7 @@ BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); atlas::grid::load(); }
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
-  eckit::SharedPtr<grid::global::Structured> Structured( grid::global::Structured::create("N80") );
+  eckit::SharedPtr<grid::Structured> Structured( grid::Structured::create("N80") );
 
   eckit::SharedPtr<grid::Grid> grid( grid::Grid::create("N24") );
 
@@ -47,7 +44,7 @@ BOOST_AUTO_TEST_CASE( test_factory )
 BOOST_AUTO_TEST_CASE( test_regular_gg )
 {
   // Constructor for N=32
-  grid::global::gaussian::RegularGaussian grid(32);
+  grid::gaussian::RegularGaussian grid(32);
 
   BOOST_CHECK_EQUAL(grid.N(), 32);
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
@@ -75,7 +72,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
 BOOST_AUTO_TEST_CASE( test_reduced_gg )
 {
   long nlon[] = {4,6,8};
-  grid::global::gaussian::ReducedGaussian grid(3,nlon);
+  grid::gaussian::ReducedGaussian grid(3,nlon);
   BOOST_CHECK_EQUAL(grid.N(),3);
   BOOST_CHECK_EQUAL(grid.nlat(),6);
   BOOST_CHECK_EQUAL(grid.npts(),8+12+16);
@@ -84,7 +81,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg )
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
 {
-  grid::global::gaussian::ClassicGaussian grid(32);
+  grid::gaussian::ClassicGaussian grid(32);
 
   BOOST_CHECK_EQUAL(grid.N(),    32);
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
@@ -98,7 +95,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   // Constructor for N=8
   size_t nlon = 32;
   size_t nlat = 16;
-  grid::global::lonlat::ShiftedLat grid(nlon,nlat);
+  grid::lonlat::ShiftedLat grid(nlon,nlat);
 
   BOOST_CHECK_EQUAL(grid.nlon(), nlon);
   BOOST_CHECK_EQUAL(grid.nlat(), nlat);
@@ -130,11 +127,11 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
   BOOST_CHECK_EQUAL(gridptr->gridType(),"shifted_lat");
 
-  grid::global::lonlat::RegularLonLat ll_poles(4, 3);
+  grid::lonlat::RegularLonLat ll_poles(4, 3);
   BOOST_CHECK_EQUAL( ll_poles.nlon(), 4);
   BOOST_CHECK_EQUAL( ll_poles.nlat(), 3);
 
-  grid::global::lonlat::ShiftedLat ll_nopoles(4, 2);
+  grid::lonlat::ShiftedLat ll_nopoles(4, 2);
   BOOST_CHECK_EQUAL( ll_nopoles.nlon(), 4);
   BOOST_CHECK_EQUAL( ll_nopoles.nlat(), 2);
   BOOST_CHECK_CLOSE( ll_nopoles.lat(0), 45., 1.e-5);
@@ -145,9 +142,9 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
 
 BOOST_AUTO_TEST_CASE( test_reducedgaussian )
 {
-  grid::global::gaussian::ClassicGaussian N640(640);
+  grid::gaussian::ClassicGaussian N640(640);
   BOOST_CHECK_EQUAL(N640.npts(),2140702);
-  grid::global::gaussian::ReducedGaussian custom(N640.N(),N640.pl().data());
+  grid::gaussian::ReducedGaussian custom(N640.N(),N640.pl().data());
   BOOST_CHECK_EQUAL(N640.npts(),custom.npts());
 }
 

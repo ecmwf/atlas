@@ -58,7 +58,7 @@ void TestField::test_constructor()
 {
   // create a grid
 
-  Grid::Ptr g (new atlas::grid::global::lonlat::RegularLonLat( 20ul, 10ul ) );
+  Grid::Ptr g (new atlas::grid::lonlat::RegularLonLat( 20ul, 10ul ) );
 
   ASSERT( g );
 

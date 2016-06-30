@@ -10,7 +10,7 @@
 
 #include "eckit/utils/MD5.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/Structured.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/StructuredColumns.h"
@@ -66,7 +66,7 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
 StructuredColumns::StructuredColumns(const grid::Grid& grid) :
   FunctionSpace()
 {
-    grid_ = dynamic_cast<const grid::global::Structured*>(&grid);
+    grid_ = dynamic_cast<const grid::Structured*>(&grid);
     if (grid_ == NULL)
     {
       throw eckit::BadCast("Grid is not a grid::Structured type. "

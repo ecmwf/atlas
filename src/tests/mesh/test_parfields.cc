@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   meshgen_options.set("triangulate",false);
   mesh::generators::Structured generate(meshgen_options);
   mesh::Mesh* m = generate(
-      grid::global::gaussian::ClassicGaussian(32) );
+      grid::gaussian::ClassicGaussian(32) );
   mesh::actions::build_parallel_fields(*m);
 
   mesh::Nodes& nodes = m->nodes();

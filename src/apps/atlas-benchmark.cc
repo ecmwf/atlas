@@ -329,7 +329,7 @@ void AtlasBenchmark::setup()
 
   grid::load();
 
-  SharedPtr<global::Structured> grid( global::Structured::create(gridname));
+  SharedPtr<Structured> grid( Structured::create(gridname) );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
   mesh.reset( meshgenerator->generate(*grid) );
 

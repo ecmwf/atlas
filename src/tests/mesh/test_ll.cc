@@ -16,12 +16,8 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/grid/global/lonlat/RegularLonLat.h"
+#include "atlas/grid/lonlat/RegularLonLat.h"
 
-
-using namespace atlas::output;
-using namespace atlas::mesh::generators;
-using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
@@ -36,10 +32,10 @@ BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
-  global::lonlat::RegularLonLat g(5);
+  grid::lonlat::RegularLonLat g(5);
   mesh::Mesh m;
   mesh::generators::Structured().generate(g,m);
-  Gmsh("L5.msh").write(m);
+  output::Gmsh("L5.msh").write(m);
 }
 
 } // namespace test

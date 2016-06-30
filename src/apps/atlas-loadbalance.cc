@@ -108,8 +108,8 @@ void AtlasLoadbalance::run()
   if( !do_run ) return;
   grid::load();
 
-  SharedPtr<global::Structured> grid;
-  try{ grid.reset( global::Structured::create(key) ); }
+  SharedPtr<Structured> grid;
+  try{ grid.reset( Structured::create(key) ); }
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;

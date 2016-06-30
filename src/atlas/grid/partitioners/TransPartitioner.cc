@@ -9,7 +9,7 @@
  */
 
 #include "eckit/exception/Exceptions.h"
-#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/Structured.h"
 #include "atlas/grid/partitioners/TransPartitioner.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -52,10 +52,10 @@ TransPartitioner::~TransPartitioner() {
 }
 
 void TransPartitioner::partition(int part[]) const {
-    if( dynamic_cast<const grid::global::Structured*>(&grid()) == NULL )
+    if( dynamic_cast<const grid::Structured*>(&grid()) == NULL )
         throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 
-    int nlonmax = dynamic_cast<const grid::global::Structured*>(&grid())->nlonmax();
+    int nlonmax = dynamic_cast<const grid::Structured*>(&grid())->nlonmax();
 
     array::ArrayView<int,1> nloen       = t_->nloen();
     array::ArrayView<int,1> n_regions   = t_->n_regions();

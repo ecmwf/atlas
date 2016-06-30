@@ -106,9 +106,9 @@ endif()
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/grids.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/global/Structured.h
-    MODULE    atlas_grid_global_Structured_c_binding
-    OUTPUT    grid_global_Structured_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Structured.h
+    MODULE    atlas_grid_Structured_c_binding
+    OUTPUT    grid_Structured_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/GridDistribution.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Mesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Nodes.h)

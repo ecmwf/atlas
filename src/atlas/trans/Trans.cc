@@ -10,9 +10,9 @@
 
 #include "eckit/parser/JSON.h"
 #include "eckit/exception/Exceptions.h"
-#include "atlas/grid/global/Structured.h"
-#include "atlas/grid/global/lonlat/RegularLonLat.h"
-#include "atlas/grid/global/lonlat/ShiftedLonLat.h"
+#include "atlas/grid/Structured.h"
+#include "atlas/grid/lonlat/RegularLonLat.h"
+#include "atlas/grid/lonlat/ShiftedLonLat.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/FieldSet.h"
@@ -52,7 +52,7 @@ namespace trans {
 
 Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
 {
-  const grid::global::Structured* reduced = dynamic_cast<const grid::global::Structured*>(&grid);
+  const grid::Structured* reduced = dynamic_cast<const grid::Structured*>(&grid);
   if( !reduced )
     throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
   size_t nsmax = 0;
@@ -68,12 +68,12 @@ Trans::Trans(const size_t N, const Trans::Options& p)
 
 Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p )
 {
-  const grid::global::Structured* reduced = dynamic_cast<const grid::global::Structured*>(&grid);
+  const grid::Structured* reduced = dynamic_cast<const grid::Structured*>(&grid);
   if( !reduced )
     throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 
-  const grid::global::lonlat::LonLat* lonlat
-      = dynamic_cast<const grid::global::lonlat::LonLat*>(reduced);
+  const grid::lonlat::LonLat* lonlat
+      = dynamic_cast<const grid::lonlat::LonLat*>(reduced);
 
   if( lonlat  )
   {

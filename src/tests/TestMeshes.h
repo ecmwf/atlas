@@ -11,18 +11,18 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/grid/global/gaussian/ReducedGaussian.h"
+#include "atlas/grid/gaussian/ReducedGaussian.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::grid::global::gaussian;
+using namespace atlas::grid::gaussian;
 
 namespace atlas {
 namespace test {
 
-mesh::Mesh::Ptr generate_mesh( const global::Structured& rgg )
+mesh::Mesh::Ptr generate_mesh( const Structured& rgg )
 {
   mesh::generators::Structured generate;
   return mesh::Mesh::Ptr( generate( rgg ) );
