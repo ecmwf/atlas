@@ -31,7 +31,6 @@
 
 #include "atlas/grid/Domain.h"
 #include "atlas/util/Config.h"
-#include "atlas/internals/ObjectRegistry.h"
 
 namespace atlas { namespace mesh { class Mesh; } }
 
@@ -40,7 +39,7 @@ namespace grid {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Grid : public eckit::Owned, public internals::Registered<Grid> {
+class Grid : public eckit::Owned {
 
  public:  // types
 

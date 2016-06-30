@@ -313,7 +313,6 @@ internals/Debug.h
 internals/Functions.h
 internals/IsGhost.h
 internals/LonLatMicroDeg.h
-internals/ObjectRegistry.h
 internals/Parameters.h
 internals/PeriodicTransform.h
 internals/Unique.h

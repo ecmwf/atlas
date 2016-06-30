@@ -134,12 +134,14 @@ template<> Metadata& Metadata::set(const std::string& name, const std::vector<si
 
 template<> Metadata& Metadata::set(const std::string& name, const mesh::Mesh& value)
 {
-  return set(name,value.id());
+    NOTIMP;
+  // return set(name,value.id());
 }
 
 template<> Metadata& Metadata::set(const std::string& name, const grid::Grid& value)
 {
-  return set(name,value.id());
+    NOTIMP;
+  // return set(name,value.id());
 }
 
 template<> bool Metadata::get(const std::string& name) const
@@ -305,14 +307,16 @@ template<> bool Metadata::get(const std::string& name, std::vector<float>& value
 
 template<> mesh::Mesh& Metadata::get(const std::string& name) const
 {
-  if( !has(name) ) throw_exception(name);
-  return mesh::Mesh::from_id(eckit::Properties::get(name));
+    NOTIMP;
+  // if( !has(name) ) throw_exception(name);
+  // return mesh::Mesh::from_id(eckit::Properties::get(name));
 }
 
 template<> grid::Grid& Metadata::get(const std::string& name) const
 {
-  if( !has(name) ) throw_exception(name);
-  return grid::Grid::from_id(eckit::Properties::get(name));
+    NOTIMP;
+  // if( !has(name) ) throw_exception(name);
+  // return grid::Grid::from_id(eckit::Properties::get(name));
 }
 
 template<> eckit::Properties Metadata::get(const std::string& name) const

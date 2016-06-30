@@ -20,7 +20,6 @@
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/internals/atlas_config.h"
-#include "atlas/internals/ObjectRegistry.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"
 
@@ -59,8 +58,7 @@ namespace mpl {
 namespace atlas {
 namespace mesh {
 
-class Mesh : public eckit::Owned,
-             public internals::Registered<Mesh> {
+class Mesh : public eckit::Owned {
 public: // types
 
     typedef eckit::SharedPtr<Mesh> Ptr;
