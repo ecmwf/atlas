@@ -38,8 +38,6 @@ grid/Grid.cc
 grid/Grid.h
 grid/GridDistribution.cc
 grid/GridDistribution.h
-grid/deprecated/RotatedGrid.cc
-grid/deprecated/RotatedGrid.h
 grid/global/CustomStructured.cc
 grid/global/CustomStructured.h
 grid/global/Structured.cc
