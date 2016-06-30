@@ -26,7 +26,6 @@
 #include "eckit/utils/MD5.h"
 #include "eckit/value/Properties.h"
 #include "atlas/grid/Domain.h"
-#include "atlas/internals/ObjectRegistry.h"
 
 
 namespace atlas {
@@ -40,9 +39,9 @@ namespace atlas {
 namespace grid {
 
 
-class Grid : public eckit::Owned, public internals::Registered<Grid> {
+class Grid : public eckit::Owned {
 
-  public:  // types (FIXME: remove some)
+  public:  // types
 
     typedef eckit::BuilderT1<Grid> builder_t;
     typedef const eckit::Parametrisation& ARG1;
