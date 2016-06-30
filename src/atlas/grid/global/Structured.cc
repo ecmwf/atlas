@@ -48,7 +48,7 @@ std::string Structured::grid_type_str() {
 
 
 Structured::Structured(const Domain& dom) :
-    Global(dom),
+    Grid(dom),
     N_(0) {
 }
 

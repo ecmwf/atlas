@@ -20,7 +20,7 @@
 #include <cstddef>
 #include <vector>
 #include "eckit/memory/ScopedPtr.h"
-#include "atlas/grid/global/Global.h"
+#include "atlas/grid/Grid.h"
 
 
 namespace atlas {
@@ -28,7 +28,7 @@ namespace grid {
 namespace global {
 
 
-class Unstructured : public Global {
+class Unstructured : public Grid {
 
   public: // methods
 

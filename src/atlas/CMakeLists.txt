@@ -42,8 +42,6 @@ grid/deprecated/RotatedGrid.cc
 grid/deprecated/RotatedGrid.h
 grid/global/CustomStructured.cc
 grid/global/CustomStructured.h
-grid/global/Global.cc
-grid/global/Global.h
 grid/global/Structured.cc
 grid/global/Structured.h
 grid/global/Unstructured.cc
@@ -126,8 +124,6 @@ grid/global/lonlat/ShiftedLonLat.cc
 grid/global/lonlat/ShiftedLonLat.h
 grid/grids.cc
 grid/grids.h
-grid/local/Local.cc
-grid/local/Local.h
 grid/partitioners/EqualRegionsPartitioner.cc
 grid/partitioners/EqualRegionsPartitioner.h
 grid/partitioners/Partitioner.cc
