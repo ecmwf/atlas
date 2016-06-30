@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 
   mesh::Mesh::Ptr m( generate( grid ) );
 
-  mesh::Mesh::Id meshid = m->id();
+  // mesh::Mesh::Id meshid = m->id();
 
 //  actions::distribute_mesh(*m);
 
@@ -111,7 +111,8 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 
   mesh::actions::write_load_balance_report(*m,"load_balance.dat");
 
-  mesh::Mesh& mesh1 = mesh::Mesh::from_id(meshid);
+  // mesh::Mesh& mesh1 = mesh::Mesh::from_id(meshid);
+  mesh::Mesh& mesh1 = *m;
   BOOST_CHECK( mesh1.nodes().size() == m->nodes().size() );
 
   const array::ArrayView<int,1> part( m->nodes().partition() );
