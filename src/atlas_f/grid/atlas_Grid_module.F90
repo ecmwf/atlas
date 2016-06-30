@@ -108,8 +108,8 @@ END TYPE atlas_grid_CustomStructured
 interface atlas_grid_CustomStructured
   module procedure atlas_grid_CustomStructured__ctor_int32
   module procedure atlas_grid_CustomStructured__ctor_int64
-  module procedure atlas_grid_CustomStructured__ctor_lonmin_int32
-  module procedure atlas_grid_CustomStructured__ctor_lonmin_int64
+  module procedure atlas_grid_CustomStructured__ctor_lonmin_lonmax_int32
+  module procedure atlas_grid_CustomStructured__ctor_lonmin_lonmax_int64
 end interface
 
 !------------------------------------------------------------------------------
@@ -308,26 +308,28 @@ function atlas_grid_CustomStructured__ctor_int64(lats,nlon) result(grid)
   call grid%reset_c_ptr( atlas__grid__global__CustomStructured_long(nlat,lats,nlon) )
 end function
 
-function atlas_grid_CustomStructured__ctor_lonmin_int32(lats,nlon,lonmin) result(grid)
+function atlas_grid_CustomStructured__ctor_lonmin_lonmax_int32(lats,nlon,lonmin,lonmax) result(grid)
   use atlas_grid_global_Structured_c_binding
   type(atlas_grid_CustomStructured) :: grid
   real(c_double), intent(in) :: lats(:)
   integer(c_int), intent(in) :: nlon(:)
   real(c_double), intent(in) :: lonmin(:)
+  real(c_double), intent(in) :: lonmax(:)
   integer(c_size_t) :: nlat
   nlat = size(nlon)
-  call grid%reset_c_ptr( atlas__grid__global__CustomStructured_lonmin_int(nlat,lats,nlon,lonmin) )
+  call grid%reset_c_ptr( atlas__grid__global__CustomStructured_lonmin_lonmax_int(nlat,lats,nlon,lonmin,lonmax) )
 end function
 
-function atlas_grid_CustomStructured__ctor_lonmin_int64(lats,nlon,lonmin) result(grid)
+function atlas_grid_CustomStructured__ctor_lonmin_lonmax_int64(lats,nlon,lonmin,lonmax) result(grid)
   use atlas_grid_global_Structured_c_binding
   type(atlas_grid_CustomStructured) :: grid
   real(c_double),  intent(in) :: lats(:)
   integer(c_long), intent(in) :: nlon(:)
   real(c_double),  intent(in) :: lonmin(:)
+  real(c_double),  intent(in) :: lonmax(:)
   integer(c_size_t) :: nlat
   nlat = size(nlon)
-  call grid%reset_c_ptr( atlas__grid__global__CustomStructured_lonmin_long(nlat,lats,nlon,lonmin) )
+  call grid%reset_c_ptr( atlas__grid__global__CustomStructured_lonmin_lonmax_long(nlat,lats,nlon,lonmin,lonmax) )
 end function
 
 

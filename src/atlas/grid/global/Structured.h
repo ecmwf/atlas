@@ -185,8 +185,8 @@ extern "C"
     Structured* atlas__grid__global__Structured__config(CONFIG* conf);
     Structured* atlas__grid__global__CustomStructured_int(size_t nlat, double lat[], int nlon[]);
     Structured* atlas__grid__global__CustomStructured_long(size_t nlat, double lat[], long nlon[]);
-    Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lat[], int nlon[], double lonmin[], double lonmax[]);
-    Structured* atlas__grid__global__CustomStructured_lonmin_long(size_t nlat, double lat[], long nlon[], double lonmin[], double lonmax[]);
+    Structured* atlas__grid__global__CustomStructured_lonmin_lonmax_int(size_t nlat, double lat[], int nlon[], double lonmin[], double lonmax[]);
+    Structured* atlas__grid__global__CustomStructured_lonmin_lonmax_long(size_t nlat, double lat[], long nlon[], double lonmin[], double lonmax[]);
     Structured* atlas__grid__global__gaussian__RegularGaussian(size_t N);
     Structured* atlas__grid__global__gaussian__ReducedGaussian_int(size_t N, int nlon[]);
     Structured* atlas__grid__global__gaussian__ReducedGaussian_long(size_t N, long nlon[]);

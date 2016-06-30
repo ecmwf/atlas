@@ -88,19 +88,16 @@ CustomStructured::CustomStructured(
 
 eckit::Properties CustomStructured::spec() const {
     eckit::Properties grid_spec;
-
-    grid_spec.set("grid_type",gridType());
-    grid_spec.set("short_name",shortName());
-
-    grid_spec.set("nlat",nlat());
-
-    grid_spec.set("latitudes", eckit::makeVectorValue(latitudes()));
-    grid_spec.set("pl",        eckit::makeVectorValue(pl()));
-    grid_spec.set("lon_min",   eckit::makeVectorValue(lonmin_));
-
-    if (N() != 0)
-        grid_spec.set("N", N() );
-
+    grid_spec.set("grid_type",  gridType());
+    grid_spec.set("short_name", shortName());
+    grid_spec.set("nlat",       nlat());
+    grid_spec.set("latitudes",  eckit::makeVectorValue(latitudes()));
+    grid_spec.set("pl",         eckit::makeVectorValue(pl()));
+    grid_spec.set("lon_min",    eckit::makeVectorValue(lonmin_));
+    grid_spec.set("lon_max",    eckit::makeVectorValue(lonmax_));
+    if (N() != 0) {
+        grid_spec.set("N", N());
+    }
     return grid_spec;
 }
 
@@ -111,30 +108,31 @@ extern "C" {
     Structured* atlas__grid__global__CustomStructured_int(size_t nlat, double lats[], int pl[]) {
         std::vector<long> pl_vector;
         pl_vector.assign(pl,pl+nlat);
-        return new CustomStructured(nlat,lats,pl_vector.data(),Domain::makeGlobal());
+        return new CustomStructured(nlat, lats, pl_vector.data(), Domain::makeGlobal());
     }
 
 
     Structured* atlas__grid__global__CustomStructured_long(size_t nlat, double lats[], long pl[]) {
-        return new CustomStructured(nlat,lats,pl,Domain::makeGlobal());
+        return new CustomStructured(nlat, lats, pl, Domain::makeGlobal());
     }
 
 
-    Structured* atlas__grid__global__CustomStructured_lonmin_int(size_t nlat, double lats[], int pl[], double lonmin[], double lonmax[]) {
+    Structured* atlas__grid__global__CustomStructured_lonmin_lonmax_int(size_t nlat, double lats[], int pl[], double lonmin[], double lonmax[]) {
         std::vector<long> pl_vector;
-        pl_vector.assign(pl,pl+nlat);
-        return new CustomStructured(nlat,lats,pl_vector.data(),lonmin,lonmax,Domain::makeGlobal());
+        pl_vector.assign(pl, pl+nlat);
+        return new CustomStructured(nlat, lats, pl_vector.data(), lonmin, lonmax, Domain::makeGlobal());
     }
 
 
-    Structured* atlas__grid__global__CustomStructured_lonmin_long(size_t nlat, double lats[], long pl[], double lonmin[], double lonmax[]) {
-        return new CustomStructured(nlat,lats,pl,lonmin,lonmax,Domain::makeGlobal());
+    Structured* atlas__grid__global__CustomStructured_lonmin_lonmax_long(size_t nlat, double lats[], long pl[], double lonmin[], double lonmax[]) {
+        return new CustomStructured(nlat, lats, pl, lonmin, lonmax, Domain::makeGlobal());
     }
 
 
 }
 
 
-} // namespace global
-} // namespace grid
-} // namespace atlas
+}  // namespace global
+}  // namespace grid
+}  // namespace atlas
+
