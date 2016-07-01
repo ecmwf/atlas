@@ -168,8 +168,6 @@ class Structured : public Grid {
     /// Value of maximum longitude per latitude [default=0]
     std::vector<double> lonmax_;
 
-  private:
-
     /// Value of longitude increment
     std::vector<double> lon_inc_;
 

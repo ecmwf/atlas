@@ -64,10 +64,11 @@ void RegularGaussian::setup(const size_t& N, const Domain& dom) {
     ASSERT(N>=2);
     N_ = N;
 
+
     // set (Ni,Nj) specific to domain-bound regular Gaussian
     Ni_ = N*4;
     if (!dom.isPeriodicEastWest()) {
-        const double lat = dom.north();
+        const double lat = (dom.north() + dom.south())/2.;
 
         Ni_ = 0;
         for (size_t i=0; i<N*4; ++i) {
@@ -78,24 +79,38 @@ void RegularGaussian::setup(const size_t& N, const Domain& dom) {
     }
     ASSERT(0<Ni_ && Ni_<=N*4);
 
-    Nj_ = N*2;
-    if (!dom.includesPoleNorth() || !dom.includesPoleSouth()) {
-        const double lon = dom.west();
+    Structured::lat_.assign(2*N, 0.);
+    if (dom.includesPoleNorth() && dom.includesPoleSouth()) {
+        latitudes::gaussian_latitudes_npole_spole(N, Structured::lat_.data());
+    }
+    else {
+        const double lon = (dom.east() + dom.west())/2.;
 
-        std::vector<double> lats(2*N,0.);
-        latitudes::gaussian_latitudes_npole_spole(N,lats.data());
+        std::vector<double> lats(2*N, 0.);
+        latitudes::gaussian_latitudes_npole_spole(N, lats.data());
 
-        Nj_ = 0;
+        Structured::lat_.clear();
         for (size_t i=0; i<N*2; ++i) {
             if (dom.contains(lon,lats[i]))
-                ++ Nj_;
+                lat_.push_back(lats[i]);
         }
     }
+    Nj_ = lat_.size();
     ASSERT(0<Nj_ && Nj_<=N*2);
 
-    // set internal Structured/Gaussian
-    std::vector<long> pl(Nj_,Ni_);
-    Gaussian::setup_N_hemisphere(N,pl.data());
+
+    // set Structured:: members
+
+    Structured::pl_.assign(Nj_, Ni_);
+    Structured::nlonmin_ = Ni_;
+    Structured::nlonmax_ = Ni_;
+    Structured::npts_    = Ni_*Nj_;
+
+    const double inc_west_east = 90.0/static_cast<double>(N);
+    Structured::lon_inc_.assign(Nj_, inc_west_east);
+    Structured::lonmin_ .assign(Nj_, dom.west());
+    Structured::lonmax_ .assign(Nj_, dom.east() - (dom.isPeriodicEastWest()? inc_west_east : 0.));
+
 
     set_typeinfo();
 }
