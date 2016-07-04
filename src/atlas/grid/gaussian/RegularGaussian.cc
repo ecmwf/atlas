@@ -60,53 +60,47 @@ eckit::Properties RegularGaussian::spec() const {
 
 void RegularGaussian::setup(const size_t& N, const Domain& dom) {
 
-    // set internal Gaussian N
+    // set internal Gaussian N and latitudes (assuming global domain)
     ASSERT(N>=2);
-    N_ = N;
-
+    Structured::N_  = N;
+    Structured::lat_.assign(2*N, 0.);
+    latitudes::gaussian_latitudes_npole_spole(N, Structured::lat_.data());
 
     // set (Ni,Nj) specific to domain-bound regular Gaussian
+    const double lat_middle = (dom.north() + dom.south())/2.;
+    const double lon_middle = (dom.east()  + dom.west() )/2.;
+    const double inc_west_east = 90.0/static_cast<double>(N);
+
     Ni_ = N*4;
     if (!dom.isPeriodicEastWest()) {
-        const double lat = (dom.north() + dom.south())/2.;
-
         Ni_ = 0;
         for (size_t i=0; i<N*4; ++i) {
             const double lon = dom.west() + static_cast<double>(i*90.0)/static_cast<double>(N);
-            if (dom.contains(lon,lat))
-                ++ Ni_;
+            if (dom.contains(lon,lat_middle))
+                ++Ni_;
         }
     }
     ASSERT(0<Ni_ && Ni_<=N*4);
 
-    Structured::lat_.assign(2*N, 0.);
-    if (dom.includesPoleNorth() && dom.includesPoleSouth()) {
-        latitudes::gaussian_latitudes_npole_spole(N, Structured::lat_.data());
-    }
-    else {
-        const double lon = (dom.east() + dom.west())/2.;
-
-        std::vector<double> lats(2*N, 0.);
-        latitudes::gaussian_latitudes_npole_spole(N, lats.data());
-
-        Structured::lat_.clear();
+    Nj_ = N*2;
+    if (!dom.includesPoleNorth() || !dom.includesPoleSouth()) {
+        std::vector<double> lat_global;
+        Structured::lat_.swap(lat_global);
+        Structured::lat_.reserve(2*N);
         for (size_t i=0; i<N*2; ++i) {
-            if (dom.contains(lon,lats[i]))
-                lat_.push_back(lats[i]);
+            if (dom.contains(lon_middle,lat_global[i]))
+                Structured::lat_.push_back(lat_global[i]);
         }
+        Nj_ = Structured::lat_.size();
     }
-    Nj_ = lat_.size();
     ASSERT(0<Nj_ && Nj_<=N*2);
 
 
     // set Structured:: members
-
     Structured::pl_.assign(Nj_, Ni_);
     Structured::nlonmin_ = Ni_;
     Structured::nlonmax_ = Ni_;
     Structured::npts_    = Ni_*Nj_;
-
-    const double inc_west_east = 90.0/static_cast<double>(N);
     Structured::lon_inc_.assign(Nj_, inc_west_east);
     Structured::lonmin_ .assign(Nj_, dom.west());
     Structured::lonmax_ .assign(Nj_, dom.east() - (dom.isPeriodicEastWest()? inc_west_east : 0.));
