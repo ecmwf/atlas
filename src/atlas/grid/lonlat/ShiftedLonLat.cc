@@ -43,7 +43,7 @@ void ShiftedLonLat::set_typeinfo() {
 
 
 ShiftedLonLat::ShiftedLonLat(const eckit::Parametrisation& p) :
-    LonLat(Shift::LON|Shift::LAT,Domain::makeGlobal()) {
+    LonLat(Shift::LON|Shift::LAT, Domain::makeGlobal()) {
     setup(p);
 }
 
