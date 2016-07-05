@@ -46,33 +46,34 @@ void LonLat::setup(const size_t nlon, const size_t nlat, const Domain& dom) {
         throw eckit::BadParameter("Params domain of wrong size, expected #4");
     }
 #endif
-    ASSERT(nlat>0);
 
-    const bool
-    isShiftedLon = shift_(Shift::LON),
-    isShiftedLat = shift_(Shift::LAT);
+    ASSERT(nlat>0);
+    const bool isShiftedLon = shift_(Shift::LON);
+    const bool isShiftedLat = shift_(Shift::LAT);
 
     const double
-    lon_inc = (dom.east()  - dom.west() )/static_cast<double>(nlon),
-    lat_inc = (dom.north() - dom.south())/static_cast<double>(isShiftedLat? nlat : nlat-1);
+            ns = dom.north() - dom.south(),
+            ew = dom.east()  - dom.west(),
+            Nj = static_cast<double>(isShiftedLat? nlat : nlat-1),
+            _loninc = ew/static_cast<double>(nlon),
+            _lonmin = dom.west() + _loninc*( isShiftedLon? 0.5 : 0. ),
+            _lonmax = dom.east() + _loninc*((isShiftedLon? 0.5 : 0.) + (dom.isPeriodicEastWest()? -1.: 0.) );
 
-    std::vector<double> lonmin(nlat,dom.west() + (isShiftedLon? lon_inc*0.5 : 0.) );
-    std::vector<double> lonmax(nlat,dom.east() + (isShiftedLon? lon_inc*0.5 : 0.) );
+    std::vector<double> lonmin(nlat, _lonmin);
+    std::vector<double> lonmax(nlat, _lonmax);
 
     std::vector<double> lats(nlat);
-    lats[0] = dom.north() - (isShiftedLat? lat_inc*0.5 : 0);
-    for (size_t i=1; i<nlat; ++i) {
-        lats[i] = lats[0] - lat_inc*static_cast<double>(i);
+    for (size_t j=0; j<nlat; ++j) {
+        lats[j] = dom.north() - ((static_cast<double>(j) + (isShiftedLat? 0.5 : 0.))*ns)/Nj;
     }
 
     std::vector<long> pl(nlat,nlon);
 
     Structured::setup(nlat, lats.data(), pl.data(), lonmin.data(), lonmax.data());
-
     Structured::N_ = !dom.isGlobal()? 0
-                     :  isShiftedLat && ( nlat   %2==0) && (nlon==2* nlat   )? size_t( nlat   /2)
-                     : !isShiftedLat && ((nlat-1)%2==0) && (nlon==2*(nlat-1))? size_t((nlat-1)/2)
-                     : 0;
+                   :  isShiftedLat && ( nlat   %2==0) && (nlon==2* nlat   )? size_t( nlat   /2)
+                   : !isShiftedLat && ((nlat-1)%2==0) && (nlon==2*(nlat-1))? size_t((nlat-1)/2)
+                   : 0;
 
     set_typeinfo();
 }
@@ -81,24 +82,24 @@ void LonLat::setup(const size_t nlon, const size_t nlat, const Domain& dom) {
 void LonLat::setup(const long pl[], const size_t nlat, const Domain& dom) {
 
     ASSERT(nlat>0);
-    const bool
-    isShiftedLon = shift_(Shift::LON),
-    isShiftedLat = shift_(Shift::LAT);
+    ASSERT(shift_(Shift::NONE));
 
-    const double lat_inc = (dom.north() - dom.south())/static_cast<double>(isShiftedLat? nlat : nlat-1);
+    const double
+            ns = dom.north() - dom.south(),
+            ew = dom.east()  - dom.west(),
+            Nj = static_cast<double>(nlat-1);
 
     std::vector<double> lonmin(nlat);
     std::vector<double> lonmax(nlat);
     for (size_t i=0; i<nlat; ++i) {
-        const double lon_inc = (dom.east() - dom.west() )/static_cast<double>(pl[i]);
-        lonmin[i] = dom.west() + (isShiftedLon? lon_inc*0.5 : 0.);
-        lonmax[i] = dom.east() + (isShiftedLon? lon_inc*0.5 : 0.);
+        const double _loninc = pl[i]? (ew)/static_cast<double>(pl[i]) : 0.;
+        lonmin[i] = dom.west();
+        lonmax[i] = dom.east() + (dom.isPeriodicEastWest()? -_loninc : 0.);
     }
 
     std::vector<double> lats(nlat);
-    lats[0] = dom.north() - (isShiftedLat? lat_inc*0.5 : 0);
-    for (size_t i=1; i<nlat; ++i) {
-        lats[i] = lats[0] - lat_inc*static_cast<double>(i);
+    for (size_t j=0; j<nlat; ++j) {
+        lats[j] = dom.north() - (static_cast<double>(j)*ns)/Nj;
     }
 
     Structured::setup(nlat, lats.data(), pl, lonmin.data(), lonmax.data());
