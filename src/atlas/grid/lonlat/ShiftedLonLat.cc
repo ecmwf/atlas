@@ -11,8 +11,6 @@
 
 #include "atlas/grid/lonlat/ShiftedLonLat.h"
 
-#include "eckit/value/Properties.h"
-
 
 namespace atlas {
 namespace grid {
@@ -47,20 +45,18 @@ void ShiftedLonLat::set_typeinfo() {
 ShiftedLonLat::ShiftedLonLat(const eckit::Parametrisation& p) :
     LonLat(Shift::LON|Shift::LAT,Domain::makeGlobal()) {
     setup(p);
-    set_typeinfo();
 }
 
 
-ShiftedLonLat::ShiftedLonLat(const size_t N) :
-    LonLat(Shift::LON|Shift::LAT,Domain::makeGlobal()) {
-    LonLat::setup(N, domain_);
+ShiftedLonLat::ShiftedLonLat(const size_t N, const Domain& dom) :
+    LonLat(Shift::LON|Shift::LAT, dom) {
+    LonLat::setup(N, dom);
 }
 
 
-ShiftedLonLat::ShiftedLonLat(const size_t nlon, const size_t nlat) :
-    LonLat(Shift::LON|Shift::LAT,Domain::makeGlobal()) {
-    LonLat::setup(nlon, nlat, domain_);
-    set_typeinfo();
+ShiftedLonLat::ShiftedLonLat(const size_t nlon, const size_t nlat, const Domain& dom) :
+    LonLat(Shift::LON|Shift::LAT, dom) {
+    LonLat::setup(nlon, nlat, dom);
 }
 
 
@@ -69,11 +65,11 @@ void ShiftedLonLat::setup(const eckit::Parametrisation& p) {
     if (p.get("N",N)) {
         LonLat::setup(N, domain_);
     }
-    else if (p.get("nlon",nlon) && p.get("nlat",nlat)) {
+    else if (p.get("nlon", nlon) && p.get("nlat", nlat)) {
         LonLat::setup(nlon, nlat, domain_);
     }
     else {
-        throw eckit::BadParameter("Params (nlon,nlat) or N missing",Here());
+        throw eckit::BadParameter("Params (nlon,nlat) or N missing", Here());
     }
 }
 
@@ -82,15 +78,14 @@ eckit::Properties ShiftedLonLat::spec() const {
     eckit::Properties grid_spec;
     grid_spec.set("grid_type",  gridType());
     grid_spec.set("short_name", shortName());
-    grid_spec.set("N",          N());
-    grid_spec.set("nlon",       nlon());
-    grid_spec.set("nlat",       nlat());
+    grid_spec.set("N",    N());
+    grid_spec.set("nlon", nlon());
+    grid_spec.set("nlat", nlat());
     return grid_spec;
 }
 
 
-extern "C"
-{
+extern "C" {
 
 
     Structured* atlas__grid__lonlat__ShiftedLonLat(size_t nlon, size_t nlat) {

@@ -48,15 +48,15 @@ ShiftedLon::ShiftedLon(const eckit::Parametrisation& p) :
 }
 
 
-ShiftedLon::ShiftedLon(const size_t N) :
-    LonLat(Shift::LON,Domain::makeGlobal()) {
-    LonLat::setup(N,domain());
+ShiftedLon::ShiftedLon(const size_t N, const Domain& dom) :
+    LonLat(Shift::LON, dom) {
+    LonLat::setup(N, dom);
 }
 
 
-ShiftedLon::ShiftedLon(const size_t nlon, const size_t nlat) :
-    LonLat(Shift::LON,Domain::makeGlobal()) {
-    LonLat::setup(nlon, nlat, domain());
+ShiftedLon::ShiftedLon(const size_t nlon, const size_t nlat, const Domain& dom) :
+    LonLat(Shift::LON, dom) {
+    LonLat::setup(nlon, nlat, dom);
 }
 
 
@@ -78,9 +78,9 @@ eckit::Properties ShiftedLon::spec() const {
     eckit::Properties grid_spec;
     grid_spec.set("grid_type",  gridType());
     grid_spec.set("short_name", shortName());
-    grid_spec.set("N",          N());
-    grid_spec.set("nlon",       nlon());
-    grid_spec.set("nlat",       nlat());
+    grid_spec.set("N",    N());
+    grid_spec.set("nlon", nlon());
+    grid_spec.set("nlat", nlat());
     return grid_spec;
 }
 

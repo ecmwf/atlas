@@ -20,19 +20,19 @@ namespace grid {
 namespace lonlat {
 
 
-class ShiftedLon: public LonLat {
+class ShiftedLon : public LonLat {
 
   public:
 
     static std::string grid_type_str();
 
+    static std::string className();
+
     ShiftedLon(const eckit::Parametrisation&);
 
-    ShiftedLon(const size_t N);
+    ShiftedLon(const size_t N, const Domain& dom=Domain::makeGlobal());
 
-    ShiftedLon(const size_t nlon, const size_t nlat);
-
-    static std::string className();
+    ShiftedLon(const size_t nlon, const size_t nlat, const Domain& dom=Domain::makeGlobal());
 
     virtual eckit::Properties spec() const;
 

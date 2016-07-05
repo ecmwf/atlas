@@ -9,9 +9,6 @@
  */
 
 
-#include <typeinfo>
-#include "eckit/memory/Builder.h"
-#include "atlas/internals/atlas_config.h"
 #include "atlas/grid/lonlat/ShiftedLat.h"
 
 
@@ -48,29 +45,25 @@ void ShiftedLat::set_typeinfo() {
 ShiftedLat::ShiftedLat(const eckit::Parametrisation& p) :
     LonLat(Shift::LAT,Domain::makeGlobal()) {
     setup(p);
-    set_typeinfo();
 }
 
 
-ShiftedLat::ShiftedLat(const size_t N) :
-    LonLat(Shift::LAT,Domain::makeGlobal()) {
-    LonLat::setup(N,domain());
+ShiftedLat::ShiftedLat(const size_t N, const Domain& dom) :
+    LonLat(Shift::LAT, dom) {
+    LonLat::setup(N, dom);
 }
 
 
-ShiftedLat::ShiftedLat(const size_t nlon, const size_t nlat) :
-    LonLat(Shift::LAT,Domain::makeGlobal()) {
-    LonLat::setup(nlon,nlat,domain());
-    set_typeinfo();
+ShiftedLat::ShiftedLat(const size_t nlon, const size_t nlat, const Domain& dom) :
+    LonLat(Shift::LAT, dom) {
+    LonLat::setup(nlon, nlat, dom);
 }
 
 
 void ShiftedLat::setup(const eckit::Parametrisation& p) {
-    // set nlon and nlat
     size_t nlon, nlat, N(0);
-
     if (p.get("N",N)) {
-        LonLat::setup(N,domain_);
+        LonLat::setup(N, domain_);
     }
     else if (p.get("nlon", nlon) && p.get("nlat", nlat)) {
         LonLat::setup(nlon, nlat, domain_);
@@ -83,14 +76,11 @@ void ShiftedLat::setup(const eckit::Parametrisation& p) {
 
 eckit::Properties ShiftedLat::spec() const {
     eckit::Properties grid_spec;
-
-    grid_spec.set("grid_type",gridType() );
-    grid_spec.set("short_name",shortName());
-
-    grid_spec.set("N", N() );
-    grid_spec.set("nlon", nlon() );
-    grid_spec.set("nlat", nlat() );
-
+    grid_spec.set("grid_type",  gridType());
+    grid_spec.set("short_name", shortName());
+    grid_spec.set("N",    N());
+    grid_spec.set("nlon", nlon());
+    grid_spec.set("nlat", nlat());
     return grid_spec;
 }
 

@@ -11,10 +11,6 @@
 
 #include "atlas/grid/lonlat/RegularLonLat.h"
 
-//#include <typeinfo>
-//#include "eckit/memory/Builder.h"
-//#include "atlas/internals/atlas_config.h"
-
 
 namespace atlas {
 namespace grid {
@@ -49,20 +45,17 @@ void RegularLonLat::set_typeinfo() {
 RegularLonLat::RegularLonLat(const eckit::Parametrisation& p) :
     LonLat(Shift::NONE,Domain::makeGlobal()) {
     setup(p);
-    set_typeinfo();
-}
-
-
-RegularLonLat::RegularLonLat(const size_t nlon, const size_t nlat, const Domain& dom) :
-    LonLat(Shift::NONE,dom) {
-    LonLat::setup(nlon, nlat, dom);
 }
 
 
 RegularLonLat::RegularLonLat(const size_t N, const Domain& dom) :
-    LonLat(Shift::NONE,dom) {
-    size_t nlon = 4*N;
-    size_t nlat = 2*N+1;
+    LonLat(Shift::NONE, dom) {
+    LonLat::setup(N, dom);
+}
+
+
+RegularLonLat::RegularLonLat(const size_t nlon, const size_t nlat, const Domain& dom) :
+    LonLat(Shift::NONE, dom) {
     LonLat::setup(nlon, nlat, dom);
 }
 
@@ -70,10 +63,10 @@ RegularLonLat::RegularLonLat(const size_t N, const Domain& dom) :
 void RegularLonLat::setup(const eckit::Parametrisation& p) {
     size_t nlon, nlat, N(0);
     if (p.get("N",N)) {
-        LonLat::setup(N,domain_);
+        LonLat::setup(N, domain_);
     }
     else if (p.get("nlon",nlon) && p.get("nlat",nlat)) {
-        LonLat::setup(nlon,nlat,domain_);
+        LonLat::setup(nlon, nlat, domain_);
     }
     else {
         throw eckit::BadParameter("Params (nlon,nlat) or N missing",Here());
@@ -83,13 +76,11 @@ void RegularLonLat::setup(const eckit::Parametrisation& p) {
 
 eckit::Properties RegularLonLat::spec() const {
     eckit::Properties grid_spec;
-
-    grid_spec.set("grid_type",gridType() );
-    grid_spec.set("short_name",shortName());
-
-    grid_spec.set("nlon", nlon() );
-    grid_spec.set("nlat", nlat() );
-
+    grid_spec.set("grid_type",  gridType());
+    grid_spec.set("short_name", shortName());
+    grid_spec.set("N",    N());
+    grid_spec.set("nlon", nlon());
+    grid_spec.set("nlat", nlat());
     return grid_spec;
 }
 

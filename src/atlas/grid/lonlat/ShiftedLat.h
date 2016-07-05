@@ -20,7 +20,7 @@ namespace grid {
 namespace lonlat {
 
 
-class ShiftedLat: public LonLat {
+class ShiftedLat : public LonLat {
 
   public:
 
@@ -30,9 +30,9 @@ class ShiftedLat: public LonLat {
 
     ShiftedLat(const eckit::Parametrisation&);
 
-    ShiftedLat(const size_t N);
+    ShiftedLat(const size_t N, const Domain& dom=Domain::makeGlobal());
 
-    ShiftedLat(const size_t nlon, const size_t nlat);
+    ShiftedLat(const size_t nlon, const size_t nlat, const Domain& dom=Domain::makeGlobal());
 
     virtual eckit::Properties spec() const;
 

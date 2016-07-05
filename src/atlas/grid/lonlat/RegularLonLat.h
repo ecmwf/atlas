@@ -20,15 +20,7 @@ namespace grid {
 namespace lonlat {
 
 
-/**
- * @brief Regular LonLat Grid
- *
- * This grid is a special case of the class Structured, with
- * equidistant distribution of latitudes and longitudes.
- * Longitude is the X-direction (first  index in C)
- * Latitude  is the Y-direction (second index in C)
- */
-class RegularLonLat: public LonLat {
+class RegularLonLat : public LonLat {
 
   public:
 
@@ -36,20 +28,11 @@ class RegularLonLat: public LonLat {
 
     static std::string className();
 
-    /**
-     * @brief Constructor, parametrizable
-     */
     RegularLonLat(const eckit::Parametrisation&);
 
-    /**
-     * @brief Constructor, grid over a domain
-     */
-    RegularLonLat(const size_t nlon, const size_t nlat, const Domain& dom=Domain::makeGlobal());
-
-    /**
-     * @brief Constructor, grid over a domain
-     */
     RegularLonLat(const size_t N, const Domain& dom=Domain::makeGlobal());
+
+    RegularLonLat(const size_t nlon, const size_t nlat, const Domain& dom=Domain::makeGlobal());
 
     virtual eckit::Properties spec() const;
 
