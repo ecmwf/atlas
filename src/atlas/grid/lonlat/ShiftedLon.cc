@@ -26,7 +26,7 @@ std::string ShiftedLon::grid_type_str() {
 
 
 std::string ShiftedLon::className() {
-    return "atlas.grid..lonlat.ShiftedLon";
+    return "atlas.grid.lonlat.ShiftedLon";
 }
 
 

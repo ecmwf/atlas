@@ -29,7 +29,7 @@ std::string ShiftedLat::grid_type_str() {
 
 
 std::string ShiftedLat::className() {
-    return "atlas.grid..lonlat.ShiftedLat";
+    return "atlas.grid.lonlat.ShiftedLat";
 }
 
 

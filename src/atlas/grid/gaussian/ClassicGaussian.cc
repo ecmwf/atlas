@@ -29,7 +29,7 @@ std::string ClassicGaussian::grid_type_str() {
 
 
 std::string ClassicGaussian::className() {
-    return "atlas.grid..gaussian.ClassicGaussian";
+    return "atlas.grid.gaussian.ClassicGaussian";
 }
 
 

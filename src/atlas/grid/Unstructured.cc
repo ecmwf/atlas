@@ -31,7 +31,7 @@ std::string Unstructured::grid_type_str() {
 
 
 std::string Unstructured::className() {
-    return "atlas.grid..Unstructured";
+    return "atlas.grid.Unstructured";
 }
 
 

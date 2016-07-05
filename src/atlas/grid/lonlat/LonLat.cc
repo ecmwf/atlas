@@ -23,7 +23,7 @@ std::string LonLat::grid_type_str() {
 
 
 std::string LonLat::className() {
-    return "atlas.grid..lonlat.LonLat";
+    return "atlas.grid.lonlat.LonLat";
 }
 
 

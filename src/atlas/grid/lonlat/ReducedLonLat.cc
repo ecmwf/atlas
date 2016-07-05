@@ -26,7 +26,7 @@ std::string ReducedLonLat::grid_type_str() {
 
 
 std::string ReducedLonLat::className() {
-    return "atlas.grid..lonlat.ReducedLonLat";
+    return "atlas.grid.lonlat.ReducedLonLat";
 }
 
 

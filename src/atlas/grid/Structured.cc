@@ -37,7 +37,7 @@ Structured* Structured::create(const std::string& uid) {
 
 
 std::string Structured::className() {
-    return "atlas.grid..Structured";
+    return "atlas.grid.Structured";
 }
 
 
