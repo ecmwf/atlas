@@ -31,17 +31,17 @@ namespace lonlat {
  *   N   = number of latitudes in hemisphere
  *   npts_per_lat[] = number of points on each latitude
  */
-class ReducedLonLat: public LonLat {
+class ReducedLonLat : public LonLat {
 
   public:
 
     static std::string grid_type_str();
 
+    static std::string className();
+
     ReducedLonLat(const eckit::Parametrisation&);
 
     ReducedLonLat(const size_t nlat, const long nlon[], const Domain& dom=Domain::makeGlobal());
-
-    static std::string className();
 
     virtual eckit::Properties spec() const;
 

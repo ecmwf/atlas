@@ -41,14 +41,12 @@ void ReducedLonLat::set_typeinfo() {
 ReducedLonLat::ReducedLonLat(const size_t nlat, const long nlon[], const Domain& dom) :
     LonLat(Shift::NONE,dom) {
     LonLat::setup(nlon,nlat,domain());
-    set_typeinfo();
 }
 
 
 ReducedLonLat::ReducedLonLat(const eckit::Parametrisation& params) :
     LonLat(Shift::NONE,Domain::makeGlobal()) {
     setup(params);
-    set_typeinfo();
 }
 
 
@@ -70,14 +68,12 @@ void ReducedLonLat::setup(const eckit::Parametrisation& params) {
 
 eckit::Properties ReducedLonLat::spec() const {
     eckit::Properties grid_spec;
-
     grid_spec.set("grid_type",  gridType());
     grid_spec.set("short_name", shortName());
     grid_spec.set("N",          N());
     grid_spec.set("nlat",       nlat());
     grid_spec.set("pl",         eckit::makeVectorValue(pl()));
     grid_spec.set("latitudes",  eckit::makeVectorValue(latitudes()));
-
     return grid_spec;
 }
 
