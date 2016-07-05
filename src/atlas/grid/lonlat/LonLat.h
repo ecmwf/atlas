@@ -20,47 +20,25 @@ namespace grid {
 namespace lonlat {
 
 
-class Shift {
+struct Shift {
 
-  public:
     enum Bits {
-        NONE     = 0,
-        LON      = (1<<2),
-        LAT      = (1<<3)
+        NONE = 0,
+        LAT  = (1<<1),
+        LON  = (1<<2)
     };
-    Shift() {
-        bits_ = NONE;
-    }
-    Shift(Bits bits) {
-        bits_ = static_cast<int>(bits);
-    }
-    Shift(int  bits) {
-        bits_ = bits;
-    }
-    Shift(bool shift_lon, bool shift_lat) {
-        bits_ = NONE;
-        if (shift_lon) bits_ |= LON;
-        if (shift_lat) bits_ |= LAT;
+
+    Shift(int bits=NONE) : bits_(bits) {
     }
 
-    bool lat() const      {
-        return check(LAT);
-    }
-    bool lon() const      {
-        return check(LON);
-    }
-    bool lonlat() const   {
-        return check(LON|LAT);
-    }
-    operator bool() const {
-        return (bits_ != 0);
+    Shift(bool shift_lon, bool shift_lat) : bits_((shift_lon? LON:NONE) | (shift_lat? LAT:NONE)) {
     }
 
-  private:
-    bool check(int b) const {
-        return (bits_ & b) == b;
+    bool operator()(int bits) const {
+        return (bits_ & bits) == bits;
     }
-    int bits_;
+
+    const int bits_;
 
 };
 
@@ -87,10 +65,6 @@ class LonLat: public Structured {
     LonLat(const Shift&, const Domain& dom=Domain::makeGlobal());
 
     const Shift& shifted() const {
-        return shift_;
-    }
-
-    bool regular() const {
         return shift_;
     }
 

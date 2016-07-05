@@ -49,8 +49,8 @@ void LonLat::setup(const size_t nlon, const size_t nlat, const Domain& dom) {
     ASSERT(nlat>0);
 
     const bool
-    isShiftedLon = shift_.lon(),
-    isShiftedLat = shift_.lat();
+    isShiftedLon = shift_(Shift::LON),
+    isShiftedLat = shift_(Shift::LAT);
 
     const double
     lon_inc = (dom.east()  - dom.west() )/static_cast<double>(nlon),
@@ -82,8 +82,8 @@ void LonLat::setup(const long pl[], const size_t nlat, const Domain& dom) {
 
     ASSERT(nlat>0);
     const bool
-    isShiftedLon = shift_.lon(),
-    isShiftedLat = shift_.lat();
+    isShiftedLon = shift_(Shift::LON),
+    isShiftedLat = shift_(Shift::LAT);
 
     const double lat_inc = (dom.north() - dom.south())/static_cast<double>(isShiftedLat? nlat : nlat-1);
 
