@@ -40,7 +40,7 @@ class Shift {
     Shift(bool shift_lon, bool shift_lat) {
         bits_ = NONE;
         if (shift_lon) bits_ |= LON;
-        if (shift_lon) bits_ |= LAT;
+        if (shift_lat) bits_ |= LAT;
     }
 
     bool lat() const      {
