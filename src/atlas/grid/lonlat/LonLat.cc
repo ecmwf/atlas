@@ -67,7 +67,7 @@ void LonLat::setup(const size_t nlon, const size_t nlat, const Domain& dom) {
         lats[j] = dom.north() - ((static_cast<double>(j) + (isShiftedLat? 0.5 : 0.))*ns)/Nj;
     }
 
-    std::vector<long> pl(nlat,nlon);
+    std::vector<long> pl(nlat,static_cast<long>(nlon));
 
     Structured::setup(nlat, lats.data(), pl.data(), lonmin.data(), lonmax.data());
     Structured::N_ = !dom.isGlobal()? 0
