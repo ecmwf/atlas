@@ -11,6 +11,7 @@
 
 #include "atlas/grid/Structured.h"
 
+#include <algorithm>
 #include <limits>
 #include "atlas/runtime/ErrorHandling.h"
 
@@ -56,14 +57,6 @@ Structured::~Structured() {
 }
 
 
-void Structured::setup(const size_t nlat, const double lats[], const long pl[]) {
-    std::vector<double>
-        lonmin(nlat,domain_.west()),
-        lonmax(nlat,domain_.east());
-    setup(nlat,lats,pl,lonmin.data(),lonmax.data());
-}
-
-
 void Structured::setup(
     const size_t nlat,
     const double lats[],
@@ -72,50 +65,72 @@ void Structured::setup(
     const double lonmax[] ) {
     ASSERT(nlat>1);  // can't have a grid with just one latitude
 
-    pl_.assign(pl,pl+nlat);
-    lat_.assign(lats,lats+nlat);
-    lonmin_.assign(lonmin,lonmin+nlat);
-    lonmax_.assign(lonmax,lonmax+nlat);
+    pl_    .assign(pl, pl+nlat);
+    lat_   .assign(lats, lats+nlat);
+    lonmin_.assign(lonmin, lonmin+nlat);
+    lonmax_.assign(lonmax, lonmax+nlat);
+    npts_ = static_cast<size_t>(std::accumulate(pl_.begin(), pl_.end(), 0));
+
     lon_inc_.resize(nlat);
+    nlonmin_ = nlonmax_ = static_cast<size_t>(pl_[0]);
 
-    npts_ = 0;
-    nlonmax_ = 0;
-    nlonmin_ = std::numeric_limits<size_t>::max();
-    nlonmax_ = std::numeric_limits<size_t>::min();
-    double lon_min(1000), lon_max(-1000);
-
+    const double ew = domain().east() - domain().west();
     const bool isPeriodicEastWest = domain_.isPeriodicEastWest();
-
     for (size_t jlat = 0; jlat < nlat; ++jlat) {
-        const double ew   = lonmax_[jlat] - lonmin_[jlat];
+        if (jlat>0 && pl_[jlat-1]==pl_[jlat]) {
+            lon_inc_[jlat] = lon_inc_[jlat-1];
+            continue;
+        }
+
         const double ndiv = static_cast<double>(pl_[jlat] + (isPeriodicEastWest? 0:-1));
         lon_inc_[jlat] = pl_[jlat]? ew/ndiv : 0.;
+        nlonmin_ = std::min(static_cast<size_t>(pl_[jlat]),nlonmin_);
+        nlonmax_ = std::max(static_cast<size_t>(pl_[jlat]),nlonmax_);
+    }
+}
 
-        lon_min = std::min(lon_min,lonmin_[jlat]);
-        lon_max = std::max(lon_max,lonmin_[jlat]+(pl_[jlat]-1l)*lon_inc_[jlat]);
-        nlonmax_ = std::max((size_t) pl_[jlat],nlonmax_);
-        nlonmin_ = std::min((size_t) pl_[jlat],nlonmin_);
 
-        npts_ += pl_[jlat];
+void Structured::setup_lon_limits(const size_t nlat, const long pl[], const Domain& dom, double lonmin[], double lonmax[]) {
+    ASSERT(nlat);
+
+    std::fill_n(lonmin, nlat, dom.west());
+    std::fill_n(lonmax, nlat, dom.east());
+
+    const double ew = dom.east() - dom.west();
+    const bool isPeriodicEastWest = dom.isPeriodicEastWest();
+
+    for (size_t jlat = 0; jlat < nlat; ++jlat) {
+        const double ndiv = static_cast<double>(pl[jlat] + (isPeriodicEastWest? 0:-1));
+        lonmax[jlat] -= pl[jlat]? ew/ndiv : 0.;;
     }
 }
 
 
 void Structured::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[]) {
-    // construct pl (assuming global domain)
-    std::vector<long> pl(2*N);
-    std::copy( lon, lon+N, pl.begin() );
-    std::reverse_copy( lon, lon+N, pl.begin()+N );
 
-    // construct latitudess (assuming global domain)
-    std::vector<double> lats(2*N);
+    const size_t nlat = 2*N;
+    ASSERT(nlat);
+
+    // construct pl (assuming global domain)
+    std::vector<long> pl(nlat);
+    std::copy( lon, lon+N, pl.begin() );
+    std::reverse_copy( lon, lon+N, pl.begin()+static_cast<long>(N) );
+
+    // construct latitudes (assuming global domain)
+    std::vector<double> lats(nlat);
     std::copy( lat, lat+N, lats.begin() );
-    std::reverse_copy( lat, lat+N, lats.begin()+N );
-    for(size_t j = N; j < 2*N; ++j)
+    std::reverse_copy( lat, lat+N, lats.begin()+static_cast<long>(N) );
+    for(size_t j = N; j < nlat; ++j) {
         lats[j] *= -1.;
+    }
+
+    // assign longitude limits
+    std::vector<double> lonmin(nlat);
+    std::vector<double> lonmax(nlat);
+    setup_lon_limits(nlat, pl.data(), domain(), lonmin.data(), lonmax.data());
 
     // common setup
-    setup(2*N,lats.data(),pl.data());
+    setup(nlat, lats.data(), pl.data(), lonmin.data(), lonmax.data());
 }
 
 

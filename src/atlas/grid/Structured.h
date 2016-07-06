@@ -85,7 +85,7 @@ class Structured : public Grid {
     }
 
     inline size_t nlon( size_t jlat ) const {
-        return pl_[jlat];
+        return static_cast<size_t>(pl_[jlat]);
     }
 
     inline size_t nlonmax() const {
@@ -105,7 +105,7 @@ class Structured : public Grid {
     }
 
     inline double lon( const size_t jlat, const size_t jlon ) const {
-        return lonmin_[jlat] + (double)jlon * lon_inc_[jlat];
+        return lonmin_[jlat] + static_cast<double>(jlon) * lon_inc_[jlat];
     }
 
     inline double lat( const size_t jlat ) const {
@@ -130,9 +130,9 @@ class Structured : public Grid {
     /// Hash of the PL array
     virtual void hash(eckit::MD5&) const;
 
-    void setup(const size_t nlat, const double lats[], const long pl[]);
-
     void setup(const size_t nlat, const double lats[], const long pl[], const double lonmin[], const double lonmax[]);
+
+    static void setup_lon_limits(const size_t nlat, const long pl[], const Domain& dom, double lonmin[], double lonmax[]);
 
     void setup_lat_hemisphere(const size_t N, const double lat[], const long lon[]);
 
@@ -153,10 +153,10 @@ class Structured : public Grid {
     /// Latitude values
     std::vector<double> lat_;
 
-    // TODO: remove, only to instantiate leaf classees
+    // TODO: remove, only to instantiate leaf classes
     std::string grid_type_;
 
-    // TODO: remove, only to instantiate leaf classees
+    // TODO: remove, only to instantiate leaf classes
     std::string shortName_;
 
     /// Number of points per latitude

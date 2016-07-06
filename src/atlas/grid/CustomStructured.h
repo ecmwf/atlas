@@ -12,10 +12,10 @@
 #ifndef atlas_grid_CustomStructured_h
 #define atlas_grid_CustomStructured_h
 
-#include "eckit/memory/Builder.h"
 #include "eckit/config/Parametrisation.h"
-#include "atlas/internals/Parameters.h"
+#include "eckit/memory/Builder.h"
 #include "atlas/grid/Structured.h"
+#include "atlas/internals/Parameters.h"
 
 
 namespace atlas {
@@ -43,13 +43,13 @@ class CustomStructured: public Structured {
     CustomStructured(
         size_t nlat,
         const double lats[],
-        const long   nlon[],
+        const long pl[],
         const Domain& dom=Domain::makeGlobal() );
 
     CustomStructured(
         size_t nlat,
         const double lats[],
-        const long   nlon[],
+        const long pl[],
         const double lonmin[],
         const double lonmax[],
         const Domain& dom=Domain::makeGlobal() );
