@@ -70,9 +70,10 @@ ecbuild_add_test( TARGET atlas_test_ll
 
 ecbuild_add_test( TARGET atlas_test_parfields
   BOOST
-  MPI      2
-  SOURCES  test_parfields.cc
-  LIBS     atlas
+  MPI        2
+  SOURCES    test_parfields.cc
+  CONDITION  HAVE_TRANS
+  LIBS       atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_halo
