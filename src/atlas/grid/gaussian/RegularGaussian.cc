@@ -34,6 +34,8 @@ std::string RegularGaussian::className() {
 
 RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
     Gaussian(Domain::makeGlobal()) {
+    // TODO: set domain from params
+
     size_t N;
     if (!params.get("N",N)) {
         throw eckit::BadParameter("N missing in Params", Here());

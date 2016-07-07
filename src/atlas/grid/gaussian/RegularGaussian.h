@@ -56,7 +56,7 @@ namespace gaussian {
  * Area: Do we check the area.
  * Area: Can we assume area is multiple of the grids ?
  */
-class RegularGaussian: public Gaussian {
+class RegularGaussian : public Gaussian {
 
   public:
 
@@ -71,7 +71,7 @@ class RegularGaussian: public Gaussian {
     virtual eckit::Properties spec() const;
 
     int nlon() const {
-        return Structured::nlon(0);
+        return static_cast<int>(Structured::nlon(0));
     }
 
     double lon( const size_t jlon ) const {
