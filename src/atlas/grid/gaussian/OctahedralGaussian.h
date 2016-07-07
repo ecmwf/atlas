@@ -24,7 +24,7 @@ namespace grid {
 namespace gaussian {
 
 
-class OctahedralGaussian: public Gaussian {
+class OctahedralGaussian : public Gaussian {
 
   public:
 
@@ -32,10 +32,9 @@ class OctahedralGaussian: public Gaussian {
 
     static std::string grid_type_str();
 
-    OctahedralGaussian(const size_t N);
+    OctahedralGaussian(const size_t N, const Domain& dom=Domain::makeGlobal());
 
-    OctahedralGaussian( const eckit::Parametrisation& arg1);
-
+    OctahedralGaussian(const eckit::Parametrisation&);
 
   private:
 

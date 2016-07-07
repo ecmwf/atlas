@@ -41,8 +41,8 @@ void ClassicGaussian::set_typeinfo() {
 }
 
 
-ClassicGaussian::ClassicGaussian(const size_t N) :
-    Gaussian() {
+ClassicGaussian::ClassicGaussian(const size_t N, const Domain& dom) :
+    Gaussian(dom) {
     std::vector<long> nlon(N);
     classic::points_per_latitude_npole_equator(N,nlon.data());
     setup_N_hemisphere(N,nlon.data());
@@ -51,13 +51,17 @@ ClassicGaussian::ClassicGaussian(const size_t N) :
 
 
 ClassicGaussian::ClassicGaussian(const eckit::Parametrisation& params) :
-    Gaussian() {
+    Gaussian(Domain::makeGlobal()) {
+    // TODO: set domain from params
+
     size_t N;
-    if( ! params.get("N",N) )
+    if (!params.get("N",N))
         throw eckit::BadParameter("N missing in Params",Here());
+
     std::vector<long> nlon(N);
-    classic::points_per_latitude_npole_equator(N,nlon.data());
-    setup_N_hemisphere(N,nlon.data());
+    classic::points_per_latitude_npole_equator(N, nlon.data());
+    setup_N_hemisphere(N, nlon.data());
+
     set_typeinfo();
 }
 

@@ -32,7 +32,7 @@ namespace gaussian {
  *   N   = number of latitudes in hemisphere
  *   npts_per_lat[] = number of points on each latitude
  */
-class ClassicGaussian: public Gaussian {
+class ClassicGaussian : public Gaussian {
 
   public:
 
@@ -42,7 +42,7 @@ class ClassicGaussian: public Gaussian {
 
     ClassicGaussian(const eckit::Parametrisation&);
 
-    ClassicGaussian(const size_t N);
+    ClassicGaussian(const size_t N, const Domain& dom=Domain::makeGlobal());
 
   protected:
 

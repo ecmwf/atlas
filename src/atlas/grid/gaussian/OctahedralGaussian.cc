@@ -37,17 +37,20 @@ std::vector<long> OctahedralGaussian::computePL(const size_t N) {
 }
 
 
-OctahedralGaussian::OctahedralGaussian(const size_t N) :
-    Gaussian() {
+OctahedralGaussian::OctahedralGaussian(const size_t N, const Domain& dom) :
+    Gaussian(dom) {
     construct(N);
     set_typeinfo();
 }
 
 
-OctahedralGaussian::OctahedralGaussian( const eckit::Parametrisation& params) :
-    Gaussian() {
+OctahedralGaussian::OctahedralGaussian(const eckit::Parametrisation& params) :
+    Gaussian(Domain::makeGlobal()) {
+    // TODO: set domain from params
+
     size_t N;
     params.get("N",N);
+
     construct(N);
     set_typeinfo();
 }

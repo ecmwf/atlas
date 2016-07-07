@@ -32,7 +32,7 @@ namespace gaussian {
  * * N   = number of latitudes in hemisphere
  * * npts_per_lat[] = number of points on each latitude
  */
-class ReducedGaussian: public Gaussian {
+class ReducedGaussian : public Gaussian {
 
   public:
 
@@ -42,7 +42,7 @@ class ReducedGaussian: public Gaussian {
 
     ReducedGaussian(const eckit::Parametrisation&);
 
-    ReducedGaussian(const size_t N, const long pl[]);
+    ReducedGaussian(const size_t N, const long pl[], const Domain& dom=Domain::makeGlobal());
 
   protected:
 

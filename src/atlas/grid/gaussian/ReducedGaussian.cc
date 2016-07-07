@@ -33,15 +33,17 @@ std::string ReducedGaussian::className() {
 }
 
 
-ReducedGaussian::ReducedGaussian(const size_t N, const long nlons[]) :
-    Gaussian() {
+ReducedGaussian::ReducedGaussian(const size_t N, const long nlons[], const Domain& dom) :
+    Gaussian(dom) {
     setup_N_hemisphere(N,nlons);
     set_typeinfo();
 }
 
 
 ReducedGaussian::ReducedGaussian(const eckit::Parametrisation& params) :
-    Gaussian() {
+    Gaussian(Domain::makeGlobal()) {
+    // TODO: set domain from params
+
     setup(params);
     set_typeinfo();
 }
