@@ -78,10 +78,9 @@ ecbuild_add_test( TARGET atlas_test_parfields
 
 ecbuild_add_test( TARGET atlas_test_halo
   BOOST
-  MPI        5
-  SOURCES    test_halo.cc ../TestMeshes.h
-  CONDITION  HAVE_TRANS
-  LIBS       atlas
+  MPI      5
+  SOURCES  test_halo.cc ../TestMeshes.h
+  LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_distmesh
