@@ -13,6 +13,7 @@
 
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/util/Metadata.h"
+#include "atlas/util/Config.h"
 
 namespace eckit { class Parametrisation; }
 
@@ -45,8 +46,7 @@ class Structured : public MeshGenerator {
 
 public:
 
-  Structured();
-  Structured(const eckit::Parametrisation&);
+  Structured(const eckit::Parametrisation& = util::NoConfig() );
 
   virtual void generate(const grid::Grid&, const grid::GridDistribution&, Mesh&) const;
   virtual void generate(const grid::Grid&, Mesh&) const;
