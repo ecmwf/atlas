@@ -69,12 +69,6 @@ struct Region
   std::vector<int> nb_lat_elems;
 };
 
-Structured::Structured()
-{
-  configure_defaults();
-}
-
-
 Structured::Structured(const eckit::Parametrisation& p)
 {
   configure_defaults();
@@ -1332,4 +1326,3 @@ static MeshGeneratorBuilder< Structured > __Structured("Structured");
 } // namespace generators
 } // namespace mesh
 } // namespace atlas
-
