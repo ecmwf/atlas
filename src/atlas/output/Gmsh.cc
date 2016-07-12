@@ -123,7 +123,7 @@ util::io::Gmsh writer(const Gmsh::Configuration& c)
 
 std::ios_base::openmode openmode(const Gmsh::Configuration& c)
 {
-  std::ios_base::openmode omode;
+  std::ios_base::openmode omode(std::ios_base::out);
   if     ( std::string(c.openmode)=="w" )  omode = std::ios_base::out;
   else if( std::string(c.openmode)=="a" )  omode = std::ios_base::app;
   if( c.binary )                           omode |= std::ios::binary;
@@ -280,7 +280,7 @@ void Gmsh::write(
 // -----------------------------------------------------------------------------
 
 extern "C" {
-  
+
 Gmsh* atlas__output__Gmsh__create_pathname_mode(const char* pathname, const char* mode)
 {
   Gmsh* gmsh(0);
