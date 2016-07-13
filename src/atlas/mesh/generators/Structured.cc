@@ -36,10 +36,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/internals/Debug.h"
 
-#ifdef ATLAS_HAVE_TRANS
-#include "atlas/grid/partitioners/TransPartitioner.h"
-#endif
-
 #define DEBUG_OUTPUT 0
 
 using namespace eckit;
