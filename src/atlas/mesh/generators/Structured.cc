@@ -18,7 +18,7 @@
 #include "eckit/geometry/Point3.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/Structured.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -39,7 +39,6 @@
 #define DEBUG_OUTPUT 0
 
 using namespace eckit;
-using namespace atlas::grid;
 
 using atlas::internals::Topology;
 
@@ -106,7 +105,7 @@ Structured::Structured(const eckit::Parametrisation& p)
     options.set("ghost_at_end",ghost_at_end);
 
   std::string partitioner;
-  if( partitioners::PartitionerFactory::has("Trans") )
+  if( grid::partitioners::PartitionerFactory::has("Trans") )
     partitioner = "Trans";
   else
     partitioner = "EqualRegions";
@@ -165,7 +164,7 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
 {
     ASSERT(!mesh.generated());
 
-  const grid::global::Structured* rg = dynamic_cast<const grid::global::Structured*>(&grid);
+  const grid::Structured* rg = dynamic_cast<const grid::Structured*>(&grid);
   if( !rg )
     throw eckit::BadCast("Structured can only work with a Structured",Here());
 
@@ -177,7 +176,7 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
   if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
 
   grid::partitioners::Partitioner::Ptr partitioner( grid::partitioners::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
-  GridDistribution::Ptr distribution( partitioner->distribution() );
+  grid::GridDistribution::Ptr distribution( partitioner->distribution() );
   generate( grid, *distribution, mesh );
 }
 
@@ -191,7 +190,7 @@ void Structured::hash(MD5& md5) const
 
 void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
 {
-  const grid::global::Structured* rg = dynamic_cast<const grid::global::Structured*>(&grid);
+  const grid::Structured* rg = dynamic_cast<const grid::Structured*>(&grid);
   if( !rg )
     throw eckit::BadCast("Grid could not be cast to a Structured",Here());
 
@@ -214,10 +213,7 @@ void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& 
 }
 
 
-void Structured::generate_region(const global::Structured& rg,
-                                               const std::vector<int>& parts,
-                                               int mypart,
-                                               Region& region) const
+void Structured::generate_region(const grid::Structured& rg, const std::vector<int>& parts, int mypart, Region& region) const
 {
   double max_angle          = options.get<double>("angle");
   bool   triangulate_quads  = options.get<bool>("triangulate");
@@ -766,11 +762,7 @@ struct GhostNode {
 };
 }
 
-void Structured::generate_mesh(
-    const global::Structured& rg,
-    const std::vector<int>& parts,
-    const Region& region,
-    Mesh& mesh ) const
+void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int>& parts, const Region& region, Mesh& mesh) const
 {
 
   ASSERT(!mesh.generated());
@@ -779,16 +771,33 @@ void Structured::generate_mesh(
   int nparts = options.get<size_t>("nb_parts");
   int n, l;
 
-  bool has_north_pole = rg.lat(0) == 90 && rg.nlon(0) > 0;
-  bool has_south_pole = rg.lat(rg.nlat()-1) == -90 && rg.nlon(rg.nlat()-1) > 0;
-
-  bool include_north_pole = (mypart == 0       ) && options.get<bool>("include_pole") && !has_north_pole;
-  bool include_south_pole = (mypart == nparts-1) && options.get<bool>("include_pole") && !has_south_pole;
+  bool has_north_pole = rg.latitudes().front() ==  90 && rg.pl().front() > 0;
+  bool has_south_pole = rg.latitudes().back()  == -90 && rg.pl().back()  > 0;
   bool three_dimensional  = options.get<bool>("3d");
-  bool patch_north_pole   = (mypart == 0       ) && options.get<bool>("patch_pole") && three_dimensional
-                            && !has_north_pole && rg.nlon(1) > 0;
-  bool patch_south_pole   = (mypart == nparts-1) && options.get<bool>("patch_pole") && three_dimensional
-                            && !has_south_pole && rg.nlon(rg.nlat()-2) > 0;
+
+  bool include_north_pole = (mypart == 0 )
+          && options.get<bool>("include_pole")
+          && !has_north_pole
+          && rg.domain().includesPoleNorth();
+
+  bool include_south_pole = (mypart == nparts-1)
+          && options.get<bool>("include_pole")
+          && !has_south_pole
+          && rg.domain().includesPoleSouth();
+
+  bool patch_north_pole = (mypart == 0)
+          && options.get<bool>("patch_pole")
+          && three_dimensional
+          && !has_north_pole
+          && rg.domain().includesPoleNorth()
+          && rg.nlon(1) > 0;
+
+  bool patch_south_pole = (mypart == nparts-1)
+          && options.get<bool>("patch_pole")
+          && three_dimensional
+          && !has_south_pole
+          && rg.domain().includesPoleSouth()
+          && rg.nlon(rg.nlat()-2) > 0;
 
   if( three_dimensional && nparts != 1 )
     throw BadParameter("Cannot generate three_dimensional mesh in parallel",Here());

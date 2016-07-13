@@ -8,35 +8,32 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/types/Types.h"
+
+#include "atlas/mesh/actions/AddVirtualNodes.h"
+
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/field/Field.h"
 #include "atlas/grid/Domain.h"
-#include "atlas/grid/global/gaussian/OctahedralGaussian.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/gaussian/OctahedralGaussian.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/actions/AddVirtualNodes.h"
-#include "atlas/field/Field.h"
 
-using eckit::geometry::LLPoint2;
-using atlas::grid::global::gaussian::OctahedralGaussian;
-using eckit::operator<<;
 
 namespace atlas {
 namespace mesh {
 namespace actions {
 
-//----------------------------------------------------------------------------------------------------------------------
 
-void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh) const
-{
-    const grid::Domain& domain = grid.domain();
+void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh) const {
+    using eckit::geometry::LLPoint2;
+    const grid::Domain& dom = grid.domain();
 
-    if( domain.global() ) return; // don't add virtual points to global domains
+    if (dom.isGlobal()) return; // don't add virtual points to global domains
 
-    const grid::Grid& octa = OctahedralGaussian(16);
+    const grid::Grid& octa = atlas::grid::gaussian::OctahedralGaussian(16);
 
     std::vector<LLPoint2> allPts;
     octa.lonlat(allPts);
@@ -44,10 +41,9 @@ void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mes
     std::vector<LLPoint2> vPts; // virtual points
 
     // loop over the point and keep the ones that *don't* fall in the domain
-    for(size_t i = 0; i < allPts.size(); ++i)
-    {
+    for(size_t i = 0; i < allPts.size(); ++i) {
         const LLPoint2& p = allPts[i];
-        if( !domain.contains(p.lon(),p.lat()) )
+        if( !dom.contains(p.lon(),p.lat()) )
             vPts.push_back(p);
     }
 
@@ -71,8 +67,7 @@ void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mes
     array::ArrayView<double,2> lonlat ( nodes.lonlat() );
     array::ArrayView<gidx_t,1> gidx   ( nodes.global_index() );
 
-    for(size_t i = 0; i < nb_virtual_pts; ++i)
-    {
+    for(size_t i = 0; i < nb_virtual_pts; ++i) {
         const size_t n = nb_real_pts + i;
         lonlat(n,internals::LON) = vPts[i].lon();
         lonlat(n,internals::LAT) = vPts[i].lat();
@@ -81,7 +76,6 @@ void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mes
     }
 }
 
-//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace actions
 } // namespace mesh

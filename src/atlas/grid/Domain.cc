@@ -8,106 +8,119 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/utils/MD5.h"
-#include "eckit/types/FloatCompare.h"
+
 #include "atlas/grid/Domain.h"
 
-using eckit::FloatCompare;
+#include <algorithm>
+#include "eckit/types/FloatCompare.h"
+#include "eckit/utils/MD5.h"
+
 
 namespace atlas {
 namespace grid {
 
-Domain::Domain(double north, double west, double south, double east) :
-  north_(north),
-  west_(west),
-  south_(south),
-  east_(east)
-{
-  normalise();
+
+typedef eckit::FloatCompare<double> cmp;
+
+
+bool Domain::operator==(const Domain& other) {
+    return cmp::isApproximatelyEqual(north_, other.north_)
+        && cmp::isApproximatelyEqual(west_,  other.west_)
+        && cmp::isApproximatelyEqual(south_, other.south_)
+        && cmp::isApproximatelyEqual(east_,  other.east_);
 }
 
-Domain::~Domain()
-{
+
+void Domain::hash(eckit::MD5& md5) const {
+    md5.add(north_);
+    md5.add(west_);
+    md5.add(south_);
+    md5.add(east_);
 }
 
-void Domain::hash(eckit::MD5& md5) const
-{
-  md5.add(north_);
-  md5.add(west_);
-  md5.add(south_);
-  md5.add(east_);
+
+bool Domain::isEmpty() const {
+    return !cmp::isStrictlyGreater(north_,south_)
+        || !cmp::isStrictlyGreater(east_,west_);
 }
 
-bool Domain::contains( const eckit::geometry::LLPoint2& p ) const
-{
-    return contains(p.lon(),p.lat());
-}
 
-bool Domain::contains(double lon, double lat) const
-{
+bool Domain::contains(double lon, double lat) const {
+    // approximate comparisons include boundary coordinates
     lon = normalise(lon);
-
-    return FloatCompare<double>::isApproximatelyGreaterOrEqual(north_, lat) &&
-           FloatCompare<double>::isApproximatelyGreaterOrEqual(lat, south_) &&
-           FloatCompare<double>::isApproximatelyGreaterOrEqual(lon , west_) &&
-           FloatCompare<double>::isApproximatelyGreaterOrEqual(east_, lon);
+    return  cmp::isApproximatelyGreaterOrEqual(north_, lat) &&
+            cmp::isApproximatelyGreaterOrEqual(lat, south_) &&
+            cmp::isApproximatelyGreaterOrEqual(lon, west_)  &&
+            cmp::isApproximatelyGreaterOrEqual(east_, lon);
 }
 
-Domain Domain::makeGlobal() {
-    return Domain(90.,0.,-90.,360.);
+
+#if 0
+Domain Domain::intersect(const Domain& other) const {
+    return !intersects(other)? makeEmpty()
+           : Domain(
+               std::min(n, other.n),
+               std::min(w, other.w),
+               std::max(s, other.s),
+               std::max(e, other.e) );
 }
 
-bool Domain::global() const
-{
-    // This logic should not be changed
-    // We should not use increments to test for globalness
 
-    return north_ == 90. && south_ == -90. && (east_ - west_) == 360.;
+bool Domain::intersects(const Domain& other) const {
+    ASSERT(other.n >= other.s);
+    ASSERT(other.w <= other.e);
+
+    // strict comparisons ensure resulting areas have 2-dimensionality
+    return  cmp::isStrictlyGreater(e, other.w) &&
+            cmp::isStrictlyGreater(other.e, w) &&
+            cmp::isStrictlyGreater(s, other.n) &&
+            cmp::isStrictlyGreater(other.s, n);
+}
+#endif
+
+
+void Domain::normalise() {
+    ASSERT(north_ <= 90 && south_ >= -90);
+    ASSERT(north_ >= south_);
+
+    while (east_ >  360) {
+        east_ -= 360;
+        west_ -= 360;
+    }
+    while (east_ < -180) {
+        east_ += 360;
+        west_ += 360;
+    }
+    while (east_ < west_) {
+        east_ += 360;
+    }
+
+    ASSERT(west_ <= east_);
 }
 
-void Domain::normalise()
-{
-  while (east_ > 360) {
-      east_ -= 360;
-      west_ -= 360;
-  }
 
-  while (east_ < -180) {
-      east_ += 360;
-      west_ += 360;
-  }
-
-  while (east_ < west_) {
-      east_ += 360;
-  }
-
-  ASSERT(north_ <= 90 && south_ <= 90 && north_ >= -90 && south_ >= -90);
-  ASSERT(north_ >= south_);
-  ASSERT(west_ <= east_);
+double Domain::normalise(double lon) const {
+    while (lon > east_) {
+        lon -= 360;
+    }
+    while (lon < west_) {
+        lon += 360;
+    }
+    return lon;
 }
 
-double Domain::normalise(double lon) const
-{
-  while (lon > east_) {
-      lon -= 360;
-  }
 
-  while (lon < west_) {
-      lon += 360;
-  }
-  return lon;
+void Domain::print(std::ostream& os) const {
+    os  << "Domain["
+        <<  "N:" << north_
+        << ",W:" << west_
+        << ",S:" << south_
+        << ",E:" << east_
+        << ",isGlobal=" << isGlobal()
+        << ",isEmpty="  << isEmpty()
+        << "]";
 }
 
-void Domain::print(std::ostream& os) const
-{
-  os << "Domain("
-     << "N:" << north_
-     << ",W:" << west_
-     << ",S:" << south_
-     << ",E:" << east_
-     << ")";
-}
 
 } // namespace grid
 } // namespace atlas
-

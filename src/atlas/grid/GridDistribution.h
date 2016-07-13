@@ -17,52 +17,77 @@
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/internals/atlas_config.h"
 
-namespace atlas { namespace grid { class Grid; } }
-namespace atlas { namespace grid { namespace partitioners { class Partitioner; } } }
+namespace atlas {
+namespace grid {
+class Grid;
+}
+}
+namespace atlas {
+namespace grid {
+namespace partitioners {
+class Partitioner;
+}
+}
+}
 
 namespace atlas {
 namespace grid {
 
-class GridDistribution: public eckit::Owned
-{
-public:
-  typedef eckit::SharedPtr<GridDistribution> Ptr;
-public:
+class GridDistribution: public eckit::Owned {
+  public:
+    typedef eckit::SharedPtr<GridDistribution> Ptr;
+  public:
 
-  GridDistribution(const Grid&);
+    GridDistribution(const Grid&);
 
-  GridDistribution(const partitioners::Partitioner&);
+    GridDistribution(const partitioners::Partitioner&);
 
-  GridDistribution(size_t npts, int partition[], int part0 = 0);
+    GridDistribution(size_t npts, int partition[], int part0 = 0);
 
-  virtual ~GridDistribution() {}
+    virtual ~GridDistribution() {}
 
-  int partition(const gidx_t gidx) const { return part_[gidx]; }
+    int partition(const gidx_t gidx) const {
+        return part_[gidx];
+    }
 
-  const std::vector<int>& partition() const { return part_; }
+    const std::vector<int>& partition() const {
+        return part_;
+    }
 
-  size_t nb_partitions() const { return nb_partitions_; }
+    size_t nb_partitions() const {
+        return nb_partitions_;
+    }
 
-  operator const std::vector<int>&() const { return part_; }
+    operator const std::vector<int>&() const {
+        return part_;
+    }
 
-  const int* data() const { return part_.data(); }
+    const int* data() const {
+        return part_.data();
+    }
 
-  const std::vector<int>& nb_pts() const { return nb_pts_; }
+    const std::vector<int>& nb_pts() const {
+        return nb_pts_;
+    }
 
-  size_t max_pts() const { return max_pts_; }
-  size_t min_pts() const { return min_pts_; }
+    size_t max_pts() const {
+        return max_pts_;
+    }
+    size_t min_pts() const {
+        return min_pts_;
+    }
 
-private:
-  size_t nb_partitions_;
-  std::vector<int> part_;
-  std::vector<int> nb_pts_;
-  size_t max_pts_;
-  size_t min_pts_;
+  private:
+    size_t nb_partitions_;
+    std::vector<int> part_;
+    std::vector<int> nb_pts_;
+    size_t max_pts_;
+    size_t min_pts_;
 };
 
 extern "C" {
-GridDistribution* atlas__GridDistribution__new(int npts, int part[], int part0);
-void atlas__GridDistribution__delete(GridDistribution* This);
+    GridDistribution* atlas__GridDistribution__new(int npts, int part[], int part0);
+    void atlas__GridDistribution__delete(GridDistribution* This);
 }
 
 } // namespace grid

@@ -34,7 +34,6 @@
 
 
 using namespace eckit;
-using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
@@ -83,7 +82,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
 
   // Create grid and trans object
-  SharedPtr<global::Structured> g ( global::Structured::create( "N80" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "N80" ) );
 
   BOOST_CHECK_EQUAL( g->nlat() , 160 );
 
@@ -92,7 +91,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
 
   grid::partitioners::TransPartitioner partitioner(*g,trans);
-  GridDistribution distribution( partitioner );
+  grid::GridDistribution distribution( partitioner );
 
   // -------------- do checks -------------- //
   BOOST_CHECK_EQUAL( trans.nproc(),  eckit::mpi::size() );
@@ -131,7 +130,7 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 {
   BOOST_TEST_CHECKPOINT("test_trans_partitioner");
   // Create grid and trans object
-  SharedPtr<global::Structured> g ( global::Structured::create( "N80" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "N80" ) );
 
   trans::Trans trans( *g, 0 );
 
@@ -152,7 +151,7 @@ BOOST_AUTO_TEST_CASE( test_trans_options )
 
 BOOST_AUTO_TEST_CASE( test_distspec )
 {
-  SharedPtr<global::Structured> g ( global::Structured::create( "O80" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "O80" ) );
   mesh::generators::Structured generate( atlas::util::Config("angle",0) );
   BOOST_TEST_CHECKPOINT("mesh generator created");
   //trans::Trans trans(*g, 159 );
@@ -184,14 +183,14 @@ BOOST_AUTO_TEST_CASE( test_distspec )
 
 BOOST_AUTO_TEST_CASE( test_distribution )
 {
-  SharedPtr<global::Structured> g ( global::Structured::create( "O80" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "O80" ) );
 
   BOOST_TEST_CHECKPOINT("test_distribution");
 
-  GridDistribution::Ptr d_trans( grid::partitioners::TransPartitioner(*g).distribution() );
+  grid::GridDistribution::Ptr d_trans( grid::partitioners::TransPartitioner(*g).distribution() );
   BOOST_TEST_CHECKPOINT("trans distribution created");
 
-  GridDistribution::Ptr d_eqreg( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
+  grid::GridDistribution::Ptr d_eqreg( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
 
   BOOST_TEST_CHECKPOINT("eqregions distribution created");
 
@@ -211,7 +210,7 @@ BOOST_AUTO_TEST_CASE( test_distribution )
 BOOST_AUTO_TEST_CASE( test_generate_mesh )
 {
   BOOST_TEST_CHECKPOINT("test_generate_mesh");
-  SharedPtr<global::Structured> g ( global::Structured::create( "O80" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "O80" ) );
   mesh::generators::Structured generate( atlas::util::Config
     ("angle",0)
     ("triangulate",true)
@@ -221,11 +220,11 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   mesh::Mesh::Ptr m_default( generate( *g ) );
 
   BOOST_TEST_CHECKPOINT("trans_distribution");
-  GridDistribution::Ptr trans_distribution( grid::partitioners::TransPartitioner(*g).distribution() );
+  grid::GridDistribution::Ptr trans_distribution( grid::partitioners::TransPartitioner(*g).distribution() );
   mesh::Mesh::Ptr m_trans( generate( *g, *trans_distribution ) );
 
   BOOST_TEST_CHECKPOINT("eqreg_distribution");
-  GridDistribution::Ptr eqreg_distribution( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
+  grid::GridDistribution::Ptr eqreg_distribution( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
   mesh::Mesh::Ptr m_eqreg( generate( *g, *eqreg_distribution ) );
 
   array::ArrayView<int,1> p_default( m_default->nodes().partition() );
@@ -248,7 +247,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 {
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
-  SharedPtr<global::Structured> g ( global::Structured::create( "O48" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "O48" ) );
   mesh::generators::Structured generate( atlas::util::Config
     ("angle",0)
     ("triangulate",false)
@@ -284,7 +283,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
 {
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
-  SharedPtr<global::Structured> g ( global::Structured::create( "O48" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "O48" ) );
   SharedPtr<trans::Trans> trans ( new trans::Trans(*g,47) );
 
   SharedPtr<functionspace::Spectral>    spectral    (new functionspace::Spectral(*trans));

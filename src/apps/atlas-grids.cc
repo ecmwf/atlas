@@ -121,8 +121,8 @@ void AtlasGrids::execute(const Args& args)
 
   if( !key.empty() )
   {
-    SharedPtr<global::Structured> grid;
-    try{ grid.reset(global::Structured::create(key) ); }
+    SharedPtr<Structured> grid;
+    try{ grid.reset(Structured::create(key) ); }
     catch( eckit::BadParameter& err ){}
 
     if( !grid ) return;

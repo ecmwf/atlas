@@ -13,146 +13,147 @@
 /// @author Pedro Maciel
 /// @date Jan 2015
 
+
 #ifndef atlas_Grid_H
 #define atlas_Grid_H
 
-#include <cstddef>
-#include <vector>
-#include <cmath>
 #include <string>
-
-#include "eckit/exception/Exceptions.h"
-#include "eckit/value/Properties.h"
+#include <vector>
 #include "eckit/geometry/Point2.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/utils/MD5.h"
-
+#include "eckit/value/Properties.h"
 #include "atlas/grid/Domain.h"
-#include "atlas/util/Config.h"
 
-namespace atlas { namespace mesh { class Mesh; } }
+
+namespace atlas {
+namespace mesh {
+class Mesh;
+}
+}
+
 
 namespace atlas {
 namespace grid {
 
-//----------------------------------------------------------------------------------------------------------------------
 
 class Grid : public eckit::Owned {
 
- public:  // types
+  public:  // types
 
-  typedef eckit::BuilderT1<Grid> builder_t;
-  typedef const eckit::Parametrisation& ARG1;
+    typedef eckit::BuilderT1<Grid> builder_t;
+    typedef const eckit::Parametrisation& ARG1;
+    typedef eckit::SharedPtr<Grid> Ptr;
+    typedef eckit::geometry::LLPoint2 Point; // must be sizeof(double)*2
+    typedef std::string uid_t;
 
-  typedef eckit::SharedPtr<Grid> Ptr;
+  public:  // methods
 
-  typedef eckit::geometry::LLPoint2 Point; // must be sizeof(double)*2
-  typedef std::string uid_t;
+    static std::string className();
 
- public:  // methods
+    static Grid* create(const eckit::Parametrisation&);
 
-  static std::string className() { return "atlas.Grid"; }
+    static Grid* create(const Grid::uid_t& shortName);
 
-  static Grid* create(const eckit::Parametrisation&);
-  static Grid* create(const Grid::uid_t& shortName);
+    /// ctor (default)
+    Grid(const Domain& dom=Domain::makeGlobal());
 
-  /// Default constructor builds a Grid that is Global
-  Grid();
+    /// dtor
+    virtual ~Grid();
 
-  /// Constructor takes a domain for this Grid
-  Grid( const Domain& );
+    Ptr self() {
+        return Ptr(this);    ///< @todo not necessary?
+    }
 
-  virtual ~Grid();
+    /// Human readable name (may not be unique)
+    virtual std::string shortName() const = 0;
 
-  Ptr self() { return Ptr(this); } ///< @todo not necessary?
+    /// Unique grid id
+    /// Computed from the shortName and the hash
+    uid_t uniqueId() const;
 
-  /// Human readable name (may not be unique)
-  virtual std::string shortName() const = 0;
+    /// Adds to the MD5 the information that makes this Grid unique
+    virtual void hash(eckit::MD5&) const = 0;
 
-  /// Unique grid id
-  /// Computed from the shortName and the hash
-  uid_t uniqueId() const;
+    /// @returns the hash of the information that makes this Grid unique
+    eckit::MD5::digest_t hash() const;
 
-  /// Adds to the MD5 the information that makes this Grid unique
-  virtual void hash(eckit::MD5&) const = 0;
+    /// @return area represented by the grid
+    const Domain& domain() const {
+        return domain_;
+    }
 
-  /// @returns the hash of the information that makes this Grid unique
-  eckit::MD5::digest_t hash() const;
+    /// @return number of grid points
+    /// @note This methods should have constant access time, if necessary derived
+    //        classes should compute it at construction
+    virtual size_t npts() const = 0;
 
+    /// Fill provided parameter with grid points, as (lon,lat) values
+    /// @post resizes the vector
+    virtual void lonlat(std::vector<Point>&) const = 0;
 
-  /// @return area which contains the grid
-  virtual const Domain& domain() const;
+    /// Fills the provided vector with the (lon,lat) values
+    /// @post resizes the vector
+    void fillLonLat(std::vector<double>&) const;
 
-  /// Set the domain
-  virtual void domain(const Domain& domain);
+    /// Fills the provided array with the (lon,lat) values
+    /// @note Assumes that the input array has been allocated with correct size
+    /// @param array is an array already allocated with enough size to store all the latlon values
+    /// @param arraySize is the size of the array
+    void fillLonLat(double array[], size_t arraySize) const;
 
-  /// @return number of grid points
-  /// @note This methods should have constant access time, if necessary derived
-  //        classes should compute it at construction
-  virtual size_t npts() const = 0;
+    virtual std::string gridType() const = 0;
 
-  /// Fill provided parameter with grid points, as (lon,lat) values
-  /// @post resizes the vector
-  virtual void lonlat(std::vector<Point>&) const = 0;
+    virtual std::string getOptimalMeshGenerator() const;
 
-  /// Fills the provided vector with the (lon,lat) values
-  /// @post resizes the vector
-  void fillLonLat(std::vector<double>&) const;
+    virtual eckit::Properties spec() const = 0;
 
-  /// Fills the provided array with the (lon,lat) values
-  /// @note Assumes that the input array has been allocated with correct size
-  /// @param array is an array already allocated with enough size to store all the latlon values
-  /// @param arraySize is the size of the array
-  void fillLonLat(double array[], size_t arraySize) const;
+    virtual bool same(const grid::Grid&) const;
 
-  virtual std::string gridType() const = 0;
+  protected:  // methods
 
-  virtual std::string getOptimalMeshGenerator() const;
+    /// Fill provided memory buffer with the grid points, as (lon,lat) values
+    /// This implementation in the base Grid class is not optimal as it incurs in double copy
+    /// Derived classes should reimplement more optimised versions.
+    ///
+    /// @note Assumes that the input buffer has been allocated with correct size,
+    ///       possibly from calling method npts()
+    ///
+    /// @param array to be filled in with the (lon,lat) values
+    /// @param size number of doubles in array
+    ///
+    /// @return the size of bytes copyied in
+    virtual size_t copyLonLatMemory(double* pts, size_t size) const;
 
-  virtual eckit::Properties spec() const = 0;
+    virtual void print(std::ostream&) const = 0;
 
-  virtual bool same(const grid::Grid&) const;
+  private:  // methods
 
-protected:  // methods
+    friend std::ostream& operator<<(std::ostream& s, const grid::Grid& p) {
+        p.print(s);
+        return s;
+    }
 
-  /// Fill provided memory buffer with the grid points, as (lon,lat) values
-  /// This implementation in the base Grid class is not optimal as it incurs in double copy
-  /// Derived classes should reimplement more optimised versions.
-  ///
-  /// @note Assumes that the input buffer has been allocated with correct size,
-  ///       possibly from calling method npts()
-  ///
-  /// @param array to be filled in with the (lon,lat) values
-  /// @param size number of doubles in array
-  ///
-  /// @return the size of bytes copyied in
-  virtual size_t copyLonLatMemory(double* pts, size_t size) const;
+  protected:  // members
 
-  virtual void print(std::ostream&) const = 0;
+    /// Area represented by the grid
+    Domain domain_;
 
-private:  // methods
+  private:  // members
 
-  friend std::ostream& operator<<(std::ostream& s, const grid::Grid& p) {
-      p.print(s);
-      return s;
-  }
+    /// Cache the unique ID
+    mutable uid_t uid_;
 
-protected:  // members
-
-  atlas::grid::Domain domain_;
-
-private:  // members
-
-  mutable uid_t                  uid_;  ///< cache the unique ID
-  mutable eckit::MD5::digest_t   hash_; ///< cache the hash
+    /// Cache the hash
+    mutable eckit::MD5::digest_t hash_;
 
 };
 
-//----------------------------------------------------------------------------------------------------------------------
 
-} // namespace grid
-} // namespace atlas
+}  // namespace grid
+}  // namespace atlas
+
 
 #endif

@@ -8,23 +8,16 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/parser/JSON.h"
-#include "eckit/exception/Exceptions.h"
-#include "atlas/grid/global/Structured.h"
-#include "atlas/grid/global/lonlat/RegularLonLat.h"
-#include "atlas/grid/global/lonlat/ShiftedLonLat.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
-#include "atlas/field/FieldSet.h"
-#include "atlas/field/Field.h"
-#include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/functionspace/NodeColumns.h"
-#include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/functionspace/Spectral.h"
 #include "atlas/trans/Trans.h"
-#include "atlas/internals/Bitflags.h"
-#include "atlas/internals/IsGhost.h"
+
+#include "eckit/parser/JSON.h"
 #include "atlas/array/Array.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/Spectral.h"
+#include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/grid/lonlat/LonLat.h"
+#include "atlas/internals/IsGhost.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/ErrorHandling.h"
 
 // anonymous namespace
@@ -52,7 +45,7 @@ namespace trans {
 
 Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
 {
-  const grid::global::Structured* reduced = dynamic_cast<const grid::global::Structured*>(&grid);
+  const grid::Structured* reduced = dynamic_cast<const grid::Structured*>(&grid);
   if( !reduced )
     throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
   size_t nsmax = 0;
@@ -68,25 +61,25 @@ Trans::Trans(const size_t N, const Trans::Options& p)
 
 Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p )
 {
-  const grid::global::Structured* structured = dynamic_cast<const grid::global::Structured*>(&grid);
-  if( !structured )
-    throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
-
-  const grid::global::lonlat::LonLat* lonlat
-      = dynamic_cast<const grid::global::lonlat::LonLat*>(structured);
-
-  if( lonlat && nsmax > 0 )
-  {
-    if( lonlat->reduced() ) throw eckit::BadParameter("Cannot transform a reduced lonlat grid");
-    if( lonlat->shifted().lonlat() && !lonlat->shifted() )
-      ctor_lonlat( lonlat->nlonmax(), lonlat->nlat(), nsmax, p );
-    else
-      throw eckit::BadParameter("Cannot transform a shifted lat or shifted lon grid");
+  const grid::Structured* structured = dynamic_cast<const grid::Structured*>(&grid);
+  if (!structured) {
+    throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans", Here());
   }
-  else
-    ctor_rgg(structured->nlat(),structured->pl().data(), nsmax, p);
-}
 
+  const grid::lonlat::LonLat* lonlat = dynamic_cast<const grid::lonlat::LonLat*>(structured);
+  if (lonlat && nsmax > 0) {
+    if( lonlat->reduced() ) {
+      throw eckit::BadParameter("Cannot transform a reduced lonlat grid");
+    }
+    else if (lonlat->shifted()(grid::lonlat::Shift::LON) != lonlat->shifted()(grid::lonlat::Shift::LAT)) {
+        throw eckit::BadParameter("Cannot transform a ShiftedLat or ShiftedLon grid");
+    }
+    ctor_lonlat( lonlat->nlonmax(), lonlat->nlat(), nsmax, p );
+  }
+  else {
+    ctor_rgg(structured->nlat(), structured->pl().data(), nsmax, p);
+  }
+}
 
 Trans::Trans(const size_t N, const size_t nsmax, const Trans::Options& p)
 {

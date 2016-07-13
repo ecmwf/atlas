@@ -27,49 +27,48 @@
 
 namespace {
 
-    static eckit::Mutex *local_mutex = 0;
-    static std::map<std::string,
-           atlas::grid::partitioners::PartitionerFactory *> *m = 0;
-    static pthread_once_t once = PTHREAD_ONCE_INIT;
+static eckit::Mutex *local_mutex = 0;
+static std::map<std::string,
+       atlas::grid::partitioners::PartitionerFactory *> *m = 0;
+static pthread_once_t once = PTHREAD_ONCE_INIT;
 
-    static void init() {
-        local_mutex = new eckit::Mutex();
-        m = new std::map<std::string,
-                         atlas::grid::partitioners::PartitionerFactory *>();
-    }
+static void init() {
+    local_mutex = new eckit::Mutex();
+    m = new std::map<std::string,
+    atlas::grid::partitioners::PartitionerFactory *>();
+}
 }
 
 namespace atlas {
 namespace grid {
 namespace partitioners {
 
-Partitioner::Partitioner(const grid::Grid& grid): nb_partitions_(eckit::mpi::size()), grid_(grid)
-{ }
-
-Partitioner::Partitioner(const grid::Grid& grid, const size_t nb_partitions): nb_partitions_(nb_partitions), grid_(grid)
-{ }
-
-Partitioner::~Partitioner()
-{ }
-
-size_t Partitioner::nb_partitions() const
-{
-  return nb_partitions_;
+Partitioner::Partitioner(const grid::Grid& grid): nb_partitions_(eckit::mpi::size()), grid_(grid) {
 }
 
-GridDistribution* Partitioner::distribution() const
-{
-  return new GridDistribution(*this);
+Partitioner::Partitioner(const grid::Grid& grid, const size_t nb_partitions): nb_partitions_(nb_partitions), grid_(grid) {
+}
+
+Partitioner::~Partitioner() {
+}
+
+size_t Partitioner::nb_partitions() const {
+    return nb_partitions_;
+}
+
+GridDistribution* Partitioner::distribution() const {
+    return new GridDistribution(*this);
 }
 
 
 namespace {
 
-template<typename T> void load_builder() { PartitionerBuilder<T>("tmp"); }
+template<typename T> void load_builder() {
+    PartitionerBuilder<T>("tmp");
+}
 
 struct force_link {
-    force_link()
-    {
+    force_link() {
         load_builder< grid::partitioners::EqualRegionsPartitioner >();
 #ifdef ATLAS_HAVE_TRANS
         load_builder< grid::partitioners::TransPartitioner >();
@@ -113,15 +112,14 @@ void PartitionerFactory::list(std::ostream& out) {
     }
 }
 
-bool PartitionerFactory::has(const std::string& name)
-{
-  pthread_once(&once, init);
+bool PartitionerFactory::has(const std::string& name) {
+    pthread_once(&once, init);
 
-  eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-  static force_link static_linking;
+    static force_link static_linking;
 
-  return ( m->find(name) != m->end() );
+    return ( m->find(name) != m->end() );
 }
 
 

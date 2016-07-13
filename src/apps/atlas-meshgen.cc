@@ -163,16 +163,16 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( eckit::mpi::size() > 1 || edges )
     meshgenerator_config.set("3d",false);
 
-  SharedPtr<global::Structured> grid;
+  SharedPtr<Structured> grid;
   if( key.size() )
   {
-    try{ grid.reset( global::Structured::create(key) ); }
+    try{ grid.reset( Structured::create(key) ); }
     catch( eckit::BadParameter& e ){}
   }
   else if( path_in.path().size() )
   {
     Log::info() << "Creating grid from file " << path_in << std::endl;
-    try{ grid.reset( global::Structured::create( atlas::util::Config(path_in) ) ); }
+    try{ grid.reset( Structured::create( atlas::util::Config(path_in) ) ); }
     catch( eckit::BadParameter& e ){}
   }
   else
