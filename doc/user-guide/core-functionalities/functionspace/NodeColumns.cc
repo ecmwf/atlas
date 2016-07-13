@@ -18,7 +18,7 @@ using atlas::field::FieldSet;
 using atlas::field::global;
 using atlas::functionspace::NodeColumns;
 using atlas::gidx_t;
-using atlas::grid::global::Structured;
+using atlas::grid::Structured;
 using atlas::Log;
 using atlas::mesh::Halo;
 using atlas::mesh::Mesh;

@@ -1,10 +1,10 @@
 #include "atlas/atlas.h"
-#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/Structured.h"
 #include "atlas/runtime/Log.h"
 
 using atlas::atlas_init;
 using atlas::atlas_finalize;
-using atlas::grid::global::Structured;
+using atlas::grid::Structured;
 using atlas::Log;
 
 int main(int argc, char *argv[])
