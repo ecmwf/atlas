@@ -28,12 +28,12 @@ Checksum::Checksum(const std::string& name) :
 
 void Checksum::setup( const int part[],
                       const int remote_idx[], const int base,
-                      const gidx_t glb_idx[], const gidx_t max_glb_idx,
+                      const gidx_t glb_idx[],
                       const int parsize )
 {
   parsize_ = parsize;
   gather_.setup(part,remote_idx,base,
-                glb_idx,max_glb_idx,parsize);
+                glb_idx,parsize);
   is_setup_ = true;
 }
 
@@ -61,35 +61,35 @@ void atlas__Checksum__delete (Checksum* This) {
 
 void atlas__Checksum__setup32 ( Checksum* This,  int part[],
                                 int remote_idx[], int base,
-                                int glb_idx[], int max_glb_idx,
+                                int glb_idx[],
                                 int parsize )
 {
 #if ATLAS_BITS_GLOBAL==32
-  This->setup(part,remote_idx,base,glb_idx,max_glb_idx,parsize);
+  This->setup(part,remote_idx,base,glb_idx,parsize);
 #else
   std::vector<gidx_t> glb_idx_convert(parsize);
   for( int j=0; j<parsize; ++j )
   {
     glb_idx_convert[j] = glb_idx[j];
   }
-  This->setup(part,remote_idx,base,glb_idx_convert.data(),max_glb_idx,parsize);
+  This->setup(part,remote_idx,base,glb_idx_convert.data(),parsize);
 #endif
 }
 
 void atlas__Checksum__setup64 ( Checksum* This,  int part[],
                                 int remote_idx[], int base,
-                                long glb_idx[], long max_glb_idx,
+                                long glb_idx[],
                                 int parsize )
 {
 #if ATLAS_BITS_GLOBAL==64
-  This->setup(part,remote_idx,base,glb_idx,max_glb_idx,parsize);
+  This->setup(part,remote_idx,base,glb_idx,parsize);
 #else
   std::vector<gidx_t> glb_idx_convert(parsize);
   for( int j=0; j<parsize; ++j )
   {
     glb_idx_convert[j] = glb_idx[j];
   }
-  This->setup(part,remote_idx,base,glb_idx_convert.data(),max_glb_idx,parsize);
+  This->setup(part,remote_idx,base,glb_idx_convert.data(),parsize);
 #endif
 }
 

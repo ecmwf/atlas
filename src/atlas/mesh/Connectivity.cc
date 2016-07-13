@@ -29,13 +29,13 @@ namespace mesh {
 IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
   name_(name),
   owns_(true),
+  owned_displs_(1,0ul),
+  owned_counts_(1,0ul),
   values_(0),
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
   rows_(0),
   displs_(0),
   counts_(0),
-  owned_displs_(1,0ul),
-  owned_counts_(1,0ul),
   maxcols_(0),
   mincols_(std::numeric_limits<size_t>::max()),
   ctxt_update_(0),
@@ -301,10 +301,10 @@ MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, siz
 
 MultiBlockConnectivity::MultiBlockConnectivity(const std::string& name) :
   IrregularConnectivity(name),
-  blocks_(0),
-  block_displs_(0),
   owned_block_displs_(1,0ul),
-  owned_block_cols_()
+  owned_block_cols_(),
+  blocks_(0),
+  block_displs_(0)
 {}
 
 //------------------------------------------------------------------------------------------------------
@@ -379,8 +379,8 @@ void MultiBlockConnectivity::add( size_t rows, const size_t cols[] )
   size_t max=0;
   for( size_t j=0; j<rows; ++j )
   {
-  	min = std::min(min,cols[j]);
-  	max = std::min(max,cols[j]);
+    min = std::min(min,cols[j]);
+    max = std::min(max,cols[j]);
   }
   if( min != max ) throw eckit::AssertionFailed("MultiBlockConnectivity::add(rows,cols[]): all elements of cls[] must be identical");
   IrregularConnectivity::add(rows,cols);
@@ -499,7 +499,7 @@ void MultiBlockConnectivity::rebuild_block_connectivity()
 
 
 BlockConnectivity::BlockConnectivity() :
-  owns_(true), values_(0), rows_(0), cols_(0),
+  owns_(true), rows_(0), cols_(0), values_(0),
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
 {
 }

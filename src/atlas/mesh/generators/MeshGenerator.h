@@ -13,9 +13,13 @@
 
 #include <iosfwd>
 #include <string>
+
 #include "eckit/memory/Owned.h"
 #include "eckit/config/Parametrisation.h"
+
 #include "atlas/util/Config.h"
+
+namespace eckit { class MD5; }
 
 namespace atlas {
 namespace mesh {
@@ -32,7 +36,7 @@ namespace atlas {
 namespace mesh {
 namespace generators {
 
-// -----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 class MeshGenerator : public eckit::Owned {
 
@@ -40,6 +44,7 @@ public:
 
   typedef eckit::SharedPtr<MeshGenerator> Ptr;
   typedef atlas::util::Config Parameters;
+
   static MeshGenerator* create(const std::string &, const eckit::Parametrisation & = Parameters());
 
 public:
@@ -47,6 +52,8 @@ public:
     MeshGenerator();
 
     virtual ~MeshGenerator();
+
+    virtual void hash(eckit::MD5&) const = 0;
 
     virtual void generate( const grid::Grid&, const grid::GridDistribution&, Mesh& ) const =0;
     virtual void generate( const grid::Grid&, Mesh& ) const =0;
@@ -59,10 +66,11 @@ public:
 
 };
 
-
+//----------------------------------------------------------------------------------------------------------------------
 
 class MeshGeneratorFactory {
-  public:
+public:
+
     /*!
      * \brief build MeshGenerator with factory key, and default options
      * \return mesh generator
@@ -81,18 +89,20 @@ class MeshGeneratorFactory {
      */
     static void list(std::ostream &);
 
-  private:
+private:
+
     std::string name_;
     virtual MeshGenerator* make() = 0 ;
     virtual MeshGenerator* make(const eckit::Parametrisation&) = 0 ;
 
-  protected:
+protected:
 
     MeshGeneratorFactory(const std::string&);
     virtual ~MeshGeneratorFactory();
 
 };
 
+//----------------------------------------------------------------------------------------------------------------------
 
 template<class T>
 class MeshGeneratorBuilder : public MeshGeneratorFactory {
@@ -106,7 +116,7 @@ class MeshGeneratorBuilder : public MeshGeneratorFactory {
     MeshGeneratorBuilder(const std::string& name) : MeshGeneratorFactory(name) {}
 };
 
-// -----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 #define Parametrisation eckit::Parametrisation
 #define grid_Grid grid::Grid
@@ -122,6 +132,8 @@ Mesh* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid
 #undef grid_Grid
 #undef grid_GridDistribution
 #undef Parametrisation
+
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace generators
 } // namespace mesh

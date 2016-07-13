@@ -91,38 +91,24 @@ subroutine atlas_Checksum__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_Checksum__delete
 
-subroutine Checksum__setup32(this, part, remote_idx, glb_idx, opt_max_glb_idx)
+subroutine Checksum__setup32(this, part, remote_idx, glb_idx )
   use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
   integer(c_int), intent(in) :: glb_idx(:)
-  integer(c_int), optional, intent(in) :: opt_max_glb_idx
-  integer(c_int) :: max_glb_idx
-  if (.not. present(opt_max_glb_idx) ) then
-    max_glb_idx = huge(max_glb_idx)
-  else
-    max_glb_idx = opt_max_glb_idx
-  endif
   call atlas__Checksum__setup32( this%c_ptr(), part, remote_idx, 1, &
-    &                          glb_idx, max_glb_idx, size(part) )
+    &                          glb_idx, size(part) )
 end subroutine Checksum__setup32
 
-subroutine Checksum__setup64(this, part, remote_idx, glb_idx, opt_max_glb_idx)
+subroutine Checksum__setup64(this, part, remote_idx, glb_idx)
   use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
   integer(c_long), intent(in) :: glb_idx(:)
-  integer(c_long), optional, intent(in) :: opt_max_glb_idx
-  integer(c_long) :: max_glb_idx
-  if (.not. present(opt_max_glb_idx) ) then
-    max_glb_idx = huge(max_glb_idx)
-  else
-    max_glb_idx = opt_max_glb_idx
-  endif
   call atlas__Checksum__setup64( this%c_ptr(), part, remote_idx, 1, &
-    &                            glb_idx, max_glb_idx, size(part) )
+    &                            glb_idx, size(part) )
 end subroutine Checksum__setup64
 
 function Checksum__execute_int32_r1(this, loc_field_data) result(checksum)

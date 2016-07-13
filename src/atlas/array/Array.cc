@@ -132,6 +132,11 @@ Array* Array::create( const Array& other )
   return array;
 }
 
+template <> Array* Array::wrap(int data[], const ArraySpec& s) { return new ArrayT<int>(data,s); }
+template <> Array* Array::wrap(long data[], const ArraySpec& s) { return new ArrayT<long>(data,s); }
+template <> Array* Array::wrap(float data[], const ArraySpec& s) { return new ArrayT<float>(data,s); }
+template <> Array* Array::wrap(double data[], const ArraySpec& s) { return new ArrayT<double>(data,s); }
+
 template <> Array* Array::wrap(int data[], const ArrayShape& s) { return new ArrayT<int>(data,s); }
 template <> Array* Array::wrap(long data[], const ArrayShape& s) { return new ArrayT<long>(data,s); }
 template <> Array* Array::wrap(float data[], const ArrayShape& s) { return new ArrayT<float>(data,s); }

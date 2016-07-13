@@ -119,38 +119,24 @@ subroutine atlas_GatherScatter__delete(this)
 end subroutine atlas_GatherScatter__delete
 
 
-subroutine GatherScatter__setup32(this, part, remote_idx, glb_idx, opt_max_glb_idx)
+subroutine GatherScatter__setup32(this, part, remote_idx, glb_idx)
   use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
   integer(c_int), intent(in) :: glb_idx(:)
-  integer(c_int), optional, intent(in) :: opt_max_glb_idx
-  integer(c_int) :: max_glb_idx
-  if (.not. present(opt_max_glb_idx) ) then
-    max_glb_idx = huge(max_glb_idx)
-  else
-    max_glb_idx = opt_max_glb_idx
-  endif
   call atlas__GatherScatter__setup32( this%c_ptr(), part, remote_idx, 1, &
-    &                        glb_idx, max_glb_idx, size(part) )
+    &                        glb_idx, size(part) )
 end subroutine GatherScatter__setup32
 
-subroutine GatherScatter__setup64(this, part, remote_idx, glb_idx, opt_max_glb_idx)
+subroutine GatherScatter__setup64(this, part, remote_idx, glb_idx )
   use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
   integer(c_long), intent(in) :: glb_idx(:)
-  integer(c_long), optional, intent(in) :: opt_max_glb_idx
-  integer(c_long) :: max_glb_idx
-  if (.not. present(opt_max_glb_idx) ) then
-    max_glb_idx = huge(max_glb_idx)
-  else
-    max_glb_idx = opt_max_glb_idx
-  endif
   call atlas__GatherScatter__setup64( this%c_ptr(), part, remote_idx, 1, &
-    &                        glb_idx, max_glb_idx, size(part) )
+    &                        glb_idx, size(part) )
 end subroutine GatherScatter__setup64
 
 function GatherScatter__glb_dof(this) result(glb_dof)

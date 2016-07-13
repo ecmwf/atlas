@@ -12,7 +12,7 @@
 #include "atlas/atlas_f.h"
 
 #ifdef ATLAS_HAVE_MPI
-use mpi
+#include "mpif.h"
 #else
 use mpistubs
 #endif

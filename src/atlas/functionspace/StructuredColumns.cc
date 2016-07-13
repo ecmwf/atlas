@@ -25,6 +25,41 @@
 namespace atlas {
 namespace functionspace {
 
+
+namespace {
+void set_field_metadata(const eckit::Parametrisation& config, field::Field& field)
+{
+  bool global(false);
+  if( config.get("global",global) )
+  {
+    if( global )
+    {
+      size_t owner(0);
+      config.get("owner",owner);
+      field.metadata().set("owner",owner);
+    }
+  }
+  field.metadata().set("global",global);
+}
+}
+
+size_t StructuredColumns::config_size(const eckit::Parametrisation& config) const
+{
+  size_t size = npts();
+  bool global(false);
+  if( config.get("global",global) )
+  {
+    if( global )
+    {
+      size_t owner(0);
+      config.get("owner",owner);
+      size = (eckit::mpi::rank() == owner ? grid_->npts() : 0);
+    }
+  }
+  return size;
+}
+
+
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
@@ -42,9 +77,6 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
     trans_ = new trans::Trans(*grid_);
 
     npts_ = trans_->ngptot();
-
-    // Maximum number of global points in the longitude direction
-    int nlonmax = dynamic_cast<const grid::global::Structured*>(&grid)->nlonmax();
 
     // Number of latitude bands
     int n_regions_NS = trans_->n_regions_NS();
@@ -71,15 +103,12 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
     // Note that it is associated to nptrfrstlat
     array::ArrayView<int,2> nonl = trans_->nonl();
 
-    // Total number of longitudes per latitude
-    array::ArrayView<int,1> nloen = trans_->nloen();
-
     size_t proc(0);
     // Loop over number of latitude bands (ja)
-    for (size_t ja = 0; ja < n_regions_NS; ++ja)
+    for (int ja = 0; ja < n_regions_NS; ++ja)
     {
         // Loop over number of longitude bands (jb)
-        for (size_t jb = 0; jb < n_regions[ja]; ++jb)
+        for (int jb = 0; jb < n_regions[ja]; ++jb)
         {
             if (proc == eckit::mpi::rank())
             {
@@ -170,11 +199,13 @@ StructuredColumns::~StructuredColumns()
 // ----------------------------------------------------------------------------
 // Create Field
 // ----------------------------------------------------------------------------
-field::Field* StructuredColumns::createField(const std::string& name, array::DataType datatype ) const
+field::Field* StructuredColumns::createField(const std::string& name, array::DataType datatype, const eckit::Parametrisation& options ) const
 {
 #ifdef ATLAS_HAVE_TRANS
-    field::Field* field = field::Field::create(name, datatype, array::make_shape(trans_->ngptot()));
+    size_t npts = config_size(options);
+    field::Field* field = field::Field::create(name, datatype, array::make_shape(npts));
     field->set_functionspace(*this);
+    set_field_metadata(options,*field);
     return field;
 #else
     if( eckit::mpi::size() > 1 )
@@ -185,6 +216,7 @@ field::Field* StructuredColumns::createField(const std::string& name, array::Dat
     }
     field::Field* field = field::Field::create(name, datatype, array::make_shape(grid_->npts()) );
     field->set_functionspace(*this);
+    set_field_metadata(options,*field);
     return field;
 #endif
 }
@@ -197,14 +229,16 @@ field::Field* StructuredColumns::createField(const std::string& name, array::Dat
 // ----------------------------------------------------------------------------
 field::Field* StructuredColumns::createField(
     const std::string& name, array::DataType datatype,
-    size_t levels) const
+    size_t levels, const eckit::Parametrisation& options) const
 {
 #ifdef ATLAS_HAVE_TRANS
+    size_t npts = config_size(options);
     field::Field* field = field::Field::create<double>(
-                    name, array::make_shape(trans_->ngptot(), levels));
+                    name, array::make_shape(npts, levels));
 
     field->set_functionspace(*this);
     field->set_levels(levels);
+    set_field_metadata(options,*field);
     return field;
 #else
     if( eckit::mpi::size() > 1 )
@@ -217,50 +251,11 @@ field::Field* StructuredColumns::createField(
                     name, array::make_shape(grid_->npts(), levels));
 
     field->set_functionspace(*this);
+    set_field_metadata(options,*field);
     return field;
 #endif
 }
 // ----------------------------------------------------------------------------
-
-
-
-// ----------------------------------------------------------------------------
-// Create global Field
-// ----------------------------------------------------------------------------
-field::Field* StructuredColumns::createGlobalField(
-    const std::string& name,
-    array::DataType datatype ) const
-{
-    field::Field* field = field::Field::create(
-      name,
-      datatype,
-      array::make_shape(grid_->npts()) );
-    field->set_functionspace(*this);
-    return field;
-}
-
-// ----------------------------------------------------------------------------
-
-
-
-// ----------------------------------------------------------------------------
-// Create global Field with vertical levels
-// ----------------------------------------------------------------------------
-field::Field* StructuredColumns::createGlobalField(
-    const std::string& name,
-    array::DataType datatype,
-    size_t levels) const
-{
-    field::Field* field = field::Field::create(
-      name,
-      datatype,
-      array::make_shape(grid_->npts(), levels) );
-
-    field->set_functionspace(*this);
-    return field;
-}
-// ----------------------------------------------------------------------------
-
 
 
 // ----------------------------------------------------------------------------
@@ -286,13 +281,15 @@ void StructuredColumns::gather(
             throw eckit::BadValue(err.str());
         }
 
-        std::vector<int> nto(1,1);
+        size_t root(0);
+        glb.metadata().get("owner",root);
+        std::vector<int> nto(1,root+1);
         if( loc.rank() > 1 )
         {
             nto.resize(loc.stride(0));
             for( size_t i=0; i<nto.size(); ++i )
             {
-                nto[i] = 1;
+                nto[i] = root+1;
             }
         }
         trans_->gathgrid(nto.size(), nto.data(),
@@ -348,17 +345,21 @@ void StructuredColumns::scatter(
             throw eckit::BadValue(err.str());
         }
 
-        std::vector<int> nfrom(1,1);
+        size_t root(0);
+        glb.metadata().get("owner",root);
+        std::vector<int> nfrom(1,root+1);
         if( loc.rank() > 1 )
         {
             nfrom.resize(loc.stride(0));
             for( size_t i=0; i<nfrom.size(); ++i)
             {
-                nfrom[i] = 1;
+                nfrom[i] = root+1;
             }
         }
         trans_->distgrid(nfrom.size(), nfrom.data(),
                          glb.data<double>(), loc.data<double>());
+        glb.metadata().broadcast(loc.metadata(),root);
+        loc.metadata().set("global",false);
   }
 #else
     eckit::NotImplemented("StructuredColumns::scatter currently relies "
@@ -467,38 +468,20 @@ void atlas__functionspace__StructuredColumns__delete (StructuredColumns* This)
   );
 }
 
-field::Field* atlas__fs__StructuredColumns__create_field_name_kind (const StructuredColumns* This, const char* name, int kind)
+field::Field* atlas__fs__StructuredColumns__create_field_name_kind (const StructuredColumns* This, const char* name, int kind, const eckit::Parametrisation* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createField(std::string(name),array::DataType(kind));
+    return This->createField(std::string(name),array::DataType(kind),*options);
   );
   return 0;
 }
 
-field::Field* atlas__fs__StructuredColumns__create_field_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels)
+field::Field* atlas__fs__StructuredColumns__create_field_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels, const eckit::Parametrisation* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createField(std::string(name),array::DataType(kind),levels);
-  );
-  return 0;
-}
-
-field::Field* atlas__fs__StructuredColumns__create_gfield_name_kind (const StructuredColumns* This, const char* name, int kind)
-{
-  ATLAS_ERROR_HANDLING (
-    ASSERT(This);
-    return This->createGlobalField(std::string(name),array::DataType(kind));
-  );
-  return 0;
-}
-
-field::Field* atlas__fs__StructuredColumns__create_gfield_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return This->createGlobalField(std::string(name),array::DataType(kind),levels);
+    return This->createField(std::string(name),array::DataType(kind),levels,*options);
   );
   return 0;
 }

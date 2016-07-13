@@ -102,7 +102,7 @@ void Method::setup()
       }
       array::ArrayView<double,2> node2edge_sign( nodes_.field("node2edge_sign") );
 
-      atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
+      atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
       {
         for(size_t jedge = 0; jedge < node_edge_connectivity.cols(jnode); ++jedge)
         {

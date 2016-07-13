@@ -246,7 +246,7 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
   array::IndexView<int,   1> ridx   ( nodes.remote_index()  );
   array::ArrayView<int,   1> part   ( nodes.partition()   );
   array::ArrayView<double,2> lonlat ( nodes.lonlat() );
-  int nb_nodes = nodes.size();
+  size_t nb_nodes = nodes.size();
 
 
   int varsize=2;
@@ -255,7 +255,7 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
   std::vector< std::vector<uid_t> > recv_needed( eckit::mpi::size() );
   int sendcnt=0;
   std::map<uid_t,int> lookup;
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {
     uid_t uid = compute_uid(jnode);
     if( size_t(part(jnode)) == mypart )
@@ -266,7 +266,7 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     else
     {
       ASSERT( jnode < part.size() );
-      if( part(jnode) >= proc.size() )
+      if( part(jnode) >= (int)proc.size() )
       {
         std::stringstream msg;
         msg << "Assertion [part("<<jnode<<") < proc.size()] failed\n"
@@ -274,8 +274,8 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
             << "proc.size() = " << proc.size();
         eckit::AssertionFailed(msg.str(),Here());
       }
-      ASSERT( part(jnode) < proc.size() );
-      ASSERT( proc[part(jnode)] < send_needed.size() );
+      ASSERT( part(jnode) < (int)proc.size() );
+      ASSERT( (size_t)proc[part(jnode)] < send_needed.size() );
       send_needed[ proc[part(jnode)] ].push_back( uid  );
       send_needed[ proc[part(jnode)] ].push_back( jnode );
       sendcnt++;
@@ -361,9 +361,7 @@ field::Field& build_edges_partition( Mesh& mesh )
   array::ArrayView<gidx_t,   1> gidx    ( nodes.global_index() );
 #endif
 
-  const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
   array::ArrayView<int,1>     elem_part    ( mesh.cells().partition() );
-  array::ArrayView<gidx_t,1>  elem_glb_idx ( mesh.cells().global_index() );
 
   PeriodicTransform transform;
 
@@ -456,7 +454,7 @@ field::Field& build_edges_partition( Mesh& mesh )
     double centroid[2];
     std::vector< std::vector<uid_t> > send_unknown( eckit::mpi::size() );
     std::vector< std::vector<uid_t> > recv_unknown( eckit::mpi::size() );
-    for( int jedge=0; jedge<nb_edges; ++jedge )
+    for( size_t jedge=0; jedge<nb_edges; ++jedge )
     {
       int ip1 = edge_nodes(jedge,0);
       int ip2 = edge_nodes(jedge,1);
@@ -566,7 +564,7 @@ field::Field& build_edges_partition( Mesh& mesh )
   }
 
   // Sanity check
-  for( int jedge=0; jedge<nb_edges; ++jedge )
+  for( size_t jedge=0; jedge<nb_edges; ++jedge )
   {
     int ip1 = edge_nodes(jedge,0);
     int ip2 = edge_nodes(jedge,1);

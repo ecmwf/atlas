@@ -13,22 +13,24 @@
 
 #include <cmath>
 #include <iostream>
+
+#include "atlas/atlas.h"
+#include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/internals/Parameters.h"
+#include "atlas/mesh/generators/Structured.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
+#include "atlas/numerics/fvm/Method.h"
+#include "atlas/numerics/Nabla.h"
+#include "atlas/output/Gmsh.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/util/Config.h"
+#include "atlas/util/Constants.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/atlas.h"
-#include "atlas/numerics/Nabla.h"
-#include "atlas/util/Config.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/Structured.h"
-#include "atlas/numerics/fvm/Method.h"
-#include "atlas/mesh/Nodes.h"
-#include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/util/Constants.h"
-#include "atlas/util/io/Gmsh.h"
-#include "atlas/field/FieldSet.h"
-#include "atlas/parallel/mpi/mpi.h"
+
 
 using namespace eckit;
 using namespace atlas::numerics;
@@ -110,10 +112,14 @@ void rotated_flow_magnitude(const fvm::Method& fvm, field::Field& field, const d
   }
 }
 
-
+static std::string griduid() { return "Slat80"; }
 
 struct AtlasFixture {
-    AtlasFixture()  { atlas_init(); }
+    AtlasFixture()
+    {
+      atlas_init(boost::unit_test::framework::master_test_suite().argc,
+                 boost::unit_test::framework::master_test_suite().argv);
+    }
     ~AtlasFixture() { atlas_finalize(); }
 };
 
@@ -127,7 +133,7 @@ BOOST_AUTO_TEST_CASE( test_factory )
 BOOST_AUTO_TEST_CASE( test_build )
 {
   Log::info() << "test_build" << std::endl;
-  SharedPtr<Grid> grid ( Grid::create("O200") );
+  SharedPtr<Grid> grid ( Grid::create("O16") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
   const double R = util::Earth::radiusInMeters();
@@ -145,7 +151,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
   Log::info() << "test_grad" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create("O32") );
+  SharedPtr<Grid> grid ( Grid::create(griduid()) );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
@@ -156,7 +162,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
   size_t nlev = 1;
 
   field::FieldSet fields;
-  fields.add( fvm.node_columns().createField<double>("scalar",nlev) );
+  fields.add( fvm.node_columns().createField<double>("scalar",nlev,array::make_shape(1)) );
   fields.add( fvm.node_columns().createField<double>("rscalar",nlev) );
   fields.add( fvm.node_columns().createField<double>("grad",nlev,array::make_shape(2)) );
   fields.add( fvm.node_columns().createField<double>("rgrad",nlev,array::make_shape(2)) );
@@ -204,15 +210,14 @@ BOOST_AUTO_TEST_CASE( test_grad )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
-    util::io::Gmsh().write(fields["scalar"],grid->shortName()+"_fields.msh");
-    util::io::Gmsh().write(fields["xder"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["yder"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["rscalar"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["rxder"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["ryder"],grid->shortName()+"_fields.msh",std::ios::app);
-
-    //    util::io::Gmsh().write(fields["exact_yder"],grid->shortName()+"_fields.msh",std::ios::app);
+    output::Gmsh(grid->shortName()+".msh").write(*mesh);
+    output::Gmsh gmsh_fields(grid->shortName()+"_fields.msh");
+    gmsh_fields.write(fields["scalar"]);
+    gmsh_fields.write(fields["xder"]);
+    gmsh_fields.write(fields["yder"]);
+    gmsh_fields.write(fields["rscalar"]);
+    gmsh_fields.write(fields["rxder"]);
+    gmsh_fields.write(fields["ryder"]);
   }
 }
 
@@ -222,7 +227,7 @@ BOOST_AUTO_TEST_CASE( test_div )
   Log::info() << "test_div" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create("O32") );
+  SharedPtr<Grid> grid ( Grid::create(griduid()) );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
@@ -242,9 +247,9 @@ BOOST_AUTO_TEST_CASE( test_div )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
-    util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["div"],grid->shortName()+"_fields.msh",std::ios::app);
+    output::Gmsh gmsh (grid->shortName()+"_fields.msh","a");
+    gmsh.write(fields["wind"]);
+    gmsh.write(fields["div"]);
   }
 }
 
@@ -253,7 +258,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
   Log::info() << "test_curl" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create("O32") );
+  SharedPtr<Grid> grid ( Grid::create(griduid()) );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
@@ -270,13 +275,52 @@ BOOST_AUTO_TEST_CASE( test_curl )
 
   nabla->curl(fields["wind"],fields["vor"]);
 
+  fields.add( fvm.node_columns().createField<double>("windgrad",nlev,array::make_shape(2,2)));
+  nabla->gradient(fields["wind"],fields["windgrad"]);
+
+  fields.add( fvm.node_columns().createField<double>("windX") );
+  fields.add( fvm.node_columns().createField<double>("windY") );
+  fields.add( fvm.node_columns().createField<double>("windXgradX") );
+  fields.add( fvm.node_columns().createField<double>("windXgradY") );
+  fields.add( fvm.node_columns().createField<double>("windYgradX") );
+  fields.add( fvm.node_columns().createField<double>("windYgradY") );
+  array::ArrayView<double,3> wind(fields["wind"]);
+  array::ArrayView<double,4> windgrad(fields["windgrad"]);
+
+  array::ArrayView<double,1> windX(fields["windX"]);
+  array::ArrayView<double,1> windY(fields["windY"]);
+  array::ArrayView<double,1> windXgradX(fields["windXgradX"]);
+  array::ArrayView<double,1> windXgradY(fields["windXgradY"]);
+  array::ArrayView<double,1> windYgradX(fields["windYgradX"]);
+  array::ArrayView<double,1> windYgradY(fields["windYgradY"]);
+  for( size_t j=0; j<windX.size(); ++j )
+  {
+    windX(j) = wind(j,0,0);
+    windY(j) = wind(j,0,1);
+    windXgradX(j) = windgrad(j,0,0,0);
+    windXgradY(j) = windgrad(j,0,0,1);
+    windYgradX(j) = windgrad(j,0,1,0);
+    windYgradY(j) = windgrad(j,0,1,1);
+  }
+
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
-//    util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["vor"],grid->shortName()+"_fields.msh",std::ios::app);
+    output::Gmsh gmsh(grid->shortName()+"_fields.msh","a");
+    gmsh.write(fields["vor"]);
+    gmsh.write(fields["windX"]);
+    gmsh.write(fields["windXgradX"]);
+    gmsh.write(fields["windXgradY"]);
+    gmsh.write(fields["windY"]);
+    gmsh.write(fields["windYgradX"]);
+    gmsh.write(fields["windYgradY"]);
+    gmsh.write(fields["windgrad"]);
   }
+
+
+
+
+
 }
 
 BOOST_AUTO_TEST_CASE( test_lapl )
@@ -284,7 +328,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   Log::info() << "test_lapl" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create("O32") );
+  SharedPtr<Grid> grid ( Grid::create(griduid()) );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
@@ -304,9 +348,8 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    util::io::Gmsh().write(*mesh,grid->shortName()+".msh");
-//    util::io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
-    util::io::Gmsh().write(fields["lapl"],grid->shortName()+"_fields.msh",std::ios::app);
+    output::Gmsh gmsh(grid->shortName()+"_fields.msh","a");
+    gmsh.write(fields["lapl"]);
   }
 }
 

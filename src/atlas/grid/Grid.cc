@@ -11,7 +11,6 @@
 #include <vector>
 #include "eckit/memory/Factory.h"
 #include "eckit/memory/Builder.h"
-#include "eckit/config/Resource.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/Mesh.h"
@@ -27,7 +26,7 @@ static void checkSizeOfPoint()
 {
     // compilen time check support C++11
     #if __cplusplus >= 201103L
-        static_assert( sizeof(Grid::Point)==2*double, "Grid requires size of Point to be 2*double" );
+        static_assert( sizeof(Grid::Point)==2*sizeof(double), "Grid requires size of Point to be 2*double" );
     #endif
 
     // runtime check
@@ -67,6 +66,11 @@ const Domain& Grid::domain() const
   return domain_;
 }
 
+
+void Grid::domain(const Domain& domain) {
+  domain_ = domain;
+}
+
 Grid::uid_t Grid::uniqueId() const {
   if (uid_.empty()) {
     std::ostringstream s;
@@ -83,12 +87,6 @@ eckit::MD5::digest_t Grid::hash() const {
     hash_ = md5.digest();
   }
   return hash_;
-}
-
-BoundBox Grid::boundingBox() const
-{
-    NOTIMP;
-    return BoundBox();
 }
 
 void Grid::fillLonLat(double array[], size_t arraySize) const
@@ -108,19 +106,19 @@ void Grid::fillLonLat(std::vector<double>& v) const {
     copyLonLatMemory(&v[0], size_t(sizeof(double)*v.size()));
 }
 
-void Grid::set_mesh(const mesh::Mesh& mesh)
-{
-  mesh_ = eckit::SharedPtr<mesh::Mesh>(const_cast<mesh::Mesh*>(&mesh));
-}
+//void Grid::set_mesh(const mesh::Mesh& mesh)
+//{
+//  mesh_ = eckit::SharedPtr<mesh::Mesh>(const_cast<mesh::Mesh*>(&mesh));
+//}
 
-mesh::Mesh& Grid::mesh() const {
-  if( !mesh_ )
-  {
-    mesh_.reset( new mesh::Mesh() );
-    mesh_->createNodes(*this);
-  }
-  return *mesh_;
-}
+//mesh::Mesh& Grid::mesh() const {
+//  if( !mesh_ )
+//  {
+//    mesh_.reset( new mesh::Mesh() );
+//    mesh_->createNodes(*this);
+//  }
+//  return *mesh_;
+//}
 
 size_t Grid::copyLonLatMemory(double* pts, size_t size) const
 {

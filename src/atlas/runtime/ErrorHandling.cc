@@ -1,11 +1,24 @@
 #include "eckit/log/CodeLocation.h"
 #include "eckit/os/BackTrace.h"
-#include "eckit/config/Resource.h"
+#include "eckit/utils/Translator.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 
 using namespace atlas;
+
+namespace { // anonymous
+template <typename T>
+static bool get_env(const std::string& var,T& val){
+  const char* env = ::getenv(var.c_str());
+  if( env ) {
+    std::string val_str = env;
+    val = eckit::Translator<std::string,T>()(val_str);
+    return true;
+  }
+  return false;
+}
+} // namespace anonymous
 
 namespace atlas {
 namespace runtime {
@@ -13,9 +26,12 @@ namespace runtime {
 Error::Error()
 {
   clear();
-  throws_    = eckit::Resource<bool>("atlas.error.throws;$ATLAS_ERROR_THROWS",false);
-  aborts_    = eckit::Resource<bool>("atlas.error.aborts;$ATLAS_ERROR_ABORTS",true);
-  backtrace_ = eckit::Resource<bool>("atlas.error.backtrace;$ATLAS_ERROR_BACKTRACE",true);
+  throws_ = false;
+  aborts_ = true;
+  backtrace_ = true;
+  get_env("ATLAS_ERROR_THROWS",throws_);
+  get_env("ATLAS_ERROR_ABORTS",aborts_);
+  get_env("ATLAS_ERROR_BACKTRACE",backtrace_);
 }
 
 Error& Error::instance()

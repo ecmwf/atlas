@@ -19,7 +19,7 @@
 namespace atlas {
 namespace field {
 
-Field* FieldCreatorArraySpec::create_field( const eckit::Parametrisation& params ) const
+Field* FieldCreatorArraySpec::createField( const eckit::Parametrisation& params ) const
 {
   std::vector<long> shape;
   if( !params.get("shape",shape) )

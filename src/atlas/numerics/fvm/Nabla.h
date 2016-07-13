@@ -41,6 +41,9 @@ public:
 private:
   void setup();
 
+  void gradient_of_scalar(const field::Field &scalar, field::Field &grad) const;
+  void gradient_of_vector(const field::Field &vector, field::Field &grad) const;
+
 private:
 
   fvm::Method const *fvm_;

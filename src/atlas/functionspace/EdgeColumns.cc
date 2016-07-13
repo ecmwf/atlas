@@ -70,6 +70,37 @@ array::ArrayView<T,1> surface_scalar_view(const field::Field &field)
 }
 
 
+void set_field_metadata(const eckit::Parametrisation& config, field::Field& field)
+{
+  bool global(false);
+  if( config.get("global",global) )
+  {
+    if( global )
+    {
+      size_t owner(0);
+      config.get("owner",owner);
+      field.metadata().set("owner",owner);
+    }
+  }
+  field.metadata().set("global",global);
+}
+
+}
+
+size_t EdgeColumns::config_size(const eckit::Parametrisation& config) const
+{
+  size_t size = nb_edges();
+  bool global(false);
+  if( config.get("global",global) )
+  {
+    if( global )
+    {
+      size_t owner(0);
+      config.get("owner",owner);
+      size = (eckit::mpi::rank() == owner ? nb_edges_global() : 0);
+    }
+  }
+  return size;
 }
 
 EdgeColumns::EdgeColumns( mesh::Mesh& mesh )
@@ -129,17 +160,15 @@ void EdgeColumns::constructor()
         partition.data<int>(),
         remote_index.data<int>(),REMOTE_IDX_BASE,
         edges_.global_index().data<gidx_t>(),
-        -1,
         nb_edges_);
 
   checksum_->setup(
         partition.data<int>(),
         remote_index.data<int>(),REMOTE_IDX_BASE,
         global_index.data<gidx_t>(),
-        -1,
         nb_edges_);
 
-  nb_edges_global_ = gather_scatter_->glb_dof();
+  nb_edges_global_ =  gather_scatter_->glb_dof();
 }
 
 EdgeColumns::~EdgeColumns() {}
@@ -154,83 +183,57 @@ size_t EdgeColumns::nb_edges_global() const
   return nb_edges_global_;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype) const {
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges()));
+field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype,const eckit::Parametrisation& options) const
+{
+  size_t nb_edges = config_size(options);
+  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges));
   field->set_functionspace(*this);
+  set_field_metadata(options,*field);
   return field;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype, size_t levels) const {
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges(),levels));
+field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype, size_t levels,const eckit::Parametrisation& options) const
+{
+  size_t nb_edges = config_size(options);
+  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges,levels));
   field->set_levels(levels);
   field->set_functionspace(*this);
+  set_field_metadata(options,*field);
   return field;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_edges());
+field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype, const std::vector<size_t>& variables,const eckit::Parametrisation& options) const
+{
+  size_t nb_edges = config_size(options);
+  std::vector<size_t> shape(1,nb_edges);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
   field->set_functionspace(*this);
+  set_field_metadata(options,*field);
   return field;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_edges()); shape.push_back(levels);
+field::Field* EdgeColumns::createField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables,const eckit::Parametrisation& options) const
+{
+  size_t nb_edges = config_size(options);
+  std::vector<size_t> shape(1,nb_edges); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
   field->set_levels(levels);
   field->set_functionspace(*this);
+  set_field_metadata(options,*field);
   return field;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name, const field::Field& other) const {
+field::Field* EdgeColumns::createField(const std::string& name, const field::Field& other,const eckit::Parametrisation& options) const {
+  size_t nb_edges = config_size(options);
   array::ArrayShape shape = other.shape();
-  shape[0] = nb_edges();
+  shape[0] = nb_edges;
   field::Field* field = field::Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
   field->set_functionspace(*this);
-  return field;
-}
-
-field::Field* EdgeColumns::createGlobalField(const std::string& name,array::DataType datatype) const {
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges_global()));
-  field->set_functionspace(*this);
-  return field;
-}
-
-field::Field* EdgeColumns::createGlobalField(const std::string& name, array::DataType datatype, size_t levels) const {
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges_global(),levels));
-  field->set_levels(levels);
-  field->set_functionspace(*this);
-  return field;
-}
-
-field::Field* EdgeColumns::createGlobalField(const std::string& name, array::DataType datatype, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_edges_global());
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_functionspace(*this);
-  return field;
-}
-
-field::Field* EdgeColumns::createGlobalField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_edges_global()); shape.push_back(levels);
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_levels(levels);
-  field->set_functionspace(*this);
-  return field;
-}
-
-field::Field* EdgeColumns::createGlobalField(const std::string& name,const field::Field& other) const {
-  array::ArrayShape shape = other.shape();
-  shape[0] = nb_edges_global();
-  field::Field* field = field::Field::create(name,other.datatype(),shape);
-  if( other.has_levels() )
-    field->set_levels(field->shape(1));
-  field->set_functionspace(*this);
+  set_field_metadata(options,*field);
   return field;
 }
 
@@ -278,25 +281,27 @@ void EdgeColumns::gather( const field::FieldSet& local_fieldset, field::FieldSet
     const field::Field& loc = local_fieldset[f];
     field::Field& glb = global_fieldset[f];
     const size_t nb_fields = 1;
+    size_t root(0);
+    glb.metadata().get("owner",root);
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
       parallel::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
       parallel::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
-      gather().gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
       parallel::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
       parallel::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
-      gather().gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
       parallel::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
       parallel::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
-      gather().gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
       parallel::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
       parallel::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
-      gather().gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }
@@ -328,28 +333,31 @@ void EdgeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldS
     const field::Field& glb = global_fieldset[f];
     field::Field& loc = local_fieldset[f];
     const size_t nb_fields = 1;
-
+    size_t root(0);
+    glb.metadata().get("owner",root);
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
       parallel::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
       parallel::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
-      scatter().scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
       parallel::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
       parallel::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
-      scatter().scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
       parallel::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
       parallel::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
-      scatter().scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
       parallel::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
       parallel::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
-      scatter().scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
+    glb.metadata().broadcast(loc.metadata(),root);
+    loc.metadata().set("global",false);
   }
 }
 void EdgeColumns::scatter( const field::Field& global, field::Field& local ) const
@@ -512,10 +520,15 @@ mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This)
 
 //------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind )
+field::Field* atlas__functionspace__Edges__create_field (
+    const EdgeColumns* This,
+    const char* name,
+    int kind,
+    const eckit::Parametrisation* options )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
+    ASSERT(options);
     return This->createField(std::string(name),array::DataType(kind));
   );
   return 0;
@@ -529,12 +542,14 @@ field::Field* atlas__functionspace__Edges__create_field_vars (
     int variables[],
     int variables_size,
     int fortran_ordering,
-    int kind)
+    int kind,
+    const eckit::Parametrisation* options )
 {
 
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(variables_size);
+    ASSERT(options);
     return This->createField(
       std::string(name),
       array::DataType(kind),
@@ -545,10 +560,16 @@ field::Field* atlas__functionspace__Edges__create_field_vars (
 
 // -----------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_field_lev (const EdgeColumns* This, const char* name, int levels, int kind )
+field::Field* atlas__functionspace__Edges__create_field_lev (
+    const EdgeColumns* This,
+    const char* name,
+    int levels,
+    int kind,
+    const eckit::Parametrisation* options )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
+    ASSERT(options);
     return This->createField(std::string(name),array::DataType(kind),size_t(levels));
   );
   return 0;
@@ -563,11 +584,13 @@ field::Field* atlas__functionspace__Edges__create_field_lev_vars (
     int variables[],
     int variables_size,
     int fortran_ordering,
-    int kind)
+    int kind,
+    const eckit::Parametrisation* options )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(variables_size);
+    ASSERT(options);
     return This->createField(
       std::string(name),
       array::DataType(kind),
@@ -579,99 +602,19 @@ field::Field* atlas__functionspace__Edges__create_field_lev_vars (
 
 // -----------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_field_template (const EdgeColumns* This, const char* name, const field::Field* field_template )
+field::Field* atlas__functionspace__Edges__create_field_template (
+    const EdgeColumns* This,
+    const char* name,
+    const field::Field* field_template,
+    const eckit::Parametrisation* options )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
+    ASSERT(options);
     return This->createField(std::string(name),*field_template);
   );
   return 0;
 }
-
-// -----------------------------------------------------------------------------------
-
-field::Field* atlas__functionspace__Edges__create_global_field (const EdgeColumns* This, const char* name, int kind )
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return This->createGlobalField(std::string(name),array::DataType(kind));
-  );
-  return 0;
-}
-
-// -----------------------------------------------------------------------------------
-
-field::Field* atlas__functionspace__Edges__create_global_field_vars (
-    const EdgeColumns* This,
-    const char* name,
-    int variables[],
-    int variables_size,
-    int fortran_ordering,
-    int kind)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    ASSERT(variables_size);
-    return This->createGlobalField(
-      std::string(name),
-      array::DataType(kind),
-      variables_to_vector(variables,variables_size,fortran_ordering) );
-  );
-  return 0;
-}
-
-// -----------------------------------------------------------------------------------
-
-field::Field* atlas__functionspace__Edges__create_global_field_lev (
-    const EdgeColumns* This,
-    const char* name,
-    int levels,
-    int kind )
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels));
-  );
-  return 0;
-}
-
-// -----------------------------------------------------------------------------------
-
-field::Field* atlas__functionspace__Edges__create_global_field_lev_vars (
-    const EdgeColumns* This,
-    const char* name,
-    int levels,
-    int variables[],
-    int variables_size,
-    int fortran_ordering,
-    int kind)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    ASSERT(variables_size);
-    return This->createGlobalField(
-      std::string(name),
-      array::DataType(kind),
-      size_t(levels),
-      variables_to_vector(variables,variables_size,fortran_ordering) );
-  );
-  return 0;
-}
-
-// -----------------------------------------------------------------------------------
-
-field::Field* atlas__functionspace__Edges__create_global_field_template (
-    const EdgeColumns* This,
-    const char* name,
-    const field::Field* field_template )
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return This->createGlobalField(std::string(name),*field_template);
-  );
-  return 0;
-}
-
 
 // -----------------------------------------------------------------------------------
 

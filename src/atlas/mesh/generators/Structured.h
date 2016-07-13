@@ -13,6 +13,7 @@
 
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/util/Metadata.h"
+#include "atlas/util/Config.h"
 
 namespace eckit { class Parametrisation; }
 
@@ -39,20 +40,22 @@ namespace atlas {
 namespace mesh {
 namespace generators {
 
-// -----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 class Structured : public MeshGenerator {
 
 public:
 
-  Structured();
-  Structured(const eckit::Parametrisation&);
+  Structured(const eckit::Parametrisation& = util::NoConfig() );
 
   virtual void generate(const grid::Grid&, const grid::GridDistribution&, Mesh&) const;
   virtual void generate(const grid::Grid&, Mesh&) const;
+
   using MeshGenerator::generate;
 
 private:
+
+  virtual void hash(eckit::MD5&) const;
 
   void configure_defaults();
 
@@ -77,13 +80,13 @@ private:
   void generate_global_element_numbering(
     Mesh& mesh ) const;
 
-public:
+private:
 
   util::Metadata options;
 
 };
 
-// -----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace generators
 } // namespace mesh

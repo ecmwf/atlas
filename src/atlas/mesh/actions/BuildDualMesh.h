@@ -8,17 +8,19 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #ifndef BuildDualMesh_h
 #define BuildDualMesh_h
 
 #include "atlas/internals/atlas_config.h"
 
 namespace atlas {
-  class Mesh;
+
+namespace grid { class Grid; }
 
 namespace mesh {
+
+class Mesh;
+
 namespace actions {
 
 /*
@@ -53,7 +55,7 @@ void build_centroid_dual_mesh( Mesh& mesh );
  *   |       |       |       |
  *   |   #   |   #   |   #   |   #
  */
-void build_brick_dual_mesh( Mesh& mesh );
+void build_brick_dual_mesh(const atlas::grid::Grid& grid, Mesh& mesh );
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

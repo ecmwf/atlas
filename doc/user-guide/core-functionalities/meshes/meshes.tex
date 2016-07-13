@@ -16,13 +16,7 @@ for this example.
 
 \section{C++ version}
 The \lista{code-meshes-C} shows how to construct a mesh 
-starting from a grid that can be specified as a command 
-line argument. In particular, we use the third-party 
-\textit{eckit} object called \inltc{Resource} to define 
-the command-line behaviour as done in the previous chapter. 
-We have also added an additional command line argument 
-called \inlsh{\ddash{visualize}}. This will allow us to 
-visualize the mesh either in 2D or 3D. 
+starting from a grid.
 %
 \lstinputlisting[caption=Generating a mesh starting from a grid 
 in \Atlas using C++, style=CStyle, label=code-meshes-C]{meshes-Structured.cc}
@@ -57,11 +51,11 @@ type we want (either 2D or 3D), respectively. For instance,
 we can execute the following command line
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-meshes-Structured --grid O32 --visualize 3D
+./atlas_c-meshes-Structured
 \end{lstlisting}
 % 
 This will produce an octahedral reduced Gaussian mesh 
-(stored in mesh.msh) with 32 latitudes on one emisphere 
+(stored in mesh.msh) with 32 latitudes on one hemisphere 
 (i.e. 64 latitudes in total). It will also produce an 
 additional file, called \inltc{mesh\_info.msh}, containing
 some information regarding the mesh.
@@ -97,23 +91,19 @@ introduced in \chap{chap:global-grids}!
 
 \section{Fortran version}
 The \lista{code-meshes-C} shows how to construct a mesh 
-starting from a grid that can be specified as a command 
-line argument. In particular, we use the third-party 
-\textit{eckit} object called \inltc{Resource} to define 
-the command-line behaviour as done in the previous chapter. 
- 
+starting from a grid.
 %
 \lstinputlisting[caption=Generating a mesh starting from a grid 
 in \Atlas using Fortran, style=FStyle, label=code-meshes-F]{meshes-Structured.F90}
 %
-Once defined the command-line behaviour, we first create 
+We first create 
 a global structured grid object (see line 13). For more 
 details on how to create a grid see \chap{chap:global-grids}.
 
 We successively create the mesh object on line 15 and 16.
-In particular, we first define a \inltc{atlas\_meshgenerator\_Structured} 
+In particular, we first define a \inltc{atlas\_Meshgenerator} 
 object that is then used to effectively generate the mesh object 
-\inltc{mesh} that is an \inltc{atlas\_mesh} type.
+\inltc{mesh} that is an \inltc{atlas\_Mesh} type.
 
 In this simple example we took the freedom to add just one line 
 line to visualize the mesh in Gmsh. In particular, on line 17 
@@ -128,11 +118,11 @@ identifies an \Atlas predefined grid. For instance,
 we can execute the following command line
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-meshes-Structured --grid O32
+./atlas_c-meshes-Structured
 \end{lstlisting}
 % 
 This will produce an octahedral reduced Gaussian mesh 
-(stored in mesh.msh) with 32 latitudes on one emisphere 
+(stored in mesh.msh) with 32 latitudes on one hemisphere 
 (i.e. 64 latitudes in total).
 If we visualize it in Gmsh, we will obtain something similar
 to \fig{fig:meshes-f}.

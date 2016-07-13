@@ -14,6 +14,7 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/global/Structured.h"
 #include "atlas/mesh/Mesh.h"
@@ -103,7 +104,7 @@ void build_median_dual_mesh( Mesh& mesh )
 
   mesh::Nodes& nodes   = mesh.nodes();
   mesh::HybridElements& edges = mesh.edges();
-  field::Field& dual_volumes = nodes.add( field::Field::create<double>( "dual_volumes", array::make_shape(nodes.size()) ) );
+  nodes.add( field::Field::create<double>( "dual_volumes", array::make_shape(nodes.size()) ) );
 
   if( ! mesh.cells().has_field("centroids_lonlat") )
     mesh.cells().add( field::Field::create("centroids_lonlat",build_centroids_lonlat(mesh.cells(),mesh.nodes().lonlat())) );
@@ -173,7 +174,7 @@ void add_median_dual_volume_contribution_cells(
   // special ordering for bit-identical results
   size_t nb_cells = cells.size();
   std::vector<Node> ordering(nb_cells);
-  for (int jcell=0; jcell<nb_cells; ++jcell)
+  for (size_t jcell=0; jcell<nb_cells; ++jcell)
     ordering[jcell] = Node( internals::unique_lonlat(cell_centroids[jcell]), jcell );
   std::sort( ordering.data(), ordering.data()+nb_cells );
 
@@ -289,7 +290,7 @@ void build_dual_normals( Mesh& mesh )
     }
   }
 
-  for (int edge=0; edge<nb_edges; ++edge)
+  for (size_t edge=0; edge<nb_edges; ++edge)
   {
     if( edge_cell_connectivity(edge,0) == edge_cell_connectivity.missing_value() )
     {
@@ -300,7 +301,7 @@ void build_dual_normals( Mesh& mesh )
         idx_t node = edge_node_connectivity(edge,n);
         std::vector<idx_t>& bdry_edges = node_to_bdry_edge[node];
         double x[2];
-        int cnt=0;
+        size_t cnt=0;
         for (size_t jedge = 0; jedge < bdry_edges.size(); ++jedge)
         {
           idx_t bdry_edge = bdry_edges[jedge];
@@ -388,9 +389,9 @@ void make_dual_normals_outward( Mesh& mesh )
 }
 
 
-void build_brick_dual_mesh( Mesh& mesh )
+void build_brick_dual_mesh(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh)
 {
-  if( const grid::global::Structured* g = dynamic_cast<const grid::global::Structured*>(&mesh.grid()) )
+  if( const grid::global::Structured* g = dynamic_cast<const grid::global::Structured*>(&grid) )
   {
     if( eckit::mpi::size() != 1 )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());

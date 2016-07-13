@@ -53,88 +53,51 @@ mesh::Nodes* atlas__NodesFunctionSpace__nodes(NodeColumns* This)
   return &This->nodes();
 }
 
-field::Field* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind )
+field::Field* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind, const eckit::Parametrisation* options )
 {
   ASSERT(This);
-  return This->createField(std::string(name),array::DataType(kind));
+  ASSERT(options);
+  return This->createField(std::string(name),array::DataType(kind),*options);
 }
 
-field::Field* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
+field::Field* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options)
 {
   ASSERT(This);
+  ASSERT(options);
   ASSERT(variables_size);
   std::vector<size_t> variables_(variables_size);
   if( fortran_ordering )
     std::reverse_copy( variables, variables+variables_size,variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),array::DataType(kind),variables_);
+  return This->createField(std::string(name),array::DataType(kind),variables_,*options);
 }
 
-field::Field* atlas__NodesFunctionSpace__create_field_lev (const NodeColumns* This, const char* name, int levels, int kind )
+field::Field* atlas__NodesFunctionSpace__create_field_lev (const NodeColumns* This, const char* name, int levels, int kind, const eckit::Parametrisation* options )
 {
   ASSERT(This);
-  return This->createField(std::string(name),array::DataType(kind),size_t(levels));
+  ASSERT(options);
+  return This->createField(std::string(name),array::DataType(kind),size_t(levels),*options);
 }
 
-field::Field* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind)
+field::Field* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options )
 {
   ASSERT(This);
+  ASSERT(options);
   ASSERT(variables_size);
   std::vector<size_t> variables_(variables_size);
   if( fortran_ordering )
     std::reverse_copy( variables, variables+variables_size,variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),array::DataType(kind),size_t(levels),variables_);
+  return This->createField(std::string(name),array::DataType(kind),size_t(levels),variables_, *options);
 }
 
-field::Field* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field::Field* field_template )
+field::Field* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field::Field* field_template, const eckit::Parametrisation* options )
 {
   ASSERT(This);
-  return This->createField(std::string(name),*field_template);
-}
-
-field::Field* atlas__NodesFunctionSpace__create_global_field (const NodeColumns* This, const char* name, int kind )
-{
-  ASSERT(This);
-  return This->createGlobalField(std::string(name),array::DataType(kind));
-}
-
-field::Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
-{
-  ASSERT(This);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),array::DataType(kind),variables_);
-}
-
-field::Field* atlas__NodesFunctionSpace__create_global_field_lev (const NodeColumns* This, const char* name, int levels, int kind )
-{
-  ASSERT(This);
-  return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels));
-}
-
-field::Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind)
-{
-  ASSERT(This);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),array::DataType(kind),size_t(levels),variables_);
-}
-
-field::Field* atlas__NodesFunctionSpace__create_global_field_template (const NodeColumns* This, const char* name, const field::Field* field_template )
-{
-  ASSERT(This);
-  return This->createGlobalField(std::string(name),*field_template);
+  ASSERT(options);
+  return This->createField(std::string(name),*field_template,*options);
 }
 
 
@@ -283,7 +246,7 @@ void atlas__NodesFunctionSpace__sum_arr_double(const NodeColumns* This, const fi
         This->orderIndependentSum(*field,sumvec,size_t_N);
         size = sumvec.size();
         sum = new double[size];
-        for( size_t j=0; j<size; ++j ) sum[j] = sumvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) sum[j] = sumvec[j];
   );
   N = size_t_N;
 }
@@ -298,7 +261,7 @@ void atlas__NodesFunctionSpace__sum_arr_float(const NodeColumns* This, const fie
         This->orderIndependentSum(*field,sumvec,size_t_N);
         size = sumvec.size();
         sum = new float[size];
-        for( size_t j=0; j<size; ++j ) sum[j] = sumvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) sum[j] = sumvec[j];
   );
   N = size_t_N;
 }
@@ -313,7 +276,7 @@ void atlas__NodesFunctionSpace__sum_arr_long(const NodeColumns* This, const fiel
         This->orderIndependentSum(*field,sumvec,size_t_N);
         size = sumvec.size();
         sum = new long[size];
-        for( size_t j=0; j<size; ++j ) sum[j] = sumvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) sum[j] = sumvec[j];
   );
   N = size_t_N;
 }
@@ -328,7 +291,7 @@ void atlas__NodesFunctionSpace__sum_arr_int(const NodeColumns* This, const field
         This->orderIndependentSum(*field,sumvec,size_t_N);
         size = sumvec.size();
         sum = new int[size];
-        for( size_t j=0; j<size; ++j ) sum[j] = sumvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) sum[j] = sumvec[j];
   );
   N = size_t_N;
 }
@@ -362,7 +325,7 @@ void atlas__NodesFunctionSpace__oisum_arr_double(const NodeColumns* This, const 
         This->orderIndependentSum(*field,sumvec,size_t_N);
         size = sumvec.size();
         sum = new double[size];
-        for( size_t j=0; j<size; ++j ) sum[j] = sumvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) sum[j] = sumvec[j];
   );
   N = size_t_N;
 }
@@ -377,7 +340,7 @@ void atlas__NodesFunctionSpace__oisum_arr_float(const NodeColumns* This, const f
         This->orderIndependentSum(*field,sumvec,size_t_N);
         size = sumvec.size();
         sum = new float[size];
-        for( size_t j=0; j<size; ++j ) sum[j] = sumvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) sum[j] = sumvec[j];
   );
   N = size_t_N;
 }
@@ -447,7 +410,7 @@ void atlas__NodesFunctionSpace__min_arr_double(const NodeColumns* This, const fi
         This->minimum(*field,minvec);
         size = minvec.size();
         minimum = new double[size];
-        for( size_t j=0; j<size; ++j ) minimum[j] = minvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) minimum[j] = minvec[j];
   );
 }
 
@@ -460,7 +423,7 @@ void atlas__NodesFunctionSpace__min_arr_float(const NodeColumns* This, const fie
         This->minimum(*field,minvec);
         size = minvec.size();
         minimum = new float[size];
-        for( size_t j=0; j<size; ++j ) minimum[j] = minvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) minimum[j] = minvec[j];
   );
 }
 
@@ -473,7 +436,7 @@ void atlas__NodesFunctionSpace__min_arr_long(const NodeColumns* This, const fiel
         This->minimum(*field,minvec);
         size = minvec.size();
         minimum = new long[size];
-        for( size_t j=0; j<size; ++j ) minimum[j] = minvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) minimum[j] = minvec[j];
   );
 }
 
@@ -486,7 +449,7 @@ void atlas__NodesFunctionSpace__min_arr_int(const NodeColumns* This, const field
         This->minimum(*field,minvec);
         size = minvec.size();
         minimum = new int[size];
-        for( size_t j=0; j<size; ++j ) minimum[j] = minvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) minimum[j] = minvec[j];
   );
 }
 
@@ -500,7 +463,7 @@ void atlas__NodesFunctionSpace__max_arr_double(const NodeColumns* This, const fi
         This->maximum(*field,maxvec);
         size = maxvec.size();
         maximum = new double[size];
-        for( size_t j=0; j<size; ++j ) maximum[j] = maxvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) maximum[j] = maxvec[j];
   );
 }
 
@@ -513,7 +476,7 @@ void atlas__NodesFunctionSpace__max_arr_float(const NodeColumns* This, const fie
         This->maximum(*field,maxvec);
         size = maxvec.size();
         maximum = new float[size];
-        for( size_t j=0; j<size; ++j ) maximum[j] = maxvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) maximum[j] = maxvec[j];
   );
 }
 
@@ -526,7 +489,7 @@ void atlas__NodesFunctionSpace__max_arr_long(const NodeColumns* This, const fiel
         This->maximum(*field,maxvec);
         size = maxvec.size();
         maximum = new long[size];
-        for( size_t j=0; j<size; ++j ) maximum[j] = maxvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) maximum[j] = maxvec[j];
   );
 }
 
@@ -539,7 +502,7 @@ void atlas__NodesFunctionSpace__max_arr_int(const NodeColumns* This, const field
         This->maximum(*field,maxvec);
         size = maxvec.size();
         maximum = new int[size];
-        for( size_t j=0; j<size; ++j ) maximum[j] = maxvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) maximum[j] = maxvec[j];
   );
 }
 
@@ -626,7 +589,7 @@ void atlas__NodesFunctionSpace__minloc_arr_double(const NodeColumns* This, const
         size = minvec.size();
         minimum = new double[size];
         glb_idx = new long[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           minimum[j] = minvec[j];
           glb_idx[j] = gidxvec[j];
         }
@@ -644,7 +607,7 @@ void atlas__NodesFunctionSpace__minloc_arr_float(const NodeColumns* This, const 
         size = minvec.size();
         minimum = new float[size];
         glb_idx = new long[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           minimum[j] = minvec[j];
           glb_idx[j] = gidxvec[j];
         }
@@ -662,7 +625,7 @@ void atlas__NodesFunctionSpace__minloc_arr_long(const NodeColumns* This, const f
         size = minvec.size();
         minimum = new long[size];
         glb_idx = new long[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           minimum[j] = minvec[j];
           glb_idx[j] = gidxvec[j];
         }
@@ -680,7 +643,7 @@ void atlas__NodesFunctionSpace__minloc_arr_int(const NodeColumns* This, const fi
         size = minvec.size();
         minimum = new int[size];
         glb_idx = new long[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           minimum[j] = minvec[j];
           glb_idx[j] = gidxvec[j];
         }
@@ -698,7 +661,7 @@ void atlas__NodesFunctionSpace__maxloc_arr_double(const NodeColumns* This, const
         size = maxvec.size();
         maximum = new double[size];
         glb_idx = new long[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           maximum[j] = maxvec[j];
           glb_idx[j] = gidxvec[j];
         }
@@ -716,7 +679,7 @@ void atlas__NodesFunctionSpace__maxloc_arr_float(const NodeColumns* This, const 
         size = maxvec.size();
         maximum = new float[size];
         glb_idx = new long[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           maximum[j] = maxvec[j];
           glb_idx[j] = gidxvec[j];
         }
@@ -734,7 +697,7 @@ void atlas__NodesFunctionSpace__maxloc_arr_long(const NodeColumns* This, const f
         size = maxvec.size();
         maximum = new long[size];
         glb_idx = new long[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           maximum[j] = maxvec[j];
           glb_idx[j] = gidxvec[j];
         }
@@ -752,7 +715,7 @@ void atlas__NodesFunctionSpace__maxloc_arr_int(const NodeColumns* This, const fi
         size = maxvec.size();
         maximum = new int[size];
         glb_idx = new long[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           maximum[j] = maxvec[j];
           glb_idx[j] = gidxvec[j];
         }
@@ -797,7 +760,7 @@ void atlas__NodesFunctionSpace__mean_arr_double(const NodeColumns* This, const f
         This->mean(*field,meanvec,size_t_N);
         size = meanvec.size();
         mean = new double[size];
-        for( size_t j=0; j<size; ++j ) mean[j] = meanvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) mean[j] = meanvec[j];
   );
   N = size_t_N;
 }
@@ -812,7 +775,7 @@ void atlas__NodesFunctionSpace__mean_arr_float(const NodeColumns* This, const fi
         This->mean(*field,meanvec,size_t_N);
         size = meanvec.size();
         mean = new float[size];
-        for( size_t j=0; j<size; ++j ) mean[j] = meanvec[j];
+        for( size_t j=0; j<(size_t)size; ++j ) mean[j] = meanvec[j];
   );
   N = size_t_N;
 }
@@ -867,7 +830,7 @@ void atlas__NodesFunctionSpace__mean_and_stddev_arr_double(const NodeColumns* Th
         size = meanvec.size();
         mean = new double[size];
         stddev = new double[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           mean[j] = meanvec[j];
           stddev[j] = stddevvec[j];
         }
@@ -888,7 +851,7 @@ void atlas__NodesFunctionSpace__mean_and_stddev_arr_float(const NodeColumns* Thi
         size = meanvec.size();
         mean = new float[size];
         stddev = new float[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           mean[j] = meanvec[j];
           stddev[j] = stddevvec[j];
         }
@@ -1007,7 +970,7 @@ void atlas__NodesFunctionSpace__minloclev_arr_double(const NodeColumns* This, co
         minimum = new double[size];
         glb_idx = new long[size];
         level   = new int[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           minimum[j] = minvec[j];
           glb_idx[j] = gidxvec[j];
           level[j] = levvec[j];
@@ -1028,7 +991,7 @@ void atlas__NodesFunctionSpace__minloclev_arr_float(const NodeColumns* This, con
         minimum = new float[size];
         glb_idx = new long[size];
         level   = new int[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           minimum[j] = minvec[j];
           glb_idx[j] = gidxvec[j];
           level[j] = levvec[j];
@@ -1049,7 +1012,7 @@ void atlas__NodesFunctionSpace__minloclev_arr_long(const NodeColumns* This, cons
         minimum = new long[size];
         glb_idx = new long[size];
         level   = new int[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           minimum[j] = minvec[j];
           glb_idx[j] = gidxvec[j];
           level[j] = levvec[j];
@@ -1070,7 +1033,7 @@ void atlas__NodesFunctionSpace__minloclev_arr_int(const NodeColumns* This, const
         minimum = new int[size];
         glb_idx = new long[size];
         level   = new int[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           minimum[j] = minvec[j];
           glb_idx[j] = gidxvec[j];
           level[j] = levvec[j];
@@ -1091,7 +1054,7 @@ void atlas__NodesFunctionSpace__maxloclev_arr_double(const NodeColumns* This, co
         maximum = new double[size];
         glb_idx = new long[size];
         level   = new int[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           maximum[j] = maxvec[j];
           glb_idx[j] = gidxvec[j];
           level[j] = levvec[j];
@@ -1112,7 +1075,7 @@ void atlas__NodesFunctionSpace__maxloclev_arr_float(const NodeColumns* This, con
         maximum = new float[size];
         glb_idx = new long[size];
         level   = new int[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           maximum[j] = maxvec[j];
           glb_idx[j] = gidxvec[j];
           level[j] = levvec[j];
@@ -1133,7 +1096,7 @@ void atlas__NodesFunctionSpace__maxloclev_arr_long(const NodeColumns* This, cons
         maximum = new long[size];
         glb_idx = new long[size];
         level   = new int[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           maximum[j] = maxvec[j];
           glb_idx[j] = gidxvec[j];
           level[j] = levvec[j];
@@ -1154,7 +1117,7 @@ void atlas__NodesFunctionSpace__maxloclev_arr_int(const NodeColumns* This, const
         maximum = new int[size];
         glb_idx = new long[size];
         level   = new int[size];
-        for( size_t j=0; j<size; ++j ) {
+        for( size_t j=0; j<(size_t)size; ++j ) {
           maximum[j] = maxvec[j];
           glb_idx[j] = gidxvec[j];
           level[j] = levvec[j];

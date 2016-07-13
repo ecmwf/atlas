@@ -175,11 +175,9 @@ use atlas_mesh_actions_module, only: &
     & atlas_build_median_dual_mesh, &
     & atlas_write_load_balance_report, &
     & atlas_renumber_nodes_glb_idx
-use atlas_io_module, only: &
-    & atlas_read_gmsh, &
-    & atlas_write_gmsh, &
-    & atlas_write_gmsh_field, &
-    & atlas_write_gmsh_fieldset
+use atlas_output_module, only: &
+    & atlas_Output, &
+    & atlas_output_Gmsh
 
 implicit none
 

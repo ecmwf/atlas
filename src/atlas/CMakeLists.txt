@@ -32,8 +32,6 @@ atlas.cc
 )
 
 list( APPEND atlas_grid_srcs
-grid/BoundBox.h
-grid/BoundBox.cc
 grid/Domain.h
 grid/Domain.cc
 grid/Grid.h
@@ -128,10 +126,6 @@ grid/global/gaussian/classic/N4000.cc  # TL7999
 grid/global/gaussian/classic/N8000.cc  # TL15999
 grid/local/Local.h
 grid/local/Local.cc
-grid/deprecated/LocalGrid.h
-grid/deprecated/LocalGrid.cc
-grid/deprecated/RotatedGrid.h
-grid/deprecated/RotatedGrid.cc
 grid/partitioners/EqualRegionsPartitioner.h
 grid/partitioners/EqualRegionsPartitioner.cc
 grid/partitioners/Partitioner.h
@@ -191,6 +185,13 @@ mesh/generators/Structured.h
 mesh/generators/Structured.cc
 )
 
+list( APPEND atlas_output_srcs
+output/Output.h
+output/Output.cc
+output/Gmsh.h
+output/Gmsh.cc
+)
+
 list( APPEND atlas_field_srcs
 field/Field.h
 field/Field.cc
@@ -204,6 +205,7 @@ field/FieldSet.h
 field/FieldSet.cc
 field/State.h
 field/State.cc
+field/Options.h
 )
 
 list( APPEND atlas_functionspace_srcs
@@ -298,6 +300,8 @@ parallel/GatherScatter.cc
 )
 
 list( APPEND atlas_internals_srcs
+internals/AtlasTool.h
+internals/AtlasTool.cc
 internals/AccumulateFaces.h
 internals/AccumulateFaces.cc
 internals/Bitflags.h
@@ -307,7 +311,6 @@ internals/Debug.h
 internals/Functions.h
 internals/IsGhost.h
 internals/LonLatMicroDeg.h
-internals/ObjectRegistry.h
 internals/Parameters.h
 internals/PeriodicTransform.h
 internals/Unique.h
@@ -345,6 +348,7 @@ ecbuild_add_library( TARGET atlas
     ${atlas_functionspace_srcs}
     ${atlas_interpolation_srcs}
     ${atlas_numerics_srcs}
+    ${atlas_output_srcs}
     ${atlas_util_srcs}
     ${atlas_internals_srcs}
     ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.h
@@ -357,7 +361,7 @@ ecbuild_add_library( TARGET atlas
     "${TRANSI_INCLUDE_DIRS}"
 
   LIBS
-    eckit_geometry
+    eckit_geometry eckit_option
     "${ECKIT_MPI_LIBRARIES}"
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}" )

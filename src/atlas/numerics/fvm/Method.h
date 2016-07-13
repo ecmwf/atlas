@@ -53,8 +53,8 @@ private:
 
 private: // data
 
-    mesh::Halo             halo_;
     mesh::Mesh             &mesh_; // non-const because functionspace may modify mesh
+    mesh::Halo             halo_;
     mesh::Nodes            &nodes_;
     mesh::HybridElements   &edges_;
     eckit::SharedPtr<functionspace::NodeColumns>  node_columns_;

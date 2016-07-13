@@ -16,8 +16,8 @@ type(atlas_Metadata)          :: metadata
 call atlas_init()
 
 ! Define fields
-field_pressure = atlas_Field("pressure", atlas_real(wp), [100])
-field_wind     = atlas_Field("wind"    , atlas_real(wp), [2, 100])
+field_pressure = atlas_Field(name="pressure", kind=atlas_real(wp), shape=[100])
+field_wind     = atlas_Field(name="wind"    , kind=atlas_real(wp), shape=[2, 100])
 
 ! Access fields data
 call field_pressure%data(pressure)
@@ -80,7 +80,7 @@ call atlas_log%info(string)
 ! Finalize object to release memory
 call field_pressure%final()
 call field_wind    %final()
-call fields       %final()
+call fields        %final()
 
 call atlas_finalize()
 end program main

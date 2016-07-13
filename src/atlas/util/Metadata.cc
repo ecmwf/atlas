@@ -15,6 +15,8 @@
 #include <sstream>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/parser/JSON.h"
+#include "eckit/parser/JSONParser.h"
+#include "eckit/mpi/Collectives.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/runtime/ErrorHandling.h"
@@ -132,12 +134,14 @@ template<> Metadata& Metadata::set(const std::string& name, const std::vector<si
 
 template<> Metadata& Metadata::set(const std::string& name, const mesh::Mesh& value)
 {
-  return set(name,value.id());
+    NOTIMP;
+  // return set(name,value.id());
 }
 
 template<> Metadata& Metadata::set(const std::string& name, const grid::Grid& value)
 {
-  return set(name,value.id());
+    NOTIMP;
+  // return set(name,value.id());
 }
 
 template<> bool Metadata::get(const std::string& name) const
@@ -303,14 +307,16 @@ template<> bool Metadata::get(const std::string& name, std::vector<float>& value
 
 template<> mesh::Mesh& Metadata::get(const std::string& name) const
 {
-  if( !has(name) ) throw_exception(name);
-  return mesh::Mesh::from_id(eckit::Properties::get(name));
+    NOTIMP;
+  // if( !has(name) ) throw_exception(name);
+  // return mesh::Mesh::from_id(eckit::Properties::get(name));
 }
 
 template<> grid::Grid& Metadata::get(const std::string& name) const
 {
-  if( !has(name) ) throw_exception(name);
-  return grid::Grid::from_id(eckit::Properties::get(name));
+    NOTIMP;
+  // if( !has(name) ) throw_exception(name);
+  // return grid::Grid::from_id(eckit::Properties::get(name));
 }
 
 template<> eckit::Properties Metadata::get(const std::string& name) const
@@ -334,6 +340,91 @@ template<> std::vector<eckit::Properties> Metadata::get(const std::string& name)
 bool Metadata::has(const std::string & name) const
 {
   return Properties::has(name);
+}
+
+void Metadata::broadcast()
+{
+  size_t root = 0;
+  get( "owner", root );
+  broadcast(*this,root);
+}
+
+void Metadata::broadcast(const size_t root)
+{
+  broadcast(*this,root);
+}
+
+void Metadata::broadcast(Metadata& dest)
+{
+  size_t root = 0;
+  get( "owner", root );
+  broadcast(dest,root);
+}
+
+void Metadata::broadcast(Metadata& dest, const size_t root)
+{
+  std::string buffer;
+  int buffer_size;
+  if( eckit::mpi::rank() == root )
+  {
+    std::stringstream s;
+    eckit::JSON json(s);
+    json << *this;
+    buffer = s.str();
+    buffer_size = buffer.size();
+  }
+  eckit::mpi::broadcast(buffer_size,root);
+  if( eckit::mpi::rank() != root )
+    buffer.resize(buffer_size);
+
+  ECKIT_MPI_CHECK_RESULT( MPI_Bcast(
+    &buffer[0],buffer_size, eckit::mpi::datatype<char>(),
+    root,eckit::mpi::comm() ) );
+
+
+  if( not (&dest==this && eckit::mpi::rank() == root ) )
+  {
+    std::stringstream s;
+    s << buffer;
+    eckit::JSONParser parser( s );
+    dest.set( eckit::Properties( parser.parse() ) );
+  }
+}
+
+void Metadata::broadcast(Metadata& dest) const
+{
+  size_t root = 0;
+  get( "owner", root );
+  broadcast(dest,root);
+}
+
+void Metadata::broadcast(Metadata& dest, const size_t root) const
+{
+  std::string buffer;
+  int buffer_size;
+  if( eckit::mpi::rank() == root )
+  {
+    std::stringstream s;
+    eckit::JSON json(s);
+    json << *this;
+    buffer = s.str();
+    buffer_size = buffer.size();
+  }
+  eckit::mpi::broadcast(buffer_size,root);
+  if( eckit::mpi::rank() != root )
+    buffer.resize(buffer_size);
+
+  ECKIT_MPI_CHECK_RESULT( MPI_Bcast(
+    &buffer[0],buffer_size, eckit::mpi::datatype<char>(),
+    root,eckit::mpi::comm() ) );
+
+  // Fill in dest
+  {
+    std::stringstream s;
+    s << buffer;
+    eckit::JSONParser parser( s );
+    dest.set( eckit::Properties( parser.parse() ) );
+  }
 }
 
 

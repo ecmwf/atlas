@@ -46,8 +46,6 @@ public: // methods
 
   virtual ~Unstructured();
 
-  virtual BoundBox boundingBox() const;
-
   virtual size_t npts() const;
 
   virtual void lonlat(std::vector< Point >&) const;
@@ -69,8 +67,6 @@ private: // methods
 protected:
 
   eckit::ScopedPtr< std::vector< Point > > points_;  ///< storage of coordinate points
-
-  BoundBox bound_box_;                               ///< bounding box for the domain
 
   mutable std::string shortName_;      ///< cache for the shortName
 

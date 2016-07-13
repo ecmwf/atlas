@@ -1,37 +1,31 @@
 #include "atlas/atlas.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/mesh/actions/BuildXYZField.h"
-#include "atlas/util/io/Gmsh.h"
-#include "eckit/config/Resource.h"
+#include "atlas/output/Gmsh.h"
+#include "atlas/util/Config.h"
 
-using namespace std;
-using namespace eckit;
-using namespace atlas;
-using namespace atlas::grid::global;
-using namespace atlas::mesh;
+using atlas::atlas_init;
+using atlas::atlas_finalize;
+using atlas::grid::Grid;
+using atlas::mesh::Mesh;
+using atlas::output::Gmsh;
+using atlas::util::Config;
 
 int main(int argc, char *argv[])
 {
     atlas_init(argc, argv);
 
-    string gridID    = Resource<string>("--grid"     , string("N32"));
-    string visualize = Resource<string>("--visualize", string("2D") );
+    atlas::mesh::generators::Structured meshgenerator;
 
-    SharedPtr<Structured> Structured( Structured::create(gridID) );
+    Grid::Ptr grid( Grid::create( "O32" ) );
+    Mesh::Ptr mesh( meshgenerator.generate(*grid) );
 
-    mesh::generators::Structured meshgenerator;
-    SharedPtr<Mesh> mesh( meshgenerator.generate(*Structured) );
+    Gmsh gmsh_2d("mesh2d.msh");
+    Gmsh gmsh_3d("mesh3d.msh", Config("coordinates", "xyz") );
 
-    util::io::Gmsh gmsh;
-    gmsh.options.set("info", true);
-    if (visualize == "3D")
-    {
-        actions::BuildXYZField("xyz")(*mesh);
-        gmsh.options.set("nodes", std::string("xyz"));
-    }
-    gmsh.write(*mesh, "mesh.msh");
+    gmsh_2d.write(*mesh);
+    gmsh_3d.write(*mesh);
 
     atlas_finalize();
 
