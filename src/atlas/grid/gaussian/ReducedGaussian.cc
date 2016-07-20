@@ -36,15 +36,23 @@ std::string ReducedGaussian::className() {
 ReducedGaussian::ReducedGaussian(const size_t N, const long nlons[], const Domain& dom) :
     Gaussian() {
     domain_ = dom;
-    setup_N_hemisphere(N,nlons);
+    setup_N_hemisphere(N,nlons,domain_);
     set_typeinfo();
 }
 
 
 ReducedGaussian::ReducedGaussian(const eckit::Parametrisation& params) :
     Gaussian() {
-    // TODO: set domain from params
-    domain_ = Domain::makeGlobal();
+
+    std::vector<double> p_domain(4);
+    if( params.get("domain", p_domain) )
+    {
+      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    }
+    else
+    {
+      domain_ = Domain::makeGlobal();
+    }
 
     setup(params);
     set_typeinfo();
@@ -58,7 +66,7 @@ void ReducedGaussian::setup( const eckit::Parametrisation& params ) {
 
     std::vector<long> pl;
     params.get("pl",pl);
-    setup_N_hemisphere(N,pl.data());
+    setup_N_hemisphere(N,pl.data(),domain_);
 }
 
 

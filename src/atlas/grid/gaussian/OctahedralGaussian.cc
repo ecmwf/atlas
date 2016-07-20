@@ -47,8 +47,16 @@ OctahedralGaussian::OctahedralGaussian(const size_t N, const Domain& dom) :
 
 OctahedralGaussian::OctahedralGaussian(const eckit::Parametrisation& params) :
     Gaussian() {
-    // TODO: set domain from params
-    domain_ = Domain::makeGlobal();
+
+    std::vector<double> p_domain(4);
+    if( params.get("domain", p_domain) )
+    {
+      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    }
+    else
+    {
+      domain_ = Domain::makeGlobal();
+    }
 
     size_t N;
     params.get("N",N);
@@ -60,7 +68,7 @@ OctahedralGaussian::OctahedralGaussian(const eckit::Parametrisation& params) :
 
 void OctahedralGaussian::construct(const size_t N) {
     std::vector<long> pl = computePL(N);
-    setup_N_hemisphere(N,pl.data());
+    setup_N_hemisphere(N,pl.data(),domain_);
 }
 
 

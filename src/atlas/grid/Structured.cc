@@ -74,16 +74,8 @@ void Structured::setup(
     lon_inc_.resize(nlat);
     nlonmin_ = nlonmax_ = static_cast<size_t>(pl_[0]);
 
-    const double ew = domain().east() - domain().west();
-    const bool isPeriodicEastWest = domain().isPeriodicEastWest();
     for (size_t jlat = 0; jlat < nlat; ++jlat) {
-        if (jlat>0 && pl_[jlat-1]==pl_[jlat]) {
-            lon_inc_[jlat] = lon_inc_[jlat-1];
-            continue;
-        }
-
-        const double ndiv = static_cast<double>(pl_[jlat] + (isPeriodicEastWest? 0:-1));
-        lon_inc_[jlat] = pl_[jlat]? ew/ndiv : 0.;
+        lon_inc_[jlat] = (lonmax_[jlat]-lonmin_[jlat])/double(pl_[jlat]-1);
         nlonmin_ = std::min(static_cast<size_t>(pl_[jlat]),nlonmin_);
         nlonmax_ = std::max(static_cast<size_t>(pl_[jlat]),nlonmax_);
     }

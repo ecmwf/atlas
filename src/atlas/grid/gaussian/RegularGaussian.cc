@@ -13,7 +13,6 @@
 
 #include "atlas/grid/gaussian/latitudes/Latitudes.h"
 
-
 namespace atlas {
 namespace grid {
 namespace gaussian {
@@ -88,48 +87,48 @@ void RegularGaussian::setup(const size_t& N, const Domain& dom) {
     // set internal Gaussian N and latitudes (assuming global domain)
     ASSERT(N>=2);
     Structured::N_  = N;
-    Structured::lat_.assign(2*N, 0.);
-    latitudes::gaussian_latitudes_npole_spole(N, Structured::lat_.data());
+    std::vector<double> glb_lats(2*N);
+    LatitudesNorthPoleToSouthPole(N,glb_lats.data());
 
     // set (Ni,Nj) specific to domain-bound regular Gaussian
-    const double lat_middle = (dom.north() + dom.south())/2.;
     const double lon_middle = (dom.east()  + dom.west() )/2.;
     const double inc_west_east = 90.0/static_cast<double>(N);
 
-    Ni_ = N*4;
-    if (!dom.isPeriodicEastWest()) {
-        Ni_ = 0;
-        for (size_t i=0; i<N*4; ++i) {
-            const double lon = dom.west() + static_cast<double>(i*90.0)/static_cast<double>(N);
-            if (dom.contains(lon,lat_middle))
-                ++Ni_;
-        }
-    }
-    ASSERT(0<Ni_ && Ni_<=N*4);
-
     Nj_ = N*2;
+    std::vector<double> dom_lats; dom_lats.reserve(2*N);
     if (!dom.includesPoleNorth() || !dom.includesPoleSouth()) {
-        std::vector<double> lat_global;
-        Structured::lat_.swap(lat_global);
-        Structured::lat_.reserve(2*N);
         for (size_t i=0; i<N*2; ++i) {
-            if (dom.contains(lon_middle,lat_global[i]))
-                Structured::lat_.push_back(lat_global[i]);
+            if (dom.contains(lon_middle,glb_lats[i]))
+                dom_lats.push_back(glb_lats[i]);
         }
-        Nj_ = Structured::lat_.size();
+        Nj_ = dom_lats.size();
     }
     ASSERT(0<Nj_ && Nj_<=N*2);
 
+    double lonmin =  std::numeric_limits<double>::max();
+    double lonmax = -std::numeric_limits<double>::max();
+    const double tol = 1.e-6;
+    Ni_ = 0;
+    for( long jlon=-long(4*N)-1; jlon < long(4*N); ++jlon )
+    {
+      double lon = inc_west_east*jlon;
+      if( lon+tol > dom.west() && lon-tol < dom.east() )
+      {
+          ++Ni_;
+          lonmin = std::min(lonmin,lon);
+          lonmax = std::max(lonmax,lon);
+      }
+    }
+    if( dom.isPeriodicEastWest() )
+    {
+      Ni_=4*N;
+      lonmax = lonmin +(Ni_-1)*inc_west_east;
+    }
 
-    // set Structured:: members
-    Structured::pl_.assign(Nj_, Ni_);
-    Structured::nlonmin_ = Ni_;
-    Structured::nlonmax_ = Ni_;
-    Structured::npts_    = Ni_*Nj_;
-    Structured::lon_inc_.assign(Nj_, inc_west_east);
-    Structured::lonmin_ .assign(Nj_, dom.west());
-    Structured::lonmax_ .assign(Nj_, dom.east() - (dom.isPeriodicEastWest()? inc_west_east : 0.));
-
+    std::vector<long>   dom_pl(Nj_,Ni_);
+    std::vector<double> dom_lonmin(Nj_,lonmin);
+    std::vector<double> dom_lonmax(Nj_,lonmax);
+    Structured::setup(Nj_,dom_lats.data(),dom_pl.data(),dom_lonmin.data(),dom_lonmax.data());
 
     set_typeinfo();
 }

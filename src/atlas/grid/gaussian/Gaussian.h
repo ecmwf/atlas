@@ -77,7 +77,7 @@ class Gaussian: public Structured {
     /// to be used only by derived types
     Gaussian();
 
-    void setup_N_hemisphere(const size_t N, const long pl[]);
+    void setup_N_hemisphere(const size_t N, const long pl[], const Domain& dom);
 
     virtual void set_typeinfo() = 0;
 
