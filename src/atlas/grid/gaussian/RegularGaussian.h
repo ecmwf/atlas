@@ -78,15 +78,25 @@ class RegularGaussian : public Gaussian {
         return Structured::lon(0,jlon);
     }
 
-  protected:
+    virtual const Domain& domain() const {
+        return domain_;
+    }
+
+  private:
 
     virtual void setup(const size_t& N, const Domain&);
 
     virtual void set_typeinfo();
 
+  private:
+
+    Domain domain_;
+
     size_t Ni_;
 
     size_t Nj_;
+
+
 
 };
 

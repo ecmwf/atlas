@@ -45,7 +45,7 @@ class ReducedLonLat : public LonLat {
 
     virtual eckit::Properties spec() const;
 
-  protected:
+  private:
 
     void setup(const eckit::Parametrisation&);
 

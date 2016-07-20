@@ -30,46 +30,41 @@ std::string CustomStructured::grid_type_str() {
 
 
 CustomStructured::CustomStructured(const eckit::Parametrisation& params) :
-    Structured(Domain::makeGlobal()) {
-    setup(params);
+    Structured()
+{
+  domain_ = Domain::makeGlobal();
 
-    //if( ! params.get("short_name",shortName_) ) throw eckit::BadParameter("short_name missing in Params",Here());
-    //if( ! params.has("hash") ) throw eckit::BadParameter("hash missing in Params",Here());
+  // mandatory parameters: pl, latitudes
+  std::vector<long> pl;
+  std::vector<double> latitudes;
+
+  if (!params.get("pl", pl))
+      throw eckit::BadParameter("pl missing in Params",Here());
+  if (!params.get("latitudes", latitudes))
+      throw eckit::BadParameter("latitudes missing in Params",Here());
+
+  ASSERT(pl.size());
+  ASSERT(pl.size() == latitudes.size());
+  const size_t nlat = pl.size();
+
+  // optional parameters: N identifier, longitude limits (lon_min, lon_max)
+  std::vector<double> lonmin(nlat);
+  std::vector<double> lonmax(nlat);
+  setup_lon_limits(nlat, pl.data(), domain(), lonmin.data(), lonmax.data());
+
+  params.get("N", Structured::N_);
+  if (params.has("lon_min"))
+      params.get("lon_min", lonmin);
+  if (params.has("lon_max"))
+      params.get("lon_max", lonmax);
+
+  ASSERT(lonmin.size() == nlat);
+  ASSERT(lonmax.size() == nlat);
+
+  // common (base) class setup
+  Structured::setup(latitudes.size(), latitudes.data(), pl.data(), lonmin.data(), lonmax.data());
 }
 
-
-void CustomStructured::setup(const eckit::Parametrisation& params) {
-
-    // mandatory parameters: pl, latitudes
-    std::vector<long> pl;
-    std::vector<double> latitudes;
-
-    if (!params.get("pl", pl))
-        throw eckit::BadParameter("pl missing in Params",Here());
-    if (!params.get("latitudes", latitudes))
-        throw eckit::BadParameter("latitudes missing in Params",Here());
-
-    ASSERT(pl.size());
-    ASSERT(pl.size() == latitudes.size());
-    const size_t nlat = pl.size();
-
-    // optional parameters: N identifier, longitude limits (lon_min, lon_max)
-    std::vector<double> lonmin(nlat);
-    std::vector<double> lonmax(nlat);
-    setup_lon_limits(nlat, pl.data(), domain(), lonmin.data(), lonmax.data());
-
-    params.get("N", Structured::N_);
-    if (params.has("lon_min"))
-        params.get("lon_min", lonmin);
-    if (params.has("lon_max"))
-        params.get("lon_max", lonmax);
-
-    ASSERT(lonmin.size() == nlat);
-    ASSERT(lonmax.size() == nlat);
-
-    // common (base) class setup
-    Structured::setup(latitudes.size(), latitudes.data(), pl.data(), lonmin.data(), lonmax.data());
-}
 
 
 CustomStructured::CustomStructured(
@@ -77,8 +72,9 @@ CustomStructured::CustomStructured(
     const double lats[],
     const long pl[],
     const Domain& dom ) :
-    Structured(dom) {
-
+    Structured(),
+    domain_(dom)
+{
     ASSERT(nlat);
 
     // assign longitude limits
@@ -101,7 +97,9 @@ CustomStructured::CustomStructured(
     const double lonmin[],
     const double lonmax[],
     const Domain& dom ) :
-    Structured(dom) {
+    Structured(),
+    domain_(dom)
+{
     Structured::setup(nlat, latitudes, pl, lonmin, lonmax);
 }
 

@@ -58,14 +58,10 @@ class Grid : public eckit::Owned {
     static Grid* create(const Grid::uid_t& shortName);
 
     /// ctor (default)
-    Grid(const Domain& dom=Domain::makeGlobal());
+    Grid();
 
     /// dtor
     virtual ~Grid();
-
-    Ptr self() {
-        return Ptr(this);    ///< @todo not necessary?
-    }
 
     /// Human readable name (may not be unique)
     virtual std::string shortName() const = 0;
@@ -81,9 +77,7 @@ class Grid : public eckit::Owned {
     eckit::MD5::digest_t hash() const;
 
     /// @return area represented by the grid
-    const Domain& domain() const {
-        return domain_;
-    }
+    virtual const Domain& domain() const = 0;
 
     /// @return number of grid points
     /// @note This methods should have constant access time, if necessary derived
@@ -135,11 +129,6 @@ class Grid : public eckit::Owned {
         p.print(s);
         return s;
     }
-
-  protected:  // members
-
-    /// Area represented by the grid
-    Domain domain_;
 
   private:  // members
 

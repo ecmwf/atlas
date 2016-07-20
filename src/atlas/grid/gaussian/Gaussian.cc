@@ -53,8 +53,8 @@ std::string Gaussian::className() {
 }
 
 
-Gaussian::Gaussian(const Domain& dom) :
-    Structured(dom) {
+Gaussian::Gaussian() :
+    Structured() {
 }
 
 

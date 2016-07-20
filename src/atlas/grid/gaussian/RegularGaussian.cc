@@ -33,8 +33,9 @@ std::string RegularGaussian::className() {
 
 
 RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
-    Gaussian(Domain::makeGlobal()) {
+    Gaussian() {
     // TODO: set domain from params
+    domain_ = Domain::makeGlobal();
 
     size_t N;
     if (!params.get("N",N)) {
@@ -45,7 +46,8 @@ RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
 
 
 RegularGaussian::RegularGaussian(const size_t& N, const Domain& dom) :
-    Gaussian(dom) {
+    Gaussian() {
+    domain_ = dom;
     setup(N,dom);
 }
 

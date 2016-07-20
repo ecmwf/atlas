@@ -47,7 +47,7 @@ class Structured : public Grid {
 
   public:
 
-    Structured(const Domain& dom=Domain::makeGlobal());
+    Structured();
 
     virtual ~Structured();
 

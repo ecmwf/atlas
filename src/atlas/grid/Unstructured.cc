@@ -36,8 +36,10 @@ std::string Unstructured::className() {
 
 
 Unstructured::Unstructured(const mesh::Mesh& m) :
-    Grid(Domain::makeGlobal()),
+    Grid(),
     points_ ( new std::vector< Grid::Point > (m.nodes().size() ) ) {
+
+    domain_ = Domain::makeGlobal();
 
     double lat_min = std::numeric_limits<double>::max();
     double lat_max = std::numeric_limits<double>::min();
@@ -59,14 +61,16 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
 
 
 Unstructured::Unstructured(const eckit::Parametrisation& p) :
-    Grid(Domain::makeGlobal()) {
+    Grid() {
+    domain_ = Domain::makeGlobal();
     NOTIMP;
 }
 
 
 Unstructured::Unstructured(std::vector<Point>* pts) :
-    Grid(Domain::makeGlobal()),
+    Grid(),
     points_(pts) {
+    domain_ = Domain::makeGlobal();
 
     const std::vector<Point> &p = *points_;
     const size_t npts = p.size();

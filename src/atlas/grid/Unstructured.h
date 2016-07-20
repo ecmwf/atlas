@@ -56,6 +56,10 @@ class Unstructured : public Grid {
 
     virtual eckit::Properties spec() const;
 
+    virtual const Domain& domain() const {
+        return domain_;
+    }
+
   private: // methods
 
     virtual void print(std::ostream&) const;
@@ -76,6 +80,11 @@ class Unstructured : public Grid {
 
     /// Cache for the spec since may be quite heavy to compute
     mutable eckit::ScopedPtr<eckit::Properties> cached_spec_;
+
+  protected:  // members
+
+    /// Area represented by the grid
+    Domain domain_;
 
 };
 

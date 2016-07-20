@@ -36,6 +36,10 @@ class OctahedralGaussian : public Gaussian {
 
     OctahedralGaussian(const eckit::Parametrisation&);
 
+    virtual const Domain& domain() const {
+        return domain_;
+    }
+
   private:
 
     /// Computes the PL for the Octohedral distribution
@@ -45,6 +49,10 @@ class OctahedralGaussian : public Gaussian {
     void construct(const size_t N);
 
     virtual void set_typeinfo();
+
+  private:
+
+    Domain domain_;
 
 };
 

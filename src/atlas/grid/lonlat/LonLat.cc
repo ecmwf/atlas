@@ -28,6 +28,7 @@ std::string LonLat::className() {
 
 
 void LonLat::setup(const size_t N, const Domain& dom) {
+    domain_ = dom;
     const size_t
     nlon = 4*N,
     nlat = 2*N;
@@ -36,6 +37,7 @@ void LonLat::setup(const size_t N, const Domain& dom) {
 
 
 void LonLat::setup(const size_t nlon, const size_t nlat, const Domain& dom) {
+    domain_ = dom;
 #if 0
     // set domain (optional)
     Domain dom = domain();
@@ -81,6 +83,8 @@ void LonLat::setup(const size_t nlon, const size_t nlat, const Domain& dom) {
 
 void LonLat::setup(const long pl[], const size_t nlat, const Domain& dom) {
 
+    domain_ = dom;
+
     ASSERT(nlat>0);
     ASSERT(shift_(Shift::NONE));
 
@@ -110,8 +114,10 @@ void LonLat::setup(const long pl[], const size_t nlat, const Domain& dom) {
 
 
 LonLat::LonLat(const Shift& shift, const Domain& dom) :
-    Structured(dom),
-    shift_(shift) {
+    Structured(),
+    shift_(shift),
+    domain_(dom)
+{
 }
 
 

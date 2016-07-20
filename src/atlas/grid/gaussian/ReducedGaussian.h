@@ -44,6 +44,10 @@ class ReducedGaussian : public Gaussian {
 
     ReducedGaussian(const size_t N, const long pl[], const Domain& dom=Domain::makeGlobal());
 
+    virtual const Domain& domain() const {
+        return domain_;
+    }
+
   protected:
 
     ReducedGaussian() : Gaussian() {}
@@ -51,6 +55,10 @@ class ReducedGaussian : public Gaussian {
     void setup(const eckit::Parametrisation&);
 
     virtual void set_typeinfo();
+
+  private:
+
+    Domain domain_;
 
 };
 

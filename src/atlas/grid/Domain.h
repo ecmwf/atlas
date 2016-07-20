@@ -19,7 +19,8 @@
 
 #include <iostream>
 #include "eckit/exception/Exceptions.h"
-
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 namespace eckit {
 class MD5;
@@ -29,7 +30,10 @@ namespace atlas {
 namespace grid {
 
 
-class Domain {
+class Domain: public eckit::Owned {
+
+  public:
+    typedef eckit::SharedPtr<Domain> Ptr;
 
   public:
 

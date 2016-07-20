@@ -854,7 +854,7 @@ void Trans::invtrans_vordiv2wind(const Spectral& sp, const field::Field& spvor, 
 
 Trans* atlas__Trans__new (const grid::Grid* grid, int nsmax)
 {
-  Trans* trans;
+  Trans* trans(0);
   ATLAS_ERROR_HANDLING(
     ASSERT( grid );
     trans = new Trans(*grid,nsmax);

@@ -68,6 +68,11 @@ class LonLat: public Structured {
         return shift_;
     }
 
+    virtual const Domain& domain() const {
+        return domain_;
+    }
+
+
   protected:
 
     void setup(const size_t N, const Domain&);
@@ -81,6 +86,8 @@ class LonLat: public Structured {
   protected:
 
     Shift shift_;
+
+    Domain domain_;
 
 };
 

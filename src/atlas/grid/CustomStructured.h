@@ -56,10 +56,13 @@ class CustomStructured: public Structured {
 
     virtual eckit::Properties spec() const;
 
+    virtual const Domain& domain() const {
+        return domain_;
+    }
+
   private:
 
-    void setup(const eckit::Parametrisation&);
-
+    Domain domain_;
 };
 
 

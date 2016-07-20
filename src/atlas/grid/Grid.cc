@@ -57,11 +57,10 @@ Grid* Grid::create(const Grid::uid_t& uid) {
 }
 
 
-Grid::Grid(const Domain& dom) :
-    domain_(dom) {
+Grid::Grid()
+{
     checkSizeOfPoint();
 }
-
 
 Grid::~Grid() {
 }

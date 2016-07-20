@@ -47,8 +47,8 @@ std::string Structured::grid_type_str() {
 }
 
 
-Structured::Structured(const Domain& dom) :
-    Grid(dom),
+Structured::Structured() :
+    Grid(),
     N_(0) {
 }
 
@@ -75,7 +75,7 @@ void Structured::setup(
     nlonmin_ = nlonmax_ = static_cast<size_t>(pl_[0]);
 
     const double ew = domain().east() - domain().west();
-    const bool isPeriodicEastWest = domain_.isPeriodicEastWest();
+    const bool isPeriodicEastWest = domain().isPeriodicEastWest();
     for (size_t jlat = 0; jlat < nlat; ++jlat) {
         if (jlat>0 && pl_[jlat-1]==pl_[jlat]) {
             lon_inc_[jlat] = lon_inc_[jlat-1];

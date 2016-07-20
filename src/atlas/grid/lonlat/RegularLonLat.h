@@ -44,7 +44,7 @@ class RegularLonLat : public LonLat {
         return Structured::lon(0,jlon);
     }
 
-  protected:
+  private:
 
     void setup(const eckit::Parametrisation&);
 

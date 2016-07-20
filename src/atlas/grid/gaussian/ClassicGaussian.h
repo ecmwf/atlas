@@ -44,10 +44,17 @@ class ClassicGaussian : public Gaussian {
 
     ClassicGaussian(const size_t N, const Domain& dom=Domain::makeGlobal());
 
-  protected:
+    virtual const Domain& domain() const {
+        return domain_;
+    }
+
+  private:
 
     virtual void set_typeinfo();
 
+  private:
+
+    Domain domain_;
 };
 
 
