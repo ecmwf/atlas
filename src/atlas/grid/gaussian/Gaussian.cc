@@ -90,7 +90,7 @@ void Gaussian::setup_N_hemisphere(const size_t N, const long pl[], const Domain&
                 ++nlat;
                 const double lat = glb_lats[jlat];
                 double lonmin =  std::numeric_limits<double>::max();
-                double lonmax = -std::numeric_limits<double>::min();
+                double lonmax = -std::numeric_limits<double>::max();
                 size_t nlon = 0;
                 const double inc_west_east = 360./double(glb_pl[jlat]);
                 for( long jlon=-glb_pl[jlat]; jlon<glb_pl[jlat]; ++jlon )
