@@ -62,6 +62,18 @@ ShiftedLon::ShiftedLon(const size_t nlon, const size_t nlat, const Domain& dom) 
 
 void ShiftedLon::setup(const eckit::Parametrisation& p) {
     size_t nlon, nlat, N(0);
+
+    std::vector<double> p_domain(4);
+
+    if( p.get("domain", p_domain) )
+    {
+      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    }
+    else
+    {
+      domain_ = Domain::makeGlobal();
+    }
+
     if (p.get("N",N)) {
         LonLat::setup(N, domain_);
     }
@@ -81,6 +93,7 @@ eckit::Properties ShiftedLon::spec() const {
     grid_spec.set("N",    N());
     grid_spec.set("nlon", nlon());
     grid_spec.set("nlat", nlat());
+    grid_spec.set("domain", domain_spec(domain_) );
     return grid_spec;
 }
 

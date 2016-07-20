@@ -26,6 +26,15 @@ std::string LonLat::className() {
     return "atlas.grid.lonlat.LonLat";
 }
 
+eckit::Value LonLat::domain_spec(const Domain& dom)
+{
+  std::vector<double> dspec(4);
+  dspec[0] = dom.north();
+  dspec[1] = dom.west();
+  dspec[2] = dom.south();
+  dspec[3] = dom.east();
+  return eckit::makeVectorValue(dspec);
+}
 
 void LonLat::setup(const size_t N, const Domain& dom) {
     domain_ = dom;

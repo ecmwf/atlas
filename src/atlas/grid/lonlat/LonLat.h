@@ -83,6 +83,8 @@ class LonLat: public Structured {
 
     virtual void set_typeinfo() = 0;
 
+    static eckit::Value domain_spec(const Domain& dom);
+
   protected:
 
     Shift shift_;
