@@ -221,6 +221,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
   bool   has_north_pole = rg.lat(0) == 90;
   bool   has_south_pole = rg.lat(rg.nlat()-1) == -90;
   bool   unique_pole        = options.get<bool>("unique_pole") && three_dimensional && has_north_pole && has_south_pole;
+  bool   periodic_east_west = rg.domain().isPeriodicEastWest();
 
   int n;
   /*
@@ -308,13 +309,13 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
     size_t beginN, beginS, endN, endS;
 
     beginN = 0;
-    endN   = rg.nlon(latN); // include periodic point
+    endN   = rg.nlon(latN) - (periodic_east_west ? 0 : 1);
     if( yN == 90 && unique_pole )
       endN = beginN;
 
 
     beginS = 0;
-    endS   = rg.nlon(latS); // include periodic point
+    endS   = rg.nlon(latS) - (periodic_east_west ? 0 : 1);
     if( yS == -90 && unique_pole )
       endS = beginS;
 
@@ -738,7 +739,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
     nb_region_nodes += region.lat_end.at(jlat)-region.lat_begin.at(jlat)+1;
 
     // Count extra periodic node to be added in this case
-    if(size_t(region.lat_end.at(jlat)) == rg.nlon(jlat) - 1) ++nb_region_nodes;
+    if( periodic_east_west && size_t(region.lat_end.at(jlat)) == rg.nlon(jlat) - 1) ++nb_region_nodes;
 
   }
 
@@ -774,6 +775,10 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   bool has_north_pole = rg.latitudes().front() ==  90 && rg.pl().front() > 0;
   bool has_south_pole = rg.latitudes().back()  == -90 && rg.pl().back()  > 0;
   bool three_dimensional  = options.get<bool>("3d");
+  bool periodic_east_west = rg.domain().isPeriodicEastWest();
+  bool include_periodic_ghost_points = periodic_east_west
+          && !three_dimensional ;
+  bool remove_periodic_ghost_points = three_dimensional && periodic_east_west ;
 
   bool include_north_pole = (mypart == 0 )
           && options.get<bool>("include_pole")
@@ -808,21 +813,21 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
   if (include_north_pole) {
     ++nnodes;
-    ntriags += rg.nlon(0);
+    ntriags += rg.nlon(0) - (periodic_east_west ? 0 : 1);
   }
   else if (patch_north_pole) {
     ntriags += rg.nlon(0)-2;
   }
   if (include_south_pole) {
     ++nnodes;
-    ntriags += rg.nlon(rg.nlat()-1);
+    ntriags += rg.nlon(rg.nlat()-1) - (periodic_east_west ? 0 : 1);
   }
   else if (patch_south_pole) {
     ntriags += rg.nlon(rg.nlat()-1)-2;
   }
 
   size_t node_numbering_size = nnodes;
-  if (three_dimensional) {
+  if ( remove_periodic_ghost_points ) {
     for(size_t jlat = 0; jlat < rg.nlat(); ++jlat)
     {
       if( rg.nlon(jlat) > 0 )
@@ -831,6 +836,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   }
 
 #if DEBUG_OUTPUT
+  DEBUG_VAR(include_periodic_ghost_points);
   DEBUG_VAR(include_north_pole);
   DEBUG_VAR(include_south_pole);
   DEBUG_VAR(three_dimensional);
@@ -856,7 +862,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
   std::vector<int> periodic_glb(rg.nlat());
 
-  if( !three_dimensional )
+  if( include_periodic_ghost_points )
   {
     for(size_t jlat = 0; jlat < rg.nlat(); ++jlat)
     {
@@ -924,7 +930,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
         }
         ++jnode;
       }
-      if(!three_dimensional && size_t(region.lat_end.at(jlat)) == rg.nlon(jlat) - 1) // add periodic point
+      if(include_periodic_ghost_points && size_t(region.lat_end.at(jlat)) == rg.nlon(jlat) - 1) // add periodic point
       {
         ++l;
         part(jnode)      = part(jnode-1);
@@ -985,7 +991,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
       if( size_t(jlat) == rg.nlat()-1 && !include_south_pole) {
         Topology::set(flags(inode),Topology::BC|Topology::SOUTH);
       }
-      if( jlon == 0 && !three_dimensional) {
+      if( jlon == 0 && include_periodic_ghost_points) {
         Topology::set(flags(inode),Topology::BC|Topology::WEST);
       }
       if( part(inode) != mypart ) {
@@ -994,7 +1000,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
       }
       ++jnode;
     }
-    if(!three_dimensional && size_t(region.lat_end.at(jlat)) == rg.nlon(jlat) - 1) // add periodic point
+    if(include_periodic_ghost_points && size_t(region.lat_end.at(jlat)) == rg.nlon(jlat) - 1) // add periodic point
     {
       int inode = node_numbering.at(jnode);
       int inode_left = node_numbering.at(jnode-1);
@@ -1080,31 +1086,30 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       if(elem.at(2)>=0 && elem.at(3)>=0) // This is a quad
       {
-        jcell = quad_begin + jquad++;
         quad_nodes[0] = node_numbering.at( offset_loc.at(ilatN) + elem.at(0) - region.lat_begin.at(jlatN) );
         quad_nodes[1] = node_numbering.at( offset_loc.at(ilatS) + elem.at(1) - region.lat_begin.at(jlatS) );
         quad_nodes[2] = node_numbering.at( offset_loc.at(ilatS) + elem.at(2) - region.lat_begin.at(jlatS) );
         quad_nodes[3] = node_numbering.at( offset_loc.at(ilatN) + elem.at(3) - region.lat_begin.at(jlatN) );
 
-        if( three_dimensional )
+        if( three_dimensional && periodic_east_west )
         {
           if (size_t(elem.at(2)) == rg.nlon(jlatS)) quad_nodes[2] = node_numbering.at( offset_loc.at(ilatS) );
           if (size_t(elem.at(3)) == rg.nlon(jlatN)) quad_nodes[3] = node_numbering.at( offset_loc.at(ilatN) );
         }
 
+        jcell = quad_begin + jquad++;
         node_connectivity.set( jcell, quad_nodes );
         cells_glb_idx(jcell) = jcell+1;
         cells_part(jcell)    = mypart;
       }
       else // This is a triag
       {
-        jcell = triag_begin + jtriag++;
         if(elem.at(3)<0) // This is a triangle pointing up
         {
           triag_nodes[0] = node_numbering.at( offset_loc.at(ilatN) + elem.at(0) - region.lat_begin.at(jlatN) );
           triag_nodes[1] = node_numbering.at( offset_loc.at(ilatS) + elem.at(1) - region.lat_begin.at(jlatS) );
           triag_nodes[2] = node_numbering.at( offset_loc.at(ilatS) + elem.at(2) - region.lat_begin.at(jlatS) );
-          if( three_dimensional )
+          if( three_dimensional && periodic_east_west )
           {
             if (size_t(elem.at(0)) == rg.nlon(jlatN)) triag_nodes[0] = node_numbering.at( offset_loc.at(ilatN) );
             if (size_t(elem.at(2)) == rg.nlon(jlatS)) triag_nodes[2] = node_numbering.at( offset_loc.at(ilatS) );
@@ -1115,12 +1120,13 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
           triag_nodes[0] = node_numbering.at( offset_loc.at(ilatN) + elem.at(0) - region.lat_begin.at(jlatN) );
           triag_nodes[1] = node_numbering.at( offset_loc.at(ilatS) + elem.at(1) - region.lat_begin.at(jlatS) );
           triag_nodes[2] = node_numbering.at( offset_loc.at(ilatN) + elem.at(3) - region.lat_begin.at(jlatN) );
-          if( three_dimensional )
+          if( three_dimensional && periodic_east_west )
           {
             if (size_t(elem.at(1)) == rg.nlon(jlatS)) triag_nodes[1] = node_numbering.at( offset_loc.at(ilatS) );
             if (size_t(elem.at(3)) == rg.nlon(jlatN)) triag_nodes[2] = node_numbering.at( offset_loc.at(ilatN) );
           }
         }
+        jcell = triag_begin + jtriag++;
         node_connectivity.set( jcell, triag_nodes );
         cells_glb_idx(jcell) = jcell+1;
         cells_part(jcell) = mypart;
@@ -1132,7 +1138,8 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   {
     int ilat = 0;
     int ip1  = 0;
-    for (size_t ip2 = 0; ip2 < rg.nlon(0); ++ip2)
+    size_t nlon = rg.nlon(0) - (periodic_east_west ? 0 : 1);
+    for (size_t ip2 = 0; ip2 < nlon; ++ip2)
     {
       jcell = triag_begin + jtriag++;
       size_t ip3 = ip2+1;
@@ -1150,65 +1157,48 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
     int jlat = 0;
     int ilat = 0;
     int ip1, ip2, ip3;
-    int q1,q2,q3,q4;
 
-    // start with triag:
-    jcell = triag_begin + jtriag++;
-    ip1 = 0;
-    ip2 = 1;
-    ip3 = rg.nlon(0)-1;
-    triag_nodes[0] = node_numbering.at( offset_loc.at(ilat) + ip1 );
-    triag_nodes[1] = node_numbering.at( offset_loc.at(ilat) + ip2 );
-    triag_nodes[2] = node_numbering.at( offset_loc.at(ilat) + ip3 );
-    node_connectivity.set( jcell, triag_nodes );
-    cells_glb_idx(jcell) = jcell+1;
-    cells_part(jcell) = mypart;
+    int jforward = 0;
+    int jbackward = rg.nlon(jlat) - 1;
+    bool forward = true;
 
-    q1 = ip2;
-    q4 = ip3;
-    for (size_t k = 0; k < (rg.nlon(jlat)-4)/2; ++k)
+    while( true )
     {
-      q2=q1+1;
-      q3=q4-1;
+      if( forward )
+      {
+        ip1 = jforward;
+        ip2 = jforward+1;
+        ip3 = jbackward;
+      }
+      else
+      {
+        ip1 = jforward;
+        ip2 = jbackward-1;
+        ip3 = jbackward;
+      }
 
-      // add triag
-      jcell = triag_begin + jtriag++;
-      ip1 = q1;
-      ip2 = q3;
-      ip3 = q4;
       triag_nodes[0] = node_numbering.at( offset_loc.at(ilat) + ip1 );
       triag_nodes[1] = node_numbering.at( offset_loc.at(ilat) + ip2 );
       triag_nodes[2] = node_numbering.at( offset_loc.at(ilat) + ip3 );
+
+      jcell = triag_begin + jtriag++;
       node_connectivity.set( jcell, triag_nodes );
       cells_glb_idx(jcell) = jcell+1;
       cells_part(jcell) = mypart;
 
-      // add triag
-      jcell = triag_begin + jtriag++;
-      ip1 = q1;
-      ip2 = q2;
-      ip3 = q3;
-      triag_nodes[0] = node_numbering.at( offset_loc.at(ilat) + ip1 );
-      triag_nodes[1] = node_numbering.at( offset_loc.at(ilat) + ip2 );
-      triag_nodes[2] = node_numbering.at( offset_loc.at(ilat) + ip3 );
-      node_connectivity.set( jcell, triag_nodes );
-      cells_glb_idx(jcell) = jcell+1;
-      cells_part(jcell) = mypart;
+      if (jbackward == jforward+2 ) break;
 
-      q1 = q2;
-      q4 = q3;
+      if( forward )
+      {
+        ++jforward;
+        forward = false;
+      }
+      else
+      {
+        --jbackward;
+        forward = true;
+      }
     }
-    // end with triag:
-    jcell = triag_begin + jtriag++;
-    ip1 = q1;
-    ip2 = q1+1;
-    ip3 = q4;
-    triag_nodes[0] = node_numbering.at( offset_loc.at(ilat) + ip1 );
-    triag_nodes[1] = node_numbering.at( offset_loc.at(ilat) + ip2 );
-    triag_nodes[2] = node_numbering.at( offset_loc.at(ilat) + ip3 );
-    node_connectivity.set( jcell, triag_nodes );
-    cells_glb_idx(jcell) = jcell+1;
-    cells_part(jcell) = mypart;
   }
 
   if (include_south_pole)
@@ -1216,7 +1206,8 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
     int jlat = rg.nlat()-1;
     int ilat = region.south-region.north;
     int ip1 = 0;
-    for (size_t ip2 = 1; ip2 < rg.nlon(jlat)+1; ++ip2)
+    size_t nlon = rg.nlon(jlat)+1 - (periodic_east_west ? 0 : 1);
+    for (size_t ip2 = 1; ip2 < nlon; ++ip2)
     {
       jcell = triag_begin + jtriag++;
       int ip3 = ip2-1;
@@ -1235,65 +1226,48 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
     int jlat = rg.nlat()-1;
     int ilat = region.south-region.north;
     int ip1, ip2, ip3;
-    int q1,q2,q3,q4;
 
-    // start with triag:
-    jcell = triag_begin + jtriag++;
-    ip1 = 0;
-    ip2 = 1;
-    ip3 = rg.nlon(0)-1;
-    triag_nodes[0] = node_numbering.at( offset_loc.at(ilat) + ip1 );
-    triag_nodes[2] = node_numbering.at( offset_loc.at(ilat) + ip2 );
-    triag_nodes[1] = node_numbering.at( offset_loc.at(ilat) + ip3 );
-    node_connectivity.set( jcell, triag_nodes );
-    cells_glb_idx(jcell) = jcell+1;
-    cells_part(jcell) = mypart;
+    int jforward = 0;
+    int jbackward = rg.nlon(jlat) - 1;
+    bool forward = true;
 
-    q1 = ip2;
-    q4 = ip3;
-    for (size_t k = 0; k < (rg.nlon(jlat)-4)/2; ++k)
+    while( true )
     {
-      q2=q1+1;
-      q3=q4-1;
+      if( forward )
+      {
+        ip1 = jforward;
+        ip2 = jforward+1;
+        ip3 = jbackward;
+      }
+      else
+      {
+        ip1 = jforward;
+        ip2 = jbackward-1;
+        ip3 = jbackward;
+      }
 
-      // add triag
-      jcell = triag_begin + jtriag++;
-      ip1 = q1;
-      ip2 = q3;
-      ip3 = q4;
       triag_nodes[0] = node_numbering.at( offset_loc.at(ilat) + ip1 );
-      triag_nodes[2] = node_numbering.at( offset_loc.at(ilat) + ip2 );
-      triag_nodes[1] = node_numbering.at( offset_loc.at(ilat) + ip3 );
+      triag_nodes[1] = node_numbering.at( offset_loc.at(ilat) + ip2 );
+      triag_nodes[2] = node_numbering.at( offset_loc.at(ilat) + ip3 );
+
+      jcell = triag_begin + jtriag++;
       node_connectivity.set( jcell, triag_nodes );
       cells_glb_idx(jcell) = jcell+1;
       cells_part(jcell) = mypart;
 
-      // add triag
-      jcell = triag_begin + jtriag++;
-      ip1 = q1;
-      ip2 = q2;
-      ip3 = q3;
-      triag_nodes[0] = node_numbering.at( offset_loc.at(ilat) + ip1 );
-      triag_nodes[2] = node_numbering.at( offset_loc.at(ilat) + ip2 );
-      triag_nodes[1] = node_numbering.at( offset_loc.at(ilat) + ip3 );
-      node_connectivity.set( jcell, triag_nodes );
-      cells_glb_idx(jcell) = jcell+1;
-      cells_part(jcell) = mypart;
+      if (jbackward == jforward+2 ) break;
 
-      q1 = q2;
-      q4 = q3;
+      if( forward )
+      {
+        ++jforward;
+        forward = false;
+      }
+      else
+      {
+        --jbackward;
+        forward = true;
+      }
     }
-    // end with triag:
-    jcell = triag_begin + jtriag++;
-    ip1 = q1;
-    ip2 = q1+1;
-    ip3 = q4;
-    triag_nodes[0] = node_numbering.at( offset_loc.at(ilat) + ip1 );
-    triag_nodes[2] = node_numbering.at( offset_loc.at(ilat) + ip2 );
-    triag_nodes[1] = node_numbering.at( offset_loc.at(ilat) + ip3 );
-    node_connectivity.set( jcell, triag_nodes );
-    cells_glb_idx(jcell) = jcell+1;
-    cells_part(jcell) = mypart;
   }
 
   generate_global_element_numbering( mesh );

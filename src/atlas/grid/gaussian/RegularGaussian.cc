@@ -34,13 +34,22 @@ std::string RegularGaussian::className() {
 
 RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
     Gaussian() {
-    // TODO: set domain from params
-    domain_ = Domain::makeGlobal();
-
     size_t N;
     if (!params.get("N",N)) {
         throw eckit::BadParameter("N missing in Params", Here());
     }
+
+    std::vector<double> p_domain(4);
+
+    if( params.get("domain", p_domain) )
+    {
+      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    }
+    else
+    {
+      domain_ = Domain::makeGlobal();
+    }
+
     setup(N,domain_);
 }
 
@@ -51,6 +60,17 @@ RegularGaussian::RegularGaussian(const size_t& N, const Domain& dom) :
     setup(N,dom);
 }
 
+namespace {
+static eckit::Value domain_spec(const Domain& dom)
+{
+  std::vector<double> dspec(4);
+  dspec[0] = dom.north();
+  dspec[1] = dom.west();
+  dspec[2] = dom.south();
+  dspec[3] = dom.east();
+  return eckit::makeVectorValue(dspec);
+}
+}
 
 eckit::Properties RegularGaussian::spec() const {
     eckit::Properties grid_spec;
@@ -58,6 +78,7 @@ eckit::Properties RegularGaussian::spec() const {
     grid_spec.set("short_name", shortName());
     grid_spec.set("N", N());
     grid_spec.set("nlat", nlat());
+    grid_spec.set("domain", domain_spec(domain_) );
     return grid_spec;
 }
 
