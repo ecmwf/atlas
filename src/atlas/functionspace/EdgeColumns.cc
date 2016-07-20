@@ -455,7 +455,7 @@ extern "C" {
 
 EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh* mesh, int halo )
 {
-  EdgeColumns* edges;
+  EdgeColumns* edges(0);
   ATLAS_ERROR_HANDLING(
       ASSERT(mesh);
       edges = new EdgeColumns(*mesh,mesh::Halo(halo));
@@ -467,7 +467,7 @@ EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh* mesh, int halo )
 
 EdgeColumns* atlas__functionspace__Edges__new_mesh ( mesh::Mesh* mesh )
 {
-  EdgeColumns* edges;
+  EdgeColumns* edges(0);
   ATLAS_ERROR_HANDLING(
       ASSERT(mesh);
       edges = new EdgeColumns(*mesh);

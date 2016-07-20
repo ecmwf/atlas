@@ -103,6 +103,9 @@ void RegularGaussian::setup(const size_t& N, const Domain& dom) {
         }
         Nj_ = dom_lats.size();
     }
+    else {
+      dom_lats = glb_lats;
+    }
     ASSERT(0<Nj_ && Nj_<=N*2);
 
     double lonmin =  std::numeric_limits<double>::max();
