@@ -29,19 +29,6 @@ contains
   procedure, public :: return => atlas_RefCounted__return
 endtype
 
-interface
-  subroutine atlas_RefCounted__delete(this)
-     import atlas_RefCounted
-     class(atlas_RefCounted), intent(inout):: this
-  end subroutine
-  subroutine atlas_RefCounted__copy(this,obj_in)
-    import atlas_RefCounted
-    class(atlas_RefCounted), intent(inout) :: this
-    class(atlas_RefCounted), target, intent(in) :: obj_in
-  end subroutine
-end interface
-
-
 !========================================================================
 
 type, abstract, extends(atlas_object) :: atlas_RefCounted_Fortran
@@ -56,13 +43,6 @@ contains
   procedure, public :: detach => RefCounted_Fortran__detach
   procedure, public :: return => atlas_RefCounted_Fortran__return
 endtype
-
-interface
-  subroutine atlas_RefCounted_Fortran__delete(this)
-     import atlas_RefCounted_Fortran
-     class(atlas_RefCounted_Fortran), intent(inout):: this
-  end subroutine
-end interface
 
 !========================================================================
 
@@ -88,6 +68,19 @@ end interface
 
 !========================================================================
 contains
+
+subroutine atlas_RefCounted__delete(this)
+  class(atlas_RefCounted), intent(inout):: this
+end subroutine atlas_RefCounted__delete
+
+subroutine atlas_RefCounted__copy(this,obj_in)
+  class(atlas_RefCounted), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine atlas_RefCounted__copy
+
+subroutine atlas_RefCounted_Fortran__delete(this)
+   class(atlas_RefCounted_Fortran), intent(inout):: this
+end subroutine
 
 subroutine atlas_RefCounted_nocopy(this,obj_in)
   class(atlas_RefCounted), intent(inout) :: this
