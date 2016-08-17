@@ -12,25 +12,26 @@
 /// @author Tiago Quintino
 /// @date   August 2016
 
-#include "atlas/LibAtlas.h"
-
-#include "atlas/internals/atlas_version.h"
+#include "eckit/system/Library.h"
 
 namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-LibAtlas::LibAtlas() : Library("atlas") {}
+class LibAtlas : public eckit::system::Library {
+public:
 
-const void* LibAtlas::addr() const { return this; }
+    LibAtlas();
 
-std::string LibAtlas::version() const { return atlas_version_str(); }
+protected:
 
-std::string LibAtlas::gitsha1(unsigned int count) const {
-    return atlas_git_sha1_abbrev(count);
-}
+    const void* addr() const;
 
-static LibAtlas libatlas;
+    virtual std::string version() const;
+
+    virtual std::string gitsha1(unsigned int count) const;
+
+};
 
 //----------------------------------------------------------------------------------------------------------------------
 
