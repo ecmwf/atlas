@@ -12,13 +12,13 @@ unsigned int atlas_version_int()
 }
 
 const char * atlas_git_sha1() { return "@ATLAS_GIT_SHA1@"; }
-const char * atlas_git_sha1_abbrev(unsigned int length)
+const char * atlas_git_sha1_abbrev(unsigned int count)
 {
     static std::string sha1(atlas_git_sha1());
     if(sha1.empty()) {
         return "not available";
-
-    sha1 = sha1.substr(0, std::min(count,40));
+    }
+    sha1 = sha1.substr(0, std::min(count,40u));
     return sha1.c_str();
 }
 
