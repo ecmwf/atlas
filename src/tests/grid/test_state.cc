@@ -92,7 +92,7 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
       std::stringstream s;
       eckit::JSON json(s);
       json << fieldparams;
-      Log::debug(0) << "fieldparams = " << s.str() << std::endl;
+      Log::debug() << "fieldparams = " << s.str() << std::endl;
     }
   }
 }

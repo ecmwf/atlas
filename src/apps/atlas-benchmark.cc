@@ -426,7 +426,7 @@ void AtlasBenchmark::setup()
 
 void AtlasBenchmark::iteration()
 {
-  Timer t("iteration", Log::debug(5));
+  Timer t("iteration", Log::debug());
 
   eckit::ScopedPtr<array::Array> avgS_arr( array::Array::create<double>(nedges,nlev,2) );
   array::ArrayView<double,3> avgS(*avgS_arr);
@@ -503,7 +503,7 @@ void AtlasBenchmark::iteration()
 
   // halo-exchange
   eckit::mpi::barrier();
-  Timer halo("halo-exchange", Log::debug(5));
+  Timer halo("halo-exchange", Log::debug());
   nodes_fs->halo_exchange().execute(grad);
   eckit::mpi::barrier();
   t.stop();

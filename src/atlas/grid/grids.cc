@@ -214,7 +214,7 @@ void load_grid() {
 }
 
 void load() {
-    Log::debug(2) << "Loading library [atlas::grid]" << std::endl;
+    Log::debug() << "Loading library [atlas::grid]" << std::endl;
 
     // We have to touch all classes we want to register for static linking.
 

@@ -23,6 +23,8 @@ public:
 
     LibAtlas();
 
+    static const LibAtlas& instance();
+
 protected:
 
     const void* addr() const;

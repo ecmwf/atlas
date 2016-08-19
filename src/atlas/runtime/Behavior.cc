@@ -259,7 +259,7 @@ Channel& Behavior::channel(int cat)
 /// Configuration
 void Behavior::reconfigure()
 {
-  Log::debug(2) << "File read policy: " << read_policy_ << std::endl;
+  Log::debug() << "File read policy: " << read_policy_ << std::endl;
 }
 
 eckit::FileReadPolicy Behavior::fileReadPolicy()

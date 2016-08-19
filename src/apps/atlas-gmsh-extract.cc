@@ -189,7 +189,7 @@ void gmsh_extract::run()
 
 				field_name_read.assign(line,1,line.size()-2);
 				field_name = field_name_read;
-				Log::debug(2) << "Found field " << field_name << std::endl;
+                Log::debug() << "Found field " << field_name << std::endl;
 				if( field_name[field_name.size()-1] == ']' )
 				{
 					std::string lev_str;

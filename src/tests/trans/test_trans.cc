@@ -306,7 +306,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
     array::ArrayView<double,1> sp (*spf);
     BOOST_CHECK_CLOSE( sp(0), 4., 0.001 );
     for( size_t jp=0; jp<sp.size(); ++jp ) {
-      Log::debug(2) << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
+      Log::debug() << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
     }
   }
 
@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
     array::ArrayView<double,1> gpg (*gpfg);
     for( size_t jp=0; jp<gpg.size(); ++jp ) {
       BOOST_CHECK_CLOSE( gpg(jp), 4., 0.001 );
-      Log::debug(3) << "gpg("<<jp << ")   :   " << gpg(jp) << std::endl;
+      Log::debug() << "gpg("<<jp << ")   :   " << gpg(jp) << std::endl;
     }
   }
 

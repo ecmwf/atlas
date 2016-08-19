@@ -20,7 +20,14 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+static LibAtlas libatlas;
+
 LibAtlas::LibAtlas() : Library("atlas") {}
+
+const LibAtlas& LibAtlas::instance()
+{
+    return libatlas;
+}
 
 const void* LibAtlas::addr() const { return this; }
 
@@ -29,8 +36,6 @@ std::string LibAtlas::version() const { return atlas_version_str(); }
 std::string LibAtlas::gitsha1(unsigned int count) const {
     return atlas_git_sha1_abbrev(count);
 }
-
-static LibAtlas libatlas;
 
 //----------------------------------------------------------------------------------------------------------------------
 
