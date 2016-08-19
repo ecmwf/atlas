@@ -64,11 +64,11 @@ void atlas__log_set_debug (int level)
 
 void atlas__log_debug(int lvl, char *msg, int endl, int flush)
 {
-  atlas::Log::debug(lvl) << msg;
+  atlas::Log::debug() << msg;
   if( endl )
-    atlas::Log::debug(lvl) << std::endl;
+    atlas::Log::debug() << std::endl;
   else if ( flush )
-    atlas::Log::debug(lvl) << std::flush;
+    atlas::Log::debug() << std::flush;
 }
 
 void atlas__log_cat(int cat, int lvl, char *msg, int endl, int flush)
