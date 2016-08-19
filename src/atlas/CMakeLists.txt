@@ -29,8 +29,8 @@ configure_file( internals/atlas_version.cc.in internals/atlas_version.cc )
 list( APPEND atlas_srcs
 atlas.h
 atlas.cc
-LibAtlas.h
-LibAtlas.cc
+config/LibAtlas.h
+config/LibAtlas.cc
 )
 
 list( APPEND atlas_grid_srcs
