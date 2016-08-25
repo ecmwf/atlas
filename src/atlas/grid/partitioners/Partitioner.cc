@@ -43,7 +43,7 @@ namespace atlas {
 namespace grid {
 namespace partitioners {
 
-Partitioner::Partitioner(const grid::Grid& grid): nb_partitions_(eckit::mpi::size()), grid_(grid) {
+Partitioner::Partitioner(const grid::Grid& grid): nb_partitions_(eckit::mpi::comm().size()), grid_(grid) {
 }
 
 Partitioner::Partitioner(const grid::Grid& grid, const size_t nb_partitions): nb_partitions_(nb_partitions), grid_(grid) {

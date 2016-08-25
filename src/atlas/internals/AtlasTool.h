@@ -93,7 +93,7 @@ protected:
       if( eckit::Context::instance().argv(i) == "--help" ||
           eckit::Context::instance().argv(i) == "-h"     )
       {
-        if( eckit::mpi::rank() == 0 )
+        if( eckit::mpi::comm().rank() == 0 )
           help();
         return true;
       }

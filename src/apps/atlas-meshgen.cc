@@ -160,7 +160,7 @@ void Meshgen2Gmsh::execute(const Args& args)
     halo = std::max(halo,1l);
 
   eckit::LocalConfiguration meshgenerator_config( args );
-  if( eckit::mpi::size() > 1 || edges )
+  if( eckit::mpi::comm().size() > 1 || edges )
     meshgenerator_config.set("3d",false);
 
   SharedPtr<Structured> grid;

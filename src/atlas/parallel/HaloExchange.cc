@@ -29,7 +29,7 @@ struct IsGhostPoint
     part_   = part;
     ridx_   = ridx;
     base_   = base;
-    mypart_ = eckit::mpi::rank();
+    mypart_ = eckit::mpi::comm().rank();
   }
 
   bool operator()(size_t idx)
@@ -49,16 +49,16 @@ HaloExchange::HaloExchange() :
   name_(),
   is_setup_(false)
 {
-  myproc = eckit::mpi::rank();
-  nproc  = eckit::mpi::size();
+  myproc = eckit::mpi::comm().rank();
+  nproc  = eckit::mpi::comm().size();
 }
 
 HaloExchange::HaloExchange(const std::string& name) :
   name_(name),
   is_setup_(false)
 {
-  myproc = eckit::mpi::rank();
-  nproc  = eckit::mpi::size();
+  myproc = eckit::mpi::comm().rank();
+  nproc  = eckit::mpi::comm().size();
 }
 
 void HaloExchange::setup( const int part[],

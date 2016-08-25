@@ -80,12 +80,12 @@ BOOST_AUTO_TEST_CASE( test_small )
   mesh::actions::build_halo(*m,2);
 
 
-  if( eckit::mpi::size() == 5 )
+  if( eckit::mpi::comm().size() == 5 )
   {
     IndexView<int,1> ridx ( m->nodes().remote_index() );
     array::array::ArrayView<gidx_t,1> gidx ( m->nodes().global_index() );
 
-    switch( eckit::mpi::rank() ) // with 5 tasks
+    switch( eckit::mpi::comm().rank() ) // with 5 tasks
     {
     case 0:
       BOOST_CHECK_EQUAL( ridx(9),  9  );
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   }
   else
   {
-    if( eckit::mpi::rank() == 0 )
+    if( eckit::mpi::comm().rank() == 0 )
       std::cout << "skipping tests with 5 mpi tasks!" << std::endl;
   }
 
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE( test_small )
 
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
 
-  std::stringstream filename; filename << "small_halo_p" << eckit::mpi::rank() << ".msh";
+  std::stringstream filename; filename << "small_halo_p" << eckit::mpi::comm().rank() << ".msh";
   Gmsh(filename.str()).write(*m);
 }
 #endif

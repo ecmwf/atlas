@@ -30,14 +30,14 @@ LogFormat::LogFormat(std::size_t size)
     char p[j+1];
     char P[j+1];
     std::stringstream fmt; fmt << "%0"<<j<<"zu";
-    std::sprintf(p, fmt.str().c_str(),eckit::mpi::rank());
-    std::sprintf(P, fmt.str().c_str(),eckit::mpi::rank()+1);
+    std::sprintf(p, fmt.str().c_str(),eckit::mpi::comm().rank());
+    std::sprintf(P, fmt.str().c_str(),eckit::mpi::comm().rank()+1);
     std::stringstream sub; sub << "%"<<j<<"p";
     subst_[sub.str()] = std::string(p);
     std::stringstream sub_plus_1; sub_plus_1 << "%"<<j<<"P";
     subst_[sub_plus_1.str()] = std::string(P);
   }
-  int digits = std::floor(std::log10(double(eckit::mpi::size())))+1;
+  int digits = std::floor(std::log10(double(eckit::mpi::comm().size())))+1;
   std::stringstream p; p<<"%"<<digits<<"p";
   std::stringstream P; P<<"%"<<digits<<"P";
   subst_["%p"] = subst_[p.str()];

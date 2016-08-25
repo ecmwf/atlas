@@ -175,7 +175,7 @@ public:
   //         "\n"
   //     << options_str.str();
   //
-  //     if( eckit::mpi::rank()==0 )
+  //     if( eckit::mpi::comm().rank()==0 )
   //     {
   //       Log::info() << help_str.str() << std::flush;
   //     }
@@ -266,7 +266,7 @@ void AtlasBenchmark::execute(const Args& args)
   Log::info() << "  nlev: " << nlev << endl;
   Log::info() << "  niter: " << niter << endl;
   Log::info() << endl;
-  Log::info() << "  MPI tasks: "<<eckit::mpi::size()<<endl;
+  Log::info() << "  MPI tasks: "<<eckit::mpi::comm().size()<<endl;
   Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
   Log::info() << endl;
 
@@ -502,10 +502,10 @@ void AtlasBenchmark::iteration()
   }
 
   // halo-exchange
-  eckit::mpi::barrier();
+  eckit::mpi::comm().barrier();
   Timer halo("halo-exchange", Log::debug());
   nodes_fs->halo_exchange().execute(grad);
-  eckit::mpi::barrier();
+  eckit::mpi::comm().barrier();
   t.stop();
   halo.stop();
 

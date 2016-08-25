@@ -46,7 +46,7 @@ void build_periodic_boundaries( Mesh& mesh )
 
 
 
-    int mypart = eckit::mpi::rank();
+    int mypart = eckit::mpi::comm().rank();
 
     mesh::Nodes& nodes = mesh.nodes();
 
@@ -94,19 +94,19 @@ void build_periodic_boundaries( Mesh& mesh )
       }
     }
 
-    std::vector< std::vector<int> > found_master(eckit::mpi::size());
-    std::vector< std::vector<int> > send_slave_idx(eckit::mpi::size());
+    std::vector< std::vector<int> > found_master(eckit::mpi::comm().size());
+    std::vector< std::vector<int> > send_slave_idx(eckit::mpi::comm().size());
     // Find masters on other tasks to send to me
     {
       int sendcnt = slave_nodes.size();
-      std::vector< int > recvcounts( eckit::mpi::size() );
-      ECKIT_MPI_CHECK_RESULT( MPI_Allgather(&sendcnt,           1, MPI_INT,
-                                       recvcounts.data(), 1, MPI_INT, eckit::mpi::comm() ) );
+      std::vector< int > recvcounts( eckit::mpi::comm().size() );
 
-      std::vector<int> recvdispls( eckit::mpi::size() );
+      eckit::mpi::comm().all_gather(sendcnt, recvcounts);
+
+      std::vector<int> recvdispls( eckit::mpi::comm().size() );
       recvdispls[0] = 0;
       int recvcnt = recvcounts[0];
-      for( size_t jproc=1; jproc<eckit::mpi::size(); ++jproc )
+      for( size_t jproc=1; jproc<eckit::mpi::comm().size(); ++jproc )
       {
         recvdispls[jproc] = recvdispls[jproc-1] + recvcounts[jproc-1];
         recvcnt += recvcounts[jproc];
@@ -120,7 +120,7 @@ void build_periodic_boundaries( Mesh& mesh )
 
 
       PeriodicTransform transform;
-      for( size_t jproc=0; jproc<eckit::mpi::size(); ++jproc )
+      for( size_t jproc=0; jproc<eckit::mpi::comm().size(); ++jproc )
       {
         found_master.reserve(master_nodes.size());
         send_slave_idx.reserve(master_nodes.size());
@@ -142,19 +142,19 @@ void build_periodic_boundaries( Mesh& mesh )
     }
 
     // Fill in data to communicate
-    std::vector< std::vector<int> > recv_slave_idx( eckit::mpi::size() );
-    std::vector< std::vector<int> > send_master_part( eckit::mpi::size() );
-    std::vector< std::vector<int> > recv_master_part( eckit::mpi::size() );
-    std::vector< std::vector<int> > send_master_ridx( eckit::mpi::size() );
-    std::vector< std::vector<int> > recv_master_ridx( eckit::mpi::size() );
+    std::vector< std::vector<int> > recv_slave_idx( eckit::mpi::comm().size() );
+    std::vector< std::vector<int> > send_master_part( eckit::mpi::comm().size() );
+    std::vector< std::vector<int> > recv_master_part( eckit::mpi::comm().size() );
+    std::vector< std::vector<int> > send_master_ridx( eckit::mpi::comm().size() );
+    std::vector< std::vector<int> > recv_master_ridx( eckit::mpi::comm().size() );
 
-                        //  std::vector< std::vector<int> > send_slave_part( eckit::mpi::size() );
-                        //  std::vector< std::vector<int> > recv_slave_part( eckit::mpi::size() );
-                        //  std::vector< std::vector<int> > send_slave_ridx( eckit::mpi::size() );
-                        //  std::vector< std::vector<int> > recv_slave_ridx( eckit::mpi::size() );
+                        //  std::vector< std::vector<int> > send_slave_part( eckit::mpi::comm().size() );
+                        //  std::vector< std::vector<int> > recv_slave_part( eckit::mpi::comm().size() );
+                        //  std::vector< std::vector<int> > send_slave_ridx( eckit::mpi::comm().size() );
+                        //  std::vector< std::vector<int> > recv_slave_ridx( eckit::mpi::comm().size() );
 
     {
-      for( size_t jproc=0; jproc<eckit::mpi::size(); ++jproc )
+      for( size_t jproc=0; jproc<eckit::mpi::comm().size(); ++jproc )
       {
         int nb_found_master = found_master[jproc].size();
         send_master_part   [jproc].resize(nb_found_master);
@@ -181,15 +181,15 @@ void build_periodic_boundaries( Mesh& mesh )
     }
 
     // Communicate
-    eckit::mpi::all_to_all( send_slave_idx,      recv_slave_idx      );
-    eckit::mpi::all_to_all( send_master_part,    recv_master_part    );
-    eckit::mpi::all_to_all( send_master_ridx,    recv_master_ridx     );
-                      //  eckit::mpi::all_to_all( send_slave_part,     recv_slave_part    );
-                      //  eckit::mpi::all_to_all( send_slave_loc,      recv_slave_ridx    );
+    eckit::mpi::comm().all_to_all( send_slave_idx,      recv_slave_idx      );
+    eckit::mpi::comm().all_to_all( send_master_part,    recv_master_part    );
+    eckit::mpi::comm().all_to_all( send_master_ridx,    recv_master_ridx     );
+                      //  eckit::mpi::comm().all_to_all( send_slave_part,     recv_slave_part    );
+                      //  eckit::mpi::comm().all_to_all( send_slave_loc,      recv_slave_ridx    );
 
     // Fill in periodic
     // unused // int nb_recv_master = 0;
-    for( size_t jproc=0; jproc<eckit::mpi::size(); ++jproc )
+    for( size_t jproc=0; jproc<eckit::mpi::comm().size(); ++jproc )
     {
       size_t nb_recv = recv_slave_idx[jproc].size();
       for( size_t jnode=0; jnode<nb_recv; ++jnode )

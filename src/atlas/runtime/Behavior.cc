@@ -67,7 +67,7 @@ struct CreateLogFile
   FileChannel* operator()()
   {
     char s[6];
-    std::sprintf(s, "%05zu",eckit::mpi::rank());
+    std::sprintf(s, "%05zu",eckit::mpi::comm().rank());
     FileChannel* ch = new FileChannel(LocalPathName(file_path+".p"+std::string(s))) ;
     return ch;
   }
@@ -103,7 +103,7 @@ ChannelConfig::ChannelConfig()
   logfile_path = "";
   get_env("ATLAS_LOGFILE",logfile_path);
   
-  logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || size_t(logfile_rank) == eckit::mpi::rank() );
+  logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || size_t(logfile_rank) == eckit::mpi::comm().rank() );
 
   console_rank = 0;
   get_env("ATLAS_CONSOLE_TASK",console_rank);
@@ -127,10 +127,10 @@ void ChannelConfig::apply(Channel& ch)
   if( logfile_enabled && !mc->has("logfile") )
    mc->add( "logfile", new FormattedChannel(logfile(CreateLogFile(logfile_path)),logfile_format) );
 
-  if( console_enabled && !mc->has("console") && (console_rank < 0 || size_t(console_rank) == eckit::mpi::rank()) )
+  if( console_enabled && !mc->has("console") && (console_rank < 0 || size_t(console_rank) == eckit::mpi::comm().rank()) )
     mc->add( "console" , new FormattedChannel(standard_out(),console_format) );
 
-  if( mc->has("console") && (!console_enabled || (console_rank >= 0 && size_t(console_rank) != eckit::mpi::rank() ) ) )
+  if( mc->has("console") && (!console_enabled || (console_rank >= 0 && size_t(console_rank) != eckit::mpi::comm().rank() ) ) )
     mc->remove("console");
 
   if( !mc->has("callback") )
@@ -176,7 +176,7 @@ Behavior::Behavior() : ParallelContextBehavior()
 
   // Console format
   char p[6];
-  std::sprintf(p, "%05zu",eckit::mpi::rank());
+  std::sprintf(p, "%05zu",eckit::mpi::comm().rank());
   debug_ctxt.console_format->set_prefix("[%p] (%Y-%m-%d T %H:%M:%S) (D) -- ");
   info_ctxt. console_format->set_prefix("[%p] (%Y-%m-%d T %H:%M:%S) (I) -- ");
   warn_ctxt. console_format->set_prefix("[%p] (%Y-%m-%d T %H:%M:%S) (W) -- ");

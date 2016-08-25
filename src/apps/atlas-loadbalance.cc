@@ -129,7 +129,7 @@ void AtlasLoadbalance::run()
     std::stringstream s;
     write_load_balance_report(*mesh,s);
 
-    if( eckit::mpi::rank() == 0 )
+    if( eckit::mpi::comm().rank() == 0 )
     {
       std::cout << s.str() << std::endl;
     }

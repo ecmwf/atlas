@@ -49,7 +49,7 @@ public:
   {
     part_   = array::ArrayView<int,1> (nodes.partition() );
     ridx_   = IndexView<int,1> (nodes.remote_index() );
-    mypart_ = eckit::mpi::rank();
+    mypart_ = eckit::mpi::comm().rank();
   }
 
   bool operator()(size_t idx) const
@@ -91,11 +91,11 @@ BOOST_AUTO_TEST_CASE( test1 )
   glb_idx(2) = 3;    part(2) = 0;
   glb_idx(3) = 4;    part(3) = 0;
   glb_idx(4) = 5;    part(4) = 0;
-  glb_idx(5) = 6;    part(5) = std::min(1,(int)eckit::mpi::size()-1);
-  glb_idx(6) = 7;    part(6) = std::min(1,(int)eckit::mpi::size()-1);
-  glb_idx(7) = 8;    part(7) = std::min(1,(int)eckit::mpi::size()-1);
-  glb_idx(8) = 9;    part(8) = std::min(1,(int)eckit::mpi::size()-1);
-  glb_idx(9) = 10;   part(9) = std::min(1,(int)eckit::mpi::size()-1);
+  glb_idx(5) = 6;    part(5) = std::min(1,(int)eckit::mpi::comm().size()-1);
+  glb_idx(6) = 7;    part(6) = std::min(1,(int)eckit::mpi::comm().size()-1);
+  glb_idx(7) = 8;    part(7) = std::min(1,(int)eckit::mpi::comm().size()-1);
+  glb_idx(8) = 9;    part(8) = std::min(1,(int)eckit::mpi::comm().size()-1);
+  glb_idx(9) = 10;   part(9) = std::min(1,(int)eckit::mpi::comm().size()-1);
 
   lonlat(0,LON) = 0.;    lonlat(0,LAT) = 80.;    Topology::set( flags(0), Topology::BC|Topology::WEST );
   lonlat(1,LON) = 0.;    lonlat(1,LAT) =-80.;    Topology::set( flags(1), Topology::BC|Topology::WEST );
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE( test1 )
 
   test::IsGhost is_ghost( m->nodes() );
 
-  switch ( eckit::mpi::rank() )
+  switch ( eckit::mpi::comm().rank() )
   {
   case 0:
     BOOST_CHECK_EQUAL( is_ghost(0), false );
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE( test1 )
   BOOST_CHECK_EQUAL( part(9), 0 );
   BOOST_CHECK_EQUAL( loc(8), 0 );
   BOOST_CHECK_EQUAL( loc(9), 1 );
-  if( eckit::mpi::rank() == 1 )
+  if( eckit::mpi::comm().rank() == 1 )
   {
     BOOST_CHECK_EQUAL( is_ghost(8), true );
     BOOST_CHECK_EQUAL( is_ghost(9), true );
@@ -192,8 +192,8 @@ BOOST_AUTO_TEST_CASE( test2 )
     if( is_ghost(jnode) ) ++nb_ghost;
   }
 
-  if( eckit::mpi::rank() == 0 ) BOOST_CHECK_EQUAL( nb_ghost, 129 );
-  if( eckit::mpi::rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 0   );
+  if( eckit::mpi::comm().rank() == 0 ) BOOST_CHECK_EQUAL( nb_ghost, 129 );
+  if( eckit::mpi::comm().rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 0   );
 
   mesh::actions::build_periodic_boundaries(*m);
 
@@ -203,8 +203,8 @@ BOOST_AUTO_TEST_CASE( test2 )
     if( is_ghost(jnode) ) ++nb_periodic;
   }
 
-  if( eckit::mpi::rank() == 0 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
-  if( eckit::mpi::rank() == 1 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
+  if( eckit::mpi::comm().rank() == 0 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
+  if( eckit::mpi::comm().rank() == 1 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
 
   Gmsh("periodic.msh").write(*m);
   delete m;

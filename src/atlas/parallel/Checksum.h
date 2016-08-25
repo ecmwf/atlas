@@ -107,7 +107,7 @@ std::string Checksum::execute( const DATA_TYPE data[],
     local_checksums[pp] = internals::checksum(data+pp*var_size,var_size);
   }
 
-  std::vector<internals::checksum_t> global_checksums( eckit::mpi::rank() == root ? gather_.glb_dof() : 0 );
+  std::vector<internals::checksum_t> global_checksums( eckit::mpi::comm().rank() == root ? gather_.glb_dof() : 0 );
   parallel::Field<internals::checksum_t const> loc(local_checksums.data(),1);
   parallel::Field<internals::checksum_t> glb(global_checksums.data(),1);
   gather_.gather(&loc,&glb,1);

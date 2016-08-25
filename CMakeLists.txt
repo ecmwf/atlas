@@ -34,21 +34,14 @@ ecbuild_requires_macro_version( 2.0 )
 ###############################################################################
 # project
 
+ecbuild_declare_project()
+
+### eckit
+
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
-ecbuild_use_package( PROJECT eckit VERSION 0.12.3 REQUIRED )
-
+ecbuild_use_package( PROJECT eckit VERSION 0.14 REQUIRED ) # eckit >= 0.14 includes new eckit::mpi
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
-
-if( ECKIT_HAVE_ECKIT_MPI )
-   ecbuild_debug( "eckit has mpi support" )
-endif()
-
-if( ECKIT_HAVE_ECKIT_MPISTUBS )
-   ecbuild_debug( "eckit has mpistubs support" )
-endif()
-
-ecbuild_declare_project()
 
 # options & dependencies
 
@@ -74,35 +67,28 @@ endif()
 
 ### MPI ...
 
+# Atlas uses eckit::mpi for C++ code
+# but still has some MPI direct calls in the Fortran code (migrate to fckit evventually)?
+
 ecbuild_add_option( FEATURE MPI
                     DESCRIPTION "atlas: Support for MPI distributed parallelism"
                     REQUIRED_PACKAGES "MPI COMPONENTS CXX ${Fortran}" )
 
-if( ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
-  ecbuild_debug( "Using eckit_mpi" )
-  set( ECKIT_MPI_LIBRARIES eckit_mpi )
-elseif( NOT ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
-  ecbuild_debug( "Using eckit_mpistubs" )
-  set( ECKIT_MPI_LIBRARIES eckit_mpistubs )
-  add_definitions( "-DECKIT_USE_MPISTUBS" )
-  if( ATLAS_HAVE_FORTRAN )
-    ecbuild_use_package( PROJECT mpistubs REQUIRED )
-    set( MPI_Fortran_LIBRARIES mpistubs_f )
-    set( MPI_Fortran_INCLUDE_PATH ${MPISTUBS_INCLUDE_DIRS} )
-  endif()
-elseif( NOT ATLAS_HAVE_MPI AND NOT ECKIT_HAVE_ECKIT_MPISTUBS )
-  ecbuild_error("ATLAS_HAVE_MPI=OFF, but cannot build since eckit_mpistubs not found")
-else()
-  ecbuild_info( "ATLAS_HAVE_MPI            : ${ATLAS_HAVE_MPI}" )
-  ecbuild_info( "ECKIT_HAVE_ECKIT_MPI      : ${ECKIT_HAVE_ECKIT_MPI} " )
-  ecbuild_info( "ECKIT_HAVE_ECKIT_MPISTUBS : ${ECKIT_HAVE_ECKIT_MPISTUBS} " )
-  ecbuild_error( "Invalid combination of above variables" )
+if( NOT ATLAS_HAVE_MPI )
+    if( ATLAS_HAVE_FORTRAN )
+        ecbuild_use_package( PROJECT mpistubs REQUIRED )
+        set( MPI_Fortran_LIBRARIES mpistubs_f )
+        set( MPI_Fortran_INCLUDE_PATH ${MPISTUBS_INCLUDE_DIRS} )
+    endif()
 endif()
+
+ecbuild_info( "ATLAS_HAVE_MPI      : ${ATLAS_HAVE_MPI}" )
+ecbuild_info( "ECKIT_HAVE_MPI      : ${ECKIT_HAVE_MPI} " )
+
 if( ATLAS_HAVE_FORTRAN )
   ecbuild_debug( "MPI_Fortran_INCLUDE_PATH : ${MPI_Fortran_INCLUDE_PATH}" )
   ecbuild_debug( "MPI_Fortran_LIBRARIES    : ${MPI_Fortran_LIBRARIES}" )
 endif()
-
 
 ### OMP ...
 

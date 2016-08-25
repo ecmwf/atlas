@@ -362,8 +362,8 @@ void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[
 }
 
 EqualRegionsPartitioner::EqualRegionsPartitioner(const grid::Grid& grid) :
-    Partitioner(grid,eckit::mpi::size()),
-    N_(eckit::mpi::size()) {
+    Partitioner(grid,eckit::mpi::comm().size()),
+    N_(eckit::mpi::comm().size()) {
     std::vector<double> s_cap;
     eq_caps(N_, sectors_, s_cap);
     bands_.resize(s_cap.size());

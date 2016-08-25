@@ -97,7 +97,7 @@ size_t EdgeColumns::config_size(const eckit::Parametrisation& config) const
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (eckit::mpi::rank() == owner ? nb_edges_global() : 0);
+      size = (eckit::mpi::comm().rank() == owner ? nb_edges_global() : 0);
     }
   }
   return size;

@@ -250,7 +250,7 @@ void accumulate_elements( const Mesh& mesh,
       for(size_t jelem = 0; jelem < node2elem[inode].size(); ++jelem)
       {
         int e = node2elem[inode][jelem];
-        if( size_t(elem_part(e)) == eckit::mpi::rank() )
+        if( size_t(elem_part(e)) == eckit::mpi::comm().rank() )
         {
           found_elements_set.insert( e );
         }
@@ -309,16 +309,16 @@ public:
 
     Buffers(Mesh& mesh)
     {
-      node_part.resize(eckit::mpi::size());
-      node_ridx.resize(eckit::mpi::size());
-      node_flags.resize(eckit::mpi::size());
-      node_glb_idx.resize(eckit::mpi::size());
-      node_lonlat.resize(eckit::mpi::size());
-      elem_glb_idx.resize(eckit::mpi::size());
-      elem_nodes_id.resize(eckit::mpi::size());
-      elem_nodes_displs.resize(eckit::mpi::size());
-      elem_part.resize(eckit::mpi::size());
-      elem_type.resize(eckit::mpi::size());
+      node_part.resize(eckit::mpi::comm().size());
+      node_ridx.resize(eckit::mpi::comm().size());
+      node_flags.resize(eckit::mpi::comm().size());
+      node_glb_idx.resize(eckit::mpi::comm().size());
+      node_lonlat.resize(eckit::mpi::comm().size());
+      elem_glb_idx.resize(eckit::mpi::comm().size());
+      elem_nodes_id.resize(eckit::mpi::comm().size());
+      elem_nodes_displs.resize(eckit::mpi::comm().size());
+      elem_part.resize(eckit::mpi::comm().size());
+      elem_type.resize(eckit::mpi::comm().size());
     }
 
     void print( std::ostream& os )
@@ -326,7 +326,7 @@ public:
       os << "Nodes\n"
          << "-----\n";
       size_t n(0);
-      for( size_t jpart=0; jpart<eckit::mpi::size(); ++jpart )
+      for( size_t jpart=0; jpart<eckit::mpi::comm().size(); ++jpart )
       {
         for( size_t jnode=0; jnode<node_glb_idx[jpart].size(); ++jnode )
         {
@@ -337,7 +337,7 @@ public:
       os << "Cells\n"
          << "-----\n";
       size_t e(0);
-      for( size_t jpart=0; jpart<eckit::mpi::size(); ++jpart )
+      for( size_t jpart=0; jpart<eckit::mpi::comm().size(); ++jpart )
       {
         for( size_t jelem=0; jelem<elem_glb_idx[jpart].size(); ++jelem )
         {
@@ -350,16 +350,16 @@ public:
 
   static void all_to_all(Buffers& send, Buffers& recv)
   {
-    eckit::mpi::all_to_all(send.node_glb_idx,  recv.node_glb_idx);
-    eckit::mpi::all_to_all(send.node_part,     recv.node_part);
-    eckit::mpi::all_to_all(send.node_ridx,     recv.node_ridx);
-    eckit::mpi::all_to_all(send.node_flags,    recv.node_flags);
-    eckit::mpi::all_to_all(send.node_lonlat,   recv.node_lonlat);
-    eckit::mpi::all_to_all(send.elem_glb_idx,  recv.elem_glb_idx);
-    eckit::mpi::all_to_all(send.elem_nodes_id, recv.elem_nodes_id);
-    eckit::mpi::all_to_all(send.elem_part,     recv.elem_part);
-    eckit::mpi::all_to_all(send.elem_type,     recv.elem_type);
-    eckit::mpi::all_to_all(send.elem_nodes_displs, recv.elem_nodes_displs);
+    eckit::mpi::comm().all_to_all(send.node_glb_idx,  recv.node_glb_idx);
+    eckit::mpi::comm().all_to_all(send.node_part,     recv.node_part);
+    eckit::mpi::comm().all_to_all(send.node_ridx,     recv.node_ridx);
+    eckit::mpi::comm().all_to_all(send.node_flags,    recv.node_flags);
+    eckit::mpi::comm().all_to_all(send.node_lonlat,   recv.node_lonlat);
+    eckit::mpi::comm().all_to_all(send.elem_glb_idx,  recv.elem_glb_idx);
+    eckit::mpi::comm().all_to_all(send.elem_nodes_id, recv.elem_nodes_id);
+    eckit::mpi::comm().all_to_all(send.elem_part,     recv.elem_part);
+    eckit::mpi::comm().all_to_all(send.elem_type,     recv.elem_type);
+    eckit::mpi::comm().all_to_all(send.elem_nodes_displs, recv.elem_nodes_displs);
   }
 
 
@@ -433,7 +433,7 @@ public:
       }
       else
       {
-        Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
+        Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<eckit::mpi::comm().rank()<<"]." << std::endl;
         ASSERT(false);
       }
     }
@@ -496,7 +496,7 @@ public:
       }
       else
       {
-        Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
+        Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<eckit::mpi::comm().rank()<<"]." << std::endl;
         ASSERT(false);
       }
     }
@@ -549,14 +549,14 @@ public:
     {
       node_uid.insert( compute_uid(jnode) );
     }
-    std::vector< std::vector<int> > rfn_idx(eckit::mpi::size());
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    std::vector< std::vector<int> > rfn_idx(eckit::mpi::comm().size());
+    for(size_t jpart = 0; jpart < eckit::mpi::comm().size(); ++jpart)
     {
       rfn_idx[jpart].reserve(buf.node_glb_idx[jpart].size());
     }
 
     int nb_new_nodes=0;
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    for(size_t jpart = 0; jpart < eckit::mpi::comm().size(); ++jpart)
     {
       for(size_t n = 0; n < buf.node_glb_idx[jpart].size(); ++n)
       {
@@ -584,7 +584,7 @@ public:
     // Add new nodes
     // -------------
     int new_node=0;
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    for(size_t jpart = 0; jpart < eckit::mpi::comm().size(); ++jpart)
     {
       for(size_t n = 0; n < rfn_idx[jpart].size(); ++n)
       {
@@ -629,14 +629,14 @@ public:
       elem_uid.insert( compute_uid(elem_nodes->row(jelem)) );
     }
 
-    std::vector< std::vector<int> > received_new_elems(eckit::mpi::size());
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    std::vector< std::vector<int> > received_new_elems(eckit::mpi::comm().size());
+    for(size_t jpart = 0; jpart < eckit::mpi::comm().size(); ++jpart)
     {
       received_new_elems[jpart].reserve(buf.elem_glb_idx[jpart].size());
     }
 
     size_t nb_new_elems(0);
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    for(size_t jpart = 0; jpart < eckit::mpi::comm().size(); ++jpart)
     {
       for(size_t e = 0; e < buf.elem_glb_idx[jpart].size(); ++e)
       {
@@ -651,10 +651,10 @@ public:
 
     std::vector< std::vector< std::vector<int> > >
         elements_of_type( mesh.cells().nb_types(),
-                          std::vector< std::vector<int> >( eckit::mpi::size() ) );
+                          std::vector< std::vector<int> >( eckit::mpi::comm().size() ) );
     std::vector<size_t> nb_elements_of_type( mesh.cells().nb_types(), 0 );
 
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    for(size_t jpart = 0; jpart < eckit::mpi::comm().size(); ++jpart)
     {
       for(size_t jelem = 0; jelem < received_new_elems[jpart].size(); ++jelem)
       {
@@ -680,7 +680,7 @@ public:
 
       // Copy information in new elements
       size_t new_elem(0);
-      for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+      for(size_t jpart = 0; jpart < eckit::mpi::comm().size(); ++jpart)
       {
         for(size_t e = 0; e < elems[jpart].size(); ++e)
         {
@@ -734,7 +734,7 @@ void increase_halo_interior( BuildHaloHelper& helper )
   atlas::util::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts;
   eckit::mpi::all_gather(send_bdry_nodes_uid,recv_bdry_nodes_uid_from_parts);
 
-  for (size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+  for (size_t jpart = 0; jpart < eckit::mpi::comm().size(); ++jpart)
   {
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID
@@ -811,7 +811,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
   atlas::util::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts;
   eckit::mpi::all_gather(send_bdry_nodes_uid,recv_bdry_nodes_uid_from_parts);
 
-  for (size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+  for (size_t jpart = 0; jpart < eckit::mpi::comm().size(); ++jpart)
   {
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID
