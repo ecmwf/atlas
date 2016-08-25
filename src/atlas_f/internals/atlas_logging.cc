@@ -73,11 +73,11 @@ void atlas__log_debug(int lvl, char *msg, int endl, int flush)
 
 void atlas__log_cat(int cat, int lvl, char *msg, int endl, int flush)
 {
-  atlas::Log::channel(cat,lvl) << msg;
+  atlas::Log::channel(cat) << msg;
   if( endl )
-    atlas::Log::channel(cat,lvl) << std::endl;
+    atlas::Log::channel(cat) << std::endl;
   else if ( flush )
-  atlas::Log::channel(cat,lvl) << std::flush;
+  atlas::Log::channel(cat) << std::flush;
 }
 
 // ----------------------------------------------------------------------------
