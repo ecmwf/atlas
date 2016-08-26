@@ -40,6 +40,9 @@ struct Buffer : eckit::mpi::Buffer<DATA_TYPE>
 template <typename DATA_TYPE>
 struct Buffer<DATA_TYPE,1> : public eckit::mpi::Buffer<DATA_TYPE>
 {
+
+  Buffer(size_t size) : eckit::mpi::Buffer<DATA_TYPE>(size) {}
+
   array::ArrayView<DATA_TYPE,1> operator[](int p)
   {
     return array::ArrayView<DATA_TYPE,1> ( eckit::mpi::Buffer<DATA_TYPE>::buf.data()+eckit::mpi::Buffer<DATA_TYPE>::displs[p],

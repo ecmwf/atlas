@@ -9,8 +9,9 @@
  */
 
 #include "eckit/utils/MD5.h"
-#include "eckit/mpi/mpi.h"
 #include "eckit/os/BackTrace.h"
+#include "eckit/mpi/Comm.h"
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/Spectral.h"

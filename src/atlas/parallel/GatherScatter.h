@@ -269,13 +269,12 @@ void GatherScatter::gather( parallel::Field<DATA_TYPE const> lfields[],
     }
 
     /// Pack
+
     pack_send_buffer(lfields[jfield],locmap_,loc_buffer.data());
 
     /// Gather
-    ECKIT_MPI_CHECK_RESULT(
-        MPI_Gatherv( loc_buffer.data(), loc_size, eckit::mpi::datatype<DATA_TYPE>(),
-                     glb_buffer.data(), glb_counts.data(), glb_displs.data(), eckit::mpi::datatype<DATA_TYPE>(),
-                     root, eckit::mpi::comm() ) );
+
+    eckit::mpi::comm().gatherv(loc_buffer, glb_buffer, glb_displs);
 
     /// Unpack
     if( myproc == root )
@@ -357,10 +356,8 @@ void GatherScatter::scatter( parallel::Field<DATA_TYPE const> gfields[],
       pack_send_buffer(gfields[jfield],glbmap_,glb_buffer.data());
 
     /// Scatter
-    ECKIT_MPI_CHECK_RESULT(
-        MPI_Scatterv( glb_buffer.data(), glb_counts.data(), glb_displs.data(), eckit::mpi::datatype<DATA_TYPE>(),
-                      loc_buffer.data(), loc_size, eckit::mpi::datatype<DATA_TYPE>(),
-                      root, eckit::mpi::comm() ) );
+
+    eckit::mpi::comm().scatterv(glb_buffer, glb_counts, loc_buffer, root);
 
     /// Unpack
     unpack_recv_buffer(locmap_,loc_buffer.data(),lfields[jfield]);

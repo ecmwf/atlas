@@ -731,8 +731,10 @@ void increase_halo_interior( BuildHaloHelper& helper )
   for(size_t jnode = 0; jnode < bdry_nodes.size(); ++jnode)
     send_bdry_nodes_uid[jnode] = helper.compute_uid(bdry_nodes[jnode]);
 
-  atlas::util::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts;
-  eckit::mpi::all_gather(send_bdry_nodes_uid,recv_bdry_nodes_uid_from_parts);
+  size_t size = eckit::mpi::comm().size();
+  atlas::util::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(size);
+
+  eckit::mpi::comm().all_gather(send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts);
 
   for (size_t jpart = 0; jpart < eckit::mpi::comm().size(); ++jpart)
   {
@@ -808,8 +810,11 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
     transform(crd,+1);
     send_bdry_nodes_uid[jnode] = internals::unique_lonlat(crd);
   }
-  atlas::util::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts;
-  eckit::mpi::all_gather(send_bdry_nodes_uid,recv_bdry_nodes_uid_from_parts);
+
+  size_t size = eckit::mpi::comm().size();
+  atlas::util::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(size);
+
+  eckit::mpi::comm().all_gather(send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts);
 
   for (size_t jpart = 0; jpart < eckit::mpi::comm().size(); ++jpart)
   {

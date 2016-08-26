@@ -49,12 +49,12 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
   size_t npart = eckit::mpi::comm().size();
   size_t root = 0;
 
-  std::vector<int> nb_total_nodes(npart,0);
+  std::vector<size_t> nb_total_nodes(npart,0);
   std::vector<int> nb_owned_nodes(npart,0);
   std::vector<int> nb_ghost_nodes(npart,0);
   std::vector<double> ghost_ratio_nodes(npart,0);
 
-  std::vector<int> nb_total_edges(npart,0);
+  std::vector<size_t> nb_total_edges(npart,0);
   std::vector<int> nb_owned_edges(npart,0);
   std::vector<int> nb_ghost_edges(npart,0);
   std::vector<double> nb_ghost_ratio_edges(npart,0);
@@ -62,25 +62,22 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
   {
     const mesh::Nodes& nodes = mesh.nodes();
     IsGhost is_ghost(nodes);
-    int nb_nodes = nodes.size();
+    size_t nb_nodes = nodes.size();
     int nowned(0);
     int nghost(0);
-    for( int n=0; n<nb_nodes; ++n )
+    for(size_t n = 0; n < nb_nodes; ++n)
     {
       if( is_ghost(n) )
         ++nghost;
       else
         ++nowned;
     }
-    ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nb_nodes, 1, MPI_INT,
-                                  nb_total_nodes.data(), 1, MPI_INT,
-                                  root, eckit::mpi::comm() ) );
-    ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nowned, 1, MPI_INT,
-                                  nb_owned_nodes.data(), 1, MPI_INT,
-                                  root, eckit::mpi::comm() ) );
-    ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nghost, 1, MPI_INT,
-                                  nb_ghost_nodes.data(), 1, MPI_INT,
-                                  root, eckit::mpi::comm() ) );
+
+    /// @note this could be improved by packing the 3 integers in a vector, and doing only comm() call
+
+    eckit::mpi::comm().gather(&nb_nodes, 1, nb_total_nodes, root);
+    eckit::mpi::comm().gather(&nowned,   1, nb_owned_nodes, root);
+    eckit::mpi::comm().gather(&nghost,   1, nb_ghost_nodes, root);
 
     for( size_t p=0; p<npart; ++p )
     {
@@ -105,22 +102,21 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
     size_t nb_edges = mesh.edges().size();
     int nowned(0);
     int nghost(0);
-    for( size_t j=0; j<nb_edges; ++j )
+    for(size_t j = 0; j < nb_edges; ++j)
     {
       if( is_ghost(edge_nodes(j,0)) )
         ++nghost;
       else
         ++nowned;
     }
-    ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nb_edges, 1, MPI_INT,
-                                  nb_total_edges.data(), 1, MPI_INT,
-                                  root, eckit::mpi::comm() ) );
-    ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nowned, 1, MPI_INT,
-                                  nb_owned_edges.data(), 1, MPI_INT,
-                                  root, eckit::mpi::comm() ) );
-    ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nghost, 1, MPI_INT,
-                                  nb_ghost_edges.data(), 1, MPI_INT,
-                                  root, eckit::mpi::comm() ) );
+
+
+    /// @note this could be improved by packing the 3 integers in a vector, and doing only comm() call
+
+    eckit::mpi::comm().gather(&nb_edges, 1, nb_total_edges, root);
+    eckit::mpi::comm().gather(&nowned,   1, nb_owned_edges, root);
+    eckit::mpi::comm().gather(&nghost,   1, nb_ghost_nodes, root);
+
   }
 
   if( eckit::mpi::comm().rank() == 0 )

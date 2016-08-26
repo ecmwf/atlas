@@ -63,7 +63,7 @@ field::Field& build_edges_partition ( Mesh& mesh );
 field::Field& build_edges_remote_idx( Mesh& mesh );
 field::Field& build_edges_global_idx( Mesh& mesh );
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 typedef gidx_t uid_t;
 
@@ -86,7 +86,7 @@ struct Node
 
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 
 void build_parallel_fields( Mesh& mesh )
@@ -94,7 +94,7 @@ void build_parallel_fields( Mesh& mesh )
   build_nodes_parallel_fields( mesh.nodes() );
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void build_nodes_parallel_fields( mesh::Nodes& nodes )
 {
@@ -109,7 +109,7 @@ void build_nodes_parallel_fields( mesh::Nodes& nodes )
   nodes.metadata().set("parallel",true);
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void build_edges_parallel_fields( Mesh& mesh )
 {
@@ -118,7 +118,7 @@ void build_edges_parallel_fields( Mesh& mesh )
   build_edges_global_idx( mesh );
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 field::Field& build_nodes_global_idx( mesh::Nodes& nodes )
 {
@@ -144,7 +144,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
   // unused // int mypart = eckit::mpi::comm().rank();
   int nparts = eckit::mpi::comm().size();
-  int root = 0;
+  size_t root = 0;
 
   array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
@@ -173,8 +173,9 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
   std::vector<int> recvcounts(eckit::mpi::comm().size());
   std::vector<int> recvdispls(eckit::mpi::comm().size());
-  ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nb_nodes, 1, MPI_INT,
-                                recvcounts.data(), 1, MPI_INT, root, eckit::mpi::comm()) );
+
+  eckit::mpi::comm().gather(&nb_nodes, 1, recvcounts, root);
+
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
   {
@@ -185,11 +186,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   array::ArrayT<uid_t> glb_id_arr(glb_nb_nodes);
   array::ArrayView<uid_t,1> glb_id(glb_id_arr);
 
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Gatherv( loc_id.data(), nb_nodes, eckit::mpi::datatype<uid_t>(),
-                     glb_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-                     root, eckit::mpi::comm()) );
 
+  eckit::mpi::comm().gatherv(loc_id.data(), nb_nodes, glb_id.data(), recvcounts, recvdispls, root);
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
@@ -216,10 +214,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   }
 
   // 3) Scatter renumbered back
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-                      loc_id.data(), nb_nodes, eckit::mpi::datatype<uid_t>(),
-                      root, eckit::mpi::comm()) );
+
+  eckit::mpi::comm().scatterv(glb_id.data(), recvcounts, recvdispls, loc_id.data(), nb_nodes, root);
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -227,7 +223,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   }
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 {
@@ -324,14 +320,14 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
   return nodes.field("remote_idx");
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 field::Field& build_nodes_partition( mesh::Nodes& nodes )
 {
   return nodes.partition();
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 field::Field& build_edges_partition( Mesh& mesh )
 {
@@ -753,7 +749,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   UniqueLonLat compute_uid(nodes);
 
   int nparts = eckit::mpi::comm().size();
-  int root = 0;
+  size_t root = 0;
 
   mesh::HybridElements& edges = mesh.edges();
 
@@ -808,8 +804,9 @@ field::Field& build_edges_global_idx( Mesh& mesh )
 
   std::vector<int> recvcounts(eckit::mpi::comm().size());
   std::vector<int> recvdispls(eckit::mpi::comm().size());
-  ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nb_edges, 1, MPI_INT,
-                                recvcounts.data(), 1, MPI_INT, root, eckit::mpi::comm()) );
+
+  eckit::mpi::comm().gather(&nb_edges, 1, recvcounts, root);
+
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
   {
@@ -820,11 +817,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   array::ArrayT<uid_t> glb_edge_id_arr(glb_nb_edges);
   array::ArrayView<uid_t,1> glb_edge_id(glb_edge_id_arr);
 
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Gatherv( loc_edge_id.data(), nb_edges, eckit::mpi::datatype<uid_t>(),
-                     glb_edge_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-                     root, eckit::mpi::comm()) );
-
+  eckit::mpi::comm().gatherv(loc_edge_id.data(), nb_edges, glb_edge_id.data(), recvcounts, recvdispls, root);
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> edge_sort; edge_sort.reserve(glb_nb_edges);
@@ -851,12 +844,8 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   }
 
   // 3) Scatter renumbered back
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Scatterv( glb_edge_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-                      loc_edge_id.data(), nb_edges, eckit::mpi::datatype<uid_t>(),
-                      root, eckit::mpi::comm()) );
 
-
+  eckit::mpi::comm().scatterv(glb_edge_id.data(), recvcounts, recvdispls, loc_edge_id.data(), nb_edges, root);
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
@@ -866,7 +855,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   return edges.global_index();
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 void atlas__build_parallel_fields ( Mesh* mesh) {
@@ -885,10 +874,7 @@ void atlas__renumber_nodes_glb_idx (mesh::Nodes* nodes)
   ATLAS_ERROR_HANDLING( renumber_nodes_glb_idx(*nodes) );
 }
 
-
-// ------------------------------------------------------------------
-
-
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace actions
 } // namespace mesh

@@ -769,7 +769,7 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs , const field::Fie
   field::Field::Ptr global( fs.createField("global",field, field::global() ) );
   fs.gather(field,*global);
   result = std::accumulate(global->data<DATATYPE>(),global->data<DATATYPE>()+global->size(),0.);
-  eckit::mpi::broadcast(result,root);
+  eckit::mpi::comm().broadcast(&result, 1, root);
   N = fs.nb_nodes_global();
 }
 
@@ -853,7 +853,7 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const field::Fiel
     }
   }
   size_t root = global->metadata().get<size_t>("owner");
-  eckit::mpi::broadcast(result,root);
+  eckit::mpi::comm().broadcast(result,root);
   N = fs.nb_nodes_global();
 }
 
@@ -957,7 +957,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const fiel
       }
     }
   }
-  eckit::mpi::broadcast(sumfield.data<T>(),sumfield.size(),root);
+  eckit::mpi::comm().broadcast(sumfield.data<T>(),sumfield.size(),root);
   N = fs.nb_nodes_global();
 }
 

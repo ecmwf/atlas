@@ -373,7 +373,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root)
     buffer = s.str();
     buffer_size = buffer.size();
   }
-  eckit::mpi::broadcast(buffer_size,root);
+  eckit::mpi::comm().broadcast(buffer_size,root);
   if( eckit::mpi::comm().rank() != root )
     buffer.resize(buffer_size);
 
@@ -410,7 +410,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root) const
     buffer = s.str();
     buffer_size = buffer.size();
   }
-  eckit::mpi::broadcast(buffer_size,root);
+  eckit::mpi::comm().broadcast(buffer_size,root);
   if( eckit::mpi::comm().rank() != root )
     buffer.resize(buffer_size);
 
