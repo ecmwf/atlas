@@ -34,7 +34,7 @@ void ShiftedLon::set_typeinfo() {
     std::stringstream s;
     if( N() ) {
         s << "Slon" << N();
-    } else {
+    } else if( domain_.isGlobal() ) {
         s << "Slon" << nlon() << "x" << nlat();
     }
     shortName_ = s.str();
@@ -65,22 +65,17 @@ void ShiftedLon::setup(const eckit::Parametrisation& p) {
 
     std::vector<double> p_domain(4);
 
-    if( p.get("domain", p_domain) )
-    {
-      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
-    }
-    else
-    {
-      domain_ = Domain::makeGlobal();
+    if( p.get("domain", p_domain) ) {
+        domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    } else {
+        domain_ = Domain::makeGlobal();
     }
 
-    if (p.get("N",N)) {
+    if( p.get("N",N) ) {
         LonLat::setup(N, domain_);
-    }
-    else if (p.get("nlon",nlon) && p.get("nlat",nlat)) {
+    } else if( p.get("nlon",nlon) && p.get("nlat",nlat) ) {
         LonLat::setup(nlon, nlat, domain_);
-    }
-    else {
+    } else {
         throw eckit::BadParameter("Params (nlon,nlat) or N missing",Here());
     }
 }
@@ -112,4 +107,3 @@ extern "C" {
 }  // namespace lonlat
 }  // namespace grid
 }  // namespace atlas
-
