@@ -52,7 +52,7 @@ void atlas__resource_set_int (const char* resource, int value)
 {
   ATLAS_ERROR_HANDLING(
     std::stringstream val_str; val_str << value;
-    eckit::ResourceMgr::instance().set(resource,val_str.str());
+    eckit::ResourceMgr::set(resource,val_str.str());
   );
 }
 
@@ -60,7 +60,7 @@ void atlas__resource_set_long (const char* resource, long value)
 {
   ATLAS_ERROR_HANDLING(
     std::stringstream val_str; val_str << value;
-    eckit::ResourceMgr::instance().set(resource,val_str.str());
+    eckit::ResourceMgr::set(resource,val_str.str());
   );
 }
 
@@ -68,7 +68,7 @@ void atlas__resource_set_float (const char* resource, float value)
 {
   ATLAS_ERROR_HANDLING(
     std::stringstream val_str; val_str << value;
-    eckit::ResourceMgr::instance().set(resource,val_str.str());
+    eckit::ResourceMgr::set(resource,val_str.str());
   );
 }
 
@@ -76,7 +76,7 @@ void atlas__resource_set_double (const char* resource, double value)
 {
   ATLAS_ERROR_HANDLING(
     std::stringstream val_str; val_str << value;
-    eckit::ResourceMgr::instance().set(resource,val_str.str());
+    eckit::ResourceMgr::set(resource,val_str.str());
   );
 }
 
@@ -84,7 +84,7 @@ void atlas__resource_set_string (const char* resource, const char* value)
 {
   ATLAS_ERROR_HANDLING(
     std::stringstream val_str; val_str << value;
-    eckit::ResourceMgr::instance().set(resource,val_str.str());
+    eckit::ResourceMgr::set(resource,val_str.str());
   );
 }
 

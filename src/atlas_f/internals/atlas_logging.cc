@@ -1,10 +1,6 @@
 #include "atlas_f/internals/atlas_logging.h"
 #include "eckit/runtime/Context.h"
-#include "eckit/runtime/ContextBehavior.h"
-#include "eckit/log/MultiChannel.h"
-#include "eckit/log/CallbackChannel.h"
 #include "atlas/runtime/LogFormat.h"
-#include "atlas/runtime/Behavior.h"
 #include "atlas/runtime/Log.h"
 
 using namespace eckit;
@@ -19,6 +15,9 @@ void write_to_fortran_unit( void* ctxt, const char* msg )
   atlas_write_to_fortran_unit( *static_cast<int*>(ctxt), msg );
 }
 
+/*
+
+BR: COMEBACK
 class FortranUnitChannel: public CallbackChannel {
 public:
 
@@ -59,7 +58,7 @@ private:
 
 void atlas__log_set_debug (int level)
 {
-  eckit::Context::instance().debug( level );
+  eckit::Context::instance().debugLevel( level );
 }
 
 void atlas__log_debug(int lvl, char *msg, int endl, int flush)
@@ -445,8 +444,8 @@ void atlas__LogChannel__clear_indentation_fortran_unit (MultiChannel* ch, int un
     throw BadCast("Cannot cast channel to runtime::FormattedChannel");
   formatted_ch->format().clear_indentation();
 }
-
+*/
 // ----------------------------------------------------------------------------
 
-
+}
 
