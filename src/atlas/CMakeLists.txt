@@ -278,10 +278,6 @@ util/io/Gmsh.h
 util/io/Gmsh.cc
 util/io/PointCloud.h
 util/io/PointCloud.cc
-runtime/Behavior.h
-runtime/Behavior.cc
-runtime/LogFormat.h
-runtime/LogFormat.cc
 runtime/ErrorHandling.cc
 runtime/ErrorHandling.cc
 parallel/omp/omp.h

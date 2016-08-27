@@ -10,8 +10,6 @@
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/field/FieldCreator.h"
-#include "atlas/runtime/Log.h"
-#include "atlas/runtime/Behavior.h"
 #include "atlas/util/Config.h"
 
 using namespace eckit;
@@ -24,27 +22,36 @@ std::string rundir()
   return cwd;
 }
 
+
+static const char* runtime_indent = ">>>";
+static const char* runtime_dedent = "<<<";
+
 // ----------------------------------------------------------------------------
 
 void atlas_info( std::ostream& out )
 {
   out << "Atlas initialised [" << Context::instance().displayName() << "]\n";
-  out << runtime::indent();
+  out << runtime_indent;
   out << "atlas version [" << atlas_version() << "]\n";
   out << "atlas git     [" << atlas_git_sha1()<< "]\n";
   out << "eckit version [" << eckit_version() << "]\n";
   out << "eckit git     [" << eckit_git_sha1()<< "]\n";
-  Context::instance().behavior().reconfigure();
+
   out << "current dir   [" << PathName(rundir()).fullName() << "]\n";
 
   if( eckit::mpi::comm().size() > 1 ) {
-    out << "MPI\n" << runtime::indent();
+    out << "MPI\n" << runtime_indent
     out << "communicator  [" << eckit::mpi::comm() << "] \n";
     out << "size          [" << eckit::mpi::comm().size() << "] \n";
     out << "rank          [" << eckit::mpi::comm().rank() << "] \n";
-    out << runtime::dedent();
+    out << runtime_dedent;
   }
-  out << runtime::dedent();
+  out << runtime_dedent
+  else
+  {
+    out << "MPI           [OFF]\n";
+  }
+  out << runtime_dedent;
 }
 
 // ----------------------------------------------------------------------------
@@ -81,8 +88,7 @@ void atlas_init(int argc, char** argv)
     if( env_debug ) debug = ::atol(env_debug);
     // args.get("debug",debug);
 
-    Context::instance().behavior( new atlas::runtime::Behavior() );
-    Context::instance().debug(debug);
+    Context::instance().debugLevel(debug);
   }
   atlas_init();
 }

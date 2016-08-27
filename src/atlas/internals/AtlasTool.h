@@ -15,8 +15,6 @@
 #include <iostream>
 
 #include "atlas/atlas.h"
-#include "atlas/runtime/Behavior.h"
-#include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/runtime/Context.h"
 #include "eckit/option/CmdArgs.h"
@@ -121,9 +119,7 @@ protected:
     if( env_debug ) debug = ::atol(env_debug);
     args.get("debug",debug);
 
-    if( not serial() )
-      eckit::Context::instance().behavior( new atlas::runtime::Behavior() );
-    eckit::Context::instance().debug(debug);
+    eckit::Context::instance().debugLevel(debug);
 
     atlas_init();
     execute(args);
@@ -136,7 +132,6 @@ public:
 
   AtlasTool(int argc,char **argv): eckit::Tool(argc,argv)
   {
-    /* eckit::Context::instance().behavior( new eckit::mpi::ParallelContextBehavior() ); */
     add_option( new SimpleOption<bool>("help","Print this help") );
     add_option( new SimpleOption<long>("debug","Debug level") );
   }
