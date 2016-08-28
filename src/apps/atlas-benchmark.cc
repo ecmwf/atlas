@@ -68,7 +68,7 @@
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
 #include "eckit/parser/JSON.h"
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 
 
 //----------------------------------------------------------------------------------------------------------------------

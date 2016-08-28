@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 #include "eckit/parser/StringTools.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
@@ -10,6 +10,7 @@
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/field/FieldCreator.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 
 using namespace eckit;
@@ -30,8 +31,8 @@ static const char* runtime_dedent = "<<<";
 
 void atlas_info( std::ostream& out )
 {
-  out << "Atlas initialised [" << Context::instance().displayName() << "]\n";
-  out << runtime_indent;
+  out << "Atlas initialised [" << Main::instance().name() << "]\n";
+  out << runtime_dedent;
   out << "atlas version [" << atlas_version() << "]\n";
   out << "atlas git     [" << atlas_git_sha1()<< "]\n";
   out << "eckit version [" << eckit_version() << "]\n";
@@ -76,20 +77,8 @@ void atlas_init(const eckit::Parametrisation&)
 // This is only to be used from Fortran or unit-tests
 void atlas_init(int argc, char** argv)
 {
-  if( Context::instance().argc() == 0 )
-  {
-    if( argc>0 )
-      Context::instance().setup(argc, argv);
-    if( Context::instance().argc() > 0 )
-      Context::instance().runName( PathName(Context::instance().argv(0)).baseName(false) );
 
-    long debug(0);
-    const char* env_debug = ::getenv("DEBUG");
-    if( env_debug ) debug = ::atol(env_debug);
-    // args.get("debug",debug);
-
-    Context::instance().debugLevel(debug);
-  }
+  Main::instance().initialise(argc, argv);
   atlas_init();
 }
 
@@ -172,7 +161,7 @@ const char* atlas__atlas_git_sha1_abbrev(int length)
 
 const char* atlas__run_name ()
 {
-  static std::string str( Context::instance().runName() );
+  static std::string str( Main::instance().name() );
   return str.c_str();
 }
 
@@ -180,7 +169,7 @@ const char* atlas__run_name ()
 
 const char* atlas__display_name ()
 {
-  static std::string str( Context::instance().displayName() );
+  static std::string str( Main::instance().name() );
   return str.c_str();
 }
 

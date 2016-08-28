@@ -13,7 +13,7 @@
 #include <cmath>
 #include <limits>
 #include <vector>
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 #include "eckit/config/Configurable.h"
 #include "eckit/geometry/Point3.h"
 #include "atlas/internals/atlas_config.h"
