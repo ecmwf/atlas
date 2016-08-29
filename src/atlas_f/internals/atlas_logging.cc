@@ -1,5 +1,5 @@
 #include "atlas_f/internals/atlas_logging.h"
-#include "eckit/runtime/Main.h"
+#include "eckit/exception/Exceptions.h"
 #include "atlas/runtime/Log.h"
 
 using namespace eckit;
