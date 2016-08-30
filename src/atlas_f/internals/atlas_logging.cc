@@ -433,5 +433,5 @@ void atlas__LogChannel__clear_indentation_fortran_unit (Channel* ch, int unit)
 
 // ----------------------------------------------------------------------------
 
-}
+
 

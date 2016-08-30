@@ -23,21 +23,15 @@ std::string rundir()
   return cwd;
 }
 
-
-static const char* runtime_indent = ">>>";
-static const char* runtime_dedent = "<<<";
-
 // ----------------------------------------------------------------------------
 
 void atlas_info( std::ostream& out )
 {
   out << "Atlas initialised [" << Main::instance().name() << "]\n";
-  out << runtime_dedent;
   out << "atlas version [" << atlas_version() << "]\n";
   out << "atlas git     [" << atlas_git_sha1()<< "]\n";
   out << "eckit version [" << eckit_version() << "]\n";
   out << "eckit git     [" << eckit_git_sha1()<< "]\n";
-
   out << "current dir   [" << PathName(rundir()).fullName() << "]\n";
 
   if( eckit::mpi::comm().size() > 1 ) {
@@ -45,14 +39,11 @@ void atlas_info( std::ostream& out )
     out << "communicator  [" << eckit::mpi::comm() << "] \n";
     out << "size          [" << eckit::mpi::comm().size() << "] \n";
     out << "rank          [" << eckit::mpi::comm().rank() << "] \n";
-    out << runtime_dedent;
   }
-  out << runtime_dedent
   else
   {
     out << "MPI           [OFF]\n";
   }
-  out << runtime_dedent;
 }
 
 // ----------------------------------------------------------------------------
@@ -77,7 +68,6 @@ void atlas_init(const eckit::Parametrisation&)
 // This is only to be used from Fortran or unit-tests
 void atlas_init(int argc, char** argv)
 {
-
   Main::instance().initialise(argc, argv);
   atlas_init();
 }

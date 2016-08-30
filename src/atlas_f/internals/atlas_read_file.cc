@@ -1,7 +1,4 @@
-
-// #include "eckit/config/FileReadPolicy.h"
 #include "eckit/runtime/Main.h"
-// #include "eckit/runtime/ContextBehavior.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas_f/internals/atlas_read_file.h"
 
@@ -12,6 +9,7 @@ extern "C"
 
 int atlas__read_file( const char* path, char* &content, int& size )
 {
+
   ATLAS_ERROR_HANDLING(
 
     NOTIMP;
@@ -29,7 +27,6 @@ int atlas__read_file( const char* path, char* &content, int& size )
     //   return true;
     // }
   );
-
   return false;
 }
 
