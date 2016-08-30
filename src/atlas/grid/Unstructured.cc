@@ -25,6 +25,9 @@ namespace atlas {
 namespace grid {
 
 
+register_BuilderT1(Grid, Unstructured, Unstructured::grid_type_str());
+
+
 std::string Unstructured::grid_type_str() {
     return "unstructured";
 }
@@ -32,6 +35,11 @@ std::string Unstructured::grid_type_str() {
 
 std::string Unstructured::className() {
     return "atlas.grid.Unstructured";
+}
+
+
+std::string Unstructured::gridType() const {
+    return grid_type_str();
 }
 
 
@@ -94,7 +102,7 @@ Unstructured::~Unstructured() {
 
 
 Grid::uid_t Unstructured::shortName() const {
-    if ( shortName_.empty() ) {
+    if (shortName_.empty()) {
         std::ostringstream s;
         s <<  "unstructured." << Grid::hash().substr(0, 7);
         shortName_ = s.str();
@@ -139,7 +147,7 @@ eckit::Properties Unstructured::spec() const {
 
     cached_spec_.reset( new eckit::Properties );
 
-    cached_spec_->set("grid_type", gridType());
+    cached_spec_->set("grid_type", grid_type_str());
 
     std::vector<double> coords;
     coords.resize(2*npts());
@@ -154,9 +162,6 @@ eckit::Properties Unstructured::spec() const {
 void Unstructured::print(std::ostream& os) const {
     os << "Unstructured(Npts:" << npts() << ")";
 }
-
-
-register_BuilderT1(Grid, Unstructured, Unstructured::grid_type_str());
 
 
 }  // namespace grid

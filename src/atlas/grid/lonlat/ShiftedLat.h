@@ -28,6 +28,8 @@ class ShiftedLat : public LonLat {
 
     static std::string className();
 
+    std::string gridType() const;
+
     ShiftedLat(const eckit::Parametrisation&);
 
     ShiftedLat(const size_t N, const Domain& dom=Domain::makeGlobal());
@@ -48,7 +50,11 @@ class ShiftedLat : public LonLat {
 
     void setup(const eckit::Parametrisation&);
 
-    virtual void set_typeinfo();
+    std::string shortName() const;
+
+  private:
+
+    mutable std::string shortName_;
 
 };
 

@@ -17,7 +17,7 @@ namespace grid {
 namespace lonlat {
 
 
-register_BuilderT1(Grid,ShiftedLon,ShiftedLon::grid_type_str());
+register_BuilderT1(Grid, ShiftedLon, ShiftedLon::grid_type_str());
 
 
 std::string ShiftedLon::grid_type_str() {
@@ -30,33 +30,43 @@ std::string ShiftedLon::className() {
 }
 
 
-void ShiftedLon::set_typeinfo() {
-    std::stringstream s;
-    if( N() ) {
-        s << "Slon" << N();
-    } else if( domain_.isGlobal() ) {
-        s << "Slon" << nlon() << "x" << nlat();
+std::string ShiftedLon::gridType() const {
+    return grid_type_str();
+}
+
+
+std::string ShiftedLon::shortName() const {
+    if (shortName_.empty()) {
+        std::stringstream s;
+        if( N() ) {
+            s << "Slon" << N();
+        } else {
+            s << "Slon" << nlon() << "x" << nlat();
+        }
+        if (!domain_.isGlobal()) {
+            s << "-local";
+        }
+        shortName_ = s.str();
     }
-    shortName_ = s.str();
-    grid_type_ = grid_type_str();
+    return shortName_;
 }
 
 
 ShiftedLon::ShiftedLon(const eckit::Parametrisation& p) :
-    LonLat(Shift::LON,Domain::makeGlobal()) {
+    LonLat(Shift::LON, Domain::makeGlobal()) {
     setup(p);
 }
 
 
-ShiftedLon::ShiftedLon(const size_t N, const Domain& dom) :
-    LonLat(Shift::LON, dom) {
-    LonLat::setup(N, dom);
+ShiftedLon::ShiftedLon(const size_t N, const Domain& domain) :
+    LonLat(Shift::LON, domain) {
+    LonLat::setup(N, domain);
 }
 
 
-ShiftedLon::ShiftedLon(const size_t nlon, const size_t nlat, const Domain& dom) :
-    LonLat(Shift::LON, dom) {
-    LonLat::setup(nlon, nlat, dom);
+ShiftedLon::ShiftedLon(const size_t nlon, const size_t nlat, const Domain& domain) :
+    LonLat(Shift::LON, domain) {
+    LonLat::setup(nlon, nlat, domain);
 }
 
 
@@ -73,10 +83,10 @@ void ShiftedLon::setup(const eckit::Parametrisation& p) {
 
     if( p.get("N",N) ) {
         LonLat::setup(N, domain_);
-    } else if( p.get("nlon",nlon) && p.get("nlat",nlat) ) {
+    } else if( p.get("nlon", nlon) && p.get("nlat", nlat) ) {
         LonLat::setup(nlon, nlat, domain_);
     } else {
-        throw eckit::BadParameter("Params (nlon,nlat) or N missing",Here());
+        throw eckit::BadParameter("Params (nlon,nlat) or N missing", Here());
     }
 }
 
@@ -97,7 +107,7 @@ extern "C" {
 
 
     Structured* atlas__grid__lonlat__ShiftedLon(size_t nlon, size_t nlat) {
-        return new ShiftedLon(nlon,nlat);
+        return new ShiftedLon(nlon, nlat);
     }
 
 

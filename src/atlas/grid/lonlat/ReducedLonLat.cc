@@ -17,7 +17,7 @@ namespace grid {
 namespace lonlat {
 
 
-register_BuilderT1(Grid,ReducedLonLat,ReducedLonLat::grid_type_str());
+register_BuilderT1(Grid, ReducedLonLat, ReducedLonLat::grid_type_str());
 
 
 std::string ReducedLonLat::grid_type_str() {
@@ -30,11 +30,19 @@ std::string ReducedLonLat::className() {
 }
 
 
-void ReducedLonLat::set_typeinfo() {
-    std::stringstream s;
-    s << "reduced_lonlat";
-    shortName_ = s.str();
-    grid_type_ = grid_type_str();
+std::string ReducedLonLat::gridType() const {
+    return grid_type_str();
+}
+
+
+std::string ReducedLonLat::shortName() const {
+    if (shortName_.empty()) {
+        shortName_ = "reduced_lonlat";
+        if (!domain_.isGlobal()) {
+            shortName_ += "-local";
+        }
+    }
+    return shortName_;
 }
 
 

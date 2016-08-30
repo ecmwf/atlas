@@ -39,6 +39,8 @@ class ReducedLonLat : public LonLat {
 
     static std::string className();
 
+    std::string gridType() const;
+
     ReducedLonLat(const eckit::Parametrisation&);
 
     ReducedLonLat(const size_t nlat, const long nlon[], const Domain& dom=Domain::makeGlobal());
@@ -49,7 +51,11 @@ class ReducedLonLat : public LonLat {
 
     void setup(const eckit::Parametrisation&);
 
-    void set_typeinfo();
+    std::string shortName() const;
+
+  private:
+
+    mutable std::string shortName_;
 
 };
 

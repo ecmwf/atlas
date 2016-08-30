@@ -64,6 +64,8 @@ class RegularGaussian : public Gaussian {
 
     static std::string className();
 
+    std::string gridType() const;
+
     RegularGaussian(const eckit::Parametrisation&);
 
     RegularGaussian(const size_t& N, const Domain& dom=Domain::makeGlobal());
@@ -86,9 +88,11 @@ class RegularGaussian : public Gaussian {
 
     virtual void setup(const size_t& N, const Domain&);
 
-    virtual void set_typeinfo();
+    std::string shortName() const;
 
   private:
+
+    mutable std::string shortName_;
 
     Domain domain_;
 

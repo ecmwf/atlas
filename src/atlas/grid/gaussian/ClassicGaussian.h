@@ -40,9 +40,11 @@ class ClassicGaussian : public Gaussian {
 
     static std::string className();
 
-    ClassicGaussian(const eckit::Parametrisation&);
+    std::string gridType() const;
 
-    ClassicGaussian(const size_t N, const Domain& dom=Domain::makeGlobal());
+    ClassicGaussian(const size_t N, const Domain& domain=Domain::makeGlobal());
+
+    ClassicGaussian(const eckit::Parametrisation&);
 
     virtual const Domain& domain() const {
         return domain_;
@@ -50,11 +52,14 @@ class ClassicGaussian : public Gaussian {
 
   private:
 
-    virtual void set_typeinfo();
+    std::string shortName() const;
 
   private:
 
+    mutable std::string shortName_;
+
     Domain domain_;
+
 };
 
 
