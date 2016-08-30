@@ -139,7 +139,7 @@ eckit::Properties Unstructured::spec() const {
 
     cached_spec_.reset( new eckit::Properties );
 
-    cached_spec_->set("grid_type",gridType());
+    cached_spec_->set("grid_type", gridType());
 
     std::vector<double> coords;
     coords.resize(2*npts());

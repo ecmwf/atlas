@@ -45,7 +45,7 @@ Grid* Grid::create(const eckit::Parametrisation& p) {
         return fact.get(shortName).create(p);
     }
     std::string gridType;
-    if (p.get("grid_type",gridType) && fact.exists(gridType)) {
+    if (p.get("grid_type", gridType) && fact.exists(gridType)) {
         return fact.get(gridType).create(p);
     }
     return NULL;

@@ -115,7 +115,7 @@ class Grid : public eckit::Owned {
     /// @note Assumes that the input buffer has been allocated with correct size,
     ///       possibly from calling method npts()
     ///
-    /// @param array to be filled in with the (lon,lat) values
+    /// @param pts array to be filled in with the (lon,lat) values
     /// @param size number of doubles in array
     ///
     /// @return the size of bytes copyied in
