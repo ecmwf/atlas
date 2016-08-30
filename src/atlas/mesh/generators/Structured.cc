@@ -327,8 +327,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
     int jelem=0;
 
 #if DEBUG_OUTPUT
-    Log::info(Here())  << "=================\n";
-    Log::info(Here())  << "latN, latS : " << latN << ", " << latS << '\n';
+    Log::info()  << "=================\n";
+    Log::info()  << "latN, latS : " << latN << ", " << latS << '\n';
 #endif
 
     while (true)
@@ -357,8 +357,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       else
         pS2 = parts.at(offset.at(latS)+ipS2);
 
-      //Log::info(Here())  << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
-      //Log::info(Here())  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
+      //Log::info()  << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
+      //Log::info()  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
 
 
       xN1 = rg.lon(latN,ipN1) * to_rad;
@@ -372,11 +372,11 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       if( stagger && (latS+1)%2==0 ) xS2 += M_PI/static_cast<double>(rg.nlon(latS));
 
 #if DEBUG_OUTPUT
-      Log::info(Here())  << "-------\n";
+      Log::info()  << "-------\n";
 #endif
-      // Log::info(Here())  << "  access  " << region.elems.stride(0)*(jlat-region.north) + region.elems.stride(1)*jelem + 5 << std::endl;
-//      Log::info(Here())  << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2 << ")  " << std::endl;
-//      Log::info(Here())  << ipS1 << "("<< xS1 << ")  " << ipS2 <<  "("<< xS2 << ")  " << std::endl;
+      // Log::info()  << "  access  " << region.elems.stride(0)*(jlat-region.north) + region.elems.stride(1)*jelem + 5 << std::endl;
+//      Log::info()  << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2 << ")  " << std::endl;
+//      Log::info()  << ipS1 << "("<< xS1 << ")  " << ipS2 <<  "("<< xS2 << ")  " << std::endl;
       try_make_triangle_up   = false;
       try_make_triangle_down = false;
       try_make_quad = false;
@@ -405,7 +405,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
             dN1S2 = std::abs(xN1-xS2);
             dS1N2 = std::abs(xS1-xN2);
             // dN2S2 = std::abs(xN2-xS2);
-            // Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
+            // Log::info()  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
             if (dN1S2 == dS1N2)
             {
               try_make_triangle_up   = (jlat+ipN1) % 2;
@@ -442,7 +442,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         dN1S2 = std::abs(xN1-xS2);
         dS1N2 = std::abs(xS1-xN2);
         // dN2S2 = std::abs(xN2-xS2);
-        // Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
+        // Log::info()  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
         if( (dN1S2 <= dS1N2) && (ipS1 != ipS2) ) { try_make_triangle_up = true;}
         else if( (dN1S2 >= dS1N2) && (ipN1 != ipN2) ) { try_make_triangle_down = true;}
         else Exception("Should not try to make a quadrilateral!",Here());
@@ -462,8 +462,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       {
         // add quadrilateral
 #if DEBUG_OUTPUT
-        Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << '\n';
-        Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << '\n';
+        Log::info()  << "          " << ipN1 << "  " << ipN2 << '\n';
+        Log::info()  << "          " << ipS1 << "  " << ipS2 << '\n';
 #endif
         elem.at(0) = ipN1;
         elem.at(1) = ipS1;
@@ -525,7 +525,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         else
         {
 #if DEBUG_OUTPUT
-          Log::info(Here()) << "Quad belongs to other partition" << std::endl;
+          Log::info() << "Quad belongs to other partition" << std::endl;
 #endif
         }
         ipN1=ipN2;
@@ -535,8 +535,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       {
         // triangle without ip3
 #if DEBUG_OUTPUT
-        Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << '\n';
-        Log::info(Here())  << "          " << ipS1 << '\n';
+        Log::info()  << "          " << ipN1 << "  " << ipN2 << '\n';
+        Log::info()  << "          " << ipS1 << '\n';
 #endif
         elem.at(0) = ipN1;
         elem.at(1) = ipS1;
@@ -604,7 +604,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         else
         {
 #if DEBUG_OUTPUT
-          Log::info(Here()) << "Triag belongs to other partition" << std::endl;
+          Log::info() << "Triag belongs to other partition" << std::endl;
 #endif
         }
         ipN1=ipN2;
@@ -615,8 +615,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       {
         // triangle without ip4
 #if DEBUG_OUTPUT
-        Log::info(Here())  << "          " << ipN1 << '\n';
-        Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << '\n';
+        Log::info()  << "          " << ipN1 << '\n';
+        Log::info()  << "          " << ipS1 << "  " << ipS2 << '\n';
 #endif
         elem.at(0) = ipN1;
         elem.at(1) = ipS1;
@@ -690,7 +690,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         else
         {
 #if DEBUG_OUTPUT
-          Log::info(Here()) << "Triag belongs to other partition" << std::endl;
+          Log::info() << "Triag belongs to other partition" << std::endl;
 #endif
         }
         ipS1=ipS2;
@@ -728,9 +728,9 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
     }
   } // for jlat
 
-//  Log::info(Here())  << "nb_triags = " << region.ntriags << std::endl;
-//  Log::info(Here())  << "nb_quads = " << region.nquads << std::endl;
-//  Log::info(Here())  << "nb_elems = " << nelems << std::endl;
+//  Log::info()  << "nb_triags = " << region.ntriags << std::endl;
+//  Log::info()  << "nb_quads = " << region.nquads << std::endl;
+//  Log::info()  << "nb_elems = " << nelems << std::endl;
 
   int nb_region_nodes = 0;
 
