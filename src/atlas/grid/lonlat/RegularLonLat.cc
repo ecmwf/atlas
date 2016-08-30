@@ -37,6 +37,7 @@ void RegularLonLat::set_typeinfo() {
     } else if( domain_.isGlobal() ) {
         s << "L" << nlon() << "x" << nlat();
     } else {
+        // FIXME: What does that mean?
         s << "WHAT-IS-THIS-GRID-" << nlon() << "x" << nlat();
     }
     shortName_ = s.str();
