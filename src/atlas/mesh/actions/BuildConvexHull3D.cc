@@ -96,7 +96,7 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 
     ASSERT( points.size() == nodes.size() );
 
-    const size_t nb_nodes = points.size();
+    const idx_t nb_nodes = idx_t(points.size());
 
     ASSERT( mesh.cells().size() == 0 );
 
