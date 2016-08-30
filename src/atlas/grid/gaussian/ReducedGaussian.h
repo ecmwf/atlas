@@ -40,9 +40,11 @@ class ReducedGaussian : public Gaussian {
 
     static std::string className();
 
+    std::string gridType() const;
+
     ReducedGaussian(const eckit::Parametrisation&);
 
-    ReducedGaussian(const size_t N, const long pl[], const Domain& dom=Domain::makeGlobal());
+    ReducedGaussian(const size_t N, const long pl[], const Domain& domain=Domain::makeGlobal());
 
     virtual const Domain& domain() const {
         return domain_;
@@ -52,11 +54,11 @@ class ReducedGaussian : public Gaussian {
 
     ReducedGaussian() : Gaussian() {}
 
-    void setup(const eckit::Parametrisation&);
-
-    virtual void set_typeinfo();
+    std::string shortName() const;
 
   private:
+
+    mutable std::string shortName_;
 
     Domain domain_;
 

@@ -28,11 +28,13 @@ class OctahedralGaussian : public Gaussian {
 
   public:
 
-    static std::string className();
-
     static std::string grid_type_str();
 
-    OctahedralGaussian(const size_t N, const Domain& dom=Domain::makeGlobal());
+    static std::string className();
+
+    std::string gridType() const;
+
+    OctahedralGaussian(const size_t N, const Domain& domain=Domain::makeGlobal());
 
     OctahedralGaussian(const eckit::Parametrisation&);
 
@@ -46,11 +48,11 @@ class OctahedralGaussian : public Gaussian {
     /// number of points at latitude closest to pole
     static std::vector<long> computePL(const size_t N);
 
-    void construct(const size_t N);
-
-    virtual void set_typeinfo();
+    std::string shortName() const;
 
   private:
+
+    mutable std::string shortName_;
 
     Domain domain_;
 

@@ -24,6 +24,11 @@ std::string CustomStructured::className() {
 }
 
 
+std::string CustomStructured::gridType() const {
+    return grid_type_str();
+}
+
+
 std::string CustomStructured::grid_type_str() {
     return "custom_structured";
 }
@@ -117,6 +122,17 @@ eckit::Properties CustomStructured::spec() const {
         grid_spec.set("N", N());
     }
     return grid_spec;
+}
+
+
+std::string CustomStructured::shortName() const {
+    if (shortName_.empty()) {
+        shortName_ = grid_type_str();
+        if (!domain_.isGlobal()) {
+            shortName_ += "-local";
+        }
+    }
+    return shortName_;
 }
 
 

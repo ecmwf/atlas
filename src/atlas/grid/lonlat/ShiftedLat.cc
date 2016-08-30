@@ -17,7 +17,7 @@ namespace grid {
 namespace lonlat {
 
 
-register_BuilderT1(Grid,ShiftedLat,ShiftedLat::grid_type_str());
+register_BuilderT1(Grid, ShiftedLat, ShiftedLat::grid_type_str());
 
 
 std::string ShiftedLat::grid_type_str() {
@@ -30,33 +30,43 @@ std::string ShiftedLat::className() {
 }
 
 
-void ShiftedLat::set_typeinfo() {
-    std::stringstream s;
-    if( N() ) {
-        s << "Slat" << N();
-    } else if( domain_.isGlobal() ) {
-        s << "Slat" << nlon() << "x" << nlat();
+std::string ShiftedLat::gridType() const {
+    return grid_type_str();
+}
+
+
+std::string ShiftedLat::shortName() const {
+    if (shortName_.empty()) {
+        std::stringstream s;
+        if( N() ) {
+            s << "Slat" << N();
+        } else {
+            s << "Slat" << nlon() << "x" << nlat();
+        }
+        if (!domain_.isGlobal()) {
+            s << "-local";
+        }
+        shortName_ = s.str();
     }
-    shortName_ = s.str();
-    grid_type_ = grid_type_str();
+    return shortName_;
 }
 
 
 ShiftedLat::ShiftedLat(const eckit::Parametrisation& p) :
-    LonLat(Shift::LAT,Domain::makeGlobal()) {
+    LonLat(Shift::LAT, Domain::makeGlobal()) {
     setup(p);
 }
 
 
-ShiftedLat::ShiftedLat(const size_t N, const Domain& dom) :
-    LonLat(Shift::LAT, dom) {
-    LonLat::setup(N, dom);
+ShiftedLat::ShiftedLat(const size_t N, const Domain& domain) :
+    LonLat(Shift::LAT, domain) {
+    LonLat::setup(N, domain);
 }
 
 
-ShiftedLat::ShiftedLat(const size_t nlon, const size_t nlat, const Domain& dom) :
-    LonLat(Shift::LAT, dom) {
-    LonLat::setup(nlon, nlat, dom);
+ShiftedLat::ShiftedLat(const size_t nlon, const size_t nlat, const Domain& domain) :
+    LonLat(Shift::LAT, domain) {
+    LonLat::setup(nlon, nlat, domain);
 }
 
 
@@ -97,7 +107,7 @@ extern "C" {
 
 
     Structured* atlas__grid__lonlat__ShiftedLat(size_t nlon, size_t nlat) {
-        return new ShiftedLat(nlon,nlat);
+        return new ShiftedLat(nlon, nlat);
     }
 
 

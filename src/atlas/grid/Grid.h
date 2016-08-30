@@ -63,7 +63,9 @@ class Grid : public eckit::Owned {
     /// dtor
     virtual ~Grid();
 
-    /// Human readable name (may not be unique)
+    /// Human readable name
+    /// @note: may not be unique, such as when reduced Gaussian grids have
+    /// the same N numbers but different distribution of latitude points
     virtual std::string shortName() const = 0;
 
     /// Unique grid id

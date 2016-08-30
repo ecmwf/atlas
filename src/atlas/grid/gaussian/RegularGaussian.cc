@@ -18,7 +18,7 @@ namespace grid {
 namespace gaussian {
 
 
-register_BuilderT1(Grid, RegularGaussian,RegularGaussian::grid_type_str());
+register_BuilderT1(Grid, RegularGaussian, RegularGaussian::grid_type_str());
 
 
 std::string RegularGaussian::grid_type_str() {
@@ -31,6 +31,31 @@ std::string RegularGaussian::className() {
 }
 
 
+std::string RegularGaussian::gridType() const {
+    return grid_type_str();
+}
+
+
+std::string RegularGaussian::shortName() const {
+    if (shortName_.empty()) {
+        std::stringstream s;
+        s << "F" << N();
+        if (!domain_.isGlobal()) {
+            s << "-local";
+        }
+        shortName_ = s.str();
+    }
+    return shortName_;
+}
+
+
+RegularGaussian::RegularGaussian(const size_t& N, const Domain& domain) :
+    Gaussian() {
+    domain_ = domain;
+    setup(N, domain);
+}
+
+
 RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
     Gaussian() {
     size_t N;
@@ -38,26 +63,16 @@ RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
         throw eckit::BadParameter("N missing in Params", Here());
     }
 
+    domain_ = Domain::makeGlobal();
     std::vector<double> p_domain(4);
-
-    if( params.get("domain", p_domain) )
-    {
-      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
-    }
-    else
-    {
-      domain_ = Domain::makeGlobal();
+    if (params.get("domain", p_domain)) {
+      domain_ = Domain(p_domain[0], p_domain[1], p_domain[2], p_domain[3]);
     }
 
-    setup(N,domain_);
+    setup(N, domain_);
 }
 
 
-RegularGaussian::RegularGaussian(const size_t& N, const Domain& dom) :
-    Gaussian() {
-    domain_ = dom;
-    setup(N,dom);
-}
 
 namespace {
 static eckit::Value domain_spec(const Domain& dom)
@@ -132,16 +147,6 @@ void RegularGaussian::setup(const size_t& N, const Domain& dom) {
     std::vector<double> dom_lonmin(Nj_,lonmin);
     std::vector<double> dom_lonmax(Nj_,lonmax);
     Structured::setup(Nj_,dom_lats.data(),dom_pl.data(),dom_lonmin.data(),dom_lonmax.data());
-
-    set_typeinfo();
-}
-
-
-void RegularGaussian::set_typeinfo() {
-    std::stringstream s;
-    s << "F"<< N();
-    shortName_ = s.str();
-    grid_type_ = grid_type_str();
 }
 
 

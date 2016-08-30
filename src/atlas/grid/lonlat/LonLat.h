@@ -81,8 +81,6 @@ class LonLat: public Structured {
 
     void setup(const long pl[], const size_t nlat, const Domain&);
 
-    virtual void set_typeinfo() = 0;
-
     static eckit::Value domain_spec(const Domain& dom);
 
   protected:
