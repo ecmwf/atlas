@@ -36,6 +36,8 @@ void RegularLonLat::set_typeinfo() {
         s << "L" << N();
     } else if( domain_.isGlobal() ) {
         s << "L" << nlon() << "x" << nlat();
+    } else {
+        s << "WHAT-IS-THIS-GRID-" << nlon() << "x" << nlat();
     }
     shortName_ = s.str();
     grid_type_ = grid_type_str();

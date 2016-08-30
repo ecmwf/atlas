@@ -15,8 +15,9 @@
 #include <iostream>
 
 #include "atlas/atlas.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 #include "eckit/option/CmdArgs.h"
 #include "eckit/option/SimpleOption.h"
 #include "eckit/option/Separator.h"
@@ -85,10 +86,10 @@ protected:
 
   bool handle_help()
   {
-    for( int i=1; i<eckit::Context::instance().argc(); ++i )
+    for( int i=1; i<argc(); ++i )
     {
-      if( eckit::Context::instance().argv(i) == "--help" ||
-          eckit::Context::instance().argv(i) == "-h"     )
+      if( argv(i) == "--help" ||
+          argv(i) == "-h"     )
       {
         if( eckit::mpi::rank() == 0 )
           help();
@@ -103,7 +104,7 @@ protected:
     if( handle_help() )
       return;
 
-    if( eckit::Context::instance().argc()-1 < minimumPositionalArguments() )
+    if( argc()-1 < minimumPositionalArguments() )
     {
       Log::info() << "Usage: " << usage() << std::endl;
       return;
@@ -114,12 +115,14 @@ protected:
         numberOfPositionalArguments(),
         minimumPositionalArguments());
 
-    long debug(0);
-    const char* env_debug = ::getenv("DEBUG");
-    if( env_debug ) debug = ::atol(env_debug);
-    args.get("debug",debug);
+    // long debug(0);
+    // const char* env_debug = ::getenv("DEBUG");
+    // if( env_debug ) debug = ::atol(env_debug);
+    // args.get("debug",debug);
 
-    eckit::Context::instance().debugLevel(debug);
+    // if( not serial() )
+    //   behavior( new atlas::runtime::Behavior() );
+    // debug(debug);
 
     atlas_init();
     execute(args);

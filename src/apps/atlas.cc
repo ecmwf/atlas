@@ -12,6 +12,7 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/config/Resource.h"
 #include "atlas/atlas.h"
+#include "eckit/log/Log.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "transi/version.h"
