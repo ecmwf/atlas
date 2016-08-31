@@ -52,9 +52,9 @@ std::string RegularLonLat::shortName() const {
 }
 
 
-RegularLonLat::RegularLonLat(const eckit::Parametrisation& p) :
+RegularLonLat::RegularLonLat(const eckit::Parametrisation& params) :
     LonLat(Shift::NONE, Domain::makeGlobal()) {
-    setup(p);
+    setup(params);
 }
 
 
@@ -70,20 +70,20 @@ RegularLonLat::RegularLonLat(const size_t nlon, const size_t nlat, const Domain&
 }
 
 
-void RegularLonLat::setup(const eckit::Parametrisation& p) {
+void RegularLonLat::setup(const eckit::Parametrisation& params) {
     size_t nlon, nlat, N(0);
 
     std::vector<double> p_domain(4);
 
-    if( p.get("domain", p_domain) ) {
+    if( params.get("domain", p_domain) ) {
         domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
     } else {
         domain_ = Domain::makeGlobal();
     }
 
-    if( p.get("N",N) ) {
+    if( params.get("N",N) ) {
         LonLat::setup(N, domain_);
-    } else if( p.get("nlon", nlon) && p.get("nlat", nlat) ) {
+    } else if( params.get("nlon", nlon) && params.get("nlat", nlat) ) {
         LonLat::setup(nlon, nlat, domain_);
     } else {
         throw eckit::BadParameter("Params (nlon,nlat) or N missing", Here());
