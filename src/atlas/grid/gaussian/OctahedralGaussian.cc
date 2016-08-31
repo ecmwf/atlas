@@ -17,7 +17,7 @@ namespace grid {
 namespace gaussian {
 
 
-eckit::ConcreteBuilderT1<Grid,OctahedralGaussian> builder_OctahedralGaussian (OctahedralGaussian::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, OctahedralGaussian> builder_OctahedralGaussian(OctahedralGaussian::grid_type_str());
 
 
 std::string OctahedralGaussian::grid_type_str() {
@@ -32,29 +32,6 @@ std::string OctahedralGaussian::className() {
 
 std::string OctahedralGaussian::gridType() const {
     return grid_type_str();
-}
-
-
-std::string OctahedralGaussian::shortName() const {
-    if (shortName_.empty()) {
-        std::stringstream s;
-        s << "O" << N();
-        if (!domain_.isGlobal()) {
-            s << "-local";
-        }
-        shortName_ = s.str();
-    }
-    return shortName_;
-}
-
-
-std::vector<long> OctahedralGaussian::computePL(const size_t N) {
-    const size_t start = 20;
-    std::vector<long> pl(N);
-    for(size_t jlat=0; jlat < N; ++jlat) {
-        pl[jlat] = start + 4*jlat;
-    }
-    return pl;
 }
 
 
@@ -84,6 +61,29 @@ OctahedralGaussian::OctahedralGaussian(const eckit::Parametrisation& params) :
     std::vector<long> pl = computePL(N);
 
     setup_N_hemisphere(N, pl.data(), domain_);
+}
+
+
+std::string OctahedralGaussian::shortName() const {
+    if (shortName_.empty()) {
+        std::stringstream s;
+        s << "O" << N();
+        if (!domain_.isGlobal()) {
+            s << "-local";
+        }
+        shortName_ = s.str();
+    }
+    return shortName_;
+}
+
+
+std::vector<long> OctahedralGaussian::computePL(const size_t N) {
+    const size_t start = 20;
+    std::vector<long> pl(N);
+    for(size_t jlat=0; jlat < N; ++jlat) {
+        pl[jlat] = start + 4*jlat;
+    }
+    return pl;
 }
 
 

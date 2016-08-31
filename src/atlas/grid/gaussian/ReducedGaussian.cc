@@ -20,7 +20,7 @@ namespace grid {
 namespace gaussian {
 
 
-register_BuilderT1(Grid, ReducedGaussian, ReducedGaussian::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, ReducedGaussian> builder_ReducedGaussian(ReducedGaussian::grid_type_str());
 
 
 std::string ReducedGaussian::grid_type_str() {
@@ -100,6 +100,7 @@ extern "C" {
 }
 
 
-} // namespace gaussian
-} // namespace grid
-} // namespace atlas
+}  // namespace gaussian
+}  // namespace grid
+}  // namespace atlas
+

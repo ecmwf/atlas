@@ -17,7 +17,7 @@ namespace grid {
 namespace lonlat {
 
 
-register_BuilderT1(Grid, ReducedLonLat, ReducedLonLat::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, ReducedLonLat> builder_ReducedLonLat(ReducedLonLat::grid_type_str());
 
 
 std::string ReducedLonLat::grid_type_str() {

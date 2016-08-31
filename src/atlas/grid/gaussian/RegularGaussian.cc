@@ -18,7 +18,7 @@ namespace grid {
 namespace gaussian {
 
 
-register_BuilderT1(Grid, RegularGaussian, RegularGaussian::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, RegularGaussian> builder_RegularGaussian(RegularGaussian::grid_type_str());
 
 
 std::string RegularGaussian::grid_type_str() {

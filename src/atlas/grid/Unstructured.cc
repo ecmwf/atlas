@@ -25,7 +25,7 @@ namespace atlas {
 namespace grid {
 
 
-register_BuilderT1(Grid, Unstructured, Unstructured::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, Unstructured> builder_Unstructured(Unstructured::grid_type_str());
 
 
 std::string Unstructured::grid_type_str() {

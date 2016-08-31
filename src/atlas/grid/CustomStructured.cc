@@ -16,7 +16,7 @@ namespace atlas {
 namespace grid {
 
 
-register_BuilderT1(Grid, CustomStructured, CustomStructured::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, CustomStructured> builder_CustomStructured(CustomStructured::grid_type_str());
 
 
 std::string CustomStructured::className() {
