@@ -130,8 +130,8 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   std::vector<int        > send_counts(nproc    );
   std::vector<int        > recv_counts(nproc    );
 
-  eckit::mpi::Request::Vector send_req(nproc    );
-  eckit::mpi::Request::Vector recv_req(nproc    );
+  std::vector<eckit::mpi::Request> send_req(nproc    );
+  std::vector<eckit::mpi::Request> recv_req(nproc    );
 
   for (size_t jproc=0; jproc<nproc; ++jproc)
   {
@@ -147,7 +147,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if(recv_counts[jproc] > 0)
     {
-        eckit::mpi::comm().receive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag, *recv_req[jproc]);
+        recv_req[jproc] = eckit::mpi::comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
     }
   }
 
@@ -159,7 +159,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if(send_counts[jproc] > 0)
     {
-        eckit::mpi::comm().send(&send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag, *send_req[jproc]);
+        send_req[jproc] = eckit::mpi::comm().iSend(&send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag);
     }
   }
 
@@ -168,7 +168,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if( recvcounts_[jproc] > 0)
     {
-        eckit::mpi::comm().wait(*recv_req[jproc]);
+        eckit::mpi::comm().wait(recv_req[jproc]);
     }
   }
 
@@ -180,7 +180,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if( sendcounts_[jproc] > 0)
     {
-        eckit::mpi::comm().wait(*send_req[jproc]);
+        eckit::mpi::comm().wait(send_req[jproc]);
     }
   }
 }

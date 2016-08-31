@@ -19,7 +19,6 @@
 #include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/runtime/Context.h"
-#include "eckit/mpi/ParallelContextBehavior.h"
 #include "eckit/option/CmdArgs.h"
 #include "eckit/option/SimpleOption.h"
 #include "eckit/option/Separator.h"
@@ -137,7 +136,7 @@ public:
 
   AtlasTool(int argc,char **argv): eckit::Tool(argc,argv)
   {
-    eckit::Context::instance().behavior( new eckit::mpi::ParallelContextBehavior() );
+    /* eckit::Context::instance().behavior( new eckit::mpi::ParallelContextBehavior() ); */
     add_option( new SimpleOption<bool>("help","Print this help") );
     add_option( new SimpleOption<long>("debug","Debug level") );
   }

@@ -116,7 +116,7 @@ std::string Checksum::execute( const DATA_TYPE data[],
                                                 global_checksums.data(),
                                                 global_checksums.size());
 
-  eckit::mpi::comm().broadcast(&glb_checksum, 1, root);
+  eckit::mpi::comm().broadcast(glb_checksum, root);
 
   return eckit::Translator<internals::checksum_t,std::string>()(glb_checksum);
 }

@@ -1279,7 +1279,7 @@ void Structured::generate_global_element_numbering( Mesh& mesh ) const
   std::vector<size_t> elem_counts( eckit::mpi::comm().size() );
   std::vector<int> elem_displs( eckit::mpi::comm().size() );
 
-  eckit::mpi::comm().all_gather(&loc_nb_elems, 1, elem_counts);
+  eckit::mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
 
   elem_displs.at(0) = 0;
   for(size_t jpart = 1; jpart < eckit::mpi::comm().size(); ++jpart)

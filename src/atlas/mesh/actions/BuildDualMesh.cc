@@ -48,6 +48,7 @@ void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2]
   min[internals::LAT] =  std::numeric_limits<double>::max();
   max[internals::LON] = -std::numeric_limits<double>::max();
   max[internals::LAT] = -std::numeric_limits<double>::max();
+
   for (int node=0; node<nb_nodes; ++node)
   {
     min[internals::LON] = std::min( min[internals::LON], lonlat(node,internals::LON) );
@@ -55,8 +56,9 @@ void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2]
     max[internals::LON] = std::max( max[internals::LON], lonlat(node,internals::LON) );
     max[internals::LAT] = std::max( max[internals::LAT], lonlat(node,internals::LAT) );
   }
-  eckit::mpi::comm().all_reduce(min,2,eckit::mpi::min());
-  eckit::mpi::comm().all_reduce(max,2,eckit::mpi::max());
+
+  eckit::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
+  eckit::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
 }
 
 struct Node

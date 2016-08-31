@@ -46,7 +46,7 @@ void Error::clear()
   msg_       = std::string("Error code was not set!");
 }
 
-void handle_error(const eckit::Exception& exception, const int err_code)
+void handle_error(const eckit::Exception& exception, const int errorCode)
 {
   std::stringstream msg;
   if( Error::instance().backtrace() || Error::instance().aborts() )
@@ -70,13 +70,13 @@ void handle_error(const eckit::Exception& exception, const int err_code)
   {
     msg << exception.what();
   }
-  Error::instance().set_code(err_code);
+  Error::instance().set_code(errorCode);
   Error::instance().set_msg(msg.str());
 
   if( Error::instance().aborts() )
   {
     Log::error() << msg.str() << std::endl;
-    MPI_Abort(eckit::mpi::comm(), err_code);
+    eckit::mpi::comm().abort(errorCode);
   }
   if( Error::instance().throws() )
   {
@@ -202,7 +202,8 @@ void atlas__abort(char* msg, char* file, int line, char* function )
                << BackTrace::dump() << "\n"
                << "========================================="
                << std::endl;
-  MPI_Abort(eckit::mpi::comm(), -1);
+
+  eckit::mpi::comm().abort(-1);
 }
 
 void atlas__error_example()

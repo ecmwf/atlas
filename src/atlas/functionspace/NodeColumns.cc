@@ -582,7 +582,7 @@ void dispatch_sum( const NodeColumns& fs, const field::Field& field, T& result, 
         local_sum += arr(n,l);
     }
   }
-  eckit::mpi::comm().all_reduce(local_sum,result,eckit::mpi::sum());
+  eckit::mpi::comm().allReduce(local_sum, result, eckit::mpi::sum());
   N = fs.nb_nodes_global() * arr.shape(1);
 }
 
@@ -656,7 +656,9 @@ void dispatch_sum( const NodeColumns& fs, const field::Field& field, std::vector
       }
     }
   }
-  eckit::mpi::comm().all_reduce(local_sum,result,eckit::mpi::sum());
+
+  eckit::mpi::comm().allReduce(local_sum, result, eckit::mpi::sum());
+
   N = fs.nb_nodes_global() * arr.shape(1);
 }
 
@@ -738,7 +740,7 @@ void dispatch_sum_per_level( const NodeColumns& fs, const field::Field& field, f
       }
     }
   }
-  eckit::mpi::comm().all_reduce(sum_per_level.data(),sum.size(),eckit::mpi::sum());
+  eckit::mpi::comm().allReduceInPlace(sum_per_level.data(), sum.size(), eckit::mpi::sum());
   N = fs.nb_nodes_global();
 }
 
@@ -1005,7 +1007,8 @@ void dispatch_minimum( const NodeColumns& fs, const field::Field& field, std::ve
       }
     }
   }
-  eckit::mpi::comm().all_reduce(local_minimum,min,eckit::mpi::min());
+
+  eckit::mpi::comm().allReduce(local_minimum, min, eckit::mpi::min());
 }
 
 template< typename T >
@@ -1072,7 +1075,7 @@ void dispatch_maximum( const NodeColumns& fs, const field::Field& field, std::ve
       }
     }
   }
-  eckit::mpi::comm().all_reduce(local_maximum,max,eckit::mpi::max());
+  eckit::mpi::comm().allReduce(local_maximum, max, eckit::mpi::max());
 }
 
 template< typename T >
@@ -1163,7 +1166,7 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const field::Field& fiel
       }
     }
   }
-  eckit::mpi::comm().all_reduce(min_field.data<T>(),min_field.size(),eckit::mpi::min());
+  eckit::mpi::comm().allReduceInPlace(min_field.data<T>(), min_field.size(), eckit::mpi::min());
 }
 
 void minimum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& min )
@@ -1218,7 +1221,7 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const field::Field& fiel
       }
     }
   }
-  eckit::mpi::comm().all_reduce(max_field.data<T>(),max_field.size(),eckit::mpi::max());
+  eckit::mpi::comm().allReduceInPlace(max_field.data<T>(),max_field.size(),eckit::mpi::max());
 }
 
 void maximum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& max )
@@ -1293,13 +1296,16 @@ void dispatch_minimum_and_location( const NodeColumns& fs, const field::Field& f
     min_and_gidx_loc[j] = std::make_pair(local_minimum[j],glb_idx);
     min_and_level_loc[j] = std::make_pair(local_minimum[j],loc_level[j]);
   }
-  eckit::mpi::comm().all_reduce(min_and_gidx_loc, min_and_gidx_glb, eckit::mpi::minloc());
-  eckit::mpi::comm().all_reduce(min_and_level_loc,min_and_level_glb,eckit::mpi::minloc());
+
+  eckit::mpi::comm().allReduce(min_and_gidx_loc, min_and_gidx_glb, eckit::mpi::minloc());
+  eckit::mpi::comm().allReduce(min_and_level_loc,min_and_level_glb,eckit::mpi::minloc());
+
   for( size_t j=0; j<nvar; ++j ) {
     min[j]     = min_and_gidx_glb[j].first;
     glb_idx[j] = min_and_gidx_glb[j].second;
     level[j]   = min_and_level_glb[j].second;
   }
+
 }
 
 template< typename T >
@@ -1394,8 +1400,10 @@ void dispatch_maximum_and_location( const NodeColumns& fs, const field::Field& f
     max_and_gidx_loc[j] = std::make_pair(local_maximum[j],glb_idx);
     max_and_level_loc[j] = std::make_pair(local_maximum[j],loc_level[j]);
   }
-  eckit::mpi::comm().all_reduce(max_and_gidx_loc, max_and_gidx_glb, eckit::mpi::maxloc());
-  eckit::mpi::comm().all_reduce(max_and_level_loc,max_and_level_glb,eckit::mpi::maxloc());
+
+  eckit::mpi::comm().allReduce(max_and_gidx_loc, max_and_gidx_glb, eckit::mpi::maxloc());
+  eckit::mpi::comm().allReduce(max_and_level_loc,max_and_level_glb,eckit::mpi::maxloc());
+
   for( size_t j=0; j<nvar; ++j ) {
     max[j]     = max_and_gidx_glb[j].first;
     glb_idx[j] = max_and_gidx_glb[j].second;
@@ -1549,7 +1557,7 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const field
     }
   }
 
-  eckit::mpi::comm().all_reduce(min_and_gidx_loc,min_and_gidx_glb,eckit::mpi::minloc());
+  eckit::mpi::comm().allReduce(min_and_gidx_loc,min_and_gidx_glb,eckit::mpi::minloc());
 
   atlas_omp_parallel_for( size_t l=0; l<nlev; ++l ) {
     for( size_t j=0; j<nvar; ++j ) {
@@ -1638,7 +1646,7 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const field
     }
   }
 
-  eckit::mpi::comm().all_reduce(max_and_gidx_loc,max_and_gidx_glb,eckit::mpi::maxloc());
+  eckit::mpi::comm().allReduce(max_and_gidx_loc,max_and_gidx_glb,eckit::mpi::maxloc());
 
   atlas_omp_parallel_for( size_t l=0; l<nlev; ++l ) {
     for( size_t j=0; j<nvar; ++j ) {

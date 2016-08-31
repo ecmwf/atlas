@@ -101,7 +101,7 @@ void build_periodic_boundaries( Mesh& mesh )
       int sendcnt = slave_nodes.size();
       std::vector< int > recvcounts( eckit::mpi::comm().size() );
 
-      eckit::mpi::comm().all_gather(&sendcnt, 1, recvcounts);
+      eckit::mpi::comm("writers").allGather(sendcnt, recvcounts.begin(), recvcounts.end());
 
       std::vector<int> recvdispls( eckit::mpi::comm().size() );
       recvdispls[0] = 0;
@@ -113,7 +113,7 @@ void build_periodic_boundaries( Mesh& mesh )
       }
       std::vector<int> recvbuf(recvcnt);
 
-      eckit::mpi::comm().all_gatherv(slave_nodes, recvbuf, recvdispls);
+      eckit::mpi::comm().allGatherv(slave_nodes.begin(), slave_nodes.end(), recvbuf.begin(), recvcounts.data(), recvdispls.data());
 
       PeriodicTransform transform;
       for( size_t jproc=0; jproc<eckit::mpi::comm().size(); ++jproc )

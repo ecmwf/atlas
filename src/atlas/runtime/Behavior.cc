@@ -153,7 +153,7 @@ struct CreateWarnChannel  : CreateChannel {};
 struct CreateErrorChannel : CreateChannel {};
 struct CreateStatsChannel : CreateChannel {};
 
-Behavior::Behavior() : ParallelContextBehavior()
+Behavior::Behavior() /* : ParallelContextBehavior() */
 {
   // Read Policy
   const char* read_policy = ::getenv("ATLAS_FILE_READ_POLICY");
@@ -266,8 +266,8 @@ eckit::FileReadPolicy Behavior::fileReadPolicy()
 {
   switch( read_policy_ )
   {
-    case PARALLEL_FILE_READ_POLICY:
-      return eckit::mpi::ParallelContextBehavior::fileReadPolicy();
+//    case PARALLEL_FILE_READ_POLICY:
+//      return eckit::mpi::ParallelContextBehavior::fileReadPolicy();
     case DIRECT_FILE_READ_POLICY:
       return eckit::StandardBehavior::fileReadPolicy();
     default:

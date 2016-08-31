@@ -187,7 +187,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   array::ArrayView<uid_t,1> glb_id(glb_id_arr);
 
 
-  eckit::mpi::comm().gatherv(loc_id.data(), nb_nodes, glb_id.data(), recvcounts, recvdispls, root);
+  eckit::mpi::comm().gatherv(loc_id.begin(), loc_id.end(), glb_id.begin(), recvcounts.data(), recvdispls.data(), root);
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
@@ -215,7 +215,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
   // 3) Scatter renumbered back
 
-  eckit::mpi::comm().scatterv(glb_id.data(), recvcounts, recvdispls, loc_id.data(), nb_nodes, root);
+  eckit::mpi::comm().scatterv(glb_id.begin(), recvcounts, recvdispls, loc_id.begin(), loc_id.end(), root);
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -817,7 +817,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   array::ArrayT<uid_t> glb_edge_id_arr(glb_nb_edges);
   array::ArrayView<uid_t,1> glb_edge_id(glb_edge_id_arr);
 
-  eckit::mpi::comm().gatherv(loc_edge_id.data(), nb_edges, glb_edge_id.data(), recvcounts, recvdispls, root);
+  eckit::mpi::comm().gatherv(loc_edge_id.begin(), loc_edge_id.end(), glb_edge_id.data(), recvcounts, recvdispls, root);
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> edge_sort; edge_sort.reserve(glb_nb_edges);
@@ -845,7 +845,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
 
   // 3) Scatter renumbered back
 
-  eckit::mpi::comm().scatterv(glb_edge_id.data(), recvcounts, recvdispls, loc_edge_id.data(), nb_edges, root);
+  eckit::mpi::comm().scatterv(glb_edge_id.begin(), recvcounts, recvdispls, loc_edge_id.begin(), loc_edge_id.end(), root);
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {

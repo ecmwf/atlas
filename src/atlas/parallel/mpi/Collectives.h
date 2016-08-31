@@ -45,8 +45,9 @@ struct Buffer<DATA_TYPE,1> : public eckit::mpi::Buffer<DATA_TYPE>
 
   array::ArrayView<DATA_TYPE,1> operator[](int p)
   {
-    return array::ArrayView<DATA_TYPE,1> ( eckit::mpi::Buffer<DATA_TYPE>::buf.data()+eckit::mpi::Buffer<DATA_TYPE>::displs[p],
-                                    array::make_shape( eckit::mpi::Buffer<DATA_TYPE>::counts[p] ) );
+    return array::ArrayView<DATA_TYPE,1>(
+                eckit::mpi::Buffer<DATA_TYPE>::buffer.data() + eckit::mpi::Buffer<DATA_TYPE>::displs[p],
+                array::make_shape( eckit::mpi::Buffer<DATA_TYPE>::counts[p] ) );
   }
 };
 
