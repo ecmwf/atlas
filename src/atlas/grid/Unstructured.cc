@@ -68,7 +68,7 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
 }
 
 
-Unstructured::Unstructured(const eckit::Parametrisation& p) :
+Unstructured::Unstructured(const eckit::Parametrisation&) :
     Grid() {
     domain_ = Domain::makeGlobal();
     NOTIMP;
