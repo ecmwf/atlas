@@ -17,7 +17,7 @@ namespace grid {
 namespace lonlat {
 
 
-register_BuilderT1(Grid, RegularLonLat, RegularLonLat::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, RegularLonLat> builder_RegularLonLat(RegularLonLat::grid_type_str());
 
 
 std::string RegularLonLat::grid_type_str() {

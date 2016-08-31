@@ -20,7 +20,7 @@ namespace grid {
 namespace gaussian {
 
 
-register_BuilderT1(Grid, ClassicGaussian, ClassicGaussian::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, ClassicGaussian> builder_ClassicGaussian(ClassicGaussian::grid_type_str());
 
 
 std::string ClassicGaussian::grid_type_str() {
@@ -35,19 +35,6 @@ std::string ClassicGaussian::className() {
 
 std::string ClassicGaussian::gridType() const {
     return grid_type_str();
-}
-
-
-std::string ClassicGaussian::shortName() const {
-    if (shortName_.empty()) {
-        std::stringstream s;
-        s << "N" << N();
-        if (!domain_.isGlobal()) {
-            s << "-local";
-        }
-        shortName_ = s.str();
-    }
-    return shortName_;
 }
 
 
@@ -79,6 +66,19 @@ ClassicGaussian::ClassicGaussian(const eckit::Parametrisation& params) :
     classic::points_per_latitude_npole_equator(N, pl.data());
 
     setup_N_hemisphere(N, pl.data(), domain_);
+}
+
+
+std::string ClassicGaussian::shortName() const {
+    if (shortName_.empty()) {
+        std::stringstream s;
+        s << "N" << N();
+        if (!domain_.isGlobal()) {
+            s << "-local";
+        }
+        shortName_ = s.str();
+    }
+    return shortName_;
 }
 
 

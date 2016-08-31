@@ -15,7 +15,6 @@
 #ifndef atlas_grid_gaussian_OctahedralGaussian_h
 #define atlas_grid_gaussian_OctahedralGaussian_h
 
-#include "eckit/memory/Builder.h"
 #include "atlas/grid/gaussian/Gaussian.h"
 
 
@@ -44,11 +43,11 @@ class OctahedralGaussian : public Gaussian {
 
   private:
 
+    std::string shortName() const;
+
     /// Computes the PL for the Octohedral distribution
     /// number of points at latitude closest to pole
     static std::vector<long> computePL(const size_t N);
-
-    std::string shortName() const;
 
   private:
 

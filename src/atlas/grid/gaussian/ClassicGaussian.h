@@ -29,8 +29,8 @@ namespace gaussian {
  * direction, which reduce in number going closer towards poles,
  * essentially making the grid more uniform on the sphere
  * It can be constructed with following definition:
- *   N   = number of latitudes in hemisphere
- *   npts_per_lat[] = number of points on each latitude
+ * * N   = number of latitudes in hemisphere
+ * * npts_per_lat[] = number of points on each latitude
  */
 class ClassicGaussian : public Gaussian {
 
