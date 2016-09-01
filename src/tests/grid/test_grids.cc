@@ -28,7 +28,7 @@
 namespace atlas {
 namespace test {
 
-BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); atlas::grid::load(); }
+BOOST_AUTO_TEST_CASE( init ) { atlas::grid::load(); }
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
@@ -147,8 +147,6 @@ BOOST_AUTO_TEST_CASE( test_reducedgaussian )
   grid::gaussian::ReducedGaussian custom(N640.N(),N640.pl().data());
   BOOST_CHECK_EQUAL(N640.npts(),custom.npts());
 }
-
-BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
 
 } // namespace test
 } // namespace atlas

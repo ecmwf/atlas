@@ -17,6 +17,7 @@
 #include <stdexcept>
 
 #include "eckit/memory/ScopedPtr.h"
+#include "eckit/mpi/Comm.h"
 
 #include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
@@ -352,21 +353,24 @@ public:
 
   static void all_to_all(Buffers& send, Buffers& recv)
   {
-    eckit::mpi::comm().allToAll(send.node_glb_idx,  recv.node_glb_idx);
-    eckit::mpi::comm().allToAll(send.node_part,     recv.node_part);
-    eckit::mpi::comm().allToAll(send.node_ridx,     recv.node_ridx);
-    eckit::mpi::comm().allToAll(send.node_flags,    recv.node_flags);
-    eckit::mpi::comm().allToAll(send.node_lonlat,   recv.node_lonlat);
-    eckit::mpi::comm().allToAll(send.elem_glb_idx,  recv.elem_glb_idx);
-    eckit::mpi::comm().allToAll(send.elem_nodes_id, recv.elem_nodes_id);
-    eckit::mpi::comm().allToAll(send.elem_part,     recv.elem_part);
-    eckit::mpi::comm().allToAll(send.elem_type,     recv.elem_type);
-    eckit::mpi::comm().allToAll(send.elem_nodes_displs, recv.elem_nodes_displs);
+      const eckit::mpi::Comm& comm = eckit::mpi::comm();
+
+      comm.allToAll(send.node_glb_idx,  recv.node_glb_idx);
+      comm.allToAll(send.node_part,     recv.node_part);
+      comm.allToAll(send.node_ridx,     recv.node_ridx);
+      comm.allToAll(send.node_flags,    recv.node_flags);
+      comm.allToAll(send.node_lonlat,   recv.node_lonlat);
+      comm.allToAll(send.elem_glb_idx,  recv.elem_glb_idx);
+      comm.allToAll(send.elem_nodes_id, recv.elem_nodes_id);
+      comm.allToAll(send.elem_part,     recv.elem_part);
+      comm.allToAll(send.elem_type,     recv.elem_type);
+      comm.allToAll(send.elem_nodes_displs, recv.elem_nodes_displs);
   }
 
-
 public:
+
   Mesh& mesh;
+
   array::ArrayView<double,2> lonlat;
   array::ArrayView<gidx_t,1> glb_idx;
   array::ArrayView<int   ,1> part;

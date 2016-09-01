@@ -60,18 +60,18 @@
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
+
 #include "eckit/config/Resource.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/log/Timer.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
-#include "eckit/mpi/ParallelContextBehavior.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/runtime/Context.h"
 
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 using std::string;
 using std::stringstream;
@@ -106,7 +106,8 @@ namespace {
   }
 
 }
-//------------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------------------------
 
 struct TimerStats
 {
@@ -229,7 +230,7 @@ public:
 
 };
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::execute(const Args& args)
 {
@@ -321,7 +322,7 @@ void AtlasBenchmark::execute(const Args& args)
   exit_code = verify( res );
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::setup()
 {
@@ -422,7 +423,7 @@ void AtlasBenchmark::setup()
 
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::iteration()
 {
@@ -525,7 +526,7 @@ void AtlasBenchmark::iteration()
   }
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 template< typename DATA_TYPE >
 DATA_TYPE vecnorm( DATA_TYPE vec[], size_t size )
@@ -558,9 +559,10 @@ double AtlasBenchmark::result()
     }
   }
 
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,eckit::mpi::datatype<double>(),MPI_MAX,eckit::mpi::comm()) );
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,eckit::mpi::datatype<double>(),MPI_MIN,eckit::mpi::comm()) );
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,eckit::mpi::datatype<double>(),MPI_SUM,eckit::mpi::comm()) );
+  eckit::mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
+  eckit::mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
+  eckit::mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());
+
   norm = std::sqrt(norm);
 
   Log::info() << "  checksum: " << nodes_fs->checksum().execute( grad ) << endl;
@@ -634,7 +636,7 @@ int AtlasBenchmark::verify(const double& norm)
   return 1;
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 int main( int argc, char **argv )
 {

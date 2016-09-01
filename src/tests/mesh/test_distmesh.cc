@@ -56,20 +56,22 @@ double dual_volume(mesh::Mesh& mesh)
       area += dual_volumes(node);
     }
   }
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
+
+  eckit::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+
   return area;
 }
 
-struct MPIFixture {
-     MPIFixture()  {
+struct AtlasFixture {
+     AtlasFixture()  {
        atlas_init(
              boost::unit_test::framework::master_test_suite().argc,
              boost::unit_test::framework::master_test_suite().argv);
      }
-    ~MPIFixture()  { atlas_finalize(); }
+    ~AtlasFixture()  { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( MPIFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {

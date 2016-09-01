@@ -55,17 +55,12 @@ double dual_volume(mesh::Mesh& mesh)
       area += dual_volumes(node);
     }
   }
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
+
+  eckit::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+
   return area;
 }
 
-
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
-
-BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 #if 0
 BOOST_AUTO_TEST_CASE( test_small )

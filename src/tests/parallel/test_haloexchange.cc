@@ -34,11 +34,6 @@ std::vector<T> vec( const T (&list)[N] )
   return std::vector<T>(list,list+N);
 }
 
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
-
 struct Fixture {
   Fixture()
   {
@@ -78,9 +73,6 @@ struct Fixture {
 
   size_t N;
 };
-
-
-BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
 {

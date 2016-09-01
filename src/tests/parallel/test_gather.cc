@@ -35,11 +35,6 @@ std::vector<T> vec( const T (&list)[N] )
   return std::vector<T>(list,list+N);
 }
 
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
-
 struct Fixture {
   Fixture()
   {
@@ -83,8 +78,6 @@ struct Fixture {
   int Ng() { return eckit::mpi::comm().rank() == root ? gather_scatter.glb_dof() : 0; }
 };
 
-
-BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank0, Fixture )
 {
