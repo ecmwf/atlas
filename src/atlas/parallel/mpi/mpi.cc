@@ -18,10 +18,12 @@ extern "C"
 {
   void atlas_mpi_comm_attach_fortran_communicator (int fcomm )
   {
+      NOTIMP;
 //    eckit::mpi::comm().attach_fortran_communicator( fcomm );
   }
   int atlas_mpi_comm_fortran_communicator ()
   {
+      NOTIMP;
 //    return eckit::mpi::comm().fortran_communicator();
   }
 }

@@ -278,7 +278,7 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     }
   }
 
-  eckit::mpi::comm().all_to_all( send_needed, recv_needed );
+  eckit::mpi::comm().allToAll(send_needed, recv_needed);
 
   std::vector< std::vector<int> > send_found( eckit::mpi::comm().size() );
   std::vector< std::vector<int> > recv_found( eckit::mpi::comm().size() );
@@ -306,7 +306,7 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     }
   }
 
-  eckit::mpi::comm().all_to_all( send_found, recv_found );
+  eckit::mpi::comm().allToAll(send_found, recv_found);
 
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
@@ -510,7 +510,7 @@ field::Field& build_edges_partition( Mesh& mesh )
 
     }
 
-    eckit::mpi::comm().all_to_all( send_unknown, recv_unknown );
+    eckit::mpi::comm().allToAll(send_unknown, recv_unknown);
 
     // So now we have identified all possible edges with wrong partition.
     // We still need to check if it is actually wrong. This can be achieved
@@ -536,7 +536,7 @@ field::Field& build_edges_partition( Mesh& mesh )
       }
     }
 
-    eckit::mpi::comm().all_to_all( send_found, recv_found );
+    eckit::mpi::comm().allToAll(send_found, recv_found);
 
     for( size_t jpart=0; jpart<nparts; ++jpart )
     {
@@ -695,7 +695,7 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
 #ifdef DEBUGGING_PARFIELDS
   varsize=6;
 #endif
-  eckit::mpi::comm().all_to_all( send_needed, recv_needed );
+  eckit::mpi::comm().allToAll(send_needed, recv_needed);
 
   std::vector< std::vector<int> > send_found( eckit::mpi::comm().size() );
   std::vector< std::vector<int> > recv_found( eckit::mpi::comm().size() );
@@ -730,7 +730,7 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
       }
     }
   }
-  eckit::mpi::comm().all_to_all( send_found, recv_found );
+  eckit::mpi::comm().allToAll(send_found, recv_found);
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
     array::ArrayView<int,2> recv_edge( recv_found[ jpart ].data(),

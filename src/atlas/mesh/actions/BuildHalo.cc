@@ -15,7 +15,9 @@
 #include <limits>
 #include <iostream>
 #include <stdexcept>
+
 #include "eckit/memory/ScopedPtr.h"
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -350,16 +352,16 @@ public:
 
   static void all_to_all(Buffers& send, Buffers& recv)
   {
-    eckit::mpi::comm().all_to_all(send.node_glb_idx,  recv.node_glb_idx);
-    eckit::mpi::comm().all_to_all(send.node_part,     recv.node_part);
-    eckit::mpi::comm().all_to_all(send.node_ridx,     recv.node_ridx);
-    eckit::mpi::comm().all_to_all(send.node_flags,    recv.node_flags);
-    eckit::mpi::comm().all_to_all(send.node_lonlat,   recv.node_lonlat);
-    eckit::mpi::comm().all_to_all(send.elem_glb_idx,  recv.elem_glb_idx);
-    eckit::mpi::comm().all_to_all(send.elem_nodes_id, recv.elem_nodes_id);
-    eckit::mpi::comm().all_to_all(send.elem_part,     recv.elem_part);
-    eckit::mpi::comm().all_to_all(send.elem_type,     recv.elem_type);
-    eckit::mpi::comm().all_to_all(send.elem_nodes_displs, recv.elem_nodes_displs);
+    eckit::mpi::comm().allToAll(send.node_glb_idx,  recv.node_glb_idx);
+    eckit::mpi::comm().allToAll(send.node_part,     recv.node_part);
+    eckit::mpi::comm().allToAll(send.node_ridx,     recv.node_ridx);
+    eckit::mpi::comm().allToAll(send.node_flags,    recv.node_flags);
+    eckit::mpi::comm().allToAll(send.node_lonlat,   recv.node_lonlat);
+    eckit::mpi::comm().allToAll(send.elem_glb_idx,  recv.elem_glb_idx);
+    eckit::mpi::comm().allToAll(send.elem_nodes_id, recv.elem_nodes_id);
+    eckit::mpi::comm().allToAll(send.elem_part,     recv.elem_part);
+    eckit::mpi::comm().allToAll(send.elem_type,     recv.elem_type);
+    eckit::mpi::comm().allToAll(send.elem_nodes_displs, recv.elem_nodes_displs);
   }
 
 
@@ -753,11 +755,11 @@ void increase_halo_interior( BuildHaloHelper& helper )
                         found_bdry_nodes_uid);
 
     // 4) Fill node and element buffers to send back
-    helper.fill_sendbuffer(sendmesh,found_bdry_nodes_uid,found_bdry_elems,jpart);
+    helper.fill_sendbuffer(sendmesh, found_bdry_nodes_uid, found_bdry_elems, jpart);
   }
 
   // 5) Now communicate all buffers
-  helper.all_to_all(sendmesh,recvmesh);
+  helper.all_to_all(sendmesh, recvmesh);
 
   // 6) Adapt mesh
   helper.add_buffers(recvmesh);
@@ -833,11 +835,11 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
                         found_bdry_nodes_uid);
 
     // 4) Fill node and element buffers to send back
-    helper.fill_sendbuffer(sendmesh,found_bdry_nodes_uid,found_bdry_elems,transform,newflags,jpart);
+    helper.fill_sendbuffer(sendmesh, found_bdry_nodes_uid, found_bdry_elems, transform, newflags, jpart);
   }
 
   // 5) Now communicate all buffers
-  helper.all_to_all(sendmesh,recvmesh);
+  helper.all_to_all(sendmesh, recvmesh);
 
   // 6) Adapt mesh
 

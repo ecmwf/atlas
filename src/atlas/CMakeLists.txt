@@ -359,7 +359,8 @@ ecbuild_add_library( TARGET atlas
     "${TRANSI_INCLUDE_DIRS}"
 
   LIBS
-    eckit_geometry eckit_option
-    "${ECKIT_MPI_LIBRARIES}"
+    eckit_geometry
+    eckit_option
+    eckit_mpi
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}" )

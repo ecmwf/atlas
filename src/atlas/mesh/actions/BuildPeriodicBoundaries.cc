@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <iostream>
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
@@ -177,11 +178,11 @@ void build_periodic_boundaries( Mesh& mesh )
     }
 
     // Communicate
-    eckit::mpi::comm().all_to_all( send_slave_idx,      recv_slave_idx      );
-    eckit::mpi::comm().all_to_all( send_master_part,    recv_master_part    );
-    eckit::mpi::comm().all_to_all( send_master_ridx,    recv_master_ridx     );
-                      //  eckit::mpi::comm().all_to_all( send_slave_part,     recv_slave_part    );
-                      //  eckit::mpi::comm().all_to_all( send_slave_loc,      recv_slave_ridx    );
+    eckit::mpi::comm().allToAll( send_slave_idx,      recv_slave_idx      );
+    eckit::mpi::comm().allToAll( send_master_part,    recv_master_part    );
+    eckit::mpi::comm().allToAll( send_master_ridx,    recv_master_ridx     );
+    //  eckit::mpi::comm().allToAll( send_slave_part,     recv_slave_part    );
+    //  eckit::mpi::comm().allToAll( send_slave_loc,      recv_slave_ridx    );
 
     // Fill in periodic
     // unused // int nb_recv_master = 0;
