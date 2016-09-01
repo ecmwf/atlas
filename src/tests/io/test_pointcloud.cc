@@ -102,15 +102,7 @@ namespace {
 namespace atlas {
 namespace test {
 
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
-
-BOOST_GLOBAL_FIXTURE( MPIFixture );
-
 BOOST_AUTO_TEST_SUITE( test_pointcloud )
-
 
 BOOST_AUTO_TEST_CASE( read_inexistent_file )
 {

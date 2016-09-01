@@ -68,11 +68,6 @@ private:
 #define DISABLE if(0)
 #define ENABLE if(1)
 
-BOOST_AUTO_TEST_CASE( init )
-{
-  eckit::mpi::init();
-}
-
 BOOST_AUTO_TEST_CASE( test1 )
 {
   mesh::Mesh::Ptr m ( mesh::Mesh::create() );
@@ -209,9 +204,6 @@ BOOST_AUTO_TEST_CASE( test2 )
   Gmsh("periodic.msh").write(*m);
   delete m;
 }
-
-
-BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
 
 } // namespace test
 } // namespace atlas
