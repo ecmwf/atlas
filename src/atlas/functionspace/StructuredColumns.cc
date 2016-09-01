@@ -16,7 +16,7 @@
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/internals/Checksum.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"

@@ -27,7 +27,7 @@
 #include "atlas/grid/Unstructured.h"
 #include "atlas/util/io/PointCloud.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 
 //----------------------------------------------------------------------------------------------------------------------

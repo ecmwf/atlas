@@ -18,7 +18,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 
 using namespace atlas::output;

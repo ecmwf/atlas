@@ -10,7 +10,9 @@
 
 #include <algorithm>
 #include <cmath>
+
 #include "eckit/utils/MD5.h"
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/HybridElements.h"
@@ -19,7 +21,6 @@
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/internals/IsGhost.h"
-#include "atlas/parallel/mpi/Collectives.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/HaloExchange.h"

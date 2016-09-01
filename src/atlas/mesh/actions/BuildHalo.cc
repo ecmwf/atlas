@@ -33,13 +33,13 @@
 #include "atlas/internals/Unique.h"
 #include "atlas/internals/LonLatMicroDeg.h"
 #include "atlas/internals/Functions.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/Array.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 using atlas::internals::accumulate_facets;
 using atlas::internals::Topology;

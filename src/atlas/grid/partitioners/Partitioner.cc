@@ -10,14 +10,17 @@
 
 #include <map>
 #include <string>
+
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
+#include "eckit/mpi/Comm.h"
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/grid/partitioners/Partitioner.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/grid/partitioners/TransPartitioner.h"

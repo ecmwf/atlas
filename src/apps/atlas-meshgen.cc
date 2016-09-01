@@ -32,7 +32,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/io/Gmsh.h"
 #include "eckit/exception/Exceptions.h"

@@ -31,7 +31,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 using atlas::internals::accumulate_facets;
 using atlas::internals::Topology;

@@ -11,7 +11,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdarg>
+
+#include "eckit/os/BackTrace.h"
 #include "eckit/utils/MD5.h"
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -26,8 +29,6 @@
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/parallel/mpi/Collectives.h"
-#include "eckit/os/BackTrace.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1

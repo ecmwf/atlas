@@ -14,7 +14,7 @@
 #define BOOST_TEST_MODULE TestDistributeMesh
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/atlas.h"
 #include "tests/TestMeshes.h"
 #include "atlas/mesh/Mesh.h"

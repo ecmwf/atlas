@@ -12,7 +12,7 @@
 #define internals_MPL_ArrayView_h
 
 #include <vector>
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/array/ArrayView.h"
 
 namespace atlas {

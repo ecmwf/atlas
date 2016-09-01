@@ -288,7 +288,7 @@ parallel/omp/omp.h
 parallel/omp/omp.cc
 parallel/mpi/mpi.h
 parallel/mpi/mpi.cc
-parallel/mpi/Collectives.h
+parallel/mpi/Buffer.h
 parallel/Checksum.h
 parallel/Checksum.cc
 parallel/HaloExchange.h

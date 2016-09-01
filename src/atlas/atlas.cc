@@ -1,10 +1,12 @@
 #include <stdlib.h>
+
 #include "eckit/runtime/Context.h"
 #include "eckit/parser/StringTools.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
+#include "eckit/mpi/Comm.h"
+
 #include "atlas/atlas.h"
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/field/FieldCreator.h"

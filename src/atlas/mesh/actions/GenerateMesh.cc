@@ -13,7 +13,7 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 namespace atlas {
 namespace mesh {

@@ -12,7 +12,7 @@
 #define atlas_output_Gmsh_h
 
 #include "atlas/output/Output.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {

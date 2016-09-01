@@ -8,14 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef ATLAS_MPI_COLLECTIVES_h
-#define ATLAS_MPI_COLLECTIVES_h
+#ifndef ATLAS_MPI_BUFFER_h
+#define ATLAS_MPI_BUFFER_h
 
 #include "eckit/mpi/Comm.h"
 
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array/ArrayView.h"
-
 
 namespace atlas {
 namespace util {
@@ -58,4 +56,4 @@ struct Buffer<DATA_TYPE,1> : public eckit::mpi::Buffer<DATA_TYPE>
 } // namespace util
 } // namespace atlas
 
-#endif // ATLAS_MPI_COLLECTIVES_h
+#endif

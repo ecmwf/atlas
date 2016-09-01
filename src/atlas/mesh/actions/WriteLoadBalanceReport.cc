@@ -18,7 +18,7 @@
 #include "atlas/internals/IsGhost.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 using atlas::internals::IsGhost;
 

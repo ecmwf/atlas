@@ -18,7 +18,7 @@
 #include "atlas/internals/Checksum.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/parallel/GatherScatter.h"
 
 namespace atlas {

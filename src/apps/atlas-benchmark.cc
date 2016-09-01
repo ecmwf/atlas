@@ -58,7 +58,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/parallel/HaloExchange.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/parallel/omp/omp.h"
 
 #include "eckit/config/Resource.h"

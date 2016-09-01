@@ -18,7 +18,7 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/internals/Debug.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/internals/MPLArrayView.h"
 
 namespace atlas {

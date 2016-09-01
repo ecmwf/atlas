@@ -1,7 +1,7 @@
 #include "eckit/log/CodeLocation.h"
 #include "eckit/os/BackTrace.h"
 #include "eckit/utils/Translator.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 

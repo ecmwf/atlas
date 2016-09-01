@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 namespace atlas {
 namespace parallel {
@@ -19,12 +19,21 @@ extern "C"
   void atlas_mpi_comm_attach_fortran_communicator (int fcomm )
   {
       NOTIMP;
-//    eckit::mpi::comm().attach_fortran_communicator( fcomm );
+      ///
+      /// Maybe should be moved to fckit!?
+      ///
+      /// eckit::mpi::comm().attach_fortran_communicator( fcomm );
+      ///
   }
+
   int atlas_mpi_comm_fortran_communicator ()
   {
       NOTIMP;
-//    return eckit::mpi::comm().fortran_communicator();
+      ///
+      /// Maybe should be moved to fckit!?
+      ///
+      ///    return eckit::mpi::comm().fortran_communicator();
+      ///
   }
 }
 

@@ -12,7 +12,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/atlas.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/mesh/Mesh.h"

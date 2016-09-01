@@ -18,7 +18,7 @@
 #include "atlas/grid/Structured.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/internals/Functions.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 using atlas::internals::microdeg;
 

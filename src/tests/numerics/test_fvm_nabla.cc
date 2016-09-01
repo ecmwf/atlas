@@ -25,7 +25,7 @@
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/numerics/Nabla.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "eckit/memory/ScopedPtr.h"

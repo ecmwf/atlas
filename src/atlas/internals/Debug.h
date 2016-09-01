@@ -16,10 +16,10 @@
 
 #include "atlas/internals/atlas_config.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 /// DEBUG MACRO
-#define DEBUG_RANK (eckit::mpi::Environment::instance().initialized() ? eckit::mpi::comm().rank() : 0)
+#define DEBUG_RANK (eckit::mpi::comm().rank())
 #define DEBUG_0()            atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG() @ " << Here() << std::endl;
 #define DEBUG_1(WHAT)        atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
 #define DEBUG_2(WHAT,RANK)   if(DEBUG_RANK == RANK) { DEBUG_1(WHAT) }

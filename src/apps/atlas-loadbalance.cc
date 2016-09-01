@@ -22,7 +22,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 //------------------------------------------------------------------------------------------------------
 
 using namespace eckit;

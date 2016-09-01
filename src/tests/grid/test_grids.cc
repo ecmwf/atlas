@@ -19,7 +19,7 @@
 #include "atlas/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/grids.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/util/Config.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"

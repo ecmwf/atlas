@@ -26,7 +26,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/parallel/GatherScatter.h"
 
 //#define DEBUGGING_PARFIELDS

@@ -2,7 +2,7 @@
 #include "eckit/log/TimeStamp.h"
 #include "eckit/log/MultiChannel.h"
 #include "atlas/runtime/LogFormat.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 using namespace eckit;
 
