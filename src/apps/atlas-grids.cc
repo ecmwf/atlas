@@ -139,8 +139,6 @@ void AtlasGrids::execute(const Args& args)
                   << g.shortName() << std::endl;
       Log::info() << "   uid:                                "
                   << g.uniqueId() << std::endl;
-      Log::info() << "   N number:                           "
-                  << grid->N() << std::endl;
       Log::info() << "   number of points:                   "
                   << grid->npts() << std::endl;
       Log::info() << "   number of latitudes (N-S):          "

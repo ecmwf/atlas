@@ -17,7 +17,7 @@ namespace grid {
 namespace lonlat {
 
 
-register_BuilderT1(Grid,ShiftedLat,ShiftedLat::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, ShiftedLat> builder_ShiftedLat(ShiftedLat::grid_type_str());
 
 
 std::string ShiftedLat::grid_type_str() {
@@ -30,50 +30,60 @@ std::string ShiftedLat::className() {
 }
 
 
-void ShiftedLat::set_typeinfo() {
-    std::stringstream s;
-    if( N() ) {
-        s << "Slat" << N();
-    } else if( domain_.isGlobal() ) {
-        s << "Slat" << nlon() << "x" << nlat();
+std::string ShiftedLat::gridType() const {
+    return grid_type_str();
+}
+
+
+std::string ShiftedLat::shortName() const {
+    if (shortName_.empty()) {
+        std::stringstream s;
+        if( N() ) {
+            s << "Slat" << N();
+        } else {
+            s << "Slat" << nlon() << "x" << nlat();
+        }
+        if (!domain_.isGlobal()) {
+            s << "-local";
+        }
+        shortName_ = s.str();
     }
-    shortName_ = s.str();
-    grid_type_ = grid_type_str();
+    return shortName_;
 }
 
 
-ShiftedLat::ShiftedLat(const eckit::Parametrisation& p) :
-    LonLat(Shift::LAT,Domain::makeGlobal()) {
-    setup(p);
+ShiftedLat::ShiftedLat(const eckit::Parametrisation& params) :
+    LonLat(Shift::LAT, Domain::makeGlobal()) {
+    setup(params);
 }
 
 
-ShiftedLat::ShiftedLat(const size_t N, const Domain& dom) :
-    LonLat(Shift::LAT, dom) {
-    LonLat::setup(N, dom);
+ShiftedLat::ShiftedLat(const size_t N, const Domain& domain) :
+    LonLat(Shift::LAT, domain) {
+    LonLat::setup(N, domain);
 }
 
 
-ShiftedLat::ShiftedLat(const size_t nlon, const size_t nlat, const Domain& dom) :
-    LonLat(Shift::LAT, dom) {
-    LonLat::setup(nlon, nlat, dom);
+ShiftedLat::ShiftedLat(const size_t nlon, const size_t nlat, const Domain& domain) :
+    LonLat(Shift::LAT, domain) {
+    LonLat::setup(nlon, nlat, domain);
 }
 
 
-void ShiftedLat::setup(const eckit::Parametrisation& p) {
+void ShiftedLat::setup(const eckit::Parametrisation& params) {
     size_t nlon, nlat, N(0);
 
     std::vector<double> p_domain(4);
 
-    if( p.get("domain", p_domain) ) {
+    if( params.get("domain", p_domain) ) {
         domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
     } else {
         domain_ = Domain::makeGlobal();
     }
 
-    if( p.get("N",N) ) {
+    if( params.get("N",N) ) {
         LonLat::setup(N, domain_);
-    } else if( p.get("nlon", nlon) && p.get("nlat", nlat) ) {
+    } else if( params.get("nlon", nlon) && params.get("nlat", nlat) ) {
         LonLat::setup(nlon, nlat, domain_);
     } else {
         throw eckit::BadParameter("Params (nlon,nlat) or N missing", Here());
@@ -97,7 +107,7 @@ extern "C" {
 
 
     Structured* atlas__grid__lonlat__ShiftedLat(size_t nlon, size_t nlat) {
-        return new ShiftedLat(nlon,nlat);
+        return new ShiftedLat(nlon, nlat);
     }
 
 

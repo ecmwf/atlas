@@ -79,8 +79,6 @@ class Gaussian: public Structured {
 
     void setup_N_hemisphere(const size_t N, const long pl[], const Domain& dom);
 
-    virtual void set_typeinfo() = 0;
-
 };
 
 

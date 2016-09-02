@@ -28,6 +28,8 @@ class RegularLonLat : public LonLat {
 
     static std::string className();
 
+    std::string gridType() const;
+
     RegularLonLat(const eckit::Parametrisation&);
 
     RegularLonLat(const size_t N, const Domain& dom=Domain::makeGlobal());
@@ -48,7 +50,11 @@ class RegularLonLat : public LonLat {
 
     void setup(const eckit::Parametrisation&);
 
-    virtual void set_typeinfo();
+    std::string shortName() const;
+
+  private:
+
+    mutable std::string shortName_;
 
 };
 

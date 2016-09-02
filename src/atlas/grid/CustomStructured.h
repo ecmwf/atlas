@@ -36,6 +36,8 @@ class CustomStructured: public Structured {
 
     static std::string className();
 
+    std::string gridType() const;
+
     static std::string grid_type_str();
 
     CustomStructured(const eckit::Parametrisation&);
@@ -60,7 +62,11 @@ class CustomStructured: public Structured {
         return domain_;
     }
 
+    std::string shortName() const;
+
   private:
+
+    mutable std::string shortName_;
 
     Domain domain_;
 };

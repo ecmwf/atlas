@@ -20,8 +20,8 @@ namespace atlas {
 namespace grid {
 
 
-Structured* Structured::create(const eckit::Parametrisation& p) {
-    Structured* grid = dynamic_cast<Structured*>(Grid::create(p));
+Structured* Structured::create(const eckit::Parametrisation& params) {
+    Structured* grid = dynamic_cast<Structured*>(Grid::create(params));
     if (!grid)
         throw eckit::BadParameter("Grid is not a reduced grid", Here());
     return grid;

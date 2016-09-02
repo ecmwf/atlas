@@ -86,8 +86,6 @@ void LonLat::setup(const size_t nlon, const size_t nlat, const Domain& dom) {
                    :  isShiftedLat && ( nlat   %2==0) && (nlon==2* nlat   )? size_t( nlat   /2)
                    : !isShiftedLat && ((nlat-1)%2==0) && (nlon==2*(nlat-1))? size_t((nlat-1)/2)
                    : 0;
-
-    set_typeinfo();
 }
 
 
@@ -118,8 +116,6 @@ void LonLat::setup(const long pl[], const size_t nlat, const Domain& dom) {
 
     Structured::setup(nlat, lats.data(), pl, lonmin.data(), lonmax.data());
     Structured::N_ = 0;
-
-    set_typeinfo();
 }
 
 

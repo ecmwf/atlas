@@ -35,8 +35,10 @@ class Unstructured : public Grid {
 
     static std::string className();
 
+    std::string gridType() const;
+
     /// Constructor taking a list of parameters
-    Unstructured(const eckit::Parametrisation& p);
+    Unstructured(const eckit::Parametrisation&);
 
     /// Constructor taking a list of points
     Unstructured(std::vector< Point >* pts);
@@ -49,10 +51,6 @@ class Unstructured : public Grid {
     virtual size_t npts() const;
 
     virtual void lonlat(std::vector< Point >&) const;
-
-    virtual std::string gridType() const {
-        return grid_type_str();
-    }
 
     virtual eckit::Properties spec() const;
 

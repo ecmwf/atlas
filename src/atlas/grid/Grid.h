@@ -63,7 +63,9 @@ class Grid : public eckit::Owned {
     /// dtor
     virtual ~Grid();
 
-    /// Human readable name (may not be unique)
+    /// Human readable name
+    /// @note: may not be unique, such as when reduced Gaussian grids have
+    /// the same N numbers but different distribution of latitude points
     virtual std::string shortName() const = 0;
 
     /// Unique grid id
@@ -115,7 +117,7 @@ class Grid : public eckit::Owned {
     /// @note Assumes that the input buffer has been allocated with correct size,
     ///       possibly from calling method npts()
     ///
-    /// @param array to be filled in with the (lon,lat) values
+    /// @param pts array to be filled in with the (lon,lat) values
     /// @param size number of doubles in array
     ///
     /// @return the size of bytes copyied in
