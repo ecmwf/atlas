@@ -75,9 +75,9 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 
     /// @note this could be improved by packing the 3 integers in a vector, and doing only comm() call
 
-    eckit::mpi::comm().gather(&nb_nodes, 1, nb_total_nodes, root);
-    eckit::mpi::comm().gather(&nowned,   1, nb_owned_nodes, root);
-    eckit::mpi::comm().gather(&nghost,   1, nb_ghost_nodes, root);
+    eckit::mpi::comm().gather(nb_nodes, nb_total_nodes, root);
+    eckit::mpi::comm().gather(nowned,   nb_owned_nodes, root);
+    eckit::mpi::comm().gather(nghost,   nb_ghost_nodes, root);
 
     for( size_t p=0; p<npart; ++p )
     {
@@ -113,9 +113,9 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 
     /// @note this could be improved by packing the 3 integers in a vector, and doing only comm() call
 
-    eckit::mpi::comm().gather(&nb_edges, 1, nb_total_edges, root);
-    eckit::mpi::comm().gather(&nowned,   1, nb_owned_edges, root);
-    eckit::mpi::comm().gather(&nghost,   1, nb_ghost_nodes, root);
+    eckit::mpi::comm().gather(nb_edges, nb_total_edges, root);
+    eckit::mpi::comm().gather(nowned,   nb_owned_edges, root);
+    eckit::mpi::comm().gather(nghost,   nb_ghost_nodes, root);
 
   }
 

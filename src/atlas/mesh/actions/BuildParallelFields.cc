@@ -174,7 +174,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   std::vector<int> recvcounts(eckit::mpi::comm().size());
   std::vector<int> recvdispls(eckit::mpi::comm().size());
 
-  eckit::mpi::comm().gather(&nb_nodes, 1, recvcounts, root);
+  eckit::mpi::comm().gather(nb_nodes, recvcounts, root);
 
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
@@ -805,7 +805,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   std::vector<int> recvcounts(eckit::mpi::comm().size());
   std::vector<int> recvdispls(eckit::mpi::comm().size());
 
-  eckit::mpi::comm().gather(&nb_edges, 1, recvcounts, root);
+  eckit::mpi::comm().gather(nb_edges, recvcounts, root);
 
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
