@@ -116,7 +116,7 @@ void GatherScatter::setup( const int part[],
     }
   }
 
-  eckit::mpi::comm().allGather(&loccnt_, 1, glbcounts_.data(), 1);
+  eckit::mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
 
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
 
