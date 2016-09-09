@@ -2,7 +2,7 @@
 module atlas_deprecated_functionspace_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
-use atlas_c_interop, only: c_str, c_to_f_string_cptr, view1d
+use fckit_c_interop, only: c_str, c_ptr_to_string, view1d
 use atlas_object_module, only : atlas_object
 use atlas_metadata_module, only : atlas_Metadata
 use atlas_field_module, only : atlas_Field
@@ -12,7 +12,7 @@ use atlas_haloexchange_module, only: atlas_HaloExchange
 implicit none
 
 private :: c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
-private :: c_str, c_to_f_string_cptr, view1d
+private :: c_str, c_ptr_to_string, view1d
 private :: atlas_object
 private :: atlas_Metadata
 private :: atlas_Field
@@ -176,7 +176,7 @@ function FunctionSpace__name(this) result(name)
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
   name_c_str = atlas__deprecated__FunctionSpace__name(this%c_ptr())
-  name = c_to_f_string_cptr(name_c_str)
+  name = c_ptr_to_string(name_c_str)
 end function FunctionSpace__name
 
 function FunctionSpace__dof(this) result(dof)

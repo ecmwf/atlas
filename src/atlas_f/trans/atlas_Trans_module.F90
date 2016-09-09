@@ -5,7 +5,8 @@ module atlas_Trans_module
 
 
 use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_double, c_f_pointer
-use atlas_c_interop, only: c_str, view1d
+use fckit_c_interop, only: c_str
+use fckit_array, only: array_view1d
 use atlas_object_module, only: atlas_object
 use atlas_refcounted_module, only: atlas_refcounted
 use atlas_Grid_module, only: atlas_Grid
@@ -17,7 +18,7 @@ use atlas_Error_module, only: atlas_code_location, atlas_throw_usererror
 implicit none
 
 private :: c_ptr, c_int, c_double, c_f_pointer
-private :: c_str, view1d
+private :: c_str, array_view1d
 private :: atlas_refcounted
 private :: atlas_object
 private :: atlas_Grid
@@ -913,8 +914,8 @@ subroutine atlas_Trans__gathspec_r2(this, local, global)
 #ifdef ATLAS_HAVE_TRANS
   integer :: destination(size(local,1))
   destination(:) = 1
-  local_view => view1d(local)
-  global_view => view1d(global)
+  local_view => array_view1d(local)
+  global_view => array_view1d(global)
   call atlas__Trans__gathspec(this%c_ptr(), size(local,1), destination, local_view, global_view )
 #else
   THROW_ERROR

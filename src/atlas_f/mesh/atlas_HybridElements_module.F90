@@ -8,7 +8,7 @@ use atlas_Field_module, only: atlas_Field
 use atlas_ElementType_module, only: atlas_ElementType
 use atlas_Elements_module, only: atlas_Elements
 use, intrinsic :: iso_c_binding, only: c_size_t, c_int, c_ptr
-use atlas_c_interop, only: c_str
+use fckit_c_interop, only: c_str
 
 implicit none
 

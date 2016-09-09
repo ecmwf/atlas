@@ -2,7 +2,7 @@
 module atlas_State_module
 
 use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_size_t
-use atlas_c_interop, only: c_str
+use fckit_c_interop, only: c_str
 use atlas_refcounted_module, only: atlas_refcounted
 use atlas_Field_module, only: atlas_Field
 use atlas_Config_module, only: atlas_Config

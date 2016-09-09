@@ -4,7 +4,7 @@ module atlas_Logging_module
 use, intrinsic :: iso_c_binding, only : c_char, c_int
 use atlas_object_module, only: atlas_object
 use atlas_refcounted_module, only: atlas_refcounted
-use atlas_c_interop, only: c_to_f_string_cptr, c_str_no_trim, c_str
+use fckit_c_interop, only: c_ptr_to_string, c_str_no_trim, c_str
 implicit none
 
 private :: c_char, c_int
@@ -644,7 +644,7 @@ subroutine atlas_write_to_fortran_unit(unit,msg_cptr) bind(C)
   integer(c_int), value, intent(in) :: unit
   type(c_ptr), value, intent(in) :: msg_cptr
   character(len=:), allocatable :: msg
-  msg = c_to_f_string_cptr(msg_cptr)
+  msg = c_ptr_to_string(msg_cptr)
   write(unit,'(A)',advance='no') msg
 end subroutine
 

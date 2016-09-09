@@ -3,7 +3,7 @@
 module atlas_functionspace_NodeColumns_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_size_t, c_float, c_double, c_f_pointer
-use atlas_c_interop, only : c_str, c_to_f_string_cptr, atlas_free
+use fckit_c_interop, only : c_str, c_ptr_to_string, c_ptr_free
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
 use atlas_FieldSet_module, only: atlas_FieldSet
@@ -19,7 +19,7 @@ use atlas_kinds_module, only: ATLAS_KIND_GIDX
 implicit none
 
 private :: c_ptr, c_int, c_long, c_size_t, c_float, c_double, c_f_pointer
-private :: c_str, c_to_f_string_cptr, atlas_free
+private :: c_str, c_ptr_to_string, c_ptr_free
 private :: atlas_FunctionSpace
 private :: atlas_Field
 private :: atlas_FieldSet
@@ -678,8 +678,8 @@ function checksum_fieldset(this,fieldset) result(checksum)
   integer :: checksum_size, checksum_allocated
   call atlas__NodesFunctionSpace__checksum_fieldset(this%c_ptr(),fieldset%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
-  checksum = c_to_f_string_cptr(checksum_cptr)
-  if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
+  checksum = c_ptr_to_string(checksum_cptr)
+  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
 end function
 
 !------------------------------------------------------------------------------
@@ -693,8 +693,8 @@ function checksum_field(this,field) result(checksum)
   integer :: checksum_size, checksum_allocated
   call atlas__NodesFunctionSpace__checksum_field(this%c_ptr(),field%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
-  checksum = c_to_f_string_cptr(checksum_cptr)
-  if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
+  checksum = c_ptr_to_string(checksum_cptr)
+  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
 end function
 
 !------------------------------------------------------------------------------
@@ -721,7 +721,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
-  call atlas_free(min_cptr)
+  call c_ptr_free(min_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -748,7 +748,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
-  call atlas_free(max_cptr)
+  call c_ptr_free(max_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -796,8 +796,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(min_size))
   minimum(:) = min_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -819,8 +819,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(max_size))
   maximum(:) = max_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -852,7 +852,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -885,7 +885,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -918,7 +918,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
-  call atlas_free(mean_cptr)
+  call c_ptr_free(mean_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -956,8 +956,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(stddev(varsize))
   mean(:) = mean_fptr(:)
   stddev(:) = stddev_fptr(:)
-  call atlas_free(mean_cptr)
-  call atlas_free(stddev_cptr)
+  call c_ptr_free(mean_cptr)
+  call c_ptr_free(stddev_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -985,7 +985,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
-  call atlas_free(min_cptr)
+  call c_ptr_free(min_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1012,7 +1012,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
-  call atlas_free(max_cptr)
+  call c_ptr_free(max_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1060,8 +1060,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(min_size))
   minimum(:) = min_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1083,8 +1083,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(max_size))
   maximum(:) = max_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1116,7 +1116,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1149,7 +1149,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1182,7 +1182,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
-  call atlas_free(mean_cptr)
+  call c_ptr_free(mean_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1220,8 +1220,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(stddev(varsize))
   mean(:) = mean_fptr(:)
   stddev(:) = stddev_fptr(:)
-  call atlas_free(mean_cptr)
-  call atlas_free(stddev_cptr)
+  call c_ptr_free(mean_cptr)
+  call c_ptr_free(stddev_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1249,7 +1249,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
-  call atlas_free(min_cptr)
+  call c_ptr_free(min_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1276,7 +1276,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
-  call atlas_free(max_cptr)
+  call c_ptr_free(max_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1324,8 +1324,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(min_size))
   minimum(:) = min_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1347,8 +1347,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(max_size))
   maximum(:) = max_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1380,7 +1380,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1413,7 +1413,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
-  call atlas_free(mean_cptr)
+  call c_ptr_free(mean_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1451,8 +1451,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(stddev(varsize))
   mean(:) = mean_fptr(:)
   stddev(:) = stddev_fptr(:)
-  call atlas_free(mean_cptr)
-  call atlas_free(stddev_cptr)
+  call c_ptr_free(mean_cptr)
+  call c_ptr_free(stddev_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1480,7 +1480,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
-  call atlas_free(min_cptr)
+  call c_ptr_free(min_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1507,7 +1507,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
-  call atlas_free(max_cptr)
+  call c_ptr_free(max_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1555,8 +1555,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(min_size))
   minimum(:) = min_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1578,8 +1578,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(max_size))
   maximum(:) = max_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1611,7 +1611,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1644,7 +1644,7 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
-  call atlas_free(mean_cptr)
+  call c_ptr_free(mean_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1682,8 +1682,8 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(stddev(varsize))
   mean(:) = mean_fptr(:)
   stddev(:) = stddev_fptr(:)
-  call atlas_free(mean_cptr)
-  call atlas_free(stddev_cptr)
+  call c_ptr_free(mean_cptr)
+  call c_ptr_free(stddev_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1745,9 +1745,9 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(min_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1776,9 +1776,9 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(max_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1839,9 +1839,9 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(min_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1870,9 +1870,9 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(max_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(loc_cptr)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1933,9 +1933,9 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(min_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1964,9 +1964,9 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(max_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -2021,9 +2021,9 @@ use atlas_functionspace_NodeColumns_c_binding
   minimum(:) = min_fptr(:)
   location(:) = loc_fptr(:)
   level(:) = lev_fptr(:)
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -2050,9 +2050,9 @@ use atlas_functionspace_NodeColumns_c_binding
   maximum(:) = max_fptr(:)
   location(:) = loc_fptr(:)
   level(:) = lev_fptr(:)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------

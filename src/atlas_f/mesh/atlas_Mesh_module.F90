@@ -5,7 +5,7 @@ module atlas_Mesh_module
 
 
 use, intrinsic :: iso_c_binding, only: c_ptr
-use atlas_c_interop, only: c_str
+use fckit_c_interop, only: c_str
 use atlas_refcounted_module, only: atlas_refcounted
 use atlas_mesh_Cells_module, only: atlas_mesh_Cells
 use atlas_mesh_Edges_module, only: atlas_mesh_Edges

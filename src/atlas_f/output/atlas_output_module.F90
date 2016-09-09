@@ -4,7 +4,7 @@
 
 module atlas_output_module
 
-use atlas_c_interop, only : c_str
+use fckit_c_interop, only : c_str
 use atlas_refcounted_module, only : atlas_refcounted
 use atlas_Config_module, only : atlas_Config
 use atlas_FunctionSpace_module, only: &

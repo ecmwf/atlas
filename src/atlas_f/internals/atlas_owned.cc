@@ -3,12 +3,6 @@
 
 extern "C"
 {
-  void atlas_free( void* ptr[] )
-  {
-    delete[] ptr;
-    ptr=NULL;
-  }
-
   int atlas__Owned__owners(const eckit::Owned* owned)
   {
     return owned->owners();
@@ -28,7 +22,6 @@ extern "C"
   {
     return (p1 == p2);
   }
-
 }
 
 

@@ -57,18 +57,20 @@ ecbuild_find_python()
 ### Fortran ...
 
 ecbuild_add_option( FEATURE FORTRAN
-                    DESCRIPTION "atlas: Provide Fortran bindings" )
+                    DESCRIPTION "atlas: Provide Fortran bindings"
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.1" )
 
 if( ATLAS_HAVE_FORTRAN )
-
   ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
-
-  ecbuild_add_option( FEATURE FCTEST
-                      DEFAULT ${ENABLE_TESTS}
-                      DESCRIPTION "atlas: Fortran Unit Test Framework"
-                      REQUIRED_PACKAGES "PROJECT fckit VERSION 0.1" )
-
   set( Fortran Fortran )
+
+  if( ENABLE_TESTS )
+    set( HAVE_FCTEST ON )
+    set( ATLAS_HAVE_FCTEST ON )
+  else()
+    set( HAVE_FCTEST OFF )
+    set( ATLAS_HAVE_FCTEST OFF )
+  endif()
 
 endif()
 

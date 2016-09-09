@@ -3,7 +3,7 @@ module atlas_MeshGenerator_module
 
 
 use, intrinsic :: iso_c_binding, only: c_ptr
-use atlas_c_interop, only: c_str
+use fckit_c_interop, only: c_str
 use atlas_refcounted_module, only: atlas_refcounted
 use atlas_Grid_module, only: atlas_Grid
 use atlas_GridDistribution_module, only: atlas_GridDistribution

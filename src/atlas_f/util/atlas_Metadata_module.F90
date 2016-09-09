@@ -2,17 +2,20 @@
 module atlas_metadata_module
 
 use atlas_object_module, only : atlas_object
-use atlas_c_interop, only : c_str, MAX_STR_LEN, c_to_f_string_cptr, c_to_f_string_str, atlas_free
+use fckit_c_interop, only : c_str, c_ptr_to_string, c_ptr_free
+use fckit_c_interop, only : c_str_to_string
 use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_ptr, c_f_pointer
 implicit none
 
 private :: atlas_object
-private :: c_str, MAX_STR_LEN, c_to_f_string_cptr, c_to_f_string_str, atlas_free
+private :: c_str, c_ptr_to_string, c_str_to_string, c_ptr_free
 private :: c_int, c_long, c_float, c_double, c_ptr, c_f_pointer
 
 public :: atlas_Metadata
 
 private
+
+integer(c_int), parameter :: MAX_STR_LEN=255
 
 !------------------------------------------------------------------------------
 TYPE, extends(atlas_object) :: atlas_Metadata
@@ -202,7 +205,7 @@ subroutine Metadata__get_string(this, name, value)
   character(len=:), allocatable, intent(out) :: value
   character(len=MAX_STR_LEN) :: value_cstr
   call atlas__Metadata__get_string(this%c_ptr(), c_str(name), value_cstr, MAX_STR_LEN )
-  value = c_to_f_string_str(value_cstr)
+  value = c_str_to_string(value_cstr)
 end subroutine Metadata__get_string
 
 subroutine Metadata__set_array_int32(this, name, value)
@@ -255,7 +258,7 @@ subroutine Metadata__get_array_int32(this, name, value)
   call c_f_pointer(value_cptr,value_fptr,(/value_size/))
   allocate(value(value_size))
   value(:) = value_fptr(:)
-  if( value_allocated == 1 ) call atlas_free(value_cptr)
+  if( value_allocated == 1 ) call c_ptr_free(value_cptr)
 end subroutine Metadata__get_array_int32
 
 subroutine Metadata__get_array_int64(this, name, value)
@@ -272,7 +275,7 @@ subroutine Metadata__get_array_int64(this, name, value)
   call c_f_pointer(value_cptr,value_fptr,(/value_size/))
   allocate(value(value_size))
   value(:) = value_fptr(:)
-  if( value_allocated == 1 ) call atlas_free(value_cptr)
+  if( value_allocated == 1 ) call c_ptr_free(value_cptr)
 end subroutine Metadata__get_array_int64
 
 subroutine Metadata__get_array_real32(this, name, value)
@@ -289,7 +292,7 @@ subroutine Metadata__get_array_real32(this, name, value)
   call c_f_pointer(value_cptr,value_fptr,(/value_size/))
   allocate(value(value_size))
   value(:) = value_fptr(:)
-  if( value_allocated == 1 ) call atlas_free(value_cptr)
+  if( value_allocated == 1 ) call c_ptr_free(value_cptr)
 end subroutine Metadata__get_array_real32
 
 subroutine Metadata__get_array_real64(this, name, value)
@@ -306,7 +309,7 @@ subroutine Metadata__get_array_real64(this, name, value)
   call c_f_pointer(value_cptr,value_fptr,(/value_size/))
   allocate(value(value_size))
   value(:) = value_fptr(:)
-  if( value_allocated == 1 ) call atlas_free(value_cptr)
+  if( value_allocated == 1 ) call c_ptr_free(value_cptr)
 end subroutine Metadata__get_array_real64
 
 subroutine MetaData__print(this,channel)
@@ -326,8 +329,8 @@ function Metadata__json(this) result(json)
   integer(c_int) :: json_allocated
   call atlas__Metadata__json(this%c_ptr(),json_cptr,json_size,json_allocated)
   allocate(character(len=json_size) :: json )
-  json = c_to_f_string_cptr(json_cptr)
-  if( json_allocated == 1 ) call atlas_free(json_cptr)
+  json = c_ptr_to_string(json_cptr)
+  if( json_allocated == 1 ) call c_ptr_free(json_cptr)
 end function Metadata__json
 
 end module atlas_metadata_module

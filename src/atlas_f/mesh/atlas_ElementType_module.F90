@@ -2,13 +2,13 @@
 module atlas_ElementType_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_size_t, c_int
-use atlas_c_interop, only : c_to_f_string_cptr
+use fckit_c_interop, only : c_ptr_to_string
 use atlas_refcounted_module, only : atlas_refcounted
 
 implicit none
 
 private :: c_ptr, c_size_t, c_int
-private :: c_to_f_string_cptr
+private :: c_ptr_to_string
 private :: atlas_refcounted
 
 public :: atlas_ElementType
@@ -115,7 +115,7 @@ function name(this)
   class(atlas_ElementType) :: this
   type(c_ptr) :: name_c_str
   name_c_str = atlas__mesh__ElementType__name(this%c_ptr())
-  name = c_to_f_string_cptr(name_c_str)
+  name = c_ptr_to_string(name_c_str)
 end function
 
 function parametric(this)
