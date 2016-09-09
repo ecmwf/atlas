@@ -16,7 +16,6 @@
 #include "atlas/array/ArrayView.h"
 
 namespace atlas {
-namespace util {
 namespace parallel {
 namespace mpi {
 
@@ -53,7 +52,6 @@ struct Buffer<DATA_TYPE,1> : public eckit::mpi::Buffer<DATA_TYPE>
 
 } // namespace mpi
 } // namespace parallel
-} // namespace util
 } // namespace atlas
 
 #endif

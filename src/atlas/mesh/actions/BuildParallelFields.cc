@@ -215,7 +215,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
   // 3) Scatter renumbered back
 
-  eckit::mpi::comm().scatterv(glb_id.begin(), recvcounts, recvdispls, loc_id.begin(), loc_id.end(), root);
+  eckit::mpi::comm().scatterv(glb_id.begin(), glb_id.end(), recvcounts, recvdispls, loc_id.begin(), loc_id.end(), root);
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -845,7 +845,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
 
   // 3) Scatter renumbered back
 
-  eckit::mpi::comm().scatterv(glb_edge_id.begin(), recvcounts, recvdispls, loc_edge_id.begin(), loc_edge_id.end(), root);
+  eckit::mpi::comm().scatterv(glb_edge_id.begin(), glb_edge_id.end(), recvcounts, recvdispls, loc_edge_id.begin(), loc_edge_id.end(), root);
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {

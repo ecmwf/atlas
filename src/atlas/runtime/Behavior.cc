@@ -266,8 +266,9 @@ eckit::FileReadPolicy Behavior::fileReadPolicy()
 {
   switch( read_policy_ )
   {
-//    case PARALLEL_FILE_READ_POLICY:
+    case PARALLEL_FILE_READ_POLICY:
 //      return eckit::mpi::ParallelContextBehavior::fileReadPolicy();
+      return eckit::StandardBehavior::fileReadPolicy();
     case DIRECT_FILE_READ_POLICY:
       return eckit::StandardBehavior::fileReadPolicy();
     default:

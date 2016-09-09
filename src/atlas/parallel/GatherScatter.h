@@ -357,7 +357,7 @@ void GatherScatter::scatter( parallel::Field<DATA_TYPE const> gfields[],
 
     /// Scatter
 
-    eckit::mpi::comm().scatterv(glb_buffer.begin(), glb_counts, glb_displs, loc_buffer.begin(), loc_buffer.end(), root);
+    eckit::mpi::comm().scatterv(glb_buffer.begin(), glb_buffer.end(), glb_counts, glb_displs, loc_buffer.begin(), loc_buffer.end(), root);
 
     /// Unpack
     unpack_recv_buffer(locmap_,loc_buffer.data(),lfields[jfield]);

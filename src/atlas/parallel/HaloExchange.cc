@@ -89,7 +89,7 @@ void HaloExchange::setup( const int part[],
     Find the amount of nodes this proc has to send to each other proc
   */
 
-  eckit::mpi::comm().allToAll(recvcounts_.data(), 1, sendcounts_.data(), 1 );
+  eckit::mpi::comm().allToAll(recvcounts_, sendcounts_);
 
   sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
 //  std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;

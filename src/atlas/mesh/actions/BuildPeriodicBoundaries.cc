@@ -97,12 +97,13 @@ void build_periodic_boundaries( Mesh& mesh )
 
     std::vector< std::vector<int> > found_master(eckit::mpi::comm().size());
     std::vector< std::vector<int> > send_slave_idx(eckit::mpi::comm().size());
+
     // Find masters on other tasks to send to me
     {
       int sendcnt = slave_nodes.size();
       std::vector< int > recvcounts( eckit::mpi::comm().size() );
 
-      eckit::mpi::comm("writers").allGather(sendcnt, recvcounts.begin(), recvcounts.end());
+      eckit::mpi::comm().allGather(sendcnt, recvcounts.begin(), recvcounts.end());
 
       std::vector<int> recvdispls( eckit::mpi::comm().size() );
       recvdispls[0] = 0;
