@@ -214,8 +214,7 @@ ecbuild_add_library( TARGET atlas_f
         trans/atlas_Trans_module.F90
         internals/atlas_object_module.F90
         internals/atlas_refcounted_module.F90
-        internals/atlas_C_interop.F90
-        internals/atlas_C_interop.cc
+        internals/atlas_owned.cc
         internals/atlas_logging.h
         internals/atlas_logging.cc
         internals/atlas_resource.h
@@ -225,5 +224,5 @@ ecbuild_add_library( TARGET atlas_f
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
   PRIVATE_INCLUDES ${MPI_Fortran_INCLUDE_PATH}
-  LIBS atlas ${MPI_Fortran_LIBRARIES}
+  LIBS atlas ${MPI_Fortran_LIBRARIES} fckit
 )

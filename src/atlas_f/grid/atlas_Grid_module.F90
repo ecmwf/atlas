@@ -3,7 +3,7 @@ module atlas_Grid_module
 
 
 use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_long, c_double, c_size_t, c_f_pointer
-use atlas_c_interop, only: c_str
+use fckit_c_interop, only: c_str
 use atlas_refcounted_module, only: atlas_refcounted
 use atlas_Config_module, only: atlas_Config
 

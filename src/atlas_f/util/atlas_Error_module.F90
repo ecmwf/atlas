@@ -1,7 +1,7 @@
 
 module atlas_Error_module
 
-use atlas_c_interop , only:  c_str, c_to_f_string_cptr
+use fckit_c_interop , only:  c_str, c_ptr_to_string
 
 implicit none
 private
@@ -130,7 +130,7 @@ function atlas_err_msg()
   type(c_ptr) :: msg_cptr
   character(len=:), allocatable :: atlas_err_msg
   msg_cptr = atlas__Error_msg()
-  atlas_err_msg = c_to_f_string_cptr(msg_cptr)
+  atlas_err_msg = c_ptr_to_string(msg_cptr)
 end function
 
 subroutine atlas_err_set_aborts( aborts )

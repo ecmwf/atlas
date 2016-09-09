@@ -2,7 +2,7 @@
 module atlas_functionspace_Spectral_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int
-use atlas_c_interop, only : c_str, c_to_f_string_cptr, atlas_free
+use fckit_c_interop, only : c_str, c_ptr_to_string, c_ptr_free
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
 use atlas_FieldSet_module, only: atlas_FieldSet
@@ -12,7 +12,7 @@ use atlas_Config_module, only: atlas_Config
 implicit none
 
 private :: c_ptr, c_int
-private :: c_str, c_to_f_string_cptr, atlas_free
+private :: c_str, c_ptr_to_string, c_ptr_free
 private :: atlas_FunctionSpace
 private :: atlas_Field
 private :: atlas_FieldSet

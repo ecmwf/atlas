@@ -2,7 +2,7 @@
 module atlas_connectivity_module
 
 use, intrinsic :: iso_c_binding, only : c_funptr, c_ptr, c_loc, c_f_pointer, c_f_procpointer, c_funloc, c_int, c_size_t
-use atlas_c_interop, only : c_str, c_to_f_string_cptr
+use fckit_c_interop, only : c_str, c_ptr_to_string
 use atlas_refcounted_module, only : atlas_refcounted
 implicit none
 
@@ -14,7 +14,7 @@ private :: c_funloc
 private :: c_int
 private :: c_size_t
 private :: atlas_refcounted
-private :: c_str, c_to_f_string_cptr
+private :: c_str, c_ptr_to_string
 
 public :: atlas_Connectivity
 public :: atlas_MultiBlockConnectivity
@@ -206,7 +206,7 @@ function atlas_Connectivity__name(this) result(name)
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
   name_c_str = atlas__Connectivity__name(this%c_ptr())
-  name = c_to_f_string_cptr(name_c_str)
+  name = c_ptr_to_string(name_c_str)
 end function
 
 pure function access_value(this,c,r) result(val)

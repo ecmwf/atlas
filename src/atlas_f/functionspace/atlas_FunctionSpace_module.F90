@@ -79,13 +79,13 @@ end subroutine
 
 function atlas_FunctionSpace__name(this) result(name)
   use atlas_functionspace_c_binding
-  use atlas_c_interop, only : c_to_f_string_cptr
+  use fckit_c_interop, only : c_ptr_to_string
   use, intrinsic :: iso_c_binding, only : c_ptr
   class(atlas_FunctionSpace), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
   name_c_str = atlas__FunctionSpace__name(this%c_ptr())
-  name = c_to_f_string_cptr(name_c_str)
+  name = c_ptr_to_string(name_c_str)
 end function
 
 end module atlas_functionspace_module

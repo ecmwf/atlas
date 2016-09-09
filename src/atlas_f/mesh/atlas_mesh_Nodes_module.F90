@@ -3,7 +3,7 @@ module atlas_mesh_Nodes_module
 
 
 use, intrinsic :: iso_c_binding, only: c_size_t, c_int, c_ptr
-use atlas_c_interop, only: c_str, c_to_f_string_cptr, atlas_free
+use fckit_c_interop, only: c_str, c_ptr_to_string, c_ptr_free
 use atlas_refcounted_module, only: atlas_refcounted
 use atlas_Connectivity_module, only: atlas_Connectivity
 use atlas_Field_module, only: atlas_Field
@@ -12,7 +12,7 @@ use atlas_Metadata_module, only: atlas_Metadata
 implicit none
 
 private :: c_size_t, c_int, c_ptr
-private :: c_str, c_to_f_string_cptr, atlas_free
+private :: c_str, c_ptr_to_string, c_ptr_free
 private :: atlas_refcounted
 private :: atlas_Connectivity
 private :: atlas_Field
@@ -263,8 +263,8 @@ function str(this)
   integer(c_int) :: str_size
   call atlas__mesh__Nodes__str(this%c_ptr(),str_cptr,str_size)
   allocate(character(len=str_size) :: str )
-  str = c_to_f_string_cptr(str_cptr)
-  call atlas_free(str_cptr)
+  str = c_ptr_to_string(str_cptr)
+  call c_ptr_free(str_cptr)
 end function
 
 

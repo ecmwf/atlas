@@ -1,11 +1,9 @@
 module atlas_refcounted_module
-use atlas_c_interop, only: atlas_compare_equal
 use atlas_object_module, only: atlas_object
 implicit none
 private
 
 private :: atlas_object
-private :: atlas_compare_equal
 
 !========================================================================
 ! Public interface

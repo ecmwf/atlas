@@ -2,12 +2,12 @@
 module atlas_Value_module
 
 use, intrinsic :: iso_c_binding, only : c_int, c_long, c_double, c_float, c_ptr
-use atlas_c_interop, only : c_str, c_to_f_string_cptr
+use fckit_c_interop, only : c_str, c_ptr_to_string
 use atlas_object_module, only : atlas_object
 implicit none
 
 private :: c_int, c_long, c_double, c_float, c_ptr
-private :: c_str, c_to_f_string_cptr
+private :: c_str, c_ptr_to_string
 
 public :: atlas_Value
 
@@ -212,7 +212,7 @@ end subroutine
 
 subroutine atlas_Value__get_string(this,val)
   use, intrinsic :: iso_c_binding , only : c_ptr, c_int
-  use atlas_c_interop
+  use fckit_c_interop
   use atlas_atlas_value_c_binding
   class(atlas_Value), intent(in) :: this
   character(len=:), allocatable, intent(out) :: val
@@ -220,13 +220,13 @@ subroutine atlas_Value__get_string(this,val)
   integer(c_int) :: val_size
   integer(c_int) :: val_allocated
   call atlas__Value__string(this%c_ptr(),val_cptr,val_size,val_allocated)
-  val = c_to_f_string_cptr(val_cptr)
-  if( val_allocated == 1 ) call atlas_free(val_cptr)
+  val = c_ptr_to_string(val_cptr)
+  if( val_allocated == 1 ) call c_ptr_free(val_cptr)
 end subroutine
 
 subroutine atlas_Value__get_array_int32(this,val)
   use, intrinsic :: iso_c_binding , only : c_int, c_f_pointer, c_ptr
-  use atlas_c_interop
+  use fckit_c_interop
   use atlas_atlas_value_c_binding
   class(atlas_Value), intent(in) :: this
   integer(c_int), allocatable, intent(out) :: val(:)
@@ -239,13 +239,13 @@ subroutine atlas_Value__get_array_int32(this,val)
   if( allocated(val) ) deallocate(val)
   allocate( val(val_size) )
   val(:) = val_fptr(:)
-  if( val_allocated == 1 ) call atlas_free(val_cptr)
+  if( val_allocated == 1 ) call c_ptr_free(val_cptr)
 end subroutine
 
 subroutine atlas_Value__get_array_int64(this,val)
   use, intrinsic :: iso_c_binding , only : c_long, c_int, c_ptr, c_f_pointer
   use atlas_atlas_value_c_binding
-  use atlas_c_interop
+  use fckit_c_interop
   class(atlas_Value), intent(in) :: this
   integer(c_long), allocatable, intent(out) :: val(:)
   integer(c_long), pointer :: val_fptr(:)
@@ -257,13 +257,13 @@ subroutine atlas_Value__get_array_int64(this,val)
   if( allocated(val) ) deallocate(val)
   allocate( val(val_size) )
   val(:) = val_fptr(:)
-  if( val_allocated == 1 ) call atlas_free(val_cptr)
+  if( val_allocated == 1 ) call c_ptr_free(val_cptr)
 end subroutine
 
 subroutine atlas_Value__get_array_real32(this,val)
   use, intrinsic :: iso_c_binding , only : c_float, c_int, c_ptr, c_f_pointer
   use atlas_atlas_value_c_binding
-  use atlas_c_interop
+  use fckit_c_interop
   class(atlas_Value), intent(in) :: this
   real(c_float), allocatable, intent(out) :: val(:)
   real(c_float), pointer :: val_fptr(:)
@@ -275,13 +275,13 @@ subroutine atlas_Value__get_array_real32(this,val)
   if( allocated(val) ) deallocate(val)
   allocate( val(val_size) )
   val(:) = val_fptr(:)
-  if( val_allocated == 1 ) call atlas_free(val_cptr)
+  if( val_allocated == 1 ) call c_ptr_free(val_cptr)
 end subroutine
 
 subroutine atlas_Value__get_array_real64(this,val)
   use, intrinsic :: iso_c_binding , only : c_double, c_int, c_ptr, c_f_pointer
   use atlas_atlas_value_c_binding
-  use atlas_c_interop
+  use fckit_c_interop
   class(atlas_Value), intent(in) :: this
   real(c_double), allocatable, intent(out) :: val(:)
   real(c_double), pointer :: val_fptr(:)
@@ -293,7 +293,7 @@ subroutine atlas_Value__get_array_real64(this,val)
   if( allocated(val) ) deallocate(val)
   allocate( val(val_size) )
   val(:) = val_fptr(:)
-  if( val_allocated == 1 ) call atlas_free(val_cptr)
+  if( val_allocated == 1 ) call c_ptr_free(val_cptr)
 end subroutine
 
 end module atlas_Value_module

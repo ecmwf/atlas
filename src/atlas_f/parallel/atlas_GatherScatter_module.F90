@@ -2,13 +2,13 @@
 module atlas_gatherscatter_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
-use atlas_c_interop, only : stride, view1d
+use fckit_array, only : array_stride, array_view1d
 use atlas_object_module, only : atlas_object
 
 implicit none
 
 private :: c_ptr, c_int, c_long, c_float, c_double
-private :: stride, view1d
+private :: array_stride, array_view1d
 private :: atlas_object
 
 public :: atlas_GatherScatter
@@ -154,12 +154,12 @@ subroutine GatherScatter__gather_int32_r1_r1(this, loc_field_data, glb_field_dat
   integer(c_int), pointer :: lview(:), gview(:)
   integer :: lstrides(1), lextents(1), lrank=1
   integer :: gstrides(1), gextents(1), grank=1
-  lstrides = (/ stride(loc_field_data,2) /)
+  lstrides = (/ array_stride(loc_field_data,2) /)
   lextents = (/ 1                        /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,2) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2) /)
   gextents = (/ 1                        /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -177,12 +177,12 @@ subroutine GatherScatter__gather_int32_r2_r2(this, loc_field_data, glb_field_dat
   integer(c_int), pointer :: lview(:), gview(:)
   integer :: lstrides(2), lextents(2), lrank=2
   integer :: gstrides(2), gextents(2), grank=2
-  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -200,12 +200,12 @@ subroutine GatherScatter__gather_int32_r3_r3(this, loc_field_data, glb_field_dat
   integer(c_int), pointer :: lview(:), gview(:)
   integer :: lstrides(3), lextents(3), lrank=3
   integer :: gstrides(3), gextents(3), grank=3
-  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2) , stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,3), array_stride(loc_field_data,2) , array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,2) , size(loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2) , stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,3), array_stride(glb_field_data,2) , array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,2) , size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -222,12 +222,12 @@ subroutine GatherScatter__gather_int64_r1_r1(this, loc_field_data, glb_field_dat
   integer(c_long), pointer :: lview(:), gview(:)
   integer :: lstrides(1), lextents(1), lrank=1
   integer :: gstrides(1), gextents(1), grank=1
-  lstrides = (/ stride(loc_field_data,2) /)
+  lstrides = (/ array_stride(loc_field_data,2) /)
   lextents = (/ 1                        /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,2) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2) /)
   gextents = (/ 1                        /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -245,12 +245,12 @@ subroutine GatherScatter__gather_int64_r2_r2(this, loc_field_data, glb_field_dat
   integer(c_long), pointer :: lview(:), gview(:)
   integer :: lstrides(2), lextents(2), lrank=2
   integer :: gstrides(2), gextents(2), grank=2
-  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -268,12 +268,12 @@ subroutine GatherScatter__gather_int64_r3_r3(this, loc_field_data, glb_field_dat
   integer(c_long), pointer :: lview(:), gview(:)
   integer :: lstrides(3), lextents(3), lrank=3
   integer :: gstrides(3), gextents(3), grank=3
-  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2) , stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,3), array_stride(loc_field_data,2) , array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,2) , size(loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2) , stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,3), array_stride(glb_field_data,2) , array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,2) , size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -291,12 +291,12 @@ subroutine GatherScatter__gather_real32_r1_r1(this, loc_field_data, glb_field_da
   integer :: lstrides(1), lextents(1), lrank=1
   integer :: gstrides(1), gextents(1), grank=1
   real(c_float), pointer :: lview(:), gview(:)
-  lstrides = (/ stride(loc_field_data,2) /)
+  lstrides = (/ array_stride(loc_field_data,2) /)
   lextents = (/ 1                        /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,2) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2) /)
   gextents = (/ 1                        /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -312,12 +312,12 @@ subroutine GatherScatter__gather_real32_r2_r2(this, loc_field_data, glb_field_da
   real(c_float), pointer :: lview(:), gview(:)
   integer :: lstrides(2), lextents(2), lrank=2
   integer :: gstrides(2), gextents(2), grank=2
-  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -333,12 +333,12 @@ subroutine GatherScatter__gather_real32_r3_r3(this, loc_field_data, glb_field_da
   real(c_float), pointer :: lview(:), gview(:)
   integer :: lstrides(3), lextents(3), lrank=3
   integer :: gstrides(3), gextents(3), grank=3
-  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2) , stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,3), array_stride(loc_field_data,2) , array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,2) , size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2) , stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,3), array_stride(glb_field_data,2) , array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,2) , size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -355,12 +355,12 @@ subroutine GatherScatter__gather_real64_r1_r1(this, loc_field_data, glb_field_da
   integer :: lstrides(1), lextents(1), lrank=1
   integer :: gstrides(1), gextents(1), grank=1
   real(c_double), pointer :: lview(:), gview(:)
-  lstrides = (/ stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,1) /)
   lextents = (/ 1                        /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,1) /)
   gextents = (/ 1                        /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   !write(0,*) atlas_mpi_rank(),"lstrides",lstrides
   !write(0,*) atlas_mpi_rank(),"lextents",lextents
   !write(0,*) atlas_mpi_rank(),"gstrides",gstrides
@@ -381,12 +381,12 @@ subroutine GatherScatter__gather_real64_r2_r2(this, loc_field_data, glb_field_da
   real(c_double), pointer :: lview(:), gview(:)
   integer :: lstrides(2), lextents(2), lrank=2
   integer :: gstrides(2), gextents(2), grank=2
-  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -402,12 +402,12 @@ subroutine GatherScatter__gather_real64_r3_r3(this, loc_field_data, glb_field_da
   real(c_double), pointer :: lview(:), gview(:)
   integer :: lstrides(3), lextents(3), lrank=3
   integer :: gstrides(3), gextents(3), grank=3
-  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2) , stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,3), array_stride(loc_field_data,2) , array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,2) , size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2) , stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,3), array_stride(glb_field_data,2) , array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,2) , size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -426,12 +426,12 @@ subroutine GatherScatter__scatter_int32_r1_r1(this, glb_field_data, loc_field_da
   integer(c_int), pointer :: lview(:), gview(:)
   integer :: lstrides(1), lextents(1), lrank=1
   integer :: gstrides(1), gextents(1), grank=1
-  lstrides = (/ stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,1) /)
   lextents = (/ 1                        /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,1) /)
   gextents = (/ 1                        /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   call atlas__GatherScatter__scatter_int( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
@@ -445,12 +445,12 @@ subroutine GatherScatter__scatter_int32_r2_r2(this, glb_field_data, loc_field_da
   integer(c_int), pointer :: lview(:), gview(:)
   integer :: lstrides(2), lextents(2), lrank=2
   integer :: gstrides(2), gextents(2), grank=2
-  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -467,12 +467,12 @@ subroutine GatherScatter__scatter_int64_r1_r1(this, glb_field_data, loc_field_da
   integer(c_long), pointer :: lview(:), gview(:)
   integer :: lstrides(1), lextents(1), lrank=1
   integer :: gstrides(1), gextents(1), grank=1
-  lstrides = (/ stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,1) /)
   lextents = (/ 1                        /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,1) /)
   gextents = (/ 1                        /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   call atlas__GatherScatter__scatter_long( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
@@ -486,12 +486,12 @@ subroutine GatherScatter__scatter_int64_r2_r2(this, glb_field_data, loc_field_da
   integer(c_long), pointer :: lview(:), gview(:)
   integer :: lstrides(2), lextents(2), lrank=2
   integer :: gstrides(2), gextents(2), grank=2
-  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -509,12 +509,12 @@ subroutine GatherScatter__scatter_real32_r1_r1(this, glb_field_data, loc_field_d
   real(c_float), pointer :: lview(:), gview(:)
   integer :: lstrides(1), lextents(1), lrank=1
   integer :: gstrides(1), gextents(1), grank=1
-  lstrides = (/ stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,1) /)
   lextents = (/ 1                        /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,1) /)
   gextents = (/ 1                        /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   call atlas__GatherScatter__scatter_float( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
@@ -527,12 +527,12 @@ subroutine GatherScatter__scatter_real32_r2_r2(this, glb_field_data, loc_field_d
   real(c_float), pointer :: lview(:), gview(:)
   integer :: lstrides(2), lextents(2), lrank=2
   integer :: gstrides(2), gextents(2), grank=2
-  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -548,12 +548,12 @@ subroutine GatherScatter__scatter_real64_r1_r1(this, glb_field_data, loc_field_d
   real(c_double), pointer :: lview(:), gview(:)
   integer :: lstrides(1), lextents(1), lrank=1
   integer :: gstrides(1), gextents(1), grank=1
-  lstrides = (/ stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,1) /)
   lextents = (/ 1                        /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,1) /)
   gextents = (/ 1                        /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   call atlas__GatherScatter__scatter_double( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
@@ -566,12 +566,12 @@ subroutine GatherScatter__scatter_real64_r2_r2(this, glb_field_data, loc_field_d
   real(c_double), pointer :: lview(:), gview(:)
   integer :: lstrides(2), lextents(2), lrank=2
   integer :: gstrides(2), gextents(2), grank=2
-  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
@@ -588,12 +588,12 @@ subroutine GatherScatter__scatter_real64_r3_r3(this, glb_field_data, loc_field_d
   real(c_double), pointer :: lview(:), gview(:)
   integer :: lstrides(3), lextents(3), lrank=3
   integer :: gstrides(3), gextents(3), grank=3
-  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,3), array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,2) , size (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
-  gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2), stride(glb_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,3), array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,2) , size (glb_field_data,1) /)
-  gview => view1d(glb_field_data)
+  gview => array_view1d(glb_field_data)
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif

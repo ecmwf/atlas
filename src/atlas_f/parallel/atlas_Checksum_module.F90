@@ -2,13 +2,14 @@
 module atlas_checksum_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_char
-use atlas_c_interop, only : stride, view1d, c_to_f_string_str
+use fckit_array, only : array_stride, array_view1d
+use fckit_c_interop, only : c_str_to_string
 use atlas_object_module, only : atlas_object
 
 implicit none
 
 private :: c_ptr, c_int, c_long, c_float, c_double, c_char
-private :: stride, view1d, c_to_f_string_str
+private :: array_stride, array_view1d, c_str_to_string
 private :: atlas_object
 
 public :: atlas_Checksum
@@ -118,11 +119,11 @@ function Checksum__execute_int32_r1(this, loc_field_data) result(checksum)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
   integer :: lstrides(1), lextents(1), lrank=1
-  lstrides = (/ stride(loc_field_data,2) /)
+  lstrides = (/ array_stride(loc_field_data,2) /)
   lextents = (/ 1                        /)
   call atlas__Checksum__execute_strided_int( this%c_ptr(), &
     &  loc_field_data, lstrides, lextents, lrank, checksum_c_str )
-  checksum = c_to_f_string_str(checksum_c_str)
+  checksum = c_str_to_string(checksum_c_str)
 end function Checksum__execute_int32_r1
 
 function Checksum__execute_int32_r2(this, loc_field_data) result(checksum)
@@ -133,12 +134,12 @@ function Checksum__execute_int32_r2(this, loc_field_data) result(checksum)
   character(kind=c_char) :: checksum_c_str(132)
   integer, pointer :: lview(:)
   integer :: lstrides(2), lextents(2), lrank=2
-  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
+  lview => array_view1d(loc_field_data)
   call atlas__Checksum__execute_strided_int( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, checksum_c_str )
-  checksum = c_to_f_string_str(checksum_c_str)
+  checksum = c_str_to_string(checksum_c_str)
 end function Checksum__execute_int32_r2
 
 
@@ -150,12 +151,12 @@ function Checksum__execute_int32_r3(this, loc_field_data) result(checksum)
   character(kind=c_char) :: checksum_c_str(132)
   integer, pointer :: lview(:)
   integer :: lstrides(3), lextents(3), lrank=3
-  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2) , stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,3), array_stride(loc_field_data,2) , array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,2) , size(loc_field_data,1) /)
-  lview => view1d(loc_field_data)
+  lview => array_view1d(loc_field_data)
   call atlas__Checksum__execute_strided_int( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, checksum_c_str )
-  checksum = c_to_f_string_str(checksum_c_str)
+  checksum = c_str_to_string(checksum_c_str)
 end function Checksum__execute_int32_r3
 
 function Checksum__execute_real32_r1(this, loc_field_data) result(checksum)
@@ -165,11 +166,11 @@ function Checksum__execute_real32_r1(this, loc_field_data) result(checksum)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
   integer :: lstrides(1), lextents(1), lrank=1
-  lstrides = (/ stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,1) /)
   lextents = (/ 1                        /)
   call atlas__Checksum__execute_strided_float( this%c_ptr(), &
     &  loc_field_data, lstrides, lextents, lrank, checksum_c_str )
-  checksum = c_to_f_string_str(checksum_c_str)
+  checksum = c_str_to_string(checksum_c_str)
 end function Checksum__execute_real32_r1
 function Checksum__execute_real32_r2(this, loc_field_data) result(checksum)
   use atlas_checksum_c_binding
@@ -179,12 +180,12 @@ function Checksum__execute_real32_r2(this, loc_field_data) result(checksum)
   character(kind=c_char) :: checksum_c_str(132)
   real(c_float), pointer :: lview(:)
   integer :: lstrides(2), lextents(2), lrank=2
-  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
+  lview => array_view1d(loc_field_data)
   call atlas__Checksum__execute_strided_float( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, checksum_c_str )
-  checksum = c_to_f_string_str(checksum_c_str)
+  checksum = c_str_to_string(checksum_c_str)
 end function Checksum__execute_real32_r2
 function Checksum__execute_real32_r3(this, loc_field_data) result(checksum)
   use atlas_checksum_c_binding
@@ -194,12 +195,12 @@ function Checksum__execute_real32_r3(this, loc_field_data) result(checksum)
   character(kind=c_char) :: checksum_c_str(132)
   real(c_float), pointer :: lview(:)
   integer :: lstrides(3), lextents(3), lrank=3
-  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2) , stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,3), array_stride(loc_field_data,2) , array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,2) , size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
+  lview => array_view1d(loc_field_data)
   call atlas__Checksum__execute_strided_float( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, checksum_c_str )
-  checksum = c_to_f_string_str(checksum_c_str)
+  checksum = c_str_to_string(checksum_c_str)
 end function Checksum__execute_real32_r3
 
 function Checksum__execute_real64_r1(this, loc_field_data) result(checksum)
@@ -210,12 +211,12 @@ function Checksum__execute_real64_r1(this, loc_field_data) result(checksum)
   character(kind=c_char) :: checksum_c_str(132)
   integer :: lstrides(1), lextents(1), lrank=1
   real(c_double), pointer :: lview(:)
-  lstrides = (/ stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,1) /)
   lextents = (/ 1                        /)
-  lview => view1d(loc_field_data)
+  lview => array_view1d(loc_field_data)
   call atlas__Checksum__execute_strided_double( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, checksum_c_str )
-  checksum = c_to_f_string_str(checksum_c_str)
+  checksum = c_str_to_string(checksum_c_str)
 end function Checksum__execute_real64_r1
 function Checksum__execute_real64_r2(this, loc_field_data) result(checksum)
   use atlas_checksum_c_binding
@@ -225,12 +226,12 @@ function Checksum__execute_real64_r2(this, loc_field_data) result(checksum)
   character(kind=c_char) :: checksum_c_str(132)
   real(c_double), pointer :: lview(:)
   integer :: lstrides(2), lextents(2), lrank=2
-  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
+  lview => array_view1d(loc_field_data)
   call atlas__Checksum__execute_strided_double( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, checksum_c_str )
-  checksum = c_to_f_string_str(checksum_c_str)
+  checksum = c_str_to_string(checksum_c_str)
 end function Checksum__execute_real64_r2
 function Checksum__execute_real64_r3(this, loc_field_data) result(checksum)
   use atlas_checksum_c_binding
@@ -240,12 +241,12 @@ function Checksum__execute_real64_r3(this, loc_field_data) result(checksum)
   character(kind=c_char) :: checksum_c_str(132)
   real(c_double), pointer :: lview(:)
   integer :: lstrides(3), lextents(3), lrank=3
-  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2) , stride(loc_field_data,1) /)
+  lstrides = (/ array_stride(loc_field_data,3), array_stride(loc_field_data,2) , array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,2) , size  (loc_field_data,1) /)
-  lview => view1d(loc_field_data)
+  lview => array_view1d(loc_field_data)
   call atlas__Checksum__execute_strided_double( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, checksum_c_str )
-  checksum = c_to_f_string_str(checksum_c_str)
+  checksum = c_str_to_string(checksum_c_str)
 end function Checksum__execute_real64_r3
 
 ! -----------------------------------------------------------------------------
