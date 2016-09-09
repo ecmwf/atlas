@@ -1,5 +1,5 @@
 module atlas_mpi_module
-use atlas_mpi_c_binding
+
 public
 contains
 
