@@ -287,6 +287,8 @@ runtime/ErrorHandling.cc
 parallel/omp/omp.h
 parallel/omp/omp.cc
 parallel/mpi/Buffer.h
+parallel/mpi/mpi.h
+parallel/mpi/mpi.cc
 parallel/Checksum.h
 parallel/Checksum.cc
 parallel/HaloExchange.h

@@ -36,7 +36,8 @@ void atlas_info( std::ostream& out )
   out << "eckit git     [" << eckit_git_sha1()<< "]\n";
   Context::instance().behavior().reconfigure();
   out << "current dir   [" << PathName(rundir()).fullName() << "]\n";
-  if( eckit::mpi::isRunning() ) {
+
+  if( eckit::mpi::comm().size() ) {
     out << "MPI\n" << runtime::indent();
     out << "communicator  [" << eckit::mpi::comm() << "] \n";
     out << "size          [" << eckit::mpi::comm().size() << "] \n";
