@@ -1,13 +1,13 @@
 
 module atlas_metadata_module
 
-use atlas_object_module, only : atlas_object
-use fckit_c_interop, only : c_str, c_ptr_to_string, c_ptr_free
-use fckit_c_interop, only : c_str_to_string
+use fckit_object_module, only : fckit_object
+use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
+use fckit_c_interop_module, only : c_str_to_string
 use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_ptr, c_f_pointer
 implicit none
 
-private :: atlas_object
+private :: fckit_object
 private :: c_str, c_ptr_to_string, c_str_to_string, c_ptr_free
 private :: c_int, c_long, c_float, c_double, c_ptr, c_f_pointer
 
@@ -18,7 +18,7 @@ private
 integer(c_int), parameter :: MAX_STR_LEN=255
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_object) :: atlas_Metadata
+TYPE, extends(fckit_object) :: atlas_Metadata
 
 ! Purpose :
 ! -------

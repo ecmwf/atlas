@@ -161,7 +161,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/Checksum.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_resource.h)
-generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_value.h)
+# generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_value.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
 
 preprocess_fypp( atlas_f_src field/atlas_Field_module.F90 )
@@ -182,7 +182,6 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_resource_module.F90
         util/atlas_Logging_module.F90
         util/atlas_Error_module.F90
-        util/atlas_Value_module.F90
         output/atlas_output_module.F90
         functionspace/atlas_FunctionSpace_module.F90
         functionspace/atlas_functionspace_EdgeColumns_module.F90
@@ -212,17 +211,16 @@ ecbuild_add_library( TARGET atlas_f
         parallel/atlas_Checksum_module.F90
         parallel/atlas_HaloExchange_module.F90
         trans/atlas_Trans_module.F90
-        internals/atlas_object_module.F90
-        internals/atlas_refcounted_module.F90
-        internals/atlas_owned.cc
         internals/atlas_logging.h
         internals/atlas_logging.cc
         internals/atlas_resource.h
         internals/atlas_resource.cc
-        internals/atlas_value.h
-        internals/atlas_value.cc
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
-  PRIVATE_INCLUDES ${MPI_Fortran_INCLUDE_PATH}
+
+  PRIVATE_INCLUDES
+        ${MPI_Fortran_INCLUDE_PATH}
+        ${FCKIT_INCLUDE_DIRS}
+
   LIBS atlas ${MPI_Fortran_LIBRARIES} fckit
 )

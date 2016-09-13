@@ -2,19 +2,19 @@
 module atlas_config_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer, c_null_ptr, c_loc
-use fckit_c_interop, only : c_str, c_ptr_to_string, c_ptr_free
-use atlas_refcounted_module, only : atlas_RefCounted_Fortran
+use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
+use fckit_refcounted_module, only : fckit_refcounted_fortran
 
 implicit none
 
-private :: atlas_RefCounted_Fortran
+private :: fckit_refcounted_fortran
 private :: c_ptr, c_int, c_long, c_double, c_float, c_f_pointer, c_null_ptr, c_loc
 private :: c_str, c_ptr_to_string, c_ptr_free
 public :: atlas_Config
 
 private
 
-TYPE, extends(atlas_RefCounted_Fortran) :: atlas_Config
+TYPE, extends(fckit_refcounted_fortran) :: atlas_Config
 
 ! Purpose :
 ! -------

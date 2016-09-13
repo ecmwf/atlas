@@ -2,21 +2,21 @@
 module atlas_haloexchange_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_long, c_float, c_double
-use fckit_array, only : array_stride, array_view1d
-use atlas_object_module, only : atlas_object
+use fckit_array_module, only : array_stride, array_view1d
+use fckit_object_module, only : fckit_object
 
 implicit none
 
 private :: c_ptr, c_long, c_float, c_double
 private :: array_stride, array_view1d
-private :: atlas_object
+private :: fckit_object
 
 public :: atlas_HaloExchange
 
 private
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_object) :: atlas_HaloExchange
+TYPE, extends(fckit_object) :: atlas_HaloExchange
 
 ! Purpose :
 ! -------

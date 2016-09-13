@@ -1,7 +1,7 @@
 
 module atlas_Error_module
 
-use fckit_c_interop , only:  c_str, c_ptr_to_string
+use fckit_c_interop_module , only:  c_str, c_ptr_to_string
 
 implicit none
 private
