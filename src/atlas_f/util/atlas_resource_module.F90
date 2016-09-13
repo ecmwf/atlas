@@ -2,7 +2,7 @@
 module atlas_resource_module
 
 use, intrinsic :: iso_c_binding, only : c_char, c_int, c_long, c_double, c_float, c_ptr
-use fckit_c_interop, only : c_str, c_ptr_to_string
+use fckit_c_interop_module, only : c_str, c_ptr_to_string
 implicit none
 
 private :: c_char, c_int, c_long, c_double, c_float, c_ptr

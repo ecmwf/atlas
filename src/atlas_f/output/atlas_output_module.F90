@@ -4,8 +4,8 @@
 
 module atlas_output_module
 
-use fckit_c_interop, only : c_str
-use atlas_refcounted_module, only : atlas_refcounted
+use fckit_c_interop_module, only : c_str
+use fckit_refcounted_module, only : fckit_refcounted
 use atlas_Config_module, only : atlas_Config
 use atlas_FunctionSpace_module, only: &
     & atlas_FunctionSpace
@@ -24,7 +24,7 @@ private :: atlas_Field
 private :: atlas_FieldSet
 private :: atlas_Mesh
 private :: atlas_Config
-private :: atlas_refcounted
+private :: fckit_refcounted
 
 public :: atlas_Output
 public :: atlas_output_Gmsh
@@ -32,7 +32,7 @@ public :: atlas_output_Gmsh
 private
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_Output
+TYPE, extends(fckit_refcounted) :: atlas_Output
 
 ! Purpose :
 ! -------
@@ -93,7 +93,7 @@ end subroutine atlas_Output__delete
 
 subroutine atlas_Output__copy(this,obj_in)
   class(atlas_Output), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 function atlas_output_Gmsh__pathname_mode(file,mode,coordinates,levels,gather) result(output)

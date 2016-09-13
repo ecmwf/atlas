@@ -4,7 +4,7 @@
 
 module atlas_mesh_actions_module
 
-use fckit_c_interop, only : c_str
+use fckit_c_interop_module, only : c_str
 use atlas_mesh_Nodes_module, only: &
     & atlas_mesh_Nodes
 use atlas_Mesh_module, only: &

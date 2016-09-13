@@ -3,8 +3,8 @@ module atlas_mesh_Nodes_module
 
 
 use, intrinsic :: iso_c_binding, only: c_size_t, c_int, c_ptr
-use fckit_c_interop, only: c_str, c_ptr_to_string, c_ptr_free
-use atlas_refcounted_module, only: atlas_refcounted
+use fckit_c_interop_module, only: c_str, c_ptr_to_string, c_ptr_free
+use fckit_refcounted_module, only: fckit_refcounted
 use atlas_Connectivity_module, only: atlas_Connectivity
 use atlas_Field_module, only: atlas_Field
 use atlas_Metadata_module, only: atlas_Metadata
@@ -13,7 +13,7 @@ implicit none
 
 private :: c_size_t, c_int, c_ptr
 private :: c_str, c_ptr_to_string, c_ptr_free
-private :: atlas_refcounted
+private :: fckit_refcounted
 private :: atlas_Connectivity
 private :: atlas_Field
 
@@ -25,7 +25,7 @@ private
 ! atlas_mesh_Nodes           !
 !-----------------------------
 
-TYPE, extends(atlas_refcounted) :: atlas_mesh_Nodes
+TYPE, extends(fckit_refcounted) :: atlas_mesh_Nodes
 contains
 procedure, public :: size => atlas_mesh_Nodes__size
 procedure, public :: resize
@@ -95,7 +95,7 @@ end subroutine
 
 subroutine atlas_mesh_Nodes__copy(this,obj_in)
   class(atlas_mesh_Nodes), intent(inout) :: this
-  class(atlas_RefCounted),   target, intent(in) :: obj_in
+  class(fckit_refcounted),   target, intent(in) :: obj_in
 end subroutine
 
 function atlas_mesh_Nodes__size(this) result(val)

@@ -2,14 +2,14 @@
 module atlas_ElementType_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_size_t, c_int
-use fckit_c_interop, only : c_ptr_to_string
-use atlas_refcounted_module, only : atlas_refcounted
+use fckit_c_interop_module, only : c_ptr_to_string
+use fckit_refcounted_module, only : fckit_refcounted
 
 implicit none
 
 private :: c_ptr, c_size_t, c_int
 private :: c_ptr_to_string
-private :: atlas_refcounted
+private :: fckit_refcounted
 
 public :: atlas_ElementType
 public :: atlas_Triangle
@@ -23,7 +23,7 @@ private
 ! atlas_ElementType     !
 !-----------------------------
 
-type, extends(atlas_refcounted) :: atlas_ElementType
+type, extends(fckit_refcounted) :: atlas_ElementType
 contains
 ! Public methods
   procedure, public :: copy     => atlas_ElementType__copy
@@ -67,7 +67,7 @@ end subroutine
 
 subroutine atlas_ElementType__copy(this,obj_in)
   class(atlas_ElementType), intent(inout) :: this
-  class(atlas_RefCounted),   target, intent(in) :: obj_in
+  class(fckit_refcounted),   target, intent(in) :: obj_in
 end subroutine
 
 function atlas_ElementType__cptr(cptr) result(this)

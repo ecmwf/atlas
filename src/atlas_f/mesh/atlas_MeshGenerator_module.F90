@@ -3,8 +3,8 @@ module atlas_MeshGenerator_module
 
 
 use, intrinsic :: iso_c_binding, only: c_ptr
-use fckit_c_interop, only: c_str
-use atlas_refcounted_module, only: atlas_refcounted
+use fckit_c_interop_module, only: c_str
+use fckit_refcounted_module, only: fckit_refcounted
 use atlas_Grid_module, only: atlas_Grid
 use atlas_GridDistribution_module, only: atlas_GridDistribution
 use atlas_Mesh_module, only: atlas_Mesh
@@ -14,7 +14,7 @@ implicit none
 
 private :: c_ptr
 private :: c_str
-private :: atlas_refcounted
+private :: fckit_refcounted
 private :: atlas_Grid
 private :: atlas_GridDistribution
 private :: atlas_Mesh
@@ -30,7 +30,7 @@ private
 !-----------------------------!
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_MeshGenerator
+TYPE, extends(fckit_refcounted) :: atlas_MeshGenerator
 
 ! Purpose :
 ! -------
@@ -118,7 +118,7 @@ end subroutine atlas_MeshGenerator__delete
 
 subroutine atlas_MeshGenerator__copy(this,obj_in)
   class(atlas_MeshGenerator), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 function atlas_MeshGenerator__generate(this,grid,distribution) result(mesh)

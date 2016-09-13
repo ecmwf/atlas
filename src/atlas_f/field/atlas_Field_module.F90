@@ -12,17 +12,17 @@ atlas_abort("${string}$",atlas_code_location("atlas_Field_module.F90",${_LINE_}$
 module atlas_field_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
-use fckit_c_interop, only: c_ptr_to_string, c_ptr_free, c_str
-use atlas_refcounted_module, only : atlas_RefCounted
+use fckit_c_interop_module, only: c_ptr_to_string, c_ptr_free, c_str
+use fckit_refcounted_module, only : fckit_refcounted
 use atlas_Config_module, only : atlas_Config
 use atlas_Logging_module, only : atlas_log
 use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange
-use fckit_array, only : array_view1d, array_strides
+use fckit_array_module, only : array_view1d, array_strides
 implicit none
 
 private :: c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
 private :: c_ptr_to_string, c_ptr_free, c_str
-private :: atlas_RefCounted, atlas_Config, atlas_log, atlas_code_location, atlas_abort, atlas_throw_outofrange
+private :: fckit_refcounted, atlas_Config, atlas_log, atlas_code_location, atlas_abort, atlas_throw_outofrange
 
 public :: atlas_Field
 public :: atlas_real
@@ -36,7 +36,7 @@ private
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_refcounted) :: atlas_Field
+TYPE, extends(fckit_refcounted) :: atlas_Field
 
 ! Purpose :
 ! -------
@@ -72,10 +72,7 @@ contains
   procedure :: set_functionspace
 
   procedure, public :: delete => atlas_Field__delete
-  procedure, public :: copy => atlas_Field__copy
-#ifdef FORTRAN_SUPPORTS_FINAL
-  final :: atlas_Field__final
-#endif
+!   procedure, public :: copy => atlas_Field__copy
 
 #:for rank in ranks
 #:for dtype in dtypes
@@ -410,15 +407,6 @@ end function
 
 !-------------------------------------------------------------------------------
 
-#ifdef FORTRAN_SUPPORTS_FINAL
-subroutine atlas_Field__final(this)
-  type(atlas_Field), intent(inout) :: this
-  call this%final()
-end subroutine
-#endif
-
-!-------------------------------------------------------------------------------
-
 subroutine atlas_Field__delete(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
@@ -430,10 +418,10 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Field__copy(this,obj_in)
-  class(atlas_Field), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
-end subroutine
+! subroutine atlas_Field__copy(this,obj_in)
+!   class(atlas_Field), intent(inout) :: this
+!   class(fckit_RefCounted), target, intent(in) :: obj_in
+! end subroutine
 
 !-------------------------------------------------------------------------------
 

@@ -2,19 +2,19 @@
 module atlas_HybridElements_module
 
 !use, intrinsic :: iso_c_binding, only : c_funptr, c_ptr, c_loc, c_f_pointer, c_f_procpointer, c_funloc, c_int, c_size_t
-use atlas_refcounted_module, only: atlas_refcounted
+use fckit_refcounted_module, only: fckit_refcounted
 use atlas_Connectivity_module, only: atlas_MultiBlockConnectivity
 use atlas_Field_module, only: atlas_Field
 use atlas_ElementType_module, only: atlas_ElementType
 use atlas_Elements_module, only: atlas_Elements
 use, intrinsic :: iso_c_binding, only: c_size_t, c_int, c_ptr
-use fckit_c_interop, only: c_str
+use fckit_c_interop_module, only: c_str
 
 implicit none
 
 private :: c_size_t, c_int, c_ptr
 private :: c_str
-private :: atlas_refcounted
+private :: fckit_refcounted
 private :: atlas_MultiBlockConnectivity
 private :: atlas_Field
 private :: atlas_ElementType
@@ -28,7 +28,7 @@ private
 ! atlas_HybridElements       !
 !-----------------------------
 
-type, extends(atlas_refcounted) :: atlas_HybridElements
+type, extends(fckit_refcounted) :: atlas_HybridElements
 contains
 
 ! Public methods
@@ -102,7 +102,7 @@ end subroutine
 
 subroutine atlas_HybridElements__copy(this,obj_in)
   class(atlas_HybridElements), intent(inout) :: this
-  class(atlas_RefCounted),   target, intent(in) :: obj_in
+  class(fckit_refcounted),   target, intent(in) :: obj_in
 end subroutine
 
 function atlas_HybridElements__size(this) result(val)

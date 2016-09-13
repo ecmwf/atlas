@@ -198,7 +198,7 @@ subroutine atlas_init( mpi_comm )
   use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_atlas_c_binding
   use atlas_mpi_module, only :  atlas_mpi_comm_attach_fortran_communicator
-  use fckit_c_interop
+  use fckit_c_interop_module
   integer, save :: argc
   type(c_ptr), save :: argv(15)
   integer, intent(in), optional :: mpi_comm
@@ -211,7 +211,7 @@ subroutine atlas_init( mpi_comm )
 end subroutine
 
 subroutine atlas_finalize()
-  use fckit_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   call atlas__atlas_finalize()
 end subroutine
@@ -220,13 +220,13 @@ end subroutine
 
 function eckit_version()
   use atlas_atlas_c_binding
-  use fckit_c_interop
+  use fckit_c_interop_module
   character(len=40) :: eckit_version
   eckit_version = c_ptr_to_string(atlas__eckit_version())
 end function eckit_version
 
 function eckit_git_sha1()
-  use fckit_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=40) :: eckit_git_sha1
   eckit_git_sha1 = c_ptr_to_string(atlas__eckit_git_sha1())
@@ -235,7 +235,7 @@ end function eckit_git_sha1
 function eckit_git_sha1_abbrev(length)
   use, intrinsic :: iso_c_binding, only: c_int
   use atlas_atlas_c_binding
-  use fckit_c_interop
+  use fckit_c_interop_module
   character(len=40) :: eckit_git_sha1_abbrev
   integer(c_int), optional :: length
   integer(c_int) :: opt_length
@@ -245,21 +245,21 @@ function eckit_git_sha1_abbrev(length)
 end function eckit_git_sha1_abbrev
 
 function atlas_version()
-  use fckit_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=40) :: atlas_version
   atlas_version = c_ptr_to_string(atlas__atlas_version())
 end function atlas_version
 
 function atlas_git_sha1()
-  use fckit_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=40) :: atlas_git_sha1
   atlas_git_sha1 = c_ptr_to_string(atlas__atlas_git_sha1())
 end function atlas_git_sha1
 
 function atlas_git_sha1_abbrev(length)
-  use fckit_c_interop
+  use fckit_c_interop_module
   use, intrinsic :: iso_c_binding, only: c_int
   use atlas_atlas_c_binding
   character(len=40) :: atlas_git_sha1_abbrev
@@ -271,28 +271,28 @@ function atlas_git_sha1_abbrev(length)
 end function atlas_git_sha1_abbrev
 
 function atlas_run_name()
-  use fckit_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=128) :: atlas_run_name
   atlas_run_name = c_ptr_to_string(atlas__run_name())
 end function atlas_run_name
 
 function atlas_display_name()
-  use fckit_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=128) :: atlas_display_name
   atlas_display_name = c_ptr_to_string(atlas__display_name())
 end function atlas_display_name
 
 function atlas_rundir()
-  use fckit_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=128) :: atlas_rundir
   atlas_rundir = c_ptr_to_string(atlas__rundir())
 end function atlas_rundir
 
 function atlas_workdir()
-  use fckit_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=128) :: atlas_workdir
   atlas_workdir = c_ptr_to_string(atlas__workdir())

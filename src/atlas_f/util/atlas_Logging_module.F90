@@ -2,13 +2,13 @@
 module atlas_Logging_module
 
 use, intrinsic :: iso_c_binding, only : c_char, c_int
-use atlas_object_module, only: atlas_object
-use atlas_refcounted_module, only: atlas_refcounted
-use fckit_c_interop, only: c_ptr_to_string, c_str_no_trim, c_str
+use fckit_object_module, only: fckit_object
+use fckit_refcounted_module, only: fckit_refcounted
+use fckit_c_interop_module, only: c_ptr_to_string, c_str_no_trim, c_str
 implicit none
 
 private :: c_char, c_int
-private :: atlas_object
+private :: fckit_object
 
 public :: atlas_log
 
@@ -28,7 +28,7 @@ integer, parameter, public :: ATLAS_LOG_CATEGORY_STATS   = 4
 character(len=4), parameter, private :: default_indent = "    "
 
 
-TYPE, extends(atlas_object) :: atlas_LogChannel
+TYPE, extends(fckit_object) :: atlas_LogChannel
   character(len=1024), public :: msg = ""
   integer, private :: cat
 contains
@@ -73,7 +73,7 @@ end interface
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_object) :: atlas_Logger
+TYPE, extends(fckit_object) :: atlas_Logger
 
 ! Purpose :
 ! -------
@@ -379,7 +379,7 @@ end subroutine
 
 subroutine atlas_LogChannel__copy(this,obj_in)
   class(atlas_LogChannel), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 

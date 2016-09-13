@@ -2,7 +2,7 @@
 module atlas_functionspace_EdgeColumns_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int
-use fckit_c_interop, only : c_str, c_ptr_to_string, c_ptr_free
+use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
 use atlas_FieldSet_module, only: atlas_FieldSet
