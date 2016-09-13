@@ -37,16 +37,12 @@ void atlas_info( std::ostream& out )
   Context::instance().behavior().reconfigure();
   out << "current dir   [" << PathName(rundir()).fullName() << "]\n";
 
-  if( eckit::mpi::comm().size() ) {
+  if( eckit::mpi::comm().size() > 1 ) {
     out << "MPI\n" << runtime::indent();
     out << "communicator  [" << eckit::mpi::comm() << "] \n";
     out << "size          [" << eckit::mpi::comm().size() << "] \n";
     out << "rank          [" << eckit::mpi::comm().rank() << "] \n";
     out << runtime::dedent();
-  }
-  else
-  {
-    out << "MPI           [OFF]\n";
   }
   out << runtime::dedent();
 }
