@@ -34,7 +34,7 @@ contains
     use atlas_mpi_c_binding
     integer :: atlas_mpi_comm
     atlas_mpi_comm = tmp_comm
-    !atlas_mpi_comm_fortran_communicator()
+    call atlas_mpi_init()
   end function atlas_mpi_comm
 
   subroutine atlas_mpi_set_comm(comm)
