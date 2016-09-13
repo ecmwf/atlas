@@ -635,6 +635,7 @@ void dispatch_sum( const NodeColumns& fs, const field::Field& field, std::vector
   const internals::IsGhost is_ghost(fs.nodes());
   const size_t nvar = arr.shape(2);
   std::vector<T> local_sum(nvar,0);
+  result.resize(nvar);
 
   atlas_omp_parallel
   {
