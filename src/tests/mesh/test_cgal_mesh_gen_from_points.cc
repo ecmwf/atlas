@@ -20,7 +20,6 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/generators/Delaunay.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/parallel/mpi/mpi.h"
 
 using namespace atlas;
 using namespace atlas::grid;
