@@ -3,7 +3,7 @@ module atlas_config_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer, c_null_ptr, c_loc
 use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
-use fckit_refcounted_module, only : fckit_refcounted_fortran
+use fckit_refcounted_fortran_module, only : fckit_refcounted_fortran
 
 implicit none
 
