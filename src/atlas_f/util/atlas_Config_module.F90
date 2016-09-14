@@ -2,19 +2,19 @@
 module atlas_config_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer, c_null_ptr, c_loc
-use atlas_c_interop, only : c_str, c_to_f_string_cptr, atlas_free
-use atlas_refcounted_module, only : atlas_RefCounted_Fortran
+use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
+use fckit_refcounted_fortran_module, only : fckit_refcounted_fortran
 
 implicit none
 
-private :: atlas_RefCounted_Fortran
+private :: fckit_refcounted_fortran
 private :: c_ptr, c_int, c_long, c_double, c_float, c_f_pointer, c_null_ptr, c_loc
-private :: c_str, c_to_f_string_cptr, atlas_free
+private :: c_str, c_ptr_to_string, c_ptr_free
 public :: atlas_Config
 
 private
 
-TYPE, extends(atlas_RefCounted_Fortran) :: atlas_Config
+TYPE, extends(fckit_refcounted_fortran) :: atlas_Config
 
 ! Purpose :
 ! -------
@@ -234,7 +234,7 @@ function atlas_Config__get_config_list(this, name, value) result(found)
     do j=1,value_list_size
       call value(j)%reset_c_ptr( value_cptrs(j) )
     enddo
-    if( value_list_allocated == 1 ) call atlas_free(value_list_cptr)
+    if( value_list_allocated == 1 ) call c_ptr_free(value_list_cptr)
   endif
   found = .False.
   if (found_int == 1) found = .True.
@@ -310,8 +310,8 @@ function atlas_Config__get_string(this, name, value) result(found)
   if( found_int == 1 ) then
     if( allocated(value) ) deallocate(value)
     allocate(character(len=value_size) :: value )
-    value = c_to_f_string_cptr(value_cptr)
-    if( value_allocated == 1 ) call atlas_free(value_cptr)
+    value = c_ptr_to_string(value_cptr)
+    if( value_allocated == 1 ) call c_ptr_free(value_cptr)
   endif
   found = .False.
   if (found_int == 1) found = .True.
@@ -371,7 +371,7 @@ function atlas_Config__get_array_int32(this, name, value) result(found)
     if( allocated(value) ) deallocate(value)
     allocate(value(value_size))
     value(:) = value_fptr(:)
-    if( value_allocated == 1 ) call atlas_free(value_cptr)
+    if( value_allocated == 1 ) call c_ptr_free(value_cptr)
   endif
   found = .False.
   if (found_int == 1) found = .True.
@@ -395,7 +395,7 @@ function atlas_Config__get_array_int64(this, name, value) result(found)
     if( allocated(value) ) deallocate(value)
     allocate(value(value_size))
     value(:) = value_fptr(:)
-    if( value_allocated == 1 ) call atlas_free(value_cptr)
+    if( value_allocated == 1 ) call c_ptr_free(value_cptr)
   endif
   found = .False.
   if (found_int == 1) found = .True.
@@ -419,7 +419,7 @@ function atlas_Config__get_array_real32(this, name, value) result(found)
     if( allocated(value) ) deallocate(value)
     allocate(value(value_size))
     value(:) = value_fptr(:)
-    if( value_allocated == 1 ) call atlas_free(value_cptr)
+    if( value_allocated == 1 ) call c_ptr_free(value_cptr)
   endif
   found = .False.
   if (found_int == 1) found = .True.
@@ -443,7 +443,7 @@ function atlas_Config__get_array_real64(this, name, value) result(found)
     if( allocated(value) ) deallocate(value)
     allocate(value(value_size))
     value(:) = value_fptr(:)
-    if( value_allocated == 1 ) call atlas_free(value_cptr)
+    if( value_allocated == 1 ) call c_ptr_free(value_cptr)
   endif
   found = .False.
   if (found_int == 1) found = .True.
@@ -458,8 +458,8 @@ function atlas_Config__json(this) result(json)
   integer(c_int) :: json_allocated
   call atlas__Config__json(this%c_ptr(),json_cptr,json_size,json_allocated)
   allocate(character(len=json_size) :: json )
-  json = c_to_f_string_cptr(json_cptr)
-  if( json_allocated == 1 ) call atlas_free(json_cptr)
+  json = c_ptr_to_string(json_cptr)
+  if( json_allocated == 1 ) call c_ptr_free(json_cptr)
 end function atlas_Config__json
 
 end module atlas_config_module

@@ -8,12 +8,6 @@
 
 if( HAVE_FCTEST )
 
-  add_fctest( TARGET atlas_fctest_refcounting
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_refcounting.F90
-    LIBS            atlas_f
-  )
-
   add_fctest( TARGET atlas_fctest_logging
     MPI             1
     LINKER_LANGUAGE Fortran
@@ -25,13 +19,6 @@ if( HAVE_FCTEST )
     MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_error.F90
-    LIBS            atlas_f
-  )
-
-  add_fctest( TARGET atlas_fctest_value
-    MPI             1
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_value.F90
     LIBS            atlas_f
   )
 

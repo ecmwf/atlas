@@ -2,18 +2,18 @@
 module atlas_Elements_module
 
 !use, intrinsic :: iso_c_binding, only : c_funptr, c_ptr, c_loc, c_f_pointer, c_f_procpointer, c_funloc, c_int, c_size_t
-use atlas_refcounted_module, only: atlas_refcounted
+use fckit_refcounted_module, only: fckit_refcounted
 use atlas_Connectivity_module, only: atlas_BlockConnectivity
 use atlas_ElementType_module, only: atlas_ElementType
 use atlas_Field_module, only: atlas_Field
 use, intrinsic :: iso_c_binding, only: c_size_t, c_int, c_ptr
-use atlas_c_interop, only: c_str
+use fckit_c_interop_module, only: c_str
 
 implicit none
 
 private :: c_size_t, c_int, c_ptr
 private :: c_str
-private :: atlas_refcounted
+private :: fckit_refcounted
 private :: atlas_BlockConnectivity
 private :: atlas_Field
 private :: atlas_ElementType
@@ -26,10 +26,9 @@ private
 ! atlas_Elements        !
 !-----------------------------
 
-type, extends(atlas_refcounted) :: atlas_Elements
+type, extends(fckit_refcounted) :: atlas_Elements
 contains
 ! Public methods
-  procedure, public :: copy     => atlas_Elements__copy
   procedure, public :: delete   => atlas_Elements__delete
 
   procedure, public :: size     => atlas_Elements__size
@@ -84,12 +83,6 @@ subroutine atlas_Elements__delete(this)
   end if
   call this%reset_c_ptr()
 end subroutine
-
-subroutine atlas_Elements__copy(this,obj_in)
-  class(atlas_Elements), intent(inout) :: this
-  class(atlas_RefCounted),   target, intent(in) :: obj_in
-end subroutine
-
 
 function atlas_Elements__size(this) result(val)
   use atlas_elements_c_binding

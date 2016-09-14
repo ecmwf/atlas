@@ -2,8 +2,8 @@
 module atlas_State_module
 
 use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_size_t
-use atlas_c_interop, only: c_str
-use atlas_refcounted_module, only: atlas_refcounted
+use fckit_c_interop_module, only: c_str
+use fckit_refcounted_module, only: fckit_refcounted
 use atlas_Field_module, only: atlas_Field
 use atlas_Config_module, only: atlas_Config
 use atlas_Metadata_module, only: atlas_Metadata
@@ -12,7 +12,7 @@ implicit none
 
 private :: c_ptr, c_int, c_size_t
 private :: c_str
-private :: atlas_refcounted
+private :: fckit_refcounted
 private :: atlas_Field
 private :: atlas_Config
 private :: atlas_Metadata
@@ -28,7 +28,7 @@ private
 ! (C) Copyright 2013-2015 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_State
+TYPE, extends(fckit_refcounted) :: atlas_State
 
 ! Purpose :
 ! -------
@@ -119,7 +119,7 @@ end subroutine
 
 subroutine atlas_State__copy(this,obj_in)
   class(atlas_State), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 

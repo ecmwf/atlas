@@ -3,15 +3,15 @@ module atlas_Grid_module
 
 
 use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_long, c_double, c_size_t, c_f_pointer
-use atlas_c_interop, only: c_str
-use atlas_refcounted_module, only: atlas_refcounted
+use fckit_c_interop_module, only: c_str
+use fckit_refcounted_module, only: fckit_refcounted
 use atlas_Config_module, only: atlas_Config
 
 implicit none
 
 private :: c_ptr, c_int, c_long, c_double, c_size_t, c_f_pointer
 private :: c_str
-private :: atlas_refcounted
+private :: fckit_refcounted
 
 public :: atlas_Grid
 public :: atlas_grid_Structured
@@ -31,7 +31,7 @@ private
 !-----------------------------
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_Grid
+TYPE, extends(fckit_refcounted) :: atlas_Grid
 
 ! Purpose :
 ! -------
@@ -557,7 +557,7 @@ end subroutine
 
 subroutine atlas_Grid__copy(this,obj_in)
   class(atlas_Grid), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 ! ----------------------------------------------------------------------------------------
