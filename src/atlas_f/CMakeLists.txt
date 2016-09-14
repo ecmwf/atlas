@@ -161,7 +161,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/Checksum.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_resource.h)
-# generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_value.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
 
 preprocess_fypp( atlas_f_src field/atlas_Field_module.F90 )
