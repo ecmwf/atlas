@@ -29,6 +29,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/parallel/mpi/mpi.h"
 
+#include "tests/AtlasFixture.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -101,11 +102,6 @@ namespace {
 
 namespace atlas {
 namespace test {
-
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
 
 BOOST_GLOBAL_FIXTURE( MPIFixture );
 

@@ -31,23 +31,20 @@
 #include "atlas/trans/Trans.h"
 #include "transi/trans.h"
 
+#include "tests/AtlasFixture.h"
 
 using namespace eckit;
 
 namespace atlas {
 namespace test {
 
-struct Fixture   {
+struct AtlasTransFixture : public AtlasFixture {
        Fixture() {
-
-         atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                    boost::unit_test::framework::master_test_suite().argv);
          trans_init();
-
        }
+
       ~Fixture() {
          trans_finalize();
-         atlas_finalize();
        }
 };
 
@@ -73,7 +70,7 @@ void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<i
 }
 
 
-BOOST_GLOBAL_FIXTURE( Fixture );
+BOOST_GLOBAL_FIXTURE( AtlasTransFixture );
 
 BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 {

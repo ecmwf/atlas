@@ -31,6 +31,8 @@
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/memory/SharedPtr.h"
 
+#include "tests/AtlasFixture.h"
+
 
 using namespace eckit;
 using namespace atlas::numerics;

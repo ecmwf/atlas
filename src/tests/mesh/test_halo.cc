@@ -32,6 +32,8 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/IsGhost.h"
 
+#include "tests/AtlasFixture.h"
+
 
 using namespace atlas::output;
 using namespace atlas::util;
