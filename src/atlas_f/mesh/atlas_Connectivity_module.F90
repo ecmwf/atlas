@@ -1,20 +1,13 @@
 
 module atlas_connectivity_module
 
-use, intrinsic :: iso_c_binding, only : c_funptr, c_ptr, c_loc, c_f_pointer, c_f_procpointer, c_funloc, c_int, c_size_t
-use fckit_c_interop_module, only : c_str, c_ptr_to_string
+use, intrinsic :: iso_c_binding, only : c_int, c_size_t, c_ptr 
 use fckit_refcounted_module, only : fckit_refcounted
 implicit none
 
-private :: c_funptr
 private :: c_ptr
-private :: c_loc
-private :: c_f_pointer
-private :: c_funloc
 private :: c_int
 private :: c_size_t
-private :: fckit_refcounted
-private :: c_str, c_ptr_to_string
 
 public :: atlas_Connectivity
 public :: atlas_MultiBlockConnectivity
@@ -123,32 +116,28 @@ end type
 ! ----------------------------------------------------------------------------
 interface
     subroutine atlas__connectivity__register_update(This,funptr,ptr) bind(c,name="atlas__connectivity__register_update")
-        import :: c_funptr
-        import :: c_ptr
+        use, intrinsic :: iso_c_binding, only: c_ptr, c_funptr
         type(c_ptr),    value :: This
         type(c_funptr), value :: funptr
         type(c_ptr),    value :: ptr
     end subroutine
 
     subroutine atlas__connectivity__register_delete(This,funptr,ptr) bind(c,name="atlas__connectivity__register_delete")
-        import :: c_funptr
-        import :: c_ptr
+        use, intrinsic :: iso_c_binding, only: c_ptr, c_funptr
         type(c_ptr),    value :: This
         type(c_funptr), value :: funptr
         type(c_ptr),    value :: ptr
     end subroutine
 
     function atlas__connectivity__ctxt_update(This,ptr) bind(c,name="atlas__connectivity__ctxt_update")
-        import ::c_ptr
-        import :: c_int
+        use, intrinsic :: iso_c_binding, only: c_ptr, c_int
         integer(c_int) :: atlas__connectivity__ctxt_update
         type(c_ptr),    value :: This
         type(c_ptr) :: ptr
     end function
 
     function atlas__connectivity__ctxt_delete(This,ptr) bind(c,name="atlas__connectivity__ctxt_delete")
-        import ::c_ptr
-        import :: c_int
+        use, intrinsic :: iso_c_binding, only: c_ptr, c_int
         integer(c_int) :: atlas__connectivity__ctxt_delete
         type(c_ptr),    value :: This
         type(c_ptr) :: ptr
@@ -159,6 +148,7 @@ end interface
 contains
 
 function Connectivity_cptr(cptr) result(this)
+  use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_connectivity_c_binding
   type(atlas_Connectivity) :: this
   type(c_ptr) :: cptr
@@ -168,6 +158,7 @@ end function
 
 function Connectivity_constructor(name) result(this)
   use atlas_connectivity_c_binding
+  use fckit_c_interop_module, only : c_str
   type(atlas_Connectivity) :: this
   character(len=*), intent(in), optional :: name
   this = Connectivity_cptr( atlas__Connectivity__create() )
@@ -201,7 +192,9 @@ subroutine atlas_Connectivity__copy(this,obj_in)
 end subroutine
 
 function atlas_Connectivity__name(this) result(name)
+  use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_connectivity_c_binding
+  use fckit_c_interop_module, only : c_ptr_to_string
   class(atlas_Connectivity), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
@@ -210,6 +203,7 @@ function atlas_Connectivity__name(this) result(name)
 end function
 
 pure function access_value(this,c,r) result(val)
+  use, intrinsic :: iso_c_binding, only : c_int, c_size_t
   integer(c_int) :: val
   class(atlas_ConnectivityAccess), intent(in) :: this
   integer(c_size_t), intent(in) :: r,c
@@ -217,12 +211,14 @@ pure function access_value(this,c,r) result(val)
 end function
 
 pure function access_rows(this) result(val)
+  use, intrinsic :: iso_c_binding, only : c_int
   integer(c_int) :: val
   class(atlas_ConnectivityAccess), intent(in) :: this
   val = this%rows_
 end function
 
 pure function atlas_Connectivity__value_args_size_t(this,c,r) result(val)
+  use, intrinsic :: iso_c_binding, only : c_size_t, c_int
   integer(c_int) :: val
   class(atlas_Connectivity), intent(in) :: this
   integer(c_size_t), intent(in) :: r,c
@@ -230,6 +226,7 @@ pure function atlas_Connectivity__value_args_size_t(this,c,r) result(val)
 end function
 
 pure function atlas_Connectivity__value_args_int(this,c,r) result(val)
+  use, intrinsic :: iso_c_binding, only : c_int
   integer(c_int) :: val
   class(atlas_Connectivity), intent(in) :: this
   integer(c_int), intent(in) :: r,c
@@ -237,6 +234,7 @@ pure function atlas_Connectivity__value_args_int(this,c,r) result(val)
 end function
 
 pure function atlas_Connectivity__rows(this) result(val)
+  use, intrinsic :: iso_c_binding, only : c_size_t
   integer(c_size_t) :: val
   class(atlas_Connectivity), intent(in) :: this
   val = this%access%rows_
@@ -250,6 +248,7 @@ function atlas_Connectivity__missing_value(this) result(val)
 end function
 
 pure function atlas_Connectivity__cols(this,r) result(val)
+  use, intrinsic :: iso_c_binding, only : c_size_t
   integer(c_size_t) :: val
   class(atlas_Connectivity), intent(in) :: this
   integer(c_size_t), intent(in) :: r
@@ -257,18 +256,21 @@ pure function atlas_Connectivity__cols(this,r) result(val)
 end function
 
 pure function atlas_Connectivity__mincols(this) result(val)
+  use, intrinsic :: iso_c_binding, only : c_size_t
   integer(c_size_t) :: val
   class(atlas_Connectivity), intent(in) :: this
   val = this%access%mincols_
 end function
 
 pure function atlas_Connectivity__maxcols(this) result(val)
+  use, intrinsic :: iso_c_binding, only : c_size_t
   integer(c_size_t) :: val
   class(atlas_Connectivity), intent(in) :: this
   val = this%access%maxcols_
 end function
 
 subroutine atlas_Connectivity__padded_data(this, padded, cols)
+  use, intrinsic :: iso_c_binding, only : c_int, c_size_t
   class(atlas_Connectivity), intent(inout) :: this
   integer(c_int), pointer, intent(inout) :: padded(:,:)
   integer(c_size_t), pointer, intent(out), optional :: cols(:)
@@ -278,6 +280,7 @@ subroutine atlas_Connectivity__padded_data(this, padded, cols)
 end subroutine
 
 subroutine atlas_Connectivity__data(this, data, ncols)
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_loc
   class(atlas_Connectivity), intent(in) :: this
   integer(c_int), pointer, intent(out) :: data(:,:)
   integer(c_int), intent(out), optional :: ncols
@@ -297,6 +300,7 @@ end subroutine
 
 
 subroutine atlas_Connectivity__row(this, row_idx, row, cols)
+  use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_Connectivity), intent(in) :: this
   integer(c_int), intent(in) :: row_idx
   integer(c_int), pointer, intent(out) :: row(:)
@@ -307,6 +311,7 @@ end subroutine
 
 subroutine atlas_Connectivity__add_values_args_size_t(this,rows,cols,values)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_size_t, c_int
   class(atlas_Connectivity), intent(in) :: this
   integer(c_size_t) :: rows
   integer(c_size_t) :: cols
@@ -316,6 +321,7 @@ end subroutine
 
 subroutine atlas_Connectivity__add_values_args_int(this,rows,cols,values)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_Connectivity), intent(in) :: this
   integer(c_int) :: rows
   integer(c_int) :: cols
@@ -325,6 +331,7 @@ end subroutine
 
 subroutine atlas_Connectivity__add_missing_args_size_t(this,rows,cols)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_size_t
   class(atlas_Connectivity), intent(in) :: this
   integer(c_size_t) :: rows
   integer(c_size_t) :: cols
@@ -333,6 +340,7 @@ end subroutine
 
 subroutine atlas_Connectivity__add_missing_args_int(this,rows,cols)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_Connectivity), intent(in) :: this
   integer(c_int) :: rows
   integer(c_int) :: cols
@@ -343,6 +351,7 @@ end subroutine
 
 function MultiBlockConnectivity_cptr(cptr) result(this)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr
   type(atlas_MultiBlockConnectivity) :: this
   type(c_ptr) :: cptr
   call this%reset_c_ptr( cptr )
@@ -351,6 +360,7 @@ end function
 
 function MultiBlockConnectivity_constructor(name) result(this)
   use atlas_connectivity_c_binding
+  use fckit_c_interop_module
   type(atlas_MultiBlockConnectivity) :: this
   character(len=*), intent(in), optional :: name
   this = MultiBlockConnectivity_cptr( atlas__MultiBlockConnectivity__create() )
@@ -363,6 +373,7 @@ end function
 
 function atlas_MultiBlockConnectivity__blocks(this) result(val)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_size_t
   integer(c_size_t) :: val
   class(atlas_MultiBlockConnectivity), intent(in) :: this
   val = atlas__MultiBlockConnectivity__blocks(this%c_ptr())
@@ -370,6 +381,7 @@ end function
 
 function atlas_MultiBlockConnectivity__block(this,block_idx) result(block)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_size_t
   type(atlas_BlockConnectivity) :: block
   class(atlas_MultiBlockConnectivity), intent(in) :: this
   integer(c_size_t) :: block_idx
@@ -380,6 +392,7 @@ end function
 
 function BlockConnectivity_cptr(cptr) result(this)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr
   type(atlas_BlockConnectivity) :: this
   type(c_ptr) :: cptr
   call this%reset_c_ptr( cptr )
@@ -401,6 +414,7 @@ end subroutine
 
 subroutine atlas_BlockConnectivity__data(this,data)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_size_t, c_f_pointer
   class(atlas_BlockConnectivity), intent(in) :: this
   integer(c_int), pointer, intent(out) :: data(:,:)
   type(c_ptr) :: data_cptr
@@ -412,6 +426,7 @@ end subroutine
 
 function atlas_BlockConnectivity__rows(this) result(val)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_size_t
   integer(c_size_t) :: val
   class(atlas_BlockConnectivity), intent(in) :: this
   val = atlas__BlockConnectivity__rows(this%c_ptr())
@@ -419,6 +434,7 @@ end function
 
 function atlas_BlockConnectivity__cols(this) result(val)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_size_t
   integer(c_size_t) :: val
   class(atlas_BlockConnectivity), intent(in) :: this
   val = atlas__BlockConnectivity__cols(this%c_ptr())
@@ -426,6 +442,7 @@ end function
 
 function atlas_BlockConnectivity__missing_value(this) result(val)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   integer(c_int) :: val
   class(atlas_BlockConnectivity), intent(in) :: this
   val = atlas__BlockConnectivity__missing_value(this%c_ptr()) + 1
@@ -434,6 +451,7 @@ end function
 !========================================================
 
 subroutine setup_access(connectivity)
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer, c_funloc, c_loc
   class(atlas_Connectivity), intent(inout) :: connectivity
   type(c_ptr) :: ctxt_update
   type(c_ptr) :: ctxt_delete
@@ -455,14 +473,16 @@ subroutine setup_access(connectivity)
 end subroutine
 
 subroutine update_access_c(this_ptr) bind(c)
- type(c_ptr), value :: this_ptr
- type(atlas_ConnectivityAccess), pointer :: this
- call c_f_pointer(this_ptr,this)
- call update_access(this)
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_f_pointer
+  type(c_ptr), value :: this_ptr
+  type(atlas_ConnectivityAccess), pointer :: this
+  call c_f_pointer(this_ptr,this)
+  call update_access(this)
 end subroutine
 
 subroutine update_access(this)
   use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_size_t, c_f_pointer
   type(atlas_ConnectivityAccess), intent(inout) :: this
   integer :: jrow
 
@@ -495,6 +515,7 @@ subroutine update_access(this)
 end subroutine
 
 subroutine update_padded(this)
+  use, intrinsic :: iso_c_binding, only : c_size_t
   class(atlas_ConnectivityAccess), intent(inout) :: this
   integer(c_size_t) :: jrow, jcol
   if( associated(this%padded_) ) deallocate(this%padded_)
@@ -508,16 +529,18 @@ subroutine update_padded(this)
 end subroutine
 
 subroutine delete_access_c(this_ptr) bind(c)
- type(c_ptr), value :: this_ptr
- type(atlas_ConnectivityAccess), pointer :: this
- call c_f_pointer(this_ptr,this)
- call delete_access(this)
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_f_pointer
+  type(c_ptr), value :: this_ptr
+  type(atlas_ConnectivityAccess), pointer :: this
+  call c_f_pointer(this_ptr,this)
+  call delete_access(this)
 end subroutine
 
 subroutine delete_access(this)
+  use, intrinsic :: iso_c_binding, only : c_int
   use atlas_connectivity_c_binding
   type(atlas_ConnectivityAccess), intent(inout) :: this
-  integer :: jrow
+  integer(c_int) :: jrow
   if( associated( this%row ) )    deallocate(this%row)
   if( associated( this%padded_) ) deallocate(this%padded_)
 end subroutine

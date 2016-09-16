@@ -216,6 +216,7 @@ ecbuild_add_library( TARGET atlas_f
         internals/atlas_resource.cc
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
+        internals/atlas_write_to_fortran_unit.F90
 
   PRIVATE_INCLUDES
         ${MPI_Fortran_INCLUDE_PATH}
