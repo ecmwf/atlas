@@ -2,11 +2,11 @@
 module atlas_resource_module
 
 use, intrinsic :: iso_c_binding, only : c_char, c_int, c_long, c_double, c_float, c_ptr
-use atlas_c_interop, only : c_str, c_to_f_string_cptr
+use fckit_c_interop_module, only : c_str, c_ptr_to_string
 implicit none
 
 private :: c_char, c_int, c_long, c_double, c_float, c_ptr
-private :: c_str, c_to_f_string_cptr
+private :: c_str, c_ptr_to_string
 
 public :: atlas_resource
 public :: atlas_resource_set
@@ -96,7 +96,7 @@ subroutine resource_get_string(resource_str,default_value,value)
   character(len=*), intent(out) :: value
   type(c_ptr) :: value_c_str
   value_c_str = atlas__resource_string( c_str(resource_str), c_str(default_value) )
-  value = c_to_f_string_cptr(value_c_str)
+  value = c_ptr_to_string(value_c_str)
 end subroutine
 
 subroutine resource_set_int32(resource_str,value)

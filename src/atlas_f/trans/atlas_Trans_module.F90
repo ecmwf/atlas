@@ -5,9 +5,10 @@ module atlas_Trans_module
 
 
 use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_double, c_f_pointer
-use atlas_c_interop, only: c_str, view1d
-use atlas_object_module, only: atlas_object
-use atlas_refcounted_module, only: atlas_refcounted
+use fckit_c_interop_module, only: c_str
+use fckit_array_module, only: array_view1d
+use fckit_object_module, only: fckit_object
+use fckit_refcounted_module, only: fckit_refcounted
 use atlas_Grid_module, only: atlas_Grid
 use atlas_functionspace_module, only: atlas_Functionspace
 use atlas_field_module, only: atlas_Field
@@ -17,9 +18,9 @@ use atlas_Error_module, only: atlas_code_location, atlas_throw_usererror
 implicit none
 
 private :: c_ptr, c_int, c_double, c_f_pointer
-private :: c_str, view1d
-private :: atlas_refcounted
-private :: atlas_object
+private :: c_str, array_view1d
+private :: fckit_refcounted
+private :: fckit_object
 private :: atlas_Grid
 private :: atlas_Field
 private :: atlas_FieldSet
@@ -36,7 +37,7 @@ private
 !-----------------------------
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_Trans
+TYPE, extends(fckit_refcounted) :: atlas_Trans
 
 ! Purpose :
 ! -------
@@ -116,7 +117,7 @@ end interface
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(atlas_object) :: atlas_TransParameters
+TYPE, extends(fckit_object) :: atlas_TransParameters
 
 ! Purpose :
 ! -------
@@ -202,7 +203,7 @@ end subroutine
 
 subroutine atlas_Trans__copy(this,obj_in)
   class(atlas_Trans), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 
@@ -220,7 +221,7 @@ end subroutine
 
 subroutine atlas_TransParameters__copy(this,obj_in)
   class(atlas_TransParameters), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 function atlas_Trans__handle( this ) result(handle)
@@ -913,8 +914,8 @@ subroutine atlas_Trans__gathspec_r2(this, local, global)
 #ifdef ATLAS_HAVE_TRANS
   integer :: destination(size(local,1))
   destination(:) = 1
-  local_view => view1d(local)
-  global_view => view1d(global)
+  local_view => array_view1d(local)
+  global_view => array_view1d(global)
   call atlas__Trans__gathspec(this%c_ptr(), size(local,1), destination, local_view, global_view )
 #else
   THROW_ERROR
