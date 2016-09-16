@@ -22,6 +22,10 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/parallel/HaloExchange.h"
 
+
+#include "tests/AtlasFixture.h"
+
+
 /// POD: Type to test
 typedef double POD;
 
@@ -33,11 +37,6 @@ std::vector<T> vec( const T (&list)[N] )
 {
   return std::vector<T>(list,list+N);
 }
-
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
 
 struct Fixture {
   Fixture()

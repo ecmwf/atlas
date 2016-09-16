@@ -22,7 +22,7 @@
 #include "atlas/internals/AtlasTool.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Resource.h"
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/memory/Factory.h"
 #include "eckit/memory/Builder.h"

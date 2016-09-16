@@ -13,7 +13,7 @@
 
 #include "atlas/internals/atlas_config.h"
 
-#define BOOST_TEST_MODULE test_atlas_io
+#define BOOST_TEST_MODULE atlas_test_pointcloud
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/memory/ScopedPtr.h"
@@ -29,12 +29,11 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/parallel/mpi/mpi.h"
 
+#include "tests/AtlasFixture.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
-
 namespace {
-
 
   namespace test_arrays {
 
@@ -52,7 +51,6 @@ namespace {
     const char   *fnames [] = { " f_1  ", "f    2 " };
 
   }
-
 
   namespace test_vectors {
 
@@ -101,11 +99,6 @@ namespace {
 
 namespace atlas {
 namespace test {
-
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
 
 BOOST_GLOBAL_FIXTURE( MPIFixture );
 

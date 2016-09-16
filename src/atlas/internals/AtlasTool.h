@@ -15,11 +15,9 @@
 #include <iostream>
 
 #include "atlas/atlas.h"
-#include "atlas/runtime/Behavior.h"
 #include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
-#include "eckit/runtime/Context.h"
-#include "eckit/mpi/ParallelContextBehavior.h"
+#include "eckit/runtime/Main.h"
 #include "eckit/option/CmdArgs.h"
 #include "eckit/option/SimpleOption.h"
 #include "eckit/option/Separator.h"
@@ -88,10 +86,10 @@ protected:
 
   bool handle_help()
   {
-    for( int i=1; i<eckit::Context::instance().argc(); ++i )
+    for( int i=1; i<argc(); ++i )
     {
-      if( eckit::Context::instance().argv(i) == "--help" ||
-          eckit::Context::instance().argv(i) == "-h"     )
+      if( argv(i) == "--help" ||
+          argv(i) == "-h"     )
       {
         if( eckit::mpi::rank() == 0 )
           help();
@@ -106,7 +104,7 @@ protected:
     if( handle_help() )
       return;
 
-    if( eckit::Context::instance().argc()-1 < minimumPositionalArguments() )
+    if( argc()-1 < minimumPositionalArguments() )
     {
       Log::info() << "Usage: " << usage() << std::endl;
       return;
@@ -117,14 +115,14 @@ protected:
         numberOfPositionalArguments(),
         minimumPositionalArguments());
 
-    long debug(0);
-    const char* env_debug = ::getenv("DEBUG");
-    if( env_debug ) debug = ::atol(env_debug);
-    args.get("debug",debug);
+    // long debug(0);
+    // const char* env_debug = ::getenv("DEBUG");
+    // if( env_debug ) debug = ::atol(env_debug);
+    // args.get("debug",debug);
 
-    if( not serial() )
-      eckit::Context::instance().behavior( new atlas::runtime::Behavior() );
-    eckit::Context::instance().debug(debug);
+    // if( not serial() )
+    //   behavior( new atlas::runtime::Behavior() );
+    // debug(debug);
 
     atlas_init();
     execute(args);
@@ -137,7 +135,6 @@ public:
 
   AtlasTool(int argc,char **argv): eckit::Tool(argc,argv)
   {
-    eckit::Context::instance().behavior( new eckit::mpi::ParallelContextBehavior() );
     add_option( new SimpleOption<bool>("help","Print this help") );
     add_option( new SimpleOption<long>("debug","Debug level") );
   }

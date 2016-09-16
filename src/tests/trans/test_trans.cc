@@ -28,27 +28,23 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/LogFormat.h"
 #include "atlas/trans/Trans.h"
 #include "transi/trans.h"
 
+#include "tests/AtlasFixture.h"
 
 using namespace eckit;
 
 namespace atlas {
 namespace test {
 
-struct Fixture   {
-       Fixture() {
-
-         atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                    boost::unit_test::framework::master_test_suite().argv);
+struct AtlasTransFixture : public AtlasFixture {
+       AtlasTransFixture() {
          trans_init();
-
        }
-      ~Fixture() {
+
+      ~AtlasTransFixture() {
          trans_finalize();
-         atlas_finalize();
        }
 };
 
@@ -74,7 +70,7 @@ void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<i
 }
 
 
-BOOST_GLOBAL_FIXTURE( Fixture );
+BOOST_GLOBAL_FIXTURE( AtlasTransFixture );
 
 BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 {

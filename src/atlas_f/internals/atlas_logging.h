@@ -1,8 +1,8 @@
 #ifndef atlas_fortran_atlas_logging_h
 #define atlas_fortran_atlas_logging_h
 
-#include "eckit/log/MultiChannel.h"
-typedef eckit::MultiChannel AtlasChannel;
+#include "eckit/log/Channel.h"
+typedef eckit::Channel AtlasChannel;
 
 extern "C"
 {

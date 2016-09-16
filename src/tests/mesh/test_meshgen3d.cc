@@ -20,6 +20,8 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/parallel/mpi/mpi.h"
 
+#include "tests/AtlasFixture.h"
+
 
 using namespace atlas::output;
 using namespace atlas::mesh::generators;
@@ -27,13 +29,8 @@ using namespace atlas::mesh::generators;
 namespace atlas {
 namespace test {
 
-struct GlobalFixture {
-    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                  boost::unit_test::framework::master_test_suite().argv); }
-    ~GlobalFixture() { atlas_finalize(); }
-};
 
-BOOST_GLOBAL_FIXTURE( GlobalFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_create_mesh )
 {

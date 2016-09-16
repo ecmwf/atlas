@@ -14,7 +14,7 @@
 
 #include "atlas/internals/atlas_config.h"
 
-#define BOOST_TEST_MODULE test_elements
+#define BOOST_TEST_MODULE atlas_test_elements
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/memory/ScopedPtr.h"
@@ -31,6 +31,9 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/Grid.h"
 
+#include "tests/AtlasFixture.h"
+
+
 // ------------------------------------------------------------------
 
 using namespace atlas::mesh;
@@ -44,13 +47,8 @@ namespace test {
 //                               BEGIN TESTS
 // ===================================================================
 
-struct GlobalFixture {
-    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                  boost::unit_test::framework::master_test_suite().argv); }
-    ~GlobalFixture() { atlas_finalize(); }
-};
 
-BOOST_GLOBAL_FIXTURE( GlobalFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( hybrid_elements )
 {

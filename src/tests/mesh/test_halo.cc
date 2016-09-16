@@ -32,6 +32,8 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/IsGhost.h"
 
+#include "tests/AtlasFixture.h"
+
 
 using namespace atlas::output;
 using namespace atlas::util;
@@ -59,11 +61,6 @@ double dual_volume(mesh::Mesh& mesh)
   return area;
 }
 
-
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
 
 BOOST_GLOBAL_FIXTURE( MPIFixture );
 
