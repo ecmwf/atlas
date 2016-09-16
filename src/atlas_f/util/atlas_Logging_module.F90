@@ -1,4 +1,3 @@
-
 module atlas_Logging_module
 
 use, intrinsic :: iso_c_binding, only : c_char, c_int

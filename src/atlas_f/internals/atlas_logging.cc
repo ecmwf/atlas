@@ -32,21 +32,10 @@ void atlas__log_debug(int lvl, char *msg, int endl, int flush)
     atlas::Log::debug() << std::flush;
 }
 
-void atlas__log_cat(int cat, int lvl, char *msg, int endl, int flush)
-{
-  NOTIMP;
-  // atlas::Log::channel(cat) << msg;
-  // if( endl )
-  //   atlas::Log::channel(cat) << std::endl;
-  // else if ( flush )
-  // atlas::Log::channel(cat) << std::flush;
-}
-
 // ----------------------------------------------------------------------------
 
 Channel& atlas__get_log_channel(int cat)
 {
-  NOTIMP;
   // Channel& ch = atlas::Log::channel(cat);
   // Channel* mc = dynamic_cast< Channel* > (&ch);
   // if( !mc )
@@ -54,6 +43,14 @@ Channel& atlas__get_log_channel(int cat)
   //                 "so I cannot connect fortran unit to it. "
   //                 "Did you forget to call atlas_init()?",Here());
   // return *mc;
+
+  eckit::Channel& channel =
+      cat == 0 ? atlas::Log::error() :
+      cat == 1 ? atlas::Log::warning() :
+      cat == 2 ? atlas::Log::info() :
+      cat == 3 ? atlas::Log::debug() :
+      atlas::Log::info() ;
+  return channel;
 }
 
 // ----------------------------------------------------------------------------
@@ -61,6 +58,18 @@ Channel& atlas__get_log_channel(int cat)
 Channel* atlas__LogChannel_cat(int cat)
 {
   return &atlas__get_log_channel(cat);
+}
+
+// ----------------------------------------------------------------------------
+
+void atlas__log_cat(int cat, int lvl, char *msg, int endl, int flush)
+{
+  Channel& channel = atlas__get_log_channel(cat);
+  channel << msg;
+  if( endl )
+    channel << std::endl;
+  else if ( flush )
+    channel << std::flush;
 }
 
 // ----------------------------------------------------------------------------

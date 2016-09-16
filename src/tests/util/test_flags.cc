@@ -15,11 +15,14 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/internals/Bitflags.h"
+#include "tests/AtlasFixture.h"
 
 using atlas::internals::Bitflags;
 
 namespace atlas {
 namespace test {
+
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_Flags )
 {

@@ -14,6 +14,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
+#include "tests/AtlasFixture.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define IN_FORTRAN
@@ -34,6 +35,7 @@ std::string pos(Iterator& it)
   return ss.str();
 }
 
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_array )
 {
