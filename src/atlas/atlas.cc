@@ -11,9 +11,36 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 
-using namespace eckit;
+using eckit::PathName;
+using eckit::Main;
+using eckit::LocalPathName;
 
 namespace atlas {
+
+class Environment {
+private:
+  Environment()
+  {
+    eckit::mpi::init( Main::instance().argc(), Main::instance().argv() );
+  }
+
+  ~Environment()
+  {
+    eckit::mpi::finalize();
+  }
+
+public:
+  static Environment& setupMPI()
+  {
+    static Environment env;
+    return env;
+  }
+
+  static bool usingMPI() {
+      return (::getenv("OMPI_COMM_WORLD_SIZE") || ::getenv("ALPS_APP_PE"));
+  }
+
+};
 
 std::string rundir()
 {
@@ -57,6 +84,13 @@ void atlas_init()
 
 void atlas_init(const eckit::Parametrisation&)
 {
+  Environment::setupMPI();
+  if( eckit::mpi::rank() > 0 ) {
+    Log::info().reset();
+    Log::debug().reset();
+    Log::warning().reset();
+  }
+
   atlas_info( Log::debug() );
 
   // Load factories for static linking
@@ -68,7 +102,7 @@ void atlas_init(const eckit::Parametrisation&)
 // This is only to be used from Fortran or unit-tests
 void atlas_init(int argc, char** argv)
 {
-  Main::instance().initialise(argc, argv);
+  Main::initialise(argc, argv);
   atlas_init();
 }
 
