@@ -1,14 +1,12 @@
 
 module atlas_config_module
 
-use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer, c_null_ptr, c_loc
 use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
 use fckit_refcounted_fortran_module, only : fckit_refcounted_fortran
 
 implicit none
 
 private :: fckit_refcounted_fortran
-private :: c_ptr, c_int, c_long, c_double, c_float, c_f_pointer, c_null_ptr, c_loc
 private :: c_str, c_ptr_to_string, c_ptr_free
 public :: atlas_Config
 
@@ -138,6 +136,7 @@ end subroutine atlas_Config__set_config
 
 subroutine atlas_Config__set_config_list(this, name, value)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_loc
   class(atlas_Config), intent(inout) :: this
   character(len=*), intent(in) :: name
   class(atlas_Config), intent(in) :: value(:)
@@ -150,6 +149,7 @@ subroutine atlas_Config__set_config_list(this, name, value)
     call atlas__Config__set_config_list(this%c_ptr(), c_str(name), c_loc(value_cptrs(1)), size(value_cptrs) )
   endif
 end subroutine atlas_Config__set_config_list
+
 
 subroutine atlas_Config__set_logical(this, name, value)
   use atlas_Config_c_binding
@@ -175,6 +175,7 @@ end subroutine atlas_Config__set_int32
 
 subroutine atlas_Config__set_real32(this, name, value)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float
   class(atlas_Config), intent(inout) :: this
   character(len=*), intent(in) :: name
   real(c_float), intent(in) :: value
@@ -183,6 +184,7 @@ end subroutine atlas_Config__set_real32
 
 subroutine atlas_Config__set_real64(this, name, value)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
   class(atlas_Config), intent(inout) :: this
   character(len=*), intent(in) :: name
   real(c_double), intent(in) :: value
@@ -214,6 +216,7 @@ end function atlas_Config__get_config
 
 function atlas_Config__get_config_list(this, name, value) result(found)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_f_pointer, c_null_ptr
   logical :: found
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -274,6 +277,7 @@ end function atlas_Config__get_int32
 
 function atlas_Config__get_real32(this, name, value) result(found)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float
   logical :: found
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -286,6 +290,7 @@ end function atlas_Config__get_real32
 
 function atlas_Config__get_real64(this, name, value) result(found)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
   logical :: found
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -298,6 +303,7 @@ end function atlas_Config__get_real64
 
 function atlas_Config__get_string(this, name, value) result(found)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int
   logical :: found
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -319,6 +325,7 @@ end function atlas_Config__get_string
 
 subroutine atlas_Config__set_array_int32(this, name, value)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
   integer(c_int), intent(in) :: value(:)
@@ -328,6 +335,7 @@ end subroutine atlas_Config__set_array_int32
 
 subroutine atlas_Config__set_array_int64(this, name, value)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
   integer(c_long), intent(in) :: value(:)
@@ -337,6 +345,7 @@ end subroutine atlas_Config__set_array_int64
 
 subroutine atlas_Config__set_array_real32(this, name, value)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
   real(c_float), intent(in) :: value(:)
@@ -346,6 +355,7 @@ end subroutine atlas_Config__set_array_real32
 
 subroutine atlas_Config__set_array_real64(this, name, value)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
   real(c_double), intent(in) :: value(:)
@@ -355,6 +365,7 @@ end subroutine atlas_Config__set_array_real64
 
 function atlas_Config__get_array_int32(this, name, value) result(found)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer
   logical :: found
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -379,6 +390,7 @@ end function atlas_Config__get_array_int32
 
 function atlas_Config__get_array_int64(this, name, value) result(found)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long, c_ptr, c_f_pointer
   logical :: found
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -403,6 +415,7 @@ end function atlas_Config__get_array_int64
 
 function atlas_Config__get_array_real32(this, name, value) result(found)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_ptr, c_f_pointer
   logical :: found
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -427,6 +440,7 @@ end function atlas_Config__get_array_real32
 
 function atlas_Config__get_array_real64(this, name, value) result(found)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_ptr, c_f_pointer
   logical :: found
   class(atlas_Config), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -451,6 +465,7 @@ end function atlas_Config__get_array_real64
 
 function atlas_Config__json(this) result(json)
   use atlas_Config_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int
   character(len=:), allocatable :: json
   class(atlas_Config), intent(in) :: this
   type(c_ptr) :: json_cptr

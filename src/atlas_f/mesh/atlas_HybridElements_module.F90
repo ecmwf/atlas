@@ -1,7 +1,6 @@
 
 module atlas_HybridElements_module
 
-!use, intrinsic :: iso_c_binding, only : c_funptr, c_ptr, c_loc, c_f_pointer, c_f_procpointer, c_funloc, c_int, c_size_t
 use fckit_refcounted_module, only: fckit_refcounted
 use atlas_Connectivity_module, only: atlas_MultiBlockConnectivity
 use atlas_Field_module, only: atlas_Field

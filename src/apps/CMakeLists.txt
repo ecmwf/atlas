@@ -38,5 +38,6 @@ ecbuild_add_executable(
   TARGET      atlas-numerics-nabla
   SOURCES     atlas-numerics-nabla.F90
   LIBS        atlas_f
+  LINKER_LANGUAGE Fortran
   CONDITION   HAVE_FORTRAN )
 

@@ -2,14 +2,14 @@
 module atlas_Grid_module
 
 
-use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_long, c_double, c_size_t, c_f_pointer
+use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_long, c_double, c_size_t
 use fckit_c_interop_module, only: c_str
 use fckit_refcounted_module, only: fckit_refcounted
 use atlas_Config_module, only: atlas_Config
 
 implicit none
 
-private :: c_ptr, c_int, c_long, c_double, c_size_t, c_f_pointer
+private :: c_ptr, c_int, c_long, c_double, c_size_t
 private :: c_str
 private :: fckit_refcounted
 
@@ -483,12 +483,13 @@ end function
 
 function Structured__pl(this) result(nlon)
   use atlas_grid_Structured_c_binding
+  use, intrinsic :: iso_c_binding , only : c_long, c_ptr, c_size_t, c_f_pointer
   class(atlas_grid_Structured), intent(in) :: this
   integer(c_long), pointer                 :: nlon(:)
   type   (c_ptr)                           :: nlon_c_ptr
   integer(c_size_t)                        :: nlon_size
   call atlas__grid__Structured__pl(this%c_ptr(), nlon_c_ptr, nlon_size)
-  call C_F_POINTER (nlon_c_ptr , nlon , (/nlon_size/))
+  call c_f_pointer(nlon_c_ptr , nlon , (/nlon_size/))
 end function
 
 function Structured__nlonmax(this) result(nlonmax)
@@ -515,13 +516,14 @@ end function
 
 function Structured__latitudes(this) result(lat)
   use atlas_grid_Structured_c_binding
+  use, intrinsic :: iso_c_binding , only : c_double, c_ptr, c_size_t, c_f_pointer
   class(atlas_grid_Structured), intent(in) :: this
   real   (c_double)       , pointer    :: lat(:)
   type   (c_ptr)                       :: lat_c_ptr
   integer(c_size_t)                    :: lat_size
   call atlas__grid__Structured__latitudes(this%c_ptr(), &
       & lat_c_ptr, lat_size)
-  call C_F_POINTER (lat_c_ptr, lat, (/lat_size/))
+  call c_f_pointer (lat_c_ptr, lat, (/lat_size/))
 end function
 
 function Structured__lon(this, jlat, jlon) result(lon)

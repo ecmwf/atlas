@@ -4,7 +4,6 @@
 module atlas_Trans_module
 
 
-use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_double, c_f_pointer
 use fckit_c_interop_module, only: c_str
 use fckit_array_module, only: array_view1d
 use fckit_object_module, only: fckit_object
@@ -17,7 +16,6 @@ use atlas_Error_module, only: atlas_code_location, atlas_throw_usererror
 
 implicit none
 
-private :: c_ptr, c_int, c_double, c_f_pointer
 private :: c_str, array_view1d
 private :: fckit_refcounted
 private :: fckit_object
@@ -406,13 +404,14 @@ end function
 
 function atlas_Trans__nloen(this) result(nloen)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nloen(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nloen_c_ptr
   integer(c_int) :: size
 #ifdef ATLAS_HAVE_TRANS
   nloen_c_ptr =  atlas__Trans__nloen(this%c_ptr(), size)
-  call C_F_POINTER ( nloen_c_ptr , nloen , (/size/) )
+  call c_f_pointer ( nloen_c_ptr , nloen , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nloen) ) then
@@ -423,13 +422,14 @@ end function atlas_Trans__nloen
 
 function atlas_Trans__n_regions(this) result(n_regions)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: n_regions(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: n_regions_c_ptr
   integer(c_int) :: size
 #ifdef ATLAS_HAVE_TRANS
   n_regions_c_ptr =  atlas__Trans__n_regions(this%c_ptr(), size)
-  call C_F_POINTER ( n_regions_c_ptr , n_regions , (/size/) )
+  call c_f_pointer ( n_regions_c_ptr , n_regions , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(n_regions) ) then
@@ -441,13 +441,14 @@ end function atlas_Trans__n_regions
 
 function atlas_Trans__nfrstlat(this) result(nfrstlat)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nfrstlat(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nfrstlat_c_ptr
   integer(c_int) :: size
 #ifdef ATLAS_HAVE_TRANS
   nfrstlat_c_ptr =  atlas__Trans__nfrstlat(this%c_ptr(), size)
-  call C_F_POINTER ( nfrstlat_c_ptr , nfrstlat , (/size/) )
+  call c_f_pointer ( nfrstlat_c_ptr , nfrstlat , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nfrstlat) ) then
@@ -458,13 +459,14 @@ end function atlas_Trans__nfrstlat
 
 function atlas_Trans__nlstlat(this) result(nlstlat)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_f_pointer
   integer(c_int), pointer :: nlstlat(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nlstlat_c_ptr
   integer(c_int) :: size
 #ifdef ATLAS_HAVE_TRANS
   nlstlat_c_ptr =  atlas__Trans__nlstlat(this%c_ptr(), size)
-  call C_F_POINTER ( nlstlat_c_ptr , nlstlat , (/size/) )
+  call c_f_pointer ( nlstlat_c_ptr , nlstlat , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nlstlat) ) then
@@ -476,13 +478,14 @@ end function atlas_Trans__nlstlat
 
 function atlas_Trans__nptrfrstlat(this) result(nptrfrstlat)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nptrfrstlat(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nptrfrstlat_c_ptr
   integer(c_int) :: size
 #ifdef ATLAS_HAVE_TRANS
   nptrfrstlat_c_ptr =  atlas__Trans__nptrfrstlat(this%c_ptr(), size)
-  call C_F_POINTER ( nptrfrstlat_c_ptr , nptrfrstlat , (/size/) )
+  call c_f_pointer ( nptrfrstlat_c_ptr , nptrfrstlat , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nptrfrstlat) ) then
@@ -494,6 +497,7 @@ end function atlas_Trans__nptrfrstlat
 
 function atlas_Trans__nsta(this) result(nsta)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nsta(:,:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nsta_c_ptr
@@ -501,7 +505,7 @@ function atlas_Trans__nsta(this) result(nsta)
   integer(c_int) :: sizef2
 #ifdef ATLAS_HAVE_TRANS
   nsta_c_ptr =  atlas__Trans__nsta(this%c_ptr(), sizef2, sizef1)
-  call C_F_POINTER ( nsta_c_ptr , nsta , (/sizef1,sizef2/) )
+  call c_f_pointer ( nsta_c_ptr , nsta , (/sizef1,sizef2/) )
 #else
   THROW_ERROR
   if ( .not. associated(nsta) ) then
@@ -512,6 +516,7 @@ end function atlas_Trans__nsta
 
 function atlas_Trans__nonl(this) result(nonl)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nonl(:,:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nonl_c_ptr
@@ -519,7 +524,7 @@ function atlas_Trans__nonl(this) result(nonl)
   integer(c_int) :: sizef2
 #ifdef ATLAS_HAVE_TRANS
   nonl_c_ptr =  atlas__Trans__nonl(this%c_ptr(), sizef2, sizef1)
-  call C_F_POINTER ( nonl_c_ptr , nonl , (/sizef1,sizef2/) )
+  call c_f_pointer ( nonl_c_ptr , nonl , (/sizef1,sizef2/) )
 #else
   THROW_ERROR
   if ( .not. associated(nonl) ) then
@@ -531,13 +536,14 @@ end function atlas_Trans__nonl
 
 function atlas_Trans__nmyms(this) result(nmyms)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nmyms(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nmyms_c_ptr
   integer(c_int) :: size
 #ifdef ATLAS_HAVE_TRANS
   nmyms_c_ptr =  atlas__Trans__nptrfrstlat(this%c_ptr(), size)
-  call C_F_POINTER ( nmyms_c_ptr , nmyms , (/size/) )
+  call c_f_pointer ( nmyms_c_ptr , nmyms , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nmyms) ) then
@@ -548,13 +554,14 @@ end function atlas_Trans__nmyms
 
 function atlas_Trans__nasm0(this) result(nasm0)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nasm0(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nasm0_c_ptr
   integer(c_int) :: size
 #ifdef ATLAS_HAVE_TRANS
   nasm0_c_ptr =  atlas__Trans__nasm0(this%c_ptr(), size)
-  call C_F_POINTER ( nasm0_c_ptr , nasm0 , (/size/) )
+  call c_f_pointer ( nasm0_c_ptr , nasm0 , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nasm0) ) then
@@ -565,13 +572,14 @@ end function atlas_Trans__nasm0
 
 function atlas_Trans__nvalue(this) result(nvalue)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nvalue(:)
   class(atlas_Trans), intent(in) :: this
   type(c_ptr) :: nvalue_c_ptr
   integer(c_int) :: size
 #ifdef ATLAS_HAVE_TRANS
   nvalue_c_ptr =  atlas__Trans__nvalue(this%c_ptr(), size)
-  call C_F_POINTER ( nvalue_c_ptr , nvalue , (/size/) )
+  call c_f_pointer ( nvalue_c_ptr , nvalue , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nvalue) ) then
@@ -895,6 +903,7 @@ end subroutine atlas_Trans__invtrans_vordiv2wind_field
 
 subroutine atlas_Trans__gathspec_r1(this, local, global)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:)
   real(c_double), intent(inout) :: global(:)
@@ -907,6 +916,7 @@ end subroutine atlas_Trans__gathspec_r1
 
 subroutine atlas_Trans__gathspec_r2(this, local, global)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:,:)
   real(c_double), intent(inout) :: global(:,:)
