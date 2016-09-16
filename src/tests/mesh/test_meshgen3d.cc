@@ -29,11 +29,6 @@ using namespace atlas::mesh::generators;
 namespace atlas {
 namespace test {
 
-struct AtlasFixture {
-    AtlasFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                  boost::unit_test::framework::master_test_suite().argv); }
-    ~AtlasFixture() { atlas_finalize(); }
-};
 
 BOOST_GLOBAL_FIXTURE( AtlasFixture );
 

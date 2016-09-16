@@ -63,6 +63,7 @@ double dual_volume(mesh::Mesh& mesh)
   return area;
 }
 
+BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 #if 0
 BOOST_AUTO_TEST_CASE( test_small )

@@ -9,7 +9,7 @@
  */
 
 
-#define BOOST_TEST_MODULE test_atlas_geometry
+#define BOOST_TEST_MODULE atlas_test_geometry
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/geometry/Point3.h"

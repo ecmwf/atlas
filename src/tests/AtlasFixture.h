@@ -9,6 +9,9 @@
  */
 
 #include "eckit/testing/Setup.h"
+#include "eckit/mpi/mpi.h"
+
+#include "atlas/atlas.h"
 
 namespace atlas {
 namespace test {
@@ -21,7 +24,7 @@ struct AtlasFixture : public eckit::testing::Setup {
 };
 
 
-struct MPIFixture {
+struct MPIFixture : public eckit::testing::Setup {
     MPIFixture()  { eckit::mpi::init(); }
     ~MPIFixture() { eckit::mpi::finalize(); }
 };

@@ -14,7 +14,7 @@
 
 #include "atlas/internals/atlas_config.h"
 
-#define BOOST_TEST_MODULE test_elements
+#define BOOST_TEST_MODULE atlas_test_elements
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/memory/ScopedPtr.h"
@@ -47,11 +47,6 @@ namespace test {
 //                               BEGIN TESTS
 // ===================================================================
 
-struct AtlasFixture {
-    AtlasFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                  boost::unit_test::framework::master_test_suite().argv); }
-    ~AtlasFixture() { atlas_finalize(); }
-};
 
 BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
