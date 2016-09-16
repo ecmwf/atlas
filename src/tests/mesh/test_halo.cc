@@ -62,11 +62,6 @@ double dual_volume(mesh::Mesh& mesh)
 }
 
 
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
-
 BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 #if 0

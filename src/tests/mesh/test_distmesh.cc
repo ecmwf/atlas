@@ -63,15 +63,6 @@ double dual_volume(mesh::Mesh& mesh)
   return area;
 }
 
-struct MPIFixture : public eckit::testing::Setup {
-     MPIFixture()  {
-       atlas_init(
-             boost::unit_test::framework::master_test_suite().argc,
-             boost::unit_test::framework::master_test_suite().argv);
-     }
-    ~MPIFixture()  { atlas_finalize(); }
-};
-
 BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )

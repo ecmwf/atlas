@@ -30,14 +30,7 @@
 namespace atlas {
 namespace test {
 
-struct AtlasFixture : public eckit::testing::Setup {
-    AtlasFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                 boost::unit_test::framework::master_test_suite().argv); }
-    ~AtlasFixture() { atlas_finalize(); }
-};
-
 BOOST_GLOBAL_FIXTURE( AtlasFixture );
-
 
 BOOST_AUTO_TEST_CASE( test_gmsh_output )
 {

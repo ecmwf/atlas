@@ -39,11 +39,11 @@ namespace atlas {
 namespace test {
 
 struct AtlasTransFixture : public AtlasFixture {
-       Fixture() {
+       AtlasTransFixture() {
          trans_init();
        }
 
-      ~Fixture() {
+      ~AtlasTransFixture() {
          trans_finalize();
        }
 };

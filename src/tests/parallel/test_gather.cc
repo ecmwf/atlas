@@ -37,11 +37,6 @@ std::vector<T> vec( const T (&list)[N] )
   return std::vector<T>(list,list+N);
 }
 
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
-
 struct Fixture {
   Fixture()
   {

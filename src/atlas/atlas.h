@@ -2,6 +2,7 @@
 #define atlas_atlas_h
 
 #include <iosfwd>
+
 #include "atlas/internals/atlas_config.h"
 
 // Forward declarations

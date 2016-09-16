@@ -13,7 +13,7 @@
 
 #include "atlas/internals/atlas_config.h"
 
-#define BOOST_TEST_MODULE test_atlas_io
+#define BOOST_TEST_MODULE atlas_test_pointcloud
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/memory/ScopedPtr.h"
@@ -33,9 +33,7 @@
 
 //----------------------------------------------------------------------------------------------------------------------
 
-
 namespace {
-
 
   namespace test_arrays {
 
@@ -53,7 +51,6 @@ namespace {
     const char   *fnames [] = { " f_1  ", "f    2 " };
 
   }
-
 
   namespace test_vectors {
 
