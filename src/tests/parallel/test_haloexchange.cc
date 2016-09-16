@@ -22,6 +22,10 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/parallel/HaloExchange.h"
 
+
+#include "tests/AtlasFixture.h"
+
+
 /// POD: Type to test
 typedef double POD;
 

@@ -29,6 +29,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "eckit/mpi/Comm.h"
 
+#include "tests/AtlasFixture.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -101,6 +102,8 @@ namespace {
 
 namespace atlas {
 namespace test {
+
+BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 BOOST_AUTO_TEST_SUITE( test_pointcloud )
 

@@ -25,10 +25,12 @@
 #include "atlas/output/Output.h"
 #include "atlas/output/Gmsh.h"
 
+#include "tests/AtlasFixture.h"
+
 namespace atlas {
 namespace test {
 
-struct AtlasFixture {
+struct AtlasFixture : public eckit::testing::Setup {
     AtlasFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
                                  boost::unit_test::framework::master_test_suite().argv); }
     ~AtlasFixture() { atlas_finalize(); }

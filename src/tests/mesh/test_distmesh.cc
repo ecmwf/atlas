@@ -33,6 +33,9 @@
 #include "atlas/internals/IsGhost.h"
 #include "atlas/runtime/Log.h"
 
+#include "tests/AtlasFixture.h"
+
+
 using namespace atlas;
 using namespace atlas::output;
 using namespace atlas::mesh::generators;
@@ -62,8 +65,8 @@ double dual_volume(mesh::Mesh& mesh)
   return area;
 }
 
-struct AtlasFixture {
-     AtlasFixture()  {
+struct MPIFixture : public eckit::testing::Setup {
+     MPIFixture()  {
        atlas_init(
              boost::unit_test::framework::master_test_suite().argc,
              boost::unit_test::framework::master_test_suite().argv);

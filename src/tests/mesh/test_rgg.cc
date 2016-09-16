@@ -40,6 +40,9 @@
 #include "atlas/internals/Bitflags.h"
 #include "atlas/internals/Debug.h"
 
+#include "tests/AtlasFixture.h"
+
+
 namespace atlas {
 namespace grid {
 namespace gaussian {
@@ -118,13 +121,7 @@ double compute_lonlat_area(mesh::Mesh& mesh)
   return area;
 }
 
-struct GlobalFixture {
-    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                  boost::unit_test::framework::master_test_suite().argv); }
-    ~GlobalFixture() { atlas_finalize(); }
-};
-
-BOOST_GLOBAL_FIXTURE( GlobalFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_eq_caps )
 {

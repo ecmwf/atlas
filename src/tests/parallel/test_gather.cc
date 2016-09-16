@@ -23,6 +23,8 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/internals/Debug.h"
 
+#include "tests/AtlasFixture.h"
+
 /// POD: Type to test
 typedef double POD;
 

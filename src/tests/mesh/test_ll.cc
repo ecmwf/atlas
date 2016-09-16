@@ -18,17 +18,19 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/grid/lonlat/RegularLonLat.h"
 
+#include "tests/AtlasFixture.h"
+
 
 namespace atlas {
 namespace test {
 
-struct GlobalFixture {
-    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
+struct AtlasFixture {
+    AtlasFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
                                   boost::unit_test::framework::master_test_suite().argv); }
-    ~GlobalFixture() { atlas_finalize(); }
+    ~AtlasFixture() { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( GlobalFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
