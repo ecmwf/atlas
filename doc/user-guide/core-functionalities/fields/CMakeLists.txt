@@ -10,6 +10,12 @@ ecbuild_add_executable(
   LIBS        atlas
   NOINSTALL )
 
+set_target_properties(atlas_c-fields
+                      atlas_c-fields-on-grid
+                      PROPERTIES EXCLUDE_FROM_ALL true )
+
+if( ATLAS_HAVE_FORTRAN )
+
 ecbuild_add_executable(
   TARGET      atlas_f-fields
   SOURCES     fields.F90
@@ -22,10 +28,8 @@ ecbuild_add_executable(
   LIBS        atlas_f
   NOINSTALL )
 
-set_target_properties(atlas_c-fields
-                      atlas_f-fields
-                      atlas_c-fields-on-grid
+set_target_properties(atlas_f-fields
                       atlas_f-fields-on-grid
                       PROPERTIES EXCLUDE_FROM_ALL true )
 
-
+endif()
