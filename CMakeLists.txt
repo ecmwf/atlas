@@ -260,11 +260,11 @@ ecbuild_add_resources(
         LICENSE
 )
 
-ecbuild_install_project( NAME Atlas )
-
 if( ATLAS_HAVE_FORTRAN )
     install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR} DESTINATION ${INSTALL_INCLUDE_DIR} )
 endif()
+
+ecbuild_install_project( NAME Atlas )
 
 ecbuild_print_summary()
 
