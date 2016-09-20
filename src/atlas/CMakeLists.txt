@@ -34,8 +34,15 @@ atlas.cc
 list( APPEND atlas_grid_srcs
 grid/CustomStructured.cc
 grid/CustomStructured.h
-grid/Domain.cc
-grid/Domain.h
+grid/domains/Domain.h
+grid/domains/RectangularDomain.h
+grid/domains/RectangularDomain.cc
+grid/domains/CircularDomain.h
+grid/domains/CircularDomain.cc
+grid/domains/EmptyDomain.h
+grid/domains/EmptyDomain.cc
+grid/domains/GlobalDomain.h
+grid/domains/GlobalDomain.cc
 grid/Grid.cc
 grid/Grid.h
 grid/GridDistribution.cc
@@ -126,6 +133,27 @@ grid/partitioners/EqualRegionsPartitioner.cc
 grid/partitioners/EqualRegionsPartitioner.h
 grid/partitioners/Partitioner.cc
 grid/partitioners/Partitioner.h
+grid/projections/Projection.h
+grid/projections/LonLatProjection.cc
+grid/projections/LonLatProjection.h
+grid/projections/LambertProjection.cc
+grid/projections/LambertProjection.h
+grid/projections/SchmidtProjection.cc
+grid/projections/SchmidtProjection.h
+grid/spacing/Spacing.h
+grid/spacing/UniformSpacing.h
+grid/spacing/UniformSpacing.cc
+grid/spacing/FocusSpacing.h
+grid/spacing/FocusSpacing.cc
+grid/spacing/GaussianSpacing.h
+grid/spacing/GaussianSpacing.cc
+grid/spacing/gaussian/Latitudes.cc
+grid/spacing/gaussian/Latitudes.h
+grid/spacing/gaussian/N.cc
+grid/spacing/gaussian/N.h
+grid/spacing/gaussian/N16.cc    # TL31
+grid/spacing/gaussian/N24.cc    # TL47
+
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_grid_srcs

@@ -58,14 +58,13 @@ endif()
 
 add_subdirectory( atlas )
 
-if( ATLAS_HAVE_FORTRAN )
-  add_subdirectory( atlas_f )
-endif()
+#if( ATLAS_HAVE_FORTRAN )
+#  add_subdirectory( atlas_f )
+#endif()
 
-add_subdirectory( apps )
+#add_subdirectory( apps )
+#add_subdirectory( tests )
 
-add_subdirectory( tests )
-
-if( HAVE_SANDBOX )
-    add_subdirectory( sandbox )
-endif()
+#if( HAVE_SANDBOX )
+#    add_subdirectory( sandbox )
+#endif()

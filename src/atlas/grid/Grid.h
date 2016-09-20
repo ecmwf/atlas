@@ -25,7 +25,8 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/utils/MD5.h"
 #include "eckit/value/Properties.h"
-#include "atlas/grid/Domain.h"
+#include "atlas/grid/domains/Domain.h"
+#include "atlas/grid/projections/Projection.h"
 
 
 namespace atlas {
@@ -44,16 +45,17 @@ class Grid : public eckit::Owned {
   public:  // types
 
     typedef eckit::BuilderT1<Grid> builder_t;
-    typedef const eckit::Parametrisation& ARG1;
+    typedef const util::Config& ARG1;
     typedef eckit::SharedPtr<Grid> Ptr;
     typedef eckit::geometry::LLPoint2 Point; // must be sizeof(double)*2
+    typedef eckit::geometry::Point2 XYPoint; // must be sizeof(double)*2
     typedef std::string uid_t;
 
   public:  // methods
 
     static std::string className();
 
-    static Grid* create(const eckit::Parametrisation&);
+    static Grid* create(const util::Config&);
 
     static Grid* create(const Grid::uid_t& shortName);
 
@@ -79,6 +81,9 @@ class Grid : public eckit::Owned {
     /// @return area represented by the grid
     virtual const Domain& domain() const = 0;
 
+    /// @return projection (mapping between geographic coordinates and grid coordinates)
+    //virtual const Projection& projection() const = 0;
+
     /// @return number of grid points
     /// @note This methods should have constant access time, if necessary derived
     //        classes should compute it at construction
@@ -87,6 +92,7 @@ class Grid : public eckit::Owned {
     /// Fill provided parameter with grid points, as (lon,lat) values
     /// @post resizes the vector
     virtual void lonlat(std::vector<Point>&) const = 0;
+    //virtual void xy(std::vector<XYPoint>&) const = 0;
 
     /// Fills the provided vector with the (lon,lat) values
     /// @post resizes the vector

@@ -45,13 +45,19 @@ OctahedralGaussian::OctahedralGaussian(const size_t N, const Domain& dom) :
 }
 
 
-OctahedralGaussian::OctahedralGaussian(const eckit::Parametrisation& params) :
+OctahedralGaussian::OctahedralGaussian(const util::Config& params) :
     Gaussian() {
 
-    std::vector<double> p_domain(4);
-    if( params.get("domain", p_domain) )
+    //std::vector<double> p_domain(4);
+    //if( p.get("domain", p_domain) )
+    //{
+    //  domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    //}
+    
+    util::Config p_domain;
+    if( params.get("domain",p_domain) )
     {
-      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+      domain_ = *Domain::create(p_domain);
     }
     else
     {

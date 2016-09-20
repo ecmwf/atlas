@@ -34,7 +34,7 @@ class OctahedralGaussian : public Gaussian {
 
     OctahedralGaussian(const size_t N, const Domain& dom=Domain::makeGlobal());
 
-    OctahedralGaussian(const eckit::Parametrisation&);
+    OctahedralGaussian(const util::Config&);
 
     virtual const Domain& domain() const {
         return domain_;

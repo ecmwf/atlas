@@ -37,7 +37,7 @@ std::string Grid::className() {
 }
 
 
-Grid* Grid::create(const eckit::Parametrisation& p) {
+Grid* Grid::create(const util::Config& p) {
     eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
 
     std::string shortName;

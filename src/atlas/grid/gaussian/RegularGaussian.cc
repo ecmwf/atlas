@@ -38,11 +38,16 @@ RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
         throw eckit::BadParameter("N missing in Params", Here());
     }
 
-    std::vector<double> p_domain(4);
-
-    if( params.get("domain", p_domain) )
+    //std::vector<double> p_domain(4);
+    //if( p.get("domain", p_domain) )
+    //{
+    //  domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    //}
+    
+    std::string domainType;
+    if( params.get("domainType",domainType) )
     {
-      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+      domain_ = *Domain::create(params);
     }
     else
     {

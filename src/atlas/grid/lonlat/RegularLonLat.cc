@@ -10,7 +10,9 @@
 
 
 #include "atlas/grid/lonlat/RegularLonLat.h"
+#include "atlas/util/Config.h"
 
+#include "eckit/config/Configuration.h"
 
 namespace atlas {
 namespace grid {
@@ -42,7 +44,7 @@ void RegularLonLat::set_typeinfo() {
 }
 
 
-RegularLonLat::RegularLonLat(const eckit::Parametrisation& p) :
+RegularLonLat::RegularLonLat(const util::Config& p) :
     LonLat(Shift::NONE,Domain::makeGlobal()) {
     setup(p);
 }
@@ -60,14 +62,19 @@ RegularLonLat::RegularLonLat(const size_t nlon, const size_t nlat, const Domain&
 }
 
 
-void RegularLonLat::setup(const eckit::Parametrisation& p) {
+void RegularLonLat::setup(const util::Config& p) {
     size_t nlon, nlat, N(0);
 
-    std::vector<double> p_domain(4);
-
-    if( p.get("domain", p_domain) )
+    //std::vector<double> p_domain(4);
+    //if( p.get("domain", p_domain) )
+    //{
+    //  domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    //}
+    
+    util::Config p_domain;
+    if( p.get("domain",p_domain) )
     {
-      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+      domain_ = *Domain::create(p_domain);
     }
     else
     {

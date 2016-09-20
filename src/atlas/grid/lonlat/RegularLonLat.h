@@ -13,6 +13,7 @@
 #define atlas_grid_lonlat_RegularLonLat_h
 
 #include "atlas/grid/lonlat/LonLat.h"
+#include "atlas/util/Config.h"
 
 
 namespace atlas {
@@ -28,7 +29,7 @@ class RegularLonLat : public LonLat {
 
     static std::string className();
 
-    RegularLonLat(const eckit::Parametrisation&);
+    RegularLonLat(const util::Config&);
 
     RegularLonLat(const size_t N, const Domain& dom=Domain::makeGlobal());
 
@@ -46,7 +47,7 @@ class RegularLonLat : public LonLat {
 
   private:
 
-    void setup(const eckit::Parametrisation&);
+    void setup(const util::Config&);
 
     virtual void set_typeinfo();
 

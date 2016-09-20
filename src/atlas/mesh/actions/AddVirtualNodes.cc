@@ -14,7 +14,7 @@
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/Domain.h"
+#include "atlas/grid/domains/RectangularDomain.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/gaussian/OctahedralGaussian.h"
 #include "atlas/internals/Parameters.h"

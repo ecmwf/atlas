@@ -12,9 +12,9 @@
 #ifndef Structured_h
 #define Structured_h
 
-#include "eckit/config/Parametrisation.h"
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/util/Config.h"
 
 
 namespace atlas {
@@ -35,7 +35,7 @@ class Structured : public Grid {
 
     typedef eckit::SharedPtr<Structured> Ptr;
 
-    static Structured* create(const eckit::Parametrisation&);
+    static Structured* create(const util::Config&);
 
     static Structured* create(const std::string& shortName);
 
@@ -174,7 +174,7 @@ class Structured : public Grid {
 };
 
 
-#define CONFIG eckit::Parametrisation
+#define CONFIG util::Config
 extern "C"
 {
     void atlas__grid__Structured__delete(Structured* This);

@@ -63,13 +63,17 @@ ShiftedLonLat::ShiftedLonLat(const size_t nlon, const size_t nlat, const Domain&
 void ShiftedLonLat::setup(const eckit::Parametrisation& p) {
     size_t nlon, nlat, N(0);
 
-    std::vector<double> p_domain(4);
-
-    if( p.get("domain", p_domain) )
+    //std::vector<double> p_domain(4);
+    //if( p.get("domain", p_domain) )
+    //{
+    //  domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    //}
+    
+    std::string domainType;
+    if( p.get("domainType",domainType) )
     {
-      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+      domain_ = *Domain::create(p);
     }
-    else
     {
       domain_ = Domain::makeGlobal();
     }

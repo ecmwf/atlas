@@ -62,7 +62,7 @@ void atlas_init(const eckit::Parametrisation&)
   atlas_info( Log::debug() );
 
   // Load factories for static linking
-  atlas::grid::load();
+  // atlas::grid::load();
 }
 
 // ----------------------------------------------------------------------------

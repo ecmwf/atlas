@@ -52,7 +52,7 @@ struct Shift {
  * essentially making the grid more uniform on the sphere
  * It can be constructed with following definition:
  * * N   = number of latitudes in hemisphere
- * * npts_per_lat[] = number of points on each latitude
+ * * npts_per_lat[] = number of points on each latitude 
  */
 class LonLat: public Structured {
 
@@ -71,6 +71,10 @@ class LonLat: public Structured {
     virtual const Domain& domain() const {
         return domain_;
     }
+    
+    //virtual const Projection& projection() const {
+    //		return projection_;
+    //}
 
 
   protected:
@@ -90,6 +94,8 @@ class LonLat: public Structured {
     Shift shift_;
 
     Domain domain_;
+    
+    //Projection & projection_;
 
 };
 

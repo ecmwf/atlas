@@ -36,7 +36,7 @@ class Unstructured : public Grid {
     static std::string className();
 
     /// Constructor taking a list of parameters
-    Unstructured(const eckit::Parametrisation& p);
+    Unstructured(const util::Config& p);
 
     /// Constructor taking a list of points
     Unstructured(std::vector< Point >* pts);
