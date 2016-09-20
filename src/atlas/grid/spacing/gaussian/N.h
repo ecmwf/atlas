@@ -1,0 +1,80 @@
+/*
+ * (C) Copyright 1996-2016 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
+/// @author Willem Deconinck
+/// @date Nov 2014
+
+
+#ifndef atlas_grid_spacing_gaussian_N_h
+#define atlas_grid_spacing_gaussian_N_h
+
+#include "eckit/memory/Builder.h"
+#include "eckit/memory/Owned.h"
+
+
+namespace atlas {
+namespace grid {
+namespace spacing {
+namespace gaussian {
+
+
+class GaussianLatitudes : public eckit::Owned {
+
+  public:
+
+    typedef eckit::BuilderT0<GaussianLatitudes> builder_t;
+
+    static std::string className();
+
+    /// @pre nlats has enough allocated memory to store the latitudes
+    /// @param size of lats vector
+    void assign(double lats[], const size_t size) const;
+
+    /// @post resizes the vector to the number of latitutes
+    void assign(std::vector<double>& lats) const;
+
+    size_t N() const {
+        return lats_.size();
+    }
+
+  protected:
+
+    std::vector<double> lats_;
+
+};
+
+
+#define DECLARE_GAUSSIAN_LATITUDES(NUMBER) \
+  class N##NUMBER : public GaussianLatitudes { public: N##NUMBER(); };
+
+#define LIST(...) __VA_ARGS__
+#define DEFINE_GAUSSIAN_LATITUDES(NUMBER,LATS) \
+  eckit::ConcreteBuilderT0<GaussianLatitudes,N##NUMBER> builder_N##NUMBER(#NUMBER); \
+  \
+  N##NUMBER::N##NUMBER()\
+  {\
+    size_t N = NUMBER;\
+    double lat[] = {LATS} ;\
+    lats_.assign(lat,lat+N);\
+  }\
+
+DECLARE_GAUSSIAN_LATITUDES(16);
+DECLARE_GAUSSIAN_LATITUDES(24);
+
+#undef DECLARE_GAUSSIAN_LATITUDES
+
+
+}  // namespace gaussian
+}  // namespace spacing
+}  // namespace grid
+}  // namespace atlas
+
+
+#endif
