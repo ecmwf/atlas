@@ -93,36 +93,38 @@ template <> void ArrayT<double>::dump(std::ostream& os) const { dump_array_data(
 
 Array* Array::create( DataType datatype, const ArrayShape& shape )
 {
+  Array* array(0);
   switch( datatype.kind() )
   {
-    case DataType::KIND_REAL64: return new ArrayT<double>(shape);
-    case DataType::KIND_REAL32: return new ArrayT<float>(shape);
-    case DataType::KIND_INT32:  return new ArrayT<int>(shape);
-    case DataType::KIND_INT64:  return new ArrayT<long>(shape);
+    case DataType::KIND_REAL64: array = new ArrayT<double>(shape); break;
+    case DataType::KIND_REAL32: array = new ArrayT<float >(shape); break;
+    case DataType::KIND_INT32:  array = new ArrayT<int   >(shape); break;
+    case DataType::KIND_INT64:  array = new ArrayT<long  >(shape); break;
     default:
     {
       std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
       throw eckit::BadParameter(err.str(),Here());
     }
   }
-  return 0;
+  return array;
 }
 
 Array* Array::create( DataType datatype )
 {
+  Array* array(0);
   switch( datatype.kind() )
   {
-    case DataType::KIND_REAL64: return new ArrayT<double>();
-    case DataType::KIND_REAL32: return new ArrayT<float>();
-    case DataType::KIND_INT32:  return new ArrayT<int>();
-    case DataType::KIND_INT64:  return new ArrayT<long>();
+    case DataType::KIND_REAL64: array = new ArrayT<double>(); break;
+    case DataType::KIND_REAL32: array = new ArrayT<float >(); break;
+    case DataType::KIND_INT32:  array = new ArrayT<int   >(); break;
+    case DataType::KIND_INT64:  array = new ArrayT<long  >(); break;
     default:
     {
       std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
       throw eckit::BadParameter(err.str(),Here());
     }
   }
-  return 0;
+  return array;
 }
 
 Array* Array::create( const Array& other )
