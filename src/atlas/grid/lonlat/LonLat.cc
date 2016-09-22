@@ -26,7 +26,7 @@ std::string LonLat::className() {
     return "atlas.grid.lonlat.LonLat";
 }
 
-eckit::Value LonLat::domain_spec(const Domain& dom)
+eckit::Value LonLat::domain_spec(const domain::Domain& dom)
 {
   std::vector<double> dspec(4);
   dspec[0] = dom.north();
@@ -36,7 +36,7 @@ eckit::Value LonLat::domain_spec(const Domain& dom)
   return eckit::makeVectorValue(dspec);
 }
 
-void LonLat::setup(const size_t N, const Domain& dom) {
+void LonLat::setup(const size_t N, const domain::Domain& dom) {
     domain_ = dom;
     const size_t
     nlon = 4*N,
@@ -45,14 +45,14 @@ void LonLat::setup(const size_t N, const Domain& dom) {
 }
 
 
-void LonLat::setup(const size_t nlon, const size_t nlat, const Domain& dom) {
+void LonLat::setup(const size_t nlon, const size_t nlat, const domain::Domain& dom) {
     domain_ = dom;
 #if 0
     // set domain (optional)
-    Domain dom = domain();
+    domain::Domain dom = domain();
     std::vector<double> domv;
     if (p.get("domain",domv) && domv.size()==4) {
-        dom = Domain(domv[0],domv[1],domv[2],domv[3]);
+        dom = domain::Domain(domv[0],domv[1],domv[2],domv[3]);
     } else if (p.has("domain")) {
         throw eckit::BadParameter("Params domain of wrong size, expected #4");
     }
@@ -90,7 +90,7 @@ void LonLat::setup(const size_t nlon, const size_t nlat, const Domain& dom) {
 }
 
 
-void LonLat::setup(const long pl[], const size_t nlat, const Domain& dom) {
+void LonLat::setup(const long pl[], const size_t nlat, const domain::Domain& dom) {
 
     domain_ = dom;
 
@@ -122,7 +122,7 @@ void LonLat::setup(const long pl[], const size_t nlat, const Domain& dom) {
 }
 
 
-LonLat::LonLat(const Shift& shift, const Domain& dom) :
+LonLat::LonLat(const Shift& shift, const domain::Domain& dom) :
     Structured(),
     shift_(shift),
     domain_(dom)

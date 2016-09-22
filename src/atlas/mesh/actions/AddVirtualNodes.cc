@@ -14,7 +14,7 @@
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/domains/RectangularDomain.h"
+#include "atlas/grid/domain/Domain.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/gaussian/OctahedralGaussian.h"
 #include "atlas/internals/Parameters.h"
@@ -29,7 +29,7 @@ namespace actions {
 
 void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh) const {
     using eckit::geometry::LLPoint2;
-    const grid::Domain& dom = grid.domain();
+    const grid::domain::Domain& dom = grid.domain();
 
     if (dom.isGlobal()) return; // don't add virtual points to global domains
 

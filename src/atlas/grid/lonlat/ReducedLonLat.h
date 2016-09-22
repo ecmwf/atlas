@@ -41,7 +41,7 @@ class ReducedLonLat : public LonLat {
 
     ReducedLonLat(const eckit::Parametrisation&);
 
-    ReducedLonLat(const size_t nlat, const long nlon[], const Domain& dom=Domain::makeGlobal());
+    ReducedLonLat(const size_t nlat, const long nlon[], const domain::Domain& dom=domain::Domain::makeGlobal());
 
     virtual eckit::Properties spec() const;
 

@@ -34,15 +34,15 @@ atlas.cc
 list( APPEND atlas_grid_srcs
 grid/CustomStructured.cc
 grid/CustomStructured.h
-grid/domains/Domain.h
-grid/domains/RectangularDomain.h
-grid/domains/RectangularDomain.cc
-grid/domains/CircularDomain.h
-grid/domains/CircularDomain.cc
-grid/domains/EmptyDomain.h
-grid/domains/EmptyDomain.cc
-grid/domains/GlobalDomain.h
-grid/domains/GlobalDomain.cc
+grid/domain/Domain.h
+grid/domain/RectangularDomain.h
+grid/domain/RectangularDomain.cc
+grid/domain/CircularDomain.h
+grid/domain/CircularDomain.cc
+grid/domain/EmptyDomain.h
+grid/domain/EmptyDomain.cc
+grid/domain/GlobalDomain.h
+grid/domain/GlobalDomain.cc
 grid/Grid.cc
 grid/Grid.h
 grid/GridDistribution.cc
@@ -133,13 +133,13 @@ grid/partitioners/EqualRegionsPartitioner.cc
 grid/partitioners/EqualRegionsPartitioner.h
 grid/partitioners/Partitioner.cc
 grid/partitioners/Partitioner.h
-grid/projections/Projection.h
-grid/projections/LonLatProjection.cc
-grid/projections/LonLatProjection.h
-grid/projections/LambertProjection.cc
-grid/projections/LambertProjection.h
-grid/projections/SchmidtProjection.cc
-grid/projections/SchmidtProjection.h
+grid/projection/Projection.h
+grid/projection/LonLatProjection.cc
+grid/projection/LonLatProjection.h
+grid/projection/LambertProjection.cc
+grid/projection/LambertProjection.h
+grid/projection/SchmidtProjection.cc
+grid/projection/SchmidtProjection.h
 grid/spacing/Spacing.h
 grid/spacing/UniformSpacing.h
 grid/spacing/UniformSpacing.cc
@@ -153,7 +153,10 @@ grid/spacing/gaussian/N.cc
 grid/spacing/gaussian/N.h
 grid/spacing/gaussian/N16.cc    # TL31
 grid/spacing/gaussian/N24.cc    # TL47
-
+grid/regular/Regular.h
+grid/regular/Regular.cc
+grid/regular/RegularRegional.h
+grid/regular/RegularRegional.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_grid_srcs

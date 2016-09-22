@@ -1,8 +1,9 @@
-#include "atlas/grid/domains/RectangularDomain.h"
+#include "atlas/grid/domain/RectangularDomain.h"
 
 
 namespace atlas {
 namespace grid {
+namespace domain {
 
 RectangularDomain::RectangularDomain(const eckit::Parametrisation& params) {
 
@@ -32,7 +33,8 @@ void RectangularDomain::setup() {
 	if (ymin_>ymax_) {
 		swp=ymin_;ymin_=ymax_;ymax_=swp;
 	}
-
+	
+	//std::cout << domain_type_str() << std::endl;
 }
 
 bool RectangularDomain::contains(eckit::geometry::Point2 xy) {
@@ -40,8 +42,9 @@ bool RectangularDomain::contains(eckit::geometry::Point2 xy) {
 	return ( xmin_ <= xy[eckit::geometry::XX] && xmax_ >= xy[eckit::geometry::XX] && ymin_ <= xy[eckit::geometry::YY] && ymax_ >= xy[eckit::geometry::YY] );
 }
 
-register_BuilderT1(Domain,RectangularDomain,RectangularDomain::className());
+register_BuilderT1(Domain,RectangularDomain,RectangularDomain::domain_type_str());
 
+}  // namespace domain
 }  // namespace grid
 }  // namespace atlas
 

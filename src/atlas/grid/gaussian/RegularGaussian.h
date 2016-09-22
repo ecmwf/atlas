@@ -66,7 +66,7 @@ class RegularGaussian : public Gaussian {
 
     RegularGaussian(const eckit::Parametrisation&);
 
-    RegularGaussian(const size_t& N, const Domain& dom=Domain::makeGlobal());
+    RegularGaussian(const size_t& N, const domain::Domain& dom=domain::Domain::makeGlobal());
 
     virtual eckit::Properties spec() const;
 
@@ -78,19 +78,19 @@ class RegularGaussian : public Gaussian {
         return Structured::lon(0,jlon);
     }
 
-    virtual const Domain& domain() const {
+    virtual const domain::Domain& domain() const {
         return domain_;
     }
 
   private:
 
-    virtual void setup(const size_t& N, const Domain&);
+    virtual void setup(const size_t& N, const domain::Domain&);
 
     virtual void set_typeinfo();
 
   private:
 
-    Domain domain_;
+    domain::Domain domain_;
 
     size_t Ni_;
 

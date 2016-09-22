@@ -43,18 +43,18 @@ void ShiftedLat::set_typeinfo() {
 
 
 ShiftedLat::ShiftedLat(const eckit::Parametrisation& p) :
-    LonLat(Shift::LAT,Domain::makeGlobal()) {
+    LonLat(Shift::LAT,domain::Domain::makeGlobal()) {
     setup(p);
 }
 
 
-ShiftedLat::ShiftedLat(const size_t N, const Domain& dom) :
+ShiftedLat::ShiftedLat(const size_t N, const domain::Domain& dom) :
     LonLat(Shift::LAT, dom) {
     LonLat::setup(N, dom);
 }
 
 
-ShiftedLat::ShiftedLat(const size_t nlon, const size_t nlat, const Domain& dom) :
+ShiftedLat::ShiftedLat(const size_t nlon, const size_t nlat, const domain::Domain& dom) :
     LonLat(Shift::LAT, dom) {
     LonLat::setup(nlon, nlat, dom);
 }
@@ -66,17 +66,17 @@ void ShiftedLat::setup(const eckit::Parametrisation& p) {
     //std::vector<double> p_domain(4);
     //if( p.get("domain", p_domain) )
     //{
-    //  domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    //  domain_ = domain::Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
     //}
     
     std::string domainType;
     if( p.get("domainType",domainType) )
     {
-      domain_ = *Domain::create(p);
+      domain_ = *domain::Domain::create(p);
     }
     else
     {
-      domain_ = Domain::makeGlobal();
+      domain_ = domain::Domain::makeGlobal();
     }
 
     if (p.get("N",N)) {

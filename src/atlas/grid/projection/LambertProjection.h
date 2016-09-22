@@ -1,10 +1,11 @@
 #ifndef atlas_LambertProjection_H
 #define atlas_LambertProjection_H
 
-#include "atlas/grid/projections/Projection.h"
+#include "atlas/grid/projection/Projection.h"
 
 namespace atlas {
 namespace grid {
+namespace projection {
 
 class LambertProjection: public Projection {
 	public:
@@ -14,6 +15,7 @@ class LambertProjection: public Projection {
 
 		// class name
 		static std::string className() { return "atlas.LambertProjection"; }
+		static std::string projection_type_str() {return "lambert";}
 
 		// projection and inverse projection
 		eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2);
@@ -32,6 +34,7 @@ class LambertProjection: public Projection {
 		void setup();
 };
 
+}  // namespace projection
 }  // namespace grid
 }  // namespace atlas
 

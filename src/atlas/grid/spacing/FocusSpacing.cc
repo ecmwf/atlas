@@ -3,6 +3,7 @@
 
 namespace atlas {
 namespace grid {
+namespace spacing {
 
 FocusSpacing::FocusSpacing(const eckit::Parametrisation& params) {
 	// no parameters for uniform spacing!
@@ -10,9 +11,8 @@ FocusSpacing::FocusSpacing(const eckit::Parametrisation& params) {
     throw eckit::BadParameter("focus_factor missing in Params",Here());
 };
 
-std::vector<double> FocusSpacing::generate(double xmin, double xmax, size_t N) {
+void FocusSpacing::generate(double xmin, double xmax, size_t N, std::vector<double> &x) const {
 	// create vector of points, unevenly spaced between xmin and xmax
-	std::vector<double> x(N);
 	double xx;
 	for (int i=1;i<N-1;i++) {
 		xx=(2*i-int(N-1))/double(N-1);		// between -1 and 1;
@@ -21,12 +21,11 @@ std::vector<double> FocusSpacing::generate(double xmin, double xmax, size_t N) {
 	}
 	x[0]=xmin;
 	x[N-1]=xmax;
-	
-	return x;
 };
 
-register_BuilderT1(Spacing,FocusSpacing,FocusSpacing::className());
+register_BuilderT1(Spacing,FocusSpacing,FocusSpacing::spacing_type_str());
 
+}  // namespace spacing
 }  // namespace grid
 }  // namespace atlas
 

@@ -7,6 +7,7 @@
 
 namespace atlas {
 namespace grid {
+namespace spacing {
 
 class Spacing {
 
@@ -19,7 +20,7 @@ class Spacing {
 		static Spacing* create() {
 			// default: uniform spacing
 			util::Config params;
-			params.set("spacingType","atlas.UniformSpacing");
+			params.set("spacingType","uniform");
 			return Spacing::create(params);
 		};
 		
@@ -35,12 +36,14 @@ class Spacing {
 		}
 		
 		static std::string className() {return "atlas.Spacing";}
+		static std::string spacing_type_str() {return "spacing";}
 		
 		// purely virtual functions: must be implemented by inheriting classes
-		virtual std::vector<double>         generate(double xmin, double xmax, size_t N)=0;
+		virtual void generate(double xmin, double xmax, size_t N, std::vector<double>& x) const =0;
 
 };
 
+}  // namespace spacing
 }  // namespace grid
 }  // namespace atlas
 

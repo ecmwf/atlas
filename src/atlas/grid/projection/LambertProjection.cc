@@ -1,6 +1,6 @@
 #include <cmath>
 
-#include "atlas/grid/projections/LambertProjection.h"
+#include "atlas/grid/projection/LambertProjection.h"
 #include "atlas/util/Constants.h"
 
 /*
@@ -15,6 +15,7 @@ The origin of the xy-system is at (lon0,0)
 
 namespace atlas {
 namespace grid {
+namespace projection {
 
 // constructors
 LambertProjection::LambertProjection(const eckit::Parametrisation& params) {
@@ -87,8 +88,9 @@ eckit::geometry::LLPoint2 LambertProjection::coords2lonlat(eckit::geometry::Poin
 	return eckit::geometry::LLPoint2(lon,lat);
 }
 
-register_BuilderT1(Projection,LambertProjection,LambertProjection::className());
+register_BuilderT1(Projection,LambertProjection,LambertProjection::projection_type_str());
 
+}  // namespace projection
 }  // namespace grid
 }  // namespace atlas
 

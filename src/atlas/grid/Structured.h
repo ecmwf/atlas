@@ -16,6 +16,8 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/util/Config.h"
 
+#include "atlas/grid/spacing/Spacing.h"
+
 
 namespace atlas {
 namespace grid {
@@ -116,6 +118,15 @@ class Structured : public Grid {
         crd[0] = lon(jlat,jlon);
         crd[1] = lat(jlat);
     }
+    
+    void geoLonlat(const size_t jlon, const size_t jlat, eckit::geometry::LLPoint2 &Pll) const {
+    	// in grid coordinates
+    	double xy[2];
+    	lonlat(jlat,jlon,xy);
+    	eckit::geometry::Point2 Pxy(xy[0],xy[1]);
+    	// convert to geographic coordinates
+    	Pll=projection_->coords2lonlat(Pxy);
+    }
 
     inline bool reduced() const {
         return nlonmax() != nlonmin();
@@ -132,7 +143,7 @@ class Structured : public Grid {
 
     void setup(const size_t nlat, const double lats[], const long pl[], const double lonmin[], const double lonmax[]);
 
-    static void setup_lon_limits(const size_t nlat, const long pl[], const Domain& dom, double lonmin[], double lonmax[]);
+    static void setup_lon_limits(const size_t nlat, const long pl[], const domain::Domain& dom, double lonmin[], double lonmax[]);
 
     void setup_lat_hemisphere(const size_t N, const double lat[], const long lon[]);
 

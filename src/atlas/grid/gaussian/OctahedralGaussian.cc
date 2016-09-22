@@ -37,7 +37,7 @@ std::vector<long> OctahedralGaussian::computePL(const size_t N) {
 }
 
 
-OctahedralGaussian::OctahedralGaussian(const size_t N, const Domain& dom) :
+OctahedralGaussian::OctahedralGaussian(const size_t N, const domain::Domain& dom) :
     Gaussian() {
     domain_ = dom;
     construct(N);
@@ -57,11 +57,11 @@ OctahedralGaussian::OctahedralGaussian(const util::Config& params) :
     util::Config p_domain;
     if( params.get("domain",p_domain) )
     {
-      domain_ = *Domain::create(p_domain);
+      domain_ = *domain::Domain::create(p_domain);
     }
     else
     {
-      domain_ = Domain::makeGlobal();
+      domain_ = domain::Domain::makeGlobal();
     }
 
     size_t N;

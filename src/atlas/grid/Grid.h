@@ -25,8 +25,8 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/utils/MD5.h"
 #include "eckit/value/Properties.h"
-#include "atlas/grid/domains/Domain.h"
-#include "atlas/grid/projections/Projection.h"
+#include "atlas/grid/domain/Domain.h"
+#include "atlas/grid/projection/Projection.h"
 
 
 namespace atlas {
@@ -79,7 +79,7 @@ class Grid : public eckit::Owned {
     eckit::MD5::digest_t hash() const;
 
     /// @return area represented by the grid
-    virtual const Domain& domain() const = 0;
+    virtual const domain::Domain& domain() const = 0;
 
     /// @return projection (mapping between geographic coordinates and grid coordinates)
     //virtual const Projection& projection() const = 0;
@@ -144,6 +144,8 @@ class Grid : public eckit::Owned {
     /// Cache the hash
     mutable eckit::MD5::digest_t hash_;
 
+	protected: // members
+		projection::Projection * projection_;
 };
 
 

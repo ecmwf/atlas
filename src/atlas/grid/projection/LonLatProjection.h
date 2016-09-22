@@ -1,10 +1,11 @@
 #ifndef atlas_LonLatProjection_H
 #define atlas_LonLatProjection_H
 
-#include "atlas/grid/projections/Projection.h"
+#include "atlas/grid/projection/Projection.h"
 
 namespace atlas {
 namespace grid {
+namespace projection {
 
 class LonLatProjection: public Projection {
 
@@ -15,7 +16,8 @@ class LonLatProjection: public Projection {
 		LonLatProjection(const eckit::Parametrisation& p);
 		
 		// class name
-		static std::string className() { return "atlas.LonLatProjection"; } 
+		static std::string className() { return "atlas.LonLatProjection"; }
+		static std::string projection_type_str() {return "lonlat";}
 
 		// projection and inverse projection
 		eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2);
@@ -25,6 +27,7 @@ class LonLatProjection: public Projection {
 		bool isRegional() { return false; }
 };
 
+}  // namespace projection
 }  // namespace grid
 }  // namespace atlas
 

@@ -22,7 +22,7 @@ daand:
 
 namespace atlas {
 namespace grid {
-
+namespace domain {
 
 class Domain {
 
@@ -40,6 +40,7 @@ class Domain {
 		};
 		
 		static Domain* create(const eckit::Parametrisation& p) {
+		
 			std::string domainType;
 			if (p.get("domainType",domainType)) {
 				return eckit::Factory<Domain>::instance().get(domainType).create(p);
@@ -52,6 +53,8 @@ class Domain {
 		
 		// className
 		static std::string className() {return "atlas.Domain";}
+		
+		static std::string domain_type_str() {return "abstract";}
 		
 		static Domain makeGlobal() {return *create(); };
   	
@@ -90,6 +93,7 @@ class Domain {
 };
 
 
+}  // namespace domain
 }  // namespace grid
 }  // namespace atlas
 

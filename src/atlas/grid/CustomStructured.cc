@@ -32,7 +32,7 @@ std::string CustomStructured::grid_type_str() {
 CustomStructured::CustomStructured(const eckit::Parametrisation& params) :
     Structured()
 {
-  domain_ = Domain::makeGlobal();
+  domain_ = domain::Domain::makeGlobal();
 
   // mandatory parameters: pl, latitudes
   std::vector<long> pl;
@@ -71,7 +71,7 @@ CustomStructured::CustomStructured(
     size_t nlat,
     const double lats[],
     const long pl[],
-    const Domain& dom ) :
+    const domain::Domain& dom ) :
     Structured(),
     domain_(dom)
 {
@@ -96,7 +96,7 @@ CustomStructured::CustomStructured(
     const long pl[],
     const double lonmin[],
     const double lonmax[],
-    const Domain& dom ) :
+    const domain::Domain& dom ) :
     Structured(),
     domain_(dom)
 {
@@ -126,24 +126,24 @@ extern "C" {
     Structured* atlas__grid__CustomStructured_int(size_t nlat, double lats[], int pl[]) {
         std::vector<long> pl_vector;
         pl_vector.assign(pl,pl+nlat);
-        return new CustomStructured(nlat, lats, pl_vector.data(), Domain::makeGlobal());
+        return new CustomStructured(nlat, lats, pl_vector.data(), domain::Domain::makeGlobal());
     }
 
 
     Structured* atlas__grid__CustomStructured_long(size_t nlat, double lats[], long pl[]) {
-        return new CustomStructured(nlat, lats, pl, Domain::makeGlobal());
+        return new CustomStructured(nlat, lats, pl, domain::Domain::makeGlobal());
     }
 
 
     Structured* atlas__grid__CustomStructured_lonmin_lonmax_int(size_t nlat, double lats[], int pl[], double lonmin[], double lonmax[]) {
         std::vector<long> pl_vector;
         pl_vector.assign(pl, pl+nlat);
-        return new CustomStructured(nlat, lats, pl_vector.data(), lonmin, lonmax, Domain::makeGlobal());
+        return new CustomStructured(nlat, lats, pl_vector.data(), lonmin, lonmax, domain::Domain::makeGlobal());
     }
 
 
     Structured* atlas__grid__CustomStructured_lonmin_lonmax_long(size_t nlat, double lats[], long pl[], double lonmin[], double lonmax[]) {
-        return new CustomStructured(nlat, lats, pl, lonmin, lonmax, Domain::makeGlobal());
+        return new CustomStructured(nlat, lats, pl, lonmin, lonmax, domain::Domain::makeGlobal());
     }
 
 

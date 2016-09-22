@@ -30,9 +30,9 @@ class ShiftedLon : public LonLat {
 
     ShiftedLon(const eckit::Parametrisation&);
 
-    ShiftedLon(const size_t N, const Domain& dom=Domain::makeGlobal());
+    ShiftedLon(const size_t N, const domain::Domain& dom=domain::Domain::makeGlobal());
 
-    ShiftedLon(const size_t nlon, const size_t nlat, const Domain& dom=Domain::makeGlobal());
+    ShiftedLon(const size_t nlon, const size_t nlat, const domain::Domain& dom=domain::Domain::makeGlobal());
 
     virtual eckit::Properties spec() const;
 

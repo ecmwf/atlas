@@ -45,18 +45,18 @@ void RegularLonLat::set_typeinfo() {
 
 
 RegularLonLat::RegularLonLat(const util::Config& p) :
-    LonLat(Shift::NONE,Domain::makeGlobal()) {
+    LonLat(Shift::NONE,domain::Domain::makeGlobal()) {
     setup(p);
 }
 
 
-RegularLonLat::RegularLonLat(const size_t N, const Domain& dom) :
+RegularLonLat::RegularLonLat(const size_t N, const domain::Domain& dom) :
     LonLat(Shift::NONE, dom) {
     LonLat::setup(N, dom);
 }
 
 
-RegularLonLat::RegularLonLat(const size_t nlon, const size_t nlat, const Domain& dom) :
+RegularLonLat::RegularLonLat(const size_t nlon, const size_t nlat, const domain::Domain& dom) :
     LonLat(Shift::NONE, dom) {
     LonLat::setup(nlon, nlat, dom);
 }
@@ -68,17 +68,17 @@ void RegularLonLat::setup(const util::Config& p) {
     //std::vector<double> p_domain(4);
     //if( p.get("domain", p_domain) )
     //{
-    //  domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    //  domain_ = domain::Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
     //}
     
     util::Config p_domain;
     if( p.get("domain",p_domain) )
     {
-      domain_ = *Domain::create(p_domain);
+      domain_ = *domain::Domain::create(p_domain);
     }
     else
     {
-      domain_ = Domain::makeGlobal();
+      domain_ = domain::Domain::makeGlobal();
     }
 
     if (p.get("N",N)) {

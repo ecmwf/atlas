@@ -56,7 +56,7 @@ class Unstructured : public Grid {
 
     virtual eckit::Properties spec() const;
 
-    virtual const Domain& domain() const {
+    virtual const domain::Domain& domain() const {
         return domain_;
     }
 
@@ -84,7 +84,7 @@ class Unstructured : public Grid {
   protected:  // members
 
     /// Area represented by the grid
-    Domain domain_;
+    domain::Domain domain_;
 
 };
 

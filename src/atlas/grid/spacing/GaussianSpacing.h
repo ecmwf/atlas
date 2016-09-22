@@ -5,6 +5,7 @@
 
 namespace atlas {
 namespace grid {
+namespace spacing {
 
 class GaussianSpacing: public Spacing {
 
@@ -16,11 +17,13 @@ class GaussianSpacing: public Spacing {
 		
 		// class name
 		static std::string className() { return "atlas.GaussianSpacing"; } 
+		static std::string spacing_type_str() {return "gaussian";}
 
 		
-		std::vector<double> generate(double xmin, double xmax, size_t N);
+		void generate(double xmin, double xmax, size_t N, std::vector<double> &x) const;
 };
 
+}  // namespace spacing
 }  // namespace grid
 }  // namespace atlas
 

@@ -42,9 +42,9 @@ class ClassicGaussian : public Gaussian {
 
     ClassicGaussian(const eckit::Parametrisation&);
 
-    ClassicGaussian(const size_t N, const Domain& dom=Domain::makeGlobal());
+    ClassicGaussian(const size_t N, const domain::Domain& dom=domain::Domain::makeGlobal());
 
-    virtual const Domain& domain() const {
+    virtual const domain::Domain& domain() const {
         return domain_;
     }
 
@@ -54,7 +54,7 @@ class ClassicGaussian : public Gaussian {
 
   private:
 
-    Domain domain_;
+    domain::Domain domain_;
 };
 
 

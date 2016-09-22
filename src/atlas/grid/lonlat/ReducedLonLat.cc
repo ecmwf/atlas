@@ -38,14 +38,14 @@ void ReducedLonLat::set_typeinfo() {
 }
 
 
-ReducedLonLat::ReducedLonLat(const size_t nlat, const long nlon[], const Domain& dom) :
+ReducedLonLat::ReducedLonLat(const size_t nlat, const long nlon[], const domain::Domain& dom) :
     LonLat(Shift::NONE,dom) {
     LonLat::setup(nlon,nlat,domain());
 }
 
 
 ReducedLonLat::ReducedLonLat(const eckit::Parametrisation& params) :
-    LonLat(Shift::NONE,Domain::makeGlobal()) {
+    LonLat(Shift::NONE,domain::Domain::makeGlobal()) {
     setup(params);
 }
 

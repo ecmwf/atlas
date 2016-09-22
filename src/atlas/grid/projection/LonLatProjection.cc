@@ -1,7 +1,8 @@
-#include "atlas/grid/projections/LonLatProjection.h"
+#include "atlas/grid/projection/LonLatProjection.h"
 
 namespace atlas {
 namespace grid {
+namespace projection {
 
 LonLatProjection::LonLatProjection(const eckit::Parametrisation& params) {
 }
@@ -16,8 +17,9 @@ eckit::geometry::Point2 LonLatProjection::lonlat2coords(eckit::geometry::LLPoint
 	return eckit::geometry::Point2(ll.lon(),ll.lat());
 }
 
-register_BuilderT1(Projection,LonLatProjection,LonLatProjection::className());
+register_BuilderT1(Projection,LonLatProjection,LonLatProjection::projection_type_str());
 
+}  // namespace projection
 }  // namespace grid
 }  // namespace atlas
 

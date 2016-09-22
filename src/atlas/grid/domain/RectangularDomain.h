@@ -2,12 +2,12 @@
 #define atlas_grid_RectangularDomain_h
 
 #include <iostream>
-#include "atlas/grid/domains/Domain.h"
+#include "atlas/grid/domain/Domain.h"
 #include "eckit/geometry/Point2.h"
 
 namespace atlas {
 namespace grid {
-
+namespace domain {
 
 class RectangularDomain: public Domain {
 
@@ -18,9 +18,19 @@ class RectangularDomain: public Domain {
 
 		// class name
 		static std::string className() { return "atlas.RectangularDomain"; }
+		static std::string domain_type_str() {return "rectangular";}
 
     /// Checks if the point is contained in the domain
     bool contains(eckit::geometry::Point2 P);
+    
+    std::vector<double> bbox() {
+    	std::vector<double> bb(4);
+    	bb[0]=xmin_;
+    	bb[1]=xmax_;
+    	bb[2]=ymin_;
+    	bb[3]=ymax_;
+    	return bb;
+    }
     
 	private:
 		
@@ -29,6 +39,7 @@ class RectangularDomain: public Domain {
 };
 
 
+}  // namespace domain
 }  // namespace grid
 }  // namespace atlas
 

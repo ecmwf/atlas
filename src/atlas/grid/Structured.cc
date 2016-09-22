@@ -82,7 +82,7 @@ void Structured::setup(
 }
 
 
-void Structured::setup_lon_limits(const size_t nlat, const long pl[], const Domain& dom, double lonmin[], double lonmax[]) {
+void Structured::setup_lon_limits(const size_t nlat, const long pl[], const domain::Domain& dom, double lonmin[], double lonmax[]) {
     ASSERT(nlat);
 
     std::fill_n(lonmin, nlat, dom.west());

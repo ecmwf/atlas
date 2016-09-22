@@ -1,10 +1,11 @@
 #ifndef atlas_SchmidtProjection_H
 #define atlas_SchmidtProjection_H
 
-#include "atlas/grid/projections/Projection.h"
+#include "atlas/grid/projection/Projection.h"
 
 namespace atlas {
 namespace grid {
+namespace projection {
 
 class SchmidtProjection: public Projection {
 	public:
@@ -13,6 +14,7 @@ class SchmidtProjection: public Projection {
 
 		// class name
 		static std::string className() { return "atlas.SchmidtProjection"; }
+		static std::string projection_type_str() {return "schmidt";}
 
 		// projection and inverse projection
 		eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2);
@@ -25,6 +27,7 @@ class SchmidtProjection: public Projection {
 		double c_;		// stretching factor
 };
 
+}  // namespace projection
 }  // namespace grid
 }  // namespace atlas
 

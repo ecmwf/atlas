@@ -41,31 +41,31 @@ RegularGaussian::RegularGaussian(const eckit::Parametrisation& params) :
     //std::vector<double> p_domain(4);
     //if( p.get("domain", p_domain) )
     //{
-    //  domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    //  domain_ = domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
     //}
     
     std::string domainType;
     if( params.get("domainType",domainType) )
     {
-      domain_ = *Domain::create(params);
+      domain_ = *domain::Domain::create(params);
     }
     else
     {
-      domain_ = Domain::makeGlobal();
+      domain_ = domain::Domain::makeGlobal();
     }
 
     setup(N,domain_);
 }
 
 
-RegularGaussian::RegularGaussian(const size_t& N, const Domain& dom) :
+RegularGaussian::RegularGaussian(const size_t& N, const domain::Domain& dom) :
     Gaussian() {
     domain_ = dom;
     setup(N,dom);
 }
 
 namespace {
-static eckit::Value domain_spec(const Domain& dom)
+static eckit::Value domain_spec(const domain::Domain& dom)
 {
   std::vector<double> dspec(4);
   dspec[0] = dom.north();
@@ -87,7 +87,7 @@ eckit::Properties RegularGaussian::spec() const {
 }
 
 
-void RegularGaussian::setup(const size_t& N, const Domain& dom) {
+void RegularGaussian::setup(const size_t& N, const domain::Domain& dom) {
 
     // set internal Gaussian N and latitudes (assuming global domain)
     ASSERT(N>=2);
@@ -154,7 +154,7 @@ extern "C" {
 
 
     Structured* atlas__grid__gaussian__RegularGaussian(size_t N) {
-        return new RegularGaussian(N, Domain::makeGlobal());
+        return new RegularGaussian(N, domain::Domain::makeGlobal());
     }
 
 

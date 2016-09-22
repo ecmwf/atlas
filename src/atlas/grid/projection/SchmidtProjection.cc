@@ -1,8 +1,9 @@
-#include "atlas/grid/projections/SchmidtProjection.h"
+#include "atlas/grid/projection/SchmidtProjection.h"
 #include <cmath>
 
 namespace atlas {
 namespace grid {
+namespace projection {
 
 // constructor
 SchmidtProjection::SchmidtProjection(const eckit::Parametrisation& params) {
@@ -23,8 +24,9 @@ eckit::geometry::Point2 SchmidtProjection::lonlat2coords(eckit::geometry::LLPoin
 	return eckit::geometry::Point2(ll.lon(),lat2);
 }
 
-register_BuilderT1(Projection,SchmidtProjection,SchmidtProjection::className());
+register_BuilderT1(Projection,SchmidtProjection,SchmidtProjection::projection_type_str());
 
+}  // namespace projection
 }  // namespace grid
 }  // namespace atlas
 

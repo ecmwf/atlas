@@ -32,11 +32,11 @@ class OctahedralGaussian : public Gaussian {
 
     static std::string grid_type_str();
 
-    OctahedralGaussian(const size_t N, const Domain& dom=Domain::makeGlobal());
+    OctahedralGaussian(const size_t N, const domain::Domain& dom=domain::Domain::makeGlobal());
 
     OctahedralGaussian(const util::Config&);
 
-    virtual const Domain& domain() const {
+    virtual const domain::Domain& domain() const {
         return domain_;
     }
 
@@ -52,7 +52,7 @@ class OctahedralGaussian : public Gaussian {
 
   private:
 
-    Domain domain_;
+    domain::Domain domain_;
 
 };
 

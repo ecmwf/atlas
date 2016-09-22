@@ -38,6 +38,7 @@ std::string Grid::className() {
 
 
 Grid* Grid::create(const util::Config& p) {
+
     eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
 
     std::string shortName;
@@ -48,6 +49,11 @@ Grid* Grid::create(const util::Config& p) {
     if (p.get("grid_type",gridType) && fact.exists(gridType)) {
         return fact.get(gridType).create(p);
     }
+    
+    std::cout << "shortName: " << shortName << std::endl;
+    std::cout << "gridType: " << gridType << std::endl;
+    
+    throw eckit::BadParameter("no short_name or grid_type in configuration, or gridType doesn't exist",Here());
     return NULL;
 }
 

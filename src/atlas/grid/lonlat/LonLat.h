@@ -62,38 +62,34 @@ class LonLat: public Structured {
 
     static std::string className();
 
-    LonLat(const Shift&, const Domain& dom=Domain::makeGlobal());
+    LonLat(const Shift&, const domain::Domain& dom=domain::Domain::makeGlobal());
 
     const Shift& shifted() const {
         return shift_;
     }
 
-    virtual const Domain& domain() const {
+    virtual const domain::Domain& domain() const {
         return domain_;
     }
-    
-    //virtual const Projection& projection() const {
-    //		return projection_;
-    //}
 
 
   protected:
 
-    void setup(const size_t N, const Domain&);
+    void setup(const size_t N, const domain::Domain&);
 
-    void setup(const size_t nlon, const size_t nlat, const Domain&);
+    void setup(const size_t nlon, const size_t nlat, const domain::Domain&);
 
-    void setup(const long pl[], const size_t nlat, const Domain&);
+    void setup(const long pl[], const size_t nlat, const domain::Domain&);
 
     virtual void set_typeinfo() = 0;
 
-    static eckit::Value domain_spec(const Domain& dom);
+    static eckit::Value domain_spec(const domain::Domain& dom);
 
   protected:
 
     Shift shift_;
 
-    Domain domain_;
+    domain::Domain domain_;
     
     //Projection & projection_;
 

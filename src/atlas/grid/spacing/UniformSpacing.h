@@ -5,6 +5,7 @@
 
 namespace atlas {
 namespace grid {
+namespace spacing {
 
 class UniformSpacing: public Spacing {
 
@@ -16,11 +17,13 @@ class UniformSpacing: public Spacing {
 		
 		// class name
 		static std::string className() { return "atlas.UniformSpacing"; } 
+		static std::string spacing_type_str() {return "uniform";}
 
 		
-		std::vector<double> generate(double xmin, double xmax, size_t N);
+		void generate(double xmin, double xmax, size_t N, std::vector<double> &x) const;
 };
 
+}  // namespace spacing
 }  // namespace grid
 }  // namespace atlas
 

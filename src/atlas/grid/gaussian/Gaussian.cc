@@ -57,7 +57,7 @@ Gaussian::Gaussian() :
 }
 
 
-void Gaussian::setup_N_hemisphere(const size_t N, const long pl[], const Domain& dom) {
+void Gaussian::setup_N_hemisphere(const size_t N, const long pl[], const domain::Domain& dom) {
     Structured::N_ = N;
 
     if( dom.isGlobal() && dom.west() == 0. ) {

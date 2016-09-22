@@ -5,6 +5,7 @@
 
 namespace atlas {
 namespace grid {
+namespace spacing {
 
 class FocusSpacing: public Spacing {
 
@@ -16,14 +17,16 @@ class FocusSpacing: public Spacing {
 		
 		// class name
 		static std::string className() { return "atlas.FocusSpacing"; } 
+		static std::string spacing_type_str() {return "focus";}
 
 		
-		std::vector<double> generate(double xmin, double xmax, size_t N);
+		void generate(double xmin, double xmax, size_t N, std::vector<double> &x) const;
 	
 	private:
 		double focus_factor_;
 };
 
+}  // namespace spacing
 }  // namespace grid
 }  // namespace atlas
 

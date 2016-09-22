@@ -9,6 +9,7 @@
 
 namespace atlas {
 namespace grid {
+namespace projection {
 
 class Projection {
 
@@ -37,6 +38,7 @@ class Projection {
 		}
 		
 		static std::string className() {return "atlas.Projection";}
+		static std::string projection_type_str() {return "projection";}
 		
 		// purely virtual functions: must be implemented by inheriting classes
 		virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2)=0;
@@ -44,6 +46,7 @@ class Projection {
 		virtual bool isRegional()=0;
 };
 
+}  // namespace projection
 }  // namespace grid
 }  // namespace atlas
 

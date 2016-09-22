@@ -44,7 +44,7 @@ class CustomStructured: public Structured {
         size_t nlat,
         const double lats[],
         const long pl[],
-        const Domain& dom=Domain::makeGlobal() );
+        const domain::Domain& dom=domain::Domain::makeGlobal() );
 
     CustomStructured(
         size_t nlat,
@@ -52,17 +52,17 @@ class CustomStructured: public Structured {
         const long pl[],
         const double lonmin[],
         const double lonmax[],
-        const Domain& dom=Domain::makeGlobal() );
+        const domain::Domain& dom=domain::Domain::makeGlobal() );
 
     virtual eckit::Properties spec() const;
 
-    virtual const Domain& domain() const {
+    virtual const domain::Domain& domain() const {
         return domain_;
     }
 
   private:
 
-    Domain domain_;
+    domain::Domain domain_;
 };
 
 
