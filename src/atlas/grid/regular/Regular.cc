@@ -48,7 +48,7 @@ void Regular::setup() {
 	pl.assign(ny,nx);
 	
 	Structured::setup(ny,y.data(), pl.data(), xmin.data(), xmax.data());
-	Structured::N_=0;
+	Structured::N_=0;	// not true for some global lonlat grids ;-(
 
 	//set_typeinfo();
 }

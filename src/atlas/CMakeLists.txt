@@ -140,6 +140,8 @@ grid/projection/LambertProjection.cc
 grid/projection/LambertProjection.h
 grid/projection/SchmidtProjection.cc
 grid/projection/SchmidtProjection.h
+grid/projection/RotatedTiltedSchmidtProjection.cc
+grid/projection/RotatedTiltedSchmidtProjection.h
 grid/spacing/Spacing.h
 grid/spacing/UniformSpacing.h
 grid/spacing/UniformSpacing.cc
@@ -159,6 +161,16 @@ grid/regular/RegularRegional.h
 grid/regular/RegularRegional.cc
 grid/regular/RegularGlobalLonLat.h
 grid/regular/RegularGlobalLonLat.cc
+grid/reduced/classic/N.h
+grid/reduced/classic/N.cc
+grid/reduced/classic/PointsPerLatitude.h
+grid/reduced/classic/PointsPerLatitude.cc
+grid/reduced/classic/N16.cc
+grid/reduced/classic/N24.cc
+grid/reduced/ClassicGaussian.h
+grid/reduced/ClassicGaussian.cc
+grid/reduced/ARPEGE.h
+grid/reduced/ARPEGE.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_grid_srcs

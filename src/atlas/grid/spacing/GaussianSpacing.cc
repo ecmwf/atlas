@@ -11,8 +11,8 @@ GaussianSpacing::GaussianSpacing(const eckit::Parametrisation& params) {
 	Spacing::setup(params);
 	
 	// perform checks
-	ASSERT ( xmin_==-90.0 );
-	ASSERT ( xmax_== 90.0 );
+	ASSERT ( xmin_== 90.0 );
+	ASSERT ( xmax_== -90.0 );
 	ASSERT ( N_%2 == 0 );
 	
 	// initialize latitudes during setup, to avoid repeating it.
