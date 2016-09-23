@@ -1,6 +1,5 @@
 #include "atlas/grid/regular/Regular.h"
 
-#include "atlas/grid/domain/RectangularDomain.h"
 #include "atlas/grid/spacing/UniformSpacing.h"
 
 namespace atlas {
@@ -22,10 +21,6 @@ std::string Regular::className() {
 void Regular::setup() {
 
 	// perform checks
-	
-	// RectangularDomain?
-	domain::RectangularDomain * rd=dynamic_cast<domain::RectangularDomain*>(domain_);
-	if (! rd) throw eckit::BadParameter("RegularRegional grid requires a RectangularDomain",Here());
 	
 	// UniformSpacing in x-direction? -- For now, Structured assumes equidistant points along each latitude
 	const spacing::UniformSpacing * us=dynamic_cast<const spacing::UniformSpacing*>(spacing_x_);

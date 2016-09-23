@@ -1,4 +1,5 @@
 #include "atlas/grid/regular/RegularRegional.h"
+#include "atlas/grid/domain/RectangularDomain.h"
 
 
 namespace atlas {
@@ -19,6 +20,12 @@ std::string RegularRegional::className() {
 
 void RegularRegional::setup() {
 
+	// perform checks
+	
+		// RectangularDomain?
+		domain::RectangularDomain * rd=dynamic_cast<domain::RectangularDomain*>(domain_);
+		if (! rd) throw eckit::BadParameter("RegularRegional grid requires a RectangularDomain",Here());
+	
 		// setup regular grid
     Regular::setup();
     
@@ -57,8 +64,6 @@ RegularRegional::RegularRegional(const util::Config& config) :
 {
 		util::Config config_dom, config_spacing_x, config_spacing_y, config_proj;
 		
-		domain::Domain * dom;
-		projection::Projection * proj;
 		long nx, ny;
 		std::vector<double> bbox(4);
 		std::vector<double> sw(2), ne(2), center(2);
@@ -71,7 +76,6 @@ RegularRegional::RegularRegional(const util::Config& config) :
 		} else {
 			// default, error, or hardcoded default?
 			config_proj.set("projectionType","lonlat");
-			projection_=projection::Projection::create();
 		}
 		projection_=projection::Projection::create(config_proj);
 

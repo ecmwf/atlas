@@ -157,6 +157,8 @@ grid/regular/Regular.h
 grid/regular/Regular.cc
 grid/regular/RegularRegional.h
 grid/regular/RegularRegional.cc
+grid/regular/RegularGlobalLonLat.h
+grid/regular/RegularGlobalLonLat.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_grid_srcs
