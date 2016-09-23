@@ -20,7 +20,7 @@ class FocusSpacing: public Spacing {
 		static std::string spacing_type_str() {return "focus";}
 
 		
-		void generate(double xmin, double xmax, size_t N, std::vector<double> &x) const;
+		void generate(size_t i, double &x) const;
 	
 	private:
 		double focus_factor_;

@@ -39,7 +39,27 @@ class Spacing {
 		static std::string spacing_type_str() {return "spacing";}
 		
 		// purely virtual functions: must be implemented by inheriting classes
-		virtual void generate(double xmin, double xmax, size_t N, std::vector<double>& x) const =0;
+		virtual void generate(size_t i, double &x) const =0;
+
+		void generate(std::vector<double>& x) const {
+			for (size_t i=0;i<N_;i++) generate(i,x[i]);
+		};
+		
+		size_t N() { return N_; };
+	
+	protected:
+	
+	  void setup(const eckit::Parametrisation& params) {
+	  	// retrieve xmin, xmax and N from params
+			if ( !params.get("xmin",xmin_) ) throw eckit::BadParameter("xmin missing in Params",Here());
+			if ( !params.get("xmax",xmax_) ) throw eckit::BadParameter("xmax missing in Params",Here());
+			if ( !params.get("N",N_) )       throw eckit::BadParameter("N missing in Params",Here());
+	  }
+
+	
+		double xmin_;
+		double xmax_;
+		size_t N_;
 
 };
 

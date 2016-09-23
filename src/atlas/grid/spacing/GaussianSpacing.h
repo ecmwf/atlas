@@ -14,13 +14,17 @@ class GaussianSpacing: public Spacing {
 		
 		// constructor
 		GaussianSpacing(const eckit::Parametrisation& p);
+		~GaussianSpacing();	// required to deallocate lats_
 		
 		// class name
 		static std::string className() { return "atlas.GaussianSpacing"; } 
 		static std::string spacing_type_str() {return "gaussian";}
 
 		
-		void generate(double xmin, double xmax, size_t N, std::vector<double> &x) const;
+		void generate(size_t i, double &x) const;
+	
+	private:
+		double * lats_;
 };
 
 }  // namespace spacing
