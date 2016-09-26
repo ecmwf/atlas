@@ -26,7 +26,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/parallel/GatherScatter.h"
 
 //#define DEBUGGING_PARFIELDS
@@ -63,7 +63,7 @@ field::Field& build_edges_partition ( Mesh& mesh );
 field::Field& build_edges_remote_idx( Mesh& mesh );
 field::Field& build_edges_global_idx( Mesh& mesh );
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 typedef gidx_t uid_t;
 
@@ -86,7 +86,7 @@ struct Node
 
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 
 void build_parallel_fields( Mesh& mesh )
@@ -94,7 +94,7 @@ void build_parallel_fields( Mesh& mesh )
   build_nodes_parallel_fields( mesh.nodes() );
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void build_nodes_parallel_fields( mesh::Nodes& nodes )
 {
@@ -109,7 +109,7 @@ void build_nodes_parallel_fields( mesh::Nodes& nodes )
   nodes.metadata().set("parallel",true);
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void build_edges_parallel_fields( Mesh& mesh )
 {
@@ -118,7 +118,7 @@ void build_edges_parallel_fields( Mesh& mesh )
   build_edges_global_idx( mesh );
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 field::Field& build_nodes_global_idx( mesh::Nodes& nodes )
 {
@@ -142,9 +142,9 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
   UniqueLonLat compute_uid(nodes);
 
-  // unused // int mypart = eckit::mpi::rank();
-  int nparts = eckit::mpi::size();
-  int root = 0;
+  // unused // int mypart = eckit::mpi::comm().rank();
+  int nparts = eckit::mpi::comm().size();
+  size_t root = 0;
 
   array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
@@ -171,10 +171,11 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
     loc_id(jnode) = glb_idx(jnode);
   }
 
-  std::vector<int> recvcounts(eckit::mpi::size());
-  std::vector<int> recvdispls(eckit::mpi::size());
-  ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nb_nodes, 1, MPI_INT,
-                                recvcounts.data(), 1, MPI_INT, root, eckit::mpi::comm()) );
+  std::vector<int> recvcounts(eckit::mpi::comm().size());
+  std::vector<int> recvdispls(eckit::mpi::comm().size());
+
+  eckit::mpi::comm().gather(nb_nodes, recvcounts, root);
+
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
   {
@@ -185,11 +186,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   array::ArrayT<uid_t> glb_id_arr(glb_nb_nodes);
   array::ArrayView<uid_t,1> glb_id(glb_id_arr);
 
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Gatherv( loc_id.data(), nb_nodes, eckit::mpi::datatype<uid_t>(),
-                     glb_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-                     root, eckit::mpi::comm()) );
 
+  eckit::mpi::comm().gatherv(loc_id.begin(), loc_id.end(), glb_id.begin(), glb_id.end(), recvcounts, recvdispls, root);
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
@@ -216,10 +214,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   }
 
   // 3) Scatter renumbered back
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-                      loc_id.data(), nb_nodes, eckit::mpi::datatype<uid_t>(),
-                      root, eckit::mpi::comm()) );
+
+  eckit::mpi::comm().scatterv(glb_id.begin(), glb_id.end(), recvcounts, recvdispls, loc_id.begin(), loc_id.end(), root);
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -227,12 +223,12 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   }
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 {
-  size_t mypart = eckit::mpi::rank();
-  size_t nparts = eckit::mpi::size();
+  size_t mypart = eckit::mpi::comm().rank();
+  size_t nparts = eckit::mpi::comm().size();
 
   UniqueLonLat compute_uid(nodes);
 
@@ -251,8 +247,8 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 
   int varsize=2;
 
-  std::vector< std::vector<uid_t> > send_needed( eckit::mpi::size() );
-  std::vector< std::vector<uid_t> > recv_needed( eckit::mpi::size() );
+  std::vector< std::vector<uid_t> > send_needed( eckit::mpi::comm().size() );
+  std::vector< std::vector<uid_t> > recv_needed( eckit::mpi::comm().size() );
   int sendcnt=0;
   std::map<uid_t,int> lookup;
   for( size_t jnode=0; jnode<nb_nodes; ++jnode )
@@ -282,10 +278,10 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     }
   }
 
-  eckit::mpi::all_to_all( send_needed, recv_needed );
+  eckit::mpi::comm().allToAll(send_needed, recv_needed);
 
-  std::vector< std::vector<int> > send_found( eckit::mpi::size() );
-  std::vector< std::vector<int> > recv_found( eckit::mpi::size() );
+  std::vector< std::vector<int> > send_found( eckit::mpi::comm().size() );
+  std::vector< std::vector<int> > recv_found( eckit::mpi::comm().size() );
 
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
@@ -303,14 +299,14 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
       else
       {
         std::stringstream msg;
-        msg << "[" << eckit::mpi::rank() << "] " << "Node requested by rank ["<<jpart
+        msg << "[" << eckit::mpi::comm().rank() << "] " << "Node requested by rank ["<<jpart
             << "] with uid [" << uid << "] that should be owned is not found";
         throw eckit::SeriousBug(msg.str(),Here());
       }
     }
   }
 
-  eckit::mpi::all_to_all( send_found, recv_found );
+  eckit::mpi::comm().allToAll(send_found, recv_found);
 
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
@@ -324,22 +320,22 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
   return nodes.field("remote_idx");
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 field::Field& build_nodes_partition( mesh::Nodes& nodes )
 {
   return nodes.partition();
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 field::Field& build_edges_partition( Mesh& mesh )
 {
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
 
-  size_t mypart = eckit::mpi::rank();
-  size_t nparts = eckit::mpi::size();
+  size_t mypart = eckit::mpi::comm().rank();
+  size_t nparts = eckit::mpi::comm().size();
 
   mesh::HybridElements& edges = mesh.edges();
   array::ArrayView<int,1> edge_part  ( edges.partition() );
@@ -452,8 +448,8 @@ field::Field& build_edges_partition( Mesh& mesh )
     std::map<uid_t,int> lookup;
     int varsize=2;
     double centroid[2];
-    std::vector< std::vector<uid_t> > send_unknown( eckit::mpi::size() );
-    std::vector< std::vector<uid_t> > recv_unknown( eckit::mpi::size() );
+    std::vector< std::vector<uid_t> > send_unknown( eckit::mpi::comm().size() );
+    std::vector< std::vector<uid_t> > recv_unknown( eckit::mpi::comm().size() );
     for( size_t jedge=0; jedge<nb_edges; ++jedge )
     {
       int ip1 = edge_nodes(jedge,0);
@@ -514,7 +510,7 @@ field::Field& build_edges_partition( Mesh& mesh )
 
     }
 
-    eckit::mpi::all_to_all( send_unknown, recv_unknown );
+    eckit::mpi::comm().allToAll(send_unknown, recv_unknown);
 
     // So now we have identified all possible edges with wrong partition.
     // We still need to check if it is actually wrong. This can be achieved
@@ -522,8 +518,8 @@ field::Field& build_edges_partition( Mesh& mesh )
     // assigned edge partition. If the edge is not found on that partition,
     // then its other node must be the edge partition.
 
-    std::vector< std::vector<int> > send_found( eckit::mpi::size() );
-    std::vector< std::vector<int> > recv_found( eckit::mpi::size() );
+    std::vector< std::vector<int> > send_found( eckit::mpi::comm().size() );
+    std::vector< std::vector<int> > recv_found( eckit::mpi::comm().size() );
 
     for( size_t jpart=0; jpart<nparts; ++jpart )
     {
@@ -540,7 +536,7 @@ field::Field& build_edges_partition( Mesh& mesh )
       }
     }
 
-    eckit::mpi::all_to_all( send_found, recv_found );
+    eckit::mpi::comm().allToAll(send_found, recv_found);
 
     for( size_t jpart=0; jpart<nparts; ++jpart )
     {
@@ -604,8 +600,8 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
 
-  size_t mypart = eckit::mpi::rank();
-  size_t nparts = eckit::mpi::size();
+  size_t mypart = eckit::mpi::comm().rank();
+  size_t nparts = eckit::mpi::comm().size();
 
   mesh::HybridElements& edges = mesh.edges();
 
@@ -632,8 +628,8 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
   const int nb_edges = edges.size();
 
   double centroid[2];
-  std::vector< std::vector<uid_t> > send_needed( eckit::mpi::size() );
-  std::vector< std::vector<uid_t> > recv_needed( eckit::mpi::size() );
+  std::vector< std::vector<uid_t> > send_needed( eckit::mpi::comm().size() );
+  std::vector< std::vector<uid_t> > recv_needed( eckit::mpi::comm().size() );
   int sendcnt=0;
   std::map<uid_t,int> lookup;
 
@@ -699,10 +695,10 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
 #ifdef DEBUGGING_PARFIELDS
   varsize=6;
 #endif
-  eckit::mpi::all_to_all( send_needed, recv_needed );
+  eckit::mpi::comm().allToAll(send_needed, recv_needed);
 
-  std::vector< std::vector<int> > send_found( eckit::mpi::size() );
-  std::vector< std::vector<int> > recv_found( eckit::mpi::size() );
+  std::vector< std::vector<int> > send_found( eckit::mpi::comm().size() );
+  std::vector< std::vector<int> > recv_found( eckit::mpi::comm().size() );
 
   std::map<uid_t,int>::iterator found;
   for( size_t jpart=0; jpart<nparts; ++jpart )
@@ -734,7 +730,7 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
       }
     }
   }
-  eckit::mpi::all_to_all( send_found, recv_found );
+  eckit::mpi::comm().allToAll(send_found, recv_found);
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
     array::ArrayView<int,2> recv_edge( recv_found[ jpart ].data(),
@@ -752,8 +748,8 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
 
-  int nparts = eckit::mpi::size();
-  int root = 0;
+  int nparts = eckit::mpi::comm().size();
+  size_t root = 0;
 
   mesh::HybridElements& edges = mesh.edges();
 
@@ -806,10 +802,11 @@ field::Field& build_edges_global_idx( Mesh& mesh )
     loc_edge_id(jedge) = edge_gidx(jedge);
   }
 
-  std::vector<int> recvcounts(eckit::mpi::size());
-  std::vector<int> recvdispls(eckit::mpi::size());
-  ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nb_edges, 1, MPI_INT,
-                                recvcounts.data(), 1, MPI_INT, root, eckit::mpi::comm()) );
+  std::vector<int> recvcounts(eckit::mpi::comm().size());
+  std::vector<int> recvdispls(eckit::mpi::comm().size());
+
+  eckit::mpi::comm().gather(nb_edges, recvcounts, root);
+
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
   {
@@ -820,11 +817,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   array::ArrayT<uid_t> glb_edge_id_arr(glb_nb_edges);
   array::ArrayView<uid_t,1> glb_edge_id(glb_edge_id_arr);
 
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Gatherv( loc_edge_id.data(), nb_edges, eckit::mpi::datatype<uid_t>(),
-                     glb_edge_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-                     root, eckit::mpi::comm()) );
-
+  eckit::mpi::comm().gatherv(loc_edge_id.begin(), loc_edge_id.end(), glb_edge_id.begin(), glb_edge_id.end(), recvcounts, recvdispls, root);
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> edge_sort; edge_sort.reserve(glb_nb_edges);
@@ -851,12 +844,8 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   }
 
   // 3) Scatter renumbered back
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Scatterv( glb_edge_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-                      loc_edge_id.data(), nb_edges, eckit::mpi::datatype<uid_t>(),
-                      root, eckit::mpi::comm()) );
 
-
+  eckit::mpi::comm().scatterv(glb_edge_id.begin(), glb_edge_id.end(), recvcounts, recvdispls, loc_edge_id.begin(), loc_edge_id.end(), root);
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
@@ -866,7 +855,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   return edges.global_index();
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 void atlas__build_parallel_fields ( Mesh* mesh) {
@@ -885,10 +874,7 @@ void atlas__renumber_nodes_glb_idx (mesh::Nodes* nodes)
   ATLAS_ERROR_HANDLING( renumber_nodes_glb_idx(*nodes) );
 }
 
-
-// ------------------------------------------------------------------
-
-
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace actions
 } // namespace mesh

@@ -10,7 +10,9 @@
 
 #include <algorithm>
 #include <cmath>
+
 #include "eckit/utils/MD5.h"
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/HybridElements.h"
@@ -19,7 +21,6 @@
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/internals/IsGhost.h"
-#include "atlas/parallel/mpi/Collectives.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/HaloExchange.h"
@@ -97,7 +98,7 @@ size_t EdgeColumns::config_size(const eckit::Parametrisation& config) const
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (eckit::mpi::rank() == owner ? nb_edges_global() : 0);
+      size = (eckit::mpi::comm().rank() == owner ? nb_edges_global() : 0);
     }
   }
   return size;

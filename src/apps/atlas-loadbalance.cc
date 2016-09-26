@@ -22,7 +22,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 //------------------------------------------------------------------------------------------------------
 
 using namespace eckit;
@@ -129,7 +129,7 @@ void AtlasLoadbalance::run()
     std::stringstream s;
     write_load_balance_report(*mesh,s);
 
-    if( eckit::mpi::rank() == 0 )
+    if( eckit::mpi::comm().rank() == 0 )
     {
       std::cout << s.str() << std::endl;
     }

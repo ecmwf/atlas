@@ -1,9 +1,7 @@
-
-// #include "eckit/config/FileReadPolicy.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/exception/Exceptions.h"
-// #include "eckit/runtime/ContextBehavior.h"
+
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas_f/internals/atlas_read_file.h"
 

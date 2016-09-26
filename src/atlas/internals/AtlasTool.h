@@ -21,6 +21,7 @@
 #include "eckit/option/CmdArgs.h"
 #include "eckit/option/SimpleOption.h"
 #include "eckit/option/Separator.h"
+
 #include "atlas/internals/Debug.h"
 
 //--------------------------------------------------------------------------------
@@ -91,7 +92,7 @@ protected:
       if( argv(i) == "--help" ||
           argv(i) == "-h"     )
       {
-        if( eckit::mpi::rank() == 0 )
+        if( eckit::mpi::comm().rank() == 0 )
           help();
         return true;
       }

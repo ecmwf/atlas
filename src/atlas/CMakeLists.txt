@@ -282,9 +282,9 @@ runtime/ErrorHandling.cc
 runtime/ErrorHandling.cc
 parallel/omp/omp.h
 parallel/omp/omp.cc
+parallel/mpi/Buffer.h
 parallel/mpi/mpi.h
 parallel/mpi/mpi.cc
-parallel/mpi/Collectives.h
 parallel/Checksum.h
 parallel/Checksum.cc
 parallel/HaloExchange.h
@@ -355,7 +355,8 @@ ecbuild_add_library( TARGET atlas
     "${TRANSI_INCLUDE_DIRS}"
 
   LIBS
-    eckit_geometry eckit_option
-    "${ECKIT_MPI_LIBRARIES}"
+    eckit_geometry
+    eckit_option
+    eckit_mpi
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}" )

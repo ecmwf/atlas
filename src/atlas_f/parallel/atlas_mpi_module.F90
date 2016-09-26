@@ -1,7 +1,10 @@
-
 module atlas_mpi_module
-use atlas_mpi_c_binding
+
 #include "atlas_f/internals/atlas_f_mpi.h"
+
+! Temporary until fckit will wrap all of eckit::mpi
+integer, save :: tmp_comm = MPI_COMM_WORLD
+
 public
 contains
 
@@ -28,12 +31,16 @@ contains
   end function atlas_mpi_finalized
 
   function atlas_mpi_comm()
+    use atlas_mpi_c_binding
     integer :: atlas_mpi_comm
-    atlas_mpi_comm = atlas_mpi_comm_fortran_communicator()
+    atlas_mpi_comm = tmp_comm
+    call atlas_mpi_init()
   end function atlas_mpi_comm
 
   subroutine atlas_mpi_set_comm(comm)
+    use atlas_mpi_c_binding
     integer :: comm
+    tmp_comm = comm
     call atlas_mpi_comm_attach_fortran_communicator(comm)
   end subroutine atlas_mpi_set_comm
 

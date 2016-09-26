@@ -11,11 +11,6 @@
 #ifndef ATLAS_MPI_MPI_h
 #define ATLAS_MPI_MPI_h
 
-#include "eckit/mpi/mpi.h"
-#include "eckit/mpi/Collectives.h"
-#include "eckit/mpi/Exceptions.h"
-#include "atlas/parallel/mpi/Collectives.h"
-
 namespace atlas {
 namespace parallel {
 namespace mpi {

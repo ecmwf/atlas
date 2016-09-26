@@ -32,7 +32,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/io/Gmsh.h"
 #include "eckit/exception/Exceptions.h"
@@ -159,7 +159,7 @@ void Meshgen2Gmsh::execute(const Args& args)
     halo = std::max(halo,1l);
 
   eckit::LocalConfiguration meshgenerator_config( args );
-  if( eckit::mpi::size() > 1 || edges )
+  if( eckit::mpi::comm().size() > 1 || edges )
     meshgenerator_config.set("3d",false);
 
   SharedPtr<Structured> grid;

@@ -8,15 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef ATLAS_MPI_COLLECTIVES_h
-#define ATLAS_MPI_COLLECTIVES_h
+#ifndef ATLAS_MPI_BUFFER_h
+#define ATLAS_MPI_BUFFER_h
 
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
+
 #include "atlas/array/ArrayView.h"
 
-
 namespace atlas {
-namespace util {
 namespace parallel {
 namespace mpi {
 
@@ -38,10 +37,14 @@ struct Buffer : eckit::mpi::Buffer<DATA_TYPE>
 template <typename DATA_TYPE>
 struct Buffer<DATA_TYPE,1> : public eckit::mpi::Buffer<DATA_TYPE>
 {
+
+  Buffer(size_t size) : eckit::mpi::Buffer<DATA_TYPE>(size) {}
+
   array::ArrayView<DATA_TYPE,1> operator[](int p)
   {
-    return array::ArrayView<DATA_TYPE,1> ( eckit::mpi::Buffer<DATA_TYPE>::buf.data()+eckit::mpi::Buffer<DATA_TYPE>::displs[p],
-                                    array::make_shape( eckit::mpi::Buffer<DATA_TYPE>::counts[p] ) );
+    return array::ArrayView<DATA_TYPE,1>(
+                eckit::mpi::Buffer<DATA_TYPE>::buffer.data() + eckit::mpi::Buffer<DATA_TYPE>::displs[p],
+                array::make_shape( eckit::mpi::Buffer<DATA_TYPE>::counts[p] ) );
   }
 };
 
@@ -49,7 +52,6 @@ struct Buffer<DATA_TYPE,1> : public eckit::mpi::Buffer<DATA_TYPE>
 
 } // namespace mpi
 } // namespace parallel
-} // namespace util
 } // namespace atlas
 
-#endif // ATLAS_MPI_COLLECTIVES_h
+#endif

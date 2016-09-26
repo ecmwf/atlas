@@ -12,7 +12,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 namespace atlas {
 namespace mesh {
@@ -41,7 +41,7 @@ Nodes::Nodes(): size_(0)
   for(size_t n=0; n<size(); ++n)
   {
     glb_idx(n) = 1+n;
-    part(n) = eckit::mpi::rank();
+    part(n) = eckit::mpi::comm().rank();
     flags(n) = 0;
   }
 }

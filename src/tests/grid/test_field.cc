@@ -12,7 +12,7 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
 
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/grids.h"
@@ -221,13 +221,11 @@ void TestField::test_wrap_rawdata_direct()
 
 void TestField::run()
 {
-    eckit::mpi::init();
     test_constructor();
     test_fieldcreator();
     test_implicit_conversion();
     test_wrap_rawdata_through_array();
     test_wrap_rawdata_direct();
-    eckit::mpi::finalize();
 }
 
 //-----------------------------------------------------------------------------

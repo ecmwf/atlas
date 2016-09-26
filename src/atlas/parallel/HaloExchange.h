@@ -17,13 +17,15 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
-#include "eckit/mpi/Exceptions.h"
 #include "eckit/exception/Exceptions.h"
+#include "eckit/mpi/Comm.h"
+
 #include "atlas/internals/Debug.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 namespace atlas {
 namespace parallel {
@@ -127,8 +129,9 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   std::vector<int        > recv_displs(nproc    );
   std::vector<int        > send_counts(nproc    );
   std::vector<int        > recv_counts(nproc    );
-  std::vector<MPI_Request> send_req   (nproc    );
-  std::vector<MPI_Request> recv_req   (nproc    );
+
+  std::vector<eckit::mpi::Request> send_req(nproc    );
+  std::vector<eckit::mpi::Request> recv_req(nproc    );
 
   for (size_t jproc=0; jproc<nproc; ++jproc)
   {
@@ -144,8 +147,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if(recv_counts[jproc] > 0)
     {
-      ECKIT_MPI_CHECK_RESULT( MPI_Irecv( &recv_buffer[recv_displs[jproc]] , recv_counts[jproc],
-        eckit::mpi::datatype<DATA_TYPE>(), jproc, tag, eckit::mpi::comm(), &recv_req[jproc] ) );
+        recv_req[jproc] = eckit::mpi::comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
     }
   }
 
@@ -157,8 +159,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if(send_counts[jproc] > 0)
     {
-      ECKIT_MPI_CHECK_RESULT( MPI_Isend( &send_buffer[send_displs[jproc]], send_counts[jproc],
-        eckit::mpi::datatype<DATA_TYPE>(), jproc, tag, eckit::mpi::comm(), &send_req[jproc] ) );
+        send_req[jproc] = eckit::mpi::comm().iSend(&send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag);
     }
   }
 
@@ -167,7 +168,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if( recvcounts_[jproc] > 0)
     {
-      ECKIT_MPI_CHECK_RESULT( MPI_Wait(&recv_req[jproc], MPI_STATUS_IGNORE ) );
+        eckit::mpi::comm().wait(recv_req[jproc]);
     }
   }
 
@@ -179,14 +180,10 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if( sendcounts_[jproc] > 0)
     {
-      ECKIT_MPI_CHECK_RESULT( MPI_Wait(&send_req[jproc], MPI_STATUS_IGNORE ) );
+        eckit::mpi::comm().wait(send_req[jproc]);
     }
   }
-
 }
-
-
-
 
 template<typename DATA_TYPE>
 void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
@@ -404,7 +401,7 @@ void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>& field ) const
 }
 
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C"
 {
@@ -420,7 +417,8 @@ extern "C"
   void atlas__HaloExchange__execute_double (HaloExchange* This, double field[], int var_rank);
 
 }
-// ------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace parallel
 } // namespace atlas

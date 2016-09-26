@@ -13,10 +13,12 @@
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
+
 #include "eckit/exception/Exceptions.h"
+#include "eckit/mpi/Comm.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
-#include "eckit/mpi/Collectives.h"
+
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/runtime/ErrorHandling.h"
@@ -27,12 +29,12 @@ namespace atlas {
 namespace util {
 
 namespace {
-void throw_exception(const std::string& name)
-{
-  std::stringstream msg;
-  msg << "Could not find metadata \"" << name << "\"";
-  throw eckit::OutOfRange(msg.str(),Here());
-}
+    void throw_exception(const std::string& name)
+    {
+      std::stringstream msg;
+      msg << "Could not find metadata \"" << name << "\"";
+      throw eckit::OutOfRange(msg.str(),Here());
+    }
 }
 
 Metadata& Metadata::set( const eckit::Properties& p )
@@ -365,7 +367,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root)
 {
   std::string buffer;
   int buffer_size;
-  if( eckit::mpi::rank() == root )
+  if( eckit::mpi::comm().rank() == root )
   {
     std::stringstream s;
     eckit::JSON json(s);
@@ -373,16 +375,15 @@ void Metadata::broadcast(Metadata& dest, const size_t root)
     buffer = s.str();
     buffer_size = buffer.size();
   }
-  eckit::mpi::broadcast(buffer_size,root);
-  if( eckit::mpi::rank() != root )
+
+  eckit::mpi::comm().broadcast(buffer_size,root);
+  if( eckit::mpi::comm().rank() != root ) {
     buffer.resize(buffer_size);
+  }
 
-  ECKIT_MPI_CHECK_RESULT( MPI_Bcast(
-    &buffer[0],buffer_size, eckit::mpi::datatype<char>(),
-    root,eckit::mpi::comm() ) );
+  eckit::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
 
-
-  if( not (&dest==this && eckit::mpi::rank() == root ) )
+  if( not (&dest==this && eckit::mpi::comm().rank() == root ) )
   {
     std::stringstream s;
     s << buffer;
@@ -402,7 +403,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root) const
 {
   std::string buffer;
   int buffer_size;
-  if( eckit::mpi::rank() == root )
+  if( eckit::mpi::comm().rank() == root )
   {
     std::stringstream s;
     eckit::JSON json(s);
@@ -410,13 +411,13 @@ void Metadata::broadcast(Metadata& dest, const size_t root) const
     buffer = s.str();
     buffer_size = buffer.size();
   }
-  eckit::mpi::broadcast(buffer_size,root);
-  if( eckit::mpi::rank() != root )
-    buffer.resize(buffer_size);
 
-  ECKIT_MPI_CHECK_RESULT( MPI_Bcast(
-    &buffer[0],buffer_size, eckit::mpi::datatype<char>(),
-    root,eckit::mpi::comm() ) );
+  eckit::mpi::comm().broadcast(buffer_size,root);
+  if( eckit::mpi::comm().rank() != root ) {
+    buffer.resize(buffer_size);
+  }
+
+  eckit::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
 
   // Fill in dest
   {

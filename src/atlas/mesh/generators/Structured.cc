@@ -33,7 +33,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/internals/Debug.h"
 
 #define DEBUG_OUTPUT 0
@@ -141,10 +141,10 @@ void Structured::configure_defaults()
   options.set( "3d", false );
 
   // This option sets number of parts the mesh will be split in
-  options.set( "nb_parts", eckit::mpi::size() );
+  options.set( "nb_parts", eckit::mpi::comm().size() );
 
   // This option sets the part that will be generated
-  options.set( "part", eckit::mpi::rank() );
+  options.set( "part", eckit::mpi::comm().rank() );
 
   // Experimental option. The result is a non-standard Reduced Gaussian Grid, with a ragged Greenwich line
   options.set("stagger", false );
@@ -173,7 +173,7 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
   std::string partitioner_factory = "Trans";
   options.get("partitioner",partitioner_factory);
   if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
-  if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
+  if ( nb_parts == 1 || eckit::mpi::comm().size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
 
   grid::partitioners::Partitioner::Ptr partitioner( grid::partitioners::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
   grid::GridDistribution::Ptr distribution( partitioner->distribution() );
@@ -1275,20 +1275,19 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
 void Structured::generate_global_element_numbering( Mesh& mesh ) const
 {
-  int loc_nb_elems = mesh.cells().size();
-  std::vector<int> elem_counts( eckit::mpi::size() );
-  std::vector<int> elem_displs( eckit::mpi::size() );
+  size_t loc_nb_elems = mesh.cells().size();
+  std::vector<size_t> elem_counts( eckit::mpi::comm().size() );
+  std::vector<int> elem_displs( eckit::mpi::comm().size() );
 
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Allgather( &loc_nb_elems, 1, MPI_INT,
-                       elem_counts.data(), 1, MPI_INT, eckit::mpi::comm()) );
+  eckit::mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
+
   elem_displs.at(0) = 0;
-  for(size_t jpart = 1; jpart < eckit::mpi::size(); ++jpart)
+  for(size_t jpart = 1; jpart < eckit::mpi::comm().size(); ++jpart)
   {
     elem_displs.at(jpart) = elem_displs.at(jpart-1) + elem_counts.at(jpart-1);
   }
 
-  gidx_t gid = 1+elem_displs.at( eckit::mpi::rank() );
+  gidx_t gid = 1+elem_displs.at( eckit::mpi::comm().rank() );
 
   array::ArrayView<gidx_t,1> glb_idx( mesh.cells().global_index() );
 

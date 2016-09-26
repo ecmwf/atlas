@@ -1,10 +1,12 @@
 #include <stdlib.h>
+
 #include "eckit/runtime/Main.h"
 #include "eckit/parser/StringTools.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
+#include "eckit/mpi/Comm.h"
+
 #include "atlas/atlas.h"
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/field/FieldCreator.h"
@@ -48,44 +50,41 @@ std::string rundir()
   return cwd;
 }
 
-// ----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void atlas_info( std::ostream& out )
 {
   out << "Atlas initialised [" << Main::instance().name() << "]\n";
-  //out << runtime::indent();
+
   out << "atlas version [" << atlas_version() << "]\n";
   out << "atlas git     [" << atlas_git_sha1()<< "]\n";
   out << "eckit version [" << eckit_version() << "]\n";
   out << "eckit git     [" << eckit_git_sha1()<< "]\n";
   out << "current dir   [" << PathName(rundir()).fullName() << "]\n";
-  if( eckit::mpi::initialized() ) {
-    out << "MPI\n" ; //<< runtime::indent();
-    out << "communicator  [" << eckit::mpi::comm().fortran_communicator() << "] \n";
+
+  if(eckit::mpi::comm().size() > 1) {
+    out << "MPI\n";
+    out << "communicator  [" << eckit::mpi::comm() << "] \n";
     out << "size          [" << eckit::mpi::comm().size() << "] \n";
     out << "rank          [" << eckit::mpi::comm().rank() << "] \n";
-    //out << runtime::dedent();
   }
   else
   {
     out << "MPI           [OFF]\n";
   }
-  //out << runtime::dedent();
 }
 
-// ----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void atlas_init()
 {
   return atlas_init(util::NoConfig());
 }
 
-// ----------------------------------------------------------------------------
 
 void atlas_init(const eckit::Parametrisation&)
 {
-  Environment::setupMPI();
-  if( eckit::mpi::rank() > 0 ) {
+  if( eckit::mpi::comm().rank() > 0 ) {
     Log::info().reset();
     Log::debug().reset();
     Log::warning().reset();
@@ -97,7 +96,6 @@ void atlas_init(const eckit::Parametrisation&)
   atlas::grid::load();
 }
 
-// ----------------------------------------------------------------------------
 
 // This is only to be used from Fortran or unit-tests
 void atlas_init(int argc, char** argv)
@@ -106,21 +104,19 @@ void atlas_init(int argc, char** argv)
   atlas_init();
 }
 
-// ----------------------------------------------------------------------------
 
 void atlas_finalize()
 {
   Log::debug() << "Atlas finalized\n" << std::flush;
 }
 
-// ----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void atlas__atlas_init(int argc, char* argv[])
 {
   atlas_init(argc,argv);
 }
 
-// ----------------------------------------------------------------------------
 
 void atlas__atlas_init_noargs()
 {
@@ -129,28 +125,24 @@ void atlas__atlas_init_noargs()
   atlas_init(argc,(char**)argv);
 }
 
-// ----------------------------------------------------------------------------
 
 void atlas__atlas_finalize()
 {
   atlas_finalize();
 }
 
-// ----------------------------------------------------------------------------
 
 const char* atlas__eckit_version()
 {
   return eckit_version();
 }
 
-// ----------------------------------------------------------------------------
 
 const char* atlas__eckit_git_sha1()
 {
   return eckit_git_sha1();
 }
 
-// ----------------------------------------------------------------------------
 
 const char* atlas__eckit_git_sha1_abbrev(int length)
 {
@@ -160,28 +152,24 @@ const char* atlas__eckit_git_sha1_abbrev(int length)
   return git_sha1.c_str();
 }
 
-// ----------------------------------------------------------------------------
 
 const char* atlas__atlas_version()
 {
   return atlas_version();
 }
 
-// ----------------------------------------------------------------------------
 
 const char* atlas__atlas_git_sha1()
 {
   return atlas_git_sha1();
 }
 
-// ----------------------------------------------------------------------------
 
 const char* atlas__atlas_git_sha1_abbrev(int length)
 {
   return atlas_git_sha1_abbrev(length);
 }
 
-// ----------------------------------------------------------------------------
 
 const char* atlas__run_name ()
 {
@@ -189,7 +177,6 @@ const char* atlas__run_name ()
   return str.c_str();
 }
 
-// ----------------------------------------------------------------------------
 
 const char* atlas__display_name ()
 {
@@ -197,14 +184,12 @@ const char* atlas__display_name ()
   return str.c_str();
 }
 
-// ----------------------------------------------------------------------------
 
 const char* atlas__rundir ()
 {
   return rundir().c_str();
 }
 
-// ----------------------------------------------------------------------------
 
 const char* atlas__workdir ()
 {
@@ -212,7 +197,7 @@ const char* atlas__workdir ()
   return workdir.c_str();
 }
 
-// ----------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
 

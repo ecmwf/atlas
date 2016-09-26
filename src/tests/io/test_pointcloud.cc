@@ -27,7 +27,7 @@
 #include "atlas/grid/Unstructured.h"
 #include "atlas/util/io/PointCloud.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 #include "tests/AtlasFixture.h"
 
@@ -100,10 +100,9 @@ namespace {
 namespace atlas {
 namespace test {
 
-BOOST_GLOBAL_FIXTURE( MPIFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_SUITE( test_pointcloud )
-
 
 BOOST_AUTO_TEST_CASE( read_inexistent_file )
 {

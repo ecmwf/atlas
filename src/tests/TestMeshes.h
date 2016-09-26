@@ -13,7 +13,7 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/gaussian/ReducedGaussian.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 
 using namespace atlas;
 using namespace atlas::grid;

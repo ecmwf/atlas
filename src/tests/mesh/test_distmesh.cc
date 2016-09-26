@@ -14,7 +14,7 @@
 #define BOOST_TEST_MODULE TestDistributeMesh
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/parallel/mpi/mpi.h"
+#include "eckit/mpi/Comm.h"
 #include "atlas/atlas.h"
 #include "tests/TestMeshes.h"
 #include "atlas/mesh/Mesh.h"
@@ -59,11 +59,13 @@ double dual_volume(mesh::Mesh& mesh)
       area += dual_volumes(node);
     }
   }
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
+
+  eckit::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+
   return area;
 }
 
-BOOST_GLOBAL_FIXTURE( MPIFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {

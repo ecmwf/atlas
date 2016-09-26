@@ -9,8 +9,9 @@
  */
 
 #include "eckit/utils/MD5.h"
-#include "eckit/mpi/mpi.h"
 #include "eckit/os/BackTrace.h"
+#include "eckit/mpi/Comm.h"
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/Spectral.h"
@@ -51,7 +52,7 @@ size_t Spectral::config_size(const eckit::Parametrisation& config) const
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (eckit::mpi::rank() == owner ? nb_spectral_coefficients_global() : 0);
+      size = (eckit::mpi::comm().rank() == owner ? nb_spectral_coefficients_global() : 0);
     }
   }
   return size;
@@ -136,7 +137,7 @@ void Spectral::gather( const field::FieldSet& local_fieldset, field::FieldSet& g
     size_t root=0;
     glb.metadata().get("owner",root);
     ASSERT( loc.shape(0) == nb_spectral_coefficients() );
-    if( eckit::mpi::rank() == root )
+    if( eckit::mpi::comm().rank() == root )
       ASSERT( glb.shape(0) == nb_spectral_coefficients_global() );
     std::vector<int> nto(1,root+1);
     if( loc.rank() > 1 ) {
@@ -180,7 +181,7 @@ void Spectral::scatter( const field::FieldSet& global_fieldset, field::FieldSet&
     size_t root=0;
     glb.metadata().get("owner",root);
     ASSERT( loc.shape(0) == nb_spectral_coefficients() );
-    if( eckit::mpi::rank() == root )
+    if( eckit::mpi::comm().rank() == root )
       ASSERT( glb.shape(0) == nb_spectral_coefficients_global() );
     std::vector<int> nfrom(1,root+1);
     if( loc.rank() > 1 ) {
