@@ -100,7 +100,7 @@ namespace {
 namespace atlas {
 namespace test {
 
-BOOST_GLOBAL_FIXTURE( MPIFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_SUITE( test_pointcloud )
 

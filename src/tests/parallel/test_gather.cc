@@ -80,6 +80,7 @@ struct Fixture {
   int Ng() { return eckit::mpi::comm().rank() == root ? gather_scatter.glb_dof() : 0; }
 };
 
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank0, Fixture )
 {

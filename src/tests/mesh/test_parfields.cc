@@ -14,6 +14,8 @@
 #define BOOST_TEST_MODULE TestBuildParallelFields
 #include "ecbuild/boost_test_framework.h"
 
+#include "eckit/mpi/Comm.h"
+
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/internals/atlas_config.h"
@@ -26,11 +28,12 @@
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "eckit/mpi/Comm.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/internals/Bitflags.h"
+
+#include "tests/AtlasFixture.h"
 
 using atlas::internals::Topology;
 
@@ -67,6 +70,8 @@ private:
 
 #define DISABLE if(0)
 #define ENABLE if(1)
+
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test1 )
 {

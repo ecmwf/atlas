@@ -21,12 +21,6 @@ struct AtlasFixture : public eckit::testing::Setup {
     ~AtlasFixture() { atlas_finalize(); }
 };
 
-
-struct MPIFixture : public AtlasFixture {
-    MPIFixture()  {}
-    ~MPIFixture() {}
-};
-
 //----------------------------------------------------------------------------------------------------------------------
 
 } // end namespace test

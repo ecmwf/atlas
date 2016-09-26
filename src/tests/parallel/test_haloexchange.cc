@@ -78,6 +78,8 @@ struct Fixture {
   size_t N;
 };
 
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
+
 BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
 {
   size_t strides[] = {1};
