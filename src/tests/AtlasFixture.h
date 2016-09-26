@@ -8,6 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
+#ifndef atlas_testing_AtlasFixture_h
+#define atlas_testing_AtlasFixture_h
+
 #include "eckit/testing/Setup.h"
 
 #include "atlas/atlas.h"
@@ -25,3 +28,5 @@ struct AtlasFixture : public eckit::testing::Setup {
 
 } // end namespace test
 } // end namespace atlas
+
+#endif // atlas_testing_AtlasFixture_h
