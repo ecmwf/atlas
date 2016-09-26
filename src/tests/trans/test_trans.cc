@@ -28,7 +28,6 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
 #include "eckit/mpi/Comm.h"
-#include "atlas/runtime/LogFormat.h"
 #include "atlas/trans/Trans.h"
 #include "transi/trans.h"
 
