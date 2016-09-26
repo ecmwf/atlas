@@ -19,8 +19,10 @@ void atlas_init(const eckit::Parametrisation&);
 void atlas_info(std::ostream&);
 void atlas_finalize();
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
+
 // C wrapper interfaces to C++ routines
+
 extern "C"
 {
   void atlas__atlas_init_noargs();
@@ -37,8 +39,8 @@ extern "C"
   const char* atlas__rundir ();
   const char* atlas__workdir ();
 }
-// ------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
 

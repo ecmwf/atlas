@@ -13,16 +13,20 @@
 
 #include <vector>
 #include <stdexcept>
+
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
+#include "eckit/mpi/Comm.h"
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/internals/Debug.h"
 #include "atlas/array/ArrayView.h"
-#include "eckit/mpi/Comm.h"
 #include "atlas/internals/MPLArrayView.h"
 
 namespace atlas {
 namespace parallel {
+
+//----------------------------------------------------------------------------------------------------------------------
 
 template<typename T> struct remove_const          { typedef T type; };
 template<typename T> struct remove_const<T const> { typedef T type; };

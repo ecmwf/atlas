@@ -9,7 +9,6 @@
  */
 
 #include "eckit/testing/Setup.h"
-#include "eckit/mpi/mpi.h"
 
 #include "atlas/atlas.h"
 
@@ -18,16 +17,14 @@ namespace test {
 
 
 struct AtlasFixture : public eckit::testing::Setup {
-    AtlasFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                 boost::unit_test::framework::master_test_suite().argv);
-                    }
+    AtlasFixture()  { atlas_init(); }
     ~AtlasFixture() { atlas_finalize(); }
 };
 
 
-struct MPIFixture : public eckit::testing::Setup {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
+struct MPIFixture : public AtlasFixture {
+    MPIFixture()  {}
+    ~MPIFixture() {}
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -10,7 +10,10 @@
 
 #include <iomanip>
 #include <fstream>
+
 #include "eckit/filesystem/PathName.h"
+#include "eckit/mpi/Comm.h"
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -18,7 +21,6 @@
 #include "atlas/internals/IsGhost.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "eckit/mpi/Comm.h"
 
 using atlas::internals::IsGhost;
 
