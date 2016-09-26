@@ -19,31 +19,6 @@ using eckit::LocalPathName;
 
 namespace atlas {
 
-class Environment {
-private:
-  Environment()
-  {
-    eckit::mpi::init( Main::instance().argc(), Main::instance().argv() );
-  }
-
-  ~Environment()
-  {
-    eckit::mpi::finalize();
-  }
-
-public:
-  static Environment& setupMPI()
-  {
-    static Environment env;
-    return env;
-  }
-
-  static bool usingMPI() {
-      return (::getenv("OMPI_COMM_WORLD_SIZE") || ::getenv("ALPS_APP_PE"));
-  }
-
-};
-
 std::string rundir()
 {
   static PathName cwd( LocalPathName::cwd() );
