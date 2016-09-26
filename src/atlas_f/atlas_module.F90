@@ -195,14 +195,14 @@ CONTAINS
 subroutine atlas_init( mpi_comm )
   use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_atlas_c_binding
-  use atlas_mpi_module, only :  atlas_mpi_comm_attach_fortran_communicator
+  use atlas_mpi_module, only : atlas_mpi_set_comm
   use fckit_c_interop_module
   integer, save :: argc
   type(c_ptr), save :: argv(15)
   integer, intent(in), optional :: mpi_comm
   call get_c_commandline_arguments(argc,argv)
   if( present(mpi_comm) ) then
-    call atlas_mpi_comm_attach_fortran_communicator(mpi_comm)
+    call atlas_mpi_set_comm(mpi_comm)
   endif
   call atlas__atlas_init(argc,argv)
   atlas_log = atlas_Logger()
