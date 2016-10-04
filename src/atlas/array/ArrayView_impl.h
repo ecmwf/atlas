@@ -671,7 +671,7 @@ ArrayView_iterator<DATA_TYPE,RANK>::ArrayView_iterator(ArrayView<DATA_TYPE,RANK>
 
 template <typename DATA_TYPE, int RANK>
 ArrayView_iterator<DATA_TYPE,RANK>::ArrayView_iterator(const ArrayView_iterator& it)
-    : p_(it.p_), arr_(it.arr_), loc_(it.loc_)
+    : p_(it.p_), arr_(it.arr_), loc_(it.loc_), fastest_idx_(it.fastest_idx_)
 {}
 
 template <typename DATA_TYPE, int RANK>
@@ -726,7 +726,7 @@ ArrayView_const_iterator<DATA_TYPE,RANK>::ArrayView_const_iterator(const ArrayVi
 
 template <typename DATA_TYPE, int RANK>
 ArrayView_const_iterator<DATA_TYPE,RANK>::ArrayView_const_iterator(const ArrayView_iterator<DATA_TYPE,RANK>& it)
-    : p_(it.p_), arr_(it.arr_), loc_(it.loc_)
+    : p_(it.p_), arr_(it.arr_), loc_(it.loc_), fastest_idx_(it.fastest_idx_)
 {}
 
 template <typename DATA_TYPE, int RANK>
