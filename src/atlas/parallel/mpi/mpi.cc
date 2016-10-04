@@ -19,6 +19,11 @@ namespace atlas {
 namespace parallel {
 namespace mpi {
 
+const eckit::mpi::Comm& comm()
+{
+  return eckit::mpi::comm();
+}
+
 extern "C"
 {
     void atlas_mpi_comm_attach_fortran_communicator (int fcomm )

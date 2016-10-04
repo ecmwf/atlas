@@ -1,10 +1,15 @@
 #include <stdlib.h>
 
+// Temporary until ECKIT-166 is fixed
+#ifdef BUG_ECKIT_166
+#include <mpi.h>
+#endif
+
 #include "eckit/runtime/Main.h"
 #include "eckit/parser/StringTools.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #include "atlas/atlas.h"
 #include "atlas/grid/grids.h"
@@ -37,11 +42,11 @@ void atlas_info( std::ostream& out )
   out << "eckit git     [" << eckit_git_sha1()<< "]\n";
   out << "current dir   [" << PathName(rundir()).fullName() << "]\n";
 
-  if(eckit::mpi::comm().size() > 1) {
+  if(parallel::mpi::comm().size() > 1) {
     out << "MPI\n";
-    out << "communicator  [" << eckit::mpi::comm() << "] \n";
-    out << "size          [" << eckit::mpi::comm().size() << "] \n";
-    out << "rank          [" << eckit::mpi::comm().rank() << "] \n";
+    out << "communicator  [" << parallel::mpi::comm() << "] \n";
+    out << "size          [" << parallel::mpi::comm().size() << "] \n";
+    out << "rank          [" << parallel::mpi::comm().rank() << "] \n";
   }
   else
   {
@@ -59,7 +64,7 @@ void atlas_init()
 
 void atlas_init(const eckit::Parametrisation&)
 {
-  if( eckit::mpi::comm().rank() > 0 ) {
+  if( parallel::mpi::comm().rank() > 0 ) {
     Log::info().reset();
     Log::debug().reset();
     Log::warning().reset();
@@ -71,6 +76,11 @@ void atlas_init(const eckit::Parametrisation&)
   atlas::grid::load();
 }
 
+#ifdef BUG_ECKIT_166
+static bool areMPIVarsSet() {
+    return (::getenv("OMPI_COMM_WORLD_SIZE") || ::getenv("ALPS_APP_PE"));
+}
+#endif
 
 // This is only to be used from Fortran or unit-tests
 void atlas_init(int argc, char** argv)
@@ -79,9 +89,19 @@ void atlas_init(int argc, char** argv)
   atlas_init();
 }
 
-
 void atlas_finalize()
-{
+{ 
+// Temporary until ECKIT-166 is fixed
+#ifdef BUG_ECKIT_166
+    if( atlas::areMPIVarsSet() ) {
+      int finalized = 1;
+      MPI_Finalized(&finalized);
+      if( not finalized ) {
+        MPI_Finalize();
+      }
+    }
+#endif
+  
   Log::debug() << "Atlas finalized\n" << std::flush;
 }
 

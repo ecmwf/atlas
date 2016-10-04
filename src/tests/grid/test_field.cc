@@ -13,6 +13,7 @@
 #include "eckit/value/CompositeParams.h"
 
 #include "eckit/mpi/Comm.h"
+#include "atlas/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/grids.h"
@@ -39,9 +40,11 @@ namespace  test {
 class TestField : public Tool {
 public:
 
-    TestField(int argc,char **argv): Tool(argc,argv) {}
+    TestField(int argc,char **argv): Tool(argc,argv) {
+      atlas_init(argc,argv);
+    }
 
-    ~TestField() {}
+    ~TestField() {atlas_finalize();}
 
     virtual void run();
 

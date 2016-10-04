@@ -323,6 +323,10 @@ if( NOT ATLAS_HAVE_TRANS )
   unset( TRANSI_LIBRARIES )
 endif()
 
+if( ATLAS_HAVE_MPI AND  EC_OS_NAME MATCHES "macosx" )
+  list( APPEND ATLAS_DEFINITIONS BUG_ECKIT_166 )
+endif()
+
 ecbuild_add_library( TARGET atlas
 
   AUTO_VERSION
@@ -359,4 +363,8 @@ ecbuild_add_library( TARGET atlas
     eckit_option
     eckit_mpi
     "${CGAL_LIBRARIES}"
-    "${TRANSI_LIBRARIES}" )
+    "${TRANSI_LIBRARIES}"
+  
+  DEFINITIONS
+    ${ATLAS_DEFINITIONS}
+ )

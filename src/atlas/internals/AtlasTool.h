@@ -17,7 +17,6 @@
 #include "atlas/atlas.h"
 #include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
-#include "eckit/runtime/Main.h"
 #include "eckit/option/CmdArgs.h"
 #include "eckit/option/SimpleOption.h"
 #include "eckit/option/Separator.h"

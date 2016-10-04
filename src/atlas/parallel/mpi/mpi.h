@@ -11,9 +11,13 @@
 #ifndef ATLAS_MPI_MPI_h
 #define ATLAS_MPI_MPI_h
 
+#include "eckit/mpi/Comm.h"
+
 namespace atlas {
 namespace parallel {
 namespace mpi {
+  
+const eckit::mpi::Comm& comm();
 
 } // namespace mpi
 } // namespace parallel
