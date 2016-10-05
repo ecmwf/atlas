@@ -29,8 +29,6 @@ configure_file( internals/atlas_version.cc.in internals/atlas_version.cc )
 list( APPEND atlas_srcs
 atlas.h
 atlas.cc
-config/LibAtlas.h
-config/LibAtlas.cc
 )
 
 list( APPEND atlas_grid_srcs
@@ -278,6 +276,8 @@ util/io/Gmsh.h
 util/io/Gmsh.cc
 util/io/PointCloud.h
 util/io/PointCloud.cc
+runtime/LibAtlas.h
+runtime/LibAtlas.cc
 runtime/ErrorHandling.cc
 runtime/ErrorHandling.cc
 parallel/omp/omp.h

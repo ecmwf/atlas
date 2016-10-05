@@ -12,7 +12,7 @@
 /// @author Tiago Quintino
 /// @date   August 2016
 
-#include "atlas/config/LibAtlas.h"
+#include "atlas/runtime/LibAtlas.h"
 
 #include "atlas/internals/atlas_version.h"
 
