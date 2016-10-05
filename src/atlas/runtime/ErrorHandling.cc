@@ -1,7 +1,7 @@
 #include "eckit/log/CodeLocation.h"
 #include "eckit/os/BackTrace.h"
 #include "eckit/utils/Translator.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 
@@ -76,7 +76,7 @@ void handle_error(const eckit::Exception& exception, const int errorCode)
   if( Error::instance().aborts() )
   {
     Log::error() << msg.str() << std::endl;
-    eckit::mpi::comm().abort(errorCode);
+    parallel::mpi::comm().abort(errorCode);
   }
   if( Error::instance().throws() )
   {
@@ -203,7 +203,7 @@ void atlas__abort(char* msg, char* file, int line, char* function )
                << "========================================="
                << std::endl;
 
-  eckit::mpi::comm().abort(-1);
+  parallel::mpi::comm().abort(-1);
 }
 
 void atlas__error_example()

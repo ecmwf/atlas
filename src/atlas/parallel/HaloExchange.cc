@@ -29,7 +29,7 @@ struct IsGhostPoint
     part_   = part;
     ridx_   = ridx;
     base_   = base;
-    mypart_ = eckit::mpi::comm().rank();
+    mypart_ = parallel::mpi::comm().rank();
   }
 
   bool operator()(size_t idx)
@@ -49,16 +49,16 @@ HaloExchange::HaloExchange() :
   name_(),
   is_setup_(false)
 {
-  myproc = eckit::mpi::comm().rank();
-  nproc  = eckit::mpi::comm().size();
+  myproc = parallel::mpi::comm().rank();
+  nproc  = parallel::mpi::comm().size();
 }
 
 HaloExchange::HaloExchange(const std::string& name) :
   name_(name),
   is_setup_(false)
 {
-  myproc = eckit::mpi::comm().rank();
-  nproc  = eckit::mpi::comm().size();
+  myproc = parallel::mpi::comm().rank();
+  nproc  = parallel::mpi::comm().size();
 }
 
 void HaloExchange::setup( const int part[],
@@ -89,7 +89,7 @@ void HaloExchange::setup( const int part[],
     Find the amount of nodes this proc has to send to each other proc
   */
 
-  eckit::mpi::comm().allToAll(recvcounts_, sendcounts_);
+  parallel::mpi::comm().allToAll(recvcounts_, sendcounts_);
 
   sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
 //  std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
@@ -128,7 +128,7 @@ void HaloExchange::setup( const int part[],
 
   std::vector<int> recv_requests(sendcnt_);
 
-  eckit::mpi::comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(),
+  parallel::mpi::comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(),
                                recv_requests.data(), sendcounts_.data(), senddispls_.data());
 
   /*

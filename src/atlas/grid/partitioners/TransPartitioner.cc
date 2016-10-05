@@ -12,7 +12,7 @@
 #include "atlas/grid/Structured.h"
 #include "atlas/grid/partitioners/TransPartitioner.h"
 #include "atlas/trans/Trans.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
 namespace grid {

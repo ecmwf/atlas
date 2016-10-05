@@ -17,7 +17,7 @@
 
 #include "eckit/geometry/KPoint.h"
 #include "atlas/atlas.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/gaussian/latitudes/Latitudes.h"
 #include "atlas/grid/grids.h"

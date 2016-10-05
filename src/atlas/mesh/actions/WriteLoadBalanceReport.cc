@@ -12,7 +12,7 @@
 #include <fstream>
 
 #include "eckit/filesystem/PathName.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -31,7 +31,7 @@ namespace actions {
 void write_load_balance_report( const Mesh& mesh, const std::string& filename )
 {
   std::ofstream ofs;
-  if( eckit::mpi::comm().rank() == 0 )
+  if( parallel::mpi::comm().rank() == 0 )
   {
     eckit::PathName path(filename);
     ofs.open( path.localPath(), std::ofstream::out );
@@ -39,7 +39,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
 
   write_load_balance_report( mesh, ofs );
 
-  if( eckit::mpi::comm().rank() == 0 )
+  if( parallel::mpi::comm().rank() == 0 )
   {
     ofs.close();
   }
@@ -48,7 +48,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
 
 void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 {
-  size_t npart = eckit::mpi::comm().size();
+  size_t npart = parallel::mpi::comm().size();
   size_t root = 0;
 
   std::vector<size_t> nb_total_nodes(npart,0);
@@ -77,9 +77,9 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 
     /// @note this could be improved by packing the 3 integers in a vector, and doing only comm() call
 
-    eckit::mpi::comm().gather(nb_nodes, nb_total_nodes, root);
-    eckit::mpi::comm().gather(nowned,   nb_owned_nodes, root);
-    eckit::mpi::comm().gather(nghost,   nb_ghost_nodes, root);
+    parallel::mpi::comm().gather(nb_nodes, nb_total_nodes, root);
+    parallel::mpi::comm().gather(nowned,   nb_owned_nodes, root);
+    parallel::mpi::comm().gather(nghost,   nb_ghost_nodes, root);
 
     for( size_t p=0; p<npart; ++p )
     {
@@ -115,13 +115,13 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 
     /// @note this could be improved by packing the 3 integers in a vector, and doing only comm() call
 
-    eckit::mpi::comm().gather(nb_edges, nb_total_edges, root);
-    eckit::mpi::comm().gather(nowned,   nb_owned_edges, root);
-    eckit::mpi::comm().gather(nghost,   nb_ghost_nodes, root);
+    parallel::mpi::comm().gather(nb_edges, nb_total_edges, root);
+    parallel::mpi::comm().gather(nowned,   nb_owned_edges, root);
+    parallel::mpi::comm().gather(nghost,   nb_ghost_nodes, root);
 
   }
 
-  if( eckit::mpi::comm().rank() == 0 )
+  if( parallel::mpi::comm().rank() == 0 )
   {
     int idt = 10;
     ofs << "# STATISTICS\n";

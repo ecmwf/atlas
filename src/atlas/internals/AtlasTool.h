@@ -91,7 +91,7 @@ protected:
       if( argv(i) == "--help" ||
           argv(i) == "-h"     )
       {
-        if( eckit::mpi::comm().rank() == 0 )
+        if( parallel::mpi::comm().rank() == 0 )
           help();
         return true;
       }

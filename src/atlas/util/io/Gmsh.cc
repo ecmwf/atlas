@@ -27,6 +27,7 @@
 #include "atlas/util/Constants.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/io/Gmsh.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
@@ -47,17 +48,17 @@ static double rad = util::Constants::degreesToRadians();
 
 class GmshFile : public std::ofstream {
 public:
-  GmshFile(const PathName& file_path, std::ios_base::openmode mode, int part = eckit::mpi::comm().rank())
+  GmshFile(const PathName& file_path, std::ios_base::openmode mode, int part = atlas::parallel::mpi::comm().rank())
   {
     PathName par_path(file_path);
-    if (eckit::mpi::comm().size() == 1 || part == -1) {
+    if (atlas::parallel::mpi::comm().size() == 1 || part == -1) {
       std::ofstream::open(par_path.localPath(), mode);
     } else {
       Translator<int, std::string> to_str;
-      if (eckit::mpi::comm().rank() == 0) {
+      if (atlas::parallel::mpi::comm().rank() == 0) {
         PathName par_path(file_path);
         std::ofstream par_file(par_path.localPath(), std::ios_base::out);
-        for(size_t p = 0; p < eckit::mpi::comm().size(); ++p) {
+        for(size_t p = 0; p < atlas::parallel::mpi::comm().size(); ++p) {
           PathName loc_path(file_path);
           // loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
           loc_path = loc_path.baseName(false) + ".msh.p" + to_str(p);
@@ -144,7 +145,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   for (int ilev=0; ilev<lev.size(); ++ilev)
   {
     int jlev = lev[ilev];
-    if( ( gather && eckit::mpi::comm().rank() == 0 ) || !gather )
+    if( ( gather && atlas::parallel::mpi::comm().rank() == 0 ) || !gather )
     {
       char field_lev[6] = {0, 0, 0, 0, 0, 0};
       if( field.has_levels() )
@@ -162,7 +163,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
       else if( nvars <= 3 ) out << 3     << "\n";
       else if( nvars <= 9 ) out << 9     << "\n";
       out << ndata << "\n";
-      out << eckit::mpi::comm().rank() << "\n";
+      out << atlas::parallel::mpi::comm().rank() << "\n";
 
       if( binary )
       {
@@ -324,7 +325,7 @@ void write_field_nodes(
     //    field.global_index(), *gidx_glb);
     //array::ArrayView<gidx_t,1> gidx = array::ArrayView<gidx_t,1>(*gidx_glb);
 
-    if( eckit::mpi::comm().size() > 1 )
+    if( atlas::parallel::mpi::comm().size() > 1 )
     {
       field_glb = function_space.createField<double>("glb_field",field::global());
       function_space.gather(field, *field_glb);
@@ -353,7 +354,7 @@ void write_field_nodes(
         lev = gmsh_levels;
     }
 
-    if (eckit::mpi::comm().rank() == 0)
+    if (atlas::parallel::mpi::comm().rank() == 0)
     {
         for (int ilev = 0; ilev < lev.size(); ++ilev)
         {
@@ -381,7 +382,7 @@ void write_field_nodes(
             if     ( nvars == 1 ) out << nvars << "\n";
             else if( nvars <= 3 ) out << 3     << "\n";
             out << ndata << "\n";
-            out << eckit::mpi::comm().rank() << "\n";
+            out << atlas::parallel::mpi::comm().rank() << "\n";
 
             if (binary)
             {
@@ -504,7 +505,7 @@ void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& functi
     if     ( nvars == 1 ) out << nvars << "\n";
     else if( nvars <= 3 ) out << 3     << "\n";
     out << ndata << "\n";
-    out << eckit::mpi::comm().rank() << "\n";
+    out << parallel::mpi::comm().rank() << "\n";
 
     if( binary )
     {
@@ -867,7 +868,7 @@ void Gmsh::read(const PathName& file_path, mesh::Mesh& mesh ) const
 
 void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
 {
-  int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : eckit::mpi::comm().rank();
+  int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : atlas::parallel::mpi::comm().rank();
   bool include_ghost = options.get<bool>("ghost") && options.get<bool>("elements");
 
   std::string nodes_field = options.get<std::string>("nodes");
@@ -1158,7 +1159,7 @@ void Gmsh::write_delegate(
     bool binary( !options.get<bool>("ascii") );
     if ( binary ) mode |= std::ios_base::binary;
     bool gather = options.has("gather") ? options.get<bool>("gather") : false;
-    GmshFile file(file_path,mode,gather?-1:eckit::mpi::comm().rank());
+    GmshFile file(file_path,mode,gather?-1:atlas::parallel::mpi::comm().rank());
 
     // Header
     if (is_new_file)
@@ -1211,7 +1212,7 @@ void Gmsh::write_delegate(
 
     bool gather = options.has("gather") ? options.get<bool>("gather") : false;
 
-    GmshFile file(file_path,mode,gather?-1:eckit::mpi::comm().rank());
+    GmshFile file(file_path,mode,gather?-1:atlas::parallel::mpi::comm().rank());
 
     // Header
     if (is_new_file)

@@ -12,9 +12,6 @@
 
 #include <sstream>
 
-#include "eckit/mpi/Comm.h"
-
-
 namespace atlas {
 namespace parallel {
 namespace mpi {

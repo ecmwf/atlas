@@ -18,7 +18,7 @@
 #include "atlas/grid/Structured.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/internals/Functions.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 using atlas::internals::microdeg;
 
@@ -362,8 +362,8 @@ void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[
 }
 
 EqualRegionsPartitioner::EqualRegionsPartitioner(const grid::Grid& grid) :
-    Partitioner(grid,eckit::mpi::comm().size()),
-    N_(eckit::mpi::comm().size()) {
+    Partitioner(grid,parallel::mpi::comm().size()),
+    N_(parallel::mpi::comm().size()) {
     std::vector<double> s_cap;
     eq_caps(N_, sectors_, s_cap);
     bands_.resize(s_cap.size());

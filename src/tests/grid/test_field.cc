@@ -12,7 +12,7 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
 
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"

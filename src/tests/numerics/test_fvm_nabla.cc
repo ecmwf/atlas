@@ -25,7 +25,7 @@
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/numerics/Nabla.h"
 #include "atlas/output/Gmsh.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "eckit/memory/ScopedPtr.h"
@@ -59,7 +59,7 @@ double dual_volume(const mesh::Mesh& mesh)
     }
   }
 
-  eckit::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+  parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
 
   return area;
 }

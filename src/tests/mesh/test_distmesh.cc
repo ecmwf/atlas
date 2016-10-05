@@ -14,7 +14,7 @@
 #define BOOST_TEST_MODULE TestDistributeMesh
 #include "ecbuild/boost_test_framework.h"
 
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas.h"
 #include "tests/TestMeshes.h"
 #include "atlas/mesh/Mesh.h"
@@ -60,7 +60,7 @@ double dual_volume(mesh::Mesh& mesh)
     }
   }
 
-  eckit::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+  parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
 
   return area;
 }

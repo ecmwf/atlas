@@ -13,14 +13,13 @@
 
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #include "atlas/internals/atlas_config.h"
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/grid/partitioners/Partitioner.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/mpi/Comm.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/grid/partitioners/TransPartitioner.h"
@@ -46,7 +45,7 @@ namespace atlas {
 namespace grid {
 namespace partitioners {
 
-Partitioner::Partitioner(const grid::Grid& grid): nb_partitions_(eckit::mpi::comm().size()), grid_(grid) {
+Partitioner::Partitioner(const grid::Grid& grid): nb_partitions_(parallel::mpi::comm().size()), grid_(grid) {
 }
 
 Partitioner::Partitioner(const grid::Grid& grid, const size_t nb_partitions): nb_partitions_(nb_partitions), grid_(grid) {

@@ -29,7 +29,7 @@ struct IsGhostPoint
     part_   = part;
     ridx_   = ridx;
     base_   = base;
-    mypart_ = eckit::mpi::comm().rank();
+    mypart_ = parallel::mpi::comm().rank();
   }
 
   bool operator()(int idx)
@@ -80,16 +80,16 @@ GatherScatter::GatherScatter() :
   name_(),
   is_setup_(false)
 {
-  myproc = eckit::mpi::comm().rank();
-  nproc  = eckit::mpi::comm().size();
+  myproc = parallel::mpi::comm().rank();
+  nproc  = parallel::mpi::comm().size();
 }
 
 GatherScatter::GatherScatter(const std::string& name) :
   name_(name),
   is_setup_(false)
 {
-  myproc = eckit::mpi::comm().rank();
-  nproc  = eckit::mpi::comm().size();
+  myproc = parallel::mpi::comm().rank();
+  nproc  = parallel::mpi::comm().size();
 }
 
 
@@ -116,7 +116,7 @@ void GatherScatter::setup( const int part[],
     }
   }
 
-  eckit::mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
+  parallel::mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
 
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
 
@@ -127,7 +127,7 @@ void GatherScatter::setup( const int part[],
   }
   std::vector<gidx_t> recvnodes(glbcnt_);
 
-  eckit::mpi::comm().allGatherv(sendnodes.begin(), sendnodes.begin() + loccnt_,
+  parallel::mpi::comm().allGatherv(sendnodes.begin(), sendnodes.begin() + loccnt_,
                                 recvnodes.data(), glbcounts_.data(), glbdispls_.data());
 
   // Load recvnodes in sorting structure

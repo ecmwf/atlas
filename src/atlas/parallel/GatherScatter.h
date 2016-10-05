@@ -16,7 +16,7 @@
 
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #include "atlas/internals/atlas_config.h"
 #include "atlas/internals/Debug.h"
@@ -278,7 +278,7 @@ void GatherScatter::gather( parallel::Field<DATA_TYPE const> lfields[],
 
     /// Gather
 
-    eckit::mpi::comm().gatherv(loc_buffer, glb_buffer, glb_counts, glb_displs, root);
+    parallel::mpi::comm().gatherv(loc_buffer, glb_buffer, glb_counts, glb_displs, root);
 
     /// Unpack
     if( myproc == root )
@@ -361,7 +361,7 @@ void GatherScatter::scatter( parallel::Field<DATA_TYPE const> gfields[],
 
     /// Scatter
 
-    eckit::mpi::comm().scatterv(glb_buffer.begin(), glb_buffer.end(), glb_counts, glb_displs, loc_buffer.begin(), loc_buffer.end(), root);
+    parallel::mpi::comm().scatterv(glb_buffer.begin(), glb_buffer.end(), glb_counts, glb_displs, loc_buffer.begin(), loc_buffer.end(), root);
 
     /// Unpack
     unpack_recv_buffer(locmap_,loc_buffer.data(),lfields[jfield]);

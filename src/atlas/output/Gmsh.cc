@@ -51,17 +51,17 @@ GmshFileStream::GmshFileStream(const PathName& file_path, const char* mode, int 
   if     ( std::string(mode)=="w" )  omode = std::ios_base::out;
   else if( std::string(mode)=="a" )  omode = std::ios_base::app;
 
-  if( part<0 || eckit::mpi::comm().size() == 1 )
+  if( part<0 || parallel::mpi::comm().size() == 1 )
   {
     std::ofstream::open(file_path.localPath(), omode);
   }
   else
   {
-    if (eckit::mpi::comm().rank() == 0)
+    if (parallel::mpi::comm().rank() == 0)
     {
       PathName par_path(file_path);
       std::ofstream par_file(par_path.localPath(), std::ios_base::out);
-      for(size_t p = 0; p < eckit::mpi::comm().size(); ++p)
+      for(size_t p = 0; p < parallel::mpi::comm().size(); ++p)
       {
         par_file << "Merge \"" << parallelPathName(file_path,p) << "\";" << std::endl;
       }

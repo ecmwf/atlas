@@ -11,7 +11,7 @@
 #ifndef ATLAS_MPI_BUFFER_h
 #define ATLAS_MPI_BUFFER_h
 
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #include "atlas/array/ArrayView.h"
 

@@ -57,8 +57,8 @@ void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2]
     max[internals::LAT] = std::max( max[internals::LAT], lonlat(node,internals::LAT) );
   }
 
-  eckit::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
-  eckit::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
+  parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
+  parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
 }
 
 struct Node
@@ -395,7 +395,7 @@ void build_brick_dual_mesh(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mes
 {
   if( const grid::Structured* g = dynamic_cast<const grid::Structured*>(&grid) )
   {
-    if( eckit::mpi::comm().size() != 1 )
+    if( parallel::mpi::comm().size() != 1 )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
 
     mesh::Nodes& nodes   = mesh.nodes();

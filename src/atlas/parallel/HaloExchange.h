@@ -21,11 +21,10 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/exception/Exceptions.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #include "atlas/internals/Debug.h"
 #include "atlas/array/ArrayView.h"
-#include "eckit/mpi/Comm.h"
 
 namespace atlas {
 namespace parallel {
@@ -147,7 +146,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if(recv_counts[jproc] > 0)
     {
-        recv_req[jproc] = eckit::mpi::comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
+        recv_req[jproc] = parallel::mpi::comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
     }
   }
 
@@ -159,7 +158,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if(send_counts[jproc] > 0)
     {
-        send_req[jproc] = eckit::mpi::comm().iSend(&send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag);
+        send_req[jproc] = parallel::mpi::comm().iSend(&send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag);
     }
   }
 
@@ -168,7 +167,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if( recvcounts_[jproc] > 0)
     {
-        eckit::mpi::comm().wait(recv_req[jproc]);
+        parallel::mpi::comm().wait(recv_req[jproc]);
     }
   }
 
@@ -180,7 +179,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   {
     if( sendcounts_[jproc] > 0)
     {
-        eckit::mpi::comm().wait(send_req[jproc]);
+        parallel::mpi::comm().wait(send_req[jproc]);
     }
   }
 }

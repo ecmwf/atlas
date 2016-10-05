@@ -13,7 +13,7 @@
 
 #include "tests/TestMeshes.h"
 #include "atlas/atlas.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/internals/Debug.h"
 #include "atlas/mesh/Mesh.h"

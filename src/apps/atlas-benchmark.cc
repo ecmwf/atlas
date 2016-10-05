@@ -58,7 +58,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/parallel/HaloExchange.h"
-#include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
 
 #include "eckit/config/Resource.h"
@@ -176,7 +176,7 @@ public:
   //         "\n"
   //     << options_str.str();
   //
-  //     if( eckit::mpi::comm().rank()==0 )
+  //     if( parallel::mpi::comm().rank()==0 )
   //     {
   //       Log::info() << help_str.str() << std::flush;
   //     }
@@ -267,7 +267,7 @@ void AtlasBenchmark::execute(const Args& args)
   Log::info() << "  nlev: " << nlev << endl;
   Log::info() << "  niter: " << niter << endl;
   Log::info() << endl;
-  Log::info() << "  MPI tasks: "<<eckit::mpi::comm().size()<<endl;
+  Log::info() << "  MPI tasks: "<<parallel::mpi::comm().size()<<endl;
   Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
   Log::info() << endl;
 
@@ -503,10 +503,10 @@ void AtlasBenchmark::iteration()
   }
 
   // halo-exchange
-  eckit::mpi::comm().barrier();
+  parallel::mpi::comm().barrier();
   Timer halo("halo-exchange", Log::debug());
   nodes_fs->halo_exchange().execute(grad);
-  eckit::mpi::comm().barrier();
+  parallel::mpi::comm().barrier();
   t.stop();
   halo.stop();
 
@@ -559,9 +559,9 @@ double AtlasBenchmark::result()
     }
   }
 
-  eckit::mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
-  eckit::mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
-  eckit::mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());
+  parallel::mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
+  parallel::mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
+  parallel::mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());
 
   norm = std::sqrt(norm);
 
