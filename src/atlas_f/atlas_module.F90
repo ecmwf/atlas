@@ -158,9 +158,6 @@ use atlas_fvm_module, only: &
     & atlas_fvm_Method
 use atlas_Nabla_module, only: &
     & atlas_Nabla
-use atlas_resource_module, only: &
-    & atlas_resource, &
-    & atlas_resource_set
 use atlas_mesh_actions_module, only: &
     & atlas_build_parallel_fields, &
     & atlas_build_nodes_parallel_fields, &

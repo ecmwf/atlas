@@ -33,14 +33,6 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
-  add_fctest( TARGET atlas_fctest_resource
-    MPI             1
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_resource.F90
-    ARGS            -integer 10 -long 5000000000 -float 0.123456 -double 0.1234567890123456789 -string "hello world"
-    LIBS            atlas_f
-  )
-
 endif()
 
 ecbuild_add_test( TARGET atlas_test_flags

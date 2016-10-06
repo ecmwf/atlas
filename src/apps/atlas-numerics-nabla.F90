@@ -227,16 +227,17 @@ END SUBROUTINE FV_GRADIENT
 
 
 subroutine init()
-  character(len=1024) :: grid_uid
+  use fckit_resource_module
+  character(len=:),allocatable :: grid_uid
   type(atlas_mesh_Nodes) :: mesh_nodes
 
   call atlas_init()
 
-  call atlas_resource("--grid","N24",grid_uid)
-  call atlas_resource("--levels",137,nlev)
-  call atlas_resource("--iterations",100,niter)
-  call atlas_resource("--startcount",5,startcount)
-  call atlas_resource("--outer",1,nouter)
+  call fckit_resource("--grid","N24",grid_uid)
+  call fckit_resource("--levels",137,nlev)
+  call fckit_resource("--iterations",100,niter)
+  call fckit_resource("--startcount",5,startcount)
+  call fckit_resource("--outer",1,nouter)
 
   config = atlas_Config()
   call config%set("radius",1.0)
