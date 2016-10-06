@@ -32,7 +32,7 @@ END_TESTSUITE_INIT
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-  call atlas_mpi_finalize()
+  call atlas_finalize()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
