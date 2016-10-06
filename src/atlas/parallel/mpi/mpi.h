@@ -23,13 +23,4 @@ const eckit::mpi::Comm& comm();
 } // namespace parallel
 } // namespace atlas
 
-// ------------------------------------------------------------------
-// C wrapper interfaces to C++ routines
-extern "C"
-{
-  void atlas_mpi_comm_attach_fortran_communicator (int comm);
-  int atlas_mpi_comm_fortran_communicator ();
-}
-// ------------------------------------------------------------------
-
 #endif // ATLAS_MPI_MPI_h

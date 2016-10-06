@@ -357,6 +357,7 @@ ecbuild_add_library( TARGET atlas
   PRIVATE_INCLUDES
     "${CGAL_INCLUDE_DIRS}"
     "${TRANSI_INCLUDE_DIRS}"
+    "${MPI_CXX_INCLUDE_DIRS}"
 
   LIBS
     eckit_geometry

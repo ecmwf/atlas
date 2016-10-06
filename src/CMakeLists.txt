@@ -18,12 +18,6 @@ else()
   set( ATLAS_HAVE_OMP 0 )
 endif()
 
-if( ATLAS_HAVE_MPI )
-  set( ATLAS_HAVE_MPI 1 )
-else()
-  set( ATLAS_HAVE_MPI 0 )
-endif()
-
 if( ATLAS_HAVE_TESSELATION )
   set( ATLAS_HAVE_TESSELATION 1 )
 else()
@@ -51,7 +45,6 @@ endif()
 if( ATLAS_HAVE_MPI )
 
   set( ATLAS_MPI_C_LIBRARIES            ${MPI_CXX_LIBRARIES} )
-  set( ATLAS_MPI_Fortran_LIBRARIES      ${MPI_Fortran_LIBRARIES} )
   ecbuild_include_mpi()
 
 endif()

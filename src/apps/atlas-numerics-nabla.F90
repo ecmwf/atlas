@@ -286,15 +286,15 @@ end subroutine
 ! -----------------------------------------------------------------------------
 
 subroutine run()
-
+use fckit_mpi_module
 type(Timer_type) :: timer
-
+type(fckit_mpi_comm) :: mpi
 integer :: jiter, jouter
 real(c_double) :: timing_cpp, timing_f90, timing
 real(c_double) :: min_timing_cpp, min_timing_f90
-
+mpi = fckit_mpi_comm()
 call node_columns%halo_exchange(varfield)
-call atlas_mpi_barrier()
+call mpi%barrier()
 timing_cpp = 1.e10
 timing_f90 = 1.e10
 min_timing_cpp = 1.e10

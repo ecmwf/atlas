@@ -230,12 +230,14 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_collectives )
+use fckit_mpi_module
 type(atlas_grid_Structured) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs2d
 type(atlas_Field) :: field, global, scal
 type(atlas_Metadata) :: metadata
+type(fckit_mpi_comm) :: mpi
 real(c_float), pointer :: scalvalues(:)
 real(c_float), pointer :: values(:,:)
 real(c_float), pointer :: values3d(:,:,:,:)
@@ -245,6 +247,7 @@ integer :: halo_size, levels
 integer(ATLAS_KIND_GIDX) :: glb_idx
 integer(ATLAS_KIND_GIDX), allocatable :: glb_idxv (:)
 integer(c_int) :: test_broadcast
+mpi = fckit_mpi_comm()
 halo_size = 1
 levels = 10
 
@@ -265,7 +268,7 @@ call fs2d%gather(field,global)
 call fs2d%halo_exchange(field)
 
 metadata = global%metadata()
-if( atlas_mpi_rank() == 0 ) then
+if( mpi%rank() == 0 ) then
   call metadata%set("test_broadcast",123)
 endif
 
@@ -280,8 +283,8 @@ scalvalues = 2.
 
 call atlas_log%info(fs2d%checksum(field))
 
-values = atlas_mpi_rank()
-scalvalues = atlas_mpi_rank()
+values = mpi%rank()
+scalvalues = mpi%rank()
 
 
 call fs2d%minimum(scal,minimum)
@@ -321,7 +324,7 @@ call global%final()
 
 
 field  = fs2d%create_field(atlas_real(c_float),levels,[2,3])
-global = fs2d%create_field(field,global=.True.,owner=atlas_mpi_size()-1)
+global = fs2d%create_field(field,global=.True.,owner=mpi%size()-1)
 
 write(atlas_log%msg,*) "field:  rank",field%rank(), " shape [",field%shape(), "] size ", field%size();  call atlas_log%info()
 write(atlas_log%msg,*) "global: rank",global%rank()," shape [",global%shape(),"] size ", global%size(); call atlas_log%info()

@@ -79,27 +79,11 @@ endif()
 
 ### MPI ...
 
-# Atlas uses eckit::mpi for C++ code
-# but still has some MPI direct calls in the Fortran code (migrate to fckit evventually)?
-
+# Atlas currently only required MPI for working around bug ECKIT-166 for MacOSX
+if( EC_OS_NAME MATCHES "macosx" )
 ecbuild_add_option( FEATURE MPI
                     DESCRIPTION "atlas: Support for MPI distributed parallelism"
-                    REQUIRED_PACKAGES "MPI COMPONENTS CXX ${Fortran}" )
-
-if( NOT ATLAS_HAVE_MPI )
-    if( ATLAS_HAVE_FORTRAN )
-        ecbuild_use_package( PROJECT mpistubs REQUIRED )
-        set( MPI_Fortran_LIBRARIES mpistubs_f )
-        set( MPI_Fortran_INCLUDE_PATH ${MPISTUBS_INCLUDE_DIRS} )
-    endif()
-endif()
-
-ecbuild_info( "ATLAS_HAVE_MPI      : ${ATLAS_HAVE_MPI}" )
-ecbuild_info( "ECKIT_HAVE_MPI      : ${ECKIT_HAVE_MPI} " )
-
-if( ATLAS_HAVE_FORTRAN )
-  ecbuild_debug( "MPI_Fortran_INCLUDE_PATH : ${MPI_Fortran_INCLUDE_PATH}" )
-  ecbuild_debug( "MPI_Fortran_LIBRARIES    : ${MPI_Fortran_LIBRARIES}" )
+                    REQUIRED_PACKAGES "MPI COMPONENTS CXX" )
 endif()
 
 ### OMP ...

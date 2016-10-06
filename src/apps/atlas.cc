@@ -74,16 +74,12 @@ void Version::run()
                 << std::endl;
 
     bool feature_fortran(false);
-    bool feature_MPI(false);
     bool feature_OpenMP(false);
     bool feature_Trans(false);
     bool feature_Tesselation(false);
     bool feature_BoundsChecking(false);
 #ifdef ATLAS_HAVE_FORTRAN
       feature_fortran = true;
-#endif
-#ifdef ATLAS_HAVE_MPI
-      feature_MPI = true;
 #endif
 #ifdef ATLAS_HAVE_OMP
       feature_OpenMP = true;
@@ -99,7 +95,6 @@ void Version::run()
 #endif
     Log::info() << "  Features:" << std::endl;
     Log::info() << "    Fortran        : " << print(feature_fortran) << std::endl
-                << "    MPI            : " << print(feature_MPI) << std::endl
                 << "    OpenMP         : " << print(feature_OpenMP) << std::endl
                 << "    BoundsChecking : " << print(feature_BoundsChecking) << std::endl
                 << "    Trans          : " << print(feature_Trans) << std::endl

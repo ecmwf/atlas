@@ -28,14 +28,13 @@ Requirements to compile atlas:
 
 - CMake --- For use and installation see http://www.cmake.org/
 - ecbuild
-- eckit (with mpi support -- meaning either eckit_mpi or eckit_mpistubs library)
+- eckit (with mpi support)
 - python (only when Fortran bindings are required)
 
 Recommended:
 
-- MPI --- Distributed memory parallelisation
 - OpenMP --- Shared memory parallelisation
-- fctest --- Unit testing for Fortran
+- fkit --- Unit testing for Fortran
 - boost_unit_test --- Unit testing for C++
 
 

@@ -219,8 +219,7 @@ ecbuild_add_library( TARGET atlas_f
         internals/atlas_write_to_fortran_unit.F90
 
   PRIVATE_INCLUDES
-        ${MPI_Fortran_INCLUDE_PATH}
         ${FCKIT_INCLUDE_DIRS}
 
-  LIBS atlas ${MPI_Fortran_LIBRARIES} fckit
+  LIBS atlas fckit
 )

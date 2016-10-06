@@ -10,8 +10,6 @@
 
 #include "atlas/parallel/mpi/mpi.h"
 
-#include <sstream>
-
 namespace atlas {
 namespace parallel {
 namespace mpi {
@@ -19,21 +17,6 @@ namespace mpi {
 const eckit::mpi::Comm& comm()
 {
   return eckit::mpi::comm();
-}
-
-extern "C"
-{
-    void atlas_mpi_comm_attach_fortran_communicator (int fcomm )
-    {
-        std::ostringstream oss;
-        oss << "fortran." << fcomm;
-        eckit::mpi::addComm(oss.str().c_str(), fcomm );
-    }
-
-    int atlas_mpi_comm_fortran_communicator ()
-    {
-        NOTIMP;
-    }
 }
 
 } // namespace mpi
