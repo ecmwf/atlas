@@ -112,7 +112,7 @@ public:
 		}
 
 		if( in_files.empty() )
-			throw UserError(Here(),"missing input filename, parameter -i\n"+help_str);
+			throw UserError("missing input filename, parameter -i\n"+help_str, Here());
 
 	}
 
