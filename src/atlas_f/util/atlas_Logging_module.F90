@@ -9,7 +9,7 @@ implicit none
 private :: c_char, c_int
 private :: fckit_object
 
-public :: atlas_log
+!public :: atlas_log
 
 
 public :: atlas_LogChannel

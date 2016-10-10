@@ -21,6 +21,30 @@
 namespace atlas {
 namespace grid {
 
+template<typename CONCRETE>
+void load_grid() {
+    eckit::ConcreteBuilderT1<Grid,CONCRETE> builder("tmp");
+}
+
+void load() {
+    Log::debug() << "Loading library [atlas::grid]" << std::endl;
+
+    // We have to touch all classes we want to register for static linking.
+
+    load_grid<Unstructured>();
+    load_grid<CustomStructured>();
+    load_grid<gaussian::ReducedGaussian>();
+    load_grid<gaussian::RegularGaussian>();
+    load_grid<gaussian::ClassicGaussian>();
+    load_grid<gaussian::OctahedralGaussian>();
+    load_grid<lonlat::ReducedLonLat>();
+    load_grid<lonlat::RegularLonLat>();
+    load_grid<lonlat::ShiftedLonLat>();
+    load_grid<lonlat::ShiftedLon>();
+    load_grid<lonlat::ShiftedLat>();
+
+}
+
 
 size_t regex_count_parens(const std::string& string) {
     size_t out = 0;
@@ -91,6 +115,7 @@ class Regex {
 //=====================================================
 
 Grid* grid_from_uid(const std::string& uid) {
+    load();
     if (eckit::Factory<Grid>::instance().exists(uid)) {
         return Grid::create(util::Config("grid_type", uid));
     } else {
@@ -206,42 +231,6 @@ Grid* grid_from_uid(const std::string& uid) {
     throw eckit::BadParameter("Insufficient information to construct grid "+uid+" or grid does not exist.",Here());
     return 0;
 }
-
-
-template<typename CONCRETE>
-void load_grid() {
-    eckit::ConcreteBuilderT1<Grid,CONCRETE> builder("tmp");
-}
-
-void load() {
-    Log::debug() << "Loading library [atlas::grid]" << std::endl;
-
-    // We have to touch all classes we want to register for static linking.
-
-    load_grid<Unstructured>();
-    load_grid<CustomStructured>();
-    load_grid<gaussian::ReducedGaussian>();
-    load_grid<gaussian::RegularGaussian>();
-    load_grid<gaussian::ClassicGaussian>();
-    load_grid<gaussian::OctahedralGaussian>();
-    load_grid<lonlat::ReducedLonLat>();
-    load_grid<lonlat::RegularLonLat>();
-    load_grid<lonlat::ShiftedLonLat>();
-    load_grid<lonlat::ShiftedLon>();
-    load_grid<lonlat::ShiftedLat>();
-
-}
-
-
-extern "C"
-{
-
-    void atlas__grids__load() {
-        atlas::grid::load();
-    }
-
-}
-
 
 } // namespace grid
 } // namespace atlas

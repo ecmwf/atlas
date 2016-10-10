@@ -41,7 +41,7 @@ class TestField : public Tool {
 public:
 
     TestField(int argc,char **argv): Tool(argc,argv) {
-      atlas_init(argc,argv);
+      atlas_init();
     }
 
     ~TestField() {atlas_finalize();}

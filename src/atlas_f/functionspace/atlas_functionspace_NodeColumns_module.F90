@@ -12,7 +12,6 @@ use atlas_GatherScatter_module, only: atlas_GatherScatter
 use atlas_HaloExchange_module, only: atlas_HaloExchange
 use atlas_Checksum_module, only: atlas_Checksum
 use atlas_Config_module, only: atlas_Config
-use atlas_logging_module, only: atlas_log
 use atlas_kinds_module, only: ATLAS_KIND_GIDX
 
 implicit none
@@ -27,7 +26,6 @@ private :: atlas_HaloExchange
 private :: atlas_Checksum
 private :: atlas_Mesh
 private :: atlas_Config
-private :: atlas_log
 private :: ATLAS_KIND_GIDX
 
 public :: atlas_functionspace_NodeColumns

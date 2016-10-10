@@ -6,8 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-set( FORTRAN_CALLBACK_LOGGING 0 )
-
 
 if( HAVE_FCTEST )
 
@@ -15,7 +13,6 @@ if( HAVE_FCTEST )
     MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_logging.F90
-    CONDITION ${FORTRAN_CALLBACK_LOGGING}
     LIBS            atlas_f
   )
 
@@ -30,14 +27,6 @@ if( HAVE_FCTEST )
     MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_parametrisation.F90
-    LIBS            atlas_f
-  )
-
-  add_fctest( TARGET atlas_fctest_resource
-    MPI             1
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_resource.F90
-    ARGS            -integer 10 -long 5000000000 -float 0.123456 -double 0.1234567890123456789 -string "hello world"
     LIBS            atlas_f
   )
 

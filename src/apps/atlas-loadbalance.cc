@@ -106,7 +106,6 @@ private:
 void AtlasLoadbalance::run()
 {
   if( !do_run ) return;
-  grid::load();
 
   SharedPtr<Structured> grid;
   try{ grid.reset( Structured::create(key) ); }

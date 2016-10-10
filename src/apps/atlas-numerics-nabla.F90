@@ -17,6 +17,8 @@ use atlas_module
 use, intrinsic :: iso_c_binding, only: c_double, c_int
 implicit none
 
+  character(len=1024) :: msg
+
   type(atlas_grid_Structured) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Nodes) :: nodes
@@ -227,16 +229,17 @@ END SUBROUTINE FV_GRADIENT
 
 
 subroutine init()
-  character(len=1024) :: grid_uid
+  use fckit_resource_module
+  character(len=:),allocatable :: grid_uid
   type(atlas_mesh_Nodes) :: mesh_nodes
 
   call atlas_init()
 
-  call atlas_resource("--grid","N24",grid_uid)
-  call atlas_resource("--levels",137,nlev)
-  call atlas_resource("--iterations",100,niter)
-  call atlas_resource("--startcount",5,startcount)
-  call atlas_resource("--outer",1,nouter)
+  call fckit_resource("--grid","N24",grid_uid)
+  call fckit_resource("--levels",137,nlev)
+  call fckit_resource("--iterations",100,niter)
+  call fckit_resource("--startcount",5,startcount)
+  call fckit_resource("--outer",1,nouter)
 
   config = atlas_Config()
   call config%set("radius",1.0)
@@ -260,8 +263,8 @@ subroutine init()
   var(:,:) = 0.
 
   mesh_nodes = mesh%nodes()
-  write(atlas_log%msg,*) "Mesh has locally ",mesh_nodes%size(), " nodes"
-  call atlas_log%info()
+  write(msg,*) "Mesh has locally ",mesh_nodes%size(), " nodes"
+  call atlas_log%info(msg)
   call mesh_nodes%final()
 
 end subroutine
@@ -309,8 +312,8 @@ do jiter = 1,niter
     timing = min(timing,timer%elapsed())
 enddo
 timing_cpp = timing
-write(atlas_log%msg,*) "timing_cpp = ", timing_cpp
-call atlas_log%info()
+write(msg,*) "timing_cpp = ", timing_cpp
+call atlas_log%info(msg)
 if( nouter == 1 .or. jouter < nouter ) then
   min_timing_cpp = min(timing_cpp,min_timing_cpp)
 endif
@@ -323,25 +326,25 @@ do jiter = 1,niter
   timing = min(timing,timer%elapsed())
 enddo
 timing_f90 = timing
-write(atlas_log%msg,*) "timing_f90 = ", timing_f90
-call atlas_log%info()
+write(msg,*) "timing_f90 = ", timing_f90
+call atlas_log%info(msg)
 if( nouter == 1 .or. jouter < nouter ) then
   min_timing_f90 = min(timing_f90,min_timing_f90)
 endif
-write(atlas_log%msg,*) "|timing_f90-timing_cpp| / timing_f90 = ", &
+write(msg,*) "|timing_f90-timing_cpp| / timing_f90 = ", &
   & abs(timing_f90-timing_cpp)/timing_f90 *100 , "%"
-call atlas_log%info()
+call atlas_log%info(msg)
 
 enddo
 
 call atlas_log%info("==================")
-write(atlas_log%msg,*) "min_timing_cpp = ", min_timing_cpp
-call atlas_log%info()
-write(atlas_log%msg,*) "min_timing_f90 = ", min_timing_f90
-call atlas_log%info()
-write(atlas_log%msg,*) "|min_timing_f90-min_timing_cpp| / min_timing_f90 = ", &
+write(msg,*) "min_timing_cpp = ", min_timing_cpp
+call atlas_log%info(msg)
+write(msg,*) "min_timing_f90 = ", min_timing_f90
+call atlas_log%info(msg)
+write(msg,*) "|min_timing_f90-min_timing_cpp| / min_timing_f90 = ", &
   & abs(min_timing_f90-min_timing_cpp)/min_timing_f90 *100 , "%"
-call atlas_log%info()
+call atlas_log%info(msg)
 end subroutine
 
 end module atlas_nabla_program_module

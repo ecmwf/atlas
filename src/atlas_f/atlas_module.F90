@@ -53,15 +53,15 @@ use atlas_JSON_module, only: &
     & atlas_PathName
 use atlas_Metadata_module, only: &
     & atlas_Metadata
-use atlas_Logging_module, only: &
-    & atlas_log, &
-    & atlas_Logger, &
-    & atlas_LogChannel, &
-    & ATLAS_LOG_CATEGORY_ERROR, &
-    & ATLAS_LOG_CATEGORY_WARNING, &
-    & ATLAS_LOG_CATEGORY_INFO, &
-    & ATLAS_LOG_CATEGORY_DEBUG, &
-    & ATLAS_LOG_CATEGORY_STATS
+!use atlas_Logging_module, only: &
+!    & atlas_log, &
+!    & atlas_Logger, &
+!    & atlas_LogChannel, &
+!    & ATLAS_LOG_CATEGORY_ERROR, &
+!    & ATLAS_LOG_CATEGORY_WARNING, &
+!    & ATLAS_LOG_CATEGORY_INFO, &
+!    & ATLAS_LOG_CATEGORY_DEBUG, &
+!    & ATLAS_LOG_CATEGORY_STATS
 use atlas_Error_module, only: &
     & atlas_CodeLocation, &
     & atlas_code_location_str, &
@@ -158,9 +158,6 @@ use atlas_fvm_module, only: &
     & atlas_fvm_Method
 use atlas_Nabla_module, only: &
     & atlas_Nabla
-use atlas_resource_module, only: &
-    & atlas_resource, &
-    & atlas_resource_set
 use atlas_mesh_actions_module, only: &
     & atlas_build_parallel_fields, &
     & atlas_build_nodes_parallel_fields, &
@@ -177,9 +174,14 @@ use atlas_output_module, only: &
     & atlas_Output, &
     & atlas_output_Gmsh
 
+use fckit_main_module, only: fckit_main
+use fckit_log_module,  only: atlas_log => log
+
 implicit none
 
 public
+
+type(fckit_main), public :: main
 
 ENUM, bind(c)
   enumerator :: openmode
@@ -193,20 +195,30 @@ CONTAINS
 
 
 subroutine atlas_init( mpi_comm )
-  use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_atlas_c_binding
+  use iso_fortran_env, only : output_unit
+  use fckit_mpi_module, only : fckit_mpi_comm
   use atlas_mpi_module, only : atlas_mpi_set_comm
-  use fckit_c_interop_module
-  integer, save :: argc
-  type(c_ptr), save :: argv(15)
+
   integer, intent(in), optional :: mpi_comm
-  call get_c_commandline_arguments(argc,argv)
+  type(fckit_mpi_comm) :: world
+
+  call main%init()
+  world = fckit_mpi_comm("world")
+  call main%set_taskID(world%rank())
+  if( main%taskID() == 0 ) then
+    call atlas_log%set_fortran_unit(output_unit,style=atlas_log%PREFIX)
+  else
+    call atlas_log%reset()
+  endif
+
   if( present(mpi_comm) ) then
     call atlas_mpi_set_comm(mpi_comm)
   endif
-  call atlas__atlas_init(argc,argv)
-  atlas_log = atlas_Logger()
+  call atlas__atlas_init_noargs()
+
 end subroutine
+
 
 subroutine atlas_finalize()
   use fckit_c_interop_module

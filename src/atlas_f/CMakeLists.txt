@@ -105,7 +105,6 @@ else()
 endif()
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/grids.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Structured.h
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )
@@ -159,7 +158,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/GatherScatter.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/Checksum.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_logging.h)
-generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
 
 preprocess_fypp( atlas_f_src field/atlas_Field_module.F90 )
@@ -177,7 +175,6 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_JSON_module.F90
         util/atlas_Config_module.F90
         util/atlas_Metadata_module.F90
-        util/atlas_resource_module.F90
         util/atlas_Logging_module.F90
         util/atlas_Error_module.F90
         output/atlas_output_module.F90
@@ -190,7 +187,6 @@ ecbuild_add_library( TARGET atlas_f
         field/atlas_State_module.F90
         grid/atlas_Grid_module.F90
         grid/atlas_GridDistribution_module.F90
-        grid/atlas_grids_module.F90
         mesh/atlas_MeshGenerator_module.F90
         mesh/atlas_Mesh_module.F90
         mesh/atlas_mesh_Nodes_module.F90
@@ -211,8 +207,6 @@ ecbuild_add_library( TARGET atlas_f
         trans/atlas_Trans_module.F90
         internals/atlas_logging.h
         internals/atlas_logging.cc
-        internals/atlas_resource.h
-        internals/atlas_resource.cc
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
         internals/atlas_write_to_fortran_unit.F90

@@ -19,6 +19,7 @@
 
 #include "atlas/atlas.h"
 #include "atlas/grid/grids.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/internals/AtlasTool.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Resource.h"
@@ -31,9 +32,11 @@
 
 //------------------------------------------------------------------------------
 
-using namespace eckit;
 using namespace atlas;
 using namespace atlas::grid;
+using eckit::JSON;
+using eckit::Factory;
+using eckit::SharedPtr;
 
 //------------------------------------------------------------------------------
 

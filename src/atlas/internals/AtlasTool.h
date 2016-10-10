@@ -115,15 +115,6 @@ protected:
         numberOfPositionalArguments(),
         minimumPositionalArguments());
 
-    // long debug(0);
-    // const char* env_debug = ::getenv("DEBUG");
-    // if( env_debug ) debug = ::atol(env_debug);
-    // args.get("debug",debug);
-
-    // if( not serial() )
-    //   behavior( new atlas::runtime::Behavior() );
-    // debug(debug);
-
     atlas_init();
     execute(args);
     atlas_finalize();
@@ -137,6 +128,9 @@ public:
   {
     add_option( new SimpleOption<bool>("help","Print this help") );
     add_option( new SimpleOption<long>("debug","Debug level") );
+    taskID( eckit::mpi::comm("world").rank());
+    if( taskID() != 0 )
+        Log::reset();
   }
 
 private:
