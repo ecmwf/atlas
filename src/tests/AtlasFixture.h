@@ -14,14 +14,29 @@
 #include "eckit/testing/Setup.h"
 
 #include "atlas/atlas.h"
+#include "eckit/runtime/Main.h"
+#include "eckit/mpi/Comm.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace test {
 
 
 struct AtlasFixture : public eckit::testing::Setup {
-    AtlasFixture()  { atlas_init(); }
-    ~AtlasFixture() { atlas_finalize(); }
+
+    AtlasFixture()
+    {
+        eckit::Main::instance().taskID(
+            eckit::mpi::comm("world").rank());
+        if( eckit::Main::instance().taskID() != 0 )
+            Log::reset();
+        atlas_init();
+    }
+
+    ~AtlasFixture()
+    {
+        atlas_finalize();
+    }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -65,17 +65,17 @@ void atlas_init(const eckit::Parametrisation&)
 void atlas_init() { return atlas_init(util::NoConfig()); }
 
 
-// This is only to be used from Fortran or unit-tests
+/// deprecated
 void atlas_init(int argc, char** argv)
 {
   Main::initialise(argc, argv);
   Main::instance().taskID(eckit::mpi::comm("world").rank());
   if( Main::instance().taskID() != 0 ) Log::reset();
-  atlas_init(util::NoConfig());
+  atlas_init();
 }
 
 void atlas_finalize()
-{ 
+{
 // Temporary until ECKIT-166 is fixed
 #ifdef BUG_ECKIT_166
     const bool using_mpi = (::getenv("OMPI_COMM_WORLD_SIZE") || ::getenv("ALPS_APP_PE"));
@@ -87,23 +87,15 @@ void atlas_finalize()
       }
     }
 #endif
-  
+
   Log::debug() << "Atlas finalized\n" << std::flush;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void atlas__atlas_init(int argc, char* argv[])
-{
-  atlas_init(argc,argv);
-}
-
-
 void atlas__atlas_init_noargs()
 {
-  static int argc = 1;
-  static char const *argv[] = {"atlas_program"};
-  atlas_init(argc,(char**)argv);
+  atlas_init();
 }
 
 

@@ -13,7 +13,7 @@ namespace eckit
 
 namespace atlas {
 
-// This is only to be used from Fortran or unit-tests
+// Deprecated. To be removed soon!
 void atlas_init(int argc, char **argv);
 
 void atlas_init();
@@ -30,7 +30,6 @@ void atlas_info(std::ostream&);
 extern "C"
 {
   void atlas__atlas_init_noargs();
-  void atlas__atlas_init (int argc, char** argv);
   void atlas__atlas_finalize ();
   const char* atlas__eckit_version();
   const char* atlas__eckit_git_sha1();
