@@ -17,6 +17,7 @@ module fcta_Mesh_fixture
 use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
+character(len=1024) :: msg
 end module fcta_Mesh_fixture
 
 ! -----------------------------------------------------------------------------
@@ -147,10 +148,9 @@ implicit none
   call metadata%get("arr_int64",arr_int32)
   call metadata%get("arr_real64",arr_real32)
 
-  call metadata%print(atlas_log%channel_info)
+  !!! TODO call metadata%print(atlas_log%channel_info)
 
-  write(atlas_log%msg,*) metadata%json()
-  call atlas_log%info()
+  call atlas_log%info(metadata%json())
   !write(0,*) metadata%json()
 
   CHECK( true  .eqv. .True.  )

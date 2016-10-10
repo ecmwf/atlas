@@ -6,8 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-set( FORTRAN_CALLBACK_LOGGING 0 )
-
 
 if( HAVE_FCTEST )
 
@@ -15,7 +13,6 @@ if( HAVE_FCTEST )
     MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_logging.F90
-    CONDITION ${FORTRAN_CALLBACK_LOGGING}
     LIBS            atlas_f
   )
 

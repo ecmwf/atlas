@@ -53,15 +53,15 @@ use atlas_JSON_module, only: &
     & atlas_PathName
 use atlas_Metadata_module, only: &
     & atlas_Metadata
-use atlas_Logging_module, only: &
-    & atlas_log, &
-    & atlas_Logger, &
-    & atlas_LogChannel, &
-    & ATLAS_LOG_CATEGORY_ERROR, &
-    & ATLAS_LOG_CATEGORY_WARNING, &
-    & ATLAS_LOG_CATEGORY_INFO, &
-    & ATLAS_LOG_CATEGORY_DEBUG, &
-    & ATLAS_LOG_CATEGORY_STATS
+!use atlas_Logging_module, only: &
+!    & atlas_log, &
+!    & atlas_Logger, &
+!    & atlas_LogChannel, &
+!    & ATLAS_LOG_CATEGORY_ERROR, &
+!    & ATLAS_LOG_CATEGORY_WARNING, &
+!    & ATLAS_LOG_CATEGORY_INFO, &
+!    & ATLAS_LOG_CATEGORY_DEBUG, &
+!    & ATLAS_LOG_CATEGORY_STATS
 use atlas_Error_module, only: &
     & atlas_CodeLocation, &
     & atlas_code_location_str, &
@@ -176,6 +176,7 @@ use atlas_output_module, only: &
 
 
 use fckit_main_module, only: fckit_main
+use fckit_log_module,  only: atlas_log => log
 
 implicit none
 
@@ -187,12 +188,6 @@ ENUM, bind(c)
   enumerator :: out = 16
 end ENUM
 
-private :: fckit_main
-type, extends(fckit_main) :: atlas_tool
-contains
-  procedure, nopass :: init => atlas_tool_init
-end type
-
 ! =============================================================================
 CONTAINS
 ! =============================================================================
@@ -200,17 +195,15 @@ CONTAINS
 subroutine atlas_tool_init()
   use fckit_main_module, only : fcmain => main
   use fckit_mpi_module, only : fckit_mpi_comm
-  use fckit_log_module, only : log
   type(fckit_mpi_comm) :: world
   world = fckit_mpi_comm("world")
   call fcmain%init()
   call fcmain%set_taskID(world%rank())
   if( world%rank() == 0 ) then
-    call log%set_fortran_unit(6,style=log%PREFIX)
+    call atlas_log%set_fortran_unit(6,style=atlas_log%PREFIX)
   else
-    call log%reset()
+    call atlas_log%reset()
   endif
-  atlas_log = atlas_Logger()
 end subroutine
 
 subroutine atlas_init( mpi_comm )

@@ -13,11 +13,10 @@ module atlas_field_module
 
 use fckit_refcounted_module, only : fckit_refcounted
 use atlas_Config_module, only : atlas_Config
-use atlas_Logging_module, only : atlas_log
 use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange
 implicit none
 
-private :: fckit_refcounted, atlas_Config, atlas_log, atlas_code_location, atlas_abort, atlas_throw_outofrange
+private :: fckit_refcounted, atlas_Config, atlas_code_location, atlas_abort, atlas_throw_outofrange
 
 public :: atlas_Field
 public :: atlas_real

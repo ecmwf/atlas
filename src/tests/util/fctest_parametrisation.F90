@@ -141,6 +141,7 @@ TEST(test_parametrisation_json_string)
  type(atlas_Config), allocatable :: records(:)
  type(atlas_JSON) :: json
  character (len=:), allocatable :: name
+ character(len=1024) :: msg
  integer :: age
  integer :: jrec
  json=atlas_JSON('{"records":['//&
@@ -154,7 +155,7 @@ TEST(test_parametrisation_json_string)
    do jrec=1,size(records)
      if( .not. records(jrec)%get("name",name) ) call atlas_abort("name not found")
      if( .not. records(jrec)%get("age",age) )   call atlas_abort("age not found")
-     write(atlas_log%msg,'(2A,I0,A)') name," is ",age," years old"; call atlas_log%info()
+     write(msg,'(2A,I0,A)') name," is ",age," years old"; call atlas_log%info(msg)
   enddo
   do jrec=1,size(records)
     call records(jrec)%final()
@@ -172,6 +173,8 @@ TEST(test_parametrisation_json_file)
  character (len=:), allocatable :: name, company, street, city
  integer :: age
  integer :: jrec
+ character(len=1024) :: msg
+
 
  ! Write a json file
  OPEN (UNIT=9 , FILE="fctest_parametrisation.json", STATUS='REPLACE')
@@ -186,7 +189,7 @@ TEST(test_parametrisation_json_file)
    do jrec=1,size(records)
      if( .not. records(jrec)%get("name",name) ) call atlas_abort("name not found")
      if( .not. records(jrec)%get("age",age) )   call atlas_abort("age not found")
-     write(atlas_log%msg,'(2A,I0,A)') name," is ",age," years old"; call atlas_log%info()
+     write(msg,'(2A,I0,A)') name," is ",age," years old"; call atlas_log%info(msg)
    enddo
    do jrec=1,size(records)
      call records(jrec)%final()
@@ -223,11 +226,11 @@ TEST(test_json_file)
  CLOSE(9)
 
  json = atlas_JSON( atlas_PathName("fctest_parametrisation.json") )
- 
+
  call atlas_log%info("json = "//json%str())
- 
+
  config = atlas_Config( json )
- 
+
  call atlas_log%info("config = "//config%json())
 
 END_TEST
