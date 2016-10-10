@@ -73,7 +73,11 @@ class Vector3D {
     }
 
     double norm() const {
-        return sqrt(x_ * x_ + y_ * y_ + z_ * z_);
+        return sqrt(norm2());
+    }
+
+    double norm2() const {
+        return x_ * x_ + y_ * y_ + z_ * z_;
     }
 
     double dot(const Vector3D &other) const {

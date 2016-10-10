@@ -18,8 +18,6 @@ namespace interpolation {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const double parametricEpsilon = 1e-10; ///< Epsilon used to compare weights and u,v's
-
 /// Intersection data structure
 
 struct Intersect {

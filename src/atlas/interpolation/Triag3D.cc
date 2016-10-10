@@ -8,12 +8,15 @@
  * does it submit to any jurisdiction.
  */
 
-#include <cmath>
 
+#include <cmath>
 #include "atlas/interpolation/Ray.h"
 #include "atlas/interpolation/Triag3D.h"
 
 //----------------------------------------------------------------------------------------------------------------------
+
+
+static const double parametricEpsilon = 1e-7; ///< Epsilon used to compare weights and u,v's
 
 
 namespace atlas {
@@ -21,41 +24,50 @@ namespace interpolation {
 
 Intersect Triag3D::intersects(const Ray& r, double epsilon) const {
 
-  Intersect isect;
+    Intersect isect;
 
-  Vector3D edge1 = v1 - v0;
-  Vector3D edge2 = v2 - v0;
-  Vector3D pvec = r.dir.cross(edge2);
+    Vector3D edge1 = v1 - v0;
+    Vector3D edge2 = v2 - v0;
+    Vector3D pvec = r.dir.cross(edge2);
 
-  const double det = edge1.dot(pvec);
+    // ray is parallel to triangle (check?)
+    const double det = edge1.dot(pvec);
+    if (fabs(det) < epsilon) return isect.success(false);
 
-  // ray is parallel to triangle (check ?)
-  if (fabs(det) < epsilon) return isect.success(false);
+    // pick an epsilon based on a small proportion of the smallest edge length
+    // (this scales linearly so it better compares with linear weights u,v,w)
+    const double edgeEpsilon = std::max(epsilon, parametricEpsilon * std::sqrt(std::min(edge1.norm2(), edge2.norm2())));
 
-  const double invDet = 1. / det;
-  Vector3D tvec = r.orig - v0;
-  isect.u = tvec.dot(pvec) * invDet;
+    const double invDet = 1. / det;
+    Vector3D tvec = r.orig - v0;
+    isect.u = tvec.dot(pvec) * invDet;
 
-  if(fabs(isect.u) < parametricEpsilon ) isect.u = 0;
-  if(fabs(1-isect.u) < parametricEpsilon ) isect.u = 1;
+    if (fabs(isect.u) < edgeEpsilon) isect.u = 0;
+    else if (fabs(1-isect.u) < edgeEpsilon) isect.u = 1;
+    else if (isect.u < 0 || isect.u > 1) return isect.success(false);
 
-  if (isect.u < 0 || isect.u > 1) return isect.success(false);
+    Vector3D qvec = tvec.cross(edge1);
+    isect.v = r.dir.dot(qvec) * invDet;
 
-  Vector3D qvec = tvec.cross(edge1);
-  isect.v = r.dir.dot(qvec) * invDet;
+    if (fabs(isect.v) < edgeEpsilon) isect.v = 0;
+    else if (fabs(1-isect.v) < edgeEpsilon) isect.v = 1;
+    else if (isect.v < 0 || isect.v > 1) return isect.success(false);
 
-  if(fabs(isect.v) < parametricEpsilon ) isect.v = 0;
-  if(fabs(1-isect.v) < parametricEpsilon ) isect.v = 1;
+    // check if projection point is near the diagonal of reference triangle
+    // if very close (but outside) to diagonal, equally correct u and v to the inside
+    const double w = 1 - (isect.u + isect.v);
+    if (w < 0) {
+        if (fabs(w) < edgeEpsilon) {
+            isect.u += 0.5 * w;
+            isect.v += 0.5 * w;
+        } else {
+            return isect.success(false);
+        }
+    }
 
-  double tmp = isect.u + isect.v;
-  if(fabs(tmp) < parametricEpsilon ) tmp = 0;
-  if(fabs(1-tmp) < parametricEpsilon ) tmp = 1;
-  isect.u = tmp - isect.v;
+    isect.t = edge2.dot(qvec) * invDet;
 
-  if (isect.v < 0 || isect.u + isect.v > 1) return isect.success(false);
-  isect.t = edge2.dot(qvec) * invDet;
-
-  return isect.success(true);
+    return isect.success(true);
 }
 
 double Triag3D::area() const
