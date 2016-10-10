@@ -73,7 +73,7 @@ class Vector3D {
     }
 
     double norm() const {
-        return sqrt(norm2());
+        return sqrt(squaredNorm());
     }
 
     double squaredNorm() const {
