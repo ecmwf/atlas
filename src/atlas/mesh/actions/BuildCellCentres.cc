@@ -25,7 +25,7 @@ namespace actions {
 
 void BuildCellCentres::operator()( Mesh& mesh ) const
 {
-    if( mesh.cells().has_field("centre") ) {
+    if( !mesh.cells().has_field("centre") ) {
 
         mesh::Nodes& nodes     = mesh.nodes();
         array::ArrayView<double,2> coords  ( nodes.field("xyz") );
