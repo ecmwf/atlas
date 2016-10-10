@@ -323,8 +323,9 @@ if( NOT ATLAS_HAVE_TRANS )
   unset( TRANSI_LIBRARIES )
 endif()
 
-if( ATLAS_HAVE_MPI AND  EC_OS_NAME MATCHES "macosx" )
+if( ECKIT_HAVE_MPI AND ATLAS_HAVE_MPI AND  EC_OS_NAME MATCHES "macosx" )
   list( APPEND ATLAS_DEFINITIONS BUG_ECKIT_166 )
+  link_libraries(${MPI_CXX_LIBRARIES})
 endif()
 
 ecbuild_add_library( TARGET atlas

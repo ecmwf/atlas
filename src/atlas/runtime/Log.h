@@ -4,8 +4,7 @@
 #include "atlas/internals/atlas_defines.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
-
-#include "fckit/log/Log.h"
+#include "fckit/Log.h"
 namespace atlas { 
 typedef fckit::Log Log;
 }
