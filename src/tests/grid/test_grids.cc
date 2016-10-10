@@ -28,8 +28,6 @@
 namespace atlas {
 namespace test {
 
-BOOST_AUTO_TEST_CASE( init ) { atlas::grid::load(); }
-
 BOOST_AUTO_TEST_CASE( test_factory )
 {
   eckit::SharedPtr<grid::Structured> Structured( grid::Structured::create("N80") );

@@ -105,7 +105,6 @@ else()
 endif()
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/grids.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Structured.h
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )
@@ -188,7 +187,6 @@ ecbuild_add_library( TARGET atlas_f
         field/atlas_State_module.F90
         grid/atlas_Grid_module.F90
         grid/atlas_GridDistribution_module.F90
-        grid/atlas_grids_module.F90
         mesh/atlas_MeshGenerator_module.F90
         mesh/atlas_Mesh_module.F90
         mesh/atlas_mesh_Nodes_module.F90

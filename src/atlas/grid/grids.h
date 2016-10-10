@@ -35,24 +35,7 @@
 namespace atlas {
 namespace grid {
 
-
-void load();
-
-
-void unload();
-
-
 Grid* grid_from_uid(const std::string& uid);
-
-
-extern "C" {
-
-
-    void atlas__grids__load();
-
-
-}
-
 
 }  // namespace grid
 }  // namespace atlas

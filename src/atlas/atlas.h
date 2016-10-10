@@ -13,11 +13,15 @@ namespace eckit
 
 namespace atlas {
 
+// This is only to be used from Fortran or unit-tests
 void atlas_init(int argc, char **argv);
+
 void atlas_init();
 void atlas_init(const eckit::Parametrisation&);
-void atlas_info(std::ostream&);
 void atlas_finalize();
+
+
+void atlas_info(std::ostream&);
 
 //----------------------------------------------------------------------------------------------------------------------
 

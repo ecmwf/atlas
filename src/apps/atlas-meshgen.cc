@@ -32,6 +32,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/io/Gmsh.h"
@@ -45,13 +46,14 @@
 
 //------------------------------------------------------------------------------
 
-using namespace eckit;
 using namespace atlas;
 using namespace atlas::mesh::actions;
 using namespace atlas::grid;
 using namespace atlas::functionspace;
 using namespace atlas::mesh;
 using atlas::util::Config;
+using eckit::PathName;
+using eckit::SharedPtr;
 
 //------------------------------------------------------------------------------
 

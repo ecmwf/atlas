@@ -5,6 +5,7 @@
 #include <mpi.h>
 #endif
 
+#include "atlas/internals/atlas_defines.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/parser/StringTools.h"
 #include "eckit/filesystem/PathName.h"
@@ -56,44 +57,29 @@ void atlas_info( std::ostream& out )
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void atlas_init()
-{
-  return atlas_init(util::NoConfig());
-}
-
 
 void atlas_init(const eckit::Parametrisation&)
 {
-  if( parallel::mpi::comm().rank() > 0 ) {
-    Log::info().reset();
-    Log::debug().reset();
-    Log::warning().reset();
-  }
-
   atlas_info( Log::debug() );
-
-  // Load factories for static linking
-  atlas::grid::load();
 }
+void atlas_init() { return atlas_init(util::NoConfig()); }
 
-#ifdef BUG_ECKIT_166
-static bool areMPIVarsSet() {
-    return (::getenv("OMPI_COMM_WORLD_SIZE") || ::getenv("ALPS_APP_PE"));
-}
-#endif
 
 // This is only to be used from Fortran or unit-tests
 void atlas_init(int argc, char** argv)
 {
   Main::initialise(argc, argv);
-  atlas_init();
+  Main::instance().taskID(eckit::mpi::comm("world").rank());
+  if( Main::instance().taskID() != 0 ) Log::reset();
+  atlas_init(util::NoConfig());
 }
 
 void atlas_finalize()
 { 
 // Temporary until ECKIT-166 is fixed
 #ifdef BUG_ECKIT_166
-    if( atlas::areMPIVarsSet() ) {
+    const bool using_mpi = (::getenv("OMPI_COMM_WORLD_SIZE") || ::getenv("ALPS_APP_PE"));
+    if( using_mpi ) {
       int finalized = 1;
       MPI_Finalized(&finalized);
       if( not finalized ) {
