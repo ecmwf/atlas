@@ -36,7 +36,7 @@ Intersect Triag3D::intersects(const Ray& r, double epsilon) const {
 
     // pick an epsilon based on a small proportion of the smallest edge length
     // (this scales linearly so it better compares with linear weights u,v,w)
-    const double edgeEpsilon = std::max(epsilon, parametricEpsilon * std::sqrt(std::min(edge1.norm2(), edge2.norm2())));
+    const double edgeEpsilon = std::max(epsilon, parametricEpsilon * std::sqrt(std::min(edge1.squaredNorm(), edge2.squaredNorm())));
 
     const double invDet = 1. / det;
     Vector3D tvec = r.orig - v0;
