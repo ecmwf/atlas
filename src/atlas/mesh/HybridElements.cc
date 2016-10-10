@@ -60,7 +60,7 @@ field::Field& HybridElements::add( field::Field* field )
 
   if( has_field(field->name()) ) {
     std::stringstream msg;
-    msg << "Trying to add field '"<<field->name()<<"' to Nodes, but Nodes already has a field with this name.";
+    msg << "Trying to add field '"<<field->name()<<"' to HybridElements, but HybridElements already has a field with this name.";
     throw eckit::Exception(msg.str(),Here());
   }
   fields_[field->name()] = eckit::SharedPtr<field::Field>(field);
