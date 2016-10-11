@@ -26,7 +26,7 @@ void atlas_info(std::ostream&);
 //----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-
+#define OSTREAM std::ostream
 extern "C"
 {
   void atlas__atlas_init_noargs();
@@ -41,7 +41,9 @@ extern "C"
   const char* atlas__display_name ();
   const char* atlas__rundir ();
   const char* atlas__workdir ();
+  void atlas__info(OSTREAM* channel);
 }
+#undef OSTREAM
 
 //----------------------------------------------------------------------------------------------------------------------
 

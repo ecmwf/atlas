@@ -53,15 +53,6 @@ use atlas_JSON_module, only: &
     & atlas_PathName
 use atlas_Metadata_module, only: &
     & atlas_Metadata
-!use atlas_Logging_module, only: &
-!    & atlas_log, &
-!    & atlas_Logger, &
-!    & atlas_LogChannel, &
-!    & ATLAS_LOG_CATEGORY_ERROR, &
-!    & ATLAS_LOG_CATEGORY_WARNING, &
-!    & ATLAS_LOG_CATEGORY_INFO, &
-!    & ATLAS_LOG_CATEGORY_DEBUG, &
-!    & ATLAS_LOG_CATEGORY_STATS
 use atlas_Error_module, only: &
     & atlas_CodeLocation, &
     & atlas_code_location_str, &
@@ -194,26 +185,35 @@ CONTAINS
 ! =============================================================================
 
 
-subroutine atlas_init( mpi_comm )
+subroutine atlas_init( comm, output_unit )
   use atlas_atlas_c_binding
-  use iso_fortran_env, only : output_unit
+  use iso_fortran_env, only : stdout => output_unit
   use fckit_mpi_module, only : fckit_mpi_comm
   use atlas_mpi_module, only : atlas_mpi_set_comm
 
-  integer, intent(in), optional :: mpi_comm
+  integer, intent(in), optional :: comm
+  integer, intent(in), optional :: output_unit
   type(fckit_mpi_comm) :: world
+  integer :: opt_output_unit
 
-  call main%init()
+  if( .not. main%ready() ) then
+    call main%init()
+  endif
+
+  opt_output_unit = stdout
+  if( present(output_unit) ) opt_output_unit = output_unit
+
   world = fckit_mpi_comm("world")
   call main%set_taskID(world%rank())
+
   if( main%taskID() == 0 ) then
-    call atlas_log%set_fortran_unit(output_unit,style=atlas_log%PREFIX)
+    call atlas_log%set_fortran_unit(opt_output_unit,style=atlas_log%PREFIX)
   else
     call atlas_log%reset()
   endif
 
-  if( present(mpi_comm) ) then
-    call atlas_mpi_set_comm(mpi_comm)
+  if( present(comm) ) then
+    call atlas_mpi_set_comm(comm)
   endif
   call atlas__atlas_init_noargs()
 
@@ -308,6 +308,19 @@ function atlas_workdir()
   atlas_workdir = c_ptr_to_string(atlas__workdir())
 end function atlas_workdir
 
+subroutine atlas_info(channel)
+  use atlas_atlas_c_binding
+  use fckit_log_module
+  type(logchannel), optional :: channel
+  type(logchannel) :: default_channel
+
+  if( present(channel) ) then
+    call atlas__info(channel%c_ptr())
+  else
+    default_channel = atlas_log%info_channel()
+    call atlas__info(default_channel%c_ptr())
+  endif
+end subroutine
 
 ! -----------------------------------------------------------------------------
 

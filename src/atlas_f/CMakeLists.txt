@@ -157,7 +157,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/HaloExchange.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/GatherScatter.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/Checksum.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
-generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
 
 preprocess_fypp( atlas_f_src field/atlas_Field_module.F90 )
@@ -175,7 +174,6 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_JSON_module.F90
         util/atlas_Config_module.F90
         util/atlas_Metadata_module.F90
-        util/atlas_Logging_module.F90
         util/atlas_Error_module.F90
         output/atlas_output_module.F90
         functionspace/atlas_FunctionSpace_module.F90
@@ -205,8 +203,6 @@ ecbuild_add_library( TARGET atlas_f
         parallel/atlas_Checksum_module.F90
         parallel/atlas_HaloExchange_module.F90
         trans/atlas_Trans_module.F90
-        internals/atlas_logging.h
-        internals/atlas_logging.cc
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
         internals/atlas_write_to_fortran_unit.F90

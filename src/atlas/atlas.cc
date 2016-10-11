@@ -35,24 +35,19 @@ std::string rundir()
 
 void atlas_info( std::ostream& out )
 {
-  out << "Atlas initialised [" << Main::instance().name() << "]\n";
+  out << "Executable        [" << Main::instance().name() << "]\n";
 
-  out << "atlas version [" << atlas_version() << "]\n";
-  out << "atlas git     [" << atlas_git_sha1()<< "]\n";
-  out << "eckit version [" << eckit_version() << "]\n";
-  out << "eckit git     [" << eckit_git_sha1()<< "]\n";
-  out << "current dir   [" << PathName(rundir()).fullName() << "]\n";
+  out << "  atlas version   [" << atlas_version() << "]\n";
+  out << "  atlas git       [" << atlas_git_sha1_abbrev(7)<< "]\n";
+  out << "  eckit version   [" << eckit_version() << "]\n";
+  out << "  eckit git       [" << atlas__eckit_git_sha1_abbrev(7)<< "]\n";
+  out << "  current dir     [" << PathName(rundir()).fullName() << "]\n";
 
-  if(parallel::mpi::comm().size() > 1) {
-    out << "MPI\n";
-    out << "communicator  [" << parallel::mpi::comm() << "] \n";
-    out << "size          [" << parallel::mpi::comm().size() << "] \n";
-    out << "rank          [" << parallel::mpi::comm().rank() << "] \n";
-  }
-  else
-  {
-    out << "MPI           [OFF]\n";
-  }
+  out << "  MPI\n";
+  out << "    communicator  [" << parallel::mpi::comm() << "] \n";
+  out << "    size          [" << parallel::mpi::comm().size() << "] \n";
+  out << "    rank          [" << parallel::mpi::comm().rank() << "] \n";
+  out << std::flush;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -169,6 +164,12 @@ const char* atlas__workdir ()
   static LocalPathName workdir = LocalPathName::cwd().fullName();
   return workdir.c_str();
 }
+
+void atlas__info(std::ostream* channel)
+{
+  atlas_info(*channel);
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------
 

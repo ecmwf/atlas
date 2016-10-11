@@ -343,7 +343,6 @@ end subroutine Metadata__get_array_real64
 
 subroutine MetaData__print(this,channel)
   use atlas_metadata_c_binding
-  use atlas_Logging_module
   use fckit_log_module, only : logchannel
   class(atlas_Metadata), intent(in) :: this
   type(logchannel), intent(in) :: channel
