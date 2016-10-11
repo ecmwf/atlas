@@ -40,7 +40,7 @@ ecbuild_declare_project()
 
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
-ecbuild_use_package( PROJECT eckit VERSION 0.14 REQUIRED ) # eckit >= 0.14 includes new eckit::mpi
+ecbuild_use_package( PROJECT eckit VERSION 0.14 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
@@ -51,7 +51,7 @@ ecbuild_find_python()
 
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "atlas: Provide Fortran bindings"
-                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.1" )
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.2" )
 if( ATLAS_HAVE_FORTRAN )
 
   if( FCKIT_HAVE_ECKIT )
