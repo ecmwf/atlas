@@ -26,7 +26,6 @@ private
 type, extends(fckit_refcounted) :: atlas_ElementType
 contains
 ! Public methods
-  procedure, public :: copy     => atlas_ElementType__copy
   procedure, public :: delete   => atlas_ElementType__delete
 
   procedure, public :: nb_nodes
@@ -63,11 +62,6 @@ subroutine atlas_ElementType__delete(this)
     call atlas__mesh__ElementType__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
-end subroutine
-
-subroutine atlas_ElementType__copy(this,obj_in)
-  class(atlas_ElementType), intent(inout) :: this
-  class(fckit_refcounted),   target, intent(in) :: obj_in
 end subroutine
 
 function atlas_ElementType__cptr(cptr) result(this)

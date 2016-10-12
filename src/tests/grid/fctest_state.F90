@@ -109,8 +109,6 @@ END_TEST
 
 TEST( test_state_factory )
 type(atlas_State) :: state
-type(atlas_Field) :: field
-type(atlas_mesh) :: mesh
 
 ! Create a new state
 state = atlas_State()

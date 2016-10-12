@@ -300,7 +300,6 @@ TEST( test_fieldset )
 implicit none
 
   type(atlas_FieldSet) :: fieldset
-  type(atlas_Field) :: afield
   type(atlas_Field) :: field
 
   write(*,*) "test_fieldset starting"

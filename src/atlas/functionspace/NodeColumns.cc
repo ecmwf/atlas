@@ -29,7 +29,8 @@
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-
+#undef atlas_omp_critical_ordered
+#define atlas_omp_critical_ordered atlas_omp_critical
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
 #else

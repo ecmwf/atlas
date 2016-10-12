@@ -164,9 +164,8 @@ TEST( test_multiblockconnectivity )
   implicit none
   type(atlas_MultiBlockConnectivity) :: multiblock
   type(atlas_BlockConnectivity) :: block
-  integer(c_int), pointer :: row(:), data(:,:), padded(:,:)
+  integer(c_int), pointer :: data(:,:), padded(:,:)
   integer(c_size_t), pointer :: cols(:)
-  integer(c_int) :: ncols, nblocks
 
   type(atlas_Connectivity) :: base
 
