@@ -93,6 +93,14 @@ Field::~Field()
     delete array_;
 }
 
+size_t Field::footprint() const {
+  size_t size = sizeof(*this);
+  // TODO
+  size += functionspace_->footprint();
+  size += array_->footprint();
+  return size;
+}
+
 void Field::dump(std::ostream& os) const
 {
   print(os);

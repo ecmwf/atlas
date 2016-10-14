@@ -90,7 +90,6 @@ template <> void ArrayT<long>::dump(std::ostream& os) const { dump_array_data(*t
 template <> void ArrayT<float>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<double>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 
-
 Array* Array::create( DataType datatype, const ArrayShape& shape )
 {
   Array* array(0);

@@ -36,6 +36,7 @@ public:
     virtual ~FunctionSpace() = 0;
     virtual std::string name() const = 0;
     virtual operator bool() const { return true; }
+    virtual size_t footprint() const = 0;
 
     template <typename FunctionSpaceT>
     FunctionspaceT_nonconst *cast();
@@ -71,6 +72,7 @@ public:
     virtual ~NoFunctionSpace() {}
     virtual std::string name() const { return "NoFunctionSpace"; }
     virtual operator bool() const { return false; }
+    virtual size_t footprint() const { return sizeof(*this); }
 };
 
 //------------------------------------------------------------------------------------------------------

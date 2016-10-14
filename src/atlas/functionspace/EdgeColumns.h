@@ -153,6 +153,7 @@ private: // methods
     std::string checksum_name() const;
     void constructor();
     size_t config_size(const eckit::Parametrisation& config) const;
+    size_t footprint() const;
 
 private: // data
 

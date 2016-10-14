@@ -155,6 +155,9 @@ public: // Destructor
   void set_functionspace(const functionspace::FunctionSpace &);
   functionspace::FunctionSpace& functionspace() const { return *functionspace_; }
 
+  /// @brief Return the memory footprint of the Field
+  size_t footprint() const;
+
 private: // methods
 
   void print(std::ostream& os) const;

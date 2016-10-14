@@ -83,6 +83,12 @@ Spectral::~Spectral()
 {
 }
 
+size_t Spectral::footprint() const {
+  size_t size = sizeof(*this);
+  // TODO
+  return size;
+}
+
 size_t Spectral::nb_spectral_coefficients() const {
 #ifdef ATLAS_HAVE_TRANS
   if( trans_ ) return trans_->nspec2();
