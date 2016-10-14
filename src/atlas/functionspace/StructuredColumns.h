@@ -99,6 +99,7 @@ public:
 private: // methods
 
   size_t config_size(const eckit::Parametrisation& config) const;
+  size_t footprint() const;
 
 private: // data
 

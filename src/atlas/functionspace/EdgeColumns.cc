@@ -174,6 +174,12 @@ void EdgeColumns::constructor()
 
 EdgeColumns::~EdgeColumns() {}
 
+size_t EdgeColumns::footprint() const {
+  size_t size = sizeof(*this);
+  // TODO
+  return size;
+}
+
 size_t EdgeColumns::nb_edges() const
 {
   return nb_edges_;

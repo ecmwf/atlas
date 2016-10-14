@@ -185,6 +185,12 @@ void NodeColumns::constructor()
 
 NodeColumns::~NodeColumns() {}
 
+size_t NodeColumns::footprint() const {
+  size_t size = sizeof(*this);
+  // TODO
+  return size;
+}
+
 size_t NodeColumns::nb_nodes() const
 {
   return nb_nodes_;

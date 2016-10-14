@@ -195,6 +195,11 @@ StructuredColumns::~StructuredColumns()
 // ----------------------------------------------------------------------------
 
 
+size_t StructuredColumns::footprint() const {
+  size_t size = sizeof(*this);
+  // TODO
+  return size;
+}
 
 // ----------------------------------------------------------------------------
 // Create Field

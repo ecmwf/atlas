@@ -48,6 +48,7 @@ public:
   virtual array::DataType datatype() const = 0;
   virtual double bytes() const = 0;
   virtual void dump(std::ostream& os) const = 0;
+  virtual size_t footprint() const = 0;
 
   void resize(const ArrayShape&);
 
@@ -165,6 +166,7 @@ public:
   virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
   virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
   virtual void dump(std::ostream& os) const;
+  virtual size_t footprint() const;
 
   const DATA_TYPE& operator[](size_t i) const { return *(data()+i); }
         DATA_TYPE& operator[](size_t i)       { return *(data()+i); }
@@ -244,6 +246,16 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
   for( size_t j=0; j<size(); ++j )
     data_[j] = other_data[j];
   view_ = ArrayView<DATA_TYPE>( *this );
+}
+
+
+template< typename DATA_TYPE >
+size_t ArrayT<DATA_TYPE>::footprint() const {
+  if( not contiguous() ) NOTIMP;
+  size_t size = sizeof(*this);
+  size += owned_data_.capacity();
+  size += view_.footprint();
+  return size;
 }
 
 //------------------------------------------------------------------------------

@@ -275,7 +275,9 @@ void HybridElements::clear()
 
 size_t HybridElements::footprint() const {
   size_t size = sizeof(*this);
-  // TODO
+  for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
+    size += (*it).second->footprint();
+  }
   return size;
 }
 
