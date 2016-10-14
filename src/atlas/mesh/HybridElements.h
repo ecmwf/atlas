@@ -112,6 +112,9 @@ public: // methods
 
   void clear();
 
+  /// @brief Return the memory footprint of the elements
+  size_t footprint() const;
+
 private:
 
 // -- Data
