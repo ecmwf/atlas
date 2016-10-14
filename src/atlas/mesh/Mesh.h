@@ -114,6 +114,9 @@ public: // methods
 
     bool generated() const;
 
+    /// @brief Return the memory footprint of the mesh
+    size_t footprint() const;
+
 private:  // methods
 
     friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {

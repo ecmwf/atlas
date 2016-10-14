@@ -92,6 +92,9 @@ public: // methods
 
   Connectivity& add( mesh::Connectivity* );
 
+  /// @brief Return the memory footprint of the Nodes
+  size_t footprint() const;
+
 private:
 
   void print(std::ostream&) const;

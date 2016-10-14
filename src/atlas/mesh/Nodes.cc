@@ -143,6 +143,14 @@ void Nodes::print(std::ostream& os) const
     os << "]";
 }
 
+
+size_t Nodes::footprint() const {
+  size_t size = sizeof(*this);
+  // TODO
+  return size;
+}
+
+
 const IrregularConnectivity& Nodes::connectivity(const std::string& name) const
 {
   if( (connectivities_.find(name) == connectivities_.end()) )

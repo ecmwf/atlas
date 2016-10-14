@@ -272,6 +272,13 @@ void HybridElements::clear()
   elements_.clear();
 }
 
+
+size_t HybridElements::footprint() const {
+  size_t size = sizeof(*this);
+  // TODO
+  return size;
+}
+
 //-----------------------------------------------------------------------------
 
 extern "C" {
