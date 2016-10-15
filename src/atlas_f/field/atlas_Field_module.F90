@@ -66,7 +66,6 @@ contains
   procedure :: set_functionspace
 
   procedure, public :: delete => atlas_Field__delete
-!   procedure, public :: copy => atlas_Field__copy
 
 #:for rank in ranks
 #:for dtype in dtypes
@@ -425,13 +424,6 @@ subroutine atlas_Field__delete(this)
   end if
   call this%reset_c_ptr()
 end subroutine
-
-!-------------------------------------------------------------------------------
-
-! subroutine atlas_Field__copy(this,obj_in)
-!   class(atlas_Field), intent(inout) :: this
-!   class(fckit_RefCounted), target, intent(in) :: obj_in
-! end subroutine
 
 !-------------------------------------------------------------------------------
 

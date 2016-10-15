@@ -169,7 +169,6 @@ TEST(test_parametrisation_json_file)
  type(atlas_Config) :: params
  type(atlas_Config), allocatable :: records(:)
  type(atlas_Config) :: location
- type(atlas_JSON) :: json
  character (len=:), allocatable :: name, company, street, city
  integer :: age
  integer :: jrec

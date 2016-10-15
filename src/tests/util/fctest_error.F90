@@ -38,8 +38,6 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_error )
-integer :: err_code
-character(len=:), allocatable :: err_msg
 
 call atlas_err_set_throws(.False.)
 call atlas_err_set_aborts(.False.)

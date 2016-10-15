@@ -242,7 +242,7 @@ real(c_float), pointer :: scalvalues(:)
 real(c_float), pointer :: values(:,:)
 real(c_float), pointer :: values3d(:,:,:,:)
 real(c_float) :: minimum, maximum, sum, oisum, mean, stddev
-real(c_float), allocatable :: minimumv(:), maximumv(:), sumv(:), oisumv(:), meanv(:), stddevv(:)
+real(c_float), allocatable :: minimumv(:), maximumv(:), meanv(:), stddevv(:)
 integer :: halo_size, levels
 integer(ATLAS_KIND_GIDX) :: glb_idx
 integer(ATLAS_KIND_GIDX), allocatable :: glb_idxv (:)

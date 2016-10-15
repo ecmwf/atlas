@@ -66,7 +66,6 @@ end type
 
 type, extends(fckit_refcounted) :: atlas_BlockConnectivity
 contains
-  procedure, public :: copy     => atlas_BlockConnectivity__copy
   procedure, public :: delete   => atlas_BlockConnectivity__delete
   procedure, public :: rows     => atlas_BlockConnectivity__rows
   procedure, public :: cols     => atlas_BlockConnectivity__cols
@@ -407,11 +406,6 @@ subroutine atlas_BlockConnectivity__delete(this)
   call this%reset_c_ptr()
 end subroutine
 
-subroutine atlas_BlockConnectivity__copy(this,obj_in)
-  class(atlas_BlockConnectivity), intent(inout) :: this
-  class(fckit_refcounted),   target, intent(in) :: obj_in
-end subroutine
-
 subroutine atlas_BlockConnectivity__data(this,data)
   use atlas_connectivity_c_binding
   use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_size_t, c_f_pointer
@@ -540,7 +534,6 @@ subroutine delete_access(this)
   use, intrinsic :: iso_c_binding, only : c_int
   use atlas_connectivity_c_binding
   type(atlas_ConnectivityAccess), intent(inout) :: this
-  integer(c_int) :: jrow
   if( associated( this%row ) )    deallocate(this%row)
   if( associated( this%padded_) ) deallocate(this%padded_)
 end subroutine
