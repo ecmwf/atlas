@@ -52,3 +52,9 @@ ecbuild_add_test( TARGET atlas_test_metadata
   SOURCES  test_metadata.cc
   LIBS     atlas
 )
+
+ecbuild_add_test( TARGET atlas_test_footprint
+  BOOST
+  SOURCES test_footprint.cc
+  LIBS    atlas
+)

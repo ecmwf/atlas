@@ -20,6 +20,8 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "eckit/log/Bytes.h"
+#include "atlas/runtime/Log.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
@@ -278,6 +280,14 @@ size_t HybridElements::footprint() const {
   for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
     size += (*it).second->footprint();
   }
+  for( ConnectivityMap::const_iterator it = connectivities_.begin(); it != connectivities_.end(); ++it ) {
+    size += (*it).second->footprint();
+  }
+  size += elements_size_.capacity() * sizeof(size_t);
+  size += elements_begin_.capacity() * sizeof(size_t);
+  
+  size += metadata_.footprint();
+  
   return size;
 }
 

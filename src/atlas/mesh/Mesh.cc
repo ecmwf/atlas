@@ -86,17 +86,16 @@ void Mesh::print(std::ostream& os) const
 }
 
 size_t Mesh::footprint() const {
-    // Missing metadata_.footprint()
-    size_t size = sizeof(*this);
+  size_t size = sizeof(*this);
 
-    if(nodes_) size += nodes_->footprint();
-    if(cells_) size += cells_->footprint();
-    if(facets_) size += facets_->footprint();
-    if(ridges_) size += ridges_->footprint();
-    if(peaks_) size += peaks_->footprint();
-    if(edges_) size += edges_->footprint();
+  size += metadata_.footprint();
+  if(nodes_)  size += nodes_->footprint();
+  if(cells_)  size += cells_->footprint();
+  if(facets_) size += facets_->footprint();
+  if(ridges_) size += ridges_->footprint();
+  if(peaks_)  size += peaks_->footprint();
 
-    return size;
+  return size;
 }
 
 

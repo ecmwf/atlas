@@ -288,6 +288,17 @@ void IrregularConnectivity::insert( size_t position, size_t rows, const size_t c
 
 //------------------------------------------------------------------------------------------------------
 
+size_t IrregularConnectivity::footprint() const
+{
+  size_t size = sizeof(*this);
+  size += owned_values_.capacity() * sizeof(idx_t);
+  size += owned_displs_.capacity() * sizeof(size_t);
+  size += owned_counts_.capacity() * sizeof(size_t);
+  return size;
+}
+
+//------------------------------------------------------------------------------------------------------
+
 MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[], size_t blocks, size_t block_displs[], size_t block_cols[] )
   : IrregularConnectivity(values,rows,displs,counts),
     blocks_(blocks),
@@ -497,6 +508,19 @@ void MultiBlockConnectivity::rebuild_block_connectivity()
 
 //------------------------------------------------------------------------------------------------------
 
+size_t MultiBlockConnectivity::footprint() const
+{
+  size_t size = IrregularConnectivity::footprint();
+  size += owned_block_displs_.capacity() * sizeof(size_t);
+  size += owned_block_cols_.capacity() * sizeof(size_t);
+  for( size_t j=0; j<block_.size(); ++ j ) {
+    size += block_[j]->footprint();
+  }
+  return size;
+}
+
+//------------------------------------------------------------------------------------------------------
+
 
 BlockConnectivity::BlockConnectivity() :
   owns_(true), rows_(0), cols_(0), values_(0),
@@ -543,6 +567,15 @@ void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool
   values_=owned_values_.data();
   rows_+=rows;
   cols_=cols;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+size_t BlockConnectivity::footprint() const
+{
+  size_t size = sizeof(*this);
+  size += owned_values_.capacity() * sizeof(idx_t);
+  return size;
 }
 
 //------------------------------------------------------------------------------------------------------

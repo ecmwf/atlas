@@ -146,7 +146,13 @@ void Nodes::print(std::ostream& os) const
 
 size_t Nodes::footprint() const {
   size_t size = sizeof(*this);
-  // TODO
+  for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
+    size += (*it).second->footprint();
+  }
+  for( ConnectivityMap::const_iterator it = connectivities_.begin(); it != connectivities_.end(); ++it ) {
+    size += (*it).second->footprint();
+  }
+  size += metadata_.footprint();
   return size;
 }
 
