@@ -158,6 +158,7 @@ extern "C"
   mesh_Nodes* atlas__Mesh__nodes (Mesh* This);
   mesh_Edges* atlas__Mesh__edges (Mesh* This);
   mesh_Cells* atlas__Mesh__cells (Mesh* This);
+  size_t atlas__Mesh__footprint (Mesh* This);
 }
 #undef mesh_Nodes
 #undef mesh_Edges

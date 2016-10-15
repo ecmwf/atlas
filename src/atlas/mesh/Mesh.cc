@@ -165,6 +165,16 @@ mesh::Cells* atlas__Mesh__cells (Mesh* This) {
   return NULL;
 }
 
+size_t atlas__Mesh__footprint (Mesh* This) {
+  size_t size(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    size = This->footprint();
+  );
+  return size;
+}
+
+
 
 //----------------------------------------------------------------------------------------------------------------------
 
