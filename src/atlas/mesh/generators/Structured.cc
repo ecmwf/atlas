@@ -183,9 +183,7 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
 void Structured::hash(MD5& md5) const
 {
     md5.add("Structured");
-#if ECKIT_MAJOR_VERSION >= 0 && ECKIT_MINOR_VERSION >= 13
     options.hash(md5);
-#endif
 }
 
 void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
