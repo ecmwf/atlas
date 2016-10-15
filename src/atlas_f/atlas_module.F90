@@ -165,14 +165,11 @@ use atlas_output_module, only: &
     & atlas_Output, &
     & atlas_output_Gmsh
 
-use fckit_main_module, only: fckit_main
 use fckit_log_module,  only: atlas_log => log
 
 implicit none
 
 public
-
-type(fckit_main), public :: main
 
 ENUM, bind(c)
   enumerator :: openmode
@@ -188,6 +185,7 @@ CONTAINS
 subroutine atlas_init( comm, output_unit )
   use atlas_atlas_c_binding
   use iso_fortran_env, only : stdout => output_unit
+  use fckit_main_module, only: main
   use fckit_mpi_module, only : fckit_mpi_comm
   use atlas_mpi_module, only : atlas_mpi_set_comm
 
