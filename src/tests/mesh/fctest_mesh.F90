@@ -396,6 +396,8 @@ implicit none
 
       node_to_node = nodes%connectivity("node")
       node_to_edge = nodes%connectivity("edge")
+      
+      write(0,*) "mesh.footprint (bytes) = ", mesh%footprint()
 
       call node_to_node%final()
       call mesh%final()
