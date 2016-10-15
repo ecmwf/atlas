@@ -251,10 +251,11 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
 
 template< typename DATA_TYPE >
 size_t ArrayT<DATA_TYPE>::footprint() const {
-  if( not contiguous() ) NOTIMP;
   size_t size = sizeof(*this);
-  size += owned_data_.capacity();
-  size += view_.footprint();
+  if( owned_ ) {
+    size += owned_data_.capacity()*sizeof(DATA_TYPE);
+  }
+  if( not contiguous() ) NOTIMP;
   return size;
 }
 

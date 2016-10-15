@@ -95,9 +95,10 @@ Field::~Field()
 
 size_t Field::footprint() const {
   size_t size = sizeof(*this);
-  // TODO
   size += functionspace_->footprint();
   size += array_->footprint();
+  size += metadata_.footprint();
+  size += name_.capacity() * sizeof(std::string::value_type);
   return size;
 }
 

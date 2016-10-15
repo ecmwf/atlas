@@ -54,6 +54,8 @@ public:
   void broadcast(Metadata&, const size_t root);
   void broadcast(Metadata&) const;
   void broadcast(Metadata&, const size_t root) const;
+  
+  size_t footprint() const;
 };
 
 // ------------------------------------------------------------------

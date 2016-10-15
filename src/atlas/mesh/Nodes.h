@@ -124,7 +124,7 @@ private:
   field::Field* lonlat_;
   field::Field* ghost_;
 
-
+// Cached shortcuts to specific connectivities in connectivities_
   Connectivity* edge_connectivity_;
   Connectivity* cell_connectivity_;
 

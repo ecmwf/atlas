@@ -118,9 +118,8 @@ public:
   size_t size() const;
 
   size_t footprint() const {
-    size_t size = sizeof(*this);
-    // TODO
-    return size;
+    // An  arrayview does not own the data
+    return sizeof(*this);
   }
 
 private:

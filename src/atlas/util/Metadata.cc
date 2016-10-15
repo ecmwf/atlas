@@ -37,6 +37,13 @@ namespace {
     }
 }
 
+size_t Metadata::footprint() const
+{
+  // TODO
+  size_t size = sizeof(*this);
+  return size;
+}
+
 Metadata& Metadata::set( const eckit::Properties& p )
 {
   eckit::Properties::set(p);
