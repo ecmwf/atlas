@@ -53,15 +53,6 @@ use atlas_JSON_module, only: &
     & atlas_PathName
 use atlas_Metadata_module, only: &
     & atlas_Metadata
-use atlas_Logging_module, only: &
-    & atlas_log, &
-    & atlas_Logger, &
-    & atlas_LogChannel, &
-    & ATLAS_LOG_CATEGORY_ERROR, &
-    & ATLAS_LOG_CATEGORY_WARNING, &
-    & ATLAS_LOG_CATEGORY_INFO, &
-    & ATLAS_LOG_CATEGORY_DEBUG, &
-    & ATLAS_LOG_CATEGORY_STATS
 use atlas_Error_module, only: &
     & atlas_CodeLocation, &
     & atlas_code_location_str, &
@@ -158,11 +149,6 @@ use atlas_fvm_module, only: &
     & atlas_fvm_Method
 use atlas_Nabla_module, only: &
     & atlas_Nabla
-use atlas_resource_module, only: &
-    & atlas_resource, &
-    & atlas_resource_set
-use atlas_Value_module, only: &
-    & atlas_Value
 use atlas_mesh_actions_module, only: &
     & atlas_build_parallel_fields, &
     & atlas_build_nodes_parallel_fields, &
@@ -179,6 +165,8 @@ use atlas_output_module, only: &
     & atlas_Output, &
     & atlas_output_Gmsh
 
+use fckit_log_module,  only: atlas_log => log
+
 implicit none
 
 public
@@ -194,24 +182,44 @@ CONTAINS
 ! =============================================================================
 
 
-subroutine atlas_init( mpi_comm )
-  use, intrinsic :: iso_c_binding, only : c_ptr
+subroutine atlas_init( comm, output_unit )
   use atlas_atlas_c_binding
-  use atlas_mpi_module, only :  atlas_mpi_comm_attach_fortran_communicator
-  use atlas_c_interop
-  integer, save :: argc
-  type(c_ptr), save :: argv(15)
-  integer, intent(in), optional :: mpi_comm
-  call get_c_arguments(argc,argv)
-  if( present(mpi_comm) ) then
-    call atlas_mpi_comm_attach_fortran_communicator(mpi_comm)
+  use iso_fortran_env, only : stdout => output_unit
+  use fckit_main_module, only: main
+  use fckit_mpi_module, only : fckit_mpi_comm
+  use atlas_mpi_module, only : atlas_mpi_set_comm
+
+  integer, intent(in), optional :: comm
+  integer, intent(in), optional :: output_unit
+  type(fckit_mpi_comm) :: world
+  integer :: opt_output_unit
+
+  if( .not. main%ready() ) then
+    call main%init()
   endif
-  call atlas__atlas_init(argc,argv)
-  atlas_log = atlas_Logger()
+
+  opt_output_unit = stdout
+  if( present(output_unit) ) opt_output_unit = output_unit
+
+  world = fckit_mpi_comm("world")
+  call main%set_taskID(world%rank())
+
+  if( main%taskID() == 0 ) then
+    call atlas_log%set_fortran_unit(opt_output_unit,style=atlas_log%PREFIX)
+  else
+    call atlas_log%reset()
+  endif
+
+  if( present(comm) ) then
+    call atlas_mpi_set_comm(comm)
+  endif
+  call atlas__atlas_init_noargs()
+
 end subroutine
 
+
 subroutine atlas_finalize()
-  use atlas_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   call atlas__atlas_finalize()
 end subroutine
@@ -220,46 +228,46 @@ end subroutine
 
 function eckit_version()
   use atlas_atlas_c_binding
-  use atlas_c_interop
+  use fckit_c_interop_module
   character(len=40) :: eckit_version
-  eckit_version = c_to_f_string_cptr(atlas__eckit_version())
+  eckit_version = c_ptr_to_string(atlas__eckit_version())
 end function eckit_version
 
 function eckit_git_sha1()
-  use atlas_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=40) :: eckit_git_sha1
-  eckit_git_sha1 = c_to_f_string_cptr(atlas__eckit_git_sha1())
+  eckit_git_sha1 = c_ptr_to_string(atlas__eckit_git_sha1())
 end function eckit_git_sha1
 
 function eckit_git_sha1_abbrev(length)
   use, intrinsic :: iso_c_binding, only: c_int
   use atlas_atlas_c_binding
-  use atlas_c_interop
+  use fckit_c_interop_module
   character(len=40) :: eckit_git_sha1_abbrev
   integer(c_int), optional :: length
   integer(c_int) :: opt_length
   opt_length = 7
   if( present(length) ) opt_length = length
-  eckit_git_sha1_abbrev = c_to_f_string_cptr(atlas__eckit_git_sha1_abbrev(opt_length))
+  eckit_git_sha1_abbrev = c_ptr_to_string(atlas__eckit_git_sha1_abbrev(opt_length))
 end function eckit_git_sha1_abbrev
 
 function atlas_version()
-  use atlas_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=40) :: atlas_version
-  atlas_version = c_to_f_string_cptr(atlas__atlas_version())
+  atlas_version = c_ptr_to_string(atlas__atlas_version())
 end function atlas_version
 
 function atlas_git_sha1()
-  use atlas_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=40) :: atlas_git_sha1
-  atlas_git_sha1 = c_to_f_string_cptr(atlas__atlas_git_sha1())
+  atlas_git_sha1 = c_ptr_to_string(atlas__atlas_git_sha1())
 end function atlas_git_sha1
 
 function atlas_git_sha1_abbrev(length)
-  use atlas_c_interop
+  use fckit_c_interop_module
   use, intrinsic :: iso_c_binding, only: c_int
   use atlas_atlas_c_binding
   character(len=40) :: atlas_git_sha1_abbrev
@@ -267,37 +275,50 @@ function atlas_git_sha1_abbrev(length)
   integer(c_int) :: opt_length
   opt_length = 7
   if( present(length) ) opt_length = length
-  atlas_git_sha1_abbrev = c_to_f_string_cptr(atlas__atlas_git_sha1_abbrev(opt_length))
+  atlas_git_sha1_abbrev = c_ptr_to_string(atlas__atlas_git_sha1_abbrev(opt_length))
 end function atlas_git_sha1_abbrev
 
 function atlas_run_name()
-  use atlas_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=128) :: atlas_run_name
-  atlas_run_name = c_to_f_string_cptr(atlas__run_name())
+  atlas_run_name = c_ptr_to_string(atlas__run_name())
 end function atlas_run_name
 
 function atlas_display_name()
-  use atlas_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=128) :: atlas_display_name
-  atlas_display_name = c_to_f_string_cptr(atlas__display_name())
+  atlas_display_name = c_ptr_to_string(atlas__display_name())
 end function atlas_display_name
 
 function atlas_rundir()
-  use atlas_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=128) :: atlas_rundir
-  atlas_rundir = c_to_f_string_cptr(atlas__rundir())
+  atlas_rundir = c_ptr_to_string(atlas__rundir())
 end function atlas_rundir
 
 function atlas_workdir()
-  use atlas_c_interop
+  use fckit_c_interop_module
   use atlas_atlas_c_binding
   character(len=128) :: atlas_workdir
-  atlas_workdir = c_to_f_string_cptr(atlas__workdir())
+  atlas_workdir = c_ptr_to_string(atlas__workdir())
 end function atlas_workdir
 
+subroutine atlas_info(channel)
+  use atlas_atlas_c_binding
+  use fckit_log_module
+  type(logchannel), optional :: channel
+  type(logchannel) :: default_channel
+
+  if( present(channel) ) then
+    call atlas__info(channel%c_ptr())
+  else
+    default_channel = atlas_log%info_channel()
+    call atlas__info(default_channel%c_ptr())
+  endif
+end subroutine
 
 ! -----------------------------------------------------------------------------
 

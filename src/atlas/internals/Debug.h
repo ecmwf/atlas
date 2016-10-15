@@ -13,12 +13,13 @@
 
 #include <sstream>
 #include <unistd.h>
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 /// DEBUG MACRO
-#define DEBUG_RANK (eckit::mpi::initialized() ? eckit::mpi::rank() : 0)
+#define DEBUG_RANK (parallel::mpi::comm().rank())
 #define DEBUG_0()            atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG() @ " << Here() << std::endl;
 #define DEBUG_1(WHAT)        atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
 #define DEBUG_2(WHAT,RANK)   if(DEBUG_RANK == RANK) { DEBUG_1(WHAT) }
@@ -30,18 +31,18 @@
 
 /// DEBUG_SYNC MACRO
 #define DEBUG_SYNC(...) do {\
-  {eckit::mpi::barrier();\
-  int npid = eckit::mpi::size();\
+  {parallel::mpi::comm().barrier();\
+  int npid = parallel::mpi::comm().size();\
   for( int p=0; p<npid; ++p )\
   {\
-    if( p==eckit::mpi::rank() )\
+    if( p==parallel::mpi::comm().rank() )\
     {\
       DEBUG_X(,##__VA_ARGS__,\
         DEBUG_2(__VA_ARGS__),\
         DEBUG_1(__VA_ARGS__),\
         DEBUG_0(__VA_ARGS__))\
     }\
-    eckit::mpi::barrier(); usleep(100); /*microseconds*/ \
+    parallel::mpi::comm().barrier(); usleep(100); /*microseconds*/ \
   }}} while(0)
 
 /// DEBUG_VAR MACRO
@@ -58,11 +59,11 @@
 
 /// DEBUG_VAR_SYNC MACRO
 #define DEBUG_VAR_SYNC(...) do {\
-  eckit::mpi::barrier();\
+  parallel::mpi::comm().barrier();\
   DEBUG_VAR_X(,##__VA_ARGS__,\
      DEBUG_VAR_2(__VA_ARGS__),\
      DEBUG_VAR_1(__VA_ARGS__))\
-  eckit::mpi::barrier(); usleep(1000); /*microseconds*/\
+  parallel::mpi::comm().barrier(); usleep(1000); /*microseconds*/\
   } while(0)
 
 #endif

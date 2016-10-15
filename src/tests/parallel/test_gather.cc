@@ -23,6 +23,8 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/internals/Debug.h"
 
+#include "tests/AtlasFixture.h"
+
 /// POD: Type to test
 typedef double POD;
 
@@ -35,17 +37,12 @@ std::vector<T> vec( const T (&list)[N] )
   return std::vector<T>(list,list+N);
 }
 
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
-
 struct Fixture {
   Fixture()
   {
     int nnodes_c[] = {6, 6, 7}; nb_nodes = vec(nnodes_c);
-    Nl = nb_nodes[eckit::mpi::rank()];
-    switch( eckit::mpi::rank() )
+    Nl = nb_nodes[parallel::mpi::comm().rank()];
+    switch( parallel::mpi::comm().rank() )
     {
       case 0:
       {               //./----> extra ghost point with nonstandard gidx
@@ -80,28 +77,27 @@ struct Fixture {
   int Nl;
   size_t root;
 
-  int Ng() { return eckit::mpi::rank() == root ? gather_scatter.glb_dof() : 0; }
+  int Ng() { return parallel::mpi::comm().rank() == root ? gather_scatter.glb_dof() : 0; }
 };
 
-
-BOOST_GLOBAL_FIXTURE( MPIFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank0, Fixture )
 {
-  for( root=0; root<eckit::mpi::size(); ++root )
+  for( root=0; root<parallel::mpi::comm().size(); ++root )
   {
     std::vector<POD> loc(Nl);
     std::vector<POD> glb(Ng());
 
     for( int j=0; j<Nl; ++j ) {
-      loc[j] = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
+      loc[j] = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*10 );
     }
 
     size_t strides[] = {1};
     size_t extents[] = {1};
     gather_scatter.gather(loc.data(),strides,extents,1,glb.data(),strides,extents,1,root);
 
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { 10, 20, 30, 40, 50, 60, 70, 80, 90 };
       BOOST_CHECK_EQUAL_COLLECTIONS(glb.begin(),glb.end(), glb_c,glb_c+Ng());
@@ -111,7 +107,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank0, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
 {
-  for( root=0; root<eckit::mpi::size(); ++root )
+  for( root=0; root<parallel::mpi::comm().size(); ++root )
   {
     array::ArrayT<POD> loc(Nl,2);
     array::ArrayT<POD> glb(Ng(),2);
@@ -119,8 +115,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
     array::ArrayT<POD> glb2(Ng(),1);
     array::ArrayView<POD,2> locv(loc);
     for( int j=0; j<Nl; ++j ) {
-      locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
-      locv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
+      locv(j,0) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*10 );
+      locv(j,1) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*100);
     }
 
     // Gather complete field
@@ -132,7 +128,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
     gather_scatter.gather( loc.data(), loc_strides, loc_extents, 1,
                            glb.data(), glb_strides, glb_extents, 1, root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { 10,100, 20,200, 30,300, 40,400, 50,500, 60,600, 70,700, 80,800, 90,900 };
       BOOST_CHECK_EQUAL_COLLECTIONS(glb.data(),glb.data()+2*Ng(), glb_c,glb_c+2*Ng());
@@ -147,7 +143,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
       gather_scatter.gather( loc.data(),  loc_strides, loc_extents, 1,
                              glb1.data(), glb_strides, glb_extents, 1, root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb1_c[] = { 10, 20, 30, 40, 50, 60, 70, 80, 90 };
       BOOST_CHECK_EQUAL_COLLECTIONS(glb1.data(),glb1.data()+Ng(), glb1_c,glb1_c+Ng());
@@ -162,7 +158,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
       gather_scatter.gather( loc.data()+1, loc_strides, loc_extents, 1,
                              glb2.data(),  glb_strides, glb_extents, 1, root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb2_c[] = { 100, 200, 300, 400, 500, 600, 700, 800, 900 };
       BOOST_CHECK_EQUAL_COLLECTIONS(glb2.data(),glb2.data()+Ng(), glb2_c,glb2_c+Ng());
@@ -172,7 +168,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
 {
-  for( root=0; root<eckit::mpi::size(); ++root )
+  for( root=0; root<parallel::mpi::comm().size(); ++root )
   {
     array::ArrayT<POD> loc(Nl,2);
     array::ArrayT<POD> glb(Ng(),2);
@@ -180,8 +176,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
     array::ArrayT<POD> glb2(Ng(),1);
     array::ArrayView<POD,2> locv(loc);
     for( int j=0; j<Nl; ++j ) {
-      locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
-      locv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
+      locv(j,0) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*10 );
+      locv(j,1) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*100);
     }
 
     // Gather complete field
@@ -218,7 +214,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
                            root );
 
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { 10,100, 20,200, 30,300, 40,400, 50,500, 60,600, 70,700, 80,800, 90,900 };
       BOOST_CHECK_EQUAL_COLLECTIONS(glb.data(),glb.data()+2*Ng(), glb_c,glb_c+2*Ng());
@@ -256,7 +252,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
                              glb1.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                              root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb1_c[] = { 10, 20, 30, 40, 50, 60, 70, 80, 90 };
       BOOST_CHECK_EQUAL_COLLECTIONS(glb1.data(),glb1.data()+Ng(), glb1_c,glb1_c+Ng());
@@ -278,7 +274,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
                              glb2.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                              root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb2_c[] = { 100, 200, 300, 400, 500, 600, 700, 800, 900 };
       BOOST_CHECK_EQUAL_COLLECTIONS(glb2.data(),glb2.data()+Ng(), glb2_c,glb2_c+Ng());
@@ -290,7 +286,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
 {
-  for( root=0; root<eckit::mpi::size(); ++root )
+  for( root=0; root<parallel::mpi::comm().size(); ++root )
   {
     array::ArrayT<POD> loc(Nl,3,2);
     array::ArrayT<POD> glb(Ng(),3,2);
@@ -305,8 +301,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
     {
       for(int i = 0; i < 3; ++i)
       {
-        locv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-        locv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+        locv(p,i,0) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 : -gidx[p]*std::pow(10,i) );
+        locv(p,i,1) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 :  gidx[p]*std::pow(10,i) );
       }
     }
 
@@ -326,7 +322,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
                              glb.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                              root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { -1,1, -10,10, -100,100,
                       -2,2, -20,20, -200,200,
@@ -356,7 +352,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
                              glbx1.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                              root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { -1, -10, -100,
                       -2, -20, -200,
@@ -386,7 +382,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
                              glbx2.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                              root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { 1, 10, 100,
                       2, 20, 200,
@@ -417,7 +413,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
                              glb1x.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                              root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { -1,1,
                       -2,2,
@@ -447,7 +443,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
                              glb2x.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                              root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { -10,10,
                       -20,20,
@@ -478,7 +474,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
                              glb32.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                              root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { 100,
                       200,
@@ -497,7 +493,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank0_ArrayView, Fixture )
 {
-  for( root=0; root<eckit::mpi::size(); ++root )
+  for( root=0; root<parallel::mpi::comm().size(); ++root )
   {
 
     array::ArrayT<POD> loc(Nl);
@@ -507,14 +503,14 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank0_ArrayView, Fixture )
     array::ArrayView<POD,1> glbv(glb);
     for(int p = 0; p < Nl; ++p)
     {
-      locv(p) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*10 );
+      locv(p) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 :  gidx[p]*10 );
     }
 
     // Gather complete field
     {
       gather_scatter.gather( locv, glbv, root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { 10,
                       20,
@@ -532,7 +528,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank0_ArrayView, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank1_ArrayView, Fixture )
 {
-  for( root=0; root<eckit::mpi::size(); ++root )
+  for( root=0; root<parallel::mpi::comm().size(); ++root )
   {
 
     array::ArrayT<POD> loc(Nl,2);
@@ -542,15 +538,15 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_ArrayView, Fixture )
     array::ArrayView<POD,2> glbv(glb);
     for(int p = 0; p < Nl; ++p)
     {
-      locv(p,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*10 );
-      locv(p,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*10 );
+      locv(p,0) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 : -gidx[p]*10 );
+      locv(p,1) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 :  gidx[p]*10 );
     }
 
     // Gather complete field
     {
       gather_scatter.gather( locv, glbv, root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { -10,10,
                       -20,20,
@@ -569,7 +565,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_ArrayView, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank2_ArrayView, Fixture )
 {
-  for( root=0; root<eckit::mpi::size(); ++root )
+  for( root=0; root<parallel::mpi::comm().size(); ++root )
   {
 
     array::ArrayT<POD> loc(Nl,3,2);
@@ -581,8 +577,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2_ArrayView, Fixture )
     {
       for(int i = 0; i < 3; ++i)
       {
-        locv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-        locv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+        locv(p,i,0) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 : -gidx[p]*std::pow(10,i) );
+        locv(p,i,1) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 :  gidx[p]*std::pow(10,i) );
       }
     }
 
@@ -590,7 +586,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2_ArrayView, Fixture )
     {
       gather_scatter.gather( locv, glbv, root );
     }
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { -1,1, -10,10, -100,100,
                       -2,2, -20,20, -200,200,
@@ -609,7 +605,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2_ArrayView, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_scatter_rank2_ArrayView, Fixture )
 {
-  for( root=0; root<eckit::mpi::size(); ++root )
+  for( root=0; root<parallel::mpi::comm().size(); ++root )
   {
 
     array::ArrayT<POD> loc(Nl,3,2);
@@ -617,7 +613,7 @@ BOOST_FIXTURE_TEST_CASE( test_scatter_rank2_ArrayView, Fixture )
 
     array::ArrayView<POD,3> locv(loc);
     array::ArrayView<POD,3> glbv(glb);
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
     {
       POD glb_c[] = { -1,1, -10,10, -100,100,
                       -2,2, -20,20, -200,200,
@@ -636,7 +632,7 @@ BOOST_FIXTURE_TEST_CASE( test_scatter_rank2_ArrayView, Fixture )
 
     gather_scatter.scatter( glbv, locv, root );
 
-    switch( eckit::mpi::rank() )
+    switch( parallel::mpi::comm().rank() )
     {
     case 0: {
       POD loc_c[] = { nan,nan, nan,nan, nan,nan,

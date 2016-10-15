@@ -20,10 +20,10 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 
 #include "atlas/atlas.h"
-#include "atlas/grid/global/gaussian/Gaussian.h"
+#include "atlas/grid/gaussian/Gaussian.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -108,7 +108,7 @@ void AtlasGaussianLatitudes::run()
   std::vector<double> lats (2*N);
 
   try {
-    atlas::grid::global::gaussian::Gaussian::
+    atlas::grid::gaussian::Gaussian::
       LatitudesNorthPoleToSouthPole(N,lats.data());
   }
   catch( eckit::NotImplemented& err )

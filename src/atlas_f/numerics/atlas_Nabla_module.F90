@@ -1,14 +1,14 @@
 
 module atlas_Nabla_module
 
-use atlas_refcounted_module, only : atlas_RefCounted
+use fckit_refcounted_module, only : fckit_refcounted
 use atlas_Method_module, only : atlas_Method
 use atlas_Field_module, only : atlas_Field
 use atlas_Config_module, only : atlas_Config
 
 implicit none
 
-private :: atlas_RefCounted
+private :: fckit_refcounted
 private :: atlas_Method
 private :: atlas_Field
 private :: atlas_Config
@@ -18,7 +18,7 @@ public :: atlas_Nabla
 private
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_Nabla
+TYPE, extends(fckit_refcounted) :: atlas_Nabla
 
 ! Purpose :
 ! -------
@@ -85,7 +85,7 @@ end subroutine atlas_Nabla__delete
 
 subroutine atlas_Nabla__copy(this,obj_in)
   class(atlas_Nabla), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 

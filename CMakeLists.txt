@@ -34,21 +34,14 @@ ecbuild_requires_macro_version( 2.0 )
 ###############################################################################
 # project
 
+ecbuild_declare_project()
+
+### eckit
+
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
-ecbuild_use_package( PROJECT eckit VERSION 0.12.3 REQUIRED )
-
+ecbuild_use_package( PROJECT eckit VERSION 0.14 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
-
-if( ECKIT_HAVE_ECKIT_MPI )
-   ecbuild_debug( "eckit has mpi support" )
-endif()
-
-if( ECKIT_HAVE_ECKIT_MPISTUBS )
-   ecbuild_debug( "eckit has mpistubs support" )
-endif()
-
-ecbuild_declare_project()
 
 # options & dependencies
 
@@ -57,50 +50,48 @@ ecbuild_find_python()
 ### Fortran ...
 
 ecbuild_add_option( FEATURE FORTRAN
-                    DESCRIPTION "atlas: Provide Fortran bindings" )
-
+                    DESCRIPTION "atlas: Provide Fortran bindings"
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.2" )
 if( ATLAS_HAVE_FORTRAN )
 
-  ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
+  if( FCKIT_HAVE_ECKIT )
 
-  ecbuild_add_option( FEATURE FCTEST
-                      DEFAULT ${ENABLE_TESTS}
-                      DESCRIPTION "atlas: Fortran Unit Test Framework"
-                      REQUIRED_PACKAGES "PROJECT fckit VERSION 0.1" )
+    ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
+    set( Fortran Fortran )
 
-  set( Fortran Fortran )
+    if( ENABLE_TESTS )
+      set( HAVE_FCTEST ON )
+      set( ATLAS_HAVE_FCTEST ON )
+    else()
+      set( HAVE_FCTEST OFF )
+      set( ATLAS_HAVE_FCTEST OFF )
+    endif()
+
+  else()
+
+    ecbuild_warn( "In order to compile atlas_f, fckit is required to be compiled with eckit. Turning off fortran." )
+    set( HAVE_FORTRAN 0 )
+    set( ATLAS_HAVE_FORTRAN 0 )
+
+  endif()
 
 endif()
 
 ### MPI ...
 
+# Atlas currently only required MPI for working around bug ECKIT-166 for MacOSX
+if( ECKIT_HAVE_MPI AND EC_OS_NAME MATCHES "macosx" )
 ecbuild_add_option( FEATURE MPI
                     DESCRIPTION "atlas: Support for MPI distributed parallelism"
-                    REQUIRED_PACKAGES "MPI COMPONENTS CXX ${Fortran}" )
-
-if( ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
-  ecbuild_debug( "Using eckit_mpi" )
-  set( ECKIT_MPI_LIBRARIES eckit_mpi )
-elseif( NOT ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
-  ecbuild_debug( "Using eckit_mpistubs" )
-  set( ECKIT_MPI_LIBRARIES eckit_mpistubs )
-  add_definitions( "-DECKIT_USE_MPISTUBS" )
-  if( ATLAS_HAVE_FORTRAN )
-    ecbuild_use_package( PROJECT mpistubs REQUIRED )
-    set( MPI_Fortran_LIBRARIES mpistubs_f )
-    set( MPI_Fortran_INCLUDE_PATH ${MPISTUBS_INCLUDE_DIRS} )
-  endif()
-elseif( NOT ATLAS_HAVE_MPI AND NOT ECKIT_HAVE_ECKIT_MPISTUBS )
-  ecbuild_error("ATLAS_HAVE_MPI=OFF, but cannot build since eckit_mpistubs not found")
-else()
-  ecbuild_info( "ATLAS_HAVE_MPI            : ${ATLAS_HAVE_MPI}" )
-  ecbuild_info( "ECKIT_HAVE_ECKIT_MPI      : ${ECKIT_HAVE_ECKIT_MPI} " )
-  ecbuild_info( "ECKIT_HAVE_ECKIT_MPISTUBS : ${ECKIT_HAVE_ECKIT_MPISTUBS} " )
-  ecbuild_error( "Invalid combination of above variables" )
+                    REQUIRED_PACKAGES "MPI COMPONENTS CXX" )
 endif()
-if( ATLAS_HAVE_FORTRAN )
-  ecbuild_debug( "MPI_Fortran_INCLUDE_PATH : ${MPI_Fortran_INCLUDE_PATH}" )
-  ecbuild_debug( "MPI_Fortran_LIBRARIES    : ${MPI_Fortran_LIBRARIES}" )
+
+if( ECKIT_HAVE_MPI )
+  set( MPI_FOUND 1 CACHE BOOL " " )
+  set( MPIEXEC "mpiexec" CACHE STRING " " )
+  set( MPIEXEC_NUMPROC_FLAG "-np" CACHE STRING " " )
+else()
+  ecbuild_warn("ecKit has been compiled without MPI. This causes Atlas to not be able to run parallel jobs.")
 endif()
 
 
@@ -248,11 +239,11 @@ ecbuild_add_resources(
         LICENSE
 )
 
-ecbuild_install_project( NAME Atlas )
-
 if( ATLAS_HAVE_FORTRAN )
     install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR} DESTINATION ${INSTALL_INCLUDE_DIR} )
 endif()
+
+ecbuild_install_project( NAME Atlas )
 
 ecbuild_print_summary()
 

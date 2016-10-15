@@ -64,7 +64,9 @@
 #include "atlas/grid/partitioners/Partitioner.h"
 
 namespace atlas {
-namespace grid { class Grid; }
+namespace grid {
+class Grid;
+}
 }
 
 namespace atlas {
@@ -74,53 +76,55 @@ namespace partitioners {
 void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap);
 void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[]);
 
-class EqualRegionsPartitioner: public Partitioner
-{
-public:
+class EqualRegionsPartitioner: public Partitioner {
+  public:
 
-  EqualRegionsPartitioner(const grid::Grid&);
+    EqualRegionsPartitioner(const grid::Grid&);
 
-  EqualRegionsPartitioner(const grid::Grid&, int N);
+    EqualRegionsPartitioner(const grid::Grid&, int N);
 
-  void where(int partition, int& band, int& sector) const;
-  int nb_bands() const { return bands_.size(); }
-  int nb_regions(int band) const { return sectors_[band]; }
+    void where(int partition, int& band, int& sector) const;
+    int nb_bands() const {
+        return bands_.size();
+    }
+    int nb_regions(int band) const {
+        return sectors_[band];
+    }
 
-  virtual void partition( int part[] ) const;
+    virtual void partition( int part[] ) const;
 
-public:
+  public:
 
-  // Node struct that holds the longitude and latitude in millidegrees (integers)
-  // This structure is used in sorting algorithms, and uses less memory than
-  // if x and y were in double precision.
-  struct NodeInt
-  {
-    int x, y;
-    int n;
-  };
+    // Node struct that holds the longitude and latitude in millidegrees (integers)
+    // This structure is used in sorting algorithms, and uses less memory than
+    // if x and y were in double precision.
+    struct NodeInt {
+        int x, y;
+        int n;
+    };
 
-private:
-  // Doesn't matter if nodes[] is in degrees or radians, as a sorting
-  // algorithm is used internally
-  void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
+  private:
+    // Doesn't matter if nodes[] is in degrees or radians, as a sorting
+    // algorithm is used internally
+    void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
 
 
-private:
+  private:
 
-  // x and y in radians
-  int partition(const double& x, const double& y) const;
+    // x and y in radians
+    int partition(const double& x, const double& y) const;
 
-  // y in radians
-  int band(const double& y) const;
+    // y in radians
+    int band(const double& y) const;
 
-  // x in radians
-  int sector(int band, const double& x) const;
+    // x in radians
+    int sector(int band, const double& x) const;
 
-private:
+  private:
 
-  int N_;
-  std::vector<double> bands_;
-  std::vector<int> sectors_;
+    int N_;
+    std::vector<double> bands_;
+    std::vector<int> sectors_;
 };
 
 } // namespace partitioners

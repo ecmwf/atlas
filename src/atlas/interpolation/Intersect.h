@@ -18,8 +18,6 @@ namespace interpolation {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const double parametricEpsilon = 1e-10; ///< Epsilon used to compare weights and u,v's
-
 /// Intersection data structure
 
 struct Intersect {
@@ -32,7 +30,8 @@ struct Intersect {
 
   operator bool() const { return success_; }
 
-  Intersect& success(bool s){ success_ = s; return *this; }
+  Intersect& success() { success_ = true; return *this; }
+  Intersect& fail()    { success_ = false; return *this; }
 
   void print(std::ostream& s) const;
 

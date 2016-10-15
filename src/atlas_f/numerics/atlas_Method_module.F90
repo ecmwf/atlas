@@ -1,18 +1,18 @@
 
 module atlas_Method_module
 
-use atlas_refcounted_module, only : atlas_RefCounted
+use fckit_refcounted_module, only : fckit_refcounted
 
 implicit none
 
-private :: atlas_RefCounted
+private :: fckit_refcounted
 
 public :: atlas_Method
 
 private
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_Method
+TYPE, extends(fckit_refcounted) :: atlas_Method
 
 ! Purpose :
 ! -------
@@ -73,19 +73,19 @@ end subroutine atlas_Method__delete
 
 subroutine atlas_Method__copy(this,obj_in)
   class(atlas_Method), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 
 function atlas_Method__name(this) result(name)
   use atlas_Method_c_binding
-  use atlas_c_interop, only : c_to_f_string_cptr
+  use fckit_c_interop_module, only : c_ptr_to_string
   use, intrinsic :: iso_c_binding, only : c_ptr
   class(atlas_Method), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
   name_c_str = atlas__Method__name(this%c_ptr())
-  name = c_to_f_string_cptr(name_c_str)
+  name = c_ptr_to_string(name_c_str)
 end function
 
 end module atlas_Method_module

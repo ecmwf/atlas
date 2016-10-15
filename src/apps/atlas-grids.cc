@@ -19,10 +19,11 @@
 
 #include "atlas/atlas.h"
 #include "atlas/grid/grids.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/internals/AtlasTool.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Resource.h"
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/memory/Factory.h"
 #include "eckit/memory/Builder.h"
@@ -31,9 +32,11 @@
 
 //------------------------------------------------------------------------------
 
-using namespace eckit;
 using namespace atlas;
 using namespace atlas::grid;
+using eckit::JSON;
+using eckit::Factory;
+using eckit::SharedPtr;
 
 //------------------------------------------------------------------------------
 
@@ -121,8 +124,8 @@ void AtlasGrids::execute(const Args& args)
 
   if( !key.empty() )
   {
-    SharedPtr<global::Structured> grid;
-    try{ grid.reset(global::Structured::create(key) ); }
+    SharedPtr<Structured> grid;
+    try{ grid.reset(Structured::create(key) ); }
     catch( eckit::BadParameter& err ){}
 
     if( !grid ) return;
@@ -139,8 +142,6 @@ void AtlasGrids::execute(const Args& args)
                   << g.shortName() << std::endl;
       Log::info() << "   uid:                                "
                   << g.uniqueId() << std::endl;
-      Log::info() << "   N number:                           "
-                  << grid->N() << std::endl;
       Log::info() << "   number of points:                   "
                   << grid->npts() << std::endl;
       Log::info() << "   number of latitudes (N-S):          "

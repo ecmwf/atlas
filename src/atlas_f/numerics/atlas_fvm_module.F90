@@ -1,7 +1,7 @@
 
 module atlas_fvm_module
 
-use atlas_refcounted_module, only : atlas_RefCounted
+use fckit_refcounted_module, only : fckit_refcounted
 use atlas_Method_module, only : atlas_Method
 use atlas_Config_module, only : atlas_Config
 use atlas_Mesh_module, only : atlas_Mesh
@@ -9,7 +9,7 @@ use atlas_functionspace_NodeColumns_module, only : atlas_functionspace_NodeColum
 use atlas_functionspace_EdgeColumns_module, only : atlas_functionspace_EdgeColumns
 implicit none
 
-private :: atlas_RefCounted
+private :: fckit_refcounted
 private :: atlas_Method
 private :: atlas_Mesh
 private :: atlas_Config

@@ -28,28 +28,23 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/LogFormat.h"
 #include "atlas/trans/Trans.h"
 #include "transi/trans.h"
 
+#include "tests/AtlasFixture.h"
 
 using namespace eckit;
-using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
 
-struct Fixture   {
-       Fixture() {
-
-         atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                    boost::unit_test::framework::master_test_suite().argv);
+struct AtlasTransFixture : public AtlasFixture {
+       AtlasTransFixture() {
          trans_init();
-
        }
-      ~Fixture() {
+
+      ~AtlasTransFixture() {
          trans_finalize();
-         atlas_finalize();
        }
 };
 
@@ -75,7 +70,7 @@ void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<i
 }
 
 
-BOOST_GLOBAL_FIXTURE( Fixture );
+BOOST_GLOBAL_FIXTURE( AtlasTransFixture );
 
 BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 {
@@ -83,7 +78,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
 
   // Create grid and trans object
-  SharedPtr<global::Structured> g ( global::Structured::create( "N80" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "N80" ) );
 
   BOOST_CHECK_EQUAL( g->nlat() , 160 );
 
@@ -92,14 +87,14 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
 
   grid::partitioners::TransPartitioner partitioner(*g,trans);
-  GridDistribution distribution( partitioner );
+  grid::GridDistribution distribution( partitioner );
 
   // -------------- do checks -------------- //
-  BOOST_CHECK_EQUAL( trans.nproc(),  eckit::mpi::size() );
-  BOOST_CHECK_EQUAL( trans.myproc(0), eckit::mpi::rank() );
+  BOOST_CHECK_EQUAL( trans.nproc(),  parallel::mpi::comm().size() );
+  BOOST_CHECK_EQUAL( trans.myproc(0), parallel::mpi::comm().rank() );
 
 
-  if( eckit::mpi::rank() == 0 ) // all tasks do the same, so only one needs to check
+  if( parallel::mpi::comm().rank() == 0 ) // all tasks do the same, so only one needs to check
   {
     int max_nb_regions_EW(0);
     for( int j=0; j<partitioner.nb_bands(); ++j )
@@ -108,7 +103,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
     BOOST_CHECK_EQUAL( trans.n_regions_NS(), partitioner.nb_bands() );
     BOOST_CHECK_EQUAL( trans.n_regions_EW(), max_nb_regions_EW );
 
-    BOOST_CHECK_EQUAL( distribution.nb_partitions(), eckit::mpi::size() );
+    BOOST_CHECK_EQUAL( distribution.nb_partitions(), parallel::mpi::comm().size() );
     BOOST_CHECK_EQUAL( distribution.partition().size(), g->npts() );
 
     std::vector<int> npts(distribution.nb_partitions(),0);
@@ -117,7 +112,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
       ++npts[distribution.partition(j)];
 
     BOOST_CHECK_EQUAL( trans.ngptotg(), g->npts() );
-    BOOST_CHECK_EQUAL( trans.ngptot(),  npts[eckit::mpi::rank()] );
+    BOOST_CHECK_EQUAL( trans.ngptot(),  npts[parallel::mpi::comm().rank()] );
     BOOST_CHECK_EQUAL( trans.ngptotmx(), *std::max_element(npts.begin(),npts.end()) );
 
     array::ArrayView<int,1> n_regions ( trans.n_regions() ) ;
@@ -131,7 +126,7 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 {
   BOOST_TEST_CHECKPOINT("test_trans_partitioner");
   // Create grid and trans object
-  SharedPtr<global::Structured> g ( global::Structured::create( "N80" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "N80" ) );
 
   trans::Trans trans( *g, 0 );
 
@@ -152,13 +147,13 @@ BOOST_AUTO_TEST_CASE( test_trans_options )
 
 BOOST_AUTO_TEST_CASE( test_distspec )
 {
-  SharedPtr<global::Structured> g ( global::Structured::create( "O80" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "O80" ) );
   mesh::generators::Structured generate( atlas::util::Config("angle",0) );
   BOOST_TEST_CHECKPOINT("mesh generator created");
   //trans::Trans trans(*g, 159 );
 
   trans::Trans::Options p;
-  if( eckit::mpi::size() == 1 )
+  if( parallel::mpi::comm().size() == 1 )
     p.set_write("cached_legendre_coeffs");
   p.set_flt(false);
   trans::Trans trans(400, 159, p);
@@ -184,18 +179,18 @@ BOOST_AUTO_TEST_CASE( test_distspec )
 
 BOOST_AUTO_TEST_CASE( test_distribution )
 {
-  SharedPtr<global::Structured> g ( global::Structured::create( "O80" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "O80" ) );
 
   BOOST_TEST_CHECKPOINT("test_distribution");
 
-  GridDistribution::Ptr d_trans( grid::partitioners::TransPartitioner(*g).distribution() );
+  grid::GridDistribution::Ptr d_trans( grid::partitioners::TransPartitioner(*g).distribution() );
   BOOST_TEST_CHECKPOINT("trans distribution created");
 
-  GridDistribution::Ptr d_eqreg( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
+  grid::GridDistribution::Ptr d_eqreg( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
 
   BOOST_TEST_CHECKPOINT("eqregions distribution created");
 
-  if( eckit::mpi::rank() == 0 )
+  if( parallel::mpi::comm().rank() == 0 )
   {
     BOOST_CHECK_EQUAL( d_trans->nb_partitions(), d_eqreg->nb_partitions() );
     BOOST_CHECK_EQUAL( d_trans->max_pts(), d_eqreg->max_pts() );
@@ -211,7 +206,7 @@ BOOST_AUTO_TEST_CASE( test_distribution )
 BOOST_AUTO_TEST_CASE( test_generate_mesh )
 {
   BOOST_TEST_CHECKPOINT("test_generate_mesh");
-  SharedPtr<global::Structured> g ( global::Structured::create( "O80" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "O80" ) );
   mesh::generators::Structured generate( atlas::util::Config
     ("angle",0)
     ("triangulate",true)
@@ -221,11 +216,11 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   mesh::Mesh::Ptr m_default( generate( *g ) );
 
   BOOST_TEST_CHECKPOINT("trans_distribution");
-  GridDistribution::Ptr trans_distribution( grid::partitioners::TransPartitioner(*g).distribution() );
+  grid::GridDistribution::Ptr trans_distribution( grid::partitioners::TransPartitioner(*g).distribution() );
   mesh::Mesh::Ptr m_trans( generate( *g, *trans_distribution ) );
 
   BOOST_TEST_CHECKPOINT("eqreg_distribution");
-  GridDistribution::Ptr eqreg_distribution( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
+  grid::GridDistribution::Ptr eqreg_distribution( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
   mesh::Mesh::Ptr m_eqreg( generate( *g, *eqreg_distribution ) );
 
   array::ArrayView<int,1> p_default( m_default->nodes().partition() );
@@ -248,7 +243,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 {
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
-  SharedPtr<global::Structured> g ( global::Structured::create( "O48" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "O48" ) );
   mesh::generators::Structured generate( atlas::util::Config
     ("angle",0)
     ("triangulate",false)
@@ -284,7 +279,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
 {
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
-  SharedPtr<global::Structured> g ( global::Structured::create( "O48" ) );
+  SharedPtr<grid::Structured> g ( grid::Structured::create( "O48" ) );
   SharedPtr<trans::Trans> trans ( new trans::Trans(*g,47) );
 
   SharedPtr<functionspace::Spectral>    spectral    (new functionspace::Spectral(*trans));
@@ -296,18 +291,18 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   SharedPtr<field::Field> gpfg ( gridpoints->createField<double>("gpf", field::global()) );
 
   array::ArrayView<double,1> spg (*spfg);
-  if( eckit::mpi::rank() == 0 ) {
+  if( parallel::mpi::comm().rank() == 0 ) {
     spg = 0.;
     spg(0) = 4.;
   }
 
   BOOST_CHECK_NO_THROW( spectral->scatter(*spfg,*spf) );
 
-  if( eckit::mpi::rank() == 0 ) {
+  if( parallel::mpi::comm().rank() == 0 ) {
     array::ArrayView<double,1> sp (*spf);
     BOOST_CHECK_CLOSE( sp(0), 4., 0.001 );
     for( size_t jp=0; jp<sp.size(); ++jp ) {
-      Log::debug(2) << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
+      Log::debug() << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
     }
   }
 
@@ -315,11 +310,11 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
 
   BOOST_CHECK_NO_THROW( gridpoints->gather(*gpf,*gpfg) );
 
-  if( eckit::mpi::rank() == 0 ) {
+  if( parallel::mpi::comm().rank() == 0 ) {
     array::ArrayView<double,1> gpg (*gpfg);
     for( size_t jp=0; jp<gpg.size(); ++jp ) {
       BOOST_CHECK_CLOSE( gpg(jp), 4., 0.001 );
-      Log::debug(3) << "gpg("<<jp << ")   :   " << gpg(jp) << std::endl;
+      Log::debug() << "gpg("<<jp << ")   :   " << gpg(jp) << std::endl;
     }
   }
 
@@ -329,7 +324,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
 
   BOOST_CHECK_NO_THROW( spectral->gather(*spf,*spfg) );
 
-  if( eckit::mpi::rank() == 0 ) {
+  if( parallel::mpi::comm().rank() == 0 ) {
     BOOST_CHECK_CLOSE( spg(0), 4., 0.001 );
   }
 }

@@ -16,7 +16,7 @@
 #include <stdexcept>
 
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/Structured.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -48,6 +48,7 @@ void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2]
   min[internals::LAT] =  std::numeric_limits<double>::max();
   max[internals::LON] = -std::numeric_limits<double>::max();
   max[internals::LAT] = -std::numeric_limits<double>::max();
+
   for (int node=0; node<nb_nodes; ++node)
   {
     min[internals::LON] = std::min( min[internals::LON], lonlat(node,internals::LON) );
@@ -55,8 +56,9 @@ void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2]
     max[internals::LON] = std::max( max[internals::LON], lonlat(node,internals::LON) );
     max[internals::LAT] = std::max( max[internals::LAT], lonlat(node,internals::LAT) );
   }
-  eckit::mpi::all_reduce(min,2,eckit::mpi::min());
-  eckit::mpi::all_reduce(max,2,eckit::mpi::max());
+
+  parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
+  parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
 }
 
 struct Node
@@ -391,9 +393,9 @@ void make_dual_normals_outward( Mesh& mesh )
 
 void build_brick_dual_mesh(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh)
 {
-  if( const grid::global::Structured* g = dynamic_cast<const grid::global::Structured*>(&grid) )
+  if( const grid::Structured* g = dynamic_cast<const grid::Structured*>(&grid) )
   {
-    if( eckit::mpi::size() != 1 )
+    if( parallel::mpi::comm().size() != 1 )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
 
     mesh::Nodes& nodes   = mesh.nodes();

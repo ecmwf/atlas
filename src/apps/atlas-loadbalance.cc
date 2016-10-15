@@ -106,10 +106,9 @@ private:
 void AtlasLoadbalance::run()
 {
   if( !do_run ) return;
-  grid::load();
 
-  SharedPtr<global::Structured> grid;
-  try{ grid.reset( global::Structured::create(key) ); }
+  SharedPtr<Structured> grid;
+  try{ grid.reset( Structured::create(key) ); }
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;
@@ -129,7 +128,7 @@ void AtlasLoadbalance::run()
     std::stringstream s;
     write_load_balance_report(*mesh,s);
 
-    if( eckit::mpi::rank() == 0 )
+    if( parallel::mpi::comm().rank() == 0 )
     {
       std::cout << s.str() << std::endl;
     }

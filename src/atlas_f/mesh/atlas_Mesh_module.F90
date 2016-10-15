@@ -5,8 +5,8 @@ module atlas_Mesh_module
 
 
 use, intrinsic :: iso_c_binding, only: c_ptr
-use atlas_c_interop, only: c_str
-use atlas_refcounted_module, only: atlas_refcounted
+use fckit_c_interop_module, only: c_str
+use fckit_refcounted_module, only: fckit_refcounted
 use atlas_mesh_Cells_module, only: atlas_mesh_Cells
 use atlas_mesh_Edges_module, only: atlas_mesh_Edges
 use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
@@ -15,7 +15,7 @@ implicit none
 
 private :: c_ptr
 private :: c_str
-private :: atlas_refcounted
+private :: fckit_refcounted
 private :: atlas_mesh_Cells
 private :: atlas_mesh_Edges
 private :: atlas_mesh_Nodes
@@ -28,7 +28,7 @@ private
 ! atlas_Mesh                 !
 !-----------------------------
 
-TYPE, extends(atlas_RefCounted) :: atlas_Mesh
+TYPE, extends(fckit_refcounted) :: atlas_Mesh
 
 ! Purpose :
 ! -------
@@ -43,12 +43,13 @@ TYPE, extends(atlas_RefCounted) :: atlas_Mesh
 
 !------------------------------------------------------------------------------
 contains
-  procedure :: create_nodes => Mesh__create_nodes
-  procedure :: nodes => Mesh__nodes
-  procedure :: cells => Mesh__cells
-  procedure :: edges => Mesh__edges
+  procedure, public :: create_nodes => Mesh__create_nodes
+  procedure, public :: nodes => Mesh__nodes
+  procedure, public :: cells => Mesh__cells
+  procedure, public :: edges => Mesh__edges
   procedure, public :: delete => atlas_Mesh__delete
   procedure, public :: copy => atlas_Mesh__copy
+  procedure, public :: footprint
 
 END TYPE atlas_Mesh
 
@@ -120,8 +121,16 @@ end subroutine atlas_Mesh__delete
 
 subroutine atlas_Mesh__copy(this,obj_in)
   class(atlas_Mesh), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
+
+function footprint(this)
+  use, intrinsic :: iso_c_binding, only : c_size_t
+  use atlas_mesh_c_binding
+  integer(c_size_t) :: footprint
+  class(atlas_Mesh) :: this
+  footprint = atlas__Mesh__footprint(this%c_ptr())
+end function
 
 ! ----------------------------------------------------------------------------------------
 

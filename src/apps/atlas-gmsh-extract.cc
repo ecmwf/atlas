@@ -20,7 +20,7 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Resource.h"
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/filesystem/PathName.h"
 
@@ -112,7 +112,7 @@ public:
 		}
 
 		if( in_files.empty() )
-			throw UserError(Here(),"missing input filename, parameter -i\n"+help_str);
+			throw UserError("missing input filename, parameter -i\n"+help_str, Here());
 
 	}
 
@@ -130,10 +130,10 @@ private:
 void gmsh_extract::run()
 {
 	if( !do_run ) return;
-	atlas_init(Context::instance().argc(),Context::instance().argvs());
+	atlas_init(argc(),argv());
 	Log::debug() << "Command line:" << std::endl;
-	for( int i=0; i< Context::instance().argc(); ++i)
-		Log::debug() << Context::instance().argv(i) << std::endl;
+	for( int i=0; i< argc(); ++i)
+		Log::debug() << argv(i) << std::endl;
 	Log::debug() << Translator<std::vector<std::string>,std::string>()(in_files) << std::endl;
 
 	std::ofstream out_file;
@@ -189,7 +189,7 @@ void gmsh_extract::run()
 
 				field_name_read.assign(line,1,line.size()-2);
 				field_name = field_name_read;
-				Log::debug(2) << "Found field " << field_name << std::endl;
+                Log::debug() << "Found field " << field_name << std::endl;
 				if( field_name[field_name.size()-1] == ']' )
 				{
 					std::string lev_str;

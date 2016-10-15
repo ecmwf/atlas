@@ -22,22 +22,20 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/global/gaussian/ReducedGaussian.h"
+#include "atlas/grid/gaussian/ReducedGaussian.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
 #endif
+
+#include "tests/AtlasFixture.h"
+
+
 using namespace eckit;
 using namespace atlas::functionspace;
 using namespace atlas::util;
 
 namespace atlas {
 namespace test {
-
-struct AtlasFixture {
-    AtlasFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                 boost::unit_test::framework::master_test_suite().argv); }
-    ~AtlasFixture() { atlas_finalize(); }
-};
 
 BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
@@ -47,7 +45,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   size_t nlat = 2;
   long nlon[] = {4,8};
-  ScopedPtr<grid::Grid> grid( new grid::global::gaussian::ReducedGaussian( nlat, nlon ) );
+  ScopedPtr<grid::Grid> grid( new grid::gaussian::ReducedGaussian( nlat, nlon ) );
 
   mesh::Mesh mesh;
   mesh::generators::Structured generator;
@@ -123,21 +121,21 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   field::Field::Ptr field( nodes_fs->createField<int>("partition",nb_levels) );
   array::ArrayView<int,2> arr(*field);
-  arr = eckit::mpi::rank();
+  arr = parallel::mpi::comm().rank();
   //field->dump( Log::info() );
   nodes_fs->haloExchange(*field);
   //field->dump( Log::info() );
 
   field::Field::Ptr field2( nodes_fs->createField<int>("partition2",nb_levels,array::make_shape(2)) );
   array::ArrayView<int,3> arr2(*field2);
-  arr2 = eckit::mpi::rank();
+  arr2 = parallel::mpi::comm().rank();
   //field2->dump( Log::info() );
   nodes_fs->haloExchange(*field2);
   //field2->dump( Log::info() );
 
   Log::info() << nodes_fs->checksum(*field) << std::endl;
 
-  size_t root = eckit::mpi::size()-1;
+  size_t root = parallel::mpi::comm().size()-1;
   field::Field::Ptr glb_field( nodes_fs->createField("partition",*field,field::global(root)) );
   nodes_fs->gather(*field,*glb_field);
 
@@ -150,7 +148,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   //glb_field->dump( Log::info() );
 
-  if( eckit::mpi::rank() == root )
+  if( parallel::mpi::comm().rank() == root )
     glb_field->metadata().set("test_broadcast",123);
 
   arr = -1;
@@ -184,15 +182,15 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
   gidx_t gidx_min;
 
   array::ArrayView<double,1> sfc_arr( field );
-  sfc_arr = eckit::mpi::rank()+1;
+  sfc_arr = parallel::mpi::comm().rank()+1;
   fs.maximum(*surface_scalar_field,max);
-  BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
+  BOOST_CHECK_EQUAL( max, double(parallel::mpi::comm().size()) );
 
   fs.minimum(*surface_scalar_field,min);
   BOOST_CHECK_EQUAL( min, 1 );
 
   fs.maximumAndLocation(field,max,gidx_max);
-  BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
+  BOOST_CHECK_EQUAL( max, double(parallel::mpi::comm().size()) );
   Log::info() << "global index for maximum: " << gidx_max << std::endl;
 
   fs.minimumAndLocation(field,min,gidx_min);
@@ -242,9 +240,9 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
     std::vector<gidx_t> gidx_min;
 
     array::ArrayView<double,2> vec_arr( field );
-    vec_arr = eckit::mpi::rank()+1;
+    vec_arr = parallel::mpi::comm().rank()+1;
     fs.maximum(field,max);
-    std::vector<double> check_max(field.stride(0),eckit::mpi::size());
+    std::vector<double> check_max(field.stride(0),parallel::mpi::comm().size());
     BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
 
     fs.minimum(field,min);
@@ -299,15 +297,15 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
     BOOST_CHECK_EQUAL(field.has_levels(),true);
 
     array::ArrayView<double,2> arr( field );
-    arr = eckit::mpi::rank()+1;
+    arr = parallel::mpi::comm().rank()+1;
     fs.maximum(field,max);
-    BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
+    BOOST_CHECK_EQUAL( max, double(parallel::mpi::comm().size()) );
 
     fs.minimum(field,min);
     BOOST_CHECK_EQUAL( min, 1 );
 
     fs.maximumAndLocation(field,max,gidx_max,level);
-    BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
+    BOOST_CHECK_EQUAL( max, double(parallel::mpi::comm().size()) );
     Log::info() << "global index for maximum: " << gidx_max << std::endl;
     Log::info() << "level for maximum: " << level << std::endl;
 
@@ -379,9 +377,9 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
     std::vector<size_t> levels;
 
     array::ArrayView<double,3> vec_arr( field );
-    vec_arr = eckit::mpi::rank()+1;
+    vec_arr = parallel::mpi::comm().rank()+1;
     fs.maximum(field,max);
-    std::vector<double> check_max(nvar,eckit::mpi::size());
+    std::vector<double> check_max(nvar,parallel::mpi::comm().size());
     BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
 
     fs.minimum(field,min);

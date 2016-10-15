@@ -11,26 +11,16 @@
 #ifndef ATLAS_MPI_MPI_h
 #define ATLAS_MPI_MPI_h
 
-#include "eckit/mpi/mpi.h"
-#include "eckit/mpi/Collectives.h"
-#include "eckit/mpi/Exceptions.h"
-#include "atlas/parallel/mpi/Collectives.h"
+#include "eckit/mpi/Comm.h"
 
 namespace atlas {
 namespace parallel {
 namespace mpi {
+  
+const eckit::mpi::Comm& comm();
 
 } // namespace mpi
 } // namespace parallel
 } // namespace atlas
-
-// ------------------------------------------------------------------
-// C wrapper interfaces to C++ routines
-extern "C"
-{
-  void atlas_mpi_comm_attach_fortran_communicator (int comm);
-  int atlas_mpi_comm_fortran_communicator ();
-}
-// ------------------------------------------------------------------
 
 #endif // ATLAS_MPI_MPI_h

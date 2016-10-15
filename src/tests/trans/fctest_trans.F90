@@ -17,6 +17,7 @@ module fctest_atlas_trans_fixture
 use atlas_module
 use iso_c_binding
 implicit none
+character(len=1024) :: msg
 end module fctest_atlas_trans_fixture
 
 ! -----------------------------------------------------------------------------
@@ -32,7 +33,7 @@ END_TESTSUITE_INIT
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-  call atlas_mpi_finalize()
+  call atlas_finalize()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
@@ -352,7 +353,7 @@ call trans%invtrans(spfields,gpfields)
 
 do jfld=1,spfields%size()
   field = spfields%field(jfld)
-  write(atlas_log%msg,*) "spectral field ",field%name(); call atlas_log%info()
+  write(msg,*) "spectral field ",field%name(); call atlas_log%info(msg)
 enddo
 
 call field%final()

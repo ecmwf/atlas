@@ -11,14 +11,12 @@
 #ifndef atlas_GenerateMesh_h
 #define atlas_GenerateMesh_h
 
-#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/Structured.h"
 #include "atlas/mesh/Mesh.h"
 
 namespace atlas {
 namespace grid {
-namespace global {
 class Structured;
-}
 class GridDistribution;
 }
 namespace mesh {
@@ -30,12 +28,12 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
-//mesh::Mesh* generate_mesh (const grid::global::Structured& grid);
+//mesh::Mesh* generate_mesh (const grid::Structured& grid);
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-#define STRUCTUREDGRID grid::global::Structured
+#define STRUCTUREDGRID grid::Structured
 #define grid_GridDistribution grid::GridDistribution
 #define mesh_Mesh mesh::Mesh
 extern "C"

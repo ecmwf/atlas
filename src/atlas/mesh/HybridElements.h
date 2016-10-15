@@ -84,68 +84,7 @@ public: // methods
   /// This allows optimized access to connectivities and loops.
   const Elements& elements( size_t type_idx ) const;
         Elements& elements( size_t type_idx );
-
-// -- Modifiers
-
-  /// @brief Add a new element type with given number of elements
-  /// @return type_idx of the added element type
-  size_t add( const ElementType*, size_t nb_elements );
-
-  /// @brief Add a new element type with given number of elements and node-connectivity
-  /// @return type_idx of the added element type
-  size_t add( const ElementType*, size_t nb_elements, const std::vector<idx_t> &node_connectivity );
-
-  /// @brief Add a new element type with given number of elements and node-connectivity
-  /// @return type_idx of the added element type
-  size_t add( const ElementType*, size_t nb_elements, const idx_t node_connectivity[] );
-
-  /// @brief Add a new element type with given number of elements and node-connectivity
-  /// @return type_idx of the added element type
-  size_t add( const ElementType*, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array );
-
-  /// @brief Add a new element type from existing Elements.
-  /// Data will be copied.
-  /// @return type_idx of the added element type
-  size_t add( const Elements& );
-
-  void insert( size_t type_idx, size_t position, size_t nb_elements = 1 );
-
-  void clear();
-
-private:
-
-// -- Data
-  size_t size_;                          //!< total number of elements
-
-// -- Data: one value per type
-  std::vector<size_t> elements_size_;
-  std::vector<size_t> elements_begin_;
-  std::vector< eckit::SharedPtr<const ElementType> > element_types_;
-
-// -- Data: one value per element
-  std::vector<size_t> type_idx_;
-
-// -- Connectivity tables
-  Connectivity* node_connectivity_;
-  Connectivity* edge_connectivity_;
-  Connectivity* cell_connectivity_;
-
-// -- Sub elements
-  std::vector< eckit::SharedPtr<Elements> > elements_;
-
-// -- New stuff
-
-private:
-
-  typedef std::map< std::string, eckit::SharedPtr<field::Field> > FieldMap;
-  typedef std::map< std::string, eckit::SharedPtr<Connectivity> > ConnectivityMap;
-
-  void resize( size_t size );
-
-public:
-  field::Field& add( field::Field* field );
-  void remove_field(const std::string& name);
-
+        
   const field::Field& field(const std::string& name) const;
         field::Field& field(const std::string& name);
   bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
@@ -169,24 +108,87 @@ public:
   const field::Field& halo() const { return *halo_; }
         field::Field& halo()       { return *halo_; }
 
+// -- Modifiers
 
+  /// @brief Add a new element type with given number of elements
+  /// @return type_idx of the added element type
+  size_t add( const ElementType*, size_t nb_elements );
 
-private:
+  /// @brief Add a new element type with given number of elements and node-connectivity
+  /// @return type_idx of the added element type
+  size_t add( const ElementType*, size_t nb_elements, const std::vector<idx_t> &node_connectivity );
+
+  /// @brief Add a new element type with given number of elements and node-connectivity
+  /// @return type_idx of the added element type
+  size_t add( const ElementType*, size_t nb_elements, const idx_t node_connectivity[] );
+
+  /// @brief Add a new element type with given number of elements and node-connectivity
+  /// @return type_idx of the added element type
+  size_t add( const ElementType*, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array );
+
+  /// @brief Add a new element type from existing Elements.
+  /// Data will be copied.
+  /// @return type_idx of the added element type
+  size_t add( const Elements& );
+  
+  field::Field& add( field::Field* field );
+
+  void remove_field(const std::string& name);
+
+  void insert( size_t type_idx, size_t position, size_t nb_elements = 1 );
+
+  void clear();
+
+  /// @brief Return the memory footprint of the elements
+  size_t footprint() const;
+
+private: // -- types
+
+  typedef std::map< std::string, eckit::SharedPtr<field::Field> > FieldMap;
+  typedef std::map< std::string, eckit::SharedPtr<Connectivity> > ConnectivityMap;
+
+private: // -- methods
+
+  void resize( size_t size );
 
   size_t elemtype_nb_nodes(size_t elem_idx) const ;
   size_t elemtype_nb_edges(size_t elem_idx) const ;
 
   Connectivity& add( Connectivity* );
+  
+private: // -- Data
 
+// -- Total number of elements
+  size_t size_;
+
+// -- Data: one value per type
+  std::vector<size_t> elements_size_;
+  std::vector<size_t> elements_begin_;
+  std::vector< eckit::SharedPtr<const ElementType> > element_types_;
+
+// -- Data: one value per element
+  std::vector<size_t> type_idx_;
+
+// -- Sub elements
+  std::vector< eckit::SharedPtr<Elements> > elements_;
+
+// -- Fields and connectivities
   FieldMap fields_;
   ConnectivityMap connectivities_;
+
+// -- Metadata
   util::Metadata metadata_;
 
-  // Cached shortcuts to specific fields in fields_
+// -- Cached shortcuts to specific fields in fields_
   field::Field* global_index_;
   field::Field* remote_index_;
   field::Field* partition_;
   field::Field* halo_;
+
+// -- Cached shortcuts to specific connectivities in connectivities_
+  Connectivity* node_connectivity_;
+  Connectivity* edge_connectivity_;
+  Connectivity* cell_connectivity_;
 
 };
 

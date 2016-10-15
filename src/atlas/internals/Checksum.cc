@@ -55,7 +55,7 @@ inline uint64_t fletcher64( const uint32_t* data, size_t count )
 
 }
 
-checksum_t checksum(const char* data, size_t size)
+static checksum_t checksum(const char* data, size_t size)
 {
   return fletcher64( reinterpret_cast<const uint32_t*>(data), size/sizeof(uint32_t) );
 //  return fletcher32( reinterpret_cast<const uint16_t*>(data), size/sizeof(uint16_t) );

@@ -2,8 +2,7 @@
 
 module atlas_functionspace_NodeColumns_module
 
-use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_size_t, c_float, c_double, c_f_pointer
-use atlas_c_interop, only : c_str, c_to_f_string_cptr, atlas_free
+use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
 use atlas_FieldSet_module, only: atlas_FieldSet
@@ -13,13 +12,11 @@ use atlas_GatherScatter_module, only: atlas_GatherScatter
 use atlas_HaloExchange_module, only: atlas_HaloExchange
 use atlas_Checksum_module, only: atlas_Checksum
 use atlas_Config_module, only: atlas_Config
-use atlas_logging_module, only: atlas_log
 use atlas_kinds_module, only: ATLAS_KIND_GIDX
 
 implicit none
 
-private :: c_ptr, c_int, c_long, c_size_t, c_float, c_double, c_f_pointer
-private :: c_str, c_to_f_string_cptr, atlas_free
+private :: c_str, c_ptr_to_string, c_ptr_free
 private :: atlas_FunctionSpace
 private :: atlas_Field
 private :: atlas_FieldSet
@@ -29,7 +26,6 @@ private :: atlas_HaloExchange
 private :: atlas_Checksum
 private :: atlas_Mesh
 private :: atlas_Config
-private :: atlas_log
 private :: ATLAS_KIND_GIDX
 
 public :: atlas_functionspace_NodeColumns
@@ -250,6 +246,7 @@ contains
 !------------------------------------------------------------------------------
 
 function constructor__cptr(cptr) result(functionspace)
+  use, intrinsic :: iso_c_binding, only : c_ptr
   type(atlas_functionspace_NodeColumns) :: functionspace
   type(c_ptr), intent(in) :: cptr
   call functionspace%reset_c_ptr( cptr )
@@ -312,6 +309,7 @@ end function
 
 function create_field_name_kind(this,name,kind,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -337,6 +335,7 @@ end function
 
 function create_field_name_kind_lev(this,name,kind,levels,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -363,6 +362,7 @@ end function
 
 function create_field_name_kind_vars(this,name,kind,vars,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -391,6 +391,7 @@ end function
 
 function create_field_name_kind_lev_vars(this,name,kind,levels,vars,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -420,6 +421,7 @@ end function
 
 function create_field_name_template(this,name,template,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -447,6 +449,7 @@ end function
 
 function create_field_kind(this,kind,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   integer, intent(in) :: kind
@@ -471,6 +474,7 @@ end function
 
 function create_field_kind_lev(this,kind,levels,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   integer, intent(in) :: kind
@@ -496,6 +500,7 @@ end function
 
 function create_field_kind_vars(this,kind,vars,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   integer, intent(in) :: vars(:)
@@ -523,6 +528,7 @@ end function
 
 function create_field_kind_lev_vars(this,kind,levels,vars,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   integer, intent(in) :: kind
@@ -551,6 +557,7 @@ end function
 
 function create_field_template(this,template,global,owner) result(field)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: template
@@ -671,6 +678,7 @@ end function
 
 function checksum_fieldset(this,fieldset) result(checksum)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr
   character(len=:), allocatable :: checksum
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: fieldset
@@ -678,14 +686,15 @@ function checksum_fieldset(this,fieldset) result(checksum)
   integer :: checksum_size, checksum_allocated
   call atlas__NodesFunctionSpace__checksum_fieldset(this%c_ptr(),fieldset%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
-  checksum = c_to_f_string_cptr(checksum_cptr)
-  if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
+  checksum = c_ptr_to_string(checksum_cptr)
+  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
 end function
 
 !------------------------------------------------------------------------------
 
 function checksum_field(this,field) result(checksum)
   use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr
   character(len=:), allocatable :: checksum
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
@@ -693,14 +702,15 @@ function checksum_field(this,field) result(checksum)
   integer :: checksum_size, checksum_allocated
   call atlas__NodesFunctionSpace__checksum_field(this%c_ptr(),field%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
-  checksum = c_to_f_string_cptr(checksum_cptr)
-  if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
+  checksum = c_ptr_to_string(checksum_cptr)
+  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
 end function
 
 !------------------------------------------------------------------------------
 
 subroutine minimum_real32_r0(this,field,minimum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: minimum
@@ -710,7 +720,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minimum_real32_r1(this,field,minimum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float,c_ptr,c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: minimum(:)
@@ -721,13 +732,14 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
-  call atlas_free(min_cptr)
+  call c_ptr_free(min_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maximum_real32_r0(this,field,maximum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: maximum
@@ -737,7 +749,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maximum_real32_r1(this,field,maximum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: maximum(:)
@@ -748,13 +761,14 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
-  call atlas_free(max_cptr)
+  call c_ptr_free(max_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minloc_real32_r0(this,field,minimum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: minimum
@@ -767,7 +781,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maxloc_real32_r0(this,field,maximum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: maximum
@@ -780,7 +795,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minloc_real32_r1(this,field,minimum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_ptr, c_f_pointer, c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: minimum(:)
@@ -796,14 +812,15 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(min_size))
   minimum(:) = min_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maxloc_real32_r1(this,field,maximum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_ptr, c_f_pointer, c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: maximum(:)
@@ -819,14 +836,15 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(max_size))
   maximum(:) = max_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine sum_real32_r0(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: sum
@@ -839,7 +857,9 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine sum_real32_r1(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_int, c_ptr, c_f_pointer
+  use fckit_c_interop_module, only : c_ptr_free
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: sum(:)
@@ -852,14 +872,15 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine order_independent_sum_real32_r0(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: sum
@@ -872,7 +893,9 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine order_independent_sum_real32_r1(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_int, c_ptr, c_f_pointer
+  use fckit_c_interop_module, only : c_ptr_free
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: sum(:)
@@ -885,14 +908,15 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine mean_real32_r0(this,field,mean,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: mean
@@ -905,7 +929,9 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine mean_real32_r1(this,field,mean,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_int, c_ptr, c_f_pointer
+  use fckit_c_interop_module, only : c_ptr_free
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: mean(:)
@@ -918,14 +944,15 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
-  call atlas_free(mean_cptr)
+  call c_ptr_free(mean_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_real32_r0(this,field,mean,stddev,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: mean
@@ -939,7 +966,9 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_real32_r1(this,field,mean,stddev,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_int ,c_ptr, c_f_pointer
+  use fckit_c_interop_module, only : c_ptr_free
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: mean(:)
@@ -956,15 +985,16 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(stddev(varsize))
   mean(:) = mean_fptr(:)
   stddev(:) = stddev_fptr(:)
-  call atlas_free(mean_cptr)
-  call atlas_free(stddev_cptr)
+  call c_ptr_free(mean_cptr)
+  call c_ptr_free(stddev_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minimum_real64_r0(this,field,minimum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: minimum
@@ -974,7 +1004,9 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minimum_real64_r1(this,field,minimum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_ptr, c_f_pointer
+  use fckit_c_interop_module, only : c_ptr_free
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: minimum(:)
@@ -985,13 +1017,14 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
-  call atlas_free(min_cptr)
+  call c_ptr_free(min_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maximum_real64_r0(this,field,maximum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: maximum
@@ -1001,7 +1034,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maximum_real64_r1(this,field,maximum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_ptr, c_double, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: maximum(:)
@@ -1012,13 +1046,14 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
-  call atlas_free(max_cptr)
+  call c_ptr_free(max_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minloc_real64_r0(this,field,minimum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: minimum
@@ -1031,7 +1066,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maxloc_real64_r0(this,field,maximum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: maximum
@@ -1044,7 +1080,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minloc_real64_r1(this,field,minimum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_long, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: minimum(:)
@@ -1060,14 +1097,15 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(min_size))
   minimum(:) = min_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maxloc_real64_r1(this,field,maximum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_ptr, c_f_pointer, c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: maximum(:)
@@ -1083,14 +1121,15 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(max_size))
   maximum(:) = max_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine sum_real64_r0(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: sum
@@ -1103,7 +1142,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine sum_real64_r1(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: sum(:)
@@ -1116,14 +1156,15 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine order_independent_sum_real64_r0(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: sum
@@ -1136,7 +1177,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine order_independent_sum_real64_r1(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: sum(:)
@@ -1149,14 +1191,15 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine mean_real64_r0(this,field,mean,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: mean
@@ -1169,7 +1212,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine mean_real64_r1(this,field,mean,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: mean(:)
@@ -1182,14 +1226,15 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
-  call atlas_free(mean_cptr)
+  call c_ptr_free(mean_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_real64_r0(this,field,mean,stddev,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: mean
@@ -1203,7 +1248,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_real64_r1(this,field,mean,stddev,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: mean(:)
@@ -1220,15 +1266,16 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(stddev(varsize))
   mean(:) = mean_fptr(:)
   stddev(:) = stddev_fptr(:)
-  call atlas_free(mean_cptr)
-  call atlas_free(stddev_cptr)
+  call c_ptr_free(mean_cptr)
+  call c_ptr_free(stddev_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minimum_int64_r0(this,field,minimum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: minimum
@@ -1238,7 +1285,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minimum_int64_r1(this,field,minimum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long, c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: minimum(:)
@@ -1249,13 +1297,14 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
-  call atlas_free(min_cptr)
+  call c_ptr_free(min_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maximum_int64_r0(this,field,maximum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: maximum
@@ -1265,7 +1314,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maximum_int64_r1(this,field,maximum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: maximum(:)
@@ -1276,13 +1326,14 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
-  call atlas_free(max_cptr)
+  call c_ptr_free(max_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minloc_int64_r0(this,field,minimum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: minimum
@@ -1295,7 +1346,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maxloc_int64_r0(this,field,maximum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: maximum
@@ -1308,7 +1360,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minloc_int64_r1(this,field,minimum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_f_pointer, c_long, c_ptr
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: minimum(:)
@@ -1324,14 +1377,15 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(min_size))
   minimum(:) = min_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maxloc_int64_r1(this,field,maximum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: maximum(:)
@@ -1347,14 +1401,15 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(max_size))
   maximum(:) = max_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine sum_int64_r0(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long, c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: sum
@@ -1367,7 +1422,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine sum_int64_r1(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long, c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: sum(:)
@@ -1380,14 +1436,15 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine mean_int64_r0(this,field,mean,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: mean
@@ -1400,7 +1457,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine mean_int64_r1(this,field,mean,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long, c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: mean(:)
@@ -1413,14 +1471,15 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
-  call atlas_free(mean_cptr)
+  call c_ptr_free(mean_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_int64_r0(this,field,mean,stddev,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: mean
@@ -1434,7 +1493,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_int64_r1(this,field,mean,stddev,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long, c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: mean(:)
@@ -1451,15 +1511,16 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(stddev(varsize))
   mean(:) = mean_fptr(:)
   stddev(:) = stddev_fptr(:)
-  call atlas_free(mean_cptr)
-  call atlas_free(stddev_cptr)
+  call c_ptr_free(mean_cptr)
+  call c_ptr_free(stddev_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minimum_int32_r0(this,field,minimum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: minimum
@@ -1469,7 +1530,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minimum_int32_r1(this,field,minimum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_f_pointer, c_int, c_ptr
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: minimum(:)
@@ -1480,13 +1542,14 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
-  call atlas_free(min_cptr)
+  call c_ptr_free(min_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maximum_int32_r0(this,field,maximum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: maximum
@@ -1496,7 +1559,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maximum_int32_r1(this,field,maximum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: maximum(:)
@@ -1507,13 +1571,14 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
-  call atlas_free(max_cptr)
+  call c_ptr_free(max_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minloc_int32_r0(this,field,minimum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: minimum
@@ -1526,7 +1591,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maxloc_int32_r0(this,field,maximum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: maximum
@@ -1539,7 +1605,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minloc_int32_r1(this,field,minimum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_long, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: minimum(:)
@@ -1555,14 +1622,15 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(min_size))
   minimum(:) = min_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maxloc_int32_r1(this,field,maximum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_long, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: maximum(:)
@@ -1578,14 +1646,15 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(location(max_size))
   maximum(:) = max_fptr(:)
   location(:) = loc_fptr(:)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine sum_int32_r0(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: sum
@@ -1598,7 +1667,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine sum_int32_r1(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: sum(:)
@@ -1611,14 +1681,15 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
-  call atlas_free(sum_cptr)
+  call c_ptr_free(sum_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine mean_int32_r0(this,field,mean,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: mean
@@ -1631,7 +1702,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine mean_int32_r1(this,field,mean,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: mean(:)
@@ -1644,14 +1716,15 @@ use atlas_functionspace_NodeColumns_c_binding
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
-  call atlas_free(mean_cptr)
+  call c_ptr_free(mean_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_int32_r0(this,field,mean,stddev,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: mean
@@ -1665,7 +1738,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_int32_r1(this,field,mean,stddev,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: mean(:)
@@ -1682,15 +1756,16 @@ use atlas_functionspace_NodeColumns_c_binding
   allocate(stddev(varsize))
   mean(:) = mean_fptr(:)
   stddev(:) = stddev_fptr(:)
-  call atlas_free(mean_cptr)
-  call atlas_free(stddev_cptr)
+  call c_ptr_free(mean_cptr)
+  call c_ptr_free(stddev_cptr)
   if( present(N) ) N = opt_N
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minloclev_real32_r0(this,field,minimum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: minimum
@@ -1706,7 +1781,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maxloclev_real32_r0(this,field,maximum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: maximum
@@ -1722,7 +1798,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minloclev_real32_r1(this,field,minimum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_float, c_long, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: minimum(:)
@@ -1745,15 +1822,16 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(min_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maxloclev_real32_r1(this,field,maximum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_float, c_int, c_long , c_f_pointer, c_ptr
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: maximum(:)
@@ -1776,15 +1854,16 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(max_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minloclev_real64_r0(this,field,minimum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_int, c_long
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: minimum
@@ -1800,7 +1879,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maxloclev_real64_r0(this,field,maximum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: maximum
@@ -1816,7 +1896,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minloclev_real64_r1(this,field,minimum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_int, c_ptr, c_long, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: minimum(:)
@@ -1839,15 +1920,16 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(min_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maxloclev_real64_r1(this,field,maximum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double, c_ptr, c_int, c_long, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: maximum(:)
@@ -1870,15 +1952,16 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(max_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(loc_cptr)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minloclev_int64_r0(this,field,minimum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long, c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: minimum
@@ -1894,7 +1977,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maxloclev_int64_r0(this,field,maximum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: maximum
@@ -1910,7 +1994,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minloclev_int64_r1(this,field,minimum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long, c_int, c_ptr, c_long, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: minimum(:)
@@ -1933,15 +2018,16 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(min_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maxloclev_int64_r1(this,field,maximum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_long, c_int, c_ptr, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: maximum(:)
@@ -1964,15 +2050,16 @@ use atlas_functionspace_NodeColumns_c_binding
     allocate(level(max_size))
     level(:) = lev_fptr(:)
   endif
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minloclev_int32_r0(this,field,minimum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: minimum
@@ -1986,7 +2073,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maxloclev_int32_r0(this,field,maximum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: maximum
@@ -2000,7 +2088,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minloclev_int32_r1(this,field,minimum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_long, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: minimum(:)
@@ -2021,15 +2110,16 @@ use atlas_functionspace_NodeColumns_c_binding
   minimum(:) = min_fptr(:)
   location(:) = loc_fptr(:)
   level(:) = lev_fptr(:)
-  call atlas_free(min_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine maxloclev_int32_r1(this,field,maximum,location,level)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_long, c_f_pointer
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: maximum(:)
@@ -2050,15 +2140,15 @@ use atlas_functionspace_NodeColumns_c_binding
   maximum(:) = max_fptr(:)
   location(:) = loc_fptr(:)
   level(:) = lev_fptr(:)
-  call atlas_free(max_cptr)
-  call atlas_free(loc_cptr)
-  call atlas_free(lev_cptr)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
 end subroutine
 
 !------------------------------------------------------------------------------
 
 subroutine minloc_per_level(this,field,minimum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: minimum
@@ -2069,7 +2159,7 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maxloc_per_level(this,field,maximum,location)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: maximum
@@ -2080,7 +2170,7 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine minimum_per_level(this,field,minimum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: minimum
@@ -2090,7 +2180,7 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine maximum_per_level(this,field,maximum)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: maximum
@@ -2100,7 +2190,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine sum_per_level(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: sum
@@ -2113,7 +2204,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine order_independent_sum_per_level(this,field,sum,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: sum
@@ -2126,7 +2218,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine mean_per_level(this,field,mean,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: mean
@@ -2139,7 +2232,8 @@ end subroutine
 !------------------------------------------------------------------------------
 
 subroutine mean_and_stddev_per_level(this,field,mean,stddev,N)
-use atlas_functionspace_NodeColumns_c_binding
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(inout) :: mean

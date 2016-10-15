@@ -85,6 +85,19 @@ void Mesh::print(std::ostream& os) const
 {
 }
 
+size_t Mesh::footprint() const {
+  size_t size = sizeof(*this);
+
+  size += metadata_.footprint();
+  if(nodes_)  size += nodes_->footprint();
+  if(cells_)  size += cells_->footprint();
+  if(facets_) size += facets_->footprint();
+  if(ridges_) size += ridges_->footprint();
+  if(peaks_)  size += peaks_->footprint();
+
+  return size;
+}
+
 
 void Mesh::createElements()
 {
@@ -151,6 +164,16 @@ mesh::Cells* atlas__Mesh__cells (Mesh* This) {
   );
   return NULL;
 }
+
+size_t atlas__Mesh__footprint (Mesh* This) {
+  size_t size(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    size = This->footprint();
+  );
+  return size;
+}
+
 
 
 //----------------------------------------------------------------------------------------------------------------------

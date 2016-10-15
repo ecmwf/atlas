@@ -117,6 +117,11 @@ public:
   size_t rank() const;
   size_t size() const;
 
+  size_t footprint() const {
+    // An  arrayview does not own the data
+    return sizeof(*this);
+  }
+
 private:
 // -- Private data
   DATA_TYPE* data_;
@@ -176,6 +181,8 @@ public:
   ArrayStrides::value_type stride(size_t i) const;
   size_t rank() const;
   size_t size() const;
+
+  size_t footprint() const;
 
 private:
 // -- Private data

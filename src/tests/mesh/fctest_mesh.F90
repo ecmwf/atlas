@@ -147,10 +147,9 @@ implicit none
   call metadata%get("arr_int64",arr_int32)
   call metadata%get("arr_real64",arr_real32)
 
-  call metadata%print(atlas_log%channel_info)
+  call metadata%print(atlas_log%info_channel())
 
-  write(atlas_log%msg,*) metadata%json()
-  call atlas_log%info()
+  call atlas_log%info(metadata%json())
   !write(0,*) metadata%json()
 
   CHECK( true  .eqv. .True.  )
@@ -301,7 +300,6 @@ TEST( test_fieldset )
 implicit none
 
   type(atlas_FieldSet) :: fieldset
-  type(atlas_Field) :: afield
   type(atlas_Field) :: field
 
   write(*,*) "test_fieldset starting"
@@ -397,6 +395,8 @@ implicit none
 
       node_to_node = nodes%connectivity("node")
       node_to_edge = nodes%connectivity("edge")
+      
+      write(0,*) "mesh.footprint (bytes) = ", mesh%footprint()
 
       call node_to_node%final()
       call mesh%final()

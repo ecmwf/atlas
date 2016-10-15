@@ -13,10 +13,6 @@
 #define ATLAS_HAVE_OMP
 #endif
 
-#if @ATLAS_HAVE_MPI@
-#define ATLAS_HAVE_MPI
-#endif
-
 #if @ATLAS_HAVE_TESSELATION@
 #define ATLAS_HAVE_TESSELATION
 #endif

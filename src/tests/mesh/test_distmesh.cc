@@ -29,9 +29,12 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/grid/global/gaussian/classic/N.h"
+#include "atlas/grid/gaussian/classic/N.h"
 #include "atlas/internals/IsGhost.h"
 #include "atlas/runtime/Log.h"
+
+#include "tests/AtlasFixture.h"
+
 
 using namespace atlas;
 using namespace atlas::output;
@@ -56,20 +59,13 @@ double dual_volume(mesh::Mesh& mesh)
       area += dual_volumes(node);
     }
   }
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
+
+  parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+
   return area;
 }
 
-struct MPIFixture {
-     MPIFixture()  {
-       atlas_init(
-             boost::unit_test::framework::master_test_suite().argc,
-             boost::unit_test::framework::master_test_suite().argv);
-     }
-    ~MPIFixture()  { atlas_finalize(); }
-};
-
-BOOST_GLOBAL_FIXTURE( MPIFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {
@@ -83,7 +79,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
       // test::TestGrid grid(5,lon);
 
       //  GG grid(120,60);
-  grid::global::gaussian::ClassicGaussian grid(16);
+  grid::gaussian::ClassicGaussian grid(16);
 
 
   mesh::Mesh::Ptr m( generate( grid ) );

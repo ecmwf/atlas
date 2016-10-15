@@ -80,7 +80,7 @@ end function
 
 function atlas_JSON__ctor_path(path) result(JSON)
   use atlas_atlas_read_file_c_binding
-  use atlas_c_interop, only : c_str, c_to_f_string_cptr, atlas_free
+  use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
   type(atlas_JSON) :: JSON
   type(atlas_PathName), intent(in) :: path
   character(len=:), allocatable :: str
@@ -89,8 +89,8 @@ function atlas_JSON__ctor_path(path) result(JSON)
   integer(c_int) :: str_size
   iret = atlas__read_file(c_str(path%str()), str_cptr, str_size)
   allocate(character(len=str_size) :: str )
-  str = c_to_f_string_cptr(str_cptr)
-  call atlas_free(str_cptr)
+  str = c_ptr_to_string(str_cptr)
+  call c_ptr_free(str_cptr)
   JSON = atlas_JSON__ctor_str(str)
 end function
 

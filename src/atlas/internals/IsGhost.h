@@ -28,7 +28,7 @@ public:
   {
 //    part_   = array::ArrayView<int,1> (nodes.partition() );
 //    ridx_   = array::IndexView<int,1> (nodes.remote_index() );
-//    mypart_ = eckit::mpi::rank();
+//    mypart_ = parallel::mpi::comm().rank();
   flags_ = array::ArrayView<int,1> (nodes.field("flags"));
   ghost_ = array::ArrayView<int,1> (nodes.ghost());
   }

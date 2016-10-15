@@ -13,6 +13,7 @@
 #include "eckit/value/CompositeParams.h"
 
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/grids.h"
@@ -39,9 +40,11 @@ namespace  test {
 class TestField : public Tool {
 public:
 
-    TestField(int argc,char **argv): Tool(argc,argv) {}
+    TestField(int argc,char **argv): Tool(argc,argv) {
+      atlas_init();
+    }
 
-    ~TestField() {}
+    ~TestField() {atlas_finalize();}
 
     virtual void run();
 
@@ -58,7 +61,7 @@ void TestField::test_constructor()
 {
   // create a grid
 
-  Grid::Ptr g (new atlas::grid::global::lonlat::RegularLonLat( 20ul, 10ul ) );
+  Grid::Ptr g (new atlas::grid::lonlat::RegularLonLat( 20ul, 10ul ) );
 
   ASSERT( g );
 
@@ -221,13 +224,11 @@ void TestField::test_wrap_rawdata_direct()
 
 void TestField::run()
 {
-    eckit::mpi::init();
     test_constructor();
     test_fieldcreator();
     test_implicit_conversion();
     test_wrap_rawdata_through_array();
     test_wrap_rawdata_direct();
-    eckit::mpi::finalize();
 }
 
 //-----------------------------------------------------------------------------

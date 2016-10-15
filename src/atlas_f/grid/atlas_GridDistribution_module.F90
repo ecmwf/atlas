@@ -2,11 +2,11 @@
 module atlas_GridDistribution_module
 
 
-use atlas_object_module, only: atlas_object
+use fckit_object_module, only: fckit_object
 
 implicit none
 
-private :: atlas_object
+private :: fckit_object
 
 public :: atlas_GridDistribution
 
@@ -18,7 +18,7 @@ private
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_object) :: atlas_GridDistribution
+TYPE, extends(fckit_object) :: atlas_GridDistribution
 
 ! Purpose :
 ! -------

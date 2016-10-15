@@ -2,14 +2,14 @@
 module atlas_ElementType_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_size_t, c_int
-use atlas_c_interop, only : c_to_f_string_cptr
-use atlas_refcounted_module, only : atlas_refcounted
+use fckit_c_interop_module, only : c_ptr_to_string
+use fckit_refcounted_module, only : fckit_refcounted
 
 implicit none
 
 private :: c_ptr, c_size_t, c_int
-private :: c_to_f_string_cptr
-private :: atlas_refcounted
+private :: c_ptr_to_string
+private :: fckit_refcounted
 
 public :: atlas_ElementType
 public :: atlas_Triangle
@@ -23,10 +23,9 @@ private
 ! atlas_ElementType     !
 !-----------------------------
 
-type, extends(atlas_refcounted) :: atlas_ElementType
+type, extends(fckit_refcounted) :: atlas_ElementType
 contains
 ! Public methods
-  procedure, public :: copy     => atlas_ElementType__copy
   procedure, public :: delete   => atlas_ElementType__delete
 
   procedure, public :: nb_nodes
@@ -63,11 +62,6 @@ subroutine atlas_ElementType__delete(this)
     call atlas__mesh__ElementType__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
-end subroutine
-
-subroutine atlas_ElementType__copy(this,obj_in)
-  class(atlas_ElementType), intent(inout) :: this
-  class(atlas_RefCounted),   target, intent(in) :: obj_in
 end subroutine
 
 function atlas_ElementType__cptr(cptr) result(this)
@@ -115,7 +109,7 @@ function name(this)
   class(atlas_ElementType) :: this
   type(c_ptr) :: name_c_str
   name_c_str = atlas__mesh__ElementType__name(this%c_ptr())
-  name = c_to_f_string_cptr(name_c_str)
+  name = c_ptr_to_string(name_c_str)
 end function
 
 function parametric(this)

@@ -9,7 +9,7 @@ using atlas::Log;
 using atlas::array::ArrayView;
 using atlas::array::make_shape;
 using atlas::field::Field;
-using atlas::grid::global::Structured;
+using atlas::grid::Structured;
 
 int main(int argc, char *argv[])
 {

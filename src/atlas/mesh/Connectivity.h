@@ -153,6 +153,8 @@ public:
   virtual void insert( size_t position, size_t rows, const size_t cols[] );
 
   virtual void clear();
+  
+  virtual size_t footprint() const;
 
 protected:
   bool owns() { return owns_; }
@@ -298,6 +300,8 @@ public:
   virtual void insert( size_t position, size_t rows, const size_t cols[] );
 
   virtual void clear();
+  
+  virtual size_t footprint() const;
 
 private:
 
@@ -362,6 +366,8 @@ public:
         idx_t* data()       { return values_; }
 
   idx_t missing_value() const { return missing_value_; }
+  
+  size_t footprint() const;
 
 //-- Modifiers
 

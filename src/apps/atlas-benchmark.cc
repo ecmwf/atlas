@@ -60,18 +60,18 @@
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
+
 #include "eckit/config/Resource.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/log/Timer.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
-#include "eckit/mpi/ParallelContextBehavior.h"
 #include "eckit/parser/JSON.h"
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 using std::string;
 using std::stringstream;
@@ -106,7 +106,8 @@ namespace {
   }
 
 }
-//------------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------------------------
 
 struct TimerStats
 {
@@ -175,7 +176,7 @@ public:
   //         "\n"
   //     << options_str.str();
   //
-  //     if( eckit::mpi::rank()==0 )
+  //     if( parallel::mpi::comm().rank()==0 )
   //     {
   //       Log::info() << help_str.str() << std::flush;
   //     }
@@ -229,7 +230,7 @@ public:
 
 };
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::execute(const Args& args)
 {
@@ -266,7 +267,7 @@ void AtlasBenchmark::execute(const Args& args)
   Log::info() << "  nlev: " << nlev << endl;
   Log::info() << "  niter: " << niter << endl;
   Log::info() << endl;
-  Log::info() << "  MPI tasks: "<<eckit::mpi::size()<<endl;
+  Log::info() << "  MPI tasks: "<<parallel::mpi::comm().size()<<endl;
   Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
   Log::info() << endl;
 
@@ -321,15 +322,13 @@ void AtlasBenchmark::execute(const Args& args)
   exit_code = verify( res );
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::setup()
 {
   Timer timer( "setup", Log::debug());
 
-  grid::load();
-
-  SharedPtr<global::Structured> grid( global::Structured::create(gridname));
+  SharedPtr<Structured> grid( Structured::create(gridname) );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
   mesh.reset( meshgenerator->generate(*grid) );
 
@@ -422,11 +421,11 @@ void AtlasBenchmark::setup()
 
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::iteration()
 {
-  Timer t("iteration", Log::debug(5));
+  Timer t("iteration", Log::debug());
 
   eckit::ScopedPtr<array::Array> avgS_arr( array::Array::create<double>(nedges,nlev,2) );
   array::ArrayView<double,3> avgS(*avgS_arr);
@@ -502,10 +501,10 @@ void AtlasBenchmark::iteration()
   }
 
   // halo-exchange
-  eckit::mpi::barrier();
-  Timer halo("halo-exchange", Log::debug(5));
+  parallel::mpi::comm().barrier();
+  Timer halo("halo-exchange", Log::debug());
   nodes_fs->halo_exchange().execute(grad);
-  eckit::mpi::barrier();
+  parallel::mpi::comm().barrier();
   t.stop();
   halo.stop();
 
@@ -525,7 +524,7 @@ void AtlasBenchmark::iteration()
   }
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 template< typename DATA_TYPE >
 DATA_TYPE vecnorm( DATA_TYPE vec[], size_t size )
@@ -558,9 +557,10 @@ double AtlasBenchmark::result()
     }
   }
 
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,eckit::mpi::datatype<double>(),MPI_MAX,eckit::mpi::comm()) );
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,eckit::mpi::datatype<double>(),MPI_MIN,eckit::mpi::comm()) );
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,eckit::mpi::datatype<double>(),MPI_SUM,eckit::mpi::comm()) );
+  parallel::mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
+  parallel::mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
+  parallel::mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());
+
   norm = std::sqrt(norm);
 
   Log::info() << "  checksum: " << nodes_fs->checksum().execute( grad ) << endl;
@@ -634,7 +634,7 @@ int AtlasBenchmark::verify(const double& norm)
   return 1;
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 int main( int argc, char **argv )
 {

@@ -207,8 +207,8 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
     max[internals::LAT] = std::max( max[internals::LAT], lonlat(node,internals::LAT) );
   }
 
-  eckit::mpi::all_reduce( min, 2, eckit::mpi::min() );
-  eckit::mpi::all_reduce( max, 2, eckit::mpi::max() );
+  parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
+  parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
 
   double tol = 1e-6;
 

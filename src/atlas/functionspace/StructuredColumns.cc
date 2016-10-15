@@ -10,7 +10,7 @@
 
 #include "eckit/utils/MD5.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/global/Structured.h"
+#include "atlas/grid/Structured.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/StructuredColumns.h"
@@ -53,7 +53,7 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (eckit::mpi::rank() == owner ? grid_->npts() : 0);
+      size = (parallel::mpi::comm().rank() == owner ? grid_->npts() : 0);
     }
   }
   return size;
@@ -66,7 +66,7 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
 StructuredColumns::StructuredColumns(const grid::Grid& grid) :
   FunctionSpace()
 {
-    grid_ = dynamic_cast<const grid::global::Structured*>(&grid);
+    grid_ = dynamic_cast<const grid::Structured*>(&grid);
     if (grid_ == NULL)
     {
       throw eckit::BadCast("Grid is not a grid::Structured type. "
@@ -110,7 +110,7 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
         // Loop over number of longitude bands (jb)
         for (int jb = 0; jb < n_regions[ja]; ++jb)
         {
-            if (proc == eckit::mpi::rank())
+            if (proc == parallel::mpi::comm().rank())
             {
                 nlat_ = nlstlat[ja] - nfrstlat[ja] + 1;
                 nlon_.resize(nlat_);
@@ -147,7 +147,7 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
             // Loop over number of longitude bands (jb)
             for (size_t jb = 0; jb < n_regions[ja]; ++jb)
             {
-                if (proc == eckit::mpi::rank())
+                if (proc == parallel::mpi::comm().rank())
                 {
                     // Loop over latitude points of lat band (ja) and lon band (jb)
                     for (int jglat = nfrstlat[ja]-1; jglat < nlstlat[ja]; ++jglat)
@@ -195,6 +195,11 @@ StructuredColumns::~StructuredColumns()
 // ----------------------------------------------------------------------------
 
 
+size_t StructuredColumns::footprint() const {
+  size_t size = sizeof(*this);
+  // TODO
+  return size;
+}
 
 // ----------------------------------------------------------------------------
 // Create Field
@@ -208,7 +213,7 @@ field::Field* StructuredColumns::createField(const std::string& name, array::Dat
     set_field_metadata(options,*field);
     return field;
 #else
-    if( eckit::mpi::size() > 1 )
+    if( parallel::mpi::comm().size() > 1 )
     {
         throw eckit::NotImplemented(
           "StructuredColumns::createField currently relies"
@@ -241,7 +246,7 @@ field::Field* StructuredColumns::createField(
     set_field_metadata(options,*field);
     return field;
 #else
-    if( eckit::mpi::size() > 1 )
+    if( parallel::mpi::comm().size() > 1 )
     {
         throw eckit::NotImplemented(
           "StructuredColumns::createField currently relies"

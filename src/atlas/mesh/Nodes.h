@@ -92,6 +92,9 @@ public: // methods
 
   Connectivity& add( mesh::Connectivity* );
 
+  /// @brief Return the memory footprint of the Nodes
+  size_t footprint() const;
+
 private:
 
   void print(std::ostream&) const;
@@ -121,7 +124,7 @@ private:
   field::Field* lonlat_;
   field::Field* ghost_;
 
-
+// Cached shortcuts to specific connectivities in connectivities_
   Connectivity* edge_connectivity_;
   Connectivity* cell_connectivity_;
 

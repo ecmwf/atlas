@@ -296,6 +296,8 @@ private: // methods
     std::string config_name(const eckit::Parametrisation&) const;
     size_t config_levels(const eckit::Parametrisation&) const;
 
+    size_t footprint() const;
+
 private: // data
 
     mesh::Mesh& mesh_; // non-const because functionspace may modify mesh

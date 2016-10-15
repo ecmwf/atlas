@@ -90,19 +90,22 @@ template<> inline DataType::kind_t DataType::kind(const double&) { return KIND_R
 
 inline DataType::kind_t DataType::str_to_kind(const std::string& datatype)
 {
-  if      ( datatype == "int32"  ) return KIND_INT32;
-  else if ( datatype == "int64"  ) return KIND_INT64;
-  else if ( datatype == "real32" ) return KIND_REAL32;
-  else if ( datatype == "real64" ) return KIND_REAL64;
-  else throw eckit::Exception("datatype "+datatype+" not recognised.",Here());
-  return 0;
+  DataType::kind_t kind = 0;
+  if      ( datatype == "int32"  ) kind = KIND_INT32;
+  else if ( datatype == "int64"  ) kind = KIND_INT64;
+  else if ( datatype == "real32" ) kind = KIND_REAL32;
+  else if ( datatype == "real64" ) kind = KIND_REAL64;
+  else {
+    throw eckit::Exception("datatype "+datatype+" not recognised.",Here());
+  }
+  return kind;
 }
 inline std::string DataType::kind_to_str(kind_t kind)
 {
   switch( kind )
   {
-    case KIND_INT32: return int32_str();
-    case KIND_INT64: return int64_str();
+    case KIND_INT32:  return int32_str();
+    case KIND_INT64:  return int64_str();
     case KIND_REAL32: return real32_str();
     case KIND_REAL64: return real64_str();
     default:

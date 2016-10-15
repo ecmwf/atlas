@@ -31,9 +31,7 @@ namespace field {
 
 namespace atlas {
 namespace grid {
-namespace global {
     class Structured;
-}
 }
 }
 
@@ -96,11 +94,12 @@ public:
   std::string checksum( const field::FieldSet& ) const;
   std::string checksum( const field::Field& ) const;
 
-  const grid::global::Structured& grid() const { return *grid_; }
+  const grid::Structured& grid() const { return *grid_; }
 
 private: // methods
 
   size_t config_size(const eckit::Parametrisation& config) const;
+  size_t footprint() const;
 
 private: // data
 
@@ -111,7 +110,7 @@ private: // data
   std::vector<size_t> first_lon_;
 
   trans::Trans* trans_;
-  const grid::global::Structured* grid_;
+  const grid::Structured* grid_;
   parallel::GatherScatter* gather_scatter_;
   parallel::Checksum* checksum_;
 

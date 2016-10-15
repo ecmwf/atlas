@@ -15,9 +15,7 @@
 
 namespace atlas {
 namespace grid {
-namespace global {
 class Structured;
-}
 class GridDistribution;
 }
 }
@@ -33,33 +31,32 @@ namespace atlas {
 namespace grid {
 namespace partitioners {
 
-class TransPartitioner: public Partitioner
-{
-public:
+class TransPartitioner: public Partitioner {
+  public:
 
-  /// @brief Constructor
-  TransPartitioner(const grid::Grid& grid,
-                   const trans::Trans& trans);
+    /// @brief Constructor
+    TransPartitioner(const grid::Grid& grid,
+                     const trans::Trans& trans);
 
-  /// @brief Constructor
-  /// This constructor allocates a new Trans, but without the computations
-  /// of the spectral coefficients (LDGRIDONLY=TRUE)
-  TransPartitioner( const grid::Grid& grid );
+    /// @brief Constructor
+    /// This constructor allocates a new Trans, but without the computations
+    /// of the spectral coefficients (LDGRIDONLY=TRUE)
+    TransPartitioner( const grid::Grid& grid );
 
-  TransPartitioner(const grid::Grid& grid,
-                   const size_t nb_partitions );
+    TransPartitioner(const grid::Grid& grid,
+                     const size_t nb_partitions );
 
-  virtual ~TransPartitioner();
+    virtual ~TransPartitioner();
 
-  virtual void partition(int part[]) const;
+    virtual void partition(int part[]) const;
 
-  int nb_bands() const;
+    int nb_bands() const;
 
-  int nb_regions(int b) const;
+    int nb_regions(int b) const;
 
-private:
-  mutable trans::Trans* t_;
-  bool owned_;
+  private:
+    mutable trans::Trans* t_;
+    bool owned_;
 };
 
 } // namespace partitioners

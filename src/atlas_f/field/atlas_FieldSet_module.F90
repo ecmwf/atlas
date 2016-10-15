@@ -2,15 +2,15 @@
 module atlas_FieldSet_module
 
 use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_size_t
-use atlas_c_interop, only: c_str
-use atlas_refcounted_module, only: atlas_refcounted
+use fckit_c_interop_module, only: c_str
+use fckit_refcounted_module, only: fckit_refcounted
 use atlas_Field_module, only: atlas_Field
 
 implicit none
 
 private :: c_ptr, c_int, c_size_t
 private :: c_str
-private :: atlas_refcounted
+private :: fckit_refcounted
 private :: atlas_Field
 
 public :: atlas_FieldSet
@@ -22,7 +22,7 @@ private
 !-----------------------------
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_FieldSet
+TYPE, extends(fckit_refcounted) :: atlas_FieldSet
 
 ! Purpose :
 ! -------
@@ -49,7 +49,6 @@ contains
   procedure, public :: add
   generic :: field => field_by_name, field_by_idx_int, field_by_idx_size_t
   procedure, public :: delete
-  procedure, public :: copy
 END TYPE atlas_FieldSet
 !------------------------------------------------------------------------------
 
@@ -92,11 +91,6 @@ subroutine delete(this)
     call atlas__FieldSet__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
-end subroutine
-
-subroutine copy(this,obj_in)
-  class(atlas_FieldSet), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
 end subroutine
 
 subroutine add(this,field)

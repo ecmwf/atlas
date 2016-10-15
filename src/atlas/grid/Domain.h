@@ -12,82 +12,202 @@
 /// @author Baudouin Raoult
 /// @date Jun 2015
 
-#ifndef atlas_Domain_H
-#define atlas_Domain_H
 
+#ifndef atlas_grid_Domain_h
+#define atlas_grid_Domain_h
+
+
+#include <iostream>
 #include "eckit/exception/Exceptions.h"
-#include "eckit/geometry/Point2.h"
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 namespace eckit {
-  class MD5;
-  namespace geometry {
-    class LLPoint2;
-  }
+class MD5;
 }
 
 namespace atlas {
 namespace grid {
 
-//------------------------------------------------------------------------------------------------------
 
-/// If is periodic then east() - west() == 360
-/// It has North Pole is north() == 90
-/// It has South Pole is south() == -90
+class Domain: public eckit::Owned {
 
-class Domain {
+  public:
+    typedef eckit::SharedPtr<Domain> Ptr;
 
-public:  // methods
+  public:
 
-    /// East and West are reduced to the interval [0,360[
-    Domain(double north = 90, double west = 0, double south = -90, double east = 360);
+    // -- Exceptions
+    // None
 
-    ~Domain(); // make it virtual once is a virtual base
+    // -- Contructors
+
+    /// ctor using coordinates
+    Domain(double north, double west, double south, double east) :
+        north_(north), west_(west), south_(south), east_(east) {
+        normalise();
+    }
+
+    /// ctor (default)
+    Domain() :
+        north_(90), west_(0), south_(-90), east_(360) {
+        normalise();
+    }
+
+    /// ctor (copy)
+    Domain(const Domain& other) :
+        north_(other.north_), west_(other.west_), south_(other.south_), east_(other.east_) {
+        normalise();
+    }
+
+    // -- Destructor
+
+    /// dtor
+    ~Domain() {}
+
+    // -- Convertors
+    // None
+
+    // -- Operators
+
+    /// Assignment
+    Domain& operator=(const Domain& other) {
+        north_ = other.north_;
+        west_  = other.west_;
+        south_ = other.south_;
+        east_  = other.east_;
+        return *this;
+    }
+
+    /// Comparison
+    bool operator==(const Domain& other);
+
+    // -- Methods
+
+    /// Generator for a global Domain
+    static Domain makeGlobal() {
+        return Domain(90.,0.,-90.,360.);
+    }
+
+    /// Generator for an empty Domain
+    static Domain makeEmpty()  {
+        return Domain(0.,0.,0.,0.);
+    }
+
+    /// Check if grid includes the North pole
+    bool includesPoleNorth() const {
+        return north_==90.;
+    }
+
+    /// Check if grid includes the South pole
+    bool includesPoleSouth() const {
+        return south_==-90.;
+    }
+
+    /// Check if grid spans the complete range East-West (periodic)
+    bool isPeriodicEastWest() const {
+        return east_-west_==360.;
+    };
+
+    /// Check if domain represents the complete globe surface
+    bool isGlobal() const {
+        return includesPoleNorth() && includesPoleSouth() && isPeriodicEastWest();
+    }
 
     /// Adds to the MD5 the information
     void hash(eckit::MD5&) const;
 
-    /// checks if the point is contained in the domain
-    bool contains( const eckit::geometry::LLPoint2& ) const;
+    /// Check if domain does not represent any area on the globe surface
+    bool isEmpty() const;
 
-    /// checks if the point is contained in the domain
-    bool contains( double lon, double lat ) const;
+    /// Checks if the point is contained in the domain
+    bool contains(double lon, double lat) const;
 
+    /// Normalises the longitude of a query point
+    double normalise(double lon) const;
+
+    /// Output to stream
     void print(std::ostream&) const;
 
-    static Domain makeGlobal();
+    const double& north() const {
+        return north_;
+    }
+    const double& west()  const {
+        return west_;
+    }
+    const double& south() const {
+        return south_;
+    }
+    const double& east()  const {
+        return east_;
+    }
 
-    double north() const { return north_; }
-    double west() const { return west_; }
-    double south() const { return south_; }
-    double east() const { return east_; }
+    // -- Overridden methods
+    // None
 
-    bool global() const;
+    // -- Class members
+    // None
 
-private:  // methods
+    // -- Class methods
+    // None
 
-  /// normalises the constructor input
-  void normalise();
+  protected:
 
-  /// normalises the longitude of a query point
-  double normalise(double lon) const;
+    // -- Members
 
-  friend std::ostream& operator<<(std::ostream& s, const Domain& p) {
-      p.print(s);
-      return s;
-  }
-
-private: // members
-
+    /// Coordinates defining maximum (N,E) and minimum (S,W) latitude and longitude
     double north_;
     double west_;
     double south_;
     double east_;
 
+    // -- Methods
+    // None
+
+    // -- Overridden methods
+    // None
+
+    // -- Class members
+    // None
+
+    // -- Class methods
+    // None
+
+    // -- Friends
+    // None
+
+  private:
+
+    // -- Members
+    // None
+
+    // -- Methods
+
+    /// Normalises the constructor input
+    void normalise();
+
+    // -- Overridden methods
+    // None
+
+    // -- Class members
+    // None
+
+    // -- Class methods
+    // None
+
+    // -- Friends
+
+    /// Output using stream operator
+    friend std::ostream& operator<<(std::ostream& s, const Domain& p) {
+        p.print(s);
+        return s;
+    }
+
 };
 
-//------------------------------------------------------------------------------------------------------
 
-} // namespace grid
-} // namespace atlas
+}  // namespace grid
+}  // namespace atlas
+
 
 #endif

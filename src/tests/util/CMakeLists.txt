@@ -6,13 +6,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( HAVE_FCTEST )
 
-  add_fctest( TARGET atlas_fctest_refcounting
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_refcounting.F90
-    LIBS            atlas_f
-  )
+if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_logging
     MPI             1
@@ -28,25 +23,10 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
-  add_fctest( TARGET atlas_fctest_value
-    MPI             1
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_value.F90
-    LIBS            atlas_f
-  )
-
   add_fctest( TARGET atlas_fctest_parametrisation
     MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_parametrisation.F90
-    LIBS            atlas_f
-  )
-
-  add_fctest( TARGET atlas_fctest_resource
-    MPI             1
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_resource.F90
-    ARGS            -integer 10 -long 5000000000 -float 0.123456 -double 0.1234567890123456789 -string "hello world"
     LIBS            atlas_f
   )
 
@@ -71,4 +51,10 @@ ecbuild_add_test( TARGET atlas_test_metadata
   MPI      4
   SOURCES  test_metadata.cc
   LIBS     atlas
+)
+
+ecbuild_add_test( TARGET atlas_test_footprint
+  BOOST
+  SOURCES test_footprint.cc
+  LIBS    atlas
 )

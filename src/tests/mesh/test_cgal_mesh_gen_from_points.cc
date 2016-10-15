@@ -15,31 +15,25 @@
 #include <memory>
 
 #include "atlas/internals/atlas_config.h"
-
+#include "atlas/atlas.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/generators/Delaunay.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/parallel/mpi/mpi.h"
-
-//------------------------------------------------------------------------------
 
 using namespace atlas;
 using namespace atlas::grid;
 using namespace atlas::mesh::generators;
 using namespace atlas::output;
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 #define NLATS 64
 #define NLONG 128
 
-//------------------------------------------------------------------------------
-
-int main()
+int main(int argc, char **argv)
 {
-    eckit::mpi::init();
-
+    atlas_init(argc,argv);
     Grid::Ptr grid( Grid::create( "L32x11") );
 
     // Build a mesh from grid
@@ -49,7 +43,6 @@ int main()
     Gmsh gmsh("earth.msh", util::Config("coordinates","xyz") );
     gmsh.write(*mesh);
 
-    eckit::mpi::finalize();
-
+    atlas_finalize();
     return 0;
 }

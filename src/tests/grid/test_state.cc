@@ -30,7 +30,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/runtime/Log.h"
 
-// ------------------------------------------------------------------
+#include "tests/AtlasFixture.h"
 
 using namespace atlas::field;
 
@@ -92,7 +92,7 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
       std::stringstream s;
       eckit::JSON json(s);
       json << fieldparams;
-      Log::debug(0) << "fieldparams = " << s.str() << std::endl;
+      Log::debug() << "fieldparams = " << s.str() << std::endl;
     }
   }
 }
@@ -104,14 +104,7 @@ StateGeneratorBuilder<MyStateGenerator> __MyStateGenerator("MyStateGenerator");
 //                               BEGIN TESTS
 // ===================================================================
 
-
-struct GlobalFixture {
-    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                  boost::unit_test::framework::master_test_suite().argv); }
-    ~GlobalFixture() { atlas_finalize(); }
-};
-
-BOOST_GLOBAL_FIXTURE( GlobalFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_SUITE( test_state )
 
