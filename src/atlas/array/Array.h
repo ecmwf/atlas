@@ -19,6 +19,7 @@
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
+#include "storage-facility.hpp"
 
 //------------------------------------------------------------------------------
 

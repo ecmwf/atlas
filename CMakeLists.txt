@@ -142,6 +142,17 @@ if( HAVE_TESSELATION )
     endif()
 endif()
 
+### FIND GRIDTOOLS STORAGE
+find_path( GRIDTOOLS_STORAGE_INCLUDE_DIRS 
+           NAME storage-facility.hpp
+           PATHS ${GRIDTOOLS_STORAGE_PATH}/include 
+)
+
+if( GRIDTOOLS_STORAGE_INCLUDE_DIRS ) 
+   set( HAVE_GRIDTOOLS_STORAGE 1)
+   ecbuild_add_cxx11_flags()
+endif()
+
 ### Eigen
 
 ecbuild_add_option( FEATURE EIGEN

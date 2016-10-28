@@ -1,3 +1,5 @@
+include_directories(${GRIDTOOLS_STORAGE_INCLUDE_DIRS})
+
 ecbuild_add_executable(
   TARGET      atlas-main
   OUTPUT_NAME atlas 
@@ -32,7 +34,8 @@ ecbuild_add_executable(
 ecbuild_add_executable(
   TARGET      atlas-benchmark
   SOURCES     atlas-benchmark.cc
-  LIBS        atlas )
+  LIBS        atlas 
+)
 
 ecbuild_add_executable(
   TARGET      atlas-numerics-nabla
