@@ -149,7 +149,7 @@ find_path( GRIDTOOLS_STORAGE_INCLUDE_DIRS
 )
 
 if( GRIDTOOLS_STORAGE_INCLUDE_DIRS ) 
-   set( HAVE_GRIDTOOLS_STORAGE 1)
+   set( ATLAS_HAVE_GRIDTOOLS_STORAGE 1)
    ecbuild_add_cxx11_flags()
 endif()
 
