@@ -43,10 +43,10 @@ public:
   static Array* create( const Array& );
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-  template<unsigned int ID, typename Value, typename ... UInts>
+  template<typename Value, typename ... UInts>
   static Array* create_storage(UInts... dims);
 
-  template <unsigned int ID, typename Value, unsigned int NDims, bool ReadOnly = false>
+  template <typename Value, unsigned int NDims, bool ReadOnly = false>
   static gridtools::data_view<gridtools::storage_traits<BACKEND>::data_store_t<
                                   Value, gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> >,
                               ReadOnly>
@@ -297,7 +297,7 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
 
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-  template<unsigned int ID, typename Value, typename ... UInts>
+  template<typename Value, typename ... UInts>
   Array* Array::create_storage(UInts... dims) {
       static_assert(( sizeof...(dims) > 0), "Error: can not create storages without any dimension");
       typedef gridtools::storage_traits< BACKEND >::storage_info_t< 0, sizeof...(UInts) > storage_info_ty;
@@ -310,12 +310,12 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
       return new ArrayT<Value>(ds);
   }
 
-  template <unsigned int ID, typename Value, unsigned int NDims, bool ReadOnly>
+  template <typename Value, unsigned int NDims, bool ReadOnly>
   gridtools::data_view<gridtools::storage_traits<BACKEND>::data_store_t<
                                   Value, gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> >,
                               ReadOnly>
   Array::make_host_view(Array* data) {
-    typedef gridtools::storage_traits<BACKEND>::storage_info_t<ID, NDims> storage_info_ty;
+    typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> storage_info_ty;
     typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
 
     data_store_t* ds = reinterpret_cast<data_store_t*>(((ArrayT<Value>*)data)->data());

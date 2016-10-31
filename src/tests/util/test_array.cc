@@ -19,8 +19,8 @@ namespace test {
 
 BOOST_AUTO_TEST_CASE( test_array )
 {
-   auto ds = Array::create_storage<0, double>(4);
-   auto hv = Array::make_host_view<0 , double, 1>(ds);
+   auto ds = Array::create_storage<double>(4);
+   auto hv = Array::make_host_view<double, 1>(ds);
    hv(3) = 4.5;
 
    BOOST_CHECK_EQUAL( hv(3) , 4.5 );
