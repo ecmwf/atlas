@@ -1,5 +1,3 @@
-include_directories(${GRIDTOOLS_STORAGE_INCLUDE_DIRS})
-
 ecbuild_add_executable(
   TARGET      atlas-main
   OUTPUT_NAME atlas 

@@ -66,6 +66,15 @@ ecbuild_add_test( TARGET atlas_test_indexview
   LIBS     atlas
 )
 
+ecbuild_add_test( TARGET atlas_test_array
+  BOOST
+  MPI      1
+  SOURCES  test_array.cc
+  LIBS     atlas
+)
+
+
+
 ecbuild_add_test( TARGET atlas_test_metadata
   BOOST
   MPI      4

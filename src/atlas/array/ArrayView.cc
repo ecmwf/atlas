@@ -12,6 +12,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
@@ -121,3 +122,4 @@ TEMPLATE_SPECIALIZATION(double);
 
 } // namespace array
 } // namespace atlas
+#endif

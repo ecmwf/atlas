@@ -16,6 +16,8 @@ using atlas::array::DataType;
 namespace atlas {
 namespace array {
 
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
 void Array::resize(const ArrayShape& _shape)
 {
   spec_ = ArraySpec(_shape);
@@ -44,8 +46,11 @@ void Array::resize(size_t size1, size_t size2) { resize( make_shape(size1,size2)
 void Array::resize(size_t size1, size_t size2, size_t size3) { resize( make_shape(size1,size2,size3) ); }
 
 void Array::resize(size_t size1, size_t size2, size_t size3, size_t size4) { resize( make_shape(size1,size2,size3,size4) ); }
+#endif
 
 namespace {
+
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 template< typename DATA_TYPE >
 DATA_TYPE* get_array_data( const Array& arraybase )
 {
@@ -73,9 +78,11 @@ void dump_array_data( const ArrayT<DATA_TYPE>& array, std::ostream& os )
   }
   os << std::endl;
 }
+#endif
 
 }
 
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 template <> const int*    Array::data<int   >() const { return get_array_data<int   >(*this); }
 template <>       int*    Array::data<int   >()       { return get_array_data<int   >(*this); }
 template <> const long*   Array::data<long  >() const { return get_array_data<long  >(*this); }
@@ -89,7 +96,9 @@ template <> void ArrayT<int>::dump(std::ostream& os) const { dump_array_data(*th
 template <> void ArrayT<long>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<float>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<double>::dump(std::ostream& os) const { dump_array_data(*this,os); };
+#endif
 
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 Array* Array::create( DataType datatype, const ArrayShape& shape )
 {
@@ -141,6 +150,7 @@ template <> Array* Array::wrap(int data[], const ArrayShape& s) { return new Arr
 template <> Array* Array::wrap(long data[], const ArrayShape& s) { return new ArrayT<long>(data,s); }
 template <> Array* Array::wrap(float data[], const ArrayShape& s) { return new ArrayT<float>(data,s); }
 template <> Array* Array::wrap(double data[], const ArrayShape& s) { return new ArrayT<double>(data,s); }
+#endif
 
 } // namespace array
 } // namespace atlas

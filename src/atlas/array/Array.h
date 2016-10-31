@@ -19,18 +19,41 @@
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
-#include "storage-facility.hpp"
+
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+   #include "storage-facility.hpp"
+#endif
 
 //------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
 
+//TODO Enable GPU compilation
+//#ifdef __CUDACC__
+//#define BACKEND enumtype::Cuda
+//#else
+#define BACKEND gridtools::enumtype::Host
+//#endif
+
 class Array : public eckit::Owned {
 public:
   static Array* create( array::DataType, const ArrayShape& );
   static Array* create( array::DataType );
   static Array* create( const Array& );
+
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+  template<unsigned int ID, typename Value, typename ... UInts>
+  static Array* create_storage(UInts... dims);
+
+  template <unsigned int ID, typename Value, unsigned int NDims, bool ReadOnly = false>
+  static gridtools::data_view<gridtools::storage_traits<BACKEND>::data_store_t<
+                                  Value, gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> >,
+                              ReadOnly>
+  make_host_view(Array* data);
+
+#endif
+
   template <typename T> static Array* create(const ArrayShape& s);
   template <typename T> static Array* create();
   template <typename T> static Array* create(size_t size);
@@ -47,6 +70,7 @@ public:
   Array(const ArraySpec& s) : spec_(s) {}
 
   virtual array::DataType datatype() const = 0;
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
   virtual double bytes() const = 0;
   virtual void dump(std::ostream& os) const = 0;
 
@@ -61,6 +85,7 @@ public:
   void resize(size_t size1, size_t size2, size_t size3, size_t size4);
 
   void insert(size_t idx1, size_t size1);
+#endif
 
   size_t size() const { return spec_.size(); }
 
@@ -81,19 +106,20 @@ public:
   bool contiguous() const { return spec_.contiguous(); }
 
   /// @brief Access to raw data
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
   template <typename DATATYPE>       DATATYPE* data();
   template <typename DATATYPE> const DATATYPE* data() const;
-
-  void operator=( const Array &array ) { return assign(array); }
   virtual void assign( const Array& )=0;
-
-private: // methods
 
   virtual void resize_data( size_t size )=0;
   virtual void insert_data(size_t idx1, size_t size1)=0;
 
-private:
+  void operator=( const Array &array ) { return assign(array); }
 
+#endif
+
+
+private: // methods
   ArraySpec spec_;
 };
 
@@ -117,6 +143,25 @@ template <typename T> Array* Array::create(size_t size1, size_t size2, size_t si
 
 //------------------------------------------------------------------------------
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+template<typename DATA_TYPE>
+class ArrayT : public Array  {
+public:
+
+public:
+
+  template<typename DataStore>
+  ArrayT(DataStore* ds): owned_(true), data_(static_cast<void*>(ds)) {}
+
+  virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
+
+  void* data() { return data_;}
+private:
+  bool owned_;
+  void* data_;
+};
+
+#else
 template< typename DATA_TYPE >
 class ArrayT : public Array  {
 public:
@@ -170,10 +215,10 @@ public:
   const DATA_TYPE& operator[](size_t i) const { return *(data()+i); }
         DATA_TYPE& operator[](size_t i)       { return *(data()+i); }
 
-  const DATA_TYPE* data() const { return data_; }
-        DATA_TYPE* data()       { return data_; }
+  const DATA_TYPE* data() const { return (data_); }
+        DATA_TYPE* data()       { return (data_); }
 
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) data_[n]=scalar; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) data()[n]=scalar; }
 
   virtual void assign( const Array& );
 
@@ -231,7 +276,7 @@ void ArrayT<DATA_TYPE>::assign( RandomAccessIterator begin, RandomAccessIterator
   }
   RandomAccessIterator it = begin;
   for( size_t j=0; j<size(); ++j, ++it ) {
-    data_[j] = *it;
+    data()[j] = *it;
   }
 }
 
@@ -243,11 +288,43 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
   ASSERT( datatype().kind() == other.datatype().kind() );
   const DATA_TYPE* other_data = other.data<DATA_TYPE>();
   for( size_t j=0; j<size(); ++j )
-    data_[j] = other_data[j];
+    data()[j] = other_data[j];
   view_ = ArrayView<DATA_TYPE>( *this );
 }
+#endif
 
 //------------------------------------------------------------------------------
+
+
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+  template<unsigned int ID, typename Value, typename ... UInts>
+  Array* Array::create_storage(UInts... dims) {
+      static_assert(( sizeof...(dims) > 0), "Error: can not create storages without any dimension");
+      typedef gridtools::storage_traits< BACKEND >::storage_info_t< 0, sizeof...(UInts) > storage_info_ty;
+      storage_info_ty si(dims...);
+
+      typedef gridtools::storage_traits< BACKEND >::data_store_t< Value, storage_info_ty > data_store_t;
+      data_store_t* ds = new data_store_t(dims...);
+      ds->allocate();
+
+      return new ArrayT<Value>(ds);
+  }
+
+  template <unsigned int ID, typename Value, unsigned int NDims, bool ReadOnly>
+  gridtools::data_view<gridtools::storage_traits<BACKEND>::data_store_t<
+                                  Value, gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> >,
+                              ReadOnly>
+  Array::make_host_view(Array* data) {
+    typedef gridtools::storage_traits<BACKEND>::storage_info_t<ID, NDims> storage_info_ty;
+    typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
+
+    data_store_t* ds = reinterpret_cast<data_store_t*>(((ArrayT<Value>*)data)->data());
+
+    return gridtools::make_host_view(*ds);
+  }
+
+#endif
+
 
 } // namespace array
 } // namespace atlas

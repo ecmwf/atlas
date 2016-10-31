@@ -50,6 +50,7 @@
 #include <cstddef>
 #include <vector>
 
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 namespace atlas {
 namespace array {
   class Array;
@@ -356,5 +357,6 @@ private:
 } // namespace atlas
 
 #include "atlas/array/ArrayView_impl.h"
+#endif
 
 #endif
