@@ -19,22 +19,12 @@
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
-
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-   #include "storage-facility.hpp"
-#endif
+#include "atlas/array/GridToolsTraits.h"
 
 //------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
-
-//TODO Enable GPU compilation
-//#ifdef __CUDACC__
-//#define BACKEND enumtype::Cuda
-//#else
-#define BACKEND gridtools::enumtype::Host
-//#endif
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
@@ -76,29 +66,35 @@ public:
 
   };
 
-  template <typename Value, unsigned int NDims, bool ReadOnly = false>
-  static gridtools::data_view<gridtools::storage_traits<BACKEND>::data_store_t<
-                                  Value, gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> >,
-                              ReadOnly>
-  make_host_view(Array* data);
-
   template<typename Value>
   static Array* create_shape(const ArrayShape& shape)
   {
-      assert(shape.size() > 0);
-      switch(shape.size()) {
-          case 1: return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 1>() );
-          case 2: return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 2>() );
-          case 3: return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 3>() );
-          case 4: return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 4>() );
-          case 5: return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 5>() );
-          case 6: return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 6>() );
-          case 7: return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 7>() );
-          case 8: return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 8>() );
-          case 9: return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 9>() );
-      default: assert(false);
+    assert(shape.size() > 0);
+    switch (shape.size()) {
+      case 1:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 1>());
+      case 2:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 2>());
+      case 3:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 3>());
+      case 4:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 4>());
+      case 5:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 5>());
+      case 6:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 6>());
+      case 7:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 7>());
+      case 8:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 8>());
+      case 9:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 9>());
+      default: {
+        std::stringstream err;
+        err << "shape not recognized";
+        throw eckit::BadParameter(err.str(), Here());
       }
-
+    }
   }
 
 #endif
@@ -349,19 +345,6 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
   template<typename Value, typename ... UInts>
   Array* Array::create_storage(UInts... dims) {
       return new ArrayT<Value>(create_storage_<Value>(dims...));
-  }
-
-  template <typename Value, unsigned int NDims, bool ReadOnly>
-  gridtools::data_view<gridtools::storage_traits<BACKEND>::data_store_t<
-                                  Value, gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> >,
-                              ReadOnly>
-  Array::make_host_view(Array* data) {
-    typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> storage_info_ty;
-    typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
-
-    data_store_t* ds = reinterpret_cast<data_store_t*>(((ArrayT<Value>*)data)->data());
-
-    return gridtools::make_host_view(*ds);
   }
 
 #endif

@@ -186,6 +186,7 @@ inline void ArrayView<DATA_TYPE,0>::operator=(const DATA_TYPE& scalar) { for(siz
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 template <typename DATA_TYPE>
 ArrayView<DATA_TYPE,1>::ArrayView( DATA_TYPE* data, const size_t size )
@@ -297,6 +298,7 @@ inline size_t ArrayView<DATA_TYPE,1>::size() const { return shape_[0]; }
 
 template <typename DATA_TYPE>
 inline void ArrayView<DATA_TYPE,1>::operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar; }
+#endif
 
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------

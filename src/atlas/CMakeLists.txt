@@ -264,6 +264,8 @@ array/IndexView.cc
 array/ArrayView.h
 array/ArrayView.cc
 array/DataType.h
+array/GridToolsTraits.h
+array/MakeView.h
 )
 
 list( APPEND atlas_util_srcs

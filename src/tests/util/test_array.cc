@@ -11,6 +11,7 @@
 #define BOOST_TEST_MODULE TestIndexView
 #include "ecbuild/boost_test_framework.h"
 #include "atlas/array/Array.h"
+#include "atlas/array/MakeView.h"
 
 using namespace atlas::array;
 
@@ -20,8 +21,10 @@ namespace test {
 BOOST_AUTO_TEST_CASE( test_array )
 {
    auto ds = Array::create_storage<double>(4);
-   auto hv = Array::make_host_view<double, 1>(ds);
+   auto hv = make_gt_host_view<double, 1>(ds);
    hv(3) = 4.5;
+
+   ArrayView<double, 1> h2v = make_host_view<double, 1>(ds);
 
    BOOST_CHECK_EQUAL( hv(3) , 4.5 );
    
@@ -29,9 +32,10 @@ BOOST_AUTO_TEST_CASE( test_array )
 
 BOOST_AUTO_TEST_CASE( test_array_shape )
 {
-    ArrayShape as{2,3};
-   auto ds = Array::create<double>(as);
-   auto hv = Array::make_host_view<double, 2>(ds);
+   ArrayShape as{2,3};
+   Array* ds = Array::create<double>(as);
+   auto hv = make_gt_host_view<double, 2>(ds);
+
    hv(1,1) = 4.5;
 
    BOOST_CHECK_EQUAL( hv(1,1) , 4.5 );

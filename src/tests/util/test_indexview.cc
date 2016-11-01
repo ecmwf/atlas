@@ -14,6 +14,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define IN_FORTRAN
@@ -34,7 +35,7 @@ std::string pos(Iterator& it)
   return ss.str();
 }
 
-
+/*
 BOOST_AUTO_TEST_CASE( test_array )
 {
   array::ArrayT<int> array (3,1,4);
@@ -90,7 +91,59 @@ BOOST_AUTO_TEST_CASE( test_arrayview_iterator )
     std::cout << "read at pos " << test::pos(const_it) << " : " << *const_it << std::endl;
   }
 }
+*/
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+BOOST_AUTO_TEST_CASE( test_indexview_1d )
+{
+  //array::ArrayT<int> array( 10 );
+
+  Array* array = Array::create<double>(10);
+  ArrayView<double,1> aview = make_host_view<double, 1>(array);
+
+  aview(0) = 1 IN_FORTRAN;
+  BOOST_CHECK_EQUAL( aview(0),       1 IN_FORTRAN );
+
+
+ /*
+  array::ArrayView<int,1>       aview(array);
+  IndexView<int,1>       iview(array);
+  const IndexView<int,1> const_iview(array);
+
+  aview(0) = 1 IN_FORTRAN;
+  BOOST_CHECK_EQUAL( aview(0),       1 IN_FORTRAN );
+  BOOST_CHECK_EQUAL( const_iview(0), 0 );
+  BOOST_CHECK_EQUAL( int(iview(0)),  0 );
+
+  iview(2) = 2;
+  BOOST_CHECK_EQUAL( aview(2),       3 IN_FORTRAN );
+  BOOST_CHECK_EQUAL( const_iview(2), 2 );
+  BOOST_CHECK_EQUAL( int(iview(2)),  2 );
+
+  iview(3) = iview(2);
+  BOOST_CHECK_EQUAL( aview(3),       3 IN_FORTRAN );
+  BOOST_CHECK_EQUAL( const_iview(3), 2 );
+  BOOST_CHECK_EQUAL( int(iview(3)),  2 );
+
+  iview(3) = iview(2) + 1;
+  BOOST_CHECK_EQUAL( aview(3),       4 IN_FORTRAN );
+  BOOST_CHECK_EQUAL( const_iview(3), 3 );
+  BOOST_CHECK_EQUAL( int(iview(3)) , 3 );
+
+  iview(4) = iview(3);
+  ++iview(4);
+  BOOST_CHECK_EQUAL( aview(4),       5 IN_FORTRAN );
+  BOOST_CHECK_EQUAL( const_iview(4), 4 );
+  BOOST_CHECK_EQUAL( int(iview(4)) , 4 );
+
+  int val = iview(4);
+  BOOST_CHECK_EQUAL( val, 4 );
+
+  val = iview(4)+1;
+  BOOST_CHECK_EQUAL( val, 5 );
+*/
+}
+#else
 BOOST_AUTO_TEST_CASE( test_indexview_1d )
 {
   array::ArrayT<int> array( 10 );
@@ -130,8 +183,11 @@ BOOST_AUTO_TEST_CASE( test_indexview_1d )
 
   val = iview(4)+1;
   BOOST_CHECK_EQUAL( val, 5 );
-}
 
+}
+#endif
+
+/*
 BOOST_AUTO_TEST_CASE( test_indexview_2d )
 {
   array::ArrayT<int> array( 5, 10 );
@@ -218,6 +274,7 @@ BOOST_AUTO_TEST_CASE( test_indexview_3d )
   val = iview(i,4,k)+1;
   BOOST_CHECK_EQUAL( val, 5 );
 }
+*/
 
 } // namespace test
 } // namespace atlas
