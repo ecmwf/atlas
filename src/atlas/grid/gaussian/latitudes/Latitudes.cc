@@ -27,6 +27,7 @@ using eckit::Factory;
 using eckit::ScopedPtr;
 
 using atlas::array::ArrayT;
+using atlas::array::ArrayView;
 
 namespace atlas {
 namespace grid {
@@ -256,7 +257,9 @@ void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], do
 
 
     int kdgl = 2*N;
-    ArrayT<double> zfn(kdgl+1,kdgl+1);
+    ArrayT<double> zfn_(kdgl+1,kdgl+1);
+    ArrayView<double,2> zfn(zfn_);
+    
     int iodd;
 
     // Belousov, Swarztrauber use zfn(0,0)=std::sqrt(2.)

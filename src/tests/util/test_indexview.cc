@@ -37,7 +37,8 @@ std::string pos(Iterator& it)
 
 BOOST_AUTO_TEST_CASE( test_array )
 {
-  array::ArrayT<int> array (3,1,4);
+  array::ArrayT<int> _array (3,1,4);
+  array::ArrayView<int,3> array(_array);
   BOOST_CHECK_EQUAL( array.shape(0) , 3 );
   BOOST_CHECK_EQUAL( array.shape(1) , 1 );
   BOOST_CHECK_EQUAL( array.shape(2) , 4 );
@@ -46,7 +47,7 @@ BOOST_AUTO_TEST_CASE( test_array )
   BOOST_CHECK_EQUAL( array.stride(1), 4 );
   BOOST_CHECK_EQUAL( array.stride(2), 1 );
   for( size_t j=0; j<array.size(); ++j ) {
-    array[j] = j;
+    array.data()[j] = j;
   }
   BOOST_CHECK_EQUAL( array(0,0,0) , 0 );
   BOOST_CHECK_EQUAL( array(0,0,1) , 1 );

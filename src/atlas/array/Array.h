@@ -153,19 +153,6 @@ public:
 
 public:
 
-  const DATA_TYPE& operator()(size_t i) const                                         { return view_(i); }
-        DATA_TYPE& operator()(size_t i)                                               { return view_(i); }
-  const DATA_TYPE& operator()(size_t i, size_t j) const                               { return view_(i,j); }
-        DATA_TYPE& operator()(size_t i, size_t j)                                     { return view_(i,j); }
-  const DATA_TYPE& operator()(size_t i, size_t j, size_t k) const                     { return view_(i,j,k); }
-        DATA_TYPE& operator()(size_t i, size_t j, size_t k)                           { return view_(i,j,k); }
-  const DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l) const           { return view_(i,j,k,l); }
-        DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l)                 { return view_(i,j,k,l); }
-  const DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l, size_t m) const { return view_(i,j,k,l,m); }
-        DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l, size_t m)       { return view_(i,j,k,l,m); }
-  const DATA_TYPE& operator()(const ArrayIdx& idx) const                              { return view_(idx); }
-        DATA_TYPE& operator()(const ArrayIdx& idx)                                    { return view_(idx); }
-
   virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
   virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
   virtual void dump(std::ostream& os) const;
@@ -194,7 +181,6 @@ private:
   bool owned_;
   std::vector<DATA_TYPE> owned_data_;
   DATA_TYPE* data_;
-  ArrayView<DATA_TYPE> view_;
 };
 
 
@@ -204,7 +190,6 @@ void ArrayT<DATA_TYPE>::resize_data( size_t size )
   if( !owned_ ) throw eckit::SeriousBug("Cannot resize data that is not owned");
   owned_data_.resize( size );
   data_ = owned_data_.data();
-  view_ = ArrayView<DATA_TYPE>( *this );
 }
 
 template< typename DATA_TYPE>
@@ -213,7 +198,6 @@ void ArrayT<DATA_TYPE>::insert_data(size_t pos, size_t size)
   if( !owned_ ) throw eckit::SeriousBug("Cannot resize data that is not owned");
   owned_data_.insert(owned_data_.begin()+pos,size,0);
   data_ = owned_data_.data();
-  view_ = ArrayView<DATA_TYPE>( *this );
 }
 
 
@@ -221,7 +205,6 @@ template <typename DATA_TYPE>
 void ArrayT<DATA_TYPE>::wrap(DATA_TYPE data[])
 {
   data_ = data;
-  view_ = ArrayView<DATA_TYPE>( *this );
 }
 
 template< typename DATA_TYPE>
@@ -247,7 +230,6 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
   const DATA_TYPE* other_data = other.data<DATA_TYPE>();
   for( size_t j=0; j<size(); ++j )
     data_[j] = other_data[j];
-  view_ = ArrayView<DATA_TYPE>( *this );
 }
 
 //------------------------------------------------------------------------------

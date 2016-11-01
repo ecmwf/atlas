@@ -724,7 +724,7 @@ void dispatch_sum_per_level( const NodeColumns& fs, const field::Field& field, f
       if( ! is_ghost(n) ) {
         for( size_t l=0; l<arr.shape(1); ++l ) {
           for( size_t j=0; j<arr.shape(2); ++j ) {
-            sum_per_level_private(l,j) += arr(n,l,j);
+            sum_per_level_private_view(l,j) += arr(n,l,j);
           }
         }
       }
@@ -733,7 +733,7 @@ void dispatch_sum_per_level( const NodeColumns& fs, const field::Field& field, f
     {
       for( size_t l=0; l<sum_per_level_private.shape(0); ++l ) {
         for( size_t j=0; j<sum_per_level_private.shape(1); ++j ) {
-          sum_per_level(l,j) += sum_per_level_private(l,j);
+          sum_per_level(l,j) += sum_per_level_private_view(l,j);
         }
       }
     }
@@ -1145,12 +1145,12 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const field::Field& fiel
   atlas_omp_parallel
   {
     array::ArrayT<T> min_private(min.shape(0),min.shape(1));
-    array::ArrayView<T> min_private_view(min_private); min_private_view = std::numeric_limits<T>::max();
+    array::ArrayView<T,2> min_private_view(min_private); min_private_view = std::numeric_limits<T>::max();
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          min_private(l,j) = std::min(arr(n,l,j),min_private(l,j));
+          min_private_view(l,j) = std::min(arr(n,l,j),min_private_view(l,j));
         }
       }
     }
@@ -1158,7 +1158,7 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const field::Field& fiel
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          min(l,j) = std::min(min_private(l,j),min(l,j));
+          min(l,j) = std::min(min_private_view(l,j),min(l,j));
         }
       }
     }
@@ -1205,7 +1205,7 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const field::Field& fiel
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          max_private(l,j) = std::max(arr(n,l,j),max_private(l,j));
+          max_private_view(l,j) = std::max(arr(n,l,j),max_private_view(l,j));
         }
       }
     }
@@ -1213,7 +1213,7 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const field::Field& fiel
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          max(l,j) = std::max(max_private(l,j),max(l,j));
+          max(l,j) = std::max(max_private_view(l,j),max(l,j));
         }
       }
     }
@@ -1512,15 +1512,16 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const field
   atlas_omp_parallel
   {
     array::ArrayT<T> min_private(min.shape(0),min.shape(1));
-    array::ArrayView<T> min_private_view(min_private); min_private_view = std::numeric_limits<T>::max();
+    array::ArrayView<T,2> min_private_view(min_private); min_private_view = std::numeric_limits<T>::max();
     array::ArrayT<gidx_t> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
+    array::ArrayView<gidx_t,2> glb_idx_private_view(glb_idx_private);
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
           if( arr(n,l,j) < min(l,j) ) {
-            min_private(l,j) = arr(n,l,j);
-            glb_idx_private(l,j) = n;
+            min_private_view(l,j) = arr(n,l,j);
+            glb_idx_private_view(l,j) = n;
           }
         }
       }
@@ -1529,9 +1530,9 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const field
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          if( min_private(l,j) < min(l,j) ) {
-            min(l,j) = min_private(l,j);
-            glb_idx(l,j) = glb_idx_private(l,j);
+          if( min_private_view(l,j) < min(l,j) ) {
+            min(l,j) = min_private_view(l,j);
+            glb_idx(l,j) = glb_idx_private_view(l,j);
           }
         }
       }
@@ -1600,14 +1601,15 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const field
   atlas_omp_parallel
   {
     array::ArrayT<T> max_private(max.shape(0),max.shape(1));
-    array::ArrayView<T> max_private_view(max_private); max_private_view = -std::numeric_limits<T>::max();
+    array::ArrayView<T,2> max_private_view(max_private); max_private_view = -std::numeric_limits<T>::max();
     array::ArrayT<gidx_t> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
+    array::ArrayView<gidx_t,2> glb_idx_private_view(glb_idx_private);
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
           if( arr(n,l,j) > max(l,j) ) {
-            max_private(l,j) = arr(n,l,j);
+            max_private_view(l,j) = arr(n,l,j);
             glb_idx(l,j) = n;
           }
         }
@@ -1617,9 +1619,9 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const field
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          if( max_private(l,j) > max(l,j) ) {
-            max(l,j) = max_private(l,j);
-            glb_idx(l,j) = glb_idx_private(l,j);
+          if( max_private_view(l,j) > max(l,j) ) {
+            max(l,j) = max_private_view(l,j);
+            glb_idx(l,j) = glb_idx_private_view(l,j);
           }
         }
       }
