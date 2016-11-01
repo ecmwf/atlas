@@ -19,7 +19,10 @@
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/internals/atlas_config.h"
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "storage-facility.hpp"
+#endif
 
 //------------------------------------------------------------------------------
 
