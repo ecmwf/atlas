@@ -46,20 +46,6 @@ void Array::resize(size_t size1, size_t size2, size_t size3) { resize( make_shap
 void Array::resize(size_t size1, size_t size2, size_t size3, size_t size4) { resize( make_shape(size1,size2,size3,size4) ); }
 
 namespace {
-template< typename DATA_TYPE >
-DATA_TYPE* get_array_data( const Array& arraybase )
-{
-  const ArrayT<DATA_TYPE>* array = dynamic_cast< const ArrayT<DATA_TYPE>* >(&arraybase);
-  if( array == NULL )
-  {
-    std::stringstream msg;
-    msg << "Could not cast Array "
-        << " with datatype " << arraybase.datatype().str() << " to "
-        << DataType::str<DATA_TYPE>();
-    throw eckit::BadCast(msg.str(),Here());
-  }
-  return const_cast<DATA_TYPE*>(array->data());
-}
 
 template< typename DATA_TYPE >
 void dump_array_data( const ArrayT<DATA_TYPE>& array, std::ostream& os )
@@ -75,15 +61,6 @@ void dump_array_data( const ArrayT<DATA_TYPE>& array, std::ostream& os )
 }
 
 }
-
-template <> const int*    Array::data<int   >() const { return get_array_data<int   >(*this); }
-template <>       int*    Array::data<int   >()       { return get_array_data<int   >(*this); }
-template <> const long*   Array::data<long  >() const { return get_array_data<long  >(*this); }
-template <>       long*   Array::data<long  >()       { return get_array_data<long  >(*this); }
-template <> const float*  Array::data<float >() const { return get_array_data<float >(*this); }
-template <>       float*  Array::data<float >()       { return get_array_data<float >(*this); }
-template <> const double* Array::data<double>() const { return get_array_data<double>(*this); }
-template <>       double* Array::data<double>()       { return get_array_data<double>(*this); }
 
 template <> void ArrayT<int>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<long>::dump(std::ostream& os) const { dump_array_data(*this,os); };

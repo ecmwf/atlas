@@ -93,8 +93,8 @@ public: // Destructor
 // -- Accessors
 
   /// @brief Access to raw data
-  template <typename DATA_TYPE> const DATA_TYPE* data() const  { return array_->data<DATA_TYPE>(); }
-  template <typename DATA_TYPE>       DATA_TYPE* data()        { return array_->data<DATA_TYPE>(); }
+  template <typename DATA_TYPE> const DATA_TYPE* data() const  { return array::ArrayView<DATA_TYPE>(*array_).data(); }
+  template <typename DATA_TYPE>       DATA_TYPE* data()        { return array::ArrayView<DATA_TYPE>(*array_).data(); }
 
   /// @brief Internal data type of field
   array::DataType datatype() const { return array_->datatype(); }

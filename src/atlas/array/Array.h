@@ -83,10 +83,6 @@ public:
 
   bool contiguous() const { return spec_.contiguous(); }
 
-  /// @brief Access to raw data
-  template <typename DATATYPE>       DATATYPE* data();
-  template <typename DATATYPE> const DATATYPE* data() const;
-
   void operator=( const Array &array ) { return assign(array); }
   virtual void assign( const Array& )=0;
 
@@ -227,7 +223,9 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
   if( not contiguous() or not other.contiguous()) NOTIMP;
   resize( other.shape() );
   ASSERT( datatype().kind() == other.datatype().kind() );
-  const DATA_TYPE* other_data = other.data<DATA_TYPE>();
+  const ArrayT<DATA_TYPE>& other_array = *dynamic_cast< const ArrayT<DATA_TYPE>* >(&other);
+  
+  const DATA_TYPE* other_data = other_array.data();
   for( size_t j=0; j<size(); ++j )
     data_[j] = other_data[j];
 }

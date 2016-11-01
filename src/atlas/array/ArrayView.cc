@@ -17,11 +17,28 @@
 namespace atlas {
 namespace array {
 
+  namespace {
+  template< typename DATA_TYPE >
+  static DATA_TYPE* get_array_data( const Array& arraybase )
+  {
+    const ArrayT<DATA_TYPE>* array = dynamic_cast< const ArrayT<DATA_TYPE>* >(&arraybase);
+    if( array == NULL )
+    {
+      std::stringstream msg;
+      msg << "Could not cast Array "
+          << " with datatype " << arraybase.datatype().str() << " to "
+          << DataType::str<DATA_TYPE>();
+      throw eckit::BadCast(msg.str(),Here());
+    }
+    return const_cast<DATA_TYPE*>(array->data());
+  }
+  }
+
 //------------------------------------------------------------------------------------------------------
 
 #define TEMPLATE_SPECIALIZATION( DATA_TYPE ) \
 template<>\
-ArrayView <DATA_TYPE, 0 >::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(array.data<DATA_TYPE>()) ) \
+ArrayView <DATA_TYPE, 0 >::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(get_array_data<DATA_TYPE>(array)) ) \
 { \
   rank_ = array.strides().size(); \
   strides_ = array.strides(); \
@@ -29,14 +46,14 @@ ArrayView <DATA_TYPE, 0 >::ArrayView( const Array& array ) : data_( const_cast<D
   size_ = std::accumulate(shape_.data(),shape_.data()+rank_,1,std::multiplies<int>()); \
 } \
 template<>\
-ArrayView <DATA_TYPE, 1 >::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(array.data<DATA_TYPE>()) ) \
+ArrayView <DATA_TYPE, 1 >::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(get_array_data<DATA_TYPE>(array)) ) \
 { \
   ASSERT( array.shape().size() >= 1 ); \
   strides_[0]=array.stride(0);  shape_[0]=array.shape(0); \
   ASSERT(size() == array.size()); \
 } \
 template<> \
-ArrayView<DATA_TYPE,2>::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(array.data<DATA_TYPE>()) ) \
+ArrayView<DATA_TYPE,2>::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(get_array_data<DATA_TYPE>(array)) ) \
 { \
   ASSERT( array.rank() > 0 ); \
   if( array.rank() == 1  ) { \
@@ -53,7 +70,7 @@ ArrayView<DATA_TYPE,2>::ArrayView( const Array& array ) : data_( const_cast<DATA
   ASSERT(size() == array.size()); \
 } \
 template<> \
-ArrayView<DATA_TYPE,3>::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(array.data<DATA_TYPE>()) ) \
+ArrayView<DATA_TYPE,3>::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(get_array_data<DATA_TYPE>(array)) ) \
 { \
   ASSERT( array.rank() > 0 ); \
   if( array.rank() == 1  ) { \
@@ -77,7 +94,7 @@ ArrayView<DATA_TYPE,3>::ArrayView( const Array& array ) : data_( const_cast<DATA
   ASSERT(size() == array.size()); \
 } \
 template<> \
-ArrayView<DATA_TYPE,4>::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(array.data<DATA_TYPE>()) ) \
+ArrayView<DATA_TYPE,4>::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(get_array_data<DATA_TYPE>(array)) ) \
 { \
   ASSERT( array.rank() > 0 ); \
   if( array.rank() == 1  ) { \
