@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestIndexView
+#define BOOST_TEST_MODULE TestArray
 #include "ecbuild/boost_test_framework.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/MakeView.h"
@@ -24,10 +24,11 @@ BOOST_AUTO_TEST_CASE( test_array )
    auto hv = make_gt_host_view<double, 1>(ds);
    hv(3) = 4.5;
 
-   ArrayView<double, 1> h2v = make_host_view<double, 1>(ds);
+   ArrayView<double, 1> atlas_hv = make_host_view<double, 1>(ds);
 
    BOOST_CHECK_EQUAL( hv(3) , 4.5 );
-   
+   BOOST_CHECK_EQUAL( atlas_hv(3) , 4.5 );
+
 }
 
 BOOST_AUTO_TEST_CASE( test_array_shape )
@@ -35,11 +36,20 @@ BOOST_AUTO_TEST_CASE( test_array_shape )
    ArrayShape as{2,3};
    Array* ds = Array::create<double>(as);
    auto hv = make_gt_host_view<double, 2>(ds);
+   ArrayView<double, 2> atlas_hv = make_host_view<double, 2>(ds);
 
    hv(1,1) = 4.5;
 
    BOOST_CHECK_EQUAL( hv(1,1) , 4.5 );
+   BOOST_CHECK_EQUAL( atlas_hv(1,1) , 4.5 );
 
+   BOOST_CHECK_EQUAL( ds->size() , 6 );
+   BOOST_CHECK_EQUAL( ds->rank() , 2 );
+   BOOST_CHECK_EQUAL( ds->stride(0) , 3 );
+   BOOST_CHECK_EQUAL( ds->stride(1) , 1 );
+   BOOST_CHECK_EQUAL( ds->contiguous() , true );
+
+   delete ds;
 }
 
 }

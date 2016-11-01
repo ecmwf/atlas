@@ -163,6 +163,14 @@ public:
 
 #endif
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+  template<typename ... UInt>
+  void set_spec(UInt... dims)
+  {
+      spec_ = ArraySpec(ArrayShape{dims...});
+  }
+
+#endif
 
 private: // methods
   ArraySpec spec_;
@@ -344,7 +352,9 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
   template<typename Value, typename ... UInts>
   Array* Array::create_storage(UInts... dims) {
-      return new ArrayT<Value>(create_storage_<Value>(dims...));
+      Array* array = new ArrayT<Value>(create_storage_<Value>(dims...));
+      array->set_spec(dims...);
+      return array;
   }
 
 #endif
