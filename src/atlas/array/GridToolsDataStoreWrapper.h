@@ -28,6 +28,9 @@ namespace array {
         virtual void sync() const = 0;
         virtual bool is_on_host() const = 0;
         virtual bool is_on_device() const = 0;
+        virtual void reactivate_device_write_views() const = 0;
+        virtual void reactivate_host_write_views() const = 0;
+
     };
 
     template<typename DataStore>
@@ -58,6 +61,12 @@ namespace array {
         }
         bool is_on_device() const {
             data_store_->is_on_device();
+        }
+        void reactivate_device_write_views() const {
+            data_store_->reactivate_device_write_views();
+        }
+        void reactivate_host_write_views() const {
+            data_store_->reactivate_host_write_views();
         }
 
     private:

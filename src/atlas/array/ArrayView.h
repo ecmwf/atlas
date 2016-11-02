@@ -88,14 +88,15 @@ public:
 
     template < typename... Coords >
     DATA_TYPE&
+    GT_FUNCTION
     operator()(Coords... c) {
         assert(sizeof...(Coords) == RANK);
         return gt_data_view_(c...);
     }
 
     template <typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == RANK), int>::type>
+    GT_FUNCTION
     DATA_TYPE const& operator()(Coords... c) const {
-      assert(sizeof...(Coords) == RANK);
       return gt_data_view_(c...);
     }
 

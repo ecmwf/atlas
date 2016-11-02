@@ -10,12 +10,11 @@
 namespace atlas {
 namespace array {
 
-//TODO Enable GPU compilation
-//#ifdef __CUDACC__
-//#define BACKEND enumtype::Cuda
-//#else
+#ifdef __CUDACC__
+#define BACKEND gridtools::enumtype::Cuda
+#else
 #define BACKEND gridtools::enumtype::Host
-//#endif
+#endif
 
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
 using data_view_tt = gridtools::data_view<gridtools::storage_traits<BACKEND>::data_store_t<

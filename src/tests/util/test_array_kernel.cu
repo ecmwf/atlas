@@ -9,6 +9,7 @@
  */
 
 #define BOOST_TEST_MODULE TestArrayKernel
+#include <cuda_runtime.h>
 #include "ecbuild/boost_test_framework.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/MakeView.h"
@@ -18,16 +19,30 @@ using namespace atlas::array;
 namespace atlas {
 namespace test {
 
+template<typename Value, int RANK>
+__global__
+void kernel_ex(ArrayView<Value, RANK>& dv)
+{
+    dv(3) += 1;
+}
+
 BOOST_AUTO_TEST_CASE( test_array )
 {
-   auto ds = Array::create<double>(4ul);
-   auto hv = make_gt_host_view<double, 1>(ds);
+   Array* ds = Array::create<double>(4ul);
+   auto hv = make_host_view<double, 1>(ds);
    hv(3) = 4.5;
 
-   ArrayView<double, 1> atlas_hv = make_host_view<double, 1>(ds);
+   auto cv = make_device_view<double, 1>(ds);
 
-   BOOST_CHECK_EQUAL( hv(3) , 4.5 );
-   BOOST_CHECK_EQUAL( atlas_hv(3) , 4.5 );
+   kernel_ex<<<1,1>>>(cv);
+
+   cudaDeviceSynchronize();
+
+   ds->reactivate_host_write_views();
+
+   BOOST_CHECK_EQUAL( hv(3) , 5.5 );
+
+   delete ds;
 }
 
 }

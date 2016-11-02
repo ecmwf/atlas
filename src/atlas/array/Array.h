@@ -217,6 +217,13 @@ public:
       data_store_->is_on_device();
   }
 
+  void reactivate_device_write_views() const {
+      data_store_->reactivate_device_write_views();
+  }
+
+  void reactivate_host_write_views() const {
+      data_store_->reactivate_host_write_views();
+  }
 
 private:
   std::unique_ptr< DataStoreInterface>  data_store_;
@@ -366,14 +373,7 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
 //------------------------------------------------------------------------------
 
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-  // template<typename Value, typename ... UInts>
-  // Array* Array::create_storage(UInts... dims) {
-  //     Array* array = new ArrayT<Value>(create_storage_<Value>(dims...));
-  //     array->set_spec(dims...);
-  //     return array;
-  // }
-#else
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 template <typename T> Array* Array::create(const ArrayShape& s)
 { return create(array::DataType::create<T>(),s); }
