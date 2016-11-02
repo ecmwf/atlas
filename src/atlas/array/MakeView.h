@@ -35,6 +35,12 @@ make_host_view(Array* data) {
   return ArrayView<Value, NDims>(gridtools::make_host_view(*ds));
 }
 
+template <typename Value, unsigned int NDims, bool ReadOnly = false>
+static ArrayView<Value, NDims>
+make_view(Array* data) {
+    return make_host_view<Value, NDims, ReadOnly>(data);
+}
+
 
 }
 }

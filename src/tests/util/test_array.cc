@@ -31,6 +31,19 @@ BOOST_AUTO_TEST_CASE( test_array )
 
 }
 
+BOOST_AUTO_TEST_CASE( test_make_view )
+{
+   auto ds = Array::create<double>(4);
+   auto hv = make_gt_host_view<double, 1>(ds);
+   hv(3) = 4.5;
+
+   ArrayView<double, 1> atlas_hv = make_view<double, 1>(ds);
+
+   BOOST_CHECK_EQUAL( hv(3) , 4.5 );
+   BOOST_CHECK_EQUAL( atlas_hv(3) , 4.5 );
+
+}
+
 BOOST_AUTO_TEST_CASE( test_array_shape )
 {
    ArrayShape as{2,3};

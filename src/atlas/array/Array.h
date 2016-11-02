@@ -21,6 +21,10 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/GridToolsTraits.h"
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#include "GridToolsDataStoreWrapper.h"
+#endif
+
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -125,6 +129,11 @@ public:
 
   Array(){}
   Array(const ArraySpec& s) : spec_(s) {}
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+  template<typename DataStore, typename = typename std::enable_if< gridtools::is_data_store<DataStore>::value > >
+  Array(DataStore* ds) : data_store_( new DataStoreWrapper<DataStore>(ds)) {}
+
+#endif
 
   virtual array::DataType datatype() const = 0;
 #ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
@@ -180,6 +189,9 @@ public:
       spec_ = ArraySpec(ArrayShape{dims...});
   }
 
+private:
+  std::unique_ptr< DataStoreInterface>  data_store_;
+
 #endif
 
 private: // methods
@@ -195,8 +207,8 @@ public:
 
 public:
 
-  template<typename DataStore>
-  ArrayT(DataStore* ds): owned_(true), data_(static_cast<void*>(ds)) {}
+  template<typename DataStore, typename = typename std::enable_if<gridtools::is_data_store<DataStore>::value >::type >
+  ArrayT(DataStore* ds): owned_(true), data_(static_cast<void*>(ds)), Array(ds) {}
 
   virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
 
