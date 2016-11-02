@@ -189,6 +189,27 @@ public:
       spec_ = ArraySpec(ArrayShape{dims...});
   }
 
+  void clone_to_device() const {
+      data_store_->clone_to_device();
+  }
+  void clone_from_device() const {
+      data_store_->clone_from_device();
+  }
+
+  bool valid() const {
+      data_store_->valid();
+  }
+  void sync() const {
+      data_store_->sync();
+  }
+  bool is_on_host() const {
+      data_store_->is_on_host();
+  }
+  bool is_on_device() const {
+      data_store_->is_on_device();
+  }
+
+
 private:
   std::unique_ptr< DataStoreInterface>  data_store_;
 
