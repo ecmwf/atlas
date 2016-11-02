@@ -79,8 +79,10 @@ ecbuild_add_test( TARGET atlas_test_metadata
   LIBS     atlas
 )
 
+if( ENABLE_GPU )
 cuda_add_executable (test_array_kernel test_array_kernel.cu)
   target_link_libraries(test_array_kernel gtest gtest_main cudart pthread)
 #  set_target_properties(test_array_kernel PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${DIR} OUTPUT_NAME ${unit_test})
   add_test (test_array_kernel test_array_kernel)
+endif()
 
