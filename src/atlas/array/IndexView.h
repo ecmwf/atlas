@@ -36,6 +36,8 @@
 #ifndef atlas_IndexView_h
 #define atlas_IndexView_h
 
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
 #include "atlas/internals/atlas_defines.h"
 
 #ifdef ATLAS_INDEXVIEW_BOUNDS_CHECKING
@@ -352,6 +354,8 @@ private:
 
 } // namespace array
 } // namespace atlas
+
+#endif
 
 #undef CHECK_RANK
 #undef CHECK_BOUNDS

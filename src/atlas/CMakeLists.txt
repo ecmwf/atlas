@@ -264,6 +264,8 @@ array/IndexView.cc
 array/ArrayView.h
 array/ArrayView.cc
 array/DataType.h
+array/GridToolsTraits.h
+array/MakeView.h
 )
 
 list( APPEND atlas_util_srcs
@@ -296,10 +298,10 @@ parallel/GatherScatter.cc
 )
 
 list( APPEND atlas_internals_srcs
-internals/AtlasTool.h
-internals/AtlasTool.cc
-internals/AccumulateFaces.h
-internals/AccumulateFaces.cc
+#internals/AtlasTool.h
+#internals/AtlasTool.cc
+#internals/AccumulateFaces.h
+#internals/AccumulateFaces.cc
 internals/Bitflags.h
 internals/Checksum.h
 internals/Checksum.cc
@@ -336,16 +338,16 @@ ecbuild_add_library( TARGET atlas
   HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
 
   SOURCES
-    ${atlas_srcs}
+ #   ${atlas_srcs}
     ${atlas_array_srcs}
-    ${atlas_grid_srcs}
-    ${atlas_mesh_srcs}
-    ${atlas_field_srcs}
-    ${atlas_functionspace_srcs}
-    ${atlas_interpolation_srcs}
-    ${atlas_numerics_srcs}
-    ${atlas_output_srcs}
-    ${atlas_util_srcs}
+ #   ${atlas_grid_srcs}
+ #   ${atlas_mesh_srcs}
+ #   ${atlas_field_srcs}
+ #   ${atlas_functionspace_srcs}
+ #   ${atlas_interpolation_srcs}
+ #   ${atlas_numerics_srcs}
+ #   ${atlas_output_srcs}
+ #   ${atlas_util_srcs}
     ${atlas_internals_srcs}
     ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.h
     ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.cc

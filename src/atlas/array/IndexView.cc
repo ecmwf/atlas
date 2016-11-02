@@ -14,6 +14,7 @@
 #include "atlas/array/IndexView.h"
 
 //------------------------------------------------------------------------------------------------------
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 namespace atlas {
 namespace array {
@@ -88,3 +89,4 @@ TEMPLATE_SPECIALIZATION(int);
 
 } // namespace array
 } // namespace atlas
+#endif

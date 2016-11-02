@@ -138,8 +138,10 @@ public: // Destructor
   /// @brief Rank of field
   size_t rank() const { return array_->rank(); }
 
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
   /// @brief Number of bytes occupied by the values of this field
   double bytes() const { return array_->bytes(); }
+#endif
 
   /// @brief Output information of field
   friend std::ostream& operator<<( std::ostream& os, const Field& v);

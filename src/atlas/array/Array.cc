@@ -16,6 +16,8 @@ using atlas::array::DataType;
 namespace atlas {
 namespace array {
 
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
 void Array::resize(const ArrayShape& _shape)
 {
   spec_ = ArraySpec(_shape);
@@ -44,9 +46,11 @@ void Array::resize(size_t size1, size_t size2) { resize( make_shape(size1,size2)
 void Array::resize(size_t size1, size_t size2, size_t size3) { resize( make_shape(size1,size2,size3) ); }
 
 void Array::resize(size_t size1, size_t size2, size_t size3, size_t size4) { resize( make_shape(size1,size2,size3,size4) ); }
+#endif
+
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 namespace {
-
 template< typename DATA_TYPE >
 void dump_array_data( const ArrayT<DATA_TYPE>& array, std::ostream& os )
 {
@@ -59,14 +63,15 @@ void dump_array_data( const ArrayT<DATA_TYPE>& array, std::ostream& os )
   }
   os << std::endl;
 }
-
 }
-
 template <> void ArrayT<int>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<long>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<float>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<double>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 
+#endif
+
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 Array* Array::create( DataType datatype, const ArrayShape& shape )
 {
@@ -101,6 +106,28 @@ Array* Array::create( DataType datatype )
   }
   return 0;
 }
+#else
+
+Array* Array::create( DataType datatype, const ArrayShape& shape )
+{
+  switch( datatype.kind() )
+  {
+    case DataType::KIND_REAL64: return create<double>(shape);
+    case DataType::KIND_REAL32: return create<float>(shape);
+    case DataType::KIND_INT32:  return create<int>(shape);
+    case DataType::KIND_INT64:  return create<long>(shape);
+    default:
+    {
+      std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
+      throw eckit::BadParameter(err.str(),Here());
+    }
+  }
+  return 0;
+}
+
+#endif
+
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 Array* Array::create( const Array& other )
 {
@@ -118,6 +145,7 @@ template <> Array* Array::wrap(int data[], const ArrayShape& s) { return new Arr
 template <> Array* Array::wrap(long data[], const ArrayShape& s) { return new ArrayT<long>(data,s); }
 template <> Array* Array::wrap(float data[], const ArrayShape& s) { return new ArrayT<float>(data,s); }
 template <> Array* Array::wrap(double data[], const ArrayShape& s) { return new ArrayT<double>(data,s); }
+#endif
 
 } // namespace array
 } // namespace atlas

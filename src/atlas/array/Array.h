@@ -19,28 +19,105 @@
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/internals/atlas_config.h"
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#include "storage-facility.hpp"
-#endif
+#include "atlas/array/GridToolsTraits.h"
 
 //------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
+template<typename DATA_TYPE>
+class ArrayT;
+
+#endif
+
 class Array : public eckit::Owned {
 public:
   static Array* create( array::DataType, const ArrayShape& );
   static Array* create( array::DataType );
   static Array* create( const Array& );
+
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
+private:
+
+  template<typename Value>
+  struct storage_creator {
+      template<typename UInt, UInt ... Indices>
+      static Array* apply(const ArrayShape& shape, gridtools::gt_integer_sequence<UInt, Indices...> ) {
+          return Array::create<Value>(shape[Indices]...);
+      }
+
+  };
+
+  template <typename Value, typename... UInts>
+  static gridtools::storage_traits<BACKEND>::data_store_t<
+      Value, gridtools::storage_traits<BACKEND>::storage_info_t<0, sizeof...(UInts)> >* create_storage_(UInts... dims) {
+    static_assert((sizeof...(dims) > 0), "Error: can not create storages without any dimension");
+    typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, sizeof...(UInts)> storage_info_ty;
+    storage_info_ty si(dims...);
+
+    typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
+    data_store_t* ds = new data_store_t(si);
+    ds->allocate();
+
+    return ds;
+  }
+
+public:
+
+  template<typename Value, typename ... UInts, typename = gridtools::all_integers<UInts...> >
+  static Array* create(UInts... dims)
+  {
+      Array* array = new ArrayT<Value>(create_storage_<Value>(dims...));
+      array->set_spec(dims...);
+      return array;
+  }
+
+  template<typename Value>
+  static Array* create(const ArrayShape& shape)
+  {
+    assert(shape.size() > 0);
+    switch (shape.size()) {
+      case 1:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 1>());
+      case 2:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 2>());
+      case 3:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 3>());
+      case 4:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 4>());
+      case 5:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 5>());
+      case 6:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 6>());
+      case 7:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 7>());
+      case 8:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 8>());
+      case 9:
+        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 9>());
+      default: {
+        std::stringstream err;
+        err << "shape not recognized";
+        throw eckit::BadParameter(err.str(), Here());
+      }
+    }
+  }
+
+#else
+
   template <typename T> static Array* create(const ArrayShape& s);
-  template <typename T> static Array* create();
   template <typename T> static Array* create(size_t size);
   template <typename T> static Array* create(size_t size1, size_t size2);
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3);
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3, size_t size4);
 
+#endif
+
+  template <typename T> static Array* create();
   template <typename T> static Array* wrap(T data[], const ArraySpec&);
   template <typename T> static Array* wrap(T data[], const ArrayShape&);
 
@@ -50,6 +127,7 @@ public:
   Array(const ArraySpec& s) : spec_(s) {}
 
   virtual array::DataType datatype() const = 0;
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
   virtual double bytes() const = 0;
   virtual void dump(std::ostream& os) const = 0;
 
@@ -64,6 +142,7 @@ public:
   void resize(size_t size1, size_t size2, size_t size3, size_t size4);
 
   void insert(size_t idx1, size_t size1);
+#endif
 
   size_t size() const { return spec_.size(); }
 
@@ -83,39 +162,51 @@ public:
 
   bool contiguous() const { return spec_.contiguous(); }
 
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
   void operator=( const Array &array ) { return assign(array); }
-  virtual void assign( const Array& )=0;
 
-private: // methods
+  virtual void assign( const Array& )=0;
 
   virtual void resize_data( size_t size )=0;
   virtual void insert_data(size_t idx1, size_t size1)=0;
 
-private:
+  void operator=( const Array &array ) { return assign(array); }
+#endif
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+  template<typename ... UInt>
+  void set_spec(UInt... dims)
+  {
+      spec_ = ArraySpec(ArrayShape{dims...});
+  }
+
+#endif
+
+private: // methods
   ArraySpec spec_;
 };
 
-template <typename T> Array* Array::create(const ArrayShape& s)
-{ return create(array::DataType::create<T>(),s); }
-
-template <typename T> Array* Array::create()
-{ return create(array::DataType::create<T>()); }
-
-template <typename T> Array* Array::create(size_t size)
-{ return create(array::DataType::create<T>(),make_shape(size)); }
-
-template <typename T> Array* Array::create(size_t size1, size_t size2)
-{ return create(array::DataType::create<T>(),make_shape(size1,size2)); }
-
-template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3)
-{ return create(array::DataType::create<T>(),make_shape(size1,size2,size3)); }
-
-template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3, size_t size4)
-{ return create(array::DataType::create<T>(),make_shape(size1,size2,size3,size4)); }
-
 //------------------------------------------------------------------------------
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+template<typename DATA_TYPE>
+class ArrayT : public Array  {
+public:
+
+public:
+
+  template<typename DataStore>
+  ArrayT(DataStore* ds): owned_(true), data_(static_cast<void*>(ds)) {}
+
+  virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
+
+  void* data() { return data_;}
+private:
+  bool owned_;
+  void* data_;
+};
+
+#else
 template< typename DATA_TYPE >
 class ArrayT : public Array  {
 public:
@@ -156,10 +247,10 @@ public:
   const DATA_TYPE& operator[](size_t i) const { return *(data()+i); }
         DATA_TYPE& operator[](size_t i)       { return *(data()+i); }
 
-  const DATA_TYPE* data() const { return data_; }
-        DATA_TYPE* data()       { return data_; }
+  const DATA_TYPE* data() const { return (data_); }
+        DATA_TYPE* data()       { return (data_); }
 
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) data_[n]=scalar; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) data()[n]=scalar; }
 
   virtual void assign( const Array& );
 
@@ -213,7 +304,7 @@ void ArrayT<DATA_TYPE>::assign( RandomAccessIterator begin, RandomAccessIterator
   }
   RandomAccessIterator it = begin;
   for( size_t j=0; j<size(); ++j, ++it ) {
-    data_[j] = *it;
+    data()[j] = *it;
   }
 }
 
@@ -227,10 +318,39 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
   
   const DATA_TYPE* other_data = other_array.data();
   for( size_t j=0; j<size(); ++j )
-    data_[j] = other_data[j];
+    data()[j] = other_data[j];
 }
+#endif
 
 //------------------------------------------------------------------------------
+
+
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+  // template<typename Value, typename ... UInts>
+  // Array* Array::create_storage(UInts... dims) {
+  //     Array* array = new ArrayT<Value>(create_storage_<Value>(dims...));
+  //     array->set_spec(dims...);
+  //     return array;
+  // }
+#else
+
+template <typename T> Array* Array::create(const ArrayShape& s)
+{ return create(array::DataType::create<T>(),s); }
+
+template <typename T> Array* Array::create(size_t size)
+{ return create(array::DataType::create<T>(),make_shape(size)); }
+
+template <typename T> Array* Array::create(size_t size1, size_t size2)
+{ return create(array::DataType::create<T>(),make_shape(size1,size2)); }
+
+template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3)
+{ return create(array::DataType::create<T>(),make_shape(size1,size2,size3)); }
+
+template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3, size_t size4)
+{ return create(array::DataType::create<T>(),make_shape(size1,size2,size3,size4)); }
+
+#endif
+
 
 } // namespace array
 } // namespace atlas

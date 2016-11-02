@@ -49,6 +49,8 @@
 
 #include <cstddef>
 #include <vector>
+#include "atlas/internals/atlas_defines.h"
+#include "atlas/array/GridToolsTraits.h"
 
 namespace atlas {
 namespace array {
@@ -66,6 +68,85 @@ namespace array {
 
 namespace atlas {
 namespace array {
+
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
+template< typename DATA_TYPE, int RANK >
+class ArrayView
+{
+public:
+// -- Type definitions
+  typedef ArrayView_iterator<DATA_TYPE,RANK>         iterator;
+  typedef ArrayView_const_iterator<DATA_TYPE,RANK>   const_iterator;
+  typedef typename remove_const<DATA_TYPE>::type  value_type;
+
+  using data_view_t = data_view_tt<DATA_TYPE, RANK>;
+
+public:
+
+    ArrayView(data_view_t data_view) : gt_data_view_(data_view) {}
+
+    template < typename... Coords >
+    DATA_TYPE&
+    operator()(Coords... c) {
+        assert(sizeof...(Coords) == RANK);
+        return gt_data_view_(c...);
+    }
+
+    template <typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == RANK), int>::type>
+    DATA_TYPE const& operator()(Coords... c) const {
+      assert(sizeof...(Coords) == RANK);
+      return gt_data_view_(c...);
+    }
+
+private:
+    data_view_t gt_data_view_;
+//// -- Constructors
+//  ArrayView() {}
+//  ArrayView( DATA_TYPE* data, const size_t size );
+//  ArrayView( DATA_TYPE* data, const ArrayShape::value_type shape[1], const ArrayStrides::value_type strides[1] );
+//  ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[1] );
+//  ArrayView( const DATA_TYPE* data, const ArrayShape& shape );
+//  ArrayView( const Array& );
+
+//// -- Iterators
+//  iterator       begin();
+//  iterator       end();
+//  const_iterator begin() const;
+//  const_iterator end()   const;
+//  const_iterator cbegin() const;
+//  const_iterator cend() const;
+
+//// -- Operators
+//  const DATA_TYPE& operator()(size_t i) const;
+//        DATA_TYPE& operator()(size_t i);
+//  const DATA_TYPE& operator()(const ArrayIdx& idx) const;
+//        DATA_TYPE& operator()(const ArrayIdx& idx);
+//  const DATA_TYPE& operator[](size_t i) const;
+//        DATA_TYPE& operator[](size_t i);
+//  const DATA_TYPE& at(size_t i) const;
+//        DATA_TYPE& at(size_t i);
+//  void operator=(const DATA_TYPE& scalar);
+
+//// -- Accessors
+//  const DATA_TYPE* data() const;
+//        DATA_TYPE* data();
+//  const ArrayStrides::value_type* strides() const;
+//  const ArrayShape::value_type* shape() const;
+//  ArrayShape::value_type shape(const size_t i) const;
+//  ArrayStrides::value_type stride(size_t i) const;
+//  size_t rank() const;
+//  size_t size() const;
+
+//private:
+//// -- Private data
+//  DATA_TYPE* data_;
+//  ArrayStrides::value_type strides_[1];
+//  ArrayShape::value_type   shape_[1];
+};
+
+#else
+
 
 template< typename DATA_TYPE >
 class ArrayView<DATA_TYPE,0>
@@ -125,7 +206,6 @@ private:
   size_t rank_;
   size_t size_;
 };
-
 
 //------------------------------------------------------------------------------------------------------
 
@@ -351,6 +431,7 @@ private:
 };
 
 //------------------------------------------------------------------------------------------------------
+#endif
 
 } // namespace array
 } // namespace atlas
