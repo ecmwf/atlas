@@ -264,6 +264,7 @@ array/IndexView.cc
 array/ArrayView.h
 array/ArrayView.cc
 array/DataType.h
+array/GridToolsDataStoreWrapper.h
 array/GridToolsTraits.h
 array/MakeView.h
 )
