@@ -5,7 +5,6 @@
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "storage-facility.hpp"
-
 //------------------------------------------------------------------------------
 
 namespace atlas {

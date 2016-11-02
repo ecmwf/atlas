@@ -44,8 +44,17 @@ public:
   static Array* create( const Array& );
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-  template<typename Value, typename ... UInts >
-  static Array* create_storage(UInts... dims);
+
+private:
+
+  template<typename Value>
+  struct storage_creator {
+      template<typename UInt, UInt ... Indices>
+      static Array* apply(const ArrayShape& shape, gridtools::gt_integer_sequence<UInt, Indices...> ) {
+          return Array::create<Value>(shape[Indices]...);
+      }
+
+  };
 
   template <typename Value, typename... UInts>
   static gridtools::storage_traits<BACKEND>::data_store_t<
@@ -61,17 +70,18 @@ public:
     return ds;
   }
 
-  template<typename Value>
-  struct storage_creator {
-      template<typename UInt, UInt ... Indices>
-      static Array* apply(const ArrayShape& shape, gridtools::gt_integer_sequence<UInt, Indices...> ) {
-          return Array::create_storage<Value>(shape[Indices]...);
-      }
+public:
 
-  };
+  template<typename Value, typename ... UInts, typename = gridtools::all_integers<UInts...> >
+  static Array* create(UInts... dims)
+  {
+      Array* array = new ArrayT<Value>(create_storage_<Value>(dims...));
+      array->set_spec(dims...);
+      return array;
+  }
 
   template<typename Value>
-  static Array* create_shape(const ArrayShape& shape)
+  static Array* create(const ArrayShape& shape)
   {
     assert(shape.size() > 0);
     switch (shape.size()) {
@@ -101,15 +111,17 @@ public:
     }
   }
 
-#endif
+#else
 
   template <typename T> static Array* create(const ArrayShape& s);
-  template <typename T> static Array* create();
   template <typename T> static Array* create(size_t size);
   template <typename T> static Array* create(size_t size1, size_t size2);
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3);
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3, size_t size4);
 
+#endif
+
+  template <typename T> static Array* create();
   template <typename T> static Array* wrap(T data[], const ArraySpec&);
   template <typename T> static Array* wrap(T data[], const ArrayShape&);
 
@@ -173,7 +185,6 @@ public:
 #endif
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-
   template<typename ... UInt>
   void set_spec(UInt... dims)
   {
@@ -182,33 +193,12 @@ public:
 
 private:
   std::unique_ptr< DataStoreInterface>  data_store_;
-  void clone_to_device() const {
-
-  }
 
 #endif
 
 private: // methods
   ArraySpec spec_;
 };
-
-template <typename T> Array* Array::create(const ArrayShape& s)
-{ return create(array::DataType::create<T>(),s); }
-
-template <typename T> Array* Array::create()
-{ return create(array::DataType::create<T>()); }
-
-template <typename T> Array* Array::create(size_t size)
-{ return create(array::DataType::create<T>(),make_shape(size)); }
-
-template <typename T> Array* Array::create(size_t size1, size_t size2)
-{ return create(array::DataType::create<T>(),make_shape(size1,size2)); }
-
-template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3)
-{ return create(array::DataType::create<T>(),make_shape(size1,size2,size3)); }
-
-template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3, size_t size4)
-{ return create(array::DataType::create<T>(),make_shape(size1,size2,size3,size4)); }
 
 //------------------------------------------------------------------------------
 
@@ -366,12 +356,28 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
 
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-  template<typename Value, typename ... UInts>
-  Array* Array::create_storage(UInts... dims) {
-      Array* array = new ArrayT<Value>(create_storage_<Value>(dims...));
-      array->set_spec(dims...);
-      return array;
-  }
+  // template<typename Value, typename ... UInts>
+  // Array* Array::create_storage(UInts... dims) {
+  //     Array* array = new ArrayT<Value>(create_storage_<Value>(dims...));
+  //     array->set_spec(dims...);
+  //     return array;
+  // }
+#else
+
+template <typename T> Array* Array::create(const ArrayShape& s)
+{ return create(array::DataType::create<T>(),s); }
+
+template <typename T> Array* Array::create(size_t size)
+{ return create(array::DataType::create<T>(),make_shape(size)); }
+
+template <typename T> Array* Array::create(size_t size1, size_t size2)
+{ return create(array::DataType::create<T>(),make_shape(size1,size2)); }
+
+template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3)
+{ return create(array::DataType::create<T>(),make_shape(size1,size2,size3)); }
+
+template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3, size_t size4)
+{ return create(array::DataType::create<T>(),make_shape(size1,size2,size3,size4)); }
 
 #endif
 
