@@ -47,6 +47,12 @@ public:
 
 private:
 
+  //indirection around C++11 sizeof... since it is buggy for nvcc and cray
+  template<typename ...T>
+  struct get_pack_size {
+      using type = gridtools::static_uint< sizeof...(T) >;
+  };
+
   template<typename Value>
   struct storage_creator {
       template<typename UInt, UInt ... Indices>
@@ -56,11 +62,13 @@ private:
 
   };
 
+public:
   template <typename Value, typename... UInts>
   static gridtools::storage_traits<BACKEND>::data_store_t<
-      Value, gridtools::storage_traits<BACKEND>::storage_info_t<0, sizeof...(UInts)> >* create_storage_(UInts... dims) {
+      Value, gridtools::storage_traits<BACKEND>::storage_info_t<0, get_pack_size<UInts...>::type::value> >* create_storage_(UInts... dims) {
     static_assert((sizeof...(dims) > 0), "Error: can not create storages without any dimension");
-    typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, sizeof...(UInts)> storage_info_ty;
+
+    typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, get_pack_size<UInts...>::type::value> storage_info_ty;
     storage_info_ty si(dims...);
 
     typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
