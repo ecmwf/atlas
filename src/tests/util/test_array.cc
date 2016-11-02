@@ -20,7 +20,7 @@ namespace test {
 
 BOOST_AUTO_TEST_CASE( test_array )
 {
-   auto ds = Array::create_storage<double>(4);
+   auto ds = Array::create<double>(4ul);
    auto hv = make_gt_host_view<double, 1>(ds);
    hv(3) = 4.5;
 

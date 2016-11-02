@@ -139,10 +139,10 @@ Array* Array::create( DataType datatype, const ArrayShape& shape )
 {
   switch( datatype.kind() )
   {
-    case DataType::KIND_REAL64: return create_shape<double>(shape);
-    case DataType::KIND_REAL32: return create_shape<float>(shape);
-    case DataType::KIND_INT32:  return create_shape<int>(shape);
-    case DataType::KIND_INT64:  return create_shape<long>(shape);
+    case DataType::KIND_REAL64: return create<double>(shape);
+    case DataType::KIND_REAL32: return create<float>(shape);
+    case DataType::KIND_INT32:  return create<int>(shape);
+    case DataType::KIND_INT64:  return create<long>(shape);
     default:
     {
       std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
