@@ -149,8 +149,40 @@ find_path( GRIDTOOLS_STORAGE_INCLUDE_DIRS
 )
 
 if( GRIDTOOLS_STORAGE_INCLUDE_DIRS ) 
-   set( ATLAS_HAVE_GRIDTOOLS_STORAGE 1)
-   ecbuild_add_cxx11_flags()
+    set( ATLAS_HAVE_GRIDTOOLS_STORAGE 1)
+    ecbuild_add_cxx11_flags()
+
+    set( ENABLE_GPU "OFF" CACHE BOOL "Compile with GPU support (CUDA)" )
+
+
+    if(ENABLE_GPU)
+        find_package(CUDA REQUIRED)
+        string(REPLACE "." "" CUDA_VERSION ${CUDA_VERSION})
+        add_definitions(-DCUDA_VERSION=${CUDA_VERSION})
+
+        set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+        if( ${CUDA_VERSION} VERSION_GREATER "60")
+            set(CUDA_NVCC_FLAGS "--std=c++11" "--expt-relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
+        else()
+            message(FATAL_ERROR "CUDA 6.0 or lower does not support C++11 (disabling)")
+        endif()
+
+        set( CUDA_ARCH "sm_35" CACHE STRING "Compute capability for CUDA" )
+        set( CUDA_SEPARABLE_COMPILATION ON)
+
+        include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
+
+        set(exe_LIBS "${CUDA_CUDART_LIBRARY}" "${exe_LIBS}" )
+        set(CUDA_SEPARABLE_COMPILATION ON)
+        # adding the additional nvcc flags
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-arch=${CUDA_ARCH}" "-Xcudafe" "--diag_suppress=dupl_calling_convention")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-Xcudafe" "--diag_suppress=code_is_unreachable" "-Xcudafe")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=implicit_return_from_non_void_function" "-Xcudafe")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=calling_convention_not_allowed" "-Xcudafe")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=conflicting_calling_conventions")
+
+    endif()
+
 endif()
 
 ### Eigen
