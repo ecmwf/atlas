@@ -35,6 +35,7 @@ make_host_view(Array* data) {
   return ArrayView<Value, NDims>(gridtools::make_host_view(*ds));
 }
 
+#ifdef __CUDACC__
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
 static data_view_tt<Value, NDims>
 make_gt_device_view(Array* data) {
@@ -59,7 +60,7 @@ make_device_view(Array* data) {
 
   return ArrayView<Value, NDims>(gridtools::make_device_view(*ds));
 }
-
+#endif
 
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
 static ArrayView<Value, NDims>
