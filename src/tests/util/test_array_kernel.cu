@@ -21,26 +21,28 @@ namespace test {
 
 template<typename Value, int RANK>
 __global__
-void kernel_ex(ArrayView<Value, RANK>& dv)
+void kernel_ex(ArrayView<Value, RANK> dv)
 {
-    dv(3) += 1;
+    dv(3, 3, 3) += 1;
 }
 
 BOOST_AUTO_TEST_CASE( test_array )
 {
-   Array* ds = Array::create<double>(4ul);
-   auto hv = make_host_view<double, 1>(ds);
-   hv(3) = 4.5;
+   Array* ds = Array::create<double>(4ul, 4ul, 4ul);
+   auto hv = make_host_view<double, 3>(ds);
+   hv(3, 3, 3) = 4.5;
 
-   auto cv = make_device_view<double, 1>(ds);
+   ds->clone_to_device();
+   auto cv = make_device_view<double, 3>(ds);
 
    kernel_ex<<<1,1>>>(cv);
 
    cudaDeviceSynchronize();
 
+   ds->clone_from_device();
    ds->reactivate_host_write_views();
 
-   BOOST_CHECK_EQUAL( hv(3) , 5.5 );
+   BOOST_CHECK_EQUAL( hv(3, 3, 3) , 5.5 );
 
    delete ds;
 }
