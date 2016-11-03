@@ -80,8 +80,9 @@ ecbuild_add_test( TARGET atlas_test_metadata
 )
 
 if( ENABLE_GPU )
+ADD_LIBRARY(boost_unit_test_framework STATIC IMPORTED)
 cuda_add_executable (test_array_kernel test_array_kernel.cu)
-  target_link_libraries(test_array_kernel cudart pthread)
+  target_link_libraries(test_array_kernel eckit ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} cudart pthread)
 #  set_target_properties(test_array_kernel PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${DIR} OUTPUT_NAME ${unit_test})
   add_test (test_array_kernel test_array_kernel)
 endif()
