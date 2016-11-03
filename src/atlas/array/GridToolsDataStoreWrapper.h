@@ -51,16 +51,16 @@ namespace array {
         }
 
         bool valid() const {
-            data_store_->valid();
+            return data_store_->valid();
         }
         void sync() const {
             data_store_->sync();
         }
         bool is_on_host() const {
-            data_store_->is_on_host();
+            return data_store_->is_on_host();
         }
         bool is_on_device() const {
-            data_store_->is_on_device();
+            return data_store_->is_on_device();
         }
         void reactivate_device_write_views() const {
             data_store_->reactivate_device_write_views();
