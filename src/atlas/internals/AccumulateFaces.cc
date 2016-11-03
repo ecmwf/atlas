@@ -13,7 +13,6 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/internals/AccumulateFaces.h"
-#include "atlas/array/IndexView.h"
 
 namespace atlas {
 namespace internals {

@@ -31,6 +31,8 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/Checksum.h"
 
+using atlas::internals::LON;
+using atlas::internals::LAT;
 using atlas::functionspace::NodeColumns;
 using atlas::mesh::Halo;
 
@@ -42,7 +44,7 @@ namespace {
 
 void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2] )
 {
-  array::ArrayView<double,2> lonlat( nodes.lonlat() );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
   const int nb_nodes = nodes.size();
   min[internals::LON] =  std::numeric_limits<double>::max();
   min[internals::LAT] =  std::numeric_limits<double>::max();
@@ -117,10 +119,10 @@ void build_median_dual_mesh( Mesh& mesh )
 
   build_dual_normals( mesh );
 
-  array::ArrayView<double,1> skewness ( mesh.edges().add( field::Field::create<double>("skewness",array::make_shape(mesh.edges().size()))) );
-  array::ArrayView<double,1> alpha    ( mesh.edges().add( field::Field::create<double>("alpha",array::make_shape(mesh.edges().size()))) );
-  skewness = 0.;
-  alpha = 0.5;
+  field::Field& skewness = mesh.edges().add( field::Field::create<double>("skewness",array::make_shape(mesh.edges().size())));
+  field::Field& alpha    = mesh.edges().add( field::Field::create<double>("alpha",array::make_shape(mesh.edges().size())));
+  skewness.initializeTo(0.);
+  alpha.initializeTo(0.5);
 
   eckit::SharedPtr<functionspace::NodeColumns> nodes_fs(new functionspace::NodeColumns(mesh, Halo(mesh)));
   nodes_fs->haloExchange(nodes.field( "dual_volumes" ));
@@ -135,9 +137,9 @@ void build_median_dual_mesh( Mesh& mesh )
 
 array::Array* build_centroids_lonlat( const mesh::HybridElements& elements, const field::Field& field_lonlat )
 {
-  const array::ArrayView<double,2> lonlat( field_lonlat );
+  const array::ArrayView<double,2> lonlat = array::make_view<double,2>( field_lonlat );
   array::Array* array_centroids = array::Array::create<double>(array::make_shape(elements.size(),2));
-  array::ArrayView<double,2> centroids( *array_centroids );
+  array::ArrayView<double,2> centroids = array::make_view<double,2>( *array_centroids );
   size_t nb_elems = elements.size();
   const mesh::HybridElements::Connectivity& elem_nodes = elements.node_connectivity();
   for (size_t e=0; e<nb_elems; ++e)
@@ -163,11 +165,11 @@ void add_median_dual_volume_contribution_cells(
     const mesh::Nodes& nodes,
     array::Array& array_dual_volumes )
 {
-  array::ArrayView<double,1> dual_volumes( array_dual_volumes );
+  array::ArrayView<double,1> dual_volumes = array::make_view<double,1> ( array_dual_volumes );
 
-  const array::ArrayView<double,2> lonlat ( nodes.lonlat() );
-  const array::ArrayView<double,2> cell_centroids ( cells.field("centroids_lonlat") );
-  const array::ArrayView<double,2> edge_centroids ( edges.field("centroids_lonlat") );
+  const array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
+  const array::ArrayView<double,2> cell_centroids = array::make_view<double,2>( cells.field("centroids_lonlat") );
+  const array::ArrayView<double,2> edge_centroids = array::make_view<double,2>( edges.field("centroids_lonlat") );
   const mesh::HybridElements::Connectivity& cell_edge_connectivity = cells.edge_connectivity();
   const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
 
@@ -175,7 +177,8 @@ void add_median_dual_volume_contribution_cells(
   size_t nb_cells = cells.size();
   std::vector<Node> ordering(nb_cells);
   for (size_t jcell=0; jcell<nb_cells; ++jcell)
-    ordering[jcell] = Node( internals::unique_lonlat(cell_centroids[jcell]), jcell );
+    ordering[jcell] = Node( internals::unique_lonlat(
+      cell_centroids(jcell,LON), cell_centroids(jcell,LAT) ), jcell );
   std::sort( ordering.data(), ordering.data()+nb_cells );
 
   for (size_t jcell=0; jcell<nb_cells; ++jcell)
@@ -206,9 +209,9 @@ void add_median_dual_volume_contribution_poles(
     const mesh::Nodes& nodes,
     array::Array& array_dual_volumes )
 {
-  array::ArrayView<double,1> dual_volumes( array_dual_volumes );
-  const array::ArrayView<double,2> lonlat ( nodes.lonlat() );
-  const array::ArrayView<double,2> edge_centroids ( edges.field("centroids_lonlat") );
+  array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( array_dual_volumes );
+  const array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
+  const array::ArrayView<double,2> edge_centroids = array::make_view<double,2>( edges.field("centroids_lonlat") );
   const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
   const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
 
@@ -261,20 +264,20 @@ void add_median_dual_volume_contribution_poles(
 
 void build_dual_normals( Mesh& mesh )
 {
-  array::ArrayView<double,2> elem_centroids( mesh.cells().field("centroids_lonlat") );
+  array::ArrayView<double,2> elem_centroids = array::make_view<double,2>( mesh.cells().field("centroids_lonlat") );
 
   mesh::Nodes&  nodes = mesh.nodes();
   mesh::HybridElements&  edges = mesh.edges();
   const size_t nb_edges = edges.size();
 
-  array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
+  array::ArrayView<double,2> node_lonlat = array::make_view<double,2>( nodes.lonlat() );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
   double tol = 1.e-6;
 
   double xl, yl, xr, yr;
-  array::ArrayView<double,2> edge_centroids( edges.field("centroids_lonlat") );
-  array::ArrayView<double,2> dual_normals  ( edges.add( field::Field::create<double>("dual_normals",array::make_shape(nb_edges,2)) ) );
+  array::ArrayView<double,2> edge_centroids = array::make_view<double,2>( edges.field("centroids_lonlat") );
+  array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.add( field::Field::create<double>("dual_normals",array::make_shape(nb_edges,2)) ) );
 
   const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
   const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
@@ -362,12 +365,12 @@ void build_dual_normals( Mesh& mesh )
 void make_dual_normals_outward( Mesh& mesh )
 {
   mesh::Nodes&  nodes = mesh.nodes();
-  array::ArrayView<double,2> node_lonlat( nodes.lonlat() );
+  array::ArrayView<double,2> node_lonlat = array::make_view<double,2>( nodes.lonlat() );
 
   mesh::HybridElements& edges = mesh.edges();
   const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
   const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
-  array::ArrayView<double,2> dual_normals  ( edges.field("dual_normals") );
+  array::ArrayView<double,2> dual_normals = array::make_view<double,2>( edges.field("dual_normals") );
   const size_t nb_edges = edges.size();
 
   for (size_t edge=0; edge<nb_edges; ++edge)
@@ -397,9 +400,9 @@ void build_brick_dual_mesh(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mes
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
 
     mesh::Nodes& nodes   = mesh.nodes();
-    array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
-    array::ArrayView<double,1> dual_volumes  ( nodes.add( field::Field::create<double>("dual_volumes",array::make_shape(nodes.size(),1) ) ) );
-    array::ArrayView<gidx_t,1> gidx  ( nodes.global_index() );
+    array::ArrayView<double,2> lonlat        = array::make_view<double,2>( nodes.lonlat() );
+    array::ArrayView<double,1> dual_volumes  = array::make_view<double,1>( nodes.add( field::Field::create<double>("dual_volumes",array::make_shape(nodes.size(),1) ) ) );
+    array::ArrayView<gidx_t,1> gidx          = array::make_view<gidx_t,1>( nodes.global_index() );
 
     int c=0;
     int n=0;

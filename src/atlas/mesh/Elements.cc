@@ -61,6 +61,7 @@ const std::string& Elements::name() const
   return hybrid_elements_->element_type(type_idx_).name();
 }
 
+#if 0
 template<> array::ArrayView<double,1> Elements::view( const field::Field& field ) const
 {
   return array::ArrayView<double,1>( field.data<double>()+begin(), array::make_shape(size()) );
@@ -103,15 +104,14 @@ template<> array::ArrayView<long,2> Elements::view( const field::Field& field ) 
   return array::ArrayView<long,2>( field.data<long>()+begin(), array::make_shape(size(),field.shape(1)) );
 }
 
-
-
-
 size_t Elements::add(const size_t nb_elements)
 {
   size_t position = size();
   hybrid_elements_->insert(type_idx_,end(),nb_elements);
   return position;
 }
+
+#endif
 
 //-----------------------------------------------------------------------------
 

@@ -20,36 +20,38 @@ namespace test {
 
 BOOST_AUTO_TEST_CASE( test_array )
 {
-   auto ds = Array::create<double>(4ul);
-   auto hv = make_gt_host_view<double, 1>(ds);
+   Array *ds = Array::create<double>(4ul);
+   auto hv = make_gt_host_view<double, 1>(*ds);
    hv(3) = 4.5;
 
-   ArrayView<double, 1> atlas_hv = make_host_view<double, 1>(ds);
+   ArrayView<double, 1> atlas_hv = make_host_view<double, 1>(*ds);
 
    BOOST_CHECK_EQUAL( hv(3) , 4.5 );
    BOOST_CHECK_EQUAL( atlas_hv(3) , 4.5 );
 
+   delete ds;
 }
 
 BOOST_AUTO_TEST_CASE( test_make_view )
 {
-   auto ds = Array::create<double>(4);
-   auto hv = make_gt_host_view<double, 1>(ds);
+   Array *ds = Array::create<double>(4ul);
+   auto hv = make_gt_host_view<double, 1>(*ds);
    hv(3) = 4.5;
 
-   ArrayView<double, 1> atlas_hv = make_view<double, 1>(ds);
+   ArrayView<double, 1> atlas_hv = make_view<double, 1>(*ds);
 
    BOOST_CHECK_EQUAL( hv(3) , 4.5 );
    BOOST_CHECK_EQUAL( atlas_hv(3) , 4.5 );
-
+   
+   delete ds;
 }
 
 BOOST_AUTO_TEST_CASE( test_array_shape )
 {
    ArrayShape as{2,3};
-   Array* ds = Array::create<double>(as);
-   auto hv = make_gt_host_view<double, 2>(ds);
-   ArrayView<double, 2> atlas_hv = make_host_view<double, 2>(ds);
+   Array *ds = Array::create<double>(as);
+   auto hv = make_gt_host_view<double, 2>(*ds);
+   ArrayView<double, 2> atlas_hv = make_host_view<double, 2>(*ds);
 
    hv(1,1) = 4.5;
 

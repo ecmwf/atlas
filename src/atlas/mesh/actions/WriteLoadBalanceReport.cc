@@ -16,7 +16,6 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/internals/IsGhost.h"
-#include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
 

@@ -38,7 +38,7 @@ PointSet::PointSet( mesh::Mesh& mesh )
 
 	ASSERT( nodes.has_field("xyz") );
 
-    array::ArrayView<double,2> coords ( nodes.field("xyz") );
+    array::ArrayView<double,2> coords = array::make_view<double,2>( nodes.field("xyz") );
 
     std::vector< PointIndex3::Value > pidx;
     pidx.reserve(npts_);

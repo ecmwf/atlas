@@ -28,6 +28,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
 
 // ------------------------------------------------------------------
@@ -205,16 +206,16 @@ BOOST_AUTO_TEST_CASE( state_create )
   Log::info() << state.field("soiltype")    << std::endl;
   Log::info() << state.field("GFL")         << std::endl;
 
-  array::ArrayView<float,4> temperature( state.field("temperature") );
+  array::ArrayView<float,4> temperature = array::make_view<float,4>( state.field("temperature") );
   temperature(0,0,0,0) = 0;
 
-  array::ArrayView<double,4> wind( state.field("wind") );
+  array::ArrayView<double,4> wind = array::make_view<double,4>( state.field("wind") );
   wind(0,0,0,0) = 0;
 
-  array::ArrayView<int,4> soiltype( state.field("soiltype") );
+  array::ArrayView<int,4> soiltype = array::make_view<int,4>( state.field("soiltype") );
   soiltype(0,0,0,0) = 0;
 
-  array::ArrayView<long,2> array( state["array"] );
+  array::ArrayView<long,2> array = array::make_view<long,2>( state["array"] );
   array(0,0) = 0;
 
 }

@@ -17,7 +17,6 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/field/Field.h"
-#include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/ErrorHandling.h"
 

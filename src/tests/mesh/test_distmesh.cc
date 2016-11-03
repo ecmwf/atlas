@@ -20,8 +20,8 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/array/IndexView.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
@@ -46,8 +46,8 @@ double dual_volume(mesh::Mesh& mesh)
   mesh::Nodes& nodes = mesh.nodes();
   internals::IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.size();
-  array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-  array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( nodes.field("dual_volumes") );
+  array::ArrayView<gidx_t,1> glb_idx      = array::make_view<gidx_t,1>( nodes.global_index() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {
@@ -115,9 +115,9 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   mesh::Mesh& mesh1 = *m;
   BOOST_CHECK( mesh1.nodes().size() == m->nodes().size() );
 
-  const array::ArrayView<int,1> part( m->nodes().partition() );
-  const array::ArrayView<int,1> ghost( m->nodes().ghost() );
-  const array::ArrayView<int,1> flags( m->nodes().field("flags") );
+  const array::ArrayView<int,1> part  = array::make_view<int,1>( m->nodes().partition() );
+  const array::ArrayView<int,1> ghost = array::make_view<int,1>( m->nodes().ghost() );
+  const array::ArrayView<int,1> flags = array::make_view<int,1>( m->nodes().field("flags") );
 
   Log::info() << "partition = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )

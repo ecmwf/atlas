@@ -377,16 +377,16 @@ inline DATA_TYPE& ArrayView<DATA_TYPE,2>::operator()(const ArrayIdx& idx)
 }
 
 template <typename DATA_TYPE>
-inline const ArrayView<DATA_TYPE,1> ArrayView<DATA_TYPE,2>::operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+inline const LocalView<DATA_TYPE,1> ArrayView<DATA_TYPE,2>::operator[](size_t i) const { CHECK_BOUNDS_1(i); return LocalView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
 
 template <typename DATA_TYPE>
-inline ArrayView<DATA_TYPE,1>       ArrayView<DATA_TYPE,2>::operator[](size_t i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+inline LocalView<DATA_TYPE,1>       ArrayView<DATA_TYPE,2>::operator[](size_t i)       { CHECK_BOUNDS_1(i); return LocalView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
 
 template <typename DATA_TYPE>
-inline const ArrayView<DATA_TYPE,1> ArrayView<DATA_TYPE,2>::at(size_t i) const { CHECK_BOUNDS_1_FORCE(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+inline const LocalView<DATA_TYPE,1> ArrayView<DATA_TYPE,2>::at(size_t i) const { CHECK_BOUNDS_1_FORCE(i); return LocalView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
 
 template <typename DATA_TYPE>
-inline ArrayView<DATA_TYPE,1>       ArrayView<DATA_TYPE,2>::at(size_t i)       { CHECK_BOUNDS_1_FORCE(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+inline LocalView<DATA_TYPE,1>       ArrayView<DATA_TYPE,2>::at(size_t i)       { CHECK_BOUNDS_1_FORCE(i); return LocalView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
 
 template <typename DATA_TYPE>
 inline DATA_TYPE*       ArrayView<DATA_TYPE,2>::data()            { return data_; }
@@ -492,16 +492,16 @@ inline DATA_TYPE& ArrayView<DATA_TYPE,3>::operator()(const ArrayIdx& idx)
 }
 
 template <typename DATA_TYPE>
-inline const ArrayView<DATA_TYPE,2> ArrayView<DATA_TYPE,3>::operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i,shape_+1, strides_+1 ); }
+inline const LocalView<DATA_TYPE,2> ArrayView<DATA_TYPE,3>::operator[](size_t i) const { CHECK_BOUNDS_1(i); return LocalView<DATA_TYPE,2>( data_+strides_[0]*i,shape_+1, strides_+1 ); }
 
 template <typename DATA_TYPE>
-inline ArrayView<DATA_TYPE,2>       ArrayView<DATA_TYPE,3>::operator[](size_t i)       { CHECK_BOUNDS_1(i);return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+inline LocalView<DATA_TYPE,2>       ArrayView<DATA_TYPE,3>::operator[](size_t i)       { CHECK_BOUNDS_1(i);return LocalView<DATA_TYPE,2>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
 
 template <typename DATA_TYPE>
-inline const ArrayView<DATA_TYPE,2> ArrayView<DATA_TYPE,3>::at(size_t i) const { CHECK_BOUNDS_1_FORCE(i); return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i,shape_+1, strides_+1 ); }
+inline const LocalView<DATA_TYPE,2> ArrayView<DATA_TYPE,3>::at(size_t i) const { CHECK_BOUNDS_1_FORCE(i); return LocalView<DATA_TYPE,2>( data_+strides_[0]*i,shape_+1, strides_+1 ); }
 
 template <typename DATA_TYPE>
-inline ArrayView<DATA_TYPE,2>       ArrayView<DATA_TYPE,3>::at(size_t i)       { CHECK_BOUNDS_1_FORCE(i);return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+inline LocalView<DATA_TYPE,2>       ArrayView<DATA_TYPE,3>::at(size_t i)       { CHECK_BOUNDS_1_FORCE(i);return LocalView<DATA_TYPE,2>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
 
 
 template <typename DATA_TYPE>
@@ -611,10 +611,10 @@ inline DATA_TYPE& ArrayView<DATA_TYPE,4>::operator()(const ArrayIdx& idx)
 }
 
 template <typename DATA_TYPE>
-inline const ArrayView<DATA_TYPE,3> ArrayView<DATA_TYPE,4>::operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+inline const LocalView<DATA_TYPE,3> ArrayView<DATA_TYPE,4>::operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
 
 template <typename DATA_TYPE>
-inline ArrayView<DATA_TYPE,3>       ArrayView<DATA_TYPE,4>::operator[](size_t i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+inline LocalView<DATA_TYPE,3>       ArrayView<DATA_TYPE,4>::operator[](size_t i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
 
 template <typename DATA_TYPE>
 inline DATA_TYPE*       ArrayView<DATA_TYPE,4>::data()            { return data_; }

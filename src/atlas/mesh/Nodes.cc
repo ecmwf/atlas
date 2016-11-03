@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/array/MakeView.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
@@ -34,9 +35,9 @@ Nodes::Nodes(): size_(0)
   add( field::Field::create<int>("flags", array::make_shape(size(),1)) );
 
 
-  array::ArrayView<gidx_t,1> glb_idx( global_index() );
-  array::ArrayView<int   ,1> part( partition() );
-  array::ArrayView<int   ,1> flags( field("flags") );
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( global_index() );
+  array::ArrayView<int   ,1> part = array::make_view<int,1>( partition() );
+  array::ArrayView<int   ,1> flags = array::make_view<int,1>( field("flags") );
 
   for(size_t n=0; n<size(); ++n)
   {

@@ -81,7 +81,7 @@ IndexView<DATA_TYPE,4>::IndexView( const field::Field& field ) : data_( const_ca
   size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3]; \
 }
 
-TEMPLATE_SPECIALIZATION(int);
+//TEMPLATE_SPECIALIZATION(int);
 
 #undef TEMPLATE_SPECIALIZATION
 

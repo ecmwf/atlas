@@ -52,6 +52,10 @@
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/array/GridToolsTraits.h"
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#include <eckit/exception/Exceptions.h>
+#endif
+ 
 namespace atlas {
 namespace array {
   class Array;
@@ -63,11 +67,94 @@ namespace array {
 
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/ArrayView_iterator.h"
+#include <cassert>
+#include <type_traits>
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
+
+  template< typename DATA_TYPE, int RANK >
+  class LocalView_helper
+  {
+  public:
+    DATA_TYPE *data_;
+    size_t shape_[RANK];
+    size_t strides_[RANK];
+    size_t size_;
+  public:
+  // -- Type definitions
+    typedef typename remove_const<DATA_TYPE>::type  value_type;
+
+  public:
+
+      LocalView_helper() { NOTIMP; }
+    
+      LocalView_helper( DATA_TYPE* data, const size_t shape[RANK], const size_t strides[RANK] ) :
+        data_(data)
+      {
+        size_ = 1;
+        for( size_t j=0; j<RANK; ++j ) {
+          shape_[j] = shape[j];
+          strides_[j] = strides[j];
+          size_ *= shape_[j];
+        }
+      }
+    
+      LocalView_helper( DATA_TYPE* data, const size_t shape[RANK] ) :
+        data_(data)
+      {
+        size_ = 1;
+        for( size_t j=0; j<RANK; ++j ) {
+          shape_[j] = shape[j];
+          size_ *= shape_[j];
+          strides_[j] = 1;
+        }
+        for( size_t j=RANK-2; j!=0; --j ) {
+          strides_[j] = strides_[j+1]*shape_[j+1];
+        }
+      }
+    
+
+      template < typename... Coords >
+      DATA_TYPE&
+      operator()(Coords... c) {
+          assert(sizeof...(Coords) == RANK);
+          NOTIMP;
+          return data_[0];
+      }
+
+      template <typename... Coords, typename = typename std::enable_if<(sizeof...(Coords) == RANK), int>::type>
+      DATA_TYPE const& operator()(Coords... c) const {
+        NOTIMP;
+        return data_[0];
+      }
+
+      size_t shape(size_t idx) const { NOTIMP; return 0; }
+  };
+  
+  template< typename DATA_TYPE, int RANK >
+  class LocalView : public LocalView_helper<DATA_TYPE,RANK>
+  {
+  public:
+    LocalView() : LocalView_helper<DATA_TYPE,RANK>() {}
+    LocalView( DATA_TYPE* data, const size_t shape[RANK], const size_t strides[RANK] ) : LocalView_helper<DATA_TYPE,RANK>(data,shape,strides) {}
+    LocalView( DATA_TYPE* data, const size_t shape[RANK] ) : LocalView_helper<DATA_TYPE,RANK>(data,shape) {}
+    LocalView<DATA_TYPE,RANK-1> at(const size_t i) const { return LocalView<DATA_TYPE,RANK-1>( LocalView_helper<DATA_TYPE,RANK>::data_+LocalView_helper<DATA_TYPE,RANK>::strides_[0]*i, LocalView_helper<DATA_TYPE,RANK>::shape_+1, LocalView_helper<DATA_TYPE,RANK>::strides_+1 ); }
+  };
+
+  template< typename DATA_TYPE >
+  class LocalView<DATA_TYPE,1> : public LocalView_helper<DATA_TYPE,1>
+  {
+  public:
+      LocalView() : LocalView_helper<DATA_TYPE,1>() {}
+      LocalView( DATA_TYPE* data, const size_t shape[1], const size_t strides[1] ) : LocalView_helper<DATA_TYPE,1>(data,shape,strides) {}
+      LocalView( DATA_TYPE* data, const size_t shape[1] ) : LocalView_helper<DATA_TYPE,1>(data,shape) {}
+      DATA_TYPE& at(const size_t i) const { return *(LocalView_helper<DATA_TYPE,1>::data_+LocalView_helper<DATA_TYPE,1>::strides_[0]*i); }
+  };
+
+
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
@@ -84,6 +171,8 @@ public:
 
 public:
 
+    //ArrayView( ArrayView& other ) : gt_data_view_(other.gt_data_view) {}
+
     ArrayView(data_view_t data_view) : gt_data_view_(data_view) {}
 
     template < typename... Coords >
@@ -99,6 +188,14 @@ public:
     DATA_TYPE const& operator()(Coords... c) const {
       return gt_data_view_(c...);
     }
+
+    size_t shape(size_t idx) const { NOTIMP; return 0; }
+
+    LocalView<DATA_TYPE,RANK-1> at(const size_t i) const {
+     return LocalView<DATA_TYPE,RANK-1>();
+     // return LocalView<DATA_TYPE,RANK-1>( LocalView_helper<DATA_TYPE,RANK>::data_+LocalView_helper<DATA_TYPE,RANK>::strides_[0]*i, LocalView_helper<DATA_TYPE,RANK>::shape_+1, LocalView_helper<DATA_TYPE,RANK>::strides_+1 );
+   }
+
 
 private:
     data_view_t gt_data_view_;
@@ -164,7 +261,7 @@ public:
 // -- Constructors
   ArrayView() {}
   ArrayView( const DATA_TYPE* data, const size_t rank, const ArrayShape::value_type shape[], const ArrayStrides::value_type strides[] );
-  ArrayView( const Array& );
+  // ArrayView( const Array& );
 
 // -- Iterators
   iterator begin();
@@ -227,7 +324,7 @@ public:
   ArrayView( DATA_TYPE* data, const ArrayShape::value_type shape[1], const ArrayStrides::value_type strides[1] );
   ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[1] );
   ArrayView( const DATA_TYPE* data, const ArrayShape& shape );
-  ArrayView( const Array& );
+  // ArrayView( const Array& );
 
 // -- Iterators
   iterator       begin();
@@ -283,7 +380,7 @@ public:
   ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[2], const ArrayStrides::value_type strides[2] );
   ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[2] );
   ArrayView( const DATA_TYPE* data, const ArrayShape& shape );
-  ArrayView( const Array& );
+  // ArrayView( const Array& );
 
 // -- Iterators
   iterator begin();
@@ -298,10 +395,10 @@ public:
         DATA_TYPE& operator()(size_t i, size_t j);
   const DATA_TYPE& operator()(const ArrayIdx& idx) const;
         DATA_TYPE& operator()(const ArrayIdx& idx);
-  const ArrayView<DATA_TYPE,1> operator[](size_t i) const;
-        ArrayView<DATA_TYPE,1> operator[](size_t i);
-  const ArrayView<DATA_TYPE,1> at(size_t i) const;
-        ArrayView<DATA_TYPE,1> at(size_t i);
+  const LocalView<DATA_TYPE,1> operator[](size_t i) const;
+        LocalView<DATA_TYPE,1> operator[](size_t i);
+  const LocalView<DATA_TYPE,1> at(size_t i) const;
+        LocalView<DATA_TYPE,1> at(size_t i);
   void operator=(const DATA_TYPE& scalar);
 
 // -- Accessors
@@ -338,7 +435,7 @@ public:
   ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[3], const ArrayStrides::value_type strides [3] );
   ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[3] );
   ArrayView( const DATA_TYPE* data, const ArrayShape& shape );
-  ArrayView( const Array& );
+  // ArrayView( const Array& );
 
 // -- Iterators
   iterator begin();
@@ -353,10 +450,10 @@ public:
         DATA_TYPE& operator()(size_t i, size_t j, size_t k);
   const DATA_TYPE& operator()(const ArrayIdx& idx) const;
         DATA_TYPE& operator()(const ArrayIdx& idx);
-  const ArrayView<DATA_TYPE,2> operator[](size_t i) const;
-        ArrayView<DATA_TYPE,2> operator[](size_t i);
-  const ArrayView<DATA_TYPE,2> at(size_t i) const;
-        ArrayView<DATA_TYPE,2> at(size_t i);
+  const LocalView<DATA_TYPE,2> operator[](size_t i) const;
+        LocalView<DATA_TYPE,2> operator[](size_t i);
+  const LocalView<DATA_TYPE,2> at(size_t i) const;
+        LocalView<DATA_TYPE,2> at(size_t i);
   void operator=(const DATA_TYPE& scalar);
 
 // -- Accessors
@@ -394,7 +491,7 @@ public:
   ArrayView( DATA_TYPE* data, const ArrayShape::value_type shape[4], const ArrayStrides::value_type strides[4] );
   ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[4] );
   ArrayView( const DATA_TYPE* data, const ArrayShape& shape );
-  ArrayView( const Array& );
+  // ArrayView( const Array& );
 
 // -- Iterators
   iterator begin();
@@ -409,8 +506,8 @@ public:
         DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l);
   const DATA_TYPE& operator()(const ArrayIdx& idx) const;
         DATA_TYPE& operator()(const ArrayIdx& idx);
-  const ArrayView<DATA_TYPE,3> operator[](size_t i) const;
-        ArrayView<DATA_TYPE,3> operator[](size_t i);
+  const LocalView<DATA_TYPE,3> operator[](size_t i) const;
+        LocalView<DATA_TYPE,3> operator[](size_t i);
   void operator=(const DATA_TYPE& scalar);
 
 // -- Accessors

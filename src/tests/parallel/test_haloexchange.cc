@@ -19,7 +19,7 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/parallel/HaloExchange.h"
 
 /// POD: Type to test
@@ -85,8 +85,8 @@ BOOST_GLOBAL_FIXTURE( MPIFixture );
 BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
 {
   size_t strides[] = {1};
-  size_t extents[] = {1};
-  halo_exchange.execute(gidx.data(),strides,extents,1);
+  size_t shape[] = {1};
+  halo_exchange.execute(gidx.data(),strides,shape,1);
 
   switch( eckit::mpi::rank() )
   {
@@ -102,15 +102,15 @@ BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
 BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
-  array::ArrayView<POD,2> arrv(arr);
+  array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
   for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
   size_t strides[] = {1};
-  size_t extents[] = {2};
-  halo_exchange.execute(arr.data(),strides,extents,1);
+  size_t shape[] = {2};
+  halo_exchange.execute(arr.data(),strides,shape,1);
 
   switch( eckit::mpi::rank() )
   {
@@ -126,15 +126,15 @@ BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
 BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v1, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
-  array::ArrayView<POD,2> arrv(arr);
+  array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
   for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
   size_t strides[] = {2};
-  size_t extents[] = {1};
-  halo_exchange.execute(&arrv(0,0),strides,extents,1);
+  size_t shape[] = {1};
+  halo_exchange.execute(&arrv(0,0),strides,shape,1);
 
   switch( eckit::mpi::rank() )
   {
@@ -150,15 +150,15 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v1, Fixture )
 BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v2, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
-  array::ArrayView<POD,2> arrv(arr);
+  array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
   for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
   size_t strides[] = {2};
-  size_t extents[] = {1};
-  halo_exchange.execute(&arrv(0,1),strides,extents,1);
+  size_t shape[] = {1};
+  halo_exchange.execute(&arrv(0,1),strides,shape,1);
 
   switch( eckit::mpi::rank() )
   {
@@ -174,7 +174,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v2, Fixture )
 BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
-  array::ArrayView<POD,3> arrv(arr);
+  array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
   for( size_t p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
@@ -185,8 +185,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
   }
 
   size_t strides[] = {2,1};
-  size_t extents[] = {3,2};
-  halo_exchange.execute(arr.data(),strides,extents,2);
+  size_t shape[] = {3,2};
+  halo_exchange.execute(arr.data(),strides,shape,2);
 
   switch( eckit::mpi::rank() )
   {
@@ -229,7 +229,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
 BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
-  array::ArrayView<POD,3> arrv(arr);
+  array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
   for( size_t p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
@@ -240,8 +240,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
   }
 
   size_t strides[] = {6,1};
-  size_t extents[] = {1,2};
-  halo_exchange.execute(arr.data(),strides,extents,2);
+  size_t shape[] = {1,2};
+  halo_exchange.execute(arr.data(),strides,shape,2);
 
   switch( eckit::mpi::rank() )
   {
@@ -285,7 +285,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
 {
   // Test rank 2 halo-exchange
   array::ArrayT<POD> arr(N,3,2);
-  array::ArrayView<POD,3> arrv(arr);
+  array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
   for( size_t p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
@@ -296,8 +296,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
   }
 
   size_t strides[] = {6,2};
-  size_t extents[] = {1,1};
-  halo_exchange.execute(&arrv(0,1,1),strides,extents,2);
+  size_t shape[] = {1,1};
+  halo_exchange.execute(&arrv(0,1,1),strides,shape,2);
 
   switch( eckit::mpi::rank() )
   {
@@ -340,7 +340,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
 BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
-  array::ArrayView<POD,3> arrv(arr);
+  array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
   for( size_t p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
@@ -351,8 +351,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
   }
 
   size_t strides[] = {2,2};
-  size_t extents[] = {3,1};
-  halo_exchange.execute(&arrv(0,0,1),strides,extents,2);
+  size_t shape[] = {3,1};
+  halo_exchange.execute(&arrv(0,0,1),strides,shape,2);
 
   switch( eckit::mpi::rank() )
   {
@@ -395,8 +395,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
 BOOST_FIXTURE_TEST_CASE( test_rank0_ArrayView, Fixture )
 {
   size_t strides[] = {1};
-  size_t extents[] = {N};
-  array::ArrayView<POD,1> arrv(gidx.data(),extents,strides);
+  size_t shape[] = {N};
+  array::ArrayView<POD,1> arrv(gidx.data(),shape,strides);
 
   halo_exchange.execute(arrv);
 
@@ -415,7 +415,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank0_ArrayView, Fixture )
 BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
-  array::ArrayView<POD,2> arrv(arr);
+  array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
   for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
@@ -440,7 +440,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
 BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
-  array::ArrayView<POD,3> arrv(arr);
+  array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
   for( size_t p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )

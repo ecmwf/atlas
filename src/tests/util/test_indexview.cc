@@ -99,8 +99,8 @@ BOOST_AUTO_TEST_CASE( test_indexview_1d )
 {
   //array::ArrayT<int> array( 10 );
 
-  Array* array = Array::create<double>(10);
-  ArrayView<double,1> aview = make_host_view<double, 1>(array);
+  Array *array = Array::create<double>(10);
+  ArrayView<double,1> aview = make_host_view<double, 1>(*array);
 
   aview(0) = 1 IN_FORTRAN;
   BOOST_CHECK_EQUAL( aview(0),       1 IN_FORTRAN );
@@ -147,11 +147,11 @@ BOOST_AUTO_TEST_CASE( test_indexview_1d )
 #else
 BOOST_AUTO_TEST_CASE( test_indexview_1d )
 {
-  array::ArrayT<int> array( 10 );
+  Array *array = Array::create<int>(10);
 
-  array::ArrayView<int,1>       aview(array);
-  IndexView<int,1>       iview(array);
-  const IndexView<int,1> const_iview(array);
+  ArrayView<int,1>       aview = make_view<int,1>(*array);
+  IndexView<int,1>       iview = make_indexview<int,1>(*array);
+  const IndexView<int,1> const_iview = make_indexview<int,1>(*array);
 
   aview(0) = 1 IN_FORTRAN;
   BOOST_CHECK_EQUAL( aview(0),       1 IN_FORTRAN );

@@ -148,9 +148,11 @@ find_path( GRIDTOOLS_STORAGE_INCLUDE_DIRS
            PATHS ${GRIDTOOLS_STORAGE_PATH}/include 
 )
 
+ecbuild_add_cxx11_flags()
+
 if( GRIDTOOLS_STORAGE_INCLUDE_DIRS ) 
     set( ATLAS_HAVE_GRIDTOOLS_STORAGE 1)
-    ecbuild_add_cxx11_flags()
+    # ecbuild_add_cxx11_flags()
 
     set( ENABLE_GPU "OFF" CACHE BOOL "Compile with GPU support (CUDA)" )
 
