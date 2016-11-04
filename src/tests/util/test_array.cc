@@ -73,6 +73,9 @@ BOOST_AUTO_TEST_CASE( test_spec )
    BOOST_CHECK_EQUAL( ds->spec().shape()[0], 4);
    BOOST_CHECK_EQUAL( ds->spec().shape()[1], 5);
    BOOST_CHECK_EQUAL( ds->spec().shape()[2], 6);
+   BOOST_CHECK_EQUAL( ds->spec().shapef()[0], 6);
+   BOOST_CHECK_EQUAL( ds->spec().shapef()[1], 5);
+   BOOST_CHECK_EQUAL( ds->spec().shapef()[2], 4);
 
    BOOST_CHECK_EQUAL( ds->spec().strides()[0], 6*5);
    BOOST_CHECK_EQUAL( ds->spec().strides()[1], 6);
@@ -89,7 +92,9 @@ BOOST_AUTO_TEST_CASE( test_spec_layout )
    BOOST_CHECK_EQUAL( ds->spec().shape()[0], 4);
    BOOST_CHECK_EQUAL( ds->spec().shape()[1], 5);
    BOOST_CHECK_EQUAL( ds->spec().shape()[2], 6);
-
+   BOOST_CHECK_EQUAL( ds->spec().shapef()[0], 6);
+   BOOST_CHECK_EQUAL( ds->spec().shapef()[1], 5);
+   BOOST_CHECK_EQUAL( ds->spec().shapef()[2], 4);
    BOOST_CHECK_EQUAL( ds->spec().strides()[0], 6*5);
    BOOST_CHECK_EQUAL( ds->spec().strides()[1], 6);
    BOOST_CHECK_EQUAL( ds->spec().strides()[2], 1);
@@ -105,7 +110,9 @@ BOOST_AUTO_TEST_CASE( test_spec_layout_rev )
    BOOST_CHECK_EQUAL( ds->spec().shape()[0], 4);
    BOOST_CHECK_EQUAL( ds->spec().shape()[1], 5);
    BOOST_CHECK_EQUAL( ds->spec().shape()[2], 6);
-
+   BOOST_CHECK_EQUAL( ds->spec().shapef()[0], 4);
+   BOOST_CHECK_EQUAL( ds->spec().shapef()[1], 5);
+   BOOST_CHECK_EQUAL( ds->spec().shapef()[2], 6);
    BOOST_CHECK_EQUAL( ds->spec().strides()[0], 1);
    BOOST_CHECK_EQUAL( ds->spec().strides()[1], 4);
    BOOST_CHECK_EQUAL( ds->spec().strides()[2], 4*5);

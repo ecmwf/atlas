@@ -116,42 +116,34 @@ public:
       }
   };
 
+  template <typename Layout>
+  struct get_shapef_component {
+    template <int Idx>
+    struct get_component {
+      GT_FUNCTION
+      constexpr get_component() {}
+
+      template <typename StorageInfoPtr>
+      GT_FUNCTION constexpr static int apply(StorageInfoPtr a) {
+        static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value),
+                      "Error: not a storage_info");
+        return a->template dim<Layout::template at<Layout::length - Idx - 1>() >();
+      }
+    };
+  };
+
   template <typename Value, typename... UInts,
             typename = gridtools::all_integers<UInts...> >
   static Array* create(UInts... dims) {
-    constexpr static unsigned int ndims = get_pack_size<UInts...>::type::value;
-
-    auto gt_data_store_ptr =
-        create_storage_<Value, gridtools::storage_traits<BACKEND>::template default_layout<ndims> >(dims...);
-    auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
-    Array* array = new ArrayT<Value>(gt_data_store_ptr);
-
-    using seq =
-        gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
-
-    array->spec().set_strides(
-        seq::template apply<
-            std::vector<unsigned long>,
-            get_stride_component<unsigned long, typename get_pack_size<UInts...>::type>::template get_component>(
-            storage_info_ptr));
-    array->spec().set_shape(ArrayShape{(unsigned long)dims...});
-    array->spec().set_shapef(seq::template apply<std::vector<int>, get_shape_component>(storage_info_ptr));
-    array->spec().set_stridesf(
-        seq::template apply<std::vector<int>,
-                            get_stride_component<int, typename get_pack_size<UInts...>::type>::template get_component>(
-            storage_info_ptr));
-    array->spec().set_rank(sizeof...(dims));
-    array->spec().set_size();
-    array->spec().set_contiguous();
-    return array;
+      return create_with_layout<Value, gridtools::storage_traits<BACKEND>::template default_layout<sizeof...(dims)> >(dims...);
   }
 
   template <typename Value,
-            typename LayoutMap,
+            typename Layout,
             typename... UInts,
             typename = gridtools::all_integers<UInts...> >
   static Array* create_with_layout(UInts... dims) {
-    auto gt_data_store_ptr = create_storage_<Value, LayoutMap>(dims...);
+    auto gt_data_store_ptr = create_storage_<Value, Layout>(dims...);
     auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
     Array* array = new ArrayT<Value>(gt_data_store_ptr);
 
@@ -164,7 +156,7 @@ public:
             get_stride_component<unsigned long, typename get_pack_size<UInts...>::type>::template get_component>(
             storage_info_ptr));
     array->spec().set_shape(ArrayShape{(unsigned long)dims...});
-    array->spec().set_shapef(seq::template apply<std::vector<int>, get_shape_component>(storage_info_ptr));
+    array->spec().set_shapef(seq::template apply<std::vector<int>, get_shapef_component<Layout>::template get_component>(storage_info_ptr));
     array->spec().set_stridesf(
         seq::template apply<std::vector<int>,
                             get_stride_component<int, typename get_pack_size<UInts...>::type>::template get_component>(
