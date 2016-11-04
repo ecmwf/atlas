@@ -10,7 +10,7 @@ if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_functionspace
     MPI             4
-    CONDITION       ECKIT_HAVE_MPI
+    CONDITION       ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_functionspace.F90
     LIBS            atlas_f

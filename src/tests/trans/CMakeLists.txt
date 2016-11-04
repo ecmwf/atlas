@@ -22,7 +22,7 @@ ecbuild_add_test( TARGET atlas_test_trans
   BOOST
   MPI      4
   SOURCES   test_trans.cc
-  CONDITION HAVE_TRANS AND ECKIT_HAVE_MPI
+  CONDITION HAVE_TRANS AND ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
   LIBS      atlas
 )
 
