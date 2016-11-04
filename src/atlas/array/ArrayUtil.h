@@ -65,6 +65,20 @@ public:
   const std::vector<int>& shapef() const;
   const std::vector<int>& stridesf() const;
   bool contiguous() const { return contiguous_; }
+
+  void set_strides(ArrayStrides&& strides) { strides_ = strides; }
+  void set_stridesf(std::vector<int>&& strides) { stridesf_ = strides; }
+
+  void set_shape(ArrayShape&& shape) { shape_ = shape; }
+  void set_shapef(std::vector<int>&& shapef) { shapef_ = shapef; }
+  void set_rank(size_t rank) { rank_ = rank; }
+  void set_size() {
+    size_ = 1;
+    for (size_t n = 0; n < rank_; ++n) {
+      size_ *= shape_[n];
+    }
+  }
+  void set_contiguous() { contiguous_ = (size_ == shape_[0] * strides_[0] ? true : false); }
 };
 
 //------------------------------------------------------------------------------------------------------

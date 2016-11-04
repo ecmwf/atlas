@@ -58,9 +58,57 @@ BOOST_AUTO_TEST_CASE( test_array_shape )
 
    BOOST_CHECK_EQUAL( ds->size() , 6 );
    BOOST_CHECK_EQUAL( ds->rank() , 2 );
-   BOOST_CHECK_EQUAL( ds->stride(0) , 3 );
-   BOOST_CHECK_EQUAL( ds->stride(1) , 1 );
-   BOOST_CHECK_EQUAL( ds->contiguous() , true );
+   BOOST_CHECK_EQUAL( ds->stride(0) , 1 );
+   BOOST_CHECK_EQUAL( ds->stride(1) , 2 );
+   BOOST_CHECK_EQUAL( ds->contiguous() , false );
+
+   delete ds;
+}
+
+BOOST_AUTO_TEST_CASE( test_spec )
+{
+   Array* ds = Array::create<double>(4,5,6);
+   BOOST_CHECK_EQUAL( ds->spec().rank(), 3);
+   BOOST_CHECK_EQUAL( ds->spec().size(), 4*5*6);
+   BOOST_CHECK_EQUAL( ds->spec().shape()[0], 4);
+   BOOST_CHECK_EQUAL( ds->spec().shape()[1], 5);
+   BOOST_CHECK_EQUAL( ds->spec().shape()[2], 6);
+
+   BOOST_CHECK_EQUAL( ds->spec().strides()[0], 6*5);
+   BOOST_CHECK_EQUAL( ds->spec().strides()[1], 6);
+   BOOST_CHECK_EQUAL( ds->spec().strides()[2], 1);
+
+   delete ds;
+}
+
+BOOST_AUTO_TEST_CASE( test_spec_layout )
+{
+   Array* ds = Array::create_with_layout<double, gridtools::layout_map<0,1,2> >(4,5,6);
+   BOOST_CHECK_EQUAL( ds->spec().rank(), 3);
+   BOOST_CHECK_EQUAL( ds->spec().size(), 4*5*6);
+   BOOST_CHECK_EQUAL( ds->spec().shape()[0], 4);
+   BOOST_CHECK_EQUAL( ds->spec().shape()[1], 5);
+   BOOST_CHECK_EQUAL( ds->spec().shape()[2], 6);
+
+   BOOST_CHECK_EQUAL( ds->spec().strides()[0], 6*5);
+   BOOST_CHECK_EQUAL( ds->spec().strides()[1], 6);
+   BOOST_CHECK_EQUAL( ds->spec().strides()[2], 1);
+
+   delete ds;
+}
+
+BOOST_AUTO_TEST_CASE( test_spec_layout_rev )
+{
+   Array* ds = Array::create_with_layout<double, gridtools::layout_map<2,1,0> >(4,5,6);
+   BOOST_CHECK_EQUAL( ds->spec().rank(), 3);
+   BOOST_CHECK_EQUAL( ds->spec().size(), 4*5*6);
+   BOOST_CHECK_EQUAL( ds->spec().shape()[0], 4);
+   BOOST_CHECK_EQUAL( ds->spec().shape()[1], 5);
+   BOOST_CHECK_EQUAL( ds->spec().shape()[2], 6);
+
+   BOOST_CHECK_EQUAL( ds->spec().strides()[0], 1);
+   BOOST_CHECK_EQUAL( ds->spec().strides()[1], 4);
+   BOOST_CHECK_EQUAL( ds->spec().strides()[2], 4*5);
 
    delete ds;
 }

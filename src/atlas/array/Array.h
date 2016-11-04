@@ -14,6 +14,7 @@
 #include <vector>
 #include <iosfwd>
 #include <iterator>
+#include <type_traits>
 #include "eckit/memory/Owned.h"
 #include "eckit/exception/Exceptions.h"
 #include "atlas/array/ArrayUtil.h"
@@ -63,12 +64,19 @@ private:
   };
 
 public:
-  template <typename Value, typename... UInts>
+  template<typename T> struct printy{BOOST_MPL_ASSERT_MSG((false), YYYYYYYYYYYYYYYY, (T));};
+
+  template <typename Value, typename LayoutMap, typename... UInts>
   static gridtools::storage_traits<BACKEND>::data_store_t<
-      Value, gridtools::storage_traits<BACKEND>::storage_info_t<0, get_pack_size<UInts...>::type::value> >* create_storage_(UInts... dims) {
+      Value, gridtools::storage_traits<BACKEND>::storage_info_t<
+                 0, get_pack_size<UInts...>::type::value,
+                 typename gridtools::zero_halo<get_pack_size<UInts...>::type::value>::type, LayoutMap> >*
+      create_storage_(UInts... dims) {
     static_assert((sizeof...(dims) > 0), "Error: can not create storages without any dimension");
 
-    typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, get_pack_size<UInts...>::type::value> storage_info_ty;
+    constexpr static unsigned int ndims = get_pack_size<UInts...>::type::value;
+    typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, ndims, typename gridtools::zero_halo<ndims>::type,
+                                                               LayoutMap> storage_info_ty;
     storage_info_ty si(dims...);
 
     typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
@@ -79,14 +87,94 @@ public:
   }
 
 public:
+  template <typename Value, typename RANKS>
+  struct get_stride_component {
+    template <int Idx>
+    struct get_component {
+      GT_FUNCTION
+      constexpr get_component() {}
 
-  template<typename Value, typename ... UInts, typename = gridtools::all_integers<UInts...> >
-  static Array* create(UInts... dims)
-  {
-      Array* array = new ArrayT<Value>(create_storage_<Value>(dims...));
-      array->set_spec(dims...);
-      return array;
+      template <typename StorageInfoPtr>
+      GT_FUNCTION constexpr static Value apply(StorageInfoPtr a) {
+        static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value),
+                      "Error: not a storage_info");
+        return a->template stride<Idx>();
+      }
+    };
+  };
+
+  template < int Idx >
+  struct get_shape_component {
+
+      GT_FUNCTION
+      constexpr get_shape_component() {}
+
+      template < typename StorageInfoPtr>
+      GT_FUNCTION constexpr static int apply(StorageInfoPtr a) {
+          static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type >::value ), "Error: not a storage_info");
+          return a->template dim<Idx>();
+      }
+  };
+
+  template <typename Value, typename... UInts,
+            typename = gridtools::all_integers<UInts...> >
+  static Array* create(UInts... dims) {
+    constexpr static unsigned int ndims = get_pack_size<UInts...>::type::value;
+
+    auto gt_data_store_ptr =
+        create_storage_<Value, gridtools::storage_traits<BACKEND>::template default_layout<ndims> >(dims...);
+    auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
+    Array* array = new ArrayT<Value>(gt_data_store_ptr);
+
+    using seq =
+        gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
+
+    array->spec().set_strides(
+        seq::template apply<
+            std::vector<unsigned long>,
+            get_stride_component<unsigned long, typename get_pack_size<UInts...>::type>::template get_component>(
+            storage_info_ptr));
+    array->spec().set_shape(ArrayShape{(unsigned long)dims...});
+    array->spec().set_shapef(seq::template apply<std::vector<int>, get_shape_component>(storage_info_ptr));
+    array->spec().set_stridesf(
+        seq::template apply<std::vector<int>,
+                            get_stride_component<int, typename get_pack_size<UInts...>::type>::template get_component>(
+            storage_info_ptr));
+    array->spec().set_rank(sizeof...(dims));
+    array->spec().set_size();
+    array->spec().set_contiguous();
+    return array;
   }
+
+  template <typename Value,
+            typename LayoutMap,
+            typename... UInts,
+            typename = gridtools::all_integers<UInts...> >
+  static Array* create_with_layout(UInts... dims) {
+    auto gt_data_store_ptr = create_storage_<Value, LayoutMap>(dims...);
+    auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
+    Array* array = new ArrayT<Value>(gt_data_store_ptr);
+
+    using seq =
+        gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
+
+    array->spec().set_strides(
+        seq::template apply<
+            std::vector<unsigned long>,
+            get_stride_component<unsigned long, typename get_pack_size<UInts...>::type>::template get_component>(
+            storage_info_ptr));
+    array->spec().set_shape(ArrayShape{(unsigned long)dims...});
+    array->spec().set_shapef(seq::template apply<std::vector<int>, get_shape_component>(storage_info_ptr));
+    array->spec().set_stridesf(
+        seq::template apply<std::vector<int>,
+                            get_stride_component<int, typename get_pack_size<UInts...>::type>::template get_component>(
+            storage_info_ptr));
+    array->spec().set_rank(sizeof...(dims));
+    array->spec().set_size();
+    array->spec().set_contiguous();
+    return array;
+  }
+
 
   template<typename Value>
   static Array* create(const ArrayShape& shape)
@@ -191,10 +279,17 @@ public:
 #endif
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-  template<typename ... UInt>
-  void set_spec(UInt... dims)
-  {
-      spec_ = ArraySpec(ArrayShape{dims...});
+
+  template < typename Value, typename... Coords>
+  GT_FUNCTION
+  void resize(Coords... c) {
+      assert(sizeof...(c) == spec_.rank());
+
+      if(!data_store_->is_on_host()) {
+          data_store_->clone_from_device();
+      }
+      Array* dest_array = Array::create<Value>(c...);
+
   }
 
   void clone_to_device() const {
@@ -229,6 +324,8 @@ private:
   std::unique_ptr< DataStoreInterface>  data_store_;
 
 #endif
+public:
+  ArraySpec& spec() {return spec_;}
 
 private: // methods
   ArraySpec spec_;

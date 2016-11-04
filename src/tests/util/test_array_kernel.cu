@@ -29,7 +29,7 @@ void kernel_ex(ArrayView<Value, RANK> dv)
 BOOST_AUTO_TEST_CASE( test_array )
 {
    Array* ds = Array::create<double>(4ul, 4ul, 4ul);
-   auto hv = make_host_view<double, 3>(ds);
+   ArrayView<double,3> hv = make_host_view<double, 3>(ds);
    hv(3, 3, 3) = 4.5;
 
    ds->clone_to_device();

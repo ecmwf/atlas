@@ -86,7 +86,7 @@ public:
 
     ArrayView(data_view_t data_view) : gt_data_view_(data_view) {}
 
-    template < typename... Coords >
+    template < typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == RANK), int>::type >
     DATA_TYPE&
     GT_FUNCTION
     operator()(Coords... c) {
@@ -188,6 +188,7 @@ public:
   const DATA_TYPE& operator()(const ArrayIdx& idx) const;
         DATA_TYPE& operator()(const ArrayIdx& idx);
   void operator=(const DATA_TYPE& scalar);
+  void resize(size_t size1, size_t size2);
 
 // -- Accessors
   const DATA_TYPE* data() const;
@@ -203,7 +204,8 @@ private:
 // -- Private data
   DATA_TYPE* data_;
   ArrayStrides strides_;
-  ArrayShape shape_;
+  ArrayShape shape_;  void resize(size_t size1, size_t size2);
+
   size_t rank_;
   size_t size_;
 };
@@ -269,7 +271,8 @@ private:
 
 template< typename DATA_TYPE >
 class ArrayView < DATA_TYPE, 2 >
-{
+{  void resize(size_t size1, size_t size2);
+
 public:
 // -- Type definitions
   typedef ArrayView_iterator<DATA_TYPE,2>       iterator;
