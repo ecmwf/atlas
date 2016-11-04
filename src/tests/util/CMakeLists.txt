@@ -10,21 +10,18 @@
 if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_logging
-    MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_logging.F90
     LIBS            atlas_f
   )
 
   add_fctest( TARGET atlas_fctest_error
-    MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_error.F90
     LIBS            atlas_f
   )
 
   add_fctest( TARGET atlas_fctest_parametrisation
-    MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_parametrisation.F90
     LIBS            atlas_f
@@ -34,23 +31,22 @@ endif()
 
 ecbuild_add_test( TARGET atlas_test_flags
   BOOST
-  MPI      1
   SOURCES  test_flags.cc
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_indexview
   BOOST
-  MPI      1
   SOURCES  test_indexview.cc
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_metadata
   BOOST
-  MPI      4
-  SOURCES  test_metadata.cc
-  LIBS     atlas
+  MPI        4
+  CONDITION  ECKIT_HAVE_MPI
+  SOURCES    test_metadata.cc
+  LIBS       atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_footprint
