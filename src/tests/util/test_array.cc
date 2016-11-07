@@ -120,5 +120,33 @@ BOOST_AUTO_TEST_CASE( test_spec_layout_rev )
    delete ds;
 }
 
+BOOST_AUTO_TEST_CASE( test_resize_throw )
+{
+   Array* ds = Array::create<double>(32,5,33);
+
+   BOOST_CHECK_NO_THROW(ds->resize(32,5,33));
+   BOOST_CHECK_THROW(ds->resize(32,4,33), eckit::BadParameter);
+   BOOST_CHECK_THROW(ds->resize(32,5,32), eckit::BadParameter);
+   BOOST_CHECK_THROW(ds->resize(32,5,33,4), eckit::BadParameter);
+
+   delete ds;
+}
+
+BOOST_AUTO_TEST_CASE( test_resize )
+{
+   Array* ds = Array::create<double>(7,5,8);
+
+   ds->resize(32,5,33);
+
+   BOOST_CHECK_EQUAL(ds->spec().shape()[0], 32);
+   BOOST_CHECK_EQUAL(ds->spec().shape()[1], 5);
+   BOOST_CHECK_EQUAL(ds->spec().shape()[2], 33);
+
+   BOOST_CHECK_EQUAL( ds->spec().rank(), 3);
+   BOOST_CHECK_EQUAL( ds->spec().size(), 32*5*33);
+
+   delete ds;
+}
+
 }
 }

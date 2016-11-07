@@ -20,9 +20,9 @@
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/GridToolsTraits.h"
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#include "atlas/array/GridToolsTraits.h"
 #include "GridToolsDataStoreWrapper.h"
 #endif
 
@@ -35,6 +35,42 @@ namespace array {
 
 template<typename DATA_TYPE>
 class ArrayT;
+
+template <unsigned int RANK>
+struct array_initializer;
+
+template <unsigned int TotalDims, unsigned int Dim, typename = void>
+struct check_dimension_lengths_impl {
+  template <typename FirstDim, typename... Dims>
+  static void apply(ArrayShape const& shape, FirstDim first_dim, Dims... d) {
+    if (first_dim < shape[Dim]) {
+      std::stringstream err;
+      err << "Attempt to resize array with original size for dimension " << Dim << " of " << shape[Dim] << " by "
+          << first_dim << std::endl;
+      throw eckit::BadParameter(err.str(), Here());
+    }
+    check_dimension_lengths_impl<TotalDims, Dim + 1>::apply(shape, d...);
+  }
+};
+
+template <unsigned int TotalDims, unsigned int Dim>
+struct check_dimension_lengths_impl<TotalDims, Dim, typename std::enable_if< (Dim == TotalDims-1)>::type > {
+  template <typename FirstDim>
+  static void apply(ArrayShape const& shape, FirstDim first_dim) {
+    if (first_dim < shape[Dim]) {
+      std::stringstream err;
+      err << "Attempt to resize array with original size for dimension " << Dim - 1 << " of "
+          << shape[Dim - 1] << " by " << first_dim << std::endl;
+      throw eckit::BadParameter(err.str(), Here());
+    }
+  }
+};
+
+template<typename ... Dims>
+void check_dimension_lengths(ArrayShape const&  shape, Dims...d) {
+    check_dimension_lengths_impl<sizeof...(d), 0>::apply(shape, d...);
+}
+
 
 #endif
 
@@ -64,8 +100,6 @@ private:
   };
 
 public:
-  template<typename T> struct printy{BOOST_MPL_ASSERT_MSG((false), YYYYYYYYYYYYYYYY, (T));};
-
   template <typename Value, typename LayoutMap, typename... UInts>
   static gridtools::storage_traits<BACKEND>::data_store_t<
       Value, gridtools::storage_traits<BACKEND>::storage_info_t<
@@ -144,26 +178,11 @@ public:
             typename = gridtools::all_integers<UInts...> >
   static Array* create_with_layout(UInts... dims) {
     auto gt_data_store_ptr = create_storage_<Value, Layout>(dims...);
-    auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
+
     Array* array = new ArrayT<Value>(gt_data_store_ptr);
 
-    using seq =
-        gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
+    array->build_spec(gt_data_store_ptr, dims...);
 
-    array->spec().set_strides(
-        seq::template apply<
-            std::vector<unsigned long>,
-            get_stride_component<unsigned long, typename get_pack_size<UInts...>::type>::template get_component>(
-            storage_info_ptr));
-    array->spec().set_shape(ArrayShape{(unsigned long)dims...});
-    array->spec().set_shapef(seq::template apply<std::vector<int>, get_shapef_component<Layout>::template get_component>(storage_info_ptr));
-    array->spec().set_stridesf(
-        seq::template apply<std::vector<int>,
-                            get_stride_component<int, typename get_pack_size<UInts...>::type>::template get_component>(
-            storage_info_ptr));
-    array->spec().set_rank(sizeof...(dims));
-    array->spec().set_size();
-    array->spec().set_contiguous();
     return array;
   }
 
@@ -221,6 +240,39 @@ public:
   template<typename DataStore, typename = typename std::enable_if< gridtools::is_data_store<DataStore>::value > >
   Array(DataStore* ds) : data_store_( new DataStoreWrapper<DataStore>(ds)) {}
 
+//  template<typename DataStore, typename = typename std::enable_if< gridtools::is_data_store<DataStore>::value > >
+  void swap_datastore(Array& other) {
+      data_store_ = std::move(other.data_store());
+  }
+
+  std::unique_ptr< DataStoreInterface>&& data_store() { return std::move(data_store_); }
+
+  template<typename DataStore, typename ... Dims>
+  void build_spec(DataStore* gt_data_store_ptr, Dims...dims) {
+      static_assert((gridtools::is_data_store<DataStore>::value), "Internal Error: passing a non GT data store");
+
+      auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
+      using Layout = typename DataStore::storage_info_t::Layout;
+
+      using seq =
+          gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
+
+      spec().set_strides(
+          seq::template apply<
+              std::vector<unsigned long>,
+              get_stride_component<unsigned long, typename get_pack_size<Dims...>::type>::template get_component>(
+              storage_info_ptr));
+      spec().set_shape(ArrayShape{(unsigned long)dims...});
+      spec().set_shapef(seq::template apply<std::vector<int>, get_shapef_component<Layout>::template get_component>(storage_info_ptr));
+      spec().set_stridesf(
+          seq::template apply<std::vector<int>,
+                              get_stride_component<int, typename get_pack_size<Dims...>::type>::template get_component>(
+              storage_info_ptr));
+      spec().set_rank(sizeof...(dims));
+      spec().set_size();
+      spec().set_contiguous();
+  }
+
 #endif
 
   virtual array::DataType datatype() const = 0;
@@ -272,17 +324,62 @@ public:
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
-  template < typename Value, typename... Coords>
+  template <typename... Coords, typename = gridtools::all_integers<Coords...> >
   GT_FUNCTION
   void resize(Coords... c) {
-      assert(sizeof...(c) == spec_.rank());
+      if(sizeof...(c) != spec_.rank()){
+        std::stringstream err; err << "trying to resize an array of rank " << spec_.rank() << " by dimensions with rank " <<
+                                      sizeof...(c) << std::endl;
+        throw eckit::BadParameter(err.str(),Here());
+      }
+
+      check_dimension_lengths(shape(), c...);
 
       if(!data_store_->is_on_host()) {
           data_store_->clone_from_device();
       }
-      Array* dest_array = Array::create<Value>(c...);
 
+      Array* array_resized = Array::create(datatype(), ArrayShape{(unsigned int)c...});
+
+      array_initializer<sizeof...(c)>::apply( *this, *array_resized);
+      swap_datastore(*array_resized);
+
+      spec_ = array_resized->spec();
+
+      delete array_resized;
   }
+
+  template<typename Value>
+  void resize(const ArrayShape& shape)
+  {
+//    assert(shape.size() > 0);
+//    switch (shape.size()) {
+//      case 1:
+//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 1>());
+//      case 2:
+//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 2>());
+//      case 3:
+//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 3>());
+//      case 4:
+//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 4>());
+//      case 5:
+//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 5>());
+//      case 6:
+//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 6>());
+//      case 7:
+//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 7>());
+//      case 8:
+//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 8>());
+//      case 9:
+//        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 9>());
+//      default: {
+//        std::stringstream err;
+//        err << "shape not recognized";
+//        throw eckit::BadParameter(err.str(), Here());
+//      }
+//    }
+  }
+
 
   void clone_to_device() const {
       data_store_->clone_to_device();
@@ -484,5 +581,7 @@ template <typename T> Array* Array::create(size_t size1, size_t size2, size_t si
 
 } // namespace array
 } // namespace atlas
+
+#include "Array_impl.h"
 
 #endif

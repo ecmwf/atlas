@@ -84,7 +84,7 @@ public:
 
 public:
 
-    ArrayView(data_view_t data_view) : gt_data_view_(data_view) {}
+    ArrayView(data_view_t data_view, ArrayShape const& shape) : gt_data_view_(data_view), shape_(shape) {}
 
     template < typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == RANK), int>::type >
     DATA_TYPE&
@@ -99,6 +99,8 @@ public:
     DATA_TYPE const& operator()(Coords... c) const {
       return gt_data_view_(c...);
     }
+
+    ArrayShape const & shape() const {return shape_;}
 
 private:
     data_view_t gt_data_view_;
@@ -143,7 +145,7 @@ private:
 //// -- Private data
 //  DATA_TYPE* data_;
 //  ArrayStrides::value_type strides_[1];
-//  ArrayShape::value_type   shape_[1];
+  ArrayShape const&   shape_;
 };
 
 #else

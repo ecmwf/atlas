@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include "atlas/array/Array.h"
+#include "atlas/array/Array_impl.h"
 
 using atlas::array::DataType;
 
