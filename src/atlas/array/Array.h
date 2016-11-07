@@ -39,6 +39,9 @@ class ArrayT;
 template <unsigned int RANK>
 struct array_initializer;
 
+template<unsigned int PartDim>
+struct array_initializer_partitioned;
+
 template <unsigned int TotalDims, unsigned int Dim, typename = void>
 struct check_dimension_lengths_impl {
   template <typename FirstDim, typename... Dims>
@@ -97,6 +100,13 @@ private:
           return Array::create<Value>(shape[Indices]...);
       }
 
+  };
+
+  struct storage_resizer {
+      template<typename UInt, UInt ... Indices>
+      static void apply(Array& array, const ArrayShape& shape, gridtools::gt_integer_sequence<UInt, Indices...> ) {
+          return array.resize(shape[Indices]...);
+      }
   };
 
 public:
@@ -240,12 +250,7 @@ public:
   template<typename DataStore, typename = typename std::enable_if< gridtools::is_data_store<DataStore>::value > >
   Array(DataStore* ds) : data_store_( new DataStoreWrapper<DataStore>(ds)) {}
 
-//  template<typename DataStore, typename = typename std::enable_if< gridtools::is_data_store<DataStore>::value > >
-  void swap_datastore(Array& other) {
-      data_store_ = std::move(other.data_store());
-  }
-
-  std::unique_ptr< DataStoreInterface>&& data_store() { return std::move(data_store_); }
+  std::unique_ptr< DataStoreInterface>& data_store() { return data_store_; }
 
   template<typename DataStore, typename ... Dims>
   void build_spec(DataStore* gt_data_store_ptr, Dims...dims) {
@@ -320,6 +325,10 @@ public:
   virtual void insert_data(size_t idx1, size_t size1)=0;
 
   void operator=( const Array &array ) { return assign(array); }
+#else
+
+  void insert(size_t idx1, size_t size1);
+
 #endif
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
@@ -342,42 +351,41 @@ public:
       Array* array_resized = Array::create(datatype(), ArrayShape{(unsigned int)c...});
 
       array_initializer<sizeof...(c)>::apply( *this, *array_resized);
-      swap_datastore(*array_resized);
+      data_store_.swap(array_resized->data_store());
 
       spec_ = array_resized->spec();
 
-      delete array_resized;
+//      delete array_resized;
   }
 
-  template<typename Value>
   void resize(const ArrayShape& shape)
   {
-//    assert(shape.size() > 0);
-//    switch (shape.size()) {
-//      case 1:
-//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 1>());
-//      case 2:
-//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 2>());
-//      case 3:
-//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 3>());
-//      case 4:
-//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 4>());
-//      case 5:
-//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 5>());
-//      case 6:
-//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 6>());
-//      case 7:
-//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 7>());
-//      case 8:
-//        resize(shape, gridtools::make_gt_integer_sequence<unsigned int, 8>());
-//      case 9:
-//        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 9>());
-//      default: {
-//        std::stringstream err;
-//        err << "shape not recognized";
-//        throw eckit::BadParameter(err.str(), Here());
-//      }
-//    }
+    assert(shape.size() > 0);
+    switch (shape.size()) {
+      case 1:
+        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 1>());
+      case 2:
+        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 2>());
+      case 3:
+        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 3>());
+      case 4:
+        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 4>());
+      case 5:
+        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 5>());
+      case 6:
+        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 6>());
+      case 7:
+        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 7>());
+      case 8:
+        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 8>());
+      case 9:
+        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 9>());
+      default: {
+        std::stringstream err;
+        err << "shape not recognized";
+        throw eckit::BadParameter(err.str(), Here());
+      }
+    }
   }
 
 

@@ -24,7 +24,6 @@ void Array::resize(const ArrayShape& _shape)
   spec_ = ArraySpec(_shape);
   resize_data(spec_.size());
 }
-
 void Array::insert(size_t idx1, size_t size1)
 {
   size_t old_size = shape(0);
@@ -38,8 +37,9 @@ void Array::insert(size_t idx1, size_t size1)
     insert_data(idx1*stride(0),size1*stride(0));
   }
 }
+#endif
 
-
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 void Array::resize(size_t size1) { resize( make_shape(size1) ); }
 
 void Array::resize(size_t size1, size_t size2) { resize( make_shape(size1,size2) ); }
