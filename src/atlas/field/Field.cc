@@ -172,6 +172,8 @@ void Field::set_functionspace(const functionspace::FunctionSpace &functionspace)
   functionspace_->attach();
 }
 
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
@@ -439,6 +441,7 @@ void atlas__Field__set_functionspace(Field* This, const functionspace::FunctionS
     This->set_functionspace(*functionspace);
   );
 }
+#endif
 
 
 // ------------------------------------------------------------------

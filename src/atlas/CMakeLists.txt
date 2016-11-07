@@ -344,7 +344,7 @@ ecbuild_add_library( TARGET atlas
     ${atlas_array_srcs}
  #   ${atlas_grid_srcs}
  #   ${atlas_mesh_srcs}
- #   ${atlas_field_srcs}
+    ${atlas_field_srcs}
  #   ${atlas_functionspace_srcs}
  #   ${atlas_interpolation_srcs}
  #   ${atlas_numerics_srcs}

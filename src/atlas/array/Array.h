@@ -281,6 +281,10 @@ public:
 #endif
 
   virtual array::DataType datatype() const = 0;
+  virtual size_t sizeof_data() const = 0;
+
+  size_t bytes() const { return sizeof_data() * size();}
+
 #ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
   virtual double bytes() const = 0;
   virtual void dump(std::ostream& os) const = 0;
@@ -355,6 +359,7 @@ public:
 
       spec_ = array_resized->spec();
 
+      //TODO when deleting this if seg fault
 //      delete array_resized;
   }
 
@@ -443,6 +448,9 @@ public:
   virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
 
   void* data() { return data_;}
+
+  size_t sizeof_data() const {return sizeof(DATA_TYPE);}
+
 private:
   bool owned_;
   void* data_;
