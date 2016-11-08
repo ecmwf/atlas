@@ -10,14 +10,57 @@
 
 #include <iostream>
 #include "atlas/array/Array.h"
-#include "atlas/array/Array_impl.h"
 
 using atlas::array::DataType;
 
 namespace atlas {
 namespace array {
 
+Array* Array::create( DataType datatype, const ArrayShape& shape )
+{
+  switch( datatype.kind() )
+  {
+    case DataType::KIND_REAL64: return create<double>(shape);
+    case DataType::KIND_REAL32: return create<float>(shape);
+    case DataType::KIND_INT32:  return create<int>(shape);
+    case DataType::KIND_INT64:  return create<long>(shape);
+    default:
+    {
+      std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
+      throw eckit::BadParameter(err.str(),Here());
+    }
+  }
+  return 0;
+}
+
 #ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
+Array* Array::create( DataType datatype )
+{
+  switch( datatype.kind() )
+  {
+    case DataType::KIND_REAL64: return new ArrayT<double>();
+    case DataType::KIND_REAL32: return new ArrayT<float>();
+    case DataType::KIND_INT32:  return new ArrayT<int>();
+    case DataType::KIND_INT64:  return new ArrayT<long>();
+    default:
+    {
+      std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
+      throw eckit::BadParameter(err.str(),Here());
+    }
+  }
+  return 0;
+}
+
+template <> Array* Array::wrap(int data[], const ArraySpec& s) { return new ArrayT<int>(data,s); }
+template <> Array* Array::wrap(long data[], const ArraySpec& s) { return new ArrayT<long>(data,s); }
+template <> Array* Array::wrap(float data[], const ArraySpec& s) { return new ArrayT<float>(data,s); }
+template <> Array* Array::wrap(double data[], const ArraySpec& s) { return new ArrayT<double>(data,s); }
+
+template <> Array* Array::wrap(int data[], const ArrayShape& s) { return new ArrayT<int>(data,s); }
+template <> Array* Array::wrap(long data[], const ArrayShape& s) { return new ArrayT<long>(data,s); }
+template <> Array* Array::wrap(float data[], const ArrayShape& s) { return new ArrayT<float>(data,s); }
+template <> Array* Array::wrap(double data[], const ArrayShape& s) { return new ArrayT<double>(data,s); }
 
 void Array::resize(const ArrayShape& _shape)
 {
@@ -37,9 +80,7 @@ void Array::insert(size_t idx1, size_t size1)
     insert_data(idx1*stride(0),size1*stride(0));
   }
 }
-#endif
 
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 void Array::resize(size_t size1) { resize( make_shape(size1) ); }
 
 void Array::resize(size_t size1, size_t size2) { resize( make_shape(size1,size2) ); }
@@ -47,9 +88,6 @@ void Array::resize(size_t size1, size_t size2) { resize( make_shape(size1,size2)
 void Array::resize(size_t size1, size_t size2, size_t size3) { resize( make_shape(size1,size2,size3) ); }
 
 void Array::resize(size_t size1, size_t size2, size_t size3, size_t size4) { resize( make_shape(size1,size2,size3,size4) ); }
-#endif
-
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 namespace {
 template< typename DATA_TYPE >
@@ -70,82 +108,6 @@ template <> void ArrayT<long>::dump(std::ostream& os) const { dump_array_data(*t
 template <> void ArrayT<float>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<double>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 
-#endif
-
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
-
-Array* Array::create( DataType datatype, const ArrayShape& shape )
-{
-  switch( datatype.kind() )
-  {
-    case DataType::KIND_REAL64: return new ArrayT<double>(shape);
-    case DataType::KIND_REAL32: return new ArrayT<float>(shape);
-    case DataType::KIND_INT32:  return new ArrayT<int>(shape);
-    case DataType::KIND_INT64:  return new ArrayT<long>(shape);
-    default:
-    {
-      std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
-      throw eckit::BadParameter(err.str(),Here());
-    }
-  }
-  return 0;
-}
-
-Array* Array::create( DataType datatype )
-{
-  switch( datatype.kind() )
-  {
-    case DataType::KIND_REAL64: return new ArrayT<double>();
-    case DataType::KIND_REAL32: return new ArrayT<float>();
-    case DataType::KIND_INT32:  return new ArrayT<int>();
-    case DataType::KIND_INT64:  return new ArrayT<long>();
-    default:
-    {
-      std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
-      throw eckit::BadParameter(err.str(),Here());
-    }
-  }
-  return 0;
-}
-#else
-
-Array* Array::create( DataType datatype, const ArrayShape& shape )
-{
-  switch( datatype.kind() )
-  {
-    case DataType::KIND_REAL64: return create<double>(shape);
-    case DataType::KIND_REAL32: return create<float>(shape);
-    case DataType::KIND_INT32:  return create<int>(shape);
-    case DataType::KIND_INT64:  return create<long>(shape);
-    default:
-    {
-      std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
-      throw eckit::BadParameter(err.str(),Here());
-    }
-  }
-  return 0;
-}
-
-#endif
-
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
-
-// Array* Array::create( const Array& other )
-// {
-//   Array* array = Array::create(other.datatype());
-//   // array->assign(other);
-//   return array;
-// }
-
-template <> Array* Array::wrap(int data[], const ArraySpec& s) { return new ArrayT<int>(data,s); }
-template <> Array* Array::wrap(long data[], const ArraySpec& s) { return new ArrayT<long>(data,s); }
-template <> Array* Array::wrap(float data[], const ArraySpec& s) { return new ArrayT<float>(data,s); }
-template <> Array* Array::wrap(double data[], const ArraySpec& s) { return new ArrayT<double>(data,s); }
-
-template <> Array* Array::wrap(int data[], const ArrayShape& s) { return new ArrayT<int>(data,s); }
-template <> Array* Array::wrap(long data[], const ArrayShape& s) { return new ArrayT<long>(data,s); }
-template <> Array* Array::wrap(float data[], const ArrayShape& s) { return new ArrayT<float>(data,s); }
-template <> Array* Array::wrap(double data[], const ArrayShape& s) { return new ArrayT<double>(data,s); }
 #endif
 
 } // namespace array

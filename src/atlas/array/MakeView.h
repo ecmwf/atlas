@@ -11,8 +11,6 @@
 namespace atlas {
 namespace array {
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-
 namespace impl {
     template<typename Value, unsigned NDims>
     inline static void check_metadata(const Array& array)
@@ -29,6 +27,8 @@ namespace impl {
         }
     }
 }
+
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
 inline static data_view_tt<Value, NDims>

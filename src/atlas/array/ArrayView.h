@@ -51,11 +51,8 @@
 #include <vector>
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/array/GridToolsTraits.h"
+#include "eckit/exception/Exceptions.h"
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#include <eckit/exception/Exceptions.h>
-#endif
- 
 namespace atlas {
 namespace array {
   class Array;
@@ -112,7 +109,7 @@ namespace array {
   public:
 
       LocalView() { NOTIMP; }
-    
+
       LocalView( DATA_TYPE* data, const size_t shape[RANK], const size_t strides[RANK] ) :
         data_(data)
       {
@@ -123,7 +120,7 @@ namespace array {
           size_ *= shape_[j];
         }
       }
-    
+
       LocalView( DATA_TYPE* data, const size_t shape[RANK] ) :
         data_(data)
       {
@@ -137,7 +134,7 @@ namespace array {
           strides_[j] = strides_[j+1]*shape_[j+1];
         }
       }
-    
+
 
       template < typename... Coords >
       DATA_TYPE&

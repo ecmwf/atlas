@@ -21,6 +21,7 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/array/MakeView.h"
 
 namespace atlas {
 namespace mesh {
