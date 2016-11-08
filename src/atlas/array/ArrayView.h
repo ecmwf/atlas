@@ -76,7 +76,7 @@ namespace atlas {
 namespace array {
 
   template< typename DATA_TYPE, int RANK >
-  class LocalView_helper
+  class LocalView
   {
   public:
     DATA_TYPE *data_;
@@ -87,11 +87,33 @@ namespace array {
   // -- Type definitions
     typedef typename remove_const<DATA_TYPE>::type  value_type;
 
+    using degenerated_array_return_t = typename std::conditional<(RANK==1), DATA_TYPE&, LocalView<DATA_TYPE,RANK-1> >::type;
+
+    template <typename ReturnType = degenerated_array_return_t, bool ToScalar = false>
+    struct degenerate_local_array {
+      degenerate_local_array(LocalView<DATA_TYPE, RANK> const& lv) : lv_(lv) {}
+      LocalView<DATA_TYPE, RANK> const& lv_;
+      ReturnType apply(const size_t i) const {
+        return LocalView<DATA_TYPE, RANK - 1>(lv_.data_ + lv_.strides_[0] * i, lv_.shape_ + 1, lv_.strides_ + 1);
+      }
+    };
+
+    template <typename ReturnType>
+    struct degenerate_local_array<ReturnType, true> {
+      degenerate_local_array(LocalView<DATA_TYPE, RANK> const& lv) : lv_(lv) {}
+
+      LocalView<DATA_TYPE, RANK> const& lv_;
+      ReturnType apply(const size_t i) const {
+        return *(lv_.data_ + lv_.strides_[0] * i);
+        ;
+      }
+    };
+
   public:
 
-      LocalView_helper() { NOTIMP; }
+      LocalView() { NOTIMP; }
     
-      LocalView_helper( DATA_TYPE* data, const size_t shape[RANK], const size_t strides[RANK] ) :
+      LocalView( DATA_TYPE* data, const size_t shape[RANK], const size_t strides[RANK] ) :
         data_(data)
       {
         size_ = 1;
@@ -102,7 +124,7 @@ namespace array {
         }
       }
     
-      LocalView_helper( DATA_TYPE* data, const size_t shape[RANK] ) :
+      LocalView( DATA_TYPE* data, const size_t shape[RANK] ) :
         data_(data)
       {
         size_ = 1;
@@ -125,36 +147,11 @@ namespace array {
           return data_[0];
       }
 
-      template <typename... Coords, typename = typename std::enable_if<(sizeof...(Coords) == RANK), int>::type>
-      DATA_TYPE const& operator()(Coords... c) const {
-        NOTIMP;
-        return data_[0];
-      }
-
       size_t shape(size_t idx) const { NOTIMP; return 0; }
-  };
-  
-  template< typename DATA_TYPE, int RANK >
-  class LocalView : public LocalView_helper<DATA_TYPE,RANK>
-  {
-  public:
-    LocalView() : LocalView_helper<DATA_TYPE,RANK>() {}
-    LocalView( DATA_TYPE* data, const size_t shape[RANK], const size_t strides[RANK] ) : LocalView_helper<DATA_TYPE,RANK>(data,shape,strides) {}
-    LocalView( DATA_TYPE* data, const size_t shape[RANK] ) : LocalView_helper<DATA_TYPE,RANK>(data,shape) {}
-    LocalView<DATA_TYPE,RANK-1> at(const size_t i) const { return LocalView<DATA_TYPE,RANK-1>( LocalView_helper<DATA_TYPE,RANK>::data_+LocalView_helper<DATA_TYPE,RANK>::strides_[0]*i, LocalView_helper<DATA_TYPE,RANK>::shape_+1, LocalView_helper<DATA_TYPE,RANK>::strides_+1 ); }
-  };
 
-  template< typename DATA_TYPE >
-  class LocalView<DATA_TYPE,1> : public LocalView_helper<DATA_TYPE,1>
-  {
-  public:
-      LocalView() : LocalView_helper<DATA_TYPE,1>() {}
-      LocalView( DATA_TYPE* data, const size_t shape[1], const size_t strides[1] ) : LocalView_helper<DATA_TYPE,1>(data,shape,strides) {}
-      LocalView( DATA_TYPE* data, const size_t shape[1] ) : LocalView_helper<DATA_TYPE,1>(data,shape) {}
-      DATA_TYPE& at(const size_t i) const { return *(LocalView_helper<DATA_TYPE,1>::data_+LocalView_helper<DATA_TYPE,1>::strides_[0]*i); }
+      degenerated_array_return_t at(const size_t i) const {
+          return degenerate_local_array<degenerated_array_return_t, RANK==1>(*this).apply(i); }
   };
-
-
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
