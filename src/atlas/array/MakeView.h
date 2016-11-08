@@ -34,7 +34,6 @@ template <typename Value, unsigned int NDims, bool ReadOnly = false>
 inline static data_view_tt<Value, NDims>
 make_gt_host_view(const Array& array) {
 
-  impl::check_metadata<Value, NDims>(array);
   typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> storage_info_ty;
   typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
 
@@ -48,20 +47,23 @@ make_gt_host_view(const Array& array) {
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
 inline static ArrayView<Value, NDims>
 make_host_view(const Array& array) {
+  impl::check_metadata<Value, NDims>(array);
   return ArrayView<Value, NDims>(make_gt_host_view<Value, NDims>(array), array.shape());
 }
 
+template <typename Value, unsigned int NDims, bool ReadOnly = false>
+inline static ArrayView<Value, NDims>
+make_host_view(const Array& array, const ArrayShape& shape) {
+  return ArrayView<Value, NDims>(make_gt_host_view<Value, NDims>(array), shape);
+}
 
 #ifdef __CUDACC__
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
 inline static data_view_tt<Value, NDims>
 make_gt_device_view(const Array& array) {
-  impl::check_metadata<Value, NDims>(array);
-
   typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> storage_info_ty;
   typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
 
-//      Array::data_view_t<Value, NDims, ReadOnly>
   data_store_t* ds = reinterpret_cast<data_store_t*>(array.data());
 
   return gridtools::make_device_view(*ds);
@@ -71,8 +73,15 @@ make_gt_device_view(const Array& array) {
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
 inline static ArrayView<Value, NDims>
 make_device_view(const Array& array) {
+  impl::check_metadata<Value, NDims>(array);
   return ArrayView<Value, NDims>(make_gt_host_view<Value, NDims>(array), ds->shape());
 }
+template <typename Value, unsigned int NDims, bool ReadOnly = false>
+inline static ArrayView<Value, NDims>
+make_device_view(const Array& array, const ArrayShape& shape) {
+  return ArrayView<Value, NDims>(make_gt_device_view<Value, NDims>(array), shape);
+}
+
 #endif
 
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
@@ -120,6 +129,12 @@ make_view(const Array& array) {
     impl::check_metadata<Value, NDims>(array);
 
     return make_host_view<Value, NDims, ReadOnly>(array);
+}
+
+template <typename Value, unsigned int NDims, bool ReadOnly = false>
+inline static ArrayView<Value, NDims>
+make_view(const Array& array, const ArrayShape& shape) {
+    return make_host_view<Value, NDims, ReadOnly>(array, shape);
 }
 
 }

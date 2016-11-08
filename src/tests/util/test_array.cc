@@ -46,6 +46,20 @@ BOOST_AUTO_TEST_CASE( test_make_view )
    delete ds;
 }
 
+BOOST_AUTO_TEST_CASE( test_make_view_shape )
+{
+   Array *ds = Array::create<double>(4ul, 5ul);
+   ArrayView<double, 2> hv = make_view<double, 2>(*ds);
+   hv(2,3) = 4.5;
+
+   ArrayView<double, 3> atlas_hv = make_view<double, 3>(*ds, ArrayShape{4,1,5});
+
+   BOOST_CHECK_EQUAL( hv(2,3) , 4.5 );
+   BOOST_CHECK_EQUAL( atlas_hv(2,1,3) , 4.5 );
+
+   delete ds;
+}
+
 BOOST_AUTO_TEST_CASE( test_array_shape )
 {
    ArrayShape as{2,3};
