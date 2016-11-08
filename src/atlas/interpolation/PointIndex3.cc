@@ -26,7 +26,7 @@ ElemPayload make_elem_payload(size_t id, ElemPayload::ElementTypeEnum type) { re
 ElemIndex3* create_element_centre_index( const atlas::mesh::Mesh& mesh )
 {
 
-    const array::ArrayView<double,2> centres ( mesh.cells().field( "centre" ) );
+    const array::ArrayView<double,2> centres = array::make_view<double,2>( mesh.cells().field( "centre" ) );
     const size_t ncells = mesh.cells().size();
 
     std::vector<ElemIndex3::Value> p;

@@ -39,7 +39,6 @@
 #include <memory>
 
 #include "atlas/array/Array.h"
-#include "atlas/array/IndexView.h"
 #include "atlas/atlas.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/grids.h"

@@ -280,6 +280,9 @@ public:
 
 #endif
 
+  virtual void* data() = 0;
+  virtual const void* data() const = 0;
+
   virtual array::DataType datatype() const = 0;
   virtual size_t sizeof_data() const = 0;
 
@@ -319,7 +322,6 @@ public:
   const std::vector<int>& stridesf() const { return spec_.stridesf(); }
 
   bool contiguous() const { return spec_.contiguous(); }
-
 #ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
   void operator=( const Array &array ) { return assign(array); }
 
@@ -447,9 +449,9 @@ public:
 
   virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
 
-  void* data() { return data_;}
-
   size_t sizeof_data() const {return sizeof(DATA_TYPE);}
+  virtual void* data() { return data_;}
+  virtual const void* data() const { return data_;}
 
 private:
   bool owned_;
@@ -497,8 +499,8 @@ public:
   const DATA_TYPE& operator[](size_t i) const { return *(data()+i); }
         DATA_TYPE& operator[](size_t i)       { return *(data()+i); }
 
-  const DATA_TYPE* data() const { return (data_); }
-        DATA_TYPE* data()       { return (data_); }
+  virtual void* data()             { return (data_); }
+  virtual const void* data() const { return (data_); }
 
   void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) data()[n]=scalar; }
 
@@ -558,18 +560,18 @@ void ArrayT<DATA_TYPE>::assign( RandomAccessIterator begin, RandomAccessIterator
   }
 }
 
-template< typename DATA_TYPE>
-void ArrayT<DATA_TYPE>::assign( const Array& other )
-{
-  if( not contiguous() or not other.contiguous()) NOTIMP;
-  resize( other.shape() );
-  ASSERT( datatype().kind() == other.datatype().kind() );
-  const ArrayT<DATA_TYPE>& other_array = *dynamic_cast< const ArrayT<DATA_TYPE>* >(&other);
-  
-  const DATA_TYPE* other_data = other_array.data();
-  for( size_t j=0; j<size(); ++j )
-    data()[j] = other_data[j];
-}
+// template< typename DATA_TYPE>
+// void ArrayT<DATA_TYPE>::assign( const Array& other )
+// {
+//   if( not contiguous() or not other.contiguous()) NOTIMP;
+//   resize( other.shape() );
+//   ASSERT( datatype().kind() == other.datatype().kind() );
+//   const ArrayT<DATA_TYPE>& other_array = *dynamic_cast< const ArrayT<DATA_TYPE>* >(&other);
+//
+//   const DATA_TYPE* other_data = (const DATA_TYPE*)(other_array.data());
+//   for( size_t j=0; j<size(); ++j )
+//     data()[j] = other_data[j];
+// }
 #endif
 
 //------------------------------------------------------------------------------

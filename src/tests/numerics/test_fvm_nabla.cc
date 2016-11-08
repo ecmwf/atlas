@@ -45,9 +45,9 @@ double dual_volume(const mesh::Mesh& mesh)
 {
   const mesh::Nodes& nodes = mesh.nodes();
   int nb_nodes = nodes.size();
-  const array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-  const array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
-  const array::ArrayView<int,1>    is_ghost ( nodes.ghost() );
+  const array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( nodes.field("dual_volumes") );
+  const array::ArrayView<gidx_t,1> glb_idx      = array::make_view<gidx_t,1>( nodes.global_index() );
+  const array::ArrayView<int   ,1> is_ghost     = array::make_view<int   ,1>( nodes.ghost() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {
@@ -70,8 +70,8 @@ void rotated_flow(const fvm::Method& fvm, field::Field& field, const double& bet
   const double pvel = USCAL/radius;
   const double deg2rad = M_PI/180.;
 
-  array::ArrayView<double,2> lonlat_deg (fvm.mesh().nodes().lonlat());
-  array::ArrayView<double,3> var (field);
+  array::ArrayView<double,2> lonlat_deg = array::make_view<double,2>(fvm.mesh().nodes().lonlat());
+  array::ArrayView<double,3> var        = array::make_view<double,3>(field);
 
   size_t nnodes = fvm.mesh().nodes().size();
   for( size_t jnode=0; jnode<nnodes; ++jnode )
@@ -97,8 +97,8 @@ void rotated_flow_magnitude(const fvm::Method& fvm, field::Field& field, const d
   const double pvel = USCAL/radius;
   const double deg2rad = M_PI/180.;
 
-  array::ArrayView<double,2> lonlat_deg (fvm.mesh().nodes().lonlat());
-  array::ArrayView<double,2> var (field);
+  array::ArrayView<double,2> lonlat_deg = array::make_view<double,2> (fvm.mesh().nodes().lonlat());
+  array::ArrayView<double,2> var        = array::make_view<double,2> (field);
 
   size_t nnodes = fvm.mesh().nodes().size();
   for( size_t jnode=0; jnode<nnodes; ++jnode )
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nnodes = mesh->nodes().size();
   size_t nlev = 1;
 
@@ -191,12 +191,12 @@ BOOST_AUTO_TEST_CASE( test_grad )
 
   nabla->gradient(fields["scalar"],fields["grad"]);
   nabla->gradient(fields["rscalar"],fields["rgrad"]);
-  array::ArrayView<double,2> xder( fields["xder"] );
-  array::ArrayView<double,2> yder( fields["yder"] );
-  array::ArrayView<double,2> rxder( fields["rxder"] );
-  array::ArrayView<double,2> ryder( fields["ryder"] );
-  const array::ArrayView<double,3> grad( fields["grad"] );
-  const array::ArrayView<double,3> rgrad( fields["rgrad"] );
+  array::ArrayView<double,2> xder  = array::make_view<double,2>( fields["xder"] );
+  array::ArrayView<double,2> yder  = array::make_view<double,2>( fields["yder"] );
+  array::ArrayView<double,2> rxder = array::make_view<double,2>( fields["rxder"] );
+  array::ArrayView<double,2> ryder = array::make_view<double,2>( fields["ryder"] );
+  const array::ArrayView<double,3> grad  = array::make_view<double,3>( fields["grad"] );
+  const array::ArrayView<double,3> rgrad = array::make_view<double,3>( fields["rgrad"] );
   for( size_t jnode=0; jnode< nnodes ; ++jnode )
   {
     for(size_t jlev = 0; jlev < nlev; ++jlev) {
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE( test_div )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   field::FieldSet fields;
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   field::FieldSet fields;
@@ -284,15 +284,15 @@ BOOST_AUTO_TEST_CASE( test_curl )
   fields.add( fvm.node_columns().createField<double>("windXgradY") );
   fields.add( fvm.node_columns().createField<double>("windYgradX") );
   fields.add( fvm.node_columns().createField<double>("windYgradY") );
-  array::ArrayView<double,3> wind(fields["wind"]);
-  array::ArrayView<double,4> windgrad(fields["windgrad"]);
+  array::ArrayView<double,3> wind     = array::make_view<double,3>(fields["wind"]);
+  array::ArrayView<double,4> windgrad = array::make_view<double,4>(fields["windgrad"]);
 
-  array::ArrayView<double,1> windX(fields["windX"]);
-  array::ArrayView<double,1> windY(fields["windY"]);
-  array::ArrayView<double,1> windXgradX(fields["windXgradX"]);
-  array::ArrayView<double,1> windXgradY(fields["windXgradY"]);
-  array::ArrayView<double,1> windYgradX(fields["windYgradX"]);
-  array::ArrayView<double,1> windYgradY(fields["windYgradY"]);
+  array::ArrayView<double,1> windX      = array::make_view<double,1>(fields["windX"]);
+  array::ArrayView<double,1> windY      = array::make_view<double,1>(fields["windY"]);
+  array::ArrayView<double,1> windXgradX = array::make_view<double,1>(fields["windXgradX"]);
+  array::ArrayView<double,1> windXgradY = array::make_view<double,1>(fields["windXgradY"]);
+  array::ArrayView<double,1> windYgradX = array::make_view<double,1>(fields["windYgradX"]);
+  array::ArrayView<double,1> windYgradY = array::make_view<double,1>(fields["windYgradY"]);
   for( size_t j=0; j<windX.size(); ++j )
   {
     windX(j) = wind(j,0,0);
@@ -334,7 +334,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   field::FieldSet fields;

@@ -15,7 +15,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 
 namespace atlas {
 namespace mesh {
@@ -24,10 +24,10 @@ namespace actions {
 void BuildCellCentres::operator()( Mesh& mesh ) const
 {
   mesh::Nodes& nodes     = mesh.nodes();
-  array::ArrayView<double,2> coords  ( nodes.field("xyz") );
+  array::ArrayView<double,2> coords = array::make_view<double,2>( nodes.field("xyz") );
 
   size_t nb_cells = mesh.cells().size();
-  array::ArrayView<double,2> centroids ( mesh.cells().add( field::Field::create<double>("centre", array::make_shape(nb_cells,3))) );
+  array::ArrayView<double,2> centroids = array::make_view<double,2>( mesh.cells().add( field::Field::create<double>("centre", array::make_shape(nb_cells,3))) );
   const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
 
   for (size_t e=0; e<nb_cells; ++e)

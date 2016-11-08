@@ -40,9 +40,11 @@ class MultiBlockConnectivity;
 // --------------------------------------------------------------------------
 
 #ifdef ATLAS_HAVE_FORTRAN
+#define INDEX_REF Index
 #define FROM_FORTRAN -1
-#define TO_FORTRAN +1
+#define TO_FORTRAN   +1
 #else
+#define INDEX_REF *
 #define FROM_FORTRAN
 #define TO_FORTRAN
 #endif
@@ -69,8 +71,25 @@ class MultiBlockConnectivity;
 ///
 /// In the first mode of construction, the connectivity table cannot be resized.
 /// In the second mode of construction, resizing is possible
+
+class ConnectivityRow
+{
+  typedef array::detail::FortranIndex<idx_t> Index;
+  public:
+    ConnectivityRow(idx_t *data, size_t size) : data_(data), size_(size) {}
+    Index operator()(size_t i) const { return INDEX_REF(data_); }
+    idx_t operator()(size_t i)       { return data_[i] FROM_FORTRAN; }
+    size_t size() const { return size_; }
+
+  private:
+    idx_t *data_;
+    size_t size_;
+};
+
 class IrregularConnectivity : public eckit::Owned
 {
+public:
+  typedef ConnectivityRow Row;
 public:
 //-- Constructors
 
@@ -115,7 +134,7 @@ public:
 
   idx_t missing_value() const { return missing_value_; }
 
-  array::IndexView<idx_t,1> row( size_t row_idx ) const;
+  Row row( size_t row_idx ) const;
 
 ///-- Modifiers
 
@@ -172,7 +191,7 @@ private:
   std::vector<size_t> owned_displs_;
   std::vector<size_t> owned_counts_;
 
-  idx_t  *values_;
+  array::IndexArray values_;
   idx_t  missing_value_;
   size_t rows_;
   size_t *displs_;
@@ -381,7 +400,7 @@ private:
 
   size_t rows_;
   size_t cols_;
-  idx_t *values_;
+  array::IndexArray values_;
   idx_t missing_value_;
 
 };
@@ -406,10 +425,9 @@ inline void IrregularConnectivity::set( size_t row_idx, size_t col_idx, const id
   col[col_idx] = value TO_FORTRAN;
 }
 
-inline array::IndexView<idx_t,1> IrregularConnectivity::row( size_t row_idx ) const
+inline IrregularConnectivity::Row IrregularConnectivity::row( size_t row_idx ) const
 {
-  size_t rowsize[1] = {counts_[row_idx]};
-  return array::IndexView<idx_t,1>(values_+displs_[row_idx],rowsize);
+  return Row(values_+displs_[row_idx],counts_[row_idx]);
 }
 
 // -----------------------------------------------------------------------------------------------------
@@ -473,6 +491,7 @@ void atlas__BlockConnectivity__delete(BlockConnectivity* This);
 
 #undef FROM_FORTRAN
 #undef TO_FORTRAN
+#undef INDEX_REF
 
 //------------------------------------------------------------------------------------------------------
 

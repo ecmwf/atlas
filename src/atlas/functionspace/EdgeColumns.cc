@@ -43,9 +43,9 @@ template <typename T>
 array::ArrayView<T,3> leveled_view(const field::Field &field)
 {
   if( field.has_levels() )
-    return array::ArrayView<T,3> ( field.data<T>(), array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
+    return make_view<T, 3>(field, array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
   else
-    return array::ArrayView<T,3> ( field.data<T>(), array::make_shape(field.shape(0),1,field.stride(0)) );
+    return make_view<T, 2>(field, array::make_shape(field.shape(0),1,field.stride(0)) );
 }
 
 template <typename T>
@@ -242,19 +242,19 @@ void EdgeColumns::haloExchange( field::FieldSet& fieldset ) const
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const field::Field& field = fieldset[f];
     if     ( field.datatype() == array::DataType::kind<int>() ) {
-      array::ArrayView<int,2> view(field);
+      array::ArrayView<int,2> view = array::make_view<int,2>(field);
       halo_exchange().execute( view );
     }
     else if( field.datatype() == array::DataType::kind<long>() ) {
-      array::ArrayView<long,2> view(field);
+      array::ArrayView<long,2> view = array::make_view<long,2>(field);
       halo_exchange().execute( view );
     }
     else if( field.datatype() == array::DataType::kind<float>() ) {
-      array::ArrayView<float,2> view(field);
+      array::ArrayView<float,2> view = array::make_view<float,2>(field);
       halo_exchange().execute( view );
     }
     else if( field.datatype() == array::DataType::kind<double>() ) {
-      array::ArrayView<double,2> view(field);
+      array::ArrayView<double,2> view = array::make_view<double,2>(field);
       halo_exchange().execute( view );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -375,7 +375,7 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const field::F
 {
   array::ArrayView<T,3> values = leveled_view<T>(field);
   array::ArrayT<T> surface_field ( array::make_shape(values.shape(0),values.shape(2) ) );
-  array::ArrayView<T,2> surface(surface_field);
+  array::ArrayView<T,2> surface = array::make_view<T,2>(surface_field);
   for( size_t n=0; n<values.shape(0); ++n ) {
     for( size_t j=0; j<surface.shape(1); ++j )
     {

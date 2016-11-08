@@ -19,7 +19,6 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Log.h"
 
@@ -62,7 +61,7 @@ void Nabla::setup()
 
   const size_t nedges = edges.size();
 
-  const array::ArrayView<int,1> edge_is_pole ( edges.field("is_pole_edge") );
+  const array::ArrayView<int,1> edge_is_pole = array::make_view<int,1>( edges.field("is_pole_edge") );
 
   // Filter pole_edges out of all edges
   std::vector<size_t> tmp(nedges);
@@ -120,17 +119,17 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
   const array::ArrayView<double,2> scalar ( scalar_field.data<double>(), array::make_shape(nnodes,nlev)   );
         array::ArrayView<double,3> grad   ( grad_field.  data<double>(), array::make_shape(nnodes,nlev,2) );
 
-  const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const array::ArrayView<double,1> dual_volumes   ( nodes.field("dual_volumes") );
-  const array::ArrayView<double,2> dual_normals   ( edges.field("dual_normals") );
-  const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const array::ArrayView<double,2> lonlat_deg     = array::make_view<double,2>( nodes.lonlat() );
+  const array::ArrayView<double,1> dual_volumes   = array::make_view<double,1>( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.field("dual_normals") );
+  const array::ArrayView<int,   1> edge_is_pole   = array::make_view<int   ,1>( edges.field("is_pole_edge") );
+  const array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes.field("node2edge_sign") );
 
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
   const mesh::Connectivity& edge2node = edges.node_connectivity();
 
   array::ArrayT<double> avgS_arr( nedges,nlev,2 );
-  array::ArrayView<double,3> avgS(avgS_arr);
+  array::ArrayView<double,3> avgS = array::make_view<double,3>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius;
 
@@ -203,17 +202,17 @@ void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &g
   const array::ArrayView<double,3> vector ( vector_field.data<double>(), array::make_shape(nnodes,nlev,2)   );
         array::ArrayView<double,4> grad   ( grad_field.  data<double>(), array::make_shape(nnodes,nlev,2,2) );
 
-  const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const array::ArrayView<double,1> dual_volumes   ( nodes.field("dual_volumes") );
-  const array::ArrayView<double,2> dual_normals   ( edges.field("dual_normals") );
-  const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const array::ArrayView<double,2> lonlat_deg     = array::make_view<double,2>( nodes.lonlat() );
+  const array::ArrayView<double,1> dual_volumes   = array::make_view<double,1>( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.field("dual_normals") );
+  const array::ArrayView<int,   1> edge_is_pole   = array::make_view<int   ,1>( edges.field("is_pole_edge") );
+  const array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes.field("node2edge_sign") );
 
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
   const mesh::Connectivity& edge2node = edges.node_connectivity();
 
   array::ArrayT<double> avgS_arr( nedges,nlev,2,2 );
-  array::ArrayView<double,4> avgS(avgS_arr);
+  array::ArrayView<double,4> avgS = array::make_view<double,4>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius;
 
@@ -311,16 +310,16 @@ void Nabla::divergence(const field::Field& vector_field, field::Field& div_field
   const array::ArrayView<double,3> vector ( vector_field.data<double>(), array::make_shape(nnodes,nlev,2));
         array::ArrayView<double,2> div    ( div_field   .data<double>(), array::make_shape(nnodes,nlev)  );
 
-  const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const array::ArrayView<double,1> dual_volumes   ( nodes.field("dual_volumes") );
-  const array::ArrayView<double,2> dual_normals   ( edges.field("dual_normals") );
-  const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const array::ArrayView<double,2> lonlat_deg     = array::make_view<double,2>( nodes.lonlat() );
+  const array::ArrayView<double,1> dual_volumes   = array::make_view<double,1>( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.field("dual_normals") );
+  const array::ArrayView<int,   1> edge_is_pole   = array::make_view<int   ,1>( edges.field("is_pole_edge") );
+  const array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes.field("node2edge_sign") );
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
   const mesh::Connectivity& edge2node = edges.node_connectivity();
 
   array::ArrayT<double> avgS_arr( nedges,nlev,2 );
-  array::ArrayView<double,3> avgS(avgS_arr);
+  array::ArrayView<double,3> avgS = array::make_view<double,3>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius;
 
@@ -396,17 +395,17 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
   const array::ArrayView<double,3> vector ( vector_field.data<double>(), array::make_shape(nnodes,nlev,2));
         array::ArrayView<double,2> curl   ( curl_field  .data<double>(), array::make_shape(nnodes,nlev)  );
 
-  const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const array::ArrayView<double,1> dual_volumes   ( nodes.field("dual_volumes") );
-  const array::ArrayView<double,2> dual_normals   ( edges.field("dual_normals") );
-  const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const array::ArrayView<double,2> lonlat_deg     = array::make_view<double,2>( nodes.lonlat() );
+  const array::ArrayView<double,1> dual_volumes   = array::make_view<double,1>( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.field("dual_normals") );
+  const array::ArrayView<int,   1> edge_is_pole   = array::make_view<int   ,1>( edges.field("is_pole_edge") );
+  const array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes.field("node2edge_sign") );
 
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
   const mesh::Connectivity& edge2node = edges.node_connectivity();
 
   array::ArrayT<double> avgS_arr( nedges,nlev,2 );
-  array::ArrayView<double,3> avgS(avgS_arr);
+  array::ArrayView<double,3> avgS = array::make_view<double,3>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius*radius;
 

@@ -93,8 +93,7 @@ public: // Destructor
 // -- Accessors
 
   /// @brief Access to raw data
-  template <typename DATA_TYPE> const DATA_TYPE* data() const  { return array::ArrayView<DATA_TYPE>(*array_).data(); }
-  template <typename DATA_TYPE>       DATA_TYPE* data()        { return array::ArrayView<DATA_TYPE>(*array_).data(); }
+  void* data() { return array_->data(); }
 
   /// @brief Internal data type of field
   array::DataType datatype() const { return array_->datatype(); }
@@ -113,6 +112,9 @@ public: // Destructor
   void resize(const array::ArrayShape&);
 
   void insert(size_t idx1, size_t size1 );
+
+  template<typename T>
+  void initializeTo(const T& value) { NOTIMP; }
 
   /// @brief Shape of this field in Fortran style (reverse order of C style)
   const std::vector<int>& shapef()  const { return array_->shapef(); }

@@ -13,7 +13,7 @@
 
 #include <limits>
 #include "eckit/memory/Builder.h"
-#include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/mesh/Mesh.h"
@@ -46,7 +46,7 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
     double lon_min = lat_min;
     double lon_max = lat_max;
 
-    array::ArrayView<double,2> lonlat (m.nodes().lonlat());
+    array::ArrayView<double,2> lonlat = array::make_view<double,2>(m.nodes().lonlat());
     std::vector<Point> &p = *points_;
     const size_t npts = p.size();
 

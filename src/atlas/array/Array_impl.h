@@ -10,11 +10,15 @@
 namespace atlas {
 namespace array {
 
+template <typename Value, unsigned int NDims, bool ReadOnly = false>
+static ArrayView<Value, NDims>
+make_view(const Array& array);
+
 template <typename Value, unsigned int RANK, unsigned int Dim>
 struct array_initializer_impl {
 
   static void apply(Array const& orig, Array& array_resized) {
-      array_initializer_impl<Value, RANK, Dim>::apply(make_view<Value, RANK>(&orig), make_view<Value, RANK>(&array_resized));
+      array_initializer_impl<Value, RANK, Dim>::apply(make_view<Value, RANK>(orig), make_view<Value, RANK>(array_resized));
   }
   template <typename ... DimIndex>
   static void apply(ArrayView<Value, RANK> const&& orig, ArrayView<Value, RANK>&& array_resized, DimIndex... idxs) {
@@ -63,7 +67,8 @@ struct array_initializer {
 template<typename Value, unsigned int RANK, unsigned int Dim, unsigned int PartDim>
 struct array_initializer_partitioned_val_impl {
   static void apply(Array const& orig, Array& dest, unsigned int pos) {
-      array_initializer_partitioned_val_impl<Value, RANK, Dim, PartDim>::apply(make_view<Value, RANK>(&orig), make_view<Value, RANK>(&dest), pos);
+      auto view = make_view<Value, RANK>(orig);
+      array_initializer_partitioned_val_impl<Value, RANK, Dim, PartDim>::apply(make_view<Value, RANK>(orig), make_view<Value, RANK>(dest), pos);
   }
   template <typename ... DimIndex>
   static void apply(ArrayView<Value, RANK> const&& orig, ArrayView<Value, RANK>&& dest, unsigned int pos, DimIndex... idxs) {

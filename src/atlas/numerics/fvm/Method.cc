@@ -23,7 +23,6 @@
 #include "atlas/util/Constants.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 
@@ -90,7 +89,7 @@ void Method::setup()
 
     // Compute sign
     {
-      const array::ArrayView<int,1> is_pole_edge   ( edges_.field("is_pole_edge") );
+      const array::ArrayView<int,1> is_pole_edge = array::make_view<int,1>( edges_.field("is_pole_edge") );
 
       const mesh::Connectivity &node_edge_connectivity = nodes_.edge_connectivity();
       const mesh::Connectivity &edge_node_connectivity = edges_.node_connectivity();
@@ -100,7 +99,7 @@ void Method::setup()
               field::Field::create<double>("node2edge_sign",
               array::make_shape(nnodes,node_edge_connectivity.maxcols()) ) );
       }
-      array::ArrayView<double,2> node2edge_sign( nodes_.field("node2edge_sign") );
+      array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes_.field("node2edge_sign") );
 
       atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
       {
@@ -123,9 +122,9 @@ void Method::setup()
     // Metrics
     if (0) {
       const size_t nedges = edges_.size();
-      const array::ArrayView<double,2> lonlat_deg( nodes_.lonlat() );
-      array::ArrayView<double,1> dual_volumes ( nodes_.field("dual_volumes") );
-      array::ArrayView<double,2> dual_normals ( edges_.field("dual_normals") );
+      const array::ArrayView<double,2> lonlat_deg = array::make_view<double,2>( nodes_.lonlat() );
+      array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( nodes_.field("dual_volumes") );
+      array::ArrayView<double,2> dual_normals = array::make_view<double,2>( edges_.field("dual_normals") );
 
       const double deg2rad = M_PI/180.;
       atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )

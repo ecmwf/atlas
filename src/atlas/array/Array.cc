@@ -55,7 +55,7 @@ namespace {
 template< typename DATA_TYPE >
 void dump_array_data( const ArrayT<DATA_TYPE>& array, std::ostream& os )
 {
-  const DATA_TYPE* data = array.data();
+  const DATA_TYPE* data = (DATA_TYPE*)(array.data());
   for(size_t i = 0; i < array.size(); ++i)
   {
       os << data[i] << " ";
@@ -130,12 +130,12 @@ Array* Array::create( DataType datatype, const ArrayShape& shape )
 
 #ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
-Array* Array::create( const Array& other )
-{
-  Array* array = Array::create(other.datatype());
-  array->assign(other);
-  return array;
-}
+// Array* Array::create( const Array& other )
+// {
+//   Array* array = Array::create(other.datatype());
+//   // array->assign(other);
+//   return array;
+// }
 
 template <> Array* Array::wrap(int data[], const ArraySpec& s) { return new ArrayT<int>(data,s); }
 template <> Array* Array::wrap(long data[], const ArraySpec& s) { return new ArrayT<long>(data,s); }
