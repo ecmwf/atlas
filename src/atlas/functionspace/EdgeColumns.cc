@@ -39,37 +39,6 @@ namespace functionspace {
 
 namespace {
 
-template <typename T>
-array::ArrayView<T,3> leveled_view(const field::Field &field)
-{
-  if( field.has_levels() )
-    return make_view<T, 3>(field, array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
-  else
-    return make_view<T, 2>(field, array::make_shape(field.shape(0),1,field.stride(0)) );
-}
-
-template <typename T>
-array::ArrayView<T,2> surface_view(const field::Field &field)
-{
-  return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),field.stride(0)) );
-}
-
-template <typename T>
-array::ArrayView<T,2> leveled_scalar_view(const field::Field &field)
-{
-  if( field.has_levels() )
-    return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),field.shape(1)) );
-  else
-    return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),1) );
-}
-
-template <typename T>
-array::ArrayView<T,1> surface_scalar_view(const field::Field &field)
-{
-  return array::ArrayView<T,1> ( field.data<T>(), array::make_shape(field.size()) );
-}
-
-
 void set_field_metadata(const eckit::Parametrisation& config, field::Field& field)
 {
   bool global(false);
@@ -373,8 +342,8 @@ namespace {
 template <typename T>
 std::string checksum_3d_field(const parallel::Checksum& checksum, const field::Field& field )
 {
-  array::ArrayView<T,3> values = leveled_view<T>(field);
-  array::ArrayT<T> surface_field ( array::make_shape(values.shape(0),values.shape(2) ) );
+  array::ArrayView<T,3> values = array::make_view<T,3>(field);
+  eckit::SharedPtr<array::Array> surface_field( array::Array::create<T>( array::make_shape(field.shape(0),field.shape(2) ) ) );
   array::ArrayView<T,2> surface = array::make_view<T,2>(surface_field);
   for( size_t n=0; n<values.shape(0); ++n ) {
     for( size_t j=0; j<surface.shape(1); ++j )
@@ -386,20 +355,43 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const field::F
   }
   return checksum.execute( surface.data(), surface.stride(0) );
 }
+template <typename T>
+std::string checksum_2d_field(const parallel::Checksum& checksum, const field::Field& field )
+{
+  array::ArrayView<T,2> values = array::make_view<T,2>(field);
+  return checksum.execute( values.data(), values.stride(0) );
+}
+
 }
 
 std::string EdgeColumns::checksum( const field::FieldSet& fieldset ) const {
   eckit::MD5 md5;
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const field::Field& field=fieldset[f];
-    if     ( field.datatype() == array::DataType::kind<int>() )
-      md5 << checksum_3d_field<int>(checksum(),field);
-    else if( field.datatype() == array::DataType::kind<long>() )
-      md5 << checksum_3d_field<long>(checksum(),field);
-    else if( field.datatype() == array::DataType::kind<float>() )
-      md5 << checksum_3d_field<float>(checksum(),field);
-    else if( field.datatype() == array::DataType::kind<double>() )
-      md5 << checksum_3d_field<double>(checksum(),field);
+    if     ( field.datatype() == array::DataType::kind<int>() ) {
+      if( field.has_levels() )
+        md5 << checksum_3d_field<int>(checksum(),field);
+      else
+        md5 << checksum_2d_field<int>(checksum(),field);
+    }
+    else if( field.datatype() == array::DataType::kind<long>() ) {
+      if( field.has_levels() )
+        md5 << checksum_3d_field<long>(checksum(),field);
+      else
+        md5 << checksum_2d_field<long>(checksum(),field);
+    }
+    else if( field.datatype() == array::DataType::kind<float>() ) {
+      if( field.has_levels() )
+        md5 << checksum_3d_field<float>(checksum(),field);
+      else
+        md5 << checksum_2d_field<float>(checksum(),field);
+    }
+    else if( field.datatype() == array::DataType::kind<double>() ) {
+      if( field.has_levels() )
+        md5 << checksum_3d_field<double>(checksum(),field);
+      else
+        md5 << checksum_2d_field<double>(checksum(),field);
+    }
     else throw eckit::Exception("datatype not supported",Here());
   }
   return md5;

@@ -44,7 +44,6 @@ public:
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3);
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3, size_t size4);
 
-  template <typename T> static Array* create();
   template <typename T> static Array* wrap(T data[], const ArraySpec&);
   template <typename T> static Array* wrap(T data[], const ArrayShape&);
 

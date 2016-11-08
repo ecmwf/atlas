@@ -220,8 +220,8 @@ public:
   }
 
   template <typename T> static Array* create();
-  template <typename T> static Array* wrap(T data[], const ArraySpec&);
-  template <typename T> static Array* wrap(T data[], const ArrayShape&);
+  template <typename T> static Array* wrap(T data[], const ArraySpec&) { NOTIMP; return 0; }
+  template <typename T> static Array* wrap(T data[], const ArrayShape&) { NOTIMP; return 0; }
 
 public:
 
