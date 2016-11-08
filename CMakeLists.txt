@@ -143,6 +143,11 @@ if( HAVE_TESSELATION )
 endif()
 
 ### FIND GRIDTOOLS STORAGE
+ecbuild_add_option(
+    FEATURE GRIDTOOLS_STORAGE
+    DESCRIPTION "atlas: Arrays internally use GridTools storage layer"
+)
+
 find_path( GRIDTOOLS_STORAGE_INCLUDE_DIRS 
            NAME storage-facility.hpp
            PATHS ${GRIDTOOLS_STORAGE_PATH}/include 
@@ -150,7 +155,7 @@ find_path( GRIDTOOLS_STORAGE_INCLUDE_DIRS
 
 ecbuild_add_cxx11_flags()
 
-if( GRIDTOOLS_STORAGE_INCLUDE_DIRS ) 
+if( ENABLE_GRIDTOOLS_STORAGE AND GRIDTOOLS_STORAGE_INCLUDE_DIRS ) 
     set( ATLAS_HAVE_GRIDTOOLS_STORAGE 1)
     # ecbuild_add_cxx11_flags()
 
@@ -184,7 +189,8 @@ if( GRIDTOOLS_STORAGE_INCLUDE_DIRS )
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=conflicting_calling_conventions")
 
     endif()
-
+else()
+  set( ATLAS_HAVE_GRIDTOOLS_STORAGE 0 )
 endif()
 
 ### Eigen

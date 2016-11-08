@@ -185,12 +185,10 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   eckit::SharedPtr<array::Array> glb_id_arr( array::Array::create<uid_t>(glb_nb_nodes) );
   array::ArrayView<uid_t,1> glb_id = array::make_view<uid_t,1>(*glb_id_arr);
 
-NOTIMP; // data no longer member of ArrayView
-  //ECKIT_MPI_CHECK_RESULT(
-  //      MPI_Gatherv( loc_id.data(), nb_nodes, eckit::mpi::datatype<uid_t>(),
-  //                   glb_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-  //                   root, eckit::mpi::comm()) );
-// ENDNOTIMP
+  ECKIT_MPI_CHECK_RESULT(
+        MPI_Gatherv( loc_id.data(), nb_nodes, eckit::mpi::datatype<uid_t>(),
+                     glb_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
+                     root, eckit::mpi::comm()) );
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
@@ -217,12 +215,10 @@ NOTIMP; // data no longer member of ArrayView
   }
 
   // 3) Scatter renumbered back
-NOTIMP; // data no longer member of ArrayView
-//  ECKIT_MPI_CHECK_RESULT(
-//        MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-//                      loc_id.data(), nb_nodes, eckit::mpi::datatype<uid_t>(),
-//                      root, eckit::mpi::comm()) );
-// ENDNOTIMP;
+  ECKIT_MPI_CHECK_RESULT(
+        MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
+                      loc_id.data(), nb_nodes, eckit::mpi::datatype<uid_t>(),
+                      root, eckit::mpi::comm()) );
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -836,12 +832,10 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   eckit::SharedPtr<array::Array> glb_edge_id_arr( array::Array::create<uid_t>(glb_nb_edges) );
   array::ArrayView<uid_t,1> glb_edge_id = array::make_view<uid_t,1>(*glb_edge_id_arr);
 
-NOTIMP; // data function not present yet
-  //ECKIT_MPI_CHECK_RESULT(
-  //      MPI_Gatherv( loc_edge_id.data(), nb_edges, eckit::mpi::datatype<uid_t>(),
-  //                   glb_edge_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-  //                   root, eckit::mpi::comm()) );
-// END NOTIMP;
+  ECKIT_MPI_CHECK_RESULT(
+        MPI_Gatherv( loc_edge_id.data(), nb_edges, eckit::mpi::datatype<uid_t>(),
+                     glb_edge_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
+                     root, eckit::mpi::comm()) );
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> edge_sort; edge_sort.reserve(glb_nb_edges);
@@ -868,12 +862,10 @@ NOTIMP; // data function not present yet
   }
 
   // 3) Scatter renumbered back
-NOTIMP; // data function not present yet
-  //ECKIT_MPI_CHECK_RESULT(
-  //      MPI_Scatterv( glb_edge_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
-  //                    loc_edge_id.data(), nb_edges, eckit::mpi::datatype<uid_t>(),
-  //                    root, eckit::mpi::comm()) );
-// ENDNOTIMP;
+  ECKIT_MPI_CHECK_RESULT(
+        MPI_Scatterv( glb_edge_id.data(), recvcounts.data(), recvdispls.data(), eckit::mpi::datatype<uid_t>(),
+                      loc_edge_id.data(), nb_edges, eckit::mpi::datatype<uid_t>(),
+                      root, eckit::mpi::comm()) );
 
 
   for( int jedge=0; jedge<nb_edges; ++jedge )

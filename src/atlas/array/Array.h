@@ -289,7 +289,7 @@ public:
   size_t bytes() const { return sizeof_data() * size();}
 
 #ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
-  virtual double bytes() const = 0;
+
   virtual void dump(std::ostream& os) const = 0;
 
   void resize(const ArrayShape&);
@@ -330,7 +330,6 @@ public:
   virtual void resize_data( size_t size )=0;
   virtual void insert_data(size_t idx1, size_t size1)=0;
 
-  void operator=( const Array &array ) { return assign(array); }
 #else
 
   void insert(size_t idx1, size_t size1);
@@ -493,7 +492,9 @@ public:
 public:
 
   virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
-  virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
+
+  size_t sizeof_data() const {return sizeof(DATA_TYPE);}
+
   virtual void dump(std::ostream& os) const;
 
   const DATA_TYPE& operator[](size_t i) const { return *(data()+i); }

@@ -124,22 +124,21 @@ void build_periodic_boundaries( Mesh& mesh )
       {
         found_master.reserve(master_nodes.size());
         send_slave_idx.reserve(master_nodes.size());
-NOTIMP; // constructor not available
-//        array::ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], array::make_shape(recvcounts[jproc]/3,3) );
-//        for( size_t jnode=0; jnode<recv_slave.shape(0); ++jnode )
-//        {
-//          LonLatMicroDeg slave( recv_slave(jnode,internals::LON), recv_slave(jnode,internals::LAT) );
-//          transform(slave,-1);
-//          uid_t slave_uid = slave.unique();
-//          if( master_lookup.count( slave_uid ) )
-//          {
-//            int master_idx = master_lookup[ slave_uid ];
-//            int slave_idx  = recv_slave(jnode,2);
-//            found_master[jproc].push_back( master_idx );
-//            send_slave_idx[jproc].push_back( slave_idx );
-//          }
-//        }
-// END NOTIMP;
+        array::ArrayShape recv_slave_shape = array::make_shape(recvcounts[jproc]/3,3);
+        array::LocalView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], recv_slave_shape.data() );
+        for( size_t jnode=0; jnode<recv_slave.shape(0); ++jnode )
+        {
+          LonLatMicroDeg slave( recv_slave(jnode,internals::LON), recv_slave(jnode,internals::LAT) );
+          transform(slave,-1);
+          uid_t slave_uid = slave.unique();
+          if( master_lookup.count( slave_uid ) )
+          {
+            int master_idx = master_lookup[ slave_uid ];
+            int slave_idx  = recv_slave(jnode,2);
+            found_master[jproc].push_back( master_idx );
+            send_slave_idx[jproc].push_back( slave_idx );
+          }
+        }
       }
     }
 

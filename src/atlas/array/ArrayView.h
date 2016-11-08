@@ -180,6 +180,8 @@ public:
     //   return *this;
     // }
 
+    DATA_TYPE* data() { return gt_data_view_.data(); }
+
     template < typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == RANK), int>::type >
     DATA_TYPE&
     GT_FUNCTION
@@ -307,7 +309,7 @@ private:
 // -- Private data
   DATA_TYPE* data_;
   ArrayStrides strides_;
-  ArrayShape shape_;  void resize(size_t size1, size_t size2);
+  ArrayShape shape_;
 
   size_t rank_;
   size_t size_;

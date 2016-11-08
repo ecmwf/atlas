@@ -73,8 +73,7 @@ mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
 {
   size_t nb_nodes = g.npts();
   nodes().resize(nb_nodes);
-  NOTIMP;
-  //g.fillLonLat(nodes().lonlat().data<double>(), nb_nodes*2);
+  g.fillLonLat( array::make_view<double,2>(nodes().lonlat()).data(), nb_nodes*2 );
   return nodes();
 }
 
