@@ -138,12 +138,12 @@ BOOST_AUTO_TEST_CASE( test_resize )
 {
   Array* ds = Array::create<double>(7, 5, 8);
   {
-    ArrayView<double, 3> hv = make_host_view<double, 3>(ds);
+    ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
     hv(3, 3, 3) = 4.5;
     hv(6, 4, 7) = 7.5;
   }
   ds->resize(32, 5, 33);
-  ArrayView<double, 3> hv = make_host_view<double, 3>(ds);
+  ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
 
   BOOST_CHECK_EQUAL(ds->spec().shape()[0], 32);
   BOOST_CHECK_EQUAL(ds->spec().shape()[1], 5);
@@ -162,13 +162,13 @@ BOOST_AUTO_TEST_CASE( test_resize_shape )
 {
    Array* ds = Array::create<double>(7,5,8);
    {
-     ArrayView<double, 3> hv = make_host_view<double, 3>(ds);
+     ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
      hv(3, 3, 3) = 4.5;
      hv(6, 4, 7) = 7.5;
    }
    ds->resize(ArrayShape{32,5,33});
 
-   ArrayView<double, 3> hv = make_host_view<double, 3>(ds);
+   ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
    BOOST_CHECK_EQUAL(ds->spec().shape()[0], 32);
    BOOST_CHECK_EQUAL(ds->spec().shape()[1], 5);
    BOOST_CHECK_EQUAL(ds->spec().shape()[2], 33);
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE( test_insert )
 {
    Array* ds = Array::create<double>(7,5,8);
 
-   ArrayView<double, 3> hv = make_host_view<double, 3>(ds);
+   ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
    hv(1,3,3) = 1.5;
    hv(2,3,3) = 2.5;
    hv(3,3,3) = 3.5;
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE( test_insert )
    BOOST_CHECK_EQUAL( ds->spec().rank(), 3);
    BOOST_CHECK_EQUAL( ds->spec().size(), 9*5*8);
 
-   ArrayView<double, 3> hv2 = make_host_view<double, 3>(ds);
+   ArrayView<double, 3> hv2 = make_host_view<double, 3>(*ds);
 
    BOOST_CHECK_EQUAL( hv(1,3,3), 1.5);
    BOOST_CHECK_EQUAL( hv(3,3,3), 3.5);
