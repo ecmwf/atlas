@@ -205,6 +205,8 @@ public:
      // return LocalView<DATA_TYPE,RANK-1>( LocalView_helper<DATA_TYPE,RANK>::data_+LocalView_helper<DATA_TYPE,RANK>::strides_[0]*i, LocalView_helper<DATA_TYPE,RANK>::shape_+1, LocalView_helper<DATA_TYPE,RANK>::strides_+1 );
    }
 
+    data_view_t& data_view() { return gt_data_view_;}
+
 private:
     data_view_t gt_data_view_;
 //// -- Constructors
