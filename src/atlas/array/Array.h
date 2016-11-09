@@ -42,6 +42,21 @@ struct array_initializer;
 template<unsigned int PartDim>
 struct array_initializer_partitioned;
 
+template<unsigned int NDims>
+struct default_layout {
+
+    template<typename T>
+    struct get_layout;
+
+    template<typename UInt, UInt ... Indices>
+    struct get_layout<gridtools::gt_integer_sequence<UInt, Indices...> >
+    {
+        using type = gridtools::layout_map<Indices...>;
+    };
+
+    using type = typename get_layout< typename gridtools::make_gt_integer_sequence<unsigned int, NDims>::type >::type;
+};
+
 template <unsigned int TotalDims, unsigned int Dim, typename = void>
 struct check_dimension_lengths_impl {
   template <typename FirstDim, typename... Dims>
@@ -179,7 +194,7 @@ public:
   template <typename Value, typename... UInts,
             typename = gridtools::all_integers<UInts...> >
   static Array* create(UInts... dims) {
-      return create_with_layout<Value, gridtools::storage_traits<BACKEND>::template default_layout<sizeof...(dims)> >(dims...);
+      return create_with_layout<Value, typename default_layout<sizeof...(dims)>::type >(dims...);
   }
 
   template <typename Value,
