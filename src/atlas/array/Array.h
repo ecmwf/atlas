@@ -16,6 +16,7 @@
 #include <type_traits>
 #include "eckit/memory/Owned.h"
 #include "eckit/exception/Exceptions.h"
+#include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 

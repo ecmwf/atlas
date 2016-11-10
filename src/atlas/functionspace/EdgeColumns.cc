@@ -26,6 +26,7 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/array/MakeView.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
