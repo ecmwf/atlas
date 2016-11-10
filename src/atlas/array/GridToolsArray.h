@@ -268,6 +268,8 @@ public:
     assert(ds);
     Array* array = new ArrayT<Value>(ds);
     array->spec_ = spec;
+
+    return array;
   }
 
   template <typename T> static Array* wrap(T* data, const ArraySpec& spec) {
