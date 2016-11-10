@@ -339,8 +339,8 @@ public:
       spec().set_contiguous();
   }
 
-  virtual void* data() = 0;
-  virtual const void* data() const = 0;
+  virtual void* storage() = 0;
+  virtual const void* storage() const = 0;
 
   virtual array::DataType datatype() const = 0;
   virtual size_t sizeof_data() const = 0;
