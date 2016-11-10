@@ -56,6 +56,7 @@ template <unsigned int NDims>
 std::array<unsigned int, NDims> get_array_from_vector(std::vector<size_t> const& values) {
     std::array<unsigned int, NDims> array;
     std::copy(values.begin(), values.end(), array.begin());
+    return array;
 }
 
 template <unsigned int TotalDims, unsigned int Dim, typename = void>
@@ -151,7 +152,6 @@ public:
           std::array<unsigned int, NDims>&& shape, std::array<unsigned int, NDims>&& strides) {
 
     static_assert((NDims > 0), "Error: can not create storages without any dimension");
-
     typedef gridtools::storage_traits<BACKEND>::storage_info_t<
         0, NDims, typename gridtools::zero_halo<NDims>::type,
         typename default_layout<NDims>::type> storage_info_ty;
