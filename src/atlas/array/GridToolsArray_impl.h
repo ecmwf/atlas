@@ -1,7 +1,5 @@
 #pragma once
 
-#include "atlas/array/GridToolsArray.h"
-
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -178,5 +176,3 @@ inline void Array::insert(size_t idx1, size_t size1)
 
 }
 }
-
-#include "atlas/array/MakeView.h"

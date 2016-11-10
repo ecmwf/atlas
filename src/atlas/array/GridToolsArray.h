@@ -265,6 +265,7 @@ public:
 
   template <typename Value, template <class> class Storage, typename StorageInfo>
   static Array* wrap_array(gridtools::data_store< Storage<Value>, StorageInfo> * ds, const ArraySpec& spec) {
+    assert(ds);
     Array* array = new ArrayT<Value>(ds);
     array->spec_ = spec;
   }
@@ -301,7 +302,7 @@ public:
     }
   }
 
-  template <typename T> static Array* wrap(T* data, const ArrayShape&);
+  template <typename T> static Array* wrap(T* data, const ArrayShape&) { NOTIMP;}
 
 public:
 

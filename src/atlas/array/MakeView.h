@@ -1,5 +1,4 @@
-#ifndef atlas_MakeArray_h
-#define atlas_MakeArray_h
+#pragma once
 
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
@@ -142,5 +141,3 @@ make_view(const Array& array) {
 
 }
 }
-
-#endif
