@@ -52,6 +52,12 @@ struct default_layout {
     using type = typename get_layout< typename gridtools::make_gt_integer_sequence<unsigned int, NDims>::type >::type;
 };
 
+template <unsigned int NDims>
+std::array<unsigned int, NDims> get_array_from_vector(std::vector<size_t> const& values) {
+    std::array<unsigned int, NDims> array;
+    std::copy(values.begin(), values.end(), array.begin());
+}
+
 template <unsigned int TotalDims, unsigned int Dim, typename = void>
 struct check_dimension_lengths_impl {
   template <typename FirstDim, typename... Dims>
@@ -132,6 +138,27 @@ public:
     typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
     data_store_t* ds = new data_store_t(si);
     ds->allocate();
+
+    return ds;
+  }
+
+  template <typename Value, unsigned int NDims>
+  static gridtools::storage_traits<BACKEND>::data_store_t<
+      Value, gridtools::storage_traits<BACKEND>::storage_info_t<
+                 0, NDims,
+                 typename gridtools::zero_halo<NDims>::type,
+                 typename default_layout<NDims>::type > >* wrap_storage_(Value* data,
+          std::array<unsigned int, NDims>&& shape, std::array<unsigned int, NDims>&& strides) {
+
+    static_assert((NDims > 0), "Error: can not create storages without any dimension");
+
+    typedef gridtools::storage_traits<BACKEND>::storage_info_t<
+        0, NDims, typename gridtools::zero_halo<NDims>::type,
+        typename default_layout<NDims>::type> storage_info_ty;
+    storage_info_ty si(shape, strides);
+
+    typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
+    data_store_t* ds = new data_store_t(si, data);
 
     return ds;
   }
@@ -235,8 +262,46 @@ public:
   }
 
   template <typename T> static Array* create();
-  template <typename T> static Array* wrap(T data[], const ArraySpec&);
-  template <typename T> static Array* wrap(T data[], const ArrayShape&);
+
+  template <typename Value, template <class> class Storage, typename StorageInfo>
+  static Array* wrap_array(gridtools::data_store< Storage<Value>, StorageInfo> * ds, const ArraySpec& spec) {
+    Array* array = new ArrayT<Value>(ds);
+    array->spec_ = spec;
+  }
+
+  template <typename T> static Array* wrap(T* data, const ArraySpec& spec) {
+    ArrayShape const& shape = spec.shape();
+    ArrayStrides const& strides = spec.strides();
+
+    assert(shape.size() > 0);
+    switch (shape.size()) {
+      case 1:
+        return wrap_array( wrap_storage_<T, 1>(data, get_array_from_vector<1>(strides), get_array_from_vector<1>(strides)), spec);
+      case 2:
+        return wrap_array( wrap_storage_<T, 2>(data, get_array_from_vector<2>(strides), get_array_from_vector<2>(strides)), spec);
+      case 3:
+        return wrap_array( wrap_storage_<T, 3>(data, get_array_from_vector<3>(strides), get_array_from_vector<3>(strides)), spec);
+      case 4:
+        return wrap_array( wrap_storage_<T, 4>(data, get_array_from_vector<4>(strides), get_array_from_vector<4>(strides)), spec);
+      case 5:
+        return wrap_array( wrap_storage_<T, 5>(data, get_array_from_vector<5>(strides), get_array_from_vector<5>(strides)), spec);
+      case 6:
+        return wrap_array( wrap_storage_<T, 6>(data, get_array_from_vector<6>(strides), get_array_from_vector<6>(strides)), spec);
+      case 7:
+        return wrap_array( wrap_storage_<T, 7>(data, get_array_from_vector<7>(strides), get_array_from_vector<7>(strides)), spec);
+      case 8:
+        return wrap_array( wrap_storage_<T, 8>(data, get_array_from_vector<8>(strides), get_array_from_vector<8>(strides)), spec);
+      case 9:
+        return wrap_array( wrap_storage_<T, 9>(data, get_array_from_vector<9>(strides), get_array_from_vector<9>(strides)), spec);
+      default: {
+        std::stringstream err;
+        err << "shape not recognized";
+        throw eckit::BadParameter(err.str(), Here());
+      }
+    }
+  }
+
+  template <typename T> static Array* wrap(T* data, const ArrayShape&);
 
 public:
 
