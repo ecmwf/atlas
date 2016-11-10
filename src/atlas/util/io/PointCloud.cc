@@ -23,6 +23,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/array/DataType.h"
 #include "atlas/util/io/PointCloud.h"
 

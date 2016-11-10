@@ -135,6 +135,19 @@ namespace array {
         }
       }
 
+      LocalView( DATA_TYPE* data, const ArrayShape& shape ) :
+        data_(data)
+      {
+        size_ = 1;
+        for( size_t j=0; j<RANK; ++j ) {
+          shape_[j] = shape[j];
+          size_ *= shape_[j];
+          strides_[j] = 1;
+        }
+        for( size_t j=RANK-2; j!=0; --j ) {
+          strides_[j] = strides_[j+1]*shape_[j+1];
+        }
+      }
 
       template < typename... Coords >
       DATA_TYPE&
@@ -144,10 +157,22 @@ namespace array {
           return data_[0];
       }
 
+      template < typename... Coords >
+      const DATA_TYPE&
+      operator()(Coords... c) const {
+          assert(sizeof...(Coords) == RANK);
+          NOTIMP;
+          return data_[0];
+      }
+
       size_t shape(size_t idx) const { NOTIMP; return 0; }
 
       degenerated_array_return_t at(const size_t i) const {
           return degenerate_local_array<degenerated_array_return_t, RANK==1>(*this).apply(i); }
+
+
+      DATA_TYPE* data() { return data_; }
+      DATA_TYPE const* data() const { return data_; }
   };
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
@@ -197,12 +222,22 @@ public:
 
     size_t shape(size_t idx) const { return shape_[idx]; }
 
+
+    ArrayStrides const& strides() const { NOTIMP; return strides_;}
+
+    size_t stride(size_t idx) const { return strides_[idx]; }
+
+
     LocalView<DATA_TYPE,RANK-1> at(const size_t i) const {
      return LocalView<DATA_TYPE,RANK-1>();
      // return LocalView<DATA_TYPE,RANK-1>( LocalView_helper<DATA_TYPE,RANK>::data_+LocalView_helper<DATA_TYPE,RANK>::strides_[0]*i, LocalView_helper<DATA_TYPE,RANK>::shape_+1, LocalView_helper<DATA_TYPE,RANK>::strides_+1 );
    }
 
+   size_t rank() const { return RANK; }
+   size_t size() const { NOTIMP; return 0; }
+
 private:
+    ArrayStrides strides_;
     data_view_t gt_data_view_;
 //// -- Constructors
 //  ArrayView() {}

@@ -13,6 +13,7 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/interpolation/PointIndex3.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 
 //------------------------------------------------------------------------------------------------------
 

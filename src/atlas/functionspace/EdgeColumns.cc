@@ -121,20 +121,20 @@ void EdgeColumns::constructor()
   const field::Field& global_index = edges().global_index();
 
   halo_exchange_->setup(
-        partition.data<int>(),
-        remote_index.data<int>(),REMOTE_IDX_BASE,
+        array::make_view<int,1>(partition).data(),
+        array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
         nb_edges_);
 
   gather_scatter_->setup(
-        partition.data<int>(),
-        remote_index.data<int>(),REMOTE_IDX_BASE,
-        edges_.global_index().data<gidx_t>(),
+        array::make_view<int,1>(partition).data(),
+        array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
+        array::make_view<gidx_t,1>(global_index).data(),
         nb_edges_);
 
   checksum_->setup(
-        partition.data<int>(),
-        remote_index.data<int>(),REMOTE_IDX_BASE,
-        global_index.data<gidx_t>(),
+        array::make_view<int,1>(partition).data(),
+        array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
+        array::make_view<gidx_t,1>(global_index).data(),
         nb_edges_);
 
   nb_edges_global_ =  gather_scatter_->glb_dof();
@@ -253,23 +253,23 @@ void EdgeColumns::gather( const field::FieldSet& local_fieldset, field::FieldSet
     size_t root(0);
     glb.metadata().get("owner",root);
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      parallel::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
-      parallel::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
+      parallel::Field<int const> loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
+      parallel::Field<int      > glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      parallel::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
-      parallel::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
+      parallel::Field<long const> loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
+      parallel::Field<long      > glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      parallel::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
-      parallel::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
+      parallel::Field<float const> loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
+      parallel::Field<float      > glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      parallel::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
-      parallel::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
+      parallel::Field<double const> loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
+      parallel::Field<double      > glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -305,23 +305,23 @@ void EdgeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldS
     size_t root(0);
     glb.metadata().get("owner",root);
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      parallel::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
-      parallel::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
+      parallel::Field<int const> glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
+      parallel::Field<int      > loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      parallel::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
-      parallel::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
+      parallel::Field<long const> glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
+      parallel::Field<long      > loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      parallel::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
-      parallel::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
+      parallel::Field<float const> glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
+      parallel::Field<float      > loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      parallel::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
-      parallel::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
+      parallel::Field<double const> glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
+      parallel::Field<double      > loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -344,7 +344,7 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const field::F
 {
   array::ArrayView<T,3> values = array::make_view<T,3>(field);
   eckit::SharedPtr<array::Array> surface_field( array::Array::create<T>( array::make_shape(field.shape(0),field.shape(2) ) ) );
-  array::ArrayView<T,2> surface = array::make_view<T,2>(surface_field);
+  array::ArrayView<T,2> surface = array::make_view<T,2>(*surface_field);
   for( size_t n=0; n<values.shape(0); ++n ) {
     for( size_t j=0; j<surface.shape(1); ++j )
     {

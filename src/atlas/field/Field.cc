@@ -20,6 +20,7 @@
 #include "atlas/field/FieldCreator.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/array/MakeView.h"
 
 namespace atlas {
 namespace field {
@@ -373,10 +374,9 @@ void atlas__Field__shapef (Field* This, int* &shape, int &rank)
 
 void atlas__Field__data_int_specf (Field* This, int* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  NOTIMP;
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    //data = &This->data<int>()[0];
+    data = array::make_storageview<int>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
@@ -385,10 +385,9 @@ void atlas__Field__data_int_specf (Field* This, int* &data, int &rank, int* &sha
 
 void atlas__Field__data_long_specf (Field* This, long* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  NOTIMP;
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    //data = &This->data<long>()[0];
+    data = array::make_storageview<long>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
@@ -397,10 +396,9 @@ void atlas__Field__data_long_specf (Field* This, long* &data, int &rank, int* &s
 
 void atlas__Field__data_float_specf (Field* This, float* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  NOTIMP;
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    //data = &This->data<float>()[0];
+    data = array::make_storageview<float>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
@@ -409,10 +407,9 @@ void atlas__Field__data_float_specf (Field* This, float* &data, int &rank, int* 
 
 void atlas__Field__data_double_specf (Field* This, double* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  NOTIMP;
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    //data = &This->data<double>()[0];
+    data = array::make_storageview<double>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();

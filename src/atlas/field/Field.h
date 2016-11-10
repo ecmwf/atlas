@@ -93,7 +93,7 @@ public: // Destructor
 // -- Accessors
 
   /// @brief Access to raw data
-  void* data() { return array_->data(); }
+  void* storage() { return array_->storage(); }
 
   /// @brief Internal data type of field
   array::DataType datatype() const { return array_->datatype(); }
