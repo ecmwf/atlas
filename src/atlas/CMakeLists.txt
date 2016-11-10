@@ -265,6 +265,7 @@ array/IndexView.h
 array/IndexView.cc
 array/ArrayView.h
 array/ArrayView.cc
+array/StorageView.h
 array/DataType.h
 array/GridToolsDataStoreWrapper.h
 array/GridToolsTraits.h

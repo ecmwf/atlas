@@ -93,7 +93,7 @@ namespace {
 template< typename DATA_TYPE >
 void dump_array_data( const ArrayT<DATA_TYPE>& array, std::ostream& os )
 {
-  const DATA_TYPE* data = (DATA_TYPE*)(array.data());
+  const DATA_TYPE* data = (DATA_TYPE*)(array.storage());
   for(size_t i = 0; i < array.size(); ++i)
   {
       os << data[i] << " ";

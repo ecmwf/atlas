@@ -31,6 +31,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
 
 using namespace eckit;
@@ -113,7 +114,8 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   int ndata = std::min(function_space.nb_nodes(),field.shape(0));
   int nvars = field.stride(0)/nlev;
   array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( function_space.nodes().global_index() );
-  array::ArrayView<DATATYPE,2> data = array::ArrayView<DATATYPE,2>( field.data<DATATYPE>(), array::make_shape(field.shape(0),field.stride(0)) );
+  array::LocalView<DATATYPE,2> data ( array::make_storageview<DATATYPE>(field).data(),
+                                      array::make_shape(field.shape(0),field.stride(0)) );
   field::Field::Ptr gidx_glb;
   field::Field::Ptr data_glb;
   if( gather )
@@ -124,7 +126,8 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
 
     data_glb.reset( function_space.createField( "glb_field",field, field::global() ) );
     function_space.gather(field,*data_glb);
-    data = array::ArrayView<DATATYPE,2>( data_glb->data<DATATYPE>(), array::make_shape(data_glb->shape(0),data_glb->stride(0)) );
+    data = array::LocalView<DATATYPE,2>( array::make_storageview<DATATYPE>(*data_glb).data(),
+                                         array::make_shape(data_glb->shape(0),data_glb->stride(0)) );
     ndata = std::min(function_space.nb_nodes_global(),data.shape(0));
   }
 
@@ -310,9 +313,9 @@ void write_field_nodes(
 
     //field::Field::Ptr gidxField(function_space.createField<gidx_t>("gidx"));
     //array::ArrayView<gidx_t,1>   gidx(gidxField);
-    array::ArrayView<DATATYPE,2> data(field.data<DATATYPE>(),
-                               array::make_shape(field.shape(0),
-                                          field.stride(0)));
+    array::LocalView<DATATYPE,2> data(
+        array::make_storageview<DATATYPE>(field).data(),
+        array::make_shape(field.shape(0),field.stride(0)) );
 
     field::Field::Ptr gidx_glb;
     field::Field::Ptr field_glb;
@@ -328,10 +331,9 @@ void write_field_nodes(
     {
       field_glb = function_space.createField<double>("glb_field",field::global());
       function_space.gather(field, *field_glb);
-      data = array::ArrayView<DATATYPE,2>(
-        field_glb->data<DATATYPE>(),
-        array::make_shape(field_glb->shape(0),
-        field_glb->stride(0)));
+      data = array::LocalView<DATATYPE,2>(
+          array::make_storageview<DATATYPE>(*field_glb).data(),
+          array::make_shape(field_glb->shape(0),field_glb->stride(0)) );
     }
 
     int ndata = data.shape(0);
@@ -964,6 +966,9 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
           NOTIMP;
 
         const mesh::Elements::Connectivity& node_connectivity = elements.node_connectivity();
+
+NOTIMP; // TODO!!!!!
+#if 0
         const array::ArrayView<gidx_t,1> elems_glb_idx = elements.view<gidx_t,1>( elements.global_index() );
         const array::ArrayView<int,1> elems_partition = elements.view<int,1>( elements.partition() );
         const array::ArrayView<int,1> elems_halo = elements.view<int,1>( elements.halo() );
@@ -1017,6 +1022,7 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
             }
           }
         }
+#endif
       }
     }
   }

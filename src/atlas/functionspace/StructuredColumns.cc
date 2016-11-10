@@ -433,13 +433,9 @@ std::string StructuredColumns::checksum(
 std::string StructuredColumns::checksum(
     const field::Field& field) const
 {
-    // FieldSet fieldset;
-    // fieldset.add(field);
-    // return checksum(fieldset);
-    eckit::Log::warning() << "Only local checksum implemented" << std::endl;
-    std::stringstream resultss;
-    resultss << internals::checksum(field.data<double>(),field.size());
-    return resultss.str();
+    field::FieldSet fieldset;
+    fieldset.add(field);
+    return checksum(fieldset);
 }
 // ----------------------------------------------------------------------------
 

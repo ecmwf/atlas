@@ -15,6 +15,7 @@
 #include <iostream>
 
 #include "atlas/atlas.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/grid/Grid.h"
