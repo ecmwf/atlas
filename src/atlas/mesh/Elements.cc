@@ -104,14 +104,14 @@ template<> array::ArrayView<long,2> Elements::view( const field::Field& field ) 
   return array::ArrayView<long,2>( field.data<long>()+begin(), array::make_shape(size(),field.shape(1)) );
 }
 
+#endif
+
 size_t Elements::add(const size_t nb_elements)
 {
   size_t position = size();
   hybrid_elements_->insert(type_idx_,end(),nb_elements);
   return position;
 }
-
-#endif
 
 //-----------------------------------------------------------------------------
 

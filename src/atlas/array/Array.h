@@ -45,7 +45,6 @@ public:
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3);
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3, size_t size4);
 
-  template <typename T> static Array* create();
   template <typename T> static Array* wrap(T data[], const ArraySpec&);
   template <typename T> static Array* wrap(T data[], const ArrayShape&);
 
@@ -54,8 +53,8 @@ public:
   Array(){}
   Array(const ArraySpec& s) : spec_(s) {}
 
-  virtual void* data() = 0;
-  virtual const void* data() const = 0;
+  virtual void* storage() = 0;
+  virtual const void* storage() const = 0;
 
   virtual array::DataType datatype() const = 0;
   virtual size_t sizeof_data() const = 0;
@@ -146,19 +145,8 @@ public:
 
   virtual void dump(std::ostream& os) const;
 
-  const DATA_TYPE& operator[](size_t i) const { return *(data()+i); }
-        DATA_TYPE& operator[](size_t i)       { return *(data()+i); }
-
-  virtual void* data()             { return (data_); }
-  virtual const void* data() const { return (data_); }
-
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) data()[n]=scalar; }
-
-  virtual void assign( const Array& );
-
-  template< typename RandomAccessIterator >
-  void assign( RandomAccessIterator begin, RandomAccessIterator end );
-
+  virtual void* storage()             { return (data_); }
+  virtual const void* storage() const { return (data_); }
 
 private:
 
@@ -194,20 +182,6 @@ template <typename DATA_TYPE>
 void ArrayT<DATA_TYPE>::wrap(DATA_TYPE data[])
 {
   data_ = data;
-}
-
-template< typename DATA_TYPE>
-template< typename RandomAccessIterator >
-void ArrayT<DATA_TYPE>::assign( RandomAccessIterator begin, RandomAccessIterator end )
-{
-  if( not contiguous() ) NOTIMP;
-  if( std::distance(begin,end) != size() ) {
-    throw eckit::SeriousBug("Size doesn't match");
-  }
-  RandomAccessIterator it = begin;
-  for( size_t j=0; j<size(); ++j, ++it ) {
-    data()[j] = *it;
-  }
 }
 
 //------------------------------------------------------------------------------

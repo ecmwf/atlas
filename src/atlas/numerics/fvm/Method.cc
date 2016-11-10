@@ -23,6 +23,7 @@
 #include "atlas/util/Constants.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 

@@ -235,8 +235,8 @@ public:
   }
 
   template <typename T> static Array* create();
-  template <typename T> static Array* wrap(T data[], const ArraySpec&);
-  template <typename T> static Array* wrap(T data[], const ArrayShape&);
+  template <typename T> static Array* wrap(T data[], const ArraySpec&) { NOTIMP; return 0; }
+  template <typename T> static Array* wrap(T data[], const ArrayShape&) { NOTIMP; return 0; }
 
 public:
 
@@ -274,8 +274,8 @@ public:
       spec().set_contiguous();
   }
 
-  virtual void* data() = 0;
-  virtual const void* data() const = 0;
+  virtual void* storage() = 0;
+  virtual const void* storage() const = 0;
 
   virtual array::DataType datatype() const = 0;
   virtual size_t sizeof_data() const = 0;
@@ -412,8 +412,8 @@ public:
   virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
 
   size_t sizeof_data() const {return sizeof(DATA_TYPE);}
-  virtual void* data() { return data_;}
-  virtual const void* data() const { return data_;}
+  virtual void* storage() { return data_;}
+  virtual const void* storage() const { return data_;}
 
   virtual void dump(std::ostream& os) const {
     os << "\nWARNING: Array dump not implemented\n";
