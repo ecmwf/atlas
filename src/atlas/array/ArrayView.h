@@ -149,20 +149,29 @@ namespace array {
         }
       }
 
+private:
+      template < typename... Ints >
+      constexpr int index_part(int cnt, int first, Ints... ints) const {
+          return (cnt < RANK) ? first * strides_[cnt] + index_part(cnt + 1, ints..., first) : 0;
+      }
+
+      template < typename... Ints >
+      constexpr int index(Ints... idx) const {
+          return index_part(0, idx...);
+      }
+public:
       template < typename... Coords >
       DATA_TYPE&
       operator()(Coords... c) {
           assert(sizeof...(Coords) == RANK);
-          NOTIMP;
-          return data_[0];
+          return data_[index(c...)];
       }
 
       template < typename... Coords >
       const DATA_TYPE&
       operator()(Coords... c) const {
           assert(sizeof...(Coords) == RANK);
-          NOTIMP;
-          return data_[0];
+          return data_[index(c...)];
       }
 
       size_t shape(size_t idx) const { NOTIMP; return 0; }
@@ -203,6 +212,7 @@ public:
     // }
 
     DATA_TYPE* data() { return gt_data_view_.data(); }
+    DATA_TYPE const* data() const { return gt_data_view_.data(); }
 
     template < typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == RANK), int>::type >
     DATA_TYPE&
@@ -227,11 +237,12 @@ public:
 
     size_t stride(size_t idx) const { return strides_[idx]; }
 
-
     LocalView<DATA_TYPE,RANK-1> at(const size_t i) const {
-     return LocalView<DATA_TYPE,RANK-1>();
-     // return LocalView<DATA_TYPE,RANK-1>( LocalView_helper<DATA_TYPE,RANK>::data_+LocalView_helper<DATA_TYPE,RANK>::strides_[0]*i, LocalView_helper<DATA_TYPE,RANK>::shape_+1, LocalView_helper<DATA_TYPE,RANK>::strides_+1 );
-   }
+     return LocalView<DATA_TYPE,RANK-1>( 
+                const_cast<DATA_TYPE*>(data())+strides_[0]*i,
+                shape().data()+1,
+                strides().data()+1 );
+    }
 
     data_view_t& data_view() { return gt_data_view_;}
 

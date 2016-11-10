@@ -69,8 +69,10 @@ endif()
 
 add_subdirectory( atlas )
 
+if( NOT SHORTCUT_COMPILATION )
 if( ATLAS_HAVE_FORTRAN )
  add_subdirectory( atlas_f )
+endif()
 endif()
 
 #add_subdirectory( apps )

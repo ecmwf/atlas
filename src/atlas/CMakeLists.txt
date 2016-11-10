@@ -331,6 +331,19 @@ if( NOT ATLAS_HAVE_TRANS )
   unset( TRANSI_LIBRARIES )
 endif()
 
+if( SHORTCUT_COMPILATION )
+  unset( atlas_srcs )
+  unset( atlas_grid_srcs )
+  unset( atlas_mesh_srcs )
+  unset( atlas_field_srcs )
+  unset( atlas_functionspace_srcs )
+  unset( atlas_interpolation_srcs )
+  unset( atlas_numerics_srcs )
+  unset( atlas_output_srcs )
+  unset( atlas_util_srcs )
+  unset( atlas_internals_srcs )
+endif()
+
 ecbuild_add_library( TARGET atlas
 
   AUTO_VERSION
