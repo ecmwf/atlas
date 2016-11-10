@@ -96,9 +96,7 @@ Field::~Field()
 void Field::dump(std::ostream& os) const
 {
   print(os);
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
   array_->dump(os);
-#endif
 }
 
 namespace {

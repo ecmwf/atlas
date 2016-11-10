@@ -374,14 +374,21 @@ void HaloExchange::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
   size_t rank = std::max(1,RANK-1) ;
   varstrides.resize(rank);
   varshape.resize(rank);
+
   if( RANK>1 )
   {
-    varstrides.assign(arr.strides()+1,arr.strides()+RANK);
-    varshape.assign(arr.shape()+1,arr.shape()+RANK);
+    size_t stride=1;
+    for( size_t j=RANK-1; j>0; --j ) {
+      varstrides[j] = stride;
+      varshape[j] = arr.shape()[j];
+      stride *= varshape[j];
+    }
+//    varstrides.assign(arr.strides()+1,arr.strides()+RANK);
+//    varshape.assign(arr.shape()+1,arr.shape()+RANK);
   }
   else
   {
-    varstrides[0] = arr.strides()[0];
+    varstrides[0] = 1;
     varshape[0] = 1;
   }
 }
@@ -402,7 +409,6 @@ void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>& field ) const
     NOTIMP; // Need to implement with parallel ranks > 1
   }
 }
-
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

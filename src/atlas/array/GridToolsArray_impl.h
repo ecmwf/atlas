@@ -1,15 +1,13 @@
 #pragma once
 
-#include "atlas/array/Array.h"
-#include "atlas/array/MakeView.h"
-
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#include "atlas/array/GridToolsArray.h"
 
 //------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
 
+/// TODO: make_view to forward declarations
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
 static ArrayView<Value, NDims>
 make_view(const Array& array);
@@ -178,7 +176,5 @@ inline void Array::insert(size_t idx1, size_t size1)
 
 }
 
-
 }
 }
-#endif
