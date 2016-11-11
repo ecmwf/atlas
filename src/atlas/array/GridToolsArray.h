@@ -149,13 +149,13 @@ public:
       Value, gridtools::storage_traits<BACKEND>::storage_info_t<
                  0, NDims,
                  typename gridtools::zero_halo<NDims>::type,
-                 typename default_layout<NDims>::type > >* wrap_storage_(Value* data,
+                 typename atlas::array::default_layout<NDims>::type > >* wrap_storage_(Value* data,
           std::array<unsigned int, NDims>&& shape, std::array<unsigned int, NDims>&& strides) {
 
     static_assert((NDims > 0), "Error: can not create storages without any dimension");
     typedef gridtools::storage_traits<BACKEND>::storage_info_t<
         0, NDims, typename gridtools::zero_halo<NDims>::type,
-        typename default_layout<NDims>::type> storage_info_ty;
+        typename atlas::array::default_layout<NDims>::type> storage_info_ty;
     storage_info_ty si(shape, strides);
 
     typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
@@ -169,7 +169,7 @@ public:
   template <typename Value, typename... UInts,
             typename = gridtools::all_integers<UInts...> >
   static Array* create(UInts... dims) {
-      return create_with_layout<Value, typename default_layout<sizeof...(dims)>::type >(dims...);
+      return create_with_layout<Value, typename atlas::array::default_layout<sizeof...(dims)>::type >(dims...);
   }
 
   template <typename Value,

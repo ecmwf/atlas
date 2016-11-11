@@ -51,11 +51,11 @@
 #include <cstring>
 #include <cassert>
 #include "atlas/internals/atlas_defines.h"
+#include "atlas/array/ArrayUtil.h"
 #include "atlas/array/GridToolsTraits.h"
-#include "eckit/exception/Exceptions.h"
 #include "atlas/array/ArrayHelpers.h"
 #include "atlas/array/LocalView.h"
-#include "atlas/array/ArrayUtil.h"
+#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace array {

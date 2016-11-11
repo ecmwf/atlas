@@ -1,5 +1,7 @@
 #pragma once
 
+#include "atlas/array/array_fwd.h"
+
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -43,15 +45,15 @@ make_gt_host_view(const Array& array) {
 }
 
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-inline static ArrayView<Value, NDims>
+template <typename Value, unsigned int NDims, bool ReadOnly>
+inline ArrayView<Value, NDims>
 make_host_view(const Array& array) {
   impl::check_metadata<Value, NDims>(array);
   return ArrayView<Value, NDims>(make_gt_host_view<Value, NDims>(array));
 }
 
 template <typename Value>
-inline static StorageView<Value>
+inline StorageView<Value>
 make_storageview(const Array& array) {
   typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, 1> storage_info_ty;
   typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
@@ -72,22 +74,22 @@ make_gt_device_view(const Array& array) {
 }
 
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-inline static ArrayView<Value, NDims>
+template <typename Value, unsigned int NDims, bool ReadOnly>
+inline ArrayView<Value, NDims>
 make_device_view(const Array& array) {
   impl::check_metadata<Value, NDims>(array);
   return ArrayView<Value, NDims>(make_gt_host_view<Value, NDims>(array));
 }
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-inline static ArrayView<Value, NDims>
-make_device_view(const Array& array, const ArrayShape& shape) {
-  return ArrayView<Value, NDims>(make_gt_device_view<Value, NDims>(array));
-}
+// template <typename Value, unsigned int NDims, bool ReadOnly = false>
+// inline ArrayView<Value, NDims>
+// make_device_view(const Array& array, const ArrayShape& shape) {
+//   return ArrayView<Value, NDims>(make_gt_device_view<Value, NDims>(array));
+// }
 
 #endif
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-inline static IndexView<Value, NDims>
+template <typename Value, unsigned int NDims, bool ReadOnly>
+inline IndexView<Value, NDims>
 make_host_indexview(const Array& array) {
   typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> storage_info_ty;
   typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
@@ -101,20 +103,20 @@ make_host_indexview(const Array& array) {
 // Old implementation
 #else
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-inline static ArrayView<Value, NDims>
+template <typename Value, unsigned int NDims, bool ReadOnly>
+inline ArrayView<Value, NDims>
 make_host_view(const Array& array) {
   return ArrayView<Value, NDims>((const Value*)(array.storage()),array.shape());
 }
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-static IndexView<Value, NDims>
+template <typename Value, unsigned int NDims, bool ReadOnly>
+inline IndexView<Value, NDims>
 make_host_indexview(const Array& array) {
   return IndexView<Value,NDims>( (Value*)(array.storage()),array.shape().data() );
 }
 
 template <typename Value>
-inline static StorageView<Value>
+inline StorageView<Value>
 make_storageview(const Array& array) {
   return StorageView<Value>(const_cast<Array&>(array).storage(),array.size(),array.contiguous());
 }
@@ -123,16 +125,16 @@ make_storageview(const Array& array) {
 
 // --------------------------------------------------------------------------------------------
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-inline static IndexView<Value, NDims>
+template <typename Value, unsigned int NDims, bool ReadOnly>
+inline IndexView<Value, NDims>
 make_indexview(const Array& array) {
   impl::check_metadata<Value, NDims>(array);
 
   return make_host_indexview<Value,NDims>(array);
 }
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-inline static ArrayView<Value, NDims>
+template <typename Value, unsigned int NDims, bool ReadOnly>
+inline ArrayView<Value, NDims>
 make_view(const Array& array) {
     impl::check_metadata<Value, NDims>(array);
 

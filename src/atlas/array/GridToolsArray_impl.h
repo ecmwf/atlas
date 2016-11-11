@@ -1,14 +1,11 @@
 #pragma once
 
+#include "atlas/array/array_fwd.h"
+
 //------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
-
-/// TODO: make_view to forward declarations
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-static ArrayView<Value, NDims>
-make_view(const Array& array);
 
 template <typename Value, unsigned int RANK, unsigned int Dim>
 struct array_initializer_impl {
