@@ -22,6 +22,7 @@
 
 #include "atlas/array/GridToolsTraits.h"
 #include "atlas/array/GridToolsDataStoreWrapper.h"
+#include "atlas/array/ArrayHelpers.h"
 
 //------------------------------------------------------------------------------
 
@@ -164,65 +165,6 @@ public:
   }
 
 public:
-
-  template <typename Value, typename LayoutMap>
-  struct get_layout_map_component {
-    // TODO: static_assert( gridtools::is_layout_map<LayoutMap>(), "Error: not a layout_map" );
-    template <int Idx>
-    struct get_component {
-      GT_FUNCTION
-      constexpr get_component() {}
-
-      GT_FUNCTION constexpr static Value apply() {
-        return LayoutMap::template at<Idx>();
-      }
-    };
-  };
-
-  template <typename Value, typename RANKS>
-  struct get_stride_component {
-    template <int Idx>
-    struct get_component {
-      GT_FUNCTION
-      constexpr get_component() {}
-
-      template <typename StorageInfoPtr>
-      GT_FUNCTION constexpr static Value apply(StorageInfoPtr a) {
-        static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value),
-                      "Error: not a storage_info");
-        return a->template stride<Idx>();
-      }
-    };
-  };
-
-  template < int Idx >
-  struct get_shape_component {
-
-      GT_FUNCTION
-      constexpr get_shape_component() {}
-
-      template < typename StorageInfoPtr>
-      GT_FUNCTION constexpr static int apply(StorageInfoPtr a) {
-          static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type >::value ), "Error: not a storage_info");
-          return a->template dim<Idx>();
-      }
-  };
-
-  template <typename Layout>
-  struct get_shapef_component {
-    template <int Idx>
-    struct get_component {
-      GT_FUNCTION
-      constexpr get_component() {}
-
-      template <typename StorageInfoPtr>
-      GT_FUNCTION constexpr static int apply(StorageInfoPtr a) {
-        static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value),
-                      "Error: not a storage_info");
-        return a->template dim<Layout::template at<Layout::length - Idx - 1>() >();
-      }
-    };
-  };
 
   template <typename Value, typename... UInts,
             typename = gridtools::all_integers<UInts...> >

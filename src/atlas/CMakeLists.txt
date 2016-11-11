@@ -255,6 +255,7 @@ interpolation/PointSet.cc
 list( APPEND atlas_array_srcs
 array/Array.h
 array/Array.cc
+array/ArrayHelpers.h
 array/GridToolsArray.h
 array/GridToolsArray_impl.h
 array/ArrayUtil.h

@@ -19,6 +19,7 @@
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
+#include "atlas/array/ArrayHelpers.h"
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "atlas/array/GridToolsArray.h"
@@ -48,7 +49,8 @@ public:
   template <typename T> static Array* wrap(T data[], const ArraySpec&);
   template <typename T> static Array* wrap(T data[], const ArrayShape&);
 
-public:
+public:#include "atlas/array/ArrayView.h"
+
 
   Array(){}
   Array(const ArraySpec& s) : spec_(s) {}
