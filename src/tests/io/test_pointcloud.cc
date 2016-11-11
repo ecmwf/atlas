@@ -19,6 +19,7 @@
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/exception/Exceptions.h"
 
+#include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
@@ -441,8 +442,8 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   // (data section: guarantee data are from different places, to make checks useful)
   const field::Field& field_from_FieldSet(mesh_from_FieldSet->nodes().field("my_super_field"));
   const field::Field& field_from_Grid    (mesh_from_FieldSet->nodes().field("my_super_field"));
-  BOOST_CHECK_NE( field.data< double >(), field_from_FieldSet.data< double >() );
-  BOOST_CHECK_NE( field.data< double >(), field_from_Grid    .data< double >() );
+  BOOST_CHECK_NE( array::make_storageview<double>(field).data(), array::make_storageview<double>(field_from_FieldSet).data() );
+  BOOST_CHECK_NE( array::make_storageview<double>(field).data(), array::make_storageview<double>(field_from_Grid)    .data() );
 
   array::ArrayView< double,1 > field_from_FieldSet_data = array::make_view<double,1>(field_from_FieldSet);
   array::ArrayView< double,1 > field_from_Grid_data     = array::make_view<double,1>(field_from_Grid    );

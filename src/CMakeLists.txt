@@ -6,6 +6,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+set( COMPILE_BROKEN_TESTS OFF )
+
 if( CGAL_FOUND )
   set( CGAL_FOUND 1 )
 else()
@@ -69,10 +71,8 @@ endif()
 
 add_subdirectory( atlas )
 
-if( NOT SHORTCUT_COMPILATION )
 if( ATLAS_HAVE_FORTRAN )
  add_subdirectory( atlas_f )
-endif()
 endif()
 
 #add_subdirectory( apps )

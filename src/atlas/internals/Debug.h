@@ -17,8 +17,20 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
 
-/// DEBUG MACRO
+
 #define DEBUG_RANK (eckit::mpi::initialized() ? eckit::mpi::rank() : 0)
+
+#define DEBUG_0()       
+#define DEBUG_1(WHAT)   
+#define DEBUG_2(WHAT,RANK)
+#define DEBUG_X(x,A,B,FUNC, ...)
+#define DEBUG(...)  do {DEBUG_X(,##__VA_ARGS__,\
+                        DEBUG_2(__VA_ARGS__),\
+                        DEBUG_1(__VA_ARGS__),\
+                        DEBUG_0(__VA_ARGS__))} while(0)
+#if 0
+
+/// DEBUG MACRO
 #define DEBUG_0()            atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG() @ " << Here() << std::endl;
 #define DEBUG_1(WHAT)        atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
 #define DEBUG_2(WHAT,RANK)   if(DEBUG_RANK == RANK) { DEBUG_1(WHAT) }
@@ -27,6 +39,8 @@
                         DEBUG_2(__VA_ARGS__),\
                         DEBUG_1(__VA_ARGS__),\
                         DEBUG_0(__VA_ARGS__))} while(0)
+
+#endif
 
 /// DEBUG_SYNC MACRO
 #define DEBUG_SYNC(...) do {\

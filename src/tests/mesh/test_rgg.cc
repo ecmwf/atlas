@@ -32,6 +32,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Config.h"

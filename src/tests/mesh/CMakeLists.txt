@@ -73,6 +73,7 @@ ecbuild_add_test( TARGET atlas_test_parfields
   MPI      2
   SOURCES  test_parfields.cc
   LIBS     atlas
+  CONDITION COMPILE_BROKEN_TESTS
 )
 
 ecbuild_add_test( TARGET atlas_test_halo

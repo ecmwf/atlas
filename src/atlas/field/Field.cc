@@ -171,10 +171,11 @@ void Field::set_functionspace(const functionspace::FunctionSpace &functionspace)
   functionspace_->attach();
 }
 
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
-
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+
+extern "C"
+{
 
 Field* atlas__Field__wrap_int_specf(const char* name, int data[], int rank, int shapef[], int stridesf[])
 {
@@ -440,9 +441,8 @@ void atlas__Field__set_functionspace(Field* This, const functionspace::FunctionS
     This->set_functionspace(*functionspace);
   );
 }
-#endif
 
-
+}
 // ------------------------------------------------------------------
 
 } // namespace field
