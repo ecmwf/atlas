@@ -304,7 +304,9 @@ public:
     }
   }
 
-  template <typename T> static Array* wrap(T* data, const ArrayShape&) { NOTIMP;}
+  template <typename T> static Array* wrap(T* data, const ArrayShape& shape) { 
+    return wrap(data,ArraySpec(shape));
+  }
 
 public:
 

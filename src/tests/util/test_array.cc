@@ -46,32 +46,37 @@ BOOST_AUTO_TEST_CASE( test_make_view )
    delete ds;
 }
 
-//BOOST_AUTO_TEST_CASE( test_localview )
-//{
-//   Array *ds = Array::create<double>(8ul,4ul,2ul);
-//   auto hv = make_view<double, 3>(*ds);
+BOOST_AUTO_TEST_CASE( test_localview )
+{
+  Array *ds = Array::create<double>(8ul,4ul,2ul);
+  auto hv = make_host_view<double, 3>(*ds);
    
-//   // Initialize fields
-//   for( size_t i=0; i<ds->shape(0); ++i ) {
-//     for( size_t j=0; j<ds->shape(1); ++j ) {
-//       for( size_t k=0; k<ds->shape(2); ++k ) {
-//         hv(i,j,k) = (i*100) + (j*10) + (k);
-//       }
-//     }
-//   }
+  BOOST_CHECK_EQUAL( hv.shape(0), 8ul );
+  BOOST_CHECK_EQUAL( hv.shape(1), 4ul );
+  BOOST_CHECK_EQUAL( hv.shape(2), 2ul );
+  BOOST_CHECK_EQUAL( hv.size(), 8ul*4ul*2ul );
 
-//   // Check values
-//   for( size_t i=0; i<ds->shape(0); ++i ) {
-//     LocalView<double,2> lv = hv.at(0);
-//     for( size_t j=0; j<lv.shape(0); ++j ) {
-//       for( size_t k=0; k<lv.shape(1); ++k ) {
-//         BOOST_CHECK_EQUAL( lv(j,k), (i*100) + (j*10) + (k) );
-//       }
-//     }
-//   }
-   
-//   delete ds;
-//}
+  // Initialize fields
+  for( size_t i=0; i<ds->shape(0); ++i ) {
+    for( size_t j=0; j<ds->shape(1); ++j ) {
+      for( size_t k=0; k<ds->shape(2); ++k ) {
+        hv(i,j,k) = (i*100) + (j*10) + (k);
+      }
+    }
+  }
+
+  // Check values
+  for( size_t i=0; i<ds->shape(0); ++i ) {
+    LocalView<double,2> lv = hv.at(i);
+    for( size_t j=0; j<lv.shape(0); ++j ) {
+      for( size_t k=0; k<lv.shape(1); ++k ) {
+        BOOST_CHECK_EQUAL( lv(j,k), (i*100) + (j*10) + (k) );
+      }
+    }
+  }
+  
+  delete ds;
+}
 
 BOOST_AUTO_TEST_CASE( test_array_shape )
 {

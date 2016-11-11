@@ -16,17 +16,17 @@
 namespace atlas {
 namespace array {
 
-ArraySpec::ArraySpec( const ArrayShape& _shape )
+ArraySpec::ArraySpec( const ArrayShape& shape )
 {
-  shape_=_shape;
-  strides_.resize(shape_.size());
-  strides_[shape_.size()-1] = 1;
-  for( long n=shape_.size()-2; n>=0; --n )
-  {
-    strides_[n] = strides_[n+1]*shape_[n+1];
-  }
   rank_ = shape_.size();
-  size_ = shape_[0]*strides_[0];
+  size_ = 1;
+  shape_.resize(rank_);
+  strides_.resize(rank_);
+  for( int j=rank_-1; j>=0; --j ) {
+    shape_[j] = shape[j];
+    strides_[j] = size_;
+    size_ *= shape_[j];
+  }
   contiguous_ = true;
 };
 

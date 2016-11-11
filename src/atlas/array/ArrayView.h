@@ -125,13 +125,10 @@ namespace array {
         data_(data)
       {
         size_ = 1;
-        for( size_t j=0; j<RANK; ++j ) {
+        for( size_t j=RANK-1; j!=0; --j ) {
           shape_[j] = shape[j];
+          strides_[j] = size_;
           size_ *= shape_[j];
-          strides_[j] = 1;
-        }
-        for( size_t j=RANK-2; j!=0; --j ) {
-          strides_[j] = strides_[j+1]*shape_[j+1];
         }
       }
 
@@ -174,7 +171,7 @@ public:
           return data_[index(c...)];
       }
 
-      size_t shape(size_t idx) const { NOTIMP; return 0; }
+      size_t shape(size_t idx) const { return shape_[idx]; }
 
       degenerated_array_return_t at(const size_t i) const {
           return degenerate_local_array<degenerated_array_return_t, RANK==1>(*this).apply(i); }
@@ -203,13 +200,20 @@ public:
         gt_data_view_(other.gt_data_view_)
     {
       std::memcpy(shape_,other.shape_,RANK);
+      std::memcpy(strides_,other.strides_,RANK);
+      size_ = other.size_;
       // TODO: check compatibility
     }
 
     ArrayView(data_view_t data_view, ArrayShape const& shape) :
         gt_data_view_(data_view)
     {
-      std::memcpy(shape_,shape.data(),RANK);
+      size_ = 1;
+      for( int j=RANK-1; j>=0; --j ) {
+        shape_[j] = shape[j];
+        strides_[j] = size_;
+        size_ *= shape_[j];
+      }
     }
 
     DATA_TYPE* data() { return gt_data_view_.data(); }
@@ -232,7 +236,7 @@ public:
     size_t shape(size_t idx) const { return shape_[idx]; }
 
     LocalView<DATA_TYPE,RANK-1> at(const size_t i) const {
-      NOTIMP; // strides_ is invalid at the moment (should be created at construction)
+      assert( i < shape_[0] );
       return LocalView<DATA_TYPE,RANK-1>( 
                 const_cast<DATA_TYPE*>(data())+strides_[0]*i,
                 shape_+1,
@@ -242,12 +246,13 @@ public:
     data_view_t& data_view() { return gt_data_view_;}
 
    size_t rank() const { return RANK; }
-   size_t size() const { NOTIMP; return 0; }
+   size_t size() const { return size_; }
 
 private:
     data_view_t gt_data_view_;
-    size_t* shape_;
-    size_t* strides_;
+    size_t shape_[RANK];
+    size_t strides_[RANK];
+    size_t size_;
 };
 
 #else
