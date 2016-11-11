@@ -214,6 +214,21 @@ public:
         strides_[j] = size_;
         size_ *= shape_[j];
       }
+
+        using seq =
+            gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, RANK>::type>;
+
+//        spec().set_strides(
+//            seq::template apply<
+//                size_t[RANK],
+//                get_stride_component<unsigned long, typename get_pack_size<Dims...>::type>::template get_component>(
+//                storage_info_ptr));
+
+//        for(size_t i=0; i < RANK; ++i)
+//        {
+//            shape_[i] = gt_data_view_.storage_info().dim
+//        }
+//      std::memcpy(shape_,shape.data(),RANK);
     }
 
     DATA_TYPE* data() { return gt_data_view_.data(); }

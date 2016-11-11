@@ -259,20 +259,39 @@ BOOST_AUTO_TEST_CASE( test_insert )
 
 BOOST_AUTO_TEST_CASE( test_wrap_storage )
 {
-   Array* ds = Array::create<double>(4,5,6);
+  {
+    Array* ds = Array::create<double>(4, 5, 6);
 
-   ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
+    ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
 
-   hv(2,3,3) = 2.5;
+    hv(2, 3, 3) = 2.5;
 
-   Array* ds_ext = Array::wrap<double>(hv.data(), ds->spec());
+    Array* ds_ext = Array::wrap<double>(hv.data(), ds->spec());
 
-   ArrayView<double, 3> hv_ext = make_host_view<double, 3>(*ds_ext);
+    ArrayView<double, 3> hv_ext = make_host_view<double, 3>(*ds_ext);
 
-   BOOST_CHECK_EQUAL( hv_ext(2,3,3), 2.5);
+    BOOST_CHECK_EQUAL(hv_ext(2, 3, 3), 2.5);
 
-   delete ds;
-   delete ds_ext;
+    delete ds;
+    delete ds_ext;
+  }
+//  {
+//    Array* ds = Array::create<double>(4, 5, 6);
+
+//    ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
+
+//    hv(2, 3, 3) = 2.5;
+
+//    ArrayShape shape{4, 5, 6};
+//    Array* ds_ext = Array::wrap<double>(hv.data(), shape);
+
+//    ArrayView<double, 3> hv_ext = make_host_view<double, 3>(*ds_ext);
+
+//    BOOST_CHECK_EQUAL(hv_ext(2, 3, 3), 2.5);
+
+//    delete ds;
+//    delete ds_ext;
+//  }
 }
 
 }
