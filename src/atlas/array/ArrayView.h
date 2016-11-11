@@ -52,6 +52,7 @@
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/array/GridToolsTraits.h"
 #include "eckit/exception/Exceptions.h"
+#include "atlas/array/ArrayHelpers.h"
 
 namespace atlas {
 namespace array {
@@ -199,36 +200,27 @@ public:
     ArrayView( const ArrayView& other ) : 
         gt_data_view_(other.gt_data_view_)
     {
-      std::memcpy(shape_,other.shape_,RANK);
-      std::memcpy(strides_,other.strides_,RANK);
+      std::memcpy(shape_,other.shape_,sizeof(size_t)*RANK);
+      std::memcpy(strides_,other.strides_,sizeof(size_t)*RANK);
       size_ = other.size_;
       // TODO: check compatibility
     }
 
-    ArrayView(data_view_t data_view, ArrayShape const& shape) :
+    ArrayView(data_view_t data_view) :
         gt_data_view_(data_view)
     {
-      size_ = 1;
-      for( int j=RANK-1; j>=0; --j ) {
-        shape_[j] = shape[j];
-        strides_[j] = size_;
-        size_ *= shape_[j];
-      }
+      using seq = gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, RANK>::type>;
 
-        using seq =
-            gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, RANK>::type>;
+      auto stridest = seq::template apply<
+          std::vector<size_t>,
+          get_stride_component<unsigned long, gridtools::static_uint<RANK> >::template get_component>(
+          &(gt_data_view_.storage_info()));
+      auto shapet = seq::template apply<std::vector<size_t>, get_shape_component>(&(gt_data_view_.storage_info()));
 
-//        spec().set_strides(
-//            seq::template apply<
-//                size_t[RANK],
-//                get_stride_component<unsigned long, typename get_pack_size<Dims...>::type>::template get_component>(
-//                storage_info_ptr));
+      std::memcpy(strides_, &(stridest[0]), sizeof(size_t)*RANK);
+      std::memcpy(shape_, &(shapet[0]), sizeof(size_t)*RANK);
 
-//        for(size_t i=0; i < RANK; ++i)
-//        {
-//            shape_[i] = gt_data_view_.storage_info().dim
-//        }
-//      std::memcpy(shape_,shape.data(),RANK);
+      size_ = gt_data_view_.storage_info().size();
     }
 
     DATA_TYPE* data() { return gt_data_view_.data(); }

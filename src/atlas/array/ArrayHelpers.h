@@ -116,7 +116,7 @@ namespace array {
       constexpr get_shape_component() {}
 
       template < typename StorageInfoPtr>
-      GT_FUNCTION constexpr static int apply(StorageInfoPtr a) {
+      GT_FUNCTION constexpr static size_t apply(StorageInfoPtr a) {
           static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type >::value ), "Error: not a storage_info");
           return a->template dim<Idx>();
       }
