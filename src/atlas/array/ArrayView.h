@@ -48,7 +48,7 @@
 #define atlas_ArrayView_h
 
 #include <cstddef>
-#include <vector>
+#include <cstring>
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/array/GridToolsTraits.h"
 #include "eckit/exception/Exceptions.h"
@@ -199,17 +199,18 @@ public:
 
 public:
 
-    ArrayView( const ArrayView& other ) : gt_data_view_(other.gt_data_view_), shape_(other.shape_)
+    ArrayView( const ArrayView& other ) : 
+        gt_data_view_(other.gt_data_view_)
     {
+      std::memcpy(shape_,other.shape_,RANK);
       // TODO: check compatibility
     }
 
-    ArrayView(data_view_t data_view, ArrayShape const& shape) : gt_data_view_(data_view), shape_(shape) {}
-
-    // ArrayView<DATA_TYPE,RANK>& operator=(const ArrayView& other)
-    // {
-    //   return *this;
-    // }
+    ArrayView(data_view_t data_view, ArrayShape const& shape) :
+        gt_data_view_(data_view)
+    {
+      std::memcpy(shape_,shape.data(),RANK);
+    }
 
     DATA_TYPE* data() { return gt_data_view_.data(); }
     DATA_TYPE const* data() const { return gt_data_view_.data(); }
@@ -228,20 +229,14 @@ public:
       return gt_data_view_(c...);
     }
 
-    ArrayShape const& shape() const {return shape_;}
-
     size_t shape(size_t idx) const { return shape_[idx]; }
 
-
-    ArrayStrides const& strides() const { NOTIMP; return strides_;}
-
-    size_t stride(size_t idx) const { return strides_[idx]; }
-
     LocalView<DATA_TYPE,RANK-1> at(const size_t i) const {
-     return LocalView<DATA_TYPE,RANK-1>( 
+      NOTIMP; // strides_ is invalid at the moment (should be created at construction)
+      return LocalView<DATA_TYPE,RANK-1>( 
                 const_cast<DATA_TYPE*>(data())+strides_[0]*i,
-                shape().data()+1,
-                strides().data()+1 );
+                shape_+1,
+                strides_+1 );
     }
 
     data_view_t& data_view() { return gt_data_view_;}
@@ -250,50 +245,9 @@ public:
    size_t size() const { NOTIMP; return 0; }
 
 private:
-    ArrayStrides strides_;
     data_view_t gt_data_view_;
-//// -- Constructors
-//  ArrayView() {}
-//  ArrayView( DATA_TYPE* data, const size_t size );
-//  ArrayView( DATA_TYPE* data, const ArrayShape::value_type shape[1], const ArrayStrides::value_type strides[1] );
-//  ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[1] );
-//  ArrayView( const DATA_TYPE* data, const ArrayShape& shape );
-//  ArrayView( const Array& );
-
-//// -- Iterators
-//  iterator       begin();
-//  iterator       end();
-//  const_iterator begin() const;
-//  const_iterator end()   const;
-//  const_iterator cbegin() const;
-//  const_iterator cend() const;
-
-//// -- Operators
-//  const DATA_TYPE& operator()(size_t i) const;
-//        DATA_TYPE& operator()(size_t i);
-//  const DATA_TYPE& operator()(const ArrayIdx& idx) const;
-//        DATA_TYPE& operator()(const ArrayIdx& idx);
-//  const DATA_TYPE& operator[](size_t i) const;
-//        DATA_TYPE& operator[](size_t i);
-//  const DATA_TYPE& at(size_t i) const;
-//        DATA_TYPE& at(size_t i);
-//  void operator=(const DATA_TYPE& scalar);
-
-//// -- Accessors
-//  const DATA_TYPE* data() const;
-//        DATA_TYPE* data();
-//  const ArrayStrides::value_type* strides() const;
-//  const ArrayShape::value_type* shape() const;
-//  ArrayShape::value_type shape(const size_t i) const;
-//  ArrayStrides::value_type stride(size_t i) const;
-//  size_t rank() const;
-//  size_t size() const;
-
-//private:
-//// -- Private data
-//  DATA_TYPE* data_;
-//  ArrayStrides::value_type strides_[1];
-  ArrayShape shape_;
+    size_t* shape_;
+    size_t* strides_;
 };
 
 #else

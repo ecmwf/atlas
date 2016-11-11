@@ -354,13 +354,13 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const field::F
         surface(n,j) += values(n,l,j);
     }
   }
-  return checksum.execute( surface.data(), surface.stride(0) );
+  return checksum.execute( surface.data(), surface_field->stride(0) );
 }
 template <typename T>
 std::string checksum_2d_field(const parallel::Checksum& checksum, const field::Field& field )
 {
   array::ArrayView<T,2> values = array::make_view<T,2>(field);
-  return checksum.execute( values.data(), values.stride(0) );
+  return checksum.execute( values.data(), field.stride(0) );
 }
 
 }
