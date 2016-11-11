@@ -28,6 +28,7 @@ template<typename T> struct add_const<T const> { typedef const T type; };
 typedef std::vector<size_t> ArrayShape;
 typedef std::vector<size_t> ArrayStrides;
 typedef std::vector<size_t> ArrayIdx;
+typedef std::vector<size_t> ArrayLayout;
 
 inline ArrayShape make_shape() { return std::vector<size_t>(); }
 inline ArrayShape make_shape(size_t size1) { return std::vector<size_t>(1,size1); }
@@ -51,34 +52,25 @@ private:
   size_t rank_;
   ArrayShape shape_;
   ArrayStrides strides_;
+  ArrayLayout layout_;
   mutable std::vector<int> shapef_;
   mutable std::vector<int> stridesf_;
   bool contiguous_;
+  bool default_layout_;
 public:
-  ArraySpec() : size_(0), rank_(0), contiguous_(true) {}
+  ArraySpec();
   ArraySpec( const ArrayShape& );
   ArraySpec( const ArrayShape&, const ArrayStrides& );
+  ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayLayout& );
   size_t size() const { return size_; }
   size_t rank() const { return rank_; }
   const ArrayShape& shape() const { return shape_; }
   const ArrayStrides& strides() const { return strides_; }
+  const ArrayLayout& layout() const { return layout_; }
   const std::vector<int>& shapef() const;
   const std::vector<int>& stridesf() const;
   bool contiguous() const { return contiguous_; }
-
-  void set_strides(ArrayStrides&& strides) { strides_ = strides; }
-  void set_stridesf(std::vector<int>&& strides) { stridesf_ = strides; }
-
-  void set_shape(ArrayShape&& shape) { shape_ = shape; }
-  void set_shapef(std::vector<int>&& shapef) { shapef_ = shapef; }
-  void set_rank(size_t rank) { rank_ = rank; }
-  void set_size() {
-    size_ = 1;
-    for (size_t n = 0; n < rank_; ++n) {
-      size_ *= shape_[n];
-    }
-  }
-  void set_contiguous() { contiguous_ = (size_ == shape_[0] * strides_[0] ? true : false); }
+  bool default_layout() const { return default_layout_; }
 };
 
 //------------------------------------------------------------------------------------------------------

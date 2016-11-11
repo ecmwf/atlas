@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE( test_localview )
       }
     }
   }
-  
+
   delete ds;
 }
 
@@ -115,6 +115,9 @@ BOOST_AUTO_TEST_CASE( test_spec )
    BOOST_CHECK_EQUAL( ds->spec().strides()[1], 6);
    BOOST_CHECK_EQUAL( ds->spec().strides()[2], 1);
 
+   BOOST_CHECK_EQUAL( ds->spec().default_layout(), true );
+
+
    delete ds;
 }
 
@@ -132,6 +135,10 @@ BOOST_AUTO_TEST_CASE( test_spec_layout )
    BOOST_CHECK_EQUAL( ds->spec().strides()[0], 6*5);
    BOOST_CHECK_EQUAL( ds->spec().strides()[1], 6);
    BOOST_CHECK_EQUAL( ds->spec().strides()[2], 1);
+   BOOST_CHECK_EQUAL( ds->spec().default_layout(), true );
+   BOOST_CHECK_EQUAL( ds->spec().layout()[0], 0 );
+   BOOST_CHECK_EQUAL( ds->spec().layout()[1], 1 );
+   BOOST_CHECK_EQUAL( ds->spec().layout()[2], 2 );
 
    delete ds;
 }
@@ -150,6 +157,10 @@ BOOST_AUTO_TEST_CASE( test_spec_layout_rev )
    BOOST_CHECK_EQUAL( ds->spec().strides()[0], 1);
    BOOST_CHECK_EQUAL( ds->spec().strides()[1], 4);
    BOOST_CHECK_EQUAL( ds->spec().strides()[2], 4*5);
+   BOOST_CHECK_EQUAL( ds->spec().default_layout(), false );
+   BOOST_CHECK_EQUAL( ds->spec().layout()[0], 2 );
+   BOOST_CHECK_EQUAL( ds->spec().layout()[1], 1 );
+   BOOST_CHECK_EQUAL( ds->spec().layout()[2], 0 );
 
    delete ds;
 }

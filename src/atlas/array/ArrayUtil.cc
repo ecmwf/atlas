@@ -16,42 +16,79 @@
 namespace atlas {
 namespace array {
 
+ArraySpec::ArraySpec(): 
+    size_(0),
+    rank_(0),
+    contiguous_(true),
+    default_layout_(true)
+{
+}
+
 ArraySpec::ArraySpec( const ArrayShape& shape )
 {
-  rank_ = shape_.size();
+  rank_ = shape.size();
   size_ = 1;
   shape_.resize(rank_);
   strides_.resize(rank_);
+  layout_.resize(rank_);
   for( int j=rank_-1; j>=0; --j ) {
-    shape_[j] = shape[j];
+    shape_[j]   = shape[j];
     strides_[j] = size_;
+    layout_[j]  = j;
     size_ *= shape_[j];
   }
   contiguous_ = true;
+  default_layout_ = true;
 };
 
-ArraySpec::ArraySpec( const ArrayShape& _shape, const ArrayStrides& _strides )
+ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides )
 {
-  if( _shape.size() != _strides.size() )
+  if( shape.size() != strides.size() )
     throw eckit::BadParameter("dimensions of shape and stride don't match", Here());
 
-  shape_=_shape;
-  strides_=_strides;
-  rank_ = shape_.size();
+  rank_ = shape.size();
   size_ = 1;
-  for( size_t n=0; n<rank_; ++n )
-  {
-    size_ *= shape_[n];
+  shape_.resize(rank_);
+  strides_.resize(rank_);
+  layout_.resize(rank_);
+  for( int j=rank_-1; j>=0; --j ) {
+    shape_[j]   = shape[j];
+    strides_[j] = strides[j];
+    layout_[j]  = j;
+    size_ *= shape_[j];
+  }
+  contiguous_ = (size_ == shape_[0]*strides_[0] ? true : false);
+  default_layout_ = true;
+}
+
+ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout )
+{
+  if( shape.size() != strides.size() )
+    throw eckit::BadParameter("dimensions of shape and stride don't match", Here());
+
+  rank_ = shape.size();
+  size_ = 1;
+  shape_.resize(rank_);
+  strides_.resize(rank_);
+  layout_.resize(rank_);
+  default_layout_ = true;
+  for( int j=rank_-1; j>=0; --j ) {
+    shape_[j]   = shape[j];
+    strides_[j] = strides[j];
+    layout_[j]  = layout[j];
+    size_ *= shape_[j];
+    if( layout_[j] != j ) default_layout_ = false;
   }
   contiguous_ = (size_ == shape_[0]*strides_[0] ? true : false);
 }
 
 const std::vector<int>& ArraySpec::shapef() const
 {
-  if( shapef_.empty() )
-  {
-    shapef_.resize(shape().size());
-    std::reverse_copy( shape().begin(), shape().end(), shapef_.begin() );
+  if( shapef_.empty() ) {
+    shapef_.resize(rank_);
+    for( size_t j=0; j<rank_; ++j ) {
+      shapef_[j] = shape_[rank_-1- layout_[j] ];
+    }
   }
   return shapef_;
 }

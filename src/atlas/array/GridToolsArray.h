@@ -164,6 +164,21 @@ public:
   }
 
 public:
+
+  template <typename Value, typename LayoutMap>
+  struct get_layout_map_component {
+    // TODO: static_assert( gridtools::is_layout_map<LayoutMap>(), "Error: not a layout_map" );
+    template <int Idx>
+    struct get_component {
+      GT_FUNCTION
+      constexpr get_component() {}
+
+      GT_FUNCTION constexpr static Value apply() {
+        return LayoutMap::template at<Idx>();
+      }
+    };
+  };
+
   template <typename Value, typename RANKS>
   struct get_stride_component {
     template <int Idx>
@@ -191,22 +206,6 @@ public:
           static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type >::value ), "Error: not a storage_info");
           return a->template dim<Idx>();
       }
-  };
-
-  template <typename Layout>
-  struct get_shapef_component {
-    template <int Idx>
-    struct get_component {
-      GT_FUNCTION
-      constexpr get_component() {}
-
-      template <typename StorageInfoPtr>
-      GT_FUNCTION constexpr static int apply(StorageInfoPtr a) {
-        static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value),
-                      "Error: not a storage_info");
-        return a->template dim<Layout::template at<Layout::length - Idx - 1>() >();
-      }
-    };
   };
 
   template <typename Value, typename... UInts,
@@ -328,20 +327,16 @@ public:
       using seq =
           gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
 
-      spec().set_strides(
+      spec_ = ArraySpec(
+        ArrayShape{(unsigned long)dims...},
           seq::template apply<
-              std::vector<unsigned long>,
-              get_stride_component<unsigned long, typename get_pack_size<Dims...>::type>::template get_component>(
-              storage_info_ptr));
-      spec().set_shape(ArrayShape{(unsigned long)dims...});
-      spec().set_shapef(seq::template apply<std::vector<int>, get_shapef_component<Layout>::template get_component>(storage_info_ptr));
-      spec().set_stridesf(
-          seq::template apply<std::vector<int>,
-                              get_stride_component<int, typename get_pack_size<Dims...>::type>::template get_component>(
-              storage_info_ptr));
-      spec().set_rank(sizeof...(dims));
-      spec().set_size();
-      spec().set_contiguous();
+                        std::vector<unsigned long>,
+                        get_stride_component<unsigned long, typename get_pack_size<Dims...>::type>::template get_component>(
+                        storage_info_ptr),
+          seq::template apply<
+                        std::vector<unsigned long>,
+                        get_layout_map_component<unsigned long, Layout>::template get_component>()
+        );
   }
 
   virtual void* storage() = 0;
@@ -369,6 +364,8 @@ public:
   const std::vector<int>& stridesf() const { return spec_.stridesf(); }
 
   bool contiguous() const { return spec_.contiguous(); }
+
+  bool default_layout() const { return spec_.default_layout(); }
 
   void insert(size_t idx1, size_t size1);
 
