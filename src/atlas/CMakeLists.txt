@@ -264,6 +264,7 @@ array/ArrayView_iterator.h
 array/ArrayView_impl.h
 array/IndexView.h
 array/IndexView.cc
+array/LocalView.h
 array/ArrayView.h
 array/ArrayView.cc
 array/StorageView.h
