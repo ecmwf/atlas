@@ -113,9 +113,6 @@ public: // Destructor
 
   void insert(size_t idx1, size_t size1 );
 
-  template<typename T>
-  void initializeTo(const T& value) { NOTIMP; }
-
   /// @brief Shape of this field in Fortran style (reverse order of C style)
   const std::vector<int>& shapef()  const { return array_->shapef(); }
 

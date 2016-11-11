@@ -157,11 +157,6 @@ public:
 
 public:
 
-    IndexView( const DATA_TYPE* data, const size_t shape[RANK] )
-    {
-      NOTIMP;
-    }
-
     IndexView(data_view_t data_view) : gt_data_view_(data_view) {}
 
     template < typename... Coords >

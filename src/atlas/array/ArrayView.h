@@ -180,6 +180,19 @@ public:
 
       DATA_TYPE* data() { return data_; }
       DATA_TYPE const* data() const { return data_; }
+
+      void assign(const DATA_TYPE& value) {
+        ASSERT( contiguous() );
+        DATA_TYPE* raw_data = data();
+        for( size_t j=0; j<size_; ++j ) {
+          raw_data[j] = value;
+        }
+      }
+
+      bool contiguous() const
+      {
+        return (size_ == shape_[0]*strides_[0] ? true : false);
+      }
   };
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
@@ -254,6 +267,19 @@ public:
 
    size_t rank() const { return RANK; }
    size_t size() const { return size_; }
+
+   void assign(const DATA_TYPE& value) {
+      ASSERT( contiguous() );
+      DATA_TYPE* raw_data = data();
+      for( size_t j=0; j<size_; ++j ) {
+        raw_data[j] = value;
+      }
+   }
+
+    bool contiguous() const
+    {
+      return (size_ == shape_[0]*strides_[0] ? true : false);
+    }
 
 private:
     data_view_t gt_data_view_;

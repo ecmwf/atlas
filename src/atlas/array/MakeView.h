@@ -56,7 +56,7 @@ make_storageview(const Array& array) {
   typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, 1> storage_info_ty;
   typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
   data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
-  return StorageView<Value>(gridtools::make_host_view(*ds));
+  return StorageView<Value>(gridtools::make_host_view(*ds),array.size(),array.contiguous());
 }
 
 #ifdef __CUDACC__
@@ -116,7 +116,7 @@ make_host_indexview(const Array& array) {
 template <typename Value>
 inline static StorageView<Value>
 make_storageview(const Array& array) {
-  return StorageView<Value>(const_cast<Array&>(array).storage());
+  return StorageView<Value>(const_cast<Array&>(array).storage(),array.size(),array.contiguous());
 }
 
 #endif

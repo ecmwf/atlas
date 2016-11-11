@@ -277,7 +277,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
   array::ArrayShape shape = array::make_shape(region.south-region.north, 4*rg.nlonmax(), 4);
 
   region.elems.reset( array::Array::create<int>(shape) );
-NOTIMP;//  region.elems.initializeTo(-1);
+  array::make_storageview<int>(*region.elems).assign(-1);
 
   int nelems=0;
   region.nquads=0;
