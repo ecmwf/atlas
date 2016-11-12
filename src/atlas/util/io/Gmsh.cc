@@ -967,11 +967,9 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
 
         const mesh::Elements::Connectivity& node_connectivity = elements.node_connectivity();
 
-NOTIMP; // TODO!!!!!
-#if 0
-        const array::ArrayView<gidx_t,1> elems_glb_idx = elements.view<gidx_t,1>( elements.global_index() );
-        const array::ArrayView<int,1> elems_partition = elements.view<int,1>( elements.partition() );
-        const array::ArrayView<int,1> elems_halo = elements.view<int,1>( elements.halo() );
+        const array::LocalView<gidx_t,1> elems_glb_idx = elements.view<gidx_t,1>( elements.global_index() );
+        const array::LocalView<int,1> elems_partition = elements.view<int,1>( elements.partition() );
+        const array::LocalView<int,1> elems_halo = elements.view<int,1>( elements.halo() );
 
         if( binary )
         {
@@ -1022,7 +1020,6 @@ NOTIMP; // TODO!!!!!
             }
           }
         }
-#endif
       }
     }
   }

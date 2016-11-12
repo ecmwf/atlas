@@ -19,12 +19,12 @@ namespace impl {
     {
         if(array.rank() != NDims ) {
             std::stringstream err;
-            err << "Number of dimensions do not match";
+            err << "Number of dimensions do not match: template argument " << NDims << " expected to be " << array.rank();
             throw eckit::BadParameter(err.str(), Here());
         }
         if(array.datatype() != array::DataType::create<Value>() ) {
             std::stringstream err;
-            err << "Data Type does not match";
+            err << "Data Type does not match: template argument expected to be " << array.datatype().str();
             throw eckit::BadParameter(err.str(), Here());
         }
     }

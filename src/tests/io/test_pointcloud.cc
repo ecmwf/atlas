@@ -139,6 +139,8 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file )
                   test_arrays::nb_pts,
                   test_arrays::nb_columns ));
 
+  BOOST_TEST_CHECKPOINT( "pointcloud.txt created" );
+
   eckit::SharedPtr< mesh::Mesh > mesh (util::io::PointCloud::read("pointcloud.txt"));
   BOOST_TEST_CHECKPOINT( "Mesh created" );
   eckit::ScopedPtr< grid::Unstructured > grid( new grid::Unstructured(*mesh) );

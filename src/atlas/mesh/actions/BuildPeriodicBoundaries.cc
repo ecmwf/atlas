@@ -124,8 +124,7 @@ void build_periodic_boundaries( Mesh& mesh )
       {
         found_master.reserve(master_nodes.size());
         send_slave_idx.reserve(master_nodes.size());
-        array::ArrayShape recv_slave_shape = array::make_shape(recvcounts[jproc]/3,3);
-        array::LocalView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], recv_slave_shape.data() );
+        array::LocalView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], array::make_shape(recvcounts[jproc]/3,3) );
         for( size_t jnode=0; jnode<recv_slave.shape(0); ++jnode )
         {
           LonLatMicroDeg slave( recv_slave(jnode,internals::LON), recv_slave(jnode,internals::LAT) );

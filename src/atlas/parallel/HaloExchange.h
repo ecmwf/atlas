@@ -378,10 +378,10 @@ void HaloExchange::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
   if( RANK>1 )
   {
     size_t stride=1;
-    for( size_t j=RANK-1; j>0; --j ) {
-      varstrides[j] = stride;
-      varshape[j] = arr.shape(j);
-      stride *= varshape[j];
+    for( int j=RANK-1; j>0; --j ) {
+      varstrides[j-1] = stride;
+      varshape[j-1] = arr.shape(j);
+      stride *= varshape[j-1];
     }
 //    varstrides.assign(arr.strides()+1,arr.strides()+RANK);
 //    varshape.assign(arr.shape()+1,arr.shape()+RANK);

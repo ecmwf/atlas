@@ -132,13 +132,22 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
   //field->dump( Log::info() );
 
   field::Field::Ptr field2( nodes_fs->createField<int>("partition2",nb_levels,array::make_shape(2)) );
+  Log::info() << "field2.rank() = " << field2->rank() << std::endl;
   array::ArrayView<int,3> arr2 = array::make_view<int,3>(*field2);
+
   arr2.assign(eckit::mpi::rank());
+  
+  BOOST_CHECKPOINT(__LINE__);
+  
   //field2->dump( Log::info() );
   nodes_fs->haloExchange(*field2);
   //field2->dump( Log::info() );
 
+  BOOST_CHECKPOINT(__LINE__);
+
   Log::info() << nodes_fs->checksum(*field) << std::endl;
+
+  BOOST_CHECKPOINT(__LINE__);
 
   size_t root = eckit::mpi::size()-1;
   field::Field::Ptr glb_field( nodes_fs->createField("partition",*field,field::global(root)) );

@@ -86,7 +86,7 @@ namespace array {
 
   public:
 
-      LocalView( DATA_TYPE* data, const size_t shape[RANK], const size_t strides[RANK] ) :
+      LocalView( DATA_TYPE* data, const size_t shape[], const size_t strides[] ) :
         data_(data)
       {
         size_ = 1;
@@ -97,11 +97,11 @@ namespace array {
         }
       }
 
-      LocalView( DATA_TYPE* data, const size_t shape[RANK] ) :
+      LocalView( DATA_TYPE* data, const size_t shape[] ) :
         data_(data)
       {
         size_ = 1;
-        for( size_t j=RANK-1; j!=0; --j ) {
+        for( int j=RANK-1; j>=0; --j ) {
           shape_[j] = shape[j];
           strides_[j] = size_;
           size_ *= shape_[j];
@@ -112,13 +112,10 @@ namespace array {
         data_(data)
       {
         size_ = 1;
-        for( size_t j=0; j<RANK; ++j ) {
-          shape_[j] = shape[j];
+        for( int j=RANK-1; j>=0; --j ) {
+          shape_[j]   = shape[j];
+          strides_[j] = size_;
           size_ *= shape_[j];
-          strides_[j] = 1;
-        }
-        for( size_t j=RANK-2; j!=0; --j ) {
-          strides_[j] = strides_[j+1]*shape_[j+1];
         }
       }
 
