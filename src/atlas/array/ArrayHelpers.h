@@ -20,6 +20,8 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/GridToolsTraits.h"
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -140,3 +142,5 @@ namespace array {
 
 } // namespace array
 } // namespace atlas
+
+#endif

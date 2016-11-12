@@ -45,6 +45,8 @@ BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_CASE( test_accumulate_facets )
 {
+try{ 
+  
   grid::Grid* grid = grid::Grid::create("O2");
   mesh::generators::Structured generator( Config
        ("angle",29.0)
@@ -416,6 +418,12 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
   };
   BOOST_CHECK_EQUAL_COLLECTIONS( edge_to_cell_data.begin(), edge_to_cell_data.end(), edge_to_cell_check, edge_to_cell_check+2*nb_edges );
 
+
+}
+catch ( const eckit::Exception& e )
+{
+  std::cout << e.callStack() << std::endl;
+}
 }
 
 BOOST_AUTO_TEST_CASE( test_build_edges )

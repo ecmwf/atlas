@@ -20,6 +20,7 @@
 
 #define DEBUG_RANK (eckit::mpi::initialized() ? eckit::mpi::rank() : 0)
 
+#if 0
 #define DEBUG_0()       
 #define DEBUG_1(WHAT)   
 #define DEBUG_2(WHAT,RANK)
@@ -28,7 +29,8 @@
                         DEBUG_2(__VA_ARGS__),\
                         DEBUG_1(__VA_ARGS__),\
                         DEBUG_0(__VA_ARGS__))} while(0)
-#if 0
+
+#else
 
 /// DEBUG MACRO
 #define DEBUG_0()            atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG() @ " << Here() << std::endl;

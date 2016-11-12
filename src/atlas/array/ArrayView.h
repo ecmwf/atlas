@@ -53,7 +53,6 @@
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/GridToolsTraits.h"
-#include "atlas/array/ArrayHelpers.h"
 #include "atlas/array/LocalView.h"
 #include "eckit/exception/Exceptions.h"
 
@@ -207,7 +206,7 @@ public:
         DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l, size_t m);
   const DATA_TYPE& operator()(const ArrayIdx& idx) const;
         DATA_TYPE& operator()(const ArrayIdx& idx);
-  void operator=(const DATA_TYPE& scalar);
+
   void resize(size_t size1, size_t size2);
 
 // -- Accessors
@@ -219,6 +218,19 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
+  
+  void assign(const DATA_TYPE& value) {
+     ASSERT( contiguous() );
+     DATA_TYPE* raw_data = data();
+     for( size_t j=0; j<size_; ++j ) {
+       raw_data[j] = value;
+     }
+  }
+
+   bool contiguous() const
+   {
+     return (size_ == shape_[0]*strides_[0] ? true : false);
+   }
 
 private:
 // -- Private data
@@ -279,6 +291,19 @@ public:
   ArrayStrides::value_type stride(size_t i) const;
   size_t rank() const;
   size_t size() const;
+  
+  void assign(const DATA_TYPE& value) {
+     ASSERT( contiguous() );
+     DATA_TYPE* raw_data = data();
+     for( size_t j=0; j<size(); ++j ) {
+       raw_data[j] = value;
+     }
+  }
+
+   bool contiguous() const
+   {
+     return true;
+   }
 
 private:
 // -- Private data
@@ -336,6 +361,19 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
+  
+  void assign(const DATA_TYPE& value) {
+     ASSERT( contiguous() );
+     DATA_TYPE* raw_data = data();
+     for( size_t j=0; j<size_; ++j ) {
+       raw_data[j] = value;
+     }
+  }
+
+   bool contiguous() const
+   {
+     return (size_ == shape_[0]*strides_[0] ? true : false);
+   }
 
 private:
 // -- Private data
@@ -391,6 +429,19 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
+  
+  void assign(const DATA_TYPE& value) {
+     ASSERT( contiguous() );
+     DATA_TYPE* raw_data = data();
+     for( size_t j=0; j<size_; ++j ) {
+       raw_data[j] = value;
+     }
+  }
+
+   bool contiguous() const
+   {
+     return (size_ == shape_[0]*strides_[0] ? true : false);
+   }
 
 private:
 // --Private data
@@ -445,6 +496,19 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
+  
+  void assign(const DATA_TYPE& value) {
+     ASSERT( contiguous() );
+     DATA_TYPE* raw_data = data();
+     for( size_t j=0; j<size_; ++j ) {
+       raw_data[j] = value;
+     }
+  }
+
+   bool contiguous() const
+   {
+     return (size_ == shape_[0]*strides_[0] ? true : false);
+   }
 
 private:
 // -- Private data
