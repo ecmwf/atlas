@@ -66,7 +66,6 @@ endif()
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
   include_directories( ${GRIDTOOLS_STORAGE_INCLUDE_DIRS} )
-  include_directories( ${Boost_INCLUDE_DIRS} )
 endif()
 
 add_subdirectory( atlas )
