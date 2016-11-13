@@ -108,6 +108,25 @@ template <> void ArrayT<long>::dump(std::ostream& os) const { dump_array_data(*t
 template <> void ArrayT<float>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<double>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 
+#else
+
+Array* Array::create( DataType datatype, const ArrayShape& shape )
+{
+  switch( datatype.kind() )
+  {
+    case DataType::KIND_REAL64: return create<double>(shape);
+    case DataType::KIND_REAL32: return create<float>(shape);
+    case DataType::KIND_INT32:  return create<int>(shape);
+    case DataType::KIND_INT64:  return create<long>(shape);
+    default:
+    {
+      std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
+      throw eckit::BadParameter(err.str(),Here());
+    }
+  }
+  return 0;
+}
+
 #endif
 
 } // namespace array

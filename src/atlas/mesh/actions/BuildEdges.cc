@@ -334,9 +334,10 @@ void build_edges( Mesh& mesh )
   UniqueLonLat compute_uid( nodes );
 
   array::IndexView<idx_t,1>  edge_ridx    = array::make_indexview<idx_t,1> ( mesh.edges().remote_index() );
-  array::ArrayView<int,1>    edge_part    = array::make_view<int,1> ( mesh.edges().partition() );
-  array::ArrayView<gidx_t,1> edge_glb_idx = array::make_view<gidx_t,1> ( mesh.edges().global_index() );
+  array::ArrayView<int,1>    edge_part    = array::make_view<int,1>        ( mesh.edges().partition() );
+  array::ArrayView<gidx_t,1> edge_glb_idx = array::make_view<gidx_t,1>     ( mesh.edges().global_index() );
 
+  ASSERT( cell_nodes.missing_value() == missing_value );
   for( size_t edge=0; edge<nb_edges; ++edge )
   {
     const int ip1 = edge_nodes(edge,0);
@@ -356,15 +357,52 @@ void build_edges( Mesh& mesh )
     const idx_t e1 = edge_to_elem_data[2*edge+0];
     const idx_t e2 = edge_to_elem_data[2*edge+1];
 
-    if( e2 != cell_nodes.missing_value() )
-    {
-      // Swap order to ensure bit-reproducibility
-      if( compute_uid(cell_nodes.row(e1)) > compute_uid(cell_nodes.row(e2)) )
-      {
-        edge_to_elem_data[edge*2+0] = e2;
-        edge_to_elem_data[edge*2+1] = e1;
-      }
+    ASSERT( e1 != cell_nodes.missing_value() );
+    if( e2 == cell_nodes.missing_value() ) {
+      // do nothing
     }
+    else if ( compute_uid(cell_nodes.row(e1)) > compute_uid(cell_nodes.row(e2)) ) {
+      edge_to_elem_data[edge*2+0] = e2;
+      edge_to_elem_data[edge*2+1] = e1;
+    }
+    // if( e2 == cell_nodes.missing_value()  ||
+    //     compute_uid(cell_nodes.row(e1)) > compute_uid(cell_nodes.row(e2)) )
+    // {
+    //   // BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+0] , edge_cell_connectivity(jedge,0) );
+    //   // BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+1] , edge_cell_connectivity(jedge,1) );
+    // }
+    // else
+    // {
+    //   edge_to_elem_data[edge*2+0] = e2;
+    //   edge_to_elem_data[edge*2+1] = e1;
+    //
+    //   // BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+0] , edge_cell_connectivity(jedge,1) );
+    //   // BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+1] , edge_cell_connectivity(jedge,0) );
+    // }
+
+    
+    // if( e1 == cell_nodes.missing_value() && e2 != cell_nodes.missing_value() )
+    // {
+    //   edge_to_elem_data[edge*2+0] = e2;
+    //   edge_to_elem_data[edge*2+1] = e1;
+    // }
+    // else if( (e1 != cell_nodes.missing_value() && e2 != cell_nodes.missing_value() ) &&
+    //          (compute_uid(cell_nodes.row(e1)) > compute_uid(cell_nodes.row(e2)) ) )
+    // {
+    //   // Swap order to ensure bit-reproducibility
+    //   edge_to_elem_data[edge*2+0] = e2;
+    //   edge_to_elem_data[edge*2+1] = e1;
+    // }
+
+    // if( e2 != cell_nodes.missing_value() )
+    // {
+    //   // Swap order to ensure bit-reproducibility
+    //   if( compute_uid(cell_nodes.row(e1)) > compute_uid(cell_nodes.row(e2)) )
+    //   {
+    //     edge_to_elem_data[edge*2+0] = e2;
+    //     edge_to_elem_data[edge*2+1] = e1;
+    //   }
+    // }
   }
 
   mesh.edges().cell_connectivity().add( nb_edges, 2, edge_to_elem_data.data() );

@@ -681,12 +681,9 @@ public:
       if( nb_elements_of_type[t] == 0 ) continue;
       size_t new_elems_pos = elements.add(nb_elements_of_type[t]);
 
-// TODO!!!!
-NOTIMP;      
-      //array::ArrayView<gidx_t,1> elem_type_glb_idx = elements.view<gidx_t,1>( mesh.cells().global_index() );
-      //array::ArrayView<int,   1> elem_type_part    = elements.view<int,1>( mesh.cells().partition() );
-      //array::ArrayView<int,   1> elem_type_halo    = elements.view<int,1>( mesh.cells().halo() );
-// ENDTODO!!!
+      array::LocalView<gidx_t,1> elem_type_glb_idx = elements.view<gidx_t,1>( mesh.cells().global_index() );
+      array::LocalView<int,   1> elem_type_part    = elements.view<int,1>( mesh.cells().partition() );
+      array::LocalView<int,   1> elem_type_halo    = elements.view<int,1>( mesh.cells().halo() );
 
       // Copy information in new elements
       size_t new_elem(0);
@@ -695,12 +692,9 @@ NOTIMP;
         for(size_t e = 0; e < elems[jpart].size(); ++e)
         {
           size_t jelem = elems[jpart][e];
-// TODO!!!!
-NOTIMP;      
-        //  elem_type_glb_idx(new_elems_pos+new_elem)   = buf.elem_glb_idx[jpart][jelem];
-        //  elem_type_part   (new_elems_pos+new_elem)   = buf.elem_part[jpart][jelem];
-        //  elem_type_halo   (new_elems_pos+new_elem)   = 1;
-// ENDTODO!!!
+          elem_type_glb_idx(new_elems_pos+new_elem)   = buf.elem_glb_idx[jpart][jelem];
+          elem_type_part   (new_elems_pos+new_elem)   = buf.elem_part[jpart][jelem];
+          elem_type_halo   (new_elems_pos+new_elem)   = 1;
           for( size_t n=0; n<node_connectivity.cols(); ++n )
             node_connectivity.set(new_elems_pos+new_elem,n ,  uid2node[ buf.elem_nodes_id[jpart][ buf.elem_nodes_displs[jpart][jelem]+n] ] );
           ++new_elem;

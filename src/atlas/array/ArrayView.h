@@ -54,8 +54,8 @@
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/GridToolsTraits.h"
 #include "atlas/array/LocalView.h"
+#include "atlas/array/ArrayHelpers.h"
 #include "eckit/exception/Exceptions.h"
-
 namespace atlas {
 namespace array {
   class Array;
