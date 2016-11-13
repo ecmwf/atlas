@@ -371,7 +371,7 @@ void HaloExchange::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
                              std::vector<size_t>& varstrides,
                              std::vector<size_t>& varshape ) const
 {
-  size_t rank = std::max(1,RANK-1) ;
+  int rank = std::max(1,RANK-1) ;
   varstrides.resize(rank);
   varshape.resize(rank);
 
