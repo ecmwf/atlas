@@ -109,8 +109,6 @@ namespace array {
 
   public:
 
-      LocalView() { NOTIMP; }
-
       LocalView( DATA_TYPE* data, const size_t shape[RANK], const size_t strides[RANK] ) :
         data_(data)
       {
