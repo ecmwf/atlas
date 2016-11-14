@@ -16,7 +16,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/internals/Debug.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/internals/MPLArrayView.h"
@@ -576,10 +576,10 @@ void GatherScatter::gather( const array::ArrayView<DATA_TYPE,LRANK>& ldata,
   }
   else
   {
-    DEBUG_VAR(parsize_);
-    DEBUG_VAR(ldata.shape(0));
-    DEBUG_VAR(glb_cnt(root));
-    DEBUG_VAR(gdata.shape(0));
+    ATLAS_DEBUG_VAR(parsize_);
+    ATLAS_DEBUG_VAR(ldata.shape(0));
+    ATLAS_DEBUG_VAR(glb_cnt(root));
+    ATLAS_DEBUG_VAR(gdata.shape(0));
     NOTIMP; // Need to implement with parallel ranks > 1
   }
 }
@@ -597,10 +597,10 @@ void GatherScatter::scatter( const array::ArrayView<DATA_TYPE,GRANK>& gdata,
   }
   else
   {
-    DEBUG_VAR(parsize_);
-    DEBUG_VAR(ldata.shape(0));
-    DEBUG_VAR(glb_cnt(root));
-    DEBUG_VAR(gdata.shape(0));
+    ATLAS_DEBUG_VAR(parsize_);
+    ATLAS_DEBUG_VAR(ldata.shape(0));
+    ATLAS_DEBUG_VAR(glb_cnt(root));
+    ATLAS_DEBUG_VAR(gdata.shape(0));
     NOTIMP; // Need to implement with parallel ranks > 1
   }
 }

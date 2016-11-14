@@ -21,9 +21,9 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/mpi/Exceptions.h"
 #include "eckit/exception/Exceptions.h"
-#include "atlas/internals/Debug.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace parallel {
