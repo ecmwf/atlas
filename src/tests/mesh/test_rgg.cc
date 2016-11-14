@@ -38,7 +38,7 @@
 #include "atlas/util/Config.h"
 #include "atlas/grid/gaussian/classic/N.h"
 #include "atlas/internals/Bitflags.h"
-#include "atlas/internals/Debug.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace grid {
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
   for(size_t p = 0; p < nb_parts; ++p)
   {
-    DEBUG_VAR(p);
+    ATLAS_DEBUG_VAR(p);
 
     mesh::generators::Structured generate ( util::Config
            ("partitioner","EqualRegions")
@@ -393,14 +393,14 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
            ("3d",false) );
 
     mesh::Mesh::Ptr m( generate( grid ) );
-    DEBUG();
+    ATLAS_DEBUG_HERE();
     m->metadata().set("part",p);
     BOOST_TEST_CHECKPOINT("generated grid " << p);
     array::ArrayView<int   ,1> part = array::make_view<int   ,1>( m->nodes().partition() );
     array::ArrayView<gidx_t,1> gidx = array::make_view<gidx_t,1>( m->nodes().global_index() );
 
     area += test::compute_lonlat_area(*m);
-    DEBUG();
+    ATLAS_DEBUG_HERE();
 
     DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     if( nb_parts == 20 )
@@ -410,7 +410,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
       BOOST_CHECK_EQUAL( m->cells().elements(1).size(), triags[p] );
     }
     }
-    DEBUG();
+    ATLAS_DEBUG_HERE();
 
     output::Gmsh("T63.msh").write(*m);
 
@@ -471,7 +471,7 @@ DISABLE{
 
 BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 {
-  DEBUG();
+  ATLAS_DEBUG_HERE();
   int N=11;
   long lon[] = {
     2,  //90
@@ -518,7 +518,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 
 BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
 {
-  DEBUG();
+  ATLAS_DEBUG_HERE();
 
   eckit::SharedPtr<grid::Grid> grid(grid::Grid::create("O8"));
 

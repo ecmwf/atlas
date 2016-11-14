@@ -18,7 +18,7 @@
 #include "atlas/grid/grids.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/mesh/generators/Delaunay.h"
-#include "atlas/internals/Debug.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/field/State.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/array/DataType.h"
@@ -91,7 +91,7 @@ void TestField::test_fieldcreator()
                                     ("nvar",8)
                                ));
 
-  DEBUG_VAR( *ifs );
+  ATLAS_DEBUG_VAR( *ifs );
   ASSERT( ifs->shape(0) == 36 );
   ASSERT( ifs->shape(1) == 8 );
   ASSERT( ifs->shape(2) == 137 );

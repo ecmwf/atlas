@@ -14,7 +14,6 @@
 #include "eckit/types/Types.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "atlas/atlas.h"
-#include "atlas/internals/Debug.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/functionspace/NodeColumns.h"
@@ -24,6 +23,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/gaussian/ReducedGaussian.h"
+#include "atlas/parallel/mpi/mpi.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
 #endif
@@ -57,9 +57,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   //grid.reset();
 
-  DEBUG();
   SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,mesh::Halo(1)) );
-  DEBUG();
   size_t nb_levels = 10;
   //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
 
