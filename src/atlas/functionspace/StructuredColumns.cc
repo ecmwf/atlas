@@ -17,6 +17,7 @@
 #include "atlas/internals/Checksum.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/array/MakeView.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
@@ -293,7 +294,8 @@ void StructuredColumns::gather(
             }
         }
         trans_->gathgrid(nto.size(), nto.data(),
-                         loc.data<double>(), glb.data<double>());
+                         array::make_storageview<double>(loc).data(),
+                         array::make_storageview<double>(glb).data());
     }
 
 #else
@@ -357,7 +359,8 @@ void StructuredColumns::scatter(
             }
         }
         trans_->distgrid(nfrom.size(), nfrom.data(),
-                         glb.data<double>(), loc.data<double>());
+                         array::make_storageview<double>(glb).data(),
+                         array::make_storageview<double>(loc).data());
         glb.metadata().broadcast(loc.metadata(),root);
         loc.metadata().set("global",false);
   }

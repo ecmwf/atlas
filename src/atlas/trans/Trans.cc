@@ -284,6 +284,44 @@ void Trans::dirtrans(const functionspace::NodeColumns& gp, const field::Field& g
 
 // --------------------------------------------------------------------------------------------
 
+namespace {
+int pack_gridpoints_from_nodecolumns_2(const field::Field& field, array::ArrayView<double,2>& rgpview, const internals::IsGhost& is_ghost, int f)
+{
+    const array::ArrayView<double,2> gpfield = array::make_view<double,2>( field );
+    const size_t nvars = gpfield.shape(1);
+    for( size_t jvar=0; jvar<nvars; ++jvar )
+    {
+      size_t n=0;
+      for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+      {
+        if( !is_ghost(jnode) )
+        {
+          rgpview(f,n) = gpfield(jnode,jvar);
+          ++n;
+        }
+      }
+      //ASSERT( (int)n == ngptot() );
+      ++f;
+    }
+    return f;
+}
+int unpack_spectral_2(const field::Field& field, array::ArrayView<double,2>& rspecview, int f)
+{
+  array::ArrayView<double,2> spfield = array::make_view<double,2>( field );
+
+  const size_t nvars = spfield.shape(1);
+
+  for( size_t jvar=0; jvar<nvars; ++jvar )
+  {
+    for( int jwave=0; jwave<spfield.shape(0); ++jwave )
+    {
+      spfield(jwave,jvar) = rspecview(jwave,f);
+    }
+    ++f;
+  }
+  return f;
+}
+}
 
 void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet& gpfields,
                      const Spectral& sp, field::FieldSet& spfields, const TransParameters& context) const
@@ -311,8 +349,8 @@ void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet&
   array::ArrayT<double> rgp(nfld,ngptot());
   array::ArrayT<double> rspec(nspec2(),nfld);
 
-  array::ArrayView<double,2> rgpview (rgp);
-  array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview   = array::make_view<double,2>(rgp);
+  array::ArrayView<double,2> rspecview = array::make_view<double,2>(rspec);
 
   // Pack gridpoints
   {
@@ -320,22 +358,11 @@ void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet&
     size_t f=0;
     for( size_t jfld=0; jfld<gpfields.size(); ++jfld )
     {
-      const array::ArrayView<double,2> gpfield ( gpfields[jfld].data<double>(), array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
-      const size_t nvars = gpfield.shape(1);
-      for( size_t jvar=0; jvar<nvars; ++jvar )
-      {
-        size_t n=0;
-        for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
-        {
-          if( !is_ghost(jnode) )
-          {
-            rgpview(f,n) = gpfield(jnode,jvar);
-            ++n;
-          }
-        }
-        ASSERT( (int)n == ngptot() );
-        ++f;
-      }
+      const field::Field& field = gpfields[jfld];
+      if( field.rank() == 2 )
+        f += pack_gridpoints_from_nodecolumns_2(field,rgpview,is_ghost,f);
+      else
+        NOTIMP;
     }
   }
 
@@ -343,8 +370,8 @@ void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet&
   {
     struct ::DirTrans_t transform = ::new_dirtrans(&trans_);
     transform.nscalar    = nfld;
-    transform.rgp        = rgp.data();
-    transform.rspscalar  = rspec.data();
+    transform.rgp        = array::make_storageview<double>(rgp).data();
+    transform.rspscalar  = array::make_storageview<double>(rspec).data();
 
     TRANS_CHECK( ::trans_dirtrans(&transform) );
   }
@@ -354,26 +381,17 @@ void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet&
     size_t f=0;
     for( size_t jfld=0; jfld<spfields.size(); ++jfld )
     {
-      array::ArrayView<double,2> spfield ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
-
-      const size_t nvars = spfield.shape(1);
-
-      for( size_t jvar=0; jvar<nvars; ++jvar )
-      {
-        for( int jwave=0; jwave<nspec2(); ++jwave )
-        {
-          spfield(jwave,jvar) = rspecview(jwave,f);
-        }
-        ++f;
-      }
+      field::Field& field = spfields[jfld];
+      if( field.rank() == 2 )
+        f += unpack_spectral_2(field,rspecview,f);
+      else
+        NOTIMP;
     }
   }
 
 }
 
 // --------------------------------------------------------------------------------------------
-
-
 
 void Trans::dirtrans(
     const field::Field& gpfield,
@@ -394,8 +412,8 @@ void Trans::dirtrans(
   }
   const int nfld = gpfield.stride(0);
 
-  array::ArrayView<double,2> rgp   (gpfield);
-  array::ArrayView<double,2> rspec (spfield);
+  array::ArrayView<double,2> rgp   = array::make_view<double,2>(gpfield);
+  array::ArrayView<double,2> rspec = array::make_view<double,2>(spfield);
 
   // Do transform
   {
@@ -409,6 +427,25 @@ void Trans::dirtrans(
   }
 }
 
+namespace {
+int pack_gridpoints_from_structuredcolumns_2(const field::Field& field, array::ArrayView<double,2>& rgpview, int f)
+{
+    const array::ArrayView<double,2> gpfield = array::make_view<double,2>( field );
+    const size_t nvars = gpfield.shape(1);
+    for( size_t jvar=0; jvar<nvars; ++jvar )
+    {
+      size_t n=0;
+      for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+      {
+        rgpview(f,n) = gpfield(jnode,jvar);
+        ++n;
+      }
+      //ASSERT( (int)n == ngptot() );
+      ++f;
+    }
+    return f;
+}
+}
 
 void Trans::dirtrans(
     const field::FieldSet& gpfields,
@@ -440,24 +477,19 @@ void Trans::dirtrans(
   array::ArrayT<double> rgp(nfld,ngptot());
   array::ArrayT<double> rspec(nspec2(),nfld);
 
-  array::ArrayView<double,2> rgpview (rgp);
-  array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview   = array::make_view<double,2>(rgp);
+  array::ArrayView<double,2> rspecview = array::make_view<double,2>(rspec);
 
   // Pack gridpoints
   {
     size_t f=0;
     for( size_t jfld=0; jfld<gpfields.size(); ++jfld )
     {
-      const array::ArrayView<double,2> gpfield ( gpfields[jfld].data<double>(), array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
-      const size_t nvars = gpfield.shape(1);
-      for( size_t jvar=0; jvar<nvars; ++jvar )
-      {
-        for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
-        {
-          rgpview(f,jnode) = gpfield(jnode,jvar);
-        }
-        ++f;
-      }
+      const field::Field& gpfield = gpfields[jfld];
+      if( gpfield.rank() == 2 )
+        f += pack_gridpoints_from_structuredcolumns_2(gpfield,rgpview,f);
+      else
+        NOTIMP;
     }
   }
 
@@ -465,8 +497,8 @@ void Trans::dirtrans(
   {
     struct ::DirTrans_t transform = ::new_dirtrans(&trans_);
     transform.nscalar    = nfld;
-    transform.rgp        = rgp.data();
-    transform.rspscalar  = rspec.data();
+    transform.rgp        = array::make_storageview<double>(rgp).data();
+    transform.rspscalar  = array::make_storageview<double>(rspec).data();
 
     TRANS_CHECK( ::trans_dirtrans(&transform) );
   }
@@ -476,18 +508,11 @@ void Trans::dirtrans(
     size_t f=0;
     for( size_t jfld=0; jfld<spfields.size(); ++jfld )
     {
-      array::ArrayView<double,2> spfield ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
-
-      const size_t nvars = spfield.shape(1);
-
-      for( size_t jvar=0; jvar<nvars; ++jvar )
-      {
-        for( int jwave=0; jwave<nspec2(); ++jwave )
-        {
-          spfield(jwave,jvar) = rspecview(jwave,f);
-        }
-        ++f;
-      }
+      field::Field& field = spfields[jfld];
+      if( field.rank() == 2 )
+        f += unpack_spectral_2(field,rspecview,f);
+      else
+        NOTIMP;
     }
   }
 }
@@ -532,8 +557,8 @@ void Trans::invtrans(const Spectral& sp, const field::FieldSet& spfields,
   array::ArrayT<double> rgp(nfld,ngptot());
   array::ArrayT<double> rspec(nspec2(),nfld);
 
-  array::ArrayView<double,2> rgpview (rgp);
-  array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview   = array::make_view<double,2>(rgp);
+  array::ArrayView<double,2> rspecview = array::make_view<double,2>(rspec);
 
   // Pack spectral fields
   {
