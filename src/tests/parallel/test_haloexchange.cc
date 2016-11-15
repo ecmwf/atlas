@@ -110,16 +110,16 @@ BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
 
   size_t strides[] = {1};
   size_t shape[] = {2};
-  halo_exchange.execute(arr.data(),strides,shape,1);
+  halo_exchange.execute(arrv.data(),strides,shape,1);
 
   switch( eckit::mpi::rank() )
   {
     case 0: { POD arr_c[] = { 90,900, 10,100, 20,200, 30,300, 40,400 };
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
     case 1: { POD arr_c[] = { 30,300, 40,400, 50,500, 60,600, 70,700, 80,800};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
     case 2: { POD arr_c[] = { 50,500, 60,600, 70,700, 80,800, 90,900, 10,100, 20,200};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
   }
 }
 
@@ -139,11 +139,11 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v1, Fixture )
   switch( eckit::mpi::rank() )
   {
     case 0: { POD arr_c[] = { 90,0, 10,100, 20,200, 30,300, 40,0 };
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
     case 1: { POD arr_c[] = { 30,0, 40,400, 50,500, 60,600, 70,0, 80,0};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
     case 2: { POD arr_c[] = { 50,0, 60,0, 70,700, 80,800, 90,900, 10,0, 20,0};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
   }
 }
 
@@ -163,11 +163,11 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v2, Fixture )
   switch( eckit::mpi::rank() )
   {
     case 0: { POD arr_c[] = { 0,900, 10,100, 20,200, 30,300, 0,400 };
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
     case 1: { POD arr_c[] = { 0,300, 40,400, 50,500, 60,600, 0,700, 0,800};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
     case 2: { POD arr_c[] = { 0,500, 0,600, 70,700, 80,800, 90,900, 0,100, 0,200};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
   }
 }
 
@@ -186,7 +186,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
 
   size_t strides[] = {2,1};
   size_t shape[] = {3,2};
-  halo_exchange.execute(arr.data(),strides,shape,2);
+  halo_exchange.execute(arrv.data(),strides,shape,2);
 
   switch( eckit::mpi::rank() )
   {
@@ -197,7 +197,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
                       -2,2, -20,20, -200,200,
                       -3,3, -30,30, -300,300,
                       -4,4, -40,40, -400,400};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
     case 1:
@@ -208,7 +208,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
                       -6,6, -60,60, -600,600,
                       -7,7, -70,70, -700,700,
                       -8,8, -80,80, -800,800};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
     case 2:
@@ -220,7 +220,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
                       -9,9, -90,90, -900,900,
                       -1,1, -10,10, -100,100,
                       -2,2, -20,20, -200,200};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
   }
@@ -241,7 +241,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
 
   size_t strides[] = {6,1};
   size_t shape[] = {1,2};
-  halo_exchange.execute(arr.data(),strides,shape,2);
+  halo_exchange.execute(arrv.data(),strides,shape,2);
 
   switch( eckit::mpi::rank() )
   {
@@ -252,7 +252,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
                       -2,2, -20,20, -200,200,  // core
                       -3,3, -30,30, -300,300,  // core
                       -4,4,   0, 0,    0,  0}; // halo
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
     case 1:
@@ -263,7 +263,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
                       -6,6, -60,60, -600,600,  // core
                       -7,7,   0, 0,    0,  0,  // halo
                       -8,8,   0, 0,    0,  0}; // halo
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
     case 2:
@@ -275,7 +275,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
                       -9,9, -90,90, -900,900,  // core
                       -1,1,   0, 0,    0,  0,  // halo
                       -2,2,   0, 0,    0,  0}; // halo
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
   }
@@ -308,7 +308,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
                       -2,2, -20,20, -200,200,  // core
                       -3,3, -30,30, -300,300,  // core
                        0,0,   0,40,    0,  0}; // halo
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
     case 1:
@@ -319,7 +319,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
                       -6,6, -60,60, -600,600,  // core
                        0,0,   0,70,    0,  0,  // halo
                        0,0,   0,80,    0,  0}; // halo
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
     case 2:
@@ -331,7 +331,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
                       -9,9, -90,90, -900,900,  // core
                        0,0,   0,10,    0,  0,  // halo
                        0,0,   0,20,    0,  0}; // halo
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
   }
@@ -363,7 +363,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
                       -2,2, -20,20, -200,200,  // core
                       -3,3, -30,30, -300,300,  // core
                        0,4,   0,40,    0,400}; // halo
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
     case 1:
@@ -374,7 +374,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
                       -6,6, -60,60, -600,600,  // core
                        0,7,   0,70,    0,700,  // halo
                        0,8,   0,80,    0,800}; // halo
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
     case 2:
@@ -386,7 +386,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
                       -9,9, -90,90, -900,900,  // core
                        0,1,   0,10,    0,100,  // halo
                        0,2,   0,20,    0,200}; // halo
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
   }
@@ -394,9 +394,9 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_rank0_ArrayView, Fixture )
 {
-  size_t strides[] = {1};
-  size_t shape[] = {N};
-  array::ArrayView<POD,1> arrv(gidx.data(),shape,strides);
+  array::ArraySpec spec(array::make_shape(1), array::make_strides(N));
+  eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(gidx.data(), spec ) );
+  array::ArrayView<POD,1> arrv = array::make_view<POD,1>(*arr);
 
   halo_exchange.execute(arrv);
 
@@ -421,19 +421,20 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
     arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
-  size_t strides[] = {1};
-  BOOST_CHECK_EQUAL_COLLECTIONS( arrv.strides()+1,arrv.strides()+2, strides,strides+1);
+  BOOST_CHECK_EQUAL( arr.stride(1), 1 );
+  // size_t strides[] = {1};
+  // BOOST_CHECK_EQUAL_COLLECTIONS( arrv.strides()+1,arrv.strides()+2, strides,strides+1);
 
   halo_exchange.execute(arrv);
 
   switch( eckit::mpi::rank() )
   {
     case 0: { POD arr_c[] = { 90,900, 10,100, 20,200, 30,300, 40,400 };
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
     case 1: { POD arr_c[] = { 30,300, 40,400, 50,500, 60,600, 70,700, 80,800};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
     case 2: { POD arr_c[] = { 50,500, 60,600, 70,700, 80,800, 90,900, 10,100, 20,200};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+2*N, arr_c,arr_c+2*N); break; }
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
   }
 }
 
@@ -450,8 +451,10 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
     }
   }
 
-  size_t strides[] = {2,1};
-  BOOST_CHECK_EQUAL_COLLECTIONS( arrv.strides()+1,arrv.strides()+3, strides,strides+2);
+  BOOST_CHECK_EQUAL( arr.stride(1), 2 );
+  BOOST_CHECK_EQUAL( arr.stride(2), 1 );
+  // size_t strides[] = {2,1};
+  // BOOST_CHECK_EQUAL_COLLECTIONS( arrv.strides()+1,arrv.strides()+3, strides,strides+2);
 
   halo_exchange.execute(arrv);
 
@@ -464,7 +467,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
                       -2,2, -20,20, -200,200,
                       -3,3, -30,30, -300,300,
                       -4,4, -40,40, -400,400};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
     case 1:
@@ -475,7 +478,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
                       -6,6, -60,60, -600,600,
                       -7,7, -70,70, -700,700,
                       -8,8, -80,80, -800,800};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
     case 2:
@@ -487,7 +490,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
                       -9,9, -90,90, -900,900,
                       -1,1, -10,10, -100,100,
                       -2,2, -20,20, -200,200};
-      BOOST_CHECK_EQUAL_COLLECTIONS(arr.data(),arr.data()+6*N, arr_c,arr_c+6*N);
+      BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+6*N, arr_c,arr_c+6*N);
       break;
     }
   }

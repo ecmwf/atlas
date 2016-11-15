@@ -58,17 +58,23 @@ public:
   Field( const array::ArrayView<NON_CONST_DATA_TYPE,RANK>& arr )
   {
     data = const_cast<DATA_TYPE*>(arr.data());
+
     var_rank = std::max(1,(int)arr.rank()-1);
     var_strides.resize(var_rank);
     var_shape.resize(var_rank);
+
     if( arr.rank()>1 )
     {
-      var_strides.assign(arr.strides()+1,arr.strides()+arr.rank());
-      var_shape.assign(arr.shape()+1,arr.shape()+arr.rank());
+      size_t stride=1;
+      for( int j=RANK-1; j>0; --j ) {
+        var_strides[j-1] = stride;
+        var_shape[j-1] = arr.shape(j);
+        stride *= var_shape[j-1];
+      }
     }
-    if( arr.rank() == 1 )
+    else
     {
-      var_strides[0] = arr.strides()[0];
+      var_strides[0] = 1;
       var_shape[0] = 1;
     }
   }
@@ -285,30 +291,6 @@ void GatherScatter::gather( parallel::Field<DATA_TYPE const> lfields[],
 
 template<typename DATA_TYPE>
 void GatherScatter::gather( const DATA_TYPE ldata[],
-                            const size_t lstrides[],
-                            const size_t lshape[],
-                            const size_t lrank,
-                            const size_t lmpl_idxpos[],
-                            const size_t lmpl_rank,
-                            DATA_TYPE gdata[],
-                            const size_t gstrides[],
-                            const size_t gshape[],
-                            const size_t grank,
-                            const size_t gmpl_idxpos[],
-                            const size_t gmpl_rank,
-                            const size_t root ) const
-{
-  // compatibility mode
-  internals::MPL_ArrayView<DATA_TYPE const> lview(ldata,lstrides,lshape,lrank,lmpl_idxpos,lmpl_rank);
-  internals::MPL_ArrayView<DATA_TYPE      > gview(gdata,gstrides,gshape,grank,gmpl_idxpos,gmpl_rank);
-
-  gather(lview.data(),lview.var_strides().data(),lview.var_shape().data(),lview.var_rank(),
-         gview.data(),gview.var_strides().data(),gview.var_shape().data(),gview.var_rank(),
-         root);
-}
-
-template<typename DATA_TYPE>
-void GatherScatter::gather( const DATA_TYPE ldata[],
                             const size_t lvar_strides[],
                             const size_t lvar_shape[],
                             const size_t lvar_rank,
@@ -365,43 +347,6 @@ void GatherScatter::scatter( parallel::Field<DATA_TYPE const> gfields[],
     /// Unpack
     unpack_recv_buffer(locmap_,loc_buffer.data(),lfields[jfield]);
   }
-}
-
-template<typename DATA_TYPE>
-void GatherScatter::scatter( const DATA_TYPE gdata[],
-                             const size_t gstrides[],
-                             const size_t gshape[],
-                             const size_t grank,
-                             const size_t gmpl_idxpos[],
-                             const size_t gmpl_rank,
-                             DATA_TYPE ldata[],
-                             const size_t lstrides[],
-                             const size_t lshape[],
-                             const size_t lrank,
-                             const size_t lmpl_idxpos[],
-                             const size_t lmpl_rank,
-                             const size_t root ) const
-{
-  // compatibility mode
-  internals::MPL_ArrayView<DATA_TYPE const> gview(gdata,gstrides,gshape,grank,gmpl_idxpos,gmpl_rank);
-  internals::MPL_ArrayView<DATA_TYPE      > lview(ldata,lstrides,lshape,lrank,lmpl_idxpos,lmpl_rank);
-  std::vector<size_t> gvar_strides(gmpl_rank);
-  std::vector<size_t> gvar_shape(gmpl_rank);
-  std::vector<size_t> lvar_strides(lmpl_rank);
-  std::vector<size_t> lvar_shape(lmpl_rank);
-  for( size_t i=0; i<gmpl_rank; ++i)
-  {
-    gvar_strides[i] = gview.stride(i);
-    gvar_shape[i] = gview.extent(i);
-  }
-  for( size_t i=0; i<lmpl_rank; ++i)
-  {
-    lvar_strides[i] = lview.stride(i);
-    lvar_shape[i] = lview.extent(i);
-  }
-  parallel::Field<DATA_TYPE const> gfield(gdata,gvar_strides.data(),gvar_shape.data(),gview.var_rank());
-  parallel::Field<DATA_TYPE      > lfield(ldata,lvar_strides.data(),lvar_shape.data(),lview.var_rank());
-  scatter( &gfield, &lfield, 1, root );
 }
 
 template<typename DATA_TYPE>
@@ -548,17 +493,24 @@ void GatherScatter::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
                               std::vector<size_t>& varstrides,
                               std::vector<size_t>& varshape ) const
 {
-  size_t rank = std::max(1,RANK-1) ;
+  int rank = std::max(1,RANK-1) ;
   varstrides.resize(rank);
   varshape.resize(rank);
+
   if( RANK>1 )
   {
-    varstrides.assign(arr.strides()+1,arr.strides()+RANK);
-    varshape.assign(arr.shape()+1,arr.shape()+RANK);
+    size_t stride=1;
+    for( int j=RANK-1; j>0; --j ) {
+      varstrides[j-1] = stride;
+      varshape[j-1] = arr.shape(j);
+      stride *= varshape[j-1];
+    }
+//    varstrides.assign(arr.strides()+1,arr.strides()+RANK);
+//    varshape.assign(arr.shape()+1,arr.shape()+RANK);
   }
   else
   {
-    varstrides[0] = arr.strides()[0];
+    varstrides[0] = 1;
     varshape[0] = 1;
   }
 }
