@@ -76,7 +76,7 @@ struct Fixture {
   std::vector<int> ridx;
   std::vector<POD>   gidx;
 
-  size_t N;
+  int N;
 };
 
 

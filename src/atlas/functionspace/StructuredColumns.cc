@@ -83,46 +83,46 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
     int n_regions_NS = trans_->n_regions_NS();
 
     // Number of partitions per latitude band
-    array::ArrayView<int,1> n_regions = trans_->n_regions();
+    array::LocalView<int,1> n_regions = trans_->n_regions();
 
     // First latitude of latitude band
-    array::ArrayView<int,1> nfrstlat = trans_->nfrstlat();
+    array::LocalView<int,1> nfrstlat = trans_->nfrstlat();
 
     // First latitude of latitude band
-    array::ArrayView<int,1> nlstlat = trans_->nlstlat();
+    array::LocalView<int,1> nlstlat = trans_->nlstlat();
 
     // Index of latitude partition (note that if a partition
     // has two regions on a latitude - the index increases
     // by one (2 numbers)
-    array::ArrayView<int,1> nptrfrstlat = trans_->nptrfrstlat();
+    array::LocalView<int,1> nptrfrstlat = trans_->nptrfrstlat();
 
     // Starting longitudinal point per given latitude (ja)
     // Note that it is associated to nptrfrstlat
-    array::ArrayView<int,2> nsta = trans_->nsta();
+    array::LocalView<int,2> nsta = trans_->nsta();
 
     // Number of longitudinal points per given latitude (ja)
     // Note that it is associated to nptrfrstlat
-    array::ArrayView<int,2> nonl = trans_->nonl();
+    array::LocalView<int,2> nonl = trans_->nonl();
 
     size_t proc(0);
     // Loop over number of latitude bands (ja)
     for (int ja = 0; ja < n_regions_NS; ++ja)
     {
         // Loop over number of longitude bands (jb)
-        for (int jb = 0; jb < n_regions[ja]; ++jb)
+        for (int jb = 0; jb < n_regions(ja); ++jb)
         {
             if (proc == eckit::mpi::rank())
             {
-                nlat_ = nlstlat[ja] - nfrstlat[ja] + 1;
+                nlat_ = nlstlat(ja) - nfrstlat(ja) + 1;
                 nlon_.resize(nlat_);
                 first_lon_.resize(nlat_);
-                first_lat_ = nfrstlat[ja]-1;
+                first_lat_ = nfrstlat(ja)-1;
 
                 // Loop over latitude points of lat band (ja) and lon band (jb)
                 size_t ilat = 0;
-                for (int jglat = first_lat_; jglat < nlstlat[ja]; ++jglat)
+                for (int jglat = first_lat_; jglat < nlstlat(ja); ++jglat)
                 {
-                    size_t igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
+                    size_t igl = nptrfrstlat(ja) + jglat - nfrstlat(ja);
                     nlon_[ilat] = nonl(jb,igl);
                     first_lon_[ilat] = nsta(jb,igl);
                     ilat++;

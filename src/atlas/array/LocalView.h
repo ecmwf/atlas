@@ -44,6 +44,7 @@
 #include <cstring>
 #include <cassert>
 #include "atlas/internals/atlas_defines.h"
+#include "atlas/array/ArrayUtil.h"
 
 //------------------------------------------------------------------------------------------------------
 

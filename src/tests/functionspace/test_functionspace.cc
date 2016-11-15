@@ -514,10 +514,11 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
 
   BOOST_CHECK_EQUAL( surface_scalar_field->rank() , 1 );
 
-  array::ArrayView<double,1> surface_scalar( *surface_scalar_field );
+  array::ArrayView<double,1> surface_scalar = array::make_view<double,1>( *surface_scalar_field );
 
-  size_t surface_scalar_shape[] = { nspec2 };
-  BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
+  BOOST_CHECK_EQUAL( surface_scalar.shape(0), nspec2 );
+  // size_t surface_scalar_shape[] = { nspec2 };
+  // BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
 
   SharedPtr<field::Field> columns_scalar_field( spectral_fs->createField<double>("scalar",nb_levels) );
 
@@ -527,10 +528,12 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
 
   BOOST_CHECK_EQUAL( columns_scalar_field->rank() , 2 );
 
-  array::ArrayView<double,2> columns_scalar( *columns_scalar_field );
+  array::ArrayView<double,2> columns_scalar = array::make_view<double,2>( *columns_scalar_field );
 
-  size_t columns_scalar_shape[] = { nspec2, nb_levels };
-  BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
+  BOOST_CHECK_EQUAL(columns_scalar.shape(0), nspec2);
+  BOOST_CHECK_EQUAL(columns_scalar.shape(1), nb_levels);
+  // size_t columns_scalar_shape[] = { nspec2, nb_levels };
+  // BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
 
 }
 BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
@@ -554,10 +557,11 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
 
   BOOST_CHECK_EQUAL( surface_scalar_field->metadata().get<size_t>("owner"), 0 );
 
-  array::ArrayView<double,1> surface_scalar( *surface_scalar_field );
+  array::ArrayView<double,1> surface_scalar = array::make_view<double,1>( *surface_scalar_field );
 
-  size_t surface_scalar_shape[] = { nspec2g };
-  BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
+  BOOST_CHECK_EQUAL(surface_scalar.shape(0), nspec2g);
+  // size_t surface_scalar_shape[] = { nspec2g };
+  // BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
 
   SharedPtr<field::Field> columns_scalar_field( spectral_fs->createField<double>("scalar",nb_levels,field::global()) );
 
@@ -567,10 +571,12 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
 
   BOOST_CHECK_EQUAL( columns_scalar_field->rank() , 2 );
 
-  array::ArrayView<double,2> columns_scalar( *columns_scalar_field );
+  array::ArrayView<double,2> columns_scalar = array::make_view<double,2>( *columns_scalar_field );
 
-  size_t columns_scalar_shape[] = { nspec2g, nb_levels };
-  BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
+  BOOST_CHECK_EQUAL( columns_scalar.shape(0), nspec2g );
+  BOOST_CHECK_EQUAL( columns_scalar.shape(1), nb_levels );
+  // size_t columns_scalar_shape[] = { nspec2g, nb_levels };
+  // BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
 
 }
 #endif
