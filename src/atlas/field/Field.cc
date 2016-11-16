@@ -377,7 +377,7 @@ void atlas__Field__host_data_int_specf (Field* This, int* &data, int &rank, int*
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = array::make_storageview<int>(*This).data();
+    data = array::make_host_storageview<int>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
@@ -388,7 +388,7 @@ void atlas__Field__host_data_long_specf (Field* This, long* &data, int &rank, in
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = array::make_storageview<long>(*This).data();
+    data = array::make_host_storageview<long>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
@@ -399,7 +399,7 @@ void atlas__Field__host_data_float_specf (Field* This, float* &data, int &rank, 
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = array::make_storageview<float>(*This).data();
+    data = array::make_host_storageview<float>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
@@ -410,7 +410,7 @@ void atlas__Field__host_data_double_specf (Field* This, double* &data, int &rank
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = array::make_storageview<double>(*This).data();
+    data = array::make_device_storageview<double>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
@@ -421,7 +421,7 @@ void atlas__Field__device_data_int_specf (Field* This, int* &data, int &rank, in
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = array::make_storageview<int>(*This).data();
+    data = array::make_device_storageview<int>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
@@ -432,7 +432,7 @@ void atlas__Field__device_data_long_specf (Field* This, long* &data, int &rank, 
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = array::make_storageview<long>(*This).data();
+    data = array::make_device_storageview<long>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
@@ -443,7 +443,7 @@ void atlas__Field__device_data_float_specf (Field* This, float* &data, int &rank
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = array::make_storageview<float>(*This).data();
+    data = array::make_device_storageview<float>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
@@ -454,7 +454,7 @@ void atlas__Field__device_data_double_specf (Field* This, double* &data, int &ra
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = array::make_storageview<double>(*This).data();
+    data = array::make_device_storageview<double>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
