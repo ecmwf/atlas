@@ -88,6 +88,8 @@ public:
   template<typename Value>
   static Array* create(const ArrayShape& shape)
   {
+    return new ArrayT<Value>(shape);
+#if 0
     assert(shape.size() > 0);
     switch (shape.size()) {
       case 1:
@@ -114,6 +116,7 @@ public:
         throw eckit::BadParameter(err.str(), Here());
       }
     }
+#endif
   }
 
   template <typename T> static Array* create();
@@ -325,6 +328,7 @@ private: // methods
 
 template<typename DATA_TYPE>
 class ArrayT : public Array  {
+
 public:
 
   template<typename DataStore, typename = typename std::enable_if<gridtools::is_data_store<DataStore>::value >::type >
@@ -335,11 +339,62 @@ public:
   ArrayT(UInts... dims) :
     owned_(true)
   {
-    auto gt_storage = create_gt_storage<
-        DATA_TYPE,
-        typename atlas::array::default_layout<sizeof...(dims)>::type>(dims...);
+    create_from_variadic_args(dims...);
+  }
+
+  ArrayT(const ArrayShape& shape) :
+    owned_(true)
+  {
+    create_from_shape(shape);
+  }
+
+  ArrayT(const ArraySpec& spec) :
+    owned_(true)
+  {
+    if( not spec.default_layout() ) NOTIMP;
+    if( not spec.contiguous() )     NOTIMP;
+    create_from_shape(spec.shape());
+  }
+  
+  template <typename... UInts,
+            typename = gridtools::all_integers<UInts...> >
+  void create_from_variadic_args(UInts... dims)
+  {
+    auto gt_storage = create_gt_storage<DATA_TYPE,typename atlas::array::default_layout<sizeof...(dims)>::type>(dims...);
     build_spec(gt_storage,dims...);
     data_ = static_cast<void*>(gt_storage);
+  }
+  
+  void create_from_shape(const ArrayShape& shape)
+  {
+    assert(shape.size() > 0);
+    switch (shape.size()) {
+      case 1: {
+        create_from_variadic_args(shape[0]);
+        break;
+      }
+      case 2: {
+        create_from_variadic_args(shape[0],shape[1]);
+        break;
+      }
+      case 3: {
+        create_from_variadic_args(shape[0],shape[1],shape[2]);
+        break;
+      }
+      case 4: {
+        create_from_variadic_args(shape[0],shape[1],shape[2],shape[3]);
+        break;
+      }
+      case 5: {
+        create_from_variadic_args(shape[0],shape[1],shape[2],shape[3],shape[4]);
+        break;
+      }
+      default: {
+        std::stringstream err;
+        err << "shape not recognized";
+        throw eckit::BadParameter(err.str(), Here());
+      }
+    }
   }
 
   virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }

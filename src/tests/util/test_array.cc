@@ -337,15 +337,41 @@ BOOST_AUTO_TEST_CASE( test_assign )
 
 BOOST_AUTO_TEST_CASE( test_ArrayT )
 {
-  ArrayT<double> ds(2,3,4);
+  {
+    ArrayT<double> ds(2,3,4);
 
-  BOOST_CHECK_EQUAL(ds.size(),2*3*4);
-  BOOST_CHECK_EQUAL(ds.stride(0),3*4);
-  BOOST_CHECK_EQUAL(ds.stride(1),4);
-  BOOST_CHECK_EQUAL(ds.stride(2),1);
-  BOOST_CHECK_EQUAL(ds.shape(0),2);
-  BOOST_CHECK_EQUAL(ds.shape(1),3);
-  BOOST_CHECK_EQUAL(ds.shape(2),4);
+    BOOST_CHECK_EQUAL(ds.size(),2*3*4);
+    BOOST_CHECK_EQUAL(ds.stride(0),3*4);
+    BOOST_CHECK_EQUAL(ds.stride(1),4);
+    BOOST_CHECK_EQUAL(ds.stride(2),1);
+    BOOST_CHECK_EQUAL(ds.shape(0),2);
+    BOOST_CHECK_EQUAL(ds.shape(1),3);
+    BOOST_CHECK_EQUAL(ds.shape(2),4);
+  }  
+  
+  {
+    ArrayT<double> ds( make_shape(2,3,4) );
+
+    BOOST_CHECK_EQUAL(ds.size(),2*3*4);
+    BOOST_CHECK_EQUAL(ds.stride(0),3*4);
+    BOOST_CHECK_EQUAL(ds.stride(1),4);
+    BOOST_CHECK_EQUAL(ds.stride(2),1);
+    BOOST_CHECK_EQUAL(ds.shape(0),2);
+    BOOST_CHECK_EQUAL(ds.shape(1),3);
+    BOOST_CHECK_EQUAL(ds.shape(2),4);
+  }
+  
+  {
+    ArrayT<double> ds( ArraySpec( make_shape(2,3,4) ) );
+
+    BOOST_CHECK_EQUAL(ds.size(),2*3*4);
+    BOOST_CHECK_EQUAL(ds.stride(0),3*4);
+    BOOST_CHECK_EQUAL(ds.stride(1),4);
+    BOOST_CHECK_EQUAL(ds.stride(2),1);
+    BOOST_CHECK_EQUAL(ds.shape(0),2);
+    BOOST_CHECK_EQUAL(ds.shape(1),3);
+    BOOST_CHECK_EQUAL(ds.shape(2),4);
+  }
 }
 
 
