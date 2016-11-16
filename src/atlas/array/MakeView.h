@@ -66,7 +66,7 @@ make_gt_device_view(const Array& array) {
   typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> storage_info_ty;
   typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
 
-  data_store_t* ds = reinterpret_cast<data_store_t*>(array.storage());
+  data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
   return gridtools::make_device_view(*ds);
 }
@@ -76,8 +76,9 @@ template <typename Value, unsigned int NDims, bool ReadOnly = false>
 inline static ArrayView<Value, NDims>
 make_device_view(const Array& array) {
   impl::check_metadata<Value, NDims>(array);
-  return ArrayView<Value, NDims>(make_gt_host_view<Value, NDims>(array));
+  return ArrayView<Value, NDims>(make_gt_device_view<Value, NDims>(array));
 }
+
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
 inline static ArrayView<Value, NDims>
 make_device_view(const Array& array, const ArrayShape& shape) {

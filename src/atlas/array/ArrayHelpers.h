@@ -122,21 +122,5 @@ namespace array {
       }
   };
 
-  template <typename Layout>
-  struct get_shapef_component {
-    template <int Idx>
-    struct get_component {
-      GT_FUNCTION
-      constexpr get_component() {}
-
-      template <typename StorageInfoPtr>
-      GT_FUNCTION constexpr static int apply(StorageInfoPtr a) {
-        static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value),
-                      "Error: not a storage_info");
-        return a->template dim<Layout::template at<Layout::length - Idx - 1>() >();
-      }
-    };
-  };
-
 } // namespace array
 } // namespace atlas
