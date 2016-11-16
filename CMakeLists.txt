@@ -86,11 +86,7 @@ ecbuild_add_option( FEATURE MPI
                     REQUIRED_PACKAGES "MPI COMPONENTS CXX" )
 endif()
 
-if( ECKIT_HAVE_MPI )
-  set( MPI_FOUND 1 CACHE BOOL " " )
-  set( MPIEXEC "mpiexec" CACHE STRING " " )
-  set( MPIEXEC_NUMPROC_FLAG "-np" CACHE STRING " " )
-else()
+if( NOT ECKIT_HAVE_MPI )
   ecbuild_warn("ecKit has been compiled without MPI. This causes Atlas to not be able to run parallel jobs.")
 endif()
 

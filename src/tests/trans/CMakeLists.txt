@@ -10,7 +10,6 @@ if( HAVE_FCTEST )
 
   if( ATLAS_HAVE_TRANS )
     add_fctest( TARGET atlas_fctest_trans
-      MPI             1
       LINKER_LANGUAGE Fortran
       SOURCES         fctest_trans.F90
       LIBS            atlas_f
@@ -23,13 +22,13 @@ ecbuild_add_test( TARGET atlas_test_trans
   BOOST
   MPI      4
   SOURCES   test_trans.cc
-  CONDITION HAVE_TRANS
+  CONDITION HAVE_TRANS AND ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
   LIBS      atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_trans_serial
   BOOST
   SOURCES   test_trans.cc
-  CONDITION HAVE_TRANS AND NOT HAVE_MPI
+  CONDITION HAVE_TRANS AND NOT ECKIT_HAVE_MPI
   LIBS      atlas
 )

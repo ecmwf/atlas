@@ -9,7 +9,6 @@
 if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_mesh
-    MPI             1
     LINKER_LANGUAGE Fortran
     CONDITION       ON
     SOURCES         fctest_mesh.F90
@@ -17,7 +16,6 @@ if( HAVE_FCTEST )
   )
 
   add_fctest( TARGET atlas_fctest_meshgen
-    MPI             1
     LINKER_LANGUAGE Fortran
     CONDITION       ON
     SOURCES         fctest_meshgen.F90
@@ -41,7 +39,6 @@ endif()
 
 ecbuild_add_test( TARGET atlas_test_elements
   BOOST
-  MPI      1
   SOURCES  test_elements.cc
   LIBS     atlas
 )
@@ -49,49 +46,48 @@ ecbuild_add_test( TARGET atlas_test_elements
 
 ecbuild_add_test( TARGET atlas_test_accumulate_facets
   BOOST
-  MPI      1
   SOURCES  test_accumulate_facets.cc
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_rgg
   BOOST
-  MPI      1
   SOURCES  test_rgg.cc
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_ll
   BOOST
-  MPI      1
   SOURCES  test_ll.cc
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_parfields
   BOOST
-  MPI      2
-  SOURCES  test_parfields.cc
-  LIBS     atlas
+  MPI        2
+  CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+  SOURCES    test_parfields.cc
+  LIBS       atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_halo
   BOOST
-  MPI      5
-  SOURCES  test_halo.cc ../TestMeshes.h
-  LIBS     atlas
+  MPI        5
+  CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+  SOURCES    test_halo.cc ../TestMeshes.h
+  LIBS       atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_distmesh
   BOOST
-  MPI      5
-  SOURCES  test_distmesh.cc ../TestMeshes.h
-  LIBS     atlas
+  MPI        5
+  CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+  SOURCES    test_distmesh.cc ../TestMeshes.h
+  LIBS       atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_meshgen3d
   BOOST
-  MPI       1
   SOURCES   test_meshgen3d.cc
   LIBS      atlas
 )
@@ -101,5 +97,4 @@ ecbuild_add_test(
   SOURCES     test_cgal_mesh_gen_from_points.cc
   CONDITION   HAVE_TESSELATION
   LIBS        atlas
-  MPI         1 )
-
+)
