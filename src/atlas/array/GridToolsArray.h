@@ -39,7 +39,7 @@ template<unsigned int PartDim>
 struct array_initializer_partitioned;
 
 template<unsigned int NDims>
-struct default_layout {
+struct default_layout_t {
 
     template<typename T>
     struct get_layout;
@@ -149,13 +149,13 @@ public:
       Value, gridtools::storage_traits<BACKEND>::storage_info_t<
                  0, NDims,
                  typename gridtools::zero_halo<NDims>::type,
-                 typename default_layout<NDims>::type > >* wrap_storage_(Value* data,
+                 typename default_layout_t<NDims>::type > >* wrap_storage_(Value* data,
           std::array<unsigned int, NDims>&& shape, std::array<unsigned int, NDims>&& strides) {
 
     static_assert((NDims > 0), "Error: can not create storages without any dimension");
     typedef gridtools::storage_traits<BACKEND>::storage_info_t<
         0, NDims, typename gridtools::zero_halo<NDims>::type,
-        typename default_layout<NDims>::type> storage_info_ty;
+        typename default_layout_t<NDims>::type> storage_info_ty;
     storage_info_ty si(shape, strides);
 
     typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
@@ -169,7 +169,7 @@ public:
   template <typename Value, typename... UInts,
             typename = gridtools::all_integers<UInts...> >
   static Array* create(UInts... dims) {
-      return create_with_layout<Value, typename default_layout<sizeof...(dims)>::type >(dims...);
+      return create_with_layout<Value, typename default_layout_t<sizeof...(dims)>::type >(dims...);
   }
 
   template <typename Value,
@@ -328,13 +328,13 @@ public:
   void insert(size_t idx1, size_t size1);
 
   template <typename... Coords, typename = gridtools::all_integers<Coords...> >
-  GT_FUNCTION
   void resize(Coords... c) {
-      if(sizeof...(c) != spec_.rank()){
-        std::stringstream err; err << "trying to resize an array of rank " << spec_.rank() << " by dimensions with rank " <<
-                                      sizeof...(c) << std::endl;
-        throw eckit::BadParameter(err.str(),Here());
-      }
+    if (sizeof...(c) != spec_.rank()) {
+      std::stringstream err;
+      err << "trying to resize an array of rank " << spec_.rank() << " by dimensions with rank " << sizeof...(c)
+          << std::endl;
+      throw eckit::BadParameter(err.str(), Here());
+    }
 
       check_dimension_lengths(shape(), c...);
 

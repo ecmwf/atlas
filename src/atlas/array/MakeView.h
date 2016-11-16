@@ -131,7 +131,7 @@ make_indexview(const Array& array) {
   return make_host_indexview<Value,NDims>(array);
 }
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
+template <typename Value, unsigned int NDims, bool ReadOnly>
 inline static ArrayView<Value, NDims>
 make_view(const Array& array) {
     impl::check_metadata<Value, NDims>(array);
