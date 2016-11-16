@@ -154,6 +154,29 @@ public: // Destructor
   void set_functionspace(const functionspace::FunctionSpace &);
   functionspace::FunctionSpace& functionspace() const { return *functionspace_; }
 
+// -- Methods related to host-device synchronisation, requires gridtools_storage
+  void cloneToDevice() const {
+      array_->clone_to_device();
+  }
+  void cloneFromDevice() const {
+      array_->clone_from_device();
+  }
+  void syncHostDevice() const {
+      array_->sync();
+  }
+  bool isOnHost() const {
+      return array_->is_on_host();
+  }
+  bool isOnDevice() const {
+      return array_->is_on_device();
+  }
+  void reactivateDeviceWriteViews() const {
+      array_->reactivate_device_write_views();
+  }
+  void reactivateHostWriteViews() const {
+      array_->reactivate_host_write_views();
+  }
+
 private: // methods
 
   void print(std::ostream& os) const;
@@ -222,15 +245,23 @@ extern "C"
   int atlas__Field__levels (Field* This);
   double atlas__Field__bytes (Field* This);
   void atlas__Field__shapef (Field* This, int* &shape, int &rank);
-  void atlas__Field__data_int_specf (Field* This, int* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__data_long_specf (Field* This, long* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__data_float_specf (Field* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__data_double_specf (Field* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__host_data_int_specf (Field* This, int* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__host_data_long_specf (Field* This, long* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__host_data_float_specf (Field* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__host_data_double_specf (Field* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_int_specf (Field* This, int* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_long_specf (Field* This, long* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_float_specf (Field* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_double_specf (Field* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
   util_Metadata* atlas__Field__metadata (Field* This);
   functionspace_FunctionSpace* atlas__Field__functionspace (Field* This);
   void atlas__Field__rename(Field* This, const char* name);
   void atlas__Field__set_levels(Field* This, int levels);
   void atlas__Field__set_functionspace(Field* This, const functionspace_FunctionSpace* functionspace);
+  int atlas__Field__is_on_host(const Field* This);
+  int atlas__Field__is_on_device(const Field* This);
+  void atlas__Field__clone_to_device(Field* This);
+  void atlas__Field__clone_from_device(Field* This);
 }
 #undef Parametrisation
 #undef functionspace_FunctionSpace

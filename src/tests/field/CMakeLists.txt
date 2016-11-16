@@ -6,14 +6,14 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-add_subdirectory( util )
-add_subdirectory( parallel )
-add_subdirectory( field )
-add_subdirectory( grid )
-add_subdirectory( mesh )
-add_subdirectory( functionspace )
-add_subdirectory( io )
-add_subdirectory( numerics )
-add_subdirectory( trans )
-add_subdirectory( interpolation )
+if( HAVE_FCTEST )
+
+  add_fctest( TARGET atlas_fctest_field
+    CONDITION       ATLAS_HAVE_GRIDTOOLS_STORAGE
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_field.F90
+    LIBS            atlas_f
+  )
+
+endif()
 

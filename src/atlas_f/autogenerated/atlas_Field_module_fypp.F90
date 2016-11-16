@@ -67,89 +67,220 @@ contains
   final :: atlas_Field__final
 #endif
 
-  procedure, private :: access_data_int32_r1
-  procedure, private :: access_data_int32_r1_shape
-  procedure, private :: access_data_int64_r1
-  procedure, private :: access_data_int64_r1_shape
-  procedure, private :: access_data_real32_r1
-  procedure, private :: access_data_real32_r1_shape
-  procedure, private :: access_data_real64_r1
-  procedure, private :: access_data_real64_r1_shape
-  procedure, private :: access_data_logical32_r1
-  procedure, private :: access_data_logical32_r1_shape
-  procedure, private :: access_data_int32_r2
-  procedure, private :: access_data_int32_r2_shape
-  procedure, private :: access_data_int64_r2
-  procedure, private :: access_data_int64_r2_shape
-  procedure, private :: access_data_real32_r2
-  procedure, private :: access_data_real32_r2_shape
-  procedure, private :: access_data_real64_r2
-  procedure, private :: access_data_real64_r2_shape
-  procedure, private :: access_data_logical32_r2
-  procedure, private :: access_data_logical32_r2_shape
-  procedure, private :: access_data_int32_r3
-  procedure, private :: access_data_int32_r3_shape
-  procedure, private :: access_data_int64_r3
-  procedure, private :: access_data_int64_r3_shape
-  procedure, private :: access_data_real32_r3
-  procedure, private :: access_data_real32_r3_shape
-  procedure, private :: access_data_real64_r3
-  procedure, private :: access_data_real64_r3_shape
-  procedure, private :: access_data_logical32_r3
-  procedure, private :: access_data_logical32_r3_shape
-  procedure, private :: access_data_int32_r4
-  procedure, private :: access_data_int32_r4_shape
-  procedure, private :: access_data_int64_r4
-  procedure, private :: access_data_int64_r4_shape
-  procedure, private :: access_data_real32_r4
-  procedure, private :: access_data_real32_r4_shape
-  procedure, private :: access_data_real64_r4
-  procedure, private :: access_data_real64_r4_shape
-  procedure, private :: access_data_logical32_r4
-  procedure, private :: access_data_logical32_r4_shape
+  procedure, private :: access_host_data_int32_r1
+  procedure, private :: access_host_data_int32_r1_shape
+  procedure, private :: access_device_data_int32_r1
+  procedure, private :: access_device_data_int32_r1_shape
+  procedure, private :: access_host_data_int64_r1
+  procedure, private :: access_host_data_int64_r1_shape
+  procedure, private :: access_device_data_int64_r1
+  procedure, private :: access_device_data_int64_r1_shape
+  procedure, private :: access_host_data_real32_r1
+  procedure, private :: access_host_data_real32_r1_shape
+  procedure, private :: access_device_data_real32_r1
+  procedure, private :: access_device_data_real32_r1_shape
+  procedure, private :: access_host_data_real64_r1
+  procedure, private :: access_host_data_real64_r1_shape
+  procedure, private :: access_device_data_real64_r1
+  procedure, private :: access_device_data_real64_r1_shape
+  procedure, private :: access_host_data_logical32_r1
+  procedure, private :: access_host_data_logical32_r1_shape
+  procedure, private :: access_device_data_logical32_r1
+  procedure, private :: access_device_data_logical32_r1_shape
+  procedure, private :: access_host_data_int32_r2
+  procedure, private :: access_host_data_int32_r2_shape
+  procedure, private :: access_device_data_int32_r2
+  procedure, private :: access_device_data_int32_r2_shape
+  procedure, private :: access_host_data_int64_r2
+  procedure, private :: access_host_data_int64_r2_shape
+  procedure, private :: access_device_data_int64_r2
+  procedure, private :: access_device_data_int64_r2_shape
+  procedure, private :: access_host_data_real32_r2
+  procedure, private :: access_host_data_real32_r2_shape
+  procedure, private :: access_device_data_real32_r2
+  procedure, private :: access_device_data_real32_r2_shape
+  procedure, private :: access_host_data_real64_r2
+  procedure, private :: access_host_data_real64_r2_shape
+  procedure, private :: access_device_data_real64_r2
+  procedure, private :: access_device_data_real64_r2_shape
+  procedure, private :: access_host_data_logical32_r2
+  procedure, private :: access_host_data_logical32_r2_shape
+  procedure, private :: access_device_data_logical32_r2
+  procedure, private :: access_device_data_logical32_r2_shape
+  procedure, private :: access_host_data_int32_r3
+  procedure, private :: access_host_data_int32_r3_shape
+  procedure, private :: access_device_data_int32_r3
+  procedure, private :: access_device_data_int32_r3_shape
+  procedure, private :: access_host_data_int64_r3
+  procedure, private :: access_host_data_int64_r3_shape
+  procedure, private :: access_device_data_int64_r3
+  procedure, private :: access_device_data_int64_r3_shape
+  procedure, private :: access_host_data_real32_r3
+  procedure, private :: access_host_data_real32_r3_shape
+  procedure, private :: access_device_data_real32_r3
+  procedure, private :: access_device_data_real32_r3_shape
+  procedure, private :: access_host_data_real64_r3
+  procedure, private :: access_host_data_real64_r3_shape
+  procedure, private :: access_device_data_real64_r3
+  procedure, private :: access_device_data_real64_r3_shape
+  procedure, private :: access_host_data_logical32_r3
+  procedure, private :: access_host_data_logical32_r3_shape
+  procedure, private :: access_device_data_logical32_r3
+  procedure, private :: access_device_data_logical32_r3_shape
+  procedure, private :: access_host_data_int32_r4
+  procedure, private :: access_host_data_int32_r4_shape
+  procedure, private :: access_device_data_int32_r4
+  procedure, private :: access_device_data_int32_r4_shape
+  procedure, private :: access_host_data_int64_r4
+  procedure, private :: access_host_data_int64_r4_shape
+  procedure, private :: access_device_data_int64_r4
+  procedure, private :: access_device_data_int64_r4_shape
+  procedure, private :: access_host_data_real32_r4
+  procedure, private :: access_host_data_real32_r4_shape
+  procedure, private :: access_device_data_real32_r4
+  procedure, private :: access_device_data_real32_r4_shape
+  procedure, private :: access_host_data_real64_r4
+  procedure, private :: access_host_data_real64_r4_shape
+  procedure, private :: access_device_data_real64_r4
+  procedure, private :: access_device_data_real64_r4_shape
+  procedure, private :: access_host_data_logical32_r4
+  procedure, private :: access_host_data_logical32_r4_shape
+  procedure, private :: access_device_data_logical32_r4
+  procedure, private :: access_device_data_logical32_r4_shape
 
   generic, public :: data => &
-      & access_data_int32_r1, &
-      & access_data_int32_r1_shape, &
-      & access_data_int64_r1, &
-      & access_data_int64_r1_shape, &
-      & access_data_real32_r1, &
-      & access_data_real32_r1_shape, &
-      & access_data_real64_r1, &
-      & access_data_real64_r1_shape, &
-      & access_data_logical32_r1, &
-      & access_data_logical32_r1_shape, &
-      & access_data_int32_r2, &
-      & access_data_int32_r2_shape, &
-      & access_data_int64_r2, &
-      & access_data_int64_r2_shape, &
-      & access_data_real32_r2, &
-      & access_data_real32_r2_shape, &
-      & access_data_real64_r2, &
-      & access_data_real64_r2_shape, &
-      & access_data_logical32_r2, &
-      & access_data_logical32_r2_shape, &
-      & access_data_int32_r3, &
-      & access_data_int32_r3_shape, &
-      & access_data_int64_r3, &
-      & access_data_int64_r3_shape, &
-      & access_data_real32_r3, &
-      & access_data_real32_r3_shape, &
-      & access_data_real64_r3, &
-      & access_data_real64_r3_shape, &
-      & access_data_logical32_r3, &
-      & access_data_logical32_r3_shape, &
-      & access_data_int32_r4, &
-      & access_data_int32_r4_shape, &
-      & access_data_int64_r4, &
-      & access_data_int64_r4_shape, &
-      & access_data_real32_r4, &
-      & access_data_real32_r4_shape, &
-      & access_data_real64_r4, &
-      & access_data_real64_r4_shape, &
-      & access_data_logical32_r4, &
-      & access_data_logical32_r4_shape, &
+      & access_host_data_int32_r1, &
+      & access_host_data_int32_r1_shape, &
+      & access_host_data_int64_r1, &
+      & access_host_data_int64_r1_shape, &
+      & access_host_data_real32_r1, &
+      & access_host_data_real32_r1_shape, &
+      & access_host_data_real64_r1, &
+      & access_host_data_real64_r1_shape, &
+      & access_host_data_logical32_r1, &
+      & access_host_data_logical32_r1_shape, &
+      & access_host_data_int32_r2, &
+      & access_host_data_int32_r2_shape, &
+      & access_host_data_int64_r2, &
+      & access_host_data_int64_r2_shape, &
+      & access_host_data_real32_r2, &
+      & access_host_data_real32_r2_shape, &
+      & access_host_data_real64_r2, &
+      & access_host_data_real64_r2_shape, &
+      & access_host_data_logical32_r2, &
+      & access_host_data_logical32_r2_shape, &
+      & access_host_data_int32_r3, &
+      & access_host_data_int32_r3_shape, &
+      & access_host_data_int64_r3, &
+      & access_host_data_int64_r3_shape, &
+      & access_host_data_real32_r3, &
+      & access_host_data_real32_r3_shape, &
+      & access_host_data_real64_r3, &
+      & access_host_data_real64_r3_shape, &
+      & access_host_data_logical32_r3, &
+      & access_host_data_logical32_r3_shape, &
+      & access_host_data_int32_r4, &
+      & access_host_data_int32_r4_shape, &
+      & access_host_data_int64_r4, &
+      & access_host_data_int64_r4_shape, &
+      & access_host_data_real32_r4, &
+      & access_host_data_real32_r4_shape, &
+      & access_host_data_real64_r4, &
+      & access_host_data_real64_r4_shape, &
+      & access_host_data_logical32_r4, &
+      & access_host_data_logical32_r4_shape, &
       & dummy
+
+  generic, public :: host_data => &
+      & access_host_data_int32_r1, &
+      & access_host_data_int32_r1_shape, &
+      & access_host_data_int64_r1, &
+      & access_host_data_int64_r1_shape, &
+      & access_host_data_real32_r1, &
+      & access_host_data_real32_r1_shape, &
+      & access_host_data_real64_r1, &
+      & access_host_data_real64_r1_shape, &
+      & access_host_data_logical32_r1, &
+      & access_host_data_logical32_r1_shape, &
+      & access_host_data_int32_r2, &
+      & access_host_data_int32_r2_shape, &
+      & access_host_data_int64_r2, &
+      & access_host_data_int64_r2_shape, &
+      & access_host_data_real32_r2, &
+      & access_host_data_real32_r2_shape, &
+      & access_host_data_real64_r2, &
+      & access_host_data_real64_r2_shape, &
+      & access_host_data_logical32_r2, &
+      & access_host_data_logical32_r2_shape, &
+      & access_host_data_int32_r3, &
+      & access_host_data_int32_r3_shape, &
+      & access_host_data_int64_r3, &
+      & access_host_data_int64_r3_shape, &
+      & access_host_data_real32_r3, &
+      & access_host_data_real32_r3_shape, &
+      & access_host_data_real64_r3, &
+      & access_host_data_real64_r3_shape, &
+      & access_host_data_logical32_r3, &
+      & access_host_data_logical32_r3_shape, &
+      & access_host_data_int32_r4, &
+      & access_host_data_int32_r4_shape, &
+      & access_host_data_int64_r4, &
+      & access_host_data_int64_r4_shape, &
+      & access_host_data_real32_r4, &
+      & access_host_data_real32_r4_shape, &
+      & access_host_data_real64_r4, &
+      & access_host_data_real64_r4_shape, &
+      & access_host_data_logical32_r4, &
+      & access_host_data_logical32_r4_shape, &
+      & dummy
+
+  generic, public :: device_data => &
+      & access_device_data_int32_r1, &
+      & access_device_data_int32_r1_shape, &
+      & access_device_data_int64_r1, &
+      & access_device_data_int64_r1_shape, &
+      & access_device_data_real32_r1, &
+      & access_device_data_real32_r1_shape, &
+      & access_device_data_real64_r1, &
+      & access_device_data_real64_r1_shape, &
+      & access_device_data_logical32_r1, &
+      & access_device_data_logical32_r1_shape, &
+      & access_device_data_int32_r2, &
+      & access_device_data_int32_r2_shape, &
+      & access_device_data_int64_r2, &
+      & access_device_data_int64_r2_shape, &
+      & access_device_data_real32_r2, &
+      & access_device_data_real32_r2_shape, &
+      & access_device_data_real64_r2, &
+      & access_device_data_real64_r2_shape, &
+      & access_device_data_logical32_r2, &
+      & access_device_data_logical32_r2_shape, &
+      & access_device_data_int32_r3, &
+      & access_device_data_int32_r3_shape, &
+      & access_device_data_int64_r3, &
+      & access_device_data_int64_r3_shape, &
+      & access_device_data_real32_r3, &
+      & access_device_data_real32_r3_shape, &
+      & access_device_data_real64_r3, &
+      & access_device_data_real64_r3_shape, &
+      & access_device_data_logical32_r3, &
+      & access_device_data_logical32_r3_shape, &
+      & access_device_data_int32_r4, &
+      & access_device_data_int32_r4_shape, &
+      & access_device_data_int64_r4, &
+      & access_device_data_int64_r4_shape, &
+      & access_device_data_real32_r4, &
+      & access_device_data_real32_r4_shape, &
+      & access_device_data_real64_r4, &
+      & access_device_data_real64_r4_shape, &
+      & access_device_data_logical32_r4, &
+      & access_device_data_logical32_r4_shape, &
+      & dummy
+
+  procedure, public :: is_on_host
+  procedure, public :: is_on_device
+  procedure, public :: clone_to_device
+  procedure, public :: clone_from_device
 
   procedure, private :: dummy
 
@@ -248,7 +379,7 @@ subroutine array_c_to_f_int32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -283,7 +414,7 @@ subroutine array_c_to_f_int64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -318,7 +449,7 @@ subroutine array_c_to_f_real32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -353,7 +484,7 @@ subroutine array_c_to_f_real64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -388,7 +519,7 @@ subroutine array_c_to_f_logical32_r1(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -423,7 +554,7 @@ subroutine array_c_to_f_int32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -458,7 +589,7 @@ subroutine array_c_to_f_int64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -493,7 +624,7 @@ subroutine array_c_to_f_real32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -528,7 +659,7 @@ subroutine array_c_to_f_real64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -563,7 +694,7 @@ subroutine array_c_to_f_logical32_r2(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -598,7 +729,7 @@ subroutine array_c_to_f_int32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -633,7 +764,7 @@ subroutine array_c_to_f_int64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -668,7 +799,7 @@ subroutine array_c_to_f_real32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -703,7 +834,7 @@ subroutine array_c_to_f_real64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -738,7 +869,7 @@ subroutine array_c_to_f_logical32_r3(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -773,7 +904,7 @@ subroutine array_c_to_f_int32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -808,7 +939,7 @@ subroutine array_c_to_f_int64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -843,7 +974,7 @@ subroutine array_c_to_f_real32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -878,7 +1009,7 @@ subroutine array_c_to_f_real64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -913,7 +1044,7 @@ subroutine array_c_to_f_logical32_r4(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",153))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -935,7 +1066,7 @@ subroutine array_c_to_f_logical32_r4(array_cptr,rank,shape_cptr,strides_cptr,arr
 end subroutine
 !-------------------------------------------------------------------------------
 
-subroutine access_data_int32_r1(this, field)
+subroutine access_host_data_int32_r1(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_int), pointer, intent(out) :: field(:)
@@ -943,12 +1074,25 @@ subroutine access_data_int32_r1(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_int32_r1(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_int), pointer, intent(out) :: field(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_int64_r1(this, field)
+subroutine access_host_data_int64_r1(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:)
@@ -956,12 +1100,25 @@ subroutine access_data_int64_r1(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_int64_r1(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_long), pointer, intent(out) :: field(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_real32_r1(this, field)
+subroutine access_host_data_real32_r1(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:)
@@ -969,12 +1126,25 @@ subroutine access_data_real32_r1(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_real32_r1(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_real64_r1(this, field)
+subroutine access_host_data_real64_r1(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:)
@@ -982,12 +1152,25 @@ subroutine access_data_real64_r1(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_real64_r1(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_logical32_r1(this, field)
+subroutine access_host_data_logical32_r1(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   logical, pointer, intent(out) :: field(:)
@@ -995,12 +1178,25 @@ subroutine access_data_logical32_r1(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_logical32_r1(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  logical, pointer, intent(out) :: field(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_int32_r2(this, field)
+subroutine access_host_data_int32_r2(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_int), pointer, intent(out) :: field(:,:)
@@ -1008,12 +1204,25 @@ subroutine access_data_int32_r2(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_int32_r2(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_int), pointer, intent(out) :: field(:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_int64_r2(this, field)
+subroutine access_host_data_int64_r2(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:,:)
@@ -1021,12 +1230,25 @@ subroutine access_data_int64_r2(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_int64_r2(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_long), pointer, intent(out) :: field(:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_real32_r2(this, field)
+subroutine access_host_data_real32_r2(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:)
@@ -1034,12 +1256,25 @@ subroutine access_data_real32_r2(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_real32_r2(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_real64_r2(this, field)
+subroutine access_host_data_real64_r2(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:)
@@ -1047,12 +1282,25 @@ subroutine access_data_real64_r2(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_real64_r2(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_logical32_r2(this, field)
+subroutine access_host_data_logical32_r2(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   logical, pointer, intent(out) :: field(:,:)
@@ -1060,12 +1308,25 @@ subroutine access_data_logical32_r2(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_logical32_r2(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  logical, pointer, intent(out) :: field(:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_int32_r3(this, field)
+subroutine access_host_data_int32_r3(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_int), pointer, intent(out) :: field(:,:,:)
@@ -1073,12 +1334,25 @@ subroutine access_data_int32_r3(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_int32_r3(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_int), pointer, intent(out) :: field(:,:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_int64_r3(this, field)
+subroutine access_host_data_int64_r3(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:,:,:)
@@ -1086,12 +1360,25 @@ subroutine access_data_int64_r3(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_int64_r3(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_long), pointer, intent(out) :: field(:,:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_real32_r3(this, field)
+subroutine access_host_data_real32_r3(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:,:)
@@ -1099,12 +1386,25 @@ subroutine access_data_real32_r3(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_real32_r3(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:,:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_real64_r3(this, field)
+subroutine access_host_data_real64_r3(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:)
@@ -1112,12 +1412,25 @@ subroutine access_data_real64_r3(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_real64_r3(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:,:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_logical32_r3(this, field)
+subroutine access_host_data_logical32_r3(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   logical, pointer, intent(out) :: field(:,:,:)
@@ -1125,12 +1438,25 @@ subroutine access_data_logical32_r3(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_logical32_r3(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  logical, pointer, intent(out) :: field(:,:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_int32_r4(this, field)
+subroutine access_host_data_int32_r4(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_int), pointer, intent(out) :: field(:,:,:,:)
@@ -1138,12 +1464,25 @@ subroutine access_data_int32_r4(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_int32_r4(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_int), pointer, intent(out) :: field(:,:,:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_int64_r4(this, field)
+subroutine access_host_data_int64_r4(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:,:,:,:)
@@ -1151,12 +1490,25 @@ subroutine access_data_int64_r4(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_int64_r4(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_long), pointer, intent(out) :: field(:,:,:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_real32_r4(this, field)
+subroutine access_host_data_real32_r4(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:,:,:)
@@ -1164,12 +1516,25 @@ subroutine access_data_real32_r4(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_real32_r4(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:,:,:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_real64_r4(this, field)
+subroutine access_host_data_real64_r4(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:,:)
@@ -1177,12 +1542,25 @@ subroutine access_data_real64_r4(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_real64_r4(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:,:,:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_logical32_r4(this, field)
+subroutine access_host_data_logical32_r4(this, field)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   logical, pointer, intent(out) :: field(:,:,:,:)
@@ -1190,12 +1568,25 @@ subroutine access_data_logical32_r4(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_logical32_r4(this, field)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  logical, pointer, intent(out) :: field(:,:,:,:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
-subroutine access_data_int32_r1_shape(this, field, shape)
+subroutine access_host_data_int32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_int), pointer, intent(out) :: field(:)
@@ -1204,12 +1595,25 @@ subroutine access_data_int32_r1_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_int32_r1_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_int), pointer, intent(out) :: field(:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_int64_r1_shape(this, field, shape)
+subroutine access_host_data_int64_r1_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:)
@@ -1218,12 +1622,25 @@ subroutine access_data_int64_r1_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_int64_r1_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_long), pointer, intent(out) :: field(:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_real32_r1_shape(this, field, shape)
+subroutine access_host_data_real32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:)
@@ -1232,12 +1649,25 @@ subroutine access_data_real32_r1_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_real32_r1_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_real64_r1_shape(this, field, shape)
+subroutine access_host_data_real64_r1_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:)
@@ -1246,12 +1676,25 @@ subroutine access_data_real64_r1_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_real64_r1_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_logical32_r1_shape(this, field, shape)
+subroutine access_host_data_logical32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   logical, pointer, intent(out) :: field(:)
@@ -1260,12 +1703,25 @@ subroutine access_data_logical32_r1_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_logical32_r1_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  logical, pointer, intent(out) :: field(:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_int32_r2_shape(this, field, shape)
+subroutine access_host_data_int32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_int), pointer, intent(out) :: field(:,:)
@@ -1274,12 +1730,25 @@ subroutine access_data_int32_r2_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_int32_r2_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_int), pointer, intent(out) :: field(:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_int64_r2_shape(this, field, shape)
+subroutine access_host_data_int64_r2_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:,:)
@@ -1288,12 +1757,25 @@ subroutine access_data_int64_r2_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_int64_r2_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_long), pointer, intent(out) :: field(:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_real32_r2_shape(this, field, shape)
+subroutine access_host_data_real32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:)
@@ -1302,12 +1784,25 @@ subroutine access_data_real32_r2_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_real32_r2_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_real64_r2_shape(this, field, shape)
+subroutine access_host_data_real64_r2_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:)
@@ -1316,12 +1811,25 @@ subroutine access_data_real64_r2_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_real64_r2_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_logical32_r2_shape(this, field, shape)
+subroutine access_host_data_logical32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   logical, pointer, intent(out) :: field(:,:)
@@ -1330,12 +1838,25 @@ subroutine access_data_logical32_r2_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_logical32_r2_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  logical, pointer, intent(out) :: field(:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_int32_r3_shape(this, field, shape)
+subroutine access_host_data_int32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_int), pointer, intent(out) :: field(:,:,:)
@@ -1344,12 +1865,25 @@ subroutine access_data_int32_r3_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_int32_r3_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_int), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_int64_r3_shape(this, field, shape)
+subroutine access_host_data_int64_r3_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:,:,:)
@@ -1358,12 +1892,25 @@ subroutine access_data_int64_r3_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_int64_r3_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_long), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_real32_r3_shape(this, field, shape)
+subroutine access_host_data_real32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:,:)
@@ -1372,12 +1919,25 @@ subroutine access_data_real32_r3_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_real32_r3_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_real64_r3_shape(this, field, shape)
+subroutine access_host_data_real64_r3_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:)
@@ -1386,12 +1946,25 @@ subroutine access_data_real64_r3_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_real64_r3_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_logical32_r3_shape(this, field, shape)
+subroutine access_host_data_logical32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   logical, pointer, intent(out) :: field(:,:,:)
@@ -1400,12 +1973,25 @@ subroutine access_data_logical32_r3_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_logical32_r3_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  logical, pointer, intent(out) :: field(:,:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_int32_r4_shape(this, field, shape)
+subroutine access_host_data_int32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_int), pointer, intent(out) :: field(:,:,:,:)
@@ -1414,12 +2000,25 @@ subroutine access_data_int32_r4_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_int32_r4_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_int), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_int64_r4_shape(this, field, shape)
+subroutine access_host_data_int64_r4_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:,:,:,:)
@@ -1428,12 +2027,25 @@ subroutine access_data_int64_r4_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_int64_r4_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  integer(c_long), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_real32_r4_shape(this, field, shape)
+subroutine access_host_data_real32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:,:,:)
@@ -1442,12 +2054,25 @@ subroutine access_data_real32_r4_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_real32_r4_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_real64_r4_shape(this, field, shape)
+subroutine access_host_data_real64_r4_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:,:)
@@ -1456,12 +2081,25 @@ subroutine access_data_real64_r4_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_real64_r4_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine access_data_logical32_r4_shape(this, field, shape)
+subroutine access_host_data_logical32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   logical, pointer, intent(out) :: field(:,:,:,:)
@@ -1470,7 +2108,20 @@ subroutine access_data_logical32_r4_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_logical32_r4_shape(this, field, shape)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  logical, pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
@@ -1489,7 +2140,7 @@ integer function atlas_real(kind)
   else if (kind == c_float) then
     atlas_real = ATLAS_KIND_REAL32
   else
-    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",226))
+    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",277))
   end if
 end function
 
@@ -1504,7 +2155,7 @@ integer function atlas_integer(kind)
     else if (kind == c_long) then
       atlas_integer = ATLAS_KIND_INT64
     else
-      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",241))
+      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",292))
     end if
   end if
 end function
@@ -1530,7 +2181,7 @@ function atlas_data_type(kind)
   else if( kind == ATLAS_KIND_REAL64 ) then
     atlas_data_type = "real64"
   else
-    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",267))
+    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",318))
   endif
 end function
 
@@ -2255,6 +2906,47 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
+function is_on_host(this)
+  use atlas_field_c_binding
+  logical :: is_on_host
+  class(atlas_Field), intent(in) :: this
+  if( atlas__Field__is_on_host(this%c_ptr()) == 1 ) then
+    is_on_host = .true.
+  else
+    is_on_host = .false.
+  endif
+end function
+
+!-------------------------------------------------------------------------------
+
+function is_on_device(this)
+  use atlas_field_c_binding
+  logical :: is_on_device
+  class(atlas_Field), intent(in) :: this
+  if( atlas__Field__is_on_device(this%c_ptr()) == 1 ) then
+    is_on_device = .true.
+  else
+    is_on_device = .false.
+  endif
+end function
+
+!-------------------------------------------------------------------------------
+
+subroutine clone_to_device(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  call atlas__Field__clone_to_device(this%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine clone_from_device(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  call atlas__Field__clone_from_device(this%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
 
 end module atlas_field_module
 

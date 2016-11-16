@@ -94,6 +94,34 @@ public:
 
   bool contiguous() const { return spec_.contiguous(); }
 
+  void clone_to_device() const {
+      /* ignore */
+  }
+  void clone_from_device() const {
+      /* ignore */
+  }
+
+  bool valid() const {
+      return true;
+  }
+  void sync() const {
+      /* ignore */;
+  }
+  bool is_on_host() const {
+      return true;
+  }
+  bool is_on_device() const {
+      return false;
+  }
+
+  void reactivate_device_write_views() const {
+    /* ignore */
+  }
+
+  void reactivate_host_write_views() const {
+    /* ignore */
+  }
+
 private:
   virtual void resize_data( size_t size )=0;
   virtual void insert_data(size_t idx1, size_t size1)=0;
