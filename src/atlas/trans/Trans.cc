@@ -19,6 +19,7 @@
 #include "atlas/internals/IsGhost.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Log.h"
 
 using atlas::internals::Topology;
 using atlas::internals::IsGhost;
@@ -50,24 +51,26 @@ struct PackNodeColumns
   PackNodeColumns( ArrayView<double,2>& rgpview, const NodeColumns& fs ) :
     rgpview_(rgpview), is_ghost( fs.nodes() ), f(0) {}
 
-  void operator()(const Field& field) {
+  void operator()(const Field& field, int components = 0) {
+    ATLAS_DEBUG_VAR(field.rank());
     switch (field.rank()) {
       case 1:
-        pack_1(field);
+        pack_1(field,components);
         break;
       case 2:
-        pack_2(field);
+        pack_2(field,components);
         break;
       case 3:
-        pack_3(field);
+        pack_3(field,components);
         break;
       default:
-      NOTIMP;
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
       break;
     }
   }
   
-  void pack_1(const Field& field)
+  void pack_1(const Field& field, int)
   {
     const ArrayView<double,1> gpfield = make_view<double,1>( field );
     size_t n=0;
@@ -81,7 +84,7 @@ struct PackNodeColumns
     }
     ++f;
   }
-  void pack_2(const Field& field)
+  void pack_2(const Field& field, int)
   {
     const ArrayView<double,2> gpfield = make_view<double,2>( field );
     const size_t nvars = gpfield.shape(1);
@@ -99,10 +102,12 @@ struct PackNodeColumns
       ++f;
     }
   }
-  void pack_3(const Field& field)
+  void pack_3(const Field& field, int components)
   {
     const ArrayView<double,3> gpfield = make_view<double,3>( field );
-    for( size_t jcomp=0; jcomp<gpfield.shape(2); ++jcomp )
+    if( not components ) components = gpfield.shape(2);
+    ATLAS_DEBUG_VAR( components );
+    for( size_t jcomp=0; jcomp<components; ++jcomp )
     {
       for( size_t jlev=0; jlev<gpfield.shape(1); ++jlev )
       {
@@ -132,15 +137,30 @@ struct PackStructuredColumns
 
   void operator()(const Field& field) {
     switch (field.rank()) {
+      case 1:
+        pack_1(field);
+        break;
       case 2:
         pack_2(field);
-      break;
+        break;
       default:
-      NOTIMP;
-      break;
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
+        break;
     }
   }
-  
+
+  void pack_1(const Field& field)
+  {
+    const ArrayView<double,1> gpfield = make_view<double,1>( field );
+    size_t n=0;
+    for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+    {
+      rgpview_(f,n) = gpfield(jnode);
+      ++n;
+    }
+    ++f;
+  }  
   void pack_2(const Field& field)
   {
     const ArrayView<double,2> gpfield = make_view<double,2>( field );
@@ -174,8 +194,9 @@ struct PackSpectral
         pack_2(field);
         break;
       default:
-      NOTIMP;
-      break;
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
+        break;
     }
   }
   
@@ -216,24 +237,25 @@ struct UnpackNodeColumns
   UnpackNodeColumns( const ArrayView<double,2>& rgpview, const NodeColumns& fs ) :
     rgpview_(rgpview), is_ghost( fs.nodes() ), f(0) {}
 
-  void operator()(Field& field) {
+  void operator()(Field& field, int components = 0) {
     switch (field.rank()) {
       case 1:
-        unpack_1(field);
+        unpack_1(field,components);
         break;
       case 2:
-        unpack_2(field);
+        unpack_2(field,components);
         break;
       case 3:
-        unpack_3(field);
+        unpack_3(field,components);
         break;
       default:
-      NOTIMP;
-      break;
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
+        break;
     }
   }
   
-  void unpack_1(Field& field)
+  void unpack_1(Field& field, int)
   {
     ArrayView<double,1> gpfield = make_view<double,1>( field );
     size_t n(0);
@@ -247,7 +269,7 @@ struct UnpackNodeColumns
     }
     ++f;
   }
-  void unpack_2(Field& field)
+  void unpack_2(Field& field, int)
   {
     ArrayView<double,2> gpfield = make_view<double,2>( field );
     const size_t nvars = gpfield.shape(1);
@@ -265,10 +287,11 @@ struct UnpackNodeColumns
       ++f;
     }
   }
-  void unpack_3(Field& field)
+  void unpack_3(Field& field, int components)
   {
     ArrayView<double,3> gpfield = make_view<double,3>( field );
-    for( size_t jcomp=0; jcomp<gpfield.shape(2); ++jcomp )
+    if( not components ) components = gpfield.shape(2);
+    for( size_t jcomp=0; jcomp<components; ++jcomp )
     {
       for( size_t jlev=0; jlev<gpfield.shape(1); ++jlev )
       {
@@ -297,15 +320,30 @@ struct UnpackStructuredColumns
 
   void operator()(Field& field) {
     switch (field.rank()) {
+      case 1:
+        unpack_1(field);
+        break;
       case 2:
         unpack_2(field);
-      break;
+        break;
       default:
-      NOTIMP;
-      break;
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
+        break;
     }
   }
   
+  void unpack_1(Field& field)
+  {
+    ArrayView<double,1> gpfield = make_view<double,1>( field );
+    size_t n=0;
+    for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+    {
+      gpfield(jnode) = rgpview_(f,n);
+      ++n;
+    }
+    ++f;
+  }
   void unpack_2(Field& field)
   {
     ArrayView<double,2> gpfield = make_view<double,2>( field );
@@ -339,8 +377,9 @@ struct UnpackSpectral
         unpack_2(field);
         break;
       default:
-      NOTIMP;
-      break;
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
+        break;
     }
   }
 
@@ -960,11 +999,20 @@ void Trans::dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const fie
   array::ArrayT<double> rgp(2*nfld,size_t(ngptot()));
   array::ArrayView<double,2> rgpview = array::make_view<double,2>(rgp);
 
+  ATLAS_DEBUG_VAR(gpwind.size());
+  ATLAS_DEBUG_VAR(rgp.size());
+  ATLAS_DEBUG_VAR(gpwind.stride(0));
+  ATLAS_DEBUG_VAR(2*nfld);
+  ATLAS_DEBUG_VAR(rgp.stride(0));
+
+  ATLAS_DEBUG_HERE();
   // Pack gridpoints
   {
     PackNodeColumns pack( rgpview, gp );
-    pack(gpwind);
+    int wind_components = 2;
+    pack(gpwind, wind_components);
   }
+  ATLAS_DEBUG_HERE();
 
   // Do transform
   {
@@ -978,6 +1026,7 @@ void Trans::dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const fie
     ASSERT( transform.rspdiv );
     TRANS_CHECK( ::trans_dirtrans(&transform) );
   }
+  ATLAS_DEBUG_HERE();
 
 }
 
@@ -1023,7 +1072,8 @@ void Trans::invtrans_vordiv2wind(const Spectral& sp, const field::Field& spvor, 
   // Unpack the gridpoint fields
   {
     UnpackNodeColumns unpack( rgpview, gp );
-    unpack(gpwind);
+    int wind_components = 2;
+    unpack(gpwind,wind_components);
   }
 
 }
