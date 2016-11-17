@@ -164,7 +164,7 @@ struct default_layout_t {
       Value, gridtools::storage_traits<BACKEND>::storage_info_t<
                  0, NDims,
                  typename gridtools::zero_halo<NDims>::type,
-                 typename atlas::array::default_layout<NDims>::type > >*
+                 typename atlas::array::default_layout_t<NDims>::type > >*
   wrap_gt_storage(
       Value* data,
       std::array<unsigned int, NDims>&& shape, std::array<unsigned int, NDims>&& strides)
@@ -172,7 +172,7 @@ struct default_layout_t {
       static_assert((NDims > 0), "Error: can not create storages without any dimension");
       typedef gridtools::storage_traits<BACKEND>::storage_info_t<
           0, NDims, typename gridtools::zero_halo<NDims>::type,
-          typename atlas::array::default_layout<NDims>::type> storage_info_ty;
+          typename atlas::array::default_layout_t<NDims>::type> storage_info_ty;
       typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
 
       storage_info_ty si(shape, strides);

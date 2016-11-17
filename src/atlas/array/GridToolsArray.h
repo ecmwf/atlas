@@ -67,7 +67,7 @@ public:
   template <typename Value, typename... UInts,
             typename = gridtools::all_integers<UInts...> >
   static Array* create(UInts... dims) {
-      return create_with_layout<Value, typename atlas::array::default_layout<sizeof...(dims)>::type >(dims...);
+      return create_with_layout<Value, typename atlas::array::default_layout_t<sizeof...(dims)>::type >(dims...);
   }
 
   template <typename Value,
@@ -201,7 +201,6 @@ public:
   void insert(size_t idx1, size_t size1);
 
   template <typename... Coords, typename = gridtools::all_integers<Coords...> >
-  GT_FUNCTION
   void resize(Coords... c) {
       if(sizeof...(c) != spec_.rank()){
         std::stringstream err; err << "trying to resize an array of rank " << spec_.rank() << " by dimensions with rank " <<
@@ -332,7 +331,7 @@ public:
             typename = gridtools::all_integers<UInts...> >
   void create_from_variadic_args(UInts... dims)
   {
-    auto gt_storage = create_gt_storage<DATA_TYPE,typename atlas::array::default_layout<sizeof...(dims)>::type>(dims...);
+    auto gt_storage = create_gt_storage<DATA_TYPE,typename atlas::array::default_layout_t<sizeof...(dims)>::type>(dims...);
     build_spec(gt_storage,dims...);
     data_ = static_cast<void*>(gt_storage);
   }
