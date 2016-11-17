@@ -540,7 +540,8 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const field::F
   array::LocalView<T,3> values = make_leveled_view<T>(field);
   eckit::SharedPtr<array::Array> surface_field( array::Array::create<T>( array::make_shape(values.shape(0),values.shape(2) ) ) );
   array::ArrayView<T,2> surface = array::make_view<T,2>(*surface_field);
-  atlas_omp_for( size_t n=0; n<values.shape(0); ++n ) {
+  const size_t npts = values.shape(0);
+  atlas_omp_for( size_t n=0; n<npts; ++n ) {
     for( size_t j=0; j<surface.shape(1); ++j )
     {
       surface(n,j) = 0.;
