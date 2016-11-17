@@ -294,5 +294,86 @@ BOOST_AUTO_TEST_CASE( test_wrap_storage )
   }
 }
 
+BOOST_AUTO_TEST_CASE( test_storageview )
+{
+  Array *ds = Array::create<double>(2ul,3ul,4ul);
+  auto hv = make_host_view<double, 3>(*ds);
+  
+  BOOST_CHECK_EQUAL( hv.size(), 2*3*4 );
+
+  auto sv = make_storageview<double>(*ds);
+
+  BOOST_CHECK_EQUAL( sv.size(), 2*3*4 );
+
+  delete ds;
+}
+
+BOOST_AUTO_TEST_CASE( test_assign )
+{
+  Array *ds = Array::create<double>(2ul,3ul,4ul);
+  auto hv = make_host_view<double, 3>(*ds);
+   
+  hv.assign(2.5);
+
+  BOOST_CHECK_EQUAL(hv(1, 2, 3), 2.5);
+
+  auto lv = hv.at(1);
+  lv.assign(5.0);
+
+  BOOST_CHECK_EQUAL(hv(0, 2, 3), 2.5);
+  BOOST_CHECK_EQUAL(hv(1, 2, 3), 5.0);
+  BOOST_CHECK_EQUAL(lv(2, 3), 5.0);
+
+  auto sv = make_storageview<double>(*ds);
+  sv.assign(0.);
+
+  BOOST_CHECK_EQUAL(hv(0, 2, 3), 0.);
+  BOOST_CHECK_EQUAL(hv(1, 2, 3), 0.);
+  BOOST_CHECK_EQUAL(lv(2, 3), 0.);
+
+  delete ds;
+}
+
+
+BOOST_AUTO_TEST_CASE( test_ArrayT )
+{
+  {
+    ArrayT<double> ds(2,3,4);
+
+    BOOST_CHECK_EQUAL(ds.size(),2*3*4);
+    BOOST_CHECK_EQUAL(ds.stride(0),3*4);
+    BOOST_CHECK_EQUAL(ds.stride(1),4);
+    BOOST_CHECK_EQUAL(ds.stride(2),1);
+    BOOST_CHECK_EQUAL(ds.shape(0),2);
+    BOOST_CHECK_EQUAL(ds.shape(1),3);
+    BOOST_CHECK_EQUAL(ds.shape(2),4);
+  }  
+  
+  {
+    ArrayT<double> ds( make_shape(2,3,4) );
+
+    BOOST_CHECK_EQUAL(ds.size(),2*3*4);
+    BOOST_CHECK_EQUAL(ds.stride(0),3*4);
+    BOOST_CHECK_EQUAL(ds.stride(1),4);
+    BOOST_CHECK_EQUAL(ds.stride(2),1);
+    BOOST_CHECK_EQUAL(ds.shape(0),2);
+    BOOST_CHECK_EQUAL(ds.shape(1),3);
+    BOOST_CHECK_EQUAL(ds.shape(2),4);
+  }
+  
+  {
+    ArrayT<double> ds( ArraySpec( make_shape(2,3,4) ) );
+
+    BOOST_CHECK_EQUAL(ds.size(),2*3*4);
+    BOOST_CHECK_EQUAL(ds.stride(0),3*4);
+    BOOST_CHECK_EQUAL(ds.stride(1),4);
+    BOOST_CHECK_EQUAL(ds.stride(2),1);
+    BOOST_CHECK_EQUAL(ds.shape(0),2);
+    BOOST_CHECK_EQUAL(ds.shape(1),3);
+    BOOST_CHECK_EQUAL(ds.shape(2),4);
+  }
+}
+
+
 }
 }

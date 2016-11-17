@@ -113,7 +113,7 @@ mesh::Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::strin
     std::vector< array::ArrayView<double,1> > fields;
     for (size_t j=0; j<nb_fld; ++j)
     {
-      fields.push_back( array::make_view<double,1> ( nodes.add( field::Field::create<double>(vfnames[j],array::make_shape(nb_pts,1)) ) ) );
+      fields.push_back( array::make_view<double,1> ( nodes.add( field::Field::create<double>(vfnames[j],array::make_shape(nb_pts)) ) ) );
     }
 
     size_t i,j;  // (index for node/row and field/column, out of scope to check at end of loops)
@@ -225,7 +225,7 @@ void PointCloud::write(const eckit::PathName& path, const field::FieldSet& field
   {
     const field::Field& field = fieldset[i];
     if ( field.shape(0)==lonlat.shape(0) &&
-         field.shape(1)==1 &&
+         field.rank()==1 &&
          field.name()!="glb_idx" )  // FIXME: no support for non-int types!
     {
       vfnames.push_back(sanitize_field_name(field.name()));

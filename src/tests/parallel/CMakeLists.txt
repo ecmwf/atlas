@@ -12,6 +12,7 @@ ecbuild_add_test( TARGET atlas_test_haloexchange
   MPI      3
   SOURCES  test_haloexchange.cc
   LIBS     atlas
+  CONDITION COMPILE_BROKEN_TESTS
 )
 
 ecbuild_add_test( TARGET atlas_test_gather
@@ -19,4 +20,5 @@ ecbuild_add_test( TARGET atlas_test_gather
   MPI      3
   SOURCES  test_gather.cc
   LIBS     atlas
+  CONDITION COMPILE_BROKEN_TESTS
 )

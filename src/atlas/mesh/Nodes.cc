@@ -32,7 +32,7 @@ Nodes::Nodes(): size_(0)
   cell_connectivity_ = &add( new Connectivity("cell") );
 
 
-  add( field::Field::create<int>("flags", array::make_shape(size(),1)) );
+  add( field::Field::create<int>("flags", array::make_shape(size())) );
 
 
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( global_index() );

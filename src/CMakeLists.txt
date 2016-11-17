@@ -6,6 +6,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+set( COMPILE_BROKEN_TESTS ON )
+
 if( CGAL_FOUND )
   set( CGAL_FOUND 1 )
 else()
@@ -64,18 +66,15 @@ endif()
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
   include_directories( ${GRIDTOOLS_STORAGE_INCLUDE_DIRS} )
-  include_directories( ${Boost_INCLUDE_DIRS} )
 endif()
 
 add_subdirectory( atlas )
 
-if( NOT SHORTCUT_COMPILATION )
 if( ATLAS_HAVE_FORTRAN )
  add_subdirectory( atlas_f )
 endif()
-endif()
 
-#add_subdirectory( apps )
+add_subdirectory( apps )
 
 add_subdirectory( tests )
 

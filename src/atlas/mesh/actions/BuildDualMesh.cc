@@ -121,8 +121,8 @@ void build_median_dual_mesh( Mesh& mesh )
 
   field::Field& skewness = mesh.edges().add( field::Field::create<double>("skewness",array::make_shape(mesh.edges().size())));
   field::Field& alpha    = mesh.edges().add( field::Field::create<double>("alpha",array::make_shape(mesh.edges().size())));
-  skewness.initializeTo(0.);
-  alpha.initializeTo(0.5);
+  array::make_storageview<double>(skewness).assign(0.);
+  array::make_storageview<double>(alpha).assign(0.5);
 
   eckit::SharedPtr<functionspace::NodeColumns> nodes_fs(new functionspace::NodeColumns(mesh, Halo(mesh)));
   nodes_fs->haloExchange(nodes.field( "dual_volumes" ));

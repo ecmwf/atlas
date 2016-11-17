@@ -21,9 +21,9 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/mpi/Exceptions.h"
 #include "eckit/exception/Exceptions.h"
-#include "atlas/internals/Debug.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace parallel {
@@ -371,17 +371,17 @@ void HaloExchange::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
                              std::vector<size_t>& varstrides,
                              std::vector<size_t>& varshape ) const
 {
-  size_t rank = std::max(1,RANK-1) ;
+  int rank = std::max(1,RANK-1) ;
   varstrides.resize(rank);
   varshape.resize(rank);
 
   if( RANK>1 )
   {
     size_t stride=1;
-    for( size_t j=RANK-1; j>0; --j ) {
-      varstrides[j] = stride;
-      varshape[j] = arr.shape(j);
-      stride *= varshape[j];
+    for( int j=RANK-1; j>0; --j ) {
+      varstrides[j-1] = stride;
+      varshape[j-1] = arr.shape(j);
+      stride *= varshape[j-1];
     }
 //    varstrides.assign(arr.strides()+1,arr.strides()+RANK);
 //    varshape.assign(arr.shape()+1,arr.shape()+RANK);

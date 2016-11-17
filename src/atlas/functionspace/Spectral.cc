@@ -16,6 +16,7 @@
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/array/MakeView.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
@@ -143,7 +144,9 @@ void Spectral::gather( const field::FieldSet& local_fieldset, field::FieldSet& g
       nto.resize(loc.stride(0));
       for( size_t i=0; i<nto.size(); ++i ) nto[i] = root+1;
     }
-    trans_->gathspec(nto.size(),nto.data(),loc.data<double>(),glb.data<double>());
+    trans_->gathspec(nto.size(),nto.data(),
+                     array::make_storageview<double>(loc).data(),
+                     array::make_storageview<double>(glb).data());
 #else
 
     throw eckit::Exception("Cannot gather spectral fields because Atlas has not been compiled with TRANS support.");
@@ -187,7 +190,9 @@ void Spectral::scatter( const field::FieldSet& global_fieldset, field::FieldSet&
       nfrom.resize(loc.stride(0));
       for( size_t i=0; i<nfrom.size(); ++i ) nfrom[i] = root+1;
     }
-    trans_->distspec(nfrom.size(),nfrom.data(),glb.data<double>(),loc.data<double>());
+    trans_->distspec(nfrom.size(),nfrom.data(),
+                     array::make_storageview<double>(glb).data(),
+                     array::make_storageview<double>(loc).data());
     glb.metadata().broadcast(loc.metadata(),root);
     loc.metadata().set("global",false);
 #else

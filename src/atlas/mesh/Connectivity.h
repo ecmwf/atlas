@@ -27,7 +27,6 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/array/IndexView.h"
 
 namespace atlas {
 namespace mesh {
@@ -72,12 +71,39 @@ class MultiBlockConnectivity;
 /// In the first mode of construction, the connectivity table cannot be resized.
 /// In the second mode of construction, resizing is possible
 
+namespace detail {
+// FortranIndex:
+// Helper class that does +1 and -1 operations on stored values
+
+class ConnectivityIndex
+{
+public:
+  enum { BASE = 1 };
+public:
+  ConnectivityIndex(idx_t* idx): idx_(idx) {}
+  void set(const idx_t& value) { *(idx_) = value+BASE; }
+  idx_t get() const { return *(idx_)-BASE; }
+  void operator=(const idx_t& value) { set(value); }
+  ConnectivityIndex& operator=(const ConnectivityIndex& other) { set(other.get()); return *this; }
+  ConnectivityIndex& operator+(const idx_t& value) { *(idx_)+=value; return *this; }
+  ConnectivityIndex& operator-(const idx_t& value) { *(idx_)-=value; return *this; }
+  ConnectivityIndex& operator--() { --(*(idx_)); return *this; }
+  ConnectivityIndex& operator++() { ++(*(idx_)); return *this; }
+
+  //implicit conversion
+  operator idx_t() const { return get(); }
+
+private:
+  idx_t* idx_;
+};
+}
+
 class ConnectivityRow
 {
-  typedef array::detail::FortranIndex<idx_t> Index;
+  typedef detail::ConnectivityIndex Index;
   public:
     ConnectivityRow(idx_t *data, size_t size) : data_(data), size_(size) {}
-    Index operator()(size_t i) const { return INDEX_REF(data_); }
+    Index operator()(size_t i) const { return INDEX_REF(data_+i); }
     idx_t operator()(size_t i)       { return data_[i] FROM_FORTRAN; }
     size_t size() const { return size_; }
 
@@ -191,7 +217,7 @@ private:
   std::vector<size_t> owned_displs_;
   std::vector<size_t> owned_counts_;
 
-  array::IndexArray values_;
+  idx_t* values_;
   idx_t  missing_value_;
   size_t rows_;
   size_t *displs_;
@@ -400,7 +426,7 @@ private:
 
   size_t rows_;
   size_t cols_;
-  array::IndexArray values_;
+  idx_t* values_;
   idx_t missing_value_;
 
 };

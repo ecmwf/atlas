@@ -46,17 +46,17 @@ namespace test {
 class IsGhost
 {
 public:
-  IsGhost( const mesh::Nodes& nodes )
+  IsGhost( const mesh::Nodes& nodes ) :
+    part_( make_view<int,1>(nodes.partition()) ),
+    ridx_( make_indexview<int,1>(nodes.remote_index()) ),
+    mypart_(eckit::mpi::rank())
   {
-    part_   = make_view<int,1> (nodes.partition() );
-    ridx_   = make_indexview<int,1> (nodes.remote_index() );
-    mypart_ = eckit::mpi::rank();
   }
 
   bool operator()(size_t idx) const
   {
-    if( part_[idx] != mypart_ ) return true;
-    if( ridx_[idx] != (int)idx     ) return true;
+    if( part_(idx) != mypart_ ) return true;
+    if( ridx_(idx) != (int)idx     ) return true;
     return false;
   }
 private:
@@ -81,10 +81,10 @@ BOOST_AUTO_TEST_CASE( test1 )
   mesh::Nodes& nodes = m->nodes();
   nodes.resize(10);
   array::ArrayView<double,2> lonlat   = make_view<double,2>( nodes.lonlat());
-  array::ArrayView<gidx_t,1> glb_idx  = make_view<gidx_t,1>(  nodes.global_index());
+  array::ArrayView<gidx_t,1> glb_idx  = make_view<gidx_t,1>( nodes.global_index());
   array::ArrayView<int   ,1> part     = make_view<int   ,1>( nodes.partition() );
   array::ArrayView<int   ,1> flags    = make_view<int   ,1>( nodes.field("flags") );
-  flags = Topology::NONE;
+  flags.assign(Topology::NONE);
 
   // This is typically available
   glb_idx(0) = 1;    part(0) = 0;

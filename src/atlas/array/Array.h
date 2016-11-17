@@ -19,7 +19,6 @@
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
-#include "atlas/array/ArrayHelpers.h"
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "atlas/array/GridToolsArray.h"
@@ -49,7 +48,7 @@ public:
   template <typename T> static Array* wrap(T data[], const ArraySpec&);
   template <typename T> static Array* wrap(T data[], const ArrayShape&);
 
-public:#include "atlas/array/ArrayView.h"
+public:
 
 
   Array(){}
@@ -94,6 +93,34 @@ public:#include "atlas/array/ArrayView.h"
   const std::vector<int>& stridesf() const { return spec_.stridesf(); }
 
   bool contiguous() const { return spec_.contiguous(); }
+
+  void clone_to_device() const {
+      /* ignore */
+  }
+  void clone_from_device() const {
+      /* ignore */
+  }
+
+  bool valid() const {
+      return true;
+  }
+  void sync() const {
+      /* ignore */;
+  }
+  bool is_on_host() const {
+      return true;
+  }
+  bool is_on_device() const {
+      return false;
+  }
+
+  void reactivate_device_write_views() const {
+    /* ignore */
+  }
+
+  void reactivate_host_write_views() const {
+    /* ignore */
+  }
 
 private:
   virtual void resize_data( size_t size )=0;

@@ -180,10 +180,6 @@ inline size_t ArrayView<DATA_TYPE,0>::rank() const       { return rank_; }
 template <typename DATA_TYPE>
 inline size_t ArrayView<DATA_TYPE,0>::size() const       { return size_; }
 
-template <typename DATA_TYPE>
-inline void ArrayView<DATA_TYPE,0>::operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size_; ++n) *(data_+n)=scalar; }
-
-
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
@@ -297,9 +293,6 @@ inline size_t ArrayView<DATA_TYPE,1>::rank() const { return 1; }
 template <typename DATA_TYPE>
 inline size_t ArrayView<DATA_TYPE,1>::size() const { return shape_[0]; }
 
-template <typename DATA_TYPE>
-inline void ArrayView<DATA_TYPE,1>::operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar; }
-
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
@@ -411,9 +404,6 @@ inline size_t ArrayView<DATA_TYPE,2>::rank() const { return 2; }
 
 template <typename DATA_TYPE>
 inline size_t ArrayView<DATA_TYPE,2>::size() const { return size_; }
-
-template <typename DATA_TYPE>
-inline void ArrayView<DATA_TYPE,2>::operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar; }
 
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
@@ -528,9 +518,6 @@ inline size_t ArrayView<DATA_TYPE,3>::rank() const { return 3; }
 template <typename DATA_TYPE>
 inline size_t ArrayView<DATA_TYPE,3>::size() const { return shape_[0]*shape_[1]*shape_[2]; }
 
-template <typename DATA_TYPE>
-inline void ArrayView<DATA_TYPE,3>::operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar; }
-
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
@@ -639,9 +626,6 @@ inline size_t ArrayView<DATA_TYPE,4>::rank() const { return 4; }
 
 template <typename DATA_TYPE>
 inline size_t ArrayView<DATA_TYPE,4>::size() const { return shape_[0]*shape_[1]*shape_[2]*shape_[3]; }
-
-template <typename DATA_TYPE>
-inline void ArrayView<DATA_TYPE,4>::operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar; }
 
 
 //------------------------------------------------------------------------------------------------------

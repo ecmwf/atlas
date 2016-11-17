@@ -38,74 +38,13 @@ struct array_initializer;
 template<unsigned int PartDim>
 struct array_initializer_partitioned;
 
-template<unsigned int NDims>
-struct default_layout_t {
-
-    template<typename T>
-    struct get_layout;
-
-    template<typename UInt, UInt ... Indices>
-    struct get_layout<gridtools::gt_integer_sequence<UInt, Indices...> >
-    {
-        using type = gridtools::layout_map<Indices...>;
-    };
-
-    using type = typename get_layout< typename gridtools::make_gt_integer_sequence<unsigned int, NDims>::type >::type;
-};
-
-template <unsigned int NDims>
-std::array<unsigned int, NDims> get_array_from_vector(std::vector<size_t> const& values) {
-    std::array<unsigned int, NDims> array;
-    std::copy(values.begin(), values.end(), array.begin());
-    return array;
-}
-
-template <unsigned int TotalDims, unsigned int Dim, typename = void>
-struct check_dimension_lengths_impl {
-  template <typename FirstDim, typename... Dims>
-  static void apply(ArrayShape const& shape, FirstDim first_dim, Dims... d) {
-    if (first_dim < shape[Dim]) {
-      std::stringstream err;
-      err << "Attempt to resize array with original size for dimension " << Dim << " of " << shape[Dim] << " by "
-          << first_dim << std::endl;
-      throw eckit::BadParameter(err.str(), Here());
-    }
-    check_dimension_lengths_impl<TotalDims, Dim + 1>::apply(shape, d...);
-  }
-};
-
-template <unsigned int TotalDims, unsigned int Dim>
-struct check_dimension_lengths_impl<TotalDims, Dim, typename std::enable_if< (Dim == TotalDims-1)>::type > {
-  template <typename FirstDim>
-  static void apply(ArrayShape const& shape, FirstDim first_dim) {
-    if (first_dim < shape[Dim]) {
-      std::stringstream err;
-      err << "Attempt to resize array with original size for dimension " << Dim - 1 << " of "
-          << shape[Dim - 1] << " by " << first_dim << std::endl;
-      throw eckit::BadParameter(err.str(), Here());
-    }
-  }
-};
-
-template<typename ... Dims>
-void check_dimension_lengths(ArrayShape const&  shape, Dims...d) {
-    check_dimension_lengths_impl<sizeof...(d), 0>::apply(shape, d...);
-}
-
 class Array : public eckit::Owned {
 public:
   static Array* create( array::DataType, const ArrayShape& );
   static Array* create( array::DataType );
   static Array* create( const Array& );
 
-
 private:
-
-  //indirection around C++11 sizeof... since it is buggy for nvcc and cray
-  template<typename ...T>
-  struct get_pack_size {
-      using type = gridtools::static_uint< sizeof...(T) >;
-  };
 
   template<typename Value>
   struct storage_creator {
@@ -124,52 +63,11 @@ private:
   };
 
 public:
-  template <typename Value, typename LayoutMap, typename... UInts>
-  static gridtools::storage_traits<BACKEND>::data_store_t<
-      Value, gridtools::storage_traits<BACKEND>::storage_info_t<
-                 0, get_pack_size<UInts...>::type::value,
-                 typename gridtools::zero_halo<get_pack_size<UInts...>::type::value>::type, LayoutMap> >*
-      create_storage_(UInts... dims) {
-    static_assert((sizeof...(dims) > 0), "Error: can not create storages without any dimension");
-
-    constexpr static unsigned int ndims = get_pack_size<UInts...>::type::value;
-    typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, ndims, typename gridtools::zero_halo<ndims>::type,
-                                                               LayoutMap> storage_info_ty;
-    storage_info_ty si(dims...);
-
-    typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
-    data_store_t* ds = new data_store_t(si);
-    ds->allocate();
-
-    return ds;
-  }
-
-  template <typename Value, unsigned int NDims>
-  static gridtools::storage_traits<BACKEND>::data_store_t<
-      Value, gridtools::storage_traits<BACKEND>::storage_info_t<
-                 0, NDims,
-                 typename gridtools::zero_halo<NDims>::type,
-                 typename default_layout_t<NDims>::type > >* wrap_storage_(Value* data,
-          std::array<unsigned int, NDims>&& shape, std::array<unsigned int, NDims>&& strides) {
-
-    static_assert((NDims > 0), "Error: can not create storages without any dimension");
-    typedef gridtools::storage_traits<BACKEND>::storage_info_t<
-        0, NDims, typename gridtools::zero_halo<NDims>::type,
-        typename default_layout_t<NDims>::type> storage_info_ty;
-    storage_info_ty si(shape, strides);
-
-    typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
-    data_store_t* ds = new data_store_t(si, data);
-
-    return ds;
-  }
-
-public:
 
   template <typename Value, typename... UInts,
             typename = gridtools::all_integers<UInts...> >
   static Array* create(UInts... dims) {
-      return create_with_layout<Value, typename default_layout_t<sizeof...(dims)>::type >(dims...);
+      return create_with_layout<Value, typename atlas::array::default_layout<sizeof...(dims)>::type >(dims...);
   }
 
   template <typename Value,
@@ -177,7 +75,7 @@ public:
             typename... UInts,
             typename = gridtools::all_integers<UInts...> >
   static Array* create_with_layout(UInts... dims) {
-    auto gt_data_store_ptr = create_storage_<Value, Layout>(dims...);
+    auto gt_data_store_ptr = create_gt_storage<Value, Layout>(dims...);
 
     Array* array = new ArrayT<Value>(gt_data_store_ptr);
 
@@ -190,32 +88,7 @@ public:
   template<typename Value>
   static Array* create(const ArrayShape& shape)
   {
-    assert(shape.size() > 0);
-    switch (shape.size()) {
-      case 1:
-        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 1>());
-      case 2:
-        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 2>());
-      case 3:
-        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 3>());
-      case 4:
-        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 4>());
-      case 5:
-        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 5>());
-      case 6:
-        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 6>());
-      case 7:
-        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 7>());
-      case 8:
-        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 8>());
-      case 9:
-        return storage_creator<Value>::apply(shape, gridtools::make_gt_integer_sequence<unsigned int, 9>());
-      default: {
-        std::stringstream err;
-        err << "shape not recognized";
-        throw eckit::BadParameter(err.str(), Here());
-      }
-    }
+    return new ArrayT<Value>(shape);
   }
 
   template <typename T> static Array* create();
@@ -236,23 +109,23 @@ public:
     assert(shape.size() > 0);
     switch (shape.size()) {
       case 1:
-        return wrap_array( wrap_storage_<T, 1>(data, get_array_from_vector<1>(strides), get_array_from_vector<1>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 1>(data, get_array_from_vector<1>(strides), get_array_from_vector<1>(strides)), spec);
       case 2:
-        return wrap_array( wrap_storage_<T, 2>(data, get_array_from_vector<2>(strides), get_array_from_vector<2>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 2>(data, get_array_from_vector<2>(strides), get_array_from_vector<2>(strides)), spec);
       case 3:
-        return wrap_array( wrap_storage_<T, 3>(data, get_array_from_vector<3>(strides), get_array_from_vector<3>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 3>(data, get_array_from_vector<3>(strides), get_array_from_vector<3>(strides)), spec);
       case 4:
-        return wrap_array( wrap_storage_<T, 4>(data, get_array_from_vector<4>(strides), get_array_from_vector<4>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 4>(data, get_array_from_vector<4>(strides), get_array_from_vector<4>(strides)), spec);
       case 5:
-        return wrap_array( wrap_storage_<T, 5>(data, get_array_from_vector<5>(strides), get_array_from_vector<5>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 5>(data, get_array_from_vector<5>(strides), get_array_from_vector<5>(strides)), spec);
       case 6:
-        return wrap_array( wrap_storage_<T, 6>(data, get_array_from_vector<6>(strides), get_array_from_vector<6>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 6>(data, get_array_from_vector<6>(strides), get_array_from_vector<6>(strides)), spec);
       case 7:
-        return wrap_array( wrap_storage_<T, 7>(data, get_array_from_vector<7>(strides), get_array_from_vector<7>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 7>(data, get_array_from_vector<7>(strides), get_array_from_vector<7>(strides)), spec);
       case 8:
-        return wrap_array( wrap_storage_<T, 8>(data, get_array_from_vector<8>(strides), get_array_from_vector<8>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 8>(data, get_array_from_vector<8>(strides), get_array_from_vector<8>(strides)), spec);
       case 9:
-        return wrap_array( wrap_storage_<T, 9>(data, get_array_from_vector<9>(strides), get_array_from_vector<9>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 9>(data, get_array_from_vector<9>(strides), get_array_from_vector<9>(strides)), spec);
       default: {
         std::stringstream err;
         err << "shape not recognized";
@@ -328,13 +201,13 @@ public:
   void insert(size_t idx1, size_t size1);
 
   template <typename... Coords, typename = gridtools::all_integers<Coords...> >
+  GT_FUNCTION
   void resize(Coords... c) {
-    if (sizeof...(c) != spec_.rank()) {
-      std::stringstream err;
-      err << "trying to resize an array of rank " << spec_.rank() << " by dimensions with rank " << sizeof...(c)
-          << std::endl;
-      throw eckit::BadParameter(err.str(), Here());
-    }
+      if(sizeof...(c) != spec_.rank()){
+        std::stringstream err; err << "trying to resize an array of rank " << spec_.rank() << " by dimensions with rank " <<
+                                      sizeof...(c) << std::endl;
+        throw eckit::BadParameter(err.str(),Here());
+      }
 
       check_dimension_lengths(shape(), c...);
 
@@ -427,12 +300,74 @@ private: // methods
 
 template<typename DATA_TYPE>
 class ArrayT : public Array  {
-public:
 
 public:
 
   template<typename DataStore, typename = typename std::enable_if<gridtools::is_data_store<DataStore>::value >::type >
   ArrayT(DataStore* ds): owned_(true), data_(static_cast<void*>(ds)), Array(ds) {}
+
+  template <typename... UInts,
+            typename = gridtools::all_integers<UInts...> >
+  ArrayT(UInts... dims) :
+    owned_(true)
+  {
+    create_from_variadic_args(dims...);
+  }
+
+  ArrayT(const ArrayShape& shape) :
+    owned_(true)
+  {
+    create_from_shape(shape);
+  }
+
+  ArrayT(const ArraySpec& spec) :
+    owned_(true)
+  {
+    if( not spec.default_layout() ) NOTIMP;
+    if( not spec.contiguous() )     NOTIMP;
+    create_from_shape(spec.shape());
+  }
+  
+  template <typename... UInts,
+            typename = gridtools::all_integers<UInts...> >
+  void create_from_variadic_args(UInts... dims)
+  {
+    auto gt_storage = create_gt_storage<DATA_TYPE,typename atlas::array::default_layout<sizeof...(dims)>::type>(dims...);
+    build_spec(gt_storage,dims...);
+    data_ = static_cast<void*>(gt_storage);
+  }
+  
+  void create_from_shape(const ArrayShape& shape)
+  {
+    assert(shape.size() > 0);
+    switch (shape.size()) {
+      case 1: {
+        create_from_variadic_args(shape[0]);
+        break;
+      }
+      case 2: {
+        create_from_variadic_args(shape[0],shape[1]);
+        break;
+      }
+      case 3: {
+        create_from_variadic_args(shape[0],shape[1],shape[2]);
+        break;
+      }
+      case 4: {
+        create_from_variadic_args(shape[0],shape[1],shape[2],shape[3]);
+        break;
+      }
+      case 5: {
+        create_from_variadic_args(shape[0],shape[1],shape[2],shape[3],shape[4]);
+        break;
+      }
+      default: {
+        std::stringstream err;
+        err << "shape not recognized";
+        throw eckit::BadParameter(err.str(), Here());
+      }
+    }
+  }
 
   virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
 

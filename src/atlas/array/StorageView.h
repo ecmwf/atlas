@@ -29,12 +29,33 @@ public:
 
 public:
 
-    StorageView(storage_view_t storage_view) : gt_storage_view_(storage_view) {}
+    StorageView(storage_view_t storage_view, size_t size, bool contiguous = true) :
+        gt_storage_view_(storage_view),
+        size_(size),
+        contiguous_(contiguous)
+    {}
 
     DATA_TYPE* data() { return gt_storage_view_.data(); }
 
+    size_t size() { return size_; }
+
+    void assign(const DATA_TYPE& value) {
+       ASSERT( contiguous() );
+       DATA_TYPE* raw_data = data();
+       for( size_t j=0; j<size_; ++j ) {
+         raw_data[j] = value;
+       }
+    }
+
+    bool contiguous() const
+    {
+      return contiguous_;
+    }
+
 private:
     storage_view_t gt_storage_view_;
+    size_t size_;
+    bool contiguous_;
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -46,12 +67,33 @@ class StorageView
 {
   typedef void* storage_view_t;
 public:
-    StorageView(storage_view_t storage_view) : native_storage_view_(storage_view) {}
+    StorageView(storage_view_t storage_view, size_t size, bool contiguous = true) :
+        native_storage_view_(storage_view),
+        size_(size),
+        contiguous_(contiguous)
+    {}
 
     DATA_TYPE* data() { return (DATA_TYPE*) native_storage_view_; }
 
+    size_t size() { return size_; }
+
+    void assign(const DATA_TYPE& value) {
+       ASSERT( contiguous() );
+       DATA_TYPE* raw_data = data();
+       for( size_t j=0; j<size_; ++j ) {
+         raw_data[j] = value;
+       }
+    }
+
+    bool contiguous() const
+    {
+      return contiguous_;
+    }
+
 private:
     storage_view_t native_storage_view_;
+    size_t size_;
+    bool contiguous_;
 };
 
 //------------------------------------------------------------------------------------------------------

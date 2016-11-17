@@ -16,14 +16,16 @@ using atlas::array::DataType;
 namespace atlas {
 namespace array {
 
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
 Array* Array::create( DataType datatype, const ArrayShape& shape )
 {
   switch( datatype.kind() )
   {
-    case DataType::KIND_REAL64: return create<double>(shape);
-    case DataType::KIND_REAL32: return create<float>(shape);
-    case DataType::KIND_INT32:  return create<int>(shape);
-    case DataType::KIND_INT64:  return create<long>(shape);
+    case DataType::KIND_REAL64: return new ArrayT<double>(shape);
+    case DataType::KIND_REAL32: return new ArrayT<float>(shape);
+    case DataType::KIND_INT32:  return new ArrayT<int>(shape);
+    case DataType::KIND_INT64:  return new ArrayT<long>(shape);
     default:
     {
       std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
@@ -32,8 +34,6 @@ Array* Array::create( DataType datatype, const ArrayShape& shape )
   }
   return 0;
 }
-
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 Array* Array::create( DataType datatype )
 {
@@ -107,6 +107,25 @@ template <> void ArrayT<int>::dump(std::ostream& os) const { dump_array_data(*th
 template <> void ArrayT<long>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<float>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<double>::dump(std::ostream& os) const { dump_array_data(*this,os); };
+
+#else
+
+Array* Array::create( DataType datatype, const ArrayShape& shape )
+{
+  switch( datatype.kind() )
+  {
+    case DataType::KIND_REAL64: return create<double>(shape);
+    case DataType::KIND_REAL32: return create<float>(shape);
+    case DataType::KIND_INT32:  return create<int>(shape);
+    case DataType::KIND_INT64:  return create<long>(shape);
+    default:
+    {
+      std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
+      throw eckit::BadParameter(err.str(),Here());
+    }
+  }
+  return 0;
+}
 
 #endif
 

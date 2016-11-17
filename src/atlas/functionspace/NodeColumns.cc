@@ -368,31 +368,56 @@ field::Field* NodeColumns::createField(
   return field;
 }
 
+namespace {
+template<int RANK>
+void dispatch_haloExchange( const field::Field& field, const parallel::HaloExchange& halo_exchange )
+{
+  if     ( field.datatype() == array::DataType::kind<int>() ) {
+    array::ArrayView<int,RANK> view = array::make_view<int,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else if( field.datatype() == array::DataType::kind<long>() ) {
+    array::ArrayView<long,RANK> view = array::make_view<long,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else if( field.datatype() == array::DataType::kind<float>() ) {
+    array::ArrayView<float,RANK> view = array::make_view<float,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else if( field.datatype() == array::DataType::kind<double>() ) {
+    array::ArrayView<double,RANK> view = array::make_view<double,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else throw eckit::Exception("datatype not supported",Here());
+}
+}
+
 void NodeColumns::haloExchange( field::FieldSet& fieldset ) const
 {
   if( halo_.size() ) {
     for( size_t f=0; f<fieldset.size(); ++f ) {
       const field::Field& field = fieldset[f];
-      if     ( field.datatype() == array::DataType::kind<int>() ) {
-        array::ArrayView<int,2> view = array::make_view<int,2>(field);
-        halo_exchange().execute( view );
+      switch( field.rank() ) {
+        case 1:
+          dispatch_haloExchange<1>(field,halo_exchange());
+          break;
+        case 2:
+          dispatch_haloExchange<2>(field,halo_exchange());
+          break;
+        case 3:
+          dispatch_haloExchange<3>(field,halo_exchange());
+          break;
+        case 4:
+          dispatch_haloExchange<4>(field,halo_exchange());
+          break;
+        default:
+          throw eckit::Exception("Rank not supported", Here());
+          break;
       }
-      else if( field.datatype() == array::DataType::kind<long>() ) {
-        array::ArrayView<long,2> view = array::make_view<long,2>(field);
-        halo_exchange().execute( view );
-      }
-      else if( field.datatype() == array::DataType::kind<float>() ) {
-        array::ArrayView<float,2> view = array::make_view<float,2>(field);
-        halo_exchange().execute( view );
-      }
-      else if( field.datatype() == array::DataType::kind<double>() ) {
-        array::ArrayView<double,2> view = array::make_view<double,2>(field);
-        halo_exchange().execute( view );
-      }
-      else throw eckit::Exception("datatype not supported",Here());
     }
   }
 }
+
 void NodeColumns::haloExchange( field::Field& field ) const
 {
   if( halo_.size() ) {

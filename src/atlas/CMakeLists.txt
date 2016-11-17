@@ -264,6 +264,7 @@ array/ArrayView_iterator.h
 array/ArrayView_impl.h
 array/IndexView.h
 array/IndexView.cc
+array/LocalView.h
 array/ArrayView.h
 array/ArrayView.cc
 array/StorageView.h
@@ -310,7 +311,6 @@ internals/AccumulateFaces.cc
 internals/Bitflags.h
 internals/Checksum.h
 internals/Checksum.cc
-internals/Debug.h
 internals/Functions.h
 internals/IsGhost.h
 internals/LonLatMicroDeg.h

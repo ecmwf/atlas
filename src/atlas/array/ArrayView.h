@@ -49,11 +49,13 @@
 
 #include <cstddef>
 #include <cstring>
+#include <cassert>
 #include "atlas/internals/atlas_defines.h"
+#include "atlas/array/ArrayUtil.h"
 #include "atlas/array/GridToolsTraits.h"
-#include "eckit/exception/Exceptions.h"
+#include "atlas/array/LocalView.h"
 #include "atlas/array/ArrayHelpers.h"
-
+#include "eckit/exception/Exceptions.h"
 namespace atlas {
 namespace array {
   class Array;
@@ -63,122 +65,12 @@ namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
-#include "atlas/array/ArrayUtil.h"
 #include "atlas/array/ArrayView_iterator.h"
-#include <cassert>
-#include <type_traits>
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
-
-  template< typename DATA_TYPE, int RANK >
-  class LocalView
-  {
-  public:
-    DATA_TYPE *data_;
-    size_t shape_[RANK];
-    size_t strides_[RANK];
-    size_t size_;
-  public:
-  // -- Type definitions
-    typedef typename remove_const<DATA_TYPE>::type  value_type;
-
-    using degenerated_array_return_t = typename std::conditional<(RANK==1), DATA_TYPE&, LocalView<DATA_TYPE,RANK-1> >::type;
-
-    template <typename ReturnType = degenerated_array_return_t, bool ToScalar = false>
-    struct degenerate_local_array {
-      degenerate_local_array(LocalView<DATA_TYPE, RANK> const& lv) : lv_(lv) {}
-      LocalView<DATA_TYPE, RANK> const& lv_;
-      ReturnType apply(const size_t i) const {
-        return LocalView<DATA_TYPE, RANK - 1>(lv_.data_ + lv_.strides_[0] * i, lv_.shape_ + 1, lv_.strides_ + 1);
-      }
-    };
-
-    template <typename ReturnType>
-    struct degenerate_local_array<ReturnType, true> {
-      degenerate_local_array(LocalView<DATA_TYPE, RANK> const& lv) : lv_(lv) {}
-
-      LocalView<DATA_TYPE, RANK> const& lv_;
-      ReturnType apply(const size_t i) const {
-        return *(lv_.data_ + lv_.strides_[0] * i);
-        ;
-      }
-    };
-
-  public:
-
-      LocalView( DATA_TYPE* data, const size_t shape[RANK], const size_t strides[RANK] ) :
-        data_(data)
-      {
-        size_ = 1;
-        for( size_t j=0; j<RANK; ++j ) {
-          shape_[j] = shape[j];
-          strides_[j] = strides[j];
-          size_ *= shape_[j];
-        }
-      }
-
-      LocalView( DATA_TYPE* data, const size_t shape[RANK] ) :
-        data_(data)
-      {
-        size_ = 1;
-        for( size_t j=RANK-1; j!=0; --j ) {
-          shape_[j] = shape[j];
-          strides_[j] = size_;
-          size_ *= shape_[j];
-        }
-      }
-
-      LocalView( DATA_TYPE* data, const ArrayShape& shape ) :
-        data_(data)
-      {
-        size_ = 1;
-        for( size_t j=0; j<RANK; ++j ) {
-          shape_[j] = shape[j];
-          size_ *= shape_[j];
-          strides_[j] = 1;
-        }
-        for( size_t j=RANK-2; j!=0; --j ) {
-          strides_[j] = strides_[j+1]*shape_[j+1];
-        }
-      }
-
-private:
-      template < typename... Ints >
-      constexpr int index_part(int cnt, int first, Ints... ints) const {
-          return (cnt < RANK) ? first * strides_[cnt] + index_part(cnt + 1, ints..., first) : 0;
-      }
-
-      template < typename... Ints >
-      constexpr int index(Ints... idx) const {
-          return index_part(0, idx...);
-      }
-public:
-      template < typename... Coords >
-      DATA_TYPE&
-      operator()(Coords... c) {
-          assert(sizeof...(Coords) == RANK);
-          return data_[index(c...)];
-      }
-
-      template < typename... Coords >
-      const DATA_TYPE&
-      operator()(Coords... c) const {
-          assert(sizeof...(Coords) == RANK);
-          return data_[index(c...)];
-      }
-
-      size_t shape(size_t idx) const { return shape_[idx]; }
-
-      degenerated_array_return_t at(const size_t i) const {
-          return degenerate_local_array<degenerated_array_return_t, RANK==1>(*this).apply(i); }
-
-
-      DATA_TYPE* data() { return data_; }
-      DATA_TYPE const* data() const { return data_; }
-  };
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
@@ -301,7 +193,7 @@ public:
         DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l, size_t m);
   const DATA_TYPE& operator()(const ArrayIdx& idx) const;
         DATA_TYPE& operator()(const ArrayIdx& idx);
-  void operator=(const DATA_TYPE& scalar);
+
   void resize(size_t size1, size_t size2);
 
 // -- Accessors
@@ -313,6 +205,19 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
+  
+  void assign(const DATA_TYPE& value) {
+     ASSERT( contiguous() );
+     DATA_TYPE* raw_data = data();
+     for( size_t j=0; j<size_; ++j ) {
+       raw_data[j] = value;
+     }
+  }
+
+   bool contiguous() const
+   {
+     return (size_ == shape_[0]*strides_[0] ? true : false);
+   }
 
 private:
 // -- Private data
@@ -373,6 +278,19 @@ public:
   ArrayStrides::value_type stride(size_t i) const;
   size_t rank() const;
   size_t size() const;
+  
+  void assign(const DATA_TYPE& value) {
+     ASSERT( contiguous() );
+     DATA_TYPE* raw_data = data();
+     for( size_t j=0; j<size(); ++j ) {
+       raw_data[j] = value;
+     }
+  }
+
+   bool contiguous() const
+   {
+     return true;
+   }
 
 private:
 // -- Private data
@@ -430,6 +348,19 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
+  
+  void assign(const DATA_TYPE& value) {
+     ASSERT( contiguous() );
+     DATA_TYPE* raw_data = data();
+     for( size_t j=0; j<size_; ++j ) {
+       raw_data[j] = value;
+     }
+  }
+
+   bool contiguous() const
+   {
+     return (size_ == shape_[0]*strides_[0] ? true : false);
+   }
 
 private:
 // -- Private data
@@ -485,6 +416,19 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
+  
+  void assign(const DATA_TYPE& value) {
+     ASSERT( contiguous() );
+     DATA_TYPE* raw_data = data();
+     for( size_t j=0; j<size_; ++j ) {
+       raw_data[j] = value;
+     }
+  }
+
+   bool contiguous() const
+   {
+     return (size_ == shape_[0]*strides_[0] ? true : false);
+   }
 
 private:
 // --Private data
@@ -539,6 +483,19 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
+  
+  void assign(const DATA_TYPE& value) {
+     ASSERT( contiguous() );
+     DATA_TYPE* raw_data = data();
+     for( size_t j=0; j<size_; ++j ) {
+       raw_data[j] = value;
+     }
+  }
+
+   bool contiguous() const
+   {
+     return (size_ == shape_[0]*strides_[0] ? true : false);
+   }
 
 private:
 // -- Private data

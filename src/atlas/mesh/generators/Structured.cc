@@ -34,7 +34,6 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/internals/Debug.h"
 
 #define DEBUG_OUTPUT 0
 
@@ -277,7 +276,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
   array::ArrayShape shape = array::make_shape(region.south-region.north, 4*rg.nlonmax(), 4);
 
   region.elems.reset( array::Array::create<int>(shape) );
-NOTIMP;//  region.elems.initializeTo(-1);
+  array::make_storageview<int>(*region.elems).assign(-1);
 
   int nelems=0;
   region.nquads=0;
@@ -914,9 +913,9 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       if( region.lat_end.at(jlat) < region.lat_begin.at(jlat) )
       {
-        DEBUG_VAR(jlat);
-        DEBUG_VAR(region.lat_begin[jlat]);
-        DEBUG_VAR(region.lat_end[jlat]);
+        ATLAS_DEBUG_VAR(jlat);
+        ATLAS_DEBUG_VAR(region.lat_begin[jlat]);
+        ATLAS_DEBUG_VAR(region.lat_end[jlat]);
       }
       for( int jlon=region.lat_begin.at(jlat); jlon<=region.lat_end.at(jlat); ++jlon )
       {

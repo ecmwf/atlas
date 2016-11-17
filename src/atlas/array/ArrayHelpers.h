@@ -20,64 +20,67 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/GridToolsTraits.h"
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
 //------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
 
-//template<unsigned int NDims>
-//struct default_layout {
+template <unsigned int NDims>
+std::array<unsigned int, NDims> get_array_from_vector(std::vector<size_t> const& values) {
+    std::array<unsigned int, NDims> array;
+    std::copy(values.begin(), values.end(), array.begin());
+    return array;
+}
 
-//    template<typename T>
-//    struct get_layout;
+template <unsigned int TotalDims, unsigned int Dim, typename = void>
+struct check_dimension_lengths_impl {
+  template <typename FirstDim, typename... Dims>
+  static void apply(ArrayShape const& shape, FirstDim first_dim, Dims... d) {
+    if (first_dim < shape[Dim]) {
+      std::stringstream err;
+      err << "Attempt to resize array with original size for dimension " << Dim << " of " << shape[Dim] << " by "
+          << first_dim << std::endl;
+      throw eckit::BadParameter(err.str(), Here());
+    }
+    check_dimension_lengths_impl<TotalDims, Dim + 1>::apply(shape, d...);
+  }
+};
 
-//    template<typename UInt, UInt ... Indices>
-//    struct get_layout<gridtools::gt_integer_sequence<UInt, Indices...> >
-//    {
-//        using type = gridtools::layout_map<Indices...>;
-//    };
+template <unsigned int TotalDims, unsigned int Dim>
+struct check_dimension_lengths_impl<TotalDims, Dim, typename std::enable_if< (Dim == TotalDims-1)>::type > {
+  template <typename FirstDim>
+  static void apply(ArrayShape const& shape, FirstDim first_dim) {
+    if (first_dim < shape[Dim]) {
+      std::stringstream err;
+      err << "Attempt to resize array with original size for dimension " << Dim - 1 << " of "
+          << shape[Dim - 1] << " by " << first_dim << std::endl;
+      throw eckit::BadParameter(err.str(), Here());
+    }
+  }
+};
 
-//    using type = typename get_layout< typename gridtools::make_gt_integer_sequence<unsigned int, NDims>::type >::type;
-//};
+template<typename ... Dims>
+void check_dimension_lengths(ArrayShape const&  shape, Dims...d) {
+    check_dimension_lengths_impl<sizeof...(d), 0>::apply(shape, d...);
+}
 
-//template <unsigned int NDims>
-//std::array<unsigned int, NDims> get_array_from_vector(std::vector<size_t> const& values) {
-//    std::array<unsigned int, NDims> array;
-//    std::copy(values.begin(), values.end(), array.begin());
-//    return array;
-//}
+template<unsigned int NDims>
+struct default_layout_t {
 
-//template <unsigned int TotalDims, unsigned int Dim, typename = void>
-//struct check_dimension_lengths_impl {
-//  template <typename FirstDim, typename... Dims>
-//  static void apply(ArrayShape const& shape, FirstDim first_dim, Dims... d) {
-//    if (first_dim < shape[Dim]) {
-//      std::stringstream err;
-//      err << "Attempt to resize array with original size for dimension " << Dim << " of " << shape[Dim] << " by "
-//          << first_dim << std::endl;
-//      throw eckit::BadParameter(err.str(), Here());
-//    }
-//    check_dimension_lengths_impl<TotalDims, Dim + 1>::apply(shape, d...);
-//  }
-//};
+    template<typename T>
+    struct get_layout;
 
-//template <unsigned int TotalDims, unsigned int Dim>
-//struct check_dimension_lengths_impl<TotalDims, Dim, typename std::enable_if< (Dim == TotalDims-1)>::type > {
-//  template <typename FirstDim>
-//  static void apply(ArrayShape const& shape, FirstDim first_dim) {
-//    if (first_dim < shape[Dim]) {
-//      std::stringstream err;
-//      err << "Attempt to resize array with original size for dimension " << Dim - 1 << " of "
-//          << shape[Dim - 1] << " by " << first_dim << std::endl;
-//      throw eckit::BadParameter(err.str(), Here());
-//    }
-//  }
-//};
+    template<typename UInt, UInt ... Indices>
+    struct get_layout<gridtools::gt_integer_sequence<UInt, Indices...> >
+    {
+        using type = gridtools::layout_map<Indices...>;
+    };
 
-//template<typename ... Dims>
-//void check_dimension_lengths(ArrayShape const&  shape, Dims...d) {
-//    check_dimension_lengths_impl<sizeof...(d), 0>::apply(shape, d...);
-//}
+    using type = typename get_layout< typename gridtools::make_gt_integer_sequence<unsigned int, NDims>::type >::type;
+};
+
 
   template <typename Value, typename LayoutMap>
   struct get_layout_map_component {
@@ -122,5 +125,62 @@ namespace array {
       }
   };
 
+  //indirection around C++11 sizeof... since it is buggy for nvcc and cray
+  template<typename ...T>
+  struct get_pack_size {
+      using type = gridtools::static_uint< sizeof...(T) >;
+  };
+
+  template <typename Value, typename LayoutMap, typename... UInts>
+  static gridtools::storage_traits<BACKEND>::data_store_t<
+      Value,
+      gridtools::storage_traits<BACKEND>::storage_info_t<
+          0,
+          get_pack_size<UInts...>::type::value,
+          typename gridtools::zero_halo<get_pack_size<UInts...>::type::value>::type,
+          LayoutMap
+      >
+   >*
+   create_gt_storage(UInts... dims) {
+      static_assert((sizeof...(dims) > 0), "Error: can not create storages without any dimension");
+
+      constexpr static unsigned int ndims = get_pack_size<UInts...>::type::value;
+      typedef gridtools::storage_traits<BACKEND>::storage_info_t<
+          0,
+          ndims,
+          typename gridtools::zero_halo<ndims>::type,
+          LayoutMap
+      > storage_info_ty;
+      typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
+
+      storage_info_ty si(dims...);
+      data_store_t* ds = new data_store_t(si);
+      ds->allocate();
+      return ds;
+  }
+
+  template <typename Value, unsigned int NDims>
+  static gridtools::storage_traits<BACKEND>::data_store_t<
+      Value, gridtools::storage_traits<BACKEND>::storage_info_t<
+                 0, NDims,
+                 typename gridtools::zero_halo<NDims>::type,
+                 typename atlas::array::default_layout<NDims>::type > >*
+  wrap_gt_storage(
+      Value* data,
+      std::array<unsigned int, NDims>&& shape, std::array<unsigned int, NDims>&& strides)
+  {
+      static_assert((NDims > 0), "Error: can not create storages without any dimension");
+      typedef gridtools::storage_traits<BACKEND>::storage_info_t<
+          0, NDims, typename gridtools::zero_halo<NDims>::type,
+          typename atlas::array::default_layout<NDims>::type> storage_info_ty;
+      typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
+
+      storage_info_ty si(shape, strides);
+      data_store_t* ds = new data_store_t(si, data);
+      return ds;
+  }
+
 } // namespace array
 } // namespace atlas
+
+#endif

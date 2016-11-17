@@ -57,13 +57,13 @@ void TransPartitioner::partition(int part[]) const {
 
     int nlonmax = dynamic_cast<const grid::Structured*>(&grid())->nlonmax();
 
-    array::ArrayView<int,1> nloen       = t_->nloen();
-    array::ArrayView<int,1> n_regions   = t_->n_regions();
-    array::ArrayView<int,1> nfrstlat    = t_->nfrstlat();
-    array::ArrayView<int,1> nlstlat     = t_->nlstlat();
-    array::ArrayView<int,1> nptrfrstlat = t_->nptrfrstlat();
-    array::ArrayView<int,2> nsta        = t_->nsta();
-    array::ArrayView<int,2> nonl        = t_->nonl();
+    array::LocalView<int,1> nloen       = t_->nloen();
+    array::LocalView<int,1> n_regions   = t_->n_regions();
+    array::LocalView<int,1> nfrstlat    = t_->nfrstlat();
+    array::LocalView<int,1> nlstlat     = t_->nlstlat();
+    array::LocalView<int,1> nptrfrstlat = t_->nptrfrstlat();
+    array::LocalView<int,2> nsta        = t_->nsta();
+    array::LocalView<int,2> nonl        = t_->nonl();
 
 
     int i(0);
@@ -71,7 +71,7 @@ void TransPartitioner::partition(int part[]) const {
     std::vector<int> iglobal(t_->ndgl()*nlonmax,-1);
 
     for( int jgl=0; jgl<t_->ndgl(); ++jgl ) {
-        for( int jl=0; jl<nloen[jgl]; ++jl ) {
+        for( int jl=0; jl<nloen(jgl); ++jl ) {
             ++i;
             iglobal[jgl*nlonmax+jl] = i;
             maxind = std::max(maxind,jgl*nlonmax+jl);
@@ -79,9 +79,9 @@ void TransPartitioner::partition(int part[]) const {
     }
     int iproc(0);
     for( int ja=0; ja<t_->n_regions_NS(); ++ja ) {
-        for( int jb=0; jb<n_regions[ja]; ++jb ) {
-            for( int jgl=nfrstlat[ja]-1; jgl<nlstlat[ja]; ++jgl ) {
-                int igl = nptrfrstlat[ja] + jgl - nfrstlat[ja];
+        for( int jb=0; jb<n_regions(ja); ++jb ) {
+            for( int jgl=nfrstlat(ja)-1; jgl<nlstlat(ja); ++jgl ) {
+                int igl = nptrfrstlat(ja) + jgl - nfrstlat(ja);
                 for( int jl=nsta(jb,igl)-1; jl<nsta(jb,igl)+nonl(jb,igl)-1; ++jl ) {
                     size_t ind = iglobal[jgl*nlonmax+jl] - 1;
                     if( ind >= grid().npts() ) throw eckit::OutOfRange(ind,grid().npts(),Here());
@@ -100,7 +100,7 @@ int TransPartitioner::nb_bands() const {
 
 int TransPartitioner::nb_regions(int b) const {
     ASSERT( t_!= NULL );
-    return t_->n_regions()[b];
+    return t_->n_regions()(b);
 }
 
 } // namespace partitioners

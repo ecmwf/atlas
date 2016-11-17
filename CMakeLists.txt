@@ -146,21 +146,12 @@ endif()
 ecbuild_add_option(
     FEATURE GRIDTOOLS_STORAGE
     DESCRIPTION "atlas: Arrays internally use GridTools storage layer"
-)
-
-find_path( GRIDTOOLS_STORAGE_INCLUDE_DIRS 
-           NAME storage-facility.hpp
-           PATHS ${GRIDTOOLS_STORAGE_PATH}/include 
-)
+    REQUIRED_PACKAGES "gridtools_storage" )
 
 ecbuild_add_cxx11_flags()
 
-if( ENABLE_GRIDTOOLS_STORAGE AND GRIDTOOLS_STORAGE_INCLUDE_DIRS ) 
-    set( ATLAS_HAVE_GRIDTOOLS_STORAGE 1)
-    # ecbuild_add_cxx11_flags()
-
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
     set( ENABLE_GPU "OFF" CACHE BOOL "Compile with GPU support (CUDA)" )
-
 
     if(ENABLE_GPU)
         find_package(CUDA REQUIRED)
@@ -189,8 +180,6 @@ if( ENABLE_GRIDTOOLS_STORAGE AND GRIDTOOLS_STORAGE_INCLUDE_DIRS )
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=conflicting_calling_conventions")
 
     endif()
-else()
-  set( ATLAS_HAVE_GRIDTOOLS_STORAGE 0 )
 endif()
 
 ### Eigen
@@ -246,6 +235,7 @@ foreach( _tpl ${ATLAS_TPLS} )
   list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
 
+ecbuild_debug_var( ATLAS_EXTRA_INCLUDE_DIRS )
 ecbuild_debug_var( ATLAS_EXTRA_LIBRARIES )
 
 

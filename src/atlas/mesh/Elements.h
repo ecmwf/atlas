@@ -113,10 +113,8 @@ public:
   const field::Field& halo() const { return hybrid_elements_->halo(); }
         field::Field& halo()       { return hybrid_elements_->halo(); }
         
-#if 0
   template <typename DATATYPE, int RANK>
-  array::ArrayView<DATATYPE,RANK> view( const field::Field& ) const;
-#endif
+  array::LocalView<DATATYPE,RANK> view( const field::Field& ) const;
   
   size_t add(const size_t nb_elements);
 
