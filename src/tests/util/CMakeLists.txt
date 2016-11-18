@@ -80,11 +80,45 @@ ecbuild_add_test( TARGET atlas_test_metadata
   LIBS     atlas
 )
 
-if( ENABLE_GPU )
-ADD_LIBRARY(boost_unit_test_framework STATIC IMPORTED)
-cuda_add_executable (test_array_kernel test_array_kernel.cu)
-  target_link_libraries(test_array_kernel eckit ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} cudart pthread atlas)
-#  set_target_properties(test_array_kernel PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${DIR} OUTPUT_NAME ${unit_test})
-  add_test (test_array_kernel test_array_kernel)
-endif()
+# Macro ecbuild_add_cuda_test
+# Envisioned to become part of ecbuild_add_test with a CUDA option
+# in a future ecbuild release
+macro( ecbuild_add_cuda_test )
+  set( options           BOOST )
+  set( single_value_args TARGET )
+  set( multi_value_args  SOURCES LIBS )
+  cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
 
+  if(_PAR_UNPARSED_ARGUMENTS)
+    ecbuild_critical("Unknown keywords given to add_cuda_test(): \"${_PAR_UNPARSED_ARGUMENTS}\"")
+  endif()
+
+  if( ENABLE_GPU AND ENABLE_TESTS )
+
+    list( APPEND _libs ${_PAR_LIBS} )
+
+    if( _PAR_BOOST )
+      list( APPEND _libs ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${Boost_TEST_EXEC_MONITOR_LIBRARY} )
+    endif()
+
+    cuda_add_executable (${_PAR_TARGET} ${_PAR_SOURCES})
+    if( _libs )
+      target_link_libraries(${_PAR_TARGET} ${_libs})
+    endif()
+
+    # whatever project settings are, we always build tests with the build_rpath, not the install_rpath
+    set_property( TARGET ${_PAR_TARGET} PROPERTY BUILD_WITH_INSTALL_RPATH FALSE )
+    set_property( TARGET ${_PAR_TARGET} PROPERTY SKIP_BUILD_RPATH         FALSE )
+
+    add_test (${_PAR_TARGET} ${_PAR_TARGET})
+
+  endif()
+endmacro()
+
+set ( CMAKE_NVCC_FLAGS "-G" )
+ecbuild_add_cuda_test(
+  TARGET atlas_test_array_kernel
+  BOOST
+  SOURCES test_array_kernel.cu
+  LIBS atlas
+)
