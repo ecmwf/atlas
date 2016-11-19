@@ -13,6 +13,7 @@
 #include "ecbuild/boost_test_framework.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/MakeView.h"
+#include "atlas/runtime/Log.h"
 
 using namespace atlas::array;
 
@@ -28,16 +29,28 @@ void kernel_ex(ArrayView<Value, RANK> dv)
 
 BOOST_AUTO_TEST_CASE( test_array )
 {
+   ATLAS_DEBUG_HERE();
    Array* ds = Array::create<double>(4ul, 4ul, 4ul);
    ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
    hv(3, 3, 3) = 4.5;
 
+   ATLAS_DEBUG_HERE();
+
    ds->clone_to_device();
+
+   ATLAS_DEBUG_HERE();
+
    auto cv = make_device_view<double, 3>(*ds);
+
+   ATLAS_DEBUG_HERE();
 
    kernel_ex<<<1,1>>>(cv);
 
+   ATLAS_DEBUG_HERE();
+
    cudaDeviceSynchronize();
+
+   ATLAS_DEBUG_HERE();
 
    ds->clone_from_device();
    ds->reactivate_host_write_views();
