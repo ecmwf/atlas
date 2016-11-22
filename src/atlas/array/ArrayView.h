@@ -74,6 +74,10 @@ namespace array {
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
+template <typename Value, unsigned int NDims, bool ReadOnly = false>
+inline data_view_tt<Value, NDims>
+make_gt_host_view(const Array& array);
+
 template< typename DATA_TYPE, int RANK >
 class ArrayView
 {
@@ -96,21 +100,25 @@ public:
       // TODO: check compatibility
     }
 
-    ArrayView(data_view_t data_view) :
+    ArrayView(data_view_t data_view, const Array& array) :
         gt_data_view_(data_view)
     {
       using seq = gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, RANK>::type>;
 
+        using value_t = typename data_view_t::data_store_t::data_t;
+        constexpr static unsigned int ndims = data_view_t::data_store_t::storage_info_t::ndims;
+        auto gt_host_view_ = make_gt_host_view<value_t, ndims, true> ( array );
+
       auto stridest = seq::template apply<
           std::vector<size_t>,
           get_stride_component<unsigned long, gridtools::static_uint<RANK> >::template get_component>(
-          &(gt_data_view_.storage_info()));
-      auto shapet = seq::template apply<std::vector<size_t>, get_shape_component>(&(gt_data_view_.storage_info()));
+          &(gt_host_view_.storage_info()));
+      auto shapet = seq::template apply<std::vector<size_t>, get_shape_component>(&(gt_host_view_.storage_info()));
 
       std::memcpy(strides_, &(stridest[0]), sizeof(size_t)*RANK);
       std::memcpy(shape_, &(shapet[0]), sizeof(size_t)*RANK);
 
-      size_ = gt_data_view_.storage_info().size();
+      size_ = gt_host_view_.storage_info().size();
     }
 
     DATA_TYPE* data() { return gt_data_view_.data(); }
@@ -205,7 +213,6 @@ public:
         DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l, size_t m);
   const DATA_TYPE& operator()(const ArrayIdx& idx) const;
         DATA_TYPE& operator()(const ArrayIdx& idx);
-
   void resize(size_t size1, size_t size2);
 
 // -- Accessors
