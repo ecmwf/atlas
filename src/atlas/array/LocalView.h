@@ -60,6 +60,8 @@ namespace array {
     size_t strides_[RANK];
     size_t size_;
   public:
+    size_t size() const { return size_;}
+
   // -- Type definitions
     typedef typename remove_const<DATA_TYPE>::type  value_type;
 

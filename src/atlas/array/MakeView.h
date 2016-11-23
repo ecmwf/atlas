@@ -32,7 +32,7 @@ namespace impl {
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
+template <typename Value, unsigned int NDims, bool ReadOnly>
 inline static data_view_tt<Value, NDims>
 make_gt_host_view(const Array& array) {
 
