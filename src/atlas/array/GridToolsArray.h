@@ -146,7 +146,8 @@ public:
   template<typename DataStore, typename = typename std::enable_if< gridtools::is_data_store<DataStore>::value > >
   Array(DataStore* ds) : data_store_( new DataStoreWrapper<DataStore>(ds)) {}
 
-  std::unique_ptr< DataStoreInterface>& data_store() { return data_store_; }
+  std::unique_ptr< DataStoreInterface>& data_store() {
+      return data_store_; }
 
   template<typename DataStore, typename ... Dims>
   void build_spec(DataStore* gt_data_store_ptr, Dims...dims) {
@@ -222,7 +223,7 @@ public:
       spec_ = array_resized->spec();
 
       //TODO when deleting this if seg fault
-//      delete array_resized;
+      delete array_resized;
   }
 
   void resize(const ArrayShape& shape)
@@ -285,7 +286,7 @@ public:
       data_store_->reactivate_host_write_views();
   }
 
-private:
+protected:
   std::unique_ptr< DataStoreInterface>  data_store_;
 
 public:
@@ -303,7 +304,7 @@ class ArrayT : public Array  {
 public:
 
   template<typename DataStore, typename = typename std::enable_if<gridtools::is_data_store<DataStore>::value >::type >
-  ArrayT(DataStore* ds): owned_(true), data_(static_cast<void*>(ds)), Array(ds) {}
+  ArrayT(DataStore* ds): owned_(true), Array(ds) {}
 
   template <typename... UInts,
             typename = gridtools::all_integers<UInts...> >
@@ -332,8 +333,9 @@ public:
   void create_from_variadic_args(UInts... dims)
   {
     auto gt_storage = create_gt_storage<DATA_TYPE,typename atlas::array::default_layout_t<sizeof...(dims)>::type>(dims...);
+    using data_store_t = typename std::remove_pointer<decltype(gt_storage)>::type;
     build_spec(gt_storage,dims...);
-    data_ = static_cast<void*>(gt_storage);
+    data_store_ = std::unique_ptr< DataStoreInterface>(new DataStoreWrapper<data_store_t>(gt_storage));
   }
   
   void create_from_shape(const ArrayShape& shape)
@@ -371,8 +373,8 @@ public:
   virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
 
   size_t sizeof_data() const {return sizeof(DATA_TYPE);}
-  virtual void* storage() { return data_;}
-  virtual const void* storage() const { return data_;}
+  virtual void* storage() { return data_store_->void_data_store();}
+  virtual const void* storage() const { return data_store_->void_data_store();}
 
   virtual void dump(std::ostream& os) const {
     os << "\nWARNING: Array dump not implemented\n";
@@ -380,7 +382,6 @@ public:
 
 private:
   bool owned_;
-  void* data_;
 };
 
 //------------------------------------------------------------------------------

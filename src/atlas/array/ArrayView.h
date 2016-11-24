@@ -161,6 +161,10 @@ public:
       }
    }
 
+   bool valid() const {
+       return gt_data_view_.valid();
+   }
+
     bool contiguous() const
     {
       return (size_ == shape_[0]*strides_[0] ? true : false);

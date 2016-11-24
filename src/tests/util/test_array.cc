@@ -32,6 +32,21 @@ BOOST_AUTO_TEST_CASE( test_array )
    delete ds;
 }
 
+BOOST_AUTO_TEST_CASE( test_create )
+{
+   Array *ds = Array::create(array::DataType::create<int>(), ArrayShape({4,3}));
+   auto hv = make_gt_host_view<int, 2>(*ds);
+   hv(3,2) = 4;
+
+   ArrayView<int, 2> atlas_hv = make_host_view<int, 2>(*ds);
+
+   BOOST_CHECK_EQUAL( hv(3,2) , 4 );
+   BOOST_CHECK_EQUAL( atlas_hv(3,2) , 4 );
+
+   delete ds;
+}
+
+
 BOOST_AUTO_TEST_CASE( test_make_view )
 {
    Array *ds = Array::create<double>(4ul);
@@ -235,7 +250,7 @@ BOOST_AUTO_TEST_CASE( test_insert )
    hv(3,3,3) = 3.5;
    hv(6,4,7) = 6.5;
 
-   ds->insert(2, 2);
+   ds->insert(3, 2);
 
    BOOST_CHECK_EQUAL(ds->spec().shape()[0], 9);
    BOOST_CHECK_EQUAL(ds->spec().shape()[1], 5);
@@ -246,15 +261,25 @@ BOOST_AUTO_TEST_CASE( test_insert )
 
    ArrayView<double, 3> hv2 = make_host_view<double, 3>(*ds);
 
-   BOOST_CHECK_EQUAL( hv(1,3,3), 1.5);
-   BOOST_CHECK_EQUAL( hv(3,3,3), 3.5);
+   //currently we have no mechanism to invalidate the old views after an insertion into the Array
+   // The original gt data store is deleted and replaced, but the former ArrayView keeps a pointer to it
+   // wihtout noticing it has been deleted
+   BOOST_CHECK_EQUAL( hv.valid(), true);
+   BOOST_CHECK_EQUAL( hv2.valid(), true);
 
    BOOST_CHECK_EQUAL( hv2(1,3,3), 1.5);
    BOOST_CHECK_EQUAL( hv2(2,3,3), 2.5);
-   BOOST_CHECK_EQUAL( hv2(3,3,3), 3.5);
-   BOOST_CHECK_EQUAL( hv2(6,4,7), 6.5);
+   BOOST_CHECK_EQUAL( hv2(5,3,3), 3.5);
+   BOOST_CHECK_EQUAL( hv2(8,4,7), 6.5);
 
    delete ds;
+}
+
+BOOST_AUTO_TEST_CASE( test_insert_throw )
+{
+   Array* ds = Array::create<double>(7,5,8);
+
+   BOOST_CHECK_THROW(ds->insert(8,2), eckit::BadParameter);
 }
 
 BOOST_AUTO_TEST_CASE( test_wrap_storage )
