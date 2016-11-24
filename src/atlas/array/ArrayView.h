@@ -217,7 +217,6 @@ public:
         DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l, size_t m);
   const DATA_TYPE& operator()(const ArrayIdx& idx) const;
         DATA_TYPE& operator()(const ArrayIdx& idx);
-  void resize(size_t size1, size_t size2);
 
 // -- Accessors
   const DATA_TYPE* data() const;
@@ -326,8 +325,7 @@ private:
 
 template< typename DATA_TYPE >
 class ArrayView < DATA_TYPE, 2 >
-{  void resize(size_t size1, size_t size2);
-
+{
 public:
 // -- Type definitions
   typedef ArrayView_iterator<DATA_TYPE,2>       iterator;
