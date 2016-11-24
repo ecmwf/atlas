@@ -272,6 +272,7 @@ array/DataType.h
 array/GridToolsDataStoreWrapper.h
 array/GridToolsTraits.h
 array/MakeView.h
+array/MakeView_fwd.h
 )
 
 list( APPEND atlas_util_srcs

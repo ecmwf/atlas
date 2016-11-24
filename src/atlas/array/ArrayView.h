@@ -56,6 +56,7 @@
 #include "atlas/array/LocalView.h"
 #include "atlas/array/ArrayHelpers.h"
 #include "eckit/exception/Exceptions.h"
+
 namespace atlas {
 namespace array {
   class Array;
@@ -66,6 +67,7 @@ namespace array {
 //------------------------------------------------------------------------------------------------------
 
 #include "atlas/array/ArrayView_iterator.h"
+#include "atlas/array/MakeView_fwd.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -73,10 +75,6 @@ namespace atlas {
 namespace array {
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-inline data_view_tt<Value, NDims>
-make_gt_host_view(const Array& array);
 
 template< typename DATA_TYPE, int RANK >
 class ArrayView

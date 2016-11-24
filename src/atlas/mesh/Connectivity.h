@@ -27,6 +27,9 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/internals/atlas_config.h"
+#include "atlas/array/Array.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
 
 namespace atlas {
 namespace mesh {
@@ -115,7 +118,7 @@ class ConnectivityRow
 class IrregularConnectivity : public eckit::Owned
 {
 public:
-  typedef ConnectivityRow Row;
+  typedef array::LocalView<idx_t, 1> Row;
 public:
 //-- Constructors
 
@@ -141,7 +144,7 @@ public:
   size_t rows() const { return rows_; }
 
   /// @brief Number of columns for specified row in the connectivity table
-  size_t cols( size_t row_idx ) const { return counts_[row_idx]; }
+  size_t cols( size_t row_idx ) const { return counts_view_(row_idx); }
 
   /// @brief Maximum value for number of columns over all rows
   size_t maxcols() const { return maxcols_; }
@@ -155,8 +158,8 @@ public:
 
   /// @brief Access to raw data.
   /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is defined.
-  const idx_t* data() const { return values_; }
-        idx_t* data()       { return values_; }
+  const idx_t* data() const { return values_view_.data(); }
+        idx_t* data()       { return values_view_.data(); }
 
   idx_t missing_value() const { return missing_value_; }
 
@@ -169,6 +172,10 @@ public:
 
   /// @brief Modify (row,col) with given value. Value must be given with base 0
   void set( size_t row_idx, size_t col_idx, const idx_t value );
+
+  /// @brief Resize connectivity
+  /// @note Can only be used when data is owned.
+  virtual void resize(size_t old_size, size_t size, bool initialize, bool fortran_array);
 
   /// @brief Resize connectivity, and add given rows
   /// @note Can only be used when data is owned.
@@ -201,8 +208,8 @@ public:
 
 protected:
   bool owns() { return owns_; }
-  const size_t *displs() const { return displs_; }
-  const size_t *counts() const { return counts_; }
+  const size_t *displs() const { return displs_view_.data(); }
+  const size_t *counts() const { return counts_view_.data(); }
 
 private:
 
@@ -213,15 +220,16 @@ private:
   std::string name_;
 
   bool owns_;
-  std::vector<idx_t>  owned_values_;
-  std::vector<size_t> owned_displs_;
-  std::vector<size_t> owned_counts_;
+  array::Array* values_;
+  array::Array* displs_;
+  array::Array* counts_;
 
-  idx_t* values_;
+  array::ArrayView<idx_t, 1> values_view_;
+  array::ArrayView<size_t,1> displs_view_;
+  array::ArrayView<size_t,1> counts_view_;
+
   idx_t  missing_value_;
   size_t rows_;
-  size_t *displs_;
-  size_t *counts_;
   size_t maxcols_;
   size_t mincols_;
 
@@ -299,8 +307,8 @@ public:
   size_t blocks() const { return blocks_; }
 
   /// @brief Access to a block connectivity
-  const BlockConnectivity& block( size_t block_idx ) const { return *block_[block_idx].get(); }
-        BlockConnectivity& block( size_t block_idx )       { return *block_[block_idx].get(); }
+  const BlockConnectivity& block( size_t block_idx ) const { return *block_view_(block_idx); }
+        BlockConnectivity& block( size_t block_idx )       { return *block_view_(block_idx); }
 
   /// @brief Access to connectivity table elements for given row and column
   /// The row_idx counts up from 0, from block 0, as in IrregularConnectivity
@@ -349,12 +357,15 @@ private:
   void rebuild_block_connectivity();
 
 private:
-  std::vector<size_t> owned_block_displs_;
-  std::vector<size_t> owned_block_cols_;
+  array::Array* block_displs_;
+  array::Array* block_cols_;
+  array::Array* block_;
+
+  array::ArrayView<size_t,1> block_displs_view_;
+  array::ArrayView<size_t,1> block_cols_view_;
+  array::ArrayView<BlockConnectivity*, 1> block_view_;
   size_t blocks_;
-  size_t *block_displs_;
-  size_t *block_cols_;
-  std::vector< eckit::SharedPtr<BlockConnectivity> > block_;
+
 };
 
 // -----------------------------------------------------------------------------------------------------
@@ -387,6 +398,9 @@ public:
   /// No resizing can be performed as data is not owned.
   BlockConnectivity( size_t rows, size_t cols, idx_t values[] );
 
+  /// @brief Destructor
+  ~BlockConnectivity();
+
   void rebuild( size_t rows, size_t cols, idx_t values[] );
 
 //-- Accessors
@@ -403,8 +417,8 @@ public:
 
   /// @brief Access to raw data.
   /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is defined.
-  const idx_t* data() const { return values_; }
-        idx_t* data()       { return values_; }
+  const idx_t* data() const { return values_view_.data(); }
+        idx_t* data()       { return values_view_.data(); }
 
   idx_t missing_value() const { return missing_value_; }
 
@@ -422,11 +436,11 @@ public:
 
 private:
   bool owns_;
-  std::vector<idx_t> owned_values_;
+  array::Array* values_;
+  array::ArrayView<idx_t, 2> values_view_;
 
   size_t rows_;
   size_t cols_;
-  idx_t* values_;
   idx_t missing_value_;
 
 };
@@ -435,25 +449,23 @@ private:
 
 inline idx_t IrregularConnectivity::operator()( size_t row_idx, size_t col_idx ) const
 {
-  return (values_+displs_[row_idx])[col_idx] FROM_FORTRAN;
+  return values_view_(displs_view_(row_idx) + col_idx) FROM_FORTRAN;
 }
 
 inline void IrregularConnectivity::set( size_t row_idx, const idx_t column_values[] ) {
-  idx_t *col = values_+displs_[row_idx];
-  const size_t N = counts_[row_idx];
+  const size_t N = counts_view_(row_idx);
   for( size_t n=0; n<N; ++n ) {
-    col[n] = column_values[n] TO_FORTRAN;
+    values_view_(displs_view_(row_idx) + n) = column_values[n] TO_FORTRAN;
   }
 }
 
 inline void IrregularConnectivity::set( size_t row_idx, size_t col_idx, const idx_t value ) {
-  idx_t *col = values_+displs_[row_idx];
-  col[col_idx] = value TO_FORTRAN;
+  values_view_(displs_view_(row_idx)) = value TO_FORTRAN;
 }
 
 inline IrregularConnectivity::Row IrregularConnectivity::row( size_t row_idx ) const
 {
-  return Row(values_+displs_[row_idx],counts_[row_idx]);
+  return IrregularConnectivity::Row(const_cast<idx_t*>(values_view_.data()) +displs_view_(row_idx) , array::ArrayShape{counts_view_(row_idx)});
 }
 
 // -----------------------------------------------------------------------------------------------------
@@ -473,19 +485,17 @@ inline idx_t MultiBlockConnectivity::operator()( size_t block_idx, size_t block_
 // -----------------------------------------------------------------------------------------------------
 
 inline idx_t BlockConnectivity::operator()( size_t row_idx, size_t col_idx ) const {
-  return (values_+row_idx*cols_)[col_idx] FROM_FORTRAN;
+  return values_view_(row_idx, col_idx) FROM_FORTRAN;
 }
 
 inline void BlockConnectivity::set( size_t row_idx, const idx_t column_values[] ) {
-  idx_t *col = values_+row_idx*cols_;
   for( size_t n=0; n<cols_; ++n ) {
-    col[n] = column_values[n] TO_FORTRAN;
+    values_view_(row_idx,n) = column_values[n] TO_FORTRAN;
   }
 }
 
 inline void BlockConnectivity::set( size_t row_idx, size_t col_idx, const idx_t value ) {
-  idx_t *col = values_+row_idx*cols_;
-  col[col_idx] = value TO_FORTRAN;
+  values_view_(row_idx, col_idx) = value TO_FORTRAN;
 }
 
 // ------------------------------------------------------------------------------------------------------
