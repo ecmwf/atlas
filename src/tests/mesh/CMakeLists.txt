@@ -39,6 +39,14 @@ if( HAVE_FCTEST )
 endif()
 
 
+ecbuild_add_test( TARGET atlas_test_connectivity
+  BOOST
+  MPI      1
+  SOURCES  test_connectivity.cc
+  LIBS     atlas
+)
+
+
 ecbuild_add_test( TARGET atlas_test_elements
   BOOST
   MPI      1

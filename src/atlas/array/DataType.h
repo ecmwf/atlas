@@ -81,6 +81,9 @@ template<> inline std::string DataType::str(const float&)  { return real32_str()
 template<> inline std::string DataType::str(const double&) { return real64_str(); }
 template<> inline DataType::kind_t DataType::kind<int>()    { return KIND_INT32;    }
 template<> inline DataType::kind_t DataType::kind<long>()   { return KIND_INT64;    }
+//TODO CHECK THIS
+template<> inline DataType::kind_t DataType::kind<unsigned long>()   { return KIND_INT64;    }
+
 template<> inline DataType::kind_t DataType::kind<float>()  { return KIND_REAL32;   }
 template<> inline DataType::kind_t DataType::kind<double>() { return KIND_REAL64;   }
 template<> inline DataType::kind_t DataType::kind(const int&)    { return KIND_INT32;   }

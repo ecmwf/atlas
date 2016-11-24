@@ -32,6 +32,15 @@ BOOST_AUTO_TEST_CASE( test_array )
    delete ds;
 }
 
+BOOST_AUTO_TEST_CASE( test_array_zero_size )
+{
+   Array *ds = Array::create<double>(0);
+
+   BOOST_CHECK_EQUAL( ds->size() , 0 );
+   delete ds;
+}
+
+
 BOOST_AUTO_TEST_CASE( test_create )
 {
    Array *ds = Array::create(array::DataType::create<int>(), ArrayShape({4,3}));
