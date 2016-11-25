@@ -17,6 +17,19 @@ using namespace atlas::mesh;
 namespace atlas {
 namespace mesh {
 
+#ifdef ATLAS_HAVE_FORTRAN
+#define FORTRAN_BASE 1
+#define INDEX_REF Index
+#define FROM_FORTRAN -1
+#define TO_FORTRAN   +1
+#else
+#define FORTRAN_BASE 0
+#define INDEX_REF *
+#define FROM_FORTRAN
+#define TO_FORTRAN
+#endif
+
+
 BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
 {
     IrregularConnectivity conn("mesh");
@@ -28,10 +41,10 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     BOOST_CHECK_EQUAL(conn.rows(),1);
     BOOST_CHECK_EQUAL(conn.cols(0),4);
 
-    BOOST_CHECK_EQUAL(conn.get(0,0),3);
-    BOOST_CHECK_EQUAL(conn.get(0,1),4);
-    BOOST_CHECK_EQUAL(conn.get(0,2),6);
-    BOOST_CHECK_EQUAL(conn.get(0,3),7);
+    BOOST_CHECK_EQUAL(conn(0,0),3 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(0,1),4 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(0,2),6 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(0,3),7 + FROM_FORTRAN);
 
     BOOST_CHECK_EQUAL(conn.row(0)(0),3);
     BOOST_CHECK_EQUAL(conn.row(0)(1),4);
@@ -42,9 +55,13 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     constexpr idx_t vals2[6] = {1,3,4,3,7,8};
     conn.add(2, 3, vals2, true);
 
-    BOOST_CHECK_EQUAL(conn.get(1,0),1);
-    BOOST_CHECK_EQUAL(conn.get(1,1),3);
-    BOOST_CHECK_EQUAL(conn.get(1,2),4);
+    BOOST_CHECK_EQUAL(conn.rows(),3);
+    BOOST_CHECK_EQUAL(conn.cols(1),3);
+    BOOST_CHECK_EQUAL(conn.cols(2),3);
+
+    BOOST_CHECK_EQUAL(conn(1,0),1 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(1,1),3 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(1,2),4 + FROM_FORTRAN);
 
     BOOST_CHECK_EQUAL(conn.row(2)(0),3);
     BOOST_CHECK_EQUAL(conn.row(2)(1),7);
@@ -52,17 +69,79 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
 
     //set always add a TO_FORTRAN value
     conn.set(1,1,9);
-    BOOST_CHECK_EQUAL(conn.get(1,0),1);
-    BOOST_CHECK_EQUAL(conn.get(1,1),10);
-    BOOST_CHECK_EQUAL(conn.get(1,2),4);
+    BOOST_CHECK_EQUAL(conn(1,0),1 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(1,1),9 + FROM_FORTRAN + TO_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(1,2),4 + FROM_FORTRAN);
 
     //set always add a TO_FORTRAN value
     constexpr idx_t vals3[3] = {6,7,5};
     conn.set(2, vals3);
-    BOOST_CHECK_EQUAL(conn.get(2,0),7);
-    BOOST_CHECK_EQUAL(conn.get(2,1),8);
-    BOOST_CHECK_EQUAL(conn.get(2,2),6);
+    BOOST_CHECK_EQUAL(conn(2,0),6 + FROM_FORTRAN + TO_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(2,1),7 + FROM_FORTRAN + TO_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(2,2),5 + FROM_FORTRAN + TO_FORTRAN);
 
+
+    constexpr idx_t vals4[8] = {2,11,51,12,4,13,55,78};
+    conn.insert(1, 2, 4, vals4, false);
+
+    BOOST_CHECK_EQUAL(conn.rows(),5);
+    BOOST_CHECK_EQUAL(conn.cols(1),4);
+    BOOST_CHECK_EQUAL(conn.cols(2),4);
+
+    BOOST_CHECK_EQUAL(conn(1,0),2 + FROM_FORTRAN );
+    BOOST_CHECK_EQUAL(conn(1,1),11 + FROM_FORTRAN );
+    BOOST_CHECK_EQUAL(conn(1,2),51 + FROM_FORTRAN );
+    BOOST_CHECK_EQUAL(conn(1,3),12 + FROM_FORTRAN );
+
+    BOOST_CHECK_EQUAL(conn(2,0),4 + FROM_FORTRAN );
+    BOOST_CHECK_EQUAL(conn(2,1),13 + FROM_FORTRAN );
+    BOOST_CHECK_EQUAL(conn(2,2),55 + FROM_FORTRAN );
+    BOOST_CHECK_EQUAL(conn(2,3),78 + FROM_FORTRAN );
+
+    BOOST_CHECK_EQUAL(conn(3,0),1 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(3,1),9 + FROM_FORTRAN + TO_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(3,2),4 + FROM_FORTRAN);
+
+    constexpr idx_t vals5[2] = {3,6};
+    conn.insert(3, 1, 2, vals5, true);
+
+    BOOST_CHECK_EQUAL(conn.rows(),6);
+    BOOST_CHECK_EQUAL(conn.cols(3),2);
+    BOOST_CHECK_EQUAL(conn.cols(4),3);
+
+    BOOST_CHECK_EQUAL(conn(3,0),3 + FROM_FORTRAN + FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn(3,1),6 + FROM_FORTRAN + FORTRAN_BASE);
+
+    BOOST_CHECK_EQUAL(conn(4,0),1 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(4,1),9 + FROM_FORTRAN + TO_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(4,2),4 + FROM_FORTRAN);
+
+    //insert 3 rows with 1 column
+    conn.insert(4, 3, 1);
+
+    BOOST_CHECK_EQUAL(conn.rows(),9);
+    BOOST_CHECK_EQUAL(conn.cols(4),1);
+    BOOST_CHECK_EQUAL(conn.cols(5),1);
+
+    BOOST_CHECK_EQUAL(conn(7,0),1 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(7,1),9 + FROM_FORTRAN + TO_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(7,2),4 + FROM_FORTRAN);
+
+
+    constexpr size_t cols[3] = {3,7,1};
+    BOOST_CHECK_EQUAL(conn.cols(2),4);
+    conn.insert(2, 3, cols);
+
+    BOOST_CHECK_EQUAL(conn.rows(),12);
+    BOOST_CHECK_EQUAL(conn.cols(2),3);
+    BOOST_CHECK_EQUAL(conn.cols(3),7);
+    BOOST_CHECK_EQUAL(conn.cols(4),1);
+    BOOST_CHECK_EQUAL(conn.cols(5),4);
+
+    BOOST_CHECK_EQUAL(conn(5,0),4 + FROM_FORTRAN );
+    BOOST_CHECK_EQUAL(conn(5,1),13 + FROM_FORTRAN );
+    BOOST_CHECK_EQUAL(conn(5,2),55 + FROM_FORTRAN );
+    BOOST_CHECK_EQUAL(conn(5,3),78 + FROM_FORTRAN );
 
 }
 

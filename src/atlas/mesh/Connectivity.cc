@@ -257,9 +257,12 @@ void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols, c
   displs_view_ = array::make_view<size_t, 1>(*displs_);
   counts_view_ = array::make_view<size_t, 1>(*counts_);
 
-  for( size_t jrow=position; jrow<displs_view_.size(); ++jrow ) {
+  displs_view_(position) = position_displs;
+  for( size_t jrow=position; jrow<position+rows; ++jrow ) {
       counts_view_(jrow) = cols;
-      displs_view_(jrow) = displs_view_(jrow) + counts_view_(jrow);
+  }
+  for( size_t jrow=position; jrow<displs_view_.size()-1; ++jrow ) {
+      displs_view_(jrow+1) = displs_view_(jrow) + counts_view_(jrow);
   }
   maxcols_ = std::max(maxcols_,cols);
   mincols_ = std::min(mincols_,cols);
@@ -267,6 +270,7 @@ void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols, c
   values_->insert(position_displs,rows*cols);
   values_view_ = array::make_view<idx_t, 1>(*values_);
 
+  //TODO WILLEM values was being ignored in the original code
   if(values == NULL) {
       for(size_t c=position_displs; c<position_displs+rows*cols; ++c) {
          values_view_(c) = missing_value() TO_FORTRAN;
@@ -302,11 +306,14 @@ void IrregularConnectivity::insert( size_t position, size_t rows, const size_t c
     displs_view_ = array::make_view<size_t, 1>(*displs_);
     counts_view_ = array::make_view<size_t, 1>(*counts_);
 
-    for( size_t jrow=position; jrow<displs_view_.size(); ++jrow ) {
+    displs_view_(position) = position_displs;
+    for( size_t jrow=position; jrow<position+rows; ++jrow ) {
         counts_view_(jrow) = cols[jrow-position];
-        displs_view_(jrow) = displs_view_(jrow) + counts_view_(jrow);
         maxcols_ = std::max(maxcols_,counts_view_(jrow));
         mincols_ = std::min(mincols_,counts_view_(jrow));
+    }
+    for( size_t jrow=position; jrow<displs_view_.size()-1; ++jrow ) {
+        displs_view_(jrow+1) = displs_view_(jrow) + counts_view_(jrow);
     }
 
     size_t insert_size(0);
