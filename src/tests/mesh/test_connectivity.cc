@@ -50,6 +50,20 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     BOOST_CHECK_EQUAL(conn.row(2)(1),7);
     BOOST_CHECK_EQUAL(conn.row(2)(2),8);
 
+    //set always add a TO_FORTRAN value
+    conn.set(1,1,9);
+    BOOST_CHECK_EQUAL(conn.get(1,0),1);
+    BOOST_CHECK_EQUAL(conn.get(1,1),10);
+    BOOST_CHECK_EQUAL(conn.get(1,2),4);
+
+    //set always add a TO_FORTRAN value
+    constexpr idx_t vals3[3] = {6,7,5};
+    conn.set(2, vals3);
+    BOOST_CHECK_EQUAL(conn.get(2,0),7);
+    BOOST_CHECK_EQUAL(conn.get(2,1),8);
+    BOOST_CHECK_EQUAL(conn.get(2,2),6);
+
+
 }
 
 

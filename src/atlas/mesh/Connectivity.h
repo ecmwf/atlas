@@ -166,11 +166,7 @@ public:
 
   Row row( size_t row_idx ) const;
 
-  inline idx_t get( size_t row_idx, size_t col ) const
-  {
-      assert(counts_view_(row_idx) > col);
-      return values_view_(displs_view_(row_idx)+ col);
-  }
+  inline idx_t get( size_t row_idx, size_t col ) const;
 
 ///-- Modifiers
 
@@ -467,13 +463,21 @@ inline void IrregularConnectivity::set( size_t row_idx, const idx_t column_value
 }
 
 inline void IrregularConnectivity::set( size_t row_idx, size_t col_idx, const idx_t value ) {
-  values_view_(displs_view_(row_idx)) = value TO_FORTRAN;
+    assert(col_idx < counts_view_(row_idx));
+  values_view_(displs_view_(row_idx) + col_idx) = value TO_FORTRAN;
 }
 
 inline IrregularConnectivity::Row IrregularConnectivity::row( size_t row_idx ) const
 {
   return IrregularConnectivity::Row(const_cast<idx_t*>(values_view_.data()) +displs_view_(row_idx) , array::ArrayShape{counts_view_(row_idx)});
 }
+
+inline idx_t IrregularConnectivity::get( size_t row_idx, size_t col ) const
+{
+    assert(counts_view_(row_idx) > col);
+    return values_view_(displs_view_(row_idx)+ col);
+}
+
 
 // -----------------------------------------------------------------------------------------------------
 
