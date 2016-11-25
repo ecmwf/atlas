@@ -166,6 +166,12 @@ public:
 
   Row row( size_t row_idx ) const;
 
+  inline idx_t get( size_t row_idx, size_t col ) const
+  {
+      assert(counts_view_(row_idx) > col);
+      return values_view_(displs_view_(row_idx)+ col);
+  }
+
 ///-- Modifiers
 
   /// @brief Modify row with given values. Values must be given with base 0
@@ -176,7 +182,7 @@ public:
 
   /// @brief Resize connectivity
   /// @note Can only be used when data is owned.
-  virtual void resize(size_t old_size, size_t size, bool initialize, bool fortran_array);
+  virtual void resize(size_t old_size, size_t size, bool initialize, const idx_t values[], bool fortran_array);
 
   /// @brief Resize connectivity, and add given rows
   /// @note Can only be used when data is owned.

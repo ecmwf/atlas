@@ -28,10 +28,27 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     BOOST_CHECK_EQUAL(conn.rows(),1);
     BOOST_CHECK_EQUAL(conn.cols(0),4);
 
-    BOOST_CHECK_EQUAL(conn.row(0)(0),2);
-    BOOST_CHECK_EQUAL(conn.row(0)(1),3);
-    BOOST_CHECK_EQUAL(conn.row(0)(2),5);
-    BOOST_CHECK_EQUAL(conn.row(0)(3),6);
+    BOOST_CHECK_EQUAL(conn.get(0,0),3);
+    BOOST_CHECK_EQUAL(conn.get(0,1),4);
+    BOOST_CHECK_EQUAL(conn.get(0,2),6);
+    BOOST_CHECK_EQUAL(conn.get(0,3),7);
+
+    BOOST_CHECK_EQUAL(conn.row(0)(0),3);
+    BOOST_CHECK_EQUAL(conn.row(0)(1),4);
+    BOOST_CHECK_EQUAL(conn.row(0)(2),6);
+    BOOST_CHECK_EQUAL(conn.row(0)(3),7);
+
+
+    constexpr idx_t vals2[6] = {1,3,4,3,7,8};
+    conn.add(2, 3, vals2, true);
+
+    BOOST_CHECK_EQUAL(conn.get(1,0),1);
+    BOOST_CHECK_EQUAL(conn.get(1,1),3);
+    BOOST_CHECK_EQUAL(conn.get(1,2),4);
+
+    BOOST_CHECK_EQUAL(conn.row(2)(0),3);
+    BOOST_CHECK_EQUAL(conn.row(2)(1),7);
+    BOOST_CHECK_EQUAL(conn.row(2)(2),8);
 
 }
 

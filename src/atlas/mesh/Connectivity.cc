@@ -32,8 +32,8 @@ IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
   name_(name),
   owns_(true),
   values_(array::Array::create<idx_t>(0)),
-  displs_(array::Array::create<size_t>(0)),
-  counts_(array::Array::create<size_t>(0)),
+  displs_(array::Array::create<size_t>(1)),
+  counts_(array::Array::create<size_t>(1)),
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
   rows_(0),
   maxcols_(0),
@@ -145,14 +145,15 @@ void IrregularConnectivity::on_update()
   if( ctxt_update_ && callback_update_ ) callback_update_(ctxt_update_);
 }
 
-void IrregularConnectivity::resize( size_t old_size, size_t new_size, bool initialize, bool fortran_array)
+void IrregularConnectivity::resize( size_t old_size, size_t new_size, bool initialize, const idx_t values[], bool fortran_array)
 {
   values_->resize(new_size);
   values_view_ = array::make_view<idx_t, 1>(*values_);
+  //TODO WILLEM isnt this if the other way around?
   idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
   if (initialize) {
     for (size_t j = 0, c = old_size; c < new_size; ++c, ++j) {
-      values_view_(c) = values_view_(j) + add_base;
+      values_view_(c) = values[j] + add_base;
     }
   } else {
     for (size_t j = old_size; j < new_size; ++j) values_view_(j) = missing_value() TO_FORTRAN;
@@ -160,7 +161,7 @@ void IrregularConnectivity::resize( size_t old_size, size_t new_size, bool initi
 }
 
 //------------------------------------------------------------------------------------------------------
-
+//TODO can we pass std::array instead of C array? it is unsafe like this
 void IrregularConnectivity::add( size_t rows, size_t cols, const idx_t values[], bool fortran_array )
 {
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
@@ -179,7 +180,7 @@ void IrregularConnectivity::add( size_t rows, size_t cols, const idx_t values[],
   maxcols_ = std::max(maxcols_,cols);
   mincols_ = std::min(mincols_,cols);
 
-  resize(old_size, new_size, true, fortran_array);
+  resize(old_size, new_size, true, values, fortran_array);
 
   on_update();
 }
@@ -216,7 +217,7 @@ void IrregularConnectivity::add( size_t rows, const size_t cols[] )
     mincols_ = std::min(mincols_,cols[j]);
   }
 
-  resize(old_size, new_size, false, false);
+  resize(old_size, new_size, false, NULL, false);
 
   on_update();
 }
@@ -241,7 +242,7 @@ void IrregularConnectivity::add( size_t rows, size_t cols )
   maxcols_ = std::max(maxcols_,cols);
   mincols_ = std::min(mincols_,cols);
 
-  resize(old_size, new_size, false, false);
+  resize(old_size, new_size, false, NULL, false);
   on_update();
 }
 
@@ -343,13 +344,16 @@ MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, siz
 
 MultiBlockConnectivity::MultiBlockConnectivity(const std::string& name) :
   IrregularConnectivity(name),
-  block_displs_(array::Array::create<size_t>(0)),
+  block_displs_(array::Array::create<size_t>(1)),
   block_cols_(array::Array::create<size_t>(0)),
   block_(array::Array::create<BlockConnectivity*>(0)),
   block_displs_view_(array::make_view<size_t, 1>(*block_displs_)),
   block_cols_view_(array::make_view<size_t, 1>(*block_cols_)),
   block_view_(array::make_view<BlockConnectivity*, 1>(*block_))
-{}
+{
+    block_displs_view_(0) = 0;
+
+}
 
 //------------------------------------------------------------------------------------------------------
 
