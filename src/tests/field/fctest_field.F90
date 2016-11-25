@@ -50,7 +50,7 @@ field = atlas_Field(kind=atlas_real(8),shape=[10,5])
 call field%host_data(host)
 
 FCTEST_CHECK( field%is_on_host() )
-FCTEST_CHECK( .not. field%is_on_device() )
+FCTEST_CHECK( field%is_on_device() )
 
 call field%clone_to_device()
 FCTEST_CHECK( field%is_on_device() )
