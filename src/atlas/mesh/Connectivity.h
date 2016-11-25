@@ -120,6 +120,11 @@ class IrregularConnectivity : public eckit::Owned
 {
 public:
   typedef array::LocalView<idx_t, 1> Row;
+
+  static constexpr unsigned short _values_=0;
+  static constexpr unsigned short _displs_=1;
+  static constexpr unsigned short _counts_=2;
+
 public:
 //-- Constructors
 
@@ -207,6 +212,16 @@ public:
 
   virtual void clear();
 
+
+  void clone_to_device() const;
+  void clone_from_device() const;
+  bool valid() const;
+  void sync() const;
+  bool is_on_host() const;
+  bool is_on_device() const;
+  void reactivate_device_write_views() const;
+  void reactivate_host_write_views() const;
+
 protected:
   bool owns() { return owns_; }
   const size_t *displs() const { return displs_view_.data(); }
@@ -221,9 +236,7 @@ private:
   std::string name_;
 
   bool owns_;
-  array::Array* values_;
-  array::Array* displs_;
-  array::Array* counts_;
+  std::array<array::Array*, 3> data_;
 
   array::ArrayView<idx_t, 1> values_view_;
   array::ArrayView<size_t,1> displs_view_;

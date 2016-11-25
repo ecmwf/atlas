@@ -34,12 +34,15 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
 {
     IrregularConnectivity conn("mesh");
     BOOST_CHECK_EQUAL(conn.rows(),0);
+    BOOST_CHECK_EQUAL(conn.maxcols(),0);
 
     constexpr idx_t vals[4] = {2,3,5,6};
     conn.add(1, 4, vals, false);
 
     BOOST_CHECK_EQUAL(conn.rows(),1);
     BOOST_CHECK_EQUAL(conn.cols(0),4);
+    BOOST_CHECK_EQUAL(conn.mincols(),4);
+    BOOST_CHECK_EQUAL(conn.maxcols(),4);
 
     BOOST_CHECK_EQUAL(conn(0,0),3 + FROM_FORTRAN);
     BOOST_CHECK_EQUAL(conn(0,1),4 + FROM_FORTRAN);
@@ -58,6 +61,8 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     BOOST_CHECK_EQUAL(conn.rows(),3);
     BOOST_CHECK_EQUAL(conn.cols(1),3);
     BOOST_CHECK_EQUAL(conn.cols(2),3);
+    BOOST_CHECK_EQUAL(conn.mincols(),3);
+    BOOST_CHECK_EQUAL(conn.maxcols(),4);
 
     BOOST_CHECK_EQUAL(conn(1,0),1 + FROM_FORTRAN);
     BOOST_CHECK_EQUAL(conn(1,1),3 + FROM_FORTRAN);
@@ -83,6 +88,8 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
 
     constexpr idx_t vals4[8] = {2,11,51,12,4,13,55,78};
     conn.insert(1, 2, 4, vals4, false);
+    BOOST_CHECK_EQUAL(conn.mincols(),3);
+    BOOST_CHECK_EQUAL(conn.maxcols(),4);
 
     BOOST_CHECK_EQUAL(conn.rows(),5);
     BOOST_CHECK_EQUAL(conn.cols(1),4);
@@ -105,6 +112,9 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     constexpr idx_t vals5[2] = {3,6};
     conn.insert(3, 1, 2, vals5, true);
 
+    BOOST_CHECK_EQUAL(conn.mincols(),2);
+    BOOST_CHECK_EQUAL(conn.maxcols(),4);
+
     BOOST_CHECK_EQUAL(conn.rows(),6);
     BOOST_CHECK_EQUAL(conn.cols(3),2);
     BOOST_CHECK_EQUAL(conn.cols(4),3);
@@ -122,6 +132,9 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     BOOST_CHECK_EQUAL(conn.rows(),9);
     BOOST_CHECK_EQUAL(conn.cols(4),1);
     BOOST_CHECK_EQUAL(conn.cols(5),1);
+    BOOST_CHECK_EQUAL(conn.mincols(),1);
+    BOOST_CHECK_EQUAL(conn.maxcols(),4);
+
 
     BOOST_CHECK_EQUAL(conn(7,0),1 + FROM_FORTRAN);
     BOOST_CHECK_EQUAL(conn(7,1),9 + FROM_FORTRAN + TO_FORTRAN);
@@ -130,7 +143,11 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
 
     constexpr size_t cols[3] = {3,7,1};
     BOOST_CHECK_EQUAL(conn.cols(2),4);
+    //insert in position 2, 3 rows with cols[3] number of columns
     conn.insert(2, 3, cols);
+
+    BOOST_CHECK_EQUAL(conn.mincols(),1);
+    BOOST_CHECK_EQUAL(conn.maxcols(),7);
 
     BOOST_CHECK_EQUAL(conn.rows(),12);
     BOOST_CHECK_EQUAL(conn.cols(2),3);

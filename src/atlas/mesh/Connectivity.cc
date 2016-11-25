@@ -31,9 +31,7 @@ namespace mesh {
 IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
   name_(name),
   owns_(true),
-  values_(array::Array::create<idx_t>(0)),
-  displs_(array::Array::create<size_t>(1)),
-  counts_(array::Array::create<size_t>(1)),
+  data_{array::Array::create<idx_t>(0), array::Array::create<size_t>(1), array::Array::create<size_t>(1)},
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
   rows_(0),
   maxcols_(0),
@@ -44,9 +42,9 @@ IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
   callback_update_(0),
   callback_set_(0),
   callback_delete_(0),
-  values_view_(array::make_view<idx_t, 1>(*values_)),
-  displs_view_(array::make_view<size_t, 1>(*displs_)),
-  counts_view_(array::make_view<size_t, 1>(*counts_))
+  values_view_(array::make_view<idx_t, 1>(*(data_[_values_]))),
+  displs_view_(array::make_view<size_t, 1>(*(data_[_displs_]))),
+  counts_view_(array::make_view<size_t, 1>(*(data_[_counts_])))
 {
     displs_view_(0) = 0;
     counts_view_(0) = 0;
@@ -70,18 +68,18 @@ IrregularConnectivity::IrregularConnectivity( idx_t values[], size_t rows, size_
     owns_(false),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
     rows_(rows),
-    values_(array::Array::wrap<idx_t>(values, array::ArrayShape{get_total_size_counts(rows, counts)})),
-    displs_(array::Array::wrap<size_t>(displs, array::ArrayShape{rows})),
-    counts_(array::Array::wrap<size_t>(counts, array::ArrayShape{rows})),
+    data_{array::Array::wrap<idx_t>(values, array::ArrayShape{get_total_size_counts(rows, counts)}),
+            array::Array::wrap<size_t>(displs, array::ArrayShape{rows}),
+            array::Array::wrap<size_t>(counts, array::ArrayShape{rows})},
     ctxt_update_(0),
     ctxt_set_(0),
     ctxt_delete_(0),
     callback_update_(0),
     callback_set_(0),
     callback_delete_(0),
-    values_view_(array::make_view<idx_t, 1>(*values_)),
-    displs_view_(array::make_view<size_t, 1>(*displs_)),
-    counts_view_(array::make_view<size_t, 1>(*counts_))
+    values_view_(array::make_view<idx_t, 1>(*data_[_values_])),
+    displs_view_(array::make_view<size_t, 1>(*data_[_displs_])),
+    counts_view_(array::make_view<size_t, 1>(*data_[_counts_]))
 {
   maxcols_ = 0;
   mincols_ = std::numeric_limits<size_t>::max();
@@ -104,18 +102,11 @@ void IrregularConnectivity::clear()
 {
   if( owns() )
   {
-      assert(values_);
-      assert(displs_);
-      assert(counts_);
-
-    delete values_;
-    delete displs_;
-    delete counts_;
+      std::for_each(data_.begin(), data_.end(), [](array::Array* a){ assert(a); delete a;});
   }
-  values_ = 0;
-  rows_   = 0;
-  displs_ = 0;
-  counts_ = 0;
+
+  std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a=0;});
+
   maxcols_ = 0;
   mincols_ = std::numeric_limits<size_t>::max();
   on_update();
@@ -125,16 +116,10 @@ void IrregularConnectivity::clear()
 
 void IrregularConnectivity::on_delete()
 {
-    //TODO  ????
   if( ctxt_delete_ && callback_delete_ ) callback_delete_(ctxt_delete_);
 
   if(owns_) {
-      assert(values_);
-      delete values_;
-      assert(displs_);
-      delete displs_;
-      assert(counts_);
-      delete counts_;
+      std::for_each(data_.begin(), data_.end(), [](array::Array* a){ assert(a); delete a; a = 0;});
   }
 }
 
@@ -147,8 +132,8 @@ void IrregularConnectivity::on_update()
 
 void IrregularConnectivity::resize( size_t old_size, size_t new_size, bool initialize, const idx_t values[], bool fortran_array)
 {
-  values_->resize(new_size);
-  values_view_ = array::make_view<idx_t, 1>(*values_);
+  data_[_values_]->resize(new_size);
+  values_view_ = array::make_view<idx_t, 1>(*(data_[_values_]));
   //TODO WILLEM isnt this if the other way around?
   idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
   if (initialize) {
@@ -161,17 +146,16 @@ void IrregularConnectivity::resize( size_t old_size, size_t new_size, bool initi
 }
 
 //------------------------------------------------------------------------------------------------------
-//TODO can we pass std::array instead of C array? it is unsafe like this
 void IrregularConnectivity::add( size_t rows, size_t cols, const idx_t values[], bool fortran_array )
 {
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
-  size_t old_size = values_->size();
+  size_t old_size = data_[_values_]->size();
   size_t new_size = old_size + rows*cols;
   size_t new_rows = rows_+rows;
-  displs_->resize(new_rows+1);
-  counts_->resize(new_rows+1);
-  displs_view_ = array::make_view<size_t, 1>(*displs_);
-  counts_view_ = array::make_view<size_t, 1>(*counts_);
+  data_[_displs_]->resize(new_rows+1);
+  data_[_counts_]->resize(new_rows+1);
+  displs_view_ = array::make_view<size_t, 1>(*(data_[_displs_]));
+  counts_view_ = array::make_view<size_t, 1>(*(data_[_counts_]));
 
   for(size_t j=0; rows_<new_rows; ++rows_, ++j) {
     displs_view_(rows_+1) = displs_view_(rows_)+cols;
@@ -199,15 +183,15 @@ void IrregularConnectivity::add( const BlockConnectivity& block )
 void IrregularConnectivity::add( size_t rows, const size_t cols[] )
 {
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
-  size_t old_size = values_->size();
+  size_t old_size = data_[_values_]->size();
   size_t new_size = old_size;
   for( size_t j=0; j<rows; ++j )
     new_size += cols[j];
   size_t new_rows = rows_+rows;
-  displs_->resize(new_rows+1);
-  counts_->resize(new_rows+1);
-  displs_view_ = array::make_view<size_t, 1>(*displs_);
-  counts_view_ = array::make_view<size_t, 1>(*counts_);
+  data_[_displs_]->resize(new_rows+1);
+  data_[_counts_]->resize(new_rows+1);
+  displs_view_ = array::make_view<size_t, 1>(*(data_[_displs_]));
+  counts_view_ = array::make_view<size_t, 1>(*(data_[_counts_]));
 
   for(size_t j=0; rows_<new_rows; ++rows_, ++j) {
     //TODO isnt this a bug ? I dont understand
@@ -227,13 +211,13 @@ void IrregularConnectivity::add( size_t rows, const size_t cols[] )
 void IrregularConnectivity::add( size_t rows, size_t cols )
 {
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
-  size_t old_size = values_->size();
+  size_t old_size = data_[_values_]->size();
   size_t new_size = old_size + rows*cols;
   size_t new_rows = rows_+rows;
-  displs_->resize(new_rows+1);
-  counts_->resize(new_rows+1);
-  displs_view_ = array::make_view<size_t, 1>(*displs_);
-  counts_view_ = array::make_view<size_t, 1>(*counts_);
+  data_[_displs_]->resize(new_rows+1);
+  data_[_counts_]->resize(new_rows+1);
+  displs_view_ = array::make_view<size_t, 1>(*(data_[_displs_]));
+  counts_view_ = array::make_view<size_t, 1>(*(data_[_counts_]));
 
   for(size_t j=0; rows_<new_rows; ++rows_, ++j) {
     displs_view_(rows_+1) = displs_view_(rows_)+cols;
@@ -252,10 +236,10 @@ void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols, c
 {
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
   size_t position_displs = displs_view_(position);
-  displs_->insert( position, rows);
-  counts_->insert( position, rows);
-  displs_view_ = array::make_view<size_t, 1>(*displs_);
-  counts_view_ = array::make_view<size_t, 1>(*counts_);
+  data_[_displs_]->insert( position, rows);
+  data_[_counts_]->insert( position, rows);
+  displs_view_ = array::make_view<size_t, 1>(*(data_[_displs_]));
+  counts_view_ = array::make_view<size_t, 1>(*(data_[_counts_]));
 
   displs_view_(position) = position_displs;
   for( size_t jrow=position; jrow<position+rows; ++jrow ) {
@@ -267,8 +251,8 @@ void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols, c
   maxcols_ = std::max(maxcols_,cols);
   mincols_ = std::min(mincols_,cols);
 
-  values_->insert(position_displs,rows*cols);
-  values_view_ = array::make_view<idx_t, 1>(*values_);
+  data_[_values_]->insert(position_displs,rows*cols);
+  values_view_ = array::make_view<idx_t, 1>(*(data_[_values_]));
 
   //TODO WILLEM values was being ignored in the original code
   if(values == NULL) {
@@ -301,10 +285,10 @@ void IrregularConnectivity::insert( size_t position, size_t rows, const size_t c
 {
     if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
     size_t position_displs = displs_view_(position);
-    displs_->insert( position, rows);
-    counts_->insert( position, rows);
-    displs_view_ = array::make_view<size_t, 1>(*displs_);
-    counts_view_ = array::make_view<size_t, 1>(*counts_);
+    data_[_displs_]->insert( position, rows);
+    data_[_counts_]->insert( position, rows);
+    displs_view_ = array::make_view<size_t, 1>(*(data_[_displs_]));
+    counts_view_ = array::make_view<size_t, 1>(*(data_[_counts_]));
 
     displs_view_(position) = position_displs;
     for( size_t jrow=position; jrow<position+rows; ++jrow ) {
@@ -320,8 +304,8 @@ void IrregularConnectivity::insert( size_t position, size_t rows, const size_t c
     for( size_t j=0; j<rows; ++j )
       insert_size += cols[j];
 
-    values_->insert(position_displs,insert_size);
-    values_view_ = array::make_view<idx_t, 1>(*values_);
+    data_[_values_]->insert(position_displs,insert_size);
+    values_view_ = array::make_view<idx_t, 1>(*(data_[_values_]));
 
     for(size_t c=position_displs; c<position_displs+insert_size; ++c) {
        values_view_(c) = missing_value() TO_FORTRAN;
@@ -329,6 +313,37 @@ void IrregularConnectivity::insert( size_t position, size_t rows, const size_t c
 
     rows_ += rows;
     on_update();
+}
+
+void IrregularConnectivity::clone_to_device() const {
+    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->clone_to_device();});
+}
+void IrregularConnectivity::clone_from_device() const {
+    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->clone_from_device();});
+}
+bool IrregularConnectivity::valid() const {
+    bool res = true;
+    std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->valid();});
+    return res;
+}
+void IrregularConnectivity::sync() const {
+    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->sync();});
+}
+bool IrregularConnectivity::is_on_host() const {
+    bool res=true;
+    std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->is_on_host();});
+    return res;
+}
+bool IrregularConnectivity::is_on_device() const {
+    bool res=true;
+    std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->is_on_device();});
+    return res;
+}
+void IrregularConnectivity::reactivate_device_write_views() const {
+    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->reactivate_device_write_views();});
+}
+void IrregularConnectivity::reactivate_host_write_views() const {
+    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->reactivate_host_write_views();});
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -659,9 +674,9 @@ public:
   callback_t  &callback_set()    { return connectivity_.callback_set_; }
   callback_t  &callback_delete() { return connectivity_.callback_delete_; }
 //TODO return array or arrayview?
-  array::Array       *values()   { return connectivity_.values_; }
-  array::Array      *displs()   { return connectivity_.displs_; }
-  array::Array      *counts()   { return connectivity_.counts_; }
+  array::Array       *values()   { return connectivity_.data_[Connectivity::_values_]; }
+  array::Array      *displs()   { return connectivity_.data_[Connectivity::_displs_]; }
+  array::Array      *counts()   { return connectivity_.data_[Connectivity::_counts_]; }
 
 private:
   Connectivity& connectivity_;
