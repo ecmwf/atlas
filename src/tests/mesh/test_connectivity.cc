@@ -145,6 +145,20 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
 
 }
 
+BOOST_AUTO_TEST_CASE( test_block_connectivity )
+{
+    idx_t vals[15] = {3,7,1,4,5,6,4,56,8,4,1,3,76,4,3};
+    BlockConnectivity conn(3,5, vals);
+    BOOST_CHECK_EQUAL(conn.rows(),3);
+    BOOST_CHECK_EQUAL(conn.cols(),5);
 
+    BOOST_CHECK_EQUAL(conn(0,2),1 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(1,1),4 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(2,2),76 + FROM_FORTRAN);
+
+//    conn.add(2, 1)
+//    void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
+
+}
 }
 }

@@ -636,7 +636,7 @@ void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool
     }
   }
 
-  //TODO ????
+  //TODO WILLLEM is this a bug?
   rows_ += rows;
   cols_ = cols;
 }
