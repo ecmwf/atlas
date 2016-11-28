@@ -319,7 +319,6 @@ int atlas__Config__get_float (Config* This, const char* name, float& value)
 {
   double double_value;
   ATLAS_ERROR_HANDLING ( if ( ! This->get(std::string(name), double_value) ) return false ; );
-  ASSERT(float(double_value) == double_value);
   value = double_value;
   return true;
 }
