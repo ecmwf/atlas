@@ -84,21 +84,9 @@
 
 //------------------------------------------------------------------------------------------------------
 
-namespace atlas { namespace field { class Field; } }
-
 namespace atlas {
 namespace array {
 
-typedef idx_t* IndexArray;
-
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
-
-//------------------------------------------------------------------------------------------------------
-
-template< typename DATA_TYPE, int RANK >
-class IndexView
-{};
-#endif
 //------------------------------------------------------------------------------------------------------
 
 namespace detail {
@@ -151,13 +139,16 @@ public:
 #ifdef ATLAS_HAVE_FORTRAN
   typedef detail::FortranIndex<DATA_TYPE> Index;
 #else
-    typedef DATA_TYPE& Index;
+  typedef DATA_TYPE& Index;
 #endif
   using data_view_t = data_view_tt<DATA_TYPE, RANK>;
 
 public:
 
-    IndexView(data_view_t data_view) : gt_data_view_(data_view) {}
+    IndexView(data_view_t data_view) : gt_data_view_(data_view) 
+    {
+      size_ = gt_data_view_.storage_info().size();
+    }
 
     template < typename... Coords >
     Index
@@ -173,11 +164,28 @@ public:
       return gt_data_view_(c...) FROM_FORTRAN;
     }
 
+    size_t size() const { return size_; }
+
+    void dump(std::ostream& os) const
+    {
+      os << "size: " << size() << " , values: ";
+      os << "[ ";
+      for( size_t j=0; j<size(); ++ j )
+        os << (*this)(j) << " ";
+      os << "]" << std::endl;
+    }
+
+
 private:
     data_view_t gt_data_view_;
+    size_t size_;
 };
 
 #else
+
+template< typename DATA_TYPE, int RANK >
+class IndexView
+{};
 
 template< typename DATA_TYPE >
 class IndexView < DATA_TYPE, 1 >
@@ -186,87 +194,35 @@ public:
 #ifdef ATLAS_HAVE_FORTRAN
   typedef detail::FortranIndex<DATA_TYPE> Index;
 #else
-    typedef DATA_TYPE& Index;
+  typedef DATA_TYPE& Index;
 #endif
 
 public:
 
-  IndexView() {}
-
   IndexView( DATA_TYPE* data, const size_t shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
-    strides_[0]=1;       shape_[0]=shape[0];
+    strides_[0]=1;
+    shape_[0]=shape[0];
   }
 
   DATA_TYPE operator()(size_t i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
   Index     operator()(size_t i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
 
-  DATA_TYPE operator[](size_t i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
-  Index     operator[](size_t i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
-
-  const size_t* strides() const   { return strides_; }
-  const size_t* shape() const   { return shape_; }
-  size_t shape(const size_t i) const { return shape_[0]; }
-  size_t stride(const size_t i) const { return strides_[0]; }
-
   size_t size() const { return shape_[0]; }
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
 
-  const DATA_TYPE* data() const { return data_; }
-        DATA_TYPE* data()       { return data_; }
+  void dump(std::ostream& os) const
+  {
+    os << "size: " << size() << " , values: ";
+    os << "[ ";
+    for( size_t j=0; j<size(); ++ j )
+      os << (*this)(j) << " ";
+    os << "]" << std::endl;
+  }
 
 private:
   DATA_TYPE* data_;
   size_t strides_[1];
   size_t shape_[1];
-};
-
-//------------------------------------------------------------------------------------------------------
-
-template< typename DATA_TYPE >
-class IndexView < DATA_TYPE, 2 >
-{
-public:
-#ifdef ATLAS_HAVE_FORTRAN
-    typedef detail::FortranIndex<DATA_TYPE> Index;
-#else
-    typedef DATA_TYPE& Index;
-#endif
-
-public:
-
-  IndexView() {}
-
-  IndexView( const DATA_TYPE* data, const size_t shape[2] ) : data_( const_cast<DATA_TYPE*>(data) )
-  {
-    shape_[0]=shape[0]; strides_[0]=shape[1];
-    shape_[1]=shape[1]; strides_[1]=1;
-    size_ = shape_[0]*shape_[1];
-  }
-
-  DATA_TYPE operator()(size_t i, size_t j) const  { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]) FROM_FORTRAN; }
-  Index     operator()(size_t i, size_t j)        { CHECK_BOUNDS_2(i,j); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]); }
-
-
-  const IndexView<DATA_TYPE,1> operator[](size_t i) const { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
-  IndexView<DATA_TYPE,1>       operator[](size_t i)       { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
-
-  const size_t* strides() const   { return strides_; }
-  const size_t* shape() const   { return shape_; }
-  size_t shape(const size_t i) const { return shape_[i]; }
-  size_t stride(const size_t i) const { return strides_[i]; }
-
-  size_t size() const { return size_; }
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
-
-  const DATA_TYPE* data() const { return data_; }
-        DATA_TYPE* data()       { return data_; }
-
-private:
-  DATA_TYPE* data_;
-  size_t size_;
-  size_t strides_[2];
-  size_t shape_[2];
 };
 
 //------------------------------------------------------------------------------------------------------

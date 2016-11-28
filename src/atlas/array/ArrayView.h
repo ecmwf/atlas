@@ -167,6 +167,18 @@ public:
     {
       return (size_ == shape_[0]*strides_[0] ? true : false);
     }
+
+    void dump(std::ostream& os) const
+    {
+      ASSERT( contiguous() );
+      const DATA_TYPE* data_ = data();
+      os << "size: " << size() << " , values: ";
+      os << "[ ";
+      for( size_t j=0; j<size(); ++ j )
+        os << data_[j] << " ";
+      os << "]";
+    }
+
 private:
     data_view_t gt_data_view_;
     size_t shape_[RANK];
@@ -238,6 +250,17 @@ public:
    {
      return (size_ == shape_[0]*strides_[0] ? true : false);
    }
+
+  void dump(std::ostream& os) const
+  {
+    ASSERT( contiguous() );
+    const DATA_TYPE* data_ = data();
+    os << "size: " << size() << " , values: ";
+    os << "[ ";
+    for( size_t j=0; j<size(); ++ j )
+      os << data_[j] << " ";
+    os << "]";
+  }
 
 private:
 // -- Private data
@@ -312,6 +335,18 @@ public:
      return true;
    }
 
+  void dump(std::ostream& os) const
+  {
+    ASSERT( contiguous() );
+    const DATA_TYPE* data_ = data();
+    os << "size: " << size() << " , values: ";
+    os << "[ ";
+    for( size_t j=0; j<size(); ++ j )
+      os << data_[j] << " ";
+    os << "]";
+  }
+
+
 private:
 // -- Private data
   DATA_TYPE* data_;
@@ -381,6 +416,18 @@ public:
      return (size_ == shape_[0]*strides_[0] ? true : false);
    }
 
+  void dump(std::ostream& os) const
+  {
+    ASSERT( contiguous() );
+    const DATA_TYPE* data_ = data();
+    os << "size: " << size() << " , values: ";
+    os << "[ ";
+    for( size_t j=0; j<size(); ++ j )
+      os << data_[j] << " ";
+    os << "]";
+  }
+
+
 private:
 // -- Private data
   DATA_TYPE* data_;
@@ -449,6 +496,17 @@ public:
      return (size_ == shape_[0]*strides_[0] ? true : false);
    }
 
+  void dump(std::ostream& os) const
+  {
+    ASSERT( contiguous() );
+    const DATA_TYPE* data_ = data();
+    os << "size: " << size() << " , values: ";
+    os << "[ ";
+    for( size_t j=0; j<size(); ++ j )
+      os << data_[j] << " ";
+    os << "]";
+  }
+
 private:
 // --Private data
   DATA_TYPE* data_;
@@ -515,6 +573,17 @@ public:
    {
      return (size_ == shape_[0]*strides_[0] ? true : false);
    }
+
+  void dump(std::ostream& os) const
+  {
+    ASSERT( contiguous() );
+    const DATA_TYPE* data_ = data();
+    os << "size: " << size() << " , values: ";
+    os << "[ ";
+    for( size_t j=0; j<size(); ++ j )
+      os << data_[j] << " ";
+    os << "]";
+  }
 
 private:
 // -- Private data

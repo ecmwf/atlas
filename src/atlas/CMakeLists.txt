@@ -25,7 +25,6 @@ configure_file( internals/atlas_version.cc.in internals/atlas_version.cc )
 
 ### sources
 
-
 list( APPEND atlas_srcs
 atlas.h
 atlas.cc

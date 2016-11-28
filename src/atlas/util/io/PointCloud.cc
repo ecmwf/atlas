@@ -92,6 +92,7 @@ mesh::Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::strin
       throw eckit::BadValue(msg+"invalid number of columns (failed: nb_columns>=2)");
 
     mesh->nodes().resize(nb_pts);
+
     mesh::Nodes& nodes = mesh->nodes();
     array::ArrayView< double, 2 > lonlat = array::make_view<double,2>( nodes.lonlat() );
 

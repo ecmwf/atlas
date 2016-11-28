@@ -247,7 +247,6 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
   array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
   size_t nb_nodes = nodes.size();
 
-
   int varsize=2;
 
   std::vector< std::vector<uid_t> > send_needed( eckit::mpi::size() );

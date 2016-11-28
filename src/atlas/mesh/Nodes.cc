@@ -97,6 +97,7 @@ field::Field& Nodes::field(const std::string& name)
 
 void Nodes::resize( size_t size )
 {
+  size_t previous_size = size_;
   size_ = size;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
@@ -104,6 +105,17 @@ void Nodes::resize( size_t size )
     array::ArrayShape shape = field.shape();
     shape[0] = size_;
     field.resize(shape);
+  }
+
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( global_index() );
+  array::ArrayView<int   ,1> part = array::make_view<int,1>( partition() );
+  array::ArrayView<int   ,1> flags = array::make_view<int,1>( field("flags") );
+
+  for(size_t n=previous_size; n<size_; ++n)
+  {
+    glb_idx(n) = 1+n;
+    part(n) = eckit::mpi::rank();
+    flags(n) = 0;
   }
 }
 

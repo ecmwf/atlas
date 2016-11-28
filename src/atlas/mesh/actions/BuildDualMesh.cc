@@ -106,7 +106,7 @@ void build_median_dual_mesh( Mesh& mesh )
 
   mesh::Nodes& nodes   = mesh.nodes();
   mesh::HybridElements& edges = mesh.edges();
-  nodes.add( field::Field::create<double>( "dual_volumes", array::make_shape(nodes.size()) ) );
+  field::Field& dual_volumes = nodes.add( field::Field::create<double>( "dual_volumes", array::make_shape(nodes.size()) ) );
 
   if( ! mesh.cells().has_field("centroids_lonlat") )
     mesh.cells().add( field::Field::create("centroids_lonlat",build_centroids_lonlat(mesh.cells(),mesh.nodes().lonlat())) );
@@ -114,15 +114,16 @@ void build_median_dual_mesh( Mesh& mesh )
   if( ! mesh.edges().has_field("centroids_lonlat") )
     mesh.edges().add( field::Field::create("centroids_lonlat",build_centroids_lonlat(mesh.edges(),mesh.nodes().lonlat())) );
 
-  add_median_dual_volume_contribution_cells(mesh.cells(),mesh.edges(),mesh.nodes(),nodes.field("dual_volumes").array());
-  add_median_dual_volume_contribution_poles(mesh.edges(),mesh.nodes(),nodes.field("dual_volumes").array());
+  array::make_view<double,1>(dual_volumes).assign(0.);
+  add_median_dual_volume_contribution_cells(mesh.cells(),mesh.edges(),mesh.nodes(),dual_volumes);
+  add_median_dual_volume_contribution_poles(mesh.edges(),mesh.nodes(),dual_volumes);
 
   build_dual_normals( mesh );
 
   field::Field& skewness = mesh.edges().add( field::Field::create<double>("skewness",array::make_shape(mesh.edges().size())));
   field::Field& alpha    = mesh.edges().add( field::Field::create<double>("alpha",array::make_shape(mesh.edges().size())));
-  array::make_storageview<double>(skewness).assign(0.);
-  array::make_storageview<double>(alpha).assign(0.5);
+  array::make_view<double,1>(skewness).assign(0.);
+  array::make_view<double,1>(alpha).assign(0.5);
 
   eckit::SharedPtr<functionspace::NodeColumns> nodes_fs(new functionspace::NodeColumns(mesh, Halo(mesh)));
   nodes_fs->haloExchange(nodes.field( "dual_volumes" ));
