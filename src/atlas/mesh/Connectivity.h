@@ -213,14 +213,11 @@ public:
   virtual void clear();
 
 
-  void clone_to_device() const;
-  void clone_from_device() const;
+  void clone_to_device();
+  void clone_from_device();
   bool valid() const;
-  void sync() const;
   bool is_on_host() const;
   bool is_on_device() const;
-  void reactivate_device_write_views() const;
-  void reactivate_host_write_views() const;
 
 protected:
   bool owns() { return owns_; }
@@ -366,6 +363,12 @@ public:
 
   virtual void clear();
 
+  void clone_to_device() ;
+  void clone_from_device() ;
+  bool valid() const;
+  bool is_on_host() const;
+  bool is_on_device() const;
+
 private:
 
   void rebuild_block_connectivity();
@@ -421,32 +424,46 @@ public:
 
   /// @brief Access to connectivity table elements for given row and column
   /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
+  GT_FUNCTION
   idx_t operator()( size_t row_idx, size_t col_idx ) const;
 
   /// @brief Number of rows
+  GT_FUNCTION
   size_t rows() const { return rows_; }
 
   /// @brief Number of columns
+  GT_FUNCTION
   size_t cols() const { return cols_; }
 
   /// @brief Access to raw data.
   /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is defined.
+  GT_FUNCTION
   const idx_t* data() const { return values_view_.data(); }
+  GT_FUNCTION
         idx_t* data()       { return values_view_.data(); }
 
+  GT_FUNCTION
   idx_t missing_value() const { return missing_value_; }
 
 //-- Modifiers
 
   /// @brief Modify row with given values. Values must be given with base 0
+  GT_FUNCTION
   void set( size_t row_idx, const idx_t column_values[] );
 
   /// @brief Modify (row,col) with given value. Value must be given with base 0
+  GT_FUNCTION
   void set( size_t row_idx, size_t col_idx, const idx_t value );
 
   /// @brief Resize connectivity, and add given rows
   /// @note Can only be used when data is owned.
   void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
+
+  void clone_to_device();
+  void clone_from_device();
+  bool valid() const;
+  bool is_on_host() const;
+  bool is_on_device() const;
 
 private:
   bool owns_;

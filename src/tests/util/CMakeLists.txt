@@ -115,7 +115,8 @@ macro( ecbuild_add_cuda_test )
   endif()
 endmacro()
 
-set ( CMAKE_NVCC_FLAGS "-G" )
+#TODO Do this only in DEBUG mode
+#set ( CMAKE_NVCC_FLAGS "-G" )
 ecbuild_add_cuda_test(
   TARGET atlas_test_array_kernel
   BOOST

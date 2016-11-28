@@ -315,19 +315,22 @@ void IrregularConnectivity::insert( size_t position, size_t rows, const size_t c
     on_update();
 }
 
-void IrregularConnectivity::clone_to_device() const {
+void IrregularConnectivity::clone_to_device() {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->clone_to_device();});
+    values_view_ = array::make_device_view<idx_t, 1>(*(data_[_values_]));
+    displs_view_ = array::make_device_view<size_t, 1>(*(data_[_displs_]));
+    counts_view_ = array::make_device_view<size_t, 1>(*(data_[_counts_]));
 }
-void IrregularConnectivity::clone_from_device() const {
+void IrregularConnectivity::clone_from_device() {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->clone_from_device();});
+    values_view_ = array::make_host_view<idx_t, 1>(*(data_[_values_]));
+    displs_view_ = array::make_host_view<size_t, 1>(*(data_[_displs_]));
+    counts_view_ = array::make_host_view<size_t, 1>(*(data_[_counts_]));
 }
 bool IrregularConnectivity::valid() const {
     bool res = true;
     std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->valid();});
     return res;
-}
-void IrregularConnectivity::sync() const {
-    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->sync();});
 }
 bool IrregularConnectivity::is_on_host() const {
     bool res=true;
@@ -338,12 +341,6 @@ bool IrregularConnectivity::is_on_device() const {
     bool res=true;
     std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->is_on_device();});
     return res;
-}
-void IrregularConnectivity::reactivate_device_write_views() const {
-    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->reactivate_device_write_views();});
-}
-void IrregularConnectivity::reactivate_host_write_views() const {
-    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->reactivate_host_write_views();});
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -651,6 +648,27 @@ void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool
 
   rows_ += rows;
   cols_ = cols;
+}
+
+void BlockConnectivity::clone_to_device()  {
+    values_->clone_to_device();
+    values_view_ = array::make_device_view<idx_t, 2>(*values_);
+}
+void BlockConnectivity::clone_from_device() {
+    values_->clone_from_device();
+    values_view_ = array::make_host_view<idx_t, 2>(*values_);
+}
+
+bool BlockConnectivity::valid() const {
+    return values_->valid();
+}
+
+bool BlockConnectivity::is_on_host() const {
+    return values_->is_on_host();
+}
+
+bool BlockConnectivity::is_on_device() const {
+    return values_->is_on_device();
 }
 
 //------------------------------------------------------------------------------------------------------
