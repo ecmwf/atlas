@@ -233,9 +233,9 @@ BOOST_AUTO_TEST_CASE(test_resize) {
 
     delete ds;
   }
-  //test the resize with wrap
+  // test the resize with wrap
   {
-    int vals[6] = {3,4,6,7,5,4};
+    int vals[6] = {3, 4, 6, 7, 5, 4};
 
     Array* ds = Array::wrap<int>(vals, array::ArrayShape{3, 2});
     {
