@@ -638,20 +638,17 @@ void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool
   if (cols_ != 0 && cols_ != cols)
     throw eckit::AssertionFailed("Cannot add values with different cols than already existing in BlockConnectivity");
 
-  //TODO I DO NOT UNDERSTAND THIS
-//  size_t old_size = rows_ * cols_;
-//  size_t new_size = old_size + rows * cols;
-  values_->resize(rows_ + rows, cols_ + cols);
+  values_->resize(rows_+rows, cols);
+  values_view_ = array::make_view<idx_t, 2>(*values_);
 
-  if (fortran_array) {
-    for (size_t i = 0; i < values_->shape(0); ++i) {
-      for (size_t j = 0; j < values_->shape(1); ++j) {
-        values_view_(i, j) = values_view_(i, j) + FORTRAN_BASE;
+  idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
+
+    for (size_t i = 0, i_old=rows_; i < rows; ++i, ++i_old) {
+      for (size_t j = 0; j < cols; ++j) {
+        values_view_(i_old, j) = values[i*cols + j] + add_base;
       }
     }
-  }
 
-  //TODO WILLLEM is this a bug?
   rows_ += rows;
   cols_ = cols;
 }

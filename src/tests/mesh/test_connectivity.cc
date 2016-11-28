@@ -173,9 +173,38 @@ BOOST_AUTO_TEST_CASE( test_block_connectivity )
     BOOST_CHECK_EQUAL(conn(1,1),4 + FROM_FORTRAN);
     BOOST_CHECK_EQUAL(conn(2,2),76 + FROM_FORTRAN);
 
-//    conn.add(2, 1)
-//    void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
+    idx_t vals2[10] = {2,3,9,34,356,86,3,24,84,45};
+
+    conn.add(2,5, vals2);
+    BOOST_CHECK_EQUAL(conn.rows(),5);
+    BOOST_CHECK_EQUAL(conn.cols(),5);
+
+    BOOST_CHECK_EQUAL(conn(0,2),1 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(1,1),4 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(2,2),76 + FROM_FORTRAN);
+
+    BOOST_CHECK_EQUAL(conn(3,2),9 + FROM_FORTRAN+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn(3,4),356 + FROM_FORTRAN+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn(4,1),3 + FROM_FORTRAN+FORTRAN_BASE);
 
 }
+BOOST_AUTO_TEST_CASE( test_block_connectivity_empty_add )
+{
+    BlockConnectivity conn;
+    BOOST_CHECK_EQUAL(conn.rows(),0);
+    BOOST_CHECK_EQUAL(conn.cols(),0);
+
+    idx_t vals2[12] = {2,3,9,34,356,86,3,24,84,45,2,2};
+
+    conn.add(2,5, vals2);
+    BOOST_CHECK_EQUAL(conn.rows(),2);
+    BOOST_CHECK_EQUAL(conn.cols(),5);
+
+    BOOST_CHECK_EQUAL(conn(0,2),9 + FROM_FORTRAN+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn(0,4),356 + FROM_FORTRAN+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn(1,1),3 + FROM_FORTRAN+FORTRAN_BASE);
+}
+
+
 }
 }
