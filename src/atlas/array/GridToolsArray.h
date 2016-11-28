@@ -91,8 +91,6 @@ public:
     return new ArrayT<Value>(shape);
   }
 
-  template <typename T> static Array* create();
-
   template <typename Value, template <class> class Storage, typename StorageInfo>
   static Array* wrap_array(gridtools::data_store< Storage<Value>, StorageInfo> * ds, const ArraySpec& spec) {
     assert(ds);
@@ -109,23 +107,23 @@ public:
     assert(shape.size() > 0);
     switch (shape.size()) {
       case 1:
-        return wrap_array( wrap_gt_storage<T, 1>(data, get_array_from_vector<1>(strides), get_array_from_vector<1>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 1>(data, get_array_from_vector<1>(shape), get_array_from_vector<1>(strides)), spec);
       case 2:
-        return wrap_array( wrap_gt_storage<T, 2>(data, get_array_from_vector<2>(strides), get_array_from_vector<2>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 2>(data, get_array_from_vector<2>(shape), get_array_from_vector<2>(strides)), spec);
       case 3:
-        return wrap_array( wrap_gt_storage<T, 3>(data, get_array_from_vector<3>(strides), get_array_from_vector<3>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 3>(data, get_array_from_vector<3>(shape), get_array_from_vector<3>(strides)), spec);
       case 4:
-        return wrap_array( wrap_gt_storage<T, 4>(data, get_array_from_vector<4>(strides), get_array_from_vector<4>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 4>(data, get_array_from_vector<4>(shape), get_array_from_vector<4>(strides)), spec);
       case 5:
-        return wrap_array( wrap_gt_storage<T, 5>(data, get_array_from_vector<5>(strides), get_array_from_vector<5>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 5>(data, get_array_from_vector<5>(shape), get_array_from_vector<5>(strides)), spec);
       case 6:
-        return wrap_array( wrap_gt_storage<T, 6>(data, get_array_from_vector<6>(strides), get_array_from_vector<6>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 6>(data, get_array_from_vector<6>(shape), get_array_from_vector<6>(strides)), spec);
       case 7:
-        return wrap_array( wrap_gt_storage<T, 7>(data, get_array_from_vector<7>(strides), get_array_from_vector<7>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 7>(data, get_array_from_vector<7>(shape), get_array_from_vector<7>(strides)), spec);
       case 8:
-        return wrap_array( wrap_gt_storage<T, 8>(data, get_array_from_vector<8>(strides), get_array_from_vector<8>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 8>(data, get_array_from_vector<8>(shape), get_array_from_vector<8>(strides)), spec);
       case 9:
-        return wrap_array( wrap_gt_storage<T, 9>(data, get_array_from_vector<9>(strides), get_array_from_vector<9>(strides)), spec);
+        return wrap_array( wrap_gt_storage<T, 9>(data, get_array_from_vector<9>(shape), get_array_from_vector<9>(strides)), spec);
       default: {
         std::stringstream err;
         err << "shape not recognized";
