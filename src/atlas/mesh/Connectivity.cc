@@ -31,7 +31,7 @@ namespace mesh {
 IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
   name_(name),
   owns_(true),
-  data_{array::Array::create<idx_t>(0), array::Array::create<size_t>(1), array::Array::create<size_t>(1)},
+  data_{array::Array::create<idx_t>(1), array::Array::create<size_t>(1), array::Array::create<size_t>(1)},
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
   rows_(0),
   maxcols_(0),
@@ -384,8 +384,8 @@ MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, siz
 MultiBlockConnectivity::MultiBlockConnectivity(const std::string& name) :
   IrregularConnectivity(name),
   block_displs_(array::Array::create<size_t>(1)),
-  block_cols_(array::Array::create<size_t>(0)),
-  block_(array::Array::create<BlockConnectivity*>(0)),
+  block_cols_(array::Array::create<size_t>(1)),
+  block_(array::Array::create<BlockConnectivity*>(1)),
   block_displs_view_(array::make_view<size_t, 1>(*block_displs_)),
   block_cols_view_(array::make_view<size_t, 1>(*block_cols_)),
   block_view_(array::make_view<BlockConnectivity*, 1>(*block_))
@@ -610,7 +610,7 @@ void MultiBlockConnectivity::rebuild_block_connectivity()
 //------------------------------------------------------------------------------------------------------
 
 BlockConnectivity::BlockConnectivity() :
-  owns_(true), rows_(0), cols_(0), values_(array::Array::create<idx_t>(0,0) ),
+  owns_(true), rows_(0), cols_(0), values_(array::Array::create<idx_t>(1,1) ),
   values_view_(array::make_view<idx_t, 2>(*values_)),
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
 {}
