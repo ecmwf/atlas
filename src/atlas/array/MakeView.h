@@ -61,7 +61,7 @@ make_host_storageview(const Array& array) {
   return StorageView<Value>(gridtools::make_host_view(*ds),array.size(),array.contiguous());
 }
 
-#ifdef __CUDACC__
+#ifdef ENABLE_GPU
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
 inline static data_view_tt<Value, NDims>
 make_gt_device_view(const Array& array) {

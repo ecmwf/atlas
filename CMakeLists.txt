@@ -157,7 +157,7 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
         find_package(CUDA REQUIRED)
         string(REPLACE "." "" CUDA_VERSION ${CUDA_VERSION})
         add_definitions(-DCUDA_VERSION=${CUDA_VERSION})
-
+        add_definitions(-DENABLE_GPU)
         set(CUDA_PROPAGATE_HOST_FLAGS OFF)
         if( ${CUDA_VERSION} VERSION_GREATER "60")
             set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
