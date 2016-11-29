@@ -50,6 +50,26 @@ IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
     counts_view_(0) = 0;
 }
 
+GT_FUNCTION
+IrregularConnectivity::IrregularConnectivity(const IrregularConnectivity &other) :
+    owns_(other.owns_),
+    missing_value_(other.missing_value_),
+    rows_(other.rows_),
+    maxcols_(other.maxcols_),
+    mincols_(other.mincols_),
+#ifdef __CUDACC__
+    data_{0,0,0},
+    values_view_(array::make_device_view<idx_t, 1>(*(other.data_[_values_]))),
+    displs_view_(array::make_device_view<size_t, 1>(*(other.data_[_displs_]))),
+    counts_view_(array::make_device_view<size_t, 1>(*(other.data_[_counts_])))
+#else
+    data_{other.data_[0], other.data_[1], other.data_[2]},
+    values_view_(array::make_host_view<idx_t, 1>(*(other.data_[_values_]))),
+    displs_view_(array::make_host_view<size_t, 1>(*(other.data_[_displs_]))),
+    counts_view_(array::make_host_view<size_t, 1>(*(other.data_[_counts_])))
+#endif
+{}
+
 // -----------------------------------------------------------------------------
 
 size_t get_total_size_counts(size_t rows, size_t counts[])
@@ -589,7 +609,6 @@ void MultiBlockConnectivity::rebuild_block_connectivity()
 
 //------------------------------------------------------------------------------------------------------
 
-
 BlockConnectivity::BlockConnectivity() :
   owns_(true), rows_(0), cols_(0), values_(array::Array::create<idx_t>(0,0) ),
   values_view_(array::make_view<idx_t, 2>(*values_)),
@@ -599,11 +618,25 @@ BlockConnectivity::BlockConnectivity() :
 //------------------------------------------------------------------------------------------------------
 
 BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[] )
-  : rows_(rows),
+  : owns_(false),
+    rows_(rows),
     cols_(cols),
     values_(array::Array::wrap<idx_t>(values, array::ArrayShape{rows, cols})),
     values_view_(array::make_view<idx_t, 2>(*values_)),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
+{}
+
+GT_FUNCTION
+BlockConnectivity::BlockConnectivity(const BlockConnectivity& other)
+    : rows_(other.rows_),
+      cols_(other.cols_),
+      values_(other.values_),
+#ifdef __CUDACC__
+      values_view_(array::make_device_view<idx_t, 2>(*values_)),
+#else
+      values_view_(array::make_device_view<idx_t, 2>(*values_)),
+#endif
+      missing_value_( other.missing_value_)
 {}
 
 //------------------------------------------------------------------------------------------------------

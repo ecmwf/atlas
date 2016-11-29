@@ -31,24 +31,33 @@ namespace test {
 
 
 __global__
-void kernel_ex(BlockConnectivity* conn, bool* result)
+void kernel_block(BlockConnectivity conn, bool* result)
 {
 
-    *result &= (conn->rows() == 2);
-    *result &= (conn->cols() == 5);
+    *result &= (conn.rows() == 2);
+    *result &= (conn.cols() == 5);
 
-    *result &= ((*conn)(0,2) == 9 + FROM_FORTRAN+FORTRAN_BASE);
-    *result &= ((*conn)(0,4) == 356 + FROM_FORTRAN+FORTRAN_BASE);
-    *result &= ((*conn)(1,1) == 3 + FROM_FORTRAN+FORTRAN_BASE);
+    *result &= ((conn)(0,2) == 9 + FROM_FORTRAN+FORTRAN_BASE);
+    *result &= ((conn)(0,4) == 356 + FROM_FORTRAN+FORTRAN_BASE);
+    *result &= ((conn)(1,1) == 3 + FROM_FORTRAN+FORTRAN_BASE);
 }
 
-BOOST_AUTO_TEST_CASE( test_connectivity )
+__global__
+void kernel_irr(IrregularConnectivity conn, bool* result)
 {
-    BlockConnectivity conn_h;
-    BlockConnectivity* conn;
-    cudaMallocManaged(&conn, sizeof(BlockConnectivity));
 
-    std::memcpy(conn, &conn_h, sizeof(BlockConnectivity)); 
+//    *result &= (conn.rows() == 2);
+//    *result &= (conn.cols() == 5);
+
+//    *result &= ((conn)(0,2) == 9 + FROM_FORTRAN+FORTRAN_BASE);
+//    *result &= ((conn)(0,4) == 356 + FROM_FORTRAN+FORTRAN_BASE);
+//    *result &= ((conn)(1,1) == 3 + FROM_FORTRAN+FORTRAN_BASE);
+}
+
+
+BOOST_AUTO_TEST_CASE( test_block_connectivity )
+{
+    BlockConnectivity conn;
 
     bool* result;
     cudaMallocManaged(&result, sizeof(bool));
@@ -57,12 +66,35 @@ BOOST_AUTO_TEST_CASE( test_connectivity )
 
     idx_t vals2[12] = {2,3,9,34,356,86,3,24,84,45,2,2};
 
-    conn->add(2,5, vals2);
-    conn->clone_to_device();
-    kernel_ex<<<1,1>>>(conn, result);
+    conn.add(2,5, vals2);
+    conn.clone_to_device();
+    kernel_block<<<1,1>>>(conn, result);
 
    cudaDeviceSynchronize();
  
+   BOOST_CHECK_EQUAL( *result , true );
+
+}
+
+BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
+{
+    IrregularConnectivity conn("mesh");
+    BOOST_CHECK_EQUAL(conn.rows(),0);
+    BOOST_CHECK_EQUAL(conn.maxcols(),0);
+
+    constexpr idx_t vals[6] = {1,3,4,3,7,8};
+    conn.add(2, 3, vals, true);
+
+    bool* result;
+    cudaMallocManaged(&result, sizeof(bool));
+
+    *result = true;
+
+    conn.clone_to_device();
+    kernel_irr<<<1,1>>>(conn, result);
+
+   cudaDeviceSynchronize();
+
    BOOST_CHECK_EQUAL( *result , true );
 
 }

@@ -136,6 +136,10 @@ public:
   /// No resizing can be performed as data is not owned.
   IrregularConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[] );
 
+  /// @brief Copy ctr
+  GT_FUNCTION
+  IrregularConnectivity(const IrregularConnectivity& other);
+
   ~IrregularConnectivity();
 
 //-- Accessors
@@ -414,6 +418,10 @@ public:
   /// @brief Construct connectivity table wrapping existing raw data.
   /// No resizing can be performed as data is not owned.
   BlockConnectivity( size_t rows, size_t cols, idx_t values[] );
+
+  /// @brief Copy ctr
+  GT_FUNCTION
+  BlockConnectivity(const BlockConnectivity& other);
 
   /// @brief Destructor
   ~BlockConnectivity();
