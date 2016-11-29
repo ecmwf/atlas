@@ -76,7 +76,6 @@ make_gt_device_view(const Array& array) {
 template <typename Value, unsigned int NDims, bool ReadOnly>
 inline ArrayView<Value, NDims>
 make_device_view(const Array& array) {
-std::cout << "MANTLE" << std::endl;
   impl::check_metadata<Value, NDims>(array);
   return ArrayView<Value, NDims>(make_gt_device_view<Value, NDims>(array), array);
 }

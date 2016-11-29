@@ -52,7 +52,7 @@ IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
 
 GT_FUNCTION
 IrregularConnectivity::IrregularConnectivity(const IrregularConnectivity &other) :
-    owns_(other.owns_),
+    owns_(false),
     missing_value_(other.missing_value_),
     rows_(other.rows_),
     maxcols_(other.maxcols_),
@@ -628,7 +628,8 @@ BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[] )
 
 GT_FUNCTION
 BlockConnectivity::BlockConnectivity(const BlockConnectivity& other)
-    : rows_(other.rows_),
+    : owns_(false),
+      rows_(other.rows_),
       cols_(other.cols_),
       values_(other.values_),
 #ifdef __CUDACC__
@@ -685,9 +686,7 @@ void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool
 
 void BlockConnectivity::clone_to_device()  {
     values_->clone_to_device();
-std::cout << "II " << values_view_.data() << std::endl;
     values_view_ = array::make_device_view<idx_t, 2>(*values_);
-std::cout << "II " << values_view_.data() << std::endl;
 
 }
 void BlockConnectivity::clone_from_device() {
