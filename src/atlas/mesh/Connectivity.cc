@@ -652,7 +652,10 @@ void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool
 
 void BlockConnectivity::clone_to_device()  {
     values_->clone_to_device();
+std::cout << "II " << values_view_.data() << std::endl;
     values_view_ = array::make_device_view<idx_t, 2>(*values_);
+std::cout << "II " << values_view_.data() << std::endl;
+
 }
 void BlockConnectivity::clone_from_device() {
     values_->clone_from_device();
