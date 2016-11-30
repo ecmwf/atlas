@@ -135,6 +135,7 @@ grid/partitioners/CheckerBoardPartitioner.cc
 grid/partitioners/CheckerBoardPartitioner.h
 grid/partitioners/Partitioner.cc
 grid/partitioners/Partitioner.h
+grid/projection/Projection.cc
 grid/projection/Projection.h
 grid/projection/LonLatProjection.cc
 grid/projection/LonLatProjection.h
@@ -142,8 +143,10 @@ grid/projection/LambertProjection.cc
 grid/projection/LambertProjection.h
 grid/projection/SchmidtProjection.cc
 grid/projection/SchmidtProjection.h
-grid/projection/RotatedTiltedSchmidtProjection.cc
-grid/projection/RotatedTiltedSchmidtProjection.h
+grid/projection/RotatedLonLatProjection.cc
+grid/projection/RotatedLonLatProjection.h
+grid/projection/RotatedSchmidtProjection.cc
+grid/projection/RotatedSchmidtProjection.h
 grid/spacing/Spacing.h
 grid/spacing/UniformSpacing.h
 grid/spacing/UniformSpacing.cc

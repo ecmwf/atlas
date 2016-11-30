@@ -44,8 +44,7 @@ ARPEGE::ARPEGE(const util::Config& config) :
 		config_proj.set("stretching_factor",c);
 		std::vector<double> pole(2);
 		if ( config.get("pole",pole) ) {
-			std::cout << "POLE PRESENT!" << std::endl;
-			config_proj.set("projectionType","rotatedTiltedSchmidt");
+			config_proj.set("projectionType","rotatedSchmidt");
 			config_proj.set("pole",pole);
 		} else {
 			config_proj.set("projectionType","schmidt");

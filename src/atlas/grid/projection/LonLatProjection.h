@@ -20,8 +20,8 @@ class LonLatProjection: public Projection {
 		static std::string projection_type_str() {return "lonlat";}
 
 		// projection and inverse projection
-		eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2);
-		eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2);
+		virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2);
+		virtual eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2);
 		
 		// purely regional? - no!
 		bool isRegional() { return false; }
