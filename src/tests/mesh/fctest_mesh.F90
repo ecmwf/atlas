@@ -108,66 +108,6 @@ END_TEST
 
 ! -----------------------------------------------------------------------------
 
-
-TEST( test_field_metadata )
-implicit none
-
-  integer(c_int) :: intval
-  logical :: true, false
-  real(c_float) :: real32
-  real(c_double) :: real64
-  character(len=:), allocatable :: string
-  integer(c_int), allocatable :: arr_int32(:)
-  real(c_float), allocatable :: arr_real32(:)
-  type(atlas_Metadata) metadata
-  type(atlas_Field) field
-
-  write(*,*) "test_field_metadata starting"
-
-  field = atlas_Field("field_prop",atlas_real(c_float),(/1,10/))
-  metadata = field%metadata()
-
-  call metadata%set("true",.True.)
-  call metadata%set("false",.False.)
-  call metadata%set("int",20)
-  call metadata%set("real32", real(0.1,kind=c_float)   )
-  call metadata%set("real64", real(0.2,kind=c_double) )
-  call metadata%set("string", "hello world")
-  call metadata%set("arr_int32", (/1,2,3/))
-  call metadata%set("arr_int64", (/1_c_long,2_c_long,3_c_long/))
-  call metadata%set("arr_real32", (/1.1_c_float,2.1_c_float,3.7_c_float/))
-  call metadata%set("arr_real64", (/1.1_c_double,2.1_c_double,3.7_c_double/))
-
-  call metadata%get("true",true)
-  call metadata%get("false",false)
-  call metadata%get("int",intval)
-  call metadata%get("real32",real32)
-  call metadata%get("real64",real64)
-  call metadata%get("string",string)
-  call metadata%get("arr_int64",arr_int32)
-  call metadata%get("arr_real64",arr_real32)
-
-  call metadata%print(atlas_log%info_channel())
-
-  call atlas_log%info(metadata%json())
-  !write(0,*) metadata%json()
-
-  CHECK( true  .eqv. .True.  )
-  CHECK( false .eqv. .False. )
-
-  FCTEST_CHECK_EQUAL( intval, 20 )
-  FCTEST_CHECK_CLOSE( real32, real(0.1,kind=c_float), real(0.,kind=c_float) )
-  FCTEST_CHECK_CLOSE( real64, real(0.2,kind=c_double), real(0.,kind=c_double) )
-  FCTEST_CHECK_EQUAL( string, "hello world" )
-  FCTEST_CHECK_EQUAL( arr_int32, (/1,2,3/) )
-  FCTEST_CHECK_EQUAL( arr_real32, (/1.1_c_float,2.1_c_float,3.7_c_float/) )
-
-  call field%final()
-
-END_TEST
-
-! -----------------------------------------------------------------------------
-
 TEST( test_field_size )
 implicit none
 

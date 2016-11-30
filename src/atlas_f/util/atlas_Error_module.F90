@@ -1,8 +1,6 @@
 
 module atlas_Error_module
 
-use fckit_c_interop_module , only:  c_str, c_ptr_to_string
-
 implicit none
 private
 
@@ -125,8 +123,9 @@ function atlas_err_code()
 end function
 
 function atlas_err_msg()
-  use atlas_errorhandling_c_binding
   use, intrinsic :: iso_c_binding, only: c_ptr
+  use atlas_errorhandling_c_binding
+  use fckit_c_interop_module , only:  c_ptr_to_string
   type(c_ptr) :: msg_cptr
   character(len=:), allocatable :: atlas_err_msg
   msg_cptr = atlas__Error_msg()
@@ -206,17 +205,20 @@ function code_location_file_line_func(file,line,func) result( code_location )
 end function
 
 subroutine atlas_abort_null()
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   call atlas__abort(c_str(""),c_str(""),0,c_str(""))
 end subroutine
 
 subroutine atlas_abort_msg(msg)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   call atlas__abort(c_str(msg),c_str(""),0,c_str(""))
 end subroutine
 
 subroutine atlas_abort_msg_loc(msg,code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   type(atlas_CodeLocation), intent(in) :: code_loc
@@ -226,18 +228,21 @@ end subroutine
 ! -----------------------------------------------------------------------------
 
 subroutine atlas_throw_exception_msg(msg)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   call atlas__throw_exception(c_str(msg),c_str(""),0,c_str(""))
 end subroutine
 
 subroutine atlas_throw_exception_loc(code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_exception(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
 subroutine atlas_throw_exception_msg_loc(msg,code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   type(atlas_CodeLocation), intent(in) :: code_loc
@@ -247,18 +252,21 @@ end subroutine
 ! -----------------------------------------------------------------------------
 
 subroutine atlas_throw_notimplemented_loc(code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_notimplemented(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
 subroutine atlas_throw_notimplemented_msg(msg)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   call atlas__throw_notimplemented(c_str(msg),c_str(""),0,c_str(""))
 end subroutine
 
 subroutine atlas_throw_notimplemented_msg_loc(msg,code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   type(atlas_CodeLocation), intent(in) :: code_loc
@@ -268,18 +276,21 @@ end subroutine
 ! -----------------------------------------------------------------------------
 
 subroutine atlas_throw_outofrange_loc(code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_outofrange(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
 subroutine atlas_throw_outofrange_msg(msg)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   call atlas__throw_outofrange(c_str(msg),c_str(""),0,c_str(""))
 end subroutine
 
 subroutine atlas_throw_outofrange_msg_loc(msg,code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   type(atlas_CodeLocation), intent(in) :: code_loc
@@ -287,6 +298,7 @@ subroutine atlas_throw_outofrange_msg_loc(msg,code_loc)
 end subroutine
 
 subroutine atlas_throw_outofrange_range_loc(arrayname,idx,max,code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: arrayname
   integer, intent(in) :: idx, max
@@ -297,6 +309,7 @@ subroutine atlas_throw_outofrange_range_loc(arrayname,idx,max,code_loc)
 end subroutine
 
 subroutine atlas_throw_outofrange_range(arrayname,idx,max)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: arrayname
   integer, intent(in) :: idx, max
@@ -308,18 +321,21 @@ end subroutine
 ! -----------------------------------------------------------------------------
 
 subroutine atlas_throw_usererror_loc(code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_usererror(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
 subroutine atlas_throw_usererror_msg(msg)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   call atlas__throw_usererror(c_str(msg),c_str(""),0,c_str(""))
 end subroutine
 
 subroutine atlas_throw_usererror_msg_loc(msg,code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   type(atlas_CodeLocation), intent(in) :: code_loc
@@ -329,18 +345,21 @@ end subroutine
 ! -----------------------------------------------------------------------------
 
 subroutine atlas_throw_assertionfailed_loc(code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_assertionfailed(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
 subroutine atlas_throw_assertionfailed_msg(msg)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   call atlas__throw_assertionfailed(c_str(msg),c_str(""),0,c_str(""))
 end subroutine
 
 subroutine atlas_throw_assertionfailed_msg_loc(msg,code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   type(atlas_CodeLocation), intent(in) :: code_loc
@@ -350,18 +369,21 @@ end subroutine
 ! -----------------------------------------------------------------------------
 
 subroutine atlas_throw_seriousbug_loc(code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_seriousbug(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
 subroutine atlas_throw_seriousbug_msg(msg)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   call atlas__throw_seriousbug(c_str(msg),c_str(""),0,c_str(""))
 end subroutine
 
 subroutine atlas_throw_seriousbug_msg_loc(msg,code_loc)
+  use fckit_c_interop_module, only:  c_str
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
   type(atlas_CodeLocation), intent(in) :: code_loc

@@ -1,13 +1,14 @@
 
 module atlas_connectivity_module
 
-use, intrinsic :: iso_c_binding, only : c_int, c_size_t, c_ptr 
+use, intrinsic :: iso_c_binding, only : c_int, c_size_t, c_ptr, c_null_ptr
 use fckit_refcounted_module, only : fckit_refcounted
 implicit none
 
 private :: c_ptr
 private :: c_int
 private :: c_size_t
+private :: c_null_ptr
 
 public :: atlas_Connectivity
 public :: atlas_MultiBlockConnectivity
@@ -106,7 +107,7 @@ type :: atlas_ConnectivityAccess
   integer, private, pointer :: padded_(:,:) => null()
   integer(c_size_t), private :: maxcols_, mincols_
   integer(c_int), private :: missing_value_
-  type(c_ptr), private :: connectivity_ptr
+  type(c_ptr), private :: connectivity_ptr = c_null_ptr
 contains
   procedure, public :: rows  => access_rows
   procedure, public :: value => access_value
@@ -278,16 +279,25 @@ subroutine atlas_Connectivity__padded_data(this, padded, cols)
   if( present(cols) ) cols => this%access%cols
 end subroutine
 
+function c_loc_int32(x)
+  use, intrinsic :: iso_c_binding
+  integer(c_int), target :: x
+  type(c_ptr) :: c_loc_int32
+  c_loc_int32 = c_loc(x)
+end function
+
 subroutine atlas_Connectivity__data(this, data, ncols)
   use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_loc
   class(atlas_Connectivity), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: data(:,:)
+  integer(c_int), pointer, intent(inout) :: data(:,:)
   integer(c_int), intent(out), optional :: ncols
   integer(c_int) :: maxcols
+
   maxcols = this%maxcols()
   if( maxcols == this%mincols() ) then
     if( size(this%access%values_) > 0 ) then
-      call c_f_pointer (c_loc(this%access%values_(1)), data, [maxcols,int(this%access%rows_,c_int)])
+      call c_f_pointer (c_loc_int32(this%access%values_(1)), data, &
+          & (/maxcols,int(this%access%rows_,c_int)/))
       if( present(ncols) ) then
         ncols = maxcols
       endif

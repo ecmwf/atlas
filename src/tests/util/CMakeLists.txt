@@ -27,6 +27,12 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
+  add_fctest( TARGET atlas_fctest_metadata
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_metadata.F90
+    LIBS            atlas_f
+  )
+
 endif()
 
 ecbuild_add_test( TARGET atlas_test_flags

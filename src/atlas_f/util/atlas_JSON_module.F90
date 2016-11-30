@@ -1,11 +1,8 @@
 
 module atlas_JSON_module
 
-use, intrinsic :: iso_c_binding, only : c_char, c_int, c_ptr
-
 implicit none
 
-private :: c_char, c_int, c_ptr
 public :: atlas_JSON
 public :: atlas_PathName
 
@@ -13,7 +10,7 @@ private
 
 
 TYPE :: atlas_PathName
-  character(kind=c_char,len=1), allocatable, private :: string(:)
+  character(len=1), allocatable, private :: string(:)
 contains
   procedure :: str => atlas_PathName__str
 END TYPE atlas_PathName
@@ -25,7 +22,7 @@ end interface
 
 
 TYPE :: atlas_JSON
-  character(kind=c_char,len=1), allocatable, private :: string(:)
+  character(len=1), allocatable, private :: string(:)
 contains
   procedure :: str => atlas_JSON__str
 
@@ -79,6 +76,7 @@ function atlas_JSON__ctor_str(str) result(JSON)
 end function
 
 function atlas_JSON__ctor_path(path) result(JSON)
+  use, intrinsic :: iso_c_binding, only : c_char, c_int, c_ptr
   use atlas_atlas_read_file_c_binding
   use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
   type(atlas_JSON) :: JSON
