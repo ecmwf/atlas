@@ -19,6 +19,7 @@
 #include "atlas/internals/IsGhost.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 // anonymous namespace
 namespace {
@@ -118,6 +119,7 @@ void Trans::ctor_rgg(const size_t nlat, const long pl[], size_t nsmax, const Tra
   trans_.lsplit = p.split_latitudes();
   trans_.flt = p.flt();
 
+  TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
   TRANS_CHECK(::trans_setup(&trans_));
 }
 
@@ -144,6 +146,7 @@ void Trans::ctor_lonlat(const size_t nlon, const size_t nlat, size_t nsmax, cons
   trans_.lsplit = p.split_latitudes();
   trans_.flt = p.flt();
 
+  TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
   TRANS_CHECK(::trans_setup(&trans_));
 }
 
