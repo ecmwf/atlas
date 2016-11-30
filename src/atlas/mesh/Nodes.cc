@@ -25,6 +25,7 @@ Nodes::Nodes(): size_(0)
   remote_index_ = &add( field::Field::create<int   >("remote_idx",array::make_shape(size())) );
   partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size())) );
   lonlat_       = &add( field::Field::create<double>("lonlat",    array::make_shape(size(),2)) );
+  geolonlat_    = &add( field::Field::create<double>("geolonlat", array::make_shape(size(),2)) );
   ghost_        = &add( field::Field::create<int   >("ghost",     array::make_shape(size())) );
 
   edge_connectivity_ = &add( new Connectivity("edge") );

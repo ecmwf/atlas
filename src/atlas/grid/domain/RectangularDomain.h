@@ -23,14 +23,7 @@ class RectangularDomain: public Domain {
     /// Checks if the point is contained in the domain
     bool contains(eckit::geometry::Point2 P);
     
-    std::vector<double> bbox() {
-    	std::vector<double> bb(4);
-    	bb[0]=xmin_;
-    	bb[1]=xmax_;
-    	bb[2]=ymin_;
-    	bb[3]=ymax_;
-    	return bb;
-    }
+    std::vector<double> bbox() const;
     
 	private:
 		

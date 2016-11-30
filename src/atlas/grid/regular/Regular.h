@@ -20,6 +20,7 @@ class Regular: public Structured {
     Regular();
 
     virtual const domain::Domain& domain() const { return *domain_; }
+    virtual const domain::Domain * domain_ptr() const { return domain_; }
     
     virtual eckit::Properties spec() const;
     
@@ -33,7 +34,7 @@ class Regular: public Structured {
 
   protected:
 
-    domain::Domain * domain_;
+    domain::Domain *domain_;
     
     spacing::Spacing * spacing_x_;
     spacing::Spacing * spacing_y_;

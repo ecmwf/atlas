@@ -172,8 +172,8 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
 
   std::string partitioner_factory = "Trans";
   options.get("partitioner",partitioner_factory);
-  if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
-  if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
+  //if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
+  //if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
 
   grid::partitioners::Partitioner::Ptr partitioner( grid::partitioners::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
   grid::GridDistribution::Ptr distribution( partitioner->distribution() );
@@ -810,6 +810,8 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   int ntriags = region.ntriags;
   int nquads  = region.nquads;
 
+  eckit::geometry::LLPoint2 ll;
+
 
   if (include_north_pole) {
     ++nnodes;
@@ -889,6 +891,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   mesh::Nodes& nodes = mesh.nodes();
 
   array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
+  array::ArrayView<double,2> geolonlat        ( nodes.geolonlat() );
   array::ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
   array::ArrayView<int,   1> part          ( nodes.partition() );
   array::ArrayView<int,   1> ghost         ( nodes.ghost() );
@@ -981,6 +984,13 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       lonlat(inode,internals::LON) = x;
       lonlat(inode,internals::LAT) = y;
+      
+      // geographic coordinates
+      rg.geoLonlat(jlon,jlat,ll);
+      geolonlat(inode,internals::LON) = ll.lon();
+      geolonlat(inode,internals::LAT) = ll.lat();
+      // std::cout << ll.lon() << "," << ll.lat() << std::endl;
+      
       glb_idx(inode)   = n+1;
       part(inode) = parts.at(n);
       ghost(inode) = 0;
@@ -1010,6 +1020,11 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       lonlat(inode,internals::LON) = x;
       lonlat(inode,internals::LAT) = y;
+      // geographic coordinates
+      rg.geoLonlat(rg.nlon(jlat) - 1,jlat,ll);
+      geolonlat(inode,internals::LON) = ll.lon();
+      geolonlat(inode,internals::LAT) = ll.lat();
+
       glb_idx(inode)   = periodic_glb.at(jlat)+1;
       part(inode)      = part(inode_left);
       ghost(inode)     = 1;
@@ -1029,6 +1044,8 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
     double x = 180.;
     lonlat(inode,internals::LON) = x;
     lonlat(inode,internals::LAT) = y;
+    // geographic coordinates: impossible, since this point doesn't belong to the grid yet !?
+
     glb_idx(inode)   = periodic_glb.at(rg.nlat()-1)+2;
     part(inode)      = mypart;
     ghost(inode)     = 0;

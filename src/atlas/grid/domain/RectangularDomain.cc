@@ -42,6 +42,19 @@ bool RectangularDomain::contains(eckit::geometry::Point2 xy) {
 	return ( xmin_ <= xy[eckit::geometry::XX] && xmax_ >= xy[eckit::geometry::XX] && ymin_ <= xy[eckit::geometry::YY] && ymax_ >= xy[eckit::geometry::YY] );
 }
 
+std::vector<double> RectangularDomain::bbox() const {
+
+	std::vector<double> bb(4);
+	bb[0]=xmin_;
+	bb[1]=xmax_;
+	bb[2]=ymin_;
+	bb[3]=ymax_;
+	
+	return bb;
+
+}
+
+
 register_BuilderT1(Domain,RectangularDomain,RectangularDomain::domain_type_str());
 
 }  // namespace domain

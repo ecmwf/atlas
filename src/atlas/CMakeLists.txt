@@ -131,6 +131,8 @@ grid/lonlat/ShiftedLonLat.cc
 grid/lonlat/ShiftedLonLat.h
 grid/partitioners/EqualRegionsPartitioner.cc
 grid/partitioners/EqualRegionsPartitioner.h
+grid/partitioners/CheckerBoardPartitioner.cc
+grid/partitioners/CheckerBoardPartitioner.h
 grid/partitioners/Partitioner.cc
 grid/partitioners/Partitioner.h
 grid/projection/Projection.h
@@ -224,6 +226,10 @@ mesh/generators/MeshGenerator.cc
 mesh/generators/MeshGenerator.h
 mesh/generators/Structured.h
 mesh/generators/Structured.cc
+mesh/generators/RegularMeshGenerator.cc
+mesh/generators/RegularMeshGenerator.h
+mesh/actions/BuildTorusXYZField.h
+mesh/actions/BuildTorusXYZField.cc
 )
 
 list( APPEND atlas_output_srcs

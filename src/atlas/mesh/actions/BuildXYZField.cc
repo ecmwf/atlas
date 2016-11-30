@@ -37,10 +37,11 @@ field::Field& BuildXYZField::operator()(mesh::Nodes& nodes) const
   if( !nodes.has_field(name_) )
   {
     size_t npts = nodes.size();
-    array::ArrayView<double,2> lonlat( nodes.lonlat() );
+    array::ArrayView<double,2> lonlat( nodes.geolonlat() );
     array::ArrayView<double,2> xyz   ( nodes.add( field::Field::create<double>(name_,array::make_shape(npts,3) ) ) );
     for( size_t n=0; n<npts; ++n )
     {
+    	//std::cout << lonlat[n][0] << std::endl;
       eckit::geometry::lonlat_to_3d(lonlat[n].data(),xyz[n].data());
     }
   }

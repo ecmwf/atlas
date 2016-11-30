@@ -80,6 +80,7 @@ class Grid : public eckit::Owned {
 
     /// @return area represented by the grid
     virtual const domain::Domain& domain() const = 0;
+    virtual const domain::Domain * domain_ptr() const { return NULL;};
 
     /// @return projection (mapping between geographic coordinates and grid coordinates)
     //virtual const Projection& projection() const = 0;
