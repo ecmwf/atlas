@@ -124,7 +124,6 @@ public:
   static constexpr unsigned short _values_=0;
   static constexpr unsigned short _displs_=1;
   static constexpr unsigned short _counts_=2;
-  static constexpr unsigned short _base_offset_=0;
 public:
 //-- Constructors
 
@@ -533,24 +532,24 @@ private:
 inline idx_t IrregularConnectivity::operator()( size_t row_idx, size_t col_idx ) const
 {
   assert(counts_view_(row_idx) >( col_idx));
-  return values_view_(displs_view_(row_idx) + col_idx+_base_offset_) FROM_FORTRAN;
+  return values_view_(displs_view_(row_idx) + col_idx) FROM_FORTRAN;
 }
 
 inline void IrregularConnectivity::set( size_t row_idx, const idx_t column_values[] ) {
   const size_t N = counts_view_(row_idx);
   for( size_t n=0; n<N; ++n ) {
-    values_view_(displs_view_(row_idx) + n + 1) = column_values[n] TO_FORTRAN;
+    values_view_(displs_view_(row_idx) + n) = column_values[n] TO_FORTRAN;
   }
 }
 
 inline void IrregularConnectivity::set( size_t row_idx, size_t col_idx, const idx_t value ) {
     assert(col_idx < counts_view_(row_idx));
-  values_view_(displs_view_(row_idx) + col_idx+_base_offset_) = value TO_FORTRAN;
+  values_view_(displs_view_(row_idx) + col_idx) = value TO_FORTRAN;
 }
 
 inline IrregularConnectivity::Row IrregularConnectivity::row( size_t row_idx ) const
 {
-  return IrregularConnectivity::Row(const_cast<idx_t*>(values_view_.data() ) +displs_view_(row_idx)+_base_offset_ , array::ArrayShape{counts_view_(row_idx)});
+  return IrregularConnectivity::Row(const_cast<idx_t*>(values_view_.data() ) +displs_view_(row_idx) , array::ArrayShape{counts_view_(row_idx)});
 }
 
 // -----------------------------------------------------------------------------------------------------

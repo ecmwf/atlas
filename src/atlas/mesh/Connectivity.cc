@@ -150,15 +150,26 @@ void IrregularConnectivity::add( size_t rows, size_t cols, const idx_t values[],
 {
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
   size_t old_size = data_[_values_]->size();
+
+  if(rows_ == 0)
+     old_size=0;
+
   size_t new_size = old_size + rows*cols;
   size_t new_rows = rows_+rows;
-  data_[_displs_]->resize(new_rows+1);
-  data_[_counts_]->resize(new_rows+1);
+
+  data_[_displs_]->resize(new_rows);
+  data_[_counts_]->resize(new_rows);
   displs_view_ = array::make_view<size_t, 1>(*(data_[_displs_]));
   counts_view_ = array::make_view<size_t, 1>(*(data_[_counts_]));
 
   for(size_t j=0; rows_<new_rows; ++rows_, ++j) {
-    displs_view_(rows_+1) = displs_view_(rows_)+cols;
+    size_t prev_displ = 0;
+    if(rows_ > 0) {
+        prev_displ = displs_view_(rows_-1);
+        displs_view_(rows_) = prev_displ+counts_view_(rows_-1);
+    }
+    else
+        displs_view_(rows_) = 0;
     counts_view_(rows_) = cols;
   }
   maxcols_ = std::max(maxcols_,cols);
@@ -232,9 +243,8 @@ void IrregularConnectivity::add( size_t rows, size_t cols )
 
 //------------------------------------------------------------------------------------------------------
 
-void IrregularConnectivity::insert( size_t pos, size_t rows, size_t cols, const idx_t values[], bool fortran_array )
+void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array )
 {
-  size_t position = pos+_base_offset_;
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
   size_t position_displs = displs_view_(position);
   data_[_displs_]->insert( position, rows);
@@ -282,15 +292,20 @@ void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols )
 
 //------------------------------------------------------------------------------------------------------
 
-void IrregularConnectivity::insert( size_t pos, size_t rows, const size_t cols[] )
+void IrregularConnectivity::insert( size_t position, size_t rows, const size_t cols[] )
 {
-
-    size_t position = pos+_base_offset_;
-
     if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
     size_t position_displs = displs_view_(position);
-    data_[_displs_]->insert( position, rows);
-    data_[_counts_]->insert( position, rows);
+
+    if(rows_==0) {
+        if(position>1) {
+            data_[_displs_]->insert( position-1, rows);
+            data_[_counts_]->insert( position-1, rows);
+        }
+    } else {
+        data_[_displs_]->insert( position, rows);
+        data_[_counts_]->insert( position, rows);
+    }
     displs_view_ = array::make_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_view<size_t, 1>(*(data_[_counts_]));
 

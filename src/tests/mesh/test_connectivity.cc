@@ -44,15 +44,15 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     BOOST_CHECK_EQUAL(conn.mincols(),4);
     BOOST_CHECK_EQUAL(conn.maxcols(),4);
 
-    BOOST_CHECK_EQUAL(conn(0,0),3 + FROM_FORTRAN);
-    BOOST_CHECK_EQUAL(conn(0,1),4 + FROM_FORTRAN);
-    BOOST_CHECK_EQUAL(conn(0,2),6 + FROM_FORTRAN);
-    BOOST_CHECK_EQUAL(conn(0,3),7 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(0,0),2+FROM_FORTRAN+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn(0,1),3+FROM_FORTRAN+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn(0,2),5+FROM_FORTRAN+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn(0,3),6+FROM_FORTRAN+FORTRAN_BASE);
 
-    BOOST_CHECK_EQUAL(conn.row(0)(0),3);
-    BOOST_CHECK_EQUAL(conn.row(0)(1),4);
-    BOOST_CHECK_EQUAL(conn.row(0)(2),6);
-    BOOST_CHECK_EQUAL(conn.row(0)(3),7);
+    BOOST_CHECK_EQUAL(conn.row(0)(0),2+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn.row(0)(1),3+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn.row(0)(2),5+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn.row(0)(3),6+FORTRAN_BASE);
 
 
     constexpr idx_t vals2[6] = {1,3,4,3,7,8};
@@ -162,10 +162,34 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
 
 }
 
+BOOST_AUTO_TEST_CASE( test_irregular_insert )
+{
+    IrregularConnectivity conn("mesh");
+    BOOST_CHECK_EQUAL(conn.rows(),0);
+    BOOST_CHECK_EQUAL(conn.maxcols(),0);
+
+    constexpr idx_t vals[4] = {2,3,5,6};
+    conn.insert(0, 1, 4, vals, false);
+
+    BOOST_CHECK_EQUAL(conn.rows(),1);
+    BOOST_CHECK_EQUAL(conn.cols(0),4);
+    BOOST_CHECK_EQUAL(conn.mincols(),4);
+    BOOST_CHECK_EQUAL(conn.maxcols(),4);
+
+    BOOST_CHECK_EQUAL(conn(0,0),2 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(0,1),3 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(0,2),5 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(0,3),6 + FROM_FORTRAN);
+
+    BOOST_CHECK_EQUAL(conn.row(0)(0),2);
+    BOOST_CHECK_EQUAL(conn.row(0)(1),3);
+    BOOST_CHECK_EQUAL(conn.row(0)(2),5);
+    BOOST_CHECK_EQUAL(conn.row(0)(3),6);
+}
 
 BOOST_AUTO_TEST_CASE( test_block_connectivity )
 {
-/*    idx_t vals[15] = {3,7,1,4,5,6,4,56,8,4,1,3,76,4,3};
+    idx_t vals[15] = {3,7,1,4,5,6,4,56,8,4,1,3,76,4,3};
     BlockConnectivity conn(3,5, vals);
     BOOST_CHECK_EQUAL(conn.rows(),3);
     BOOST_CHECK_EQUAL(conn.cols(),5);
@@ -174,24 +198,24 @@ BOOST_AUTO_TEST_CASE( test_block_connectivity )
     BOOST_CHECK_EQUAL(conn(1,1),4 + FROM_FORTRAN);
     BOOST_CHECK_EQUAL(conn(2,2),76 + FROM_FORTRAN);
 
+}
+
+BOOST_AUTO_TEST_CASE( test_block_connectivity_add ) {
+    BlockConnectivity conn;
     idx_t vals2[10] = {2,3,9,34,356,86,3,24,84,45};
 
     conn.add(2,5, vals2);
-    BOOST_CHECK_EQUAL(conn.rows(),5);
+    BOOST_CHECK_EQUAL(conn.rows(),2);
     BOOST_CHECK_EQUAL(conn.cols(),5);
 
-    BOOST_CHECK_EQUAL(conn(0,2),1 + FROM_FORTRAN);
-    BOOST_CHECK_EQUAL(conn(1,1),4 + FROM_FORTRAN);
-    BOOST_CHECK_EQUAL(conn(2,2),76 + FROM_FORTRAN);
+    BOOST_CHECK_EQUAL(conn(0,2),9 + FROM_FORTRAN+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn(0,4),356 + FROM_FORTRAN+FORTRAN_BASE);
+    BOOST_CHECK_EQUAL(conn(1,1),3 + FROM_FORTRAN+FORTRAN_BASE);
 
-    BOOST_CHECK_EQUAL(conn(3,2),9 + FROM_FORTRAN+FORTRAN_BASE);
-    BOOST_CHECK_EQUAL(conn(3,4),356 + FROM_FORTRAN+FORTRAN_BASE);
-    BOOST_CHECK_EQUAL(conn(4,1),3 + FROM_FORTRAN+FORTRAN_BASE);
-*/
 }
 BOOST_AUTO_TEST_CASE( test_block_connectivity_empty_add )
 {
-/*    BlockConnectivity conn;
+    BlockConnectivity conn;
     BOOST_CHECK_EQUAL(conn.rows(),0);
     BOOST_CHECK_EQUAL(conn.cols(),0);
 
@@ -204,7 +228,7 @@ BOOST_AUTO_TEST_CASE( test_block_connectivity_empty_add )
     BOOST_CHECK_EQUAL(conn(0,2),9 + FROM_FORTRAN+FORTRAN_BASE);
     BOOST_CHECK_EQUAL(conn(0,4),356 + FROM_FORTRAN+FORTRAN_BASE);
     BOOST_CHECK_EQUAL(conn(1,1),3 + FROM_FORTRAN+FORTRAN_BASE);
-*/
+
 }
 
 
