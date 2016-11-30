@@ -54,10 +54,10 @@ void kernel_irr(IrregularConnectivity conn, bool* result)
     *result &= (conn.cols(1) == 3);
     *result &= (conn.mincols() == 3);
     *result &= (conn.maxcols() == 3);
-printf(" %d %d %d ", conn(0,0), conn(0,1), conn(0,2));
-    *result &= (conn(0,0),1 + FROM_FORTRAN);
-    *result &= (conn(0,1),3 + FROM_FORTRAN);
-    *result &= (conn(0,2),4 + FROM_FORTRAN);
+
+    *result &= (conn(0,0) == 1 + FROM_FORTRAN);
+    *result &= (conn(0,1) ==3 + FROM_FORTRAN);
+    *result &= (conn(0,2) == 4 + FROM_FORTRAN);
 
 }
 
