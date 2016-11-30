@@ -50,26 +50,6 @@ IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
     counts_view_(0) = 0;
 }
 
-GT_FUNCTION
-IrregularConnectivity::IrregularConnectivity(const IrregularConnectivity &other) :
-    owns_(false),
-    missing_value_(other.missing_value_),
-    rows_(other.rows_),
-    maxcols_(other.maxcols_),
-    mincols_(other.mincols_),
-#ifdef __CUDACC__
-    data_{0,0,0},
-    values_view_(array::make_device_view<idx_t, 1>(*(other.data_[_values_]))),
-    displs_view_(array::make_device_view<size_t, 1>(*(other.data_[_displs_]))),
-    counts_view_(array::make_device_view<size_t, 1>(*(other.data_[_counts_])))
-#else
-    data_{other.data_[0], other.data_[1], other.data_[2]},
-    values_view_(array::make_host_view<idx_t, 1>(*(other.data_[_values_]))),
-    displs_view_(array::make_host_view<size_t, 1>(*(other.data_[_displs_]))),
-    counts_view_(array::make_host_view<size_t, 1>(*(other.data_[_counts_])))
-#endif
-{}
-
 // -----------------------------------------------------------------------------
 
 size_t get_total_size_counts(size_t rows, size_t counts[])
@@ -97,9 +77,9 @@ IrregularConnectivity::IrregularConnectivity( idx_t values[], size_t rows, size_
     callback_update_(0),
     callback_set_(0),
     callback_delete_(0),
-    values_view_(array::make_view<idx_t, 1>(*data_[_values_])),
-    displs_view_(array::make_view<size_t, 1>(*data_[_displs_])),
-    counts_view_(array::make_view<size_t, 1>(*data_[_counts_]))
+    values_view_(array::make_view<idx_t, 1>(*(data_[_values_]))),
+    displs_view_(array::make_view<size_t, 1>(*(data_[_displs_]))),
+    counts_view_(array::make_view<size_t, 1>(*(data_[_counts_])))
 {
   maxcols_ = 0;
   mincols_ = std::numeric_limits<size_t>::max();
@@ -252,8 +232,9 @@ void IrregularConnectivity::add( size_t rows, size_t cols )
 
 //------------------------------------------------------------------------------------------------------
 
-void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array )
+void IrregularConnectivity::insert( size_t pos, size_t rows, size_t cols, const idx_t values[], bool fortran_array )
 {
+  size_t position = pos+_base_offset_;
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
   size_t position_displs = displs_view_(position);
   data_[_displs_]->insert( position, rows);
@@ -301,8 +282,11 @@ void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols )
 
 //------------------------------------------------------------------------------------------------------
 
-void IrregularConnectivity::insert( size_t position, size_t rows, const size_t cols[] )
+void IrregularConnectivity::insert( size_t pos, size_t rows, const size_t cols[] )
 {
+
+    size_t position = pos+_base_offset_;
+
     if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
     size_t position_displs = displs_view_(position);
     data_[_displs_]->insert( position, rows);
@@ -624,20 +608,6 @@ BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[] )
     values_(array::Array::wrap<idx_t>(values, array::ArrayShape{rows, cols})),
     values_view_(array::make_view<idx_t, 2>(*values_)),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
-{}
-
-GT_FUNCTION
-BlockConnectivity::BlockConnectivity(const BlockConnectivity& other)
-    : owns_(false),
-      rows_(other.rows_),
-      cols_(other.cols_),
-      values_(other.values_),
-#ifdef __CUDACC__
-      values_view_(array::make_device_view<idx_t, 2>(*values_)),
-#else
-      values_view_(array::make_device_view<idx_t, 2>(*values_)),
-#endif
-      missing_value_( other.missing_value_)
 {}
 
 //------------------------------------------------------------------------------------------------------

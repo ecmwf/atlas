@@ -48,16 +48,17 @@ void kernel_irr(IrregularConnectivity conn, bool* result)
 
 
     *result = true;
-//    *result &= (conn.rows()== 3);
-/*  *result &= (conn.cols(1) == 3);
-    BOOST_CHECK_EQUAL(conn.cols(2),3);
-    BOOST_CHECK_EQUAL(conn.mincols(),3);
-    BOOST_CHECK_EQUAL(conn.maxcols(),4);
+    
+    *result &= (conn.rows()== 2);
+    *result &= (conn.cols(0) == 3);
+    *result &= (conn.cols(1) == 3);
+    *result &= (conn.mincols() == 3);
+    *result &= (conn.maxcols() == 3);
+printf(" %d %d %d ", conn(0,0), conn(0,1), conn(0,2));
+    *result &= (conn(0,0),1 + FROM_FORTRAN);
+    *result &= (conn(0,1),3 + FROM_FORTRAN);
+    *result &= (conn(0,2),4 + FROM_FORTRAN);
 
-    BOOST_CHECK_EQUAL(conn(1,0),1 + FROM_FORTRAN);
-    BOOST_CHECK_EQUAL(conn(1,1),3 + FROM_FORTRAN);
-    BOOST_CHECK_EQUAL(conn(1,2),4 + FROM_FORTRAN);
-*/
 }
 
 
@@ -95,7 +96,6 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     cudaMallocManaged(&result, sizeof(bool));
 
     *result = true;
-
     conn.clone_to_device();
     kernel_irr<<<1,1>>>(conn, result);
 
