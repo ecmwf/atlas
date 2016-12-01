@@ -188,6 +188,14 @@ ecbuild_debug_var( ATLAS_EXTRA_LIBRARIES )
 ################################################################################
 # sources
 
+if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI"  AND
+    CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 16.8 )
+  set( atlas_fctest_parametrisation_DISABLED TRUE )
+  ecbuild_warn( "PGI Fortran compiler version tested up to 16.7 has a compiler bug "
+                "that leads to a segfaults for atlas_fctest_parametrisation. "
+                "Disabling this test..." )
+endif()
+
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
 add_subdirectory( src )
 
