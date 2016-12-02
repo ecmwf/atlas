@@ -4,26 +4,13 @@
 module atlas_Trans_module
 
 
-use fckit_c_interop_module, only: c_str
-use fckit_array_module, only: array_view1d
 use fckit_object_module, only: fckit_object
 use fckit_refcounted_module, only: fckit_refcounted
-use atlas_Grid_module, only: atlas_Grid
-use atlas_functionspace_module, only: atlas_Functionspace
-use atlas_field_module, only: atlas_Field
-use atlas_fieldset_module, only: atlas_FieldSet
-use atlas_Error_module, only: atlas_code_location, atlas_throw_usererror
 
 implicit none
 
-private :: c_str, array_view1d
 private :: fckit_refcounted
 private :: fckit_object
-private :: atlas_Grid
-private :: atlas_Field
-private :: atlas_FieldSet
-private :: atlas_FunctionSpace
-private :: atlas_code_location
 
 public :: atlas_Trans
 public :: atlas_TransParameters
@@ -150,6 +137,7 @@ contains
 #define THROW_ERROR call te("atlas_Trans_module.F90",__LINE__)
 
 subroutine te(file,line)
+  use atlas_Error_module, only: atlas_code_location, atlas_throw_usererror
   character(len=*), intent(in) :: file
   integer, intent(in) :: line
   call atlas_throw_usererror("Cannot use atlas_Trans since atlas is compiled without" // &
@@ -157,8 +145,9 @@ subroutine te(file,line)
 end subroutine
 
 function atlas_Trans__ctor( grid, nsmax ) result(trans)
-  use atlas_trans_c_binding
   use, intrinsic :: iso_c_binding, only: c_null_ptr
+  use atlas_trans_c_binding
+  use atlas_Grid_module, only: atlas_Grid
   type(atlas_Trans) :: trans
   class(atlas_Grid), intent(in) :: grid
   integer, intent(in), optional :: nsmax
@@ -590,6 +579,9 @@ end function atlas_Trans__nvalue
 
 subroutine atlas_Trans__dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_fieldset_module, only: atlas_FieldSet
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: gp
   class(atlas_FieldSet), intent(in)  :: gpfields
@@ -622,6 +614,8 @@ end subroutine atlas_Trans__dirtrans_fieldset_nodes
 
 subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
   use atlas_trans_c_binding
+  use atlas_fieldset_module, only: atlas_FieldSet
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: gpfields
   class(atlas_FieldSet), intent(inout) :: spfields
@@ -650,6 +644,9 @@ end subroutine atlas_Trans__dirtrans_fieldset
 
 subroutine atlas_Trans__invtrans_fieldset_nodes(this, sp, spfields, gp, gpfields, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_fieldset_module, only: atlas_FieldSet
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_FieldSet), intent(in)  :: spfields
@@ -682,6 +679,8 @@ end subroutine atlas_Trans__invtrans_fieldset_nodes
 
 subroutine atlas_Trans__invtrans_fieldset(this, spfields, gpfields, parameters)
   use atlas_trans_c_binding
+  use atlas_fieldset_module, only: atlas_FieldSet
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: spfields
   class(atlas_FieldSet), intent(inout) :: gpfields
@@ -711,6 +710,8 @@ end subroutine atlas_Trans__invtrans_fieldset
 
 subroutine atlas_Trans__dirtrans_field_nodes(this, gp, gpfield, sp, spfield, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: gp
   class(atlas_Field), intent(in)  :: gpfield
@@ -743,6 +744,7 @@ end subroutine atlas_Trans__dirtrans_field_nodes
 
 subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
   use atlas_trans_c_binding
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: gpfield
   class(atlas_Field), intent(inout) :: spfield
@@ -771,6 +773,8 @@ end subroutine atlas_Trans__dirtrans_field
 
 subroutine atlas_Trans__dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, spdiv, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: gp
   type(atlas_Field), intent(in)  :: gpwind
@@ -806,6 +810,8 @@ end subroutine atlas_Trans__dirtrans_wind2vordiv_field
 
 subroutine atlas_Trans__invtrans_field_nodes(this, sp, spfield, gp, gpfield, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_Field), intent(in)  :: spfield
@@ -838,6 +844,7 @@ end subroutine atlas_Trans__invtrans_field_nodes
 
 subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
   use atlas_trans_c_binding
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: spfield
   class(atlas_Field), intent(inout) :: gpfield
@@ -867,6 +874,8 @@ end subroutine atlas_Trans__invtrans_field
 
 subroutine atlas_Trans__invtrans_vordiv2wind_field(this, sp, spvor, spdiv, gp, gpwind, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_Field), intent(in)  :: spvor
@@ -915,8 +924,9 @@ subroutine atlas_Trans__gathspec_r1(this, local, global)
 end subroutine atlas_Trans__gathspec_r1
 
 subroutine atlas_Trans__gathspec_r2(this, local, global)
-  use atlas_trans_c_binding
   use, intrinsic :: iso_c_binding, only : c_double
+  use fckit_array_module, only: array_view1d
+  use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:,:)
   real(c_double), intent(inout) :: global(:,:)

@@ -3,22 +3,11 @@
 
 module atlas_Mesh_module
 
-
-use, intrinsic :: iso_c_binding, only: c_ptr
-use fckit_c_interop_module, only: c_str
 use fckit_refcounted_module, only: fckit_refcounted
-use atlas_mesh_Cells_module, only: atlas_mesh_Cells
-use atlas_mesh_Edges_module, only: atlas_mesh_Edges
-use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
 
 implicit none
 
-private :: c_ptr
-private :: c_str
 private :: fckit_refcounted
-private :: atlas_mesh_Cells
-private :: atlas_mesh_Edges
-private :: atlas_mesh_Nodes
 
 public :: atlas_Mesh
 
@@ -63,6 +52,7 @@ contains
 !========================================================
 
 function atlas_Mesh__cptr(cptr) result(mesh)
+  use, intrinsic :: iso_c_binding, only: c_ptr
   use atlas_mesh_c_binding
   type(atlas_Mesh) :: mesh
   type(c_ptr), intent(in) :: cptr
@@ -77,6 +67,7 @@ end function atlas_Mesh__ctor
 
 function Mesh__create_nodes(this,nb_nodes) result(nodes)
   use atlas_mesh_c_binding
+  use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
   type(atlas_mesh_Nodes) :: nodes
   class(atlas_Mesh), intent(in) :: this
   integer, intent(in) :: nb_nodes
@@ -86,6 +77,7 @@ end function
 
 function Mesh__nodes(this) result(nodes)
   use atlas_mesh_c_binding
+  use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Nodes) :: nodes
   call nodes%reset_c_ptr( atlas__Mesh__nodes(this%c_ptr()) )
@@ -94,6 +86,7 @@ end function
 
 function Mesh__cells(this) result(cells)
   use atlas_mesh_c_binding
+  use atlas_mesh_Cells_module, only: atlas_mesh_Cells
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Cells) :: cells
   cells = atlas_mesh_Cells(atlas__Mesh__cells(this%c_ptr()))
@@ -103,6 +96,7 @@ end function
 
 function Mesh__edges(this) result(edges)
   use atlas_mesh_c_binding
+  use atlas_mesh_Edges_module, only: atlas_mesh_Edges
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Edges) :: edges
   edges = atlas_mesh_Edges( atlas__Mesh__Edges(this%c_ptr()) )

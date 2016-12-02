@@ -12,11 +12,10 @@ atlas_abort("${string}$",atlas_code_location("atlas_Field_module.F90",${_LINE_}$
 module atlas_field_module
 
 use fckit_refcounted_module, only : fckit_refcounted
-use atlas_Config_module, only : atlas_Config
 use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange
 implicit none
 
-private :: fckit_refcounted, atlas_Config, atlas_code_location, atlas_abort, atlas_throw_outofrange
+private :: fckit_refcounted, atlas_code_location, atlas_abort, atlas_throw_outofrange
 
 public :: atlas_Field
 public :: atlas_real
@@ -278,6 +277,7 @@ end function
 
 function atlas_Field__create(params) result(field)
   use atlas_field_c_binding
+  use atlas_Config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Config), intent(in) :: params
   field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
@@ -288,6 +288,7 @@ end function
 
 function atlas_Field__create_name_kind_shape_int32(name,kind,shape) result(field)
   use atlas_field_c_binding
+  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -312,6 +313,7 @@ end function
 
 function atlas_Field__create_name_kind_shape_int64(name,kind,shape) result(field)
   use atlas_field_c_binding
+  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_long
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -336,6 +338,7 @@ end function
 
 function atlas_Field__create_kind_shape_int32(kind,shape) result(field)
   use atlas_field_c_binding
+  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind
@@ -356,6 +359,7 @@ end function
 
 function atlas_Field__create_kind_shape_int64(kind,shape) result(field)
   use atlas_field_c_binding
+  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int, c_long
   type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind

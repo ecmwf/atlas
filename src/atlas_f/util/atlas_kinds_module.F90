@@ -5,12 +5,12 @@
 module atlas_kinds_module
 
 use, intrinsic :: iso_c_binding, only: &
-  & c_size_t, c_int, c_long, c_float, c_double, c_char
+  & c_int, c_long
 
 implicit none
 private
 
-private :: c_size_t, c_long, c_int, c_float, c_double, c_char
+private :: c_long, c_int
 
 public :: ATLAS_KIND_GIDX
 public :: ATLAS_KIND_IDX
