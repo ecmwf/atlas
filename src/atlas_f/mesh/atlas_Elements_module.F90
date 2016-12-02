@@ -2,20 +2,10 @@
 module atlas_Elements_module
 
 use fckit_refcounted_module, only: fckit_refcounted
-use atlas_Connectivity_module, only: atlas_BlockConnectivity
-use atlas_ElementType_module, only: atlas_ElementType
-use atlas_Field_module, only: atlas_Field
-use, intrinsic :: iso_c_binding, only: c_size_t, c_int, c_ptr
-use fckit_c_interop_module, only: c_str
 
 implicit none
 
-private :: c_size_t, c_int, c_ptr
-private :: c_str
 private :: fckit_refcounted
-private :: atlas_BlockConnectivity
-private :: atlas_Field
-private :: atlas_ElementType
 
 public :: atlas_Elements
 
@@ -69,6 +59,7 @@ contains
 !========================================================
 
 function atlas_Elements__cptr(cptr) result(elements)
+  use, intrinsic :: iso_c_binding, only: c_ptr
   type(atlas_Elements) :: elements
   type(c_ptr), intent(in) :: cptr
   call elements%reset_c_ptr( cptr )
@@ -84,6 +75,7 @@ subroutine atlas_Elements__delete(this)
 end subroutine
 
 function atlas_Elements__size(this) result(val)
+  use, intrinsic :: iso_c_binding, only: c_size_t
   use atlas_elements_c_binding
   integer(c_size_t) :: val
   class(atlas_Elements), intent(in) :: this
@@ -92,6 +84,7 @@ end function
 
 function node_connectivity(this) result(connectivity)
   use atlas_elements_c_binding
+  use atlas_Connectivity_module, only: atlas_BlockConnectivity
   class(atlas_Elements), intent(in) :: this
   type(atlas_BlockConnectivity) :: connectivity
   connectivity = atlas_BlockConnectivity( &
@@ -101,6 +94,7 @@ end function
 
 function edge_connectivity(this) result(connectivity)
   use atlas_elements_c_binding
+  use atlas_Connectivity_module, only: atlas_BlockConnectivity
   class(atlas_Elements), intent(in) :: this
   type(atlas_BlockConnectivity) :: connectivity
   connectivity = atlas_BlockConnectivity( &
@@ -110,6 +104,7 @@ end function
 
 function cell_connectivity(this) result(connectivity)
   use atlas_elements_c_binding
+  use atlas_Connectivity_module, only: atlas_BlockConnectivity
   class(atlas_Elements), intent(in) :: this
   type(atlas_BlockConnectivity) :: connectivity
   connectivity = atlas_BlockConnectivity( &
@@ -119,6 +114,7 @@ end function
 
 function element_type(this) result(etype)
   use atlas_elements_c_binding
+  use atlas_ElementType_module, only: atlas_ElementType
   class(atlas_Elements), intent(in) :: this
   type(atlas_ElementType) :: etype
   etype = atlas_ElementType( &
@@ -127,6 +123,7 @@ function element_type(this) result(etype)
 end function
 
 subroutine add_elements_size_t(this,nb_elements)
+  use, intrinsic :: iso_c_binding, only: c_size_t
   use atlas_elements_c_binding
   class(atlas_Elements), intent(inout) :: this
   integer(c_size_t) :: nb_elements
@@ -134,6 +131,7 @@ subroutine add_elements_size_t(this,nb_elements)
 end subroutine
 
 subroutine add_elements_int(this,nb_elements)
+  use, intrinsic :: iso_c_binding, only: c_size_t, c_int
   use atlas_elements_c_binding
   class(atlas_Elements), intent(inout) :: this
   integer(c_int) :: nb_elements
@@ -141,6 +139,7 @@ subroutine add_elements_int(this,nb_elements)
 end subroutine
 
 function nb_fields(this) result(val)
+  use, intrinsic :: iso_c_binding, only: c_size_t
   use atlas_elements_c_binding
   integer(c_size_t) :: val
   class(atlas_Elements), intent(in) :: this
@@ -148,6 +147,7 @@ function nb_fields(this) result(val)
 end function
 
 function has_field(this,name) result(val)
+  use fckit_c_interop_module, only: c_str
   use atlas_elements_c_binding
   logical :: val
   class(atlas_Elements), intent(in) :: this
@@ -160,7 +160,9 @@ function has_field(this,name) result(val)
 end function
 
 function field_by_name(this,name) result(field)
+  use fckit_c_interop_module, only: c_str
   use atlas_elements_c_binding
+  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -169,7 +171,9 @@ function field_by_name(this,name) result(field)
 end function
 
 function field_by_idx_size_t(this,idx) result(field)
+  use, intrinsic :: iso_c_binding, only: c_size_t
   use atlas_elements_c_binding
+  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
   integer(c_size_t), intent(in) :: idx
@@ -178,7 +182,9 @@ function field_by_idx_size_t(this,idx) result(field)
 end function
 
 function field_by_idx_int(this,idx) result(field)
+  use, intrinsic :: iso_c_binding, only: c_size_t, c_int
   use atlas_elements_c_binding
+  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
   integer(c_int), intent(in) :: idx
@@ -188,6 +194,7 @@ end function
 
 function global_index(this) result(field)
   use atlas_elements_c_binding
+  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
   field = atlas_Field( atlas__mesh__Elements__global_index(this%c_ptr()) )
@@ -196,6 +203,7 @@ end function
 
 function remote_index(this) result(field)
   use atlas_elements_c_binding
+  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
   field = atlas_Field( atlas__mesh__Elements__remote_index(this%c_ptr()) )
@@ -204,6 +212,7 @@ end function
 
 function partition(this) result(field)
   use atlas_elements_c_binding
+  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
   field = atlas_Field( atlas__mesh__Elements__partition(this%c_ptr()) )
@@ -212,6 +221,7 @@ end function
 
 function halo(this) result(field)
   use atlas_elements_c_binding
+  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
   field = atlas_Field( atlas__mesh__Elements__halo(this%c_ptr()) )
@@ -219,6 +229,7 @@ function halo(this) result(field)
 end function
 
 function atlas_Elements__begin(this) result(val)
+  use, intrinsic :: iso_c_binding, only: c_size_t
   use atlas_elements_c_binding
   integer(c_size_t) :: val
   class(atlas_Elements), intent(in) :: this
@@ -226,6 +237,7 @@ function atlas_Elements__begin(this) result(val)
 end function
 
 function atlas_Elements__end(this) result(val)
+  use, intrinsic :: iso_c_binding, only: c_size_t
   use atlas_elements_c_binding
   integer(c_size_t) :: val
   class(atlas_Elements), intent(in) :: this

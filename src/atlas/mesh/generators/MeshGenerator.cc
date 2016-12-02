@@ -188,6 +188,15 @@ void atlas__MeshGenerator__delete(MeshGenerator* This)
   );
 }
 
+MeshGenerator* atlas__MeshGenerator__create_noconfig(const char* name)
+{
+  MeshGenerator* meshgenerator(0);
+  ATLAS_ERROR_HANDLING (
+    meshgenerator = MeshGenerator::create(std::string(name));
+  );
+  return meshgenerator;
+}
+
 MeshGenerator* atlas__MeshGenerator__create(const char* name, const eckit::Parametrisation* params)
 {
   MeshGenerator* meshgenerator(0);

@@ -1,14 +1,10 @@
 
 module atlas_ElementType_module
 
-use, intrinsic :: iso_c_binding, only : c_ptr, c_size_t, c_int
-use fckit_c_interop_module, only : c_ptr_to_string
 use fckit_refcounted_module, only : fckit_refcounted
 
 implicit none
 
-private :: c_ptr, c_size_t, c_int
-private :: c_ptr_to_string
 private :: fckit_refcounted
 
 public :: atlas_ElementType
@@ -65,6 +61,7 @@ subroutine atlas_ElementType__delete(this)
 end subroutine
 
 function atlas_ElementType__cptr(cptr) result(this)
+  use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_elementtype_c_binding
   type(atlas_ElementType) :: this
   type(c_ptr) :: cptr
@@ -90,6 +87,7 @@ function atlas_Line__constructor() result(this)
 end function
 
 function nb_nodes(this)
+  use, intrinsic :: iso_c_binding, only : c_size_t
   use atlas_elementtype_c_binding
   integer(c_size_t) :: nb_nodes
   class(atlas_ElementType), intent(in) :: this
@@ -97,6 +95,7 @@ function nb_nodes(this)
 end function
 
 function nb_edges(this)
+  use, intrinsic :: iso_c_binding, only : c_size_t
   use atlas_elementtype_c_binding
   integer(c_size_t) :: nb_edges
   class(atlas_ElementType), intent(in) :: this
@@ -104,6 +103,8 @@ function nb_edges(this)
 end function
 
 function name(this)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  use fckit_c_interop_module, only : c_ptr_to_string
   use atlas_elementtype_c_binding
   character(len=:), allocatable :: name
   class(atlas_ElementType) :: this
@@ -113,6 +114,7 @@ function name(this)
 end function
 
 function parametric(this)
+  use, intrinsic :: iso_c_binding, only : c_int
   use atlas_elementtype_c_binding
   logical :: parametric
   class(atlas_ElementType), intent(in) :: this

@@ -2,16 +2,10 @@
 module atlas_Nabla_module
 
 use fckit_refcounted_module, only : fckit_refcounted
-use atlas_Method_module, only : atlas_Method
-use atlas_Field_module, only : atlas_Field
-use atlas_Config_module, only : atlas_Config
 
 implicit none
 
 private :: fckit_refcounted
-private :: atlas_Method
-private :: atlas_Field
-private :: atlas_Config
 
 public :: atlas_Nabla
 
@@ -60,6 +54,8 @@ end function
 
 function atlas_Nabla__method_config(method,config) result(nabla)
   use atlas_Nabla_c_binding
+  use atlas_Method_module, only : atlas_Method
+  use atlas_Config_module, only : atlas_Config
   type(atlas_Nabla) :: nabla
   class(atlas_Method), intent(in) :: method
   type(atlas_Config), intent(in), optional :: config
@@ -91,6 +87,7 @@ end subroutine
 
 subroutine atlas_Nabla__gradient(this,scalar,grad)
   use atlas_Nabla_c_binding
+  use atlas_Field_module, only : atlas_Field
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: scalar
   class(atlas_Field), intent(inout) :: grad
@@ -100,6 +97,7 @@ end subroutine
 
 subroutine atlas_Nabla__divergence(this,vector,div)
   use atlas_Nabla_c_binding
+  use atlas_Field_module, only : atlas_Field
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: vector
   class(atlas_Field), intent(inout) :: div
@@ -108,6 +106,7 @@ end subroutine
 
 subroutine atlas_Nabla__curl(this,vector,curl)
   use atlas_Nabla_c_binding
+  use atlas_Field_module, only : atlas_Field
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: vector
   class(atlas_Field), intent(inout) :: curl
@@ -116,6 +115,7 @@ end subroutine
 
 subroutine atlas_Nabla__laplacian(this,scalar,lapl)
   use atlas_Nabla_c_binding
+  use atlas_Field_module, only : atlas_Field
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: scalar
   class(atlas_Field), intent(inout) :: lapl

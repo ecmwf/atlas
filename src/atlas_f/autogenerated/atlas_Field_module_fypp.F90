@@ -3,11 +3,10 @@
 module atlas_field_module
 
 use fckit_refcounted_module, only : fckit_refcounted
-use atlas_Config_module, only : atlas_Config
 use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange
 implicit none
 
-private :: fckit_refcounted, atlas_Config, atlas_code_location, atlas_abort, atlas_throw_outofrange
+private :: fckit_refcounted, atlas_code_location, atlas_abort, atlas_throw_outofrange
 
 public :: atlas_Field
 public :: atlas_real
@@ -241,7 +240,7 @@ subroutine array_c_to_f_int32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -278,7 +277,7 @@ subroutine array_c_to_f_int64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -315,7 +314,7 @@ subroutine array_c_to_f_real32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -352,7 +351,7 @@ subroutine array_c_to_f_real64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -389,7 +388,7 @@ subroutine array_c_to_f_logical32_r1(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:1)
   integer :: accumulated, factor, j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -426,7 +425,7 @@ subroutine array_c_to_f_int32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -463,7 +462,7 @@ subroutine array_c_to_f_int64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -500,7 +499,7 @@ subroutine array_c_to_f_real32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -537,7 +536,7 @@ subroutine array_c_to_f_real64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -574,7 +573,7 @@ subroutine array_c_to_f_logical32_r2(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:2)
   integer :: accumulated, factor, j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -611,7 +610,7 @@ subroutine array_c_to_f_int32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -648,7 +647,7 @@ subroutine array_c_to_f_int64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -685,7 +684,7 @@ subroutine array_c_to_f_real32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -722,7 +721,7 @@ subroutine array_c_to_f_real64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -759,7 +758,7 @@ subroutine array_c_to_f_logical32_r3(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:3)
   integer :: accumulated, factor, j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -796,7 +795,7 @@ subroutine array_c_to_f_int32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -833,7 +832,7 @@ subroutine array_c_to_f_int64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -870,7 +869,7 @@ subroutine array_c_to_f_real32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -907,7 +906,7 @@ subroutine array_c_to_f_real64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -944,7 +943,7 @@ subroutine array_c_to_f_logical32_r4(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(0:4)
   integer :: accumulated, factor, j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",146))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",145))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -1561,7 +1560,7 @@ integer function atlas_real(kind)
   else if (kind == c_float) then
     atlas_real = ATLAS_KIND_REAL32
   else
-    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",222))
+    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",221))
   end if
 end function
 
@@ -1577,7 +1576,7 @@ integer function atlas_integer(kind)
     else if (kind == c_long) then
       atlas_integer = ATLAS_KIND_INT64
     else
-      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",238))
+      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",237))
     end if
   end if
 end function
@@ -1603,7 +1602,7 @@ function atlas_data_type(kind)
   else if( kind == ATLAS_KIND_REAL64 ) then
     atlas_data_type = "real64"
   else
-    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",264))
+    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",263))
   endif
 end function
 
@@ -1620,6 +1619,7 @@ end function
 
 function atlas_Field__create(params) result(field)
   use atlas_field_c_binding
+  use atlas_Config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Config), intent(in) :: params
   field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
@@ -1630,6 +1630,7 @@ end function
 
 function atlas_Field__create_name_kind_shape_int32(name,kind,shape) result(field)
   use atlas_field_c_binding
+  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1654,6 +1655,7 @@ end function
 
 function atlas_Field__create_name_kind_shape_int64(name,kind,shape) result(field)
   use atlas_field_c_binding
+  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_long
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -1678,6 +1680,7 @@ end function
 
 function atlas_Field__create_kind_shape_int32(kind,shape) result(field)
   use atlas_field_c_binding
+  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind
@@ -1698,6 +1701,7 @@ end function
 
 function atlas_Field__create_kind_shape_int64(kind,shape) result(field)
   use atlas_field_c_binding
+  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int, c_long
   type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind

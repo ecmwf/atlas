@@ -4,26 +4,10 @@
 
 module atlas_output_module
 
-use fckit_c_interop_module, only : c_str
 use fckit_refcounted_module, only : fckit_refcounted
-use atlas_Config_module, only : atlas_Config
-use atlas_FunctionSpace_module, only: &
-    & atlas_FunctionSpace
-use atlas_Field_module, only: &
-    & atlas_Field
-use atlas_FieldSet_module, only: &
-    & atlas_FieldSet
-use atlas_Mesh_module, only: &
-    & atlas_Mesh
 
 implicit none
 
-private :: c_str
-private :: atlas_FunctionSpace
-private :: atlas_Field
-private :: atlas_FieldSet
-private :: atlas_Mesh
-private :: atlas_Config
 private :: fckit_refcounted
 
 public :: atlas_Output
@@ -97,7 +81,9 @@ subroutine atlas_Output__copy(this,obj_in)
 end subroutine
 
 function atlas_output_Gmsh__pathname_mode(file,mode,coordinates,levels,gather) result(output)
+  use fckit_c_interop_module, only : c_str
   use atlas_output_gmsh_c_binding
+  use atlas_Config_module, only : atlas_Config
   type(atlas_Output) :: output
   character(len=*), intent(in) :: file
   character(len=1), intent(in), optional :: mode
@@ -119,6 +105,8 @@ end function
 
 subroutine write_mesh(this,mesh,config)
   use atlas_output_c_binding
+  use atlas_Config_module, only : atlas_Config
+  use atlas_Mesh_module, only: atlas_Mesh
   class(atlas_Output), intent(in) :: this
   type(atlas_Mesh), intent(in) :: mesh
   type(atlas_Config), intent(in), optional :: config
@@ -134,6 +122,9 @@ end subroutine
 
 subroutine write_field_fs(this,field,functionspace,config)
   use atlas_output_c_binding
+  use atlas_Config_module, only : atlas_Config
+  use atlas_Field_module, only: atlas_Field
+  use atlas_FunctionSpace_module, only: atlas_FunctionSpace
   class(atlas_Output), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   class(atlas_FunctionSpace), intent(in) :: functionspace
@@ -150,6 +141,9 @@ end subroutine
 
 subroutine write_fieldset_fs(this,fieldset,functionspace,config)
   use atlas_output_c_binding
+  use atlas_Config_module, only : atlas_Config
+  use atlas_FunctionSpace_module, only: atlas_FunctionSpace
+  use atlas_FieldSet_module, only: atlas_FieldSet
   class(atlas_Output), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: fieldset
   class(atlas_FunctionSpace), intent(in) :: functionspace
@@ -167,6 +161,8 @@ end subroutine
 
 subroutine write_field(this,field,config)
   use atlas_output_c_binding
+  use atlas_Config_module, only : atlas_Config
+  use atlas_Field_module, only: atlas_Field
   class(atlas_Output), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Config), intent(in), optional :: config
@@ -183,6 +179,8 @@ end subroutine
 
 subroutine write_fieldset(this,fieldset,config)
   use atlas_output_c_binding
+  use atlas_Config_module, only : atlas_Config
+  use atlas_FieldSet_module, only: atlas_FieldSet
   class(atlas_Output), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: fieldset
   type(atlas_Config), intent(in), optional :: config

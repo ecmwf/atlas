@@ -2,18 +2,16 @@
 module atlas_metadata_module
 
 use fckit_object_module, only : fckit_object
-use, intrinsic :: iso_c_binding, only: c_int
 
 implicit none
 
 private :: fckit_object
-private :: c_int
 
 public :: atlas_Metadata
 
 private
 
-integer(c_int), parameter :: MAX_STR_LEN=255
+integer, parameter :: MAX_STR_LEN=255
 
 !------------------------------------------------------------------------------
 TYPE, extends(fckit_object) :: atlas_Metadata
