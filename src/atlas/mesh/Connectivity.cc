@@ -526,17 +526,10 @@ void MultiBlockConnectivity::insert( size_t position, size_t rows, size_t cols, 
 
   ASSERT( blk_idx >= 0l );
 
-  std::cout << "Inserting at " << blk_idx << std::endl;
-
   for( size_t jblk=blk_idx; jblk<blocks_; ++jblk)
     block_displs_view_(jblk+1) += rows;
 
   IrregularConnectivity::insert(position,rows,cols,values,fortran_array);
-
-  for(size_t i=0; i < block_displs_view_.size(); ++i)
-     std::cout << " IK " << block_displs_view_(i) << std::endl;
-  for(size_t i=0; i < block_cols_view_.size(); ++i)
-     std::cout << " JK " << block_cols_view_(i) << std::endl;
 
   rebuild_block_connectivity();
 }
@@ -608,7 +601,6 @@ void MultiBlockConnectivity::rebuild_block_connectivity()
   for( size_t b=0; b<blocks_-1; ++b )
   {
       tcount += (block_displs_view_(b+1)-block_displs_view_(b)) * block_cols_view_(b);
-std::cout << " K " << b << " " << blocks_ << std::endl;
     if( block_[b] ) {
       block_[b]->rebuild(
           block_displs_view_(b+1)-block_displs_view_(b), // rows
@@ -659,11 +651,7 @@ BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[] )
     values_(array::Array::wrap<idx_t>(values, array::ArrayShape{rows, cols})),
     values_view_(array::make_view<idx_t, 2>(*values_)),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
-{
-//    std::cout << " BUILDING " << rows_ << " " << cols_ << std::endl;
-//    std::cout << " " << values[0] << std::endl;
-//    std::cout << " " << values[1] << std::endl;
-}
+{}
 
 //------------------------------------------------------------------------------------------------------
 
