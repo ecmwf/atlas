@@ -31,6 +31,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/DataType.h"
+#include "atlas/array/Vector.h"
 
 namespace atlas {
 namespace mesh {
@@ -198,6 +199,8 @@ public:
   const idx_t* data() const { return values_view_.data(); }
         idx_t* data()       { return values_view_.data(); }
 
+  size_t size() const { return values_view_.size();}
+
   GT_FUNCTION
   idx_t missing_value() const { return missing_value_; }
 
@@ -245,6 +248,7 @@ public:
 
   virtual void clear();
 
+  size_t displs(const size_t row) const {return displs_view_(row); }
 
   void clone_to_device();
   void clone_from_device();
@@ -351,8 +355,8 @@ public:
   size_t blocks() const { return blocks_; }
 
   /// @brief Access to a block connectivity
-  const BlockConnectivity& block( size_t block_idx ) const { return *block_view_(block_idx); }
-        BlockConnectivity& block( size_t block_idx )       { return *block_view_(block_idx); }
+  const BlockConnectivity& block( size_t block_idx ) const { return *(block_[block_idx]); }
+        BlockConnectivity& block( size_t block_idx )       { return *(block_[block_idx]); }
 
   /// @brief Access to connectivity table elements for given row and column
   /// The row_idx counts up from 0, from block 0, as in IrregularConnectivity
@@ -409,11 +413,10 @@ private:
 private:
   array::Array* block_displs_;
   array::Array* block_cols_;
-  array::Array* block_;
 
   array::ArrayView<size_t,1> block_displs_view_;
   array::ArrayView<size_t,1> block_cols_view_;
-  array::ArrayView<BlockConnectivity*, 1> block_view_;
+  array::Vector<BlockConnectivity*> block_;
   size_t blocks_;
 
 };

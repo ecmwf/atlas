@@ -369,13 +369,11 @@ MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, siz
     blocks_(blocks),
     block_displs_(array::Array::wrap<size_t>(block_displs, array::ArrayShape{blocks})),
     block_cols_(array::Array::wrap<size_t>(block_cols, array::ArrayShape{blocks})),
-    block_(array::Array::create<BlockConnectivity*>(1)),
+    block_(blocks),
     block_displs_view_(array::make_view<size_t, 1>(*block_displs_)),
-    block_cols_view_(array::make_view<size_t, 1>(*block_cols_)),
-    block_view_(array::make_view<BlockConnectivity*, 1>(*block_))
+    block_cols_view_(array::make_view<size_t, 1>(*block_cols_))
 {
-//TODO
-//  rebuild_block_connectivity();
+  rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -384,10 +382,10 @@ MultiBlockConnectivity::MultiBlockConnectivity(const std::string& name) :
   IrregularConnectivity(name),
   block_displs_(array::Array::create<size_t>(1)),
   block_cols_(array::Array::create<size_t>(1)),
-  block_(array::Array::create<BlockConnectivity*>(1)),
+  block_(0),
+  blocks_(0),
   block_displs_view_(array::make_view<size_t, 1>(*block_displs_)),
-  block_cols_view_(array::make_view<size_t, 1>(*block_cols_)),
-  block_view_(array::make_view<BlockConnectivity*, 1>(*block_))
+  block_cols_view_(array::make_view<size_t, 1>(*block_cols_))
 {
     block_displs_view_(0) = 0;
 
@@ -420,18 +418,21 @@ void MultiBlockConnectivity::clear()
 void MultiBlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool fortran_array )
 {
   if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
+  size_t old_rows = this->rows();
   IrregularConnectivity::add(rows,cols,values,fortran_array);
+
+  if(blocks_) {
+      block_displs_->insert( block_displs_->size(), 1);
+      block_cols_->insert( block_cols_->size(), 1);
+      block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
+      block_cols_view_ = array::make_view<size_t, 1>(*block_cols_);
+  }
   blocks_++;
 
-  block_displs_->insert( block_displs_->size(), 1);
-  block_cols_->insert( block_cols_->size(), 1);
-  block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
-  block_cols_view_ = array::make_view<size_t, 1>(*block_cols_);
-
-  block_displs_view_(block_displs_view_.size()-1) = this->rows();
+  block_displs_view_(block_displs_view_.size()-1) = old_rows;
   block_cols_view_(block_cols_view_.size()-1) = cols;
 
-//  rebuild_block_connectivity();
+  rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -440,18 +441,20 @@ void MultiBlockConnectivity::add( const BlockConnectivity& block )
 {
   if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
   IrregularConnectivity::add(block);
+  size_t old_rows = this->rows();
+
+  if(blocks_) {
+    block_displs_->insert( block_displs_->size(), 1);
+    block_cols_->insert( block_cols_->size(), 1);
+    block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
+    block_cols_view_ = array::make_view<size_t, 1>(*block_cols_);
+  }
   blocks_++;
 
-  block_displs_->insert( block_displs_->size(), 1);
-  block_cols_->insert( block_cols_->size(), 1);
-  block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
-  block_cols_view_ = array::make_view<size_t, 1>(*block_cols_);
-
-  block_displs_view_(block_displs_view_.size()-1) = rows();
+  block_displs_view_(block_displs_view_.size()-1) = old_rows;
   block_cols_view_(block_cols_view_.size()-1) = block.cols();
 
-  //TODO
-//  rebuild_block_connectivity();
+  rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -460,17 +463,19 @@ void MultiBlockConnectivity::add( size_t rows, size_t cols )
 {
   if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
   IrregularConnectivity::add(rows,cols);
+  size_t old_rows = this->rows();
+
+  if(blocks_) {
+    block_displs_->insert( block_displs_->size(), 1);
+    block_cols_->insert( block_cols_->size(), 1);
+    block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
+    block_cols_view_ = array::make_view<size_t, 1>(*block_cols_);
+  }
   blocks_++;
 
-  block_displs_->insert( block_displs_->size(), 1);
-  block_cols_->insert( block_cols_->size(), 1);
-  block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
-  block_cols_view_ = array::make_view<size_t, 1>(*block_cols_);
-
-  block_displs_view_(block_displs_view_.size()-1) = this->rows();
+  block_displs_view_(block_displs_view_.size()-1) = old_rows;
   block_cols_view_(block_cols_view_.size()-1) = cols;
-//TODO
-//  rebuild_block_connectivity();
+  rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -480,6 +485,8 @@ void MultiBlockConnectivity::add( size_t rows, const size_t cols[] )
   if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
   size_t min=std::numeric_limits<size_t>::max();
   size_t max=0;
+  size_t old_rows = this->rows();
+
   for( size_t j=0; j<rows; ++j )
   {
     min = std::min(min,cols[j]);
@@ -487,17 +494,19 @@ void MultiBlockConnectivity::add( size_t rows, const size_t cols[] )
   }
   if( min != max ) throw eckit::AssertionFailed("MultiBlockConnectivity::add(rows,cols[]): all elements of cls[] must be identical");
   IrregularConnectivity::add(rows,cols);
+
+  if(blocks_) {
+    block_displs_->insert( block_displs_->size(), 1);
+    block_cols_->insert( block_cols_->size(), 1);
+    block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
+    block_cols_view_ = array::make_view<size_t, 1>(*block_cols_);
+  }
+
   blocks_++;
 
-  block_displs_->insert( block_displs_->size(), 1);
-  block_cols_->insert( block_cols_->size(), 1);
-  block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
-  block_cols_view_ = array::make_view<size_t, 1>(*block_cols_);
-
-  block_displs_view_(block_displs_view_.size()-1) = this->rows();
+  block_displs_view_(block_displs_view_.size()-1) = old_rows;
   block_cols_view_(block_cols_view_.size()-1) = max;
-//TODO
-//  rebuild_block_connectivity();
+  rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -506,22 +515,30 @@ void MultiBlockConnectivity::insert( size_t position, size_t rows, size_t cols, 
 {
   if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
 
+  ASSERT(blocks_);
+
   long blk_idx = blocks_;
   do{ blk_idx--; } while(
-     blk_idx >= 0l &&
-     block_displs_view_(blk_idx) >= position &&
-     cols != block_cols_view_(blk_idx)
+       blk_idx >= 0l &&
+       block_displs_view_(blk_idx) >= position &&
+       cols != block_cols_view_(blk_idx)
   );
 
   ASSERT( blk_idx >= 0l );
 
-  IrregularConnectivity::insert(position,rows,cols,values,fortran_array);
+  std::cout << "Inserting at " << blk_idx << std::endl;
 
   for( size_t jblk=blk_idx; jblk<blocks_; ++jblk)
     block_displs_view_(jblk+1) += rows;
-// TODO ??
-//  block_displs_ = owned_block_displs_.data();
-//  rebuild_block_connectivity();
+
+  IrregularConnectivity::insert(position,rows,cols,values,fortran_array);
+
+  for(size_t i=0; i < block_displs_view_.size(); ++i)
+     std::cout << " IK " << block_displs_view_(i) << std::endl;
+  for(size_t i=0; i < block_cols_view_.size(); ++i)
+     std::cout << " JK " << block_cols_view_(i) << std::endl;
+
+  rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -546,7 +563,7 @@ void MultiBlockConnectivity::insert( size_t position, size_t rows, size_t cols )
     block_displs_view_(jblk+1) += rows;
 // TODO
 //  block_displs_ = owned_block_displs_.data();
-//  rebuild_block_connectivity();
+  rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -579,31 +596,50 @@ void MultiBlockConnectivity::insert( size_t position, size_t rows, const size_t 
     block_displs_view_(jblk+1) += rows;
 // TODO
 //  block_displs_ = owned_block_displs_.data();
-//  rebuild_block_connectivity();
+  rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivity::rebuild_block_connectivity()
 {
-    //TODO
-//  block_.resize(blocks_);
-//  for( size_t b=0; b<blocks_; ++b )
-//  {
-//    if( block_[b] ) {
-//      block_[b]->rebuild(
-//          block_displs_[b+1]-block_displs_[b], // rows
-//          block_cols_[b],                      // cols
-//          data()+displs()[block_displs_[b]]);
-//    }
-//    else {
-//      block_[b].reset(
-//         new BlockConnectivity(
-//          block_displs_[b+1]-block_displs_[b], // rows
-//          block_cols_[b],                      // cols
-//          data()+displs()[block_displs_[b]]) );
-//    }
-//  }
+  block_.resize(blocks_);
+  size_t tcount = 0;
+  for( size_t b=0; b<blocks_-1; ++b )
+  {
+      tcount += (block_displs_view_(b+1)-block_displs_view_(b)) * block_cols_view_(b);
+std::cout << " K " << b << " " << blocks_ << std::endl;
+    if( block_[b] ) {
+      block_[b]->rebuild(
+          block_displs_view_(b+1)-block_displs_view_(b), // rows
+          block_cols_view_(b),                      // cols
+          data()+ displs(block_displs_view_(b)));
+    }
+    else {
+      block_[b] =
+         new BlockConnectivity(
+          block_displs_view_(b+1)-block_displs_view_(b), // rows
+          block_cols_view_(b),                      // cols
+          data()+displs(block_displs_view_(b)));
+    }
+  }
+
+  //specific for last block to avoid overflow with block_displs_view_(b+1)
+  size_t blockid = blocks_-1;
+  if( block_[blockid] ) {
+    block_[blockid]->rebuild(
+        (size()-tcount)/ block_cols_view_(blockid), // rows
+        block_cols_view_(blockid),                      // cols
+        data()+ displs(block_displs_view_(blockid)));
+  }
+  else {
+      block_[blockid] =
+       new BlockConnectivity(
+        (size()-tcount)/ block_cols_view_(blockid), // rows
+        block_cols_view_(blockid),                      // cols
+        data()+ displs(block_displs_view_(blockid)));
+  }
+
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -623,7 +659,11 @@ BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[] )
     values_(array::Array::wrap<idx_t>(values, array::ArrayShape{rows, cols})),
     values_view_(array::make_view<idx_t, 2>(*values_)),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
-{}
+{
+//    std::cout << " BUILDING " << rows_ << " " << cols_ << std::endl;
+//    std::cout << " " << values[0] << std::endl;
+//    std::cout << " " << values[1] << std::endl;
+}
 
 //------------------------------------------------------------------------------------------------------
 

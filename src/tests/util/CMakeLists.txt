@@ -73,6 +73,14 @@ ecbuild_add_test( TARGET atlas_test_array
   CONDITION ATLAS_HAVE_GRIDTOOLS_STORAGE
 )
 
+ecbuild_add_test( TARGET atlas_test_vector
+  BOOST
+  SOURCES  test_vector.cc
+  LIBS     atlas
+  CONDITION ATLAS_HAVE_GRIDTOOLS_STORAGE
+)
+
+
 ecbuild_add_test( TARGET atlas_test_metadata
   BOOST
   MPI      4
