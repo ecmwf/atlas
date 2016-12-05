@@ -38,8 +38,6 @@ ecbuild_declare_project()
 
 ### eckit
 
-set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
-
 ecbuild_use_package( PROJECT eckit VERSION 0.14 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
