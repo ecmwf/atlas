@@ -147,6 +147,10 @@ grid/projection/RotatedLonLatProjection.cc
 grid/projection/RotatedLonLatProjection.h
 grid/projection/RotatedSchmidtProjection.cc
 grid/projection/RotatedSchmidtProjection.h
+grid/projection/MercatorProjection.cc
+grid/projection/MercatorProjection.h
+grid/projection/RotatedMercatorProjection.cc
+grid/projection/RotatedMercatorProjection.h
 grid/spacing/Spacing.h
 grid/spacing/UniformSpacing.h
 grid/spacing/UniformSpacing.cc
