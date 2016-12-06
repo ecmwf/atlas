@@ -1,35 +1,35 @@
-#include "atlas/grid/regular/RegularGlobalLonLat.h"
+#include "atlas/grid/regular/RegularGaussian.h"
 
 
 namespace atlas {
 namespace grid {
 namespace regular {
 
-register_BuilderT1(Grid,RegularGlobalLonLat,RegularGlobalLonLat::grid_type_str());
+register_BuilderT1(Grid,RegularGaussian,RegularGaussian::grid_type_str());
 
-std::string RegularGlobalLonLat::grid_type_str() {
-    return "regularGlobalLonLat";
+std::string RegularGaussian::grid_type_str() {
+    return "regularGaussian";
 }
 
 
-std::string RegularGlobalLonLat::className() {
-    return "atlas.grid.regular.RegularGlobalLonLat";
+std::string RegularGaussian::className() {
+    return "atlas.grid.regular.RegularGaussian";
 }
 
 
-void RegularGlobalLonLat::setup() {
+void RegularGaussian::setup() {
 
 		// setup regular grid
     Regular::setup();
     
 }
 
-RegularGlobalLonLat::RegularGlobalLonLat(const util::Config& config) :
+RegularGaussian::RegularGaussian(const util::Config& config) :
     Regular()
 {
 		long nlon, nlat, N;
 		util::Config config_proj, config_spacing, config_domain;
-
+		
 		// projection is lonlat
 		config_proj.set("projectionType","lonlat");
 		projection_=projection::Projection::create(config_proj);
@@ -38,9 +38,7 @@ RegularGlobalLonLat::RegularGlobalLonLat(const util::Config& config) :
 		if ( config.get("N",N) ) {
 			nlon=4*N;nlat=2*N;
 		} else {
-			if ( !config.get("nlon",nlon) || !config.get("nlat",nlat) ) {
-				throw eckit::BadParameter("RegularGlobalLonLat requires either N, or (nlon,nlat)",Here());
-			}
+			throw eckit::BadParameter("RegularGaussian requires parameter N",Here());
 		}
 
 		// spacing is uniform in x and y
@@ -49,6 +47,8 @@ RegularGlobalLonLat::RegularGlobalLonLat(const util::Config& config) :
 		config_spacing.set("xmax",(nlon-1)*360.0/nlon);
 		config_spacing.set("N",nlon);
 		spacing_x_=spacing::Spacing::create(config_spacing);
+
+		config_spacing.set("spacingType","gaussian");
 		config_spacing.set("xmin",90.0);
 		config_spacing.set("xmax",-90.0);
 		config_spacing.set("N",nlat);
@@ -62,7 +62,7 @@ RegularGlobalLonLat::RegularGlobalLonLat(const util::Config& config) :
 		setup();
 }
 
-eckit::Properties RegularGlobalLonLat::spec() const {
+eckit::Properties RegularGaussian::spec() const {
     eckit::Properties grid_spec;
     grid_spec.set("grid_type",  gridType());
     /*

@@ -23,7 +23,7 @@ register_BuilderT1(Grid,RegularLonLat,RegularLonLat::grid_type_str());
 
 
 std::string RegularLonLat::grid_type_str() {
-    return "regular_lonlat";
+    return "regular_lonlat.obsolete";
 }
 
 

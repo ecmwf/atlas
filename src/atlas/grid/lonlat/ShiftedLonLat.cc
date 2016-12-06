@@ -21,7 +21,7 @@ register_BuilderT1(Grid,ShiftedLonLat,ShiftedLonLat::grid_type_str());
 
 
 std::string ShiftedLonLat::grid_type_str() {
-    return "shifted_lonlat";
+    return "shifted_lonlat.obsolete";
 }
 
 

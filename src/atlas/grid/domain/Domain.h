@@ -35,7 +35,7 @@ class Domain {
  		static Domain* create() {
 			// default: global domain
 			util::Config projParams;
-			projParams.set("domainType","atlas.GlobalDomain");
+			projParams.set("domainType","global");
 			return Domain::create(projParams);
 		};
 		
@@ -76,10 +76,10 @@ class Domain {
 	  bool includesPoleSouth() const {};
 
 	  /// Check if grid spans the complete range East-West (periodic)
-	  bool isPeriodicEastWest() const {};
+	  virtual bool isPeriodicEastWest() const {};
 	  
 	  /// Check if domain represents the complete globe surface
-		bool isGlobal() const {};
+		virtual bool isGlobal() const {};
 
 	  /// Check if domain does not represent any area on the globe surface
 	  bool isEmpty() const {};

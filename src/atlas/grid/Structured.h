@@ -107,7 +107,11 @@ class Structured : public Grid {
     }
 
     inline double lon( const size_t jlat, const size_t jlon ) const {
+    		//std::cout << "jlon = " << jlon << "; lon_min_ = " << lonmin_[jlat]
+    		//	<< "; lon_inc_ = " << lon_inc_[jlat] << std::endl;
         return lonmin_[jlat] + static_cast<double>(jlon) * lon_inc_[jlat];
+        
+        
     }
 
     inline double lat( const size_t jlat ) const {
@@ -125,6 +129,7 @@ class Structured : public Grid {
     	lonlat(jlat,jlon,xy);
     	eckit::geometry::Point2 Pxy(xy[0],xy[1]);
     	// convert to geographic coordinates
+    	//std::cout << "projection is " << projection_ << std::endl;
     	Pll=projection_->coords2lonlat(Pxy);
     }
 

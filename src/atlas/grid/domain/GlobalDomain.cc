@@ -17,6 +17,14 @@ bool GlobalDomain::contains(eckit::geometry::Point2 xy) {
 	return true;
 }
 
+bool GlobalDomain::isGlobal() const {
+	return true;
+}
+
+bool GlobalDomain::isPeriodicEastWest() const {
+	return true;
+}
+
 register_BuilderT1(Domain,GlobalDomain,GlobalDomain::domain_type_str());
 
 }  // namespace domain

@@ -1,5 +1,5 @@
-#ifndef atlas_grid_regular_RegularGlobalLonLat_h
-#define atlas_grid_regular_RegularGlobalLonLat_h
+#ifndef atlas_grid_regular_RegularLonLat_h
+#define atlas_grid_regular_RegularLonLat_h
 
 #include "atlas/grid/regular/Regular.h"
 #include "atlas/grid/domain/Domain.h"
@@ -10,7 +10,7 @@ namespace atlas {
 namespace grid {
 namespace regular {
 
-class RegularGlobalLonLat: public Regular {
+class RegularLonLat: public Regular {
 
   public:
 
@@ -18,16 +18,20 @@ class RegularGlobalLonLat: public Regular {
 
     static std::string className();
 
-    RegularGlobalLonLat(const util::Config& params);
+    RegularLonLat();
+    RegularLonLat(const util::Config& params);
 
     eckit::Properties spec() const;
     
   protected:
 
-    void setup();
+    void setup(long nlon, long nlat);
 
     //virtual void set_typeinfo() = 0;
     //static eckit::Value domain_spec(const Domain& dom);
+    
+    bool shiftLon_;
+    bool shiftLat_;
 
 };
 

@@ -18,50 +18,8 @@ std::string RegularRegional::className() {
 }
 
 
-void RegularRegional::setup() {
+void RegularRegional::setup(const util::Config& config) {
 
-	// perform checks
-	
-		// RectangularDomain?
-		domain::RectangularDomain * rd=dynamic_cast<domain::RectangularDomain*>(domain_);
-		if (! rd) throw eckit::BadParameter("RegularRegional grid requires a RectangularDomain",Here());
-	
-		// setup regular grid
-    Regular::setup();
-    
-
-/*
-    ASSERT(nlat>0);
-    ASSERT(shift_(Shift::NONE));
-
-    const double
-            ns = dom.north() - dom.south(),
-            ew = dom.east()  - dom.west(),
-            Nj = static_cast<double>(nlat-1);
-
-    std::vector<double> lonmin(nlat);
-    std::vector<double> lonmax(nlat);
-    for (size_t i=0; i<nlat; ++i) {
-        const double _loninc = pl[i]? (ew)/static_cast<double>(pl[i]) : 0.;
-        lonmin[i] = dom.west();
-        lonmax[i] = dom.east() + (dom.isPeriodicEastWest()? -_loninc : 0.);
-    }
-
-    std::vector<double> lats(nlat);
-    for (size_t j=0; j<nlat; ++j) {
-        lats[j] = dom.north() - (static_cast<double>(j)*ns)/Nj;
-    }
-
-    Structured::setup(nlat, lats.data(), pl, lonmin.data(), lonmax.data());
-    Structured::N_ = 0;
-
-    set_typeinfo();
-*/
-}
-
-RegularRegional::RegularRegional(const util::Config& config) :
-    Regular()
-{
 		util::Config config_dom, config_spacing_x, config_spacing_y, config_proj;
 		
 		long nx, ny;
@@ -119,7 +77,11 @@ RegularRegional::RegularRegional(const util::Config& config) :
 			std::string domainType;
 			if (!config_dom.get("domainType",domainType)) config_dom.set("domainType","rectangular");
 			// create domain from configuration
-			domain_=domain::Domain::create(config_dom);			
+			domain_=domain::Domain::create(config_dom);
+			// check if the domain is rectangular
+			domain::RectangularDomain * rd=dynamic_cast<domain::RectangularDomain*>(domain_);
+			if (! rd) throw eckit::BadParameter("RegularRegional grid requires a RectangularDomain",Here());
+				
 		} else {
 			// error
 			throw eckit::BadParameter("domain is required for a RegularRegional grid",Here());
@@ -148,8 +110,21 @@ RegularRegional::RegularRegional(const util::Config& config) :
 		// create spacing
 		spacing_y_=spacing::Spacing::create(config_spacing);
 		
-		// general setup
-    RegularRegional::setup();
+	
+		// setup regular grid
+    Regular::setup();
+    
+}
+
+RegularRegional::RegularRegional(const util::Config& config) :
+    Regular()
+{
+		setup(config);
+}
+
+RegularRegional::RegularRegional() :
+    Regular()
+{
 }
 
 eckit::Properties RegularRegional::spec() const {

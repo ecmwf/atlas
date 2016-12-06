@@ -24,7 +24,7 @@ register_BuilderT1(Grid,ReducedGaussian,ReducedGaussian::grid_type_str());
 
 
 std::string ReducedGaussian::grid_type_str() {
-    return "reduced_gaussian";
+    return "reduced_gaussian.obsolete";
 }
 
 

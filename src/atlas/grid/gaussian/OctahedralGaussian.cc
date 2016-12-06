@@ -23,7 +23,7 @@ std::string OctahedralGaussian::className() {
 
 
 std::string OctahedralGaussian::grid_type_str() {
-    return "octahedral_gaussian";
+    return "octahedral_gaussian.obsolete";
 }
 
 
@@ -66,7 +66,7 @@ OctahedralGaussian::OctahedralGaussian(const util::Config& params) :
 
     size_t N;
     params.get("N",N);
-
+		
     construct(N);
     set_typeinfo();
 }

@@ -21,7 +21,7 @@ register_BuilderT1(Grid,ReducedLonLat,ReducedLonLat::grid_type_str());
 
 
 std::string ReducedLonLat::grid_type_str() {
-    return "reduced_lonlat";
+    return "reduced_lonlat.obsolete";
 }
 
 

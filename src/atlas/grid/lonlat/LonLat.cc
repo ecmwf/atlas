@@ -18,7 +18,7 @@ namespace lonlat {
 
 
 std::string LonLat::grid_type_str() {
-    return "reduced_lonlat";
+    return "reduced_lonlat.obsolete";
 }
 
 

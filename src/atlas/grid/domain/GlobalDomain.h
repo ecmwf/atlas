@@ -20,6 +20,10 @@ class GlobalDomain: public Domain {
     /// Checks if the point is contained in the domain
     bool contains(eckit::geometry::Point2 P);
     
+    // Domain properties
+    bool isGlobal() const;
+    bool isPeriodicEastWest() const;
+    
     static std::string domain_type_str() {return "global";}
     
 	private:

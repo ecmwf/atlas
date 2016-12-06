@@ -75,6 +75,7 @@ void Structured::setup(
     nlonmin_ = nlonmax_ = static_cast<size_t>(pl_[0]);
 
     for (size_t jlat = 0; jlat < nlat; ++jlat) {
+    		//std::cout << "jlat = " << jlat << "; nlon = " << pl_[jlat] << std::endl;
         lon_inc_[jlat] = (lonmax_[jlat]-lonmin_[jlat])/double(pl_[jlat]-1);
         nlonmin_ = std::min(static_cast<size_t>(pl_[jlat]),nlonmin_);
         nlonmax_ = std::max(static_cast<size_t>(pl_[jlat]),nlonmax_);
@@ -84,7 +85,26 @@ void Structured::setup(
 
 void Structured::setup_lon_limits(const size_t nlat, const long pl[], const domain::Domain& dom, double lonmin[], double lonmax[]) {
     ASSERT(nlat);
+    
+    if ( !dom.isGlobal() )
+    	throw eckit::BadCast("this routine shouldn't be called for nonglobal domains.",Here());
+    
+    
+    double east, west;
+    east=-180.;
+    west=180.;
+    
+    std::fill_n(lonmin, nlat, west);
+    std::fill_n(lonmax, nlat, east);
 
+    const double ew = east - west;
+
+    for (size_t jlat = 0; jlat < nlat; ++jlat) {
+        const double ndiv = static_cast<double>(pl[jlat]);
+        lonmax[jlat] -= pl[jlat]? ew/ndiv : 0.;
+    }
+
+    /*
     std::fill_n(lonmin, nlat, dom.west());
     std::fill_n(lonmax, nlat, dom.east());
 
@@ -95,6 +115,9 @@ void Structured::setup_lon_limits(const size_t nlat, const long pl[], const doma
         const double ndiv = static_cast<double>(pl[jlat] + (isPeriodicEastWest? 0:-1));
         lonmax[jlat] -= pl[jlat]? ew/ndiv : 0.;;
     }
+    */
+    
+    
 }
 
 

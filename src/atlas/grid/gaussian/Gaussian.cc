@@ -43,7 +43,7 @@ void Gaussian::QuadratureNorthPoleToSouthPole(const size_t N, double weights[]) 
 
 
 std::string Gaussian::grid_type_str() {
-    return "gaussian";
+    return "gaussian.obsolete";
 }
 
 
@@ -54,6 +54,8 @@ std::string Gaussian::className() {
 
 Gaussian::Gaussian() :
     Structured() {
+    // these grids are obsolete: they adapted to the new domain and projection classes.
+    throw eckit::BadValue("Grids from grid/gaussian are obsolete. Consider using the ones from grid/regular/ or from grid/reduced/",Here());
 }
 
 

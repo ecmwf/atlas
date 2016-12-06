@@ -19,12 +19,13 @@ class RegularRegional: public Regular {
     static std::string className();
 
     RegularRegional(const util::Config& params);
+    RegularRegional();
 
     eckit::Properties spec() const;
     
   protected:
 
-    void setup();
+    void setup(const util::Config& params);
 
     //virtual void set_typeinfo() = 0;
     //static eckit::Value domain_spec(const Domain& dom);

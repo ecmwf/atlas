@@ -22,7 +22,7 @@ register_BuilderT1(Grid, RegularGaussian,RegularGaussian::grid_type_str());
 
 
 std::string RegularGaussian::grid_type_str() {
-    return "regular_gaussian";
+    return "regular_gaussian.obsolete";
 }
 
 

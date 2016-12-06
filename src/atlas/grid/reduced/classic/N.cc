@@ -47,6 +47,27 @@ void load() {
 void regist() {
     load<N16>();
     load<N24>();
+    load<N32>();
+    load<N48>();
+    load<N64>();
+    load<N80>();
+    load<N96>();
+    load<N128>();
+    load<N160>();
+    load<N200>();
+    load<N256>();
+    load<N320>();
+    load<N400>();
+    load<N512>();
+    load<N576>();
+    load<N640>();
+    load<N800>();
+    load<N1024>();
+    load<N1280>();
+    load<N1600>();
+    load<N2000>();
+    load<N4000>();
+    load<N8000>();
 }
 
 
