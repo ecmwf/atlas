@@ -73,6 +73,14 @@ ecbuild_add_test( TARGET atlas_test_array
   CONDITION ATLAS_HAVE_GRIDTOOLS_STORAGE
 )
 
+ecbuild_add_test( TARGET atlas_test_vector
+  BOOST
+  SOURCES  test_vector.cc
+  LIBS     atlas
+  CONDITION ATLAS_HAVE_GRIDTOOLS_STORAGE
+)
+
+
 ecbuild_add_test( TARGET atlas_test_metadata
   BOOST
   MPI      4
@@ -115,7 +123,8 @@ macro( ecbuild_add_cuda_test )
   endif()
 endmacro()
 
-set ( CMAKE_NVCC_FLAGS "-G" )
+#TODO Do this only in DEBUG mode
+#set ( CMAKE_NVCC_FLAGS "-G" )
 ecbuild_add_cuda_test(
   TARGET atlas_test_array_kernel
   BOOST

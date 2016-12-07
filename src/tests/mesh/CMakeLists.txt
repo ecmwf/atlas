@@ -39,6 +39,14 @@ if( HAVE_FCTEST )
 endif()
 
 
+ecbuild_add_test( TARGET atlas_test_connectivity
+  BOOST
+  MPI      1
+  SOURCES  test_connectivity.cc
+  LIBS     atlas
+)
+
+
 ecbuild_add_test( TARGET atlas_test_elements
   BOOST
   MPI      1
@@ -103,4 +111,11 @@ ecbuild_add_test(
   CONDITION   HAVE_TESSELATION
   LIBS        atlas
   MPI         1 )
+
+ecbuild_add_cuda_test(
+  TARGET atlas_test_connectivity_kernel
+  BOOST
+  SOURCES test_connectivity_kernel.cu
+  LIBS atlas
+)
 

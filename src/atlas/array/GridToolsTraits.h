@@ -10,7 +10,7 @@
 namespace atlas {
 namespace array {
 
-#ifdef __CUDACC__
+#ifdef ENABLE_GPU
 #define BACKEND gridtools::enumtype::Cuda
 #else
 #define BACKEND gridtools::enumtype::Host
