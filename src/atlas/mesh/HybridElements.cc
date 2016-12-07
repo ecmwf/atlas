@@ -18,7 +18,7 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/field/Field.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/array/MakeView.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
@@ -27,8 +27,33 @@
 #define FORTRAN_BASE 0
 #endif
 
+using atlas::array::ArrayView;
+using atlas::array::IndexView;
+using atlas::array::make_view;
+using atlas::array::make_indexview;
+
 namespace atlas {
 namespace mesh {
+
+//------------------------------------------------------------------------------------------------------
+
+namespace {
+
+static void set_uninitialized_fields_to_zero( HybridElements& elems, size_t begin )
+{
+  ArrayView<gidx_t,1> global_index = make_view<gidx_t,1>( elems.global_index() );
+  IndexView<int,1> remote_index = make_indexview<int,1>( elems.remote_index() );
+  ArrayView<int,1> partition = make_view<int,1>( elems.partition() );
+  ArrayView<int,1> halo = make_view<int,1>( elems.halo() );
+
+  for( size_t j=begin; j<elems.size(); ++j ) {
+    global_index(j) = 0;
+    remote_index(j) = 0;
+    partition(j) = 0;
+    halo(j) = 0;
+  }
+}
+}
 
 //------------------------------------------------------------------------------------------------------
 
@@ -42,6 +67,8 @@ HybridElements::HybridElements() :
   remote_index_ = &add( field::Field::create<int   >("remote_idx",array::make_shape(size())) );
   partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size())) );
   halo_         = &add( field::Field::create<int   >("halo",      array::make_shape(size())) );
+
+  set_uninitialized_fields_to_zero(*this, 0);
 
   node_connectivity_ = &add( new Connectivity("node") );
   edge_connectivity_ = &add( new Connectivity("edge") );
@@ -68,6 +95,7 @@ field::Field& HybridElements::add( field::Field* field )
 
 void HybridElements::resize( size_t size )
 {
+  size_t old_size = size_;
   size_ = size;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
@@ -76,6 +104,9 @@ void HybridElements::resize( size_t size )
     shape[0] = size_;
     field.resize(shape);
   }
+
+  set_uninitialized_fields_to_zero( *this, old_size );
+
 }
 
 void HybridElements::remove_field(const std::string& name)
