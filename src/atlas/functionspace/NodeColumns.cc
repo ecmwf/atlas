@@ -119,22 +119,16 @@ void NodeColumns::constructor()
 
   if( halo_.size() > 0)
   {
-    // Create new halo-exchange
-    halo_exchange_.reset(new parallel::HaloExchange());
-
     mesh::actions::build_halo(mesh_,halo_.size());
-
     mesh::actions::renumber_nodes_glb_idx(mesh_.nodes());
-
-    field::Field& ridx = mesh_.nodes().remote_index();
-    field::Field& part = mesh_.nodes().partition();
-
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
     mesh_.metadata().get(ss.str(),nb_nodes_);
-
-    halo_exchange_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,nb_nodes_);
   }
+  field::Field& ridx = mesh_.nodes().remote_index();
+  field::Field& part = mesh_.nodes().partition();
+  halo_exchange_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,nb_nodes_);
+
   if( !nb_nodes_ ) {
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
