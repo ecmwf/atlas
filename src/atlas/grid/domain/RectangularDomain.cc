@@ -37,7 +37,7 @@ void RectangularDomain::setup() {
 	//std::cout << domain_type_str() << std::endl;
 }
 
-bool RectangularDomain::contains(eckit::geometry::Point2 xy) {
+bool RectangularDomain::contains(eckit::geometry::Point2 xy) const {
 	// probably should be done with some margin ...
 	return ( xmin_ <= xy[eckit::geometry::XX] && xmax_ >= xy[eckit::geometry::XX] && ymin_ <= xy[eckit::geometry::YY] && ymax_ >= xy[eckit::geometry::YY] );
 }

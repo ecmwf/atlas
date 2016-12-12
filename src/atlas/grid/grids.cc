@@ -112,7 +112,7 @@ Grid* grid_from_uid(const std::string& uid) {
         if( classical_gaussian.match(uid,matches) ) {
             try {
                 int N = to_int(matches[0]);
-                gridparams.set("grid_type", gaussian::ClassicGaussian::grid_type_str());
+                gridparams.set("grid_type", reduced::ClassicGaussian::grid_type_str());
                 gridparams.set("N",N);
                 return Grid::create( gridparams );
             } catch( const eckit::BadParameter& e ) {
@@ -121,59 +121,59 @@ Grid* grid_from_uid(const std::string& uid) {
             return 0;
         } else if( octahedral_gaussian.match(uid,matches) ) {
             int N = to_int(matches[0]);
-            gridparams.set("grid_type", gaussian::OctahedralGaussian::grid_type_str());
+            gridparams.set("grid_type", reduced::OctahedralGaussian::grid_type_str());
             gridparams.set("N",N);
             return Grid::create( gridparams );
         } else if( regular_gaussian.match(uid,matches) ) {
             int N = to_int(matches[0]);
-            gridparams.set("grid_type", gaussian::RegularGaussian::grid_type_str());
+            gridparams.set("grid_type", regular::RegularGaussian::grid_type_str());
             gridparams.set("N",N);
             return Grid::create( gridparams );
         } else if( regular_lonlat.match(uid,matches) ) {
             int N = to_int(matches[0]);
-            gridparams.set("grid_type", lonlat::RegularLonLat::grid_type_str());
+            gridparams.set("grid_type", regular::GlobalLonLat::grid_type_str());
             gridparams.set("N",N);
             return Grid::create( gridparams );
         } else if( shifted_lonlat.match(uid,matches) ) {
             int N = to_int(matches[0]);
-            gridparams.set("grid_type", lonlat::ShiftedLonLat::grid_type_str());
+            gridparams.set("grid_type", regular::ShiftedLonLat::grid_type_str());
             gridparams.set("N",N);
             return Grid::create( gridparams );
         } else if( shifted_lon.match(uid,matches) ) {
             int N = to_int(matches[0]);
-            gridparams.set("grid_type", lonlat::ShiftedLon::grid_type_str());
+            gridparams.set("grid_type", regular::ShiftedLon::grid_type_str());
             gridparams.set("N",N);
             return Grid::create( gridparams );
         } else if( shifted_lat.match(uid,matches) ) {
             int N = to_int(matches[0]);
-            gridparams.set("grid_type", lonlat::ShiftedLat::grid_type_str());
+            gridparams.set("grid_type", regular::ShiftedLat::grid_type_str());
             gridparams.set("N",N);
             return Grid::create( gridparams );
         } else if( regular_lonlat_x.match(uid,matches) ) {
             int nlon = to_int(matches[0]);
             int nlat = to_int(matches[1]);
-            gridparams.set("grid_type", lonlat::RegularLonLat::grid_type_str());
+            gridparams.set("grid_type", regular::GlobalLonLat::grid_type_str());
             gridparams.set("nlon",nlon);
             gridparams.set("nlat",nlat);
             return Grid::create( gridparams );
         } else if( shifted_lonlat_x.match(uid,matches) ) {
             int nlon = to_int(matches[0]);
             int nlat = to_int(matches[1]);
-            gridparams.set("grid_type", lonlat::ShiftedLonLat::grid_type_str());
+            gridparams.set("grid_type", regular::ShiftedLonLat::grid_type_str());
             gridparams.set("nlon",nlon);
             gridparams.set("nlat",nlat);
             return Grid::create( gridparams );
         } else if( shifted_lon_x.match(uid,matches) ) {
             int nlon = to_int(matches[0]);
             int nlat = to_int(matches[1]);
-            gridparams.set("grid_type", lonlat::ShiftedLon::grid_type_str());
+            gridparams.set("grid_type", regular::ShiftedLon::grid_type_str());
             gridparams.set("nlon",nlon);
             gridparams.set("nlat",nlat);
             return Grid::create( gridparams );
         } else if( shifted_lat_x.match(uid,matches) ) {
             int nlon = to_int(matches[0]);
             int nlat = to_int(matches[1]);
-            gridparams.set("grid_type", lonlat::ShiftedLat::grid_type_str());
+            gridparams.set("grid_type", regular::ShiftedLat::grid_type_str());
             gridparams.set("nlon",nlon);
             gridparams.set("nlat",nlat);
             return Grid::create( gridparams );
@@ -220,15 +220,16 @@ void load() {
 
     load_grid<Unstructured>();
     load_grid<CustomStructured>();
-    load_grid<gaussian::ReducedGaussian>();
-    load_grid<gaussian::RegularGaussian>();
-    load_grid<gaussian::ClassicGaussian>();
-    load_grid<gaussian::OctahedralGaussian>();
-    load_grid<lonlat::ReducedLonLat>();
-    load_grid<lonlat::RegularLonLat>();
-    load_grid<lonlat::ShiftedLonLat>();
-    load_grid<lonlat::ShiftedLon>();
-    load_grid<lonlat::ShiftedLat>();
+    load_grid<reduced::ReducedGaussian>();
+    load_grid<regular::RegularGaussian>();
+    load_grid<reduced::ClassicGaussian>();
+    load_grid<reduced::OctahedralGaussian>();
+    load_grid<reduced::ARPEGE>();
+    load_grid<reduced::ReducedLonLat>();
+    load_grid<regular::GlobalLonLat>();
+    load_grid<regular::ShiftedLonLat>();
+    load_grid<regular::ShiftedLon>();
+    load_grid<regular::ShiftedLat>();
 
 }
 

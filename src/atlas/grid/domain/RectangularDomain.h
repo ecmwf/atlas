@@ -21,9 +21,12 @@ class RectangularDomain: public Domain {
 		static std::string domain_type_str() {return "rectangular";}
 
     /// Checks if the point is contained in the domain
-    bool contains(eckit::geometry::Point2 P);
+    bool contains(eckit::geometry::Point2 P) const;
     
     std::vector<double> bbox() const;
+    
+    bool isGlobal() const { return false; }
+    bool isEmpty() const { return ( (xmin_ != xmax_) && (ymin_ != ymax_) ); }
     
 	private:
 		

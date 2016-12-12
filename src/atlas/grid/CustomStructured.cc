@@ -32,7 +32,10 @@ std::string CustomStructured::grid_type_str() {
 CustomStructured::CustomStructured(const eckit::Parametrisation& params) :
     Structured()
 {
-  domain_ = domain::Domain::makeGlobal();
+  //domain_ = domain::Domain::makeGlobal();
+	util::Config config_domain;
+	config_domain.set("domainType","global");
+	domain_=domain::Domain::create(config_domain);
 
   // mandatory parameters: pl, latitudes
   std::vector<long> pl;
@@ -50,7 +53,7 @@ CustomStructured::CustomStructured(const eckit::Parametrisation& params) :
   // optional parameters: N identifier, longitude limits (lon_min, lon_max)
   std::vector<double> lonmin(nlat);
   std::vector<double> lonmax(nlat);
-  setup_lon_limits(nlat, pl.data(), domain(), lonmin.data(), lonmax.data());
+  setup_lon_limits(nlat, pl.data(), *domain_, lonmin.data(), lonmax.data());
 
   params.get("N", Structured::N_);
   if (params.has("lon_min"))
@@ -70,17 +73,19 @@ CustomStructured::CustomStructured(const eckit::Parametrisation& params) :
 CustomStructured::CustomStructured(
     size_t nlat,
     const double lats[],
-    const long pl[],
-    const domain::Domain& dom ) :
-    Structured(),
-    domain_(dom)
+    const long pl[]) :
+    Structured()
 {
     ASSERT(nlat);
+
+		util::Config config_domain;
+		config_domain.set("domainType","global");
+		domain_=domain::Domain::create(config_domain);
 
     // assign longitude limits
     std::vector<double> lonmin(nlat);
     std::vector<double> lonmax(nlat);
-    setup_lon_limits(nlat, pl, domain(), lonmin.data(), lonmax.data());
+    setup_lon_limits(nlat, pl, *domain_, lonmin.data(), lonmax.data());
 
     ASSERT(lonmin.size() == nlat);
     ASSERT(lonmax.size() == nlat);
@@ -95,10 +100,8 @@ CustomStructured::CustomStructured(
     const double latitudes[],
     const long pl[],
     const double lonmin[],
-    const double lonmax[],
-    const domain::Domain& dom ) :
-    Structured(),
-    domain_(dom)
+    const double lonmax[] ) :
+    Structured()
 {
     Structured::setup(nlat, latitudes, pl, lonmin, lonmax);
 }
@@ -126,24 +129,24 @@ extern "C" {
     Structured* atlas__grid__CustomStructured_int(size_t nlat, double lats[], int pl[]) {
         std::vector<long> pl_vector;
         pl_vector.assign(pl,pl+nlat);
-        return new CustomStructured(nlat, lats, pl_vector.data(), domain::Domain::makeGlobal());
+        return new CustomStructured(nlat, lats, pl_vector.data());
     }
 
 
     Structured* atlas__grid__CustomStructured_long(size_t nlat, double lats[], long pl[]) {
-        return new CustomStructured(nlat, lats, pl, domain::Domain::makeGlobal());
+        return new CustomStructured(nlat, lats, pl);
     }
 
 
     Structured* atlas__grid__CustomStructured_lonmin_lonmax_int(size_t nlat, double lats[], int pl[], double lonmin[], double lonmax[]) {
         std::vector<long> pl_vector;
         pl_vector.assign(pl, pl+nlat);
-        return new CustomStructured(nlat, lats, pl_vector.data(), lonmin, lonmax, domain::Domain::makeGlobal());
+        return new CustomStructured(nlat, lats, pl_vector.data(), lonmin, lonmax);
     }
 
 
     Structured* atlas__grid__CustomStructured_lonmin_lonmax_long(size_t nlat, double lats[], long pl[], double lonmin[], double lonmax[]) {
-        return new CustomStructured(nlat, lats, pl, lonmin, lonmax, domain::Domain::makeGlobal());
+        return new CustomStructured(nlat, lats, pl, lonmin, lonmax);
     }
 
 

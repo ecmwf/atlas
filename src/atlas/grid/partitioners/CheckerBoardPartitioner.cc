@@ -75,6 +75,9 @@ void CheckerBoardPartitioner::configure_defaults(const grid::Grid& grid) {
 
 	// grid dimensions
   const grid::regular::Regular* rg = dynamic_cast<const grid::regular::Regular*>(&grid);
+  if ( !rg )
+  	throw eckit::BadValue("Checkerboard Partitioner only works for Regular grids.",Here());
+  	
 	nx_=rg->nlonmax();
 	ny_=rg->nlat();
 	
@@ -122,8 +125,6 @@ void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
   already by construction in this order, but then sorting is really fast
   */
   
-  std::cout << "nbands = " << nbands << std::endl;
-
   /*
 	Number of procs per band
   */

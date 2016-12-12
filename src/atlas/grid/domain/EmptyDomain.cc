@@ -13,7 +13,7 @@ void EmptyDomain::setup() {
 
 }
 
-bool EmptyDomain::contains(eckit::geometry::Point2 xy) {
+bool EmptyDomain::contains(eckit::geometry::Point2 xy) const {
 	return false;
 }
 

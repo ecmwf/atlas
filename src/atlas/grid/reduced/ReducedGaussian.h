@@ -20,10 +20,6 @@ class ReducedGaussian: public Structured {
 
     eckit::Properties spec() const;
     
-    virtual const domain::Domain * domain_ptr() const { return domain_; }
-    virtual const domain::Domain &domain() const { return *domain_; }
-    
-    
   protected:
 
     void setup(size_t N, long pl[]);
@@ -31,8 +27,6 @@ class ReducedGaussian: public Structured {
     //virtual void set_typeinfo() = 0;
     //static eckit::Value domain_spec(const Domain& dom);
     
-    domain::Domain * domain_;
-
 };
 
 

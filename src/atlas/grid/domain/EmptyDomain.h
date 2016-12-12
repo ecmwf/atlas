@@ -17,9 +17,12 @@ class EmptyDomain: public Domain {
     ~EmptyDomain() {};
 
     /// Checks if the point is contained in the domain
-    bool contains(eckit::geometry::Point2 P);
+    bool contains(eckit::geometry::Point2 P) const;
     
     static std::string domain_type_str() {return "empty";}
+    
+    bool isEmpty() const { return true; }
+    bool isGlobal() const { return false; }
     
 	private:
 		

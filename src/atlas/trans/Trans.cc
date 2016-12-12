@@ -15,7 +15,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/lonlat/LonLat.h"
+#include "atlas/grid/regular/GlobalLonLat.h"
 #include "atlas/internals/IsGhost.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/ErrorHandling.h"
@@ -66,12 +66,13 @@ Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p
     throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans", Here());
   }
 
-  const grid::lonlat::LonLat* lonlat = dynamic_cast<const grid::lonlat::LonLat*>(structured);
+  const grid::regular::GlobalLonLat* lonlat = dynamic_cast<const grid::regular::GlobalLonLat*>(structured);
   if (lonlat && nsmax > 0) {
+    /*
     if( lonlat->reduced() ) {
       throw eckit::BadParameter("Cannot transform a reduced lonlat grid");
     }
-    else if (lonlat->shifted()(grid::lonlat::Shift::LON) != lonlat->shifted()(grid::lonlat::Shift::LAT)) {
+    else */if (lonlat->isShiftedLon() != lonlat->isShiftedLat()) {
         throw eckit::BadParameter("Cannot transform a ShiftedLat or ShiftedLon grid");
     }
     ctor_lonlat( lonlat->nlonmax(), lonlat->nlat(), nsmax, p );

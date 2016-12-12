@@ -23,6 +23,9 @@ class GlobalLonLat: public Regular {
 
     eckit::Properties spec() const;
     
+    bool isShiftedLon() const { return shiftLon_; }
+    bool isShiftedLat() const { return shiftLat_; }
+    
   protected:
 
     void setup(long nlon, long nlat);

@@ -21,7 +21,7 @@ void CircularDomain::setup() {
 
 }
 
-bool CircularDomain::contains(eckit::geometry::Point2 xy) {
+bool CircularDomain::contains(eckit::geometry::Point2 xy) const {
 	// probably should be done with some margin ...
 	return ( (xy[eckit::geometry::XX]-xc_)*(xy[eckit::geometry::XX]-xc_)+(xy[eckit::geometry::YY]-yc_)*(xy[eckit::geometry::YY]-yc_) <= radius_*radius_ );
 }

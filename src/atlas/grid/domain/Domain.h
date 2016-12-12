@@ -56,40 +56,31 @@ class Domain {
 		
 		static std::string domain_type_str() {return "abstract";}
 		
-		static Domain makeGlobal() {return *create(); };
+		//Domain * makeGlobal() {return create(); };
   	
   	/// Checks if the point is contained in the domain
-    virtual bool contains(eckit::geometry::Point2) const {return false; }; // should become purely virtual!
-    virtual bool contains(double x, double y) const {return contains(eckit::geometry::Point2(x,y)); }; // should become purely virtual!
+    virtual bool contains(eckit::geometry::Point2) const =0;
+    virtual bool contains(double x, double y) const {return contains(eckit::geometry::Point2(x,y)); };
     
 
     /// Output to stream
     void print(std::ostream&) const;
   
-  	
-		// Here's stuff that's probably needed, but which depends on the projection, so it should be moved to the Grid class.
-     
-	  /// Check if grid includes the North pole
-	  bool includesPoleNorth() const {};
+  	/// Check if grid includes the North pole
+	  bool includesPoleNorth() const { return isGlobal(); }
 
 	  /// Check if grid includes the South pole
-	  bool includesPoleSouth() const {};
+	  bool includesPoleSouth() const { return isGlobal(); };
 
 	  /// Check if grid spans the complete range East-West (periodic)
-	  virtual bool isPeriodicEastWest() const {};
+	  virtual bool isPeriodicEastWest() const { return isGlobal(); };
 	  
 	  /// Check if domain represents the complete globe surface
-		virtual bool isGlobal() const {};
+		virtual bool isGlobal() const =0;
 
 	  /// Check if domain does not represent any area on the globe surface
-	  bool isEmpty() const {};
+	  virtual bool isEmpty() const =0;
 	  
-		// dummies for now
-    double north() const { return 0.; }
-    double west() const { return 0.; }
-    double south() const { return 0.; }
-    double east() const { return 0.; }    
-  
 };
 
 

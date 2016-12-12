@@ -142,7 +142,7 @@ void Structured::setup_lat_hemisphere(const size_t N, const double lat[], const 
     // assign longitude limits
     std::vector<double> lonmin(nlat);
     std::vector<double> lonmax(nlat);
-    setup_lon_limits(nlat, pl.data(), domain(), lonmin.data(), lonmax.data());
+    setup_lon_limits(nlat, pl.data(), *domain_, lonmin.data(), lonmax.data());
 
     // common setup
     setup(nlat, lats.data(), pl.data(), lonmin.data(), lonmax.data());

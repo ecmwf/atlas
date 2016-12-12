@@ -39,7 +39,11 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
     Grid(),
     points_ ( new std::vector< Grid::Point > (m.nodes().size() ) ) {
 
-    domain_ = domain::Domain::makeGlobal();
+   	util::Config config_domain;
+		config_domain.set("domainType","global");
+		domain_=domain::Domain::create(config_domain);
+
+		//domain_ = domain::Domain::makeGlobal();
 
     double lat_min = std::numeric_limits<double>::max();
     double lat_max = std::numeric_limits<double>::min();
@@ -62,7 +66,10 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
 
 Unstructured::Unstructured(const util::Config& p) :
     Grid() {
-    domain_ = domain::Domain::makeGlobal();
+   	util::Config config_domain;
+		config_domain.set("domainType","global");
+		domain_=domain::Domain::create(config_domain);
+//domain_ = domain::Domain::makeGlobal();
     NOTIMP;
 }
 
@@ -70,7 +77,11 @@ Unstructured::Unstructured(const util::Config& p) :
 Unstructured::Unstructured(std::vector<Point>* pts) :
     Grid(),
     points_(pts) {
-    domain_ = domain::Domain::makeGlobal();
+    //domain_ = domain::Domain::makeGlobal();
+   	util::Config config_domain;
+		config_domain.set("domainType","global");
+		domain_=domain::Domain::create(config_domain);
+
 
     const std::vector<Point> &p = *points_;
     const size_t npts = p.size();

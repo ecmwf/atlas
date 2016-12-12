@@ -79,8 +79,7 @@ class Grid : public eckit::Owned {
     eckit::MD5::digest_t hash() const;
 
     /// @return area represented by the grid
-    virtual const domain::Domain& domain() const = 0;
-    virtual const domain::Domain * domain_ptr() const { return NULL;};
+    virtual const domain::Domain* domain() const { return domain_; };
 
     /// @return projection (mapping between geographic coordinates and grid coordinates)
     //virtual const Projection& projection() const = 0;
@@ -147,6 +146,7 @@ class Grid : public eckit::Owned {
 
 	protected: // members
 		projection::Projection * projection_;
+		domain::Domain * domain_;
 };
 
 

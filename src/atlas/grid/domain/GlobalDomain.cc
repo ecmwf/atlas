@@ -13,15 +13,7 @@ void GlobalDomain::setup() {
 
 }
 
-bool GlobalDomain::contains(eckit::geometry::Point2 xy) {
-	return true;
-}
-
-bool GlobalDomain::isGlobal() const {
-	return true;
-}
-
-bool GlobalDomain::isPeriodicEastWest() const {
+bool GlobalDomain::contains(eckit::geometry::Point2 xy) const {
 	return true;
 }
 

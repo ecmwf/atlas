@@ -43,19 +43,21 @@ class CustomStructured: public Structured {
     CustomStructured(
         size_t nlat,
         const double lats[],
-        const long pl[],
-        const domain::Domain& dom=domain::Domain::makeGlobal() );
+        const long pl[]
+    );
 
     CustomStructured(
         size_t nlat,
         const double lats[],
         const long pl[],
         const double lonmin[],
-        const double lonmax[],
-        const domain::Domain& dom=domain::Domain::makeGlobal() );
+        const double lonmax[]
+    );
 
     virtual eckit::Properties spec() const;
 
+/*
+// domain is now at the level of Grid.
     virtual const domain::Domain& domain() const {
         return domain_;
     }
@@ -63,6 +65,7 @@ class CustomStructured: public Structured {
   private:
 
     domain::Domain domain_;
+ */
 };
 
 

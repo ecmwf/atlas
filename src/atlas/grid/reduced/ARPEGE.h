@@ -18,10 +18,7 @@ class ARPEGE: public ClassicGaussian {
     ARPEGE(const util::Config& params);
 
     eckit::Properties spec() const;
-    
-    virtual const domain::Domain& domain() const { return *domain_; }
-    virtual const domain::Domain * domain_ptr() const { return domain_; }
-    
+   
   protected:
 
     void setup(size_t N);

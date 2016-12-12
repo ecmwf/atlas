@@ -20,20 +20,14 @@ class ClassicGaussian: public ReducedGaussian {
 
     eckit::Properties spec() const;
     
-    virtual const domain::Domain * domain_ptr() const { return domain_; }
-    virtual const domain::Domain &domain() const { return *domain_; }
-    
-    
+   
   protected:
 
     void setup(size_t N);
 
     //virtual void set_typeinfo() = 0;
     //static eckit::Value domain_spec(const Domain& dom);
-    
-    domain::Domain * domain_;
-
-};
+ };
 
 
 }  // namespace reduced
