@@ -24,16 +24,25 @@ void RegionalLonLat::setup(const util::Config& config) {
 		double east, west, south, north;
 		
 		// get domain boundaries
-		if ( !config.get("bbox",bbox) ) {
-			if ( config.get("east",east) && config.get("west",west) && config.get("south",south) && config.get("north",north) ) {
-				bbox[0]=east;
-				bbox[1]=west;
-				bbox[2]=south;
-				bbox[3]=north;
-			} else {
+		if ( config.get("bbox",bbox) ) {
+			east=bbox[0];
+			west=bbox[1];
+			south=bbox[2];
+			north=bbox[3];
+		} else {
+			if ( ! ( config.get("east",east) && config.get("west",west) && config.get("south",south) && config.get("north",north) ) ) {
 				throw eckit::BadParameter("RegionalLonLat grid domain should be specified by bbox, or by east, west, south and north.",Here());
 			}
 		}
+		
+		// perform checks on bounds
+		if (south>north)
+			throw eckit::BadValue("RegionalLonLat grid domain requires north>south.",Here());
+		while (east<west) east+=360.;
+		bbox[0]=east;
+		bbox[1]=west;
+		bbox[2]=south;
+		bbox[3]=north;
 		
 		// define domain subconfiguration
 		config_dom.set("bbox",bbox);

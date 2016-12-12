@@ -42,7 +42,14 @@ eckit::geometry::Point2 RotatedMercatorProjection::lonlat2coords(eckit::geometry
 
 	// first unrotate
 	eckit::geometry::LLPoint2 P(ll.lon(),ll.lat());
+
+	//std::cout << "pole = " << pole_.lon() << " , " << pole_.lat() << std::endl;
+	
+	//std::cout << "P before unrotation = " << P.lon() << " , " << P.lat() << std::endl;
+
 	unrotate_(P,pole_);
+	
+	//std::cout << "P after unrotation = " << P.lon() << " , " << P.lat() << std::endl;
 	
 	// then project
 	return MercatorProjection::lonlat2coords(P);
@@ -53,9 +60,14 @@ eckit::geometry::LLPoint2 RotatedMercatorProjection::coords2lonlat(eckit::geomet
 
 	// inverse projection
 	eckit::geometry::LLPoint2 P=MercatorProjection::coords2lonlat(xy);
+
+	//std::cout << "pole = " << pole_.lon() << " , " << pole_.lat() << std::endl;
 	
 	// unrotate
-	unrotate_(P,pole_);
+	//std::cout << "P before rotation = " << P.lon() << " , " << P.lat() << std::endl;
+	
+	rotate_(P,pole_);
+	//std::cout << "P after rotation = " << P.lon() << " , " << P.lat() << std::endl;
 	
 	// then project
 	return P;

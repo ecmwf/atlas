@@ -34,7 +34,7 @@ ShiftedLon::ShiftedLon(const util::Config& config)
 		shiftLon_=true;
 		
 		// perform setup
-		RegularLonLat::setup(nlon,nlat);
+		GlobalLonLat::setup(nlon,nlat);
 }
 
 eckit::Properties ShiftedLon::spec() const {

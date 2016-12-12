@@ -28,7 +28,9 @@ eckit::geometry::LLPoint2 RotatedLonLatProjection::coords2lonlat(eckit::geometry
 	eckit::geometry::LLPoint2 P(xy[eckit::geometry::XX],xy[eckit::geometry::YY]);
 	
 	// perform rotation
+	std::cout << "P before rotation = " << P.lon() << " , " << P.lat() << std::endl;
 	rotate_(P,pole_);
+	std::cout << "P after rotation = " << P.lon() << " , " << P.lat() << std::endl;
 
 	return P;
 }
@@ -36,7 +38,9 @@ eckit::geometry::LLPoint2 RotatedLonLatProjection::coords2lonlat(eckit::geometry
 eckit::geometry::Point2 RotatedLonLatProjection::lonlat2coords(eckit::geometry::LLPoint2 P) {
 
 	// inverse rotation
+	std::cout << "P before unrotation = " << P.lon() << " , " << P.lat() << std::endl;
 	unrotate_(P,pole_);
+	std::cout << "P after unrotation = " << P.lon() << " , " << P.lat() << std::endl;
 
 	return eckit::geometry::Point2(P.lon(),P.lat());
 }

@@ -121,6 +121,8 @@ void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
   the points in bands. Note this may not be necessary, as it could be
   already by construction in this order, but then sorting is really fast
   */
+  
+  std::cout << "nbands = " << nbands << std::endl;
 
   /*
 	Number of procs per band
@@ -216,7 +218,7 @@ void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
 
 	}	
 	
-#ifndef gnarls
+#ifdef gnarls
 	// nice output of partition
 	if ( eckit::mpi::rank()==0 ) {
 		for (int iy=0;iy<ny_;iy++) {

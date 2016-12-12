@@ -189,8 +189,8 @@ grid/regular/Regular.h
 grid/regular/Regular.cc
 grid/regular/RegularRegional.h
 grid/regular/RegularRegional.cc
-grid/regular/RegularLonLat.h
-grid/regular/RegularLonLat.cc
+grid/regular/GlobalLonLat.h
+grid/regular/GlobalLonLat.cc
 grid/regular/RegionalLonLat.h
 grid/regular/RegionalLonLat.cc
 grid/regular/ShiftedLon.h

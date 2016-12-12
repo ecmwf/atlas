@@ -1,23 +1,23 @@
-#include "atlas/grid/regular/RegularLonLat.h"
+#include "atlas/grid/regular/GlobalLonLat.h"
 
 
 namespace atlas {
 namespace grid {
 namespace regular {
 
-register_BuilderT1(Grid,RegularLonLat,RegularLonLat::grid_type_str());
+register_BuilderT1(Grid,GlobalLonLat,GlobalLonLat::grid_type_str());
 
-std::string RegularLonLat::grid_type_str() {
-    return "regularLonLat";
+std::string GlobalLonLat::grid_type_str() {
+    return "globalLonLat";
 }
 
 
-std::string RegularLonLat::className() {
-    return "atlas.grid.regular.RegularLonLat";
+std::string GlobalLonLat::className() {
+    return "atlas.grid.regular.GlobalLonLat";
 }
 
 
-void RegularLonLat::setup(long nlon, long nlat) {
+void GlobalLonLat::setup(long nlon, long nlat) {
 
 		util::Config config_proj, config_spacing, config_domain;
 
@@ -48,7 +48,7 @@ void RegularLonLat::setup(long nlon, long nlat) {
     
 }
 
-RegularLonLat::RegularLonLat(const util::Config& config) :
+GlobalLonLat::GlobalLonLat(const util::Config& config) :
     Regular()
 {
 		long nlon, nlat, N;
@@ -58,7 +58,7 @@ RegularLonLat::RegularLonLat(const util::Config& config) :
 			nlon=4*N;nlat=2*N;
 		} else {
 			if ( !config.get("nlon",nlon) || !config.get("nlat",nlat) ) {
-				throw eckit::BadParameter("RegularLonLat requires either N, or (nlon,nlat)",Here());
+				throw eckit::BadParameter("GlobalLonLat requires either N, or (nlon,nlat)",Here());
 			}
 		}
 		
@@ -70,10 +70,10 @@ RegularLonLat::RegularLonLat(const util::Config& config) :
 		setup(nlon, nlat);
 }
 
-RegularLonLat::RegularLonLat() : Regular() {
+GlobalLonLat::GlobalLonLat() : Regular() {
 }
 
-eckit::Properties RegularLonLat::spec() const {
+eckit::Properties GlobalLonLat::spec() const {
     eckit::Properties grid_spec;
     grid_spec.set("grid_type",  gridType());
     /*

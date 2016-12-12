@@ -55,8 +55,8 @@ field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::gr
     	double *ll=lonlat[n].data();
     	
     	double lon, lat;
-    	lat=0.95*(-pi+2*pi*(ll[1]-bbox[2])/(bbox[3]-bbox[2]));	// reshaped to make full circle
-    	lon=0.95*(-pi+2*pi*(ll[0]-bbox[0])/(bbox[1]-bbox[0]));
+    	lat=0.975*(-pi+2*pi*(ll[1]-bbox[2])/(bbox[3]-bbox[2]));	// reshaped to make full circle, note that 0.975 matches 40 gridpoints
+    	lon=0.98*(-pi+2*pi*(ll[0]-bbox[0])/(bbox[1]-bbox[0]));
     	
     	xx[0]=cos(lon)*(r0+r1*cos(lat));
     	xx[1]=sin(lon)*(r0+r1*cos(lat));

@@ -15,7 +15,7 @@ class RotatedMercatorProjection: public MercatorProjection {
 
 		// class name
 		static std::string className() { return "atlas.RotatedMercatorProjection"; }
-		static std::string projection_type_str() {return "mercator";}
+		static std::string projection_type_str() {return "rotatedMercator";}
 
 		// projection and inverse projection
 		eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2);

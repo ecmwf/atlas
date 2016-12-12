@@ -1,7 +1,7 @@
 #ifndef atlas_grid_regular_ShiftedLonLat_h
 #define atlas_grid_regular_ShiftedLonLat_h
 
-#include "atlas/grid/regular/RegularLonLat.h"
+#include "atlas/grid/regular/GlobalLonLat.h"
 #include "atlas/grid/domain/Domain.h"
 #include "atlas/grid/spacing/Spacing.h"
 #include "atlas/grid/projection/Projection.h"
@@ -10,7 +10,7 @@ namespace atlas {
 namespace grid {
 namespace regular {
 
-class ShiftedLonLat: public RegularLonLat {
+class ShiftedLonLat: public GlobalLonLat {
 
   public:
 
