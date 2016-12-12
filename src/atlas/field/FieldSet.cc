@@ -23,13 +23,14 @@ FieldSet::FieldSet(const std::string &name) :
 {}
 
 
-void FieldSet::add(const Field& field)
+Field& FieldSet::add(const Field& field)
 {
   index_[field.name()] = fields_.size();
   fields_.push_back( eckit::SharedPtr<Field>(const_cast<Field*>(&field)) );
+  return const_cast<Field&>(field);
 }
 
-void FieldSet::add(const Field* field)
+Field& FieldSet::add(const Field* field)
 {
   if( field->name().size() ) {
     index_[field->name()] = fields_.size();
@@ -38,6 +39,7 @@ void FieldSet::add(const Field* field)
     index_[name.str()] = fields_.size();
   }
   fields_.push_back( eckit::SharedPtr<Field>(const_cast<Field*>(field)) );
+  return *const_cast<Field*>(field);
 }
 
 bool FieldSet::has_field(const std::string& name) const

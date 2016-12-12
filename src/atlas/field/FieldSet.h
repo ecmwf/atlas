@@ -167,8 +167,8 @@ public: // methods
 
   std::vector< std::string > field_names() const;
 
-  void add(const Field&);
-  void add(const Field*);
+  Field& add(const Field&);
+  Field& add(const Field*);
 
   bool has_field(const std::string& name) const;
 
