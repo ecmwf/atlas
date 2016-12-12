@@ -79,7 +79,7 @@ NodeColumns::NodeColumns( mesh::Mesh& mesh )
   : mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(0),
-    nb_nodes_(0),
+    nb_nodes_(nodes_.size()),
     nb_nodes_global_(0)
 {
   constructor();
@@ -90,7 +90,7 @@ NodeColumns::NodeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit:
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),
-    nb_nodes_(0),
+    nb_nodes_(nodes_.size()),
     nb_nodes_global_(0)
 {
   constructor();
@@ -101,7 +101,7 @@ NodeColumns::NodeColumns(mesh::Mesh& mesh, const mesh::Halo &halo)
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),
-    nb_nodes_(0),
+    nb_nodes_(nodes_.size()),
     nb_nodes_global_(0)
 {
   constructor();
@@ -354,36 +354,32 @@ field::Field* NodeColumns::createField(
 
 void NodeColumns::haloExchange( field::FieldSet& fieldset ) const
 {
-  if( halo_.size() ) {
-    for( size_t f=0; f<fieldset.size(); ++f ) {
-      const field::Field& field = fieldset[f];
-      if     ( field.datatype() == array::DataType::kind<int>() ) {
-        array::ArrayView<int,2> view(field);
-        halo_exchange().execute( view );
-      }
-      else if( field.datatype() == array::DataType::kind<long>() ) {
-        array::ArrayView<long,2> view(field);
-        halo_exchange().execute( view );
-      }
-      else if( field.datatype() == array::DataType::kind<float>() ) {
-        array::ArrayView<float,2> view(field);
-        halo_exchange().execute( view );
-      }
-      else if( field.datatype() == array::DataType::kind<double>() ) {
-        array::ArrayView<double,2> view(field);
-        halo_exchange().execute( view );
-      }
-      else throw eckit::Exception("datatype not supported",Here());
+  for( size_t f=0; f<fieldset.size(); ++f ) {
+    const field::Field& field = fieldset[f];
+    if     ( field.datatype() == array::DataType::kind<int>() ) {
+      array::ArrayView<int,2> view(field);
+      halo_exchange().execute( view );
     }
+    else if( field.datatype() == array::DataType::kind<long>() ) {
+      array::ArrayView<long,2> view(field);
+      halo_exchange().execute( view );
+    }
+    else if( field.datatype() == array::DataType::kind<float>() ) {
+      array::ArrayView<float,2> view(field);
+      halo_exchange().execute( view );
+    }
+    else if( field.datatype() == array::DataType::kind<double>() ) {
+      array::ArrayView<double,2> view(field);
+      halo_exchange().execute( view );
+    }
+    else throw eckit::Exception("datatype not supported",Here());
   }
 }
 void NodeColumns::haloExchange( field::Field& field ) const
 {
-  if( halo_.size() ) {
-    field::FieldSet fieldset;
-    fieldset.add(field);
-    haloExchange(fieldset);
-  }
+  field::FieldSet fieldset;
+  fieldset.add(field);
+  haloExchange(fieldset);
 }
 const parallel::HaloExchange& NodeColumns::halo_exchange() const
 {
