@@ -29,48 +29,19 @@ std::vector<long> OctahedralGaussian::computePL(const size_t N) {
 void OctahedralGaussian::setup(size_t N) {
 
 		util::Config config_spacing, config_domain, config_proj;
-
-		// projection is lonlat
-		config_proj.set("projectionType","lonlat");
-		projection_=projection::Projection::create(config_proj);
-		
-		// domain is global
-		config_domain.set("domainType","global");
-		domain_=domain::Domain::create(config_domain);
-
-		// determine input for Structured::setup
-		size_t ny=2*N;
-		std::vector<double> xmin(ny);		// first longitude per latitude
-		std::vector<double> xmax(ny);		// last longitude per latitude
-		std::vector<long>   pl(ny);			// number of longitudes per latitude
-		std::vector<double> y(ny);			// latitudes
 		
 		// number of longitudes per latitude
+		size_t ny=2*N;
+		std::vector<long>   pl(ny);
     pl=computePL(N);
     
-    // latitudes: gaussian spacing
-    config_spacing.set("spacingType","gaussian");
-    config_spacing.set("xmin",90.0);
-    config_spacing.set("xmax",-90.0);
-    config_spacing.set("N",ny);
-    spacing::Spacing * spacing_y=spacing::Spacing::create(config_spacing);
-    spacing_y->generate(y);
-    
-    // loop over latitudes to set bounds
-    xmin.assign(ny,0.0);
-    for (int jlat=0;jlat<ny;jlat++) {
-    	xmin[jlat]=0.0;
-    	xmax[jlat]=(pl[jlat]-1)*360.0/pl[jlat];
-    }
+    // setup from reducedGaussian
+		ReducedGaussian::setup(N,pl.data());
 		
-		// setup Structured grid
-		Structured::setup(ny,y.data(), pl.data(), xmin.data(), xmax.data());
-		Structured::N_=N;
-
 }
 
 OctahedralGaussian::OctahedralGaussian(const util::Config& config) :
-    Structured()
+    ReducedGaussian()
 {
 		size_t N;
 		

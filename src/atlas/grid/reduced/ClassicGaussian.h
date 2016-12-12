@@ -1,13 +1,13 @@
 #ifndef atlas_grid_reduced_ClassicGaussian_h
 #define atlas_grid_reduced_ClassicGaussian_h
 
-#include "atlas/grid/Structured.h"
+#include "atlas/grid/reduced/ReducedGaussian.h"
 
 namespace atlas {
 namespace grid {
 namespace reduced {
 
-class ClassicGaussian: public Structured {
+class ClassicGaussian: public ReducedGaussian {
 
   public:
 
@@ -15,7 +15,7 @@ class ClassicGaussian: public Structured {
 
     static std::string className();
     
-    ClassicGaussian(): Structured() {};
+    ClassicGaussian(): ReducedGaussian() {};
     ClassicGaussian(const util::Config& params);
 
     eckit::Properties spec() const;

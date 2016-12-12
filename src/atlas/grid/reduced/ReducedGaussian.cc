@@ -17,15 +17,10 @@ std::string ReducedGaussian::className() {
     return "atlas.grid.reduced.ReducedGaussian";
 }
 
-
 void ReducedGaussian::setup(size_t N, long pl[]) {
 
 		util::Config config_spacing, config_domain, config_proj;
 
-		// projection is lonlat
-		config_proj.set("projectionType","lonlat");
-		projection_=projection::Projection::create(config_proj);
-		
 		// domain is global
 		config_domain.set("domainType","global");
 		domain_=domain::Domain::create(config_domain);
@@ -49,9 +44,6 @@ void ReducedGaussian::setup(size_t N, long pl[]) {
     for (int jlat=0;jlat<ny;jlat++) {
     	xmin[jlat]=0.0;
     	xmax[jlat]=(pl[jlat]-1)*360.0/pl[jlat];
-    	
-    	//std::cout << "jlat = " << jlat << "; nlon = " << pl[jlat] << "; lat = " << y[jlat]
-    	//	<< "; xmax = " << xmax[jlat] << std::endl;
     }
 		
 		// setup Structured grid
@@ -83,6 +75,11 @@ ReducedGaussian::ReducedGaussian(const util::Config& config) :
     // check length
    	if ( pl.size() != 2*N )
    		throw eckit::BadParameter("pl should have length N or 2*N",Here());
+
+		// projection is lonlat
+		util::Config config_proj;
+		config_proj.set("projectionType","lonlat");
+		projection_=projection::Projection::create(config_proj);
     
     // setup
     setup(N,pl.data());

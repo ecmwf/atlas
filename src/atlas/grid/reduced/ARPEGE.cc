@@ -34,11 +34,7 @@ ARPEGE::ARPEGE(const util::Config& config) :
 		// get N from config
 		if ( !config.get("N",N) ) throw eckit::BadParameter("ARPEGE requires N",Here());
 		
-		// setup
-		ClassicGaussian::setup(N);
-
-		// change projection
-		
+		// set projection
 		// get stretching factor; defaults to 1
 		if ( !config.get("stretching_factor",c) ) c=1.0;
 		config_proj.set("stretching_factor",c);
@@ -50,6 +46,9 @@ ARPEGE::ARPEGE(const util::Config& config) :
 			config_proj.set("projectionType","schmidt");
 		}
 		projection_=projection::Projection::create(config_proj);
+
+		// setup
+		ClassicGaussian::setup(N);
 }
 
 eckit::Properties ARPEGE::spec() const {

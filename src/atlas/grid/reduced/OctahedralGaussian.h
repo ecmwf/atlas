@@ -1,13 +1,13 @@
 #ifndef atlas_grid_reduced_OctahedralGaussian_h
 #define atlas_grid_reduced_OctahedralGaussian_h
 
-#include "atlas/grid/Structured.h"
+#include "atlas/grid/reduced/ReducedGaussian.h"
 
 namespace atlas {
 namespace grid {
 namespace reduced {
 
-class OctahedralGaussian: public Structured {
+class OctahedralGaussian: public ReducedGaussian {
 
   public:
 
@@ -17,7 +17,7 @@ class OctahedralGaussian: public Structured {
     
 		std::vector<long> computePL(const size_t N);
 		
-    OctahedralGaussian(): Structured() {};
+    OctahedralGaussian(): ReducedGaussian() {};
     OctahedralGaussian(const util::Config& params);
 
     eckit::Properties spec() const;
