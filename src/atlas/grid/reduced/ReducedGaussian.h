@@ -15,10 +15,12 @@ class ReducedGaussian: public Structured {
 
     static std::string className();
     
+    virtual std::string shortName() const;
+
     ReducedGaussian(): Structured() {};
     ReducedGaussian(const util::Config& params);
 
-    eckit::Properties spec() const;
+    virtual eckit::Properties spec() const;
     
   protected:
 

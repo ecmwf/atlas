@@ -12,11 +12,15 @@ std::string RegularRegional::grid_type_str() {
     return "regularRegional";
 }
 
-
 std::string RegularRegional::className() {
     return "atlas.grid.regular.RegularRegional";
 }
 
+std::string RegularRegional::shortName() const {
+    std::ostringstream s;
+    s << "RR"<< nlonmin() << "x" << nlat();
+    return s.str();
+}
 
 void RegularRegional::setup(const util::Config& config) {
 
@@ -126,20 +130,6 @@ RegularRegional::RegularRegional() :
     Regular()
 {
 }
-
-eckit::Properties RegularRegional::spec() const {
-    eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
-    return grid_spec;
-}
-
 
 }  // namespace regular
 }  // namespace grid

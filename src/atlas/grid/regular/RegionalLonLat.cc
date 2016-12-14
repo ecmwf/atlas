@@ -78,19 +78,11 @@ RegionalLonLat::RegionalLonLat(const util::Config& config) :
 RegionalLonLat::RegionalLonLat() : RegularRegional() {
 }
 
-eckit::Properties RegionalLonLat::spec() const {
-    eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
-    return grid_spec;
+std::string RegionalLonLat::shortName() const {
+    std::ostringstream s;
+    s << "RLL"<< nlonmin() << "x" << nlat();
+    return s.str();
 }
-
 
 }  // namespace regular
 }  // namespace grid

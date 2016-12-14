@@ -15,20 +15,19 @@ class OctahedralGaussian: public ReducedGaussian {
 
     static std::string className();
     
+    virtual std::string shortName() const;
+
 		std::vector<long> computePL(const size_t N);
 		
     OctahedralGaussian(): ReducedGaussian() {};
     OctahedralGaussian(const util::Config& params);
+    
+    virtual eckit::Properties spec() const;
 
-    eckit::Properties spec() const;
-        
   protected:
 
     void setup(size_t N);
 
-    //virtual void set_typeinfo() = 0;
-    //static eckit::Value domain_spec(const Domain& dom);
-    
 };
 
 

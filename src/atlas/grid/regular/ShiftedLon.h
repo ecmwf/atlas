@@ -18,10 +18,10 @@ class ShiftedLon: public GlobalLonLat {
 
     static std::string className();
 
+    virtual std::string shortName() const;
+
     ShiftedLon(const util::Config& params);
 
-    eckit::Properties spec() const;
-    
   protected:
 
     void setup();

@@ -16,6 +16,12 @@ std::string OctahedralGaussian::className() {
     return "atlas.grid.reduced.OctahedralGaussian";
 }
 
+std::string OctahedralGaussian::shortName() const {
+   std::ostringstream s;
+   s << "O" << nlat()/2;
+   return s.str();
+}
+
 std::vector<long> OctahedralGaussian::computePL(const size_t N) {
     const size_t start = 20;
     std::vector<long> pl(2*N);
@@ -47,6 +53,11 @@ OctahedralGaussian::OctahedralGaussian(const util::Config& config) :
 		
 		// get N from config
 		if ( !config.get("N",N) ) throw eckit::BadParameter("OctahedralGaussian requires N",Here());
+
+		// projection is lonlat
+		util::Config config_proj;
+		config_proj.set("projectionType","lonlat");
+		projection_=projection::Projection::create(config_proj);
 		
 		// setup
 		setup(N);
@@ -54,14 +65,12 @@ OctahedralGaussian::OctahedralGaussian(const util::Config& config) :
 
 eckit::Properties OctahedralGaussian::spec() const {
     eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
+    
+    // general specs
+    grid_spec=Grid::spec();
+        
+    // specs for this grid are in shortname
+
     return grid_spec;
 }
 

@@ -53,6 +53,15 @@ eckit::geometry::LLPoint2 MercatorProjection::coords2lonlat(eckit::geometry::Poi
 	return eckit::geometry::LLPoint2(lon,lat);
 }
 
+// specification
+eckit::Properties MercatorProjection::spec() const {
+	eckit::Properties proj_spec;
+	proj_spec.set("projectionType",virtual_projection_type_str());
+	proj_spec.set("projectionLongitude0",lon0_);
+	proj_spec.set("projectionRadius",radius_);
+	return proj_spec;
+}
+
 register_BuilderT1(Projection,MercatorProjection,MercatorProjection::projection_type_str());
 
 }  // namespace projection

@@ -49,6 +49,18 @@ eckit::geometry::Point2 RotatedSchmidtProjection::lonlat2coords(eckit::geometry:
 	return eckit::geometry::Point2(P.lon(),lat2);
 }
 
+// specification
+eckit::Properties RotatedSchmidtProjection::spec() const {
+	eckit::Properties proj_spec;
+	proj_spec.set("projectionType",virtual_projection_type_str());
+	proj_spec.set("projectionStretchingFactor",c_);
+	std::vector<double> p(2);
+	p[0]=pole_.lon();
+	p[1]=pole_.lat();
+	proj_spec.set("projectionPole",eckit::makeVectorValue(p));
+	return proj_spec;
+}
+
 register_BuilderT1(Projection,RotatedSchmidtProjection,RotatedSchmidtProjection::projection_type_str());
 
 }  // namespace projection

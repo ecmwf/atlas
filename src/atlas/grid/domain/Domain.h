@@ -54,7 +54,8 @@ class Domain {
 		// className
 		static std::string className() {return "atlas.Domain";}
 		
-		static std::string domain_type_str() {return "abstract";}
+		static std::string domain_type_str() { return "domain"; }
+		virtual std::string virtual_domain_type_str() const { return "domain"; }
 		
 		//Domain * makeGlobal() {return create(); };
   	
@@ -62,7 +63,9 @@ class Domain {
     virtual bool contains(eckit::geometry::Point2) const =0;
     virtual bool contains(double x, double y) const {return contains(eckit::geometry::Point2(x,y)); };
     
-
+    // Specification of grid
+		virtual eckit::Properties spec() const =0;
+		
     /// Output to stream
     void print(std::ostream&) const;
   

@@ -16,6 +16,16 @@ std::string ShiftedLonLat::className() {
     return "atlas.grid.regular.ShiftedLonLat";
 }
 
+std::string ShiftedLonLat::shortName() const {
+    std::ostringstream s;
+    long mlat=nlat()+1;	// for shifted lat, one latitude was removed.
+    if ( nlonmin() == 2*mlat && mlat%2==0 ) {
+    	s << "S"<< mlat/2;
+    } else {
+	    s << "S"<< nlonmin() << "x" << mlat;
+	  }
+    return s.str();
+}
 
 ShiftedLonLat::ShiftedLonLat(const util::Config& config)
 {
@@ -37,20 +47,6 @@ ShiftedLonLat::ShiftedLonLat(const util::Config& config)
 		// perform setup
 		GlobalLonLat::setup(nlon,nlat);
 }
-
-eckit::Properties ShiftedLonLat::spec() const {
-    eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
-    return grid_spec;
-}
-
 
 }  // namespace regular
 }  // namespace grid

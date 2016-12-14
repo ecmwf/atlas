@@ -15,6 +15,8 @@ class Regular: public Structured {
     static std::string grid_type_str();
 
     static std::string className();
+    
+    virtual std::string shortName() const { return "regular"; }
 
     Regular(const util::Config& params);
     Regular();
@@ -24,10 +26,6 @@ class Regular: public Structured {
   protected:
 
     void setup();
-
-    //virtual void set_typeinfo() = 0;
-
-    //static eckit::Value domain_spec(const Domain& dom);
 
   protected:
 

@@ -26,6 +26,17 @@ bool CircularDomain::contains(eckit::geometry::Point2 xy) const {
 	return ( (xy[eckit::geometry::XX]-xc_)*(xy[eckit::geometry::XX]-xc_)+(xy[eckit::geometry::YY]-yc_)*(xy[eckit::geometry::YY]-yc_) <= radius_*radius_ );
 }
 
+eckit::Properties CircularDomain::spec() const {
+	eckit::Properties domain_prop;
+	domain_prop.set("domainType",virtual_domain_type_str());
+	domain_prop.set("radius",radius_);
+  std::vector<double> xyc(2);
+  xyc[0] = xc_;
+  xyc[1] = yc_;
+	domain_prop.set("center",eckit::makeVectorValue(xyc));
+	return domain_prop;
+}
+
 register_BuilderT1(Domain,CircularDomain,CircularDomain::domain_type_str());
 
 }  // namespace domain

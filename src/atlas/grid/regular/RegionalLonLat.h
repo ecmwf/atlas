@@ -17,12 +17,11 @@ class RegionalLonLat: public RegularRegional {
     static std::string grid_type_str();
 
     static std::string className();
+    virtual std::string shortName() const;
 
     RegionalLonLat();
     RegionalLonLat(const util::Config& params);
 
-    eckit::Properties spec() const;
-    
   protected:
 
     void setup(const util::Config& params);

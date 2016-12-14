@@ -41,17 +41,14 @@ Grid* Grid::create(const util::Config& p) {
 
     eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
 
-    std::string shortName;
-    if (p.get("short_name",shortName) && fact.exists(shortName)) {
-        return fact.get(shortName).create(p);
+    std::string shortname;
+    if (p.get("short_name",shortname) && fact.exists(shortname)) {
+        return fact.get(shortname).create(p);
     }
-    std::string gridType;
-    if (p.get("grid_type",gridType) && fact.exists(gridType)) {
-        return fact.get(gridType).create(p);
+    std::string gridtype;
+    if (p.get("grid_type",gridtype) && fact.exists(gridtype)) {
+        return fact.get(gridtype).create(p);
     }
-    
-    std::cout << "shortName: " << shortName << std::endl;
-    std::cout << "gridType: " << gridType << std::endl;
     
     throw eckit::BadParameter("no short_name or grid_type in configuration, or gridType doesn't exist",Here());
     return NULL;
@@ -84,8 +81,13 @@ Grid::uid_t Grid::uniqueId() const {
 
 eckit::MD5::digest_t Grid::hash() const {
     if (hash_.empty()) {
+    		// hash is based on (string representation of) spec()
         eckit::MD5 md5;
-        hash(md5);
+        eckit::Properties prop;
+        std::ostringstream s;
+				s << spec();
+   			prop.set("spec",s.str());
+        prop.hash(md5);
         hash_ = md5.digest();
     }
     return hash_;
@@ -129,6 +131,23 @@ size_t Grid::copyLonLatMemory(double* pts, size_t size) const {
 
 bool Grid::same(const grid::Grid& g) const {
     return uniqueId() == g.uniqueId();
+}
+
+eckit::Properties Grid::spec() const {
+    eckit::Properties grid_spec, dom_spec, proj_spec;
+
+    // grid type
+    grid_spec.set("shortName", shortName());
+
+    // add domain specs
+    dom_spec=domain_->spec();
+    grid_spec.set(dom_spec);
+
+    // add projection specs
+    proj_spec=projection_->spec();
+    grid_spec.set(proj_spec);
+
+    return grid_spec;
 }
 
 

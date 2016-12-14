@@ -17,12 +17,18 @@ std::string ARPEGE::className() {
     return "atlas.grid.reduced.ARPEGE";
 }
 
+std::string ARPEGE::shortName() const {
+   std::ostringstream s;
+   s << "ARP" << nlat()/2;
+   return s.str();
+}
 
 void ARPEGE::setup(size_t N) {
 
 		util::Config config_spacing, config_domain, config_proj;
 
 }
+
 
 ARPEGE::ARPEGE(const util::Config& config) :
     ClassicGaussian()
@@ -50,20 +56,6 @@ ARPEGE::ARPEGE(const util::Config& config) :
 		// setup
 		ClassicGaussian::setup(N);
 }
-
-eckit::Properties ARPEGE::spec() const {
-    eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
-    return grid_spec;
-}
-
 
 }  // namespace regular
 }  // namespace grid

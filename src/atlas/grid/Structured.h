@@ -39,7 +39,7 @@ class Structured : public Grid {
 
     static Structured* create(const util::Config&);
 
-    static Structured* create(const std::string& shortName);
+    static Structured* create(const std::string& shortname);
 
   public:
 
@@ -59,20 +59,17 @@ class Structured : public Grid {
 
     virtual void lonlat(std::vector<Point>&) const;
 
-    virtual std::string gridType() const {
-        return grid_type_;
-    }
+    //virtual std::string gridType() const {
+    //    return grid_type_;
+   	//}
 
-    virtual eckit::Properties spec() const = 0;
+    virtual eckit::Properties spec() const;
 
     /**
      * Human readable name
      * @note: may not be unique, such as when reduced Gaussian grids have the same N numbers but different distribution of latitude points
      */
-    virtual std::string shortName() const {
-        ASSERT(!shortName_.empty());
-        return shortName_;
-    }
+    virtual std::string shortName() const;
 
     virtual std::string getOptimalMeshGenerator() const {
         return "Structured";
@@ -107,8 +104,6 @@ class Structured : public Grid {
     }
 
     inline double lon( const size_t jlat, const size_t jlon ) const {
-    		//std::cout << "jlon = " << jlon << "; lon_min_ = " << lonmin_[jlat]
-    		//	<< "; lon_inc_ = " << lon_inc_[jlat] << std::endl;
         return lonmin_[jlat] + static_cast<double>(jlon) * lon_inc_[jlat];
         
         
@@ -129,7 +124,6 @@ class Structured : public Grid {
     	lonlat(jlat,jlon,xy);
     	eckit::geometry::Point2 Pxy(xy[0],xy[1]);
     	// convert to geographic coordinates
-    	//std::cout << "projection is " << projection_ << std::endl;
     	Pll=projection_->coords2lonlat(Pxy);
     }
 
@@ -144,7 +138,7 @@ class Structured : public Grid {
     virtual void print(std::ostream&) const;
 
     /// Hash of the PL array
-    virtual void hash(eckit::MD5&) const;
+    //virtual void hash(eckit::MD5&) const;
 
     void setup(const size_t nlat, const double lats[], const long pl[], const double lonmin[], const double lonmax[]);
 
@@ -170,10 +164,10 @@ class Structured : public Grid {
     std::vector<double> lat_;
 
     // TODO: remove, only to instantiate leaf classes
-    std::string grid_type_;
+    //std::string grid_type_;
 
     // TODO: remove, only to instantiate leaf classes
-    std::string shortName_;
+    //std::string shortName_;
 
     /// Number of points per latitude
     std::vector<long> pl_;

@@ -37,6 +37,8 @@ class CustomStructured: public Structured {
     static std::string className();
 
     static std::string grid_type_str();
+    
+    virtual std::string shortName() { return "customStructured"; }
 
     CustomStructured(const eckit::Parametrisation&);
 
@@ -54,18 +56,6 @@ class CustomStructured: public Structured {
         const double lonmax[]
     );
 
-    virtual eckit::Properties spec() const;
-
-/*
-// domain is now at the level of Grid.
-    virtual const domain::Domain& domain() const {
-        return domain_;
-    }
-
-  private:
-
-    domain::Domain domain_;
- */
 };
 
 

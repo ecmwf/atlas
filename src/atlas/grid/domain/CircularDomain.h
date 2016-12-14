@@ -19,9 +19,12 @@ class CircularDomain: public Domain {
     bool contains(eckit::geometry::Point2 P) const;
     
     static std::string domain_type_str() {return "circular";}
+    virtual std::string virtual_domain_type_str() const { return "circular"; }
     
     bool isEmpty() const { return (radius_>0); }
     bool isGlobal() const { return false; }
+    
+    virtual eckit::Properties spec() const;
     
 	private:
 		

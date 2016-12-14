@@ -46,6 +46,10 @@ std::string Structured::grid_type_str() {
     return "structured";
 }
 
+std::string Structured::shortName() const {
+	return "structured";
+
+}
 
 Structured::Structured() :
     Grid(),
@@ -150,6 +154,9 @@ void Structured::setup_lat_hemisphere(const size_t N, const double lat[], const 
 
 
 void Structured::lonlat( std::vector<Point>& pts ) const {
+		std::cout << "npts = " << npts() << std::endl;
+		std::cout << "pts.size() = " << pts.size() << std::endl;
+		
     pts.resize(npts());
 
     for(size_t jlat=0, c=0; jlat<nlat(); ++jlat) {
@@ -181,12 +188,30 @@ void Structured::print(std::ostream& os) const {
 }
 
 
+/*
 void Structured::hash(eckit::MD5& md5) const {
     // Through inheritance the grid_type_str() might differ while still being same grid
     //md5.add(grid_type_str());
 
     md5.add(latitudes().data(), sizeof(double)*latitudes().size());
     md5.add(pl().data(), sizeof(long)*nlat());
+}
+*/
+
+eckit::Properties Structured::spec() const {
+    eckit::Properties grid_spec;
+
+    // general specs
+    grid_spec=Grid::spec();
+
+    // specific specs
+    grid_spec.set("nlat",nlat());
+    grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
+    grid_spec.set("pl",eckit::makeVectorValue(pl()));
+    grid_spec.set("lonmin",eckit::makeVectorValue(lonmin_));
+    grid_spec.set("lonmax",eckit::makeVectorValue(lonmax_));
+
+    return grid_spec;
 }
 
 

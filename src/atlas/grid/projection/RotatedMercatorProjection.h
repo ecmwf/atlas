@@ -16,12 +16,16 @@ class RotatedMercatorProjection: public MercatorProjection {
 		// class name
 		static std::string className() { return "atlas.RotatedMercatorProjection"; }
 		static std::string projection_type_str() {return "rotatedMercator";}
+		virtual std::string virtual_projection_type_str() const {return "rotatedMercator";}
 
 		// projection and inverse projection
 		eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2);
 		eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2);
 
 		bool isRegional() { return true; }	// lambert projection cannot be used for global grids
+
+		// specification
+		virtual eckit::Properties spec() const;
 
 	private:
 

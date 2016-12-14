@@ -106,23 +106,6 @@ CustomStructured::CustomStructured(
     Structured::setup(nlat, latitudes, pl, lonmin, lonmax);
 }
 
-
-eckit::Properties CustomStructured::spec() const {
-    eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("nlat",       nlat());
-    grid_spec.set("latitudes",  eckit::makeVectorValue(latitudes()));
-    grid_spec.set("pl",         eckit::makeVectorValue(pl()));
-    grid_spec.set("lon_min",    eckit::makeVectorValue(lonmin_));
-    grid_spec.set("lon_max",    eckit::makeVectorValue(lonmax_));
-    if (N() != 0) {
-        grid_spec.set("N", N());
-    }
-    return grid_spec;
-}
-
-
 extern "C" {
 
 

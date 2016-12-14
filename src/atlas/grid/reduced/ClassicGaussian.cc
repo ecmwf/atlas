@@ -18,6 +18,12 @@ std::string ClassicGaussian::className() {
     return "atlas.grid.reduced.ClassicGaussian";
 }
 
+std::string ClassicGaussian::shortName() const {
+   std::ostringstream s;
+   s << "N" << nlat()/2;
+   return s.str();
+}
+
 
 void ClassicGaussian::setup(size_t N) {
 
@@ -48,19 +54,6 @@ ClassicGaussian::ClassicGaussian(const util::Config& config) :
 		
 		// setup
 		setup(N);
-}
-
-eckit::Properties ClassicGaussian::spec() const {
-    eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
-    return grid_spec;
 }
 
 

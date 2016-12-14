@@ -17,10 +17,11 @@ class ShiftedLat: public GlobalLonLat {
     static std::string grid_type_str();
 
     static std::string className();
+    
+    virtual std::string shortName() const;
 
     ShiftedLat(const util::Config& params);
 
-    eckit::Properties spec() const;
     
   protected:
 

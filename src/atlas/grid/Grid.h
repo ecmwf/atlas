@@ -73,16 +73,16 @@ class Grid : public eckit::Owned {
     uid_t uniqueId() const;
 
     /// Adds to the MD5 the information that makes this Grid unique
-    virtual void hash(eckit::MD5&) const = 0;
+    //virtual void hash(eckit::MD5&) const = 0;
 
     /// @returns the hash of the information that makes this Grid unique
     eckit::MD5::digest_t hash() const;
 
     /// @return area represented by the grid
-    virtual const domain::Domain* domain() const { return domain_; };
+    const domain::Domain* domain() const { return domain_; };
 
     /// @return projection (mapping between geographic coordinates and grid coordinates)
-    //virtual const Projection& projection() const = 0;
+    const projection::Projection* projection() const { return projection_; }
 
     /// @return number of grid points
     /// @note This methods should have constant access time, if necessary derived
@@ -104,11 +104,11 @@ class Grid : public eckit::Owned {
     /// @param arraySize is the size of the array
     void fillLonLat(double array[], size_t arraySize) const;
 
-    virtual std::string gridType() const = 0;
+    //virtual std::string gridType() const = 0;
 
     virtual std::string getOptimalMeshGenerator() const;
 
-    virtual eckit::Properties spec() const = 0;
+    virtual eckit::Properties spec() const;
 
     virtual bool same(const grid::Grid&) const;
 

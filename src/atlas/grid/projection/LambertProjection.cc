@@ -88,6 +88,18 @@ eckit::geometry::LLPoint2 LambertProjection::coords2lonlat(eckit::geometry::Poin
 	return eckit::geometry::LLPoint2(lon,lat);
 }
 
+// specification
+eckit::Properties LambertProjection::spec() const {
+	eckit::Properties proj_spec;
+	proj_spec.set("projectionType",virtual_projection_type_str());
+	proj_spec.set("projectionLatitude1",lat1_);
+	proj_spec.set("projectionLatitude2",lat2_);
+	proj_spec.set("projectionLongitude0",lon0_);
+	proj_spec.set("projectionRadius",radius_);
+	return proj_spec;
+}
+
+
 register_BuilderT1(Projection,LambertProjection,LambertProjection::projection_type_str());
 
 }  // namespace projection

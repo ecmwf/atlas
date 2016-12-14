@@ -25,6 +25,9 @@ class GlobalDomain: public Domain {
     bool isEmpty() const { return false; }
     
     static std::string domain_type_str() {return "global";}
+    virtual std::string virtual_domain_type_str() const { return "global"; }
+    
+    virtual eckit::Properties spec() const;
     
 	private:
 		

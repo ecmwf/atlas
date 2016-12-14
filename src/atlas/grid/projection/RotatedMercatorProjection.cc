@@ -42,14 +42,7 @@ eckit::geometry::Point2 RotatedMercatorProjection::lonlat2coords(eckit::geometry
 
 	// first unrotate
 	eckit::geometry::LLPoint2 P(ll.lon(),ll.lat());
-
-	//std::cout << "pole = " << pole_.lon() << " , " << pole_.lat() << std::endl;
-	
-	//std::cout << "P before unrotation = " << P.lon() << " , " << P.lat() << std::endl;
-
 	unrotate_(P,pole_);
-	
-	//std::cout << "P after unrotation = " << P.lon() << " , " << P.lat() << std::endl;
 	
 	// then project
 	return MercatorProjection::lonlat2coords(P);
@@ -60,18 +53,26 @@ eckit::geometry::LLPoint2 RotatedMercatorProjection::coords2lonlat(eckit::geomet
 
 	// inverse projection
 	eckit::geometry::LLPoint2 P=MercatorProjection::coords2lonlat(xy);
-
-	//std::cout << "pole = " << pole_.lon() << " , " << pole_.lat() << std::endl;
 	
 	// unrotate
-	//std::cout << "P before rotation = " << P.lon() << " , " << P.lat() << std::endl;
-	
 	rotate_(P,pole_);
-	//std::cout << "P after rotation = " << P.lon() << " , " << P.lat() << std::endl;
 	
 	// then project
 	return P;
 }
+
+// specification
+eckit::Properties RotatedMercatorProjection::spec() const {
+	eckit::Properties proj_spec;
+	proj_spec.set("projectionType",virtual_projection_type_str());
+	proj_spec.set("projectionRadius",radius_);
+	std::vector<double> p(2);
+	p[0]=pole_.lon();
+	p[1]=pole_.lat();
+	proj_spec.set("projectionPole",eckit::makeVectorValue(p));
+	return proj_spec;
+}
+
 
 register_BuilderT1(Projection,RotatedMercatorProjection,RotatedMercatorProjection::projection_type_str());
 

@@ -11,11 +11,19 @@ std::string ShiftedLon::grid_type_str() {
     return "shiftedLon";
 }
 
-
 std::string ShiftedLon::className() {
     return "atlas.grid.regular.ShiftedLon";
 }
 
+std::string ShiftedLon::shortName() const {
+    std::ostringstream s;
+    if ( nlonmin() == 2*nlat() && nlat()%2==0 ) {
+    	s << "Slon"<< nlat()/2;
+    } else {
+	    s << "Slon"<< nlonmin() << "x" << nlat();
+	  }
+    return s.str();
+}
 
 ShiftedLon::ShiftedLon(const util::Config& config)
 {
@@ -36,20 +44,6 @@ ShiftedLon::ShiftedLon(const util::Config& config)
 		// perform setup
 		GlobalLonLat::setup(nlon,nlat);
 }
-
-eckit::Properties ShiftedLon::spec() const {
-    eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
-    return grid_spec;
-}
-
 
 }  // namespace regular
 }  // namespace grid

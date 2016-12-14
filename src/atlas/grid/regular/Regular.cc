@@ -17,7 +17,6 @@ std::string Regular::className() {
     return "atlas.grid.regular.Regular";
 }
 
-
 void Regular::setup() {
 
 	// perform checks
@@ -63,14 +62,14 @@ Regular::Regular(const util::Config& p) :
 
 eckit::Properties Regular::spec() const {
     eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
+    
+    // general specs
+    grid_spec=Grid::spec();
+
+    // specific specs
+    grid_spec.set("nlat",nlat());
+    grid_spec.set("nlon",nlonmin());
+
     return grid_spec;
 }
 

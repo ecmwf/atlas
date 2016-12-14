@@ -12,9 +12,12 @@ std::string ReducedLonLat::grid_type_str() {
     return "reducedLonLat";
 }
 
-
 std::string ReducedLonLat::className() {
     return "atlas.grid.reduced.ReducedLonLat";
+}
+
+std::string ReducedLonLat::shortName() const {
+	return "reducedLonLat";
 }
 
 
@@ -90,14 +93,13 @@ ReducedLonLat::ReducedLonLat(const util::Config& config) :
 
 eckit::Properties ReducedLonLat::spec() const {
     eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
+    
+    // general specs
+    grid_spec=Grid::spec();
+    
+    // specs for reduced gaussian
+    grid_spec.set("pl", eckit::makeVectorValue(pl()));
+
     return grid_spec;
 }
 

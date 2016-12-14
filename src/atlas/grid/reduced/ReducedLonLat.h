@@ -15,6 +15,8 @@ class ReducedLonLat: public Structured {
 
     static std::string className();
     
+    virtual std::string shortName() const;
+
     ReducedLonLat(): Structured() {};
     ReducedLonLat(const util::Config& params);
 

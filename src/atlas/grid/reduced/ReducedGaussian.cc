@@ -17,6 +17,10 @@ std::string ReducedGaussian::className() {
     return "atlas.grid.reduced.ReducedGaussian";
 }
 
+std::string ReducedGaussian::shortName() const {
+	return "reducedGaussian";
+}
+
 void ReducedGaussian::setup(size_t N, long pl[]) {
 
 		util::Config config_spacing, config_domain, config_proj;
@@ -87,14 +91,13 @@ ReducedGaussian::ReducedGaussian(const util::Config& config) :
 
 eckit::Properties ReducedGaussian::spec() const {
     eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
+    
+    // general specs
+    grid_spec=Grid::spec();
+    
+    // specs for reduced gaussian
+    grid_spec.set("pl", eckit::makeVectorValue(pl()));
+
     return grid_spec;
 }
 

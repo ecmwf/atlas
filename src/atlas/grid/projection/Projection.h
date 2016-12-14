@@ -22,34 +22,16 @@ class Projection {
 		static Projection* create();
 		static Projection* create(const eckit::Parametrisation& p);
 		
-		/* 
-		// implementations moved to Projection.cc
-		static Projection* create() {
-			// default: no projection, i.e. stay in (lon,lat)-space
-			util::Config projParams;
-			projParams.set("projectionType","atlas.LonLatProjection");
-			return Projection::create(projParams);
-		};
-		
-		static Projection* create(const eckit::Parametrisation& p) {
-			std::string projectionType;
-			if (p.get("projectionType",projectionType)) {
-				return eckit::Factory<Projection>::instance().get(projectionType).create(p);
-			}
-
-			// should return error here
-	    throw eckit::BadParameter("projectionType missing in Params",Here());
-			return NULL;
-		}
-		*/
-		
 		static std::string className() {return "atlas.Projection";}
 		static std::string projection_type_str() {return "projection";}
+		virtual std::string virtual_projection_type_str() const { return "projection"; }
 		
 		// purely virtual functions: must be implemented by inheriting classes
 		virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2)=0;
 		virtual eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2)=0;
 		virtual bool isRegional()=0;
+		
+		virtual eckit::Properties spec() const =0;
 	
 	protected:
 		void rotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole);			// coordinates of the point on a rotated sphere with specified pole

@@ -17,6 +17,12 @@ eckit::geometry::Point2 LonLatProjection::lonlat2coords(eckit::geometry::LLPoint
 	return eckit::geometry::Point2(ll.lon(),ll.lat());
 }
 
+// specification
+eckit::Properties LonLatProjection::spec() const {
+	eckit::Properties proj_spec;
+	proj_spec.set("projectionType",virtual_projection_type_str());
+	return proj_spec;
+}
 register_BuilderT1(Projection,LonLatProjection,LonLatProjection::projection_type_str());
 
 }  // namespace projection

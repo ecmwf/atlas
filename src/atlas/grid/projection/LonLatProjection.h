@@ -18,6 +18,7 @@ class LonLatProjection: public Projection {
 		// class name
 		static std::string className() { return "atlas.LonLatProjection"; }
 		static std::string projection_type_str() {return "lonlat";}
+		virtual std::string virtual_projection_type_str() const {return "lonlat";}
 
 		// projection and inverse projection
 		virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2);
@@ -25,6 +26,10 @@ class LonLatProjection: public Projection {
 		
 		// purely regional? - no!
 		bool isRegional() { return false; }
+
+		// specification
+		virtual eckit::Properties spec() const;
+
 };
 
 }  // namespace projection

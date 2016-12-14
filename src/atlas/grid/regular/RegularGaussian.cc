@@ -16,6 +16,15 @@ std::string RegularGaussian::className() {
     return "atlas.grid.regular.RegularGaussian";
 }
 
+std::string RegularGaussian::shortName() const {
+    std::ostringstream s;
+    if ( nlonmin() == 2*nlat() && nlat()%2==0 ) {
+    	s << "F"<< nlat()/2;
+    } else {
+	    s << "F"<< nlonmin() << "x" << nlat();
+	  }
+    return s.str();
+}
 
 void RegularGaussian::setup() {
 
@@ -61,20 +70,6 @@ RegularGaussian::RegularGaussian(const util::Config& config) :
 		// perform setup
 		setup();
 }
-
-eckit::Properties RegularGaussian::spec() const {
-    eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
-    return grid_spec;
-}
-
 
 }  // namespace regular
 }  // namespace grid

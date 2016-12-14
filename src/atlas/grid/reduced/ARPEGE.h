@@ -14,11 +14,11 @@ class ARPEGE: public ClassicGaussian {
     static std::string grid_type_str();
 
     static std::string className();
+    
+    virtual std::string shortName() const;
 
     ARPEGE(const util::Config& params);
 
-    eckit::Properties spec() const;
-   
   protected:
 
     void setup(size_t N);

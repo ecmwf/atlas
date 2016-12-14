@@ -16,6 +16,15 @@ std::string GlobalLonLat::className() {
     return "atlas.grid.regular.GlobalLonLat";
 }
 
+std::string GlobalLonLat::shortName() const {
+    std::ostringstream s;
+    if ( nlonmin() == 2*nlat() && nlat()%2==0 ) {
+    	s << "L"<< nlat()/2;
+    } else {
+	    s << "L"<< nlonmin() << "x" << nlat();
+	  }
+    return s.str();
+}
 
 void GlobalLonLat::setup(long nlon, long nlat) {
 
@@ -75,14 +84,12 @@ GlobalLonLat::GlobalLonLat() : Regular() {
 
 eckit::Properties GlobalLonLat::spec() const {
     eckit::Properties grid_spec;
-    grid_spec.set("grid_type",  gridType());
-    /*
-    grid_spec.set("short_name", shortName());
-    grid_spec.set("N",    N());
-    grid_spec.set("nlon", nlon());
-    grid_spec.set("nlat", nlat());
-    grid_spec.set("domain", domain_spec(domain_) );
-    */
+    
+    // general specs
+    grid_spec=Grid::spec();
+    
+    // no other specs for GlobalLonLat
+
     return grid_spec;
 }
 

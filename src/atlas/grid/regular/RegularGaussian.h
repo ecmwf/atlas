@@ -17,17 +17,14 @@ class RegularGaussian: public Regular {
     static std::string grid_type_str();
 
     static std::string className();
+    
+    virtual std::string shortName() const;
 
     RegularGaussian(const util::Config& params);
 
-    eckit::Properties spec() const;
-    
   protected:
 
     void setup();
-
-    //virtual void set_typeinfo() = 0;
-    //static eckit::Value domain_spec(const Domain& dom);
 
 };
 

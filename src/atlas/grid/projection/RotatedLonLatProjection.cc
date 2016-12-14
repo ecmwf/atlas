@@ -28,9 +28,7 @@ eckit::geometry::LLPoint2 RotatedLonLatProjection::coords2lonlat(eckit::geometry
 	eckit::geometry::LLPoint2 P(xy[eckit::geometry::XX],xy[eckit::geometry::YY]);
 	
 	// perform rotation
-	std::cout << "P before rotation = " << P.lon() << " , " << P.lat() << std::endl;
 	rotate_(P,pole_);
-	std::cout << "P after rotation = " << P.lon() << " , " << P.lat() << std::endl;
 
 	return P;
 }
@@ -38,11 +36,21 @@ eckit::geometry::LLPoint2 RotatedLonLatProjection::coords2lonlat(eckit::geometry
 eckit::geometry::Point2 RotatedLonLatProjection::lonlat2coords(eckit::geometry::LLPoint2 P) {
 
 	// inverse rotation
-	std::cout << "P before unrotation = " << P.lon() << " , " << P.lat() << std::endl;
 	unrotate_(P,pole_);
-	std::cout << "P after unrotation = " << P.lon() << " , " << P.lat() << std::endl;
 
 	return eckit::geometry::Point2(P.lon(),P.lat());
+}
+
+
+// specification
+eckit::Properties RotatedLonLatProjection::spec() const {
+	eckit::Properties proj_spec;
+	proj_spec.set("projectionType",virtual_projection_type_str());
+	std::vector<double> p(2);
+	p[0]=pole_.lon();
+	p[1]=pole_.lat();
+	proj_spec.set("projectionPole",eckit::makeVectorValue(p));
+	return proj_spec;
 }
 
 register_BuilderT1(Projection,RotatedLonLatProjection,RotatedLonLatProjection::projection_type_str());

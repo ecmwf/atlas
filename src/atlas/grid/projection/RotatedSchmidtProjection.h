@@ -15,6 +15,7 @@ class RotatedSchmidtProjection: public SchmidtProjection {
 		// class name
 		static std::string className() { return "atlas.RotatedSchmidtProjection"; }
 		static std::string projection_type_str() {return "rotatedSchmidt";}
+		virtual std::string virtual_projection_type_str() const {return "rotatedSchmidt";}
 
 		// projection and inverse projection
 		eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2);
@@ -22,7 +23,10 @@ class RotatedSchmidtProjection: public SchmidtProjection {
 
 		// purely regional? - no!
 		bool isRegional() { return false; }	// schmidt is global grid
-	
+
+		// specification
+		virtual eckit::Properties spec() const;
+
 	private:
 		double c_;													// stretching factor
 		eckit::geometry::LLPoint2 pole_;		// pole

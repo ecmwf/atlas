@@ -29,6 +29,14 @@ eckit::geometry::Point2 SchmidtProjection::lonlat2coords(eckit::geometry::LLPoin
 	return eckit::geometry::Point2(ll.lon(),lat2);
 }
 
+// specification
+eckit::Properties SchmidtProjection::spec() const {
+	eckit::Properties proj_spec;
+	proj_spec.set("projectionType",virtual_projection_type_str());
+	proj_spec.set("projectionStretchingFactor",c_);
+	return proj_spec;
+}
+
 register_BuilderT1(Projection,SchmidtProjection,SchmidtProjection::projection_type_str());
 
 }  // namespace projection

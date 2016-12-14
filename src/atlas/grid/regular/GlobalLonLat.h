@@ -17,7 +17,9 @@ class GlobalLonLat: public Regular {
     static std::string grid_type_str();
 
     static std::string className();
-
+		
+		virtual std::string shortName() const;
+		
     GlobalLonLat();
     GlobalLonLat(const util::Config& params);
 

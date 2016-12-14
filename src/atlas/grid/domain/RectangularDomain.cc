@@ -34,7 +34,6 @@ void RectangularDomain::setup() {
 		swp=ymin_;ymin_=ymax_;ymax_=swp;
 	}
 	
-	//std::cout << domain_type_str() << std::endl;
 }
 
 bool RectangularDomain::contains(eckit::geometry::Point2 xy) const {
@@ -54,6 +53,14 @@ std::vector<double> RectangularDomain::bbox() const {
 
 }
 
+eckit::Properties RectangularDomain::spec() const {
+	eckit::Properties domain_prop;
+	domain_prop.set("domainType",virtual_domain_type_str());
+  std::vector<double> bb(4);
+  bb=bbox();
+	domain_prop.set("bbox",eckit::makeVectorValue(bb));
+	return domain_prop;
+}
 
 register_BuilderT1(Domain,RectangularDomain,RectangularDomain::domain_type_str());
 

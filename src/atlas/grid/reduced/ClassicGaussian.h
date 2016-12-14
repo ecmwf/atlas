@@ -15,18 +15,15 @@ class ClassicGaussian: public ReducedGaussian {
 
     static std::string className();
     
+    virtual std::string shortName() const;
+
     ClassicGaussian(): ReducedGaussian() {};
     ClassicGaussian(const util::Config& params);
-
-    eckit::Properties spec() const;
-    
    
   protected:
 
     void setup(size_t N);
 
-    //virtual void set_typeinfo() = 0;
-    //static eckit::Value domain_spec(const Domain& dom);
  };
 
 
