@@ -747,9 +747,9 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   bool has_south_pole = rg.latitudes().back()  == -90 && rg.pl().back()  > 0;
   bool three_dimensional  = options.get<bool>("3d");
   bool periodic_east_west = rg.domain().isPeriodicEastWest();
-  bool include_periodic_ghost_points = periodic_east_west
-          && !three_dimensional ;
-  bool remove_periodic_ghost_points = three_dimensional && periodic_east_west ;
+
+  bool include_periodic_ghost_points = periodic_east_west && !three_dimensional;
+  bool remove_periodic_ghost_points  = periodic_east_west &&  three_dimensional;
 
   bool include_north_pole = (mypart == 0 )
           && options.get<bool>("include_pole")
@@ -763,14 +763,12 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
   bool patch_north_pole = (mypart == 0)
           && options.get<bool>("patch_pole")
-          && three_dimensional
           && !has_north_pole
           && rg.domain().includesPoleNorth()
           && rg.nlon(1) > 0;
 
   bool patch_south_pole = (mypart == nparts-1)
           && options.get<bool>("patch_pole")
-          && three_dimensional
           && !has_south_pole
           && rg.domain().includesPoleSouth()
           && rg.nlon(rg.nlat()-2) > 0;
@@ -1031,6 +1029,12 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
   array::ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
   array::ArrayView<int,1>    cells_part(    mesh.cells().partition() );
+  array::ArrayView<int,1>    cells_patch(   mesh.cells().field("patch") );
+
+  /*
+   * label all patch cells a non-patch
+   */
+  cells_patch = 0;
 
   /*
   Fill in connectivity tables with global node indices first
@@ -1154,8 +1158,10 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       jcell = triag_begin + jtriag++;
       node_connectivity.set( jcell, triag_nodes );
-      cells_glb_idx(jcell) = jcell+1;
-      cells_part(jcell) = mypart;
+
+      cells_glb_idx (jcell) = jcell+1;
+      cells_part    (jcell) = mypart;
+      cells_patch   (jcell) = 1;  // mark cell as "patch"
 
       if (jbackward == jforward+2 ) break;
 
@@ -1223,8 +1229,10 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       jcell = triag_begin + jtriag++;
       node_connectivity.set( jcell, triag_nodes );
-      cells_glb_idx(jcell) = jcell+1;
-      cells_part(jcell) = mypart;
+
+      cells_glb_idx (jcell) = jcell+1;
+      cells_part    (jcell) = mypart;
+      cells_patch   (jcell) = 1;  // mark cell as "patch"
 
       if (jbackward == jforward+2 ) break;
 

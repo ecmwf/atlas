@@ -46,6 +46,8 @@ HybridElements::HybridElements() :
   partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size())) );
   halo_         = &add( field::Field::create<int   >("halo",      array::make_shape(size())) );
 
+                   add( field::Field::create<int   >("patch",     array::make_shape(size())) );
+
   node_connectivity_ = &add( new Connectivity("node") );
   edge_connectivity_ = &add( new Connectivity("edge") );
   cell_connectivity_ = &add( new Connectivity("cell") );
@@ -285,9 +287,9 @@ size_t HybridElements::footprint() const {
   }
   size += elements_size_.capacity() * sizeof(size_t);
   size += elements_begin_.capacity() * sizeof(size_t);
-  
+
   size += metadata_.footprint();
-  
+
   return size;
 }
 
