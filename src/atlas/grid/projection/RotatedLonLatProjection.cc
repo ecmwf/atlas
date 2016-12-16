@@ -22,7 +22,7 @@ RotatedLonLatProjection::RotatedLonLatProjection(const eckit::Parametrisation& p
   
 }
 
-eckit::geometry::LLPoint2 RotatedLonLatProjection::coords2lonlat(eckit::geometry::Point2 xy) {
+eckit::geometry::LLPoint2 RotatedLonLatProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
 
 	// point
 	eckit::geometry::LLPoint2 P(xy[eckit::geometry::XX],xy[eckit::geometry::YY]);
@@ -33,7 +33,7 @@ eckit::geometry::LLPoint2 RotatedLonLatProjection::coords2lonlat(eckit::geometry
 	return P;
 }
 
-eckit::geometry::Point2 RotatedLonLatProjection::lonlat2coords(eckit::geometry::LLPoint2 P) {
+eckit::geometry::Point2 RotatedLonLatProjection::lonlat2coords(eckit::geometry::LLPoint2 P) const {
 
 	// inverse rotation
 	unrotate_(P,pole_);

@@ -48,7 +48,7 @@ void LambertProjection::setup() {
 }
 
 // projection
-eckit::geometry::Point2 LambertProjection::lonlat2coords(eckit::geometry::LLPoint2 ll) {
+eckit::geometry::Point2 LambertProjection::lonlat2coords(eckit::geometry::LLPoint2 ll) const {
 
 	double rho=radius_*F_/pow(tan(D2R(45+ll.lat()/2)),n_);
 	double theta=ll.lon()-lon0_;
@@ -61,7 +61,7 @@ eckit::geometry::Point2 LambertProjection::lonlat2coords(eckit::geometry::LLPoin
 }
 
 // inverse projection
-eckit::geometry::LLPoint2 LambertProjection::coords2lonlat(eckit::geometry::Point2 xy) {
+eckit::geometry::LLPoint2 LambertProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
 	double x=xy[eckit::geometry::XX], y=xy[eckit::geometry::YY];
 	
 	// auxiliaries

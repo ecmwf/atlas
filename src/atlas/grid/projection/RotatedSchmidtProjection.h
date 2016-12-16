@@ -18,8 +18,8 @@ class RotatedSchmidtProjection: public SchmidtProjection {
 		virtual std::string virtual_projection_type_str() const {return "rotatedSchmidt";}
 
 		// projection and inverse projection
-		eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2);
-		eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2);
+		eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const;
+		eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2) const;
 
 		// purely regional? - no!
 		bool isRegional() { return false; }	// schmidt is global grid

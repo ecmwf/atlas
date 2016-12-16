@@ -9,6 +9,7 @@
 #include "atlas/grid/partitioners/CheckerBoardPartitioner.h"
 #include "atlas/internals/Functions.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
 
 using atlas::internals::microdeg;
 
@@ -220,15 +221,16 @@ void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
 	}	
 	
 #ifdef gnarls
+
 	// nice output of partition
 	if ( eckit::mpi::rank()==0 ) {
 		for (int iy=0;iy<ny_;iy++) {
 			for (int ix=0;ix<nx_;ix++) {
-				std::cout  << std::setw(3) << part[iy*nx_+ix] << " ";
+				Log::info(Here())  << std::setw(3) << part[iy*nx_+ix] << " ";
 			}
-			std::cout << "\n";
+			Log::info(Here()) << "\n";
 		}
-		std::cout << std::endl;
+		Log::info(Here()) << std::endl;
 	}
   //ASSERT(0);
 #endif

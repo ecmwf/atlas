@@ -27,12 +27,12 @@ BuildTorusXYZField::BuildTorusXYZField(const std::string& name)
 {
 }
 
-field::Field& BuildTorusXYZField::operator()(Mesh& mesh, const atlas::grid::domain::Domain * dom, double r0, double r1) const
+field::Field& BuildTorusXYZField::operator()(Mesh& mesh, const atlas::grid::domain::Domain * dom, double r0, double r1, int nx, int ny) const
 {
-  return operator()(mesh.nodes(),dom,r0,r1);
+  return operator()(mesh.nodes(),dom,r0,r1,nx,ny);
 }
 
-field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::grid::domain::Domain * dom, double r0, double r1) const
+field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::grid::domain::Domain * dom, double r0, double r1, int nx, int ny) const
 {
 	// fill xyz with torus coordinates. r0 and r1 are large and small radii, respectively.
 
@@ -55,8 +55,8 @@ field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::gr
     	double *ll=lonlat[n].data();
     	
     	double lon, lat;
-    	lat=0.975*(-pi+2*pi*(ll[1]-bbox[2])/(bbox[3]-bbox[2]));	// reshaped to make full circle, note that 0.975 matches 40 gridpoints
-    	lon=0.98*(-pi+2*pi*(ll[0]-bbox[0])/(bbox[1]-bbox[0]));
+    	lon=-pi+2*pi*(nx-1)*(ll[0]-bbox[0])/(bbox[1]-bbox[0])/nx;
+    	lat=-pi+2*pi*(ny-1)*(ll[1]-bbox[2])/(bbox[3]-bbox[2])/ny;
     	
     	xx[0]=cos(lon)*(r0+r1*cos(lat));
     	xx[1]=sin(lon)*(r0+r1*cos(lat));

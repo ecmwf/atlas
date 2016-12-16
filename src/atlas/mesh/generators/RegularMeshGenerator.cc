@@ -26,8 +26,10 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/internals/Debug.h"
+#include "atlas/runtime/Log.h"
 
 #define DEBUG_OUTPUT 0
+#define DEBUG_OUTPUT_DETAIL 0
 
 using namespace eckit;
 
@@ -37,16 +39,11 @@ namespace atlas {
 namespace mesh {
 namespace generators {
 
-namespace {
-static double to_rad = M_PI/180.;
-static double to_deg = 180.*M_1_PI;
-}
-
 RegularMeshGenerator::RegularMeshGenerator(const eckit::Parametrisation& p)
 {
   configure_defaults();
 
-	// options from Structured MeshGenerator
+	// options copied from Structured MeshGenerator
   size_t nb_parts;
   if( p.get("nb_parts",nb_parts) )
     options.set("nb_parts",nb_parts);
@@ -54,10 +51,6 @@ RegularMeshGenerator::RegularMeshGenerator(const eckit::Parametrisation& p)
   size_t part;
   if( p.get("part",part) )
     options.set("part",part);
-
-  bool ghost_at_end;
-  if( p.get("ghost_at_end",ghost_at_end) )
-    options.set("ghost_at_end",ghost_at_end);
 
 	std::string partitioner;
   if( p.get("partitioner",partitioner) )
@@ -110,6 +103,11 @@ RegularMeshGenerator::RegularMeshGenerator(const eckit::Parametrisation& p)
   bool triangulate;
   if( p.get("triangulate",triangulate) )
     options.set("triangulate",triangulate);
+
+  bool ghost_at_end;
+  if( p.get("ghost_at_end",ghost_at_end) )
+    options.set("ghost_at_end",ghost_at_end);
+
 	***/
 
 }
@@ -123,9 +121,6 @@ void RegularMeshGenerator::configure_defaults()
 
   // This option sets the part that will be generated
   options.set( "part", eckit::mpi::rank() );
-
-	// This options moves the ghost points to the end
-  options.set<bool>("ghost_at_end", true );
 
 	// This options sets the default partitioner
 	std::string partitioner;
@@ -166,6 +161,10 @@ void RegularMeshGenerator::configure_defaults()
   options.set<double>("angle", 0. );
 
   options.set<bool>("triangulate", false );
+
+	// This options moves the ghost points to the end
+  options.set<bool>("ghost_at_end", true );
+
   ***/
 
 }
@@ -180,11 +179,12 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
 
   size_t nb_parts = options.get<size_t>("nb_parts");
 
-  std::string partitioner_factory = "Trans";
+  std::string partitioner_factory = "EqualRegions";
   options.get("partitioner",partitioner_factory);
-  if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
-  if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
-
+  
+  //if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
+  //if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
+  
   grid::partitioners::Partitioner::Ptr partitioner( grid::partitioners::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
   grid::GridDistribution::Ptr distribution( partitioner->distribution() );
   generate( grid, *distribution, mesh );
@@ -219,14 +219,6 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::GridDist
   generate_mesh(*rg,distribution,mesh);
 }
 
-namespace {
-struct GhostNode {
-  GhostNode(int _jlat, int _jlon, int _jnode) { jlat = _jlat; jlon=_jlon; jnode=_jnode; }
-  int jlat;
-  int jlon;
-  int jnode;
-};
-}
 void RegularMeshGenerator::generate_mesh(
     const grid::regular::Regular& rg,
     const std::vector<int>& parts,
@@ -241,7 +233,10 @@ void RegularMeshGenerator::generate_mesh(
 	bool periodic_x = options.get<bool>("periodic_x");
 	bool periodic_y = options.get<bool>("periodic_y");
 	
-	//sleep(mypart);	// for asynchronous output ...
+	// for asynchronous output
+#if DEBUG_OUTPUT
+	sleep( mypart );
+#endif
 	
 	// this function should do the following:
 	// - define nodes with
@@ -269,128 +264,154 @@ void RegularMeshGenerator::generate_mesh(
 	int ii_glb;	// global index
 	int ncells;
 	
-	// determine surrounding rectangle (ix_min:ix_max) x (iy_min:iy_max) for nodes on this processor
-	int ix_min, ix_max, iy_min, iy_max, ix_glb, iy_glb, ix, iy;
-	int nnodes_ng, nnodes, nnodes_mx;		// number of nodes: non-ghost; total;  inside surrounding rectangle
-
-	//std::cout << "(#" << mypart << ") " << "parts = \n";
-	//for (int ii=0;ii<parts.size();++ii) std::cout << parts[ii] << ",";
-	//std::cout << std::endl;
+	// vector of local indices: necessary for remote indices of ghost nodes
+	std::vector<int> local_idx(rg.npts(),-1);
+	std::vector<int> current_idx(nparts,0);	// index counter for each proc
 	
+	// determine rectangle (ix_min:ix_max) x (iy_min:iy_max) surrounding the nodes on this processor
+	int ix_min, ix_max, iy_min, iy_max, ix_glb, iy_glb, ix, iy;
+	int nnodes_nonghost, nnodes, nnodes_mx;		// number of nodes: non-ghost; total;  inside surrounding rectangle
+	int ixr, iyu;	// indices of point to the right and above
+	int nnodes_SR, ii;
+	
+	// loop over all points to determine local indices and surroundig rectangle
 	ix_min=nx+1;ix_max=0;iy_min=ny+1;iy_max=0;
-	nnodes_ng=0;
-	for (int iy=0;iy<ny; iy++)
-		for (int ix=0;ix<nx;ix++)
-			if ( parts[iy*nx+ix] == mypart )
+	nnodes_nonghost=0;
+	
+	ii_glb=0;
+	for (iy=0;iy<ny; iy++) {
+		for (ix=0;ix<nx;ix++) {
+			local_idx[ii_glb]=current_idx[parts[ii_glb]]++;		// store local index on the local proc of this point
+			if ( parts[ii_glb] == mypart )
 			{
-				nnodes_ng++;	// non-ghost node
+				++nnodes_nonghost;	// non-ghost node: belongs to this part
 				ix_min=std::min(ix_min,ix);
 				ix_max=std::max(ix_max,ix);
 				iy_min=std::min(iy_min,iy);
 				iy_max=std::max(iy_max,iy);
 			}
-	// add one row/column for ghost nodes and periodicity nodes
-	ix_max=std::min(ix_max+1,periodic_x?nx:nx-1);
-	iy_max=std::min(iy_max+1,periodic_y?ny:ny-1);
+			++ii_glb; 																				// global index
+		}
+	}
+
+	// add one row/column for ghost nodes (which include periodicity points)
+	ix_max=ix_max+1;
+	iy_max=iy_max+1;
+	
+#if DEBUG_OUTPUT_DETAIL		
+				std::cout << "[" << mypart << "] : " << "SR = " << ix_min << ":" << ix_max << " x " << iy_min << ":" << iy_max << std::endl;
+#endif
+
+	// dimensions of surrounding rectangle (SR)
 	int nxl=ix_max-ix_min+1;
 	int nyl=iy_max-iy_min+1;
-
-	//std::cout << "(#" << mypart << ") " << "nnodes_ng = " << nnodes_ng << std::endl;
-	//std::cout << "(#" << mypart << ") " << "surrounding rectangle = " << ix_min << ":" << ix_max << "x" << iy_min << ":" << iy_max << std::endl;
 	
 	// upper estimate for number of nodes
-	nnodes_mx=nxl*nyl;
-	
-	// typ_local contains the type of the points
-	//	0: non-ghost, non-periodic
-	//	1: non-ghost, periodic
-	//	2: ghost, non-periodic
-	//	3: ghost, periodic
-	
-	std::vector< int > typ_local(nnodes_mx,-1);		
-	// fill typ_local
+	nnodes_SR=nxl*nyl;
+
+	// partitions and local indices in SR
+	std::vector<int> parts_SR(nnodes_SR,-1);
+	std::vector<int> local_idx_SR(nnodes_SR,-1);
+	std::vector<bool> is_ghost_SR(nnodes_SR,true);
+	ii=0;																		// index inside SR
 	for (iy=0; iy<nyl; iy++) {
-		iy_glb=(iy_min+iy);	// global index
+		iy_glb=(iy_min+iy);										// global y-index
 		for (ix=0; ix<nxl; ix++) {
-			ix_glb=(ix_min+ix);	// global index
-			if ( parts[(iy_glb)%ny*nx+ix_glb%nx] == mypart) {
-				if (iy_glb<ny && ix_glb<nx) {
-					// non-ghost, non-periodic node
-					typ_local[iy*nxl+ix]=0;
-				} else {
-					// non-ghost, periodic
-					typ_local[iy*nxl+ix]=1;
-				}
+			ix_glb=(ix_min+ix);									// global x-index
+			is_ghost_SR[ii]=! ((parts_SR[ii]==mypart) && ix<nxl-1 && iy<nyl-1);
+			if (ix_glb<nx && iy_glb<ny ) {
+				ii_glb=(iy_glb)*nx+ix_glb;		// global index
+				parts_SR[ii]=parts[ii_glb];
+				local_idx_SR[ii]=local_idx[ii_glb];
+				is_ghost_SR[ii]=! ((parts_SR[ii]==mypart) && ix<nxl-1 && iy<nyl-1);
+			} else if (ix_glb==nx && iy_glb<ny) {
+				// take properties from the point to the left
+				parts_SR[ii]=parts[iy_glb*nx+ix_glb-1];
+				local_idx_SR[ii]=-1;
+				is_ghost_SR[ii]=true;
+			} else if (iy_glb==ny && ix_glb<nx ) {
+				// take properties from the point below
+				parts_SR[ii]=parts[(iy_glb-1)*nx+ix_glb];
+				local_idx_SR[ii]=-1;
+				is_ghost_SR[ii]=true;
 			} else {
-				if ( ( ix_glb>0 && parts[(iy_glb)*nx+(ix_glb-1)] == mypart ) // point to the left
-						|| ( iy_glb>0 && parts[(iy_glb-1)*nx+(ix_glb)] == mypart ) // point below
-						|| ( ix_glb>0 && iy_glb>0 && parts[(iy_glb-1)*nx+(ix_glb-1)] == mypart ) // point left-below
-				) {
-					if (iy_glb<ny && ix_glb<nx) {
-						// ghost, non-periodic node
-						typ_local[iy*nxl+ix]=2;
-					} else {
-						// ghost, periodic
-						typ_local[iy*nxl+ix]=3;
-					}
-				}
+				// take properties from the point belowleft
+				parts_SR[ii]=parts[(iy_glb-1)*nx+ix_glb-1];
+				local_idx_SR[ii]=-1;
+				is_ghost_SR[ii]=true;
 			}
-		}
-	}
-	
-	// number of cells: only if bottom-left node is a regular node (typ 0) on this partition (so the loops go till nyl-1 and nxl-1)
-	ncells=0;
-	for (iy=0;iy<nyl-1;iy++) {
-		for (ix=0;ix<nxl-1;ix++) {
-			if (typ_local[iy*nxl+ix]==0) ncells++;
+			++ii;
 		}
 	}
 
-	/*
-	std::cout << "ncells = " << ncells << std::endl;
-	std::cout << "typ_local = \n";
-	for (int iiy=nyl-1; iiy>=0;iiy--) {
-		for (int iix=0; iix<nxl; iix++) std::cout << typ_local[iiy*nxl+iix] << "\t";
-		std::cout << "\n";
-	}
-	std::cout << std::endl;
-	//ASSERT(0);
-	*/
-	
-	// ii_local contains the local indices of the points in the surrounding rectangle.
-	// 		non-ghost periodic points are assigned the index of the actual point
-	
-	std::vector< int > ii_local(nnodes_mx,-1);
-	
-	// first: non-ghost non-periodic
+#if DEBUG_OUTPUT_DETAIL
+	std::cout << "[" << mypart << "] : " << "parts_SR = "; for (ii=0;ii<nnodes_SR;ii++) std::cout << parts_SR[ii] << ","; std::cout << std::endl;
+	std::cout << "[" << mypart << "] : " << "local_idx_SR = "; for (ii=0;ii<nnodes_SR;ii++) std::cout << local_idx_SR[ii] << ","; std::cout << std::endl;
+	std::cout << "[" << mypart << "] : " << "is_ghost_SR = "; for (ii=0;ii<nnodes_SR;ii++) std::cout << is_ghost_SR[ii] << ","; std::cout << std::endl;
+#endif
+
+	// vectors marking nodes that are necessary for this proc's cells
+	std::vector<bool> is_node_SR(nnodes_SR,false);
+
+	// determine number of cells and number of nodes
 	nnodes=0;
-	for (int ii=0;ii<nnodes_mx; ii++) {
-		if (typ_local[ii]==0) ii_local[ii]=nnodes++;
-	}
-	
-	// second: non-ghost periodics
-	for (iy=0; iy<nyl; iy++) {
-		for (ix=0; ix<nxl; ix++) {
-			if (typ_local[iy*nxl+ix]==1) {
-				ii_local[iy*nxl+ix]=ii_local[(iy%ny)*nxl+(ix%nx)];		// periodicity through modulus operator: index nx is modified into index 0
+	ncells=0;
+	for (iy=0; iy<nyl-1; iy++) {			// don't loop into ghost/periodicity row
+		for (ix=0; ix<nxl-1; ix++) {		// don't loop into ghost/periodicity column
+			ii=iy*nxl+ix;
+			if ( ! is_ghost_SR[ii] ) {
+				// mark this node as being used
+				if (! is_node_SR[ii]) {
+					++nnodes;
+					is_node_SR[ii]=true;
+				}
+				// check if this node is the lowerleft corner of a new cell
+				if ( (ix_min+ix<nx-1 || periodic_x) && (iy_min+iy<ny-1 || periodic_y) ) {
+					++ncells;
+					// mark lowerright corner
+					ii=iy*nxl+ix+1;
+					if (! is_node_SR[ii]) {
+						++nnodes;
+						is_node_SR[ii]=true;
+					}
+					// mark upperleft corner
+					ii=(iy+1)*nxl+ix;
+					if (! is_node_SR[ii]) {
+						++nnodes;
+						is_node_SR[ii]=true;
+					}
+					// mark upperright corner
+					ii=(iy+1)*nxl+ix+1;
+					if (! is_node_SR[ii]) {
+						++nnodes;
+						is_node_SR[ii]=true;
+					}
+				}
+				// periodic points are always needed, even if they don't belong to a cell
+				ii=iy*nxl+ix+1;
+				if ( periodic_x && ix_min+ix==nx-1 && ! is_node_SR[ii] ) {
+					++nnodes;
+					is_node_SR[ii]=true;
+				}
+				ii=(iy+1)*nxl+ix;
+				if ( periodic_y && iy_min+iy==ny-1 && ! is_node_SR[ii]  ) {
+					++nnodes;
+					is_node_SR[ii]=true;
+				}
+				ii=(iy+1)*nxl+ix+1;
+				if ( periodic_x && periodic_y && ix_min+ix==nx-1 && iy_min+iy==ny-1 && ! is_node_SR[ii]  ) {
+					++nnodes;
+					is_node_SR[ii]=true;
+				}
+					
 			}
 		}
 	}
-	
-	// third: ghost nodes
-	for (int ii=0;ii<nnodes_mx; ii++) {
-		if (typ_local[ii]>=2) ii_local[ii]=nnodes++;
-	}
-	
-	/*
-	std::cout << "ii_local = \n";
-	for (int iiy=nyl-1; iiy>=0;iiy--) {
-		for (int iix=0; iix<nxl; iix++) std::cout << ii_local[iiy*nxl+iix] << "\t";
-		std::cout << "\n";
-	}
-	std::cout << std::endl;
-	//ASSERT(0);
-	*/
+
+#if DEBUG_OUTPUT_DETAIL
+	std::cout << "[" << mypart << "] : " << "nnodes = " << nnodes << std::endl;
+	std::cout << "[" << mypart << "] : " << "is_node_SR = "; for (ii=0;ii<nnodes_SR;ii++) std::cout << is_node_SR[ii] << ","; std::cout << std::endl;
+#endif
 	
 	// define nodes and associated properties
 	mesh.nodes().resize(nnodes);
@@ -398,6 +419,7 @@ void RegularMeshGenerator::generate_mesh(
 	array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
   array::ArrayView<double,2> geolonlat     ( nodes.geolonlat() );
 	array::ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
+	array::ArrayView<int,   1> remote_idx    ( nodes.remote_index() );
 	array::ArrayView<int,   1> part          ( nodes.partition() );
 	array::ArrayView<int,   1> ghost         ( nodes.ghost() );
 	array::ArrayView<int,   1> flags         ( nodes.field("flags") );
@@ -408,65 +430,147 @@ void RegularMeshGenerator::generate_mesh(
 	array::ArrayView<int,1>    cells_part(    mesh.cells().partition() );	
 	mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
 	
-	// reloop over nodes and set properties
-	int i_glb, iix, iiy;
   int quad_nodes[4];	
   int jcell=quad_begin;
-  int inode;
+  int inode, inode_nonghost, inode_ghost;
   eckit::geometry::LLPoint2 llg;
-  
-	for (int ii=0;ii<nnodes_mx;ii++)
-	{
-		inode=ii_local[ii];
-		//std::cout << "inode = "<< inode << std::endl;
-		if ( inode >=0 )
-		{
-			// local indices
-			iy=ii/nxl;
-			ix=ii%nxl;
-			// global indices
-			ix_glb=(ix_min+ix)%nx;
-			iy_glb=(iy_min+iy)%ny;
-			i_glb=iy_glb*nx+ix_glb;
-			// grid coordinates
-			double ll[2];
-			rg.lonlat((size_t) iy_glb,(size_t) ix_glb,ll);
-      lonlat(inode,internals::LON) = ll[internals::LON];
-      lonlat(inode,internals::LAT) = ll[internals::LAT];
-      // geographic coordinates
- 			rg.geoLonlat((size_t) ix_glb,(size_t) iy_glb,llg);
-      geolonlat(inode,internals::LON) = llg[internals::LON];
-      geolonlat(inode,internals::LAT) = llg[internals::LAT];
-      // global index
-      glb_idx(inode) = i_glb+1;	// starting from 1
-	  	//std::cout << "New node " << "\n\t";
-	  	//std::cout << "\tinode=" << inode << "; lon=" << lonlat(inode,0) << "; lat=" << lonlat(inode,1) << "; glb_idx=" << glb_idx(inode) << std::endl;
-	  	//std::cout << "\tglon=" << geolonlat(inode,0) << "; glat=" << geolonlat(inode,1) << "; glb_idx=" << glb_idx(inode) << std::endl;
-      // part
-      part(inode) = parts[i_glb];
-    	// ghost nodes
-    	ghost(inode)=( part(inode)==mypart?0:1 );
-    	// flags
-    	Topology::reset(flags(inode));
-    	if ( ghost(inode) ) Topology::set(flags(inode),Topology::GHOST);
+	
+  // global indices for periodicity points
+  inode=nx*ny;
+  std::vector<int> glb_idx_px(ny+1,-1);
+  std::vector<int> glb_idx_py(nx+1,-1);
+  if (periodic_x) {
+  	for (iy=0;iy<ny+(periodic_y?1:0);iy++) {
+			glb_idx_px[iy]=inode++;
+		}
+	}
+  if (periodic_y) {
+  	for (ix=0;ix<nx;ix++) {
+	  	glb_idx_py[ix]=inode++;
+		}
+	}
 
-    	// define cell corners (local indices)
-    	if ( typ_local[ii]==0 && (periodic_x || ix <nxl-1) && (periodic_y || iy <nyl-1)  )
-    	{
-		  	quad_nodes[0]=ii_local[ii];
-		  	quad_nodes[1]=ii_local[iy*nxl+ix+1];			// point to the right
-		  	quad_nodes[2]=ii_local[(iy+1)*nxl+ix+1];	// point above right
-		  	quad_nodes[3]=ii_local[(iy+1)*nxl+ix];		// point above
-		    node_connectivity.set( jcell, quad_nodes );
-		    cells_part(jcell)    = mypart;
-		  	//std::cout << "New quad " << jcell << "\n\t";
-		  	//std::cout << quad_nodes[0] << "," << quad_nodes[1] << "," << quad_nodes[2] << "," << quad_nodes[3] << std::endl;
-		  	++jcell;
+	// loop over nodes and set properties
+	ii=0;
+  inode_nonghost=0;
+  inode_ghost=nnodes_nonghost;	// ghost nodes start counting after nonghost nodes
+	for (iy=0; iy<nyl; iy++) {
+		for (ix=0; ix<nxl; ix++) {
+			// node properties
+			if ( is_node_SR[ii] ) {
+				// set node counter
+				if ( is_ghost_SR[ii] ) {
+					inode=inode_ghost++;
+				} else {
+					inode=inode_nonghost++;
+				}
+				// global index
+				ix_glb=(ix_min+ix);			// don't take modulus here: periodicity points have their own global index.
+				iy_glb=(iy_min+iy);
+		    if ( ix_glb < nx && iy_glb < ny ) {
+					ii_glb=iy_glb*nx+ix_glb;	// no periodic point
+		    } else {
+		    	if ( ix_glb==nx ) {
+		    		// periodicity point in x-direction
+		    		ii_glb=glb_idx_px[iy_glb];
+		    	} else {
+		    		
+		    		// periodicity point in x-direction
+		    		ii_glb=glb_idx_py[ix_glb];
+		    	}
+		    }
+		    glb_idx(inode) = ii_glb+1;	// starting from 1
+				// grid coordinates
+				double xy[2];
+				if (iy_glb<ny) {
+					// normal calculation
+					rg.lonlat((size_t) iy_glb,(size_t) ix_glb,xy);
+				} else {
+					// for periodic_y grids, iy_glb==ny lies outside the range of latitudes in the Structured grid...
+					// so we extrapolate from two other points -- this is okay for regular grids with uniform spacing.
+					double xy1[2], xy2[2];
+					rg.lonlat((size_t) iy_glb-1,(size_t) ix_glb,xy1);
+					rg.lonlat((size_t) iy_glb-2,(size_t) ix_glb,xy2);
+					xy[0]=2*xy1[0]-xy2[0];
+					xy[1]=2*xy1[1]-xy2[1];
+				}
+		    lonlat(inode,internals::LON) = xy[internals::LON];
+		    lonlat(inode,internals::LAT) = xy[internals::LAT];
+		    
+		    // geographic coordinates by using projection
+		    llg=rg.projection()->coords2lonlat(eckit::geometry::Point2(xy[0],xy[1]));
+		    geolonlat(inode,internals::LON) = llg[internals::LON];
+		    geolonlat(inode,internals::LAT) = llg[internals::LAT];
+		    
+		    // part
+		    part(inode) = parts_SR[ii];
+		  	// ghost nodes
+		  	ghost(inode)=is_ghost_SR[ii];
+		  	// flags
+		  	Topology::reset(flags(inode));
+		  	if ( ghost(inode) ) {
+		  		Topology::set(flags(inode),Topology::GHOST);
+		  		remote_idx(inode)=local_idx_SR[ii];
+		  		// change local index -- required for cells
+		  		local_idx_SR[ii]=inode;
+		  	} else {
+		  		remote_idx(inode)=-1;
+		  	}
+		  	
+#if DEBUG_OUTPUT_DETAIL
+				std::cout << "[" << mypart << "] : " << "New node " << "\n\t";
+				std::cout << "[" << mypart << "] : "  << "\tinode=" << inode << "; ix_glb=" << ix_glb << "; iy_glb=" << iy_glb << "; glb_idx=" << ii_glb << std::endl;
+				std::cout << "[" << mypart << "] : "  << "\tglon=" << geolonlat(inode,0) << "; glat=" << geolonlat(inode,1) << "; glb_idx=" << glb_idx(inode) << std::endl;
+#endif
+			}
+			++ii;
+		}
+	}
+
+	
+	// loop over nodes and define cells
+	for (iy=0; iy<nyl-1; iy++) {			// don't loop into ghost/periodicity row
+		for (ix=0; ix<nxl-1; ix++) {		// don't loop into ghost/periodicity column
+			ii=iy*nxl+ix;
+			if ( ! is_ghost_SR[ii] ) {
+				if ( (ix_min+ix<nx-1 || periodic_x) && (iy_min+iy<ny-1 || periodic_y) ) {
+		    	// define cell corners (local indices)
+			  	quad_nodes[0]=local_idx_SR[ii];
+					quad_nodes[1]=local_idx_SR[iy*nxl+ix+1];			// point to the right
+					quad_nodes[2]=local_idx_SR[(iy+1)*nxl+ix+1];	// point above right
+					quad_nodes[3]=local_idx_SR[(iy+1)*nxl+ix];		// point above
+				  node_connectivity.set( jcell, quad_nodes );
+				  cells_part(jcell)    = mypart;
+#if DEBUG_OUTPUT_DETAIL
+					std::cout << "[" << mypart << "] : "  << "New quad " << jcell << "\n\t";
+					std::cout << "[" << mypart << "] : "  << quad_nodes[0] << "," << quad_nodes[1] << "," << quad_nodes[2] << "," << quad_nodes[3] << std::endl;
+#endif
+			  	++jcell;
+			  }
 		  }
 		}
 	}
-	
+
+#if DEBUG_OUTPUT	
+	// list nodes
+	for (inode=0;inode<nnodes;inode++) {
+		std::cout << "[" << mypart << "] : " << " node " << inode << ": ghost = " << ghost(inode) << ", glb_idx = " << glb_idx(inode)-1
+			<< ", part = " << part(inode) << ", lon = " << lonlat(inode,0) << ", lat = " << lonlat(inode,1)
+			<< ", remote_idx = " << remote_idx(inode)
+			<< std::endl;
+	}
+
+	int * cell_nodes;
+	for (jcell=0;jcell<ncells;jcell++) {
+		std::cout << "[" << mypart << "] : " << " cell " << jcell << ": " << node_connectivity(jcell,0) << ","
+			<< node_connectivity(jcell,1) << ","<< node_connectivity(jcell,2) << ","<< node_connectivity(jcell,3) << std::endl;
+	}
+#endif
+
   generate_global_element_numbering( mesh );
+  
+  nodes.metadata().set("parallel",true);
+ 
 }
 
 

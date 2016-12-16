@@ -27,15 +27,15 @@ class Projection {
 		virtual std::string virtual_projection_type_str() const { return "projection"; }
 		
 		// purely virtual functions: must be implemented by inheriting classes
-		virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2)=0;
-		virtual eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2)=0;
+		virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const =0;
+		virtual eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2) const =0;
 		virtual bool isRegional()=0;
 		
 		virtual eckit::Properties spec() const =0;
 	
 	protected:
-		void rotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole);			// coordinates of the point on a rotated sphere with specified pole
-		void unrotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole);		// inverse operation of rotate
+		void rotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole) const;			// coordinates of the point on a rotated sphere with specified pole
+		void unrotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole) const;		// inverse operation of rotate
 
 };
 

@@ -35,7 +35,7 @@ void MercatorProjection::setup(const eckit::Parametrisation& params) {
 }
 
 // projection
-eckit::geometry::Point2 MercatorProjection::lonlat2coords(eckit::geometry::LLPoint2 ll) {
+eckit::geometry::Point2 MercatorProjection::lonlat2coords(eckit::geometry::LLPoint2 ll) const {
 
 	double x=radius_*(D2R(ll.lon()-lon0_));
 	double y=radius_*log(tan(D2R(45+ll.lat()/2)));
@@ -44,7 +44,7 @@ eckit::geometry::Point2 MercatorProjection::lonlat2coords(eckit::geometry::LLPoi
 }
 
 // inverse projection
-eckit::geometry::LLPoint2 MercatorProjection::coords2lonlat(eckit::geometry::Point2 xy) {
+eckit::geometry::LLPoint2 MercatorProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
 	double x=xy[eckit::geometry::XX], y=xy[eckit::geometry::YY];
 	
 	double lon=lon0_+R2D(x/radius_);

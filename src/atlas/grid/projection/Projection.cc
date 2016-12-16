@@ -28,7 +28,7 @@ Projection* Projection::create(const eckit::Parametrisation& p) {
 	return NULL;
 }
 
-void Projection::rotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole) {
+void Projection::rotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole) const {
 	// coordinates of the point P on a rotated sphere with specified pole
 
 	double lon, lat, lonr, latr, lont, latt;
@@ -58,7 +58,7 @@ void Projection::rotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLP
 	P.assign(lonr,latr);
 }
 
-void Projection::unrotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole) {
+void Projection::unrotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole) const {
 	// inverse operation of Projection::rotate
 
 	double lon, lat, lonr, latr, lont, latt;

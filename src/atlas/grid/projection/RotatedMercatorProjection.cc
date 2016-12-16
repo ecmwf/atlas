@@ -38,7 +38,7 @@ void RotatedMercatorProjection::setup(const eckit::Parametrisation& params) {
 }
 
 // projection
-eckit::geometry::Point2 RotatedMercatorProjection::lonlat2coords(eckit::geometry::LLPoint2 ll) {
+eckit::geometry::Point2 RotatedMercatorProjection::lonlat2coords(eckit::geometry::LLPoint2 ll) const {
 
 	// first unrotate
 	eckit::geometry::LLPoint2 P(ll.lon(),ll.lat());
@@ -49,7 +49,7 @@ eckit::geometry::Point2 RotatedMercatorProjection::lonlat2coords(eckit::geometry
 }
 
 // inverse projection
-eckit::geometry::LLPoint2 RotatedMercatorProjection::coords2lonlat(eckit::geometry::Point2 xy) {
+eckit::geometry::LLPoint2 RotatedMercatorProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
 
 	// inverse projection
 	eckit::geometry::LLPoint2 P=MercatorProjection::coords2lonlat(xy);

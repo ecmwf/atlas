@@ -38,8 +38,8 @@ public:
 
     explicit BuildTorusXYZField(const std::string& name = "xyz");
 
-    field::Field& operator()(Mesh&,const atlas::grid::domain::Domain * dom, double r0, double r1) const;
-    field::Field& operator()(mesh::Nodes&,const atlas::grid::domain::Domain * dom, double r0, double r1) const;
+    field::Field& operator()(Mesh&,const atlas::grid::domain::Domain * dom, double r0, double r1, int nx, int ny) const;
+    field::Field& operator()(mesh::Nodes&,const atlas::grid::domain::Domain * dom, double r0, double r1, int nx, int ny) const;
 
 private:
 

@@ -25,7 +25,7 @@ RotatedSchmidtProjection::RotatedSchmidtProjection(const eckit::Parametrisation&
   
 }
 
-eckit::geometry::LLPoint2 RotatedSchmidtProjection::coords2lonlat(eckit::geometry::Point2 xy) {
+eckit::geometry::LLPoint2 RotatedSchmidtProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
 
 	// stretch
 	double lat=R2D(asin(cos(2*atan(1/c_*tan(acos(sin(D2R(xy[eckit::geometry::YY])))/2)))));
@@ -38,7 +38,7 @@ eckit::geometry::LLPoint2 RotatedSchmidtProjection::coords2lonlat(eckit::geometr
 	return P;
 }
 
-eckit::geometry::Point2 RotatedSchmidtProjection::lonlat2coords(eckit::geometry::LLPoint2 P) {
+eckit::geometry::Point2 RotatedSchmidtProjection::lonlat2coords(eckit::geometry::LLPoint2 P) const {
 
 	// inverse rotation
 	unrotate_(P,pole_);
