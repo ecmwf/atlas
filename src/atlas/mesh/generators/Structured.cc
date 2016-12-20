@@ -704,14 +704,20 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
 //  Log::info()  << "nb_elems = " << nelems << std::endl;
 
   int nb_region_nodes = 0;
-
-  for( int jlat=region.north; jlat<=region.south; ++jlat ) {
+  for(size_t jlat = region.north; jlat <= region.south; ++jlat) {
+    n = offset.at(jlat);
     region.lat_begin.at(jlat) = std::max( 0, region.lat_begin.at(jlat) );
+    for(size_t jlon = 0; jlon < rg.nlon(jlat); ++jlon) {
+      if( parts.at(n) == mypart ) {
+        region.lat_begin.at(jlat) = std::min( region.lat_begin.at(jlat), int(jlon) );
+        region.lat_end.  at(jlat) = std::max( region.lat_end  .at(jlat), int(jlon) );
+      }
+      ++n;
+    }
     nb_region_nodes += region.lat_end.at(jlat)-region.lat_begin.at(jlat)+1;
 
-    // Count extra periodic node to be added in this case
+    // Count extra periodic node
     if( periodic_east_west && size_t(region.lat_end.at(jlat)) == rg.nlon(jlat) - 1) ++nb_region_nodes;
-
   }
 
   region.nnodes = nb_region_nodes;
@@ -1250,30 +1256,6 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   }
 
   generate_global_element_numbering( mesh );
-}
-
-void Structured::generate_global_element_numbering( Mesh& mesh ) const
-{
-  size_t loc_nb_elems = mesh.cells().size();
-  std::vector<size_t> elem_counts( parallel::mpi::comm().size() );
-  std::vector<int> elem_displs( parallel::mpi::comm().size() );
-
-  parallel::mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
-
-  elem_displs.at(0) = 0;
-  for(size_t jpart = 1; jpart < parallel::mpi::comm().size(); ++jpart)
-  {
-    elem_displs.at(jpart) = elem_displs.at(jpart-1) + elem_counts.at(jpart-1);
-  }
-
-  gidx_t gid = 1+elem_displs.at( parallel::mpi::comm().rank() );
-
-  array::ArrayView<gidx_t,1> glb_idx( mesh.cells().global_index() );
-
-  for( size_t jelem=0; jelem<mesh.cells().size(); ++jelem )
-  {
-    glb_idx(jelem) = gid++;
-  }
 }
 
 namespace {
