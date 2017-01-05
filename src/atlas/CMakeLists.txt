@@ -243,19 +243,31 @@ list( APPEND atlas_numerics_srcs
 endif()
 
 list( APPEND atlas_interpolation_srcs
-interpolation/Intersect.h
+interpolation/FieldContext.cc
+interpolation/FieldContext.h
+interpolation/FieldContextInput.cc
+interpolation/FieldContextInput.h
+interpolation/FieldContextOutput.cc
+interpolation/FieldContextOutput.h
+interpolation/FiniteElement.cc
+interpolation/FiniteElement.h
+interpolation/Interpolation.cc
+interpolation/Interpolation.h
 interpolation/Intersect.cc
-interpolation/Quad3D.h
-interpolation/Quad3D.cc
-interpolation/Ray.h
-interpolation/Ray.cc
-interpolation/Triag3D.h
-interpolation/Triag3D.cc
-interpolation/Vector3D.h
-interpolation/PointIndex3.h
+interpolation/Intersect.h
+interpolation/NearestNeighbour.cc
+interpolation/NearestNeighbour.h
 interpolation/PointIndex3.cc
-interpolation/PointSet.h
+interpolation/PointIndex3.h
 interpolation/PointSet.cc
+interpolation/PointSet.h
+interpolation/Quad3D.cc
+interpolation/Quad3D.h
+interpolation/Ray.cc
+interpolation/Ray.h
+interpolation/Triag3D.cc
+interpolation/Triag3D.h
+interpolation/Vector3D.h
 )
 
 list( APPEND atlas_array_srcs
@@ -368,8 +380,9 @@ ecbuild_add_library( TARGET atlas
 
   LIBS
     eckit_geometry
-    eckit_option
+    eckit_linalg
     eckit_mpi
+    eckit_option
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
   
