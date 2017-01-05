@@ -36,6 +36,7 @@ namespace interpolation {
 
 
 struct FieldContextOutput : FieldContext {
+
     FieldContextOutput(
             const std::string& gridname,
             const std::string& partitioner,
@@ -44,6 +45,9 @@ struct FieldContextOutput : FieldContext {
             const grid::Domain& prePartitionedDomain = grid::Domain::makeGlobal(),
             bool meshGeneratorTriangulate = false,
             double meshGeneratorAngle = 0 );
+
+    virtual void write(const std::string& fileName);
+
 };
 
 

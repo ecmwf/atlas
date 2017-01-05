@@ -45,9 +45,6 @@ struct FieldContext {
 
     virtual ~FieldContext() {}
 
-    virtual void read(const std::string& name);
-    virtual void write(const std::string& fileName);
-
     size_t meshHaloSize(size_t haloSize) { meshHaloSize_ = haloSize; }
     size_t meshHaloSize() const { return meshHaloSize_; }
 

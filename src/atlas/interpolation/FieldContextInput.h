@@ -36,12 +36,16 @@ namespace interpolation {
 
 
 struct FieldContextInput : FieldContext {
+
     FieldContextInput(
             const std::string& gridname,
             const std::string& partitioner,
             const std::string& meshGenerator,
             bool meshGeneratorTriangulate = false,
             double meshGeneratorAngle = 0 );
+
+    virtual void read(const std::string& name);
+
 };
 
 
