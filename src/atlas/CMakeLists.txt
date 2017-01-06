@@ -243,31 +243,31 @@ list( APPEND atlas_numerics_srcs
 endif()
 
 list( APPEND atlas_interpolation_srcs
-interpolation/FieldContext.cc
-interpolation/FieldContext.h
-interpolation/FieldContextInput.cc
-interpolation/FieldContextInput.h
-interpolation/FieldContextOutput.cc
-interpolation/FieldContextOutput.h
-interpolation/FiniteElement.cc
-interpolation/FiniteElement.h
-interpolation/Interpolation.cc
-interpolation/Interpolation.h
-interpolation/Intersect.cc
-interpolation/Intersect.h
-interpolation/NearestNeighbour.cc
-interpolation/NearestNeighbour.h
-interpolation/PointIndex3.cc
-interpolation/PointIndex3.h
-interpolation/PointSet.cc
-interpolation/PointSet.h
-interpolation/Quad3D.cc
-interpolation/Quad3D.h
-interpolation/Ray.cc
-interpolation/Ray.h
-interpolation/Triag3D.cc
-interpolation/Triag3D.h
 interpolation/Vector3D.h
+interpolation/context/Context.cc
+interpolation/context/Context.h
+interpolation/context/InputContext.cc
+interpolation/context/InputContext.h
+interpolation/context/OutputContext.cc
+interpolation/context/OutputContext.h
+interpolation/element/Quad3D.cc
+interpolation/element/Quad3D.h
+interpolation/element/Triag3D.cc
+interpolation/element/Triag3D.h
+interpolation/method/FiniteElement.cc
+interpolation/method/FiniteElement.h
+interpolation/method/Intersect.cc
+interpolation/method/Intersect.h
+interpolation/method/Method.cc
+interpolation/method/Method.h
+interpolation/method/NearestNeighbour.cc
+interpolation/method/NearestNeighbour.h
+interpolation/method/PointIndex3.cc
+interpolation/method/PointIndex3.h
+interpolation/method/PointSet.cc
+interpolation/method/PointSet.h
+interpolation/method/Ray.cc
+interpolation/method/Ray.h
 )
 
 list( APPEND atlas_array_srcs

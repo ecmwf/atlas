@@ -9,8 +9,10 @@
  */
 
 
-#include "atlas/interpolation/FieldContext.h"
+#ifndef atlas_interpolation_OutputContext_h
+#define atlas_interpolation_OutputContext_h
 
+//include "eckit/linalg/LinearAlgebra.h"
 //include "eckit/linalg/Vector.h"
 //include "atlas/atlas.h"
 #include "atlas/functionspace/NodeColumns.h"
@@ -24,32 +26,35 @@
 #include "atlas/output/Gmsh.h"
 //include "atlas/runtime/Log.h"
 
-#include "atlas/grid/partitioners/PartitionerFromPrePartitionedMesh.h"
+//#include "atlas/grid/partitioners/PartitionerFromPrePartitionedMesh.h"
 //include "atlas/interpolation/Interpolation.h"
+#include "atlas/interpolation/context/Context.h"
 
 
 namespace atlas {
 namespace interpolation {
+namespace context {
 
 
-FieldContext::FieldContext(
-        const std::string& gridname,
-        const std::string& partitioner,
-        const std::string& meshGenerator,
-        bool meshGeneratorTriangulate,
-        double meshGeneratorAngle ) :
-    optionGridname_(gridname),
-    optionPartitioner_(partitioner),
-    optionMeshGenerator_(meshGenerator),
-    meshHaloSize_(0) {
+struct OutputContext : Context {
 
-    meshGeneratorParams_.set("three_dimensional", false);
-    meshGeneratorParams_.set("patch_pole",        true);
-    meshGeneratorParams_.set("include_pole",      false);
-    meshGeneratorParams_.set("triangulate", meshGeneratorTriangulate);
-    meshGeneratorParams_.set("angle",       meshGeneratorAngle);
-}
+    OutputContext(
+            const std::string& gridname,
+            const std::string& partitioner,
+            const std::string& meshGenerator,
+            const mesh::Mesh::Ptr prePartitionedMesh,
+            const grid::Domain& prePartitionedDomain = grid::Domain::makeGlobal(),
+            bool meshGeneratorTriangulate = false,
+            double meshGeneratorAngle = 0 );
+
+    virtual void write(const std::string& fileName);
+
+};
 
 
+}  // context
 }  // interpolation
 }  // atlas
+
+
+#endif

@@ -10,12 +10,13 @@
  */
 
 #include "atlas/array/ArrayView.h"
-#include "atlas/interpolation/PointIndex3.h"
+#include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/mesh/HybridElements.h"
 
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
 
 ElemIndex3* create_element_centre_index(const mesh::Mesh& mesh) {
@@ -39,6 +40,7 @@ ElemIndex3* create_element_centre_index(const mesh::Mesh& mesh) {
 }
 
 
+} // namespace method
 } // namespace interpolation
 } // namespace atlas
 

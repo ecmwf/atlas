@@ -49,15 +49,15 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/mesh/actions/BuildConvexHull3D.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/interpolation/PointSet.h"
+#include "atlas/interpolation/method/PointSet.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 
 using namespace eckit;
 using namespace eckit::geometry;
 
-using atlas::interpolation::PointSet;
-using atlas::interpolation::PointIndex3;
+using atlas::interpolation::method::PointSet;
+using atlas::interpolation::method::PointIndex3;
 
 namespace atlas {
 namespace mesh {

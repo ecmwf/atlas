@@ -9,7 +9,7 @@
  */
 
 
-#include "atlas/interpolation/FieldContextInput.h"
+#include "atlas/interpolation/context/InputContext.h"
 
 //include "eckit/linalg/Vector.h"
 //include "atlas/atlas.h"
@@ -30,15 +30,16 @@
 
 namespace atlas {
 namespace interpolation {
+namespace context {
 
 
-FieldContextInput::FieldContextInput(
+InputContext::InputContext(
         const std::string& gridname,
         const std::string& partitioner,
         const std::string& meshGenerator,
         bool meshGeneratorTriangulate,
         double meshGeneratorAngle ) :
-    FieldContext(gridname, partitioner, meshGenerator, meshGeneratorTriangulate, meshGeneratorAngle) {
+    Context(gridname, partitioner, meshGenerator, meshGeneratorTriangulate, meshGeneratorAngle) {
     using grid::partitioners::Partitioner;
     using mesh::generators::MeshGenerator;
 
@@ -56,7 +57,7 @@ FieldContextInput::FieldContextInput(
 }
 
 
-void FieldContextInput::read(const std::string&) {
+void InputContext::read(const std::string&) {
 
     // Create source functionspace and fields
     functionSpace_.reset(new functionspace::NodeColumns(mesh(), meshHaloSize_));
@@ -99,5 +100,6 @@ void FieldContextInput::read(const std::string&) {
 }
 
 
+}  // context
 }  // interpolation
 }  // atlas

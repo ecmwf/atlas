@@ -9,8 +9,8 @@
  */
 
 
-#ifndef atlas_interpolation_PointIndex3_h
-#define atlas_interpolation_PointIndex3_h
+#ifndef atlas_interpolation_method_PointIndex3_h
+#define atlas_interpolation_method_PointIndex3_h
 
 #include "eckit/container/KDMapped.h"
 #include "eckit/container/KDMemory.h"
@@ -23,6 +23,7 @@
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -72,6 +73,7 @@ ElemIndex3* create_element_centre_index(const mesh::Mesh& mesh);
 
 //----------------------------------------------------------------------------------------------------------------------
 
+} // namespace method
 } // namespace interpolation
 } // namespace atlas
 

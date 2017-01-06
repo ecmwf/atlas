@@ -9,7 +9,7 @@
  */
 
 
-#include "NearestNeighbour.h"
+#include "atlas/interpolation/method/NearestNeighbour.h"
 
 #include "eckit/log/Plural.h"
 #include "eckit/log/Seconds.h"
@@ -19,23 +19,24 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/interpolation/PointIndex3.h"
+#include "atlas/interpolation/method/PointIndex3.h"
 
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
 
 namespace {
 
 
-InterpolationBuilder<NearestNeighbour> __builder("nearest-neighbour");
+MethodBuilder<NearestNeighbour> __builder("nearest-neighbour");
 
 
 }  // (anonymous namespace)
 
 
-void NearestNeighbour::execute(Interpolation::Matrix& matrix, mesh::Mesh& meshSource, mesh::Mesh& meshTarget) const {
+void NearestNeighbour::execute(Method::Matrix& matrix, mesh::Mesh& meshSource, mesh::Mesh& meshTarget) const {
     using namespace atlas;
     eckit::TraceTimer<LibAtlas> timer("Nearest::execute");
 
@@ -92,5 +93,6 @@ void NearestNeighbour::execute(Interpolation::Matrix& matrix, mesh::Mesh& meshSo
 }
 
 
+}  // method
 }  // interpolation
 }  // atlas

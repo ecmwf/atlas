@@ -9,8 +9,8 @@
  */
 
 
-#ifndef atlas_interpolation_Interpolation_h
-#define atlas_interpolation_Interpolation_h
+#ifndef atlas_interpolation_method_Method_h
+#define atlas_interpolation_method_Method_h
 
 #include <string>
 #include <vector>
@@ -28,13 +28,14 @@ namespace mesh { class Mesh; }
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
 
-class Interpolation : public eckit::NonCopyable {
+class Method : public eckit::NonCopyable {
 public:
 
-    typedef eckit::ScopedPtr<Interpolation> Ptr;
-    typedef eckit::Configuration            Config;
+    typedef eckit::ScopedPtr< Method >  Ptr;
+    typedef eckit::Configuration        Config;
 
     typedef eckit::linalg::SparseMatrix Matrix;
     typedef eckit::geometry::Point3     Point;
@@ -43,8 +44,8 @@ public:
 
     enum { LON=0, LAT=1 };
 
-    Interpolation(const Config& config) : config_(config) {}
-    virtual ~Interpolation() {}
+    Method(const Config& config) : config_(config) {}
+    virtual ~Method() {}
 
     /**
      * @brief Create an interpolant sparse matrix relating two (pre-partitioned) meshes
@@ -62,30 +63,31 @@ protected:
 };
 
 
-struct InterpolationFactory {
+struct MethodFactory {
 
-    static Interpolation *build(const std::string& name, const Interpolation::Config&);
+    static Method *build(const std::string& name, const Method::Config&);
 
 protected:
 
     std::string name_;
-    virtual Interpolation *make(const Interpolation::Config&) = 0;
+    virtual Method *make(const Method::Config&) = 0;
 
-    InterpolationFactory(const std::string&);
-    virtual ~InterpolationFactory();
+    MethodFactory(const std::string&);
+    virtual ~MethodFactory();
 };
 
 
 template<class T>
-struct InterpolationBuilder : public InterpolationFactory {
+struct MethodBuilder : public MethodFactory {
 
-    InterpolationBuilder(const std::string &name) : InterpolationFactory(name) {}
+    MethodBuilder(const std::string &name) : MethodFactory(name) {}
 
 private:
-    virtual Interpolation *make(const Interpolation::Config& config) { return new T(config); }
+    virtual Method *make(const Method::Config& config) { return new T(config); }
 };
 
 
+}  // method
 }  // interpolation
 }  // atlas
 

@@ -9,8 +9,8 @@
  */
 
 
-#ifndef atlas_interpolation_FieldContextinput_h
-#define atlas_interpolation_FieldContextinput_h
+#ifndef atlas_interpolation_context_InputContext_h
+#define atlas_interpolation_context_InputContext_h
 
 //include "eckit/linalg/LinearAlgebra.h"
 //include "eckit/linalg/Vector.h"
@@ -28,16 +28,17 @@
 
 //#include "atlas/grid/partitioners/PartitionerFromPrePartitionedMesh.h"
 //include "atlas/interpolation/Interpolation.h"
-#include "atlas/interpolation/FieldContext.h"
+#include "atlas/interpolation/context/Context.h"
 
 
 namespace atlas {
 namespace interpolation {
+namespace context {
 
 
-struct FieldContextInput : FieldContext {
+struct InputContext : Context {
 
-    FieldContextInput(
+    InputContext(
             const std::string& gridname,
             const std::string& partitioner,
             const std::string& meshGenerator,
@@ -49,6 +50,7 @@ struct FieldContextInput : FieldContext {
 };
 
 
+}  // context
 }  // interpolation
 }  // atlas
 

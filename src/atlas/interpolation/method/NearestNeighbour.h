@@ -9,26 +9,27 @@
  */
 
 
-#ifndef atlas_interpolation_NearestNeighbour_h
-#define atlas_interpolation_NearestNeighbour_h
+#ifndef atlas_interpolation_method_NearestNeighbour_h
+#define atlas_interpolation_method_NearestNeighbour_h
 
-#include "Interpolation.h"
+#include "atlas/interpolation/method/Method.h"
 
 #include <string>
 #include "eckit/config/Configuration.h"
 #include "eckit/memory/NonCopyable.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/interpolation/PointIndex3.h"
+#include "atlas/interpolation/method/PointIndex3.h"
 
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
 
-class NearestNeighbour : public Interpolation {
+class NearestNeighbour : public Method {
 public:
 
-    NearestNeighbour(const Config& config) : Interpolation(config) {}
+    NearestNeighbour(const Config& config) : Method(config) {}
     virtual ~NearestNeighbour() {}
 
     /**
@@ -42,6 +43,7 @@ public:
 };
 
 
+}  // method
 }  // interpolation
 }  // atlas
 

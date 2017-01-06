@@ -9,27 +9,28 @@
  */
 
 
-#ifndef atlas_interpolation_FiniteElement_h
-#define atlas_interpolation_FiniteElement_h
+#ifndef atlas_interpolation_method_FiniteElement_h
+#define atlas_interpolation_method_FiniteElement_h
 
-#include "Interpolation.h"
+#include "atlas/interpolation/method/Method.h"
 
 #include <string>
 #include "eckit/config/Configuration.h"
 #include "eckit/memory/NonCopyable.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/interpolation/PointIndex3.h"
+#include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/mesh/Elements.h"
 
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
 
-class FiniteElement : public Interpolation {
+class FiniteElement : public Method {
 public:
 
-    FiniteElement(const Config& config) : Interpolation(config) {}
+    FiniteElement(const Config& config) : Method(config) {}
     virtual ~FiniteElement() {}
 
     /**
@@ -59,6 +60,7 @@ protected:
 };
 
 
+}  // method
 }  // interpolation
 }  // atlas
 

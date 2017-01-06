@@ -9,7 +9,7 @@
  */
 
 
-#include "Interpolation.h"
+#include "atlas/interpolation/method/Method.h"
 
 #include <map>
 #include "eckit/thread/AutoLock.h"
@@ -20,12 +20,13 @@
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
 
 namespace {
 
 
-typedef std::map<std::string, InterpolationFactory*> InterpolationFactoryMap_t;
+typedef std::map<std::string, MethodFactory*> InterpolationFactoryMap_t;
 static InterpolationFactoryMap_t *m = 0;
 static eckit::Mutex *local_mutex = 0;
 static pthread_once_t once = PTHREAD_ONCE_INIT;
@@ -40,7 +41,7 @@ static void init() {
 }  // (anonymous namespace)
 
 
-InterpolationFactory::InterpolationFactory(const std::string& name):
+MethodFactory::MethodFactory(const std::string& name):
     name_(name) {
     pthread_once(&once, init);
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
@@ -54,13 +55,13 @@ InterpolationFactory::InterpolationFactory(const std::string& name):
 }
 
 
-InterpolationFactory::~InterpolationFactory() {
+MethodFactory::~MethodFactory() {
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
     m->erase(name_);
 }
 
 
-Interpolation* InterpolationFactory::build(const std::string& name, const Interpolation::Config& config) {
+Method* MethodFactory::build(const std::string& name, const Method::Config& config) {
     pthread_once(&once, init);
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
@@ -78,7 +79,7 @@ Interpolation* InterpolationFactory::build(const std::string& name, const Interp
 }
 
 
-void Interpolation::normalise(Interpolation::Triplets& triplets) {
+void Method::normalise(Method::Triplets& triplets) {
     // sum all calculated weights for normalisation
     double sum = 0.0;
 
@@ -94,6 +95,7 @@ void Interpolation::normalise(Interpolation::Triplets& triplets) {
 }
 
 
+}  // method
 }  // interpolation
 }  // atlas
 

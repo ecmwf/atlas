@@ -10,18 +10,20 @@
 
 
 #include <cmath>
-#include "atlas/interpolation/Ray.h"
-#include "atlas/interpolation/Triag3D.h"
+#include "atlas/interpolation/element/Triag3D.h"
+#include "atlas/interpolation/method/Intersect.h"
+#include "atlas/interpolation/method/Ray.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
 
 namespace atlas {
 namespace interpolation {
+namespace element {
 
-Intersect Triag3D::intersects(const Ray& r, double edgeEpsilon, double epsilon) const {
+method::Intersect Triag3D::intersects(const method::Ray& r, double edgeEpsilon, double epsilon) const {
 
-    Intersect isect;
+    method::Intersect isect;
 
     Vector3D edge1 = v1 - v0;
     Vector3D edge2 = v2 - v0;
@@ -109,6 +111,7 @@ double Triag3D::area() const
 
 //----------------------------------------------------------------------------------------------------------------------
 
+}  // namespace element
 }  // namespace interpolation
 }  // namespace atlas
 

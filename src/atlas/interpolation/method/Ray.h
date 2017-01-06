@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_geometry_Ray_h
-#define atlas_geometry_Ray_h
+#ifndef atlas_interpolation_method_Ray_h
+#define atlas_interpolation_method_Ray_h
 
 #include <iosfwd>
 
@@ -17,6 +17,7 @@
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -42,6 +43,7 @@ struct Ray {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+}  // namespace method
 }  // namespace interpolation
 }  // namespace atlas
 

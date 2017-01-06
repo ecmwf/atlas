@@ -9,31 +9,32 @@
  */
 
 
-#include "FiniteElement.h"
+#include "atlas/interpolation/method/FiniteElement.h"
 
 #include "eckit/log/Plural.h"
 #include "eckit/log/Seconds.h"
 #include "eckit/log/Timer.h"
 #include "eckit/mpi/Comm.h"
-#include "atlas/interpolation/Quad3D.h"
-#include "atlas/interpolation/Ray.h"
-#include "atlas/interpolation/Triag3D.h"
-#include "atlas/mesh/ElementType.h"
-#include "atlas/mesh/Nodes.h"
+#include "atlas/interpolation/element/Quad3D.h"
+#include "atlas/interpolation/element/Triag3D.h"
+#include "atlas/interpolation/method/Ray.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
+#include "atlas/mesh/ElementType.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
 
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
 
 namespace {
 
 
-InterpolationBuilder<FiniteElement> __builder("finite-element");
+MethodBuilder<FiniteElement> __builder("finite-element");
 
 
 // epsilon used to scale edge tolerance when projecting ray to intesect element
@@ -43,7 +44,7 @@ static const double parametricEpsilon = 1e-16;
 }  // (anonymous namespace)
 
 
-void FiniteElement::execute(Interpolation::Matrix& matrix, mesh::Mesh& meshSource, mesh::Mesh& meshTarget) const {
+void FiniteElement::execute(Method::Matrix& matrix, mesh::Mesh& meshSource, mesh::Mesh& meshTarget) const {
     using namespace atlas;
 
     Log::info() << "FiniteElement::execute" << std::endl;
@@ -163,7 +164,7 @@ void FiniteElement::execute(Interpolation::Matrix& matrix, mesh::Mesh& meshSourc
 }
 
 
-Interpolation::Triplets FiniteElement::projectPointToElements(
+Method::Triplets FiniteElement::projectPointToElements(
         const array::ArrayView<double, 2>& icoords,
         const mesh::Connectivity& connectivity,
         const Point &p,
@@ -196,7 +197,7 @@ Interpolation::Triplets FiniteElement::projectPointToElements(
         if (nb_cols == 3) {
 
             /* triangle */
-            Triag3D triag(
+            element::Triag3D triag(
                     icoords[idx[0]].data(),
                     icoords[idx[1]].data(),
                     icoords[idx[2]].data());
@@ -226,7 +227,7 @@ Interpolation::Triplets FiniteElement::projectPointToElements(
         } else {
 
             /* quadrilateral */
-            Quad3D quad(
+            element::Quad3D quad(
                     icoords[idx[0]].data(),
                     icoords[idx[1]].data(),
                     icoords[idx[2]].data(),
@@ -265,6 +266,7 @@ Interpolation::Triplets FiniteElement::projectPointToElements(
 }
 
 
+}  // method
 }  // interpolation
 }  // atlas
 

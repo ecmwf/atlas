@@ -8,47 +8,36 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_geometry_Intersect_h
-#define atlas_geometry_Intersect_h
+#include <iostream>
 
-#include <iosfwd>
+#include "atlas/interpolation/method/Ray.h"
+
+//----------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
-//----------------------------------------------------------------------------------------------------------------------
+Ray::Ray(const double *p) {
+    orig = Vector3D::Map(p);
+    dir = -orig;
+}
 
-/// Intersection data structure
+Ray::Ray(const double* o, const double* d) {
+    orig = Vector3D::Map(o);
+    dir = Vector3D::Map(d);
+}
 
-struct Intersect {
+void Ray::print(std::ostream& s) const { s << "Ray[orig=" << orig << ",dir=" << dir << "]"; }
 
-  double u;
-  double v;
-  double t;
-
-  Intersect();
-
-  operator bool() const { return success_; }
-
-  Intersect& success() { success_ = true; return *this; }
-  Intersect& fail()    { success_ = false; return *this; }
-
-  void print(std::ostream& s) const;
-
-  friend std::ostream& operator<<(std::ostream& s, const Intersect& p) {
+std::ostream& operator<<(std::ostream& s, const Ray& p) {
     p.print(s);
     return s;
-  }
-
-private:
-
-  bool success_;
-
-};
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 
+}  // namespace method
 }  // namespace interpolation
 }  // namespace atlas
 
-#endif

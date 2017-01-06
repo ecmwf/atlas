@@ -9,7 +9,7 @@
  */
 
 
-#include "atlas/interpolation/FieldContextOutput.h"
+#include "atlas/interpolation/context/OutputContext.h"
 
 //include "eckit/linalg/Vector.h"
 //include "atlas/atlas.h"
@@ -30,9 +30,10 @@
 
 namespace atlas {
 namespace interpolation {
+namespace context {
 
 
-FieldContextOutput::FieldContextOutput(
+OutputContext::OutputContext(
         const std::string& gridname,
         const std::string& partitioner,
         const std::string& meshGenerator,
@@ -40,7 +41,7 @@ FieldContextOutput::FieldContextOutput(
         const grid::Domain& prePartitionedDomain,
         bool meshGeneratorTriangulate,
         double meshGeneratorAngle ) :
-    FieldContext(gridname, partitioner, meshGenerator, meshGeneratorTriangulate, meshGeneratorAngle) {
+    Context(gridname, partitioner, meshGenerator, meshGeneratorTriangulate, meshGeneratorAngle) {
     using grid::partitioners::Partitioner;
     using mesh::generators::MeshGenerator;
 
@@ -64,7 +65,7 @@ FieldContextOutput::FieldContextOutput(
 }
 
 
-void FieldContextOutput::write(const std::string& fileName) {
+void OutputContext::write(const std::string& fileName) {
     util::Config output_config;
     output_config.set("coordinates", std::string("xyz"));
     output::Gmsh out(fileName, output_config);
@@ -77,5 +78,6 @@ void FieldContextOutput::write(const std::string& fileName) {
 }
 
 
+}  // context
 }  // interpolation
 }  // atlas

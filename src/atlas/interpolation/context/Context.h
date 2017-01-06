@@ -9,8 +9,8 @@
  */
 
 
-#ifndef atlas_interpolation_FieldContext_h
-#define atlas_interpolation_FieldContext_h
+#ifndef atlas_interpolation_context_Context_h
+#define atlas_interpolation_context_Context_h
 
 //include "eckit/linalg/LinearAlgebra.h"
 //include "eckit/linalg/Vector.h"
@@ -32,18 +32,19 @@
 
 namespace atlas {
 namespace interpolation {
+namespace context {
 
 
-struct FieldContext {
+struct Context {
 
-    FieldContext(
+    Context(
             const std::string& gridname,
             const std::string& partitioner,
             const std::string& meshGenerator,
             bool meshGeneratorTriangulate = false,
             double meshGeneratorAngle = 0 );
 
-    virtual ~FieldContext() {}
+    virtual ~Context() {}
 
     size_t meshHaloSize(size_t haloSize) { meshHaloSize_ = haloSize; }
     size_t meshHaloSize() const { return meshHaloSize_; }
@@ -82,6 +83,7 @@ protected:
 };
 
 
+}  // context
 }  // interpolation
 }  // atlas
 
