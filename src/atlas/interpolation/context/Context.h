@@ -46,7 +46,7 @@ struct Context {
 
     virtual ~Context() {}
 
-    size_t meshHaloSize(size_t haloSize) { meshHaloSize_ = haloSize; }
+    void meshHaloSize(size_t haloSize) { meshHaloSize_ = haloSize; }
     size_t meshHaloSize() const { return meshHaloSize_; }
 
     const grid::Structured& grid()  const { return *grid_; }

@@ -12,6 +12,7 @@
 #include "atlas/interpolation/context/OutputContext.h"
 
 #include <map>
+#include <typeinfo>
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/thread/Once.h"
