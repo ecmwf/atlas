@@ -63,6 +63,8 @@ struct Context {
     field::FieldSet& fieldSet()                    { return *fieldSet_; }
     functionspace::NodeColumns& functionSpace()    { return *functionSpace_; }
 
+    void writeGmsh(const std::string& fileName);
+
 protected:
 
     const std::string& optionGridname_;

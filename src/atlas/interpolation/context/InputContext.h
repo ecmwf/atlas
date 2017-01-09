@@ -12,22 +12,6 @@
 #ifndef atlas_interpolation_context_InputContext_h
 #define atlas_interpolation_context_InputContext_h
 
-//include "eckit/linalg/LinearAlgebra.h"
-//include "eckit/linalg/Vector.h"
-//include "atlas/atlas.h"
-#include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid/GridDistribution.h"
-#include "atlas/grid/partitioners/Partitioner.h"
-#include "atlas/grid/Structured.h"
-//include "atlas/internals/AtlasTool.h"
-#include "atlas/mesh/generators/Structured.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
-#include "atlas/output/Gmsh.h"
-//include "atlas/runtime/Log.h"
-
-//#include "atlas/grid/partitioners/PartitionerFromPrePartitionedMesh.h"
-//include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/context/Context.h"
 
 
@@ -47,6 +31,24 @@ struct InputContext : Context {
 
     virtual void read(const std::string& name);
 
+};
+
+
+struct InputContextFactory {
+    static InputContext* build(const std::string& key, const std::string& name);
+protected:
+    std::string name_;
+    InputContextFactory(const std::string&);
+    virtual ~InputContextFactory();
+    virtual InputContext* make(const std::string& name) = 0;
+};
+
+
+template<class T>
+struct InputContextBuilder : public InputContextFactory {
+    InputContextBuilder(const std::string& name) : InputContextFactory(name) {}
+private:
+    virtual InputContext* make(const std::string& name) { return new T(name); }
 };
 
 

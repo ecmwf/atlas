@@ -9,25 +9,9 @@
  */
 
 
-#ifndef atlas_interpolation_OutputContext_h
-#define atlas_interpolation_OutputContext_h
+#ifndef atlas_interpolation_context_OutputContext_h
+#define atlas_interpolation_context_OutputContext_h
 
-//include "eckit/linalg/LinearAlgebra.h"
-//include "eckit/linalg/Vector.h"
-//include "atlas/atlas.h"
-#include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid/GridDistribution.h"
-#include "atlas/grid/partitioners/Partitioner.h"
-#include "atlas/grid/Structured.h"
-//include "atlas/internals/AtlasTool.h"
-#include "atlas/mesh/generators/Structured.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
-#include "atlas/output/Gmsh.h"
-//include "atlas/runtime/Log.h"
-
-//#include "atlas/grid/partitioners/PartitionerFromPrePartitionedMesh.h"
-//include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/context/Context.h"
 
 
@@ -47,8 +31,26 @@ struct OutputContext : Context {
             bool meshGeneratorTriangulate = false,
             double meshGeneratorAngle = 0 );
 
-    virtual void write(const std::string& fileName);
+    virtual void write(const std::string& fileName) /*= 0;*/ { NOTIMP; }
 
+};
+
+
+struct OutputContextFactory {
+    static OutputContext* build(const std::string& key, const std::string& name);
+protected:
+    std::string name_;
+    OutputContextFactory(const std::string&);
+    virtual ~OutputContextFactory();
+    virtual OutputContext* make(const std::string& name) = 0;
+};
+
+
+template<class T>
+struct OutputContextBuilder : public OutputContextFactory {
+    OutputContextBuilder(const std::string& name) : OutputContextFactory(name) {}
+private:
+    virtual OutputContext* make(const std::string& name) { return new T(name); }
 };
 
 

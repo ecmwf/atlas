@@ -52,6 +52,21 @@ Context::Context(
 }
 
 
+void Context::writeGmsh(const std::string& fileName) {
+    util::Config output_config;
+    output_config.set("coordinates", std::string("xyz"));
+
+    output::Gmsh out(fileName, output_config);
+    out.write(*mesh_);
+
+    if (fieldSet_) {
+        for (size_t i = 0; i < fieldSet_->size(); ++i) {
+            out.write(fieldSet_->operator[](i));
+        }
+    }
+}
+
+
 }  // context
 }  // interpolation
 }  // atlas
