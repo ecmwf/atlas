@@ -133,8 +133,8 @@ void AtlasGrids::execute(const Args& args)
     {
       double deg, km;
       Log::info() << "Grid " << key << std::endl;
-      Log::info() << "   type:                               "
-                  << g.gridType() << std::endl;
+//      Log::info() << "   type:                               "
+//                  << g.gridType() << std::endl;
       Log::info() << "   name:                               "
                   << g.shortName() << std::endl;
       Log::info() << "   uid:                                "

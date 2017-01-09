@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
   // opts.set("part",    0); // default = 0
 
     m = generate(
-          grid::gaussian::ClassicGaussian(24)
+          grid::reduced::ClassicGaussian(24)
         ); //< 2*N - 1 => N24 grid
 
 	Gmsh("out.msh", util::Config("coordinates","xyz") ).write(*m);

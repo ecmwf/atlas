@@ -16,6 +16,8 @@ class ARPEGE: public ClassicGaussian {
     static std::string className();
     
     virtual std::string shortName() const;
+    virtual std::string gridType() const { return "arpege"; }
+
 
     ARPEGE(const util::Config& params);
 

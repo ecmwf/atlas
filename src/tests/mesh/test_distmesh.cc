@@ -29,7 +29,7 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/grid/gaussian/classic/N.h"
+#include "atlas/grid/reduced/classic/N.h"
 #include "atlas/internals/IsGhost.h"
 #include "atlas/runtime/Log.h"
 
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
       // test::TestGrid grid(5,lon);
 
       //  GG grid(120,60);
-  grid::gaussian::ClassicGaussian grid(16);
+  grid::reduced::ClassicGaussian grid(16);
 
 
   mesh::Mesh::Ptr m( generate( grid ) );

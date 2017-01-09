@@ -16,6 +16,7 @@ class OctahedralGaussian: public ReducedGaussian {
     static std::string className();
     
     virtual std::string shortName() const;
+    virtual std::string gridType() const { return "octahedral_gaussian"; }
 
 		std::vector<long> computePL(const size_t N);
 		

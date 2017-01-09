@@ -19,9 +19,12 @@ class GlobalLonLat: public Regular {
     static std::string className();
 		
 		virtual std::string shortName() const;
+		virtual std::string gridType() const { return "global_lonlat"; }
 		
     GlobalLonLat();
     GlobalLonLat(const util::Config& params);
+    GlobalLonLat(long nlon, long nlat);
+    GlobalLonLat(long N);
 
     eckit::Properties spec() const;
     

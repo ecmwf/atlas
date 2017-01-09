@@ -40,6 +40,16 @@ ShiftedLon::ShiftedLon(const util::Config& config)
 		
 		// set shift
 		shiftLon_=true;
+		shiftLat_=false;
+		
+		// perform setup
+		GlobalLonLat::setup(nlon,nlat);
+}
+
+ShiftedLon::ShiftedLon(long nlon, long nlat) {
+		// set shift
+		shiftLon_=true;
+		shiftLat_=false;
 		
 		// perform setup
 		GlobalLonLat::setup(nlon,nlat);

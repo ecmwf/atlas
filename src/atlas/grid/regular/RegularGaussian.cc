@@ -26,31 +26,20 @@ std::string RegularGaussian::shortName() const {
     return s.str();
 }
 
-void RegularGaussian::setup() {
+void RegularGaussian::setup(long N) {
 
-		// setup regular grid
-    Regular::setup();
-    
-}
-
-RegularGaussian::RegularGaussian(const util::Config& config) :
-    Regular()
-{
-		long nlon, nlat, N;
 		util::Config config_proj, config_spacing, config_domain;
 		
+		// grid dimensions
+		long nlat, nlon;	
+		nlat=2*N;
+		nlon=4*N;
+	
 		// projection is lonlat
 		config_proj.set("projectionType","lonlat");
 		projection_=projection::Projection::create(config_proj);
-		
-		// dimensions
-		if ( config.get("N",N) ) {
-			nlon=4*N;nlat=2*N;
-		} else {
-			throw eckit::BadParameter("RegularGaussian requires parameter N",Here());
-		}
 
-		// spacing is uniform in x and y
+		// spacing is uniform in x, gaussian in y
 		config_spacing.set("spacingType","uniform");
 		config_spacing.set("xmin",0.0);
 		config_spacing.set("xmax",(nlon-1)*360.0/nlon);
@@ -66,9 +55,33 @@ RegularGaussian::RegularGaussian(const util::Config& config) :
 		// domain is global
 		config_domain.set("domainType","global");
 		domain_=domain::Domain::create(config_domain);
+
+		// setup regular grid
+    Regular::setup();
+    
+    // set N_ of Structured
+    Structured::N_=N;
+    
+}
+
+RegularGaussian::RegularGaussian(long N) : Regular() {
+
+	// perform setup
+	setup(N);
+}
+
+RegularGaussian::RegularGaussian(const util::Config& config) :
+    Regular()
+{
+		long N;
 		
+		// dimensions
+		if ( ! config.get("N",N) ) {
+			throw eckit::BadParameter("RegularGaussian requires parameter N",Here());
+		}
+
 		// perform setup
-		setup();
+		setup(N);
 }
 
 }  // namespace regular

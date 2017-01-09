@@ -24,10 +24,9 @@ std::string OctahedralGaussian::shortName() const {
 
 std::vector<long> OctahedralGaussian::computePL(const size_t N) {
     const size_t start = 20;
-    std::vector<long> pl(2*N);
+    std::vector<long> pl(N);
     for(size_t jlat=0; jlat < N; ++jlat) {
         pl[jlat] = start + 4*jlat;
-        pl[2*N-1-jlat] = pl[jlat];
     }
     return pl;
 }
@@ -37,8 +36,7 @@ void OctahedralGaussian::setup(size_t N) {
 		util::Config config_spacing, config_domain, config_proj;
 		
 		// number of longitudes per latitude
-		size_t ny=2*N;
-		std::vector<long>   pl(ny);
+		std::vector<long>   pl(N);
     pl=computePL(N);
     
     // setup from reducedGaussian

@@ -16,9 +16,11 @@ class ClassicGaussian: public ReducedGaussian {
     static std::string className();
     
     virtual std::string shortName() const;
+    virtual std::string gridType() const { return "classic_gaussian"; }
 
     ClassicGaussian(): ReducedGaussian() {};
     ClassicGaussian(const util::Config& params);
+    ClassicGaussian(size_t N);
    
   protected:
 

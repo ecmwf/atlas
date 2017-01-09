@@ -16,15 +16,17 @@ class ReducedGaussian: public Structured {
     static std::string className();
     
     virtual std::string shortName() const;
+    virtual std::string gridType() const { return "reduced_gaussian"; }
 
     ReducedGaussian(): Structured() {};
     ReducedGaussian(const util::Config& params);
+    ReducedGaussian(const int N, const long pl[]);
 
     virtual eckit::Properties spec() const;
     
   protected:
 
-    void setup(size_t N, long pl[]);
+    void setup(const size_t N, const long pl[]);
 
     //virtual void set_typeinfo() = 0;
     //static eckit::Value domain_spec(const Domain& dom);

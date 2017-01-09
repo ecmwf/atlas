@@ -172,8 +172,8 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
 
   std::string partitioner_factory = "Trans";
   options.get("partitioner",partitioner_factory);
-  //if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
-  //if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
+  if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
+  if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
   
   grid::partitioners::Partitioner::Ptr partitioner( grid::partitioners::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
   grid::GridDistribution::Ptr distribution( partitioner->distribution() );
@@ -792,7 +792,6 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   ASSERT(!mesh.generated());
 
   int mypart = options.get<size_t>("part");
-	sleep( mypart );
   int nparts = options.get<size_t>("nb_parts");
   int n, l;
 

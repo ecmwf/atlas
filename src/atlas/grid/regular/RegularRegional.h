@@ -19,6 +19,7 @@ class RegularRegional: public Regular {
     static std::string className();
     
     virtual std::string shortName() const;
+    virtual std::string gridType() const { return "regular_regional"; }
 
     RegularRegional(const util::Config& params);
     RegularRegional();

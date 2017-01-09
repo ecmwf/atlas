@@ -11,13 +11,13 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/grid/gaussian/ReducedGaussian.h"
+#include "atlas/grid/reduced/ReducedGaussian.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::grid::gaussian;
+using namespace atlas::grid::reduced;
 
 namespace atlas {
 namespace test {

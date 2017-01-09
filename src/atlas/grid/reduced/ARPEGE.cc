@@ -23,13 +23,6 @@ std::string ARPEGE::shortName() const {
    return s.str();
 }
 
-void ARPEGE::setup(size_t N) {
-
-		util::Config config_spacing, config_domain, config_proj;
-
-}
-
-
 ARPEGE::ARPEGE(const util::Config& config) :
     ClassicGaussian()
 {

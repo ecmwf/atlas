@@ -19,7 +19,7 @@
 #include "atlas/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/gaussian/latitudes/Latitudes.h"
+#include "atlas/grid/spacing/gaussian/Latitudes.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
@@ -36,14 +36,14 @@
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Config.h"
-#include "atlas/grid/gaussian/classic/N.h"
+#include "atlas/grid/reduced/classic/N.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/internals/Debug.h"
 
 namespace atlas {
 namespace grid {
+namespace spacing {
 namespace gaussian {
-namespace latitudes {
 void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], double weights[]);
 }
 }
@@ -59,7 +59,7 @@ namespace test {
 using eckit::geometry::LAT;
 using eckit::geometry::LON;
 
-class DebugMesh:   public grid::gaussian::ReducedGaussian { public: DebugMesh(); };
+class DebugMesh:   public grid::reduced::ReducedGaussian { public: DebugMesh(); };
 DebugMesh::DebugMesh()
 {
   int N=5;
@@ -70,19 +70,14 @@ DebugMesh::DebugMesh()
     22,
     22,
   };
-  std::vector<double> lat(N);
-  grid::gaussian::latitudes::gaussian_latitudes_npole_equator(N,lat.data());
-  setup_lat_hemisphere(N,lat.data(),lon);
+  grid::reduced::ReducedGaussian::setup(N,lon);
 }
 
 
-class MinimalMesh:   public grid::gaussian::ReducedGaussian { public: MinimalMesh(int N, long lon[]); };
-MinimalMesh::MinimalMesh(int N, long lon[])
-{
-  std::vector<double> lat(N);
-  grid::gaussian::latitudes::gaussian_latitudes_npole_equator(N,lat.data());
-  setup_lat_hemisphere(N,lat.data(),lon);
-}
+class MinimalMesh:   public grid::reduced::ReducedGaussian {
+	public:
+		MinimalMesh(int N, long lon[]) : ReducedGaussian(N,lon) {}
+};
 
 double compute_lonlat_area(mesh::Mesh& mesh)
 {
@@ -147,7 +142,7 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
 
 BOOST_AUTO_TEST_CASE( test_partitioner )
 {
-  grid::lonlat::ShiftedLonLat g(4,2);
+  grid::regular::ShiftedLonLat g(4,2);
 
   // 12 partitions
   {
@@ -198,8 +193,8 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
     BOOST_CHECK_EQUAL( partitioner.nb_regions(8),  6 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(9),  1 );
   }
+  
 }
-
 
 BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
 {
@@ -209,6 +204,7 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
 
 
   size_t size_test_N = 19;
+  
   size_t test_N[] = {16,24,32,48,64,80,96,128,160,
                      200,256,320,400,512,576,640,
                      800,1024,1280,1600,2000,4000,8000};
@@ -220,8 +216,10 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
     factory_latitudes.resize(N);
     computed_latitudes.resize(N);
     computed_weights.resize(N);
-    grid::gaussian::latitudes::gaussian_latitudes_npole_equator (N, factory_latitudes.data());
-    grid::gaussian::latitudes::compute_gaussian_quadrature_npole_equator(N, computed_latitudes.data(), computed_weights.data());
+    //grid::gaussian::latitudes::gaussian_latitudes_npole_equator (N, factory_latitudes.data());
+    //grid::gaussian::latitudes::compute_gaussian_quadrature_npole_equator(N, computed_latitudes.data(), computed_weights.data());
+    grid::spacing::gaussian::gaussian_latitudes_npole_equator (N, factory_latitudes.data());
+    grid::spacing::gaussian::compute_gaussian_quadrature_npole_equator(N, computed_latitudes.data(), computed_weights.data());
     double wsum=0;
     for( size_t i=0; i<N; ++i )
     {
@@ -363,14 +361,24 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
+
   BOOST_CHECK( grid::partitioners::PartitionerFactory::has("EqualRegions") );
   size_t nb_parts = 20;
           //  Alternative grid for debugging
           //  int nlat=10;
           //  long lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
           //  test::MinimalMesh grid(nlat,lon);
-  grid::gaussian::ClassicGaussian grid(32);
-//  RegularGrid grid(128,64);
+  grid::reduced::ClassicGaussian grid(32);
+  //RegularGrid grid(128,64);
+  
+  /*
+  std::cout << grid.spec() << std::endl;
+  for (int jlat=0;jlat<2*nlat; jlat++) {
+  	std::cout << grid.lon(jlat,0) << ", ... , " << "," << grid.lon(jlat,9) << grid.lon(jlat,10) << std::endl;
+  }
+  ASSERT(0);
+  */
+
   double max_lat = grid.lat(0);
   double check_area = 360.*2.*max_lat;
   double area = 0;
@@ -383,6 +391,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
   for(size_t p = 0; p < nb_parts; ++p)
   {
+
     DEBUG_VAR(p);
 
     mesh::generators::Structured generate ( util::Config
@@ -468,7 +477,6 @@ DISABLE{
 
 }
 
-
 BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 {
   DEBUG();
@@ -500,7 +508,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
     -90
   };
   grid::CustomStructured grid(N,lat,lon);
-
+	
   bool three_dimensional = true;
 
   mesh::generators::Structured generate( util::Config
@@ -513,7 +521,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
   if( three_dimensional ) options.set("coordinates","xyz");
   output::Gmsh gmsh("rll.msh",options);
   gmsh.write(*m);
-
+  
 }
 
 BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )

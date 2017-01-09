@@ -17,11 +17,10 @@ std::string ShiftedLat::className() {
 
 std::string ShiftedLat::shortName() const {
     std::ostringstream s;
-    long mlat=nlat()+1;	// for shifted lat, one latitude was removed.
-    if ( nlonmin() == 2*mlat && mlat%2==0 ) {
-    	s << "Slat"<< mlat/2;
+    if ( nlonmin() == 2*nlat() ) {
+    	s << "Slat"<< nlat()/2;
     } else {
-	    s << "Slat"<< nlonmin() << "x" << mlat;
+	    s << "Slat"<< nlonmin() << "x" << nlat();
 	  }
     return s.str();
 }
@@ -40,6 +39,16 @@ ShiftedLat::ShiftedLat(const util::Config& config)
 		}
 		
 		// set shift
+		shiftLon_=false;
+		shiftLat_=true;
+		
+		// perform setup
+		GlobalLonLat::setup(nlon,nlat);
+}
+
+ShiftedLat::ShiftedLat(long nlon, long nlat) {
+		// set shift
+		shiftLon_=false;
 		shiftLat_=true;
 		
 		// perform setup

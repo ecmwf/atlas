@@ -38,7 +38,9 @@ class CustomStructured: public Structured {
 
     static std::string grid_type_str();
     
-    virtual std::string shortName() { return "customStructured"; }
+    virtual std::string shortName() const { return "customStructured"; }
+    virtual std::string gridType() const { return "custom_structured"; }
+
 
     CustomStructured(const eckit::Parametrisation&);
 

@@ -19,8 +19,10 @@ class ShiftedLon: public GlobalLonLat {
     static std::string className();
 
     virtual std::string shortName() const;
+    virtual std::string gridType() const { return "shifted_lon"; }
 
     ShiftedLon(const util::Config& params);
+    ShiftedLon(long nlon, long nlat);
 
   protected:
 

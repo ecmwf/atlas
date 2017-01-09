@@ -17,11 +17,15 @@ class Regular: public Structured {
     static std::string className();
     
     virtual std::string shortName() const { return "regular"; }
+    virtual std::string gridType() const { return "regular"; }
 
     Regular(const util::Config& params);
     Regular();
 
     virtual eckit::Properties spec() const;
+    
+    size_t nlon() { return nlonmin(); }	// same for all latitudes
+    double lon(size_t jlon) { return Structured::lon(0,jlon); } // same for all latitudes
     
   protected:
 

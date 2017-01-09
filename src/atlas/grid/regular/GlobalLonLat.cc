@@ -33,7 +33,7 @@ void GlobalLonLat::setup(long nlon, long nlat) {
 		// projection is lonlat
 		config_proj.set("projectionType","lonlat");
 		projection_=projection::Projection::create(config_proj);
-		
+				
 		// spacing is uniform in x
 		config_spacing.set("spacingType","uniform");
 		config_spacing.set("xmin",(shiftLon_ ? 0.5 : 0.0)*360.0/nlon );
@@ -43,9 +43,9 @@ void GlobalLonLat::setup(long nlon, long nlat) {
 		
 		// spacing is uniform in y
 		config_spacing.set("spacingType","uniform");
-		config_spacing.set("xmin", 90.0-(shiftLat_ ? 90.0/(nlat-1) : 0.0) );
-		config_spacing.set("xmax",-90.0+(shiftLat_ ? 90.0/(nlat-1) : 0.0) );
-		config_spacing.set("N",nlat+(shiftLat_?-1:0));
+		config_spacing.set("xmin", 90.0-(shiftLat_ ? 90.0/(nlat) : 0.0) );
+		config_spacing.set("xmax",-90.0+(shiftLat_ ? 90.0/(nlat) : 0.0) );
+		config_spacing.set("N",nlat);
 		spacing_y_=spacing::Spacing::create(config_spacing);
 		
 		// domain is global
@@ -77,6 +77,33 @@ GlobalLonLat::GlobalLonLat(const util::Config& config) :
 
 		// perform setup
 		setup(nlon, nlat);
+}
+
+GlobalLonLat::GlobalLonLat(long nlon, long nlat) : Regular() {
+		
+		// default: no shift
+		shiftLon_=false;
+		shiftLat_=false;
+
+		// perform setup
+		setup(nlon, nlat);
+		
+}
+
+GlobalLonLat::GlobalLonLat(long N) : Regular() {
+
+		long nlon, nlat;
+		
+		// dimensions
+		nlon=4*N;nlat=2*N;
+		
+		// default: no shift
+		shiftLon_=false;
+		shiftLat_=false;
+
+		// perform setup
+		setup(nlon, nlat);
+		
 }
 
 GlobalLonLat::GlobalLonLat() : Regular() {

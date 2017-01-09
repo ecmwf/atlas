@@ -19,12 +19,14 @@ class RegularGaussian: public Regular {
     static std::string className();
     
     virtual std::string shortName() const;
+    virtual std::string gridType() const { return "regular_gaussian"; }
 
     RegularGaussian(const util::Config& params);
+    RegularGaussian(long N);
 
   protected:
 
-    void setup();
+    void setup(long N);
 
 };
 

@@ -21,16 +21,27 @@ std::string ReducedGaussian::shortName() const {
 	return "reducedGaussian";
 }
 
-void ReducedGaussian::setup(size_t N, long pl[]) {
-
+void ReducedGaussian::setup(const size_t N, const long pl[]) {
+	
+		// configs for spacing, domain and projection
 		util::Config config_spacing, config_domain, config_proj;
+		
+		// number of latitudes
+		size_t ny=2*N;
 
 		// domain is global
 		config_domain.set("domainType","global");
 		domain_=domain::Domain::create(config_domain);
 
+		
+    // mirror pl around equator
+    std::vector<long> pll(ny);
+    for (int jlat=0;jlat<N;jlat++) {
+    	pll[jlat]=pl[jlat];
+    	pll[ny-1-jlat]=pl[jlat];
+    }
+		
 		// determine input for Structured::setup
-		size_t ny=2*N;
 		std::vector<double> xmin(ny);		// first longitude per latitude
 		std::vector<double> xmax(ny);		// last longitude per latitude
 		std::vector<double> y(ny);			// latitudes
@@ -47,11 +58,11 @@ void ReducedGaussian::setup(size_t N, long pl[]) {
     xmin.assign(ny,0.0);
     for (int jlat=0;jlat<ny;jlat++) {
     	xmin[jlat]=0.0;
-    	xmax[jlat]=(pl[jlat]-1)*360.0/pl[jlat];
+    	xmax[jlat]=(pll[jlat]-1)*360.0/pll[jlat];
     }
-		
+    
 		// setup Structured grid
-		Structured::setup(ny,y.data(), pl, xmin.data(), xmax.data());
+		Structured::setup(ny,y.data(), pll.data(), xmin.data(), xmax.data());
 		Structured::N_=N;
 
 }
@@ -67,26 +78,23 @@ ReducedGaussian::ReducedGaussian(const util::Config& config) :
     if( ! config.has("pl") ) throw eckit::BadParameter("pl missing in config",Here());
     config.get("pl",pl);
     
-    // mirror if necessary
-    if ( pl.size() == N ) {
-    	// mirror to get length 2*N
-    	pl.resize(2*N);
-    	for (int jlat=0;jlat<N;jlat++) {
-    		pl[2*N-1-jlat]=pl[jlat];
-    	}
-    }
-    
     // check length
-   	if ( pl.size() != 2*N )
-   		throw eckit::BadParameter("pl should have length N or 2*N",Here());
+   	if ( pl.size() != N  )
+   		throw eckit::BadParameter("pl should have length N",Here());
+    
+    // setup
+    setup(N,pl.data());
+}
 
+ReducedGaussian::ReducedGaussian(const int N, const long pl[]) {
 		// projection is lonlat
 		util::Config config_proj;
 		config_proj.set("projectionType","lonlat");
 		projection_=projection::Projection::create(config_proj);
-    
-    // setup
-    setup(N,pl.data());
+	
+		// setup
+		setup(N,pl);
+		
 }
 
 eckit::Properties ReducedGaussian::spec() const {

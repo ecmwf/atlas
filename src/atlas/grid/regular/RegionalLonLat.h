@@ -18,6 +18,7 @@ class RegionalLonLat: public RegularRegional {
 
     static std::string className();
     virtual std::string shortName() const;
+    virtual std::string gridType() const { return "regional_lonlat"; }
 
     RegionalLonLat();
     RegionalLonLat(const util::Config& params);

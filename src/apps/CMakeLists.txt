@@ -34,9 +34,9 @@ ecbuild_add_executable(
   SOURCES     atlas-benchmark.cc
   LIBS        atlas )
 
-ecbuild_add_executable(
-  TARGET      atlas-numerics-nabla
-  SOURCES     atlas-numerics-nabla.F90
-  LIBS        atlas_f
-  CONDITION   HAVE_FORTRAN )
+#ecbuild_add_executable(
+#  TARGET      atlas-numerics-nabla
+#  SOURCES     atlas-numerics-nabla.F90
+#  LIBS        atlas_f
+#  CONDITION   HAVE_FORTRAN )
 

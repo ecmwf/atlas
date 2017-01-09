@@ -70,6 +70,8 @@ class Structured : public Grid {
      * @note: may not be unique, such as when reduced Gaussian grids have the same N numbers but different distribution of latitude points
      */
     virtual std::string shortName() const;
+    virtual std::string gridType() const { return "structured"; }
+
 
     virtual std::string getOptimalMeshGenerator() const {
         return "Structured";

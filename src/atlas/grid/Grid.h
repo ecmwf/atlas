@@ -67,6 +67,7 @@ class Grid : public eckit::Owned {
 
     /// Human readable name (may not be unique)
     virtual std::string shortName() const = 0;
+    virtual std::string gridType() const=0;
 
     /// Unique grid id
     /// Computed from the shortName and the hash

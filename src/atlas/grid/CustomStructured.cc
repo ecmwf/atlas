@@ -82,6 +82,10 @@ CustomStructured::CustomStructured(
 		config_domain.set("domainType","global");
 		domain_=domain::Domain::create(config_domain);
 
+		util::Config config_proj;
+		config_proj.set("projectionType","lonlat");
+		projection_=projection::Projection::create(config_proj);
+
     // assign longitude limits
     std::vector<double> lonmin(nlat);
     std::vector<double> lonmax(nlat);

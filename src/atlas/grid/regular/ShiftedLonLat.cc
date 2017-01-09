@@ -48,6 +48,15 @@ ShiftedLonLat::ShiftedLonLat(const util::Config& config)
 		GlobalLonLat::setup(nlon,nlat);
 }
 
+ShiftedLonLat::ShiftedLonLat(long nlon, long nlat) {
+		// set shift
+		shiftLon_=true;
+		shiftLat_=true;
+		
+		// perform setup
+		GlobalLonLat::setup(nlon,nlat);
+}
+
 }  // namespace regular
 }  // namespace grid
 }  // namespace atlas

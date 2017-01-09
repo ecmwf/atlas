@@ -21,7 +21,7 @@ std::string ReducedLonLat::shortName() const {
 }
 
 
-void ReducedLonLat::setup(size_t N, long pl[]) {
+void ReducedLonLat::setup(size_t ny, long pl[]) {
 
 		util::Config config_spacing, config_domain, config_proj;
 
@@ -34,7 +34,6 @@ void ReducedLonLat::setup(size_t N, long pl[]) {
 		domain_=domain::Domain::create(config_domain);
 
 		// determine input for Structured::setup
-		size_t ny=2*N;
 		std::vector<double> xmin(ny);		// first longitude per latitude
 		std::vector<double> xmax(ny);		// last longitude per latitude
 		std::vector<double> y(ny);			// latitudes
@@ -50,41 +49,45 @@ void ReducedLonLat::setup(size_t N, long pl[]) {
     // loop over latitudes to set bounds
     xmin.assign(ny,0.0);
     for (int jlat=0;jlat<ny;jlat++) {
-    	xmin[jlat]=0.0;
     	xmax[jlat]=(pl[jlat]-1)*360.0/pl[jlat];
-    	
-    	//std::cout << "jlat = " << jlat << "; nlon = " << pl[jlat] << "; lat = " << y[jlat]
-    	//	<< "; xmax = " << xmax[jlat] << std::endl;
     }
 		
 		// setup Structured grid
 		Structured::setup(ny,y.data(), pl, xmin.data(), xmax.data());
-		Structured::N_=N;
+		if (ny%2) {
+			Structured::N_=0;		// odd number of latitudes
+		} else {
+			Structured::N_=ny/2;
+		}
 
 }
 
 ReducedLonLat::ReducedLonLat(const util::Config& config) :
     Structured()
 {
-    size_t N;
-    if( ! config.has("N") ) throw eckit::BadParameter("N missing in config",Here());
-    config.get("N",N);
-
+    size_t N, nlat;
+    if( ! config.get("nlat",nlat) ) {
+    	if ( !config.get("N",N) ) {
+    		throw eckit::BadParameter("N or nlat missing in config",Here());
+    	} else {
+    		nlat=2*N;
+    	}
+    }
+    
     std::vector<long> pl;
-    if( ! config.has("pl") ) throw eckit::BadParameter("pl missing in config",Here());
-    config.get("pl",pl);
+    if( ! config.get("pl",pl) ) throw eckit::BadParameter("pl missing in config",Here());
     
     // mirror if necessary
     if ( pl.size() == N ) {
     	// mirror to get length 2*N
-    	pl.resize(2*N);
+    	pl.resize(nlat);
     	for (int jlat=0;jlat<N;jlat++) {
-    		pl[2*N-1-jlat]=pl[jlat];
+    		pl[nlat-1-jlat]=pl[jlat];
     	}
     }
     
     // check length
-   	if ( pl.size() != 2*N )
+   	if ( pl.size() != nlat )
    		throw eckit::BadParameter("pl should have length N or 2*N",Here());
     
     // setup

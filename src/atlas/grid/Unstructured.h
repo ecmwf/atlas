@@ -50,11 +50,11 @@ class Unstructured : public Grid {
 
     virtual void lonlat(std::vector< Point >&) const;
 
-    virtual std::string gridType() const {
-        return grid_type_str();
-    }
-
     virtual eckit::Properties spec() const;
+
+    /// Human readable name
+    virtual std::string shortName() const;
+    virtual std::string gridType() const { return "unstructured"; }
 
     /*** domain is now in Grid
     virtual const domain::Domain& domain() const {
@@ -65,8 +65,6 @@ class Unstructured : public Grid {
 
     virtual void print(std::ostream&) const;
 
-    /// Human readable name
-    virtual std::string shortName() const;
 
     /// Hash of the lonlat array + BoundingBox
     virtual void hash(eckit::MD5&) const;

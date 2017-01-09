@@ -16,6 +16,7 @@ class ReducedLonLat: public Structured {
     static std::string className();
     
     virtual std::string shortName() const;
+    virtual std::string gridType() const { return "reduced_lonlat"; }
 
     ReducedLonLat(): Structured() {};
     ReducedLonLat(const util::Config& params);
@@ -24,10 +25,7 @@ class ReducedLonLat: public Structured {
        
   protected:
 
-    void setup(size_t N, long pl[]);
-
-    //virtual void set_typeinfo() = 0;
-    //static eckit::Value domain_spec(const Domain& dom);
+    void setup(size_t nlat, long pl[]);
     
 };
 
