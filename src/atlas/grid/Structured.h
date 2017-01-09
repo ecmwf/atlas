@@ -196,13 +196,13 @@ extern "C"
     Structured* atlas__grid__CustomStructured_long(size_t nlat, double lat[], long nlon[]);
     Structured* atlas__grid__CustomStructured_lonmin_lonmax_int(size_t nlat, double lat[], int nlon[], double lonmin[], double lonmax[]);
     Structured* atlas__grid__CustomStructured_lonmin_lonmax_long(size_t nlat, double lat[], long nlon[], double lonmin[], double lonmax[]);
-    Structured* atlas__grid__gaussian__RegularGaussian(size_t N);
-    Structured* atlas__grid__gaussian__ReducedGaussian_int(size_t N, int nlon[]);
-    Structured* atlas__grid__gaussian__ReducedGaussian_long(size_t N, long nlon[]);
-    Structured* atlas__grid__lonlat__RegularLonLat(size_t nlon, size_t nlat);
-    Structured* atlas__grid__lonlat__ShiftedLonLat(size_t nlon, size_t nlat);
-    Structured* atlas__grid__lonlat__ShiftedLon(size_t nlon, size_t nlat);
-    Structured* atlas__grid__lonlat__ShiftedLat(size_t nlon, size_t nlat);
+    Structured* atlas__grid__regular__RegularGaussian(size_t N);
+    Structured* atlas__grid__reduced__ReducedGaussian_int(size_t N, int nlon[]);
+    Structured* atlas__grid__reduced__ReducedGaussian_long(size_t N, long nlon[]);
+    Structured* atlas__grid__regular__GlobalLonLat(size_t nlon, size_t nlat);
+    Structured* atlas__grid__regular__ShiftedLonLat(size_t nlon, size_t nlat);
+    Structured* atlas__grid__regular__ShiftedLon(size_t nlon, size_t nlat);
+    Structured* atlas__grid__regular__ShiftedLat(size_t nlon, size_t nlat);
 
     void   atlas__grid__Structured__pl        (Structured* This, const long* &pl, size_t &size);
     size_t atlas__grid__Structured__N         (Structured* This);

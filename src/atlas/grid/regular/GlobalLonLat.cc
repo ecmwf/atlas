@@ -120,6 +120,14 @@ eckit::Properties GlobalLonLat::spec() const {
     return grid_spec;
 }
 
+extern "C" {
+
+
+    Structured* atlas__grid__regular__GlobalLonLat(size_t nlon, size_t nlat) {
+        return new GlobalLonLat(nlon,nlat);
+    }
+}
+
 
 }  // namespace regular
 }  // namespace grid

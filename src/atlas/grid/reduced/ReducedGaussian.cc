@@ -110,6 +110,25 @@ eckit::Properties ReducedGaussian::spec() const {
 }
 
 
+extern "C" {
+
+
+    Structured* atlas__grid__reduced__ReducedGaussian_int(size_t N, int pl[]) {
+        std::vector<long> pl_vector;
+        pl_vector.assign(pl,pl+N);
+        return new ReducedGaussian(N,pl_vector.data());
+    }
+
+
+    Structured* atlas__grid__reduced__ReducedGaussian_long(size_t N, long pl[]) {
+        return new ReducedGaussian(N,pl);
+    }
+
+
+}
+
+
+
 }  // namespace regular
 }  // namespace grid
 }  // namespace atlas

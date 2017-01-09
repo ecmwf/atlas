@@ -13,6 +13,6 @@ add_subdirectory( mesh )
 add_subdirectory( functionspace )
 add_subdirectory( io )
 add_subdirectory( numerics )
-#add_subdirectory( trans )
+add_subdirectory( trans )
 add_subdirectory( interpolation )
 

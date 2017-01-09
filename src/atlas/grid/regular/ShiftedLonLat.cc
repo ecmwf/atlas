@@ -57,6 +57,14 @@ ShiftedLonLat::ShiftedLonLat(long nlon, long nlat) {
 		GlobalLonLat::setup(nlon,nlat);
 }
 
+extern "C" {
+
+
+    Structured* atlas__grid__regular__ShiftedLonLat(size_t nlon, size_t nlat) {
+        return new ShiftedLonLat(nlon,nlat);
+    }
+}
+
 }  // namespace regular
 }  // namespace grid
 }  // namespace atlas
