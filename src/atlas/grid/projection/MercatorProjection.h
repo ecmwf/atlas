@@ -12,8 +12,13 @@ class MercatorProjection: public Projection {
 	
 		// constructor
 		MercatorProjection(const eckit::Parametrisation& p);
-		MercatorProjection();
 
+		// copy constructor
+		MercatorProjection( const MercatorProjection& rhs );
+		
+		// clone method
+		virtual MercatorProjection *clone() const ;
+		
 		// class name
 		static std::string className() { return "atlas.MercatorProjection"; }
 		static std::string projection_type_str() {return "mercator";}

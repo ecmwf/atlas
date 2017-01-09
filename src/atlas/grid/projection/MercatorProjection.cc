@@ -22,7 +22,16 @@ MercatorProjection::MercatorProjection(const eckit::Parametrisation& params) {
   setup(params);
 }
 
-MercatorProjection::MercatorProjection() {}
+// copy constructor
+MercatorProjection::MercatorProjection( const MercatorProjection& rhs ) : Projection(rhs)  {
+	radius_=rhs.radius_;
+	lon0_=rhs.lon0_;
+}
+
+// clone method
+MercatorProjection * MercatorProjection::clone() const  {
+	return new MercatorProjection(*this);
+}
 
 // setup routine
 void MercatorProjection::setup(const eckit::Parametrisation& params) {

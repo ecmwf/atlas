@@ -221,6 +221,8 @@ void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& 
 		}
 #endif
 	
+  // clone some grid properties
+  mesh.setProjection(rg->projection());
 
   Region region;
   generate_region(*rg,distribution,mypart,region);
@@ -914,7 +916,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   mesh::Nodes& nodes = mesh.nodes();
 
   array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
-  array::ArrayView<double,2> geolonlat        ( nodes.geolonlat() );
+  array::ArrayView<double,2> geolonlat     ( nodes.geolonlat() );
   array::ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
   array::ArrayView<int,   1> part          ( nodes.partition() );
   array::ArrayView<int,   1> ghost         ( nodes.ghost() );

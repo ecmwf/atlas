@@ -13,6 +13,15 @@ class LambertProjection: public Projection {
 		// constructor
 		LambertProjection(const eckit::Parametrisation& p);
 
+		// copy constructor
+		LambertProjection( const LambertProjection& rhs );
+		
+		// clone method
+		virtual LambertProjection *clone() const ;
+		
+		// destructor
+		~LambertProjection() {};
+		
 		// class name
 		static std::string className() { return "atlas.LambertProjection"; }
 		static std::string projection_type_str() {return "lambert";}

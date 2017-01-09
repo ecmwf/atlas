@@ -215,6 +215,9 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::GridDist
   }
 
   int mypart   = options.get<size_t>("part");
+  
+  // clone some grid properties
+  mesh.setProjection(rg->projection());
 
   generate_mesh(*rg,distribution,mesh);
 }

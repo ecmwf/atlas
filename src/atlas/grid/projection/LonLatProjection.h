@@ -14,7 +14,16 @@ class LonLatProjection: public Projection {
 		
 		// constructor
 		LonLatProjection(const eckit::Parametrisation& p);
+
+		// copy constructor
+		LonLatProjection( const LonLatProjection& rhs );
 		
+		// clone method
+		virtual LonLatProjection *clone() const ;
+		
+		// destructor
+		~LonLatProjection() {};
+				
 		// class name
 		static std::string className() { return "atlas.LonLatProjection"; }
 		static std::string projection_type_str() {return "lonlat";}

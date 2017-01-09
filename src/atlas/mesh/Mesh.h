@@ -22,6 +22,7 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"
+#include "atlas/grid/projection/Projection.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -113,6 +114,10 @@ public: // methods
           mesh::HybridElements& peaks()       { return *peaks_; }
 
     bool generated() const;
+    
+    const grid::projection::Projection * projection() const { return projection_; }
+    
+    void setProjection(const grid::projection::Projection * prj);
 
 private:  // methods
 
@@ -138,6 +143,8 @@ private: // members
     eckit::SharedPtr<mesh::HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
 
     size_t dimensionality_;
+    
+    grid::projection::Projection * projection_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

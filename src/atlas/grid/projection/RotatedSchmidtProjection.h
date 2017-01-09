@@ -12,6 +12,12 @@ class RotatedSchmidtProjection: public SchmidtProjection {
 		// constructor
 		RotatedSchmidtProjection(const eckit::Parametrisation& p);
 
+		// copy constructor
+		RotatedSchmidtProjection( const RotatedSchmidtProjection& rhs );
+		
+		// clone method
+		virtual RotatedSchmidtProjection *clone() const ;
+		
 		// class name
 		static std::string className() { return "atlas.RotatedSchmidtProjection"; }
 		static std::string projection_type_str() {return "rotatedSchmidt";}

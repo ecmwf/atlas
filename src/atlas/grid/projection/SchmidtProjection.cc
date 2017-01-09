@@ -16,6 +16,18 @@ SchmidtProjection::SchmidtProjection(const eckit::Parametrisation& params) {
     throw eckit::BadParameter("stretching_factor missing in Params",Here());
 }
 
+
+// copy constructor
+SchmidtProjection::SchmidtProjection( const SchmidtProjection& rhs ) : Projection(rhs)  {
+	c_=rhs.c_;
+}
+
+// clone method
+SchmidtProjection * SchmidtProjection::clone() const  {
+	return new SchmidtProjection(*this);
+}
+
+
 eckit::geometry::LLPoint2 SchmidtProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
 	double lat=R2D(asin(cos(2*atan(1/c_*tan(acos(sin(D2R(xy[eckit::geometry::YY])))/2)))));
 	

@@ -7,6 +7,15 @@ namespace projection {
 LonLatProjection::LonLatProjection(const eckit::Parametrisation& params) {
 }
 
+// copy constructor
+LonLatProjection::LonLatProjection( const LonLatProjection& rhs ) : Projection(rhs) {
+}
+
+// clone method
+LonLatProjection * LonLatProjection::clone() const  {
+	return new LonLatProjection(*this);
+}
+
 eckit::geometry::LLPoint2 LonLatProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
 	
 	return eckit::geometry::LLPoint2(xy[eckit::geometry::XX],xy[eckit::geometry::YY]);

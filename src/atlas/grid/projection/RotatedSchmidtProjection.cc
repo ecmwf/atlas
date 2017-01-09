@@ -25,6 +25,19 @@ RotatedSchmidtProjection::RotatedSchmidtProjection(const eckit::Parametrisation&
   
 }
 
+
+// copy constructor
+RotatedSchmidtProjection::RotatedSchmidtProjection( const RotatedSchmidtProjection& rhs ) : SchmidtProjection(rhs) {
+	pole_.assign(rhs.pole_[0],rhs.pole_[1]);
+	c_=rhs.c_;
+}
+
+// clone method
+RotatedSchmidtProjection * RotatedSchmidtProjection::clone() const  {
+	return new RotatedSchmidtProjection(*this);
+}
+
+
 eckit::geometry::LLPoint2 RotatedSchmidtProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
 
 	// stretch

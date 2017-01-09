@@ -34,6 +34,20 @@ LambertProjection::LambertProjection(const eckit::Parametrisation& params) {
   setup();
 }
 
+// copy constructor
+LambertProjection::LambertProjection( const LambertProjection& rhs ) : Projection( rhs ) {
+	// copy fundamental data
+	lat1_=rhs.lat1_;
+	lat2_=rhs.lat2_;
+	radius_=rhs.radius_;
+	lon0_=rhs.lon0_;
+	// call setup to determine derived parameters
+	setup();
+}
+
+// clone method
+LambertProjection * LambertProjection::clone() const { return new LambertProjection(*this); }
+
 // setup routine
 void LambertProjection::setup() {
 	// setup (derived) constants

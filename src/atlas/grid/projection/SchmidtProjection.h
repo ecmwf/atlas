@@ -11,7 +11,14 @@ class SchmidtProjection: public Projection {
 	public:
 		// constructor
 		SchmidtProjection(const eckit::Parametrisation& p);
-
+		SchmidtProjection() {};
+		
+		// copy constructor
+		SchmidtProjection( const SchmidtProjection& rhs );
+		
+		// clone method
+		virtual SchmidtProjection *clone() const ;
+		
 		// class name
 		static std::string className() { return "atlas.SchmidtProjection"; }
 		static std::string projection_type_str() {return "schmidt";}

@@ -12,6 +12,12 @@ class RotatedLonLatProjection: public LonLatProjection {
 		// constructor
 		RotatedLonLatProjection(const eckit::Parametrisation& p);
 
+		// copy constructor
+		RotatedLonLatProjection( const RotatedLonLatProjection& rhs );
+		
+		// clone method
+		virtual RotatedLonLatProjection *clone() const ;
+		
 		// class name
 		static std::string className() { return "atlas.RotatedLonLatProjection"; }
 		static std::string projection_type_str() {return "rotatedLonLat";}

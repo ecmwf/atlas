@@ -22,6 +22,17 @@ RotatedLonLatProjection::RotatedLonLatProjection(const eckit::Parametrisation& p
   
 }
 
+// copy constructor
+RotatedLonLatProjection::RotatedLonLatProjection( const RotatedLonLatProjection& rhs ) : LonLatProjection(rhs) {
+	pole_.assign(rhs.pole_[0],rhs.pole_[1]);
+}
+
+// clone method
+RotatedLonLatProjection * RotatedLonLatProjection::clone() const  {
+	return new RotatedLonLatProjection(*this);
+}
+
+
 eckit::geometry::LLPoint2 RotatedLonLatProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
 
 	// point

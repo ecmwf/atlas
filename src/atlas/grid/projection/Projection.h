@@ -22,6 +22,11 @@ class Projection {
 		static Projection* create();
 		static Projection* create(const eckit::Parametrisation& p);
 		
+		Projection() {};
+		Projection( const Projection& rhs ) {};		// copy constructor
+		virtual Projection * clone() const =0;					// clone method acting like virtual copy constructor
+		virtual ~Projection() {};									// destructor should be virtual when using a virtual copy constructor
+		
 		static std::string className() {return "atlas.Projection";}
 		static std::string projection_type_str() {return "projection";}
 		virtual std::string virtual_projection_type_str() const { return "projection"; }

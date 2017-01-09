@@ -18,11 +18,23 @@ namespace grid {
 namespace projection {
 
 // constructors
-RotatedMercatorProjection::RotatedMercatorProjection(const eckit::Parametrisation& params) {
+RotatedMercatorProjection::RotatedMercatorProjection(const eckit::Parametrisation& params) : MercatorProjection(params) {
 
 	setup(params);
 
 }
+
+// copy constructor
+RotatedMercatorProjection::RotatedMercatorProjection( const RotatedMercatorProjection& rhs ) : MercatorProjection(rhs) {
+	pole_.assign(rhs.pole_[0],rhs.pole_[1]);
+	lon0_=rhs.lon0_;
+}
+
+// clone method
+RotatedMercatorProjection * RotatedMercatorProjection::clone() const  {
+	return new RotatedMercatorProjection(*this);
+}
+
 
 void RotatedMercatorProjection::setup(const eckit::Parametrisation& params) {
   // check presence of pole
