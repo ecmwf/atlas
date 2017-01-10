@@ -107,6 +107,7 @@ bool Mesh::generated() const {
 }
 
 void Mesh::setProjection(const grid::projection::Projection * prj) {
+	ASSERT(prj);
 	projection_=prj->clone();
 }
 

@@ -82,6 +82,11 @@ ReducedGaussian::ReducedGaussian(const util::Config& config) :
    	if ( pl.size() != N  )
    		throw eckit::BadParameter("pl should have length N",Here());
     
+		// projection is lonlat
+		util::Config config_proj;
+		config_proj.set("projectionType","lonlat");
+		projection_=projection::Projection::create(config_proj);
+
     // setup
     setup(N,pl.data());
 }

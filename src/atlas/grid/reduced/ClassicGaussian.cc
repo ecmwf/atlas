@@ -38,7 +38,7 @@ void ClassicGaussian::setup(size_t N) {
     
 }
 
-ClassicGaussian::ClassicGaussian(size_t N) {
+ClassicGaussian::ClassicGaussian(size_t N) : ReducedGaussian() {
 
 	// projection is lonlat
 	util::Config config_proj;
@@ -49,9 +49,7 @@ ClassicGaussian::ClassicGaussian(size_t N) {
 	setup(N);
 }
 
-ClassicGaussian::ClassicGaussian(const util::Config& config) :
-    ReducedGaussian()
-{
+ClassicGaussian::ClassicGaussian(const util::Config& config) : ReducedGaussian() {
 		size_t N;
 		
 		// get N from config

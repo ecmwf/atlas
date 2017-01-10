@@ -33,8 +33,6 @@ std::vector<long> OctahedralGaussian::computePL(const size_t N) {
 
 void OctahedralGaussian::setup(size_t N) {
 
-		util::Config config_spacing, config_domain, config_proj;
-		
 		// number of longitudes per latitude
 		std::vector<long>   pl(N);
     pl=computePL(N);
