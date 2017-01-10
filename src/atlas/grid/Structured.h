@@ -140,7 +140,7 @@ class Structured : public Grid {
     virtual void print(std::ostream&) const;
 
     /// Hash of the PL array
-    //virtual void hash(eckit::MD5&) const;
+    virtual void hash(eckit::MD5&) const;
 
     void setup(const size_t nlat, const double lats[], const long pl[], const double lonmin[], const double lonmax[]);
 

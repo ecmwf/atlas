@@ -74,7 +74,7 @@ class Grid : public eckit::Owned {
     uid_t uniqueId() const;
 
     /// Adds to the MD5 the information that makes this Grid unique
-    //virtual void hash(eckit::MD5&) const = 0;
+    virtual void hash(eckit::MD5&) const = 0;
 
     /// @returns the hash of the information that makes this Grid unique
     eckit::MD5::digest_t hash() const;

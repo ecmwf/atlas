@@ -81,18 +81,12 @@ Grid::uid_t Grid::uniqueId() const {
 
 eckit::MD5::digest_t Grid::hash() const {
     if (hash_.empty()) {
-    		// hash is based on (string representation of) spec()
         eckit::MD5 md5;
-        eckit::Properties prop;
-        std::ostringstream s;
-				s << spec();
-   			prop.set("spec",s.str());
-        prop.hash(md5);
+        hash(md5);
         hash_ = md5.digest();
     }
     return hash_;
 }
-
 
 void Grid::fillLonLat(double array[], size_t arraySize) const {
     const size_t size = npts()*2;

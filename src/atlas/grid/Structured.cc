@@ -188,15 +188,24 @@ void Structured::print(std::ostream& os) const {
 }
 
 
-/*
 void Structured::hash(eckit::MD5& md5) const {
     // Through inheritance the grid_type_str() might differ while still being same grid
     //md5.add(grid_type_str());
 
     md5.add(latitudes().data(), sizeof(double)*latitudes().size());
     md5.add(pl().data(), sizeof(long)*nlat());
+    
+    // also add lonmin and lonmax
+    md5.add(lonmin_.data(), sizeof(double)*lonmin_.size());
+    md5.add(lonmax_.data(), sizeof(double)*lonmax_.size());
+    
+    // also add projection information
+    eckit::Properties prop;
+    std::ostringstream s;
+		s << projection()->spec();
+		prop.set("projection",s.str());
+    prop.hash(md5);
 }
-*/
 
 eckit::Properties Structured::spec() const {
     eckit::Properties grid_spec;
@@ -210,7 +219,7 @@ eckit::Properties Structured::spec() const {
     grid_spec.set("pl",eckit::makeVectorValue(pl()));
     grid_spec.set("lonmin",eckit::makeVectorValue(lonmin_));
     grid_spec.set("lonmax",eckit::makeVectorValue(lonmax_));
-
+    
     return grid_spec;
 }
 
