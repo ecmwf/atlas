@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-//------------------------------------------------------------------------------------------------------
-
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
@@ -21,7 +19,7 @@ using namespace eckit;
 namespace atlas {
 namespace interpolation {
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 PointSet::PointSet( const std::vector< Point >& ipts ) : npts_(ipts.size())
 {
@@ -51,7 +49,7 @@ PointSet::PointSet( mesh::Mesh& mesh )
     tree_->build(pidx.begin(), pidx.end());
 }
 
-size_t PointSet::search_unique( const Point& p, size_t idx, u_int32_t n  )
+size_t PointSet::search_unique( const Point& p, size_t idx, uint32_t n  )
 {
     PointIndex3::NodeList nearest = tree_->kNearestNeighbours( p, Kn(n) );
 
@@ -92,7 +90,7 @@ size_t PointSet::search_unique( const Point& p, size_t idx, u_int32_t n  )
     }
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace interpolation
 } // namespace atlas

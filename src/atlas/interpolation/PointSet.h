@@ -17,17 +17,20 @@
 #include <vector>
 #include <limits>
 #include <memory>
+#include <stdint.h>
+
 #include "eckit/log/Timer.h"
 #include "eckit/types/FloatCompare.h"
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/interpolation/PointIndex3.h"
 
-//------------------------------------------------------------------------------------------------------
+
 
 namespace atlas {
 namespace interpolation {
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 class PointSet {
 
@@ -108,11 +111,11 @@ protected: // methods
         tree_->build(pidx.begin(), pidx.end());
     }
 
-    size_t search_unique( const Point& p, size_t idx, u_int32_t n  );
+    size_t search_unique( const Point& p, size_t idx, uint32_t n  );
 
 protected:
 
-    size_t Kn( u_int32_t n )
+    size_t Kn( uint32_t n )
     {
         if( !n )
             return 2;
@@ -130,7 +133,7 @@ private:
 
 };
 
-//---------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace interpolation
 } // namespace atlas
