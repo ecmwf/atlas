@@ -105,11 +105,16 @@ private:
 
 class ConnectivityRow
 {
-  typedef detail::ConnectivityIndex Index;
+  #ifdef ATLAS_HAVE_FORTRAN
+    typedef detail::ConnectivityIndex Index;
+  #else
+    typedef idx_t Index;
+  #endif
+
   public:
     ConnectivityRow(idx_t *data, size_t size) : data_(data), size_(size) {}
-    Index operator()(size_t i) const { return INDEX_REF(data_+i); }
-    idx_t operator()(size_t i)       { return data_[i] FROM_FORTRAN; }
+    idx_t operator()(size_t i) const { return data_[i] FROM_FORTRAN; }
+    Index operator()(size_t i)       { return INDEX_REF(data_+i); }
     size_t size() const { return size_; }
 
   private:
@@ -120,7 +125,7 @@ class ConnectivityRow
 class IrregularConnectivity : public eckit::Owned
 {
 public:
-  typedef array::LocalView<idx_t, 1> Row;
+  typedef ConnectivityRow Row;
 
   static constexpr unsigned short _values_=0;
   static constexpr unsigned short _displs_=1;
@@ -256,6 +261,8 @@ public:
   bool is_on_host() const;
   bool is_on_device() const;
 
+  void dump(std::ostream& os) const;
+
 protected:
   bool owns() { return owns_; }
   const size_t *displs() const { return displs_view_.data(); }
@@ -337,6 +344,7 @@ public:
   /// Data is owned
   MultiBlockConnectivity( const std::string& name = "" );
 
+/*
   /// @brief Construct connectivity table wrapping existing raw data.
   /// No resizing can be performed as data is not owned.
   MultiBlockConnectivity(
@@ -346,7 +354,7 @@ public:
       size_t counts[],
       size_t blocks, size_t block_displs[],
       size_t block_cols[] );
-
+*/
   ~MultiBlockConnectivity();
 
 //-- Accessors
@@ -439,6 +447,11 @@ private:
 /// In the first mode of construction, the connectivity table cannot be resized.
 /// In the second mode of construction, resizing is possible
 class BlockConnectivity : public eckit::Owned {
+
+private:
+  friend class MultiBlockConnectivity;
+  BlockConnectivity( size_t rows, size_t cols, idx_t values[], bool dummy);
+
 public:
 
 //-- Constructors
@@ -446,10 +459,11 @@ public:
   /// @brief Construct connectivity table that needs resizing a-posteriori
   /// Data is owned
   BlockConnectivity();
+  BlockConnectivity( size_t rows, size_t cols, const std::initializer_list<idx_t>& );
 
   /// @brief Construct connectivity table wrapping existing raw data.
   /// No resizing can be performed as data is not owned.
-  BlockConnectivity( size_t rows, size_t cols, idx_t values[] );
+  BlockConnectivity( size_t rows, size_t cols, idx_t values[]);
 
   /// @brief Copy ctr (only to be used when calling a cuda kernel)
   // This ctr has to be defined in the header, since __CUDACC__ will identify whether 
@@ -519,6 +533,8 @@ public:
   bool is_on_host() const;
   bool is_on_device() const;
 
+  bool owns() const { return owns_; }
+
 private:
   bool owns_;
   array::Array* values_;
@@ -552,7 +568,7 @@ inline void IrregularConnectivity::set( size_t row_idx, size_t col_idx, const id
 
 inline IrregularConnectivity::Row IrregularConnectivity::row( size_t row_idx ) const
 {
-  return IrregularConnectivity::Row(const_cast<idx_t*>(values_view_.data() ) +displs_view_(row_idx) , array::ArrayShape{counts_view_(row_idx)});
+  return IrregularConnectivity::Row(const_cast<idx_t*>(values_view_.data() ) +displs_view_(row_idx) , counts_view_(row_idx) );
 }
 
 // -----------------------------------------------------------------------------------------------------

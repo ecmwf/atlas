@@ -190,6 +190,13 @@ BOOST_AUTO_TEST_CASE(test_resize_throw) {
 
 BOOST_AUTO_TEST_CASE(test_resize) {
   {
+    Array* ds = Array::create<double>(0);
+    BOOST_CHECK_EQUAL(ds->size(), 0);
+    ds->resize(0);
+    delete ds;
+  }
+
+  {
     Array* ds = Array::create<double>(7, 5, 8);
     {
       ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);

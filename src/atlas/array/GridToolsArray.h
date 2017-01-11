@@ -213,7 +213,7 @@ public:
           data_store_->clone_from_device();
       }
 
-      Array* array_resized = Array::create(datatype(), ArrayShape{(unsigned int)c...});
+      Array* array_resized = create(datatype(), ArrayShape{(unsigned int)c...});
 
       array_initializer<sizeof...(c)>::apply( *this, *array_resized);
       data_store_.swap(array_resized->data_store());

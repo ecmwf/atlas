@@ -41,7 +41,6 @@ endif()
 
 ecbuild_add_test( TARGET atlas_test_connectivity
   BOOST
-  MPI      1
   SOURCES  test_connectivity.cc
   LIBS     atlas
 )
@@ -49,7 +48,6 @@ ecbuild_add_test( TARGET atlas_test_connectivity
 
 ecbuild_add_test( TARGET atlas_test_elements
   BOOST
-  MPI      1
   SOURCES  test_elements.cc
   LIBS     atlas
 )
@@ -57,21 +55,18 @@ ecbuild_add_test( TARGET atlas_test_elements
 
 ecbuild_add_test( TARGET atlas_test_accumulate_facets
   BOOST
-  MPI      1
   SOURCES  test_accumulate_facets.cc
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_rgg
   BOOST
-  MPI      1
   SOURCES  test_rgg.cc
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_ll
   BOOST
-  MPI      1
   SOURCES  test_ll.cc
   LIBS     atlas
 )
@@ -100,7 +95,6 @@ ecbuild_add_test( TARGET atlas_test_distmesh
 
 ecbuild_add_test( TARGET atlas_test_meshgen3d
   BOOST
-  MPI       1
   SOURCES   test_meshgen3d.cc
   LIBS      atlas
 )
@@ -109,8 +103,7 @@ ecbuild_add_test(
   TARGET      atlas_test_cgal_mesh_gen_from_points
   SOURCES     test_cgal_mesh_gen_from_points.cc
   CONDITION   HAVE_TESSELATION
-  LIBS        atlas
-  MPI         1 )
+  LIBS        atlas)
 
 ecbuild_add_cuda_test(
   TARGET atlas_test_connectivity_kernel

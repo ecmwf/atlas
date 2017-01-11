@@ -154,6 +154,7 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
     set( ENABLE_GPU "OFF" CACHE BOOL "Compile with GPU support (CUDA)" )
 
     if(ENABLE_GPU)
+        set( CUDA_USE_STATIC_CUDA_RUNTIME OFF )
         find_package(CUDA REQUIRED)
         string(REPLACE "." "" CUDA_VERSION ${CUDA_VERSION})
         add_definitions(-DCUDA_VERSION=${CUDA_VERSION})
@@ -170,7 +171,6 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 
         include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
 
-        set(exe_LIBS "${CUDA_CUDART_LIBRARY}" "${exe_LIBS}" )
         set(CUDA_SEPARABLE_COMPILATION ON)
         # adding the additional nvcc flags
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-arch=${CUDA_ARCH}" "-Xcudafe" "--diag_suppress=dupl_calling_convention")
