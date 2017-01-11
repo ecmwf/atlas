@@ -443,6 +443,15 @@ void MultiBlockConnectivity::clear()
 //  block_displs_ = 0;
 //  block_cols_ = 0;
 //  block_.clear();
+  for( size_t j=0; j<block_.size(); )
+  {
+    if( block_[j] ) {
+      block_[j]->detach();
+      if( not block_[j]->owners() ) {
+        delete block_[j];
+      }
+    }
+  }
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -631,6 +640,7 @@ void MultiBlockConnectivity::rebuild_block_connectivity()
           block_cols_view_(b),                           // cols
           data()+displs(block_displs_view_(b)),
           /*own = */ false);
+      block_[b]->attach();
     }
   }
 
@@ -649,6 +659,7 @@ void MultiBlockConnectivity::rebuild_block_connectivity()
         block_cols_view_(blockid),                      // cols
         data()+ displs(block_displs_view_(blockid)),
        /*own = */ false);
+      block_[blockid]->attach();
   }
 }
 
