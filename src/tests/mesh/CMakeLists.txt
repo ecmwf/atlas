@@ -9,7 +9,6 @@
 if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_mesh
-    MPI             1
     LINKER_LANGUAGE Fortran
     CONDITION       ON
     SOURCES         fctest_mesh.F90
@@ -17,7 +16,6 @@ if( HAVE_FCTEST )
   )
 
   add_fctest( TARGET atlas_fctest_meshgen
-    MPI             1
     LINKER_LANGUAGE Fortran
     CONDITION       ON
     SOURCES         fctest_meshgen.F90

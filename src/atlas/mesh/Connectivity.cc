@@ -803,10 +803,12 @@ public:
   callback_t  &callback_update() { return connectivity_.callback_update_; }
   callback_t  &callback_set()    { return connectivity_.callback_set_; }
   callback_t  &callback_delete() { return connectivity_.callback_delete_; }
-//TODO return array or arrayview?
-  array::Array       *values()   { return connectivity_.data_[Connectivity::_values_]; }
-  array::Array      *displs()   { return connectivity_.data_[Connectivity::_displs_]; }
-  array::Array      *counts()   { return connectivity_.data_[Connectivity::_counts_]; }
+
+// TODO : For now return host-view raw data to Fortran, but this should be
+//        reviewed to also possibly return device-view data
+  int    *values()   { return array::make_view<int,1>( *connectivity_.data_[Connectivity::_values_] ).data(); }
+  size_t *displs()   { return array::make_view<size_t,1>( *connectivity_.data_[Connectivity::_displs_] ).data(); }
+  size_t *counts()   { return array::make_view<size_t,1>( *connectivity_.data_[Connectivity::_counts_] ).data(); }
 
 private:
   Connectivity& connectivity_;
@@ -859,26 +861,23 @@ int atlas__connectivity__ctxt_delete(Connectivity* This, Connectivity::ctxt_t* c
 
 void atlas__Connectivity__displs(Connectivity* This, size_t* &displs, size_t &size)
 {
-    //TODO
-//  ConnectivityPrivateAccess access(*This);
-//  displs = access.displs();
-//  size = This->rows()+1;
+  ConnectivityPrivateAccess access(*This);
+  displs = access.displs();
+  size = This->rows()+1;
 }
 
 void atlas__Connectivity__counts(Connectivity* This, size_t* &counts, size_t &size)
 {
-    //TODO
-//  ConnectivityPrivateAccess access(*This);
-//  counts = access.counts();
-//  size = This->rows();
+  ConnectivityPrivateAccess access(*This);
+  counts = access.counts();
+  size = This->rows();
 }
 
 void atlas__Connectivity__values(Connectivity* This, int* &values, size_t &size)
 {
-    //TODO
-//  ConnectivityPrivateAccess access(*This);
-//  values = access.values();
-//  size = This->rows() ? access.displs()[This->rows()]+1 : 0 ;
+  ConnectivityPrivateAccess access(*This);
+  values = access.values();
+  size = This->rows() ? access.displs()[This->rows()]+1 : 0 ;
 }
 
 void atlas__Connectivity__add_values(Connectivity* This, size_t rows, size_t cols, int values[])
