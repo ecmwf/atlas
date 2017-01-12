@@ -26,6 +26,7 @@ Array* Array::create( DataType datatype, const ArrayShape& shape )
     case DataType::KIND_REAL32: return new ArrayT<float>(shape);
     case DataType::KIND_INT32:  return new ArrayT<int>(shape);
     case DataType::KIND_INT64:  return new ArrayT<long>(shape);
+    case DataType::KIND_UINT64: return new ArrayT<unsigned long>(shape);
     default:
     {
       std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
@@ -43,6 +44,7 @@ Array* Array::create( DataType datatype )
     case DataType::KIND_REAL32: return new ArrayT<float>();
     case DataType::KIND_INT32:  return new ArrayT<int>();
     case DataType::KIND_INT64:  return new ArrayT<long>();
+    case DataType::KIND_UINT64: return new ArrayT<unsigned long>();
     default:
     {
       std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
@@ -56,11 +58,13 @@ template <> Array* Array::wrap(int data[], const ArraySpec& s) { return new Arra
 template <> Array* Array::wrap(long data[], const ArraySpec& s) { return new ArrayT<long>(data,s); }
 template <> Array* Array::wrap(float data[], const ArraySpec& s) { return new ArrayT<float>(data,s); }
 template <> Array* Array::wrap(double data[], const ArraySpec& s) { return new ArrayT<double>(data,s); }
+template <> Array* Array::wrap(unsigned long data[], const ArraySpec& s) { return new ArrayT<unsigned long>(data,s); }
 
 template <> Array* Array::wrap(int data[], const ArrayShape& s) { return new ArrayT<int>(data,s); }
 template <> Array* Array::wrap(long data[], const ArrayShape& s) { return new ArrayT<long>(data,s); }
 template <> Array* Array::wrap(float data[], const ArrayShape& s) { return new ArrayT<float>(data,s); }
 template <> Array* Array::wrap(double data[], const ArrayShape& s) { return new ArrayT<double>(data,s); }
+template <> Array* Array::wrap(unsigned long data[], const ArrayShape& s) { return new ArrayT<unsigned long>(data,s); }
 
 void Array::resize(const ArrayShape& _shape)
 {
@@ -107,6 +111,7 @@ template <> void ArrayT<int>::dump(std::ostream& os) const { dump_array_data(*th
 template <> void ArrayT<long>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<float>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 template <> void ArrayT<double>::dump(std::ostream& os) const { dump_array_data(*this,os); };
+template <> void ArrayT<unsigned long>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 
 #else
 
@@ -118,6 +123,7 @@ Array* Array::create( DataType datatype, const ArrayShape& shape )
     case DataType::KIND_REAL32: return create<float>(shape);
     case DataType::KIND_INT32:  return create<int>(shape);
     case DataType::KIND_INT64:  return create<long>(shape);
+    case DataType::KIND_UINT64:  return create<unsigned long>(shape);
     default:
     {
       std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";

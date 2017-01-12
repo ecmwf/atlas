@@ -125,6 +125,12 @@ make_host_view(const Array& array) {
 }
 
 template <typename Value, unsigned int NDims, bool ReadOnly>
+inline ArrayView<Value, NDims>
+make_device_view(const Array& array) {
+  return make_host_view<Value,NDims,ReadOnly>(array);
+}
+
+template <typename Value, unsigned int NDims, bool ReadOnly>
 inline IndexView<Value, NDims>
 make_host_indexview(const Array& array) {
   return IndexView<Value,NDims>( (Value*)(array.storage()),array.shape().data() );
@@ -140,7 +146,7 @@ make_host_storageview(const Array& array) {
 template <typename Value>
 inline StorageView<Value>
 make_device_storageview(const Array& array) {
-  return make_device_storageview<Value>(array);
+  return make_host_storageview<Value>(array);
 }
 
 #endif

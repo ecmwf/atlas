@@ -32,6 +32,7 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/Vector.h"
+#include "atlas/array/array_fwd.h"
 
 namespace atlas {
 namespace mesh {

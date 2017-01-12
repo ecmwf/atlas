@@ -23,7 +23,7 @@
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "atlas/array/GridToolsArray.h"
 #else
-
+#define GT_FUNCTION
 //------------------------------------------------------------------------------
 
 namespace atlas {

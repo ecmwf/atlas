@@ -2,7 +2,6 @@
 if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_griddistribution
-    MPI             1
     LINKER_LANGUAGE Fortran
     CONDITION       ON
     SOURCES         fctest_griddistribution.F90
@@ -10,7 +9,6 @@ if( HAVE_FCTEST )
   )
 
   add_fctest( TARGET atlas_fctest_state
-    MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_state.F90
     LIBS            atlas_f

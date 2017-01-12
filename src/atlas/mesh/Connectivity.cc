@@ -462,16 +462,13 @@ void MultiBlockConnectivity::add(size_t rows, size_t cols, const idx_t values[],
   size_t old_rows = this->rows();
   IrregularConnectivity::add(rows,cols,values,fortran_array);
 
-  if(blocks_) {
-      block_displs_->insert( block_displs_->size(), 1);
-      block_cols_  ->insert( block_cols_  ->size(), 1);
-      block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
-      block_cols_view_   = array::make_view<size_t, 1>(*block_cols_);
-  }
+  block_displs_->insert( block_displs_->size(), 1);
+  block_cols_  ->insert( block_cols_  ->size(), 1);
+  block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
+  block_cols_view_   = array::make_view<size_t, 1>(*block_cols_);
   blocks_++;
-
-  block_displs_view_(block_displs_view_.size()-1) = old_rows;
-  block_cols_view_  (block_cols_view_  .size()-1) = cols;
+  block_displs_view_(block_displs_view_.size()-1) = old_rows+rows;
+  block_cols_view_  (block_cols_view_  .size()-2) = cols;
 
   rebuild_block_connectivity();
 }
@@ -492,16 +489,14 @@ void MultiBlockConnectivity::add( size_t rows, size_t cols )
   size_t old_rows = this->rows();
   IrregularConnectivity::add(rows,cols);
 
-  if(blocks_) {
-    block_displs_->insert( block_displs_->size(), 1);
-    block_cols_  ->insert( block_cols_  ->size(), 1);
-    block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
-    block_cols_view_   = array::make_view<size_t, 1>(*block_cols_);
-  }
+  block_displs_->insert( block_displs_->size(), 1);
+  block_cols_  ->insert( block_cols_  ->size(), 1);
+  block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
+  block_cols_view_   = array::make_view<size_t, 1>(*block_cols_);
   blocks_++;
+  block_displs_view_(block_displs_view_.size()-1) = old_rows+rows;
+  block_cols_view_  (block_cols_view_  .size()-2) = cols;
 
-  block_displs_view_(block_displs_view_.size()-1) = old_rows;
-  block_cols_view_(block_cols_view_.size()-1) = cols;
   rebuild_block_connectivity();
 }
 
@@ -522,17 +517,14 @@ void MultiBlockConnectivity::add( size_t rows, const size_t cols[] )
   if( min != max ) throw eckit::AssertionFailed("MultiBlockConnectivity::add(rows,cols[]): all elements of cols[] must be identical");
   IrregularConnectivity::add(rows,cols);
 
-  if(blocks_) {
-    block_displs_->insert( block_displs_->size(), 1);
-    block_cols_->insert( block_cols_->size(), 1);
-    block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
-    block_cols_view_ = array::make_view<size_t, 1>(*block_cols_);
-  }
-
+  block_displs_->insert( block_displs_->size(), 1);
+  block_cols_->insert( block_cols_->size(), 1);
+  block_displs_view_ = array::make_view<size_t, 1>(*block_displs_);
+  block_cols_view_ = array::make_view<size_t, 1>(*block_cols_);
   blocks_++;
-
   block_displs_view_(block_displs_view_.size()-1) = old_rows;
-  block_cols_view_(block_cols_view_.size()-1) = max;
+  block_cols_view_(block_cols_view_.size()-2) = max;
+
   rebuild_block_connectivity();
 }
 
@@ -623,10 +615,10 @@ void MultiBlockConnectivity::insert( size_t position, size_t rows, const size_t 
 void MultiBlockConnectivity::rebuild_block_connectivity()
 {    
   block_.resize(blocks_);
-  size_t tcount = 0;
-  for( size_t b=0; b<blocks_-1; ++b )
+  for( size_t b=0; b<blocks_; ++b )
   {
-    tcount += (block_displs_view_(b+1)-block_displs_view_(b)) * block_cols_view_(b);
+    size_t rows = block_displs_view_(b+1)-block_displs_view_(b);
+    size_t cols = block_cols_view_(b);
     if( block_[b] ) {
       block_[b]->rebuild(
           block_displs_view_(b+1)-block_displs_view_(b), // rows
@@ -642,24 +634,6 @@ void MultiBlockConnectivity::rebuild_block_connectivity()
           /*own = */ false);
       block_[b]->attach();
     }
-  }
-
-  //specific for last block to avoid overflow with block_displs_view_(b+1)
-  size_t blockid = blocks_-1;
-  if( block_[blockid] ) {
-    block_[blockid]->rebuild(
-        (size()-tcount)/ block_cols_view_(blockid),     // rows
-        block_cols_view_(blockid),                      // cols
-        data()+ displs(block_displs_view_(blockid)));
-  }
-  else {
-      block_[blockid] =
-       new BlockConnectivity(
-        (size()-tcount)/ block_cols_view_(blockid),     // rows
-        block_cols_view_(blockid),                      // cols
-        data()+ displs(block_displs_view_(blockid)),
-       /*own = */ false);
-      block_[blockid]->attach();
   }
 }
 

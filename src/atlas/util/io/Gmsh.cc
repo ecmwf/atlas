@@ -1012,7 +1012,7 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
           {
             if( include_ghost || !elems_halo(elem) )
             {
-              file << elems_glb_idx(elem) << elem_info << elems_partition(+elem);
+              file << elems_glb_idx(elem) << elem_info << elems_partition(elem);
               for( size_t n=0; n<node_connectivity.cols(); ++n ) {
                 file << " " << glb_idx(node_connectivity(elem,n));
               }

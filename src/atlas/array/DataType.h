@@ -29,6 +29,7 @@ public:
   static const kind_t KIND_INT64  = -8;
   static const kind_t KIND_REAL32 =  4;
   static const kind_t KIND_REAL64 =  8;
+  static const kind_t KIND_UINT64 = -16;
 
   template< typename DATATYPE > static DataType create();
 
@@ -52,6 +53,7 @@ private:
   static std::string int64_str()  { return "int64";  }
   static std::string real32_str() { return "real32";  }
   static std::string real64_str() { return "real64";  }
+  static std::string uint64_str() { return "uint64";  }
 
 public:
   DataType(const std::string&);
@@ -75,19 +77,20 @@ template<> inline std::string DataType::str<int>()    { return int32_str();  }
 template<> inline std::string DataType::str<long>()   { return int64_str();  }
 template<> inline std::string DataType::str<float>()  { return real32_str(); }
 template<> inline std::string DataType::str<double>() { return real64_str(); }
+template<> inline std::string DataType::str<unsigned long>() { return uint64_str(); }
 template<> inline std::string DataType::str(const int&)    { return int32_str();  }
 template<> inline std::string DataType::str(const long&)   { return int64_str();  }
+template<> inline std::string DataType::str(const unsigned long&)   { return uint64_str();  }
 template<> inline std::string DataType::str(const float&)  { return real32_str(); }
 template<> inline std::string DataType::str(const double&) { return real64_str(); }
 template<> inline DataType::kind_t DataType::kind<int>()    { return KIND_INT32;    }
 template<> inline DataType::kind_t DataType::kind<long>()   { return KIND_INT64;    }
-//TODO CHECK THIS
-template<> inline DataType::kind_t DataType::kind<unsigned long>()   { return KIND_INT64;    }
-
+template<> inline DataType::kind_t DataType::kind<unsigned long>()   { return KIND_UINT64;    }
 template<> inline DataType::kind_t DataType::kind<float>()  { return KIND_REAL32;   }
 template<> inline DataType::kind_t DataType::kind<double>() { return KIND_REAL64;   }
 template<> inline DataType::kind_t DataType::kind(const int&)    { return KIND_INT32;   }
 template<> inline DataType::kind_t DataType::kind(const long&)   { return KIND_INT64;   }
+template<> inline DataType::kind_t DataType::kind(const unsigned long&)   { return KIND_UINT64;   }
 template<> inline DataType::kind_t DataType::kind(const float&)  { return KIND_REAL32;   }
 template<> inline DataType::kind_t DataType::kind(const double&) { return KIND_REAL64;   }
 
@@ -95,6 +98,7 @@ inline DataType::kind_t DataType::str_to_kind(const std::string& datatype)
 {
   if      ( datatype == "int32"  ) return KIND_INT32;
   else if ( datatype == "int64"  ) return KIND_INT64;
+  else if ( datatype == "unt64"  ) return KIND_UINT64;
   else if ( datatype == "real32" ) return KIND_REAL32;
   else if ( datatype == "real64" ) return KIND_REAL64;
   else throw eckit::Exception("datatype "+datatype+" not recognised.",Here());
@@ -106,6 +110,7 @@ inline std::string DataType::kind_to_str(kind_t kind)
   {
     case KIND_INT32: return int32_str();
     case KIND_INT64: return int64_str();
+    case KIND_UINT64: return uint64_str();
     case KIND_REAL32: return real32_str();
     case KIND_REAL64: return real64_str();
     default:
@@ -120,6 +125,7 @@ inline bool DataType::kind_valid(kind_t kind)
   {
     case KIND_INT32:
     case KIND_INT64:
+    case KIND_UINT64:
     case KIND_REAL32:
     case KIND_REAL64:
       return true;

@@ -47,7 +47,9 @@ struct array_initializer {
       case DataType::KIND_INT64:
         array_initializer_impl<long, RANK, 0>::apply(orig, array_resized, idxs...);
         break;
-        ;
+      case DataType::KIND_UINT64:
+        array_initializer_impl<unsigned long, RANK, 0>::apply(orig, array_resized, idxs...);
+        break;
       default: {
         std::stringstream err;
         err << "data kind " << orig.datatype().kind() << " not recognised.";
@@ -103,7 +105,9 @@ struct array_initializer_partitioned_impl {
         case DataType::KIND_INT64:
           array_initializer_partitioned_val_impl<long, RANK, 0, PartDim>::apply(orig, dest, pos, offset);
           break;
-          ;
+        case DataType::KIND_UINT64:
+          array_initializer_partitioned_val_impl<unsigned long, RANK, 0, PartDim>::apply(orig, dest, pos, offset);
+          break;
         default: {
           std::stringstream err;
           err << "data kind " << orig.datatype().kind() << " not recognised.";
