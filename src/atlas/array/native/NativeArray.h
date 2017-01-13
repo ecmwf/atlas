@@ -20,15 +20,11 @@
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#include "atlas/array/gridtools/GridToolsArray.h"
-#else
-#define GT_FUNCTION
 //------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
-
+namespace native {
 
 template<typename DATA_TYPE>
 class ArrayT;
@@ -230,7 +226,6 @@ template <typename T> Array* Array::create(size_t size1, size_t size2, size_t si
 template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3, size_t size4)
 { return create(array::DataType::create<T>(),make_shape(size1,size2,size3,size4)); }
 
+} // namespace native
 } // namespace array
 } // namespace atlas
-
-#endif

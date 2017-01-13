@@ -9,7 +9,7 @@
  */
 #pragma once
 
-#include "atlas/array/GridToolsTraits.h"
+#include "atlas/array/gridtools/GridToolsTraits.h"
 
 //------------------------------------------------------------------------------------------------------
 

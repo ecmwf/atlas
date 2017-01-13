@@ -37,7 +37,7 @@
 #define atlas_IndexView_h
 
 #include "atlas/internals/atlas_config.h"
-#include "atlas/array/GridToolsTraits.h"
+#include "atlas/array/gridtools/GridToolsTraits.h"
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include <eckit/exception/Exceptions.h>

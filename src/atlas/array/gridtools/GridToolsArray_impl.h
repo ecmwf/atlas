@@ -10,7 +10,7 @@ namespace array {
 template <typename Value, unsigned int RANK, unsigned int Dim>
 struct array_initializer_impl {
 
-  static void apply(Array const& orig, Array& array_resized) {
+  static void apply(GTArray const& orig, GTArray& array_resized) {
       array_initializer_impl<Value, RANK, Dim>::apply(make_view<Value, RANK>(orig), make_view<Value, RANK>(array_resized));
   }
   template <typename ... DimIndex>
@@ -33,7 +33,7 @@ struct array_initializer_impl<Value, RANK, RANK> {
 template <unsigned int RANK>
 struct array_initializer {
   template <typename... DimIndex>
-  static void apply(Array const& orig, Array& array_resized, DimIndex... idxs) {
+  static void apply(GTArray const& orig, GTArray& array_resized, DimIndex... idxs) {
     switch (orig.datatype().kind()) {
       case DataType::KIND_REAL64:
         array_initializer_impl<double, RANK, 0>::apply(orig, array_resized, idxs...);
@@ -61,7 +61,7 @@ struct array_initializer {
 
 template<typename Value, unsigned int RANK, unsigned int Dim, unsigned int PartDim>
 struct array_initializer_partitioned_val_impl {
-  static void apply(Array const& orig, Array& dest, unsigned int pos, unsigned int offset) {
+  static void apply(GTArray const& orig, GTArray& dest, unsigned int pos, unsigned int offset) {
       auto view = make_view<Value, RANK>(orig);
       array_initializer_partitioned_val_impl<Value, RANK, Dim, PartDim>::apply(make_view<Value, RANK>(orig), make_view<Value, RANK>(dest), pos, offset);
   }
@@ -91,7 +91,7 @@ struct array_initializer_partitioned_val_impl<Value, RANK, RANK, PartDim> {
 
 template<unsigned int RANK, unsigned int PartDim>
 struct array_initializer_partitioned_impl {
-  static void apply(Array const& orig, Array& dest, unsigned int pos, unsigned int offset) {
+  static void apply( GTArray const& orig, GTArray& dest, unsigned int pos, unsigned int offset) {
       switch (orig.datatype().kind()) {
         case DataType::KIND_REAL64:
           array_initializer_partitioned_val_impl<double, RANK, 0, PartDim>::apply(orig, dest, pos, offset);
@@ -119,7 +119,7 @@ struct array_initializer_partitioned_impl {
 
 template<unsigned int PartDim>
 struct array_initializer_partitioned {
-  static void apply(Array const& orig, Array& dest, unsigned int pos, unsigned int offset) {
+  static void apply(GTArray const& orig, GTArray& dest, unsigned int pos, unsigned int offset) {
     switch (orig.rank()) {
       case 1:
         array_initializer_partitioned_impl<1, PartDim>::apply(orig, dest, pos, offset);
@@ -157,6 +157,10 @@ struct array_initializer_partitioned {
   }
 };
 
+#ifdef GTNS
+namespace gridtools {
+#endif
+
 inline void Array::insert(size_t idx1, size_t size1)
 {
     if(!data_store_->is_on_host()) {
@@ -176,8 +180,9 @@ inline void Array::insert(size_t idx1, size_t size1)
 
     spec_ = array_resized->spec();
     delete array_resized;
-
 }
-
-}
-}
+#ifdef GTNS
+} // namespace gridtools
+#endif
+} // namespace array
+} // namespace atlas

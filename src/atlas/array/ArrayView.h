@@ -52,7 +52,7 @@
 #include <cassert>
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
-#include "atlas/array/GridToolsTraits.h"
+#include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array/LocalView.h"
 #include "atlas/array/ArrayHelpers.h"
 #include "eckit/exception/Exceptions.h"
@@ -66,7 +66,7 @@ namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
-#include "atlas/array/ArrayView_iterator.h"
+#include "atlas/array/native/ArrayView_iterator.h"
 #include "atlas/array/MakeView_fwd.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ public:
 
 public:
 
-    ArrayView( const ArrayView& other ) : 
+    ArrayView( const ArrayView& other ) :
         gt_data_view_(other.gt_data_view_)
     {
       std::memcpy(shape_,other.shape_,sizeof(size_t)*RANK);
@@ -101,7 +101,7 @@ public:
     ArrayView(data_view_t data_view, const Array& array) :
         gt_data_view_(data_view)
     {
-      using seq = gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, RANK>::type>;
+      using seq = ::gridtools::apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, RANK>::type>;
 
         using value_t = typename data_view_t::data_store_t::data_t;
         constexpr static unsigned int ndims = data_view_t::data_store_t::storage_info_t::ndims;
@@ -109,7 +109,7 @@ public:
 
       auto stridest = seq::template apply<
           std::vector<size_t>,
-          get_stride_component<unsigned long, gridtools::static_uint<RANK> >::template get_component>(
+          get_stride_component<unsigned long, ::gridtools::static_uint<RANK> >::template get_component>(
           &(gt_host_view_.storage_info()));
       auto shapet = seq::template apply<std::vector<size_t>, get_shape_component>(&(gt_host_view_.storage_info()));
 
@@ -140,7 +140,7 @@ public:
 
     LocalView<DATA_TYPE,RANK-1> at(const size_t i) const {
       assert( i < shape_[0] );
-      return LocalView<DATA_TYPE,RANK-1>( 
+      return LocalView<DATA_TYPE,RANK-1>(
                 const_cast<DATA_TYPE*>(data())+strides_[0]*i,
                 shape_+1,
                 strides_+1 );
@@ -237,7 +237,7 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
-  
+
   void assign(const DATA_TYPE& value) {
      ASSERT( contiguous() );
      DATA_TYPE* raw_data = data();
@@ -321,7 +321,7 @@ public:
   ArrayStrides::value_type stride(size_t i) const;
   size_t rank() const;
   size_t size() const;
-  
+
   void assign(const DATA_TYPE& value) {
      ASSERT( contiguous() );
      DATA_TYPE* raw_data = data();
@@ -402,7 +402,7 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
-  
+
   void assign(const DATA_TYPE& value) {
      ASSERT( contiguous() );
      DATA_TYPE* raw_data = data();
@@ -482,7 +482,7 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
-  
+
   void assign(const DATA_TYPE& value) {
      ASSERT( contiguous() );
      DATA_TYPE* raw_data = data();
@@ -560,7 +560,7 @@ public:
   ArrayShape::value_type shape(size_t i) const;
   size_t rank() const;
   size_t size() const;
-  
+
   void assign(const DATA_TYPE& value) {
      ASSERT( contiguous() );
      DATA_TYPE* raw_data = data();
@@ -599,6 +599,6 @@ private:
 } // namespace array
 } // namespace atlas
 
-#include "atlas/array/ArrayView_impl.h"
+#include "atlas/array/native/ArrayView_impl.h"
 
 #endif

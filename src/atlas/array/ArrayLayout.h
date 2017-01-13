@@ -10,22 +10,15 @@
 
 #pragma once
 
-#include "atlas/array/ArrayShape.h"
-#include "atlas/array/ArrayStrides.h"
-#include "atlas/array/ArrayLayout.h"
-#include "atlas/array/ArrayIdx.h"
-#include "atlas/array/ArraySpec.h"
+#include <stddef.h>
+#include <vector>
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
 
-template<typename T> struct remove_const          { typedef T type; };
-template<typename T> struct remove_const<T const> { typedef T type; };
-
-template<typename T> struct add_const          { typedef const typename remove_const<T>::type type; };
-template<typename T> struct add_const<T const> { typedef const T type; };
+typedef std::vector<size_t> ArrayLayout;
 
 //------------------------------------------------------------------------------------------------------
 

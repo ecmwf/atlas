@@ -7,7 +7,7 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/array/StorageView.h"
 
-#include "atlas/array/GridToolsTraits.h"
+#include "atlas/array/gridtools/GridToolsTraits.h"
 //------------------------------------------------------------------------------
 
 namespace atlas {

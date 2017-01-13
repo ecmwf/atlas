@@ -3,6 +3,10 @@
 namespace atlas {
 namespace array {
 
+//#define GTNS gridtools::
+//#define GTArray gridtools::Array
+#define GTArray Array
+
 class Array;
 
 template<typename Value>

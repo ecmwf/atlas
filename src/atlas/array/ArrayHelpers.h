@@ -18,7 +18,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
-#include "atlas/array/GridToolsTraits.h"
+#include "atlas/array/gridtools/GridToolsTraits.h"
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 

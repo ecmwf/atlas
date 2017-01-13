@@ -9,14 +9,13 @@
  */
 
 #include <algorithm>
-#include <vector>
 #include "eckit/exception/Exceptions.h"
 #include "atlas/array/ArrayUtil.h"
 
 namespace atlas {
 namespace array {
 
-ArraySpec::ArraySpec(): 
+ArraySpec::ArraySpec():
     size_(0),
     rank_(0),
     contiguous_(true),

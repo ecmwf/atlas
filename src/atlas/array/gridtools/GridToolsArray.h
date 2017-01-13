@@ -20,9 +20,10 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
 
-#include "atlas/array/GridToolsTraits.h"
-#include "atlas/array/GridToolsDataStoreWrapper.h"
+#include "atlas/array/gridtools/GridToolsTraits.h"
+#include "atlas/array/gridtools/GridToolsDataStoreWrapper.h"
 #include "atlas/array/ArrayHelpers.h"
+#include "atlas/array/array_fwd.h"
 
 //------------------------------------------------------------------------------
 
@@ -38,6 +39,13 @@ struct array_initializer;
 template<unsigned int PartDim>
 struct array_initializer_partitioned;
 
+
+//------------------------------------------------------------------------------
+
+#ifdef GTNS
+namespace gridtools {
+#endif
+
 class Array : public eckit::Owned {
 public:
   static Array* create( array::DataType, const ArrayShape& );
@@ -49,7 +57,7 @@ private:
   template<typename Value>
   struct storage_creator {
       template<typename UInt, UInt ... Indices>
-      static Array* apply(const ArrayShape& shape, gridtools::gt_integer_sequence<UInt, Indices...> ) {
+      static Array* apply(const ArrayShape& shape, ::gridtools::gt_integer_sequence<UInt, Indices...> ) {
           return Array::create<Value>(shape[Indices]...);
       }
 
@@ -57,7 +65,7 @@ private:
 
   struct storage_resizer {
       template<typename UInt, UInt ... Indices>
-      static void apply(Array& array, const ArrayShape& shape, gridtools::gt_integer_sequence<UInt, Indices...> ) {
+      static void apply(Array& array, const ArrayShape& shape, ::gridtools::gt_integer_sequence<UInt, Indices...> ) {
           return array.resize(shape[Indices]...);
       }
   };
@@ -65,7 +73,7 @@ private:
 public:
 
   template <typename Value, typename... UInts,
-            typename = gridtools::all_integers<UInts...> >
+            typename = ::gridtools::all_integers<UInts...> >
   static Array* create(UInts... dims) {
       return create_with_layout<Value, typename atlas::array::default_layout_t<sizeof...(dims)>::type >(dims...);
   }
@@ -73,7 +81,7 @@ public:
   template <typename Value,
             typename Layout,
             typename... UInts,
-            typename = gridtools::all_integers<UInts...> >
+            typename = ::gridtools::all_integers<UInts...> >
   static Array* create_with_layout(UInts... dims) {
     auto gt_data_store_ptr = create_gt_storage<Value, Layout>(dims...);
 
@@ -92,7 +100,7 @@ public:
   }
 
   template <typename Value, template <class> class Storage, typename StorageInfo>
-  static Array* wrap_array(gridtools::data_store< Storage<Value>, StorageInfo> * ds, const ArraySpec& spec) {
+  static Array* wrap_array(::gridtools::data_store< Storage<Value>, StorageInfo> * ds, const ArraySpec& spec) {
     assert(ds);
     Array* array = new ArrayT<Value>(ds);
     array->spec_ = spec;
@@ -132,7 +140,7 @@ public:
     }
   }
 
-  template <typename T> static Array* wrap(T* data, const ArrayShape& shape) { 
+  template <typename T> static Array* wrap(T* data, const ArrayShape& shape) {
     return wrap(data,ArraySpec(shape));
   }
 
@@ -141,7 +149,7 @@ public:
   Array(){}
   Array(const ArraySpec& s) : spec_(s) {}
 
-  template<typename DataStore, typename = typename std::enable_if< gridtools::is_data_store<DataStore>::value > >
+  template<typename DataStore, typename = typename std::enable_if< ::gridtools::is_data_store<DataStore>::value > >
   Array(DataStore* ds) : data_store_( new DataStoreWrapper<DataStore>(ds)) {}
 
   std::unique_ptr< DataStoreInterface>& data_store() {
@@ -149,13 +157,13 @@ public:
 
   template<typename DataStore, typename ... Dims>
   void build_spec(DataStore* gt_data_store_ptr, Dims...dims) {
-      static_assert((gridtools::is_data_store<DataStore>::value), "Internal Error: passing a non GT data store");
+      static_assert((::gridtools::is_data_store<DataStore>::value), "Internal Error: passing a non GT data store");
 
       auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
       using Layout = typename DataStore::storage_info_t::Layout;
 
       using seq =
-          gridtools::apply_gt_integer_sequence<typename gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
+          ::gridtools::apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
 
       spec_ = ArraySpec(
         ArrayShape{(unsigned long)dims...},
@@ -199,7 +207,7 @@ public:
 
   void insert(size_t idx1, size_t size1);
 
-  template <typename... Coords, typename = gridtools::all_integers<Coords...> >
+  template <typename... Coords, typename = ::gridtools::all_integers<Coords...> >
   void resize(Coords... c) {
       if(sizeof...(c) != spec_.rank()){
         std::stringstream err; err << "trying to resize an array of rank " << spec_.rank() << " by dimensions with rank " <<
@@ -229,23 +237,23 @@ public:
     assert(shape.size() > 0);
     switch (shape.size()) {
       case 1:
-        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 1>());
+        return storage_resizer::apply(*this, shape, ::gridtools::make_gt_integer_sequence<unsigned int, 1>());
       case 2:
-        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 2>());
+        return storage_resizer::apply(*this, shape, ::gridtools::make_gt_integer_sequence<unsigned int, 2>());
       case 3:
-        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 3>());
+        return storage_resizer::apply(*this, shape, ::gridtools::make_gt_integer_sequence<unsigned int, 3>());
       case 4:
-        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 4>());
+        return storage_resizer::apply(*this, shape, ::gridtools::make_gt_integer_sequence<unsigned int, 4>());
       case 5:
-        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 5>());
+        return storage_resizer::apply(*this, shape, ::gridtools::make_gt_integer_sequence<unsigned int, 5>());
       case 6:
-        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 6>());
+        return storage_resizer::apply(*this, shape, ::gridtools::make_gt_integer_sequence<unsigned int, 6>());
       case 7:
-        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 7>());
+        return storage_resizer::apply(*this, shape, ::gridtools::make_gt_integer_sequence<unsigned int, 7>());
       case 8:
-        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 8>());
+        return storage_resizer::apply(*this, shape, ::gridtools::make_gt_integer_sequence<unsigned int, 8>());
       case 9:
-        return storage_resizer::apply(*this, shape, gridtools::make_gt_integer_sequence<unsigned int, 9>());
+        return storage_resizer::apply(*this, shape, ::gridtools::make_gt_integer_sequence<unsigned int, 9>());
       default: {
         std::stringstream err;
         err << "shape not recognized";
@@ -294,18 +302,22 @@ private: // methods
   ArraySpec spec_;
 };
 
+#ifdef GTNS
+} // namespace gridtools
+#endif
+
 //------------------------------------------------------------------------------
 
 template<typename DATA_TYPE>
-class ArrayT : public Array  {
+class ArrayT : public GTArray  {
 
 public:
 
-  template<typename DataStore, typename = typename std::enable_if<gridtools::is_data_store<DataStore>::value >::type >
+  template<typename DataStore, typename = typename std::enable_if<::gridtools::is_data_store<DataStore>::value >::type >
   ArrayT(DataStore* ds): owned_(true), Array(ds) {}
 
   template <typename... UInts,
-            typename = gridtools::all_integers<UInts...> >
+            typename = ::gridtools::all_integers<UInts...> >
   ArrayT(UInts... dims) :
     owned_(true)
   {
@@ -325,9 +337,9 @@ public:
     if( not spec.contiguous() )     NOTIMP;
     create_from_shape(spec.shape());
   }
-  
+
   template <typename... UInts,
-            typename = gridtools::all_integers<UInts...> >
+            typename = ::gridtools::all_integers<UInts...> >
   void create_from_variadic_args(UInts... dims)
   {
     auto gt_storage = create_gt_storage<DATA_TYPE,typename atlas::array::default_layout_t<sizeof...(dims)>::type>(dims...);
@@ -335,7 +347,7 @@ public:
     build_spec(gt_storage,dims...);
     data_store_ = std::unique_ptr< DataStoreInterface>(new DataStoreWrapper<data_store_t>(gt_storage));
   }
-  
+
   void create_from_shape(const ArrayShape& shape)
   {
     assert(shape.size() > 0);
@@ -387,4 +399,4 @@ private:
 } // namespace array
 } // namespace atlas
 
-#include "atlas/array/GridToolsArray_impl.h"
+#include "atlas/array/gridtools/GridToolsArray_impl.h"

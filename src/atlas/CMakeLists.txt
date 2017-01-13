@@ -252,15 +252,21 @@ interpolation/PointSet.cc
 )
 
 list( APPEND atlas_array_srcs
+array/array_fwd.h
 array/Array.h
 array/Array.cc
 array/ArrayHelpers.h
-array/GridToolsArray.h
-array/GridToolsArray_impl.h
 array/ArrayUtil.h
-array/ArrayUtil.cc
-array/ArrayView_iterator.h
-array/ArrayView_impl.h
+array/ArrayShape.h
+array/ArrayStrides.h
+array/ArrayLayout.h
+array/ArrayIdx.h
+array/ArraySpec.h
+array/ArraySpec.cc
+array/native/NativeArray.h
+array/native/NativeArray.cc
+array/native/ArrayView_iterator.h
+array/native/ArrayView_impl.h
 array/IndexView.h
 array/IndexView.cc
 array/LocalView.h
@@ -268,11 +274,13 @@ array/ArrayView.h
 array/ArrayView.cc
 array/StorageView.h
 array/DataType.h
-array/GridToolsDataStoreWrapper.h
-array/GridToolsTraits.h
 array/MakeView.h
 array/MakeView_fwd.h
 array/Vector.h
+array/gridtools/GridToolsArray.h
+array/gridtools/GridToolsArray_impl.h
+array/gridtools/GridToolsDataStoreWrapper.h
+array/gridtools/GridToolsTraits.h
 )
 
 list( APPEND atlas_util_srcs

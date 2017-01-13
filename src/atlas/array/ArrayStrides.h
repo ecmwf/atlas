@@ -10,22 +10,20 @@
 
 #pragma once
 
-#include "atlas/array/ArrayShape.h"
-#include "atlas/array/ArrayStrides.h"
-#include "atlas/array/ArrayLayout.h"
-#include "atlas/array/ArrayIdx.h"
-#include "atlas/array/ArraySpec.h"
+#include <stddef.h>
+#include <vector>
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
 
-template<typename T> struct remove_const          { typedef T type; };
-template<typename T> struct remove_const<T const> { typedef T type; };
+typedef std::vector<size_t> ArrayStrides;
 
-template<typename T> struct add_const          { typedef const typename remove_const<T>::type type; };
-template<typename T> struct add_const<T const> { typedef const T type; };
+inline ArrayStrides make_strides(size_t size1) { return std::vector<size_t>(1,size1); }
+inline ArrayStrides make_strides(size_t size1, size_t size2) { std::vector<size_t> v(2); v[0]=size1; v[1]=size2; return v; }
+inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3) { std::vector<size_t> v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
+inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3, size_t size4) { std::vector<size_t> v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
 
 //------------------------------------------------------------------------------------------------------
 
