@@ -244,12 +244,6 @@ endif()
 
 list( APPEND atlas_interpolation_srcs
 interpolation/Vector3D.h
-interpolation/context/Context.cc
-interpolation/context/Context.h
-interpolation/context/InputContext.cc
-interpolation/context/InputContext.h
-interpolation/context/OutputContext.cc
-interpolation/context/OutputContext.h
 interpolation/element/Quad3D.cc
 interpolation/element/Quad3D.h
 interpolation/element/Triag3D.cc
