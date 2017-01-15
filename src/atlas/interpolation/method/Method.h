@@ -56,6 +56,9 @@ public:
      */
     virtual void setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) = 0;
 
+    virtual void execute(const field::FieldSet& fieldsSource, field::FieldSet& fieldsTarget);
+    virtual void execute(const field::Field&    fieldSource,  field::Field&    fieldTarget);
+
     const Matrix& matrix() const { return matrix_; }
     Matrix&       matrix()       { return matrix_; }
 

@@ -12,10 +12,14 @@
 #include "atlas/interpolation/method/Method.h"
 
 #include <map>
-#include "eckit/thread/AutoLock.h"
-#include "eckit/thread/Once.h"
-#include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
+#include "eckit/linalg/Vector.h"
+#include "eckit/thread/AutoLock.h"
+#include "eckit/thread/Mutex.h"
+#include "eckit/thread/Once.h"
+#include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/runtime/Log.h"
 
 
 namespace atlas {
@@ -76,6 +80,40 @@ Method* MethodFactory::build(const std::string& name, const Method::Config& conf
     }
 
     return (*j).second->make(config);
+}
+
+
+void Method::execute(const field::FieldSet& fieldsSource, field::FieldSet& fieldsTarget) {
+    Log::debug() << "Method::execute()..." << std::endl;
+
+    const size_t N = fieldsSource.size();
+    ASSERT(N == fieldsTarget.size());
+
+    for (size_t i = 0; i < fieldsSource.size(); ++i) {
+        Log::debug() << "Method::execute() on field " << (i+1) << '/' << N << "..." << std::endl;
+
+        field::Field& src = const_cast< field::Field& >(fieldsSource[i]);
+        field::Field& tgt = const_cast< field::Field& >(fieldsTarget[i]);
+
+        eckit::linalg::Vector v_src(src.data<double>(), src.shape(0));
+        eckit::linalg::Vector v_tgt(tgt.data<double>(), tgt.shape(0));
+
+        eckit::linalg::LinearAlgebra::backend().spmv(matrix_, v_src, v_tgt);
+    }
+
+    Log::debug() << "Method::execute()..." << std::endl;
+}
+
+
+void Method::execute(const field::Field& fieldSource, field::Field& fieldTarget) {
+    Log::debug() << "Method::execute()..." << std::endl;
+
+    eckit::linalg::Vector v_src(const_cast< field::Field& >(fieldSource).data<double>(), fieldSource.shape(0));
+    eckit::linalg::Vector v_tgt(fieldTarget.data<double>(), fieldTarget.shape(0));
+
+    eckit::linalg::LinearAlgebra::backend().spmv(matrix_, v_src, v_tgt);
+
+    Log::debug() << "Method::execute()..." << std::endl;
 }
 
 
