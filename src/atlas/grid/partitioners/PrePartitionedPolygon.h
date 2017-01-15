@@ -9,8 +9,8 @@
  */
 
 
-#ifndef atlas_grid_partitioners_DummyPartitioner_h
-#define atlas_grid_partitioners_DummyPartitioner_h
+#ifndef atlas_grid_partitioners_PrePartitionedPolygon_h
+#define atlas_grid_partitioners_PrePartitionedPolygon_h
 
 #include "PartitionerFromPrePartitionedMesh.h"
 
@@ -20,17 +20,16 @@ namespace grid {
 namespace partitioners {
 
 
-class DummyPartitioner : public PartitionerFromPrePartitionedMesh {
+class PrePartitionedPolygon : public PartitionerFromPrePartitionedMesh {
 public:
 
-    DummyPartitioner(const Grid& grid) : PartitionerFromPrePartitionedMesh(grid) {}
-    DummyPartitioner(const Grid& grid, const size_t nb_partitions) : PartitionerFromPrePartitionedMesh(grid, nb_partitions) {}
+    PrePartitionedPolygon(const Grid& grid) : PartitionerFromPrePartitionedMesh(grid) {}
+    PrePartitionedPolygon(const Grid& grid, const size_t nb_partitions) : PartitionerFromPrePartitionedMesh(grid, nb_partitions) {}
 
     /**
      * @brief Create a GridDistribution, placing nodes in the same partitions as a
-     * given pre-partitioned mesh. The method is very simple and only a starting point,
-     * assigning a partition number (MPI rank) by checking every source mesh element,
-     * for every target grid node.
+     * given pre-partitioned mesh. The method reconstructs the partition edges polygon
+     * and tests every target grid node if it is internal to the polygon.
      * @param gridTarget grid to be distributed
      * @param meshSource mesh already partitioned
      * @return grid partitioner

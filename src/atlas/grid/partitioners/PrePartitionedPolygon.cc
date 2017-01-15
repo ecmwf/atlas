@@ -9,7 +9,7 @@
  */
 
 
-#include "PolygonPartitioner.h"
+#include "PrePartitionedPolygon.h"
 
 #include <set>
 #include <utility>
@@ -36,7 +36,7 @@ namespace partitioners {
 namespace {
 
 
-PartitionerBuilder<PolygonPartitioner> __builder("polygon");
+PartitionerBuilder<PrePartitionedPolygon> __builder("PrePartitionedPolygon");
 
 
 double dot_sign(
@@ -162,7 +162,7 @@ struct Poly : std::vector< size_t > {
 }  // (anonymous namespace)
 
 
-GridDistribution* PolygonPartitioner::distributionFromPrePartitionedMesh() const {
+GridDistribution* PrePartitionedPolygon::distributionFromPrePartitionedMesh() const {
     eckit::mpi::Comm& comm = eckit::mpi::comm();
     const int mpi_rank = int(comm.rank());
 

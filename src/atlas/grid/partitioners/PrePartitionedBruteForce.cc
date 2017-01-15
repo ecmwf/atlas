@@ -9,7 +9,7 @@
  */
 
 
-#include "DummyPartitioner.h"
+#include "PrePartitionedBruteForce.h"
 
 #include <vector>
 #include "eckit/geometry/Point2.h"
@@ -35,7 +35,7 @@ namespace partitioners {
 namespace {
 
 
-PartitionerBuilder<DummyPartitioner> __builder("dummy");
+PartitionerBuilder<PrePartitionedBruteForce> __builder("PrePartitionedBruteForce");
 
 
 double dot_sign(
@@ -93,7 +93,7 @@ typedef eckit::geometry::Point2 point_t;
 }  // (anonymous namespace)
 
 
-GridDistribution* DummyPartitioner::distributionFromPrePartitionedMesh() const {
+GridDistribution* PrePartitionedBruteForce::distributionFromPrePartitionedMesh() const {
     eckit::mpi::Comm& comm = eckit::mpi::comm();
     const int mpi_rank = int(comm.rank());
 

@@ -122,15 +122,15 @@ grid/lonlat/ShiftedLon.cc
 grid/lonlat/ShiftedLon.h
 grid/lonlat/ShiftedLonLat.cc
 grid/lonlat/ShiftedLonLat.h
-grid/partitioners/DummyPartitioner.cc
-grid/partitioners/DummyPartitioner.h
 grid/partitioners/EqualRegionsPartitioner.cc
 grid/partitioners/EqualRegionsPartitioner.h
 grid/partitioners/Partitioner.cc
 grid/partitioners/Partitioner.h
 grid/partitioners/PartitionerFromPrePartitionedMesh.h
-grid/partitioners/PolygonPartitioner.cc
-grid/partitioners/PolygonPartitioner.h
+grid/partitioners/PrePartitionedBruteForce.cc
+grid/partitioners/PrePartitionedBruteForce.h
+grid/partitioners/PrePartitionedPolygon.cc 
+grid/partitioners/PrePartitionedPolygon.h
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_grid_srcs
