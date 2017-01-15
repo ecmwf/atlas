@@ -16,6 +16,7 @@
 #include <vector>
 #include "eckit/config/Configuration.h"
 #include "eckit/geometry/Point3.h"
+#include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/SparseMatrix.h"
 #include "eckit/memory/NonCopyable.h"
 #include "eckit/memory/ScopedPtr.h"
@@ -23,6 +24,7 @@
 
 namespace atlas {
 namespace mesh { class Mesh; }
+namespace field { class Field; class FieldSet; }
 }
 
 
@@ -48,17 +50,22 @@ public:
     virtual ~Method() {}
 
     /**
-     * @brief Create an interpolant sparse matrix relating two (pre-partitioned) meshes
+     * @brief Setup the interpolant matrix relating two (pre-partitioned) meshes
      * @param meshSource mesh containing source elements
      * @param meshTarget mesh containing target points
      */
-    virtual void execute(Matrix& matrix, mesh::Mesh& meshSource, mesh::Mesh& meshTarget) const = 0;
+    virtual void setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) = 0;
+
+    const Matrix& matrix() const { return matrix_; }
+    Matrix&       matrix()       { return matrix_; }
 
 protected:
 
     static void normalise(Triplets& triplets);
 
     const Config& config_;
+
+    Matrix matrix_;
 
 };
 

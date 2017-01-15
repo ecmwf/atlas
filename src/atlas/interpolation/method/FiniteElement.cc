@@ -44,7 +44,7 @@ static const double parametricEpsilon = 1e-16;
 }  // (anonymous namespace)
 
 
-void FiniteElement::execute(Method::Matrix& matrix, mesh::Mesh& meshSource, mesh::Mesh& meshTarget) const {
+void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
     using namespace atlas;
 
     Log::info() << "FiniteElement::execute" << std::endl;
@@ -160,7 +160,7 @@ void FiniteElement::execute(Method::Matrix& matrix, mesh::Mesh& meshSource, mesh
 
     // fill sparse matrix and return
     Matrix A(out_npts, inp_npts, weights_triplets);
-    matrix.swap(A);
+    matrix_.swap(A);
 }
 
 

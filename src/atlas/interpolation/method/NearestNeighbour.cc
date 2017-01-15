@@ -36,7 +36,7 @@ MethodBuilder<NearestNeighbour> __builder("nearest-neighbour");
 }  // (anonymous namespace)
 
 
-void NearestNeighbour::execute(Method::Matrix& matrix, mesh::Mesh& meshSource, mesh::Mesh& meshTarget) const {
+void NearestNeighbour::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
     using namespace atlas;
     eckit::TraceTimer<LibAtlas> timer("Nearest::execute");
 
@@ -89,7 +89,7 @@ void NearestNeighbour::execute(Method::Matrix& matrix, mesh::Mesh& meshSource, m
 
     // fill sparse matrix and return
     Matrix A(out_npts, inp_npts, weights_triplets);
-    matrix.swap(A);
+    matrix_.swap(A);
 }
 
 

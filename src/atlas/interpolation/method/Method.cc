@@ -26,15 +26,15 @@ namespace method {
 namespace {
 
 
-typedef std::map<std::string, MethodFactory*> InterpolationFactoryMap_t;
-static InterpolationFactoryMap_t *m = 0;
+typedef std::map<std::string, MethodFactory*> MethodFactoryMap_t;
+static MethodFactoryMap_t *m = 0;
 static eckit::Mutex *local_mutex = 0;
 static pthread_once_t once = PTHREAD_ONCE_INIT;
 
 
 static void init() {
     local_mutex = new eckit::Mutex();
-    m = new InterpolationFactoryMap_t();
+    m = new MethodFactoryMap_t();
 }
 
 
@@ -47,7 +47,7 @@ MethodFactory::MethodFactory(const std::string& name):
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     if (m->find(name) != m->end()) {
-        throw eckit::SeriousBug("InterpolationFactory duplicate '" + name + "'");
+        throw eckit::SeriousBug("MethodFactory duplicate '" + name + "'");
     }
 
     ASSERT(m->find(name) == m->end());
@@ -65,14 +65,14 @@ Method* MethodFactory::build(const std::string& name, const Method::Config& conf
     pthread_once(&once, init);
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-    InterpolationFactoryMap_t::const_iterator j = m->find(name);
+    MethodFactoryMap_t::const_iterator j = m->find(name);
     if (j == m->end()) {
-        eckit::Log::error() << "InterpolationFactory '" << name << "' not found." << std::endl;
-        eckit::Log::error() << "InterpolationFactories are:" << std::endl;
+        eckit::Log::error() << "MethodFactory '" << name << "' not found." << std::endl;
+        eckit::Log::error() << "MethodFactories are:" << std::endl;
         for (j = m->begin() ; j != m->end() ; ++j) {
             eckit::Log::error() << '\t' << (*j).first << std::endl;
         }
-        throw eckit::SeriousBug("InterpolationFactory '" + name + "' not found.");
+        throw eckit::SeriousBug("MethodFactory '" + name + "' not found.");
     }
 
     return (*j).second->make(config);

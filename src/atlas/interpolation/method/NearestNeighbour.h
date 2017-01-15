@@ -38,7 +38,7 @@ public:
      * @param meshSource mesh containing source elements
      * @param meshTarget mesh containing target points
      */
-    void execute(Matrix& matrix, mesh::Mesh& meshSource, mesh::Mesh& meshTarget) const;
+    void setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget);
 
 };
 
