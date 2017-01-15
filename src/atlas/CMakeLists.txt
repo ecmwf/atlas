@@ -128,7 +128,6 @@ grid/partitioners/EqualRegionsPartitioner.cc
 grid/partitioners/EqualRegionsPartitioner.h
 grid/partitioners/Partitioner.cc
 grid/partitioners/Partitioner.h
-grid/partitioners/PartitionerFromPrePartitionedMesh.cc
 grid/partitioners/PartitionerFromPrePartitionedMesh.h
 grid/partitioners/PolygonPartitioner.cc
 grid/partitioners/PolygonPartitioner.h

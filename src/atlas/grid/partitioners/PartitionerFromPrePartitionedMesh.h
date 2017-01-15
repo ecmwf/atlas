@@ -65,8 +65,6 @@ public:
      */
     virtual GridDistribution* distributionFromPrePartitionedMesh() const = 0;
 
-    void dump();
-
     void partition(int part[]) const {
         // FIXME don't understand if this is needed!
         NOTIMP;
