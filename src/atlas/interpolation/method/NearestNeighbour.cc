@@ -38,7 +38,8 @@ MethodBuilder<NearestNeighbour> __builder("nearest-neighbour");
 
 void NearestNeighbour::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
     using namespace atlas;
-    eckit::TraceTimer<LibAtlas> timer("Nearest::execute");
+    eckit::TraceTimer<LibAtlas> tim("atlas::interpolation::method::NearestNeighbour::setup()");
+
 
     // generate 3D point coordinates
     mesh::actions::BuildXYZField("xyz")(meshSource);
@@ -69,22 +70,24 @@ void NearestNeighbour::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
     // fill the sparse matrix
     std::vector< Triplet > weights_triplets;
     weights_triplets.reserve(out_npts);
+    {
+        eckit::Timer timer;
+        for (size_t ip = 0; ip < out_npts; ++ip) {
 
-    for (size_t ip = 0; ip < out_npts; ++ip) {
+            if (ip && (ip % 1000 == 0)) {
+                double rate = ip / timer.elapsed();
+                Log::debug() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
+            }
 
-        if (ip && (ip % 1000 == 0)) {
-            double rate = ip / timer.elapsed();
-            Log::info() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
+            // find the closest input point to the output point
+            PointIndex3::Point p(ocoords[ip].data());
+            PointIndex3::NodeInfo nn = pTree->nearestNeighbour(p);
+            size_t jp = nn.payload();
+
+            // insert the weights into the interpolant matrix
+            ASSERT(jp < inp_npts);
+            weights_triplets.push_back(Triplet(ip, jp, 1));
         }
-
-        // find the closest input point to the output point
-        PointIndex3::Point p(ocoords[ip].data());
-        PointIndex3::NodeInfo nn = pTree->nearestNeighbour(p);
-        size_t jp = nn.payload();
-
-        // insert the weights into the interpolant matrix
-        ASSERT(jp < inp_npts);
-        weights_triplets.push_back(Triplet(ip, jp, 1));
     }
 
     // fill sparse matrix and return

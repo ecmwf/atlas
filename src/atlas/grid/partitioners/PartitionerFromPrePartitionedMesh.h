@@ -54,6 +54,7 @@ public:
      * @param includesSouthPole
      */
     void setup(const mesh::Mesh::Ptr prePartitionedMesh, const Domain& prePartitionedDomain=Domain::makeGlobal()) {
+        ASSERT(prePartitionedMesh);
         prePartitionedMesh_ = prePartitionedMesh;
         prePartitionedDomain_ = prePartitionedDomain;
     }

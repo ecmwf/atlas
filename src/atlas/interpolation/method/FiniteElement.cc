@@ -46,8 +46,8 @@ static const double parametricEpsilon = 1e-16;
 
 void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
     using namespace atlas;
+    eckit::TraceTimer<LibAtlas> tim("atlas::interpolation::method::FiniteElement::setup()");
 
-    Log::info() << "FiniteElement::execute" << std::endl;
 
     // generate 3D point coordinates
     mesh::actions::BuildXYZField("xyz")(meshSource);
@@ -78,8 +78,6 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
     const double maxFractionElemsToTry = 0.2;
 
 
-
-
     // weights -- one per vertex of element, triangles (3) or quads (4)
 
     std::vector< eckit::linalg::Triplet > weights_triplets;  // structure to fill-in sparse matrix
@@ -102,7 +100,7 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
             if (ip && (ip % 1000 == 0)) {
                 double rate = ip / timerProj.elapsed();
-                Log::info() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
+                Log::debug() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
             }
 
             Point p ( ocoords[ip].data() ); // lookup point
@@ -138,8 +136,8 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
         }
     }
 
-    Log::info() << "Projected " << eckit::Plural(out_npts, "point") << std::endl;
-    Log::info() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
+    Log::debug() << "Projected " << eckit::Plural(out_npts, "point") << std::endl;
+    Log::debug() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
 
 
 

@@ -14,11 +14,13 @@
 #include <map>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/linalg/Vector.h"
+#include "eckit/log/Timer.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/thread/Once.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
 
 
@@ -84,7 +86,7 @@ Method* MethodFactory::build(const std::string& name, const Method::Config& conf
 
 
 void Method::execute(const field::FieldSet& fieldsSource, field::FieldSet& fieldsTarget) {
-    Log::debug() << "Method::execute()..." << std::endl;
+    eckit::TraceTimer<LibAtlas> tim("atlas::interpolation::method::Method::execute()");
 
     const size_t N = fieldsSource.size();
     ASSERT(N == fieldsTarget.size());
@@ -95,25 +97,23 @@ void Method::execute(const field::FieldSet& fieldsSource, field::FieldSet& field
         field::Field& src = const_cast< field::Field& >(fieldsSource[i]);
         field::Field& tgt = const_cast< field::Field& >(fieldsTarget[i]);
 
-        eckit::linalg::Vector v_src(src.data<double>(), src.shape(0));
-        eckit::linalg::Vector v_tgt(tgt.data<double>(), tgt.shape(0));
+        eckit::linalg::Vector
+                v_src(src.data<double>(), src.shape(0)),
+                v_tgt(tgt.data<double>(), tgt.shape(0));
 
         eckit::linalg::LinearAlgebra::backend().spmv(matrix_, v_src, v_tgt);
     }
-
-    Log::debug() << "Method::execute()..." << std::endl;
 }
 
 
 void Method::execute(const field::Field& fieldSource, field::Field& fieldTarget) {
-    Log::debug() << "Method::execute()..." << std::endl;
+    eckit::TraceTimer<LibAtlas> tim("atlas::interpolation::method::Method::execute()");
 
-    eckit::linalg::Vector v_src(const_cast< field::Field& >(fieldSource).data<double>(), fieldSource.shape(0));
-    eckit::linalg::Vector v_tgt(fieldTarget.data<double>(), fieldTarget.shape(0));
+    eckit::linalg::Vector
+            v_src(const_cast< field::Field& >(fieldSource).data<double>(), fieldSource.shape(0)),
+            v_tgt(fieldTarget.data<double>(), fieldTarget.shape(0));
 
     eckit::linalg::LinearAlgebra::backend().spmv(matrix_, v_src, v_tgt);
-
-    Log::debug() << "Method::execute()..." << std::endl;
 }
 
 
