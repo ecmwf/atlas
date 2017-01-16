@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(test_spec) {
 }
 
 BOOST_AUTO_TEST_CASE(test_spec_layout) {
-  Array* ds = Array::create_with_layout<double, gridtools::layout_map<0, 1, 2> >(4, 5, 6);
+  Array* ds = Array::create<double>(make_shape(4,5,6), make_layout(0,1,2));
   BOOST_CHECK_EQUAL(ds->spec().rank(), 3);
   BOOST_CHECK_EQUAL(ds->spec().size(), 4 * 5 * 6);
   BOOST_CHECK_EQUAL(ds->spec().shape()[0], 4);
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(test_spec_layout) {
 }
 
 BOOST_AUTO_TEST_CASE(test_spec_layout_rev) {
-  Array* ds = Array::create_with_layout<double, gridtools::layout_map<2, 1, 0> >(4, 5, 6);
+  Array* ds = Array::create<double>(make_shape(4,5,6),make_layout(2,1,0));
   BOOST_CHECK_EQUAL(ds->spec().rank(), 3);
   BOOST_CHECK_EQUAL(ds->spec().size(), 4 * 5 * 6);
   BOOST_CHECK_EQUAL(ds->spec().shape()[0], 4);
@@ -175,6 +175,9 @@ BOOST_AUTO_TEST_CASE(test_spec_layout_rev) {
   BOOST_CHECK_EQUAL(ds->spec().layout()[2], 0);
 
   delete ds;
+
+
+  BOOST_CHECK_THROW( Array::create<double>(make_shape(4,5,6),make_layout(2,0,1)), eckit::BadParameter );
 }
 
 BOOST_AUTO_TEST_CASE(test_resize_throw) {

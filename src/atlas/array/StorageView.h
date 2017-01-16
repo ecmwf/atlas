@@ -9,7 +9,10 @@
  */
 #pragma once
 
+#include "atlas/internals/atlas_defines.h"
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "atlas/array/gridtools/GridToolsTraits.h"
+#endif
 
 //------------------------------------------------------------------------------------------------------
 

@@ -43,6 +43,7 @@
 #include <cstddef>
 #include <cstring>
 #include <cassert>
+#include <type_traits>
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
 

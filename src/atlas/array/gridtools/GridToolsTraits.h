@@ -1,31 +1,37 @@
-#ifndef atlas_GridToolsTraits_h
-#define atlas_GridToolsTraits_h
+#pragma once
 
 #include "atlas/internals/atlas_defines.h"
-
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "storage-facility.hpp"
-//------------------------------------------------------------------------------
+
 
 namespace atlas {
 namespace array {
+namespace gridtools {
 
-#ifdef ENABLE_GPU
-#define BACKEND gridtools::enumtype::Cuda
+//------------------------------------------------------------------------------
+
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+using storage_traits = ::gridtools::storage_traits< ::gridtools::enumtype::Cuda >;
+#elif ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
+using storage_traits = ::gridtools::storage_traits< ::gridtools::enumtype::Host >;
 #else
-#define BACKEND gridtools::enumtype::Host
+#error ATLAS_GRIDTOOLS_STORAGE_BACKEND_<HOST,CUDA> not set
 #endif
+
+//------------------------------------------------------------------------------
+
+} // namespace gridtools
+
+//------------------------------------------------------------------------------
 
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
-using data_view_tt = gridtools::data_view<
-    gridtools::storage_traits<BACKEND>::data_store_t<
-        Value,
-        gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> >,
-        ReadOnly>;
+using data_view_tt = ::gridtools::data_view<
+        gridtools::storage_traits::data_store_t<
+          Value,
+          gridtools::storage_traits::storage_info_t<0, NDims> >,
+          ReadOnly>;
 
-}
-}
-#endif
+//------------------------------------------------------------------------------
 
-#endif
-
+} // namespace array
+} // namespace atlas

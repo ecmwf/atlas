@@ -20,8 +20,6 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -73,18 +71,18 @@ struct default_layout_t {
     struct get_layout;
 
     template<typename UInt, UInt ... Indices>
-    struct get_layout<gridtools::gt_integer_sequence<UInt, Indices...> >
+    struct get_layout<::gridtools::gt_integer_sequence<UInt, Indices...> >
     {
-        using type = gridtools::layout_map<Indices...>;
+        using type = ::gridtools::layout_map<Indices...>;
     };
 
-    using type = typename get_layout< typename gridtools::make_gt_integer_sequence<unsigned int, NDims>::type >::type;
+    using type = typename get_layout< typename ::gridtools::make_gt_integer_sequence<unsigned int, NDims>::type >::type;
 };
 
 
   template <typename Value, typename LayoutMap>
   struct get_layout_map_component {
-    // TODO: static_assert( gridtools::is_layout_map<LayoutMap>(), "Error: not a layout_map" );
+    // TODO: static_assert( ::gridtools::is_layout_map<LayoutMap>(), "Error: not a layout_map" );
     template <int Idx>
     struct get_component {
       GT_FUNCTION
@@ -105,7 +103,7 @@ struct default_layout_t {
 
       template <typename StorageInfoPtr>
       GT_FUNCTION constexpr static Value apply(StorageInfoPtr a) {
-        static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value),
+        static_assert((::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value),
                       "Error: not a storage_info");
         return a->template stride<Idx>();
       }
@@ -120,7 +118,7 @@ struct default_layout_t {
 
       template < typename StorageInfoPtr>
       GT_FUNCTION constexpr static size_t apply(StorageInfoPtr a) {
-          static_assert((gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type >::value ), "Error: not a storage_info");
+          static_assert((::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type >::value ), "Error: not a storage_info");
           return a->template dim<Idx>();
       }
   };
@@ -128,16 +126,16 @@ struct default_layout_t {
   //indirection around C++11 sizeof... since it is buggy for nvcc and cray
   template<typename ...T>
   struct get_pack_size {
-      using type = gridtools::static_uint< sizeof...(T) >;
+      using type = ::gridtools::static_uint< sizeof...(T) >;
   };
 
   template <typename Value, typename LayoutMap, typename... UInts>
-  static gridtools::storage_traits<BACKEND>::data_store_t<
+  static gridtools::storage_traits::data_store_t<
       Value,
-      gridtools::storage_traits<BACKEND>::storage_info_t<
+      gridtools::storage_traits::storage_info_t<
           0,
           get_pack_size<UInts...>::type::value,
-          typename gridtools::zero_halo<get_pack_size<UInts...>::type::value>::type,
+          typename ::gridtools::zero_halo<get_pack_size<UInts...>::type::value>::type,
           LayoutMap
       >
    >*
@@ -145,13 +143,13 @@ struct default_layout_t {
       static_assert((sizeof...(dims) > 0), "Error: can not create storages without any dimension");
 
       constexpr static unsigned int ndims = get_pack_size<UInts...>::type::value;
-      typedef gridtools::storage_traits<BACKEND>::storage_info_t<
+      typedef gridtools::storage_traits::storage_info_t<
           0,
           ndims,
-          typename gridtools::zero_halo<ndims>::type,
+          typename ::gridtools::zero_halo<ndims>::type,
           LayoutMap
       > storage_info_ty;
-      typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
+      typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
       storage_info_ty si(dims...);
       data_store_t* ds = new data_store_t(si);
@@ -160,27 +158,50 @@ struct default_layout_t {
   }
 
   template <typename Value, unsigned int NDims>
-  static gridtools::storage_traits<BACKEND>::data_store_t<
-      Value, gridtools::storage_traits<BACKEND>::storage_info_t<
+  static gridtools::storage_traits::data_store_t<
+      Value, gridtools::storage_traits::storage_info_t<
                  0, NDims,
-                 typename gridtools::zero_halo<NDims>::type,
+                 typename ::gridtools::zero_halo<NDims>::type,
                  typename atlas::array::default_layout_t<NDims>::type > >*
   wrap_gt_storage(
       Value* data,
       std::array<unsigned int, NDims>&& shape, std::array<unsigned int, NDims>&& strides)
   {
       static_assert((NDims > 0), "Error: can not create storages without any dimension");
-      typedef gridtools::storage_traits<BACKEND>::storage_info_t<
-          0, NDims, typename gridtools::zero_halo<NDims>::type,
+      typedef gridtools::storage_traits::storage_info_t<
+          0, NDims, typename ::gridtools::zero_halo<NDims>::type,
           typename atlas::array::default_layout_t<NDims>::type> storage_info_ty;
-      typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
+      typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
       storage_info_ty si(shape, strides);
       data_store_t* ds = new data_store_t(si, data);
       return ds;
   }
 
+
+  template<typename DataStore, typename ... Dims>
+  ArraySpec make_spec(DataStore* gt_data_store_ptr, Dims...dims) {
+      static_assert((::gridtools::is_data_store<DataStore>::value), "Internal Error: passing a non GT data store");
+
+      auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
+      using Layout = typename DataStore::storage_info_t::Layout;
+
+      using seq =
+          ::gridtools::apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
+
+      return ArraySpec(
+        ArrayShape{(unsigned long)dims...},
+          seq::template apply<
+                        std::vector<unsigned long>,
+                        get_stride_component<unsigned long, typename get_pack_size<Dims...>::type>::template get_component>(
+                        storage_info_ptr),
+          seq::template apply<
+                        std::vector<unsigned long>,
+                        get_layout_map_component<unsigned long, Layout>::template get_component>()
+        );
+  }
+
+
+
 } // namespace array
 } // namespace atlas
-
-#endif

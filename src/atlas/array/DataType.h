@@ -8,10 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-
-
-#ifndef atlas_DataType_h
-#define atlas_DataType_h
+#pragma once
 
 #include <string>
 #include <sstream>
@@ -183,5 +180,3 @@ inline DataType DataType::create() { return DataType(DataType::kind<DATATYPE>())
 
 } // namespace array
 } // namespace atlas
-
-#endif

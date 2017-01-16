@@ -21,7 +21,91 @@
 #include "atlas/array/DataType.h"
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
+namespace atlas {
+namespace array {
+
+class ArrayBase : public eckit::Owned
+{
+public:
+
+  static ArrayBase* create( array::DataType, const ArrayShape& );
+
+public:
+
+  ArrayBase() {}
+
+  ArrayBase(const ArraySpec& spec) : spec_(spec) {}
+
+  size_t bytes() const { return sizeof_data() * size();}
+
+  size_t size() const { return spec_.size(); }
+
+  size_t rank() const { return spec_.rank(); }
+
+  size_t stride(size_t i) const { return spec_.strides()[i]; }
+
+  size_t shape(size_t i) const { return spec_.shape()[i]; }
+
+  const ArrayStrides& strides() const { return spec_.strides(); }
+
+  const ArrayShape& shape() const { return spec_.shape(); }
+
+  const std::vector<int>& shapef() const { return spec_.shapef(); }
+
+  const std::vector<int>& stridesf() const { return spec_.stridesf(); }
+
+  bool contiguous() const { return spec_.contiguous(); }
+
+  bool default_layout() const { return spec_.default_layout(); }
+
+  virtual array::DataType datatype() const = 0;
+
+  virtual size_t sizeof_data() const = 0;
+
+  virtual void resize(const ArrayShape& shape) = 0;
+  virtual void resize(size_t dim0) = 0;
+  virtual void resize(size_t dim0, size_t dim1) = 0;
+  virtual void resize(size_t dim0, size_t dim1, size_t dim2) = 0;
+  virtual void resize(size_t dim0, size_t dim1, size_t dim2, size_t dim3) = 0;
+  virtual void resize(size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4) = 0;
+
+  virtual void insert(size_t idx1, size_t size1) = 0;
+
+  virtual void dump(std::ostream& os) const = 0;
+
+  virtual void* storage() { return data_store_->void_data_store();}
+
+  virtual const void* storage() const { return data_store_->void_data_store();}
+
+  void clone_to_device() const { data_store_->clone_to_device(); }
+
+  void clone_from_device() const { data_store_->clone_from_device(); }
+
+  bool valid() const { return data_store_->valid(); }
+
+  void sync() const { data_store_->sync(); }
+
+  bool is_on_host() const { return data_store_->is_on_host(); }
+
+  bool is_on_device() const { return data_store_->is_on_device(); }
+
+  void reactivate_device_write_views() const { data_store_->reactivate_device_write_views(); }
+
+  void reactivate_host_write_views() const { data_store_->reactivate_host_write_views(); }
+
+  ArraySpec& spec() {return spec_;}
+
+public:
+  ArraySpec spec_;
+  std::unique_ptr<ArrayDataStore> data_store_;
+};
+
+} // namespace array
+} // namespace atlas
+
 #include "atlas/array/gridtools/GridToolsArray.h"
+
 #else
 #define GT_FUNCTION
 //------------------------------------------------------------------------------

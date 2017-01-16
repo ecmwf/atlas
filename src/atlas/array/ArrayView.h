@@ -44,7 +44,8 @@
 ///     ArrayView<int,2> arrayview( Array );
 ///
 /// @author Willem Deconinck
-#ifndef atlas_ArrayView_h
+
+#pragma once
 #define atlas_ArrayView_h
 
 #include <cstddef>
@@ -52,10 +53,13 @@
 #include <cassert>
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
-#include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array/LocalView.h"
-#include "atlas/array/ArrayHelpers.h"
 #include "eckit/exception/Exceptions.h"
+
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#include "atlas/array/gridtools/GridToolsTraits.h"
+#include "atlas/array/gridtools/GridToolsArrayHelpers.h"
+#endif
 
 namespace atlas {
 namespace array {
@@ -600,5 +604,3 @@ private:
 } // namespace atlas
 
 #include "atlas/array/native/ArrayView_impl.h"
-
-#endif

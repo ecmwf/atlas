@@ -7,7 +7,10 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/array/StorageView.h"
 
+#include "atlas/internals/atlas_defines.h"
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "atlas/array/gridtools/GridToolsTraits.h"
+#endif
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -15,7 +18,7 @@ namespace array {
 
 namespace impl {
     template<typename Value, unsigned NDims>
-    inline static void check_metadata(const Array& array)
+    inline static void check_metadata(const ArrayBase& array)
     {
         if(array.rank() != NDims ) {
             std::stringstream err;
@@ -36,12 +39,12 @@ template <typename Value, unsigned int NDims, bool ReadOnly>
 inline static data_view_tt<Value, NDims>
 make_gt_host_view(const Array& array) {
 
-  typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> storage_info_ty;
-  typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
+  typedef gridtools::storage_traits::storage_info_t<0, NDims> storage_info_ty;
+  typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
   data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
-  return gridtools::make_host_view(*ds);
+  return ::gridtools::make_host_view(*ds);
 }
 
 
@@ -55,22 +58,22 @@ make_host_view(const Array& array) {
 template <typename Value>
 inline StorageView<Value>
 make_host_storageview(const Array& array) {
-  typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, 1> storage_info_ty;
-  typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
+  typedef gridtools::storage_traits::storage_info_t<0, 1> storage_info_ty;
+  typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
   data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
-  return StorageView<Value>(gridtools::make_host_view(*ds),array.size(),array.contiguous());
+  return StorageView<Value>(::gridtools::make_host_view(*ds),array.size(),array.contiguous());
 }
 
-#ifdef ENABLE_GPU
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
 inline static data_view_tt<Value, NDims>
 make_gt_device_view(const Array& array) {
-  typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> storage_info_ty;
-  typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
+  typedef gridtools::storage_traits::storage_info_t<0, NDims> storage_info_ty;
+  typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
   data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
-  return gridtools::make_device_view(*ds);
+  return ::gridtools::make_device_view(*ds);
 }
 
 template <typename Value, unsigned int NDims, bool ReadOnly>
@@ -106,12 +109,12 @@ make_device_storageview(const Array& array) {
 template <typename Value, unsigned int NDims, bool ReadOnly>
 inline IndexView<Value, NDims>
 make_host_indexview(const Array& array) {
-  typedef gridtools::storage_traits<BACKEND>::storage_info_t<0, NDims> storage_info_ty;
-  typedef gridtools::storage_traits<BACKEND>::data_store_t<Value, storage_info_ty> data_store_t;
+  typedef gridtools::storage_traits::storage_info_t<0, NDims> storage_info_ty;
+  typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
   data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
-  return IndexView<Value, NDims>(gridtools::make_host_view(*ds));
+  return IndexView<Value, NDims>(::gridtools::make_host_view(*ds));
 }
 
 
@@ -173,6 +176,19 @@ inline StorageView<Value>
 make_storageview(const Array& array) {
     return make_host_storageview<Value>(array);
 }
+
+
+
+
+
+template <typename Value, unsigned int NDims, bool ReadOnly>
+inline ArrayView<Value, NDims>
+make_view(const ArrayBase& array) {
+    impl::check_metadata<Value, NDims>(array);
+
+    return make_host_view<Value, NDims, ReadOnly>(dynamic_cast<const Array&>(array));
+}
+
 
 
 }

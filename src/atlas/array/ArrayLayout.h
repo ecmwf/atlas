@@ -20,6 +20,11 @@ namespace array {
 
 typedef std::vector<size_t> ArrayLayout;
 
+inline ArrayStrides make_layout(size_t size1) { return std::vector<size_t>(1,size1); }
+inline ArrayStrides make_layout(size_t size1, size_t size2) { std::vector<size_t> v(2); v[0]=size1; v[1]=size2; return v; }
+inline ArrayStrides make_layout(size_t size1, size_t size2, size_t size3) { std::vector<size_t> v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
+inline ArrayStrides make_layout(size_t size1, size_t size2, size_t size3, size_t size4) { std::vector<size_t> v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
+
 //------------------------------------------------------------------------------------------------------
 
 } // namespace array

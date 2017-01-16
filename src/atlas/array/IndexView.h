@@ -37,7 +37,11 @@
 #define atlas_IndexView_h
 
 #include "atlas/internals/atlas_config.h"
+
+#include "atlas/internals/atlas_defines.h"
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "atlas/array/gridtools/GridToolsTraits.h"
+#endif
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include <eckit/exception/Exceptions.h>
@@ -145,7 +149,7 @@ public:
 
 public:
 
-    IndexView(data_view_t data_view) : gt_data_view_(data_view) 
+    IndexView(data_view_t data_view) : gt_data_view_(data_view)
     {
       size_ = gt_data_view_.storage_info().size();
     }

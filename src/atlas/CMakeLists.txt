@@ -255,7 +255,6 @@ list( APPEND atlas_array_srcs
 array/array_fwd.h
 array/Array.h
 array/Array.cc
-array/ArrayHelpers.h
 array/ArrayUtil.h
 array/ArrayShape.h
 array/ArrayStrides.h
@@ -265,6 +264,7 @@ array/ArraySpec.h
 array/ArraySpec.cc
 array/native/NativeArray.h
 array/native/NativeArray.cc
+array/native/NativeDataStore.h
 array/native/ArrayView_iterator.h
 array/native/ArrayView_impl.h
 array/IndexView.h
@@ -278,9 +278,13 @@ array/MakeView.h
 array/MakeView_fwd.h
 array/Vector.h
 array/gridtools/GridToolsArray.h
-array/gridtools/GridToolsArray_impl.h
-array/gridtools/GridToolsDataStoreWrapper.h
+array/gridtools/GridToolsArray.cc
+array/gridtools/GridToolsArrayInsert.h
+array/gridtools/GridToolsDataStore.h
 array/gridtools/GridToolsTraits.h
+array/gridtools/GridToolsArrayHelpers.h
+array/gridtools/GridToolsArrayInitializer.h
+array/gridtools/GridToolsArrayResizer.h
 )
 
 list( APPEND atlas_util_srcs
