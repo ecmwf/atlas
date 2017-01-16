@@ -19,10 +19,10 @@ namespace gridtools {
 
 //------------------------------------------------------------------------------
 
-class GridToolsArrayInsert {
+class ArrayBackendInsert {
 
 public:
-  GridToolsArrayInsert( ArrayBase& array ) : array_(array) {}
+  ArrayBackendInsert( Array& array ) : array_(array) {}
 
   void insert(size_t idx1, size_t size1)
   {
@@ -36,7 +36,7 @@ public:
       }
       nshape[0] += size1;
 
-      ArrayBase* array_resized = ArrayBase::create(array_.datatype(), nshape);
+      Array* array_resized = Array::create(array_.datatype(), nshape);
 
       array_initializer_partitioned<0>::apply( array_, *array_resized, idx1, size1);
       array_.data_store_.swap(array_resized->data_store_);
@@ -47,7 +47,7 @@ public:
 
 private:
 
-  ArrayBase& array_;
+  Array& array_;
 };
 
 //------------------------------------------------------------------------------

@@ -29,9 +29,9 @@ namespace gridtools {
 
 template <int RANK> using UintSequence = ::gridtools::make_gt_integer_sequence<unsigned int, RANK>;
 
-class GridToolsArrayResizer {
+class ArrayBackendResize {
 public:
-  GridToolsArrayResizer( ArrayBase& array ) : array_(array) {}
+  ArrayBackendResize( Array& array ) : array_(array) {}
 
   template <typename... Coords, typename = ::gridtools::all_integers<Coords...> >
   void resize(Coords... c) {
@@ -48,7 +48,7 @@ public:
         array_.data_store_->clone_from_device();
     }
 
-    ArrayBase* array_resized = ArrayBase::create(array_.datatype(), ArrayShape{(unsigned int)c...});
+    Array* array_resized = Array::create(array_.datatype(), ArrayShape{(unsigned int)c...});
 
     array_initializer<sizeof...(c)>::apply( array_, *array_resized);
     array_.data_store_.swap(array_resized->data_store_);
@@ -85,7 +85,7 @@ private:
     return resize(shape[Indices]...);
   }
 
-  ArrayBase& array_;
+  Array& array_;
 };
 
 //------------------------------------------------------------------------------

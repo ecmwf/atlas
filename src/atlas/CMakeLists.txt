@@ -277,14 +277,13 @@ array/DataType.h
 array/MakeView.h
 array/MakeView_fwd.h
 array/Vector.h
-array/gridtools/GridToolsArray.h
 array/gridtools/GridToolsArray.cc
 array/gridtools/GridToolsArrayInsert.h
 array/gridtools/GridToolsDataStore.h
 array/gridtools/GridToolsTraits.h
 array/gridtools/GridToolsArrayHelpers.h
 array/gridtools/GridToolsArrayInitializer.h
-array/gridtools/GridToolsArrayResizer.h
+array/gridtools/GridToolsArrayResize.h
 )
 
 list( APPEND atlas_util_srcs

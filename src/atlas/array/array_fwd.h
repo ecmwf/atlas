@@ -57,10 +57,10 @@ make_device_storageview(const Array& array);
 
 
 
-class ArrayBase;
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-ArrayView<Value, NDims>
-make_view(const ArrayBase& array);
+//class ArrayBase;
+//template <typename Value, unsigned int NDims, bool ReadOnly = false>
+//ArrayView<Value, NDims>
+//make_view(const ArrayBase& array);
 
 
 

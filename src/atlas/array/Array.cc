@@ -11,24 +11,10 @@
 #include <iostream>
 #include "atlas/array/Array.h"
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#include "atlas/array/gridtools/GridToolsArray.h"
-#endif
-
 using atlas::array::DataType;
 
 namespace atlas {
 namespace array {
-
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-
-ArrayBase* ArrayBase::create( array::DataType datatype, const ArrayShape& shape )
-{
-  // gridtools array creation
-  return Array::create(datatype,shape);
-}
-
-#endif
 
 #ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 

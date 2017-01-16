@@ -113,9 +113,9 @@ public:
 
       auto stridest = seq::template apply<
           std::vector<size_t>,
-          get_stride_component<unsigned long, ::gridtools::static_uint<RANK> >::template get_component>(
+          atlas::array::gridtools::get_stride_component<unsigned long, ::gridtools::static_uint<RANK> >::template get_component>(
           &(gt_host_view_.storage_info()));
-      auto shapet = seq::template apply<std::vector<size_t>, get_shape_component>(&(gt_host_view_.storage_info()));
+      auto shapet = seq::template apply<std::vector<size_t>, atlas::array::gridtools::get_shape_component>(&(gt_host_view_.storage_info()));
 
       std::memcpy(strides_, &(stridest[0]), sizeof(size_t)*RANK);
       std::memcpy(shape_, &(shapet[0]), sizeof(size_t)*RANK);

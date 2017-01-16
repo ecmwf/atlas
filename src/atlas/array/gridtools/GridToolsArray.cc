@@ -16,13 +16,14 @@
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array/gridtools/GridToolsDataStore.h"
 #include "atlas/array/gridtools/GridToolsArrayHelpers.h"
-#include "atlas/array/gridtools/GridToolsArray.h"
-#include "atlas/array/gridtools/GridToolsArrayResizer.h"
+#include "atlas/array/gridtools/GridToolsArrayResize.h"
 #include "atlas/array/gridtools/GridToolsArrayInsert.h"
 
 #include "atlas/array/MakeView.h"
 
 //------------------------------------------------------------------------------
+
+using namespace atlas::array::gridtools;
 
 namespace atlas {
 namespace array {
@@ -37,17 +38,17 @@ static Array* create_array_with_layout(UInts... dims) {
   auto gt_data_store_ptr = create_gt_storage<Value, Layout>(dims...);
   using data_store_t = typename std::remove_pointer<decltype(gt_data_store_ptr)>::type;
   ArrayDataStore* data_store = new gridtools::GridToolsDataStore<data_store_t>(gt_data_store_ptr);
-  return ArrayCreatorT<Value>::create(data_store,make_spec(gt_data_store_ptr, dims...));
+  return ArrayBackend<Value>::create(data_store,make_spec(gt_data_store_ptr, dims...));
 }
 
 template <typename Value,
           typename... UInts,
           typename = ::gridtools::all_integers<UInts...> >
 static Array* create_array(UInts... dims) {
-  auto gt_data_store_ptr = create_gt_storage<Value, typename atlas::array::default_layout_t<sizeof...(dims)>::type>(dims...);
+  auto gt_data_store_ptr = create_gt_storage<Value, typename default_layout_t<sizeof...(dims)>::type>(dims...);
   using data_store_t = typename std::remove_pointer<decltype(gt_data_store_ptr)>::type;
   ArrayDataStore* data_store = new gridtools::GridToolsDataStore<data_store_t>(gt_data_store_ptr);
-  return ArrayCreatorT<Value>::create(data_store,make_spec(gt_data_store_ptr, dims...));
+  return ArrayBackend<Value>::create(data_store,make_spec(gt_data_store_ptr, dims...));
 }
 
 template <typename Value, template <class> class Storage, typename StorageInfo>
@@ -55,42 +56,42 @@ static Array* wrap_array(::gridtools::data_store< Storage<Value>, StorageInfo> *
   assert(ds);
   using data_store_t = typename std::remove_pointer<decltype(ds)>::type;
   ArrayDataStore* data_store = new gridtools::GridToolsDataStore<data_store_t>(ds);
-  return ArrayCreatorT<Value>::create(data_store,spec);
+  return ArrayBackend<Value>::create(data_store,spec);
 }
 
-template <typename Value> Array* ArrayCreatorT<Value>::create(ArrayDataStore* datastore, const ArraySpec& spec) {
+template <typename Value> Array* ArrayBackend<Value>::create(ArrayDataStore* datastore, const ArraySpec& spec) {
   return new ArrayT<Value>(datastore,spec);
 }
 
-template <typename Value> Array* ArrayCreatorT<Value>::create(const ArrayShape& shape) {
+template <typename Value> Array* ArrayBackend<Value>::create(const ArrayShape& shape) {
   return new ArrayT<Value>(shape);
 }
 
-template<typename Value> Array *ArrayCreatorT<Value>::create(const ArrayShape& shape, const ArrayLayout& layout) {
+template<typename Value> Array *ArrayBackend<Value>::create(const ArrayShape& shape, const ArrayLayout& layout) {
   return new ArrayT<Value>(shape,layout);
 }
 
-template <typename Value> Array* ArrayCreatorT<Value>::create(size_t dim0) {
+template <typename Value> Array* ArrayBackend<Value>::create(size_t dim0) {
   return create_array<Value>(dim0);
 }
-template <typename Value> Array* ArrayCreatorT<Value>::create(size_t dim0, size_t dim1) {
+template <typename Value> Array* ArrayBackend<Value>::create(size_t dim0, size_t dim1) {
   return create_array<Value>(dim0,dim1);
 }
-template <typename Value> Array* ArrayCreatorT<Value>::create(size_t dim0, size_t dim1, size_t dim2) {
+template <typename Value> Array* ArrayBackend<Value>::create(size_t dim0, size_t dim1, size_t dim2) {
   return create_array<Value>(dim0,dim1,dim2);
 }
-template <typename Value> Array* ArrayCreatorT<Value>::create(size_t dim0, size_t dim1, size_t dim2, size_t dim3) {
+template <typename Value> Array* ArrayBackend<Value>::create(size_t dim0, size_t dim1, size_t dim2, size_t dim3) {
   return create_array<Value>(dim0,dim1,dim2,dim3);
 }
-template <typename Value> Array* ArrayCreatorT<Value>::create(size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4) {
+template <typename Value> Array* ArrayBackend<Value>::create(size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4) {
   return create_array<Value>(dim0,dim1,dim2,dim3,dim4);
 }
 
-template <typename Value> Array* ArrayCreatorT<Value>::wrap(Value* data, const ArrayShape& shape) {
+template <typename Value> Array* ArrayBackend<Value>::wrap(Value* data, const ArrayShape& shape) {
   return wrap(data,ArraySpec(shape));
 }
 
-template <typename Value> Array* ArrayCreatorT<Value>::wrap(Value* data, const ArraySpec& spec) {
+template <typename Value> Array* ArrayBackend<Value>::wrap(Value* data, const ArraySpec& spec) {
   ArrayShape const& shape = spec.shape();
   ArrayStrides const& strides = spec.strides();
 
@@ -119,11 +120,11 @@ Array* Array::create(DataType datatype, const ArrayShape& shape)
 {
   switch( datatype.kind() )
   {
-    case DataType::KIND_REAL64: return ArrayCreatorT<double>::create(shape);
-    case DataType::KIND_REAL32: return ArrayCreatorT<float>::create(shape);
-    case DataType::KIND_INT32:  return ArrayCreatorT<int>::create(shape);
-    case DataType::KIND_INT64:  return ArrayCreatorT<long>::create(shape);
-    case DataType::KIND_UINT64: return ArrayCreatorT<unsigned long>::create(shape);
+    case DataType::KIND_REAL64: return ArrayBackend<double>::create(shape);
+    case DataType::KIND_REAL32: return ArrayBackend<float>::create(shape);
+    case DataType::KIND_INT32:  return ArrayBackend<int>::create(shape);
+    case DataType::KIND_INT64:  return ArrayBackend<long>::create(shape);
+    case DataType::KIND_UINT64: return ArrayBackend<unsigned long>::create(shape);
     default:
     {
       std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
@@ -137,11 +138,11 @@ Array* Array::create(DataType datatype, const ArrayShape& shape, const ArrayLayo
 {
   switch( datatype.kind() )
   {
-  case DataType::KIND_REAL64: return ArrayCreatorT<double>::create(shape,layout);
-  case DataType::KIND_REAL32: return ArrayCreatorT<float>::create(shape,layout);
-  case DataType::KIND_INT32:  return ArrayCreatorT<int>::create(shape,layout);
-  case DataType::KIND_INT64:  return ArrayCreatorT<long>::create(shape,layout);
-  case DataType::KIND_UINT64: return ArrayCreatorT<unsigned long>::create(shape,layout);
+  case DataType::KIND_REAL64: return ArrayBackend<double>::create(shape,layout);
+  case DataType::KIND_REAL32: return ArrayBackend<float>::create(shape,layout);
+  case DataType::KIND_INT32:  return ArrayBackend<int>::create(shape,layout);
+  case DataType::KIND_INT64:  return ArrayBackend<long>::create(shape,layout);
+  case DataType::KIND_UINT64: return ArrayBackend<unsigned long>::create(shape,layout);
 
     default:
     {
@@ -155,33 +156,33 @@ Array* Array::create(DataType datatype, const ArrayShape& shape, const ArrayLayo
 //------------------------------------------------------------------------------
 
 template <typename Value> void ArrayT<Value>::insert(size_t idx1, size_t size1) {
-  gridtools::GridToolsArrayInsert(*this).insert(idx1,size1);
+  gridtools::ArrayBackendInsert(*this).insert(idx1,size1);
 }
 
 //------------------------------------------------------------------------------
 
 template <typename Value> void ArrayT<Value>::resize(const ArrayShape& shape) {
-  gridtools::GridToolsArrayResizer(*this).resize(shape);
+  gridtools::ArrayBackendResize(*this).resize(shape);
 }
 
 template <typename Value> void ArrayT<Value>::resize(size_t dim0) {
-  gridtools::GridToolsArrayResizer(*this).resize(dim0);
+  gridtools::ArrayBackendResize(*this).resize(dim0);
 }
 
 template <typename Value> void ArrayT<Value>::resize(size_t dim0, size_t dim1) {
-  gridtools::GridToolsArrayResizer(*this).resize(dim0,dim1);
+  gridtools::ArrayBackendResize(*this).resize(dim0,dim1);
 }
 
 template <typename Value> void ArrayT<Value>::resize(size_t dim0, size_t dim1, size_t dim2) {
-  gridtools::GridToolsArrayResizer(*this).resize(dim0,dim1,dim2);
+  gridtools::ArrayBackendResize(*this).resize(dim0,dim1,dim2);
 }
 
 template <typename Value> void ArrayT<Value>::resize(size_t dim0, size_t dim1, size_t dim2, size_t dim3) {
-  gridtools::GridToolsArrayResizer(*this).resize(dim0,dim1,dim2,dim3);
+  gridtools::ArrayBackendResize(*this).resize(dim0,dim1,dim2,dim3);
 }
 
 template <typename Value> void ArrayT<Value>::resize(size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4) {
-  gridtools::GridToolsArrayResizer(*this).resize(dim0,dim1,dim2,dim3,dim4);
+  gridtools::ArrayBackendResize(*this).resize(dim0,dim1,dim2,dim3,dim4);
 }
 
 template <typename Value> void ArrayT<Value>::dump(std::ostream& os) const {
@@ -215,7 +216,7 @@ private:
             typename = ::gridtools::all_integers<UInts...> >
   void construct(UInts... dims)
   {
-    auto gt_storage = create_gt_storage<Value,typename atlas::array::default_layout_t<sizeof...(dims)>::type>(dims...);
+    auto gt_storage = create_gt_storage<Value,typename default_layout_t<sizeof...(dims)>::type>(dims...);
     using data_store_t = typename std::remove_pointer<decltype(gt_storage)>::type;
     array_.data_store_ = std::unique_ptr<ArrayDataStore>(new gridtools::GridToolsDataStore<data_store_t>(gt_storage));
     array_.spec_ = make_spec(gt_storage,dims...);
@@ -323,11 +324,11 @@ template <typename Value> ArrayT<Value>::ArrayT(const ArraySpec& spec) {
 
 //------------------------------------------------------------------------------
 
-template class ArrayCreatorT<int>;
-template class ArrayCreatorT<long>;
-template class ArrayCreatorT<float>;
-template class ArrayCreatorT<double>;
-template class ArrayCreatorT<unsigned long>;
+template class ArrayBackend<int>;
+template class ArrayBackend<long>;
+template class ArrayBackend<float>;
+template class ArrayBackend<double>;
+template class ArrayBackend<unsigned long>;
 
 template class ArrayT<int>;
 template class ArrayT<long>;

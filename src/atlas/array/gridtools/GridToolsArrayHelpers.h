@@ -24,6 +24,7 @@
 
 namespace atlas {
 namespace array {
+namespace gridtools {
 
 template <unsigned int NDims>
 std::array<unsigned int, NDims> get_array_from_vector(std::vector<size_t> const& values) {
@@ -162,7 +163,7 @@ struct default_layout_t {
       Value, gridtools::storage_traits::storage_info_t<
                  0, NDims,
                  typename ::gridtools::zero_halo<NDims>::type,
-                 typename atlas::array::default_layout_t<NDims>::type > >*
+                 typename default_layout_t<NDims>::type > >*
   wrap_gt_storage(
       Value* data,
       std::array<unsigned int, NDims>&& shape, std::array<unsigned int, NDims>&& strides)
@@ -170,7 +171,7 @@ struct default_layout_t {
       static_assert((NDims > 0), "Error: can not create storages without any dimension");
       typedef gridtools::storage_traits::storage_info_t<
           0, NDims, typename ::gridtools::zero_halo<NDims>::type,
-          typename atlas::array::default_layout_t<NDims>::type> storage_info_ty;
+          typename default_layout_t<NDims>::type> storage_info_ty;
       typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
       storage_info_ty si(shape, strides);
@@ -202,6 +203,6 @@ struct default_layout_t {
   }
 
 
-
+} // namespace gridtools
 } // namespace array
 } // namespace atlas

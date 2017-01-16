@@ -18,7 +18,7 @@ namespace array {
 
 namespace impl {
     template<typename Value, unsigned NDims>
-    inline static void check_metadata(const ArrayBase& array)
+    inline static void check_metadata(const Array& array)
     {
         if(array.rank() != NDims ) {
             std::stringstream err;
@@ -181,13 +181,13 @@ make_storageview(const Array& array) {
 
 
 
-template <typename Value, unsigned int NDims, bool ReadOnly>
-inline ArrayView<Value, NDims>
-make_view(const ArrayBase& array) {
-    impl::check_metadata<Value, NDims>(array);
+//template <typename Value, unsigned int NDims, bool ReadOnly>
+//inline ArrayView<Value, NDims>
+//make_view(const Array& array) {
+//    impl::check_metadata<Value, NDims>(array);
 
-    return make_host_view<Value, NDims, ReadOnly>(dynamic_cast<const Array&>(array));
-}
+//    return make_host_view<Value, NDims, ReadOnly>(dynamic_cast<const Array&>(array));
+//}
 
 
 

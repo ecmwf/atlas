@@ -11,11 +11,7 @@
 #pragma once
 
 #include <vector>
-#include <iosfwd>
-#include <iterator>
-#include <type_traits>
 #include "eckit/memory/Owned.h"
-#include "eckit/exception/Exceptions.h"
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
@@ -25,17 +21,79 @@
 namespace atlas {
 namespace array {
 
-class ArrayBase : public eckit::Owned
+class Array;
+
+template <typename Value>
+class ArrayBackend
+{
+public:
+  static Array* create(size_t dim0);
+  static Array* create(size_t dim0, size_t dim1);
+  static Array* create(size_t dim0, size_t dim1, size_t dim2);
+  static Array* create(size_t dim0, size_t dim1, size_t dim2, size_t dim3);
+  static Array* create(size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4);
+  static Array* create( const ArrayShape& );
+  static Array* create( const ArrayShape&, const ArrayLayout& );
+  static Array* wrap(Value* data, const ArrayShape& );
+  static Array* wrap(Value* data, const ArraySpec& );
+
+public:
+  static Array* create(ArrayDataStore*, const ArraySpec&);
+};
+class ArrayBackendResize;
+class ArrayBackendInsert;
+
+
+
+class Array : public eckit::Owned
 {
 public:
 
-  static ArrayBase* create( array::DataType, const ArrayShape& );
+  static Array* create( array::DataType, const ArrayShape& );
+
+  static Array* create( array::DataType, const ArrayShape&, const ArrayLayout& );
+
+  template<typename Value> static Array* create(size_t dim0) {
+    return ArrayBackend<Value>::create(dim0);
+  }
+
+  template<typename Value> static Array* create(size_t dim0, size_t dim1) {
+    return ArrayBackend<Value>::create(dim0,dim1);
+  }
+
+  template<typename Value> static Array* create(size_t dim0, size_t dim1, size_t dim2) {
+    return ArrayBackend<Value>::create(dim0,dim1,dim2);
+  }
+
+  template<typename Value> static Array* create(size_t dim0, size_t dim1, size_t dim2, size_t dim3) {
+    return ArrayBackend<Value>::create(dim0,dim1,dim2,dim3);
+  }
+
+  template<typename Value> static Array* create(size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4) {
+    return ArrayBackend<Value>::create(dim0,dim1,dim2,dim3,dim4);
+  }
+
+  template<typename Value> static Array* create(const ArrayShape& shape) {
+    return create( array::DataType::create<Value>(), shape );
+  }
+
+  template<typename Value> static Array* create(const ArrayShape& shape, const ArrayLayout& layout) {
+    return create( array::DataType::create<Value>(), shape, layout );
+  }
+
+  template <typename Value> static Array* wrap(Value* data, const ArrayShape& shape) {
+    return ArrayBackend<Value>::wrap(data,shape);
+  }
+
+  template <typename Value> static Array* wrap(Value* data, const ArraySpec& spec) {
+    return ArrayBackend<Value>::wrap(data,spec);
+  }
 
 public:
 
-  ArrayBase() {}
+  Array() {}
 
-  ArrayBase(const ArraySpec& spec) : spec_(spec) {}
+  Array(const ArraySpec& spec) : spec_(spec) {}
 
   size_t bytes() const { return sizeof_data() * size();}
 
@@ -99,12 +157,59 @@ public:
 public:
   ArraySpec spec_;
   std::unique_ptr<ArrayDataStore> data_store_;
+
+
+private:
+
+  friend class ArrayBackendResize;
+  friend class ArrayBackendInsert;
+
 };
+
+template<typename DATA_TYPE>
+class ArrayT : public Array  {
+
+public:
+
+  // These constructors are used to create an ArrayT on the stack.
+  ArrayT(size_t dim0);
+  ArrayT(size_t dim0, size_t dim1);
+  ArrayT(size_t dim0, size_t dim1, size_t dim2);
+  ArrayT(size_t dim0, size_t dim1, size_t dim2, size_t dim3);
+  ArrayT(size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4);
+
+  ArrayT(const ArrayShape&);
+  ArrayT(const ArrayShape&, const ArrayLayout&);
+
+  ArrayT(const ArraySpec&);
+
+public:
+
+  virtual void insert(size_t idx1, size_t size1);
+
+  virtual void resize(const ArrayShape&);
+  virtual void resize(size_t dim0);
+  virtual void resize(size_t dim0, size_t dim1);
+  virtual void resize(size_t dim0, size_t dim1, size_t dim2);
+  virtual void resize(size_t dim0, size_t dim1, size_t dim2, size_t dim3);
+  virtual void resize(size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4);
+
+  virtual array::DataType datatype() const { return array::DataType::create<DATA_TYPE>(); }
+
+  virtual size_t sizeof_data() const {return sizeof(DATA_TYPE);}
+
+  virtual void dump(std::ostream& os) const;
+
+private:
+  // This constructor is used through the Array::create() or the Array::wrap() methods
+  template <typename T>
+  friend class ArrayBackend;
+  ArrayT(ArrayDataStore*, const ArraySpec&);
+};
+
 
 } // namespace array
 } // namespace atlas
-
-#include "atlas/array/gridtools/GridToolsArray.h"
 
 #else
 #define GT_FUNCTION

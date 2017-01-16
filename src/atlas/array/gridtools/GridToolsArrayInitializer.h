@@ -35,7 +35,7 @@ template <typename Value, unsigned int RANK, unsigned int Dim>
 struct array_initializer_impl {
 
 
-  static void apply(ArrayBase const& orig, ArrayBase& array_resized) {
+  static void apply(Array const& orig, Array& array_resized) {
     array_initializer_impl<Value, RANK, Dim>::apply(
           make_view<Value, RANK>(orig),
           make_view<Value, RANK>(array_resized) );
@@ -75,7 +75,7 @@ struct array_initializer_impl<Value, RANK, RANK> {
 template <unsigned int RANK>
 struct array_initializer {
   template <typename... DimIndex>
-  static void apply(ArrayBase const& orig, ArrayBase& array_resized, DimIndex... idxs) {
+  static void apply(Array const& orig, Array& array_resized, DimIndex... idxs) {
     switch (orig.datatype().kind()) {
       case DataType::KIND_REAL64: return array_initializer_impl<double,        RANK, 0>::apply(orig, array_resized, idxs...);
       case DataType::KIND_REAL32: return array_initializer_impl<float,         RANK, 0>::apply(orig, array_resized, idxs...);
@@ -95,7 +95,7 @@ struct array_initializer {
 
 template<typename Value, unsigned int RANK, unsigned int Dim, unsigned int PartDim>
 struct array_initializer_partitioned_val_impl {
-  static void apply(ArrayBase const& orig, ArrayBase& dest, unsigned int pos, unsigned int offset) {
+  static void apply(Array const& orig, Array& dest, unsigned int pos, unsigned int offset) {
       auto view = make_view<Value, RANK>(orig);
       array_initializer_partitioned_val_impl<Value, RANK, Dim, PartDim>::apply(make_view<Value, RANK>(orig), make_view<Value, RANK>(dest), pos, offset);
   }
@@ -128,7 +128,7 @@ struct array_initializer_partitioned_val_impl<Value, RANK, RANK, PartDim> {
 
 template<unsigned int RANK, unsigned int PartDim>
 struct array_initializer_partitioned_impl {
-  static void apply( ArrayBase const& orig, ArrayBase& dest, unsigned int pos, unsigned int offset) {
+  static void apply( Array const& orig, Array& dest, unsigned int pos, unsigned int offset) {
       switch (orig.datatype().kind()) {
         case DataType::KIND_REAL64: return array_initializer_partitioned_val_impl<double, RANK, 0, PartDim>::apply(orig, dest, pos, offset);
         case DataType::KIND_REAL32: return array_initializer_partitioned_val_impl<float, RANK, 0, PartDim>::apply(orig, dest,pos, offset );
@@ -148,7 +148,7 @@ struct array_initializer_partitioned_impl {
 
 template<unsigned int PartDim>
 struct array_initializer_partitioned {
-  static void apply(ArrayBase const& orig, ArrayBase& dest, unsigned int pos, unsigned int offset) {
+  static void apply(Array const& orig, Array& dest, unsigned int pos, unsigned int offset) {
     switch (orig.rank()) {
       case 1: return array_initializer_partitioned_impl<1, PartDim>::apply(orig, dest, pos, offset);
       case 2: return array_initializer_partitioned_impl<2, PartDim>::apply(orig, dest, pos, offset);
