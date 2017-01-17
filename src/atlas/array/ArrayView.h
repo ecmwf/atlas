@@ -65,14 +65,9 @@
 namespace atlas {
 namespace array {
   class Array;
-  template <typename DATA_TYPE, int RANK=0> class ArrayView;
+  template <typename DATA_TYPE, int RANK> class ArrayView;
 } // namespace array
 } // namespace atlas
-
-//------------------------------------------------------------------------------------------------------
-
-#include "atlas/array/native/ArrayView_iterator.h"
-#include "atlas/array/MakeView_fwd.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -85,8 +80,8 @@ class ArrayView<DATA_TYPE,0>
 public:
 
 // -- Type definitions
-  typedef ArrayView_iterator<DATA_TYPE,0>         iterator;
-  typedef ArrayView_const_iterator<DATA_TYPE,0>   const_iterator;
+//  typedef ArrayView_iterator<DATA_TYPE,0>         iterator;
+//  typedef ArrayView_const_iterator<DATA_TYPE,0>   const_iterator;
   typedef typename remove_const<DATA_TYPE>::type  value_type;
 
 public:
@@ -96,13 +91,13 @@ public:
   ArrayView( const DATA_TYPE* data, const size_t rank, const ArrayShape::value_type shape[], const ArrayStrides::value_type strides[] );
   // ArrayView( const Array& );
 
-// -- Iterators
-  iterator begin();
-  iterator end();
-  const_iterator begin() const;
-  const_iterator end()   const;
-  const_iterator cbegin() const;
-  const_iterator cend() const;
+//// -- Iterators
+//  iterator begin();
+//  iterator end();
+//  const_iterator begin() const;
+//  const_iterator end()   const;
+//  const_iterator cbegin() const;
+//  const_iterator cend() const;
 
 // -- Operators
   const DATA_TYPE& operator()(size_t i) const;
@@ -169,8 +164,8 @@ class ArrayView < DATA_TYPE, 1 >
 {
 public:
 // -- Type definitions
-  typedef ArrayView_iterator<DATA_TYPE,1>         iterator;
-  typedef ArrayView_const_iterator<DATA_TYPE,1>   const_iterator;
+//  typedef ArrayView_iterator<DATA_TYPE,1>         iterator;
+//  typedef ArrayView_const_iterator<DATA_TYPE,1>   const_iterator;
   typedef typename remove_const<DATA_TYPE>::type  value_type;
 
 public:
@@ -184,12 +179,12 @@ public:
   // ArrayView( const Array& );
 
 // -- Iterators
-  iterator       begin();
-  iterator       end();
-  const_iterator begin() const;
-  const_iterator end()   const;
-  const_iterator cbegin() const;
-  const_iterator cend() const;
+//  iterator       begin();
+//  iterator       end();
+//  const_iterator begin() const;
+//  const_iterator end()   const;
+//  const_iterator cbegin() const;
+//  const_iterator cend() const;
 
 // -- Operators
   const DATA_TYPE& operator()(size_t i) const;
@@ -251,8 +246,8 @@ class ArrayView < DATA_TYPE, 2 >
 {
 public:
 // -- Type definitions
-  typedef ArrayView_iterator<DATA_TYPE,2>       iterator;
-  typedef ArrayView_const_iterator<DATA_TYPE,2> const_iterator;
+//  typedef ArrayView_iterator<DATA_TYPE,2>       iterator;
+//  typedef ArrayView_const_iterator<DATA_TYPE,2> const_iterator;
   typedef typename remove_const<DATA_TYPE>::type  value_type;
 
 public:
@@ -265,12 +260,12 @@ public:
   // ArrayView( const Array& );
 
 // -- Iterators
-  iterator begin();
-  iterator end();
-  const_iterator begin() const;
-  const_iterator end()   const;
-  const_iterator cbegin() const;
-  const_iterator cend() const;
+//  iterator begin();
+//  iterator end();
+//  const_iterator begin() const;
+//  const_iterator end()   const;
+//  const_iterator cbegin() const;
+//  const_iterator cend() const;
 
 // -- Operators
   const DATA_TYPE& operator()(size_t i, size_t j) const;
@@ -333,8 +328,8 @@ class ArrayView < DATA_TYPE, 3 >
 {
 public:
 // -- Type definitions
-  typedef ArrayView_iterator<DATA_TYPE,3>         iterator;
-  typedef ArrayView_const_iterator<DATA_TYPE,3>   const_iterator;
+//  typedef ArrayView_iterator<DATA_TYPE,3>         iterator;
+//  typedef ArrayView_const_iterator<DATA_TYPE,3>   const_iterator;
   typedef typename remove_const<DATA_TYPE>::type  value_type;
 
 // -- Constructors
@@ -345,12 +340,12 @@ public:
   // ArrayView( const Array& );
 
 // -- Iterators
-  iterator begin();
-  iterator end();
-  const_iterator begin() const;
-  const_iterator end()   const;
-  const_iterator cbegin() const;
-  const_iterator cend() const;
+//  iterator begin();
+//  iterator end();
+//  const_iterator begin() const;
+//  const_iterator end()   const;
+//  const_iterator cbegin() const;
+//  const_iterator cend() const;
 
 // -- Operators
   const DATA_TYPE& operator()(size_t i, size_t j, size_t k) const;
@@ -413,8 +408,8 @@ class ArrayView < DATA_TYPE, 4 >
 public:
 
 // -- Type definitions
-  typedef ArrayView_iterator<DATA_TYPE,4>       iterator;
-  typedef ArrayView_const_iterator<DATA_TYPE,4> const_iterator;
+//  typedef ArrayView_iterator<DATA_TYPE,4>       iterator;
+//  typedef ArrayView_const_iterator<DATA_TYPE,4> const_iterator;
   typedef typename remove_const<DATA_TYPE>::type  value_type;
 
 // -- Constructors
@@ -425,12 +420,12 @@ public:
   // ArrayView( const Array& );
 
 // -- Iterators
-  iterator begin();
-  iterator end();
-  const_iterator cbegin() const;
-  const_iterator cend() const;
-  const_iterator begin() const;
-  const_iterator end()   const;
+//  iterator begin();
+//  iterator end();
+//  const_iterator cbegin() const;
+//  const_iterator cend() const;
+//  const_iterator begin() const;
+//  const_iterator end()   const;
 
 // -- Operators
   const DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l) const;

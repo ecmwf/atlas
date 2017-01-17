@@ -251,6 +251,8 @@ interpolation/PointSet.h
 interpolation/PointSet.cc
 )
 
+
+
 list( APPEND atlas_array_srcs
 array/array_fwd.h
 array/Array.h
@@ -276,6 +278,9 @@ array/StorageView.h
 array/DataType.h
 array/MakeView.h
 array/Vector.h
+)
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+list( APPEND atlas_array_srcs
 array/gridtools/GridToolsArray.cc
 array/gridtools/GridToolsArrayInsert.h
 array/gridtools/GridToolsDataStore.h
@@ -291,6 +296,7 @@ array/gridtools/GridToolsStorageView.h
 array/gridtools/GridToolsMakeView.h
 array/gridtools/GridToolsMakeView.cc
 )
+endif()
 
 list( APPEND atlas_util_srcs
 util/Config.h

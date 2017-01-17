@@ -21,7 +21,6 @@
 
 #ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
 
-
 #define CHECK_RANK(R)\
   if(rank()!=R) { std::ostringstream msg; msg << "ArrayView  rank mismatch: rank()="<<rank()<< " != " << R; throw eckit::OutOfRange(msg.str(),Here()); }
 #define CHECK_BOUNDS(idx) {\
@@ -87,23 +86,23 @@ ArrayView<DATA_TYPE,0>::ArrayView( const DATA_TYPE* data,
     size_ *= shape_[j];
 }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,0>::iterator ArrayView<DATA_TYPE,0>::begin() { return iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,0>::iterator ArrayView<DATA_TYPE,0>::begin() { return iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,0>::iterator ArrayView<DATA_TYPE,0>::end()   { return iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,0>::iterator ArrayView<DATA_TYPE,0>::end()   { return iterator(); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,0>::const_iterator ArrayView<DATA_TYPE,0>::cbegin() const { return const_iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,0>::const_iterator ArrayView<DATA_TYPE,0>::cbegin() const { return const_iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,0>::const_iterator ArrayView<DATA_TYPE,0>::cend() const { return const_iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,0>::const_iterator ArrayView<DATA_TYPE,0>::cend() const { return const_iterator(); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,0>::const_iterator ArrayView<DATA_TYPE,0>::begin() const  { return const_iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,0>::const_iterator ArrayView<DATA_TYPE,0>::begin() const  { return const_iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,0>::const_iterator ArrayView<DATA_TYPE,0>::end()   const  { return const_iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,0>::const_iterator ArrayView<DATA_TYPE,0>::end()   const  { return const_iterator(); }
 
 template <typename DATA_TYPE>
 inline const DATA_TYPE& ArrayView<DATA_TYPE,0>::operator()(size_t i) const { CHECK_RANK(1); CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
@@ -212,23 +211,23 @@ ArrayView<DATA_TYPE,1>::ArrayView( const DATA_TYPE* data, const ArrayShape& shap
   shape_[0]=shape[0]; strides_[0]=1;
 }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,1>::iterator ArrayView<DATA_TYPE,1>::begin() { return iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,1>::iterator ArrayView<DATA_TYPE,1>::begin() { return iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,1>::iterator ArrayView<DATA_TYPE,1>::end()   { return iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,1>::iterator ArrayView<DATA_TYPE,1>::end()   { return iterator(); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,1>::const_iterator ArrayView<DATA_TYPE,1>::cbegin() const { return const_iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,1>::const_iterator ArrayView<DATA_TYPE,1>::cbegin() const { return const_iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,1>::const_iterator ArrayView<DATA_TYPE,1>::cend() const  { return const_iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,1>::const_iterator ArrayView<DATA_TYPE,1>::cend() const  { return const_iterator(); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,1>::const_iterator ArrayView<DATA_TYPE,1>::begin() const  { return const_iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,1>::const_iterator ArrayView<DATA_TYPE,1>::begin() const  { return const_iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,1>::const_iterator ArrayView<DATA_TYPE,1>::end()   const  { return const_iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,1>::const_iterator ArrayView<DATA_TYPE,1>::end()   const  { return const_iterator(); }
 
 template <typename DATA_TYPE>
 inline const DATA_TYPE& ArrayView<DATA_TYPE,1>::operator()(size_t i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
@@ -324,23 +323,23 @@ ArrayView<DATA_TYPE,2>::ArrayView( const DATA_TYPE* data, const std::vector<size
   size_ = shape_[0]*shape_[1];
 }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,2>::iterator ArrayView<DATA_TYPE,2>::begin() { return iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,2>::iterator ArrayView<DATA_TYPE,2>::begin() { return iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,2>::iterator ArrayView<DATA_TYPE,2>::end()   { return iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,2>::iterator ArrayView<DATA_TYPE,2>::end()   { return iterator(); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,2>::const_iterator ArrayView<DATA_TYPE,2>::cbegin() const { return const_iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,2>::const_iterator ArrayView<DATA_TYPE,2>::cbegin() const { return const_iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,2>::const_iterator ArrayView<DATA_TYPE,2>::cend() const   { return const_iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,2>::const_iterator ArrayView<DATA_TYPE,2>::cend() const   { return const_iterator(); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,2>::const_iterator ArrayView<DATA_TYPE,2>::begin() const  { return const_iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,2>::const_iterator ArrayView<DATA_TYPE,2>::begin() const  { return const_iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,2>::const_iterator ArrayView<DATA_TYPE,2>::end()   const  { return const_iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,2>::const_iterator ArrayView<DATA_TYPE,2>::end()   const  { return const_iterator(); }
 
 template <typename DATA_TYPE>
 inline const DATA_TYPE& ArrayView<DATA_TYPE,2>::operator()(size_t i, size_t j) const  { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
@@ -436,23 +435,23 @@ ArrayView<DATA_TYPE,3>::ArrayView( const DATA_TYPE* data, const std::vector<size
   size_ = shape_[0]*shape_[1]*shape_[2];
 }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,3>::iterator ArrayView<DATA_TYPE,3>::begin() { return iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,3>::iterator ArrayView<DATA_TYPE,3>::begin() { return iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,3>::iterator ArrayView<DATA_TYPE,3>::end()   { return iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,3>::iterator ArrayView<DATA_TYPE,3>::end()   { return iterator(); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,3>::const_iterator ArrayView<DATA_TYPE,3>::cbegin() const { return const_iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,3>::const_iterator ArrayView<DATA_TYPE,3>::cbegin() const { return const_iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,3>::const_iterator ArrayView<DATA_TYPE,3>::cend() const   { return const_iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,3>::const_iterator ArrayView<DATA_TYPE,3>::cend() const   { return const_iterator(); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,3>::const_iterator ArrayView<DATA_TYPE,3>::begin() const  { return const_iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,3>::const_iterator ArrayView<DATA_TYPE,3>::begin() const  { return const_iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,3>::const_iterator ArrayView<DATA_TYPE,3>::end()   const  { return const_iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,3>::const_iterator ArrayView<DATA_TYPE,3>::end()   const  { return const_iterator(); }
 
 template <typename DATA_TYPE>
 inline const DATA_TYPE& ArrayView<DATA_TYPE,3>::operator()(size_t i, size_t j, size_t k) const { CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
@@ -552,23 +551,23 @@ ArrayView<DATA_TYPE,4>::ArrayView( const DATA_TYPE* data, const ArrayShape::valu
   size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3];
 }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,4>::iterator ArrayView<DATA_TYPE,4>::begin() { return iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,4>::iterator ArrayView<DATA_TYPE,4>::begin() { return iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,4>::iterator ArrayView<DATA_TYPE,4>::end()   { return iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,4>::iterator ArrayView<DATA_TYPE,4>::end()   { return iterator(); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,4>::const_iterator ArrayView<DATA_TYPE,4>::cbegin() const { return const_iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,4>::const_iterator ArrayView<DATA_TYPE,4>::cbegin() const { return const_iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,4>::const_iterator ArrayView<DATA_TYPE,4>::cend() const  { return const_iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,4>::const_iterator ArrayView<DATA_TYPE,4>::cend() const  { return const_iterator(); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,4>::const_iterator ArrayView<DATA_TYPE,4>::begin() const  { return const_iterator(this); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,4>::const_iterator ArrayView<DATA_TYPE,4>::begin() const  { return const_iterator(this); }
 
-template <typename DATA_TYPE>
-inline typename ArrayView<DATA_TYPE,4>::const_iterator ArrayView<DATA_TYPE,4>::end()   const  { return const_iterator(); }
+//template <typename DATA_TYPE>
+//inline typename ArrayView<DATA_TYPE,4>::const_iterator ArrayView<DATA_TYPE,4>::end()   const  { return const_iterator(); }
 
 template <typename DATA_TYPE>
 inline const DATA_TYPE& ArrayView<DATA_TYPE,4>::operator()(size_t i, size_t j, size_t k, size_t l) const { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
@@ -631,7 +630,7 @@ inline size_t ArrayView<DATA_TYPE,4>::size() const { return shape_[0]*shape_[1]*
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
-
+#if 0
 template <typename DATA_TYPE, int RANK>
 ArrayView_iterator<DATA_TYPE,RANK>::ArrayView_iterator()
     : p_(0), arr_(0), loc_(0), fastest_idx_(0)
@@ -740,9 +739,7 @@ ArrayView_const_iterator<DATA_TYPE,RANK>& ArrayView_const_iterator<DATA_TYPE,RAN
   }
   return *this;
 }
-
 #endif
-
 //------------------------------------------------------------------------------------------------------
 
 } // namespace array

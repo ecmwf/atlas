@@ -232,13 +232,10 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   array::ArrayView<int,1> p_trans   = array::make_view<int,1>( m_trans  ->nodes().partition() );
   array::ArrayView<int,1> p_eqreg   = array::make_view<int,1>( m_eqreg  ->nodes().partition() );
 
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
-  BOOST_CHECK_EQUAL_COLLECTIONS( p_default.begin(), p_default.end(),
-                                 p_trans  .begin(), p_trans  .end() );
-
-  BOOST_CHECK_EQUAL_COLLECTIONS( p_default.begin(), p_default.end(),
-                                 p_eqreg  .begin(), p_eqreg  .end() );
-#endif
+  for( size_t j=0; j<p_default.shape(0); ++j ) {
+    BOOST_CHECK_EQUAL( p_default(j), p_trans(j) );
+    BOOST_CHECK_EQUAL( p_default(j), p_eqreg(j) );
+  }
 
   //mesh::Mesh::Ptr mesh ( generate(*g, mesh::generators::EqualAreaPartitioner(*g).distribution() ) );
 

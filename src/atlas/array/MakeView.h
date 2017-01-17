@@ -8,18 +8,20 @@
 
 //------------------------------------------------------------------------------
 #ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
-// Old implementation
+#include "atlas/array/Array.h"
+
+// Native implementation
 
 namespace atlas {
 namespace array {
 
-namespace impl {
-    template<typename Value, unsigned NDims>
+namespace {
+    template<typename Value, unsigned Rank>
     inline static void check_metadata(const Array& array)
     {
-        if(array.rank() != NDims ) {
+        if(array.rank() != Rank ) {
             std::stringstream err;
-            err << "Number of dimensions do not match: template argument " << NDims << " expected to be " << array.rank();
+            err << "Number of dimensions do not match: template argument " << Rank << " expected to be " << array.rank();
             throw eckit::BadParameter(err.str(), Here());
         }
         if(array.datatype() != array::DataType::create<Value>() ) {
@@ -32,55 +34,54 @@ namespace impl {
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int NDims, bool ReadOnly>
-inline ArrayView<Value, NDims>
+template <typename Value, unsigned int Rank, bool ReadOnly>
+inline ArrayView<Value, Rank>
 make_host_view(const Array& array) {
-  return ArrayView<Value, NDims>((const Value*)(array.storage()),array.shape());
+    return ArrayView<Value, Rank>((const Value*)(array.storage()),array.shape());
 }
 
 
-template <typename Value, unsigned int NDims, bool ReadOnly>
-inline ArrayView<Value, NDims>
+template <typename Value, unsigned int Rank, bool ReadOnly>
+inline ArrayView<Value, Rank>
 make_device_view(const Array& array) {
-  return make_host_view<Value,NDims,ReadOnly>(array);
+    return make_host_view<Value,Rank,ReadOnly>(array);
 }
 
 
-template <typename Value, unsigned int NDims, bool ReadOnly>
-inline IndexView<Value, NDims>
+template <typename Value, unsigned int Rank, bool ReadOnly>
+inline IndexView<Value, Rank>
 make_host_indexview(const Array& array) {
-  return IndexView<Value,NDims>( (Value*)(array.storage()),array.shape().data() );
+    return IndexView<Value,Rank>( (Value*)(array.storage()),array.shape().data() );
 }
 
 
 template <typename Value>
 inline StorageView<Value>
 make_host_storageview(const Array& array) {
-  return StorageView<Value>(const_cast<Array&>(array).storage(),array.size(),array.contiguous());
+    return StorageView<Value>(const_cast<Array&>(array).storage(),array.size(),array.contiguous());
 }
 
 
 template <typename Value>
 inline StorageView<Value>
 make_device_storageview(const Array& array) {
-  return make_host_storageview<Value>(array);
+    return make_host_storageview<Value>(array);
 }
 
 
-template <typename Value, unsigned int NDims, bool ReadOnly>
-inline IndexView<Value, NDims>
+template <typename Value, unsigned int Rank, bool ReadOnly>
+inline IndexView<Value, Rank>
 make_indexview(const Array& array) {
-  impl::check_metadata<Value, NDims>(array);
-  return make_host_indexview<Value,NDims>(array);
+    check_metadata<Value, Rank>(array);
+    return make_host_indexview<Value,Rank>(array);
 }
 
 
-template <typename Value, unsigned int NDims, bool ReadOnly>
-inline ArrayView<Value, NDims>
+template <typename Value, unsigned int Rank, bool ReadOnly>
+inline ArrayView<Value, Rank>
 make_view(const Array& array) {
-    impl::check_metadata<Value, NDims>(array);
-
-    return make_host_view<Value, NDims, ReadOnly>(array);
+    check_metadata<Value, Rank>(array);
+    return make_host_view<Value, Rank, ReadOnly>(array);
 }
 
 

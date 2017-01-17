@@ -31,15 +31,15 @@ public:
         contiguous_(contiguous)
     {}
 
-    Value* data() { return (DATA_TYPE*) native_storage_view_; }
+    Value* data() { return (Value*) native_storage_view_; }
 
     size_t size() { return size_; }
 
     bool contiguous() const { return contiguous_; }
 
-    void assign(const DATA_TYPE& value) {
+    void assign(const Value& value) {
         ASSERT( contiguous() );
-        DATA_TYPE* raw_data = data();
+        Value* raw_data = data();
         for( size_t j=0; j<size_; ++j ) {
             raw_data[j] = value;
         }
