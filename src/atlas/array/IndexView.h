@@ -145,7 +145,7 @@ public:
 #else
   typedef DATA_TYPE& Index;
 #endif
-  using data_view_t = data_view_tt<DATA_TYPE, RANK>;
+  using data_view_t = gridtools::data_view_tt<DATA_TYPE, RANK>;
 
 public:
 

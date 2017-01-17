@@ -27,7 +27,7 @@ namespace atlas {
 namespace array {
 namespace gridtools {
 
-template <int RANK> using UintSequence = ::gridtools::make_gt_integer_sequence<unsigned int, RANK>;
+template <int Rank> using UintSequence = ::gridtools::make_gt_integer_sequence<unsigned int, Rank>;
 
 class ArrayBackendResize {
 public:
@@ -36,8 +36,8 @@ public:
   template <typename... Coords, typename = ::gridtools::all_integers<Coords...> >
   void resize(Coords... c) {
     if(sizeof...(c) != array_.rank()){
-      std::stringstream err; err << "trying to resize an array of rank " << array_.rank() <<
-                                    " by dimensions with rank " <<
+      std::stringstream err; err << "trying to resize an array of Rank " << array_.rank() <<
+                                    " by dimensions with Rank " <<
                                     sizeof...(c) << std::endl;
       throw eckit::BadParameter(err.str(),Here());
     }

@@ -8,12 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
+#pragma once
+
 #ifndef atlas_ArrayView_h
 #error This file can only be included from atlas_ArrayView_h
 #endif
-
-#ifndef atlas_ArrayView_impl_h
-#define atlas_ArrayView_impl_h
 
 #include "atlas/internals/atlas_defines.h"
 

@@ -14,6 +14,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/array_fwd.h"
+#include "atlas/array/Array.h"
 
 //------------------------------------------------------------------------------
 
@@ -23,7 +24,7 @@ namespace gridtools {
 
 //------------------------------------------------------------------------------
 
-template <unsigned int RANK>
+template <unsigned int Rank>
 struct array_initializer;
 
 template<unsigned int PartDim>
@@ -31,22 +32,22 @@ struct array_initializer_partitioned;
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int RANK, unsigned int Dim>
+template <typename Value, unsigned int Rank, unsigned int Dim>
 struct array_initializer_impl {
 
 
   static void apply(Array const& orig, Array& array_resized) {
-    array_initializer_impl<Value, RANK, Dim>::apply(
-          make_view<Value, RANK>(orig),
-          make_view<Value, RANK>(array_resized) );
+    array_initializer_impl<Value, Rank, Dim>::apply(
+          make_view<Value, Rank>(orig),
+          make_view<Value, Rank>(array_resized) );
   }
 
 
   template <typename ... DimIndex>
-  static void apply(ArrayView<Value, RANK> const&& orig, ArrayView<Value, RANK>&& array_resized, DimIndex... idxs) {
+  static void apply(ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& array_resized, DimIndex... idxs) {
 
     for(size_t i=0; i < orig.shape(Dim); ++i) {
-      array_initializer_impl<Value, RANK, Dim+1>::apply(
+      array_initializer_impl<Value, Rank, Dim+1>::apply(
             std::move(orig),
             std::move(array_resized),
             idxs...,
@@ -60,11 +61,11 @@ struct array_initializer_impl {
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int RANK>
-struct array_initializer_impl<Value, RANK, RANK> {
+template <typename Value, unsigned int Rank>
+struct array_initializer_impl<Value, Rank, Rank> {
 
   template <typename ... DimIndex>
-  static void apply(ArrayView<Value, RANK> const&& orig,ArrayView<Value, RANK>&& array_resized, DimIndex... idxs) {
+  static void apply(ArrayView<Value, Rank> const&& orig,ArrayView<Value, Rank>&& array_resized, DimIndex... idxs) {
       array_resized(idxs...) = orig(idxs...);
   }
 
@@ -72,16 +73,16 @@ struct array_initializer_impl<Value, RANK, RANK> {
 
 //------------------------------------------------------------------------------
 
-template <unsigned int RANK>
+template <unsigned int Rank>
 struct array_initializer {
   template <typename... DimIndex>
   static void apply(Array const& orig, Array& array_resized, DimIndex... idxs) {
     switch (orig.datatype().kind()) {
-      case DataType::KIND_REAL64: return array_initializer_impl<double,        RANK, 0>::apply(orig, array_resized, idxs...);
-      case DataType::KIND_REAL32: return array_initializer_impl<float,         RANK, 0>::apply(orig, array_resized, idxs...);
-      case DataType::KIND_INT32:  return array_initializer_impl<int,           RANK, 0>::apply(orig, array_resized, idxs...);
-      case DataType::KIND_INT64:  return array_initializer_impl<long,          RANK, 0>::apply(orig, array_resized, idxs...);
-      case DataType::KIND_UINT64: return array_initializer_impl<unsigned long, RANK, 0>::apply(orig, array_resized, idxs...);
+      case DataType::KIND_REAL64: return array_initializer_impl<double,        Rank, 0>::apply(orig, array_resized, idxs...);
+      case DataType::KIND_REAL32: return array_initializer_impl<float,         Rank, 0>::apply(orig, array_resized, idxs...);
+      case DataType::KIND_INT32:  return array_initializer_impl<int,           Rank, 0>::apply(orig, array_resized, idxs...);
+      case DataType::KIND_INT64:  return array_initializer_impl<long,          Rank, 0>::apply(orig, array_resized, idxs...);
+      case DataType::KIND_UINT64: return array_initializer_impl<unsigned long, Rank, 0>::apply(orig, array_resized, idxs...);
       default: {
         std::stringstream err;
         err << "data kind " << orig.datatype().kind() << " not recognised.";
@@ -93,14 +94,14 @@ struct array_initializer {
 
 //------------------------------------------------------------------------------
 
-template<typename Value, unsigned int RANK, unsigned int Dim, unsigned int PartDim>
+template<typename Value, unsigned int Rank, unsigned int Dim, unsigned int PartDim>
 struct array_initializer_partitioned_val_impl {
   static void apply(Array const& orig, Array& dest, unsigned int pos, unsigned int offset) {
-      auto view = make_view<Value, RANK>(orig);
-      array_initializer_partitioned_val_impl<Value, RANK, Dim, PartDim>::apply(make_view<Value, RANK>(orig), make_view<Value, RANK>(dest), pos, offset);
+      auto view = make_view<Value, Rank>(orig);
+      array_initializer_partitioned_val_impl<Value, Rank, Dim, PartDim>::apply(make_view<Value, Rank>(orig), make_view<Value, Rank>(dest), pos, offset);
   }
   template <typename ... DimIndex>
-  static void apply(ArrayView<Value, RANK> const&& orig, ArrayView<Value, RANK>&& dest, unsigned int pos, unsigned int offset, DimIndex... idxs) {
+  static void apply(ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, unsigned int pos, unsigned int offset, DimIndex... idxs) {
       for(size_t i=0; i < orig.shape(Dim); ++i)
       {
           unsigned int displ = i;
@@ -108,7 +109,7 @@ struct array_initializer_partitioned_val_impl {
               displ += offset;
           }
           std::pair<int,int> pair_idx{i,displ};
-          array_initializer_partitioned_val_impl<Value, RANK, Dim+1, PartDim>::apply(std::move(orig), std::move(dest), pos, offset, idxs..., pair_idx);
+          array_initializer_partitioned_val_impl<Value, Rank, Dim+1, PartDim>::apply(std::move(orig), std::move(dest), pos, offset, idxs..., pair_idx);
       }
   }
 
@@ -116,25 +117,25 @@ struct array_initializer_partitioned_val_impl {
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int RANK, unsigned int PartDim>
-struct array_initializer_partitioned_val_impl<Value, RANK, RANK, PartDim> {
+template <typename Value, unsigned int Rank, unsigned int PartDim>
+struct array_initializer_partitioned_val_impl<Value, Rank, Rank, PartDim> {
     template <typename ... DimIndex>
-  static void apply(ArrayView<Value, RANK> const&& orig, ArrayView<Value, RANK>&& dest, unsigned int pos, unsigned int offset, DimIndex... idxs) {
+  static void apply(ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, unsigned int pos, unsigned int offset, DimIndex... idxs) {
       dest(std::get<1>(idxs)...) = orig(std::get<0>(idxs)...);
   }
 };
 
 //------------------------------------------------------------------------------
 
-template<unsigned int RANK, unsigned int PartDim>
+template<unsigned int Rank, unsigned int PartDim>
 struct array_initializer_partitioned_impl {
   static void apply( Array const& orig, Array& dest, unsigned int pos, unsigned int offset) {
       switch (orig.datatype().kind()) {
-        case DataType::KIND_REAL64: return array_initializer_partitioned_val_impl<double, RANK, 0, PartDim>::apply(orig, dest, pos, offset);
-        case DataType::KIND_REAL32: return array_initializer_partitioned_val_impl<float, RANK, 0, PartDim>::apply(orig, dest,pos, offset );
-        case DataType::KIND_INT32:  return array_initializer_partitioned_val_impl<int, RANK, 0, PartDim>::apply(orig, dest, pos, offset);
-        case DataType::KIND_INT64:  return array_initializer_partitioned_val_impl<long, RANK, 0, PartDim>::apply(orig, dest, pos, offset);
-        case DataType::KIND_UINT64: return array_initializer_partitioned_val_impl<unsigned long, RANK, 0, PartDim>::apply(orig, dest, pos, offset);
+        case DataType::KIND_REAL64: return array_initializer_partitioned_val_impl<double, Rank, 0, PartDim>::apply(orig, dest, pos, offset);
+        case DataType::KIND_REAL32: return array_initializer_partitioned_val_impl<float, Rank, 0, PartDim>::apply(orig, dest,pos, offset );
+        case DataType::KIND_INT32:  return array_initializer_partitioned_val_impl<int, Rank, 0, PartDim>::apply(orig, dest, pos, offset);
+        case DataType::KIND_INT64:  return array_initializer_partitioned_val_impl<long, Rank, 0, PartDim>::apply(orig, dest, pos, offset);
+        case DataType::KIND_UINT64: return array_initializer_partitioned_val_impl<unsigned long, Rank, 0, PartDim>::apply(orig, dest, pos, offset);
         default: {
           std::stringstream err;
           err << "data kind " << orig.datatype().kind() << " not recognised.";
@@ -161,7 +162,7 @@ struct array_initializer_partitioned {
       case 9: return array_initializer_partitioned_impl<9, PartDim>::apply(orig, dest, pos, offset);
       default: {
         std::stringstream err;
-        err << "too high rank";
+        err << "too high Rank";
         throw eckit::BadParameter(err.str(), Here());
       }
     }

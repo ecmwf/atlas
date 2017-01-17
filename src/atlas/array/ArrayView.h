@@ -46,20 +46,21 @@
 /// @author Willem Deconinck
 
 #pragma once
+
+#include "atlas/internals/atlas_defines.h"
+
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#include "atlas/array/gridtools/GridToolsArrayView.h"
+#else
+
 #define atlas_ArrayView_h
 
 #include <cstddef>
 #include <cstring>
 #include <cassert>
-#include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/LocalView.h"
 #include "eckit/exception/Exceptions.h"
-
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#include "atlas/array/gridtools/GridToolsTraits.h"
-#include "atlas/array/gridtools/GridToolsArrayHelpers.h"
-#endif
 
 namespace atlas {
 namespace array {
@@ -77,121 +78,6 @@ namespace array {
 
 namespace atlas {
 namespace array {
-
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-
-template< typename DATA_TYPE, int RANK >
-class ArrayView
-{
-public:
-// -- Type definitions
-  typedef ArrayView_iterator<DATA_TYPE,RANK>         iterator;
-  typedef ArrayView_const_iterator<DATA_TYPE,RANK>   const_iterator;
-  typedef typename remove_const<DATA_TYPE>::type  value_type;
-
-  using data_view_t = data_view_tt<DATA_TYPE, RANK>;
-
-public:
-
-    ArrayView( const ArrayView& other ) :
-        gt_data_view_(other.gt_data_view_)
-    {
-      std::memcpy(shape_,other.shape_,sizeof(size_t)*RANK);
-      std::memcpy(strides_,other.strides_,sizeof(size_t)*RANK);
-      size_ = other.size_;
-      // TODO: check compatibility
-    }
-
-    ArrayView(data_view_t data_view, const Array& array) :
-        gt_data_view_(data_view)
-    {
-      using seq = ::gridtools::apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, RANK>::type>;
-
-        using value_t = typename data_view_t::data_store_t::data_t;
-        constexpr static unsigned int ndims = data_view_t::data_store_t::storage_info_t::ndims;
-        auto gt_host_view_ = make_gt_host_view<value_t, ndims, true> ( array );
-
-      auto stridest = seq::template apply<
-          std::vector<size_t>,
-          atlas::array::gridtools::get_stride_component<unsigned long, ::gridtools::static_uint<RANK> >::template get_component>(
-          &(gt_host_view_.storage_info()));
-      auto shapet = seq::template apply<std::vector<size_t>, atlas::array::gridtools::get_shape_component>(&(gt_host_view_.storage_info()));
-
-      std::memcpy(strides_, &(stridest[0]), sizeof(size_t)*RANK);
-      std::memcpy(shape_, &(shapet[0]), sizeof(size_t)*RANK);
-
-      size_ = gt_host_view_.storage_info().size();
-    }
-
-    DATA_TYPE* data() { return gt_data_view_.data(); }
-    DATA_TYPE const* data() const { return gt_data_view_.data(); }
-
-    template < typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == RANK), int>::type >
-    DATA_TYPE&
-    GT_FUNCTION
-    operator()(Coords... c) {
-        assert(sizeof...(Coords) == RANK);
-        return gt_data_view_(c...);
-    }
-
-    template <typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == RANK), int>::type>
-    GT_FUNCTION
-    DATA_TYPE const& operator()(Coords... c) const {
-      return gt_data_view_(c...);
-    }
-
-    size_t shape(size_t idx) const { return shape_[idx]; }
-
-    LocalView<DATA_TYPE,RANK-1> at(const size_t i) const {
-      assert( i < shape_[0] );
-      return LocalView<DATA_TYPE,RANK-1>(
-                const_cast<DATA_TYPE*>(data())+strides_[0]*i,
-                shape_+1,
-                strides_+1 );
-    }
-
-    data_view_t& data_view() { return gt_data_view_;}
-
-   size_t rank() const { return RANK; }
-   size_t size() const { return size_; }
-
-   void assign(const DATA_TYPE& value) {
-      ASSERT( contiguous() );
-      DATA_TYPE* raw_data = data();
-      for( size_t j=0; j<size_; ++j ) {
-        raw_data[j] = value;
-      }
-   }
-
-   bool valid() const {
-       return gt_data_view_.valid();
-   }
-
-    bool contiguous() const
-    {
-      return (size_ == shape_[0]*strides_[0] ? true : false);
-    }
-
-    void dump(std::ostream& os) const
-    {
-      ASSERT( contiguous() );
-      const DATA_TYPE* data_ = data();
-      os << "size: " << size() << " , values: ";
-      os << "[ ";
-      for( size_t j=0; j<size(); ++ j )
-        os << data_[j] << " ";
-      os << "]";
-    }
-
-private:
-    data_view_t gt_data_view_;
-    size_t shape_[RANK];
-    size_t strides_[RANK];
-    size_t size_;
-};
-
-#else
-
 
 template< typename DATA_TYPE >
 class ArrayView<DATA_TYPE,0>
@@ -598,9 +484,10 @@ private:
 };
 
 //------------------------------------------------------------------------------------------------------
-#endif
 
 } // namespace array
 } // namespace atlas
 
 #include "atlas/array/native/ArrayView_impl.h"
+
+#endif

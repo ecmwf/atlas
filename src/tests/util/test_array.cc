@@ -20,7 +20,7 @@ namespace test {
 
 BOOST_AUTO_TEST_CASE(test_array) {
   Array* ds = Array::create<double>(4ul);
-  auto hv = make_gt_host_view<double, 1>(*ds);
+  auto hv = atlas::array::gridtools::make_gt_host_view<double, 1>(*ds);
   hv(3) = 4.5;
 
   ArrayView<double, 1> atlas_hv = make_host_view<double, 1>(*ds);
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(test_array_zero_size) {
 
 BOOST_AUTO_TEST_CASE(test_create) {
   Array* ds = Array::create(array::DataType::create<int>(), ArrayShape({4, 3}));
-  auto hv = make_gt_host_view<int, 2>(*ds);
+  auto hv = atlas::array::gridtools::make_gt_host_view<int, 2>(*ds);
   hv(3, 2) = 4;
 
   ArrayView<int, 2> atlas_hv = make_host_view<int, 2>(*ds);
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(test_create) {
 
 BOOST_AUTO_TEST_CASE(test_make_view) {
   Array* ds = Array::create<double>(4ul);
-  auto hv = make_gt_host_view<double, 1>(*ds);
+  auto hv = atlas::array::gridtools::make_gt_host_view<double, 1>(*ds);
   hv(3) = 4.5;
 
   ArrayView<double, 1> atlas_hv = make_view<double, 1>(*ds);
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(test_localview) {
 BOOST_AUTO_TEST_CASE(test_array_shape) {
   ArrayShape as{2, 3};
   Array* ds = Array::create<double>(as);
-  auto hv = make_gt_host_view<double, 2>(*ds);
+  auto hv = atlas::array::gridtools::make_gt_host_view<double, 2>(*ds);
   ArrayView<double, 2> atlas_hv = make_host_view<double, 2>(*ds);
 
   hv(1, 1) = 4.5;

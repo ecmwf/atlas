@@ -28,7 +28,7 @@ class StorageView
 {
 public:
 
-  using storage_view_t = data_view_tt<DATA_TYPE, 1>;
+  using storage_view_t = gridtools::data_view_tt<DATA_TYPE, 1>;
 
 public:
 

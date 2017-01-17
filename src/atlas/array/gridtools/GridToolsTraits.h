@@ -1,8 +1,16 @@
 #pragma once
 
 #include "atlas/internals/atlas_defines.h"
-#include "storage-facility.hpp"
 
+//------------------------------------------------------------------------------
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#define ENABLE_GPU
+#endif
+#include "storage-facility.hpp"
+#ifdef ENABLE_GPU
+#undef ENABLE_GPU
+#endif
+//------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
@@ -20,18 +28,15 @@ using storage_traits = ::gridtools::storage_traits< ::gridtools::enumtype::Host 
 
 //------------------------------------------------------------------------------
 
-} // namespace gridtools
-
-//------------------------------------------------------------------------------
-
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
+template <typename Value, unsigned int Rank, bool ReadOnly = false>
 using data_view_tt = ::gridtools::data_view<
         gridtools::storage_traits::data_store_t<
           Value,
-          gridtools::storage_traits::storage_info_t<0, NDims> >,
+          gridtools::storage_traits::storage_info_t<0, Rank> >,
           ReadOnly>;
 
 //------------------------------------------------------------------------------
 
+} // namespace gridtools
 } // namespace array
 } // namespace atlas

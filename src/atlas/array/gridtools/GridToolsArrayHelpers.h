@@ -10,15 +10,11 @@
 
 #pragma once
 
-#include <vector>
-#include <iosfwd>
-#include <iterator>
+#include <array>
 #include <type_traits>
-#include "eckit/memory/Owned.h"
-#include "eckit/exception/Exceptions.h"
 #include "atlas/array/ArrayUtil.h"
-#include "atlas/array/DataType.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
+#include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------
 
@@ -26,9 +22,9 @@ namespace atlas {
 namespace array {
 namespace gridtools {
 
-template <unsigned int NDims>
-std::array<unsigned int, NDims> get_array_from_vector(std::vector<size_t> const& values) {
-    std::array<unsigned int, NDims> array;
+template <unsigned int Rank>
+std::array<unsigned int, Rank> get_array_from_vector(std::vector<size_t> const& values) {
+    std::array<unsigned int, Rank> array;
     std::copy(values.begin(), values.end(), array.begin());
     return array;
 }
@@ -65,7 +61,7 @@ void check_dimension_lengths(ArrayShape const&  shape, Dims...d) {
     check_dimension_lengths_impl<sizeof...(d), 0>::apply(shape, d...);
 }
 
-template<unsigned int NDims>
+template<unsigned int Rank>
 struct default_layout_t {
 
     template<typename T>
@@ -77,7 +73,7 @@ struct default_layout_t {
         using type = ::gridtools::layout_map<Indices...>;
     };
 
-    using type = typename get_layout< typename ::gridtools::make_gt_integer_sequence<unsigned int, NDims>::type >::type;
+    using type = typename get_layout< typename ::gridtools::make_gt_integer_sequence<unsigned int, Rank>::type >::type;
 };
 
 
@@ -95,7 +91,7 @@ struct default_layout_t {
     };
   };
 
-  template <typename Value, typename RANKS>
+  template <typename Value, typename RankS>
   struct get_stride_component {
     template <int Idx>
     struct get_component {
@@ -143,11 +139,11 @@ struct default_layout_t {
    create_gt_storage(UInts... dims) {
       static_assert((sizeof...(dims) > 0), "Error: can not create storages without any dimension");
 
-      constexpr static unsigned int ndims = get_pack_size<UInts...>::type::value;
+      constexpr static unsigned int rank = get_pack_size<UInts...>::type::value;
       typedef gridtools::storage_traits::storage_info_t<
           0,
-          ndims,
-          typename ::gridtools::zero_halo<ndims>::type,
+          rank,
+          typename ::gridtools::zero_halo<rank>::type,
           LayoutMap
       > storage_info_ty;
       typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
@@ -158,20 +154,20 @@ struct default_layout_t {
       return ds;
   }
 
-  template <typename Value, unsigned int NDims>
+  template <typename Value, unsigned int Rank>
   static gridtools::storage_traits::data_store_t<
       Value, gridtools::storage_traits::storage_info_t<
-                 0, NDims,
-                 typename ::gridtools::zero_halo<NDims>::type,
-                 typename default_layout_t<NDims>::type > >*
+                 0, Rank,
+                 typename ::gridtools::zero_halo<Rank>::type,
+                 typename default_layout_t<Rank>::type > >*
   wrap_gt_storage(
       Value* data,
-      std::array<unsigned int, NDims>&& shape, std::array<unsigned int, NDims>&& strides)
+      std::array<unsigned int, Rank>&& shape, std::array<unsigned int, Rank>&& strides)
   {
-      static_assert((NDims > 0), "Error: can not create storages without any dimension");
+      static_assert((Rank > 0), "Error: can not create storages without any dimension");
       typedef gridtools::storage_traits::storage_info_t<
-          0, NDims, typename ::gridtools::zero_halo<NDims>::type,
-          typename default_layout_t<NDims>::type> storage_info_ty;
+          0, Rank, typename ::gridtools::zero_halo<Rank>::type,
+          typename default_layout_t<Rank>::type> storage_info_ty;
       typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
       storage_info_ty si(shape, strides);
@@ -191,13 +187,13 @@ struct default_layout_t {
           ::gridtools::apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
 
       return ArraySpec(
-        ArrayShape{(unsigned long)dims...},
+          ArrayShape{(unsigned long)dims...},
           seq::template apply<
-                        std::vector<unsigned long>,
+                        ArrayStrides,
                         get_stride_component<unsigned long, typename get_pack_size<Dims...>::type>::template get_component>(
                         storage_info_ptr),
           seq::template apply<
-                        std::vector<unsigned long>,
+                        ArrayLayout,
                         get_layout_map_component<unsigned long, Layout>::template get_component>()
         );
   }

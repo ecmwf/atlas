@@ -275,7 +275,6 @@ array/ArrayView.cc
 array/StorageView.h
 array/DataType.h
 array/MakeView.h
-array/MakeView_fwd.h
 array/Vector.h
 array/gridtools/GridToolsArray.cc
 array/gridtools/GridToolsArrayInsert.h
@@ -284,6 +283,10 @@ array/gridtools/GridToolsTraits.h
 array/gridtools/GridToolsArrayHelpers.h
 array/gridtools/GridToolsArrayInitializer.h
 array/gridtools/GridToolsArrayResize.h
+array/gridtools/GridToolsArrayView.h
+array/gridtools/GridToolsArrayView.cc
+array/gridtools/GridToolsMakeView.h
+array/gridtools/GridToolsMakeView.cc
 )
 
 list( APPEND atlas_util_srcs
@@ -329,7 +332,6 @@ internals/LonLatMicroDeg.h
 internals/Parameters.h
 internals/PeriodicTransform.h
 internals/Unique.h
-internals/MPLArrayView.h
 )
 
 

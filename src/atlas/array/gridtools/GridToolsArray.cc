@@ -9,10 +9,10 @@
  */
 
 #include <vector>
-#include <iosfwd>
-#include <iterator>
+#include <iostream>
 #include <type_traits>
 
+#include "atlas/array/Array.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array/gridtools/GridToolsDataStore.h"
 #include "atlas/array/gridtools/GridToolsArrayHelpers.h"

@@ -1,5 +1,3 @@
-#pragma once
-
 /*
 * (C) Copyright 1996-2016 ECMWF.
 *
@@ -12,10 +10,12 @@
 
 #pragma once
 
-//------------------------------------------------------------------------------
+#include <cstddef>
 
 namespace atlas {
 namespace array {
+
+//------------------------------------------------------------------------------
 
 template <typename T>
 class Vector {
@@ -52,5 +52,8 @@ private:
   T* data_;
   size_t size_;
 };
-}
-}
+
+//------------------------------------------------------------------------------
+
+} // namespace array
+} // namespace atlas

@@ -19,7 +19,6 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/internals/MPLArrayView.h"
 
 namespace atlas {
 namespace parallel {
