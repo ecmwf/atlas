@@ -34,142 +34,149 @@
 /// Example 2:
 ///     int[] array = { 1, 2, 3, 4, 5, 6, 7, 8, 9};
 ///     int[2] shape = { 3, 3 };
-///     ArrayView<int,2> matrix( array, shape );
+///     LocalView<int,2> matrix( array, shape );
 /// which is identical for this matrix to previous Example 1
 ///
 /// @author Willem Deconinck
 #pragma once
 
 #include <cstddef>
-#include <cstring>
 #include <cassert>
 #include <type_traits>
-#include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
+#include "eckit/exception/Exceptions.h"
+
+// TODO: boundschecking
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
 
-  template< typename DATA_TYPE, int RANK >
-  class LocalView
-  {
-  public:
-    DATA_TYPE *data_;
-    size_t shape_[RANK];
-    size_t strides_[RANK];
-    size_t size_;
-  public:
-    size_t size() const { return size_;}
+template< typename Value, int Rank >
+class LocalView {
+public:
 
-  // -- Type definitions
-    typedef typename remove_const<DATA_TYPE>::type  value_type;
+// -- Type definitions
+    typedef typename remove_const<Value>::type  value_type;
 
-    using degenerated_array_return_t = typename std::conditional<(RANK==1), DATA_TYPE&, LocalView<DATA_TYPE,RANK-1> >::type;
+    using degenerated_array_return_t = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
 
     template <typename ReturnType = degenerated_array_return_t, bool ToScalar = false>
     struct degenerate_local_array {
-      degenerate_local_array(LocalView<DATA_TYPE, RANK> const& lv) : lv_(lv) {}
-      LocalView<DATA_TYPE, RANK> const& lv_;
-      ReturnType apply(const size_t i) const {
-        return LocalView<DATA_TYPE, RANK - 1>(lv_.data_ + lv_.strides_[0] * i, lv_.shape_ + 1, lv_.strides_ + 1);
-      }
+        degenerate_local_array(LocalView<value_type, Rank> const& lv) : lv_(lv) {}
+        LocalView<value_type, Rank> const& lv_;
+        ReturnType apply(const size_t i) const {
+            return LocalView<value_type, Rank - 1>(lv_.data_ + lv_.strides_[0] * i, lv_.shape_ + 1, lv_.strides_ + 1);
+        }
     };
 
     template <typename ReturnType>
     struct degenerate_local_array<ReturnType, true> {
-      degenerate_local_array(LocalView<DATA_TYPE, RANK> const& lv) : lv_(lv) {}
-
-      LocalView<DATA_TYPE, RANK> const& lv_;
-      ReturnType apply(const size_t i) const {
-        return *(lv_.data_ + lv_.strides_[0] * i);
-        ;
-      }
+        degenerate_local_array(LocalView<value_type, Rank> const& lv) : lv_(lv) {}
+        LocalView<value_type, Rank> const& lv_;
+        ReturnType apply(const size_t i) const {
+            return *(lv_.data_ + lv_.strides_[0] * i);
+        }
     };
 
-  public:
+public:
 
-      LocalView( DATA_TYPE* data, const size_t shape[], const size_t strides[] ) :
-        data_(data)
-      {
-        size_ = 1;
-        for( size_t j=0; j<RANK; ++j ) {
-          shape_[j] = shape[j];
-          strides_[j] = strides[j];
-          size_ *= shape_[j];
-        }
-      }
+// -- Constructors
 
-      LocalView( DATA_TYPE* data, const size_t shape[] ) :
-        data_(data)
-      {
+    LocalView( value_type* data, const size_t shape[], const size_t strides[] ) :
+        data_(data) {
         size_ = 1;
-        for( int j=RANK-1; j>=0; --j ) {
-          shape_[j] = shape[j];
-          strides_[j] = size_;
-          size_ *= shape_[j];
+        for( size_t j=0; j<Rank; ++j ) {
+            shape_[j] = shape[j];
+            strides_[j] = strides[j];
+            size_ *= shape_[j];
         }
-      }
+    }
 
-      LocalView( DATA_TYPE* data, const ArrayShape& shape ) :
-        data_(data)
-      {
+    LocalView( value_type* data, const size_t shape[] ) :
+        data_(data) {
         size_ = 1;
-        for( int j=RANK-1; j>=0; --j ) {
-          shape_[j]   = shape[j];
-          strides_[j] = size_;
-          size_ *= shape_[j];
+        for( int j=Rank-1; j>=0; --j ) {
+            shape_[j] = shape[j];
+            strides_[j] = size_;
+            size_ *= shape_[j];
         }
-      }
+    }
+
+    LocalView( value_type* data, const ArrayShape& shape ) :
+        data_(data) {
+        size_ = 1;
+        for( int j=Rank-1; j>=0; --j ) {
+            shape_[j]   = shape[j];
+            strides_[j] = size_;
+            size_ *= shape_[j];
+        }
+    }
+
+// -- Access methods
+
+    template < typename... Coords >
+    value_type&
+    operator()(Coords... c) {
+        assert(sizeof...(Coords) == Rank);
+        return data_[index(c...)];
+    }
+
+    template < typename... Coords >
+    const value_type&
+    operator()(Coords... c) const {
+        assert(sizeof...(Coords) == Rank);
+        return data_[index(c...)];
+    }
+
+    degenerated_array_return_t at(const size_t i) const {
+        return degenerate_local_array<degenerated_array_return_t, Rank==1>(*this).apply(i);
+    }
+
+    size_t size() const { return size_;}
+
+    size_t shape(size_t idx) const { return shape_[idx]; }
+
+    value_type const* data() const { return data_; }
+    value_type*       data()       { return data_; }
+
+    bool contiguous() const {
+        return (size_ == shape_[0]*strides_[0] ? true : false);
+    }
+
+    void assign(const value_type& value) {
+        ASSERT( contiguous() );
+        value_type* raw_data = data();
+        for( size_t j=0; j<size_; ++j ) {
+            raw_data[j] = value;
+        }
+    }
 
 private:
-      template < typename... Ints >
-      constexpr int index_part(int cnt, int first, Ints... ints) const {
-          return (cnt < RANK) ? first * strides_[cnt] + index_part(cnt + 1, ints..., first) : 0;
-      }
 
-      template < typename... Ints >
-      constexpr int index(Ints... idx) const {
-          return index_part(0, idx...);
-      }
-public:
-      template < typename... Coords >
-      DATA_TYPE&
-      operator()(Coords... c) {
-          assert(sizeof...(Coords) == RANK);
-          return data_[index(c...)];
-      }
+// -- Private methods
 
-      template < typename... Coords >
-      const DATA_TYPE&
-      operator()(Coords... c) const {
-          assert(sizeof...(Coords) == RANK);
-          return data_[index(c...)];
-      }
+    template < typename... Ints >
+    constexpr int index_part(int cnt, int first, Ints... ints) const {
+        return (cnt < Rank) ? first * strides_[cnt] + index_part(cnt + 1, ints..., first) : 0;
+    }
 
-      size_t shape(size_t idx) const { return shape_[idx]; }
+    template < typename... Ints >
+    constexpr int index(Ints... idx) const {
+        return index_part(0, idx...);
+    }
 
-      degenerated_array_return_t at(const size_t i) const {
-          return degenerate_local_array<degenerated_array_return_t, RANK==1>(*this).apply(i); }
+private:
 
+// -- Private data
 
-      DATA_TYPE* data() { return data_; }
-      DATA_TYPE const* data() const { return data_; }
+  value_type *data_;
+  size_t size_;
+  size_t shape_[Rank];
+  size_t strides_[Rank];
 
-      void assign(const DATA_TYPE& value) {
-        ASSERT( contiguous() );
-        DATA_TYPE* raw_data = data();
-        for( size_t j=0; j<size_; ++j ) {
-          raw_data[j] = value;
-        }
-      }
-
-      bool contiguous() const
-      {
-        return (size_ == shape_[0]*strides_[0] ? true : false);
-      }
-  };
+};
 
 } // namespace array
 } // namespace atlas

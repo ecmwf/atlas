@@ -285,6 +285,9 @@ array/gridtools/GridToolsArrayInitializer.h
 array/gridtools/GridToolsArrayResize.h
 array/gridtools/GridToolsArrayView.h
 array/gridtools/GridToolsArrayView.cc
+array/gridtools/GridToolsIndexView.h
+array/gridtools/GridToolsIndexView.cc
+array/gridtools/GridToolsStorageView.h
 array/gridtools/GridToolsMakeView.h
 array/gridtools/GridToolsMakeView.cc
 )

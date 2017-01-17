@@ -9,10 +9,7 @@
  */
 #pragma once
 
-#include "atlas/internals/atlas_defines.h"
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#include "atlas/array/gridtools/GridToolsStorageView.h"
-#else
+#include "atlas/array/gridtools/GridToolsTraits.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -22,31 +19,37 @@ namespace array {
 //------------------------------------------------------------------------------------------------------
 
 template< typename Value >
-class StorageView {
-  typedef void* storage_view_t;
+class StorageView
+{
 public:
+
+    using storage_view_t = gridtools::data_view_tt<Value, 1>;
+
+public:
+
     StorageView(storage_view_t storage_view, size_t size, bool contiguous = true) :
-        native_storage_view_(storage_view),
+        gt_storage_view_(storage_view),
         size_(size),
         contiguous_(contiguous)
     {}
 
-    Value* data() { return (DATA_TYPE*) native_storage_view_; }
+    Value* data() { return gt_storage_view_.data(); }
 
     size_t size() { return size_; }
 
     bool contiguous() const { return contiguous_; }
 
-    void assign(const DATA_TYPE& value) {
+    void assign(const Value& value) {
         ASSERT( contiguous() );
-        DATA_TYPE* raw_data = data();
+        Value* raw_data = data();
         for( size_t j=0; j<size_; ++j ) {
             raw_data[j] = value;
         }
     }
 
+
 private:
-    storage_view_t native_storage_view_;
+    storage_view_t gt_storage_view_;
     size_t size_;
     bool contiguous_;
 };
@@ -55,4 +58,3 @@ private:
 
 } // namespace array
 } // namespace atlas
-#endif

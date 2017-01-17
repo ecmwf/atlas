@@ -37,15 +37,10 @@
 #define atlas_IndexView_h
 
 #include "atlas/internals/atlas_config.h"
-
 #include "atlas/internals/atlas_defines.h"
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#include "atlas/array/gridtools/GridToolsTraits.h"
-#endif
-
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#include <eckit/exception/Exceptions.h>
-#endif
+#include "atlas/array/gridtools/GridToolsIndexView.h"
+#else
 
 #ifdef ATLAS_INDEXVIEW_BOUNDS_CHECKING
 #include <eckit/exception/Exceptions.h>
@@ -133,60 +128,6 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-
-template< typename DATA_TYPE, int RANK >
-class IndexView
-{
-public:
-// -- Type definitions
-#ifdef ATLAS_HAVE_FORTRAN
-  typedef detail::FortranIndex<DATA_TYPE> Index;
-#else
-  typedef DATA_TYPE& Index;
-#endif
-  using data_view_t = gridtools::data_view_tt<DATA_TYPE, RANK>;
-
-public:
-
-    IndexView(data_view_t data_view) : gt_data_view_(data_view)
-    {
-      size_ = gt_data_view_.storage_info().size();
-    }
-
-    template < typename... Coords >
-    Index
-    GT_FUNCTION
-    operator()(Coords... c) {
-        assert(sizeof...(Coords) == RANK);
-        return INDEX_REF( &gt_data_view_(c...) );
-    }
-
-    template <typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == RANK), int>::type>
-    GT_FUNCTION
-    DATA_TYPE const operator()(Coords... c) const {
-      return gt_data_view_(c...) FROM_FORTRAN;
-    }
-
-    size_t size() const { return size_; }
-
-    void dump(std::ostream& os) const
-    {
-      os << "size: " << size() << " , values: ";
-      os << "[ ";
-      for( size_t j=0; j<size(); ++ j )
-        os << (*this)(j) << " ";
-      os << "]" << std::endl;
-    }
-
-
-private:
-    data_view_t gt_data_view_;
-    size_t size_;
-};
-
-#else
-
 template< typename DATA_TYPE, int RANK >
 class IndexView
 {};
@@ -231,12 +172,10 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-#endif
-
-//------------------------------------------------------------------------------------------------------
-
 } // namespace array
 } // namespace atlas
+
+#endif
 
 #undef CHECK_RANK
 #undef CHECK_BOUNDS
