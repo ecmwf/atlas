@@ -34,6 +34,7 @@ MethodBuilder<KNearestNeighbours> __builder("k-nearest-neighbours");
 
 
 KNearestNeighbours::KNearestNeighbours(const Method::Config& config) : KNearestNeighboursBase(config) {
+    k_ = 1;
     config.get("k-nearest-neighbours", k_);
     ASSERT(k_);
 }
