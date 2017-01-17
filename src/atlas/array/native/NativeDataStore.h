@@ -19,45 +19,93 @@ namespace atlas {
 namespace array {
 namespace native {
 
-    template<typename T>
-    struct DataStore : ArrayDataStore
-    {
+template<typename Value>
+class DataStore : public ArrayDataStore {
+public:
 
-        void clone_to_device() const {
-        }
+    DataStore(size_t size) :
+        data_store_(size) {
+    }
 
-        void clone_from_device() const {
-        }
+    void clone_to_device() const {
+    }
 
-        bool valid() const {
-            return true;
-        }
+    void clone_from_device() const {
+    }
 
-        void sync() const {
-        }
+    bool valid() const {
+        return true;
+    }
 
-        bool is_on_host() const {
-            return true;
-        }
+    void sync() const {
+    }
 
-        bool is_on_device() const {
-            return false;
-        }
+    bool is_on_host() const {
+        return true;
+    }
 
-        void reactivate_device_write_views() const {
-        }
+    bool is_on_device() const {
+        return false;
+    }
 
-        void reactivate_host_write_views() const {
-            data_store_->reactivate_host_write_views();
-        }
+    void reactivate_device_write_views() const {
+    }
 
-        void* void_data_store() {
-            return static_cast<void*>( &data_store_ );
-        }
+    void reactivate_host_write_views() const {
+    }
 
-    private:
-        std::vector<T> data_store_;
-    };
+    void* void_data_store() {
+        return static_cast<void*>( &data_store_.front() );
+    }
+
+private:
+    std::vector<Value> data_store_;
+};
+
+//------------------------------------------------------------------------------
+
+template<typename Value>
+class WrappedDataStore : public ArrayDataStore {
+public:
+
+    WrappedDataStore(Value* data_store) :
+        data_store_(data_store) {
+    }
+
+    void clone_to_device() const {
+    }
+
+    void clone_from_device() const {
+    }
+
+    bool valid() const {
+        return true;
+    }
+
+    void sync() const {
+    }
+
+    bool is_on_host() const {
+        return true;
+    }
+
+    bool is_on_device() const {
+        return false;
+    }
+
+    void reactivate_device_write_views() const {
+    }
+
+    void reactivate_host_write_views() const {
+    }
+
+    void* void_data_store() {
+        return static_cast<void*>( data_store_ );
+    }
+
+private:
+    Value* data_store_;
+};
 
 } // namespace native
 } // namespace array

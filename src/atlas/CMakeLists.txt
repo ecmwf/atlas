@@ -264,11 +264,6 @@ array/ArrayLayout.h
 array/ArrayIdx.h
 array/ArraySpec.h
 array/ArraySpec.cc
-array/native/NativeArray.h
-array/native/NativeArray.cc
-array/native/NativeDataStore.h
-array/native/ArrayView_iterator.h
-array/native/ArrayView_impl.h
 array/IndexView.h
 array/IndexView.cc
 array/LocalView.h
@@ -295,6 +290,12 @@ array/gridtools/GridToolsIndexView.cc
 array/gridtools/GridToolsStorageView.h
 array/gridtools/GridToolsMakeView.h
 array/gridtools/GridToolsMakeView.cc
+)
+else()
+list( APPEND atlas_array_srcs
+array/native/NativeArray.cc
+array/native/NativeDataStore.h
+array/native/ArrayView_impl.h
 )
 endif()
 

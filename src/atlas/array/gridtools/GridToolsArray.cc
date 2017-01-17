@@ -115,7 +115,6 @@ template <typename Value> Array* ArrayBackend<Value>::wrap(Value* data, const Ar
   }
 }
 
-
 Array* Array::create(DataType datatype, const ArrayShape& shape)
 {
   switch( datatype.kind() )
