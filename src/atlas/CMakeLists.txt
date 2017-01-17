@@ -251,6 +251,10 @@ interpolation/method/FiniteElement.cc
 interpolation/method/FiniteElement.h
 interpolation/method/Intersect.cc
 interpolation/method/Intersect.h
+interpolation/method/KNearestNeighboursBase.cc
+interpolation/method/KNearestNeighboursBase.h
+interpolation/method/KNearestNeighbours.cc
+interpolation/method/KNearestNeighbours.h
 interpolation/method/Method.cc
 interpolation/method/Method.h
 interpolation/method/NearestNeighbour.cc

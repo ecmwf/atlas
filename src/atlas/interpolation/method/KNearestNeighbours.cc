@@ -5,11 +5,11 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction. and Interpolation
+ * does it submit to any jurisdiction.
  */
 
 
-#include "atlas/interpolation/method/NearestNeighbour.h"
+#include "atlas/interpolation/method/KNearestNeighbours.h"
 
 #include "eckit/log/Plural.h"
 #include "eckit/log/Timer.h"
@@ -17,6 +17,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
+
 
 namespace atlas {
 namespace interpolation {
@@ -26,13 +27,19 @@ namespace method {
 namespace {
 
 
-MethodBuilder<NearestNeighbour> __builder("nearest-neighbour");
+MethodBuilder<KNearestNeighbours> __builder("k-nearest-neighbours");
 
 
 }  // (anonymous namespace)
 
 
-void NearestNeighbour::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
+KNearestNeighbours::KNearestNeighbours(const Method::Config& config) : KNearestNeighboursBase(config) {
+    config.get("k-nearest-neighbours", k_);
+    ASSERT(k_);
+}
+
+
+void KNearestNeighbours::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
     using namespace atlas;
 
 
@@ -51,8 +58,10 @@ void NearestNeighbour::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
     // fill the sparse matrix
     std::vector< Triplet > weights_triplets;
-    weights_triplets.reserve(out_npts);
+    weights_triplets.reserve(out_npts * k_);
     {
+        std::vector<double> weights;
+
         eckit::TraceTimer<LibAtlas> timer("atlas::interpolation::method::NearestNeighbour::setup()");
         for (size_t ip = 0; ip < out_npts; ++ip) {
 
@@ -61,16 +70,34 @@ void NearestNeighbour::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
                 Log::debug() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
             }
 
-            // find the closest input point to the output point
+            // find the closest input points to the output point
             PointIndex3::Point p(coords[ip].data());
-            PointIndex3::NodeInfo nn = pTree_->nearestNeighbour(p);
-            size_t jp = nn.payload();
+            PointIndex3::NodeList nn = pTree_->kNearestNeighbours(p, k_);
 
-            // insert the weights into the interpolant matrix
-            ASSERT(jp < inp_npts);
-            weights_triplets.push_back(Triplet(ip, jp, 1));
+            // calculate weights (individual and total, to normalise) using distance squared
+            const size_t npts = nn.size();
+            ASSERT(npts);
+            weights.resize(npts, 0);
+
+            double sum = 0;
+            for (size_t j = 0; j < npts; ++j) {
+                PointIndex3::Point np = nn[j].point();
+                const double d2 = eckit::geometry::Point3::distance2(p, np);
+
+                weights[j] = 1. / (1. + d2);
+                sum += weights[j];
+            }
+            ASSERT(sum > 0);
+
+            // insert weights into the matrix
+            for (size_t j = 0; j < npts; ++j) {
+                size_t jp = nn[j].payload();
+                ASSERT(jp < inp_npts);
+                weights_triplets.push_back(Triplet(ip, jp, weights[j]/sum));
+            }
         }
     }
+
 
     // fill sparse matrix and return
     Matrix A(out_npts, inp_npts, weights_triplets);

@@ -9,8 +9,8 @@
  */
 
 
-#ifndef atlas_interpolation_method_NearestNeighbour_h
-#define atlas_interpolation_method_NearestNeighbour_h
+#ifndef atlas_interpolation_method_KNearestNeighbours_h
+#define atlas_interpolation_method_KNearestNeighbours_h
 
 #include "atlas/interpolation/method/KNearestNeighboursBase.h"
 
@@ -20,21 +20,23 @@ namespace interpolation {
 namespace method {
 
 
-class NearestNeighbour : public KNearestNeighboursBase {
+class KNearestNeighbours : public KNearestNeighboursBase {
 public:
 
-    NearestNeighbour(const Config& config) : KNearestNeighboursBase(config) {}
-    virtual ~NearestNeighbour() {}
+    KNearestNeighbours(const Config& config);
+    virtual ~KNearestNeighbours() {}
 
 protected:
 
     /**
      * @brief Create an interpolant sparse matrix relating two (pre-partitioned) meshes,
-     * using nearest neighbour method
+     * using the k-nearest neighbours method
      * @param meshSource mesh containing source elements
      * @param meshTarget mesh containing target points
      */
     void setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget);
+
+    size_t k_;
 
 };
 
