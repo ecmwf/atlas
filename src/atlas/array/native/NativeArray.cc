@@ -112,9 +112,7 @@ void ArrayT<Value>::resize( const ArrayShape& _shape )
     resized_data[j] = this_data[j];
   }
 
-  data_store_.swap(resized->data_store_);
-  spec_ = resized->spec();
-
+  replace(*resized);
   delete resized;
 }
 
@@ -145,9 +143,7 @@ void ArrayT<Value>::insert(size_t idx1, size_t size1)
   }
   ASSERT( c == this->size() );
 
-  data_store_.swap(resized->data_store_);
-  spec_ = resized->spec();
-
+  replace(*resized);
   delete resized;
 }
 

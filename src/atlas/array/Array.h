@@ -22,11 +22,8 @@ namespace array {
 // --------------------------------------------------------------------------------------------
 // Forward declarations
 
-// TODO: Remove ArrayBackendResize and ArrayBackendInsert
-class ArrayBackendResize;
-class ArrayBackendInsert;
-
 template <typename Value> class ArrayT;
+template <typename Value> class ArrayT_impl;
 
 // --------------------------------------------------------------------------------------------
 
@@ -34,15 +31,21 @@ class Array : public eckit::Owned {
 public:
 
   static Array* create( array::DataType, const ArrayShape& );
+
   static Array* create( array::DataType, const ArrayShape&, const ArrayLayout& );
+
   template <typename Value> static Array* create(size_t size0);
   template <typename Value> static Array* create(size_t size0, size_t size1);
   template <typename Value> static Array* create(size_t size0, size_t size1, size_t size2);
   template <typename Value> static Array* create(size_t size0, size_t size1, size_t size2, size_t size3);
   template <typename Value> static Array* create(size_t size0, size_t size1, size_t size2, size_t size3, size_t size4);
+
   template <typename Value> static Array* create(const ArrayShape& shape);
+
   template <typename Value> static Array* create(const ArrayShape& shape, const ArrayLayout& layout);
+
   template <typename Value> static Array* wrap(Value* data, const ArrayShape& shape);
+
   template <typename Value> static Array* wrap(Value* data, const ArraySpec& spec);
 
   size_t bytes() const { return sizeof_data() * size();}
@@ -72,6 +75,7 @@ public:
   virtual size_t sizeof_data() const = 0;
 
   virtual void resize(const ArrayShape& shape) = 0;
+
   virtual void resize(size_t size0) = 0;
   virtual void resize(size_t size0, size_t size1) = 0;
   virtual void resize(size_t size0, size_t size1, size_t size2) = 0;
@@ -104,58 +108,57 @@ public:
 
   ArraySpec& spec() {return spec_;}
 
-private:
-
-  template <typename Value>
-  friend class ArrayT;
+protected:
 
   ArraySpec spec_;
   std::unique_ptr<ArrayDataStore> data_store_;
 
-  // TODO: Remove ArrayBackendResize and ArrayBackendInsert
-  friend class ArrayBackendResize;
-  friend class ArrayBackendInsert;
+  void replace(Array& array) {
+    data_store_.swap(array.data_store_);
+    spec_ = array.spec_;
+  }
 
 };
 
 // --------------------------------------------------------------------------------------------
 
-template<typename Value>
-class ArrayT : public Array  {
+template<typename Value> class ArrayT : public Array {
 public:
 
-  ArrayT(size_t size0);
-  ArrayT(size_t size0, size_t size1);
-  ArrayT(size_t size0, size_t size1, size_t size2);
-  ArrayT(size_t size0, size_t size1, size_t size2, size_t size3);
-  ArrayT(size_t size0, size_t size1, size_t size2, size_t size3, size_t size4);
+    ArrayT(size_t size0);
+    ArrayT(size_t size0, size_t size1);
+    ArrayT(size_t size0, size_t size1, size_t size2);
+    ArrayT(size_t size0, size_t size1, size_t size2, size_t size3);
+    ArrayT(size_t size0, size_t size1, size_t size2, size_t size3, size_t size4);
 
-  ArrayT(const ArraySpec&);
+    ArrayT(const ArraySpec&);
 
-  ArrayT(const ArrayShape&);
+    ArrayT(const ArrayShape&);
 
-  ArrayT(const ArrayShape&, const ArrayLayout&);
+    ArrayT(const ArrayShape&, const ArrayLayout&);
 
-  virtual void insert(size_t idx1, size_t size1);
+    virtual void insert(size_t idx1, size_t size1);
 
-  virtual void resize(const ArrayShape&);
+    virtual void resize(const ArrayShape&);
 
-  virtual void resize(size_t size0);
-  virtual void resize(size_t size0, size_t size1);
-  virtual void resize(size_t size0, size_t size1, size_t size2);
-  virtual void resize(size_t size0, size_t size1, size_t size2, size_t size3);
-  virtual void resize(size_t size0, size_t size1, size_t size2, size_t size3, size_t size4);
+    virtual void resize(size_t size0);
+    virtual void resize(size_t size0, size_t size1);
+    virtual void resize(size_t size0, size_t size1, size_t size2);
+    virtual void resize(size_t size0, size_t size1, size_t size2, size_t size3);
+    virtual void resize(size_t size0, size_t size1, size_t size2, size_t size3, size_t size4);
 
-  virtual array::DataType datatype() const { return array::DataType::create<Value>(); }
+    virtual array::DataType datatype() const { return array::DataType::create<Value>(); }
 
-  virtual size_t sizeof_data() const {return sizeof(Value);}
+    virtual size_t sizeof_data() const {return sizeof(Value);}
 
-  virtual void dump(std::ostream& os) const;
+    virtual void dump(std::ostream& os) const;
+
+    // This constructor is used through the Array::create() or the Array::wrap() methods
+    ArrayT(ArrayDataStore*, const ArraySpec&);
 
 private:
-  // This constructor is used through the Array::create() or the Array::wrap() methods
-  friend class Array;
-  ArrayT(ArrayDataStore*, const ArraySpec&);
+    template <typename T>
+    friend class ArrayT_impl;
 };
 
 // --------------------------------------------------------------------------------------------
