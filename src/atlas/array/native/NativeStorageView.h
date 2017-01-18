@@ -7,43 +7,46 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
-
-#include <iostream>
-#include "atlas/array/IndexView.h"
+#pragma once
 
 //------------------------------------------------------------------------------------------------------
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 namespace atlas {
 namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank>
-IndexView<Value,Rank>::IndexView( Value* data, const size_t shape[1] ) :
-    data_( const_cast<Value*>(data) ) {
-    strides_[0]=1;
-    shape_[0]=shape[0];
-}
+template< typename Value >
+class StorageView {
+  typedef void* storage_view_t;
+public:
+    StorageView(storage_view_t storage_view, size_t size, bool contiguous = true) :
+        native_storage_view_(storage_view),
+        size_(size),
+        contiguous_(contiguous)
+    {}
 
-template <typename Value, int Rank>
-void IndexView<Value,Rank>::dump(std::ostream& os) const
-{
-  os << "size: " << size() << " , values: ";
-  os << "[ ";
-  for( size_t j=0; j<size(); ++ j )
-    os << (*this)(j) << " ";
-  os << "]" << std::endl;
-}
+    Value* data() { return (Value*) native_storage_view_; }
 
-//------------------------------------------------------------------------------------------------------
-// Explicit template instatiation
+    size_t size() { return size_; }
 
-template class IndexView<int,1>;
-template class IndexView<int,2>;
+    bool contiguous() const { return contiguous_; }
+
+    void assign(const Value& value) {
+        ASSERT( contiguous() );
+        Value* raw_data = data();
+        for( size_t j=0; j<size_; ++j ) {
+            raw_data[j] = value;
+        }
+    }
+
+private:
+    storage_view_t native_storage_view_;
+    size_t size_;
+    bool contiguous_;
+};
 
 //------------------------------------------------------------------------------------------------------
 
 } // namespace array
 } // namespace atlas
-#endif

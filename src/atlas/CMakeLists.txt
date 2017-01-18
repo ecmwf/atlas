@@ -256,7 +256,6 @@ interpolation/PointSet.cc
 list( APPEND atlas_array_srcs
 array/array_fwd.h
 array/Array.h
-array/Array.cc
 array/ArrayUtil.h
 array/ArrayShape.h
 array/ArrayStrides.h
@@ -265,11 +264,9 @@ array/ArrayIdx.h
 array/ArraySpec.h
 array/ArraySpec.cc
 array/IndexView.h
-array/IndexView.cc
 array/LocalView.h
 array/LocalView.cc
 array/ArrayView.h
-array/ArrayView.cc
 array/StorageView.h
 array/DataType.h
 array/MakeView.h
@@ -296,7 +293,11 @@ else()
 list( APPEND atlas_array_srcs
 array/native/NativeArray.cc
 array/native/NativeDataStore.h
-array/native/ArrayView_impl.h
+array/native/NativeArrayView.h
+array/native/NativeArrayView.cc
+array/native/NativeIndexView.h
+array/native/NativeIndexView.cc
+array/native/NativeStorageView.h
 )
 endif()
 

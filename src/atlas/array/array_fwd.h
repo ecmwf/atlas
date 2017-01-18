@@ -3,15 +3,22 @@
 namespace atlas {
 namespace array {
 
+class DataType;
+
+class ArraySpec;
+
 class Array;
 
-template<typename Value>
+template <typename Value>
+class ArrayT;
+
+template <typename Value>
 class StorageView;
 
-template<typename Value, int RANK>
+template <typename Value, int RANK>
 class ArrayView;
 
-template<typename Value, int RANK>
+template <typename Value, int RANK>
 class IndexView;
 
 template <typename Value, unsigned int NDims, bool ReadOnly = false>

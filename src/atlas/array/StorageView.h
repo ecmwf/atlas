@@ -13,46 +13,5 @@
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "atlas/array/gridtools/GridToolsStorageView.h"
 #else
-
-//------------------------------------------------------------------------------------------------------
-
-namespace atlas {
-namespace array {
-
-//------------------------------------------------------------------------------------------------------
-
-template< typename Value >
-class StorageView {
-  typedef void* storage_view_t;
-public:
-    StorageView(storage_view_t storage_view, size_t size, bool contiguous = true) :
-        native_storage_view_(storage_view),
-        size_(size),
-        contiguous_(contiguous)
-    {}
-
-    Value* data() { return (Value*) native_storage_view_; }
-
-    size_t size() { return size_; }
-
-    bool contiguous() const { return contiguous_; }
-
-    void assign(const Value& value) {
-        ASSERT( contiguous() );
-        Value* raw_data = data();
-        for( size_t j=0; j<size_; ++j ) {
-            raw_data[j] = value;
-        }
-    }
-
-private:
-    storage_view_t native_storage_view_;
-    size_t size_;
-    bool contiguous_;
-};
-
-//------------------------------------------------------------------------------------------------------
-
-} // namespace array
-} // namespace atlas
+#include "atlas/array/native/NativeStorageView.h"
 #endif
