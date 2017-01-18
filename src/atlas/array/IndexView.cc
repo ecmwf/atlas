@@ -8,9 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include <stdexcept>
-#include "atlas/field/Field.h"
-#include "atlas/array/Array.h"
+#include <iostream>
 #include "atlas/array/IndexView.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -21,69 +19,28 @@ namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
-#define TEMPLATE_SPECIALIZATION( DATA_TYPE ) \
-template<>\
-IndexView <DATA_TYPE, 1 >::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
-{ \
-  strides_[0]=array.stride(0);  shape_[0]=array.shape(0);\
-} \
-template<> \
-IndexView <DATA_TYPE, 1 >::IndexView( const field::Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
-{ \
-  strides_[0]=field.stride(0);  shape_[0]=field.shape(0); \
-} \
-template<> \
-IndexView<DATA_TYPE,2>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
-{ \
-  strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
-  strides_[1]=array.stride(1);       shape_[1]=array.shape(1); \
-  size_ = shape_[0]*shape_[1]; \
-} \
-template<> \
-IndexView<DATA_TYPE,2>::IndexView( const field::Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
-{ \
-  strides_[0]=field.stride(0);       shape_[0]=field.shape(0); \
-  strides_[1]=field.stride(1);       shape_[1]=field.shape(1); \
-  size_ = shape_[0]*shape_[1]; \
-} \
-template<> \
-IndexView<DATA_TYPE,3>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
-{ \
-  strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
-  strides_[1]=array.stride(1);       shape_[1]=array.shape(1); \
-  strides_[2]=array.stride(2);       shape_[2]=array.shape(2); \
-  size_ = shape_[0]*shape_[1]*shape_[2]; \
-} \
-template<> \
-IndexView<DATA_TYPE,3>::IndexView( const field::Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
-{ \
-  strides_[0]=field.stride(0);       shape_[0]=field.shape(0); \
-  strides_[1]=field.stride(1);       shape_[1]=field.shape(1); \
-  strides_[2]=field.stride(2);       shape_[2]=field.shape(2); \
-  size_ = shape_[0]*shape_[1]*shape_[2]; \
-} \
-template<> \
-IndexView<DATA_TYPE,4>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
-{ \
-  strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
-  strides_[1]=array.stride(1);       shape_[1]=array.shape(1); \
-  strides_[2]=array.stride(2);       shape_[2]=array.shape(2); \
-  strides_[3]=array.stride(3);       shape_[3]=array.shape(3); \
-  size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3]; \
-} \
-template<> \
-IndexView<DATA_TYPE,4>::IndexView( const field::Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
-{ \
-  strides_[0]=field.stride(0);       shape_[0]=field.shape(0); \
-  strides_[1]=field.stride(1);       shape_[1]=field.shape(1); \
-  strides_[2]=field.stride(2);       shape_[2]=field.shape(2); \
-  strides_[3]=field.stride(3);       shape_[3]=field.shape(3); \
-  size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3]; \
+template <typename Value, int Rank>
+IndexView<Value,Rank>::IndexView( Value* data, const size_t shape[1] ) :
+    data_( const_cast<Value*>(data) ) {
+    strides_[0]=1;
+    shape_[0]=shape[0];
 }
 
-//TEMPLATE_SPECIALIZATION(int);
+template <typename Value, int Rank>
+void IndexView<Value,Rank>::dump(std::ostream& os) const
+{
+  os << "size: " << size() << " , values: ";
+  os << "[ ";
+  for( size_t j=0; j<size(); ++ j )
+    os << (*this)(j) << " ";
+  os << "]" << std::endl;
+}
 
-#undef TEMPLATE_SPECIALIZATION
+//------------------------------------------------------------------------------------------------------
+// Explicit template instatiation
+
+template class IndexView<int,1>;
+template class IndexView<int,2>;
 
 //------------------------------------------------------------------------------------------------------
 

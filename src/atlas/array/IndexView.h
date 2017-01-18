@@ -41,44 +41,23 @@
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "atlas/array/gridtools/GridToolsIndexView.h"
 #else
+#include <iosfwd>
 
 #ifdef ATLAS_INDEXVIEW_BOUNDS_CHECKING
 #include <eckit/exception/Exceptions.h>
 
 
 #define CHECK_RANK(R)\
-  if(rank()!=R) { std::ostringstream msg; msg << "IndexView  rank mismatch: rank()="<<rank()<< " != " << R; throw eckit::OutOfRange(msg.str(),Here()); }
-#define CHECK_BOUNDS(idx) {\
-  for( size_t d=0; d<rank(); ++d ) { \
-    if(idx[d]>=shape_[d]) {std::ostringstream msg; msg << "index " << d << " out of bounds: " << idx[d] << " >= " << shape_[d]; throw eckit::OutOfRange(msg.str(),Here()); } } }
+  if(Rank!=R) { std::ostringstream msg; msg << "IndexView  rank mismatch: Rank="<<Rank<< " != " << R; throw eckit::OutOfRange(msg.str(),Here()); }
 #define CHECK_BOUNDS_1(i)\
-	if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }
+  if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }
 #define CHECK_BOUNDS_2(i,j)\
 	if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i,j) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }\
 	if(j>=shape_[1]) {std::ostringstream msg; msg << "IndexView(i,j) index out of bounds: j=" << j << " >= " << shape_[1]; throw eckit::OutOfRange(msg.str(),Here()); }
-#define CHECK_BOUNDS_3(i,j,k)\
-	if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i,j,k) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }\
-	if(j>=shape_[1]) {std::ostringstream msg; msg << "IndexView(i,j,k) index out of bounds: j=" << j << " >= " << shape_[1]; throw eckit::OutOfRange(msg.str(),Here()); }\
-	if(k>=shape_[2]) {std::ostringstream msg; msg << "IndexView(i,j,k) index out of bounds: k=" << k << " >= " << shape_[2]; throw eckit::OutOfRange(msg.str(),Here()); }
-#define CHECK_BOUNDS_4(i,j,k,l)\
-	if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i,j,k,l) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }\
-	if(j>=shape_[1]) {std::ostringstream msg; msg << "IndexView(i,j,k,l) index out of bounds: j=" << j << " >= " << shape_[1]; throw eckit::OutOfRange(msg.str(),Here()); }\
-	if(k>=shape_[2]) {std::ostringstream msg; msg << "IndexView(i,j,k,l) index out of bounds: k=" << k << " >= " << shape_[2]; throw eckit::OutOfRange(msg.str(),Here()); }\
-	if(l>=shape_[3]) {std::ostringstream msg; msg << "IndexView(i,j,k,l) index out of bounds: l=" << l << " >= " << shape_[3]; throw eckit::OutOfRange(msg.str(),Here()); }
-#define CHECK_BOUNDS_5(i,j,k,l,m)\
-	if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i,j,k,l,m) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }\
-	if(j>=shape_[1]) {std::ostringstream msg; msg << "IndexView(i,j,k,l,m) index out of bounds: j=" << j << " >= " << shape_[1]; throw eckit::OutOfRange(msg.str(),Here()); }\
-	if(k>=shape_[2]) {std::ostringstream msg; msg << "IndexView(i,j,k,l,m) index out of bounds: k=" << k << " >= " << shape_[2]; throw eckit::OutOfRange(msg.str(),Here()); }\
-	if(l>=shape_[3]) {std::ostringstream msg; msg << "IndexView(i,j,k,l,m) index out of bounds: l=" << l << " >= " << shape_[3]; throw eckit::OutOfRange(msg.str(),Here()); }\
-	if(m>=shape_[4]) {std::ostringstream msg; msg << "IndexView(i,j,k,l,m) index out of bounds: m=" << m << " >= " << shape_[4]; throw eckit::OutOfRange(msg.str(),Here()); }
 #else
 #define CHECK_RANK(R)
-#define CHECK_BOUNDS(idx)
 #define CHECK_BOUNDS_1(i)
 #define CHECK_BOUNDS_2(i,j)
-#define CHECK_BOUNDS_3(i,j,k)
-#define CHECK_BOUNDS_4(i,j,k,l)
-#define CHECK_BOUNDS_5(i,j,k,l,m)
 #endif
 
 //------------------------------------------------------------------------------------------------------
@@ -91,27 +70,27 @@ namespace array {
 namespace detail {
 // FortranIndex:
 // Helper class that does +1 and -1 operations on stored values
-template< typename DATA_TYPE >
+template< typename Value >
 class FortranIndex
 {
 public:
   enum { BASE = 1 };
 public:
-  FortranIndex(DATA_TYPE* idx): idx_(idx) {}
-  void set(const DATA_TYPE& value) { *(idx_) = value+BASE; }
-  DATA_TYPE get() const { return *(idx_)-BASE; }
-  void operator=(const DATA_TYPE& value) { set(value); }
-  FortranIndex<DATA_TYPE>& operator=(const FortranIndex<DATA_TYPE>& other) { set(other.get()); return *this; }
-  FortranIndex<DATA_TYPE>& operator+(const DATA_TYPE& value) { *(idx_)+=value; return *this; }
-  FortranIndex<DATA_TYPE>& operator-(const DATA_TYPE& value) { *(idx_)-=value; return *this; }
-  FortranIndex<DATA_TYPE>& operator--() { --(*(idx_)); return *this; }
-  FortranIndex<DATA_TYPE>& operator++() { ++(*(idx_)); return *this; }
+  FortranIndex(Value* idx): idx_(idx) {}
+  void set(const Value& value) { *(idx_) = value+BASE; }
+  Value get() const { return *(idx_)-BASE; }
+  void operator=(const Value& value) { set(value); }
+  FortranIndex<Value>& operator=(const FortranIndex<Value>& other) { set(other.get()); return *this; }
+  FortranIndex<Value>& operator+(const Value& value) { *(idx_)+=value; return *this; }
+  FortranIndex<Value>& operator-(const Value& value) { *(idx_)-=value; return *this; }
+  FortranIndex<Value>& operator--() { --(*(idx_)); return *this; }
+  FortranIndex<Value>& operator++() { ++(*(idx_)); return *this; }
 
   //implicit conversion
-  operator DATA_TYPE() const { return get(); }
+  operator Value() const { return get(); }
 
 private:
-  DATA_TYPE* idx_;
+  Value* idx_;
 };
 }
 
@@ -128,46 +107,32 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-template< typename DATA_TYPE, int RANK >
-class IndexView
-{};
-
-template< typename DATA_TYPE >
-class IndexView < DATA_TYPE, 1 >
-{
+template< typename Value, int Rank >
+class IndexView {
 public:
 #ifdef ATLAS_HAVE_FORTRAN
-  typedef detail::FortranIndex<DATA_TYPE> Index;
+  typedef detail::FortranIndex<Value> Index;
 #else
-  typedef DATA_TYPE& Index;
+  typedef Value& Index;
 #endif
 
 public:
 
-  IndexView( DATA_TYPE* data, const size_t shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
-  {
-    strides_[0]=1;
-    shape_[0]=shape[0];
-  }
+  IndexView( Value* data, const size_t shape[Rank] );
 
-  DATA_TYPE operator()(size_t i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
-  Index     operator()(size_t i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
+  Value operator()(size_t i) const { CHECK_RANK(1); CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
+  Index operator()(size_t i)       { CHECK_RANK(1); CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
+  Value operator()(size_t i, size_t j) const { CHECK_RANK(2); CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+strides_[1]*j) FROM_FORTRAN; }
+  Index operator()(size_t i, size_t j)       { CHECK_RANK(2); CHECK_BOUNDS_2(i,j); return INDEX_REF(data_+strides_[0]*i+strides_[1]*j); }
 
   size_t size() const { return shape_[0]; }
 
-  void dump(std::ostream& os) const
-  {
-    os << "size: " << size() << " , values: ";
-    os << "[ ";
-    for( size_t j=0; j<size(); ++ j )
-      os << (*this)(j) << " ";
-    os << "]" << std::endl;
-  }
+  void dump(std::ostream& os) const;
 
 private:
-  DATA_TYPE* data_;
-  size_t strides_[1];
-  size_t shape_[1];
+  Value* data_;
+  size_t strides_[Rank];
+  size_t shape_[Rank];
 };
 
 //------------------------------------------------------------------------------------------------------
