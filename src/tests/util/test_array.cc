@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(test_spec_layout_rev) {
   delete ds;
 
 
-  BOOST_CHECK_THROW( Array::create<double>(make_shape(4,5,6),make_layout(2,0,1)), eckit::BadParameter );
+  BOOST_CHECK_THROW( Array::create<double>(make_shape(4,5,6,2),make_layout(0,1,3,2)), eckit::BadParameter );
 }
 
 BOOST_AUTO_TEST_CASE(test_resize_throw) {
