@@ -8,7 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/array/ArrayView.h"
+#include "atlas/array/LocalView.h"
+#include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -18,7 +19,7 @@ namespace array {
 //------------------------------------------------------------------------------------------------------
 
 template <typename Value, int Rank>
-void ArrayView<Value,Rank>::assign(const value_type& value) {
+void LocalView<Value,Rank>::assign(const value_type& value) {
     ASSERT( contiguous() );
     value_type* raw_data = data();
     for( size_t j=0; j<size_; ++j ) {
@@ -29,7 +30,7 @@ void ArrayView<Value,Rank>::assign(const value_type& value) {
 //------------------------------------------------------------------------------------------------------
 
 template <typename Value, int Rank>
-void ArrayView<Value,Rank>::dump(std::ostream& os) const {
+void LocalView<Value,Rank>::dump(std::ostream& os) const {
 ASSERT( contiguous() );
 const value_type* data_ = data();
 os << "size: " << size() << " , values: ";
@@ -38,6 +39,10 @@ for( size_t j=0; j<size(); ++ j )
   os << data_[j] << " ";
 os << "]";
 }
+
+
+template <int Dim>
+static char array_dim();
 
 //------------------------------------------------------------------------------------------------------
 
@@ -50,11 +55,11 @@ os << "]";
 namespace atlas {
 namespace array {
 #define EXPLICIT_TEMPLATE_INSTANTIATION(Rank) \
-template class ArrayView<int,Rank>;\
-template class ArrayView<long,Rank>;\
-template class ArrayView<long unsigned,Rank>;\
-template class ArrayView<float,Rank>;\
-template class ArrayView<double,Rank>;\
+template class LocalView<int,Rank>;\
+template class LocalView<long,Rank>;\
+template class LocalView<long unsigned,Rank>;\
+template class LocalView<float,Rank>;\
+template class LocalView<double,Rank>;\
 
 // For each NDims in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION(1)

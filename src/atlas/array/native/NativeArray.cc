@@ -143,7 +143,7 @@ void ArrayT<Value>::insert(size_t idx1, size_t size1)
   for( size_t j=insert_end; j<resized->size(); ++j ) {
     resized_data[j] = this_data[c++];
   }
-  assert( c == this->size() );
+  ASSERT( c == this->size() );
 
   data_store_.swap(resized->data_store_);
   spec_ = resized->spec();

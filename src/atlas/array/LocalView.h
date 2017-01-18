@@ -41,12 +41,11 @@
 #pragma once
 
 #include <cstddef>
-#include <cassert>
 #include <type_traits>
+#include <sstream>
+#include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
 #include "eckit/exception/Exceptions.h"
-
-// TODO: boundschecking
 
 //------------------------------------------------------------------------------------------------------
 
@@ -58,27 +57,8 @@ class LocalView {
 public:
 
 // -- Type definitions
-    typedef typename remove_const<Value>::type  value_type;
-
-    using degenerated_array_return_t = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
-
-    template <typename ReturnType = degenerated_array_return_t, bool ToScalar = false>
-    struct degenerate_local_array {
-        degenerate_local_array(LocalView<value_type, Rank> const& lv) : lv_(lv) {}
-        LocalView<value_type, Rank> const& lv_;
-        ReturnType apply(const size_t i) const {
-            return LocalView<value_type, Rank - 1>(lv_.data_ + lv_.strides_[0] * i, lv_.shape_ + 1, lv_.strides_ + 1);
-        }
-    };
-
-    template <typename ReturnType>
-    struct degenerate_local_array<ReturnType, true> {
-        degenerate_local_array(LocalView<value_type, Rank> const& lv) : lv_(lv) {}
-        LocalView<value_type, Rank> const& lv_;
-        ReturnType apply(const size_t i) const {
-            return *(lv_.data_ + lv_.strides_[0] * i);
-        }
-    };
+    using value_type = typename remove_const<Value>::type;
+    using Slice = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
 
 public:
 
@@ -116,22 +96,20 @@ public:
 
 // -- Access methods
 
-    template < typename... Coords >
-    value_type&
-    operator()(Coords... c) {
-        assert(sizeof...(Coords) == Rank);
-        return data_[index(c...)];
+    template < typename... Ints >
+    value_type& operator()(Ints... idx) {
+        check_bounds(idx...);
+        return data_[index(idx...)];
     }
 
-    template < typename... Coords >
-    const value_type&
-    operator()(Coords... c) const {
-        assert(sizeof...(Coords) == Rank);
-        return data_[index(c...)];
+    template < typename... Ints >
+    const value_type& operator()(Ints... idx) const {
+        check_bounds(idx...);
+        return data_[index(idx...)];
     }
 
-    degenerated_array_return_t at(const size_t i) const {
-        return degenerate_local_array<degenerated_array_return_t, Rank==1>(*this).apply(i);
+    Slice at(const size_t i) const {
+        return Slicer<Slice, Rank==1>(*this).apply(i);
     }
 
     size_t size() const { return size_;}
@@ -139,32 +117,87 @@ public:
     size_t shape(size_t idx) const { return shape_[idx]; }
 
     value_type const* data() const { return data_; }
+
     value_type*       data()       { return data_; }
 
     bool contiguous() const {
         return (size_ == shape_[0]*strides_[0] ? true : false);
     }
 
-    void assign(const value_type& value) {
-        ASSERT( contiguous() );
-        value_type* raw_data = data();
-        for( size_t j=0; j<size_; ++j ) {
-            raw_data[j] = value;
-        }
-    }
+    void assign(const value_type& value);
+
+    void dump(std::ostream& os) const;
 
 private:
+
+// -- Type definitions
+
+    template <typename ReturnType = Slice, bool ToScalar = false>
+    struct Slicer {
+        Slicer(LocalView<value_type, Rank> const& lv) : lv_(lv) {}
+        LocalView<value_type, Rank> const& lv_;
+        ReturnType apply(const size_t i) const {
+            return LocalView<value_type, Rank - 1>(lv_.data_ + lv_.strides_[0] * i, lv_.shape_ + 1, lv_.strides_ + 1);
+        }
+    };
+
+    template <typename ReturnType>
+    struct Slicer<ReturnType, true> {
+        Slicer(LocalView<value_type, Rank> const& lv) : lv_(lv) {}
+        LocalView<value_type, Rank> const& lv_;
+        ReturnType apply(const size_t i) const {
+            return *(lv_.data_ + lv_.strides_[0] * i);
+        }
+    };
 
 // -- Private methods
 
     template < typename... Ints >
-    constexpr int index_part(int cnt, int first, Ints... ints) const {
-        return (cnt < Rank) ? first * strides_[cnt] + index_part(cnt + 1, ints..., first) : 0;
+    constexpr int index_part(int dim, int idx, Ints... next_idx) const {
+        return dim < Rank ? idx*strides_[dim] + index_part( dim+1, next_idx..., idx ) : 0 ;
     }
 
     template < typename... Ints >
     constexpr int index(Ints... idx) const {
-        return index_part(0, idx...);
+      return index_part(0, idx...);
+    }
+
+#ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
+    template < typename... Ints >
+    void check_bounds(Ints... idx) const {
+      ASSERT( sizeof...(idx) == Rank );
+      return check_bounds_part(0, idx...);
+    }
+#else
+    template < typename... Ints >
+    void check_bounds(Ints...) const {}
+#endif
+
+    template < typename... Ints >
+    void check_bounds_force(Ints... idx) const {
+      ASSERT( sizeof...(idx) == Rank );
+      return check_bounds_part(0, idx...);
+    }
+
+    template < typename... Ints >
+    void check_bounds_part(int dim, int idx, Ints... next_idx) const {
+        if( dim < Rank ) {
+            if( idx >= shape_[dim] ) {
+                std::ostringstream msg; msg << "ArrayView index " << array_dim(dim) << " out of bounds: " << idx << " >= " << shape_[dim];
+                throw eckit::OutOfRange(msg.str(),Here());
+            }
+            check_bounds_part( dim+1, next_idx..., idx );
+        }
+    }
+
+    static constexpr char array_dim(size_t dim) {
+        return
+            dim == 0 ? 'i' :(
+            dim == 1 ? 'j' :(
+            dim == 2 ? 'k' :(
+            dim == 3 ? 'l' :(
+            dim == 4 ? 'm' :(
+            '*')))));
     }
 
 private:

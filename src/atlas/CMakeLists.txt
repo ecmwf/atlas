@@ -267,6 +267,7 @@ array/ArraySpec.cc
 array/IndexView.h
 array/IndexView.cc
 array/LocalView.h
+array/LocalView.cc
 array/ArrayView.h
 array/ArrayView.cc
 array/StorageView.h

@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cassert>
 
 namespace atlas {
 namespace array {
