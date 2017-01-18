@@ -21,7 +21,6 @@
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array/gridtools/GridToolsDataStore.h"
 #include "atlas/array/gridtools/GridToolsArrayHelpers.h"
-#include "atlas/array/gridtools/GridToolsArrayInitializer.h"
 
 #include "eckit/exception/Exceptions.h"
 
