@@ -32,7 +32,7 @@ IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
   name_(name),
   owns_(true),
   data_{
-    array::Array::create<idx_t >(1),   // values
+    array::Array::create<idx_t >(0),   // values
     array::Array::create<size_t>(1),   // displs
     array::Array::create<size_t>(1)},  // counts
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
@@ -45,9 +45,9 @@ IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
   callback_update_(0),
   callback_set_(0),
   callback_delete_(0),
-  values_view_(array::make_view<idx_t,  1>(*(data_[_values_]))),
-  displs_view_(array::make_view<size_t, 1>(*(data_[_displs_]))),
-  counts_view_(array::make_view<size_t, 1>(*(data_[_counts_])))
+  values_view_(array::make_host_view<idx_t,  1>(*(data_[_values_]))),
+  displs_view_(array::make_host_view<size_t, 1>(*(data_[_displs_]))),
+  counts_view_(array::make_host_view<size_t, 1>(*(data_[_counts_])))
 {
     displs_view_(0) = 0;
     counts_view_(0) = 0;
@@ -361,17 +361,20 @@ void IrregularConnectivity::insert( size_t position, size_t rows, const size_t c
     on_update();
 }
 
-void IrregularConnectivity::cloneToDevice() {
+void IrregularConnectivity::cloneToDevice() const {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->cloneToDevice();});
     values_view_ = array::make_device_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_device_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_device_view<size_t, 1>(*(data_[_counts_]));
 }
-void IrregularConnectivity::cloneFromDevice() {
+void IrregularConnectivity::cloneFromDevice() const {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->cloneFromDevice();});
     values_view_ = array::make_host_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_host_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_host_view<size_t, 1>(*(data_[_counts_]));
+}
+void IrregularConnectivity::syncHostDevice() const {
+    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->syncHostDevice();});
 }
 bool IrregularConnectivity::valid() const {
     bool res = true;
@@ -452,6 +455,48 @@ void MultiBlockConnectivity::clear()
       }
     }
   }
+}
+
+void MultiBlockConnectivity::cloneToDevice() const
+{
+  IrregularConnectivity::cloneToDevice();
+  block_displs_->cloneToDevice();
+  block_cols_  ->cloneToDevice();
+}
+
+void MultiBlockConnectivity::cloneFromDevice() const
+{
+  IrregularConnectivity::cloneFromDevice();
+  block_displs_->cloneFromDevice();
+  block_cols_  ->cloneFromDevice();
+}
+
+void MultiBlockConnectivity::syncHostDevice() const
+{
+  IrregularConnectivity::syncHostDevice();
+  block_displs_->syncHostDevice();
+  block_cols_  ->syncHostDevice();
+}
+
+bool MultiBlockConnectivity::valid() const {
+  return
+      IrregularConnectivity::valid() &&
+      block_displs_->valid() &&
+      block_cols_->valid();
+}
+
+bool MultiBlockConnectivity::isOnHost() const {
+  return
+      IrregularConnectivity::isOnHost() &&
+      block_displs_->isOnHost() &&
+      block_cols_->isOnHost();
+}
+
+bool MultiBlockConnectivity::isOnDevice() const {
+  return
+      IrregularConnectivity::isOnDevice() &&
+      block_displs_->isOnDevice() &&
+      block_cols_->isOnDevice();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -749,12 +794,12 @@ void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool
     cols_ = cols;
 }
 
-void BlockConnectivity::cloneToDevice()  {
+void BlockConnectivity::cloneToDevice() const {
     values_->cloneToDevice();
     values_view_ = array::make_device_view<idx_t, 2>(*values_);
 
 }
-void BlockConnectivity::cloneFromDevice() {
+void BlockConnectivity::cloneFromDevice() const {
     values_->cloneFromDevice();
     values_view_ = array::make_host_view<idx_t, 2>(*values_);
 }
@@ -791,7 +836,7 @@ public:
 
 // TODO : For now return host-view raw data to Fortran, but this should be
 //        reviewed to also possibly return device-view data
-  int    *values()   { return array::make_view<int,1>( *connectivity_.data_[Connectivity::_values_] ).data(); }
+  int    *values()   { return array::make_view<int,   1>( *connectivity_.data_[Connectivity::_values_] ).data(); }
   size_t *displs()   { return array::make_view<size_t,1>( *connectivity_.data_[Connectivity::_displs_] ).data(); }
   size_t *counts()   { return array::make_view<size_t,1>( *connectivity_.data_[Connectivity::_counts_] ).data(); }
 

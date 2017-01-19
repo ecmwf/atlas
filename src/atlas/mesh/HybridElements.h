@@ -112,6 +112,12 @@ public: // methods
 
   void clear();
 
+  void cloneToDevice() const;
+
+  void cloneFromDevice() const;
+
+  void syncHostDevice() const;
+
 private:
 
 // -- Data

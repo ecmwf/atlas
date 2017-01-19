@@ -264,11 +264,12 @@ public:
 
   size_t displs(const size_t row) const {return displs_view_(row); }
 
-  void cloneToDevice();
-  void cloneFromDevice();
-  bool valid() const;
-  bool isOnHost() const;
-  bool isOnDevice() const;
+  virtual void cloneToDevice() const;
+  virtual void cloneFromDevice() const;
+  virtual void syncHostDevice() const;
+  virtual bool valid() const;
+  virtual bool isOnHost() const;
+  virtual bool isOnDevice() const;
 
   void dump(std::ostream& os) const;
 
@@ -286,11 +287,11 @@ private:
   std::string name_;
 
   bool owns_;
-  std::array<array::Array*, 3> data_;
+  mutable std::array<array::Array*, 3> data_;
 
-  array::ArrayView<idx_t, 1> values_view_;
-  array::ArrayView<size_t,1> displs_view_;
-  array::ArrayView<size_t,1> counts_view_;
+  mutable array::ArrayView<idx_t, 1> values_view_;
+  mutable array::ArrayView<size_t,1> displs_view_;
+  mutable array::ArrayView<size_t,1> counts_view_;
 
   idx_t  missing_value_;
   size_t rows_;
@@ -417,11 +418,12 @@ public:
 
   virtual void clear();
 
-  void cloneToDevice() ;
-  void cloneFromDevice() ;
-  bool valid() const;
-  bool isOnHost() const;
-  bool isOnDevice() const;
+  virtual void cloneToDevice() const;
+  virtual void cloneFromDevice() const;
+  virtual void syncHostDevice() const;
+  virtual bool valid() const;
+  virtual bool isOnHost() const;
+  virtual bool isOnDevice() const;
 
 private:
 
@@ -431,9 +433,9 @@ private:
   array::Array* block_displs_;
   array::Array* block_cols_;
 
-  array::ArrayView<size_t,1> block_displs_view_;
-  array::ArrayView<size_t,1> block_cols_view_;
-  array::Vector<BlockConnectivity*> block_;
+  mutable array::ArrayView<size_t,1> block_displs_view_;
+  mutable array::ArrayView<size_t,1> block_cols_view_;
+  mutable array::Vector<BlockConnectivity*> block_;
   size_t blocks_;
 
 };
@@ -536,8 +538,9 @@ public:
   /// @note Can only be used when data is owned.
   void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
 
-  void cloneToDevice();
-  void cloneFromDevice();
+  void cloneToDevice() const;
+  void cloneFromDevice() const;
+  void syncHostDevice() const;
   bool valid() const;
   bool isOnHost() const;
   bool isOnDevice() const;
@@ -547,7 +550,7 @@ public:
 private:
   bool owns_;
   array::Array* values_;
-  array::ArrayView<idx_t, 2> values_view_;
+  mutable array::ArrayView<idx_t, 2> values_view_;
 
   size_t rows_;
   size_t cols_;

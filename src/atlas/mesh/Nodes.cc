@@ -108,8 +108,8 @@ void Nodes::resize( size_t size )
   }
 
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( global_index() );
-  array::ArrayView<int   ,1> part = array::make_view<int,1>( partition() );
-  array::ArrayView<int   ,1> flags = array::make_view<int,1>( field("flags") );
+  array::ArrayView<int   ,1> part    = array::make_view<int,   1>( partition() );
+  array::ArrayView<int   ,1> flags   = array::make_view<int,   1>( field("flags") );
 
   for(size_t n=previous_size; n<size_; ++n)
   {
@@ -177,7 +177,20 @@ IrregularConnectivity& Nodes::connectivity(const std::string& name)
   return *connectivities_.find(name)->second;
 }
 
+void Nodes::cloneToDevice() const {
+  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second->cloneToDevice();});
+  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->cloneToDevice();});
+}
 
+void Nodes::cloneFromDevice() const {
+  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second->cloneFromDevice();});
+  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->cloneFromDevice();});
+}
+
+void Nodes::syncHostDevice() const {
+  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second->syncHostDevice();});
+  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->syncHostDevice();});
+}
 
 //-----------------------------------------------------------------------------
 

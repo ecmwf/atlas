@@ -92,6 +92,12 @@ public: // methods
 
   Connectivity& add( mesh::Connectivity* );
 
+  void cloneToDevice() const;
+
+  void cloneFromDevice() const;
+
+  void syncHostDevice() const;
+
 private:
 
   void print(std::ostream&) const;
