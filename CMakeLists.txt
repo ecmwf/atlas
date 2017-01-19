@@ -159,8 +159,13 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
     if(ENABLE_GPU)
         set( CUDA_USE_STATIC_CUDA_RUNTIME OFF )
         find_package(CUDA REQUIRED)
+
         string(REPLACE "." "" CUDA_VERSION ${CUDA_VERSION})
-        add_definitions(-DCUDA_VERSION=${CUDA_VERSION})
+
+        # Do we really need to add -DCUDA_VERSION?
+        # It seems to already be defined in cuda.h and gives warnings
+        #    add_definitions(-DCUDA_VERSION=${CUDA_VERSION})
+
         set(CUDA_PROPAGATE_HOST_FLAGS OFF)
         if( ${CUDA_VERSION} VERSION_GREATER "60")
             set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")

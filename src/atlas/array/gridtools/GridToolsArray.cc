@@ -155,8 +155,8 @@ public:
 
       check_dimension_lengths(array_.shape(), c...);
 
-      if(!array_.is_on_host()) {
-          array_.clone_from_device();
+      if(!array_.isOnHost()) {
+          array_.cloneFromDevice();
       }
 
       Array* resized = Array::create<Value>(ArrayShape{(unsigned int)c...});
@@ -266,8 +266,8 @@ Array* Array::create(DataType datatype, const ArrayShape& shape, const ArrayLayo
 //------------------------------------------------------------------------------
 
 template <typename Value> void ArrayT<Value>::insert(size_t idx1, size_t size1) {
-    if(!is_on_host()) {
-        clone_from_device();
+    if(!isOnHost()) {
+        cloneFromDevice();
     }
 
     ArrayShape nshape = shape();

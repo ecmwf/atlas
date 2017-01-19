@@ -47,7 +47,7 @@ public:
   const std::vector<int>& shapef() const;
   const std::vector<int>& stridesf() const;
   bool contiguous() const { return contiguous_; }
-  bool default_layout() const { return default_layout_; }
+  bool hasDefaultLayout() const { return default_layout_; }
 };
 
 //------------------------------------------------------------------------------------------------------

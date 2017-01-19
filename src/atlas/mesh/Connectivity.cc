@@ -32,7 +32,7 @@ IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
   name_(name),
   owns_(true),
   data_{
-    array::Array::create<idx_t >(0),   // values
+    array::Array::create<idx_t >(1),   // values
     array::Array::create<size_t>(1),   // displs
     array::Array::create<size_t>(1)},  // counts
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
@@ -361,15 +361,15 @@ void IrregularConnectivity::insert( size_t position, size_t rows, const size_t c
     on_update();
 }
 
-void IrregularConnectivity::clone_to_device() {
-    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->clone_to_device();});
-    values_view_ = array::make_device_view<idx_t, 1>(*(data_[_values_]));
+void IrregularConnectivity::cloneToDevice() {
+    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->cloneToDevice();});
+    values_view_ = array::make_device_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_device_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_device_view<size_t, 1>(*(data_[_counts_]));
 }
-void IrregularConnectivity::clone_from_device() {
-    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->clone_from_device();});
-    values_view_ = array::make_host_view<idx_t, 1>(*(data_[_values_]));
+void IrregularConnectivity::cloneFromDevice() {
+    std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->cloneFromDevice();});
+    values_view_ = array::make_host_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_host_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_host_view<size_t, 1>(*(data_[_counts_]));
 }
@@ -378,14 +378,14 @@ bool IrregularConnectivity::valid() const {
     std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->valid();});
     return res;
 }
-bool IrregularConnectivity::is_on_host() const {
+bool IrregularConnectivity::isOnHost() const {
     bool res=true;
-    std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->is_on_host();});
+    std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->isOnHost();});
     return res;
 }
-bool IrregularConnectivity::is_on_device() const {
+bool IrregularConnectivity::isOnDevice() const {
     bool res=true;
-    std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->is_on_device();});
+    std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->isOnDevice();});
     return res;
 }
 
@@ -613,7 +613,7 @@ void MultiBlockConnectivity::insert( size_t position, size_t rows, const size_t 
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivity::rebuild_block_connectivity()
-{    
+{
   block_.resize(blocks_);
   for( size_t b=0; b<blocks_; ++b )
   {
@@ -749,13 +749,13 @@ void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool
     cols_ = cols;
 }
 
-void BlockConnectivity::clone_to_device()  {
-    values_->clone_to_device();
+void BlockConnectivity::cloneToDevice()  {
+    values_->cloneToDevice();
     values_view_ = array::make_device_view<idx_t, 2>(*values_);
 
 }
-void BlockConnectivity::clone_from_device() {
-    values_->clone_from_device();
+void BlockConnectivity::cloneFromDevice() {
+    values_->cloneFromDevice();
     values_view_ = array::make_host_view<idx_t, 2>(*values_);
 }
 
@@ -763,12 +763,12 @@ bool BlockConnectivity::valid() const {
     return values_->valid();
 }
 
-bool BlockConnectivity::is_on_host() const {
-    return values_->is_on_host();
+bool BlockConnectivity::isOnHost() const {
+    return values_->isOnHost();
 }
 
-bool BlockConnectivity::is_on_device() const {
-    return values_->is_on_device();
+bool BlockConnectivity::isOnDevice() const {
+    return values_->isOnDevice();
 }
 
 //------------------------------------------------------------------------------------------------------

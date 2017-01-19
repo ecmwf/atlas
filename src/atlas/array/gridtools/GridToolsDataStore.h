@@ -28,11 +28,11 @@ struct GridToolsDataStore : ArrayDataStore
         delete data_store_;
     }
 
-    void clone_to_device() const {
+    void cloneToDevice() const {
         data_store_->clone_to_device();
     }
 
-    void clone_from_device() const {
+    void cloneFromDevice() const {
         data_store_->clone_from_device();
     }
 
@@ -40,27 +40,27 @@ struct GridToolsDataStore : ArrayDataStore
         return data_store_->valid();
     }
 
-    void sync() const {
+    void syncHostDevice() const {
         data_store_->sync();
     }
 
-    bool is_on_host() const {
+    bool isOnHost() const {
         return data_store_->is_on_host();
     }
 
-    bool is_on_device() const {
+    bool isOnDevice() const {
         return data_store_->is_on_device();
     }
 
-    void reactivate_device_write_views() const {
+    void reactivateDeviceWriteViews() const {
         data_store_->reactivate_device_write_views();
     }
 
-    void reactivate_host_write_views() const {
+    void reactivateHostWriteViews() const {
         data_store_->reactivate_host_write_views();
     }
 
-    void* void_data_store() {
+    void* voidDataStore() {
         return static_cast<void*>(const_cast<gt_DataStore*>(data_store_));
     }
 

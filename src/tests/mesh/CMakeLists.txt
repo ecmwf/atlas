@@ -103,7 +103,7 @@ ecbuild_add_test(
   CONDITION   HAVE_TESSELATION
   LIBS        atlas)
 
-ecbuild_add_cuda_test(
+atlas_add_cuda_test(
   TARGET atlas_test_connectivity_kernel
   BOOST
   SOURCES test_connectivity_kernel.cu

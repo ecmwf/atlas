@@ -156,25 +156,25 @@ public: // Destructor
 
 // -- Methods related to host-device synchronisation, requires gridtools_storage
   void cloneToDevice() const {
-      array_->clone_to_device();
+      array_->cloneToDevice();
   }
   void cloneFromDevice() const {
-      array_->clone_from_device();
+      array_->cloneFromDevice();
   }
   void syncHostDevice() const {
-      array_->sync();
+      array_->syncHostDevice();
   }
   bool isOnHost() const {
-      return array_->is_on_host();
+      return array_->isOnHost();
   }
   bool isOnDevice() const {
-      return array_->is_on_device();
+      return array_->isOnDevice();
   }
   void reactivateDeviceWriteViews() const {
-      array_->reactivate_device_write_views();
+      array_->reactivateDeviceWriteViews();
   }
   void reactivateHostWriteViews() const {
-      array_->reactivate_host_write_views();
+      array_->reactivateHostWriteViews();
   }
 
 private: // methods

@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE( test_array )
 
    ATLAS_DEBUG_HERE();
 
-   ds->clone_to_device();
+   ds->cloneToDevice();
 
    ATLAS_DEBUG_HERE();
 
@@ -52,8 +52,8 @@ BOOST_AUTO_TEST_CASE( test_array )
 
    ATLAS_DEBUG_HERE();
 
-   ds->clone_from_device();
-   ds->reactivate_host_write_views();
+   ds->cloneFromDevice();
+   ds->reactivateHostWriteViews();
 
    BOOST_CHECK_EQUAL( hv(3, 3, 3) , 5.5 );
 

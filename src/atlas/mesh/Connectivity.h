@@ -112,10 +112,18 @@ class ConnectivityRow
     typedef idx_t Index;
   #endif
 
-  public:
+public:
+
+    GT_FUNCTION
     ConnectivityRow(idx_t *data, size_t size) : data_(data), size_(size) {}
+
+    GT_FUNCTION
     idx_t operator()(size_t i) const { return data_[i] FROM_FORTRAN; }
+
+    GT_FUNCTION
     Index operator()(size_t i)       { return INDEX_REF(data_+i); }
+
+    GT_FUNCTION
     size_t size() const { return size_; }
 
   private:
@@ -143,7 +151,7 @@ public:
   IrregularConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[] );
 
   /// @brief Copy ctr (only to be used when calling a cuda kernel)
-  // This ctr has to be defined in the header, since __CUDACC__ will identify whether 
+  // This ctr has to be defined in the header, since __CUDACC__ will identify whether
   // it is compiled it for a GPU kernel
   GT_FUNCTION
   IrregularConnectivity(const IrregularConnectivity &other) :
@@ -256,11 +264,11 @@ public:
 
   size_t displs(const size_t row) const {return displs_view_(row); }
 
-  void clone_to_device();
-  void clone_from_device();
+  void cloneToDevice();
+  void cloneFromDevice();
   bool valid() const;
-  bool is_on_host() const;
-  bool is_on_device() const;
+  bool isOnHost() const;
+  bool isOnDevice() const;
 
   void dump(std::ostream& os) const;
 
@@ -409,11 +417,11 @@ public:
 
   virtual void clear();
 
-  void clone_to_device() ;
-  void clone_from_device() ;
+  void cloneToDevice() ;
+  void cloneFromDevice() ;
   bool valid() const;
-  bool is_on_host() const;
-  bool is_on_device() const;
+  bool isOnHost() const;
+  bool isOnDevice() const;
 
 private:
 
@@ -467,9 +475,9 @@ public:
   BlockConnectivity( size_t rows, size_t cols, idx_t values[]);
 
   /// @brief Copy ctr (only to be used when calling a cuda kernel)
-  // This ctr has to be defined in the header, since __CUDACC__ will identify whether 
+  // This ctr has to be defined in the header, since __CUDACC__ will identify whether
   // it is compiled it for a GPU kernel
-  GT_FUNCTION 
+  GT_FUNCTION
   BlockConnectivity(const BlockConnectivity& other)
     : owns_(false),
       rows_(other.rows_),
@@ -528,11 +536,11 @@ public:
   /// @note Can only be used when data is owned.
   void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
 
-  void clone_to_device();
-  void clone_from_device();
+  void cloneToDevice();
+  void cloneFromDevice();
   bool valid() const;
-  bool is_on_host() const;
-  bool is_on_device() const;
+  bool isOnHost() const;
+  bool isOnDevice() const;
 
   bool owns() const { return owns_; }
 

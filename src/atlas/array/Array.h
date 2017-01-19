@@ -68,7 +68,7 @@ public:
 
   bool contiguous() const { return spec_.contiguous(); }
 
-  bool default_layout() const { return spec_.default_layout(); }
+  bool hasDefaultLayout() const { return spec_.hasDefaultLayout(); }
 
   virtual array::DataType datatype() const = 0;
 
@@ -86,25 +86,25 @@ public:
 
   virtual void dump(std::ostream& os) const = 0;
 
-  virtual void* storage() { return data_store_->void_data_store();}
+  virtual void* storage() { return data_store_->voidDataStore();}
 
-  virtual const void* storage() const { return data_store_->void_data_store();}
+  virtual const void* storage() const { return data_store_->voidDataStore();}
 
-  void clone_to_device() const { data_store_->clone_to_device(); }
+  void cloneToDevice() const { data_store_->cloneToDevice(); }
 
-  void clone_from_device() const { data_store_->clone_from_device(); }
+  void cloneFromDevice() const { data_store_->cloneFromDevice(); }
 
   bool valid() const { return data_store_->valid(); }
 
-  void sync() const { data_store_->sync(); }
+  void syncHostDevice() const { data_store_->syncHostDevice(); }
 
-  bool is_on_host() const { return data_store_->is_on_host(); }
+  bool isOnHost() const { return data_store_->isOnHost(); }
 
-  bool is_on_device() const { return data_store_->is_on_device(); }
+  bool isOnDevice() const { return data_store_->isOnDevice(); }
 
-  void reactivate_device_write_views() const { data_store_->reactivate_device_write_views(); }
+  void reactivateDeviceWriteViews() const { data_store_->reactivateDeviceWriteViews(); }
 
-  void reactivate_host_write_views() const { data_store_->reactivate_host_write_views(); }
+  void reactivateHostWriteViews() const { data_store_->reactivateHostWriteViews(); }
 
   ArraySpec& spec() {return spec_;}
 

@@ -27,34 +27,34 @@ public:
         data_store_(size) {
     }
 
-    void clone_to_device() const {
+    void cloneToDevice() const {
     }
 
-    void clone_from_device() const {
+    void cloneFromDevice() const {
     }
 
     bool valid() const {
         return true;
     }
 
-    void sync() const {
+    void syncHostDevice() const {
     }
 
-    bool is_on_host() const {
+    bool isOnHost() const {
         return true;
     }
 
-    bool is_on_device() const {
+    bool isOnDevice() const {
         return false;
     }
 
-    void reactivate_device_write_views() const {
+    void reactivateDeviceWriteViews() const {
     }
 
-    void reactivate_host_write_views() const {
+    void reactivateHostWriteViews() const {
     }
 
-    void* void_data_store() {
+    void* voidDataStore() {
         return static_cast<void*>( &data_store_.front() );
     }
 
@@ -72,34 +72,34 @@ public:
         data_store_(data_store) {
     }
 
-    void clone_to_device() const {
+    void cloneToDevice() const {
     }
 
-    void clone_from_device() const {
+    void cloneFromDevice() const {
     }
 
     bool valid() const {
         return true;
     }
 
-    void sync() const {
+    void syncHostDevice() const {
     }
 
-    bool is_on_host() const {
+    bool isOnHost() const {
         return true;
     }
 
-    bool is_on_device() const {
+    bool isOnDevice() const {
         return false;
     }
 
-    void reactivate_device_write_views() const {
+    void reactivateDeviceWriteViews() const {
     }
 
-    void reactivate_host_write_views() const {
+    void reactivateHostWriteViews() const {
     }
 
-    void* void_data_store() {
+    void* voidDataStore() {
         return static_cast<void*>( data_store_ );
     }
 

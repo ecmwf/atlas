@@ -31,15 +31,15 @@ class ArrayDataStore
 {
 public:
   virtual ~ArrayDataStore() {}
-  virtual void clone_to_device() const = 0;
-  virtual void clone_from_device() const = 0;
+  virtual void cloneToDevice() const = 0;
+  virtual void cloneFromDevice() const = 0;
   virtual bool valid() const = 0;
-  virtual void sync() const = 0;
-  virtual bool is_on_host() const = 0;
-  virtual bool is_on_device() const = 0;
-  virtual void reactivate_device_write_views() const = 0;
-  virtual void reactivate_host_write_views() const = 0;
-  virtual void* void_data_store() = 0;
+  virtual void syncHostDevice() const = 0;
+  virtual bool isOnHost() const = 0;
+  virtual bool isOnDevice() const = 0;
+  virtual void reactivateDeviceWriteViews() const = 0;
+  virtual void reactivateHostWriteViews() const = 0;
+  virtual void* voidDataStore() = 0;
 };
 
 //------------------------------------------------------------------------------------------------------
