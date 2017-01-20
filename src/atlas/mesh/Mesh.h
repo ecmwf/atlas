@@ -117,6 +117,12 @@ public: // methods
     /// @brief Return the memory footprint of the mesh
     size_t footprint() const;
 
+    void cloneToDevice() const;
+
+    void cloneFromDevice() const;
+
+    void syncHostDevice() const;
+
 private:  // methods
 
     friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {

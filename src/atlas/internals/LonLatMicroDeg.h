@@ -45,7 +45,7 @@ public:
 // -- Constructors taking degrees
   LonLatMicroDeg( const double& lon, const double& lat )  { p[LON]=microdeg(lon);         p[LAT]=microdeg(lat); }
   LonLatMicroDeg( const double lonlat[2] )                { p[LON]=microdeg(lonlat[LON]); p[LAT]=microdeg(lonlat[LAT]); }
-  LonLatMicroDeg( const array::ArrayView<double,1>& lonlat )     { p[LON]=microdeg(lonlat[LON]); p[LAT]=microdeg(lonlat[LAT]); }
+  //LonLatMicroDeg( const array::ArrayView<double,1>& lonlat )     { p[LON]=microdeg(lonlat[LON]); p[LAT]=microdeg(lonlat[LAT]); }
   LonLatMicroDeg( const eckit::geometry::Point2& lonlat ) { p[LON]=microdeg(lonlat[LON]); p[LAT]=microdeg(lonlat[LAT]); }
 
 // -- Methods

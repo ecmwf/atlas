@@ -21,6 +21,7 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/array/MakeView.h"
 
 namespace atlas {
 namespace mesh {
@@ -73,7 +74,7 @@ mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
 {
   size_t nb_nodes = g.npts();
   nodes().resize(nb_nodes);
-  g.fillLonLat(nodes().lonlat().data<double>(), nb_nodes*2);
+  g.fillLonLat( array::make_view<double,2>(nodes().lonlat()).data(), nb_nodes*2 );
   return nodes();
 }
 
@@ -117,6 +118,30 @@ void Mesh::createElements()
 
 bool Mesh::generated() const {
   return ! (cells_->size() == 0 && facets_->size() == 0 && ridges_->size() == 0 && peaks_->size() == 0);
+}
+
+void Mesh::cloneToDevice() const {
+  if( nodes_  ) nodes_ ->cloneToDevice();
+  if( cells_  ) cells_ ->cloneToDevice();
+  if( facets_ ) facets_->cloneToDevice();
+  if( ridges_ ) ridges_->cloneToDevice();
+  if( peaks_  ) peaks_ ->cloneToDevice();
+}
+
+void Mesh::cloneFromDevice() const {
+  if( nodes_  ) nodes_ ->cloneFromDevice();
+  if( cells_  ) cells_ ->cloneFromDevice();
+  if( facets_ ) facets_->cloneFromDevice();
+  if( ridges_ ) ridges_->cloneFromDevice();
+  if( peaks_  ) peaks_ ->cloneFromDevice();
+}
+
+void Mesh::syncHostDevice() const {
+  if( nodes_  ) nodes_ ->syncHostDevice();
+  if( cells_  ) cells_ ->syncHostDevice();
+  if( facets_ ) facets_->syncHostDevice();
+  if( ridges_ ) ridges_->syncHostDevice();
+  if( peaks_  ) peaks_ ->syncHostDevice();
 }
 
 //----------------------------------------------------------------------------------------------------------------------

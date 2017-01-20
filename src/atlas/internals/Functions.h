@@ -16,7 +16,7 @@ namespace internals {
 
 inline int microdeg( const double& deg )
 {
-  return static_cast<int>(deg*1.e6 + 0.5);
+  return int(deg*1.e6 + 0.5);
 }
 
 } // namespace private

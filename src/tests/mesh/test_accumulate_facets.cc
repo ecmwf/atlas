@@ -413,7 +413,6 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
   78, 79
   };
   BOOST_CHECK_EQUAL_COLLECTIONS( edge_to_cell_data.begin(), edge_to_cell_data.end(), edge_to_cell_check, edge_to_cell_check+2*nb_edges );
-
 }
 
 BOOST_AUTO_TEST_CASE( test_build_edges )
@@ -812,6 +811,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
       }
       else
       {
+        std::cout << "jedge " << jedge << std::endl;
         BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+0] , edge_cell_connectivity(jedge,1) );
         BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+1] , edge_cell_connectivity(jedge,0) );
       }

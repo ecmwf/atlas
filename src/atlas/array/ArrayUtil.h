@@ -8,11 +8,13 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_ArrayUtil_h
-#define atlas_ArrayUtil_h
+#pragma once
 
-#include <stddef.h>
-#include <vector>
+#include "atlas/array/ArrayShape.h"
+#include "atlas/array/ArrayStrides.h"
+#include "atlas/array/ArrayLayout.h"
+#include "atlas/array/ArrayIdx.h"
+#include "atlas/array/ArraySpec.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -25,51 +27,22 @@ template<typename T> struct remove_const<T const> { typedef T type; };
 template<typename T> struct add_const          { typedef const typename remove_const<T>::type type; };
 template<typename T> struct add_const<T const> { typedef const T type; };
 
-typedef std::vector<size_t> ArrayShape;
-typedef std::vector<size_t> ArrayStrides;
-typedef std::vector<size_t> ArrayIdx;
-
-inline ArrayShape make_shape() { return std::vector<size_t>(); }
-inline ArrayShape make_shape(size_t size1) { return std::vector<size_t>(1,size1); }
-inline ArrayShape make_shape(size_t size1, size_t size2) { std::vector<size_t> v(2); v[0]=size1; v[1]=size2; return v; }
-inline ArrayShape make_shape(size_t size1, size_t size2, size_t size3) { std::vector<size_t> v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
-inline ArrayShape make_shape(size_t size1, size_t size2, size_t size3, size_t size4) { std::vector<size_t> v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
-
-inline ArrayStrides make_strides(size_t size1) { return std::vector<size_t>(1,size1); }
-inline ArrayStrides make_strides(size_t size1, size_t size2) { std::vector<size_t> v(2); v[0]=size1; v[1]=size2; return v; }
-inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3) { std::vector<size_t> v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
-inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3, size_t size4) { std::vector<size_t> v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
-
-inline ArrayIdx make_idx(size_t size1) { return std::vector<size_t>(1,size1); }
-inline ArrayIdx make_idx(size_t size1, size_t size2) { std::vector<size_t> v(2); v[0]=size1; v[1]=size2; return v; }
-inline ArrayIdx make_idx(size_t size1, size_t size2, size_t size3) { std::vector<size_t> v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
-inline ArrayIdx make_idx(size_t size1, size_t size2, size_t size3, size_t size4) { std::vector<size_t> v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
-
-class ArraySpec {
-private:
-  size_t size_;
-  size_t rank_;
-  ArrayShape shape_;
-  ArrayStrides strides_;
-  mutable std::vector<int> shapef_;
-  mutable std::vector<int> stridesf_;
-  bool contiguous_;
+class ArrayDataStore
+{
 public:
-  ArraySpec() : size_(0), rank_(0), contiguous_(true) {}
-  ArraySpec( const ArrayShape& );
-  ArraySpec( const ArrayShape&, const ArrayStrides& );
-  size_t size() const { return size_; }
-  size_t rank() const { return rank_; }
-  const ArrayShape& shape() const { return shape_; }
-  const ArrayStrides& strides() const { return strides_; }
-  const std::vector<int>& shapef() const;
-  const std::vector<int>& stridesf() const;
-  bool contiguous() const { return contiguous_; }
+  virtual ~ArrayDataStore() {}
+  virtual void cloneToDevice() const = 0;
+  virtual void cloneFromDevice() const = 0;
+  virtual bool valid() const = 0;
+  virtual void syncHostDevice() const = 0;
+  virtual bool isOnHost() const = 0;
+  virtual bool isOnDevice() const = 0;
+  virtual void reactivateDeviceWriteViews() const = 0;
+  virtual void reactivateHostWriteViews() const = 0;
+  virtual void* voidDataStore() = 0;
 };
 
 //------------------------------------------------------------------------------------------------------
 
 } // namespace array
 } // namespace atlas
-
-#endif

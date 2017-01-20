@@ -12,6 +12,7 @@
 #include "atlas/mesh/actions/AddVirtualNodes.h"
 
 #include "eckit/geometry/Point2.h"
+#include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Domain.h"
@@ -20,6 +21,7 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/array/MakeView.h"
 
 
 namespace atlas {
@@ -63,15 +65,19 @@ void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mes
     nodes.metadata().set<size_t>("NbRealPts",nb_real_pts);
     nodes.metadata().set<size_t>("NbVirtualPts",nb_virtual_pts);
 
-    array::ArrayView<double,2> coords ( nodes.field("xyz") );
-    array::ArrayView<double,2> lonlat ( nodes.lonlat() );
-    array::ArrayView<gidx_t,1> gidx   ( nodes.global_index() );
+    array::ArrayView<double,2> coords = array::make_view<double,2>( nodes.field("xyz") );
+    array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
+    array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( nodes.global_index() );
 
+    double xyz[3];
     for(size_t i = 0; i < nb_virtual_pts; ++i) {
         const size_t n = nb_real_pts + i;
         lonlat(n,internals::LON) = vPts[i].lon();
         lonlat(n,internals::LAT) = vPts[i].lat();
-        eckit::geometry::lonlat_to_3d(lonlat[n].data(),coords[n].data());
+        eckit::geometry::lonlat_to_3d( vPts[i].lon(),vPts[i].lat(),xyz);
+        coords(n,0) = xyz[0];
+        coords(n,1) = xyz[1];
+        coords(n,2) = xyz[2];
         gidx(n) = n+1;
     }
 }

@@ -68,19 +68,44 @@ contains
 
 #:for rank in ranks
 #:for dtype in dtypes
-  procedure, private :: access_data_${dtype}$_r${rank}$
-  procedure, private :: access_data_${dtype}$_r${rank}$_shape
+  procedure, private :: access_host_data_${dtype}$_r${rank}$
+  procedure, private :: access_host_data_${dtype}$_r${rank}$_shape
+  procedure, private :: access_device_data_${dtype}$_r${rank}$
+  procedure, private :: access_device_data_${dtype}$_r${rank}$_shape
 #:endfor
 #:endfor
 
   generic, public :: data => &
 #:for rank in ranks
 #:for dtype in dtypes
-      & access_data_${dtype}$_r${rank}$, &
-      & access_data_${dtype}$_r${rank}$_shape, &
+      & access_host_data_${dtype}$_r${rank}$, &
+      & access_host_data_${dtype}$_r${rank}$_shape, &
 #:endfor
 #:endfor
       & dummy
+
+  generic, public :: host_data => &
+#:for rank in ranks
+#:for dtype in dtypes
+      & access_host_data_${dtype}$_r${rank}$, &
+      & access_host_data_${dtype}$_r${rank}$_shape, &
+#:endfor
+#:endfor
+      & dummy
+
+  generic, public :: device_data => &
+#:for rank in ranks
+#:for dtype in dtypes
+      & access_device_data_${dtype}$_r${rank}$, &
+      & access_device_data_${dtype}$_r${rank}$_shape, &
+#:endfor
+#:endfor
+      & dummy
+
+  procedure, public :: is_on_host
+  procedure, public :: is_on_device
+  procedure, public :: clone_to_device
+  procedure, public :: clone_from_device
 
   procedure, private :: dummy
 
@@ -168,7 +193,7 @@ end subroutine
 #:endfor
 #:for rank  in ranks
 #:for dtype,ftype,ctype in types
-subroutine access_data_${dtype}$_r${rank}$(this, field)
+subroutine access_host_data_${dtype}$_r${rank}$(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
@@ -177,16 +202,30 @@ subroutine access_data_${dtype}$_r${rank}$(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
+
+subroutine access_device_data_${dtype}$_r${rank}$(this, field)
+  use atlas_field_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  class(atlas_Field), intent(in) :: this
+  ${ftype}$, pointer, intent(out) :: field(${dim[rank]}$)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
 #:endfor
 #:endfor
 #:for rank  in ranks
 #:for dtype,ftype,ctype in types
-subroutine access_data_${dtype}$_r${rank}$_shape(this, field, shape)
+subroutine access_host_data_${dtype}$_r${rank}$_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
@@ -196,7 +235,21 @@ subroutine access_data_${dtype}$_r${rank}$_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call c_f_pointer( field_cptr, field, shape )
+end subroutine
+
+subroutine access_device_data_${dtype}$_r${rank}$_shape(this, field, shape)
+  use atlas_field_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
+  class(atlas_Field), intent(in) :: this
+  ${ftype}$, pointer, intent(out) :: field(${dim[rank]}$)
+  integer(c_int), intent(in) :: shape(:)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__device_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
@@ -591,6 +644,47 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
+function is_on_host(this)
+  use atlas_field_c_binding
+  logical :: is_on_host
+  class(atlas_Field), intent(in) :: this
+  if( atlas__Field__is_on_host(this%c_ptr()) == 1 ) then
+    is_on_host = .true.
+  else
+    is_on_host = .false.
+  endif
+end function
+
+!-------------------------------------------------------------------------------
+
+function is_on_device(this)
+  use atlas_field_c_binding
+  logical :: is_on_device
+  class(atlas_Field), intent(in) :: this
+  if( atlas__Field__is_on_device(this%c_ptr()) == 1 ) then
+    is_on_device = .true.
+  else
+    is_on_device = .false.
+  endif
+end function
+
+!-------------------------------------------------------------------------------
+
+subroutine clone_to_device(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  call atlas__Field__clone_to_device(this%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine clone_from_device(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  call atlas__Field__clone_from_device(this%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
 
 end module atlas_field_module
 

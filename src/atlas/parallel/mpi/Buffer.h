@@ -13,7 +13,7 @@
 
 #include "atlas/parallel/mpi/mpi.h"
 
-#include "atlas/array/ArrayView.h"
+#include "atlas/array/LocalView.h"
 
 namespace atlas {
 namespace parallel {
@@ -34,18 +34,34 @@ struct Buffer : eckit::mpi::Buffer<DATA_TYPE>
 {
 };
 
+template<typename DATA_TYPE>
+class BufferView
+{
+public:
+    BufferView(DATA_TYPE *data, size_t size) : data_(data), size_(size) {}
+    size_t size() const { return size_; }
+    const DATA_TYPE& operator()(const size_t i) const { return data_[i]; }
+    const DATA_TYPE& operator[](const size_t i) const { return data_[i]; }
+private:
+    DATA_TYPE *data_;
+    size_t size_;
+};
+
 template <typename DATA_TYPE>
 struct Buffer<DATA_TYPE,1> : public eckit::mpi::Buffer<DATA_TYPE>
 {
 
   Buffer(size_t size) : eckit::mpi::Buffer<DATA_TYPE>(size) {}
 
-  array::ArrayView<DATA_TYPE,1> operator[](int p)
+  //                                   array::make_shape( eckit::mpi::Buffer<DATA_TYPE>::counts[p] ) );
+  // }
+  BufferView<DATA_TYPE> operator[](int p)
   {
-    return array::ArrayView<DATA_TYPE,1>(
+    return BufferView<DATA_TYPE>(
                 eckit::mpi::Buffer<DATA_TYPE>::buffer.data() + eckit::mpi::Buffer<DATA_TYPE>::displs[p],
-                array::make_shape( eckit::mpi::Buffer<DATA_TYPE>::counts[p] ) );
+                eckit::mpi::Buffer<DATA_TYPE>::counts[p] );
   }
+
 };
 
 // ----------------------------------------------------------------------------------

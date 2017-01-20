@@ -25,7 +25,6 @@ configure_file( internals/atlas_version.cc.in internals/atlas_version.cc )
 
 ### sources
 
-
 list( APPEND atlas_srcs
 atlas.h
 atlas.cc
@@ -56,58 +55,58 @@ grid/gaussian/RegularGaussian.cc
 grid/gaussian/RegularGaussian.h
 grid/gaussian/classic/N.cc
 grid/gaussian/classic/N.h
-grid/gaussian/classic/N16.cc    # TL31
-grid/gaussian/classic/N24.cc    # TL47
-grid/gaussian/classic/N32.cc    # TL63
-grid/gaussian/classic/N48.cc    # TL95
-grid/gaussian/classic/N64.cc    # TL127
-grid/gaussian/classic/N80.cc    # TL159
-grid/gaussian/classic/N96.cc    # TL191
+grid/gaussian/classic/N1024.cc  # TL2047
 grid/gaussian/classic/N128.cc   # TL255
+grid/gaussian/classic/N1280.cc  # TL2559
+grid/gaussian/classic/N16.cc    # TL31
 grid/gaussian/classic/N160.cc   # TL319
+grid/gaussian/classic/N1600.cc  # TL3199
 grid/gaussian/classic/N200.cc   # TL399
+grid/gaussian/classic/N2000.cc  # TL3999
+grid/gaussian/classic/N24.cc    # TL47
 grid/gaussian/classic/N256.cc   # TL511
+grid/gaussian/classic/N32.cc    # TL63
 grid/gaussian/classic/N320.cc   # TL639
 grid/gaussian/classic/N400.cc   # TL799
+grid/gaussian/classic/N4000.cc  # TL7999
+grid/gaussian/classic/N48.cc    # TL95
 grid/gaussian/classic/N512.cc   # TL1023
 grid/gaussian/classic/N576.cc   # TL1151
+grid/gaussian/classic/N64.cc    # TL127
 grid/gaussian/classic/N640.cc   # TL1279
+grid/gaussian/classic/N80.cc    # TL159
 grid/gaussian/classic/N800.cc   # TL1599
-grid/gaussian/classic/N1024.cc  # TL2047
-grid/gaussian/classic/N1280.cc  # TL2559
-grid/gaussian/classic/N1600.cc  # TL3199
-grid/gaussian/classic/N2000.cc  # TL3999
-grid/gaussian/classic/N4000.cc  # TL7999
 grid/gaussian/classic/N8000.cc  # TL15999
+grid/gaussian/classic/N96.cc    # TL191
 grid/gaussian/classic/PointsPerLatitude.cc
 grid/gaussian/classic/PointsPerLatitude.h
 grid/gaussian/latitudes/Latitudes.cc
 grid/gaussian/latitudes/Latitudes.h
 grid/gaussian/latitudes/N.cc
 grid/gaussian/latitudes/N.h
-grid/gaussian/latitudes/N16.cc    # TL31
-grid/gaussian/latitudes/N24.cc    # TL47
-grid/gaussian/latitudes/N32.cc    # TL63
-grid/gaussian/latitudes/N48.cc    # TL95
-grid/gaussian/latitudes/N64.cc    # TL127
-grid/gaussian/latitudes/N80.cc    # TL159
-grid/gaussian/latitudes/N96.cc    # TL191
+grid/gaussian/latitudes/N1024.cc  # TL2047
 grid/gaussian/latitudes/N128.cc   # TL255
+grid/gaussian/latitudes/N1280.cc  # TL2559
+grid/gaussian/latitudes/N16.cc    # TL31
 grid/gaussian/latitudes/N160.cc   # TL319
+grid/gaussian/latitudes/N1600.cc  # TL3199
 grid/gaussian/latitudes/N200.cc   # TL399
+grid/gaussian/latitudes/N2000.cc  # TL3999
+grid/gaussian/latitudes/N24.cc    # TL47
 grid/gaussian/latitudes/N256.cc   # TL511
+grid/gaussian/latitudes/N32.cc    # TL63
 grid/gaussian/latitudes/N320.cc   # TL639
 grid/gaussian/latitudes/N400.cc   # TL799
+grid/gaussian/latitudes/N4000.cc  # TL7999
+grid/gaussian/latitudes/N48.cc    # TL95
 grid/gaussian/latitudes/N512.cc   # TL1023
 grid/gaussian/latitudes/N576.cc   # TL1151
+grid/gaussian/latitudes/N64.cc    # TL127
 grid/gaussian/latitudes/N640.cc   # TL1279
+grid/gaussian/latitudes/N80.cc    # TL159
 grid/gaussian/latitudes/N800.cc   # TL1599
-grid/gaussian/latitudes/N1024.cc  # TL2047
-grid/gaussian/latitudes/N1280.cc  # TL2559
-grid/gaussian/latitudes/N1600.cc  # TL3199
-grid/gaussian/latitudes/N2000.cc  # TL3999
-grid/gaussian/latitudes/N4000.cc  # TL7999
 grid/gaussian/latitudes/N8000.cc  # TL15999
+grid/gaussian/latitudes/N96.cc    # TL191
 grid/grids.cc
 grid/grids.h
 grid/lonlat/LonLat.cc
@@ -135,50 +134,51 @@ list( APPEND atlas_grid_srcs
 endif()
 
 list( APPEND atlas_mesh_srcs
-mesh/Connectivity.h
 mesh/Connectivity.cc
-mesh/Elements.h
-mesh/Elements.cc
-mesh/ElementType.h
+mesh/Connectivity.h
 mesh/ElementType.cc
-mesh/Halo.h
+mesh/ElementType.h
+mesh/Elements.cc
+mesh/Elements.h
 mesh/Halo.cc
-mesh/HybridElements.h
+mesh/Halo.h
 mesh/HybridElements.cc
-mesh/Mesh.h
+mesh/HybridElements.h
 mesh/Mesh.cc
-mesh/Nodes.h
+mesh/Mesh.h
 mesh/Nodes.cc
-mesh/actions/AddVirtualNodes.h
+mesh/Nodes.h
 mesh/actions/AddVirtualNodes.cc
-mesh/actions/BuildDualMesh.h
-mesh/actions/BuildDualMesh.cc
-mesh/actions/BuildEdges.h
-mesh/actions/BuildEdges.cc
-mesh/actions/BuildHalo.h
-mesh/actions/BuildHalo.cc
-mesh/actions/BuildParallelFields.h
-mesh/actions/BuildParallelFields.cc
-mesh/actions/BuildPeriodicBoundaries.h
-mesh/actions/BuildPeriodicBoundaries.cc
-mesh/actions/BuildStatistics.h
-mesh/actions/BuildStatistics.cc
-mesh/actions/BuildXYZField.h
-mesh/actions/BuildXYZField.cc
-mesh/actions/BuildCellCentres.h
+mesh/actions/AddVirtualNodes.h
 mesh/actions/BuildCellCentres.cc
-mesh/actions/BuildConvexHull3D.h
+mesh/actions/BuildCellCentres.h
 mesh/actions/BuildConvexHull3D.cc
-mesh/actions/GenerateMesh.h
+mesh/actions/BuildConvexHull3D.h
+mesh/actions/BuildDualMesh.cc
+mesh/actions/BuildDualMesh.h
+mesh/actions/BuildEdges.cc
+mesh/actions/BuildEdges.h
+mesh/actions/BuildHalo.cc
+mesh/actions/BuildHalo.h
+mesh/actions/BuildParallelFields.cc
+mesh/actions/BuildParallelFields.h
+mesh/actions/BuildPeriodicBoundaries.cc
+mesh/actions/BuildPeriodicBoundaries.h
+mesh/actions/BuildStatistics.cc
+mesh/actions/BuildStatistics.h
+mesh/actions/BuildXYZField.cc
+mesh/actions/BuildXYZField.h
 mesh/actions/GenerateMesh.cc
-mesh/actions/WriteLoadBalanceReport.h
+mesh/actions/GenerateMesh.h
 mesh/actions/WriteLoadBalanceReport.cc
-mesh/generators/Delaunay.h
+mesh/actions/WriteLoadBalanceReport.h
 mesh/generators/Delaunay.cc
+mesh/generators/Delaunay.h
 mesh/generators/MeshGenerator.cc
 mesh/generators/MeshGenerator.h
-mesh/generators/Structured.h
 mesh/generators/Structured.cc
+mesh/generators/Structured.h
+
 )
 
 list( APPEND atlas_output_srcs
@@ -252,63 +252,94 @@ interpolation/PointSet.h
 interpolation/PointSet.cc
 )
 
+
+
 list( APPEND atlas_array_srcs
+array/array.h
+array/array_fwd.h
 array/Array.h
-array/Array.cc
+array/ArrayIdx.h
+array/ArrayLayout.h
+array/ArrayShape.h
+array/ArraySpec.cc
+array/ArraySpec.h
+array/ArrayStrides.h
 array/ArrayUtil.h
-array/ArrayUtil.cc
-array/ArrayView_iterator.h
-array/ArrayView_impl.h
-array/IndexView.h
-array/IndexView.cc
 array/ArrayView.h
-array/ArrayView.cc
 array/DataType.h
+array/IndexView.h
+array/LocalView.cc
+array/LocalView.h
+array/StorageView.h
+array/Vector.h
 )
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+list( APPEND atlas_array_srcs
+array/gridtools/GridToolsArray.cc
+array/gridtools/GridToolsArrayHelpers.h
+array/gridtools/GridToolsArrayView.cc
+array/gridtools/GridToolsArrayView.h
+array/gridtools/GridToolsDataStore.h
+array/gridtools/GridToolsIndexView.cc
+array/gridtools/GridToolsIndexView.h
+array/gridtools/GridToolsMakeView.cc
+array/gridtools/GridToolsMakeView.h
+array/gridtools/GridToolsStorageView.h
+array/gridtools/GridToolsTraits.h
+)
+else()
+list( APPEND atlas_array_srcs
+array/native/NativeArray.cc
+array/native/NativeArrayView.cc
+array/native/NativeArrayView.h
+array/native/NativeDataStore.h
+array/native/NativeIndexView.cc
+array/native/NativeIndexView.h
+array/native/NativeMakeView.cc
+array/native/NativeStorageView.h
+)
+endif()
 
 list( APPEND atlas_util_srcs
-util/Config.h
+parallel/Checksum.cc
+parallel/Checksum.h
+parallel/GatherScatter.cc
+parallel/GatherScatter.h
+parallel/HaloExchange.cc
+parallel/HaloExchange.h
+parallel/mpi/mpi.cc
+parallel/mpi/mpi.h
+parallel/omp/omp.cc
+parallel/omp/omp.h
+runtime/ErrorHandling.cc
+runtime/ErrorHandling.cc
 util/Config.cc
+util/Config.h
 util/Constants.h
-util/Metadata.h
 util/Metadata.cc
-util/io/Gmsh.h
+util/Metadata.h
 util/io/Gmsh.cc
-util/io/PointCloud.h
+util/io/Gmsh.h
 util/io/PointCloud.cc
 runtime/LibAtlas.h
 runtime/LibAtlas.cc
-runtime/ErrorHandling.cc
-runtime/ErrorHandling.cc
-parallel/omp/omp.h
-parallel/omp/omp.cc
 parallel/mpi/Buffer.h
-parallel/mpi/mpi.h
-parallel/mpi/mpi.cc
-parallel/Checksum.h
-parallel/Checksum.cc
-parallel/HaloExchange.h
-parallel/HaloExchange.cc
-parallel/GatherScatter.h
-parallel/GatherScatter.cc
 )
 
 list( APPEND atlas_internals_srcs
-internals/AtlasTool.h
-internals/AtlasTool.cc
-internals/AccumulateFaces.h
 internals/AccumulateFaces.cc
+internals/AccumulateFaces.h
+internals/AtlasTool.cc
+internals/AtlasTool.h
 internals/Bitflags.h
-internals/Checksum.h
 internals/Checksum.cc
-internals/Debug.h
+internals/Checksum.h
 internals/Functions.h
 internals/IsGhost.h
 internals/LonLatMicroDeg.h
 internals/Parameters.h
 internals/PeriodicTransform.h
 internals/Unique.h
-internals/MPLArrayView.h
 )
 
 
@@ -326,6 +357,19 @@ endif()
 if( ECKIT_HAVE_MPI AND ATLAS_HAVE_MPI AND  EC_OS_NAME MATCHES "macosx" )
   list( APPEND ATLAS_DEFINITIONS BUG_ECKIT_166 )
   link_libraries(${MPI_CXX_LIBRARIES})
+endif()
+
+if( SHORTCUT_COMPILATION )
+  unset( atlas_srcs )
+  unset( atlas_grid_srcs )
+  unset( atlas_mesh_srcs )
+  unset( atlas_field_srcs )
+  unset( atlas_functionspace_srcs )
+  unset( atlas_interpolation_srcs )
+  unset( atlas_numerics_srcs )
+  unset( atlas_output_srcs )
+  unset( atlas_util_srcs )
+  unset( atlas_internals_srcs )
 endif()
 
 ecbuild_add_library( TARGET atlas
@@ -359,14 +403,13 @@ ecbuild_add_library( TARGET atlas
     "${CGAL_INCLUDE_DIRS}"
     "${TRANSI_INCLUDE_DIRS}"
     "${MPI_CXX_INCLUDE_DIRS}"
-
   LIBS
     eckit_geometry
     eckit_option
     eckit_mpi
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
-  
+    "${CUDA_LIBRARIES}"
   DEFINITIONS
     ${ATLAS_DEFINITIONS}
  )

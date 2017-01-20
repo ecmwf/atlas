@@ -26,4 +26,9 @@ class Log : public eckit::Log {
 };
 }
 #endif
+
+#define ATLAS_DEBUG(WHAT)    do{ atlas::Log::info() << "DEBUG(" << WHAT << ") @ " << Here() << std::endl; } while(0)
+#define ATLAS_DEBUG_HERE()   do{ atlas::Log::info() << "DEBUG() @ " << Here() << std::endl; } while(0)
+#define ATLAS_DEBUG_VAR(VAR) do{ atlas::Log::info() << "DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl; } while(0)
+
 #endif

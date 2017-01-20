@@ -20,6 +20,7 @@
 #include "atlas/field/FieldCreator.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/array/MakeView.h"
 
 namespace atlas {
 namespace field {
@@ -140,7 +141,9 @@ void Field::print(std::ostream& os) const
      << ",size=" << size()
      << ",shape=" << vector_to_str( shape() )
      << ",strides=" << vector_to_str( strides() )
+      #ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
      << ",bytes=" << bytes()
+      #endif
      << ",metadata=" << metadata()
      << "]";
 }
@@ -177,82 +180,11 @@ void Field::set_functionspace(const functionspace::FunctionSpace &functionspace)
   functionspace_->attach();
 }
 
-
-template <> const float* Field::data() const
-{
-  try {
-    return array_->data<float>();
-  } catch( const eckit::BadCast& e ) {
-    std::stringstream msg;
-    msg << "Could not cast data for field " << name()
-        << " with datatype " << array_->datatype().str() << " to "
-        << array::DataType::str<float>();
-    throw eckit::BadCast(msg.str(),Here());
-  }
-  return 0;
-}
-template <> float* Field::data()
-{
-  return const_cast<float*>(const_cast<const Field&>(*this).data<float>());
-}
-
-template <> const double* Field::data() const
-{
-  try {
-    return array_->data<double>();
-  } catch( const eckit::BadCast& e ) {
-    std::stringstream msg;
-    msg << "Could not cast data for field " << name()
-        << " with datatype " << array_->datatype().str() << " to "
-        << array::DataType::str<double>();
-    throw eckit::BadCast(msg.str(),Here());
-  }
-  return 0;
-}
-template <> double* Field::data()
-{
-  return const_cast<double*>(const_cast<const Field&>(*this).data<double>());
-}
-
-template <> const int* Field::data() const
-{
-  try {
-    return array_->data<int>();
-  } catch( const eckit::BadCast& e ) {
-    std::stringstream msg;
-    msg << "Could not cast data for field " << name()
-        << " with datatype " << array_->datatype().str() << " to "
-        << array::DataType::str<int>();
-    throw eckit::BadCast(msg.str(),Here());
-  }
-  return 0;
-}
-template <> int* Field::data()
-{
-  return const_cast<int*>(const_cast<const Field&>(*this).data<int>());
-}
-
-template <> const long* Field::data() const
-{
-  try {
-    return array_->data<long>();
-  } catch( const eckit::BadCast& e ) {
-    std::stringstream msg;
-    msg << "Could not cast data for field " << name()
-        << " with datatype " << array_->datatype().str() << " to "
-        << array::DataType::str<long>();
-    throw eckit::BadCast(msg.str(),Here());
-  }
-  return 0;
-}
-template <> long* Field::data()
-{
-  return const_cast<long*>(const_cast<const Field&>(*this).data<long>());
-}
-
-
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+
+extern "C"
+{
 
 Field* atlas__Field__wrap_int_specf(const char* name, int data[], int rank, int shapef[], int stridesf[])
 {
@@ -450,48 +382,102 @@ void atlas__Field__shapef (Field* This, int* &shape, int &rank)
   );
 }
 
-void atlas__Field__data_int_specf (Field* This, int* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__host_data_int_specf (Field* This, int* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = &This->data<int>()[0];
+    data = array::make_host_storageview<int>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
   );
 }
 
-void atlas__Field__data_long_specf (Field* This, long* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__host_data_long_specf (Field* This, long* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = &This->data<long>()[0];
+    data = array::make_host_storageview<long>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
   );
 }
 
-void atlas__Field__data_float_specf (Field* This, float* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__host_data_float_specf (Field* This, float* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = &This->data<float>()[0];
+    data = array::make_host_storageview<float>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
   );
 }
 
-void atlas__Field__data_double_specf (Field* This, double* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__host_data_double_specf (Field* This, double* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    data = &This->data<double>()[0];
+    data = array::make_device_storageview<double>(*This).data();
     shapef = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank = This->shapef().size();
   );
+}
+
+void atlas__Field__device_data_int_specf (Field* This, int* &data, int &rank, int* &shapef, int* &stridesf)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    data = array::make_device_storageview<int>(*This).data();
+    shapef = const_cast<int*>(This->shapef().data());
+    stridesf = const_cast<int*>(This->stridesf().data());
+    rank = This->shapef().size();
+  );
+}
+
+void atlas__Field__device_data_long_specf (Field* This, long* &data, int &rank, int* &shapef, int* &stridesf)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    data = array::make_device_storageview<long>(*This).data();
+    shapef = const_cast<int*>(This->shapef().data());
+    stridesf = const_cast<int*>(This->stridesf().data());
+    rank = This->shapef().size();
+  );
+}
+
+void atlas__Field__device_data_float_specf (Field* This, float* &data, int &rank, int* &shapef, int* &stridesf)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    data = array::make_device_storageview<float>(*This).data();
+    shapef = const_cast<int*>(This->shapef().data());
+    stridesf = const_cast<int*>(This->stridesf().data());
+    rank = This->shapef().size();
+  );
+}
+
+void atlas__Field__device_data_double_specf (Field* This, double* &data, int &rank, int* &shapef, int* &stridesf)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    data = array::make_device_storageview<double>(*This).data();
+    shapef = const_cast<int*>(This->shapef().data());
+    stridesf = const_cast<int*>(This->stridesf().data());
+    rank = This->shapef().size();
+  );
+}
+
+int atlas__Field__is_on_host(const Field* This)
+{
+  return This->isOnHost();
+}
+
+int atlas__Field__is_on_device(const Field* This)
+{
+  return This->isOnDevice();
 }
 
 void atlas__Field__rename(Field* This, const char* name)
@@ -519,7 +505,17 @@ void atlas__Field__set_functionspace(Field* This, const functionspace::FunctionS
   );
 }
 
+void atlas__Field__clone_to_device(Field* This)
+{
+  This->cloneToDevice();
+}
+void atlas__Field__clone_from_device(Field* This)
+{
+  This->cloneFromDevice();
+}
 
+
+}
 // ------------------------------------------------------------------
 
 } // namespace field

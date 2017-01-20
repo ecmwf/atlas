@@ -134,20 +134,27 @@ std::string Checksum::execute( DATA_TYPE lfield[], const int nb_vars ) const
 template<typename DATA_TYPE, int RANK>
 void Checksum::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
                          std::vector<int>& varstrides,
-                         std::vector<int>& varextents ) const
+                         std::vector<int>& varshape ) const
 {
   int rank = std::max(1,RANK-1) ;
   varstrides.resize(rank);
-  varextents.resize(rank);
+  varshape.resize(rank);
+
   if( RANK>1 )
   {
-    varstrides.assign(arr.strides()+1,arr.strides()+RANK);
-    varextents.assign(arr.shape()+1,arr.shape()+RANK);
+    size_t stride=1;
+    for( int j=RANK-1; j>0; --j ) {
+      varstrides[j-1] = stride;
+      varshape[j-1] = arr.shape(j);
+      stride *= varshape[j-1];
+    }
+//    varstrides.assign(arr.strides()+1,arr.strides()+RANK);
+//    varshape.assign(arr.shape()+1,arr.shape()+RANK);
   }
   else
   {
-    varstrides[0] = arr.strides()[0];
-    varextents[0] = 1;
+    varstrides[0] = 1;
+    varshape[0] = 1;
   }
 }
 

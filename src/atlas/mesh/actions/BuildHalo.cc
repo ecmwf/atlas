@@ -37,6 +37,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/Buffer.h"
 
 using atlas::internals::accumulate_facets;
 using atlas::internals::Topology;
@@ -108,7 +109,7 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
 {
   std::set<int> bdry_nodes_set;
 
-  std::vector< idx_t > facet_nodes_data;
+  std::vector< idx_t > facet_nodes;
   std::vector< idx_t > connectivity_facet_to_elem;
   size_t nb_facets(0);
   size_t nb_inner_facets(0);
@@ -116,22 +117,19 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
   accumulate_facets(
       /*in*/  mesh.cells(),
       /*in*/  mesh.nodes(),
-      /*out*/ facet_nodes_data, // shape(nb_facets,nb_nodes_per_facet)
+      /*out*/ facet_nodes, // shape(nb_facets,nb_nodes_per_facet)
       /*out*/ connectivity_facet_to_elem,
       /*out*/ nb_facets,
       /*out*/ nb_inner_facets,
       /*out*/ missing_value );
 
-  array::ArrayView<idx_t,2> facet_nodes(facet_nodes_data.data(), array::make_shape(nb_facets,2));
-  array::ArrayView<idx_t,2> facet_elem_connectivity(connectivity_facet_to_elem.data(), array::make_shape(nb_facets,2));
-
   for( size_t jface=0; jface<nb_facets; ++jface )
   {
-    if( facet_elem_connectivity(jface,1) == missing_value )
+    if( connectivity_facet_to_elem[jface*2+1] == missing_value )
     {
       for( size_t jnode=0; jnode<2; ++jnode) // 2 nodes per face
       {
-        bdry_nodes_set.insert(facet_nodes(jface,jnode));
+        bdry_nodes_set.insert(facet_nodes[jface*2+jnode]);
       }
     }
   }
@@ -192,8 +190,8 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
 {
   Notification notes;
   mesh::Nodes& nodes         = mesh.nodes();
-  array::ArrayView<double,2> lonlat   ( nodes.lonlat() );
-  array::ArrayView<gidx_t,1> glb_idx  ( nodes.global_index() );
+  array::ArrayView<double,2> lonlat  = array::make_view<double,2> ( nodes.lonlat() );
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1> ( nodes.global_index() );
   size_t nb_nodes = nodes.size();
 
   UniqueLonLat compute_uid(nodes);
@@ -219,16 +217,16 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
 }
 
 void accumulate_elements( const Mesh& mesh,
-                          const array::ArrayView<uid_t,1>& node_uid,
+                          const parallel::mpi::BufferView<uid_t>& node_uid,
                           const Uid2Node& uid2node,
                           const Node2Elem& node2elem,
                           std::vector<int>& found_elements,
                           std::set< uid_t >& new_nodes_uid )
 {
   const mesh::HybridElements::Connectivity &elem_nodes = mesh.cells().node_connectivity();
-  const array::ArrayView<int,1> elem_part ( mesh.cells().partition() );
-  const array::ArrayView<gidx_t,1> ngidx ( mesh.nodes().global_index() );
-  const array::ArrayView<gidx_t,1> egidx ( mesh.cells().global_index() );
+  const array::ArrayView<int,1> elem_part = array::make_view<int,1>( mesh.cells().partition() );
+  const array::ArrayView<gidx_t,1> ngidx  = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
+  const array::ArrayView<gidx_t,1> egidx  = array::make_view<gidx_t,1>( mesh.cells().global_index() );
 
   size_t nb_nodes = node_uid.size();
 
@@ -385,26 +383,36 @@ public:
 
 
 public:
-  BuildHaloHelper( Mesh& _mesh ): mesh(_mesh),
-    compute_uid(mesh.nodes())
+  BuildHaloHelper( Mesh& _mesh ):
+    mesh(_mesh),
+    compute_uid(mesh.nodes()),
+    lonlat       ( array::make_view<double,2> ( mesh.nodes().lonlat() ) ),
+    glb_idx      ( array::make_view<gidx_t,1> ( mesh.nodes().global_index() ) ),
+    part         ( array::make_view<int   ,1> ( mesh.nodes().partition() ) ),
+    ridx         ( array::make_indexview<int,1> ( mesh.nodes().remote_index() ) ),
+    flags        ( array::make_view<int   ,1> ( mesh.nodes().field("flags") ) ),
+    ghost        ( array::make_view<int   ,1> ( mesh.nodes().ghost() ) ),
+    elem_nodes   ( &mesh.cells().node_connectivity() ),
+    elem_part    ( array::make_view<int   ,1> ( mesh.cells().partition() ) ),
+    elem_glb_idx ( array::make_view<gidx_t,1> ( mesh.cells().global_index() ) )
   {
-    update();
+    // update();
   }
 
   void update()
   {
     compute_uid.update();
     mesh::Nodes& nodes         = mesh.nodes();
-    lonlat   = array::ArrayView<double,2> ( nodes.lonlat() );
-    glb_idx  = array::ArrayView<gidx_t,1> ( nodes.global_index() );
-    part     = array::ArrayView<int   ,1> ( nodes.partition() );
-    ridx     = array::IndexView<int   ,1> ( nodes.remote_index() );
-    flags    = array::ArrayView<int   ,1> ( nodes.field("flags") );
-    ghost    = array::ArrayView<int   ,1> ( nodes.ghost() );
+    lonlat   = array::make_view<double,2> ( nodes.lonlat() );
+    glb_idx  = array::make_view<gidx_t,1> ( nodes.global_index() );
+    part     = array::make_view<int   ,1> ( nodes.partition() );
+    ridx     = array::make_indexview<int   ,1> ( nodes.remote_index() );
+    flags    = array::make_view<int   ,1> ( nodes.field("flags") );
+    ghost    = array::make_view<int   ,1> ( nodes.ghost() );
 
     elem_nodes   = &mesh.cells().node_connectivity();
-    elem_part    = array::ArrayView<int,1> ( mesh.cells().partition() );
-    elem_glb_idx = array::ArrayView<gidx_t,1> ( mesh.cells().global_index() );
+    elem_part    = array::make_view<int,1> ( mesh.cells().partition() );
+    elem_glb_idx = array::make_view<gidx_t,1> ( mesh.cells().global_index() );
   }
 
   template< typename NodeContainer, typename ElementContainer >
@@ -575,12 +583,12 @@ public:
     // Resize nodes
     // ------------
     nodes.resize( nb_nodes+nb_new_nodes );
-    flags   = array::ArrayView<int,   1>( nodes.field("flags") );
-    glb_idx = array::ArrayView<gidx_t,1>( nodes.global_index() );
-    part    = array::ArrayView<int,   1>( nodes.partition() );
-    ridx    = array::IndexView<int,   1>( nodes.remote_index() );
-    lonlat  = array::ArrayView<double,2>( nodes.lonlat() );
-    ghost   = array::ArrayView<int,   1>( nodes.ghost() );
+    flags   = array::make_view<int,   1>( nodes.field("flags") );
+    glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
+    part    = array::make_view<int,   1>( nodes.partition() );
+    ridx    = array::make_indexview<int,   1>( nodes.remote_index() );
+    lonlat  = array::make_view<double,2>( nodes.lonlat() );
+    ghost   = array::make_view<int,   1>( nodes.ghost() );
 
     compute_uid.update();
 
@@ -625,7 +633,7 @@ public:
     // Elements might be duplicated from different Tasks. We need to identify unique entries
     std::set<uid_t> elem_uid;
     int nb_elems = mesh.cells().size();
-    array::ArrayView<gidx_t,1> node_glb_idx ( mesh.nodes().global_index() );
+    array::ArrayView<gidx_t,1> node_glb_idx = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
 
     for( int jelem=0; jelem<nb_elems; ++jelem )
     {
@@ -677,9 +685,9 @@ public:
       if( nb_elements_of_type[t] == 0 ) continue;
       size_t new_elems_pos = elements.add(nb_elements_of_type[t]);
 
-      array::ArrayView<gidx_t,1> elem_type_glb_idx = elements.view<gidx_t,1>( mesh.cells().global_index() );
-      array::ArrayView<int,   1> elem_type_part    = elements.view<int,1>( mesh.cells().partition() );
-      array::ArrayView<int,   1> elem_type_halo    = elements.view<int,1>( mesh.cells().halo() );
+      array::LocalView<gidx_t,1> elem_type_glb_idx = elements.view<gidx_t,1>( mesh.cells().global_index() );
+      array::LocalView<int,   1> elem_type_part    = elements.view<int,1>( mesh.cells().partition() );
+      array::LocalView<int,   1> elem_type_halo    = elements.view<int,1>( mesh.cells().halo() );
 
       // Copy information in new elements
       size_t new_elem(0);
@@ -744,7 +752,7 @@ void increase_halo_interior( BuildHaloHelper& helper )
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID
 
-    array::ArrayView<uid_t,1> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
+    parallel::mpi::BufferView<uid_t> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
 
     std::vector<int>  found_bdry_elems;
     std::set< uid_t > found_bdry_nodes_uid;
@@ -768,11 +776,11 @@ void increase_halo_interior( BuildHaloHelper& helper )
 
 class PeriodicPoints {
 public:
-  PeriodicPoints(Mesh& mesh, int flag, size_t N)
+  PeriodicPoints(Mesh& mesh, int flag, size_t N) :
+    flags_( array::make_view<int,1> ( mesh.nodes().field("flags") ) )
   {
     flag_ = flag;
     N_ = N;
-    flags_ = array::ArrayView<int,1> ( mesh.nodes().field("flags") );
   }
 
   bool operator()(int j) const
@@ -824,7 +832,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID
 
-    array::ArrayView<uid_t,1> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
+    atlas::parallel::mpi::BufferView<uid_t> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
 
     std::vector<int>  found_bdry_elems;
     std::set< uid_t > found_bdry_nodes_uid;

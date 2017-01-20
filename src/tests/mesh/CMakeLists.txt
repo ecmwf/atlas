@@ -37,6 +37,13 @@ if( HAVE_FCTEST )
 endif()
 
 
+ecbuild_add_test( TARGET atlas_test_connectivity
+  BOOST
+  SOURCES  test_connectivity.cc
+  LIBS     atlas
+)
+
+
 ecbuild_add_test( TARGET atlas_test_elements
   BOOST
   SOURCES  test_elements.cc
@@ -68,6 +75,7 @@ ecbuild_add_test( TARGET atlas_test_parfields
   CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
   SOURCES    test_parfields.cc
   LIBS       atlas
+  CONDITION COMPILE_BROKEN_TESTS
 )
 
 ecbuild_add_test( TARGET atlas_test_halo
@@ -96,5 +104,11 @@ ecbuild_add_test(
   TARGET      atlas_test_cgal_mesh_gen_from_points
   SOURCES     test_cgal_mesh_gen_from_points.cc
   CONDITION   HAVE_TESSELATION
-  LIBS        atlas
+  LIBS        atlas)
+
+atlas_add_cuda_test(
+  TARGET atlas_test_connectivity_kernel
+  BOOST
+  SOURCES test_connectivity_kernel.cu
+  LIBS atlas
 )

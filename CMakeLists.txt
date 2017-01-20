@@ -125,6 +125,55 @@ if( HAVE_TESSELATION )
     endif()
 endif()
 
+### FIND GRIDTOOLS STORAGE
+ecbuild_add_option(
+    FEATURE GRIDTOOLS_STORAGE
+    DESCRIPTION "atlas: Arrays internally use GridTools storage layer"
+    REQUIRED_PACKAGES "gridtools_storage" )
+
+ecbuild_add_cxx11_flags()
+
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+    set( ENABLE_GPU "OFF" CACHE BOOL "Compile with GPU support (CUDA)" )
+
+    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
+    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
+
+    if(ENABLE_GPU)
+        set( CUDA_USE_STATIC_CUDA_RUNTIME OFF )
+        find_package(CUDA REQUIRED)
+
+        string(REPLACE "." "" CUDA_VERSION ${CUDA_VERSION})
+
+        # Do we really need to add -DCUDA_VERSION?
+        # It seems to already be defined in cuda.h and gives warnings
+        #    add_definitions(-DCUDA_VERSION=${CUDA_VERSION})
+
+        set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+        if( ${CUDA_VERSION} VERSION_GREATER "60")
+            set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
+        else()
+            message(FATAL_ERROR "CUDA 6.0 or lower does not support C++11 (disabling)")
+        endif()
+
+        set( CUDA_ARCH "sm_35" CACHE STRING "Compute capability for CUDA" )
+        set( CUDA_SEPARABLE_COMPILATION ON)
+
+        include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
+
+        set(CUDA_SEPARABLE_COMPILATION ON)
+        # adding the additional nvcc flags
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-arch=${CUDA_ARCH}" "-Xcudafe" "--diag_suppress=dupl_calling_convention")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-Xcudafe" "--diag_suppress=code_is_unreachable" "-Xcudafe")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=implicit_return_from_non_void_function" "-Xcudafe")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=calling_convention_not_allowed" "-Xcudafe")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=conflicting_calling_conventions")
+
+        set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
+        set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
+    endif()
+endif()
+
 ### Eigen
 
 ecbuild_add_option( FEATURE EIGEN
@@ -176,6 +225,7 @@ foreach( _tpl ${ATLAS_TPLS} )
   list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
 
+ecbuild_debug_var( ATLAS_EXTRA_INCLUDE_DIRS )
 ecbuild_debug_var( ATLAS_EXTRA_LIBRARIES )
 
 

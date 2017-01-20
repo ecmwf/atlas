@@ -13,6 +13,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/interpolation/PointSet.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 
 using namespace eckit;
 
@@ -36,13 +37,13 @@ PointSet::PointSet( mesh::Mesh& mesh )
 
 	ASSERT( nodes.has_field("xyz") );
 
-    array::ArrayView<double,2> coords ( nodes.field("xyz") );
+    array::ArrayView<double,2> coords = array::make_view<double,2>( nodes.field("xyz") );
 
     std::vector< PointIndex3::Value > pidx;
     pidx.reserve(npts_);
 
     for( size_t ip = 0; ip < npts_; ++ip )
-        pidx.push_back( PointIndex3::Value( PointIndex3::Point( coords[ip].data() ) , ip ) );
+        pidx.push_back( PointIndex3::Value( PointIndex3::Point( coords(ip,0),coords(ip,1) ) , ip ) );
 
     tree_ = new PointIndex3();
 

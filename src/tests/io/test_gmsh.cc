@@ -15,7 +15,6 @@
 #include "atlas/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/io/Gmsh.h"
-#include "atlas/internals/Debug.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"

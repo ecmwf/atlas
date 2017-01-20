@@ -31,6 +31,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/internals/Bitflags.h"
 
 #include "tests/AtlasFixture.h"
@@ -48,17 +49,18 @@ namespace test {
 class IsGhost
 {
 public:
-  IsGhost( const mesh::Nodes& nodes )
+  IsGhost( const mesh::Nodes& nodes ) :
+    part_( make_view<int,1>(nodes.partition()) ),
+    ridx_( make_indexview<int,1>(nodes.remote_index()) ),
+    mypart_(parallel::mpi::comm().rank())
   {
-    part_   = array::ArrayView<int,1> (nodes.partition() );
-    ridx_   = IndexView<int,1> (nodes.remote_index() );
-    mypart_ = parallel::mpi::comm().rank();
+
   }
 
   bool operator()(size_t idx) const
   {
-    if( part_[idx] != mypart_ ) return true;
-    if( ridx_[idx] != (int)idx     ) return true;
+    if( part_(idx) != mypart_ ) return true;
+    if( ridx_(idx) != (int)idx     ) return true;
     return false;
   }
 private:
@@ -79,11 +81,11 @@ BOOST_AUTO_TEST_CASE( test1 )
 
   mesh::Nodes& nodes = m->nodes();
   nodes.resize(10);
-  array::ArrayView<double,2> lonlat ( nodes.lonlat());
-  array::ArrayView<gidx_t,1> glb_idx( nodes.global_index());
-  array::ArrayView<int,1> part ( nodes.partition() );
-  array::ArrayView<int,1> flags ( nodes.field("flags") );
-  flags = Topology::NONE;
+  array::ArrayView<double,2> lonlat   = make_view<double,2>( nodes.lonlat());
+  array::ArrayView<gidx_t,1> glb_idx  = make_view<gidx_t,1>( nodes.global_index());
+  array::ArrayView<int   ,1> part     = make_view<int   ,1>( nodes.partition() );
+  array::ArrayView<int   ,1> flags    = make_view<int   ,1>( nodes.field("flags") );
+  flags.assign(Topology::NONE);
 
   // This is typically available
   glb_idx(0) = 1;    part(0) = 0;
@@ -112,7 +114,7 @@ BOOST_AUTO_TEST_CASE( test1 )
 
   BOOST_REQUIRE( nodes.has_field("remote_idx") );
 
-  IndexView<int,1> loc( nodes.remote_index() );
+  IndexView<int,1> loc = make_indexview<int,1>( nodes.remote_index() );
   BOOST_CHECK_EQUAL( loc(0) , 0 );
   BOOST_CHECK_EQUAL( loc(1) , 1 );
   BOOST_CHECK_EQUAL( loc(2) , 2 );
@@ -180,9 +182,9 @@ BOOST_AUTO_TEST_CASE( test2 )
   mesh::actions::build_parallel_fields(*m);
 
   mesh::Nodes& nodes = m->nodes();
-  IndexView<int,1> loc_idx ( nodes.remote_index() );
-  array::ArrayView<int,1> part    ( nodes.partition());
-  array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  IndexView<int,1> loc_idx = array::make_indexview<int,1>( nodes.remote_index() );
+  array::ArrayView<int   ,1> part    = array::make_view<int   ,1>( nodes.partition()    );
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
 
   test::IsGhost is_ghost(nodes);
 

@@ -137,6 +137,13 @@ public: // methods
 
   void insert( size_t type_idx, size_t position, size_t nb_elements = 1 );
 
+  void cloneToDevice() const;
+
+  void cloneFromDevice() const;
+
+  void syncHostDevice() const;
+
+
   void clear();
 
   /// @brief Return the memory footprint of the elements

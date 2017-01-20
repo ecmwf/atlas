@@ -27,6 +27,7 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/array/MakeView.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -39,37 +40,6 @@ namespace atlas {
 namespace functionspace {
 
 namespace {
-
-template <typename T>
-array::ArrayView<T,3> leveled_view(const field::Field &field)
-{
-  if( field.has_levels() )
-    return array::ArrayView<T,3> ( field.data<T>(), array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
-  else
-    return array::ArrayView<T,3> ( field.data<T>(), array::make_shape(field.shape(0),1,field.stride(0)) );
-}
-
-template <typename T>
-array::ArrayView<T,2> surface_view(const field::Field &field)
-{
-  return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),field.stride(0)) );
-}
-
-template <typename T>
-array::ArrayView<T,2> leveled_scalar_view(const field::Field &field)
-{
-  if( field.has_levels() )
-    return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),field.shape(1)) );
-  else
-    return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),1) );
-}
-
-template <typename T>
-array::ArrayView<T,1> surface_scalar_view(const field::Field &field)
-{
-  return array::ArrayView<T,1> ( field.data<T>(), array::make_shape(field.size()) );
-}
-
 
 void set_field_metadata(const eckit::Parametrisation& config, field::Field& field)
 {
@@ -153,20 +123,20 @@ void EdgeColumns::constructor()
   const field::Field& global_index = edges().global_index();
 
   halo_exchange_->setup(
-        partition.data<int>(),
-        remote_index.data<int>(),REMOTE_IDX_BASE,
+        array::make_view<int,1>(partition).data(),
+        array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
         nb_edges_);
 
   gather_scatter_->setup(
-        partition.data<int>(),
-        remote_index.data<int>(),REMOTE_IDX_BASE,
-        edges_.global_index().data<gidx_t>(),
+        array::make_view<int,1>(partition).data(),
+        array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
+        array::make_view<gidx_t,1>(global_index).data(),
         nb_edges_);
 
   checksum_->setup(
-        partition.data<int>(),
-        remote_index.data<int>(),REMOTE_IDX_BASE,
-        global_index.data<gidx_t>(),
+        array::make_view<int,1>(partition).data(),
+        array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
+        array::make_view<gidx_t,1>(global_index).data(),
         nb_edges_);
 
   nb_edges_global_ =  gather_scatter_->glb_dof();
@@ -249,19 +219,19 @@ void EdgeColumns::haloExchange( field::FieldSet& fieldset ) const
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const field::Field& field = fieldset[f];
     if     ( field.datatype() == array::DataType::kind<int>() ) {
-      array::ArrayView<int,2> view(field);
+      array::ArrayView<int,2> view = array::make_view<int,2>(field);
       halo_exchange().execute( view );
     }
     else if( field.datatype() == array::DataType::kind<long>() ) {
-      array::ArrayView<long,2> view(field);
+      array::ArrayView<long,2> view = array::make_view<long,2>(field);
       halo_exchange().execute( view );
     }
     else if( field.datatype() == array::DataType::kind<float>() ) {
-      array::ArrayView<float,2> view(field);
+      array::ArrayView<float,2> view = array::make_view<float,2>(field);
       halo_exchange().execute( view );
     }
     else if( field.datatype() == array::DataType::kind<double>() ) {
-      array::ArrayView<double,2> view(field);
+      array::ArrayView<double,2> view = array::make_view<double,2>(field);
       halo_exchange().execute( view );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -291,23 +261,23 @@ void EdgeColumns::gather( const field::FieldSet& local_fieldset, field::FieldSet
     size_t root(0);
     glb.metadata().get("owner",root);
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      parallel::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
-      parallel::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
+      parallel::Field<int const> loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
+      parallel::Field<int      > glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      parallel::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
-      parallel::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
+      parallel::Field<long const> loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
+      parallel::Field<long      > glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      parallel::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
-      parallel::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
+      parallel::Field<float const> loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
+      parallel::Field<float      > glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      parallel::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
-      parallel::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
+      parallel::Field<double const> loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
+      parallel::Field<double      > glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -343,23 +313,23 @@ void EdgeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldS
     size_t root(0);
     glb.metadata().get("owner",root);
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      parallel::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
-      parallel::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
+      parallel::Field<int const> glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
+      parallel::Field<int      > loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      parallel::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
-      parallel::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
+      parallel::Field<long const> glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
+      parallel::Field<long      > loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      parallel::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
-      parallel::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
+      parallel::Field<float const> glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
+      parallel::Field<float      > loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      parallel::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
-      parallel::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
+      parallel::Field<double const> glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
+      parallel::Field<double      > loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -380,9 +350,9 @@ namespace {
 template <typename T>
 std::string checksum_3d_field(const parallel::Checksum& checksum, const field::Field& field )
 {
-  array::ArrayView<T,3> values = leveled_view<T>(field);
-  array::ArrayT<T> surface_field ( array::make_shape(values.shape(0),values.shape(2) ) );
-  array::ArrayView<T,2> surface(surface_field);
+  array::ArrayView<T,3> values = array::make_view<T,3>(field);
+  eckit::SharedPtr<array::Array> surface_field( array::Array::create<T>( array::make_shape(field.shape(0),field.shape(2) ) ) );
+  array::ArrayView<T,2> surface = array::make_view<T,2>(*surface_field);
   for( size_t n=0; n<values.shape(0); ++n ) {
     for( size_t j=0; j<surface.shape(1); ++j )
     {
@@ -391,22 +361,45 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const field::F
         surface(n,j) += values(n,l,j);
     }
   }
-  return checksum.execute( surface.data(), surface.stride(0) );
+  return checksum.execute( surface.data(), surface_field->stride(0) );
 }
+template <typename T>
+std::string checksum_2d_field(const parallel::Checksum& checksum, const field::Field& field )
+{
+  array::ArrayView<T,2> values = array::make_view<T,2>(field);
+  return checksum.execute( values.data(), field.stride(0) );
+}
+
 }
 
 std::string EdgeColumns::checksum( const field::FieldSet& fieldset ) const {
   eckit::MD5 md5;
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const field::Field& field=fieldset[f];
-    if     ( field.datatype() == array::DataType::kind<int>() )
-      md5 << checksum_3d_field<int>(checksum(),field);
-    else if( field.datatype() == array::DataType::kind<long>() )
-      md5 << checksum_3d_field<long>(checksum(),field);
-    else if( field.datatype() == array::DataType::kind<float>() )
-      md5 << checksum_3d_field<float>(checksum(),field);
-    else if( field.datatype() == array::DataType::kind<double>() )
-      md5 << checksum_3d_field<double>(checksum(),field);
+    if     ( field.datatype() == array::DataType::kind<int>() ) {
+      if( field.has_levels() )
+        md5 << checksum_3d_field<int>(checksum(),field);
+      else
+        md5 << checksum_2d_field<int>(checksum(),field);
+    }
+    else if( field.datatype() == array::DataType::kind<long>() ) {
+      if( field.has_levels() )
+        md5 << checksum_3d_field<long>(checksum(),field);
+      else
+        md5 << checksum_2d_field<long>(checksum(),field);
+    }
+    else if( field.datatype() == array::DataType::kind<float>() ) {
+      if( field.has_levels() )
+        md5 << checksum_3d_field<float>(checksum(),field);
+      else
+        md5 << checksum_2d_field<float>(checksum(),field);
+    }
+    else if( field.datatype() == array::DataType::kind<double>() ) {
+      if( field.has_levels() )
+        md5 << checksum_3d_field<double>(checksum(),field);
+      else
+        md5 << checksum_2d_field<double>(checksum(),field);
+    }
     else throw eckit::Exception("datatype not supported",Here());
   }
   return md5;
