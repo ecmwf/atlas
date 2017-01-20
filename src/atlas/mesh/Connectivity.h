@@ -261,7 +261,7 @@ public:
   virtual void insert( size_t position, size_t rows, const size_t cols[] );
 
   virtual void clear();
-  
+
   virtual size_t footprint() const;
 
   size_t displs(const size_t row) const {return displs_view_(row); }
@@ -419,7 +419,7 @@ public:
   virtual void insert( size_t position, size_t rows, const size_t cols[] );
 
   virtual void clear();
-  
+
   virtual size_t footprint() const;
 
   virtual void cloneToDevice() const;
@@ -527,7 +527,7 @@ public:
 
   GT_FUNCTION
   idx_t missing_value() const { return missing_value_; }
-  
+
   size_t footprint() const;
 
 //-- Modifiers

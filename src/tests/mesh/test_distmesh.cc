@@ -61,6 +61,7 @@ double dual_volume(mesh::Mesh& mesh)
   }
 
 
+
   parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
 
   return area;
