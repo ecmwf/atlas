@@ -530,7 +530,7 @@ template< typename DATA_TYPE >
 DATA_TYPE vecnorm( DATA_TYPE vec[], size_t size )
 {
   DATA_TYPE norm=0;
-  for( int j=0; j<size; ++j )
+  for(size_t j=0; j < size; ++j)
     norm += std::pow(vec[j],2);
   return std::sqrt(norm);
 }

@@ -338,7 +338,7 @@ void GatherScatter::scatter( parallel::Field<DATA_TYPE const> gfields[],
     throw eckit::SeriousBug("GatherScatter was not setup",Here());
   }
 
-  for( int jfield=0; jfield<nb_fields; ++jfield )
+  for(size_t jfield=0; jfield < nb_fields; ++jfield)
   {
     const int lvar_size = std::accumulate(lfields[jfield].var_shape.data(),lfields[jfield].var_shape.data()+lfields[jfield].var_rank,1,std::multiplies<int>());
     const int gvar_size = std::accumulate(gfields[jfield].var_shape.data(),gfields[jfield].var_shape.data()+gfields[jfield].var_rank,1,std::multiplies<int>());
@@ -349,7 +349,7 @@ void GatherScatter::scatter( parallel::Field<DATA_TYPE const> gfields[],
     std::vector<int> glb_displs(nproc);
     std::vector<int> glb_counts(nproc);
 
-    for (int jproc=0; jproc<nproc; ++jproc)
+    for (size_t jproc=0; jproc < nproc; ++jproc)
     {
       glb_counts[jproc] = glbcounts_[jproc]*gvar_size;
       glb_displs[jproc] = glbdispls_[jproc]*gvar_size;
@@ -426,7 +426,7 @@ void GatherScatter::pack_send_buffer( const parallel::Field<DATA_TYPE const>& fi
                                       const std::vector<int>& sendmap,
                                       DATA_TYPE send_buffer[] ) const
 {
-  const int sendcnt = sendmap.size();
+  const size_t sendcnt = sendmap.size();
 
   size_t ibuf = 0;
   const size_t send_stride = field.var_strides[0]*field.var_shape[0];
@@ -434,7 +434,7 @@ void GatherScatter::pack_send_buffer( const parallel::Field<DATA_TYPE const>& fi
   switch( field.var_rank )
   {
   case 1:
-    for( size_t p=0; p<sendcnt; ++p)
+    for(size_t p=0; p < sendcnt; ++p)
     {
       const size_t pp = send_stride*sendmap[p];
       for( size_t i=0; i<field.var_shape[0]; ++i )
@@ -445,7 +445,7 @@ void GatherScatter::pack_send_buffer( const parallel::Field<DATA_TYPE const>& fi
     }
     break;
   case 2:
-    for( size_t p=0; p<sendcnt; ++p)
+    for(size_t p=0; p < sendcnt; ++p)
     {
       const size_t pp = send_stride*sendmap[p];
       for( size_t i=0; i<field.var_shape[0]; ++i )
@@ -459,7 +459,7 @@ void GatherScatter::pack_send_buffer( const parallel::Field<DATA_TYPE const>& fi
     }
     break;
   case 3:
-    for( size_t p=0; p<sendcnt; ++p)
+    for(size_t p=0; p < sendcnt; ++p)
     {
       const size_t pp = send_stride*sendmap[p];
       for( size_t i=0; i<field.var_shape[0]; ++i )
