@@ -83,7 +83,8 @@ void atlas_finalize()
     }
 #endif
 
-  Log::debug() << "Atlas finalized\n" << std::flush;
+  Log::debug() << "Atlas finalized\n";
+  Log::flush();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
