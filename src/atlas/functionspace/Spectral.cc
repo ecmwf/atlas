@@ -223,6 +223,32 @@ std::string Spectral::checksum( const field::Field& field ) const {
   return checksum(fieldset);
 }
 
+void Spectral::norm( const field::Field& field, double& norm, int rank ) const {
+#ifdef ATLAS_HAVE_TRANS
+  ASSERT( field.levels() == 1 );
+  trans_->specnorm(1,field.data<double>(), &norm, rank);
+#else
+  throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
+#endif
+}
+void Spectral::norm( const field::Field& field, double norm_per_level[], int rank ) const {
+#ifdef ATLAS_HAVE_TRANS
+  trans_->specnorm(field.levels(),field.data<double>(), norm_per_level, rank);
+#else
+  throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
+#endif
+}
+void Spectral::norm( const field::Field& field, std::vector<double>& norm_per_level, int rank ) const {
+#ifdef ATLAS_HAVE_TRANS
+  norm_per_level.resize( field.levels() );
+  trans_->specnorm(norm_per_level.size(),field.data<double>(), norm_per_level.data(), rank);
+#else
+  throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
+#endif
+}
+
+
+
 // ----------------------------------------------------------------------
 
 
@@ -314,6 +340,17 @@ void atlas__SpectralFunctionSpace__scatter_fieldset (const Spectral* This, const
     This->scatter(*global,*local);
   );
 }
+
+void atlas__SpectralFunctionSpace__norm(const Spectral* This, const field::Field* field, double norm[], int rank)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(field);
+    ASSERT(norm);
+    This->norm(*field,norm,rank);
+  );
+}
+
 
 
 }

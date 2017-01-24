@@ -975,6 +975,19 @@ void Trans::dirtrans( const int nb_fields, const double wind_fields[], double vo
 
 ///////////////////////////////////////////////////////////////////////////////
 
+
+void Trans::specnorm( const int nb_fields, const double spectra[], double norms[], int rank ) const
+{
+  struct ::SpecNorm_t args = new_specnorm(&trans_);
+    args.nfld = nb_fields;
+    args.rspec = spectra;
+    args.rnorm = norms;
+    args.nmaster = rank+1;
+  TRANS_CHECK( ::trans_specnorm(&args) );
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 void atlas__Trans__distspec( const Trans* t, int nb_fields, int origin[], double global_spectra[], double spectra[] )
 {
   ATLAS_ERROR_HANDLING(
@@ -1038,6 +1051,15 @@ void atlas__Trans__dirtrans_wind2vordiv( const Trans* t, int nb_fields, double w
     return t->dirtrans(nb_fields,wind_fields,vorticity_spectra,divergence_spectra);
   );
 }
+
+void atlas__Trans__specnorm (const Trans* t, int nb_fields, double spectra[], double norms[], int rank)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT( t );
+    return t->specnorm(nb_fields, spectra, norms, rank);
+  );
+}
+
 
 int atlas__Trans__nproc (const Trans* This)
 {

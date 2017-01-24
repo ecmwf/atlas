@@ -378,6 +378,8 @@ public:
                             const functionspace::NodeColumns&, field::Field& gpwind,
                             const TransParameters& = TransParameters()) const;
 
+  void specnorm( const int nb_fields, const double spectra[], double norms[], int rank=0 ) const;
+
 
 private:
 
@@ -412,6 +414,7 @@ extern "C"
   void atlas__Trans__invtrans_vordiv2wind (const Trans* t, int nb_fields, double vorticity_spectra[], double divergence_spectra[], double wind_fields[]);
   void atlas__Trans__dirtrans_scalar (const Trans* t, int nb_fields, double scalar_fields[], double scalar_spectra[]);
   void atlas__Trans__dirtrans_wind2vordiv (const Trans* t, int nb_fields, double wind_fields[], double vorticity_spectra[], double divergence_spectra[]);
+  void atlas__Trans__specnorm (const Trans* t, int nb_fields, double spectra[], double norms[], int rank);
   void atlas__Trans__dirtrans_fieldset (const Trans* This, const field_FieldSet* gpfields, field_FieldSet* spfields, const TransParameters* parameters);
   void atlas__Trans__dirtrans_field (const Trans* This, const field_Field* gpfield, field_Field* spfield, const TransParameters* parameters);
   void atlas__Trans__invtrans_fieldset (const Trans* This, const field_FieldSet* spfields, field_FieldSet* gpfields, const TransParameters* parameters);

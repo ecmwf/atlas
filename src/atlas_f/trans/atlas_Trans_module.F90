@@ -89,6 +89,10 @@ contains
   procedure, private :: gathspec_r2 => atlas_Trans__gathspec_r2
   generic, public :: gathspec => gathspec_r1, gathspec_r2
 
+  procedure, private :: specnorm_r1_scalar
+  procedure, private :: specnorm_r2
+  generic, public :: specnorm => specnorm_r1_scalar, specnorm_r2
+
   procedure, public :: delete => atlas_Trans__delete
   procedure, public :: copy => atlas_Trans__copy
 
@@ -941,6 +945,44 @@ subroutine atlas_Trans__gathspec_r2(this, local, global)
   THROW_ERROR
 #endif
 end subroutine atlas_Trans__gathspec_r2
+
+
+subroutine specnorm_r1_scalar(this, spectra, norm, rank)
+  use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
+  class(atlas_Trans), intent(in) :: this
+  real(c_double), intent(in) :: spectra(:)
+  real(c_double), intent(out) :: norm
+  integer, optional :: rank
+#ifdef ATLAS_HAVE_TRANS
+  integer :: rank_opt
+  real(c_double) :: norms(1)
+  rank_opt = 0
+  if( present(rank) ) rank_opt = rank
+  call atlas__Trans__specnorm(this%c_ptr(), 1, spectra, norms, rank_opt )
+  norm = norms(1)
+#else
+  THROW_ERROR
+#endif
+end subroutine
+
+subroutine specnorm_r2(this, spectra, norm, rank)
+  use, intrinsic :: iso_c_binding, only : c_double
+  use fckit_array_module, only: array_view1d
+  use atlas_trans_c_binding
+  class(atlas_Trans), intent(in) :: this
+  real(c_double), intent(in) :: spectra(:,:)
+  real(c_double), intent(inout) :: norm(:)
+  integer, optional :: rank
+#ifdef ATLAS_HAVE_TRANS
+  integer :: rank_opt
+  real(c_double), pointer :: spectra_view(:)
+  spectra_view => array_view1d(spectra)
+  call atlas__Trans__specnorm(this%c_ptr(), size(spectra,1), spectra_view, norm, rank_opt )
+#else
+  THROW_ERROR
+#endif
+end subroutine
 
 ! ----------------------------------------------------------------------------------------
 

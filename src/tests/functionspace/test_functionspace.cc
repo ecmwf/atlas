@@ -598,6 +598,43 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
     BOOST_CHECK_EQUAL( columns_scalar.shape(1), nb_levels );
   }
 }
+BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_norm )
+{
+  trans::Trans trans(80,159);
+  size_t nb_levels(10);
+
+  SharedPtr<Spectral> spectral_fs( new Spectral(trans) );
+
+  SharedPtr<field::Field> twoD_field  ( spectral_fs->createField<double>("2d") );
+  SharedPtr<field::Field> threeD_field( spectral_fs->createField<double>("3d",nb_levels) );
+
+  // Set first wave number
+  {
+    array::ArrayView<double,1> twoD( *twoD_field );
+    twoD = 0.;
+    if( parallel::mpi::comm().rank() == 0 ) twoD(0) = 1.;
+
+    array::ArrayView<double,2> threeD( *threeD_field );
+    threeD = 0.;
+    for( size_t jlev=0; jlev<nb_levels; ++jlev) {
+      if( parallel::mpi::comm().rank() == 0 ) threeD(0,jlev) = jlev;
+    }
+  }
+
+  double twoD_norm(0.);
+  std::vector<double> threeD_norms(threeD_field->levels(),0.);
+
+  spectral_fs->norm(*twoD_field,twoD_norm);
+  spectral_fs->norm(*threeD_field,threeD_norms);
+
+  if( eckit::mpi::comm().rank() == 0 ) {
+    BOOST_CHECK_CLOSE( twoD_norm, 1.0, 1.e-10 );
+    for( size_t jlev=0; jlev<nb_levels; ++jlev) {
+      BOOST_CHECK_CLOSE( threeD_norms[jlev], double(jlev), 1.e-10 );
+    }
+  }
+}
+
 #endif
 
 } // namespace test
