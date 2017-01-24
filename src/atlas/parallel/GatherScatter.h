@@ -569,7 +569,7 @@ void GatherScatter::gather( const array::ArrayView<DATA_TYPE,LRANK>& ldata,
                             array::ArrayView<DATA_TYPE,GRANK>& gdata,
                             const size_t root ) const
 {
-  if( ldata.shape(0) == parsize_ && gdata.shape(0) == glb_cnt(root) )
+  if( ldata.shape(0) == parsize_ && gdata.shape(0) == size_t(glb_cnt(root)) )
   {
     std::vector< parallel::Field<DATA_TYPE const> > lfields(1, parallel::Field<DATA_TYPE const>(ldata) );
     std::vector< parallel::Field<DATA_TYPE> >       gfields(1, parallel::Field<DATA_TYPE>(gdata) );
@@ -590,7 +590,7 @@ void GatherScatter::scatter( const array::ArrayView<DATA_TYPE,GRANK>& gdata,
                              array::ArrayView<DATA_TYPE,LRANK>& ldata,
                              const size_t root ) const
 {
-  if( ldata.shape(0) == parsize_ && gdata.shape(0) == glb_cnt(root) )
+  if( ldata.shape(0) == parsize_ && gdata.shape(0) == size_t(glb_cnt(root)) )
   {
     std::vector< parallel::Field<DATA_TYPE const> > gfields(1, parallel::Field<DATA_TYPE const>(gdata) );
     std::vector< parallel::Field<DATA_TYPE> >       lfields(1, parallel::Field<DATA_TYPE>(ldata) );

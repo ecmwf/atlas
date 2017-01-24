@@ -227,7 +227,7 @@ template< typename RandomAccessIterator >
 void ArrayT<DATA_TYPE>::assign( RandomAccessIterator begin, RandomAccessIterator end )
 {
   if( not contiguous() ) NOTIMP;
-  if( std::distance(begin,end) != size() ) {
+  if( size_t(std::distance(begin,end)) != size() ) {
     throw eckit::SeriousBug("Size doesn't match");
   }
   RandomAccessIterator it = begin;
