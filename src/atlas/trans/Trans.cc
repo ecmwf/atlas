@@ -497,6 +497,107 @@ void Trans::dirtrans(
 
 // --------------------------------------------------------------------------------------------
 
+void Trans::invtrans_grad(const Spectral& sp, const field::Field& spfield,
+                          const functionspace::NodeColumns& gp, field::Field& gradfield) const
+{
+  field::FieldSet spfields;   spfields.  add(spfield);
+  field::FieldSet gradfields; gradfields.add(gradfield);
+  invtrans(sp,spfields,gp,gradfields);
+}
+
+void Trans::invtrans_grad(const Spectral& sp, const field::FieldSet& spfields,
+                          const functionspace::NodeColumns& gp, field::FieldSet& gradfields) const
+{
+  // Count total number of fields and do sanity checks
+  int nb_gridpoint_field(0);
+  for(size_t jfld = 0; jfld < gradfields.size(); ++jfld)
+  {
+    const field::Field& f = gradfields[jfld];
+    nb_gridpoint_field += f.stride(0);
+  }
+
+  int nfld(0);
+  for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
+  {
+    const field::Field& f = spfields[jfld];
+    nfld += f.stride(0);
+    ASSERT( f.levels() == f.stride(0) );
+  }
+
+  if( nb_gridpoint_field != 2*nfld ) // factor 2 because N-S and E-W derivatives
+    throw eckit::SeriousBug("invtrans_grad: different number of gridpoint fields than spectral fields",Here());
+
+  // Arrays Trans expects
+  // Allocate space for
+  array::ArrayT<double> rgp(3*nfld,ngptot()); // (scalars) + (NS ders) + (EW ders)
+  array::ArrayT<double> rspec(nspec2(),nfld);
+
+  array::ArrayView<double,2> rgpview (rgp);
+  array::ArrayView<double,2> rspecview (rspec);
+
+  // Pack spectral fields
+  {
+    int f=0;
+    for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
+    {
+      const array::ArrayView<double,2> field ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
+      const int nlev = field.shape(1);
+
+      for( int jlev=0; jlev<nlev; ++jlev )
+      {
+        for( int jwave=0; jwave<nspec2(); ++jwave )
+        {
+          rspecview(jwave,f) = field(jwave,jlev);
+        }
+        ++f;
+      }
+    }
+  }
+
+  // Do transform
+  {
+    struct ::InvTrans_t transform = ::new_invtrans(&trans_);
+    transform.nscalar     = nfld;
+    transform.rgp         = rgp.data();
+    transform.rspscalar   = rspec.data();
+    transform.lscalarders = true;
+
+    TRANS_CHECK(::trans_invtrans(&transform));
+  }
+
+  // Unpack the gridpoint fields
+  {
+    internals::IsGhost is_ghost( gp.nodes());
+    int f=nfld; // skip to where derivatives start
+    for(size_t dim=0; dim<2; ++dim) {
+      for(size_t jfld = 0; jfld < gradfields.size(); ++jfld)
+      {
+        const size_t nlev = gradfields[jfld].levels();
+        const size_t nb_nodes  = gradfields[jfld].shape(0);
+
+        array::ArrayView<double,3> field ( gradfields[jfld].data<double>(),
+           array::make_shape(nb_nodes, nlev, 2 ) );
+
+        for( size_t jlev=0; jlev<nlev; ++jlev )
+        {
+          int n=0;
+          for( size_t jnode=0; jnode<nb_nodes; ++jnode )
+          {
+            if( !is_ghost(jnode) )
+            {
+              field(jnode,jlev,dim) = rgpview(f,n);
+              ++n;
+            }
+          }
+          ASSERT( n == ngptot() );
+          ++f;
+        }
+      }
+    }
+  }
+}
+
+// --------------------------------------------------------------------------------------------
 
 void Trans::invtrans(const Spectral& sp, const field::Field& spfield,
                      const functionspace::NodeColumns& gp, field::Field& gpfield, const TransParameters& context) const
@@ -929,24 +1030,63 @@ void Trans::gathgrid( const int nb_fields, const int destination[], const double
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void Trans::invtrans( const int nb_fields, const double scalar_spectra[], double scalar_fields[] ) const
+void Trans::invtrans( const int nb_scalar_fields, const double scalar_spectra[],
+                      const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
+                      double gp_fields[],
+                      const TransParameters& context ) const
 {
   struct ::InvTrans_t args = new_invtrans(&trans_);
-    args.nscalar = nb_fields;
+    args.nscalar = nb_scalar_fields;
     args.rspscalar = scalar_spectra;
-    args.rgp = scalar_fields;
+    args.nvordiv = nb_vordiv_fields;
+    args.rspvor = vorticity_spectra;
+    args.rspdiv = divergence_spectra;
+    args.rgp = gp_fields;
+  if( context.scalar_derivatives() ) {
+    args.lscalarders = true;
+  }
+  if( context.wind_EW_derivatives() ) {
+    args.luvder_EW = true;
+  }
+  if( context.vorticity_divergence_fields() ) {
+    args.lvordivgp = true;
+  }
   TRANS_CHECK( ::trans_invtrans(&args) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void Trans::invtrans( const int nb_fields, const double vorticity_spectra[], const double divergence_spectra[], double wind_fields[] ) const
+void Trans::invtrans(const int nb_scalar_fields, const double scalar_spectra[],
+                     double gp_fields[],
+                     const TransParameters& context) const
 {
   struct ::InvTrans_t args = new_invtrans(&trans_);
-    args.nvordiv = nb_fields;
-    args.rspvor = vorticity_spectra;
-    args.rspdiv = divergence_spectra;
-    args.rgp = wind_fields;
+    args.nscalar     = nb_scalar_fields;
+    args.rspscalar   = scalar_spectra;
+    args.rgp         = gp_fields;
+  if( context.scalar_derivatives() ) {
+    args.lscalarders = true;
+  }
+  TRANS_CHECK( ::trans_invtrans(&args) );
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Trans::invtrans( const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
+                      double gp_fields[],
+                      const TransParameters& context ) const
+{
+  struct ::InvTrans_t args = new_invtrans(&trans_);
+    args.nvordiv = nb_vordiv_fields;
+    args.rspvor  = vorticity_spectra;
+    args.rspdiv  = divergence_spectra;
+    args.rgp     = gp_fields;
+  if( context.wind_EW_derivatives() ) {
+      args.luvder_EW = true;
+    }
+  if( context.vorticity_divergence_fields() ) {
+    args.lvordivgp = true;
+  }
   TRANS_CHECK( ::trans_invtrans(&args) );
 }
 
@@ -1394,6 +1534,17 @@ void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const Sp
     ASSERT( gpwind );
     ASSERT( parameters );
     This->invtrans_vordiv2wind(*sp,*spvor,*spdiv,*gp,*gpwind,*parameters);
+  );
+}
+
+void atlas__Trans__invtrans (const Trans* This, int nb_scalar_fields, double scalar_spectra[], int nb_vordiv_fields, double vorticity_spectra[], double divergence_spectra[], double gp_fields[], const TransParameters* parameters)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+      This->invtrans( nb_scalar_fields, scalar_spectra,
+                      nb_vordiv_fields, vorticity_spectra, divergence_spectra,
+                      gp_fields,
+                      *parameters );
   );
 }
 
