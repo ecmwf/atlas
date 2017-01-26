@@ -71,9 +71,6 @@ static void rotated_flow_magnitude(grid::Structured& grid, double var[], const d
       ++n;
     }
   }
-  Log::error() << "n = " << n << std::endl;
-  Log::error() << "grid.npts() = " << grid.npts() << std::endl;
-  ASSERT( n == grid.npts() );
 }
 
 /// @brief Compute magnitude of flow with rotation-angle beta

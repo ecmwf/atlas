@@ -1548,6 +1548,19 @@ void atlas__Trans__invtrans (const Trans* This, int nb_scalar_fields, double sca
   );
 }
 
+void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const Spectral* sp, const field::Field* spfield, const functionspace::NodeColumns* gp, field::Field* gpfield)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    ASSERT( sp );
+    ASSERT( spfield );
+    ASSERT( gp );
+    ASSERT( gpfield );
+    This->invtrans_grad(*sp,*spfield,*gp,*gpfield);
+  );
+}
+
+
 
 TransParameters* atlas__TransParameters__new ()
 {

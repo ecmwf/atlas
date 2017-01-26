@@ -468,6 +468,8 @@ extern "C"
   void atlas__Trans__invtrans_field_nodes (const Trans* This, const functionspace_Spectral* sp, const field_Field* spfield, const functionspace_NodeColumns* gp, field_Field* gpfield, const TransParameters* parameters);
   void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const functionspace_NodeColumns* gp, const field_Field* gpwind, const functionspace_Spectral* sp, field_Field* spvor, field_Field* spdiv, const TransParameters* parameters);
   void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const functionspace_Spectral* sp, const field_Field* spvor, const field_Field* spdiv, const functionspace_NodeColumns* gp, field_Field* gpwind, const TransParameters* parameters);
+  void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const functionspace_Spectral* sp, const field_Field* spfield, const functionspace_NodeColumns* gp, field_Field* gpfield);
+
   int atlas__Trans__nproc (const Trans* This);
   int atlas__Trans__myproc (const Trans* This, int proc0);
   int atlas__Trans__ndgl (const Trans* This);

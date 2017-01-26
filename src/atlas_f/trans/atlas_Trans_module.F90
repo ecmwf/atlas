@@ -63,30 +63,34 @@ contains
   procedure :: nump         => atlas_Trans__nump
   procedure :: nvalue       => atlas_Trans__nvalue
 
-  procedure, private :: dirtrans_field_nodes => atlas_Trans__dirtrans_field_nodes
-  procedure, private :: dirtrans_field => atlas_Trans__dirtrans_field
-  procedure, private :: dirtrans_fieldset_nodes => atlas_Trans__dirtrans_fieldset_nodes
-  procedure, private :: dirtrans_fieldset => atlas_Trans__dirtrans_fieldset
-  procedure, public :: dirtrans_wind2vordiv => atlas_Trans__dirtrans_wind2vordiv_field
+  procedure, private :: dirtrans_field_nodes
+  procedure, private :: dirtrans_field
+  procedure, private :: dirtrans_fieldset_nodes
+  procedure, private :: dirtrans_fieldset
+  procedure, public :: dirtrans_wind2vordiv => dirtrans_wind2vordiv_field
   generic, public :: dirtrans => &
     & dirtrans_field, &
     & dirtrans_fieldset, &
     & dirtrans_fieldset_nodes, &
     & dirtrans_field_nodes
 
-  procedure, private :: invtrans_field_nodes => atlas_Trans__invtrans_field_nodes
-  procedure, private :: invtrans_field => atlas_Trans__invtrans_field
-  procedure, private :: invtrans_fieldset_nodes => atlas_Trans__invtrans_fieldset_nodes
-  procedure, private :: invtrans_fieldset => atlas_Trans__invtrans_fieldset
-  procedure, public :: invtrans_vordiv2wind => atlas_Trans__invtrans_vordiv2wind_field
+  procedure, private :: invtrans_field_nodes
+  procedure, private :: invtrans_field
+  procedure, private :: invtrans_fieldset_nodes
+  procedure, private :: invtrans_fieldset
+  procedure, public :: invtrans_vordiv2wind => invtrans_vordiv2wind_field
   generic, public :: invtrans => &
     & invtrans_field, &
     & invtrans_fieldset, &
     & invtrans_field_nodes, &
     & invtrans_fieldset_nodes
 
-  procedure, private :: gathspec_r1 => atlas_Trans__gathspec_r1
-  procedure, private :: gathspec_r2 => atlas_Trans__gathspec_r2
+  procedure, private :: invtrans_grad_field_nodes
+  generic, public :: invtrans_grad => &
+    & invtrans_grad_field_nodes
+
+  procedure, private :: gathspec_r1
+  procedure, private :: gathspec_r2
   generic, public :: gathspec => gathspec_r1, gathspec_r2
 
   procedure, private :: specnorm_r1_scalar
@@ -581,7 +585,7 @@ function atlas_Trans__nvalue(this) result(nvalue)
 #endif
 end function atlas_Trans__nvalue
 
-subroutine atlas_Trans__dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields, parameters)
+subroutine dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields, parameters)
   use atlas_trans_c_binding
   use atlas_functionspace_module, only: atlas_Functionspace
   use atlas_fieldset_module, only: atlas_FieldSet
@@ -614,9 +618,9 @@ subroutine atlas_Trans__dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__dirtrans_fieldset_nodes
+end subroutine dirtrans_fieldset_nodes
 
-subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
+subroutine dirtrans_fieldset(this, gpfields, spfields, parameters)
   use atlas_trans_c_binding
   use atlas_fieldset_module, only: atlas_FieldSet
   use atlas_field_module, only: atlas_Field
@@ -644,9 +648,9 @@ subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__dirtrans_fieldset
+end subroutine dirtrans_fieldset
 
-subroutine atlas_Trans__invtrans_fieldset_nodes(this, sp, spfields, gp, gpfields, parameters)
+subroutine invtrans_fieldset_nodes(this, sp, spfields, gp, gpfields, parameters)
   use atlas_trans_c_binding
   use atlas_functionspace_module, only: atlas_Functionspace
   use atlas_fieldset_module, only: atlas_FieldSet
@@ -679,9 +683,9 @@ subroutine atlas_Trans__invtrans_fieldset_nodes(this, sp, spfields, gp, gpfields
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__invtrans_fieldset_nodes
+end subroutine invtrans_fieldset_nodes
 
-subroutine atlas_Trans__invtrans_fieldset(this, spfields, gpfields, parameters)
+subroutine invtrans_fieldset(this, spfields, gpfields, parameters)
   use atlas_trans_c_binding
   use atlas_fieldset_module, only: atlas_FieldSet
   use atlas_field_module, only: atlas_Field
@@ -709,10 +713,10 @@ subroutine atlas_Trans__invtrans_fieldset(this, spfields, gpfields, parameters)
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__invtrans_fieldset
+end subroutine invtrans_fieldset
 
 
-subroutine atlas_Trans__dirtrans_field_nodes(this, gp, gpfield, sp, spfield, parameters)
+subroutine dirtrans_field_nodes(this, gp, gpfield, sp, spfield, parameters)
   use atlas_trans_c_binding
   use atlas_functionspace_module, only: atlas_Functionspace
   use atlas_field_module, only: atlas_Field
@@ -744,9 +748,9 @@ subroutine atlas_Trans__dirtrans_field_nodes(this, gp, gpfield, sp, spfield, par
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__dirtrans_field_nodes
+end subroutine dirtrans_field_nodes
 
-subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
+subroutine dirtrans_field(this, gpfield, spfield, parameters)
   use atlas_trans_c_binding
   use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
@@ -773,9 +777,9 @@ subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__dirtrans_field
+end subroutine dirtrans_field
 
-subroutine atlas_Trans__dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, spdiv, parameters)
+subroutine dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, spdiv, parameters)
   use atlas_trans_c_binding
   use atlas_functionspace_module, only: atlas_Functionspace
   use atlas_field_module, only: atlas_Field
@@ -810,9 +814,9 @@ subroutine atlas_Trans__dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, 
   THROW_ERROR
 #endif
 
-end subroutine atlas_Trans__dirtrans_wind2vordiv_field
+end subroutine dirtrans_wind2vordiv_field
 
-subroutine atlas_Trans__invtrans_field_nodes(this, sp, spfield, gp, gpfield, parameters)
+subroutine invtrans_field_nodes(this, sp, spfield, gp, gpfield, parameters)
   use atlas_trans_c_binding
   use atlas_functionspace_module, only: atlas_Functionspace
   use atlas_field_module, only: atlas_Field
@@ -844,9 +848,9 @@ subroutine atlas_Trans__invtrans_field_nodes(this, sp, spfield, gp, gpfield, par
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__invtrans_field_nodes
+end subroutine invtrans_field_nodes
 
-subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
+subroutine invtrans_field(this, spfield, gpfield, parameters)
   use atlas_trans_c_binding
   use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
@@ -873,10 +877,10 @@ subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__invtrans_field
+end subroutine invtrans_field
 
 
-subroutine atlas_Trans__invtrans_vordiv2wind_field(this, sp, spvor, spdiv, gp, gpwind, parameters)
+subroutine invtrans_vordiv2wind_field(this, sp, spvor, spdiv, gp, gpwind, parameters)
   use atlas_trans_c_binding
   use atlas_functionspace_module, only: atlas_Functionspace
   use atlas_field_module, only: atlas_Field
@@ -911,10 +915,33 @@ subroutine atlas_Trans__invtrans_vordiv2wind_field(this, sp, spvor, spdiv, gp, g
   THROW_ERROR
 #endif
 
-end subroutine atlas_Trans__invtrans_vordiv2wind_field
+end subroutine invtrans_vordiv2wind_field
 
 
-subroutine atlas_Trans__gathspec_r1(this, local, global)
+subroutine invtrans_grad_field_nodes(this, sp, spfield, gp, gpfield)
+  use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_field_module, only: atlas_Field
+  class(atlas_Trans), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in)  :: sp
+  class(atlas_Field), intent(in)  :: spfield
+  class(atlas_FunctionSpace), intent(in)  :: gp
+  class(atlas_Field), intent(inout) :: gpfield
+#ifdef ATLAS_HAVE_TRANS
+
+  call atlas__Trans__invtrans_grad_field_nodes( this%c_ptr(), &
+    &                          sp%c_ptr(), &
+    &                          spfield%c_ptr(), &
+    &                          gp%c_ptr(), &
+    &                          gpfield%c_ptr() )
+#else
+  THROW_ERROR
+#endif
+end subroutine invtrans_grad_field_nodes
+
+
+
+subroutine gathspec_r1(this, local, global)
   use atlas_trans_c_binding
   use, intrinsic :: iso_c_binding, only : c_double
   class(atlas_Trans), intent(in) :: this
@@ -925,9 +952,9 @@ subroutine atlas_Trans__gathspec_r1(this, local, global)
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__gathspec_r1
+end subroutine gathspec_r1
 
-subroutine atlas_Trans__gathspec_r2(this, local, global)
+subroutine gathspec_r2(this, local, global)
   use, intrinsic :: iso_c_binding, only : c_double
   use fckit_array_module, only: array_view1d
   use atlas_trans_c_binding
@@ -944,7 +971,7 @@ subroutine atlas_Trans__gathspec_r2(this, local, global)
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__gathspec_r2
+end subroutine gathspec_r2
 
 
 subroutine specnorm_r1_scalar(this, spectra, norm, rank)

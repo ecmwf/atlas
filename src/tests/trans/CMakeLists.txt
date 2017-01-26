@@ -16,6 +16,14 @@ if( HAVE_FCTEST )
     )
   endif()
 
+  if( ATLAS_HAVE_TRANS )
+    add_fctest( TARGET atlas_fctest_trans_invtrans_grad
+      LINKER_LANGUAGE Fortran
+      SOURCES         fctest_trans_invtrans_grad.F90
+      LIBS            atlas_f
+    )
+  endif()
+
 endif()
 
 ecbuild_add_test( TARGET atlas_test_trans
