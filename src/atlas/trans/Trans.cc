@@ -502,7 +502,7 @@ void Trans::invtrans_grad(const Spectral& sp, const field::Field& spfield,
 {
   field::FieldSet spfields;   spfields.  add(spfield);
   field::FieldSet gradfields; gradfields.add(gradfield);
-  invtrans(sp,spfields,gp,gradfields);
+  invtrans_grad(sp,spfields,gp,gradfields);
 }
 
 void Trans::invtrans_grad(const Spectral& sp, const field::FieldSet& spfields,
@@ -585,7 +585,7 @@ void Trans::invtrans_grad(const Spectral& sp, const field::FieldSet& spfields,
           {
             if( !is_ghost(jnode) )
             {
-              field(jnode,jlev,dim) = rgpview(f,n);
+              field(jnode,jlev,1-dim) = rgpview(f,n);
               ++n;
             }
           }

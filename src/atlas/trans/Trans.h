@@ -64,6 +64,10 @@ public:
   ~TransParameters() {}
   static const char* className() { return "atlas::trans::TransParameters"; }
 
+  void set_scalar_derivatives(bool v)      { set("scalar_derivatives",v); }
+  void set_wind_EW_derivatives(bool v)     { set("wind_EW_derivatives",v); }
+  void vorticity_divergence_fields(bool v) { set("vorticity_divergence_fields",v); }
+
   bool scalar_derivatives() const {
     bool v = false;
     if( has("scalar_derivatives") )
