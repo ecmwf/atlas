@@ -41,7 +41,7 @@ ecbuild_add_test( TARGET atlas_test_trans_serial
   LIBS      atlas
 )
 
-ecbuild_add_test( TARGET test_trans_invtrans_grad
+ecbuild_add_test( TARGET atlas_test_trans_invtrans_grad
   BOOST
   SOURCES   test_trans_invtrans_grad.cc
   CONDITION ATLAS_HAVE_TRANS
