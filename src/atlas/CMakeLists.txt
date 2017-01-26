@@ -255,8 +255,8 @@ interpolation/PointSet.cc
 
 
 list( APPEND atlas_array_srcs
-array/array.h
-array/array_fwd.h
+array.h
+array_fwd.h
 array/Array.h
 array/ArrayIdx.h
 array/ArrayLayout.h

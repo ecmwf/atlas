@@ -10,7 +10,7 @@
 
 #include <stdexcept>
 #include "atlas/field/Field.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/IndexView.h"
 
 //------------------------------------------------------------------------------------------------------

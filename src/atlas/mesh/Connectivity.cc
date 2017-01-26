@@ -11,7 +11,7 @@
 #include <limits>
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/array/DataType.h"
 

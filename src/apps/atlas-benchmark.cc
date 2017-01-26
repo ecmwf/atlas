@@ -38,7 +38,7 @@
 #include <vector>
 #include <memory>
 
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/atlas.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/grids.h"

@@ -1,11 +1,11 @@
 
-#include "atlas/array/array_fwd.h"
+#include "atlas/array_fwd.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/StorageView.h"
 #include "atlas/internals/atlas_defines.h"
 
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 
 
 namespace atlas {

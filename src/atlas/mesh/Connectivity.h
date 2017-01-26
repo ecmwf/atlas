@@ -27,12 +27,12 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/Vector.h"
-#include "atlas/array/array_fwd.h"
+#include "atlas/array_fwd.h"
 
 namespace atlas {
 namespace mesh {

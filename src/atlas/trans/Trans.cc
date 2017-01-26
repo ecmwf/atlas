@@ -11,7 +11,7 @@
 #include "atlas/trans/Trans.h"
 
 #include "eckit/parser/JSON.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"

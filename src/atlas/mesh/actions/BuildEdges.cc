@@ -29,7 +29,7 @@
 #include "atlas/internals/Functions.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"

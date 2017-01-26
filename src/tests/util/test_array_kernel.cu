@@ -11,7 +11,7 @@
 #define BOOST_TEST_MODULE TestArrayKernel
 #include <cuda_runtime.h>
 #include "ecbuild/boost_test_framework.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
 

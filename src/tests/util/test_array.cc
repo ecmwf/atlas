@@ -10,7 +10,7 @@
 
 #define BOOST_TEST_MODULE TestArray
 #include "ecbuild/boost_test_framework.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 
 using namespace atlas::array;
