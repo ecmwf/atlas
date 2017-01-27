@@ -63,6 +63,32 @@ public:
   TransParameters(eckit::Stream& s) : eckit::Properties(s) { }
   ~TransParameters() {}
   static const char* className() { return "atlas::trans::TransParameters"; }
+
+  void set_scalar_derivatives(bool v)      { set("scalar_derivatives",v); }
+  void set_wind_EW_derivatives(bool v)     { set("wind_EW_derivatives",v); }
+  void vorticity_divergence_fields(bool v) { set("vorticity_divergence_fields",v); }
+
+  bool scalar_derivatives() const {
+    bool v = false;
+    if( has("scalar_derivatives") )
+      v = get("scalar_derivatives");
+    return v;
+  }
+
+  bool wind_EW_derivatives() const {
+    bool v = false;
+    if( has("wind_EW_derivatives") )
+      v = get("wind_EW_derivatives");
+    return v;
+  }
+
+  bool vorticity_divergence_fields() const {
+    bool v = false;
+    if( has("vorticity_divergence_fields") )
+      v = get("vorticity_divergence_fields");
+    return v;
+  }
+
 };
 
 //-----------------------------------------------------------------------------
@@ -319,19 +345,28 @@ public:
    */
   void gathgrid( const int nb_fields, const int destination[], const double fields[], double global_fields[] ) const;
 
+  void invtrans( const int nb_scalar_fields, const double scalar_spectra[],
+                 const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
+                 double gp_fields[],
+                 const TransParameters& = TransParameters() ) const;
+
   /*!
    * @brief invtrans
    * @param nb_fields
    * @param scalar_spectra
    * @param scalar_fields
    */
-  void invtrans( const int nb_fields, const double scalar_spectra[], double scalar_fields[] ) const;
+  void invtrans( const int nb_scalar_fields, const double scalar_spectra[],
+                 double gp_fields[],
+                 const TransParameters& = TransParameters() ) const;
 
   /*!
    * @brief Inverse transform of vorticity/divergence to wind(U/V)
    * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
    */
-  void invtrans( const int nb_fields, const double vorticity_spectra[], const double divergence_spectra[], double wind_fields[] ) const;
+  void invtrans( const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
+                 double gp_fields[],
+                 const TransParameters& = TransParameters()) const;
 
   /*!
    * @brief Direct transform of scalar fields
@@ -378,6 +413,15 @@ public:
                             const functionspace::NodeColumns&, field::Field& gpwind,
                             const TransParameters& = TransParameters()) const;
 
+  void invtrans_grad(const functionspace::Spectral& sp, const field::Field& spfield,
+                     const functionspace::NodeColumns& gp, field::Field& gradfield) const;
+
+
+  void invtrans_grad(const functionspace::Spectral& sp, const field::FieldSet& spfields,
+                     const functionspace::NodeColumns& gp, field::FieldSet& gradfields) const;
+
+  void specnorm( const int nb_fields, const double spectra[], double norms[], int rank=0 ) const;
+
 
 private:
 
@@ -408,10 +452,12 @@ extern "C"
   void atlas__Trans__gathspec (const Trans* t, int nb_fields, int destination[], double spectra[], double global_spectra[]);
   void atlas__Trans__distgrid (const Trans* t, int nb_fields, int origin[], double global_fields[], double fields[]);
   void atlas__Trans__gathgrid (const Trans* t, int nb_fields, int destination[], double fields[], double global_fields[]);
+  void atlas__Trans__invtrans (const Trans* t, int nb_scalar_fields, double scalar_spectra[], int nb_vordiv_fields, double vorticity_spectra[], double divergence_spectra[], double gp_fields[], const TransParameters* parameters);
   void atlas__Trans__invtrans_scalar (const Trans* t, int nb_fields, double scalar_spectra[], double scalar_fields[]);
   void atlas__Trans__invtrans_vordiv2wind (const Trans* t, int nb_fields, double vorticity_spectra[], double divergence_spectra[], double wind_fields[]);
   void atlas__Trans__dirtrans_scalar (const Trans* t, int nb_fields, double scalar_fields[], double scalar_spectra[]);
   void atlas__Trans__dirtrans_wind2vordiv (const Trans* t, int nb_fields, double wind_fields[], double vorticity_spectra[], double divergence_spectra[]);
+  void atlas__Trans__specnorm (const Trans* t, int nb_fields, double spectra[], double norms[], int rank);
   void atlas__Trans__dirtrans_fieldset (const Trans* This, const field_FieldSet* gpfields, field_FieldSet* spfields, const TransParameters* parameters);
   void atlas__Trans__dirtrans_field (const Trans* This, const field_Field* gpfield, field_Field* spfield, const TransParameters* parameters);
   void atlas__Trans__invtrans_fieldset (const Trans* This, const field_FieldSet* spfields, field_FieldSet* gpfields, const TransParameters* parameters);
@@ -422,6 +468,8 @@ extern "C"
   void atlas__Trans__invtrans_field_nodes (const Trans* This, const functionspace_Spectral* sp, const field_Field* spfield, const functionspace_NodeColumns* gp, field_Field* gpfield, const TransParameters* parameters);
   void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const functionspace_NodeColumns* gp, const field_Field* gpwind, const functionspace_Spectral* sp, field_Field* spvor, field_Field* spdiv, const TransParameters* parameters);
   void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const functionspace_Spectral* sp, const field_Field* spvor, const field_Field* spdiv, const functionspace_NodeColumns* gp, field_Field* gpwind, const TransParameters* parameters);
+  void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const functionspace_Spectral* sp, const field_Field* spfield, const functionspace_NodeColumns* gp, field_Field* gpfield);
+
   int atlas__Trans__nproc (const Trans* This);
   int atlas__Trans__myproc (const Trans* This, int proc0);
   int atlas__Trans__ndgl (const Trans* This);

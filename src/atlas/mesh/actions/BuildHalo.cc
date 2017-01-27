@@ -534,7 +534,7 @@ public:
       buf.elem_part   [p][jelem] = elem_part(ielem);
       buf.elem_type   [p][jelem] = mesh.cells().type_idx(ielem);
       std::vector<double> crds(elem_nodes->cols(ielem)*2);
-      for( int jnode=0; jnode<elem_nodes->cols(ielem); ++jnode)
+      for(size_t jnode=0; jnode<elem_nodes->cols(ielem); ++jnode)
       {
         double crd[] = { lonlat( (*elem_nodes)(ielem,jnode),internals::LON) , lonlat( (*elem_nodes)(ielem,jnode),internals::LAT) };
         transform(crd,-1);

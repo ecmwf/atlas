@@ -16,19 +16,34 @@ if( HAVE_FCTEST )
     )
   endif()
 
+  if( ATLAS_HAVE_TRANS )
+    add_fctest( TARGET atlas_fctest_trans_invtrans_grad
+      LINKER_LANGUAGE Fortran
+      SOURCES         fctest_trans_invtrans_grad.F90
+      LIBS            atlas_f
+    )
+  endif()
+
 endif()
 
 ecbuild_add_test( TARGET atlas_test_trans
   BOOST
   MPI      4
   SOURCES   test_trans.cc
-  CONDITION HAVE_TRANS AND ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+  CONDITION ATLAS_HAVE_TRANS AND ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
   LIBS      atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_trans_serial
   BOOST
   SOURCES   test_trans.cc
-  CONDITION HAVE_TRANS AND NOT ECKIT_HAVE_MPI
+  CONDITION ATLAS_HAVE_TRANS
+  LIBS      atlas
+)
+
+ecbuild_add_test( TARGET atlas_test_trans_invtrans_grad
+  BOOST
+  SOURCES   test_trans_invtrans_grad.cc
+  CONDITION ATLAS_HAVE_TRANS
   LIBS      atlas
 )

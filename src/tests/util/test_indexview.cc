@@ -32,7 +32,7 @@ template< typename Iterator >
 std::string pos(Iterator& it)
 {
   std::stringstream ss;
-  for( int i=0; i<it.pos().size(); ++i)  ss << it.pos()[i] << " ";
+  for(size_t i=0; i < it.pos().size(); ++i)  ss << it.pos()[i] << " ";
   return ss.str();
 }
 

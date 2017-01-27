@@ -170,10 +170,17 @@ BOOST_AUTO_TEST_CASE( test_distspec )
   std::vector<int> nto(nfld,1);
   std::vector<double> rgp(nfld*trans.ngptot());
   std::vector<double> rgpg(nfld*trans.ngptotg());
+  std::vector<double> specnorms(nfld,0);
 
   trans.distspec( nfld, nfrom.data(), rspecg.data(), rspec.data() );
+  trans.specnorm( nfld, rspec.data(), specnorms.data() );
   trans.invtrans( nfld, rspec.data(), rgp.data() );
   trans.gathgrid( nfld, nto.data(),   rgp.data(),    rgpg.data() );
+
+  if( parallel::mpi::comm().rank() == 0 ) {
+    BOOST_CHECK_CLOSE( specnorms[0], 1., 1.e-10 );
+    BOOST_CHECK_CLOSE( specnorms[1], 2., 1.e-10 );
+  }
 
   BOOST_TEST_CHECKPOINT("end test_distspec");
 }
