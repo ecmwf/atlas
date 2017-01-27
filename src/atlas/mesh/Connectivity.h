@@ -21,11 +21,10 @@
 /// stored with base 1, to be compatible with Fortran access.
 /// C++ access operators however convert the resulting connectivity to base 0.
 
-#ifndef atlas_Connectivity_H
-#define atlas_Connectivity_H
+#pragma once
 
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
+#include <array>
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -33,6 +32,9 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/Vector.h"
 #include "atlas/array_fwd.h"
+
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
 namespace mesh {
@@ -662,5 +664,3 @@ template<> inline DataType::kind_t DataType::kind<mesh::BlockConnectivity*>()   
 }
 
 } // namespace atlas
-
-#endif
