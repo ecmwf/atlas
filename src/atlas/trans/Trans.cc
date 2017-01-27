@@ -108,7 +108,7 @@ struct PackNodeColumns
     const ArrayView<double,3> gpfield = make_view<double,3>( field );
     if( not components ) components = gpfield.shape(2);
     ATLAS_DEBUG_VAR( components );
-    for( size_t jcomp=0; jcomp<components; ++jcomp )
+    for( size_t jcomp=0; jcomp<size_t(components); ++jcomp )
     {
       for( size_t jlev=0; jlev<gpfield.shape(1); ++jlev )
       {
@@ -205,7 +205,7 @@ struct PackSpectral
   {
     const ArrayView<double,1> spfield = make_view<double,1>( field );
 
-    for( int jwave=0; jwave<spfield.shape(0); ++jwave )
+    for( size_t jwave=0; jwave<spfield.shape(0); ++jwave )
     {
       rspecview_(jwave,f) = spfield(jwave);
     }
@@ -219,7 +219,7 @@ struct PackSpectral
 
     for( size_t jvar=0; jvar<nvars; ++jvar )
     {
-      for( int jwave=0; jwave<spfield.shape(0); ++jwave )
+      for( size_t jwave=0; jwave<spfield.shape(0); ++jwave )
       {
         rspecview_(jwave,f) = spfield(jwave,jvar);
       }
@@ -292,7 +292,7 @@ struct UnpackNodeColumns
   {
     ArrayView<double,3> gpfield = make_view<double,3>( field );
     if( not components ) components = gpfield.shape(2);
-    for( size_t jcomp=0; jcomp<components; ++jcomp )
+    for( size_t jcomp=0; jcomp<size_t(components); ++jcomp )
     {
       for( size_t jlev=0; jlev<gpfield.shape(1); ++jlev )
       {
@@ -388,7 +388,7 @@ struct UnpackSpectral
   {
     ArrayView<double,1> spfield = make_view<double,1>( field );
 
-    for( int jwave=0; jwave<spfield.shape(0); ++jwave )
+    for( size_t jwave=0; jwave<spfield.shape(0); ++jwave )
     {
       spfield(jwave) = rspecview_(jwave,f);
     }
@@ -402,7 +402,7 @@ struct UnpackSpectral
 
     for( size_t jvar=0; jvar<nvars; ++jvar )
     {
-      for( int jwave=0; jwave<spfield.shape(0); ++jwave )
+      for( size_t jwave=0; jwave<spfield.shape(0); ++jwave )
       {
         spfield(jwave,jvar) = rspecview_(jwave,f);
       }
