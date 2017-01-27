@@ -64,8 +64,8 @@ public:
 
 // -- Constructors
 
-    LocalView( value_type* data, const size_t shape[], const size_t strides[] ) :
-        data_(data) {
+    LocalView( const value_type* data, const size_t shape[], const size_t strides[] ) :
+        data_(const_cast<value_type*>(data)) {
         size_ = 1;
         for( size_t j=0; j<Rank; ++j ) {
             shape_[j] = shape[j];
@@ -74,8 +74,8 @@ public:
         }
     }
 
-    LocalView( value_type* data, const size_t shape[] ) :
-        data_(data) {
+    LocalView( const value_type* data, const size_t shape[] ) :
+        data_(const_cast<value_type*>(data)) {
         size_ = 1;
         for( int j=Rank-1; j>=0; --j ) {
             shape_[j] = shape[j];
@@ -84,8 +84,8 @@ public:
         }
     }
 
-    LocalView( value_type* data, const ArrayShape& shape ) :
-        data_(data) {
+    LocalView( const value_type* data, const ArrayShape& shape ) :
+        data_(const_cast<value_type*>(data)) {
         size_ = 1;
         for( int j=Rank-1; j>=0; --j ) {
             shape_[j]   = shape[j];

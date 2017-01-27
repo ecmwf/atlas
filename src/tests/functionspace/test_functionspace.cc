@@ -615,12 +615,12 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_norm )
 
   // Set first wave number
   {
-    array::ArrayView<double,1> twoD( *twoD_field );
-    twoD = 0.;
+    array::ArrayView<double,1> twoD = array::make_view<double,1>( *twoD_field );
+    twoD.assign(0.);
     if( parallel::mpi::comm().rank() == 0 ) twoD(0) = 1.;
 
-    array::ArrayView<double,2> threeD( *threeD_field );
-    threeD = 0.;
+    array::ArrayView<double,2> threeD = array::make_view<double,2>( *threeD_field );
+    threeD.assign(0.);
     for( size_t jlev=0; jlev<nb_levels; ++jlev) {
       if( parallel::mpi::comm().rank() == 0 ) threeD(0,jlev) = jlev;
     }

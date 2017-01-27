@@ -157,6 +157,14 @@ public: // Destructor
   /// @brief Return the memory footprint of the Field
   size_t footprint() const;
 
+// -- dangerous methods
+  template <typename DATATYPE> DATATYPE const* host_data() const   { return array_->host_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       host_data()         { return array_->host_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE const* device_data() const { return array_->device_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       device_data()       { return array_->device_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE const* data() const        { return array_->host_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       data()              { return array_->host_data<DATATYPE>(); }
+
 // -- Methods related to host-device synchronisation, requires gridtools_storage
   void cloneToDevice() const {
       array_->cloneToDevice();
