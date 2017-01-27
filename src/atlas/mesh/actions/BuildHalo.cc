@@ -225,8 +225,6 @@ void accumulate_elements( const Mesh& mesh,
 {
   const mesh::HybridElements::Connectivity &elem_nodes = mesh.cells().node_connectivity();
   const array::ArrayView<int,1> elem_part = array::make_view<int,1>( mesh.cells().partition() );
-  const array::ArrayView<gidx_t,1> ngidx  = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
-  const array::ArrayView<gidx_t,1> egidx  = array::make_view<gidx_t,1>( mesh.cells().global_index() );
 
   size_t nb_nodes = node_uid.size();
 
@@ -385,7 +383,6 @@ public:
 public:
   BuildHaloHelper( Mesh& _mesh ):
     mesh(_mesh),
-    compute_uid(mesh.nodes()),
     lonlat       ( array::make_view<double,2> ( mesh.nodes().lonlat() ) ),
     glb_idx      ( array::make_view<gidx_t,1> ( mesh.nodes().global_index() ) ),
     part         ( array::make_view<int   ,1> ( mesh.nodes().partition() ) ),
@@ -394,7 +391,8 @@ public:
     ghost        ( array::make_view<int   ,1> ( mesh.nodes().ghost() ) ),
     elem_nodes   ( &mesh.cells().node_connectivity() ),
     elem_part    ( array::make_view<int   ,1> ( mesh.cells().partition() ) ),
-    elem_glb_idx ( array::make_view<gidx_t,1> ( mesh.cells().global_index() ) )
+    elem_glb_idx ( array::make_view<gidx_t,1> ( mesh.cells().global_index() ) ),
+    compute_uid(mesh.nodes())
   {
     // update();
   }
@@ -633,7 +631,6 @@ public:
     // Elements might be duplicated from different Tasks. We need to identify unique entries
     std::set<uid_t> elem_uid;
     int nb_elems = mesh.cells().size();
-    array::ArrayView<gidx_t,1> node_glb_idx = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
 
     for( int jelem=0; jelem<nb_elems; ++jelem )
     {

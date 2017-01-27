@@ -340,8 +340,6 @@ void AtlasBenchmark::setup()
   auto V      = array::make_view<double,1> ( mesh->nodes().field("dual_volumes") );
   auto S      = array::make_view<double,2> ( mesh->edges().field("dual_normals") );
   auto field  = array::make_view<double,2> ( mesh->nodes().add( nodes_fs->createField<double>( "field", nlev ) ) );
-  field::Field& gradfield = ( mesh->nodes().add( nodes_fs->createField<double>("grad",nlev,array::make_shape(3) ) ) );
-  auto grad   = array::make_view<double,3> ( gradfield );
   mesh->nodes().field("field").metadata().set("nb_levels",nlev);
   mesh->nodes().field("grad").metadata().set("nb_levels",nlev);
 
@@ -423,7 +421,7 @@ void AtlasBenchmark::iteration()
   const auto S     = array::make_view<double,2>( mesh->edges().field("dual_normals"));
   const auto V     = array::make_view<double,1>( mesh->nodes().field("dual_volumes"));
   const auto node2edge_sign = array::make_view<double,2> ( mesh->nodes().field("to_edge_sign") );
-  
+
   auto grad = array::make_view<double,3>( mesh->nodes().field("grad") );
   auto avgS = array::make_view<double,3>(*avgS_arr);
 

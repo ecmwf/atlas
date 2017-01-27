@@ -156,24 +156,24 @@ public:
   GT_FUNCTION
   IrregularConnectivity(const IrregularConnectivity &other) :
     owns_(false),
+  #ifdef __CUDACC__
+      data_{0,0,0},
+      values_view_(array::make_device_view<idx_t, 1>(*(other.data_[_values_]))),
+      displs_view_(array::make_device_view<size_t, 1>(*(other.data_[_displs_]))),
+      counts_view_(array::make_device_view<size_t, 1>(*(other.data_[_counts_]))),
+  #else
+      data_{other.data_[0], other.data_[1], other.data_[2]},
+      values_view_(array::make_host_view<idx_t, 1>(*(other.data_[_values_]))),
+      displs_view_(array::make_host_view<size_t, 1>(*(other.data_[_displs_]))),
+      counts_view_(array::make_host_view<size_t, 1>(*(other.data_[_counts_]))),
+  #endif
     missing_value_(other.missing_value_),
     rows_(other.rows_),
     maxcols_(other.maxcols_),
     mincols_(other.mincols_),
-#ifdef __CUDACC__
-    data_{0,0,0},
-    values_view_(array::make_device_view<idx_t, 1>(*(other.data_[_values_]))),
-    displs_view_(array::make_device_view<size_t, 1>(*(other.data_[_displs_]))),
-    counts_view_(array::make_device_view<size_t, 1>(*(other.data_[_counts_]))),
-#else
-    data_{other.data_[0], other.data_[1], other.data_[2]},
-    values_view_(array::make_host_view<idx_t, 1>(*(other.data_[_values_]))),
-    displs_view_(array::make_host_view<size_t, 1>(*(other.data_[_displs_]))),
-    counts_view_(array::make_host_view<size_t, 1>(*(other.data_[_counts_]))),
-#endif
-    ctxt_delete_(0),
+    ctxt_update_(0),
     ctxt_set_(0),
-    ctxt_update_(0)
+    ctxt_delete_(0)
   {}
 
 
@@ -486,14 +486,14 @@ public:
   GT_FUNCTION
   BlockConnectivity(const BlockConnectivity& other)
     : owns_(false),
-      rows_(other.rows_),
-      cols_(other.cols_),
       values_(0),
 #ifdef __CUDACC__
       values_view_(array::make_device_view<idx_t, 2>(*(other.values_))),
 #else
       values_view_(array::make_device_view<idx_t, 2>(*(other.values_))),
 #endif
+      rows_(other.rows_),
+      cols_(other.cols_),
       missing_value_( other.missing_value_)
   {}
 

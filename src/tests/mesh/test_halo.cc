@@ -48,7 +48,6 @@ double dual_volume(mesh::Mesh& mesh)
   internals::IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.size();
   array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( nodes.field("dual_volumes") );
-  array::ArrayView<gidx_t,1> glb_idx      = array::make_view<gidx_t,1>( nodes.global_index() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {

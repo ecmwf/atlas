@@ -1001,8 +1001,8 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const fiel
 
   array::LocalView<T,2> sum ( array::make_storageview<T>(sumfield).data(),
                               array::make_shape(sumfield.shape(0),sumfield.stride(0)) );
-  for( size_t l=0; l<sum.shape(1); ++l ) {
-    for( size_t j=0; j<sum.shape(2); ++j ) {
+  for( size_t l=0; l<sum.shape(0); ++l ) {
+    for( size_t j=0; j<sum.shape(1); ++j ) {
       sum(l,j) = 0.;
     }
   }

@@ -62,9 +62,9 @@ public:
     return false;
   }
 private:
-  int mypart_;
   array::ArrayView<int,1> part_;
   IndexView<int,1> ridx_;
+  int mypart_;
 };
 
 
@@ -180,9 +180,6 @@ BOOST_AUTO_TEST_CASE( test2 )
   mesh::actions::build_parallel_fields(*m);
 
   mesh::Nodes& nodes = m->nodes();
-  IndexView<int,1> loc_idx = array::make_indexview<int,1>( nodes.remote_index() );
-  array::ArrayView<int   ,1> part    = array::make_view<int   ,1>( nodes.partition()    );
-  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
 
   test::IsGhost is_ghost(nodes);
 

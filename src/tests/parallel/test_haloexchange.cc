@@ -101,7 +101,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
   array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
-  for( size_t j=0; j<N; ++j ) {
+  for( int j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*100);
   }
@@ -125,7 +125,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v1, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
   array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
-  for( size_t j=0; j<N; ++j ) {
+  for( int j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*100);
   }
@@ -149,7 +149,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v2, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
   array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
-  for( size_t j=0; j<N; ++j ) {
+  for( int j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*100);
   }
@@ -173,7 +173,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
   array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-  for( size_t p=0; p<N; ++p )
+  for( int p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
     {
@@ -228,7 +228,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
   array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-  for( size_t p=0; p<N; ++p )
+  for( int p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
     {
@@ -284,7 +284,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
   // Test rank 2 halo-exchange
   array::ArrayT<POD> arr(N,3,2);
   array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-  for( size_t p=0; p<N; ++p )
+  for( int p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
     {
@@ -339,7 +339,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
   array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-  for( size_t p=0; p<N; ++p )
+  for( int p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
     {
@@ -414,7 +414,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
   array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
-  for( size_t j=0; j<N; ++j ) {
+  for( int j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*100);
   }
@@ -440,7 +440,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
   array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-  for( size_t p=0; p<N; ++p )
+  for( int p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
     {

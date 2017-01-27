@@ -239,7 +239,6 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 
   array::IndexView<int,   1> ridx   = array::make_indexview<int,1>( nodes.remote_index()  );
   array::ArrayView<int,   1> part   = array::make_view<int,1>( nodes.partition()   );
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
   size_t nb_nodes = nodes.size();
 
   int varsize=2;

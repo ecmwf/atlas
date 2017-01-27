@@ -35,6 +35,9 @@ IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
     array::Array::create<idx_t >(0),   // values
     array::Array::create<size_t>(1),   // displs
     array::Array::create<size_t>(1)},  // counts
+  values_view_(array::make_host_view<idx_t,  1>(*(data_[_values_]))),
+  displs_view_(array::make_host_view<size_t, 1>(*(data_[_displs_]))),
+  counts_view_(array::make_host_view<size_t, 1>(*(data_[_counts_]))),
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
   rows_(0),
   maxcols_(0),
@@ -44,10 +47,7 @@ IrregularConnectivity::IrregularConnectivity(const std::string& name ) :
   ctxt_delete_(0),
   callback_update_(0),
   callback_set_(0),
-  callback_delete_(0),
-  values_view_(array::make_host_view<idx_t,  1>(*(data_[_values_]))),
-  displs_view_(array::make_host_view<size_t, 1>(*(data_[_displs_]))),
-  counts_view_(array::make_host_view<size_t, 1>(*(data_[_counts_])))
+  callback_delete_(0)
 {
     displs_view_(0) = 0;
     counts_view_(0) = 0;
@@ -69,21 +69,21 @@ size_t get_total_size_counts(size_t rows, size_t counts[])
 IrregularConnectivity::IrregularConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[] )
   : name_(),
     owns_(false),
-    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
-    rows_(rows),
     data_{
       array::Array::wrap<idx_t >(values, array::ArrayShape{get_total_size_counts(rows, counts)}),
       array::Array::wrap<size_t>(displs, array::ArrayShape{rows}),
       array::Array::wrap<size_t>(counts, array::ArrayShape{rows})},
+    values_view_(array::make_view<idx_t,  1>(*(data_[_values_]))),
+    displs_view_(array::make_view<size_t, 1>(*(data_[_displs_]))),
+    counts_view_(array::make_view<size_t, 1>(*(data_[_counts_]))),
+    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
+    rows_(rows),
     ctxt_update_(0),
     ctxt_set_(0),
     ctxt_delete_(0),
     callback_update_(0),
     callback_set_(0),
-    callback_delete_(0),
-    values_view_(array::make_view<idx_t,  1>(*(data_[_values_]))),
-    displs_view_(array::make_view<size_t, 1>(*(data_[_displs_]))),
-    counts_view_(array::make_view<size_t, 1>(*(data_[_counts_])))
+    callback_delete_(0)
 {
   maxcols_ = 0;
   mincols_ = std::numeric_limits<size_t>::max();
@@ -428,10 +428,10 @@ MultiBlockConnectivity::MultiBlockConnectivity(const std::string& name) :
   IrregularConnectivity(name),
   block_displs_(array::Array::create<size_t>(1)),
   block_cols_(array::Array::create<size_t>(1)),
-  block_(0),
-  blocks_(0),
   block_displs_view_(array::make_view<size_t, 1>(*block_displs_)),
-  block_cols_view_(array::make_view<size_t, 1>(*block_cols_))
+  block_cols_view_(array::make_view<size_t, 1>(*block_cols_)),
+  block_(0),
+  blocks_(0)
 {
     block_displs_view_(0) = 0;
 
@@ -673,8 +673,6 @@ void MultiBlockConnectivity::rebuild_block_connectivity()
   block_.resize(blocks_);
   for( size_t b=0; b<blocks_; ++b )
   {
-    size_t rows = block_displs_view_(b+1)-block_displs_view_(b);
-    size_t cols = block_cols_view_(b);
     if( block_[b] ) {
       block_[b]->rebuild(
           block_displs_view_(b+1)-block_displs_view_(b), // rows
@@ -710,8 +708,11 @@ size_t MultiBlockConnectivity::footprint() const
 //------------------------------------------------------------------------------------------------------
 
 BlockConnectivity::BlockConnectivity() :
-  owns_(true), rows_(0), cols_(0), values_(array::Array::create<idx_t>(1,1) ),
+  owns_(true),
+  values_(array::Array::create<idx_t>(1,1) ),
   values_view_(array::make_view<idx_t, 2>(*values_)),
+  rows_(0),
+  cols_(0),
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
 {}
 
@@ -719,10 +720,10 @@ BlockConnectivity::BlockConnectivity() :
 
 BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, const std::initializer_list<idx_t>& values ) :
   owns_(true),
-  rows_(rows),
-  cols_(cols),
   values_(array::Array::create<idx_t>(1,1) ),
   values_view_(array::make_view<idx_t, 2>(*values_)),
+  rows_(rows),
+  cols_(cols),
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
 {
   delete values_;
@@ -742,10 +743,10 @@ BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, const std::initi
 
 BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[] ) :
   owns_(true),
-  rows_(rows),
-  cols_(cols),
   values_(array::Array::create<idx_t>(1,1) ),
   values_view_(array::make_view<idx_t, 2>(*values_)),
+  rows_(rows),
+  cols_(cols),
   missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
 {
   delete values_;
@@ -767,10 +768,10 @@ BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[] )
 
 BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[], bool dummy )
   : owns_(false),
-    rows_(rows),
-    cols_(cols),
     values_(array::Array::wrap<idx_t>(values, array::ArrayShape{rows, cols})),
     values_view_(array::make_view<idx_t, 2>(*values_)),
+    rows_(rows),
+    cols_(cols),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
 {}
 

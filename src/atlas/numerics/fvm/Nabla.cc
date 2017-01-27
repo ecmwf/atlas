@@ -117,7 +117,7 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
     throw eckit::AssertionFailed("gradient field should have same number of levels",Here());
 
 
-  const array::LocalView<double,2> scalar ( array::make_storageview<double>(scalar_field).data(), 
+  const array::LocalView<double,2> scalar ( array::make_storageview<double>(scalar_field).data(),
                                             array::make_shape(nnodes,nlev)   );
         array::LocalView<double,3> grad   ( array::make_storageview<double>(grad_field).data(),
                                             array::make_shape(nnodes,nlev,2) );
@@ -125,7 +125,6 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
   const array::ArrayView<double,2> lonlat_deg     = array::make_view<double,2>( nodes.lonlat() );
   const array::ArrayView<double,1> dual_volumes   = array::make_view<double,1>( nodes.field("dual_volumes") );
   const array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.field("dual_normals") );
-  const array::ArrayView<int,   1> edge_is_pole   = array::make_view<int   ,1>( edges.field("is_pole_edge") );
   const array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes.field("node2edge_sign") );
 
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();

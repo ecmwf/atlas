@@ -21,8 +21,8 @@ namespace array {
 template <typename T>
 class Vector {
 public:
-  Vector() : size_(0) {}
-  Vector(size_t N) : size_(N), data_(new T[N]()) {}
+  Vector() : data_(NULL), size_(0) {}
+  Vector(size_t N) : data_(new T[N]()), size_(N) {}
 
   void resize(size_t N) {
     assert(N >= size_);

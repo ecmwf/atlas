@@ -49,7 +49,6 @@ double dual_volume(const mesh::Mesh& mesh)
   const mesh::Nodes& nodes = mesh.nodes();
   int nb_nodes = nodes.size();
   const array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( nodes.field("dual_volumes") );
-  const array::ArrayView<gidx_t,1> glb_idx      = array::make_view<gidx_t,1>( nodes.global_index() );
   const array::ArrayView<int   ,1> is_ghost     = array::make_view<int   ,1>( nodes.ghost() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
@@ -154,7 +153,6 @@ BOOST_AUTO_TEST_CASE( test_grad )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nnodes = mesh->nodes().size();
   size_t nlev = 1;
 
@@ -230,7 +228,6 @@ BOOST_AUTO_TEST_CASE( test_div )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   field::FieldSet fields;
@@ -261,7 +258,6 @@ BOOST_AUTO_TEST_CASE( test_curl )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   field::FieldSet fields;
@@ -331,7 +327,6 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   field::FieldSet fields;

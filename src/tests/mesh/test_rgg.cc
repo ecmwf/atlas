@@ -438,7 +438,6 @@ DISABLE{
     }
 
     // Test if all nodes are owned
-    array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
     for( size_t n=0; n<nb_nodes; ++n )
     {
       if( size_t(part(n)) == p )

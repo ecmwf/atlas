@@ -644,7 +644,7 @@ BOOST_FIXTURE_TEST_CASE( test_scatter_rank2_ArrayView, Fixture )
                       -8,8, -80,80, -800,800,
                       -9,9, -90,90, -900,900 };
       auto glb_data = make_storageview<POD>(glb).data();
-      for( size_t j=0; j<Ng()*6; ++j ) glb_data[j] = glb_c[j];
+      for( int j=0; j<Ng()*6; ++j ) glb_data[j] = glb_c[j];
     }
 
     POD nan = -1000.;
