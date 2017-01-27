@@ -17,7 +17,7 @@
 
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/parallel/HaloExchange.h"

@@ -28,10 +28,8 @@
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/array/Array.h"
-#include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
-#include "atlas/array/MakeView.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/array.h"
 #include "atlas/internals/Bitflags.h"
 
 #include "tests/AtlasFixture.h"

@@ -13,8 +13,8 @@
 #include <vector>
 #include <array>
 #include <type_traits>
-#include "atlas/array/array_fwd.h"
-#include "atlas/array/Array.h"
+#include "atlas/array_fwd.h"
+#include "atlas/array.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"

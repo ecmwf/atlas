@@ -1,6 +1,7 @@
 
+#include <vector>
 #include "atlas/array/gridtools/GridToolsMakeView.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/StorageView.h"
@@ -45,8 +46,8 @@ make_gt_host_view(const Array& array) {
   return ::gridtools::make_host_view(*ds);
 }
 
-template <typename Value, unsigned int Rank, bool ReadOnly = false>
-static data_view_tt<Value, Rank>
+template <typename Value, unsigned int Rank, bool ReadOnly>
+data_view_tt<Value, Rank>
 make_gt_device_view(const Array& array) {
   typedef storage_traits::storage_info_t<0, Rank> storage_info_ty;
   typedef storage_traits::data_store_t<Value, storage_info_ty> data_store_t;

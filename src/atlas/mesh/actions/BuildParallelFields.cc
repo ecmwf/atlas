@@ -23,7 +23,7 @@
 #include "atlas/internals/PeriodicTransform.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"

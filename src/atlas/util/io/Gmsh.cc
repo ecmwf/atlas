@@ -29,7 +29,7 @@
 #include "atlas/util/io/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/MakeView.h"

@@ -23,7 +23,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"

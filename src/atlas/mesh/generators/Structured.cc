@@ -30,7 +30,7 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/parallel/mpi/mpi.h"

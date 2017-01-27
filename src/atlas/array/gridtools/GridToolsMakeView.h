@@ -9,7 +9,7 @@
  */
 #pragma once
 
-#include "atlas/array/array_fwd.h"
+#include "atlas/array_fwd.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 
 namespace atlas {

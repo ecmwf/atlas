@@ -21,7 +21,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayUtil.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/util/Metadata.h"
 
 namespace eckit { class Parametrisation; }
