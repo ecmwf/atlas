@@ -34,8 +34,7 @@ ecbuild_declare_project()
 
 ### eckit
 
-ecbuild_use_package( PROJECT eckit VERSION 0.15 REQUIRED
-                     DESCRIPTION "ECMWF C++ Toolkit" )
+ecbuild_use_package( PROJECT eckit VERSION 0.15 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
