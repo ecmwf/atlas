@@ -8,10 +8,6 @@
 
 ############################################################################################
 # ATLAS
-#
-# TODO:
-#  * add renumbering to improve cache performance
-#  * add detection of OpenMP flags (maybe move to ecbuild)
 
 cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 
@@ -29,7 +25,7 @@ set   ( ${PROJECT_NAME}_VERSION_STR  ${ATLASVER} )
 
 include( ecbuild_system NO_POLICY_SCOPE )
 
-ecbuild_requires_macro_version( 2.0 )
+ecbuild_requires_macro_version( 2.5 )
 
 ###############################################################################
 # project
@@ -38,7 +34,7 @@ ecbuild_declare_project()
 
 ### eckit
 
-ecbuild_use_package( PROJECT eckit VERSION 0.14 REQUIRED
+ecbuild_use_package( PROJECT eckit VERSION 0.15 REQUIRED
                      DESCRIPTION "ECMWF C++ Toolkit" )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
@@ -50,7 +46,7 @@ ecbuild_find_python()
 
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "Provide Fortran bindings"
-                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.2" )
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.3" )
 if( ATLAS_HAVE_FORTRAN )
 
   if( FCKIT_HAVE_ECKIT )
@@ -106,7 +102,7 @@ endif()
 
 ecbuild_add_option( FEATURE TRANS
                     DESCRIPTION "Support for spectral transforms"
-                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.3.2 QUIET" )
+                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.4.0 QUIET" )
 
 ### tesselation ...
 
