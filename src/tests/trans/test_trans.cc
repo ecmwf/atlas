@@ -41,6 +41,8 @@ namespace test {
 
 struct AtlasTransFixture : public AtlasFixture {
        AtlasTransFixture() {
+         if( parallel::mpi::comm().size() == 1 )
+           trans_use_mpi(false);
          trans_init();
        }
 

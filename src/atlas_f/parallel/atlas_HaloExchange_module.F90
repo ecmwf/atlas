@@ -43,6 +43,7 @@ contains
   procedure, private :: HaloExchange__execute_real32_r1
   procedure, private :: HaloExchange__execute_real32_r2
   procedure, private :: HaloExchange__execute_real32_r3
+  procedure, private :: HaloExchange__execute_real32_r4
   procedure, private :: HaloExchange__execute_real64_r1
   procedure, private :: HaloExchange__execute_real64_r2
   procedure, private :: HaloExchange__execute_real64_r3
@@ -57,6 +58,7 @@ contains
       & HaloExchange__execute_real32_r1, &
       & HaloExchange__execute_real32_r2, &
       & HaloExchange__execute_real32_r3, &
+      & HaloExchange__execute_real32_r4, &
       & HaloExchange__execute_real64_r1, &
       & HaloExchange__execute_real64_r2, &
       & HaloExchange__execute_real64_r3, &
@@ -211,6 +213,18 @@ subroutine HaloExchange__execute_real32_r3(this, field_data)
   call atlas__HaloExchange__execute_strided_float( this%c_ptr(), view, &
     & strides, extents, rank )
 end subroutine HaloExchange__execute_real32_r3
+subroutine HaloExchange__execute_real32_r4(this, field_data)
+  use atlas_haloexchange_c_binding
+  class(atlas_HaloExchange), intent(in) :: this
+  real(c_float), intent(inout) :: field_data(:,:,:,:)
+  real(c_float), pointer :: view(:)
+  integer :: strides(4), extents(4), rank=4
+  view => array_view1d(field_data)
+  strides = (/ array_stride(field_data,4), array_stride(field_data,3), array_stride(field_data,2), array_stride(field_data,1) /)
+  extents = (/ 1,                    ubound(field_data,3), ubound(field_data,2), ubound(field_data,1) /)
+  call atlas__HaloExchange__execute_strided_float( this%c_ptr(), view, &
+    & strides, extents, rank )
+end subroutine HaloExchange__execute_real32_r4
 
 subroutine HaloExchange__execute_real64_r1(this, field_data)
   use atlas_haloexchange_c_binding
