@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     // Retrieve lonlat field to calculate scalar1 function
     ArrayView <double,1> scalar1(*field_scalar1);
     ArrayView <double,2> lonlat ( mesh->nodes().lonlat() );
-    for (int jnode = 0; jnode < nb_nodes; ++jnode)
+    for (size_t jnode = 0; jnode < nb_nodes; ++jnode)
     {
         zlon = lonlat(jnode,0) * deg2rad;
         zlat = lonlat(jnode,1) * deg2rad;
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
     fields.add(*field_vector1);
     checksum = fs_nodes->checksum(fields);
     Log::info() << "FieldSet checksum : " << checksum << std::endl;
-    
+
     /* .... */
 
     // Operations
