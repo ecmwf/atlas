@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2016 ECMWF.
+# (C) Copyright 1996-2017 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,10 +8,6 @@
 
 ############################################################################################
 # ATLAS
-#
-# TODO:
-#  * add renumbering to improve cache performance
-#  * add detection of OpenMP flags (maybe move to ecbuild)
 
 cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 
@@ -29,7 +25,7 @@ set   ( ${PROJECT_NAME}_VERSION_STR  ${ATLASVER} )
 
 include( ecbuild_system NO_POLICY_SCOPE )
 
-ecbuild_requires_macro_version( 2.0 )
+ecbuild_requires_macro_version( 2.5 )
 
 ###############################################################################
 # project
@@ -38,9 +34,7 @@ ecbuild_declare_project()
 
 ### eckit
 
-set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
-
-ecbuild_use_package( PROJECT eckit VERSION 0.14 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 0.15 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
@@ -50,8 +44,8 @@ ecbuild_find_python()
 ### Fortran ...
 
 ecbuild_add_option( FEATURE FORTRAN
-                    DESCRIPTION "atlas: Provide Fortran bindings"
-                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.2" )
+                    DESCRIPTION "Provide Fortran bindings"
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.3" )
 if( ATLAS_HAVE_FORTRAN )
 
   if( FCKIT_HAVE_ECKIT )
@@ -82,7 +76,7 @@ endif()
 # Atlas currently only required MPI for working around bug ECKIT-166 for MacOSX
 if( ECKIT_HAVE_MPI AND EC_OS_NAME MATCHES "macosx" )
 ecbuild_add_option( FEATURE MPI
-                    DESCRIPTION "atlas: Support for MPI distributed parallelism"
+                    DESCRIPTION "Support for MPI distributed parallelism"
                     REQUIRED_PACKAGES "MPI COMPONENTS CXX" )
 endif()
 
@@ -93,10 +87,9 @@ endif()
 
 ### OMP ...
 
-ecbuild_add_option(
-    FEATURE OMP
-    DESCRIPTION "atlas: Support for OpenMP threaded parallelism"
-    REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
+ecbuild_add_option( FEATURE OMP
+                    DESCRIPTION "Support for OpenMP threaded parallelism"
+                    REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
 
 if( HAVE_OMP )
   ecbuild_enable_omp()
@@ -106,19 +99,17 @@ endif()
 
 ### trans ...
 
-ecbuild_add_option(
-    FEATURE TRANS
-    DESCRIPTION "atlas: Support for spectral transforms"
-    REQUIRED_PACKAGES "PROJECT transi VERSION 0.3.2 QUIET" )
+ecbuild_add_option( FEATURE TRANS
+                    DESCRIPTION "Support for spectral transforms"
+                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.4.0 QUIET" )
 
 ### tesselation ...
 
 set(Boost_USE_MULTITHREADED      ON )
 
-ecbuild_add_option(
-    FEATURE TESSELATION
-    DESCRIPTION "atlas: Support for unstructured mesh generation"
-    REQUIRED_PACKAGES "CGAL QUIET" "Boost 1.45.0" )
+ecbuild_add_option( FEATURE TESSELATION
+                    DESCRIPTION "Support for unstructured mesh generation"
+                    REQUIRED_PACKAGES "CGAL QUIET" "Boost 1.45.0" )
 
 if( HAVE_TESSELATION )
     list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
@@ -132,9 +123,7 @@ endif()
 ### Eigen
 
 ecbuild_add_option( FEATURE EIGEN
-                    DESCRIPTION "Eigen support"
-                    TYPE RECOMMENDED
-                    PURPOSE "Eigen backend: accelerated small matrix-vector operations"
+                    DESCRIPTION "Use Eigen linear algebra library"
                     REQUIRED_PACKAGES Eigen3 )
 
 ### Type for Global indices and unique point id's
@@ -149,7 +138,7 @@ else()
 endif()
 ecbuild_add_option( FEATURE BOUNDSCHECKING
                     DEFAULT ${DEFAULT_BOUNDSCHECKING}
-                    DESCRIPTION "atlas: Bounds checking for atlas::ArrayView and atlas::IndexView" )
+                    DESCRIPTION "Bounds checking for atlas::ArrayView and atlas::IndexView" )
 if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" AND NOT ATLAS_HAVE_BOUNDSCHECKING )
   ecbuild_info( "Turning BOUNDSCHECKING ON for Debug build" )
   set( ATLAS_HAVE_BOUNDSCHECKING 1 )

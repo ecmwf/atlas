@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -132,7 +132,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   std::vector<eckit::mpi::Request> send_req(nproc    );
   std::vector<eckit::mpi::Request> recv_req(nproc    );
 
-  for (size_t jproc=0; jproc<nproc; ++jproc)
+  for (int jproc=0; jproc < nproc; ++jproc)
   {
     send_counts[jproc] = sendcounts_[jproc]*var_size;
     recv_counts[jproc] = recvcounts_[jproc]*var_size;
@@ -142,7 +142,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
 
 
   /// Let MPI know what we like to receive
-  for( size_t jproc=0; jproc<nproc; ++jproc )
+  for(int jproc=0; jproc < nproc; ++jproc)
   {
     if(recv_counts[jproc] > 0)
     {
@@ -154,7 +154,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   pack_send_buffer(field,var_strides,var_shape,var_rank,send_buffer.data());
 
   /// Send
-  for( size_t jproc=0; jproc<nproc; ++jproc )
+  for(int jproc=0; jproc < nproc; ++jproc)
   {
     if(send_counts[jproc] > 0)
     {
@@ -163,7 +163,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   }
 
   /// Wait for receiving to finish
-  for (size_t jproc=0; jproc<nproc; ++jproc)
+  for (int jproc=0; jproc < nproc; ++jproc)
   {
     if( recvcounts_[jproc] > 0)
     {
@@ -175,7 +175,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   unpack_recv_buffer(recv_buffer.data(),field,var_strides,var_shape,var_rank);
 
   /// Wait for sending to finish
-  for (size_t jproc=0; jproc<nproc; ++jproc)
+  for (int jproc=0; jproc < nproc; ++jproc)
   {
     if( sendcounts_[jproc] > 0)
     {
@@ -197,7 +197,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
   switch( var_rank )
   {
   case 1:
-    for( size_t p=0; p<sendcnt_; ++p)
+    for(int p=0; p < sendcnt_; ++p)
     {
       const size_t pp = send_stride*sendmap_[p];
       for( size_t i=0; i<var_shape[0]; ++i )
@@ -205,7 +205,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
     }
     break;
   case 2:
-    for( size_t p=0; p<sendcnt_; ++p)
+    for(int p=0; p < sendcnt_; ++p)
     {
       const size_t pp = send_stride*sendmap_[p];
       for( size_t i=0; i<var_shape[0]; ++i )
@@ -218,7 +218,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
     }
     break;
   case 3:
-    for( size_t p=0; p<sendcnt_; ++p)
+    for(int p=0; p < sendcnt_; ++p)
     {
       const size_t pp = send_stride*sendmap_[p];
       for( size_t i=0; i<var_shape[0]; ++i )
@@ -235,7 +235,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
     }
     break;
   case 4:
-    for( size_t p=0; p<sendcnt_; ++p)
+    for(int p=0; p < sendcnt_; ++p)
     {
       const size_t pp = send_stride*sendmap_[p];
       for( size_t i=0; i<var_shape[0]; ++i )
@@ -274,7 +274,7 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
   switch( var_rank )
   {
   case 1:
-    for( size_t p=0; p<recvcnt_; ++p)
+    for(int p=0; p < recvcnt_; ++p)
     {
       const size_t pp = recv_stride*recvmap_[p];
       for( size_t i=0; i<var_shape[0]; ++i)
@@ -287,7 +287,7 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
     }
     break;
   case 2:
-    for( size_t p=0; p<recvcnt_; ++p)
+    for(int p=0; p < recvcnt_; ++p)
     {
       const size_t pp = recv_stride*recvmap_[p];
       for( size_t i=0; i<var_shape[0]; ++i )
@@ -304,7 +304,7 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
     }
     break;
   case 3:
-    for( size_t p=0; p<recvcnt_; ++p)
+    for(int p=0; p < recvcnt_; ++p)
     {
       const size_t pp = recv_stride*recvmap_[p];
       for( size_t i=0; i<var_shape[0]; ++i )
@@ -324,7 +324,7 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
     }
     break;
   case 4:
-    for( size_t p=0; p<recvcnt_; ++p)
+    for(int p=0; p < recvcnt_; ++p)
     {
       const size_t pp = recv_stride*recvmap_[p];
       for( size_t i=0; i<var_shape[0]; ++i )

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -110,9 +110,9 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
 
   bool gather( gmsh_options.get<bool>("gather") );
   bool binary( !gmsh_options.get<bool>("ascii") );
-  int nlev  = field.levels();
-  int ndata = std::min(function_space.nb_nodes(),field.shape(0));
-  int nvars = field.stride(0)/nlev;
+  size_t nlev  = field.levels();
+  size_t ndata = std::min(function_space.nb_nodes(),field.shape(0));
+  size_t nvars = field.stride(0)/nlev;
   array::ArrayView<gidx_t,1> gidx ( function_space.nodes().global_index() );
   array::ArrayView<DATATYPE,2> data ( field.data<DATATYPE>(), array::make_shape(field.shape(0),field.stride(0)) );
   field::Field::Ptr gidx_glb;
@@ -135,21 +135,21 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   if( gmsh_levels.empty() || nlev == 1 )
   {
     lev.resize(nlev);
-    for (int ilev=0; ilev<nlev; ++ilev)
+    for (size_t ilev=0; ilev < nlev; ++ilev)
       lev[ilev] = ilev;
   }
   else
   {
     lev = gmsh_levels;
   }
-  for (int ilev=0; ilev<lev.size(); ++ilev)
+  for (size_t ilev=0; ilev < lev.size(); ++ilev)
   {
-    int jlev = lev[ilev];
+    size_t jlev = lev[ilev];
     if( ( gather && atlas::parallel::mpi::comm().rank() == 0 ) || !gather )
     {
       char field_lev[6] = {0, 0, 0, 0, 0, 0};
       if( field.has_levels() )
-        std::sprintf(field_lev, "[%03d]",jlev);
+        std::sprintf(field_lev, "[%03lu]",jlev);
       double time = field.metadata().has("time") ? field.metadata().get<double>("time") : 0.;
       int step = field.metadata().has("step") ? field.metadata().get<size_t>("step") : 0 ;
       out << "$NodeData\n";
@@ -170,7 +170,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
         if( nvars == 1)
         {
           double value;
-          for( int n = 0; n < ndata; ++n )
+          for(size_t n = 0; n < ndata; ++n)
           {
             out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
             value = data(n,jlev*nvars+0);
@@ -180,10 +180,10 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
         else if( nvars <= 3 )
         {
           double value[3] = {0,0,0};
-          for( size_t n = 0; n < ndata; ++n )
+          for(size_t n = 0; n < ndata; ++n)
           {
             out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-            for( int v=0; v<nvars; ++v)
+            for(size_t v=0; v < nvars; ++v)
               value[v] = data(n,jlev*nvars+v);
             out.write(reinterpret_cast<const char*>(&value),sizeof(double)*3);
           }
@@ -197,7 +197,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
           };
           if( nvars == 4 )
           {
-            for( size_t n = 0; n < ndata; ++n )
+            for(size_t n = 0; n < ndata; ++n)
             {
               out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
               for( int i=0; i<2; ++i )
@@ -212,7 +212,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
           }
           if( nvars == 9 )
           {
-            for( size_t n = 0; n < ndata; ++n )
+            for(size_t n = 0; n < ndata; ++n)
             {
               out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
               for( int i=0; i<3; ++i )
@@ -232,7 +232,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
       {
         if( nvars == 1)
         {
-          for( int n = 0; n < ndata; ++n )
+          for( size_t n = 0; n < ndata; ++n )
           {
             ASSERT( jlev*nvars < data.shape(1) );
             ASSERT( n < gidx.shape(0) );
@@ -245,7 +245,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
           for( size_t n = 0; n < ndata; ++n )
           {
             out << gidx(n);
-            for( int v=0; v<nvars; ++v)
+            for(size_t v=0; v < nvars; ++v)
               data_vec[v] = data(n,jlev*nvars+v);
             for( int v=0; v<3; ++v)
               out << " " << data_vec[v];
@@ -306,8 +306,8 @@ void write_field_nodes(
     //bool gather(gmsh_options.get<bool>("gather"));
     bool binary(!gmsh_options.get<bool>("ascii"));
 
-    int nlev  = field.levels();
-    int nvars = field.stride(0) / nlev;
+    size_t nlev  = field.levels();
+    size_t nvars = field.stride(0) / nlev;
 
     //field::Field::Ptr gidxField(function_space.createField<gidx_t>("gidx"));
     //array::ArrayView<gidx_t,1>   gidx(gidxField);
@@ -335,7 +335,7 @@ void write_field_nodes(
         field_glb->stride(0)));
     }
 
-    int ndata = data.shape(0);
+    size_t ndata = data.shape(0);
 
     std::vector<long> lev;
     std::vector<long> gmsh_levels;
@@ -344,7 +344,7 @@ void write_field_nodes(
     if (gmsh_levels.empty() || nlev == 1)
     {
         lev.resize(nlev);
-        for (int ilev=0; ilev<nlev; ++ilev)
+        for (size_t ilev=0; ilev < nlev; ++ilev)
         {
             lev[ilev] = ilev;
         }
@@ -356,14 +356,14 @@ void write_field_nodes(
 
     if (atlas::parallel::mpi::comm().rank() == 0)
     {
-        for (int ilev = 0; ilev < lev.size(); ++ilev)
+        for (size_t ilev = 0; ilev < lev.size(); ++ilev)
         {
-            int jlev = lev[ilev];
+            size_t jlev = lev[ilev];
             char field_lev[6] = {0, 0, 0, 0, 0, 0};
 
             if (field.has_levels())
             {
-                std::sprintf(field_lev, "[%03d]", jlev);
+                std::sprintf(field_lev, "[%03lu]", jlev);
             }
 
             double time = field.metadata().has("time") ?
@@ -389,7 +389,7 @@ void write_field_nodes(
                 if (nvars == 1)
                 {
                     double value;
-                    for (int n = 0; n < ndata; ++n)
+                    for (size_t n = 0; n < ndata; ++n)
                     {
                         out.write(reinterpret_cast<const char*>(n+1),
                                   sizeof(int));
@@ -407,7 +407,7 @@ void write_field_nodes(
                     {
                         out.write(reinterpret_cast<const char*>(n+1),
                                   sizeof(int));
-                        for (int v = 0; v < nvars; ++v)
+                        for (size_t v = 0; v < nvars; ++v)
                         {
                             value[v] = data(n,jlev*nvars+v);
                         }
@@ -422,7 +422,7 @@ void write_field_nodes(
                 ASSERT(jlev*nvars <= data.shape(1));
                 if (nvars == 1)
                 {
-                    for (int n = 0; n < ndata; ++n)
+                    for (size_t n = 0; n < ndata; ++n)
                     {
                         ASSERT(n < data.shape(0));
                         out << n+1 << " "
@@ -435,7 +435,7 @@ void write_field_nodes(
                     for (size_t n = 0; n < ndata; ++n)
                     {
                         out << n+1;
-                        for (int v = 0; v < nvars; ++v)
+                        for (size_t v = 0; v < nvars; ++v)
                         {
                             data_vec[v] = data(n, jlev*nvars+v);
                         }

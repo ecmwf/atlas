@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -20,6 +20,7 @@
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/generators/Structured.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/gaussian/ReducedGaussian.h"
@@ -38,6 +39,33 @@ namespace atlas {
 namespace test {
 
 BOOST_GLOBAL_FIXTURE( AtlasFixture );
+
+BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns_no_halo )
+{
+  SharedPtr<grid::Grid> grid( grid::Grid::create("O8") );
+  SharedPtr<mesh::Mesh> mesh( mesh::generators::Structured().generate(*grid) );
+  SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh) );
+  SharedPtr<field::Field> field( nodes_fs->createField<int>("field") );
+  array::ArrayView<int,1> value ( *field );
+  array::ArrayView<int,1> ghost ( mesh->nodes().ghost() );
+  const size_t nb_nodes = mesh->nodes().size();
+  for( size_t j=0; j<nb_nodes; ++j )
+  {
+    if( ghost(j) )
+    {
+      value(j) = -1;
+    }
+    else
+    {
+      value(j) = 1;
+    }
+  }
+  nodes_fs->haloExchange(*field);
+  for( size_t j=0; j<nb_nodes; ++j )
+  {
+    BOOST_CHECK_EQUAL( value(j), 1 );
+  }
+}
 
 BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 {
@@ -448,6 +476,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
 }
 
+
 BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
 {
   size_t truncation = 159;
@@ -483,6 +512,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
   BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
 
 }
+
 
 #ifdef ATLAS_HAVE_TRANS
 
@@ -535,7 +565,8 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
 
   BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field->size() , nspec2g );
+  if( eckit::mpi::comm().rank() == 0 )
+    BOOST_CHECK_EQUAL( surface_scalar_field->size() , nspec2g );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->rank() , 1 );
 
@@ -545,25 +576,66 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
 
   array::ArrayView<double,1> surface_scalar( *surface_scalar_field );
 
-  size_t surface_scalar_shape[] = { nspec2g };
-  BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
-
+  if( eckit::mpi::comm().rank() == 0 ) {
+    BOOST_CHECK_EQUAL( surface_scalar.shape(0), nspec2g );
+  }
   SharedPtr<field::Field> columns_scalar_field( spectral_fs->createField<double>("scalar",nb_levels,field::global()) );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field->size() , nspec2g*nb_levels );
+  if( eckit::mpi::comm().rank() == 0 ) {
+    BOOST_CHECK_EQUAL( columns_scalar_field->size() , nspec2g*nb_levels );
+  } else {
+    BOOST_CHECK_EQUAL( columns_scalar_field->size() , 0 );
+  }
 
   BOOST_CHECK_EQUAL( columns_scalar_field->rank() , 2 );
 
   array::ArrayView<double,2> columns_scalar( *columns_scalar_field );
 
-  size_t columns_scalar_shape[] = { nspec2g, nb_levels };
-  BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
-
+  if( eckit::mpi::comm().rank() == 0 ) {
+    BOOST_CHECK_EQUAL( columns_scalar.shape(0), nspec2g );
+    BOOST_CHECK_EQUAL( columns_scalar.shape(1), nb_levels );
+  }
 }
-#endif
+BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_norm )
+{
+  trans::Trans trans(80,159);
+  size_t nb_levels(10);
 
+  SharedPtr<Spectral> spectral_fs( new Spectral(trans) );
+
+  SharedPtr<field::Field> twoD_field  ( spectral_fs->createField<double>("2d") );
+  SharedPtr<field::Field> threeD_field( spectral_fs->createField<double>("3d",nb_levels) );
+
+  // Set first wave number
+  {
+    array::ArrayView<double,1> twoD( *twoD_field );
+    twoD = 0.;
+    if( parallel::mpi::comm().rank() == 0 ) twoD(0) = 1.;
+
+    array::ArrayView<double,2> threeD( *threeD_field );
+    threeD = 0.;
+    for( size_t jlev=0; jlev<nb_levels; ++jlev) {
+      if( parallel::mpi::comm().rank() == 0 ) threeD(0,jlev) = jlev;
+    }
+  }
+
+  double twoD_norm(0.);
+  std::vector<double> threeD_norms(threeD_field->levels(),0.);
+
+  spectral_fs->norm(*twoD_field,twoD_norm);
+  spectral_fs->norm(*threeD_field,threeD_norms);
+
+  if( eckit::mpi::comm().rank() == 0 ) {
+    BOOST_CHECK_CLOSE( twoD_norm, 1.0, 1.e-10 );
+    for( size_t jlev=0; jlev<nb_levels; ++jlev) {
+      BOOST_CHECK_CLOSE( threeD_norms[jlev], double(jlev), 1.e-10 );
+    }
+  }
+}
+
+#endif
 
 } // namespace test
 } // namespace atlas

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -40,6 +40,8 @@ namespace test {
 
 struct AtlasTransFixture : public AtlasFixture {
        AtlasTransFixture() {
+         if( parallel::mpi::comm().size() == 1 )
+           trans_use_mpi(false);
          trans_init();
        }
 
@@ -169,10 +171,17 @@ BOOST_AUTO_TEST_CASE( test_distspec )
   std::vector<int> nto(nfld,1);
   std::vector<double> rgp(nfld*trans.ngptot());
   std::vector<double> rgpg(nfld*trans.ngptotg());
+  std::vector<double> specnorms(nfld,0);
 
   trans.distspec( nfld, nfrom.data(), rspecg.data(), rspec.data() );
+  trans.specnorm( nfld, rspec.data(), specnorms.data() );
   trans.invtrans( nfld, rspec.data(), rgp.data() );
   trans.gathgrid( nfld, nto.data(),   rgp.data(),    rgpg.data() );
+
+  if( parallel::mpi::comm().rank() == 0 ) {
+    BOOST_CHECK_CLOSE( specnorms[0], 1., 1.e-10 );
+    BOOST_CHECK_CLOSE( specnorms[1], 2., 1.e-10 );
+  }
 
   BOOST_TEST_CHECKPOINT("end test_distspec");
 }

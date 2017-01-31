@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -227,7 +227,7 @@ template< typename RandomAccessIterator >
 void ArrayT<DATA_TYPE>::assign( RandomAccessIterator begin, RandomAccessIterator end )
 {
   if( not contiguous() ) NOTIMP;
-  if( std::distance(begin,end) != size() ) {
+  if( size_t(std::distance(begin,end)) != size() ) {
     throw eckit::SeriousBug("Size doesn't match");
   }
   RandomAccessIterator it = begin;

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -31,7 +31,7 @@ template< typename Iterator >
 std::string pos(Iterator& it)
 {
   std::stringstream ss;
-  for( int i=0; i<it.pos().size(); ++i)  ss << it.pos()[i] << " ";
+  for(size_t i=0; i < it.pos().size(); ++i)  ss << it.pos()[i] << " ";
   return ss.str();
 }
 

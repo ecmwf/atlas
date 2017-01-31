@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -84,7 +84,7 @@ private: // data
   std::string name_;
   GatherScatter gather_;
   bool is_setup_;
-  int parsize_;
+  size_t parsize_;
 };
 
 template<typename DATA_TYPE>
@@ -102,7 +102,7 @@ std::string Checksum::execute( const DATA_TYPE data[],
   std::vector<internals::checksum_t> local_checksums(parsize_);
   int var_size = var_extents[0]*var_strides[0];
 
-  for( int pp=0; pp<parsize_; ++pp )
+  for( size_t pp=0; pp<parsize_; ++pp )
   {
     local_checksums[pp] = internals::checksum(data+pp*var_size,var_size);
   }

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -545,24 +545,10 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
 
         int cnt_mypart = 0;
         int np[3] = {pN1, pN2, pS1};
-        for( int j=0; j<3; ++j )
+        for( int j=0; j<3; ++j ) {
           if (np[j]==mypart) ++cnt_mypart;
-
-        if( latN == 0 )
-        {
-          if( pN1 == mypart )
-          {
-            add_triag = true;
-          }
         }
-        else if ( latS == rg.nlat()-1 )
-        {
-          if( pS1 == mypart )
-          {
-            add_triag = true;
-          }
-        }
-        else if( cnt_mypart > 1 )
+        if( cnt_mypart > 1 )
         {
           add_triag=true;
         }
@@ -626,24 +612,11 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
 
         int cnt_mypart = 0;
         int np[3] = {pN1, pS1, pS2};
-        for( int j=0; j<3; ++j )
+        for( int j=0; j<3; ++j ) {
           if (np[j]==mypart) ++cnt_mypart;
+        }
 
-        if( latN == 0 )
-        {
-          if( pN1 == mypart )
-          {
-            add_triag = true;
-          }
-        }
-        else if ( latS == rg.nlat()-1 )
-        {
-          if( pS2 == mypart )
-          {
-            add_triag = true;
-          }
-        }
-        else if( cnt_mypart > 1 )
+        if( cnt_mypart > 1 )
         {
           add_triag=true;
         }

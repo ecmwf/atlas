@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -167,8 +167,8 @@ public: // methods
 
   std::vector< std::string > field_names() const;
 
-  void add(const Field&);
-  void add(const Field*);
+  Field& add(const Field&);
+  Field& add(const Field*);
 
   bool has_field(const std::string& name) const;
 

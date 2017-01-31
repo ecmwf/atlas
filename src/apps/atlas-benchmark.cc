@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -530,7 +530,7 @@ template< typename DATA_TYPE >
 DATA_TYPE vecnorm( DATA_TYPE vec[], size_t size )
 {
   DATA_TYPE norm=0;
-  for( int j=0; j<size; ++j )
+  for(size_t j=0; j < size; ++j)
     norm += std::pow(vec[j],2);
   return std::sqrt(norm);
 }

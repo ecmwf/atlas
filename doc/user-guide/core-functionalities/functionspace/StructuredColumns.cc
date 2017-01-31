@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     Grid::Ptr grid (Grid::create( "N32" ));
 
     // Number of points in the grid
-    int const nb_nodes = grid->npts();
+    size_t const nb_nodes = grid->npts();
 
     // Generate functionspace associated to grid
     StructuredColumns::Ptr
@@ -52,9 +52,9 @@ int main(int argc, char *argv[])
     Field::Ptr field_scalar1(fs_rgp->createField<double>("scalar1"));
     ArrayView <double,1> scalar1(*field_scalar1);
 
-    for (int jlat = 0; jlat < fs_rgp->nlat(); ++jlat)
+    for (size_t jlat = 0; jlat < fs_rgp->nlat(); ++jlat)
     {
-        for (int jlon = 0; jlon < fs_rgp->nlon(jlat); ++jlon)
+        for (size_t jlon = 0; jlon < fs_rgp->nlon(jlat); ++jlon)
         {
             double zlat = fs_rgp->lat(jlat);
             zlat = zlat * deg2rad;
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
       // Generate visualisation mesh associated to grid
       atlas::mesh::generators::Structured meshgenerator;
       Mesh::Ptr mesh (meshgenerator.generate(*grid));
-      
+
       Gmsh gmsh("scalar1.msh");
       gmsh.write(*mesh);
       gmsh.write(*field_scalar1);
