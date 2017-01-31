@@ -10,6 +10,7 @@
 
 #define BOOST_TEST_MODULE TestArray
 #include "ecbuild/boost_test_framework.h"
+#include "atlas/internals/atlas_defines.h"
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "tests/AtlasFixture.h"
@@ -21,6 +22,7 @@ namespace test {
 
 BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 BOOST_AUTO_TEST_CASE(test_array) {
   Array* ds = Array::create<double>(4ul);
   auto hv = atlas::array::gridtools::make_gt_host_view<double, 1>(*ds);
@@ -33,6 +35,7 @@ BOOST_AUTO_TEST_CASE(test_array) {
 
   delete ds;
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_array_zero_size) {
   Array* ds = Array::create<double>(0);
@@ -41,6 +44,7 @@ BOOST_AUTO_TEST_CASE(test_array_zero_size) {
   delete ds;
 }
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 BOOST_AUTO_TEST_CASE(test_create) {
   Array* ds = Array::create(array::DataType::create<int>(), ArrayShape({4, 3}));
   auto hv = atlas::array::gridtools::make_gt_host_view<int, 2>(*ds);
@@ -53,7 +57,9 @@ BOOST_AUTO_TEST_CASE(test_create) {
 
   delete ds;
 }
+#endif
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 BOOST_AUTO_TEST_CASE(test_make_view) {
   Array* ds = Array::create<double>(4ul);
   auto hv = atlas::array::gridtools::make_gt_host_view<double, 1>(*ds);
@@ -66,6 +72,7 @@ BOOST_AUTO_TEST_CASE(test_make_view) {
 
   delete ds;
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_localview) {
   Array* ds = Array::create<double>(8ul, 4ul, 2ul);
@@ -98,6 +105,7 @@ BOOST_AUTO_TEST_CASE(test_localview) {
   delete ds;
 }
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 BOOST_AUTO_TEST_CASE(test_array_shape) {
   ArrayShape as{2, 3};
   Array* ds = Array::create<double>(as);
@@ -117,6 +125,7 @@ BOOST_AUTO_TEST_CASE(test_array_shape) {
 
   delete ds;
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_spec) {
   Array* ds = Array::create<double>(4, 5, 6);
@@ -159,6 +168,7 @@ BOOST_AUTO_TEST_CASE(test_spec_layout) {
   delete ds;
 }
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 BOOST_AUTO_TEST_CASE(test_spec_layout_rev) {
   Array* ds = Array::create<double>(make_shape(4,5,6),make_layout(2,1,0));
   BOOST_CHECK_EQUAL(ds->spec().rank(), 3);
@@ -182,6 +192,7 @@ BOOST_AUTO_TEST_CASE(test_spec_layout_rev) {
 
   BOOST_CHECK_THROW( Array::create<double>(make_shape(4,5,6,2),make_layout(0,1,3,2)), eckit::BadParameter );
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_resize_throw) {
   Array* ds = Array::create<double>(32, 5, 33);
@@ -195,6 +206,7 @@ BOOST_AUTO_TEST_CASE(test_resize_throw) {
 }
 
 BOOST_AUTO_TEST_CASE(test_resize) {
+
   {
     Array* ds = Array::create<double>(0);
     BOOST_CHECK_EQUAL(ds->size(), 0);
@@ -203,24 +215,24 @@ BOOST_AUTO_TEST_CASE(test_resize) {
   }
 
   {
-    Array* ds = Array::create<double>(7, 5, 8);
+    Array* ds = Array::create<double>(2, 3, 4);
     {
       ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
-      hv(3, 3, 3) = 4.5;
-      hv(6, 4, 7) = 7.5;
+      hv(1, 1, 1) = 4.5;
+      hv(1, 2, 2) = 7.5;
     }
-    ds->resize(32, 5, 33);
+    ds->resize(3, 4, 5);
     ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
 
-    BOOST_CHECK_EQUAL(ds->spec().shape()[0], 32);
-    BOOST_CHECK_EQUAL(ds->spec().shape()[1], 5);
-    BOOST_CHECK_EQUAL(ds->spec().shape()[2], 33);
+    BOOST_CHECK_EQUAL(ds->spec().shape()[0], 3);
+    BOOST_CHECK_EQUAL(ds->spec().shape()[1], 4);
+    BOOST_CHECK_EQUAL(ds->spec().shape()[2], 5);
 
     BOOST_CHECK_EQUAL(ds->spec().rank(), 3);
-    BOOST_CHECK_EQUAL(ds->spec().size(), 32 * 5 * 33);
+    BOOST_CHECK_EQUAL(ds->spec().size(), 3 * 4 * 5);
 
-    BOOST_CHECK_EQUAL(hv(3, 3, 3), 4.5);
-    BOOST_CHECK_EQUAL(hv(6, 4, 7), 7.5);
+    BOOST_CHECK_EQUAL(hv(1, 1, 1), 4.5);
+    BOOST_CHECK_EQUAL(hv(1, 2, 2), 7.5);
 
     delete ds;
   }
@@ -446,5 +458,6 @@ BOOST_AUTO_TEST_CASE(test_ArrayT) {
     BOOST_CHECK_EQUAL(ds.shape(2), 4);
   }
 }
+
 }
 }

@@ -20,7 +20,7 @@
 
 namespace atlas {
 namespace array {
-namespace gridtools {
+namespace helpers {
 
 //------------------------------------------------------------------------------
 
@@ -96,12 +96,18 @@ struct array_initializer {
 
 template<typename Value, unsigned int Rank, unsigned int Dim, unsigned int PartDim>
 struct array_initializer_partitioned_val_impl {
-  static void apply(Array const& orig, Array& dest, unsigned int pos, unsigned int offset) {
-      auto view = make_view<Value, Rank>(orig);
-      array_initializer_partitioned_val_impl<Value, Rank, Dim, PartDim>::apply(make_view<Value, Rank>(orig), make_view<Value, Rank>(dest), pos, offset);
+
+  static void apply( Array const& orig, Array& dest, unsigned int pos, unsigned int offset ) {
+      array_initializer_partitioned_val_impl<Value, Rank, Dim, PartDim>::apply(
+            make_view<Value, Rank>(orig),
+            make_view<Value, Rank>(dest),
+            pos, offset);
   }
+
   template <typename ... DimIndex>
-  static void apply(ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, unsigned int pos, unsigned int offset, DimIndex... idxs) {
+  static void apply( ArrayView<Value, Rank> const&& orig,
+                     ArrayView<Value, Rank>&& dest,
+                     unsigned int pos, unsigned int offset, DimIndex... idxs) {
       for(size_t i=0; i < orig.shape(Dim); ++i)
       {
           unsigned int displ = i;
@@ -109,7 +115,10 @@ struct array_initializer_partitioned_val_impl {
               displ += offset;
           }
           std::pair<int,int> pair_idx{i,displ};
-          array_initializer_partitioned_val_impl<Value, Rank, Dim+1, PartDim>::apply(std::move(orig), std::move(dest), pos, offset, idxs..., pair_idx);
+          array_initializer_partitioned_val_impl<Value, Rank, Dim+1, PartDim>::apply(
+                std::move(orig),
+                std::move(dest),
+                pos, offset, idxs..., pair_idx);
       }
   }
 
@@ -171,6 +180,6 @@ struct array_initializer_partitioned {
 
 //------------------------------------------------------------------------------
 
-} // namespace gridtools
+} // namespace helpers
 } // namespace array
 } // namespace atlas

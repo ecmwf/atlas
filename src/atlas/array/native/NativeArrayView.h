@@ -151,6 +151,8 @@ public:
 
     value_type*       data()       { return data_; }
 
+    bool valid() const { return true; }
+
     bool contiguous() const { return (size_ == shape_[0]*strides_[0] ? true : false); }
 
     void assign(const value_type& value);

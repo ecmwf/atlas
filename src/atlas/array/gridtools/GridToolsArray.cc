@@ -27,6 +27,7 @@
 //------------------------------------------------------------------------------
 
 using namespace atlas::array::gridtools;
+using namespace atlas::array::helpers;
 
 namespace atlas {
 namespace array {

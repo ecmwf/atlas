@@ -4,6 +4,10 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/array/native/NativeDataStore.h"
 
+#include "atlas/array/helpers/ArrayInitializer.h"
+
+using namespace atlas::array::helpers;
+
 namespace atlas {
 namespace array {
 
@@ -100,16 +104,39 @@ template <typename Value> ArrayT<Value>::ArrayT(const ArraySpec& spec) {
   data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( spec_.size() ) );
 }
 
+
+
+
+
 template< typename Value >
 void ArrayT<Value>::resize( const ArrayShape& _shape )
 {
+  if( rank() != _shape.size() ) {
+    std::stringstream msg;
+    msg << "Cannot resize existing Array with rank " << rank() << " with a shape of rank " << _shape.size();
+    throw eckit::BadParameter(msg.str(),Here());
+  }
+  for( size_t j=0; j<rank(); ++j ) {
+    if( _shape[j] < shape(j) ) {
+      std::stringstream msg;
+      msg << "Cannot resize existing array by shrinking dimension "<<j<<" from " << shape(j) << " to " << _shape[j];
+      throw eckit::BadParameter(msg.str(),Here());
+    }
+  }
+
   Array* resized = Array::create<Value>(_shape);
 
-  Value *resized_data = make_storageview<Value>(*resized).data();
-  Value *this_data    = make_storageview<Value>(*this).data();
-
-  for( size_t j=0; j<this->size(); ++j ) {
-    resized_data[j] = this_data[j];
+  switch( rank() ) {
+    case 1: array_initializer<1>::apply( *this, *resized ); break;
+    case 2: array_initializer<2>::apply( *this, *resized ); break;
+    case 3: array_initializer<3>::apply( *this, *resized ); break;
+    case 4: array_initializer<4>::apply( *this, *resized ); break;
+    case 5: array_initializer<5>::apply( *this, *resized ); break;
+    case 6: array_initializer<6>::apply( *this, *resized ); break;
+    case 7: array_initializer<7>::apply( *this, *resized ); break;
+    case 8: array_initializer<8>::apply( *this, *resized ); break;
+    case 9: array_initializer<9>::apply( *this, *resized ); break;
+    default: NOTIMP;
   }
 
   replace(*resized);
@@ -119,30 +146,15 @@ void ArrayT<Value>::resize( const ArrayShape& _shape )
 template< typename Value >
 void ArrayT<Value>::insert(size_t idx1, size_t size1)
 {
-
   ArrayShape nshape = shape();
   if(idx1 > nshape[0]) {
-      throw eckit::BadParameter("can not insert into an array at a position beyond its size", Here());
+      throw eckit::BadParameter("Cannot insert into an array at a position beyond its size", Here());
   }
   nshape[0] += size1;
 
   Array* resized = Array::create<Value>(nshape);
 
-  Value *resized_data = make_storageview<Value>(*resized).data();
-  Value *this_data    = make_storageview<Value>(*this).data();
-
-  size_t insert_begin = idx1*this->stride(0);
-  size_t insert_end = insert_begin + size1*this->stride(0);
-
-  size_t c(0);
-  for( size_t j=0; j<insert_begin; ++j ) {
-    resized_data[j] = this_data[c++];
-  }
-  for( size_t j=insert_end; j<resized->size(); ++j ) {
-    resized_data[j] = this_data[c++];
-  }
-  ASSERT( c == this->size() );
-
+  array_initializer_partitioned<0>::apply( *this, *resized, idx1, size1);
   replace(*resized);
   delete resized;
 }

@@ -10,7 +10,6 @@ ecbuild_add_test( TARGET atlas_test_array
   BOOST
   SOURCES  test_array.cc
   LIBS     atlas
-  CONDITION ATLAS_HAVE_GRIDTOOLS_STORAGE
 )
 
 if( CMAKE_BUILD_TYPE MATCHES "DEBUG" )
