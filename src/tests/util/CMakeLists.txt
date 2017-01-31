@@ -48,13 +48,6 @@ ecbuild_add_test( TARGET atlas_test_indexview
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET atlas_test_array
-  BOOST
-  SOURCES  test_array.cc
-  LIBS     atlas
-  CONDITION ATLAS_HAVE_GRIDTOOLS_STORAGE
-)
-
 ecbuild_add_test( TARGET atlas_test_vector
   BOOST
   SOURCES  test_vector.cc
@@ -77,11 +70,3 @@ ecbuild_add_test( TARGET atlas_test_footprint
   LIBS    atlas
 )
 
-#TODO Do this only in DEBUG mode
-#set ( CMAKE_NVCC_FLAGS "-G" )
-atlas_add_cuda_test(
-  TARGET atlas_test_array_kernel
-  BOOST
-  SOURCES test_array_kernel.cu
-  LIBS atlas
-)
