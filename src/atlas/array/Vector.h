@@ -13,11 +13,6 @@
 #include <cstddef>
 #include <cassert>
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#include "atlas/array/gridtools/GridToolsTraits.h"
-#endif
-
-
 namespace atlas {
 namespace array {
 
@@ -42,13 +37,11 @@ public:
     size_ = N;
   }
 
-  GT_FUNCTION
   T& operator[](size_t idx) {
       assert(idx < size_);
       return data_[idx];
   }
 
-  GT_FUNCTION
   T const& operator[](size_t idx) const {
       assert(idx < size_);
       return data_[idx];
