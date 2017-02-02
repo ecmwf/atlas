@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -32,6 +32,9 @@
 #include "atlas/internals/IsGhost.h"
 #include "atlas/runtime/Log.h"
 
+#include "tests/AtlasFixture.h"
+
+
 using namespace atlas;
 using namespace atlas::output;
 using namespace atlas::mesh::generators;
@@ -46,7 +49,6 @@ double dual_volume(mesh::Mesh& mesh)
   internals::IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.size();
   array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( nodes.field("dual_volumes") );
-  array::ArrayView<gidx_t,1> glb_idx      = array::make_view<gidx_t,1>( nodes.global_index() );
   double area=0;
 
   for( int node=0; node<nb_nodes; ++node )
@@ -57,20 +59,14 @@ double dual_volume(mesh::Mesh& mesh)
     }
   }
 
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
+
+
+  parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+
   return area;
 }
 
-struct MPIFixture {
-     MPIFixture()  {
-       atlas_init(
-             boost::unit_test::framework::master_test_suite().argc,
-             boost::unit_test::framework::master_test_suite().argv);
-     }
-    ~MPIFixture()  { atlas_finalize(); }
-};
-
-BOOST_GLOBAL_FIXTURE( MPIFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {

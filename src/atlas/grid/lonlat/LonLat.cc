@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -65,10 +65,11 @@ void LonLat::setup(const size_t nlon, const size_t nlat, const Domain& dom) {
     const double
             ns = dom.north() - dom.south(),
             ew = dom.east()  - dom.west(),
-            Nj = static_cast<double>(isShiftedLat? nlat : nlat-1),
-            _loninc = ew/static_cast<double>(nlon),
-            _lonmin = dom.west() + _loninc*( isShiftedLon? 0.5 : 0. ),
-            _lonmax = dom.east() + _loninc*((isShiftedLon? 0.5 : 0.) + (dom.isPeriodicEastWest()? -1.: 0.) );
+            Ndiv = static_cast<double>(nlon) + (dom.isPeriodicEastWest()? 0. : -1.),
+            Nj   = static_cast<double>(nlat) + (isShiftedLat?             0. : -1.),
+            _loninc = ew/Ndiv,
+            _lonmin = dom.west() + _loninc*(  isShiftedLon? 0.5 : 0. ),
+            _lonmax = dom.east() + _loninc*( (isShiftedLon? 0.5 : 0.) + (dom.isPeriodicEastWest()? -1.: 0.) );
 
     std::vector<double> lonmin(nlat, _lonmin);
     std::vector<double> lonmax(nlat, _lonmax);
@@ -85,8 +86,6 @@ void LonLat::setup(const size_t nlon, const size_t nlat, const Domain& dom) {
                    :  isShiftedLat && ( nlat   %2==0) && (nlon==2* nlat   )? size_t( nlat   /2)
                    : !isShiftedLat && ((nlat-1)%2==0) && (nlon==2*(nlat-1))? size_t((nlat-1)/2)
                    : 0;
-
-    set_typeinfo();
 }
 
 
@@ -117,8 +116,6 @@ void LonLat::setup(const long pl[], const size_t nlat, const Domain& dom) {
 
     Structured::setup(nlat, lats.data(), pl, lonmin.data(), lonmax.data());
     Structured::N_ = 0;
-
-    set_typeinfo();
 }
 
 

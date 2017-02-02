@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -20,6 +20,30 @@
 
 namespace atlas {
 namespace grid {
+
+template<typename CONCRETE>
+void load_grid() {
+    eckit::ConcreteBuilderT1<Grid,CONCRETE> builder("tmp");
+}
+
+void load() {
+    Log::debug() << "Loading library [atlas::grid]" << std::endl;
+
+    // We have to touch all classes we want to register for static linking.
+
+    load_grid<Unstructured>();
+    load_grid<CustomStructured>();
+    load_grid<gaussian::ReducedGaussian>();
+    load_grid<gaussian::RegularGaussian>();
+    load_grid<gaussian::ClassicGaussian>();
+    load_grid<gaussian::OctahedralGaussian>();
+    load_grid<lonlat::ReducedLonLat>();
+    load_grid<lonlat::RegularLonLat>();
+    load_grid<lonlat::ShiftedLonLat>();
+    load_grid<lonlat::ShiftedLon>();
+    load_grid<lonlat::ShiftedLat>();
+
+}
 
 
 size_t regex_count_parens(const std::string& string) {
@@ -91,6 +115,7 @@ class Regex {
 //=====================================================
 
 Grid* grid_from_uid(const std::string& uid) {
+    load();
     if (eckit::Factory<Grid>::instance().exists(uid)) {
         return Grid::create(util::Config("grid_type", uid));
     } else {
@@ -206,42 +231,6 @@ Grid* grid_from_uid(const std::string& uid) {
     throw eckit::BadParameter("Insufficient information to construct grid "+uid+" or grid does not exist.",Here());
     return 0;
 }
-
-
-template<typename CONCRETE>
-void load_grid() {
-    eckit::ConcreteBuilderT1<Grid,CONCRETE> builder("tmp");
-}
-
-void load() {
-    Log::debug(2) << "Loading library [atlas::grid]" << std::endl;
-
-    // We have to touch all classes we want to register for static linking.
-
-    load_grid<Unstructured>();
-    load_grid<CustomStructured>();
-    load_grid<gaussian::ReducedGaussian>();
-    load_grid<gaussian::RegularGaussian>();
-    load_grid<gaussian::ClassicGaussian>();
-    load_grid<gaussian::OctahedralGaussian>();
-    load_grid<lonlat::ReducedLonLat>();
-    load_grid<lonlat::RegularLonLat>();
-    load_grid<lonlat::ShiftedLonLat>();
-    load_grid<lonlat::ShiftedLon>();
-    load_grid<lonlat::ShiftedLat>();
-
-}
-
-
-extern "C"
-{
-
-    void atlas__grids__load() {
-        atlas::grid::load();
-    }
-
-}
-
 
 } // namespace grid
 } // namespace atlas

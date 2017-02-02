@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -15,11 +15,14 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/internals/Bitflags.h"
+#include "tests/AtlasFixture.h"
 
 using atlas::internals::Bitflags;
 
 namespace atlas {
 namespace test {
+
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_Flags )
 {

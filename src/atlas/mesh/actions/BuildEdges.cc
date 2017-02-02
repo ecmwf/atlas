@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -87,7 +87,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
   if( mesh.edges().has_field("is_pole_edge") )
   {
     has_pole_edges = true;
-    is_pole_edge = std::shared_ptr< array::ArrayView<int,1> > 
+    is_pole_edge = std::shared_ptr< array::ArrayView<int,1> >
      ( new array::ArrayView<int,1>( array::make_view<int,1>( mesh.edges().field("is_pole_edge") ) ) ) ;
   }
 
@@ -209,8 +209,8 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
     max[internals::LAT] = std::max( max[internals::LAT], lonlat(node,internals::LAT) );
   }
 
-  eckit::mpi::all_reduce( min, 2, eckit::mpi::min() );
-  eckit::mpi::all_reduce( max, 2, eckit::mpi::max() );
+  parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
+  parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
 
   double tol = 1e-6;
 
@@ -282,7 +282,7 @@ struct ComputeUniquePoleEdgeIndex
 {
   ComputeUniquePoleEdgeIndex( const mesh::Nodes& nodes ) :
   lonlat( array::make_view<double,2> ( nodes.lonlat() ) )
-  { 
+  {
   }
 
   gidx_t operator()( const mesh::Connectivity::Row& edge_nodes ) const
@@ -312,9 +312,7 @@ struct ComputeUniquePoleEdgeIndex
 void build_edges( Mesh& mesh )
 {
   mesh::Nodes& nodes   = mesh.nodes();
-  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
   array::ArrayView<int,1>    part    = array::make_view<int,1>( nodes.partition() );
-  array::ArrayView<double,2> lonlat  = array::make_view<double,2>( nodes.lonlat() );
 
   size_t nb_nodes = nodes.size();
 
@@ -380,7 +378,7 @@ void build_edges( Mesh& mesh )
     //   // BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+1] , edge_cell_connectivity(jedge,0) );
     // }
 
-    
+
     // if( e1 == cell_nodes.missing_value() && e2 != cell_nodes.missing_value() )
     // {
     //   edge_to_elem_data[edge*2+0] = e2;

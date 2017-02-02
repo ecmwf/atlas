@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -22,6 +22,10 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/parallel/HaloExchange.h"
 
+
+#include "tests/AtlasFixture.h"
+
+
 /// POD: Type to test
 typedef double POD;
 
@@ -34,17 +38,12 @@ std::vector<T> vec( const T (&list)[N] )
   return std::vector<T>(list,list+N);
 }
 
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
-
 struct Fixture {
   Fixture()
   {
     int nnodes_c[] = {5, 6, 7}; nb_nodes = vec(nnodes_c);
-    N = nb_nodes[eckit::mpi::rank()];
-    switch( eckit::mpi::rank() )
+    N = nb_nodes[parallel::mpi::comm().rank()];
+    switch( parallel::mpi::comm().rank() )
     {
       case 0:
       {
@@ -79,8 +78,7 @@ struct Fixture {
   int N;
 };
 
-
-BOOST_GLOBAL_FIXTURE( MPIFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
 {
@@ -88,7 +86,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
   size_t shape[] = {1};
   halo_exchange.execute(gidx.data(),strides,shape,1);
 
-  switch( eckit::mpi::rank() )
+  switch( parallel::mpi::comm().rank() )
   {
     case 0: { POD gidx_c[] = { 9, 1, 2, 3, 4};
       BOOST_CHECK_EQUAL_COLLECTIONS(gidx.begin(),gidx.end(), gidx_c,gidx_c+N); break; }
@@ -103,16 +101,16 @@ BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
   array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
-  for( size_t j=0; j<N; ++j ) {
-    arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
-    arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
+  for( int j=0; j<N; ++j ) {
+    arrv(j,0) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*10 );
+    arrv(j,1) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*100);
   }
 
   size_t strides[] = {1};
   size_t shape[] = {2};
   halo_exchange.execute(arrv.data(),strides,shape,1);
 
-  switch( eckit::mpi::rank() )
+  switch( parallel::mpi::comm().rank() )
   {
     case 0: { POD arr_c[] = { 90,900, 10,100, 20,200, 30,300, 40,400 };
       BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
@@ -127,16 +125,16 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v1, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
   array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
-  for( size_t j=0; j<N; ++j ) {
-    arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
-    arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
+  for( int j=0; j<N; ++j ) {
+    arrv(j,0) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*10 );
+    arrv(j,1) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*100);
   }
 
   size_t strides[] = {2};
   size_t shape[] = {1};
   halo_exchange.execute(&arrv(0,0),strides,shape,1);
 
-  switch( eckit::mpi::rank() )
+  switch( parallel::mpi::comm().rank() )
   {
     case 0: { POD arr_c[] = { 90,0, 10,100, 20,200, 30,300, 40,0 };
       BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
@@ -151,16 +149,16 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v2, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
   array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
-  for( size_t j=0; j<N; ++j ) {
-    arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
-    arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
+  for( int j=0; j<N; ++j ) {
+    arrv(j,0) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*10 );
+    arrv(j,1) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*100);
   }
 
   size_t strides[] = {2};
   size_t shape[] = {1};
   halo_exchange.execute(&arrv(0,1),strides,shape,1);
 
-  switch( eckit::mpi::rank() )
+  switch( parallel::mpi::comm().rank() )
   {
     case 0: { POD arr_c[] = { 0,900, 10,100, 20,200, 30,300, 0,400 };
       BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
@@ -175,12 +173,12 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
   array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-  for( size_t p=0; p<N; ++p )
+  for( int p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
     {
-      arrv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      arrv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      arrv(p,i,0) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      arrv(p,i,1) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
@@ -188,7 +186,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
   size_t shape[] = {3,2};
   halo_exchange.execute(arrv.data(),strides,shape,2);
 
-  switch( eckit::mpi::rank() )
+  switch( parallel::mpi::comm().rank() )
   {
     case 0:
     {
@@ -230,12 +228,12 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
   array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-  for( size_t p=0; p<N; ++p )
+  for( int p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
     {
-      arrv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      arrv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      arrv(p,i,0) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      arrv(p,i,1) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
@@ -243,7 +241,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
   size_t shape[] = {1,2};
   halo_exchange.execute(arrv.data(),strides,shape,2);
 
-  switch( eckit::mpi::rank() )
+  switch( parallel::mpi::comm().rank() )
   {
     case 0:
     {
@@ -286,12 +284,12 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
   // Test rank 2 halo-exchange
   array::ArrayT<POD> arr(N,3,2);
   array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-  for( size_t p=0; p<N; ++p )
+  for( int p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
     {
-      arrv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      arrv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      arrv(p,i,0) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      arrv(p,i,1) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
@@ -299,7 +297,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
   size_t shape[] = {1,1};
   halo_exchange.execute(&arrv(0,1,1),strides,shape,2);
 
-  switch( eckit::mpi::rank() )
+  switch( parallel::mpi::comm().rank() )
   {
     case 0:
     {
@@ -341,12 +339,12 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
   array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-  for( size_t p=0; p<N; ++p )
+  for( int p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
     {
-      arrv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      arrv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      arrv(p,i,0) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      arrv(p,i,1) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
@@ -354,7 +352,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
   size_t shape[] = {3,1};
   halo_exchange.execute(&arrv(0,0,1),strides,shape,2);
 
-  switch( eckit::mpi::rank() )
+  switch( parallel::mpi::comm().rank() )
   {
     case 0:
     {
@@ -400,7 +398,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank0_ArrayView, Fixture )
 
   halo_exchange.execute(arrv);
 
-  switch( eckit::mpi::rank() )
+  switch( parallel::mpi::comm().rank() )
   {
     case 0: { POD gidx_c[] = { 9, 1, 2, 3, 4};
       BOOST_CHECK_EQUAL_COLLECTIONS(gidx.begin(),gidx.end(), gidx_c,gidx_c+N); break; }
@@ -416,9 +414,9 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
 {
   array::ArrayT<POD> arr(N,2);
   array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
-  for( size_t j=0; j<N; ++j ) {
-    arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
-    arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
+  for( int j=0; j<N; ++j ) {
+    arrv(j,0) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*10 );
+    arrv(j,1) = (size_t(part[j]) != parallel::mpi::comm().rank() ? 0 : gidx[j]*100);
   }
 
   BOOST_CHECK_EQUAL( arr.stride(1), 1 );
@@ -427,7 +425,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
 
   halo_exchange.execute(arrv);
 
-  switch( eckit::mpi::rank() )
+  switch( parallel::mpi::comm().rank() )
   {
     case 0: { POD arr_c[] = { 90,900, 10,100, 20,200, 30,300, 40,400 };
       BOOST_CHECK_EQUAL_COLLECTIONS(arrv.data(),arrv.data()+2*N, arr_c,arr_c+2*N); break; }
@@ -442,12 +440,12 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
 {
   array::ArrayT<POD> arr(N,3,2);
   array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-  for( size_t p=0; p<N; ++p )
+  for( int p=0; p<N; ++p )
   {
     for( size_t i=0; i<3; ++i )
     {
-      arrv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      arrv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      arrv(p,i,0) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      arrv(p,i,1) = (size_t(part[p]) != parallel::mpi::comm().rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
@@ -458,7 +456,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
 
   halo_exchange.execute(arrv);
 
-  switch( eckit::mpi::rank() )
+  switch( parallel::mpi::comm().rank() )
   {
     case 0:
     {

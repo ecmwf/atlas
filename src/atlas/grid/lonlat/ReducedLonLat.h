@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -39,6 +39,8 @@ class ReducedLonLat : public LonLat {
 
     static std::string className();
 
+    std::string gridType() const;
+
     ReducedLonLat(const eckit::Parametrisation&);
 
     ReducedLonLat(const size_t nlat, const long nlon[], const Domain& dom=Domain::makeGlobal());
@@ -49,7 +51,11 @@ class ReducedLonLat : public LonLat {
 
     void setup(const eckit::Parametrisation&);
 
-    void set_typeinfo();
+    std::string shortName() const;
+
+  private:
+
+    mutable std::string shortName_;
 
 };
 

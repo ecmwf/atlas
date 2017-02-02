@@ -4,6 +4,10 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/array/native/NativeDataStore.h"
 
+#include "atlas/array/helpers/ArrayInitializer.h"
+
+using namespace atlas::array::helpers;
+
 namespace atlas {
 namespace array {
 
@@ -100,16 +104,39 @@ template <typename Value> ArrayT<Value>::ArrayT(const ArraySpec& spec) {
   data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( spec_.size() ) );
 }
 
+
+
+
+
 template< typename Value >
 void ArrayT<Value>::resize( const ArrayShape& _shape )
 {
+  if( rank() != _shape.size() ) {
+    std::stringstream msg;
+    msg << "Cannot resize existing Array with rank " << rank() << " with a shape of rank " << _shape.size();
+    throw eckit::BadParameter(msg.str(),Here());
+  }
+  for( size_t j=0; j<rank(); ++j ) {
+    if( _shape[j] < shape(j) ) {
+      std::stringstream msg;
+      msg << "Cannot resize existing array by shrinking dimension "<<j<<" from " << shape(j) << " to " << _shape[j];
+      throw eckit::BadParameter(msg.str(),Here());
+    }
+  }
+
   Array* resized = Array::create<Value>(_shape);
 
-  Value *resized_data = make_storageview<Value>(*resized).data();
-  Value *this_data    = make_storageview<Value>(*this).data();
-
-  for( size_t j=0; j<this->size(); ++j ) {
-    resized_data[j] = this_data[j];
+  switch( rank() ) {
+    case 1: array_initializer<1>::apply( *this, *resized ); break;
+    case 2: array_initializer<2>::apply( *this, *resized ); break;
+    case 3: array_initializer<3>::apply( *this, *resized ); break;
+    case 4: array_initializer<4>::apply( *this, *resized ); break;
+    case 5: array_initializer<5>::apply( *this, *resized ); break;
+    case 6: array_initializer<6>::apply( *this, *resized ); break;
+    case 7: array_initializer<7>::apply( *this, *resized ); break;
+    case 8: array_initializer<8>::apply( *this, *resized ); break;
+    case 9: array_initializer<9>::apply( *this, *resized ); break;
+    default: NOTIMP;
   }
 
   replace(*resized);
@@ -119,30 +146,15 @@ void ArrayT<Value>::resize( const ArrayShape& _shape )
 template< typename Value >
 void ArrayT<Value>::insert(size_t idx1, size_t size1)
 {
-
   ArrayShape nshape = shape();
   if(idx1 > nshape[0]) {
-      throw eckit::BadParameter("can not insert into an array at a position beyond its size", Here());
+      throw eckit::BadParameter("Cannot insert into an array at a position beyond its size", Here());
   }
   nshape[0] += size1;
 
   Array* resized = Array::create<Value>(nshape);
 
-  Value *resized_data = make_storageview<Value>(*resized).data();
-  Value *this_data    = make_storageview<Value>(*this).data();
-
-  size_t insert_begin = idx1*this->stride(0);
-  size_t insert_end = insert_begin + size1*this->stride(0);
-
-  size_t c(0);
-  for( size_t j=0; j<insert_begin; ++j ) {
-    resized_data[j] = this_data[c++];
-  }
-  for( size_t j=insert_end; j<resized->size(); ++j ) {
-    resized_data[j] = this_data[c++];
-  }
-  ASSERT( c == this->size() );
-
+  array_initializer_partitioned<0>::apply( *this, *resized, idx1, size1);
   replace(*resized);
   delete resized;
 }
@@ -175,6 +187,70 @@ void ArrayT<Value>::dump(std::ostream& os) const {
   }
   os << std::endl;
 }
+
+//------------------------------------------------------------------------------
+
+template <typename Value>
+size_t ArrayT<Value>::footprint() const {
+  size_t size = sizeof(*this);
+  size += bytes();
+  if( not contiguous() ) NOTIMP;
+  return size;
+}
+
+
+template <typename DATATYPE> DATATYPE const* Array::host_data() const {
+  return array::make_host_storageview<DATATYPE>(*this).data();
+}
+template <typename DATATYPE> DATATYPE*       Array::host_data() {
+  return array::make_host_storageview<DATATYPE>(*this).data();
+}
+template <typename DATATYPE> DATATYPE const* Array::device_data() const {
+  return array::make_device_storageview<DATATYPE>(*this).data();
+}
+template <typename DATATYPE> DATATYPE*       Array::device_data() {
+  return array::make_device_storageview<DATATYPE>(*this).data();
+}
+template <typename DATATYPE> DATATYPE const* Array::data() const {
+  return array::make_host_storageview<DATATYPE>(*this).data();
+}
+template <typename DATATYPE> DATATYPE*       Array::data() {
+  return array::make_host_storageview<DATATYPE>(*this).data();
+}
+
+template int*                 Array::host_data<int>();
+template int const*           Array::host_data<int>() const;
+template long*                Array::host_data<long>();
+template long const*          Array::host_data<long>() const;
+template long unsigned*       Array::host_data<long unsigned>();
+template long unsigned const* Array::host_data<long unsigned>() const;
+template float*               Array::host_data<float>();
+template float const*         Array::host_data<float>() const;
+template double*              Array::host_data<double>();
+template double const*        Array::host_data<double>() const;
+
+template int*                 Array::device_data<int>();
+template int const*           Array::device_data<int>() const;
+template long*                Array::device_data<long>();
+template long const*          Array::device_data<long>() const;
+template long unsigned*       Array::device_data<long unsigned>();
+template long unsigned const* Array::device_data<long unsigned>() const;
+template float*               Array::device_data<float>();
+template float const*         Array::device_data<float>() const;
+template double*              Array::device_data<double>();
+template double const*        Array::device_data<double>() const;
+
+template int*                 Array::data<int>();
+template int const*           Array::data<int>() const;
+template long*                Array::data<long>();
+template long const*          Array::data<long>() const;
+template long unsigned*       Array::data<long unsigned>();
+template long unsigned const* Array::data<long unsigned>() const;
+template float*               Array::data<float>();
+template float const*         Array::data<float>() const;
+template double*              Array::data<double>();
+template double const*        Array::data<double>() const;
+
 
 //------------------------------------------------------------------------------
 

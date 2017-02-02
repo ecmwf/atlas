@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#include <cmath>
 
+#include <cmath>
 #include "atlas/interpolation/Ray.h"
 #include "atlas/interpolation/Triag3D.h"
 
@@ -19,43 +19,82 @@
 namespace atlas {
 namespace interpolation {
 
-Intersect Triag3D::intersects(const Ray& r, double epsilon) const {
+Intersect Triag3D::intersects(const Ray& r, double edgeEpsilon, double epsilon) const {
 
-  Intersect isect;
+    Intersect isect;
 
-  Vector3D edge1 = v1 - v0;
-  Vector3D edge2 = v2 - v0;
-  Vector3D pvec = r.dir.cross(edge2);
+    Vector3D edge1 = v1 - v0;
+    Vector3D edge2 = v2 - v0;
+    Vector3D pvec = r.dir.cross(edge2);
 
-  const double det = edge1.dot(pvec);
+    // ray is parallel to triangle (check?)
+    const double det = edge1.dot(pvec);
+    if (fabs(det) < epsilon) {
+        return isect.fail();
+    }
 
-  // ray is parallel to triangle (check ?)
-  if (fabs(det) < epsilon) return isect.success(false);
+    const double invDet = 1. / det;
 
-  const double invDet = 1. / det;
-  Vector3D tvec = r.orig - v0;
-  isect.u = tvec.dot(pvec) * invDet;
+    Vector3D tvec = r.orig - v0;
+    Vector3D qvec = tvec.cross(edge1);
 
-  if(fabs(isect.u) < parametricEpsilon ) isect.u = 0;
-  if(fabs(1-isect.u) < parametricEpsilon ) isect.u = 1;
+    isect.u = tvec.dot(pvec)  * invDet;
+    isect.v = r.dir.dot(qvec) * invDet;
+    isect.t = edge2.dot(qvec) * invDet;
 
-  if (isect.u < 0 || isect.u > 1) return isect.success(false);
+    const double w = 1 - (isect.u + isect.v);
 
-  Vector3D qvec = tvec.cross(edge1);
-  isect.v = r.dir.dot(qvec) * invDet;
+    if (w < 0) {
 
-  if(fabs(isect.v) < parametricEpsilon ) isect.v = 0;
-  if(fabs(1-isect.v) < parametricEpsilon ) isect.v = 1;
+        // check if far outside of triangle, in respect to diagonal edge
+        if (w < -edgeEpsilon) {
+            return isect.fail();
+        }
 
-  double tmp = isect.u + isect.v;
-  if(fabs(tmp) < parametricEpsilon ) tmp = 0;
-  if(fabs(1-tmp) < parametricEpsilon ) tmp = 1;
-  isect.u = tmp - isect.v;
+        // snap to diagonal edge
+        // Note: we may still be to the left of vertical edge or below the horizontal edge
+        isect.u += 0.5 * w;
+        isect.v += 0.5 * w;
+    }
 
-  if (isect.v < 0 || isect.u + isect.v > 1) return isect.success(false);
-  isect.t = edge2.dot(qvec) * invDet;
+    if (isect.u < 0) {
 
-  return isect.success(true);
+        // check if far outside of triangle, in respect to vertical edge
+        if ( (isect.u < -edgeEpsilon) ||
+             (isect.v < -edgeEpsilon) ||
+             (isect.v > 1 + edgeEpsilon) ) {
+            return isect.fail();
+        }
+
+        // snap to lower/upper left corners
+        isect.u = 0;
+        if (isect.v < 0) {
+            isect.v = 0;
+        } else if (isect.v > 1) {
+            isect.v = 1;
+        }
+
+    }
+
+    if (isect.v < 0) {
+
+        // check if far outside of triangle, in respect to horizontal edge
+        if( (isect.v < -edgeEpsilon) ||
+            (isect.u < -edgeEpsilon) ||
+            (isect.u > 1 + edgeEpsilon) ) {
+            return isect.fail();
+        }
+
+        // snap to lower left/right corners
+        isect.v = 0;
+        if (isect.u < 0) {
+            isect.u = 0;
+        } else if (isect.u > 1) {
+            isect.u = 1;
+        }
+    }
+
+    return isect.success();
 }
 
 double Triag3D::area() const

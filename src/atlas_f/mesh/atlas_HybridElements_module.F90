@@ -1,20 +1,15 @@
 
 module atlas_HybridElements_module
 
-!use, intrinsic :: iso_c_binding, only : c_funptr, c_ptr, c_loc, c_f_pointer, c_f_procpointer, c_funloc, c_int, c_size_t
-use atlas_refcounted_module, only: atlas_refcounted
+use fckit_refcounted_module, only: fckit_refcounted
 use atlas_Connectivity_module, only: atlas_MultiBlockConnectivity
 use atlas_Field_module, only: atlas_Field
 use atlas_ElementType_module, only: atlas_ElementType
 use atlas_Elements_module, only: atlas_Elements
-use, intrinsic :: iso_c_binding, only: c_size_t, c_int, c_ptr
-use atlas_c_interop, only: c_str
 
 implicit none
 
-private :: c_size_t, c_int, c_ptr
-private :: c_str
-private :: atlas_refcounted
+private :: fckit_refcounted
 private :: atlas_MultiBlockConnectivity
 private :: atlas_Field
 private :: atlas_ElementType
@@ -28,7 +23,7 @@ private
 ! atlas_HybridElements       !
 !-----------------------------
 
-type, extends(atlas_refcounted) :: atlas_HybridElements
+type, extends(fckit_refcounted) :: atlas_HybridElements
 contains
 
 ! Public methods
@@ -79,6 +74,7 @@ contains
 !========================================================
 
 function atlas_HybridElements__cptr(cptr) result(this)
+  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   type(atlas_HybridElements) :: this
   type(c_ptr), intent(in) :: cptr
@@ -102,10 +98,11 @@ end subroutine
 
 subroutine atlas_HybridElements__copy(this,obj_in)
   class(atlas_HybridElements), intent(inout) :: this
-  class(atlas_RefCounted),   target, intent(in) :: obj_in
+  class(fckit_refcounted),   target, intent(in) :: obj_in
 end subroutine
 
 function atlas_HybridElements__size(this) result(val)
+  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   integer(c_size_t) :: val
   class(atlas_HybridElements), intent(in) :: this
@@ -140,6 +137,7 @@ function cell_connectivity(this) result(connectivity)
 end function
 
 subroutine add_elements(this,elementtype,nb_elements)
+  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   class(atlas_HybridElements), intent(inout) :: this
   type(atlas_ElementType) :: elementtype
@@ -148,6 +146,7 @@ subroutine add_elements(this,elementtype,nb_elements)
 end subroutine
 
 subroutine add_elements_with_nodes(this,elementtype,nb_elements,node_connectivity)
+  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   class(atlas_HybridElements), intent(inout) :: this
   type(atlas_ElementType), intent(in) :: elementtype
@@ -166,6 +165,7 @@ end subroutine
 
 
 function nb_types(this) result(val)
+  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   integer(c_size_t) :: val
   class(atlas_HybridElements), intent(in) :: this
@@ -173,6 +173,7 @@ function nb_types(this) result(val)
 end function
 
 function nb_fields(this) result(val)
+  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   integer(c_size_t) :: val
   class(atlas_HybridElements), intent(in) :: this
@@ -180,6 +181,7 @@ function nb_fields(this) result(val)
 end function
 
 function has_field(this,name) result(val)
+  use fckit_c_interop_module, only: c_str
   use atlas_hybridelements_c_binding
   logical :: val
   class(atlas_HybridElements), intent(in) :: this
@@ -192,6 +194,7 @@ function has_field(this,name) result(val)
 end function
 
 function field_by_name(this,name) result(field)
+  use fckit_c_interop_module, only: c_str
   use atlas_hybridelements_c_binding
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
@@ -201,6 +204,7 @@ function field_by_name(this,name) result(field)
 end function
 
 function field_by_idx_size_t(this,idx) result(field)
+  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
@@ -210,6 +214,7 @@ function field_by_idx_size_t(this,idx) result(field)
 end function
 
 function field_by_idx_int(this,idx) result(field)
+  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
@@ -251,6 +256,7 @@ function halo(this) result(field)
 end function
 
 function elements_size_t(this,idx) result(elements)
+  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   type(atlas_Elements) :: elements
   class(atlas_HybridElements), intent(in) :: this
@@ -260,6 +266,7 @@ function elements_size_t(this,idx) result(elements)
 end function
 
 function elements_int(this,idx) result(elements)
+  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   type(atlas_Elements) :: elements
   class(atlas_HybridElements), intent(in) :: this

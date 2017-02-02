@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -27,6 +27,7 @@
 #include "atlas/util/Constants.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/io/Gmsh.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -43,22 +44,21 @@ namespace io {
 
 namespace {
 
-static double deg = util::Constants::radiansToDegrees();
-static double rad = util::Constants::degreesToRadians();
+static double rad2deg = util::Constants::radiansToDegrees();
 
 class GmshFile : public std::ofstream {
 public:
-  GmshFile(const PathName& file_path, std::ios_base::openmode mode, int part = eckit::mpi::rank())
+  GmshFile(const PathName& file_path, std::ios_base::openmode mode, int part = atlas::parallel::mpi::comm().rank())
   {
     PathName par_path(file_path);
-    if (eckit::mpi::size() == 1 || part == -1) {
+    if (atlas::parallel::mpi::comm().size() == 1 || part == -1) {
       std::ofstream::open(par_path.localPath(), mode);
     } else {
       Translator<int, std::string> to_str;
-      if (eckit::mpi::rank() == 0) {
+      if (atlas::parallel::mpi::comm().rank() == 0) {
         PathName par_path(file_path);
         std::ofstream par_file(par_path.localPath(), std::ios_base::out);
-        for(size_t p = 0; p < eckit::mpi::size(); ++p) {
+        for(size_t p = 0; p < atlas::parallel::mpi::comm().size(); ++p) {
           PathName loc_path(file_path);
           // loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
           loc_path = loc_path.baseName(false) + ".msh.p" + to_str(p);
@@ -110,11 +110,11 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
 
   bool gather( gmsh_options.get<bool>("gather") );
   bool binary( !gmsh_options.get<bool>("ascii") );
-  int nlev  = field.levels();
-  int ndata = std::min(function_space.nb_nodes(),field.shape(0));
-  int nvars = field.stride(0)/nlev;
+  size_t nlev  = field.levels();
+  size_t ndata = std::min(function_space.nb_nodes(),field.shape(0));
+  size_t nvars = field.stride(0)/nlev;
   array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( function_space.nodes().global_index() );
-  array::LocalView<DATATYPE,2> data ( array::make_storageview<DATATYPE>(field).data(),
+  array::LocalView<DATATYPE,2> data ( field.data<DATATYPE>(),
                                       array::make_shape(field.shape(0),field.stride(0)) );
   field::Field::Ptr gidx_glb;
   field::Field::Ptr data_glb;
@@ -126,7 +126,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
 
     data_glb.reset( function_space.createField( "glb_field",field, field::global() ) );
     function_space.gather(field,*data_glb);
-    data = array::LocalView<DATATYPE,2>( array::make_storageview<DATATYPE>(*data_glb).data(),
+    data = array::LocalView<DATATYPE,2>( data_glb->data<DATATYPE>(),
                                          array::make_shape(data_glb->shape(0),data_glb->stride(0)) );
     ndata = std::min(function_space.nb_nodes_global(),data.shape(0));
   }
@@ -137,21 +137,21 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   if( gmsh_levels.empty() || nlev == 1 )
   {
     lev.resize(nlev);
-    for (int ilev=0; ilev<nlev; ++ilev)
+    for (size_t ilev=0; ilev < nlev; ++ilev)
       lev[ilev] = ilev;
   }
   else
   {
     lev = gmsh_levels;
   }
-  for (int ilev=0; ilev<lev.size(); ++ilev)
+  for (size_t ilev=0; ilev < lev.size(); ++ilev)
   {
-    int jlev = lev[ilev];
-    if( ( gather && eckit::mpi::rank() == 0 ) || !gather )
+    size_t jlev = lev[ilev];
+    if( ( gather && atlas::parallel::mpi::comm().rank() == 0 ) || !gather )
     {
       char field_lev[6] = {0, 0, 0, 0, 0, 0};
       if( field.has_levels() )
-        std::sprintf(field_lev, "[%03d]",jlev);
+        std::sprintf(field_lev, "[%03lu]",jlev);
       double time = field.metadata().has("time") ? field.metadata().get<double>("time") : 0.;
       int step = field.metadata().has("step") ? field.metadata().get<size_t>("step") : 0 ;
       out << "$NodeData\n";
@@ -165,14 +165,14 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
       else if( nvars <= 3 ) out << 3     << "\n";
       else if( nvars <= 9 ) out << 9     << "\n";
       out << ndata << "\n";
-      out << eckit::mpi::rank() << "\n";
+      out << atlas::parallel::mpi::comm().rank() << "\n";
 
       if( binary )
       {
         if( nvars == 1)
         {
           double value;
-          for( int n = 0; n < ndata; ++n )
+          for(size_t n = 0; n < ndata; ++n)
           {
             out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
             value = data(n,jlev*nvars+0);
@@ -182,10 +182,10 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
         else if( nvars <= 3 )
         {
           double value[3] = {0,0,0};
-          for( size_t n = 0; n < ndata; ++n )
+          for(size_t n = 0; n < ndata; ++n)
           {
             out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-            for( int v=0; v<nvars; ++v)
+            for(size_t v=0; v < nvars; ++v)
               value[v] = data(n,jlev*nvars+v);
             out.write(reinterpret_cast<const char*>(&value),sizeof(double)*3);
           }
@@ -199,7 +199,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
           };
           if( nvars == 4 )
           {
-            for( size_t n = 0; n < ndata; ++n )
+            for(size_t n = 0; n < ndata; ++n)
             {
               out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
               for( int i=0; i<2; ++i )
@@ -214,7 +214,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
           }
           if( nvars == 9 )
           {
-            for( size_t n = 0; n < ndata; ++n )
+            for(size_t n = 0; n < ndata; ++n)
             {
               out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
               for( int i=0; i<3; ++i )
@@ -234,7 +234,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
       {
         if( nvars == 1)
         {
-          for( int n = 0; n < ndata; ++n )
+          for( size_t n = 0; n < ndata; ++n )
           {
             ASSERT( jlev*nvars < data.shape(1) );
             ASSERT( n < gidx.shape(0) );
@@ -247,7 +247,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
           for( size_t n = 0; n < ndata; ++n )
           {
             out << gidx(n);
-            for( int v=0; v<nvars; ++v)
+            for(size_t v=0; v < nvars; ++v)
               data_vec[v] = data(n,jlev*nvars+v);
             for( int v=0; v<3; ++v)
               out << " " << data_vec[v];
@@ -308,13 +308,13 @@ void write_field_nodes(
     //bool gather(gmsh_options.get<bool>("gather"));
     bool binary(!gmsh_options.get<bool>("ascii"));
 
-    int nlev  = field.levels();
-    int nvars = field.stride(0) / nlev;
+    size_t nlev  = field.levels();
+    size_t nvars = field.stride(0) / nlev;
 
     //field::Field::Ptr gidxField(function_space.createField<gidx_t>("gidx"));
     //array::ArrayView<gidx_t,1>   gidx(gidxField);
     array::LocalView<DATATYPE,2> data(
-        array::make_storageview<DATATYPE>(field).data(),
+        field.data<DATATYPE>(),
         array::make_shape(field.shape(0),field.stride(0)) );
 
     field::Field::Ptr gidx_glb;
@@ -327,16 +327,16 @@ void write_field_nodes(
     //    field.global_index(), *gidx_glb);
     //array::ArrayView<gidx_t,1> gidx = array::ArrayView<gidx_t,1>(*gidx_glb);
 
-    if( eckit::mpi::size() > 1 )
+    if( atlas::parallel::mpi::comm().size() > 1 )
     {
       field_glb = function_space.createField<double>("glb_field",field::global());
       function_space.gather(field, *field_glb);
       data = array::LocalView<DATATYPE,2>(
-          array::make_storageview<DATATYPE>(*field_glb).data(),
+          field_glb->data<DATATYPE>(),
           array::make_shape(field_glb->shape(0),field_glb->stride(0)) );
     }
 
-    int ndata = data.shape(0);
+    size_t ndata = data.shape(0);
 
     std::vector<long> lev;
     std::vector<long> gmsh_levels;
@@ -345,7 +345,7 @@ void write_field_nodes(
     if (gmsh_levels.empty() || nlev == 1)
     {
         lev.resize(nlev);
-        for (int ilev=0; ilev<nlev; ++ilev)
+        for (size_t ilev=0; ilev < nlev; ++ilev)
         {
             lev[ilev] = ilev;
         }
@@ -355,16 +355,16 @@ void write_field_nodes(
         lev = gmsh_levels;
     }
 
-    if (eckit::mpi::rank() == 0)
+    if (atlas::parallel::mpi::comm().rank() == 0)
     {
-        for (int ilev = 0; ilev < lev.size(); ++ilev)
+        for (size_t ilev = 0; ilev < lev.size(); ++ilev)
         {
-            int jlev = lev[ilev];
+            size_t jlev = lev[ilev];
             char field_lev[6] = {0, 0, 0, 0, 0, 0};
 
             if (field.has_levels())
             {
-                std::sprintf(field_lev, "[%03d]", jlev);
+                std::sprintf(field_lev, "[%03lu]", jlev);
             }
 
             double time = field.metadata().has("time") ?
@@ -383,14 +383,14 @@ void write_field_nodes(
             if     ( nvars == 1 ) out << nvars << "\n";
             else if( nvars <= 3 ) out << 3     << "\n";
             out << ndata << "\n";
-            out << eckit::mpi::rank() << "\n";
+            out << atlas::parallel::mpi::comm().rank() << "\n";
 
             if (binary)
             {
                 if (nvars == 1)
                 {
                     double value;
-                    for (int n = 0; n < ndata; ++n)
+                    for (size_t n = 0; n < ndata; ++n)
                     {
                         out.write(reinterpret_cast<const char*>(n+1),
                                   sizeof(int));
@@ -408,7 +408,7 @@ void write_field_nodes(
                     {
                         out.write(reinterpret_cast<const char*>(n+1),
                                   sizeof(int));
-                        for (int v = 0; v < nvars; ++v)
+                        for (size_t v = 0; v < nvars; ++v)
                         {
                             value[v] = data(n,jlev*nvars+v);
                         }
@@ -423,7 +423,7 @@ void write_field_nodes(
                 ASSERT(jlev*nvars <= data.shape(1));
                 if (nvars == 1)
                 {
-                    for (int n = 0; n < ndata; ++n)
+                    for (size_t n = 0; n < ndata; ++n)
                     {
                         ASSERT(n < data.shape(0));
                         out << n+1 << " "
@@ -436,7 +436,7 @@ void write_field_nodes(
                     for (size_t n = 0; n < ndata; ++n)
                     {
                         out << n+1;
-                        for (int v = 0; v < nvars; ++v)
+                        for (size_t v = 0; v < nvars; ++v)
                         {
                             data_vec[v] = data(n, jlev*nvars+v);
                         }
@@ -506,7 +506,7 @@ void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& functi
     if     ( nvars == 1 ) out << nvars << "\n";
     else if( nvars <= 3 ) out << 3     << "\n";
     out << ndata << "\n";
-    out << eckit::mpi::rank() << "\n";
+    out << parallel::mpi::comm().rank() << "\n";
 
     if( binary )
     {
@@ -714,8 +714,8 @@ void Gmsh::read(const PathName& file_path, mesh::Mesh& mesh ) const
   {
     for( size_t n = 0; n < nb_nodes; ++n )
     {
-      coords(n,internals::XX) *= deg;
-      coords(n,internals::YY) *= deg;
+      coords(n,internals::XX) *= rad2deg;
+      coords(n,internals::YY) *= rad2deg;
     }
   }
   for (int i=0; i<3; ++i)
@@ -869,7 +869,7 @@ void Gmsh::read(const PathName& file_path, mesh::Mesh& mesh ) const
 
 void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
 {
-  int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : eckit::mpi::rank();
+  int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : atlas::parallel::mpi::comm().rank();
   bool include_ghost = options.get<bool>("ghost") && options.get<bool>("elements");
 
   std::string nodes_field = options.get<std::string>("nodes");
@@ -1161,7 +1161,7 @@ void Gmsh::write_delegate(
     bool binary( !options.get<bool>("ascii") );
     if ( binary ) mode |= std::ios_base::binary;
     bool gather = options.has("gather") ? options.get<bool>("gather") : false;
-    GmshFile file(file_path,mode,gather?-1:eckit::mpi::rank());
+    GmshFile file(file_path,mode,gather?-1:atlas::parallel::mpi::comm().rank());
 
     // Header
     if (is_new_file)
@@ -1214,7 +1214,7 @@ void Gmsh::write_delegate(
 
     bool gather = options.has("gather") ? options.get<bool>("gather") : false;
 
-    GmshFile file(file_path,mode,gather?-1:eckit::mpi::rank());
+    GmshFile file(file_path,mode,gather?-1:atlas::parallel::mpi::comm().rank());
 
     // Header
     if (is_new_file)

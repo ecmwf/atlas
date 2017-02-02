@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,15 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef ATLAS_MPI_COLLECTIVES_h
-#define ATLAS_MPI_COLLECTIVES_h
+#ifndef ATLAS_MPI_BUFFER_h
+#define ATLAS_MPI_BUFFER_h
 
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/array/ArrayView.h"
 
+#include "atlas/array/LocalView.h"
 
 namespace atlas {
-namespace util {
 namespace parallel {
 namespace mpi {
 
@@ -51,15 +50,16 @@ private:
 template <typename DATA_TYPE>
 struct Buffer<DATA_TYPE,1> : public eckit::mpi::Buffer<DATA_TYPE>
 {
-  // array::ArrayView<DATA_TYPE,1> operator[](int p)
-  // {
-  //   return array::ArrayView<DATA_TYPE,1> ( eckit::mpi::Buffer<DATA_TYPE>::buf.data()+eckit::mpi::Buffer<DATA_TYPE>::displs[p],
+
+  Buffer(size_t size) : eckit::mpi::Buffer<DATA_TYPE>(size) {}
+
   //                                   array::make_shape( eckit::mpi::Buffer<DATA_TYPE>::counts[p] ) );
   // }
   BufferView<DATA_TYPE> operator[](int p)
   {
-    return BufferView<DATA_TYPE> ( eckit::mpi::Buffer<DATA_TYPE>::buf.data()+eckit::mpi::Buffer<DATA_TYPE>::displs[p],
-                                   eckit::mpi::Buffer<DATA_TYPE>::counts[p] );
+    return BufferView<DATA_TYPE>(
+                eckit::mpi::Buffer<DATA_TYPE>::buffer.data() + eckit::mpi::Buffer<DATA_TYPE>::displs[p],
+                eckit::mpi::Buffer<DATA_TYPE>::counts[p] );
   }
 
 };
@@ -68,7 +68,6 @@ struct Buffer<DATA_TYPE,1> : public eckit::mpi::Buffer<DATA_TYPE>
 
 } // namespace mpi
 } // namespace parallel
-} // namespace util
 } // namespace atlas
 
-#endif // ATLAS_MPI_COLLECTIVES_h
+#endif

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -17,7 +17,7 @@ namespace grid {
 namespace lonlat {
 
 
-register_BuilderT1(Grid,ReducedLonLat,ReducedLonLat::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, ReducedLonLat> builder_ReducedLonLat(ReducedLonLat::grid_type_str());
 
 
 std::string ReducedLonLat::grid_type_str() {
@@ -30,11 +30,19 @@ std::string ReducedLonLat::className() {
 }
 
 
-void ReducedLonLat::set_typeinfo() {
-    std::stringstream s;
-    s << "reduced_lonlat";
-    shortName_ = s.str();
-    grid_type_ = grid_type_str();
+std::string ReducedLonLat::gridType() const {
+    return grid_type_str();
+}
+
+
+std::string ReducedLonLat::shortName() const {
+    if (shortName_.empty()) {
+        shortName_ = "reduced_lonlat";
+        if (!domain_.isGlobal()) {
+            shortName_ += "-local";
+        }
+    }
+    return shortName_;
 }
 
 

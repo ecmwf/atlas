@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -362,8 +362,8 @@ void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[
 }
 
 EqualRegionsPartitioner::EqualRegionsPartitioner(const grid::Grid& grid) :
-    Partitioner(grid,eckit::mpi::size()),
-    N_(eckit::mpi::size()) {
+    Partitioner(grid,parallel::mpi::comm().size()),
+    N_(parallel::mpi::comm().size()) {
     std::vector<double> s_cap;
     eq_caps(N_, sectors_, s_cap);
     bands_.resize(s_cap.size());

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -80,8 +80,6 @@ class LonLat: public Structured {
     void setup(const size_t nlon, const size_t nlat, const Domain&);
 
     void setup(const long pl[], const size_t nlat, const Domain&);
-
-    virtual void set_typeinfo() = 0;
 
     static eckit::Value domain_spec(const Domain& dom);
 

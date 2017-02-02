@@ -1,17 +1,11 @@
 
 module atlas_FieldSet_module
 
-use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_size_t
-use atlas_c_interop, only: c_str
-use atlas_refcounted_module, only: atlas_refcounted
-use atlas_Field_module, only: atlas_Field
+use fckit_refcounted_module, only: fckit_refcounted
 
 implicit none
 
-private :: c_ptr, c_int, c_size_t
-private :: c_str
-private :: atlas_refcounted
-private :: atlas_Field
+private :: fckit_refcounted
 
 public :: atlas_FieldSet
 
@@ -22,7 +16,7 @@ private
 !-----------------------------
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_FieldSet
+TYPE, extends(fckit_refcounted) :: atlas_FieldSet
 
 ! Purpose :
 ! -------
@@ -49,7 +43,6 @@ contains
   procedure, public :: add
   generic :: field => field_by_name, field_by_idx_int, field_by_idx_size_t
   procedure, public :: delete
-  procedure, public :: copy
 END TYPE atlas_FieldSet
 !------------------------------------------------------------------------------
 
@@ -68,12 +61,14 @@ contains
 ! FieldSet routines
 
 function atlas_FieldSet__cptr(cptr) result(fieldset)
+  use, intrinsic :: iso_c_binding, only: c_ptr
   type(atlas_FieldSet) :: fieldset
   type(c_ptr), intent(in) :: cptr
   call fieldset%reset_c_ptr( cptr )
 end function
 
 function atlas_FieldSet__ctor(name) result(fieldset)
+  use fckit_c_interop_module, only: c_str
   use atlas_fieldset_c_binding
   character(len=*), intent(in), optional :: name
   type(atlas_FieldSet) :: fieldset
@@ -94,19 +89,17 @@ subroutine delete(this)
   call this%reset_c_ptr()
 end subroutine
 
-subroutine copy(this,obj_in)
-  class(atlas_FieldSet), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
-end subroutine
-
 subroutine add(this,field)
   use atlas_fieldset_c_binding
+  use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   call atlas__FieldSet__add_field(this%c_ptr(), field%c_ptr())
 end subroutine
 
 function has_field(this,name) result(flag)
+  use, intrinsic :: iso_c_binding, only: c_int
+  use fckit_c_interop_module, only: c_str
   use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -121,6 +114,7 @@ function has_field(this,name) result(flag)
 end function
 
 function FieldSet__size(this) result(nb_fields)
+  use, intrinsic :: iso_c_binding, only: c_size_t
   use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(in) :: this
   integer(c_size_t) :: nb_fields
@@ -128,7 +122,9 @@ function FieldSet__size(this) result(nb_fields)
 end function
 
 function field_by_name(this,name) result(field)
+  use fckit_c_interop_module, only: c_str
   use atlas_fieldset_c_binding
+  use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: field
@@ -137,7 +133,9 @@ function field_by_name(this,name) result(field)
 end function
 
 function field_by_idx_size_t(this,idx) result(field)
+  use, intrinsic :: iso_c_binding, only: c_size_t
   use atlas_fieldset_c_binding
+  use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
   integer(c_size_t), intent(in) :: idx
   type(atlas_Field) :: field
@@ -146,7 +144,9 @@ function field_by_idx_size_t(this,idx) result(field)
 end function
 
 function field_by_idx_int(this,idx) result(field)
+  use, intrinsic :: iso_c_binding, only: c_size_t, c_int
   use atlas_fieldset_c_binding
+  use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
   integer(c_int), intent(in) :: idx
   type(atlas_Field) :: field

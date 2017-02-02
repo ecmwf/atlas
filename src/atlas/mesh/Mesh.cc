@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -84,6 +84,19 @@ void Mesh::prettyPrint(std::ostream& os) const
 
 void Mesh::print(std::ostream& os) const
 {
+}
+
+size_t Mesh::footprint() const {
+  size_t size = sizeof(*this);
+
+  size += metadata_.footprint();
+  if(nodes_)  size += nodes_->footprint();
+  if(cells_)  size += cells_->footprint();
+  if(facets_) size += facets_->footprint();
+  if(ridges_) size += ridges_->footprint();
+  if(peaks_)  size += peaks_->footprint();
+
+  return size;
 }
 
 
@@ -176,6 +189,16 @@ mesh::Cells* atlas__Mesh__cells (Mesh* This) {
   );
   return NULL;
 }
+
+size_t atlas__Mesh__footprint (Mesh* This) {
+  size_t size(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    size = This->footprint();
+  );
+  return size;
+}
+
 
 
 //----------------------------------------------------------------------------------------------------------------------

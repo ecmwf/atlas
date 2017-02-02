@@ -12,11 +12,14 @@
 #include "ecbuild/boost_test_framework.h"
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
+#include "tests/AtlasFixture.h"
 
 using namespace atlas::array;
 
 namespace atlas {
 namespace test {
+
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE(test_array) {
   Array* ds = Array::create<double>(4ul);

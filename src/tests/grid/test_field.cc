@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -13,6 +13,7 @@
 #include "eckit/value/CompositeParams.h"
 
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/grids.h"
@@ -40,9 +41,11 @@ namespace  test {
 class TestField : public Tool {
 public:
 
-    TestField(int argc,char **argv): Tool(argc,argv) {}
+    TestField(int argc,char **argv): Tool(argc,argv) {
+      atlas_init();
+    }
 
-    ~TestField() {}
+    ~TestField() {atlas_finalize();}
 
     virtual void run();
 
@@ -166,12 +169,10 @@ void TestField::test_wrap_rawdata_direct()
 
 void TestField::run()
 {
-    eckit::mpi::init();
     test_fieldcreator();
     test_implicit_conversion();
     test_wrap_rawdata_through_array();
     test_wrap_rawdata_direct();
-    eckit::mpi::finalize();
 }
 
 //-----------------------------------------------------------------------------

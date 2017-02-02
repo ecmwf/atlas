@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -32,6 +32,8 @@
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/memory/SharedPtr.h"
 
+#include "tests/AtlasFixture.h"
+
 
 using namespace eckit;
 using namespace atlas::numerics;
@@ -47,7 +49,6 @@ double dual_volume(const mesh::Mesh& mesh)
   const mesh::Nodes& nodes = mesh.nodes();
   int nb_nodes = nodes.size();
   const array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( nodes.field("dual_volumes") );
-  const array::ArrayView<gidx_t,1> glb_idx      = array::make_view<gidx_t,1>( nodes.global_index() );
   const array::ArrayView<int   ,1> is_ghost     = array::make_view<int   ,1>( nodes.ghost() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
@@ -57,7 +58,9 @@ double dual_volume(const mesh::Mesh& mesh)
       area += dual_volumes(node);
     }
   }
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
+
+  parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+
   return area;
 }
 
@@ -115,14 +118,6 @@ void rotated_flow_magnitude(const fvm::Method& fvm, field::Field& field, const d
 
 static std::string griduid() { return "Slat80"; }
 
-struct AtlasFixture {
-    AtlasFixture()
-    {
-      atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                 boost::unit_test::framework::master_test_suite().argv);
-    }
-    ~AtlasFixture() { atlas_finalize(); }
-};
 
 BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
@@ -158,7 +153,6 @@ BOOST_AUTO_TEST_CASE( test_grad )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nnodes = mesh->nodes().size();
   size_t nlev = 1;
 
@@ -234,7 +228,6 @@ BOOST_AUTO_TEST_CASE( test_div )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   field::FieldSet fields;
@@ -265,7 +258,6 @@ BOOST_AUTO_TEST_CASE( test_curl )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   field::FieldSet fields;
@@ -335,7 +327,6 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   field::FieldSet fields;

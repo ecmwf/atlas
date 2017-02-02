@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -14,16 +14,9 @@ namespace atlas {
 namespace parallel {
 namespace mpi {
 
-extern "C"
+const eckit::mpi::Comm& comm()
 {
-  void atlas_mpi_comm_attach_fortran_communicator (int fcomm )
-  {
-    eckit::mpi::comm().attach_fortran_communicator( fcomm );
-  }
-  int atlas_mpi_comm_fortran_communicator ()
-  {
-    return eckit::mpi::comm().fortran_communicator();
-  }
+  return eckit::mpi::comm();
 }
 
 } // namespace mpi

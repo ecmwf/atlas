@@ -2,7 +2,7 @@
 module atlas_functionspace_Spectral_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int
-use atlas_c_interop, only : c_str, c_to_f_string_cptr, atlas_free
+use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
 use atlas_FieldSet_module, only: atlas_FieldSet
@@ -12,7 +12,7 @@ use atlas_Config_module, only: atlas_Config
 implicit none
 
 private :: c_ptr, c_int
-private :: c_str, c_to_f_string_cptr, atlas_free
+private :: c_str, c_ptr_to_string, c_ptr_free
 private :: atlas_FunctionSpace
 private :: atlas_Field
 private :: atlas_FieldSet
@@ -58,6 +58,9 @@ contains
   generic, public :: gather  =>  gather_field,  gather_fieldset
   generic, public :: scatter => scatter_field, scatter_fieldset
 
+  procedure, private :: norm_scalar
+  procedure, private :: norm_array
+  generic, public :: norm => norm_scalar, norm_array
 
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_functionspace_Spectral__final
@@ -231,6 +234,34 @@ subroutine scatter_fieldset(this,global,local)
   type(atlas_FieldSet), intent(in) :: global
   type(atlas_FieldSet), intent(inout) :: local
   call atlas__SpectralFunctionSpace__scatter_fieldset(this%c_ptr(),global%c_ptr(),local%c_ptr())
+end subroutine
+
+subroutine norm_scalar(this,field,norm,rank)
+  use, intrinsic :: iso_c_binding, only : c_int, c_double
+  use atlas_functionspace_spectral_c_binding
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  real(c_double), intent(out) :: norm
+  integer(c_int), optional :: rank
+  integer :: opt_rank
+  real(c_double) :: norm_array(1)
+  opt_rank = 0
+  if( present(rank) ) opt_rank = rank
+  call atlas__SpectralFunctionSpace__norm(this%c_ptr(),field%c_ptr(),norm_array,opt_rank)
+  norm = norm_array(1)
+end subroutine
+
+subroutine norm_array(this,field,norm,rank)
+  use, intrinsic :: iso_c_binding, only : c_int, c_double
+  use atlas_functionspace_spectral_c_binding
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  real(c_double), intent(inout) :: norm(:)
+  integer(c_int), optional :: rank
+  integer :: opt_rank
+  opt_rank = 0
+  if( present(rank) ) opt_rank = rank
+  call atlas__SpectralFunctionSpace__norm(this%c_ptr(),field%c_ptr(),norm,opt_rank)
 end subroutine
 
 end module atlas_functionspace_Spectral_module

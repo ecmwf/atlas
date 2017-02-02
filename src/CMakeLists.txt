@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2016 ECMWF.
+# (C) Copyright 1996-2017 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -18,12 +18,6 @@ if( ATLAS_HAVE_OMP )
   set( ATLAS_HAVE_OMP 1 )
 else()
   set( ATLAS_HAVE_OMP 0 )
-endif()
-
-if( ATLAS_HAVE_MPI )
-  set( ATLAS_HAVE_MPI 1 )
-else()
-  set( ATLAS_HAVE_MPI 0 )
 endif()
 
 if( ATLAS_HAVE_TESSELATION )
@@ -59,7 +53,6 @@ endif()
 if( ATLAS_HAVE_MPI )
 
   set( ATLAS_MPI_C_LIBRARIES            ${MPI_CXX_LIBRARIES} )
-  set( ATLAS_MPI_Fortran_LIBRARIES      ${MPI_Fortran_LIBRARIES} )
   ecbuild_include_mpi()
 
 endif()

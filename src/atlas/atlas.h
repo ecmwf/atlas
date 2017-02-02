@@ -2,6 +2,7 @@
 #define atlas_atlas_h
 
 #include <iosfwd>
+
 #include "atlas/internals/atlas_config.h"
 
 // Forward declarations
@@ -12,18 +13,23 @@ namespace eckit
 
 namespace atlas {
 
+// Deprecated. To be removed soon!
 void atlas_init(int argc, char **argv);
+
 void atlas_init();
 void atlas_init(const eckit::Parametrisation&);
-void atlas_info(std::ostream&);
 void atlas_finalize();
 
-// ------------------------------------------------------------------
+
+void atlas_info(std::ostream&);
+
+//----------------------------------------------------------------------------------------------------------------------
+
 // C wrapper interfaces to C++ routines
+#define OSTREAM std::ostream
 extern "C"
 {
   void atlas__atlas_init_noargs();
-  void atlas__atlas_init (int argc, char** argv);
   void atlas__atlas_finalize ();
   const char* atlas__eckit_version();
   const char* atlas__eckit_git_sha1();
@@ -35,9 +41,11 @@ extern "C"
   const char* atlas__display_name ();
   const char* atlas__rundir ();
   const char* atlas__workdir ();
+  void atlas__info(OSTREAM* channel);
 }
-// ------------------------------------------------------------------
+#undef OSTREAM
 
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
 

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -15,7 +15,7 @@
 #include <limits>
 #include <iostream>
 #include <stdexcept>
-#include "eckit/memory/ScopedPtr.h"
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -30,13 +30,14 @@
 #include "atlas/internals/Unique.h"
 #include "atlas/internals/LonLatMicroDeg.h"
 #include "atlas/internals/Functions.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/Buffer.h"
 
 using atlas::internals::accumulate_facets;
 using atlas::internals::Topology;
@@ -216,7 +217,7 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
 }
 
 void accumulate_elements( const Mesh& mesh,
-                          const atlas::util::parallel::mpi::BufferView<uid_t>& node_uid,
+                          const parallel::mpi::BufferView<uid_t>& node_uid,
                           const Uid2Node& uid2node,
                           const Node2Elem& node2elem,
                           std::vector<int>& found_elements,
@@ -224,8 +225,6 @@ void accumulate_elements( const Mesh& mesh,
 {
   const mesh::HybridElements::Connectivity &elem_nodes = mesh.cells().node_connectivity();
   const array::ArrayView<int,1> elem_part = array::make_view<int,1>( mesh.cells().partition() );
-  const array::ArrayView<gidx_t,1> ngidx  = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
-  const array::ArrayView<gidx_t,1> egidx  = array::make_view<gidx_t,1>( mesh.cells().global_index() );
 
   size_t nb_nodes = node_uid.size();
 
@@ -247,7 +246,7 @@ void accumulate_elements( const Mesh& mesh,
       for(size_t jelem = 0; jelem < node2elem[inode].size(); ++jelem)
       {
         int e = node2elem[inode][jelem];
-        if( size_t(elem_part(e)) == eckit::mpi::rank() )
+        if( size_t(elem_part(e)) == atlas::parallel::mpi::comm().rank() )
         {
           found_elements_set.insert( e );
         }
@@ -306,16 +305,16 @@ public:
 
     Buffers(Mesh& mesh)
     {
-      node_part.resize(eckit::mpi::size());
-      node_ridx.resize(eckit::mpi::size());
-      node_flags.resize(eckit::mpi::size());
-      node_glb_idx.resize(eckit::mpi::size());
-      node_lonlat.resize(eckit::mpi::size());
-      elem_glb_idx.resize(eckit::mpi::size());
-      elem_nodes_id.resize(eckit::mpi::size());
-      elem_nodes_displs.resize(eckit::mpi::size());
-      elem_part.resize(eckit::mpi::size());
-      elem_type.resize(eckit::mpi::size());
+      node_part.resize(parallel::mpi::comm().size());
+      node_ridx.resize(parallel::mpi::comm().size());
+      node_flags.resize(parallel::mpi::comm().size());
+      node_glb_idx.resize(parallel::mpi::comm().size());
+      node_lonlat.resize(parallel::mpi::comm().size());
+      elem_glb_idx.resize(parallel::mpi::comm().size());
+      elem_nodes_id.resize(parallel::mpi::comm().size());
+      elem_nodes_displs.resize(parallel::mpi::comm().size());
+      elem_part.resize(parallel::mpi::comm().size());
+      elem_type.resize(parallel::mpi::comm().size());
     }
 
     void print( std::ostream& os )
@@ -323,7 +322,7 @@ public:
       os << "Nodes\n"
          << "-----\n";
       size_t n(0);
-      for( size_t jpart=0; jpart<eckit::mpi::size(); ++jpart )
+      for( size_t jpart=0; jpart<parallel::mpi::comm().size(); ++jpart )
       {
         for( size_t jnode=0; jnode<node_glb_idx[jpart].size(); ++jnode )
         {
@@ -334,7 +333,7 @@ public:
       os << "Cells\n"
          << "-----\n";
       size_t e(0);
-      for( size_t jpart=0; jpart<eckit::mpi::size(); ++jpart )
+      for( size_t jpart=0; jpart<parallel::mpi::comm().size(); ++jpart )
       {
         for( size_t jelem=0; jelem<elem_glb_idx[jpart].size(); ++jelem )
         {
@@ -347,21 +346,24 @@ public:
 
   static void all_to_all(Buffers& send, Buffers& recv)
   {
-    eckit::mpi::all_to_all(send.node_glb_idx,  recv.node_glb_idx);
-    eckit::mpi::all_to_all(send.node_part,     recv.node_part);
-    eckit::mpi::all_to_all(send.node_ridx,     recv.node_ridx);
-    eckit::mpi::all_to_all(send.node_flags,    recv.node_flags);
-    eckit::mpi::all_to_all(send.node_lonlat,   recv.node_lonlat);
-    eckit::mpi::all_to_all(send.elem_glb_idx,  recv.elem_glb_idx);
-    eckit::mpi::all_to_all(send.elem_nodes_id, recv.elem_nodes_id);
-    eckit::mpi::all_to_all(send.elem_part,     recv.elem_part);
-    eckit::mpi::all_to_all(send.elem_type,     recv.elem_type);
-    eckit::mpi::all_to_all(send.elem_nodes_displs, recv.elem_nodes_displs);
+      const eckit::mpi::Comm& comm = parallel::mpi::comm();
+
+      comm.allToAll(send.node_glb_idx,  recv.node_glb_idx);
+      comm.allToAll(send.node_part,     recv.node_part);
+      comm.allToAll(send.node_ridx,     recv.node_ridx);
+      comm.allToAll(send.node_flags,    recv.node_flags);
+      comm.allToAll(send.node_lonlat,   recv.node_lonlat);
+      comm.allToAll(send.elem_glb_idx,  recv.elem_glb_idx);
+      comm.allToAll(send.elem_nodes_id, recv.elem_nodes_id);
+      comm.allToAll(send.elem_part,     recv.elem_part);
+      comm.allToAll(send.elem_type,     recv.elem_type);
+      comm.allToAll(send.elem_nodes_displs, recv.elem_nodes_displs);
   }
 
-
 public:
+
   Mesh& mesh;
+
   array::ArrayView<double,2> lonlat;
   array::ArrayView<gidx_t,1> glb_idx;
   array::ArrayView<int   ,1> part;
@@ -379,9 +381,8 @@ public:
 
 
 public:
-  BuildHaloHelper( Mesh& _mesh ): 
+  BuildHaloHelper( Mesh& _mesh ):
     mesh(_mesh),
-    compute_uid(mesh.nodes()), 
     lonlat       ( array::make_view<double,2> ( mesh.nodes().lonlat() ) ),
     glb_idx      ( array::make_view<gidx_t,1> ( mesh.nodes().global_index() ) ),
     part         ( array::make_view<int   ,1> ( mesh.nodes().partition() ) ),
@@ -390,7 +391,8 @@ public:
     ghost        ( array::make_view<int   ,1> ( mesh.nodes().ghost() ) ),
     elem_nodes   ( &mesh.cells().node_connectivity() ),
     elem_part    ( array::make_view<int   ,1> ( mesh.cells().partition() ) ),
-    elem_glb_idx ( array::make_view<gidx_t,1> ( mesh.cells().global_index() ) )
+    elem_glb_idx ( array::make_view<gidx_t,1> ( mesh.cells().global_index() ) ),
+    compute_uid(mesh.nodes())
   {
     // update();
   }
@@ -440,7 +442,7 @@ public:
       }
       else
       {
-        Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
+        Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<parallel::mpi::comm().rank()<<"]." << std::endl;
         ASSERT(false);
       }
     }
@@ -503,7 +505,7 @@ public:
       }
       else
       {
-        Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
+        Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<parallel::mpi::comm().rank()<<"]." << std::endl;
         ASSERT(false);
       }
     }
@@ -530,7 +532,7 @@ public:
       buf.elem_part   [p][jelem] = elem_part(ielem);
       buf.elem_type   [p][jelem] = mesh.cells().type_idx(ielem);
       std::vector<double> crds(elem_nodes->cols(ielem)*2);
-      for( int jnode=0; jnode<elem_nodes->cols(ielem); ++jnode)
+      for(size_t jnode=0; jnode<elem_nodes->cols(ielem); ++jnode)
       {
         double crd[] = { lonlat( (*elem_nodes)(ielem,jnode),internals::LON) , lonlat( (*elem_nodes)(ielem,jnode),internals::LAT) };
         transform(crd,-1);
@@ -556,14 +558,14 @@ public:
     {
       node_uid.insert( compute_uid(jnode) );
     }
-    std::vector< std::vector<int> > rfn_idx(eckit::mpi::size());
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    std::vector< std::vector<int> > rfn_idx(parallel::mpi::comm().size());
+    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
     {
       rfn_idx[jpart].reserve(buf.node_glb_idx[jpart].size());
     }
 
     int nb_new_nodes=0;
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
     {
       for(size_t n = 0; n < buf.node_glb_idx[jpart].size(); ++n)
       {
@@ -591,7 +593,7 @@ public:
     // Add new nodes
     // -------------
     int new_node=0;
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
     {
       for(size_t n = 0; n < rfn_idx[jpart].size(); ++n)
       {
@@ -629,21 +631,20 @@ public:
     // Elements might be duplicated from different Tasks. We need to identify unique entries
     std::set<uid_t> elem_uid;
     int nb_elems = mesh.cells().size();
-    array::ArrayView<gidx_t,1> node_glb_idx = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
 
     for( int jelem=0; jelem<nb_elems; ++jelem )
     {
       elem_uid.insert( compute_uid(elem_nodes->row(jelem)) );
     }
 
-    std::vector< std::vector<int> > received_new_elems(eckit::mpi::size());
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    std::vector< std::vector<int> > received_new_elems(parallel::mpi::comm().size());
+    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
     {
       received_new_elems[jpart].reserve(buf.elem_glb_idx[jpart].size());
     }
 
     size_t nb_new_elems(0);
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
     {
       for(size_t e = 0; e < buf.elem_glb_idx[jpart].size(); ++e)
       {
@@ -658,10 +659,10 @@ public:
 
     std::vector< std::vector< std::vector<int> > >
         elements_of_type( mesh.cells().nb_types(),
-                          std::vector< std::vector<int> >( eckit::mpi::size() ) );
+                          std::vector< std::vector<int> >( parallel::mpi::comm().size() ) );
     std::vector<size_t> nb_elements_of_type( mesh.cells().nb_types(), 0 );
 
-    for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
     {
       for(size_t jelem = 0; jelem < received_new_elems[jpart].size(); ++jelem)
       {
@@ -687,7 +688,7 @@ public:
 
       // Copy information in new elements
       size_t new_elem(0);
-      for(size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+      for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
       {
         for(size_t e = 0; e < elems[jpart].size(); ++e)
         {
@@ -738,15 +739,17 @@ void increase_halo_interior( BuildHaloHelper& helper )
   for(size_t jnode = 0; jnode < bdry_nodes.size(); ++jnode)
     send_bdry_nodes_uid[jnode] = helper.compute_uid(bdry_nodes[jnode]);
 
-  atlas::util::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts;
-  eckit::mpi::all_gather(send_bdry_nodes_uid,recv_bdry_nodes_uid_from_parts);
+  size_t size = parallel::mpi::comm().size();
+  atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(size);
 
-  for (size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+  parallel::mpi::comm().allGatherv(send_bdry_nodes_uid.begin(), send_bdry_nodes_uid.end(), recv_bdry_nodes_uid_from_parts);
+
+  for (size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
   {
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID
 
-    atlas::util::parallel::mpi::BufferView<uid_t> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
+    parallel::mpi::BufferView<uid_t> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
 
     std::vector<int>  found_bdry_elems;
     std::set< uid_t > found_bdry_nodes_uid;
@@ -758,11 +761,11 @@ void increase_halo_interior( BuildHaloHelper& helper )
                         found_bdry_nodes_uid);
 
     // 4) Fill node and element buffers to send back
-    helper.fill_sendbuffer(sendmesh,found_bdry_nodes_uid,found_bdry_elems,jpart);
+    helper.fill_sendbuffer(sendmesh, found_bdry_nodes_uid, found_bdry_elems, jpart);
   }
 
   // 5) Now communicate all buffers
-  helper.all_to_all(sendmesh,recvmesh);
+  helper.all_to_all(sendmesh, recvmesh);
 
   // 6) Adapt mesh
   helper.add_buffers(recvmesh);
@@ -815,15 +818,18 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
     transform(crd,+1);
     send_bdry_nodes_uid[jnode] = internals::unique_lonlat(crd);
   }
-  atlas::util::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts;
-  eckit::mpi::all_gather(send_bdry_nodes_uid,recv_bdry_nodes_uid_from_parts);
 
-  for (size_t jpart = 0; jpart < eckit::mpi::size(); ++jpart)
+  size_t size = parallel::mpi::comm().size();
+  atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(size);
+
+  parallel::mpi::comm().allGatherv(send_bdry_nodes_uid.begin(), send_bdry_nodes_uid.end(), recv_bdry_nodes_uid_from_parts);
+
+  for (size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
   {
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID
 
-    atlas::util::parallel::mpi::BufferView<uid_t> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
+    atlas::parallel::mpi::BufferView<uid_t> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
 
     std::vector<int>  found_bdry_elems;
     std::set< uid_t > found_bdry_nodes_uid;
@@ -835,11 +841,11 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
                         found_bdry_nodes_uid);
 
     // 4) Fill node and element buffers to send back
-    helper.fill_sendbuffer(sendmesh,found_bdry_nodes_uid,found_bdry_elems,transform,newflags,jpart);
+    helper.fill_sendbuffer(sendmesh, found_bdry_nodes_uid, found_bdry_elems, transform, newflags, jpart);
   }
 
   // 5) Now communicate all buffers
-  helper.all_to_all(sendmesh,recvmesh);
+  helper.all_to_all(sendmesh, recvmesh);
 
   // 6) Adapt mesh
 

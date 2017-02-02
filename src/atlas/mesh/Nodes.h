@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -92,6 +92,10 @@ public: // methods
 
   Connectivity& add( mesh::Connectivity* );
 
+
+  /// @brief Return the memory footprint of the Nodes
+  size_t footprint() const;
+
   void cloneToDevice() const;
 
   void cloneFromDevice() const;
@@ -127,7 +131,7 @@ private:
   field::Field* lonlat_;
   field::Field* ghost_;
 
-
+// Cached shortcuts to specific connectivities in connectivities_
   Connectivity* edge_connectivity_;
   Connectivity* cell_connectivity_;
 

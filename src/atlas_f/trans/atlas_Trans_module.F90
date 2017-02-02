@@ -4,27 +4,13 @@
 module atlas_Trans_module
 
 
-use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_double, c_f_pointer
-use atlas_c_interop, only: c_str, view1d
-use atlas_object_module, only: atlas_object
-use atlas_refcounted_module, only: atlas_refcounted
-use atlas_Grid_module, only: atlas_Grid
-use atlas_functionspace_module, only: atlas_Functionspace
-use atlas_field_module, only: atlas_Field
-use atlas_fieldset_module, only: atlas_FieldSet
-use atlas_Error_module, only: atlas_code_location, atlas_throw_usererror
+use fckit_object_module, only: fckit_object
+use fckit_refcounted_module, only: fckit_refcounted
 
 implicit none
 
-private :: c_ptr, c_int, c_double, c_f_pointer
-private :: c_str, view1d
-private :: atlas_refcounted
-private :: atlas_object
-private :: atlas_Grid
-private :: atlas_Field
-private :: atlas_FieldSet
-private :: atlas_FunctionSpace
-private :: atlas_code_location
+private :: fckit_refcounted
+private :: fckit_object
 
 public :: atlas_Trans
 public :: atlas_TransParameters
@@ -36,7 +22,7 @@ private
 !-----------------------------
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_Trans
+TYPE, extends(fckit_refcounted) :: atlas_Trans
 
 ! Purpose :
 ! -------
@@ -77,31 +63,39 @@ contains
   procedure :: nump         => atlas_Trans__nump
   procedure :: nvalue       => atlas_Trans__nvalue
 
-  procedure, private :: dirtrans_field_nodes => atlas_Trans__dirtrans_field_nodes
-  procedure, private :: dirtrans_field => atlas_Trans__dirtrans_field
-  procedure, private :: dirtrans_fieldset_nodes => atlas_Trans__dirtrans_fieldset_nodes
-  procedure, private :: dirtrans_fieldset => atlas_Trans__dirtrans_fieldset
-  procedure, public :: dirtrans_wind2vordiv => atlas_Trans__dirtrans_wind2vordiv_field
+  procedure, private :: dirtrans_field_nodes
+  procedure, private :: dirtrans_field
+  procedure, private :: dirtrans_fieldset_nodes
+  procedure, private :: dirtrans_fieldset
+  procedure, public :: dirtrans_wind2vordiv => dirtrans_wind2vordiv_field
   generic, public :: dirtrans => &
     & dirtrans_field, &
     & dirtrans_fieldset, &
     & dirtrans_fieldset_nodes, &
     & dirtrans_field_nodes
 
-  procedure, private :: invtrans_field_nodes => atlas_Trans__invtrans_field_nodes
-  procedure, private :: invtrans_field => atlas_Trans__invtrans_field
-  procedure, private :: invtrans_fieldset_nodes => atlas_Trans__invtrans_fieldset_nodes
-  procedure, private :: invtrans_fieldset => atlas_Trans__invtrans_fieldset
-  procedure, public :: invtrans_vordiv2wind => atlas_Trans__invtrans_vordiv2wind_field
+  procedure, private :: invtrans_field_nodes
+  procedure, private :: invtrans_field
+  procedure, private :: invtrans_fieldset_nodes
+  procedure, private :: invtrans_fieldset
+  procedure, public :: invtrans_vordiv2wind => invtrans_vordiv2wind_field
   generic, public :: invtrans => &
     & invtrans_field, &
     & invtrans_fieldset, &
     & invtrans_field_nodes, &
     & invtrans_fieldset_nodes
 
-  procedure, private :: gathspec_r1 => atlas_Trans__gathspec_r1
-  procedure, private :: gathspec_r2 => atlas_Trans__gathspec_r2
+  procedure, private :: invtrans_grad_field_nodes
+  generic, public :: invtrans_grad => &
+    & invtrans_grad_field_nodes
+
+  procedure, private :: gathspec_r1
+  procedure, private :: gathspec_r2
   generic, public :: gathspec => gathspec_r1, gathspec_r2
+
+  procedure, private :: specnorm_r1_scalar
+  procedure, private :: specnorm_r2
+  generic, public :: specnorm => specnorm_r1_scalar, specnorm_r2
 
   procedure, public :: delete => atlas_Trans__delete
   procedure, public :: copy => atlas_Trans__copy
@@ -116,7 +110,7 @@ end interface
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(atlas_object) :: atlas_TransParameters
+TYPE, extends(fckit_object) :: atlas_TransParameters
 
 ! Purpose :
 ! -------
@@ -151,6 +145,7 @@ contains
 #define THROW_ERROR call te("atlas_Trans_module.F90",__LINE__)
 
 subroutine te(file,line)
+  use atlas_Error_module, only: atlas_code_location, atlas_throw_usererror
   character(len=*), intent(in) :: file
   integer, intent(in) :: line
   call atlas_throw_usererror("Cannot use atlas_Trans since atlas is compiled without" // &
@@ -158,8 +153,9 @@ subroutine te(file,line)
 end subroutine
 
 function atlas_Trans__ctor( grid, nsmax ) result(trans)
-  use atlas_trans_c_binding
   use, intrinsic :: iso_c_binding, only: c_null_ptr
+  use atlas_trans_c_binding
+  use atlas_Grid_module, only: atlas_Grid
   type(atlas_Trans) :: trans
   class(atlas_Grid), intent(in) :: grid
   integer, intent(in), optional :: nsmax
@@ -202,7 +198,7 @@ end subroutine
 
 subroutine atlas_Trans__copy(this,obj_in)
   class(atlas_Trans), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 
@@ -220,7 +216,7 @@ end subroutine
 
 subroutine atlas_TransParameters__copy(this,obj_in)
   class(atlas_TransParameters), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 function atlas_Trans__handle( this ) result(handle)
@@ -405,13 +401,14 @@ end function
 
 function atlas_Trans__nloen(this) result(nloen)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nloen(:)
   class(atlas_Trans), intent(in) :: this
+#ifdef ATLAS_HAVE_TRANS
   type(c_ptr) :: nloen_c_ptr
   integer(c_int) :: size
-#ifdef ATLAS_HAVE_TRANS
   nloen_c_ptr =  atlas__Trans__nloen(this%c_ptr(), size)
-  call C_F_POINTER ( nloen_c_ptr , nloen , (/size/) )
+  call c_f_pointer ( nloen_c_ptr , nloen , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nloen) ) then
@@ -422,13 +419,14 @@ end function atlas_Trans__nloen
 
 function atlas_Trans__n_regions(this) result(n_regions)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: n_regions(:)
   class(atlas_Trans), intent(in) :: this
+#ifdef ATLAS_HAVE_TRANS
   type(c_ptr) :: n_regions_c_ptr
   integer(c_int) :: size
-#ifdef ATLAS_HAVE_TRANS
   n_regions_c_ptr =  atlas__Trans__n_regions(this%c_ptr(), size)
-  call C_F_POINTER ( n_regions_c_ptr , n_regions , (/size/) )
+  call c_f_pointer ( n_regions_c_ptr , n_regions , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(n_regions) ) then
@@ -440,13 +438,14 @@ end function atlas_Trans__n_regions
 
 function atlas_Trans__nfrstlat(this) result(nfrstlat)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nfrstlat(:)
   class(atlas_Trans), intent(in) :: this
+#ifdef ATLAS_HAVE_TRANS
   type(c_ptr) :: nfrstlat_c_ptr
   integer(c_int) :: size
-#ifdef ATLAS_HAVE_TRANS
   nfrstlat_c_ptr =  atlas__Trans__nfrstlat(this%c_ptr(), size)
-  call C_F_POINTER ( nfrstlat_c_ptr , nfrstlat , (/size/) )
+  call c_f_pointer ( nfrstlat_c_ptr , nfrstlat , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nfrstlat) ) then
@@ -457,13 +456,14 @@ end function atlas_Trans__nfrstlat
 
 function atlas_Trans__nlstlat(this) result(nlstlat)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_f_pointer
   integer(c_int), pointer :: nlstlat(:)
   class(atlas_Trans), intent(in) :: this
+#ifdef ATLAS_HAVE_TRANS
   type(c_ptr) :: nlstlat_c_ptr
   integer(c_int) :: size
-#ifdef ATLAS_HAVE_TRANS
   nlstlat_c_ptr =  atlas__Trans__nlstlat(this%c_ptr(), size)
-  call C_F_POINTER ( nlstlat_c_ptr , nlstlat , (/size/) )
+  call c_f_pointer ( nlstlat_c_ptr , nlstlat , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nlstlat) ) then
@@ -475,13 +475,14 @@ end function atlas_Trans__nlstlat
 
 function atlas_Trans__nptrfrstlat(this) result(nptrfrstlat)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nptrfrstlat(:)
   class(atlas_Trans), intent(in) :: this
+#ifdef ATLAS_HAVE_TRANS
   type(c_ptr) :: nptrfrstlat_c_ptr
   integer(c_int) :: size
-#ifdef ATLAS_HAVE_TRANS
   nptrfrstlat_c_ptr =  atlas__Trans__nptrfrstlat(this%c_ptr(), size)
-  call C_F_POINTER ( nptrfrstlat_c_ptr , nptrfrstlat , (/size/) )
+  call c_f_pointer ( nptrfrstlat_c_ptr , nptrfrstlat , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nptrfrstlat) ) then
@@ -493,14 +494,15 @@ end function atlas_Trans__nptrfrstlat
 
 function atlas_Trans__nsta(this) result(nsta)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nsta(:,:)
   class(atlas_Trans), intent(in) :: this
+#ifdef ATLAS_HAVE_TRANS
   type(c_ptr) :: nsta_c_ptr
   integer(c_int) :: sizef1
   integer(c_int) :: sizef2
-#ifdef ATLAS_HAVE_TRANS
   nsta_c_ptr =  atlas__Trans__nsta(this%c_ptr(), sizef2, sizef1)
-  call C_F_POINTER ( nsta_c_ptr , nsta , (/sizef1,sizef2/) )
+  call c_f_pointer ( nsta_c_ptr , nsta , (/sizef1,sizef2/) )
 #else
   THROW_ERROR
   if ( .not. associated(nsta) ) then
@@ -511,14 +513,15 @@ end function atlas_Trans__nsta
 
 function atlas_Trans__nonl(this) result(nonl)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nonl(:,:)
   class(atlas_Trans), intent(in) :: this
+#ifdef ATLAS_HAVE_TRANS
   type(c_ptr) :: nonl_c_ptr
   integer(c_int) :: sizef1
   integer(c_int) :: sizef2
-#ifdef ATLAS_HAVE_TRANS
   nonl_c_ptr =  atlas__Trans__nonl(this%c_ptr(), sizef2, sizef1)
-  call C_F_POINTER ( nonl_c_ptr , nonl , (/sizef1,sizef2/) )
+  call c_f_pointer ( nonl_c_ptr , nonl , (/sizef1,sizef2/) )
 #else
   THROW_ERROR
   if ( .not. associated(nonl) ) then
@@ -530,13 +533,14 @@ end function atlas_Trans__nonl
 
 function atlas_Trans__nmyms(this) result(nmyms)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nmyms(:)
   class(atlas_Trans), intent(in) :: this
+#ifdef ATLAS_HAVE_TRANS
   type(c_ptr) :: nmyms_c_ptr
   integer(c_int) :: size
-#ifdef ATLAS_HAVE_TRANS
   nmyms_c_ptr =  atlas__Trans__nptrfrstlat(this%c_ptr(), size)
-  call C_F_POINTER ( nmyms_c_ptr , nmyms , (/size/) )
+  call c_f_pointer ( nmyms_c_ptr , nmyms , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nmyms) ) then
@@ -547,13 +551,14 @@ end function atlas_Trans__nmyms
 
 function atlas_Trans__nasm0(this) result(nasm0)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nasm0(:)
   class(atlas_Trans), intent(in) :: this
+#ifdef ATLAS_HAVE_TRANS
   type(c_ptr) :: nasm0_c_ptr
   integer(c_int) :: size
-#ifdef ATLAS_HAVE_TRANS
   nasm0_c_ptr =  atlas__Trans__nasm0(this%c_ptr(), size)
-  call C_F_POINTER ( nasm0_c_ptr , nasm0 , (/size/) )
+  call c_f_pointer ( nasm0_c_ptr , nasm0 , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nasm0) ) then
@@ -564,13 +569,14 @@ end function atlas_Trans__nasm0
 
 function atlas_Trans__nvalue(this) result(nvalue)
   use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
   integer(c_int), pointer :: nvalue(:)
   class(atlas_Trans), intent(in) :: this
+#ifdef ATLAS_HAVE_TRANS
   type(c_ptr) :: nvalue_c_ptr
   integer(c_int) :: size
-#ifdef ATLAS_HAVE_TRANS
   nvalue_c_ptr =  atlas__Trans__nvalue(this%c_ptr(), size)
-  call C_F_POINTER ( nvalue_c_ptr , nvalue , (/size/) )
+  call c_f_pointer ( nvalue_c_ptr , nvalue , (/size/) )
 #else
   THROW_ERROR
   if ( .not. associated(nvalue) ) then
@@ -579,8 +585,11 @@ function atlas_Trans__nvalue(this) result(nvalue)
 #endif
 end function atlas_Trans__nvalue
 
-subroutine atlas_Trans__dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields, parameters)
+subroutine dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_fieldset_module, only: atlas_FieldSet
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: gp
   class(atlas_FieldSet), intent(in)  :: gpfields
@@ -609,10 +618,12 @@ subroutine atlas_Trans__dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__dirtrans_fieldset_nodes
+end subroutine dirtrans_fieldset_nodes
 
-subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
+subroutine dirtrans_fieldset(this, gpfields, spfields, parameters)
   use atlas_trans_c_binding
+  use atlas_fieldset_module, only: atlas_FieldSet
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: gpfields
   class(atlas_FieldSet), intent(inout) :: spfields
@@ -637,10 +648,13 @@ subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__dirtrans_fieldset
+end subroutine dirtrans_fieldset
 
-subroutine atlas_Trans__invtrans_fieldset_nodes(this, sp, spfields, gp, gpfields, parameters)
+subroutine invtrans_fieldset_nodes(this, sp, spfields, gp, gpfields, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_fieldset_module, only: atlas_FieldSet
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_FieldSet), intent(in)  :: spfields
@@ -669,10 +683,12 @@ subroutine atlas_Trans__invtrans_fieldset_nodes(this, sp, spfields, gp, gpfields
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__invtrans_fieldset_nodes
+end subroutine invtrans_fieldset_nodes
 
-subroutine atlas_Trans__invtrans_fieldset(this, spfields, gpfields, parameters)
+subroutine invtrans_fieldset(this, spfields, gpfields, parameters)
   use atlas_trans_c_binding
+  use atlas_fieldset_module, only: atlas_FieldSet
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: spfields
   class(atlas_FieldSet), intent(inout) :: gpfields
@@ -697,11 +713,13 @@ subroutine atlas_Trans__invtrans_fieldset(this, spfields, gpfields, parameters)
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__invtrans_fieldset
+end subroutine invtrans_fieldset
 
 
-subroutine atlas_Trans__dirtrans_field_nodes(this, gp, gpfield, sp, spfield, parameters)
+subroutine dirtrans_field_nodes(this, gp, gpfield, sp, spfield, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: gp
   class(atlas_Field), intent(in)  :: gpfield
@@ -730,10 +748,11 @@ subroutine atlas_Trans__dirtrans_field_nodes(this, gp, gpfield, sp, spfield, par
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__dirtrans_field_nodes
+end subroutine dirtrans_field_nodes
 
-subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
+subroutine dirtrans_field(this, gpfield, spfield, parameters)
   use atlas_trans_c_binding
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: gpfield
   class(atlas_Field), intent(inout) :: spfield
@@ -758,10 +777,12 @@ subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__dirtrans_field
+end subroutine dirtrans_field
 
-subroutine atlas_Trans__dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, spdiv, parameters)
+subroutine dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, spdiv, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: gp
   type(atlas_Field), intent(in)  :: gpwind
@@ -793,10 +814,12 @@ subroutine atlas_Trans__dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, 
   THROW_ERROR
 #endif
 
-end subroutine atlas_Trans__dirtrans_wind2vordiv_field
+end subroutine dirtrans_wind2vordiv_field
 
-subroutine atlas_Trans__invtrans_field_nodes(this, sp, spfield, gp, gpfield, parameters)
+subroutine invtrans_field_nodes(this, sp, spfield, gp, gpfield, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_Field), intent(in)  :: spfield
@@ -825,10 +848,11 @@ subroutine atlas_Trans__invtrans_field_nodes(this, sp, spfield, gp, gpfield, par
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__invtrans_field_nodes
+end subroutine invtrans_field_nodes
 
-subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
+subroutine invtrans_field(this, spfield, gpfield, parameters)
   use atlas_trans_c_binding
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: spfield
   class(atlas_Field), intent(inout) :: gpfield
@@ -853,11 +877,13 @@ subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__invtrans_field
+end subroutine invtrans_field
 
 
-subroutine atlas_Trans__invtrans_vordiv2wind_field(this, sp, spvor, spdiv, gp, gpwind, parameters)
+subroutine invtrans_vordiv2wind_field(this, sp, spvor, spdiv, gp, gpwind, parameters)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_field_module, only: atlas_Field
   class(atlas_Trans), intent(in) :: this
   class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_Field), intent(in)  :: spvor
@@ -889,11 +915,35 @@ subroutine atlas_Trans__invtrans_vordiv2wind_field(this, sp, spvor, spdiv, gp, g
   THROW_ERROR
 #endif
 
-end subroutine atlas_Trans__invtrans_vordiv2wind_field
+end subroutine invtrans_vordiv2wind_field
 
 
-subroutine atlas_Trans__gathspec_r1(this, local, global)
+subroutine invtrans_grad_field_nodes(this, sp, spfield, gp, gpfield)
   use atlas_trans_c_binding
+  use atlas_functionspace_module, only: atlas_Functionspace
+  use atlas_field_module, only: atlas_Field
+  class(atlas_Trans), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in)  :: sp
+  class(atlas_Field), intent(in)  :: spfield
+  class(atlas_FunctionSpace), intent(in)  :: gp
+  class(atlas_Field), intent(inout) :: gpfield
+#ifdef ATLAS_HAVE_TRANS
+
+  call atlas__Trans__invtrans_grad_field_nodes( this%c_ptr(), &
+    &                          sp%c_ptr(), &
+    &                          spfield%c_ptr(), &
+    &                          gp%c_ptr(), &
+    &                          gpfield%c_ptr() )
+#else
+  THROW_ERROR
+#endif
+end subroutine invtrans_grad_field_nodes
+
+
+
+subroutine gathspec_r1(this, local, global)
+  use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:)
   real(c_double), intent(inout) :: global(:)
@@ -902,24 +952,64 @@ subroutine atlas_Trans__gathspec_r1(this, local, global)
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__gathspec_r1
+end subroutine gathspec_r1
 
-subroutine atlas_Trans__gathspec_r2(this, local, global)
+subroutine gathspec_r2(this, local, global)
+  use, intrinsic :: iso_c_binding, only : c_double
+  use fckit_array_module, only: array_view1d
   use atlas_trans_c_binding
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:,:)
   real(c_double), intent(inout) :: global(:,:)
-  real(c_double), pointer :: local_view(:), global_view(:)
 #ifdef ATLAS_HAVE_TRANS
+  real(c_double), pointer :: local_view(:), global_view(:)
   integer :: destination(size(local,1))
   destination(:) = 1
-  local_view => view1d(local)
-  global_view => view1d(global)
+  local_view => array_view1d(local)
+  global_view => array_view1d(global)
   call atlas__Trans__gathspec(this%c_ptr(), size(local,1), destination, local_view, global_view )
 #else
   THROW_ERROR
 #endif
-end subroutine atlas_Trans__gathspec_r2
+end subroutine gathspec_r2
+
+
+subroutine specnorm_r1_scalar(this, spectra, norm, rank)
+  use atlas_trans_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
+  class(atlas_Trans), intent(in) :: this
+  real(c_double), intent(in) :: spectra(:)
+  real(c_double), intent(out) :: norm
+  integer, optional :: rank
+#ifdef ATLAS_HAVE_TRANS
+  integer :: rank_opt
+  real(c_double) :: norms(1)
+  rank_opt = 0
+  if( present(rank) ) rank_opt = rank
+  call atlas__Trans__specnorm(this%c_ptr(), 1, spectra, norms, rank_opt )
+  norm = norms(1)
+#else
+  THROW_ERROR
+#endif
+end subroutine
+
+subroutine specnorm_r2(this, spectra, norm, rank)
+  use, intrinsic :: iso_c_binding, only : c_double
+  use fckit_array_module, only: array_view1d
+  use atlas_trans_c_binding
+  class(atlas_Trans), intent(in) :: this
+  real(c_double), intent(in) :: spectra(:,:)
+  real(c_double), intent(inout) :: norm(:)
+  integer, optional :: rank
+#ifdef ATLAS_HAVE_TRANS
+  integer :: rank_opt
+  real(c_double), pointer :: spectra_view(:)
+  spectra_view => array_view1d(spectra)
+  call atlas__Trans__specnorm(this%c_ptr(), size(spectra,1), spectra_view, norm, rank_opt )
+#else
+  THROW_ERROR
+#endif
+end subroutine
 
 ! ----------------------------------------------------------------------------------------
 

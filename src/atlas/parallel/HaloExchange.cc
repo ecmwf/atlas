@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -28,7 +28,7 @@ struct IsGhostPoint
     part_   = part;
     ridx_   = ridx;
     base_   = base;
-    mypart_ = eckit::mpi::rank();
+    mypart_ = parallel::mpi::comm().rank();
   }
 
   bool operator()(size_t idx)
@@ -48,16 +48,16 @@ HaloExchange::HaloExchange() :
   name_(),
   is_setup_(false)
 {
-  myproc = eckit::mpi::rank();
-  nproc  = eckit::mpi::size();
+  myproc = parallel::mpi::comm().rank();
+  nproc  = parallel::mpi::comm().size();
 }
 
 HaloExchange::HaloExchange(const std::string& name) :
   name_(name),
   is_setup_(false)
 {
-  myproc = eckit::mpi::rank();
-  nproc  = eckit::mpi::size();
+  myproc = parallel::mpi::comm().rank();
+  nproc  = parallel::mpi::comm().size();
 }
 
 void HaloExchange::setup( const int part[],
@@ -88,7 +88,8 @@ void HaloExchange::setup( const int part[],
     Find the amount of nodes this proc has to send to each other proc
   */
 
-  ECKIT_MPI_CHECK_RESULT( MPI_Alltoall( recvcounts_.data(), 1, MPI_INT, sendcounts_.data(), 1, MPI_INT, eckit::mpi::comm() ) );
+  parallel::mpi::comm().allToAll(recvcounts_, sendcounts_);
+
   sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
 //  std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
 //  std::cout << myproc << ":  recvcnt = " << recvcnt_ << std::endl;
@@ -126,10 +127,8 @@ void HaloExchange::setup( const int part[],
 
   std::vector<int> recv_requests(sendcnt_);
 
-  ECKIT_MPI_CHECK_RESULT( MPI_Alltoallv(
-                      send_requests.data(), recvcounts_.data(), recvdispls_.data(), MPI_INT,
-                      recv_requests.data(), sendcounts_.data(), senddispls_.data(), MPI_INT,
-                      eckit::mpi::comm() ) );
+  parallel::mpi::comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(),
+                               recv_requests.data(), sendcounts_.data(), senddispls_.data());
 
   /*
     What needs to be sent to other procs is asked by remote_idx, which is local here

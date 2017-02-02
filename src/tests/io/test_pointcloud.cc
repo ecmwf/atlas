@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -13,7 +13,7 @@
 
 #include "atlas/internals/atlas_config.h"
 
-#define BOOST_TEST_MODULE test_atlas_io
+#define BOOST_TEST_MODULE atlas_test_pointcloud
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/memory/ScopedPtr.h"
@@ -30,12 +30,11 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/parallel/mpi/mpi.h"
 
+#include "tests/AtlasFixture.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
-
 namespace {
-
 
   namespace test_arrays {
 
@@ -53,7 +52,6 @@ namespace {
     const char   *fnames [] = { " f_1  ", "f    2 " };
 
   }
-
 
   namespace test_vectors {
 
@@ -103,15 +101,9 @@ namespace {
 namespace atlas {
 namespace test {
 
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
-
-BOOST_GLOBAL_FIXTURE( MPIFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_SUITE( test_pointcloud )
-
 
 BOOST_AUTO_TEST_CASE( read_inexistent_file )
 {

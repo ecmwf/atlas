@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2016 ECMWF.
+! (C) Copyright 1996-2017 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -38,8 +38,6 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_error )
-integer :: err_code
-character(len=:), allocatable :: err_msg
 
 call atlas_err_set_throws(.False.)
 call atlas_err_set_aborts(.False.)

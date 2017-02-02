@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -154,6 +154,17 @@ public: // Destructor
   void set_functionspace(const functionspace::FunctionSpace &);
   functionspace::FunctionSpace& functionspace() const { return *functionspace_; }
 
+  /// @brief Return the memory footprint of the Field
+  size_t footprint() const;
+
+// -- dangerous methods
+  template <typename DATATYPE> DATATYPE const* host_data() const   { return array_->host_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       host_data()         { return array_->host_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE const* device_data() const { return array_->device_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       device_data()       { return array_->device_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE const* data() const        { return array_->host_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       data()              { return array_->host_data<DATATYPE>(); }
+
 // -- Methods related to host-device synchronisation, requires gridtools_storage
   void cloneToDevice() const {
       array_->cloneToDevice();
@@ -218,7 +229,7 @@ Field* Field::wrap(
 }
 
 
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
+//#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -268,7 +279,7 @@ extern "C"
 #undef util_Metadata
 #undef Char
 
-#endif
+//#endif
 //------------------------------------------------------------------------------------------------------
 
 } // namespace field

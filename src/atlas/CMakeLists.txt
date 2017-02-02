@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2016 ECMWF.
+# (C) Copyright 1996-2017 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -272,6 +272,7 @@ array/LocalView.cc
 array/LocalView.h
 array/StorageView.h
 array/Vector.h
+array/helpers/ArrayInitializer.h
 )
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 list( APPEND atlas_array_srcs
@@ -307,17 +308,12 @@ parallel/GatherScatter.cc
 parallel/GatherScatter.h
 parallel/HaloExchange.cc
 parallel/HaloExchange.h
-parallel/mpi/Collectives.h
 parallel/mpi/mpi.cc
 parallel/mpi/mpi.h
 parallel/omp/omp.cc
 parallel/omp/omp.h
-runtime/Behavior.cc
-runtime/Behavior.h
 runtime/ErrorHandling.cc
 runtime/ErrorHandling.cc
-runtime/LogFormat.cc
-runtime/LogFormat.h
 util/Config.cc
 util/Config.h
 util/Constants.h
@@ -326,8 +322,9 @@ util/Metadata.h
 util/io/Gmsh.cc
 util/io/Gmsh.h
 util/io/PointCloud.cc
-util/io/PointCloud.h
-
+runtime/LibAtlas.h
+runtime/LibAtlas.cc
+parallel/mpi/Buffer.h
 )
 
 list( APPEND atlas_internals_srcs
@@ -356,6 +353,11 @@ ecbuild_debug_var(CGAL_INCLUDE_DIRS)
 if( NOT ATLAS_HAVE_TRANS )
   unset( TRANSI_INCLUDE_DIRS )
   unset( TRANSI_LIBRARIES )
+endif()
+
+if( ECKIT_HAVE_MPI AND ATLAS_HAVE_MPI AND  EC_OS_NAME MATCHES "macosx" )
+  list( APPEND ATLAS_DEFINITIONS BUG_ECKIT_166 )
+  link_libraries(${MPI_CXX_LIBRARIES})
 endif()
 
 if( SHORTCUT_COMPILATION )
@@ -401,9 +403,14 @@ ecbuild_add_library( TARGET atlas
   PRIVATE_INCLUDES
     "${CGAL_INCLUDE_DIRS}"
     "${TRANSI_INCLUDE_DIRS}"
+    "${MPI_CXX_INCLUDE_DIRS}"
   LIBS
-    eckit_geometry eckit_option
-    "${ECKIT_MPI_LIBRARIES}"
+    eckit_geometry
+    eckit_option
+    eckit_mpi
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
-    "${CUDA_LIBRARIES}" )
+    "${CUDA_LIBRARIES}"
+  DEFINITIONS
+    ${ATLAS_DEFINITIONS}
+ )

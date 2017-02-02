@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -154,7 +154,7 @@ void build_statistics( Mesh& mesh )
   std::ofstream ofs;
   eckit::PathName stats_path("stats.txt");
   int idt = 10;
-  if( eckit::mpi::size() == 1 )
+  if( parallel::mpi::comm().size() == 1 )
   {
     ofs.open( stats_path.localPath(), std::ofstream::out );
     ofs << "# STATISTICS rho (min_length/max_length), eta (quality) \n";
@@ -166,7 +166,7 @@ void build_statistics( Mesh& mesh )
 
   // Cell statistics
   {
-    if( eckit::mpi::size() == 1 )
+    if( parallel::mpi::comm().size() == 1 )
       ofs.open( stats_path.localPath(), std::ofstream::app );
 
     array::ArrayView<double,1> rho = array::make_view<double,1>( mesh.cells().add( field::Field::create<double>("stats_rho",array::make_shape(mesh.cells().size()) ) ) );
@@ -204,7 +204,7 @@ void build_statistics( Mesh& mesh )
           // see http://www.gidhome.com/component/manual/referencemanual/preprocessing/mesh_menu/mesh_quality
           eta(ielem) = (4*area*std::sqrt(3.))/( std::pow(l12,2)+std::pow(l23,2)+std::pow(l31,2) );
 
-          if( eckit::mpi::size() == 1 )
+          if( parallel::mpi::comm().size() == 1 )
           {
             ofs << std::setw(idt) << rho(ielem)
                 << std::setw(idt) << eta(ielem)
@@ -238,7 +238,7 @@ void build_statistics( Mesh& mesh )
           double max_length = std::max(std::max(std::max(l12,l23),l34),l41);
           rho(ielem) = min_length/max_length;
 
-          if( eckit::mpi::size() == 1 )
+          if( parallel::mpi::comm().size() == 1 )
           {
             ofs << std::setw(idt) << rho(ielem)
                 << std::setw(idt) << eta(ielem)
@@ -248,12 +248,12 @@ void build_statistics( Mesh& mesh )
 
       }
     }
-    if( eckit::mpi::size() == 1 )
+    if( parallel::mpi::comm().size() == 1 )
       ofs.close();
   }
 
   eckit::PathName dual_stats_path("dual_stats.txt");
-  if( eckit::mpi::size() == 1 )
+  if( parallel::mpi::comm().size() == 1 )
   {
     ofs.open( dual_stats_path.localPath(), std::ofstream::out );
     ofs << "# STATISTICS dual_area \n";
@@ -274,7 +274,7 @@ void build_statistics( Mesh& mesh )
       dual_delta_sph(jnode) = std::sqrt(dual_volumes(jnode)*hx*hy);
     }
 
-    if( eckit::mpi::size() == 1 )
+    if( parallel::mpi::comm().size() == 1 )
     {
       for( size_t jnode=0; jnode<nodes.size(); ++jnode )
       {
@@ -283,7 +283,7 @@ void build_statistics( Mesh& mesh )
       }
     }
   }
-  if( eckit::mpi::size() == 1 )
+  if( parallel::mpi::comm().size() == 1 )
     ofs.close();
 
 

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -73,7 +73,11 @@ class Vector3D {
     }
 
     double norm() const {
-        return sqrt(x_ * x_ + y_ * y_ + z_ * z_);
+        return sqrt(squaredNorm());
+    }
+
+    double squaredNorm() const {
+        return x_ * x_ + y_ * y_ + z_ * z_;
     }
 
     double dot(const Vector3D &other) const {

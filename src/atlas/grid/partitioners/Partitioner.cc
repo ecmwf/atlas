@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,14 +10,16 @@
 
 #include <map>
 #include <string>
+
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
+#include "atlas/parallel/mpi/mpi.h"
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/grid/partitioners/Partitioner.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/parallel/mpi/mpi.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/grid/partitioners/TransPartitioner.h"
@@ -43,7 +45,7 @@ namespace atlas {
 namespace grid {
 namespace partitioners {
 
-Partitioner::Partitioner(const grid::Grid& grid): nb_partitions_(eckit::mpi::size()), grid_(grid) {
+Partitioner::Partitioner(const grid::Grid& grid): nb_partitions_(parallel::mpi::comm().size()), grid_(grid) {
 }
 
 Partitioner::Partitioner(const grid::Grid& grid, const size_t nb_partitions): nb_partitions_(nb_partitions), grid_(grid) {

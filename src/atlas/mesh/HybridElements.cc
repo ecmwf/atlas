@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -18,7 +18,9 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/field/Field.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "eckit/log/Bytes.h"
 #include "atlas/array/MakeView.h"
+#include "atlas/runtime/Log.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
@@ -86,7 +88,7 @@ field::Field& HybridElements::add( field::Field* field )
 
   if( has_field(field->name()) ) {
     std::stringstream msg;
-    msg << "Trying to add field '"<<field->name()<<"' to Nodes, but Nodes already has a field with this name.";
+    msg << "Trying to add field '"<<field->name()<<"' to HybridElements, but HybridElements already has a field with this name.";
     throw eckit::Exception(msg.str(),Here());
   }
   fields_[field->name()] = eckit::SharedPtr<field::Field>(field);
@@ -317,6 +319,23 @@ void HybridElements::cloneFromDevice() const {
 void HybridElements::syncHostDevice() const {
   std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second->syncHostDevice();});
   std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->syncHostDevice();});
+}
+
+
+size_t HybridElements::footprint() const {
+  size_t size = sizeof(*this);
+  for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
+    size += (*it).second->footprint();
+  }
+  for( ConnectivityMap::const_iterator it = connectivities_.begin(); it != connectivities_.end(); ++it ) {
+    size += (*it).second->footprint();
+  }
+  size += elements_size_.capacity() * sizeof(size_t);
+  size += elements_begin_.capacity() * sizeof(size_t);
+  
+  size += metadata_.footprint();
+  
+  return size;
 }
 
 //-----------------------------------------------------------------------------

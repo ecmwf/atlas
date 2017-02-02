@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -13,7 +13,7 @@
 #include <cmath>
 #include <limits>
 #include <vector>
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 #include "eckit/config/Configurable.h"
 #include "eckit/geometry/Point3.h"
 #include "atlas/internals/atlas_config.h"
@@ -140,10 +140,10 @@ void Structured::configure_defaults()
   options.set( "3d", false );
 
   // This option sets number of parts the mesh will be split in
-  options.set( "nb_parts", eckit::mpi::size() );
+  options.set( "nb_parts", parallel::mpi::comm().size() );
 
   // This option sets the part that will be generated
-  options.set( "part", eckit::mpi::rank() );
+  options.set( "part", parallel::mpi::comm().rank() );
 
   // Experimental option. The result is a non-standard Reduced Gaussian Grid, with a ragged Greenwich line
   options.set("stagger", false );
@@ -172,7 +172,7 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
   std::string partitioner_factory = "Trans";
   options.get("partitioner",partitioner_factory);
   if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
-  if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
+  if ( nb_parts == 1 || parallel::mpi::comm().size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
 
   grid::partitioners::Partitioner::Ptr partitioner( grid::partitioners::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
   grid::GridDistribution::Ptr distribution( partitioner->distribution() );
@@ -182,9 +182,7 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
 void Structured::hash(MD5& md5) const
 {
     md5.add("Structured");
-#if ECKIT_MAJOR_VERSION >= 0 && ECKIT_MINOR_VERSION >= 13
     options.hash(md5);
-#endif
 }
 
 void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
@@ -326,8 +324,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
     int jelem=0;
 
 #if DEBUG_OUTPUT
-    Log::info(Here())  << "=================\n";
-    Log::info(Here())  << "latN, latS : " << latN << ", " << latS << '\n';
+    Log::info()  << "=================\n";
+    Log::info()  << "latN, latS : " << latN << ", " << latS << '\n';
 #endif
 
     while (true)
@@ -356,8 +354,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       else
         pS2 = parts.at(offset.at(latS)+ipS2);
 
-      //Log::info(Here())  << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
-      //Log::info(Here())  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
+      //Log::info()  << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
+      //Log::info()  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
 
 
       xN1 = rg.lon(latN,ipN1) * to_rad;
@@ -371,11 +369,11 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       if( stagger && (latS+1)%2==0 ) xS2 += M_PI/static_cast<double>(rg.nlon(latS));
 
 #if DEBUG_OUTPUT
-      Log::info(Here())  << "-------\n";
+      Log::info()  << "-------\n";
 #endif
-      // Log::info(Here())  << "  access  " << region.elems.stride(0)*(jlat-region.north) + region.elems.stride(1)*jelem + 5 << std::endl;
-//      Log::info(Here())  << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2 << ")  " << std::endl;
-//      Log::info(Here())  << ipS1 << "("<< xS1 << ")  " << ipS2 <<  "("<< xS2 << ")  " << std::endl;
+      // Log::info()  << "  access  " << region.elems.stride(0)*(jlat-region.north) + region.elems.stride(1)*jelem + 5 << std::endl;
+//      Log::info()  << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2 << ")  " << std::endl;
+//      Log::info()  << ipS1 << "("<< xS1 << ")  " << ipS2 <<  "("<< xS2 << ")  " << std::endl;
       try_make_triangle_up   = false;
       try_make_triangle_down = false;
       try_make_quad = false;
@@ -404,7 +402,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
             dN1S2 = std::abs(xN1-xS2);
             dS1N2 = std::abs(xS1-xN2);
             // dN2S2 = std::abs(xN2-xS2);
-            // Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
+            // Log::info()  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
             if (dN1S2 == dS1N2)
             {
               try_make_triangle_up   = (jlat+ipN1) % 2;
@@ -441,7 +439,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         dN1S2 = std::abs(xN1-xS2);
         dS1N2 = std::abs(xS1-xN2);
         // dN2S2 = std::abs(xN2-xS2);
-        // Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
+        // Log::info()  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
         if( (dN1S2 <= dS1N2) && (ipS1 != ipS2) ) { try_make_triangle_up = true;}
         else if( (dN1S2 >= dS1N2) && (ipN1 != ipN2) ) { try_make_triangle_down = true;}
         else Exception("Should not try to make a quadrilateral!",Here());
@@ -461,8 +459,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       {
         // add quadrilateral
 #if DEBUG_OUTPUT
-        Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << '\n';
-        Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << '\n';
+        Log::info()  << "          " << ipN1 << "  " << ipN2 << '\n';
+        Log::info()  << "          " << ipS1 << "  " << ipS2 << '\n';
 #endif
         elem.at(0) = ipN1;
         elem.at(1) = ipS1;
@@ -524,7 +522,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         else
         {
 #if DEBUG_OUTPUT
-          Log::info(Here()) << "Quad belongs to other partition" << std::endl;
+          Log::info() << "Quad belongs to other partition" << std::endl;
 #endif
         }
         ipN1=ipN2;
@@ -534,8 +532,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       {
         // triangle without ip3
 #if DEBUG_OUTPUT
-        Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << '\n';
-        Log::info(Here())  << "          " << ipS1 << '\n';
+        Log::info()  << "          " << ipN1 << "  " << ipN2 << '\n';
+        Log::info()  << "          " << ipS1 << '\n';
 #endif
         elem.at(0) = ipN1;
         elem.at(1) = ipS1;
@@ -589,7 +587,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         else
         {
 #if DEBUG_OUTPUT
-          Log::info(Here()) << "Triag belongs to other partition" << std::endl;
+          Log::info() << "Triag belongs to other partition" << std::endl;
 #endif
         }
         ipN1=ipN2;
@@ -600,8 +598,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       {
         // triangle without ip4
 #if DEBUG_OUTPUT
-        Log::info(Here())  << "          " << ipN1 << '\n';
-        Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << '\n';
+        Log::info()  << "          " << ipN1 << '\n';
+        Log::info()  << "          " << ipS1 << "  " << ipS2 << '\n';
 #endif
         elem.at(0) = ipN1;
         elem.at(1) = ipS1;
@@ -662,7 +660,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         else
         {
 #if DEBUG_OUTPUT
-          Log::info(Here()) << "Triag belongs to other partition" << std::endl;
+          Log::info() << "Triag belongs to other partition" << std::endl;
 #endif
         }
         ipS1=ipS2;
@@ -700,9 +698,9 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
     }
   } // for jlat
 
-//  Log::info(Here())  << "nb_triags = " << region.ntriags << std::endl;
-//  Log::info(Here())  << "nb_quads = " << region.nquads << std::endl;
-//  Log::info(Here())  << "nb_elems = " << nelems << std::endl;
+//  Log::info()  << "nb_triags = " << region.ntriags << std::endl;
+//  Log::info()  << "nb_quads = " << region.nquads << std::endl;
+//  Log::info()  << "nb_elems = " << nelems << std::endl;
 
   int nb_region_nodes = 0;
 
@@ -1247,20 +1245,19 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
 void Structured::generate_global_element_numbering( Mesh& mesh ) const
 {
-  int loc_nb_elems = mesh.cells().size();
-  std::vector<int> elem_counts( eckit::mpi::size() );
-  std::vector<int> elem_displs( eckit::mpi::size() );
+  size_t loc_nb_elems = mesh.cells().size();
+  std::vector<size_t> elem_counts( parallel::mpi::comm().size() );
+  std::vector<int> elem_displs( parallel::mpi::comm().size() );
 
-  ECKIT_MPI_CHECK_RESULT(
-        MPI_Allgather( &loc_nb_elems, 1, MPI_INT,
-                       elem_counts.data(), 1, MPI_INT, eckit::mpi::comm()) );
+  parallel::mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
+
   elem_displs.at(0) = 0;
-  for(size_t jpart = 1; jpart < eckit::mpi::size(); ++jpart)
+  for(size_t jpart = 1; jpart < parallel::mpi::comm().size(); ++jpart)
   {
     elem_displs.at(jpart) = elem_displs.at(jpart-1) + elem_counts.at(jpart-1);
   }
 
-  gidx_t gid = 1+elem_displs.at( eckit::mpi::rank() );
+  gidx_t gid = 1+elem_displs.at( parallel::mpi::comm().rank() );
 
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( mesh.cells().global_index() );
 

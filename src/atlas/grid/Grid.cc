@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -37,16 +37,16 @@ std::string Grid::className() {
 }
 
 
-Grid* Grid::create(const eckit::Parametrisation& p) {
+Grid* Grid::create(const eckit::Parametrisation& params) {
     eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
 
     std::string shortName;
-    if (p.get("short_name",shortName) && fact.exists(shortName)) {
-        return fact.get(shortName).create(p);
+    if (params.get("short_name",shortName) && fact.exists(shortName)) {
+        return fact.get(shortName).create(params);
     }
     std::string gridType;
-    if (p.get("grid_type",gridType) && fact.exists(gridType)) {
-        return fact.get(gridType).create(p);
+    if (params.get("grid_type", gridType) && fact.exists(gridType)) {
+        return fact.get(gridType).create(params);
     }
     return NULL;
 }

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -124,6 +124,7 @@ class MeshGeneratorBuilder : public MeshGeneratorFactory {
 
 extern "C" {
 void atlas__MeshGenerator__delete(MeshGenerator* This);
+MeshGenerator* atlas__MeshGenerator__create_noconfig(const char* name);
 MeshGenerator* atlas__MeshGenerator__create(const char* name, const Parametrisation* params);
 Mesh* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator* This, const grid_Grid* grid, const grid_GridDistribution* distribution);
 Mesh* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid_Grid* grid);

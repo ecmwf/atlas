@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -20,7 +20,7 @@ namespace grid {
 namespace gaussian {
 
 
-register_BuilderT1(Grid,ReducedGaussian,ReducedGaussian::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, ReducedGaussian> builder_ReducedGaussian(ReducedGaussian::grid_type_str());
 
 
 std::string ReducedGaussian::grid_type_str() {
@@ -33,48 +33,52 @@ std::string ReducedGaussian::className() {
 }
 
 
-ReducedGaussian::ReducedGaussian(const size_t N, const long nlons[], const Domain& dom) :
+std::string ReducedGaussian::gridType() const {
+    return grid_type_str();
+}
+
+
+ReducedGaussian::ReducedGaussian(const size_t N, const long nlons[], const Domain& domain) :
     Gaussian() {
-    domain_ = dom;
-    setup_N_hemisphere(N,nlons,domain_);
-    set_typeinfo();
+    domain_ = domain;
+
+    setup_N_hemisphere(N, nlons, domain_);
 }
 
 
 ReducedGaussian::ReducedGaussian(const eckit::Parametrisation& params) :
     Gaussian() {
 
-    std::vector<double> p_domain(4);
-    if( params.get("domain", p_domain) )
-    {
-      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
-    }
-    else
-    {
-      domain_ = Domain::makeGlobal();
-    }
-
-    setup(params);
-    set_typeinfo();
-}
-
-
-void ReducedGaussian::setup( const eckit::Parametrisation& params ) {
-    if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
     size_t N;
-    params.get("N",N);
+    if (!params.get("N", N)) {
+        throw eckit::BadParameter("N missing in Params", Here());
+    }
+
+    domain_ = Domain::makeGlobal();
+    std::vector<double> p_domain(4);
+    if (params.get("domain", p_domain)) {
+      domain_ = Domain(p_domain[0], p_domain[1], p_domain[2], p_domain[3]);
+    }
 
     std::vector<long> pl;
-    params.get("pl",pl);
-    setup_N_hemisphere(N,pl.data(),domain_);
+    if (!params.get("pl", pl)) {
+        throw eckit::BadParameter("pl missing in Params", Here());
+    }
+
+    setup_N_hemisphere(N, pl.data(), domain_);
 }
 
 
-void ReducedGaussian::set_typeinfo() {
-    std::stringstream s;
-    s << "reduced_gaussian.N" << N();
-    shortName_ = s.str();
-    grid_type_ = grid_type_str();
+std::string ReducedGaussian::shortName() const {
+    if (shortName_.empty()) {
+        std::stringstream s;
+        s << "reduced_gaussian.N" << N();
+        if (!domain_.isGlobal()) {
+            s << "-local";
+        }
+        shortName_ = s.str();
+    }
+    return shortName_;
 }
 
 
@@ -96,6 +100,7 @@ extern "C" {
 }
 
 
-} // namespace gaussian
-} // namespace grid
-} // namespace atlas
+}  // namespace gaussian
+}  // namespace grid
+}  // namespace atlas
+

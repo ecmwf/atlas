@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -16,11 +16,16 @@ namespace atlas {
 namespace grid {
 
 
-register_BuilderT1(Grid, CustomStructured, CustomStructured::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, CustomStructured> builder_CustomStructured(CustomStructured::grid_type_str());
 
 
 std::string CustomStructured::className() {
     return "atlas.grid.CustomStructured";
+}
+
+
+std::string CustomStructured::gridType() const {
+    return grid_type_str();
 }
 
 
@@ -117,6 +122,17 @@ eckit::Properties CustomStructured::spec() const {
         grid_spec.set("N", N());
     }
     return grid_spec;
+}
+
+
+std::string CustomStructured::shortName() const {
+    if (shortName_.empty()) {
+        shortName_ = grid_type_str();
+        if (!domain_.isGlobal()) {
+            shortName_ += "-local";
+        }
+    }
+    return shortName_;
 }
 
 

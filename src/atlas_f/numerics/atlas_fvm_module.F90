@@ -1,19 +1,12 @@
 
 module atlas_fvm_module
 
-use atlas_refcounted_module, only : atlas_RefCounted
+use fckit_refcounted_module, only : fckit_refcounted
 use atlas_Method_module, only : atlas_Method
-use atlas_Config_module, only : atlas_Config
-use atlas_Mesh_module, only : atlas_Mesh
-use atlas_functionspace_NodeColumns_module, only : atlas_functionspace_NodeColumns
-use atlas_functionspace_EdgeColumns_module, only : atlas_functionspace_EdgeColumns
 implicit none
 
-private :: atlas_RefCounted
+private :: fckit_refcounted
 private :: atlas_Method
-private :: atlas_Mesh
-private :: atlas_Config
-private :: atlas_functionspace_NodeColumns
 
 public :: atlas_fvm_Method
 
@@ -62,6 +55,8 @@ end function
 
 function atlas_fvm_Method__mesh_config(mesh,config) result(method)
   use atlas_fvm_method_c_binding
+  use atlas_Config_module, only : atlas_Config
+  use atlas_Mesh_module, only : atlas_Mesh
   type(atlas_fvm_Method) :: method
   type(atlas_Mesh), intent(inout) :: mesh
   type(atlas_Config), intent(in), optional :: config
@@ -80,6 +75,7 @@ end function
 
 function node_columns(this)
   use atlas_fvm_method_c_binding
+  use atlas_functionspace_NodeColumns_module, only : atlas_functionspace_NodeColumns
   type(atlas_functionspace_NodeColumns) :: node_columns
   class(atlas_fvm_Method) :: this
   node_columns = atlas_functionspace_NodeColumns( &
@@ -89,7 +85,8 @@ end function
 
 function edge_columns(this)
   use atlas_fvm_method_c_binding
-  type(atlas_functionspace_NodeColumns) :: edge_columns
+  use atlas_functionspace_EdgeColumns_module, only : atlas_functionspace_EdgeColumns
+  type(atlas_functionspace_EdgeColumns) :: edge_columns
   class(atlas_fvm_Method) :: this
   edge_columns = atlas_functionspace_EdgeColumns( &
     & atlas__numerics__fvm__Method__functionspace_edges(this%c_ptr()) )

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -29,8 +29,8 @@ namespace gaussian {
  * direction, which reduce in number going closer towards poles,
  * essentially making the grid more uniform on the sphere
  * It can be constructed with following definition:
- *   N   = number of latitudes in hemisphere
- *   npts_per_lat[] = number of points on each latitude
+ * * N   = number of latitudes in hemisphere
+ * * npts_per_lat[] = number of points on each latitude
  */
 class ClassicGaussian : public Gaussian {
 
@@ -40,9 +40,11 @@ class ClassicGaussian : public Gaussian {
 
     static std::string className();
 
-    ClassicGaussian(const eckit::Parametrisation&);
+    std::string gridType() const;
 
-    ClassicGaussian(const size_t N, const Domain& dom=Domain::makeGlobal());
+    ClassicGaussian(const size_t N, const Domain& domain=Domain::makeGlobal());
+
+    ClassicGaussian(const eckit::Parametrisation&);
 
     virtual const Domain& domain() const {
         return domain_;
@@ -50,11 +52,14 @@ class ClassicGaussian : public Gaussian {
 
   private:
 
-    virtual void set_typeinfo();
+    std::string shortName() const;
 
   private:
 
+    mutable std::string shortName_;
+
     Domain domain_;
+
 };
 
 

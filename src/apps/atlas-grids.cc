@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -19,23 +19,27 @@
 
 #include "atlas/atlas.h"
 #include "atlas/grid/grids.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/internals/AtlasTool.h"
+
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Resource.h"
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/memory/Factory.h"
 #include "eckit/memory/Builder.h"
+#include "eckit/log/Log.h"
+#include "eckit/log/Bytes.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/Tokenizer.h"
 
-//------------------------------------------------------------------------------
-
-using namespace eckit;
 using namespace atlas;
 using namespace atlas::grid;
+using eckit::JSON;
+using eckit::Factory;
+using eckit::SharedPtr;
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 class AtlasGrids : public AtlasTool {
 
@@ -139,8 +143,6 @@ void AtlasGrids::execute(const Args& args)
                   << g.shortName() << std::endl;
       Log::info() << "   uid:                                "
                   << g.uniqueId() << std::endl;
-      Log::info() << "   N number:                           "
-                  << grid->N() << std::endl;
       Log::info() << "   number of points:                   "
                   << grid->npts() << std::endl;
       Log::info() << "   number of latitudes (N-S):          "
@@ -167,6 +169,12 @@ void AtlasGrids::execute(const Args& args)
 
       deg = 360.*std::cos(grid->lat(0)*M_PI/180.)/static_cast<double>(grid->nlon(0));
       km  = deg*40075./360.;
+
+      size_t memsize = grid->npts() * sizeof(double);
+
+      Log::info() << "   memory footprint per field:                   "
+                  << eckit::Bytes(memsize) << std::endl;
+
       Log::info() << "   approximate resolution E-W pole:    "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
 

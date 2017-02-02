@@ -21,8 +21,8 @@ namespace array {
 template <typename T>
 class Vector {
 public:
-  Vector() : size_(0) {}
-  Vector(size_t N) : size_(N), data_(new T[N]()) {}
+  Vector() : data_(NULL), size_(0) {}
+  Vector(size_t N) : data_(new T[N]()), size_(N) {}
 
   void resize(size_t N) {
     assert(N >= size_);
@@ -47,7 +47,7 @@ public:
       return data_[idx];
   }
 
-  size_t size() { return size_;}
+  size_t size() const { return size_;}
 
 private:
   T* data_;

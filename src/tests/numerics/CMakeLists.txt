@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2016 ECMWF.
+# (C) Copyright 1996-2017 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,7 +9,6 @@
 
 ecbuild_add_test( TARGET atlas_test_fvm_nabla
   BOOST
-  MPI       1
   SOURCES   test_fvm_nabla.cc
   LIBS      atlas
 )
@@ -17,9 +16,7 @@ ecbuild_add_test( TARGET atlas_test_fvm_nabla
 if( HAVE_FCTEST)
   add_fctest( TARGET atlas_fctest_fvm_nabla
     LINKER_LANGUAGE Fortran
-    MPI             1
     SOURCES         fctest_fvm_nabla.F90
     LIBS            atlas_f
   )
 endif()
-

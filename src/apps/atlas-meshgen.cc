@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -32,27 +32,28 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/io/Gmsh.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/geometry/Point3.h"
-#include "eckit/mpi/ParallelContextBehavior.h"
 #include "eckit/parser/Tokenizer.h"
-#include "eckit/runtime/Context.h"
+#include "eckit/runtime/Main.h"
 #include "eckit/runtime/Tool.h"
 
 
 //------------------------------------------------------------------------------
 
-using namespace eckit;
 using namespace atlas;
 using namespace atlas::mesh::actions;
 using namespace atlas::grid;
 using namespace atlas::functionspace;
 using namespace atlas::mesh;
 using atlas::util::Config;
+using eckit::PathName;
+using eckit::SharedPtr;
 
 //------------------------------------------------------------------------------
 
@@ -160,7 +161,7 @@ void Meshgen2Gmsh::execute(const Args& args)
     halo = std::max(halo,1l);
 
   eckit::LocalConfiguration meshgenerator_config( args );
-  if( eckit::mpi::size() > 1 || edges )
+  if( parallel::mpi::comm().size() > 1 || edges )
     meshgenerator_config.set("3d",false);
 
   SharedPtr<Structured> grid;

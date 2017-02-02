@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -295,6 +295,8 @@ private: // methods
     array::DataType config_datatype(const eckit::Parametrisation&) const;
     std::string config_name(const eckit::Parametrisation&) const;
     size_t config_levels(const eckit::Parametrisation&) const;
+
+    size_t footprint() const;
 
 private: // data
 

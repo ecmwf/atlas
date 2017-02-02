@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -17,7 +17,7 @@ namespace grid {
 namespace lonlat {
 
 
-register_BuilderT1(Grid,RegularLonLat,RegularLonLat::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, RegularLonLat> builder_RegularLonLat(RegularLonLat::grid_type_str());
 
 
 std::string RegularLonLat::grid_type_str() {
@@ -30,58 +30,63 @@ std::string RegularLonLat::className() {
 }
 
 
-void RegularLonLat::set_typeinfo() {
-    std::stringstream s;
-    if( N() ) {
-        s << "L" << N();
-    } else {
-        s << "L" << nlon() << "x" << nlat();
+std::string RegularLonLat::gridType() const {
+    return grid_type_str();
+}
+
+
+std::string RegularLonLat::shortName() const {
+    if (shortName_.empty()) {
+        std::stringstream s;
+        if( N() ) {
+            s << "L" << N();
+        } else {
+            s << "L" << nlon() << "x" << nlat();
+        }
+        if (!domain_.isGlobal()) {
+            s << "-local";
+        }
+        shortName_ = s.str();
     }
-    shortName_ = s.str();
-    grid_type_ = grid_type_str();
+    return shortName_;
 }
 
 
-RegularLonLat::RegularLonLat(const eckit::Parametrisation& p) :
-    LonLat(Shift::NONE,Domain::makeGlobal()) {
-    setup(p);
+RegularLonLat::RegularLonLat(const eckit::Parametrisation& params) :
+    LonLat(Shift::NONE, Domain::makeGlobal()) {
+    setup(params);
 }
 
 
-RegularLonLat::RegularLonLat(const size_t N, const Domain& dom) :
-    LonLat(Shift::NONE, dom) {
-    LonLat::setup(N, dom);
+RegularLonLat::RegularLonLat(const size_t N, const Domain& domain) :
+    LonLat(Shift::NONE, domain) {
+    LonLat::setup(N, domain);
 }
 
 
-RegularLonLat::RegularLonLat(const size_t nlon, const size_t nlat, const Domain& dom) :
-    LonLat(Shift::NONE, dom) {
-    LonLat::setup(nlon, nlat, dom);
+RegularLonLat::RegularLonLat(const size_t nlon, const size_t nlat, const Domain& domain) :
+    LonLat(Shift::NONE, domain) {
+    LonLat::setup(nlon, nlat, domain);
 }
 
 
-void RegularLonLat::setup(const eckit::Parametrisation& p) {
+void RegularLonLat::setup(const eckit::Parametrisation& params) {
     size_t nlon, nlat, N(0);
 
     std::vector<double> p_domain(4);
 
-    if( p.get("domain", p_domain) )
-    {
-      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
-    }
-    else
-    {
-      domain_ = Domain::makeGlobal();
+    if( params.get("domain", p_domain) ) {
+        domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
+    } else {
+        domain_ = Domain::makeGlobal();
     }
 
-    if (p.get("N",N)) {
+    if( params.get("N",N) ) {
         LonLat::setup(N, domain_);
-    }
-    else if (p.get("nlon",nlon) && p.get("nlat",nlat)) {
+    } else if( params.get("nlon", nlon) && params.get("nlat", nlat) ) {
         LonLat::setup(nlon, nlat, domain_);
-    }
-    else {
-        throw eckit::BadParameter("Params (nlon,nlat) or N missing",Here());
+    } else {
+        throw eckit::BadParameter("Params (nlon,nlat) or N missing", Here());
     }
 }
 
@@ -102,7 +107,7 @@ extern "C" {
 
 
     Structured* atlas__grid__lonlat__RegularLonLat(size_t nlon, size_t nlat) {
-        return new RegularLonLat(nlon,nlat);
+        return new RegularLonLat(nlon, nlat);
     }
 
 
@@ -112,4 +117,3 @@ extern "C" {
 }  // namespace lonlat
 }  // namespace grid
 }  // namespace atlas
-

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -35,8 +35,10 @@ class Unstructured : public Grid {
 
     static std::string className();
 
+    std::string gridType() const;
+
     /// Constructor taking a list of parameters
-    Unstructured(const eckit::Parametrisation& p);
+    Unstructured(const eckit::Parametrisation&);
 
     /// Constructor taking a list of points
     Unstructured(std::vector< Point >* pts);
@@ -49,10 +51,6 @@ class Unstructured : public Grid {
     virtual size_t npts() const;
 
     virtual void lonlat(std::vector< Point >&) const;
-
-    virtual std::string gridType() const {
-        return grid_type_str();
-    }
 
     virtual eckit::Properties spec() const;
 

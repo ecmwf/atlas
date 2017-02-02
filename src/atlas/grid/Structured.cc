@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -20,8 +20,8 @@ namespace atlas {
 namespace grid {
 
 
-Structured* Structured::create(const eckit::Parametrisation& p) {
-    Structured* grid = dynamic_cast<Structured*>(Grid::create(p));
+Structured* Structured::create(const eckit::Parametrisation& params) {
+    Structured* grid = dynamic_cast<Structured*>(Grid::create(params));
     if (!grid)
         throw eckit::BadParameter("Grid is not a reduced grid", Here());
     return grid;

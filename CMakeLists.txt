@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2016 ECMWF.
+# (C) Copyright 1996-2017 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,10 +8,6 @@
 
 ############################################################################################
 # ATLAS
-#
-# TODO:
-#  * add renumbering to improve cache performance
-#  * add detection of OpenMP flags (maybe move to ecbuild)
 
 cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 
@@ -29,26 +25,17 @@ set   ( ${PROJECT_NAME}_VERSION_STR  ${ATLASVER} )
 
 include( ecbuild_system NO_POLICY_SCOPE )
 
-ecbuild_requires_macro_version( 2.0 )
+ecbuild_requires_macro_version( 2.5 )
 
 ###############################################################################
 # project
 
-set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
-
-ecbuild_use_package( PROJECT eckit VERSION 0.12.3 REQUIRED )
-
-ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
-
-if( ECKIT_HAVE_ECKIT_MPI )
-   ecbuild_debug( "eckit has mpi support" )
-endif()
-
-if( ECKIT_HAVE_ECKIT_MPISTUBS )
-   ecbuild_debug( "eckit has mpistubs support" )
-endif()
-
 ecbuild_declare_project()
+
+### eckit
+
+ecbuild_use_package( PROJECT eckit VERSION 0.15 REQUIRED )
+ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
 
@@ -57,59 +44,52 @@ ecbuild_find_python()
 ### Fortran ...
 
 ecbuild_add_option( FEATURE FORTRAN
-                    DESCRIPTION "atlas: Provide Fortran bindings" )
-
+                    DESCRIPTION "Provide Fortran bindings"
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.3" )
 if( ATLAS_HAVE_FORTRAN )
 
-  ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
+  if( FCKIT_HAVE_ECKIT )
 
-  ecbuild_add_option( FEATURE FCTEST
-                      DEFAULT ${ENABLE_TESTS}
-                      DESCRIPTION "atlas: Fortran Unit Test Framework"
-                      REQUIRED_PACKAGES "PROJECT fckit VERSION 0.1" )
+    ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
+    set( Fortran Fortran )
 
-  set( Fortran Fortran )
+    if( ENABLE_TESTS )
+      set( HAVE_FCTEST ON )
+      set( ATLAS_HAVE_FCTEST ON )
+    else()
+      set( HAVE_FCTEST OFF )
+      set( ATLAS_HAVE_FCTEST OFF )
+    endif()
+
+  else()
+
+    ecbuild_warn( "In order to compile atlas_f, fckit is required to be compiled with eckit. Turning off fortran." )
+    set( HAVE_FORTRAN 0 )
+    set( ATLAS_HAVE_FORTRAN 0 )
+
+  endif()
 
 endif()
 
 ### MPI ...
 
+# Atlas currently only required MPI for working around bug ECKIT-166 for MacOSX
+if( ECKIT_HAVE_MPI AND EC_OS_NAME MATCHES "macosx" )
 ecbuild_add_option( FEATURE MPI
-                    DESCRIPTION "atlas: Support for MPI distributed parallelism"
-                    REQUIRED_PACKAGES "MPI COMPONENTS CXX ${Fortran}" )
-
-if( ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
-  ecbuild_debug( "Using eckit_mpi" )
-  set( ECKIT_MPI_LIBRARIES eckit_mpi )
-elseif( NOT ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
-  ecbuild_debug( "Using eckit_mpistubs" )
-  set( ECKIT_MPI_LIBRARIES eckit_mpistubs )
-  add_definitions( "-DECKIT_USE_MPISTUBS" )
-  if( ATLAS_HAVE_FORTRAN )
-    ecbuild_use_package( PROJECT mpistubs REQUIRED )
-    set( MPI_Fortran_LIBRARIES mpistubs_f )
-    set( MPI_Fortran_INCLUDE_PATH ${MPISTUBS_INCLUDE_DIRS} )
-  endif()
-elseif( NOT ATLAS_HAVE_MPI AND NOT ECKIT_HAVE_ECKIT_MPISTUBS )
-  ecbuild_error("ATLAS_HAVE_MPI=OFF, but cannot build since eckit_mpistubs not found")
-else()
-  ecbuild_info( "ATLAS_HAVE_MPI            : ${ATLAS_HAVE_MPI}" )
-  ecbuild_info( "ECKIT_HAVE_ECKIT_MPI      : ${ECKIT_HAVE_ECKIT_MPI} " )
-  ecbuild_info( "ECKIT_HAVE_ECKIT_MPISTUBS : ${ECKIT_HAVE_ECKIT_MPISTUBS} " )
-  ecbuild_error( "Invalid combination of above variables" )
+                    DESCRIPTION "Support for MPI distributed parallelism"
+                    REQUIRED_PACKAGES "MPI COMPONENTS CXX" )
 endif()
-if( ATLAS_HAVE_FORTRAN )
-  ecbuild_debug( "MPI_Fortran_INCLUDE_PATH : ${MPI_Fortran_INCLUDE_PATH}" )
-  ecbuild_debug( "MPI_Fortran_LIBRARIES    : ${MPI_Fortran_LIBRARIES}" )
+
+if( NOT ECKIT_HAVE_MPI )
+  ecbuild_warn("ecKit has been compiled without MPI. This causes Atlas to not be able to run parallel jobs.")
 endif()
 
 
 ### OMP ...
 
-ecbuild_add_option(
-    FEATURE OMP
-    DESCRIPTION "atlas: Support for OpenMP threaded parallelism"
-    REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
+ecbuild_add_option( FEATURE OMP
+                    DESCRIPTION "Support for OpenMP threaded parallelism"
+                    REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
 
 if( HAVE_OMP )
   ecbuild_enable_omp()
@@ -119,19 +99,17 @@ endif()
 
 ### trans ...
 
-ecbuild_add_option(
-    FEATURE TRANS
-    DESCRIPTION "atlas: Support for spectral transforms"
-    REQUIRED_PACKAGES "PROJECT transi VERSION 0.3.2 QUIET" )
+ecbuild_add_option( FEATURE TRANS
+                    DESCRIPTION "Support for spectral transforms"
+                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.4.0 QUIET" )
 
 ### tesselation ...
 
 set(Boost_USE_MULTITHREADED      ON )
 
-ecbuild_add_option(
-    FEATURE TESSELATION
-    DESCRIPTION "atlas: Support for unstructured mesh generation"
-    REQUIRED_PACKAGES "CGAL QUIET" "Boost 1.45.0" )
+ecbuild_add_option( FEATURE TESSELATION
+                    DESCRIPTION "Support for unstructured mesh generation"
+                    REQUIRED_PACKAGES "CGAL QUIET" "Boost 1.45.0" )
 
 if( HAVE_TESSELATION )
     list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
@@ -194,9 +172,7 @@ endif()
 ### Eigen
 
 ecbuild_add_option( FEATURE EIGEN
-                    DESCRIPTION "Eigen support"
-                    TYPE RECOMMENDED
-                    PURPOSE "Eigen backend: accelerated small matrix-vector operations"
+                    DESCRIPTION "Use Eigen linear algebra library"
                     REQUIRED_PACKAGES Eigen3 )
 
 ### Type for Global indices and unique point id's
@@ -211,7 +187,7 @@ else()
 endif()
 ecbuild_add_option( FEATURE BOUNDSCHECKING
                     DEFAULT ${DEFAULT_BOUNDSCHECKING}
-                    DESCRIPTION "atlas: Bounds checking for atlas::ArrayView and atlas::IndexView" )
+                    DESCRIPTION "Bounds checking for atlas::ArrayView and atlas::IndexView" )
 if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" AND NOT ATLAS_HAVE_BOUNDSCHECKING )
   ecbuild_info( "Turning BOUNDSCHECKING ON for Debug build" )
   set( ATLAS_HAVE_BOUNDSCHECKING 1 )
@@ -250,6 +226,14 @@ ecbuild_debug_var( ATLAS_EXTRA_LIBRARIES )
 
 ################################################################################
 # sources
+
+if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI"  AND
+    CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 16.8 )
+  set( atlas_fctest_parametrisation_DISABLED TRUE )
+  ecbuild_warn( "PGI Fortran compiler version tested up to 16.7 has a compiler bug "
+                "that leads to a segfaults for atlas_fctest_parametrisation. "
+                "Disabling this test..." )
+endif()
 
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
 add_subdirectory( src )
@@ -298,11 +282,11 @@ ecbuild_add_resources(
         LICENSE
 )
 
-ecbuild_install_project( NAME Atlas )
-
 if( ATLAS_HAVE_FORTRAN )
     install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR} DESTINATION ${INSTALL_INCLUDE_DIR} )
 endif()
+
+ecbuild_install_project( NAME Atlas )
 
 ecbuild_print_summary()
 

@@ -1,21 +1,11 @@
 
 module atlas_State_module
 
-use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_size_t
-use atlas_c_interop, only: c_str
-use atlas_refcounted_module, only: atlas_refcounted
-use atlas_Field_module, only: atlas_Field
-use atlas_Config_module, only: atlas_Config
-use atlas_Metadata_module, only: atlas_Metadata
+use fckit_refcounted_module, only: fckit_refcounted
 
 implicit none
 
-private :: c_ptr, c_int, c_size_t
-private :: c_str
-private :: atlas_refcounted
-private :: atlas_Field
-private :: atlas_Config
-private :: atlas_Metadata
+private :: fckit_refcounted
 
 public :: atlas_State
 
@@ -28,7 +18,7 @@ private
 ! (C) Copyright 2013-2015 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_State
+TYPE, extends(fckit_refcounted) :: atlas_State
 
 ! Purpose :
 ! -------
@@ -89,7 +79,9 @@ function atlas_State__new() result(State)
 end function
 
 function atlas_State__generate(generator, params) result(State)
+  use fckit_c_interop_module, only: c_str
   use atlas_state_c_binding
+  use atlas_Config_module, only: atlas_Config
   type(atlas_State) :: State
   character(len=*), intent(in) :: generator
   class(atlas_Config), intent(in), optional :: params
@@ -119,18 +111,20 @@ end subroutine
 
 subroutine atlas_State__copy(this,obj_in)
   class(atlas_State), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
+  class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
 
 subroutine atlas_State__add(this,field)
   use atlas_state_c_binding
+  use atlas_Field_module, only: atlas_Field
   class(atlas_State), intent(inout) :: this
   class(atlas_Field), intent(in) :: field
   call atlas__State__add(this%c_ptr(),field%c_ptr())
 end subroutine
-
+ 
 subroutine atlas_State__remove(this,name)
+  use fckit_c_interop_module, only: c_str
   use atlas_state_c_binding
   class(atlas_State), intent(inout) :: this
   character(len=*), intent(in) :: name
@@ -138,6 +132,7 @@ subroutine atlas_State__remove(this,name)
 end subroutine
 
 function atlas_State__has(this,name) result(has)
+  use fckit_c_interop_module, only: c_str
   use atlas_state_c_binding
   logical :: has
   class(atlas_State), intent(in) :: this
@@ -156,7 +151,9 @@ function atlas_State__size(this) result(size)
 end function
 
 function atlas_State__field_by_name(this,name) result(field)
+  use fckit_c_interop_module, only: c_str
   use atlas_state_c_binding
+  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_State), intent(inout) :: this
   character(len=*), intent(in) :: name
@@ -166,6 +163,7 @@ end function
 
 function atlas_State__field_by_index(this,index) result(field)
   use atlas_state_c_binding
+  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_State), intent(in) :: this
   integer, intent(in) :: index
@@ -175,6 +173,7 @@ end function
 
 function atlas_State__metadata(this) result(metadata)
   use atlas_state_c_binding
+  use atlas_Metadata_module, only: atlas_Metadata
   type(atlas_Metadata) :: metadata
   class(atlas_State), intent(in) :: this
   call metadata%reset_c_ptr( atlas__State__metadata(this%c_ptr()) )

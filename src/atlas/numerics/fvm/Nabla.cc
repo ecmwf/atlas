@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -117,7 +117,7 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
     throw eckit::AssertionFailed("gradient field should have same number of levels",Here());
 
 
-  const array::LocalView<double,2> scalar ( array::make_storageview<double>(scalar_field).data(), 
+  const array::LocalView<double,2> scalar ( array::make_storageview<double>(scalar_field).data(),
                                             array::make_shape(nnodes,nlev)   );
         array::LocalView<double,3> grad   ( array::make_storageview<double>(grad_field).data(),
                                             array::make_shape(nnodes,nlev,2) );
@@ -125,7 +125,6 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
   const array::ArrayView<double,2> lonlat_deg     = array::make_view<double,2>( nodes.lonlat() );
   const array::ArrayView<double,1> dual_volumes   = array::make_view<double,1>( nodes.field("dual_volumes") );
   const array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.field("dual_normals") );
-  const array::ArrayView<int,   1> edge_is_pole   = array::make_view<int   ,1>( edges.field("is_pole_edge") );
   const array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes.field("node2edge_sign") );
 
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
@@ -143,7 +142,6 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
       int ip1 = edge2node(jedge,0);
       int ip2 = edge2node(jedge,1);
 
-      #pragma ivdep
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
         double avg = ( scalar(ip1,jlev) + scalar(ip2,jlev) ) * 0.5;
@@ -154,7 +152,6 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
 
     atlas_omp_for( size_t jnode=0; jnode<nnodes; ++jnode )
     {
-      #pragma ivdep
       for(size_t jlev = 0; jlev < nlev; ++jlev )
       {
         grad(jnode,jlev,LON) = 0.;
@@ -164,7 +161,6 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
       {
         const int iedge = node2edge(jnode,jedge);
         const double add = node2edge_sign(jnode,jedge);
-        #pragma ivdep
         for(size_t jlev = 0; jlev < nlev; ++jlev)
         {
           grad(jnode,jlev,LON) += add*avgS(iedge,jlev,LON);
@@ -174,7 +170,6 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
       const double y  = lonlat_deg(jnode,LAT) * deg2rad;
       const double metric_y = 1./(dual_volumes(jnode)*scale);
       const double metric_x = metric_y/std::cos(y);
-      #pragma ivdep
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
         grad(jnode,jlev,LON) *= metric_x;
@@ -229,7 +224,6 @@ void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &g
       int ip2 = edge2node(jedge,1);
       double pbc = 1.-2.*edge_is_pole(jedge);
 
-      #pragma ivdep
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
         double avg[2] = {
@@ -247,7 +241,6 @@ void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &g
 
     atlas_omp_for( size_t jnode=0; jnode<nnodes; ++jnode )
     {
-      #pragma ivdep
       for(size_t jlev = 0; jlev < nlev; ++jlev )
       {
         grad(jnode,jlev,LON,LON) = 0.;
@@ -259,7 +252,6 @@ void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &g
       {
         const int iedge = node2edge(jnode,jedge);
         double add = node2edge_sign(jnode,jedge);
-        #pragma ivdep
         for(size_t jlev = 0; jlev < nlev; ++jlev)
         {
           grad(jnode,jlev,LON,LON) += add*avgS(iedge,jlev,LON,LON);
@@ -271,7 +263,6 @@ void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &g
       const double y  = lonlat_deg(jnode,LAT) * deg2rad;
       const double metric_y = 1./(dual_volumes(jnode)*scale);
       const double metric_x = metric_y/std::cos(y);
-      #pragma ivdep
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
         grad(jnode,jlev,LON,LON) *= metric_x;
@@ -287,7 +278,6 @@ void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &g
     const int iedge = pole_edges_[jedge];
     const int jnode = edge2node(iedge,1);
     const double metric_y = 1./(dual_volumes(jnode)*scale);
-    #pragma ivdep
     for(size_t jlev = 0; jlev < nlev; ++jlev)
     {
       grad(jnode,jlev,LON,LAT) -= 2.*avgS(iedge,jlev,LON,LAT)*metric_y;

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,7 +9,7 @@
  */
 
 
-#define BOOST_TEST_MODULE test_atlas_geometry
+#define BOOST_TEST_MODULE atlas_test_geometry
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/geometry/Point3.h"

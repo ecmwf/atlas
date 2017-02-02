@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -84,7 +84,7 @@ private: // data
   std::string name_;
   GatherScatter gather_;
   bool is_setup_;
-  int parsize_;
+  size_t parsize_;
 };
 
 template<typename DATA_TYPE>
@@ -102,12 +102,12 @@ std::string Checksum::execute( const DATA_TYPE data[],
   std::vector<internals::checksum_t> local_checksums(parsize_);
   int var_size = var_extents[0]*var_strides[0];
 
-  for( int pp=0; pp<parsize_; ++pp )
+  for( size_t pp=0; pp<parsize_; ++pp )
   {
     local_checksums[pp] = internals::checksum(data+pp*var_size,var_size);
   }
 
-  std::vector<internals::checksum_t> global_checksums( eckit::mpi::rank() == root ? gather_.glb_dof() : 0 );
+  std::vector<internals::checksum_t> global_checksums( parallel::mpi::comm().rank() == root ? gather_.glb_dof() : 0 );
   parallel::Field<internals::checksum_t const> loc(local_checksums.data(),1);
   parallel::Field<internals::checksum_t> glb(global_checksums.data(),1);
   gather_.gather(&loc,&glb,1);
@@ -116,8 +116,8 @@ std::string Checksum::execute( const DATA_TYPE data[],
                                                 global_checksums.data(),
                                                 global_checksums.size());
 
-  MPI_Bcast(&glb_checksum, 1, eckit::mpi::datatype<internals::checksum_t>(),
-            root, eckit::mpi::comm());
+  parallel::mpi::comm().broadcast(glb_checksum, root);
+
   return eckit::Translator<internals::checksum_t,std::string>()(glb_checksum);
 }
 

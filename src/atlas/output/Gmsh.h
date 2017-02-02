@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -30,8 +30,8 @@ namespace output {
 
 class GmshFileStream : public std::ofstream {
 public:
-  static std::string parallelPathName(const PathName& path,int part = eckit::mpi::rank());
-  GmshFileStream(const PathName& file_path, const char* mode, int part = eckit::mpi::rank());
+  static std::string parallelPathName(const PathName& path,int part = parallel::mpi::comm().rank());
+  GmshFileStream(const PathName& file_path, const char* mode, int part = parallel::mpi::comm().rank());
 
 };
 

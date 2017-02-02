@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -27,8 +27,6 @@
 
 namespace atlas {
 namespace test {
-
-BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); atlas::grid::load(); }
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
@@ -147,8 +145,6 @@ BOOST_AUTO_TEST_CASE( test_reducedgaussian )
   grid::gaussian::ReducedGaussian custom(N640.N(),N640.pl().data());
   BOOST_CHECK_EQUAL(N640.npts(),custom.npts());
 }
-
-BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
 
 } // namespace test
 } // namespace atlas

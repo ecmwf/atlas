@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2016 ECMWF.
+! (C) Copyright 1996-2017 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -17,6 +17,7 @@ module fctest_atlas_trans_fixture
 use atlas_module
 use iso_c_binding
 implicit none
+character(len=1024) :: msg
 end module fctest_atlas_trans_fixture
 
 ! -----------------------------------------------------------------------------
@@ -32,7 +33,8 @@ END_TESTSUITE_INIT
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-  call atlas_mpi_finalize()
+  write(0,*) "FINALIZE"
+  call atlas_finalize()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
@@ -322,6 +324,7 @@ type(atlas_Field) :: fieldg, field
 type(atlas_FieldSet) :: gpfields, spfields
 integer :: jfld, nfld
 character(len=10) :: fieldname
+real(c_double) :: norm
 
 grid = atlas_grid_Structured("O24")
 trans = atlas_Trans(grid,23)
@@ -352,7 +355,9 @@ call trans%invtrans(spfields,gpfields)
 
 do jfld=1,spfields%size()
   field = spfields%field(jfld)
-  write(atlas_log%msg,*) "spectral field ",field%name(); call atlas_log%info()
+  write(msg,*) "spectral field ",field%name(); call atlas_log%info(msg)
+  call spectral%norm(field,norm)
+  write(msg,*) "norm = ",norm; call atlas_log%info(msg)
 enddo
 
 call field%final()

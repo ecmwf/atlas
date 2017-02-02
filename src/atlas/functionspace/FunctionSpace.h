@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -36,6 +36,7 @@ public:
     virtual ~FunctionSpace() = 0;
     virtual std::string name() const = 0;
     virtual operator bool() const { return true; }
+    virtual size_t footprint() const = 0;
 
     template <typename FunctionSpaceT>
     FunctionspaceT_nonconst *cast();
@@ -71,6 +72,7 @@ public:
     virtual ~NoFunctionSpace() {}
     virtual std::string name() const { return "NoFunctionSpace"; }
     virtual operator bool() const { return false; }
+    virtual size_t footprint() const { return sizeof(*this); }
 };
 
 //------------------------------------------------------------------------------------------------------

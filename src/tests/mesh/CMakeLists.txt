@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2016 ECMWF.
+# (C) Copyright 1996-2017 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -71,24 +71,27 @@ ecbuild_add_test( TARGET atlas_test_ll
 
 ecbuild_add_test( TARGET atlas_test_parfields
   BOOST
-  MPI      2
-  SOURCES  test_parfields.cc
-  LIBS     atlas
+  MPI        2
+  CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+  SOURCES    test_parfields.cc
+  LIBS       atlas
   CONDITION COMPILE_BROKEN_TESTS
 )
 
 ecbuild_add_test( TARGET atlas_test_halo
   BOOST
-  MPI      5
-  SOURCES  test_halo.cc ../TestMeshes.h
-  LIBS     atlas
+  MPI        5
+  CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+  SOURCES    test_halo.cc ../TestMeshes.h
+  LIBS       atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_distmesh
   BOOST
-  MPI      5
-  SOURCES  test_distmesh.cc ../TestMeshes.h
-  LIBS     atlas
+  MPI        5
+  CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+  SOURCES    test_distmesh.cc ../TestMeshes.h
+  LIBS       atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_meshgen3d
@@ -109,4 +112,3 @@ atlas_add_cuda_test(
   SOURCES test_connectivity_kernel.cu
   LIBS atlas
 )
-

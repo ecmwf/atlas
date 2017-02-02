@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -35,7 +35,7 @@ void build_parallel_fields( Mesh& mesh );
 /*
  * Build parallel fields for the "nodes" function space if they don't exist.
  * - glb_idx:    create unique indices for non-positive values
- * - partition:  set to eckit::mpi::rank() for negative values
+ * - partition:  set to parallel::mpi::comm().rank() for negative values
  * - remote_idx: rebuild from scratch
  */
 void build_nodes_parallel_fields( mesh::Nodes& nodes );

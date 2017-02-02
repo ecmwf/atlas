@@ -76,7 +76,7 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, cons
     strides_[j] = strides[j];
     layout_[j]  = layout[j];
     size_ *= shape_[j];
-    if( layout_[j] != j ) default_layout_ = false;
+    if( layout_[j] != size_t(j) ) default_layout_ = false;
   }
   contiguous_ = (size_ == shape_[0]*strides_[0] ? true : false);
 }

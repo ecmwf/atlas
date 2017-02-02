@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -32,6 +32,8 @@
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/IsGhost.h"
 
+#include "tests/AtlasFixture.h"
+
 
 using namespace atlas::output;
 using namespace atlas::util;
@@ -46,7 +48,6 @@ double dual_volume(mesh::Mesh& mesh)
   internals::IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.size();
   array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( nodes.field("dual_volumes") );
-  array::ArrayView<gidx_t,1> glb_idx      = array::make_view<gidx_t,1>( nodes.global_index() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {
@@ -55,17 +56,13 @@ double dual_volume(mesh::Mesh& mesh)
       area += dual_volumes(node);
     }
   }
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
+
+  parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+
   return area;
 }
 
-
-struct MPIFixture {
-    MPIFixture()  { eckit::mpi::init(); }
-    ~MPIFixture() { eckit::mpi::finalize(); }
-};
-
-BOOST_GLOBAL_FIXTURE( MPIFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 #if 0
 BOOST_AUTO_TEST_CASE( test_small )
@@ -80,12 +77,12 @@ BOOST_AUTO_TEST_CASE( test_small )
   mesh::actions::build_halo(*m,2);
 
 
-  if( eckit::mpi::size() == 5 )
+  if( parallel::mpi::comm().size() == 5 )
   {
     IndexView<int,1> ridx ( m->nodes().remote_index() );
     array::array::ArrayView<gidx_t,1> gidx ( m->nodes().global_index() );
 
-    switch( eckit::mpi::rank() ) // with 5 tasks
+    switch( parallel::mpi::comm().rank() ) // with 5 tasks
     {
     case 0:
       BOOST_CHECK_EQUAL( ridx(9),  9  );
@@ -97,7 +94,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   }
   else
   {
-    if( eckit::mpi::rank() == 0 )
+    if( parallel::mpi::comm().rank() == 0 )
       std::cout << "skipping tests with 5 mpi tasks!" << std::endl;
   }
 
@@ -106,7 +103,7 @@ BOOST_AUTO_TEST_CASE( test_small )
 
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
 
-  std::stringstream filename; filename << "small_halo_p" << eckit::mpi::rank() << ".msh";
+  std::stringstream filename; filename << "small_halo_p" << parallel::mpi::comm().rank() << ".msh";
   Gmsh(filename.str()).write(*m);
 }
 #endif

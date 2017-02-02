@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2016 ECMWF.
+! (C) Copyright 1996-2017 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -164,9 +164,8 @@ TEST( test_multiblockconnectivity )
   implicit none
   type(atlas_MultiBlockConnectivity) :: multiblock
   type(atlas_BlockConnectivity) :: block
-  integer(c_int), pointer :: row(:), data(:,:), padded(:,:)
+  integer(c_int), pointer :: data(:,:), padded(:,:)
   integer(c_size_t), pointer :: cols(:)
-  integer(c_int) :: ncols, nblocks
 
   type(atlas_Connectivity) :: base
 

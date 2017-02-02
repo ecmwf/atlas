@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -64,6 +64,8 @@ class RegularGaussian : public Gaussian {
 
     static std::string className();
 
+    std::string gridType() const;
+
     RegularGaussian(const eckit::Parametrisation&);
 
     RegularGaussian(const size_t& N, const Domain& dom=Domain::makeGlobal());
@@ -86,9 +88,11 @@ class RegularGaussian : public Gaussian {
 
     virtual void setup(const size_t& N, const Domain&);
 
-    virtual void set_typeinfo();
+    std::string shortName() const;
 
   private:
+
+    mutable std::string shortName_;
 
     Domain domain_;
 

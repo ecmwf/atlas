@@ -29,7 +29,6 @@ ArrayView<Value,Rank>::ArrayView(data_view_t data_view, const Array& array) :
     gt_data_view_(data_view) {
     using seq = ::gridtools::apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, Rank>::type>;
 
-    using value_t = typename data_view_t::data_store_t::data_t;
     constexpr static unsigned int ndims = data_view_t::data_store_t::storage_info_t::ndims;
     data_view_t gt_host_view_ = atlas::array::gridtools::make_gt_host_view<value_type, ndims, true> ( array );
 

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -42,7 +42,7 @@ Nodes::Nodes(): size_(0)
   for(size_t n=0; n<size(); ++n)
   {
     glb_idx(n) = 1+n;
-    part(n) = eckit::mpi::rank();
+    part(n) = parallel::mpi::comm().rank();
     flags(n) = 0;
   }
 }
@@ -114,7 +114,7 @@ void Nodes::resize( size_t size )
   for(size_t n=previous_size; n<size_; ++n)
   {
     glb_idx(n) = 1+n;
-    part(n) = eckit::mpi::rank();
+    part(n) = parallel::mpi::comm().rank();
     flags(n) = 0;
   }
 }
@@ -155,6 +155,20 @@ void Nodes::print(std::ostream& os) const
     }
     os << "]";
 }
+
+
+size_t Nodes::footprint() const {
+  size_t size = sizeof(*this);
+  for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
+    size += (*it).second->footprint();
+  }
+  for( ConnectivityMap::const_iterator it = connectivities_.begin(); it != connectivities_.end(); ++it ) {
+    size += (*it).second->footprint();
+  }
+  size += metadata_.footprint();
+  return size;
+}
+
 
 const IrregularConnectivity& Nodes::connectivity(const std::string& name) const
 {

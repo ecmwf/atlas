@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -67,6 +67,10 @@ public:
   std::string checksum( const field::FieldSet& ) const;
   std::string checksum( const field::Field& ) const;
 
+  void norm( const field::Field&, double& norm, int rank=0 ) const;
+  void norm( const field::Field&, double norm_per_level[], int rank=0 ) const;
+  void norm( const field::Field&, std::vector<double>& norm_per_level, int rank=0 ) const;
+
 public: // methods
 
   size_t nb_spectral_coefficients() const;
@@ -75,6 +79,7 @@ public: // methods
 private: // methods
 
   size_t config_size(const eckit::Parametrisation& config) const;
+  size_t footprint() const;
 
 private: // data
 
@@ -101,6 +106,7 @@ extern "C"
   void atlas__SpectralFunctionSpace__gather_fieldset(const Spectral* This, const field_FieldSet* local, field_FieldSet* global);
   void atlas__SpectralFunctionSpace__scatter(const Spectral* This, const field_Field* global, field_Field* local);
   void atlas__SpectralFunctionSpace__scatter_fieldset(const Spectral* This, const field_FieldSet* global, field_FieldSet* local);
+  void atlas__SpectralFunctionSpace__norm(const Spectral* This, const field_Field* field, double norm[], int rank);
 }
 #undef Trans
 #undef field_Field

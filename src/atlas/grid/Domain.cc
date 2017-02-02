@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -19,15 +19,18 @@
 namespace atlas {
 namespace grid {
 
+//----------------------------------------------------------------------------------------------------------------------
 
-typedef eckit::FloatCompare<double> cmp;
+using eckit::types::is_approximately_equal;
+using eckit::types::is_strictly_greater;
+using eckit::types::is_approximately_greater_or_equal;
 
 
 bool Domain::operator==(const Domain& other) {
-    return cmp::isApproximatelyEqual(north_, other.north_)
-        && cmp::isApproximatelyEqual(west_,  other.west_)
-        && cmp::isApproximatelyEqual(south_, other.south_)
-        && cmp::isApproximatelyEqual(east_,  other.east_);
+    return is_approximately_equal(north_, other.north_)
+        && is_approximately_equal(west_,  other.west_)
+        && is_approximately_equal(south_, other.south_)
+        && is_approximately_equal(east_,  other.east_);
 }
 
 
@@ -40,18 +43,18 @@ void Domain::hash(eckit::MD5& md5) const {
 
 
 bool Domain::isEmpty() const {
-    return !cmp::isStrictlyGreater(north_,south_)
-        || !cmp::isStrictlyGreater(east_,west_);
+    return !is_strictly_greater(north_,south_)
+        || !is_strictly_greater(east_,west_);
 }
 
 
 bool Domain::contains(double lon, double lat) const {
     // approximate comparisons include boundary coordinates
     lon = normalise(lon);
-    return  cmp::isApproximatelyGreaterOrEqual(north_, lat) &&
-            cmp::isApproximatelyGreaterOrEqual(lat, south_) &&
-            cmp::isApproximatelyGreaterOrEqual(lon, west_)  &&
-            cmp::isApproximatelyGreaterOrEqual(east_, lon);
+    return  is_approximately_greater_or_equal(north_, lat) &&
+            is_approximately_greater_or_equal(lat, south_) &&
+            is_approximately_greater_or_equal(lon, west_)  &&
+            is_approximately_greater_or_equal(east_, lon);
 }
 
 
@@ -71,10 +74,10 @@ bool Domain::intersects(const Domain& other) const {
     ASSERT(other.w <= other.e);
 
     // strict comparisons ensure resulting areas have 2-dimensionality
-    return  cmp::isStrictlyGreater(e, other.w) &&
-            cmp::isStrictlyGreater(other.e, w) &&
-            cmp::isStrictlyGreater(s, other.n) &&
-            cmp::isStrictlyGreater(other.s, n);
+    return  is_strictly_greater(e, other.w) &&
+            is_strictly_greater(other.e, w) &&
+            is_strictly_greater(s, other.n) &&
+            is_strictly_greater(other.s, n);
 }
 #endif
 
@@ -120,6 +123,8 @@ void Domain::print(std::ostream& os) const {
         << ",isEmpty="  << isEmpty()
         << "]";
 }
+
+//----------------------------------------------------------------------------------------------------------------------
 
 
 } // namespace grid

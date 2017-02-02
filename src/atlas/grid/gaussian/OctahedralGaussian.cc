@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -17,13 +17,63 @@ namespace grid {
 namespace gaussian {
 
 
+eckit::ConcreteBuilderT1<Grid, OctahedralGaussian> builder_OctahedralGaussian(OctahedralGaussian::grid_type_str());
+
+
+std::string OctahedralGaussian::grid_type_str() {
+    return "octahedral_gaussian";
+}
+
+
 std::string OctahedralGaussian::className() {
     return "atlas.grid.gaussian.OctahedralGaussian";
 }
 
 
-std::string OctahedralGaussian::grid_type_str() {
-    return "octahedral_gaussian";
+std::string OctahedralGaussian::gridType() const {
+    return grid_type_str();
+}
+
+
+OctahedralGaussian::OctahedralGaussian(size_t N, const Domain& domain) :
+    Gaussian() {
+    std::vector<long> pl = computePL(N);
+    domain_ = domain;
+
+    setup_N_hemisphere(N, pl.data(), domain);
+}
+
+
+OctahedralGaussian::OctahedralGaussian(const eckit::Parametrisation& params) :
+    Gaussian() {
+
+    size_t N;
+    if (!params.get("N", N)) {
+        throw eckit::BadParameter("N missing in Params", Here());
+    }
+
+    domain_ = Domain::makeGlobal();
+    std::vector<double> p_domain(4);
+    if (params.get("domain", p_domain)) {
+      domain_ = Domain(p_domain[0], p_domain[1], p_domain[2], p_domain[3]);
+    }
+
+    std::vector<long> pl = computePL(N);
+
+    setup_N_hemisphere(N, pl.data(), domain_);
+}
+
+
+std::string OctahedralGaussian::shortName() const {
+    if (shortName_.empty()) {
+        std::stringstream s;
+        s << "O" << N();
+        if (!domain_.isGlobal()) {
+            s << "-local";
+        }
+        shortName_ = s.str();
+    }
+    return shortName_;
 }
 
 
@@ -37,52 +87,7 @@ std::vector<long> OctahedralGaussian::computePL(const size_t N) {
 }
 
 
-OctahedralGaussian::OctahedralGaussian(const size_t N, const Domain& dom) :
-    Gaussian() {
-    domain_ = dom;
-    construct(N);
-    set_typeinfo();
-}
-
-
-OctahedralGaussian::OctahedralGaussian(const eckit::Parametrisation& params) :
-    Gaussian() {
-
-    std::vector<double> p_domain(4);
-    if( params.get("domain", p_domain) )
-    {
-      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
-    }
-    else
-    {
-      domain_ = Domain::makeGlobal();
-    }
-
-    size_t N;
-    params.get("N",N);
-
-    construct(N);
-    set_typeinfo();
-}
-
-
-void OctahedralGaussian::construct(const size_t N) {
-    std::vector<long> pl = computePL(N);
-    setup_N_hemisphere(N,pl.data(),domain_);
-}
-
-
-void OctahedralGaussian::set_typeinfo() {
-    std::ostringstream s;
-    s << "O"<< N();
-    shortName_ = s.str();
-    grid_type_ = grid_type_str();
-}
-
-
-eckit::ConcreteBuilderT1<Grid,OctahedralGaussian> builder_OctahedralGaussian (OctahedralGaussian::grid_type_str());
-
-
-}  // namspace gaussian
+}  // namespace gaussian
 }  // namespace grid
 }  // namespace atlas
+

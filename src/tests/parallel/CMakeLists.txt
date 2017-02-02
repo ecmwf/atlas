@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2016 ECMWF.
+# (C) Copyright 1996-2017 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,16 +9,18 @@
 
 ecbuild_add_test( TARGET atlas_test_haloexchange
   BOOST
-  MPI      3
-  SOURCES  test_haloexchange.cc
-  LIBS     atlas
+  MPI        3
+  CONDITION  ECKIT_HAVE_MPI
+  SOURCES    test_haloexchange.cc
+  LIBS       atlas
   CONDITION COMPILE_BROKEN_TESTS
 )
 
 ecbuild_add_test( TARGET atlas_test_gather
   BOOST
-  MPI      3
-  SOURCES  test_gather.cc
-  LIBS     atlas
+  MPI        3
+  CONDITION  ECKIT_HAVE_MPI
+  SOURCES    test_gather.cc
+  LIBS       atlas
   CONDITION COMPILE_BROKEN_TESTS
 )

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -20,7 +20,7 @@ namespace grid {
 namespace gaussian {
 
 
-register_BuilderT1(Grid,ClassicGaussian,ClassicGaussian::grid_type_str());
+eckit::ConcreteBuilderT1<Grid, ClassicGaussian> builder_ClassicGaussian(ClassicGaussian::grid_type_str());
 
 
 std::string ClassicGaussian::grid_type_str() {
@@ -33,49 +33,56 @@ std::string ClassicGaussian::className() {
 }
 
 
-void ClassicGaussian::set_typeinfo() {
-    std::stringstream s;
-    s << "N" << N();
-    shortName_ = s.str();
-    grid_type_ = grid_type_str();
+std::string ClassicGaussian::gridType() const {
+    return grid_type_str();
 }
 
 
-ClassicGaussian::ClassicGaussian(const size_t N, const Domain& dom) :
+ClassicGaussian::ClassicGaussian(const size_t N, const Domain& domain) :
     Gaussian() {
-    domain_ = dom;
-    std::vector<long> nlon(N);
-    classic::points_per_latitude_npole_equator(N,nlon.data());
-    setup_N_hemisphere(N,nlon.data(),domain_);
-    set_typeinfo();
+    std::vector<long> pl(N);
+    classic::points_per_latitude_npole_equator(N, pl.data());
+    domain_ = domain;
+
+    setup_N_hemisphere(N, pl.data(), domain);
 }
 
 
 ClassicGaussian::ClassicGaussian(const eckit::Parametrisation& params) :
     Gaussian() {
 
-    std::vector<double> p_domain(4);
-    if( params.get("domain", p_domain) )
-    {
-      domain_ = Domain(p_domain[0],p_domain[1],p_domain[2],p_domain[3]);
-    }
-    else
-    {
-      domain_ = Domain::makeGlobal();
-    }
-
     size_t N;
-    if (!params.get("N",N))
-        throw eckit::BadParameter("N missing in Params",Here());
+    if (!params.get("N", N)) {
+        throw eckit::BadParameter("N missing in Params", Here());
+    }
 
-    std::vector<long> nlon(N);
-    classic::points_per_latitude_npole_equator(N, nlon.data());
-    setup_N_hemisphere(N, nlon.data(),domain_);
+    domain_ = Domain::makeGlobal();
+    std::vector<double> p_domain(4);
+    if (params.get("domain", p_domain)) {
+      domain_ = Domain(p_domain[0], p_domain[1], p_domain[2], p_domain[3]);
+    }
 
-    set_typeinfo();
+    std::vector<long> pl(N);
+    classic::points_per_latitude_npole_equator(N, pl.data());
+
+    setup_N_hemisphere(N, pl.data(), domain_);
+}
+
+
+std::string ClassicGaussian::shortName() const {
+    if (shortName_.empty()) {
+        std::stringstream s;
+        s << "N" << N();
+        if (!domain_.isGlobal()) {
+            s << "-local";
+        }
+        shortName_ = s.str();
+    }
+    return shortName_;
 }
 
 
 }  // namespace gaussian
 }  // namespace grid
 }  // namespace atlas
+

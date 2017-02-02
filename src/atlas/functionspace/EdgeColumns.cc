@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,7 +10,9 @@
 
 #include <algorithm>
 #include <cmath>
+
 #include "eckit/utils/MD5.h"
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/HybridElements.h"
@@ -19,7 +21,6 @@
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/internals/IsGhost.h"
-#include "atlas/parallel/mpi/Collectives.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/HaloExchange.h"
@@ -67,7 +68,7 @@ size_t EdgeColumns::config_size(const eckit::Parametrisation& config) const
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (eckit::mpi::rank() == owner ? nb_edges_global() : 0);
+      size = (parallel::mpi::comm().rank() == owner ? nb_edges_global() : 0);
     }
   }
   return size;
@@ -142,6 +143,12 @@ void EdgeColumns::constructor()
 }
 
 EdgeColumns::~EdgeColumns() {}
+
+size_t EdgeColumns::footprint() const {
+  size_t size = sizeof(*this);
+  // TODO
+  return size;
+}
 
 size_t EdgeColumns::nb_edges() const
 {

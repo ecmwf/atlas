@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -106,7 +106,6 @@ private:
 void AtlasLoadbalance::run()
 {
   if( !do_run ) return;
-  grid::load();
 
   SharedPtr<Structured> grid;
   try{ grid.reset( Structured::create(key) ); }
@@ -129,7 +128,7 @@ void AtlasLoadbalance::run()
     std::stringstream s;
     write_load_balance_report(*mesh,s);
 
-    if( eckit::mpi::rank() == 0 )
+    if( parallel::mpi::comm().rank() == 0 )
     {
       std::cout << s.str() << std::endl;
     }

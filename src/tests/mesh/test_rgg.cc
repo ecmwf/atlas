@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -39,6 +39,9 @@
 #include "atlas/grid/gaussian/classic/N.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/runtime/Log.h"
+
+#include "tests/AtlasFixture.h"
+
 
 namespace atlas {
 namespace grid {
@@ -118,13 +121,7 @@ double compute_lonlat_area(mesh::Mesh& mesh)
   return area;
 }
 
-struct GlobalFixture {
-    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                  boost::unit_test::framework::master_test_suite().argv); }
-    ~GlobalFixture() { atlas_finalize(); }
-};
-
-BOOST_GLOBAL_FIXTURE( GlobalFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_eq_caps )
 {
@@ -441,7 +438,6 @@ DISABLE{
     }
 
     // Test if all nodes are owned
-    array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
     for( size_t n=0; n<nb_nodes; ++n )
     {
       if( size_t(part(n)) == p )

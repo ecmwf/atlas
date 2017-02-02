@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -21,11 +21,10 @@
 /// stored with base 1, to be compatible with Fortran access.
 /// C++ access operators however convert the resulting connectivity to base 0.
 
-#ifndef atlas_Connectivity_H
-#define atlas_Connectivity_H
+#pragma once
 
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
+#include <array>
+
 #include "atlas/internals/atlas_config.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -33,6 +32,9 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/Vector.h"
 #include "atlas/array_fwd.h"
+
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
 namespace mesh {
@@ -156,24 +158,24 @@ public:
   GT_FUNCTION
   IrregularConnectivity(const IrregularConnectivity &other) :
     owns_(false),
+  #ifdef __CUDACC__
+      data_{0,0,0},
+      values_view_(array::make_device_view<idx_t, 1>(*(other.data_[_values_]))),
+      displs_view_(array::make_device_view<size_t, 1>(*(other.data_[_displs_]))),
+      counts_view_(array::make_device_view<size_t, 1>(*(other.data_[_counts_]))),
+  #else
+      data_{other.data_[0], other.data_[1], other.data_[2]},
+      values_view_(array::make_host_view<idx_t, 1>(*(other.data_[_values_]))),
+      displs_view_(array::make_host_view<size_t, 1>(*(other.data_[_displs_]))),
+      counts_view_(array::make_host_view<size_t, 1>(*(other.data_[_counts_]))),
+  #endif
     missing_value_(other.missing_value_),
     rows_(other.rows_),
     maxcols_(other.maxcols_),
     mincols_(other.mincols_),
-#ifdef __CUDACC__
-    data_{0,0,0},
-    values_view_(array::make_device_view<idx_t, 1>(*(other.data_[_values_]))),
-    displs_view_(array::make_device_view<size_t, 1>(*(other.data_[_displs_]))),
-    counts_view_(array::make_device_view<size_t, 1>(*(other.data_[_counts_]))),
-#else
-    data_{other.data_[0], other.data_[1], other.data_[2]},
-    values_view_(array::make_host_view<idx_t, 1>(*(other.data_[_values_]))),
-    displs_view_(array::make_host_view<size_t, 1>(*(other.data_[_displs_]))),
-    counts_view_(array::make_host_view<size_t, 1>(*(other.data_[_counts_]))),
-#endif
-    ctxt_delete_(0),
+    ctxt_update_(0),
     ctxt_set_(0),
-    ctxt_update_(0)
+    ctxt_delete_(0)
   {}
 
 
@@ -261,6 +263,8 @@ public:
   virtual void insert( size_t position, size_t rows, const size_t cols[] );
 
   virtual void clear();
+
+  virtual size_t footprint() const;
 
   size_t displs(const size_t row) const {return displs_view_(row); }
 
@@ -418,6 +422,8 @@ public:
 
   virtual void clear();
 
+  virtual size_t footprint() const;
+
   virtual void cloneToDevice();
   virtual void cloneFromDevice();
   virtual void syncHostDevice() const;
@@ -482,14 +488,14 @@ public:
   GT_FUNCTION
   BlockConnectivity(const BlockConnectivity& other)
     : owns_(false),
-      rows_(other.rows_),
-      cols_(other.cols_),
       values_(0),
 #ifdef __CUDACC__
       values_view_(array::make_device_view<idx_t, 2>(*(other.values_))),
 #else
       values_view_(array::make_device_view<idx_t, 2>(*(other.values_))),
 #endif
+      rows_(other.rows_),
+      cols_(other.cols_),
       missing_value_( other.missing_value_)
   {}
 
@@ -523,6 +529,8 @@ public:
 
   GT_FUNCTION
   idx_t missing_value() const { return missing_value_; }
+
+  size_t footprint() const;
 
 //-- Modifiers
 
@@ -656,5 +664,3 @@ template<> inline DataType::kind_t DataType::kind<mesh::BlockConnectivity*>()   
 }
 
 } // namespace atlas
-
-#endif

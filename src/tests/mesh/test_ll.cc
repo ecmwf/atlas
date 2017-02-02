@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -18,17 +18,14 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/grid/lonlat/RegularLonLat.h"
 
+#include "tests/AtlasFixture.h"
+
 
 namespace atlas {
 namespace test {
 
-struct GlobalFixture {
-    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                  boost::unit_test::framework::master_test_suite().argv); }
-    ~GlobalFixture() { atlas_finalize(); }
-};
 
-BOOST_GLOBAL_FIXTURE( GlobalFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {

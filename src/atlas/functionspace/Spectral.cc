@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,8 +9,9 @@
  */
 
 #include "eckit/utils/MD5.h"
-#include "eckit/mpi/mpi.h"
 #include "eckit/os/BackTrace.h"
+#include "atlas/parallel/mpi/mpi.h"
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/Spectral.h"
@@ -52,7 +53,7 @@ size_t Spectral::config_size(const eckit::Parametrisation& config) const
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (eckit::mpi::rank() == owner ? nb_spectral_coefficients_global() : 0);
+      size = (parallel::mpi::comm().rank() == owner ? nb_spectral_coefficients_global() : 0);
     }
   }
   return size;
@@ -81,6 +82,12 @@ Spectral::Spectral(trans::Trans& trans)
 
 Spectral::~Spectral()
 {
+}
+
+size_t Spectral::footprint() const {
+  size_t size = sizeof(*this);
+  // TODO
+  return size;
 }
 
 size_t Spectral::nb_spectral_coefficients() const {
@@ -137,7 +144,7 @@ void Spectral::gather( const field::FieldSet& local_fieldset, field::FieldSet& g
     size_t root=0;
     glb.metadata().get("owner",root);
     ASSERT( loc.shape(0) == nb_spectral_coefficients() );
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
       ASSERT( glb.shape(0) == nb_spectral_coefficients_global() );
     std::vector<int> nto(1,root+1);
     if( loc.rank() > 1 ) {
@@ -183,7 +190,7 @@ void Spectral::scatter( const field::FieldSet& global_fieldset, field::FieldSet&
     size_t root=0;
     glb.metadata().get("owner",root);
     ASSERT( loc.shape(0) == nb_spectral_coefficients() );
-    if( eckit::mpi::rank() == root )
+    if( parallel::mpi::comm().rank() == root )
       ASSERT( glb.shape(0) == nb_spectral_coefficients_global() );
     std::vector<int> nfrom(1,root+1);
     if( loc.rank() > 1 ) {
@@ -220,6 +227,32 @@ std::string Spectral::checksum( const field::Field& field ) const {
   fieldset.add(field);
   return checksum(fieldset);
 }
+
+void Spectral::norm( const field::Field& field, double& norm, int rank ) const {
+#ifdef ATLAS_HAVE_TRANS
+  ASSERT( field.levels() == 1 );
+  trans_->specnorm(1,field.data<double>(), &norm, rank);
+#else
+  throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
+#endif
+}
+void Spectral::norm( const field::Field& field, double norm_per_level[], int rank ) const {
+#ifdef ATLAS_HAVE_TRANS
+  trans_->specnorm(field.levels(),field.data<double>(), norm_per_level, rank);
+#else
+  throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
+#endif
+}
+void Spectral::norm( const field::Field& field, std::vector<double>& norm_per_level, int rank ) const {
+#ifdef ATLAS_HAVE_TRANS
+  norm_per_level.resize( field.levels() );
+  trans_->specnorm(norm_per_level.size(),field.data<double>(), norm_per_level.data(), rank);
+#else
+  throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
+#endif
+}
+
+
 
 // ----------------------------------------------------------------------
 
@@ -312,6 +345,17 @@ void atlas__SpectralFunctionSpace__scatter_fieldset (const Spectral* This, const
     This->scatter(*global,*local);
   );
 }
+
+void atlas__SpectralFunctionSpace__norm(const Spectral* This, const field::Field* field, double norm[], int rank)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(field);
+    ASSERT(norm);
+    This->norm(*field,norm,rank);
+  );
+}
+
 
 
 }

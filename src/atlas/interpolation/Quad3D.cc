@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -22,26 +22,23 @@ namespace interpolation {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-
-Intersect Quad3D::intersects(const Ray &r, double epsilon) const
-{
+Intersect Quad3D::intersects(const Ray &r, double edgeEpsilon, double epsilon) const {
     Intersect isect; // intersection is false
 
     Triag3D T013(v00, v10, v01);
-    isect = T013.intersects(r,epsilon);
+    isect = T013.intersects(r, edgeEpsilon, epsilon);
     if(isect)
         return isect;
 
     Triag3D T231(v11, v01, v10);
-    isect = T231.intersects(r,epsilon);
-    if(isect)
-    {
+    isect = T231.intersects(r, edgeEpsilon, epsilon);
+    if(isect) {
         isect.u = 1 - isect.u;
         isect.v = 1 - isect.v;
         return isect;
     }
 
-    return isect.success(false);
+    return isect.fail();
 }
 
 bool Quad3D::validate() const {
@@ -82,16 +79,12 @@ bool Quad3D::validate() const {
     double dot10 = N302.dot(N231);
 
     // all normals must point same way
-
-    if (( dot02 >= 0. &&  dot23 >= 0. &&  dot31 >= 0. &&  dot10 >= 0. ) ||
-        ( dot02 <= 0. &&  dot23 <= 0. &&  dot31 <= 0. &&  dot10 <= 0. ))
-        return true;
-    else
-        return false;
+    bool is_inside = ( ( dot02 >= 0. &&  dot23 >= 0. &&  dot31 >= 0. &&  dot10 >= 0. ) ||
+                       ( dot02 <= 0. &&  dot23 <= 0. &&  dot31 <= 0. &&  dot10 <= 0. ) );
+    return is_inside;
 }
 
-double Quad3D::area() const
-{
+double Quad3D::area() const {
     Triag3D T013(v00, v10, v01);
     Triag3D T231(v11, v01, v10);
 
@@ -102,4 +95,3 @@ double Quad3D::area() const
 
 }  // namespace interpolation
 }  // namespace atlas
-

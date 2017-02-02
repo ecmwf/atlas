@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -114,6 +114,9 @@ public: // methods
 
     bool generated() const;
 
+    /// @brief Return the memory footprint of the mesh
+    size_t footprint() const;
+
     void cloneToDevice() const;
 
     void cloneFromDevice() const;
@@ -161,6 +164,7 @@ extern "C"
   mesh_Nodes* atlas__Mesh__nodes (Mesh* This);
   mesh_Edges* atlas__Mesh__edges (Mesh* This);
   mesh_Cells* atlas__Mesh__cells (Mesh* This);
+  size_t atlas__Mesh__footprint (Mesh* This);
 }
 #undef mesh_Nodes
 #undef mesh_Edges

@@ -12,6 +12,8 @@
 #include "ecbuild/boost_test_framework.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/runtime/Log.h"
+#include "tests/AtlasFixture.h"
+
 
 using namespace atlas::mesh;
 
@@ -32,7 +34,9 @@ namespace test {
 #define IN_FORTRAN
 #endif
 
- BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
+
+BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
 {
     IrregularConnectivity conn("mesh");
     BOOST_CHECK_EQUAL(conn.rows(),0);
@@ -453,15 +457,15 @@ BOOST_AUTO_TEST_CASE(test_multi_block_connectivity_insert) {
     mbc.insert(0, 2,5, vals);
   }
 
-  {
+  /*
     idx_t check[] = {
         31,71,61,41,42,
         11,31,33,54,56,
         3,7,1,4,5,
         6,4,56,8,4,
-        1,3,76,4,3 
+        1,3,76,4,3
       };
-  }
+  */
 
   BOOST_CHECK_EQUAL( mbc.block(0).rows(), 5 );
 
@@ -481,7 +485,7 @@ BOOST_AUTO_TEST_CASE(test_multi_block_connectivity_insert) {
       65,45,
       51,35}));
 
-  {
+  /*
     idx_t check[] = {
       31,71,61,41,42,
       11,31,33,54,56,
@@ -491,7 +495,7 @@ BOOST_AUTO_TEST_CASE(test_multi_block_connectivity_insert) {
       4,75,
       65,45,
       51,35};
-  }
+  */
 
   BOOST_CHECK_EQUAL( mbc.block(0).rows(), 5 );
   BOOST_CHECK_EQUAL( mbc.block(1).rows(), 3 );
@@ -519,7 +523,7 @@ BOOST_AUTO_TEST_CASE(test_multi_block_connectivity_insert) {
   BOOST_CHECK_EQUAL(mbc.block(1).rows(),3);
   BOOST_CHECK_EQUAL(mbc.blocks(), 2);
 
-  {
+  /*
     idx_t check[] = {
       31,71,61,41,42,
       11,31,33,54,56,
@@ -532,7 +536,7 @@ BOOST_AUTO_TEST_CASE(test_multi_block_connectivity_insert) {
       4,75,
       65,45,
       51,35};
-  }
+  */
 
   BOOST_CHECK_EQUAL( mbc.block(0)(0,0), 31);
   BOOST_CHECK_EQUAL( mbc(0, 0,0), 31);

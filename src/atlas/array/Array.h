@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -33,6 +33,8 @@ public:
   static Array* create( array::DataType, const ArrayShape& );
 
   static Array* create( array::DataType, const ArrayShape&, const ArrayLayout& );
+
+  virtual size_t footprint() const = 0;
 
   template <typename Value> static Array* create(size_t size0);
   template <typename Value> static Array* create(size_t size0, size_t size1);
@@ -108,6 +110,14 @@ public:
 
   ArraySpec& spec() {return spec_;}
 
+  // -- dangerous methods... You're on your own interpreting the raw data
+  template <typename DATATYPE> DATATYPE const* host_data() const;
+  template <typename DATATYPE> DATATYPE*       host_data();
+  template <typename DATATYPE> DATATYPE const* device_data() const;
+  template <typename DATATYPE> DATATYPE*       device_data();
+  template <typename DATATYPE> DATATYPE const* data() const;
+  template <typename DATATYPE> DATATYPE*       data();
+
 protected:
 
   ArraySpec spec_;
@@ -156,12 +166,12 @@ public:
     // This constructor is used through the Array::create() or the Array::wrap() methods
     ArrayT(ArrayDataStore*, const ArraySpec&);
 
+    virtual size_t footprint() const;
+
 private:
     template <typename T>
     friend class ArrayT_impl;
 };
-
-// --------------------------------------------------------------------------------------------
 
 } // namespace array
 } // namespace atlas

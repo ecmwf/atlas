@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 1996-2017 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,8 +7,6 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
-
-//------------------------------------------------------------------------------------------------------
 
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/Mesh.h"
@@ -22,7 +20,7 @@ using namespace eckit;
 namespace atlas {
 namespace interpolation {
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 PointSet::PointSet( const std::vector< Point >& ipts ) : npts_(ipts.size())
 {
@@ -52,7 +50,7 @@ PointSet::PointSet( mesh::Mesh& mesh )
     tree_->build(pidx.begin(), pidx.end());
 }
 
-size_t PointSet::search_unique( const Point& p, size_t idx, u_int32_t n  )
+size_t PointSet::search_unique( const Point& p, size_t idx, uint32_t n  )
 {
     PointIndex3::NodeList nearest = tree_->kNearestNeighbours( p, Kn(n) );
 
@@ -93,7 +91,7 @@ size_t PointSet::search_unique( const Point& p, size_t idx, u_int32_t n  )
     }
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace interpolation
 } // namespace atlas

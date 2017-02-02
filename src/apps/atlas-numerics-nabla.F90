@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2016 ECMWF.
+! (C) Copyright 1996-2017 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -16,6 +16,8 @@ module atlas_nabla_program_module
 use atlas_module
 use, intrinsic :: iso_c_binding, only: c_double, c_int
 implicit none
+
+  character(len=1024) :: msg
 
   type(atlas_grid_Structured) :: grid
   type(atlas_Mesh) :: mesh
@@ -152,7 +154,6 @@ INTEGER(KIND=JPIM) :: INODE2EDGE_SIZE
 INTEGER(KIND=JPIM) :: JNODE,JEDGE,JLEV,INEDGES,IP1,IP2,IEDGE,INODES
 REAL(KIND=JPRB) :: ZAVG,ZSIGN,ZMETRIC_X,ZMETRIC_Y,ZSCALE
 REAL(KIND=JPRB), ALLOCATABLE :: ZAVG_S(:,:,:)
-REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !     ------------------------------------------------------------------
 
 !IF (LHOOK) CALL DR_HOOK('FV_GRADIENT',0,ZHOOK_HANDLE)
@@ -227,16 +228,17 @@ END SUBROUTINE FV_GRADIENT
 
 
 subroutine init()
-  character(len=1024) :: grid_uid
+  use fckit_resource_module
+  character(len=:),allocatable :: grid_uid
   type(atlas_mesh_Nodes) :: mesh_nodes
 
   call atlas_init()
 
-  call atlas_resource("--grid","N24",grid_uid)
-  call atlas_resource("--levels",137,nlev)
-  call atlas_resource("--iterations",100,niter)
-  call atlas_resource("--startcount",5,startcount)
-  call atlas_resource("--outer",1,nouter)
+  call fckit_resource("--grid","N24",grid_uid)
+  call fckit_resource("--levels",137,nlev)
+  call fckit_resource("--iterations",100,niter)
+  call fckit_resource("--startcount",5,startcount)
+  call fckit_resource("--outer",1,nouter)
 
   config = atlas_Config()
   call config%set("radius",1.0)
@@ -260,8 +262,8 @@ subroutine init()
   var(:,:) = 0.
 
   mesh_nodes = mesh%nodes()
-  write(atlas_log%msg,*) "Mesh has locally ",mesh_nodes%size(), " nodes"
-  call atlas_log%info()
+  write(msg,*) "Mesh has locally ",mesh_nodes%size(), " nodes"
+  call atlas_log%info(msg)
   call mesh_nodes%final()
 
 end subroutine
@@ -286,15 +288,15 @@ end subroutine
 ! -----------------------------------------------------------------------------
 
 subroutine run()
-
+use fckit_mpi_module
 type(Timer_type) :: timer
-
+type(fckit_mpi_comm) :: mpi
 integer :: jiter, jouter
 real(c_double) :: timing_cpp, timing_f90, timing
 real(c_double) :: min_timing_cpp, min_timing_f90
-
+mpi = fckit_mpi_comm()
 call node_columns%halo_exchange(varfield)
-call atlas_mpi_barrier()
+call mpi%barrier()
 timing_cpp = 1.e10
 timing_f90 = 1.e10
 min_timing_cpp = 1.e10
@@ -309,8 +311,8 @@ do jiter = 1,niter
     timing = min(timing,timer%elapsed())
 enddo
 timing_cpp = timing
-write(atlas_log%msg,*) "timing_cpp = ", timing_cpp
-call atlas_log%info()
+write(msg,*) "timing_cpp = ", timing_cpp
+call atlas_log%info(msg)
 if( nouter == 1 .or. jouter < nouter ) then
   min_timing_cpp = min(timing_cpp,min_timing_cpp)
 endif
@@ -323,25 +325,25 @@ do jiter = 1,niter
   timing = min(timing,timer%elapsed())
 enddo
 timing_f90 = timing
-write(atlas_log%msg,*) "timing_f90 = ", timing_f90
-call atlas_log%info()
+write(msg,*) "timing_f90 = ", timing_f90
+call atlas_log%info(msg)
 if( nouter == 1 .or. jouter < nouter ) then
   min_timing_f90 = min(timing_f90,min_timing_f90)
 endif
-write(atlas_log%msg,*) "|timing_f90-timing_cpp| / timing_f90 = ", &
+write(msg,*) "|timing_f90-timing_cpp| / timing_f90 = ", &
   & abs(timing_f90-timing_cpp)/timing_f90 *100 , "%"
-call atlas_log%info()
+call atlas_log%info(msg)
 
 enddo
 
 call atlas_log%info("==================")
-write(atlas_log%msg,*) "min_timing_cpp = ", min_timing_cpp
-call atlas_log%info()
-write(atlas_log%msg,*) "min_timing_f90 = ", min_timing_f90
-call atlas_log%info()
-write(atlas_log%msg,*) "|min_timing_f90-min_timing_cpp| / min_timing_f90 = ", &
+write(msg,*) "min_timing_cpp = ", min_timing_cpp
+call atlas_log%info(msg)
+write(msg,*) "min_timing_f90 = ", min_timing_f90
+call atlas_log%info(msg)
+write(msg,*) "|min_timing_f90-min_timing_cpp| / min_timing_f90 = ", &
   & abs(min_timing_f90-min_timing_cpp)/min_timing_f90 *100 , "%"
-call atlas_log%info()
+call atlas_log%info(msg)
 end subroutine
 
 end module atlas_nabla_program_module
