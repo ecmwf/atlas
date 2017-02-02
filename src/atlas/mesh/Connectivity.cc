@@ -361,13 +361,13 @@ void IrregularConnectivity::insert( size_t position, size_t rows, const size_t c
     on_update();
 }
 
-void IrregularConnectivity::cloneToDevice() const {
+void IrregularConnectivity::cloneToDevice() {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->cloneToDevice();});
     values_view_ = array::make_device_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_device_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_device_view<size_t, 1>(*(data_[_counts_]));
 }
-void IrregularConnectivity::cloneFromDevice() const {
+void IrregularConnectivity::cloneFromDevice() {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->cloneFromDevice();});
     values_view_ = array::make_host_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_host_view<size_t, 1>(*(data_[_displs_]));
@@ -457,14 +457,14 @@ void MultiBlockConnectivity::clear()
   }
 }
 
-void MultiBlockConnectivity::cloneToDevice() const
+void MultiBlockConnectivity::cloneToDevice()
 {
   IrregularConnectivity::cloneToDevice();
   block_displs_->cloneToDevice();
   block_cols_  ->cloneToDevice();
 }
 
-void MultiBlockConnectivity::cloneFromDevice() const
+void MultiBlockConnectivity::cloneFromDevice()
 {
   IrregularConnectivity::cloneFromDevice();
   block_displs_->cloneFromDevice();
@@ -794,12 +794,12 @@ void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool
     cols_ = cols;
 }
 
-void BlockConnectivity::cloneToDevice() const {
+void BlockConnectivity::cloneToDevice() {
     values_->cloneToDevice();
     values_view_ = array::make_device_view<idx_t, 2>(*values_);
 
 }
-void BlockConnectivity::cloneFromDevice() const {
+void BlockConnectivity::cloneFromDevice() {
     values_->cloneFromDevice();
     values_view_ = array::make_host_view<idx_t, 2>(*values_);
 }
