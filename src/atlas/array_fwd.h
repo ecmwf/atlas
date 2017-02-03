@@ -53,5 +53,17 @@ template <typename Value>
 StorageView<Value>
 make_device_storageview(const Array& array);
 
+class Table;
+
+template <bool ReadOnly>
+class TableView;
+
+template <bool ReadOnly>
+class TableRow;
+
+template<bool ReadOnly=true>
+TableView<ReadOnly>
+make_table_view(const Table& table);
+
 }
 }

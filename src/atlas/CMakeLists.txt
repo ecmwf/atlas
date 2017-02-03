@@ -273,6 +273,10 @@ array/LocalView.h
 array/StorageView.h
 array/Vector.h
 array/helpers/ArrayInitializer.h
+array/Table.h
+array/Table.cc
+array/TableView.h
+array/TableView.cc
 )
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 list( APPEND atlas_array_srcs
