@@ -74,9 +74,7 @@ public:
 
     size_t rank() const { return Rank; }
     size_t size() const { return size_; }
-    bool valid() const {
-        return gt_data_view_.valid();
-    }
+    bool valid() const;
 
     bool contiguous() const {
         return (size_ == shape_[0]*strides_[0] ? true : false);
@@ -91,6 +89,8 @@ private:
     size_t shape_[Rank];
     size_t strides_[Rank];
     size_t size_;
+    ArrayDataStore const* data_store_orig_;
+    Array const* array_;
 };
 
 //------------------------------------------------------------------------------------------------------

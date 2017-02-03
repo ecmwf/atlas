@@ -118,6 +118,8 @@ public:
   template <typename DATATYPE> DATATYPE const* data() const;
   template <typename DATATYPE> DATATYPE*       data();
 
+  ArrayDataStore const* data_store() const { return data_store_.get();}
+
 protected:
 
   ArraySpec spec_;

@@ -17,7 +17,7 @@ namespace array {
 
 template< typename Value, int Rank >
 ArrayView<Value,Rank>::ArrayView( const ArrayView& other ) :
-    gt_data_view_(other.gt_data_view_) {
+    gt_data_view_(other.gt_data_view_), data_store_orig_(other.data_store_orig_), array_(other.array_) {
     std::memcpy(shape_,other.shape_,sizeof(size_t)*Rank);
     std::memcpy(strides_,other.strides_,sizeof(size_t)*Rank);
     size_ = other.size_;
@@ -26,7 +26,7 @@ ArrayView<Value,Rank>::ArrayView( const ArrayView& other ) :
 
 template< typename Value, int Rank >
 ArrayView<Value,Rank>::ArrayView(data_view_t data_view, const Array& array) :
-    gt_data_view_(data_view) {
+    gt_data_view_(data_view), data_store_orig_(array.data_store()), array_(&array) {
     using seq = ::gridtools::apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, Rank>::type>;
 
     constexpr static unsigned int ndims = data_view_t::data_store_t::storage_info_t::ndims;
@@ -42,6 +42,11 @@ ArrayView<Value,Rank>::ArrayView(data_view_t data_view, const Array& array) :
     std::memcpy(shape_, &(shapet[0]), sizeof(size_t)*Rank);
 
     size_ = gt_host_view_.storage_info().size();
+}
+
+template< typename Value, int Rank >
+bool ArrayView<Value,Rank>::valid() const {
+    return gt_data_view_.valid() && (array_->data_store() == data_store_orig_);
 }
 
 template< typename Value, int Rank >
