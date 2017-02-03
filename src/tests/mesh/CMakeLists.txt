@@ -75,7 +75,6 @@ ecbuild_add_test( TARGET atlas_test_parfields
   CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
   SOURCES    test_parfields.cc
   LIBS       atlas
-  CONDITION COMPILE_BROKEN_TESTS
 )
 
 ecbuild_add_test( TARGET atlas_test_halo
