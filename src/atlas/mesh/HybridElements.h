@@ -267,8 +267,6 @@ inline size_t HybridElements::type_idx( size_t elem_idx ) const
 
 // ------------------------------------------------------------------------------------------------------
 
-#define field_Field field::Field
-
 extern "C"
 {
 HybridElements* atlas__mesh__HybridElements__create();
@@ -280,21 +278,19 @@ MultiBlockConnectivity* atlas__mesh__HybridElements__cell_connectivity(HybridEle
 size_t atlas__mesh__HybridElements__size(const HybridElements* This);
 void atlas__mesh__HybridElements__add_elements(HybridElements* This, ElementType* elementtype, size_t nb_elements);
 void atlas__mesh__HybridElements__add_elements_with_nodes(HybridElements* This, ElementType* elementtype, size_t nb_elements, int node_connectivity[], int fortran_array);
-void atlas__mesh__HybridElements__add_field(HybridElements* This, field_Field* field);
+void atlas__mesh__HybridElements__add_field(HybridElements* This, field::Field* field);
 int atlas__mesh__HybridElements__has_field(const HybridElements* This, char* name);
 int atlas__mesh__HybridElements__nb_fields(const HybridElements* This);
 int atlas__mesh__HybridElements__nb_types(const HybridElements* This);
-field_Field* atlas__mesh__HybridElements__field_by_name(HybridElements* This, char* name);
-field_Field* atlas__mesh__HybridElements__field_by_idx(HybridElements* This, size_t idx);
-field_Field* atlas__mesh__HybridElements__global_index(HybridElements* This);
-field_Field* atlas__mesh__HybridElements__remote_index(HybridElements* This);
-field_Field* atlas__mesh__HybridElements__partition(HybridElements* This);
-field_Field* atlas__mesh__HybridElements__halo(HybridElements* This);
+field::Field* atlas__mesh__HybridElements__field_by_name(HybridElements* This, char* name);
+field::Field* atlas__mesh__HybridElements__field_by_idx(HybridElements* This, size_t idx);
+field::Field* atlas__mesh__HybridElements__global_index(HybridElements* This);
+field::Field* atlas__mesh__HybridElements__remote_index(HybridElements* This);
+field::Field* atlas__mesh__HybridElements__partition(HybridElements* This);
+field::Field* atlas__mesh__HybridElements__halo(HybridElements* This);
 
 Elements* atlas__mesh__HybridElements__elements(HybridElements* This, size_t idx);
 }
-
-#undef field_Field
 
 } // namespace mesh
 } // namespace atlas

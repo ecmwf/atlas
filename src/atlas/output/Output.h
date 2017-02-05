@@ -139,27 +139,15 @@ class OutputBuilder : public OutputFactory {
 
 // -----------------------------------------------------------------------------
 
-#define Parametrisation eckit::Parametrisation
-#define Mesh mesh::Mesh
-#define FieldSet field::FieldSet
-#define Field field::Field
-#define FunctionSpace functionspace::FunctionSpace
-
 extern "C" {
 void atlas__Output__delete(Output* This);
-Output* atlas__Output__create(const char* factory_key, Stream* stream, const Parametrisation* params);
-void atlas__Output__write_mesh(const Output* This, const Mesh* mesh, const Parametrisation* params);
-void atlas__Output__write_fieldset(const Output* This, const FieldSet* fieldset, const Parametrisation* params);
-void atlas__Output__write_field(const Output* This, const Field* field, const Parametrisation* params);
-void atlas__Output__write_fieldset_fs(const Output* This, const FieldSet* fieldset, const FunctionSpace* functionspace, const Parametrisation* params);
-void atlas__Output__write_field_fs(const Output* This, const Field* field, const FunctionSpace* functionspace, const Parametrisation* params);
+Output* atlas__Output__create(const char* factory_key, Stream* stream, const eckit::Parametrisation* params);
+void atlas__Output__write_mesh(const Output* This, const mesh::Mesh* mesh, const eckit::Parametrisation* params);
+void atlas__Output__write_fieldset(const Output* This, const field::FieldSet* fieldset, const eckit::Parametrisation* params);
+void atlas__Output__write_field(const Output* This, const field::Field* field, const eckit::Parametrisation* params);
+void atlas__Output__write_fieldset_fs(const Output* This, const field::FieldSet* fieldset, const functionspace::FunctionSpace* functionspace, const eckit::Parametrisation* params);
+void atlas__Output__write_field_fs(const Output* This, const field::Field* field, const functionspace::FunctionSpace* functionspace, const eckit::Parametrisation* params);
 }
-
-#undef FieldSet
-#undef Field
-#undef Mesh
-#undef Parametrisation
-#undef FunctionSpace
 
 } // namespace output
 } // namespace atlas

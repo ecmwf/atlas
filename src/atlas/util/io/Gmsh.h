@@ -131,26 +131,17 @@ private:
 //----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-#define mesh_Mesh mesh::Mesh
-#define field_Field field::Field
-#define field_FieldSet field::FieldSet
-#define functionspace_FunctionSpace functionspace::FunctionSpace
 
 extern "C" {
 Gmsh* atlas__Gmsh__new();
 void atlas__Gmsh__delete(Gmsh* This);
-mesh_Mesh* atlas__Gmsh__read(Gmsh* This, char* file_path);
-void atlas__Gmsh__write(Gmsh* This, mesh_Mesh* mesh, char* file_path);
-mesh_Mesh* atlas__read_gmsh(char* file_path);
-void atlas__write_gmsh_mesh(mesh_Mesh* mesh, char* file_path);
-void atlas__write_gmsh_fieldset(field_FieldSet* fieldset, functionspace_FunctionSpace* function_space, char* file_path, int mode);
-void atlas__write_gmsh_field(field_Field* field, functionspace_FunctionSpace* function_space, char* file_path, int mode);
+mesh::Mesh* atlas__Gmsh__read(Gmsh* This, char* file_path);
+void atlas__Gmsh__write(Gmsh* This, mesh::Mesh* mesh, char* file_path);
+mesh::Mesh* atlas__read_gmsh(char* file_path);
+void atlas__write_gmsh_mesh(mesh::Mesh* mesh, char* file_path);
+void atlas__write_gmsh_fieldset(field::FieldSet* fieldset, functionspace::FunctionSpace* function_space, char* file_path, int mode);
+void atlas__write_gmsh_field(field::Field* field, functionspace::FunctionSpace* function_space, char* file_path, int mode);
 }
-
-#undef field_Field
-#undef field_FieldSet
-#undef functionspace_NodeColumns
-#undef mesh_Mesh
 
 //----------------------------------------------------------------------------------------------------------------------
 

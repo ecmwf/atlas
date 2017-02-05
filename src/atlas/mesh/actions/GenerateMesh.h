@@ -33,17 +33,11 @@ namespace actions {
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-#define STRUCTUREDGRID grid::Structured
-#define grid_GridDistribution grid::GridDistribution
-#define mesh_Mesh mesh::Mesh
-extern "C"
+  extern "C"
 {
-  mesh_Mesh* atlas__generate_mesh (STRUCTUREDGRID* grid);
-  mesh_Mesh* atlas__generate_mesh_with_distribution (STRUCTUREDGRID* grid, grid_GridDistribution* distribution);
+  mesh::Mesh* atlas__generate_mesh (const grid::Structured* grid);
+  mesh::Mesh* atlas__generate_mesh_with_distribution (const grid::Structured* grid, const grid::GridDistribution* distribution);
 }
-
-#undef grid_GridDistribution
-#undef STRUCTUREDGRID
 
 // ------------------------------------------------------------------
 

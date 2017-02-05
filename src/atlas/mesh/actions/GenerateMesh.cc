@@ -36,7 +36,7 @@ Mesh* generate_mesh(const grid::Structured& rgg)
 // ------------------------------------------------------------------
 
 
-Mesh* atlas__generate_mesh(grid::Structured* rgg)
+Mesh* atlas__generate_mesh(const grid::Structured* rgg)
 {
   ATLAS_ERROR_HANDLING( return generate_mesh(*rgg); );
   return NULL;
@@ -45,7 +45,7 @@ Mesh* atlas__generate_mesh(grid::Structured* rgg)
 // ------------------------------------------------------------------
 
 
-Mesh* atlas__generate_mesh_with_distribution(grid::Structured* rgg, grid::GridDistribution* distribution)
+Mesh* atlas__generate_mesh_with_distribution(const grid::Structured* rgg, const grid::GridDistribution* distribution)
 {
   ATLAS_ERROR_HANDLING(
         mesh::generators::Structured generate;

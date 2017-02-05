@@ -437,15 +437,10 @@ private:
 //-----------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-#define functionspace_NodeColumns functionspace::NodeColumns
-#define functionspace_Spectral functionspace::Spectral
-#define grid_Grid grid::Grid
-#define field_Field field::Field
-#define field_FieldSet field::FieldSet
 
 extern "C"
 {
-  Trans* atlas__Trans__new (const grid_Grid* grid, int nsmax);
+  Trans* atlas__Trans__new (const grid::Grid* grid, int nsmax);
   void atlas__Trans__delete (Trans* trans);
   int atlas__Trans__handle (const Trans* trans);
   void atlas__Trans__distspec (const Trans* t, int nb_fields, int origin[], double global_spectra[], double spectra[]);
@@ -458,17 +453,17 @@ extern "C"
   void atlas__Trans__dirtrans_scalar (const Trans* t, int nb_fields, double scalar_fields[], double scalar_spectra[]);
   void atlas__Trans__dirtrans_wind2vordiv (const Trans* t, int nb_fields, double wind_fields[], double vorticity_spectra[], double divergence_spectra[]);
   void atlas__Trans__specnorm (const Trans* t, int nb_fields, double spectra[], double norms[], int rank);
-  void atlas__Trans__dirtrans_fieldset (const Trans* This, const field_FieldSet* gpfields, field_FieldSet* spfields, const TransParameters* parameters);
-  void atlas__Trans__dirtrans_field (const Trans* This, const field_Field* gpfield, field_Field* spfield, const TransParameters* parameters);
-  void atlas__Trans__invtrans_fieldset (const Trans* This, const field_FieldSet* spfields, field_FieldSet* gpfields, const TransParameters* parameters);
-  void atlas__Trans__invtrans_field (const Trans* This, const field_Field* spfield, field_Field* gpfield, const TransParameters* parameters);
-  void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspace_NodeColumns* gp, const field_FieldSet* gpfields, const functionspace_Spectral* sp, field_FieldSet* spfields, const TransParameters* parameters);
-  void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const functionspace_Spectral* sp, const field_FieldSet* spfields, const functionspace_NodeColumns* gp, field_FieldSet* gpfields, const TransParameters* parameters);
-  void atlas__Trans__dirtrans_field_nodes (const Trans* This, const functionspace_NodeColumns* gp, const field_Field* gpfield, const functionspace_Spectral* sp, field_Field* spfield, const TransParameters* parameters);
-  void atlas__Trans__invtrans_field_nodes (const Trans* This, const functionspace_Spectral* sp, const field_Field* spfield, const functionspace_NodeColumns* gp, field_Field* gpfield, const TransParameters* parameters);
-  void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const functionspace_NodeColumns* gp, const field_Field* gpwind, const functionspace_Spectral* sp, field_Field* spvor, field_Field* spdiv, const TransParameters* parameters);
-  void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const functionspace_Spectral* sp, const field_Field* spvor, const field_Field* spdiv, const functionspace_NodeColumns* gp, field_Field* gpwind, const TransParameters* parameters);
-  void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const functionspace_Spectral* sp, const field_Field* spfield, const functionspace_NodeColumns* gp, field_Field* gpfield);
+  void atlas__Trans__dirtrans_fieldset (const Trans* This, const field::FieldSet* gpfields, field::FieldSet* spfields, const TransParameters* parameters);
+  void atlas__Trans__dirtrans_field (const Trans* This, const field::Field* gpfield, field::Field* spfield, const TransParameters* parameters);
+  void atlas__Trans__invtrans_fieldset (const Trans* This, const field::FieldSet* spfields, field::FieldSet* gpfields, const TransParameters* parameters);
+  void atlas__Trans__invtrans_field (const Trans* This, const field::Field* spfield, field::Field* gpfield, const TransParameters* parameters);
+  void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspace::NodeColumns* gp, const field::FieldSet* gpfields, const functionspace::Spectral* sp, field::FieldSet* spfields, const TransParameters* parameters);
+  void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const functionspace::Spectral* sp, const field::FieldSet* spfields, const functionspace::NodeColumns* gp, field::FieldSet* gpfields, const TransParameters* parameters);
+  void atlas__Trans__dirtrans_field_nodes (const Trans* This, const functionspace::NodeColumns* gp, const field::Field* gpfield, const functionspace::Spectral* sp, field::Field* spfield, const TransParameters* parameters);
+  void atlas__Trans__invtrans_field_nodes (const Trans* This, const functionspace::Spectral* sp, const field::Field* spfield, const functionspace::NodeColumns* gp, field::Field* gpfield, const TransParameters* parameters);
+  void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const functionspace::NodeColumns* gp, const field::Field* gpwind, const functionspace::Spectral* sp, field::Field* spvor, field::Field* spdiv, const TransParameters* parameters);
+  void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const functionspace::Spectral* sp, const field::Field* spvor, const field::Field* spdiv, const functionspace::NodeColumns* gp, field::Field* gpwind, const TransParameters* parameters);
+  void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const functionspace::Spectral* sp, const field::Field* spfield, const functionspace::NodeColumns* gp, field::Field* gpfield);
 
   int atlas__Trans__nproc (const Trans* This);
   int atlas__Trans__myproc (const Trans* This, int proc0);
@@ -497,11 +492,6 @@ extern "C"
   TransParameters* atlas__TransParameters__new ();
   void atlas__TransParameters__delete (TransParameters* parameters);
 }
-#undef grid_Grid
-#undef field_FieldSet
-#undef field_Field
-#undef functionspace_NodeColumns
-#undef functionspace_Spectral
 
 // ------------------------------------------------------------------
 

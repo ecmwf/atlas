@@ -91,27 +91,20 @@ private: // data
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-#define Trans trans::Trans
-#define field_Field field::Field
-#define field_FieldSet field::FieldSet
-#define Options eckit::Parametrisation
 extern "C"
 {
   Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation);
-  Spectral* atlas__SpectralFunctionSpace__new__trans (Trans* trans);
+  Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans);
   void atlas__SpectralFunctionSpace__delete (Spectral* This);
-  field_Field* atlas__fs__Spectral__create_field_name_kind(const Spectral* This, const char* name, int kind, const Options* options);
-  field_Field* atlas__fs__Spectral__create_field_name_kind_lev(const Spectral* This, const char* name, int kind, int levels, const Options* options);
-  void atlas__SpectralFunctionSpace__gather(const Spectral* This, const field_Field* local, field_Field* global);
-  void atlas__SpectralFunctionSpace__gather_fieldset(const Spectral* This, const field_FieldSet* local, field_FieldSet* global);
-  void atlas__SpectralFunctionSpace__scatter(const Spectral* This, const field_Field* global, field_Field* local);
-  void atlas__SpectralFunctionSpace__scatter_fieldset(const Spectral* This, const field_FieldSet* global, field_FieldSet* local);
-  void atlas__SpectralFunctionSpace__norm(const Spectral* This, const field_Field* field, double norm[], int rank);
+  field::Field* atlas__fs__Spectral__create_field_name_kind(const Spectral* This, const char* name, int kind, const eckit::Parametrisation* options);
+  field::Field* atlas__fs__Spectral__create_field_name_kind_lev(const Spectral* This, const char* name, int kind, int levels, const eckit::Parametrisation* options);
+  void atlas__SpectralFunctionSpace__gather(const Spectral* This, const field::Field* local, field::Field* global);
+  void atlas__SpectralFunctionSpace__gather_fieldset(const Spectral* This, const field::FieldSet* local, field::FieldSet* global);
+  void atlas__SpectralFunctionSpace__scatter(const Spectral* This, const field::Field* global, field::Field* local);
+  void atlas__SpectralFunctionSpace__scatter_fieldset(const Spectral* This, const field::FieldSet* global, field::FieldSet* local);
+  void atlas__SpectralFunctionSpace__norm(const Spectral* This, const field::Field* field, double norm[], int rank);
 }
-#undef Trans
-#undef field_Field
-#undef field_FieldSet
-#undef Options
+
 } // namespace functionspace
 } // namespace atlas
 

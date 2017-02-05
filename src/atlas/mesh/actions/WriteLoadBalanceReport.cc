@@ -220,7 +220,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 // ------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-void atlas__write_load_balance_report (Mesh* mesh, char* filename)
+void atlas__write_load_balance_report (const Mesh* mesh, char* filename)
 {
   ATLAS_ERROR_HANDLING( write_load_balance_report( *mesh, std::string(filename) ) );
 }

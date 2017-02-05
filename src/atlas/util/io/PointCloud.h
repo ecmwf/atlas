@@ -123,23 +123,15 @@ namespace io {
 
 
 // C wrapper interfaces to C++ routines
-#define mesh_Mesh mesh::Mesh
-#define field_Field field::Field
-#define functionspace_FunctionSpace functionspace::FunctionSpace
-
- extern "C"
+extern "C"
 {
   PointCloud* atlas__pointcloud__new ();
   void atlas__pointcloud__delete(PointCloud* This);
-  mesh_Mesh* atlas__pointcloud__read(PointCloud* This, char* file_path);
-  mesh_Mesh* atlas__read_pointcloud(char* file_path);
-  void atlas__write_pointcloud_fieldset(char* file_path, const field_Field* fieldset, const functionspace_FunctionSpace* functionspace);
-  void atlas__write_pointcloud_field(char* file_path, const field_Field* field, const functionspace_FunctionSpace* functionspace);
+  mesh::Mesh* atlas__pointcloud__read(PointCloud* This, char* file_path);
+  mesh::Mesh* atlas__read_pointcloud(char* file_path);
+  void atlas__write_pointcloud_fieldset(char* file_path, const field::Field* fieldset, const functionspace::FunctionSpace* functionspace);
+  void atlas__write_pointcloud_field(char* file_path, const field::Field* field, const functionspace::FunctionSpace* functionspace);
 }
-
-#undef mesh_Mesh
-#undef field_Field
-#undef functionspace_FunctionSpace
 
 } // namespace io
 } // namespace util

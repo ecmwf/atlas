@@ -118,21 +118,14 @@ class MeshGeneratorBuilder : public MeshGeneratorFactory {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-#define Parametrisation eckit::Parametrisation
-#define grid_Grid grid::Grid
-#define grid_GridDistribution grid::GridDistribution
-
 extern "C" {
 void atlas__MeshGenerator__delete(MeshGenerator* This);
 MeshGenerator* atlas__MeshGenerator__create_noconfig(const char* name);
-MeshGenerator* atlas__MeshGenerator__create(const char* name, const Parametrisation* params);
-Mesh* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator* This, const grid_Grid* grid, const grid_GridDistribution* distribution);
-Mesh* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid_Grid* grid);
+MeshGenerator* atlas__MeshGenerator__create(const char* name, const eckit::Parametrisation* params);
+Mesh* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator* This, const grid::Grid* grid, const grid::GridDistribution* distribution);
+Mesh* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid::Grid* grid);
 }
 
-#undef grid_Grid
-#undef grid_GridDistribution
-#undef Parametrisation
 
 //----------------------------------------------------------------------------------------------------------------------
 

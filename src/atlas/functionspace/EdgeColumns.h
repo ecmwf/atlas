@@ -24,6 +24,8 @@ namespace atlas {
 namespace mesh {
     class Mesh;
     class HybridElements;
+    typedef HybridElements Edges;
+    typedef HybridElements Cells;
 }
 }
 
@@ -206,59 +208,40 @@ field::Field* EdgeColumns::createField(
 }
 
 // -------------------------------------------------------------------------------
-#define mesh_Edges mesh::HybridElements
-#define Char char
-#define GatherScatter parallel::GatherScatter
-#define Checksum parallel::Checksum
-#define HaloExchange parallel::HaloExchange
-#define field_Field field::Field
-#define field_FieldSet field::FieldSet
-#define mesh_Mesh mesh::Mesh
-#define Options eckit::Parametrisation
 
 extern "C" {
 
-EdgeColumns* atlas__functionspace__Edges__new (mesh_Mesh* mesh, int halo);
-EdgeColumns* atlas__functionspace__Edges__new_mesh (mesh_Mesh* mesh);
+EdgeColumns* atlas__functionspace__Edges__new (mesh::Mesh* mesh, int halo);
+EdgeColumns* atlas__functionspace__Edges__new_mesh (mesh::Mesh* mesh);
 void atlas__functionspace__Edges__delete (EdgeColumns* This);
 int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This);
-mesh_Mesh* atlas__functionspace__Edges__mesh(EdgeColumns* This);
-mesh_Edges* atlas__functionspace__Edges__edges(EdgeColumns* This);
-field_Field* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind, const Options* options);
-field_Field* atlas__functionspace__Edges__create_field_vars (const EdgeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const Options* options);
+mesh::Mesh* atlas__functionspace__Edges__mesh(EdgeColumns* This);
+mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This);
+field::Field* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
+field::Field* atlas__functionspace__Edges__create_field_vars (const EdgeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
 
-field_Field* atlas__functionspace__Edges__create_field_lev (const EdgeColumns* This, const char* name, int levels, int kind, const Options* options);
-field_Field* atlas__functionspace__Edges__create_field_lev_vars (const EdgeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const Options* options);
+field::Field* atlas__functionspace__Edges__create_field_lev (const EdgeColumns* This, const char* name, int levels, int kind, const eckit::Parametrisation* options);
+field::Field* atlas__functionspace__Edges__create_field_lev_vars (const EdgeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
 
 
-field_Field* atlas__functionspace__Edges__create_field_template (const EdgeColumns* This, const char* name, const field_Field* field_template, const Options* options);
+field::Field* atlas__functionspace__Edges__create_field_template (const EdgeColumns* This, const char* name, const field::Field* field_template, const eckit::Parametrisation* options);
 
-void atlas__functionspace__Edges__halo_exchange_fieldset(const EdgeColumns* This, field_FieldSet* fieldset);
-void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, field_Field* field);
-const HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const EdgeColumns* This);
+void atlas__functionspace__Edges__halo_exchange_fieldset(const EdgeColumns* This, field::FieldSet* fieldset);
+void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, field::Field* field);
+const parallel::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__gather_fieldset(const EdgeColumns* This, const field_FieldSet* local, field_FieldSet* global);
-void atlas__functionspace__Edges__gather_field(const EdgeColumns* This, const field_Field* local, field_Field* global);
-const GatherScatter* atlas__functionspace__Edges__get_gather(const EdgeColumns* This);
+void atlas__functionspace__Edges__gather_fieldset(const EdgeColumns* This, const field::FieldSet* local, field::FieldSet* global);
+void atlas__functionspace__Edges__gather_field(const EdgeColumns* This, const field::Field* local, field::Field* global);
+const parallel::GatherScatter* atlas__functionspace__Edges__get_gather(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, const field_FieldSet* global, field_FieldSet* local);
-void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const field_Field* global, field_Field* local);
-const GatherScatter* atlas__functionspace__Edges__get_scatter(const EdgeColumns* This);
+void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, const field::FieldSet* global, field::FieldSet* local);
+void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const field::Field* global, field::Field* local);
+const parallel::GatherScatter* atlas__functionspace__Edges__get_scatter(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__checksum_fieldset(const EdgeColumns* This, const field_FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
-void atlas__functionspace__Edges__checksum_field(const EdgeColumns* This, const field_Field* field, Char* &checksum, int &size, int &allocated);
-const Checksum* atlas__functionspace__Edges__get_checksum(const EdgeColumns* This);
+void atlas__functionspace__Edges__checksum_fieldset(const EdgeColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated);
+void atlas__functionspace__Edges__checksum_field(const EdgeColumns* This, const field::Field* field, char* &checksum, int &size, int &allocated);
+const parallel::Checksum* atlas__functionspace__Edges__get_checksum(const EdgeColumns* This);
 }
-
-#undef mesh_Edges
-#undef Char
-#undef GatherScatter
-#undef Checksum
-#undef HaloExchange
-#undef field_Field
-#undef field_FieldSet
-#undef mesh_Mesh
-#undef Options
 
 } // namespace functionspace
 } // namespace atlas

@@ -252,7 +252,6 @@ inline size_t Elements::end() const
 
 // ------------------------------------------------------------------------------------------------------
 
-# define field_Field field::Field
 extern "C"
 {
 void atlas__mesh__Elements__delete(Elements* This);
@@ -264,17 +263,16 @@ BlockConnectivity* atlas__mesh__Elements__edge_connectivity(Elements* This);
 BlockConnectivity* atlas__mesh__Elements__cell_connectivity(Elements* This);
 int atlas__mesh__Elements__has_field(const Elements* This, char* name);
 int atlas__mesh__Elements__nb_fields(const Elements* This);
-field_Field* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx);
-field_Field* atlas__mesh__Elements__field_by_name(Elements* This, char* name);
-field_Field* atlas__mesh__Elements__global_index(Elements* This);
-field_Field* atlas__mesh__Elements__remote_index(Elements* This);
-field_Field* atlas__mesh__Elements__partition(Elements* This);
-field_Field* atlas__mesh__Elements__halo(Elements* This);
+field::Field* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx);
+field::Field* atlas__mesh__Elements__field_by_name(Elements* This, char* name);
+field::Field* atlas__mesh__Elements__global_index(Elements* This);
+field::Field* atlas__mesh__Elements__remote_index(Elements* This);
+field::Field* atlas__mesh__Elements__partition(Elements* This);
+field::Field* atlas__mesh__Elements__halo(Elements* This);
 const ElementType* atlas__mesh__Elements__element_type(const Elements* This);
 void atlas__mesh__Elements__add(Elements* This, size_t nb_elements);
 }
 
-#undef field_Field
 //------------------------------------------------------------------------------------------------------
 
 } // namespace mesh

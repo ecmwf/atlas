@@ -68,21 +68,13 @@ private: // data
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-#define Parametrisation eckit::Parametrisation
-#define mesh_Mesh mesh::Mesh
-#define functionspace_NodeColumns functionspace::NodeColumns
-#define functionspace_EdgeColumns functionspace::EdgeColumns
 
 extern "C"
 {
-  Method* atlas__numerics__fvm__Method__new (mesh_Mesh* mesh, const Parametrisation* params);
-  functionspace_NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This);
-  functionspace_EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This);
+  Method* atlas__numerics__fvm__Method__new (mesh::Mesh* mesh, const eckit::Parametrisation* params);
+  functionspace::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This);
+  functionspace::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This);
 }
-#undef Parametrisation
-#undef mesh_Mesh
-#undef functionspace_NodeColumns
-#undef functionspace_EdgeColumns
 
 } // namespace fvm
 } // namespace numerics

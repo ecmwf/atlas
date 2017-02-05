@@ -150,10 +150,6 @@ inline Nodes::Connectivity& Nodes::cell_connectivity()
   return *cell_connectivity_;
 }
 
-
-#define Char char
-#define util_Metadata util::Metadata
-#define field_Field field::Field
 extern "C"
 {
 Nodes* atlas__mesh__Nodes__create();
@@ -161,26 +157,24 @@ void atlas__mesh__Nodes__delete (Nodes* This);
 size_t atlas__mesh__Nodes__size (Nodes* This);
 void atlas__mesh__Nodes__resize (Nodes* This, size_t size);
 size_t atlas__mesh__Nodes__nb_fields (Nodes* This);
-void atlas__mesh__Nodes__add_field (Nodes* This, field_Field* field);
+void atlas__mesh__Nodes__add_field (Nodes* This, field::Field* field);
 void atlas__mesh__Nodes__remove_field (Nodes* This, char* name);
 int atlas__mesh__Nodes__has_field (Nodes* This, char* name);
-field_Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name);
-field_Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, size_t idx);
-util_Metadata* atlas__mesh__Nodes__metadata(Nodes* This);
-void atlas__mesh__Nodes__str (Nodes* This, Char* &str, int &size);
+field::Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name);
+field::Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, size_t idx);
+util::Metadata* atlas__mesh__Nodes__metadata(Nodes* This);
+void atlas__mesh__Nodes__str (Nodes* This, char* &str, int &size);
 IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity(Nodes* This);
 IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This);
 IrregularConnectivity* atlas__mesh__Nodes__connectivity (Nodes* This, char* name);
 void atlas__mesh__Nodes__add_connectivity (Nodes* This, IrregularConnectivity* connectivity);
-field_Field* atlas__mesh__Nodes__lonlat(Nodes* This);
-field_Field* atlas__mesh__Nodes__global_index(Nodes* This);
-field_Field* atlas__mesh__Nodes__remote_index(Nodes* This);
-field_Field* atlas__mesh__Nodes__partition(Nodes* This);
-field_Field* atlas__mesh__Nodes__ghost(Nodes* This);
+field::Field* atlas__mesh__Nodes__lonlat(Nodes* This);
+field::Field* atlas__mesh__Nodes__global_index(Nodes* This);
+field::Field* atlas__mesh__Nodes__remote_index(Nodes* This);
+field::Field* atlas__mesh__Nodes__partition(Nodes* This);
+field::Field* atlas__mesh__Nodes__ghost(Nodes* This);
 }
-#undef Char
-#undef util_Metadata
-#undef field_Field
+
 //------------------------------------------------------------------------------------------------------
 
 } // namespace mesh

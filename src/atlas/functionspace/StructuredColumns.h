@@ -138,29 +138,17 @@ inline field::Field* StructuredColumns::createField(
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-#define Char char
-#define grid_Grid grid::Grid
-#define field_Field field::Field
-#define field_FieldSet field::FieldSet
-#define Options eckit::Parametrisation
 extern "C"
 {
-  StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid_Grid* grid);
+  StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid::Grid* grid);
   void atlas__functionspace__StructuredColumns__delete (StructuredColumns* This);
-  field_Field* atlas__fs__StructuredColumns__create_field_name_kind (const StructuredColumns* This, const char* name, int kind, const Options* options);
-  field_Field* atlas__fs__StructuredColumns__create_field_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels, const Options* options);
-  void atlas__functionspace__StructuredColumns__gather (const StructuredColumns* This, const field_Field* local, field_Field* global);
-  void atlas__functionspace__StructuredColumns__scatter (const StructuredColumns* This, const field_Field* global, field_Field* local);
-  void atlas__fs__StructuredColumns__checksum_fieldset(const StructuredColumns* This, const field_FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
-  void atlas__fs__StructuredColumns__checksum_field(const StructuredColumns* This, const field_Field* field, Char* &checksum, int &size, int &allocated);
+  field::Field* atlas__fs__StructuredColumns__create_field_name_kind (const StructuredColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
+  field::Field* atlas__fs__StructuredColumns__create_field_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels, const eckit::Parametrisation* options);
+  void atlas__functionspace__StructuredColumns__gather (const StructuredColumns* This, const field::Field* local, field::Field* global);
+  void atlas__functionspace__StructuredColumns__scatter (const StructuredColumns* This, const field::Field* global, field::Field* local);
+  void atlas__fs__StructuredColumns__checksum_fieldset(const StructuredColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated);
+  void atlas__fs__StructuredColumns__checksum_field(const StructuredColumns* This, const field::Field* field, char* &checksum, int &size, int &allocated);
 }
-
-#undef grid_Grid
-#undef field_FieldSet
-#undef field_Field
-#undef Char
-#undef Options
-
 
 } // namespace functionspace
 } // namespace atlas

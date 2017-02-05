@@ -140,12 +140,10 @@ class StateGeneratorBuilder : public StateGeneratorFactory {
 // ------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-#define util_Metadata util::Metadata
-#define eckit_Parametrisation eckit::Parametrisation
 extern "C"
 {
   State* atlas__State__new ();
-  void atlas__State__initialize (State* This, const char* generator, const eckit_Parametrisation* params);
+  void atlas__State__initialize (State* This, const char* generator, const eckit::Parametrisation* params);
   void atlas__State__delete (State* This);
   void atlas__State__add (State* This, Field* field);
   void atlas__State__remove (State* This, const char* name);
@@ -153,10 +151,8 @@ extern "C"
   Field* atlas__State__field_by_name (State* This, const char* name);
   Field* atlas__State__field_by_index (State* This, int index);
   int atlas__State__size(const State* This);
-  util_Metadata* atlas__State__metadata (State* This);
+  util::Metadata* atlas__State__metadata (State* This);
 }
-#undef util_Metadata
-#undef eckit_Parametrisation
 
 } // namespace field
 } // namespace atlas

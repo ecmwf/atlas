@@ -80,19 +80,17 @@ private:
 };
 
 // ------------------------------------------------------------------
-#define Parametrisation eckit::Parametrisation
-#define field_Field field::Field
+
 extern "C" {
 
 void atlas__Nabla__delete (Nabla* This);
-Nabla* atlas__Nabla__create (const Method* method, const Parametrisation* params);
-void atlas__Nabla__gradient (const Nabla* This, const field_Field* scalar, field_Field* grad);
-void atlas__Nabla__divergence (const Nabla* This, const field_Field* vector, field_Field* div);
-void atlas__Nabla__curl (const Nabla* This, const field_Field* vector, field_Field* curl);
-void atlas__Nabla__laplacian (const Nabla* This, const field_Field* scalar, field_Field* laplacian);
+Nabla* atlas__Nabla__create (const Method* method, const eckit::Parametrisation* params);
+void atlas__Nabla__gradient (const Nabla* This, const field::Field* scalar, field::Field* grad);
+void atlas__Nabla__divergence (const Nabla* This, const field::Field* vector, field::Field* div);
+void atlas__Nabla__curl (const Nabla* This, const field::Field* vector, field::Field* curl);
+void atlas__Nabla__laplacian (const Nabla* This, const field::Field* scalar, field::Field* laplacian);
+
 }
-#undef field_Field
-#undef Parametrisation
 
 } // namespace numerics
 } // namespace atlas
