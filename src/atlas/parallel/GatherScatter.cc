@@ -12,7 +12,6 @@
 #include <numeric>
 #include <iostream>
 #include <sstream>
-#include "atlas/internals/Checksum.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/runtime/Log.h"

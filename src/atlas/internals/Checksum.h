@@ -2,9 +2,6 @@
 #ifndef atlas_Checksum_h
 #define atlas_Checksum_h
 
-#include <sstream>
-#include <limits>
-
 namespace atlas {
 namespace internals {
 typedef unsigned long checksum_t;
