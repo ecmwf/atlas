@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# (C) Copyright 1996-2014 ECMWF.
+# (C) Copyright 1996-2017 ECMWF.
 # 
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -8,241 +8,345 @@
 # does it submit to any jurisdiction.
 
 #! /usr/bin/env python
+
 from argparse import ArgumentParser
 import re
-import os
+import time
+
+INDENT = "    "
+
+supported = [
+    'void',
+    'char',
+    'short',
+    'int',
+    'long',
+    'size_t',
+    'float',
+    'double',
+    '_Bool'
+]
+
+c2ftype = {
+    'char':'character(c_char)',
+    'short':'integer(c_short)',
+    'int':'integer(c_int)',
+    'long':'integer(c_long)',
+    'size_t':'integer(c_size_t)',
+    'float':'real(c_float)',
+    'double':'real(c_double)',
+    "_Bool":"logical(c_bool)",
+}
+
+ftype2use = {
+    'character(c_char)':'c_char',
+    'integer(c_short)':'c_short',
+    'integer(c_int)':'c_int',
+    'integer(c_long)':'c_long',
+    'integer(c_size_t)':'c_size_t',
+    'real(c_float)':'c_float',
+    'real(c_double)':'c_double',
+    'logical(c_bool)':'_Bool'
+}
+
+function_signature = re.compile('''^
+(                                            #1 Type
+  (const\s+)?                                #2 Leading const
+  ([^\*\&\s\[]+)                             #3
+  \s*
+  (\&|\*)?                                   #4
+  \s*
+  (const)?                                   #5
+  \s*
+  (\&|\*)?                                   #6
+  \s*
+)
+(.+?)\s*                                   #7 Function name
+\((.*?)\)$                                 #8 Argument list
+''',re.VERBOSE)
+
+class ParsingFailed(Exception):
+    def __init__(self,msg):
+        Exception.__init__(self, msg)
+
+class Argument:
+
+    arg_signature = re.compile('''^
+    (                                            #1 Type
+      (const\s+)?                                #2 Leading const
+      ([^\*\&\s\[]+)                             #3
+      \s*
+      (\&|\*)?                                   #4
+      \s*
+      (const)?                                   #5
+      \s*
+      (\&|\*)?                                   #6
+      \s+?
+      (\&|\*)?                                   #7
+    )
+    (.+?)      #8
+    (\[\])?$   #9
+    ''',re.VERBOSE)
+
+    def __init__(self,arg,debug=False):
+        self.c = arg
+        self.type=""
+        self.value=""
+        self.ref=False
+        
+        match = Argument.arg_signature.match(arg)
+        if not match:
+            raise ParsingFailed("Could not parse argument "+arg)
+
+        self.type  = str(match.group(1)).strip()
+        self.base_type  = str(match.group(3)).strip()
+        self.name = str(match.group(8)).strip()
+        if( match.group(9) and self.base_type in supported ):
+            self.array = True
+        else:
+            self.array = False
+        
+        if( "&" in self.type ):
+            self.ref = True
+        else:
+            self.ref = False
+        
+        if( "*" in self.type ):
+            self.ptr = True
+        else:
+            self.ptr = False
+        
+        if debug:
+            print "name = ",self.name
+            print "type = ",self.type
+            print "base_type = ",self.base_type
+            print "array = ",self.array
+            print "ref = ",self.ref
+            print "ptr = ",self.ptr
+ 
+        self.use = set()
+        self.fortran = ""
+        if( self.base_type == "char" and self.ptr and not self.ref  ) :
+            self.fortran += "character(c_char), dimension(*)"
+            self.use.add("c_char")
+        else:
+            if(self.ptr):
+                self.fortran += "type(c_ptr)"
+                self.use.add("c_ptr")
+            else:
+                try:
+                    ftype = c2ftype[self.base_type]
+                    self.fortran += ftype
+                    self.use.add(ftype2use[ftype])
+                except KeyError:
+                    raise ParsingFailed("Could not parse argument "+arg)
+
+            if( self.array ):
+                self.fortran += ", dimension(*)"
+
+            elif( not self.ref ):
+                self.fortran += ", value"
+                
+        self.fortran += " :: "+self.name
+        
+        if( debug ):
+            print self.fortran
+
+class ReturnType:
+
+    def __init__(self,line):
+
+        match = function_signature.match(line)
+        if( not match ):
+            raise ParsingFailed("Could not parse return type for line "+line)
+        self.type = str(match.group(1)).strip()
+        self.base_type = str(match.group(3)).strip()
+        self.ptr = match.group(4) or match.group(6)
+        self.use = set()
+        self.ftype = ""
+
+        if( self.type != "void" ):
+            
+            if( self.ptr ):
+                self.ftype = "type(c_ptr)"
+                self.use.add("c_ptr")
+            else:
+                if( not self.type in supported ):
+                    raise ParsingFailed("Cannot return type "+self.type+" for statement "+str(line))
+                try:
+                    self.ftype = c2ftype[self.base_type]
+                    self.use.add(ftype2use[self.ftype])
+                except KeyError:
+                    raise ParsingFailed("Could not parse return type for statement "+line)
+
+    def __nonzero__(self):
+        if( self.type == "void" ):
+            return 0
+        else:
+            return 1
+        
+class Function:
+    
+    def __init__(self,line):
+        self.line = line
+        self.return_type = ReturnType(line)
+        self.name = self.extract_function_name(line)
+        self.arguments = [ Argument(function_arg) for function_arg in self.extract_function_args(line) ]
+
+    def extract_function_name(self,line):
+        match = function_signature.match(line)
+        if match:
+            fn = str(match.group(7))
+            return fn
+
+    def extract_function_args(self,line):
+        match = function_signature.match(line)
+        if match:
+            args = str(match.group(8)).strip()
+            if args:
+                return [arg.strip() for arg in args.split(',')]
+        return []
+
+    def fix_fortran_linewidth(self,code,linewidth):
+        newcode = ""
+        for line in code.split('\n'):
+            comment = line.strip()[0] == "!"
+            if comment :
+                width = linewidth
+                end = ''
+                begin = '!   '
+            else :
+                width = linewidth-1
+                begin = "  "+"&"
+                end = "&"
+            while len(line) > width:
+                newcode += line[:width] + end + "\n"
+                line = begin + line[width:]
+            newcode += line + "\n"
+        return newcode
+
+    def fortran_interface(self,linewidth=80):
+        sep = '!'+'-'*(linewidth-1)
+        intf = sep+"\n"
+        intf += "! "+self.line+"\n"
+        intf += sep+"\n"
+        if( self.return_type ):
+            intf += "function "
+        else:
+            intf += "subroutine "
+        intf += self.name+"("
+
+        if self.arguments:
+            intf += " "+", ".join([arg.name for arg in self.arguments])+" "
+        intf += ")"+" bind(C,name=\""+self.name+"\")\n"
+        
+        self.use = set()
+        self.use.update(self.return_type.use)
+        for arg in self.arguments:
+            self.use.update(arg.use)
+        if( self.use ):
+            intf += INDENT+"use iso_c_binding, only: "+", ".join(self.use)+"\n"
+
+        
+        if( self.return_type ):
+            intf += INDENT+self.return_type.ftype + " :: " + self.name + "\n"
+        for arg in self.arguments:
+            intf += INDENT+arg.fortran + "\n"
+        
+        if( self.return_type ):
+            intf += "end function\n"
+        else:
+            intf += "end subroutine\n"
+
+        intf += sep
+        
+        intf = self.fix_fortran_linewidth(intf,linewidth)
+        return intf
+
+class Code:
+    
+    def __init__(self):
+        self.content=''
+    
+    def readline(self,line):
+        self.content+=line
+    
+    def statements(self):
+        self.statements = [ statement.strip() for statement in self.content.split(';')[:-1] ]
+        return self.statements
+
+# -----------------------------------------------------------------------------
+
 parser = ArgumentParser()
-parser.add_argument("files", type=str, nargs='*', help="files to parse")
+parser.add_argument("file", type=str, help="file to parse")
 parser.add_argument("-o", "--output", type=str, help="output")
 parser.add_argument("-m", "--module", type=str, help="module")
 parsed = parser.parse_args()
-files = parsed.files
+input  = parsed.file
 output = parsed.output
 module = parsed.module
-used_types = []
+if not module:
+    module = output
+    module = str(re.sub(r'(.+)(\..+)',r'\1',module))
+    module.replace('-','_')
 
-# A tabulation:
-TAB = "  "
+code = Code()
 
-# -------------------------------------------------------------------------
-# These dictionaries give the Fortran type and its KIND for each C type:
-# -------------------------------------------------------------------------
-# One word types:
-TYPES_DICT = { 
-    "int":("integer(c_int)","c_int"),
-    "long":("integer(c_long)","c_long"),
-    "short":("integer(c_short)","c_short"),
-    "_Bool":("logical(c_bool)","c_bool"),
-    "boolean":("logical(c_bool)","c_bool"),
-    "double": ("real(c_double)","c_double"),
-    "float":("real(c_float)","c_float"),
-    "size_t":  ("integer(c_size_t)","c_size_t"),
-     }
-
-# Two words types:
-TYPES2_DICT = {
-    "long double": ("real(c_long_double)","c_long_double"),
-    "unsigned long":("integer(c_long)","c_long"),
-    "unsigned short":("integer(c_short)","c_short"),
-    "unsigned int":("integer(c_int)","c_int"),
-    }
-
-class ParsingError(Exception):
-    def __init__(self, message):
-
-        # Call the base class constructor with the parameters it needs
-        Exception.__init__(self, message)
-
-#---------------------------------------------------------------------------
-# Regular expressions used to identify the different parts of a C c_line:
-#---------------------------------------------------------------------------
-REGEX_RETURNED_TYPE = re.compile( "^ *([_0-9a-zA-Z ]+ *\**&?)" )
-REGEX_FUNCTION_NAME = re.compile( "([0-9a-zA-Z_]+) *\(" )
-REGEX_ARGUMENTS = re.compile( "\(([&0-9a-zA-Z_\s\,\*\[\]]*)\).*;$" )
-REGEX_ARGS = re.compile( " *([&0-9a-zA-Z_\s\*\[\]]+),?" )
-REGEX_VAR_TYPE = re.compile( " *([_0-9a-zA-Z]+)[ |\*]" )
-REGEX_TYPE = re.compile( "^ *((const )?\w+)[ \*]?" )
-REGEX_VAR_NAME = re.compile( "[ |\*&]([_0-9a-zA-Z]+)(?:\[\])?$" )
-
-def multiline(line, maxlength): 
-    """Split a long line in a multiline, following Fortran syntax."""
-    result = ""
-    while len(line) > maxlength-1:
-        result += line[0:maxlength-1] + "&\n"
-        line = "&"+ line[maxlength-1:]
-    result += line
-    return result
-
-def iso_c_binding(declaration, returned):
-    """ Returns the Fortran type corresponding to a C type in the 
-        ISO_C_BINDING module and the KIND type """
-    global REGEX_TYPE
-    global TYPES_DICT
-
-    try:
-        c_type = REGEX_TYPE.search(declaration).group(1)
-    except AttributeError:
-        return "?", "?"    # error
-
-    # Is it an array ?
-    if declaration.find("[") != -1:
-        array = ", dimension(*)"
-    else:
-        array = ""
-
-    # Is it a pointer ?
-    if declaration.find("*") != -1:
-        # Is it a string (char or gchar array) ?
-        # TODO: what about "unsigned char"   "guchar" gunichar ?
-        if ((c_type.find("char") != -1) or (c_type.find("char*") != -1)) and (not returned):
-            if declaration.find("**") != -1:
-                return "type(c_ptr), dimension(*)", "c_ptr"
-            else:
-                return "character(kind=c_char), dimension(*)", "c_char"
-        else:
-            return "type(c_ptr)", "c_ptr"
-
-    # Other cases:
-    if len(declaration.split()) >= 3:   # Two words type
-        for each in TYPES2_DICT:
-            if set(each.split()).issubset(set(declaration.split())):
-                return TYPES2_DICT[each][0] + array, TYPES2_DICT[each][1]
-    else:  # It is a one word type
-        for each in TYPES_DICT:
-            if each in c_type.split():
-                return TYPES_DICT[each][0] + array, TYPES_DICT[each][1]
-
-    # It is finally an unknown type:
-    return "?", "?"
-
-def C_F_binding(c_line):
-
-    type_returned = REGEX_RETURNED_TYPE.search(c_line)
-    try:
-        function_type = type_returned.group(1)
-    except AttributeError:
-        raise ParsingError, "Returned type not found "+ c_line
-
-    # Will it be a Fortran function or a subroutine ?
-    if (function_type.find("void") != -1) and (function_type.find("*") == -1):
-        f_procedure = "subroutine "
-        f_the_end   = "end subroutine"
-        isfunction  = False
-        f_use       = ""
-    else:
-        f_procedure = "function "
-        f_the_end   = "end function"
-        isfunction  = True
-        returned_type, iso_c = iso_c_binding(type_returned.group(1), True)
-        f_use = iso_c
-        if returned_type.find("?") != -1:
-            error_flag = True
-            raise ParsingError, "Unknown data type:    " + type_returned.group(1) + "  " + c_line 
-
-    # f_name is the name of the function in fortran:
-    function_name = REGEX_FUNCTION_NAME.search(c_line)
-    try:
-        f_name = function_name.group(1)
-    except AttributeError:
-        raise ParsingError, "Function name not found "+c_line
-                           
-    arguments = REGEX_ARGUMENTS.search(c_line)
-    try:
-        args = REGEX_ARGS.findall(arguments.group(1))
-    except AttributeError:
-        raise ParsingError, "Arguments not found " + c_line
-
-    # Each argument of the function is analyzed:
-    declarations = ""
-    args_list = ""
-    for arg in args:
-        if arg != "void":
-            try:
-                var_type = REGEX_VAR_TYPE.search(arg).group(1)
-            except AttributeError:
-                raise ParsingError, "Variable type for arg ["+arg+"] not found " + c_line
-
-            f_type, iso_c = iso_c_binding(arg, False)
-            if iso_c not in used_types:
-                used_types.append(iso_c)
-                        
-            if f_type.find("c_") != -1:
-                if f_use == "":
-                    f_use = iso_c
-                else:
-                    # each iso_c must appear only once:
-                    REGEX_ISO_C = re.compile( "("+iso_c+")"+"([^\w]|$)" )
-                    if REGEX_ISO_C.search(f_use) == None:
-                        f_use += ", " + iso_c 
-            elif f_type.find("?") != -1:
-                raise ParsingError, "Unknown data type:    " + arg + "  " + c_line
-
-            
-            try:
-                var_name = REGEX_VAR_NAME.search(arg).group(1)
-            except AttributeError:
-                raise ParsingError,"Variable name not found "+c_line+"  "+arg
+with open(input,'r') as file:
+    content = file.read()
+    externC = re.compile('^extern\s+"C"(\s*{)?')
     
-            # Array with unknown dimension are passed by adress,
-            # the others by value:
-            if (f_type.find("(*)") != -1):
-                passvar = ""
-            else:
-                if (arg.find("&") !=  -1):
-                    passvar = ""
-                else:
-                    passvar = ", value"
-                
-            declarations += 1*TAB + f_type + passvar + " :: " + var_name + "\n"
-            if args_list == "":
-                args_list = var_name
-            else:
-                args_list += ", " + var_name
-    interface = 0*TAB + "! " + c_line + "\n"
-    first_line = 0*TAB + f_procedure + f_name + "(" + args_list + ') bind(c,name="{f_name}")'.format(f_name=f_name)
-    
-    interface += multiline(first_line, 79) + " \n"
+    regex_externC = [re.compile('^extern\s+"C"(\s*{)?'),re.compile('^{')]
+    in_externC = [False,False]
 
-    interface += 1*TAB + "use iso_c_binding, only: " + f_use + "\n"
-    if isfunction:
-        interface += 1*TAB + returned_type + " :: " + f_name + "\n"
-    interface += declarations
-    interface += 0*TAB + f_the_end + "\n\n" 
-
-    return interface
-
-def parse_file(c_file):
-    file_name, file_ext = os.path.splitext(c_file)
-    with open(c_file,'r') as open_file:
-        text = open_file.read()
-        repl = r""
-        text = re.sub('(?ms).*?extern "C"\s*{', '', text)
-        text = re.sub('(?ms)}.*$', '', text)
-        text = re.sub('(?ms)^\s+', '', text)
-        lines = [ line.strip() for line in text.strip().splitlines() ]
-    f_file_path = output
-    if( module ):
-        module_name = module
-    else:
-        module_name = "atlas_"+file_name.split('/')[-1]+"_c_binding"
-    with open(f_file_path,'w') as f_file:
-        import time
-        f_file_header =  "! Automatically generated by c2f.py on {time}\n".format(time=time.asctime(time.localtime()))
-        f_file_header += "! Based on file {filename}\n".format(filename=c_file)
-        f_file_header += "! Please do not modify.\n"
-
-        f_file.write(f_file_header+"\nmodule {module_name}\nimplicit none\ninterface\n\n".format(module_name=module_name))
+    for line in content.splitlines():
+        line = line.strip()
         
-        for line in lines:
-          try:
-            f_file.write( C_F_binding(line) + '\n\n')
-          except ParsingError, e:
-            print("\n----------------------------------------\n"+
-                  "Parsing failed for file\n    "+c_file+" : \n"+str(e)+
-                  "\n----------------------------------------\n"+text)
-        f_file.write("end interface\nend module {module_name}\n".format(module_name=module_name))
+        # Go in extern "C" region
+        if not in_externC[0] :
+            match = regex_externC[0].match(line)
+            if match:
+                in_externC[0]=True
+                if match.group(1):
+                    in_externC[1] = True
+                    continue
+        if in_externC[0] and not in_externC[1] :
+            match = regex_externC[1].match(line)
+            if match:
+                in_externC[1] = True
+                continue
 
+        # Go out of extern "C" region
+        if re.search("^}",line):
+            in_externC[0] = False
+            in_externC[1] = False
 
+        # Skip empty lines and comment lines
+        if re.search("^//|^$",line):
+            continue
+        
+        # Line to parse
+        if in_externC[1]:
+            code.readline(line)
 
-for file in files:
-    parse_file(file)
+intf = ""
+intf += "! Do not modify!\n"
+intf += "! Automatically generated file that contains Fortran bindings\n"
+intf += "! of C funtions in file "+input+" contained within extern \"C\" scope.\n"
+intf += "! Time of creation: "+str(time.asctime(time.localtime()))+"\n\n"
+intf += "module "+module+"\n"
+intf += "implicit none\n"
+intf += "interface\n\n"
+for statement in code.statements():
+    try:
+        intf += Function(statement).fortran_interface()+"\n"
+    except ParsingFailed, e:
+        print("\n\n"+"-"*80+"\n"+"Automatic generation of Fortran bindings failed for file\n\n"+
+              "    "+input+"\n\n"+"ParsingFailed for statement:\n\n"+
+              "    "+statement+"\n\nError: "+str(e)+"\n"+"-"*80+"\n")
+        raise
+intf += "end interface\n"
+intf += "end module\n"
+
+with open(output,'w') as out:
+    out.write(intf)
