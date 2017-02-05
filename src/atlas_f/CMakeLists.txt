@@ -38,17 +38,14 @@ function(generate_fortran_bindings output filename)
   endif()
   set(${output} ${${output}} ${outfile} PARENT_SCOPE)
 
-  if( _PAR_MODULE )
-    add_custom_command(
-        OUTPUT ${outfile}
-        COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile} -m ${_PAR_MODULE}
-        DEPENDS ${filename} )
-  else()
-    add_custom_command(
-        OUTPUT ${outfile}
-        COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
-        DEPENDS ${filename} )
+  if( NOT _PAR_MODULE )
+    set( _PAR_MODULE "atlas_${base}_c_binding" )
   endif()
+
+  add_custom_command(
+    OUTPUT ${outfile}
+    COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile} -m ${_PAR_MODULE}
+    DEPENDS ${filename} )
   set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()
 
