@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdarg>
+#include <limits>
 
 #include "eckit/os/BackTrace.h"
 #include "eckit/utils/MD5.h"
