@@ -28,6 +28,10 @@ configure_file( internals/atlas_version.cc.in internals/atlas_version.cc )
 list( APPEND atlas_srcs
 atlas.h
 atlas.cc
+parallel/mpi/mpi.cc
+parallel/mpi/mpi.h
+parallel/omp/omp.cc
+parallel/omp/omp.h
 )
 
 list( APPEND atlas_grid_srcs
@@ -312,10 +316,6 @@ parallel/GatherScatter.cc
 parallel/GatherScatter.h
 parallel/HaloExchange.cc
 parallel/HaloExchange.h
-parallel/mpi/mpi.cc
-parallel/mpi/mpi.h
-parallel/omp/omp.cc
-parallel/omp/omp.h
 runtime/ErrorHandling.cc
 runtime/ErrorHandling.cc
 util/Config.cc
@@ -348,6 +348,49 @@ internals/Unique.h
 )
 
 
+function( create_cuda_wrapper variable )
+set( options "" )
+set( single_value_args SOURCE )
+set( multi_value_args "" )
+cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
+
+  get_filename_component(directory ${_PAR_SOURCE} DIRECTORY)
+  get_filename_component(base      ${_PAR_SOURCE} NAME_WE)
+  get_filename_component(name      ${_PAR_SOURCE} NAME)
+  if( directory )
+    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${directory}/${base}.cu)
+  else()
+    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${base}.cu)
+  endif()
+  set(${variable} ${cuda_wrapper} PARENT_SCOPE)
+  set(content
+"
+#include \"atlas/${directory}/${name}\"
+")
+
+  file(WRITE ${cuda_wrapper} "${content}")
+
+endfunction()
+
+function( use_cuda srclist )
+  set( options "" )
+  set( single_value_args "" )
+  set( multi_value_args "" )
+  cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}" ${ARGN} )
+  set( use_cuda_srclist ${ARGN} )
+
+  ecbuild_list_exclude_pattern( LIST ${srclist} REGEX ${use_cuda_srclist} )
+
+  foreach( src ${use_cuda_srclist} )
+    create_cuda_wrapper( cuda_wrapper SOURCE ${src} )
+    list( APPEND ${srclist} ${cuda_wrapper} )
+  endforeach()
+
+  set( ${srclist} "${${srclist}}" PARENT_SCOPE )
+
+  add_custom_target( atlas_cuda SOURCES ${use_cuda_srclist} )
+
+endfunction()
 
 ### atlas c++ library
 
@@ -365,7 +408,6 @@ if( ECKIT_HAVE_MPI AND ATLAS_HAVE_MPI AND  EC_OS_NAME MATCHES "macosx" )
 endif()
 
 if( SHORTCUT_COMPILATION )
-  unset( atlas_srcs )
   unset( atlas_grid_srcs )
   unset( atlas_mesh_srcs )
   unset( atlas_field_srcs )
@@ -375,6 +417,34 @@ if( SHORTCUT_COMPILATION )
   unset( atlas_output_srcs )
   unset( atlas_util_srcs )
   unset( atlas_internals_srcs )
+endif()
+
+list( APPEND source_list
+${atlas_srcs}
+${atlas_array_srcs}
+${atlas_grid_srcs}
+${atlas_mesh_srcs}
+${atlas_field_srcs}
+${atlas_functionspace_srcs}
+${atlas_interpolation_srcs}
+${atlas_numerics_srcs}
+${atlas_output_srcs}
+${atlas_util_srcs}
+${atlas_internals_srcs}
+${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.h
+${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.cc
+${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_config.h
+${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_defines.h
+)
+
+if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+  use_cuda( source_list
+    array/gridtools/GridToolsArray.cc
+    array/gridtools/GridToolsArrayView.cc
+    array/gridtools/GridToolsIndexView.cc
+    array/gridtools/GridToolsMakeView.cc
+    mesh/Connectivity.cc
+  )
 endif()
 
 ecbuild_add_library( TARGET atlas
@@ -388,21 +458,7 @@ ecbuild_add_library( TARGET atlas
   HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
 
   SOURCES
-    ${atlas_srcs}
-    ${atlas_array_srcs}
-    ${atlas_grid_srcs}
-    ${atlas_mesh_srcs}
-    ${atlas_field_srcs}
-    ${atlas_functionspace_srcs}
-    ${atlas_interpolation_srcs}
-    ${atlas_numerics_srcs}
-    ${atlas_output_srcs}
-    ${atlas_util_srcs}
-    ${atlas_internals_srcs}
-    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.h
-    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_config.h
-    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_defines.h
+    ${source_list}
 
   PRIVATE_INCLUDES
     "${CGAL_INCLUDE_DIRS}"
