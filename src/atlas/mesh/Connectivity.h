@@ -25,6 +25,7 @@
 
 #include <array>
 
+#include "atlas/internals/atlas_defines.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -116,16 +117,16 @@ class ConnectivityRow
 
 public:
 
-    GT_FUNCTION
+    ATLAS_HOST_DEVICE
     ConnectivityRow(idx_t *data, size_t size) : data_(data), size_(size) {}
 
-    GT_FUNCTION
+    ATLAS_HOST_DEVICE
     idx_t operator()(size_t i) const { return data_[i] FROM_FORTRAN; }
 
-    GT_FUNCTION
+    ATLAS_HOST_DEVICE
     Index operator()(size_t i)       { return INDEX_REF(data_+i); }
 
-    GT_FUNCTION
+    ATLAS_HOST_DEVICE
     size_t size() const { return size_; }
 
   private:
@@ -155,7 +156,7 @@ public:
   /// @brief Copy ctr (only to be used when calling a cuda kernel)
   // This ctr has to be defined in the header, since __CUDACC__ will identify whether
   // it is compiled it for a GPU kernel
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   IrregularConnectivity(const IrregularConnectivity &other) :
     owns_(false),
   #ifdef __CUDACC__
@@ -190,24 +191,24 @@ public:
   void rename(const std::string& name) { name_ = name; }
 
   /// @brief Number of rows in the connectivity table
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   size_t rows() const { return rows_; }
 
   /// @brief Number of columns for specified row in the connectivity table
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   size_t cols( size_t row_idx ) const { return counts_view_(row_idx); }
 
   /// @brief Maximum value for number of columns over all rows
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   size_t maxcols() const { return maxcols_; }
 
   /// @brief Minimum value for number of columns over all rows
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   size_t mincols() const { return mincols_; }
 
   /// @brief Access to connectivity table elements for given row and column
   /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   idx_t operator()( size_t row_idx, size_t col_idx ) const;
 
   /// @brief Access to raw data.
@@ -217,10 +218,10 @@ public:
 
   size_t size() const { return values_view_.size();}
 
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   idx_t missing_value() const { return missing_value_; }
 
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   Row row( size_t row_idx ) const;
 
 ///-- Modifiers
@@ -485,7 +486,7 @@ public:
   /// @brief Copy ctr (only to be used when calling a cuda kernel)
   // This ctr has to be defined in the header, since __CUDACC__ will identify whether
   // it is compiled it for a GPU kernel
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   BlockConnectivity(const BlockConnectivity& other)
     : owns_(false),
       values_(0),
@@ -509,25 +510,25 @@ public:
 
   /// @brief Access to connectivity table elements for given row and column
   /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   idx_t operator()( size_t row_idx, size_t col_idx ) const;
 
   /// @brief Number of rows
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   size_t rows() const { return rows_; }
 
   /// @brief Number of columns
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   size_t cols() const { return cols_; }
 
   /// @brief Access to raw data.
   /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is defined.
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   const idx_t* data() const { return values_view_.data(); }
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
         idx_t* data()       { return values_view_.data(); }
 
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   idx_t missing_value() const { return missing_value_; }
 
   size_t footprint() const;
@@ -535,11 +536,11 @@ public:
 //-- Modifiers
 
   /// @brief Modify row with given values. Values must be given with base 0
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   void set( size_t row_idx, const idx_t column_values[] );
 
   /// @brief Modify (row,col) with given value. Value must be given with base 0
-  GT_FUNCTION
+  ATLAS_HOST_DEVICE
   void set( size_t row_idx, size_t col_idx, const idx_t value );
 
   /// @brief Resize connectivity, and add given rows

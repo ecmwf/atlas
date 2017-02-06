@@ -13,6 +13,7 @@
 #include <vector>
 #include <array>
 #include <type_traits>
+#include "atlas/internals/atlas_defines.h"
 #include "atlas/array_fwd.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayUtil.h"
@@ -87,10 +88,10 @@ struct default_layout_t {
     // TODO: static_assert( ::gridtools::is_layout_map<LayoutMap>(), "Error: not a layout_map" );
     template <int Idx>
     struct get_component {
-      GT_FUNCTION
+      ATLAS_HOST_DEVICE
       constexpr get_component() {}
 
-      GT_FUNCTION constexpr static Value apply() {
+      ATLAS_HOST_DEVICE constexpr static Value apply() {
         return LayoutMap::template at<Idx>();
       }
     };
@@ -100,11 +101,11 @@ struct default_layout_t {
   struct get_stride_component {
     template <int Idx>
     struct get_component {
-      GT_FUNCTION
+      ATLAS_HOST_DEVICE
       constexpr get_component() {}
 
       template <typename StorageInfoPtr>
-      GT_FUNCTION constexpr static Value apply(StorageInfoPtr a) {
+      ATLAS_HOST_DEVICE constexpr static Value apply(StorageInfoPtr a) {
         static_assert((::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value),
                       "Error: not a storage_info");
         return a->template stride<Idx>();
@@ -115,11 +116,11 @@ struct default_layout_t {
   template < int Idx >
   struct get_shape_component {
 
-      GT_FUNCTION
+      ATLAS_HOST_DEVICE
       constexpr get_shape_component() {}
 
       template < typename StorageInfoPtr>
-      GT_FUNCTION constexpr static size_t apply(StorageInfoPtr a) {
+      ATLAS_HOST_DEVICE constexpr static size_t apply(StorageInfoPtr a) {
           static_assert((::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type >::value ), "Error: not a storage_info");
           return a->template dim<Idx>();
       }

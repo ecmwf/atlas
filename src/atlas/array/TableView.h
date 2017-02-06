@@ -25,8 +25,6 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/array/Table.h"
 
-#define ATLAS_HOST_DEVICE GT_FUNCTION
-
 namespace atlas {
 namespace array {
 
@@ -247,7 +245,6 @@ private:
 
 // -----------------------------------------------------------------------------------------------------
 
-#undef ATLAS_HOST_DEVICE
 #undef FROM_FORTRAN
 #undef TO_FORTRAN
 #undef INDEX_REF

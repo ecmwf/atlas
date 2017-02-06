@@ -13,9 +13,9 @@
 #include <cstddef>
 #include <cstring>
 #include <cassert>
+#include "atlas/internals/atlas_defines.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/LocalView.h"
-
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array/gridtools/GridToolsMakeView.h"
 
@@ -48,14 +48,14 @@ public:
 
     template < typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == Rank), int>::type >
     value_type&
-    GT_FUNCTION
+    ATLAS_HOST_DEVICE
     operator()(Coords... c) {
         assert(sizeof...(Coords) == Rank);
         return gt_data_view_(c...);
     }
 
     template <typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == Rank), int>::type>
-    GT_FUNCTION
+    ATLAS_HOST_DEVICE
     value_type const& operator()(Coords... c) const {
         return gt_data_view_(c...);
     }

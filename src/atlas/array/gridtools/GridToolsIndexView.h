@@ -77,14 +77,14 @@ public:
 
     template < typename... Coords >
     Index
-    GT_FUNCTION
+    ATLAS_HOST_DEVICE
     operator()(Coords... c) {
         assert(sizeof...(Coords) == Rank);
         return INDEX_REF( &gt_data_view_(c...) );
     }
 
     template <typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == Rank), int>::type>
-    GT_FUNCTION
+    ATLAS_HOST_DEVICE
     Value const operator()(Coords... c) const {
       return gt_data_view_(c...) FROM_FORTRAN;
     }

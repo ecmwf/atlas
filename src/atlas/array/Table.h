@@ -23,8 +23,6 @@
 #include "atlas/array.h"
 #include "eckit/memory/Owned.h"
 
-#define ATLAS_HOST_DEVICE GT_FUNCTION
-
 namespace atlas {
 namespace array {
 
