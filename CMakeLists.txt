@@ -78,7 +78,7 @@ ecbuild_add_option( FEATURE MPI
                     DESCRIPTION "atlas: Support for MPI distributed parallelism"
                     REQUIRED_PACKAGES "MPI COMPONENTS CXX ${Fortran}" )
 
-set( MPIEXEC "/opt/sgi/mpt/mpt-2.12/bin/mpirun" )		# daand: hardcoded hack to have ctest work on RMI's hpc
+#set( MPIEXEC "/opt/sgi/mpt/mpt-2.12/bin/mpirun" )		# daand: hardcoded hack to have ctest work on RMI's hpc
 
 if( ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
   ecbuild_debug( "Using eckit_mpi" )
