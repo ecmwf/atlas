@@ -11,15 +11,14 @@ daand:
 
  */
 
-#ifndef atlas_grid_Domain_h
-#define atlas_grid_Domain_h
+#ifndef atlas_grid_domain_Domain_h
+#define atlas_grid_domain_Domain_h
 
-#include <iostream>
 #include "eckit/geometry/Point2.h"
 #include "eckit/config/Parametrisation.h"
-#include "eckit/memory/Builder.h"
+#include "eckit/value/Properties.h"
 #include "eckit/memory/Owned.h"
-#include "atlas/util/Config.h"
+#include "eckit/memory/Builder.h"
 
 namespace atlas {
 namespace grid {
@@ -34,32 +33,15 @@ public:
 
 public:
 
-    static Domain* create() {
-      // default: global domain
-      util::Config projParams;
-      projParams.set("domainType","global");
-      return Domain::create(projParams);
-    }
+    static Domain* create(); // Create a global domain
 
-    static Domain* create(const eckit::Parametrisation& p) {
-
-        std::string domainType;
-        if (p.get("domainType",domainType)) {
-        return eckit::Factory<Domain>::instance().get(domainType).create(p);
-      }
-
-        // should return error here
-        throw eckit::BadParameter("domainType missing in Params",Here());
-        return NULL;
-    }
+    static Domain* create(const eckit::Parametrisation&);
 
     // className
     static std::string className() {return "atlas.Domain";}
 
     static std::string domain_type_str() { return "domain"; }
     virtual std::string virtual_domain_type_str() const { return "domain"; }
-
-    //Domain * makeGlobal() {return create(); };
 
     /// Checks if the point is contained in the domain
     virtual bool contains(eckit::geometry::Point2) const =0;

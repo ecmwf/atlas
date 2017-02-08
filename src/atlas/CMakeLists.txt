@@ -34,6 +34,7 @@ atlas.cc
 list( APPEND atlas_grid_srcs
 grid/CustomStructured.cc
 grid/CustomStructured.h
+grid/domain/Domain.cc
 grid/domain/Domain.h
 grid/domain/RectangularDomain.h
 grid/domain/RectangularDomain.cc
