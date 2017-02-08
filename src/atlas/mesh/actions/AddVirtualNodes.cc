@@ -29,12 +29,12 @@ namespace actions {
 
 void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh) const {
     using eckit::geometry::LLPoint2;
-    const grid::domain::Domain* dom = grid.domain();
 
-    if (dom->isGlobal()) return; // don't add virtual points to global domains
+    if (grid.domain().isGlobal()) return; // don't add virtual points to global domains
 
 
 // daand: octahedralGaussian grids now are global by definition!
+#warning gnarls
 #ifdef gnarls
     const grid::Grid& octa = atlas::grid::gaussian::OctahedralGaussian(16);
 
@@ -77,7 +77,7 @@ void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mes
         eckit::geometry::lonlat_to_3d(lonlat[n].data(),coords[n].data());
         gidx(n) = n+1;
     }
-#endif    
+#endif
 }
 
 

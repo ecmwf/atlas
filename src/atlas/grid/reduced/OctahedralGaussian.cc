@@ -53,7 +53,7 @@ OctahedralGaussian::OctahedralGaussian(const util::Config& config) :
     // projection is lonlat
     util::Config config_proj;
     config_proj.set("projectionType","lonlat");
-    projection_=projection::Projection::create(config_proj);
+    projection_.reset( projection::Projection::create(config_proj) );
 
     // setup
     setup(N);

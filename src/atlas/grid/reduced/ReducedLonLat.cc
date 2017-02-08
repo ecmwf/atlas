@@ -27,11 +27,11 @@ void ReducedLonLat::setup(size_t ny, long pl[]) {
 
     // projection is lonlat
     config_proj.set("projectionType","lonlat");
-    projection_=projection::Projection::create(config_proj);
+    projection_.reset( projection::Projection::create(config_proj) );
 
     // domain is global
     config_domain.set("domainType","global");
-    domain_=domain::Domain::create(config_domain);
+    domain_.reset( domain::Domain::create(config_domain) );
 
     // determine input for Structured::setup
     std::vector<double> xmin(ny);    // first longitude per latitude

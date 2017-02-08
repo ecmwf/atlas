@@ -80,10 +80,10 @@ public:  // methods
     eckit::MD5::digest_t hash() const;
 
     /// @return area represented by the grid
-    const domain::Domain* domain() const { return domain_; };
+    const domain::Domain& domain() const { return *domain_; }
 
     /// @return projection (mapping between geographic coordinates and grid coordinates)
-    const projection::Projection* projection() const { return projection_; }
+    const projection::Projection& projection() const { return *projection_; }
 
     /// @return number of grid points
     /// @note This methods should have constant access time, if necessary derived
@@ -147,8 +147,8 @@ private:  // members
 
 protected: // members
 
-    projection::Projection * projection_;
-    domain::Domain * domain_;
+    eckit::SharedPtr<projection::Projection> projection_;
+    eckit::SharedPtr<domain::Domain>         domain_;
 };
 
 

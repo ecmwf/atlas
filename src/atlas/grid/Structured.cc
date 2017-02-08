@@ -202,7 +202,7 @@ void Structured::hash(eckit::MD5& md5) const {
     // also add projection information
     eckit::Properties prop;
     std::ostringstream s;
-    s << projection()->spec();
+    s << projection().spec();
     prop.set("projection",s.str());
     prop.hash(md5);
 }

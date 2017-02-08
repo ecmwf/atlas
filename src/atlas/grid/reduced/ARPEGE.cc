@@ -44,7 +44,7 @@ ARPEGE::ARPEGE(const util::Config& config) :
     } else {
       config_proj.set("projectionType","schmidt");
     }
-    projection_=projection::Projection::create(config_proj);
+    projection_.reset( projection::Projection::create(config_proj) );
 
     // setup
     ClassicGaussian::setup(N);

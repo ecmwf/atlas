@@ -5,13 +5,14 @@
 #include "eckit/geometry/Point2.h"
 #include "eckit/config/Parametrisation.h"
 #include "eckit/memory/Builder.h"
+#include "eckit/memory/Owned.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {
 namespace grid {
 namespace projection {
 
-class Projection {
+class Projection : public eckit::Owned {
 
 public:
 
@@ -20,7 +21,7 @@ public:
 
 public:
 
-    static Projection* create();
+    static Projection* create(); // creates the LonLatProjection
     static Projection* create(const eckit::Parametrisation& p);
 
     Projection() {}

@@ -39,7 +39,7 @@ void RegularRegional::setup(const util::Config& config) {
       // default, error, or hardcoded default?
       config_proj.set("projectionType","lonlat");
     }
-    projection_=projection::Projection::create(config_proj);
+    projection_.reset( projection::Projection::create(config_proj) );
 
     // dimensions
     if ( ! config.get("nx",nx) ) throw eckit::BadParameter("nx missing in Params",Here());
@@ -81,10 +81,11 @@ void RegularRegional::setup(const util::Config& config) {
       std::string domainType;
       if (!config_dom.get("domainType",domainType)) config_dom.set("domainType","rectangular");
       // create domain from configuration
-      domain_=domain::Domain::create(config_dom);
+      domain_.reset( domain::Domain::create(config_dom) );
       // check if the domain is rectangular
-      domain::RectangularDomain * rd=dynamic_cast<domain::RectangularDomain*>(domain_);
-      if (! rd) throw eckit::BadParameter("RegularRegional grid requires a RectangularDomain",Here());
+      if( not dynamic_cast<domain::RectangularDomain*>(domain_.get()) ) {
+        throw eckit::BadParameter("RegularRegional grid requires a RectangularDomain",Here());
+      }
 
     } else {
       // error

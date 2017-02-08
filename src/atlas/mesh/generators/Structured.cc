@@ -239,7 +239,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
   bool   has_north_pole = rg.lat(0) == 90;
   bool   has_south_pole = rg.lat(rg.nlat()-1) == -90;
   bool   unique_pole        = options.get<bool>("unique_pole") && three_dimensional && has_north_pole && has_south_pole;
-  bool   periodic_east_west = rg.domain()->isPeriodicEastWest();
+  bool   periodic_east_west = rg.domain().isPeriodicEastWest();
 
 
   int n;
@@ -800,7 +800,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   bool has_north_pole = rg.latitudes().front() ==  90 && rg.pl().front() > 0;
   bool has_south_pole = rg.latitudes().back()  == -90 && rg.pl().back()  > 0;
   bool three_dimensional  = options.get<bool>("3d");
-  bool periodic_east_west = rg.domain()->isPeriodicEastWest();
+  bool periodic_east_west = rg.domain().isPeriodicEastWest();
   bool include_periodic_ghost_points = periodic_east_west
           && !three_dimensional ;
   bool remove_periodic_ghost_points = three_dimensional && periodic_east_west ;
@@ -808,25 +808,25 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   bool include_north_pole = (mypart == 0 )
           && options.get<bool>("include_pole")
           && !has_north_pole
-          && rg.domain()->includesPoleNorth();
+          && rg.domain().includesPoleNorth();
 
   bool include_south_pole = (mypart == nparts-1)
           && options.get<bool>("include_pole")
           && !has_south_pole
-          && rg.domain()->includesPoleSouth();
+          && rg.domain().includesPoleSouth();
 
   bool patch_north_pole = (mypart == 0)
           && options.get<bool>("patch_pole")
           && three_dimensional
           && !has_north_pole
-          && rg.domain()->includesPoleNorth()
+          && rg.domain().includesPoleNorth()
           && rg.nlon(1) > 0;
 
   bool patch_south_pole = (mypart == nparts-1)
           && options.get<bool>("patch_pole")
           && three_dimensional
           && !has_south_pole
-          && rg.domain()->includesPoleSouth()
+          && rg.domain().includesPoleSouth()
           && rg.nlon(rg.nlat()-2) > 0;
 
   if( three_dimensional && nparts != 1 )
@@ -1013,7 +1013,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       // geographic coordinates by using projection
       eckit::geometry::Point2 xy(x,y);
-      llg=rg.projection()->coords2lonlat(xy);
+      llg=rg.projection().coords2lonlat(xy);
       geolonlat(inode,internals::LON) = llg[internals::LON];
       geolonlat(inode,internals::LAT) = llg[internals::LAT];
 
@@ -1049,7 +1049,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       // geographic coordinates by using projection
       eckit::geometry::Point2 xy(x,y);
-      llg=rg.projection()->coords2lonlat(xy);
+      llg=rg.projection().coords2lonlat(xy);
       geolonlat(inode,internals::LON) = llg[internals::LON];
       geolonlat(inode,internals::LAT) = llg[internals::LAT];
 
@@ -1076,7 +1076,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
     // geographic coordinates by using projection
     eckit::geometry::Point2 xy(x,y);
-    llg=rg.projection()->coords2lonlat(xy);
+    llg=rg.projection().coords2lonlat(xy);
     geolonlat(inode,internals::LON) = llg[internals::LON];
     geolonlat(inode,internals::LAT) = llg[internals::LAT];
 
@@ -1100,7 +1100,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
     // geographic coordinates by using projection
     eckit::geometry::Point2 xy(x,y);
-    llg=rg.projection()->coords2lonlat(xy);
+    llg=rg.projection().coords2lonlat(xy);
     geolonlat(inode,internals::LON) = llg[internals::LON];
     geolonlat(inode,internals::LAT) = llg[internals::LAT];
 

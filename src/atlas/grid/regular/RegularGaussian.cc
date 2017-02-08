@@ -37,7 +37,7 @@ void RegularGaussian::setup(long N) {
 
     // projection is lonlat
     config_proj.set("projectionType","lonlat");
-    projection_=projection::Projection::create(config_proj);
+    projection_.reset( projection::Projection::create(config_proj) );
 
     // spacing is uniform in x, gaussian in y
     config_spacing.set("spacingType","uniform");
@@ -54,7 +54,7 @@ void RegularGaussian::setup(long N) {
 
     // domain is global
     config_domain.set("domainType","global");
-    domain_=domain::Domain::create(config_domain);
+    domain_.reset( domain::Domain::create(config_domain) );
 
     // setup regular grid
     Regular::setup();
