@@ -13,19 +13,20 @@ namespace projection {
 
 class Projection {
 
-  public:
+public:
+
     typedef const eckit::Parametrisation& ARG1;
     typedef eckit::BuilderT1<Projection> builder_t;
 
-  public:
+public:
 
     static Projection* create();
     static Projection* create(const eckit::Parametrisation& p);
 
-    Projection() {};
-    Projection( const Projection& rhs ) {};    // copy constructor
-    virtual Projection * clone() const =0;     // clone method acting like virtual copy constructor
-    virtual ~Projection() {};                  // destructor should be virtual when using a virtual copy constructor
+    Projection() {}
+    Projection( const Projection& rhs ) {}    // copy constructor
+    virtual Projection * clone() const =0;    // clone method acting like virtual copy constructor
+    virtual ~Projection() {}                  // destructor should be virtual when using a virtual copy constructor
 
     static std::string className() {return "atlas.Projection";}
     static std::string projection_type_str() {return "projection";}
@@ -38,7 +39,8 @@ class Projection {
 
     virtual eckit::Properties spec() const =0;
 
-  protected:
+protected:
+
     void rotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole) const;      // coordinates of the point on a rotated sphere with specified pole
     void unrotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole) const;    // inverse operation of rotate
 

@@ -34,9 +34,12 @@ namespace atlas {
 namespace grid {
 
 class GridDistribution: public eckit::Owned {
-  public:
-    typedef eckit::SharedPtr<GridDistribution> Ptr;
-  public:
+
+public:
+
+     typedef eckit::SharedPtr<GridDistribution> Ptr;
+
+public:
 
     GridDistribution(const Grid&);
 
@@ -77,7 +80,8 @@ class GridDistribution: public eckit::Owned {
         return min_pts_;
     }
 
-  private:
+private:
+
     size_t nb_partitions_;
     std::vector<int> part_;
     std::vector<int> nb_pts_;

@@ -8,7 +8,8 @@ namespace grid {
 namespace projection {
 
 class RotatedMercatorProjection: public MercatorProjection {
-  public:
+
+public:
 
     // constructor
     RotatedMercatorProjection(const eckit::Parametrisation& p);
@@ -33,7 +34,7 @@ class RotatedMercatorProjection: public MercatorProjection {
     // specification
     virtual eckit::Properties spec() const;
 
-  private:
+private:
 
     eckit::geometry::LLPoint2 pole_;    // pole
     void setup(const eckit::Parametrisation & p);

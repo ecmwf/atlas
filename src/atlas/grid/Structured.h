@@ -33,7 +33,8 @@ namespace grid {
  * such distribution can be represented with this class
  */
 class Structured : public Grid {
-  public:
+
+public:
 
     typedef eckit::SharedPtr<Structured> Ptr;
 
@@ -41,13 +42,13 @@ class Structured : public Grid {
 
     static Structured* create(const std::string& shortname);
 
-  public:
+public:
 
     static std::string className();
 
     static std::string grid_type_str();
 
-  public:
+public:
 
     Structured();
 
@@ -107,8 +108,6 @@ class Structured : public Grid {
 
     inline double lon( const size_t jlat, const size_t jlon ) const {
         return lonmin_[jlat] + static_cast<double>(jlon) * lon_inc_[jlat];
-
-
     }
 
     inline double lat( const size_t jlat ) const {
@@ -133,7 +132,7 @@ class Structured : public Grid {
         return nlonmax() != nlonmin();
     }
 
-  protected: // methods
+protected: // methods
 
     virtual size_t copyLonLatMemory(double* pts, size_t size) const;
 
@@ -148,7 +147,7 @@ class Structured : public Grid {
 
     void setup_lat_hemisphere(const size_t N, const double lat[], const long lon[]);
 
-  protected:
+protected:
 
     /// Number of latitudes in hemisphere
     size_t N_;

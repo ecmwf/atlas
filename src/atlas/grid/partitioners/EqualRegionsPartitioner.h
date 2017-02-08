@@ -77,7 +77,8 @@ void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap);
 void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[]);
 
 class EqualRegionsPartitioner: public Partitioner {
-  public:
+
+public:
 
     EqualRegionsPartitioner(const grid::Grid&);
 
@@ -93,7 +94,7 @@ class EqualRegionsPartitioner: public Partitioner {
 
     virtual void partition( int part[] ) const;
 
-  public:
+public:
 
     // Node struct that holds the longitude and latitude in millidegrees (integers)
     // This structure is used in sorting algorithms, and uses less memory than
@@ -103,13 +104,11 @@ class EqualRegionsPartitioner: public Partitioner {
         int n;
     };
 
-  private:
+private:
+
     // Doesn't matter if nodes[] is in degrees or radians, as a sorting
     // algorithm is used internally
     void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
-
-
-  private:
 
     // x and y in radians
     int partition(const double& x, const double& y) const;
@@ -120,7 +119,7 @@ class EqualRegionsPartitioner: public Partitioner {
     // x in radians
     int sector(int band, const double& x) const;
 
-  private:
+private:
 
     int N_;
     std::vector<double> bands_;

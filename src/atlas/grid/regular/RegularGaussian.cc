@@ -87,7 +87,6 @@ RegularGaussian::RegularGaussian(const util::Config& config) :
 
 extern "C" {
 
-
     Structured* atlas__grid__regular__RegularGaussian(size_t N) {
         return new RegularGaussian(N);
     }

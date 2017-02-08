@@ -10,12 +10,12 @@ namespace regular {
 
 class Regular: public Structured {
 
-  public:
+public:
 
     static std::string grid_type_str();
 
     static std::string className();
-    
+
     virtual std::string shortName() const { return "regular"; }
     virtual std::string gridType() const { return "regular"; }
 
@@ -23,19 +23,19 @@ class Regular: public Structured {
     Regular();
 
     virtual eckit::Properties spec() const;
-    
+
     size_t nlon() { return nlonmin(); }	// same for all latitudes
     double lon(size_t jlon) { return Structured::lon(0,jlon); } // same for all latitudes
-    
-  protected:
+
+protected:
 
     void setup();
 
-  protected:
+protected:
 
     spacing::Spacing * spacing_x_;
     spacing::Spacing * spacing_y_;
-    
+
 };
 
 

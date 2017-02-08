@@ -8,7 +8,8 @@ namespace grid {
 namespace projection {
 
 class RotatedLonLatProjection: public LonLatProjection {
-  public:
+
+public:
     // constructor
     RotatedLonLatProjection(const eckit::Parametrisation& p);
 

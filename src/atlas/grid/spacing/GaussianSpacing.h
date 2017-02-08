@@ -9,8 +9,7 @@ namespace spacing {
 
 class GaussianSpacing: public Spacing {
 
-
-  public:
+public:
 
     // constructor
     GaussianSpacing(const eckit::Parametrisation& p);
@@ -23,7 +22,8 @@ class GaussianSpacing: public Spacing {
 
     void generate(size_t i, double &x) const;
 
-  private:
+private:
+
     double * lats_;
 };
 

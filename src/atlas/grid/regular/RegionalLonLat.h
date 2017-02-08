@@ -12,7 +12,7 @@ namespace regular {
 
 class RegionalLonLat: public RegularRegional {
 
-  public:
+public:
 
     static std::string grid_type_str();
 
@@ -23,13 +23,13 @@ class RegionalLonLat: public RegularRegional {
     RegionalLonLat();
     RegionalLonLat(const util::Config& params);
 
-  protected:
+protected:
 
     void setup(const util::Config& params);
 
     //virtual void set_typeinfo() = 0;
     //static eckit::Value domain_spec(const Domain& dom);
-    
+
     bool shiftLon_;
     bool shiftLat_;
 

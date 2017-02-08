@@ -12,20 +12,20 @@ namespace regular {
 
 class ShiftedLat: public GlobalLonLat {
 
-  public:
+public:
 
     static std::string grid_type_str();
 
     static std::string className();
-    
+
     virtual std::string shortName() const;
     virtual std::string gridType() const { return "shifted_lat"; }
 
     ShiftedLat(const util::Config& params);
     ShiftedLat(long nlon, long nlat);
 
-    
-  protected:
+
+protected:
 
     void setup();
 

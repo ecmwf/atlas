@@ -8,10 +8,11 @@ namespace grid {
 namespace projection {
 
 class SchmidtProjection: public Projection {
-  public:
+
+public:
     // constructor
     SchmidtProjection(const eckit::Parametrisation& p);
-    SchmidtProjection() {};
+    SchmidtProjection() {}
 
     // copy constructor
     SchmidtProjection( const SchmidtProjection& rhs );
@@ -34,7 +35,7 @@ class SchmidtProjection: public Projection {
     // specification
     virtual eckit::Properties spec() const;
 
-  private:
+private:
     double c_;    // stretching factor
 };
 

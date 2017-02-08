@@ -42,7 +42,7 @@ namespace grid {
 
 class Grid : public eckit::Owned {
 
-  public:  // types
+public:  // types
 
     typedef eckit::BuilderT1<Grid> builder_t;
     typedef const util::Config& ARG1;
@@ -51,7 +51,7 @@ class Grid : public eckit::Owned {
     typedef eckit::geometry::Point2 XYPoint; // must be sizeof(double)*2
     typedef std::string uid_t;
 
-  public:  // methods
+public:  // methods
 
     static std::string className();
 
@@ -113,7 +113,7 @@ class Grid : public eckit::Owned {
 
     virtual bool same(const grid::Grid&) const;
 
-  protected:  // methods
+protected:  // methods
 
     /// Fill provided memory buffer with the grid points, as (lon,lat) values
     /// This implementation in the base Grid class is not optimal as it incurs in double copy
@@ -130,14 +130,14 @@ class Grid : public eckit::Owned {
 
     virtual void print(std::ostream&) const = 0;
 
-  private:  // methods
+private:  // methods
 
     friend std::ostream& operator<<(std::ostream& s, const grid::Grid& p) {
         p.print(s);
         return s;
     }
 
-  private:  // members
+private:  // members
 
     /// Cache the unique ID
     mutable uid_t uid_;
@@ -145,7 +145,8 @@ class Grid : public eckit::Owned {
     /// Cache the hash
     mutable eckit::MD5::digest_t hash_;
 
-  protected: // members
+protected: // members
+
     projection::Projection * projection_;
     domain::Domain * domain_;
 };

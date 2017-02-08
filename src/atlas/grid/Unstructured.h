@@ -29,7 +29,7 @@ namespace grid {
 
 class Unstructured : public Grid {
 
-  public: // methods
+public: // methods
 
     static std::string grid_type_str();
 
@@ -61,7 +61,8 @@ class Unstructured : public Grid {
         return domain_;
     }
     */
-  private: // methods
+
+private: // methods
 
     virtual void print(std::ostream&) const;
 
@@ -69,7 +70,7 @@ class Unstructured : public Grid {
     /// Hash of the lonlat array + BoundingBox
     virtual void hash(eckit::MD5&) const;
 
-  protected:
+protected:
 
     /// Storage of coordinate points
     eckit::ScopedPtr< std::vector< Point > > points_;
@@ -79,11 +80,6 @@ class Unstructured : public Grid {
 
     /// Cache for the spec since may be quite heavy to compute
     mutable eckit::ScopedPtr<eckit::Properties> cached_spec_;
-
-  protected:  // members
-
-    /// Area represented by the grid
-    //domain::Domain domain_;
 
 };
 

@@ -32,7 +32,8 @@ namespace grid {
 namespace partitioners {
 
 class TransPartitioner: public Partitioner {
-  public:
+
+public:
 
     /// @brief Constructor
     TransPartitioner(const grid::Grid& grid,
@@ -54,7 +55,8 @@ class TransPartitioner: public Partitioner {
 
     int nb_regions(int b) const;
 
-  private:
+private:
+
     mutable trans::Trans* t_;
     bool owned_;
 };

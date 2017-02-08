@@ -11,9 +11,10 @@ namespace domain {
 
 class CircularDomain: public Domain {
 
-  public:
-     CircularDomain(const eckit::Parametrisation& p);
-    ~CircularDomain() {};
+public:
+
+    CircularDomain(const eckit::Parametrisation& p);
+    ~CircularDomain() {}
 
     /// Checks if the point is contained in the domain
     bool contains(eckit::geometry::Point2 P) const;
@@ -26,7 +27,7 @@ class CircularDomain: public Domain {
 
     virtual eckit::Properties spec() const;
 
-  private:
+private:
 
     double xc_, yc_, radius_;
     void setup();

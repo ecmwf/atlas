@@ -8,7 +8,9 @@ namespace grid {
 namespace projection {
 
 class RotatedSchmidtProjection: public SchmidtProjection {
-  public:
+
+public:
+
     // constructor
     RotatedSchmidtProjection(const eckit::Parametrisation& p);
 
@@ -33,7 +35,8 @@ class RotatedSchmidtProjection: public SchmidtProjection {
     // specification
     virtual eckit::Properties spec() const;
 
-  private:
+private:
+
     double c_;                          // stretching factor
     eckit::geometry::LLPoint2 pole_;    // pole
 };

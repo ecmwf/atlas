@@ -11,18 +11,18 @@ namespace spacing {
 
 class Spacing {
 
-  public:
+public:
     typedef const eckit::Parametrisation& ARG1;
     typedef eckit::BuilderT1<Spacing> builder_t;
 
-  public:
+public:
 
     static Spacing* create() {
       // default: uniform spacing
       util::Config params;
       params.set("spacingType","uniform");
       return Spacing::create(params);
-    };
+    }
 
     static Spacing* create(const eckit::Parametrisation& params) {
       std::string spacingType;
@@ -43,11 +43,11 @@ class Spacing {
 
     void generate(std::vector<double>& x) const {
       for (size_t i=0;i<N_;i++) generate(i,x[i]);
-    };
+    }
 
-    size_t N() { return N_; };
+    size_t N() { return N_; }
 
-  protected:
+protected:
 
     void setup(const eckit::Parametrisation& params) {
       // retrieve xmin, xmax and N from params

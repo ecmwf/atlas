@@ -9,8 +9,7 @@ namespace spacing {
 
 class FocusSpacing: public Spacing {
 
-
-  public:
+public:
 
     // constructor
     FocusSpacing(const eckit::Parametrisation& p);
@@ -22,7 +21,8 @@ class FocusSpacing: public Spacing {
 
     void generate(size_t i, double &x) const;
 
-  private:
+private:
+
     double focus_factor_;
 };
 

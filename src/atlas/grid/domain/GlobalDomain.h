@@ -11,7 +11,7 @@ namespace domain {
 
 class GlobalDomain: public Domain {
 
-  public:
+public:
 
     GlobalDomain(const eckit::Parametrisation& p);
     ~GlobalDomain() {}
@@ -29,7 +29,7 @@ class GlobalDomain: public Domain {
 
     virtual eckit::Properties spec() const;
 
-  private:
+private:
 
     void setup();
 };

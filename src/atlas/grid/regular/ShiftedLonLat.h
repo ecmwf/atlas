@@ -12,7 +12,7 @@ namespace regular {
 
 class ShiftedLonLat: public GlobalLonLat {
 
-  public:
+public:
 
     static std::string grid_type_str();
 
@@ -23,8 +23,8 @@ class ShiftedLonLat: public GlobalLonLat {
 
     ShiftedLonLat(const util::Config& params);
     ShiftedLonLat(long nlon, long nlat);
- 
-  protected:
+
+protected:
 
     void setup();
 

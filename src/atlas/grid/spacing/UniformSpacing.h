@@ -9,8 +9,7 @@ namespace spacing {
 
 class UniformSpacing: public Spacing {
 
-
-  public:
+public:
 
     // constructor
     UniformSpacing(const eckit::Parametrisation& p);

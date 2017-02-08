@@ -26,29 +26,30 @@ namespace domain {
 
 class Domain {
 
-  public:
+public:
+
     typedef const eckit::Parametrisation& ARG1;
     typedef eckit::BuilderT1<Domain> builder_t;
 
-  public:
+public:
 
-     static Domain* create() {
+    static Domain* create() {
       // default: global domain
       util::Config projParams;
       projParams.set("domainType","global");
       return Domain::create(projParams);
-    };
+    }
 
     static Domain* create(const eckit::Parametrisation& p) {
 
-      std::string domainType;
-      if (p.get("domainType",domainType)) {
+        std::string domainType;
+        if (p.get("domainType",domainType)) {
         return eckit::Factory<Domain>::instance().get(domainType).create(p);
       }
 
-      // should return error here
-      throw eckit::BadParameter("domainType missing in Params",Here());
-      return NULL;
+        // should return error here
+        throw eckit::BadParameter("domainType missing in Params",Here());
+        return NULL;
     }
 
     // className
@@ -61,7 +62,7 @@ class Domain {
 
     /// Checks if the point is contained in the domain
     virtual bool contains(eckit::geometry::Point2) const =0;
-    virtual bool contains(double x, double y) const {return contains(eckit::geometry::Point2(x,y)); };
+    virtual bool contains(double x, double y) const {return contains(eckit::geometry::Point2(x,y)); }
 
     // Specification of grid
     virtual eckit::Properties spec() const =0;
@@ -73,10 +74,10 @@ class Domain {
     bool includesPoleNorth() const { return isGlobal(); }
 
     /// Check if grid includes the South pole
-    bool includesPoleSouth() const { return isGlobal(); };
+    bool includesPoleSouth() const { return isGlobal(); }
 
     /// Check if grid spans the complete range East-West (periodic)
-    virtual bool isPeriodicEastWest() const { return isGlobal(); };
+    virtual bool isPeriodicEastWest() const { return isGlobal(); }
 
     /// Check if domain represents the complete globe surface
     virtual bool isGlobal() const =0;

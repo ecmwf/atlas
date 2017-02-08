@@ -9,19 +9,19 @@ namespace reduced {
 
 class ARPEGE: public ClassicGaussian {
 
-  public:
+public:
 
     static std::string grid_type_str();
 
     static std::string className();
-    
+
     virtual std::string shortName() const;
     virtual std::string gridType() const { return "arpege"; }
 
 
     ARPEGE(const util::Config& params);
 
-  protected:
+protected:
 
     void setup(size_t N);
 

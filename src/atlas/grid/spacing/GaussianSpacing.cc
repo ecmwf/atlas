@@ -18,7 +18,7 @@ GaussianSpacing::GaussianSpacing(const eckit::Parametrisation& params) {
   // initialize latitudes during setup, to avoid repeating it.
   lats_=new double[N_];
   spacing::gaussian::gaussian_latitudes_npole_spole(N_/2, lats_);
-};
+}
 
 GaussianSpacing::~GaussianSpacing() {
   // clean up
@@ -28,7 +28,7 @@ GaussianSpacing::~GaussianSpacing() {
 void GaussianSpacing::generate(size_t i, double &x) const {
   ASSERT( i<N_ );
   x=lats_[i];
-};
+}
 
 register_BuilderT1(Spacing,GaussianSpacing,GaussianSpacing::spacing_type_str());
 

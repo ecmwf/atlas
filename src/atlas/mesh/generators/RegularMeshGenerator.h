@@ -35,30 +35,30 @@ class RegularMeshGenerator : public MeshGenerator {
 
 public:
 
-  RegularMeshGenerator(const eckit::Parametrisation& = util::NoConfig() );
+    RegularMeshGenerator(const eckit::Parametrisation& = util::NoConfig() );
 
-  virtual void generate(const atlas::grid::Grid&, const grid::GridDistribution&, Mesh&) const;
-  virtual void generate(const atlas::grid::Grid&, Mesh&) const;
+    virtual void generate(const atlas::grid::Grid&, const grid::GridDistribution&, Mesh&) const;
+    virtual void generate(const atlas::grid::Grid&, Mesh&) const;
 
-  using MeshGenerator::generate;
-
-private:
-
-  virtual void hash(eckit::MD5&) const;
-
-  void configure_defaults();
-
-  void generate_mesh(
-    const atlas::grid::regular::Regular&,
-    const std::vector<int>& parts,
-    Mesh& m ) const;
-
-  void generate_global_element_numbering(
-    Mesh& mesh ) const;
+    using MeshGenerator::generate;
 
 private:
 
-  util::Metadata options;
+    virtual void hash(eckit::MD5&) const;
+
+    void configure_defaults();
+
+    void generate_mesh(
+      const atlas::grid::regular::Regular&,
+      const std::vector<int>& parts,
+      Mesh& m ) const;
+
+    void generate_global_element_numbering(
+      Mesh& mesh ) const;
+
+private:
+
+    util::Metadata options;
 
 };
 

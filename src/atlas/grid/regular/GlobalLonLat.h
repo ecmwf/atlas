@@ -12,7 +12,7 @@ namespace regular {
 
 class GlobalLonLat: public Regular {
 
-  public:
+public:
 
     static std::string grid_type_str();
 
@@ -31,7 +31,7 @@ class GlobalLonLat: public Regular {
     bool isShiftedLon() const { return shiftLon_; }
     bool isShiftedLat() const { return shiftLat_; }
 
-  protected:
+protected:
 
     void setup(long nlon, long nlat);
 

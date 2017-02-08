@@ -32,12 +32,13 @@ namespace grid {
  * such distribution can be represented with this class
  */
 class CustomStructured: public Structured {
-  public:
+
+public:
 
     static std::string className();
 
     static std::string grid_type_str();
-    
+
     virtual std::string shortName() const { return "customStructured"; }
     virtual std::string gridType() const { return "custom_structured"; }
 

@@ -11,7 +11,7 @@ namespace domain {
 
 class RectangularDomain: public Domain {
 
-  public:
+public:
 
      // constructor
     RectangularDomain(const eckit::Parametrisation& p);        // from 4 values
@@ -31,7 +31,7 @@ class RectangularDomain: public Domain {
 
     virtual eckit::Properties spec() const;
 
-  private:
+private:
 
     double xmin_, xmax_, ymin_, ymax_;
     void setup();

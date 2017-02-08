@@ -9,8 +9,7 @@ namespace projection {
 
 class LonLatProjection: public Projection {
 
-
-  public:
+public:
 
     // constructor
     LonLatProjection(const eckit::Parametrisation& p);
@@ -22,7 +21,7 @@ class LonLatProjection: public Projection {
     virtual LonLatProjection *clone() const ;
 
     // destructor
-    ~LonLatProjection() {};
+    ~LonLatProjection() {}
 
     // class name
     static std::string className() { return "atlas.LonLatProjection"; }

@@ -8,7 +8,8 @@ namespace grid {
 namespace projection {
 
 class LambertProjection: public Projection {
-  public:
+
+public:
 
     // constructor
     LambertProjection(const eckit::Parametrisation& p);
@@ -20,7 +21,7 @@ class LambertProjection: public Projection {
     virtual LambertProjection *clone() const ;
 
     // destructor
-    ~LambertProjection() {};
+    ~LambertProjection() {}
 
     // class name
     static std::string className() { return "atlas.LambertProjection"; }
@@ -36,7 +37,7 @@ class LambertProjection: public Projection {
     // specification
     virtual eckit::Properties spec() const;
 
-  private:
+private:
 
     double lat1_, lat2_;     // secant latitudes
     bool isTangent_;

@@ -9,24 +9,24 @@ namespace reduced {
 
 class ReducedLonLat: public Structured {
 
-  public:
+public:
 
     static std::string grid_type_str();
 
     static std::string className();
-    
+
     virtual std::string shortName() const;
     virtual std::string gridType() const { return "reduced_lonlat"; }
 
-    ReducedLonLat(): Structured() {};
+    ReducedLonLat(): Structured() {}
     ReducedLonLat(const util::Config& params);
 
     eckit::Properties spec() const;
-       
-  protected:
+
+protected:
 
     void setup(size_t nlat, long pl[]);
-    
+
 };
 
 

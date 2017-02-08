@@ -34,6 +34,7 @@ namespace actions {
 
 /// Creates a XYZ field from the (lon,lat) field
 class BuildTorusXYZField {
+
 public:
 
     explicit BuildTorusXYZField(const std::string& name = "xyz");

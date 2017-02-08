@@ -8,7 +8,7 @@ UniformSpacing::UniformSpacing(const eckit::Parametrisation& params) {
   // general setup
   Spacing::setup(params);
 
-};
+}
 
 void UniformSpacing::generate(size_t i, double &x) const {
   // points are equally spaced between xmin and xmax
@@ -20,7 +20,7 @@ void UniformSpacing::generate(size_t i, double &x) const {
   } else {
     x=xmin_+i*(xmax_-xmin_)/(N_-1);
   }
-};
+}
 
 register_BuilderT1(Spacing,UniformSpacing,UniformSpacing::spacing_type_str());
 

@@ -8,7 +8,8 @@ namespace grid {
 namespace projection {
 
 class MercatorProjection: public Projection {
-  public:
+
+public:
 
     // constructor
     MercatorProjection(const eckit::Parametrisation& p);
@@ -33,7 +34,7 @@ class MercatorProjection: public Projection {
     // specification
     virtual eckit::Properties spec() const;
 
-  protected:
+protected:
 
     double lon0_;            // central longitude
     double radius_;          // sphere radius

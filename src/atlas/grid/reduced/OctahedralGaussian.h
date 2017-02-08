@@ -9,7 +9,7 @@ namespace reduced {
 
 class OctahedralGaussian: public ReducedGaussian {
 
-  public:
+public:
 
     static std::string grid_type_str();
 
@@ -20,12 +20,12 @@ class OctahedralGaussian: public ReducedGaussian {
 
     std::vector<long> computePL(const size_t N);
 
-    OctahedralGaussian(): ReducedGaussian() {};
+    OctahedralGaussian(): ReducedGaussian() {}
     OctahedralGaussian(const util::Config& params);
 
     virtual eckit::Properties spec() const;
 
-  protected:
+protected:
 
     void setup(size_t N);
 
