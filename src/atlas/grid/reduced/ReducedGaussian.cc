@@ -51,7 +51,7 @@ void ReducedGaussian::setup(const size_t N, const long pl[]) {
     config_spacing.set("xmin",90.0);
     config_spacing.set("xmax",-90.0);
     config_spacing.set("N",ny);
-    spacing::Spacing * spacing_y=spacing::Spacing::create(config_spacing);
+    eckit::SharedPtr<spacing::Spacing> spacing_y ( spacing::Spacing::create(config_spacing) );
     spacing_y->generate(y);
 
     // loop over latitudes to set bounds

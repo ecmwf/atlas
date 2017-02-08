@@ -39,14 +39,14 @@ void GlobalLonLat::setup(long nlon, long nlat) {
     config_spacing.set("xmin",(shiftLon_ ? 0.5 : 0.0)*360.0/nlon );
     config_spacing.set("xmax",(shiftLon_ ? nlon-0.5 : nlon-1)*360.0/nlon );
     config_spacing.set("N",nlon);
-    spacing_x_=spacing::Spacing::create(config_spacing);
+    spacing_x_.reset( spacing::Spacing::create(config_spacing) );
 
     // spacing is uniform in y
     config_spacing.set("spacingType","uniform");
     config_spacing.set("xmin", 90.0-(shiftLat_ ? 90.0/(nlat) : 0.0) );
     config_spacing.set("xmax",-90.0+(shiftLat_ ? 90.0/(nlat) : 0.0) );
     config_spacing.set("N",nlat);
-    spacing_y_=spacing::Spacing::create(config_spacing);
+    spacing_y_.reset( spacing::Spacing::create(config_spacing) );
 
     // domain is global
     config_domain.set("domainType","global");

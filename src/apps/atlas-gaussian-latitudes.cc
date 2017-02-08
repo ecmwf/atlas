@@ -108,14 +108,14 @@ void AtlasGaussianLatitudes::run()
   std::vector<double> lats (2*N);
 
   try {
-  	// create spacing object
-  	atlas::util::Config params;
-  	params.set("xmin",90.);
-  	params.set("xmax",-90.);
-  	params.set("N",2*N);
-  	params.set("spacingType","gaussian");
-  	atlas::grid::spacing::Spacing * sp=atlas::grid::spacing::Spacing::create(params);
-  	sp->generate(lats);
+    // create spacing object
+    atlas::util::Config params;
+    params.set("xmin",90.);
+    params.set("xmax",-90.);
+    params.set("N",2*N);
+    params.set("spacingType","gaussian");
+    eckit::SharedPtr<atlas::grid::spacing::Spacing> sp( atlas::grid::spacing::Spacing::create(params) );
+    sp->generate(lats);
   }
   catch( eckit::NotImplemented& err )
   {

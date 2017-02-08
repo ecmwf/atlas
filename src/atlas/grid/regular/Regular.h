@@ -33,8 +33,8 @@ protected:
 
 protected:
 
-    spacing::Spacing * spacing_x_;
-    spacing::Spacing * spacing_y_;
+    eckit::SharedPtr<spacing::Spacing> spacing_x_;
+    eckit::SharedPtr<spacing::Spacing> spacing_y_;
 
 };
 

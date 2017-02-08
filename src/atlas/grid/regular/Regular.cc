@@ -22,9 +22,9 @@ void Regular::setup() {
   // perform checks
 
   // UniformSpacing in x-direction? -- For now, Structured assumes equidistant points along each latitude
-  const spacing::UniformSpacing * us=dynamic_cast<const spacing::UniformSpacing*>(spacing_x_);
-  if (! us) throw eckit::BadParameter("(For now,) Structured grids require a UniformSpacing in X-direction",Here());
-
+  if( not dynamic_cast<const spacing::UniformSpacing*>(spacing_x_.get()) ) {
+    throw eckit::BadParameter("(For now,) Structured grids require a UniformSpacing in X-direction",Here());
+  }
 
   // calculate input for Structured grid
   double xx;

@@ -3,15 +3,17 @@
 
 #include "eckit/config/Parametrisation.h"
 #include "eckit/memory/Builder.h"
+#include "eckit/memory/Owned.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {
 namespace grid {
 namespace spacing {
 
-class Spacing {
+class Spacing : public eckit::Owned {
 
 public:
+
     typedef const eckit::Parametrisation& ARG1;
     typedef eckit::BuilderT1<Spacing> builder_t;
 

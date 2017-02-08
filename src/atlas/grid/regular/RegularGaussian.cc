@@ -44,13 +44,13 @@ void RegularGaussian::setup(long N) {
     config_spacing.set("xmin",0.0);
     config_spacing.set("xmax",(nlon-1)*360.0/nlon);
     config_spacing.set("N",nlon);
-    spacing_x_=spacing::Spacing::create(config_spacing);
+    spacing_x_.reset( spacing::Spacing::create(config_spacing) );
 
     config_spacing.set("spacingType","gaussian");
     config_spacing.set("xmin",90.0);
     config_spacing.set("xmax",-90.0);
     config_spacing.set("N",nlat);
-    spacing_y_=spacing::Spacing::create(config_spacing);
+    spacing_y_.reset( spacing::Spacing::create(config_spacing) );
 
     // domain is global
     config_domain.set("domainType","global");
