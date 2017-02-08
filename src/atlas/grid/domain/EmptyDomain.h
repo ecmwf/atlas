@@ -12,24 +12,24 @@ namespace domain {
 class EmptyDomain: public Domain {
 
   public:
- 
+
     EmptyDomain(const eckit::Parametrisation& p);
     ~EmptyDomain() {};
 
     /// Checks if the point is contained in the domain
     bool contains(eckit::geometry::Point2 P) const;
-    
+
     static std::string domain_type_str() {return "empty";}
     virtual std::string virtual_domain_type_str() const { return "empty"; }
-    
+
     bool isEmpty() const { return true; }
     bool isGlobal() const { return false; }
-    
+
     virtual eckit::Properties spec() const;
-    
-	private:
-		
-		void setup();
+
+  private:
+
+    void setup();
 };
 
 

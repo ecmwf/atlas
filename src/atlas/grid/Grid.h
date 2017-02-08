@@ -145,9 +145,9 @@ class Grid : public eckit::Owned {
     /// Cache the hash
     mutable eckit::MD5::digest_t hash_;
 
-	protected: // members
-		projection::Projection * projection_;
-		domain::Domain * domain_;
+  protected: // members
+    projection::Projection * projection_;
+    domain::Domain * domain_;
 };
 
 

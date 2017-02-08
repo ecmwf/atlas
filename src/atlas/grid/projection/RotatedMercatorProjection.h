@@ -8,36 +8,36 @@ namespace grid {
 namespace projection {
 
 class RotatedMercatorProjection: public MercatorProjection {
-	public:
-	
-		// constructor
-		RotatedMercatorProjection(const eckit::Parametrisation& p);
+  public:
 
-		// copy constructor
-		RotatedMercatorProjection( const RotatedMercatorProjection& rhs );
-		
-		// clone method
-		virtual RotatedMercatorProjection *clone() const ;
-		
-		// class name
-		static std::string className() { return "atlas.RotatedMercatorProjection"; }
-		static std::string projection_type_str() {return "rotatedMercator";}
-		virtual std::string virtual_projection_type_str() const {return "rotatedMercator";}
+    // constructor
+    RotatedMercatorProjection(const eckit::Parametrisation& p);
 
-		// projection and inverse projection
-		eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const;
-		eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2) const;
+    // copy constructor
+    RotatedMercatorProjection( const RotatedMercatorProjection& rhs );
 
-		bool isRegional() { return true; }	// lambert projection cannot be used for global grids
+    // clone method
+    virtual RotatedMercatorProjection *clone() const ;
 
-		// specification
-		virtual eckit::Properties spec() const;
+    // class name
+    static std::string className() { return "atlas.RotatedMercatorProjection"; }
+    static std::string projection_type_str() {return "rotatedMercator";}
+    virtual std::string virtual_projection_type_str() const {return "rotatedMercator";}
 
-	private:
+    // projection and inverse projection
+    eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const;
+    eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2) const;
 
-		eckit::geometry::LLPoint2 pole_;		// pole
-		void setup(const eckit::Parametrisation & p);
-		
+    bool isRegional() { return true; }  // lambert projection cannot be used for global grids
+
+    // specification
+    virtual eckit::Properties spec() const;
+
+  private:
+
+    eckit::geometry::LLPoint2 pole_;    // pole
+    void setup(const eckit::Parametrisation & p);
+
 };
 
 }  // namespace projection

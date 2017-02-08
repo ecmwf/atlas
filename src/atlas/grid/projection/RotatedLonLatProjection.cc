@@ -13,55 +13,55 @@ namespace projection {
 // constructor
 RotatedLonLatProjection::RotatedLonLatProjection(const eckit::Parametrisation& params) : LonLatProjection(params) {
 
-	// get pole
+  // get pole
   std::vector<double> p(2);
-	if( ! params.get("pole",p) )
+  if( ! params.get("pole",p) )
     throw eckit::BadParameter("pole missing in Params",Here());
-  
+
   pole_.assign(p[0],p[1]);
-  
+
 }
 
 // copy constructor
 RotatedLonLatProjection::RotatedLonLatProjection( const RotatedLonLatProjection& rhs ) : LonLatProjection(rhs) {
-	pole_.assign(rhs.pole_[0],rhs.pole_[1]);
+  pole_.assign(rhs.pole_[0],rhs.pole_[1]);
 }
 
 // clone method
 RotatedLonLatProjection * RotatedLonLatProjection::clone() const  {
-	return new RotatedLonLatProjection(*this);
+  return new RotatedLonLatProjection(*this);
 }
 
 
 eckit::geometry::LLPoint2 RotatedLonLatProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
 
-	// point
-	eckit::geometry::LLPoint2 P(xy[eckit::geometry::XX],xy[eckit::geometry::YY]);
-	
-	// perform rotation
-	rotate_(P,pole_);
+  // point
+  eckit::geometry::LLPoint2 P(xy[eckit::geometry::XX],xy[eckit::geometry::YY]);
 
-	return P;
+  // perform rotation
+  rotate_(P,pole_);
+
+  return P;
 }
 
 eckit::geometry::Point2 RotatedLonLatProjection::lonlat2coords(eckit::geometry::LLPoint2 P) const {
 
-	// inverse rotation
-	unrotate_(P,pole_);
+  // inverse rotation
+  unrotate_(P,pole_);
 
-	return eckit::geometry::Point2(P.lon(),P.lat());
+  return eckit::geometry::Point2(P.lon(),P.lat());
 }
 
 
 // specification
 eckit::Properties RotatedLonLatProjection::spec() const {
-	eckit::Properties proj_spec;
-	proj_spec.set("projectionType",virtual_projection_type_str());
-	std::vector<double> p(2);
-	p[0]=pole_.lon();
-	p[1]=pole_.lat();
-	proj_spec.set("projectionPole",eckit::makeVectorValue(p));
-	return proj_spec;
+  eckit::Properties proj_spec;
+  proj_spec.set("projectionType",virtual_projection_type_str());
+  std::vector<double> p(2);
+  p[0]=pole_.lon();
+  p[1]=pole_.lat();
+  proj_spec.set("projectionPole",eckit::makeVectorValue(p));
+  return proj_spec;
 }
 
 register_BuilderT1(Projection,RotatedLonLatProjection,RotatedLonLatProjection::projection_type_str());

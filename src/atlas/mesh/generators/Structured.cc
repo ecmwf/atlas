@@ -174,7 +174,7 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
   options.get("partitioner",partitioner_factory);
   if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
   if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
-  
+
   grid::partitioners::Partitioner::Ptr partitioner( grid::partitioners::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
   grid::GridDistribution::Ptr distribution( partitioner->distribution() );
   generate( grid, *distribution, mesh );
@@ -206,21 +206,21 @@ void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& 
 
   int mypart   = options.get<size_t>("part");
 
-	
-	// show distribution
+
+  // show distribution
 #if DEBUG_OUTPUT
-		int inode=0;
-		std::vector<int> parts=distribution;
-		Log::info(Here()) << "Partition : " << std::endl;
-		for (int ilat=0; ilat<rg->nlat(); ilat++) {
-			for (int ilon=0; ilon<rg->nlon(ilat); ilon++ ) {
-				Log::info(Here()) << std::setw(3) << parts[inode];
-				inode++;
-			}
-			Log::info(Here()) << "\n";
-		}
+    int inode=0;
+    std::vector<int> parts=distribution;
+    Log::info(Here()) << "Partition : " << std::endl;
+    for (int ilat=0; ilat<rg->nlat(); ilat++) {
+      for (int ilon=0; ilon<rg->nlon(ilat); ilon++ ) {
+        Log::info(Here()) << std::setw(3) << parts[inode];
+        inode++;
+      }
+      Log::info(Here()) << "\n";
+    }
 #endif
-	
+
   // clone some grid properties
   mesh.setProjection(rg->projection());
 
@@ -240,8 +240,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
   bool   has_south_pole = rg.lat(rg.nlat()-1) == -90;
   bool   unique_pole        = options.get<bool>("unique_pole") && three_dimensional && has_north_pole && has_south_pole;
   bool   periodic_east_west = rg.domain()->isPeriodicEastWest();
-  
-	
+
+
   int n;
   /*
   Find min and max latitudes used by this part.
@@ -372,7 +372,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         pS1 = parts.at(offset.at(latS)+ipS1);
       else
         pS1 = parts.at(offset.at(latS)+ipS1-1);
-      
+
 
       if( ipN2 == rg.nlon(latN) )
         pN2 = pN1;
@@ -383,7 +383,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       else
         pS2 = parts.at(offset.at(latS)+ipS2);
 
-#if DEBUG_OUTPUT		
+#if DEBUG_OUTPUT
       Log::info(Here())  << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
       Log::info(Here())  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
 #endif
@@ -573,7 +573,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         int np[3] = {pN1, pN2, pS1};
         for( int j=0; j<3; ++j )
           if (np[j]==mypart) ++cnt_mypart;
-        
+
         if( latN == 0 )
         {
           if( pN1 == mypart )
@@ -804,7 +804,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   bool include_periodic_ghost_points = periodic_east_west
           && !three_dimensional ;
   bool remove_periodic_ghost_points = three_dimensional && periodic_east_west ;
-  
+
   bool include_north_pole = (mypart == 0 )
           && options.get<bool>("include_pole")
           && !has_north_pole
@@ -1010,13 +1010,13 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       lonlat(inode,internals::LON) = x;
       lonlat(inode,internals::LAT) = y;
-      
-		  // geographic coordinates by using projection
-	    eckit::geometry::Point2 xy(x,y);
-	    llg=rg.projection()->coords2lonlat(xy);
-	    geolonlat(inode,internals::LON) = llg[internals::LON];
-	    geolonlat(inode,internals::LAT) = llg[internals::LAT];
-      
+
+      // geographic coordinates by using projection
+      eckit::geometry::Point2 xy(x,y);
+      llg=rg.projection()->coords2lonlat(xy);
+      geolonlat(inode,internals::LON) = llg[internals::LON];
+      geolonlat(inode,internals::LAT) = llg[internals::LAT];
+
       glb_idx(inode)   = n+1;
       part(inode) = parts.at(n);
       ghost(inode) = 0;
@@ -1046,14 +1046,14 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       lonlat(inode,internals::LON) = x;
       lonlat(inode,internals::LAT) = y;
-      
-		  // geographic coordinates by using projection
-	    eckit::geometry::Point2 xy(x,y);
-	    llg=rg.projection()->coords2lonlat(xy);
-	    geolonlat(inode,internals::LON) = llg[internals::LON];
-	    geolonlat(inode,internals::LAT) = llg[internals::LAT];
-			
-			
+
+      // geographic coordinates by using projection
+      eckit::geometry::Point2 xy(x,y);
+      llg=rg.projection()->coords2lonlat(xy);
+      geolonlat(inode,internals::LON) = llg[internals::LON];
+      geolonlat(inode,internals::LAT) = llg[internals::LAT];
+
+
       glb_idx(inode)   = periodic_glb.at(jlat)+1;
       part(inode)      = part(inode_left);
       ghost(inode)     = 1;
@@ -1074,7 +1074,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
     lonlat(inode,internals::LON) = x;
     lonlat(inode,internals::LAT) = y;
 
-	  // geographic coordinates by using projection
+    // geographic coordinates by using projection
     eckit::geometry::Point2 xy(x,y);
     llg=rg.projection()->coords2lonlat(xy);
     geolonlat(inode,internals::LON) = llg[internals::LON];
@@ -1098,12 +1098,12 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
     lonlat(inode,internals::LON) = x;
     lonlat(inode,internals::LAT) = y;
 
-	  // geographic coordinates by using projection
+    // geographic coordinates by using projection
     eckit::geometry::Point2 xy(x,y);
     llg=rg.projection()->coords2lonlat(xy);
     geolonlat(inode,internals::LON) = llg[internals::LON];
     geolonlat(inode,internals::LAT) = llg[internals::LAT];
-    
+
     glb_idx(inode)   = periodic_glb.at(rg.nlat()-1)+3;
     part(inode)      = mypart;
     ghost(inode)     = 0;

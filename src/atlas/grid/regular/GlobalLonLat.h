@@ -17,27 +17,27 @@ class GlobalLonLat: public Regular {
     static std::string grid_type_str();
 
     static std::string className();
-		
-		virtual std::string shortName() const;
-		virtual std::string gridType() const { return "global_lonlat"; }
-		
+
+    virtual std::string shortName() const;
+    virtual std::string gridType() const { return "global_lonlat"; }
+
     GlobalLonLat();
     GlobalLonLat(const util::Config& params);
     GlobalLonLat(long nlon, long nlat);
     GlobalLonLat(long N);
 
     eckit::Properties spec() const;
-    
+
     bool isShiftedLon() const { return shiftLon_; }
     bool isShiftedLat() const { return shiftLat_; }
-    
+
   protected:
 
     void setup(long nlon, long nlat);
 
     //virtual void set_typeinfo() = 0;
     //static eckit::Value domain_spec(const Domain& dom);
-    
+
     bool shiftLon_;
     bool shiftLat_;
 

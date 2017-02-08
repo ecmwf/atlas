@@ -61,7 +61,7 @@ class Structured : public Grid {
 
     //virtual std::string gridType() const {
     //    return grid_type_;
-   	//}
+     //}
 
     virtual eckit::Properties spec() const;
 
@@ -107,8 +107,8 @@ class Structured : public Grid {
 
     inline double lon( const size_t jlat, const size_t jlon ) const {
         return lonmin_[jlat] + static_cast<double>(jlon) * lon_inc_[jlat];
-        
-        
+
+
     }
 
     inline double lat( const size_t jlat ) const {
@@ -119,14 +119,14 @@ class Structured : public Grid {
         crd[0] = lon(jlat,jlon);
         crd[1] = lat(jlat);
     }
-    
+
     void geoLonlat(const size_t jlon, const size_t jlat, eckit::geometry::LLPoint2 &Pll) const {
-    	// in grid coordinates
-    	double xy[2];
-    	lonlat(jlat,jlon,xy);
-    	eckit::geometry::Point2 Pxy(xy[0],xy[1]);
-    	// convert to geographic coordinates
-    	Pll=projection_->coords2lonlat(Pxy);
+      // in grid coordinates
+      double xy[2];
+      lonlat(jlat,jlon,xy);
+      eckit::geometry::Point2 Pxy(xy[0],xy[1]);
+      // convert to geographic coordinates
+      Pll=projection_->coords2lonlat(Pxy);
     }
 
     inline bool reduced() const {

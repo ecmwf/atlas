@@ -18,7 +18,7 @@ public:
 
   CheckerBoardPartitioner(const grid::Grid&);
 
-  CheckerBoardPartitioner(const grid::Grid&, int N);		// N is the number of parts (aka MPI tasks)
+  CheckerBoardPartitioner(const grid::Grid&, int N);    // N is the number of parts (aka MPI tasks)
 
   CheckerBoardPartitioner(const grid::Grid&, int N, int nbands);
   CheckerBoardPartitioner(const grid::Grid&, int N, int nbands, bool checkerboard);
@@ -39,18 +39,18 @@ private:
   // algorithm is used internally
   void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
 
-	void configure_defaults(const grid::Grid&);
-	
-private:
-
-	virtual void partition( int part[] ) const;
+  void configure_defaults(const grid::Grid&);
 
 private:
 
-  int nparts_;	// number of parts
-	int nbands_;	// number of bands
-	int nx_, ny_;	// grid dimensions
-	bool checkerboard_;	// exact (true) or approximate (false) checkerboard
+  virtual void partition( int part[] ) const;
+
+private:
+
+  int nparts_;  // number of parts
+  int nbands_;  // number of bands
+  int nx_, ny_;  // grid dimensions
+  bool checkerboard_;  // exact (true) or approximate (false) checkerboard
 
 };
 

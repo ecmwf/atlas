@@ -8,33 +8,33 @@ namespace grid {
 namespace projection {
 
 class RotatedLonLatProjection: public LonLatProjection {
-	public:
-		// constructor
-		RotatedLonLatProjection(const eckit::Parametrisation& p);
+  public:
+    // constructor
+    RotatedLonLatProjection(const eckit::Parametrisation& p);
 
-		// copy constructor
-		RotatedLonLatProjection( const RotatedLonLatProjection& rhs );
-		
-		// clone method
-		virtual RotatedLonLatProjection *clone() const ;
-		
-		// class name
-		static std::string className() { return "atlas.RotatedLonLatProjection"; }
-		static std::string projection_type_str() {return "rotatedLonLat";}
-		virtual std::string virtual_projection_type_str() const {return "rotatedLonLat";}
+    // copy constructor
+    RotatedLonLatProjection( const RotatedLonLatProjection& rhs );
 
-		// projection and inverse projection
-		eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const;
-		eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2) const;
+    // clone method
+    virtual RotatedLonLatProjection *clone() const ;
 
-		// purely regional? - no!
-		bool isRegional() { return false; }	// lonlat can be global
-	
-		// specification
-		virtual eckit::Properties spec() const;
+    // class name
+    static std::string className() { return "atlas.RotatedLonLatProjection"; }
+    static std::string projection_type_str() {return "rotatedLonLat";}
+    virtual std::string virtual_projection_type_str() const {return "rotatedLonLat";}
 
-	private:
-		eckit::geometry::LLPoint2 pole_;		// pole
+    // projection and inverse projection
+    eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const;
+    eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2) const;
+
+    // purely regional? - no!
+    bool isRegional() { return false; }  // lonlat can be global
+
+    // specification
+    virtual eckit::Properties spec() const;
+
+  private:
+    eckit::geometry::LLPoint2 pole_;    // pole
 };
 
 }  // namespace projection

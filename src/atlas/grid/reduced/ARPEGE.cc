@@ -26,28 +26,28 @@ std::string ARPEGE::shortName() const {
 ARPEGE::ARPEGE(const util::Config& config) :
     ClassicGaussian()
 {
-		size_t N;
-		double c;
-		util::Config config_proj;
-		
-		// get N from config
-		if ( !config.get("N",N) ) throw eckit::BadParameter("ARPEGE requires N",Here());
-		
-		// set projection
-		// get stretching factor; defaults to 1
-		if ( !config.get("stretching_factor",c) ) c=1.0;
-		config_proj.set("stretching_factor",c);
-		std::vector<double> pole(2);
-		if ( config.get("pole",pole) ) {
-			config_proj.set("projectionType","rotatedSchmidt");
-			config_proj.set("pole",pole);
-		} else {
-			config_proj.set("projectionType","schmidt");
-		}
-		projection_=projection::Projection::create(config_proj);
+    size_t N;
+    double c;
+    util::Config config_proj;
 
-		// setup
-		ClassicGaussian::setup(N);
+    // get N from config
+    if ( !config.get("N",N) ) throw eckit::BadParameter("ARPEGE requires N",Here());
+
+    // set projection
+    // get stretching factor; defaults to 1
+    if ( !config.get("stretching_factor",c) ) c=1.0;
+    config_proj.set("stretching_factor",c);
+    std::vector<double> pole(2);
+    if ( config.get("pole",pole) ) {
+      config_proj.set("projectionType","rotatedSchmidt");
+      config_proj.set("pole",pole);
+    } else {
+      config_proj.set("projectionType","schmidt");
+    }
+    projection_=projection::Projection::create(config_proj);
+
+    // setup
+    ClassicGaussian::setup(N);
 }
 
 }  // namespace regular

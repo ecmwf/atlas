@@ -10,16 +10,16 @@ namespace spacing {
 class UniformSpacing: public Spacing {
 
 
-	public:
-		
-		// constructor
-		UniformSpacing(const eckit::Parametrisation& p);
-		
-		// class name
-		static std::string className() { return "atlas.UniformSpacing"; } 
-		static std::string spacing_type_str() {return "uniform";}
+  public:
 
-		void generate(size_t i, double &x) const;
+    // constructor
+    UniformSpacing(const eckit::Parametrisation& p);
+
+    // class name
+    static std::string className() { return "atlas.UniformSpacing"; }
+    static std::string spacing_type_str() {return "uniform";}
+
+    void generate(size_t i, double &x) const;
 };
 
 }  // namespace spacing

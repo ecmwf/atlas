@@ -33,9 +33,9 @@ CustomStructured::CustomStructured(const eckit::Parametrisation& params) :
     Structured()
 {
   //domain_ = domain::Domain::makeGlobal();
-	util::Config config_domain;
-	config_domain.set("domainType","global");
-	domain_=domain::Domain::create(config_domain);
+  util::Config config_domain;
+  config_domain.set("domainType","global");
+  domain_=domain::Domain::create(config_domain);
 
   // mandatory parameters: pl, latitudes
   std::vector<long> pl;
@@ -78,13 +78,13 @@ CustomStructured::CustomStructured(
 {
     ASSERT(nlat);
 
-		util::Config config_domain;
-		config_domain.set("domainType","global");
-		domain_=domain::Domain::create(config_domain);
+    util::Config config_domain;
+    config_domain.set("domainType","global");
+    domain_=domain::Domain::create(config_domain);
 
-		util::Config config_proj;
-		config_proj.set("projectionType","lonlat");
-		projection_=projection::Projection::create(config_proj);
+    util::Config config_proj;
+    config_proj.set("projectionType","lonlat");
+    projection_=projection::Projection::create(config_proj);
 
     // assign longitude limits
     std::vector<double> lonmin(nlat);

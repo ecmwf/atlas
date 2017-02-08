@@ -14,15 +14,15 @@ class OctahedralGaussian: public ReducedGaussian {
     static std::string grid_type_str();
 
     static std::string className();
-    
+
     virtual std::string shortName() const;
     virtual std::string gridType() const { return "octahedral_gaussian"; }
 
-		std::vector<long> computePL(const size_t N);
-		
+    std::vector<long> computePL(const size_t N);
+
     OctahedralGaussian(): ReducedGaussian() {};
     OctahedralGaussian(const util::Config& params);
-    
+
     virtual eckit::Properties spec() const;
 
   protected:

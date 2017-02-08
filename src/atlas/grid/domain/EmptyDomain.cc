@@ -6,7 +6,7 @@ namespace grid {
 namespace domain {
 
 EmptyDomain::EmptyDomain(const eckit::Parametrisation& p) {
-	setup();
+  setup();
 }
 
 void EmptyDomain::setup() {
@@ -14,13 +14,13 @@ void EmptyDomain::setup() {
 }
 
 bool EmptyDomain::contains(eckit::geometry::Point2 xy) const {
-	return false;
+  return false;
 }
 
 eckit::Properties EmptyDomain::spec() const {
-	eckit::Properties domain_prop;
-	domain_prop.set("domainType",virtual_domain_type_str());
-	return domain_prop;
+  eckit::Properties domain_prop;
+  domain_prop.set("domainType",virtual_domain_type_str());
+  return domain_prop;
 }
 
 register_BuilderT1(Domain,EmptyDomain,EmptyDomain::domain_type_str());

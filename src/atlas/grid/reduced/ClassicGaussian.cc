@@ -27,41 +27,41 @@ std::string ClassicGaussian::shortName() const {
 
 void ClassicGaussian::setup(size_t N) {
 
-		util::Config config_spacing, config_domain, config_proj;
-		
-		// number of longitudes: from predefined sets
-		std::vector<long> pl(N);			// number of longitudes per latitude
-		classic::points_per_latitude_npole_equator(N,pl.data());
-    
+    util::Config config_spacing, config_domain, config_proj;
+
+    // number of longitudes: from predefined sets
+    std::vector<long> pl(N);      // number of longitudes per latitude
+    classic::points_per_latitude_npole_equator(N,pl.data());
+
     // setup from reducedGaussian
     ReducedGaussian::setup(N,pl.data());
-    
+
 }
 
 ClassicGaussian::ClassicGaussian(size_t N) : ReducedGaussian() {
 
-	// projection is lonlat
-	util::Config config_proj;
-	config_proj.set("projectionType","lonlat");
-	projection_=projection::Projection::create(config_proj);
+  // projection is lonlat
+  util::Config config_proj;
+  config_proj.set("projectionType","lonlat");
+  projection_=projection::Projection::create(config_proj);
 
-	// setup
-	setup(N);
+  // setup
+  setup(N);
 }
 
 ClassicGaussian::ClassicGaussian(const util::Config& config) : ReducedGaussian() {
-		size_t N;
-		
-		// get N from config
-		if ( !config.get("N",N) ) throw eckit::BadParameter("ClassicGaussian requires N",Here());
+    size_t N;
 
-		// projection is lonlat
-		util::Config config_proj;
-		config_proj.set("projectionType","lonlat");
-		projection_=projection::Projection::create(config_proj);
-		
-		// setup
-		setup(N);
+    // get N from config
+    if ( !config.get("N",N) ) throw eckit::BadParameter("ClassicGaussian requires N",Here());
+
+    // projection is lonlat
+    util::Config config_proj;
+    config_proj.set("projectionType","lonlat");
+    projection_=projection::Projection::create(config_proj);
+
+    // setup
+    setup(N);
 }
 
 

@@ -33,38 +33,38 @@ std::vector<long> OctahedralGaussian::computePL(const size_t N) {
 
 void OctahedralGaussian::setup(size_t N) {
 
-		// number of longitudes per latitude
-		std::vector<long>   pl(N);
+    // number of longitudes per latitude
+    std::vector<long>   pl(N);
     pl=computePL(N);
-    
+
     // setup from reducedGaussian
-		ReducedGaussian::setup(N,pl.data());
-		
+    ReducedGaussian::setup(N,pl.data());
+
 }
 
 OctahedralGaussian::OctahedralGaussian(const util::Config& config) :
     ReducedGaussian()
 {
-		size_t N;
-		
-		// get N from config
-		if ( !config.get("N",N) ) throw eckit::BadParameter("OctahedralGaussian requires N",Here());
+    size_t N;
 
-		// projection is lonlat
-		util::Config config_proj;
-		config_proj.set("projectionType","lonlat");
-		projection_=projection::Projection::create(config_proj);
-		
-		// setup
-		setup(N);
+    // get N from config
+    if ( !config.get("N",N) ) throw eckit::BadParameter("OctahedralGaussian requires N",Here());
+
+    // projection is lonlat
+    util::Config config_proj;
+    config_proj.set("projectionType","lonlat");
+    projection_=projection::Projection::create(config_proj);
+
+    // setup
+    setup(N);
 }
 
 eckit::Properties OctahedralGaussian::spec() const {
     eckit::Properties grid_spec;
-    
+
     // general specs
     grid_spec=Grid::spec();
-        
+
     // specs for this grid are in shortname
 
     return grid_spec;

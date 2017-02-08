@@ -47,7 +47,7 @@ std::string Structured::grid_type_str() {
 }
 
 std::string Structured::shortName() const {
-	return "structured";
+  return "structured";
 
 }
 
@@ -79,7 +79,7 @@ void Structured::setup(
     nlonmin_ = nlonmax_ = static_cast<size_t>(pl_[0]);
 
     for (size_t jlat = 0; jlat < nlat; ++jlat) {
-    		//std::cout << "jlat = " << jlat << "; nlon = " << pl_[jlat] << std::endl;
+        //std::cout << "jlat = " << jlat << "; nlon = " << pl_[jlat] << std::endl;
         lon_inc_[jlat] = (lonmax_[jlat]-lonmin_[jlat])/double(pl_[jlat]-1);
         nlonmin_ = std::min(static_cast<size_t>(pl_[jlat]),nlonmin_);
         nlonmax_ = std::max(static_cast<size_t>(pl_[jlat]),nlonmax_);
@@ -89,15 +89,15 @@ void Structured::setup(
 
 void Structured::setup_lon_limits(const size_t nlat, const long pl[], const domain::Domain& dom, double lonmin[], double lonmax[]) {
     ASSERT(nlat);
-    
+
     if ( !dom.isGlobal() )
-    	throw eckit::BadCast("this routine shouldn't be called for nonglobal domains.",Here());
-    
-    
+      throw eckit::BadCast("this routine shouldn't be called for nonglobal domains.",Here());
+
+
     double east, west;
     east=-180.;
     west=180.;
-    
+
     std::fill_n(lonmin, nlat, west);
     std::fill_n(lonmax, nlat, east);
 
@@ -120,8 +120,8 @@ void Structured::setup_lon_limits(const size_t nlat, const long pl[], const doma
         lonmax[jlat] -= pl[jlat]? ew/ndiv : 0.;;
     }
     */
-    
-    
+
+
 }
 
 
@@ -154,9 +154,9 @@ void Structured::setup_lat_hemisphere(const size_t N, const double lat[], const 
 
 
 void Structured::lonlat( std::vector<Point>& pts ) const {
-		std::cout << "npts = " << npts() << std::endl;
-		std::cout << "pts.size() = " << pts.size() << std::endl;
-		
+    std::cout << "npts = " << npts() << std::endl;
+    std::cout << "pts.size() = " << pts.size() << std::endl;
+
     pts.resize(npts());
 
     for(size_t jlat=0, c=0; jlat<nlat(); ++jlat) {
@@ -194,16 +194,16 @@ void Structured::hash(eckit::MD5& md5) const {
 
     md5.add(latitudes().data(), sizeof(double)*latitudes().size());
     md5.add(pl().data(), sizeof(long)*nlat());
-    
+
     // also add lonmin and lonmax
     md5.add(lonmin_.data(), sizeof(double)*lonmin_.size());
     md5.add(lonmax_.data(), sizeof(double)*lonmax_.size());
-    
+
     // also add projection information
     eckit::Properties prop;
     std::ostringstream s;
-		s << projection()->spec();
-		prop.set("projection",s.str());
+    s << projection()->spec();
+    prop.set("projection",s.str());
     prop.hash(md5);
 }
 
@@ -219,7 +219,7 @@ eckit::Properties Structured::spec() const {
     grid_spec.set("pl",eckit::makeVectorValue(pl()));
     grid_spec.set("lonmin",eckit::makeVectorValue(lonmin_));
     grid_spec.set("lonmax",eckit::makeVectorValue(lonmax_));
-    
+
     return grid_spec;
 }
 

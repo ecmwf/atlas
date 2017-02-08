@@ -12,26 +12,26 @@ namespace domain {
 class GlobalDomain: public Domain {
 
   public:
- 
+
     GlobalDomain(const eckit::Parametrisation& p);
     ~GlobalDomain() {}
     static std::string className() {return "atlas.GlobalDomain";}
 
     /// Checks if the point is contained in the domain
     bool contains(eckit::geometry::Point2 P) const;
-    
+
     // Domain properties
     bool isGlobal() const { return true; }
     bool isEmpty() const { return false; }
-    
+
     static std::string domain_type_str() {return "global";}
     virtual std::string virtual_domain_type_str() const { return "global"; }
-    
+
     virtual eckit::Properties spec() const;
-    
-	private:
-		
-		void setup();
+
+  private:
+
+    void setup();
 };
 
 

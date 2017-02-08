@@ -10,34 +10,34 @@ namespace projection {
 class LonLatProjection: public Projection {
 
 
-	public:
-		
-		// constructor
-		LonLatProjection(const eckit::Parametrisation& p);
+  public:
 
-		// copy constructor
-		LonLatProjection( const LonLatProjection& rhs );
-		
-		// clone method
-		virtual LonLatProjection *clone() const ;
-		
-		// destructor
-		~LonLatProjection() {};
-				
-		// class name
-		static std::string className() { return "atlas.LonLatProjection"; }
-		static std::string projection_type_str() {return "lonlat";}
-		virtual std::string virtual_projection_type_str() const {return "lonlat";}
+    // constructor
+    LonLatProjection(const eckit::Parametrisation& p);
 
-		// projection and inverse projection
-		virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const;
-		virtual eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2) const;
-		
-		// purely regional? - no!
-		bool isRegional() { return false; }
+    // copy constructor
+    LonLatProjection( const LonLatProjection& rhs );
 
-		// specification
-		virtual eckit::Properties spec() const;
+    // clone method
+    virtual LonLatProjection *clone() const ;
+
+    // destructor
+    ~LonLatProjection() {};
+
+    // class name
+    static std::string className() { return "atlas.LonLatProjection"; }
+    static std::string projection_type_str() {return "lonlat";}
+    virtual std::string virtual_projection_type_str() const {return "lonlat";}
+
+    // projection and inverse projection
+    virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const;
+    virtual eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2) const;
+
+    // purely regional? - no!
+    bool isRegional() { return false; }
+
+    // specification
+    virtual eckit::Properties spec() const;
 
 };
 

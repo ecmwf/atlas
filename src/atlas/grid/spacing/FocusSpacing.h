@@ -10,20 +10,20 @@ namespace spacing {
 class FocusSpacing: public Spacing {
 
 
-	public:
-		
-		// constructor
-		FocusSpacing(const eckit::Parametrisation& p);
-		
-		// class name
-		static std::string className() { return "atlas.FocusSpacing"; } 
-		static std::string spacing_type_str() {return "focus";}
+  public:
 
-		
-		void generate(size_t i, double &x) const;
-	
-	private:
-		double focus_factor_;
+    // constructor
+    FocusSpacing(const eckit::Parametrisation& p);
+
+    // class name
+    static std::string className() { return "atlas.FocusSpacing"; }
+    static std::string spacing_type_str() {return "focus";}
+
+
+    void generate(size_t i, double &x) const;
+
+  private:
+    double focus_factor_;
 };
 
 }  // namespace spacing
