@@ -76,6 +76,7 @@ grid/projection/MercatorProjection.cc
 grid/projection/MercatorProjection.h
 grid/projection/RotatedMercatorProjection.cc
 grid/projection/RotatedMercatorProjection.h
+grid/spacing/Spacing.cc
 grid/spacing/Spacing.h
 grid/spacing/UniformSpacing.h
 grid/spacing/UniformSpacing.cc

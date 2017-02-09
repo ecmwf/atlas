@@ -18,7 +18,6 @@ public:
     static std::string className() { return "atlas.UniformSpacing"; }
     static std::string spacing_type_str() {return "uniform";}
 
-    void generate(size_t i, double &x) const;
 };
 
 }  // namespace spacing

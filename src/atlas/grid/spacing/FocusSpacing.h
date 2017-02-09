@@ -18,9 +18,6 @@ public:
     static std::string className() { return "atlas.FocusSpacing"; }
     static std::string spacing_type_str() {return "focus";}
 
-
-    void generate(size_t i, double &x) const;
-
 private:
 
     double focus_factor_;

@@ -27,28 +27,20 @@ void Regular::setup() {
   }
 
   // calculate input for Structured grid
-  double xx;
-  size_t nx=spacing_x_->N();
-  size_t ny=spacing_y_->N();
+  size_t nx=spacing_x_->size();
+  size_t ny=spacing_y_->size();
 
   std::vector<double> xmin(ny);
   std::vector<double> xmax(ny);
   std::vector<long>   pl(ny);
-  std::vector<double> y(ny);
 
-  spacing_x_->generate(0,xx);
-  xmin.assign(ny,xx);
+  xmin.assign( ny, (*spacing_x_)[0]    );
+  xmax.assign( ny, (*spacing_x_)[nx-1] );
 
-  spacing_x_->generate(spacing_x_->N()-1,xx);
-  xmax.assign(ny,xx);
+  pl.assign( ny, nx );
 
-  spacing_y_->generate(y);
-
-  pl.assign(ny,nx);
-
-  Structured::setup(ny,y.data(), pl.data(), xmin.data(), xmax.data());
+  Structured::setup(ny,spacing_y_->data(), pl.data(), xmin.data(), xmax.data());
   Structured::N_=0;  // not true for some global lonlat grids ;-(
-
 
   //set_typeinfo();
 }

@@ -1,10 +1,14 @@
 #ifndef atlas_Spacing_H
 #define atlas_Spacing_H
 
-#include "eckit/config/Parametrisation.h"
+#include <vector>
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
 #include "atlas/util/Config.h"
+
+namespace eckit {
+  class Parametrisation;
+}
 
 namespace atlas {
 namespace grid {
@@ -16,52 +20,30 @@ public:
 
     typedef const eckit::Parametrisation& ARG1;
     typedef eckit::BuilderT1<Spacing> builder_t;
+    typedef std::vector<double>::const_iterator const_iterator;
 
 public:
 
-    static Spacing* create() {
-      // default: uniform spacing
-      util::Config params;
-      params.set("spacingType","uniform");
-      return Spacing::create(params);
-    }
-
-    static Spacing* create(const eckit::Parametrisation& params) {
-      std::string spacingType;
-      if (params.get("spacingType",spacingType)) {
-        return eckit::Factory<Spacing>::instance().get(spacingType).create(params);
-      }
-
-      // should return error here
-      throw eckit::BadParameter("spacingType missing in params",Here());
-      return NULL;
-    }
+    static Spacing* create(const eckit::Parametrisation& params);
 
     static std::string className() {return "atlas.Spacing";}
     static std::string spacing_type_str() {return "spacing";}
 
-    // purely virtual functions: must be implemented by inheriting classes
-    virtual void generate(size_t i, double &x) const =0;
+    double operator[](size_t i) const { return x_[i]; }
 
-    void generate(std::vector<double>& x) const {
-      for (size_t i=0;i<N_;i++) generate(i,x[i]);
-    }
+    size_t size() const { return x_.size(); }
 
-    size_t N() { return N_; }
+    const double* data() const { return x_.data(); }
+
+    const_iterator begin() const { return x_.begin(); }
+    const_iterator end()   const { return x_.end();   }
+
+    const double& front() const { return x_.front(); }
+    const double& back()  const { return x_.back();  }
 
 protected:
 
-    void setup(const eckit::Parametrisation& params) {
-      // retrieve xmin, xmax and N from params
-      if ( !params.get("xmin",xmin_) ) throw eckit::BadParameter("xmin missing in Params",Here());
-      if ( !params.get("xmax",xmax_) ) throw eckit::BadParameter("xmax missing in Params",Here());
-      if ( !params.get("N",N_) )       throw eckit::BadParameter("N missing in Params",Here());
-    }
-
-
-    double xmin_;
-    double xmax_;
-    size_t N_;
+    std::vector<double> x_;
 
 };
 

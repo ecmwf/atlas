@@ -1,33 +1,33 @@
 #include "atlas/grid/spacing/GaussianSpacing.h"
-
 #include "atlas/grid/spacing/gaussian/Latitudes.h"
+#include "eckit/config/Parametrisation.h"
+#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace grid {
 namespace spacing {
 
-GaussianSpacing::GaussianSpacing(const eckit::Parametrisation& params) {
-  // general setup
-  Spacing::setup(params);
-
+GaussianSpacing::GaussianSpacing(long nlat) {
   // perform checks
-  ASSERT ( xmin_== 90.0 );
-  ASSERT ( xmax_== -90.0 );
-  ASSERT ( N_%2 == 0 );
+  ASSERT ( nlat%2 == 0 );
 
   // initialize latitudes during setup, to avoid repeating it.
-  lats_=new double[N_];
-  spacing::gaussian::gaussian_latitudes_npole_spole(N_/2, lats_);
+  x_.resize(nlat);
+  gaussian::gaussian_latitudes_npole_spole(nlat/2, x_.data());
 }
 
-GaussianSpacing::~GaussianSpacing() {
-  // clean up
-  delete[] lats_;
-}
+GaussianSpacing::GaussianSpacing(const eckit::Parametrisation& params) {
 
-void GaussianSpacing::generate(size_t i, double &x) const {
-  ASSERT( i<N_ );
-  x=lats_[i];
+  // retrieve N from params
+  long N;
+  if ( !params.get("N",N) )      throw eckit::BadParameter("N missing in Params",Here());
+
+  // perform checks
+  ASSERT ( N%2 == 0 );
+
+  // initialize latitudes during setup, to avoid repeating it.
+  x_.resize(N);
+  gaussian::gaussian_latitudes_npole_spole(N/2, x_.data());
 }
 
 register_BuilderT1(Spacing,GaussianSpacing,GaussianSpacing::spacing_type_str());

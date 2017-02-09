@@ -44,7 +44,6 @@ void ReducedGaussian::setup(const size_t N, const long pl[]) {
     // determine input for Structured::setup
     std::vector<double> xmin(ny);    // first longitude per latitude
     std::vector<double> xmax(ny);    // last longitude per latitude
-    std::vector<double> y(ny);      // latitudes
 
     // latitudes: gaussian spacing
     config_spacing.set("spacingType","gaussian");
@@ -52,7 +51,6 @@ void ReducedGaussian::setup(const size_t N, const long pl[]) {
     config_spacing.set("xmax",-90.0);
     config_spacing.set("N",ny);
     eckit::SharedPtr<spacing::Spacing> spacing_y ( spacing::Spacing::create(config_spacing) );
-    spacing_y->generate(y);
 
     // loop over latitudes to set bounds
     xmin.assign(ny,0.0);
@@ -62,7 +60,7 @@ void ReducedGaussian::setup(const size_t N, const long pl[]) {
     }
 
     // setup Structured grid
-    Structured::setup(ny,y.data(), pll.data(), xmin.data(), xmax.data());
+    Structured::setup(ny,spacing_y->data(), pll.data(), xmin.data(), xmax.data());
     Structured::N_=N;
 
 }

@@ -1,24 +1,31 @@
 #include "atlas/grid/spacing/UniformSpacing.h"
+#include "eckit/config/Parametrisation.h"
+#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace grid {
 namespace spacing {
 
 UniformSpacing::UniformSpacing(const eckit::Parametrisation& params) {
-  // general setup
-  Spacing::setup(params);
 
-}
+  double xmin;
+  double xmax;
+  long   N;
 
-void UniformSpacing::generate(size_t i, double &x) const {
+  // retrieve xmin, xmax and N from params
+  if ( !params.get("xmin",xmin) ) throw eckit::BadParameter("xmin missing in Params",Here());
+  if ( !params.get("xmax",xmax) ) throw eckit::BadParameter("xmax missing in Params",Here());
+  if ( !params.get("N",   N   ) ) throw eckit::BadParameter("N missing in Params",   Here());
+
   // points are equally spaced between xmin and xmax
-
-  ASSERT( i<N_ );
-
-  if (N_==1) {
-    x=0.5*(xmin_+xmax_);
+  x_.resize(N);
+  if (N==1) {
+    x_[0] = 0.5*( xmin + xmax );
   } else {
-    x=xmin_+i*(xmax_-xmin_)/(N_-1);
+    const double dx = (xmax-xmin)/double(N-1);
+    for( long i=0; i<N; ++i ) {
+      x_[i] = xmin + i*dx;
+    }
   }
 }
 
