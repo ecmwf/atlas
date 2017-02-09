@@ -6,15 +6,6 @@ namespace grid {
 namespace domain {
 
 GlobalDomain::GlobalDomain(const eckit::Parametrisation& p) {
-  setup();
-}
-
-void GlobalDomain::setup() {
-
-}
-
-bool GlobalDomain::contains(eckit::geometry::Point2 xy) const {
-  return true;
 }
 
 eckit::Properties GlobalDomain::spec() const {

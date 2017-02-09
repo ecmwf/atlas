@@ -22,19 +22,18 @@ public:
     virtual std::string virtual_domain_type_str() const { return "rectangular"; }
 
     /// Checks if the point is contained in the domain
-    bool contains(eckit::geometry::Point2 P) const;
+    virtual bool contains(double x, double y) const;
 
     std::vector<double> bbox() const;
 
-    bool isGlobal() const { return false; }
-    bool isEmpty() const { return ( (xmin_ != xmax_) && (ymin_ != ymax_) ); }
+    virtual bool isGlobal() const { return false; }
+    virtual bool isEmpty() const { return ( (xmin_ != xmax_) && (ymin_ != ymax_) ); }
 
     virtual eckit::Properties spec() const;
 
 private:
 
     double xmin_, xmax_, ymin_, ymax_;
-    void setup();
 
 };
 

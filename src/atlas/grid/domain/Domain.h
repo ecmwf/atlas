@@ -44,14 +44,23 @@ public:
     virtual std::string virtual_domain_type_str() const { return "domain"; }
 
     /// Checks if the point is contained in the domain
-    virtual bool contains(eckit::geometry::Point2) const =0;
-    virtual bool contains(double x, double y) const {return contains(eckit::geometry::Point2(x,y)); }
+    bool contains(eckit::geometry::Point2 p) const { return contains(p[0],p[1]); }
+    virtual bool contains(double x, double y) const =0;
 
     // Specification of grid
     virtual eckit::Properties spec() const =0;
 
     /// Output to stream
     void print(std::ostream&) const;
+
+    /// Check if domain represents the complete globe surface
+    virtual bool isGlobal() const =0;
+
+    /// Check if domain does not represent any area on the globe surface
+    virtual bool isEmpty() const =0;
+
+// Unless the domain is global, we can never be sure about these functions
+// without knowing also the projection
 
     /// Check if grid includes the North pole
     bool includesPoleNorth() const { return isGlobal(); }
@@ -61,12 +70,6 @@ public:
 
     /// Check if grid spans the complete range East-West (periodic)
     virtual bool isPeriodicEastWest() const { return isGlobal(); }
-
-    /// Check if domain represents the complete globe surface
-    virtual bool isGlobal() const =0;
-
-    /// Check if domain does not represent any area on the globe surface
-    virtual bool isEmpty() const =0;
 
 };
 

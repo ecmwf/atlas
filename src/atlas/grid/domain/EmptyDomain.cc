@@ -6,15 +6,6 @@ namespace grid {
 namespace domain {
 
 EmptyDomain::EmptyDomain(const eckit::Parametrisation& p) {
-  setup();
-}
-
-void EmptyDomain::setup() {
-
-}
-
-bool EmptyDomain::contains(eckit::geometry::Point2 xy) const {
-  return false;
 }
 
 eckit::Properties EmptyDomain::spec() const {

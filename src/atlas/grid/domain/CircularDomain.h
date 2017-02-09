@@ -14,23 +14,20 @@ class CircularDomain: public Domain {
 public:
 
     CircularDomain(const eckit::Parametrisation& p);
-    ~CircularDomain() {}
 
     /// Checks if the point is contained in the domain
-    bool contains(eckit::geometry::Point2 P) const;
+    virtual bool contains(double x, double y) const;
 
     static std::string domain_type_str() {return "circular";}
     virtual std::string virtual_domain_type_str() const { return "circular"; }
 
-    bool isEmpty() const { return (radius_>0); }
-    bool isGlobal() const { return false; }
+    virtual bool isEmpty() const { return (radius_>0); }
+    virtual bool isGlobal() const { return false; }
 
     virtual eckit::Properties spec() const;
 
 private:
-
-    double xc_, yc_, radius_;
-    void setup();
+    double xc_, yc_, radius_, rr_;
 };
 
 

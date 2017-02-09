@@ -18,11 +18,6 @@ RectangularDomain::RectangularDomain(const eckit::Parametrisation& params) {
   ymin_=v[2];
   ymax_=v[3];
 
-  // setup
-  setup();
-}
-
-void RectangularDomain::setup() {
   // normalize domain: make sure xmax>=xmin and ymax>=ymin
   double swp;
 
@@ -33,12 +28,11 @@ void RectangularDomain::setup() {
   if (ymin_>ymax_) {
     swp=ymin_;ymin_=ymax_;ymax_=swp;
   }
-
 }
 
-bool RectangularDomain::contains(eckit::geometry::Point2 xy) const {
+bool RectangularDomain::contains(double x, double y) const {
   // probably should be done with some margin ...
-  return ( xmin_ <= xy[eckit::geometry::XX] && xmax_ >= xy[eckit::geometry::XX] && ymin_ <= xy[eckit::geometry::YY] && ymax_ >= xy[eckit::geometry::YY] );
+  return ( xmin_ <= x && xmax_ >= x && ymin_ <= y && ymax_ >= y );
 }
 
 std::vector<double> RectangularDomain::bbox() const {
