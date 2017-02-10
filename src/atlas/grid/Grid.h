@@ -27,6 +27,7 @@
 #include "eckit/value/Properties.h"
 #include "atlas/grid/domain/Domain.h"
 #include "atlas/grid/projection/Projection.h"
+#include "atlas/util/Config.h"
 
 
 namespace atlas {

@@ -1,29 +1,31 @@
-#ifndef atlas_SchmidtProjection_H
-#define atlas_SchmidtProjection_H
+#pragma once
 
 #include "atlas/grid/projection/Projection.h"
+#include "atlas/grid/projection/Rotation.h"
 
 namespace atlas {
 namespace grid {
 namespace projection {
 
-class SchmidtProjection: public Projection {
+template <typename Rotation>
+class SchmidtProjectionT: public Projection {
 
 public:
+
     // constructor
-    SchmidtProjection(const eckit::Parametrisation& p);
-    SchmidtProjection() {}
+    SchmidtProjectionT(const eckit::Parametrisation& p);
+    SchmidtProjectionT() {}
 
     // copy constructor
-    SchmidtProjection( const SchmidtProjection& rhs );
+    SchmidtProjectionT( const SchmidtProjectionT& rhs );
 
     // clone method
-    virtual Projection *clone() const ;
+    virtual Projection* clone() const ;
 
     // class name
-    static std::string className() { return "atlas.SchmidtProjection"; }
-    static std::string projection_type_str() {return "schmidt";}
-    virtual std::string virtual_projection_type_str() const {return "schmidt";}
+    static std::string className() { return "atlas."+Rotation::classNamePrefix()+"SchmidtProjection"; }
+    static std::string projection_type_str() { return Rotation::typePrefix()+"schmidt"; }
+    virtual std::string virtual_projection_type_str() const { return Rotation::typePrefix()+"schmidt"; }
 
     // projection and inverse projection
     virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const;
@@ -36,12 +38,15 @@ public:
     virtual eckit::Properties spec() const;
 
 private:
+
     double c_;    // stretching factor
+    Rotation rotation_;
+
 };
+
+typedef SchmidtProjectionT<NotRotated> SchmidtProjection;
+typedef SchmidtProjectionT<Rotated>    RotatedSchmidtProjection;
 
 }  // namespace projection
 }  // namespace grid
 }  // namespace atlas
-
-
-#endif

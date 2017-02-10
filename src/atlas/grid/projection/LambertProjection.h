@@ -1,5 +1,4 @@
-#ifndef atlas_LambertProjection_H
-#define atlas_LambertProjection_H
+#pragma once
 
 #include "atlas/grid/projection/Projection.h"
 
@@ -45,12 +44,8 @@ private:
     double radius_;          // sphere radius
     double n_, F_, rho0_;    // projection constants
 
-    void setup();
 };
 
 }  // namespace projection
 }  // namespace grid
 }  // namespace atlas
-
-
-#endif

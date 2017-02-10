@@ -1,12 +1,11 @@
-#ifndef atlas_Projection_H
-#define atlas_Projection_H
+#pragma once
 
 #include "eckit/geometry/KPoint.h"
 #include "eckit/geometry/Point2.h"
 #include "eckit/config/Parametrisation.h"
+#include "eckit/value/Properties.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
-#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace grid {
@@ -42,33 +41,6 @@ public:
 
 };
 
-
-class Rotated {
-
-public:
-
-    Rotated( const eckit::Parametrisation& );
-    Rotated( const Rotated& rhs ); // copy constructor
-    virtual ~Rotated() {} // destructor should be virtual when using a virtual copy constructor
-
-protected:
-
-    void rotate(eckit::geometry::LLPoint2 &P) const;      // coordinates of the point on a rotated sphere with specified pole
-    void unrotate(eckit::geometry::LLPoint2 &P) const;    // inverse operation of rotate
-
-    eckit::Properties spec() const;
-
-private:
-
-    eckit::geometry::LLPoint2 pole_;    // pole
-    double cos_latrp_; //  cos( 90 - pole_lat )
-    double sin_latrp_; //  sin( 90 - pole_lat )
-
-};
-
 }  // namespace projection
 }  // namespace grid
 }  // namespace atlas
-
-
-#endif
