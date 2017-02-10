@@ -7,7 +7,7 @@ namespace atlas {
 namespace grid {
 namespace projection {
 
-class RotatedLonLatProjection: public LonLatProjection {
+class RotatedLonLatProjection: public LonLatProjection, public Rotated {
 
 public:
     // constructor
@@ -17,7 +17,7 @@ public:
     RotatedLonLatProjection( const RotatedLonLatProjection& rhs );
 
     // clone method
-    virtual RotatedLonLatProjection *clone() const ;
+    virtual Projection *clone() const ;
 
     // class name
     static std::string className() { return "atlas.RotatedLonLatProjection"; }
@@ -34,8 +34,6 @@ public:
     // specification
     virtual eckit::Properties spec() const;
 
-  private:
-    eckit::geometry::LLPoint2 pole_;    // pole
 };
 
 }  // namespace projection

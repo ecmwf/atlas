@@ -7,7 +7,7 @@ namespace atlas {
 namespace grid {
 namespace projection {
 
-class RotatedSchmidtProjection: public SchmidtProjection {
+class RotatedSchmidtProjection: public SchmidtProjection, public Rotated {
 
 public:
 
@@ -18,7 +18,7 @@ public:
     RotatedSchmidtProjection( const RotatedSchmidtProjection& rhs );
 
     // clone method
-    virtual RotatedSchmidtProjection *clone() const ;
+    virtual Projection *clone() const ;
 
     // class name
     static std::string className() { return "atlas.RotatedSchmidtProjection"; }
@@ -38,7 +38,6 @@ public:
 private:
 
     double c_;                          // stretching factor
-    eckit::geometry::LLPoint2 pole_;    // pole
 };
 
 }  // namespace projection

@@ -12,7 +12,7 @@ LonLatProjection::LonLatProjection( const LonLatProjection& rhs ) : Projection(r
 }
 
 // clone method
-LonLatProjection * LonLatProjection::clone() const  {
+Projection* LonLatProjection::clone() const  {
   return new LonLatProjection(*this);
 }
 

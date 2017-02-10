@@ -18,7 +18,7 @@ public:
     SchmidtProjection( const SchmidtProjection& rhs );
 
     // clone method
-    virtual SchmidtProjection *clone() const ;
+    virtual Projection *clone() const ;
 
     // class name
     static std::string className() { return "atlas.SchmidtProjection"; }

@@ -11,29 +11,24 @@ namespace grid {
 namespace projection {
 
 // constructor
-RotatedSchmidtProjection::RotatedSchmidtProjection(const eckit::Parametrisation& params) : SchmidtProjection(params) {
+RotatedSchmidtProjection::RotatedSchmidtProjection(const eckit::Parametrisation& params) :
+  SchmidtProjection(params),
+  Rotated(params) {
   // get stretching factor
   if( ! params.get("stretching_factor",c_) )
     throw eckit::BadParameter("stretching_factor missing in Params",Here());
-
-  // get pole
-  std::vector<double> p(2);
-  if( ! params.get("pole",p) )
-    throw eckit::BadParameter("pole missing in Params",Here());
-
-  pole_.assign(p[0],p[1]);
-
 }
 
 
 // copy constructor
-RotatedSchmidtProjection::RotatedSchmidtProjection( const RotatedSchmidtProjection& rhs ) : SchmidtProjection(rhs) {
-  pole_.assign(rhs.pole_[0],rhs.pole_[1]);
-  c_=rhs.c_;
+RotatedSchmidtProjection::RotatedSchmidtProjection( const RotatedSchmidtProjection& rhs ) :
+    SchmidtProjection(rhs),
+    Rotated(rhs) {
+    c_=rhs.c_;
 }
 
 // clone method
-RotatedSchmidtProjection * RotatedSchmidtProjection::clone() const  {
+Projection* RotatedSchmidtProjection::clone() const  {
   return new RotatedSchmidtProjection(*this);
 }
 
@@ -46,7 +41,7 @@ eckit::geometry::LLPoint2 RotatedSchmidtProjection::coords2lonlat(eckit::geometr
   eckit::geometry::LLPoint2 P(xy[eckit::geometry::XX],lat);
 
   // perform rotation
-  rotate_(P,pole_);
+  rotate(P);
 
   return P;
 }
@@ -54,7 +49,7 @@ eckit::geometry::LLPoint2 RotatedSchmidtProjection::coords2lonlat(eckit::geometr
 eckit::geometry::Point2 RotatedSchmidtProjection::lonlat2coords(eckit::geometry::LLPoint2 P) const {
 
   // inverse rotation
-  unrotate_(P,pole_);
+  unrotate(P);
 
   // unstretch
   double lat2=R2D(asin(cos(2*atan(c_*tan(acos(sin(D2R(P.lat())))/2)))));
@@ -64,13 +59,9 @@ eckit::geometry::Point2 RotatedSchmidtProjection::lonlat2coords(eckit::geometry:
 
 // specification
 eckit::Properties RotatedSchmidtProjection::spec() const {
-  eckit::Properties proj_spec;
+  eckit::Properties proj_spec = Rotated::spec();
   proj_spec.set("projectionType",virtual_projection_type_str());
   proj_spec.set("projectionStretchingFactor",c_);
-  std::vector<double> p(2);
-  p[0]=pole_.lon();
-  p[1]=pole_.lat();
-  proj_spec.set("projectionPole",eckit::makeVectorValue(p));
   return proj_spec;
 }
 

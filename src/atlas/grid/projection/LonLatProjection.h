@@ -18,7 +18,7 @@ public:
     LonLatProjection( const LonLatProjection& rhs );
 
     // clone method
-    virtual LonLatProjection *clone() const ;
+    virtual Projection* clone() const ;
 
     // destructor
     ~LonLatProjection() {}

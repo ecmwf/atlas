@@ -18,7 +18,7 @@ public:
     LambertProjection( const LambertProjection& rhs );
 
     // clone method
-    virtual LambertProjection *clone() const ;
+    virtual Projection* clone() const ;
 
     // destructor
     ~LambertProjection() {}

@@ -23,7 +23,7 @@ SchmidtProjection::SchmidtProjection( const SchmidtProjection& rhs ) : Projectio
 }
 
 // clone method
-SchmidtProjection * SchmidtProjection::clone() const  {
+Projection* SchmidtProjection::clone() const  {
   return new SchmidtProjection(*this);
 }
 

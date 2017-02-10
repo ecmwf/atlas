@@ -46,7 +46,7 @@ LambertProjection::LambertProjection( const LambertProjection& rhs ) : Projectio
 }
 
 // clone method
-LambertProjection * LambertProjection::clone() const { return new LambertProjection(*this); }
+Projection* LambertProjection::clone() const { return new LambertProjection(*this); }
 
 // setup routine
 void LambertProjection::setup() {

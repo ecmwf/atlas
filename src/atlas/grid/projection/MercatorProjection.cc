@@ -29,7 +29,7 @@ MercatorProjection::MercatorProjection( const MercatorProjection& rhs ) : Projec
 }
 
 // clone method
-MercatorProjection * MercatorProjection::clone() const  {
+Projection* MercatorProjection::clone() const  {
   return new MercatorProjection(*this);
 }
 

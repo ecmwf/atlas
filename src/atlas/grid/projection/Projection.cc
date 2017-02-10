@@ -35,64 +35,102 @@ namespace {
   }
 }
 
-void Projection::rotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole) const {
+Rotated::Rotated(const eckit::Parametrisation& p) {
+  // get pole
+  std::vector<double> pole(2);
+  if( ! p.get("pole",pole) )
+    throw eckit::BadParameter("pole missing in Params",Here());
+  pole_.assign(pole[0],pole[1]);
+
+  double latrp = D2R(90.0-pole_.lat());
+  cos_latrp_ = std::cos(latrp);
+  sin_latrp_ = std::sin(latrp);
+
+}
+
+Rotated::Rotated( const Rotated& rhs ) {
+    pole_ = rhs.pole_;
+    cos_latrp_ = rhs.cos_latrp_;
+    sin_latrp_ = rhs.sin_latrp_;
+}
+
+
+void Rotated::rotate(eckit::geometry::LLPoint2 &P) const {
   // coordinates of the point P on a rotated sphere with specified pole
 
   double lon, lat, lonr, latr, lont, latt;
   double xt, yt, zt, x, y, z;
+  double cos_lon, sin_lon, cos_lat, sin_lat;
 
-  lon=P.lon();
-  lat=P.lat();
+  lon = D2R(P.lon());
+  lat = D2R(P.lat());
+  cos_lon = std::cos(lon);
+  cos_lat = std::cos(lat);
+  sin_lon = std::sin(lon);
+  sin_lat = std::sin(lat);
 
   // cartesian coordinates
-  x=std::cos(D2R(lon))*std::cos(D2R(lat));
-  y=std::sin(D2R(lon))*std::cos(D2R(lat));
-  z=std::sin(D2R(lat));
+  x = cos_lon * cos_lat;
+  y = sin_lon * cos_lat;
+  z = sin_lat;
 
   // tilt
-  xt=std::cos(D2R(90.0-pole.lat()))*x + std::sin(D2R(90.0-pole.lat()))*z;
-  yt=y;
-  zt=-std::sin(D2R(90.0-pole.lat()))*x + std::cos(D2R(90.0-pole.lat()))*z;
+  xt = cos_latrp_*x + sin_latrp_*z;
+  yt = y;
+  zt = -sin_latrp_*x + cos_latrp_*z;
 
   // back to spherical coordinates
   lont=R2D(std::atan2(yt,xt));
   latt=R2D(std::asin(zt));
 
   // rotate
-  lonr=lont+pole.lon();
+  lonr=lont+pole_.lon();
   latr=latt;
 
   P.assign(lonr,latr);
 }
 
-void Projection::unrotate_(eckit::geometry::LLPoint2 &P,const eckit::geometry::LLPoint2 &pole) const {
+void Rotated::unrotate(eckit::geometry::LLPoint2 &P) const {
   // inverse operation of Projection::rotate
 
-  double lon, lat, lonr, latr, lont, latt;
+  double lon, lat, lont, latt;
   double xt, yt, zt, x, y, z;
-
-  lonr=P.lon();
-  latr=P.lat();
+  double cos_lont, sin_lont, cos_latt, sin_latt;
 
   // unrotate
-  lont=lonr-pole.lon();
-  latt=latr;
+  lont=D2R(P.lon()-pole_.lon());
+  latt=D2R(P.lat());
+
+  cos_lont  = std::cos(lont);
+  cos_latt  = std::cos(latt);
+  sin_lont  = std::sin(lont);
+  sin_latt  = std::sin(latt);
 
   // cartesian coordinates
-  xt=std::cos(D2R(lont))*std::cos(D2R(latt));
-  yt=std::sin(D2R(lont))*std::cos(D2R(latt));
-  zt=std::sin(D2R(latt));
+  xt = cos_lont * cos_latt;
+  yt = sin_lont * cos_latt;
+  zt = sin_latt;
 
   // untilt
-  x=std::cos(D2R(90.0-pole.lat()))*xt - std::sin(D2R(90.0-pole.lat()))*zt;
-  y=yt;
-  z=std::sin(D2R(90.0-pole.lat()))*xt + std::cos(D2R(90.0-pole.lat()))*zt;
+  x = cos_latrp_*xt - sin_latrp_*zt;
+  y = yt;
+  z = sin_latrp_*xt + cos_latrp_*zt;
 
   // back to spherical coordinates
   lon=R2D(std::atan2(y,x));
   lat=R2D(std::asin(z));
 
   P.assign(lon,lat);
+}
+
+// specification
+eckit::Properties Rotated::spec() const {
+  eckit::Properties proj_spec;
+  std::vector<double> p(2);
+  p[0]=pole_.lon();
+  p[1]=pole_.lat();
+  proj_spec.set("projectionPole",eckit::makeVectorValue(p));
+  return proj_spec;
 }
 
 }  // namespace projection

@@ -18,7 +18,7 @@ public:
     MercatorProjection( const MercatorProjection& rhs );
 
     // clone method
-    virtual MercatorProjection *clone() const ;
+    virtual Projection* clone() const ;
 
     // class name
     static std::string className() { return "atlas.MercatorProjection"; }

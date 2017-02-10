@@ -7,7 +7,7 @@ namespace atlas {
 namespace grid {
 namespace projection {
 
-class RotatedMercatorProjection: public MercatorProjection {
+class RotatedMercatorProjection: public MercatorProjection, public Rotated {
 
 public:
 
@@ -18,7 +18,7 @@ public:
     RotatedMercatorProjection( const RotatedMercatorProjection& rhs );
 
     // clone method
-    virtual RotatedMercatorProjection *clone() const ;
+    virtual Projection *clone() const ;
 
     // class name
     static std::string className() { return "atlas.RotatedMercatorProjection"; }
@@ -37,7 +37,6 @@ public:
 private:
 
     eckit::geometry::LLPoint2 pole_;    // pole
-    void setup(const eckit::Parametrisation & p);
 
 };
 
