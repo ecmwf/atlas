@@ -38,17 +38,18 @@ void kernel_block(BlockConnectivity conn, bool* result)
 }
 
 __global__
-void kernel_irr(IrregularConnectivity conn, bool* result)
+void kernel_irr(IrregularConnectivityImpl* conn_, bool* result)
 {
 
+    IrregularConnectivityImpl& conn = *conn_;
 
     *result = true;
 
-    *result &= (conn.rows()== 2);
-    *result &= (conn.cols(0) == 3);
-    *result &= (conn.cols(1) == 3);
-    *result &= (conn.mincols() == 3);
-    *result &= (conn.maxcols() == 3);
+    *result &= (conn->rows()== 2);
+    *result &= (conn->cols(0) == 3);
+    *result &= (conn->cols(1) == 3);
+    *result &= (conn->mincols() == 3);
+    *result &= (conn->maxcols() == 3);
 
     *result &= (conn(0,0) == 1 IN_FORTRAN);
     *result &= (conn(0,1) == 3 IN_FORTRAN);
@@ -96,7 +97,7 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     conn.cloneToDevice();
     BOOST_CHECK( conn.isOnDevice() );
 
-    kernel_irr<<<1,1>>>(conn, result);
+    kernel_irr<<<1,1>>>(conn.gpu_object_ptr(), result);
 
     cudaDeviceSynchronize();
 

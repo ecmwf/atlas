@@ -29,7 +29,6 @@ namespace mesh {
 
 
 IrregularConnectivityImpl::IrregularConnectivityImpl(const std::string& name ) :
-  name_(name),
   owns_(true),
   data_{
     array::Array::create<idx_t >(0),   // values
@@ -49,6 +48,7 @@ IrregularConnectivityImpl::IrregularConnectivityImpl(const std::string& name ) :
   callback_set_(0),
   callback_delete_(0)
 {
+    rename(name);
     displs_view_(0) = 0;
     counts_view_(0) = 0;
 }
@@ -67,8 +67,7 @@ size_t get_total_size_counts(size_t rows, size_t counts[])
 // -----------------------------------------------------------------------------
 
 IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], size_t rows, size_t displs[], size_t counts[] )
-  : name_(),
-    owns_(false),
+  : owns_(false),
     data_{
       array::Array::wrap<idx_t >(values, array::ArrayShape{get_total_size_counts(rows, counts)}),
       array::Array::wrap<size_t>(displs, array::ArrayShape{rows}),
@@ -366,12 +365,13 @@ void IrregularConnectivityImpl::cloneToDevice() {
     values_view_ = array::make_device_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_device_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_device_view<size_t, 1>(*(data_[_counts_]));
+    cudaMemcpy(gpu_object_ptr_, this, sizeof(IrregularConnectivityImpl),  cudaMemcpyHostToDevice);
 }
 void IrregularConnectivityImpl::cloneFromDevice() {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->cloneFromDevice();});
     values_view_ = array::make_host_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_host_view<size_t, 1>(*(data_[_displs_]));
-    counts_view_ = array::make_host_view<size_t, 1>(*(data_[_counts_]));
+    counts_view_ = array::make_host_view<size_t, 1>(*(data_[_counts_])); 
 }
 void IrregularConnectivityImpl::syncHostDevice() const {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->syncHostDevice();});

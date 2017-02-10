@@ -40,10 +40,12 @@
 namespace atlas {
 namespace mesh {
 
+#define MAX_STRING_SIZE 60
+
 template <typename ConnectivityImpl>
 class ConnectivityInterface : public eckit::Owned, public ConnectivityImpl
 {
-    using typename ConnectivityImpl::ConnectivityImpl;
+    using ConnectivityImpl::ConnectivityImpl;
     using eckit::Owned::Owned;
 };
 
@@ -164,20 +166,17 @@ public:
   /// @brief Copy ctr (only to be used when calling a cuda kernel)
   // This ctr has to be defined in the header, since __CUDACC__ will identify whether
   // it is compiled it for a GPU kernel
+
+  /// @brief Copy ctr (only to be used when calling a cuda kernel)
+  // This ctr has to be defined in the header, since __CUDACC__ will identify whether
+  // it is compiled it for a GPU kernel
   ATLAS_HOST_DEVICE
   IrregularConnectivityImpl(const IrregularConnectivityImpl &other) :
     owns_(false),
-  #ifdef __CUDACC__
-      data_{0,0,0},
-      values_view_(array::make_device_view<idx_t, 1>(*(other.data_[_values_]))),
-      displs_view_(array::make_device_view<size_t, 1>(*(other.data_[_displs_]))),
-      counts_view_(array::make_device_view<size_t, 1>(*(other.data_[_counts_]))),
-  #else
-      data_{other.data_[0], other.data_[1], other.data_[2]},
-      values_view_(array::make_host_view<idx_t, 1>(*(other.data_[_values_]))),
-      displs_view_(array::make_host_view<size_t, 1>(*(other.data_[_displs_]))),
-      counts_view_(array::make_host_view<size_t, 1>(*(other.data_[_counts_]))),
-  #endif
+    data_{other.data_[0], other.data_[1], other.data_[2]},
+    values_view_(other.values_view_),
+    displs_view_(other.displs_view_),
+    counts_view_(other.counts_view_),
     missing_value_(other.missing_value_),
     rows_(other.rows_),
     maxcols_(other.maxcols_),
@@ -187,16 +186,15 @@ public:
     ctxt_delete_(0)
   {}
 
-
   ~IrregularConnectivityImpl();
 
 //-- Accessors
 
   /// @brief Name associated to this Connetivity
-  const std::string& name() const { return name_; }
+  const std::string name() const { return std::string(name_); }
 
   /// @brief Rename this Connectivity
-  void rename(const std::string& name) { name_ = name; }
+  void rename(const std::string& name) {  strncpy(name_, name.c_str(), std::max(name.size(), size_t(MAX_STRING_SIZE))); }
 
   /// @brief Number of rows in the connectivity table
   ATLAS_HOST_DEVICE
@@ -284,6 +282,8 @@ public:
   virtual bool isOnHost() const;
   virtual bool isOnDevice() const;
 
+  IrregularConnectivityImpl* gpu_object_ptr() {return static_cast<IrregularConnectivityImpl*>(gpu_object_ptr_);}
+
   void dump(std::ostream& os) const;
 
 protected:
@@ -297,10 +297,10 @@ private:
   void on_update();
 
 private:
-  std::string name_;
+  char name_[MAX_STRING_SIZE];
 
   bool owns_;
-  mutable std::array<array::Array*, 3> data_;
+  std::array<array::Array*, 3> data_;
 
   array::ArrayView<idx_t, 1> values_view_;
   array::ArrayView<size_t,1> displs_view_;
@@ -312,6 +312,8 @@ private:
   size_t mincols_;
 
 public:
+  void* gpu_object_ptr_;
+
   typedef void* ctxt_t;
   typedef void (*callback_t)(ctxt_t);
 private:
