@@ -40,10 +40,18 @@
 namespace atlas {
 namespace mesh {
 
+template <typename ConnectivityImpl>
+class ConnectivityInterface : public eckit::Owned, public ConnectivityImpl
+{
+    using typename ConnectivityImpl::ConnectivityImpl;
+    using eckit::Owned::Owned;
+};
+
+
 // Classes defined in this file:
-class IrregularConnectivity;
-class BlockConnectivity;
-class MultiBlockConnectivity;
+class IrregularConnectivityImpl;
+class BlockConnectivityImpl;
+class MultiBlockConnectivityImpl;
 
 // --------------------------------------------------------------------------
 
@@ -74,7 +82,7 @@ class MultiBlockConnectivity;
 ///   - It owns the connectivity data
 ///
 /// In case ATLAS_HAVE_FORTRAN is defined (which is usually the case),
-/// the raw data will be stored with base 1 for Fortran interoperability.
+/// the raw data will be : public eckit::Ownedstored with base 1 for Fortran interoperability.
 /// The operator(row,col) will then do the conversion to base 0.
 ///
 /// In the first mode of construction, the connectivity table cannot be resized.
@@ -134,7 +142,7 @@ public:
     size_t size_;
 };
 
-class IrregularConnectivity : public eckit::Owned
+class IrregularConnectivityImpl
 {
 public:
   typedef ConnectivityRow Row;
@@ -147,17 +155,17 @@ public:
 
   /// @brief Construct connectivity table that needs resizing a-posteriori
   /// Data is owned
-  IrregularConnectivity( const std::string& name = "" );
+  IrregularConnectivityImpl( const std::string& name = "" );
 
   /// @brief Construct connectivity table wrapping existing raw data.
   /// No resizing can be performed as data is not owned.
-  IrregularConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[] );
+  IrregularConnectivityImpl( idx_t values[], size_t rows, size_t displs[], size_t counts[] );
 
   /// @brief Copy ctr (only to be used when calling a cuda kernel)
   // This ctr has to be defined in the header, since __CUDACC__ will identify whether
   // it is compiled it for a GPU kernel
   ATLAS_HOST_DEVICE
-  IrregularConnectivity(const IrregularConnectivity &other) :
+  IrregularConnectivityImpl(const IrregularConnectivityImpl &other) :
     owns_(false),
   #ifdef __CUDACC__
       data_{0,0,0},
@@ -180,7 +188,7 @@ public:
   {}
 
 
-  ~IrregularConnectivity();
+  ~IrregularConnectivityImpl();
 
 //-- Accessors
 
@@ -249,7 +257,7 @@ public:
   virtual void add( size_t rows, const size_t cols[] );
 
   /// @brief Resize connectivity, and copy from a BlockConnectivity
-  virtual void add( const BlockConnectivity& block );
+  virtual void add( const BlockConnectivityImpl& block );
 
   /// @brief Resize connectivity, and insert given rows
   /// @note Can only be used when data is owned.
@@ -316,11 +324,9 @@ private:
   callback_t callback_delete_;
 };
 
-typedef IrregularConnectivity Connectivity;
-
 // ----------------------------------------------------------------------------------------------
 
-/// @brief MultiBlockConnectivity Table
+/// @brief MultiBlockConnectivityImpl Table
 /// @author Willem Deconinck
 ///
 /// Container for connectivity tables that are layed out in memory as multiple BlockConnectivities stitched together.
@@ -349,7 +355,7 @@ typedef IrregularConnectivity Connectivity;
 ///
 /// In the first mode of construction, the connectivity table cannot be resized.
 /// In the second mode of construction, resizing is possible
-class MultiBlockConnectivity : public IrregularConnectivity
+class MultiBlockConnectivityImpl : public IrregularConnectivityImpl
 {
 public:
 
@@ -357,7 +363,7 @@ public:
 
   /// @brief Construct connectivity table that needs resizing a-posteriori
   /// Data is owned
-  MultiBlockConnectivity( const std::string& name = "" );
+  MultiBlockConnectivityImpl( const std::string& name = "" );
 
 /*
   /// @brief Construct connectivity table wrapping existing raw data.
@@ -370,7 +376,7 @@ public:
       size_t blocks, size_t block_displs[],
       size_t block_cols[] );
 */
-  ~MultiBlockConnectivity();
+  ~MultiBlockConnectivityImpl();
 
 //-- Accessors
 
@@ -378,8 +384,8 @@ public:
   size_t blocks() const { return blocks_; }
 
   /// @brief Access to a block connectivity
-  const BlockConnectivity& block( size_t block_idx ) const { return *(block_[block_idx]); }
-        BlockConnectivity& block( size_t block_idx )       { return *(block_[block_idx]); }
+  const BlockConnectivityImpl& block( size_t block_idx ) const { return *(block_[block_idx]); }
+        BlockConnectivityImpl& block( size_t block_idx )       { return *(block_[block_idx]); }
 
   /// @brief Access to connectivity table elements for given row and column
   /// The row_idx counts up from 0, from block 0, as in IrregularConnectivity
@@ -399,7 +405,7 @@ public:
 
   /// @brief Resize connectivity, and copy from a BlockConnectivity to a new block
   /// @note Can only be used when data is owned.
-  virtual void add( const BlockConnectivity& );
+  virtual void add( const BlockConnectivityImpl& );
 
   /// @brief Resize connectivity, and add given rows with missing values
   /// @note Can only be used when data is owned.
@@ -442,7 +448,7 @@ private:
 
   array::ArrayView<size_t,1> block_displs_view_;
   array::ArrayView<size_t,1> block_cols_view_;
-  array::Vector<BlockConnectivity*> block_;
+  array::Vector<BlockConnectivityImpl*> block_;
   size_t blocks_;
 
 };
@@ -464,11 +470,11 @@ private:
 ///
 /// In the first mode of construction, the connectivity table cannot be resized.
 /// In the second mode of construction, resizing is possible
-class BlockConnectivity : public eckit::Owned {
+class BlockConnectivityImpl {
 
 private:
-  friend class MultiBlockConnectivity;
-  BlockConnectivity( size_t rows, size_t cols, idx_t values[], bool dummy);
+  friend class MultiBlockConnectivityImpl;
+  BlockConnectivityImpl( size_t rows, size_t cols, idx_t values[], bool dummy);
 
 public:
 
@@ -476,18 +482,18 @@ public:
 
   /// @brief Construct connectivity table that needs resizing a-posteriori
   /// Data is owned
-  BlockConnectivity();
-  BlockConnectivity( size_t rows, size_t cols, const std::initializer_list<idx_t>& );
+  BlockConnectivityImpl();
+  BlockConnectivityImpl( size_t rows, size_t cols, const std::initializer_list<idx_t>& );
 
   /// @brief Construct connectivity table wrapping existing raw data.
   /// No resizing can be performed as data is not owned.
-  BlockConnectivity( size_t rows, size_t cols, idx_t values[]);
+  BlockConnectivityImpl( size_t rows, size_t cols, idx_t values[]);
 
   /// @brief Copy ctr (only to be used when calling a cuda kernel)
   // This ctr has to be defined in the header, since __CUDACC__ will identify whether
   // it is compiled it for a GPU kernel
   ATLAS_HOST_DEVICE
-  BlockConnectivity(const BlockConnectivity& other)
+  BlockConnectivityImpl(const BlockConnectivityImpl& other)
     : owns_(false),
       values_(0),
 #ifdef __CUDACC__
@@ -502,7 +508,7 @@ public:
 
 
   /// @brief Destructor
-  ~BlockConnectivity();
+  ~BlockConnectivityImpl();
 
   void rebuild( size_t rows, size_t cols, idx_t values[] );
 
@@ -567,40 +573,46 @@ private:
 
 };
 
+typedef ConnectivityInterface<IrregularConnectivityImpl> IrregularConnectivity;
+typedef ConnectivityInterface<BlockConnectivityImpl> BlockConnectivity;
+typedef ConnectivityInterface<MultiBlockConnectivityImpl> MultiBlockConnectivity;
+
+typedef IrregularConnectivity Connectivity;
+
 // -----------------------------------------------------------------------------------------------------
 
-inline idx_t IrregularConnectivity::operator()( size_t row_idx, size_t col_idx ) const
+inline idx_t IrregularConnectivityImpl::operator()( size_t row_idx, size_t col_idx ) const
 {
   assert(counts_view_(row_idx) >( col_idx));
   return values_view_(displs_view_(row_idx) + col_idx) FROM_FORTRAN;
 }
 
-inline void IrregularConnectivity::set( size_t row_idx, const idx_t column_values[] ) {
+inline void IrregularConnectivityImpl::set( size_t row_idx, const idx_t column_values[] ) {
   const size_t N = counts_view_(row_idx);
   for( size_t n=0; n<N; ++n ) {
     values_view_(displs_view_(row_idx) + n) = column_values[n] TO_FORTRAN;
   }
 }
 
-inline void IrregularConnectivity::set( size_t row_idx, size_t col_idx, const idx_t value ) {
+inline void IrregularConnectivityImpl::set( size_t row_idx, size_t col_idx, const idx_t value ) {
     assert(col_idx < counts_view_(row_idx));
   values_view_(displs_view_(row_idx) + col_idx) = value TO_FORTRAN;
 }
 
-inline IrregularConnectivity::Row IrregularConnectivity::row( size_t row_idx ) const
+inline IrregularConnectivityImpl::Row IrregularConnectivityImpl::row( size_t row_idx ) const
 {
-  return IrregularConnectivity::Row(const_cast<idx_t*>(values_view_.data() ) +displs_view_(row_idx) , counts_view_(row_idx) );
+  return IrregularConnectivityImpl::Row(const_cast<idx_t*>(values_view_.data() ) +displs_view_(row_idx) , counts_view_(row_idx) );
 }
 
 // -----------------------------------------------------------------------------------------------------
 
-inline idx_t MultiBlockConnectivity::operator()( size_t row_idx, size_t col_idx ) const
+inline idx_t MultiBlockConnectivityImpl::operator()( size_t row_idx, size_t col_idx ) const
 {
-  return IrregularConnectivity::operator()(row_idx,col_idx);
+  return IrregularConnectivityImpl::operator()(row_idx,col_idx);
 }
 
 
-inline idx_t MultiBlockConnectivity::operator()( size_t block_idx, size_t block_row_idx, size_t block_col_idx ) const
+inline idx_t MultiBlockConnectivityImpl::operator()( size_t block_idx, size_t block_row_idx, size_t block_col_idx ) const
 {
   return block(block_idx)(block_row_idx,block_col_idx);
 }
@@ -608,17 +620,17 @@ inline idx_t MultiBlockConnectivity::operator()( size_t block_idx, size_t block_
 
 // -----------------------------------------------------------------------------------------------------
 
-inline idx_t BlockConnectivity::operator()( size_t row_idx, size_t col_idx ) const {
+inline idx_t BlockConnectivityImpl::operator()( size_t row_idx, size_t col_idx ) const {
   return values_view_(row_idx, col_idx) FROM_FORTRAN;
 }
 
-inline void BlockConnectivity::set( size_t row_idx, const idx_t column_values[] ) {
+inline void BlockConnectivityImpl::set( size_t row_idx, const idx_t column_values[] ) {
   for( size_t n=0; n<cols_; ++n ) {
     values_view_(row_idx,n) = column_values[n] TO_FORTRAN;
   }
 }
 
-inline void BlockConnectivity::set( size_t row_idx, size_t col_idx, const idx_t value ) {
+inline void BlockConnectivityImpl::set( size_t row_idx, size_t col_idx, const idx_t value ) {
   values_view_(row_idx, col_idx) = value TO_FORTRAN;
 }
 
@@ -627,7 +639,7 @@ inline void BlockConnectivity::set( size_t row_idx, size_t col_idx, const idx_t 
 extern "C"
 {
 Connectivity* atlas__Connectivity__create();
-MultiBlockConnectivity* atlas__MultiBlockConnectivity__create();
+MultiBlockConnectivityImpl* atlas__MultiBlockConnectivity__create();
 const char* atlas__Connectivity__name (Connectivity* This);
 void atlas__Connectivity__rename(Connectivity* This, const char* name);
 void atlas__Connectivity__delete(Connectivity* This);
@@ -639,14 +651,14 @@ void atlas__Connectivity__add_values(Connectivity* This, size_t rows, size_t col
 void atlas__Connectivity__add_missing(Connectivity* This, size_t rows, size_t cols);
 int atlas__Connectivity__missing_value(const Connectivity* This);
 
-size_t atlas__MultiBlockConnectivity__blocks(const MultiBlockConnectivity* This);
-BlockConnectivity* atlas__MultiBlockConnectivity__block(MultiBlockConnectivity* This, size_t block_idx);
+size_t atlas__MultiBlockConnectivity__blocks(const MultiBlockConnectivityImpl* This);
+BlockConnectivityImpl* atlas__MultiBlockConnectivity__block(MultiBlockConnectivityImpl* This, size_t block_idx);
 
-size_t atlas__BlockConnectivity__rows(const BlockConnectivity* This);
-size_t atlas__BlockConnectivity__cols(const BlockConnectivity* This);
-int atlas__BlockConnectivity__missing_value(const BlockConnectivity* This);
-void atlas__BlockConnectivity__data(BlockConnectivity* This, int* &data, size_t &rows, size_t &cols);
-void atlas__BlockConnectivity__delete(BlockConnectivity* This);
+size_t atlas__BlockConnectivity__rows(const BlockConnectivityImpl* This);
+size_t atlas__BlockConnectivity__cols(const BlockConnectivityImpl* This);
+int atlas__BlockConnectivity__missing_value(const BlockConnectivityImpl* This);
+void atlas__BlockConnectivity__data(BlockConnectivityImpl* This, int* &data, size_t &rows, size_t &cols);
+void atlas__BlockConnectivity__delete(BlockConnectivityImpl* This);
 }
 
 #undef FROM_FORTRAN
@@ -660,7 +672,7 @@ void atlas__BlockConnectivity__delete(BlockConnectivity* This);
 namespace array {
 
 //TODO HACK
-template<> inline DataType::kind_t DataType::kind<mesh::BlockConnectivity*>()   { return KIND_INT64;    }
+template<> inline DataType::kind_t DataType::kind<mesh::BlockConnectivityImpl*>()   { return KIND_INT64;    }
 
 }
 

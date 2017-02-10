@@ -65,16 +65,16 @@ public:
   size_t nb_edges() const;
 
   /// @brief Element to Node connectivity table
-  const Connectivity& node_connectivity() const;
-        Connectivity& node_connectivity();
+  const BlockConnectivityImpl &node_connectivity() const;
+        BlockConnectivityImpl &node_connectivity();
 
   /// @brief Element to Edge connectivity table
-  const Connectivity& edge_connectivity() const;
-        Connectivity& edge_connectivity();
+  const BlockConnectivityImpl &edge_connectivity() const;
+        BlockConnectivityImpl &edge_connectivity();
 
   /// @brief Element to Cell connectivity table
-  const Connectivity& cell_connectivity() const;
-        Connectivity& cell_connectivity();
+  const BlockConnectivityImpl &cell_connectivity() const;
+        BlockConnectivityImpl &cell_connectivity();
 
   /// @brief Element type of these Elements
   const ElementType& element_type() const;
@@ -161,75 +161,75 @@ inline size_t Elements::nb_edges() const
 //  return *hybrid_elements_;
 //}
 
-inline const Elements::Connectivity& Elements::node_connectivity() const
+inline const BlockConnectivityImpl& Elements::node_connectivity() const
 {
   if( hybrid_elements_->node_connectivity().blocks() ) {
     return hybrid_elements_->node_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivityImpl dummy;
     return dummy;
   }
 }
 
-inline Elements::Connectivity& Elements::node_connectivity()
+inline BlockConnectivityImpl& Elements::node_connectivity()
 {
   if( hybrid_elements_->node_connectivity().blocks() ) {
     return hybrid_elements_->node_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivityImpl dummy;
     return dummy;
   }
 }
 
-inline const Elements::Connectivity& Elements::edge_connectivity() const
+inline const BlockConnectivityImpl& Elements::edge_connectivity() const
 {
   if( hybrid_elements_->edge_connectivity().blocks() ) {
     return hybrid_elements_->edge_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivityImpl dummy;
     return dummy;
   }
 }
 
-inline Elements::Connectivity& Elements::edge_connectivity()
+inline BlockConnectivityImpl& Elements::edge_connectivity()
 {
   if( hybrid_elements_->edge_connectivity().blocks() ) {
     return hybrid_elements_->edge_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivityImpl dummy;
     return dummy;
   }
 }
 
 
-inline const Elements::Connectivity& Elements::cell_connectivity() const
+inline const BlockConnectivityImpl& Elements::cell_connectivity() const
 {
   if( hybrid_elements_->cell_connectivity().blocks() ) {
     return hybrid_elements_->cell_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivityImpl dummy;
     return dummy;
   }
 }
 
-inline Elements::Connectivity& Elements::cell_connectivity()
+inline BlockConnectivityImpl& Elements::cell_connectivity()
 {
   if( hybrid_elements_->cell_connectivity().blocks() ) {
     return hybrid_elements_->cell_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivityImpl dummy;
     return dummy;
   }
 }
@@ -259,9 +259,9 @@ void atlas__mesh__Elements__delete(Elements* This);
 size_t atlas__mesh__Elements__size(const Elements* This);
 size_t atlas__mesh__Elements__begin(const Elements* This);
 size_t atlas__mesh__Elements__end(const Elements* This);
-BlockConnectivity* atlas__mesh__Elements__node_connectivity(Elements* This);
-BlockConnectivity* atlas__mesh__Elements__edge_connectivity(Elements* This);
-BlockConnectivity* atlas__mesh__Elements__cell_connectivity(Elements* This);
+BlockConnectivityImpl* atlas__mesh__Elements__node_connectivity(Elements* This);
+BlockConnectivityImpl* atlas__mesh__Elements__edge_connectivity(Elements* This);
+BlockConnectivityImpl* atlas__mesh__Elements__cell_connectivity(Elements* This);
 int atlas__mesh__Elements__has_field(const Elements* This, char* name);
 int atlas__mesh__Elements__nb_fields(const Elements* This);
 field_Field* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx);

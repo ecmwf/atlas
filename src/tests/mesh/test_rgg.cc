@@ -94,8 +94,8 @@ double compute_lonlat_area(mesh::Mesh& mesh)
   mesh::Elements& triags = mesh.cells().elements(1);
   array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
 
-  const mesh::Elements::Connectivity& quad_nodes  = quads.node_connectivity();
-  const mesh::Elements::Connectivity& triag_nodes = triags.node_connectivity();
+  const mesh::BlockConnectivityImpl& quad_nodes  = quads.node_connectivity();
+  const mesh::BlockConnectivityImpl& triag_nodes = triags.node_connectivity();
 
   double area=0;
   for(size_t e = 0; e < quads.size(); ++e)

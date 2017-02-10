@@ -820,7 +820,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 
 
   {
-    const IrregularConnectivity& elem_edge_connectivity = mesh->cells().edge_connectivity();
+    const MultiBlockConnectivity& elem_edge_connectivity = mesh->cells().edge_connectivity();
     for( size_t jelem=0; jelem<mesh->cells().size(); ++jelem )
     {
       std::cout << jelem << " : " ;
@@ -848,7 +848,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
   mesh::actions::build_edges(*mesh);
 
   {
-    const IrregularConnectivity& elem_edge_connectivity = mesh->cells().edge_connectivity();
+    const MultiBlockConnectivity& elem_edge_connectivity = mesh->cells().edge_connectivity();
     for( size_t jelem=0; jelem<mesh->cells().size(); ++jelem )
     {
       std::cout << jelem << " : " ;

@@ -93,7 +93,7 @@ void Method::setup()
       const array::ArrayView<int,1> is_pole_edge = array::make_view<int,1>( edges_.field("is_pole_edge") );
 
       const mesh::Connectivity &node_edge_connectivity = nodes_.edge_connectivity();
-      const mesh::Connectivity &edge_node_connectivity = edges_.node_connectivity();
+      const mesh::MultiBlockConnectivity &edge_node_connectivity = edges_.node_connectivity();
       if( ! nodes_.has_field("node2edge_sign") )
       {
         nodes_.add(
