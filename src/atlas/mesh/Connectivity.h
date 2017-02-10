@@ -440,6 +440,8 @@ public:
   virtual bool isOnHost() const;
   virtual bool isOnDevice() const;
 
+  MultiBlockConnectivityImpl* gpu_object_ptr() {return static_cast<MultiBlockConnectivityImpl*>(gpu_object_ptr_);}
+
 private:
 
   void rebuild_block_connectivity();
@@ -452,7 +454,7 @@ private:
   array::ArrayView<size_t,1> block_cols_view_;
   array::Vector<BlockConnectivityImpl*> block_;
   size_t blocks_;
-
+  void *gpu_object_ptr_;
 };
 
 // -----------------------------------------------------------------------------------------------------
@@ -562,6 +564,8 @@ public:
   bool isOnHost() const;
   bool isOnDevice() const;
 
+  BlockConnectivityImpl* gpu_object_ptr() {return static_cast<BlockConnectivityImpl*>(gpu_object_ptr_);}
+
   bool owns() const { return owns_; }
 
 private:
@@ -572,6 +576,7 @@ private:
   size_t rows_;
   size_t cols_;
   idx_t missing_value_;
+  void* gpu_object_ptr_;
 
 };
 

@@ -365,7 +365,9 @@ void IrregularConnectivityImpl::cloneToDevice() {
     values_view_ = array::make_device_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_device_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_device_view<size_t, 1>(*(data_[_counts_]));
+#ifdef ENABLE_GPU
     cudaMemcpy(gpu_object_ptr_, this, sizeof(IrregularConnectivityImpl),  cudaMemcpyHostToDevice);
+#endif
 }
 void IrregularConnectivityImpl::cloneFromDevice() {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->cloneFromDevice();});
@@ -464,6 +466,11 @@ void MultiBlockConnectivityImpl::cloneToDevice()
   IrregularConnectivityImpl::cloneToDevice();
   block_displs_->cloneToDevice();
   block_cols_  ->cloneToDevice();
+
+#ifdef ENABLE_GPU
+    cudaMemcpy(gpu_object_ptr_, this, sizeof(MultiBlockConnectivityImpl),  cudaMemcpyHostToDevice);
+#endif
+
 }
 
 void MultiBlockConnectivityImpl::cloneFromDevice()
@@ -822,6 +829,10 @@ size_t BlockConnectivityImpl::footprint() const
 void BlockConnectivityImpl::cloneToDevice() {
     values_->cloneToDevice();
     values_view_ = array::make_device_view<idx_t, 2>(*values_);
+#ifdef ENABLE_GPU
+    cudaMemcpy(gpu_object_ptr_, this, sizeof(BlockConnectivityImpl),  cudaMemcpyHostToDevice);
+#endif
+
 }
 
 void BlockConnectivityImpl::cloneFromDevice() {
