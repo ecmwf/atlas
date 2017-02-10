@@ -10,3 +10,9 @@ add_subdirectory( fortran_submodule )
 add_subdirectory( fortran_modinc )
 add_subdirectory( fortran_object )
 add_subdirectory( example_fortran )
+
+ecbuild_add_executable(
+    TARGET  atlas-interpolation
+    SOURCES atlas-interpolation.cc
+    LIBS    atlas )
+

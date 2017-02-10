@@ -242,6 +242,8 @@ list( APPEND atlas_numerics_srcs
 endif()
 
 list( APPEND atlas_interpolation_srcs
+interpolation/PartitionedMesh.cc
+interpolation/PartitionedMesh.h
 interpolation/Vector3D.h
 interpolation/element/Quad3D.cc
 interpolation/element/Quad3D.h
@@ -251,10 +253,10 @@ interpolation/method/FiniteElement.cc
 interpolation/method/FiniteElement.h
 interpolation/method/Intersect.cc
 interpolation/method/Intersect.h
-interpolation/method/KNearestNeighboursBase.cc
-interpolation/method/KNearestNeighboursBase.h
 interpolation/method/KNearestNeighbours.cc
 interpolation/method/KNearestNeighbours.h
+interpolation/method/KNearestNeighboursBase.cc
+interpolation/method/KNearestNeighboursBase.h
 interpolation/method/Method.cc
 interpolation/method/Method.h
 interpolation/method/NearestNeighbour.cc
