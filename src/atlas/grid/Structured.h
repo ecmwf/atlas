@@ -121,11 +121,11 @@ public:
 
     void geoLonlat(const size_t jlon, const size_t jlat, eckit::geometry::LLPoint2 &Pll) const {
       // in grid coordinates
-      double xy[2];
-      lonlat(jlat,jlon,xy);
-      eckit::geometry::Point2 Pxy(xy[0],xy[1]);
+      double crd[2];
+      lonlat(jlat,jlon,crd);
       // convert to geographic coordinates
-      Pll=projection_->coords2lonlat(Pxy);
+      projection_->coords2lonlat(crd);
+      Pll.assign(crd[0],crd[1]);
     }
 
     inline bool reduced() const {

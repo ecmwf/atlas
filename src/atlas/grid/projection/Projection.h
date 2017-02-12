@@ -32,9 +32,9 @@ public:
     static std::string projection_type_str() {return "projection";}
     virtual std::string virtual_projection_type_str() const { return "projection"; }
 
-    // purely virtual functions: must be implemented by inheriting classes
-    virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const =0;
-    virtual eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2) const =0;
+    virtual void coords2lonlat(double crd[]) const = 0;
+    virtual void lonlat2coords(double crd[]) const = 0;
+    
     virtual bool isRegional()=0;
 
     virtual eckit::Properties spec() const =0;

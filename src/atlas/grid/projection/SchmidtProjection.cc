@@ -39,34 +39,24 @@ Projection* SchmidtProjectionT<Rotation>::clone() const  {
   return new SchmidtProjectionT(*this);
 }
 
-
 template <typename Rotation>
-eckit::geometry::LLPoint2 SchmidtProjectionT<Rotation>::coords2lonlat(eckit::geometry::Point2 xy) const {
-
+void SchmidtProjectionT<Rotation>::coords2lonlat(double crd[]) const {
 
   // stretch
-  double lat=R2D(std::asin(std::cos(2.*std::atan(1/c_*std::tan(std::acos(std::sin(D2R(xy[eckit::geometry::YY])))*0.5)))));
-
-  eckit::geometry::LLPoint2 P(xy[eckit::geometry::XX],lat);
+  crd[1]=R2D(std::asin(std::cos(2.*std::atan(1/c_*std::tan(std::acos(std::sin(D2R(crd[1])))*0.5)))));
 
   // perform rotation
-  rotation_.rotate(P);
-
-  return P;
+  rotation_.rotate(crd);
 }
 
 template <typename Rotation>
-eckit::geometry::Point2 SchmidtProjectionT<Rotation>::lonlat2coords(eckit::geometry::LLPoint2 ll) const {
+void SchmidtProjectionT<Rotation>::lonlat2coords(double crd[]) const {
 
   // inverse rotation
-  rotation_.unrotate(ll);
+  rotation_.unrotate(crd);
 
   // unstretch
-  double lat2=R2D(std::asin(std::cos(2.*std::atan(c_*std::tan(std::acos(std::sin(D2R(ll.lat())))*0.5)))));
-
-  return eckit::geometry::Point2(ll.lon(),lat2);
-
-
+  crd[1]=R2D(std::asin(std::cos(2.*std::atan(c_*std::tan(std::acos(std::sin(D2R(crd[1])))*0.5)))));
 }
 
 // specification

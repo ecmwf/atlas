@@ -35,6 +35,7 @@ MercatorProjectionT<Rotation>::MercatorProjectionT(const eckit::Parametrisation&
   if( ! params.get("longitude0",lon0_) )
     lon0_=0.0;
 
+  inv_radius_ = 1./radius_;
 }
 
 // copy constructor
@@ -44,6 +45,7 @@ MercatorProjectionT<Rotation>::MercatorProjectionT( const MercatorProjectionT& r
   rotation_(rhs.rotation_) {
   radius_=rhs.radius_;
   lon0_=rhs.lon0_;
+  inv_radius_ = 1./radius_;
 }
 
 // clone method
@@ -52,37 +54,29 @@ Projection* MercatorProjectionT<Rotation>::clone() const  {
   return new MercatorProjectionT<Rotation>(*this);
 }
 
-// projection
+
 template <typename Rotation>
-eckit::geometry::Point2 MercatorProjectionT<Rotation>::lonlat2coords(eckit::geometry::LLPoint2 ll) const {
+void MercatorProjectionT<Rotation>::lonlat2coords(double crd[]) const {
+
   // first unrotate
-  rotation_.unrotate(ll);
+  rotation_.unrotate(crd);
 
   // then project
-  double x=radius_*(D2R(ll.lon()-lon0_));
-  double y=radius_*std::log(std::tan(D2R(45.+ll.lat()*0.5)));
-
-  return eckit::geometry::Point2(x,y);
+  crd[0] = radius_*(D2R(crd[0]-lon0_));
+  crd[1] = radius_*std::log(std::tan(D2R(45.+crd[1]*0.5)));
 }
 
-// inverse projection
 template <typename Rotation>
-eckit::geometry::LLPoint2 MercatorProjectionT<Rotation>::coords2lonlat(eckit::geometry::Point2 coords) const {
+void MercatorProjectionT<Rotation>::coords2lonlat(double crd[]) const {
 
   // first projection
-  const double x=coords[eckit::geometry::XX];
-  const double y=coords[eckit::geometry::YY];
-  eckit::geometry::LLPoint2 lonlat(
-      lon0_+R2D(x/radius_),
-      2.*R2D(std::atan(std::exp(y/radius_)))-90.
-  );
+  crd[0] = lon0_ + R2D(crd[0]*inv_radius_);
+  crd[1] = 2.*R2D(std::atan(std::exp(crd[0]*inv_radius_)))-90.;
 
   // then rotate
-  rotation_.rotate(lonlat);
-
-  // then project
-  return lonlat;
+  rotation_.rotate(crd);
 }
+
 
 // specification
 template <typename Rotation>

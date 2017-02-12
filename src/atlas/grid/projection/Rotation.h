@@ -19,8 +19,8 @@ public:
     static std::string classNamePrefix() { return "Rotated"; }
     static std::string typePrefix() { return "rotated_"; }
 
-    void rotate(eckit::geometry::LLPoint2 &P) const;    // coordinates of the point on a rotated sphere with specified pole
-    void unrotate(eckit::geometry::LLPoint2 &P) const;    // inverse operation of rotate
+    void rotate(double crd[]) const;    // coordinates of the point on a rotated sphere with specified pole
+    void unrotate(double crd[]) const;  // inverse operation of rotate
 
     void spec(eckit::Properties&) const;
 
@@ -42,8 +42,8 @@ public:
     static std::string classNamePrefix() { return ""; } // deliberately empty
     static std::string typePrefix() { return ""; }      // deliberately empty
 
-    void rotate(eckit::geometry::LLPoint2&) const { /* do nothing */ }
-    void unrotate(eckit::geometry::LLPoint2&) const { /* do nothing */ }
+    void rotate(double crd[]) const   { /* do nothing */ }
+    void unrotate(double crd[]) const { /* do nothing */ }
 
     void spec(eckit::Properties&) const {}
 };

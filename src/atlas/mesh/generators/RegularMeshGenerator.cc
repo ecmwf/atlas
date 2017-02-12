@@ -501,9 +501,9 @@ void RegularMeshGenerator::generate_mesh(
         lonlat(inode,internals::LAT) = xy[internals::LAT];
 
         // geographic coordinates by using projection
-        llg=rg.projection().coords2lonlat(eckit::geometry::Point2(xy[0],xy[1]));
-        geolonlat(inode,internals::LON) = llg[internals::LON];
-        geolonlat(inode,internals::LAT) = llg[internals::LAT];
+        rg.projection().coords2lonlat(xy);
+        geolonlat(inode,internals::LON) = xy[internals::LON];
+        geolonlat(inode,internals::LAT) = xy[internals::LAT];
 
         // part
         part(inode) = parts_SR[ii];

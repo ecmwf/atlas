@@ -1012,10 +1012,10 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
       lonlat(inode,internals::LAT) = y;
 
       // geographic coordinates by using projection
-      eckit::geometry::Point2 xy(x,y);
-      llg=rg.projection().coords2lonlat(xy);
-      geolonlat(inode,internals::LON) = llg[internals::LON];
-      geolonlat(inode,internals::LAT) = llg[internals::LAT];
+      double crd[] = {x,y};
+      rg.projection().coords2lonlat(crd);
+      geolonlat(inode,internals::LON) = crd[internals::LON];
+      geolonlat(inode,internals::LAT) = crd[internals::LAT];
 
       glb_idx(inode)   = n+1;
       part(inode) = parts.at(n);
@@ -1048,10 +1048,10 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
       lonlat(inode,internals::LAT) = y;
 
       // geographic coordinates by using projection
-      eckit::geometry::Point2 xy(x,y);
-      llg=rg.projection().coords2lonlat(xy);
-      geolonlat(inode,internals::LON) = llg[internals::LON];
-      geolonlat(inode,internals::LAT) = llg[internals::LAT];
+      double crd[] = {x,y};
+      rg.projection().coords2lonlat(crd);
+      geolonlat(inode,internals::LON) = crd[internals::LON];
+      geolonlat(inode,internals::LAT) = crd[internals::LAT];
 
 
       glb_idx(inode)   = periodic_glb.at(jlat)+1;
@@ -1075,10 +1075,10 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
     lonlat(inode,internals::LAT) = y;
 
     // geographic coordinates by using projection
-    eckit::geometry::Point2 xy(x,y);
-    llg=rg.projection().coords2lonlat(xy);
-    geolonlat(inode,internals::LON) = llg[internals::LON];
-    geolonlat(inode,internals::LAT) = llg[internals::LAT];
+    double crd[] = {x,y};
+    rg.projection().coords2lonlat(crd);
+    geolonlat(inode,internals::LON) = crd[internals::LON];
+    geolonlat(inode,internals::LAT) = crd[internals::LAT];
 
     glb_idx(inode)   = periodic_glb.at(rg.nlat()-1)+2;
     part(inode)      = mypart;
@@ -1099,10 +1099,10 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
     lonlat(inode,internals::LAT) = y;
 
     // geographic coordinates by using projection
-    eckit::geometry::Point2 xy(x,y);
-    llg=rg.projection().coords2lonlat(xy);
-    geolonlat(inode,internals::LON) = llg[internals::LON];
-    geolonlat(inode,internals::LAT) = llg[internals::LAT];
+    double crd[] = {x,y};
+    rg.projection().coords2lonlat(crd);
+    geolonlat(inode,internals::LON) = crd[internals::LON];
+    geolonlat(inode,internals::LAT) = crd[internals::LAT];
 
     glb_idx(inode)   = periodic_glb.at(rg.nlat()-1)+3;
     part(inode)      = mypart;

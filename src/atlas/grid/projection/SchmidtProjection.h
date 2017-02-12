@@ -28,8 +28,8 @@ public:
     virtual std::string virtual_projection_type_str() const { return Rotation::typePrefix()+"schmidt"; }
 
     // projection and inverse projection
-    virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const;
-    virtual eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2) const;
+    virtual void coords2lonlat(double crd[]) const;
+    virtual void lonlat2coords(double crd[]) const;
 
     // purely regional? - no!
     bool isRegional() { return false; }  // schmidt is global grid

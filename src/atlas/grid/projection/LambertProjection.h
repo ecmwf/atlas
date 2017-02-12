@@ -28,8 +28,8 @@ public:
     virtual std::string virtual_projection_type_str() const {return "lambert";}
 
     // projection and inverse projection
-    eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2) const;
-    eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2) const;
+    virtual void coords2lonlat(double crd[]) const;
+    virtual void lonlat2coords(double crd[]) const;
 
     bool isRegional() { return true; }  // lambert projection cannot be used for global grids
 
@@ -37,13 +37,14 @@ public:
     virtual eckit::Properties spec() const;
 
 private:
-
+  
     double lat1_, lat2_;     // secant latitudes
     bool isTangent_;
     double lon0_;            // central longitude
     double radius_;          // sphere radius
-    double n_, F_, rho0_;    // projection constants
+    double n_, inv_n_, F_, rho0_;    // projection constants
 
+    void setup();
 };
 
 }  // namespace projection

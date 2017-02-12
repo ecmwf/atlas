@@ -50,12 +50,11 @@ void RegularRegional::setup(const util::Config& config) {
       if ( !config_dom.get("bbox",bbox) ) {
         if ( config_dom.get("center",center) && config_dom.get("dx",dx) && config_dom.get("dy",dy)  ) {
           // coordinates of center
-          eckit::geometry::LLPoint2 llcenter(center[0],center[1]);
-          eckit::geometry::Point2 xy;
-          xy=projection_->lonlat2coords(llcenter);
+          double crd_center[] = {center[0],center[1]};
+          projection_->lonlat2coords(crd_center);
           // calculate bbox
-          double x = xy[0];
-          double y = xy[1];
+          double x = crd_center[0];
+          double y = crd_center[1];
           double LX = (nx-1)*dx;
           double LY = (ny-1)*dy;
           bbox[0]=x-0.5*LX; bbox[1]=x+0.5*LX;
@@ -63,16 +62,16 @@ void RegularRegional::setup(const util::Config& config) {
         } else {
           if ( config_dom.get("sw",sw) && config_dom.get("ne",ne) )  {
             // corner coordinates
-            eckit::geometry::Point2 xy;
-            eckit::geometry::LLPoint2 llsw(sw[0],sw[1]), llne(ne[0],ne[1]);
+            double crd_sw[] = {sw[0],sw[1]};
+            double crd_ne[] = {ne[0],ne[1]};
             // sw corner
-            xy=projection_->lonlat2coords(llsw);
+            projection_->lonlat2coords(crd_sw);
             // put in bbox
-            bbox[0]=xy[0];bbox[2]=xy[1];
+            bbox[0]=crd_sw[0]; bbox[2]=crd_sw[1];
             // ne corner
-            xy=projection_->lonlat2coords(llne);
+            projection_->lonlat2coords(crd_ne);
             // put in bbox
-            bbox[1]=xy[0];bbox[3]=xy[1];
+            bbox[1]=crd_ne[0]; bbox[3]=crd_ne[1];
           } else {
             throw eckit::BadParameter("RegularRegional grid domain should be specified by (i) bbox, (ii) center, dx and dy, or (iii) ne and sw",Here());
           }

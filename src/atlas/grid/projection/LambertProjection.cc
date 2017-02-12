@@ -35,6 +35,8 @@ LambertProjection::LambertProjection(const eckit::Parametrisation& params) {
   // check presence of lon0
   if( ! params.get("longitude0",lon0_) )
     throw eckit::BadParameter("longitude0 missing in Params",Here());
+  
+  setup();
 }
 
 // copy constructor
@@ -45,6 +47,10 @@ LambertProjection::LambertProjection( const LambertProjection& rhs ) : Projectio
   radius_=rhs.radius_;
   lon0_=rhs.lon0_;
 
+  setup();
+}
+
+void LambertProjection::setup() {
   // setup (derived) constants
   isTangent_=(lat1_==lat2_);
   if ( isTangent_ ) {
@@ -54,50 +60,85 @@ LambertProjection::LambertProjection( const LambertProjection& rhs ) : Projectio
   }
   F_=std::cos(D2R(lat1_))*std::pow(std::tan(D2R(45.+lat1_*0.5)),n_)/n_;
   rho0_=radius_*F_;
+  inv_n_ = 1./n_;
 }
 
 // clone method
 Projection* LambertProjection::clone() const { return new LambertProjection(*this); }
 
-// projection
-eckit::geometry::Point2 LambertProjection::lonlat2coords(eckit::geometry::LLPoint2 ll) const {
+// // projection
+// eckit::geometry::Point2 LambertProjection::lonlat2coords(eckit::geometry::LLPoint2 ll) const {
+//
+//   double rho=radius_*F_/std::pow(std::tan(D2R(45+ll.lat()*0.5)),n_);
+//   double theta=ll.lon()-lon0_;
+//   eckit::geometry::reduceTo2Pi(theta);
+//   theta*=n_;
+//   double x=rho*std::sin(D2R(theta));
+//   double y=rho0_-rho*std::cos(D2R(theta));
+//
+//   return eckit::geometry::Point2(x,y);
+// }
+//
+// // inverse projection
+// eckit::geometry::LLPoint2 LambertProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
+//   double x=xy[eckit::geometry::XX], y=xy[eckit::geometry::YY];
+//
+//   // auxiliaries
+//   double rho=std::sqrt(x*x+(rho0_-y)*(rho0_-y));
+//   if (n_<0.) rho = -rho;
+//   double theta;
+//   if (n_>0.) {
+//     theta=R2D(std::atan2(x,rho0_-y));
+//   } else {
+//     theta=R2D(std::atan2(-x,y-rho0_));
+//   }
+//
+//   // longitude
+//   double lon=theta*inv_n_+lon0_;
+//
+//   // latitude
+//   double lat;
+//   if (rho==0.) {
+//     lat=( n_>0. ? 90. : -90. );
+//   } else {
+//     lat=2.*R2D(std::atan(std::pow(radius_*F_/rho,inv_n_)))-90.;
+//   }
+//
+//   return eckit::geometry::LLPoint2(lon,lat);
+// }
 
-  double rho=radius_*F_/std::pow(std::tan(D2R(45+ll.lat()*0.5)),n_);
-  double theta=ll.lon()-lon0_;
-  eckit::geometry::reduceTo2Pi(theta);
+void LambertProjection::lonlat2coords(double crd[]) const {
+
+  double rho=radius_*F_/std::pow(std::tan(D2R(45+crd[1]*0.5)),n_);
+  double theta=crd[0]-lon0_;
+  eckit::geometry::reduceTo2Pi(theta); // bracket between 0 and 360
   theta*=n_;
-  double x=rho*std::sin(D2R(theta));
-  double y=rho0_-rho*std::cos(D2R(theta));
-
-  return eckit::geometry::Point2(x,y);
+  crd[0]=rho*std::sin(D2R(theta));
+  crd[1]=rho0_-rho*std::cos(D2R(theta));
 }
 
 // inverse projection
-eckit::geometry::LLPoint2 LambertProjection::coords2lonlat(eckit::geometry::Point2 xy) const {
-  double x=xy[eckit::geometry::XX], y=xy[eckit::geometry::YY];
-
+void LambertProjection::coords2lonlat(double crd[]) const {
   // auxiliaries
-  double rho=std::sqrt(x*x+(rho0_-y)*(rho0_-y));
+  double rho=std::sqrt(crd[0]*crd[0]+(rho0_-crd[1])*(rho0_-crd[1]));
   if (n_<0.) rho = -rho;
   double theta;
   if (n_>0.) {
-    theta=R2D(std::atan2(x,rho0_-y));
+    theta=R2D(std::atan2(crd[0],rho0_-crd[1]));
   } else {
-    theta=R2D(std::atan2(-x,y-rho0_));
+    theta=R2D(std::atan2(-crd[0],crd[1]-rho0_));
   }
 
   // longitude
-  double lon=theta/n_+lon0_;
+  crd[0]=theta*inv_n_+lon0_;
 
   // latitude
   double lat;
   if (rho==0.) {
-    lat=( n_>0. ? 90. : -90. );
+    crd[1]=( n_>0. ? 90. : -90. );
   } else {
-    lat=2.*R2D(std::atan(std::pow(radius_*F_/rho,1./n_)))-90.;
+    crd[1]=2.*R2D(std::atan(std::pow(radius_*F_/rho,inv_n_)))-90.;
   }
-
-  return eckit::geometry::LLPoint2(lon,lat);
 }
 
 // specification

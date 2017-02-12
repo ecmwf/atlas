@@ -27,9 +27,9 @@ public:
     virtual std::string virtual_projection_type_str() const { return Rotation::typePrefix()+"mercator"; }
 
     // projection and inverse projection
-    eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2)   const;
-    eckit::geometry::Point2   lonlat2coords(eckit::geometry::LLPoint2) const;
-
+    virtual void coords2lonlat(double crd[]) const;
+    virtual void lonlat2coords(double crd[]) const;
+    
     // TODO: the comment says lambert, but this is Mercator.... ?
     bool isRegional() { return true; }  // lambert projection cannot be used for global grids
 
@@ -40,6 +40,7 @@ protected:
 
     double lon0_;            // central longitude
     double radius_;          // sphere radius
+    double inv_radius_;      // 1/(sphere radius)
 
     void setup(const eckit::Parametrisation& p);
 

@@ -30,17 +30,8 @@ public:
   virtual std::string virtual_projection_type_str() const { return Rotation::typePrefix()+"lonlat"; }
 
   // projection and inverse projection
-  virtual eckit::geometry::LLPoint2 coords2lonlat(eckit::geometry::Point2 xy) const {
-    eckit::geometry::LLPoint2 lonlat(xy[0],xy[1]);
-    rotation_.rotate(lonlat);
-    return lonlat;
-  }
-
-  virtual eckit::geometry::Point2 lonlat2coords(eckit::geometry::LLPoint2 ll) const {
-    eckit::geometry::LLPoint2 coords(ll.lon(),ll.lat());
-    rotation_.unrotate(coords);
-    return coords;
-  }
+  virtual void coords2lonlat(double crd[]) const { rotation_.rotate(crd);   }
+  virtual void lonlat2coords(double crd[]) const { rotation_.unrotate(crd); }
 
   // purely regional? - no!
   bool isRegional() { return false; }
