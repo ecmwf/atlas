@@ -124,7 +124,7 @@ void RegularMeshGenerator::configure_defaults()
 
   // This options sets the default partitioner
   std::string partitioner;
-  if( grid::partitioners::PartitionerFactory::has("Trans") )
+  if( grid::partitioners::PartitionerFactory::has("Trans") && eckit::mpi::size() > 1 )
     partitioner = "Trans";
   else
     partitioner = "EqualRegions";

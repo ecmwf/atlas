@@ -1,7 +1,6 @@
 #include "atlas/grid/regular/RegularRegional.h"
 #include "atlas/grid/domain/RectangularDomain.h"
 
-
 namespace atlas {
 namespace grid {
 namespace regular {
@@ -55,8 +54,12 @@ void RegularRegional::setup(const util::Config& config) {
           eckit::geometry::Point2 xy;
           xy=projection_->lonlat2coords(llcenter);
           // calculate bbox
-          bbox[0]=xy[0]-(nx-1)*dx/2;bbox[1]=xy[0]+(nx-1)*dx/2;
-          bbox[2]=xy[1]-(ny-1)*dy/2;bbox[3]=xy[1]+(ny-1)*dy/2;
+          double x = xy[0];
+          double y = xy[1];
+          double LX = (nx-1)*dx;
+          double LY = (ny-1)*dy;
+          bbox[0]=x-0.5*LX; bbox[1]=x+0.5*LX;
+          bbox[2]=y-0.5*LY; bbox[3]=y+0.5*LY;
         } else {
           if ( config_dom.get("sw",sw) && config_dom.get("ne",ne) )  {
             // corner coordinates
@@ -92,10 +95,10 @@ void RegularRegional::setup(const util::Config& config) {
       throw eckit::BadParameter("domain is required for a RegularRegional grid",Here());
     }
 
-    // spacing_x
     util::Config config_spacing;
     std::string spacingType;
 
+    // spacing_x
     if ( !config.get("spacing_x",spacingType) ) spacingType="uniform";
     // set configuration of spacing_x
     config_spacing.set("spacingType",spacingType);
@@ -114,7 +117,6 @@ void RegularRegional::setup(const util::Config& config) {
     config_spacing.set("N",ny);
     // create spacing
     spacing_y_=spacing::Spacing::create(config_spacing);
-
 
     // setup regular grid
     Regular::setup();
