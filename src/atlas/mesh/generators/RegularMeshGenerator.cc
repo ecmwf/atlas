@@ -539,9 +539,9 @@ void RegularMeshGenerator::generate_mesh(
         if ( (ix_min+ix<nx-1 || periodic_x) && (iy_min+iy<ny-1 || periodic_y) ) {
           // define cell corners (local indices)
           quad_nodes[0]=local_idx_SR[ii];
-          quad_nodes[1]=local_idx_SR[iy*nxl+ix+1];      // point to the right
+          quad_nodes[3]=local_idx_SR[iy*nxl+ix+1];      // point to the right
           quad_nodes[2]=local_idx_SR[(iy+1)*nxl+ix+1];  // point above right
-          quad_nodes[3]=local_idx_SR[(iy+1)*nxl+ix];    // point above
+          quad_nodes[1]=local_idx_SR[(iy+1)*nxl+ix];    // point above
           node_connectivity.set( jcell, quad_nodes );
           cells_part(jcell)    = mypart;
 #if DEBUG_OUTPUT_DETAIL

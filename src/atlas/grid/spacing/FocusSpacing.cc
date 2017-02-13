@@ -30,7 +30,7 @@ FocusSpacing::FocusSpacing(const eckit::Parametrisation& params) {
     const double d2 = 2./double(N-1);
     const double c1 = (xmax-xmin)*M_1_PI;
     const double c2 = 1./focus_factor_;
-    x_[0]    = xmin;
+    x_[0]   = xmin;
     x_[N-1] = xmax;
     for( long i=1; i<N-1; ++i ) {
       const double x2 = -1.+i*d2; // x2 between -1 and 1;
