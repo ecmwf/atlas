@@ -40,7 +40,7 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
     points_ ( new std::vector< Grid::Point > (m.nodes().size() ) ) {
 
      util::Config config_domain;
-    config_domain.set("domainType","global");
+    config_domain.set("type","global");
     domain_.reset( domain::Domain::create(config_domain) );
 
     //domain_ = domain::Domain::makeGlobal();
@@ -67,7 +67,7 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
 Unstructured::Unstructured(const util::Config& p) :
     Grid() {
      util::Config config_domain;
-    config_domain.set("domainType","global");
+    config_domain.set("type","global");
     domain_.reset( domain::Domain::create(config_domain) );
 //domain_ = domain::Domain::makeGlobal();
     NOTIMP;
@@ -79,7 +79,7 @@ Unstructured::Unstructured(std::vector<Point>* pts) :
     points_(pts) {
     //domain_ = domain::Domain::makeGlobal();
      util::Config config_domain;
-    config_domain.set("domainType","global");
+    config_domain.set("type","global");
     domain_.reset( domain::Domain::create(config_domain) );
 
 

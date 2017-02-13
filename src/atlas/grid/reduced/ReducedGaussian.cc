@@ -30,7 +30,7 @@ void ReducedGaussian::setup(const size_t N, const long pl[]) {
     size_t ny=2*N;
 
     // domain is global
-    config_domain.set("domainType","global");
+    config_domain.set("type","global");
     domain_.reset( domain::Domain::create(config_domain) );
 
 
@@ -82,7 +82,7 @@ ReducedGaussian::ReducedGaussian(const util::Config& config) :
 
     // projection is lonlat
     util::Config config_proj;
-    config_proj.set("projectionType","lonlat");
+    config_proj.set("type","lonlat");
     projection_.reset( projection::Projection::create(config_proj) );
 
     // setup
@@ -92,7 +92,7 @@ ReducedGaussian::ReducedGaussian(const util::Config& config) :
 ReducedGaussian::ReducedGaussian(const int N, const long pl[]) {
     // projection is lonlat
     util::Config config_proj;
-    config_proj.set("projectionType","lonlat");
+    config_proj.set("type","lonlat");
     projection_.reset( projection::Projection::create(config_proj) );
 
     // setup

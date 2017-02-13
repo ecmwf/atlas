@@ -25,7 +25,6 @@ Rotated::Rotated(const eckit::Parametrisation& p) {
   double latrp = D2R(90.0-pole_.lat());
   cos_latrp_ = std::cos(latrp);
   sin_latrp_ = std::sin(latrp);
-
 }
 
 Rotated::Rotated( const Rotated& rhs ) {
@@ -37,7 +36,6 @@ Rotated::Rotated( const Rotated& rhs ) {
 
 void Rotated::rotate(double crd[]) const {
   // coordinates of the point P on a rotated sphere with specified pole
-
   double lon, lat, lont, latt;
   double xt, yt, zt, x, y, z;
   double cos_lon, sin_lon, cos_lat, sin_lat;

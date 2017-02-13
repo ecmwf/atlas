@@ -26,11 +26,11 @@ void ReducedLonLat::setup(size_t ny, long pl[]) {
     util::Config config_spacing, config_domain, config_proj;
 
     // projection is lonlat
-    config_proj.set("projectionType","lonlat");
+    config_proj.set("type","lonlat");
     projection_.reset( projection::Projection::create(config_proj) );
 
     // domain is global
-    config_domain.set("domainType","global");
+    config_domain.set("type","global");
     domain_.reset( domain::Domain::create(config_domain) );
 
     // determine input for Structured::setup

@@ -29,6 +29,14 @@ public:
 
     virtual eckit::Properties spec() const;
 
+    virtual double xmin() const { return  0.  ; }
+    virtual double xmax() const { return  360.; }
+    virtual double ymin() const { return -90. ; }
+    virtual double ymax() const { return  90  ; }
+
+    virtual bool isPeriodicX() const { return true; }
+    virtual bool isPeriodicY() const { return true; }
+
 private:
 
     void setup();

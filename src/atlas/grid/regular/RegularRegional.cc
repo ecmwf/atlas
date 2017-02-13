@@ -8,7 +8,7 @@ namespace regular {
 register_BuilderT1(Grid,RegularRegional,RegularRegional::grid_type_str());
 
 std::string RegularRegional::grid_type_str() {
-    return "regularRegional";
+    return "regular_regional";
 }
 
 std::string RegularRegional::className() {
@@ -23,7 +23,7 @@ std::string RegularRegional::shortName() const {
 
 void RegularRegional::setup(const util::Config& config) {
 
-    util::Config config_dom, config_spacing_x, config_spacing_y, config_proj;
+    util::Config config_dom, config_proj;
 
     long nx, ny;
     std::vector<double> bbox(4);
@@ -36,7 +36,7 @@ void RegularRegional::setup(const util::Config& config) {
     if ( config.get("projection",config_proj) ) {
     } else {
       // default, error, or hardcoded default?
-      config_proj.set("projectionType","lonlat");
+      config_proj.set("type","lonlat");
     }
     projection_.reset( projection::Projection::create(config_proj) );
 
@@ -47,7 +47,7 @@ void RegularRegional::setup(const util::Config& config) {
     // domain
     if ( config.get("domain",config_dom) ) {
       // domain is specified either by bbox, by sw and ne, or by center and resolution
-      if ( !config_dom.get("bbox",bbox) ) {
+      if ( !config_dom.get("bounding_box",bbox) ) {
         if ( config_dom.get("center",center) && config_dom.get("dx",dx) && config_dom.get("dy",dy)  ) {
           // coordinates of center
           double crd_center[] = {center[0],center[1]};
@@ -77,11 +77,11 @@ void RegularRegional::setup(const util::Config& config) {
           }
         }
         // put bbox in config_dom
-        config_dom.set("bbox",bbox);
+        config_dom.set("bounding_box",bbox);
       }
       // set domainType if it's missing
       std::string domainType;
-      if (!config_dom.get("domainType",domainType)) config_dom.set("domainType","rectangular");
+      if (!config_dom.get("type",domainType)) config_dom.set("type","rectangular");
       // create domain from configuration
       domain_.reset( domain::Domain::create(config_dom) );
       // check if the domain is rectangular
@@ -94,28 +94,35 @@ void RegularRegional::setup(const util::Config& config) {
       throw eckit::BadParameter("domain is required for a RegularRegional grid",Here());
     }
 
-    util::Config config_spacing;
-    std::string spacingType;
-
     // spacing_x
-    if ( !config.get("spacing_x",spacingType) ) spacingType="uniform";
-    // set configuration of spacing_x
-    config_spacing.set("spacingType",spacingType);
-    config_spacing.set("xmin",bbox[0]);
-    config_spacing.set("xmax",bbox[1]);
-    config_spacing.set("N",nx);
-    // create spacing
-    spacing_x_=spacing::Spacing::create(config_spacing);
+    {
+      util::Config config_spacing;
+      std::string spacingType;
+
+      if ( !config.get("spacing_x",spacingType) ) spacingType="uniform";
+      // set configuration of spacing_x
+      config_spacing.set("spacingType",spacingType);
+      config_spacing.set("xmin",bbox[0]);
+      config_spacing.set("xmax",bbox[1]);
+      config_spacing.set("N",nx);
+      // create spacing
+      spacing_x_=spacing::Spacing::create(config_spacing);
+    }
 
     // spacing_y
-    if ( !config.get("spacing_y",spacingType) ) spacingType="uniform";
-    // set configuration of spacing_y
-    config_spacing.set("spacingType",spacingType);
-    config_spacing.set("xmin",bbox[2]);
-    config_spacing.set("xmax",bbox[3]);
-    config_spacing.set("N",ny);
-    // create spacing
-    spacing_y_=spacing::Spacing::create(config_spacing);
+    {
+      util::Config config_spacing;
+      std::string spacingType;
+
+      if ( !config.get("spacing_y",spacingType) ) spacingType="uniform";
+      // set configuration of spacing_y
+      config_spacing.set("spacingType",spacingType);
+      config_spacing.set("xmin",bbox[2]);
+      config_spacing.set("xmax",bbox[3]);
+      config_spacing.set("N",ny);
+      // create spacing
+      spacing_y_=spacing::Spacing::create(config_spacing);
+    }
 
     // setup regular grid
     Regular::setup();

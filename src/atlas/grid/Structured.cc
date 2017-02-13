@@ -62,101 +62,88 @@ Structured::~Structured() {
 
 
 void Structured::setup(
-    const size_t nlat,
-    const double lats[],
-    const long pl[],
-    const double lonmin[],
-    const double lonmax[] ) {
-    ASSERT(nlat>1);  // can't have a grid with just one latitude
+    const size_t ny,
+    const double y[],
+    const long nx[],
+    const double xmin[],
+    const double xmax[] ) {
+    ASSERT(ny>1);  // can't have a grid with just one latitude
 
-    pl_    .assign(pl, pl+nlat);
-    lat_   .assign(lats, lats+nlat);
-    lonmin_.assign(lonmin, lonmin+nlat);
-    lonmax_.assign(lonmax, lonmax+nlat);
-    npts_ = static_cast<size_t>(std::accumulate(pl_.begin(), pl_.end(), 0));
+    nx_  .assign(nx,   nx   + ny);
+    y_   .assign(y,    y    + ny);
+    xmin_.assign(xmin, xmin + ny);
+    xmax_.assign(xmax, xmax + ny);
+    npts_ = static_cast<size_t>(std::accumulate(nx_.begin(), nx_.end(), 0));
 
-    lon_inc_.resize(nlat);
-    nlonmin_ = nlonmax_ = static_cast<size_t>(pl_[0]);
+    dx_.resize(ny);
+    nxmin_ = nxmax_ = static_cast<size_t>(nx_[0]);
 
-    for (size_t jlat = 0; jlat < nlat; ++jlat) {
-        //std::cout << "jlat = " << jlat << "; nlon = " << pl_[jlat] << std::endl;
-        lon_inc_[jlat] = (lonmax_[jlat]-lonmin_[jlat])/double(pl_[jlat]-1);
-        nlonmin_ = std::min(static_cast<size_t>(pl_[jlat]),nlonmin_);
-        nlonmax_ = std::max(static_cast<size_t>(pl_[jlat]),nlonmax_);
+    for (size_t j = 0; j < ny; ++j) {
+        dx_[j] = (xmax_[j]-xmin_[j])/double(nx_[j]-1);
+        nxmin_ = std::min(static_cast<size_t>(nx_[j]),nxmin_);
+        nxmax_ = std::max(static_cast<size_t>(nx_[j]),nxmax_);
     }
 }
 
 
-void Structured::setup_lon_limits(const size_t nlat, const long pl[], const domain::Domain& dom, double lonmin[], double lonmax[]) {
-    ASSERT(nlat);
+void Structured::setup_cropped(const size_t ny, const double y[], const long nx[], const double xmin[], const double xmax[], const domain::Domain& dom ) {
+    ASSERT(ny>0);
 
-    if ( !dom.isGlobal() )
-      throw eckit::BadCast("this routine shouldn't be called for nonglobal domains.",Here());
+    std::vector<double> dom_y;    dom_y.  reserve(ny);
+    std::vector<long>   dom_nx;   dom_nx.    reserve(ny);
+    std::vector<double> dom_xmin; dom_xmin.reserve(ny);
+    std::vector<double> dom_xmax; dom_xmax.reserve(ny);
+    const double tol = 1.e-6;
+    size_t dom_ny = 0;
+    const bool periodic_x = dom.isPeriodicX();
+    const double d_xmin = dom.xmin();
+    const double d_xmax = dom.xmax();
+    const double d_ymin = dom.ymin();
+    const double d_ymax = dom.ymax();
+    double dx;
+    for( size_t j=0; j<ny; ++j )
+    {
+        if( y[j]-tol < d_ymax && y[j]+tol > d_ymin )
+        {
+            ++dom_ny;
+            const double _y = y[j];
+            double _xmin = xmin[j];
+            double _xmax = xmax[j];
+            if( periodic_x ) {  // periodic:      nx = number of divisions
+              dx = (d_xmax-d_xmin)/double(nx[j]);
+            } else {            // not periodic:  nx = number of points
+              if( _xmin < _xmax ) {
+                dx = (_xmax-_xmin)/double(nx[j]-1l);
+              } else {
+                dx = (d_xmax-d_xmin)/double(nx[j]-1l);
+              }
+            }
 
 
-    double east, west;
-    east=-180.;
-    west=180.;
+// Flaw: Assumed that original grid has increments that start from xmin=0.0
+//       xmin of original grid does not even have to be multiple of dx
 
-    std::fill_n(lonmin, nlat, west);
-    std::fill_n(lonmax, nlat, east);
-
-    const double ew = east - west;
-
-    for (size_t jlat = 0; jlat < nlat; ++jlat) {
-        const double ndiv = static_cast<double>(pl[jlat]);
-        lonmax[jlat] -= pl[jlat]? ew/ndiv : 0.;
+            long _nx(0);
+            for( long i=0; i<nx[j]; ++i )
+            {
+                const double x = dx*i;
+                if( x+tol > d_xmin && x-tol < d_xmax )
+                {
+                    _xmin = std::min(_xmin,x);
+                    _nx++;
+                }
+            }
+            _xmax = _xmin+_nx*dx;
+            dom_y     .push_back(y[j]);
+            dom_nx    .push_back(_nx);
+            dom_xmin.push_back(_xmin);
+            dom_xmax.push_back(_xmax);
+        }
     }
-
-    /*
-    std::fill_n(lonmin, nlat, dom.west());
-    std::fill_n(lonmax, nlat, dom.east());
-
-    const double ew = dom.east() - dom.west();
-    const bool isPeriodicEastWest = dom.isPeriodicEastWest();
-
-    for (size_t jlat = 0; jlat < nlat; ++jlat) {
-        const double ndiv = static_cast<double>(pl[jlat] + (isPeriodicEastWest? 0:-1));
-        lonmax[jlat] -= pl[jlat]? ew/ndiv : 0.;;
-    }
-    */
-
-
+    setup(dom_ny,dom_y.data(),dom_nx.data(),dom_xmin.data(),dom_xmax.data());
 }
-
-
-void Structured::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[]) {
-
-    const size_t nlat = 2*N;
-    ASSERT(nlat);
-
-    // construct pl (assuming global domain)
-    std::vector<long> pl(nlat);
-    std::copy( lon, lon+N, pl.begin() );
-    std::reverse_copy( lon, lon+N, pl.begin()+static_cast<long>(N) );
-
-    // construct latitudes (assuming global domain)
-    std::vector<double> lats(nlat);
-    std::copy( lat, lat+N, lats.begin() );
-    std::reverse_copy( lat, lat+N, lats.begin()+static_cast<long>(N) );
-    for(size_t j = N; j < nlat; ++j) {
-        lats[j] *= -1.;
-    }
-
-    // assign longitude limits
-    std::vector<double> lonmin(nlat);
-    std::vector<double> lonmax(nlat);
-    setup_lon_limits(nlat, pl.data(), *domain_, lonmin.data(), lonmax.data());
-
-    // common setup
-    setup(nlat, lats.data(), pl.data(), lonmin.data(), lonmax.data());
-}
-
 
 void Structured::lonlat( std::vector<Point>& pts ) const {
-    std::cout << "npts = " << npts() << std::endl;
-    std::cout << "pts.size() = " << pts.size() << std::endl;
-
     pts.resize(npts());
 
     for(size_t jlat=0, c=0; jlat<nlat(); ++jlat) {
@@ -196,8 +183,8 @@ void Structured::hash(eckit::MD5& md5) const {
     md5.add(pl().data(), sizeof(long)*nlat());
 
     // also add lonmin and lonmax
-    md5.add(lonmin_.data(), sizeof(double)*lonmin_.size());
-    md5.add(lonmax_.data(), sizeof(double)*lonmax_.size());
+    md5.add(xmin_.data(), sizeof(double)*xmin_.size());
+    md5.add(xmax_.data(), sizeof(double)*xmax_.size());
 
     // also add projection information
     eckit::Properties prop;
@@ -217,8 +204,8 @@ eckit::Properties Structured::spec() const {
     grid_spec.set("nlat",nlat());
     grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
     grid_spec.set("pl",eckit::makeVectorValue(pl()));
-    grid_spec.set("lonmin",eckit::makeVectorValue(lonmin_));
-    grid_spec.set("lonmax",eckit::makeVectorValue(lonmax_));
+    grid_spec.set("lonmin",eckit::makeVectorValue(xmin_));
+    grid_spec.set("lonmax",eckit::makeVectorValue(xmax_));
 
     return grid_spec;
 }

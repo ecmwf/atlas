@@ -8,7 +8,7 @@ namespace regular {
 register_BuilderT1(Grid,RegionalLonLat,RegionalLonLat::grid_type_str());
 
 std::string RegionalLonLat::grid_type_str() {
-    return "regionalLonLat";
+    return "regional_lonlat";
 }
 
 
@@ -24,7 +24,7 @@ void RegionalLonLat::setup(const util::Config& config) {
     double east, west, south, north;
 
     // get domain boundaries
-    if ( config.get("bbox",bbox) ) {
+    if ( config.get("bounding_box",bbox) ) {
       east=bbox[0];
       west=bbox[1];
       south=bbox[2];
@@ -45,8 +45,8 @@ void RegionalLonLat::setup(const util::Config& config) {
     bbox[3]=north;
 
     // define domain subconfiguration
-    config_dom.set("bbox",bbox);
-    config_dom.set("domainType","rectangular");
+    config_dom.set("bounding_box",bbox);
+    config_dom.set("type","rectangular");
 
     // grid dimensions
     if ( !config.get("nlon",nlon) )
@@ -55,7 +55,7 @@ void RegionalLonLat::setup(const util::Config& config) {
       throw eckit::BadParameter("RegionalLonLat grid domain requires nlat.",Here());
 
     // projection is lonlat
-    config_proj.set("projectionType","lonlat");
+    config_proj.set("type","lonlat");
 
     // put subconfigurations in master grid configuration for RegularRegional
     config_rr.set("domain",config_dom);

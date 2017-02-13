@@ -22,6 +22,10 @@ daand:
 
 namespace atlas {
 namespace grid {
+namespace projection {
+class Projection;
+}
+
 namespace domain {
 
 class Domain : public eckit::Owned {
@@ -63,13 +67,18 @@ public:
 // without knowing also the projection
 
     /// Check if grid includes the North pole
-    bool includesPoleNorth() const { return isGlobal(); }
+    bool includesNorthPole(const projection::Projection& ) const;
 
     /// Check if grid includes the South pole
-    bool includesPoleSouth() const { return isGlobal(); }
+    bool includesSouthPole(const projection::Projection& ) const;
 
-    /// Check if grid spans the complete range East-West (periodic)
-    virtual bool isPeriodicEastWest() const { return isGlobal(); }
+    virtual bool isPeriodicX() const =0;
+    virtual bool isPeriodicY() const =0;
+
+    virtual double xmin() const =0;
+    virtual double xmax() const =0;
+    virtual double ymin() const =0;
+    virtual double ymax() const =0;
 
 };
 

@@ -19,7 +19,7 @@
 #include "atlas/grid/CustomStructured.h"
 #include "atlas/grid/Structured.h"
 #include "atlas/grid/Unstructured.h"
-#include "atlas/grid/regular/GlobalLonLat.h"
+#include "atlas/grid/regular/RegularLonLat.h"
 #include "atlas/grid/regular/ShiftedLon.h"
 #include "atlas/grid/regular/ShiftedLat.h"
 #include "atlas/grid/regular/ShiftedLonLat.h"

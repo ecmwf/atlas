@@ -131,7 +131,7 @@ Grid* grid_from_uid(const std::string& uid) {
             return Grid::create( gridparams );
         } else if( regular_lonlat.match(uid,matches) ) {
             int N = to_int(matches[0]);
-            gridparams.set("grid_type", regular::GlobalLonLat::grid_type_str());
+            gridparams.set("grid_type", regular::RegularLonLat::grid_type_str());
             gridparams.set("N",N);
             return Grid::create( gridparams );
         } else if( shifted_lonlat.match(uid,matches) ) {
@@ -152,7 +152,7 @@ Grid* grid_from_uid(const std::string& uid) {
         } else if( regular_lonlat_x.match(uid,matches) ) {
             int nlon = to_int(matches[0]);
             int nlat = to_int(matches[1]);
-            gridparams.set("grid_type", regular::GlobalLonLat::grid_type_str());
+            gridparams.set("grid_type", regular::RegularLonLat::grid_type_str());
             gridparams.set("nlon",nlon);
             gridparams.set("nlat",nlat);
             return Grid::create( gridparams );
@@ -226,7 +226,7 @@ void load() {
     load_grid<reduced::OctahedralGaussian>();
     load_grid<reduced::ARPEGE>();
     load_grid<reduced::ReducedLonLat>();
-    load_grid<regular::GlobalLonLat>();
+    load_grid<regular::RegularLonLat>();
     load_grid<regular::ShiftedLonLat>();
     load_grid<regular::ShiftedLon>();
     load_grid<regular::ShiftedLat>();

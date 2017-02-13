@@ -42,7 +42,7 @@ ClassicGaussian::ClassicGaussian(size_t N) : ReducedGaussian() {
 
   // projection is lonlat
   util::Config config_proj;
-  config_proj.set("projectionType","lonlat");
+  config_proj.set("type","lonlat");
   projection_.reset( projection::Projection::create(config_proj) );
 
   // setup
@@ -57,7 +57,7 @@ ClassicGaussian::ClassicGaussian(const util::Config& config) : ReducedGaussian()
 
     // projection is lonlat
     util::Config config_proj;
-    config_proj.set("projectionType","lonlat");
+    config_proj.set("type","lonlat");
     projection_.reset( projection::Projection::create(config_proj) );
 
     // setup

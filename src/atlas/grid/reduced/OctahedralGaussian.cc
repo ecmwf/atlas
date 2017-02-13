@@ -39,7 +39,6 @@ void OctahedralGaussian::setup(size_t N) {
 
     // setup from reducedGaussian
     ReducedGaussian::setup(N,pl.data());
-
 }
 
 OctahedralGaussian::OctahedralGaussian(const util::Config& config) :
@@ -52,7 +51,7 @@ OctahedralGaussian::OctahedralGaussian(const util::Config& config) :
 
     // projection is lonlat
     util::Config config_proj;
-    config_proj.set("projectionType","lonlat");
+    config_proj.set("type","lonlat");
     projection_.reset( projection::Projection::create(config_proj) );
 
     // setup

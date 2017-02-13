@@ -107,12 +107,14 @@ grid/spacing/gaussian/N1600.cc  # TL3199
 grid/spacing/gaussian/N2000.cc  # TL3999
 grid/spacing/gaussian/N4000.cc  # TL7999
 grid/spacing/gaussian/N8000.cc  # TL15999
+grid/regular/GlobalLonLat.h
+grid/regular/GlobalLonLat.cc
 grid/regular/Regular.h
 grid/regular/Regular.cc
 grid/regular/RegularRegional.h
 grid/regular/RegularRegional.cc
-grid/regular/GlobalLonLat.h
-grid/regular/GlobalLonLat.cc
+grid/regular/RegularLonLat.h
+grid/regular/RegularLonLat.cc
 grid/regular/RegionalLonLat.h
 grid/regular/RegionalLonLat.cc
 grid/regular/ShiftedLon.h

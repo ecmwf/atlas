@@ -218,7 +218,7 @@ void Meshgen2Gmsh::execute(const Args& args)
 
   if( stats )
     build_statistics(*mesh);
-  
+
   bool torus=false;
   args.get("torus",torus);
   if( torus ) {
@@ -230,7 +230,7 @@ void Meshgen2Gmsh::execute(const Args& args)
   atlas::output::Gmsh gmsh( path_out , Config
     ("info",info)
     ("ghost",ghost)
-    ("coordinates", dim_3d ? "xyz" : "lonlat" )
+    ("coordinates", dim_3d ? "xyz" : "geolonlat" )
     ("edges",edges )
     ("binary",binary )
   );

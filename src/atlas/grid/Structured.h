@@ -83,35 +83,35 @@ public:
     }
 
     inline size_t nlat() const {
-        return lat_.size();
+        return y_.size();
     }
 
     inline size_t nlon( size_t jlat ) const {
-        return static_cast<size_t>(pl_[jlat]);
+        return static_cast<size_t>(nx_[jlat]);
     }
 
     inline size_t nlonmax() const {
-        return nlonmax_;
+        return nxmax_;
     }
 
     inline size_t nlonmin() const {
-        return nlonmin_;
+        return nxmin_;
     }
 
     inline const std::vector<long>& pl() const {
-        return pl_;
+        return nx_;
     }
 
     inline const std::vector<double>& latitudes() const {
-        return lat_;
+        return y_;
     }
 
     inline double lon( const size_t jlat, const size_t jlon ) const {
-        return lonmin_[jlat] + static_cast<double>(jlon) * lon_inc_[jlat];
+        return xmin_[jlat] + static_cast<double>(jlon) * dx_[jlat];
     }
 
     inline double lat( const size_t jlat ) const {
-        return lat_[jlat];
+        return y_[jlat];
     }
 
     inline void lonlat( const size_t jlat, const size_t jlon, double crd[] ) const {
@@ -143,9 +143,7 @@ protected: // methods
 
     void setup(const size_t nlat, const double lats[], const long pl[], const double lonmin[], const double lonmax[]);
 
-    static void setup_lon_limits(const size_t nlat, const long pl[], const domain::Domain& dom, double lonmin[], double lonmax[]);
-
-    void setup_lat_hemisphere(const size_t N, const double lat[], const long lon[]);
+    void setup_cropped(const size_t ny, const double y[], const long nx[], const double xmin[], const double xmax[], const domain::Domain& dom);
 
 protected:
 
@@ -153,16 +151,16 @@ protected:
     size_t N_;
 
     // TODO: document
-    size_t nlonmin_;
+    size_t nxmin_;
 
     // TODO: document
-    size_t nlonmax_;
+    size_t nxmax_;
 
     /// Total number of unique points in the grid
     size_t npts_;
 
     /// Latitude values
-    std::vector<double> lat_;
+    std::vector<double> y_;
 
     // TODO: remove, only to instantiate leaf classes
     //std::string grid_type_;
@@ -171,16 +169,16 @@ protected:
     //std::string shortName_;
 
     /// Number of points per latitude
-    std::vector<long> pl_;
+    std::vector<long> nx_;
 
     /// Value of minimum longitude per latitude [default=0]
-    std::vector<double> lonmin_;
+    std::vector<double> xmin_;
 
     /// Value of maximum longitude per latitude [default=0]
-    std::vector<double> lonmax_;
+    std::vector<double> xmax_;
 
     /// Value of longitude increment
-    std::vector<double> lon_inc_;
+    std::vector<double> dx_;
 
 };
 
@@ -198,7 +196,7 @@ extern "C"
     Structured* atlas__grid__regular__RegularGaussian(size_t N);
     Structured* atlas__grid__reduced__ReducedGaussian_int(size_t N, int nlon[]);
     Structured* atlas__grid__reduced__ReducedGaussian_long(size_t N, long nlon[]);
-    Structured* atlas__grid__regular__GlobalLonLat(size_t nlon, size_t nlat);
+    Structured* atlas__grid__regular__RegularLonLat(size_t nlon, size_t nlat);
     Structured* atlas__grid__regular__ShiftedLonLat(size_t nlon, size_t nlat);
     Structured* atlas__grid__regular__ShiftedLon(size_t nlon, size_t nlat);
     Structured* atlas__grid__regular__ShiftedLat(size_t nlon, size_t nlat);

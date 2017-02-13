@@ -8,7 +8,7 @@ namespace regular {
 register_BuilderT1(Grid,RegularGaussian,RegularGaussian::grid_type_str());
 
 std::string RegularGaussian::grid_type_str() {
-    return "regularGaussian";
+    return "regular_gaussian";
 }
 
 
@@ -36,7 +36,7 @@ void RegularGaussian::setup(long N) {
     nlon=4*N;
 
     // projection is lonlat
-    config_proj.set("projectionType","lonlat");
+    config_proj.set("type","lonlat");
     projection_.reset( projection::Projection::create(config_proj) );
 
     // spacing is uniform in x, gaussian in y
@@ -53,7 +53,7 @@ void RegularGaussian::setup(long N) {
     spacing_y_.reset( spacing::Spacing::create(config_spacing) );
 
     // domain is global
-    config_domain.set("domainType","global");
+    config_domain.set("type","global");
     domain_.reset( domain::Domain::create(config_domain) );
 
     // setup regular grid

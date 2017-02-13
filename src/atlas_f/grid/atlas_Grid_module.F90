@@ -376,14 +376,14 @@ function atlas_grid_RegularLonLat__ctor_int32(nlon,nlat) result(grid)
   use atlas_grid_Structured_c_binding
   type(atlas_grid_RegularLonLat) :: grid
   integer(c_int), intent(in) :: nlon, nlat
-  call grid%reset_c_ptr( atlas__grid__regular__GlobalLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
+  call grid%reset_c_ptr( atlas__grid__regular__RegularLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
 end function
 
 function atlas_grid_RegularLonLat__ctor_int64(nlon,nlat) result(grid)
   use atlas_grid_Structured_c_binding
   type(atlas_grid_RegularLonLat) :: grid
   integer(c_long), intent(in) :: nlon, nlat
-  call grid%reset_c_ptr( atlas__grid__regular__GlobalLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
+  call grid%reset_c_ptr( atlas__grid__regular__RegularLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
 end function
 
 !-----------------------------------------------------------------------------

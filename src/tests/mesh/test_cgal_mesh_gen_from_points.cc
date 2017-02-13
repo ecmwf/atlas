@@ -40,7 +40,7 @@ int main()
 {
     eckit::mpi::init();
 
-    Grid::Ptr grid( Grid::create( "L32x11") );
+    Grid::Ptr grid( Grid::create( "Slat32x11") );
 
     // Build a mesh from grid
     Delaunay generate;

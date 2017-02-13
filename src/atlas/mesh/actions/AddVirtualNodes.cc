@@ -13,6 +13,7 @@
 
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
+#include "eckit/exception/Exceptions.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/domain/Domain.h"
 #include "atlas/grid/Grid.h"
@@ -30,8 +31,10 @@ namespace actions {
 void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh) const {
     using eckit::geometry::LLPoint2;
 
+
     if (grid.domain().isGlobal()) return; // don't add virtual points to global domains
 
+    NOTIMP;
 
 // daand: octahedralGaussian grids now are global by definition!
 #warning gnarls

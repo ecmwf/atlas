@@ -33,39 +33,49 @@ CustomStructured::CustomStructured(const eckit::Parametrisation& params) :
     Structured()
 {
   //domain_ = domain::Domain::makeGlobal();
+
   util::Config config_domain;
-  config_domain.set("domainType","global");
-  domain_=domain::Domain::create(config_domain);
+  if( dynamic_cast<const util::Config&>(params).get("domain",config_domain) )
+    domain_.reset( domain::Domain::create(config_domain) );
+  else
+    domain_.reset( domain::Domain::create() );
+
+  util::Config config_proj;
+  if( dynamic_cast<const util::Config&>(params).get("projection",config_proj) )
+    projection_.reset( projection::Projection::create(config_proj) );
+  else
+    projection_.reset( projection::Projection::create() );
 
   // mandatory parameters: pl, latitudes
-  std::vector<long> pl;
-  std::vector<double> latitudes;
+  std::vector<long> nx;
+  std::vector<double> y;
 
-  if (!params.get("pl", pl))
-      throw eckit::BadParameter("pl missing in Params",Here());
-  if (!params.get("latitudes", latitudes))
-      throw eckit::BadParameter("latitudes missing in Params",Here());
+  if (!params.get("nx", nx))
+      throw eckit::BadParameter("nx missing in Params",Here());
+  if (!params.get("y", y))
+      throw eckit::BadParameter("y missing in Params",Here());
 
-  ASSERT(pl.size());
-  ASSERT(pl.size() == latitudes.size());
-  const size_t nlat = pl.size();
+  ASSERT(y.size());
+  ASSERT(y.size() == y.size());
+  const size_t ny = nx.size();
 
   // optional parameters: N identifier, longitude limits (lon_min, lon_max)
-  std::vector<double> lonmin(nlat);
-  std::vector<double> lonmax(nlat);
-  setup_lon_limits(nlat, pl.data(), *domain_, lonmin.data(), lonmax.data());
+  std::vector<double> xmin(ny,std::numeric_limits<double>::max());
+  std::vector<double> xmax(ny,-std::numeric_limits<double>::max());
 
   params.get("N", Structured::N_);
-  if (params.has("lon_min"))
-      params.get("lon_min", lonmin);
-  if (params.has("lon_max"))
-      params.get("lon_max", lonmax);
+  if (params.has("xmin"))
+      params.get("xmin", xmin);
+  if (params.has("xmax"))
+      params.get("xmax", xmax);
 
-  ASSERT(lonmin.size() == nlat);
-  ASSERT(lonmax.size() == nlat);
+  ASSERT(xmin.size() == ny);
+  ASSERT(xmax.size() == ny);
+
+  setup_cropped(ny, y.data(), nx.data(), xmin.data(), xmax.data(), *domain_ );
 
   // common (base) class setup
-  Structured::setup(latitudes.size(), latitudes.data(), pl.data(), lonmin.data(), lonmax.data());
+  //Structured::setup(latitudes.size(), latitudes.data(), pl.data(), lonmin.data(), lonmax.data());
 }
 
 
@@ -79,23 +89,24 @@ CustomStructured::CustomStructured(
     ASSERT(nlat);
 
     util::Config config_domain;
-    config_domain.set("domainType","global");
+    config_domain.set("type","global");
     domain_.reset( domain::Domain::create(config_domain) );
 
     util::Config config_proj;
-    config_proj.set("projectionType","lonlat");
+    config_proj.set("type","lonlat");
     projection_.reset( projection::Projection::create(config_proj) );
 
     // assign longitude limits
-    std::vector<double> lonmin(nlat);
-    std::vector<double> lonmax(nlat);
-    setup_lon_limits(nlat, pl, *domain_, lonmin.data(), lonmax.data());
-
+    std::vector<double> lonmin(nlat,std::numeric_limits<double>::max());
+    std::vector<double> lonmax(nlat,-std::numeric_limits<double>::max());
     ASSERT(lonmin.size() == nlat);
     ASSERT(lonmax.size() == nlat);
 
+    setup_cropped(nlat, lats, pl, lonmin.data(), lonmax.data(), *domain_ );
+
+
     // common (base) class setup
-    Structured::setup(nlat, lats, pl, lonmin.data(), lonmax.data());
+//    Structured::setup(nlat, lats, pl, lonmin.data(), lonmax.data());
 }
 
 

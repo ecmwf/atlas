@@ -31,9 +31,18 @@ public:
 
     virtual eckit::Properties spec() const;
 
+    virtual double xmin() const { return xmin_; }
+    virtual double xmax() const { return xmax_; }
+    virtual double ymin() const { return ymin_; }
+    virtual double ymax() const { return ymax_; }
+
+    virtual bool isPeriodicX() const { return periodic_x_; }
+    virtual bool isPeriodicY() const { return periodic_y_; }
+
 private:
 
     double xmin_, xmax_, ymin_, ymax_;
+    bool periodic_x_, periodic_y_;
 
 };
 

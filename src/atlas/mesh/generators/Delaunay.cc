@@ -71,8 +71,9 @@ void Delaunay::generate(const grid::Grid& g, Mesh& mesh) const
   mesh.createNodes(g);
 
   array::ArrayView<gidx_t,1> gidx( mesh.nodes().global_index() );
-  for( size_t jnode=0; jnode<mesh.nodes().size(); ++ jnode )
+  for( size_t jnode=0; jnode<mesh.nodes().size(); ++ jnode ) {
     gidx(jnode) = jnode+1;
+  }
 
   actions::BuildXYZField()(mesh);
   actions::AddVirtualNodes()(g, mesh);    ///< does nothing if global domain

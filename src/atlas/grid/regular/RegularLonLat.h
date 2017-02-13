@@ -1,5 +1,5 @@
-#ifndef atlas_grid_regular_ShiftedLonLat_h
-#define atlas_grid_regular_ShiftedLonLat_h
+#ifndef atlas_grid_regular_RegularLonLat_h
+#define atlas_grid_regular_RegularLonLat_h
 
 #include "atlas/grid/regular/GlobalLonLat.h"
 #include "atlas/grid/domain/Domain.h"
@@ -10,7 +10,7 @@ namespace atlas {
 namespace grid {
 namespace regular {
 
-class ShiftedLonLat: public GlobalLonLat {
+class RegularLonLat: public GlobalLonLat {
 
 public:
 
@@ -19,10 +19,11 @@ public:
     static std::string className();
 
     virtual std::string shortName() const;
-    virtual std::string gridType() const { return "shifted_lonlat"; }
+    virtual std::string gridType() const { return "regular_lonlat"; }
 
-    ShiftedLonLat(const util::Config& params);
-    ShiftedLonLat(long nlon, long nlat);
+    RegularLonLat(const util::Config& params);
+    RegularLonLat(long nlon, long nlat);
+    RegularLonLat(long N);
 
 };
 

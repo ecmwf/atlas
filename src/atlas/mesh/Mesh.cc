@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include "eckit/exception/Exceptions.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/projection/Projection.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -74,6 +75,11 @@ mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
   size_t nb_nodes = g.npts();
   nodes().resize(nb_nodes);
   g.fillLonLat(nodes().lonlat().data<double>(), nb_nodes*2);
+  g.fillLonLat(nodes().geolonlat().data<double>(), nb_nodes*2);
+  array::ArrayView<double,2> geolonlat( nodes().geolonlat() );
+  for( size_t jnode=0; jnode<nb_nodes; ++jnode ) {
+    g.projection().coords2lonlat(&geolonlat(jnode,0));
+  }
   return nodes();
 }
 

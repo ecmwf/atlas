@@ -9,8 +9,8 @@ RectangularDomain::RectangularDomain(const eckit::Parametrisation& params) {
 
   // check if bbox is present
   std::vector<double> v(4);
-  if( ! params.get("bbox",v) )
-    throw eckit::BadParameter("bbox missing in Params",Here());
+  if( ! params.get("bounding_box",v) )
+    throw eckit::BadParameter("bounding_box missing in Params",Here());
 
   // store vector elements
   xmin_=v[0];
@@ -28,6 +28,11 @@ RectangularDomain::RectangularDomain(const eckit::Parametrisation& params) {
   if (ymin_>ymax_) {
     swp=ymin_;ymin_=ymax_;ymax_=swp;
   }
+
+  periodic_x_ = false;
+  periodic_y_ = false;
+  params.get("periodic_x",periodic_x_);
+  params.get("periodic_y",periodic_y_);
 }
 
 bool RectangularDomain::contains(double x, double y) const {
@@ -52,7 +57,7 @@ eckit::Properties RectangularDomain::spec() const {
   domain_prop.set("domainType",virtual_domain_type_str());
   std::vector<double> bb(4);
   bb=bbox();
-  domain_prop.set("bbox",eckit::makeVectorValue(bb));
+  domain_prop.set("bounding_box",eckit::makeVectorValue(bb));
   return domain_prop;
 }
 

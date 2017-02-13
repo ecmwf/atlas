@@ -8,7 +8,7 @@ namespace regular {
 register_BuilderT1(Grid,ShiftedLon,ShiftedLon::grid_type_str());
 
 std::string ShiftedLon::grid_type_str() {
-    return "shiftedLon";
+    return "shifted_lon";
 }
 
 std::string ShiftedLon::className() {
