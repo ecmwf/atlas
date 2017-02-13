@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include <cmath>
 #include "eckit/geometry/Point3.h"
 
 #include "atlas/mesh/Mesh.h"
@@ -15,6 +16,8 @@
 #include "atlas/mesh/actions/BuildTorusXYZField.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/grid/domain/RectangularDomain.h"
+#include "atlas/grid/domain/GlobalDomain.h"
 
 namespace atlas {
 namespace mesh {
@@ -36,32 +39,45 @@ field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::gr
 {
   // fill xyz with torus coordinates. r0 and r1 are large and small radii, respectively.
 
+  std::vector<double> bbox;
 
   // check if the domain is rectangular
-  const atlas::grid::domain::RectangularDomain * rdom=dynamic_cast<const atlas::grid::domain::RectangularDomain *>(dom);
-  if( !rdom )
-    throw eckit::BadCast("Torus can only be built from rectangular domain",Here());
+  const atlas::grid::domain::RectangularDomain* rdom=dynamic_cast<const atlas::grid::domain::RectangularDomain*>(dom);
+  const atlas::grid::domain::GlobalDomain* gdom=dynamic_cast<const atlas::grid::domain::GlobalDomain*>(dom);
+  if( rdom ) {
+    bbox = rdom->bbox();
+  }
+  else if( gdom ) {
+    bbox.resize(4);
+    bbox[0]= 0.;
+    bbox[1]= 360.;
+    bbox[2]=-90.;
+    bbox[3]= 90.;
+  }
+  if( bbox.empty() ) {
+    throw eckit::BadCast("Torus can only be built from rectangular or global domain");
+  }
 
   if( !nodes.has_field(name_) )
   {
     size_t npts = nodes.size();
     array::ArrayView<double,2> lonlat( nodes.lonlat() );
     array::ArrayView<double,2> xyz   ( nodes.add( field::Field::create<double>(name_,array::make_shape(npts,3) ) ) );
-    std::vector<double> bbox=rdom->bbox();
-     double pi=acos(-1.);
+
+    const double pi=M_PI;
+    const double c1 = 2.*pi/double(nx)*(nx-1)/(bbox[1]-bbox[0]);
+    const double c2 = 2.*pi/double(ny)*(ny-1)/(bbox[3]-bbox[2]);
     for( size_t n=0; n<npts; ++n )
     {
       double *xx=xyz[n].data();
       double *ll=lonlat[n].data();
 
-      double lon, lat;
-      lon=-pi+2*pi*(nx-1)*(ll[0]-bbox[0])/(bbox[1]-bbox[0])/nx;
-      lat=-pi+2*pi*(ny-1)*(ll[1]-bbox[2])/(bbox[3]-bbox[2])/ny;
+      double lon=-pi+c1*(ll[0]-bbox[0]);
+      double lat=-pi+c2*(ll[1]-bbox[2]);
 
-      xx[0]=cos(lon)*(r0+r1*cos(lat));
-      xx[1]=sin(lon)*(r0+r1*cos(lat));
-      xx[2]=r1*sin(lat);
-
+      xx[0]=std::cos(lon)*(r0+r1*std::cos(lat));
+      xx[1]=std::sin(lon)*(r0+r1*std::cos(lat));
+      xx[2]=r1*std::sin(lat);
     }
   }
   return nodes.field(name_);

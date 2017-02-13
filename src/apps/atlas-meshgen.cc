@@ -28,6 +28,7 @@
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/mesh/actions/BuildStatistics.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
+#include "atlas/mesh/actions/BuildTorusXYZField.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -115,6 +116,11 @@ Meshgen2Gmsh::Meshgen2Gmsh(int argc,char **argv): AtlasTool(argc,argv)
   add_option( new SimpleOption<bool>("stats","Write statistics file") );
   add_option( new SimpleOption<bool>("info","Write Info") );
   add_option( new SimpleOption<bool>("binary","Write binary file") );
+  add_option( new SimpleOption<std::string>("generator","Mesh generator") );
+  add_option( new SimpleOption<std::string>("partitioner","Mesh partitioner") );
+  add_option( new SimpleOption<bool>("periodic_x","periodic mesh in x-direction") );
+  add_option( new SimpleOption<bool>("periodic_y","periodic mesh in y-direction") );
+  add_option( new SimpleOption<bool>("torus","Output mesh as torus") );
 }
 
 //-----------------------------------------------------------------------------
@@ -159,6 +165,8 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( edges )
     halo = std::max(halo,1l);
 
+  std::string meshgenerator_type("Structured");
+  args.get("generator",meshgenerator_type);
   eckit::LocalConfiguration meshgenerator_config( args );
   if( eckit::mpi::size() > 1 || edges )
     meshgenerator_config.set("3d",false);
@@ -182,7 +190,7 @@ void Meshgen2Gmsh::execute(const Args& args)
 
   if( !grid ) return;
   SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
-      mesh::generators::MeshGenerator::create("Structured",meshgenerator_config) );
+      mesh::generators::MeshGenerator::create(meshgenerator_type,meshgenerator_config) );
 
 
   SharedPtr<mesh::Mesh> mesh;
@@ -210,6 +218,14 @@ void Meshgen2Gmsh::execute(const Args& args)
 
   if( stats )
     build_statistics(*mesh);
+  
+  bool torus=false;
+  args.get("torus",torus);
+  if( torus ) {
+    dim_3d = true;
+    Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
+    mesh::actions::BuildTorusXYZField("xyz")(*mesh,&grid->domain(),5.,2.,grid->nlonmax(),grid->nlat());
+  }
 
   atlas::output::Gmsh gmsh( path_out , Config
     ("info",info)
