@@ -21,6 +21,7 @@
 namespace atlas {
 namespace grid {
 namespace reduced {
+namespace pl {
 namespace classic {
 
 
@@ -41,6 +42,7 @@ void points_per_latitude_npole_spole   (const size_t N, long nlon[]);
 
 
 }  // namespace classic
+}  // namespace pl
 }  // namespace reduced
 }  // namespace grid
 }  // namespace atlas

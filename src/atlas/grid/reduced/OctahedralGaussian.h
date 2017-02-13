@@ -18,7 +18,7 @@ public:
     virtual std::string shortName() const;
     virtual std::string gridType() const { return "octahedral_gaussian"; }
 
-    std::vector<long> computePL(const size_t N);
+    static std::vector<long> computePL(const size_t N);
 
     OctahedralGaussian(): ReducedGaussian() {}
     OctahedralGaussian(const util::Config& params);

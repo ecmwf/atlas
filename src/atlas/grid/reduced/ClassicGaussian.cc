@@ -1,7 +1,7 @@
 #include "atlas/grid/reduced/ClassicGaussian.h"
 
 #include "atlas/grid/spacing/Spacing.h"
-#include "atlas/grid/reduced/classic/PointsPerLatitude.h"
+#include "atlas/grid/reduced/pl/classic/PointsPerLatitude.h"
 
 namespace atlas {
 namespace grid {
@@ -31,7 +31,7 @@ void ClassicGaussian::setup(size_t N) {
 
     // number of longitudes: from predefined sets
     std::vector<long> pl(N);      // number of longitudes per latitude
-    classic::points_per_latitude_npole_equator(N,pl.data());
+    pl::classic::points_per_latitude_npole_equator(N,pl.data());
 
     // setup from reducedGaussian
     ReducedGaussian::setup(N,pl.data());

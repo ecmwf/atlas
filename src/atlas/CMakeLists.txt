@@ -123,33 +123,33 @@ grid/regular/ShiftedLonLat.h
 grid/regular/ShiftedLonLat.cc
 grid/regular/RegularGaussian.h
 grid/regular/RegularGaussian.cc
-grid/reduced/classic/N.h
-grid/reduced/classic/N.cc
-grid/reduced/classic/PointsPerLatitude.h
-grid/reduced/classic/PointsPerLatitude.cc
-grid/reduced/classic/N16.cc    # TL31
-grid/reduced/classic/N24.cc    # TL47
-grid/reduced/classic/N32.cc    # TL63
-grid/reduced/classic/N48.cc    # TL95
-grid/reduced/classic/N64.cc    # TL127
-grid/reduced/classic/N80.cc    # TL159
-grid/reduced/classic/N96.cc    # TL191
-grid/reduced/classic/N128.cc   # TL255
-grid/reduced/classic/N160.cc   # TL319
-grid/reduced/classic/N200.cc   # TL399
-grid/reduced/classic/N256.cc   # TL511
-grid/reduced/classic/N320.cc   # TL639
-grid/reduced/classic/N400.cc   # TL799
-grid/reduced/classic/N512.cc   # TL1023
-grid/reduced/classic/N576.cc   # TL1151
-grid/reduced/classic/N640.cc   # TL1279
-grid/reduced/classic/N800.cc   # TL1599
-grid/reduced/classic/N1024.cc  # TL2047
-grid/reduced/classic/N1280.cc  # TL2559
-grid/reduced/classic/N1600.cc  # TL3199
-grid/reduced/classic/N2000.cc  # TL3999
-grid/reduced/classic/N4000.cc  # TL7999
-grid/reduced/classic/N8000.cc  # TL15999
+grid/reduced/pl/classic/N.h
+grid/reduced/pl/classic/N.cc
+grid/reduced/pl/classic/PointsPerLatitude.h
+grid/reduced/pl/classic/PointsPerLatitude.cc
+grid/reduced/pl/classic/N16.cc    # TL31
+grid/reduced/pl/classic/N24.cc    # TL47
+grid/reduced/pl/classic/N32.cc    # TL63
+grid/reduced/pl/classic/N48.cc    # TL95
+grid/reduced/pl/classic/N64.cc    # TL127
+grid/reduced/pl/classic/N80.cc    # TL159
+grid/reduced/pl/classic/N96.cc    # TL191
+grid/reduced/pl/classic/N128.cc   # TL255
+grid/reduced/pl/classic/N160.cc   # TL319
+grid/reduced/pl/classic/N200.cc   # TL399
+grid/reduced/pl/classic/N256.cc   # TL511
+grid/reduced/pl/classic/N320.cc   # TL639
+grid/reduced/pl/classic/N400.cc   # TL799
+grid/reduced/pl/classic/N512.cc   # TL1023
+grid/reduced/pl/classic/N576.cc   # TL1151
+grid/reduced/pl/classic/N640.cc   # TL1279
+grid/reduced/pl/classic/N800.cc   # TL1599
+grid/reduced/pl/classic/N1024.cc  # TL2047
+grid/reduced/pl/classic/N1280.cc  # TL2559
+grid/reduced/pl/classic/N1600.cc  # TL3199
+grid/reduced/pl/classic/N2000.cc  # TL3999
+grid/reduced/pl/classic/N4000.cc  # TL7999
+grid/reduced/pl/classic/N8000.cc  # TL15999
 grid/reduced/ClassicGaussian.h
 grid/reduced/ClassicGaussian.cc
 grid/reduced/OctahedralGaussian.h

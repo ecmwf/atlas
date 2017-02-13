@@ -12,8 +12,8 @@
 /// @date Mar 2016
 
 #include "eckit/memory/ScopedPtr.h"
-#include "atlas/grid/reduced/classic/PointsPerLatitude.h"
-#include "atlas/grid/reduced/classic/N.h"
+#include "atlas/grid/reduced/pl/classic/PointsPerLatitude.h"
+#include "atlas/grid/reduced/pl/classic/N.h"
 
 using eckit::Factory;
 using eckit::ScopedPtr;
@@ -21,6 +21,7 @@ using eckit::ScopedPtr;
 namespace atlas {
 namespace grid {
 namespace reduced {
+namespace pl {
 namespace classic {
 
 //-----------------------------------------------------------------------------
@@ -53,6 +54,7 @@ void points_per_latitude_npole_spole   (const size_t N, long nlon[]) {
 //-----------------------------------------------------------------------------
 
 }  // namespace classic
+}  // namespace pl
 }  // namespace reduced
 }  // namespace grid
 }  // namespace atlas

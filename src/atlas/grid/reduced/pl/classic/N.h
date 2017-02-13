@@ -22,6 +22,7 @@
 namespace atlas {
 namespace grid {
 namespace reduced {
+namespace pl {
 namespace classic {
 
 
@@ -93,6 +94,7 @@ DECLARE_POINTS_PER_LATITUDE(8000);
 
 
 }  // namespace classic
+}  // namespace pl
 }  // namespace reduced
 }  // namespace grid
 }  // namespace atlas

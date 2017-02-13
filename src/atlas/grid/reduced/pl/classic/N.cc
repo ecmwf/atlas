@@ -12,17 +12,18 @@
 /// @date Mar 2016
 
 
-#include "atlas/grid/reduced/classic/N.h"
+#include "atlas/grid/reduced/pl/classic/N.h"
 
 
 namespace atlas {
 namespace grid {
 namespace reduced {
+namespace pl {
 namespace classic {
 
 
 std::string PointsPerLatitude::className() {
-    return "atlas.grid.reduced.classic.PointsPerLatitude";
+    return "atlas.grid.reduced.pl.classic_gaussian.PointsPerLatitude";
 }
 
 
@@ -72,6 +73,7 @@ void regist() {
 
 
 }  // namespace classic
+}  // namespace pl
 }  // namespace reduced
 }  // namespace grid
 }  // namespace atlas

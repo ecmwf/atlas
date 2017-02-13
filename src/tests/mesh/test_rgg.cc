@@ -36,7 +36,6 @@
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Config.h"
-#include "atlas/grid/reduced/classic/N.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/internals/Debug.h"
 
@@ -193,7 +192,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
     BOOST_CHECK_EQUAL( partitioner.nb_regions(8),  6 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(9),  1 );
   }
-  
+
 }
 
 BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
@@ -204,7 +203,7 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
 
 
   size_t size_test_N = 19;
-  
+
   size_t test_N[] = {16,24,32,48,64,80,96,128,160,
                      200,256,320,400,512,576,640,
                      800,1024,1280,1600,2000,4000,8000};
@@ -370,7 +369,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
           //  test::MinimalMesh grid(nlat,lon);
   grid::reduced::ClassicGaussian grid(32);
   //RegularGrid grid(128,64);
-  
+
   /*
   std::cout << grid.spec() << std::endl;
   for (int jlat=0;jlat<2*nlat; jlat++) {
@@ -508,7 +507,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
     -90
   };
   grid::CustomStructured grid(N,lat,lon);
-	
+
   bool three_dimensional = true;
 
   mesh::generators::Structured generate( util::Config
@@ -521,7 +520,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
   if( three_dimensional ) options.set("coordinates","xyz");
   output::Gmsh gmsh("rll.msh",options);
   gmsh.write(*m);
-  
+
 }
 
 BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )

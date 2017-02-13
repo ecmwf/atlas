@@ -1,10 +1,11 @@
 // TL1151
 
-#include "atlas/grid/reduced/classic/N.h"
+#include "atlas/grid/reduced/pl/classic/N.h"
 
 namespace atlas {
 namespace grid {
 namespace reduced {
+namespace pl {
 namespace classic {
 
 DEFINE_POINTS_PER_LATITUDE(576, LIST(
@@ -587,6 +588,7 @@ DEFINE_POINTS_PER_LATITUDE(576, LIST(
 ))
 
 }  // namespace classic
+}  // namespace pl
 }  // namespace reduced
 }  // namespace grid
 }  // namespace atlas
