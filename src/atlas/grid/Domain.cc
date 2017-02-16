@@ -103,7 +103,7 @@ void Domain::normalise() {
 
 
 double Domain::normalise(double lon) const {
-    while (lon > east_) {
+    while (lon >= east_) {
         lon -= 360;
     }
     while (lon < west_) {
