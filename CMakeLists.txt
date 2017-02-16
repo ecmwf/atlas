@@ -144,10 +144,10 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
         # It seems to already be defined in cuda.h and gives warnings
         #    add_definitions(-DCUDA_VERSION=${CUDA_VERSION})
 
-        set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-        if( ${CUDA_VERSION} VERSION_GREATER "60")
-            set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
-        else()
+        set(CUDA_PROPAGATE_HOST_FLAGS ON)
+        if( NOT ${CUDA_VERSION} VERSION_GREATER "60")
+#            set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
+#        else()
             message(FATAL_ERROR "CUDA 6.0 or lower does not support C++11 (disabling)")
         endif()
 

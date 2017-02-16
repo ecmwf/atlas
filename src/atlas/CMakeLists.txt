@@ -439,7 +439,7 @@ ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_defines.h
 
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
   use_cuda( source_list
-    array/gridtools/GridToolsArray.cc
+#    array/gridtools/GridToolsArray.cc
     array/gridtools/GridToolsArrayView.cc
     array/gridtools/GridToolsIndexView.cc
     array/gridtools/GridToolsMakeView.cc
