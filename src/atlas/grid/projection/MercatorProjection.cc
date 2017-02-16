@@ -71,7 +71,7 @@ void MercatorProjectionT<Rotation>::coords2lonlat(double crd[]) const {
 
   // first projection
   crd[0] = lon0_ + R2D(crd[0]*inv_radius_);
-  crd[1] = 2.*R2D(std::atan(std::exp(crd[0]*inv_radius_)))-90.;
+  crd[1] = 2.*R2D(std::atan(std::exp(crd[1]*inv_radius_)))-90.;
 
   // then rotate
   rotation_.rotate(crd);
