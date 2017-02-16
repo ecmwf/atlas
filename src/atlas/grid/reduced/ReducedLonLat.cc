@@ -9,7 +9,7 @@ namespace reduced {
 register_BuilderT1(Grid,ReducedLonLat,ReducedLonLat::grid_type_str());
 
 std::string ReducedLonLat::grid_type_str() {
-    return "reducedLonLat";
+    return "reduced_lonlat";
 }
 
 std::string ReducedLonLat::className() {
@@ -17,7 +17,7 @@ std::string ReducedLonLat::className() {
 }
 
 std::string ReducedLonLat::shortName() const {
-  return "reducedLonLat";
+  return "reduced_lonlat";
 }
 
 
@@ -63,6 +63,9 @@ void ReducedLonLat::setup(size_t ny, long pl[]) {
 ReducedLonLat::ReducedLonLat(const util::Config& config) :
     Structured()
 {
+    if( not config.get("periodic_x",periodic_x_) ) { periodic_x_ = true; }
+    if( not config.get("periodic_y",periodic_y_) ) { periodic_y_ = false; }
+
     size_t N, nlat;
     if( ! config.get("nlat",nlat) ) {
       if ( !config.get("N",N) ) {

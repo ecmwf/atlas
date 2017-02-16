@@ -95,7 +95,6 @@ void Structured::setup_cropped(const size_t ny, const double y[], const long nx[
     std::vector<double> dom_xmax; dom_xmax.reserve(ny);
     const double tol = 1.e-6;
     size_t dom_ny = 0;
-    const bool periodic_x = dom.isPeriodicX();
     const double d_xmin = dom.xmin();
     const double d_xmax = dom.xmax();
     const double d_ymin = dom.ymin();
@@ -109,7 +108,7 @@ void Structured::setup_cropped(const size_t ny, const double y[], const long nx[
             const double _y = y[j];
             double _xmin = xmin[j];
             double _xmax = xmax[j];
-            if( periodic_x ) {  // periodic:      nx = number of divisions
+            if( isPeriodicX() ) {  // periodic:      nx = number of divisions
               dx = (d_xmax-d_xmin)/double(nx[j]);
             } else {            // not periodic:  nx = number of points
               if( _xmin < _xmax ) {

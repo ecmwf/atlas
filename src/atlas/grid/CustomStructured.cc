@@ -34,6 +34,9 @@ CustomStructured::CustomStructured(const eckit::Parametrisation& params) :
 {
   //domain_ = domain::Domain::makeGlobal();
 
+  if( not params.get("periodic_x",periodic_x_) ) periodic_x_ = true;
+  if( not params.get("periodic_y",periodic_y_) ) periodic_y_ = false;
+
   util::Config config_domain;
   if( dynamic_cast<const util::Config&>(params).get("domain",config_domain) )
     domain_.reset( domain::Domain::create(config_domain) );
@@ -88,6 +91,9 @@ CustomStructured::CustomStructured(
 {
     ASSERT(nlat);
 
+    periodic_x_ = true;
+    periodic_y_ = false;
+
     util::Config config_domain;
     config_domain.set("type","global");
     domain_.reset( domain::Domain::create(config_domain) );
@@ -104,9 +110,6 @@ CustomStructured::CustomStructured(
 
     setup_cropped(nlat, lats, pl, lonmin.data(), lonmax.data(), *domain_ );
 
-
-    // common (base) class setup
-//    Structured::setup(nlat, lats, pl, lonmin.data(), lonmax.data());
 }
 
 

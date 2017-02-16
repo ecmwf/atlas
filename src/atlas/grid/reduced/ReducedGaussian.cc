@@ -23,6 +23,9 @@ std::string ReducedGaussian::shortName() const {
 
 void ReducedGaussian::setup(const size_t N, const long pl[]) {
 
+    periodic_x_ = true;
+    periodic_y_ = false;
+
     // configs for spacing, domain and projection
     util::Config config_spacing, config_domain, config_proj;
 
@@ -63,6 +66,10 @@ void ReducedGaussian::setup(const size_t N, const long pl[]) {
     Structured::setup(ny,spacing_y->data(), pll.data(), xmin.data(), xmax.data());
     Structured::N_=N;
 
+}
+
+ReducedGaussian::ReducedGaussian() :
+    Structured() {
 }
 
 ReducedGaussian::ReducedGaussian(const util::Config& config) :

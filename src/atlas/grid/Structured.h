@@ -132,6 +132,10 @@ public:
         return nlonmax() != nlonmin();
     }
 
+    bool isPeriodicX() const { return periodic_x_; }
+
+    bool isPeriodicY() const { return periodic_y_; }
+
 protected: // methods
 
     virtual size_t copyLonLatMemory(double* pts, size_t size) const;
@@ -147,13 +151,13 @@ protected: // methods
 
 protected:
 
-    /// Number of latitudes in hemisphere
+    /// Number of latitudes in hemisphere (only makes sense for global grids)
     size_t N_;
 
-    // TODO: document
+    // Minimum number of points across parallels (constant y)
     size_t nxmin_;
 
-    // TODO: document
+    // Maximum number of points across parallels (constant y)
     size_t nxmax_;
 
     /// Total number of unique points in the grid
@@ -161,12 +165,6 @@ protected:
 
     /// Latitude values
     std::vector<double> y_;
-
-    // TODO: remove, only to instantiate leaf classes
-    //std::string grid_type_;
-
-    // TODO: remove, only to instantiate leaf classes
-    //std::string shortName_;
 
     /// Number of points per latitude
     std::vector<long> nx_;
@@ -179,6 +177,12 @@ protected:
 
     /// Value of longitude increment
     std::vector<double> dx_;
+
+    /// Periodicity in x-direction
+    bool periodic_x_;
+
+    /// Periodicity in y-direction
+    bool periodic_y_;
 
 };
 

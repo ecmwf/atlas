@@ -23,6 +23,12 @@ void RegionalLonLat::setup(const util::Config& config) {
     std::vector<double> bbox(4);
     double east, west, south, north;
 
+    // Periodicity
+    periodic_x_ = false;
+    periodic_y_ = false;
+    config.get("periodic_x",periodic_x_);
+    config.get("periodic_y",periodic_y_);
+
     // get domain boundaries
     if ( config.get("bounding_box",bbox) ) {
       east=bbox[0];
@@ -62,6 +68,9 @@ void RegionalLonLat::setup(const util::Config& config) {
     config_rr.set("projection",config_proj);
     config_rr.set("nx",nlon);
     config_rr.set("ny",nlat);
+    config_rr.set("periodic_x",periodic_x_);
+    config_rr.set("periodic_y",periodic_y_);
+
 
     // setup a regular regional grid
     RegularRegional::setup(config_rr);

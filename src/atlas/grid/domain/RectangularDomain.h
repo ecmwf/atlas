@@ -36,9 +36,6 @@ public:
     virtual double ymin() const { return ymin_; }
     virtual double ymax() const { return ymax_; }
 
-    virtual bool isPeriodicX() const { return periodic_x_; }
-    virtual bool isPeriodicY() const { return periodic_y_; }
-
 private:
 
     double xmin_, xmax_, ymin_, ymax_;

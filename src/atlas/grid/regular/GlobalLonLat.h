@@ -9,14 +9,14 @@ namespace regular {
 // Uninstantiatable class
 class GlobalLonLat: public Regular {
 
-protected:
-
-    GlobalLonLat();
+public:
 
     bool isShiftedLon() const { return shiftLon_; }
     bool isShiftedLat() const { return shiftLat_; }
 
 protected:
+
+    GlobalLonLat();
 
     void setup(long nlon, long nlat);
 

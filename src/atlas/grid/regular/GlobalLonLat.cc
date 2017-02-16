@@ -7,6 +7,9 @@ namespace regular {
 
 void GlobalLonLat::setup(long nlon, long nlat) {
 
+    periodic_x_ = true;
+    periodic_y_ = false;
+
     util::Config config_proj, config_spacing, config_domain;
 
     // projection is lonlat

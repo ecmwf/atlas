@@ -56,6 +56,9 @@ void RegularGaussian::setup(long N) {
     config_domain.set("type","global");
     domain_.reset( domain::Domain::create(config_domain) );
 
+    periodic_x_ = true;
+    periodic_y_ = false;
+
     // setup regular grid
     Regular::setup();
 

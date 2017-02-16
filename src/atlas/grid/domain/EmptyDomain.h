@@ -31,9 +31,6 @@ public:
     virtual double ymin() const { return 0; }
     virtual double ymax() const { return 0; }
 
-    virtual bool isPeriodicX() const { return false; }
-    virtual bool isPeriodicY() const { return false; }
-
 };
 
 

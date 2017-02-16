@@ -239,7 +239,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
   bool   has_north_pole = rg.lat(0) == 90;
   bool   has_south_pole = rg.lat(rg.nlat()-1) == -90;
   bool   unique_pole        = options.get<bool>("unique_pole") && three_dimensional && has_north_pole && has_south_pole;
-  bool   periodic_east_west = rg.domain().isPeriodicX();
+  bool   periodic_east_west = rg.isPeriodicX();
 
 
   int n;
@@ -800,7 +800,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   bool has_north_pole = rg.latitudes().front() ==  90 && rg.pl().front() > 0;
   bool has_south_pole = rg.latitudes().back()  == -90 && rg.pl().back()  > 0;
   bool three_dimensional  = options.get<bool>("3d");
-  bool periodic_east_west = rg.domain().isPeriodicX();
+  bool periodic_east_west = rg.isPeriodicX();
   bool include_periodic_ghost_points = periodic_east_west
           && !three_dimensional ;
   bool remove_periodic_ghost_points = three_dimensional && periodic_east_west ;

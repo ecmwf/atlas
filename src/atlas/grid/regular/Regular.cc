@@ -45,12 +45,12 @@ void Regular::setup() {
   //set_typeinfo();
 }
 
-Regular::Regular() : Structured() {}
+Regular::Regular() :
+    Structured() {
+}
 
 Regular::Regular(const util::Config& p) :
-    Structured()
-{
-
+    Structured() {
 }
 
 eckit::Properties Regular::spec() const {

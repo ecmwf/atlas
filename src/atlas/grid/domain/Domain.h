@@ -72,9 +72,6 @@ public:
     /// Check if grid includes the South pole
     bool includesSouthPole(const projection::Projection& ) const;
 
-    virtual bool isPeriodicX() const =0;
-    virtual bool isPeriodicY() const =0;
-
     virtual double xmin() const =0;
     virtual double xmax() const =0;
     virtual double ymin() const =0;

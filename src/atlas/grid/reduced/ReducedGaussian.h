@@ -18,7 +18,7 @@ public:
     virtual std::string shortName() const;
     virtual std::string gridType() const { return "reduced_gaussian"; }
 
-    ReducedGaussian(): Structured() {}
+    ReducedGaussian();
     ReducedGaussian(const util::Config& params);
     ReducedGaussian(const int N, const long pl[]);
 

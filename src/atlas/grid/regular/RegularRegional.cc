@@ -44,6 +44,9 @@ void RegularRegional::setup(const util::Config& config) {
     if ( ! config.get("nx",nx) ) throw eckit::BadParameter("nx missing in Params",Here());
     if ( ! config.get("ny",ny) ) throw eckit::BadParameter("ny missing in Params",Here());
 
+    if ( ! config.get("periodic_x",periodic_x_) ) periodic_x_ = false;
+    if ( ! config.get("periodic_y",periodic_y_) ) periodic_y_ = false;
+
     // domain
     if ( config.get("domain",config_dom) ) {
       // domain is specified either by bbox, by sw and ne, or by center and resolution
@@ -130,14 +133,12 @@ void RegularRegional::setup(const util::Config& config) {
 }
 
 RegularRegional::RegularRegional(const util::Config& config) :
-    Regular()
-{
+    Regular() {
     setup(config);
 }
 
 RegularRegional::RegularRegional() :
-    Regular()
-{
+    Regular() {
 }
 
 }  // namespace regular
