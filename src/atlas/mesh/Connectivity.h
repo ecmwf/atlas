@@ -133,7 +133,7 @@ public:
     ATLAS_HOST_DEVICE
     idx_t operator()(size_t i) const { return data_[i] FROM_FORTRAN; }
 
-    ATLAS_HOST_DEVICE
+//    ATLAS_HOST_DEVICE
     Index operator()(size_t i)       { return INDEX_REF(data_+i); }
 
     ATLAS_HOST_DEVICE
