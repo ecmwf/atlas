@@ -129,6 +129,7 @@ ecbuild_add_option(
 ecbuild_add_cxx11_flags()
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FORCE_INLINES")
     set( ENABLE_GPU "OFF" CACHE BOOL "Compile with GPU support (CUDA)" )
 
     set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
@@ -144,10 +145,11 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
         # It seems to already be defined in cuda.h and gives warnings
         #    add_definitions(-DCUDA_VERSION=${CUDA_VERSION})
 
-        set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-        if( ${CUDA_VERSION} VERSION_GREATER "60")
-            set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
-        else()
+        set(CUDA_PROPAGATE_HOST_FLAGS ON)
+        set(CUDA_NVCC_FLAGS "--expt-relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
+        if( NOT ${CUDA_VERSION} VERSION_GREATER "60")
+#            set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
+#        else()
             message(FATAL_ERROR "CUDA 6.0 or lower does not support C++11 (disabling)")
         endif()
 
@@ -163,6 +165,7 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=implicit_return_from_non_void_function" "-Xcudafe")
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=calling_convention_not_allowed" "-Xcudafe")
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=conflicting_calling_conventions")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-Xcompiler" "-fPIC")
 
         set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
         set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )

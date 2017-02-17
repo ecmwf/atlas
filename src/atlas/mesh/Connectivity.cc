@@ -480,6 +480,11 @@ void MultiBlockConnectivityImpl::cloneToDevice()
   IrregularConnectivityImpl::cloneToDevice();
   block_displs_->cloneToDevice();
   block_cols_  ->cloneToDevice();
+
+#ifdef ENABLE_GPU
+    cudaMemcpy(gpu_object_ptr_, this, sizeof(MultiBlockConnectivityImpl),  cudaMemcpyHostToDevice);
+#endif
+
 }
 
 void MultiBlockConnectivityImpl::cloneFromDevice()
