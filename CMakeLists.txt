@@ -52,6 +52,8 @@ ecbuild_declare_project()
 
 # options & dependencies
 
+ecbuild_add_cxx11_flags()
+
 ecbuild_find_python()
 
 ### Fortran ...

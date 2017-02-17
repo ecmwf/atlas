@@ -2,6 +2,7 @@
 #define atlas_grid_RectangularDomain_h
 
 #include <iostream>
+#include <array>
 #include "atlas/grid/domain/Domain.h"
 #include "eckit/geometry/Point2.h"
 
@@ -36,13 +37,14 @@ public:
     virtual double ymin() const { return ymin_; }
     virtual double ymax() const { return ymax_; }
 
+    RectangularDomain( const std::array<double,2>& xrange, const std::array<double,2>& yrange );
+
 private:
 
     double xmin_, xmax_, ymin_, ymax_;
     bool periodic_x_, periodic_y_;
 
 };
-
 
 }  // namespace domain
 }  // namespace grid

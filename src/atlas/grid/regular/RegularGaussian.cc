@@ -40,13 +40,13 @@ void RegularGaussian::setup(long N) {
     projection_.reset( projection::Projection::create(config_proj) );
 
     // spacing is uniform in x, gaussian in y
-    config_spacing.set("spacingType","uniform");
+    config_spacing.set("type","uniform");
     config_spacing.set("xmin",0.0);
     config_spacing.set("xmax",(nlon-1)*360.0/nlon);
     config_spacing.set("N",nlon);
     spacing_x_.reset( spacing::Spacing::create(config_spacing) );
 
-    config_spacing.set("spacingType","gaussian");
+    config_spacing.set("type","gaussian");
     config_spacing.set("xmin",90.0);
     config_spacing.set("xmax",-90.0);
     config_spacing.set("N",nlat);

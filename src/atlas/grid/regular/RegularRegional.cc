@@ -1,9 +1,15 @@
+#include <memory>
+
 #include "atlas/grid/regular/RegularRegional.h"
 #include "atlas/grid/domain/RectangularDomain.h"
+#include "atlas/grid/spacing/UniformSpacing.h"
+#include "atlas/internals/Debug.h"
 
 namespace atlas {
 namespace grid {
 namespace regular {
+
+//-----------------------------------------------------------------------------
 
 register_BuilderT1(Grid,RegularRegional,RegularRegional::grid_type_str());
 
@@ -21,110 +27,124 @@ std::string RegularRegional::shortName() const {
     return s.str();
 }
 
+//-----------------------------------------------------------------------------
+
+RegularRegional::ParseUniformCentred::ParseUniformCentred(const eckit::Parametrisation& config) {
+  valid = config.get("nx",nx)
+      &&  config.get("ny",ny)
+      &&  config.get("centre",centre_lonlat)
+      &&  config.get("dx",dx)
+      &&  config.get("dy",dy);
+  endpoint_x = true;
+  endpoint_y = true;
+  config.get("endpoint_x",endpoint_x);
+  config.get("endpoint_y",endpoint_y);
+}
+
+void RegularRegional::ParseUniformCentred::apply(RegularRegional& g) const {
+  double p[] = {centre_lonlat[0],centre_lonlat[1]};
+  g.projection_->lonlat2coords(p);
+  g.spacing_x_.reset( new spacing::UniformSpacing(p[0],dx,nx,endpoint_x) );
+  g.spacing_y_.reset( new spacing::UniformSpacing(p[1],dy,ny,endpoint_y) );
+
+  double LX = 2.*(p[0] - g.spacing_x_->front());
+  double LY = 2.*(p[1] - g.spacing_y_->front());
+  g.domain_.reset( new domain::RectangularDomain(
+      { p[0]-0.5*LX , p[0]+0.5*LX },
+      { p[1]-0.5*LY , p[1]+0.5*LY }));
+}
+
+//-----------------------------------------------------------------------------
+
+RegularRegional::ParseBounds::ParseBounds(const eckit::Parametrisation& config) {
+  valid = config.get("nx",nx)
+      &&  config.get("ny",ny)
+      &&  config.get("xmin",xmin)
+      &&  config.get("xmax",xmax)
+      &&  config.get("ymin",ymin)
+      &&  config.get("ymax",ymax);
+  endpoint_x = true;
+  endpoint_y = true;
+  config.get("endpoint_x",endpoint_x);
+  config.get("endpoint_y",endpoint_y);
+}
+
+void RegularRegional::ParseBounds::apply(RegularRegional& g) const {
+  g.spacing_x_.reset( new spacing::UniformSpacing( {xmin, xmax}, nx, endpoint_x ) );
+  g.spacing_y_.reset( new spacing::UniformSpacing( {ymin, ymax}, ny, endpoint_y ) );
+  g.domain_.reset( new domain::RectangularDomain( {xmin, xmax}, {ymin, ymax} ) );
+}
+
+//-----------------------------------------------------------------------------
+
+RegularRegional::ParseLonLatBounds::ParseLonLatBounds(const eckit::Parametrisation& config) {
+  valid = config.get("nx",nx)
+      &&  config.get("ny",ny)
+      &&  config.get("north",north) // unrotated
+      &&  config.get("south",south) // unrotated
+      &&  config.get("east",east)   // unrotated
+      &&  config.get("west",west);  // unrotated
+  endpoint_x = true;
+  endpoint_y = true;
+  config.get("endpoint_x",endpoint_x);
+  config.get("endpoint_y",endpoint_y);
+}
+
+
+//template<typename T>
+//bool is_projection(const projection::Projection& p) {
+//  return dynamic_cast<const T*>(&p);
+//}
+
+//void RegularRegional::ParseLonLatBounds::apply(RegularRegional& g) const {
+//  if( not ( is_projection<projection::LonLatProjection>       (g.projection() )||
+//            is_projection<projection::RotatedLonLatProjection>(g.projection()))) {
+//    throw eckit::BadParameter("Projection is not compatible with lon/lat bounds",Here());
+//  }
+//  g.spacing_x_.reset( new spacing::UniformSpacing( {west,east}, nx, endpoint_x ) );
+//  g.spacing_y_.reset( new spacing::UniformSpacing( {south,north}, ny, endpoint_y ) );
+//  g.domain_.reset( new domain::RectangularDomain( {west,east}, {south,north} ) );
+//}
+
+
+void RegularRegional::ParseLonLatBounds::apply(RegularRegional& g) const {
+  double sw[] = {west,south};
+  double ne[] = {east,north};
+  g.projection_->lonlat2coords(sw);
+  g.projection_->lonlat2coords(ne);
+  g.spacing_x_.reset( new spacing::UniformSpacing( {sw[0],ne[0]}, nx, endpoint_x ) );
+  g.spacing_y_.reset( new spacing::UniformSpacing( {sw[1],ne[1]}, ny, endpoint_y ) );
+  g.domain_.reset( new domain::RectangularDomain( {sw[0],ne[0]}, {sw[1],ne[1]} ) );
+}
+
+//-----------------------------------------------------------------------------
+
 void RegularRegional::setup(const util::Config& config) {
 
-    util::Config config_dom, config_proj;
-
-    long nx, ny;
-    std::vector<double> bbox(4);
-    std::vector<double> sw(2), ne(2), center(2);
-    double dx, dy;
-
-    // read subconfigurations
-
-    // projection
-    if ( config.get("projection",config_proj) ) {
-    } else {
-      // default, error, or hardcoded default?
+    // read projection subconfiguration
+    util::Config config_proj;
+    if ( not config.get("projection",config_proj) ) {
       config_proj.set("type","lonlat");
     }
     projection_.reset( projection::Projection::create(config_proj) );
 
-    // dimensions
-    if ( ! config.get("nx",nx) ) throw eckit::BadParameter("nx missing in Params",Here());
-    if ( ! config.get("ny",ny) ) throw eckit::BadParameter("ny missing in Params",Here());
+    using Parsers = std::vector< std::unique_ptr<Parse> >;
+    Parsers parsers;
+    parsers.push_back( std::unique_ptr<ParseUniformCentred>( new ParseUniformCentred(config) ) );
+    parsers.push_back( std::unique_ptr<ParseLonLatBounds>( new ParseLonLatBounds(config) ) );
+    parsers.push_back( std::unique_ptr<ParseBounds>( new ParseBounds(config) ) );
 
-    if ( ! config.get("periodic_x",periodic_x_) ) periodic_x_ = false;
-    if ( ! config.get("periodic_y",periodic_y_) ) periodic_y_ = false;
-
-    // domain
-    if ( config.get("domain",config_dom) ) {
-      // domain is specified either by bbox, by sw and ne, or by center and resolution
-      if ( !config_dom.get("bounding_box",bbox) ) {
-        if ( config_dom.get("center",center) && config_dom.get("dx",dx) && config_dom.get("dy",dy)  ) {
-          // coordinates of center
-          double crd_center[] = {center[0],center[1]};
-          projection_->lonlat2coords(crd_center);
-          // calculate bbox
-          double x = crd_center[0];
-          double y = crd_center[1];
-          double LX = (nx-1)*dx;
-          double LY = (ny-1)*dy;
-          bbox[0]=x-0.5*LX; bbox[1]=x+0.5*LX;
-          bbox[2]=y-0.5*LY; bbox[3]=y+0.5*LY;
-        } else {
-          if ( config_dom.get("sw",sw) && config_dom.get("ne",ne) )  {
-            // corner coordinates
-            double crd_sw[] = {sw[0],sw[1]};
-            double crd_ne[] = {ne[0],ne[1]};
-            // sw corner
-            projection_->lonlat2coords(crd_sw);
-            // put in bbox
-            bbox[0]=crd_sw[0]; bbox[2]=crd_sw[1];
-            // ne corner
-            projection_->lonlat2coords(crd_ne);
-            // put in bbox
-            bbox[1]=crd_ne[0]; bbox[3]=crd_ne[1];
-          } else {
-            throw eckit::BadParameter("RegularRegional grid domain should be specified by (i) bbox, (ii) center, dx and dy, or (iii) ne and sw",Here());
-          }
-        }
-        // put bbox in config_dom
-        config_dom.set("bounding_box",bbox);
+    bool configured(false);
+    for( Parsers::const_iterator it=parsers.begin(); it!=parsers.end(); ++it ) {
+      const Parse& p = **it;
+      if( not configured && p.valid ) {
+        p.apply(*this);
+        configured = true;
       }
-      // set domainType if it's missing
-      std::string domainType;
-      if (!config_dom.get("type",domainType)) config_dom.set("type","rectangular");
-      // create domain from configuration
-      domain_.reset( domain::Domain::create(config_dom) );
-      // check if the domain is rectangular
-      if( not dynamic_cast<domain::RectangularDomain*>(domain_.get()) ) {
-        throw eckit::BadParameter("RegularRegional grid requires a RectangularDomain",Here());
-      }
-
-    } else {
-      // error
-      throw eckit::BadParameter("domain is required for a RegularRegional grid",Here());
     }
 
-    // spacing_x
-    {
-      util::Config config_spacing;
-      std::string spacingType;
-
-      if ( !config.get("spacing_x",spacingType) ) spacingType="uniform";
-      // set configuration of spacing_x
-      config_spacing.set("spacingType",spacingType);
-      config_spacing.set("xmin",bbox[0]);
-      config_spacing.set("xmax",bbox[1]);
-      config_spacing.set("N",nx);
-      // create spacing
-      spacing_x_=spacing::Spacing::create(config_spacing);
-    }
-
-    // spacing_y
-    {
-      util::Config config_spacing;
-      std::string spacingType;
-
-      if ( !config.get("spacing_y",spacingType) ) spacingType="uniform";
-      // set configuration of spacing_y
-      config_spacing.set("spacingType",spacingType);
-      config_spacing.set("xmin",bbox[2]);
-      config_spacing.set("xmax",bbox[3]);
-      config_spacing.set("N",ny);
-      // create spacing
-      spacing_y_=spacing::Spacing::create(config_spacing);
+    if( not configured ) {
+      throw eckit::BadParameter("Could not configure RegularRegional grid", Here());
     }
 
     // setup regular grid
@@ -140,6 +160,8 @@ RegularRegional::RegularRegional(const util::Config& config) :
 RegularRegional::RegularRegional() :
     Regular() {
 }
+
+//-----------------------------------------------------------------------------
 
 }  // namespace regular
 }  // namespace grid

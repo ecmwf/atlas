@@ -19,50 +19,14 @@
 
 /// DEBUG MACRO
 #define DEBUG_RANK (eckit::mpi::initialized() ? eckit::mpi::rank() : 0)
-#define DEBUG_0()            atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG() @ " << Here() << std::endl;
-#define DEBUG_1(WHAT)        atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
-#define DEBUG_2(WHAT,RANK)   if(DEBUG_RANK == RANK) { DEBUG_1(WHAT) }
-#define DEBUG_X(x,A,B,FUNC, ...)  FUNC
-#define DEBUG(...)  do {DEBUG_X(,##__VA_ARGS__,\
-                        DEBUG_2(__VA_ARGS__),\
-                        DEBUG_1(__VA_ARGS__),\
-                        DEBUG_0(__VA_ARGS__))} while(0)
-
-/// DEBUG_SYNC MACRO
-#define DEBUG_SYNC(...) do {\
-  {eckit::mpi::barrier();\
-  int npid = eckit::mpi::size();\
-  for( int p=0; p<npid; ++p )\
-  {\
-    if( p==eckit::mpi::rank() )\
-    {\
-      DEBUG_X(,##__VA_ARGS__,\
-        DEBUG_2(__VA_ARGS__),\
-        DEBUG_1(__VA_ARGS__),\
-        DEBUG_0(__VA_ARGS__))\
-    }\
-    eckit::mpi::barrier(); usleep(100); /*microseconds*/ \
-  }}} while(0)
+#define DEBUG_HERE()            atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG() @ " << Here() << std::endl;
+#define DEBUG(WHAT)        atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
 
 /// DEBUG_VAR MACRO
 #ifdef DEBUG_VAR
   #undef DEBUG_VAR
 #endif
-#define DEBUG_VAR_1(VAR) \
+#define DEBUG_VAR(VAR) \
   atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl;
-#define DEBUG_VAR_2(VAR,RANK) if(DEBUG_RANK == RANK) { DEBUG_VAR_1(VAR) }
-#define DEBUG_VAR_X(x,A,B,FUNC, ...)  FUNC
-#define DEBUG_VAR(...)  do {DEBUG_VAR_X(,##__VA_ARGS__,\
-                            DEBUG_VAR_2(__VA_ARGS__),\
-                            DEBUG_VAR_1(__VA_ARGS__))} while(0)
-
-/// DEBUG_VAR_SYNC MACRO
-#define DEBUG_VAR_SYNC(...) do {\
-  eckit::mpi::barrier();\
-  DEBUG_VAR_X(,##__VA_ARGS__,\
-     DEBUG_VAR_2(__VA_ARGS__),\
-     DEBUG_VAR_1(__VA_ARGS__))\
-  eckit::mpi::barrier(); usleep(1000); /*microseconds*/\
-  } while(0)
 
 #endif

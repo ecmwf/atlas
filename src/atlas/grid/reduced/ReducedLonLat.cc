@@ -38,7 +38,7 @@ void ReducedLonLat::setup(size_t ny, long pl[]) {
     std::vector<double> xmax(ny);    // last longitude per latitude
 
     // latitudes: gaussian spacing
-    config_spacing.set("spacingType","uniform");
+    config_spacing.set("type","uniform");
     config_spacing.set("xmin",90.0);
     config_spacing.set("xmax",-90.0);
     config_spacing.set("N",ny);

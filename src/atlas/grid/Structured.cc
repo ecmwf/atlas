@@ -14,6 +14,9 @@
 #include <algorithm>
 #include <limits>
 #include "atlas/runtime/ErrorHandling.h"
+#include "eckit/geometry/Point3.h"
+
+#include "atlas/internals/Debug.h"
 
 
 namespace atlas {
@@ -83,6 +86,8 @@ void Structured::setup(
         nxmin_ = std::min(static_cast<size_t>(nx_[j]),nxmin_);
         nxmax_ = std::max(static_cast<size_t>(nx_[j]),nxmax_);
     }
+
+    compute_true_periodicity();
 }
 
 
@@ -140,6 +145,42 @@ void Structured::setup_cropped(const size_t ny, const double y[], const long nx[
         }
     }
     setup(dom_ny,dom_y.data(),dom_nx.data(),dom_xmin.data(),dom_xmax.data());
+}
+
+void Structured::compute_true_periodicity() {
+  using eckit::geometry::lonlat_to_3d;
+  using eckit::geometry::Point3;
+  using eckit::geometry::points_equal;
+
+  double ll00[] = { domain_->xmin(), domain_->ymin() };
+  double ll10[] = { domain_->xmax(), domain_->ymin() };
+  double ll01[] = { domain_->xmin(), domain_->ymax() };
+  double ll11[] = { domain_->xmax(), domain_->ymax() };
+
+  projection_->coords2lonlat(ll00);
+  projection_->coords2lonlat(ll10);
+  projection_->coords2lonlat(ll01);
+  projection_->coords2lonlat(ll11);
+
+  double p00[3];
+  double p10[3];
+  double p11[3];
+  double p01[3];
+
+  double r=1., h=0.;
+  lonlat_to_3d(ll00,p00,r,h);
+  lonlat_to_3d(ll10,p10,r,h);
+  lonlat_to_3d(ll11,p11,r,h);
+  lonlat_to_3d(ll01,p01,r,h);
+
+  enum{ XX=0, YY=1, ZZ=2 };
+  Point3 P00(p00[XX],p00[YY],p00[ZZ]);
+  Point3 P10(p10[XX],p10[YY],p10[ZZ]);
+  Point3 P11(p11[XX],p11[YY],p11[ZZ]);
+  Point3 P01(p01[XX],p01[YY],p01[ZZ]);
+
+  periodic_x_ = points_equal( P00, P10 ) && points_equal( P01, P11 );
+  periodic_y_ = points_equal( P00, P01 ) && points_equal( P10, P11 );
 }
 
 void Structured::lonlat( std::vector<Point>& pts ) const {

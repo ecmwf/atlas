@@ -149,6 +149,8 @@ protected: // methods
 
     void setup_cropped(const size_t ny, const double y[], const long nx[], const double xmin[], const double xmax[], const domain::Domain& dom);
 
+    void compute_true_periodicity();
+
 protected:
 
     /// Number of latitudes in hemisphere (only makes sense for global grids)

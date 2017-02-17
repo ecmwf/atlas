@@ -26,6 +26,50 @@ public:
 
 protected:
 
+    struct Parse {
+      bool valid;
+      operator bool() const { return valid; }
+      virtual void apply( RegularRegional& ) const =0;
+    };
+
+    struct ParseUniformCentred : Parse {
+      ParseUniformCentred(const eckit::Parametrisation&);
+      long nx;
+      long ny;
+      double dx;
+      double dy;
+      std::vector<double> centre_lonlat;
+      bool endpoint_x;
+      bool endpoint_y;
+      virtual void apply( RegularRegional& ) const;
+    };
+
+    struct ParseBounds : Parse {
+      ParseBounds(const eckit::Parametrisation&);
+      long nx;
+      long ny;
+      double xmin;
+      double xmax;
+      double ymin;
+      double ymax;
+      bool endpoint_x;
+      bool endpoint_y;
+      virtual void apply( RegularRegional& ) const;
+    };
+
+    struct ParseLonLatBounds : Parse {
+      ParseLonLatBounds(const eckit::Parametrisation&);
+      long nx;
+      long ny;
+      double north;
+      double west;
+      double south;
+      double east;
+      bool endpoint_x;
+      bool endpoint_y;
+      virtual void apply( RegularRegional& ) const;
+    };
+
     void setup(const util::Config& params);
     std::string shortName();
 

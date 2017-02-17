@@ -56,9 +56,9 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   //grid.reset();
 
-  DEBUG();
+  DEBUG_HERE();
   SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,mesh::Halo(1)) );
-  DEBUG();
+  DEBUG_HERE();
   size_t nb_levels = 10;
   //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
 

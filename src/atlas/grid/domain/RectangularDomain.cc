@@ -35,6 +35,14 @@ RectangularDomain::RectangularDomain(const eckit::Parametrisation& params) {
   params.get("periodic_y",periodic_y_);
 }
 
+RectangularDomain::RectangularDomain( const std::array<double,2>& xrange, const std::array<double,2>& yrange ) {
+  xmin_ = xrange[0];
+  xmax_ = xrange[1];
+  ymin_ = yrange[0];
+  ymax_ = yrange[1];
+}
+
+
 bool RectangularDomain::contains(double x, double y) const {
   // probably should be done with some margin ...
   return ( xmin_ <= x && xmax_ >= x && ymin_ <= y && ymax_ >= y );

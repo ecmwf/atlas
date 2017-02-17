@@ -49,7 +49,7 @@ void ReducedGaussian::setup(const size_t N, const long pl[]) {
     std::vector<double> xmax(ny);    // last longitude per latitude
 
     // latitudes: gaussian spacing
-    config_spacing.set("spacingType","gaussian");
+    config_spacing.set("type","gaussian");
     config_spacing.set("xmin",90.0);
     config_spacing.set("xmax",-90.0);
     config_spacing.set("N",ny);
