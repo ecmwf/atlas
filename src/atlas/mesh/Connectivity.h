@@ -500,11 +500,7 @@ public:
   BlockConnectivityImpl(const BlockConnectivityImpl& other)
     : owns_(false),
       values_(0),
-#ifdef __CUDACC__
-      values_view_(array::make_device_view<idx_t, 2>(*(other.values_))),
-#else
-      values_view_(array::make_device_view<idx_t, 2>(*(other.values_))),
-#endif
+      values_view_(other.values_view_),
       rows_(other.rows_),
       cols_(other.cols_),
       missing_value_( other.missing_value_)
@@ -563,8 +559,6 @@ public:
   bool valid() const;
   bool isOnHost() const;
   bool isOnDevice() const;
-
-  BlockConnectivityImpl* gpu_object_ptr() {return static_cast<BlockConnectivityImpl*>(gpu_object_ptr_);}
 
   bool owns() const { return owns_; }
   BlockConnectivityImpl* gpu_object_ptr() {return static_cast<BlockConnectivityImpl*>(gpu_object_ptr_);}
