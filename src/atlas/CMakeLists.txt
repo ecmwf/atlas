@@ -438,13 +438,14 @@ ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_defines.h
 )
 
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
-  use_cuda( source_list
-    array/gridtools/GridToolsArray.cc
-    array/gridtools/GridToolsArrayView.cc
-    array/gridtools/GridToolsIndexView.cc
-    array/gridtools/GridToolsMakeView.cc
-    mesh/Connectivity.cc
-  )
+## TODO temporary disabled since I get a linking error of the nvcc intermediate step
+#  use_cuda( source_list
+#    array/gridtools/GridToolsArray.cc
+#    array/gridtools/GridToolsArrayView.cc
+#    array/gridtools/GridToolsIndexView.cc
+#    array/gridtools/GridToolsMakeView.cc
+#    mesh/Connectivity.cc
+#  )
 endif()
 
 ecbuild_add_library( TARGET atlas

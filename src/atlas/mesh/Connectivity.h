@@ -563,6 +563,7 @@ public:
   bool isOnDevice() const;
 
   bool owns() const { return owns_; }
+  BlockConnectivityImpl* gpu_object_ptr() {return static_cast<BlockConnectivityImpl*>(gpu_object_ptr_);}
 
 private:
   bool owns_;
@@ -572,6 +573,7 @@ private:
   size_t rows_;
   size_t cols_;
   idx_t missing_value_;
+  void* gpu_object_ptr_;
 
 };
 
