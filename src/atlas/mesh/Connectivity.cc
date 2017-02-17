@@ -46,12 +46,9 @@ IrregularConnectivityImpl::IrregularConnectivityImpl(const std::string& name ) :
   ctxt_delete_(0),
   callback_update_(0),
   callback_set_(0),
-  callback_delete_(0)
-{
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    cudaMalloc(&gpu_object_ptr_, sizeof(IrregularConnectivityImpl));
-#endif 
-    
+  callback_delete_(0),
+  gpu_clone_(this)
+{    
     rename(name);
     displs_view_(0) = 0;
     counts_view_(0) = 0;
@@ -86,11 +83,9 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], size_t row
     ctxt_delete_(0),
     callback_update_(0),
     callback_set_(0),
-    callback_delete_(0)
+    callback_delete_(0),
+    gpu_clone_(this)
 {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-  cudaMalloc(&gpu_object_ptr_, sizeof(IrregularConnectivityImpl));
-#endif
   maxcols_ = 0;
   mincols_ = std::numeric_limits<size_t>::max();
   for( size_t j=0; j<rows; ++j ) {
@@ -98,6 +93,22 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], size_t row
     mincols_ = std::min(mincols_,counts[j]);
   }
 }
+
+IrregularConnectivityImpl::IrregularConnectivityImpl(const IrregularConnectivityImpl &other) :
+  owns_(false),
+  data_{other.data_[0], other.data_[1], other.data_[2]},
+  values_view_(other.values_view_),
+  displs_view_(other.displs_view_),
+  counts_view_(other.counts_view_),
+  missing_value_(other.missing_value_),
+  rows_(other.rows_),
+  maxcols_(other.maxcols_),
+  mincols_(other.mincols_),
+  ctxt_update_(0),
+  ctxt_set_(0),
+  ctxt_delete_(0),
+  gpu_clone_(this)
+{}
 
 //------------------------------------------------------------------------------------------------------
 
@@ -112,10 +123,6 @@ IrregularConnectivityImpl::~IrregularConnectivityImpl()
         a = 0;
       });
   }
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    cudaFree(gpu_object_ptr_);
-#endif
-
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -375,19 +382,12 @@ void IrregularConnectivityImpl::cloneToDevice() {
     values_view_ = array::make_device_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_device_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_device_view<size_t, 1>(*(data_[_counts_]));
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    cudaMemcpy(gpu_object_ptr_, this, sizeof(IrregularConnectivityImpl),  cudaMemcpyHostToDevice);
-#endif
 }
 void IrregularConnectivityImpl::cloneFromDevice() {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->cloneFromDevice();});
     values_view_ = array::make_host_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_host_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_host_view<size_t, 1>(*(data_[_counts_])); 
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    cudaMemcpy(gpu_object_ptr_, this, sizeof(IrregularConnectivityImpl),  cudaMemcpyDeviceToHost);
-#endif
-
 }
 void IrregularConnectivityImpl::syncHostDevice() const {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->syncHostDevice();});

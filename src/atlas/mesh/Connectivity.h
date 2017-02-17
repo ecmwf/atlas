@@ -33,6 +33,7 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/Vector.h"
 #include "atlas/array_fwd.h"
+#include "atlas/array/gridtools/GPUClonable.h"
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
@@ -170,21 +171,7 @@ public:
   /// @brief Copy ctr (only to be used when calling a cuda kernel)
   // This ctr has to be defined in the header, since __CUDACC__ will identify whether
   // it is compiled it for a GPU kernel
-  ATLAS_HOST_DEVICE
-  IrregularConnectivityImpl(const IrregularConnectivityImpl &other) :
-    owns_(false),
-    data_{other.data_[0], other.data_[1], other.data_[2]},
-    values_view_(other.values_view_),
-    displs_view_(other.displs_view_),
-    counts_view_(other.counts_view_),
-    missing_value_(other.missing_value_),
-    rows_(other.rows_),
-    maxcols_(other.maxcols_),
-    mincols_(other.mincols_),
-    ctxt_update_(0),
-    ctxt_set_(0),
-    ctxt_delete_(0)
-  {}
+  IrregularConnectivityImpl(const IrregularConnectivityImpl &other);
 
   ~IrregularConnectivityImpl();
 
@@ -282,8 +269,7 @@ public:
   virtual bool isOnHost() const;
   virtual bool isOnDevice() const;
 
-  IrregularConnectivityImpl* gpu_object_ptr() {return static_cast<IrregularConnectivityImpl*>(gpu_object_ptr_);}
-
+  IrregularConnectivityImpl* gpu_object_ptr() {return gpu_clone_.gpu_object_ptr();}
   void dump(std::ostream& os) const;
 
 protected:
@@ -312,7 +298,7 @@ private:
   size_t mincols_;
 
 public:
-  void* gpu_object_ptr_;
+  array::gridtools::GPUClonable<IrregularConnectivityImpl> gpu_clone_;
 
   typedef void* ctxt_t;
   typedef void (*callback_t)(ctxt_t);

@@ -284,6 +284,7 @@ array/helpers/ArrayInitializer.h
 )
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 list( APPEND atlas_array_srcs
+array/gridtools/GPUClonable.h
 array/gridtools/GridToolsArray.cc
 array/gridtools/GridToolsArrayHelpers.h
 array/gridtools/GridToolsArrayView.cc
