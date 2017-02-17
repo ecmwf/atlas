@@ -447,10 +447,10 @@ MultiBlockConnectivityImpl::MultiBlockConnectivityImpl(const std::string& name) 
   block_displs_view_(array::make_view<size_t, 1>(*block_displs_)),
   block_cols_view_(array::make_view<size_t, 1>(*block_cols_)),
   block_(0),
-  blocks_(0)
+  blocks_(0),
+  gpu_clone_(this)
 {
     block_displs_view_(0) = 0;
-
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -481,10 +481,7 @@ void MultiBlockConnectivityImpl::cloneToDevice()
   block_displs_->cloneToDevice();
   block_cols_  ->cloneToDevice();
 
-#ifdef ENABLE_GPU
-    cudaMemcpy(gpu_object_ptr_, this, sizeof(MultiBlockConnectivityImpl),  cudaMemcpyHostToDevice);
-#endif
-
+  gpu_clone_.cloneToDevice();
 }
 
 void MultiBlockConnectivityImpl::cloneFromDevice()
@@ -492,6 +489,7 @@ void MultiBlockConnectivityImpl::cloneFromDevice()
   IrregularConnectivityImpl::cloneFromDevice();
   block_displs_->cloneFromDevice();
   block_cols_  ->cloneFromDevice();
+  gpu_clone_.cloneFromDevice();
 }
 
 void MultiBlockConnectivityImpl::syncHostDevice() const

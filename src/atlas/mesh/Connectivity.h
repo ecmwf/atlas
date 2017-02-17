@@ -426,7 +426,7 @@ public:
   virtual bool isOnHost() const;
   virtual bool isOnDevice() const;
 
-  MultiBlockConnectivityImpl* gpu_object_ptr() {return static_cast<MultiBlockConnectivityImpl*>(gpu_object_ptr_);}
+  MultiBlockConnectivityImpl* gpu_object_ptr() {return gpu_clone_.gpu_object_ptr();}
 
 private:
 
@@ -440,7 +440,8 @@ private:
   array::ArrayView<size_t,1> block_cols_view_;
   array::Vector<BlockConnectivityImpl*> block_;
   size_t blocks_;
-  void *gpu_object_ptr_;
+  array::gridtools::GPUClonable<MultiBlockConnectivityImpl> gpu_clone_;
+
 };
 
 // -----------------------------------------------------------------------------------------------------
