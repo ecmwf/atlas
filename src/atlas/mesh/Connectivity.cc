@@ -382,12 +382,14 @@ void IrregularConnectivityImpl::cloneToDevice() {
     values_view_ = array::make_device_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_device_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_device_view<size_t, 1>(*(data_[_counts_]));
+    gpu_clone_.cloneToDevice();
 }
 void IrregularConnectivityImpl::cloneFromDevice() {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->cloneFromDevice();});
     values_view_ = array::make_host_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_host_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_host_view<size_t, 1>(*(data_[_counts_])); 
+    gpu_clone_.cloneFromDevice();
 }
 void IrregularConnectivityImpl::syncHostDevice() const {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->syncHostDevice();});
