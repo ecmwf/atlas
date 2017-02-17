@@ -725,11 +725,9 @@ BlockConnectivityImpl::BlockConnectivityImpl() :
   values_view_(array::make_view<idx_t, 2>(*values_)),
   rows_(0),
   cols_(0),
-  missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
+  missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
+  gpu_clone_(this)
 {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-  cudaMalloc(&gpu_object_ptr_, sizeof(IrregularConnectivityImpl));
-#endif
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -740,12 +738,9 @@ BlockConnectivityImpl::BlockConnectivityImpl( size_t rows, size_t cols, const st
   values_view_(array::make_view<idx_t, 2>(*values_)),
   rows_(rows),
   cols_(cols),
-  missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
+  missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
+  gpu_clone_(this)
 {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-  cudaMalloc(&gpu_object_ptr_, sizeof(IrregularConnectivityImpl));
-#endif
-
   delete values_;
   values_ = array::Array::create<idx_t>(rows_,cols_);
   values_view_ = array::make_view<idx_t,2>(*values_);
@@ -767,11 +762,9 @@ BlockConnectivityImpl::BlockConnectivityImpl( size_t rows, size_t cols, idx_t va
   values_view_(array::make_view<idx_t, 2>(*values_)),
   rows_(rows),
   cols_(cols),
-  missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
+  missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
+  gpu_clone_(this)
 {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-  cudaMalloc(&gpu_object_ptr_, sizeof(IrregularConnectivityImpl));
-#endif
 
   delete values_;
   values_ = array::Array::create<idx_t>(rows_,cols_);
@@ -796,11 +789,9 @@ BlockConnectivityImpl::BlockConnectivityImpl( size_t rows, size_t cols, idx_t va
     values_view_(array::make_view<idx_t, 2>(*values_)),
     rows_(rows),
     cols_(cols),
-    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
+    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
+    gpu_clone_(this)
 {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-  cudaMalloc(&gpu_object_ptr_, sizeof(IrregularConnectivityImpl));
-#endif
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -810,10 +801,6 @@ BlockConnectivityImpl::~BlockConnectivityImpl() {
         assert(values_);
         delete values_;
     }
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    cudaFree(gpu_object_ptr_);
-#endif
-
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -864,19 +851,13 @@ size_t BlockConnectivityImpl::footprint() const
 void BlockConnectivityImpl::cloneToDevice() {
     values_->cloneToDevice();
     values_view_ = array::make_device_view<idx_t, 2>(*values_);
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    cudaMemcpy(gpu_object_ptr_, this, sizeof(BlockConnectivityImpl),  cudaMemcpyHostToDevice);
-#endif
-
+    gpu_clone_.cloneToDevice();
 }
 
 void BlockConnectivityImpl::cloneFromDevice() {
     values_->cloneFromDevice();
     values_view_ = array::make_host_view<idx_t, 2>(*values_);
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    cudaMemcpy(this, gpu_object_ptr_, sizeof(BlockConnectivityImpl),  cudaMemcpyDeviceToHost);
-#endif
-
+    gpu_clone_.cloneFromDevice();
 }
 
 bool BlockConnectivityImpl::valid() const {

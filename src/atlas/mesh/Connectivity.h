@@ -547,7 +547,7 @@ public:
   bool isOnDevice() const;
 
   bool owns() const { return owns_; }
-  BlockConnectivityImpl* gpu_object_ptr() {return static_cast<BlockConnectivityImpl*>(gpu_object_ptr_);}
+  BlockConnectivityImpl* gpu_object_ptr() {return gpu_clone_.gpu_object_ptr();}
 
 private:
   bool owns_;
@@ -557,7 +557,7 @@ private:
   size_t rows_;
   size_t cols_;
   idx_t missing_value_;
-  void* gpu_object_ptr_;
+  array::gridtools::GPUClonable<BlockConnectivityImpl> gpu_clone_;
 
 };
 
