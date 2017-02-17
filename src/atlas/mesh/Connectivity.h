@@ -483,14 +483,14 @@ public:
   /// @brief Copy ctr (only to be used when calling a cuda kernel)
   // This ctr has to be defined in the header, since __CUDACC__ will identify whether
   // it is compiled it for a GPU kernel
-  ATLAS_HOST_DEVICE
   BlockConnectivityImpl(const BlockConnectivityImpl& other)
     : owns_(false),
       values_(0),
       values_view_(other.values_view_),
       rows_(other.rows_),
       cols_(other.cols_),
-      missing_value_( other.missing_value_)
+      missing_value_( other.missing_value_),
+      gpu_clone_(this)
   {}
 
 
