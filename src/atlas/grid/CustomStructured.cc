@@ -10,6 +10,7 @@
 
 
 #include "atlas/grid/CustomStructured.h"
+#include "atlas/internals/Debug.h"
 
 
 namespace atlas {
@@ -29,56 +30,89 @@ std::string CustomStructured::grid_type_str() {
 }
 
 
-CustomStructured::CustomStructured(const eckit::Parametrisation& params) :
+CustomStructured::CustomStructured(const util::Config& config) :
     Structured()
 {
-  //domain_ = domain::Domain::makeGlobal();
-
-  if( not params.get("periodic_x",periodic_x_) ) periodic_x_ = true;
-  if( not params.get("periodic_y",periodic_y_) ) periodic_y_ = false;
 
   util::Config config_domain;
-  if( dynamic_cast<const util::Config&>(params).get("domain",config_domain) )
+  if( dynamic_cast<const util::Config&>(config).get("domain",config_domain) )
     domain_.reset( domain::Domain::create(config_domain) );
   else
     domain_.reset( domain::Domain::create() );
 
   util::Config config_proj;
-  if( dynamic_cast<const util::Config&>(params).get("projection",config_proj) )
+  if( dynamic_cast<const util::Config&>(config).get("projection",config_proj) )
     projection_.reset( projection::Projection::create(config_proj) );
   else
     projection_.reset( projection::Projection::create() );
 
-  // mandatory parameters: pl, latitudes
-  std::vector<long> nx;
-  std::vector<double> y;
 
-  if (!params.get("nx", nx))
-      throw eckit::BadParameter("nx missing in Params",Here());
-  if (!params.get("y", y))
-      throw eckit::BadParameter("y missing in Params",Here());
+  util::Config config_yspace;
+  if( not config.get("yspace",config_yspace) )
+    throw eckit::BadParameter("yspace missing in configuration");
 
-  ASSERT(y.size());
-  ASSERT(y.size() == y.size());
-  const size_t ny = nx.size();
+  eckit::SharedPtr<spacing::Spacing> yspace( spacing::Spacing::create(config_yspace) );
 
-  // optional parameters: N identifier, longitude limits (lon_min, lon_max)
-  std::vector<double> xmin(ny,std::numeric_limits<double>::max());
-  std::vector<double> xmax(ny,-std::numeric_limits<double>::max());
+  const size_t ny = yspace->size();
+  std::vector<long>   nx;       nx.reserve(ny);
+  std::vector<double> xmin;    xmin.reserve(ny);
+  std::vector<double> xmax;    xmax.reserve(ny);
 
-  params.get("N", Structured::N_);
-  if (params.has("xmin"))
-      params.get("xmin", xmin);
-  if (params.has("xmax"))
-      params.get("xmax", xmax);
 
-  ASSERT(xmin.size() == ny);
-  ASSERT(xmax.size() == ny);
 
-  setup_cropped(ny, y.data(), nx.data(), xmin.data(), xmax.data(), *domain_ );
+  std::vector<util::Config> config_xspace_list;
+  if( config.get("xspace[]",config_xspace_list) ) {
+    
+    ASSERT( config_xspace_list.size() == ny );
+    std::string xspace_type;
 
-  // common (base) class setup
-  //Structured::setup(latitudes.size(), latitudes.data(), pl.data(), lonmin.data(), lonmax.data());
+    for( size_t j=0; j<ny; ++j ) {
+      config_xspace_list[j].get("type",xspace_type);
+      ASSERT( xspace_type == "linear" );
+      eckit::SharedPtr<spacing::Spacing> xspace( spacing::Spacing::create(config_xspace_list[j]) );
+      nx.push_back(xspace->size());
+      xmin.push_back(xspace->front());
+      xmax.push_back(xspace->back());
+    }
+
+  } else {
+
+    util::Config config_xspace;
+    if( not config.get("xspace",config_xspace) )
+      throw eckit::BadParameter("xspace missing in configuration");
+
+    std::string xspace_type;
+    config_xspace.get("type",xspace_type);
+    ASSERT( xspace_type == "linear" );
+
+    std::vector<long>   v_N;
+    std::vector<double> v_start;
+    std::vector<double> v_end;
+    std::vector<double> v_length;
+    config_xspace.get("N[]",      v_N     );
+    config_xspace.get("start[]",  v_start );
+    config_xspace.get("end[]",    v_end   );
+    config_xspace.get("length[]", v_length);
+
+    if( not v_N.     empty() ) ASSERT(v_N.     size() == ny);
+    if( not v_start. empty() ) ASSERT(v_start. size() == ny);
+    if( not v_end.   empty() ) ASSERT(v_end.   size() == ny);
+    if( not v_length.empty() ) ASSERT(v_length.size() == ny);
+    
+    for( size_t j=0; j<ny; ++j ) {
+      if( not v_N.     empty() ) config_xspace.set("N",     v_N[j]);
+      if( not v_start. empty() ) config_xspace.set("start", v_start[j]);
+      if( not v_end.   empty() ) config_xspace.set("end",   v_end[j]);
+      if( not v_length.empty() ) config_xspace.set("length",v_length[j]);
+      eckit::SharedPtr<spacing::Spacing> xspace( spacing::Spacing::create(config_xspace) );
+      nx.push_back(xspace->size());
+      xmin.push_back(xspace->front());
+      xmax.push_back(xspace->back());
+    }
+  }
+  
+  std::vector<double> y; y.assign(yspace->begin(),yspace->end());
+  Structured::setup(ny, y.data(), nx.data(), xmin.data(), xmax.data());
 }
 
 
@@ -89,10 +123,8 @@ CustomStructured::CustomStructured(
     const long pl[]) :
     Structured()
 {
+  NOTIMP;
     ASSERT(nlat);
-
-    periodic_x_ = true;
-    periodic_y_ = false;
 
     util::Config config_domain;
     config_domain.set("type","global");
@@ -121,6 +153,8 @@ CustomStructured::CustomStructured(
     const double lonmax[] ) :
     Structured()
 {
+  NOTIMP;
+  
     Structured::setup(nlat, latitudes, pl, lonmin, lonmax);
 }
 

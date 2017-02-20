@@ -17,10 +17,16 @@ namespace {
 
 Rotated::Rotated(const eckit::Parametrisation& p) {
   // get pole
-  std::vector<double> pole(2);
-  if( ! p.get("pole",pole) )
-    throw eckit::BadParameter("pole missing in Params",Here());
-  pole_.assign(pole[0],pole[1]);
+  std::vector<double> north_pole, south_pole;
+  if( not p.get("north_pole",north_pole) ) {
+    if( not p.get("south_pole",south_pole) ) {
+      throw eckit::BadParameter("north_pole or south_pole missing in Params",Here());
+    }
+    north_pole.resize(2);
+    north_pole[0] =  south_pole[0]-180.; // longitude
+    south_pole[1] = -north_pole[0];      // latitude
+  }
+  pole_.assign(north_pole[0],north_pole[1]);
 
   double latrp = D2R(90.0-pole_.lat());
   cos_latrp_ = std::cos(latrp);

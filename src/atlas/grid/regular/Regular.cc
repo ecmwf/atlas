@@ -1,6 +1,6 @@
 #include "atlas/grid/regular/Regular.h"
 
-#include "atlas/grid/spacing/UniformSpacing.h"
+#include "atlas/grid/spacing/LinearSpacing.h"
 
 namespace atlas {
 namespace grid {
@@ -21,9 +21,9 @@ void Regular::setup() {
 
   // perform checks
 
-  // UniformSpacing in x-direction? -- For now, Structured assumes equidistant points along each latitude
-  if( not dynamic_cast<const spacing::UniformSpacing*>(spacing_x_.get()) ) {
-    throw eckit::BadParameter("(For now,) Structured grids require a UniformSpacing in X-direction",Here());
+  // LinearSpacing in x-direction? -- For now, Structured assumes equidistant points along each latitude
+  if( not dynamic_cast<const spacing::LinearSpacing*>(spacing_x_.get()) ) {
+    throw eckit::BadParameter("(For now,) Structured grids require a LinearSpacing in X-direction",Here());
   }
 
   // calculate input for Structured grid

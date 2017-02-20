@@ -17,16 +17,16 @@ void GlobalLonLat::setup(long nlon, long nlat) {
     projection_.reset( projection::Projection::create(config_proj) );
 
     // spacing is uniform in x
-    config_spacing.set("type","uniform");
-    config_spacing.set("xmin",(shiftLon_ ? 0.5 : 0.0)*360.0/double(nlon) );
-    config_spacing.set("xmax",(shiftLon_ ? nlon-0.5 : nlon-1)*360.0/double(nlon) );
+    config_spacing.set("type","linear");
+    config_spacing.set("start",(shiftLon_ ? 0.5 : 0.0)*360.0/double(nlon) );
+    config_spacing.set("end",(shiftLon_ ? nlon-0.5 : nlon-1)*360.0/double(nlon) );
     config_spacing.set("N",nlon);
     spacing_x_.reset( spacing::Spacing::create(config_spacing) );
 
     // spacing is uniform in y
-    config_spacing.set("type","uniform");
-    config_spacing.set("xmin", 90.0-(shiftLat_ ? 90.0/double(nlat) : 0.0) );
-    config_spacing.set("xmax",-90.0+(shiftLat_ ? 90.0/double(nlat) : 0.0) );
+    config_spacing.set("type","linear");
+    config_spacing.set("start", 90.0-(shiftLat_ ? 90.0/double(nlat) : 0.0) );
+    config_spacing.set("end",-90.0+(shiftLat_ ? 90.0/double(nlat) : 0.0) );
     config_spacing.set("N",nlat);
     spacing_y_.reset( spacing::Spacing::create(config_spacing) );
 

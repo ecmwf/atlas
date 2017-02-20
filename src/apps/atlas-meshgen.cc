@@ -180,6 +180,7 @@ void Meshgen2Gmsh::execute(const Args& args)
   else if( path_in.path().size() )
   {
     Log::info() << "Creating grid from file " << path_in << std::endl;
+    Log::debug() << atlas::util::Config(path_in) << std::endl;
     try{ grid.reset( Structured::create( atlas::util::Config(path_in) ) ); }
     catch( eckit::BadParameter& e ){}
   }

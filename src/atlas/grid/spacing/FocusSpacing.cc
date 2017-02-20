@@ -37,6 +37,10 @@ FocusSpacing::FocusSpacing(const eckit::Parametrisation& params) {
       x_[i]=midpoint+c1*std::atan(c2*std::tan(0.5*M_PI*x2));
     }
   }
+  
+  min_ = std::min(xmin,xmax);
+  max_ = std::max(xmin,xmax);
+
 }
 
 register_BuilderT1(Spacing,FocusSpacing,FocusSpacing::spacing_type_str());

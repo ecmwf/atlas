@@ -15,6 +15,7 @@
 #include "eckit/memory/Factory.h"
 #include "atlas/grid/grids.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/runtime/Log.h"
 
 
 namespace atlas {
@@ -46,11 +47,22 @@ Grid* Grid::create(const util::Config& p) {
         return fact.get(shortname).create(p);
     }
     std::string gridtype;
-    if (p.get("grid_type",gridtype) && fact.exists(gridtype)) {
+    if (p.get("type",gridtype) && fact.exists(gridtype)) {
         return fact.get(gridtype).create(p);
     }
     
-    throw eckit::BadParameter("no short_name or grid_type in configuration, or gridType doesn't exist",Here());
+    if( shortname.size() ) {
+      Log::info() << "short_name provided: " << shortname << std::endl;
+    }
+    if( gridtype.size() ) {
+      Log::info() << "type provided: " << gridtype << std::endl;
+    }
+    if( shortname.empty() && gridtype.empty() ) {
+      throw eckit::BadParameter("no short_name or type in configuration",Here());
+    } else {
+      throw eckit::BadParameter("short_name or type in configuration don't exist",Here());      
+    }
+    
     return NULL;
 }
 

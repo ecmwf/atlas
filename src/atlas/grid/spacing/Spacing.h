@@ -41,9 +41,14 @@ public:
     const double& front() const { return x_.front(); }
     const double& back()  const { return x_.back();  }
 
+    const double min() const { return min_; }
+    const double max() const { return max_; }
+
 protected:
 
     std::vector<double> x_;
+    double min_;
+    double max_;
 
 };
 

@@ -1,0 +1,18 @@
+{
+  "//" : "Octahedral Gaussian grid 'O4'",
+
+  "type" : "custom_structured",
+  "yspace" : { "type":"gaussian", "start":90, "end":-90, "N":8 },
+  "xspace" : { "type":"linear",  "start":0,  "end":360, "endpoint":false,
+    "N[]": [
+      16,
+      20,
+      24,
+      28,
+      28,
+      24,
+      20,
+      16
+    ]
+  }
+}

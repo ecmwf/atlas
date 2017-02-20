@@ -12,7 +12,7 @@
 #ifndef atlas_grid_CustomStructured_h
 #define atlas_grid_CustomStructured_h
 
-#include "eckit/config/Parametrisation.h"
+#include "atlas/util/Config.h"
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/Structured.h"
 #include "atlas/internals/Parameters.h"
@@ -43,7 +43,7 @@ public:
     virtual std::string gridType() const { return "custom_structured"; }
 
 
-    CustomStructured(const eckit::Parametrisation&);
+    CustomStructured(const util::Config&);
 
     CustomStructured(
         size_t nlat,

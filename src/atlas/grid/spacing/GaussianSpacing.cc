@@ -28,6 +28,19 @@ GaussianSpacing::GaussianSpacing(const eckit::Parametrisation& params) {
   // initialize latitudes during setup, to avoid repeating it.
   x_.resize(N);
   gaussian::gaussian_latitudes_npole_spole(N/2, x_.data());
+
+  // Not yet implemented: specify different bounds or direction (e.g from south to north pole)
+  double start =  90.;
+  double end   = -90.;
+  params.get("start", start);
+  params.get("end",   end  );
+  if( start!=90. && end!=-90. ) {
+    NOTIMP;
+  }
+  
+  min_ = std::min(start,end);
+  max_ = std::max(start,end);
+
 }
 
 register_BuilderT1(Spacing,GaussianSpacing,GaussianSpacing::spacing_type_str());

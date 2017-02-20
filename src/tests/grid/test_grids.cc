@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   // Full Gaussian Grid
 
   util::Config spec;
-  spec.set("grid_type","regular_gaussian");
+  spec.set("type","regular_gaussian");
   spec.set("N",32);
   gridptr = grid::Grid::Ptr( grid::Grid::create(spec) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 8192);
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
 
   // Global Grid
   util::Config spec;
-  spec.set("grid_type","shifted_lat");
+  spec.set("type","shifted_lat");
   spec.set("nlon",32);
   spec.set("nlat",16);
   gridptr = grid::Grid::Ptr( grid::Grid::create(spec) );
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(gridptr->gridType(),"shifted_lat");
 
   util::Config spec2;
-  spec2.set("grid_type","shifted_lat");
+  spec2.set("type","shifted_lat");
   spec2.set("N",8);
   gridptr = grid::Grid::Ptr( grid::Grid::create(spec2) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);

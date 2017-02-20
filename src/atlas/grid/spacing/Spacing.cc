@@ -9,13 +9,10 @@ namespace spacing {
 
 Spacing* Spacing::create(const eckit::Parametrisation& params) {
   std::string spacingType;
-  if (params.get("type",spacingType)) {
-    return eckit::Factory<Spacing>::instance().get(spacingType).create(params);
+  if (not params.get("type",spacingType) ) {
+    throw eckit::BadParameter("type missing in configuration",Here());
   }
-
-  // should return error here
-  throw eckit::BadParameter("type missing in params",Here());
-  return NULL;
+  return eckit::Factory<Spacing>::instance().get(spacingType).create(params);
 }
 
 }  // namespace spacing
