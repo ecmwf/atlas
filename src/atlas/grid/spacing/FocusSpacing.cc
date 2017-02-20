@@ -14,8 +14,8 @@ FocusSpacing::FocusSpacing(const eckit::Parametrisation& params) {
   long   N;
 
   // retrieve xmin, xmax and N from params
-  if ( !params.get("xmin",xmin) ) throw eckit::BadParameter("xmin missing in Params",Here());
-  if ( !params.get("xmax",xmax) ) throw eckit::BadParameter("xmax missing in Params",Here());
+  if ( !params.get("start",xmin) ) throw eckit::BadParameter("start missing in Params",Here());
+  if ( !params.get("end",xmax) ) throw eckit::BadParameter("end missing in Params",Here());
   if ( !params.get("N",   N   ) ) throw eckit::BadParameter("N missing in Params",   Here());
 
   // additional parameters for focus spacing

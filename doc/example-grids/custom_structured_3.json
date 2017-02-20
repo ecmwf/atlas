@@ -1,7 +1,7 @@
 {
   "//" : "Octahedral Gaussian grid 'O4'",
 
-  "type"     : "custom_structured",
+  "type"     : "structured",
   "yspace"   : { "type":"gaussian", "N":8,  "start":90, "end":-90 },
   "xspace[]" : [
       { "type":"linear", "N":16, "start":0, "end":360, "endpoint":false },

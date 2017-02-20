@@ -26,19 +26,13 @@ std::string CustomStructured::className() {
 
 
 std::string CustomStructured::grid_type_str() {
-    return "custom_structured";
+    return "structured";
 }
 
 
 CustomStructured::CustomStructured(const util::Config& config) :
     Structured()
 {
-
-  util::Config config_domain;
-  if( dynamic_cast<const util::Config&>(config).get("domain",config_domain) )
-    domain_.reset( domain::Domain::create(config_domain) );
-  else
-    domain_.reset( domain::Domain::create() );
 
   util::Config config_proj;
   if( dynamic_cast<const util::Config&>(config).get("projection",config_proj) )
@@ -59,6 +53,8 @@ CustomStructured::CustomStructured(const util::Config& config) :
   std::vector<double> xmax;    xmax.reserve(ny);
 
 
+  double dom_xmin =  std::numeric_limits<double>::max();
+  double dom_xmax = -std::numeric_limits<double>::max();
 
   std::vector<util::Config> config_xspace_list;
   if( config.get("xspace[]",config_xspace_list) ) {
@@ -73,6 +69,8 @@ CustomStructured::CustomStructured(const util::Config& config) :
       nx.push_back(xspace->size());
       xmin.push_back(xspace->front());
       xmax.push_back(xspace->back());
+      dom_xmin = std::min(dom_xmin,xspace->min());
+      dom_xmax = std::max(dom_xmax,xspace->max());
     }
 
   } else {
@@ -108,10 +106,26 @@ CustomStructured::CustomStructured(const util::Config& config) :
       nx.push_back(xspace->size());
       xmin.push_back(xspace->front());
       xmax.push_back(xspace->back());
+      dom_xmin = std::min(dom_xmin,xspace->min());
+      dom_xmax = std::max(dom_xmax,xspace->max());
     }
   }
   
   std::vector<double> y; y.assign(yspace->begin(),yspace->end());
+  
+  
+  util::Config config_domain;
+  if( dynamic_cast<const util::Config&>(config).get("domain",config_domain) )
+    domain_.reset( domain::Domain::create(config_domain) );
+  else {
+    config_domain.set("type","rectangular");
+    config_domain.set("ymin",yspace->min());
+    config_domain.set("ymax",yspace->max());
+    config_domain.set("xmin",dom_xmin);
+    config_domain.set("xmax",dom_xmax);
+    domain_.reset( domain::Domain::create(config_domain) );
+  }
+  
   Structured::setup(ny, y.data(), nx.data(), xmin.data(), xmax.data());
 }
 

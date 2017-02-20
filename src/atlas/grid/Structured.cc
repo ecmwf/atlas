@@ -152,35 +152,35 @@ void Structured::compute_true_periodicity() {
   using eckit::geometry::Point3;
   using eckit::geometry::points_equal;
 
-  double ll00[] = { domain_->xmin(), domain_->ymin() };
-  double ll10[] = { domain_->xmax(), domain_->ymin() };
-  double ll01[] = { domain_->xmin(), domain_->ymax() };
-  double ll11[] = { domain_->xmax(), domain_->ymax() };
+  double llxmin[] = { domain_->xmin(), 0.5*(domain_->ymin()+domain_->ymax()) };
+  double llxmax[] = { domain_->xmax(), 0.5*(domain_->ymin()+domain_->ymax()) };
+  double llymin[] = { 0.5*(domain_->xmin()+domain_->xmax()), domain_->ymin() };
+  double llymax[] = { 0.5*(domain_->xmin()+domain_->xmax()), domain_->ymax() };
 
-  projection_->coords2lonlat(ll00);
-  projection_->coords2lonlat(ll10);
-  projection_->coords2lonlat(ll01);
-  projection_->coords2lonlat(ll11);
+  projection_->coords2lonlat(llxmin);
+  projection_->coords2lonlat(llxmax);
+  projection_->coords2lonlat(llymin);
+  projection_->coords2lonlat(llymax);
 
-  double p00[3];
-  double p10[3];
-  double p11[3];
-  double p01[3];
+  double pxmin[3];
+  double pxmax[3];
+  double pymin[3];
+  double pymax[3];
 
   double r=1., h=0.;
-  lonlat_to_3d(ll00,p00,r,h);
-  lonlat_to_3d(ll10,p10,r,h);
-  lonlat_to_3d(ll11,p11,r,h);
-  lonlat_to_3d(ll01,p01,r,h);
+  lonlat_to_3d(llxmin,pxmin,r,h);
+  lonlat_to_3d(llxmax,pxmax,r,h);
+  lonlat_to_3d(llymin,pymin,r,h);
+  lonlat_to_3d(llymax,pymax,r,h);
 
   enum{ XX=0, YY=1, ZZ=2 };
-  Point3 P00(p00[XX],p00[YY],p00[ZZ]);
-  Point3 P10(p10[XX],p10[YY],p10[ZZ]);
-  Point3 P11(p11[XX],p11[YY],p11[ZZ]);
-  Point3 P01(p01[XX],p01[YY],p01[ZZ]);
+  Point3 Pxmin(pxmin[XX],pxmin[YY],pxmin[ZZ]);
+  Point3 Pxmax(pxmax[XX],pxmax[YY],pxmax[ZZ]);
+  Point3 Pymin(pymin[XX],pymin[YY],pymin[ZZ]);
+  Point3 Pymax(pymax[XX],pymax[YY],pymax[ZZ]);
 
-  periodic_x_ = points_equal( P00, P10 ) && points_equal( P01, P11 );
-  periodic_y_ = points_equal( P00, P01 ) && points_equal( P10, P11 );
+  periodic_x_ = points_equal( Pxmin, Pxmax );
+  periodic_y_ = points_equal( Pymin, Pymax );
 }
 
 void Structured::lonlat( std::vector<Point>& pts ) const {

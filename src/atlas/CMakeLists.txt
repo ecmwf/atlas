@@ -74,6 +74,8 @@ grid/projection/MercatorProjection.cc
 grid/projection/MercatorProjection.h
 grid/spacing/Spacing.cc
 grid/spacing/Spacing.h
+grid/spacing/CustomSpacing.h
+grid/spacing/CustomSpacing.cc
 grid/spacing/LinearSpacing.h
 grid/spacing/LinearSpacing.cc
 grid/spacing/FocusSpacing.h

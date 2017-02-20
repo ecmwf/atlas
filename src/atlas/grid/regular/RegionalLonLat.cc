@@ -30,28 +30,20 @@ void RegionalLonLat::setup(const util::Config& config) {
     config.get("periodic_y",periodic_y_);
 
     // get domain boundaries
-    if ( config.get("bounding_box",bbox) ) {
-      east=bbox[0];
-      west=bbox[1];
-      south=bbox[2];
-      north=bbox[3];
-    } else {
-      if ( ! ( config.get("east",east) && config.get("west",west) && config.get("south",south) && config.get("north",north) ) ) {
-        throw eckit::BadParameter("RegionalLonLat grid domain should be specified by bbox, or by east, west, south and north.",Here());
-      }
+    if ( ! ( config.get("east",east) && config.get("west",west) && config.get("south",south) && config.get("north",north) ) ) {
+      throw eckit::BadParameter("RegionalLonLat grid domain should be specified by bbox, or by east, west, south and north.",Here());
     }
 
     // perform checks on bounds
     if (south>north)
       throw eckit::BadValue("RegionalLonLat grid domain requires north>south.",Here());
     while (east<west) east+=360.;
-    bbox[0]=east;
-    bbox[1]=west;
-    bbox[2]=south;
-    bbox[3]=north;
 
     // define domain subconfiguration
-    config_dom.set("bounding_box",bbox);
+    config_dom.set("xmin",west);
+    config_dom.set("xmax",east);
+    config_dom.set("ymin",south);
+    config_dom.set("ymax",north);
     config_dom.set("type","rectangular");
 
     // grid dimensions
@@ -68,9 +60,6 @@ void RegionalLonLat::setup(const util::Config& config) {
     config_rr.set("projection",config_proj);
     config_rr.set("nx",nlon);
     config_rr.set("ny",nlat);
-    config_rr.set("periodic_x",periodic_x_);
-    config_rr.set("periodic_y",periodic_y_);
-
 
     // setup a regular regional grid
     RegularRegional::setup(config_rr);

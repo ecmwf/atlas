@@ -5,18 +5,29 @@ namespace atlas {
 namespace grid {
 namespace domain {
 
+namespace {
+  
+  static bool is_global(double xmin, double xmax, double ymin, double ymax) {
+    const double eps = 1.e-12;
+    return std::abs( (xmax-xmin) - 360. ) < eps 
+        && std::abs( (ymax-ymin) - 180. ) < eps ;
+  }
+  
+}
+
 RectangularDomain::RectangularDomain(const eckit::Parametrisation& params) {
 
-  // check if bbox is present
-  std::vector<double> v(4);
-  if( ! params.get("bounding_box",v) )
-    throw eckit::BadParameter("bounding_box missing in Params",Here());
+  if( ! params.get("xmin",xmin_) )
+    throw eckit::BadParameter("xmin missing in Params",Here());
 
-  // store vector elements
-  xmin_=v[0];
-  xmax_=v[1];
-  ymin_=v[2];
-  ymax_=v[3];
+  if( ! params.get("xmax",xmax_) )
+    throw eckit::BadParameter("xmax missing in Params",Here());
+
+  if( ! params.get("ymin",ymin_) )
+    throw eckit::BadParameter("ymin missing in Params",Here());
+
+  if( ! params.get("ymax",ymax_) )
+    throw eckit::BadParameter("ymax missing in Params",Here());
 
   // normalize domain: make sure xmax>=xmin and ymax>=ymin
   double swp;
@@ -28,11 +39,9 @@ RectangularDomain::RectangularDomain(const eckit::Parametrisation& params) {
   if (ymin_>ymax_) {
     swp=ymin_;ymin_=ymax_;ymax_=swp;
   }
+  
+  global_ = is_global(xmin_,xmax_,ymin_,ymax_);
 
-  periodic_x_ = false;
-  periodic_y_ = false;
-  params.get("periodic_x",periodic_x_);
-  params.get("periodic_y",periodic_y_);
 }
 
 RectangularDomain::RectangularDomain( const std::array<double,2>& xrange, const std::array<double,2>& yrange ) {
@@ -40,6 +49,7 @@ RectangularDomain::RectangularDomain( const std::array<double,2>& xrange, const 
   xmax_ = xrange[1];
   ymin_ = yrange[0];
   ymax_ = yrange[1];
+  global_ = is_global(xmin_,xmax_,ymin_,ymax_);
 }
 
 
@@ -48,24 +58,13 @@ bool RectangularDomain::contains(double x, double y) const {
   return ( xmin_ <= x && xmax_ >= x && ymin_ <= y && ymax_ >= y );
 }
 
-std::vector<double> RectangularDomain::bbox() const {
-
-  std::vector<double> bb(4);
-  bb[0]=xmin_;
-  bb[1]=xmax_;
-  bb[2]=ymin_;
-  bb[3]=ymax_;
-
-  return bb;
-
-}
-
 eckit::Properties RectangularDomain::spec() const {
   eckit::Properties domain_prop;
   domain_prop.set("domainType",virtual_domain_type_str());
-  std::vector<double> bb(4);
-  bb=bbox();
-  domain_prop.set("bounding_box",eckit::makeVectorValue(bb));
+  domain_prop.set("xmin",xmin_);
+  domain_prop.set("xmax",xmax_);
+  domain_prop.set("ymin",ymin_);
+  domain_prop.set("ymax",ymax_);
   return domain_prop;
 }
 

@@ -39,41 +39,27 @@ field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::gr
 {
   // fill xyz with torus coordinates. r0 and r1 are large and small radii, respectively.
 
-  std::vector<double> bbox;
-
-  // check if the domain is rectangular
-  const atlas::grid::domain::RectangularDomain* rdom=dynamic_cast<const atlas::grid::domain::RectangularDomain*>(dom);
-  const atlas::grid::domain::GlobalDomain* gdom=dynamic_cast<const atlas::grid::domain::GlobalDomain*>(dom);
-  if( rdom ) {
-    bbox = rdom->bbox();
-  }
-  else if( gdom ) {
-    bbox.resize(4);
-    bbox[0]= 0.;
-    bbox[1]= 360.;
-    bbox[2]=-90.;
-    bbox[3]= 90.;
-  }
-  if( bbox.empty() ) {
-    throw eckit::BadCast("Torus can only be built from rectangular or global domain");
-  }
+  const double xmin = dom->xmin();
+  const double xmax = dom->xmax();
+  const double ymin = dom->ymin();
+  const double ymax = dom->ymax();
 
   if( !nodes.has_field(name_) )
   {
-    size_t npts = nodes.size();
-    array::ArrayView<double,2> lonlat( nodes.lonlat() );
+    const size_t npts = nodes.size();
+    const array::ArrayView<double,2> lonlat( nodes.lonlat() );
     array::ArrayView<double,2> xyz   ( nodes.add( field::Field::create<double>(name_,array::make_shape(npts,3) ) ) );
 
     const double pi=M_PI;
-    const double c1 = 2.*pi/double(nx)*(nx-1)/(bbox[1]-bbox[0]);
-    const double c2 = 2.*pi/double(ny)*(ny-1)/(bbox[3]-bbox[2]);
+    const double c1 = 2.*pi/double(nx)*(nx-1)/(xmax-xmin);
+    const double c2 = 2.*pi/double(ny)*(ny-1)/(ymax-ymin);
     for( size_t n=0; n<npts; ++n )
     {
+      const double *ll=lonlat[n].data();
       double *xx=xyz[n].data();
-      double *ll=lonlat[n].data();
 
-      double lon=-pi+c1*(ll[0]-bbox[0]);
-      double lat=-pi+c2*(ll[1]-bbox[2]);
+      double lon=-pi+c1*(ll[0]-xmin);
+      double lat=-pi+c2*(ll[1]-ymin);
 
       xx[0]=std::cos(lon)*(r0+r1*std::cos(lat));
       xx[1]=std::sin(lon)*(r0+r1*std::cos(lat));

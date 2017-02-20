@@ -25,9 +25,7 @@ public:
     /// Checks if the point is contained in the domain
     virtual bool contains(double x, double y) const;
 
-    std::vector<double> bbox() const;
-
-    virtual bool isGlobal() const { return false; }
+    virtual bool isGlobal() const { return global_; }
     virtual bool isEmpty() const { return ( (xmin_ != xmax_) && (ymin_ != ymax_) ); }
 
     virtual eckit::Properties spec() const;
@@ -42,7 +40,7 @@ public:
 private:
 
     double xmin_, xmax_, ymin_, ymax_;
-    bool periodic_x_, periodic_y_;
+    bool global_;
 
 };
 

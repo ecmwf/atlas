@@ -7,13 +7,16 @@ namespace atlas {
 namespace grid {
 namespace spacing {
 
-GaussianSpacing::GaussianSpacing(long nlat) {
+GaussianSpacing::GaussianSpacing(long N) {
   // perform checks
-  ASSERT ( nlat%2 == 0 );
+  ASSERT ( N%2 == 0 );
 
   // initialize latitudes during setup, to avoid repeating it.
-  x_.resize(nlat);
-  gaussian::gaussian_latitudes_npole_spole(nlat/2, x_.data());
+  x_.resize(N);
+  gaussian::gaussian_latitudes_npole_spole(N/2, x_.data());
+  
+  min_ = -90.;
+  max_ =  90.;
 }
 
 GaussianSpacing::GaussianSpacing(const eckit::Parametrisation& params) {

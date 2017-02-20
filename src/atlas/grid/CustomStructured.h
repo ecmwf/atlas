@@ -39,8 +39,8 @@ public:
 
     static std::string grid_type_str();
 
-    virtual std::string shortName() const { return "customStructured"; }
-    virtual std::string gridType() const { return "custom_structured"; }
+    virtual std::string shortName() const { return "structured"; }
+    virtual std::string gridType() const { return "structured"; }
 
 
     CustomStructured(const util::Config&);

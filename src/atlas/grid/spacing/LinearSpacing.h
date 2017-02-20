@@ -14,9 +14,9 @@ public:
     // constructor
     LinearSpacing( const eckit::Parametrisation& p );
 
-    LinearSpacing( double centre, double step, long N, bool endpoint=true );
+    // LinearSpacing( double centre, double step, long N, bool endpoint=true );
 
-    LinearSpacing( std::array<double,2> range, long N, bool endpoint=true );
+    LinearSpacing( double start, double end, long N, bool endpoint=true );
 
     // class name
     static std::string className() { return "atlas.LinearSpacing"; }

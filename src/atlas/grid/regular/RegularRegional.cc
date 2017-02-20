@@ -44,8 +44,10 @@ RegularRegional::ParseUniformCentred::ParseUniformCentred(const eckit::Parametri
 void RegularRegional::ParseUniformCentred::apply(RegularRegional& g) const {
   double p[] = {centre_lonlat[0],centre_lonlat[1]};
   g.projection_->lonlat2coords(p);
-  g.spacing_x_.reset( new spacing::LinearSpacing(p[0],dx,nx,endpoint_x) );
-  g.spacing_y_.reset( new spacing::LinearSpacing(p[1],dy,ny,endpoint_y) );
+  
+  NOTIMP;
+  // g.spacing_x_.reset( new spacing::LinearSpacing(p[0],dx,nx,endpoint_x) );
+  // g.spacing_y_.reset( new spacing::LinearSpacing(p[1],dy,ny,endpoint_y) );
 
   double LX = 2.*(p[0] - g.spacing_x_->front());
   double LY = 2.*(p[1] - g.spacing_y_->front());
@@ -70,8 +72,8 @@ RegularRegional::ParseBounds::ParseBounds(const eckit::Parametrisation& config) 
 }
 
 void RegularRegional::ParseBounds::apply(RegularRegional& g) const {
-  g.spacing_x_.reset( new spacing::LinearSpacing( {xmin, xmax}, nx, endpoint_x ) );
-  g.spacing_y_.reset( new spacing::LinearSpacing( {ymin, ymax}, ny, endpoint_y ) );
+  g.spacing_x_.reset( new spacing::LinearSpacing( xmin, xmax, nx, endpoint_x ) );
+  g.spacing_y_.reset( new spacing::LinearSpacing( ymin, ymax, ny, endpoint_y ) );
   g.domain_.reset( new domain::RectangularDomain( {xmin, xmax}, {ymin, ymax} ) );
 }
 
@@ -112,8 +114,8 @@ void RegularRegional::ParseLonLatBounds::apply(RegularRegional& g) const {
   double ne[] = {east,north};
   g.projection_->lonlat2coords(sw);
   g.projection_->lonlat2coords(ne);
-  g.spacing_x_.reset( new spacing::LinearSpacing( {sw[0],ne[0]}, nx, endpoint_x ) );
-  g.spacing_y_.reset( new spacing::LinearSpacing( {sw[1],ne[1]}, ny, endpoint_y ) );
+  g.spacing_x_.reset( new spacing::LinearSpacing( sw[0],ne[0], nx, endpoint_x ) );
+  g.spacing_y_.reset( new spacing::LinearSpacing( sw[1],ne[1], ny, endpoint_y ) );
   g.domain_.reset( new domain::RectangularDomain( {sw[0],ne[0]}, {sw[1],ne[1]} ) );
 }
 
