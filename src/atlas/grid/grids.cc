@@ -214,8 +214,6 @@ void load_grid() {
 }
 
 void load() {
-    Log::debug(2) << "Loading library [atlas::grid]" << std::endl;
-
     // We have to touch all classes we want to register for static linking.
 
     load_grid<Unstructured>();
@@ -224,7 +222,6 @@ void load() {
     load_grid<regular::RegularGaussian>();
     load_grid<reduced::ClassicGaussian>();
     load_grid<reduced::OctahedralGaussian>();
-    load_grid<reduced::ARPEGE>();
     load_grid<reduced::ReducedLonLat>();
     load_grid<regular::RegularLonLat>();
     load_grid<regular::ShiftedLonLat>();

@@ -162,8 +162,6 @@ grid/reduced/ReducedGaussian.h
 grid/reduced/ReducedGaussian.cc
 grid/reduced/ReducedLonLat.h
 grid/reduced/ReducedLonLat.cc
-grid/reduced/ARPEGE.h
-grid/reduced/ARPEGE.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_grid_srcs

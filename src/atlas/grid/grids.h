@@ -28,7 +28,6 @@
 #include "atlas/grid/reduced/ReducedLonLat.h"
 #include "atlas/grid/reduced/ClassicGaussian.h"
 #include "atlas/grid/reduced/OctahedralGaussian.h"
-#include "atlas/grid/reduced/ARPEGE.h"
 
 
 namespace atlas {
