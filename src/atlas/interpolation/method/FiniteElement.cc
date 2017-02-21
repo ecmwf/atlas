@@ -18,6 +18,7 @@
 #include "eckit/geometry/Point3.h"
 
 #include "atlas/interpolation/element/Quad3D.h"
+#include "atlas/interpolation/element/Quad2D.h"
 #include "atlas/interpolation/element/Triag3D.h"
 #include "atlas/interpolation/element/Triag2D.h"
 #include "atlas/interpolation/method/Ray.h"
@@ -273,10 +274,32 @@ Method::Triplets FiniteElement::projectPointToElements(
 
                 break; // stop looking for elements
             }
-            else {
+            else { // fallback to 2d lonlat elements
+
+                element::Quad2D quad2d(ilonlat_[idx[0]].data(),
+                                       ilonlat_[idx[1]].data(),
+                                       ilonlat_[idx[2]].data(),
+                                       ilonlat_[idx[3]].data());
+
+                is = quad2d.intersects(Vector2D::Map(olonlat_[ip].data()),edgeEpsilon);
+
+                if (is) {
+
+                    // weights are the bilinear Lagrange function evaluated at u,v
+                    w[0] = (1. - is.u) * (1. - is.v);
+                    w[1] =       is.u  * (1. - is.v);
+                    w[2] =       is.u  *       is.v ;
+                    w[3] = (1. - is.u) *       is.v ;
+
+                    for (size_t i = 0; i < 4; ++i) {
+                        triplets.push_back( Triplet( ip, idx[i], w[i] ) );
+                    }
+
+                    break; // stop looking for elements
+                }
 
                 if( Log::debug<LibAtlas>() ) {
-                    failures_log << "Failed to project point " << Point(ocoords_[ip].data()) << " to " << quad << " with t=" << is.t << '\n';
+                    failures_log << "Failed to project point " << Point(ocoords_[ip].data()) << " to " << quad2d << " with " << is << '\n';
                 }
             }
 

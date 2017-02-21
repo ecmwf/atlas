@@ -248,6 +248,8 @@ interpolation/Vector2D.h
 interpolation/Vector3D.h
 interpolation/element/Quad3D.cc
 interpolation/element/Quad3D.h
+interpolation/element/Quad2D.cc
+interpolation/element/Quad2D.h
 interpolation/element/Triag3D.cc
 interpolation/element/Triag3D.h
 interpolation/element/Triag2D.cc
