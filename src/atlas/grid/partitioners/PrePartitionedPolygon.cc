@@ -27,6 +27,8 @@
 #include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
 
+#include "eckit/config/Resource.h"
+
 
 namespace atlas {
 namespace grid {
@@ -278,8 +280,12 @@ GridDistribution* PrePartitionedPolygon::distributionFromPrePartitionedMesh() co
     }
 
     GridDistribution* distribution_tgt = new grid::GridDistribution(node_partition.size(), node_partition.data());
-    comm.barrier();
-#if 0
+
+
+    /// For debugging purposes at the moment. To be made available later, when the Mesh
+    /// contains a Polygon for its partition boundary
+    if( eckit::Resource<bool>("--polygons",false) ) {
+
     std::vector<double> x,y;
     x.reserve(node_partition.size());
     y.reserve(node_partition.size());
@@ -292,6 +298,8 @@ GridDistribution* PrePartitionedPolygon::distributionFromPrePartitionedMesh() co
     size_t count = x.size();
     size_t count_all = x.size();
     comm.allReduceInPlace(count_all, eckit::mpi::sum());
+
+    enum {LON=0,LAT=1};
 
     for (int r = 0; r < comm.size(); ++r) {
         if (mpi_rank == r) {
@@ -310,11 +318,11 @@ GridDistribution* PrePartitionedPolygon::distributionFromPrePartitionedMesh() co
                      "\n" "";
             }
             f << "\n" "verts_" << r << " = [";
-            for (size_t i = 0; i < poly.size(); ++i) { f << "\n  (" << poly[i][LON] << ", " << poly[i][LAT] << "), "; }
+            for (size_t i = 0; i < polygon.size(); ++i) { f << "\n  (" << polygon[i][LON] << ", " << polygon[i][LAT] << "), "; }
             f << "\n]"
                  "\n" ""
                  "\n" "codes_" << r << " = [Path.MOVETO]"
-                 "\n" "codes_" << r << ".extend([Path.LINETO] * " << (poly.size()-2) << ")"
+                 "\n" "codes_" << r << ".extend([Path.LINETO] * " << (polygon.size()-2) << ")"
                  "\n" "codes_" << r << ".extend([Path.CLOSEPOLY])"
                  "\n" ""
                  "\n" "count_" << r << " = " << count <<
@@ -335,8 +343,9 @@ GridDistribution* PrePartitionedPolygon::distributionFromPrePartitionedMesh() co
         }
         comm.barrier();
     }
-//    exit(0);
-#endif
+
+    }
+
     return distribution_tgt;
 }
 

@@ -58,6 +58,10 @@ public:
         add_option(new SimpleOption<bool>       ("target-mesh-generator-angle",       "target mesh generator angle option (default false)"));
 
         add_option(new SimpleOption<size_t>     ("k-nearest-neighbours",              "k nearest neighbours (default 1)"));
+
+
+        add_option(new SimpleOption<bool>     ("polygons",              "Output python script that plots partitions as polygons"));
+
     }
 
 };
