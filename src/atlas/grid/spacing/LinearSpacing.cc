@@ -7,16 +7,9 @@ namespace atlas {
 namespace grid {
 namespace spacing {
 
-LinearSpacing::LinearSpacing(const eckit::Parametrisation& params) {
 
-  double step;
-  double centre;
-  double start;
-  double end;
-  double length;
-  long   N;
-  bool   endpoint=true;
-
+LinearSpacing::Params::Params(const eckit::Parametrisation& params) {
+  endpoint = true;
   params.get("endpoint", endpoint );
 
   // if( params.get("step",step) ) {
@@ -47,8 +40,18 @@ LinearSpacing::LinearSpacing(const eckit::Parametrisation& params) {
   else {
     throw eckit::BadParameter("Invalid combination of parameters",Here());
   }
+  length = end - start;
+  
+  if( endpoint && N>1 )
+    step = length/double(N-1);
+  else
+    step = length/double(N);
+}
 
-  setup(start,end,N,endpoint);
+
+LinearSpacing::LinearSpacing(const eckit::Parametrisation& params) {
+  Params p(params);
+  setup(p.start,p.end,p.N,p.endpoint);
 }
 
 // LinearSpacing::LinearSpacing( double centre, double step, long N, bool endpoint ) {

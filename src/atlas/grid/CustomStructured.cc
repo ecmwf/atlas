@@ -68,13 +68,13 @@ CustomStructured::CustomStructured(const util::Config& config) :
     for( size_t j=0; j<ny; ++j ) {
       config_xspace_list[j].get("type",xspace_type);
       ASSERT( xspace_type == "linear" );
-      spacing::LinearSpacing xspace( config_xspace_list[j] );
-      xmin.push_back(xspace.front());
-      xmax.push_back(xspace.max());
-      nx.push_back(xspace.size());
-      dx.push_back(xspace.step());
-      dom_xmin = std::min(dom_xmin,xspace.min());
-      dom_xmax = std::max(dom_xmax,xspace.max());
+      spacing::LinearSpacing::Params xspace( config_xspace_list[j] );
+      xmin.push_back(xspace.start);
+      xmax.push_back(xspace.end);
+      nx.push_back(xspace.N);
+      dx.push_back(xspace.step);
+      dom_xmin = std::min(dom_xmin,xspace.start);
+      dom_xmax = std::max(dom_xmax,xspace.end);
     }
 
   } else {
@@ -106,13 +106,13 @@ CustomStructured::CustomStructured(const util::Config& config) :
       if( not v_start. empty() ) config_xspace.set("start", v_start[j]);
       if( not v_end.   empty() ) config_xspace.set("end",   v_end[j]);
       if( not v_length.empty() ) config_xspace.set("length",v_length[j]);
-      spacing::LinearSpacing xspace( config_xspace );
-      xmin.push_back(xspace.front());
-      xmax.push_back(xspace.max());
-      nx.push_back(xspace.size());
-      dx.push_back(xspace.step());
-      dom_xmin = std::min(dom_xmin,xspace.min());
-      dom_xmax = std::max(dom_xmax,xspace.max());
+      spacing::LinearSpacing::Params xspace( config_xspace );
+      xmin.push_back(xspace.start);
+      xmax.push_back(xspace.end);
+      nx.push_back(xspace.N);
+      dx.push_back(xspace.step);
+      dom_xmin = std::min(dom_xmin,xspace.start);
+      dom_xmax = std::max(dom_xmax,xspace.end);
     }
   }
   

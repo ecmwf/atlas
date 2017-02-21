@@ -8,6 +8,18 @@ namespace grid {
 namespace spacing {
 
 class LinearSpacing: public Spacing {
+  
+public:
+
+  struct Params {
+    double start;
+    double end;
+    long N;
+    double length;
+    bool endpoint;
+    double step;
+    Params(const eckit::Parametrisation& p);
+  };
 
 public:
 
