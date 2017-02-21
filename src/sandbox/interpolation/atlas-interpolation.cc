@@ -145,20 +145,18 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
             const double lon = deg2rad * lonlat(j, 0);  // (lon)
             const double lat = deg2rad * lonlat(j, 1);  // (lat)
             const double
-                    c2 = cos(lat),
-                    s1 = sin((lon-c_lon)/2.),
-                    s2 = sin((lat-c_lat)/2.),
-                    dist = 2.0 * sqrt( c2*s1*c2*s1 + s2*s2 );
-            src_scalar_1(j) = dist < c_rad? 0.5 * (1. + cos(M_PI*dist/c_rad)) : 0.;
+                    c2 = std::cos(lat),
+                    s1 = std::sin((lon-c_lon)/2.),
+                    s2 = std::sin((lat-c_lat)/2.),
+                    dist = 2.0 * std::sqrt( c2*s1*c2*s1 + s2*s2 );
+            src_scalar_1(j) = dist < c_rad? 0.5 * (1. + std::cos(M_PI*dist/c_rad)) : 0.;
             src_scalar_2(j) = -src_scalar_1(j);
 
 
-            double x = lonlat(j, 0) + 25.676;
-            double y = lonlat(j, 1) - 37.741;
-            while (x >  180.) { x -= 360.; }
-            while (x < -180.) { x += 360.; }
+            double x = lonlat(j, 0) - 180.;
+            double y = lonlat(j, 1);
 
-            src_scalar_1(j) = -tanh(y/10*cos(50/sqrt(x*x+y*y))-x/10*sin(50/sqrt(x*x+y*y)));
+            src_scalar_1(j) = -std::tanh(y/10.*std::cos(50./std::sqrt(x*x+y*y))-x/10.*std::sin(50./std::sqrt(x*x+y*y)));
 
         }
     }
