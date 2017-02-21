@@ -51,11 +51,13 @@ protected:
      */
     static Triplets projectPointToElements(
             const array::ArrayView<double, 2>& icoords,
+            const array::ArrayView<double, 2>& ilonlat,
             const mesh::Connectivity& connectivity,
             const Point &p,
             size_t ip,
             ElemIndex3::NodeList::const_iterator start,
-            ElemIndex3::NodeList::const_iterator finish );
+            ElemIndex3::NodeList::const_iterator finish,
+            std::ostream& failures_log );
 
 };
 

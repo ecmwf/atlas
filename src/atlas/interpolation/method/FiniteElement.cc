@@ -15,8 +15,11 @@
 #include "eckit/log/Seconds.h"
 #include "eckit/log/Timer.h"
 #include "eckit/mpi/Comm.h"
+#include "eckit/geometry/Point3.h"
+
 #include "atlas/interpolation/element/Quad3D.h"
 #include "atlas/interpolation/element/Triag3D.h"
+#include "atlas/interpolation/element/Triag2D.h"
 #include "atlas/interpolation/method/Ray.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
@@ -62,6 +65,7 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
     const mesh::Nodes  &i_nodes  = meshSource.nodes();
     array::ArrayView<double, 2> icoords  ( i_nodes.field( "xyz" ));
+    array::ArrayView<double, 2> ilonlat(i_nodes.lonlat());
 
 
     array::ArrayView<double, 2> ocoords(meshTarget.nodes().field("xyz"));
@@ -100,13 +104,14 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
             if (ip && (ip % 1000 == 0)) {
                 double rate = ip / timerProj.elapsed();
-                Log::debug() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
+                Log::debug<LibAtlas>() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
             }
 
             Point p ( ocoords[ip].data() ); // lookup point
 
             size_t kpts = 1;
             bool success = false;
+            std::ostringstream failures_log;
 
             while (!success && kpts <= maxNbElemsToTry) {
 
@@ -115,30 +120,36 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
                 ElemIndex3::NodeList cs = eTree->kNearestNeighbours(p, kpts);
                 Triplets triplets = projectPointToElements(
                             icoords,
+                            ilonlat,
                             meshSource.cells().node_connectivity(),
                             p,
                             ip,
                             cs.begin(),
-                            cs.end() );
+                            cs.end(),
+                            failures_log );
 
                 if (triplets.size()) {
                     std::copy(triplets.begin(), triplets.end(), std::back_inserter(weights_triplets));
                     success = true;
                 }
                 kpts *= 2;
-
             }
 
             if (!success) {
                 failures.push_back(ip);
-
+                Log::debug<LibAtlas>() << "---------------------------------------------------------------------------\n";
+                Log::debug<LibAtlas>() << "Failed to project point (lon,lat)=("<<olonlat(ip,LON)<<","<<olonlat(ip,LAT) << ")" << '\n';
+                Log::debug<LibAtlas>() << failures_log.str();
             }
         }
     }
 
-    Log::debug() << "Projected " << eckit::Plural(out_npts, "point") << std::endl;
-    Log::debug() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
+    if( failures.size() ) {
+    }
 
+
+    Log::debug<LibAtlas>() << "Projected " << eckit::Plural(out_npts, "point") << std::endl;
+    Log::debug<LibAtlas>() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
 
 
     eckit::mpi::comm().barrier();
@@ -164,17 +175,18 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
 Method::Triplets FiniteElement::projectPointToElements(
         const array::ArrayView<double, 2>& icoords,
+        const array::ArrayView<double, 2>& ilonlat,
         const mesh::Connectivity& connectivity,
         const Point &p,
         size_t ip,
         ElemIndex3::NodeList::const_iterator start,
-        ElemIndex3::NodeList::const_iterator finish ) {
+        ElemIndex3::NodeList::const_iterator finish,
+        std::ostream& failures_log ) {
     ASSERT(start != finish);
 
     const size_t inp_points = icoords.shape(0);
     size_t idx[4];
     double w[4];
-
 
     Triplets triplets;
     Ray ray( p.data() );
@@ -220,6 +232,16 @@ Method::Triplets FiniteElement::projectPointToElements(
 
                 break; // stop looking for elements
             }
+            else {
+
+                if(Log::debug<LibAtlas>()) {
+                    element::Triag2D triag2d(ilonlat[idx[0]].data(),
+                                             ilonlat[idx[1]].data(),
+                                             ilonlat[idx[2]].data());
+
+                    failures_log << "Failed to project point " << p << " to " << triag2d << " with " << is << '\n';
+                }
+            }
 
 
         } else {
@@ -253,6 +275,13 @@ Method::Triplets FiniteElement::projectPointToElements(
 
                 break; // stop looking for elements
             }
+            else {
+
+                if( Log::debug<LibAtlas>() ) {
+                    failures_log << "Failed to project point " << p << " to " << quad << " with t=" << is.t << '\n';
+                }
+            }
+
         }
 
     } // loop over nearest elements

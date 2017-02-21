@@ -244,11 +244,14 @@ endif()
 list( APPEND atlas_interpolation_srcs
 interpolation/PartitionedMesh.cc
 interpolation/PartitionedMesh.h
+interpolation/Vector2D.h
 interpolation/Vector3D.h
 interpolation/element/Quad3D.cc
 interpolation/element/Quad3D.h
 interpolation/element/Triag3D.cc
 interpolation/element/Triag3D.h
+interpolation/element/Triag2D.cc
+interpolation/element/Triag2D.h
 interpolation/method/FiniteElement.cc
 interpolation/method/FiniteElement.h
 interpolation/method/Intersect.cc
