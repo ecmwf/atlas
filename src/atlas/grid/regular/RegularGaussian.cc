@@ -36,11 +36,12 @@ void RegularGaussian::setup(long N) {
     nlon=4*N;
 
     // projection is lonlat
-    config_proj.set("type","lonlat");
-    projection_.reset( projection::Projection::create(config_proj) );
-
+    if( not projection_ ) {
+      config_proj.set("type","lonlat");
+      projection_.reset( projection::Projection::create(config_proj) );
+    }
+    
     // spacing is uniform in x, gaussian in y
-
     config_spacing.set("type","gaussian");
     config_spacing.set("start",90.0);
     config_spacing.set("end",-90.0);
@@ -74,6 +75,13 @@ RegularGaussian::RegularGaussian(const util::Config& config) :
     if ( ! config.get("N",N) ) {
       throw eckit::BadParameter("RegularGaussian requires parameter N",Here());
     }
+    
+    // default projection is lonlat
+    util::Config config_proj;
+    if( not config.get("projection",config_proj) ) {
+      config_proj.set("type","lonlat");
+    }
+    projection_.reset( projection::Projection::create(config_proj) );
 
     // perform setup
     setup(N);

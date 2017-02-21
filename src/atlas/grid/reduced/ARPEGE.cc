@@ -9,7 +9,7 @@ namespace reduced {
 register_BuilderT1(Grid,ARPEGE,ARPEGE::grid_type_str());
 
 std::string ARPEGE::grid_type_str() {
-    return "ARPEGE";
+    return "arpege";
 }
 
 

@@ -10,7 +10,7 @@ namespace reduced {
 register_BuilderT1(Grid,ClassicGaussian,ClassicGaussian::grid_type_str());
 
 std::string ClassicGaussian::grid_type_str() {
-    return "classicGaussian";
+    return "classic_gaussian";
 }
 
 
@@ -55,9 +55,11 @@ ClassicGaussian::ClassicGaussian(const util::Config& config) : ReducedGaussian()
     // get N from config
     if ( !config.get("N",N) ) throw eckit::BadParameter("ClassicGaussian requires N",Here());
 
-    // projection is lonlat
+    // default projection is lonlat
     util::Config config_proj;
-    config_proj.set("type","lonlat");
+    if( not config.get("projection",config_proj) ) {
+      config_proj.set("type","lonlat");
+    }
     projection_.reset( projection::Projection::create(config_proj) );
 
     // setup

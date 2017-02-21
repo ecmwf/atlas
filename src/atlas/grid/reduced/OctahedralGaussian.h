@@ -18,16 +18,15 @@ public:
     virtual std::string shortName() const;
     virtual std::string gridType() const { return "octahedral_gaussian"; }
 
-    static std::vector<long> computePL(const size_t N);
+    static std::vector<long> computePL(const size_t N, const size_t start=20);
 
-    OctahedralGaussian(): ReducedGaussian() {}
     OctahedralGaussian(const util::Config& params);
 
     virtual eckit::Properties spec() const;
 
 protected:
 
-    void setup(size_t N);
+    void setup( const size_t N, const size_t start=20 );
 
 };
 

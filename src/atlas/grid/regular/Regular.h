@@ -25,7 +25,6 @@ protected:
 
     Regular();
 
-
 };
 
 

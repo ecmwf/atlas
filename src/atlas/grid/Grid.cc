@@ -43,8 +43,8 @@ Grid* Grid::create(const util::Config& p) {
     eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
 
     std::string shortname;
-    if (p.get("short_name",shortname) && fact.exists(shortname)) {
-        return fact.get(shortname).create(p);
+    if (p.get("name",shortname)) {
+        return grid::grid_from_uid(shortname);
     }
     std::string gridtype;
     if (p.get("type",gridtype) && fact.exists(gridtype)) {
@@ -52,15 +52,15 @@ Grid* Grid::create(const util::Config& p) {
     }
     
     if( shortname.size() ) {
-      Log::info() << "short_name provided: " << shortname << std::endl;
+      Log::info() << "name provided: " << shortname << std::endl;
     }
     if( gridtype.size() ) {
       Log::info() << "type provided: " << gridtype << std::endl;
     }
     if( shortname.empty() && gridtype.empty() ) {
-      throw eckit::BadParameter("no short_name or type in configuration",Here());
+      throw eckit::BadParameter("no name or type in configuration",Here());
     } else {
-      throw eckit::BadParameter("short_name or type in configuration don't exist",Here());      
+      throw eckit::BadParameter("name or type in configuration don't exist",Here());      
     }
     
     return NULL;
