@@ -42,7 +42,7 @@ public: // types
     }
 
     method::Intersect intersects(
-            const method::Ray& r,
+            const Vector2D& p,
             double edgeEpsilon = 5 * std::numeric_limits<double>::epsilon(),
             double epsilon = 5 * std::numeric_limits<double>::epsilon() ) const;
 

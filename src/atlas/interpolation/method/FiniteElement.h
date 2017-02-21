@@ -49,16 +49,19 @@ protected:
      * Find in which element the point is contained by projecting (ray-tracing) the
      * point to the nearest element(s), returning the (normalized) interpolation weights
      */
-    static Triplets projectPointToElements(
-            const array::ArrayView<double, 2>& icoords,
-            const array::ArrayView<double, 2>& ilonlat,
-            const mesh::Connectivity& connectivity,
-            const Point &p,
+    Triplets projectPointToElements(
             size_t ip,
-            ElemIndex3::NodeList::const_iterator start,
-            ElemIndex3::NodeList::const_iterator finish,
-            std::ostream& failures_log );
+            const ElemIndex3::NodeList& elems,
+            std::ostream& failures_log ) const;
 
+
+protected:
+
+    mesh::Connectivity* connectivity_;
+    array::ArrayView<double,2> icoords_;
+    array::ArrayView<double,2> ilonlat_;
+    array::ArrayView<double,2> ocoords_;
+    array::ArrayView<double,2> olonlat_;
 };
 
 

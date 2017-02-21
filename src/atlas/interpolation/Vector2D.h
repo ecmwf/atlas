@@ -41,10 +41,14 @@ typedef  Eigen::Vector2d Vector2D;
 class Vector2D {
   private:
 
-    Vector2D(const double *d): x_(d[0]), y_(d[1]) {
+    Vector2D(const double *d) {
+        xy_[0] = d[0];
+        xy_[1] = d[1];
     }
 
-    Vector2D(double x, double y): x_(x), y_(y) {
+    Vector2D(double x, double y) {
+        xy_[0] = x;
+        xy_[1] = y;
     }
 
   public:
@@ -59,17 +63,19 @@ class Vector2D {
 
     // Operators
 
+    double operator[](size_t i) const { return xy_[i]; }
+
     // Vector2D operator*(const Vector2D &) const;
     Vector2D operator-(const Vector2D &other) const {
-        return Vector2D(x_ - other.x_, y_ - other.y_);
+        return Vector2D(x() - other.x(), y() - other.y());
     }
 
     Vector2D operator+(const Vector2D &other) const {
-        return Vector2D(x_ + other.x_, y_ + other.y_);
+        return Vector2D(x() + other.x(), y() + other.y());
     }
 
     Vector2D operator-() const {
-        return Vector2D(-x_, -y_);
+        return Vector2D(-x(), -y());
     }
 
     double norm() const {
@@ -77,19 +83,19 @@ class Vector2D {
     }
 
     double squaredNorm() const {
-        return x_ * x_ + y_ * y_;
+        return x() * x() + y() * y();
     }
 
     double dot(const Vector2D &other) const {
-        return x_ * other.x_ + y_ * other.y_;
+        return x() * other.x() + y() * other.y();
     }
 
     double cross(const Vector2D &other) const {
-        return x_ * other.y_ - y_ * other.x_;
+        return x() * other.y() - y() * other.x();
     }
 
     void print(std::ostream &s) const {
-        s << "[" << x_ << "," << y_ << "]";
+        s << "[" << x() << "," << y() << "]";
     }
 
     friend std::ostream &operator<<(std::ostream &s, const Vector2D &p) {
@@ -97,10 +103,11 @@ class Vector2D {
         return s;
     }
 
-
   private:
-    double x_;
-    double y_;
+
+    double x() const { return xy_[0]; }
+    double y() const { return xy_[1]; }
+    double xy_[2];
 
 };
 
