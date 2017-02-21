@@ -22,6 +22,10 @@ public:
     static std::string className() { return "atlas.LinearSpacing"; }
     static std::string spacing_type_str() {return "linear";}
 
+    double step() const;
+    
+    bool endpoint() const;
+
 protected:
 
     // points are equally spaced between xmin and xmax

@@ -40,27 +40,19 @@ void RegularGaussian::setup(long N) {
     projection_.reset( projection::Projection::create(config_proj) );
 
     // spacing is uniform in x, gaussian in y
-    config_spacing.set("type","linear");
-    config_spacing.set("start",0.0);
-    config_spacing.set("end",(nlon-1)*360.0/nlon);
-    config_spacing.set("N",nlon);
-    spacing_x_.reset( spacing::Spacing::create(config_spacing) );
 
     config_spacing.set("type","gaussian");
     config_spacing.set("start",90.0);
     config_spacing.set("end",-90.0);
     config_spacing.set("N",nlat);
-    spacing_y_.reset( spacing::Spacing::create(config_spacing) );
+    spacing::Spacing* yspace = spacing::Spacing::create(config_spacing);
 
     // domain is global
     config_domain.set("type","global");
     domain_.reset( domain::Domain::create(config_domain) );
 
-    periodic_x_ = true;
-    periodic_y_ = false;
-
     // setup regular grid
-    Regular::setup();
+    Structured::setup(yspace,nlon,0.,360.,360./double(nlon));
 
     // set N_ of Structured
     Structured::N_=N;

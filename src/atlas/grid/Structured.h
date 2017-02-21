@@ -12,6 +12,8 @@
 #ifndef Structured_h
 #define Structured_h
 
+#include <memory>
+
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/util/Config.h"
@@ -145,11 +147,25 @@ protected: // methods
     /// Hash of the PL array
     virtual void hash(eckit::MD5&) const;
 
-    void setup(const size_t nlat, const double lats[], const long pl[], const double lonmin[], const double lonmax[]);
-
-    void setup_cropped(const size_t ny, const double y[], const long nx[], const double xmin[], const double xmax[], const domain::Domain& dom);
+    // void setup_cropped(const size_t ny, const double y[], const long nx[], const double xmin[], const double xmax[], const domain::Domain& dom);
 
     void compute_true_periodicity();
+    
+    
+    
+    void setup( 
+        spacing::Spacing*          yspace,
+        const std::vector<long>&   nx,
+        const std::vector<double>& xmin,
+        const std::vector<double>& xmax,
+        const std::vector<double>& dx );
+
+    void setup( 
+        spacing::Spacing* yspace,
+        const long&       nx,
+        const double&     xmin,
+        const double&     xmax,
+        const double&     dx );
 
 protected:
 
@@ -186,6 +202,7 @@ protected:
     /// Periodicity in y-direction
     bool periodic_y_;
 
+    std::unique_ptr< spacing::Spacing > yspace_;
 };
 
 

@@ -10,6 +10,8 @@
 
 
 #include "atlas/grid/CustomStructured.h"
+#include "atlas/grid/spacing/LinearSpacing.h"
+#include "atlas/grid/spacing/CustomSpacing.h"
 #include "atlas/internals/Debug.h"
 
 
@@ -45,12 +47,13 @@ CustomStructured::CustomStructured(const util::Config& config) :
   if( not config.get("yspace",config_yspace) )
     throw eckit::BadParameter("yspace missing in configuration");
 
-  eckit::SharedPtr<spacing::Spacing> yspace( spacing::Spacing::create(config_yspace) );
+  spacing::Spacing* yspace = spacing::Spacing::create(config_yspace);
 
   const size_t ny = yspace->size();
-  std::vector<long>   nx;       nx.reserve(ny);
+  std::vector<long>   nx;      nx.  reserve(ny);
   std::vector<double> xmin;    xmin.reserve(ny);
   std::vector<double> xmax;    xmax.reserve(ny);
+  std::vector<double> dx;      dx  .reserve(ny);
 
 
   double dom_xmin =  std::numeric_limits<double>::max();
@@ -65,12 +68,13 @@ CustomStructured::CustomStructured(const util::Config& config) :
     for( size_t j=0; j<ny; ++j ) {
       config_xspace_list[j].get("type",xspace_type);
       ASSERT( xspace_type == "linear" );
-      eckit::SharedPtr<spacing::Spacing> xspace( spacing::Spacing::create(config_xspace_list[j]) );
-      nx.push_back(xspace->size());
-      xmin.push_back(xspace->front());
-      xmax.push_back(xspace->back());
-      dom_xmin = std::min(dom_xmin,xspace->min());
-      dom_xmax = std::max(dom_xmax,xspace->max());
+      spacing::LinearSpacing xspace( config_xspace_list[j] );
+      xmin.push_back(xspace.front());
+      xmax.push_back(xspace.max());
+      nx.push_back(xspace.size());
+      dx.push_back(xspace.step());
+      dom_xmin = std::min(dom_xmin,xspace.min());
+      dom_xmax = std::max(dom_xmax,xspace.max());
     }
 
   } else {
@@ -102,17 +106,15 @@ CustomStructured::CustomStructured(const util::Config& config) :
       if( not v_start. empty() ) config_xspace.set("start", v_start[j]);
       if( not v_end.   empty() ) config_xspace.set("end",   v_end[j]);
       if( not v_length.empty() ) config_xspace.set("length",v_length[j]);
-      eckit::SharedPtr<spacing::Spacing> xspace( spacing::Spacing::create(config_xspace) );
-      nx.push_back(xspace->size());
-      xmin.push_back(xspace->front());
-      xmax.push_back(xspace->back());
-      dom_xmin = std::min(dom_xmin,xspace->min());
-      dom_xmax = std::max(dom_xmax,xspace->max());
+      spacing::LinearSpacing xspace( config_xspace );
+      xmin.push_back(xspace.front());
+      xmax.push_back(xspace.max());
+      nx.push_back(xspace.size());
+      dx.push_back(xspace.step());
+      dom_xmin = std::min(dom_xmin,xspace.min());
+      dom_xmax = std::max(dom_xmax,xspace.max());
     }
   }
-  
-  std::vector<double> y; y.assign(yspace->begin(),yspace->end());
-  
   
   util::Config config_domain;
   if( dynamic_cast<const util::Config&>(config).get("domain",config_domain) )
@@ -125,8 +127,8 @@ CustomStructured::CustomStructured(const util::Config& config) :
     config_domain.set("xmax",dom_xmax);
     domain_.reset( domain::Domain::create(config_domain) );
   }
-  
-  Structured::setup(ny, y.data(), nx.data(), xmin.data(), xmax.data());
+
+  Structured::setup(yspace, nx, xmin, xmax, dx);
 }
 
 
@@ -137,8 +139,8 @@ CustomStructured::CustomStructured(
     const long pl[]) :
     Structured()
 {
-  NOTIMP;
     ASSERT(nlat);
+    spacing::CustomSpacing* yspace = new spacing::CustomSpacing(nlat, lats);
 
     util::Config config_domain;
     config_domain.set("type","global");
@@ -148,28 +150,17 @@ CustomStructured::CustomStructured(
     config_proj.set("type","lonlat");
     projection_.reset( projection::Projection::create(config_proj) );
 
-    // assign longitude limits
-    std::vector<double> lonmin(nlat,std::numeric_limits<double>::max());
-    std::vector<double> lonmax(nlat,-std::numeric_limits<double>::max());
-    ASSERT(lonmin.size() == nlat);
-    ASSERT(lonmax.size() == nlat);
-
-    setup_cropped(nlat, lats, pl, lonmin.data(), lonmax.data(), *domain_ );
-
-}
-
-
-CustomStructured::CustomStructured(
-    size_t nlat,
-    const double latitudes[],
-    const long pl[],
-    const double lonmin[],
-    const double lonmax[] ) :
-    Structured()
-{
-  NOTIMP;
-  
-    Structured::setup(nlat, latitudes, pl, lonmin, lonmax);
+    std::vector<long> nx;
+    nx.assign(pl,pl+nlat);
+    
+    std::vector<double> xmin(nlat, 0.);
+    std::vector<double> xmax(nlat, 360.);
+    std::vector<double> dx(nlat);
+    for( size_t j=0; j<nlat; ++j) {
+      if( not nx[j] ) dx[j] = 0;
+      else dx[j] = 360./double(nx[j]);
+    }
+    setup(yspace,nx,xmin,xmax,dx);
 }
 
 extern "C" {
@@ -190,12 +181,16 @@ extern "C" {
     Structured* atlas__grid__CustomStructured_lonmin_lonmax_int(size_t nlat, double lats[], int pl[], double lonmin[], double lonmax[]) {
         std::vector<long> pl_vector;
         pl_vector.assign(pl, pl+nlat);
-        return new CustomStructured(nlat, lats, pl_vector.data(), lonmin, lonmax);
+        NOTIMP;
+        return 0;
+        // return new CustomStructured(nlat, lats, pl_vector.data(), lonmin, lonmax);
     }
 
 
     Structured* atlas__grid__CustomStructured_lonmin_lonmax_long(size_t nlat, double lats[], long pl[], double lonmin[], double lonmax[]) {
-        return new CustomStructured(nlat, lats, pl, lonmin, lonmax);
+        NOTIMP;
+        return 0;
+        //return new CustomStructured(nlat, lats, pl, lonmin, lonmax);
     }
 
 

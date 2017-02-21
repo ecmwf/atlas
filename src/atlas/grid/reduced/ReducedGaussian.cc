@@ -9,7 +9,7 @@ namespace reduced {
 register_BuilderT1(Grid,ReducedGaussian,ReducedGaussian::grid_type_str());
 
 std::string ReducedGaussian::grid_type_str() {
-    return "reducedGaussian";
+    return "reduced_gaussian";
 }
 
 
@@ -18,13 +18,10 @@ std::string ReducedGaussian::className() {
 }
 
 std::string ReducedGaussian::shortName() const {
-  return "reducedGaussian";
+  return "reduced_gaussian";
 }
 
 void ReducedGaussian::setup(const size_t N, const long pl[]) {
-
-    periodic_x_ = true;
-    periodic_y_ = false;
 
     // configs for spacing, domain and projection
     util::Config config_spacing, config_domain, config_proj;
@@ -38,34 +35,34 @@ void ReducedGaussian::setup(const size_t N, const long pl[]) {
 
 
     // mirror pl around equator
-    std::vector<long> pll(ny);
+    std::vector<long> nx(ny);
     for (int jlat=0;jlat<N;jlat++) {
-      pll[jlat]=pl[jlat];
-      pll[ny-1-jlat]=pl[jlat];
+      nx[jlat]=pl[jlat];
+      nx[ny-1-jlat]=pl[jlat];
     }
 
     // determine input for Structured::setup
     std::vector<double> xmin(ny);    // first longitude per latitude
     std::vector<double> xmax(ny);    // last longitude per latitude
+    std::vector<double> dx(ny);
 
     // latitudes: gaussian spacing
     config_spacing.set("type","gaussian");
     config_spacing.set("start", 90.0);
     config_spacing.set("end",  -90.0);
     config_spacing.set("N",ny);
-    eckit::SharedPtr<spacing::Spacing> spacing_y ( spacing::Spacing::create(config_spacing) );
+    spacing::Spacing* yspace = spacing::Spacing::create(config_spacing);
 
     // loop over latitudes to set bounds
-    xmin.assign(ny,0.0);
-    for (int jlat=0;jlat<ny;jlat++) {
-      xmin[jlat]=0.0;
-      xmax[jlat]=(pll[jlat]-1)*360.0/pll[jlat];
+    for (int j=0;j<ny;j++) {
+      xmin[j] = 0.0;
+      xmax[j] = 360.;
+      dx[j]   = 360.0/double(nx[j]);
     }
 
     // setup Structured grid
-    Structured::setup(ny,spacing_y->data(), pll.data(), xmin.data(), xmax.data());
+    Structured::setup(yspace, nx, xmin, xmax, dx);
     Structured::N_=N;
-
 }
 
 ReducedGaussian::ReducedGaussian() :

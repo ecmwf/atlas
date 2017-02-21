@@ -18,7 +18,6 @@ public:
     virtual std::string shortName() const;
     virtual std::string gridType() const { return "reduced_lonlat"; }
 
-    ReducedLonLat(): Structured() {}
     ReducedLonLat(const util::Config& params);
 
     eckit::Properties spec() const;

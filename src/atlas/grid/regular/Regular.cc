@@ -6,50 +6,16 @@ namespace atlas {
 namespace grid {
 namespace regular {
 
-register_BuilderT1(Grid,Regular,Regular::grid_type_str());
 
 std::string Regular::grid_type_str() {
     return "regular";
 }
 
-
 std::string Regular::className() {
     return "atlas.grid.regular.Regular";
 }
 
-void Regular::setup() {
-
-  // perform checks
-
-  // LinearSpacing in x-direction? -- For now, Structured assumes equidistant points along each latitude
-  if( not dynamic_cast<const spacing::LinearSpacing*>(spacing_x_.get()) ) {
-    throw eckit::BadParameter("(For now,) Structured grids require a LinearSpacing in X-direction",Here());
-  }
-
-  // calculate input for Structured grid
-  size_t nx=spacing_x_->size();
-  size_t ny=spacing_y_->size();
-
-  std::vector<double> xmin(ny);
-  std::vector<double> xmax(ny);
-  std::vector<long>   pl(ny);
-
-  xmin.assign( ny, (*spacing_x_)[0]    );
-  xmax.assign( ny, (*spacing_x_)[nx-1] );
-
-  pl.assign( ny, nx );
-
-  Structured::setup(ny,spacing_y_->data(), pl.data(), xmin.data(), xmax.data());
-  Structured::N_=0;  // not true for some global lonlat grids ;-(
-
-  //set_typeinfo();
-}
-
 Regular::Regular() :
-    Structured() {
-}
-
-Regular::Regular(const util::Config& p) :
     Structured() {
 }
 

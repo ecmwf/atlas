@@ -20,18 +20,11 @@ void RegionalLonLat::setup(const util::Config& config) {
 
     util::Config config_proj, config_dom, config_rr;
     long nlon, nlat;
-    std::vector<double> bbox(4);
     double east, west, south, north;
-
-    // Periodicity
-    periodic_x_ = false;
-    periodic_y_ = false;
-    config.get("periodic_x",periodic_x_);
-    config.get("periodic_y",periodic_y_);
 
     // get domain boundaries
     if ( ! ( config.get("east",east) && config.get("west",west) && config.get("south",south) && config.get("north",north) ) ) {
-      throw eckit::BadParameter("RegionalLonLat grid domain should be specified by bbox, or by east, west, south and north.",Here());
+      throw eckit::BadParameter("RegionalLonLat grid domain should be specified by east, west, south and north.",Here());
     }
 
     // perform checks on bounds

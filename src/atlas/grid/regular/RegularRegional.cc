@@ -149,9 +149,8 @@ void RegularRegional::setup(const util::Config& config) {
       throw eckit::BadParameter("Could not configure RegularRegional grid", Here());
     }
 
-    // setup regular grid
-    Regular::setup();
-
+    spacing::Spacing* yspace = new spacing::LinearSpacing(spacing_y_->min(),spacing_y_->max(),spacing_y_->endpoint());
+    Structured::setup(yspace,spacing_x_->size(),spacing_x_->min(),spacing_x_->max(),spacing_x_->step());
 }
 
 RegularRegional::RegularRegional(const util::Config& config) :

@@ -51,14 +51,6 @@ public:
         const long pl[]
     );
 
-    CustomStructured(
-        size_t nlat,
-        const double lats[],
-        const long pl[],
-        const double lonmin[],
-        const double lonmax[]
-    );
-
 };
 
 

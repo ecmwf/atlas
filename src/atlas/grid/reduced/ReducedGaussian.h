@@ -18,7 +18,6 @@ public:
     virtual std::string shortName() const;
     virtual std::string gridType() const { return "reduced_gaussian"; }
 
-    ReducedGaussian();
     ReducedGaussian(const util::Config& params);
     ReducedGaussian(const int N, const long pl[]);
 
@@ -26,10 +25,9 @@ public:
 
 protected:
 
-    void setup(const size_t N, const long pl[]);
+    ReducedGaussian();
 
-    //virtual void set_typeinfo() = 0;
-    //static eckit::Value domain_spec(const Domain& dom);
+    void setup(const size_t N, const long pl[]);
 
 };
 

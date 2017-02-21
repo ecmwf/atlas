@@ -16,10 +16,6 @@ public:
 
     static std::string className();
 
-
-    Regular(const util::Config& params);
-    Regular();
-
     virtual eckit::Properties spec() const;
 
     size_t nlon()           { return nlonmin(); }               // same for all latitudes
@@ -27,12 +23,8 @@ public:
 
 protected:
 
-    void setup();
+    Regular();
 
-protected:
-
-    eckit::SharedPtr<spacing::Spacing> spacing_x_;
-    eckit::SharedPtr<spacing::Spacing> spacing_y_;
 
 };
 

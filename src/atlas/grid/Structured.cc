@@ -63,7 +63,7 @@ Structured::Structured() :
 Structured::~Structured() {
 }
 
-
+/*
 void Structured::setup(
     const size_t ny,
     const double y[],
@@ -89,6 +89,7 @@ void Structured::setup(
 
     compute_true_periodicity();
 }
+
 
 
 void Structured::setup_cropped(const size_t ny, const double y[], const long nx[], const double xmin[], const double xmax[], const domain::Domain& dom ) {
@@ -146,6 +147,65 @@ void Structured::setup_cropped(const size_t ny, const double y[], const long nx[
     }
     setup(dom_ny,dom_y.data(),dom_nx.data(),dom_xmin.data(),dom_xmax.data());
 }
+*/
+
+
+void Structured::setup( 
+    spacing::Spacing*          yspace,
+    const std::vector<long>&   nx,
+    const std::vector<double>& xmin,
+    const std::vector<double>& xmax,
+    const std::vector<double>& dx )
+{
+  yspace_ = std::unique_ptr<spacing::Spacing>(yspace);
+  size_t ny = yspace_->size();
+
+  ASSERT(nx.size() == ny);
+  ASSERT(dx.size() == ny);
+  ASSERT(xmin.size() == ny);
+  ASSERT(xmax.size() == ny);
+
+  y_.assign(yspace->begin(),yspace->end());
+  nx_.assign(nx.begin(),nx.end());
+  dx_.assign(dx.begin(),dx.end());
+  xmin_.assign(xmin.begin(),xmin.end());
+  xmax_.assign(xmax.begin(),xmax.end());
+  
+  nxmin_ = nxmax_ = static_cast<size_t>(nx_.front());
+
+  for (size_t j=1; j<ny; ++j) {
+      nxmin_ = std::min(static_cast<size_t>(nx_[j]),nxmin_);
+      nxmax_ = std::max(static_cast<size_t>(nx_[j]),nxmax_);
+  }
+
+  npts_ = static_cast<size_t>(std::accumulate(nx_.begin(), nx_.end(), 0));
+
+  compute_true_periodicity();
+}
+
+void Structured::setup( 
+    spacing::Spacing* yspace,
+    const long&       nx,
+    const double&     xmin,
+    const double&     xmax,
+    const double&     dx )
+{
+  yspace_ = std::unique_ptr<spacing::Spacing>(yspace);
+  size_t ny = yspace_->size();
+
+  y_.assign(yspace->begin(),yspace->end());
+  nx_.assign(ny, nx);
+  dx_.assign(ny, dx);
+  xmin_.assign(ny, xmin);
+  xmax_.assign(ny, xmax);
+  
+  nxmin_ = nxmax_ = static_cast<size_t>(nx_.front());
+
+  npts_ = static_cast<size_t>(std::accumulate(nx_.begin(), nx_.end(), 0));
+
+  compute_true_periodicity();
+}
+
 
 void Structured::compute_true_periodicity() {
   using eckit::geometry::lonlat_to_3d;

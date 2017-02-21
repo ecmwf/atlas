@@ -2,6 +2,7 @@
 #define atlas_grid_regular_RegularRegional_h
 
 #include "atlas/grid/regular/Regular.h"
+#include "atlas/grid/spacing/LinearSpacing.h"
 
 namespace atlas {
 namespace grid {
@@ -70,6 +71,10 @@ protected:
     void setup(const util::Config& params);
     std::string shortName();
 
+  private:
+    eckit::SharedPtr<spacing::LinearSpacing> spacing_x_;
+    eckit::SharedPtr<spacing::LinearSpacing> spacing_y_;
+    
 };
 
 

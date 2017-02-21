@@ -36,22 +36,26 @@ void ReducedLonLat::setup(size_t ny, long pl[]) {
     // determine input for Structured::setup
     std::vector<double> xmin(ny);    // first longitude per latitude
     std::vector<double> xmax(ny);    // last longitude per latitude
+    std::vector<double> dx(ny);      // step per latitude
+    std::vector<long> nx(ny);      // step per latitude
 
-    // latitudes: gaussian spacing
+    // latitudes: linear spacing
     config_spacing.set("type","linear");
     config_spacing.set("start",90.0);
     config_spacing.set("end",-90.0);
     config_spacing.set("N",ny);
-    eckit::SharedPtr<spacing::Spacing> spacing_y ( spacing::Spacing::create(config_spacing) );
+    spacing::Spacing* yspace = spacing::Spacing::create(config_spacing);
 
     // loop over latitudes to set bounds
-    xmin.assign(ny,0.0);
-    for (int jlat=0;jlat<ny;jlat++) {
-      xmax[jlat]=(pl[jlat]-1)*360.0/pl[jlat];
+    for (int j=0;j<ny;j++) {
+      nx[j]=pl[j];
+      xmin[j]=0.;
+      xmax[j]=360.;
+      dx[j]=360./double(nx[j]);
     }
 
     // setup Structured grid
-    Structured::setup(ny,spacing_y->data(), pl, xmin.data(), xmax.data());
+    Structured::setup(yspace, nx, xmin, xmax, dx);
     if (ny%2) {
       Structured::N_=0;    // odd number of latitudes
     } else {
@@ -63,9 +67,6 @@ void ReducedLonLat::setup(size_t ny, long pl[]) {
 ReducedLonLat::ReducedLonLat(const util::Config& config) :
     Structured()
 {
-    if( not config.get("periodic_x",periodic_x_) ) { periodic_x_ = true; }
-    if( not config.get("periodic_y",periodic_y_) ) { periodic_y_ = false; }
-
     size_t N, nlat;
     if( ! config.get("nlat",nlat) ) {
       if ( !config.get("N",N) ) {

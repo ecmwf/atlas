@@ -38,9 +38,9 @@ ARPEGE::ARPEGE(const util::Config& config) :
     if ( !config.get("stretching_factor",c) ) c=1.0;
     config_proj.set("stretching_factor",c);
     std::vector<double> pole(2);
-    if ( config.get("pole",pole) ) {
+    if ( config.get("north_pole",pole) ) {
       config_proj.set("type","rotated_schmidt");
-      config_proj.set("pole",pole);
+      config_proj.set("north_pole",pole);
     } else {
       config_proj.set("type","schmidt");
     }

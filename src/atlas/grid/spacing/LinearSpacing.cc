@@ -1,3 +1,4 @@
+#include <cmath>
 #include "atlas/grid/spacing/LinearSpacing.h"
 #include "eckit/config/Parametrisation.h"
 #include "eckit/exception/Exceptions.h"
@@ -79,6 +80,18 @@ void LinearSpacing::setup(double start, double end, long N, bool endpoint) {
   min_ = std::min(start,end);
   max_ = std::max(start,end);
 }
+
+double LinearSpacing::step() const {
+  if( size()>1 )
+    return x_[1]-x_[0];
+  else
+    return 0.;
+}
+
+bool LinearSpacing::endpoint() const {
+  return std::abs(x_.back()-max_)<1.e-12;
+}
+
 
 register_BuilderT1(Spacing,LinearSpacing,LinearSpacing::spacing_type_str());
 
