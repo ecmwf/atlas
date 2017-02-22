@@ -107,6 +107,9 @@ double Domain::normalise(double lon) const {
         lon -= 360;
     }
     while (lon < west_) {
+        if (is_approximately_equal(lon, west_)) {
+            return west_;
+        }
         lon += 360;
     }
     return lon;
