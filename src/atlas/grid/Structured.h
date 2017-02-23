@@ -84,6 +84,10 @@ public:
         return N_;
     }
 
+    inline size_t ny() const {
+        return y_.size();
+    }
+
     inline size_t nlat() const {
         return y_.size();
     }
@@ -135,8 +139,6 @@ public:
     }
 
     bool isPeriodicX() const { return periodic_x_; }
-
-    bool isPeriodicY() const { return periodic_y_; }
 
 protected: // methods
 
@@ -198,9 +200,6 @@ protected:
 
     /// Periodicity in x-direction
     bool periodic_x_;
-
-    /// Periodicity in y-direction
-    bool periodic_y_;
 
     std::unique_ptr< spacing::Spacing > yspace_;
 };

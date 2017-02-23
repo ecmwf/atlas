@@ -44,6 +44,8 @@ grid/domain/EmptyDomain.h
 grid/domain/EmptyDomain.cc
 grid/domain/GlobalDomain.h
 grid/domain/GlobalDomain.cc
+grid/domain/ZonalBandDomain.h
+grid/domain/ZonalBandDomain.cc
 grid/Grid.cc
 grid/Grid.h
 grid/GridDistribution.cc

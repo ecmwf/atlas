@@ -125,6 +125,7 @@ CustomStructured::CustomStructured(const util::Config& config) :
     config_domain.set("ymax",yspace->max());
     config_domain.set("xmin",dom_xmin);
     config_domain.set("xmax",dom_xmax);
+    config_domain.set("units",projection_->units());
     domain_.reset( domain::Domain::create(config_domain) );
   }
 

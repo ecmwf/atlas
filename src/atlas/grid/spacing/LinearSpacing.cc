@@ -11,7 +11,7 @@ namespace spacing {
 LinearSpacing::Params::Params(const eckit::Parametrisation& params) {
   endpoint = true;
   params.get("endpoint", endpoint );
-
+  std::vector<double> interval;
   // if( params.get("step",step) ) {
   //
   //   // Several combinations possible:
@@ -31,7 +31,11 @@ LinearSpacing::Params::Params(const eckit::Parametrisation& params) {
     // Only one remaining combinations possible:
     if( params.get("start",start) && params.get("end",end) ) {
       // OK
-    } else if( params.get("start",start) && params.get("length",length) ) {
+    } else if( params.get("interval",interval) ) {
+      start = interval[0];
+      end   = interval[1];
+    }
+    else if( params.get("start",start) && params.get("length",length) ) {
       end = start + length;
     } else {
       throw eckit::BadParameter("Invalid combination of parameters",Here());

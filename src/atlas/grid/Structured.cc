@@ -15,9 +15,10 @@
 #include <limits>
 #include "atlas/runtime/ErrorHandling.h"
 #include "eckit/geometry/Point3.h"
-
 #include "atlas/internals/Debug.h"
 
+using eckit::geometry::Point3;
+using eckit::geometry::lonlat_to_3d;
 
 namespace atlas {
 namespace grid {
@@ -206,41 +207,47 @@ void Structured::setup(
   compute_true_periodicity();
 }
 
+namespace {
+  struct EarthCentred {
+    EarthCentred(Structured& _grid) : grid(_grid) {}
+    Point3 operator()(double ll[]) {
+      grid.projection().coords2lonlat(ll);
+      double p[3];
+      double r=1., h=0.;
+      lonlat_to_3d(ll,p,r,h);
+      return Point3( p[0], p[1], p[2] );
+    }
+    Point3 operator()(std::array<double,2> ll) { return operator()(ll.data()); }
+    Structured& grid;
+  };
+}
 
 void Structured::compute_true_periodicity() {
-  using eckit::geometry::lonlat_to_3d;
-  using eckit::geometry::Point3;
-  using eckit::geometry::points_equal;
 
-  double llxmin[] = { domain_->xmin(), 0.5*(domain_->ymin()+domain_->ymax()) };
-  double llxmax[] = { domain_->xmax(), 0.5*(domain_->ymin()+domain_->ymax()) };
-  double llymin[] = { 0.5*(domain_->xmin()+domain_->xmax()), domain_->ymin() };
-  double llymax[] = { 0.5*(domain_->xmin()+domain_->xmax()), domain_->ymax() };
+  if( projection_->isStrictlyRegional() ) {
+    periodic_x_ = false;
 
-  projection_->coords2lonlat(llxmin);
-  projection_->coords2lonlat(llxmax);
-  projection_->coords2lonlat(llymin);
-  projection_->coords2lonlat(llymax);
+  } else if( domain_->isGlobal() ) {
+    periodic_x_ = true;
 
-  double pxmin[3];
-  double pxmax[3];
-  double pymin[3];
-  double pymax[3];
+  } else {
+    // domain could be zonal band
 
-  double r=1., h=0.;
-  lonlat_to_3d(llxmin,pxmin,r,h);
-  lonlat_to_3d(llxmax,pxmax,r,h);
-  lonlat_to_3d(llymin,pymin,r,h);
-  lonlat_to_3d(llymax,pymax,r,h);
+    size_t j = ny()/2;
+    if( (nx_[j]-1) * dx_[j] == xmax_[j] ) {
+      periodic_x_ = false; // This would lead to duplicated points
+    } else {
+      // High chance to be periodic. Check anyway.
+      EarthCentred compute_earth_centred(*this);
 
-  enum{ XX=0, YY=1, ZZ=2 };
-  Point3 Pxmin(pxmin[XX],pxmin[YY],pxmin[ZZ]);
-  Point3 Pxmax(pxmax[XX],pxmax[YY],pxmax[ZZ]);
-  Point3 Pymin(pymin[XX],pymin[YY],pymin[ZZ]);
-  Point3 Pymax(pymax[XX],pymax[YY],pymax[ZZ]);
+      Point3 Pxmin = compute_earth_centred( { xmin_[j], y_[j] } );
+      Point3 Pxmax = compute_earth_centred( { xmax_[j], y_[j] } );
 
-  periodic_x_ = points_equal( Pxmin, Pxmax );
-  periodic_y_ = points_equal( Pymin, Pymax );
+      periodic_x_  = points_equal( Pxmin, Pxmax );      
+    }
+
+  }
+
 }
 
 void Structured::lonlat( std::vector<Point>& pts ) const {

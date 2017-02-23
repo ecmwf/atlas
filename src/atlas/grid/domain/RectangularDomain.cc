@@ -1,3 +1,4 @@
+#include <utility>
 #include "atlas/grid/domain/RectangularDomain.h"
 
 
@@ -7,49 +8,65 @@ namespace domain {
 
 namespace {
   
-  static bool is_global(double xmin, double xmax, double ymin, double ymax) {
-    const double eps = 1.e-12;
-    return std::abs( (xmax-xmin) - 360. ) < eps 
-        && std::abs( (ymax-ymin) - 180. ) < eps ;
+  static bool is_global(double xmin, double xmax, double ymin, double ymax, const std::string& units) {
+    return false;
+
+    // if( units != "degrees" )
+    //   return false;
+    //
+    // const double eps = 1.e-12;
+    // return std::abs( (xmax-xmin) - 360. ) < eps
+    //     && std::abs( (ymax-ymin) - 180. ) < eps ;
   }
   
-}
+  static std::array<double,2> get_interval_x(const eckit::Parametrisation& params) {
+    double xmin, xmax;
+  
+    if( ! params.get("xmin",xmin) )
+      throw eckit::BadParameter("xmin missing in Params",Here());
 
-RectangularDomain::RectangularDomain(const eckit::Parametrisation& params) {
-
-  if( ! params.get("xmin",xmin_) )
-    throw eckit::BadParameter("xmin missing in Params",Here());
-
-  if( ! params.get("xmax",xmax_) )
-    throw eckit::BadParameter("xmax missing in Params",Here());
-
-  if( ! params.get("ymin",ymin_) )
-    throw eckit::BadParameter("ymin missing in Params",Here());
-
-  if( ! params.get("ymax",ymax_) )
-    throw eckit::BadParameter("ymax missing in Params",Here());
-
-  // normalize domain: make sure xmax>=xmin and ymax>=ymin
-  double swp;
-
-  if (xmin_>xmax_) {
-    swp=xmin_;xmin_=xmax_;xmax_=swp;
+    if( ! params.get("xmax",xmax) )
+      throw eckit::BadParameter("xmax missing in Params",Here());
+  
+    return {xmin,xmax};
   }
 
-  if (ymin_>ymax_) {
-    swp=ymin_;ymin_=ymax_;ymax_=swp;
+  static std::array<double,2> get_interval_y(const eckit::Parametrisation& params) {
+    double ymin, ymax;
+  
+    if( ! params.get("ymin",ymin) )
+      throw eckit::BadParameter("ymin missing in Params",Here());
+
+    if( ! params.get("ymax",ymax) )
+      throw eckit::BadParameter("ymax missing in Params",Here());
+  
+    return {ymin,ymax};
   }
   
-  global_ = is_global(xmin_,xmax_,ymin_,ymax_);
+  static std::string get_units(const eckit::Parametrisation& params) {
+    std::string units;
+    if( ! params.get("units",units) )
+      throw eckit::BadParameter("units missing in Params",Here());
+    return units;
+  }
 
 }
 
-RectangularDomain::RectangularDomain( const std::array<double,2>& xrange, const std::array<double,2>& yrange ) {
-  xmin_ = xrange[0];
-  xmax_ = xrange[1];
-  ymin_ = yrange[0];
-  ymax_ = yrange[1];
-  global_ = is_global(xmin_,xmax_,ymin_,ymax_);
+RectangularDomain::RectangularDomain(const eckit::Parametrisation& params) :
+  RectangularDomain( get_interval_x(params), get_interval_y(params), get_units(params) ) {
+}
+
+RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, const std::string& units ) :
+  xmin_(x[0]),
+  xmax_(x[1]),
+  ymin_(y[0]),
+  ymax_(y[1]),
+  units_(units) {
+
+  // Make sure xmax>=xmin and ymax>=ymin
+  if (xmin_>xmax_) std::swap(xmin_,xmax_);
+  if (ymin_>ymax_) std::swap(ymin_,ymax_);
+  global_ = is_global(xmin_,xmax_,ymin_,ymax_,units_);
 }
 
 
@@ -60,7 +77,7 @@ bool RectangularDomain::contains(double x, double y) const {
 
 eckit::Properties RectangularDomain::spec() const {
   eckit::Properties domain_prop;
-  domain_prop.set("domainType",virtual_domain_type_str());
+  domain_prop.set("domainType",type());
   domain_prop.set("xmin",xmin_);
   domain_prop.set("xmax",xmax_);
   domain_prop.set("ymin",ymin_);
@@ -68,7 +85,17 @@ eckit::Properties RectangularDomain::spec() const {
   return domain_prop;
 }
 
-register_BuilderT1(Domain,RectangularDomain,RectangularDomain::domain_type_str());
+void RectangularDomain::print(std::ostream& os) const {
+  os << "RectangularDomain["
+     <<  "xmin=" << xmin()
+     << ",xmax=" << xmax()
+     << ",ymin=" << ymin()
+     << ",ymax=" << ymax()
+     << ",units=" << units()
+     << "]";
+}
+
+register_BuilderT1(Domain,RectangularDomain,RectangularDomain::static_type());
 
 }  // namespace domain
 }  // namespace grid

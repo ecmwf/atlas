@@ -18,18 +18,17 @@ public:
     /// Checks if the point is contained in the domain
     virtual bool contains(double x, double y) const;
 
-    static std::string domain_type_str() {return "circular";}
-    virtual std::string virtual_domain_type_str() const { return "circular"; }
+    static std::string static_type() {return "circular";}
+    virtual std::string type() const { return static_type(); }
 
     virtual bool isEmpty() const { return (radius_>0); }
     virtual bool isGlobal() const { return false; }
 
     virtual eckit::Properties spec() const;
 
-    virtual double xmin() const { return xc_-radius_; }
-    virtual double xmax() const { return xc_+radius_; }
-    virtual double ymin() const { return yc_-radius_; }
-    virtual double ymax() const { return yc_+radius_; }
+    virtual void print(std::ostream&) const;
+    
+    virtual std::string units() const; // Not implemented
 
 private:
     double xc_, yc_, radius_, rr_;

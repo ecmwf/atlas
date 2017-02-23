@@ -34,6 +34,7 @@ public:
 
     typedef const eckit::Parametrisation& ARG1;
     typedef eckit::BuilderT1<Domain> builder_t;
+    static std::string className() {return "atlas.Domain";}
 
 public:
 
@@ -41,21 +42,14 @@ public:
 
     static Domain* create(const eckit::Parametrisation&);
 
-    // className
-    static std::string className() {return "atlas.Domain";}
-
-    static std::string domain_type_str() { return "domain"; }
-    virtual std::string virtual_domain_type_str() const { return "domain"; }
+    virtual std::string type() const=0;
 
     /// Checks if the point is contained in the domain
-    bool contains(eckit::geometry::Point2 p) const { return contains(p[0],p[1]); }
+    bool contains(const eckit::geometry::Point2& p) const { return contains(p[0],p[1]); }
     virtual bool contains(double x, double y) const =0;
 
     // Specification of grid
     virtual eckit::Properties spec() const =0;
-
-    /// Output to stream
-    void print(std::ostream&) const;
 
     /// Check if domain represents the complete globe surface
     virtual bool isGlobal() const =0;
@@ -71,12 +65,17 @@ public:
 
     /// Check if grid includes the South pole
     bool includesSouthPole(const projection::Projection& ) const;
+    
+    /// Output to stream
+    virtual void print(std::ostream&) const =0;
 
-    virtual double xmin() const =0;
-    virtual double xmax() const =0;
-    virtual double ymin() const =0;
-    virtual double ymax() const =0;
-
+    friend std::ostream& operator<<(std::ostream& s, const Domain& d) {
+        d.print(s);
+        return s;
+    }
+    
+    virtual std::string units() const =0;
+    
 };
 
 

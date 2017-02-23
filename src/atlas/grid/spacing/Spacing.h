@@ -2,6 +2,7 @@
 #define atlas_Spacing_H
 
 #include <vector>
+#include <array>
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
 #include "atlas/util/Config.h"
@@ -21,6 +22,7 @@ public:
     typedef const eckit::Parametrisation& ARG1;
     typedef eckit::BuilderT1<Spacing> builder_t;
     typedef std::vector<double>::const_iterator const_iterator;
+    using Interval = std::array<double,2>;
 
 public:
 
@@ -40,6 +42,8 @@ public:
 
     const double& front() const { return x_.front(); }
     const double& back()  const { return x_.back();  }
+
+    Interval interval() const { return {min_,max_}; }
 
     const double min() const { return min_; }
     const double max() const { return max_; }

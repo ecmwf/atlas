@@ -3,11 +3,173 @@
 #include "atlas/grid/regular/RegularRegional.h"
 #include "atlas/grid/domain/RectangularDomain.h"
 #include "atlas/grid/spacing/LinearSpacing.h"
+#include "atlas/grid/projection/LonLatProjection.h"
 #include "atlas/internals/Debug.h"
+
+using atlas::grid::domain::RectangularDomain;
+using atlas::grid::projection::Projection;
+using atlas::grid::projection::LonLatProjection;
+using atlas::grid::projection::RotatedLonLatProjection;
+using atlas::grid::spacing::LinearSpacing;
+using atlas::grid::spacing::Spacing;
+using eckit::Parametrisation;
 
 namespace atlas {
 namespace grid {
 namespace regular {
+
+namespace {
+
+  double step(double min,double max, long N, bool endpoint) {
+    double l = max-min;
+    if( endpoint && N>1 )
+      return l/double(N-1);
+    else
+      return l/double(N);
+  }
+
+  struct Space {
+    Space() {}
+    Space( std::initializer_list<double> interval ) : min(*interval.begin()), max(*(interval.begin()+1)) {}
+    double min;
+    double max;
+    long N;
+    double step;
+    bool endpoint = {true};
+  };
+
+  struct Parse {
+    bool valid;
+    Space x = {0,360};
+    Space y = {-90,90};
+  };
+
+  struct Parse_llc_step : Parse {
+    Parse_llc_step( const Projection& p, const Parametrisation& config ) {
+        std::vector<double> centre_lonlat;
+
+        valid = config.get("nx",x.N)
+            &&  config.get("ny",y.N)
+            &&  config.get("dx",x.step)
+            &&  config.get("dy",y.step)
+            &&  config.get("lonlat(centre)",centre_lonlat);
+
+        if( not valid) return;
+  
+        double centre[] = {centre_lonlat[0],centre_lonlat[1]};
+        p.lonlat2coords(centre);
+
+        double lx = x.step * double(x.N-1);
+        double ly = y.step * double(y.N-1);
+  
+        x.min = centre[0] - 0.5 * lx;
+        x.max = centre[0] + 0.5 * lx;
+        y.min = centre[1] - 0.5 * ly;
+        y.max = centre[1] + 0.5 * ly;
+  
+    }
+  };
+
+  struct Parse_bounds_xy : Parse {
+    Parse_bounds_xy( const Projection& p, const Parametrisation& config ) {
+      valid = config.get("nx",x.N)
+          &&  config.get("ny",y.N)
+          &&  config.get("xmin",x.min)
+          &&  config.get("xmax",x.max)
+          &&  config.get("ymin",y.min)
+          &&  config.get("ymax",y.max);
+  
+      if( not valid ) return;
+
+      config.get("endpoint_x",x.endpoint);
+      config.get("endpoint_y",y.endpoint);
+
+      x.step = step(x.min,x.max,x.N,x.endpoint);
+      y.step = step(y.min,y.max,y.N,y.endpoint);
+    }
+  };
+
+  struct Parse_bounds_lonlat : Parse {
+    Parse_bounds_lonlat( const Projection& p, const Parametrisation& config ) {
+      valid = config.get("nx",x.N)
+          &&  config.get("ny",y.N)
+          &&  config.get("north",y.max)  // unrotated!
+          &&  config.get("south",y.min)  // unrotated!
+          &&  config.get("east", x.max)  // unrotated!
+          &&  config.get("west", x.min); // unrotated!
+
+      // This version only works with a "lonlat" or "rotated_lonlat" projection!!!
+      if( valid ) {
+        bool valid_projection = 
+              dynamic_cast<const LonLatProjection*>( &p )
+          ||  dynamic_cast<const RotatedLonLatProjection*>( &p );
+        if( not valid_projection ) {
+          throw eckit::BadParameter("This configuration requires that the projection is \"lonlat\" or \"rotated_lonlat\"",Here());
+        }
+      }
+      
+      if( not valid ) return;
+
+      config.get("endpoint_x",x.endpoint);
+      config.get("endpoint_y",y.endpoint);
+
+      x.step = step(x.min,x.max,x.N,x.endpoint);
+      y.step = step(y.min,y.max,y.N,y.endpoint);
+    }
+  };
+
+  struct Parse_ll00_ll11 : Parse {
+    Parse_ll00_ll11( const Projection& p, const Parametrisation& config ) {
+      std::vector<double> sw;
+      std::vector<double> ne;
+      valid = config.get("nx",x.N)
+          &&  config.get("ny",y.N)
+          &&  config.get("lonlat(xmin,ymin)",sw)   // includes rotation
+          &&  config.get("lonlat(xmax,ymax)",ne);  // includes rotation
+
+      if( not valid ) return;
+
+      config.get("endpoint_x",x.endpoint);
+      config.get("endpoint_y",y.endpoint);
+
+      p.lonlat2coords(sw.data());
+      p.lonlat2coords(ne.data());
+      x.min = sw[0];    x.max = ne[0];
+      y.min = sw[1];    y.max = ne[1];
+
+      x.step = step(x.min,x.max,x.N,x.endpoint);
+      y.step = step(y.min,y.max,y.N,y.endpoint);
+    }
+  };
+
+  struct Parse_ll00_step : Parse {
+    Parse_ll00_step( const Projection& p, const Parametrisation& config ) {
+      std::vector<double> sw;
+      valid = config.get("nx",x.N)
+          &&  config.get("ny",y.N)
+          &&  config.get("dx",x.step)
+          &&  config.get("dy",y.step)
+          &&  config.get("lonlat(xmin,ymin)",sw); // includes rotation
+
+      if( not valid ) return;
+
+      config.get("endpoint_x",x.endpoint);
+      config.get("endpoint_y",y.endpoint);
+
+      p.lonlat2coords(sw.data());
+      x.min = sw[0];
+      y.min = sw[1];
+  
+      x.max = x.min + x.step * (x.N-1);
+      y.max = y.min + y.step * (y.N-1);
+    }
+  };
+
+
+}
+
+
+
 
 //-----------------------------------------------------------------------------
 
@@ -29,98 +191,6 @@ std::string RegularRegional::shortName() const {
 
 //-----------------------------------------------------------------------------
 
-RegularRegional::ParseUniformCentred::ParseUniformCentred(const eckit::Parametrisation& config) {
-  valid = config.get("nx",nx)
-      &&  config.get("ny",ny)
-      &&  config.get("centre",centre_lonlat)
-      &&  config.get("dx",dx)
-      &&  config.get("dy",dy);
-  endpoint_x = true;
-  endpoint_y = true;
-  config.get("endpoint_x",endpoint_x);
-  config.get("endpoint_y",endpoint_y);
-}
-
-void RegularRegional::ParseUniformCentred::apply(RegularRegional& g) const {
-  double p[] = {centre_lonlat[0],centre_lonlat[1]};
-  g.projection_->lonlat2coords(p);
-  
-  NOTIMP;
-  // g.spacing_x_.reset( new spacing::LinearSpacing(p[0],dx,nx,endpoint_x) );
-  // g.spacing_y_.reset( new spacing::LinearSpacing(p[1],dy,ny,endpoint_y) );
-
-  double LX = 2.*(p[0] - g.spacing_x_->front());
-  double LY = 2.*(p[1] - g.spacing_y_->front());
-  g.domain_.reset( new domain::RectangularDomain(
-      { p[0]-0.5*LX , p[0]+0.5*LX },
-      { p[1]-0.5*LY , p[1]+0.5*LY }));
-}
-
-//-----------------------------------------------------------------------------
-
-RegularRegional::ParseBounds::ParseBounds(const eckit::Parametrisation& config) {
-  valid = config.get("nx",nx)
-      &&  config.get("ny",ny)
-      &&  config.get("xmin",xmin)
-      &&  config.get("xmax",xmax)
-      &&  config.get("ymin",ymin)
-      &&  config.get("ymax",ymax);
-  endpoint_x = true;
-  endpoint_y = true;
-  config.get("endpoint_x",endpoint_x);
-  config.get("endpoint_y",endpoint_y);
-}
-
-void RegularRegional::ParseBounds::apply(RegularRegional& g) const {
-  g.spacing_x_.reset( new spacing::LinearSpacing( xmin, xmax, nx, endpoint_x ) );
-  g.spacing_y_.reset( new spacing::LinearSpacing( ymin, ymax, ny, endpoint_y ) );
-  g.domain_.reset( new domain::RectangularDomain( {xmin, xmax}, {ymin, ymax} ) );
-}
-
-//-----------------------------------------------------------------------------
-
-RegularRegional::ParseLonLatBounds::ParseLonLatBounds(const eckit::Parametrisation& config) {
-  valid = config.get("nx",nx)
-      &&  config.get("ny",ny)
-      &&  config.get("north",north) // unrotated
-      &&  config.get("south",south) // unrotated
-      &&  config.get("east",east)   // unrotated
-      &&  config.get("west",west);  // unrotated
-  endpoint_x = true;
-  endpoint_y = true;
-  config.get("endpoint_x",endpoint_x);
-  config.get("endpoint_y",endpoint_y);
-}
-
-
-//template<typename T>
-//bool is_projection(const projection::Projection& p) {
-//  return dynamic_cast<const T*>(&p);
-//}
-
-//void RegularRegional::ParseLonLatBounds::apply(RegularRegional& g) const {
-//  if( not ( is_projection<projection::LonLatProjection>       (g.projection() )||
-//            is_projection<projection::RotatedLonLatProjection>(g.projection()))) {
-//    throw eckit::BadParameter("Projection is not compatible with lon/lat bounds",Here());
-//  }
-//  g.spacing_x_.reset( new spacing::LinearSpacing( {west,east}, nx, endpoint_x ) );
-//  g.spacing_y_.reset( new spacing::LinearSpacing( {south,north}, ny, endpoint_y ) );
-//  g.domain_.reset( new domain::RectangularDomain( {west,east}, {south,north} ) );
-//}
-
-
-void RegularRegional::ParseLonLatBounds::apply(RegularRegional& g) const {
-  double sw[] = {west,south};
-  double ne[] = {east,north};
-  g.projection_->lonlat2coords(sw);
-  g.projection_->lonlat2coords(ne);
-  g.spacing_x_.reset( new spacing::LinearSpacing( sw[0],ne[0], nx, endpoint_x ) );
-  g.spacing_y_.reset( new spacing::LinearSpacing( sw[1],ne[1], ny, endpoint_y ) );
-  g.domain_.reset( new domain::RectangularDomain( {sw[0],ne[0]}, {sw[1],ne[1]} ) );
-}
-
-//-----------------------------------------------------------------------------
-
 void RegularRegional::setup(const util::Config& config) {
 
     // read projection subconfiguration
@@ -132,15 +202,19 @@ void RegularRegional::setup(const util::Config& config) {
 
     using Parsers = std::vector< std::unique_ptr<Parse> >;
     Parsers parsers;
-    parsers.push_back( std::unique_ptr<ParseUniformCentred>( new ParseUniformCentred(config) ) );
-    parsers.push_back( std::unique_ptr<ParseLonLatBounds>( new ParseLonLatBounds(config) ) );
-    parsers.push_back( std::unique_ptr<ParseBounds>( new ParseBounds(config) ) );
+    parsers.push_back( std::unique_ptr<Parse>( new Parse_llc_step      (projection(),config) ) );
+    parsers.push_back( std::unique_ptr<Parse>( new Parse_ll00_step     (projection(),config) ) );
+    parsers.push_back( std::unique_ptr<Parse>( new Parse_bounds_lonlat (projection(),config) ) );
+    parsers.push_back( std::unique_ptr<Parse>( new Parse_bounds_xy     (projection(),config) ) );
+    parsers.push_back( std::unique_ptr<Parse>( new Parse_ll00_ll11     (projection(),config) ) );
 
     bool configured(false);
+    Space x,y;
     for( Parsers::const_iterator it=parsers.begin(); it!=parsers.end(); ++it ) {
       const Parse& p = **it;
       if( not configured && p.valid ) {
-        p.apply(*this);
+        x = p.x;
+        y = p.y;
         configured = true;
       }
     }
@@ -149,8 +223,11 @@ void RegularRegional::setup(const util::Config& config) {
       throw eckit::BadParameter("Could not configure RegularRegional grid", Here());
     }
 
-    spacing::Spacing* yspace = new spacing::LinearSpacing(spacing_y_->min(),spacing_y_->max(),spacing_y_->endpoint());
-    Structured::setup(yspace,spacing_x_->size(),spacing_x_->min(),spacing_x_->max(),spacing_x_->step());
+    spacing::Spacing* yspace = new LinearSpacing(y.min,y.max,y.N,y.endpoint);
+    
+    domain_.reset( new RectangularDomain( {x.min,x.max}, {y.min,y.max}, projection_->units() ) );
+        
+    Structured::setup(yspace,x.N,x.min,x.max,x.step);
 }
 
 RegularRegional::RegularRegional(const util::Config& config) :

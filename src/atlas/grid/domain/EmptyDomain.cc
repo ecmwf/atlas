@@ -5,16 +5,27 @@ namespace atlas {
 namespace grid {
 namespace domain {
 
+EmptyDomain::EmptyDomain() {
+}
+
 EmptyDomain::EmptyDomain(const eckit::Parametrisation& p) {
 }
 
 eckit::Properties EmptyDomain::spec() const {
   eckit::Properties domain_prop;
-  domain_prop.set("domainType",virtual_domain_type_str());
+  domain_prop.set("domainType",type());
   return domain_prop;
 }
 
-register_BuilderT1(Domain,EmptyDomain,EmptyDomain::domain_type_str());
+void EmptyDomain::print(std::ostream& os) const {
+  os << "EmptyDomain";
+}
+
+std::string EmptyDomain::units() const {
+  NOTIMP;
+}
+
+register_BuilderT1(Domain,EmptyDomain,EmptyDomain::static_type());
 
 }  // namespace domain
 }  // namespace grid

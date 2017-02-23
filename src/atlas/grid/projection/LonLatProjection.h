@@ -33,11 +33,12 @@ public:
   virtual void coords2lonlat(double crd[]) const { rotation_.rotate(crd);   }
   virtual void lonlat2coords(double crd[]) const { rotation_.unrotate(crd); }
 
-  // purely regional? - no!
-  bool isRegional() { return false; }
+  virtual bool isStrictlyRegional() const { return false; }
 
   // specification
   virtual eckit::Properties spec() const;
+
+  virtual std::string units() const { return "degrees"; }
 
 private:
 

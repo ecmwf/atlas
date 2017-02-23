@@ -191,8 +191,8 @@ void Meshgen2Gmsh::execute(const Args& args)
 
   if( !grid ) return;
   
-  Log::debug() << "Domain spec: " << grid->domain().spec() << std::endl;
-  Log::debug() << "Domain global: " << std::string(grid->domain().isGlobal() ? "yes" : "no") << std::endl;
+  Log::debug() << "Domain: " << grid->domain() << std::endl;
+  Log::debug() << "Periodic: " << grid->isPeriodicX() << std::endl;
   
   SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
       mesh::generators::MeshGenerator::create(meshgenerator_type,meshgenerator_config) );

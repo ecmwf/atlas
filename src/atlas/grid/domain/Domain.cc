@@ -4,8 +4,6 @@
 #include "atlas/grid/projection/Projection.h"
 #include "eckit/exception/Exceptions.h"
 
-#warning TODO: Non-global grids may also include north-pole, south-pole, or be periodic-east-west
-
 namespace atlas {
 namespace grid {
 namespace domain {
@@ -19,9 +17,9 @@ Domain *Domain::create() {
 
 Domain *Domain::create(const eckit::Parametrisation &p) {
 
-  std::string domainType;
-  if (p.get("type",domainType)) {
-    return eckit::Factory<Domain>::instance().get(domainType).create(p);
+  std::string domain_type;
+  if (p.get("type",domain_type)) {
+    return eckit::Factory<Domain>::instance().get(domain_type).create(p);
   }
 
   // should return error here

@@ -37,6 +37,12 @@ GaussianSpacing::GaussianSpacing(const eckit::Parametrisation& params) {
   double end   = -90.;
   params.get("start", start);
   params.get("end",   end  );
+  
+  std::vector<double> interval;
+  if( params.get("interval",interval) ) {
+    start = interval[0];
+    end   = interval[1];
+  }
   if( start!=90. && end!=-90. ) {
     NOTIMP;
   }

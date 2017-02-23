@@ -52,8 +52,8 @@ LambertProjection::LambertProjection( const LambertProjection& rhs ) : Projectio
 
 void LambertProjection::setup() {
   // setup (derived) constants
-  isTangent_=(lat1_==lat2_);
-  if ( isTangent_ ) {
+  is_tangent_ = (lat1_==lat2_);
+  if ( is_tangent_ ) {
     n_=std::sin(D2R(lat1_));
   } else {
     n_=std::log(std::cos(D2R(lat1_))/std::cos(D2R(lat2_)))/std::log(std::tan(D2R(45+lat2_*0.5))/std::tan(D2R(45.+lat1_*0.5)));

@@ -2,20 +2,22 @@
 #define atlas_grid_GlobalDomain_h
 
 #include <iostream>
-#include "atlas/grid/domain/Domain.h"
+#include "atlas/grid/domain/ZonalBandDomain.h"
 #include "eckit/geometry/Point2.h"
 
 namespace atlas {
 namespace grid {
 namespace domain {
 
-class GlobalDomain: public Domain {
+class GlobalDomain: public ZonalBandDomain {
 
 public:
 
+    GlobalDomain();
     GlobalDomain(const eckit::Parametrisation& p);
 
-    static std::string className() {return "atlas.GlobalDomain";}
+    static std::string static_type() {return "global";}
+    virtual std::string type() const { return static_type(); }
 
     /// Checks if the point is contained in the domain
     virtual bool contains(double x, double y) const { return true; }
@@ -24,19 +26,10 @@ public:
     virtual bool isGlobal() const { return true; }
     virtual bool isEmpty()  const { return false; }
 
-    static std::string domain_type_str() {return "global";}
-    virtual std::string virtual_domain_type_str() const { return "global"; }
-
     virtual eckit::Properties spec() const;
 
-    virtual double xmin() const { return  0.  ; }
-    virtual double xmax() const { return  360.; }
-    virtual double ymin() const { return -90. ; }
-    virtual double ymax() const { return  90  ; }
+    virtual void print(std::ostream&) const;
 
-private:
-
-    void setup();
 };
 
 

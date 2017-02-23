@@ -7,11 +7,11 @@ namespace atlas {
 namespace grid {
 namespace spacing {
 
-CustomSpacing::CustomSpacing(long N, const double values[], const std::array<double,2>& span) {
+CustomSpacing::CustomSpacing(long N, const double values[], const Interval& interval) {
 
   x_.assign(values,values+N);
-  min_ = std::min(span[0],span[1]);
-  max_ = std::max(span[0],span[1]);
+  min_ = std::min(interval[0],interval[1]);
+  max_ = std::max(interval[0],interval[1]);
 }
 
 CustomSpacing::CustomSpacing(const eckit::Parametrisation& params) {
@@ -24,11 +24,11 @@ CustomSpacing::CustomSpacing(const eckit::Parametrisation& params) {
   }
   N = x_.size();
   
-  std::vector<double> span;
-  if( params.get("span",span) ) {
+  std::vector<double> interval;
+  if( params.get("interval",interval) ) {
 
-    min_ = std::min(span[0],span[1]);
-    max_ = std::max(span[0],span[1]);
+    min_ = std::min(interval[0],interval[1]);
+    max_ = std::max(interval[0],interval[1]);
 
   } else {
   

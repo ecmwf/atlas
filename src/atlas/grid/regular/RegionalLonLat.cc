@@ -55,7 +55,7 @@ void RegionalLonLat::setup(const util::Config& config) {
     config_rr.set("ny",nlat);
 
     // setup a regular regional grid
-    RegularRegional::setup(config_rr);
+NOTIMP;    // RegularRegional::setup(config_rr);
 
 }
 

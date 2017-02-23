@@ -38,11 +38,12 @@ field::Field& BuildTorusXYZField::operator()(Mesh& mesh, const atlas::grid::doma
 field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::grid::domain::Domain * dom, double r0, double r1, int nx, int ny) const
 {
   // fill xyz with torus coordinates. r0 and r1 are large and small radii, respectively.
-
-  const double xmin = dom->xmin();
-  const double xmax = dom->xmax();
-  const double ymin = dom->ymin();
-  const double ymax = dom->ymax();
+  
+  auto domain = dynamic_cast<const grid::domain::RectangularDomain*>( dom );
+  const double xmin = domain->xmin();
+  const double xmax = domain->xmax();
+  const double ymin = domain->ymin();
+  const double ymax = domain->ymax();
 
   if( !nodes.has_field(name_) )
   {

@@ -30,11 +30,12 @@ public:
     virtual void coords2lonlat(double crd[]) const;
     virtual void lonlat2coords(double crd[]) const;
     
-    // TODO: the comment says lambert, but this is Mercator.... ?
-    bool isRegional() { return true; }  // lambert projection cannot be used for global grids
+    virtual bool isStrictlyRegional() const { return true; }  // Mercator projection cannot be used for global grids
 
     // specification
     virtual eckit::Properties spec() const;
+
+    virtual std::string units() const { return "meters"; }
 
 protected:
 

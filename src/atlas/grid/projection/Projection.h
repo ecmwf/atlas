@@ -35,9 +35,11 @@ public:
     virtual void coords2lonlat(double crd[]) const = 0;
     virtual void lonlat2coords(double crd[]) const = 0;
 
-    virtual bool isRegional()=0;
+    virtual bool isStrictlyRegional() const =0;
 
     virtual eckit::Properties spec() const =0;
+    
+    virtual std::string units() const =0;
 
 };
 

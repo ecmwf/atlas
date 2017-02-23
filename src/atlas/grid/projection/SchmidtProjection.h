@@ -31,11 +31,12 @@ public:
     virtual void coords2lonlat(double crd[]) const;
     virtual void lonlat2coords(double crd[]) const;
 
-    // purely regional? - no!
-    bool isRegional() { return false; }  // schmidt is global grid
+    virtual bool isStrictlyRegional() const { return false; }  // schmidt is global grid
 
     // specification
     virtual eckit::Properties spec() const;
+
+    virtual std::string units() const { return "degrees"; }
 
 private:
 

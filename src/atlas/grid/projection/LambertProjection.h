@@ -31,15 +31,17 @@ public:
     virtual void coords2lonlat(double crd[]) const;
     virtual void lonlat2coords(double crd[]) const;
 
-    bool isRegional() { return true; }  // lambert projection cannot be used for global grids
+    virtual bool isStrictlyRegional() const { return true; }  // lambert projection cannot be used for global grids
 
     // specification
     virtual eckit::Properties spec() const;
 
+    virtual std::string units() const { return "meters"; }
+
 private:
   
-    double lat1_, lat2_;     // secant latitudes
-    bool isTangent_;
+    double lat1_, lat2_;     // First and second latitude at which the secant cone cuts the sphere
+    bool is_tangent_;        // If the first and second latitude are equal, then the projection is on a tangent cone
     double lon0_;            // central longitude
     double radius_;          // sphere radius
     double n_, inv_n_, F_, rho0_;    // projection constants
