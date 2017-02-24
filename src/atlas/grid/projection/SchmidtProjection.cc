@@ -40,7 +40,7 @@ Projection* SchmidtProjectionT<Rotation>::clone() const  {
 }
 
 template <typename Rotation>
-void SchmidtProjectionT<Rotation>::coords2lonlat(double crd[]) const {
+void SchmidtProjectionT<Rotation>::xy2lonlat(double crd[]) const {
 
   // stretch
   crd[1]=R2D(std::asin(std::cos(2.*std::atan(1/c_*std::tan(std::acos(std::sin(D2R(crd[1])))*0.5)))));
@@ -50,7 +50,7 @@ void SchmidtProjectionT<Rotation>::coords2lonlat(double crd[]) const {
 }
 
 template <typename Rotation>
-void SchmidtProjectionT<Rotation>::lonlat2coords(double crd[]) const {
+void SchmidtProjectionT<Rotation>::lonlat2xy(double crd[]) const {
 
   // inverse rotation
   rotation_.unrotate(crd);

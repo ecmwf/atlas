@@ -78,7 +78,7 @@ mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
   g.fillLonLat(nodes().geolonlat().data<double>(), nb_nodes*2);
   array::ArrayView<double,2> geolonlat( nodes().geolonlat() );
   for( size_t jnode=0; jnode<nb_nodes; ++jnode ) {
-    g.projection().coords2lonlat(&geolonlat(jnode,0));
+    g.projection().xy2lonlat(&geolonlat(jnode,0));
   }
   return nodes();
 }

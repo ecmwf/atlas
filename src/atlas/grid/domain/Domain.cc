@@ -28,13 +28,13 @@ Domain *Domain::create(const eckit::Parametrisation &p) {
 
 bool Domain::includesNorthPole( const projection::Projection& proj ) const {
   double north_pole[] = {0.,90.};
-  proj.lonlat2coords(north_pole);
+  proj.lonlat2xy(north_pole);
   return contains(north_pole[0],north_pole[1]);
 }
 
 bool Domain::includesSouthPole( const projection::Projection& proj ) const {
   double south_pole[] = {0.,-90.};
-  proj.lonlat2coords(south_pole);
+  proj.lonlat2xy(south_pole);
   return contains(south_pole[0],south_pole[1]);
 }
 

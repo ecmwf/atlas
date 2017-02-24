@@ -130,7 +130,7 @@ public:
       double crd[2];
       lonlat(jlat,jlon,crd);
       // convert to geographic coordinates
-      projection_->coords2lonlat(crd);
+      projection_->xy2lonlat(crd);
       Pll.assign(crd[0],crd[1]);
     }
 

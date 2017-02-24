@@ -30,8 +30,8 @@ public:
   virtual std::string virtual_projection_type_str() const { return Rotation::typePrefix()+"lonlat"; }
 
   // projection and inverse projection
-  virtual void coords2lonlat(double crd[]) const { rotation_.rotate(crd);   }
-  virtual void lonlat2coords(double crd[]) const { rotation_.unrotate(crd); }
+  virtual void xy2lonlat(double crd[]) const { rotation_.rotate(crd);   }
+  virtual void lonlat2xy(double crd[]) const { rotation_.unrotate(crd); }
 
   virtual bool isStrictlyRegional() const { return false; }
 

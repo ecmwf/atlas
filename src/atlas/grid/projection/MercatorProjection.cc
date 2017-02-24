@@ -56,7 +56,7 @@ Projection* MercatorProjectionT<Rotation>::clone() const  {
 
 
 template <typename Rotation>
-void MercatorProjectionT<Rotation>::lonlat2coords(double crd[]) const {
+void MercatorProjectionT<Rotation>::lonlat2xy(double crd[]) const {
 
   // first unrotate
   rotation_.unrotate(crd);
@@ -67,7 +67,7 @@ void MercatorProjectionT<Rotation>::lonlat2coords(double crd[]) const {
 }
 
 template <typename Rotation>
-void MercatorProjectionT<Rotation>::coords2lonlat(double crd[]) const {
+void MercatorProjectionT<Rotation>::xy2lonlat(double crd[]) const {
 
   // first projection
   crd[0] = lon0_ + R2D(crd[0]*inv_radius_);

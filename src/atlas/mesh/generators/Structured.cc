@@ -1013,7 +1013,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       // geographic coordinates by using projection
       double crd[] = {x,y};
-      rg.projection().coords2lonlat(crd);
+      rg.projection().xy2lonlat(crd);
       geolonlat(inode,internals::LON) = crd[internals::LON];
       geolonlat(inode,internals::LAT) = crd[internals::LAT];
 
@@ -1049,7 +1049,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       // geographic coordinates by using projection
       double crd[] = {x,y};
-      rg.projection().coords2lonlat(crd);
+      rg.projection().xy2lonlat(crd);
       geolonlat(inode,internals::LON) = crd[internals::LON];
       geolonlat(inode,internals::LAT) = crd[internals::LAT];
 
@@ -1076,7 +1076,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
     // geographic coordinates by using projection
     double crd[] = {x,y};
-    rg.projection().coords2lonlat(crd);
+    rg.projection().xy2lonlat(crd);
     geolonlat(inode,internals::LON) = crd[internals::LON];
     geolonlat(inode,internals::LAT) = crd[internals::LAT];
 
@@ -1100,7 +1100,7 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
     // geographic coordinates by using projection
     double crd[] = {x,y};
-    rg.projection().coords2lonlat(crd);
+    rg.projection().xy2lonlat(crd);
     geolonlat(inode,internals::LON) = crd[internals::LON];
     geolonlat(inode,internals::LAT) = crd[internals::LAT];
 

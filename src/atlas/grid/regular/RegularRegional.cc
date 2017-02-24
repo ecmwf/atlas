@@ -57,7 +57,7 @@ namespace {
         if( not valid) return;
   
         double centre[] = {centre_lonlat[0],centre_lonlat[1]};
-        p.lonlat2coords(centre);
+        p.lonlat2xy(centre);
 
         double lx = x.step * double(x.N-1);
         double ly = y.step * double(y.N-1);
@@ -132,8 +132,8 @@ namespace {
       config.get("endpoint_x",x.endpoint);
       config.get("endpoint_y",y.endpoint);
 
-      p.lonlat2coords(sw.data());
-      p.lonlat2coords(ne.data());
+      p.lonlat2xy(sw.data());
+      p.lonlat2xy(ne.data());
       x.min = sw[0];    x.max = ne[0];
       y.min = sw[1];    y.max = ne[1];
 
@@ -156,7 +156,7 @@ namespace {
       config.get("endpoint_x",x.endpoint);
       config.get("endpoint_y",y.endpoint);
 
-      p.lonlat2coords(sw.data());
+      p.lonlat2xy(sw.data());
       x.min = sw[0];
       y.min = sw[1];
   

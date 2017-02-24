@@ -211,7 +211,7 @@ namespace {
   struct EarthCentred {
     EarthCentred(Structured& _grid) : grid(_grid) {}
     Point3 operator()(double ll[]) {
-      grid.projection().coords2lonlat(ll);
+      grid.projection().xy2lonlat(ll);
       double p[3];
       double r=1., h=0.;
       lonlat_to_3d(ll,p,r,h);

@@ -66,7 +66,7 @@ void LambertProjection::setup() {
 // clone method
 Projection* LambertProjection::clone() const { return new LambertProjection(*this); }
 
-void LambertProjection::lonlat2coords(double crd[]) const {
+void LambertProjection::lonlat2xy(double crd[]) const {
 
   double rho=radius_*F_/std::pow(std::tan(D2R(45+crd[1]*0.5)),n_);
   double theta=crd[0]-lon0_;
@@ -77,7 +77,7 @@ void LambertProjection::lonlat2coords(double crd[]) const {
 }
 
 // inverse projection
-void LambertProjection::coords2lonlat(double crd[]) const {
+void LambertProjection::xy2lonlat(double crd[]) const {
   // auxiliaries
   double rho=std::sqrt(crd[0]*crd[0]+(rho0_-crd[1])*(rho0_-crd[1]));
   if (n_<0.) rho = -rho;

@@ -32,8 +32,8 @@ public:
     static std::string projection_type_str() {return "projection";}
     virtual std::string virtual_projection_type_str() const { return "projection"; }
 
-    virtual void coords2lonlat(double crd[]) const = 0;
-    virtual void lonlat2coords(double crd[]) const = 0;
+    virtual void xy2lonlat(double crd[]) const = 0;
+    virtual void lonlat2xy(double crd[]) const = 0;
 
     virtual bool isStrictlyRegional() const =0;
 

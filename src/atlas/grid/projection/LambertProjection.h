@@ -28,8 +28,8 @@ public:
     virtual std::string virtual_projection_type_str() const {return "lambert";}
 
     // projection and inverse projection
-    virtual void coords2lonlat(double crd[]) const;
-    virtual void lonlat2coords(double crd[]) const;
+    virtual void xy2lonlat(double crd[]) const;
+    virtual void lonlat2xy(double crd[]) const;
 
     virtual bool isStrictlyRegional() const { return true; }  // lambert projection cannot be used for global grids
 

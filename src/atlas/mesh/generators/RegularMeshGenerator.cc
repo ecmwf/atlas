@@ -501,7 +501,7 @@ void RegularMeshGenerator::generate_mesh(
         lonlat(inode,internals::LAT) = xy[internals::LAT];
 
         // geographic coordinates by using projection
-        rg.projection().coords2lonlat(xy);
+        rg.projection().xy2lonlat(xy);
         geolonlat(inode,internals::LON) = xy[internals::LON];
         geolonlat(inode,internals::LAT) = xy[internals::LAT];
 
