@@ -1,5 +1,4 @@
-#ifndef atlas_grid_regular_RegularRegional_h
-#define atlas_grid_regular_RegularRegional_h
+#pragma once
 
 #include "atlas/grid/regular/Regular.h"
 #include "atlas/grid/spacing/LinearSpacing.h"
@@ -20,7 +19,6 @@ public:
     virtual std::string gridType() const { return "regular_regional"; }
 
     RegularRegional(const util::Config& params);
-    RegularRegional();
 
 private:
 
@@ -33,6 +31,3 @@ private:
 }  // namespace regular
 }  // namespace grid
 }  // namespace atlas
-
-
-#endif

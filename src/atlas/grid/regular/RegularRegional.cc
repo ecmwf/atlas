@@ -247,10 +247,6 @@ RegularRegional::RegularRegional(const util::Config& config) :
     setup(config);
 }
 
-RegularRegional::RegularRegional() :
-    Regular() {
-}
-
 //-----------------------------------------------------------------------------
 
 }  // namespace regular

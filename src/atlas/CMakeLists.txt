@@ -119,8 +119,6 @@ grid/regular/RegularRegional.h
 grid/regular/RegularRegional.cc
 grid/regular/RegularLonLat.h
 grid/regular/RegularLonLat.cc
-grid/regular/RegionalLonLat.h
-grid/regular/RegionalLonLat.cc
 grid/regular/ShiftedLon.h
 grid/regular/ShiftedLon.cc
 grid/regular/ShiftedLat.h
