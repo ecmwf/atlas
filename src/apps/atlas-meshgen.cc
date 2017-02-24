@@ -38,7 +38,6 @@
 #include "atlas/util/io/Gmsh.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
-#include "eckit/geometry/Point3.h"
 #include "eckit/mpi/ParallelContextBehavior.h"
 #include "eckit/parser/Tokenizer.h"
 #include "eckit/runtime/Context.h"

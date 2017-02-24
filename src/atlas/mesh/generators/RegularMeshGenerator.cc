@@ -6,7 +6,6 @@
 #include <vector>
 #include "eckit/runtime/Context.h"
 #include "eckit/config/Configurable.h"
-#include "eckit/geometry/Point3.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/regular/Regular.h"
@@ -436,7 +435,6 @@ void RegularMeshGenerator::generate_mesh(
   int quad_nodes[4];
   int jcell=quad_begin;
   int inode, inode_nonghost, inode_ghost;
-  eckit::geometry::LLPoint2 llg;
 
   // global indices for periodicity points
   inode=nx*ny;

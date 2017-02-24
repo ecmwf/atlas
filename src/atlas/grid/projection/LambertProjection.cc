@@ -54,13 +54,15 @@ void LambertProjection::setup() {
   // setup (derived) constants
   is_tangent_ = (lat1_==lat2_);
   if ( is_tangent_ ) {
-    n_=std::sin(D2R(lat1_));
+    n_ = std::sin(D2R(lat1_));
   } else {
-    n_=std::log(std::cos(D2R(lat1_))/std::cos(D2R(lat2_)))/std::log(std::tan(D2R(45+lat2_*0.5))/std::tan(D2R(45.+lat1_*0.5)));
+    n_ = std::log(std::cos(D2R(lat1_))/std::cos(D2R(lat2_)))
+       / std::log(std::tan(D2R(45+lat2_*0.5))/std::tan(D2R(45.+lat1_*0.5)));
   }
-  F_=std::cos(D2R(lat1_))*std::pow(std::tan(D2R(45.+lat1_*0.5)),n_)/n_;
-  rho0_=radius_*F_;
+  F_ = std::cos(D2R(lat1_))*std::pow(std::tan(D2R(45.+lat1_*0.5)),n_)/n_;
+  rho0_  = radius_*F_;
   inv_n_ = 1./n_;
+  sign_  = ( n_<0. ? -1. : 1. );
 }
 
 // clone method
@@ -68,34 +70,29 @@ Projection* LambertProjection::clone() const { return new LambertProjection(*thi
 
 void LambertProjection::lonlat2xy(double crd[]) const {
 
-  double rho=radius_*F_/std::pow(std::tan(D2R(45+crd[1]*0.5)),n_);
-  double theta=crd[0]-lon0_;
-  eckit::geometry::reduceTo2Pi(theta); // bracket between 0 and 360
-  theta*=n_;
-  crd[0]=rho*std::sin(D2R(theta));
-  crd[1]=rho0_-rho*std::cos(D2R(theta));
+  const double rho  = radius_*F_/std::pow(std::tan(D2R(45+crd[1]*0.5)),n_);
+  const double theta = D2R( n_*(crd[0]-lon0_) );
+  //eckit::geometry::reduceTo2Pi(theta); // bracket between 0 and 360
+  // theta*=n_;
+  crd[0] = rho*std::sin(theta);
+  crd[1] = rho0_-rho*std::cos(theta);
 }
 
 // inverse projection
 void LambertProjection::xy2lonlat(double crd[]) const {
   // auxiliaries
-  double rho=std::sqrt(crd[0]*crd[0]+(rho0_-crd[1])*(rho0_-crd[1]));
-  if (n_<0.) rho = -rho;
-  double theta;
-  if (n_>0.) {
-    theta=R2D(std::atan2(crd[0],rho0_-crd[1]));
-  } else {
-    theta=R2D(std::atan2(-crd[0],crd[1]-rho0_));
-  }
+  const double y0    = rho0_-crd[1];
+  const double rho   = sign_ * std::sqrt(crd[0]*crd[0]+y0*y0);
+  const double theta = R2D(std::atan2(sign_*crd[0],sign_*y0));
 
   // longitude
-  crd[0]=theta*inv_n_+lon0_;
+  crd[0] = theta*inv_n_+lon0_;
 
   // latitude
   if (rho==0.) {
-    crd[1]=( n_>0. ? 90. : -90. );
+    crd[1] = sign_ * 90.;
   } else {
-    crd[1]=2.*R2D(std::atan(std::pow(radius_*F_/rho,inv_n_)))-90.;
+    crd[1] = 2.*R2D(std::atan(std::pow(radius_*F_/rho,inv_n_)))-90.;
   }
 }
 

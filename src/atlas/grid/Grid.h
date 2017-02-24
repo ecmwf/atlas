@@ -19,7 +19,6 @@
 
 #include <string>
 #include <vector>
-#include "eckit/geometry/Point2.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
@@ -28,6 +27,7 @@
 #include "atlas/grid/domain/Domain.h"
 #include "atlas/grid/projection/Projection.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Point.h"
 
 
 namespace atlas {
@@ -48,8 +48,7 @@ public:  // types
     typedef eckit::BuilderT1<Grid> builder_t;
     typedef const util::Config& ARG1;
     typedef eckit::SharedPtr<Grid> Ptr;
-    typedef eckit::geometry::LLPoint2 Point; // must be sizeof(double)*2
-    typedef eckit::geometry::Point2 XYPoint; // must be sizeof(double)*2
+    typedef PointLonLat Point; // must be sizeof(double)*2
     typedef std::string uid_t;
 
 public:  // methods
@@ -94,7 +93,7 @@ public:  // methods
     /// Fill provided parameter with grid points, as (lon,lat) values
     /// @post resizes the vector
     virtual void lonlat(std::vector<Point>&) const = 0;
-    //virtual void xy(std::vector<XYPoint>&) const = 0;
+    //virtual void xy(std::vector<PointXY>&) const = 0;
 
     /// Fills the provided vector with the (lon,lat) values
     /// @post resizes the vector

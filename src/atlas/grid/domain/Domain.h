@@ -11,14 +11,13 @@ daand:
 
  */
 
-#ifndef atlas_grid_domain_Domain_h
-#define atlas_grid_domain_Domain_h
+#pragma once
 
-#include "eckit/geometry/Point2.h"
 #include "eckit/config/Parametrisation.h"
 #include "eckit/value/Properties.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/Builder.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace grid {
@@ -45,8 +44,11 @@ public:
     virtual std::string type() const=0;
 
     /// Checks if the point is contained in the domain
-    bool contains(const eckit::geometry::Point2& p) const { return contains(p[0],p[1]); }
     virtual bool contains(double x, double y) const =0;
+
+    bool contains(const PointXY& p) const {
+      return contains(p.x(),p.y());
+    }
 
     // Specification of grid
     virtual eckit::Properties spec() const =0;
@@ -82,6 +84,3 @@ public:
 }  // namespace domain
 }  // namespace grid
 }  // namespace atlas
-
-
-#endif

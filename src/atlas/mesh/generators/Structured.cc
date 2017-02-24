@@ -13,9 +13,6 @@
 #include <cmath>
 #include <limits>
 #include <vector>
-#include "eckit/runtime/Context.h"
-#include "eckit/config/Configurable.h"
-#include "eckit/geometry/Point3.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/Structured.h"
@@ -834,9 +831,6 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   int nnodes  = region.nnodes;
   int ntriags = region.ntriags;
   int nquads  = region.nquads;
-
-  eckit::geometry::LLPoint2 llg;
-
 
   if (include_north_pole) {
     ++nnodes;

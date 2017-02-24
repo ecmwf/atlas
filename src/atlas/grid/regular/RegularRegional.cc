@@ -20,31 +20,37 @@ namespace regular {
 
 namespace {
 
-  double step(double min,double max, long N, bool endpoint) {
-    double l = max-min;
-    if( endpoint && N>1 )
-      return l/double(N-1);
-    else
-      return l/double(N);
-  }
+  struct ConfigParser {
 
-  struct Space {
-    Space() {}
-    Space( std::initializer_list<double> interval ) : min(*interval.begin()), max(*(interval.begin()+1)) {}
-    double min;
-    double max;
-    long N;
-    double step;
-    bool endpoint = {true};
+    struct Parsed {
+      Parsed() {}
+      Parsed( std::initializer_list<double> interval ) : min(*interval.begin()), max(*(interval.begin()+1)) {}
+      double min;
+      double max;
+      long N;
+      double step;
+      bool endpoint = {true};
+    };
+    bool valid = {false};
+    Parsed x;
+    Parsed y;
+    
+    double step(double min,double max, long N, bool endpoint=true) {
+      double l = max-min;
+      if( endpoint && N>1 )
+        return l/double(N-1);
+      else
+        return l/double(N);
+    }
+
+    static bool parse( const Grid& grid, const Parametrisation& config, Parsed& x, Parsed& y );
+    
+    template <typename Parser>
+    static bool parse( const Grid& grid, const Parametrisation& config, Parsed& x, Parsed& y );
+
   };
 
-  struct Parse {
-    bool valid;
-    Space x = {0,360};
-    Space y = {-90,90};
-  };
-
-  struct Parse_llc_step : Parse {
+  struct Parse_llc_step : ConfigParser {
     Parse_llc_step( const Projection& p, const Parametrisation& config ) {
         std::vector<double> centre_lonlat;
 
@@ -70,7 +76,7 @@ namespace {
     }
   };
 
-  struct Parse_bounds_xy : Parse {
+  struct Parse_bounds_xy : ConfigParser {
     Parse_bounds_xy( const Projection& p, const Parametrisation& config ) {
       valid = config.get("nx",x.N)
           &&  config.get("ny",y.N)
@@ -81,15 +87,12 @@ namespace {
   
       if( not valid ) return;
 
-      config.get("endpoint_x",x.endpoint);
-      config.get("endpoint_y",y.endpoint);
-
-      x.step = step(x.min,x.max,x.N,x.endpoint);
-      y.step = step(y.min,y.max,y.N,y.endpoint);
+      x.step = step(x.min,x.max,x.N);
+      y.step = step(y.min,y.max,y.N);
     }
   };
 
-  struct Parse_bounds_lonlat : Parse {
+  struct Parse_bounds_lonlat : ConfigParser {
     Parse_bounds_lonlat( const Projection& p, const Parametrisation& config ) {
       valid = config.get("nx",x.N)
           &&  config.get("ny",y.N)
@@ -110,15 +113,12 @@ namespace {
       
       if( not valid ) return;
 
-      config.get("endpoint_x",x.endpoint);
-      config.get("endpoint_y",y.endpoint);
-
-      x.step = step(x.min,x.max,x.N,x.endpoint);
-      y.step = step(y.min,y.max,y.N,y.endpoint);
+      x.step = step(x.min,x.max,x.N);
+      y.step = step(y.min,y.max,y.N);
     }
   };
 
-  struct Parse_ll00_ll11 : Parse {
+  struct Parse_ll00_ll11 : ConfigParser {
     Parse_ll00_ll11( const Projection& p, const Parametrisation& config ) {
       std::vector<double> sw;
       std::vector<double> ne;
@@ -129,20 +129,17 @@ namespace {
 
       if( not valid ) return;
 
-      config.get("endpoint_x",x.endpoint);
-      config.get("endpoint_y",y.endpoint);
-
       p.lonlat2xy(sw.data());
       p.lonlat2xy(ne.data());
       x.min = sw[0];    x.max = ne[0];
       y.min = sw[1];    y.max = ne[1];
 
-      x.step = step(x.min,x.max,x.N,x.endpoint);
-      y.step = step(y.min,y.max,y.N,y.endpoint);
+      x.step = step(x.min,x.max,x.N);
+      y.step = step(y.min,y.max,y.N);
     }
   };
 
-  struct Parse_ll00_step : Parse {
+  struct Parse_ll00_step : ConfigParser {
     Parse_ll00_step( const Projection& p, const Parametrisation& config ) {
       std::vector<double> sw;
       valid = config.get("nx",x.N)
@@ -153,9 +150,6 @@ namespace {
 
       if( not valid ) return;
 
-      config.get("endpoint_x",x.endpoint);
-      config.get("endpoint_y",y.endpoint);
-
       p.lonlat2xy(sw.data());
       x.min = sw[0];
       y.min = sw[1];
@@ -164,7 +158,40 @@ namespace {
       y.max = y.min + y.step * (y.N-1);
     }
   };
+  
+  
+  template <typename Parser>
+  bool ConfigParser::parse( const Grid& g, const Parametrisation& config, Parsed& x, Parsed& y ) {
+    Parser p(g.projection(),config);
+    if( p.valid ) {
+      x = p.x;
+      y = p.y;
+      return true; // success
+    }
+    return false; // failure
+  }
+  
+  bool ConfigParser::parse( const Grid& g, const Parametrisation& config, Parsed& x, Parsed& y ) {
 
+    // bounding box using 4 variables  (any projection allowed)
+    if( ConfigParser::parse< Parse_bounds_xy     >( g, config, x, y) ) return true;
+
+    // centre of domain and increments  (any projection allowed)
+    if( ConfigParser::parse< Parse_llc_step      >( g, config, x, y) ) return true;
+
+    // bottom-left of domain and increments (any projection allowed)
+    if( ConfigParser::parse< Parse_ll00_step     >( g, config, x, y) ) return true;
+
+    // bounding box using two points defined in lonlat (any projection allowed)
+    if( ConfigParser::parse< Parse_ll00_ll11     >( g, config, x, y) ) return true;
+
+// From here on, projection must be (rotated) lonlat
+
+    // bounding box using 4 variables (south west north east)
+    if( ConfigParser::parse< Parse_bounds_lonlat >( g, config, x, y) ) return true;
+
+    return false;
+  }
 
 }
 
@@ -194,39 +221,24 @@ std::string RegularRegional::shortName() const {
 void RegularRegional::setup(const util::Config& config) {
 
     // read projection subconfiguration
-    util::Config config_proj;
-    if ( not config.get("projection",config_proj) ) {
-      config_proj.set("type","lonlat");
-    }
-    projection_.reset( projection::Projection::create(config_proj) );
-
-    using Parsers = std::vector< std::unique_ptr<Parse> >;
-    Parsers parsers;
-    parsers.push_back( std::unique_ptr<Parse>( new Parse_llc_step      (projection(),config) ) );
-    parsers.push_back( std::unique_ptr<Parse>( new Parse_ll00_step     (projection(),config) ) );
-    parsers.push_back( std::unique_ptr<Parse>( new Parse_bounds_lonlat (projection(),config) ) );
-    parsers.push_back( std::unique_ptr<Parse>( new Parse_bounds_xy     (projection(),config) ) );
-    parsers.push_back( std::unique_ptr<Parse>( new Parse_ll00_ll11     (projection(),config) ) );
-
-    bool configured(false);
-    Space x,y;
-    for( Parsers::const_iterator it=parsers.begin(); it!=parsers.end(); ++it ) {
-      const Parse& p = **it;
-      if( not configured && p.valid ) {
-        x = p.x;
-        y = p.y;
-        configured = true;
+    {
+      util::Config config_proj;
+      if ( not config.get("projection",config_proj) ) {
+        config_proj.set("type","lonlat");
       }
-    }
+      projection_.reset( projection::Projection::create(config_proj) );
+    } 
 
-    if( not configured ) {
-      throw eckit::BadParameter("Could not configure RegularRegional grid", Here());
+    // Read grid configuration
+    ConfigParser::Parsed x,y;
+    if( not ConfigParser::parse(*this,config,x,y) ) {
+        throw eckit::BadParameter("Could not parse configuration for RegularRegional grid", Here());
     }
+    
+    // Deduce the domain
+    domain_.reset( new RectangularDomain( {x.min,x.max}, {y.min,y.max}, projection_->units() ) );
 
     spacing::Spacing* yspace = new LinearSpacing(y.min,y.max,y.N,y.endpoint);
-    
-    domain_.reset( new RectangularDomain( {x.min,x.max}, {y.min,y.max}, projection_->units() ) );
-        
     Structured::setup(yspace,x.N,x.min,x.max,x.step);
 }
 

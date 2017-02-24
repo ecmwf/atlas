@@ -1,10 +1,8 @@
-#ifndef atlas_grid_RectangularDomain_h
-#define atlas_grid_RectangularDomain_h
+#pragma once
 
 #include <iostream>
 #include <array>
 #include "atlas/grid/domain/Domain.h"
-#include "eckit/geometry/Point2.h"
 
 namespace atlas {
 namespace grid {
@@ -53,6 +51,3 @@ private:
 }  // namespace domain
 }  // namespace grid
 }  // namespace atlas
-
-
-#endif

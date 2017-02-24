@@ -1,9 +1,6 @@
-#ifndef atlas_grid_GlobalDomain_h
-#define atlas_grid_GlobalDomain_h
+#pragma once
 
-#include <iostream>
 #include "atlas/grid/domain/ZonalBandDomain.h"
-#include "eckit/geometry/Point2.h"
 
 namespace atlas {
 namespace grid {
@@ -36,6 +33,3 @@ public:
 }  // namespace domain
 }  // namespace grid
 }  // namespace atlas
-
-
-#endif

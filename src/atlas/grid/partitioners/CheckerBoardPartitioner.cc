@@ -4,7 +4,6 @@
 #include <iostream>
 #include <functional>
 #include <algorithm>
-#include "eckit/geometry/Point2.h"
 #include "atlas/grid/regular/Regular.h"
 #include "atlas/grid/partitioners/CheckerBoardPartitioner.h"
 #include "atlas/internals/Functions.h"
@@ -220,8 +219,8 @@ void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
 
   }
 
+#warning gnarls
 #ifdef gnarls
-
   // nice output of partition
   if ( eckit::mpi::rank()==0 ) {
     for (int iy=0;iy<ny_;iy++) {

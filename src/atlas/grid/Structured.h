@@ -125,13 +125,17 @@ public:
         crd[1] = lat(jlat);
     }
 
-    void geoLonlat(const size_t jlon, const size_t jlat, eckit::geometry::LLPoint2 &Pll) const {
-      // in grid coordinates
-      double crd[2];
-      lonlat(jlat,jlon,crd);
-      // convert to geographic coordinates
-      projection_->xy2lonlat(crd);
-      Pll.assign(crd[0],crd[1]);
+    inline void xy( const size_t jlat, const size_t jlon, double p[] ) const {
+        p[0] = lon(jlat,jlon);
+        p[1] = lat(jlat);
+    }
+
+    PointXY xy( const size_t jlat, const size_t jlon ) const {
+        return PointXY( lon(jlat,jlon), lat(jlat) );
+    }
+
+    void geoLonlat(const size_t jlon, const size_t jlat, PointLonLat &Pll) const {
+      Pll.assign( projection_->lonlat( xy(jlat,jlon) ) );
     }
 
     inline bool reduced() const {

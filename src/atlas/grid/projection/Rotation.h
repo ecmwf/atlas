@@ -1,9 +1,8 @@
 #pragma once
 
-#include "eckit/geometry/KPoint.h"
-#include "eckit/geometry/Point2.h"
 #include "eckit/config/Parametrisation.h"
 #include "eckit/value/Properties.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace grid {
@@ -26,7 +25,7 @@ public:
 
 private:
 
-    eckit::geometry::LLPoint2 pole_;    // pole
+    PointLonLat pole_; // pole
     double cos_latrp_; //  cos( 90 - pole_lat )
     double sin_latrp_; //  sin( 90 - pole_lat )
 

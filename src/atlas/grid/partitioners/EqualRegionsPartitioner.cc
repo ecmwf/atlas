@@ -14,7 +14,6 @@
 #include <iostream>
 #include <functional>
 #include <algorithm>
-#include "eckit/geometry/Point2.h"
 #include "atlas/grid/Structured.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/internals/Functions.h"
@@ -513,7 +512,7 @@ void EqualRegionsPartitioner::partition(int part[]) const {
                 }
             }
         } else {
-            std::vector<eckit::geometry::LLPoint2> points;
+            std::vector<PointLonLat> points;
             grid().lonlat(points);
             for(size_t j = 0; j < grid().npts(); ++j) {
                 nodes[n].x = microdeg(points[j].lon());

@@ -26,7 +26,7 @@ Rotated::Rotated(const eckit::Parametrisation& p) {
     north_pole[0] =  south_pole[0]-180.; // longitude
     south_pole[1] = -north_pole[0];      // latitude
   }
-  pole_.assign(north_pole[0],north_pole[1]);
+  pole_ = PointLonLat(north_pole[0],north_pole[1]);
 
   double latrp = D2R(90.0-pole_.lat());
   cos_latrp_ = std::cos(latrp);

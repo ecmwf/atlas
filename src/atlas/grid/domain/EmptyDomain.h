@@ -1,9 +1,6 @@
-#ifndef atlas_grid_EmptyDomain_h
-#define atlas_grid_EmptyDomain_h
+#pragma once
 
-#include <iostream>
 #include "atlas/grid/domain/Domain.h"
-#include "eckit/geometry/Point2.h"
 
 namespace atlas {
 namespace grid {
@@ -37,6 +34,3 @@ public:
 }  // namespace domain
 }  // namespace grid
 }  // namespace atlas
-
-
-#endif

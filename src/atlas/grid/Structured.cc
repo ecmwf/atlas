@@ -14,11 +14,8 @@
 #include <algorithm>
 #include <limits>
 #include "atlas/runtime/ErrorHandling.h"
-#include "eckit/geometry/Point3.h"
+#include "atlas/util/Point.h"
 #include "atlas/internals/Debug.h"
-
-using eckit::geometry::Point3;
-using eckit::geometry::lonlat_to_3d;
 
 namespace atlas {
 namespace grid {
@@ -210,15 +207,12 @@ void Structured::setup(
 namespace {
   struct EarthCentred {
     EarthCentred(Structured& _grid) : grid(_grid) {}
-    Point3 operator()(double ll[]) {
-      grid.projection().xy2lonlat(ll);
-      double p[3];
-      double r=1., h=0.;
-      lonlat_to_3d(ll,p,r,h);
-      return Point3( p[0], p[1], p[2] );
+    PointXYZ operator()(const PointXY& xy) {
+      PointLonLat lonlat = grid.projection().lonlat(xy);
+      return lonlat_to_geocentric(lonlat,radius);
     }
-    Point3 operator()(std::array<double,2> ll) { return operator()(ll.data()); }
     Structured& grid;
+    double radius={1.};
   };
 }
 

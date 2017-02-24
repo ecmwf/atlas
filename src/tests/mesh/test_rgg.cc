@@ -15,7 +15,6 @@
 #define BOOST_TEST_MODULE TestRGG
 #include "ecbuild/boost_test_framework.h"
 
-#include "eckit/geometry/KPoint.h"
 #include "atlas/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/internals/atlas_config.h"

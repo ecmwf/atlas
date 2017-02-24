@@ -11,11 +11,11 @@
 #ifndef atlas_util_LonLatMicroDeg_h
 #define atlas_util_LonLatMicroDeg_h
 
-#include "eckit/geometry/Point2.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Functions.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace internals {
@@ -39,36 +39,36 @@ class LonLatMicroDeg
 public:
 
 // -- Constructors taking already microdegrees
-  LonLatMicroDeg( int lonlat[2] )    { p[LON]=lonlat[LON]; p[LAT]=lonlat[LAT]; }
-  LonLatMicroDeg( int lon, int lat ) { p[LON]=lon;         p[LAT]=lat; }
+  LonLatMicroDeg( int lonlat[2] )    { p_[LON]=lonlat[LON]; p_[LAT]=lonlat[LAT]; }
+  LonLatMicroDeg( int lon, int lat ) { p_[LON]=lon;         p_[LAT]=lat; }
 
 // -- Constructors taking degrees
-  LonLatMicroDeg( const double& lon, const double& lat )  { p[LON]=microdeg(lon);         p[LAT]=microdeg(lat); }
-  LonLatMicroDeg( const double lonlat[2] )                { p[LON]=microdeg(lonlat[LON]); p[LAT]=microdeg(lonlat[LAT]); }
-  LonLatMicroDeg( const array::ArrayView<double,1>& lonlat )     { p[LON]=microdeg(lonlat[LON]); p[LAT]=microdeg(lonlat[LAT]); }
-  LonLatMicroDeg( const eckit::geometry::Point2& lonlat ) { p[LON]=microdeg(lonlat[LON]); p[LAT]=microdeg(lonlat[LAT]); }
+  LonLatMicroDeg( const double& lon, const double& lat )  { p_[LON]=microdeg(lon);         p_[LAT]=microdeg(lat); }
+  LonLatMicroDeg( const double lonlat[2] )                { p_[LON]=microdeg(lonlat[LON]); p_[LAT]=microdeg(lonlat[LAT]); }
+  LonLatMicroDeg( const array::ArrayView<double,1>& lonlat ) { p_[LON]=microdeg(lonlat[LON]); p_[LAT]=microdeg(lonlat[LAT]); }
+  LonLatMicroDeg( const PointLonLat& p ) { p_[LON]=microdeg(p.lon()); p_[LAT]=microdeg(p.lat()); }
 
 // -- Methods
-  int lon() const { return p[LON]; }
-  int lat() const { return p[LAT]; }
-  void set_lon(int lon) { p[LON]=lon; }
-  void set_lat(int lat) { p[LAT]=lat; }
-  const int* data() const { return p; }
+  int lon() const { return p_[LON]; }
+  int lat() const { return p_[LAT]; }
+  void set_lon(int lon) { p_[LON]=lon; }
+  void set_lat(int lat) { p_[LAT]=lat; }
+  const int* data() const { return p_; }
   uidx_t unique() { return unique_lonlat(*this); }
 
 // -- Comparison operator
   bool operator < (const LonLatMicroDeg& other) const;
 
 private:
-  int p[2];
+  int p_[2];
 };
 
 // ------------------------------------------------------------------------------------
 
 inline bool LonLatMicroDeg::operator < (const LonLatMicroDeg& other) const
 {
-  if( p[LAT] > other.p[LAT]  ) return true;
-  if( p[LAT] == other.p[LAT] ) return (p[LON] < other.p[LON]);
+  if( p_[LAT] > other.p_[LAT]  ) return true;
+  if( p_[LAT] == other.p_[LAT] ) return (p_[LON] < other.p_[LON]);
   return false;
 }
 

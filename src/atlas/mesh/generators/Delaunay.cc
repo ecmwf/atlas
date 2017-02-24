@@ -8,11 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/mesh/generators/Delaunay.h"
-
-#include "eckit/geometry/Point3.h"
 #include "eckit/utils/MD5.h"
-
+#include "atlas/mesh/generators/Delaunay.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"

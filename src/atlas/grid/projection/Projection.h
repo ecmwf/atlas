@@ -1,7 +1,7 @@
 #pragma once
 
-#include "eckit/geometry/KPoint.h"
-#include "eckit/geometry/Point2.h"
+#include <array>
+#include "atlas/util/Point.h"
 #include "eckit/config/Parametrisation.h"
 #include "eckit/value/Properties.h"
 #include "eckit/memory/Builder.h"
@@ -15,8 +15,8 @@ class Projection : public eckit::Owned {
 
 public:
 
-    typedef const eckit::Parametrisation& ARG1;
-    typedef eckit::BuilderT1<Projection> builder_t;
+    using ARG1       = const eckit::Parametrisation&;
+    using builder_t  = eckit::BuilderT1<Projection>;
 
 public:
 
@@ -34,6 +34,9 @@ public:
 
     virtual void xy2lonlat(double crd[]) const = 0;
     virtual void lonlat2xy(double crd[]) const = 0;
+    
+    PointLonLat lonlat( const PointXY& ) const;
+    PointXY xy( const PointLonLat& ) const;
 
     virtual bool isStrictlyRegional() const =0;
 
@@ -42,6 +45,18 @@ public:
     virtual std::string units() const =0;
 
 };
+
+inline PointLonLat Projection::lonlat( const PointXY& xy ) const {
+  PointLonLat lonlat(xy);
+  xy2lonlat(lonlat.data());
+  return lonlat;
+}
+
+inline PointXY Projection::xy( const PointLonLat& lonlat ) const {
+  PointXY xy(lonlat);
+  lonlat2xy(xy.data());
+  return xy;
+}
 
 }  // namespace projection
 }  // namespace grid

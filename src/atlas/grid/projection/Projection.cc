@@ -23,6 +23,7 @@ Projection* Projection::create(const eckit::Parametrisation& p) {
   throw eckit::BadParameter("type missing in Params",Here());
 }
 
+
 }  // namespace projection
 }  // namespace grid
 }  // namespace atlas

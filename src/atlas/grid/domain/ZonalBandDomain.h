@@ -3,7 +3,6 @@
 #include <iostream>
 #include <array>
 #include "atlas/grid/domain/RectangularDomain.h"
-#include "eckit/geometry/Point2.h"
 
 namespace atlas {
 namespace grid {

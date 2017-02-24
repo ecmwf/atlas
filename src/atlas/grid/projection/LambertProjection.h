@@ -44,7 +44,7 @@ private:
     bool is_tangent_;        // If the first and second latitude are equal, then the projection is on a tangent cone
     double lon0_;            // central longitude
     double radius_;          // sphere radius
-    double n_, inv_n_, F_, rho0_;    // projection constants
+    double n_, inv_n_, F_, rho0_, sign_;    // projection constants
 
     void setup();
 };
