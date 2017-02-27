@@ -26,35 +26,28 @@ std::string RegularLonLat::shortName() const {
 }
 
 RegularLonLat::RegularLonLat(const util::Config& config) :
-    GlobalLonLat()
-{
+    GlobalLonLat() {
+
     long nlon, nlat, N;
 
     // dimensions
     if ( config.get("N",N) ) {
-      nlon=4*N;nlat=2*N+1;
+      nlon=4*N;
+      nlat=2*N+1;
+    } else if( config.get("nx",nlon) 
+            && config.get("ny",nlat) ) {
     } else {
-      if ( !config.get("nlon",nlon) || !config.get("nlat",nlat) ) {
         throw eckit::BadParameter("RegularLonLat requires either N, or (nlon,nlat)",Here());
-      }
     }
 
-    // default: no shift
-    shiftLon_=false;
-    shiftLat_=false;
-
     // perform setup
-    setup(nlon, nlat);
+    GlobalLonLat::setup(nlon, nlat, Shift(false,false));
 }
 
 RegularLonLat::RegularLonLat(long nlon, long nlat) : GlobalLonLat() {
 
-    // default: no shift
-    shiftLon_=false;
-    shiftLat_=false;
-
     // perform setup
-    GlobalLonLat::setup(nlon, nlat);
+    GlobalLonLat::setup(nlon, nlat, Shift(false,false));
 }
 
 RegularLonLat::RegularLonLat(long N) : GlobalLonLat() {
@@ -63,12 +56,8 @@ RegularLonLat::RegularLonLat(long N) : GlobalLonLat() {
     // dimensions
     nlon=4*N;nlat=2*N+1;
 
-    // default: no shift
-    shiftLon_=false;
-    shiftLat_=false;
-
     // perform setup
-    GlobalLonLat::setup(nlon, nlat);
+    GlobalLonLat::setup(nlon, nlat, Shift(false,false));
 }
 
 extern "C" {

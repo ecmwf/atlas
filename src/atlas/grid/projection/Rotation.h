@@ -23,9 +23,12 @@ public:
 
     void spec(eckit::Properties&) const;
 
+    bool rotated() const { return rotated_; }
+
 private:
 
-    PointLonLat pole_; // pole
+    bool rotated_     = {true};
+    PointLonLat pole_ = {0.,90.}; // north_pole
     double cos_latrp_; //  cos( 90 - pole_lat )
     double sin_latrp_; //  sin( 90 - pole_lat )
 
@@ -45,6 +48,8 @@ public:
     void unrotate(double crd[]) const { /* do nothing */ }
 
     void spec(eckit::Properties&) const {}
+
+    bool rotated() const { return false; }
 };
 
 }  // namespace projection

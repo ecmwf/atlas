@@ -6,25 +6,47 @@ namespace atlas {
 namespace grid {
 namespace regular {
 
+
+struct Shift {
+
+    enum Bits {
+        NONE = 0,
+        LAT  = (1<<1),
+        LON  = (1<<2)
+    };
+
+    Shift(int bits=NONE) : bits_(bits) {
+    }
+
+    Shift(bool shift_lon, bool shift_lat) : bits_((shift_lon? LON:NONE) | (shift_lat? LAT:NONE)) {
+    }
+
+    bool operator()(int bits) const {
+        return (bits_ & bits) == bits;
+    }
+
+    const int bits_;
+
+};
+
 // Uninstantiatable class
 class GlobalLonLat: public Regular {
 
 public:
 
-    bool isShiftedLon() const { return shiftLon_; }
-    bool isShiftedLat() const { return shiftLat_; }
+    bool isShiftedLon() const { return shifted_x_; }
+    bool isShiftedLat() const { return shifted_y_; }
 
 protected:
 
     GlobalLonLat();
 
-    void setup(long nlon, long nlat);
-
-    bool shiftLon_;
-    bool shiftLat_;
+    void setup(long nx, long ny, Shift);
 
     virtual eckit::Properties spec() const;
 
+    bool shifted_x_;
+    bool shifted_y_;
 };
 
 

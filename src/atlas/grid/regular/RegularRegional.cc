@@ -8,7 +8,6 @@
 
 using atlas::grid::domain::RectangularDomain;
 using atlas::grid::projection::Projection;
-using atlas::grid::projection::LonLatProjection;
 using atlas::grid::projection::RotatedLonLatProjection;
 using atlas::grid::spacing::LinearSpacing;
 using atlas::grid::spacing::Spacing;
@@ -103,9 +102,7 @@ namespace {
 
       // This version only works with a "lonlat" or "rotated_lonlat" projection!!!
       if( valid ) {
-        bool valid_projection = 
-              dynamic_cast<const LonLatProjection*>( &p )
-          ||  dynamic_cast<const RotatedLonLatProjection*>( &p );
+        bool valid_projection = p || dynamic_cast<const RotatedLonLatProjection*>( &p );
         if( not valid_projection ) {
           throw eckit::BadParameter("This configuration requires that the projection is \"lonlat\" or \"rotated_lonlat\"",Here());
         }
@@ -174,16 +171,16 @@ namespace {
   bool ConfigParser::parse( const Grid& g, const Parametrisation& config, Parsed& x, Parsed& y ) {
 
     // bounding box using 4 variables  (any projection allowed)
-    if( ConfigParser::parse< Parse_bounds_xy     >( g, config, x, y) ) return true;
+    if( ConfigParser::parse< Parse_bounds_xy >( g, config, x, y) ) return true;
 
     // centre of domain and increments  (any projection allowed)
-    if( ConfigParser::parse< Parse_llc_step      >( g, config, x, y) ) return true;
+    if( ConfigParser::parse< Parse_llc_step >( g, config, x, y) ) return true;
 
     // bottom-left of domain and increments (any projection allowed)
-    if( ConfigParser::parse< Parse_ll00_step     >( g, config, x, y) ) return true;
+    if( ConfigParser::parse< Parse_ll00_step >( g, config, x, y) ) return true;
 
     // bounding box using two points defined in lonlat (any projection allowed)
-    if( ConfigParser::parse< Parse_ll00_ll11     >( g, config, x, y) ) return true;
+    if( ConfigParser::parse< Parse_ll00_ll11 >( g, config, x, y) ) return true;
 
 // From here on, projection must be (rotated) lonlat
 
@@ -238,6 +235,7 @@ void RegularRegional::setup(const util::Config& config) {
     // Deduce the domain
     domain_.reset( new RectangularDomain( {x.min,x.max}, {y.min,y.max}, projection_->units() ) );
 
+    // Delegate further setup
     spacing::Spacing* yspace = new LinearSpacing(y.min,y.max,y.N,y.endpoint);
     Structured::setup(yspace,x.N,x.min,x.max,x.step);
 }

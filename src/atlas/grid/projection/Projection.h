@@ -43,6 +43,8 @@ public:
     virtual eckit::Properties spec() const =0;
     
     virtual std::string units() const =0;
+    
+    virtual operator bool() const { return true; }
 
 };
 

@@ -40,21 +40,14 @@ ShiftedLonLat::ShiftedLonLat(const util::Config& config)
       }
     }
 
-    // set shift
-    shiftLon_=true;
-    shiftLat_=true;
-
     // perform setup
-    GlobalLonLat::setup(nlon,nlat);
+    GlobalLonLat::setup(nlon,nlat,Shift(true,true));
 }
 
 ShiftedLonLat::ShiftedLonLat(long nlon, long nlat) {
-    // set shift
-    shiftLon_=true;
-    shiftLat_=true;
 
     // perform setup
-    GlobalLonLat::setup(nlon,nlat);
+    GlobalLonLat::setup(nlon,nlat,Shift(true,true));
 }
 
 extern "C" {

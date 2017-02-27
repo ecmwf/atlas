@@ -6,9 +6,11 @@ namespace atlas {
 namespace grid {
 namespace regular {
 
-void GlobalLonLat::setup(long nlon, long nlat) {
+void GlobalLonLat::setup(long nlon, long nlat, Shift shift) {
 
     periodic_x_ = true;
+    shifted_x_ = shift(Shift::LON);
+    shifted_y_ = shift(Shift::LAT);
 
     util::Config config_proj, config_spacing, config_domain;
 
@@ -18,15 +20,15 @@ void GlobalLonLat::setup(long nlon, long nlat) {
 
     // spacing is uniform in x
     config_spacing.set("type","linear");
-    config_spacing.set("start",(shiftLon_ ? 0.5 : 0.0)*360.0/double(nlon) );
-    config_spacing.set("end",(shiftLon_ ? nlon-0.5 : nlon-1)*360.0/double(nlon) );
+    config_spacing.set("start",(shifted_x_ ? 0.5 : 0.0)*360.0/double(nlon) );
+    config_spacing.set("end",(shifted_x_ ? nlon-0.5 : nlon-1)*360.0/double(nlon) );
     config_spacing.set("N",nlon);
     spacing::LinearSpacing xspace(config_spacing);
 
     // spacing is uniform in y
     config_spacing.set("type","linear");
-    config_spacing.set("start", 90.0-(shiftLat_ ? 90.0/double(nlat) : 0.0) );
-    config_spacing.set("end",-90.0+(shiftLat_ ? 90.0/double(nlat) : 0.0) );
+    config_spacing.set("start", 90.0-(shifted_y_ ? 90.0/double(nlat) : 0.0) );
+    config_spacing.set("end",-90.0+(shifted_y_ ? 90.0/double(nlat) : 0.0) );
     config_spacing.set("N",nlat);
     spacing::Spacing* yspace = spacing::Spacing::create(config_spacing);
 

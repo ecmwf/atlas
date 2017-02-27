@@ -39,6 +39,8 @@ public:
   virtual eckit::Properties spec() const;
 
   virtual std::string units() const { return "degrees"; }
+  
+  virtual operator bool() const { return rotation_.rotated(); }
 
 private:
 
