@@ -38,6 +38,7 @@ class NotRotated {
 
 public:
 
+    NotRotated() {}
     NotRotated( const eckit::Parametrisation& ) {}
     NotRotated( const NotRotated& ) {} // copy constructor
     virtual ~NotRotated() {} // destructor should be virtual when using a virtual copy constructor

@@ -1,11 +1,7 @@
-#include "atlas/grid/regular/Regular.h"
-
-#include "atlas/grid/spacing/LinearSpacing.h"
+#include "atlas/grid/Regular.h"
 
 namespace atlas {
 namespace grid {
-namespace regular {
-
 
 std::string Regular::grid_type_str() {
     return "regular";
@@ -32,8 +28,5 @@ eckit::Properties Regular::spec() const {
     return grid_spec;
 }
 
-
-}  // namespace regular
 }  // namespace grid
 }  // namespace atlas
-

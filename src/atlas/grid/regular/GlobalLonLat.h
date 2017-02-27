@@ -1,6 +1,6 @@
 #pragma once
 
-#include "atlas/grid/regular/Regular.h"
+#include "atlas/grid/Regular.h"
 
 namespace atlas {
 namespace grid {

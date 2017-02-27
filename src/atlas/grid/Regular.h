@@ -1,12 +1,9 @@
-#ifndef atlas_grid_regular_Regular_h
-#define atlas_grid_regular_Regular_h
+#pragma once
 
 #include "atlas/grid/Structured.h"
 
-
 namespace atlas {
 namespace grid {
-namespace regular {
 
 class Regular: public Structured {
 
@@ -28,9 +25,5 @@ protected:
 };
 
 
-}  // namespace regular
 }  // namespace grid
 }  // namespace atlas
-
-
-#endif

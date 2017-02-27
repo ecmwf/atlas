@@ -44,6 +44,37 @@ public:
 
     static Structured* create(const std::string& shortname);
 
+    struct XSpace {
+
+      XSpace(long ny);
+
+      size_t ny;
+
+      // Minimum number of points across parallels (constant y)
+      size_t nxmin;
+
+      // Maximum number of points across parallels (constant y)
+      size_t nxmax;
+
+      /// Number of points per latitude
+      std::vector<long> nx;
+
+      /// Value of minimum longitude per latitude [default=0]
+      std::vector<double> xmin;
+
+      /// Value of maximum longitude per latitude [default=0]
+      std::vector<double> xmax;
+
+      /// Value of longitude increment
+      std::vector<double> dx;
+    };
+
+    using YSpace = spacing::Spacing;
+
+    using Projection = projection::Projection;
+
+    using Domain = domain::Domain;
+
 public:
 
     static std::string className();
@@ -53,6 +84,8 @@ public:
 public:
 
     Structured();
+
+    Structured( Projection*, XSpace*, YSpace*, Domain* );
 
     virtual ~Structured();
 
@@ -134,6 +167,10 @@ public:
         return PointXY( lon(jlat,jlon), lat(jlat) );
     }
 
+    PointLonLat geolonlat( const size_t jlon, const size_t jlat ) const {
+        return projection_->lonlat( xy(jlat,jlon) );
+    }
+
     void geoLonlat(const size_t jlon, const size_t jlat, PointLonLat &Pll) const {
       Pll.assign( projection_->lonlat( xy(jlat,jlon) ) );
     }
@@ -156,17 +193,15 @@ protected: // methods
     // void setup_cropped(const size_t ny, const double y[], const long nx[], const double xmin[], const double xmax[], const domain::Domain& dom);
 
     void compute_true_periodicity();
-    
-    
-    
-    void setup( 
+
+    void setup(
         spacing::Spacing*          yspace,
         const std::vector<long>&   nx,
         const std::vector<double>& xmin,
         const std::vector<double>& xmax,
         const std::vector<double>& dx );
 
-    void setup( 
+    void setup(
         spacing::Spacing* yspace,
         const long&       nx,
         const double&     xmin,
@@ -205,7 +240,9 @@ protected:
     /// Periodicity in x-direction
     bool periodic_x_;
 
-    std::unique_ptr< spacing::Spacing > yspace_;
+private:
+    std::unique_ptr< XSpace > xspace_;
+    std::unique_ptr< YSpace > yspace_;
 };
 
 

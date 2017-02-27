@@ -58,7 +58,45 @@ Structured::Structured() :
 }
 
 
+Structured::Structured( Projection* projection, XSpace* xspace, YSpace* yspace, Domain* domain)
+{
+  // Copry members
+  if( projection )
+    projection_.reset( projection );
+  else
+    projection_.reset( Projection::create() );
+  xspace_ = std::unique_ptr<XSpace>( xspace );
+  yspace_ = std::unique_ptr<YSpace>( yspace );
+  domain_.reset( domain );
+  ASSERT( xspace_->ny == yspace_->size() );
+
+  y_.assign(yspace_->begin(),yspace_->end());
+  nx_    = xspace_->nx;
+  dx_    = xspace_->dx;
+  xmin_  = xspace_->xmin;
+  xmax_  = xspace_->xmax;
+
+  // Further setup
+  nxmin_ = nxmax_ = static_cast<size_t>(nx_.front());
+  size_t ny = xspace_->ny;
+  for (size_t j=1; j<ny; ++j) {
+      nxmin_ = std::min(static_cast<size_t>(nx_[j]),nxmin_);
+      nxmax_ = std::max(static_cast<size_t>(nx_[j]),nxmax_);
+  }
+  npts_ = size_t(std::accumulate(nx_.begin(), nx_.end(), 0));
+  compute_true_periodicity();
+}
+
+
 Structured::~Structured() {
+}
+
+Structured::XSpace::XSpace(long _ny) :
+  ny(_ny) {
+  nx.  reserve(ny);
+  xmin.reserve(ny);
+  xmax.reserve(ny);
+  dx  .reserve(ny);
 }
 
 /*
@@ -148,7 +186,7 @@ void Structured::setup_cropped(const size_t ny, const double y[], const long nx[
 */
 
 
-void Structured::setup( 
+void Structured::setup(
     spacing::Spacing*          yspace,
     const std::vector<long>&   nx,
     const std::vector<double>& xmin,
@@ -168,7 +206,7 @@ void Structured::setup(
   dx_.assign(dx.begin(),dx.end());
   xmin_.assign(xmin.begin(),xmin.end());
   xmax_.assign(xmax.begin(),xmax.end());
-  
+
   nxmin_ = nxmax_ = static_cast<size_t>(nx_.front());
 
   for (size_t j=1; j<ny; ++j) {
@@ -181,7 +219,7 @@ void Structured::setup(
   compute_true_periodicity();
 }
 
-void Structured::setup( 
+void Structured::setup(
     spacing::Spacing* yspace,
     const long&       nx,
     const double&     xmin,
@@ -196,7 +234,7 @@ void Structured::setup(
   dx_.assign(ny, dx);
   xmin_.assign(ny, xmin);
   xmax_.assign(ny, xmax);
-  
+
   nxmin_ = nxmax_ = static_cast<size_t>(nx_.front());
 
   npts_ = static_cast<size_t>(std::accumulate(nx_.begin(), nx_.end(), 0));
@@ -237,7 +275,7 @@ void Structured::compute_true_periodicity() {
       Point3 Pxmin = compute_earth_centred( { xmin_[j], y_[j] } );
       Point3 Pxmax = compute_earth_centred( { xmax_[j], y_[j] } );
 
-      periodic_x_  = points_equal( Pxmin, Pxmax );      
+      periodic_x_  = points_equal( Pxmin, Pxmax );
     }
 
   }

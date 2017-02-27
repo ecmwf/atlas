@@ -8,7 +8,7 @@
 #include "eckit/config/Configurable.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/regular/Regular.h"
+#include "atlas/grid/Regular.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -172,7 +172,7 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
 {
     ASSERT(!mesh.generated());
 
-  const grid::regular::Regular* rg = dynamic_cast<const grid::regular::Regular*>(&grid);
+  const grid::Regular* rg = dynamic_cast<const grid::Regular*>(&grid);
   if( !rg )
     throw eckit::BadCast("RegularMeshGenerator can only work with a Regular grid",Here());
 
@@ -199,7 +199,7 @@ void RegularMeshGenerator::hash(MD5& md5) const
 
 void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
 {
-  const grid::regular::Regular* rg = dynamic_cast<const grid::regular::Regular*>(&grid);
+  const grid::Regular* rg = dynamic_cast<const grid::Regular*>(&grid);
   if( !rg )
     throw eckit::BadCast("Grid could not be cast to a Regular",Here());
 
@@ -222,7 +222,7 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::GridDist
 }
 
 void RegularMeshGenerator::generate_mesh(
-    const grid::regular::Regular& rg,
+    const grid::Regular& rg,
     const std::vector<int>& parts,
     //const Region& region,
     Mesh& mesh ) const

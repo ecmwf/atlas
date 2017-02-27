@@ -1,7 +1,7 @@
 #ifndef atlas_grid_regular_RegularGaussian_h
 #define atlas_grid_regular_RegularGaussian_h
 
-#include "atlas/grid/regular/Regular.h"
+#include "atlas/grid/Regular.h"
 #include "atlas/grid/domain/Domain.h"
 #include "atlas/grid/spacing/Spacing.h"
 #include "atlas/grid/projection/Projection.h"

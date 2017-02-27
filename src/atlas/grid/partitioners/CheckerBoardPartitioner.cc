@@ -4,7 +4,7 @@
 #include <iostream>
 #include <functional>
 #include <algorithm>
-#include "atlas/grid/regular/Regular.h"
+#include "atlas/grid/Regular.h"
 #include "atlas/grid/partitioners/CheckerBoardPartitioner.h"
 #include "atlas/internals/Functions.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -74,7 +74,7 @@ void CheckerBoardPartitioner::configure_defaults(const grid::Grid& grid) {
   nparts_=eckit::mpi::size();
 
   // grid dimensions
-  const grid::regular::Regular* rg = dynamic_cast<const grid::regular::Regular*>(&grid);
+  const grid::Regular* rg = dynamic_cast<const grid::Regular*>(&grid);
   if ( !rg )
     throw eckit::BadValue("Checkerboard Partitioner only works for Regular grids.",Here());
 

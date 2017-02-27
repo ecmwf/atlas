@@ -10,6 +10,10 @@ namespace projection {
 template <typename Rotation>
 class LonLatProjectionT : public Projection {
 
+private:
+  friend class Projection;
+  LonLatProjectionT(): Projection() {}
+
 public:
 
   // constructor
@@ -39,7 +43,7 @@ public:
   virtual eckit::Properties spec() const;
 
   virtual std::string units() const { return "degrees"; }
-  
+
   virtual operator bool() const { return rotation_.rotated(); }
 
 private:

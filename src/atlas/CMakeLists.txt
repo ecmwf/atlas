@@ -54,8 +54,18 @@ grid/Structured.cc
 grid/Structured.h
 grid/Unstructured.cc
 grid/Unstructured.h
+grid/Regular.cc
+grid/Regular.h
 grid/grids.cc
 grid/grids.h
+grid/ptr/Grid.h
+grid/ptr/Grid.cc
+grid/ptr/Projection.cc
+grid/ptr/Projection.h
+grid/ptr/Domain.cc
+grid/ptr/Domain.h
+grid/ptr/Spacing.cc
+grid/ptr/Spacing.h
 grid/partitioners/EqualRegionsPartitioner.cc
 grid/partitioners/EqualRegionsPartitioner.h
 grid/partitioners/CheckerBoardPartitioner.cc
@@ -113,8 +123,6 @@ grid/spacing/gaussian/N4000.cc  # TL7999
 grid/spacing/gaussian/N8000.cc  # TL15999
 grid/regular/GlobalLonLat.h
 grid/regular/GlobalLonLat.cc
-grid/regular/Regular.h
-grid/regular/Regular.cc
 grid/regular/RegularRegional.h
 grid/regular/RegularRegional.cc
 grid/regular/RegularLonLat.h

@@ -1,5 +1,6 @@
 #include <cmath>
 #include "atlas/grid/projection/Projection.h"
+#include "atlas/grid/projection/LonLatProjection.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {
@@ -8,9 +9,7 @@ namespace projection {
 
 Projection* Projection::create() {
   // default: no projection, i.e. stay in (lon,lat)-space
-  util::Config projParams;
-  projParams.set("type","lonlat");
-  return Projection::create(projParams);
+  return new LonLatProjection();
 }
 
 Projection* Projection::create(const eckit::Parametrisation& p) {
