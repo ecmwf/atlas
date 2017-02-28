@@ -24,7 +24,7 @@ namespace mesh {
 
 namespace atlas {
 namespace grid {
-    class Structured;
+    class StructuredGrid;
     class GridDistribution;
 } }
 
@@ -58,19 +58,19 @@ private:
   void configure_defaults();
 
   void generate_region(
-    const grid::Structured&,
+    const grid::StructuredGrid&,
     const std::vector<int>& parts,
     int mypart,
     Region& region) const;
 
   void generate_mesh_new(
-    const grid::Structured&,
+    const grid::StructuredGrid&,
     const std::vector<int>& parts,
     const Region& region,
     Mesh& m) const;
 
   void generate_mesh(
-    const grid::Structured&,
+    const grid::StructuredGrid&,
     const std::vector<int>& parts,
     const Region& region,
     Mesh& m ) const;

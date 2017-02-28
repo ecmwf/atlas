@@ -74,7 +74,7 @@ void CheckerBoardPartitioner::configure_defaults(const Grid& grid) {
   nparts_=eckit::mpi::size();
 
   // grid dimensions
-  const grid::Regular rg(grid);
+  const grid::RegularGrid rg(grid);
   if ( !rg )
     throw eckit::BadValue("Checkerboard Partitioner only works for Regular grids.",Here());
 

@@ -22,7 +22,7 @@ using namespace atlas::grid::detail::grid::reduced;
 namespace atlas {
 namespace test {
 
-mesh::Mesh::Ptr generate_mesh( const Structured& grid )
+mesh::Mesh::Ptr generate_mesh( const StructuredGrid& grid )
 {
   mesh::generators::Structured generate;
   return mesh::Mesh::Ptr( generate( grid ) );
@@ -30,7 +30,7 @@ mesh::Mesh::Ptr generate_mesh( const Structured& grid )
 
 mesh::Mesh::Ptr generate_mesh(int nlat, long lon[] )
 {
-  return generate_mesh( Structured( new ReducedGaussian(nlat,lon) ) );
+  return generate_mesh( StructuredGrid( new ReducedGaussian(nlat,lon) ) );
 }
 
 

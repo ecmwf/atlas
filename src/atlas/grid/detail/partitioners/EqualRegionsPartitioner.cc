@@ -501,7 +501,7 @@ void EqualRegionsPartitioner::partition(int part[]) const {
         std::vector<NodeInt> nodes(grid().npts());
         int n(0);
 
-        if( const grid::Structured reduced_grid = Structured(grid()) ) {
+        if( const grid::StructuredGrid reduced_grid = StructuredGrid(grid()) ) {
             for(size_t jlat = 0; jlat < reduced_grid.ny(); ++jlat) {
                 for(size_t jlon = 0; jlon < reduced_grid.nx(jlat); ++jlon) {
                     nodes[n].x = microdeg(reduced_grid.x(jlon,jlat));

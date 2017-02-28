@@ -74,7 +74,7 @@ DebugGrid::DebugGrid()
   grid::detail::grid::reduced::ReducedGaussian::setup(N,lon);
 }
 
-static grid::Structured debug_grid() { return grid::Structured( new DebugGrid() ); }
+static grid::StructuredGrid debug_grid() { return grid::StructuredGrid( new DebugGrid() ); }
 
 
 class MinimalGrid:   public grid::detail::grid::reduced::ReducedGaussian {
@@ -82,7 +82,7 @@ class MinimalGrid:   public grid::detail::grid::reduced::ReducedGaussian {
 		MinimalGrid(int N, long lon[]) : ReducedGaussian(N,lon) {}
 };
 
-static grid::Structured minimal_grid(int N, long lon[]) { return grid::Structured( new MinimalGrid(N,lon) ); }
+static grid::StructuredGrid minimal_grid(int N, long lon[]) { return grid::StructuredGrid( new MinimalGrid(N,lon) ); }
 
 
 double compute_lonlat_area(mesh::Mesh& mesh)
@@ -374,7 +374,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
           //  int nlat=10;
           //  long lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
           //  test::MinimalGrid grid(nlat,lon);
-  grid::Structured grid = grid::Grid("N32");
+  grid::StructuredGrid grid = grid::Grid("N32");
   //RegularGrid grid(128,64);
 
   /*
@@ -513,7 +513,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
     -72,
     -90
   };
-  grid::Structured grid( new grid::detail::grid::CustomStructured(N,lat,lon) );
+  grid::StructuredGrid grid( new grid::detail::grid::CustomStructured(N,lat,lon) );
 
   bool three_dimensional = true;
 

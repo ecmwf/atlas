@@ -41,7 +41,7 @@ Grid::Grid( const Config& p ) {
 
 
 
-detail::grid::Structured* Structured::create( const Config& config ) {
+detail::grid::Structured* StructuredGrid::create( const Config& config ) {
 
   Projection projection;
   Spacing    yspace;
@@ -136,59 +136,71 @@ detail::grid::Structured* Structured::create( const Config& config ) {
   return new detail::grid::Structured(projection, X, yspace, domain );
 }
 
-const Structured::structured_t* structured_grid( const Grid::grid_t *grid ) {
-    const Structured::structured_t* g( dynamic_cast<const Structured::structured_t*>(grid) );
+const StructuredGrid::structured_t* structured_grid( const Grid::grid_t *grid ) {
+    const StructuredGrid::structured_t* g( dynamic_cast<const StructuredGrid::structured_t*>(grid) );
     return g;
 }
 
-Structured::Structured():
+StructuredGrid::StructuredGrid():
     Grid(),
     grid_( nullptr ) {
 }
 
-Structured::Structured( const Grid& grid ):
+StructuredGrid::StructuredGrid( const Grid& grid ):
     Grid( grid ),
     grid_( structured_grid(raw()) ) {
 }
 
-Structured::Structured( const detail::grid::Grid *grid ):
+StructuredGrid::StructuredGrid( const detail::grid::Grid *grid ):
     Grid( grid ),
     grid_( structured_grid(raw()) ) {
 }
 
-Structured::Structured( const Config& p ):
+StructuredGrid::StructuredGrid( const std::string& grid ):
+    Grid( grid ),
+    grid_( structured_grid(raw()) ) {
+}
+
+StructuredGrid::StructuredGrid( const Config& p ):
     Grid(create(p)),
     grid_( structured_grid(raw()) ) {
 }
 
-const Regular::regular_t* regular_grid( const Grid::grid_t *grid ) {
-    const Regular::regular_t* g( dynamic_cast<const Regular::regular_t*>(grid) );
+const RegularGrid::regular_t* regular_grid( const Grid::grid_t *grid ) {
+    const RegularGrid::regular_t* g( dynamic_cast<const RegularGrid::regular_t*>(grid) );
     if( g && g->reduced() ) {
         return nullptr;
     }
     return g;
 }
 
-Regular::regular_t* Regular::create( const Config& ) {
+RegularGrid::regular_t* RegularGrid::create( const Config& ) {
   NOTIMP;
 }
 
-Regular::Regular( const Grid& grid ):
-    Structured( grid ),
+RegularGrid::RegularGrid( const Grid& grid ):
+    StructuredGrid( grid ),
     grid_( regular_grid(raw()) ) {
-    if( grid_ ) nx_ = Structured::nx().front();
+    if( grid_ ) nx_ = StructuredGrid::nx().front();
 }
 
-Regular::Regular( const detail::grid::Grid *grid ):
-    Structured(grid),
+RegularGrid::RegularGrid( const detail::grid::Grid *grid ):
+    StructuredGrid(grid),
     grid_( regular_grid(raw()) ) {
-    if( grid_ ) nx_ = Structured::nx().front();
+    if( grid_ ) nx_ = StructuredGrid::nx().front();
 }
 
-Regular::Regular( const Config& p ):
-    Structured(create(p)),
+RegularGrid::RegularGrid( const std::string& grid ):
+    StructuredGrid(grid),
     grid_( regular_grid(raw()) ) {
-    if( grid_ ) nx_ = Structured::nx().front();
+    if( grid_ ) nx_ = StructuredGrid::nx().front();
+}
+
+
+RegularGrid::RegularGrid( const Config& p ):
+    StructuredGrid(create(p)),
+    grid_( regular_grid(raw()) ) {
+    if( grid_ ) nx_ = StructuredGrid::nx().front();
 }
 
 

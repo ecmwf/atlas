@@ -172,7 +172,7 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
 {
     ASSERT(!mesh.generated());
 
-  const grid::Regular rg = grid::Regular(grid);
+  const grid::RegularGrid rg = grid::RegularGrid(grid);
   if( !rg )
     throw eckit::BadCast("RegularMeshGenerator can only work with a Regular grid",Here());
 
@@ -199,7 +199,7 @@ void RegularMeshGenerator::hash(MD5& md5) const
 
 void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
 {
-  const grid::Regular rg = grid::Regular(grid);
+  const grid::RegularGrid rg = grid::RegularGrid(grid);
   if( !rg )
     throw eckit::BadCast("Grid could not be cast to a Regular",Here());
 
@@ -222,7 +222,7 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::GridDist
 }
 
 void RegularMeshGenerator::generate_mesh(
-    const grid::Regular& rg,
+    const grid::RegularGrid& rg,
     const std::vector<int>& parts,
     //const Region& region,
     Mesh& mesh ) const

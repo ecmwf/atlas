@@ -330,7 +330,7 @@ void AtlasBenchmark::setup()
 
   grid::load();
 
-  Structured grid = Grid(gridname);
+  StructuredGrid grid = Grid(gridname);
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
   mesh.reset( meshgenerator->generate(grid) );
 

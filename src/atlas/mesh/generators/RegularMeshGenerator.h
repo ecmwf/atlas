@@ -49,7 +49,7 @@ private:
     void configure_defaults();
 
     void generate_mesh(
-      const atlas::grid::Regular&,
+      const atlas::grid::RegularGrid&,
       const std::vector<int>& parts,
       Mesh& m ) const;
 

@@ -26,8 +26,8 @@
 #include "atlas/output/Gmsh.h"
 
 using Grid       = atlas::grid::Grid;
-using Structured = atlas::grid::Structured;
-using Regular    = atlas::grid::Regular;
+using Structured = atlas::grid::StructuredGrid;
+using Regular    = atlas::grid::RegularGrid;
 using Config     = atlas::util::Config;
 
 namespace atlas {

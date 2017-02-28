@@ -30,9 +30,9 @@
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
 
-using Structured = atlas::grid::Structured;
+using Structured = atlas::grid::StructuredGrid;
 using Grid       = atlas::grid::Grid;
-using Regular    = atlas::grid::Regular;
+using Regular    = atlas::grid::RegularGrid;
 
 
 namespace atlas {

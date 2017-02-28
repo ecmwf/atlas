@@ -121,7 +121,7 @@ void AtlasGrids::execute(const Args& args)
 
   if( !key.empty() )
   {
-    Structured grid;
+    StructuredGrid grid;
     try{ grid = Grid(key); }
     catch( eckit::BadParameter& err ){}
 

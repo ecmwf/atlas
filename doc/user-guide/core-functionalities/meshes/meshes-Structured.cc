@@ -18,8 +18,8 @@ int main(int argc, char *argv[])
 
     atlas::mesh::generators::Structured meshgenerator;
 
-    Grid::Ptr grid( Grid::create( "O32" ) );
-    Mesh::Ptr mesh( meshgenerator.generate(*grid) );
+    Grid grid( "O32" );
+    Mesh::Ptr mesh( meshgenerator.generate(grid) );
 
     Gmsh gmsh_2d("mesh2d.msh");
     Gmsh gmsh_3d("mesh3d.msh", Config("coordinates", "xyz") );

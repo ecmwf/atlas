@@ -170,7 +170,7 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( eckit::mpi::size() > 1 || edges )
     meshgenerator_config.set("3d",false);
 
-  Structured grid;
+  StructuredGrid grid;
   if( key.size() )
   {
     try{ grid = Grid(key); }

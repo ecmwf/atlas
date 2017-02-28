@@ -108,7 +108,7 @@ void AtlasLoadbalance::run()
   if( !do_run ) return;
   grid::load();
 
-  Structured grid;
+  StructuredGrid grid;
   try{ grid = Grid(key); }
   catch( eckit::BadParameter& err ){}
 

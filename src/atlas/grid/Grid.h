@@ -61,7 +61,7 @@ protected:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Structured: public Grid {
+class StructuredGrid: public Grid {
 
 public:
 
@@ -70,10 +70,11 @@ public:
 
 public:
 
-    Structured();
-    Structured( const Grid& );
-    Structured( const grid_t* );
-    Structured( const Config& );
+    StructuredGrid();
+    StructuredGrid( const Grid& );
+    StructuredGrid( const grid_t* );
+    StructuredGrid( const std::string& );
+    StructuredGrid( const Config& );
 
     operator bool() const { return grid_; }
 
@@ -134,7 +135,7 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Regular: public Structured {
+class RegularGrid: public StructuredGrid {
 
 public:
 
@@ -142,25 +143,26 @@ public:
 
 public:
 
-    Regular( const Grid& );
-    Regular( const grid_t* );
-    Regular( const Config& );
+    RegularGrid( const Grid& );
+    RegularGrid( const grid_t* );
+    RegularGrid( const std::string& );
+    RegularGrid( const Config& );
 
     operator bool() const { return grid_; }
 
     size_t nx() const { return nx_; }
 
     inline double x( const size_t i ) const {
-        return Structured::x(i,0);
+        return StructuredGrid::x(i,0);
     }
 
-    using Structured::y;
+    using StructuredGrid::y;
 
     inline double y( const size_t j ) const {
         return grid_->lat(j);
     }
 
-    using Structured::xy;
+    using StructuredGrid::xy;
 
     PointXY xy( const size_t i, const size_t j ) const {
       return PointXY( x(i), y(j ) );

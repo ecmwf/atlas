@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
   // Create grid and trans object
   grid::Grid g( "N80" );
 
-  BOOST_CHECK_EQUAL( grid::Structured(g).ny() , 160 );
+  BOOST_CHECK_EQUAL( grid::StructuredGrid(g).ny() , 160 );
 
   trans::Trans trans( g );
 

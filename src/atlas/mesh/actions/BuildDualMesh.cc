@@ -391,7 +391,7 @@ void make_dual_normals_outward( Mesh& mesh )
 
 void build_brick_dual_mesh(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh)
 {
-  auto g = grid::Structured(grid);
+  auto g = grid::StructuredGrid(grid);
   if( g )
   {
     if( eckit::mpi::size() != 1 )

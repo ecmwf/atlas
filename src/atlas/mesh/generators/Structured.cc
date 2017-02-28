@@ -161,7 +161,7 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
 {
     ASSERT(!mesh.generated());
 
-  const grid::Structured rg = grid::Structured(grid);
+  const grid::StructuredGrid rg = grid::StructuredGrid(grid);
   if( !rg )
     throw eckit::BadCast("Structured can only work with a Structured",Here());
 
@@ -187,7 +187,7 @@ void Structured::hash(MD5& md5) const
 
 void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
 {
-  const grid::Structured rg = grid::Structured(grid);
+  const grid::StructuredGrid rg = grid::StructuredGrid(grid);
   if( !rg )
     throw eckit::BadCast("Grid could not be cast to a Structured",Here());
 
@@ -228,7 +228,7 @@ void Structured::generate(const grid::Grid& grid, const grid::GridDistribution& 
 }
 
 
-void Structured::generate_region(const grid::Structured& rg, const std::vector<int>& parts, int mypart, Region& region) const
+void Structured::generate_region(const grid::StructuredGrid& rg, const std::vector<int>& parts, int mypart, Region& region) const
 {
   double max_angle          = options.get<double>("angle");
   bool   triangulate_quads  = options.get<bool>("triangulate");
@@ -784,7 +784,7 @@ struct GhostNode {
 };
 }
 
-void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int>& parts, const Region& region, Mesh& mesh) const
+void Structured::generate_mesh(const grid::StructuredGrid& rg, const std::vector<int>& parts, const Region& region, Mesh& mesh) const
 {
 
 

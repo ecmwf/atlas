@@ -53,7 +53,7 @@ TransPartitioner::~TransPartitioner() {
 
 void TransPartitioner::partition(int part[]) const {
 
-    grid::Structured g(grid());
+    grid::StructuredGrid g(grid());
     if( not g )
         throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 

@@ -48,7 +48,7 @@ Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
   ASSERT( grid.domain().global() );
   ASSERT( not grid.projection() );
 
-  const grid::Structured structured(grid);
+  const grid::StructuredGrid structured(grid);
   if( !structured )
     throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 
@@ -69,12 +69,12 @@ Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p
   ASSERT( grid.domain().global() );
   ASSERT( not grid.projection() );
 
-  const grid::Structured structured(grid);
+  const grid::StructuredGrid structured(grid);
   if (!structured) {
     throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans", Here());
   }
 
-  const grid::Regular regular(grid);
+  const grid::RegularGrid regular(grid);
   bool global_lonlat = regular
                &&      regular.yspace().type() == "linear";
   bool regular_lonlat = global_lonlat
