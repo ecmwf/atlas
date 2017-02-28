@@ -30,17 +30,13 @@ class Partitioner : public eckit::Owned {
 
 public:
 
-    typedef eckit::SharedPtr<Partitioner> Ptr;
-
-public:
-
     Partitioner(const grid::Grid& grid);
     Partitioner(const grid::Grid& grid, const size_t nb_partitions);
     virtual ~Partitioner();
 
     virtual void partition( int part[] ) const = 0;
 
-    virtual GridDistribution* distribution() const;
+    virtual GridDistribution distribution() const;
 
     size_t nb_partitions() const;
     const grid::Grid& grid() const {

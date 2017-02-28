@@ -55,8 +55,8 @@ size_t Partitioner::nb_partitions() const {
     return nb_partitions_;
 }
 
-GridDistribution* Partitioner::distribution() const {
-    return new GridDistribution(*this);
+GridDistribution Partitioner::distribution() const {
+    return GridDistribution(*this);
 }
 
 

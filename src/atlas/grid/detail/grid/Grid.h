@@ -34,7 +34,6 @@ public:  // types
     using Config    = atlas::util::Config;
     using builder_t = eckit::BuilderT1<Grid>;
     using ARG1      = const Config&;
-    using Ptr       = eckit::SharedPtr<Grid>;
     using Point     = PointLonLat; // must be sizeof(double)*2
     using uid_t     = std::string;
 

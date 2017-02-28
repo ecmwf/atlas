@@ -198,10 +198,10 @@ MeshGenerator* atlas__MeshGenerator__create(const char* name, const eckit::Param
   return meshgenerator;
 }
 
-Mesh* atlas__MeshGenerator__generate__grid_griddist (const MeshGenerator* This, const grid::Grid::grid_t* grid, const grid::GridDistribution* distribution )
+Mesh* atlas__MeshGenerator__generate__grid_griddist (const MeshGenerator* This, const grid::Grid::grid_t* grid, const grid::GridDistribution::impl_t* distribution )
 {
   ATLAS_ERROR_HANDLING(
-    return This->generate(grid::Grid(grid),*distribution);
+    return This->generate(grid::Grid(grid), grid::GridDistribution(distribution));
   );
   return 0;
 }

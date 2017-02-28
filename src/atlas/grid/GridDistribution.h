@@ -30,23 +30,23 @@ class Partitioner;
 namespace atlas {
 namespace grid {
 
-class GridDistribution: public eckit::Owned {
+class GridDistribution {
 
 public:
 
-     typedef eckit::SharedPtr<GridDistribution> Ptr;
+  class impl_t: public eckit::Owned {
 
-public:
+  public:
 
-    GridDistribution(const Grid&);
+    impl_t( const Grid& );
 
-    GridDistribution(const Partitioner&);
+    impl_t( const Partitioner& );
 
-    GridDistribution(size_t npts, int partition[], int part0 = 0);
+    impl_t( size_t npts, int partition[], int part0 = 0 );
 
-    virtual ~GridDistribution() {}
+    virtual ~impl_t() {}
 
-    int partition(const gidx_t gidx) const {
+    int partition( const gidx_t gidx ) const {
         return part_[gidx];
     }
 
@@ -77,19 +77,72 @@ public:
         return min_pts_;
     }
 
-private:
+  private:
 
     size_t nb_partitions_;
     std::vector<int> part_;
     std::vector<int> nb_pts_;
     size_t max_pts_;
     size_t min_pts_;
+
+  };
+
+public:
+
+    GridDistribution();
+    GridDistribution( const impl_t* );
+    GridDistribution( const GridDistribution& );
+
+    GridDistribution( const Grid& );
+
+    GridDistribution( const Partitioner& );
+
+    GridDistribution( size_t npts, int partition[], int part0 = 0 );
+
+    ~GridDistribution() {}
+
+    int partition(const gidx_t gidx) const {
+        return impl_->partition(gidx);
+    }
+
+    const std::vector<int>& partition() const {
+        return impl_->partition();
+    }
+
+    size_t nb_partitions() const {
+        return impl_->nb_partitions();
+    }
+
+    operator const std::vector<int>&() const {
+        return *impl_;
+    }
+
+    const int* data() const {
+        return impl_->data();
+    }
+
+    const std::vector<int>& nb_pts() const {
+        return impl_->nb_pts();
+    }
+
+    size_t max_pts() const {
+        return impl_->max_pts();
+    }
+    size_t min_pts() const {
+        return impl_->min_pts();
+    }
+
+private:
+
+    eckit::SharedPtr<const impl_t> impl_;
 };
 
+#define GRIDDISTRIBUTION GridDistribution::impl_t
 extern "C" {
-    GridDistribution* atlas__GridDistribution__new(int npts, int part[], int part0);
-    void atlas__GridDistribution__delete(GridDistribution* This);
+    GRIDDISTRIBUTION* atlas__GridDistribution__new(int npts, int part[], int part0);
+    void atlas__GridDistribution__delete(GRIDDISTRIBUTION* This);
 }
+#undef GRIDDISTRIBUTION
 
 } // namespace grid
 } // namespace atlas

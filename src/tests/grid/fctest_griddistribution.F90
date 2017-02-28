@@ -61,6 +61,7 @@ TEST( test_griddist )
   type(atlas_Output) :: gmsh
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_GridDistribution) :: griddistribution
+  character(len=1024) :: msg
 
   integer, allocatable :: part(:)
   integer :: jnode
@@ -78,6 +79,10 @@ TEST( test_griddist )
   enddo
 
   griddistribution = atlas_GridDistribution(part, part0=1)
+
+  write(msg,*) "owners fort",griddistribution%owners()
+  call atlas_log%info(msg)
+
   meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid,griddistribution)
   call griddistribution%final()
@@ -86,6 +91,11 @@ TEST( test_griddist )
   call gmsh%write(mesh)
 
   deallocate(part)
+
+  call mesh%final()
+  call gmsh%final()
+  call grid%final()
+  call meshgenerator%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------

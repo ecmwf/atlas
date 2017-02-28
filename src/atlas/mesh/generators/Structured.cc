@@ -172,9 +172,9 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
   if ( rg.ny()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
   if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
 
-  grid::Partitioner::Ptr partitioner( grid::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
-  grid::GridDistribution::Ptr distribution( partitioner->distribution() );
-  generate( grid, *distribution, mesh );
+  eckit::SharedPtr<grid::Partitioner> partitioner( grid::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
+  grid::GridDistribution distribution( partitioner->distribution() );
+  generate( grid, distribution, mesh );
 }
 
 void Structured::hash(MD5& md5) const

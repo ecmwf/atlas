@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_meshgen_MeshGenerator_h
-#define atlas_meshgen_MeshGenerator_h
+#pragma once
 
 #include <iosfwd>
 #include <string>
@@ -18,6 +17,7 @@
 #include "eckit/config/Parametrisation.h"
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/GridDistribution.h"
 #include "atlas/util/Config.h"
 
 namespace eckit { class MD5; }
@@ -120,7 +120,7 @@ class MeshGeneratorBuilder : public MeshGeneratorFactory {
 
 #define Parametrisation eckit::Parametrisation
 #define grid_Grid grid::Grid::grid_t
-#define grid_GridDistribution grid::GridDistribution
+#define grid_GridDistribution grid::GridDistribution::impl_t
 
 extern "C" {
 void atlas__MeshGenerator__delete(MeshGenerator* This);
@@ -138,5 +138,3 @@ Mesh* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid
 } // namespace generators
 } // namespace mesh
 } // namespace atlas
-
-#endif

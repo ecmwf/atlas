@@ -38,8 +38,6 @@ class Structured : public Grid {
 
 public:
 
-    typedef eckit::SharedPtr<Structured> Ptr;
-
     static Structured* create( const Config& );
 
     static Structured* create( const std::string& shortname );
