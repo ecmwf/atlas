@@ -369,20 +369,30 @@ public:
 //-- Accessors
 
   /// @brief Number of blocks
+  ATLAS_HOST_DEVICE
   size_t blocks() const { return blocks_; }
 
   /// @brief Access to a block connectivity
+  ATLAS_HOST_DEVICE
   const BlockConnectivityImpl& block( size_t block_idx ) const { return *(block_[block_idx]); }
+  ATLAS_HOST_DEVICE
         BlockConnectivityImpl& block( size_t block_idx )       { return *(block_[block_idx]); }
+ATLAS_HOST_DEVICE
+  BlockConnectivityImpl* block__( size_t block_idx )       { return (block_[block_idx]); }
+
+  ATLAS_HOST_DEVICE
+  BlockConnectivityImpl* base() { return block_.base();}
 
   /// @brief Access to connectivity table elements for given row and column
   /// The row_idx counts up from 0, from block 0, as in IrregularConnectivity
   /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
+  ATLAS_HOST_DEVICE
   idx_t operator()( size_t row_idx, size_t col_idx ) const;
 
   /// @brief Access to connectivity table elements for given row and column
   /// The block_row_idx counts up from zero for every block_idx.
   /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
+  ATLAS_HOST_DEVICE
   idx_t operator()( size_t block_idx, size_t block_row_idx, size_t block_col_idx ) const;
 
 ///-- Modifiers

@@ -58,6 +58,35 @@ void kernel_irr(IrregularConnectivityImpl* conn_, bool* result)
 
 }
 
+__global__
+void kernel_multiblock(MultiBlockConnectivityImpl* conn_, bool* result)
+{
+
+    MultiBlockConnectivityImpl& conn = *conn_;
+
+    *result = true;
+
+    *result &= (conn.blocks()== 1);
+    *result &= (conn.rows()== 2);
+    *result &= (conn.cols(0) == 3);
+    *result &= (conn.cols(1) == 3);
+    *result &= (conn.mincols() == 3);
+    *result &= (conn.maxcols() == 3);
+
+    *result &= (conn(0,0) == 1 IN_FORTRAN);
+    *result &= (conn(0,1) == 3 IN_FORTRAN);
+    *result &= (conn(0,2) == 4 IN_FORTRAN);
+
+//    BlockConnectivityImpl& ablock = conn.block(0);
+printf("TT %p\n", conn.base());
+printf("UU %p\n", conn.block__(0));
+//    *result &= (conn.block(0)(0,0) == 1 IN_FORTRAN);
+//    *result &= (ablock(0,1) == 3 IN_FORTRAN);
+//    *result &= (ablock(0,2) == 4 IN_FORTRAN);
+}
+
+
+
 BOOST_AUTO_TEST_CASE( test_block_connectivity )
 {
     BlockConnectivity conn;
@@ -104,6 +133,33 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
 
     BOOST_CHECK_EQUAL( *result , true );
 }
+
+BOOST_AUTO_TEST_CASE( test_multiblock_connectivity )
+{
+    
+    MultiBlockConnectivity conn("mesh");
+    BOOST_CHECK_EQUAL(conn.rows(),0);
+    BOOST_CHECK_EQUAL(conn.maxcols(),0);
+
+    constexpr idx_t vals[6] = {1,3,4,3,7,8};
+    bool from_fortran = true;
+    conn.add(2, 3, vals, from_fortran);
+BOOST_CHECK(conn.block(0)(0,0) == 1);
+    bool* result;
+    cudaMallocManaged(&result, sizeof(bool));
+    *result = true;
+
+    conn.cloneToDevice();
+    BOOST_CHECK( conn.isOnDevice() );
+
+    kernel_multiblock<<<1,1>>>(conn.gpu_object_ptr(), result);
+
+    cudaDeviceSynchronize();
+
+    BOOST_CHECK_EQUAL( *result , true );
+
+}
+
 
 }
 }

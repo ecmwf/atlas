@@ -37,16 +37,21 @@ public:
     size_ = N;
   }
 
+  ATLAS_HOST_DEVICE
   T& operator[](size_t idx) {
       assert(idx < size_);
       return data_[idx];
   }
 
+  ATLAS_HOST_DEVICE
   T const& operator[](size_t idx) const {
       assert(idx < size_);
       return data_[idx];
   }
-
+ATLAS_HOST_DEVICE
+  T base() { return *data_; }
+ 
+  ATLAS_HOST_DEVICE
   size_t size() const { return size_;}
 
 private:

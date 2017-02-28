@@ -482,7 +482,14 @@ void MultiBlockConnectivityImpl::cloneToDevice()
   IrregularConnectivityImpl::cloneToDevice();
   block_displs_->cloneToDevice();
   block_cols_  ->cloneToDevice();
+  block_displs_view_ = array::make_device_view<size_t,  1>(*(block_displs_));
+  block_cols_view_ = array::make_device_view<size_t, 1>(*(block_cols_));
 
+  for(size_t i=0; i < block_.size(); ++i) {
+    block_[i]->cloneToDevice();
+    block_[i] = block_[i]->gpu_object_ptr();
+  }
+ 
   gpu_clone_.cloneToDevice();
 }
 
