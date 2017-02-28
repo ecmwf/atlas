@@ -21,7 +21,7 @@ public:
 
     ReducedLonLat( const Config& );
 
-    eckit::Properties spec() const;
+    Spec spec() const;
 
 protected:
 

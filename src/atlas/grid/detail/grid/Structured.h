@@ -38,6 +38,36 @@ class Structured : public Grid {
 
 public:
 
+  class Iterator: public Grid::Iterator {
+  public:
+    Iterator(const Structured& grid):
+        grid_(grid),
+        i_(0),
+        j_(0) {
+    }
+
+    virtual bool next(PointXY& xy) {
+
+       if( j_<grid_.ny() && i_<grid_.nlon(j_) ) {
+
+         xy = grid_.xy(j_,i_++);
+
+         if( i_==grid_.nlon(j_) ) {
+           j_++;
+           i_=0;
+         }
+         return true;
+       }
+       return false;
+    }
+  private:
+    const Structured& grid_;
+    size_t i_;
+    size_t j_;
+  };
+
+public:
+
     static Structured* create( const Config& );
 
     static Structured* create( const std::string& shortname );
@@ -93,7 +123,7 @@ public:
     //    return grid_type_;
      //}
 
-    virtual eckit::Properties spec() const;
+    virtual Spec spec() const;
 
     /**
      * Human readable name
@@ -177,9 +207,10 @@ public:
 
     const YSpace& yspace() const { return yspace_; }
 
-protected: // methods
+    virtual Iterator* iterator() const{ return new Iterator(*this); }
 
-    virtual size_t copyLonLatMemory(double* pts, size_t size) const;
+
+protected: // methods
 
     virtual void print(std::ostream&) const;
 

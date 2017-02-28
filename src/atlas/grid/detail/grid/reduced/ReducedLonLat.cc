@@ -98,8 +98,8 @@ ReducedLonLat::ReducedLonLat(const util::Config& config) :
     setup(N,pl.data());
 }
 
-eckit::Properties ReducedLonLat::spec() const {
-    eckit::Properties grid_spec;
+Grid::Spec ReducedLonLat::spec() const {
+    Grid::Spec grid_spec;
 
     // general specs
     grid_spec=Grid::spec();

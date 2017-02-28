@@ -23,7 +23,7 @@ public:
 
     OctahedralGaussian( const Config& );
 
-    virtual eckit::Properties spec() const;
+    virtual Spec spec() const;
 
 protected:
 

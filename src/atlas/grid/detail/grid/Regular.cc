@@ -17,8 +17,8 @@ Regular::Regular() :
     Structured() {
 }
 
-eckit::Properties Regular::spec() const {
-    eckit::Properties grid_spec;
+Grid::Spec Regular::spec() const {
+    Grid::Spec grid_spec;
 
     // general specs
     grid_spec=Grid::spec();

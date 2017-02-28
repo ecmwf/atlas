@@ -13,15 +13,34 @@
 namespace atlas {
 namespace grid {
 
+class Grid;
+class StructuredGrid;
+class RegularGrid;
+
+class Iterator {
+
+public:
+
+    Iterator( detail::grid::Grid::Iterator* iterator ):
+        iterator_(iterator) {
+    }
+
+    bool next( PointXY& xy ) { return iterator_->next(xy); }
+
+private:
+
+    std::unique_ptr<detail::grid::Grid::Iterator> iterator_;
+};
+
 //---------------------------------------------------------------------------------------------------------------------
 
 class Grid {
 
 public:
 
-  using Config = atlas::util::Config;
-  using grid_t = detail::grid::Grid;
-  using Spec = eckit::Properties;
+  using grid_t   = detail::grid::Grid;
+  using Config   = grid_t::Config;
+  using Spec     = grid_t::Spec;
 
 public:
 
@@ -32,7 +51,7 @@ public:
     Grid( const Config& );
 
     operator bool() const { return grid_; }
-    operator const detail::grid::Grid&() const { return *grid_.get(); }
+    operator const grid_t&() const { return *get(); }
     bool operator==( const Grid& other ) const { return grid_ == other.grid_; }
     bool operator!=( const Grid& other ) const { return grid_ != other.grid_; }
 
@@ -45,10 +64,7 @@ public:
 
     Spec spec() const { return grid_->spec(); }
 
-    // TODO: replace with iterator
-    void lonlat(std::vector<PointLonLat>& points) const { return grid_->lonlat(points); }
-    void fillLonLat(std::vector<double>& vector) const { return grid_->fillLonLat(vector); }
-    void fillLonLat(double array[], size_t arraySize) const { return grid_->fillLonLat(array,arraySize); }
+    Iterator iterator() const { return grid_->iterator(); }
 
 private:
 
@@ -56,7 +72,7 @@ private:
 
 protected:
 
-    const grid_t* raw() { return grid_.get(); }
+    const grid_t* get() const { return grid_.get(); }
 };
 
 //---------------------------------------------------------------------------------------------------------------------

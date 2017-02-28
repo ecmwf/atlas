@@ -52,7 +52,7 @@ Grid* Grid::create(const Config& p) {
     if (p.get("type",gridtype) && fact.exists(gridtype)) {
         return fact.get(gridtype).create(p);
     }
-    
+
     if( shortname.size() ) {
       Log::info() << "name provided: " << shortname << std::endl;
     }
@@ -62,9 +62,9 @@ Grid* Grid::create(const Config& p) {
     if( shortname.empty() && gridtype.empty() ) {
       throw eckit::BadParameter("no name or type in configuration",Here());
     } else {
-      throw eckit::BadParameter("name or type in configuration don't exist",Here());      
+      throw eckit::BadParameter("name or type in configuration don't exist",Here());
     }
-    
+
     return NULL;
 }
 
@@ -102,38 +102,9 @@ eckit::MD5::digest_t Grid::hash() const {
     return hash_;
 }
 
-void Grid::fillLonLat(double array[], size_t arraySize) const {
-    const size_t size = npts()*2;
-    ASSERT(arraySize >= size);
-    copyLonLatMemory(array, size_t(sizeof(double)*size));
-}
-
 
 std::string Grid::getOptimalMeshGenerator() const {
     return "Delaunay";
-}
-
-
-void Grid::fillLonLat(std::vector<double>& v) const {
-    v.resize(npts()*2);
-    copyLonLatMemory(&v[0], size_t(sizeof(double)*v.size()));
-}
-
-
-size_t Grid::copyLonLatMemory(double* pts, size_t size) const {
-    std::vector<Grid::Point> gpts;
-    lonlat(gpts);
-
-    size_t sizePts = 2*npts();
-
-    ASSERT(size >= sizePts);
-
-    for(size_t c = 0, i = 0; i < gpts.size(); ++i) {
-        pts[c++] = gpts[i].lon();
-        pts[c++] = gpts[i].lat();
-    }
-
-    return sizePts;
 }
 
 
@@ -141,7 +112,7 @@ bool Grid::same(const grid::Grid& g) const {
     return uniqueId() == g.uniqueId();
 }
 
-eckit::Properties Grid::spec() const {
+Grid::Spec Grid::spec() const {
     eckit::Properties grid_spec, dom_spec, proj_spec;
 
     // grid type

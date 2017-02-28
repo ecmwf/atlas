@@ -22,7 +22,7 @@ public:
     ReducedGaussian( const Config& );
     ReducedGaussian( const int N, const long pl[] );
 
-    virtual eckit::Properties spec() const;
+    virtual Spec spec() const;
 
 protected:
 

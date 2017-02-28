@@ -295,22 +295,6 @@ void Structured::lonlat( std::vector<Point>& pts ) const {
     }
 }
 
-
-size_t Structured::copyLonLatMemory(double* pts, size_t size) const {
-    size_t sizePts = 2*npts();
-    ASSERT(size >= sizePts);
-
-    for(size_t jlat=0, c=0; jlat<nlat(); ++jlat ) {
-        const double y = lat(jlat);
-        for( size_t jlon=0; jlon<nlon(jlat); ++jlon ) {
-            pts[c++] = lon(jlat,jlon);
-            pts[c++] = y;
-        }
-    }
-    return sizePts;
-}
-
-
 void Structured::print(std::ostream& os) const {
     os << "Structured(Name:" << shortName() << ")";
 }
@@ -328,15 +312,15 @@ void Structured::hash(eckit::MD5& md5) const {
     md5.add(xmax_.data(), sizeof(double)*xmax_.size());
 
     // also add projection information
-    eckit::Properties prop;
+    Grid::Spec prop;
     std::ostringstream s;
     s << projection().spec();
     prop.set("projection",s.str());
     prop.hash(md5);
 }
 
-eckit::Properties Structured::spec() const {
-    eckit::Properties grid_spec;
+Grid::Spec Structured::spec() const {
+    Grid::Spec grid_spec;
 
     // general specs
     grid_spec=Grid::spec();

@@ -30,6 +30,29 @@ namespace grid {
 
 class Unstructured : public Grid {
 
+public:
+
+  class Iterator: public Grid::Iterator {
+  public:
+    Iterator(const Unstructured& grid):
+        grid_(grid),
+        n_(0) {
+    }
+
+    virtual bool next(PointXY& xy) {
+      if( n_ != grid_.points_->size() ) {
+        xy = grid_.xy(n_++);
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+  private:
+    const Unstructured& grid_;
+    size_t n_;
+  };
+
 public: // methods
 
     static std::string grid_type_str();
@@ -51,17 +74,16 @@ public: // methods
 
     virtual void lonlat(std::vector< Point >&) const;
 
-    virtual eckit::Properties spec() const;
+    virtual Spec spec() const;
 
     /// Human readable name
     virtual std::string shortName() const;
     virtual std::string gridType() const { return "unstructured"; }
 
-    /*** domain is now in Grid
-    virtual const domain::Domain& domain() const {
-        return domain_;
-    }
-    */
+    PointXY xy(size_t n) const { return PointXY( (*points_)[n] ); }
+
+    virtual Iterator* iterator() const{ return new Iterator(*this); }
+
 
 private: // methods
 
@@ -80,7 +102,7 @@ protected:
     mutable std::string shortName_;
 
     /// Cache for the spec since may be quite heavy to compute
-    mutable eckit::ScopedPtr<eckit::Properties> cached_spec_;
+    mutable eckit::ScopedPtr<Grid::Spec> cached_spec_;
 
 };
 

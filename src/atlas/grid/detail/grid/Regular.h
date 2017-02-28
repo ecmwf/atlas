@@ -15,7 +15,7 @@ public:
 
     static std::string className();
 
-    virtual eckit::Properties spec() const;
+    virtual Spec spec() const;
 
     size_t nlon()           { return nlonmin(); }               // same for all latitudes
     double lon(size_t jlon) { return Structured::lon(0,jlon); } // same for all latitudes

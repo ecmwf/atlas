@@ -108,8 +108,8 @@ ReducedGaussian::ReducedGaussian(const int N, const long pl[]) {
 
 }
 
-eckit::Properties ReducedGaussian::spec() const {
-    eckit::Properties grid_spec;
+Grid::Spec ReducedGaussian::spec() const {
+    Grid::Spec grid_spec;
 
     // general specs
     grid_spec=Grid::spec();

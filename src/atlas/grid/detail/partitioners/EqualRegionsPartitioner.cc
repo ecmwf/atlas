@@ -511,14 +511,23 @@ void EqualRegionsPartitioner::partition(int part[]) const {
                 }
             }
         } else {
-            std::vector<PointLonLat> points;
-            grid().lonlat(points);
-            for(size_t j = 0; j < grid().npts(); ++j) {
-                nodes[n].x = microdeg(points[j].lon());
-                nodes[n].y = microdeg(points[j].lat());
-                nodes[n].n = n;
-                ++n;
+
+            Iterator iterator = grid().iterator();
+            PointXY point;
+            while( iterator.next(point) ) {
+              nodes[n].x = microdeg(point.x());
+              nodes[n].y = microdeg(point.y());
+              nodes[n].n = n;
+              ++n;
             }
+//            std::vector<PointLonLat> points;
+//            grid().lonlat(points);
+//            for(size_t j = 0; j < grid().npts(); ++j) {
+//                nodes[n].x = microdeg(points[j].lon());
+//                nodes[n].y = microdeg(points[j].lat());
+//                nodes[n].n = n;
+//                ++n;
+//            }
         }
         partition(grid().npts(), nodes.data(), part);
     }

@@ -45,7 +45,7 @@ protected:
 
     void setup(long nx, long ny, Shift);
 
-    virtual eckit::Properties spec() const;
+    virtual Spec spec() const;
 
     bool shifted_x_;
     bool shifted_y_;

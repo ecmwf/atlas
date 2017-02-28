@@ -148,22 +148,22 @@ StructuredGrid::StructuredGrid():
 
 StructuredGrid::StructuredGrid( const Grid& grid ):
     Grid( grid ),
-    grid_( structured_grid(raw()) ) {
+    grid_( structured_grid(get()) ) {
 }
 
 StructuredGrid::StructuredGrid( const detail::grid::Grid *grid ):
     Grid( grid ),
-    grid_( structured_grid(raw()) ) {
+    grid_( structured_grid(get()) ) {
 }
 
 StructuredGrid::StructuredGrid( const std::string& grid ):
     Grid( grid ),
-    grid_( structured_grid(raw()) ) {
+    grid_( structured_grid(get()) ) {
 }
 
 StructuredGrid::StructuredGrid( const Config& p ):
     Grid(create(p)),
-    grid_( structured_grid(raw()) ) {
+    grid_( structured_grid(get()) ) {
 }
 
 const RegularGrid::regular_t* regular_grid( const Grid::grid_t *grid ) {
@@ -180,26 +180,26 @@ RegularGrid::regular_t* RegularGrid::create( const Config& ) {
 
 RegularGrid::RegularGrid( const Grid& grid ):
     StructuredGrid( grid ),
-    grid_( regular_grid(raw()) ) {
+    grid_( regular_grid(get()) ) {
     if( grid_ ) nx_ = StructuredGrid::nx().front();
 }
 
 RegularGrid::RegularGrid( const detail::grid::Grid *grid ):
     StructuredGrid(grid),
-    grid_( regular_grid(raw()) ) {
+    grid_( regular_grid(get()) ) {
     if( grid_ ) nx_ = StructuredGrid::nx().front();
 }
 
 RegularGrid::RegularGrid( const std::string& grid ):
     StructuredGrid(grid),
-    grid_( regular_grid(raw()) ) {
+    grid_( regular_grid(get()) ) {
     if( grid_ ) nx_ = StructuredGrid::nx().front();
 }
 
 
 RegularGrid::RegularGrid( const Config& p ):
     StructuredGrid(create(p)),
-    grid_( regular_grid(raw()) ) {
+    grid_( regular_grid(get()) ) {
     if( grid_ ) nx_ = StructuredGrid::nx().front();
 }
 

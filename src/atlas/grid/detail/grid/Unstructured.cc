@@ -146,17 +146,23 @@ void Unstructured::lonlat(std::vector<Grid::Point>& crds) const {
 }
 
 
-eckit::Properties Unstructured::spec() const {
+Grid::Spec Unstructured::spec() const {
     if (cached_spec_)
         return *cached_spec_;
 
-    cached_spec_.reset( new eckit::Properties );
+    cached_spec_.reset( new Grid::Spec );
 
     cached_spec_->set("grid_type",gridType());
 
-    std::vector<double> coords;
-    coords.resize(2*npts());
-    Grid::copyLonLatMemory(&coords[0],2*npts());
+
+    std::unique_ptr<Iterator> it( iterator() );
+    std::vector<double> coords(2*npts());
+    PointXY xy;
+    size_t c(0);
+    while( it->next(xy) ) {
+      coords[c++] = xy.x();
+      coords[c++] = xy.y();
+    }
 
     cached_spec_->set( "lonlat", eckit::makeVectorValue<double>(coords) );
 

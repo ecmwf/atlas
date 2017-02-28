@@ -47,8 +47,8 @@ void GlobalLonLat::setup(long nlon, long nlat, Shift shift) {
 GlobalLonLat::GlobalLonLat() : Regular() {
 }
 
-eckit::Properties GlobalLonLat::spec() const {
-    eckit::Properties grid_spec;
+Grid::Spec GlobalLonLat::spec() const {
+    Grid::Spec grid_spec;
 
     // general specs
     grid_spec=Grid::spec();

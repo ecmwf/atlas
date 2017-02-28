@@ -64,8 +64,8 @@ OctahedralGaussian::OctahedralGaussian(const util::Config& config) :
     setup(N,start);
 }
 
-eckit::Properties OctahedralGaussian::spec() const {
-    eckit::Properties grid_spec;
+Grid::Spec OctahedralGaussian::spec() const {
+    Grid::Spec grid_spec;
 
     // general specs
     grid_spec=Grid::spec();

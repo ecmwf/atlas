@@ -27,15 +27,24 @@ namespace grid {
 namespace detail {
 namespace grid {
 
+
 class Grid : public eckit::Owned {
 
 public:  // types
 
     using Config    = atlas::util::Config;
+    using Spec      = eckit::Properties;
     using builder_t = eckit::BuilderT1<Grid>;
     using ARG1      = const Config&;
     using Point     = PointLonLat; // must be sizeof(double)*2
     using uid_t     = std::string;
+
+
+    class Iterator {
+    public:
+      virtual bool next(PointXY&) =0;
+    };
+
 
 public:  // methods
 
@@ -95,25 +104,15 @@ public:  // methods
 
     virtual std::string getOptimalMeshGenerator() const;
 
-    virtual eckit::Properties spec() const;
+    virtual Spec spec() const;
 
     virtual bool same(const grid::Grid&) const;
 
+    virtual Iterator* iterator() const =0;
+
 protected:  // methods
 
-    /// Fill provided memory buffer with the grid points, as (lon,lat) values
-    /// This implementation in the base Grid class is not optimal as it incurs in double copy
-    /// Derived classes should reimplement more optimised versions.
-    ///
-    /// @note Assumes that the input buffer has been allocated with correct size,
-    ///       possibly from calling method npts()
-    ///
-    /// @param array to be filled in with the (lon,lat) values
-    /// @param size number of doubles in array
-    ///
-    /// @return the size of bytes copyied in
-    virtual size_t copyLonLatMemory(double* pts, size_t size) const;
-
+    /// Fill provided me
     virtual void print(std::ostream&) const = 0;
 
 private:  // methods
