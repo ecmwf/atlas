@@ -86,7 +86,7 @@ namespace io {
    */
   static void write(
       const eckit::PathName& path,
-      const std::vector< grid::Grid::Point >& pts );
+      const std::vector< PointLonLat >& pts );
 
   /**
    * @brief Write lan/lon and fields to PointCloud file (overwrites possibly existing file)

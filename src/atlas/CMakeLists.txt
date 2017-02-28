@@ -32,149 +32,149 @@ atlas.cc
 )
 
 list( APPEND atlas_grid_srcs
-grid/CustomStructured.cc
-grid/CustomStructured.h
-grid/domain/Domain.cc
-grid/domain/Domain.h
-grid/domain/RectangularDomain.h
-grid/domain/RectangularDomain.cc
-grid/domain/CircularDomain.h
-grid/domain/CircularDomain.cc
-grid/domain/EmptyDomain.h
-grid/domain/EmptyDomain.cc
-grid/domain/GlobalDomain.h
-grid/domain/GlobalDomain.cc
-grid/domain/ZonalBandDomain.h
-grid/domain/ZonalBandDomain.cc
+grid.h
 grid/Grid.cc
 grid/Grid.h
 grid/GridDistribution.cc
 grid/GridDistribution.h
-grid/Structured.cc
-grid/Structured.h
-grid/Unstructured.cc
-grid/Unstructured.h
-grid/Regular.cc
-grid/Regular.h
-grid/grids.cc
-grid/grids.h
-grid/ptr/Grid.h
-grid/ptr/Grid.cc
-grid/ptr/Projection.cc
-grid/ptr/Projection.h
-grid/ptr/Domain.cc
-grid/ptr/Domain.h
-grid/ptr/Spacing.cc
-grid/ptr/Spacing.h
-grid/partitioners/EqualRegionsPartitioner.cc
-grid/partitioners/EqualRegionsPartitioner.h
-grid/partitioners/CheckerBoardPartitioner.cc
-grid/partitioners/CheckerBoardPartitioner.h
-grid/partitioners/Partitioner.cc
-grid/partitioners/Partitioner.h
-grid/projection/Projection.cc
-grid/projection/Projection.h
-grid/projection/Rotation.cc
-grid/projection/Rotation.h
-grid/projection/LonLatProjection.cc
-grid/projection/LonLatProjection.h
-grid/projection/LambertProjection.cc
-grid/projection/LambertProjection.h
-grid/projection/SchmidtProjection.cc
-grid/projection/SchmidtProjection.h
-grid/projection/MercatorProjection.cc
-grid/projection/MercatorProjection.h
-grid/spacing/Spacing.cc
-grid/spacing/Spacing.h
-grid/spacing/CustomSpacing.h
-grid/spacing/CustomSpacing.cc
-grid/spacing/LinearSpacing.h
-grid/spacing/LinearSpacing.cc
-grid/spacing/FocusSpacing.h
-grid/spacing/FocusSpacing.cc
-grid/spacing/GaussianSpacing.h
-grid/spacing/GaussianSpacing.cc
-grid/spacing/gaussian/Latitudes.cc
-grid/spacing/gaussian/Latitudes.h
-grid/spacing/gaussian/N.cc
-grid/spacing/gaussian/N.h
-grid/spacing/gaussian/N16.cc    # TL31
-grid/spacing/gaussian/N24.cc    # TL47
-grid/spacing/gaussian/N32.cc    # TL63
-grid/spacing/gaussian/N48.cc    # TL95
-grid/spacing/gaussian/N64.cc    # TL127
-grid/spacing/gaussian/N80.cc    # TL159
-grid/spacing/gaussian/N96.cc    # TL191
-grid/spacing/gaussian/N128.cc   # TL255
-grid/spacing/gaussian/N160.cc   # TL319
-grid/spacing/gaussian/N200.cc   # TL399
-grid/spacing/gaussian/N256.cc   # TL511
-grid/spacing/gaussian/N320.cc   # TL639
-grid/spacing/gaussian/N400.cc   # TL799
-grid/spacing/gaussian/N512.cc   # TL1023
-grid/spacing/gaussian/N576.cc   # TL1151
-grid/spacing/gaussian/N640.cc   # TL1279
-grid/spacing/gaussian/N800.cc   # TL1599
-grid/spacing/gaussian/N1024.cc  # TL2047
-grid/spacing/gaussian/N1280.cc  # TL2559
-grid/spacing/gaussian/N1600.cc  # TL3199
-grid/spacing/gaussian/N2000.cc  # TL3999
-grid/spacing/gaussian/N4000.cc  # TL7999
-grid/spacing/gaussian/N8000.cc  # TL15999
-grid/regular/GlobalLonLat.h
-grid/regular/GlobalLonLat.cc
-grid/regular/RegularRegional.h
-grid/regular/RegularRegional.cc
-grid/regular/RegularLonLat.h
-grid/regular/RegularLonLat.cc
-grid/regular/ShiftedLon.h
-grid/regular/ShiftedLon.cc
-grid/regular/ShiftedLat.h
-grid/regular/ShiftedLat.cc
-grid/regular/ShiftedLonLat.h
-grid/regular/ShiftedLonLat.cc
-grid/regular/RegularGaussian.h
-grid/regular/RegularGaussian.cc
-grid/reduced/pl/classic/N.h
-grid/reduced/pl/classic/N.cc
-grid/reduced/pl/classic/PointsPerLatitude.h
-grid/reduced/pl/classic/PointsPerLatitude.cc
-grid/reduced/pl/classic/N16.cc    # TL31
-grid/reduced/pl/classic/N24.cc    # TL47
-grid/reduced/pl/classic/N32.cc    # TL63
-grid/reduced/pl/classic/N48.cc    # TL95
-grid/reduced/pl/classic/N64.cc    # TL127
-grid/reduced/pl/classic/N80.cc    # TL159
-grid/reduced/pl/classic/N96.cc    # TL191
-grid/reduced/pl/classic/N128.cc   # TL255
-grid/reduced/pl/classic/N160.cc   # TL319
-grid/reduced/pl/classic/N200.cc   # TL399
-grid/reduced/pl/classic/N256.cc   # TL511
-grid/reduced/pl/classic/N320.cc   # TL639
-grid/reduced/pl/classic/N400.cc   # TL799
-grid/reduced/pl/classic/N512.cc   # TL1023
-grid/reduced/pl/classic/N576.cc   # TL1151
-grid/reduced/pl/classic/N640.cc   # TL1279
-grid/reduced/pl/classic/N800.cc   # TL1599
-grid/reduced/pl/classic/N1024.cc  # TL2047
-grid/reduced/pl/classic/N1280.cc  # TL2559
-grid/reduced/pl/classic/N1600.cc  # TL3199
-grid/reduced/pl/classic/N2000.cc  # TL3999
-grid/reduced/pl/classic/N4000.cc  # TL7999
-grid/reduced/pl/classic/N8000.cc  # TL15999
-grid/reduced/ClassicGaussian.h
-grid/reduced/ClassicGaussian.cc
-grid/reduced/OctahedralGaussian.h
-grid/reduced/OctahedralGaussian.cc
-grid/reduced/ReducedGaussian.h
-grid/reduced/ReducedGaussian.cc
-grid/reduced/ReducedLonLat.h
-grid/reduced/ReducedLonLat.cc
+grid/Projection.cc
+grid/Projection.h
+grid/Domain.cc
+grid/Domain.h
+grid/Spacing.cc
+grid/Spacing.h
+grid/detail/grid.cc
+grid/detail/grid/Grid.h
+grid/detail/grid/Grid.cc
+grid/detail/grid/Structured.cc
+grid/detail/grid/Structured.h
+grid/detail/grid/Unstructured.cc
+grid/detail/grid/Unstructured.h
+grid/detail/grid/Regular.cc
+grid/detail/grid/Regular.h
+grid/detail/domain/Domain.cc
+grid/detail/domain/Domain.h
+grid/detail/domain/RectangularDomain.h
+grid/detail/domain/RectangularDomain.cc
+grid/detail/domain/CircularDomain.h
+grid/detail/domain/CircularDomain.cc
+grid/detail/domain/EmptyDomain.h
+grid/detail/domain/EmptyDomain.cc
+grid/detail/domain/GlobalDomain.h
+grid/detail/domain/GlobalDomain.cc
+grid/detail/domain/ZonalBandDomain.h
+grid/detail/domain/ZonalBandDomain.cc
+grid/detail/partitioners/EqualRegionsPartitioner.cc
+grid/detail/partitioners/EqualRegionsPartitioner.h
+grid/detail/partitioners/CheckerBoardPartitioner.cc
+grid/detail/partitioners/CheckerBoardPartitioner.h
+grid/detail/partitioners/Partitioner.cc
+grid/detail/partitioners/Partitioner.h
+grid/detail/projection/Projection.cc
+grid/detail/projection/Projection.h
+grid/detail/projection/Rotation.cc
+grid/detail/projection/Rotation.h
+grid/detail/projection/LonLatProjection.cc
+grid/detail/projection/LonLatProjection.h
+grid/detail/projection/LambertProjection.cc
+grid/detail/projection/LambertProjection.h
+grid/detail/projection/SchmidtProjection.cc
+grid/detail/projection/SchmidtProjection.h
+grid/detail/projection/MercatorProjection.cc
+grid/detail/projection/MercatorProjection.h
+grid/detail/spacing/Spacing.cc
+grid/detail/spacing/Spacing.h
+grid/detail/spacing/CustomSpacing.h
+grid/detail/spacing/CustomSpacing.cc
+grid/detail/spacing/LinearSpacing.h
+grid/detail/spacing/LinearSpacing.cc
+grid/detail/spacing/FocusSpacing.h
+grid/detail/spacing/FocusSpacing.cc
+grid/detail/spacing/GaussianSpacing.h
+grid/detail/spacing/GaussianSpacing.cc
+grid/detail/spacing/gaussian/Latitudes.cc
+grid/detail/spacing/gaussian/Latitudes.h
+grid/detail/spacing/gaussian/N.cc
+grid/detail/spacing/gaussian/N.h
+grid/detail/spacing/gaussian/N16.cc    # TL31
+grid/detail/spacing/gaussian/N24.cc    # TL47
+grid/detail/spacing/gaussian/N32.cc    # TL63
+grid/detail/spacing/gaussian/N48.cc    # TL95
+grid/detail/spacing/gaussian/N64.cc    # TL127
+grid/detail/spacing/gaussian/N80.cc    # TL159
+grid/detail/spacing/gaussian/N96.cc    # TL191
+grid/detail/spacing/gaussian/N128.cc   # TL255
+grid/detail/spacing/gaussian/N160.cc   # TL319
+grid/detail/spacing/gaussian/N200.cc   # TL399
+grid/detail/spacing/gaussian/N256.cc   # TL511
+grid/detail/spacing/gaussian/N320.cc   # TL639
+grid/detail/spacing/gaussian/N400.cc   # TL799
+grid/detail/spacing/gaussian/N512.cc   # TL1023
+grid/detail/spacing/gaussian/N576.cc   # TL1151
+grid/detail/spacing/gaussian/N640.cc   # TL1279
+grid/detail/spacing/gaussian/N800.cc   # TL1599
+grid/detail/spacing/gaussian/N1024.cc  # TL2047
+grid/detail/spacing/gaussian/N1280.cc  # TL2559
+grid/detail/spacing/gaussian/N1600.cc  # TL3199
+grid/detail/spacing/gaussian/N2000.cc  # TL3999
+grid/detail/spacing/gaussian/N4000.cc  # TL7999
+grid/detail/spacing/gaussian/N8000.cc  # TL15999
+grid/detail/grid/CustomStructured.cc
+grid/detail/grid/CustomStructured.h
+grid/detail/grid/regular/GlobalLonLat.h
+grid/detail/grid/regular/GlobalLonLat.cc
+grid/detail/grid/regular/RegularRegional.h
+grid/detail/grid/regular/RegularRegional.cc
+grid/detail/grid/regular/RegularLonLat.h
+grid/detail/grid/regular/RegularLonLat.cc
+grid/detail/grid/regular/ShiftedLon.h
+grid/detail/grid/regular/ShiftedLon.cc
+grid/detail/grid/regular/ShiftedLat.h
+grid/detail/grid/regular/ShiftedLat.cc
+grid/detail/grid/regular/ShiftedLonLat.h
+grid/detail/grid/regular/ShiftedLonLat.cc
+grid/detail/grid/regular/RegularGaussian.h
+grid/detail/grid/regular/RegularGaussian.cc
+grid/detail/grid/reduced/pl/classic/N.h
+grid/detail/grid/reduced/pl/classic/N.cc
+grid/detail/grid/reduced/pl/classic/PointsPerLatitude.h
+grid/detail/grid/reduced/pl/classic/PointsPerLatitude.cc
+grid/detail/grid/reduced/pl/classic/N16.cc    # TL31
+grid/detail/grid/reduced/pl/classic/N24.cc    # TL47
+grid/detail/grid/reduced/pl/classic/N32.cc    # TL63
+grid/detail/grid/reduced/pl/classic/N48.cc    # TL95
+grid/detail/grid/reduced/pl/classic/N64.cc    # TL127
+grid/detail/grid/reduced/pl/classic/N80.cc    # TL159
+grid/detail/grid/reduced/pl/classic/N96.cc    # TL191
+grid/detail/grid/reduced/pl/classic/N128.cc   # TL255
+grid/detail/grid/reduced/pl/classic/N160.cc   # TL319
+grid/detail/grid/reduced/pl/classic/N200.cc   # TL399
+grid/detail/grid/reduced/pl/classic/N256.cc   # TL511
+grid/detail/grid/reduced/pl/classic/N320.cc   # TL639
+grid/detail/grid/reduced/pl/classic/N400.cc   # TL799
+grid/detail/grid/reduced/pl/classic/N512.cc   # TL1023
+grid/detail/grid/reduced/pl/classic/N576.cc   # TL1151
+grid/detail/grid/reduced/pl/classic/N640.cc   # TL1279
+grid/detail/grid/reduced/pl/classic/N800.cc   # TL1599
+grid/detail/grid/reduced/pl/classic/N1024.cc  # TL2047
+grid/detail/grid/reduced/pl/classic/N1280.cc  # TL2559
+grid/detail/grid/reduced/pl/classic/N1600.cc  # TL3199
+grid/detail/grid/reduced/pl/classic/N2000.cc  # TL3999
+grid/detail/grid/reduced/pl/classic/N4000.cc  # TL7999
+grid/detail/grid/reduced/pl/classic/N8000.cc  # TL15999
+grid/detail/grid/reduced/ClassicGaussian.h
+grid/detail/grid/reduced/ClassicGaussian.cc
+grid/detail/grid/reduced/OctahedralGaussian.h
+grid/detail/grid/reduced/OctahedralGaussian.cc
+grid/detail/grid/reduced/ReducedGaussian.h
+grid/detail/grid/reduced/ReducedGaussian.cc
+grid/detail/grid/reduced/ReducedLonLat.h
+grid/detail/grid/reduced/ReducedLonLat.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_grid_srcs
-  grid/partitioners/TransPartitioner.h
-  grid/partitioners/TransPartitioner.cc
+  grid/detail/partitioners/TransPartitioner.h
+  grid/detail/partitioners/TransPartitioner.cc
 )
 endif()
 

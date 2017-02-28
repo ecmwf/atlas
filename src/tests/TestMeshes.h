@@ -9,28 +9,28 @@
  */
 
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/grid/reduced/ReducedGaussian.h"
+#include "atlas/grid/detail/grid/reduced/ReducedGaussian.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::grid::reduced;
+using namespace atlas::grid::detail::grid::reduced;
 
 namespace atlas {
 namespace test {
 
-mesh::Mesh::Ptr generate_mesh( const Structured& rgg )
+mesh::Mesh::Ptr generate_mesh( const Structured& grid )
 {
   mesh::generators::Structured generate;
-  return mesh::Mesh::Ptr( generate( rgg ) );
+  return mesh::Mesh::Ptr( generate( grid ) );
 }
 
 mesh::Mesh::Ptr generate_mesh(int nlat, long lon[] )
 {
-  return generate_mesh( ReducedGaussian(nlat,lon) );
+  return generate_mesh( Structured( new ReducedGaussian(nlat,lon) ) );
 }
 
 

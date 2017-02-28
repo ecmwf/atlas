@@ -18,10 +18,13 @@
 #include "atlas/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/spacing/gaussian/Latitudes.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
+#include "atlas/grid.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/grid/reduced/ReducedGaussian.h"
+#include "atlas/grid/detail/grid/regular/ShiftedLonLat.h"
+#include "atlas/grid/detail/grid/CustomStructured.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/Config.h"
 #include "atlas/mesh/Mesh.h"
@@ -57,8 +60,8 @@ namespace test {
 using eckit::geometry::LAT;
 using eckit::geometry::LON;
 
-class DebugMesh:   public grid::reduced::ReducedGaussian { public: DebugMesh(); };
-DebugMesh::DebugMesh()
+class DebugGrid: public grid::detail::grid::reduced::ReducedGaussian { public: DebugGrid(); };
+DebugGrid::DebugGrid()
 {
   int N=5;
   long lon[] = {
@@ -68,14 +71,19 @@ DebugMesh::DebugMesh()
     22,
     22,
   };
-  grid::reduced::ReducedGaussian::setup(N,lon);
+  grid::detail::grid::reduced::ReducedGaussian::setup(N,lon);
 }
 
+static grid::Structured debug_grid() { return grid::Structured( new DebugGrid() ); }
 
-class MinimalMesh:   public grid::reduced::ReducedGaussian {
+
+class MinimalGrid:   public grid::detail::grid::reduced::ReducedGaussian {
 	public:
-		MinimalMesh(int N, long lon[]) : ReducedGaussian(N,lon) {}
+		MinimalGrid(int N, long lon[]) : ReducedGaussian(N,lon) {}
 };
+
+static grid::Structured minimal_grid(int N, long lon[]) { return grid::Structured( new MinimalGrid(N,lon) ); }
+
 
 double compute_lonlat_area(mesh::Mesh& mesh)
 {
@@ -140,7 +148,7 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
 
 BOOST_AUTO_TEST_CASE( test_partitioner )
 {
-  grid::regular::ShiftedLonLat g(4,2);
+  grid::Grid g( new grid::detail::grid::regular::ShiftedLonLat(4,2) );
 
   // 12 partitions
   {
@@ -244,7 +252,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           ("3d",true)
           ("include_pole",false)
           );
-    m = generate( atlas::test::DebugMesh() );
+    m = generate( atlas::test::debug_grid() );
     BOOST_CHECK_EQUAL( m->nodes().size(), 156 );
     BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
     BOOST_CHECK_EQUAL( m->cells().elements(1).size(),  32 );
@@ -260,7 +268,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           ("3d",false)
           ("include_pole",false)
           );
-    m = generate( atlas::test::DebugMesh() );
+    m = generate( atlas::test::debug_grid() );
     BOOST_CHECK_EQUAL( m->nodes().size(), 166 );
     BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
     BOOST_CHECK_EQUAL( m->cells().elements(1).size(),  32 );
@@ -276,7 +284,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           ("3d",true)
           ("include_pole",true)
           );
-    m = generate( atlas::test::DebugMesh() );
+    m = generate( atlas::test::debug_grid() );
     BOOST_CHECK_EQUAL( m->nodes().size(), 158 );
     BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
     BOOST_CHECK_EQUAL( m->cells().elements(1).size(),  44 );
@@ -296,12 +304,12 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           );
     int nlat=2;
     long lon[] = { 4, 6 };
-    mesh = generate( test::MinimalMesh(nlat,lon) );
+    mesh = generate( test::minimal_grid(nlat,lon) );
     BOOST_CHECK_EQUAL( mesh->nodes().size(), 24 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 14 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(),  4 );
 
-    double max_lat = test::MinimalMesh(nlat,lon).lat(0);
+    double max_lat = test::minimal_grid(nlat,lon).y().front();
     BOOST_CHECK_CLOSE( test::compute_lonlat_area(*mesh), 2.*M_PI*2.*max_lat, 1e-8 );
     output::Gmsh("minimal2.msh").write(*mesh);
     delete mesh;
@@ -315,7 +323,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           );
     int nlat=3;
     long lon[] = { 4, 6, 8 };
-    mesh = generate( test::MinimalMesh(nlat,lon) );
+    mesh = generate( test::minimal_grid(nlat,lon) );
     BOOST_CHECK_EQUAL( mesh->nodes().size(), 42 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 28 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(),  8 );
@@ -331,7 +339,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           );
     int nlat=4;
     long lon[] = { 4, 6, 8, 10 };
-    mesh = generate( test::MinimalMesh(nlat,lon) );
+    mesh = generate( test::minimal_grid(nlat,lon) );
     BOOST_CHECK_EQUAL( mesh->nodes().size(), 64 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 46 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(), 12 );
@@ -347,7 +355,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           );
     int nlat=5;
     long lon[] = { 6, 10, 18, 22, 22 };
-    mesh = generate( test::MinimalMesh(nlat,lon) );
+    mesh = generate( test::minimal_grid(nlat,lon) );
     BOOST_CHECK_EQUAL( mesh->nodes().size(), 166 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 134 );
     BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(),  32 );
@@ -360,13 +368,13 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
 
-  BOOST_CHECK( grid::partitioners::PartitionerFactory::has("EqualRegions") );
+  BOOST_CHECK( grid::PartitionerFactory::has("EqualRegions") );
   size_t nb_parts = 20;
           //  Alternative grid for debugging
           //  int nlat=10;
           //  long lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
-          //  test::MinimalMesh grid(nlat,lon);
-  grid::reduced::ClassicGaussian grid(32);
+          //  test::MinimalGrid grid(nlat,lon);
+  grid::Structured grid = grid::Grid("N32");
   //RegularGrid grid(128,64);
 
   /*
@@ -377,7 +385,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   ASSERT(0);
   */
 
-  double max_lat = grid.lat(0);
+  double max_lat = grid.y().front();
   double check_area = 360.*2.*max_lat;
   double area = 0;
   int nodes[]  = {313,332,336,338,334,337,348,359,360,361,360,360,359,370,321,334,338,335,348,315};
@@ -385,7 +393,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   int triags[] = { 42, 13, 12, 13, 12, 14,  0,  1,  0,  1,  1,  0,  1,  0, 14, 12, 13, 11, 14, 42};
   int nb_owned = 0;
 
-  std::vector<int> all_owned    ( grid.npts()+grid.nlat()+1, -1 );
+  std::vector<int> all_owned    ( grid.npts()+grid.ny()+1, -1 );
 
   for(size_t p = 0; p < nb_parts; ++p)
   {
@@ -469,7 +477,7 @@ DISABLE{
       BOOST_ERROR( "node " << gid << " is not owned by anyone" );
     }
   }
-  BOOST_CHECK_EQUAL( nb_owned, grid.npts()+grid.nlat() );
+  BOOST_CHECK_EQUAL( nb_owned, grid.npts()+grid.ny() );
 
   BOOST_CHECK_CLOSE( area, check_area, 1e-10 );
 
@@ -505,7 +513,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
     -72,
     -90
   };
-  grid::CustomStructured grid(N,lat,lon);
+  grid::Structured grid( new grid::detail::grid::CustomStructured(N,lat,lon) );
 
   bool three_dimensional = true;
 
@@ -526,13 +534,13 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
 {
   DEBUG_HERE();
 
-  eckit::SharedPtr<grid::Grid> grid(grid::Grid::create("O8"));
+  grid::Grid grid("O8");
 
   atlas::util::Config cfg;
   cfg.set("part",1);
   cfg.set("nb_parts",8);
   eckit::SharedPtr<mesh::generators::MeshGenerator> meshgenerator( new mesh::generators::Structured(cfg) );
-  eckit::SharedPtr<mesh::Mesh> mesh ( meshgenerator->generate(*grid) );
+  eckit::SharedPtr<mesh::Mesh> mesh ( meshgenerator->generate(grid) );
   const array::ArrayView<int,1> part( mesh->nodes().partition() );
   const array::ArrayView<int,1> ghost( mesh->nodes().ghost() );
   const array::ArrayView<int,1> flags( mesh->nodes().field("flags") );

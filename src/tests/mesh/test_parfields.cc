@@ -23,8 +23,8 @@
 #include "atlas/util/Metadata.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array/Array.h"
@@ -175,8 +175,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   meshgen_options.set("angle",27.5);
   meshgen_options.set("triangulate",false);
   mesh::generators::Structured generate(meshgen_options);
-  mesh::Mesh* m = generate(
-      grid::reduced::ClassicGaussian(32) );
+  mesh::Mesh* m = generate( grid::Grid("N32") );
   mesh::actions::build_parallel_fields(*m);
 
   mesh::Nodes& nodes = m->nodes();

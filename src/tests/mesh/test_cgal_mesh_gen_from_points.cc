@@ -40,11 +40,11 @@ int main()
 {
     eckit::mpi::init();
 
-    Grid::Ptr grid( Grid::create( "Slat32x11") );
+    Grid grid("Slat32x11");
 
     // Build a mesh from grid
     Delaunay generate;
-    mesh::Mesh::Ptr mesh( generate(*grid) );
+    mesh::Mesh::Ptr mesh( generate(grid) );
 
     Gmsh gmsh("earth.msh", util::Config("coordinates","xyz") );
     gmsh.write(*mesh);

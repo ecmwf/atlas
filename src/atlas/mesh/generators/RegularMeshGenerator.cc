@@ -7,8 +7,8 @@
 #include "eckit/runtime/Context.h"
 #include "eckit/config/Configurable.h"
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/Regular.h"
+#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/grid/GridDistribution.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -54,7 +54,7 @@ RegularMeshGenerator::RegularMeshGenerator(const eckit::Parametrisation& p)
   std::string partitioner;
   if( p.get("partitioner",partitioner) )
   {
-    if( not grid::partitioners::PartitionerFactory::has(partitioner) ) {
+    if( not grid::PartitionerFactory::has(partitioner) ) {
       Log::warning() << "Atlas does not have support for partitioner " << partitioner << ". "
                      << "Defaulting to use partitioner EqualRegions" << std::endl;
       partitioner = "EqualRegions";
@@ -123,7 +123,7 @@ void RegularMeshGenerator::configure_defaults()
 
   // This options sets the default partitioner
   std::string partitioner;
-  if( grid::partitioners::PartitionerFactory::has("Trans") && eckit::mpi::size() > 1 )
+  if( grid::PartitionerFactory::has("Trans") && eckit::mpi::size() > 1 )
     partitioner = "Trans";
   else
     partitioner = "EqualRegions";
@@ -172,7 +172,7 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
 {
     ASSERT(!mesh.generated());
 
-  const grid::Regular* rg = dynamic_cast<const grid::Regular*>(&grid);
+  const grid::Regular rg = grid::Regular(grid);
   if( !rg )
     throw eckit::BadCast("RegularMeshGenerator can only work with a Regular grid",Here());
 
@@ -184,7 +184,7 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
   //if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
   //if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
 
-  grid::partitioners::Partitioner::Ptr partitioner( grid::partitioners::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
+  grid::Partitioner::Ptr partitioner( grid::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
   grid::GridDistribution::Ptr distribution( partitioner->distribution() );
   generate( grid, *distribution, mesh );
 }
@@ -199,7 +199,7 @@ void RegularMeshGenerator::hash(MD5& md5) const
 
 void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
 {
-  const grid::Regular* rg = dynamic_cast<const grid::Regular*>(&grid);
+  const grid::Regular rg = grid::Regular(grid);
   if( !rg )
     throw eckit::BadCast("Grid could not be cast to a Regular",Here());
 
@@ -216,9 +216,9 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::GridDist
   int mypart   = options.get<size_t>("part");
 
   // clone some grid properties
-  mesh.setProjection(rg->projection());
+  mesh.setProjection(rg.projection());
 
-  generate_mesh(*rg,distribution,mesh);
+  generate_mesh(rg,distribution,mesh);
 }
 
 void RegularMeshGenerator::generate_mesh(
@@ -229,8 +229,8 @@ void RegularMeshGenerator::generate_mesh(
 {
   int mypart = options.get<size_t>("part");
   int nparts = options.get<size_t>("nb_parts");
-  int nx=rg.nlonmin();
-  int ny=rg.nlat();
+  int nx=rg.nx();
+  int ny=rg.ny();
 
   bool periodic_x = options.get<bool>("periodic_x");
   bool periodic_y = options.get<bool>("periodic_y");
@@ -485,13 +485,13 @@ void RegularMeshGenerator::generate_mesh(
         double xy[2];
         if (iy_glb<ny) {
           // normal calculation
-          rg.lonlat((size_t) iy_glb,(size_t) ix_glb,xy);
+          rg.xy(ix_glb,iy_glb,xy);
         } else {
           // for periodic_y grids, iy_glb==ny lies outside the range of latitudes in the Structured grid...
           // so we extrapolate from two other points -- this is okay for regular grids with uniform spacing.
           double xy1[2], xy2[2];
-          rg.lonlat((size_t) iy_glb-1,(size_t) ix_glb,xy1);
-          rg.lonlat((size_t) iy_glb-2,(size_t) ix_glb,xy2);
+          rg.xy(ix_glb, iy_glb-1, xy1);
+          rg.xy(ix_glb, iy_glb-2, xy2);
           xy[0]=2*xy1[0]-xy2[0];
           xy[1]=2*xy1[1]-xy2[1];
         }

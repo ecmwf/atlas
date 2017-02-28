@@ -16,13 +16,23 @@
 #include "ecbuild/boost_test_framework.h"
 
 
+#include "atlas/grid/detail/grid/regular/RegularGaussian.h"
+#include "atlas/grid/detail/grid/regular/RegularLonLat.h"
+#include "atlas/grid/detail/grid/regular/ShiftedLat.h"
+#include "atlas/grid/detail/grid/reduced/ClassicGaussian.h"
+
+
 #include "atlas/atlas.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
+
+using Structured = atlas::grid::Structured;
+using Grid       = atlas::grid::Grid;
+using Regular    = atlas::grid::Regular;
 
 
 namespace atlas {
@@ -32,37 +42,32 @@ BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); atlas::grid::load(); }
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
-  eckit::SharedPtr<grid::Structured> Structured( grid::Structured::create("N80") );
+  Structured structured = Grid("N80");
 
-  eckit::SharedPtr<grid::Grid> grid( grid::Grid::create("N24") );
+  Grid grid = Grid("N24");
 
-  std::cout << "Structured->nlat() = " << Structured->nlat() << std::endl;
-  std::cout << "grid->npts() = " << grid->npts() << std::endl;
+  std::cout << "structured.ny() = " << structured.ny() << std::endl;
+  std::cout << "grid.npts() = " << grid.npts() << std::endl;
 
 }
 
 BOOST_AUTO_TEST_CASE( test_regular_gg )
 {
   // Constructor for N=32
-  grid::regular::RegularGaussian grid(32);
+  Regular grid( new grid::detail::grid::regular::RegularGaussian(32) );
 
-  BOOST_CHECK_EQUAL(grid.N(), 32);
-  BOOST_CHECK_EQUAL(grid.nlat(), 64);
+  BOOST_CHECK_EQUAL(grid.ny(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 8192);
-  BOOST_CHECK_EQUAL(grid.gridType(),"regular_gaussian");
-
-  // Construct using builders/factories
-
-  grid::Grid::Ptr gridptr;
+  // BOOST_CHECK_EQUAL(grid.gridType(),"regular_gaussian");
 
   // Full Gaussian Grid
 
-  util::Config spec;
-  spec.set("type","regular_gaussian");
-  spec.set("N",32);
-  gridptr = grid::Grid::Ptr( grid::Grid::create(spec) );
-  BOOST_CHECK_EQUAL(gridptr->npts(), 8192);
-  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gaussian");
+  Grid::Config config;
+  config.set("type","regular_gaussian");
+  config.set("N",32);
+  grid = Grid(config);
+  BOOST_CHECK_EQUAL(grid.npts(), 8192);
+  // BOOST_CHECK_EQUAL(grid.gridType(),"regular_gaussian");
 
 
 
@@ -70,22 +75,26 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg )
 {
+  Structured grid;
+  
+  grid = Grid( new grid::detail::grid::reduced::ClassicGaussian(32) );
+  BOOST_CHECK_EQUAL(grid.ny(),64);
+  BOOST_CHECK_EQUAL(grid.npts(),6114);
+
   long nlon[] = {4,6,8};
-  grid::reduced::ReducedGaussian grid(3,nlon);
-  BOOST_CHECK_EQUAL(grid.N(),3);
-  BOOST_CHECK_EQUAL(grid.nlat(),6);
+  grid = Grid( new grid::detail::grid::reduced::ReducedGaussian(3,nlon) );
+  BOOST_CHECK_EQUAL(grid.ny(),6);
   BOOST_CHECK_EQUAL(grid.npts(),8+12+16);
-  BOOST_CHECK_EQUAL(grid.gridType(),"reduced_gaussian");
 }
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
 {
-  grid::reduced::ClassicGaussian grid(32);
+  Structured grid( new grid::detail::grid::reduced::ClassicGaussian(32) );
 
-  BOOST_CHECK_EQUAL(grid.N(),    32);
-  BOOST_CHECK_EQUAL(grid.nlat(), 64);
+  // BOOST_CHECK_EQUAL(grid.N(),    32);
+  BOOST_CHECK_EQUAL(grid.ny(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 6114);
-  BOOST_CHECK_EQUAL(grid.gridType(),"classic_gaussian");
+  // BOOST_CHECK_EQUAL(grid.gridType(),"classic_gaussian");
 
 }
 
@@ -94,56 +103,54 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   // Constructor for N=8
   size_t nlon = 32;
   size_t nlat = 16;
-  grid::regular::ShiftedLat grid(nlon,nlat);
+  Regular grid( new grid::detail::grid::regular::ShiftedLat(nlon,nlat) );
 
-  BOOST_CHECK_EQUAL(grid.nlon(), nlon);
-  BOOST_CHECK_EQUAL(grid.nlat(), nlat);
+  BOOST_CHECK_EQUAL(grid.nx(), nlon);
+  BOOST_CHECK_EQUAL(grid.ny(), nlat);
   BOOST_CHECK_EQUAL(grid.npts(), 512);
-  BOOST_CHECK_EQUAL(grid.gridType(),"shifted_lat");
-  BOOST_CHECK_EQUAL(grid.lat(0), 90.-0.5*(180./16.));
-  BOOST_CHECK_EQUAL(grid.lat(grid.nlat()-1), -90.+0.5*(180./16.));
-  BOOST_CHECK_EQUAL(grid.lon(0), 0.);
-  BOOST_CHECK_EQUAL(grid.lon(grid.nlon()-1), 360.-360./32.);
+  // BOOST_CHECK_EQUAL(grid.gridType(),"shifted_lat");
+  BOOST_CHECK_EQUAL(grid.y(0), 90.-0.5*(180./16.));
+  BOOST_CHECK_EQUAL(grid.y(grid.ny()-1), -90.+0.5*(180./16.));
+  BOOST_CHECK_EQUAL(grid.x(0), 0.);
+  BOOST_CHECK_EQUAL(grid.x(grid.nx()-1), 360.-360./32.);
 
   // Construct using builders/factories
 
-  grid::Grid::Ptr gridptr;
-
   // Global Grid
-  util::Config spec;
-  spec.set("type","shifted_lat");
-  spec.set("nlon",32);
-  spec.set("nlat",16);
-  gridptr = grid::Grid::Ptr( grid::Grid::create(spec) );
-  BOOST_CHECK_EQUAL(gridptr->npts(), 512);
-  BOOST_CHECK_EQUAL(gridptr->gridType(),"shifted_lat");
+  Grid::Config config1;
+  config1.set("type","shifted_lat");
+  config1.set("nx",32);
+  config1.set("ny",16);
+  grid = Grid(config1);
+  BOOST_CHECK_EQUAL(grid.npts(), 512);
+  // BOOST_CHECK_EQUAL(gridptr->gridType(),"shifted_lat");
 
-  util::Config spec2;
-  spec2.set("type","shifted_lat");
-  spec2.set("N",8);
-  gridptr = grid::Grid::Ptr( grid::Grid::create(spec2) );
-  BOOST_CHECK_EQUAL(gridptr->npts(), 512);
-  BOOST_CHECK_EQUAL(gridptr->gridType(),"shifted_lat");
+  Grid::Config config2;
+  config2.set("type","shifted_lat");
+  config2.set("N",8);
+  grid = Grid(config2);
+  BOOST_CHECK_EQUAL(grid.npts(), 512);
+  // BOOST_CHECK_EQUAL(gridptr->gridType(),"shifted_lat");
 
-  grid::regular::RegularLonLat ll_poles(4, 3);
-  BOOST_CHECK_EQUAL( ll_poles.nlon(), 4);
-  BOOST_CHECK_EQUAL( ll_poles.nlat(), 3);
+  Regular ll_poles( new grid::detail::grid::regular::RegularLonLat(4, 3) );
+  BOOST_CHECK_EQUAL( ll_poles.nx(), 4);
+  BOOST_CHECK_EQUAL( ll_poles.ny(), 3);
 
-  grid::regular::ShiftedLat ll_nopoles(4, 2);
-  BOOST_CHECK_EQUAL( ll_nopoles.nlon(), 4);
-  BOOST_CHECK_EQUAL( ll_nopoles.nlat(), 2);
-  BOOST_CHECK_CLOSE( ll_nopoles.lat(0), 45., 1.e-5);
-  BOOST_CHECK_CLOSE( ll_nopoles.lat(1), -45. , 1.e-5);
-  BOOST_CHECK_CLOSE( ll_nopoles.lon(0), 0. , 1.e-5);
-  BOOST_CHECK_CLOSE( ll_nopoles.lon(1), 90. , 1.e-5);
+  Regular ll_nopoles( new grid::detail::grid::regular::ShiftedLat(4, 2) );
+  BOOST_CHECK_EQUAL( ll_nopoles.nx(), 4);
+  BOOST_CHECK_EQUAL( ll_nopoles.ny(), 2);
+  BOOST_CHECK_CLOSE( ll_nopoles.y(0), 45., 1.e-5);
+  BOOST_CHECK_CLOSE( ll_nopoles.y(1), -45. , 1.e-5);
+  BOOST_CHECK_CLOSE( ll_nopoles.x(0), 0. , 1.e-5);
+  BOOST_CHECK_CLOSE( ll_nopoles.x(1), 90. , 1.e-5);
   
 }
 
 BOOST_AUTO_TEST_CASE( test_reducedgaussian )
 {
-  grid::reduced::ClassicGaussian N640(640);
+  Structured N640( new grid::detail::grid::reduced::ClassicGaussian(640) );
   BOOST_CHECK_EQUAL(N640.npts(),2140702);
-  grid::reduced::ReducedGaussian custom(N640.N(),N640.pl().data());
+  Structured custom( new grid::detail::grid::reduced::ReducedGaussian(N640.ny()/2, N640.nx().data()) );
   BOOST_CHECK_EQUAL(N640.npts(),custom.npts());
 }
 

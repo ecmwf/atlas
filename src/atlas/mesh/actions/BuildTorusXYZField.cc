@@ -15,8 +15,8 @@
 #include "atlas/mesh/actions/BuildTorusXYZField.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/grid/domain/RectangularDomain.h"
-#include "atlas/grid/domain/GlobalDomain.h"
+#include "atlas/grid/detail/domain/RectangularDomain.h"
+#include "atlas/grid/detail/domain/GlobalDomain.h"
 
 namespace atlas {
 namespace mesh {

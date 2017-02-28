@@ -16,7 +16,7 @@
 #include <stdexcept>
 
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/Structured.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -391,7 +391,8 @@ void make_dual_normals_outward( Mesh& mesh )
 
 void build_brick_dual_mesh(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh)
 {
-  if( const grid::Structured* g = dynamic_cast<const grid::Structured*>(&grid) )
+  auto g = grid::Structured(grid);
+  if( g )
   {
     if( eckit::mpi::size() != 1 )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
@@ -403,18 +404,18 @@ void build_brick_dual_mesh(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mes
 
     int c=0;
     int n=0;
-    for(size_t jlat = 0; jlat < g->nlat(); ++jlat)
+    for(size_t jlat = 0; jlat < g.ny(); ++jlat)
     {
-      double lat = g->lat(jlat);
-      double latN = (jlat==0) ? 90. : 0.5*(lat+g->lat(jlat-1));
-      double latS = (jlat==g->nlat()-1) ? -90. : 0.5*(lat+g->lat(jlat+1));
+      double lat = g.y(jlat);
+      double latN = (jlat==0) ? 90. : 0.5*(lat+g.y(jlat-1));
+      double latS = (jlat==g.ny()-1) ? -90. : 0.5*(lat+g.y(jlat+1));
       double dlat = (latN-latS);
-      double dlon = 360./static_cast<double>(g->nlon(jlat));
+      double dlon = 360./static_cast<double>(g.nx(jlat));
 
-      for(size_t jlon = 0; jlon < g->nlon(jlat); ++jlon)
+      for(size_t jlon = 0; jlon < g.nx(jlat); ++jlon)
       {
         while( gidx(c) != n+1 ) c++;
-        ASSERT( lonlat(c,internals::LON) == g->lon(jlat,jlon) );
+        ASSERT( lonlat(c,internals::LON) == g.x(jlon,jlat) );
         ASSERT( lonlat(c,internals::LAT) == lat );
         dual_volumes(c) = dlon*dlat;
         ++n;

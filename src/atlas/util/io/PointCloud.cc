@@ -14,7 +14,6 @@
 #include <limits>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
-#include "atlas/grid/Unstructured.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
@@ -261,7 +260,7 @@ void PointCloud::write(const eckit::PathName& path, const field::FieldSet& field
 
 void PointCloud::write(
     const eckit::PathName& path,
-    const std::vector< grid::Grid::Point >& pts )
+    const std::vector< PointLonLat >& pts )
 {
   std::ofstream f(path.asString().c_str());
   if (!f.is_open())

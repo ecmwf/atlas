@@ -39,8 +39,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_gmsh_output )
 {
-  mesh::Mesh::Ptr mesh = test::generate_mesh(
-       grid::reduced::ClassicGaussian(128) );
+  mesh::Mesh::Ptr mesh = test::generate_mesh( grid::Grid("N128") );
 
   atlas::output::GmshFileStream file("bs.msh","w");
   output::Gmsh gmsh ( "test_gmsh_output.msh", util::Config

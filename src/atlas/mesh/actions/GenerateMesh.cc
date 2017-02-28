@@ -14,6 +14,7 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/grid/Grid.h"
 
 namespace atlas {
 namespace mesh {
@@ -22,7 +23,7 @@ namespace actions {
 // ------------------------------------------------------------------
 
 namespace {
-Mesh* generate_mesh(const grid::Structured& rgg)
+Mesh* generate_mesh(const grid::Grid& rgg)
 {
   Log::info() << "Deprecated function [generate_mesh] used.\n"
               << "Consider using mesh::generators::Structured directly."
@@ -36,20 +37,20 @@ Mesh* generate_mesh(const grid::Structured& rgg)
 // ------------------------------------------------------------------
 
 
-Mesh* atlas__generate_mesh(grid::Structured* rgg)
+Mesh* atlas__generate_mesh(grid::detail::grid::Structured* rgg)
 {
-  ATLAS_ERROR_HANDLING( return generate_mesh(*rgg); );
+  ATLAS_ERROR_HANDLING( return generate_mesh( grid::Grid(rgg) ); );
   return NULL;
 }
 
 // ------------------------------------------------------------------
 
 
-Mesh* atlas__generate_mesh_with_distribution(grid::Structured* rgg, grid::GridDistribution* distribution)
+Mesh* atlas__generate_mesh_with_distribution(grid::detail::grid::Structured* rgg, grid::GridDistribution* distribution)
 {
   ATLAS_ERROR_HANDLING(
         mesh::generators::Structured generate;
-        return generate(*rgg, *distribution);
+        return generate(rgg, *distribution);
   );
   return NULL;
 }

@@ -11,7 +11,7 @@
 #include <algorithm>
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/GridDistribution.h"
-#include "atlas/grid/partitioners/Partitioner.h"
+#include "atlas/grid/detail/partitioners/Partitioner.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
@@ -25,7 +25,7 @@ GridDistribution::GridDistribution(const Grid& grid) :
     min_pts_(grid.npts()) {
 }
 
-GridDistribution::GridDistribution(const partitioners::Partitioner& partitioner) {
+GridDistribution::GridDistribution(const Partitioner& partitioner) {
     part_.resize(partitioner.grid().npts());
     partitioner.partition(part_.data());
     nb_partitions_ = partitioner.nb_partitions();

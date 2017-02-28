@@ -22,7 +22,7 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"
-#include "atlas/grid/projection/Projection.h"
+#include "atlas/grid/Projection.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -115,9 +115,9 @@ public: // methods
 
     bool generated() const;
 
-    const grid::projection::Projection * projection() const { return projection_; }
+    const grid::Projection projection() const { return projection_; }
 
-    void setProjection(const grid::projection::Projection&);
+    void setProjection(const grid::Projection&);
 
 private:  // methods
 
@@ -144,7 +144,7 @@ private: // members
 
     size_t dimensionality_;
 
-    grid::projection::Projection * projection_;
+    grid::Projection projection_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

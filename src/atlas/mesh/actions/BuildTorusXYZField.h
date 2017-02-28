@@ -13,7 +13,7 @@
 
 #include <string>
 
-#include "atlas/grid/domain/RectangularDomain.h"
+#include "atlas/grid/detail/domain/RectangularDomain.h"
 
 namespace atlas {
 namespace field {

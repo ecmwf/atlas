@@ -11,7 +11,7 @@
 #ifndef atlas_GenerateMesh_h
 #define atlas_GenerateMesh_h
 
-#include "atlas/grid/Structured.h"
+#include "atlas/grid/detail/grid/Structured.h"
 #include "atlas/mesh/Mesh.h"
 
 namespace atlas {
@@ -33,7 +33,7 @@ namespace actions {
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-#define STRUCTUREDGRID grid::Structured
+#define STRUCTUREDGRID grid::detail::grid::Structured
 #define grid_GridDistribution grid::GridDistribution
 #define mesh_Mesh mesh::Mesh
 extern "C"

@@ -19,7 +19,7 @@
 
 #include "atlas/atlas.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid.h"
 #include "atlas/internals/AtlasTool.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
@@ -170,17 +170,17 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( eckit::mpi::size() > 1 || edges )
     meshgenerator_config.set("3d",false);
 
-  SharedPtr<Structured> grid;
+  Structured grid;
   if( key.size() )
   {
-    try{ grid.reset( Structured::create(key) ); }
+    try{ grid = Grid(key); }
     catch( eckit::BadParameter& e ){}
   }
   else if( path_in.path().size() )
   {
     Log::info() << "Creating grid from file " << path_in << std::endl;
-    Log::debug() << atlas::util::Config(path_in) << std::endl;
-    try{ grid.reset( Structured::create( atlas::util::Config(path_in) ) ); }
+    Log::debug() << Config(path_in) << std::endl;
+    try{ grid = Grid( Config(path_in) ); }
     catch( eckit::BadParameter& e ){}
   }
   else
@@ -190,16 +190,15 @@ void Meshgen2Gmsh::execute(const Args& args)
 
   if( !grid ) return;
   
-  Log::debug() << "Domain: " << grid->domain() << std::endl;
-  Log::debug() << "Periodic: " << grid->isPeriodicX() << std::endl;
+  Log::debug() << "Domain: " << grid.domain() << std::endl;
+  Log::debug() << "Periodic: " << grid.periodic() << std::endl;
   
   SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
       mesh::generators::MeshGenerator::create(meshgenerator_type,meshgenerator_config) );
 
-
   SharedPtr<mesh::Mesh> mesh;
   try {
-  mesh.reset( meshgenerator->generate(*grid) );
+  mesh.reset( meshgenerator->generate(grid) );
   }
   catch ( eckit::BadParameter& e)
   {
@@ -215,7 +214,7 @@ void Meshgen2Gmsh::execute(const Args& args)
     build_pole_edges(*mesh);
     build_edges_parallel_fields(*mesh);
     if( brick )
-      build_brick_dual_mesh(*grid, *mesh);
+      build_brick_dual_mesh(grid, *mesh);
     else
       build_median_dual_mesh(*mesh);
   }
@@ -228,7 +227,7 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( torus ) {
     dim_3d = true;
     Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
-    mesh::actions::BuildTorusXYZField("xyz")(*mesh,&grid->domain(),5.,2.,grid->nlonmax(),grid->nlat());
+    mesh::actions::BuildTorusXYZField("xyz")(*mesh,grid.domain(),5.,2.,grid.nxmax(),grid.ny());
   }
 
   atlas::output::Gmsh gmsh( path_out , Config
@@ -238,7 +237,7 @@ void Meshgen2Gmsh::execute(const Args& args)
     ("edges",edges )
     ("binary",binary )
   );
-  Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid->shortName() << "\"" << std::endl;
+  Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid.name() << "\"" << std::endl;
   gmsh.write( *mesh );
 }
 

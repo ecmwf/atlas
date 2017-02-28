@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include "eckit/exception/Exceptions.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/projection/Projection.h"
+#include "atlas/grid/detail/projection/Projection.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -112,8 +112,8 @@ bool Mesh::generated() const {
   return ! (cells_->size() == 0 && facets_->size() == 0 && ridges_->size() == 0 && peaks_->size() == 0);
 }
 
-void Mesh::setProjection(const grid::projection::Projection& prj) {
-  projection_=prj.clone();
+void Mesh::setProjection(const grid::Projection& projection) {
+  projection_ = projection;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

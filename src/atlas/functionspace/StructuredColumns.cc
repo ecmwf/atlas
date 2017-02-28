@@ -8,12 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/functionspace/StructuredColumns.h"
+
 #include "eckit/utils/MD5.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/Structured.h"
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/internals/Checksum.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -53,7 +53,7 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (eckit::mpi::rank() == owner ? grid_->npts() : 0);
+      size = (eckit::mpi::rank() == owner ? grid_.npts() : 0);
     }
   }
   return size;
@@ -64,17 +64,17 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
 // Constructor
 // ----------------------------------------------------------------------------
 StructuredColumns::StructuredColumns(const grid::Grid& grid) :
-  FunctionSpace()
+  FunctionSpace(),
+  grid_(grid)
 {
-    grid_ = dynamic_cast<const grid::Structured*>(&grid);
-    if (grid_ == NULL)
+    if ( not grid_ )
     {
       throw eckit::BadCast("Grid is not a grid::Structured type. "
                            "Cannot partition using IFS trans", Here());
     }
 
 #ifdef ATLAS_HAVE_TRANS
-    trans_ = new trans::Trans(*grid_);
+    trans_ = new trans::Trans(grid_);
 
     npts_ = trans_->ngptot();
 
@@ -170,11 +170,11 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
     }
 #endif
 #else
-    npts_ = grid_->npts();
-    nlat_ = grid_->nlat();
+    npts_ = grid_.npts();
+    nlat_ = grid_.ny();
     nlon_.resize(nlat_);
     for( size_t jlat=0; jlat<nlat_; ++jlat )
-      nlon_[jlat] = grid_->nlon(jlat);
+      nlon_[jlat] = grid_.nx(jlat);
     first_lat_ = 0;
     first_lon_.resize(nlat_,0);
 #endif
@@ -214,7 +214,7 @@ field::Field* StructuredColumns::createField(const std::string& name, array::Dat
           "StructuredColumns::createField currently relies"
           " on ATLAS_HAVE_TRANS for parallel fields", Here());
     }
-    field::Field* field = field::Field::create(name, datatype, array::make_shape(grid_->npts()) );
+    field::Field* field = field::Field::create(name, datatype, array::make_shape(grid_.npts()) );
     field->set_functionspace(*this);
     set_field_metadata(options,*field);
     return field;
@@ -248,7 +248,7 @@ field::Field* StructuredColumns::createField(
           " on ATLAS_HAVE_TRANS for parallel fields", Here());
     }
     field::Field* field = field::Field::create<double>(
-                    name, array::make_shape(grid_->npts(), levels));
+                    name, array::make_shape(grid_.npts(), levels));
 
     field->set_functionspace(*this);
     set_field_metadata(options,*field);
@@ -396,7 +396,7 @@ void StructuredColumns::scatter(
 double StructuredColumns::lat(
     size_t jlat) const
 {
-  return grid_->lat(jlat+first_lat_);
+  return grid_.y(jlat+first_lat_);
 }
 // ----------------------------------------------------------------------------
 
@@ -409,7 +409,7 @@ double StructuredColumns::lon(
     size_t jlat,
     size_t jlon) const
 {
-  return grid_->lon(jlat+first_lat_, jlon+first_lon_[jlat]);
+  return grid_.x(jlon+first_lon_[jlat],jlat+first_lat_);
 }
 // ----------------------------------------------------------------------------
 

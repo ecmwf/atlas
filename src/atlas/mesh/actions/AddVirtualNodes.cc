@@ -13,7 +13,7 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/domain/Domain.h"
+#include "atlas/grid/detail/domain/Domain.h"
 #include "atlas/grid/Grid.h"
 //#include "atlas/grid/gaussian/OctahedralGaussian.h"
 #include "atlas/internals/Parameters.h"
@@ -29,7 +29,7 @@ namespace actions {
 void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh) const {
 
 
-    if (grid.domain().isGlobal()) return; // don't add virtual points to global domains
+    if (grid.domain().global()) return; // don't add virtual points to global domains
 
     NOTIMP;
 

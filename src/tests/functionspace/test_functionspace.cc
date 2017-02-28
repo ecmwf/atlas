@@ -22,7 +22,7 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/reduced/ReducedGaussian.h"
+#include "atlas/grid/detail/grid/reduced/ReducedGaussian.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
 #endif
@@ -47,12 +47,12 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   size_t nlat = 2;
   long nlon[] = {4,8};
-  ScopedPtr<grid::Grid> grid( new grid::reduced::ReducedGaussian( nlat, nlon ) );
+  grid::Grid grid( new grid::detail::grid::reduced::ReducedGaussian( nlat, nlon ) );
 
   mesh::Mesh mesh;
   mesh::generators::Structured generator;
   //generator.options.set("3d",true);
-  generator.generate(*grid,mesh);
+  generator.generate(grid,mesh);
 
   //grid.reset();
 
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
   nodes_fs->gather(*field,*glb_field);
 
   Log::info() << "local points = " << nodes_fs->nb_nodes() << std::endl;
-  Log::info() << "grid points = " << grid->npts() << std::endl;
+  Log::info() << "grid points = " << grid.npts() << std::endl;
   Log::info() << "glb_field.shape(0) = " << glb_field->shape(0) << std::endl;
 
   BOOST_CHECK_EQUAL( glb_field->metadata().get<bool>("global"), true );

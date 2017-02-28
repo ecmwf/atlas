@@ -18,7 +18,7 @@
 #include <memory>
 
 #include "atlas/atlas.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid.h"
 #include "atlas/internals/AtlasTool.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Resource.h"
@@ -110,7 +110,7 @@ void AtlasGrids::execute(const Args& args)
   }
   if( list )
   {
-    std::vector<std::string> keys = Factory<Grid>::instance().keys();
+    std::vector<std::string> keys = Factory<Grid::grid_t>::instance().keys();
     Log::info() << "usage: atlas-grids GRID [OPTION]... [--help]\n" << std::endl;
     Log::info() << "Available grids:" << std::endl;
     for(size_t i = 0; i < keys.size(); ++i)
@@ -121,13 +121,11 @@ void AtlasGrids::execute(const Args& args)
 
   if( !key.empty() )
   {
-    SharedPtr<Structured> grid;
-    try{ grid.reset(Structured::create(key) ); }
+    Structured grid;
+    try{ grid = Grid(key); }
     catch( eckit::BadParameter& err ){}
 
     if( !grid ) return;
-
-    grid::Grid& g = *grid;
 
     if( info )
     {
@@ -136,46 +134,46 @@ void AtlasGrids::execute(const Args& args)
 //      Log::info() << "   type:                               "
 //                  << g.gridType() << std::endl;
       Log::info() << "   name:                               "
-                  << g.shortName() << std::endl;
+                  << grid.name() << std::endl;
       Log::info() << "   uid:                                "
-                  << g.uniqueId() << std::endl;
-      Log::info() << "   N number:                           "
-                  << grid->N() << std::endl;
+                  << grid.uid() << std::endl;
+      // Log::info() << "   N number:                           "
+      //             << grid->ny()/2 << std::endl;
       Log::info() << "   number of points:                   "
-                  << grid->npts() << std::endl;
+                  << grid.npts() << std::endl;
       Log::info() << "   number of latitudes (N-S):          "
-                  << grid->nlat() << std::endl;
+                  << grid.ny() << std::endl;
       Log::info() << "   number of longitudes (max):         "
-                  << grid->nlonmax() << std::endl;
+                  << grid.nxmax() << std::endl;
 
-      deg = (grid->lat(0)-grid->lat(grid->nlat()-1))/(grid->nlat()-1);
+      deg = (grid.y().front()-grid.y().back())/(grid.ny()-1);
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution N-S:         "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
 
 
-      deg = 360./static_cast<double>(grid->nlon(grid->nlat()/2));
+      deg = 360./static_cast<double>(grid.nx(grid.ny()/2));
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W equator: "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
 
-      deg =  360.*std::cos(grid->lat(grid->nlat()/4)*M_PI/180.)/
-             static_cast<double>(grid->nlon(grid->nlat()/4));
+      deg =  360.*std::cos(grid.y(grid.ny()/4)*M_PI/180.)/
+             static_cast<double>(grid.nx(grid.ny()/4));
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W midlat:  "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
 
-      deg = 360.*std::cos(grid->lat(0)*M_PI/180.)/static_cast<double>(grid->nlon(0));
+      deg = 360.*std::cos(grid.y().front()*M_PI/180.)/static_cast<double>(grid.nx().front());
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution E-W pole:    "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
 
       Log::info() << "   spectral truncation -- linear:      "
-                  << grid->nlat() - 1 << std::endl;
+                  << grid.ny() - 1 << std::endl;
       Log::info() << "   spectral truncation -- quadratic:   "
-                  << static_cast<int>(std::floor(2./3.*grid->nlat()+0.5))-1 << std::endl;
+                  << static_cast<int>(std::floor(2./3.*grid.ny()+0.5))-1 << std::endl;
       Log::info() << "   spectral truncation -- cubic:       "
-                  << static_cast<int>(std::floor(0.5*grid->nlat()+0.5))-1 << std::endl;
+                  << static_cast<int>(std::floor(0.5*grid.ny()+0.5))-1 << std::endl;
 
     }
     if( json )
@@ -183,7 +181,7 @@ void AtlasGrids::execute(const Args& args)
       std::stringstream stream;
       JSON js(stream);
       js.precision(16);
-      js << grid->spec();
+      js << grid.spec();
       std::cout << stream.str() << std::endl;
     }
 
@@ -191,8 +189,8 @@ void AtlasGrids::execute(const Args& args)
     {
       std::stringstream stream;
       stream << "&NAMRGRI\n";
-      for(size_t jlat = 0; jlat < grid->nlat(); ++jlat)
-        stream << " NRGRI("<< std::setfill('0') << std::setw(5) << 1+jlat <<")="<< std::setfill(' ') << std::setw(5) << grid->nlon(jlat) <<",\n";
+      for(size_t j = 0; j < grid.ny(); ++j)
+        stream << " NRGRI("<< std::setfill('0') << std::setw(5) << 1+j <<")="<< std::setfill(' ') << std::setw(5) << grid.nx(j) <<",\n";
       stream << "/" << std::flush;
       std::cout << stream.str() << std::endl;
     }

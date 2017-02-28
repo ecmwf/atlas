@@ -105,7 +105,7 @@ else()
 endif()
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/grids.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Structured.h
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )

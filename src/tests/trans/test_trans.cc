@@ -20,9 +20,9 @@
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/GridDistribution.h"
-#include "atlas/grid/grids.h"
-#include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/partitioners/TransPartitioner.h"
+#include "atlas/grid.h"
+#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioners/TransPartitioner.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -78,7 +78,7 @@ BOOST_GLOBAL_FIXTURE( Fixture );
 
 BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 {
-  BOOST_CHECK( grid::partitioners::PartitionerFactory::has("Trans") );
+  BOOST_CHECK( grid::PartitionerFactory::has("Trans") );
 
 
   // Create grid and trans object

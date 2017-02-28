@@ -23,7 +23,7 @@
 #include "eckit/runtime/Context.h"
 
 #include "atlas/atlas.h"
-#include "atlas/grid/spacing/GaussianSpacing.h"
+#include "atlas/grid/detail/spacing/GaussianSpacing.h"
 
 //------------------------------------------------------------------------------------------------------
 

@@ -9,8 +9,7 @@
  */
 
 
-#ifndef atlas_GridDistribution_h
-#define atlas_GridDistribution_h
+#pragma once
 
 #include <vector>
 #include "eckit/memory/Owned.h"
@@ -24,9 +23,7 @@ class Grid;
 }
 namespace atlas {
 namespace grid {
-namespace partitioners {
 class Partitioner;
-}
 }
 }
 
@@ -43,7 +40,7 @@ public:
 
     GridDistribution(const Grid&);
 
-    GridDistribution(const partitioners::Partitioner&);
+    GridDistribution(const Partitioner&);
 
     GridDistribution(size_t npts, int partition[], int part0 = 0);
 
@@ -96,5 +93,3 @@ extern "C" {
 
 } // namespace grid
 } // namespace atlas
-
-#endif // atlas_GridDistribution_h

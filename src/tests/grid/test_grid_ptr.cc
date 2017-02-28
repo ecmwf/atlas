@@ -17,7 +17,7 @@
 
 
 #include "atlas/atlas.h"
-#include "atlas/grid/ptr/Grid.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/util/Config.h"
 
 
@@ -25,9 +25,9 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/output/Gmsh.h"
 
-using Grid       = atlas::grid::ptr::Grid;
-using Structured = atlas::grid::ptr::Structured;
-using Regular    = atlas::grid::ptr::Regular;
+using Grid       = atlas::grid::Grid;
+using Structured = atlas::grid::Structured;
+using Regular    = atlas::grid::Regular;
 using Config     = atlas::util::Config;
 
 namespace atlas {

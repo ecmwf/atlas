@@ -19,6 +19,7 @@
 #include "tests/TestMeshes.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/ArrayView.h"
@@ -82,7 +83,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
       // test::TestGrid grid(5,lon);
 
       //  GG grid(120,60);
-  grid::reduced::ClassicGaussian grid(16);
+  Grid grid("N16");
 
 
   mesh::Mesh::Ptr m( generate( grid ) );
