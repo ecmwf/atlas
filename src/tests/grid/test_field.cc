@@ -16,7 +16,7 @@
 #include "atlas/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/mesh/generators/Delaunay.h"
 #include "atlas/internals/Debug.h"
@@ -61,17 +61,17 @@ void TestField::test_constructor()
 {
   // create a grid
 
-  Grid::Ptr g (new atlas::grid::lonlat::RegularLonLat( 20ul, 10ul ) );
+  Grid g("L20x10");
 
   ASSERT( g );
 
   // Build a mesh from grid
-  mesh::Mesh mesh(*g);
+  mesh::Mesh mesh(g);
 
   // create some reference data for testing
 
   std::vector<double> ref_data;
-  ref_data.reserve( g->npts() );
+  ref_data.reserve( g.npts() );
   for(size_t i = 0; i < ref_data.size(); ++i)
     ref_data.push_back( (double)i );
 
@@ -124,7 +124,7 @@ void TestField::test_fieldcreator()
   ASSERT( field->datatype() == array::DataType::real32() );
   ASSERT( field->name() == "myfield" );
 
-  Grid::Ptr g (Grid::create("O6"));
+  Grid g("O6");
 
   field::Field::Ptr arr (field::Field::create( util::Config
                                    ("creator","ArraySpec")
@@ -139,7 +139,7 @@ void TestField::test_fieldcreator()
       ("creator","IFS")
       ("nlev",137)
       ("nproma",10)
-      ("ngptot",g->npts());
+      ("ngptot",g.npts());
 
   Log::info() << "Creating IFS field " << std::endl;
   field::Field::Ptr ifs (field::Field::create( util::Config

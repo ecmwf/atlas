@@ -22,8 +22,6 @@ namespace eckit {
 
 namespace atlas {
 namespace util {
-class Grid;
-class Mesh;
 
 /// @brief Parametrisation class used to construct various
 ///        atlas components

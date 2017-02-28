@@ -129,9 +129,8 @@ BOOST_AUTO_TEST_CASE( test_factory )
 BOOST_AUTO_TEST_CASE( test_build )
 {
   Log::info() << "test_build" << std::endl;
-  SharedPtr<Grid> grid ( Grid::create("O16") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate( grid::Grid("O16") ) );
   const double R = util::Earth::radiusInMeters();
   fvm::Method fvm(*mesh,util::Config("radius",R));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
@@ -147,9 +146,9 @@ BOOST_AUTO_TEST_CASE( test_grad )
   Log::info() << "test_grad" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create(griduid()) );
+  grid::Grid grid(griduid());
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
@@ -206,8 +205,8 @@ BOOST_AUTO_TEST_CASE( test_grad )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    output::Gmsh(grid->shortName()+".msh").write(*mesh);
-    output::Gmsh gmsh_fields(grid->shortName()+"_fields.msh");
+    output::Gmsh(grid.name()+".msh").write(*mesh);
+    output::Gmsh gmsh_fields(grid.name()+"_fields.msh");
     gmsh_fields.write(fields["scalar"]);
     gmsh_fields.write(fields["xder"]);
     gmsh_fields.write(fields["yder"]);
@@ -223,9 +222,9 @@ BOOST_AUTO_TEST_CASE( test_div )
   Log::info() << "test_div" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create(griduid()) );
+  grid::Grid grid(griduid());
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
@@ -243,7 +242,7 @@ BOOST_AUTO_TEST_CASE( test_div )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    output::Gmsh gmsh (grid->shortName()+"_fields.msh","a");
+    output::Gmsh gmsh (grid.name()+"_fields.msh","a");
     gmsh.write(fields["wind"]);
     gmsh.write(fields["div"]);
   }
@@ -254,9 +253,9 @@ BOOST_AUTO_TEST_CASE( test_curl )
   Log::info() << "test_curl" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create(griduid()) );
+  grid::Grid grid(griduid());
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
@@ -302,7 +301,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    output::Gmsh gmsh(grid->shortName()+"_fields.msh","a");
+    output::Gmsh gmsh(grid.name()+"_fields.msh","a");
     gmsh.write(fields["vor"]);
     gmsh.write(fields["windX"]);
     gmsh.write(fields["windXgradX"]);
@@ -324,9 +323,9 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   Log::info() << "test_lapl" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create(griduid()) );
+  grid::Grid grid(griduid());
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
@@ -344,7 +343,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    output::Gmsh gmsh(grid->shortName()+"_fields.msh","a");
+    output::Gmsh gmsh(grid.name()+"_fields.msh","a");
     gmsh.write(fields["lapl"]);
   }
 }

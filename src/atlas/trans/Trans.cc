@@ -15,7 +15,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/lonlat/LonLat.h"
+#include "atlas/grid/detail/grid/regular/GlobalLonLat.h"
 #include "atlas/internals/IsGhost.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/ErrorHandling.h"
@@ -46,11 +46,16 @@ namespace trans {
 
 Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
 {
-  const grid::Structured* reduced = dynamic_cast<const grid::Structured*>(&grid);
-  if( !reduced )
+  ASSERT( grid.domain().global() );
+  ASSERT( not grid.projection() );
+
+  const grid::StructuredGrid structured(grid);
+  if( !structured )
     throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
+
   size_t nsmax = 0;
-  ctor_rgg(reduced->nlat(),reduced->pl().data(), nsmax, p);
+
+  ctor_rgg(structured.ny(),structured.nx().data(), nsmax, p);
 }
 
 Trans::Trans(const size_t N, const Trans::Options& p)
@@ -62,23 +67,31 @@ Trans::Trans(const size_t N, const Trans::Options& p)
 
 Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p )
 {
-  const grid::Structured* structured = dynamic_cast<const grid::Structured*>(&grid);
+  ASSERT( grid.domain().global() );
+  ASSERT( not grid.projection() );
+
+  const grid::StructuredGrid structured(grid);
   if (!structured) {
     throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans", Here());
   }
 
-  const grid::lonlat::LonLat* lonlat = dynamic_cast<const grid::lonlat::LonLat*>(structured);
-  if (lonlat && nsmax > 0) {
-    if( lonlat->reduced() ) {
-      throw eckit::BadParameter("Cannot transform a reduced lonlat grid");
-    }
-    else if (lonlat->shifted()(grid::lonlat::Shift::LON) != lonlat->shifted()(grid::lonlat::Shift::LAT)) {
-        throw eckit::BadParameter("Cannot transform a ShiftedLat or ShiftedLon grid");
-    }
-    ctor_lonlat( lonlat->nlonmax(), lonlat->nlat(), nsmax, p );
+  const grid::RegularGrid regular(grid);
+  bool global_lonlat = regular
+               &&      regular.yspace().type() == "linear";
+  bool regular_lonlat = global_lonlat
+               &&       regular.y(0) == 90.
+               &&       regular.x(0) == 0.;
+
+  if( global_lonlat and not regular_lonlat ) {
+    throw eckit::NotImplemented("TODO: Support for shifted_lonlat",Here());
+  }
+  if ( regular_lonlat ) {
+    ctor_lonlat( regular.nx(), regular.ny(), nsmax, p );
+
+    // TODO assert not shifted_lon, shifted_lat, and allow shifted_lonlat
   }
   else {
-    ctor_rgg(structured->nlat(), structured->pl().data(), nsmax, p);
+    ctor_rgg(structured.ny(), structured.nx().data(), nsmax, p);
   }
 }
 
@@ -956,12 +969,12 @@ void Trans::invtrans_vordiv2wind(const Spectral& sp, const field::Field& spvor, 
 
 
 
-Trans* atlas__Trans__new (const grid::Grid* grid, int nsmax)
+Trans* atlas__Trans__new (const grid::Grid::grid_t* grid, int nsmax)
 {
   Trans* trans(0);
   ATLAS_ERROR_HANDLING(
     ASSERT( grid );
-    trans = new Trans(*grid,nsmax);
+    trans = new Trans( grid::Grid(grid) ,nsmax);
   );
   return trans;
 }

@@ -1,5 +1,5 @@
 #include "atlas/atlas.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Mesh.h"
@@ -9,17 +9,11 @@
 #include "atlas/functionspace/StructuredColumns.h"
 
 using atlas::array::ArrayView;
-// using atlas::array::make_shape;
 using atlas::atlas_finalize;
 using atlas::atlas_init;
 using atlas::field::Field;
-// using atlas::field::FieldSet;
-// using atlas::field::global;
 using atlas::functionspace::StructuredColumns;
-// using atlas::gidx_t;
 using atlas::grid::Grid;
-// using atlas::Log;
-// using atlas::mesh::Halo;
 using atlas::mesh::Mesh;
 using atlas::output::Gmsh;
 
@@ -28,14 +22,14 @@ int main(int argc, char *argv[])
     atlas_init(argc, argv);
 
     // Generate global reduced grid
-    Grid::Ptr grid (Grid::create( "N32" ));
+    Grid grid( "N32" );
 
     // Number of points in the grid
-    size_t const nb_nodes = grid->npts();
+    int const nb_nodes = grid.npts();
 
     // Generate functionspace associated to grid
     StructuredColumns::Ptr
-        fs_rgp(new StructuredColumns(*grid));
+        fs_rgp(new StructuredColumns(grid));
 
     /* .... */
     // Variables for scalar1 field definition
@@ -77,7 +71,7 @@ int main(int argc, char *argv[])
     {
       // Generate visualisation mesh associated to grid
       atlas::mesh::generators::Structured meshgenerator;
-      Mesh::Ptr mesh (meshgenerator.generate(*grid));
+      Mesh::Ptr mesh (meshgenerator.generate(grid));
 
       Gmsh gmsh("scalar1.msh");
       gmsh.write(*mesh);

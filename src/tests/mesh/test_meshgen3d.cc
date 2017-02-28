@@ -16,7 +16,8 @@
 #include "atlas/atlas.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -27,6 +28,7 @@
 
 using namespace atlas::output;
 using namespace atlas::mesh::generators;
+using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
@@ -47,9 +49,7 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
   // opts.set("nb_parts",1); // default = 1
   // opts.set("part",    0); // default = 0
 
-    m = generate(
-          grid::gaussian::ClassicGaussian(24)
-        ); //< 2*N - 1 => N24 grid
+    m = generate( Grid("N24") );
 
 	Gmsh("out.msh", util::Config("coordinates","xyz") ).write(*m);
 }

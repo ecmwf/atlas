@@ -1,6 +1,6 @@
 #include "atlas/atlas.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Mesh.h"
@@ -18,7 +18,7 @@ using atlas::field::FieldSet;
 using atlas::field::global;
 using atlas::functionspace::NodeColumns;
 using atlas::gidx_t;
-using atlas::grid::Structured;
+using atlas::grid::StructuredGrid;
 using atlas::Log;
 using atlas::mesh::Halo;
 using atlas::mesh::Mesh;
@@ -29,11 +29,11 @@ int main(int argc, char *argv[])
     atlas_init(argc, argv);
 
     // Generate global classic reduced Gaussian grid
-    Structured::Ptr grid( Structured::create( "N32" ) );
+    StructuredGrid grid( "N32" );
 
     // Generate mesh associated to structured grid
     atlas::mesh::generators::Structured meshgenerator;
-    Mesh::Ptr mesh ( meshgenerator.generate(*grid) );
+    Mesh::Ptr mesh ( meshgenerator.generate(grid) );
 
     // Number of nodes in the mesh
     // (different from number of points on a grid!)
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     Log::info() << "local nodes         = "
                 << fs_nodes->nb_nodes()  << std::endl;
     Log::info() << "grid points          = "
-                << grid->npts()   << std::endl;
+                << grid.npts()   << std::endl;
     Log::info() << "field_global.shape(0) = "
                 << field_global->shape(0) << std::endl;
 

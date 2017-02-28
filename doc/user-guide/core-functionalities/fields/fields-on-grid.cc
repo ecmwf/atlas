@@ -1,6 +1,6 @@
 #include "atlas/atlas.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
 
 using atlas::atlas_init;
@@ -9,7 +9,7 @@ using atlas::Log;
 using atlas::array::ArrayView;
 using atlas::array::make_shape;
 using atlas::field::Field;
-using atlas::grid::Structured;
+using atlas::grid::StructuredGrid;
 
 int main(int argc, char *argv[])
 {
@@ -23,20 +23,20 @@ int main(int argc, char *argv[])
     const double zrad  = 2.0 * rpi / 9.0;
     double  zdist, zlon, zlat;
 
-    Structured::Ptr grid( Structured::create( "N32" ) );
-    const size_t nb_nodes = grid->npts();
+    StructuredGrid grid("N32");
+    const size_t nb_nodes = grid.npts();
 
     Field::Ptr field_pressure(
       Field::create<double>("pressure", make_shape(nb_nodes)));
 
     ArrayView <double,1> pressure(*field_pressure);
-    for (size_t jlat =0; jlat < grid->nlat(); ++jlat)
+    for (size_t jlat =0; jlat < grid.ny(); ++jlat)
     {
-        zlat = grid->lat(jlat);
+        zlat = grid.y(jlat);
         zlat = zlat * deg2rad;
-        for (size_t jlon =0; jlon < grid->nlon(jlat); ++jlon)
+        for (size_t jlon =0; jlon < grid.nx(jlat); ++jlon)
         {
-            zlon = grid->lon(jlat, jlon);
+            zlon = grid.x(jlon,jlat);
             zlon = zlon * deg2rad;
             zdist = 2.0 * sqrt((cos(zlat) * sin((zlon-zlonc)/2)) *
                               (cos(zlat) * sin((zlon-zlonc)/2)) +

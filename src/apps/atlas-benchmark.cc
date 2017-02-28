@@ -42,7 +42,7 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/atlas.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid.h"
 #include "atlas/internals/Bitflags.h"
 #include "atlas/internals/IsGhost.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
@@ -55,6 +55,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/internals/AtlasTool.h"
+#include "atlas/internals/Parameters.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/parallel/HaloExchange.h"
@@ -67,6 +68,7 @@
 #include "eckit/log/Timer.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
+#include "eckit/memory/ScopedPtr.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/runtime/Main.h"
 
@@ -328,9 +330,9 @@ void AtlasBenchmark::setup()
 {
   Timer timer( "setup", Log::debug());
 
-  SharedPtr<Structured> grid( Structured::create(gridname) );
+  StructuredGrid grid = Grid(gridname);
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
-  mesh.reset( meshgenerator->generate(*grid) );
+  mesh.reset( meshgenerator->generate(grid) );
 
   build_nodes_parallel_fields(mesh->nodes());
   build_periodic_boundaries(*mesh);

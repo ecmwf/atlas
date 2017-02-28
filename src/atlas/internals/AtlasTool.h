@@ -19,6 +19,7 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/option/CmdArgs.h"
 #include "eckit/option/SimpleOption.h"
+#include "eckit/option/VectorOption.h"
 #include "eckit/option/Separator.h"
 
 #include "atlas/internals/Debug.h"
@@ -26,6 +27,7 @@
 //--------------------------------------------------------------------------------
 
 using eckit::option::SimpleOption;
+using eckit::option::VectorOption;
 using eckit::option::Separator;
 using eckit::option::CmdArgs;
 using eckit::option::Option;

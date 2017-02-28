@@ -16,6 +16,7 @@
 #include "eckit/value/Params.h"
 #include "eckit/memory/Owned.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/grid/Grid.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -30,12 +31,6 @@ namespace field {
 namespace atlas {
 namespace array {
     class Array;
-}
-}
-
-namespace atlas {
-namespace grid {
-    class Grid;
 }
 }
 
@@ -440,7 +435,7 @@ private:
 
 extern "C"
 {
-  Trans* atlas__Trans__new (const grid::Grid* grid, int nsmax);
+  Trans* atlas__Trans__new (const grid::Grid::grid_t* grid, int nsmax);
   void atlas__Trans__delete (Trans* trans);
   int atlas__Trans__handle (const Trans* trans);
   void atlas__Trans__distspec (const Trans* t, int nb_fields, int origin[], double global_spectra[], double spectra[]);

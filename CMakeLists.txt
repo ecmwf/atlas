@@ -39,6 +39,8 @@ ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
 
+ecbuild_add_cxx11_flags()
+
 ecbuild_find_python()
 
 ### Fortran ...

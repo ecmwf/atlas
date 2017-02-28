@@ -56,7 +56,6 @@ if( ATLAS_HAVE_FORTRAN )
 endif()
 
 add_subdirectory( apps )
-
 add_subdirectory( tests )
 
 if( HAVE_SANDBOX )

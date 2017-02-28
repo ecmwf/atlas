@@ -1,0 +1,6 @@
+{
+  "//" : "Classic Gaussian grid 'N16'",
+
+  "type" : "classic_gaussian",
+  "N" : 16
+}

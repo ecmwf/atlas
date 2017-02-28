@@ -66,6 +66,9 @@ public: // methods
   const field::Field& lonlat() const { return *lonlat_; }
         field::Field& lonlat()       { return *lonlat_; }
 
+  const field::Field& geolonlat() const { return *geolonlat_; }
+        field::Field& geolonlat()       { return *geolonlat_; }
+
   const field::Field& ghost() const { return *ghost_; }
         field::Field& ghost()       { return *ghost_; }
 
@@ -122,6 +125,7 @@ private:
   field::Field* remote_index_;
   field::Field* partition_;
   field::Field* lonlat_;
+  field::Field* geolonlat_;
   field::Field* ghost_;
 
 // Cached shortcuts to specific connectivities in connectivities_

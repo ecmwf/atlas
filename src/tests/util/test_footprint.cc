@@ -45,11 +45,11 @@ BOOST_AUTO_TEST_CASE( test_broadcast_to_self )
   eckit::SharedPtr<field::Field> field( field::Field::create<double>("field",array::make_shape(10,2)));
   Log::info() << "field.footprint = " << eckit::Bytes(field->footprint()) << std::endl;
   
-  eckit::SharedPtr<grid::Grid> grid( grid::Grid::create("O640") );
+  grid::Grid grid("O640");
   eckit::SharedPtr<mesh::generators::MeshGenerator> meshgen( mesh::generators::MeshGenerator::create("Structured") );
-  eckit::SharedPtr<mesh::Mesh> mesh( meshgen->generate(*grid) );
+  eckit::SharedPtr<mesh::Mesh> mesh( meshgen->generate(grid) );
   
-  Log::info() << "Footprint for mesh generated from grid " << grid->shortName() << std::endl;
+  Log::info() << "Footprint for mesh generated from grid " << grid.name() << std::endl;
   Log::info() << "mesh.footprint = " << eckit::Bytes(mesh->footprint()) << std::endl;
   Log::info() << "    .nodes.footprint = " << eckit::Bytes(mesh->nodes().footprint()) << std::endl;
   for( size_t f=0; f<mesh->nodes().nb_fields(); ++f )

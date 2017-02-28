@@ -16,7 +16,8 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/grid/lonlat/RegularLonLat.h"
+#include "atlas/grid/detail/grid/regular/RegularLonLat.h"
+#include "atlas/grid/Grid.h"
 
 #include "tests/AtlasFixture.h"
 
@@ -29,7 +30,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
-  grid::lonlat::RegularLonLat g(5);
+  grid::Grid g( new grid::detail::grid::regular::RegularLonLat(5) );
   mesh::Mesh m;
   mesh::generators::Structured().generate(g,m);
   output::Gmsh("L5.msh").write(m);

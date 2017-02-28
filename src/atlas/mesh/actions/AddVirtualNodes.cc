@@ -11,12 +11,11 @@
 
 #include "atlas/mesh/actions/AddVirtualNodes.h"
 
-#include "eckit/geometry/Point2.h"
-#include "eckit/geometry/Point3.h"
+#include "eckit/exception/Exceptions.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/Domain.h"
+#include "atlas/grid/detail/domain/Domain.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/gaussian/OctahedralGaussian.h"
+//#include "atlas/grid/gaussian/OctahedralGaussian.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -28,11 +27,15 @@ namespace actions {
 
 
 void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh) const {
-    using eckit::geometry::LLPoint2;
-    const grid::Domain& dom = grid.domain();
 
-    if (dom.isGlobal()) return; // don't add virtual points to global domains
 
+    if (grid.domain().global()) return; // don't add virtual points to global domains
+
+    NOTIMP;
+
+// daand: octahedralGaussian grids now are global by definition!
+#warning gnarls
+#ifdef gnarls
     const grid::Grid& octa = atlas::grid::gaussian::OctahedralGaussian(16);
 
     std::vector<LLPoint2> allPts;
@@ -74,6 +77,7 @@ void AddVirtualNodes::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mes
         eckit::geometry::lonlat_to_3d(lonlat[n].data(),coords[n].data());
         gidx(n) = n+1;
     }
+#endif
 }
 
 

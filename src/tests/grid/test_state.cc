@@ -65,9 +65,9 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
   std::string grid_uid;
   if( geometry.get("grid", grid_uid) )
   {
-    eckit::ScopedPtr<grid::Grid> grid(grid::Grid::create(grid_uid));
+    grid::Grid grid(grid_uid);
     if (!geometry.has("ngptot")) {
-      geometry.set("ngptot", grid->npts());
+      geometry.set("ngptot", grid.npts());
     }
   }
 

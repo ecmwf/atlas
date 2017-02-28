@@ -1,0 +1,12 @@
+{
+  "type" : "regular_regional",
+  "nx" : 451,
+  "ny" : 337,
+  "dx" : 13545,
+  "dy" : 13545,
+  "lonlat(xmin,ymin)": [-126.138,16.281],
+  "projection" : { "type" : "lambert",
+    "latitude1"  : 25,
+    "longitude0" : -95
+  }
+}

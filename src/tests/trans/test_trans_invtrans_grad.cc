@@ -20,9 +20,8 @@
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/GridDistribution.h"
-#include "atlas/grid/grids.h"
-#include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/partitioners/TransPartitioner.h"
+#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioners/TransPartitioner.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -54,7 +53,7 @@ struct AtlasTransFixture : public AtlasFixture {
 
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
-static void rotated_flow_magnitude(grid::Structured& grid, double var[], const double& beta)
+static void rotated_flow_magnitude(grid::StructuredGrid& grid, double var[], const double& beta)
 {
   const double radius = util::Earth::radiusInMeters();
   const double USCAL = 20.;
@@ -63,10 +62,10 @@ static void rotated_flow_magnitude(grid::Structured& grid, double var[], const d
 
 
   size_t n(0);
-  for( size_t jlat=0; jlat<grid.nlat(); ++jlat ) {
-    for( size_t jlon=0; jlon<grid.nlon(jlat); ++jlon ) {
-      const double x = grid.lon(jlat,jlon) * deg2rad;
-      const double y = grid.lat(jlat)      * deg2rad;
+  for( size_t jlat=0; jlat<grid.ny(); ++jlat ) {
+    for( size_t jlon=0; jlon<grid.nx(jlat); ++jlon ) {
+      const double x = grid.x(jlon,jlat) * deg2rad;
+      const double y = grid.y(jlat)      * deg2rad;
       const double Ux =  pvel*(std::cos(beta)+std::tan(y)*std::cos(x)*std::sin(beta))*radius*std::cos(y);
       const double Uy = -pvel*std::sin(x)*std::sin(beta)*radius;
       var[n] = std::sqrt(Ux*Ux+Uy*Uy);
@@ -105,9 +104,9 @@ BOOST_GLOBAL_FIXTURE( AtlasTransFixture );
 BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
 {
   std::string grid_uid("O80");
-  SharedPtr<grid::Structured> g ( grid::Structured::create( grid_uid ) );
-
-  trans::Trans trans(*g, g->N()*2-1);
+  grid::StructuredGrid g (grid_uid);
+  long N = g.ny()/2;
+  trans::Trans trans(g,2*N-1);
   BOOST_TEST_CHECKPOINT("Trans initialized");
   std::vector<double> rspecg;
   int nfld = 1;
@@ -118,7 +117,7 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
   std::vector<int>    nfrom(nfld,1);
   if( parallel::mpi::comm().rank()==0) {
     double beta = M_PI*0.5;
-    rotated_flow_magnitude(*g,init_gpg.data(),beta);
+    rotated_flow_magnitude(g,init_gpg.data(),beta);
   }
   trans.distgrid(nfld,nfrom.data(),init_gpg.data(),init_gp.data());
   trans.dirtrans(nfld,init_gp.data(),init_sp.data());
@@ -138,8 +137,8 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
 
   // Output
   {
-    mesh::Mesh::Ptr mesh( mesh::generators::Structured().generate(*g) );
-    functionspace::StructuredColumns gp(*g);
+    mesh::Mesh::Ptr mesh( mesh::generators::Structured().generate(g) );
+    functionspace::StructuredColumns gp(g);
     output::Gmsh gmsh(grid_uid+"-grid.msh");
     field::Field::Ptr scalar(
           field::Field::wrap<double>("scalar",rgp.data(),array::make_shape(gp.npts())) );
@@ -158,9 +157,10 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
 BOOST_AUTO_TEST_CASE( test_invtrans_grad )
 {
   std::string grid_uid("O48");
-  SharedPtr<grid::Structured> g ( grid::Structured::create( grid_uid ) );
-  mesh::Mesh::Ptr mesh( mesh::generators::Structured().generate(*g) );
-  trans::Trans trans(*g, g->N()*2-1);
+  grid::StructuredGrid g ( grid_uid );
+  mesh::Mesh::Ptr mesh( mesh::generators::Structured().generate(g) );
+  long N = g.ny()/2;
+  trans::Trans trans(g, 2*N-1);
   functionspace::NodeColumns gp(*mesh);
   functionspace::Spectral sp(trans);
 
@@ -182,8 +182,8 @@ BOOST_AUTO_TEST_CASE( test_invtrans_grad )
 
   // Output
   {
-    mesh::Mesh::Ptr mesh( mesh::generators::Structured().generate(*g) );
-    functionspace::StructuredColumns gp(*g);
+    mesh::Mesh::Ptr mesh( mesh::generators::Structured().generate(g) );
+    functionspace::StructuredColumns gp(g);
     output::Gmsh gmsh(grid_uid+"-nodes.msh");
     gmsh.write(*mesh);
     gmsh.write(*scalar,gp);

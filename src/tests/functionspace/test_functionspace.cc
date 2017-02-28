@@ -23,7 +23,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/gaussian/ReducedGaussian.h"
+#include "atlas/grid/detail/grid/reduced/ReducedGaussian.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
 #endif
@@ -42,8 +42,8 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns_no_halo )
 {
-  SharedPtr<grid::Grid> grid( grid::Grid::create("O8") );
-  SharedPtr<mesh::Mesh> mesh( mesh::generators::Structured().generate(*grid) );
+  grid::Grid grid("O8");
+  SharedPtr<mesh::Mesh> mesh( mesh::generators::Structured().generate(grid) );
   SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh) );
   SharedPtr<field::Field> field( nodes_fs->createField<int>("field") );
   array::ArrayView<int,1> value ( *field );
@@ -73,18 +73,18 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   size_t nlat = 2;
   long nlon[] = {4,8};
-  ScopedPtr<grid::Grid> grid( new grid::gaussian::ReducedGaussian( nlat, nlon ) );
+  grid::Grid grid( new grid::detail::grid::reduced::ReducedGaussian( nlat, nlon ) );
 
   mesh::Mesh mesh;
   mesh::generators::Structured generator;
   //generator.options.set("3d",true);
-  generator.generate(*grid,mesh);
+  generator.generate(grid,mesh);
 
   //grid.reset();
 
-  DEBUG();
+  DEBUG_HERE();
   SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,mesh::Halo(1)) );
-  DEBUG();
+  DEBUG_HERE();
   size_t nb_levels = 10;
   //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
 
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
   nodes_fs->gather(*field,*glb_field);
 
   Log::info() << "local points = " << nodes_fs->nb_nodes() << std::endl;
-  Log::info() << "grid points = " << grid->npts() << std::endl;
+  Log::info() << "grid points = " << grid.npts() << std::endl;
   Log::info() << "glb_field.shape(0) = " << glb_field->shape(0) << std::endl;
 
   BOOST_CHECK_EQUAL( glb_field->metadata().get<bool>("global"), true );

@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include "eckit/exception/Exceptions.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/detail/projection/Projection.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -73,7 +74,22 @@ mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
 {
   size_t nb_nodes = g.npts();
   nodes().resize(nb_nodes);
-  g.fillLonLat(nodes().lonlat().data<double>(), nb_nodes*2);
+
+  array::ArrayView<double,2> lonlat( nodes().lonlat() );
+  array::ArrayView<double,2> geolonlat( nodes().geolonlat() );
+  size_t jnode(0);
+  PointXY Pxy;
+  PointLonLat Pll;
+  grid::Iterator iterator = g.iterator();
+  grid::Projection projection = g.projection();
+  while( iterator.next(Pxy) ) {
+    lonlat(jnode,0) = Pxy.x();
+    lonlat(jnode,1) = Pxy.y();
+    Pll = projection.lonlat(Pxy);
+    geolonlat(jnode,0) = Pll.lon();
+    geolonlat(jnode,1) = Pll.lat();
+    ++jnode;
+  }
   return nodes();
 }
 
@@ -117,6 +133,10 @@ void Mesh::createElements()
 
 bool Mesh::generated() const {
   return ! (cells_->size() == 0 && facets_->size() == 0 && ridges_->size() == 0 && peaks_->size() == 0);
+}
+
+void Mesh::setProjection(const grid::Projection& projection) {
+  projection_ = projection;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

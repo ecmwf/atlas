@@ -23,12 +23,13 @@
 #include "eckit/runtime/Main.h"
 
 #include "atlas/atlas.h"
-#include "atlas/grid/gaussian/Gaussian.h"
+#include "atlas/grid/detail/spacing/GaussianSpacing.h"
 
 //------------------------------------------------------------------------------------------------------
 
 using namespace eckit;
 using namespace atlas;
+using atlas::grid::spacing::GaussianSpacing;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -105,17 +106,7 @@ void AtlasGaussianLatitudes::run()
 {
   if( !do_run ) return;
 
-  std::vector<double> lats (2*N);
-
-  try {
-    atlas::grid::gaussian::Gaussian::
-      LatitudesNorthPoleToSouthPole(N,lats.data());
-  }
-  catch( eckit::NotImplemented& err )
-  {
-    std::cout << err.what() << std::endl;
-    return;
-  }
+  GaussianSpacing lats(2*N);
 
   int end = full ? 2*N : N;
 

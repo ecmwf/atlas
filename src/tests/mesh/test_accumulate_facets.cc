@@ -43,13 +43,13 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_accumulate_facets )
 {
-  grid::Grid* grid = grid::Grid::create("O2");
+  grid::Grid grid("O2");
   mesh::generators::Structured generator( Config
        ("angle",29.0)
        ("triangulate",false)
        ("ghost_at_end",false) );
 
-  mesh::Mesh* mesh = generator.generate(*grid);
+  mesh::Mesh* mesh = generator.generate(grid);
 
   // storage for edge-to-node-connectivity shape=(nb_edges,2)
   std::vector< idx_t > edge_nodes_data;
@@ -419,12 +419,12 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
 BOOST_AUTO_TEST_CASE( test_build_edges )
 {
   idx_t missing_value = -1;
-  grid::Grid* grid = grid::Grid::create("O2");
+  grid::Grid grid("O2");
   mesh::generators::Structured generator(  Config
         ("angle",29.0)
         ("triangulate",false)
         ("ghost_at_end",false) );
-  mesh::Mesh* mesh = generator.generate(*grid);
+  mesh::Mesh* mesh = generator.generate(grid);
 
   // Accumulate facets of cells ( edges in 2D )
   mesh::actions::build_edges(*mesh);
@@ -837,12 +837,12 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 
 BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
 {
-  grid::Grid* grid = grid::Grid::create("O2");
+  grid::Grid grid("O2");
   mesh::generators::Structured generator (  Config
       ("angle",29.0)
       ("triangulate",false)
       ("ghost_at_end",false) );
-  mesh::Mesh* mesh = generator.generate(*grid);
+  mesh::Mesh* mesh = generator.generate(grid);
 
   // Accumulate facets of cells ( edges in 2D )
   mesh::actions::build_edges(*mesh);

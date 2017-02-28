@@ -38,17 +38,17 @@ END_TESTSUITE_FINALIZE
 !   type(atlas_grid_Structured) :: N640
 !   type(atlas_grid_ReducedGaussian) :: custom
 !   integer(c_long), pointer :: pl(:)
-! 
+!
 !   N640 = atlas_grid_Structured("N640")
 !   FCTEST_CHECK_EQUAL(N640%npts(),2140702_c_long)
 !   pl => N640%pl()
-! 
+!
 !   custom = atlas_grid_ReducedGaussian( N640%N(), pl )
 !   FCTEST_CHECK_EQUAL(N640%npts(),custom%npts() )
-! 
+!
 !   call N640%final()
 !   call custom%final()
-! 
+!
 ! E N D _ T E S T
 
 ! -----------------------------------------------------------------------------
@@ -61,6 +61,7 @@ TEST( test_griddist )
   type(atlas_Output) :: gmsh
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_GridDistribution) :: griddistribution
+  character(len=1024) :: msg
 
   integer, allocatable :: part(:)
   integer :: jnode
@@ -78,6 +79,10 @@ TEST( test_griddist )
   enddo
 
   griddistribution = atlas_GridDistribution(part, part0=1)
+
+  write(msg,*) "owners fort",griddistribution%owners()
+  call atlas_log%info(msg)
+
   meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid,griddistribution)
   call griddistribution%final()
@@ -86,6 +91,11 @@ TEST( test_griddist )
   call gmsh%write(mesh)
 
   deallocate(part)
+
+  call mesh%final()
+  call gmsh%final()
+  call grid%final()
+  call meshgenerator%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------

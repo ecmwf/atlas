@@ -34,11 +34,11 @@ using namespace atlas::output;
 int main(int argc, char **argv)
 {
     atlas_init(argc,argv);
-    Grid::Ptr grid( Grid::create( "L32x11") );
+    Grid grid( "L33x11" );
 
     // Build a mesh from grid
     Delaunay generate;
-    mesh::Mesh::Ptr mesh( generate(*grid) );
+    mesh::Mesh::Ptr mesh( generate(grid) );
 
     Gmsh gmsh("earth.msh", util::Config("coordinates","xyz") );
     gmsh.write(*mesh);

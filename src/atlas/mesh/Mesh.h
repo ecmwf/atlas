@@ -22,6 +22,7 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"
+#include "atlas/grid/Projection.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -117,6 +118,10 @@ public: // methods
     /// @brief Return the memory footprint of the mesh
     size_t footprint() const;
 
+    const grid::Projection projection() const { return projection_; }
+
+    void setProjection(const grid::Projection&);
+
 private:  // methods
 
     friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {
@@ -141,6 +146,8 @@ private: // members
     eckit::SharedPtr<mesh::HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
 
     size_t dimensionality_;
+
+    grid::Projection projection_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

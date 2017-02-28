@@ -18,7 +18,7 @@
 #include "atlas/atlas.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
@@ -107,14 +107,14 @@ void AtlasLoadbalance::run()
 {
   if( !do_run ) return;
 
-  SharedPtr<Structured> grid;
-  try{ grid.reset( Structured::create(key) ); }
+  StructuredGrid grid;
+  try{ grid = Grid(key); }
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;
   SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
       mesh::generators::MeshGenerator::create("Structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
 
   SharedPtr<functionspace::NodeColumns> nodes( new functionspace::NodeColumns(*mesh,Halo(halo)) );
 

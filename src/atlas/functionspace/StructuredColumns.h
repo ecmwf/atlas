@@ -14,6 +14,8 @@
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Config.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/array/DataType.h"
 
 namespace atlas {
 namespace parallel {
@@ -31,7 +33,7 @@ namespace field {
 
 namespace atlas {
 namespace grid {
-    class Structured;
+    class StructuredGrid;
 }
 }
 
@@ -94,7 +96,7 @@ public:
   std::string checksum( const field::FieldSet& ) const;
   std::string checksum( const field::Field& ) const;
 
-  const grid::Structured& grid() const { return *grid_; }
+  const grid::StructuredGrid& grid() const { return grid_; }
 
 private: // methods
 
@@ -110,7 +112,7 @@ private: // data
   std::vector<size_t> first_lon_;
 
   trans::Trans* trans_;
-  const grid::Structured* grid_;
+  const grid::StructuredGrid grid_;
   parallel::GatherScatter* gather_scatter_;
   parallel::Checksum* checksum_;
 
@@ -140,7 +142,7 @@ inline field::Field* StructuredColumns::createField(
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid::Grid* grid);
+  StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid::Grid::grid_t* grid);
   void atlas__functionspace__StructuredColumns__delete (StructuredColumns* This);
   field::Field* atlas__fs__StructuredColumns__create_field_name_kind (const StructuredColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
   field::Field* atlas__fs__StructuredColumns__create_field_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels, const eckit::Parametrisation* options);

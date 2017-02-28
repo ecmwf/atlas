@@ -14,8 +14,6 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
-#include "eckit/geometry/Point2.h"
-#include "eckit/geometry/Point3.h"
 #include "eckit/filesystem/PathName.h"
 #include "atlas/internals/atlas_config.h"
 #include "atlas/mesh/Mesh.h"
@@ -27,11 +25,11 @@
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/util/Constants.h"
+#include "atlas/util/Point.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/Checksum.h"
 
-using eckit::geometry::LLPoint2;
 using eckit::geometry::lonlat_to_3d;
 namespace atlas {
 namespace mesh {
@@ -56,7 +54,7 @@ namespace {
   *
   * @sa http://en.wikipedia.org/wiki/Law_of_haversines
   */
-double arc_in_rad(const LLPoint2& from, const LLPoint2& to) {
+double arc_in_rad(const PointLonLat& from, const PointLonLat& to) {
     double lat_arc = (from.lat() - to.lat()) * DEG_TO_RAD;
     double lon_arc = (from.lon() - to.lon()) * DEG_TO_RAD;
     double lat_H = std::sin(lat_arc * 0.5);
@@ -67,7 +65,7 @@ double arc_in_rad(const LLPoint2& from, const LLPoint2& to) {
     return 2.0 * std::asin(std::sqrt(lat_H + tmp*lon_H));
 }
 
-double quad_quality( const LLPoint2& p1, const LLPoint2& p2, const LLPoint2& p3, const LLPoint2& p4)
+double quad_quality( const PointLonLat& p1, const PointLonLat& p2, const PointLonLat& p3, const PointLonLat& p4)
 {
   // see http://geuz.org/gmsh/doc/preprints/gmsh_quad_preprint.pdf
 
@@ -144,8 +142,8 @@ void build_statistics( Mesh& mesh )
     {
       int ip1 = edge_nodes(jedge,0);
       int ip2 = edge_nodes(jedge,1);
-      LLPoint2 p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
-      LLPoint2 p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
+      PointLonLat p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
+      PointLonLat p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
       dist(jedge) = arc_in_rad(p1,p2)*radius_km;
     }
   }
@@ -185,9 +183,9 @@ void build_statistics( Mesh& mesh )
           size_t ip1 = elem_nodes(jelem,0);
           size_t ip2 = elem_nodes(jelem,1);
           size_t ip3 = elem_nodes(jelem,2);
-          LLPoint2 p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
-          LLPoint2 p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
-          LLPoint2 p3(lonlat(ip3,internals::LON),lonlat(ip3,internals::LAT));
+          PointLonLat p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
+          PointLonLat p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
+          PointLonLat p3(lonlat(ip3,internals::LON),lonlat(ip3,internals::LAT));
 
           double l12 = arc_in_rad(p1,p2)/DEG_TO_RAD;
           double l23 = arc_in_rad(p2,p3)/DEG_TO_RAD;
@@ -221,10 +219,10 @@ void build_statistics( Mesh& mesh )
           size_t ip3 = elem_nodes(jelem,2);
           size_t ip4 = elem_nodes(jelem,3);
 
-          LLPoint2 p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
-          LLPoint2 p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
-          LLPoint2 p3(lonlat(ip3,internals::LON),lonlat(ip3,internals::LAT));
-          LLPoint2 p4(lonlat(ip4,internals::LON),lonlat(ip4,internals::LAT));
+          PointLonLat p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
+          PointLonLat p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
+          PointLonLat p3(lonlat(ip3,internals::LON),lonlat(ip3,internals::LAT));
+          PointLonLat p4(lonlat(ip4,internals::LON),lonlat(ip4,internals::LAT));
 
           eta(ielem) = quad_quality(p1,p2,p3,p4);
 

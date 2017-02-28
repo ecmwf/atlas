@@ -1,0 +1,9 @@
+{
+  "type" : "regular_regional",
+  "nx" : 35,
+  "ny" : 25,
+  "north" : -10,
+  "south" : -50,
+  "east" : 170,
+  "west" : 100
+}

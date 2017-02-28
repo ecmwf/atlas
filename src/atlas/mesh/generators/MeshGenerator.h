@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_meshgen_MeshGenerator_h
-#define atlas_meshgen_MeshGenerator_h
+#pragma once
 
 #include <iosfwd>
 #include <string>
@@ -17,6 +16,8 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/config/Parametrisation.h"
 
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/GridDistribution.h"
 #include "atlas/util/Config.h"
 
 namespace eckit { class MD5; }
@@ -28,7 +29,6 @@ namespace mesh {
 
 namespace atlas {
 namespace grid {
-    class Grid;
     class GridDistribution;
 } }
 
@@ -122,15 +122,12 @@ extern "C" {
 void atlas__MeshGenerator__delete(MeshGenerator* This);
 MeshGenerator* atlas__MeshGenerator__create_noconfig(const char* name);
 MeshGenerator* atlas__MeshGenerator__create(const char* name, const eckit::Parametrisation* params);
-Mesh* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator* This, const grid::Grid* grid, const grid::GridDistribution* distribution);
-Mesh* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid::Grid* grid);
+Mesh* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator* This, const grid::Grid::grid_t* grid, const grid::GridDistribution::impl_t* distribution);
+Mesh* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid::Grid::grid_t* grid);
 }
-
 
 //----------------------------------------------------------------------------------------------------------------------
 
 } // namespace generators
 } // namespace mesh
 } // namespace atlas
-
-#endif

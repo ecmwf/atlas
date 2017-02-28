@@ -1,12 +1,11 @@
 
 module atlas_GridDistribution_module
 
-
-use fckit_object_module, only: fckit_object
+use fckit_refcounted_module, only: fckit_refcounted
 
 implicit none
 
-private :: fckit_object
+private :: fckit_refcounted
 
 public :: atlas_GridDistribution
 
@@ -18,7 +17,7 @@ private
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_object) :: atlas_GridDistribution
+TYPE, extends(fckit_refcounted) :: atlas_GridDistribution
 
 ! Purpose :
 ! -------
@@ -36,6 +35,7 @@ contains
 
   procedure, public :: final  => atlas_GridDistribution__final
   procedure, public :: delete => atlas_GridDistribution__delete
+  procedure, public :: copy   => atlas_GridDistribution__copy
 
 END TYPE atlas_GridDistribution
 
@@ -80,6 +80,11 @@ subroutine atlas_GridDistribution__delete( this )
     call atlas__GridDistribution__delete(this%c_ptr());
   end if
   call this%reset_c_ptr()
+end subroutine
+
+subroutine atlas_GridDistribution__copy(this,obj_in)
+  class(atlas_GridDistribution), intent(inout) :: this
+  class(fckit_RefCounted), target, intent(in) :: obj_in
 end subroutine
 
 ! ----------------------------------------------------------------------------------------

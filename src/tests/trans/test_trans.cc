@@ -20,9 +20,9 @@
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/GridDistribution.h"
-#include "atlas/grid/grids.h"
-#include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/partitioners/TransPartitioner.h"
+#include "atlas/grid.h"
+#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioners/TransPartitioner.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -76,19 +76,19 @@ BOOST_GLOBAL_FIXTURE( AtlasTransFixture );
 
 BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 {
-  BOOST_CHECK( grid::partitioners::PartitionerFactory::has("Trans") );
+  BOOST_CHECK( grid::PartitionerFactory::has("Trans") );
 
 
   // Create grid and trans object
-  SharedPtr<grid::Structured> g ( grid::Structured::create( "N80" ) );
+  grid::Grid g( "N80" );
 
-  BOOST_CHECK_EQUAL( g->nlat() , 160 );
+  BOOST_CHECK_EQUAL( grid::StructuredGrid(g).ny() , 160 );
 
-  trans::Trans trans( *g );
+  trans::Trans trans( g );
 
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
 
-  grid::partitioners::TransPartitioner partitioner(*g,trans);
+  grid::partitioners::TransPartitioner partitioner(g,trans);
   grid::GridDistribution distribution( partitioner );
 
   // -------------- do checks -------------- //
@@ -106,14 +106,14 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
     BOOST_CHECK_EQUAL( trans.n_regions_EW(), max_nb_regions_EW );
 
     BOOST_CHECK_EQUAL( distribution.nb_partitions(), parallel::mpi::comm().size() );
-    BOOST_CHECK_EQUAL( distribution.partition().size(), g->npts() );
+    BOOST_CHECK_EQUAL( distribution.partition().size(), g.npts() );
 
     std::vector<int> npts(distribution.nb_partitions(),0);
 
-    for(size_t j = 0; j < g->npts(); ++j)
+    for(size_t j = 0; j < g.npts(); ++j)
       ++npts[distribution.partition(j)];
 
-    BOOST_CHECK_EQUAL( trans.ngptotg(), g->npts() );
+    BOOST_CHECK_EQUAL( trans.ngptotg(), g.npts() );
     BOOST_CHECK_EQUAL( trans.ngptot(),  npts[parallel::mpi::comm().rank()] );
     BOOST_CHECK_EQUAL( trans.ngptotmx(), *std::max_element(npts.begin(),npts.end()) );
 
@@ -128,12 +128,12 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 {
   BOOST_TEST_CHECKPOINT("test_trans_partitioner");
   // Create grid and trans object
-  SharedPtr<grid::Structured> g ( grid::Structured::create( "N80" ) );
+  grid::Grid g( "N80" );
 
-  trans::Trans trans( *g, 0 );
+  trans::Trans trans( g, 0 );
 
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
-  BOOST_CHECK_EQUAL( trans.ngptotg() , g->npts() );
+  BOOST_CHECK_EQUAL( trans.ngptotg() , g.npts() );
 }
 
 BOOST_AUTO_TEST_CASE( test_trans_options )
@@ -149,11 +149,6 @@ BOOST_AUTO_TEST_CASE( test_trans_options )
 
 BOOST_AUTO_TEST_CASE( test_distspec )
 {
-  SharedPtr<grid::Structured> g ( grid::Structured::create( "O80" ) );
-  mesh::generators::Structured generate( atlas::util::Config("angle",0) );
-  BOOST_TEST_CHECKPOINT("mesh generator created");
-  //trans::Trans trans(*g, 159 );
-
   trans::Trans::Options p;
   if( parallel::mpi::comm().size() == 1 )
     p.set_write("cached_legendre_coeffs");
@@ -188,25 +183,25 @@ BOOST_AUTO_TEST_CASE( test_distspec )
 
 BOOST_AUTO_TEST_CASE( test_distribution )
 {
-  SharedPtr<grid::Structured> g ( grid::Structured::create( "O80" ) );
+  grid::Grid g( "O80" );
 
   BOOST_TEST_CHECKPOINT("test_distribution");
 
-  grid::GridDistribution::Ptr d_trans( grid::partitioners::TransPartitioner(*g).distribution() );
+  grid::GridDistribution d_trans( grid::partitioners::TransPartitioner(g).distribution() );
   BOOST_TEST_CHECKPOINT("trans distribution created");
 
-  grid::GridDistribution::Ptr d_eqreg( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
+  grid::GridDistribution d_eqreg( grid::partitioners::EqualRegionsPartitioner(g).distribution() );
 
   BOOST_TEST_CHECKPOINT("eqregions distribution created");
 
   if( parallel::mpi::comm().rank() == 0 )
   {
-    BOOST_CHECK_EQUAL( d_trans->nb_partitions(), d_eqreg->nb_partitions() );
-    BOOST_CHECK_EQUAL( d_trans->max_pts(), d_eqreg->max_pts() );
-    BOOST_CHECK_EQUAL( d_trans->min_pts(), d_eqreg->min_pts() );
+    BOOST_CHECK_EQUAL( d_trans.nb_partitions(), d_eqreg.nb_partitions() );
+    BOOST_CHECK_EQUAL( d_trans.max_pts(), d_eqreg.max_pts() );
+    BOOST_CHECK_EQUAL( d_trans.min_pts(), d_eqreg.min_pts() );
 
-    BOOST_CHECK_EQUAL_COLLECTIONS( d_trans->nb_pts().begin(), d_trans->nb_pts().end(),
-                                   d_eqreg->nb_pts().begin(), d_eqreg->nb_pts().end() );
+    BOOST_CHECK_EQUAL_COLLECTIONS( d_trans.nb_pts().begin(), d_trans.nb_pts().end(),
+                                   d_eqreg.nb_pts().begin(), d_eqreg.nb_pts().end() );
   }
 
 }
@@ -215,22 +210,22 @@ BOOST_AUTO_TEST_CASE( test_distribution )
 BOOST_AUTO_TEST_CASE( test_generate_mesh )
 {
   BOOST_TEST_CHECKPOINT("test_generate_mesh");
-  SharedPtr<grid::Structured> g ( grid::Structured::create( "O80" ) );
+  grid::Grid g( "O80" );
   mesh::generators::Structured generate( atlas::util::Config
     ("angle",0)
     ("triangulate",true)
   );
-  trans::Trans trans(*g);
+  trans::Trans trans(g);
 
-  mesh::Mesh::Ptr m_default( generate( *g ) );
+  mesh::Mesh::Ptr m_default( generate( g ) );
 
   BOOST_TEST_CHECKPOINT("trans_distribution");
-  grid::GridDistribution::Ptr trans_distribution( grid::partitioners::TransPartitioner(*g).distribution() );
-  mesh::Mesh::Ptr m_trans( generate( *g, *trans_distribution ) );
+  grid::GridDistribution trans_distribution( grid::partitioners::TransPartitioner(g).distribution() );
+  mesh::Mesh::Ptr m_trans( generate( g, trans_distribution ) );
 
   BOOST_TEST_CHECKPOINT("eqreg_distribution");
-  grid::GridDistribution::Ptr eqreg_distribution( grid::partitioners::EqualRegionsPartitioner(*g).distribution() );
-  mesh::Mesh::Ptr m_eqreg( generate( *g, *eqreg_distribution ) );
+  grid::GridDistribution eqreg_distribution( grid::partitioners::EqualRegionsPartitioner(g).distribution() );
+  mesh::Mesh::Ptr m_eqreg( generate( g, eqreg_distribution ) );
 
   array::ArrayView<int,1> p_default( m_default->nodes().partition() );
   array::ArrayView<int,1> p_trans  ( m_trans  ->nodes().partition() );
@@ -242,7 +237,7 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   BOOST_CHECK_EQUAL_COLLECTIONS( p_default.begin(), p_default.end(),
                                  p_eqreg  .begin(), p_eqreg  .end() );
 
-  //mesh::Mesh::Ptr mesh ( generate(*g, mesh::generators::EqualAreaPartitioner(*g).distribution() ) );
+  //mesh::Mesh::Ptr mesh ( generate(g, mesh::generators::EqualAreaPartitioner(g).distribution() ) );
 
   output::Gmsh("N16_trans.msh").write(*m_trans);
 }
@@ -252,14 +247,14 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 {
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
-  SharedPtr<grid::Structured> g ( grid::Structured::create( "O48" ) );
+  grid::Grid g( "O48" );
   mesh::generators::Structured generate( atlas::util::Config
     ("angle",0)
     ("triangulate",false)
   );
-  mesh::Mesh::Ptr m( generate( *g ) );
+  mesh::Mesh::Ptr m( generate( g ) );
 
-  trans::Trans trans(*g,47);
+  trans::Trans trans(g,47);
 
 
   SharedPtr<functionspace::NodeColumns> nodal (new functionspace::NodeColumns(*m));
@@ -288,11 +283,11 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
 {
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
-  SharedPtr<grid::Structured> g ( grid::Structured::create( "O48" ) );
-  SharedPtr<trans::Trans> trans ( new trans::Trans(*g,47) );
+  grid::Grid g( "O48" );
+  SharedPtr<trans::Trans> trans ( new trans::Trans(g,47) );
 
   SharedPtr<functionspace::Spectral>    spectral    (new functionspace::Spectral(*trans));
-  SharedPtr<functionspace::StructuredColumns> gridpoints (new functionspace::StructuredColumns(*g));
+  SharedPtr<functionspace::StructuredColumns> gridpoints (new functionspace::StructuredColumns(g));
 
   SharedPtr<field::Field> spfg ( spectral->createField<double>("spf",field::global()) );
   SharedPtr<field::Field> spf  ( spectral->createField<double>("spf") );

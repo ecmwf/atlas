@@ -8,127 +8,28 @@
  * does it submit to any jurisdiction.
  */
 
-
 #include "atlas/grid/Domain.h"
 
-#include <algorithm>
-#include "eckit/types/FloatCompare.h"
-#include "eckit/utils/MD5.h"
-
+#include "atlas/grid/detail/domain/Domain.h"
 
 namespace atlas {
 namespace grid {
 
-//----------------------------------------------------------------------------------------------------------------------
-
-using eckit::types::is_approximately_equal;
-using eckit::types::is_strictly_greater;
-using eckit::types::is_approximately_greater_or_equal;
-
-
-bool Domain::operator==(const Domain& other) {
-    return is_approximately_equal(north_, other.north_)
-        && is_approximately_equal(west_,  other.west_)
-        && is_approximately_equal(south_, other.south_)
-        && is_approximately_equal(east_,  other.east_);
+Domain::Domain():
+    domain_( nullptr ){
 }
 
-
-void Domain::hash(eckit::MD5& md5) const {
-    md5.add(north_);
-    md5.add(west_);
-    md5.add(south_);
-    md5.add(east_);
+Domain::Domain( const Domain& domain):
+    domain_( domain.domain_ ) {
 }
 
-
-bool Domain::isEmpty() const {
-    return !is_strictly_greater(north_,south_)
-        || !is_strictly_greater(east_,west_);
+Domain::Domain( const atlas::grid::domain::Domain *domain):
+    domain_( const_cast<atlas::grid::domain::Domain*>(domain) ) {
 }
 
-
-bool Domain::contains(double lon, double lat) const {
-    // approximate comparisons include boundary coordinates
-    lon = normalise(lon);
-    return  is_approximately_greater_or_equal(north_, lat) &&
-            is_approximately_greater_or_equal(lat, south_) &&
-            is_approximately_greater_or_equal(lon, west_)  &&
-            is_approximately_greater_or_equal(east_, lon);
+Domain::Domain( const eckit::Parametrisation& p ):
+    domain_( atlas::grid::domain::Domain::create(p) ) {
 }
 
-
-#if 0
-Domain Domain::intersect(const Domain& other) const {
-    return !intersects(other)? makeEmpty()
-           : Domain(
-               std::min(n, other.n),
-               std::min(w, other.w),
-               std::max(s, other.s),
-               std::max(e, other.e) );
-}
-
-
-bool Domain::intersects(const Domain& other) const {
-    ASSERT(other.n >= other.s);
-    ASSERT(other.w <= other.e);
-
-    // strict comparisons ensure resulting areas have 2-dimensionality
-    return  is_strictly_greater(e, other.w) &&
-            is_strictly_greater(other.e, w) &&
-            is_strictly_greater(s, other.n) &&
-            is_strictly_greater(other.s, n);
-}
-#endif
-
-
-void Domain::normalise() {
-    ASSERT(north_ <= 90 && south_ >= -90);
-    ASSERT(north_ >= south_);
-
-    while (east_ >  360) {
-        east_ -= 360;
-        west_ -= 360;
-    }
-    while (east_ < -180) {
-        east_ += 360;
-        west_ += 360;
-    }
-    while (east_ < west_) {
-        east_ += 360;
-    }
-
-    ASSERT(west_ <= east_);
-}
-
-
-double Domain::normalise(double lon) const {
-    while (lon >= east_) {
-        lon -= 360;
-    }
-    while (lon < west_) {
-        if (is_approximately_equal(lon, west_)) {
-            return west_;
-        }
-        lon += 360;
-    }
-    return lon;
-}
-
-
-void Domain::print(std::ostream& os) const {
-    os  << "Domain["
-        <<  "N:" << north_
-        << ",W:" << west_
-        << ",S:" << south_
-        << ",E:" << east_
-        << ",isGlobal=" << isGlobal()
-        << ",isEmpty="  << isEmpty()
-        << "]";
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-
-} // namespace grid
+} // namespace Grid
 } // namespace atlas

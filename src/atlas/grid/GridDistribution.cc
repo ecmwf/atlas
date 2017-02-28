@@ -11,13 +11,14 @@
 #include <algorithm>
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/GridDistribution.h"
-#include "atlas/grid/partitioners/Partitioner.h"
+#include "atlas/grid/detail/partitioners/Partitioner.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace grid {
 
-GridDistribution::GridDistribution(const Grid& grid) :
+GridDistribution::impl_t::impl_t( const Grid& grid ) :
     nb_partitions_(1),
     part_(grid.npts(),0),
     nb_pts_(nb_partitions_,grid.npts()),
@@ -25,7 +26,7 @@ GridDistribution::GridDistribution(const Grid& grid) :
     min_pts_(grid.npts()) {
 }
 
-GridDistribution::GridDistribution(const partitioners::Partitioner& partitioner) {
+GridDistribution::impl_t::impl_t( const Partitioner& partitioner ) {
     part_.resize(partitioner.grid().npts());
     partitioner.partition(part_.data());
     nb_partitions_ = partitioner.nb_partitions();
@@ -36,7 +37,7 @@ GridDistribution::GridDistribution(const partitioners::Partitioner& partitioner)
     min_pts_ = *std::min_element(nb_pts_.begin(),nb_pts_.end());
 }
 
-GridDistribution::GridDistribution(size_t npts, int part[], int part0) {
+GridDistribution::impl_t::impl_t( size_t npts, int part[], int part0 ) {
     part_.assign(part,part+npts);
     std::set<int> partset(part_.begin(),part_.end());
     nb_partitions_ = partset.size();
@@ -50,11 +51,43 @@ GridDistribution::GridDistribution(size_t npts, int part[], int part0) {
 }
 
 
-GridDistribution* atlas__GridDistribution__new(int npts, int part[], int part0) {
-    return new GridDistribution(npts,part,part0);
+
+GridDistribution::GridDistribution():
+    impl_( nullptr ) {
 }
 
-void atlas__GridDistribution__delete(GridDistribution* This) {
+GridDistribution::GridDistribution( const impl_t* impl ):
+    impl_( impl ) {
+}
+
+GridDistribution::GridDistribution( const GridDistribution& other ):
+    impl_( other.impl_ ) {
+}
+
+GridDistribution::GridDistribution( const Grid& grid ):
+    impl_( new impl_t(grid) ) {
+}
+
+GridDistribution::GridDistribution(const Partitioner& partitioner):
+    impl_( new impl_t(partitioner) ) {
+}
+
+GridDistribution::GridDistribution(size_t npts, int part[], int part0):
+    impl_( new impl_t(npts,part,part0) ) {
+}
+
+
+
+GridDistribution::impl_t* atlas__GridDistribution__new(int npts, int part[], int part0) {
+    GridDistribution::impl_t* dist = new GridDistribution::impl_t(npts,part,part0);
+    Log::info() << Here() << "owners = " << dist->owners() << std::endl;
+
+    return dist;
+//    return new GridDistribution::impl_t(npts,part,part0);
+}
+
+void atlas__GridDistribution__delete(GridDistribution::impl_t* This) {
+    Log::info() << Here() << "owners = " << This->owners() << std::endl;
     delete This;
 }
 
