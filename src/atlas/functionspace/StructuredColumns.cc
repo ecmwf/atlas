@@ -452,10 +452,10 @@ std::string StructuredColumns::checksum(
 extern "C"
 {
 
-StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid::Grid* grid)
+StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid::Grid::grid_t* grid)
 {
   ATLAS_ERROR_HANDLING(
-    return new StructuredColumns(*grid);
+    return new StructuredColumns( grid::Grid(grid) );
   );
   return 0;
 }

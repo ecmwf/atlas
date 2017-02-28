@@ -140,7 +140,7 @@ inline field::Field* StructuredColumns::createField(
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 #define Char char
-#define grid_Grid grid::Grid
+#define grid_Grid grid::Grid::grid_t
 #define field_Field field::Field
 #define field_FieldSet field::FieldSet
 #define Options eckit::Parametrisation

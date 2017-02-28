@@ -17,6 +17,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/config/Parametrisation.h"
 
+#include "atlas/grid/Grid.h"
 #include "atlas/util/Config.h"
 
 namespace eckit { class MD5; }
@@ -28,7 +29,6 @@ namespace mesh {
 
 namespace atlas {
 namespace grid {
-    class Grid;
     class GridDistribution;
 } }
 
@@ -119,7 +119,7 @@ class MeshGeneratorBuilder : public MeshGeneratorFactory {
 //----------------------------------------------------------------------------------------------------------------------
 
 #define Parametrisation eckit::Parametrisation
-#define grid_Grid grid::Grid
+#define grid_Grid grid::Grid::grid_t
 #define grid_GridDistribution grid::GridDistribution
 
 extern "C" {

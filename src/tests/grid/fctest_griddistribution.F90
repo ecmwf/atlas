@@ -38,17 +38,17 @@ END_TESTSUITE_FINALIZE
 !   type(atlas_grid_Structured) :: N640
 !   type(atlas_grid_ReducedGaussian) :: custom
 !   integer(c_long), pointer :: pl(:)
-! 
+!
 !   N640 = atlas_grid_Structured("N640")
 !   FCTEST_CHECK_EQUAL(N640%npts(),2140702_c_long)
 !   pl => N640%pl()
-! 
+!
 !   custom = atlas_grid_ReducedGaussian( N640%N(), pl )
 !   FCTEST_CHECK_EQUAL(N640%npts(),custom%npts() )
-! 
+!
 !   call N640%final()
 !   call custom%final()
-! 
+!
 ! E N D _ T E S T
 
 ! -----------------------------------------------------------------------------

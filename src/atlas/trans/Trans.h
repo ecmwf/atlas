@@ -16,6 +16,7 @@
 #include "eckit/value/Params.h"
 #include "eckit/memory/Owned.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/grid/Grid.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -30,12 +31,6 @@ namespace field {
 namespace atlas {
 namespace array {
     class Array;
-}
-}
-
-namespace atlas {
-namespace grid {
-    class Grid;
 }
 }
 
@@ -395,7 +390,7 @@ private:
 // C wrapper interfaces to C++ routines
 #define functionspace_NodeColumns functionspace::NodeColumns
 #define functionspace_Spectral functionspace::Spectral
-#define grid_Grid grid::Grid
+#define grid_Grid grid::Grid::grid_t
 #define field_Field field::Field
 #define field_FieldSet field::FieldSet
 
