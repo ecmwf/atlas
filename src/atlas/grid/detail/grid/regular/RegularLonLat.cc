@@ -6,18 +6,14 @@ namespace detail {
 namespace grid {
 namespace regular {
 
-register_BuilderT1(Grid,RegularLonLat,RegularLonLat::grid_type_str());
+register_BuilderT1(Grid,RegularLonLat,RegularLonLat::static_type());
 
-std::string RegularLonLat::grid_type_str() {
+std::string RegularLonLat::static_type() {
     return "regular_lonlat";
 }
 
 
-std::string RegularLonLat::className() {
-    return "atlas.grid.regular.RegularLonLat";
-}
-
-std::string RegularLonLat::shortName() const {
+std::string RegularLonLat::name() const {
     std::ostringstream s;
     if ( nlonmin() == 2*nlat() && nlat()%2==0 ) {
       s << "L"<< nlat()/2;
@@ -36,7 +32,7 @@ RegularLonLat::RegularLonLat(const util::Config& config) :
     if ( config.get("N",N) ) {
       nlon=4*N;
       nlat=2*N+1;
-    } else if( config.get("nx",nlon) 
+    } else if( config.get("nx",nlon)
             && config.get("ny",nlat) ) {
     } else {
         throw eckit::BadParameter("RegularLonLat requires either N, or (nx,ny)",Here());

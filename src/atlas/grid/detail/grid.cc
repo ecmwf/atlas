@@ -12,6 +12,7 @@
 #include "atlas/grid.h"
 
 #include <regex.h>
+#include <iomanip>
 
 #include "eckit/parser/Tokenizer.h"
 #include "eckit/utils/Translator.h"
@@ -34,6 +35,8 @@
 
 namespace atlas {
 namespace grid {
+
+namespace {
 
 size_t regex_count_parens(const std::string& string) {
     size_t out = 0;
@@ -65,7 +68,9 @@ int regex_match_impl( const std::string& string,
                                + (use_substr ? 0 : REG_NOSUB) );
 
     if( !compiled_ok )
-        printf("This regular expression didn't compile: \"%s\"", regex.c_str());
+        Log::error() << "This regular expression didn't compile: \"" << regex << "\"" << std::endl;
+
+    ASSERT(compiled_ok);
 
     int found = !regexec(&re, string.c_str(), matchcount+1, result, 0);
     if (found && use_substr) {
@@ -89,168 +94,375 @@ class Regex {
         regex_(regex),
         use_case_(use_case) {
     }
-    bool match(const std::string& string) {
+    bool match(const std::string& string) const {
         std::vector<std::string> substr;
         return regex_match_impl(string,regex_,substr,false,use_case_);
     }
-    bool match(const std::string& string, std::vector<std::string>& substr) {
+    bool match(const std::string& string, std::vector<std::string>& substr) const {
         return regex_match_impl(string,regex_,substr,true,use_case_);
     }
+    operator std::string() const { return regex_; }
   private:
     std::string regex_;
     bool use_case_;
 };
 
-//=====================================================
+static eckit::Mutex *local_mutex = 0;
+static GridCreator::Registry *m = 0;
 
-Grid::grid_t* grid_from_uid(const std::string& uid) {
-    if (eckit::Factory<Grid::grid_t>::instance().exists(uid)) {
-        return Grid::grid_t::create(util::Config("type", uid));
-    } else {
-        Regex classical_gaussian  ("^[Nn]([0-9]+)$");
-        Regex octahedral_gaussian ("^[Oo]([0-9]+)$");
-        Regex regular_gaussian    ("^[Ff]([0-9]+)$");
-        Regex regular_lonlat      ("^[Ll]([0-9]+)$");
-        Regex shifted_lonlat      ("^[Ss]([0-9]+)$");
-        Regex shifted_lon         ("^[Ss][Ll][Oo][Nn]([0-9]+)$");
-        Regex shifted_lat         ("^[Ss][Ll][Aa][Tt]([0-9]+)$");
-        Regex regular_lonlat_x    ("^[Ll]([0-9]+)x([0-9]+)$");
-        Regex shifted_lonlat_x    ("^[Ss]([0-9]+)x([0-9]+)$");
-        Regex shifted_lon_x       ("^[Ss][Ll][Oo][Nn]([0-9]+)x([0-9]+)$");
-        Regex shifted_lat_x       ("^[Ss][Ll][Aa][Tt]([0-9]+)x([0-9]+)$");
 
-        util::Config gridparams;
-        eckit::Translator<std::string,int> to_int;
-        std::vector<std::string> matches;
-        if( classical_gaussian.match(uid,matches) ) {
-            try {
-                int N = to_int(matches[0]);
-                gridparams.set("type", detail::grid::reduced::ClassicGaussian::grid_type_str());
-                gridparams.set("N",N);
-                return detail::grid::Grid::create( gridparams );
-            } catch( const eckit::BadParameter& e ) {
-                throw eckit::BadParameter("Grid ["+uid+"] does not exist.\n"+e.what(),Here());
-            }
-            return 0;
-        } else if( octahedral_gaussian.match(uid,matches) ) {
-            int N = to_int(matches[0]);
-            gridparams.set("type", detail::grid::reduced::OctahedralGaussian::grid_type_str());
-            gridparams.set("N",N);
-            return detail::grid::Grid::create( gridparams );
-        } else if( regular_gaussian.match(uid,matches) ) {
-            int N = to_int(matches[0]);
-            gridparams.set("type", detail::grid::regular::RegularGaussian::grid_type_str());
-            gridparams.set("N",N);
-            return detail::grid::Grid::create( gridparams );
-        } else if( regular_lonlat.match(uid,matches) ) {
-            int N = to_int(matches[0]);
-            gridparams.set("type", detail::grid::regular::RegularLonLat::grid_type_str());
-            gridparams.set("N",N);
-            return detail::grid::Grid::create( gridparams );
-        } else if( shifted_lonlat.match(uid,matches) ) {
-            int N = to_int(matches[0]);
-            gridparams.set("type", detail::grid::regular::ShiftedLonLat::grid_type_str());
-            gridparams.set("N",N);
-            return detail::grid::Grid::create( gridparams );
-        } else if( shifted_lon.match(uid,matches) ) {
-            int N = to_int(matches[0]);
-            gridparams.set("type", detail::grid::regular::ShiftedLon::grid_type_str());
-            gridparams.set("N",N);
-            return detail::grid::Grid::create( gridparams );
-        } else if( shifted_lat.match(uid,matches) ) {
-            int N = to_int(matches[0]);
-            gridparams.set("type", detail::grid::regular::ShiftedLat::grid_type_str());
-            gridparams.set("N",N);
-            return detail::grid::Grid::create( gridparams );
-        } else if( regular_lonlat_x.match(uid,matches) ) {
-            int nlon = to_int(matches[0]);
-            int nlat = to_int(matches[1]);
-            gridparams.set("type", detail::grid::regular::RegularLonLat::grid_type_str());
-            gridparams.set("nx",nlon);
-            gridparams.set("ny",nlat);
-            return detail::grid::Grid::create( gridparams );
-        } else if( shifted_lonlat_x.match(uid,matches) ) {
-            int nlon = to_int(matches[0]);
-            int nlat = to_int(matches[1]);
-            gridparams.set("type", detail::grid::regular::ShiftedLonLat::grid_type_str());
-            gridparams.set("nx",nlon);
-            gridparams.set("ny",nlat);
-            return detail::grid::Grid::create( gridparams );
-        } else if( shifted_lon_x.match(uid,matches) ) {
-            int nlon = to_int(matches[0]);
-            int nlat = to_int(matches[1]);
-            gridparams.set("type", detail::grid::regular::ShiftedLon::grid_type_str());
-            gridparams.set("nx",nlon);
-            gridparams.set("ny",nlat);
-            return detail::grid::Grid::create( gridparams );
-        } else if( shifted_lat_x.match(uid,matches) ) {
-            int nlon = to_int(matches[0]);
-            int nlat = to_int(matches[1]);
-            gridparams.set("type", detail::grid::regular::ShiftedLat::grid_type_str());
-            gridparams.set("nx",nlon);
-            gridparams.set("ny",nlat);
-            return detail::grid::Grid::create( gridparams );
-        } else {
-            eckit::Tokenizer tokenize(".");
-            std::vector<std::string> tokens;
-            tokenize(uid,tokens);
-            std::string grid_type = tokens[0];
-            if( tokens.size() > 1) {
-                gridparams.set("type",grid_type);
-                if( tokens[1][0] == 'N' ) {
-                    std::string Nstr(tokens[1],1,tokens[1].size()-1);
-                    int N = to_int(Nstr);
-                    gridparams.set("N",N);
-                } else {
-                    std::vector<std::string> lonlat;
-                    eckit::Tokenizer tokenize_lonlat("x");
-                    tokenize_lonlat(tokens[1],lonlat);
-                    if( lonlat.size() > 1 ) {
-                        int nlon = to_int(lonlat[0]);
-                        int nlat = to_int(lonlat[1]);
-                        gridparams.set("nx",nlon);
-                        gridparams.set("ny",nlat);
-                    }
-                }
-            }
-            return detail::grid::Grid::create( gridparams );
-        }
+static pthread_once_t once = PTHREAD_ONCE_INIT;
+
+static void init() {
+    local_mutex = new eckit::Mutex();
+    m = new GridCreator::Registry();
+}
+
+static eckit::Translator<std::string,int> to_int;
+
+}  // anonymous namespace
+
+//---------------------------------------------------------------------------------------------------------------------
+
+  const GridCreator::Registry& GridCreator::registry() {
+    return *m;
+  }
+
+  GridCreator::GridCreator( const std::string& name ) :
+    name_(name) {
+    pthread_once(&once, init);
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+    ASSERT(registry().find(name_) == registry().end());
+    (*m)[name_] = this;
+  }
+
+  GridCreator::~GridCreator() {
+      pthread_once(&once, init);
+
+      eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+      ASSERT(registry().find(name_) != registry().end());
+      (*m).erase(name_);
+  }
+
+  const Grid::grid_t* GridCreator::create( const Grid::Config& config ) const {
+    return Grid::grid_t::create( config );
+  }
+
+
+  bool GridCreator::match(const std::string& string, std::vector<std::string>& matches) const {
+    return Regex(name_).match(string,matches);
+  }
+
+  std::string GridCreator::name() const { return name_; }
+
+  std::ostream& operator<<( std::ostream& os, const GridCreator& g ) {
+    g.print(os);
+    return os;
+  }
+
+namespace {
+
+//---------------------------------------------------------------------------------------------------------------------
+
+static class classic_gaussian : public GridCreator {
+
+public:
+
+  classic_gaussian() : GridCreator("^[Nn]([0-9]+)$") {}
+
+  virtual void print(std::ostream& os) const {
+    os << std::left << std::setw(20) << "N<gauss>" << "Classic Gaussian grid";
+  }
+
+  virtual const Grid::grid_t* create( const std::string& name ) const {
+    std::vector<std::string> matches;
+    if( match( name, matches ) ) {
+      Grid::Config grid;
+      int N = to_int(matches[0]);
+      grid.set("type", detail::grid::reduced::ClassicGaussian::static_type());
+      grid.set("N",N);
+      return GridCreator::create( grid );
     }
-    throw eckit::BadParameter("Insufficient information to construct grid "+uid+" or grid does not exist.",Here());
-    return 0;
-}
+    return nullptr;
+  }
 
-template<typename CONCRETE>
-void load_grid() {
-    eckit::ConcreteBuilderT1<detail::grid::Grid,CONCRETE> builder("tmp");
-}
+} classic_gaussian_;
 
-void load() {
-    // We have to touch all classes we want to register for static linking.
+//---------------------------------------------------------------------------------------------------------------------
 
-    load_grid<detail::grid::Unstructured>();
-    load_grid<detail::grid::CustomStructured>();
-    load_grid<detail::grid::reduced::ReducedGaussian>();
-    load_grid<detail::grid::regular::RegularGaussian>();
-    load_grid<detail::grid::reduced::ClassicGaussian>();
-    load_grid<detail::grid::reduced::OctahedralGaussian>();
-    load_grid<detail::grid::reduced::ReducedLonLat>();
-    load_grid<detail::grid::regular::RegularLonLat>();
-    load_grid<detail::grid::regular::ShiftedLonLat>();
-    load_grid<detail::grid::regular::ShiftedLon>();
-    load_grid<detail::grid::regular::ShiftedLat>();
+static class octahedral_gaussian : public GridCreator {
 
-}
+public:
 
+  octahedral_gaussian() : GridCreator("^[Oo]([0-9]+)$") {}
 
-extern "C"
-{
+  virtual void print(std::ostream& os) const {
+    os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian grid";
+  }
 
-    void atlas__grids__load() {
-        atlas::grid::load();
+  virtual const Grid::grid_t* create( const std::string& name ) const {
+    std::vector<std::string> matches;
+    if( match( name, matches ) ) {
+      util::Config grid;
+      int N = to_int(matches[0]);
+      grid.set("type", detail::grid::reduced::OctahedralGaussian::static_type());
+      grid.set("N",N);
+      return GridCreator::create( grid );
     }
+    return nullptr;
+  }
 
-}
+} octahedral_gaussian_;
+
+//---------------------------------------------------------------------------------------------------------------------
+
+static class regular_gaussian : public GridCreator {
+
+public:
+
+  regular_gaussian() : GridCreator("^[Ff]([0-9]+)$") {}
+
+  virtual void print(std::ostream& os) const {
+    os << std::left << std::setw(20) << "F<gauss>" << "Regular Gaussian grid";
+  }
+
+  virtual const Grid::grid_t* create( const std::string& name ) const {
+    std::vector<std::string> matches;
+    if( match( name, matches ) ) {
+      util::Config grid;
+      int N = to_int(matches[0]);
+      grid.set("type", detail::grid::regular::RegularGaussian::static_type());
+      grid.set("N",N);
+      return GridCreator::create( grid );
+    }
+    return nullptr;
+  }
+
+} regular_gaussian_;
+
+//---------------------------------------------------------------------------------------------------------------------
+
+static class regular_lonlat : public GridCreator {
+
+public:
+
+  regular_lonlat() : GridCreator("^[Ll]([0-9]+)$") {}
+
+  virtual void print(std::ostream& os) const {
+    os << std::left << std::setw(20) << "L<gauss>" << "Regular longitude-latitude grid";
+  }
+
+  virtual const Grid::grid_t* create( const std::string& name ) const {
+    std::vector<std::string> matches;
+    if( match( name, matches ) ) {
+      util::Config grid;
+      int N = to_int(matches[0]);
+      grid.set("type", detail::grid::regular::RegularLonLat::static_type());
+      grid.set("N",N);
+      return GridCreator::create( grid );
+    }
+    return nullptr;
+  }
+
+} regular_lonlat_;
+
+//---------------------------------------------------------------------------------------------------------------------
+
+static class shifted_lonlat : public GridCreator {
+
+public:
+
+  shifted_lonlat() : GridCreator("^[Ss]([0-9]+)$") {}
+
+  virtual void print(std::ostream& os) const {
+    os << std::left << std::setw(20) << "S<gauss>" << "Shifted longitude-latitude grid";
+  }
+
+  virtual const Grid::grid_t* create( const std::string& name ) const {
+    std::vector<std::string> matches;
+    if( match( name, matches ) ) {
+      util::Config grid;
+      int N = to_int(matches[0]);
+      grid.set("type", detail::grid::regular::ShiftedLonLat::static_type());
+      grid.set("N",N);
+      return GridCreator::create( grid );
+    }
+    return nullptr;
+  }
+
+} shifted_lonlat_;
+
+//---------------------------------------------------------------------------------------------------------------------
+
+static class shifted_lon : public GridCreator {
+
+public:
+
+  shifted_lon() : GridCreator("^[Ss][Ll][Oo][Nn]([0-9]+)$") {}
+
+  virtual void print(std::ostream& os) const {
+    os << std::left << std::setw(20) << "Slon<gauss>" << "Shifted longitude grid";
+  }
+
+  virtual const Grid::grid_t* create( const std::string& name ) const {
+    std::vector<std::string> matches;
+    if( match( name, matches ) ) {
+      util::Config grid;
+      int N = to_int(matches[0]);
+      grid.set("type", detail::grid::regular::ShiftedLon::static_type());
+      grid.set("N",N);
+      return GridCreator::create( grid );
+    }
+    return nullptr;
+  }
+
+} shifted_lon_;
+
+
+//---------------------------------------------------------------------------------------------------------------------
+
+static class shifted_lat : public GridCreator {
+
+public:
+
+  shifted_lat() : GridCreator("^[Ss][Ll][Aa][Tt]([0-9]+)$") {}
+
+  virtual void print(std::ostream& os) const {
+    os << std::left << std::setw(20) << "Slat<gauss>" << "Shifted latitude grid";
+  }
+
+  virtual const Grid::grid_t* create( const std::string& name ) const {
+    std::vector<std::string> matches;
+    if( match( name, matches ) ) {
+      util::Config grid;
+      int N = to_int(matches[0]);
+      grid.set("type", detail::grid::regular::ShiftedLat::static_type());
+      grid.set("N",N);
+      return GridCreator::create( grid );
+    }
+    return nullptr;
+  }
+
+} shifted_lat_;
+
+//---------------------------------------------------------------------------------------------------------------------
+
+static class regular_lonlat_x : public GridCreator {
+
+public:
+
+  regular_lonlat_x() : GridCreator("^[Ll]([0-9]+)x([0-9]+)$") {}
+
+  virtual void print(std::ostream& os) const {
+    os << std::left << std::setw(20) << "L<nx>x<ny>" << "Regular longitude-latitude grid";
+  }
+
+
+  virtual const Grid::grid_t* create( const std::string& name ) const {
+    std::vector<std::string> matches;
+    if( match( name, matches ) ) {
+      util::Config grid;
+      int nx = to_int(matches[0]);
+      int ny = to_int(matches[1]);
+      grid.set("type", detail::grid::regular::RegularLonLat::static_type());
+      grid.set("nx",nx);
+      grid.set("ny",ny);
+      return GridCreator::create( grid );
+    }
+    return nullptr;
+  }
+
+} regular_lonlat_x_;
+
+//---------------------------------------------------------------------------------------------------------------------
+
+static class shifted_lonlat_x : public GridCreator {
+
+public:
+
+  shifted_lonlat_x() : GridCreator("^[Ss]([0-9]+)x([0-9]+)$") {}
+
+  virtual void print(std::ostream& os) const {
+    os << std::left << std::setw(20) << "S<nx>x<ny>" << "Shifted longitude-latitude grid";
+  }
+
+  virtual const Grid::grid_t* create( const std::string& name ) const {
+    std::vector<std::string> matches;
+    if( match( name, matches ) ) {
+      util::Config grid;
+      int nx = to_int(matches[0]);
+      int ny = to_int(matches[1]);
+      grid.set("type", detail::grid::regular::ShiftedLonLat::static_type());
+      grid.set("nx",nx);
+      grid.set("ny",ny);
+      return GridCreator::create( grid );
+    }
+    return nullptr;
+  }
+
+} shifted_lonlat_x_;
+
+
+//---------------------------------------------------------------------------------------------------------------------
+
+static class shifted_lon_x : public GridCreator {
+
+public:
+
+  shifted_lon_x() : GridCreator("^[Ss][Ll][Oo][Nn]([0-9]+)x([0-9]+)$") {}
+
+  virtual void print(std::ostream& os) const {
+    os << std::left << std::setw(20) << "Slon<nx>x<ny>" << "Shifted longitude grid";
+  }
+
+  virtual const Grid::grid_t* create( const std::string& name ) const {
+    std::vector<std::string> matches;
+    if( match( name, matches ) ) {
+      util::Config grid;
+      int nx = to_int(matches[0]);
+      int ny = to_int(matches[1]);
+      grid.set("type", detail::grid::regular::ShiftedLon::static_type());
+      grid.set("nx",nx);
+      grid.set("ny",ny);
+      return GridCreator::create( grid );
+    }
+    return nullptr;
+  }
+
+} shifted_lon_x_;
+
+
+//---------------------------------------------------------------------------------------------------------------------
+
+static class shifted_lat_x : public GridCreator {
+
+public:
+
+  shifted_lat_x() : GridCreator("^[Ss][Ll][Aa][Tt]([0-9]+)x([0-9]+)$") {}
+
+  virtual void print(std::ostream& os) const {
+    os << std::left << std::setw(20) << "Slat<nx>x<ny>" << "Shifted latitude grid";
+  }
+
+  virtual const Grid::grid_t* create( const std::string& name ) const {
+    std::vector<std::string> matches;
+    if( match( name, matches ) ) {
+      util::Config grid;
+      int nx = to_int(matches[0]);
+      int ny = to_int(matches[1]);
+      grid.set("type", detail::grid::regular::ShiftedLat::static_type());
+      grid.set("nx",nx);
+      grid.set("ny",ny);
+      return GridCreator::create( grid );
+    }
+    return nullptr;
+  }
+
+} shifted_lat_x_;
+
+}  // anonymous namespace
+
+//---------------------------------------------------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace atlas

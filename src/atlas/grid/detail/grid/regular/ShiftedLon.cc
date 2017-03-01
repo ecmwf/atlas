@@ -7,17 +7,13 @@ namespace detail {
 namespace grid {
 namespace regular {
 
-register_BuilderT1(Grid,ShiftedLon,ShiftedLon::grid_type_str());
+register_BuilderT1(Grid,ShiftedLon,ShiftedLon::static_type());
 
-std::string ShiftedLon::grid_type_str() {
+std::string ShiftedLon::static_type() {
     return "shifted_lon";
 }
 
-std::string ShiftedLon::className() {
-    return "atlas.grid.regular.ShiftedLon";
-}
-
-std::string ShiftedLon::shortName() const {
+std::string ShiftedLon::name() const {
     std::ostringstream s;
     if ( nlonmin() == 2*nlat() && nlat()%2==0 ) {
       s << "Slon"<< nlat()/2;

@@ -13,19 +13,17 @@ class RegularRegional: public Regular {
 
 public:
 
-    static std::string grid_type_str();
+    static std::string static_type();
 
-    static std::string className();
-
-    virtual std::string shortName() const;
-    virtual std::string gridType() const { return "regular_regional"; }
+    virtual std::string name() const;
+    virtual std::string type() const { return "regular_regional"; }
 
     RegularRegional( const Config& );
 
 private:
 
     void setup(const util::Config& params);
-    std::string shortName();
+    std::string name();
 
 };
 

@@ -23,33 +23,16 @@ namespace detail {
 namespace grid {
 
 
-Structured* Structured::create(const util::Config& p) {
-    Structured* grid = dynamic_cast<Structured*>(Grid::create(p));
-    if (!grid)
-        throw eckit::BadParameter("Grid is not a reduced grid", Here());
-    return grid;
-
-}
-
-
-Structured* Structured::create(const std::string& uid) {
-    Structured* grid = dynamic_cast<Structured*>( Grid::create(uid) );
-    if (!grid)
-        throw eckit::BadParameter("Grid "+uid+" is not a reduced grid",Here());
-    return grid;
-}
-
-
 std::string Structured::className() {
     return "atlas.grid.Structured";
 }
 
 
-std::string Structured::grid_type_str() {
+std::string Structured::static_type() {
     return "structured";
 }
 
-std::string Structured::shortName() const {
+std::string Structured::name() const {
   return "structured";
 
 }
@@ -189,13 +172,13 @@ void Structured::setup_cropped(const size_t ny, const double y[], const long nx[
 
 
 void Structured::setup(
-    spacing::Spacing*          yspace,
+    const YSpace&              yspace,
     const std::vector<long>&   nx,
     const std::vector<double>& xmin,
     const std::vector<double>& xmax,
     const std::vector<double>& dx )
 {
-  yspace_ = YSpace(yspace);
+  yspace_ = yspace;
   size_t ny = yspace_.size();
 
   ASSERT(nx.size() == ny);
@@ -222,13 +205,13 @@ void Structured::setup(
 }
 
 void Structured::setup(
-    spacing::Spacing* yspace,
+    const YSpace&     yspace,
     const long&       nx,
     const double&     xmin,
     const double&     xmax,
     const double&     dx )
 {
-  yspace_ = YSpace(yspace);
+  yspace_ = yspace;
   size_t ny = yspace_.size();
 
   y_.assign(yspace_.begin(),yspace_.end());
@@ -296,13 +279,13 @@ void Structured::lonlat( std::vector<Point>& pts ) const {
 }
 
 void Structured::print(std::ostream& os) const {
-    os << "Structured(Name:" << shortName() << ")";
+    os << "Structured(Name:" << name() << ")";
 }
 
 
 void Structured::hash(eckit::MD5& md5) const {
-    // Through inheritance the grid_type_str() might differ while still being same grid
-    //md5.add(grid_type_str());
+    // Through inheritance the static_type() might differ while still being same grid
+    //md5.add(static_type());
 
     md5.add(latitudes().data(), sizeof(double)*latitudes().size());
     md5.add(pl().data(), sizeof(long)*nlat());
@@ -449,19 +432,23 @@ extern "C" {
     }
 
 
-    Structured* atlas__grid__Structured(char* identifier) {
+    const Structured* atlas__grid__Structured(char* identifier) {
         ATLAS_ERROR_HANDLING(
             ASSERT( identifier );
-            return Structured::create( std::string(identifier) );
+            const Structured* grid = dynamic_cast<const Structured*>( Grid::create( std::string(identifier) ) );
+            ASSERT( grid );
+            return grid;
         );
         return 0;
     }
 
 
-    Structured* atlas__grid__Structured__config(util::Config* conf) {
+    const Structured* atlas__grid__Structured__config(util::Config* conf) {
         ATLAS_ERROR_HANDLING(
             ASSERT( conf );
-            return Structured::create(*conf);
+            const Structured* grid = dynamic_cast<const Structured*>( Grid::create( *conf ) );
+            ASSERT( grid );
+            return grid;
         );
         return 0;
     }

@@ -8,18 +8,14 @@ namespace detail {
 namespace grid {
 namespace reduced {
 
-register_BuilderT1(Grid,ReducedLonLat,ReducedLonLat::grid_type_str());
+register_BuilderT1(Grid,ReducedLonLat,ReducedLonLat::static_type());
 
-std::string ReducedLonLat::grid_type_str() {
+std::string ReducedLonLat::static_type() {
     return "reduced_lonlat";
 }
 
-std::string ReducedLonLat::className() {
-    return "atlas.grid.reduced.ReducedLonLat";
-}
-
-std::string ReducedLonLat::shortName() const {
-  return "reduced_lonlat";
+std::string ReducedLonLat::name() const {
+  return static_type();
 }
 
 
@@ -49,7 +45,7 @@ void ReducedLonLat::setup(size_t ny, long pl[]) {
     YSpace yspace(config_spacing);
 
     // loop over latitudes to set bounds
-    for (int j=0;j<ny;j++) {
+    for (size_t j=0;j<ny;j++) {
       nx[j]=pl[j];
       xmin[j]=0.;
       xmax[j]=360.;
@@ -85,7 +81,7 @@ ReducedLonLat::ReducedLonLat(const util::Config& config) :
     if ( pl.size() == N ) {
       // mirror to get length 2*N
       pl.resize(nlat);
-      for (int jlat=0;jlat<N;jlat++) {
+      for (size_t jlat=0;jlat<N;jlat++) {
         pl[nlat-1-jlat]=pl[jlat];
       }
     }

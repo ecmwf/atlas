@@ -40,26 +40,26 @@ std::string Grid::className() {
 }
 
 
-Grid* Grid::create(const Config& p) {
+const Grid* Grid::create(const Config& p) {
 
     eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
 
-    std::string shortname;
-    if (p.get("name",shortname)) {
-        return grid_from_uid(shortname);
+    std::string name;
+    if (p.get("name",name)) {
+        return create(name);
     }
-    std::string gridtype;
-    if (p.get("type",gridtype) && fact.exists(gridtype)) {
-        return fact.get(gridtype).create(p);
+    std::string type;
+    if (p.get("type",type) && fact.exists(type)) {
+        return fact.get(type).create(p);
     }
 
-    if( shortname.size() ) {
-      Log::info() << "name provided: " << shortname << std::endl;
+    if( name.size() ) {
+      Log::info() << "name provided: " << name << std::endl;
     }
-    if( gridtype.size() ) {
-      Log::info() << "type provided: " << gridtype << std::endl;
+    if( type.size() ) {
+      Log::info() << "type provided: " << type << std::endl;
     }
-    if( shortname.empty() && gridtype.empty() ) {
+    if( name.empty() && type.empty() ) {
       throw eckit::BadParameter("no name or type in configuration",Here());
     } else {
       throw eckit::BadParameter("name or type in configuration don't exist",Here());
@@ -69,8 +69,25 @@ Grid* Grid::create(const Config& p) {
 }
 
 
-Grid* Grid::create(const Grid::uid_t& uid) {
-    return grid_from_uid(uid);
+const Grid* Grid::create( const std::string& name ) {
+
+      const GridCreator::Registry& registry = GridCreator::registry();
+      for( GridCreator::Registry::const_iterator it = registry.begin(); it!=registry.end(); ++it ) {
+        const Grid* grid = it->second->create(name);
+        if( grid ) {
+          return grid;
+        }
+      }
+
+      // Throw exception
+      std::ostringstream log;
+      log << "Could not construct Grid from the name \""<< name<< "\"\n";
+      log << "Accepted names are: \n";
+      for( GridCreator::Registry::const_iterator it = registry.begin(); it!=registry.end(); ++it ) {
+        log << "  -  " << *it->second << "\n";
+      }
+      throw eckit::BadParameter(log.str());
+//    return GridCreator::createNamed(name);
 }
 
 
@@ -86,7 +103,7 @@ Grid::~Grid() {
 Grid::uid_t Grid::uniqueId() const {
     if (uid_.empty()) {
         std::ostringstream s;
-        s << shortName() << "." << hash();
+        s << name() << "." << hash();
         uid_ = s.str();
     }
     return uid_;
@@ -116,7 +133,7 @@ Grid::Spec Grid::spec() const {
     eckit::Properties grid_spec, dom_spec, proj_spec;
 
     // grid type
-    grid_spec.set("shortName", shortName());
+    grid_spec.set("shortName", name());
 
     // add domain specs
     dom_spec=domain().spec();

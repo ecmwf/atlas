@@ -7,31 +7,26 @@ namespace detail {
 namespace grid {
 namespace regular {
 
-register_BuilderT1(Grid,ShiftedLonLat,ShiftedLonLat::grid_type_str());
+register_BuilderT1(Grid,ShiftedLonLat,ShiftedLonLat::static_type());
 
-std::string ShiftedLonLat::grid_type_str() {
+std::string ShiftedLonLat::static_type() {
     return "shifted_lonlat";
 }
 
-
-std::string ShiftedLonLat::className() {
-    return "atlas.grid.regular.ShiftedLonLat";
-}
-
-std::string ShiftedLonLat::shortName() const {
+std::string ShiftedLonLat::name() const {
     std::ostringstream s;
-    long mlat=nlat()+1;  // for shifted lat, one latitude was removed.
+    size_t mlat=nlat()+1;  // for shifted lat, one latitude was removed.
     if ( nlonmin() == 2*mlat && mlat%2==0 ) {
       s << "S"<< mlat/2;
     } else {
-      s << "S"<< nlonmin() << "x" << mlat;
+      s << "S"<< nlonmin() << "x" << nlat();
     }
     return s.str();
 }
 
 ShiftedLonLat::ShiftedLonLat( const Config& config )
 {
-    long nlon, nlat, N;
+    size_t nlon, nlat, N;
 
     // dimensions
     if ( config.get("N",N) ) {

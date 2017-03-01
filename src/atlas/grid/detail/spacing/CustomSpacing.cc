@@ -18,7 +18,7 @@ CustomSpacing::CustomSpacing(const eckit::Parametrisation& params) {
 
   params.get("values",x_);
 
-  long N;
+  size_t N;
   if( params.get("N",N) ) {
     ASSERT( x_.size() == N );
   }

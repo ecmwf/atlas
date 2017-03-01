@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
 
   BOOST_CHECK_EQUAL(grid.ny(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 8192);
-  // BOOST_CHECK_EQUAL(grid.gridType(),"regular_gaussian");
+  // BOOST_CHECK_EQUAL(grid.type(),"regular_gaussian");
 
   // Full Gaussian Grid
 
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   config.set("N",32);
   grid = Grid(config);
   BOOST_CHECK_EQUAL(grid.npts(), 8192);
-  // BOOST_CHECK_EQUAL(grid.gridType(),"regular_gaussian");
+  // BOOST_CHECK_EQUAL(grid.type(),"regular_gaussian");
 
 
 
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
   // BOOST_CHECK_EQUAL(grid.N(),    32);
   BOOST_CHECK_EQUAL(grid.ny(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 6114);
-  // BOOST_CHECK_EQUAL(grid.gridType(),"classic_gaussian");
+  // BOOST_CHECK_EQUAL(grid.type(),"classic_gaussian");
 
 }
 
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(grid.nx(), nlon);
   BOOST_CHECK_EQUAL(grid.ny(), nlat);
   BOOST_CHECK_EQUAL(grid.npts(), 512);
-  // BOOST_CHECK_EQUAL(grid.gridType(),"shifted_lat");
+  // BOOST_CHECK_EQUAL(grid.type(),"shifted_lat");
   BOOST_CHECK_EQUAL(grid.y(0), 90.-0.5*(180./16.));
   BOOST_CHECK_EQUAL(grid.y(grid.ny()-1), -90.+0.5*(180./16.));
   BOOST_CHECK_EQUAL(grid.x(0), 0.);
@@ -121,14 +121,14 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   config1.set("ny",16);
   grid = Grid(config1);
   BOOST_CHECK_EQUAL(grid.npts(), 512);
-  // BOOST_CHECK_EQUAL(gridptr->gridType(),"shifted_lat");
+  // BOOST_CHECK_EQUAL(gridptr->type(),"shifted_lat");
 
   Grid::Config config2;
   config2.set("type","shifted_lat");
   config2.set("N",8);
   grid = Grid(config2);
   BOOST_CHECK_EQUAL(grid.npts(), 512);
-  // BOOST_CHECK_EQUAL(gridptr->gridType(),"shifted_lat");
+  // BOOST_CHECK_EQUAL(gridptr->type(),"shifted_lat");
 
   Regular ll_poles( new grid::detail::grid::regular::RegularLonLat(4, 3) );
   BOOST_CHECK_EQUAL( ll_poles.nx(), 4);

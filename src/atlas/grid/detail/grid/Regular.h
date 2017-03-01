@@ -11,7 +11,7 @@ class Regular: public Structured {
 
 public:
 
-    static std::string grid_type_str();
+    static std::string static_type();
 
     static std::string className();
 

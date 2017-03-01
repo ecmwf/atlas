@@ -56,8 +56,8 @@ public:
 public: // methods
 
     static std::string static_type() { return "unstructured"; }
-    virtual std::string shortName() const;
-    virtual std::string gridType() const { return static_type(); }
+    virtual std::string name() const;
+    virtual std::string type() const { return static_type(); }
 
     /// Constructor taking a list of parameters
     Unstructured( const Config& );

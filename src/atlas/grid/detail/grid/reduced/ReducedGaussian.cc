@@ -8,19 +8,15 @@ namespace detail {
 namespace grid {
 namespace reduced {
 
-register_BuilderT1(Grid,ReducedGaussian,ReducedGaussian::grid_type_str());
+register_BuilderT1(Grid,ReducedGaussian,ReducedGaussian::static_type());
 
-std::string ReducedGaussian::grid_type_str() {
+std::string ReducedGaussian::static_type() {
     return "reduced_gaussian";
 }
 
 
-std::string ReducedGaussian::className() {
-    return "atlas.grid.reduced.ReducedGaussian";
-}
-
-std::string ReducedGaussian::shortName() const {
-  return "reduced_gaussian";
+std::string ReducedGaussian::name() const {
+  return static_type();
 }
 
 void ReducedGaussian::setup(const size_t N, const long pl[]) {
@@ -38,7 +34,7 @@ void ReducedGaussian::setup(const size_t N, const long pl[]) {
 
     // mirror pl around equator
     std::vector<long> nx(ny);
-    for (int jlat=0;jlat<N;jlat++) {
+    for (size_t jlat=0;jlat<N;jlat++) {
       nx[jlat]=pl[jlat];
       nx[ny-1-jlat]=pl[jlat];
     }
@@ -56,7 +52,7 @@ void ReducedGaussian::setup(const size_t N, const long pl[]) {
     YSpace yspace(config_spacing);
 
     // loop over latitudes to set bounds
-    for (int j=0;j<ny;j++) {
+    for (size_t j=0;j<ny;j++) {
       xmin[j] = 0.0;
       xmax[j] = 360.;
       dx[j]   = 360.0/double(nx[j]);

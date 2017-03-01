@@ -4,10 +4,14 @@ namespace atlas {
 namespace grid {
 
 Spacing::Spacing():
-    spacing_( nullptr ){
+  spacing_( nullptr ){
 }
 
-Spacing::Spacing( atlas::grid::spacing::Spacing *spacing):
+Spacing::Spacing( const Spacing& other ):
+  spacing_( other.spacing_ ) {
+}
+
+Spacing::Spacing( const spacing::Spacing *spacing ):
     spacing_( spacing ) {
 }
 

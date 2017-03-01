@@ -27,7 +27,7 @@ Rotated::Rotated(const eckit::Parametrisation& p) {
     south_pole[1] = -north_pole[0];      // latitude
   }
   pole_ = PointLonLat(north_pole[0],north_pole[1]);
-  
+
   if( pole_.lon() == 0. && pole_.lat() == 90. ) rotated_ = false;
 
   double latrp = D2R(90.0-pole_.lat());
@@ -79,7 +79,7 @@ void Rotated::rotate(double crd[]) const {
 void Rotated::unrotate(double crd[]) const {
   // inverse operation of Projection::rotate
 
-  double lon, lat, lont, latt;
+  double lont, latt;
   double xt, yt, zt, x, y, z;
   double cos_lont, sin_lont, cos_latt, sin_latt;
 

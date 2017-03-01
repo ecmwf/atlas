@@ -20,12 +20,11 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-static LibAtlas libatlas;
-
-LibAtlas::LibAtlas() : Library("atlas") {}
+LibAtlas::LibAtlas() : Library( std::string("atlas") ) {}
 
 const LibAtlas& LibAtlas::instance()
 {
+    static const LibAtlas libatlas;
     return libatlas;
 }
 

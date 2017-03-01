@@ -7,18 +7,13 @@ namespace detail {
 namespace grid {
 namespace regular {
 
-register_BuilderT1(Grid,RegularGaussian,RegularGaussian::grid_type_str());
+register_BuilderT1(Grid,RegularGaussian,RegularGaussian::static_type());
 
-std::string RegularGaussian::grid_type_str() {
+std::string RegularGaussian::static_type() {
     return "regular_gaussian";
 }
 
-
-std::string RegularGaussian::className() {
-    return "atlas.grid.regular.RegularGaussian";
-}
-
-std::string RegularGaussian::shortName() const {
+std::string RegularGaussian::name() const {
     std::ostringstream s;
     if ( nlonmin() == 2*nlat() && nlat()%2==0 ) {
       s << "F"<< nlat()/2;
@@ -42,7 +37,7 @@ void RegularGaussian::setup(long N) {
       config_proj.set("type","lonlat");
       projection_ = Projection(config_proj);
     }
-    
+
     // spacing is uniform in x, gaussian in y
     config_spacing.set("type","gaussian");
     config_spacing.set("start",90.0);
@@ -77,7 +72,7 @@ RegularGaussian::RegularGaussian(const util::Config& config) :
     if ( ! config.get("N",N) ) {
       throw eckit::BadParameter("RegularGaussian requires parameter N",Here());
     }
-    
+
     // default projection is lonlat
     util::Config config_proj;
     if( not config.get("projection",config_proj) ) {

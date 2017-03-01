@@ -12,12 +12,10 @@ class RegularGaussian: public Regular {
 
 public:
 
-    static std::string grid_type_str();
+    static std::string static_type();
 
-    static std::string className();
-
-    virtual std::string shortName() const;
-    virtual std::string gridType() const { return "regular_gaussian"; }
+    virtual std::string name() const;
+    virtual std::string type() const { return static_type(); }
 
     RegularGaussian( const Config& );
     RegularGaussian( long N );

@@ -12,12 +12,10 @@ class OctahedralGaussian: public ReducedGaussian {
 
 public:
 
-    static std::string grid_type_str();
+    static std::string static_type();
 
-    static std::string className();
-
-    virtual std::string shortName() const;
-    virtual std::string gridType() const { return "octahedral_gaussian"; }
+    virtual std::string name() const;
+    virtual std::string type() const { return static_type(); }
 
     static std::vector<long> computePL(const size_t N, const size_t start=20);
 

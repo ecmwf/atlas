@@ -98,7 +98,7 @@ Unstructured::~Unstructured() {
 }
 
 
-Grid::uid_t Unstructured::shortName() const {
+Grid::uid_t Unstructured::name() const {
     if (shortName_.empty()) {
         std::ostringstream s;
         s <<  "unstructured." << Grid::hash().substr(0, 7);

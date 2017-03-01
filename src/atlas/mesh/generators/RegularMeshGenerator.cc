@@ -211,8 +211,6 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::GridDist
     throw eckit::AssertionFailed(msg.str(),Here());
   }
 
-  int mypart   = options.get<size_t>("part");
-
   // clone some grid properties
   mesh.setProjection(rg.projection());
 
@@ -270,8 +268,7 @@ void RegularMeshGenerator::generate_mesh(
 
   // determine rectangle (ix_min:ix_max) x (iy_min:iy_max) surrounding the nodes on this processor
   int ix_min, ix_max, iy_min, iy_max, ix_glb, iy_glb, ix, iy;
-  int nnodes_nonghost, nnodes, nnodes_mx;    // number of nodes: non-ghost; total;  inside surrounding rectangle
-  int ixr, iyu;  // indices of point to the right and above
+  int nnodes_nonghost, nnodes;    // number of nodes: non-ghost; total;  inside surrounding rectangle
   int nnodes_SR, ii;
 
   // loop over all points to determine local indices and surroundig rectangle

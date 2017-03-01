@@ -44,6 +44,7 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+
 class Grid {
 
 public:
@@ -69,20 +70,19 @@ public:
 
     const Projection& projection() const { return grid_->projection(); }
     const Domain& domain() const { return grid_->domain(); }
-    std::string name() { return grid_->shortName(); }
+    std::string name() { return grid_->name(); }
     std::string uid() { return grid_->uniqueId(); }
 
     Spec spec() const { return grid_->spec(); }
 
     Iterator iterator() const { return grid_->iterator(); }
 
+    const grid_t* get() const { return grid_.get(); }
+
 private:
 
     eckit::SharedPtr<const grid_t> grid_;
 
-protected:
-
-    const grid_t* get() const { return grid_.get(); }
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -155,7 +155,6 @@ public:
 
 private:
 
-    static structured_t* create( const Config& );
     const structured_t* grid_;
 };
 

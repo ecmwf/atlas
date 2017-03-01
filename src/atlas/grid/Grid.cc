@@ -49,29 +49,29 @@ Grid::Grid( const Config& p ) {
 }
 
 
-detail::grid::Structured* StructuredGrid::create( const Config& config ) {
+StructuredGrid::structured_t* create_structured( const Grid::Config& config ) {
 
   Projection projection;
   Spacing    yspace;
   Domain     domain;
 
-  util::Config config_proj;
+  Grid::Config config_proj;
   if( config.get("projection",config_proj) )
     projection = Projection(config_proj);
 
-  util::Config config_yspace;
+  Grid::Config config_yspace;
   if( not config.get("yspace",config_yspace) )
     throw eckit::BadParameter("yspace missing in configuration");
   yspace = Spacing(config_yspace);
 
   const size_t ny = yspace.size();
 
-  detail::grid::Structured::XSpace *X = new detail::grid::Structured::XSpace(ny);
+  StructuredGrid::structured_t::XSpace *X = new StructuredGrid::structured_t::XSpace(ny);
 
   double dom_xmin =  std::numeric_limits<double>::max();
   double dom_xmax = -std::numeric_limits<double>::max();
 
-  std::vector<util::Config> config_xspace_list;
+  std::vector<Grid::Config> config_xspace_list;
   if( config.get("xspace[]",config_xspace_list) ) {
 
     ASSERT( config_xspace_list.size() == ny );
@@ -91,7 +91,7 @@ detail::grid::Structured* StructuredGrid::create( const Config& config ) {
 
   } else {
 
-    util::Config config_xspace;
+    Grid::Config config_xspace;
     if( not config.get("xspace",config_xspace) )
       throw eckit::BadParameter("xspace missing in configuration");
 
@@ -128,7 +128,7 @@ detail::grid::Structured* StructuredGrid::create( const Config& config ) {
     }
   }
 
-  util::Config config_domain;
+  Grid::Config config_domain;
   if( config.get("domain",config_domain) )
     domain = Domain(config_domain);
   else {
@@ -141,7 +141,7 @@ detail::grid::Structured* StructuredGrid::create( const Config& config ) {
     domain = Domain(config_domain);
   }
 
-  return new detail::grid::Structured(projection, X, yspace, domain );
+  return new StructuredGrid::structured_t(projection, X, yspace, domain );
 }
 
 const StructuredGrid::structured_t* structured_grid( const Grid::grid_t *grid ) {
@@ -170,7 +170,7 @@ StructuredGrid::StructuredGrid( const std::string& grid ):
 }
 
 StructuredGrid::StructuredGrid( const Config& p ):
-    Grid(create(p)),
+    Grid( create_structured(p) ),
     grid_( structured_grid(get()) ) {
 }
 
@@ -216,6 +216,65 @@ RegularGrid::RegularGrid( const Config& p ):
     grid_( regular_grid(get()) ) {
     if( grid_ ) nx_ = StructuredGrid::nx().front();
 }
+
+
+
+
+/*
+
+
+
+class NoInterface {
+public:
+  using grid_t   = detail::grid::Grid;
+
+public:
+  NoInterface( const grid_t* ) {}
+  bool valid() const { return true; }
+};
+
+template< class Interface = NoInterface >
+class GridT: public Interface {
+
+public:
+
+  using grid_t   = detail::grid::Grid;
+  using Config   = grid_t::Config;
+  using Spec     = grid_t::Spec;
+
+public:
+
+    GridT( const grid_t* g): Interface(g), grid_(g) {}
+
+    operator bool() const { return grid_ && static_cast<const Interface*>(this)->valid(); }
+
+private:
+
+    eckit::SharedPtr<const grid_t> grid_;
+
+};
+
+
+
+class Gaussian {
+public:
+  Gaussian( const Grid::grid_t* g):
+    grid_(dynamic_cast<const StructuredGrid::structured_t*>(g)) {
+  }
+  long N() const { return grid_->ny()/2; }
+  bool valid() const { return grid_ && grid_->yspace().type() == "gaussian"; }
+
+private:
+  const StructuredGrid::structured_t* grid_;
+};
+
+static GridT<Reduced<Gaussian>> grid( Grid::grid_t::create("F32") );
+static GridT<Regular<Gaussian>> grid( Grid::grid_t::create("F32") );
+
+
+
+*/
+
 
 
 } // namespace Grid

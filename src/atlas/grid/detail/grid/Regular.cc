@@ -5,7 +5,7 @@ namespace grid {
 namespace detail {
 namespace grid {
 
-std::string Regular::grid_type_str() {
+std::string Regular::static_type() {
     return "regular";
 }
 

@@ -9,18 +9,13 @@ namespace detail {
 namespace grid {
 namespace reduced {
 
-register_BuilderT1(Grid,ClassicGaussian,ClassicGaussian::grid_type_str());
+register_BuilderT1(Grid,ClassicGaussian,ClassicGaussian::static_type());
 
-std::string ClassicGaussian::grid_type_str() {
+std::string ClassicGaussian::static_type() {
     return "classic_gaussian";
 }
 
-
-std::string ClassicGaussian::className() {
-    return "atlas.grid.reduced.ClassicGaussian";
-}
-
-std::string ClassicGaussian::shortName() const {
+std::string ClassicGaussian::name() const {
    std::ostringstream s;
    s << "N" << nlat()/2;
    return s.str();

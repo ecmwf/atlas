@@ -34,7 +34,7 @@ namespace {
     bool valid = {false};
     Parsed x;
     Parsed y;
-    
+
     double step(double min,double max, long N, bool endpoint=true) {
       double l = max-min;
       if( endpoint && N>1 )
@@ -44,7 +44,7 @@ namespace {
     }
 
     static bool parse( const Grid& grid, const Grid::Config& config, Parsed& x, Parsed& y );
-    
+
     template <typename Parser>
     static bool parse( const Grid& grid, const Grid::Config& config, Parsed& x, Parsed& y );
 
@@ -61,18 +61,18 @@ namespace {
             &&  config.get("lonlat(centre)",centre_lonlat);
 
         if( not valid) return;
-  
+
         double centre[] = {centre_lonlat[0],centre_lonlat[1]};
         p.lonlat2xy(centre);
 
         double lx = x.step * double(x.N-1);
         double ly = y.step * double(y.N-1);
-  
+
         x.min = centre[0] - 0.5 * lx;
         x.max = centre[0] + 0.5 * lx;
         y.min = centre[1] - 0.5 * ly;
         y.max = centre[1] + 0.5 * ly;
-  
+
     }
   };
 
@@ -84,7 +84,7 @@ namespace {
           &&  config.get("xmax",x.max)
           &&  config.get("ymin",y.min)
           &&  config.get("ymax",y.max);
-  
+
       if( not valid ) return;
 
       x.step = step(x.min,x.max,x.N);
@@ -108,7 +108,7 @@ namespace {
           throw eckit::BadParameter("This configuration requires that the projection is \"lonlat\" or \"rotated_lonlat\"",Here());
         }
       }
-      
+
       if( not valid ) return;
 
       x.step = step(x.min,x.max,x.N);
@@ -151,13 +151,13 @@ namespace {
       p.lonlat2xy(sw.data());
       x.min = sw[0];
       y.min = sw[1];
-  
+
       x.max = x.min + x.step * (x.N-1);
       y.max = y.min + y.step * (y.N-1);
     }
   };
-  
-  
+
+
   template <typename Parser>
   bool ConfigParser::parse( const Grid& g, const Grid::Config& config, Parsed& x, Parsed& y ) {
     Parser p(g.projection(),config);
@@ -168,7 +168,7 @@ namespace {
     }
     return false; // failure
   }
-  
+
   bool ConfigParser::parse( const Grid& g, const Grid::Config& config, Parsed& x, Parsed& y ) {
 
     // bounding box using 4 variables  (any projection allowed)
@@ -198,17 +198,13 @@ namespace {
 
 //-----------------------------------------------------------------------------
 
-register_BuilderT1(Grid,RegularRegional,RegularRegional::grid_type_str());
+register_BuilderT1(Grid,RegularRegional,RegularRegional::static_type());
 
-std::string RegularRegional::grid_type_str() {
+std::string RegularRegional::static_type() {
     return "regular_regional";
 }
 
-std::string RegularRegional::className() {
-    return "atlas.grid.regular.RegularRegional";
-}
-
-std::string RegularRegional::shortName() const {
+std::string RegularRegional::name() const {
     std::ostringstream s;
     s << "RR"<< nlonmin() << "x" << nlat();
     return s.str();
@@ -225,14 +221,14 @@ void RegularRegional::setup( const Config& config ) {
         config_proj.set("type","lonlat");
       }
       projection_ = Projection(config_proj);
-    } 
+    }
 
     // Read grid configuration
     ConfigParser::Parsed x,y;
     if( not ConfigParser::parse(*this,config,x,y) ) {
         throw eckit::BadParameter("Could not parse configuration for RegularRegional grid", Here());
     }
-    
+
     // Deduce the domain
     domain_ = Domain( new RectangularDomain( {x.min,x.max}, {y.min,y.max}, projection_.units() ) );
 

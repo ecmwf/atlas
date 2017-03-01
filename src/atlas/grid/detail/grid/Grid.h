@@ -50,9 +50,9 @@ public:  // methods
 
     static std::string className();
 
-    static Grid* create( const Config& );
+    static const Grid* create( const Config& );
 
-    static Grid* create( const Grid::uid_t& );
+    static const Grid* create( const Grid::uid_t& );
 
     /// ctor (default)
     Grid();
@@ -61,8 +61,8 @@ public:  // methods
     virtual ~Grid();
 
     /// Human readable name (may not be unique)
-    virtual std::string shortName() const = 0;
-    virtual std::string gridType() const=0;
+    virtual std::string name() const = 0;
+    virtual std::string type() const=0;
 
     /// Unique grid id
     /// Computed from the shortName and the hash
@@ -100,7 +100,7 @@ public:  // methods
     /// @param arraySize is the size of the array
     void fillLonLat(double array[], size_t arraySize) const;
 
-    //virtual std::string gridType() const = 0;
+    //virtual std::string type() const = 0;
 
     virtual std::string getOptimalMeshGenerator() const;
 

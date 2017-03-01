@@ -9,31 +9,49 @@
  */
 
 /// @author Willem Deconinck
-/// @date Nov 2014
 
 #pragma once
+
+#include <map>
+#include <string>
 
 #include "atlas/grid/Grid.h"
 
 namespace atlas {
 namespace grid {
 
+class GridCreator {
 
-void load();
+public:
 
+  using Registry = std::map< std::string, GridCreator*>;
+  static const Registry& registry();
 
-void unload();
+public:
 
+  GridCreator( const std::string& name );
 
-detail::grid::Grid* grid_from_uid(const std::string& uid);
+  ~GridCreator();
 
+  virtual const Grid::grid_t* create( const Grid::Config& ) const;
 
-extern "C" {
+  virtual const Grid::grid_t* create( const std::string& ) const =0;
 
-    void atlas__grids__load();
+  std::string name() const;
 
-}
+protected:
 
+  bool match(const std::string& string, std::vector<std::string>& matches) const;
+
+private:
+
+  friend std::ostream& operator<<( std::ostream& os, const GridCreator& g );
+
+  virtual void print(std::ostream& os) const =0;
+
+  std::string name_;
+
+};
 
 }  // namespace grid
 }  // namespace atlas

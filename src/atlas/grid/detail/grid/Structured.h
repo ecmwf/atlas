@@ -68,10 +68,6 @@ public:
 
 public:
 
-    static Structured* create( const Config& );
-
-    static Structured* create( const std::string& shortname );
-
     struct XSpace {
 
       XSpace(long ny);
@@ -103,7 +99,7 @@ public:
 
     static std::string className();
 
-    static std::string grid_type_str();
+    static std::string static_type();
 
 public:
 
@@ -119,7 +115,7 @@ public:
 
     virtual void lonlat(std::vector<Point>&) const;
 
-    //virtual std::string gridType() const {
+    //virtual std::string type() const {
     //    return grid_type_;
      //}
 
@@ -129,8 +125,8 @@ public:
      * Human readable name
      * @note: may not be unique, such as when reduced Gaussian grids have the same N numbers but different distribution of latitude points
      */
-    virtual std::string shortName() const;
-    virtual std::string gridType() const { return "structured"; }
+    virtual std::string name() const;
+    virtual std::string type() const { return "structured"; }
 
 
     virtual std::string getOptimalMeshGenerator() const {
@@ -222,14 +218,14 @@ protected: // methods
     void compute_true_periodicity();
 
     void setup(
-        spacing::Spacing*          yspace,
+        const YSpace&              yspace,
         const std::vector<long>&   nx,
         const std::vector<double>& xmin,
         const std::vector<double>& xmax,
         const std::vector<double>& dx );
 
     void setup(
-        spacing::Spacing* yspace,
+        const YSpace&     yspace,
         const long&       nx,
         const double&     xmin,
         const double&     xmax,
@@ -277,8 +273,8 @@ private:
 extern "C"
 {
     void atlas__grid__Structured__delete(Structured* This);
-    Structured* atlas__grid__Structured(char* identifier);
-    Structured* atlas__grid__Structured__config(CONFIG* conf);
+    const Structured *atlas__grid__Structured(char* identifier);
+    const Structured* atlas__grid__Structured__config(CONFIG* conf);
     Structured* atlas__grid__CustomStructured_int(size_t nlat, double lat[], int nlon[]);
     Structured* atlas__grid__CustomStructured_long(size_t nlat, double lat[], long nlon[]);
     Structured* atlas__grid__CustomStructured_lonmin_lonmax_int(size_t nlat, double lat[], int nlon[], double lonmin[], double lonmax[]);

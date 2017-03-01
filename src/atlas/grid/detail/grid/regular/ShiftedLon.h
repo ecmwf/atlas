@@ -12,12 +12,10 @@ class ShiftedLon: public GlobalLonLat {
 
 public:
 
-    static std::string grid_type_str();
+    static std::string static_type();
 
-    static std::string className();
-
-    virtual std::string shortName() const;
-    virtual std::string gridType() const { return "shifted_lon"; }
+    virtual std::string name() const;
+    virtual std::string type() const { return static_type(); }
 
     ShiftedLon( const Config& );
     ShiftedLon( long nlon, long nlat );

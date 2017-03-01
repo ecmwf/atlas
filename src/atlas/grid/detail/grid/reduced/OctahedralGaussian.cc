@@ -8,17 +8,13 @@ namespace detail {
 namespace grid {
 namespace reduced {
 
-register_BuilderT1(Grid,OctahedralGaussian,OctahedralGaussian::grid_type_str());
+register_BuilderT1(Grid,OctahedralGaussian,OctahedralGaussian::static_type());
 
-std::string OctahedralGaussian::grid_type_str() {
+std::string OctahedralGaussian::static_type() {
     return "octahedral_gaussian";
 }
 
-std::string OctahedralGaussian::className() {
-    return "atlas.grid.reduced.OctahedralGaussian";
-}
-
-std::string OctahedralGaussian::shortName() const {
+std::string OctahedralGaussian::name() const {
    std::ostringstream s;
    s << "O" << nlat()/2;
    return s.str();

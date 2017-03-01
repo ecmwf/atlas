@@ -26,33 +26,35 @@ public:
 public:
 
   Spacing();
-  Spacing( atlas::grid::spacing::Spacing* );
+  Spacing( const Spacing& );
+  Spacing( const atlas::grid::spacing::Spacing* );
   Spacing( const eckit::Parametrisation& );
 
-  operator atlas::grid::spacing::Spacing*() { return spacing_; }
+  operator bool() const { return spacing_; }
 
+  operator const atlas::grid::spacing::Spacing*() { return spacing_.get(); }
 
-  size_t size() const { return spacing_->size(); }
+  size_t size() const { return spacing_.get()->size(); }
 
-  double operator[](size_t i) const { return spacing_->operator[](i); }
+  double operator[](size_t i) const { return spacing_.get()->operator[](i); }
 
-  const_iterator begin() const { return spacing_->begin(); }
-  const_iterator end()   const { return spacing_->end();   }
+  const_iterator begin() const { return spacing_.get()->begin(); }
+  const_iterator end()   const { return spacing_.get()->end();   }
 
-  const double& front() const { return spacing_->front(); }
-  const double& back()  const { return spacing_->back();  }
+  const double& front() const { return spacing_.get()->front(); }
+  const double& back()  const { return spacing_.get()->back();  }
 
-  Interval interval() const { return spacing_->interval(); }
+  Interval interval() const { return spacing_.get()->interval(); }
 
-  const double min() const { return spacing_->min(); }
-  const double max() const { return spacing_->max(); }
+  const double min() const { return spacing_.get()->min(); }
+  const double max() const { return spacing_.get()->max(); }
 
-  std::string type() const { return spacing_->type(); }
+  std::string type() const { return spacing_.get()->type(); }
 
 
 private:
 
-  atlas::grid::spacing::Spacing* spacing_;
+  eckit::SharedPtr<const atlas::grid::spacing::Spacing> spacing_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

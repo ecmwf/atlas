@@ -45,9 +45,9 @@ private:
 
 private:
 
-    int nparts_;  // number of parts
-    int nbands_;  // number of bands
-    int nx_, ny_;  // grid dimensions
+    size_t nparts_;  // number of parts
+    size_t nbands_;  // number of bands
+    size_t nx_, ny_;  // grid dimensions
     bool checkerboard_;  // exact (true) or approximate (false) checkerboard
 
 };

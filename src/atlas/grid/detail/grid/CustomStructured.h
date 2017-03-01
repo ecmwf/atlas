@@ -35,8 +35,8 @@ class CustomStructured: public Structured {
 public:
 
     static std::string static_type() { return "structured"; }
-    virtual std::string gridType() const { return static_type(); }
-    virtual std::string shortName() const { return "structured"; }
+    virtual std::string type() const { return static_type(); }
+    virtual std::string name() const { return "structured"; }
 
     CustomStructured( const Config& );
 

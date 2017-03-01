@@ -115,9 +115,9 @@ bool compare_X_Y(const CheckerBoardPartitioner::NodeInt& node1, const CheckerBoa
 void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) const
 {
 
-  int nparts = nparts_;
-  int nbands = nbands_;
-  int remainder;
+  size_t nparts = nparts_;
+  size_t nbands = nbands_;
+  size_t remainder;
 
   /*
   Sort nodes from south to north (increasing y), and west to east (increasing x). Now we can easily split
@@ -128,42 +128,42 @@ void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
   /*
   Number of procs per band
   */
-  std::vector< int > npartsb(nbands,0);      // number of procs per band
+  std::vector< size_t > npartsb(nbands,0);      // number of procs per band
   remainder=nparts;
-  for (int iband=0;iband<nbands;iband++)
+  for (size_t iband=0;iband<nbands;iband++)
   {
     npartsb[iband]=nparts/nbands;
     remainder-=npartsb[iband];
   }
   // distribute remaining procs over first bands
-  for (int iband=0;iband<remainder;iband++) ++npartsb[iband];
+  for (size_t iband=0;iband<remainder;iband++) ++npartsb[iband];
 
 
   /*
   Number of gridpoints per band
   */
-  std::vector< int > ngpb(nbands,0);
+  std::vector< size_t > ngpb(nbands,0);
   // split latitudes?
   if (true)
   {
     remainder=nb_nodes;
-    for (int iband=0;iband<nbands;iband++)
+    for (size_t iband=0;iband<nbands;iband++)
     {
       ngpb[iband]=(nb_nodes*npartsb[iband])/nparts;
       remainder-=ngpb[iband];
     }
     // distribute remaining gridpoints over first bands
-    for (int iband=0;iband<remainder;iband++) ++ngpb[iband];
+    for (size_t iband=0;iband<remainder;iband++) ++ngpb[iband];
 
   } else {
     remainder=ny_;
-    for (int iband=0;iband<nbands;iband++)
+    for (size_t iband=0;iband<nbands;iband++)
     {
       ngpb[iband]=nx_*(( ny_*npartsb[iband])/nparts);
       remainder-=ngpb[iband]/nx_;
     }
     // distribute remaining rows over first bands
-    for (int iband=0;iband<remainder;iband++) ngpb[iband]+=nx_;
+    for (size_t iband=0;iband<remainder;iband++) ngpb[iband]+=nx_;
   }
 
   //for (int iband=0;iband<nbands; iband++ ) std::cout << "band " << iband << " : nparts = " << npartsb[iband] << "; ngpb = " << ngpb[iband] << std::endl;
@@ -176,9 +176,9 @@ void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
   //std::cout << __LINE__ << ",  in " << __FUNCTION__ << std::endl;
 
   // for each band, select gridpoints belonging to that band, and sort them according to X first
-  int offset=0;
-  int jpart=0;
-  for (int iband=0;iband<nbands;iband++)
+  size_t offset=0;
+  size_t jpart=0;
+  for (size_t iband=0;iband<nbands;iband++)
   {
     // sort according to X first
     std::sort( nodes+offset, nodes+offset+ngpb[iband], compare_X_Y);
@@ -188,14 +188,14 @@ void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
     std::vector< int > ngpp(npartsb[iband],0);
     remainder=ngpb[iband];
     //std::cout << "remainder = " << remainder << std::endl;
-    for (int ipart=0;ipart<npartsb[iband];ipart++)
+    for (size_t ipart=0;ipart<npartsb[iband];ipart++)
     {
       ngpp[ipart]=ngpb[iband]/npartsb[iband];
       remainder-=ngpp[ipart];
       //std::cout << "remainder = " << remainder << std::endl;
     }
     // distribute remaining gridpoints over first parts
-    for (int ipart=0;ipart<remainder;ipart++) ++ngpp[ipart];
+    for (size_t ipart=0;ipart<remainder;ipart++) ++ngpp[ipart];
 
     /*
     std::cout << "ngpb = " << ngpb[iband] << "\n";
@@ -204,10 +204,10 @@ void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
     */
 
     // set partition number for each part
-    for (int ipart=0;ipart<npartsb[iband];ipart++ )
+    for (size_t ipart=0;ipart<npartsb[iband];ipart++ )
     {
       //std::cout << "looping over points " << offset << " to " << offset+ngpp[ipart] << std::endl;
-      for (int jj=offset;jj<offset+ngpp[ipart];jj++)
+      for (size_t jj=offset;jj<offset+ngpp[ipart];jj++)
       {
         part[nodes[jj].n] = jpart;
       }
