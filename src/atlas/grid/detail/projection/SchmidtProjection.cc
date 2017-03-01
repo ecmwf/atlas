@@ -63,8 +63,8 @@ void SchmidtProjectionT<Rotation>::lonlat2xy(double crd[]) const {
 template <typename Rotation>
 eckit::Properties SchmidtProjectionT<Rotation>::spec() const {
   eckit::Properties proj_spec;
-  proj_spec.set("projectionType",static_type());
-  proj_spec.set("projectionStretchingFactor",c_);
+  proj_spec.set("type",static_type());
+  proj_spec.set("stretching_factor",c_);
   rotation_.spec(proj_spec);
   return proj_spec;
 }

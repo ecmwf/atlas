@@ -193,6 +193,7 @@ void Meshgen2Gmsh::execute(const Args& args)
   
   Log::debug() << "Domain: " << grid.domain() << std::endl;
   Log::debug() << "Periodic: " << grid.periodic() << std::endl;
+  Log::debug() << "Spec: " << grid.spec() << std::endl;
   
   SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
       mesh::generators::MeshGenerator::create(meshgenerator_type,meshgenerator_config) );

@@ -40,9 +40,21 @@ FocusSpacing::FocusSpacing(const eckit::Parametrisation& params) {
 
   min_ = std::min(xmin,xmax);
   max_ = std::max(xmin,xmax);
+  start_ = xmin;
+  end_ = xmax;
 
 }
 
+eckit::Properties FocusSpacing::spec() const {
+  eckit::Properties spacing_specs;
+  spacing_specs.set("type",static_type());
+  spacing_specs.set("N",size());
+  spacing_specs.set("start",start_);
+  spacing_specs.set("end",end_);
+  spacing_specs.set("focus_factor",focus_factor_);
+  return spacing_specs;
+}
+    
 register_BuilderT1(Spacing,FocusSpacing,FocusSpacing::static_type());
 
 }  // namespace spacing

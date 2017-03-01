@@ -26,7 +26,7 @@ bool CircularDomain::contains(double x, double y) const {
 
 eckit::Properties CircularDomain::spec() const {
   eckit::Properties domain_prop;
-  domain_prop.set("domainType",type());
+  domain_prop.set("type",type());
   domain_prop.set("radius",radius_);
   std::vector<double> centre(2);
   centre[0] = xc_;
@@ -40,7 +40,7 @@ std::string CircularDomain::units() const {
 }
 
 void CircularDomain::print(std::ostream& os) const {
-  os << "CircularDomain[radius=" << radius_ << "]";
+  os << "CircularDomain[radius=" << radius_ << "," << "centre=(" << xc_ << "," << yc_ << ")]";
 }
 
 

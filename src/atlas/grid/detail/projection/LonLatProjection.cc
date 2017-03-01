@@ -27,7 +27,7 @@ Projection* LonLatProjectionT<Rotation>::clone() const  {
 template <typename Rotation>
 eckit::Properties LonLatProjectionT<Rotation>::spec() const {
   eckit::Properties proj_spec;
-  proj_spec.set("projectionType",static_type());
+  proj_spec.set("type",static_type());
   rotation_.spec(proj_spec);
   return proj_spec;
 }

@@ -82,9 +82,9 @@ void MercatorProjectionT<Rotation>::xy2lonlat(double crd[]) const {
 template <typename Rotation>
 eckit::Properties MercatorProjectionT<Rotation>::spec() const {
   eckit::Properties proj_spec;
-  proj_spec.set("projectionType",static_type());
-  proj_spec.set("projectionLongitude0",lon0_);
-  proj_spec.set("projectionRadius",radius_);
+  proj_spec.set("type",static_type());
+  proj_spec.set("longitude0",lon0_);
+  if( radius_ != util::Earth::radiusInMeters() ) proj_spec.set("radius",radius_);
   rotation_.spec(proj_spec);
   return proj_spec;
 }

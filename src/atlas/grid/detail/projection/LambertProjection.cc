@@ -99,11 +99,11 @@ void LambertProjection::xy2lonlat(double crd[]) const {
 // specification
 eckit::Properties LambertProjection::spec() const {
   eckit::Properties proj_spec;
-  proj_spec.set("projectionType",static_type());
-  proj_spec.set("projectionLatitude1",lat1_);
-  proj_spec.set("projectionLatitude2",lat2_);
-  proj_spec.set("projectionLongitude0",lon0_);
-  proj_spec.set("projectionRadius",radius_);
+  proj_spec.set("type",static_type());
+  proj_spec.set("latitude1",lat1_);
+  proj_spec.set("latitude2",lat2_);
+  proj_spec.set("longitude0",lon0_);
+  if( radius_ != util::Earth::radiusInMeters() ) proj_spec.set("radius",radius_);
   return proj_spec;
 }
 

@@ -22,6 +22,7 @@ public:
 
   using const_iterator = atlas::grid::spacing::Spacing::const_iterator;
   using Interval = atlas::grid::spacing::Spacing::Interval;
+  using Spec = eckit::Properties;
 
 public:
 
@@ -51,6 +52,7 @@ public:
 
   std::string type() const { return spacing_.get()->type(); }
 
+  Spec spec() const { return spacing_.get()->spec(); }
 
 private:
 

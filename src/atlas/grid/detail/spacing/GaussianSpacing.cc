@@ -52,6 +52,13 @@ GaussianSpacing::GaussianSpacing(const eckit::Parametrisation& params) {
 
 }
 
+eckit::Properties GaussianSpacing::spec() const {
+  eckit::Properties spacing_specs;
+  spacing_specs.set("type",static_type());
+  spacing_specs.set("N",size());
+  return spacing_specs;
+}
+
 register_BuilderT1(Spacing,GaussianSpacing,GaussianSpacing::static_type());
 
 }  // namespace spacing

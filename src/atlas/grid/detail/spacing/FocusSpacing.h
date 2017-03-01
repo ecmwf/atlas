@@ -17,10 +17,15 @@ public:
     // class name
     static std::string static_type() {return "focus";}
     virtual std::string type() const {return static_type();}
+    
+    virtual eckit::Properties spec() const;
+
 
 private:
 
     double focus_factor_;
+    double start_;
+    double end_;
 };
 
 }  // namespace spacing

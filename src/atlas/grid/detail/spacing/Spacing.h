@@ -47,6 +47,8 @@ public:
 
     const double min() const { return min_; }
     const double max() const { return max_; }
+    
+    virtual eckit::Properties spec() const =0;
 
 protected:
 

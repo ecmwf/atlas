@@ -46,6 +46,8 @@ public:
 
     bool endpoint() const;
 
+    virtual eckit::Properties spec() const;
+
 public:
 
     struct Params {
@@ -64,6 +66,10 @@ protected:
     // Depending on value of endpoint, the spacing will be different
     void setup(double start, double end, long N, bool endpoint);
 
+    double start_;
+    double end_;
+    long N_;
+    bool endpoint_;
 };
 
 }  // namespace spacing

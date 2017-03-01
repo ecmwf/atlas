@@ -86,6 +86,11 @@ void LinearSpacing::setup(double start, double end, long N, bool endpoint) {
 
   min_ = std::min(start,end);
   max_ = std::max(start,end);
+  
+  start_ = start;
+  end_ = end;
+  N_ = N;
+  endpoint_ = endpoint;
 }
 
 double LinearSpacing::step() const {
@@ -97,6 +102,16 @@ double LinearSpacing::step() const {
 
 bool LinearSpacing::endpoint() const {
   return std::abs(x_.back()-max_)<1.e-12;
+}
+
+eckit::Properties LinearSpacing::spec() const {
+  eckit::Properties spacing_specs;
+  spacing_specs.set("type",static_type());
+  spacing_specs.set("start",start_);
+  spacing_specs.set("end",end_);
+  spacing_specs.set("N",N_);
+  spacing_specs.set("endpoint",endpoint_);
+  return spacing_specs;
 }
 
 

@@ -48,14 +48,14 @@ bool ZonalBandDomain::contains(double x, double y) const {
 
 eckit::Properties ZonalBandDomain::spec() const {
   eckit::Properties domain_prop;
-  domain_prop.set("domainType",type());
+  domain_prop.set("type",type());
   domain_prop.set("ymin",ymin());
   domain_prop.set("ymax",ymax());
   return domain_prop;
 }
 
 void ZonalBandDomain::print(std::ostream& os) const {
-  os << "Domain["
+  os << "ZonalBandDomain["
      <<  "ymin=" << ymin()
      << ",ymax=" << ymax()
      << "]";

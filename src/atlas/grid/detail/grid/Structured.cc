@@ -70,6 +70,23 @@ Structured::Structured( Projection projection, XSpace* xspace, YSpace yspace, Do
   }
   npts_ = size_t(std::accumulate(nx_.begin(), nx_.end(), 0));
   compute_true_periodicity();
+  
+  Log::info() << Here() << std::endl;;
+  if( isPeriodicX() ) {
+    Log::info() << Here() << std::endl;;
+    if( yspace.max() - yspace.min() == 180. ) {
+      Log::info() << Here() << std::endl;;
+      domain_ = Domain(Grid::Config("type","global"));      
+    }
+    else {
+      Log::info() << Here() << std::endl;;
+      Grid::Config dom;
+      dom.set("type","zonal_band");
+      dom.set("ymin",yspace.min());
+      dom.set("ymax",yspace.max());
+      domain_ = Domain(dom);
+    }
+  }
 }
 
 
@@ -309,11 +326,11 @@ Grid::Spec Structured::spec() const {
     grid_spec=Grid::spec();
 
     // specific specs
-    grid_spec.set("nlat",nlat());
-    grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
-    grid_spec.set("pl",eckit::makeVectorValue(pl()));
-    grid_spec.set("lonmin",eckit::makeVectorValue(xmin_));
-    grid_spec.set("lonmax",eckit::makeVectorValue(xmax_));
+    grid_spec.set("yspace",yspace().spec());
+    // grid_spec.set("y",eckit::makeVectorValue(latitudes()));
+    grid_spec.set("nx[]",eckit::makeVectorValue(pl()));
+    grid_spec.set("xmin",eckit::makeVectorValue(xmin_));
+    grid_spec.set("xmax",eckit::makeVectorValue(xmax_));
 
     return grid_spec;
 }

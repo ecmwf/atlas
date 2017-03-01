@@ -133,15 +133,15 @@ Grid::Spec Grid::spec() const {
     eckit::Properties grid_spec, dom_spec, proj_spec;
 
     // grid type
-    grid_spec.set("shortName", name());
+    grid_spec.set("name", name());
 
     // add domain specs
     dom_spec=domain().spec();
-    grid_spec.set(dom_spec);
+    grid_spec.set("domain",dom_spec);
 
     // add projection specs
     proj_spec=projection().spec();
-    grid_spec.set(proj_spec);
+    grid_spec.set("projection",proj_spec);
 
     return grid_spec;
 }

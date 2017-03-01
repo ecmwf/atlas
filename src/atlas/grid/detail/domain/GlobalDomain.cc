@@ -20,7 +20,7 @@ GlobalDomain::GlobalDomain(const eckit::Parametrisation& p) :
 
 eckit::Properties GlobalDomain::spec() const {
   eckit::Properties domain_prop;
-  domain_prop.set("domainType",type());
+  domain_prop.set("type",type());
   return domain_prop;
 }
 

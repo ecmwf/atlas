@@ -13,12 +13,10 @@ public:
 
     static std::string static_type();
 
-    static std::string className();
-
     virtual Spec spec() const;
 
-    size_t nlon()           { return nlonmin(); }               // same for all latitudes
-    double lon(size_t jlon) { return Structured::lon(0,jlon); } // same for all latitudes
+    size_t nlon()           const { return nlonmin(); }               // same for all latitudes
+    double lon(size_t jlon) const { return Structured::lon(0,jlon); } // same for all latitudes
 
 protected:
 

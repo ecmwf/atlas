@@ -9,10 +9,6 @@ std::string Regular::static_type() {
     return "regular";
 }
 
-std::string Regular::className() {
-    return "atlas.grid.regular.Regular";
-}
-
 Regular::Regular() :
     Structured() {
 }
@@ -24,8 +20,8 @@ Grid::Spec Regular::spec() const {
     grid_spec=Grid::spec();
 
     // specific specs
-    grid_spec.set("nlat",nlat());
-    grid_spec.set("nlon",nlonmin());
+    grid_spec.set("nx",nlon());
+    grid_spec.set("ny",nlat());
 
     return grid_spec;
 }

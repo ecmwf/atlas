@@ -134,21 +134,20 @@ void AtlasGrids::execute(const Args& args)
     if( info )
     {
       double deg, km;
-      Log::info() << "Grid " << key << std::endl;
-//      Log::info() << "   type:                               "
-//                  << g.type() << std::endl;
-      Log::info() << "   name:                               "
-                  << grid.name() << std::endl;
-      Log::info() << "   uid:                                "
-                  << grid.uid() << std::endl;
-      // Log::info() << "   N number:                           "
-      //             << grid->ny()/2 << std::endl;
-      Log::info() << "   number of points:                   "
-                  << grid.npts() << std::endl;
-      Log::info() << "   number of latitudes (N-S):          "
-                  << grid.ny() << std::endl;
-      Log::info() << "   number of longitudes (max):         "
-                  << grid.nxmax() << std::endl;
+      Log::info()  << "Grid " << key << std::endl;
+      Log::info()  << "   name:                               "
+                   << grid.name() << std::endl;
+      Log::info()  << "   uid:                                "
+                   << grid.uid() << std::endl;
+      if( auto gaussian = ReducedGaussianGrid(grid) )
+        Log::info()<< "   Gaussian N number:                  "
+                   << gaussian.N() << std::endl;
+      Log::info()  << "   number of points:                   "
+                   << grid.npts() << std::endl;
+      Log::info()  << "   number of latitudes (N-S):          "
+                   << grid.ny() << std::endl;
+      Log::info()  << "   number of longitudes (max):         "
+                   << grid.nxmax() << std::endl;
 
       deg = (grid.y().front()-grid.y().back())/(grid.ny()-1);
       km  = deg*40075./360.;
@@ -171,10 +170,7 @@ void AtlasGrids::execute(const Args& args)
       km  = deg*40075./360.;
 
       size_t memsize = grid.npts() * sizeof(double);
-
-      Log::info() << "   memory footprint per field:                   "
-                  << eckit::Bytes(memsize) << std::endl;
-
+      
       Log::info() << "   approximate resolution E-W pole:    "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
 
@@ -184,6 +180,9 @@ void AtlasGrids::execute(const Args& args)
                   << static_cast<int>(std::floor(2./3.*grid.ny()+0.5))-1 << std::endl;
       Log::info() << "   spectral truncation -- cubic:       "
                   << static_cast<int>(std::floor(0.5*grid.ny()+0.5))-1 << std::endl;
+
+      Log::info() << "   memory footprint per field:         "
+                  << eckit::Bytes(memsize) << std::endl;
 
     }
     if( json )

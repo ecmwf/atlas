@@ -37,6 +37,8 @@ public:
     // class name
     static std::string static_type() {return "gaussian";}
     virtual std::string type() const {return static_type();}
+    
+    virtual eckit::Properties spec() const;
 
 };
 
