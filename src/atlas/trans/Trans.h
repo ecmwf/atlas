@@ -420,6 +420,8 @@ public:
 
 private:
 
+  void ctor( const grid::Grid&, size_t nsmax, const Options& );
+  
   void ctor_rgg(const size_t nlat, const long pl[], size_t nsmax, const Options& );
 
   void ctor_lonlat(const size_t nlon, const size_t nlat, size_t nsmax, const Options& );

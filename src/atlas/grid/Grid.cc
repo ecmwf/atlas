@@ -186,6 +186,12 @@ RegularGrid::regular_t* RegularGrid::create( const Config& ) {
   NOTIMP;
 }
 
+RegularGrid::RegularGrid():
+    StructuredGrid(),
+    grid_( nullptr ),
+    nx_(0) {
+}
+
 RegularGrid::RegularGrid( const Grid& grid ):
     StructuredGrid( grid ),
     grid_( regular_grid(get()) ) {

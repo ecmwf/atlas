@@ -169,6 +169,7 @@ public:
 
 public:
 
+    RegularGrid();
     RegularGrid( const Grid& );
     RegularGrid( const grid_t* );
     RegularGrid( const std::string& );
@@ -199,6 +200,80 @@ private:
     static regular_t* create( const Config& );
     const regular_t* grid_;
     size_t nx_ = {0};
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+template< typename Derived >
+class StructuredGridT: public StructuredGrid {
+
+public:
+
+    StructuredGridT(): StructuredGrid() {}
+    StructuredGridT( const Grid& grid ): StructuredGrid(grid) {}
+    StructuredGridT( const grid_t* grid ): StructuredGrid(grid) {}
+    StructuredGridT( const std::string& grid): StructuredGrid(grid) {}
+    StructuredGridT( const Config& grid): StructuredGrid(grid) {}
+
+    operator bool() const {
+        return StructuredGrid::operator bool() &&
+               static_cast<const Derived*>(this)->valid();
+    }
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+template< typename Derived >
+class RegularGridT: public RegularGrid {
+
+public:
+
+    RegularGridT(): RegularGrid() {}
+    RegularGridT( const Grid& grid ): RegularGrid(grid) {}
+    RegularGridT( const grid_t* grid ): RegularGrid(grid) {}
+    RegularGridT( const std::string& grid): RegularGrid(grid) {}
+    RegularGridT( const Config& grid): RegularGrid(grid) {}
+
+    operator bool() const {
+        return RegularGrid::operator bool() &&
+               static_cast<const Derived*>(this)->valid();
+    }
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class ReducedGaussianGrid : public StructuredGridT<ReducedGaussianGrid> {
+public:
+    using StructuredGridT::StructuredGridT;
+    bool valid() const {
+      return domain().global()
+        &&   not projection()
+        &&   yspace().type() == "gaussian";
+    }
+};
+
+class RegularLonLatGrid : public RegularGridT<RegularLonLatGrid> {
+public:
+    using RegularGridT::RegularGridT;
+    bool valid() const {
+      return domain().global()
+        &&   not projection()
+        &&   x(0) == 0.
+        &&   y(0) == 90.
+        &&   ny()%2 == 1;
+    }
+};
+
+class ShiftedLonLatGrid : public RegularGridT<ShiftedLonLatGrid> {
+public:
+    using RegularGridT::RegularGridT;
+    bool valid() const {
+      return domain().global()
+        &&   not projection()
+        &&   x(0) == 0.5*360./nx()
+        &&   y(0) == 90.-0.5*180./ny()
+        &&   ny()%2 == 0;
+    }
 };
 
 //---------------------------------------------------------------------------------------------------------------------

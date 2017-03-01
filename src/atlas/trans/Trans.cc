@@ -46,16 +46,8 @@ namespace trans {
 
 Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
 {
-  ASSERT( grid.domain().global() );
-  ASSERT( not grid.projection() );
-
-  const grid::StructuredGrid structured(grid);
-  if( !structured )
-    throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
-
   size_t nsmax = 0;
-
-  ctor_rgg(structured.ny(),structured.nx().data(), nsmax, p);
+  ctor(grid,nsmax,p);
 }
 
 Trans::Trans(const size_t N, const Trans::Options& p)
@@ -67,32 +59,7 @@ Trans::Trans(const size_t N, const Trans::Options& p)
 
 Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p )
 {
-  ASSERT( grid.domain().global() );
-  ASSERT( not grid.projection() );
-
-  const grid::StructuredGrid structured(grid);
-  if (!structured) {
-    throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans", Here());
-  }
-
-  const grid::RegularGrid regular(grid);
-  bool global_lonlat = regular
-               &&      regular.yspace().type() == "linear";
-  bool regular_lonlat = global_lonlat
-               &&       regular.y(0) == 90.
-               &&       regular.x(0) == 0.;
-
-  if( global_lonlat and not regular_lonlat ) {
-    throw eckit::NotImplemented("TODO: Support for shifted_lonlat",Here());
-  }
-  if ( regular_lonlat ) {
-    ctor_lonlat( regular.nx(), regular.ny(), nsmax, p );
-
-    // TODO assert not shifted_lon, shifted_lat, and allow shifted_lonlat
-  }
-  else {
-    ctor_rgg(structured.ny(), structured.nx().data(), nsmax, p);
-  }
+  ctor(grid,nsmax,p);
 }
 
 Trans::Trans(const size_t N, const size_t nsmax, const Trans::Options& p)
@@ -105,6 +72,23 @@ Trans::~Trans()
 {
   ::trans_delete(&trans_);
 }
+
+void Trans::ctor( const grid::Grid& grid, size_t nsmax, const Trans::Options& p ) {
+  ASSERT( grid.domain().global() );
+  ASSERT( not grid.projection() );
+
+  if( auto rgg = grid::ReducedGaussianGrid(grid) ) {
+    ctor_rgg(rgg.ny(), rgg.nx().data(), nsmax, p);
+  } else {
+    auto regular = grid::RegularGrid(grid);
+    if( grid::RegularLonLatGrid(grid) || grid::ShiftedLonLatGrid(grid) ) {
+      ctor_lonlat( regular.nx(), regular.ny(), nsmax, p );      
+    } else {
+      throw eckit::NotImplemented("Grid type not supported for Spectral Transforms",Here());
+    }
+  }
+}
+
 
 void Trans::ctor_rgg(const size_t nlat, const long pl[], size_t nsmax, const Trans::Options& p )
 {
