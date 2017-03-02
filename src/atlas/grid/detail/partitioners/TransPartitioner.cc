@@ -16,23 +16,24 @@
 
 namespace atlas {
 namespace grid {
+namespace detail {
 namespace partitioners {
 
-TransPartitioner::TransPartitioner(const grid::Grid& grid,
+TransPartitioner::TransPartitioner(const Grid& grid,
                                    const trans::Trans& trans) :
     Partitioner(grid, trans.nproc()),
     t_( const_cast<trans::Trans*>(&trans)), owned_(false) {
     ASSERT( t_ != NULL );
 }
 
-TransPartitioner::TransPartitioner(const grid::Grid& grid) :
+TransPartitioner::TransPartitioner(const Grid& grid) :
     Partitioner(grid),
     t_( new trans::Trans(grid,0) ), owned_(true) {
     ASSERT( t_ != NULL );
     ASSERT( size_t(t_->nproc()) == nb_partitions() );
 }
 
-TransPartitioner::TransPartitioner(const grid::Grid& grid,
+TransPartitioner::TransPartitioner(const Grid& grid,
                                    const size_t nb_partitions) :
     Partitioner(grid, nb_partitions),
     t_( new trans::Trans(grid,0) ), owned_(true) {
@@ -53,7 +54,7 @@ TransPartitioner::~TransPartitioner() {
 
 void TransPartitioner::partition(int part[]) const {
 
-    grid::StructuredGrid g(grid());
+    StructuredGrid g(grid());
     if( not g )
         throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 
@@ -106,11 +107,12 @@ int TransPartitioner::nb_regions(int b) const {
 }
 
 } // namespace partitioners
+} // namespace detail
 } // namespace grid
 } // namespace atlas
 
 namespace {
-atlas::grid::PartitionerBuilder<
-atlas::grid::partitioners::TransPartitioner> __Trans("Trans");
+atlas::grid::detail::partitioners::PartitionerBuilder<
+atlas::grid::detail::partitioners::TransPartitioner> __Trans("Trans");
 }
 

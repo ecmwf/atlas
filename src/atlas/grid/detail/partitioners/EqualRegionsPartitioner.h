@@ -62,14 +62,10 @@
 #include <vector>
 #include "atlas/grid/detail/partitioners/Partitioner.h"
 
-namespace atlas {
-namespace grid {
-class Grid;
-}
-}
 
 namespace atlas {
 namespace grid {
+namespace detail {
 namespace partitioners {
 
 void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap);
@@ -126,5 +122,6 @@ private:
 };
 
 } // namespace partitioners
+} // namespace detail
 } // namespace grid
 } // namespace atlas

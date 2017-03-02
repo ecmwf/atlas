@@ -5,7 +5,7 @@
 #include <limits>
 #include <vector>
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/mesh/Mesh.h"
@@ -52,7 +52,7 @@ RegularMeshGenerator::RegularMeshGenerator(const eckit::Parametrisation& p)
   std::string partitioner;
   if( p.get("partitioner",partitioner) )
   {
-    if( not grid::PartitionerFactory::has(partitioner) ) {
+    if( not grid::Partitioner::exists(partitioner) ) {
       Log::warning() << "Atlas does not have support for partitioner " << partitioner << ". "
                      << "Defaulting to use partitioner EqualRegions" << std::endl;
       partitioner = "EqualRegions";
@@ -121,7 +121,7 @@ void RegularMeshGenerator::configure_defaults()
 
   // This options sets the default partitioner
   std::string partitioner;
-  if( grid::PartitionerFactory::has("Trans") && parallel::mpi::comm().size() > 1 )
+  if( grid::Partitioner::exists("Trans") && parallel::mpi::comm().size() > 1 )
     partitioner = "Trans";
   else
     partitioner = "EqualRegions";
@@ -176,14 +176,14 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
 
   size_t nb_parts = options.get<size_t>("nb_parts");
 
-  std::string partitioner_factory = "EqualRegions";
-  options.get("partitioner",partitioner_factory);
+  std::string partitioner_type = "EqualRegions";
+  options.get("partitioner",partitioner_type);
 
   //if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
   //if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
 
-  eckit::SharedPtr<grid::Partitioner> partitioner( grid::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
-  grid::Distribution distribution( partitioner->distribution() );
+  grid::Partitioner  partitioner( partitioner_type, grid, nb_parts );
+  grid::Distribution distribution( partitioner.distribution() );
   generate( grid, distribution, mesh );
 }
 

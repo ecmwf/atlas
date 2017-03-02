@@ -19,10 +19,6 @@
 namespace atlas {
 namespace grid {
 class Grid;
-}
-}
-namespace atlas {
-namespace grid {
 class Partitioner;
 }
 }

@@ -4,11 +4,8 @@
 #include "atlas/grid/detail/partitioners/Partitioner.h"
 
 namespace atlas {
-namespace grid { class Grid; }
-}
-
-namespace atlas {
 namespace grid {
+namespace detail {
 namespace partitioners {
 
 class CheckerBoardPartitioner: public Partitioner {
@@ -53,5 +50,6 @@ private:
 };
 
 } // namespace partitioners
+} // namespace detail
 } // namespace grid
 } // namespace atlas

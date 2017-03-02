@@ -129,13 +129,13 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
   std::vector<int>    n_regions;
   std::vector<double> s_cap;
 
-  grid::partitioners::eq_caps(6, n_regions, s_cap);
+  grid::detail::partitioners::eq_caps(6, n_regions, s_cap);
   BOOST_CHECK_EQUAL( n_regions.size(), 3 );
   BOOST_CHECK_EQUAL( n_regions[0], 1 );
   BOOST_CHECK_EQUAL( n_regions[1], 4 );
   BOOST_CHECK_EQUAL( n_regions[2], 1 );
 
-  grid::partitioners::eq_caps(10, n_regions, s_cap);
+  grid::detail::partitioners::eq_caps(10, n_regions, s_cap);
   BOOST_CHECK_EQUAL( n_regions.size(), 4 );
   BOOST_CHECK_EQUAL( n_regions[0], 1 );
   BOOST_CHECK_EQUAL( n_regions[1], 4 );
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 12 partitions
   {
-    grid::partitioners::EqualRegionsPartitioner partitioner(g,12);
+    grid::detail::partitioners::EqualRegionsPartitioner partitioner(g,12);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),    4 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0), 1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1), 5 );
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 24 partitions
   {
-    grid::partitioners::EqualRegionsPartitioner partitioner(g,24);
+    grid::detail::partitioners::EqualRegionsPartitioner partitioner(g,24);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),     5 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 48 partitions
   {
-    grid::partitioners::EqualRegionsPartitioner partitioner(g,48);
+    grid::detail::partitioners::EqualRegionsPartitioner partitioner(g,48);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),     7 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 96 partitions
   {
-    grid::partitioners::EqualRegionsPartitioner partitioner(g,96);
+    grid::detail::partitioners::EqualRegionsPartitioner partitioner(g,96);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),    10 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -365,7 +365,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
 
-  BOOST_CHECK( grid::PartitionerFactory::has("EqualRegions") );
+  BOOST_CHECK( grid::detail::partitioners::PartitionerFactory::has("EqualRegions") );
   size_t nb_parts = 20;
           //  Alternative grid for debugging
           //  int nlat=10;

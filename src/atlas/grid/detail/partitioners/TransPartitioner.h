@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_trans_TransPartitioner_h
-#define atlas_trans_TransPartitioner_h
+#pragma once
 
 #include "atlas/grid/detail/partitioners/Partitioner.h"
 
@@ -29,6 +28,7 @@ class Trans;
 
 namespace atlas {
 namespace grid {
+namespace detail {
 namespace partitioners {
 
 class TransPartitioner: public Partitioner {
@@ -36,15 +36,15 @@ class TransPartitioner: public Partitioner {
 public:
 
     /// @brief Constructor
-    TransPartitioner(const grid::Grid& grid,
+    TransPartitioner(const Grid& grid,
                      const trans::Trans& trans);
 
     /// @brief Constructor
     /// This constructor allocates a new Trans, but without the computations
     /// of the spectral coefficients (LDGRIDONLY=TRUE)
-    TransPartitioner( const grid::Grid& grid );
+    TransPartitioner( const Grid& grid );
 
-    TransPartitioner(const grid::Grid& grid,
+    TransPartitioner(const Grid& grid,
                      const size_t nb_partitions );
 
     virtual ~TransPartitioner();
@@ -62,7 +62,6 @@ private:
 };
 
 } // namespace partitioners
+} // namespace detail
 } // namespace grid
 } // namespace atlas
-
-#endif // atlas_trans_TransPartitioner_h

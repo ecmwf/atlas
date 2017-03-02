@@ -14,6 +14,7 @@ using atlas::internals::microdeg;
 
 namespace atlas {
 namespace grid {
+namespace detail {
 namespace partitioners {
 
 CheckerBoardPartitioner::CheckerBoardPartitioner(const Grid& grid) :
@@ -40,7 +41,7 @@ CheckerBoardPartitioner::CheckerBoardPartitioner(const Grid& grid, int N) :
   if (checkerboard_ && nparts_%nbands_!=0) throw eckit::BadValue("number of bands doesn't divide number of partitions",Here());
 }
 
-CheckerBoardPartitioner::CheckerBoardPartitioner(const grid::Grid& grid, int N, int nbands) :
+CheckerBoardPartitioner::CheckerBoardPartitioner(const Grid& grid, int N, int nbands) :
   Partitioner(grid,N)
 {
   // defaults
@@ -74,7 +75,7 @@ void CheckerBoardPartitioner::configure_defaults(const Grid& grid) {
   nparts_=parallel::mpi::comm().size();
 
   // grid dimensions
-  const grid::RegularGrid rg(grid);
+  const RegularGrid rg(grid);
   if ( !rg )
     throw eckit::BadValue("Checkerboard Partitioner only works for Regular grids.",Here());
 
@@ -264,11 +265,12 @@ void CheckerBoardPartitioner::partition(int part[]) const
 }
 
 } // namespace partitioners
+} // namespace detail
 } // namespace grid
 } // namespace atlas
 
 namespace {
-    atlas::grid::PartitionerBuilder<atlas::grid::partitioners::CheckerBoardPartitioner> __CheckerBoard("CheckerBoard");
+    atlas::grid::detail::partitioners::PartitionerBuilder<atlas::grid::detail::partitioners::CheckerBoardPartitioner> __CheckerBoard("CheckerBoard");
 }
 
 

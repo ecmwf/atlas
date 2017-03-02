@@ -17,7 +17,7 @@
 #include "eckit/runtime/Main.h"
 
 #include "atlas/internals/atlas_config.h"
-#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/mesh/Mesh.h"
@@ -105,7 +105,7 @@ Structured::Structured(const eckit::Parametrisation& p)
     options.set("ghost_at_end",ghost_at_end);
 
   std::string partitioner;
-  if( grid::PartitionerFactory::has("Trans") )
+  if( grid::Partitioner::exists("Trans") )
     partitioner = "Trans";
   else
     partitioner = "EqualRegions";
@@ -113,7 +113,7 @@ Structured::Structured(const eckit::Parametrisation& p)
 
   if( p.get("partitioner",partitioner) )
   {
-    if( not grid::PartitionerFactory::has(partitioner) ) {
+    if( not grid::Partitioner::exists(partitioner) ) {
       Log::warning() << "Atlas does not have support for partitioner " << partitioner << ". "
                      << "Defaulting to use partitioner EqualRegions" << std::endl;
       partitioner = "EqualRegions";
@@ -170,14 +170,14 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
 
   size_t nb_parts = options.get<size_t>("nb_parts");
 
-  std::string partitioner_factory = "Trans";
-  options.get("partitioner",partitioner_factory);
+  std::string partitioner_type = "Trans";
+  options.get("partitioner",partitioner_type);
 
-  if ( rg.ny()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
-  if ( nb_parts == 1 || parallel::mpi::comm().size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
+  if ( rg.ny()%2 == 1 ) partitioner_type = "EqualRegions"; // Odd number of latitudes
+  if ( nb_parts == 1 || parallel::mpi::comm().size() == 1 ) partitioner_type = "EqualRegions"; // Only one part --> Trans is slower
 
-  eckit::SharedPtr<grid::Partitioner> partitioner( grid::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
-  grid::Distribution distribution( partitioner->distribution() );
+  grid::Partitioner partitioner( partitioner_type, grid, nb_parts );
+  grid::Distribution distribution( partitioner.distribution() );
   generate( grid, distribution, mesh );
 }
 

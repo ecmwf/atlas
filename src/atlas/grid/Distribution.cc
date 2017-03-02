@@ -11,7 +11,7 @@
 #include <algorithm>
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Distribution.h"
-#include "atlas/grid/detail/partitioners/Partitioner.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 

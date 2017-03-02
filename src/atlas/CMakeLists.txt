@@ -43,6 +43,8 @@ grid/Domain.cc
 grid/Domain.h
 grid/Spacing.cc
 grid/Spacing.h
+grid/Partitioner.h
+grid/Partitioner.cc
 grid/detail/grid.cc
 grid/detail/grid/Grid.h
 grid/detail/grid/Grid.cc

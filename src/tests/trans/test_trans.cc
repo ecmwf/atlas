@@ -20,6 +20,7 @@
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Distribution.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/grid.h"
 #include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioners/TransPartitioner.h"
@@ -34,6 +35,8 @@
 #include "tests/AtlasFixture.h"
 
 using namespace eckit;
+using atlas::grid::detail::partitioners::TransPartitioner;
+using atlas::grid::detail::partitioners::EqualRegionsPartitioner;
 
 namespace atlas {
 namespace test {
@@ -76,7 +79,7 @@ BOOST_GLOBAL_FIXTURE( AtlasTransFixture );
 
 BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 {
-  BOOST_CHECK( grid::PartitionerFactory::has("Trans") );
+  BOOST_CHECK( grid::Partitioner::exists("Trans") );
 
 
   // Create grid and trans object
@@ -88,7 +91,8 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
 
-  grid::partitioners::TransPartitioner partitioner(g,trans);
+  auto trans_partitioner = new TransPartitioner(g,trans);
+  grid::Partitioner partitioner( trans_partitioner );
   grid::Distribution distribution( partitioner );
 
   // -------------- do checks -------------- //
@@ -99,10 +103,10 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
   if( parallel::mpi::comm().rank() == 0 ) // all tasks do the same, so only one needs to check
   {
     int max_nb_regions_EW(0);
-    for( int j=0; j<partitioner.nb_bands(); ++j )
-      max_nb_regions_EW = std::max(max_nb_regions_EW, partitioner.nb_regions(j));
+    for( int j=0; j<trans_partitioner->nb_bands(); ++j )
+      max_nb_regions_EW = std::max(max_nb_regions_EW, trans_partitioner->nb_regions(j));
 
-    BOOST_CHECK_EQUAL( trans.n_regions_NS(), partitioner.nb_bands() );
+    BOOST_CHECK_EQUAL( trans.n_regions_NS(), trans_partitioner->nb_bands() );
     BOOST_CHECK_EQUAL( trans.n_regions_EW(), max_nb_regions_EW );
 
     BOOST_CHECK_EQUAL( distribution.nb_partitions(), parallel::mpi::comm().size() );
@@ -118,8 +122,8 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
     BOOST_CHECK_EQUAL( trans.ngptotmx(), *std::max_element(npts.begin(),npts.end()) );
 
     array::ArrayView<int,1> n_regions ( trans.n_regions() ) ;
-    for( int j=0; j<partitioner.nb_bands(); ++j )
-      BOOST_CHECK_EQUAL( n_regions[j] , partitioner.nb_regions(j) );
+    for( int j=0; j<trans_partitioner->nb_bands(); ++j )
+      BOOST_CHECK_EQUAL( n_regions[j] , trans_partitioner->nb_regions(j) );
   }
 }
 
@@ -187,11 +191,11 @@ BOOST_AUTO_TEST_CASE( test_distribution )
 
   BOOST_TEST_CHECKPOINT("test_distribution");
 
-  grid::Distribution d_trans( grid::partitioners::TransPartitioner(g).distribution() );
+  grid::Distribution d_trans = grid::Partitioner( new TransPartitioner(g) ).distribution();
   BOOST_TEST_CHECKPOINT("trans distribution created");
 
-  grid::Distribution d_eqreg( grid::partitioners::EqualRegionsPartitioner(g).distribution() );
 
+  grid::Distribution d_eqreg = grid::Partitioner( new EqualRegionsPartitioner(g) ).distribution();
   BOOST_TEST_CHECKPOINT("eqregions distribution created");
 
   if( parallel::mpi::comm().rank() == 0 )
@@ -220,11 +224,11 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   mesh::Mesh::Ptr m_default( generate( g ) );
 
   BOOST_TEST_CHECKPOINT("trans_distribution");
-  grid::Distribution trans_distribution( grid::partitioners::TransPartitioner(g).distribution() );
+  grid::Distribution trans_distribution = grid::Partitioner( new TransPartitioner(g) ).distribution();
   mesh::Mesh::Ptr m_trans( generate( g, trans_distribution ) );
 
   BOOST_TEST_CHECKPOINT("eqreg_distribution");
-  grid::Distribution eqreg_distribution( grid::partitioners::EqualRegionsPartitioner(g).distribution() );
+  grid::Distribution eqreg_distribution = grid::Partitioner( new EqualRegionsPartitioner(g) ).distribution();
   mesh::Mesh::Ptr m_eqreg( generate( g, eqreg_distribution ) );
 
   array::ArrayView<int,1> p_default( m_default->nodes().partition() );

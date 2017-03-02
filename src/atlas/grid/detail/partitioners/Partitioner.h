@@ -12,26 +12,24 @@
 #pragma once
 
 #include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
+#include "atlas/grid/Distribution.h"
+#include "atlas/grid/Grid.h"
 
 namespace atlas {
 namespace grid {
-class Grid;
-}
-namespace grid {
-class Distribution;
-}
-}
-
-namespace atlas {
-namespace grid {
+namespace detail {
+namespace partitioners {
 
 class Partitioner : public eckit::Owned {
 
 public:
 
-    Partitioner(const grid::Grid& grid);
-    Partitioner(const grid::Grid& grid, const size_t nb_partitions);
+  using Grid = atlas::grid::Grid;
+
+public:
+
+    Partitioner(const Grid& grid);
+    Partitioner(const Grid& grid, const size_t nb_partitions);
     virtual ~Partitioner();
 
     virtual void partition( int part[] ) const = 0;
@@ -39,14 +37,14 @@ public:
     virtual Distribution distribution() const;
 
     size_t nb_partitions() const;
-    const grid::Grid& grid() const {
+    const Grid& grid() const {
         return grid_;
     }
 
 private:
 
     size_t nb_partitions_;
-    const grid::Grid& grid_;
+    Grid grid_;
 };
 
 
@@ -56,15 +54,19 @@ class PartitionerFactory {
 
 public:
 
+  using Grid = Partitioner::Grid;
+
+public:
+
     /*!
      * \brief build Partitioner with factory key, constructor arguments
      * \return Partitioner
      */
-    static Partitioner* build(const std::string&, const grid::Grid& grid);
-    static Partitioner* build(const std::string&, const grid::Grid& grid, const size_t nb_partitions);
+    static Partitioner* build(const std::string&, const Grid& grid);
+    static Partitioner* build(const std::string&, const Grid& grid, const size_t nb_partitions);
 
     /*!
-     * \brief list all registered field creators
+     * \brief list all registered partioner builders
      */
     static void list(std::ostream &);
     static bool has(const std::string& name);
@@ -72,8 +74,8 @@ public:
 private:
 
     std::string name_;
-    virtual Partitioner* make(const grid::Grid& grid) = 0 ;
-    virtual Partitioner* make(const grid::Grid& grid, const size_t nb_partitions) = 0 ;
+    virtual Partitioner* make(const Grid& grid) = 0 ;
+    virtual Partitioner* make(const Grid& grid, const size_t nb_partitions) = 0 ;
 
 protected:
 
@@ -86,11 +88,11 @@ protected:
 template<class T>
 class PartitionerBuilder : public PartitionerFactory {
 
-    virtual Partitioner* make(const grid::Grid& grid) {
+    virtual Partitioner* make(const Grid& grid) {
         return new T(grid);
     }
 
-    virtual Partitioner* make(const grid::Grid& grid, const size_t nb_partitions) {
+    virtual Partitioner* make(const Grid& grid, const size_t nb_partitions) {
         return new T(grid, nb_partitions);
     }
 
@@ -101,5 +103,7 @@ public:
 
 // ------------------------------------------------------------------
 
+} // namespace partitioners
+} // namespace detail
 } // namespace grid
 } // namespace atlas
