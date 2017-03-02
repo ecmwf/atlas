@@ -25,11 +25,13 @@ class GridCreator {
 public:
 
   using Registry = std::map< std::string, GridCreator*>;
-  static const Registry& registry();
+  static const Registry& nameRegistry();
+  static const Registry& typeRegistry();
 
 public:
 
   GridCreator( const std::string& name );
+  GridCreator( const std::string& type, const std::string& name );
 
   ~GridCreator();
 
@@ -38,6 +40,8 @@ public:
   virtual const Grid::grid_t* create( const std::string& ) const =0;
 
   std::string name() const;
+
+  std::string type() const;
 
 protected:
 
@@ -50,6 +54,7 @@ private:
   virtual void print(std::ostream& os) const =0;
 
   std::string name_;
+  std::string type_;
 
 };
 

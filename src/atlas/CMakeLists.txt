@@ -32,6 +32,14 @@ atlas.cc
 )
 
 list( APPEND atlas_grid_srcs
+
+grid/detail/grid/types/Gaussian.h
+grid/detail/grid/types/Gaussian.cc
+grid/detail/grid/types/LonLat.h
+grid/detail/grid/types/LonLat.cc
+grid/detail/grid/types/Regional.h
+grid/detail/grid/types/Regional.cc
+
 grid.h
 grid/Grid.cc
 grid/Grid.h
@@ -165,10 +173,7 @@ grid/detail/grid/reduced/pl/classic/N1600.cc  # TL3199
 grid/detail/grid/reduced/pl/classic/N2000.cc  # TL3999
 grid/detail/grid/reduced/pl/classic/N4000.cc  # TL7999
 grid/detail/grid/reduced/pl/classic/N8000.cc  # TL15999
-grid/detail/grid/reduced/ClassicGaussian.h
-grid/detail/grid/reduced/ClassicGaussian.cc
-grid/detail/grid/reduced/OctahedralGaussian.h
-grid/detail/grid/reduced/OctahedralGaussian.cc
+
 grid/detail/grid/reduced/ReducedGaussian.h
 grid/detail/grid/reduced/ReducedGaussian.cc
 grid/detail/grid/reduced/ReducedLonLat.h

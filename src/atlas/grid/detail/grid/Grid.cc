@@ -40,19 +40,29 @@ std::string Grid::className() {
 }
 
 
-const Grid* Grid::create(const Config& p) {
+const Grid* Grid::create(const Config& config) {
 
-    eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
 
     std::string name;
-    if (p.get("name",name)) {
+    if( config.get("name",name) ) {
         return create(name);
     }
+
     std::string type;
-    if (p.get("type",type) && fact.exists(type)) {
-        return fact.get(type).create(p);
+    if( config.get("type",type) ) {
+        const GridCreator::Registry& registry = GridCreator::typeRegistry();
+        if( registry.find(type) != registry.end() ) {
+            const GridCreator& gc = *registry.at(type);
+            return gc.create( config );
+        }
     }
 
+//*
+    eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
+    if (fact.exists(type)) {
+        return fact.get(type).create(config);
+    }
+//*/
     if( name.size() ) {
       Log::info() << "name provided: " << name << std::endl;
     }
@@ -64,14 +74,12 @@ const Grid* Grid::create(const Config& p) {
     } else {
       throw eckit::BadParameter("name or type in configuration don't exist",Here());
     }
-
-    return NULL;
 }
 
 
 const Grid* Grid::create( const std::string& name ) {
 
-      const GridCreator::Registry& registry = GridCreator::registry();
+      const GridCreator::Registry& registry = GridCreator::nameRegistry();
       for( GridCreator::Registry::const_iterator it = registry.begin(); it!=registry.end(); ++it ) {
         const Grid* grid = it->second->create(name);
         if( grid ) {

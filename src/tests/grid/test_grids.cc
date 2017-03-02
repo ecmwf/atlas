@@ -16,10 +16,9 @@
 #include "ecbuild/boost_test_framework.h"
 
 
-#include "atlas/grid/detail/grid/regular/RegularGaussian.h"
 #include "atlas/grid/detail/grid/regular/RegularLonLat.h"
 #include "atlas/grid/detail/grid/regular/ShiftedLat.h"
-#include "atlas/grid/detail/grid/reduced/ClassicGaussian.h"
+#include "atlas/grid/detail/grid/reduced/ReducedGaussian.h"
 
 
 #include "atlas/atlas.h"
@@ -51,8 +50,7 @@ BOOST_AUTO_TEST_CASE( test_factory )
 
 BOOST_AUTO_TEST_CASE( test_regular_gg )
 {
-  // Constructor for N=32
-  Regular grid( new grid::detail::grid::regular::RegularGaussian(32) );
+  Regular grid( "F32" );
 
   BOOST_CHECK_EQUAL(grid.ny(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 8192);
@@ -75,7 +73,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg )
 {
   Structured grid;
   
-  grid = Grid( new grid::detail::grid::reduced::ClassicGaussian(32) );
+  grid = Grid( "N32" );
   BOOST_CHECK_EQUAL(grid.ny(),64);
   BOOST_CHECK_EQUAL(grid.npts(),6114);
 
@@ -87,7 +85,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg )
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
 {
-  Structured grid( new grid::detail::grid::reduced::ClassicGaussian(32) );
+  Structured grid( "N32" );
 
   // BOOST_CHECK_EQUAL(grid.N(),    32);
   BOOST_CHECK_EQUAL(grid.ny(), 64);
@@ -101,7 +99,8 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   // Constructor for N=8
   size_t nlon = 32;
   size_t nlat = 16;
-  Regular grid( new grid::detail::grid::regular::ShiftedLat(nlon,nlat) );
+  std::stringstream name; name << "Slat" << nlon << "x" << nlat;
+  Regular grid( name.str() );
 
   BOOST_CHECK_EQUAL(grid.nx(), nlon);
   BOOST_CHECK_EQUAL(grid.ny(), nlat);
@@ -146,7 +145,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
 
 BOOST_AUTO_TEST_CASE( test_reducedgaussian )
 {
-  Structured N640( new grid::detail::grid::reduced::ClassicGaussian(640) );
+  Structured N640( "N640" );
   BOOST_CHECK_EQUAL(N640.npts(),2140702);
   Structured custom( new grid::detail::grid::reduced::ReducedGaussian(N640.ny()/2, N640.nx().data()) );
   BOOST_CHECK_EQUAL(N640.npts(),custom.npts());
