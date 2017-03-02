@@ -15,7 +15,6 @@ public:
     static std::string static_type();
 
     virtual std::string name() const;
-    virtual std::string type() const { return static_type(); }
 
     ReducedGaussian( const Config& );
     ReducedGaussian( const int N, const long pl[] );

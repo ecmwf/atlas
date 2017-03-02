@@ -36,20 +36,20 @@ Grid::Grid(const Grid& grid):
     grid_( grid.grid_ ) {
 }
 
-Grid::Grid( const detail::grid::Grid *grid ):
+Grid::Grid( const Grid::grid_t *grid ):
     grid_( grid ) {
 }
 
 Grid::Grid( const std::string& shortname ) {
-    grid_ = detail::grid::Grid::create( shortname );
+    grid_ = Grid::grid_t::create( shortname );
 }
 
 Grid::Grid( const Config& p ) {
-    grid_ = detail::grid::Grid::create(p);
+    grid_ = Grid::grid_t::create(p);
 }
 
 
-StructuredGrid::structured_t* create_structured( const Grid::Config& config ) {
+StructuredGrid::grid_t* create_structured( const Grid::Config& config ) {
 
   Projection projection;
   Spacing    yspace;
@@ -66,7 +66,7 @@ StructuredGrid::structured_t* create_structured( const Grid::Config& config ) {
 
   const size_t ny = yspace.size();
 
-  StructuredGrid::structured_t::XSpace *X = new StructuredGrid::structured_t::XSpace(ny);
+  StructuredGrid::grid_t::XSpace *X = new StructuredGrid::grid_t::XSpace(ny);
 
   double dom_xmin =  std::numeric_limits<double>::max();
   double dom_xmax = -std::numeric_limits<double>::max();
@@ -141,11 +141,11 @@ StructuredGrid::structured_t* create_structured( const Grid::Config& config ) {
     domain = Domain(config_domain);
   }
 
-  return new StructuredGrid::structured_t(projection, X, yspace, domain );
+  return new StructuredGrid::grid_t(projection, X, yspace, domain );
 }
 
-const StructuredGrid::structured_t* structured_grid( const Grid::grid_t *grid ) {
-    const StructuredGrid::structured_t* g( dynamic_cast<const StructuredGrid::structured_t*>(grid) );
+const StructuredGrid::grid_t* structured_grid( const Grid::grid_t *grid ) {
+    const StructuredGrid::grid_t* g( dynamic_cast<const StructuredGrid::grid_t*>(grid) );
     return g;
 }
 
@@ -159,7 +159,7 @@ StructuredGrid::StructuredGrid( const Grid& grid ):
     grid_( structured_grid(get()) ) {
 }
 
-StructuredGrid::StructuredGrid( const detail::grid::Grid *grid ):
+StructuredGrid::StructuredGrid( const Grid::grid_t* grid ):
     Grid( grid ),
     grid_( structured_grid(get()) ) {
 }
@@ -174,16 +174,17 @@ StructuredGrid::StructuredGrid( const Config& p ):
     grid_( structured_grid(get()) ) {
 }
 
-const RegularGrid::regular_t* regular_grid( const Grid::grid_t *grid ) {
-    const RegularGrid::regular_t* g( dynamic_cast<const RegularGrid::regular_t*>(grid) );
+const RegularGrid::grid_t* regular_grid( const Grid::grid_t* grid ) {
+    const RegularGrid::grid_t* g( dynamic_cast<const RegularGrid::grid_t*>(grid) );
     if( g && g->reduced() ) {
         return nullptr;
     }
     return g;
 }
 
-RegularGrid::regular_t* RegularGrid::create( const Config& ) {
+RegularGrid::grid_t* RegularGrid::create( const Config& ) {
   NOTIMP;
+  // return nullptr;
 }
 
 RegularGrid::RegularGrid():

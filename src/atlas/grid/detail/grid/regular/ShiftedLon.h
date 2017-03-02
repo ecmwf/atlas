@@ -15,7 +15,6 @@ public:
     static std::string static_type();
 
     virtual std::string name() const;
-    virtual std::string type() const { return static_type(); }
 
     ShiftedLon( const Config& );
     ShiftedLon( long nlon, long nlat );

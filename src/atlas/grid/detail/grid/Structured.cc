@@ -23,18 +23,12 @@ namespace detail {
 namespace grid {
 
 
-std::string Structured::className() {
-    return "atlas.grid.Structured";
-}
-
-
 std::string Structured::static_type() {
     return "structured";
 }
 
 std::string Structured::name() const {
   return "structured";
-
 }
 
 Structured::Structured() :
@@ -70,13 +64,13 @@ Structured::Structured( Projection projection, XSpace* xspace, YSpace yspace, Do
   }
   npts_ = size_t(std::accumulate(nx_.begin(), nx_.end(), 0));
   compute_true_periodicity();
-  
+
   Log::info() << Here() << std::endl;;
   if( isPeriodicX() ) {
     Log::info() << Here() << std::endl;;
     if( yspace.max() - yspace.min() == 180. ) {
       Log::info() << Here() << std::endl;;
-      domain_ = Domain(Grid::Config("type","global"));      
+      domain_ = Domain(Grid::Config("type","global"));
     }
     else {
       Log::info() << Here() << std::endl;;
@@ -299,6 +293,12 @@ void Structured::print(std::ostream& os) const {
     os << "Structured(Name:" << name() << ")";
 }
 
+std::string Structured::type() const {
+  if( not type_.empty() ) {
+    type_ += std::string(reduced()?"reduced":"regular");
+  }
+  return type_;
+}
 
 void Structured::hash(eckit::MD5& md5) const {
     // Through inheritance the static_type() might differ while still being same grid

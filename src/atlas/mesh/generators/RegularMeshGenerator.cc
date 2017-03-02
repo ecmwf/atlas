@@ -190,9 +190,7 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
 void RegularMeshGenerator::hash(MD5& md5) const
 {
     md5.add("RegularMeshGenerator");
-#if ECKIT_MAJOR_VERSION >= 0 && ECKIT_MINOR_VERSION >= 13
     options.hash(md5);
-#endif
 }
 
 void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const

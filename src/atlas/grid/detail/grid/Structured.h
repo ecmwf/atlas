@@ -97,8 +97,6 @@ public:
 
 public:
 
-    static std::string className();
-
     static std::string static_type();
 
 public:
@@ -126,8 +124,8 @@ public:
      * @note: may not be unique, such as when reduced Gaussian grids have the same N numbers but different distribution of latitude points
      */
     virtual std::string name() const;
-    virtual std::string type() const { return "structured"; }
 
+    virtual std::string type() const;
 
     virtual std::string getOptimalMeshGenerator() const {
         return "Structured";
@@ -266,15 +264,15 @@ protected:
 private:
     std::unique_ptr<XSpace> xspace_;
     YSpace yspace_;
+    mutable std::string type_;
 };
 
 
-#define CONFIG util::Config
 extern "C"
 {
     void atlas__grid__Structured__delete(Structured* This);
     const Structured *atlas__grid__Structured(char* identifier);
-    const Structured* atlas__grid__Structured__config(CONFIG* conf);
+    const Structured* atlas__grid__Structured__config(util::Config* conf);
     Structured* atlas__grid__CustomStructured_int(size_t nlat, double lat[], int nlon[]);
     Structured* atlas__grid__CustomStructured_long(size_t nlat, double lat[], long nlon[]);
     Structured* atlas__grid__CustomStructured_lonmin_lonmax_int(size_t nlat, double lat[], int nlon[], double lonmin[], double lonmax[]);
@@ -300,7 +298,6 @@ extern "C"
     void   atlas__grid__Structured__latitudes (Structured* This, const double* &lats, size_t &size);
     int    atlas__grid__Structured__reduced   (Structured* This);
 }
-#undef CONFIG
 
 
 }  // namespace grid

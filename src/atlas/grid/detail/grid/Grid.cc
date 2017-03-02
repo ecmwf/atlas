@@ -100,10 +100,10 @@ Grid::~Grid() {
 }
 
 
-Grid::uid_t Grid::uniqueId() const {
+Grid::uid_t Grid::uid() const {
     if (uid_.empty()) {
         std::ostringstream s;
-        s << name() << "." << hash();
+        s << hash();
         uid_ = s.str();
     }
     return uid_;
@@ -126,7 +126,7 @@ std::string Grid::getOptimalMeshGenerator() const {
 
 
 bool Grid::same(const grid::Grid& g) const {
-    return uniqueId() == g.uniqueId();
+    return uid() == g.uid();
 }
 
 Grid::Spec Grid::spec() const {

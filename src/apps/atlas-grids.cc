@@ -139,9 +139,10 @@ void AtlasGrids::execute(const Args& args)
                    << grid.name() << std::endl;
       Log::info()  << "   uid:                                "
                    << grid.uid() << std::endl;
-      if( auto gaussian = ReducedGaussianGrid(grid) )
+      if( auto gaussian = GaussianGrid(grid) ) {
         Log::info()<< "   Gaussian N number:                  "
                    << gaussian.N() << std::endl;
+      }
       Log::info()  << "   number of points:                   "
                    << grid.npts() << std::endl;
       Log::info()  << "   number of latitudes (N-S):          "
@@ -170,7 +171,7 @@ void AtlasGrids::execute(const Args& args)
       km  = deg*40075./360.;
 
       size_t memsize = grid.npts() * sizeof(double);
-      
+
       Log::info() << "   approximate resolution E-W pole:    "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
 

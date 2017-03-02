@@ -19,13 +19,15 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/parallel/mpi/mpi.h"
 //------------------------------------------------------------------------------------------------------
 
-using namespace eckit;
+using eckit::SharedPtr;
+using eckit::Resource;
 using namespace atlas;
 using namespace atlas::mesh::actions;
 using namespace atlas::grid;
@@ -67,13 +69,13 @@ public:
         ;
     if( help )
     {
-      Log::info() << help_str << std::endl;
+      atlas::Log::info() << help_str << std::endl;
       do_run = false;
     }
 
     if( argc == 1 )
     {
-      Log::info() << "usage: atlas-loadbalance GRID [OPTION]... [--help]" << std::endl;
+      atlas::Log::info() << "usage: atlas-loadbalance GRID [OPTION]... [--help]" << std::endl;
       do_run = false;
     }
 

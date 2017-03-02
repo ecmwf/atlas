@@ -23,6 +23,9 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 
+using atlas::grid::Grid;
+using atlas::grid::Projection;
+
 namespace atlas {
 namespace mesh {
 
@@ -35,7 +38,7 @@ Mesh* Mesh::create( const eckit::Parametrisation& params )
 
 
 
-Mesh* Mesh::create( const grid::Grid& grid, const eckit::Parametrisation& params )
+Mesh* Mesh::create( const Grid& grid, const eckit::Parametrisation& params )
 {
     return new Mesh(grid,params);
 }
@@ -56,7 +59,7 @@ Mesh::Mesh( const eckit::Parametrisation& ):
   createElements();
 }
 
-Mesh::Mesh(const grid::Grid& grid, const eckit::Parametrisation& ) :
+Mesh::Mesh(const Grid& grid, const eckit::Parametrisation& ) :
    dimensionality_(2)
 {
   nodes_.reset( new mesh::Nodes() );
@@ -70,7 +73,7 @@ Mesh::~Mesh()
 }
 
 
-mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
+mesh::Nodes& Mesh::createNodes(const Grid& g)
 {
   size_t nb_nodes = g.npts();
   nodes().resize(nb_nodes);
@@ -80,8 +83,8 @@ mesh::Nodes& Mesh::createNodes(const grid::Grid& g)
   size_t jnode(0);
   PointXY Pxy;
   PointLonLat Pll;
-  grid::Iterator iterator = g.iterator();
-  grid::Projection projection = g.projection();
+  Grid::Iterator iterator = g.iterator();
+  Projection projection = g.projection();
   while( iterator.next(Pxy) ) {
     lonlat(jnode,0) = Pxy.x();
     lonlat(jnode,1) = Pxy.y();
@@ -135,7 +138,7 @@ bool Mesh::generated() const {
   return ! (cells_->size() == 0 && facets_->size() == 0 && ridges_->size() == 0 && peaks_->size() == 0);
 }
 
-void Mesh::setProjection(const grid::Projection& projection) {
+void Mesh::setProjection(const Projection& projection) {
   projection_ = projection;
 }
 

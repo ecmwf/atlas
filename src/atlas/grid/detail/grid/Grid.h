@@ -32,12 +32,14 @@ class Grid : public eckit::Owned {
 
 public:  // types
 
-    using Config    = atlas::util::Config;
-    using Spec      = eckit::Properties;
-    using builder_t = eckit::BuilderT1<Grid>;
-    using ARG1      = const Config&;
-    using Point     = PointLonLat; // must be sizeof(double)*2
-    using uid_t     = std::string;
+    using Projection = atlas::grid::Projection;
+    using Domain     = atlas::grid::Domain;
+    using Config     = atlas::util::Config;
+    using Spec       = eckit::Properties;
+    using builder_t  = eckit::BuilderT1<Grid>;
+    using ARG1       = const Config&;
+    using Point      = PointLonLat; // must be sizeof(double)*2
+    using uid_t      = std::string;
 
 
     class Iterator {
@@ -65,8 +67,8 @@ public:  // methods
     virtual std::string type() const=0;
 
     /// Unique grid id
-    /// Computed from the shortName and the hash
-    uid_t uniqueId() const;
+    /// Computed from the hash. Can be used to compare 2 grids.
+    uid_t uid() const;
 
     /// Adds to the MD5 the information that makes this Grid unique
     virtual void hash(eckit::MD5&) const = 0;

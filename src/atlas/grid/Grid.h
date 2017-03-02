@@ -17,6 +17,7 @@
 #include "atlas/grid/detail/grid/Regular.h"
 #include "atlas/grid/Projection.h"
 #include "atlas/grid/Domain.h"
+#include "atlas/grid/Iterator.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -29,6 +30,7 @@ namespace grid {
 class Grid;
 class StructuredGrid;
 class RegularGrid;
+class GaussianGrid;
 class RegularGaussianGrid;
 class ReducedGaussianGrid;
 class RegularLonLatGrid;
@@ -36,30 +38,16 @@ class ShiftedLonLatGrid;
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Iterator {
-
-public:
-
-    Iterator( detail::grid::Grid::Iterator* iterator ):
-        iterator_(iterator) {
-    }
-
-    bool next( PointXY& xy ) { return iterator_->next(xy); }
-
-private:
-
-    std::unique_ptr<detail::grid::Grid::Iterator> iterator_;
-};
-
-//---------------------------------------------------------------------------------------------------------------------
-
 class Grid {
 
 public:
 
-  using grid_t   = detail::grid::Grid;
-  using Config   = grid_t::Config;
-  using Spec     = grid_t::Spec;
+    using grid_t     = detail::grid::Grid;
+    using Config     = grid_t::Config;
+    using Spec       = grid_t::Spec;
+    using Domain     = grid::Domain;
+    using Projection = grid::Projection;
+    using Iterator   = grid::Iterator;
 
 public:
 
@@ -78,8 +66,8 @@ public:
 
     const Projection& projection() const { return grid_->projection(); }
     const Domain& domain() const { return grid_->domain(); }
-    std::string name() { return grid_->name(); }
-    std::string uid() { return grid_->uniqueId(); }
+    std::string name() const { return grid_->name(); }
+    std::string uid() const { return grid_->uid(); }
 
     Spec spec() const { return grid_->spec(); }
 
@@ -99,18 +87,20 @@ class StructuredGrid: public Grid {
 
 public:
 
-  using structured_t = detail::grid::Structured;
-  using YSpace = structured_t::YSpace;
+  using grid_t = detail::grid::Structured;
+  using YSpace = grid_t::YSpace;
 
 public:
 
     StructuredGrid();
     StructuredGrid( const Grid& );
-    StructuredGrid( const grid_t* );
+    StructuredGrid( const Grid::grid_t* );
     StructuredGrid( const std::string& );
     StructuredGrid( const Config& );
 
-    operator bool() const { return grid_ && valid(); }
+    operator bool() const {
+      return grid_ && valid();
+    }
 
     inline size_t ny() const {
         return grid_->ny();
@@ -157,14 +147,18 @@ public:
         return grid_->reduced();
     }
 
-    bool periodic() const { return grid_->isPeriodicX(); }
+    bool periodic() const {
+        return grid_->isPeriodicX();
+    }
 
-    const YSpace& yspace() const { return grid_->yspace(); }
+    const YSpace& yspace() const {
+      return grid_->yspace();
+    }
 
 private:
 
     virtual bool valid() const { return true; }
-    const structured_t* grid_;
+    const grid_t* grid_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -173,13 +167,13 @@ class RegularGrid: public StructuredGrid {
 
 public:
 
-    using regular_t = structured_t;
+    using grid_t = StructuredGrid::grid_t;
 
 public:
 
     RegularGrid();
     RegularGrid( const Grid& );
-    RegularGrid( const grid_t* );
+    RegularGrid( const Grid::grid_t* );
     RegularGrid( const std::string& );
     RegularGrid( const Config& );
 
@@ -205,85 +199,191 @@ public:
 
 private:
 
-    virtual bool valid() const { return true; }
-    static regular_t* create( const Config& );
-    const regular_t* grid_;
+    virtual bool valid() const override { return true; }
+    static grid_t* create( const Config& );
+    const grid_t* grid_;
     size_t nx_ = {0};
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class ReducedGaussianGrid : public StructuredGrid {
+template< class Grid >
+class Gaussian : public Grid {
 
 public:
 
-    using StructuredGrid::StructuredGrid;
+    using Grid::Grid;
 
-    long N() const { return ny()/2; }
+    long N() const { return Grid::ny()/2; }
 
-private:
+    inline double lon( const size_t i, const size_t j ) const {
+        return Grid::x(i,j);
+    }
 
-    virtual bool valid() const {
-      return domain().global()
-        &&   not projection()
-        &&   yspace().type() == "gaussian";
+    inline double lat( const size_t j ) const {
+        return Grid::y(j);
+    }
+
+    PointLonLat lonlat( const size_t i, const size_t j ) const {
+      return Grid::xy(i,j);
+    }
+
+protected:
+
+    bool gaussian() const {
+      return Grid::domain().global()
+        &&   not Grid::projection()
+        &&   Grid::yspace().type() == "gaussian";
     }
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class RegularGaussianGrid : public RegularGrid {
+class LonLat : public RegularGrid {
 
 public:
 
     using RegularGrid::RegularGrid;
 
-    long N() const { return ny()/2; }
+public:
+
+  inline double lon( const size_t i ) const {
+      return x(i);
+  }
+
+  inline double lat( const size_t j ) const {
+      return y(j);
+  }
+
+  PointLonLat lonlat( const size_t i, const size_t j ) const {
+    return xy(i,j);
+  }
+
+protected:
+
+    bool global_lonlat() const {
+      return domain().global()
+        &&   not projection()
+        &&   yspace().type() == "linear";
+    }
+
+    bool regular_lon() const {
+        return x(0) == 0.;
+    }
+
+    bool regular_lat() const {
+        return y(0) == 90.
+            && ny()%2 == 1;
+    }
+
+    bool shifted_lon() const {
+       return   x(0) == 0.5*360./nx();
+    }
+
+    bool shifted_lat() const {
+        return y(0) == 90.-0.5*180./ny()
+            && ny()%2 == 0;
+    }
 
 private:
 
-    bool valid() const {
-      return domain().global()
-        &&   not projection()
-        &&   yspace().type() == "gaussian";
+    virtual bool valid() const =0;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class GaussianGrid : public Gaussian<StructuredGrid> {
+
+    using Grid = Gaussian<StructuredGrid>;
+
+public:
+
+    using Grid::Grid;
+
+private:
+
+    virtual bool valid() const override {
+        return gaussian();
     }
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class RegularLonLatGrid : public RegularGrid {
+class ReducedGaussianGrid : public Gaussian<StructuredGrid> {
+
+    using Grid = Gaussian<StructuredGrid>;
 
 public:
 
-    using RegularGrid::RegularGrid;
+    using Grid::Grid;
 
 private:
 
-    bool valid() const {
-      return domain().global()
-        &&   not projection()
-        &&   x(0) == 0.
-        &&   y(0) == 90.
-        &&   ny()%2 == 1;
+    virtual bool valid() const override {
+        return gaussian() && reduced();
     }
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class ShiftedLonLatGrid : public RegularGrid {
+class RegularGaussianGrid : public Gaussian<RegularGrid> {
+
+    using Grid = Gaussian<RegularGrid>;
 
 public:
 
-    using RegularGrid::RegularGrid;
+    using Grid::Grid;
+
+    inline double lon( const size_t i ) const {
+        return x(i);
+    }
+
+    inline double lat( const size_t j ) const {
+        return y(j);
+    }
+
+    PointLonLat lonlat( const size_t i, const size_t j ) const {
+      return xy(i,j);
+    }
 
 private:
 
-    bool valid() const {
-      return domain().global()
-        &&   not projection()
-        &&   x(0) == 0.5*360./nx()
-        &&   y(0) == 90.-0.5*180./ny()
-        &&   ny()%2 == 0;
+    virtual bool valid() const override {
+        return gaussian();
+    }
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class RegularLonLatGrid : public LonLat {
+
+public:
+
+    using LonLat::LonLat;
+
+private:
+
+    virtual bool valid() const override {
+        return global_lonlat()
+            && regular_lon()
+            && regular_lat();
+    }
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class ShiftedLonLatGrid : public LonLat {
+
+public:
+
+    using LonLat::LonLat;
+
+private:
+
+    virtual bool valid() const override {
+        return global_lonlat()
+            && shifted_lon()
+            && shifted_lat();
     }
 };
 
