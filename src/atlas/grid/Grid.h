@@ -48,6 +48,9 @@ public:
     using Domain     = grid::Domain;
     using Projection = grid::Projection;
     using Iterator   = grid::Iterator;
+    
+    using iterator = Iterator;
+    using const_iterator = iterator;
 
 public:
 
@@ -70,8 +73,9 @@ public:
     std::string uid() const { return grid_->uid(); }
 
     Spec spec() const { return grid_->spec(); }
-
-    Iterator iterator() const { return grid_->iterator(); }
+    
+    iterator begin() const { return grid_->begin(); }
+    iterator end()   const { return grid_->end(); }
 
     const grid_t* get() const { return grid_.get(); }
 

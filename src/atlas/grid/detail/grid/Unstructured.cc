@@ -146,11 +146,10 @@ Grid::Spec Unstructured::spec() const {
 
     cached_spec_->set("grid_type", static_type());
 
-
-    std::unique_ptr<Iterator> it( iterator() );
+    std::unique_ptr<Iterator> it( begin() );
     std::vector<double> coords(2*npts());
-    PointXY xy;
     size_t c(0);
+    PointXY xy;
     while( it->next(xy) ) {
       coords[c++] = xy.x();
       coords[c++] = xy.y();

@@ -513,9 +513,10 @@ void EqualRegionsPartitioner::partition(int part[]) const {
             }
         } else {
 
-            Grid::Iterator iterator = grid().iterator();
-            PointXY point;
-            while( iterator.next(point) ) {
+            // Grid::Iterator iterator = grid().iterator();
+            // PointXY point;
+            // while( iterator.next(point) ) {
+            for( PointXY point : grid() ) {
               nodes[n].x = microdeg(point.x());
               nodes[n].y = microdeg(point.y());
               nodes[n].n = n;

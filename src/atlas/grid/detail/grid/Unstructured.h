@@ -34,9 +34,9 @@ public:
 
   class Iterator: public Grid::Iterator {
   public:
-    Iterator(const Unstructured& grid):
+    Iterator(const Unstructured& grid, bool begin=true):
         grid_(grid),
-        n_(0) {
+        n_( begin ? 0 : grid_.points_->size() ) {
     }
 
     virtual bool next(PointXY& xy) {
@@ -46,6 +46,23 @@ public:
       } else {
         return false;
       }
+    }
+    
+    virtual const PointXY operator *() const {
+        return grid_.xy(n_);
+    }
+
+    virtual const Grid::Iterator& operator ++() {
+        ++n_;
+        return *this;
+    }
+
+    virtual bool operator ==(const Grid::Iterator &other) const {
+      return n_ == static_cast<const Iterator&>(other).n_;
+    }
+
+    virtual bool operator !=(const Grid::Iterator &other) const {
+      return n_ != static_cast<const Iterator&>(other).n_;
     }
 
   private:
@@ -79,7 +96,8 @@ public: // methods
 
     PointXY xy(size_t n) const { return PointXY( (*points_)[n] ); }
 
-    virtual Iterator* iterator() const{ return new Iterator(*this); }
+    virtual Iterator* begin() const{ return new Iterator(*this); }
+    virtual Iterator* end()   const{ return new Iterator(*this,false); }
 
 private: // methods
 

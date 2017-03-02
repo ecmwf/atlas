@@ -27,7 +27,26 @@ public:
         iterator_(iterator) {
     }
 
-    bool next( PointXY& xy ) { return iterator_->next(xy); }
+    bool next( PointXY& xy ) {
+        return iterator_->next(xy);
+    }
+    
+    PointXY operator *() const {
+        return iterator_->operator *();
+    }
+  
+    const Iterator& operator ++() {
+        iterator_->operator ++();
+        return *this;
+    }
+
+    bool operator ==(const Iterator &other) const {
+        return iterator_->operator ==(*other.iterator_);
+    }
+    
+    bool operator !=(const Iterator &other) const {
+        return iterator_->operator !=(*other.iterator_);
+    }
 
 private:
 

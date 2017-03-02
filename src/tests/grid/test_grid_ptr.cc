@@ -19,6 +19,7 @@
 #include "atlas/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/util/Config.h"
+#include "atlas/runtime/Log.h"
 
 
 #include "atlas/mesh/Mesh.h"

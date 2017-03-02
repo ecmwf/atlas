@@ -40,10 +40,10 @@ public:
 
   class Iterator: public Grid::Iterator {
   public:
-    Iterator(const Structured& grid):
+    Iterator(const Structured& grid, bool begin = true):
         grid_(grid),
         i_(0),
-        j_(0) {
+        j_( begin ? 0 : grid.ny() ) {
     }
 
     virtual bool next(PointXY& xy) {
@@ -60,6 +60,30 @@ public:
        }
        return false;
     }
+    
+    
+    virtual const PointXY operator *() const {
+        return grid_.xy(j_,i_);
+    }
+
+    virtual const Grid::Iterator& operator ++() {
+        ++i_;
+        if( i_ == grid_.nlon(j_) ) {
+          ++j_;
+          i_=0;
+        }
+        return *this;
+    }
+
+    virtual bool operator ==(const Grid::Iterator &other) const {
+        return j_ == static_cast<const Iterator&>(other).j_ && i_ == static_cast<const Iterator&>(other).i_;
+    }
+
+    virtual bool operator !=(const Grid::Iterator &other) const {
+        return i_ != static_cast<const Iterator&>(other).i_ || j_ != static_cast<const Iterator&>(other).j_;
+    }
+    
+    
   private:
     const Structured& grid_;
     size_t i_;
@@ -201,7 +225,8 @@ public:
 
     const YSpace& yspace() const { return yspace_; }
 
-    virtual Iterator* iterator() const{ return new Iterator(*this); }
+    virtual Iterator* begin() const{ return new Iterator(*this); }
+    virtual Iterator* end()   const{ return new Iterator(*this,false); }
 
 
 protected: // methods

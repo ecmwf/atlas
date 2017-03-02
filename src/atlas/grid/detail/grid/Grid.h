@@ -45,6 +45,10 @@ public:  // types
     class Iterator {
     public:
       virtual bool next(PointXY&) =0;
+      virtual const PointXY operator *() const =0;
+      virtual const Iterator& operator ++() =0;
+      virtual bool operator ==(const Iterator &other) const =0;
+      virtual bool operator !=(const Iterator &other) const =0;
     };
 
 
@@ -109,8 +113,9 @@ public:  // methods
     virtual Spec spec() const;
 
     virtual bool same(const grid::Grid&) const;
-
-    virtual Iterator* iterator() const =0;
+    
+    virtual Iterator* begin() const=0;
+    virtual Iterator* end()   const=0;
 
 protected:  // methods
 

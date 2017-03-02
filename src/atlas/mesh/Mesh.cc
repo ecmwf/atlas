@@ -73,19 +73,17 @@ Mesh::~Mesh()
 }
 
 
-mesh::Nodes& Mesh::createNodes(const Grid& g)
+mesh::Nodes& Mesh::createNodes(const Grid& grid)
 {
-  size_t nb_nodes = g.npts();
+  size_t nb_nodes = grid.npts();
   nodes().resize(nb_nodes);
 
   array::ArrayView<double,2> lonlat( nodes().lonlat() );
   array::ArrayView<double,2> geolonlat( nodes().geolonlat() );
   size_t jnode(0);
-  PointXY Pxy;
+  Projection projection = grid.projection();
   PointLonLat Pll;
-  Grid::Iterator iterator = g.iterator();
-  Projection projection = g.projection();
-  while( iterator.next(Pxy) ) {
+  for( PointXY Pxy : grid ) {
     lonlat(jnode,0) = Pxy.x();
     lonlat(jnode,1) = Pxy.y();
     Pll = projection.lonlat(Pxy);
