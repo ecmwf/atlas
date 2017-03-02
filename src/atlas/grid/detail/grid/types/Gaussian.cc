@@ -46,16 +46,18 @@ static Spacing yspace( const Grid::Config& grid ) {
 
 }
 
-static void complete_xspace( StructuredGrid::grid_t::XSpace& xspace ) {
-    xspace.nxmin = std::numeric_limits<size_t>::max();
-    xspace.nxmax = 0;
-    for( size_t j=0; j<xspace.ny; ++j ) {
-      xspace.xmin.push_back( 0. );
-      xspace.xmax.push_back( 360. );
-      xspace.dx.push_back( 360./xspace.nx[j] );
-      xspace.nxmin = std::min( xspace.nxmin, size_t(xspace.nx[j]) );
-      xspace.nxmax = std::max( xspace.nxmax, size_t(xspace.nx[j]) );
-    }
+static StructuredGrid::grid_t::XSpace* xspace( const std::vector<long>& nx ) {
+  StructuredGrid::grid_t::XSpace *_xspace = new StructuredGrid::grid_t::XSpace(nx.size());
+  _xspace->nx = nx;
+  _xspace->nxmax = 0;
+  for( size_t j=0; j<_xspace->ny; ++j ) {
+    _xspace->xmin.push_back( 0. );
+    _xspace->xmax.push_back( 360. );
+    _xspace->dx.push_back( 360./_xspace->nx[j] );
+    _xspace->nxmin = std::min( _xspace->nxmin, size_t(_xspace->nx[j]) );
+    _xspace->nxmax = std::max( _xspace->nxmax, size_t(_xspace->nx[j]) );
+  }
+  return _xspace;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -64,15 +66,16 @@ static class classic_gaussian : public GridCreator {
 
 public:
 
-  classic_gaussian() : GridCreator("classic_gaussian","^[Nn]([0-9]+)$") {}
+  classic_gaussian() : GridCreator("classic_gaussian",{"^[Nn]([0-9]+)$"}) {}
 
   virtual void print(std::ostream& os) const {
     os << std::left << std::setw(20) << "N<gauss>" << "Classic Gaussian grid";
   }
 
   virtual const Grid::grid_t* create( const std::string& name ) const {
+    int id;
     std::vector<std::string> matches;
-    if( match( name, matches ) ) {
+    if( match( name, matches, id ) ) {
       Grid::Config grid;
       int N = to_int(matches[0]);
       grid.set("type", type() ); //detail::grid::reduced::ClassicGaussian::static_type());
@@ -85,12 +88,9 @@ public:
   virtual const Grid::grid_t* create( const Grid::Config& config ) const {
     long N;
     config.get("N",N);
-    long ny = 2*N;
-    StructuredGrid::grid_t::XSpace *xspace = new StructuredGrid::grid_t::XSpace(ny);
-    xspace->nx.resize(ny);
-    detail::grid::reduced::pl::classic::points_per_latitude_npole_spole( N, xspace->nx.data() );
-    complete_xspace( *xspace );
-    return new StructuredGrid::grid_t( projection(config), xspace , yspace(config), domain(config) );
+    std::vector<long> nx(2*N);
+    detail::grid::reduced::pl::classic::points_per_latitude_npole_spole( N, nx.data() );
+    return new StructuredGrid::grid_t( projection(config), xspace(nx) , yspace(config), domain(config) );
   }
 
 } classic_gaussian_;
@@ -101,15 +101,16 @@ static class octahedral_gaussian : public GridCreator {
 
 public:
 
-  octahedral_gaussian() : GridCreator("octahedral_gaussian","^[Oo]([0-9]+)$") {}
+  octahedral_gaussian() : GridCreator("octahedral_gaussian",{"^[Oo]([0-9]+)$"}) {}
 
   virtual void print(std::ostream& os) const {
     os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian grid";
   }
 
   virtual const Grid::grid_t* create( const std::string& name ) const {
+    int id;
     std::vector<std::string> matches;
-    if( match( name, matches ) ) {
+    if( match( name, matches, id ) ) {
       util::Config grid;
       int N = to_int(matches[0]);
       grid.set("type", type());
@@ -126,14 +127,12 @@ public:
     long start = 20;
     config.get("nx[0]",start);
 
-    StructuredGrid::grid_t::XSpace *xspace = new StructuredGrid::grid_t::XSpace(2*N);
-    xspace->nx.resize(2*N);
+    std::vector<long> nx(2*N);
     for(long j=0; j<N; ++j) {
-        xspace->nx[j] = start + 4*j;
-        xspace->nx[2*N-1-j] = xspace->nx[j];
+        nx[j] = start + 4*j;
+        nx[2*N-1-j] = nx[j];
     }
-    complete_xspace( *xspace );
-    return new StructuredGrid::grid_t( projection(config), xspace , yspace(config), domain(config) );
+    return new StructuredGrid::grid_t( projection(config), xspace(nx) , yspace(config), domain(config) );
   }
 
 } octahedral_gaussian_;
@@ -144,15 +143,16 @@ static class regular_gaussian : public GridCreator {
 
 public:
 
-  regular_gaussian() : GridCreator("regular_gaussian","^[Ff]([0-9]+)$") {}
+  regular_gaussian() : GridCreator("regular_gaussian",{"^[Ff]([0-9]+)$"}) {}
 
   virtual void print(std::ostream& os) const {
     os << std::left << std::setw(20) << "F<gauss>" << "Regular Gaussian grid";
   }
 
   virtual const Grid::grid_t* create( const std::string& name ) const {
+    int id;
     std::vector<std::string> matches;
-    if( match( name, matches ) ) {
+    if( match( name, matches, id ) ) {
       util::Config grid;
       int N = to_int(matches[0]);
       grid.set("type", type());
@@ -165,10 +165,8 @@ public:
   virtual const Grid::grid_t* create( const Grid::Config& config) const {
     long N;
     config.get("N",N);
-    StructuredGrid::grid_t::XSpace *xspace = new StructuredGrid::grid_t::XSpace(2*N);
-    xspace->nx.resize(2*N,4*N);
-    complete_xspace( *xspace );
-    return new StructuredGrid::grid_t( projection(config), xspace , yspace(config), domain(config) );
+    std::vector<long> nx(2*N,4*N);
+    return new StructuredGrid::grid_t( projection(config), xspace(nx) , yspace(config), domain(config) );
   }
 
 

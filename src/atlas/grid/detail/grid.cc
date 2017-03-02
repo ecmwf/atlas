@@ -121,23 +121,27 @@ const GridCreator::Registry& GridCreator::typeRegistry() {
   return *typed_grids;
 }
 
-GridCreator::GridCreator( const std::string& name ) :
-  name_(name),
+GridCreator::GridCreator( const std::vector<std::string>& names ) :
+  names_(names),
   type_() {
   pthread_once(&once, init);
   eckit::AutoLock<eckit::Mutex> lock(local_mutex);
-  ASSERT(named_grids->find(name_) == named_grids->end());
-  (*named_grids)[name_] = this;
+  for( const std::string& name : names_ ) {
+      ASSERT(named_grids->find(name) == named_grids->end());
+      (*named_grids)[name] = this;
+  }
 }
 
-GridCreator::GridCreator( const std::string& type, const std::string& name ) :
-  name_(name),
+GridCreator::GridCreator( const std::string& type, const std::vector<std::string>& names ) :
+  names_(names),
   type_(type) {
   pthread_once(&once, init);
   eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-  ASSERT(named_grids->find(name_) == named_grids->end());
-  (*named_grids)[name_] = this;
+  for( const std::string& name : names_ ) {
+      ASSERT(named_grids->find(name) == named_grids->end());
+      (*named_grids)[name] = this;
+  }
 
   ASSERT(typed_grids->find(type_) == typed_grids->end());
   (*typed_grids)[type] = this;
@@ -147,8 +151,10 @@ GridCreator::~GridCreator() {
     pthread_once(&once, init);
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-    ASSERT(named_grids->find(name_) != named_grids->end());
-    (*named_grids).erase(name_);
+    for( const std::string& name : names_ ) {
+        ASSERT(named_grids->find(name) != named_grids->end());
+        (*named_grids).erase(name);
+    }
 
     if( not type_.empty() ) {
       ASSERT(typed_grids->find(type_) != typed_grids->end());
@@ -186,11 +192,15 @@ const Grid::grid_t* GridCreator::create( const Grid::Config& config ) const {
 }
 
 
-bool GridCreator::match(const std::string& string, std::vector<std::string>& matches) const {
-  return Regex(name_).match(string,matches);
+bool GridCreator::match( const std::string& string, std::vector<std::string>& matches, int &id ) const {
+  id = 0;
+  for( const std::string& name : names_ ) {
+    if( Regex(name).match(string,matches) )
+      return true;
+    ++id;
+  }
+  return false;
 }
-
-std::string GridCreator::name() const { return name_; }
 
 std::string GridCreator::type() const { return type_; }
 

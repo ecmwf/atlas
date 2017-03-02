@@ -14,6 +14,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "atlas/grid/Grid.h"
 
@@ -30,8 +31,8 @@ public:
 
 public:
 
-  GridCreator( const std::string& name );
-  GridCreator( const std::string& type, const std::string& name );
+  GridCreator( const std::vector<std::string>& names );
+  GridCreator( const std::string& type, const std::vector<std::string>& names );
 
   ~GridCreator();
 
@@ -39,13 +40,13 @@ public:
 
   virtual const Grid::grid_t* create( const std::string& ) const =0;
 
-  std::string name() const;
+  //std::string name() const;
 
   std::string type() const;
 
 protected:
 
-  bool match(const std::string& string, std::vector<std::string>& matches) const;
+  bool match( const std::string& string, std::vector<std::string>& matches, int &id ) const;
 
 private:
 
@@ -53,7 +54,7 @@ private:
 
   virtual void print(std::ostream& os) const =0;
 
-  std::string name_;
+  std::vector<std::string> names_;
   std::string type_;
 
 };
