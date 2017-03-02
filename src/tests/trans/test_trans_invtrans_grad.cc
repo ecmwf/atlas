@@ -19,7 +19,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/GridDistribution.h"
+#include "atlas/grid/Distribution.h"
 #include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioners/TransPartitioner.h"
 #include "atlas/mesh/generators/Structured.h"

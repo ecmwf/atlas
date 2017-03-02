@@ -30,7 +30,7 @@ class Partitioner;
 namespace atlas {
 namespace grid {
 
-class GridDistribution {
+class Distribution {
 
 public:
 
@@ -89,17 +89,17 @@ public:
 
 public:
 
-    GridDistribution();
-    GridDistribution( const impl_t* );
-    GridDistribution( const GridDistribution& );
+    Distribution();
+    Distribution( const impl_t* );
+    Distribution( const Distribution& );
 
-    GridDistribution( const Grid& );
+    Distribution( const Grid& );
 
-    GridDistribution( const Partitioner& );
+    Distribution( const Partitioner& );
 
-    GridDistribution( size_t npts, int partition[], int part0 = 0 );
+    Distribution( size_t npts, int partition[], int part0 = 0 );
 
-    ~GridDistribution() {}
+    ~Distribution() {}
 
     int partition(const gidx_t gidx) const {
         return impl_->partition(gidx);
@@ -137,12 +137,10 @@ private:
     eckit::SharedPtr<const impl_t> impl_;
 };
 
-#define GRIDDISTRIBUTION GridDistribution::impl_t
 extern "C" {
-    GRIDDISTRIBUTION* atlas__GridDistribution__new(int npts, int part[], int part0);
-    void atlas__GridDistribution__delete(GRIDDISTRIBUTION* This);
+    Distribution::impl_t* atlas__GridDistribution__new(int npts, int part[], int part0);
+    void atlas__GridDistribution__delete(Distribution::impl_t* This);
 }
-#undef GRIDDISTRIBUTION
 
 } // namespace grid
 } // namespace atlas

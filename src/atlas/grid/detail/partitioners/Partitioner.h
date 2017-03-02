@@ -19,7 +19,7 @@ namespace grid {
 class Grid;
 }
 namespace grid {
-class GridDistribution;
+class Distribution;
 }
 }
 
@@ -36,7 +36,7 @@ public:
 
     virtual void partition( int part[] ) const = 0;
 
-    virtual GridDistribution distribution() const;
+    virtual Distribution distribution() const;
 
     size_t nb_partitions() const;
     const grid::Grid& grid() const {

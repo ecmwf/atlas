@@ -7,7 +7,7 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GridDistribution.h"
+#include "atlas/grid/Distribution.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -183,7 +183,7 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
   //if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
 
   eckit::SharedPtr<grid::Partitioner> partitioner( grid::PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
-  grid::GridDistribution distribution( partitioner->distribution() );
+  grid::Distribution distribution( partitioner->distribution() );
   generate( grid, distribution, mesh );
 }
 
@@ -195,7 +195,7 @@ void RegularMeshGenerator::hash(MD5& md5) const
 #endif
 }
 
-void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::GridDistribution& distribution, Mesh& mesh ) const
+void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const
 {
   const grid::RegularGrid rg = grid::RegularGrid(grid);
   if( !rg )

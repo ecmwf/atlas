@@ -29,7 +29,7 @@
 namespace atlas {
 namespace grid {
     class Grid;
-    class GridDistribution;
+    class Distribution;
 } }
 
 namespace atlas {

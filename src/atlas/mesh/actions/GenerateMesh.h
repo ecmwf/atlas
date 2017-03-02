@@ -18,7 +18,7 @@
 namespace atlas {
 namespace grid {
 class StructuredGrid;
-class GridDistribution;
+class Distribution;
 }
 namespace mesh {
 class Mesh;
@@ -37,7 +37,7 @@ namespace actions {
 extern "C"
 {
   mesh::Mesh* atlas__generate_mesh (const grid::Grid::grid_t* grid);
-  mesh::Mesh* atlas__generate_mesh_with_distribution (const grid::Grid::grid_t* grid, const grid::GridDistribution::impl_t* distribution);
+  mesh::Mesh* atlas__generate_mesh_with_distribution (const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
 }
 
 // ------------------------------------------------------------------

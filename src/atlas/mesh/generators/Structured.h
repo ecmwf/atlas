@@ -25,7 +25,7 @@ namespace mesh {
 namespace atlas {
 namespace grid {
     class StructuredGrid;
-    class GridDistribution;
+    class Distribution;
 } }
 
 namespace atlas {
@@ -46,7 +46,7 @@ public:
 
   Structured(const eckit::Parametrisation& = util::NoConfig() );
 
-  virtual void generate(const grid::Grid&, const grid::GridDistribution&, Mesh&) const;
+  virtual void generate(const grid::Grid&, const grid::Distribution&, Mesh&) const;
   virtual void generate(const grid::Grid&, Mesh&) const;
 
   using MeshGenerator::generate;

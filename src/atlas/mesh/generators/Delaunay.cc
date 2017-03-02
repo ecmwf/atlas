@@ -10,7 +10,7 @@
 
 #include "eckit/utils/MD5.h"
 #include "atlas/mesh/generators/Delaunay.h"
-#include "atlas/grid/GridDistribution.h"
+#include "atlas/grid/Distribution.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
@@ -46,7 +46,7 @@ void Delaunay::hash(eckit::MD5& md5) const
     // no other settings
 }
 
-void Delaunay::generate(const grid::Grid& grid, const grid::GridDistribution& dist, Mesh& mesh) const
+void Delaunay::generate(const grid::Grid& grid, const grid::Distribution& dist, Mesh& mesh) const
 {
   if( dist.nb_partitions() > 1 )
   {

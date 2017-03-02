@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/grid/GridDistribution.h"
+#include "atlas/grid/Distribution.h"
 #include "atlas/mesh/actions/GenerateMesh.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/runtime/Log.h"
@@ -46,11 +46,11 @@ Mesh* atlas__generate_mesh(grid::Grid::grid_t* rgg)
 // ------------------------------------------------------------------
 
 
-Mesh* atlas__generate_mesh_with_distribution(grid::Grid::grid_t* rgg, grid::GridDistribution::impl_t* distribution)
+Mesh* atlas__generate_mesh_with_distribution(grid::Grid::grid_t* rgg, grid::Distribution::impl_t* distribution)
 {
   ATLAS_ERROR_HANDLING(
         mesh::generators::Structured generate;
-        return generate( grid::Grid(rgg), grid::GridDistribution(distribution) );
+        return generate( grid::Grid(rgg), grid::Distribution(distribution) );
   );
   return NULL;
 }

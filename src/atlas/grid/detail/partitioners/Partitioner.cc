@@ -18,7 +18,7 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/internals/atlas_defines.h"
 #include "atlas/grid/detail/partitioners/Partitioner.h"
-#include "atlas/grid/GridDistribution.h"
+#include "atlas/grid/Distribution.h"
 #include "atlas/runtime/Log.h"
 
 #ifdef ATLAS_HAVE_TRANS
@@ -57,8 +57,8 @@ size_t Partitioner::nb_partitions() const {
     return nb_partitions_;
 }
 
-GridDistribution Partitioner::distribution() const {
-    return GridDistribution(*this);
+Distribution Partitioner::distribution() const {
+    return Distribution(*this);
 }
 
 

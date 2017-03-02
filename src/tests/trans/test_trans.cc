@@ -19,7 +19,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/GridDistribution.h"
+#include "atlas/grid/Distribution.h"
 #include "atlas/grid.h"
 #include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioners/TransPartitioner.h"
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
 
   grid::partitioners::TransPartitioner partitioner(g,trans);
-  grid::GridDistribution distribution( partitioner );
+  grid::Distribution distribution( partitioner );
 
   // -------------- do checks -------------- //
   BOOST_CHECK_EQUAL( trans.nproc(),  parallel::mpi::comm().size() );
@@ -187,10 +187,10 @@ BOOST_AUTO_TEST_CASE( test_distribution )
 
   BOOST_TEST_CHECKPOINT("test_distribution");
 
-  grid::GridDistribution d_trans( grid::partitioners::TransPartitioner(g).distribution() );
+  grid::Distribution d_trans( grid::partitioners::TransPartitioner(g).distribution() );
   BOOST_TEST_CHECKPOINT("trans distribution created");
 
-  grid::GridDistribution d_eqreg( grid::partitioners::EqualRegionsPartitioner(g).distribution() );
+  grid::Distribution d_eqreg( grid::partitioners::EqualRegionsPartitioner(g).distribution() );
 
   BOOST_TEST_CHECKPOINT("eqregions distribution created");
 
@@ -220,11 +220,11 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   mesh::Mesh::Ptr m_default( generate( g ) );
 
   BOOST_TEST_CHECKPOINT("trans_distribution");
-  grid::GridDistribution trans_distribution( grid::partitioners::TransPartitioner(g).distribution() );
+  grid::Distribution trans_distribution( grid::partitioners::TransPartitioner(g).distribution() );
   mesh::Mesh::Ptr m_trans( generate( g, trans_distribution ) );
 
   BOOST_TEST_CHECKPOINT("eqreg_distribution");
-  grid::GridDistribution eqreg_distribution( grid::partitioners::EqualRegionsPartitioner(g).distribution() );
+  grid::Distribution eqreg_distribution( grid::partitioners::EqualRegionsPartitioner(g).distribution() );
   mesh::Mesh::Ptr m_eqreg( generate( g, eqreg_distribution ) );
 
   array::ArrayView<int,1> p_default( m_default->nodes().partition() );

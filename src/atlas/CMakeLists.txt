@@ -35,8 +35,8 @@ list( APPEND atlas_grid_srcs
 grid.h
 grid/Grid.cc
 grid/Grid.h
-grid/GridDistribution.cc
-grid/GridDistribution.h
+grid/Distribution.cc
+grid/Distribution.h
 grid/Projection.cc
 grid/Projection.h
 grid/Domain.cc
@@ -414,7 +414,7 @@ ecbuild_add_library( TARGET atlas
     eckit_mpi
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
-  
+
   DEFINITIONS
     ${ATLAS_DEFINITIONS}
  )

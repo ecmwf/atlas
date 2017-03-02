@@ -106,7 +106,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Structured.h
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/GridDistribution.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Distribution.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Mesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Nodes.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Connectivity.h)
