@@ -140,14 +140,14 @@ public:
   /// @brief Constructor given Gaussian N number for grid-only setup
   ///        This is equivalent to a (regular) Gaussian grid with N number
   ///        (e.g. for parallelisation routines)
-  Trans( const size_t N, const Options& = Options() );
+  Trans( const long N, const Options& = Options() );
 
   /// @brief Constructor given grid and spectral truncation
-  Trans( const grid::Grid& g, const size_t nsmax, const Options& = Options() );
+  Trans( const grid::Grid& g, const long nsmax, const Options& = Options() );
 
   /// @brief Constructor given Gaussian N number and spectral truncation
   ///        This is equivalent to a (regular) Gaussian grid with N number
-  Trans( const size_t N, const size_t nsmax, const Options& = Options() );
+  Trans( const long N, const long nsmax, const Options& = Options() );
 
   virtual ~Trans();
   operator Trans_t*() const { return &trans_; }
@@ -420,11 +420,11 @@ public:
 
 private:
 
-  void ctor( const grid::Grid&, size_t nsmax, const Options& );
-  
-  void ctor_rgg(const size_t nlat, const long pl[], size_t nsmax, const Options& );
+  void ctor( const grid::Grid&, long nsmax, const Options& );
 
-  void ctor_lonlat(const size_t nlon, const size_t nlat, size_t nsmax, const Options& );
+  void ctor_rgg(const long nlat, const long pl[], long nsmax, const Options& );
+
+  void ctor_lonlat(const long nlon, const long nlat, long nsmax, const Options& );
 
 
 private:

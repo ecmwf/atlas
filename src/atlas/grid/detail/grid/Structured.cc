@@ -16,6 +16,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/Point.h"
 #include "atlas/internals/Debug.h"
+#include "atlas/grid/Grid.h"
 
 namespace atlas {
 namespace grid {
@@ -32,8 +33,7 @@ std::string Structured::name() const {
 }
 
 Structured::Structured() :
-    Grid(),
-    N_(0) {
+    Grid() {
 }
 
 Structured::Structured( Projection projection, XSpace* xspace, YSpace yspace, Domain domain)
@@ -359,16 +359,7 @@ Grid::Spec Structured::spec() const {
 extern "C" {
 
 
-    size_t atlas__grid__Structured__N(Structured* This) {
-        ATLAS_ERROR_HANDLING(
-            ASSERT( This );
-            return This->N();
-        );
-        return 0;
-    }
-
-
-    size_t atlas__grid__Structured__nlat(Structured* This) {
+    long atlas__grid__Structured__nlat(Structured* This) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             return This->nlat();
@@ -377,7 +368,7 @@ extern "C" {
     }
 
 
-    size_t atlas__grid__Structured__nlon(Structured* This, size_t jlat) {
+    long atlas__grid__Structured__nlon(Structured* This, long jlat) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             return This->nlon(jlat);
@@ -395,7 +386,7 @@ extern "C" {
     }
 
 
-    size_t atlas__grid__Structured__nlonmax(Structured* This) {
+    long atlas__grid__Structured__nlonmax(Structured* This) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             return This->nlonmax();
@@ -404,7 +395,7 @@ extern "C" {
     }
 
 
-    size_t atlas__grid__Structured__nlonmin(Structured* This) {
+    long atlas__grid__Structured__nlonmin(Structured* This) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             return This->nlonmin();
@@ -413,7 +404,7 @@ extern "C" {
     }
 
 
-    size_t atlas__grid__Structured__npts(Structured* This) {
+    long atlas__grid__Structured__npts(Structured* This) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             return This->npts();
@@ -422,7 +413,7 @@ extern "C" {
     }
 
 
-    double atlas__grid__Structured__lat(Structured* This,size_t jlat) {
+    double atlas__grid__Structured__lat(Structured* This, long jlat) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             return This->lat(jlat);
@@ -431,7 +422,7 @@ extern "C" {
     }
 
 
-    double atlas__grid__Structured__lon(Structured* This,size_t jlat,size_t jlon) {
+    double atlas__grid__Structured__lon( Structured* This, long jlat, long jlon ) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             return This->lon(jlat, jlon);
@@ -440,7 +431,7 @@ extern "C" {
     }
 
 
-    void atlas__grid__Structured__lonlat(Structured* This, size_t jlat, size_t jlon, double crd[]) {
+    void atlas__grid__Structured__lonlat( Structured* This, long jlat, long jlon, double crd[] ) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             This->lonlat(jlat, jlon, crd);
@@ -448,7 +439,7 @@ extern "C" {
     }
 
 
-    void atlas__grid__Structured__latitudes(Structured* This, const double* &lat, size_t &size) {
+    void atlas__grid__Structured__latitudes( Structured* This, const double* &lat, size_t &size) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             lat  = This->latitudes().data();
@@ -496,21 +487,33 @@ extern "C" {
     }
 
 
-    Structured* atlas__grid__regular__RegularGaussian(size_t N) {
+    Structured* atlas__grid__regular__RegularGaussian(long N) {
       NOTIMP;
     }
-    Structured* atlas__grid__regular__RegularLonLat(size_t nlon, size_t nlat) {
+    Structured* atlas__grid__regular__RegularLonLat(long nlon, long nlat) {
       NOTIMP;
     }
-    Structured* atlas__grid__regular__ShiftedLonLat(size_t nlon, size_t nlat) {
+    Structured* atlas__grid__regular__ShiftedLonLat(long nlon, long nlat) {
       NOTIMP;
     }
-    Structured* atlas__grid__regular__ShiftedLon(size_t nlon, size_t nlat) {
+    Structured* atlas__grid__regular__ShiftedLon(long nlon, long nlat) {
       NOTIMP;
     }
-    Structured* atlas__grid__regular__ShiftedLat(size_t nlon, size_t nlat) {
+    Structured* atlas__grid__regular__ShiftedLat(long nlon, long nlat) {
       NOTIMP;
     }
+
+
+    long atlas__grid__Gaussian__N(Structured* This) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
+            GaussianGrid gaussian(This);
+            ASSERT( gaussian );
+            return gaussian.N();
+        );
+        return 0;
+    }
+
 
 }
 

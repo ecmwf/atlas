@@ -61,8 +61,8 @@ public:
        }
        return false;
     }
-    
-    
+
+
     virtual const PointXY operator *() const {
         return grid_.xy(j_,i_);
     }
@@ -83,8 +83,8 @@ public:
     virtual bool operator !=(const Grid::Iterator &other) const {
         return i_ != static_cast<const Iterator&>(other).i_ || j_ != static_cast<const Iterator&>(other).j_;
     }
-    
-    
+
+
   private:
     const Structured& grid_;
     size_t i_;
@@ -156,10 +156,6 @@ public:
 
     virtual std::string getOptimalMeshGenerator() const {
         return "Structured";
-    }
-
-    virtual size_t N() const {
-        return N_;
     }
 
     inline size_t ny() const {
@@ -259,9 +255,6 @@ protected: // methods
 
 protected:
 
-    /// Number of latitudes in hemisphere (only makes sense for global grids)
-    size_t N_;
-
     // Minimum number of points across parallels (constant y)
     size_t nxmin_;
 
@@ -301,30 +294,32 @@ extern "C"
     void atlas__grid__Structured__delete(Structured* This);
     const Structured *atlas__grid__Structured(char* identifier);
     const Structured* atlas__grid__Structured__config(util::Config* conf);
-    Structured* atlas__grid__CustomStructured_int(size_t nlat, double lat[], int nlon[]);
-    Structured* atlas__grid__CustomStructured_long(size_t nlat, double lat[], long nlon[]);
-    Structured* atlas__grid__CustomStructured_lonmin_lonmax_int(size_t nlat, double lat[], int nlon[], double lonmin[], double lonmax[]);
-    Structured* atlas__grid__CustomStructured_lonmin_lonmax_long(size_t nlat, double lat[], long nlon[], double lonmin[], double lonmax[]);
-    Structured* atlas__grid__regular__RegularGaussian(size_t N);
-    Structured* atlas__grid__reduced__ReducedGaussian_int(size_t N, int nlon[]);
-    Structured* atlas__grid__reduced__ReducedGaussian_long(size_t N, long nlon[]);
-    Structured* atlas__grid__regular__RegularLonLat(size_t nlon, size_t nlat);
-    Structured* atlas__grid__regular__ShiftedLonLat(size_t nlon, size_t nlat);
-    Structured* atlas__grid__regular__ShiftedLon(size_t nlon, size_t nlat);
-    Structured* atlas__grid__regular__ShiftedLat(size_t nlon, size_t nlat);
+    Structured* atlas__grid__CustomStructured_int(long nlat, double lat[], int nlon[]);
+    Structured* atlas__grid__CustomStructured_long(long nlat, double lat[], long nlon[]);
+    Structured* atlas__grid__CustomStructured_lonmin_lonmax_int(long nlat, double lat[], int nlon[], double lonmin[], double lonmax[]);
+    Structured* atlas__grid__CustomStructured_lonmin_lonmax_long(long nlat, double lat[], long nlon[], double lonmin[], double lonmax[]);
+    Structured* atlas__grid__regular__RegularGaussian(long N);
+    Structured* atlas__grid__reduced__ReducedGaussian_int(long N, int nlon[]);
+    Structured* atlas__grid__reduced__ReducedGaussian_long(long N, long nlon[]);
+    Structured* atlas__grid__regular__RegularLonLat(long nlon, long nlat);
+    Structured* atlas__grid__regular__ShiftedLonLat(long nlon, long nlat);
+    Structured* atlas__grid__regular__ShiftedLon(long nlon, long nlat);
+    Structured* atlas__grid__regular__ShiftedLat(long nlon, long nlat);
 
     void   atlas__grid__Structured__pl        (Structured* This, const long* &pl, size_t &size);
-    size_t atlas__grid__Structured__N         (Structured* This);
-    size_t atlas__grid__Structured__nlat      (Structured* This);
-    size_t atlas__grid__Structured__nlon      (Structured* This, size_t jlat);
-    size_t atlas__grid__Structured__nlonmin   (Structured* This);
-    size_t atlas__grid__Structured__nlonmax   (Structured* This);
-    size_t atlas__grid__Structured__npts      (Structured* This);
-    double atlas__grid__Structured__lat       (Structured* This, size_t jlat);
-    double atlas__grid__Structured__lon       (Structured* This, size_t jlat, size_t jlon);
-    void   atlas__grid__Structured__lonlat    (Structured* This, size_t jlat, size_t jlon, double crd[]);
+    long   atlas__grid__Structured__nlat      (Structured* This);
+    long   atlas__grid__Structured__nlon      (Structured* This, long jlat);
+    long   atlas__grid__Structured__nlonmin   (Structured* This);
+    long   atlas__grid__Structured__nlonmax   (Structured* This);
+    long   atlas__grid__Structured__npts      (Structured* This);
+    double atlas__grid__Structured__lat       (Structured* This, long jlat);
+    double atlas__grid__Structured__lon       (Structured* This, long jlat, long jlon);
+    void   atlas__grid__Structured__lonlat    (Structured* This, long jlat, long jlon, double crd[]);
     void   atlas__grid__Structured__latitudes (Structured* This, const double* &lats, size_t &size);
     int    atlas__grid__Structured__reduced   (Structured* This);
+
+    long   atlas__grid__Gaussian__N           (Structured* This);
+
 }
 
 

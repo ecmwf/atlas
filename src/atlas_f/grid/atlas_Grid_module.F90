@@ -127,8 +127,10 @@ contains
 END TYPE atlas_grid_ReducedGaussian
 
 interface atlas_grid_ReducedGaussian
-  module procedure atlas_grid_ReducedGaussian__ctor_int32
-  module procedure atlas_grid_ReducedGaussian__ctor_int64
+  module procedure atlas_grid_ReducedGaussian__ctor_N_int32_pl_int32
+  module procedure atlas_grid_ReducedGaussian__ctor_N_int32_pl_int64
+  module procedure atlas_grid_ReducedGaussian__ctor_N_int64_pl_int32
+  module procedure atlas_grid_ReducedGaussian__ctor_N_int64_pl_int64
 end interface
 
 !------------------------------------------------------------------------------
@@ -263,6 +265,14 @@ end interface
 !========================================================
 contains
 !========================================================
+
+pure function c_idx(f_idx)
+    use, intrinsic :: iso_c_binding, only : c_long
+    integer(c_long) :: c_idx
+    integer(c_long), intent(in) :: f_idx
+    c_idx = f_idx - 1_c_long
+end function
+
 ! -----------------------------------------------------------------------------
 ! Constructors
 
@@ -337,11 +347,11 @@ end function
 !-----------------------------------------------------------------------------
 
 function atlas_grid_RegularGaussian__ctor_int32(N) result(grid)
-  use, intrinsic :: iso_c_binding, only: c_int, c_size_t
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
   use atlas_grid_Structured_c_binding
   type(atlas_grid_RegularGaussian) :: grid
   integer(c_int), intent(in) :: N
-  call grid%reset_c_ptr( atlas__grid__regular__RegularGaussian(int(N,c_size_t)) )
+  call grid%reset_c_ptr( atlas__grid__regular__RegularGaussian(int(N,c_long)) )
 end function
 
 function atlas_grid_RegularGaussian__ctor_int64(N) result(grid)
@@ -349,39 +359,59 @@ function atlas_grid_RegularGaussian__ctor_int64(N) result(grid)
   use atlas_grid_Structured_c_binding
   type(atlas_grid_RegularGaussian) :: grid
   integer(c_long), intent(in) :: N
-  call grid%reset_c_ptr( atlas__grid__regular__RegularGaussian(int(N,c_size_t)) )
+  call grid%reset_c_ptr( atlas__grid__regular__RegularGaussian(int(N,c_long)) )
 end function
 
 !-----------------------------------------------------------------------------
 
-function atlas_grid_ReducedGaussian__ctor_int32(N,nlon) result(grid)
-  use, intrinsic :: iso_c_binding, only: c_int, c_size_t
+function atlas_grid_ReducedGaussian__ctor_N_int32_pl_int32(N,pl) result(grid)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
   use atlas_grid_Structured_c_binding
   type(atlas_grid_ReducedGaussian) :: grid
   integer(c_int), intent(in) :: N
-  integer(c_int), intent(in)  :: nlon(:)
+  integer(c_int), intent(in)  :: pl(:)
   call grid%reset_c_ptr( &
-    & atlas__grid__reduced__ReducedGaussian_int(int(N,c_size_t),nlon) )
+    & atlas__grid__reduced__ReducedGaussian_int( int(N,c_long), pl) )
 end function
 
-function atlas_grid_ReducedGaussian__ctor_int64(N,nlon) result(grid)
-  use, intrinsic :: iso_c_binding, only: c_long, c_size_t
+function atlas_grid_ReducedGaussian__ctor_N_int32_pl_int64(N,pl) result(grid)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_grid_ReducedGaussian) :: grid
+  integer(c_int), intent(in) :: N
+  integer(c_long), intent(in) :: pl(:)
+  call grid%reset_c_ptr( &
+    & atlas__grid__reduced__ReducedGaussian_long(int(N,c_long),pl) )
+end function
+
+function atlas_grid_ReducedGaussian__ctor_N_int64_pl_int32(N,pl) result(grid)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
   use atlas_grid_Structured_c_binding
   type(atlas_grid_ReducedGaussian) :: grid
   integer(c_long), intent(in) :: N
-  integer(c_long), intent(in)  :: nlon(:)
+  integer(c_int), intent(in)  :: pl(:)
   call grid%reset_c_ptr( &
-    & atlas__grid__reduced__ReducedGaussian_long(int(N,c_size_t),nlon) )
+    & atlas__grid__reduced__ReducedGaussian_int(N, pl) )
+end function
+
+function atlas_grid_ReducedGaussian__ctor_N_int64_pl_int64(N,pl) result(grid)
+  use, intrinsic :: iso_c_binding, only: c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_grid_ReducedGaussian) :: grid
+  integer(c_long), intent(in) :: N
+  integer(c_long), intent(in) :: pl(:)
+  call grid%reset_c_ptr( &
+    & atlas__grid__reduced__ReducedGaussian_long(N,pl) )
 end function
 
 !-----------------------------------------------------------------------------
 
 function atlas_grid_RegularLonLat__ctor_int32(nlon,nlat) result(grid)
-  use, intrinsic :: iso_c_binding, only: c_int, c_size_t
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
   use atlas_grid_Structured_c_binding
   type(atlas_grid_RegularLonLat) :: grid
   integer(c_int), intent(in) :: nlon, nlat
-  call grid%reset_c_ptr( atlas__grid__regular__RegularLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
+  call grid%reset_c_ptr( atlas__grid__regular__RegularLonLat(int(nlon,c_long),int(nlat,c_long)) )
 end function
 
 function atlas_grid_RegularLonLat__ctor_int64(nlon,nlat) result(grid)
@@ -389,17 +419,17 @@ function atlas_grid_RegularLonLat__ctor_int64(nlon,nlat) result(grid)
   use atlas_grid_Structured_c_binding
   type(atlas_grid_RegularLonLat) :: grid
   integer(c_long), intent(in) :: nlon, nlat
-  call grid%reset_c_ptr( atlas__grid__regular__RegularLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
+  call grid%reset_c_ptr( atlas__grid__regular__RegularLonLat( nlon, nlat ) )
 end function
 
 !-----------------------------------------------------------------------------
 
 function atlas_grid_ShiftedLonLat__ctor_int32(nlon,nlat) result(grid)
-  use, intrinsic :: iso_c_binding, only: c_int, c_size_t
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
   use atlas_grid_Structured_c_binding
   type(atlas_grid_ShiftedLonLat) :: grid
   integer(c_int), intent(in) :: nlon, nlat
-  call grid%reset_c_ptr( atlas__grid__regular__ShiftedLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
+  call grid%reset_c_ptr( atlas__grid__regular__ShiftedLonLat(int(nlon,c_long),int(nlat,c_long)) )
 end function
 
 function atlas_grid_ShiftedLonLat__ctor_int64(nlon,nlat) result(grid)
@@ -407,7 +437,7 @@ function atlas_grid_ShiftedLonLat__ctor_int64(nlon,nlat) result(grid)
   use atlas_grid_Structured_c_binding
   type(atlas_grid_ShiftedLonLat) :: grid
   integer(c_long), intent(in) :: nlon, nlat
-  call grid%reset_c_ptr( atlas__grid__regular__ShiftedLonLat(int(nlon,c_size_t),int(nlat,c_size_t)) )
+  call grid%reset_c_ptr( atlas__grid__regular__ShiftedLonLat( nlon, nlat ) )
 end function
 
 !-----------------------------------------------------------------------------
@@ -465,7 +495,7 @@ function Structured__N(this) result(N)
   use atlas_grid_Structured_c_binding
   class(atlas_grid_Structured), intent(in) :: this
   integer(c_long) :: N
-  N = atlas__grid__Structured__N(this%c_ptr())
+  N = atlas__grid__Gaussian__N(this%c_ptr())
 end function
 
 function Structured__nlat(this) result(nlat)
@@ -478,12 +508,12 @@ end function
 
 
 function Structured__nlon(this, jlat) result(nlon)
-  use, intrinsic :: iso_c_binding, only: c_long, c_size_t, c_int
+  use, intrinsic :: iso_c_binding, only: c_long
   use atlas_grid_Structured_c_binding
   integer(c_long) :: nlon
   class(atlas_grid_Structured), intent(in) :: this
-  integer(c_int), intent(in) :: jlat
-  nlon = atlas__grid__Structured__nlon(this%c_ptr(), int(jlat-1,c_size_t) )
+  integer(c_long), intent(in) :: jlat
+  nlon = atlas__grid__Structured__nlon(this%c_ptr(), c_idx(jlat) )
 end function
 
 function Structured__reduced(this) result(reduced)
@@ -525,12 +555,12 @@ function Structured__nlonmin(this) result(nlonmin)
 end function
 
 function Structured__lat(this, jlat) result(lat)
-  use, intrinsic :: iso_c_binding, only: c_double, c_int, c_size_t
+  use, intrinsic :: iso_c_binding, only: c_double, c_long, c_size_t
   use atlas_grid_Structured_c_binding
   real(c_double) :: lat
   class(atlas_grid_Structured), intent(in) :: this
-  integer(c_int),               intent(in) :: jlat
-  lat = atlas__grid__Structured__lat(this%c_ptr(), int(jlat-1,c_size_t))
+  integer(c_long),              intent(in) :: jlat
+  lat = atlas__grid__Structured__lat(this%c_ptr(), c_idx(jlat) )
 end function
 
 function Structured__latitudes(this) result(lat)
@@ -546,25 +576,23 @@ function Structured__latitudes(this) result(lat)
 end function
 
 function Structured__lon(this, jlat, jlon) result(lon)
-  use, intrinsic :: iso_c_binding, only: c_double, c_int, c_size_t
+  use, intrinsic :: iso_c_binding, only: c_double, c_long, c_size_t
   use atlas_grid_Structured_c_binding
   class(atlas_grid_Structured), intent(in)  :: this
   real(c_double) :: lon
-  integer(c_int) :: jlat
-  integer(c_int) :: jlon
-  lon = atlas__grid__Structured__lon(this%c_ptr(), &
-      & int(jlat-1,c_size_t), int(jlon-1,c_size_t) )
+  integer(c_long) :: jlat
+  integer(c_long) :: jlon
+  lon = atlas__grid__Structured__lon(this%c_ptr(), c_idx(jlat), c_idx(jlon))
 end function
 
 function Structured__lonlat(this, jlat, jlon) result(lonlat)
-  use, intrinsic :: iso_c_binding, only: c_double, c_int, c_size_t
+  use, intrinsic :: iso_c_binding, only: c_double, c_long, c_size_t
   use atlas_grid_Structured_c_binding
   real(c_double) :: lonlat(2)
   class(atlas_grid_Structured), intent(in) :: this
-  integer(c_int) , intent(in) :: jlat
-  integer(c_int) , intent(in) :: jlon
-  call atlas__grid__Structured__lonlat(this%c_ptr(), &
-      & int(jlat-1,c_size_t), int(jlon-1,c_size_t), lonlat)
+  integer(c_long) , intent(in) :: jlat
+  integer(c_long) , intent(in) :: jlon
+  call atlas__grid__Structured__lonlat(this%c_ptr(), c_idx(jlat), c_idx(jlon), lonlat)
 end function
 
 subroutine atlas_Grid__delete(this)

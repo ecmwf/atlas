@@ -52,7 +52,7 @@ CustomStructured::CustomStructured(const util::Config& config) :
 
   std::vector<util::Config> config_xspace_list;
   if( config.get("xspace[]",config_xspace_list) ) {
-    
+
     ASSERT( config_xspace_list.size() == ny );
     std::string xspace_type;
 
@@ -91,7 +91,7 @@ CustomStructured::CustomStructured(const util::Config& config) :
     if( not v_start. empty() ) ASSERT(v_start. size() == ny);
     if( not v_end.   empty() ) ASSERT(v_end.   size() == ny);
     if( not v_length.empty() ) ASSERT(v_length.size() == ny);
-    
+
     for( size_t j=0; j<ny; ++j ) {
       if( not v_N.     empty() ) config_xspace.set("N",     v_N[j]);
       if( not v_start. empty() ) config_xspace.set("start", v_start[j]);
@@ -106,7 +106,7 @@ CustomStructured::CustomStructured(const util::Config& config) :
       dom_xmax = std::max(dom_xmax,xspace.end);
     }
   }
-  
+
   util::Config config_domain;
   if( dynamic_cast<const util::Config&>(config).get("domain",config_domain) )
     domain_ = Domain(config_domain);
@@ -144,7 +144,7 @@ CustomStructured::CustomStructured(
 
     std::vector<long> nx;
     nx.assign(pl,pl+nlat);
-    
+
     std::vector<double> xmin(nlat, 0.);
     std::vector<double> xmax(nlat, 360.);
     std::vector<double> dx(nlat);
@@ -158,19 +158,19 @@ CustomStructured::CustomStructured(
 extern "C" {
 
 
-    Structured* atlas__grid__CustomStructured_int(size_t nlat, double lats[], int pl[]) {
+    Structured* atlas__grid__CustomStructured_int(long nlat, double lats[], int pl[]) {
         std::vector<long> pl_vector;
         pl_vector.assign(pl,pl+nlat);
         return new CustomStructured(nlat, lats, pl_vector.data());
     }
 
 
-    Structured* atlas__grid__CustomStructured_long(size_t nlat, double lats[], long pl[]) {
+    Structured* atlas__grid__CustomStructured_long(long nlat, double lats[], long pl[]) {
         return new CustomStructured(nlat, lats, pl);
     }
 
 
-    Structured* atlas__grid__CustomStructured_lonmin_lonmax_int(size_t nlat, double lats[], int pl[], double lonmin[], double lonmax[]) {
+    Structured* atlas__grid__CustomStructured_lonmin_lonmax_int(long nlat, double lats[], int pl[], double lonmin[], double lonmax[]) {
         std::vector<long> pl_vector;
         pl_vector.assign(pl, pl+nlat);
         NOTIMP;
@@ -179,7 +179,7 @@ extern "C" {
     }
 
 
-    Structured* atlas__grid__CustomStructured_lonmin_lonmax_long(size_t nlat, double lats[], long pl[], double lonmin[], double lonmax[]) {
+    Structured* atlas__grid__CustomStructured_lonmin_lonmax_long(long nlat, double lats[], long pl[], double lonmin[], double lonmax[]) {
         NOTIMP;
         return 0;
         //return new CustomStructured(nlat, lats, pl, lonmin, lonmax);

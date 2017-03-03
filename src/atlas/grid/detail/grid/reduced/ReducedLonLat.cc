@@ -54,11 +54,6 @@ void ReducedLonLat::setup(size_t ny, long pl[]) {
 
     // setup Structured grid
     Structured::setup(yspace, nx, xmin, xmax, dx);
-    if (ny%2) {
-      Structured::N_=0;    // odd number of latitudes
-    } else {
-      Structured::N_=ny/2;
-    }
 
 }
 
