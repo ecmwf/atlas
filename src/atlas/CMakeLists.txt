@@ -33,12 +33,12 @@ atlas.cc
 
 list( APPEND atlas_grid_srcs
 
-grid/detail/grid/types/Gaussian.h
-grid/detail/grid/types/Gaussian.cc
-grid/detail/grid/types/LonLat.h
-grid/detail/grid/types/LonLat.cc
-grid/detail/grid/types/Regional.h
-grid/detail/grid/types/Regional.cc
+grid/detail/grid/Gaussian.h
+grid/detail/grid/Gaussian.cc
+grid/detail/grid/LonLat.h
+grid/detail/grid/LonLat.cc
+grid/detail/grid/Regional.h
+grid/detail/grid/Regional.cc
 
 grid.h
 grid/Grid.cc
@@ -128,33 +128,33 @@ grid/detail/spacing/gaussian/N1600.cc  # TL3199
 grid/detail/spacing/gaussian/N2000.cc  # TL3999
 grid/detail/spacing/gaussian/N4000.cc  # TL7999
 grid/detail/spacing/gaussian/N8000.cc  # TL15999
-grid/detail/grid/reduced/pl/classic/N.h
-grid/detail/grid/reduced/pl/classic/N.cc
-grid/detail/grid/reduced/pl/classic/PointsPerLatitude.h
-grid/detail/grid/reduced/pl/classic/PointsPerLatitude.cc
-grid/detail/grid/reduced/pl/classic/N16.cc    # TL31
-grid/detail/grid/reduced/pl/classic/N24.cc    # TL47
-grid/detail/grid/reduced/pl/classic/N32.cc    # TL63
-grid/detail/grid/reduced/pl/classic/N48.cc    # TL95
-grid/detail/grid/reduced/pl/classic/N64.cc    # TL127
-grid/detail/grid/reduced/pl/classic/N80.cc    # TL159
-grid/detail/grid/reduced/pl/classic/N96.cc    # TL191
-grid/detail/grid/reduced/pl/classic/N128.cc   # TL255
-grid/detail/grid/reduced/pl/classic/N160.cc   # TL319
-grid/detail/grid/reduced/pl/classic/N200.cc   # TL399
-grid/detail/grid/reduced/pl/classic/N256.cc   # TL511
-grid/detail/grid/reduced/pl/classic/N320.cc   # TL639
-grid/detail/grid/reduced/pl/classic/N400.cc   # TL799
-grid/detail/grid/reduced/pl/classic/N512.cc   # TL1023
-grid/detail/grid/reduced/pl/classic/N576.cc   # TL1151
-grid/detail/grid/reduced/pl/classic/N640.cc   # TL1279
-grid/detail/grid/reduced/pl/classic/N800.cc   # TL1599
-grid/detail/grid/reduced/pl/classic/N1024.cc  # TL2047
-grid/detail/grid/reduced/pl/classic/N1280.cc  # TL2559
-grid/detail/grid/reduced/pl/classic/N1600.cc  # TL3199
-grid/detail/grid/reduced/pl/classic/N2000.cc  # TL3999
-grid/detail/grid/reduced/pl/classic/N4000.cc  # TL7999
-grid/detail/grid/reduced/pl/classic/N8000.cc  # TL15999
+grid/detail/pl/classic_gaussian/N.h
+grid/detail/pl/classic_gaussian/N.cc
+grid/detail/pl/classic_gaussian/PointsPerLatitude.h
+grid/detail/pl/classic_gaussian/PointsPerLatitude.cc
+grid/detail/pl/classic_gaussian/N16.cc    # TL31
+grid/detail/pl/classic_gaussian/N24.cc    # TL47
+grid/detail/pl/classic_gaussian/N32.cc    # TL63
+grid/detail/pl/classic_gaussian/N48.cc    # TL95
+grid/detail/pl/classic_gaussian/N64.cc    # TL127
+grid/detail/pl/classic_gaussian/N80.cc    # TL159
+grid/detail/pl/classic_gaussian/N96.cc    # TL191
+grid/detail/pl/classic_gaussian/N128.cc   # TL255
+grid/detail/pl/classic_gaussian/N160.cc   # TL319
+grid/detail/pl/classic_gaussian/N200.cc   # TL399
+grid/detail/pl/classic_gaussian/N256.cc   # TL511
+grid/detail/pl/classic_gaussian/N320.cc   # TL639
+grid/detail/pl/classic_gaussian/N400.cc   # TL799
+grid/detail/pl/classic_gaussian/N512.cc   # TL1023
+grid/detail/pl/classic_gaussian/N576.cc   # TL1151
+grid/detail/pl/classic_gaussian/N640.cc   # TL1279
+grid/detail/pl/classic_gaussian/N800.cc   # TL1599
+grid/detail/pl/classic_gaussian/N1024.cc  # TL2047
+grid/detail/pl/classic_gaussian/N1280.cc  # TL2559
+grid/detail/pl/classic_gaussian/N1600.cc  # TL3199
+grid/detail/pl/classic_gaussian/N2000.cc  # TL3999
+grid/detail/pl/classic_gaussian/N4000.cc  # TL7999
+grid/detail/pl/classic_gaussian/N8000.cc  # TL15999
 
 # TODO: refactor to remove these grids
 grid/detail/grid/CustomStructured.cc
