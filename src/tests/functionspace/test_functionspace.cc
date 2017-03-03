@@ -23,7 +23,6 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/detail/grid/reduced/ReducedGaussian.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
 #endif
@@ -71,9 +70,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 {
   //ScopedPtr<grid::Grid> grid( Grid::create("O2") );
 
-  size_t nlat = 2;
-  long nlon[] = {4,8};
-  grid::Grid grid( new grid::detail::grid::reduced::ReducedGaussian( nlat, nlon ) );
+  grid::ReducedGaussianGrid grid( {4,8,8,4} );
 
   mesh::Mesh mesh;
   mesh::generators::Structured generator;

@@ -14,7 +14,6 @@
 
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/grid/detail/grid/Structured.h"
-#include "atlas/grid/detail/grid/Regular.h"
 #include "atlas/grid/Projection.h"
 #include "atlas/grid/Domain.h"
 #include "atlas/grid/Iterator.h"
@@ -320,6 +319,8 @@ class ReducedGaussianGrid : public Gaussian<StructuredGrid> {
 public:
 
     using Grid::Grid;
+    ReducedGaussianGrid( const std::initializer_list<long>& nx );
+    ReducedGaussianGrid( const std::vector<long>& nx );
 
 private:
 

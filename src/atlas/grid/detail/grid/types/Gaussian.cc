@@ -172,8 +172,48 @@ public:
 
 } regular_gaussian_;
 
+
 //---------------------------------------------------------------------------------------------------------------------
 
 } // anonymous namespace
+
+StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx ) {
+  
+  Grid::Config yspace;
+  yspace.set("type","gaussian");
+  yspace.set("start", 90.0);
+  yspace.set("end",  -90.0);
+  yspace.set("N",nx.size());
+  
+  Grid::Config domain("type","global");
+  
+  return new StructuredGrid::grid_t( Projection(), xspace(nx) , Spacing(yspace), Domain(domain) );
+  
+}
+
+extern "C" {
+
+
+    StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_int(long N, int half_pl[]) {
+      std::vector<long> nx(2*N);
+      for( long j=0; j<N; ++j ) {
+        nx[j] = half_pl[j];
+        nx[2*N-1-j] = nx[j];
+      }
+      return reduced_gaussian(nx);
+    }
+
+
+    StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_long(long N, long half_pl[]) {
+        std::vector<long> nx(2*N);
+        for( long j=0; j<N; ++j ) {
+          nx[j] = half_pl[j];
+          nx[2*N-1-j] = nx[j];
+        }
+        return reduced_gaussian(nx);
+    }
+
+}
+
 } // namespace grid
 } // namespace atlas

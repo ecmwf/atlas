@@ -61,8 +61,6 @@ grid/detail/grid/Structured.cc
 grid/detail/grid/Structured.h
 grid/detail/grid/Unstructured.cc
 grid/detail/grid/Unstructured.h
-grid/detail/grid/Regular.cc
-grid/detail/grid/Regular.h
 grid/detail/domain/Domain.cc
 grid/detail/domain/Domain.h
 grid/detail/domain/RectangularDomain.h
@@ -161,8 +159,10 @@ grid/detail/grid/reduced/pl/classic/N8000.cc  # TL15999
 # TODO: refactor to remove these grids
 grid/detail/grid/CustomStructured.cc
 grid/detail/grid/CustomStructured.h
-grid/detail/grid/reduced/ReducedGaussian.h
-grid/detail/grid/reduced/ReducedGaussian.cc
+# grid/detail/grid/reduced/ReducedGaussian.h
+# grid/detail/grid/reduced/ReducedGaussian.cc
+# grid/detail/grid/Regular.h
+# grid/detail/grid/Regular.cc
 
 )
 if( ATLAS_HAVE_TRANS )

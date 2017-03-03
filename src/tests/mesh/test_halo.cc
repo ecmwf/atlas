@@ -114,9 +114,7 @@ BOOST_AUTO_TEST_CASE( test_t63 )
 {
 //  mesh::Mesh::Ptr m = test::generate_mesh( T63() );
 
-  int nlat = 5;
-  long lon[5] = {10, 12, 14, 16, 16};
-  mesh::Mesh::Ptr m = test::generate_mesh(nlat, lon);
+  mesh::Mesh::Ptr m = test::generate_mesh( {10, 12, 14, 16, 16, 16, 16, 14, 12, 10} );
 
   mesh::actions::build_nodes_parallel_fields(m->nodes());
   mesh::actions::build_periodic_boundaries(*m);

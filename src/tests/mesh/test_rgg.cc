@@ -22,7 +22,6 @@
 #include "atlas/grid.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/detail/grid/reduced/ReducedGaussian.h"
 #include "atlas/grid/detail/grid/CustomStructured.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/Config.h"
@@ -62,29 +61,31 @@ namespace test {
 using eckit::geometry::LAT;
 using eckit::geometry::LON;
 
-class DebugGrid: public grid::detail::grid::reduced::ReducedGaussian { public: DebugGrid(); };
-DebugGrid::DebugGrid()
-{
-  int N=5;
-  long lon[] = {
+
+static grid::ReducedGaussianGrid debug_grid() {
+  return {
     6,
     10,
     18,
     22,
     22,
+    22,
+    22,
+    18,
+    10,
+    6
   };
-  grid::detail::grid::reduced::ReducedGaussian::setup(N,lon);
 }
 
-static grid::StructuredGrid debug_grid() { return grid::StructuredGrid( new DebugGrid() ); }
+static grid::StructuredGrid minimal_grid(int N, long lon[]) {
+  std::vector<long> nx(2*N);
+  for( long j=0; j<N; ++j ){
+    nx[j] = lon[j];
+    nx[nx.size()-1-j] = nx[j];
+  }
+  return grid::ReducedGaussianGrid(nx);
+}
 
-
-class MinimalGrid:   public grid::detail::grid::reduced::ReducedGaussian {
-	public:
-		MinimalGrid(int N, long lon[]) : ReducedGaussian(N,lon) {}
-};
-
-static grid::StructuredGrid minimal_grid(int N, long lon[]) { return grid::StructuredGrid( new MinimalGrid(N,lon) ); }
 
 
 double compute_lonlat_area(mesh::Mesh& mesh)

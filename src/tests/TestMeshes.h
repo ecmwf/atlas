@@ -11,13 +11,12 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid.h"
 #include "atlas/mesh/generators/Structured.h"
-#include "atlas/grid/detail/grid/reduced/ReducedGaussian.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::grid::detail::grid::reduced;
+// using namespace atlas::grid::detail::grid::reduced;
 
 namespace atlas {
 namespace test {
@@ -28,9 +27,9 @@ mesh::Mesh::Ptr generate_mesh( const StructuredGrid& grid )
   return mesh::Mesh::Ptr( generate( grid ) );
 }
 
-mesh::Mesh::Ptr generate_mesh(int nlat, long lon[] )
+mesh::Mesh::Ptr generate_mesh( std::initializer_list<long> nx )
 {
-  return generate_mesh( StructuredGrid( new ReducedGaussian(nlat,lon) ) );
+  return generate_mesh( ReducedGaussianGrid(nx) );
 }
 
 

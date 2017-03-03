@@ -224,6 +224,7 @@ protected: // methods
 
     void compute_true_periodicity();
 
+
     void setup(
         const YSpace&              yspace,
         const std::vector<long>&   nx,
@@ -231,12 +232,14 @@ protected: // methods
         const std::vector<double>& xmax,
         const std::vector<double>& dx );
 
+    /*
     void setup(
         const YSpace&     yspace,
         const long&       nx,
         const double&     xmin,
         const double&     xmax,
         const double&     dx );
+    */
 
 protected:
 

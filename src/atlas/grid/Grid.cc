@@ -20,10 +20,10 @@
 #include "atlas/grid/Domain.h"
 #include "atlas/grid/Projection.h"
 #include "atlas/grid/detail/grid/Structured.h"
-#include "atlas/grid/detail/grid/Regular.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
 #include "atlas/util/Config.h"
+#include "atlas/grid/detail/grid/types/Gaussian.h"
 
 namespace atlas {
 namespace grid {
@@ -217,6 +217,15 @@ RegularGrid::RegularGrid( const Config& p ):
     grid_( regular_grid(get()) ) {
     if( grid_ ) nx_ = StructuredGrid::nx().front();
 }
+
+ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx ):
+    ReducedGaussianGrid::Grid( reduced_gaussian(nx) ) {
+}
+
+ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<long>& nx ):
+    ReducedGaussianGrid( std::vector<long>(nx) ) {
+}
+
 
 } // namespace Grid
 } // namespace atlas

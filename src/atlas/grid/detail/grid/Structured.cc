@@ -198,7 +198,6 @@ void Structured::setup_cropped(const size_t ny, const double y[], const long nx[
 }
 */
 
-
 void Structured::setup(
     const YSpace&              yspace,
     const std::vector<long>&   nx,
@@ -232,6 +231,7 @@ void Structured::setup(
   compute_true_periodicity();
 }
 
+/*
 void Structured::setup(
     const YSpace&     yspace,
     const long&       nx,
@@ -254,6 +254,7 @@ void Structured::setup(
 
   compute_true_periodicity();
 }
+*/
 
 namespace {
   struct EarthCentred {

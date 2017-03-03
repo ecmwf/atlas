@@ -11,12 +11,13 @@
 #include "atlas/grid/Domain.h"
 
 #include "atlas/grid/detail/domain/Domain.h"
+#include "atlas/grid/detail/domain/EmptyDomain.h"
 
 namespace atlas {
 namespace grid {
 
 Domain::Domain():
-    domain_( nullptr ){
+    domain_( new domain::EmptyDomain() ) {
 }
 
 Domain::Domain( const Domain& domain):

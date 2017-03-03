@@ -15,10 +15,6 @@
 #define BOOST_TEST_MODULE TestGrids
 #include "ecbuild/boost_test_framework.h"
 
-
-#include "atlas/grid/detail/grid/reduced/ReducedGaussian.h"
-
-
 #include "atlas/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid.h"
@@ -27,9 +23,10 @@
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
 
-using Structured = atlas::grid::StructuredGrid;
+using StructuredGrid = atlas::grid::StructuredGrid;
 using Grid       = atlas::grid::Grid;
 using Regular    = atlas::grid::RegularGrid;
+using ReducedGaussianGrid    = atlas::grid::ReducedGaussianGrid;
 
 
 namespace atlas {
@@ -37,7 +34,7 @@ namespace test {
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
-  Structured structured = Grid("N80");
+  StructuredGrid structured = Grid("N80");
 
   Grid grid = Grid("N24");
 
@@ -69,21 +66,21 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg )
 {
-  Structured grid;
+  StructuredGrid grid;
   
   grid = Grid( "N32" );
   BOOST_CHECK_EQUAL(grid.ny(),64);
   BOOST_CHECK_EQUAL(grid.npts(),6114);
 
-  long nlon[] = {4,6,8};
-  grid = Grid( new grid::detail::grid::reduced::ReducedGaussian(3,nlon) );
+  grid = grid::ReducedGaussianGrid( {4,6,8,8,6,4} );
+
   BOOST_CHECK_EQUAL(grid.ny(),6);
   BOOST_CHECK_EQUAL(grid.npts(),8+12+16);
 }
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
 {
-  Structured grid( "N32" );
+  StructuredGrid grid( "N32" );
 
   // BOOST_CHECK_EQUAL(grid.N(),    32);
   BOOST_CHECK_EQUAL(grid.ny(), 64);
@@ -143,9 +140,9 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
 
 BOOST_AUTO_TEST_CASE( test_reducedgaussian )
 {
-  Structured N640( "N640" );
+  StructuredGrid N640( "N640" );
   BOOST_CHECK_EQUAL(N640.npts(),2140702);
-  Structured custom( new grid::detail::grid::reduced::ReducedGaussian(N640.ny()/2, N640.nx().data()) );
+  ReducedGaussianGrid custom( N640.nx() );
   BOOST_CHECK_EQUAL(N640.npts(),custom.npts());
 }
 
