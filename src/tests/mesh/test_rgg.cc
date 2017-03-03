@@ -22,7 +22,6 @@
 #include "atlas/grid.h"
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/detail/grid/CustomStructured.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/Config.h"
 #include "atlas/mesh/Mesh.h"
@@ -510,20 +509,20 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
     -72,
     -90
   };
-  grid::StructuredGrid grid( new grid::detail::grid::CustomStructured(N,lat,lon) );
-
-  bool three_dimensional = true;
-
-  mesh::generators::Structured generate( util::Config
-        ("3d",three_dimensional)
-        ("triangulate",false) );
-
-  mesh::Mesh::Ptr m (generate(grid));
-
-  util::Config options;
-  if( three_dimensional ) options.set("coordinates","xyz");
-  output::Gmsh gmsh("rll.msh",options);
-  gmsh.write(*m);
+  // grid::StructuredGrid grid( new grid::detail::grid::CustomStructured(N,lat,lon) );
+  //
+  // bool three_dimensional = true;
+  //
+  // mesh::generators::Structured generate( util::Config
+  //       ("3d",three_dimensional)
+  //       ("triangulate",false) );
+  //
+  // mesh::Mesh::Ptr m (generate(grid));
+  //
+  // util::Config options;
+  // if( three_dimensional ) options.set("coordinates","xyz");
+  // output::Gmsh gmsh("rll.msh",options);
+  // gmsh.write(*m);
 
 }
 

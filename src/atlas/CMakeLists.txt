@@ -33,13 +33,6 @@ atlas.cc
 
 list( APPEND atlas_grid_srcs
 
-grid/detail/grid/Gaussian.h
-grid/detail/grid/Gaussian.cc
-grid/detail/grid/LonLat.h
-grid/detail/grid/LonLat.cc
-grid/detail/grid/Regional.h
-grid/detail/grid/Regional.cc
-
 grid.h
 grid/Grid.cc
 grid/Grid.h
@@ -54,6 +47,7 @@ grid/Spacing.h
 grid/Partitioner.h
 grid/Partitioner.cc
 grid/Iterator.h
+
 grid/detail/grid.cc
 grid/detail/grid/Grid.h
 grid/detail/grid/Grid.cc
@@ -61,6 +55,13 @@ grid/detail/grid/Structured.cc
 grid/detail/grid/Structured.h
 grid/detail/grid/Unstructured.cc
 grid/detail/grid/Unstructured.h
+grid/detail/grid/Gaussian.h
+grid/detail/grid/Gaussian.cc
+grid/detail/grid/LonLat.h
+grid/detail/grid/LonLat.cc
+grid/detail/grid/Regional.h
+grid/detail/grid/Regional.cc
+
 grid/detail/domain/Domain.cc
 grid/detail/domain/Domain.h
 grid/detail/domain/RectangularDomain.h
@@ -73,12 +74,14 @@ grid/detail/domain/GlobalDomain.h
 grid/detail/domain/GlobalDomain.cc
 grid/detail/domain/ZonalBandDomain.h
 grid/detail/domain/ZonalBandDomain.cc
+
 grid/detail/partitioners/EqualRegionsPartitioner.cc
 grid/detail/partitioners/EqualRegionsPartitioner.h
 grid/detail/partitioners/CheckerBoardPartitioner.cc
 grid/detail/partitioners/CheckerBoardPartitioner.h
 grid/detail/partitioners/Partitioner.cc
 grid/detail/partitioners/Partitioner.h
+
 grid/detail/projection/Projection.cc
 grid/detail/projection/Projection.h
 grid/detail/projection/Rotation.cc
@@ -91,6 +94,7 @@ grid/detail/projection/SchmidtProjection.cc
 grid/detail/projection/SchmidtProjection.h
 grid/detail/projection/MercatorProjection.cc
 grid/detail/projection/MercatorProjection.h
+
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h
 grid/detail/spacing/CustomSpacing.h
@@ -128,6 +132,7 @@ grid/detail/spacing/gaussian/N1600.cc  # TL3199
 grid/detail/spacing/gaussian/N2000.cc  # TL3999
 grid/detail/spacing/gaussian/N4000.cc  # TL7999
 grid/detail/spacing/gaussian/N8000.cc  # TL15999
+
 grid/detail/pl/classic_gaussian/N.h
 grid/detail/pl/classic_gaussian/N.cc
 grid/detail/pl/classic_gaussian/PointsPerLatitude.h
@@ -157,8 +162,8 @@ grid/detail/pl/classic_gaussian/N4000.cc  # TL7999
 grid/detail/pl/classic_gaussian/N8000.cc  # TL15999
 
 # TODO: refactor to remove these grids
-grid/detail/grid/CustomStructured.cc
-grid/detail/grid/CustomStructured.h
+# grid/detail/grid/CustomStructured.cc
+# grid/detail/grid/CustomStructured.h
 # grid/detail/grid/reduced/ReducedGaussian.h
 # grid/detail/grid/reduced/ReducedGaussian.cc
 # grid/detail/grid/Regular.h
