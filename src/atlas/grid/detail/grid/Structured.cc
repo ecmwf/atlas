@@ -36,7 +36,6 @@ Structured::Structured() :
     N_(0) {
 }
 
-
 Structured::Structured( Projection projection, XSpace* xspace, YSpace yspace, Domain domain)
 {
   // Copry members
@@ -94,6 +93,24 @@ Structured::XSpace::XSpace(long _ny) :
   xmax.reserve(ny);
   dx  .reserve(ny);
 }
+
+Structured::XSpace::XSpace( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint ) :
+  ny(N.size()),
+  nx(N),
+  xmin(ny,interval[0]),
+  xmax(ny,interval[1]),
+  dx(ny) {
+  nxmin = std::numeric_limits<size_t>::max();
+  nxmax = 0;
+  double length = interval[1] - interval[0];
+  for( size_t j=0; j<ny; ++j ) {
+    nxmin = std::min( nxmin, size_t(nx[j]) );
+    nxmax = std::max( nxmax, size_t(nx[j]) );
+    dx[j] = endpoint ? length/double(nx[j]-1) : length/double(nx[j]);
+  }
+}
+
+
 
 /*
 void Structured::setup(
@@ -478,6 +495,22 @@ extern "C" {
         delete This;
     }
 
+
+    Structured* atlas__grid__regular__RegularGaussian(size_t N) {
+      NOTIMP;
+    }
+    Structured* atlas__grid__regular__RegularLonLat(size_t nlon, size_t nlat) {
+      NOTIMP;
+    }
+    Structured* atlas__grid__regular__ShiftedLonLat(size_t nlon, size_t nlat) {
+      NOTIMP;
+    }
+    Structured* atlas__grid__regular__ShiftedLon(size_t nlon, size_t nlat) {
+      NOTIMP;
+    }
+    Structured* atlas__grid__regular__ShiftedLat(size_t nlon, size_t nlat) {
+      NOTIMP;
+    }
 
 }
 

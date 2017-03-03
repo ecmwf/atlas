@@ -132,20 +132,8 @@ grid/detail/spacing/gaussian/N4000.cc  # TL7999
 grid/detail/spacing/gaussian/N8000.cc  # TL15999
 grid/detail/grid/CustomStructured.cc
 grid/detail/grid/CustomStructured.h
-grid/detail/grid/regular/GlobalLonLat.h
-grid/detail/grid/regular/GlobalLonLat.cc
 grid/detail/grid/regular/RegularRegional.h
 grid/detail/grid/regular/RegularRegional.cc
-grid/detail/grid/regular/RegularLonLat.h
-grid/detail/grid/regular/RegularLonLat.cc
-grid/detail/grid/regular/ShiftedLon.h
-grid/detail/grid/regular/ShiftedLon.cc
-grid/detail/grid/regular/ShiftedLat.h
-grid/detail/grid/regular/ShiftedLat.cc
-grid/detail/grid/regular/ShiftedLonLat.h
-grid/detail/grid/regular/ShiftedLonLat.cc
-grid/detail/grid/regular/RegularGaussian.h
-grid/detail/grid/regular/RegularGaussian.cc
 grid/detail/grid/reduced/pl/classic/N.h
 grid/detail/grid/reduced/pl/classic/N.cc
 grid/detail/grid/reduced/pl/classic/PointsPerLatitude.h

@@ -16,8 +16,6 @@
 #include "ecbuild/boost_test_framework.h"
 
 
-#include "atlas/grid/detail/grid/regular/RegularLonLat.h"
-#include "atlas/grid/detail/grid/regular/ShiftedLat.h"
 #include "atlas/grid/detail/grid/reduced/ReducedGaussian.h"
 
 
@@ -129,11 +127,11 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(grid.npts(), 512);
   // BOOST_CHECK_EQUAL(gridptr->type(),"shifted_lat");
 
-  Regular ll_poles( new grid::detail::grid::regular::RegularLonLat(4, 3) );
+  Regular ll_poles( "L4x3" );
   BOOST_CHECK_EQUAL( ll_poles.nx(), 4);
   BOOST_CHECK_EQUAL( ll_poles.ny(), 3);
 
-  Regular ll_nopoles( new grid::detail::grid::regular::ShiftedLat(4, 2) );
+  Regular ll_nopoles( "Slat4x2" );
   BOOST_CHECK_EQUAL( ll_nopoles.nx(), 4);
   BOOST_CHECK_EQUAL( ll_nopoles.ny(), 2);
   BOOST_CHECK_CLOSE( ll_nopoles.y(0), 45., 1.e-5);

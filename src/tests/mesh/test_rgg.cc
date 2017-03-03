@@ -23,7 +23,6 @@
 #include "atlas/mesh/generators/Structured.h"
 #include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/grid/reduced/ReducedGaussian.h"
-#include "atlas/grid/detail/grid/regular/ShiftedLonLat.h"
 #include "atlas/grid/detail/grid/CustomStructured.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/Config.h"
@@ -145,7 +144,7 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
 
 BOOST_AUTO_TEST_CASE( test_partitioner )
 {
-  grid::Grid g( new grid::detail::grid::regular::ShiftedLonLat(4,2) );
+  grid::Grid g( "S4x2" );
 
   // 12 partitions
   {

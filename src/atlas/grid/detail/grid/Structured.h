@@ -12,6 +12,7 @@
 #pragma once
 
 #include <memory>
+#include <array>
 
 #include "eckit/memory/Builder.h"
 #include "atlas/grid/detail/grid/Grid.h"
@@ -95,6 +96,8 @@ public:
     struct XSpace {
 
       XSpace(long ny);
+
+      XSpace( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint=true );
 
       size_t ny;
 

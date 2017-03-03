@@ -15,7 +15,6 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/detail/grid/regular/GlobalLonLat.h"
 #include "atlas/internals/IsGhost.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/ErrorHandling.h"
