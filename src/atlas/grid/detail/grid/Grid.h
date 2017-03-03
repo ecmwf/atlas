@@ -91,29 +91,12 @@ public:  // methods
     //        classes should compute it at construction
     virtual size_t npts() const = 0;
 
-    /// Fill provided parameter with grid points, as (lon,lat) values
-    /// @post resizes the vector
-    virtual void lonlat(std::vector<Point>&) const = 0;
-    //virtual void xy(std::vector<PointXY>&) const = 0;
-
-    /// Fills the provided vector with the (lon,lat) values
-    /// @post resizes the vector
-    void fillLonLat(std::vector<double>&) const;
-
-    /// Fills the provided array with the (lon,lat) values
-    /// @note Assumes that the input array has been allocated with correct size
-    /// @param array is an array already allocated with enough size to store all the latlon values
-    /// @param arraySize is the size of the array
-    void fillLonLat(double array[], size_t arraySize) const;
-
-    //virtual std::string type() const = 0;
-
     virtual std::string getOptimalMeshGenerator() const;
 
     virtual Spec spec() const;
 
     virtual bool same(const grid::Grid&) const;
-    
+
     virtual Iterator* begin() const=0;
     virtual Iterator* end()   const=0;
 

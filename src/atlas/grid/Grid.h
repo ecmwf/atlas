@@ -48,7 +48,7 @@ public:
     using Domain     = grid::Domain;
     using Projection = grid::Projection;
     using Iterator   = grid::Iterator;
-    
+
     using iterator = Iterator;
     using const_iterator = iterator;
 
@@ -73,7 +73,7 @@ public:
     std::string uid() const { return grid_->uid(); }
 
     Spec spec() const { return grid_->spec(); }
-    
+
     iterator begin() const { return grid_->begin(); }
     iterator end()   const { return grid_->end(); }
 
@@ -111,27 +111,27 @@ public:
     }
 
     inline size_t nx( size_t j ) const {
-        return grid_->nlon(j);;
+        return grid_->nx(j);;
     }
 
     inline const std::vector<long>& nx() const {
-        return grid_->pl();
+        return grid_->nx();
     }
 
     inline const long nxmax() const {
-        return grid_->nlonmax();
+        return grid_->nxmax();
     }
 
     inline const std::vector<double>& y() const {
-        return grid_->latitudes();
+        return grid_->y();
     }
 
     inline double x( const size_t i, const size_t j ) const {
-        return grid_->lon(j,i);
+        return grid_->x(i,j);
     }
 
     inline double y( const size_t j ) const {
-        return grid_->lat(j);
+        return grid_->y(j);
     }
 
     void xy( const size_t i, const size_t j, double xy[] ) const {
@@ -144,7 +144,7 @@ public:
     }
 
     PointLonLat lonlat( const size_t i, const size_t j ) const {
-      return grid_->geolonlat(i,j);
+      return grid_->lonlat(i,j);
     }
 
     inline bool reduced() const {
@@ -152,7 +152,7 @@ public:
     }
 
     bool periodic() const {
-        return grid_->isPeriodicX();
+        return grid_->periodic();
     }
 
     const YSpace& yspace() const {
@@ -186,13 +186,13 @@ public:
     size_t nx() const { return nx_; }
 
     inline double x( const size_t i ) const {
-        return StructuredGrid::x(i,0);
+        return grid_->x(i,0);
     }
 
     using StructuredGrid::y;
 
     inline double y( const size_t j ) const {
-        return grid_->lat(j);
+        return grid_->y(j);
     }
 
     using StructuredGrid::xy;

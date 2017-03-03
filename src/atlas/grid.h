@@ -31,6 +31,7 @@ public:
 
 public:
 
+  GridCreator( const std::string& names );
   GridCreator( const std::vector<std::string>& names );
   GridCreator( const std::string& type, const std::vector<std::string>& names );
 

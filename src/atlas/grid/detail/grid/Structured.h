@@ -49,11 +49,11 @@ public:
 
     virtual bool next(PointXY& xy) {
 
-       if( j_<grid_.ny() && i_<grid_.nlon(j_) ) {
+       if( j_<grid_.ny() && i_<grid_.nx(j_) ) {
 
-         xy = grid_.xy(j_,i_++);
+         xy = grid_.xy(i_++,j_);
 
-         if( i_==grid_.nlon(j_) ) {
+         if( i_==grid_.nx(j_) ) {
            j_++;
            i_=0;
          }
@@ -64,12 +64,12 @@ public:
 
 
     virtual const PointXY operator *() const {
-        return grid_.xy(j_,i_);
+        return grid_.xy(i_,j_);
     }
 
     virtual const Grid::Iterator& operator ++() {
         ++i_;
-        if( i_ == grid_.nlon(j_) ) {
+        if( i_ == grid_.nx(j_) ) {
           ++j_;
           i_=0;
         }
@@ -138,12 +138,6 @@ public:
         return npts_;
     }
 
-    virtual void lonlat(std::vector<Point>&) const;
-
-    //virtual std::string type() const {
-    //    return grid_type_;
-     //}
-
     virtual Spec spec() const;
 
     /**
@@ -162,65 +156,56 @@ public:
         return y_.size();
     }
 
-    inline size_t nlat() const {
-        return y_.size();
+    inline size_t nx( size_t j ) const {
+        return static_cast<size_t>(nx_[j]);
     }
 
-    inline size_t nlon( size_t jlat ) const {
-        return static_cast<size_t>(nx_[jlat]);
-    }
-
-    inline size_t nlonmax() const {
+    inline size_t nxmax() const {
         return nxmax_;
     }
 
-    inline size_t nlonmin() const {
+    inline size_t nxmin() const {
         return nxmin_;
     }
 
-    inline const std::vector<long>& pl() const {
+    inline const std::vector<long>& nx() const {
         return nx_;
     }
 
-    inline const std::vector<double>& latitudes() const {
+    inline const std::vector<double>& y() const {
         return y_;
     }
 
-    inline double lon( const size_t jlat, const size_t jlon ) const {
-        return xmin_[jlat] + static_cast<double>(jlon) * dx_[jlat];
+    inline double x( const size_t i, const size_t j ) const {
+        return xmin_[j] + static_cast<double>(i) * dx_[j];
     }
 
-    inline double lat( const size_t jlat ) const {
-        return y_[jlat];
+    inline double y( const size_t j ) const {
+        return y_[j];
     }
 
-    inline void lonlat( const size_t jlat, const size_t jlon, double crd[] ) const {
-        crd[0] = lon(jlat,jlon);
-        crd[1] = lat(jlat);
+    inline void xy( const size_t i, const size_t j, double crd[] ) const {
+        crd[0] = x(i,j);
+        crd[1] = y(j);
     }
 
-    inline void xy( const size_t jlat, const size_t jlon, double p[] ) const {
-        p[0] = lon(jlat,jlon);
-        p[1] = lat(jlat);
+    PointXY xy( const size_t i, const size_t j ) const {
+        return PointXY( x(i,j), y(j) );
     }
 
-    PointXY xy( const size_t jlat, const size_t jlon ) const {
-        return PointXY( lon(jlat,jlon), lat(jlat) );
+    PointLonLat lonlat( const size_t i, const size_t j ) const {
+        return projection_.lonlat( xy(i,j) );
     }
 
-    PointLonLat geolonlat( const size_t jlon, const size_t jlat ) const {
-        return projection_.lonlat( xy(jlat,jlon) );
-    }
-
-    void geoLonlat(const size_t jlon, const size_t jlat, PointLonLat &Pll) const {
-      Pll.assign( projection_.lonlat( xy(jlat,jlon) ) );
+    void lonlat(const size_t i, const size_t j, PointLonLat &Pll) const {
+      Pll.assign( projection_.lonlat( xy(i,j) ) );
     }
 
     inline bool reduced() const {
-        return nlonmax() != nlonmin();
+        return nxmax() != nxmin();
     }
 
-    bool isPeriodicX() const { return periodic_x_; }
+    bool periodic() const { return periodic_x_; }
 
     const YSpace& yspace() const { return yspace_; }
 

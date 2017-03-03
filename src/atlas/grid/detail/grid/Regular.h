@@ -15,8 +15,8 @@ public:
 
     virtual Spec spec() const;
 
-    size_t nlon()           const { return nlonmin(); }               // same for all latitudes
-    double lon(size_t jlon) const { return Structured::lon(0,jlon); } // same for all latitudes
+    size_t nx()        const { return nxmin(); }            // same for every y
+    double x(size_t i) const { return Structured::x(i,0); } // same for every y
 
 protected:
 

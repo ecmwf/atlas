@@ -1,5 +1,5 @@
 {
-  "type" : "regular_regional",
+  "type" : "regional",
   "nx" : 50,
   "ny" : 40,
   "dx" : 50000,

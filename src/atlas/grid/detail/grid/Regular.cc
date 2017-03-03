@@ -20,8 +20,8 @@ Grid::Spec Regular::spec() const {
     grid_spec=Grid::spec();
 
     // specific specs
-    grid_spec.set("nx",nlon());
-    grid_spec.set("ny",nlat());
+    grid_spec.set("nx",nx());
+    grid_spec.set("ny",ny());
 
     return grid_spec;
 }

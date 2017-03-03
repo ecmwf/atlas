@@ -130,10 +130,6 @@ grid/detail/spacing/gaussian/N1600.cc  # TL3199
 grid/detail/spacing/gaussian/N2000.cc  # TL3999
 grid/detail/spacing/gaussian/N4000.cc  # TL7999
 grid/detail/spacing/gaussian/N8000.cc  # TL15999
-grid/detail/grid/CustomStructured.cc
-grid/detail/grid/CustomStructured.h
-grid/detail/grid/regular/RegularRegional.h
-grid/detail/grid/regular/RegularRegional.cc
 grid/detail/grid/reduced/pl/classic/N.h
 grid/detail/grid/reduced/pl/classic/N.cc
 grid/detail/grid/reduced/pl/classic/PointsPerLatitude.h
@@ -162,10 +158,12 @@ grid/detail/grid/reduced/pl/classic/N2000.cc  # TL3999
 grid/detail/grid/reduced/pl/classic/N4000.cc  # TL7999
 grid/detail/grid/reduced/pl/classic/N8000.cc  # TL15999
 
+# TODO: refactor to remove these grids
+grid/detail/grid/CustomStructured.cc
+grid/detail/grid/CustomStructured.h
 grid/detail/grid/reduced/ReducedGaussian.h
 grid/detail/grid/reduced/ReducedGaussian.cc
-grid/detail/grid/reduced/ReducedLonLat.h
-grid/detail/grid/reduced/ReducedLonLat.cc
+
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_grid_srcs

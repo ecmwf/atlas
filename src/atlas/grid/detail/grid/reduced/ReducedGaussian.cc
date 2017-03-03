@@ -110,7 +110,7 @@ Grid::Spec ReducedGaussian::spec() const {
     grid_spec=Grid::spec();
 
     // specs for reduced gaussian
-    grid_spec.set("pl", eckit::makeVectorValue(pl()));
+    grid_spec.set("pl", eckit::makeVectorValue(nx()));
 
     return grid_spec;
 }

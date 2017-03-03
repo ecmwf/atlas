@@ -107,8 +107,6 @@ static void init() {
     typed_grids = new GridCreator::Registry();
 }
 
-static eckit::Translator<std::string,int> to_int;
-
 }  // anonymous namespace
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -120,6 +118,18 @@ const GridCreator::Registry& GridCreator::nameRegistry() {
 const GridCreator::Registry& GridCreator::typeRegistry() {
   return *typed_grids;
 }
+
+
+GridCreator::GridCreator( const std::string& type ) :
+  names_(),
+  type_(type) {
+  pthread_once(&once, init);
+  eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+
+  ASSERT(typed_grids->find(type_) == typed_grids->end());
+  (*typed_grids)[type] = this;
+}
+
 
 GridCreator::GridCreator( const std::vector<std::string>& names ) :
   names_(names),

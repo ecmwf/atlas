@@ -128,16 +128,6 @@ size_t Unstructured::npts() const {
 }
 
 
-void Unstructured::lonlat(std::vector<Grid::Point>& crds) const {
-    ASSERT(points_);
-    crds.resize(npts());
-    for (size_t i = 0; i < npts(); ++i)
-        crds[i].assign(
-            (*points_)[i].lon(),
-            (*points_)[i].lat() );
-}
-
-
 Grid::Spec Unstructured::spec() const {
     if (cached_spec_)
         return *cached_spec_;

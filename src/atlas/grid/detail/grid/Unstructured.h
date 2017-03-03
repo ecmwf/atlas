@@ -47,7 +47,7 @@ public:
         return false;
       }
     }
-    
+
     virtual const PointXY operator *() const {
         return grid_.xy(n_);
     }
@@ -88,8 +88,6 @@ public: // methods
     virtual ~Unstructured();
 
     virtual size_t npts() const;
-
-    virtual void lonlat(std::vector< Point >&) const;
 
     virtual Spec spec() const;
 
