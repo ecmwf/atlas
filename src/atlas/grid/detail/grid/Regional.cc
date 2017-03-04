@@ -2,6 +2,7 @@
 
 #include "atlas/grid/detail/domain/RectangularDomain.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
+#include "atlas/grid/detail/grid/GridBuilder.h"
 
 using atlas::grid::domain::RectangularDomain;
 using atlas::grid::spacing::LinearSpacing;
@@ -184,17 +185,17 @@ bool ConfigParser::parse( const Projection& projection, const Grid::Config& conf
 }
 
 
-static class regional : public GridCreator {
+static class regional : public GridBuilder {
 
 public:
 
-  regional() : GridCreator("regional") {}
+  regional() : GridBuilder("regional") {}
 
   virtual void print(std::ostream& os) const {
     //os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name ) const {
+  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
     eckit::NotImplemented( "There are no named regional grids implemented.", Here() );
     return nullptr;
   }

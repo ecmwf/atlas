@@ -9,13 +9,16 @@
  */
 
 
-#include "atlas/grid/detail/grid/Grid.h"
+#include "Grid.h"
 
 #include <vector>
+
 #include "eckit/memory/Factory.h"
+
 #include "atlas/grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/grid/detail/grid/GridBuilder.h"
 
 
 namespace atlas {
@@ -45,23 +48,23 @@ const Grid* Grid::create(const Config& config) {
 
     std::string name;
     if( config.get("name",name) ) {
-        return create(name);
+        return create(name,config);
     }
 
     std::string type;
     if( config.get("type",type) ) {
-        const GridCreator::Registry& registry = GridCreator::typeRegistry();
+        const GridBuilder::Registry& registry = GridBuilder::typeRegistry();
         if( registry.find(type) != registry.end() ) {
-            const GridCreator& gc = *registry.at(type);
+            const GridBuilder& gc = *registry.at(type);
             return gc.create( config );
         }
     }
 
 //*
-    eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
-    if (fact.exists(type)) {
-        return fact.get(type).create(config);
-    }
+    // eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
+    // if (fact.exists(type)) {
+    //     return fact.get(type).create(config);
+    // }
 //*/
     if( name.size() ) {
       Log::info() << "name provided: " << name << std::endl;
@@ -77,11 +80,11 @@ const Grid* Grid::create(const Config& config) {
 }
 
 
-const Grid* Grid::create( const std::string& name ) {
+const Grid* Grid::create( const std::string& name, const Grid::Config& config ) {
 
-      const GridCreator::Registry& registry = GridCreator::nameRegistry();
-      for( GridCreator::Registry::const_iterator it = registry.begin(); it!=registry.end(); ++it ) {
-        const Grid* grid = it->second->create(name);
+      const GridBuilder::Registry& registry = GridBuilder::nameRegistry();
+      for( GridBuilder::Registry::const_iterator it = registry.begin(); it!=registry.end(); ++it ) {
+        const Grid* grid = it->second->create(name,config);
         if( grid ) {
           return grid;
         }
@@ -91,11 +94,11 @@ const Grid* Grid::create( const std::string& name ) {
       std::ostringstream log;
       log << "Could not construct Grid from the name \""<< name<< "\"\n";
       log << "Accepted names are: \n";
-      for( GridCreator::Registry::const_iterator it = registry.begin(); it!=registry.end(); ++it ) {
+      for( GridBuilder::Registry::const_iterator it = registry.begin(); it!=registry.end(); ++it ) {
         log << "  -  " << *it->second << "\n";
       }
       throw eckit::BadParameter(log.str());
-//    return GridCreator::createNamed(name);
+//    return GridBuilder::createNamed(name);
 }
 
 

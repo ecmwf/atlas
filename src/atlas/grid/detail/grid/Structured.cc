@@ -19,7 +19,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
-#include "atlas/grid.h"
+#include "atlas/grid/detail/grid/GridBuilder.h"
 
 namespace atlas {
 namespace grid {
@@ -32,15 +32,16 @@ std::string Structured::static_type() {
 }
 
 std::string Structured::name() const {
-  return "structured";
+  return name_;
 }
 
-Structured::Structured() :
-    Grid() {
+Structured::Structured( Projection p, XSpace* xspace, YSpace yspace, Domain domain ):
+    Structured( Structured::static_type(), p, xspace, yspace, domain ) {
 }
 
-Structured::Structured( Projection projection, XSpace* xspace, YSpace yspace, Domain domain)
-{
+Structured::Structured( const std::string& name, Projection projection, XSpace* xspace, YSpace yspace, Domain domain):
+  Grid(),
+  name_(name) {
   // Copry members
   if( projection )
     projection_ = projection;
@@ -351,17 +352,17 @@ Grid::Spec Structured::spec() const {
 
 namespace { // anonymous
 
-static class structured : public GridCreator {
+static class structured : public GridBuilder {
 
 public:
 
-    structured(): GridCreator( "structured" ){}
+    structured(): GridBuilder( "structured" ){}
 
     virtual void print(std::ostream& os) const {
         os << std::left << std::setw(20) << " " << "Structured grid";
     }
 
-    virtual const atlas::grid::Grid::grid_t* create( const std::string& name ) const {
+    virtual const atlas::grid::Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
         throw eckit::NotImplemented( "Cannot create structured grid from name", Here() );
     }
   

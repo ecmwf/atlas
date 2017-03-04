@@ -9,7 +9,7 @@
  */
 
 
-#include "atlas/grid.h"
+#include "GridBuilder.h"
 
 #include <regex.h>
 #include <iomanip>
@@ -95,32 +95,32 @@ class Regex {
 };
 
 static eckit::Mutex *local_mutex = 0;
-static GridCreator::Registry *named_grids = 0;
-static GridCreator::Registry *typed_grids = 0;
+static GridBuilder::Registry *named_grids = 0;
+static GridBuilder::Registry *typed_grids = 0;
 
 
 static pthread_once_t once = PTHREAD_ONCE_INIT;
 
 static void init() {
     local_mutex = new eckit::Mutex();
-    named_grids = new GridCreator::Registry();
-    typed_grids = new GridCreator::Registry();
+    named_grids = new GridBuilder::Registry();
+    typed_grids = new GridBuilder::Registry();
 }
 
 }  // anonymous namespace
 
 //---------------------------------------------------------------------------------------------------------------------
 
-const GridCreator::Registry& GridCreator::nameRegistry() {
+const GridBuilder::Registry& GridBuilder::nameRegistry() {
   return *named_grids;
 }
 
-const GridCreator::Registry& GridCreator::typeRegistry() {
+const GridBuilder::Registry& GridBuilder::typeRegistry() {
   return *typed_grids;
 }
 
 
-GridCreator::GridCreator( const std::string& type ) :
+GridBuilder::GridBuilder( const std::string& type ) :
   names_(),
   type_(type) {
   pthread_once(&once, init);
@@ -131,7 +131,7 @@ GridCreator::GridCreator( const std::string& type ) :
 }
 
 
-GridCreator::GridCreator( const std::vector<std::string>& names ) :
+GridBuilder::GridBuilder( const std::vector<std::string>& names ) :
   names_(names),
   type_() {
   pthread_once(&once, init);
@@ -142,7 +142,7 @@ GridCreator::GridCreator( const std::vector<std::string>& names ) :
   }
 }
 
-GridCreator::GridCreator( const std::string& type, const std::vector<std::string>& names ) :
+GridBuilder::GridBuilder( const std::string& type, const std::vector<std::string>& names ) :
   names_(names),
   type_(type) {
   pthread_once(&once, init);
@@ -157,7 +157,7 @@ GridCreator::GridCreator( const std::string& type, const std::vector<std::string
   (*typed_grids)[type] = this;
 }
 
-GridCreator::~GridCreator() {
+GridBuilder::~GridBuilder() {
     pthread_once(&once, init);
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
@@ -172,7 +172,7 @@ GridCreator::~GridCreator() {
     }
 }
 
-const Grid::grid_t* GridCreator::create( const Grid::Config& config ) const {
+const Grid::grid_t* GridBuilder::create( const Grid::Config& config ) const {
 
   eckit::Factory<Grid::grid_t>& fact = eckit::Factory<Grid::grid_t>::instance();
 
@@ -202,7 +202,7 @@ const Grid::grid_t* GridCreator::create( const Grid::Config& config ) const {
 }
 
 
-bool GridCreator::match( const std::string& string, std::vector<std::string>& matches, int &id ) const {
+bool GridBuilder::match( const std::string& string, std::vector<std::string>& matches, int &id ) const {
   id = 0;
   for( const std::string& name : names_ ) {
     if( Regex(name).match(string,matches) )
@@ -212,9 +212,9 @@ bool GridCreator::match( const std::string& string, std::vector<std::string>& ma
   return false;
 }
 
-std::string GridCreator::type() const { return type_; }
+std::string GridBuilder::type() const { return type_; }
 
-std::ostream& operator<<( std::ostream& os, const GridCreator& g ) {
+std::ostream& operator<<( std::ostream& os, const GridBuilder& g ) {
   g.print(os);
   return os;
 }
@@ -223,4 +223,3 @@ std::ostream& operator<<( std::ostream& os, const GridCreator& g ) {
 
 } // namespace grid
 } // namespace atlas
-

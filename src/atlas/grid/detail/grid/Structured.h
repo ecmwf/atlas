@@ -128,8 +128,7 @@ public:
 
 public:
 
-    Structured();
-
+    Structured( const std::string&, Projection, XSpace*, YSpace, Domain );
     Structured( Projection, XSpace*, YSpace, Domain );
 
     virtual ~Structured();
@@ -271,6 +270,7 @@ protected:
     bool periodic_x_;
 
 private:
+    std::string name_ = {"structured"};
     std::unique_ptr<XSpace> xspace_;
     YSpace yspace_;
     mutable std::string type_;

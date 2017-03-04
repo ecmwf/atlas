@@ -58,7 +58,7 @@ public:  // methods
 
     static const Grid* create( const Config& );
 
-    static const Grid* create( const Grid::uid_t& );
+    static const Grid* create( const std::string& name, const Config& = Config() );
 
     /// ctor (default)
     Grid();

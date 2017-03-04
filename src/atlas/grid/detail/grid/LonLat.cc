@@ -2,6 +2,8 @@
 
 #include "eckit/utils/Translator.h"
 
+#include "atlas/grid/detail/grid/GridBuilder.h"
+
 namespace atlas {
 namespace grid {
 namespace { // anonymous
@@ -33,7 +35,7 @@ struct Shift {
 
 using XSpace = detail::grid::Structured::XSpace;
 
-StructuredGrid::grid_t* create_lonlat(long nlon, long nlat, Shift shift) {
+StructuredGrid::grid_t* create_lonlat(long nlon, long nlat, Shift shift, const Grid::Config& config = Grid::Config() ) {
 
     bool shifted_x = shift(Shift::LON);
     bool shifted_y = shift(Shift::LAT);
@@ -55,8 +57,27 @@ StructuredGrid::grid_t* create_lonlat(long nlon, long nlat, Shift shift) {
     Grid::Config config_domain;
     config_domain.set("type","global");
     Domain domain(config_domain);
+
+    Projection projection;
+    Grid::Config config_projection;
+    if( config.get("projection",config_projection) ) {
+      projection = Projection(config_projection);
+    }
+
+    std::string name;
     
-    return new StructuredGrid::grid_t( Projection(), xspace, yspace, domain );
+    if( shifted_x and shifted_y )
+      name = "S";
+    else if( shifted_x and not shifted_y )
+      name = "Slon";
+    else if( not shifted_x and shifted_y )
+      name = "Slat";
+    else
+      name = "L";
+
+    name += std::to_string(nlon)+"x"+std::to_string(nlat); 
+
+    return new StructuredGrid::grid_t( name, projection, xspace, yspace, domain );
 }
 
 StructuredGrid::grid_t* create_lonlat( const Grid::Config& config, Shift shift ) {
@@ -74,17 +95,17 @@ StructuredGrid::grid_t* create_lonlat( const Grid::Config& config, Shift shift )
       throw eckit::BadParameter("Configuration requires either N, or (nx,ny)",Here());
   }
   
-  return create_lonlat(nx,ny,shift);
+  return create_lonlat(nx,ny,shift,config);
   
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-static class regular_lonlat : public GridCreator {
+static class regular_lonlat : public GridBuilder {
 
 public:
 
-  regular_lonlat(): GridCreator( "regular_lonlat", {
+  regular_lonlat(): GridBuilder( "regular_lonlat", {
     "^[Ll]([0-9]+)x([0-9]+)$",
     "^[Ll]([0-9]+)$"           } ){}
 
@@ -92,12 +113,12 @@ public:
     os << std::left << std::setw(20) << "L<nx>x<ny> / L<gauss>" << "Regular longitude-latitude grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name ) const {
+  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
       
-      util::Config grid;
+      util::Config grid(config);
       grid.set("type", type());
 
       if( id == 0 ) {
@@ -123,11 +144,11 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-static class shifted_lonlat : public GridCreator {
+static class shifted_lonlat : public GridBuilder {
 
 public:
 
-  shifted_lonlat(): GridCreator( "shifted_lonlat", {
+  shifted_lonlat(): GridBuilder( "shifted_lonlat", {
     "^[Ss]([0-9]+)x([0-9]+)$",
     "^[Ss]([0-9]+)$"           } ){}
 
@@ -135,12 +156,12 @@ public:
     os << std::left << std::setw(20) << "S<nx>x<ny> / S<gauss>" << "Shifted longitude-latitude grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name ) const {
+  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
       
-      util::Config grid;
+      util::Config grid(config);
       grid.set("type", type());
 
       if( id == 0 ) {
@@ -166,11 +187,11 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-static class shifted_lon : public GridCreator {
+static class shifted_lon : public GridBuilder {
 
 public:
 
-  shifted_lon(): GridCreator( "shifted_lon", {
+  shifted_lon(): GridBuilder( "shifted_lon", {
     "^[Ss][Ll][Oo][Nn]([0-9]+)x([0-9]+)$",
     "^[Ss][Ll][Oo][Nn]([0-9]+)$"           } ){}
 
@@ -178,12 +199,12 @@ public:
     os << std::left << std::setw(20) << "Slon<nx>x<ny> / Slon<gauss>" << "Shifted longitude grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name ) const {
+  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
       
-      util::Config grid;
+      util::Config grid(config);
       grid.set("type", type());
 
       if( id == 0 ) {
@@ -210,24 +231,24 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-static class shifted_lat : public GridCreator {
+static class shifted_lat : public GridBuilder {
 
 public:
 
-  shifted_lat(): GridCreator( "shifted_lat", {
+  shifted_lat(): GridBuilder( "shifted_lat", {
     "^[Ss][Ll][Aa][Tt]([0-9]+)x([0-9]+)$",
     "^[Ss][Ll][Aa][Tt]([0-9]+)$"           } ){}
 
   virtual void print(std::ostream& os) const {
-    os << std::left << std::setw(20) << "Slat<nx>x<ny> / Slat<gauss>" << "Shifted latitude grid";    
+    os << std::left << std::setw(20) << "Slat<nx>x<ny> / Slat<gauss>" << "Shifted latitude grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name ) const {
+  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
       
-      util::Config grid;
+      util::Config grid(config);
       grid.set("type", type());
 
       if( id == 0 ) {

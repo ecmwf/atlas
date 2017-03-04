@@ -48,7 +48,8 @@ grid/Partitioner.h
 grid/Partitioner.cc
 grid/Iterator.h
 
-grid/detail/grid.cc
+grid/detail/grid/GridBuilder.h
+grid/detail/grid/GridBuilder.cc
 grid/detail/grid/Grid.h
 grid/detail/grid/Grid.cc
 grid/detail/grid/Structured.cc
@@ -160,14 +161,6 @@ grid/detail/pl/classic_gaussian/N1600.cc  # TL3199
 grid/detail/pl/classic_gaussian/N2000.cc  # TL3999
 grid/detail/pl/classic_gaussian/N4000.cc  # TL7999
 grid/detail/pl/classic_gaussian/N8000.cc  # TL15999
-
-# TODO: refactor to remove these grids
-# grid/detail/grid/CustomStructured.cc
-# grid/detail/grid/CustomStructured.h
-# grid/detail/grid/reduced/ReducedGaussian.h
-# grid/detail/grid/reduced/ReducedGaussian.cc
-# grid/detail/grid/Regular.h
-# grid/detail/grid/Regular.cc
 
 )
 if( ATLAS_HAVE_TRANS )

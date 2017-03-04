@@ -45,7 +45,7 @@ Grid::Grid( const Config& p ) {
     grid_ = Grid::grid_t::create(p);
 }
 
-const StructuredGrid::grid_t* structured_grid( const Grid::grid_t *grid ) {
+inline const StructuredGrid::grid_t* structured_grid( const Grid::grid_t *grid ) {
     const StructuredGrid::grid_t* g( dynamic_cast<const StructuredGrid::grid_t*>(grid) );
     return g;
 }
@@ -73,50 +73,6 @@ StructuredGrid::StructuredGrid( const std::string& grid ):
 StructuredGrid::StructuredGrid( const Config& grid ):
     Grid( grid ),
     grid_( structured_grid(get()) ) {
-}
-
-const RegularGrid::grid_t* regular_grid( const Grid::grid_t* grid ) {
-    const RegularGrid::grid_t* g( dynamic_cast<const RegularGrid::grid_t*>(grid) );
-    if( g && g->reduced() ) {
-        return nullptr;
-    }
-    return g;
-}
-
-RegularGrid::grid_t* RegularGrid::create( const Config& ) {
-  NOTIMP;
-  // return nullptr;
-}
-
-RegularGrid::RegularGrid():
-    StructuredGrid(),
-    grid_( nullptr ),
-    nx_(0) {
-}
-
-RegularGrid::RegularGrid( const Grid& grid ):
-    StructuredGrid( grid ),
-    grid_( regular_grid(get()) ) {
-    if( grid_ ) nx_ = StructuredGrid::nx().front();
-}
-
-RegularGrid::RegularGrid( const detail::grid::Grid *grid ):
-    StructuredGrid(grid),
-    grid_( regular_grid(get()) ) {
-    if( grid_ ) nx_ = StructuredGrid::nx().front();
-}
-
-RegularGrid::RegularGrid( const std::string& grid ):
-    StructuredGrid(grid),
-    grid_( regular_grid(get()) ) {
-    if( grid_ ) nx_ = StructuredGrid::nx().front();
-}
-
-
-RegularGrid::RegularGrid( const Config& p ):
-    StructuredGrid(create(p)),
-    grid_( regular_grid(get()) ) {
-    if( grid_ ) nx_ = StructuredGrid::nx().front();
 }
 
 ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx ):
