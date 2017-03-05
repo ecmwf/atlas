@@ -25,6 +25,9 @@
 #include "atlas/grid/partitioners/TransPartitioner.h"
 #endif
 #include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/partitioners/PartitionerFromPrePartitionedMesh.h"
+#include "atlas/grid/partitioners/PrePartitionedPolygon.h"
+#include "atlas/grid/partitioners/PrePartitionedBruteForce.h"
 
 
 namespace {
@@ -171,6 +174,21 @@ Partitioner* PartitionerFactory::build(const std::string& name, const grid::Grid
 
     return (*j).second->make(grid, nb_partitions);
 }
+
+grid::partitioners::Partitioner* MatchedPartitionerFactory::build(
+    const std::string& type,
+    const grid::Grid& grid,
+    const mesh::Mesh& partitioned ) {
+  
+    if( type == "PrePartitionedPolygon" ) {
+        return new grid::partitioners::PrePartitionedPolygon(grid,partitioned);
+    } else if ( type == "PrePartitionedBruteForce" ) {
+        return new grid::partitioners::PrePartitionedBruteForce(grid,partitioned);
+    } else {
+        NOTIMP;
+    }
+}
+
 
 } // namespace partitioners
 } // namespace grid

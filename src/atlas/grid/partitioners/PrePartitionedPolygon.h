@@ -26,6 +26,10 @@ public:
     PrePartitionedPolygon(const Grid& grid) : PartitionerFromPrePartitionedMesh(grid) {}
     PrePartitionedPolygon(const Grid& grid, const size_t nb_partitions) : PartitionerFromPrePartitionedMesh(grid, nb_partitions) {}
 
+    PrePartitionedPolygon(const Grid& grid, 
+      const mesh::Mesh& mesh, const Domain& domain=Domain::makeGlobal() ) : 
+      PartitionerFromPrePartitionedMesh(grid,mesh,domain) {}
+
     /**
      * @brief Create a GridDistribution, placing nodes in the same partitions as a
      * given pre-partitioned mesh. The method reconstructs the partition edges polygon
@@ -34,7 +38,7 @@ public:
      * @param meshSource mesh already partitioned
      * @return grid partitioner
      */
-    GridDistribution* distributionFromPrePartitionedMesh() const;
+    void partition( int part[] ) const;
 
 };
 

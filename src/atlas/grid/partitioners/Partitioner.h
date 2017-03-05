@@ -18,9 +18,10 @@
 namespace atlas {
 namespace grid {
 class Grid;
-}
-namespace grid {
 class GridDistribution;
+}
+namespace mesh {
+  class Mesh;
 }
 }
 
@@ -43,9 +44,8 @@ class Partitioner : public eckit::Owned {
 
     virtual GridDistribution* distribution() const;
 
-  public:
-
     size_t nb_partitions() const;
+
     const grid::Grid& grid() const {
         return grid_;
     }
@@ -96,6 +96,17 @@ class PartitionerBuilder : public PartitionerFactory {
     }
   public:
     PartitionerBuilder(const std::string& name) : PartitionerFactory(name) {}
+};
+
+// ------------------------------------------------------------------
+
+class MatchedPartitionerFactory {
+public:
+
+    static grid::partitioners::Partitioner* build( 
+      const std::string& type,
+      const grid::Grid& grid,
+      const mesh::Mesh& partitioned );
 };
 
 // ------------------------------------------------------------------

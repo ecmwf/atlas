@@ -26,6 +26,12 @@ public:
     PrePartitionedBruteForce(const Grid& grid) : PartitionerFromPrePartitionedMesh(grid) {}
     PrePartitionedBruteForce(const Grid& grid, const size_t nb_partitions) : PartitionerFromPrePartitionedMesh(grid, nb_partitions) {}
 
+    PrePartitionedBruteForce(const Grid& grid, 
+      const mesh::Mesh& mesh, const Domain& domain=Domain::makeGlobal() ) : 
+      PartitionerFromPrePartitionedMesh(grid,mesh,domain) {}
+
+      virtual void partition( int part[] ) const;
+
     /**
      * @brief Create a GridDistribution, placing nodes in the same partitions as a
      * given pre-partitioned mesh. The method is very simple and only a starting point,
@@ -35,7 +41,7 @@ public:
      * @param meshSource mesh already partitioned
      * @return grid partitioner
      */
-    GridDistribution* distributionFromPrePartitionedMesh() const;
+    // GridDistribution* distributionFromPrePartitionedMesh() const;
 
 };
 

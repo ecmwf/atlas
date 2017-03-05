@@ -37,47 +37,24 @@ namespace partitioners {
 class PartitionerFromPrePartitionedMesh : public Partitioner {
 public:
 
-    PartitionerFromPrePartitionedMesh(const Grid& grid) : Partitioner(grid) {}
-    PartitionerFromPrePartitionedMesh(const Grid& grid, const size_t nb_partitions) : Partitioner(grid, nb_partitions) {}
+    PartitionerFromPrePartitionedMesh(const Grid& grid) : Partitioner(grid) { NOTIMP; }
+    PartitionerFromPrePartitionedMesh(const Grid& grid, const size_t nb_partitions) : Partitioner(grid, nb_partitions) { NOTIMP; }
+
+    PartitionerFromPrePartitionedMesh(const Grid& grid, 
+      const mesh::Mesh& mesh, const Domain& domain=Domain::makeGlobal() ) : 
+      Partitioner(grid, mesh.nb_partitions()),
+      prePartitionedMesh_(&mesh),
+      prePartitionedDomain_(domain) {
+    }
 
     virtual ~PartitionerFromPrePartitionedMesh() {}
 
-    GridDistribution* distribution() const {
-        ASSERT(prePartitionedMesh_);
-        return distributionFromPrePartitionedMesh();
-    }
-
-    /**
-     * @param meshSource mesh already partitioned
-     * @param gridTarget grid to be distributed
-     * @param includesNorthPole
-     * @param includesSouthPole
-     */
-    void setup(const mesh::Mesh::Ptr prePartitionedMesh, const Domain& prePartitionedDomain=Domain::makeGlobal()) {
-        ASSERT(prePartitionedMesh);
-        prePartitionedMesh_ = prePartitionedMesh;
-        prePartitionedDomain_ = prePartitionedDomain;
-    }
-
-    /**
-     * @brief Create a GridDistribution, placing nodes in the same partitions as a
-     * given pre-partitioned mesh.
-     * @return grid partitioner
-     */
-    virtual GridDistribution* distributionFromPrePartitionedMesh() const = 0;
-
-    void partition(int part[]) const {
-        // FIXME don't understand if this is needed!
-        NOTIMP;
-    }
-
 protected:
 
-    mesh::Mesh::Ptr prePartitionedMesh_;
+    const mesh::Mesh* prePartitionedMesh_;
     Domain prePartitionedDomain_;
 
 };
-
 
 }  // partitioners
 }  // grid

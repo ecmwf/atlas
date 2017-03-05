@@ -164,7 +164,7 @@ struct Poly : std::vector< size_t > {
 }  // (anonymous namespace)
 
 
-GridDistribution* PrePartitionedPolygon::distributionFromPrePartitionedMesh() const {
+void PrePartitionedPolygon::partition( int node_partition[] ) const {
     eckit::mpi::Comm& comm = eckit::mpi::comm();
     const int mpi_rank = int(comm.rank());
 
@@ -237,7 +237,9 @@ GridDistribution* PrePartitionedPolygon::distributionFromPrePartitionedMesh() co
     // Partition the target grid nodes
     // - use a polygon bounding box to quickly discard points,
     // - except when that is above/below bounding box but poles should be included
-    std::vector<int> node_partition(grid().npts(), -1);
+    for( size_t j=0; j<grid().npts(); ++j ) {
+      node_partition[j] = -1;
+    }
 
     bool includes_north_pole = prePartitionedDomain_.includesPoleNorth() && mpi_rank == 0;
     bool includes_south_pole = prePartitionedDomain_.includesPoleSouth() && mpi_rank == (int(comm.size()) - 1 );
@@ -273,13 +275,11 @@ GridDistribution* PrePartitionedPolygon::distributionFromPrePartitionedMesh() co
 
 
     // Synchronize the partitioning and return a grid partitioner
-    comm.allReduceInPlace(node_partition.data(), node_partition.size(), eckit::mpi::Operation::MAX);
-    const int min = *std::min_element(node_partition.begin(), node_partition.end());
+    comm.allReduceInPlace(node_partition, grid().npts(), eckit::mpi::Operation::MAX);
+    const int min = *std::min_element(node_partition, node_partition+grid().npts());
     if (min<0) {
         throw eckit::SeriousBug("Could not find partition for input node (meshSource does not contain all points of gridTarget)", Here());
     }
-
-    GridDistribution* distribution_tgt = new grid::GridDistribution(node_partition.size(), node_partition.data());
 
 
     /// For debugging purposes at the moment. To be made available later, when the Mesh
@@ -287,9 +287,9 @@ GridDistribution* PrePartitionedPolygon::distributionFromPrePartitionedMesh() co
     if( eckit::Resource<bool>("--polygons",false) ) {
 
     std::vector<double> x,y;
-    x.reserve(node_partition.size());
-    y.reserve(node_partition.size());
-    for (size_t i=0; i<node_partition.size(); ++i) {
+    x.reserve(grid().npts());
+    y.reserve(grid().npts());
+    for (size_t i=0; i<grid().npts(); ++i) {
         if (node_partition[i] == mpi_rank) {
             x.push_back(lonlat_tgt_pts[i].lon());
             y.push_back(lonlat_tgt_pts[i].lat());
@@ -346,7 +346,6 @@ GridDistribution* PrePartitionedPolygon::distributionFromPrePartitionedMesh() co
 
     }
 
-    return distribution_tgt;
 }
 
 

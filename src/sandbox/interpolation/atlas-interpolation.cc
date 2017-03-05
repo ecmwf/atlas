@@ -10,13 +10,14 @@
 
 
 #include "eckit/linalg/LinearAlgebra.h"
+
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/internals/AtlasTool.h"
-#include "atlas/interpolation/PartitionedMesh.h"
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/runtime/Log.h"
 
+#include "PartitionedMesh.h"
 
 using namespace atlas;
 
@@ -57,10 +58,15 @@ public:
         add_option(new SimpleOption<bool>       ("target-mesh-generator-triangulate", "target mesh generator triangulate option (default false)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator-angle",       "target mesh generator angle option (default false)"));
 
+        add_option(new SimpleOption<size_t>     ("target-mesh-halo",                  "target mesh halo size (default 1)"));
+
         add_option(new SimpleOption<size_t>     ("k-nearest-neighbours",              "k nearest neighbours (default 1)"));
 
 
-        add_option(new SimpleOption<bool>     ("polygons",              "Output python script that plots partitions as polygons"));
+        add_option(new SimpleOption<bool>       ("polygons",                          "Output python script that plots partitions as polygons"));
+
+
+        add_option(new SimpleOption<bool>       ("with-backward",                     "Also do backward interpolation (default false)"));
 
     }
 
@@ -91,6 +97,10 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     size_t source_mesh_halo = 0;
     args.get("source-mesh-halo", source_mesh_halo);
 
+    size_t target_mesh_halo = 1;
+    args.get("target-mesh-halo", target_mesh_halo);
+    Log::debug() << "target-mesh-halo " << target_mesh_halo << std::endl;
+
 
     // Generate and partition source & target mesh
     // source mesh is partitioned on its own, the target mesh uses (pre-partitioned) source mesh
@@ -114,17 +124,36 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     src.partition(*src_grid);
     tgt.partition(*tgt_grid, src);
 
-
+    functionspace::NodeColumns src_functionspace(src.mesh(), source_mesh_halo);
+    functionspace::NodeColumns tgt_functionspace(tgt.mesh(), target_mesh_halo);
+    
     // Setup interpolator relating source & target meshes before setting a source FunctionSpace halo
-    option = "finite-element";
-    args.get("method", option);
-    interpolation::method::Method::Ptr method(interpolation::method::MethodFactory::build(option, args));
+    std::string interpolator_option = "finite-element";
+    args.get("method", interpolator_option);
+    
+    
+    Log::info() << "Computing forward interpolator" << std::endl;
+    
+    interpolation::method::Method::Ptr interpolator_forward(interpolation::method::MethodFactory::build(interpolator_option, args));
 
-    method->setup(src.mesh(), tgt.mesh());
+    interpolator_forward->setup(src.mesh(), tgt.mesh());
 
+    bool with_backward = false;
+    args.get("with-backward",with_backward);
+    interpolation::method::Method::Ptr interpolator_backward;
+        
+    if( with_backward ) {
+      Log::info() << "Computing backward interpolator" << std::endl;
+
+      interpolator_backward.reset( interpolation::method::MethodFactory::build(interpolator_option, args));
+
+      interpolator_backward->setup(tgt.mesh(), src.mesh());
+    }
+
+    Log::info() << "Set initial condition" << std::endl;
 
     // Create source FunctionSpace and fields
-    functionspace::NodeColumns src_functionspace(src.mesh(), source_mesh_halo);
+    
     field::FieldSet src_fields;
     {
         src_fields.add( src_functionspace.createField<double>("funny_scalar_1" /*, nb_levels=10*/) );
@@ -161,17 +190,32 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
         }
     }
 
-    functionspace::NodeColumns tgt_functionspace(tgt.mesh());
+    // functionspace::NodeColumns tgt_functionspace(tgt.mesh(),target_mesh_halo);
     field::FieldSet tgt_fields;
     for (size_t i = 0; i < src_fields.size(); ++i) {
         tgt_fields.add( tgt_functionspace.createField<double>(src_fields[i].name()) );
     }
 
+    src_functionspace.haloExchange(src_fields);
+
+    Log::info() << "Writing input to interpolation to src.msh" << std::endl;
+    src.writeGmsh("src.msh", &src_fields);
+
+
+    Log::info() << "Interpolate forward" << std::endl;
 
     // interpolate (matrix-field vector multiply and  synchronize results) (FIXME: necessary?)
-    method->execute(src_fields, tgt_fields);
+    interpolator_forward->execute(src_fields, tgt_fields);
     tgt_functionspace.haloExchange(tgt_fields);
 
+    if( with_backward ) {
+        Log::info() << "Interpolate backward" << std::endl;
+
+        interpolator_backward->execute(tgt_fields, src_fields);
+        src_functionspace.haloExchange(src_fields);
+    }
+
+    Log::info() << "Interpolations done" << std::endl;
 
     // Report simple statistics (on source & target)
     if (log_statistics) {
@@ -197,7 +241,13 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
 
     // Output results
+    Log::info() << "Writing forward interpolation results to tgt.msh" << std::endl;
     tgt.writeGmsh("tgt.msh", &tgt_fields);
+    
+    if( with_backward ) {
+      Log::info() << "Writing backward interpolation results to src-back.msh" << std::endl;
+      src.writeGmsh("src-back.msh", &src_fields);
+    }
 }
 
 

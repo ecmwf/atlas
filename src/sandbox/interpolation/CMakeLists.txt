@@ -9,6 +9,8 @@
 ecbuild_add_executable(
     TARGET  atlas-interpolation
     SOURCES atlas-interpolation.cc
+            PartitionedMesh.h
+            PartitionedMesh.cc
     LIBS    atlas
     NOINSTALL
 )
