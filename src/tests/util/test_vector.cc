@@ -20,23 +20,29 @@ namespace test {
 BOOST_AUTO_TEST_CASE(test_vector) {
     Vector<int> vec(3);
 
-    vec[0] = 3;
-    vec[1] = -3;
-    vec[2] = 1;
+    VectorView<int> vec_view = make_host_vector_view(vec);
 
-    BOOST_CHECK_EQUAL( vec.size(),3);
-    BOOST_CHECK_EQUAL( vec[0],3);
-    BOOST_CHECK_EQUAL( vec[1],-3);
-    BOOST_CHECK_EQUAL( vec[2],1);
+    vec_view[0] = 3;
+    vec_view[1] = -3;
+    vec_view[2] = 1;
+
+    BOOST_CHECK_EQUAL( vec_view.size(),3);
+    BOOST_CHECK_EQUAL( vec_view[0],3);
+    BOOST_CHECK_EQUAL( vec_view[1],-3);
+    BOOST_CHECK_EQUAL( vec_view[2],1);
 
     vec.resize(5);
-    vec[3] = 5;
-    vec[4] = 6;
-    BOOST_CHECK_EQUAL( vec[0],3);
-    BOOST_CHECK_EQUAL( vec[1],-3);
-    BOOST_CHECK_EQUAL( vec[2],1);
-    BOOST_CHECK_EQUAL( vec[3],5);
-    BOOST_CHECK_EQUAL( vec[4],6);
+
+    //TODO invalidate preview views
+    VectorView<int> vec_viewb = make_host_vector_view(vec);
+    vec_viewb[3] = 5;
+    vec_viewb[4] = 6;
+
+    BOOST_CHECK_EQUAL( vec_viewb[0],3);
+    BOOST_CHECK_EQUAL( vec_viewb[1],-3);
+    BOOST_CHECK_EQUAL( vec_viewb[2],1);
+    BOOST_CHECK_EQUAL( vec_viewb[3],5);
+    BOOST_CHECK_EQUAL( vec_viewb[4],6);
 
 }
 

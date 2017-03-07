@@ -28,4 +28,10 @@ atlas_add_cuda_test(
   SOURCES test_array_kernel.cu
   LIBS atlas
 )
+atlas_add_cuda_test(
+  TARGET atlas_test_vector_kernel
+  BOOST
+  SOURCES test_vector_kernel.cu
+  LIBS atlas
+)
 

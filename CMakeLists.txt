@@ -147,7 +147,7 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
         #    add_definitions(-DCUDA_VERSION=${CUDA_VERSION})
 
         set(CUDA_PROPAGATE_HOST_FLAGS ON)
-        set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
+        set(CUDA_NVCC_FLAGS "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
         if( NOT ${CUDA_VERSION} VERSION_GREATER "60")
             message(FATAL_ERROR "CUDA 6.0 or lower does not support C++11 (disabling)")
         endif()

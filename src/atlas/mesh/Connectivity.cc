@@ -14,6 +14,7 @@
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/array/DataType.h"
+#include "atlas/array/Vector.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
@@ -450,6 +451,7 @@ MultiBlockConnectivityImpl::MultiBlockConnectivityImpl(const std::string& name) 
   block_cols_view_(array::make_view<size_t, 1>(*block_cols_)),
   block_(0),
   blocks_(0),
+  block_view_(make_host_vector_view(block_)),
   gpu_clone_(this)
 {
     block_displs_view_(0) = 0;
@@ -485,10 +487,8 @@ void MultiBlockConnectivityImpl::cloneToDevice()
   block_displs_view_ = array::make_device_view<size_t,  1>(*(block_displs_));
   block_cols_view_ = array::make_device_view<size_t, 1>(*(block_cols_));
 
-  for(size_t i=0; i < block_.size(); ++i) {
-    block_[i]->cloneToDevice();
-    block_[i] = block_[i]->gpu_object_ptr();
-  }
+  block_.cloneToDevice();
+  block_view_ = make_device_vector_view(block_);
  
   gpu_clone_.cloneToDevice();
 }
@@ -499,6 +499,8 @@ void MultiBlockConnectivityImpl::cloneFromDevice()
   block_displs_->cloneFromDevice();
   block_cols_  ->cloneFromDevice();
   gpu_clone_.cloneFromDevice();
+
+  //TODO
 }
 
 void MultiBlockConnectivityImpl::syncHostDevice() const
@@ -545,6 +547,8 @@ void MultiBlockConnectivityImpl::add(size_t rows, size_t cols, const idx_t value
   block_displs_view_(block_displs_view_.size()-1) = old_rows+rows;
   block_cols_view_  (block_cols_view_  .size()-2) = cols;
 
+  block_view_ = make_host_vector_view(block_);
+
   rebuild_block_connectivity();
 }
 
@@ -554,6 +558,9 @@ void MultiBlockConnectivityImpl::add( const BlockConnectivityImpl& block )
 {
   if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
   IrregularConnectivityImpl::add(block);
+
+  block_view_ = make_host_vector_view(block_);
+
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -646,8 +653,6 @@ void MultiBlockConnectivityImpl::insert( size_t position, size_t rows, size_t co
 
   for( size_t jblk=blk_idx; jblk<blocks_; ++jblk)
     block_displs_view_(jblk+1) += rows;
-// TODO
-//  block_displs_ = owned_block_displs_.data();
   rebuild_block_connectivity();
 }
 
@@ -679,8 +684,6 @@ void MultiBlockConnectivityImpl::insert( size_t position, size_t rows, const siz
 
   for( size_t jblk=blk_idx; jblk<blocks_; ++jblk)
     block_displs_view_(jblk+1) += rows;
-// TODO
-//  block_displs_ = owned_block_displs_.data();
   rebuild_block_connectivity();
 }
 
@@ -688,17 +691,19 @@ void MultiBlockConnectivityImpl::insert( size_t position, size_t rows, const siz
 
 void MultiBlockConnectivityImpl::rebuild_block_connectivity()
 {
-  block_.resize(blocks_);
+  block_.resize(blocks_,0);
+  block_view_ =  make_host_vector_view(block_);
+
   for( size_t b=0; b<blocks_; ++b )
   {
-    if( block_[b] ) {
-      block_[b]->rebuild(
+    if( block_view_[b] ) {
+      block_view_[b]->rebuild(
           block_displs_view_(b+1)-block_displs_view_(b), // rows
           block_cols_view_(b),                           // cols
           data()+ displs(block_displs_view_(b)));
     }
     else {
-      block_[b] =
+      block_view_[b] =
          new BlockConnectivityImpl(
           block_displs_view_(b+1)-block_displs_view_(b), // rows
           block_cols_view_(b),                           // cols
@@ -717,7 +722,7 @@ size_t MultiBlockConnectivityImpl::footprint() const
   size += block_cols_->footprint();
 
   for( size_t j=0; j<block_.size(); ++ j ) {
-    size += block_[j]->footprint();
+    size += block_view_[j]->footprint();
   }
   return size;
 }

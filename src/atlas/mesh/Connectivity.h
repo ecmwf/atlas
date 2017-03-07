@@ -374,14 +374,12 @@ public:
 
   /// @brief Access to a block connectivity
   ATLAS_HOST_DEVICE
-  const BlockConnectivityImpl& block( size_t block_idx ) const { return *(block_[block_idx]); }
+  const BlockConnectivityImpl& block( size_t block_idx ) const { return *(block_view_[block_idx]); }
   ATLAS_HOST_DEVICE
-        BlockConnectivityImpl& block( size_t block_idx )       { return *(block_[block_idx]); }
-ATLAS_HOST_DEVICE
-  BlockConnectivityImpl* block__( size_t block_idx )       { return (block_[block_idx]); }
+        BlockConnectivityImpl& block( size_t block_idx )       { return *(block_view_[block_idx]); }
 
-  ATLAS_HOST_DEVICE
-  BlockConnectivityImpl* base() { return block_.base();}
+//  ATLAS_HOST_DEVICE
+//  BlockConnectivityImpl* base() { return block_.base();}
 
   /// @brief Access to connectivity table elements for given row and column
   /// The row_idx counts up from 0, from block 0, as in IrregularConnectivity
@@ -449,6 +447,8 @@ private:
   array::ArrayView<size_t,1> block_displs_view_;
   array::ArrayView<size_t,1> block_cols_view_;
   array::Vector<BlockConnectivityImpl*> block_;
+  array::VectorView<BlockConnectivityImpl*> block_view_;
+
   size_t blocks_;
   array::gridtools::GPUClonable<MultiBlockConnectivityImpl> gpu_clone_;
 
