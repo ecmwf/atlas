@@ -547,8 +547,6 @@ void MultiBlockConnectivityImpl::add(size_t rows, size_t cols, const idx_t value
   block_displs_view_(block_displs_view_.size()-1) = old_rows+rows;
   block_cols_view_  (block_cols_view_  .size()-2) = cols;
 
-  block_view_ = make_host_vector_view(block_);
-
   rebuild_block_connectivity();
 }
 
