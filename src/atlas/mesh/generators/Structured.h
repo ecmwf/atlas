@@ -75,9 +75,6 @@ private:
     const Region& region,
     Mesh& m ) const;
 
-  void generate_global_element_numbering(
-    Mesh& mesh ) const;
-
 private:
 
   util::Metadata options;

@@ -34,7 +34,7 @@ namespace actions {
 class BuildXYZField {
 public:
 
-    explicit BuildXYZField(const std::string& name = "xyz");
+    explicit BuildXYZField(const std::string& name = "xyz", bool force_recompute=false);
 
     field::Field& operator()(Mesh&) const;
     field::Field& operator()(mesh::Nodes&) const;
@@ -42,6 +42,7 @@ public:
 private:
 
     std::string name_;
+    bool force_recompute_;
 
 };
 

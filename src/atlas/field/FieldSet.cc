@@ -22,6 +22,11 @@ FieldSet::FieldSet(const std::string &name) :
   name_()
 {}
 
+void FieldSet::clear()
+{
+    index_.clear();
+    fields_.clear();
+}
 
 Field& FieldSet::add(const Field& field)
 {

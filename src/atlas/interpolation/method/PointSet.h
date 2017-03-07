@@ -8,27 +8,27 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_PointSet_h
-#define atlas_PointSet_h
+#ifndef atlas_interpolation_method_PointSet_h
+#define atlas_interpolation_method_PointSet_h
 
-#include <map>
 #include <cassert>
 #include <fstream>
-#include <vector>
 #include <limits>
+#include <map>
 #include <memory>
 #include <stdint.h>
+#include <vector>
 
 #include "eckit/log/Timer.h"
 #include "eckit/types/FloatCompare.h"
 
+#include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/interpolation/PointIndex3.h"
-
 
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -36,8 +36,8 @@ class PointSet {
 
 public: // types
 
-    typedef interpolation::PointIndex3::Point Point;
-    typedef interpolation::PointIndex3::iterator iterator;
+    typedef PointIndex3::Point Point;
+    typedef PointIndex3::iterator iterator;
     typedef std::map< size_t, size_t > DupStore_t;
 
 public: // methods
@@ -135,6 +135,8 @@ private:
 
 //----------------------------------------------------------------------------------------------------------------------
 
+
+} // namespace method
 } // namespace interpolation
 } // namespace atlas
 

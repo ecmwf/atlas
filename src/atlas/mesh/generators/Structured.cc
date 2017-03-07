@@ -588,7 +588,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         else
         {
 #if DEBUG_OUTPUT
-          Log::info() << "Triag belongs to other partition" << std::endl;
+          Log::info() << "Downward Triag belongs to other partition" << std::endl;
 #endif
         }
         ipN1=ipN2;
@@ -599,8 +599,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       {
         // triangle without ip4
 #if DEBUG_OUTPUT
-        Log::info()  << "          " << ipN1 << '\n';
-        Log::info()  << "          " << ipS1 << "  " << ipS2 << '\n';
+        Log::info()  << "          " << ipN1 << " ("<<pN1<<")" << '\n';
+        Log::info()  << "          " << ipS1 << " ("<<pS1<<")" << "  " << ipS2 << " ("<<pS2<<")" << '\n';
 #endif
         elem.at(0) = ipN1;
         elem.at(1) = ipS1;
@@ -628,11 +628,12 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
           int cnt_max = *std::max_element(pcnts,pcnts+3);
           if( cnt_max == 1)
           {
-            if( latN == 0 || latS == rg.nlat()-1 )
-            {
-              add_triag = true;
-            }
-            else if( 0.5*(yN+yS) > 1e-6 )
+            // if( latN == 0 && mypart = pN1 ) || latS == rg.nlat()-1 )
+            // {
+            //   add_triag = true;
+            // }
+            // else
+            if( 0.5*(yN+yS) > 1e-6 )
             {
               if( pS2 == mypart )
                 add_triag = true;
@@ -661,7 +662,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         else
         {
 #if DEBUG_OUTPUT
-          Log::info() << "Triag belongs to other partition" << std::endl;
+          Log::info() << "Upward Triag belongs to other partition" << std::endl;
 #endif
         }
         ipS1=ipS2;
@@ -704,14 +705,20 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
 //  Log::info()  << "nb_elems = " << nelems << std::endl;
 
   int nb_region_nodes = 0;
-
-  for( int jlat=region.north; jlat<=region.south; ++jlat ) {
+  for(size_t jlat = region.north; jlat <= region.south; ++jlat) {
+    n = offset.at(jlat);
     region.lat_begin.at(jlat) = std::max( 0, region.lat_begin.at(jlat) );
+    for(size_t jlon = 0; jlon < rg.nlon(jlat); ++jlon) {
+      if( parts.at(n) == mypart ) {
+        region.lat_begin.at(jlat) = std::min( region.lat_begin.at(jlat), int(jlon) );
+        region.lat_end.  at(jlat) = std::max( region.lat_end  .at(jlat), int(jlon) );
+      }
+      ++n;
+    }
     nb_region_nodes += region.lat_end.at(jlat)-region.lat_begin.at(jlat)+1;
 
-    // Count extra periodic node to be added in this case
+    // Count extra periodic node
     if( periodic_east_west && size_t(region.lat_end.at(jlat)) == rg.nlon(jlat) - 1) ++nb_region_nodes;
-
   }
 
   region.nnodes = nb_region_nodes;
@@ -747,9 +754,9 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   bool has_south_pole = rg.latitudes().back()  == -90 && rg.pl().back()  > 0;
   bool three_dimensional  = options.get<bool>("3d");
   bool periodic_east_west = rg.domain().isPeriodicEastWest();
-  bool include_periodic_ghost_points = periodic_east_west
-          && !three_dimensional ;
-  bool remove_periodic_ghost_points = three_dimensional && periodic_east_west ;
+
+  bool include_periodic_ghost_points = periodic_east_west && !three_dimensional;
+  bool remove_periodic_ghost_points  = periodic_east_west &&  three_dimensional;
 
   bool include_north_pole = (mypart == 0 )
           && options.get<bool>("include_pole")
@@ -763,14 +770,12 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
   bool patch_north_pole = (mypart == 0)
           && options.get<bool>("patch_pole")
-          && three_dimensional
           && !has_north_pole
           && rg.domain().includesPoleNorth()
           && rg.nlon(1) > 0;
 
   bool patch_south_pole = (mypart == nparts-1)
           && options.get<bool>("patch_pole")
-          && three_dimensional
           && !has_south_pole
           && rg.domain().includesPoleSouth()
           && rg.nlon(rg.nlat()-2) > 0;
@@ -1031,6 +1036,12 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
   array::ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
   array::ArrayView<int,1>    cells_part(    mesh.cells().partition() );
+  array::ArrayView<int,1>    cells_patch(   mesh.cells().field("patch") );
+
+  /*
+   * label all patch cells a non-patch
+   */
+  cells_patch = 0;
 
   /*
   Fill in connectivity tables with global node indices first
@@ -1154,8 +1165,10 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       jcell = triag_begin + jtriag++;
       node_connectivity.set( jcell, triag_nodes );
-      cells_glb_idx(jcell) = jcell+1;
-      cells_part(jcell) = mypart;
+
+      cells_glb_idx (jcell) = jcell+1;
+      cells_part    (jcell) = mypart;
+      cells_patch   (jcell) = 1;  // mark cell as "patch"
 
       if (jbackward == jforward+2 ) break;
 
@@ -1223,8 +1236,10 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
 
       jcell = triag_begin + jtriag++;
       node_connectivity.set( jcell, triag_nodes );
-      cells_glb_idx(jcell) = jcell+1;
-      cells_part(jcell) = mypart;
+
+      cells_glb_idx (jcell) = jcell+1;
+      cells_part    (jcell) = mypart;
+      cells_patch   (jcell) = 1;  // mark cell as "patch"
 
       if (jbackward == jforward+2 ) break;
 
@@ -1242,30 +1257,6 @@ void Structured::generate_mesh(const grid::Structured& rg, const std::vector<int
   }
 
   generate_global_element_numbering( mesh );
-}
-
-void Structured::generate_global_element_numbering( Mesh& mesh ) const
-{
-  size_t loc_nb_elems = mesh.cells().size();
-  std::vector<size_t> elem_counts( parallel::mpi::comm().size() );
-  std::vector<int> elem_displs( parallel::mpi::comm().size() );
-
-  parallel::mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
-
-  elem_displs.at(0) = 0;
-  for(size_t jpart = 1; jpart < parallel::mpi::comm().size(); ++jpart)
-  {
-    elem_displs.at(jpart) = elem_displs.at(jpart-1) + elem_counts.at(jpart-1);
-  }
-
-  gidx_t gid = 1+elem_displs.at( parallel::mpi::comm().rank() );
-
-  array::ArrayView<gidx_t,1> glb_idx( mesh.cells().global_index() );
-
-  for( size_t jelem=0; jelem<mesh.cells().size(); ++jelem )
-  {
-    glb_idx(jelem) = gid++;
-  }
 }
 
 namespace {

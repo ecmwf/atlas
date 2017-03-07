@@ -119,6 +119,11 @@ bool Mesh::generated() const {
   return ! (cells_->size() == 0 && facets_->size() == 0 && ridges_->size() == 0 && peaks_->size() == 0);
 }
 
+size_t Mesh::nb_partitions() const {
+  return parallel::mpi::comm().size();
+}
+
+
 //----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
