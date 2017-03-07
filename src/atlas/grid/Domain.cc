@@ -103,17 +103,13 @@ void Domain::normalise() {
 
 
 double Domain::normalise(double lon) const {
-    if (is_approximately_equal(lon, east_)) {
-        return east_;
-    }
-    while (lon > east_) {
+    while (lon >= east_) {
         lon -= 360;
     }
-
-    if (is_approximately_equal(lon, west_)) {
-        return west_;
-    }
     while (lon < west_) {
+        if (is_approximately_equal(lon, west_)) {
+            return west_;
+        }
         lon += 360;
     }
     return lon;
