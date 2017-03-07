@@ -89,7 +89,7 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
     // search nearest k cell centres
 
-    const size_t maxNbElemsToTry = 20;//std::max<size_t>(64, size_t(Nelements * maxFractionElemsToTry));
+    const size_t maxNbElemsToTry = std::max<size_t>(64, size_t(Nelements * maxFractionElemsToTry));
     size_t max_neighbours = 0;
 
     std::vector<size_t> failures;
@@ -104,7 +104,7 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
             if (ip && (ip % 1000 == 0)) {
                 double rate = ip / timerProj.elapsed();
-                Log::debug<LibAtlas>() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
+                Log::debug<ATLAS>() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
             }
 
             Point p ( ocoords_[ip].data() ); // lookup point
@@ -129,15 +129,15 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
             if (!success) {
                 failures.push_back(ip);
-                Log::debug<LibAtlas>() << "---------------------------------------------------------------------------\n";
-                Log::debug<LibAtlas>() << "Failed to project point (lon,lat)=("<<olonlat_(ip,LON)<<","<<olonlat_(ip,LAT) << ")" << '\n';
-                Log::debug<LibAtlas>() << failures_log.str();
+                Log::debug<ATLAS>() << "---------------------------------------------------------------------------\n";
+                Log::debug<ATLAS>() << "Failed to project point (lon,lat)=("<<olonlat_(ip,LON)<<","<<olonlat_(ip,LAT) << ")" << '\n';
+                Log::debug<ATLAS>() << failures_log.str();
             }
         }
     }
 
-    Log::debug<LibAtlas>() << "Projected " << eckit::Plural(out_npts, "point") << std::endl;
-    Log::debug<LibAtlas>() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
+    Log::debug<ATLAS>() << "Projected " << eckit::Plural(out_npts, "point") << std::endl;
+    Log::debug<ATLAS>() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
 
 
     eckit::mpi::comm().barrier();
@@ -216,7 +216,7 @@ Method::Triplets FiniteElement::projectPointToElements(
 
                 break; // stop looking for elements
             }
-            else { // fallback to 2d lonlat elements
+            else if( fallback_to_2d_ ) { // fallback to 2d lonlat elements
 
                 element::Triag2D triag2d(ilonlat_[idx[0]].data(),
                                          ilonlat_[idx[1]].data(),
@@ -236,12 +236,14 @@ Method::Triplets FiniteElement::projectPointToElements(
 
                     break; // stop looking for elements
                 }
-
-                if(Log::debug<LibAtlas>()) {
-                    failures_log << "Failed to project point " << Point(ocoords_[ip].data()) << " to " << triag2d << " with " << is << '\n';
-                }
             }
-
+            if(Log::debug<ATLAS>()) {
+                failures_log << "Failed to project point " << Point(ocoords_[ip].data()) 
+                             << " to " << element::Triag2D(ilonlat_[idx[0]].data(),
+                                                           ilonlat_[idx[1]].data(),
+                                                           ilonlat_[idx[2]].data())
+                             << " with " << is << '\n';
+            }
 
         } else {
 
@@ -298,7 +300,7 @@ Method::Triplets FiniteElement::projectPointToElements(
                     break; // stop looking for elements
                 }
 
-                if( Log::debug<LibAtlas>() ) {
+                if( Log::debug<ATLAS>() ) {
                     failures_log << "Failed to project point " << Point(ocoords_[ip].data()) << " to " << quad2d << " with " << is << '\n';
                 }
             }

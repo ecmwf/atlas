@@ -588,7 +588,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         else
         {
 #if DEBUG_OUTPUT
-          Log::info() << "Triag belongs to other partition" << std::endl;
+          Log::info() << "Downward Triag belongs to other partition" << std::endl;
 #endif
         }
         ipN1=ipN2;
@@ -599,8 +599,8 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
       {
         // triangle without ip4
 #if DEBUG_OUTPUT
-        Log::info()  << "          " << ipN1 << '\n';
-        Log::info()  << "          " << ipS1 << "  " << ipS2 << '\n';
+        Log::info()  << "          " << ipN1 << " ("<<pN1<<")" << '\n';
+        Log::info()  << "          " << ipS1 << " ("<<pS1<<")" << "  " << ipS2 << " ("<<pS2<<")" << '\n';
 #endif
         elem.at(0) = ipN1;
         elem.at(1) = ipS1;
@@ -628,11 +628,12 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
           int cnt_max = *std::max_element(pcnts,pcnts+3);
           if( cnt_max == 1)
           {
-            if( latN == 0 || latS == rg.nlat()-1 )
-            {
-              add_triag = true;
-            }
-            else if( 0.5*(yN+yS) > 1e-6 )
+            // if( latN == 0 && mypart = pN1 ) || latS == rg.nlat()-1 )
+            // {
+            //   add_triag = true;
+            // }
+            // else
+            if( 0.5*(yN+yS) > 1e-6 )
             {
               if( pS2 == mypart )
                 add_triag = true;
@@ -661,7 +662,7 @@ void Structured::generate_region(const grid::Structured& rg, const std::vector<i
         else
         {
 #if DEBUG_OUTPUT
-          Log::info() << "Triag belongs to other partition" << std::endl;
+          Log::info() << "Upward Triag belongs to other partition" << std::endl;
 #endif
         }
         ipS1=ipS2;

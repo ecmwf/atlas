@@ -139,7 +139,7 @@ Partitioner* PartitionerFactory::build(const std::string& name, const grid::Grid
 
     std::map<std::string, PartitionerFactory *>::const_iterator j = m->find(name);
 
-    Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+    Log::debug<ATLAS>() << "Looking for PartitionerFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
@@ -162,7 +162,7 @@ Partitioner* PartitionerFactory::build(const std::string& name, const grid::Grid
 
     std::map<std::string, PartitionerFactory *>::const_iterator j = m->find(name);
 
-    Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+    Log::debug<ATLAS>() << "Looking for PartitionerFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';

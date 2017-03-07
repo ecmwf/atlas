@@ -167,6 +167,7 @@ struct Poly : std::vector< size_t > {
 void PrePartitionedPolygon::partition( int node_partition[] ) const {
     eckit::mpi::Comm& comm = eckit::mpi::comm();
     const int mpi_rank = int(comm.rank());
+    const int mpi_size = int(comm.size());
 
 
     // Polygon indices
@@ -257,14 +258,23 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
 
             point_t P(lonlat_tgt_pts[i].lon(), lonlat_tgt_pts[i].lat());
 
-            if (bbox_min[LON] <= P[LON] && P[LON] <= bbox_max[LON]
-             && bbox_min[LAT] <= P[LAT] && P[LAT] <= bbox_max[LAT]) {
+            if (bbox_min[LON] <= P[LON] && P[LON] < bbox_max[LON]
+             && bbox_min[LAT] <= P[LAT] && P[LAT] < bbox_max[LAT]) {
 
                 if (point_in_poly(polygon, P)) {
                     node_partition[i] = mpi_rank;
+                } else {
+
+                  if( mpi_size == 1 ) {
+                    Log::debug<ATLAS>() << "point_in_poly failed for grid point " << i+1 << std::endl;
+                    Log::debug<ATLAS>() << "     P " << P << std::endl;
+                    Log::debug<ATLAS>() << "     bbox_min " << bbox_min << std::endl;
+                    Log::debug<ATLAS>() << "     bbox_max " << bbox_max << std::endl;
+                  }
+
                 }
 
-            } else if ((includes_north_pole && P[LAT] > bbox_max[LAT])
+            } else if ((includes_north_pole && P[LAT] >= bbox_max[LAT])
                     || (includes_south_pole && P[LAT] < bbox_min[LAT])) {
 
                 node_partition[i] = mpi_rank;
@@ -277,23 +287,26 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
     // Synchronize the partitioning and return a grid partitioner
     comm.allReduceInPlace(node_partition, grid().npts(), eckit::mpi::Operation::MAX);
     const int min = *std::min_element(node_partition, node_partition+grid().npts());
-    if (min<0) {
-        throw eckit::SeriousBug("Could not find partition for input node (meshSource does not contain all points of gridTarget)", Here());
-    }
 
 
     /// For debugging purposes at the moment. To be made available later, when the Mesh
     /// contains a Polygon for its partition boundary
     if( eckit::Resource<bool>("--polygons",false) ) {
 
-    std::vector<double> x,y;
+    std::vector<double> x,y, xlost,ylost;
+    xlost.reserve(grid().npts());
+    ylost.reserve(grid().npts());
     x.reserve(grid().npts());
     y.reserve(grid().npts());
     for (size_t i=0; i<grid().npts(); ++i) {
         if (node_partition[i] == mpi_rank) {
             x.push_back(lonlat_tgt_pts[i].lon());
             y.push_back(lonlat_tgt_pts[i].lat());
+        } else if (node_partition[i] == -1) {
+            xlost.push_back(lonlat_tgt_pts[i].lon());
+            ylost.push_back(lonlat_tgt_pts[i].lat());
         }
+
     }
     size_t count = x.size();
     size_t count_all = x.size();
@@ -315,6 +328,12 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
                      "\n" ""
                      "\n" "fig = plt.figure()"
                      "\n" "ax = fig.add_subplot(111)"
+                     "\n" "";
+                f << "\n"
+                     "\n" "xlost = ["; for (std::vector<double>::const_iterator ix=xlost.begin(); ix!=xlost.end(); ++ix) { f << *ix << ", "; } f << "]"
+                     "\n" "ylost = ["; for (std::vector<double>::const_iterator iy=ylost.begin(); iy!=ylost.end(); ++iy) { f << *iy << ", "; } f << "]"
+                     "\n"
+                     "\n" "ax.scatter(xlost, ylost, color='k', marker='o')"
                      "\n" "";
             }
             f << "\n" "verts_" << r << " = [";
@@ -343,6 +362,15 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
         }
         comm.barrier();
     }
+
+    }
+
+
+    // Sanity check
+    {
+      if (min<0) {
+          throw eckit::SeriousBug("Could not find partition for input node (meshSource does not contain all points of gridTarget)", Here());
+      }
 
     }
 

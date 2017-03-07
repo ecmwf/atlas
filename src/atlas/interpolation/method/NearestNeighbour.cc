@@ -58,7 +58,7 @@ void NearestNeighbour::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
             if (ip && (ip % 1000 == 0)) {
                 double rate = ip / timer.elapsed();
-                Log::debug() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
+                Log::debug<ATLAS>() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
             }
 
             // find the closest input point to the output point

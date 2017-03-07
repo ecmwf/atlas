@@ -68,6 +68,8 @@ public:
 
         add_option(new SimpleOption<bool>       ("with-backward",                     "Also do backward interpolation (default false)"));
 
+        add_option(new SimpleOption<bool>       ("fallback_to_2d",             "When the ray-tracing algorithm fails, we can either increase the halo of the source grid, or try to fallback to 2d."));
+
     }
 
 };
@@ -87,7 +89,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     args.get("log-rank", log_rank);
 
     if (eckit::mpi::comm().rank() != log_rank) {
-        Log::info().reset();
+        Log::reset();
     }
 
     if (args.get("backend", option)) {
@@ -113,6 +115,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
                 args.get("source-mesh-generator-triangulate", trigs)?  trigs  : false,
                 args.get("source-mesh-generator-angle",       angle)?  angle  : 0. );
 
+
     option = args.get("target-gridname", option)? option : "O32";
     atlas::grid::Grid::Ptr tgt_grid(atlas::grid::Structured::create(option));
     interpolation::PartitionedMesh tgt(
@@ -123,9 +126,12 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     src.partition(*src_grid);
     tgt.partition(*tgt_grid, src);
-
+        
     functionspace::NodeColumns src_functionspace(src.mesh(), source_mesh_halo);
     functionspace::NodeColumns tgt_functionspace(tgt.mesh(), target_mesh_halo);
+
+    src.writeGmsh("src-mesh.msh");
+    tgt.writeGmsh("tgt-mesh.msh");
     
     // Setup interpolator relating source & target meshes before setting a source FunctionSpace halo
     std::string interpolator_option = "finite-element";
@@ -190,7 +196,6 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
         }
     }
 
-    // functionspace::NodeColumns tgt_functionspace(tgt.mesh(),target_mesh_halo);
     field::FieldSet tgt_fields;
     for (size_t i = 0; i < src_fields.size(); ++i) {
         tgt_fields.add( tgt_functionspace.createField<double>(src_fields[i].name()) );

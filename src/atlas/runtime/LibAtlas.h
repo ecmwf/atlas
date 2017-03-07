@@ -8,9 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-/// @author Baudouin Raoult
-/// @author Tiago Quintino
-/// @date   August 2016
+#pragma once
 
 #include "eckit/system/Library.h"
 

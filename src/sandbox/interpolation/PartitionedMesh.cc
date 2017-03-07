@@ -44,7 +44,8 @@ void PartitionedMesh::writeGmsh(const std::string& fileName, const field::FieldS
     ASSERT(mesh_);
 
     util::Config output_config;
-    output_config.set("coordinates", std::string("xyz"));
+    // output_config.set("coordinates", std::string("xyz"));
+    output_config.set("ghost", true);
 
     output::Gmsh out(fileName, output_config);
     out.write(*mesh_);

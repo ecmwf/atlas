@@ -92,7 +92,7 @@ void Method::execute(const field::FieldSet& fieldsSource, field::FieldSet& field
     ASSERT(N == fieldsTarget.size());
 
     for (size_t i = 0; i < fieldsSource.size(); ++i) {
-        Log::debug() << "Method::execute() on field " << (i+1) << '/' << N << "..." << std::endl;
+        Log::debug<ATLAS>() << "Method::execute() on field " << (i+1) << '/' << N << "..." << std::endl;
 
         field::Field& src = const_cast< field::Field& >(fieldsSource[i]);
         field::Field& tgt = const_cast< field::Field& >(fieldsTarget[i]);

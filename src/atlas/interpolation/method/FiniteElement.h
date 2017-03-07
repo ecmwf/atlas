@@ -30,7 +30,12 @@ namespace method {
 class FiniteElement : public Method {
 public:
 
-    FiniteElement(const Config& config) : Method(config) {}
+    FiniteElement(const Config& config) : 
+        Method(config),
+        fallback_to_2d_(false) {
+        config.get("fallback_to_2d",fallback_to_2d_);
+    }
+    
     virtual ~FiniteElement() {}
 
     /**
@@ -62,6 +67,7 @@ protected:
     array::ArrayView<double,2> ilonlat_;
     array::ArrayView<double,2> ocoords_;
     array::ArrayView<double,2> olonlat_;
+    bool fallback_to_2d_;
 };
 
 
