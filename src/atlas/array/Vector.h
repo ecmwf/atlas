@@ -24,7 +24,7 @@ template <typename T>
 class Vector {
 public:
   Vector() : data_(NULL), data_gpu_(0), size_(0) {}
-  Vector(size_t N) : data_(new T[N]()), size_(N) {}
+  Vector(size_t N) : data_(new T[N]()), data_gpu_(0), size_(N) {}
 
   void resize_impl(size_t N) {
       if( data_gpu_ ) throw eckit::AssertionFailed("we can not resize a vector after has been cloned to device");
@@ -58,10 +58,13 @@ public:
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
         cudaMalloc((void**)(&data_gpu_), sizeof(T*)*size_);
 
+        T* buff = new T[size_];
+     
         for(size_t i=0; i < size(); ++i) {
           data_[i]->cloneToDevice();
-          data_gpu_[i] = data_[i]->gpu_object_ptr();
+          buff[i] = data_[i]->gpu_object_ptr();
         }
+        cudaMemcpy(data_gpu_, buff, sizeof(T*)*size_, cudaMemcpyHostToDevice);
 #else
         data_gpu_ = data_;
 #endif
