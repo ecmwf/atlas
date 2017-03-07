@@ -390,7 +390,6 @@ void IrregularConnectivityImpl::cloneFromDevice() {
     values_view_ = array::make_host_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_host_view<size_t, 1>(*(data_[_displs_]));
     counts_view_ = array::make_host_view<size_t, 1>(*(data_[_counts_])); 
-    gpu_clone_.cloneFromDevice();
 }
 void IrregularConnectivityImpl::syncHostDevice() const {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->syncHostDevice();});
@@ -503,7 +502,6 @@ void MultiBlockConnectivityImpl::cloneFromDevice()
 
   block_.cloneFromDevice();
   block_view_ = make_host_vector_view(block_);
-  gpu_clone_.cloneFromDevice();
 }
 
 void MultiBlockConnectivityImpl::syncHostDevice() const
@@ -868,7 +866,6 @@ void BlockConnectivityImpl::cloneToDevice() {
 void BlockConnectivityImpl::cloneFromDevice() {
     values_->cloneFromDevice();
     values_view_ = array::make_host_view<idx_t, 2>(*values_);
-    gpu_clone_.cloneFromDevice();
 }
 
 bool BlockConnectivityImpl::valid() const {

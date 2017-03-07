@@ -205,7 +205,6 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     BOOST_CHECK_EQUAL(conn(0,2),1  );
     BOOST_CHECK_EQUAL(conn(1,1),4  );
     BOOST_CHECK_EQUAL(conn(2,2),76 );
-
 }
 
  BOOST_AUTO_TEST_CASE( test_block_connectivity_add ) {
