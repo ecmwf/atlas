@@ -137,8 +137,6 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
             }
         }
     }
-
-    Log::debug<ATLAS>() << "Projected " << eckit::Plural(out_npts, "point") << std::endl;
     Log::debug<ATLAS>() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
 
 

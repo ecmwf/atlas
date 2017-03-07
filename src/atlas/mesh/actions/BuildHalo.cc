@@ -892,13 +892,13 @@ void build_halo(Mesh& mesh, int nb_elems )
 
     PeriodicPoints westpts(mesh,Topology::PERIODIC|Topology::WEST,nb_nodes_before_halo_increase);
 
-    Log::debug<ATLAS>() << "  periodic west : " << westpts << std::endl;
+    // Log::debug<ATLAS>() << "  periodic west : " << westpts << std::endl;
 
     increase_halo_periodic( helper, westpts, WestEast(), Topology::PERIODIC|Topology::WEST|Topology::GHOST );
 
     PeriodicPoints eastpts(mesh,Topology::PERIODIC|Topology::EAST,nb_nodes_before_halo_increase);
 
-    Log::debug<ATLAS>() << "  periodic east : " << eastpts << std::endl;
+    // Log::debug<ATLAS>() << "  periodic east : " << eastpts << std::endl;
 
     increase_halo_periodic( helper, eastpts, EastWest(), Topology::PERIODIC|Topology::EAST|Topology::GHOST );
 
