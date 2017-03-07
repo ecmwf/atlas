@@ -498,9 +498,12 @@ void MultiBlockConnectivityImpl::cloneFromDevice()
   IrregularConnectivityImpl::cloneFromDevice();
   block_displs_->cloneFromDevice();
   block_cols_  ->cloneFromDevice();
-  gpu_clone_.cloneFromDevice();
+  block_displs_view_ = array::make_host_view<size_t,  1>(*(block_displs_));
+  block_cols_view_ = array::make_host_view<size_t, 1>(*(block_cols_));
 
-  //TODO
+  block_.cloneFromDevice();
+  block_view_ = make_host_vector_view(block_);
+  gpu_clone_.cloneFromDevice();
 }
 
 void MultiBlockConnectivityImpl::syncHostDevice() const
