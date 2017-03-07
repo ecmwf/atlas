@@ -65,6 +65,7 @@ public:
           buff[i] = data_[i]->gpu_object_ptr();
         }
         cudaMemcpy(data_gpu_, buff, sizeof(T*)*size_, cudaMemcpyHostToDevice);
+        delete buff;
 #else
         data_gpu_ = data_;
 #endif
@@ -114,7 +115,6 @@ public:
   ATLAS_HOST_DEVICE
   T& operator[](size_t idx) {
       assert(idx < size_);
-      assert(vector_->size() == size_);
 
       return data_[idx];
   }
@@ -122,7 +122,6 @@ public:
   ATLAS_HOST_DEVICE
   T const& operator[](size_t idx) const {
       assert(idx < size_);
-      assert(vector_->size() == size_);
       return data_[idx];
   }
   ATLAS_HOST_DEVICE
@@ -131,7 +130,10 @@ public:
   ATLAS_HOST_DEVICE
   size_t size() const { return size_;}
 
-private:
+  bool is_valid(Vector<T>& vector) {
+    return (&vector) == vector_ && (data_ != NULL);
+  }
+public:
   Vector<T> const* vector_;
   T* data_;
   size_t size_;

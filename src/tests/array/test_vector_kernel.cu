@@ -14,13 +14,13 @@
 #include "atlas/array/Vector.h"
 #include "atlas/array/gridtools/GPUClonable.h"
 
-
 using namespace atlas::array;
 
 namespace atlas {
 namespace test {
 
 struct int_gpu {
+    int_gpu() = delete;
     int_gpu(int val) : val_(val), gpu_clone_(this) {}
 
     int_gpu* gpu_object_ptr() {return gpu_clone_.gpu_object_ptr();}
@@ -35,12 +35,37 @@ private:
 };
 
 __global__
-void kernel_ex(VectorView<int_gpu*> list_ints)
+void kernel_ex(VectorView<int_gpu*>* list_ints )
 {
-    for(size_t i=0; i < list_ints.size(); ++i) {
-        list_ints[i]->val_ += 5;
+    for(size_t i=0; i < list_ints->size() ; ++i) {
+        (*list_ints)[i]->val_ += 5;
     }
 }
+
+BOOST_AUTO_TEST_CASE( test_resize )
+{
+    Vector<int_gpu*> list_ints(2);
+
+    VectorView<int_gpu*> list_ints_h = make_host_vector_view(list_ints);
+    list_ints_h[0] = new int_gpu(3);
+    list_ints_h[1] = new int_gpu(4);
+
+    BOOST_CHECK_EQUAL( list_ints_h[0]->val_ , 3 );
+    BOOST_CHECK_EQUAL( list_ints_h[1]->val_ , 4 );
+
+    list_ints.resize(6);
+    BOOST_CHECK_EQUAL( list_ints_h.is_valid(list_ints) , false );
+  
+    VectorView<int_gpu*> list_ints_h2 = make_host_vector_view(list_ints);
+ 
+
+    BOOST_CHECK_EQUAL( list_ints_h2[0]->val_ , 3 );
+    BOOST_CHECK_EQUAL( list_ints_h2[1]->val_ , 4 );
+    BOOST_CHECK_EQUAL( list_ints_h2.size() , 6 );
+
+}
+
+
 
 BOOST_AUTO_TEST_CASE( test_vector_kernel )
 {
@@ -53,13 +78,23 @@ BOOST_AUTO_TEST_CASE( test_vector_kernel )
     list_ints_h[2] = new int_gpu(5);
     list_ints_h[3] = new int_gpu(6);
     list_ints.cloneToDevice();
+
     VectorView<int_gpu*> list_ints_d = make_device_vector_view(list_ints);
 
-    kernel_ex<<<1,1>>>(list_ints_d);
+    VectorView<int_gpu*>* list_ints_dp;
+    cudaMalloc((void**)(&list_ints_dp), sizeof(VectorView<int_gpu*>));
 
+    cudaMemcpy(list_ints_dp, &list_ints_d, sizeof(VectorView<int_gpu*>), cudaMemcpyHostToDevice);
+
+    kernel_ex<<<1,1>>>(list_ints_dp);
+
+    if( cudaPeekAtLastError() != cudaSuccess) std::cout << "ERROR " << std::endl;
     list_ints.cloneFromDevice();
 
-   BOOST_CHECK_EQUAL( list_ints_h[0]->val_ , 8 );
+    BOOST_CHECK_EQUAL( list_ints_h[0]->val_ , 8 );
+
+    BOOST_CHECK_THROW( list_ints.resize(6), eckit::AssertionFailed );
+
 }
 
 }
