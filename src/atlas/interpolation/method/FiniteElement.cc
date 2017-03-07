@@ -95,7 +95,9 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
     std::vector<size_t> failures;
 
     {
-        eckit::TraceTimer<LibAtlas> timerProj("Projecting");
+        std::stringstream msg; msg << "Computing interpolation weights for " << eckit::BigNum(out_npts) << " points...";
+        Log::debug<ATLAS>() << msg.str() << std::endl;
+        eckit::TraceTimer<LibAtlas> timerProj(msg.str()+"done");
 
         for ( size_t ip = 0; ip < out_npts; ++ip ) {
             if (out_ghosts(ip)) {
@@ -104,7 +106,7 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
             if (ip && (ip % 1000 == 0)) {
                 double rate = ip / timerProj.elapsed();
-                Log::debug<ATLAS>() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
+                Log::debug<ATLAS>() << "    " << eckit::BigNum(ip)<<" points completed (at " << rate << " points/s)..." << std::endl;
             }
 
             Point p ( ocoords_[ip].data() ); // lookup point

@@ -248,12 +248,15 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
     std::vector< grid::Grid::Point > lonlat_tgt_pts;
     grid().lonlat(lonlat_tgt_pts);
     {
-        eckit::TraceTimer<LibAtlas> timer("Partitioning target grid...");
+        std::stringstream msg; msg << "Partitioning " << eckit::BigNum(grid().npts()) 
+          << " target grid points... ";
+        Log::debug<ATLAS>() << msg.str() << std::endl;
+        eckit::TraceTimer<LibAtlas> timer(msg.str()+"done");
         for (size_t i=0; i<grid().npts(); ++i) {
 
             if (i && (i % 1000 == 0)) {
                 double rate = i / timer.elapsed();
-                Log::info() << eckit::BigNum(i) << " (at " << rate << " points/s)..." << std::endl;
+                Log::debug<ATLAS>() << "    " << eckit::BigNum(i) << " points completed (at " << rate << " points/s)" << std::endl;
             }
 
             point_t P(lonlat_tgt_pts[i].lon(), lonlat_tgt_pts[i].lat());

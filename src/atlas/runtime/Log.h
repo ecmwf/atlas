@@ -15,7 +15,8 @@ namespace atlas { namespace detail { typedef eckit::Log LogBase; } }
 namespace atlas { 
 
 typedef LibAtlas ATLAS;
-// Now we can use  Log::debug<ATLAS>() for debugging that can be switched
+
+// Use Log::debug<ATLAS>() for debugging that can be switched
 // on or off by the boolean environment variable ATLAS_DEBUG
 
 class Log : public detail::LogBase {
@@ -23,10 +24,6 @@ class Log : public detail::LogBase {
 public:
   
     typedef eckit::Channel Channel;
-
-    // static Channel& debug() {
-    //   return detail::LogBase::debug<LibAtlas>();
-    // };
 
 #ifndef ATLAS_HAVE_FORTRAN
   enum Style {

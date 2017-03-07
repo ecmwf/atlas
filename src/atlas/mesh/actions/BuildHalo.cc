@@ -16,7 +16,9 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "eckit/log/Timer.h"
 #include "atlas/internals/atlas_config.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -871,10 +873,15 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
 void build_halo(Mesh& mesh, int nb_elems )
 {
-  int jhalo = 0;
-  mesh.metadata().get("halo",jhalo);
+  int halo = 0;
+  mesh.metadata().get("halo",halo);
+  if( halo == nb_elems )
+    return;
 
-  for( ; jhalo<nb_elems; ++jhalo )
+  Log::debug<ATLAS>() << "Increasing mesh halo..." << std::endl;
+  eckit::TraceTimer<ATLAS> timer("Increasing mesh halo... done");
+  
+  for(int jhalo=halo ; jhalo<nb_elems; ++jhalo )
   {
     Log::debug<ATLAS>() << "Increase halo " << jhalo+1 << std::endl;
     size_t nb_nodes_before_halo_increase = mesh.nodes().size();
@@ -915,8 +922,6 @@ void build_halo(Mesh& mesh, int nb_elems )
     gmsh3d.write(mesh);
 #endif
   }
-
-  Log::debug<ATLAS>() << "Increase done" << std::endl;
 
   mesh.metadata().set("halo",nb_elems);
 }

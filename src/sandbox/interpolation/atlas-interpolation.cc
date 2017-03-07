@@ -124,10 +124,15 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
                 args.get("target-mesh-generator-triangulate", trigs)?  trigs  : false,
                 args.get("target-mesh-generator-angle",       angle)?  angle  : 0. );
 
+    Log::info() << "Partitioning source grid" << std::endl;
     src.partition(*src_grid);
+
+    Log::info() << "Partitioning target grid" << std::endl;
     tgt.partition(*tgt_grid, src);
-        
+
+    Log::info() << "Increasing source mesh halo by " << source_mesh_halo << " elements." << std::endl;
     functionspace::NodeColumns src_functionspace(src.mesh(), source_mesh_halo);
+    Log::info() << "Increasing target mesh halo by " << target_mesh_halo << " elements." << std::endl;
     functionspace::NodeColumns tgt_functionspace(tgt.mesh(), target_mesh_halo);
 
     src.writeGmsh("src-mesh.msh");
@@ -156,7 +161,6 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
       interpolator_backward->setup(tgt.mesh(), src.mesh());
     }
 
-    Log::info() << "Set initial condition" << std::endl;
 
     // Create source FunctionSpace and fields
     
