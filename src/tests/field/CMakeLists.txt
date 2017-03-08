@@ -15,5 +15,12 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
+  add_fctest( TARGET atlas_fctest_field_gpu
+    CONDITION       ATLAS_HAVE_GRIDTOOLS_STORAGE
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_field_gpu.F90
+    LIBS            atlas_f
+  )
+
 endif()
 
