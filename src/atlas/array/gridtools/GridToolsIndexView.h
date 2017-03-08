@@ -30,17 +30,27 @@ class FortranIndex
 public:
   enum { BASE = 1 };
 public:
+  ATLAS_HOST_DEVICE
   FortranIndex(Value* idx): idx_(idx) {}
+  ATLAS_HOST_DEVICE
   void set(const Value& value) { *(idx_) = value+BASE; }
+  ATLAS_HOST_DEVICE
   Value get() const { return *(idx_)-BASE; }
+  ATLAS_HOST_DEVICE
   void operator=(const Value& value) { set(value); }
+  ATLAS_HOST_DEVICE
   FortranIndex<Value>& operator=(const FortranIndex<Value>& other) { set(other.get()); return *this; }
+  ATLAS_HOST_DEVICE
   FortranIndex<Value>& operator+(const Value& value) { *(idx_)+=value; return *this; }
+  ATLAS_HOST_DEVICE
   FortranIndex<Value>& operator-(const Value& value) { *(idx_)-=value; return *this; }
+  ATLAS_HOST_DEVICE
   FortranIndex<Value>& operator--() { --(*(idx_)); return *this; }
+  ATLAS_HOST_DEVICE
   FortranIndex<Value>& operator++() { ++(*(idx_)); return *this; }
 
   //implicit conversion
+  ATLAS_HOST_DEVICE
   operator Value() const { return get(); }
 
 private:
