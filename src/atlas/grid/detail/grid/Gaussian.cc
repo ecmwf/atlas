@@ -29,8 +29,7 @@ static Domain domain( const Grid::Config& grid ) {
     if( grid.get("domain",config) ) {
       return Domain(config);
     }
-    config.set("type","global");
-    return Domain(config);
+    return Domain();
 }
 
 static Spacing yspace( const Grid::Config& grid ) {
@@ -182,16 +181,14 @@ namespace detail {
 namespace grid {
 
 StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx ) {
-  
+
   Grid::Config yspace;
   yspace.set("type","gaussian");
   yspace.set("start", 90.0);
   yspace.set("end",  -90.0);
   yspace.set("N",nx.size());
-  
-  Grid::Config domain("type","global");
-  
-  return new StructuredGrid::grid_t( Projection(), xspace(nx) , Spacing(yspace), Domain(domain) );  
+
+  return new StructuredGrid::grid_t( Projection(), xspace(nx) , Spacing(yspace), Domain() );
 }
 
 

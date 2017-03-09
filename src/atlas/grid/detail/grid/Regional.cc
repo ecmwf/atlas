@@ -15,6 +15,15 @@ namespace atlas {
 namespace grid {
 namespace { // anonymous
 
+static Domain domain( const Grid::Config& grid ) {
+
+    Grid::Config config;
+    if( grid.get("domain",config) ) {
+      return Domain(config);
+    }
+    return Domain();
+}
+
 struct ConfigParser {
 
   struct Parsed {
@@ -220,15 +229,12 @@ public:
         throw eckit::BadParameter("Could not parse configuration for RegularRegional grid", Here());
     }
 
-    // Deduce the domain
-    Domain domain ( new RectangularDomain( {x.min,x.max}, {y.min,y.max}, projection.units() ) );
-
     YSpace yspace( new LinearSpacing(y.min,y.max,y.N,y.endpoint) );
 
     bool with_endpoint = true;
     XSpace* xspace( new XSpace( {x.min,x.max}, std::vector<long>(y.N,x.N), with_endpoint ) );
 
-    return new StructuredGrid::grid_t( projection, xspace, yspace, domain );
+    return new StructuredGrid::grid_t( projection, xspace, yspace, domain(config) );
 
   }
 
@@ -274,14 +280,11 @@ public:
     if( not (config.get("ymin",y.min) or config.get("south",y.min)) ) y.min = -90.;
     if( not (config.get("ymax",y.max) or config.get("north",y.max)) ) y.max =  90.;
 
-    // Deduce the domain
-    Domain domain ( new ZonalBandDomain( {y.min,y.max} ) );
-
     YSpace yspace( new LinearSpacing(y.min,y.max,y.N,true) );
 
     XSpace* xspace( new XSpace( {0.,360.}, std::vector<long>(y.N,nx), false ) );
 
-    return new StructuredGrid::grid_t( projection, xspace, yspace, domain );
+    return new StructuredGrid::grid_t( projection, xspace, yspace, domain(config) );
 
   }
 

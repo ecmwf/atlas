@@ -8,12 +8,13 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_util_Unique_h
-#define atlas_util_Unique_h
+#pragma once
 
 #include <cmath>
 #include <sstream>
 #include "atlas/internals/atlas_config.h"
+#include "atlas/internals/Functions.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/LonLatMicroDeg.h"
@@ -58,7 +59,10 @@ namespace internals {
       // UniqueLonLat() {}
 
       /// @brief Constructor, needs nodes functionspace to cache the lonlat field
-      UniqueLonLat( const mesh::Nodes& nodes );
+      UniqueLonLat( const mesh::Nodes& );
+
+      /// @brief Constructor, needs nodes functionspace to cache the lonlat field
+      UniqueLonLat( const mesh::Mesh& );
 
       /// @brief Compute unique positive index of a node defined by node index.
       /// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
@@ -114,8 +118,9 @@ namespace detail {
   inline long unique64( const int lon_microdeg, const int lat_microdeg )
   {
     // Truncate microdegrees to (32 bits), and add bits together to 64 bit long.
-    long iy = static_cast<long>((360000000-lat_microdeg));    // (4*microdeg(90.)-lat)
-    long ix = static_cast<long>((lon_microdeg+1440000000));   // (lon+4*microdeg(360.))
+    long iy = 360000000l-long(lat_microdeg);    // (4*microdeg(90.)-lat)
+    long ix = long(lon_microdeg)+1440000000l;   // (lon+4*microdeg(360.))
+
     iy <<= 31;
     long id = iy | ix;
     return id;
@@ -168,6 +173,13 @@ inline uidx_t unique_lonlat( const double elem_lonlat[], size_t npts )
   return detail::unique32( microdeg(centroid[LON]), microdeg(centroid[LAT]) );
 }
 
+
+inline UniqueLonLat::UniqueLonLat( const mesh::Mesh& mesh )
+  : nodes(&mesh.nodes())
+{
+  ASSERT( mesh.projection().units() == "degrees" );
+  update();
+}
 
 inline UniqueLonLat::UniqueLonLat( const mesh::Nodes& _nodes )
   : nodes(&_nodes)
@@ -231,5 +243,3 @@ inline void UniqueLonLat::update()
 
 } // namespace internals
 } // namespace atlas
-
-#endif

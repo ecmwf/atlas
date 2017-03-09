@@ -20,8 +20,8 @@ public:
     virtual bool contains(double x, double y) const { return true; }
 
     // Domain properties
-    virtual bool isGlobal() const { return true; }
-    virtual bool isEmpty()  const { return false; }
+    virtual bool global() const { return true; }
+    virtual bool empty()  const { return false; }
 
     virtual eckit::Properties spec() const;
 

@@ -26,8 +26,8 @@ public:
     /// Checks if the point is contained in the domain
     virtual bool contains(double x, double y) const;
 
-    virtual bool isGlobal() const { return global_; }
-    virtual bool isEmpty() const  { return ( (xmin_ != xmax_) && (ymin_ != ymax_) ); }
+    virtual bool global() const { return global_; }
+    virtual bool empty() const  { return ( (xmin_ != xmax_) && (ymin_ != ymax_) ); }
 
     virtual eckit::Properties spec() const;
 

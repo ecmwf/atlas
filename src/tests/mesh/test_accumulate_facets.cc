@@ -605,7 +605,8 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 
   {
   const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh->edges().node_connectivity();
-  const internals::UniqueLonLat compute_uid( mesh->nodes() );
+  ASSERT( mesh->projection().units() == "degrees" );
+  const internals::UniqueLonLat compute_uid( *mesh );
   for( size_t jedge=0; jedge<mesh->edges().size(); ++jedge )
   {
     if( compute_uid(edge_nodes_check[2*jedge+0]) < compute_uid(edge_nodes_check[2*jedge+1]) )
@@ -799,7 +800,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
   {
     const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh->cells().node_connectivity();
     const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh->edges().cell_connectivity();
-    const internals::UniqueLonLat compute_uid( mesh->nodes() );
+    const internals::UniqueLonLat compute_uid( *mesh );
     for( size_t jedge=0; jedge<mesh->edges().size(); ++jedge )
     {
       idx_t e1 = edge_to_cell_check[2*jedge+0];

@@ -49,7 +49,6 @@ Structured::Structured( const std::string& name, Projection projection, XSpace* 
     projection_ = Projection();
   xspace_ = std::unique_ptr<XSpace>( xspace );
   yspace_ = yspace;
-  domain_ = domain;
   ASSERT( xspace_->ny == yspace_.size() );
 
   y_.assign(yspace_.begin(),yspace_.end());
@@ -68,17 +67,35 @@ Structured::Structured( const std::string& name, Projection projection, XSpace* 
   npts_ = size_t(std::accumulate(nx_.begin(), nx_.end(), 0));
   compute_true_periodicity();
 
-  if( periodic() ) {
-    if( yspace.max() - yspace.min() == 180. ) {
-      domain_ = Domain(Grid::Config("type","global"));
-    }
-    else {
+  if( domain.empty() ) {
+
+    if( periodic() ) {
+      if( yspace.max() - yspace.min() == 180. ) {
+        domain_ = Domain( Grid::Config("type","global") );
+      }
+      else {
+        Grid::Config dom;
+        dom.set("type","zonal_band");
+        dom.set("ymin",yspace.min());
+        dom.set("ymax",yspace.max());
+        domain_ = Domain(dom);
+      }
+    } else {
       Grid::Config dom;
-      dom.set("type","zonal_band");
+      dom.set("type","rectangular");
+      dom.set("xmin",xmin_[0]);
+      dom.set("xmax",xmax_[0]);
       dom.set("ymin",yspace.min());
       dom.set("ymax",yspace.max());
+      dom.set("units",projection_.units());
       domain_ = Domain(dom);
     }
+
+  } else {
+
+    // Crop grid
+    NOTIMP;
+
   }
 }
 
@@ -350,6 +367,10 @@ namespace { // anonymous
 
 static class structured : public GridBuilder {
 
+  using grid_t = atlas::grid::Grid::grid_t;
+  using Config = Grid::Config;
+  using XSpace = StructuredGrid::grid_t::XSpace;
+
 public:
 
     structured(): GridBuilder( "structured" ){}
@@ -358,33 +379,35 @@ public:
         os << std::left << std::setw(20) << " " << "Structured grid";
     }
 
-    virtual const atlas::grid::Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
+    virtual const grid_t* create( const std::string& name, const Config& config ) const {
         throw eckit::NotImplemented( "Cannot create structured grid from name", Here() );
     }
 
-    virtual const atlas::grid::Grid::grid_t* create( const Grid::Config& config ) const {
+    virtual const grid_t* create( const Config& config ) const {
 
         Projection projection;
         Spacing    yspace;
         Domain     domain;
 
-        Grid::Config config_proj;
+        Config config_proj;
         if( config.get("projection",config_proj) )
             projection = Projection(config_proj);
 
-        Grid::Config config_yspace;
+        Config config_domain;
+        if( config.get("domain",config_domain) ) {
+            domain = Domain(config_domain);
+        }
+
+        Config config_yspace;
         if( not config.get("yspace",config_yspace) )
             throw eckit::BadParameter("yspace missing in configuration");
         yspace = Spacing(config_yspace);
 
         const size_t ny = yspace.size();
 
-        StructuredGrid::grid_t::XSpace *X = new StructuredGrid::grid_t::XSpace(ny);
+        XSpace *X = new XSpace(ny);
 
-        double dom_xmin =  std::numeric_limits<double>::max();
-        double dom_xmax = -std::numeric_limits<double>::max();
-
-        std::vector<Grid::Config> config_xspace_list;
+        std::vector<Config> config_xspace_list;
         if( config.get("xspace[]",config_xspace_list) ) {
 
             ASSERT( config_xspace_list.size() == ny );
@@ -398,13 +421,11 @@ public:
                 X->xmax.push_back(xspace.end);
                 X->nx.push_back(xspace.N);
                 X->dx.push_back(xspace.step);
-                dom_xmin = std::min(dom_xmin,xspace.start);
-                dom_xmax = std::max(dom_xmax,xspace.end);
             }
 
         } else {
 
-            Grid::Config config_xspace;
+            Config config_xspace;
             if( not config.get("xspace",config_xspace) )
               throw eckit::BadParameter("xspace missing in configuration");
 
@@ -436,22 +457,7 @@ public:
               X->xmax.push_back(xspace.end);
               X->nx.push_back(xspace.N);
               X->dx.push_back(xspace.step);
-              dom_xmin = std::min(dom_xmin,xspace.start);
-              dom_xmax = std::max(dom_xmax,xspace.end);
             }
-        }
-
-        Grid::Config config_domain;
-        if( config.get("domain",config_domain) ) {
-            domain = Domain(config_domain);
-        } else {
-            config_domain.set("type","rectangular");
-            config_domain.set("ymin",yspace.min());
-            config_domain.set("ymax",yspace.max());
-            config_domain.set("xmin",dom_xmin);
-            config_domain.set("xmax",dom_xmax);
-            config_domain.set("units",projection.units());
-            domain = Domain(config_domain);
         }
 
         return new StructuredGrid::grid_t(projection, X, yspace, domain );

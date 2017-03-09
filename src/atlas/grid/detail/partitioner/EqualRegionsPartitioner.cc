@@ -502,6 +502,7 @@ void EqualRegionsPartitioner::partition(int part[]) const {
         std::vector<NodeInt> nodes(grid().npts());
         int n(0);
 
+        ASSERT( grid().projection().units() == "degrees" );
         if( auto reduced_grid = StructuredGrid(grid()) ) {
             for(size_t jlat = 0; jlat < reduced_grid.ny(); ++jlat) {
                 for(size_t jlon = 0; jlon < reduced_grid.nx(jlat); ++jlon) {

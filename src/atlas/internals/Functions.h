@@ -8,18 +8,17 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_util_Functions_h
-#define atlas_util_Functions_h
+#pragma once
 
 namespace atlas {
 namespace internals {
 
 inline int microdeg( const double& deg )
 {
+  assert( deg <  2145. ); // Since INT_MAX ==  2147483647
+  assert( deg > -2145. ); // Since INT_MIN == –2147483648
   return static_cast<int>(deg*1.e6 + 0.5);
 }
 
 } // namespace private
 } // namespace atlas
-
-#endif

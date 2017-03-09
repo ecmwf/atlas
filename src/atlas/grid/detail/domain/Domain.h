@@ -54,10 +54,10 @@ public:
     virtual eckit::Properties spec() const =0;
 
     /// Check if domain represents the complete globe surface
-    virtual bool isGlobal() const =0;
+    virtual bool global() const =0;
 
     /// Check if domain does not represent any area on the globe surface
-    virtual bool isEmpty() const =0;
+    virtual bool empty() const =0;
 
 // Unless the domain is global, we can never be sure about these functions
 // without knowing also the projection

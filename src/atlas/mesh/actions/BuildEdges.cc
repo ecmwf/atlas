@@ -92,7 +92,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
   // Sort edges for bit-reproducibility
   std::vector<Sort> edge_sort(nb_edges);
   {
-    UniqueLonLat compute_uid( mesh.nodes() );
+    UniqueLonLat compute_uid( mesh );
 
     for( size_t jedge=0; jedge<nb_edges; ++jedge )
       edge_sort[jedge] = Sort( compute_uid(edge_node_connectivity.row(jedge)), jedge );
@@ -168,7 +168,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
   for( size_t jnode=0; jnode<nodes.size(); ++jnode )
     to_edge_size[jnode] = 0;
 
-  UniqueLonLat compute_uid( nodes );
+  UniqueLonLat compute_uid( mesh );
   std::vector<Sort> edge_sort(nb_edges);
   for( size_t jedge=0; jedge<nb_edges; ++jedge )
     edge_sort[jedge] = Sort( compute_uid(edge_node_connectivity.row(jedge)), jedge );
@@ -329,7 +329,7 @@ void build_edges( Mesh& mesh )
   mesh::HybridElements::Connectivity& edge_nodes = mesh.edges().node_connectivity();
   mesh::HybridElements::Connectivity& cell_nodes = mesh.cells().node_connectivity();
 
-  UniqueLonLat compute_uid( nodes );
+  UniqueLonLat compute_uid( mesh );
 
   array::IndexView<idx_t,1>  edge_ridx     ( mesh.edges().remote_index() );
   array::ArrayView<int,1>    edge_part     ( mesh.edges().partition() );

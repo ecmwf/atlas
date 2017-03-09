@@ -10,6 +10,14 @@ namespace { // anonymous
 
 static eckit::Translator<std::string,int> to_int;
 
+static Domain domain( const Grid::Config& grid ) {
+
+    Grid::Config config;
+    if( grid.get("domain",config) ) {
+      return Domain(config);
+    }
+    return Domain();
+}
 
 struct Shift {
 
@@ -39,7 +47,7 @@ StructuredGrid::grid_t* create_lonlat(long nlon, long nlat, Shift shift, const G
 
     bool shifted_x = shift(Shift::LON);
     bool shifted_y = shift(Shift::LAT);
-    
+
     double start_x = (shifted_x ? 0.5 : 0.0)*360.0/double(nlon);
     std::array<double,2> interval_x = { start_x, start_x+360. };
     bool no_endpoint = false;
@@ -53,11 +61,6 @@ StructuredGrid::grid_t* create_lonlat(long nlon, long nlat, Shift shift, const G
     config_spacing.set("N",nlat);
     Spacing yspace(config_spacing);
 
-    // domain is global
-    Grid::Config config_domain;
-    config_domain.set("type","global");
-    Domain domain(config_domain);
-
     Projection projection;
     Grid::Config config_projection;
     if( config.get("projection",config_projection) ) {
@@ -65,7 +68,7 @@ StructuredGrid::grid_t* create_lonlat(long nlon, long nlat, Shift shift, const G
     }
 
     std::string name;
-    
+
     if( shifted_x and shifted_y )
       name = "S";
     else if( shifted_x and not shifted_y )
@@ -75,15 +78,15 @@ StructuredGrid::grid_t* create_lonlat(long nlon, long nlat, Shift shift, const G
     else
       name = "L";
 
-    name += std::to_string(nlon)+"x"+std::to_string(nlat); 
+    name += std::to_string(nlon)+"x"+std::to_string(nlat);
 
-    return new StructuredGrid::grid_t( name, projection, xspace, yspace, domain );
+    return new StructuredGrid::grid_t( name, projection, xspace, yspace, domain(config) );
 }
 
 StructuredGrid::grid_t* create_lonlat( const Grid::Config& config, Shift shift ) {
-  
+
   bool shifted_y = shift(Shift::LAT);
-  
+
   long N, nx, ny;
   // dimensions
   if ( config.get("N",N) ) {
@@ -94,9 +97,9 @@ StructuredGrid::grid_t* create_lonlat( const Grid::Config& config, Shift shift )
   } else {
       throw eckit::BadParameter("Configuration requires either N, or (nx,ny)",Here());
   }
-  
+
   return create_lonlat(nx,ny,shift,config);
-  
+
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -117,7 +120,7 @@ public:
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
-      
+
       util::Config grid(config);
       grid.set("type", type());
 
@@ -135,7 +138,7 @@ public:
     }
     return nullptr;
   }
-  
+
   virtual const Grid::grid_t* create( const Grid::Config& config ) const {
     return create_lonlat( config, Shift(false,false) );
   }
@@ -160,7 +163,7 @@ public:
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
-      
+
       util::Config grid(config);
       grid.set("type", type());
 
@@ -178,7 +181,7 @@ public:
     }
     return nullptr;
   }
-  
+
   virtual const Grid::grid_t* create( const Grid::Config& config ) const {
     return create_lonlat( config, Shift(true,true) );
   }
@@ -203,7 +206,7 @@ public:
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
-      
+
       util::Config grid(config);
       grid.set("type", type());
 
@@ -221,7 +224,7 @@ public:
     }
     return nullptr;
   }
-  
+
   virtual const Grid::grid_t* create( const Grid::Config& config ) const {
     return create_lonlat( config, Shift(true,false) );
   }
@@ -247,7 +250,7 @@ public:
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
-      
+
       util::Config grid(config);
       grid.set("type", type());
 
@@ -265,7 +268,7 @@ public:
     }
     return nullptr;
   }
-  
+
   virtual const Grid::grid_t* create( const Grid::Config& config ) const {
     return create_lonlat( config, Shift(false,true) );
   }

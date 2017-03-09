@@ -18,8 +18,8 @@ public:
     static std::string static_type() {return "circular";}
     virtual std::string type() const { return static_type(); }
 
-    virtual bool isEmpty() const { return (radius_>0); }
-    virtual bool isGlobal() const { return false; }
+    virtual bool empty() const { return (radius_>0); }
+    virtual bool global() const { return false; }
 
     virtual eckit::Properties spec() const;
 

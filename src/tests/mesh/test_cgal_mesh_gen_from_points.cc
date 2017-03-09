@@ -18,12 +18,12 @@
 #include "atlas/atlas.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/mesh/generators/Delaunay.h"
+#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::mesh::generators;
+using namespace atlas::meshgenerator;
 using namespace atlas::output;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     Grid grid( "L33x11" );
 
     // Build a mesh from grid
-    Delaunay generate;
+    DelaunayMeshGenerator generate;
     mesh::Mesh::Ptr mesh( generate(grid) );
 
     Gmsh gmsh("earth.msh", util::Config("coordinates","xyz") );

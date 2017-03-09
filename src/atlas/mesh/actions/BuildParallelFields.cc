@@ -332,7 +332,8 @@ field::Field& build_nodes_partition( mesh::Nodes& nodes )
 field::Field& build_edges_partition( Mesh& mesh )
 {
   const mesh::Nodes& nodes = mesh.nodes();
-  UniqueLonLat compute_uid(nodes);
+
+  UniqueLonLat compute_uid(mesh);
 
   size_t mypart = parallel::mpi::comm().rank();
   size_t nparts = parallel::mpi::comm().size();
@@ -598,7 +599,7 @@ field::Field& build_edges_partition( Mesh& mesh )
 field::Field& build_edges_remote_idx( Mesh& mesh  )
 {
   const mesh::Nodes& nodes = mesh.nodes();
-  UniqueLonLat compute_uid(nodes);
+  UniqueLonLat compute_uid(mesh);
 
   size_t mypart = parallel::mpi::comm().rank();
   size_t nparts = parallel::mpi::comm().size();
@@ -745,8 +746,7 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
 
 field::Field& build_edges_global_idx( Mesh& mesh )
 {
-  const mesh::Nodes& nodes = mesh.nodes();
-  UniqueLonLat compute_uid(nodes);
+  UniqueLonLat compute_uid(mesh);
 
   int nparts = parallel::mpi::comm().size();
   size_t root = 0;
@@ -757,7 +757,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   edge_gidx = -1;
 
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
-  array::ArrayView<double,2> lonlat     ( nodes.lonlat() );
+  array::ArrayView<double,2> lonlat     ( mesh.nodes().lonlat() );
   array::ArrayView<int,1> is_pole_edge;
   bool has_pole_edges = false;
   if( edges.has_field("is_pole_edge") )
