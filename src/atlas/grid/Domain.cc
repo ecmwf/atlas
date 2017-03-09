@@ -103,14 +103,19 @@ void Domain::normalise() {
 
 
 double Domain::normalise(double lon) const {
-    while (lon >= east_) {
-        lon -= 360;
+
+    // check if lon is coincident with the West meridian
+    double increment = 360;
+    if (is_approximately_equal(long((lon - west_)/increment) * increment, lon - west_)) {
+        return west_;
     }
-    while (lon < west_) {
-        if (is_approximately_equal(lon, west_)) {
-            return west_;
-        }
+
+    // check if lon is in ]West, East[
+    while (is_strictly_greater(west_, lon)) {
         lon += 360;
+    }
+    while (is_strictly_greater(lon, east_)) {
+        lon -= 360;
     }
     return lon;
 }
