@@ -10,14 +10,14 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/detail/partitioners/TransPartitioner.h"
+#include "atlas/grid/detail/partitioner/TransPartitioner.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
 namespace grid {
 namespace detail {
-namespace partitioners {
+namespace partitioner {
 
 TransPartitioner::TransPartitioner(const Grid& grid,
                                    const trans::Trans& trans) :
@@ -106,13 +106,13 @@ int TransPartitioner::nb_regions(int b) const {
     return t_->n_regions()[b];
 }
 
-} // namespace partitioners
+} // namespace partitioner
 } // namespace detail
 } // namespace grid
 } // namespace atlas
 
 namespace {
-atlas::grid::detail::partitioners::PartitionerBuilder<
-atlas::grid::detail::partitioners::TransPartitioner> __Trans("Trans");
+atlas::grid::detail::partitioner::PartitionerBuilder<
+atlas::grid::detail::partitioner::TransPartitioner> __Trans("trans");
 }
 

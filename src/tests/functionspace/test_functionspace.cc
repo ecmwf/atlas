@@ -19,7 +19,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
@@ -42,7 +42,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns_no_halo )
 {
   grid::Grid grid("O8");
-  SharedPtr<mesh::Mesh> mesh( mesh::generators::Structured().generate(grid) );
+  SharedPtr<mesh::Mesh> mesh( meshgenerator::StructuredMeshGenerator().generate(grid) );
   SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh) );
   SharedPtr<field::Field> field( nodes_fs->createField<int>("field") );
   array::ArrayView<int,1> value ( *field );
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
   grid::ReducedGaussianGrid grid( {4,8,8,4} );
 
   mesh::Mesh mesh;
-  mesh::generators::Structured generator;
+  meshgenerator::StructuredMeshGenerator generator;
   //generator.options.set("3d",true);
   generator.generate(grid,mesh);
 

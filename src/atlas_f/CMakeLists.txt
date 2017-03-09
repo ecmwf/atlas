@@ -120,7 +120,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildEdges.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildDualMesh.h)
 #generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/GenerateMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/WriteLoadBalanceReport.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/generators/MeshGenerator.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/meshgenerator/MeshGenerator.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Output.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Gmsh.h
   MODULE    atlas_output_gmsh_c_binding

@@ -10,7 +10,7 @@
 
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -23,7 +23,7 @@ namespace test {
 
 mesh::Mesh::Ptr generate_mesh( const StructuredGrid& grid )
 {
-  mesh::generators::Structured generate;
+  meshgenerator::StructuredMeshGenerator generate;
   return mesh::Mesh::Ptr( generate( grid ) );
 }
 

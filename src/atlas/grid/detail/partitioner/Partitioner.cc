@@ -17,35 +17,35 @@
 
 #include "atlas/internals/atlas_config.h"
 #include "atlas/internals/atlas_defines.h"
-#include "atlas/grid/detail/partitioners/Partitioner.h"
+#include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/runtime/Log.h"
 
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/grid/detail/partitioners/TransPartitioner.h"
+#include "atlas/grid/detail/partitioner/TransPartitioner.h"
 #endif
-#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 
 
 namespace {
 
 static eckit::Mutex *local_mutex = 0;
 static std::map<std::string,
-       atlas::grid::detail::partitioners::PartitionerFactory *> *m = 0;
+       atlas::grid::detail::partitioner::PartitionerFactory *> *m = 0;
 static pthread_once_t once = PTHREAD_ONCE_INIT;
 
 static void init() {
     local_mutex = new eckit::Mutex();
     m = new std::map<std::string,
-    atlas::grid::detail::partitioners::PartitionerFactory *>();
+    atlas::grid::detail::partitioner::PartitionerFactory *>();
 }
 }
 
 namespace atlas {
 namespace grid {
 namespace detail {
-namespace partitioners {
+namespace partitioner {
 
 Partitioner::Partitioner(const Grid& grid): nb_partitions_(parallel::mpi::comm().size()), grid_(grid) {
 }
@@ -174,7 +174,7 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
     return (*j).second->make(grid, nb_partitions);
 }
 
-} // namespace partitioners
+} // namespace partitioner
 } // namespace detail
 } // namespace grid
 } // namespace atlas

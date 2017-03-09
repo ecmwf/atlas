@@ -5,7 +5,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/functionspace/NodeColumns.h"
 
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     StructuredGrid grid( "N32" );
 
     // Generate mesh associated to structured grid
-    atlas::mesh::generators::Structured meshgenerator;
+    atlas::meshgenerator::StructuredMeshGenerator meshgenerator;
     Mesh::Ptr mesh ( meshgenerator.generate(grid) );
 
     // Number of nodes in the mesh

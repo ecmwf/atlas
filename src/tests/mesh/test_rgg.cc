@@ -20,8 +20,8 @@
 #include "atlas/internals/atlas_config.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
 #include "atlas/grid.h"
-#include "atlas/mesh/generators/Structured.h"
-#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/Config.h"
 #include "atlas/mesh/Mesh.h"
@@ -128,13 +128,13 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
   std::vector<int>    n_regions;
   std::vector<double> s_cap;
 
-  grid::detail::partitioners::eq_caps(6, n_regions, s_cap);
+  grid::detail::partitioner::eq_caps(6, n_regions, s_cap);
   BOOST_CHECK_EQUAL( n_regions.size(), 3 );
   BOOST_CHECK_EQUAL( n_regions[0], 1 );
   BOOST_CHECK_EQUAL( n_regions[1], 4 );
   BOOST_CHECK_EQUAL( n_regions[2], 1 );
 
-  grid::detail::partitioners::eq_caps(10, n_regions, s_cap);
+  grid::detail::partitioner::eq_caps(10, n_regions, s_cap);
   BOOST_CHECK_EQUAL( n_regions.size(), 4 );
   BOOST_CHECK_EQUAL( n_regions[0], 1 );
   BOOST_CHECK_EQUAL( n_regions[1], 4 );
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 12 partitions
   {
-    grid::detail::partitioners::EqualRegionsPartitioner partitioner(g,12);
+    grid::detail::partitioner::EqualRegionsPartitioner partitioner(g,12);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),    4 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0), 1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1), 5 );
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 24 partitions
   {
-    grid::detail::partitioners::EqualRegionsPartitioner partitioner(g,24);
+    grid::detail::partitioner::EqualRegionsPartitioner partitioner(g,24);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),     5 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 48 partitions
   {
-    grid::detail::partitioners::EqualRegionsPartitioner partitioner(g,48);
+    grid::detail::partitioner::EqualRegionsPartitioner partitioner(g,48);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),     7 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 96 partitions
   {
-    grid::detail::partitioners::EqualRegionsPartitioner partitioner(g,96);
+    grid::detail::partitioner::EqualRegionsPartitioner partitioner(g,96);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),    10 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   ENABLE {
 
-    mesh::generators::Structured generate(
+    meshgenerator::StructuredMeshGenerator generate(
           default_opts
           ("3d",true)
           ("include_pole",false)
@@ -259,7 +259,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
 
   ENABLE {
-    mesh::generators::Structured generate(
+    meshgenerator::StructuredMeshGenerator generate(
           default_opts
           ("3d",false)
           ("include_pole",false)
@@ -275,7 +275,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
 
   ENABLE {
-    mesh::generators::Structured generate(
+    meshgenerator::StructuredMeshGenerator generate(
           default_opts
           ("3d",true)
           ("include_pole",true)
@@ -293,7 +293,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   mesh::Mesh* mesh;
 
   ENABLE {
-    mesh::generators::Structured generate(
+    meshgenerator::StructuredMeshGenerator generate(
           default_opts
           ("3d",false)
           ("include_pole",false)
@@ -312,7 +312,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
   // 3 latitudes
   ENABLE {
-    mesh::generators::Structured generate(
+    meshgenerator::StructuredMeshGenerator generate(
           default_opts
           ("3d",false)
           ("include_pole",false)
@@ -328,7 +328,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
   // 4 latitudes
   ENABLE {
-    mesh::generators::Structured generate(
+    meshgenerator::StructuredMeshGenerator generate(
           default_opts
           ("3d",false)
           ("include_pole",false)
@@ -344,7 +344,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   }
   // 5 latitudes WIP
   ENABLE {
-    mesh::generators::Structured generate(
+    meshgenerator::StructuredMeshGenerator generate(
           default_opts
           ("3d",false)
           ("include_pole",false)
@@ -364,7 +364,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
 
-  BOOST_CHECK( grid::detail::partitioners::PartitionerFactory::has("EqualRegions") );
+  BOOST_CHECK( grid::detail::partitioner::PartitionerFactory::has("equal_regions") );
   size_t nb_parts = 20;
           //  Alternative grid for debugging
           //  int nlat=10;
@@ -396,8 +396,8 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
     DEBUG_VAR(p);
 
-    mesh::generators::Structured generate ( util::Config
-           ("partitioner","EqualRegions")
+    meshgenerator::StructuredMeshGenerator generate ( util::Config
+           ("partitioner","equal_regions")
            ("nb_parts",nb_parts)
            ("part",p)
            ("include_pole",false)
@@ -515,7 +515,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 
    bool three_dimensional = true;
 
-   mesh::generators::Structured generate( util::Config
+   meshgenerator::StructuredMeshGenerator generate( util::Config
          ("3d",three_dimensional)
          ("triangulate",false) );
 
@@ -537,7 +537,7 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
   atlas::util::Config cfg;
   cfg.set("part",1);
   cfg.set("nb_parts",8);
-  eckit::SharedPtr<mesh::generators::MeshGenerator> meshgenerator( new mesh::generators::Structured(cfg) );
+  eckit::SharedPtr<meshgenerator::MeshGenerator> meshgenerator( new meshgenerator::StructuredMeshGenerator(cfg) );
   eckit::SharedPtr<mesh::Mesh> mesh ( meshgenerator->generate(grid) );
   const array::ArrayView<int,1> part( mesh->nodes().partition() );
   const array::ArrayView<int,1> ghost( mesh->nodes().ghost() );

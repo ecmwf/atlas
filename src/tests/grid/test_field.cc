@@ -18,7 +18,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/mesh/generators/Delaunay.h"
+#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/internals/Debug.h"
 #include "atlas/field/State.h"
 #include "atlas/mesh/Mesh.h"
@@ -28,7 +28,7 @@ using namespace std;
 using namespace eckit;
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::mesh::generators;
+using namespace atlas::meshgenerator;
 
 //-----------------------------------------------------------------------------
 

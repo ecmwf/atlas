@@ -19,7 +19,7 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/numerics/fvm/Method.h"
@@ -36,7 +36,7 @@
 
 using namespace eckit;
 using namespace atlas::numerics;
-using namespace atlas::mesh::generators;
+using namespace atlas::meshgenerator;
 using namespace atlas::internals;
 using namespace atlas::grid;
 
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE( test_factory )
 BOOST_AUTO_TEST_CASE( test_build )
 {
   Log::info() << "test_build" << std::endl;
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
+  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate( grid::Grid("O16") ) );
   const double R = util::Earth::radiusInMeters();
   fvm::Method fvm(*mesh,util::Config("radius",R));
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   grid::Grid grid(griduid());
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
+  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE( test_div )
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   grid::Grid grid(griduid());
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
+  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   grid::Grid grid(griduid());
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
+  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
@@ -324,7 +324,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   grid::Grid grid(griduid());
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
+  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
   fvm::Method fvm(*mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );

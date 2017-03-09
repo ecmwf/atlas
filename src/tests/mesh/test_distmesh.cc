@@ -38,7 +38,7 @@
 
 using namespace atlas;
 using namespace atlas::output;
-using namespace atlas::mesh::generators;
+using namespace atlas::meshgenerator;
 using namespace atlas::util;
 
 namespace atlas {
@@ -70,10 +70,10 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {
   // Every task builds full mesh
-//  mesh::generators::Structured generate( util::Config
+//  meshgenerator::StructuredMeshGenerator generate( util::Config
 //      ("nb_parts",1)
 //      ("part",0) );
-  mesh::generators::Structured generate;
+  meshgenerator::StructuredMeshGenerator generate;
 
       // long lon[] = {4,6,8,8,8};
       // test::TestGrid grid(5,lon);

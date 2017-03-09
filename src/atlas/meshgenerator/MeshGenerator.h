@@ -33,8 +33,7 @@ namespace grid {
 } }
 
 namespace atlas {
-namespace mesh {
-namespace generators {
+namespace meshgenerator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -55,14 +54,14 @@ public:
 
     virtual void hash(eckit::MD5&) const = 0;
 
-    virtual void generate( const grid::Grid&, const grid::Distribution&, Mesh& ) const =0;
-    virtual void generate( const grid::Grid&, Mesh& ) const =0;
+    virtual void generate( const grid::Grid&, const grid::Distribution&, mesh::Mesh& ) const =0;
+    virtual void generate( const grid::Grid&, mesh::Mesh& ) const =0;
 
-    Mesh* generate( const grid::Grid&, const grid::Distribution& ) const;
-    Mesh* generate( const grid::Grid& ) const;
+    mesh::Mesh* generate( const grid::Grid&, const grid::Distribution& ) const;
+    mesh::Mesh* generate( const grid::Grid& ) const;
 
-    Mesh* operator()( const grid::Grid&, const grid::Distribution& ) const;
-    Mesh* operator()( const grid::Grid& ) const;
+    mesh::Mesh* operator()( const grid::Grid&, const grid::Distribution& ) const;
+    mesh::Mesh* operator()( const grid::Grid& ) const;
 
 };
 
@@ -122,12 +121,11 @@ extern "C" {
 void atlas__MeshGenerator__delete(MeshGenerator* This);
 MeshGenerator* atlas__MeshGenerator__create_noconfig(const char* name);
 MeshGenerator* atlas__MeshGenerator__create(const char* name, const eckit::Parametrisation* params);
-Mesh* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator* This, const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
-Mesh* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid::Grid::grid_t* grid);
+mesh::Mesh* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator* This, const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
+mesh::Mesh* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid::Grid::grid_t* grid);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // namespace generators
-} // namespace mesh
+} // namespace meshgenerators
 } // namespace atlas

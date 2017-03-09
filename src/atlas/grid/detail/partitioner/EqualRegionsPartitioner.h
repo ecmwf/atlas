@@ -60,13 +60,13 @@
 #pragma once
 
 #include <vector>
-#include "atlas/grid/detail/partitioners/Partitioner.h"
+#include "atlas/grid/detail/partitioner/Partitioner.h"
 
 
 namespace atlas {
 namespace grid {
 namespace detail {
-namespace partitioners {
+namespace partitioner {
 
 void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap);
 void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[]);
@@ -121,7 +121,7 @@ private:
     std::vector<int> sectors_;
 };
 
-} // namespace partitioners
+} // namespace partitioner
 } // namespace detail
 } // namespace grid
 } // namespace atlas

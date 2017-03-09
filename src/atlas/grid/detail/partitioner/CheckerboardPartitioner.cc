@@ -4,7 +4,7 @@
 #include <iostream>
 #include <functional>
 #include <algorithm>
-#include "atlas/grid/detail/partitioners/CheckerBoardPartitioner.h"
+#include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
 #include "atlas/internals/Functions.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
@@ -15,9 +15,9 @@ using atlas::internals::microdeg;
 namespace atlas {
 namespace grid {
 namespace detail {
-namespace partitioners {
+namespace partitioner {
 
-CheckerBoardPartitioner::CheckerBoardPartitioner(const Grid& grid) :
+CheckerboardPartitioner::CheckerboardPartitioner(const Grid& grid) :
   Partitioner(grid,parallel::mpi::comm().size())
 {
   // defaults
@@ -28,7 +28,7 @@ CheckerBoardPartitioner::CheckerBoardPartitioner(const Grid& grid) :
 
 }
 
-CheckerBoardPartitioner::CheckerBoardPartitioner(const Grid& grid, int N) :
+CheckerboardPartitioner::CheckerboardPartitioner(const Grid& grid, int N) :
   Partitioner(grid,N)
 {
   // defaults
@@ -41,7 +41,7 @@ CheckerBoardPartitioner::CheckerBoardPartitioner(const Grid& grid, int N) :
   if (checkerboard_ && nparts_%nbands_!=0) throw eckit::BadValue("number of bands doesn't divide number of partitions",Here());
 }
 
-CheckerBoardPartitioner::CheckerBoardPartitioner(const Grid& grid, int N, int nbands) :
+CheckerboardPartitioner::CheckerboardPartitioner(const Grid& grid, int N, int nbands) :
   Partitioner(grid,N)
 {
   // defaults
@@ -55,7 +55,7 @@ CheckerBoardPartitioner::CheckerBoardPartitioner(const Grid& grid, int N, int nb
   if (checkerboard_ && nparts_%nbands_!=0) throw eckit::BadValue("number of bands doesn't divide number of partitions",Here());
 }
 
-CheckerBoardPartitioner::CheckerBoardPartitioner(const Grid& grid, int N, int nbands, bool checkerboard) :
+CheckerboardPartitioner::CheckerboardPartitioner(const Grid& grid, int N, int nbands, bool checkerboard) :
   Partitioner(grid,N)
 {
   // defaults
@@ -70,7 +70,7 @@ CheckerBoardPartitioner::CheckerBoardPartitioner(const Grid& grid, int N, int nb
   if (checkerboard_ && nparts_%nbands_!=0) throw eckit::BadValue("number of bands doesn't divide number of partitions",Here());
 }
 
-void CheckerBoardPartitioner::configure_defaults(const Grid& grid) {
+void CheckerboardPartitioner::configure_defaults(const Grid& grid) {
   // default number of parts
   nparts_=parallel::mpi::comm().size();
 
@@ -97,7 +97,7 @@ void CheckerBoardPartitioner::configure_defaults(const Grid& grid) {
   }
 }
 
-bool compare_Y_X(const CheckerBoardPartitioner::NodeInt& node1, const CheckerBoardPartitioner::NodeInt& node2)
+bool compare_Y_X(const CheckerboardPartitioner::NodeInt& node1, const CheckerboardPartitioner::NodeInt& node2)
 {
   // comparison of two locations; X1 < X2 if it's to the south, then to the east.
   if( node1.y <  node2.y ) return true;
@@ -105,7 +105,7 @@ bool compare_Y_X(const CheckerBoardPartitioner::NodeInt& node1, const CheckerBoa
   return false;
 }
 
-bool compare_X_Y(const CheckerBoardPartitioner::NodeInt& node1, const CheckerBoardPartitioner::NodeInt& node2)
+bool compare_X_Y(const CheckerboardPartitioner::NodeInt& node1, const CheckerboardPartitioner::NodeInt& node2)
 {
   // comparison of two locations; X1 < X2 if it's to the east, then to the south.
   if( node1.x <  node2.x ) return true;
@@ -113,7 +113,7 @@ bool compare_X_Y(const CheckerBoardPartitioner::NodeInt& node1, const CheckerBoa
   return false;
 }
 
-void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) const
+void CheckerboardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) const
 {
 
   size_t nparts = nparts_;
@@ -237,7 +237,7 @@ void CheckerBoardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
 
 }
 
-void CheckerBoardPartitioner::partition(int part[]) const
+void CheckerboardPartitioner::partition(int part[]) const
 {
   if( nparts_ == 1 ) // trivial solution, so much faster
   {
@@ -264,13 +264,13 @@ void CheckerBoardPartitioner::partition(int part[]) const
   }
 }
 
-} // namespace partitioners
+} // namespace partitioner
 } // namespace detail
 } // namespace grid
 } // namespace atlas
 
 namespace {
-    atlas::grid::detail::partitioners::PartitionerBuilder<atlas::grid::detail::partitioners::CheckerBoardPartitioner> __CheckerBoard("CheckerBoard");
+    atlas::grid::detail::partitioner::PartitionerBuilder<atlas::grid::detail::partitioner::CheckerboardPartitioner> __CheckerBoard("checkerboard");
 }
 
 

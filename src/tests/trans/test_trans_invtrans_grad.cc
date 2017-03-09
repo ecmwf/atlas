@@ -20,9 +20,9 @@
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Distribution.h"
-#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/detail/partitioners/TransPartitioner.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioner/TransPartitioner.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
 
   // Output
   {
-    mesh::Mesh::Ptr mesh( mesh::generators::Structured().generate(g) );
+    mesh::Mesh::Ptr mesh( meshgenerator::StructuredMeshGenerator().generate(g) );
     functionspace::StructuredColumns gp(g);
     output::Gmsh gmsh(grid_uid+"-grid.msh");
     field::Field::Ptr scalar(
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE( test_invtrans_grad )
 {
   std::string grid_uid("O48");
   grid::StructuredGrid g ( grid_uid );
-  mesh::Mesh::Ptr mesh( mesh::generators::Structured().generate(g) );
+  mesh::Mesh::Ptr mesh( meshgenerator::StructuredMeshGenerator().generate(g) );
   long N = g.ny()/2;
   trans::Trans trans(g, 2*N-1);
   functionspace::NodeColumns gp(*mesh);
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE( test_invtrans_grad )
 
   // Output
   {
-    mesh::Mesh::Ptr mesh( mesh::generators::Structured().generate(g) );
+    mesh::Mesh::Ptr mesh( meshgenerator::StructuredMeshGenerator().generate(g) );
     functionspace::StructuredColumns gp(g);
     output::Gmsh gmsh(grid_uid+"-nodes.msh");
     gmsh.write(*mesh);

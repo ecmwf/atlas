@@ -18,7 +18,7 @@
 namespace atlas {
 namespace grid {
 namespace detail {
-namespace partitioners {
+namespace partitioner {
 
 class Partitioner : public eckit::Owned {
 
@@ -103,7 +103,7 @@ public:
 
 // ------------------------------------------------------------------
 
-} // namespace partitioners
+} // namespace partitioner
 } // namespace detail
 } // namespace grid
 } // namespace atlas

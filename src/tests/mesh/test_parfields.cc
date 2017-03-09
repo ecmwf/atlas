@@ -25,9 +25,9 @@
 #include "atlas/util/Metadata.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/internals/Parameters.h"
-#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -40,7 +40,7 @@ using atlas::internals::Topology;
 using namespace atlas::array;
 using namespace atlas::internals;
 using namespace atlas::output;
-using namespace atlas::mesh::generators;
+using namespace atlas::meshgenerator;
 
 namespace atlas {
 namespace test {
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   util::Config meshgen_options;
   meshgen_options.set("angle",27.5);
   meshgen_options.set("triangulate",false);
-  mesh::generators::Structured generate(meshgen_options);
+  meshgenerator::StructuredMeshGenerator generate(meshgen_options);
   mesh::Mesh* m = generate( grid::Grid("N32") );
   mesh::actions::build_parallel_fields(*m);
 

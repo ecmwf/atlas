@@ -22,14 +22,14 @@ namespace grid {
 //---------------------------------------------------------------------------------------------------------------------
 // grid classes defined in this file
 
-class Grid;               
-class StructuredGrid;     
-class RegularGrid;        
-class GaussianGrid;       
+class Grid;
+class StructuredGrid;
+class RegularGrid;
+class GaussianGrid;
 class ReducedGaussianGrid;
 class RegularGaussianGrid;
-class RegularLonLatGrid;  
-class ShiftedLonLatGrid;  
+class RegularLonLatGrid;
+class ShiftedLonLatGrid;
 
 /*
                                   Grid
@@ -119,7 +119,7 @@ public:
     operator bool() const {
         return valid();
     }
-    
+
     bool valid() const {
         return grid_;
     }
@@ -193,11 +193,11 @@ class ReducedGrid: public StructuredGrid {
 public:
 
     using StructuredGrid::StructuredGrid;
-    
+
     operator bool() const {
         return valid();
     }
-    
+
     bool valid() const {
         return StructuredGrid::valid() && reduced();
     }
@@ -213,11 +213,11 @@ public:
     using StructuredGrid::StructuredGrid;
     using StructuredGrid::x;
     using StructuredGrid::xy;
-    
+
     operator bool() const {
         return valid();
     }
-    
+
     bool valid() const {
         return StructuredGrid::valid() && regular();
     }
@@ -280,7 +280,7 @@ public:
     operator bool() const {
         return valid();
     }
-    
+
     bool valid() const {
         return StructuredGrid::valid() && gaussian();
     }
@@ -301,7 +301,7 @@ public:
     operator bool() const {
         return valid();
     }
-    
+
     bool valid() const {
         return ReducedGrid::valid() && gaussian();
     }
@@ -328,11 +328,11 @@ public:
     PointLonLat lonlat( const size_t i, const size_t j ) const {
       return xy(i,j);
     }
-    
+
     operator bool() const {
         return valid();
     }
-    
+
     bool valid() const {
         return RegularGrid::valid() && gaussian();
     }
@@ -352,7 +352,7 @@ public:
     operator bool() const {
         return valid();
     }
-  
+
     bool valid() const {
         return RegularGrid::valid() && global_lonlat();
     }
@@ -407,7 +407,7 @@ public:
     operator bool() const {
         return valid();
     }
-  
+
     bool valid() const {
         return LonLatGrid::valid()
             && regular_lon()
@@ -426,7 +426,7 @@ public:
     operator bool() const {
         return valid();
     }
-  
+
     bool valid() const {
         return LonLatGrid::valid()
             && shifted_lon()

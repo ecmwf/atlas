@@ -76,12 +76,12 @@ grid/detail/domain/GlobalDomain.cc
 grid/detail/domain/ZonalBandDomain.h
 grid/detail/domain/ZonalBandDomain.cc
 
-grid/detail/partitioners/EqualRegionsPartitioner.cc
-grid/detail/partitioners/EqualRegionsPartitioner.h
-grid/detail/partitioners/CheckerBoardPartitioner.cc
-grid/detail/partitioners/CheckerBoardPartitioner.h
-grid/detail/partitioners/Partitioner.cc
-grid/detail/partitioners/Partitioner.h
+grid/detail/partitioner/EqualRegionsPartitioner.cc
+grid/detail/partitioner/EqualRegionsPartitioner.h
+grid/detail/partitioner/CheckerboardPartitioner.cc
+grid/detail/partitioner/CheckerboardPartitioner.h
+grid/detail/partitioner/Partitioner.cc
+grid/detail/partitioner/Partitioner.h
 
 grid/detail/projection/Projection.cc
 grid/detail/projection/Projection.h
@@ -165,8 +165,8 @@ grid/detail/pl/classic_gaussian/N8000.cc  # TL15999
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_grid_srcs
-  grid/detail/partitioners/TransPartitioner.h
-  grid/detail/partitioners/TransPartitioner.cc
+  grid/detail/partitioner/TransPartitioner.h
+  grid/detail/partitioner/TransPartitioner.cc
 )
 endif()
 
@@ -209,14 +209,14 @@ mesh/actions/GenerateMesh.h
 mesh/actions/GenerateMesh.cc
 mesh/actions/WriteLoadBalanceReport.h
 mesh/actions/WriteLoadBalanceReport.cc
-mesh/generators/Delaunay.h
-mesh/generators/Delaunay.cc
-mesh/generators/MeshGenerator.cc
-mesh/generators/MeshGenerator.h
-mesh/generators/Structured.h
-mesh/generators/Structured.cc
-mesh/generators/RegularMeshGenerator.cc
-mesh/generators/RegularMeshGenerator.h
+meshgenerator/DelaunayMeshGenerator.h
+meshgenerator/DelaunayMeshGenerator.cc
+meshgenerator/MeshGenerator.cc
+meshgenerator/MeshGenerator.h
+meshgenerator/StructuredMeshGenerator.h
+meshgenerator/StructuredMeshGenerator.cc
+meshgenerator/RegularMeshGenerator.cc
+meshgenerator/RegularMeshGenerator.h
 mesh/actions/BuildTorusXYZField.h
 mesh/actions/BuildTorusXYZField.cc
 )

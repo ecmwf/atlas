@@ -8,10 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_mesh_generators_Structured_h
-#define atlas_mesh_generators_Structured_h
+#pragma once
 
-#include "atlas/mesh/generators/MeshGenerator.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"
 
@@ -28,26 +27,22 @@ namespace grid {
     class Distribution;
 } }
 
-namespace atlas {
-namespace mesh {
-namespace generators {
-    struct Region;
-} } }
 
 namespace atlas {
-namespace mesh {
-namespace generators {
+namespace meshgenerator {
+
+struct Region;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Structured : public MeshGenerator {
+class StructuredMeshGenerator : public MeshGenerator {
 
 public:
 
-  Structured(const eckit::Parametrisation& = util::NoConfig() );
+  StructuredMeshGenerator(const eckit::Parametrisation& = util::NoConfig() );
 
-  virtual void generate(const grid::Grid&, const grid::Distribution&, Mesh&) const;
-  virtual void generate(const grid::Grid&, Mesh&) const;
+  virtual void generate(const grid::Grid&, const grid::Distribution&, mesh::Mesh&) const;
+  virtual void generate(const grid::Grid&, mesh::Mesh&) const;
 
   using MeshGenerator::generate;
 
@@ -67,16 +62,16 @@ private:
     const grid::StructuredGrid&,
     const std::vector<int>& parts,
     const Region& region,
-    Mesh& m) const;
+    mesh::Mesh& m) const;
 
   void generate_mesh(
     const grid::StructuredGrid&,
     const std::vector<int>& parts,
     const Region& region,
-    Mesh& m ) const;
+    mesh::Mesh& m ) const;
 
   void generate_global_element_numbering(
-    Mesh& mesh ) const;
+    mesh::Mesh& mesh ) const;
 
 private:
 
@@ -86,8 +81,5 @@ private:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // namespace generators
-} // namespace mesh
+} // namespace meshgenerator
 } // namespace atlas
-
-#endif // atlas_mesh_generators_Structured_h

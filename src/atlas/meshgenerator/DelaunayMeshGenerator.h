@@ -8,10 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_meshgen_Delaunay_h
-#define atlas_meshgen_Delaunay_h
+#pragma once
 
-#include "atlas/mesh/generators/MeshGenerator.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
 
 namespace atlas {
 namespace mesh {
@@ -26,31 +25,27 @@ class Grid;
 }
 
 namespace atlas {
-namespace mesh {
-namespace generators {
+namespace meshgenerator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Delaunay : public MeshGenerator {
+class DelaunayMeshGenerator : public MeshGenerator {
 public:
 
-  Delaunay();
-  Delaunay(const eckit::Parametrisation& p);
+  DelaunayMeshGenerator();
+  DelaunayMeshGenerator(const eckit::Parametrisation& p);
 
-  virtual ~Delaunay();
+  virtual ~DelaunayMeshGenerator();
 
 private: // methods
 
   virtual void hash(eckit::MD5&) const;
 
-  virtual void generate(const grid::Grid& g, const grid::Distribution&, Mesh& mesh) const;
-  virtual void generate(const grid::Grid& g, Mesh& mesh) const;
+  virtual void generate(const grid::Grid& g, const grid::Distribution&, mesh::Mesh& mesh) const;
+  virtual void generate(const grid::Grid& g, mesh::Mesh& mesh) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace generators
-}  // namespace mesh
+}  // namespace meshgenerator
 }  // namespace atlas
-
-#endif

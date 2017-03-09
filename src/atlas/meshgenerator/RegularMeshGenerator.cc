@@ -13,7 +13,7 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
-#include "atlas/mesh/generators/RegularMeshGenerator.h"
+#include "atlas/meshgenerator/RegularMeshGenerator.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Bitflags.h"
@@ -29,12 +29,11 @@
 #define DEBUG_OUTPUT_DETAIL 0
 
 using namespace eckit;
-
+using atlas::mesh::Mesh;
 using atlas::internals::Topology;
 
 namespace atlas {
-namespace mesh {
-namespace generators {
+namespace meshgenerator {
 
 RegularMeshGenerator::RegularMeshGenerator(const eckit::Parametrisation& p)
 {
@@ -55,7 +54,7 @@ RegularMeshGenerator::RegularMeshGenerator(const eckit::Parametrisation& p)
     if( not grid::Partitioner::exists(partitioner) ) {
       Log::warning() << "Atlas does not have support for partitioner " << partitioner << ". "
                      << "Defaulting to use partitioner EqualRegions" << std::endl;
-      partitioner = "EqualRegions";
+      partitioner = "equal_regions";
     }
     options.set("partitioner",partitioner);
   }
@@ -121,48 +120,15 @@ void RegularMeshGenerator::configure_defaults()
 
   // This options sets the default partitioner
   std::string partitioner;
-  if( grid::Partitioner::exists("Trans") && parallel::mpi::comm().size() > 1 )
-    partitioner = "Trans";
+  if( grid::Partitioner::exists("trans") && parallel::mpi::comm().size() > 1 )
+    partitioner = "trans";
   else
-    partitioner = "EqualRegions";
+    partitioner = "equal_regions";
   options.set<std::string>("partitioner",partitioner);
 
   // Options for for periodic grids
   options.set<bool>("periodic_x",false);
   options.set<bool>("periodic_y",false);
-
-  /***
-  // original options from (global) structured meshgenerator, that don't seem to apply here:
-
-  // This option creates a point at the pole when true
-  options.set( "include_pole", false );
-
-  // This option sets the part that will be generated
-  options.set( "patch_pole", false );
-
-  // This option disregards multiple poles in grid (e.g. lonlat up to poles) and connects elements
-  // to the first node only. Note this option will only be looked at in case other option
-  // "3d"==true
-  options.set( "unique_pole", true );
-
-  // This option creates elements that connect east to west at greenwich meridian
-  // when true, instead of creating periodic ghost-points at east boundary when false
-  options.set( "3d", false );
-
-  // Experimental option. The result is a non-standard Reduced Gaussian Grid, with a ragged Greenwich line
-  options.set("stagger", false );
-
-  // This option sets the maximum angle deviation for a quadrilateral element
-  // angle = 30  -->  minimises number of triangles
-  // angle = 0   -->  maximises number of triangles
-  options.set<double>("angle", 0. );
-
-  options.set<bool>("triangulate", false );
-
-  // This options moves the ghost points to the end
-  options.set<bool>("ghost_at_end", true );
-
-  ***/
 
 }
 
@@ -176,11 +142,11 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
 
   size_t nb_parts = options.get<size_t>("nb_parts");
 
-  std::string partitioner_type = "EqualRegions";
+  std::string partitioner_type = "equal_regions";
   options.get("partitioner",partitioner_type);
 
-  //if ( rg->nlat()%2 == 1 ) partitioner_factory = "EqualRegions"; // Odd number of latitudes
-  //if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "EqualRegions"; // Only one part --> Trans is slower
+  //if ( rg->nlat()%2 == 1 ) partitioner_factory = "equal_regions"; // Odd number of latitudes
+  //if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "equal_regions"; // Only one part --> Trans is slower
 
   grid::Partitioner  partitioner( partitioner_type, grid, nb_parts );
   grid::Distribution distribution( partitioner.distribution() );
@@ -228,6 +194,9 @@ void RegularMeshGenerator::generate_mesh(
 
   bool periodic_x = options.get<bool>("periodic_x");
   bool periodic_y = options.get<bool>("periodic_y");
+
+  Log::info() << Here() << "periodic_x = " << periodic_x << std::endl;
+  Log::info() << Here() << "periodic_y = " << periodic_y << std::endl;
 
   // for asynchronous output
 #if DEBUG_OUTPUT
@@ -592,9 +561,8 @@ void RegularMeshGenerator::generate_global_element_numbering( Mesh& mesh ) const
 }
 
 namespace {
-static MeshGeneratorBuilder< RegularMeshGenerator > __RegularMeshGenerator("RegularMeshGenerator");
+static MeshGeneratorBuilder< RegularMeshGenerator > __RegularMeshGenerator("regular");
 }
 
-} // namespace generators
-} // namespace mesh
+} // namespace meshgenerator
 } // namespace atlas

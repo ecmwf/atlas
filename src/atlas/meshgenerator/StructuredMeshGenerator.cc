@@ -25,7 +25,7 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/field/Field.h"
 #include "atlas/internals/Parameters.h"
 #include "atlas/internals/Bitflags.h"
@@ -39,12 +39,11 @@
 #define DEBUG_OUTPUT 0
 
 using namespace eckit;
-
+using atlas::mesh::Mesh;
 using atlas::internals::Topology;
 
 namespace atlas {
-namespace mesh {
-namespace generators {
+namespace meshgenerator {
 
 namespace {
 static double to_rad = M_PI/180.;
@@ -64,7 +63,7 @@ struct Region
   std::vector<int> nb_lat_elems;
 };
 
-Structured::Structured(const eckit::Parametrisation& p)
+StructuredMeshGenerator::StructuredMeshGenerator(const eckit::Parametrisation& p)
 {
   configure_defaults();
 
@@ -105,10 +104,10 @@ Structured::Structured(const eckit::Parametrisation& p)
     options.set("ghost_at_end",ghost_at_end);
 
   std::string partitioner;
-  if( grid::Partitioner::exists("Trans") )
-    partitioner = "Trans";
+  if( grid::Partitioner::exists("trans") )
+    partitioner = "trans";
   else
-    partitioner = "EqualRegions";
+    partitioner = "equal_regions";
   options.set("partitioner",partitioner);
 
   if( p.get("partitioner",partitioner) )
@@ -116,14 +115,14 @@ Structured::Structured(const eckit::Parametrisation& p)
     if( not grid::Partitioner::exists(partitioner) ) {
       Log::warning() << "Atlas does not have support for partitioner " << partitioner << ". "
                      << "Defaulting to use partitioner EqualRegions" << std::endl;
-      partitioner = "EqualRegions";
+      partitioner = "equal_regions";
     }
     options.set("partitioner",partitioner);
   }
 }
 
 
-void Structured::configure_defaults()
+void StructuredMeshGenerator::configure_defaults()
 {
   // This option creates a point at the pole when true
   options.set( "include_pole", false );
@@ -160,7 +159,7 @@ void Structured::configure_defaults()
 
 }
 
-void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
+void StructuredMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
 {
     ASSERT(!mesh.generated());
 
@@ -170,24 +169,24 @@ void Structured::generate(const grid::Grid& grid, Mesh& mesh ) const
 
   size_t nb_parts = options.get<size_t>("nb_parts");
 
-  std::string partitioner_type = "Trans";
+  std::string partitioner_type = "trans";
   options.get("partitioner",partitioner_type);
 
-  if ( rg.ny()%2 == 1 ) partitioner_type = "EqualRegions"; // Odd number of latitudes
-  if ( nb_parts == 1 || parallel::mpi::comm().size() == 1 ) partitioner_type = "EqualRegions"; // Only one part --> Trans is slower
+  if ( rg.ny()%2 == 1 ) partitioner_type = "equal_regions"; // Odd number of latitudes
+  if ( nb_parts == 1 || parallel::mpi::comm().size() == 1 ) partitioner_type = "equal_regions"; // Only one part --> Trans is slower
 
   grid::Partitioner partitioner( partitioner_type, grid, nb_parts );
   grid::Distribution distribution( partitioner.distribution() );
   generate( grid, distribution, mesh );
 }
 
-void Structured::hash(MD5& md5) const
+void StructuredMeshGenerator::hash(MD5& md5) const
 {
     md5.add("Structured");
     options.hash(md5);
 }
 
-void Structured::generate(const grid::Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const
+void StructuredMeshGenerator::generate(const grid::Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const
 {
   const grid::StructuredGrid rg = grid::StructuredGrid(grid);
   if( !rg )
@@ -230,7 +229,7 @@ void Structured::generate(const grid::Grid& grid, const grid::Distribution& dist
 }
 
 
-void Structured::generate_region(const grid::StructuredGrid& rg, const std::vector<int>& parts, int mypart, Region& region) const
+void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, const std::vector<int>& parts, int mypart, Region& region) const
 {
   double max_angle          = options.get<double>("angle");
   bool   triangulate_quads  = options.get<bool>("triangulate");
@@ -765,7 +764,7 @@ struct GhostNode {
 };
 }
 
-void Structured::generate_mesh(const grid::StructuredGrid& rg, const std::vector<int>& parts, const Region& region, Mesh& mesh) const
+void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, const std::vector<int>& parts, const Region& region, Mesh& mesh) const
 {
 
 
@@ -1306,7 +1305,7 @@ void Structured::generate_mesh(const grid::StructuredGrid& rg, const std::vector
   generate_global_element_numbering( mesh );
 }
 
-void Structured::generate_global_element_numbering( Mesh& mesh ) const
+void StructuredMeshGenerator::generate_global_element_numbering( Mesh& mesh ) const
 {
   size_t loc_nb_elems = mesh.cells().size();
   std::vector<size_t> elem_counts( parallel::mpi::comm().size() );
@@ -1331,9 +1330,8 @@ void Structured::generate_global_element_numbering( Mesh& mesh ) const
 }
 
 namespace {
-static MeshGeneratorBuilder< Structured > __Structured("Structured");
+static MeshGeneratorBuilder< StructuredMeshGenerator > __Structured("structured");
 }
 
-} // namespace generators
-} // namespace mesh
+} // namespace meshgenerator
 } // namespace atlas

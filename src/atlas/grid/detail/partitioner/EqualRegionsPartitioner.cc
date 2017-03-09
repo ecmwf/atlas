@@ -15,7 +15,7 @@
 #include <functional>
 #include <algorithm>
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/internals/Functions.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -24,7 +24,7 @@ using atlas::internals::microdeg;
 namespace atlas {
 namespace grid {
 namespace detail {
-namespace partitioners {
+namespace partitioner {
 
 double gamma(const double& x) {
     double p[14];
@@ -535,15 +535,15 @@ void EqualRegionsPartitioner::partition(int part[]) const {
     }
 }
 
-} // namespace partitioners
+} // namespace partitioner
 } // namespace detail
 } // namespace grid
 } // namespace atlas
 
 namespace {
-atlas::grid::detail::partitioners::PartitionerBuilder<
-atlas::grid::detail::partitioners::EqualRegionsPartitioner>
-__EqualRegions ("EqualRegions");
+atlas::grid::detail::partitioner::PartitionerBuilder<
+atlas::grid::detail::partitioner::EqualRegionsPartitioner>
+__EqualRegions ("equal_regions");
 }
 
 

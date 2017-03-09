@@ -12,7 +12,7 @@
 #pragma once
 
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/grid/detail/partitioners/Partitioner.h"
+#include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 
@@ -34,7 +34,7 @@ public:
 
 public:
 
-    Partitioner( const detail::partitioners::Partitioner* );
+    Partitioner( const detail::partitioner::Partitioner* );
     Partitioner( const std::string& type, const Grid& );
     Partitioner( const std::string& type, const Grid&, const size_t nb_partitions);
 
@@ -47,7 +47,7 @@ public:
 
 private:
 
-    eckit::SharedPtr<const detail::partitioners::Partitioner> partitioner_;
+    eckit::SharedPtr<const detail::partitioner::Partitioner> partitioner_;
 };
 
 // ------------------------------------------------------------------

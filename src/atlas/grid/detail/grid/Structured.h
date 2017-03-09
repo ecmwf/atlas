@@ -148,7 +148,7 @@ public:
     virtual std::string type() const;
 
     virtual std::string getOptimalMeshGenerator() const {
-        return "Structured";
+        return "structured";
     }
 
     inline size_t ny() const {

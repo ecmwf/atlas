@@ -29,7 +29,7 @@
 #include "atlas/mesh/actions/BuildStatistics.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/actions/BuildTorusXYZField.h"
-#include "atlas/mesh/generators/MeshGenerator.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
@@ -165,7 +165,7 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( edges )
     halo = std::max(halo,1l);
 
-  std::string meshgenerator_type("Structured");
+  std::string meshgenerator_type("structured");
   args.get("generator",meshgenerator_type);
   eckit::LocalConfiguration meshgenerator_config( args );
   if( parallel::mpi::comm().size() > 1 || edges )
@@ -190,13 +190,13 @@ void Meshgen2Gmsh::execute(const Args& args)
   }
 
   if( !grid ) return;
-  
+
   Log::debug() << "Domain: " << grid.domain() << std::endl;
   Log::debug() << "Periodic: " << grid.periodic() << std::endl;
   Log::debug() << "Spec: " << grid.spec() << std::endl;
-  
-  SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
-      mesh::generators::MeshGenerator::create(meshgenerator_type,meshgenerator_config) );
+
+  SharedPtr<meshgenerator::MeshGenerator> meshgenerator (
+      meshgenerator::MeshGenerator::create(meshgenerator_type,meshgenerator_config) );
 
   SharedPtr<mesh::Mesh> mesh;
   try {

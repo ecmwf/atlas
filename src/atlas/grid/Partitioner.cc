@@ -13,13 +13,13 @@
 namespace atlas {
 namespace grid {
 
-using Factory = detail::partitioners::PartitionerFactory;
+using Factory = detail::partitioner::PartitionerFactory;
 
 bool Partitioner::exists( const std::string& type ) {
     return Factory::has(type);
 }
 
-Partitioner::Partitioner( const detail::partitioners::Partitioner* partitioner ):
+Partitioner::Partitioner( const detail::partitioner::Partitioner* partitioner ):
     partitioner_( partitioner ) {
 }
 

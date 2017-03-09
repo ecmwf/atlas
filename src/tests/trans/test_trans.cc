@@ -22,9 +22,9 @@
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid.h"
-#include "atlas/grid/detail/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/detail/partitioners/TransPartitioner.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioner/TransPartitioner.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
@@ -35,8 +35,8 @@
 #include "tests/AtlasFixture.h"
 
 using namespace eckit;
-using atlas::grid::detail::partitioners::TransPartitioner;
-using atlas::grid::detail::partitioners::EqualRegionsPartitioner;
+using atlas::grid::detail::partitioner::TransPartitioner;
+using atlas::grid::detail::partitioner::EqualRegionsPartitioner;
 
 namespace atlas {
 namespace test {
@@ -79,7 +79,7 @@ BOOST_GLOBAL_FIXTURE( AtlasTransFixture );
 
 BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 {
-  BOOST_CHECK( grid::Partitioner::exists("Trans") );
+  BOOST_CHECK( grid::Partitioner::exists("trans") );
 
 
   // Create grid and trans object
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
 {
   BOOST_TEST_CHECKPOINT("test_generate_mesh");
   grid::Grid g( "O80" );
-  mesh::generators::Structured generate( atlas::util::Config
+  meshgenerator::StructuredMeshGenerator generate( atlas::util::Config
     ("angle",0)
     ("triangulate",true)
   );
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   BOOST_CHECK_EQUAL_COLLECTIONS( p_default.begin(), p_default.end(),
                                  p_eqreg  .begin(), p_eqreg  .end() );
 
-  //mesh::Mesh::Ptr mesh ( generate(g, mesh::generators::EqualAreaPartitioner(g).distribution() ) );
+  //mesh::Mesh::Ptr mesh ( generate(g, meshgenerator::EqualAreaPartitioner(g).distribution() ) );
 
   output::Gmsh("N16_trans.msh").write(*m_trans);
 }
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
   grid::Grid g( "O48" );
-  mesh::generators::Structured generate( atlas::util::Config
+  meshgenerator::StructuredMeshGenerator generate( atlas::util::Config
     ("angle",0)
     ("triangulate",false)
   );

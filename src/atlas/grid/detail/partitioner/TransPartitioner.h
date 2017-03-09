@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "atlas/grid/detail/partitioners/Partitioner.h"
+#include "atlas/grid/detail/partitioner/Partitioner.h"
 
 namespace atlas {
 namespace grid {
@@ -29,7 +29,7 @@ class Trans;
 namespace atlas {
 namespace grid {
 namespace detail {
-namespace partitioners {
+namespace partitioner {
 
 class TransPartitioner: public Partitioner {
 
@@ -61,7 +61,7 @@ private:
     bool owned_;
 };
 
-} // namespace partitioners
+} // namespace partitioner
 } // namespace detail
 } // namespace grid
 } // namespace atlas

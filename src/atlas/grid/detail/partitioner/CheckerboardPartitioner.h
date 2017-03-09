@@ -1,23 +1,23 @@
 #pragma once
 
 #include <vector>
-#include "atlas/grid/detail/partitioners/Partitioner.h"
+#include "atlas/grid/detail/partitioner/Partitioner.h"
 
 namespace atlas {
 namespace grid {
 namespace detail {
-namespace partitioners {
+namespace partitioner {
 
-class CheckerBoardPartitioner: public Partitioner {
+class CheckerboardPartitioner: public Partitioner {
 
 public:
 
-    CheckerBoardPartitioner(const Grid&);
+    CheckerboardPartitioner(const Grid&);
 
-    CheckerBoardPartitioner(const Grid&, int N);    // N is the number of parts (aka MPI tasks)
+    CheckerboardPartitioner(const Grid&, int N);    // N is the number of parts (aka MPI tasks)
 
-    CheckerBoardPartitioner(const Grid&, int N, int nbands);
-    CheckerBoardPartitioner(const Grid&, int N, int nbands, bool checkerboard);
+    CheckerboardPartitioner(const Grid&, int N, int nbands);
+    CheckerboardPartitioner(const Grid&, int N, int nbands, bool checkerboard);
 
 public:
 
@@ -49,7 +49,7 @@ private:
 
 };
 
-} // namespace partitioners
+} // namespace partitioner
 } // namespace detail
 } // namespace grid
 } // namespace atlas

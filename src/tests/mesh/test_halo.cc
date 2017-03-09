@@ -37,7 +37,7 @@
 
 using namespace atlas::output;
 using namespace atlas::util;
-using namespace atlas::mesh::generators;
+using namespace atlas::meshgenerator;
 
 namespace atlas {
 namespace test {

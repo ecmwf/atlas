@@ -21,7 +21,7 @@
 #include "atlas/grid.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/mesh/generators/MeshGenerator.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/parallel/mpi/mpi.h"
 //------------------------------------------------------------------------------------------------------
@@ -114,8 +114,8 @@ void AtlasLoadbalance::run()
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;
-  SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
-      mesh::generators::MeshGenerator::create("Structured") );
+  SharedPtr<meshgenerator::MeshGenerator> meshgenerator (
+      meshgenerator::MeshGenerator::create("structured") );
   SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
 
   SharedPtr<functionspace::NodeColumns> nodes( new functionspace::NodeColumns(*mesh,Halo(halo)) );

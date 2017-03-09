@@ -4,7 +4,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/functionspace/StructuredColumns.h"
 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     // Write field
     {
       // Generate visualisation mesh associated to grid
-      atlas::mesh::generators::Structured meshgenerator;
+      atlas::meshgenerator::StructuredMeshGenerator meshgenerator;
       Mesh::Ptr mesh (meshgenerator.generate(grid));
 
       Gmsh gmsh("scalar1.msh");

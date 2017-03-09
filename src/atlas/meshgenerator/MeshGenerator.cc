@@ -18,15 +18,16 @@
 
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/MeshGenerator.h"
-#include "atlas/mesh/generators/Structured.h"
-#include "atlas/mesh/generators/Delaunay.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 
+using atlas::mesh::Mesh;
+
 namespace atlas {
-namespace mesh {
-namespace generators {
+namespace meshgenerator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -46,8 +47,8 @@ namespace {
     struct force_link {
         force_link()
         {
-            load_builder<mesh::generators::Structured>();
-            load_builder<Delaunay>();
+            load_builder<meshgenerator::StructuredMeshGenerator>();
+            load_builder<meshgenerator::DelaunayMeshGenerator>();
         }
     };
 
@@ -227,7 +228,6 @@ Mesh* atlas__MeshGenerator__generate__grid (const MeshGenerator* This, const gri
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // namespace generators
-} // namespace mesh
+} // namespace meshgenerator
 } // namespace atlas
 

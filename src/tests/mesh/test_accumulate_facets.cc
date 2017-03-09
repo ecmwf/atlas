@@ -17,7 +17,7 @@
 #include "atlas/internals/AccumulateFaces.h"
 
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/BuildEdges.h"
@@ -44,7 +44,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 BOOST_AUTO_TEST_CASE( test_accumulate_facets )
 {
   grid::Grid grid("O2");
-  mesh::generators::Structured generator( Config
+  meshgenerator::StructuredMeshGenerator generator( Config
        ("angle",29.0)
        ("triangulate",false)
        ("ghost_at_end",false) );
@@ -420,7 +420,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 {
   idx_t missing_value = -1;
   grid::Grid grid("O2");
-  mesh::generators::Structured generator(  Config
+  meshgenerator::StructuredMeshGenerator generator(  Config
         ("angle",29.0)
         ("triangulate",false)
         ("ghost_at_end",false) );
@@ -838,7 +838,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
 {
   grid::Grid grid("O2");
-  mesh::generators::Structured generator (  Config
+  meshgenerator::StructuredMeshGenerator generator (  Config
       ("angle",29.0)
       ("triangulate",false)
       ("ghost_at_end",false) );

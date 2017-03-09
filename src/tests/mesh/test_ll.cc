@@ -13,7 +13,7 @@
 
 #include "atlas/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/grid/Grid.h"
@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
   grid::Grid g( "L5" );
   mesh::Mesh m;
-  mesh::generators::Structured().generate(g,m);
+  meshgenerator::StructuredMeshGenerator().generate(g,m);
   output::Gmsh("L5.msh").write(m);
 }
 

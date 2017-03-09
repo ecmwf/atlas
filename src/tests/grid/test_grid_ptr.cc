@@ -23,7 +23,7 @@
 
 
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 
 using Grid       = atlas::grid::Grid;
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE( test_structured_1 )
   BOOST_CHECK_EQUAL( regular.y().back(), -90. );
 
   output::Gmsh gmsh("test_grid_ptr.msh");
-  eckit::SharedPtr<mesh::Mesh> mesh ( mesh::generators::Structured().generate(grid) );
+  eckit::SharedPtr<mesh::Mesh> mesh ( meshgenerator::StructuredMeshGenerator().generate(grid) );
   gmsh.write(*mesh);
 }
 

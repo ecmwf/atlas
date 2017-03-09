@@ -1,7 +1,7 @@
 #include "atlas/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/Config.h"
 
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 {
     atlas_init(argc, argv);
 
-    atlas::mesh::generators::Structured meshgenerator;
+    atlas::meshgenerator::StructuredMeshGenerator meshgenerator;
 
     Grid grid( "O32" );
     Mesh::Ptr mesh( meshgenerator.generate(grid) );

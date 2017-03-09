@@ -13,7 +13,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/atlas.h"
 #include "atlas/grid.h"
-#include "atlas/mesh/generators/MeshGenerator.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/field/FieldCreator.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"

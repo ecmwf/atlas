@@ -50,7 +50,7 @@
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/mesh/generators/MeshGenerator.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -96,7 +96,7 @@ using namespace atlas;
 using namespace atlas::grid;
 using namespace atlas::mesh::actions;
 using namespace atlas::functionspace;
-using namespace atlas::mesh::generators;
+using namespace atlas::meshgenerator;
 using atlas::AtlasTool;
 using eckit::Timer;
 using eckit::SharedPtr;
@@ -331,7 +331,7 @@ void AtlasBenchmark::setup()
   Timer timer( "setup", Log::debug());
 
   StructuredGrid grid = Grid(gridname);
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("Structured") );
+  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
   mesh.reset( meshgenerator->generate(grid) );
 
   build_nodes_parallel_fields(mesh->nodes());

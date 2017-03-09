@@ -9,7 +9,7 @@
  */
 
 #include "eckit/utils/MD5.h"
-#include "atlas/mesh/generators/Delaunay.h"
+#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -21,32 +21,33 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/runtime/Log.h"
 
+using atlas::mesh::Mesh;
+
 namespace atlas {
-namespace mesh {
-namespace generators {
+namespace meshgenerator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Delaunay::Delaunay()
+DelaunayMeshGenerator::DelaunayMeshGenerator()
 {
 }
 
-Delaunay::Delaunay(const eckit::Parametrisation& p)
+DelaunayMeshGenerator::DelaunayMeshGenerator(const eckit::Parametrisation& p)
 {
 }
 
 
-Delaunay::~Delaunay() {
+DelaunayMeshGenerator::~DelaunayMeshGenerator() {
 }
 
-void Delaunay::hash(eckit::MD5& md5) const
+void DelaunayMeshGenerator::hash(eckit::MD5& md5) const
 {
     md5.add("Delaunay");
 
     // no other settings
 }
 
-void Delaunay::generate(const grid::Grid& grid, const grid::Distribution& dist, Mesh& mesh) const
+void DelaunayMeshGenerator::generate(const grid::Grid& grid, const grid::Distribution& dist, mesh::Mesh& mesh) const
 {
   if( dist.nb_partitions() > 1 )
   {
@@ -63,7 +64,7 @@ void Delaunay::generate(const grid::Grid& grid, const grid::Distribution& dist, 
   }
 }
 
-void Delaunay::generate(const grid::Grid& g, Mesh& mesh) const
+void DelaunayMeshGenerator::generate(const grid::Grid& g, mesh::Mesh& mesh) const
 {
   mesh.createNodes(g);
 
@@ -72,18 +73,17 @@ void Delaunay::generate(const grid::Grid& g, Mesh& mesh) const
     gidx(jnode) = jnode+1;
   }
 
-  actions::BuildXYZField()(mesh);
-  actions::AddVirtualNodes()(g, mesh);    ///< does nothing if global domain
-  actions::BuildConvexHull3D()(mesh);
+  mesh::actions::BuildXYZField()(mesh);
+  mesh::actions::AddVirtualNodes()(g, mesh);    ///< does nothing if global domain
+  mesh::actions::BuildConvexHull3D()(mesh);
 }
 
 namespace {
-static MeshGeneratorBuilder< Delaunay > __delaunay("Delaunay");
+static MeshGeneratorBuilder< DelaunayMeshGenerator > __delaunay("delaunay");
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // namespace generators
-} // namespace mesh
+} // namespace meshgenerator
 } // namespace atlas
 

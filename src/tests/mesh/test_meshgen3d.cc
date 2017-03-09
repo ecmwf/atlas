@@ -18,7 +18,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/grid.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 #include "tests/AtlasFixture.h"
@@ -27,7 +27,7 @@
 
 
 using namespace atlas::output;
-using namespace atlas::mesh::generators;
+using namespace atlas::meshgenerator;
 using namespace atlas::grid;
 
 namespace atlas {
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
   util::Config opts;
   opts.set("3d", true); ///< creates links along date-line
   opts.set("include_pole", true);      ///< triangulate the pole point
-  mesh::generators::Structured generate(opts);
+  meshgenerator::StructuredMeshGenerator generate(opts);
 
   // opts.set("nb_parts",1); // default = 1
   // opts.set("part",    0); // default = 0
