@@ -1,10 +1,12 @@
 #include "Regional.h"
 
 #include "atlas/grid/detail/domain/RectangularDomain.h"
+#include "atlas/grid/detail/domain/ZonalBandDomain.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 
 using atlas::grid::domain::RectangularDomain;
+using atlas::grid::domain::ZonalBandDomain;
 using atlas::grid::spacing::LinearSpacing;
 using XSpace = atlas::grid::StructuredGrid::grid_t::XSpace;
 using YSpace = atlas::grid::StructuredGrid::YSpace;
@@ -231,6 +233,60 @@ public:
   }
 
 } regional_;
+
+
+
+
+static class zonal_band : public GridBuilder {
+
+public:
+
+  zonal_band() : GridBuilder("zonal_band") {}
+
+  virtual void print(std::ostream& os) const {
+    //os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian grid";
+  }
+
+  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
+    eckit::NotImplemented( "There are no named zonal_band grids implemented.", Here() );
+    return nullptr;
+  }
+
+  virtual const Grid::grid_t* create( const Grid::Config& config ) const {
+
+
+    // read projection subconfiguration
+    Projection projection;
+    {
+      util::Config config_proj;
+      if ( config.get("projection",config_proj) ) {
+        projection = Projection( config_proj );
+      }
+    }
+
+    ASSERT( projection.units() == "degrees" );
+
+    // Read grid configuration
+    ConfigParser::Parsed y;
+    long nx;
+    if( not config.get("nx",nx ) ) throw eckit::BadParameter("Parameter 'nx' missing in configuration", Here());
+    if( not config.get("ny",y.N) ) throw eckit::BadParameter("Parameter 'ny' missing in configuration", Here());
+    if( not (config.get("ymin",y.min) or config.get("south",y.min)) ) y.min = -90.;
+    if( not (config.get("ymax",y.max) or config.get("north",y.max)) ) y.max =  90.;
+
+    // Deduce the domain
+    Domain domain ( new ZonalBandDomain( {y.min,y.max} ) );
+
+    YSpace yspace( new LinearSpacing(y.min,y.max,y.N,true) );
+
+    XSpace* xspace( new XSpace( {0.,360.}, std::vector<long>(y.N,nx), false ) );
+
+    return new StructuredGrid::grid_t( projection, xspace, yspace, domain );
+
+  }
+
+} zonal_band_;
+
 
 
 
