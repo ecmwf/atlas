@@ -482,6 +482,8 @@ DISABLE{
 BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 {
   DEBUG_HERE();
+#warning gnarls
+#ifdef gnarls
   int N=11;
   long lon[] = {
     2,  //90
@@ -509,21 +511,21 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
     -72,
     -90
   };
-  // grid::StructuredGrid grid( new grid::detail::grid::CustomStructured(N,lat,lon) );
-  //
-  // bool three_dimensional = true;
-  //
-  // mesh::generators::Structured generate( util::Config
-  //       ("3d",three_dimensional)
-  //       ("triangulate",false) );
-  //
-  // mesh::Mesh::Ptr m (generate(grid));
-  //
-  // util::Config options;
-  // if( three_dimensional ) options.set("coordinates","xyz");
-  // output::Gmsh gmsh("rll.msh",options);
-  // gmsh.write(*m);
+   grid::StructuredGrid grid( new grid::detail::grid::CustomStructured(N,lat,lon) );
 
+   bool three_dimensional = true;
+
+   mesh::generators::Structured generate( util::Config
+         ("3d",three_dimensional)
+         ("triangulate",false) );
+
+   mesh::Mesh::Ptr m (generate(grid));
+
+   util::Config options;
+   if( three_dimensional ) options.set("coordinates","xyz");
+   output::Gmsh gmsh("rll.msh",options);
+   gmsh.write(*m);
+#endif
 }
 
 BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )

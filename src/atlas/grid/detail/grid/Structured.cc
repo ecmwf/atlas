@@ -68,15 +68,11 @@ Structured::Structured( const std::string& name, Projection projection, XSpace* 
   npts_ = size_t(std::accumulate(nx_.begin(), nx_.end(), 0));
   compute_true_periodicity();
 
-  Log::info() << Here() << std::endl;;
   if( periodic() ) {
-    Log::info() << Here() << std::endl;;
     if( yspace.max() - yspace.min() == 180. ) {
-      Log::info() << Here() << std::endl;;
       domain_ = Domain(Grid::Config("type","global"));
     }
     else {
-      Log::info() << Here() << std::endl;;
       Grid::Config dom;
       dom.set("type","zonal_band");
       dom.set("ymin",yspace.min());
@@ -365,7 +361,7 @@ public:
     virtual const atlas::grid::Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
         throw eckit::NotImplemented( "Cannot create structured grid from name", Here() );
     }
-  
+
     virtual const atlas::grid::Grid::grid_t* create( const Grid::Config& config ) const {
 
         Projection projection;
@@ -626,7 +622,7 @@ extern "C" {
         );
         return 0;
     }
-    
+
 
     Structured* atlas__grid__CustomStructured_int(long nlat, double lats[], int pl[]) {
       NOTIMP;
