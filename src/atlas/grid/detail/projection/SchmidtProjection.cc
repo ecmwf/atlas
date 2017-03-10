@@ -24,21 +24,6 @@ SchmidtProjectionT<Rotation>::SchmidtProjectionT(const eckit::Parametrisation& p
     throw eckit::BadParameter("stretching_factor missing in Params",Here());
 }
 
-
-// copy constructor
-template <typename Rotation>
-SchmidtProjectionT<Rotation>::SchmidtProjectionT( const SchmidtProjectionT& rhs ) :
-  Projection(rhs),
-  rotation_(rhs.rotation_) {
-  c_=rhs.c_;
-}
-
-// clone method
-template <typename Rotation>
-Projection* SchmidtProjectionT<Rotation>::clone() const  {
-  return new SchmidtProjectionT(*this);
-}
-
 template <typename Rotation>
 void SchmidtProjectionT<Rotation>::xy2lonlat(double crd[]) const {
 

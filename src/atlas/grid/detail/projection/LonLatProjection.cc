@@ -10,19 +10,6 @@ LonLatProjectionT<Rotation>::LonLatProjectionT(const eckit::Parametrisation& par
   rotation_(params) {
 }
 
-// copy constructor
-template <typename Rotation>
-LonLatProjectionT<Rotation>::LonLatProjectionT( const LonLatProjectionT& rhs ) :
-  Projection(rhs),
-  rotation_(rhs.rotation_) {
-}
-
-// clone method
-template <typename Rotation>
-Projection* LonLatProjectionT<Rotation>::clone() const  {
-  return new LonLatProjectionT<Rotation>(*this);
-}
-
 // specification
 template <typename Rotation>
 eckit::Properties LonLatProjectionT<Rotation>::spec() const {

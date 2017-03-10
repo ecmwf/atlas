@@ -16,26 +16,20 @@ public:
     SchmidtProjectionT(const eckit::Parametrisation& p);
     SchmidtProjectionT() {}
 
-    // copy constructor
-    SchmidtProjectionT( const SchmidtProjectionT& rhs );
-
-    // clone method
-    virtual Projection* clone() const ;
-
     // class name
     static std::string static_type() { return Rotation::typePrefix()+"schmidt"; }
-    virtual std::string type() const { return static_type(); }
+    virtual std::string type() const override { return static_type(); }
 
     // projection and inverse projection
-    virtual void xy2lonlat(double crd[]) const;
-    virtual void lonlat2xy(double crd[]) const;
+    virtual void xy2lonlat(double crd[]) const override;
+    virtual void lonlat2xy(double crd[]) const override;
 
-    virtual bool strictlyRegional() const { return false; }  // schmidt is global grid
+    virtual bool strictlyRegional() const override { return false; }  // schmidt is global grid
 
     // specification
-    virtual eckit::Properties spec() const;
+    virtual eckit::Properties spec() const override;
 
-    virtual std::string units() const { return "degrees"; }
+    virtual std::string units() const override { return "degrees"; }
 
 private:
 

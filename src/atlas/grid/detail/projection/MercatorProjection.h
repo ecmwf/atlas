@@ -15,26 +15,20 @@ public:
     // constructor
     MercatorProjectionT(const eckit::Parametrisation& p);
 
-    // copy constructor
-    MercatorProjectionT( const MercatorProjectionT& rhs );
-
-    // clone method
-    virtual Projection* clone() const ;
-
     // class name
     static std::string static_type() { return Rotation::typePrefix()+"mercator"; }
-    virtual std::string type() const { return static_type(); }
+    virtual std::string type() const override { return static_type(); }
 
     // projection and inverse projection
-    virtual void xy2lonlat(double crd[]) const;
-    virtual void lonlat2xy(double crd[]) const;
+    virtual void xy2lonlat(double crd[]) const override;
+    virtual void lonlat2xy(double crd[]) const override;
     
-    virtual bool strictlyRegional() const { return true; }  // Mercator projection cannot be used for global grids
+    virtual bool strictlyRegional() const override { return true; }  // Mercator projection cannot be used for global grids
 
     // specification
-    virtual eckit::Properties spec() const;
+    virtual eckit::Properties spec() const override;
 
-    virtual std::string units() const { return "meters"; }
+    virtual std::string units() const override { return "meters"; }
 
 protected:
 

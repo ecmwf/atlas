@@ -25,9 +25,7 @@ public:
     static Projection* create(const eckit::Parametrisation& p);
 
     Projection() {}
-    Projection( const Projection& rhs ) {}   // copy constructor
-    virtual Projection* clone() const =0;    // clone method acting like virtual copy constructor
-    virtual ~Projection() {}                 // destructor should be virtual when using a virtual copy constructor
+    virtual ~Projection() {} // destructor should be virtual
 
     virtual std::string type() const =0;
 

@@ -148,7 +148,7 @@ void Structured::crop( const Domain& dom ) {
       size_t jmax = 0;
       for( size_t j=0; j<ny(); ++j )
       {
-          if( zonal_domain->contains(y(j)) ) {
+          if( zonal_domain->contains_y(y(j)) ) {
               jmin = std::min(j, jmin);
               jmax = std::max(j, jmax);
           }

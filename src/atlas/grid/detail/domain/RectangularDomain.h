@@ -21,25 +21,25 @@ public:
     RectangularDomain( const Interval& x, const Interval& y, const std::string& units );
 
     static std::string static_type() {return "rectangular";}
-    virtual std::string type() const { return static_type(); }
+    virtual std::string type() const override { return static_type(); }
 
     /// Checks if the point is contained in the domain
-    virtual bool contains(double x, double y) const;
+    virtual bool contains(double x, double y) const override;
 
+    /// Checks if the x-value is contained in the domain
+    bool contains_x(double x) const { return ( xmin_tol_ <= x && x <= xmax_tol_ ); }
 
-    bool contains_x(double x) const { return ( xmin_ <= x && xmax_ >= x ); }
+    /// Checks if the y-value is contained in the domain
+    bool contains_y(double y) const { return ( ymin_tol_ <= y && y <= ymax_tol_ ); }
 
-    bool contains_y(double y) const { return ( ymin_ <= y && ymax_ >= y ); }
+    virtual bool global() const override { return global_; }
+    virtual bool empty() const  override { return (xmin_ == xmax_) or (ymin_ == ymax_); }
 
+    virtual eckit::Properties spec() const override;
 
-    virtual bool global() const { return global_; }
-    virtual bool empty() const  { return (xmin_ == xmax_) or (ymin_ == ymax_); }
+    virtual void print(std::ostream&) const override;
 
-    virtual eckit::Properties spec() const;
-
-    virtual void print(std::ostream&) const;
-
-    virtual std::string units() const { return units_; }
+    virtual std::string units() const override { return units_; }
 
     double xmin() const { return xmin_; }
     double xmax() const { return xmax_; }
@@ -49,6 +49,7 @@ public:
 private:
 
     double xmin_, xmax_, ymin_, ymax_;
+    double xmin_tol_, xmax_tol_, ymin_tol_, ymax_tol_;
     bool global_;
     std::string units_;
 

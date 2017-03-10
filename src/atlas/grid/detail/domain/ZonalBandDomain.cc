@@ -44,7 +44,7 @@ ZonalBandDomain::ZonalBandDomain( const Interval& interval_y ) :
 
 
 bool ZonalBandDomain::contains(double x, double y) const {
-  return contains(y);
+  return contains_y(y);
 }
 
 eckit::Properties ZonalBandDomain::spec() const {

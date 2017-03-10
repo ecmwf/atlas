@@ -13,29 +13,23 @@ public:
     // constructor
     LambertProjection(const eckit::Parametrisation& p);
 
-    // copy constructor
-    LambertProjection( const LambertProjection& rhs );
-
-    // clone method
-    virtual Projection* clone() const ;
-
     // destructor
     ~LambertProjection() {}
 
     // class name
     static std::string static_type() {return "lambert";}
-    virtual std::string type() const {return static_type();}
+    virtual std::string type() const override {return static_type();}
 
     // projection and inverse projection
-    virtual void xy2lonlat(double crd[]) const;
-    virtual void lonlat2xy(double crd[]) const;
+    virtual void xy2lonlat(double crd[]) const override;
+    virtual void lonlat2xy(double crd[]) const override;
 
-    virtual bool strictlyRegional() const { return true; }  // lambert projection cannot be used for global grids
+    virtual bool strictlyRegional() const override { return true; }  // lambert projection cannot be used for global grids
 
     // specification
-    virtual eckit::Properties spec() const;
+    virtual eckit::Properties spec() const override;
 
-    virtual std::string units() const { return "meters"; }
+    virtual std::string units() const override { return "meters"; }
 
 private:
   

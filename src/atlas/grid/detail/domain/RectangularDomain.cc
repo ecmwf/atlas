@@ -67,6 +67,12 @@ RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, cons
   if (xmin_>xmax_) std::swap(xmin_,xmax_);
   if (ymin_>ymax_) std::swap(ymin_,ymax_);
   global_ = is_global(xmin_,xmax_,ymin_,ymax_,units_);
+  
+  const double tol = 1.e-6;
+  xmin_tol_ = xmin_-tol;
+  ymin_tol_ = ymin_-tol;
+  xmax_tol_ = xmax_+tol;
+  ymax_tol_ = ymax_+tol;
 }
 
 

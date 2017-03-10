@@ -39,16 +39,6 @@ LambertProjection::LambertProjection(const eckit::Parametrisation& params) {
   setup();
 }
 
-// copy constructor
-LambertProjection::LambertProjection( const LambertProjection& rhs ) : Projection( rhs ) {
-  // copy fundamental data
-  lat1_=rhs.lat1_;
-  lat2_=rhs.lat2_;
-  radius_=rhs.radius_;
-  lon0_=rhs.lon0_;
-
-  setup();
-}
 
 void LambertProjection::setup() {
   // setup (derived) constants
@@ -64,9 +54,6 @@ void LambertProjection::setup() {
   inv_n_ = 1./n_;
   sign_  = ( n_<0. ? -1. : 1. );
 }
-
-// clone method
-Projection* LambertProjection::clone() const { return new LambertProjection(*this); }
 
 void LambertProjection::lonlat2xy(double crd[]) const {
 

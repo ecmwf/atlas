@@ -38,23 +38,6 @@ MercatorProjectionT<Rotation>::MercatorProjectionT(const eckit::Parametrisation&
   inv_radius_ = 1./radius_;
 }
 
-// copy constructor
-template <typename Rotation>
-MercatorProjectionT<Rotation>::MercatorProjectionT( const MercatorProjectionT& rhs ) :
-  Projection(rhs),
-  rotation_(rhs.rotation_) {
-  radius_=rhs.radius_;
-  lon0_=rhs.lon0_;
-  inv_radius_ = 1./radius_;
-}
-
-// clone method
-template <typename Rotation>
-Projection* MercatorProjectionT<Rotation>::clone() const  {
-  return new MercatorProjectionT<Rotation>(*this);
-}
-
-
 template <typename Rotation>
 void MercatorProjectionT<Rotation>::lonlat2xy(double crd[]) const {
 
