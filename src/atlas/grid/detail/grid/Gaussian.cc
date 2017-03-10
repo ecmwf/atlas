@@ -7,6 +7,7 @@
 
 #include "atlas/grid/detail/pl/classic_gaussian/PointsPerLatitude.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/internals/Debug.h";
 
 namespace atlas {
 namespace grid {
@@ -26,9 +27,13 @@ static Projection projection( const Grid::Config& grid ) {
 static Domain domain( const Grid::Config& grid ) {
 
     Grid::Config config;
+    DEBUG_VAR(grid);
     if( grid.get("domain",config) ) {
+
+      DEBUG_VAR(config);
       return Domain(config);
     }
+    DEBUG_VAR(config);
     return Domain();
 }
 

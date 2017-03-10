@@ -19,6 +19,9 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
+#include "atlas/grid/detail/domain/RectangularDomain.h"
+#include "atlas/grid/detail/domain/ZonalBandDomain.h"
+#include "atlas/grid/Domain.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 
 namespace atlas {
@@ -67,6 +70,7 @@ Structured::Structured( const std::string& name, Projection projection, XSpace* 
   npts_ = size_t(std::accumulate(nx_.begin(), nx_.end(), 0));
   compute_true_periodicity();
 
+  DEBUG_VAR( domain.empty() );
   if( domain.empty() ) {
 
     if( periodic() ) {
@@ -94,7 +98,7 @@ Structured::Structured( const std::string& name, Projection projection, XSpace* 
   } else {
 
     // Crop grid
-    NOTIMP;
+    crop( domain );
 
   }
 }
@@ -129,149 +133,124 @@ Structured::XSpace::XSpace( const std::array<double,2>& interval, const std::vec
 
 
 
-/*
-void Structured::setup(
-    const size_t ny,
-    const double y[],
-    const long nx[],
-    const double xmin[],
-    const double xmax[] ) {
-    ASSERT(ny>1);  // can't have a grid with just one latitude
+void Structured::crop( const Domain& dom ) {
 
-    nx_  .assign(nx,   nx   + ny);
-    y_   .assign(y,    y    + ny);
-    xmin_.assign(xmin, xmin + ny);
-    xmax_.assign(xmax, xmax + ny);
-    npts_ = static_cast<size_t>(std::accumulate(nx_.begin(), nx_.end(), 0));
+    DEBUG_HERE();
 
-    dx_.resize(ny);
-    nxmin_ = nxmax_ = static_cast<size_t>(nx_[0]);
+    if( dom.global() )
+      return;
 
-    for (size_t j = 0; j < ny; ++j) {
-        dx_[j] = (xmax_[j]-xmin_[j])/double(nx_[j]-1);
-        nxmin_ = std::min(static_cast<size_t>(nx_[j]),nxmin_);
-        nxmax_ = std::max(static_cast<size_t>(nx_[j]),nxmax_);
-    }
+    DEBUG_HERE();
 
-    compute_true_periodicity();
-}
+    ASSERT( dom.units() == projection().units() );
+
+    auto zonal_domain = dynamic_cast<const domain::ZonalBandDomain*>(dom.get());
+    auto rect_domain  = dynamic_cast<const domain::RectangularDomain*>(dom.get());
+
+    if( zonal_domain ) {
+
+      DEBUG_HERE();
+      const double cropped_ymin = rect_domain->ymin();
+      const double cropped_ymax = rect_domain->ymax();
+
+      size_t jmin = ny();
+      size_t jmax = 0;
+      for( size_t j=0; j<ny(); ++j )
+      {
+          if( zonal_domain->contains(y(j)) ) {
+              jmin = std::min(j, jmin);
+              jmax = std::max(j, jmax);
+          }
+      }
+      size_t cropped_ny = jmax-jmin;
+      std::vector<double> cropped_y   ( y_   .begin()+jmin, y_   .begin()+jmax );
+      std::vector<double> cropped_xmin( xmin_.begin()+jmin, xmin_.begin()+jmax );
+      std::vector<double> cropped_xmax( xmax_.begin()+jmin, xmax_.begin()+jmax );
+      std::vector<double> cropped_dx  ( dx_  .begin()+jmin, dx_  .begin()+jmax );
+      std::vector<long>   cropped_nx  ( nx_  .begin()+jmin, nx_  .begin()+jmax );
+
+      size_t cropped_nxmin, cropped_nxmax;
+      cropped_nxmin = cropped_nxmax = static_cast<size_t>(nx_.front());
+      for (size_t j=1; j<cropped_ny; ++j) {
+          cropped_nxmin = std::min(static_cast<size_t>(cropped_nx[j]),cropped_nxmin);
+          cropped_nxmax = std::max(static_cast<size_t>(cropped_nx[j]),cropped_nxmax);
+      }
+      size_t cropped_npts = size_t(std::accumulate(cropped_nx.begin(), cropped_nx.end(), 0));
+
+      Spacing cropped_yspace( new spacing::CustomSpacing(cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax}) );
+
+      // Modify grid
+      {
+        domain_ = dom;
+        yspace_ = cropped_yspace;
+        xmin_   = cropped_xmin;
+        xmax_   = cropped_xmax;
+        dx_     = cropped_dx;
+        nx_     = cropped_nx;
+        nxmin_  = cropped_nxmin;
+        nxmax_  = cropped_nxmax;
+        npts_   = cropped_npts;
+        y_      = cropped_y;
+        // Periodicity in x-direction is unmodified
+      }
+
+      } else if ( rect_domain ) {
+
+      NOTIMP;
+      /*
+      const double tol = 1.e-6;
+      const double d_xmin = rect_domain->xmin();
+      const double d_xmax = rect_domain->xmax();
+      const double d_ymin = rect_domain->ymin();
+      const double d_ymax = rect_domain->ymax();
 
 
-
-void Structured::setup_cropped(const size_t ny, const double y[], const long nx[], const double xmin[], const double xmax[], const domain::Domain& dom ) {
-    ASSERT(ny>0);
-
-    std::vector<double> dom_y;    dom_y.  reserve(ny);
-    std::vector<long>   dom_nx;   dom_nx.    reserve(ny);
-    std::vector<double> dom_xmin; dom_xmin.reserve(ny);
-    std::vector<double> dom_xmax; dom_xmax.reserve(ny);
-    const double tol = 1.e-6;
-    size_t dom_ny = 0;
-    const double d_xmin = dom.xmin();
-    const double d_xmax = dom.xmax();
-    const double d_ymin = dom.ymin();
-    const double d_ymax = dom.ymax();
-    double dx;
-    for( size_t j=0; j<ny; ++j )
-    {
-        if( y[j]-tol < d_ymax && y[j]+tol > d_ymin )
-        {
-            ++dom_ny;
-            const double _y = y[j];
-            double _xmin = xmin[j];
-            double _xmax = xmax[j];
-            if( isPeriodicX() ) {  // periodic:      nx = number of divisions
-              dx = (d_xmax-d_xmin)/double(nx[j]);
-            } else {            // not periodic:  nx = number of points
-              if( _xmin < _xmax ) {
-                dx = (_xmax-_xmin)/double(nx[j]-1l);
-              } else {
-                dx = (d_xmax-d_xmin)/double(nx[j]-1l);
-              }
-            }
-
-
-// Flaw: Assumed that original grid has increments that start from xmin=0.0
-//       xmin of original grid does not even have to be multiple of dx
-
-            long _nx(0);
-            for( long i=0; i<nx[j]; ++i )
-            {
-                const double x = dx*i;
-                if( x+tol > d_xmin && x-tol < d_xmax )
-                {
-                    _xmin = std::min(_xmin,x);
-                    _nx++;
+      for( size_t j=0; j<ny(); ++j )
+      {
+          if( y(j)-tol < d_ymax && y[j]+tol > d_ymin )
+          {
+              ++dom_ny;
+              const double _y = y[j];
+              double _xmin = xmin[j];
+              double _xmax = xmax[j];
+              if( isPeriodicX() ) {  // periodic:      nx = number of divisions
+                dx = (d_xmax-d_xmin)/double(nx[j]);
+              } else {            // not periodic:  nx = number of points
+                if( _xmin < _xmax ) {
+                  dx = (_xmax-_xmin)/double(nx[j]-1l);
+                } else {
+                  dx = (d_xmax-d_xmin)/double(nx[j]-1l);
                 }
-            }
-            _xmax = _xmin+_nx*dx;
-            dom_y     .push_back(y[j]);
-            dom_nx    .push_back(_nx);
-            dom_xmin.push_back(_xmin);
-            dom_xmax.push_back(_xmax);
-        }
+              }
+
+
+  // Flaw: Assumed that original grid has increments that start from xmin=0.0
+  //       xmin of original grid does not even have to be multiple of dx
+
+              long _nx(0);
+              for( long i=0; i<nx[j]; ++i )
+              {
+                  const double x = dx*i;
+                  if( x+tol > d_xmin && x-tol < d_xmax )
+                  {
+                      _xmin = std::min(_xmin,x);
+                      _nx++;
+                  }
+              }
+              _xmax = _xmin+_nx*dx;
+              dom_y     .push_back(y[j]);
+              dom_nx    .push_back(_nx);
+              dom_xmin.push_back(_xmin);
+              dom_xmax.push_back(_xmax);
+          }
+      }*/
     }
-    setup(dom_ny,dom_y.data(),dom_nx.data(),dom_xmin.data(),dom_xmax.data());
-}
-*/
+    else {
+      NOTIMP;
+    }
 
-void Structured::setup(
-    const YSpace&              yspace,
-    const std::vector<long>&   nx,
-    const std::vector<double>& xmin,
-    const std::vector<double>& xmax,
-    const std::vector<double>& dx )
-{
-  yspace_ = yspace;
-  size_t ny = yspace_.size();
-
-  ASSERT(nx.size() == ny);
-  ASSERT(dx.size() == ny);
-  ASSERT(xmin.size() == ny);
-  ASSERT(xmax.size() == ny);
-
-  y_.assign(yspace_.begin(),yspace_.end());
-  nx_.assign(nx.begin(),nx.end());
-  dx_.assign(dx.begin(),dx.end());
-  xmin_.assign(xmin.begin(),xmin.end());
-  xmax_.assign(xmax.begin(),xmax.end());
-
-  nxmin_ = nxmax_ = static_cast<size_t>(nx_.front());
-
-  for (size_t j=1; j<ny; ++j) {
-      nxmin_ = std::min(static_cast<size_t>(nx_[j]),nxmin_);
-      nxmax_ = std::max(static_cast<size_t>(nx_[j]),nxmax_);
-  }
-
-  npts_ = static_cast<size_t>(std::accumulate(nx_.begin(), nx_.end(), 0));
-
-  compute_true_periodicity();
 }
 
-/*
-void Structured::setup(
-    const YSpace&     yspace,
-    const long&       nx,
-    const double&     xmin,
-    const double&     xmax,
-    const double&     dx )
-{
-  yspace_ = yspace;
-  size_t ny = yspace_.size();
-
-  y_.assign(yspace_.begin(),yspace_.end());
-  nx_.assign(ny, nx);
-  dx_.assign(ny, dx);
-  xmin_.assign(ny, xmin);
-  xmax_.assign(ny, xmax);
-
-  nxmin_ = nxmax_ = static_cast<size_t>(nx_.front());
-
-  npts_ = static_cast<size_t>(std::accumulate(nx_.begin(), nx_.end(), 0));
-
-  compute_true_periodicity();
-}
-*/
 
 namespace {
   struct EarthCentred {

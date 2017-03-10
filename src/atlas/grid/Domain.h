@@ -32,12 +32,14 @@ class Domain {
 
 public:
 
+    using domain_t = atlas::grid::domain::Domain;
+
+public:
+
     Domain();
     Domain( const Domain& );
-    Domain( const atlas::grid::domain::Domain* );
+    Domain( const domain_t* );
     Domain( const eckit::Parametrisation& );
-
-    operator atlas::grid::domain::Domain*() const { return domain_.get(); }
 
     std::string type() const;
 
@@ -71,10 +73,12 @@ public:
 
     std::string units() const;
 
+    const domain_t* get() const { return domain_.get(); }
+
 
 private:
 
-    eckit::SharedPtr<atlas::grid::domain::Domain> domain_;
+    eckit::SharedPtr<const domain_t> domain_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

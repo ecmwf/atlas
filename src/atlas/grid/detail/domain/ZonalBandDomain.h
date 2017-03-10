@@ -24,10 +24,13 @@ public:
     virtual std::string type() const { return static_type(); }
 
     /// Checks if the point is contained in the domain
-    virtual bool contains(double x, double y) const;
+    virtual bool contains(double x, double y) const override;
+
+    /// Checks if the y-value is contained in the domain
+    bool contains(double y) const { return ( ymin_tol_ <= y && y <= ymax_tol_ ); }
 
     virtual bool isGlobal() const { return global_; }
-    virtual bool isEmpty()  const { return (ymin() != ymax()); }
+    virtual bool isEmpty()  const { return (ymin() == ymax()); }
 
     virtual eckit::Properties spec() const;
 
@@ -38,6 +41,8 @@ public:
 private:
 
     bool global_;
+    double ymin_tol_;
+    double ymax_tol_;
 };
 
 }  // namespace domain

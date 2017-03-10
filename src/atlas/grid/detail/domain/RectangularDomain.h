@@ -27,7 +27,7 @@ public:
     virtual bool contains(double x, double y) const;
 
     virtual bool global() const { return global_; }
-    virtual bool empty() const  { return ( (xmin_ != xmax_) && (ymin_ != ymax_) ); }
+    virtual bool empty() const  { return (xmin_ == xmax_) or (ymin_ == ymax_); }
 
     virtual eckit::Properties spec() const;
 

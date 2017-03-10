@@ -219,26 +219,9 @@ protected: // methods
     /// Hash of the PL array
     virtual void hash(eckit::MD5&) const;
 
-    // void setup_cropped(const size_t ny, const double y[], const long nx[], const double xmin[], const double xmax[], const domain::Domain& dom);
-
     void compute_true_periodicity();
 
-
-    void setup(
-        const YSpace&              yspace,
-        const std::vector<long>&   nx,
-        const std::vector<double>& xmin,
-        const std::vector<double>& xmax,
-        const std::vector<double>& dx );
-
-    /*
-    void setup(
-        const YSpace&     yspace,
-        const long&       nx,
-        const double&     xmin,
-        const double&     xmax,
-        const double&     dx );
-    */
+    void crop( const Domain& );
 
 protected:
 

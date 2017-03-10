@@ -13,6 +13,7 @@
 
 #include <string>
 
+#include "atlas/grid/Domain.h"
 #include "atlas/grid/detail/domain/RectangularDomain.h"
 
 namespace atlas {
@@ -39,8 +40,8 @@ public:
 
     explicit BuildTorusXYZField(const std::string& name = "xyz");
 
-    field::Field& operator()(Mesh&,const atlas::grid::domain::Domain * dom, double r0, double r1, int nx, int ny) const;
-    field::Field& operator()(mesh::Nodes&,const atlas::grid::domain::Domain * dom, double r0, double r1, int nx, int ny) const;
+    field::Field& operator()(Mesh&, const atlas::grid::Domain& , double r0, double r1, int nx, int ny) const;
+    field::Field& operator()(mesh::Nodes&,const atlas::grid::Domain& , double r0, double r1, int nx, int ny) const;
 
 private:
 

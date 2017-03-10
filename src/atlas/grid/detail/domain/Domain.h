@@ -67,7 +67,7 @@ public:
 
     /// Check if grid includes the South pole
     bool includesSouthPole(const projection::Projection& ) const;
-    
+
     /// Output to stream
     virtual void print(std::ostream&) const =0;
 
@@ -75,9 +75,9 @@ public:
         d.print(s);
         return s;
     }
-    
+
     virtual std::string units() const =0;
-    
+
 };
 
 

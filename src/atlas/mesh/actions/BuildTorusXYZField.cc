@@ -29,16 +29,16 @@ BuildTorusXYZField::BuildTorusXYZField(const std::string& name)
 {
 }
 
-field::Field& BuildTorusXYZField::operator()(Mesh& mesh, const atlas::grid::domain::Domain * dom, double r0, double r1, int nx, int ny) const
+field::Field& BuildTorusXYZField::operator()(Mesh& mesh, const atlas::grid::Domain& dom, double r0, double r1, int nx, int ny) const
 {
   return operator()(mesh.nodes(),dom,r0,r1,nx,ny);
 }
 
-field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::grid::domain::Domain * dom, double r0, double r1, int nx, int ny) const
+field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::grid::Domain& dom, double r0, double r1, int nx, int ny) const
 {
   // fill xyz with torus coordinates. r0 and r1 are large and small radii, respectively.
-  
-  auto domain = dynamic_cast<const grid::domain::RectangularDomain*>( dom );
+
+  auto domain = dynamic_cast<const grid::domain::RectangularDomain*>( dom.get() );
   const double xmin = domain->xmin();
   const double xmax = domain->xmax();
   const double ymin = domain->ymin();

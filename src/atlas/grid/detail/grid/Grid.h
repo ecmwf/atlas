@@ -123,7 +123,7 @@ private:  // members
 protected: // members
 
     Projection projection_;
-    Domain     domain_;
+    atlas::grid::Domain     domain_;
 };
 
 }  // namespace grid

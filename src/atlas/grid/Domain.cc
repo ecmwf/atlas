@@ -24,8 +24,8 @@ Domain::Domain( const Domain& domain):
     domain_( domain.domain_ ) {
 }
 
-Domain::Domain( const atlas::grid::domain::Domain *domain):
-    domain_( const_cast<atlas::grid::domain::Domain*>(domain) ) {
+Domain::Domain( const domain_t* domain):
+    domain_( domain ) {
 }
 
 Domain::Domain( const eckit::Parametrisation& p ):
