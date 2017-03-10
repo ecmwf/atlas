@@ -219,7 +219,9 @@ protected: // methods
     /// Hash of the PL array
     virtual void hash(eckit::MD5&) const;
 
-    void compute_true_periodicity();
+    void computeTruePeriodicity();
+
+    void computeDomain();
 
     void crop( const Domain& );
 

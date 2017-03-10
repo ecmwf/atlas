@@ -7,7 +7,7 @@ namespace grid {
 namespace domain {
 
 namespace {
-  
+
   static bool is_global(double xmin, double xmax, double ymin, double ymax, const std::string& units) {
     return false;
 
@@ -18,31 +18,31 @@ namespace {
     // return std::abs( (xmax-xmin) - 360. ) < eps
     //     && std::abs( (ymax-ymin) - 180. ) < eps ;
   }
-  
+
   static std::array<double,2> get_interval_x(const eckit::Parametrisation& params) {
     double xmin, xmax;
-  
+
     if( ! params.get("xmin",xmin) )
       throw eckit::BadParameter("xmin missing in Params",Here());
 
     if( ! params.get("xmax",xmax) )
       throw eckit::BadParameter("xmax missing in Params",Here());
-  
+
     return {xmin,xmax};
   }
 
   static std::array<double,2> get_interval_y(const eckit::Parametrisation& params) {
     double ymin, ymax;
-  
+
     if( ! params.get("ymin",ymin) )
       throw eckit::BadParameter("ymin missing in Params",Here());
 
     if( ! params.get("ymax",ymax) )
       throw eckit::BadParameter("ymax missing in Params",Here());
-  
+
     return {ymin,ymax};
   }
-  
+
   static std::string get_units(const eckit::Parametrisation& params) {
     std::string units;
     if( ! params.get("units",units) )
@@ -71,8 +71,7 @@ RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, cons
 
 
 bool RectangularDomain::contains(double x, double y) const {
-  // probably should be done with some margin ...
-  return ( xmin_ <= x && xmax_ >= x && ymin_ <= y && ymax_ >= y );
+  return contains_x(x) and contains_y(y);
 }
 
 eckit::Properties RectangularDomain::spec() const {

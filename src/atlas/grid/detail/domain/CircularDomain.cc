@@ -5,6 +5,15 @@ namespace atlas {
 namespace grid {
 namespace domain {
 
+CircularDomain::CircularDomain(const std::array<double,2>& centre, const double& radius, const std::string& units ) :
+  xc_( centre[0] ),
+  yc_( centre[1] ),
+  radius_( radius ),
+  rr_( radius*radius ),
+  units_(units) {
+}
+
+
 CircularDomain::CircularDomain(const eckit::Parametrisation& params) {
   // read data from params
   std::vector<double> centre(2);
@@ -12,6 +21,8 @@ CircularDomain::CircularDomain(const eckit::Parametrisation& params) {
   xc_=centre[0];yc_=centre[1];
 
   if ( !params.get("radius",radius_) ) throw eckit::BadParameter("radius missing in Params",Here());
+
+  if ( !params.get("units",units_) ) throw eckit::BadParameter("units missing in Params",Here());
 
   rr_ = radius_*radius_;
 }
@@ -36,7 +47,7 @@ eckit::Properties CircularDomain::spec() const {
 }
 
 std::string CircularDomain::units() const {
-  NOTIMP;
+  return units_;
 }
 
 void CircularDomain::print(std::ostream& os) const {

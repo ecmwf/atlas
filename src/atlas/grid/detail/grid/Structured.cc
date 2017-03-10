@@ -15,7 +15,6 @@
 #include <limits>
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/Point.h"
-#include "atlas/internals/Debug.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
@@ -68,41 +67,38 @@ Structured::Structured( const std::string& name, Projection projection, XSpace* 
       nxmax_ = std::max(static_cast<size_t>(nx_[j]),nxmax_);
   }
   npts_ = size_t(std::accumulate(nx_.begin(), nx_.end(), 0));
-  compute_true_periodicity();
 
-  DEBUG_VAR( domain.empty() );
-  if( domain.empty() ) {
-
-    if( periodic() ) {
-      if( yspace.max() - yspace.min() == 180. ) {
-        domain_ = Domain( Grid::Config("type","global") );
-      }
-      else {
-        Grid::Config dom;
-        dom.set("type","zonal_band");
-        dom.set("ymin",yspace.min());
-        dom.set("ymax",yspace.max());
-        domain_ = Domain(dom);
-      }
-    } else {
-      Grid::Config dom;
-      dom.set("type","rectangular");
-      dom.set("xmin",xmin_[0]);
-      dom.set("xmax",xmax_[0]);
-      dom.set("ymin",yspace.min());
-      dom.set("ymax",yspace.max());
-      dom.set("units",projection_.units());
-      domain_ = Domain(dom);
-    }
-
-  } else {
-
-    // Crop grid
+  if( not domain.empty() ) {
     crop( domain );
-
   }
+  computeTruePeriodicity();
+  computeDomain();
+
 }
 
+void Structured::computeDomain() {
+  if( periodic() ) {
+    if( yspace().max() - yspace().min() == 180. ) {
+      domain_ = Domain( Grid::Config("type","global") );
+    }
+    else {
+      Grid::Config config;
+      config.set("type","zonal_band");
+      config.set("ymin",yspace().min());
+      config.set("ymax",yspace().max());
+      domain_ = Domain(config);
+    }
+  } else if( domain_.empty() ) {
+    Grid::Config config;
+    config.set("type","rectangular");
+    config.set("xmin",xmin_[0]);
+    config.set("xmax",xmax_[0]);
+    config.set("ymin",yspace().min());
+    config.set("ymax",yspace().max());
+    config.set("units",projection_.units());
+    domain_ = Domain(config);
+  }
+}
 
 Structured::~Structured() {
 }
@@ -135,12 +131,8 @@ Structured::XSpace::XSpace( const std::array<double,2>& interval, const std::vec
 
 void Structured::crop( const Domain& dom ) {
 
-    DEBUG_HERE();
-
     if( dom.global() )
       return;
-
-    DEBUG_HERE();
 
     ASSERT( dom.units() == projection().units() );
 
@@ -149,7 +141,6 @@ void Structured::crop( const Domain& dom ) {
 
     if( zonal_domain ) {
 
-      DEBUG_HERE();
       const double cropped_ymin = rect_domain->ymin();
       const double cropped_ymax = rect_domain->ymax();
 
@@ -162,7 +153,7 @@ void Structured::crop( const Domain& dom ) {
               jmax = std::max(j, jmax);
           }
       }
-      size_t cropped_ny = jmax-jmin;
+      size_t cropped_ny = jmax-jmin+1;
       std::vector<double> cropped_y   ( y_   .begin()+jmin, y_   .begin()+jmax );
       std::vector<double> cropped_xmin( xmin_.begin()+jmin, xmin_.begin()+jmax );
       std::vector<double> cropped_xmax( xmax_.begin()+jmin, xmax_.begin()+jmax );
@@ -170,7 +161,7 @@ void Structured::crop( const Domain& dom ) {
       std::vector<long>   cropped_nx  ( nx_  .begin()+jmin, nx_  .begin()+jmax );
 
       size_t cropped_nxmin, cropped_nxmax;
-      cropped_nxmin = cropped_nxmax = static_cast<size_t>(nx_.front());
+      cropped_nxmin = cropped_nxmax = static_cast<size_t>(cropped_nx.front());
       for (size_t j=1; j<cropped_ny; ++j) {
           cropped_nxmin = std::min(static_cast<size_t>(cropped_nx[j]),cropped_nxmin);
           cropped_nxmax = std::max(static_cast<size_t>(cropped_nx[j]),cropped_nxmax);
@@ -191,62 +182,71 @@ void Structured::crop( const Domain& dom ) {
         nxmax_  = cropped_nxmax;
         npts_   = cropped_npts;
         y_      = cropped_y;
-        // Periodicity in x-direction is unmodified
       }
 
       } else if ( rect_domain ) {
 
-      NOTIMP;
-      /*
-      const double tol = 1.e-6;
-      const double d_xmin = rect_domain->xmin();
-      const double d_xmax = rect_domain->xmax();
-      const double d_ymin = rect_domain->ymin();
-      const double d_ymax = rect_domain->ymax();
+          const double cropped_ymin = rect_domain->ymin();
+          const double cropped_ymax = rect_domain->ymax();
 
-
-      for( size_t j=0; j<ny(); ++j )
-      {
-          if( y(j)-tol < d_ymax && y[j]+tol > d_ymin )
-          {
-              ++dom_ny;
-              const double _y = y[j];
-              double _xmin = xmin[j];
-              double _xmax = xmax[j];
-              if( isPeriodicX() ) {  // periodic:      nx = number of divisions
-                dx = (d_xmax-d_xmin)/double(nx[j]);
-              } else {            // not periodic:  nx = number of points
-                if( _xmin < _xmax ) {
-                  dx = (_xmax-_xmin)/double(nx[j]-1l);
-                } else {
-                  dx = (d_xmax-d_xmin)/double(nx[j]-1l);
-                }
+          size_t jmin = ny();
+          size_t jmax = 0;
+          for( size_t j=0; j<ny(); ++j ) {
+              if( rect_domain->contains_y(y(j)) ) {
+                  jmin = std::min(j, jmin);
+                  jmax = std::max(j, jmax);
               }
-
-
-  // Flaw: Assumed that original grid has increments that start from xmin=0.0
-  //       xmin of original grid does not even have to be multiple of dx
-
-              long _nx(0);
-              for( long i=0; i<nx[j]; ++i )
-              {
-                  const double x = dx*i;
-                  if( x+tol > d_xmin && x-tol < d_xmax )
-                  {
-                      _xmin = std::min(_xmin,x);
-                      _nx++;
-                  }
-              }
-              _xmax = _xmin+_nx*dx;
-              dom_y     .push_back(y[j]);
-              dom_nx    .push_back(_nx);
-              dom_xmin.push_back(_xmin);
-              dom_xmax.push_back(_xmax);
           }
-      }*/
+          size_t cropped_ny = jmax-jmin+1;
+          std::vector<double> cropped_y   ( y_ .begin()+jmin, y_ .begin()+jmin+cropped_ny );
+          std::vector<double> cropped_dx  ( dx_.begin()+jmin, dx_.begin()+jmin+cropped_ny );
+
+          std::vector<double> cropped_xmin( cropped_ny,  std::numeric_limits<double>::max() );
+          std::vector<double> cropped_xmax( cropped_ny, -std::numeric_limits<double>::max() );
+          std::vector<long>   cropped_nx  ( cropped_ny );
+
+          for( size_t j=jmin, jcropped=0; j<=jmax; ++j, ++jcropped ) {
+              size_t n=0;
+              for( size_t i=0; i<=nx(j); ++i ) {
+                 const double _x = x(i,j);
+                 if( rect_domain->contains_x(_x) ) {
+                     cropped_xmin[jcropped] = std::min( cropped_xmin[jcropped], _x );
+                     cropped_xmax[jcropped] = std::max( cropped_xmax[jcropped], _x );
+                     ++n;
+                 }
+              }
+              cropped_nx[jcropped] = n;
+          }
+
+          size_t cropped_nxmin, cropped_nxmax;
+          cropped_nxmin = cropped_nxmax = static_cast<size_t>(cropped_nx.front());
+
+          for (size_t j=1; j<cropped_ny; ++j) {
+              cropped_nxmin = std::min(static_cast<size_t>(cropped_nx[j]),cropped_nxmin);
+              cropped_nxmax = std::max(static_cast<size_t>(cropped_nx[j]),cropped_nxmax);
+          }
+          size_t cropped_npts = size_t(std::accumulate(cropped_nx.begin(), cropped_nx.end(), 0));
+
+          Spacing cropped_yspace( new spacing::CustomSpacing(cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax}) );
+
+          // Modify grid
+          {
+            domain_ = dom;
+            yspace_ = cropped_yspace;
+            xmin_   = cropped_xmin;
+            xmax_   = cropped_xmax;
+            dx_     = cropped_dx;
+            nx_     = cropped_nx;
+            nxmin_  = cropped_nxmin;
+            nxmax_  = cropped_nxmax;
+            npts_   = cropped_npts;
+            y_      = cropped_y;
+          }
     }
     else {
-      NOTIMP;
+      std::stringstream errmsg;
+      errmsg << "Cannot crop the grid with domain " << dom;
+      eckit::BadParameter(errmsg.str(), Here());
     }
 
 }
@@ -264,7 +264,7 @@ namespace {
   };
 }
 
-void Structured::compute_true_periodicity() {
+void Structured::computeTruePeriodicity() {
 
   if( projection_.strictlyRegional() ) {
     periodic_x_ = false;

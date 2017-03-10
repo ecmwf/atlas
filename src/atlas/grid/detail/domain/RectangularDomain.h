@@ -26,6 +26,12 @@ public:
     /// Checks if the point is contained in the domain
     virtual bool contains(double x, double y) const;
 
+
+    bool contains_x(double x) const { return ( xmin_ <= x && xmax_ >= x ); }
+
+    bool contains_y(double y) const { return ( ymin_ <= y && ymax_ >= y ); }
+
+
     virtual bool global() const { return global_; }
     virtual bool empty() const  { return (xmin_ == xmax_) or (ymin_ == ymax_); }
 

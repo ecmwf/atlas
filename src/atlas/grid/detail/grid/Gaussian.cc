@@ -7,7 +7,6 @@
 
 #include "atlas/grid/detail/pl/classic_gaussian/PointsPerLatitude.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
-#include "atlas/internals/Debug.h";
 
 namespace atlas {
 namespace grid {
@@ -27,13 +26,9 @@ static Projection projection( const Grid::Config& grid ) {
 static Domain domain( const Grid::Config& grid ) {
 
     Grid::Config config;
-    DEBUG_VAR(grid);
     if( grid.get("domain",config) ) {
-
-      DEBUG_VAR(config);
       return Domain(config);
     }
-    DEBUG_VAR(config);
     return Domain();
 }
 
@@ -55,6 +50,7 @@ static StructuredGrid::grid_t::XSpace* xspace( const std::vector<long>& nx ) {
   StructuredGrid::grid_t::XSpace *_xspace = new StructuredGrid::grid_t::XSpace(nx.size());
   _xspace->nx = nx;
   _xspace->nxmax = 0;
+  _xspace->nxmin = std::numeric_limits<size_t>::max();
   for( size_t j=0; j<_xspace->ny; ++j ) {
     _xspace->xmin.push_back( 0. );
     _xspace->xmax.push_back( 360. );
