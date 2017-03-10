@@ -13,17 +13,18 @@
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/runtime/Log.h"
-#include "atlas/interpolation/Ray.h"
-#include "atlas/interpolation/Quad3D.h"
-#include "atlas/interpolation/Triag3D.h"
+#include "atlas/interpolation/element/Quad3D.h"
+#include "atlas/interpolation/element/Triag3D.h"
+#include "atlas/interpolation/method/Ray.h"
 
 namespace atlas {
 namespace interpolation {
+namespace element {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Intersect Quad3D::intersects(const Ray &r, double edgeEpsilon, double epsilon) const {
-    Intersect isect; // intersection is false
+method::Intersect Quad3D::intersects(const method::Ray &r, double edgeEpsilon, double epsilon) const {
+    method::Intersect isect; // intersection is false
 
     Triag3D T013(v00, v10, v01);
     isect = T013.intersects(r, edgeEpsilon, epsilon);
@@ -93,5 +94,6 @@ double Quad3D::area() const {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+}  // namespace element
 }  // namespace interpolation
 }  // namespace atlas

@@ -8,71 +8,69 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_geometry_Triag3D_h
-#define atlas_geometry_Triag3D_h
+#ifndef atlas_interpolation_element_Triag2D_h
+#define atlas_interpolation_element_Triag2D_h
 
 #include <limits>
 
-#include "atlas/interpolation/Vector3D.h"
-#include "atlas/interpolation/Intersect.h"
+#include "atlas/interpolation/Vector2D.h"
+#include "atlas/interpolation/method/Intersect.h"
 
 namespace atlas {
 namespace interpolation {
-
+namespace method {
 struct Ray;
+}
+namespace element {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-/// Triangle structure
-/// Implements @link
-/// http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-9-ray-triangle-intersection/m-ller-trumbore-algorithm
-
-class Triag3D {
+class Triag2D {
 
 public: // types
 
-    Triag3D(const Vector3D& x0, const Vector3D& x1, const Vector3D& x2):
+    Triag2D(const Vector2D& x0, const Vector2D& x1, const Vector2D& x2):
         v0(x0),
         v1(x1),
         v2(x2) {
     }
 
-    Triag3D(const double* x0, const double* x1, const double* x2) {
-        v0 = Vector3D::Map(x0);
-        v1 = Vector3D::Map(x1);
-        v2 = Vector3D::Map(x2);
+    Triag2D(const double* x0, const double* x1, const double* x2) {
+        v0 = Vector2D::Map(x0);
+        v1 = Vector2D::Map(x1);
+        v2 = Vector2D::Map(x2);
     }
 
-    Intersect intersects(
-            const Ray& r,
+    method::Intersect intersects(
+            const Vector2D& p,
             double edgeEpsilon = 5 * std::numeric_limits<double>::epsilon(),
             double epsilon = 5 * std::numeric_limits<double>::epsilon() ) const;
 
     double area() const;
 
     void print(std::ostream& s) const {
-        s << "Triag3D["
-          <<  "v0=" << v0
-          << ",v1=" << v1
-          << ",v2=" << v2
-          << "]";
+        s << "Triag2D["
+          <<  "v0=("   << v0[0] << ", " << v0[1]
+          << "), v1=(" << v1[0] << ", " << v1[1]
+          << "), v2=(" << v2[0] << ", " << v2[1] << ")]";
     }
 
-    friend std::ostream& operator<<(std::ostream& s, const Triag3D& p) {
+    friend std::ostream& operator<<(std::ostream& s, const Triag2D& p) {
         p.print(s);
         return s;
     }
 
 private: // members
 
-    Vector3D v0;
-    Vector3D v1;
-    Vector3D v2;
+    Vector2D v0;
+    Vector2D v1;
+    Vector2D v2;
 
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
+}  // namespace element
 }  // namespace interpolation
 }  // namespace atlas
 

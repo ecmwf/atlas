@@ -21,8 +21,12 @@
 #include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/meshgenerator/DelaunayMeshGenerator.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/field/Field.h"
 
 using atlas::mesh::Mesh;
 
@@ -98,6 +102,32 @@ Mesh* MeshGenerator::generate( const grid::Grid& grid, const grid::Distribution&
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void MeshGenerator::generate_global_element_numbering( Mesh& mesh ) const
+{
+  size_t loc_nb_elems = mesh.cells().size();
+  std::vector<size_t> elem_counts( parallel::mpi::comm().size() );
+  std::vector<int> elem_displs( parallel::mpi::comm().size() );
+
+  parallel::mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
+
+  elem_displs.at(0) = 0;
+  for(size_t jpart = 1; jpart < parallel::mpi::comm().size(); ++jpart)
+  {
+    elem_displs.at(jpart) = elem_displs.at(jpart-1) + elem_counts.at(jpart-1);
+  }
+
+  gidx_t gid = 1+elem_displs.at( parallel::mpi::comm().rank() );
+
+  array::ArrayView<gidx_t,1> glb_idx( mesh.cells().global_index() );
+
+  for( size_t jelem=0; jelem<mesh.cells().size(); ++jelem )
+  {
+    glb_idx(jelem) = gid++;
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 MeshGeneratorFactory::MeshGeneratorFactory(const std::string &name):
     name_(name) {
 
@@ -141,7 +171,7 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string &name) {
 
     std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->find(name);
 
-    Log::debug() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
+    Log::debug<ATLAS>() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No MeshGeneratorFactory for [" << name << "]" << std::endl;
@@ -164,7 +194,7 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string& name, const eckit:
 
     std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->find(name);
 
-    Log::debug() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
+    Log::debug<ATLAS>() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No MeshGeneratorFactory for [" << name << "]" << std::endl;

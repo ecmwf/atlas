@@ -80,6 +80,11 @@ grid/detail/partitioner/EqualRegionsPartitioner.cc
 grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
+grid/detail/partitioner/PartitionerFromPrePartitionedMesh.h
+grid/detail/partitioner/PrePartitionedBruteForce.cc
+grid/detail/partitioner/PrePartitionedBruteForce.h
+grid/detail/partitioner/PrePartitionedPolygon.cc
+grid/detail/partitioner/PrePartitionedPolygon.h
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
 
@@ -161,7 +166,6 @@ grid/detail/pl/classic_gaussian/N1600.cc  # TL3199
 grid/detail/pl/classic_gaussian/N2000.cc  # TL3999
 grid/detail/pl/classic_gaussian/N4000.cc  # TL7999
 grid/detail/pl/classic_gaussian/N8000.cc  # TL15999
-
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_grid_srcs
@@ -277,19 +281,34 @@ list( APPEND atlas_numerics_srcs
 endif()
 
 list( APPEND atlas_interpolation_srcs
-interpolation/Intersect.h
-interpolation/Intersect.cc
-interpolation/Quad3D.h
-interpolation/Quad3D.cc
-interpolation/Ray.h
-interpolation/Ray.cc
-interpolation/Triag3D.h
-interpolation/Triag3D.cc
+interpolation/Vector2D.h
 interpolation/Vector3D.h
-interpolation/PointIndex3.h
-interpolation/PointIndex3.cc
-interpolation/PointSet.h
-interpolation/PointSet.cc
+interpolation/element/Quad3D.cc
+interpolation/element/Quad3D.h
+interpolation/element/Quad2D.cc
+interpolation/element/Quad2D.h
+interpolation/element/Triag3D.cc
+interpolation/element/Triag3D.h
+interpolation/element/Triag2D.cc
+interpolation/element/Triag2D.h
+interpolation/method/FiniteElement.cc
+interpolation/method/FiniteElement.h
+interpolation/method/Intersect.cc
+interpolation/method/Intersect.h
+interpolation/method/KNearestNeighbours.cc
+interpolation/method/KNearestNeighbours.h
+interpolation/method/KNearestNeighboursBase.cc
+interpolation/method/KNearestNeighboursBase.h
+interpolation/method/Method.cc
+interpolation/method/Method.h
+interpolation/method/NearestNeighbour.cc
+interpolation/method/NearestNeighbour.h
+interpolation/method/PointIndex3.cc
+interpolation/method/PointIndex3.h
+interpolation/method/PointSet.cc
+interpolation/method/PointSet.h
+interpolation/method/Ray.cc
+interpolation/method/Ray.h
 )
 
 list( APPEND atlas_array_srcs
@@ -402,8 +421,9 @@ ecbuild_add_library( TARGET atlas
 
   LIBS
     eckit_geometry
-    eckit_option
+    eckit_linalg
     eckit_mpi
+    eckit_option
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
 

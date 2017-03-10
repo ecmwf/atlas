@@ -13,6 +13,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace mesh {
@@ -20,9 +21,9 @@ namespace actions {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-BuildXYZField::BuildXYZField(const std::string& name)
-    : name_(name)
-{
+BuildXYZField::BuildXYZField(const std::string& name, bool force_recompute) :
+    name_(name),
+    force_recompute_(force_recompute) {
 }
 
 field::Field& BuildXYZField::operator()(Mesh& mesh) const
@@ -32,14 +33,20 @@ field::Field& BuildXYZField::operator()(Mesh& mesh) const
 
 field::Field& BuildXYZField::operator()(mesh::Nodes& nodes) const
 {
-  if( !nodes.has_field(name_) )
-  {
+  bool recompute = force_recompute_;
+  if( !nodes.has_field(name_) ) {
+    nodes.add( field::Field::create<double>(name_,array::make_shape(nodes.size(),3) ) );
+    recompute = true;
+  }
+  if( recompute ) {
     size_t npts = nodes.size();
+
     array::ArrayView<double,2> lonlat( nodes.geolonlat() );
-    array::ArrayView<double,2> xyz   ( nodes.add( field::Field::create<double>(name_,array::make_shape(npts,3) ) ) );
+    array::ArrayView<double,2> xyz   ( nodes.field(name_) );
+
     for( size_t n=0; n<npts; ++n )
     {
-    	//std::cout << lonlat[n][0] << std::endl;
+      //std::cout << lonlat[n][0] << std::endl;
       eckit::geometry::lonlat_to_3d(lonlat[n].data(),xyz[n].data());
     }
   }

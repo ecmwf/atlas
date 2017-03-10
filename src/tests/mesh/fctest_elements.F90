@@ -66,7 +66,6 @@ TEST( test_hybridelements )
   FCTEST_CHECK( cells%has_field("remote_idx") )
   FCTEST_CHECK( cells%has_field("halo") )
 
-  FCTEST_CHECK_EQUAL( cells%nb_fields(), 4_c_size_t )
   field = cells%field("partition")
   FCTEST_CHECK_EQUAL( field%owners(), 2 )
   FCTEST_CHECK_EQUAL( field%name(), "partition" )

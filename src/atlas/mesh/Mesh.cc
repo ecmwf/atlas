@@ -140,6 +140,10 @@ void Mesh::setProjection(const Projection& projection) {
   projection_ = projection;
 }
 
+size_t Mesh::nb_partitions() const {
+  return parallel::mpi::comm().size();
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines

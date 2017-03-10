@@ -8,16 +8,18 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/field/Field.h"
-#include "atlas/interpolation/PointSet.h"
+#include "atlas/interpolation/method/PointSet.h"
+
 #include "atlas/array/ArrayView.h"
+#include "atlas/field/Field.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
 
 using namespace eckit;
 
 namespace atlas {
 namespace interpolation {
+namespace method {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -92,6 +94,7 @@ size_t PointSet::search_unique( const Point& p, size_t idx, uint32_t n  )
 
 //----------------------------------------------------------------------------------------------------------------------
 
+} // namespace method
 } // namespace interpolation
 } // namespace atlas
 

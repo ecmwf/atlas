@@ -8,18 +8,20 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_geometry_Quad3D_h
-#define atlas_geometry_Quad3D_h
+#ifndef atlas_interpolation_element_Quad3D_h
+#define atlas_interpolation_element_Quad3D_h
 
 #include <limits>
 
 #include "atlas/interpolation/Vector3D.h"
-#include "atlas/interpolation/Intersect.h"
+#include "atlas/interpolation/method/Intersect.h"
 
 namespace atlas {
 namespace interpolation {
-
+namespace method {
 struct Ray;
+}
+namespace element {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -33,8 +35,8 @@ public:
         v01 = Vector3D::Map(x3);
     }
 
-    Intersect intersects(
-            const Ray& r,
+    method::Intersect intersects(
+            const method::Ray& r,
             double edgeEpsilon = 5 * std::numeric_limits<double>::epsilon(),
             double epsilon = 5 * std::numeric_limits<double>::epsilon() ) const;
 
@@ -61,6 +63,7 @@ private:  // members
 
 //----------------------------------------------------------------------------------------------------------------------
 
+}  // namespace element
 }  // namespace interpolation
 }  // namespace atlas
 

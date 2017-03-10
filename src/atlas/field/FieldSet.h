@@ -153,6 +153,8 @@ public: // methods
   size_t size() const { return  fields_.size(); }
   bool empty()  const { return !fields_.size(); }
 
+  void clear();
+
   const std::string& name() const { return name_; }
         std::string& name()       { return name_; }
 

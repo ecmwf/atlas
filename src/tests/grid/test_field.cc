@@ -155,8 +155,7 @@ void TestField::test_fieldcreator()
   ASSERT( ifs->shape(2) == 137 );
   ASSERT( ifs->shape(3) == 10 );
 
-  Log::debug() << std::flush;
-  Log::info() << std::flush;
+  Log::flush();
 }
 
 void take_array(const array::Array& arr)

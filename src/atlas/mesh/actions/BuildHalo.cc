@@ -16,7 +16,9 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "eckit/log/Timer.h"
 #include "atlas/internals/atlas_config.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -37,6 +39,12 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
+
+#ifdef DEBUG_OUTPUT
+#include "atlas/output/Gmsh.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
+#include "atlas/mesh/actions/BuildXYZField.h"
+#endif
 
 using atlas::internals::accumulate_facets;
 using atlas::internals::Topology;
@@ -91,14 +99,17 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
     node2elem[jnode].clear();
 
   const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
+  array::ArrayView<int,1> patched( mesh.cells().field("patch") );
 
   size_t nb_elems = mesh.cells().size();
   for (size_t elem=0; elem<nb_elems; ++elem)
   {
-    for (size_t n=0; n<elem_nodes.cols(elem); ++n)
-    {
-      int node = elem_nodes(elem,n);
-      node2elem[node].push_back( elem );
+    if( not patched(elem) ) {
+      for (size_t n=0; n<elem_nodes.cols(elem); ++n)
+      {
+        int node = elem_nodes(elem,n);
+        node2elem[node].push_back( elem );
+      }
     }
   }
 }
@@ -788,7 +799,18 @@ private:
   int N_;
   int flag_;
   array::ArrayView<int,1> flags_;
+  
+  friend std::ostream& operator<<(std::ostream& os, const PeriodicPoints& periodic_points) {
+    os << "[";
+    for( size_t j=0; j<periodic_points.flags_.shape(0); ++j ) {
+      if( periodic_points(j) ) os << " " << j+1;
+    }
+    os << " ]";
+    return os;
+  }
+  
 };
+
 
 void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& periodic_points, const PeriodicTransform& transform, int newflags)
 {
@@ -814,6 +836,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
   {
     double crd[] = { helper.xy(bdry_nodes[jnode],internals::LON), helper.xy(bdry_nodes[jnode],internals::LAT) };
     transform(crd,+1);
+    // Log::info() << " crd  " << crd[0] << "  " << crd[1] <<  "       uid " << internals::unique_lonlat(crd) << std::endl;
     send_bdry_nodes_uid[jnode] = internals::unique_lonlat(crd);
   }
 
@@ -853,11 +876,17 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
 void build_halo(Mesh& mesh, int nb_elems )
 {
-  int jhalo = 0;
-  mesh.metadata().get("halo",jhalo);
+  int halo = 0;
+  mesh.metadata().get("halo",halo);
+  if( halo == nb_elems )
+    return;
 
-  for( ; jhalo<nb_elems; ++jhalo )
+  Log::debug<ATLAS>() << "Increasing mesh halo..." << std::endl;
+  eckit::TraceTimer<ATLAS> timer("Increasing mesh halo... done");
+  
+  for(int jhalo=halo ; jhalo<nb_elems; ++jhalo )
   {
+    Log::debug<ATLAS>() << "Increase halo " << jhalo+1 << std::endl;
     size_t nb_nodes_before_halo_increase = mesh.nodes().size();
 
     BuildHaloHelper helper(mesh);
@@ -866,15 +895,35 @@ void build_halo(Mesh& mesh, int nb_elems )
 
     PeriodicPoints westpts(mesh,Topology::PERIODIC|Topology::WEST,nb_nodes_before_halo_increase);
 
+    // Log::debug<ATLAS>() << "  periodic west : " << westpts << std::endl;
+
     increase_halo_periodic( helper, westpts, WestEast(), Topology::PERIODIC|Topology::WEST|Topology::GHOST );
 
     PeriodicPoints eastpts(mesh,Topology::PERIODIC|Topology::EAST,nb_nodes_before_halo_increase);
+
+    // Log::debug<ATLAS>() << "  periodic east : " << eastpts << std::endl;
 
     increase_halo_periodic( helper, eastpts, EastWest(), Topology::PERIODIC|Topology::EAST|Topology::GHOST );
 
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<jhalo+1<<"]";
     mesh.metadata().set(ss.str(),mesh.nodes().size());
+
+#ifdef DEBUG_OUTPUT
+    output::Gmsh gmsh2d("build-halo-mesh2d.msh",util::Config
+      ("ghost",true)
+      ("coordinates","lonlat")
+    );
+    output::Gmsh gmsh3d("build-halo-mesh3d.msh",util::Config
+      ("ghost",true)
+      ("coordinates","xyz")
+    );
+    renumber_nodes_glb_idx (mesh.nodes());
+    BuildXYZField("xyz",true)(mesh.nodes());
+    mesh.metadata().set("halo",jhalo+1);
+    gmsh2d.write(mesh);
+    gmsh3d.write(mesh);
+#endif
   }
 
   mesh.metadata().set("halo",nb_elems);

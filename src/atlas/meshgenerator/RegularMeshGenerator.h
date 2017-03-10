@@ -45,9 +45,6 @@ private:
       const std::vector<int>& parts,
       mesh::Mesh& m ) const;
 
-    void generate_global_element_numbering(
-      mesh::Mesh& mesh ) const;
-
 private:
 
     util::Metadata options;

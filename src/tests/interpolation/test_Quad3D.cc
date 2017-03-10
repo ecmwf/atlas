@@ -12,13 +12,13 @@
 #define BOOST_TEST_MODULE atlas_test_geometry
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/interpolation/Ray.h"
-#include "atlas/interpolation/Quad3D.h"
+#include "atlas/interpolation/method/Ray.h"
+#include "atlas/interpolation/element/Quad3D.h"
 #include "atlas/util/Point.h"
 
-using atlas::interpolation::Quad3D;
-using atlas::interpolation::Intersect;
-using atlas::interpolation::Ray;
+using atlas::interpolation::element::Quad3D;
+using atlas::interpolation::method::Intersect;
+using atlas::interpolation::method::Ray;
 using atlas::PointXYZ;
 
 //----------------------------------------------------------------------------------------------------------------------

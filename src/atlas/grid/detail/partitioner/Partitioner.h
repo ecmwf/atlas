@@ -14,6 +14,7 @@
 #include "eckit/memory/Owned.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/mesh/Mesh.h"
 
 namespace atlas {
 namespace grid {
@@ -37,6 +38,7 @@ public:
     virtual Distribution distribution() const;
 
     size_t nb_partitions() const;
+
     const Grid& grid() const {
         return grid_;
     }
@@ -105,5 +107,17 @@ public:
 
 } // namespace partitioner
 } // namespace detail
+
+class MatchedPartitionerFactory {
+public:
+
+    static grid::detail::partitioner::Partitioner* build(
+      const std::string& type,
+      const grid::Grid& grid,
+      const mesh::Mesh& partitioned );
+};
+
+// ------------------------------------------------------------------
+
 } // namespace grid
 } // namespace atlas

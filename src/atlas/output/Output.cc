@@ -109,7 +109,7 @@ Output *OutputFactory::build(const std::string &name, Stream& stream) {
 
     std::map<std::string, OutputFactory *>::const_iterator j = m->find(name);
 
-    Log::debug() << "Looking for OutputFactory [" << name << "]" << std::endl;
+    Log::debug<ATLAS>() << "Looking for OutputFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No OutputFactory for [" << name << "]" << std::endl;
@@ -132,7 +132,7 @@ Output *OutputFactory::build(const std::string& name, Stream& stream, const ecki
 
     std::map<std::string, OutputFactory *>::const_iterator j = m->find(name);
 
-    Log::debug() << "Looking for OutputFactory [" << name << "]" << std::endl;
+    Log::debug<ATLAS>() << "Looking for OutputFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No OutputFactory for [" << name << "]" << std::endl;

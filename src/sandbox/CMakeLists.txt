@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2014 ECMWF.
+# (C) Copyright 1996-2017 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,3 +10,6 @@ add_subdirectory( fortran_submodule )
 add_subdirectory( fortran_modinc )
 add_subdirectory( fortran_object )
 add_subdirectory( example_fortran )
+
+add_subdirectory( interpolation )
+

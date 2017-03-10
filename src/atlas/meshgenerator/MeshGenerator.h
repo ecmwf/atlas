@@ -63,6 +63,9 @@ public:
     mesh::Mesh* operator()( const grid::Grid&, const grid::Distribution& ) const;
     mesh::Mesh* operator()( const grid::Grid& ) const;
 
+protected:
+
+    void generate_global_element_numbering( mesh::Mesh& mesh ) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

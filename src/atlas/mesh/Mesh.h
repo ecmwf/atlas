@@ -23,6 +23,7 @@
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"
 #include "atlas/grid/Projection.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -117,6 +118,8 @@ public: // methods
 
     /// @brief Return the memory footprint of the mesh
     size_t footprint() const;
+
+    size_t nb_partitions() const;
 
     const grid::Projection projection() const { return projection_; }
 

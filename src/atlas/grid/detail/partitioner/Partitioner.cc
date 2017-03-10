@@ -26,6 +26,9 @@
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
 #endif
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioner/PartitionerFromPrePartitionedMesh.h"
+#include "atlas/grid/detail/partitioner/PrePartitionedPolygon.h"
+#include "atlas/grid/detail/partitioner/PrePartitionedBruteForce.h"
 
 
 namespace {
@@ -138,7 +141,7 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
 
     std::map<std::string, PartitionerFactory *>::const_iterator j = m->find(name);
 
-    Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+    Log::debug<ATLAS>() << "Looking for PartitionerFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
@@ -161,7 +164,7 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
 
     std::map<std::string, PartitionerFactory *>::const_iterator j = m->find(name);
 
-    Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+    Log::debug<ATLAS>() << "Looking for PartitionerFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
@@ -176,5 +179,21 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
 
 } // namespace partitioner
 } // namespace detail
+
+grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build(
+    const std::string& type,
+    const grid::Grid& grid,
+    const mesh::Mesh& partitioned ) {
+
+    if( type == "PrePartitionedPolygon" ) {
+        return new grid::detail::partitioner::PrePartitionedPolygon(grid,partitioned);
+    } else if ( type == "PrePartitionedBruteForce" ) {
+        return new grid::detail::partitioner::PrePartitionedBruteForce(grid,partitioned);
+    } else {
+        NOTIMP;
+    }
+}
+
+
 } // namespace grid
 } // namespace atlas
