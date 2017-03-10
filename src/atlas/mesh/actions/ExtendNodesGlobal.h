@@ -8,9 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_actions_AddVirtualNodes_h
-#define atlas_actions_AddVirtualNodes_h
+#pragma once
 
+#include <string>
 
 namespace atlas {
 namespace mesh { class Mesh; }
@@ -24,17 +24,19 @@ namespace actions {
 
 
 /// Adds virtual nodes to the mesh that aren't contained in the Grid Domain
-class AddVirtualNodes {
+class ExtendNodesGlobal {
+
 public:
 
+    ExtendNodesGlobal( const std::string& gridname = "O16" );
     void operator()(const atlas::grid::Grid&, atlas::mesh::Mesh&) const;
 
+private:
+
+    std::string gridname_;
 };
 
 
 } // namespace actions
 } // namespace mesh
 } // namespace atlas
-
-
-#endif

@@ -189,8 +189,8 @@ mesh/Mesh.h
 mesh/Mesh.cc
 mesh/Nodes.h
 mesh/Nodes.cc
-mesh/actions/AddVirtualNodes.h
-mesh/actions/AddVirtualNodes.cc
+mesh/actions/ExtendNodesGlobal.h
+mesh/actions/ExtendNodesGlobal.cc
 mesh/actions/BuildDualMesh.h
 mesh/actions/BuildDualMesh.cc
 mesh/actions/BuildEdges.h

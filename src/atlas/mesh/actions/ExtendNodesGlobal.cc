@@ -1,0 +1,86 @@
+/*
+ * (C) Copyright 1996-2017 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
+
+#include "atlas/mesh/actions/ExtendNodesGlobal.h"
+
+#include "eckit/exception/Exceptions.h"
+#include "atlas/field/Field.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
+
+
+namespace atlas {
+namespace mesh {
+namespace actions {
+
+ExtendNodesGlobal::ExtendNodesGlobal( const std::string& gridname ) :
+    gridname_(gridname) {
+}
+
+
+void ExtendNodesGlobal::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh) const {
+
+    if (grid.domain().global()) return; // don't add virtual points to global domains
+
+    grid::Grid O16( "O16" );
+
+    // virtual points
+    std::vector<PointXY> extended_pts;
+    extended_pts.reserve( grid.npts() );
+
+    // loop over the point and keep the ones that *don't* fall in the domain
+    
+    for( const PointLonLat& lonlat : O16 ) {
+      PointXY xy = grid.projection().xy(lonlat);
+      if( not grid.domain().contains( xy ) ) {
+        extended_pts.push_back(xy);
+      }
+    }
+
+    mesh::Nodes& nodes = mesh.nodes();
+
+    const size_t nb_real_pts = nodes.size();
+    const size_t nb_extension_pts = extended_pts.size();
+
+    size_t new_size = nodes.size() + extended_pts.size();
+
+    nodes.resize(new_size); // resizes the fields
+
+    const size_t nb_total_pts = nodes.size();
+
+    ASSERT( nb_total_pts == nb_real_pts + nb_extension_pts );
+
+    nodes.metadata().set<size_t>("NbRealPts",nb_real_pts);
+    nodes.metadata().set<size_t>("NbVirtualPts",nb_extension_pts);
+
+    array::ArrayView<double,2> xyz    ( nodes.field("xyz") );
+    array::ArrayView<double,2> xy     ( nodes.lonlat() );
+    array::ArrayView<double,2> lonlat ( nodes.geolonlat() );
+    array::ArrayView<gidx_t,1> gidx   ( nodes.global_index() );
+
+    for(size_t i = 0; i < nb_extension_pts; ++i) {
+        const size_t n = nb_real_pts + i;
+        xy(n,0) = extended_pts[i].x();
+        xy(n,1) = extended_pts[i].y();
+        PointLonLat pLL = grid.projection().lonlat(extended_pts[i]);
+        lonlat(n,0) = pLL.lon();
+        lonlat(n,1) = pLL.lat();
+        eckit::geometry::lonlat_to_3d(lonlat[n].data(),xyz[n].data());
+        gidx(n) = n+1;
+    }
+
+}
+
+
+} // namespace actions
+} // namespace mesh
+} // namespace atlas

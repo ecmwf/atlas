@@ -220,21 +220,6 @@ void CheckerboardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
 
   }
 
-#warning gnarls
-#ifdef gnarls
-  // nice output of partition
-  if ( parallel::mpi::comm().rank()==0 ) {
-    for (int iy=0;iy<ny_;iy++) {
-      for (int ix=0;ix<nx_;ix++) {
-        Log::info(Here())  << std::setw(3) << part[iy*nx_+ix] << " ";
-      }
-      Log::info(Here()) << "\n";
-    }
-    Log::info(Here()) << std::endl;
-  }
-  //ASSERT(0);
-#endif
-
 }
 
 void CheckerboardPartitioner::partition(int part[]) const

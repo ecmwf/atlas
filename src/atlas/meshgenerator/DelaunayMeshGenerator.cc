@@ -14,7 +14,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
-#include "atlas/mesh/actions/AddVirtualNodes.h"
+#include "atlas/mesh/actions/ExtendNodesGlobal.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/actions/BuildConvexHull3D.h"
 #include "atlas/mesh/HybridElements.h"
@@ -74,7 +74,7 @@ void DelaunayMeshGenerator::generate(const grid::Grid& g, mesh::Mesh& mesh) cons
   }
 
   mesh::actions::BuildXYZField()(mesh);
-  mesh::actions::AddVirtualNodes()(g, mesh);    ///< does nothing if global domain
+  mesh::actions::ExtendNodesGlobal()(g, mesh);    ///< does nothing if global domain
   mesh::actions::BuildConvexHull3D()(mesh);
 }
 
