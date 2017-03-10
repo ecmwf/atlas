@@ -107,9 +107,12 @@ struct Parse_bounds_lonlat : ConfigParser {
 
     // This version only works with a "lonlat" or "rotated_lonlat" projection!!!
     if( valid ) {
-      bool valid_projection = p || p.type() == "rotated_lonlat";
+      bool valid_projection = not p or p.type() == "rotated_lonlat";
       if( not valid_projection ) {
-        throw eckit::BadParameter("This configuration requires that the projection is \"lonlat\" or \"rotated_lonlat\"",Here());
+        std::stringstream errmsg;
+        errmsg << "This configuration requires that the projection is \"lonlat\" or \"rotated_lonlat\". Received: " << p.type();
+        errmsg << "\n"  "p.bool() = " << bool(p);
+        throw eckit::BadParameter(errmsg.str(),Here());
       }
     }
 

@@ -123,7 +123,7 @@ void RegularMeshGenerator::configure_defaults()
   if( grid::Partitioner::exists("trans") && parallel::mpi::comm().size() > 1 )
     partitioner = "trans";
   else
-    partitioner = "equal_regions";
+    partitioner = "checkerboard";
   options.set<std::string>("partitioner",partitioner);
 
   // Options for for periodic grids
@@ -142,8 +142,8 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
 
   size_t nb_parts = options.get<size_t>("nb_parts");
 
-  std::string partitioner_type = "equal_regions";
-  options.get("partitioner",partitioner_type);
+  std::string partitioner_type = "checkerboard";
+  options.get("checkerboard",partitioner_type);
 
   //if ( rg->nlat()%2 == 1 ) partitioner_factory = "equal_regions"; // Odd number of latitudes
   //if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "equal_regions"; // Only one part --> Trans is slower
@@ -192,7 +192,7 @@ void RegularMeshGenerator::generate_mesh(
   int nx=rg.nx();
   int ny=rg.ny();
 
-  bool periodic_x = options.get<bool>("periodic_x");
+  bool periodic_x = options.get<bool>("periodic_x") or rg.periodic() ;
   bool periodic_y = options.get<bool>("periodic_y");
 
   Log::info() << Here() << "periodic_x = " << periodic_x << std::endl;

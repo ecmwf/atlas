@@ -3,6 +3,8 @@
 #include "atlas/grid/detail/projection/Projection.h"
 #include "atlas/grid/detail/projection/Rotation.h"
 
+#include "atlas/runtime/Log.h"
+
 namespace atlas {
 namespace grid {
 namespace projection {
@@ -36,14 +38,14 @@ public:
   virtual void xy2lonlat(double crd[]) const { rotation_.rotate(crd);   }
   virtual void lonlat2xy(double crd[]) const { rotation_.unrotate(crd); }
 
-  virtual bool isStrictlyRegional() const { return false; }
+  virtual bool strictlyRegional() const { return false; }
 
   // specification
   virtual eckit::Properties spec() const;
 
   virtual std::string units() const { return "degrees"; }
 
-  virtual operator bool() const { return rotation_.rotated(); }
+  virtual operator bool() const override { return rotation_.rotated(); Log::info() << "rotated = " << rotation_.rotated();  }
 
 private:
 

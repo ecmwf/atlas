@@ -33,16 +33,16 @@ public:
 
     virtual void xy2lonlat(double crd[]) const =0;
     virtual void lonlat2xy(double crd[]) const =0;
-    
+
     PointLonLat lonlat( const PointXY& ) const;
     PointXY xy( const PointLonLat& ) const;
 
-    virtual bool isStrictlyRegional() const =0;
+    virtual bool strictlyRegional() const =0;
 
     virtual eckit::Properties spec() const =0;
-    
+
     virtual std::string units() const =0;
-    
+
     virtual operator bool() const { return true; }
 
 };

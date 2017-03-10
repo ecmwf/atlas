@@ -287,7 +287,7 @@ namespace {
 
 void Structured::compute_true_periodicity() {
 
-  if( projection_.isStrictlyRegional() ) {
+  if( projection_.strictlyRegional() ) {
     periodic_x_ = false;
 
   } else if( domain_.global() ) {

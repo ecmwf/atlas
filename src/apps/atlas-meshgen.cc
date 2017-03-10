@@ -165,12 +165,6 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( edges )
     halo = std::max(halo,1l);
 
-  std::string meshgenerator_type("structured");
-  args.get("generator",meshgenerator_type);
-  eckit::LocalConfiguration meshgenerator_config( args );
-  if( parallel::mpi::comm().size() > 1 || edges )
-    meshgenerator_config.set("3d",false);
-
   StructuredGrid grid;
   if( key.size() )
   {
@@ -193,7 +187,14 @@ void Meshgen2Gmsh::execute(const Args& args)
 
   Log::debug() << "Domain: " << grid.domain() << std::endl;
   Log::debug() << "Periodic: " << grid.periodic() << std::endl;
-  Log::debug() << "Spec: " << grid.spec() << std::endl;
+//  Log::debug() << "Spec: " << grid.spec() << std::endl;
+
+
+  std::string meshgenerator_type = ( RegularGrid(grid) ? "regular" : "structured" );
+  args.get("generator",meshgenerator_type);
+  eckit::LocalConfiguration meshgenerator_config( args );
+  if( parallel::mpi::comm().size() > 1 || edges )
+    meshgenerator_config.set("3d",false);
 
   SharedPtr<meshgenerator::MeshGenerator> meshgenerator (
       meshgenerator::MeshGenerator::create(meshgenerator_type,meshgenerator_config) );
@@ -208,8 +209,13 @@ void Meshgen2Gmsh::execute(const Args& args)
     Log::error() << e.callStack() << std::endl;
     throw e;
   }
-  SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh,Halo(halo)) );
 
+  if( grid.projection().units() == "degrees" ) {
+    SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh,Halo(halo)) );
+  } else {
+    Log::warning() << "Not yet implemented: building halo's with projections not defined in degrees" << std::endl;
+    Log::warning() << "units: " << grid.projection().units() << std::endl;
+  }
   if( edges )
   {
     build_edges(*mesh);

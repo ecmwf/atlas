@@ -29,7 +29,7 @@ public:
     virtual void xy2lonlat(double crd[]) const;
     virtual void lonlat2xy(double crd[]) const;
     
-    virtual bool isStrictlyRegional() const { return true; }  // Mercator projection cannot be used for global grids
+    virtual bool strictlyRegional() const { return true; }  // Mercator projection cannot be used for global grids
 
     // specification
     virtual eckit::Properties spec() const;

@@ -30,7 +30,7 @@ public:
     virtual void xy2lonlat(double crd[]) const;
     virtual void lonlat2xy(double crd[]) const;
 
-    virtual bool isStrictlyRegional() const { return false; }  // schmidt is global grid
+    virtual bool strictlyRegional() const { return false; }  // schmidt is global grid
 
     // specification
     virtual eckit::Properties spec() const;
