@@ -52,7 +52,7 @@ contains
 ! GridDistribution routines
 
 function atlas_GridDistribution__ctor( part, part0 ) result(griddistribution)
-  use atlas_griddistribution_c_binding
+  use atlas_distribution_c_binding
   type(atlas_GridDistribution) :: griddistribution
   integer, intent(in) :: part(:)
   integer, intent(in), optional :: part0
@@ -65,7 +65,7 @@ end function atlas_GridDistribution__ctor
 
 
 subroutine atlas_GridDistribution__final( this )
-  use atlas_griddistribution_c_binding
+  use atlas_distribution_c_binding
   class(atlas_GridDistribution), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__GridDistribution__delete(this%c_ptr());
@@ -74,7 +74,7 @@ subroutine atlas_GridDistribution__final( this )
 end subroutine
 
 subroutine atlas_GridDistribution__delete( this )
-  use atlas_griddistribution_c_binding
+  use atlas_distribution_c_binding
   class(atlas_GridDistribution), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__GridDistribution__delete(this%c_ptr());

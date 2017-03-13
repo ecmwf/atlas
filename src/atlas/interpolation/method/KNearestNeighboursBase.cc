@@ -14,7 +14,7 @@
 #include "eckit/log/Timer.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/runtime/LibAtlas.h"
+#include "atlas/library/LibAtlas.h"
 
 
 namespace atlas {
@@ -24,7 +24,7 @@ namespace method {
 
 void KNearestNeighboursBase::buildPointSearchTree(mesh::Mesh& meshSource) {
     using namespace atlas;
-    eckit::TraceTimer<LibAtlas> tim("atlas::interpolation::method::KNearestNeighboursBase::setup()");
+    eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::KNearestNeighboursBase::setup()");
 
 
     // generate 3D point coordinates

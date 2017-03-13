@@ -16,12 +16,12 @@
 #include "ecbuild/boost_test_framework.h"
 #include "eckit/utils/Translator.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/parallel/GatherScatter.h"
-#include "atlas/internals/Debug.h"
+#include "atlas/runtime/Debug.h"
 
 #include "tests/AtlasFixture.h"
 
@@ -192,8 +192,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
     size_t glb_rank = 2;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
-    internals::MPL_ArrayView<POD> lview(loc.data(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
-    internals::MPL_ArrayView<POD> gview(glb.data(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
+    parallel::detail::MPL_ArrayView<POD> lview(loc.data(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
+    parallel::detail::MPL_ArrayView<POD> gview(glb.data(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
 
     BOOST_CHECK_EQUAL(lview.var_rank(),1);
     BOOST_CHECK_EQUAL(lview.var_stride(0),1);
@@ -232,7 +232,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
       size_t glb_rank = 1;
       size_t glb_mpl_idxpos[] = {0};
       size_t glb_mpl_rank = 1;
-      internals::MPL_ArrayView<POD> lview(loc.data(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
+      parallel::detail::MPL_ArrayView<POD> lview(loc.data(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
       BOOST_CHECK_EQUAL(lview.var_rank(),1);
       BOOST_CHECK_EQUAL(lview.var_stride(0),2);
       BOOST_CHECK_EQUAL(lview.var_shape(0),1);
@@ -240,7 +240,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
       BOOST_CHECK_EQUAL(lview.mpl_stride(0),2);
       BOOST_CHECK_EQUAL(lview.mpl_shape(0),Nl);
 
-      internals::MPL_ArrayView<POD> gview(glb1.data(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
+      parallel::detail::MPL_ArrayView<POD> gview(glb1.data(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
       BOOST_CHECK_EQUAL(gview.var_rank(),1);
       BOOST_CHECK_EQUAL(gview.var_stride(0),1);
       BOOST_CHECK_EQUAL(gview.var_shape(0),1);

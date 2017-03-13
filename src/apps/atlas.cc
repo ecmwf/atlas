@@ -11,7 +11,7 @@
 
 #include "eckit/runtime/Tool.h"
 #include "eckit/config/Resource.h"
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/runtime/Log.h"
 
 #ifdef ATLAS_HAVE_TRANS
@@ -43,18 +43,18 @@ void Version::run()
 {
   if( Resource<bool>("--version",false) )
   {
-    Log::info() << atlas_version() << std::endl;
+    Log::info() << atlas::version() << std::endl;
     return;
   }
   else if( Resource<bool>("--git",false) )
   {
-    Log::info() << atlas_git_sha1_abbrev(12) << std::endl;
+    Log::info() << atlas::git_sha1(12) << std::endl;
     return;
   }
   else if( Resource<bool>("--info",false) )
   {
-    Log::info() << "atlas version (" << atlas_version_str() << "), "
-                << "git-sha1 "<< atlas_git_sha1_abbrev(7) << std::endl;
+    Log::info() << "atlas version (" << atlas::version() << "), "
+                << "git-sha1 "<< atlas::git_sha1(7) << std::endl;
     Log::info() << std::endl;
     Log::info() << "  Build:" << std::endl;
     Log::info() << "    build type      : " << ATLAS_BUILD_TYPE << std::endl

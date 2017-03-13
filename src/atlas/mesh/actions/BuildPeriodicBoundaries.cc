@@ -14,19 +14,18 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/internals/Bitflags.h"
-#include "atlas/internals/LonLatMicroDeg.h"
-#include "atlas/internals/PeriodicTransform.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/LonLatMicroDeg.h"
+#include "atlas/mesh/detail/PeriodicTransform.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
 
-using atlas::internals::Topology;
-using atlas::internals::LonLatMicroDeg;
-using atlas::internals::PeriodicTransform;
+using Topology = atlas::mesh::Nodes::Topology;
+using atlas::util::LonLatMicroDeg;
+using atlas::mesh::detail::PeriodicTransform;
 
 namespace atlas {
 namespace mesh {
@@ -125,7 +124,7 @@ void build_periodic_boundaries( Mesh& mesh )
         array::ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], array::make_shape(recvcounts[jproc]/3,3) );
         for( size_t jnode=0; jnode<recv_slave.shape(0); ++jnode )
         {
-          LonLatMicroDeg slave( recv_slave(jnode,internals::LON), recv_slave(jnode,internals::LAT) );
+          LonLatMicroDeg slave( recv_slave(jnode,LON), recv_slave(jnode,LAT) );
           transform(slave,-1);
           uid_t slave_uid = slave.unique();
           if( master_lookup.count( slave_uid ) )

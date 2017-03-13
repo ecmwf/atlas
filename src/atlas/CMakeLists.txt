@@ -10,25 +10,30 @@
 
 ecbuild_generate_config_headers( DESTINATION ${INSTALL_INCLUDE_DIR}/atlas )
 
-configure_file( internals/atlas_config.h.in   internals/atlas_config.h  )
-configure_file( internals/atlas_version.h.in  internals/atlas_version.h )
-configure_file( internals/atlas_defines.h.in  internals/atlas_defines.h   )
+configure_file( library/defines.h.in   library/defines.h   )
+configure_file( library/git_sha1.h.in  library/git_sha1.h   )
 
 install( FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_defines.h
-  ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_config.h
-  ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.h
+  ${CMAKE_CURRENT_BINARY_DIR}/library/defines.h
+  ${CMAKE_CURRENT_BINARY_DIR}/library/config.h
   DESTINATION
-  ${INSTALL_INCLUDE_DIR}/atlas/internals )
-
-configure_file( internals/atlas_version.cc.in internals/atlas_version.cc )
+  ${INSTALL_INCLUDE_DIR}/atlas/build )
 
 ### sources
 
 
 list( APPEND atlas_srcs
-atlas.h
-atlas.cc
+library/atlas.h
+library/atlas.cc
+library/config.h
+library/config.cc
+library/LibAtlas.h
+library/LibAtlas.cc
+runtime/ErrorHandling.cc
+runtime/ErrorHandling.cc
+runtime/AtlasTool.h
+runtime/AtlasTool.cc
+runtime/Log.h
 )
 
 list( APPEND atlas_grid_srcs
@@ -331,14 +336,10 @@ util/Config.cc
 util/Constants.h
 util/Metadata.h
 util/Metadata.cc
-util/io/Gmsh.h
-util/io/Gmsh.cc
-util/io/PointCloud.h
-util/io/PointCloud.cc
-runtime/LibAtlas.h
-runtime/LibAtlas.cc
-runtime/ErrorHandling.cc
-runtime/ErrorHandling.cc
+output/detail/GmshIO.h
+output/detail/GmshIO.cc
+output/detail/PointCloud.h
+output/detail/PointCloud.cc
 parallel/omp/omp.h
 parallel/omp/omp.cc
 parallel/mpi/Buffer.h
@@ -353,21 +354,19 @@ parallel/GatherScatter.cc
 )
 
 list( APPEND atlas_internals_srcs
-internals/AtlasTool.h
-internals/AtlasTool.cc
-internals/AccumulateFaces.h
-internals/AccumulateFaces.cc
-internals/Bitflags.h
-internals/Checksum.h
-internals/Checksum.cc
-internals/Debug.h
-internals/Functions.h
-internals/IsGhost.h
-internals/LonLatMicroDeg.h
-internals/Parameters.h
-internals/PeriodicTransform.h
-internals/Unique.h
-internals/MPLArrayView.h
+mesh/detail/AccumulateFacets.h
+mesh/detail/AccumulateFacets.cc
+util/Bitflags.h
+util/Checksum.h
+util/Checksum.cc
+runtime/Debug.h
+util/MicroDeg.h
+mesh/IsGhostNode.h
+util/LonLatMicroDeg.h
+util/CoordinateEnums.h
+mesh/detail/PeriodicTransform.h
+util/Unique.h
+parallel/detail/MPLArrayView.h
 )
 
 
@@ -409,10 +408,8 @@ ecbuild_add_library( TARGET atlas
     ${atlas_output_srcs}
     ${atlas_util_srcs}
     ${atlas_internals_srcs}
-    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.h
-    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_version.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_config.h
-    ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_defines.h
+    ${CMAKE_CURRENT_BINARY_DIR}/library/git_sha1.h
+    ${CMAKE_CURRENT_BINARY_DIR}/library/defines.h
 
   PRIVATE_INCLUDES
     "${CGAL_INCLUDE_DIRS}"

@@ -5,12 +5,12 @@
 #include <functional>
 #include <algorithm>
 #include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
-#include "atlas/internals/Functions.h"
+#include "atlas/util/MicroDeg.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/grid/Grid.h"
 
-using atlas::internals::microdeg;
+using atlas::util::microdeg;
 
 namespace atlas {
 namespace grid {

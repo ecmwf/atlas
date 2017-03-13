@@ -14,7 +14,7 @@
 
 #include <algorithm>
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
@@ -29,13 +29,13 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/util/Constants.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "transi/trans.h"
 
 #include "tests/AtlasFixture.h"
 
 using namespace eckit;
-using namespace atlas::internals;
+
 namespace atlas {
 namespace test {
 

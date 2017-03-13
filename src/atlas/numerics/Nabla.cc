@@ -13,8 +13,8 @@
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
-#include "atlas/internals/atlas_config.h"
-#include "atlas/internals/atlas_defines.h"
+#include "atlas/library/config.h"
+#include "atlas/library/config.h"
 #include "atlas/numerics/Nabla.h"
 #include "atlas/numerics/Method.h"
 #include "atlas/numerics/fvm/Nabla.h"
@@ -127,7 +127,7 @@ Nabla* NablaFactory::build(const Method& method, const eckit::Parametrisation& p
 
     std::map<std::string, NablaFactory *>::const_iterator j = m->find(method.name());
 
-    Log::debug<ATLAS>() << "Looking for NablaFactory [" << method.name() << "]" << '\n';
+    Log::debug<Atlas>() << "Looking for NablaFactory [" << method.name() << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No NablaFactory for [" << method.name() << "]" << '\n';

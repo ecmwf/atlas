@@ -13,7 +13,7 @@
 
 #include "eckit/testing/Setup.h"
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/mpi/Comm.h"
 #include "atlas/runtime/Log.h"

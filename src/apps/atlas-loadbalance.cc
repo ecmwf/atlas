@@ -15,7 +15,7 @@
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid.h"

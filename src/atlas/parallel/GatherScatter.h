@@ -18,10 +18,10 @@
 #include "eckit/memory/Owned.h"
 #include "atlas/parallel/mpi/mpi.h"
 
-#include "atlas/internals/atlas_config.h"
-#include "atlas/internals/Debug.h"
+#include "atlas/library/config.h"
+#include "atlas/runtime/Debug.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/internals/MPLArrayView.h"
+#include "atlas/parallel/detail/MPLArrayView.h"
 
 namespace atlas {
 namespace parallel {
@@ -302,8 +302,8 @@ void GatherScatter::gather( const DATA_TYPE ldata[],
                             const size_t root ) const
 {
   // compatibility mode
-  internals::MPL_ArrayView<DATA_TYPE const> lview(ldata,lstrides,lshape,lrank,lmpl_idxpos,lmpl_rank);
-  internals::MPL_ArrayView<DATA_TYPE      > gview(gdata,gstrides,gshape,grank,gmpl_idxpos,gmpl_rank);
+  detail::MPL_ArrayView<DATA_TYPE const> lview(ldata,lstrides,lshape,lrank,lmpl_idxpos,lmpl_rank);
+  detail::MPL_ArrayView<DATA_TYPE      > gview(gdata,gstrides,gshape,grank,gmpl_idxpos,gmpl_rank);
 
   gather(lview.data(),lview.var_strides().data(),lview.var_shape().data(),lview.var_rank(),
          gview.data(),gview.var_strides().data(),gview.var_shape().data(),gview.var_rank(),
@@ -384,8 +384,8 @@ void GatherScatter::scatter( const DATA_TYPE gdata[],
                              const size_t root ) const
 {
   // compatibility mode
-  internals::MPL_ArrayView<DATA_TYPE const> gview(gdata,gstrides,gshape,grank,gmpl_idxpos,gmpl_rank);
-  internals::MPL_ArrayView<DATA_TYPE      > lview(ldata,lstrides,lshape,lrank,lmpl_idxpos,lmpl_rank);
+  detail::MPL_ArrayView<DATA_TYPE const> gview(gdata,gstrides,gshape,grank,gmpl_idxpos,gmpl_rank);
+  detail::MPL_ArrayView<DATA_TYPE      > lview(ldata,lstrides,lshape,lrank,lmpl_idxpos,lmpl_rank);
   std::vector<size_t> gvar_strides(gmpl_rank);
   std::vector<size_t> gvar_shape(gmpl_rank);
   std::vector<size_t> lvar_strides(lmpl_rank);

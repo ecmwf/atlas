@@ -19,7 +19,7 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 

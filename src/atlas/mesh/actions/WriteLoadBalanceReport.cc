@@ -18,11 +18,11 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
-#include "atlas/internals/IsGhost.h"
+#include "atlas/mesh/IsGhostNode.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
 
-using atlas::internals::IsGhost;
+using atlas::mesh::IsGhostNode;
 
 namespace atlas {
 namespace mesh {
@@ -63,7 +63,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 
   {
     const mesh::Nodes& nodes = mesh.nodes();
-    IsGhost is_ghost(nodes);
+    IsGhostNode is_ghost(nodes);
     size_t nb_nodes = nodes.size();
     int nowned(0);
     int nghost(0);
@@ -99,7 +99,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
   if( has_edges )
   {
     const mesh::Nodes& nodes = mesh.nodes();
-    IsGhost is_ghost(nodes);
+    IsGhostNode is_ghost(nodes);
     const mesh::HybridElements::Connectivity& edge_nodes = mesh.edges().node_connectivity();
     size_t nb_edges = mesh.edges().size();
     int nowned(0);

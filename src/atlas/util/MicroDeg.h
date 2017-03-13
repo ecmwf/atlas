@@ -11,7 +11,7 @@
 #pragma once
 
 namespace atlas {
-namespace internals {
+namespace util {
 
 inline int microdeg( const double& deg )
 {
@@ -20,5 +20,5 @@ inline int microdeg( const double& deg )
   return static_cast<int>(deg*1.e6 + 0.5);
 }
 
-} // namespace private
+} // namespace util
 } // namespace atlas

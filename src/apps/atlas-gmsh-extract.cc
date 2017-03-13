@@ -24,7 +24,7 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/filesystem/PathName.h"
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 
 //------------------------------------------------------------------------------------------------------
 

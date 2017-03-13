@@ -8,13 +8,13 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_util_PeriodicTransform_h
-#define atlas_util_PeriodicTransform_h
+#pragma once
 
-#include "atlas/internals/LonLatMicroDeg.h"
+#include "atlas/util/LonLatMicroDeg.h"
 
 namespace atlas {
-namespace internals {
+namespace mesh {
+namespace detail {
 
 class PeriodicTransform
 {
@@ -51,16 +51,15 @@ public:
     // inplace[1] = inplace[1]; null operation
   }
 
-  void operator()(LonLatMicroDeg& inplace, int direction) const
+  void operator()(util::LonLatMicroDeg& inplace, int direction) const
   {
-    inplace.set_lon( inplace.lon() + direction*microdeg(x_translation_) );
+    inplace.set_lon( inplace.lon() + direction*util::microdeg(x_translation_) );
     // inplace.set_lat( inplace.lat() ); null operation
   }
 
 };
 
 
-} // namespace internals
+} // namespace detail
+} // namespace mesh
 } // namespace atlas
-
-#endif

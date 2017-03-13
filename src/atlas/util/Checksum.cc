@@ -1,10 +1,10 @@
 
 #include <stdint.h>
 #include <cstddef>
-#include "atlas/internals/Checksum.h"
+#include "atlas/util/Checksum.h"
 
 namespace atlas {
-namespace internals {
+namespace util {
 namespace { // anonymous
 
 // Inefficient implementation of Fletcher's checksum algorithm
@@ -53,5 +53,5 @@ checksum_t checksum(const checksum_t values[], size_t size)
   return checksum(reinterpret_cast<const char*>(&values[0]),size*sizeof(checksum_t)/sizeof(char));
 }
 
-} // namespace internals
+} // namespace util
 } // namespace atlas

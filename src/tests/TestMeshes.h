@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/grid.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/mesh/Mesh.h"

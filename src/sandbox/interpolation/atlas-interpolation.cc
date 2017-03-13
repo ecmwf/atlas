@@ -13,7 +13,7 @@
 
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/internals/AtlasTool.h"
+#include "atlas/runtime/AtlasTool.h"
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/runtime/Log.h"
 

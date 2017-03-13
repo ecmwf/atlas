@@ -16,7 +16,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "tests/TestMeshes.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
@@ -29,8 +29,8 @@
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/internals/IsGhost.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/mesh/IsGhostNode.h"
 
 #include "tests/AtlasFixture.h"
 
@@ -45,7 +45,7 @@ namespace test {
 double dual_volume(mesh::Mesh& mesh)
 {
   mesh::Nodes& nodes = mesh.nodes();
-  internals::IsGhost is_ghost_node(nodes);
+  mesh::IsGhostNode is_ghost_node(nodes);
   int nb_nodes = nodes.size();
   array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
   array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );

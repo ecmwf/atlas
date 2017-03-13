@@ -19,9 +19,8 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/numerics/fvm/Method.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Constants.h"
-#include "atlas/internals/Bitflags.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/parallel/omp/omp.h"
@@ -130,7 +129,7 @@ void Method::setup()
       const double deg2rad = M_PI/180.;
       atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
       {
-        double y  = lonlat_deg(jnode,internals::LAT) * deg2rad;
+        double y  = lonlat_deg(jnode,LAT) * deg2rad;
         double hx = radius_*std::cos(y);
         double hy = radius_;
         double G  = hx*hy;
@@ -139,8 +138,8 @@ void Method::setup()
 
       atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
       {
-        dual_normals(jedge,internals::LON) *= deg2rad;
-        dual_normals(jedge,internals::LAT) *= deg2rad;
+        dual_normals(jedge,LON) *= deg2rad;
+        dual_normals(jedge,LAT) *= deg2rad;
       }
     }
   }

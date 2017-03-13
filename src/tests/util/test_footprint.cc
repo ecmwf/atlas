@@ -11,8 +11,8 @@
 #define BOOST_TEST_MODULE TestFootprint
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/atlas.h"
-#include "atlas/internals/Debug.h"
+#include "atlas/library/atlas.h"
+#include "atlas/runtime/Debug.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/Array.h"
 #include "atlas/util/Metadata.h"

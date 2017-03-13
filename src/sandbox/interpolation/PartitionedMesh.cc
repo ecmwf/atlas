@@ -18,7 +18,6 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
 
 
@@ -58,7 +57,7 @@ void PartitionedMesh::writeGmsh(const std::string& fileName, const field::FieldS
 
 
 void PartitionedMesh::partition(const grid::Grid& grid) {
-    eckit::TraceTimer<LibAtlas> tim("PartitionedMesh::partition()");
+    eckit::TraceTimer<Atlas> tim("PartitionedMesh::partition()");
 
     partitioner_ = Partitioner(optionPartitioner_, grid);
 
@@ -69,7 +68,7 @@ void PartitionedMesh::partition(const grid::Grid& grid) {
 
 
 void PartitionedMesh::partition(const grid::Grid& grid, const PartitionedMesh& other) {
-    eckit::TraceTimer<LibAtlas> tim("PartitionedMesh::partition(other)");
+    eckit::TraceTimer<Atlas> tim("PartitionedMesh::partition(other)");
 
     partitioner_ = Partitioner( grid::MatchedPartitionerFactory::build(optionPartitioner_,grid, *other.mesh_));
 

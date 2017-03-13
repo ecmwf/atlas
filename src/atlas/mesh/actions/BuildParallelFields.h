@@ -14,7 +14,7 @@
 #ifndef BuildParallelFields_h
 #define BuildParallelFields_h
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 namespace atlas {
 namespace mesh {

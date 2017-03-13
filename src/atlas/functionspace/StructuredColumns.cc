@@ -14,7 +14,7 @@
 
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/internals/Checksum.h"
+#include "atlas/util/Checksum.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -443,7 +443,7 @@ std::string StructuredColumns::checksum(
     // return checksum(fieldset);
     eckit::Log::warning() << "Only local checksum implemented" << std::endl;
     std::stringstream resultss;
-    resultss << internals::checksum(field.data<double>(),field.size());
+    resultss << util::checksum(field.data<double>(),field.size());
     return resultss.str();
 }
 // ----------------------------------------------------------------------------

@@ -14,11 +14,10 @@
 #include <limits>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/types/Types.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/internals/Bitflags.h"
 #include "atlas/array/DataType.h"
 #include "atlas/runtime/ErrorHandling.h"
 

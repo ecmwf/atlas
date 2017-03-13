@@ -15,9 +15,9 @@
 #define BOOST_TEST_MODULE TestRGG
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
 #include "atlas/grid.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
@@ -33,10 +33,9 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Config.h"
-#include "atlas/internals/Bitflags.h"
-#include "atlas/internals/Debug.h"
+#include "atlas/runtime/Debug.h"
 
 #include "tests/AtlasFixture.h"
 
@@ -56,10 +55,6 @@ void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], do
 
 namespace atlas {
 namespace test {
-
-using eckit::geometry::LAT;
-using eckit::geometry::LON;
-
 
 static grid::ReducedGaussianGrid debug_grid() {
   return {
@@ -511,8 +506,8 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
   Log::info() << "flags     = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )
   {
-    Log::info() << internals::Topology::check(flags(jnode),internals::Topology::GHOST) << " ";
-    BOOST_CHECK_EQUAL( internals::Topology::check(flags(jnode),internals::Topology::GHOST), ghost(jnode) );
+    Log::info() << mesh::Nodes::Topology::check(flags(jnode),mesh::Nodes::Topology::GHOST) << " ";
+    BOOST_CHECK_EQUAL( mesh::Nodes::Topology::check(flags(jnode),mesh::Nodes::Topology::GHOST), ghost(jnode) );
   }
   Log::info() << "]" << std::endl;
 

@@ -8,11 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_util_Constants_h
-#define atlas_util_Constants_h
+#pragma once
 
 #include <cmath>
-#include "atlas/internals/atlas_defines.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -22,9 +20,6 @@ namespace util {
 //------------------------------------------------------------------------------------------------------
 
 /// Some usefull constants
-/// @note These could be static const constants, but then the initialization would be in the .cc
-///       which would preclude constant optimization.
-///       With C++11 constexpr the constants can be initialized in the class header.
 struct Constants
 {
     static constexpr double radiansToDegrees() { return 180. * M_1_PI; }
@@ -47,5 +42,3 @@ struct Earth
 
 } // namespace util
 } // namespace atlas
-
-#endif // atlas_util_Constants_h

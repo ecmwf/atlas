@@ -24,7 +24,6 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
 
 #include "eckit/config/Resource.h"
@@ -258,13 +257,13 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
     {
         std::stringstream msg; msg << "Partitioning " << eckit::BigNum(grid().npts())
           << " target grid points... ";
-        Log::debug<ATLAS>() << msg.str() << std::endl;
-        eckit::TraceTimer<LibAtlas> timer(msg.str()+"done");
+        Log::debug<Atlas>() << msg.str() << std::endl;
+        eckit::TraceTimer<Atlas> timer(msg.str()+"done");
         for (size_t i=0; i<grid().npts(); ++i) {
 
             if (i && (i % 1000 == 0)) {
                 double rate = i / timer.elapsed();
-                Log::debug<ATLAS>() << "    " << eckit::BigNum(i) << " points completed (at " << rate << " points/s)" << std::endl;
+                Log::debug<Atlas>() << "    " << eckit::BigNum(i) << " points completed (at " << rate << " points/s)" << std::endl;
             }
 
             point_t P(lonlat_tgt_pts[i].lon(), lonlat_tgt_pts[i].lat());
@@ -277,10 +276,10 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
                 } else {
 
                   if( mpi_size == 1 ) {
-                    Log::debug<ATLAS>() << "point_in_poly failed for grid point " << i+1 << std::endl;
-                    Log::debug<ATLAS>() << "     P " << P << std::endl;
-                    Log::debug<ATLAS>() << "     bbox_min " << bbox_min << std::endl;
-                    Log::debug<ATLAS>() << "     bbox_max " << bbox_max << std::endl;
+                    Log::debug<Atlas>() << "point_in_poly failed for grid point " << i+1 << std::endl;
+                    Log::debug<Atlas>() << "     P " << P << std::endl;
+                    Log::debug<Atlas>() << "     bbox_min " << bbox_min << std::endl;
+                    Log::debug<Atlas>() << "     bbox_max " << bbox_max << std::endl;
                   }
 
                 }

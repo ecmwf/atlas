@@ -11,7 +11,7 @@
 #ifndef atlas_field_Options_h
 #define atlas_field_Options_h
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 
 // ----------------------------------------------------------------------------

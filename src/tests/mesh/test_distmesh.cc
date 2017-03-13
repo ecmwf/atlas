@@ -15,7 +15,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "tests/TestMeshes.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -29,8 +29,8 @@
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/internals/IsGhost.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/mesh/IsGhostNode.h"
 #include "atlas/runtime/Log.h"
 
 #include "tests/AtlasFixture.h"
@@ -47,7 +47,7 @@ namespace test {
 double dual_volume(mesh::Mesh& mesh)
 {
   mesh::Nodes& nodes = mesh.nodes();
-  internals::IsGhost is_ghost_node(nodes);
+  mesh::IsGhostNode is_ghost_node(nodes);
   int nb_nodes = nodes.size();
   array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
   array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
@@ -132,8 +132,8 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   Log::info() << "flags     = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )
   {
-    Log::info() << internals::Topology::check(flags(jnode),internals::Topology::GHOST) << " ";
-    BOOST_CHECK_EQUAL( internals::Topology::check(flags(jnode),internals::Topology::GHOST), ghost(jnode) );
+    Log::info() << mesh::Nodes::Topology::check(flags(jnode),mesh::Nodes::Topology::GHOST) << " ";
+    BOOST_CHECK_EQUAL( mesh::Nodes::Topology::check(flags(jnode),mesh::Nodes::Topology::GHOST), ghost(jnode) );
   }
   Log::info() << "]" << std::endl;
 

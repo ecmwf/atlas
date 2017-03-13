@@ -15,8 +15,8 @@
 #include "eckit/thread/Mutex.h"
 #include "atlas/parallel/mpi/mpi.h"
 
-#include "atlas/internals/atlas_config.h"
-#include "atlas/internals/atlas_defines.h"
+#include "atlas/library/config.h"
+#include "atlas/library/config.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
@@ -141,7 +141,7 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
 
     std::map<std::string, PartitionerFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<ATLAS>() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+    Log::debug<Atlas>() << "Looking for PartitionerFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
@@ -164,7 +164,7 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
 
     std::map<std::string, PartitionerFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<ATLAS>() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+    Log::debug<Atlas>() << "Looking for PartitionerFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';

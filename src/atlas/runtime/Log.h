@@ -1,8 +1,8 @@
 #pragma once
 
-#include "atlas/internals/atlas_defines.h"
+#include "atlas/library/config.h"
 
-#include "atlas/runtime/LibAtlas.h"
+#include "atlas/library/LibAtlas.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #include "fckit/Log.h"
@@ -14,9 +14,7 @@ namespace atlas { namespace detail { typedef eckit::Log LogBase; } }
 
 namespace atlas { 
 
-typedef LibAtlas ATLAS;
-
-// Use Log::debug<ATLAS>() for debugging that can be switched
+// Use Log::debug<Atlas>() for debugging that can be switched
 // on or off by the boolean environment variable ATLAS_DEBUG
 
 class Log : public detail::LogBase {

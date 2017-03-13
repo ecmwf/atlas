@@ -15,7 +15,6 @@
 #include "eckit/log/Timer.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
-#include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
 
 
@@ -63,12 +62,12 @@ void KNearestNeighbours::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
     {
         std::vector<double> weights;
 
-        eckit::TraceTimer<LibAtlas> timer("atlas::interpolation::method::NearestNeighbour::setup()");
+        eckit::TraceTimer<Atlas> timer("atlas::interpolation::method::NearestNeighbour::setup()");
         for (size_t ip = 0; ip < out_npts; ++ip) {
 
             if (ip && (ip % 1000 == 0)) {
                 double rate = ip / timer.elapsed();
-                Log::debug<ATLAS>() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
+                Log::debug<Atlas>() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
             }
 
             // find the closest input points to the output point

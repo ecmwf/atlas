@@ -17,10 +17,10 @@
 #include <vector>
 #include <memory>
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/grid.h"
-#include "atlas/internals/AtlasTool.h"
+#include "atlas/runtime/AtlasTool.h"
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Resource.h"

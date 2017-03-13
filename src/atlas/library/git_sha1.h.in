@@ -1,0 +1,3 @@
+#pragma once
+
+#define ATLAS_GIT_SHA1 "@ATLAS_GIT_SHA1@"

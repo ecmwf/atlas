@@ -11,7 +11,7 @@
 #include <cmath>
 #include <string>
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 #define BOOST_TEST_MODULE atlas_test_pointcloud
 #include "ecbuild/boost_test_framework.h"
@@ -26,7 +26,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid/detail/grid/Unstructured.h"
-#include "atlas/util/io/PointCloud.h"
+#include "atlas/output/detail/PointCloud.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_SUITE( test_pointcloud )
 BOOST_AUTO_TEST_CASE( read_inexistent_file )
 {
   BOOST_CHECK_THROW(
-        util::io::PointCloud::read("pointcloud.txt_should_not_exist"),
+        output::detail::PointCloud::read("pointcloud.txt_should_not_exist"),
         eckit::CantOpenFile );
 }
 
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE( read_badly_formatted_file )
 {
   BOOST_REQUIRE(test_write_file_bad("pointcloud.txt"));
   BOOST_CHECK_THROW(
-        util::io::PointCloud::read("pointcloud.txt"),
+        output::detail::PointCloud::read("pointcloud.txt"),
         eckit::BadParameter );
 }
 
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file )
                   test_arrays::nb_pts,
                   test_arrays::nb_columns ));
 
-  eckit::SharedPtr< mesh::Mesh > mesh (util::io::PointCloud::read("pointcloud.txt"));
+  eckit::SharedPtr< mesh::Mesh > mesh (output::detail::PointCloud::read("pointcloud.txt"));
   BOOST_TEST_CHECKPOINT( "Mesh created" );
   grid::Grid grid( new grid::detail::grid::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_rows )
                   test_arrays::nb_columns ));
 
   BOOST_TEST_CHECKPOINT( "Creating Mesh..." );
-  eckit::SharedPtr< mesh::Mesh > mesh (util::io::PointCloud::read("pointcloud.txt"));
+  eckit::SharedPtr< mesh::Mesh > mesh (output::detail::PointCloud::read("pointcloud.txt"));
   BOOST_TEST_CHECKPOINT( "Creating Mesh...done" );
   grid::Grid grid( new grid::detail::grid::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_columns_1 )
                   test_arrays::nb_pts,
                   test_arrays::nb_columns-1 ));
 
-  eckit::SharedPtr< mesh::Mesh > mesh (util::io::PointCloud::read("pointcloud.txt"));
+  eckit::SharedPtr< mesh::Mesh > mesh (output::detail::PointCloud::read("pointcloud.txt"));
   grid::Grid grid( new grid::detail::grid::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
 
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_columns_2 )
                   test_arrays::nb_pts,
                   test_arrays::nb_columns-test_arrays::nb_fld ));
 
-  eckit::SharedPtr< mesh::Mesh > mesh (util::io::PointCloud::read("pointcloud.txt"));
+  eckit::SharedPtr< mesh::Mesh > mesh (output::detail::PointCloud::read("pointcloud.txt"));
   grid::Grid grid( new grid::detail::grid::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
 
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE( write_array )
   std::string signature, str_lon, str_lat, str_f1, str_f2;
   size_t nb_pts, nb_columns;
 
-  util::io::PointCloud::write(
+  output::detail::PointCloud::write(
         "pointcloud.txt",
         test_arrays::nb_pts, test_arrays::lon, test_arrays::lat );
   f.open("pointcloud.txt");
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE( write_array_less_rows )
   std::string signature, str_lon, str_lat, str_f1, str_f2;
   size_t nb_pts, nb_columns;
 
-  util::io::PointCloud::write(
+  output::detail::PointCloud::write(
         "pointcloud.txt",
         test_arrays::nb_pts-1 /* deliberate */, test_arrays::lon, test_arrays::lat,
         test_arrays::nb_fld, test_arrays::fvalues, test_arrays::fnames );
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE( write_array_less_columns )
   std::string signature, str_lon, str_lat, str_f1, str_f2;
   size_t nb_pts, nb_columns;
 
-  util::io::PointCloud::write(
+  output::detail::PointCloud::write(
         "pointcloud.txt",
         test_arrays::nb_pts, test_arrays::lon, test_arrays::lat,
         test_arrays::nb_fld-1 /* deliberate */, test_arrays::fvalues, test_arrays::fnames );
@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE( write_vector_all_fields )
   std::string signature, str_lon, str_lat, str_f1, str_f2;
   size_t nb_pts, nb_columns;
 
-  util::io::PointCloud::write(
+  output::detail::PointCloud::write(
         "pointcloud.txt",
         test_vectors::lon, test_vectors::lat,
         test_vectors::fvalues, test_vectors::fnames );
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE( write_vector_no_fields )
   std::string signature, str_lon, str_lat, str_f1, str_f2;
   size_t nb_pts, nb_columns;
 
-  util::io::PointCloud::write(
+  output::detail::PointCloud::write(
         "pointcloud.txt",
         test_vectors::lon, test_vectors::lat );
   f.open("pointcloud.txt");
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   std::string signature, str_lon, str_lat, str_f;
   size_t nb_pts, nb_columns;
 
-  util::io::PointCloud::write(
+  output::detail::PointCloud::write(
         "pointcloud.txt",
         test_vectors::lon,
         test_vectors::lat,
@@ -362,7 +362,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   // read field vector from just-created file
   BOOST_TEST_CHECKPOINT("Part 2");
 
-  eckit::SharedPtr< mesh::Mesh > mesh (util::io::PointCloud::read("pointcloud.txt"));
+  eckit::SharedPtr< mesh::Mesh > mesh (output::detail::PointCloud::read("pointcloud.txt"));
   grid::Grid grid( new grid::detail::grid::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
 
@@ -399,13 +399,13 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   BOOST_CHECK_NO_THROW( fieldset.add(field) );
 
   functionspace::NodeColumns functionspace(*mesh);
-  BOOST_REQUIRE_NO_THROW( util::io::PointCloud::write("pointcloud_FieldSet.txt", fieldset, functionspace ) );
-  BOOST_REQUIRE_NO_THROW( util::io::PointCloud::write("pointcloud_Grid.txt",     *mesh    ) );
+  BOOST_REQUIRE_NO_THROW( output::detail::PointCloud::write("pointcloud_FieldSet.txt", fieldset, functionspace ) );
+  BOOST_REQUIRE_NO_THROW( output::detail::PointCloud::write("pointcloud_Grid.txt",     *mesh    ) );
 
-  eckit::SharedPtr< mesh::Mesh > mesh_from_FieldSet (util::io::PointCloud::read("pointcloud_FieldSet.txt"));
+  eckit::SharedPtr< mesh::Mesh > mesh_from_FieldSet (output::detail::PointCloud::read("pointcloud_FieldSet.txt"));
   grid::Grid grid_from_FieldSet( new grid::detail::grid::Unstructured(*mesh_from_FieldSet) );
 
-  eckit::SharedPtr< mesh::Mesh > mesh_from_Grid (util::io::PointCloud::read("pointcloud_Grid.txt"));
+  eckit::SharedPtr< mesh::Mesh > mesh_from_Grid (output::detail::PointCloud::read("pointcloud_Grid.txt"));
   grid::Grid grid_from_Grid( new grid::detail::grid::Unstructured(*mesh_from_Grid) );
   
   BOOST_REQUIRE( grid_from_FieldSet );

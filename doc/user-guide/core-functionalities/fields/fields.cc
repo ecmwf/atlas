@@ -1,4 +1,4 @@
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"

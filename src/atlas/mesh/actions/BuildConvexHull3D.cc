@@ -16,7 +16,7 @@
 #include "eckit/log/BigNum.h"
 #include "eckit/memory/ScopedPtr.h"
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 #ifdef CGAL_FOUND
 // CGAL needs -DCGAL_NDEBUG to reach peak performance ...
@@ -48,7 +48,7 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/actions/BuildConvexHull3D.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/interpolation/method/PointSet.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -77,7 +77,7 @@ static Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >
 
     std::vector<Point_3> vertices( pts.size() );
     for( size_t i = 0; i < vertices.size(); ++i )
-        vertices[i] = Point_3( pts[i](internals::XX), pts[i](internals::YY), pts[i](internals::ZZ) );
+        vertices[i] = Point_3( pts[i](XX), pts[i](YY), pts[i](ZZ) );
 
     // compute convex hull of non-collinear points
 

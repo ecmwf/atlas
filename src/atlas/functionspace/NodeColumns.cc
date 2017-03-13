@@ -16,14 +16,14 @@
 #include "eckit/os/BackTrace.h"
 #include "eckit/utils/MD5.h"
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/internals/IsGhost.h"
+#include "atlas/mesh/IsGhostNode.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/Checksum.h"
@@ -146,7 +146,7 @@ void NodeColumns::constructor()
     field::Field& part = mesh_.nodes().partition();
     field::Field& gidx = mesh_.nodes().global_index();
 
-    internals::IsGhost is_ghost(mesh_.nodes());
+    mesh::IsGhostNode is_ghost(mesh_.nodes());
     std::vector<int> mask(mesh_.nodes().size());
     const size_t npts = mask.size();
     atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
@@ -167,7 +167,7 @@ void NodeColumns::constructor()
     field::Field& ridx = mesh_.nodes().remote_index();
     field::Field& part = mesh_.nodes().partition();
     field::Field& gidx = mesh_.nodes().global_index();
-    internals::IsGhost is_ghost(mesh_.nodes());
+    mesh::IsGhostNode is_ghost(mesh_.nodes());
     std::vector<int> mask(mesh_.nodes().size());
     const size_t npts = mask.size();
     atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
@@ -570,7 +570,7 @@ namespace detail { // Collectives implementation
 template< typename T >
 void dispatch_sum( const NodeColumns& fs, const field::Field& field, T& result, size_t& N )
 {
-  const internals::IsGhost is_ghost(fs.nodes());
+  const mesh::IsGhostNode is_ghost(fs.nodes());
   const array::ArrayView<T,2> arr = leveled_scalar_view<T>( field );
   T local_sum = 0;
   const size_t npts = std::min(arr.shape(0),fs.nb_nodes());
@@ -630,7 +630,7 @@ template< typename T >
 void dispatch_sum( const NodeColumns& fs, const field::Field& field, std::vector<T>& result, size_t& N )
 {
   const array::ArrayView<T,3> arr = leveled_view<T>(field);
-  const internals::IsGhost is_ghost(fs.nodes());
+  const mesh::IsGhostNode is_ghost(fs.nodes());
   const size_t nvar = arr.shape(2);
   std::vector<T> local_sum(nvar,0);
   result.resize(nvar);
@@ -714,7 +714,7 @@ void dispatch_sum_per_level( const NodeColumns& fs, const field::Field& field, f
   const array::ArrayView<T,3> arr = leveled_view<T>(field);
   array::ArrayView<T,2> sum_per_level( sum.data<T>(), array::make_shape(sum.shape(0),sum.stride(0)) );
   sum_per_level = 0;
-  const internals::IsGhost is_ghost(fs.nodes());
+  const mesh::IsGhostNode is_ghost(fs.nodes());
 
   atlas_omp_parallel
   {

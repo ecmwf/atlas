@@ -28,7 +28,7 @@ ElemIndex3* create_element_centre_index(const mesh::Mesh& mesh) {
 
     for (size_t j = 0; j < mesh.cells().size(); ++j) {
         p.push_back(ElemIndex3::Value(
-                        ElemIndex3::Point(centres(j, internals::XX), centres(j, internals::YY), centres(j, internals::ZZ)),
+                        ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
                         ElemIndex3::Payload(j) ));
     }
 

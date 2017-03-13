@@ -12,18 +12,18 @@
 
 #include <cmath>
 #include <sstream>
-#include "atlas/internals/atlas_config.h"
-#include "atlas/internals/Functions.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/LonLatMicroDeg.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/LonLatMicroDeg.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/MicroDeg.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 
 namespace atlas {
-namespace internals {
+namespace util {
 
 // ----------------------------------------------------------------------------
 
@@ -241,5 +241,5 @@ inline void UniqueLonLat::update()
 
 // ----------------------------------------------------------------------------
 
-} // namespace internals
+} // namespace util
 } // namespace atlas

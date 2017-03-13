@@ -25,8 +25,8 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Constants.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/output/detail/GmshIO.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/array/Array.h"
@@ -36,10 +36,11 @@
 
 using namespace eckit;
 using atlas::functionspace::NodeColumns;
+using atlas::util::Metadata;
 
 namespace atlas {
-namespace util {
-namespace io {
+namespace output {
+namespace detail {
 
 namespace {
 
@@ -105,7 +106,7 @@ void write_header_binary(std::ostream& out)
 template< typename DATATYPE >
 void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeColumns& function_space, const field::Field& field, std::ostream& out)
 {
-  Log::debug<ATLAS>() << "writing field " << field.name() << " defined in NodeColumns..." << std::endl;
+  Log::debug<Atlas>() << "writing field " << field.name() << " defined in NodeColumns..." << std::endl;
 
   bool gather( gmsh_options.get<bool>("gather") );
   bool binary( !gmsh_options.get<bool>("ascii") );
@@ -301,7 +302,7 @@ void write_field_nodes(
     const field::Field&                           field,
     std::ostream&                          out)
 {
-    Log::debug<ATLAS>() << "writing field " << field.name() << "..." << std::endl;
+    Log::debug<Atlas>() << "writing field " << field.name() << "..." << std::endl;
     //bool gather(gmsh_options.get<bool>("gather"));
     bool binary(!gmsh_options.get<bool>("ascii"));
 
@@ -597,7 +598,7 @@ void swap_bytes(char *array, int size, int n)
 
 
 // ----------------------------------------------------------------------------
-Gmsh::Gmsh()
+GmshIO::GmshIO()
 {
   // which field holds the Nodes
   options.set<std::string>("nodes", "lonlat");
@@ -621,14 +622,14 @@ Gmsh::Gmsh()
   options.set< std::vector<long> >("levels", std::vector<long>() );
 }
 
-Gmsh::~Gmsh()
+GmshIO::~GmshIO()
 {
 }
 
-mesh::Mesh* Gmsh::read(const PathName& file_path) const
+mesh::Mesh* GmshIO::read(const PathName& file_path) const
 {
   mesh::Mesh* mesh = new mesh::Mesh();
-  Gmsh::read(file_path,*mesh);
+  GmshIO::read(file_path,*mesh);
   return mesh;
 }
 
@@ -643,7 +644,7 @@ mesh::ElementType* make_element_type(int type)
 }
 }
 
-void Gmsh::read(const PathName& file_path, mesh::Mesh& mesh ) const
+void GmshIO::read(const PathName& file_path, mesh::Mesh& mesh ) const
 {
   std::ifstream file;
   file.open( file_path.localPath() , std::ios::in | std::ios::binary );
@@ -690,18 +691,18 @@ void Gmsh::read(const PathName& file_path, mesh::Mesh& mesh ) const
     {
       file.read(reinterpret_cast<char*>(&g), sizeof(int));
       file.read(reinterpret_cast<char*>(&xyz), sizeof(double)*3);
-      x = xyz[internals::XX];
-      y = xyz[internals::YY];
-      z = xyz[internals::ZZ];
+      x = xyz[XX];
+      y = xyz[YY];
+      z = xyz[ZZ];
     }
     else
     {
       file >> g >> x >> y >> z;
     }
     glb_idx(n) = g;
-    coords(n,internals::XX) = x;
-    coords(n,internals::YY) = y;
-    coords(n,internals::ZZ) = z;
+    coords(n,XX) = x;
+    coords(n,YY) = y;
+    coords(n,ZZ) = z;
     glb_to_loc[ g ] = n;
     part(n) = 0;
     max_glb_idx = std::max(max_glb_idx, static_cast<gidx_t>(g));
@@ -712,8 +713,8 @@ void Gmsh::read(const PathName& file_path, mesh::Mesh& mesh ) const
   {
     for( size_t n = 0; n < nb_nodes; ++n )
     {
-      coords(n,internals::XX) *= deg;
-      coords(n,internals::YY) *= deg;
+      coords(n,XX) *= deg;
+      coords(n,YY) *= deg;
     }
   }
   for (int i=0; i<3; ++i)
@@ -865,7 +866,7 @@ void Gmsh::read(const PathName& file_path, mesh::Mesh& mesh ) const
 }
 
 
-void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
+void GmshIO::write(const mesh::Mesh& mesh, const PathName& file_path) const
 {
   int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : atlas::parallel::mpi::comm().rank();
   bool include_ghost = options.get<bool>("ghost") && options.get<bool>("elements");
@@ -880,7 +881,7 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
 
   ASSERT(surfdim == 2 || surfdim == 3);
 
-  Log::debug<ATLAS>() << "writing mesh to gmsh file " << file_path << std::endl;
+  Log::debug<Atlas>() << "writing mesh to gmsh file " << file_path << std::endl;
 
   bool binary = !options.get<bool>("ascii");
 
@@ -914,7 +915,7 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
     }
     else
     {
-        file << g << " " << xyz[internals::XX] << " " << xyz[internals::YY] << " " << xyz[internals::ZZ] << "\n";
+        file << g << " " << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << "\n";
     }
   }
   if( binary ) file << "\n";
@@ -1070,7 +1071,7 @@ void Gmsh::write(const mesh::Mesh& mesh, const PathName& file_path) const
 }
 
 // ----------------------------------------------------------------------------
-void Gmsh::write(
+void GmshIO::write(
     const field::Field&    field,
     const PathName& file_path,
     openmode        mode) const
@@ -1118,7 +1119,7 @@ void Gmsh::write(
 
 
 // ----------------------------------------------------------------------------
-void Gmsh::write_delegate(
+void GmshIO::write_delegate(
     const field::Field&                field,
     const functionspace::NodeColumns& functionspace,
     const PathName&             file_path,
@@ -1133,7 +1134,7 @@ void Gmsh::write_delegate(
 
 
 // ----------------------------------------------------------------------------
-void Gmsh::write_delegate(
+void GmshIO::write_delegate(
     const field::Field&                           field,
     const functionspace::StructuredColumns& functionspace,
     const PathName&                        file_path,
@@ -1148,7 +1149,7 @@ void Gmsh::write_delegate(
 
 
 // ----------------------------------------------------------------------------
-void Gmsh::write_delegate(
+void GmshIO::write_delegate(
     const field::FieldSet&             fieldset,
     const functionspace::NodeColumns& functionspace,
     const PathName&             file_path,
@@ -1170,7 +1171,7 @@ void Gmsh::write_delegate(
     for(size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx)
     {
         const field::Field& field = fieldset[field_idx];
-        Log::debug<ATLAS>() << "writing field " << field.name()
+        Log::debug<Atlas>() << "writing field " << field.name()
                     << " to gmsh file " << file_path << std::endl;
 
         if (field.datatype() == array::DataType::int32())
@@ -1199,7 +1200,7 @@ void Gmsh::write_delegate(
 
 
 // ----------------------------------------------------------------------------
-void Gmsh::write_delegate(
+void GmshIO::write_delegate(
     const field::FieldSet& fieldset,
     const functionspace::StructuredColumns& functionspace,
     const PathName& file_path, openmode mode) const
@@ -1221,7 +1222,7 @@ void Gmsh::write_delegate(
     for (size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx)
     {
         const field::Field& field = fieldset[field_idx];
-        Log::debug<ATLAS>() << "writing field " << field.name()
+        Log::debug<Atlas>() << "writing field " << field.name()
                     << " to gmsh file " << file_path << std::endl;
 
         if (field.datatype() == array::DataType::int32())
@@ -1250,7 +1251,7 @@ void Gmsh::write_delegate(
 
 
 // ----------------------------------------------------------------------------
-void Gmsh::write(
+void GmshIO::write(
   const field::FieldSet& fieldset,
   const functionspace::FunctionSpace& funcspace,
   const eckit::PathName& file_path,
@@ -1274,7 +1275,7 @@ void Gmsh::write(
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
-void Gmsh::write(
+void GmshIO::write(
   const field::Field& field,
   const functionspace::FunctionSpace& funcspace,
   const eckit::PathName& file_path,
@@ -1305,8 +1306,8 @@ public:
 #define field_Field field::Field
 #define field_FieldSet field::FieldSet
 #define functionspace_FunctionSpace functionspace::FunctionSpace
-  static mesh_Mesh* atlas__Gmsh__read(Gmsh* This, char* file_path);
-  static void atlas__Gmsh__write(Gmsh* This, mesh_Mesh* mesh, char* file_path);
+  static mesh_Mesh* atlas__Gmsh__read(GmshIO* This, char* file_path);
+  static void atlas__Gmsh__write(GmshIO* This, mesh_Mesh* mesh, char* file_path);
   static mesh_Mesh* atlas__read_gmsh(char* file_path);
   static void atlas__write_gmsh_mesh(mesh_Mesh* mesh, char* file_path);
   static void atlas__write_gmsh_fieldset(field_FieldSet* fieldset, functionspace_FunctionSpace* function_space, char* file_path, int mode);
@@ -1317,31 +1318,31 @@ public:
 #undef mesh_Mesh
 };
 
-mesh::Mesh* GmshFortranInterface::atlas__Gmsh__read (Gmsh* This, char* file_path) {
+mesh::Mesh* GmshFortranInterface::atlas__Gmsh__read (GmshIO* This, char* file_path) {
   return This->read( PathName(file_path) );
 }
 
-void GmshFortranInterface::atlas__Gmsh__write (Gmsh* This, mesh::Mesh* mesh, char* file_path) {
+void GmshFortranInterface::atlas__Gmsh__write (GmshIO* This, mesh::Mesh* mesh, char* file_path) {
   This->write( *mesh, PathName(file_path) );
 }
 
 mesh::Mesh* GmshFortranInterface::atlas__read_gmsh (char* file_path)
 {
-  return Gmsh().read(PathName(file_path));
+  return GmshIO().read(PathName(file_path));
 }
 
 void GmshFortranInterface::atlas__write_gmsh_mesh (mesh::Mesh* mesh, char* file_path) {
-  Gmsh writer;
+  GmshIO writer;
   writer.write( *mesh, PathName(file_path) );
 }
 
 void GmshFortranInterface::atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
-  Gmsh writer;
+  GmshIO writer;
   writer.write( *fieldset, *functionspace, PathName(file_path) );
 }
 
 void GmshFortranInterface::atlas__write_gmsh_field (field::Field* field, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
-  Gmsh writer;
+  GmshIO writer;
   writer.write( *field, *functionspace, PathName(file_path) );
 }
 
@@ -1350,19 +1351,19 @@ extern "C" {
 // ----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 // ----------------------------------------------------------------------------
-Gmsh* atlas__Gmsh__new () {
-  return new Gmsh();
+GmshIO* atlas__Gmsh__new () {
+  return new GmshIO();
 }
 
-void atlas__Gmsh__delete (Gmsh* This) {
+void atlas__Gmsh__delete (GmshIO* This) {
   delete This;
 }
 
-mesh::Mesh* atlas__Gmsh__read (Gmsh* This, char* file_path) {
+mesh::Mesh* atlas__Gmsh__read (GmshIO* This, char* file_path) {
   return GmshFortranInterface::atlas__Gmsh__read(This,file_path);
 }
 
-void atlas__Gmsh__write (Gmsh* This, mesh::Mesh* mesh, char* file_path) {
+void atlas__Gmsh__write (GmshIO* This, mesh::Mesh* mesh, char* file_path) {
   return GmshFortranInterface::atlas__Gmsh__write(This,mesh,file_path);
 }
 
@@ -1385,7 +1386,7 @@ void atlas__write_gmsh_field (field::Field* field, functionspace::FunctionSpace*
 }
 // ----------------------------------------------------------------------------
 
-} // namespace io
-} // namespace util
+} // namespace detail
+} // namespace output
 } // namespace atlas
 

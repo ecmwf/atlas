@@ -11,7 +11,7 @@
 #ifndef BuildDualMesh_h
 #define BuildDualMesh_h
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 namespace atlas {
 

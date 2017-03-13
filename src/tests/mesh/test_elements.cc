@@ -12,7 +12,7 @@
 #include <string>
 #include <iterator>
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 #define BOOST_TEST_MODULE atlas_test_elements
 #include "ecbuild/boost_test_framework.h"
@@ -20,7 +20,7 @@
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"

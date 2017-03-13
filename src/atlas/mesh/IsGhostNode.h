@@ -8,23 +8,21 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_util_IsGhost_h
-#define atlas_util_IsGhost_h
+#pragma once
 
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Bitflags.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
-namespace internals {
+namespace mesh {
 
-class IsGhost
+class IsGhostNode
 {
 public:
-  IsGhost( const mesh::Nodes& nodes )
+  IsGhostNode( const mesh::Nodes& nodes )
   {
 //    part_   = array::ArrayView<int,1> (nodes.partition() );
 //    ridx_   = array::IndexView<int,1> (nodes.remote_index() );
@@ -38,7 +36,7 @@ public:
 //    if( part_[idx] != mypart_ ) return true;
 //    if( ridx_[idx] != idx     ) return true;
 //    return false;
-    return Topology::check(flags_(idx),Topology::GHOST);
+    return Nodes::Topology::check(flags_(idx),Nodes::Topology::GHOST);
 //    return ghost_(idx);
   }
 private:
@@ -49,7 +47,5 @@ private:
   array::ArrayView<int,1> ghost_;
 };
 
-} // namespace internals
+} // namespace mesh
 } // namespace atlas
-
-#endif

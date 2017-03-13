@@ -3,7 +3,7 @@
 
 #include <iosfwd>
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 // Forward declarations
 namespace eckit

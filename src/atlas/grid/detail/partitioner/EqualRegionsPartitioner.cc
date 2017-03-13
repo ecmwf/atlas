@@ -16,10 +16,10 @@
 #include <algorithm>
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
-#include "atlas/internals/Functions.h"
+#include "atlas/util/MicroDeg.h"
 #include "atlas/parallel/mpi/mpi.h"
 
-using atlas::internals::microdeg;
+using atlas::util::microdeg;
 
 namespace atlas {
 namespace grid {

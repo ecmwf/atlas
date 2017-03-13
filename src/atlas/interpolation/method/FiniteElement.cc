@@ -26,7 +26,6 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
 
 
@@ -50,7 +49,7 @@ static const double parametricEpsilon = 1e-16;
 
 void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
     using namespace atlas;
-    eckit::TraceTimer<LibAtlas> tim("atlas::interpolation::method::FiniteElement::setup()");
+    eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::FiniteElement::setup()");
 
 
     // generate 3D point coordinates
@@ -96,8 +95,8 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
     {
         std::stringstream msg; msg << "Computing interpolation weights for " << eckit::BigNum(out_npts) << " points...";
-        Log::debug<ATLAS>() << msg.str() << std::endl;
-        eckit::TraceTimer<LibAtlas> timerProj(msg.str()+"done");
+        Log::debug<Atlas>() << msg.str() << std::endl;
+        eckit::TraceTimer<Atlas> timerProj(msg.str()+"done");
 
         for ( size_t ip = 0; ip < out_npts; ++ip ) {
             if (out_ghosts(ip)) {
@@ -106,7 +105,7 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
             if (ip && (ip % 1000 == 0)) {
                 double rate = ip / timerProj.elapsed();
-                Log::debug<ATLAS>() << "    " << eckit::BigNum(ip)<<" points completed (at " << rate << " points/s)..." << std::endl;
+                Log::debug<Atlas>() << "    " << eckit::BigNum(ip)<<" points completed (at " << rate << " points/s)..." << std::endl;
             }
 
             Point p ( ocoords_[ip].data() ); // lookup point
@@ -131,13 +130,13 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
             if (!success) {
                 failures.push_back(ip);
-                Log::debug<ATLAS>() << "---------------------------------------------------------------------------\n";
-                Log::debug<ATLAS>() << "Failed to project point (lon,lat)=("<<olonlat_(ip,LON)<<","<<olonlat_(ip,LAT) << ")" << '\n';
-                Log::debug<ATLAS>() << failures_log.str();
+                Log::debug<Atlas>() << "---------------------------------------------------------------------------\n";
+                Log::debug<Atlas>() << "Failed to project point (lon,lat)=("<<olonlat_(ip,LON)<<","<<olonlat_(ip,LAT) << ")" << '\n';
+                Log::debug<Atlas>() << failures_log.str();
             }
         }
     }
-    Log::debug<ATLAS>() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
+    Log::debug<Atlas>() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
 
 
     eckit::mpi::comm().barrier();
@@ -237,7 +236,7 @@ Method::Triplets FiniteElement::projectPointToElements(
                     break; // stop looking for elements
                 }
             }
-            if(Log::debug<ATLAS>()) {
+            if(Log::debug<Atlas>()) {
                 failures_log << "Failed to project point " << Point(ocoords_[ip].data()) 
                              << " to " << element::Triag2D(ilonlat_[idx[0]].data(),
                                                            ilonlat_[idx[1]].data(),
@@ -300,7 +299,7 @@ Method::Triplets FiniteElement::projectPointToElements(
                     break; // stop looking for elements
                 }
 
-                if( Log::debug<ATLAS>() ) {
+                if( Log::debug<Atlas>() ) {
                     failures_log << "Failed to project point " << Point(ocoords_[ip].data()) << " to " << quad2d << " with " << is << '\n';
                 }
             }

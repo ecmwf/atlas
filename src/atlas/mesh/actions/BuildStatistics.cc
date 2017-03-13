@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include "eckit/filesystem/PathName.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -23,7 +23,7 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Point.h"
 #include "atlas/array/ArrayView.h"
@@ -142,8 +142,8 @@ void build_statistics( Mesh& mesh )
     {
       int ip1 = edge_nodes(jedge,0);
       int ip2 = edge_nodes(jedge,1);
-      PointLonLat p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
-      PointLonLat p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
+      PointLonLat p1(lonlat(ip1,LON),lonlat(ip1,LAT));
+      PointLonLat p2(lonlat(ip2,LON),lonlat(ip2,LAT));
       dist(jedge) = arc_in_rad(p1,p2)*radius_km;
     }
   }
@@ -183,9 +183,9 @@ void build_statistics( Mesh& mesh )
           size_t ip1 = elem_nodes(jelem,0);
           size_t ip2 = elem_nodes(jelem,1);
           size_t ip3 = elem_nodes(jelem,2);
-          PointLonLat p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
-          PointLonLat p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
-          PointLonLat p3(lonlat(ip3,internals::LON),lonlat(ip3,internals::LAT));
+          PointLonLat p1(lonlat(ip1,LON),lonlat(ip1,LAT));
+          PointLonLat p2(lonlat(ip2,LON),lonlat(ip2,LAT));
+          PointLonLat p3(lonlat(ip3,LON),lonlat(ip3,LAT));
 
           double l12 = arc_in_rad(p1,p2)/DEG_TO_RAD;
           double l23 = arc_in_rad(p2,p3)/DEG_TO_RAD;
@@ -219,10 +219,10 @@ void build_statistics( Mesh& mesh )
           size_t ip3 = elem_nodes(jelem,2);
           size_t ip4 = elem_nodes(jelem,3);
 
-          PointLonLat p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
-          PointLonLat p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
-          PointLonLat p3(lonlat(ip3,internals::LON),lonlat(ip3,internals::LAT));
-          PointLonLat p4(lonlat(ip4,internals::LON),lonlat(ip4,internals::LAT));
+          PointLonLat p1(lonlat(ip1,LON),lonlat(ip1,LAT));
+          PointLonLat p2(lonlat(ip2,LON),lonlat(ip2,LAT));
+          PointLonLat p3(lonlat(ip3,LON),lonlat(ip3,LAT));
+          PointLonLat p4(lonlat(ip4,LON),lonlat(ip4,LAT));
 
           eta(ielem) = quad_quality(p1,p2,p3,p4);
 
@@ -265,7 +265,7 @@ void build_statistics( Mesh& mesh )
 
     for( size_t jnode=0; jnode<nodes.size(); ++jnode )
     {
-      const double lat = lonlat(jnode,internals::LAT)*DEG_TO_RAD;
+      const double lat = lonlat(jnode,LAT)*DEG_TO_RAD;
       const double hx = radius_km*std::cos(lat)*DEG_TO_RAD;
       const double hy = radius_km*DEG_TO_RAD;
       dual_delta_sph(jnode) = std::sqrt(dual_volumes(jnode)*hx*hy);

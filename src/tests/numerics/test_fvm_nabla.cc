@@ -14,11 +14,11 @@
 #include <cmath>
 #include <iostream>
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -37,7 +37,6 @@
 using namespace eckit;
 using namespace atlas::numerics;
 using namespace atlas::meshgenerator;
-using namespace atlas::internals;
 using namespace atlas::grid;
 
 namespace atlas {

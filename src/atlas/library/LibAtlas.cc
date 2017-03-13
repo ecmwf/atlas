@@ -12,9 +12,8 @@
 /// @author Tiago Quintino
 /// @date   August 2016
 
-#include "atlas/runtime/LibAtlas.h"
-
-#include "atlas/internals/atlas_version.h"
+#include "atlas/library/LibAtlas.h"
+#include "atlas/library/config.h"
 
 namespace atlas {
 
@@ -33,11 +32,11 @@ const void* LibAtlas::addr() const {
 }
 
 std::string LibAtlas::version() const {
-    return atlas_version_str();
+    return atlas::version();
 }
 
 std::string LibAtlas::gitsha1(unsigned int count) const {
-    return atlas_git_sha1_abbrev(count);
+    return atlas::git_sha1(count);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

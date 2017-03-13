@@ -15,7 +15,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/utils/Translator.h"
-#include "atlas/internals/Checksum.h"
+#include "atlas/util/Checksum.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -99,26 +99,26 @@ std::string Checksum::execute( const DATA_TYPE data[],
   {
     throw eckit::SeriousBug("Checksum was not setup",Here());
   }
-  std::vector<internals::checksum_t> local_checksums(parsize_);
+  std::vector<util::checksum_t> local_checksums(parsize_);
   int var_size = var_extents[0]*var_strides[0];
 
   for( size_t pp=0; pp<parsize_; ++pp )
   {
-    local_checksums[pp] = internals::checksum(data+pp*var_size,var_size);
+    local_checksums[pp] = util::checksum(data+pp*var_size,var_size);
   }
 
-  std::vector<internals::checksum_t> global_checksums( parallel::mpi::comm().rank() == root ? gather_.glb_dof() : 0 );
-  parallel::Field<internals::checksum_t const> loc(local_checksums.data(),1);
-  parallel::Field<internals::checksum_t> glb(global_checksums.data(),1);
+  std::vector<util::checksum_t> global_checksums( parallel::mpi::comm().rank() == root ? gather_.glb_dof() : 0 );
+  parallel::Field<util::checksum_t const> loc(local_checksums.data(),1);
+  parallel::Field<util::checksum_t> glb(global_checksums.data(),1);
   gather_.gather(&loc,&glb,1);
 
-  internals::checksum_t glb_checksum = internals::checksum(
+  util::checksum_t glb_checksum = util::checksum(
                                                 global_checksums.data(),
                                                 global_checksums.size());
 
   parallel::mpi::comm().broadcast(glb_checksum, root);
 
-  return eckit::Translator<internals::checksum_t,std::string>()(glb_checksum);
+  return eckit::Translator<util::checksum_t,std::string>()(glb_checksum);
 }
 
 

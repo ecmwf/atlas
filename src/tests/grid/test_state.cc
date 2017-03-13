@@ -11,7 +11,7 @@
 #include <cmath>
 #include <string>
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 #define BOOST_TEST_MODULE test_state
 #include "ecbuild/boost_test_framework.h"
@@ -21,7 +21,7 @@
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/field/State.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"

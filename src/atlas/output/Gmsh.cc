@@ -20,7 +20,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/detail/GmshIO.h"
 #include "eckit/exception/Exceptions.h"
 
 using atlas::field::Field;
@@ -112,9 +112,9 @@ void merge(Gmsh::Configuration& present, const eckit::Parametrisation& update)
 
 // -----------------------------------------------------------------------------
 
-util::io::Gmsh writer(const Gmsh::Configuration& c)
+detail::GmshIO writer(const Gmsh::Configuration& c)
 {
-  util::io::Gmsh gmsh;
+  detail::GmshIO gmsh;
   Gmsh::setGmshConfiguration(gmsh,c);
   return gmsh;
 }
@@ -136,7 +136,7 @@ std::ios_base::openmode openmode(const Gmsh::Configuration& c)
 
 // -----------------------------------------------------------------------------
 
-void Gmsh::setGmshConfiguration(util::io::Gmsh& gmsh, const Gmsh::Configuration& c)
+void Gmsh::setGmshConfiguration(detail::GmshIO& gmsh, const Gmsh::Configuration& c)
 {
   gmsh.options.set("ascii", not c.binary);
   gmsh.options.set("nodes",c.nodes);
@@ -219,7 +219,7 @@ void Gmsh::write(
 
   if( c.coordinates == "xyz" and not mesh.nodes().has_field("xyz") )
   {
-      Log::debug<ATLAS>() << "Building xyz representation for nodes" << std::endl;
+      Log::debug<Atlas>() << "Building xyz representation for nodes" << std::endl;
       mesh::actions::BuildXYZField("xyz")(const_cast<mesh::Mesh&>(mesh));
   }
 

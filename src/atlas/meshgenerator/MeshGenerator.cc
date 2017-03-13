@@ -171,7 +171,7 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string &name) {
 
     std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<ATLAS>() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
+    Log::debug<Atlas>() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No MeshGeneratorFactory for [" << name << "]" << std::endl;
@@ -194,7 +194,7 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string& name, const eckit:
 
     std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<ATLAS>() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
+    Log::debug<Atlas>() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No MeshGeneratorFactory for [" << name << "]" << std::endl;

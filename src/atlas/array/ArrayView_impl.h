@@ -15,7 +15,7 @@
 #ifndef atlas_ArrayView_impl_h
 #define atlas_ArrayView_impl_h
 
-#include "atlas/internals/atlas_defines.h"
+#include "atlas/library/config.h"
 
 #include <sstream>
 #include <eckit/exception/Exceptions.h>

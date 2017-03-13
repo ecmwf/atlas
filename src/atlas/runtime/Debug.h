@@ -8,13 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_Debug_h
-#define atlas_Debug_h
+#pragma once
 
 #include <sstream>
 #include <unistd.h>
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -29,5 +28,3 @@
 #endif
 #define DEBUG_VAR(VAR) \
   atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl;
-
-#endif

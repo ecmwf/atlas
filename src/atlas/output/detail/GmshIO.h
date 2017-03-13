@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef Gmsh_h
-#define Gmsh_h
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -31,15 +30,16 @@ namespace atlas { namespace util { namespace io { class GmshFortranInterface; } 
 namespace atlas { namespace output { class Gmsh; } }
 
 namespace atlas {
-namespace util {
-namespace io {
+namespace output {
+namespace detail {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Gmsh {
+class GmshIO {
 
 public: // members
 
+  using Metadata = util::Metadata;
   Metadata options;
 
 private: // types
@@ -48,9 +48,9 @@ private: // types
 
 public: // methods
 
-  Gmsh();
+  GmshIO();
 
-  ~Gmsh();
+  ~GmshIO();
 
 public:
 
@@ -133,10 +133,10 @@ private:
 // C wrapper interfaces to C++ routines
 
 extern "C" {
-Gmsh* atlas__Gmsh__new();
-void atlas__Gmsh__delete(Gmsh* This);
-mesh::Mesh* atlas__Gmsh__read(Gmsh* This, char* file_path);
-void atlas__Gmsh__write(Gmsh* This, mesh::Mesh* mesh, char* file_path);
+GmshIO* atlas__Gmsh__new();
+void atlas__Gmsh__delete(GmshIO* This);
+mesh::Mesh* atlas__Gmsh__read(GmshIO* This, char* file_path);
+void atlas__Gmsh__write(GmshIO* This, mesh::Mesh* mesh, char* file_path);
 mesh::Mesh* atlas__read_gmsh(char* file_path);
 void atlas__write_gmsh_mesh(mesh::Mesh* mesh, char* file_path);
 void atlas__write_gmsh_fieldset(field::FieldSet* fieldset, functionspace::FunctionSpace* function_space, char* file_path, int mode);
@@ -145,8 +145,6 @@ void atlas__write_gmsh_field(field::Field* field, functionspace::FunctionSpace* 
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // namespace io
-} // namespace util
+} // namespace detail
+} // namespace output
 } // namespace atlas
-
-#endif  // Gmsh_h

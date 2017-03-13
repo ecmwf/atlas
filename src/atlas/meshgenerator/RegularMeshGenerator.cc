@@ -4,7 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <vector>
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Distribution.h"
@@ -15,14 +15,13 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/meshgenerator/RegularMeshGenerator.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/internals/Bitflags.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/internals/Debug.h"
+#include "atlas/runtime/Debug.h"
 #include "atlas/runtime/Log.h"
 
 #define DEBUG_OUTPUT 0
@@ -30,7 +29,7 @@
 
 using namespace eckit;
 using atlas::mesh::Mesh;
-using atlas::internals::Topology;
+using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {
 namespace meshgenerator {
@@ -73,39 +72,6 @@ RegularMeshGenerator::RegularMeshGenerator(const eckit::Parametrisation& p)
     options.set("periodic_x",biperiodic);
     options.set("periodic_y",biperiodic);
   }
-
-  /***
-  // original options from (global) structured meshgenerator, that don't seem to apply here:
-  bool include_pole;
-  if( p.get("include_pole",include_pole) )
-    options.set("include_pole",include_pole);
-
-  bool patch_pole;
-  if( p.get("patch_pole",patch_pole) )
-    options.set("patch_pole",patch_pole);
-
-  bool unique_pole;
-  if( p.get("unique_pole",unique_pole) )
-    options.set("unique_pole",unique_pole);
-
-  bool three_dimensional;
-  if( p.get("three_dimensional",three_dimensional) || p.get("3d",three_dimensional) )
-    options.set("3d",three_dimensional);
-
-  double angle;
-  if( p.get("angle",angle) )
-    options.set("angle",angle);
-
-  bool triangulate;
-  if( p.get("triangulate",triangulate) )
-    options.set("triangulate",triangulate);
-
-  bool ghost_at_end;
-  if( p.get("ghost_at_end",ghost_at_end) )
-    options.set("ghost_at_end",ghost_at_end);
-
-  ***/
-
 }
 
 
@@ -457,13 +423,13 @@ void RegularMeshGenerator::generate_mesh(
           xy[0]=2*xy1[0]-xy2[0];
           xy[1]=2*xy1[1]-xy2[1];
         }
-        lonlat(inode,internals::LON) = xy[internals::LON];
-        lonlat(inode,internals::LAT) = xy[internals::LAT];
+        lonlat(inode,LON) = xy[LON];
+        lonlat(inode,LAT) = xy[LAT];
 
         // geographic coordinates by using projection
         rg.projection().xy2lonlat(xy);
-        geolonlat(inode,internals::LON) = xy[internals::LON];
-        geolonlat(inode,internals::LAT) = xy[internals::LAT];
+        geolonlat(inode,LON) = xy[LON];
+        geolonlat(inode,LAT) = xy[LAT];
 
         // part
         part(inode) = parts_SR[ii];

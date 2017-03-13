@@ -11,7 +11,7 @@ function( fortranize file )
   file( WRITE "${file}" "${result}" )
 endfunction()
 
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/internals/atlas_defines.h.in
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/library/defines.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h )
 
 install( FILES
@@ -101,7 +101,7 @@ else()
 
 endif()
 
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/library/atlas.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Structured.h
     MODULE    atlas_grid_Structured_c_binding
@@ -150,7 +150,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/io/Gmsh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/detail/GmshIO.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/HaloExchange.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/GatherScatter.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/Checksum.h)

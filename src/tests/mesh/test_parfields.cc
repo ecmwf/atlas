@@ -18,27 +18,25 @@
 
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/field/Field.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/internals/Bitflags.h"
 
 #include "tests/AtlasFixture.h"
 
-using atlas::internals::Topology;
+using Topology = atlas::mesh::Nodes::Topology;
 
 using namespace atlas::array;
-using namespace atlas::internals;
 using namespace atlas::output;
 using namespace atlas::meshgenerator;
 

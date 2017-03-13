@@ -22,7 +22,6 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
 
 
@@ -135,7 +134,7 @@ void PrePartitionedBruteForce::partition( int node_partition[] ) const {
   }
 
   {
-      eckit::TraceTimer<LibAtlas> timer("Partitioning target grid...");
+      eckit::TraceTimer<Atlas> timer("Partitioning target grid...");
       for (size_t i=0; i<grid().npts(); ++i) {
 
           if (i && (i % 1000 == 0)) {

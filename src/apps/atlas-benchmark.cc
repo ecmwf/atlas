@@ -40,11 +40,10 @@
 
 #include "atlas/array/Array.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
-#include "atlas/internals/Bitflags.h"
-#include "atlas/internals/IsGhost.h"
+#include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -54,8 +53,8 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/internals/AtlasTool.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/runtime/AtlasTool.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/parallel/HaloExchange.h"
@@ -88,8 +87,8 @@ using std::cout;
 using std::endl;
 using std::numeric_limits;
 
-using atlas::internals::Topology;
-using atlas::internals::IsGhost;
+using Topology = atlas::mesh::Nodes::Topology;
+using atlas::mesh::IsGhostNode;
 
 using namespace eckit::option;
 using namespace atlas;
@@ -261,8 +260,8 @@ void AtlasBenchmark::execute(const Args& args)
 
   Log::info() << "atlas-benchmark\n" << endl;
   Log::info() << "Atlas:" << endl;
-  Log::info() << "  version:  ["<< atlas_version() << "]" << endl;
-  Log::info() << "  git:      ["<< atlas_git_sha1() << "]" << endl;
+  Log::info() << "  version:  ["<< atlas::version() << "]" << endl;
+  Log::info() << "  git:      ["<< atlas::git_sha1() << "]" << endl;
   Log::info() << endl;
   Log::info() << "Configuration:" << endl;
   Log::info() << "  grid: " << gridname << endl;
@@ -363,9 +362,9 @@ void AtlasBenchmark::setup()
   double deg2rad = M_PI/180.;
   atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
   {
-    lonlat(jnode,internals::LON) = lonlat(jnode,internals::LON) * deg2rad;
-    lonlat(jnode,internals::LAT) = lonlat(jnode,internals::LAT) * deg2rad;
-    double y  = lonlat(jnode,internals::LAT);
+    lonlat(jnode,LON) = lonlat(jnode,LON) * deg2rad;
+    lonlat(jnode,LAT) = lonlat(jnode,LAT) * deg2rad;
+    double y  = lonlat(jnode,LAT);
     double hx = radius*std::cos(y);
     double hy = radius;
     double G  = hx*hy;
@@ -376,8 +375,8 @@ void AtlasBenchmark::setup()
   }
   atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
   {
-    S(jedge,internals::LON) *= deg2rad;
-    S(jedge,internals::LAT) *= deg2rad;
+    S(jedge,LON) *= deg2rad;
+    S(jedge,LAT) *= deg2rad;
   }
   dz = height/static_cast<double>(nlev);
 
@@ -442,8 +441,8 @@ void AtlasBenchmark::iteration()
     for(size_t jlev = 0; jlev < nlev; ++jlev)
     {
       double avg = ( field(ip1,jlev) + field(ip2,jlev) ) * 0.5;
-      avgS(jedge,jlev,internals::LON) = S(jedge,internals::LON)*avg;
-      avgS(jedge,jlev,internals::LAT) = S(jedge,internals::LAT)*avg;
+      avgS(jedge,jlev,LON) = S(jedge,LON)*avg;
+      avgS(jedge,jlev,LAT) = S(jedge,LAT)*avg;
     }
   }
 
@@ -451,8 +450,8 @@ void AtlasBenchmark::iteration()
   {
     for(size_t jlev = 0; jlev < nlev; ++jlev )
     {
-      grad(jnode,jlev,internals::LON) = 0.;
-      grad(jnode,jlev,internals::LAT) = 0.;
+      grad(jnode,jlev,LON) = 0.;
+      grad(jnode,jlev,LAT) = 0.;
     }
     for( size_t jedge=0; jedge<node2edge.cols(jnode); ++jedge )
     {
@@ -460,14 +459,14 @@ void AtlasBenchmark::iteration()
       double add = node2edge_sign(jnode,jedge);
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
-        grad(jnode,jlev,internals::LON) += add*avgS(iedge,jlev,internals::LON);
-        grad(jnode,jlev,internals::LAT) += add*avgS(iedge,jlev,internals::LAT);
+        grad(jnode,jlev,LON) += add*avgS(iedge,jlev,LON);
+        grad(jnode,jlev,LAT) += add*avgS(iedge,jlev,LAT);
       }
     }
     for(size_t jlev = 0; jlev < nlev; ++jlev)
     {
-      grad(jnode,jlev,internals::LON) /= V(jnode);
-      grad(jnode,jlev,internals::LAT) /= V(jnode);
+      grad(jnode,jlev,LON) /= V(jnode);
+      grad(jnode,jlev,LAT) /= V(jnode);
     }
   }
   // special treatment for the north & south pole cell faces
@@ -478,7 +477,7 @@ void AtlasBenchmark::iteration()
     int ip2 = edge2node(iedge,1);
     // correct for wrong Y-derivatives in previous loop
     for(size_t jlev = 0; jlev < nlev; ++jlev)
-      grad(ip2,jlev,internals::LAT) += 2.*avgS(iedge,jlev,internals::LAT)/V(ip2);
+      grad(ip2,jlev,LAT) += 2.*avgS(iedge,jlev,LAT)/V(ip2);
   }
 
   double dzi = 1./dz;
@@ -490,16 +489,16 @@ void AtlasBenchmark::iteration()
     {
       for(size_t jlev = 1; jlev < nlev - 1; ++jlev)
       {
-        grad(jnode,jlev,internals::ZZ)   = (field(jnode,jlev+1)     - field(jnode,jlev-1))*dzi_2;
+        grad(jnode,jlev,ZZ)   = (field(jnode,jlev+1)     - field(jnode,jlev-1))*dzi_2;
       }
     }
     if( nlev > 1 )
     {
-      grad(jnode,  0   ,internals::ZZ) = (field(jnode,  1   ) - field(jnode,  0   ))*dzi;
-      grad(jnode,nlev-1,internals::ZZ) = (field(jnode,nlev-2) - field(jnode,nlev-1))*dzi;
+      grad(jnode,  0   ,ZZ) = (field(jnode,  1   ) - field(jnode,  0   ))*dzi;
+      grad(jnode,nlev-1,ZZ) = (field(jnode,nlev-2) - field(jnode,nlev-1))*dzi;
     }
     if( nlev == 1 )
-      grad(jnode,0,internals::ZZ) = 0.;
+      grad(jnode,0,ZZ) = 0.;
   }
 
   // halo-exchange
@@ -548,12 +547,12 @@ double AtlasBenchmark::result()
     {
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
-        maxval = max(maxval,grad(jnode,jlev,internals::LON));
-        maxval = max(maxval,grad(jnode,jlev,internals::LAT));
-        maxval = max(maxval,grad(jnode,jlev,internals::ZZ));
-        minval = min(minval,grad(jnode,jlev,internals::LON));
-        minval = min(minval,grad(jnode,jlev,internals::LAT));
-        minval = min(minval,grad(jnode,jlev,internals::ZZ));
+        maxval = max(maxval,grad(jnode,jlev,LON));
+        maxval = max(maxval,grad(jnode,jlev,LAT));
+        maxval = max(maxval,grad(jnode,jlev,ZZ));
+        minval = min(minval,grad(jnode,jlev,LON));
+        minval = min(minval,grad(jnode,jlev,LAT));
+        minval = min(minval,grad(jnode,jlev,ZZ));
         norm += std::pow(vecnorm(grad[jnode][jlev].data(),3),2);
       }
     }

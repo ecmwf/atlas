@@ -8,16 +8,13 @@
  * does it submit to any jurisdiction.
  */
 
-
-/// @warning Still doesn't know about periodic BC to enlarge Halo
-
 #include <cmath>
 #include <limits>
 #include <iostream>
 #include <stdexcept>
 
 #include "eckit/log/Timer.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -25,13 +22,12 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/AccumulateFaces.h"
-#include "atlas/internals/Bitflags.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/internals/PeriodicTransform.h"
-#include "atlas/internals/Unique.h"
-#include "atlas/internals/LonLatMicroDeg.h"
-#include "atlas/internals/Functions.h"
+#include "atlas/mesh/detail/AccumulateFacets.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/mesh/detail/PeriodicTransform.h"
+#include "atlas/util/Unique.h"
+#include "atlas/util/LonLatMicroDeg.h"
+#include "atlas/util/MicroDeg.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -46,12 +42,12 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #endif
 
-using atlas::internals::accumulate_facets;
-using atlas::internals::Topology;
-using atlas::internals::PeriodicTransform;
-using atlas::internals::UniqueLonLat;
-using atlas::internals::LonLatMicroDeg;
-using atlas::internals::microdeg;
+using atlas::mesh::detail::accumulate_facets;
+using atlas::mesh::detail::PeriodicTransform;
+using atlas::util::UniqueLonLat;
+using atlas::util::LonLatMicroDeg;
+using atlas::util::microdeg;
+using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {
 namespace mesh {
@@ -219,8 +215,8 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
       int other = uid2node[uid];
       std::stringstream msg;
       msg << "Node uid: " << uid << "   " << glb_idx(jnode)
-          << " (" << xy(jnode,internals::LON) <<","<< xy(jnode,internals::LAT)<<")  has already been added as node "
-          << glb_idx(other) << " (" << xy(other,internals::LON) <<","<< xy(other,internals::LAT)<<")";
+          << " (" << xy(jnode,LON) <<","<< xy(jnode,LAT)<<")  has already been added as node "
+          << glb_idx(other) << " (" << xy(other,LON) <<","<< xy(other,LAT)<<")";
       notes.add_error(msg.str());
     }
     uid2node[uid] = jnode;
@@ -442,8 +438,8 @@ public:
         buf.node_glb_idx[p][jnode]       = glb_idx(node);
         buf.node_part   [p][jnode]       = part   (node);
         buf.node_ridx   [p][jnode]       = ridx   (node);
-        buf.node_xy     [p][jnode*2+internals::LON] = xy (node,internals::LON);
-        buf.node_xy     [p][jnode*2+internals::LAT] = xy (node,internals::LAT);
+        buf.node_xy     [p][jnode*2+LON] = xy (node,LON);
+        buf.node_xy     [p][jnode*2+LAT] = xy (node,LAT);
         Topology::set(buf.node_flags[p][jnode],flags(node)|Topology::GHOST);
       }
       else
@@ -502,11 +498,11 @@ public:
         int node = found->second;
         buf.node_part   [p][jnode]      = part   (node);
         buf.node_ridx   [p][jnode]      = ridx   (node);
-        buf.node_xy [p][jnode*2+internals::LON] = xy (node,internals::LON);
-        buf.node_xy [p][jnode*2+internals::LAT] = xy (node,internals::LAT);
+        buf.node_xy [p][jnode*2+LON] = xy (node,LON);
+        buf.node_xy [p][jnode*2+LAT] = xy (node,LAT);
         transform(&buf.node_xy[p][jnode*2],-1);
         // Global index of node is based on UID of destination
-        buf.node_glb_idx[p][jnode]      = internals::unique_lonlat(&buf.node_xy [p][jnode*2]);
+        buf.node_glb_idx[p][jnode]      = util::unique_lonlat(&buf.node_xy [p][jnode*2]);
         Topology::set(buf.node_flags[p][jnode],newflags);
       }
       else
@@ -540,15 +536,15 @@ public:
       std::vector<double> crds(elem_nodes->cols(ielem)*2);
       for(size_t jnode=0; jnode<elem_nodes->cols(ielem); ++jnode)
       {
-        double crd[] = { xy( (*elem_nodes)(ielem,jnode),internals::LON) , xy( (*elem_nodes)(ielem,jnode),internals::LAT) };
+        double crd[] = { xy( (*elem_nodes)(ielem,jnode),LON) , xy( (*elem_nodes)(ielem,jnode),LAT) };
         transform(crd,-1);
-        buf.elem_nodes_id[p][jelemnode++] = internals::unique_lonlat(crd);
-        crds[jnode*2+internals::LON] = crd[internals::LON];
-        crds[jnode*2+internals::LAT] = crd[internals::LAT];
+        buf.elem_nodes_id[p][jelemnode++] = util::unique_lonlat(crd);
+        crds[jnode*2+LON] = crd[LON];
+        crds[jnode*2+LAT] = crd[LAT];
       }
       // Global index of element is based on UID of destination
 
-      buf.elem_glb_idx[p][jelem] = internals::unique_lonlat( crds.data(), elem_nodes->cols(ielem) );
+      buf.elem_glb_idx[p][jelem] = util::unique_lonlat( crds.data(), elem_nodes->cols(ielem) );
     }
 
   }
@@ -576,8 +572,8 @@ public:
     {
       for(size_t n = 0; n < buf.node_glb_idx[jpart].size(); ++n)
       {
-        double crd[] = { buf.node_xy[jpart][n*2+internals::LON], buf.node_xy[jpart][n*2+internals::LAT] };
-        bool inserted = node_uid.insert( internals::unique_lonlat(crd) ).second;
+        double crd[] = { buf.node_xy[jpart][n*2+LON], buf.node_xy[jpart][n*2+LAT] };
+        bool inserted = node_uid.insert( util::unique_lonlat(crd) ).second;
         if( inserted ) {
           rfn_idx[jpart].push_back(n);
         }
@@ -611,8 +607,8 @@ public:
         glb_idx(loc_idx)    = buf.node_glb_idx [jpart][rfn_idx[jpart][n]];
         part   (loc_idx)    = buf.node_part    [jpart][rfn_idx[jpart][n]];
         ridx   (loc_idx)    = buf.node_ridx    [jpart][rfn_idx[jpart][n]];
-        xy     (loc_idx,internals::LON) = buf.node_xy  [jpart][rfn_idx[jpart][n]*2+internals::LON];
-        xy     (loc_idx,internals::LAT) = buf.node_xy  [jpart][rfn_idx[jpart][n]*2+internals::LAT];
+        xy     (loc_idx,LON) = buf.node_xy  [jpart][rfn_idx[jpart][n]*2+LON];
+        xy     (loc_idx,LAT) = buf.node_xy  [jpart][rfn_idx[jpart][n]*2+LAT];
         uid_t uid = compute_uid(loc_idx);
 
         // make sure new node was not already there
@@ -622,9 +618,9 @@ public:
           int other = found->second;
           std::stringstream msg;
           msg << "New node with uid " << uid << ":\n"  << glb_idx(loc_idx)
-              << "("<<xy(loc_idx,internals::LON)<<","<<xy(loc_idx,internals::LAT)<<")\n";
+              << "("<<xy(loc_idx,LON)<<","<<xy(loc_idx,LAT)<<")\n";
           msg << "Existing already loc "<< other << "  :  " << glb_idx(other)
-              << "("<<xy(other,internals::LON)<<","<<xy(other,internals::LAT)<<")\n";
+              << "("<<xy(other,LON)<<","<<xy(other,LAT)<<")\n";
           throw eckit::SeriousBug(msg.str(),Here());
         }
         uid2node[ uid ] = nb_nodes+new_node;
@@ -834,10 +830,10 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
   std::vector<uid_t> send_bdry_nodes_uid(bdry_nodes.size());
   for(size_t jnode = 0; jnode < bdry_nodes.size(); ++jnode)
   {
-    double crd[] = { helper.xy(bdry_nodes[jnode],internals::LON), helper.xy(bdry_nodes[jnode],internals::LAT) };
+    double crd[] = { helper.xy(bdry_nodes[jnode],LON), helper.xy(bdry_nodes[jnode],LAT) };
     transform(crd,+1);
-    // Log::info() << " crd  " << crd[0] << "  " << crd[1] <<  "       uid " << internals::unique_lonlat(crd) << std::endl;
-    send_bdry_nodes_uid[jnode] = internals::unique_lonlat(crd);
+    // Log::info() << " crd  " << crd[0] << "  " << crd[1] <<  "       uid " << util::unique_lonlat(crd) << std::endl;
+    send_bdry_nodes_uid[jnode] = util::unique_lonlat(crd);
   }
 
   size_t size = parallel::mpi::comm().size();
@@ -881,12 +877,12 @@ void build_halo(Mesh& mesh, int nb_elems )
   if( halo == nb_elems )
     return;
 
-  Log::debug<ATLAS>() << "Increasing mesh halo..." << std::endl;
-  eckit::TraceTimer<ATLAS> timer("Increasing mesh halo... done");
+  Log::debug<Atlas>() << "Increasing mesh halo..." << std::endl;
+  eckit::TraceTimer<Atlas> timer("Increasing mesh halo... done");
   
   for(int jhalo=halo ; jhalo<nb_elems; ++jhalo )
   {
-    Log::debug<ATLAS>() << "Increase halo " << jhalo+1 << std::endl;
+    Log::debug<Atlas>() << "Increase halo " << jhalo+1 << std::endl;
     size_t nb_nodes_before_halo_increase = mesh.nodes().size();
 
     BuildHaloHelper helper(mesh);
@@ -895,13 +891,13 @@ void build_halo(Mesh& mesh, int nb_elems )
 
     PeriodicPoints westpts(mesh,Topology::PERIODIC|Topology::WEST,nb_nodes_before_halo_increase);
 
-    // Log::debug<ATLAS>() << "  periodic west : " << westpts << std::endl;
+    // Log::debug<Atlas>() << "  periodic west : " << westpts << std::endl;
 
     increase_halo_periodic( helper, westpts, WestEast(), Topology::PERIODIC|Topology::WEST|Topology::GHOST );
 
     PeriodicPoints eastpts(mesh,Topology::PERIODIC|Topology::EAST,nb_nodes_before_halo_increase);
 
-    // Log::debug<ATLAS>() << "  periodic east : " << eastpts << std::endl;
+    // Log::debug<Atlas>() << "  periodic east : " << eastpts << std::endl;
 
     increase_halo_periodic( helper, eastpts, EastWest(), Topology::PERIODIC|Topology::EAST|Topology::GHOST );
 

@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef PointCloud_h
-#define PointCloud_h
+#pragma once
 
 #include <string>
 #include <vector>
@@ -35,8 +34,8 @@ namespace atlas { namespace mesh { class Mesh; } }
 namespace atlas { namespace functionspace { class NodeColumns; } }
 
 namespace atlas {
-namespace util {
-namespace io {
+namespace output {
+namespace detail {
 
 /**
  * @brief PointCloud supports:
@@ -133,8 +132,6 @@ extern "C"
   void atlas__write_pointcloud_field(char* file_path, const field::Field* field, const functionspace::FunctionSpace* functionspace);
 }
 
-} // namespace io
-} // namespace util
+} // namespace detail
+} // namespace output
 } // namespace atlas
-
-#endif // PointCloud_h

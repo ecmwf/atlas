@@ -1,4 +1,4 @@
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/runtime/Log.h"
 
 int main(int argc, char** argv)

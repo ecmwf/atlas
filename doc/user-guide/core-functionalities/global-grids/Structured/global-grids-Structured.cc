@@ -1,4 +1,4 @@
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Log.h"
 

@@ -5,13 +5,13 @@
 #include <mpi.h>
 #endif
 
-#include "atlas/internals/atlas_defines.h"
+#include "atlas/library/config.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/parser/StringTools.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/grid.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/field/FieldCreator.h"
@@ -36,8 +36,8 @@ void atlas_info( std::ostream& out )
 {
   out << "Executable        [" << Main::instance().name() << "]\n";
 
-  out << "  atlas version   [" << atlas_version() << "]\n";
-  out << "  atlas git       [" << atlas_git_sha1_abbrev(7)<< "]\n";
+  out << "  atlas version   [" << atlas::version() << "]\n";
+  out << "  atlas git       [" << atlas::git_sha1(7)<< "]\n";
   out << "  eckit version   [" << eckit_version() << "]\n";
   out << "  eckit git       [" << atlas__eckit_git_sha1_abbrev(7)<< "]\n";
   out << "  current dir     [" << PathName(rundir()).fullName() << "]\n";
@@ -124,19 +124,19 @@ const char* atlas__eckit_git_sha1_abbrev(int length)
 
 const char* atlas__atlas_version()
 {
-  return atlas_version();
+  return atlas::version();
 }
 
 
 const char* atlas__atlas_git_sha1()
 {
-  return atlas_git_sha1();
+  return atlas::git_sha1();
 }
 
 
 const char* atlas__atlas_git_sha1_abbrev(int length)
 {
-  return atlas_git_sha1_abbrev(length);
+  return atlas::git_sha1(length);
 }
 
 

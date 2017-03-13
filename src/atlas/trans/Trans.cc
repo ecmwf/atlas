@@ -15,7 +15,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/internals/IsGhost.h"
+#include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
@@ -37,7 +37,6 @@ void trans_check(const int code, const char* msg, const eckit::CodeLocation& loc
 
 #define TRANS_CHECK( CALL ) trans_check(CALL, #CALL, Here() )
 
-using atlas::internals::Topology;
 using atlas::functionspace::NodeColumns;
 using atlas::functionspace::Spectral;
 
@@ -318,7 +317,7 @@ void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet&
 
   // Pack gridpoints
   {
-    internals::IsGhost is_ghost(gp.nodes());
+    mesh::IsGhostNode is_ghost(gp.nodes());
     size_t f=0;
     for( size_t jfld=0; jfld<gpfields.size(); ++jfld )
     {
@@ -566,7 +565,7 @@ void Trans::invtrans_grad(const Spectral& sp, const field::FieldSet& spfields,
 
   // Unpack the gridpoint fields
   {
-    internals::IsGhost is_ghost( gp.nodes());
+    mesh::IsGhostNode is_ghost( gp.nodes());
     int f=nfld; // skip to where derivatives start
     for(size_t dim=0; dim<2; ++dim) {
       for(size_t jfld = 0; jfld < gradfields.size(); ++jfld)
@@ -669,7 +668,7 @@ void Trans::invtrans(const Spectral& sp, const field::FieldSet& spfields,
 
   // Unpack the gridpoint fields
   {
-    internals::IsGhost is_ghost( gp.nodes());
+    mesh::IsGhostNode is_ghost( gp.nodes());
     int f=0;
     for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
     {
@@ -847,7 +846,7 @@ void Trans::dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const fie
 
   // Pack gridpoints
   {
-    internals::IsGhost is_ghost( gp.nodes() );
+    mesh::IsGhostNode is_ghost( gp.nodes() );
     size_t f=0;
     array::ArrayView<double,3> wind ( gpwind.data<double>(), array::make_shape(gpwind.shape(0),nfld,nwindfld/nfld) );
     for( size_t jcomp=0; jcomp<2; ++jcomp )
@@ -926,7 +925,7 @@ void Trans::invtrans_vordiv2wind(const Spectral& sp, const field::Field& spvor, 
 
   // Unpack the gridpoint fields
   {
-    internals::IsGhost is_ghost( gp.nodes() );
+    mesh::IsGhostNode is_ghost( gp.nodes() );
 
     size_t f=0;
     array::ArrayView<double,3> wind ( gpwind.data<double>(), array::make_shape(gpwind.shape(0),nfld,nwindfld/nfld) );

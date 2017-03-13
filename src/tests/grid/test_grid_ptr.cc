@@ -16,7 +16,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/util/Config.h"
 #include "atlas/runtime/Log.h"

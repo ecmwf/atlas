@@ -12,16 +12,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "tests/TestMeshes.h"
-#include "atlas/atlas.h"
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/util/io/Gmsh.h"
-#include "atlas/internals/Debug.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/mesh/actions/BuildHalo.h"
-#include "atlas/mesh/actions/BuildEdges.h"
-#include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/output/Output.h"
 #include "atlas/output/Gmsh.h"
 

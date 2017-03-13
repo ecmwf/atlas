@@ -20,14 +20,14 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/DataType.h"
-#include "atlas/util/io/PointCloud.h"
+#include "atlas/output/detail/PointCloud.h"
 
 namespace atlas {
-namespace util {
-namespace io {
+namespace output {
+namespace detail {
 
 // ------------------------------------------------------------------
 
@@ -122,7 +122,7 @@ mesh::Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::strin
       iss.str(line);
 
       //NOTE always expects (lon,lat) order, maybe make it configurable?
-      iss >> lonlat(i,internals::LON) >> lonlat(i,internals::LAT);;
+      iss >> lonlat(i,LON) >> lonlat(i,LAT);;
       for (j=0; iss && j<nb_fld; ++j)
         iss >> fields[j](i);
       if (j<nb_fld) {
@@ -382,6 +382,6 @@ void atlas__write_pointcloud_fieldset (char* file_path, const field::FieldSet* f
 
 // ------------------------------------------------------------------
 
-} // namespace io
-} // namespace util
+} // namespace detail
+} // namespace output
 } // namespace atlas

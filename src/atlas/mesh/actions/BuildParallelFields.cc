@@ -17,10 +17,9 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/internals/Bitflags.h"
-#include "atlas/internals/Unique.h"
-#include "atlas/internals/PeriodicTransform.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/Unique.h"
+#include "atlas/mesh/detail/PeriodicTransform.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/Array.h"
@@ -48,9 +47,9 @@
 #define OWNED_UID(UID) (UID == ownuid)
 #endif
 
-using atlas::internals::Topology;
-using atlas::internals::UniqueLonLat;
-using atlas::internals::PeriodicTransform;
+using Topology = atlas::mesh::Nodes::Topology;
+using atlas::util::UniqueLonLat;
+using atlas::mesh::detail::PeriodicTransform;
 
 namespace atlas {
 namespace mesh {
@@ -458,15 +457,15 @@ field::Field& build_edges_partition( Mesh& mesh )
       int pn1 = node_part( ip1 );
       int pn2 = node_part( ip2 );
 
-      centroid[internals::LON] = 0.5*(lonlat( ip1, internals::LON ) + lonlat( ip2, internals::LON ) );
-      centroid[internals::LAT] = 0.5*(lonlat( ip1, internals::LAT ) + lonlat( ip2, internals::LAT ) );
+      centroid[LON] = 0.5*(lonlat( ip1, LON ) + lonlat( ip2, LON ) );
+      centroid[LAT] = 0.5*(lonlat( ip1, LAT ) + lonlat( ip2, LAT ) );
       if( has_pole_edges && is_pole_edge(jedge) )
       {
-        centroid[internals::LAT] = centroid[internals::LAT] > 0 ? 90. : -90.;
+        centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
       }
 
       transform(centroid,periodic[jedge]);
-      uid_t uid = internals::unique_lonlat(centroid);
+      uid_t uid = util::unique_lonlat(centroid);
 
       if( size_t(edge_part(jedge)) == mypart )
       {
@@ -498,12 +497,12 @@ field::Field& build_edges_partition( Mesh& mesh )
         if( OWNED_UID(uid) )
         {
           double x1,y1, x2,y2, xe,ye;
-          x1 = lonlat(ip1,internals::LON);
-          y1 = lonlat(ip1,internals::LAT);
-          x2 = lonlat(ip2,internals::LON);
-          y2 = lonlat(ip2,internals::LAT);
-          xe = centroid[internals::LON];
-          ye = centroid[internals::LAT];
+          x1 = lonlat(ip1,LON);
+          y1 = lonlat(ip1,LAT);
+          x2 = lonlat(ip2,LON);
+          y2 = lonlat(ip2,LAT);
+          xe = centroid[LON];
+          ye = centroid[LAT];
           DEBUG( uid << " --> " << EDGE(jedge) << "   x1,y1 - x2,y2 - xe,ye " << x1<<","<<y1
                  << " - " << x2<<","<<y2<< " - " << xe <<","<<ye<< "     part " << edge_part(jedge));
         }
@@ -641,11 +640,11 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
   {
     int ip1 = edge_nodes(jedge,0);
     int ip2 = edge_nodes(jedge,1);
-    centroid[internals::LON] = 0.5*(lonlat( ip1, internals::LON ) + lonlat( ip2, internals::LON ) );
-    centroid[internals::LAT] = 0.5*(lonlat( ip1, internals::LAT ) + lonlat( ip2, internals::LAT ) );
+    centroid[LON] = 0.5*(lonlat( ip1, LON ) + lonlat( ip2, LON ) );
+    centroid[LAT] = 0.5*(lonlat( ip1, LAT ) + lonlat( ip2, LAT ) );
     if( has_pole_edges && is_pole_edge(jedge) )
     {
-      centroid[internals::LAT] = centroid[internals::LAT] > 0 ? 90. : -90.;
+      centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
     }
 
     bool needed(false);
@@ -664,7 +663,7 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
         transform(centroid,+1);
     }
 
-    uid_t uid = internals::unique_lonlat(centroid);
+    uid_t uid = util::unique_lonlat(centroid);
     if( size_t(edge_part(jedge)) == mypart && !needed ) // All interior edges fall here
     {
       lookup[ uid ] = jedge;
@@ -778,13 +777,13 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   {
     if( edge_gidx(jedge) <= 0 )
     {
-      centroid[internals::LON] = 0.5*(lonlat( edge_nodes(jedge,0), internals::LON ) + lonlat( edge_nodes(jedge,1), internals::LON ) );
-      centroid[internals::LAT] = 0.5*(lonlat( edge_nodes(jedge,0), internals::LAT ) + lonlat( edge_nodes(jedge,1), internals::LAT ) );
+      centroid[LON] = 0.5*(lonlat( edge_nodes(jedge,0), LON ) + lonlat( edge_nodes(jedge,1), LON ) );
+      centroid[LAT] = 0.5*(lonlat( edge_nodes(jedge,0), LAT ) + lonlat( edge_nodes(jedge,1), LAT ) );
       if( has_pole_edges && is_pole_edge(jedge) )
       {
-        centroid[internals::LAT] = centroid[internals::LAT] > 0 ? 90. : -90.;
+        centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
       }
-      edge_gidx(jedge) = internals::unique_lonlat(centroid);
+      edge_gidx(jedge) = util::unique_lonlat(centroid);
     }
   }
 

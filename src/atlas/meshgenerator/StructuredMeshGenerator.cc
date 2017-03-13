@@ -16,7 +16,7 @@
 
 #include "eckit/runtime/Main.h"
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Distribution.h"
@@ -27,20 +27,19 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/internals/Bitflags.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/internals/Debug.h"
+#include "atlas/runtime/Debug.h"
 
 #define DEBUG_OUTPUT 0
 
 using namespace eckit;
 using atlas::mesh::Mesh;
-using atlas::internals::Topology;
+using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {
 namespace meshgenerator {
@@ -986,14 +985,14 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
       //std::cout << "jlat = " << jlat << "; jlon = " << jlon << "; x = " << x << std::endl;
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nx(jlat));
 
-      lonlat(inode,internals::LON) = x;
-      lonlat(inode,internals::LAT) = y;
+      lonlat(inode,LON) = x;
+      lonlat(inode,LAT) = y;
 
       // geographic coordinates by using projection
       double crd[] = {x,y};
       rg.projection().xy2lonlat(crd);
-      geolonlat(inode,internals::LON) = crd[internals::LON];
-      geolonlat(inode,internals::LAT) = crd[internals::LAT];
+      geolonlat(inode,LON) = crd[LON];
+      geolonlat(inode,LAT) = crd[LAT];
 
       glb_idx(inode)   = n+1;
       part(inode) = parts.at(n);
@@ -1022,14 +1021,14 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
       double x = rg.x(rg.nx(jlat),jlat);
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nx(jlat));
 
-      lonlat(inode,internals::LON) = x;
-      lonlat(inode,internals::LAT) = y;
+      lonlat(inode,LON) = x;
+      lonlat(inode,LAT) = y;
 
       // geographic coordinates by using projection
       double crd[] = {x,y};
       rg.projection().xy2lonlat(crd);
-      geolonlat(inode,internals::LON) = crd[internals::LON];
-      geolonlat(inode,internals::LAT) = crd[internals::LAT];
+      geolonlat(inode,LON) = crd[LON];
+      geolonlat(inode,LAT) = crd[LAT];
 
 
       glb_idx(inode)   = periodic_glb.at(jlat)+1;
@@ -1049,14 +1048,14 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     jnorth = jnode;
     double y = 90.;
     double x = 180.;
-    lonlat(inode,internals::LON) = x;
-    lonlat(inode,internals::LAT) = y;
+    lonlat(inode,LON) = x;
+    lonlat(inode,LAT) = y;
 
     // geographic coordinates by using projection
     double crd[] = {x,y};
     rg.projection().xy2lonlat(crd);
-    geolonlat(inode,internals::LON) = crd[internals::LON];
-    geolonlat(inode,internals::LAT) = crd[internals::LAT];
+    geolonlat(inode,LON) = crd[LON];
+    geolonlat(inode,LAT) = crd[LAT];
 
     glb_idx(inode)   = periodic_glb.at(rg.ny()-1)+2;
     part(inode)      = mypart;
@@ -1073,14 +1072,14 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     jsouth = jnode;
     double y = -90.;
     double x =  180.;
-    lonlat(inode,internals::LON) = x;
-    lonlat(inode,internals::LAT) = y;
+    lonlat(inode,LON) = x;
+    lonlat(inode,LAT) = y;
 
     // geographic coordinates by using projection
     double crd[] = {x,y};
     rg.projection().xy2lonlat(crd);
-    geolonlat(inode,internals::LON) = crd[internals::LON];
-    geolonlat(inode,internals::LAT) = crd[internals::LAT];
+    geolonlat(inode,LON) = crd[LON];
+    geolonlat(inode,LAT) = crd[LAT];
 
     glb_idx(inode)   = periodic_glb.at(rg.ny()-1)+3;
     part(inode)      = mypart;

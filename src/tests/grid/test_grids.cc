@@ -15,7 +15,7 @@
 #define BOOST_TEST_MODULE TestGrids
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid.h"
 #include "atlas/parallel/mpi/mpi.h"

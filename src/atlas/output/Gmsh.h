@@ -8,17 +8,16 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_output_Gmsh_h
-#define atlas_output_Gmsh_h
+#pragma once
 
 #include "atlas/output/Output.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {
-namespace util {
-namespace io {
-class Gmsh;
+namespace output {
+namespace detail {
+class GmshIO;
 }
 }
 }
@@ -99,7 +98,7 @@ public:
     std::string coordinates;
   };
 
-  static void setGmshConfiguration(util::io::Gmsh&, const Configuration& );
+  static void setGmshConfiguration(detail::GmshIO&, const Configuration& );
 
 private:
 
@@ -122,5 +121,3 @@ Gmsh* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, con
 
 } // namespace output
 } // namespace atlas
-
-#endif

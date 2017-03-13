@@ -14,7 +14,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 #ifdef ATLAS_HAVE_EIGEN
 

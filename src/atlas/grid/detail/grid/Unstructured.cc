@@ -15,7 +15,7 @@
 #include "eckit/memory/Builder.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
@@ -49,7 +49,7 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
     const size_t npts = p.size();
 
     for( size_t n=0; n<npts; ++n) {
-        p[n].assign(lonlat(n,internals::LON),lonlat(n,internals::LAT));
+        p[n].assign(lonlat(n,LON),lonlat(n,LAT));
         lat_min = std::min( lat_min, p[n].lat() );
         lat_max = std::max( lat_max, p[n].lat() );
         lon_min = std::min( lon_min, p[n].lon() );

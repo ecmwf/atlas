@@ -8,18 +8,17 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_util_AccumulateFaces_h
-#define atlas_util_AccumulateFaces_h
+#pragma once
 
 #include <vector>
-#include "atlas/internals/atlas_config.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/library/config.h"
 
 namespace atlas { namespace mesh { class HybridElements; } }
 namespace atlas { namespace mesh { class Nodes; } }
 
 namespace atlas {
-namespace internals {
+namespace mesh {
+namespace detail {
 
 // currently only supports 2D meshes. Little work needed for 3D.
 void accumulate_facets(
@@ -31,7 +30,6 @@ void accumulate_facets(
     size_t &nb_inner_facets,
     idx_t  &missing_value );
 
-} // namespace internals
+} // namespace detail
+} // namespace mesh
 } // namespace atlas
-
-#endif

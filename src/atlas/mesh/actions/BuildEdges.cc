@@ -13,7 +13,7 @@
 #include <limits>
 #include <iostream>
 #include <stdexcept>
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/Nodes.h"
@@ -21,22 +21,21 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/AccumulateFaces.h"
-#include "atlas/internals/Bitflags.h"
-#include "atlas/internals/Unique.h"
-#include "atlas/internals/LonLatMicroDeg.h"
-#include "atlas/internals/Functions.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/mesh/detail/AccumulateFacets.h"
+#include "atlas/util/Unique.h"
+#include "atlas/util/LonLatMicroDeg.h"
+#include "atlas/util/MicroDeg.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
 
-using atlas::internals::accumulate_facets;
-using atlas::internals::Topology;
-using atlas::internals::UniqueLonLat;
-using atlas::internals::microdeg;
+using atlas::mesh::detail::accumulate_facets;
+using Topology = atlas::mesh::Nodes::Topology;
+using atlas::util::UniqueLonLat;
+using atlas::util::microdeg;
 
 namespace atlas {
 namespace mesh {
@@ -195,16 +194,16 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
   const size_t nb_nodes = nodes.size();
 
   double min[2], max[2];
-  min[internals::LON] =  std::numeric_limits<double>::max();
-  min[internals::LAT] =  std::numeric_limits<double>::max();
-  max[internals::LON] = -std::numeric_limits<double>::max();
-  max[internals::LAT] = -std::numeric_limits<double>::max();
+  min[LON] =  std::numeric_limits<double>::max();
+  min[LAT] =  std::numeric_limits<double>::max();
+  max[LON] = -std::numeric_limits<double>::max();
+  max[LAT] = -std::numeric_limits<double>::max();
   for (size_t node=0; node<nb_nodes; ++node)
   {
-    min[internals::LON] = std::min( min[internals::LON], lonlat(node,internals::LON) );
-    min[internals::LAT] = std::min( min[internals::LAT], lonlat(node,internals::LAT) );
-    max[internals::LON] = std::max( max[internals::LON], lonlat(node,internals::LON) );
-    max[internals::LAT] = std::max( max[internals::LAT], lonlat(node,internals::LAT) );
+    min[LON] = std::min( min[LON], lonlat(node,LON) );
+    min[LAT] = std::min( min[LAT], lonlat(node,LAT) );
+    max[LON] = std::max( max[LON], lonlat(node,LON) );
+    max[LAT] = std::max( max[LAT], lonlat(node,LAT) );
   }
 
   parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
@@ -216,11 +215,11 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
   std::vector< std::set<int> > pole_nodes(2);
   for (size_t node=0; node<nb_nodes; ++node)
   {
-      if ( std::abs(lonlat(node,internals::LAT)-max[internals::LAT])<tol )
+      if ( std::abs(lonlat(node,LAT)-max[LAT])<tol )
       {
         pole_nodes[NORTH].insert(node);
       }
-      else if ( std::abs(lonlat(node,internals::LAT)-min[internals::LAT])<tol )
+      else if ( std::abs(lonlat(node,LAT)-min[LAT])<tol )
       {
         pole_nodes[SOUTH].insert(node);
       }
@@ -255,11 +254,11 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
       int node = *it;
       if( !Topology::check(flags(node),Topology::PERIODIC|Topology::GHOST) )
       {
-        int x2 = microdeg( lonlat(node,internals::LON) + 180. );
+        int x2 = microdeg( lonlat(node,LON) + 180. );
         for( std::set<int>::iterator itr=pole_nodes[NS].begin(); itr!=pole_nodes[NS].end(); ++itr)
         {
           int other_node = *itr;
-          if( microdeg( lonlat(other_node,internals::LON) ) == x2 )
+          if( microdeg( lonlat(other_node,LON) ) == x2 )
           {
             if( !Topology::check(flags(other_node),Topology::PERIODIC) )
             {
@@ -286,21 +285,21 @@ struct ComputeUniquePoleEdgeIndex
   gidx_t operator()( const array::IndexView<int,1>& edge_nodes ) const
   {
     double centroid[2];
-    centroid[internals::LON] = 0.;
-    centroid[internals::LAT] = 0.;
+    centroid[LON] = 0.;
+    centroid[LAT] = 0.;
     for( size_t jnode=0; jnode<2; ++jnode )
     {
-      centroid[internals::LON] += lonlat( edge_nodes(jnode), internals::LON );
-      centroid[internals::LAT] += lonlat( edge_nodes(jnode), internals::LAT );
+      centroid[LON] += lonlat( edge_nodes(jnode), LON );
+      centroid[LAT] += lonlat( edge_nodes(jnode), LAT );
     }
-    centroid[internals::LON] /= 2.;
-    centroid[internals::LAT] /= 2.;
-    if( centroid[internals::LAT] > 0 )
-      centroid[internals::LAT] =  90.;
+    centroid[LON] /= 2.;
+    centroid[LAT] /= 2.;
+    if( centroid[LAT] > 0 )
+      centroid[LAT] =  90.;
     else
-      centroid[internals::LAT] = -90.;
-    /// FIXME make this into `internals::unique_lonlat(centroid)` but this causes weird parallel behavior
-    return internals::detail::unique32( internals::microdeg(centroid[internals::LON]), internals::microdeg(centroid[internals::LON]) );
+      centroid[LAT] = -90.;
+    /// FIXME make this into `util::unique_lonlat(centroid)` but this causes weird parallel behavior
+    return util::detail::unique32( microdeg(centroid[LON]), microdeg(centroid[LON]) );
   }
 
   array::ArrayView<double,2> lonlat;

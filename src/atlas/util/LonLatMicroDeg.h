@@ -8,17 +8,16 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_util_LonLatMicroDeg_h
-#define atlas_util_LonLatMicroDeg_h
+#pragma once
 
-#include "atlas/internals/atlas_config.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/internals/Functions.h"
-#include "atlas/array/ArrayView.h"
+#include "atlas/library/config.h"
 #include "atlas/util/Point.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/MicroDeg.h"
+#include "atlas/array/ArrayView.h"
 
 namespace atlas {
-namespace internals {
+namespace util {
 
 // ------------------------------------------------------------------------------------
 
@@ -74,9 +73,7 @@ inline bool LonLatMicroDeg::operator < (const LonLatMicroDeg& other) const
 
 // ------------------------------------------------------------------------------------
 
-} // namespace internals
+} // namespace util
 } // namespace atlas
 
-#include "atlas/internals/Unique.h"
-
-#endif
+#include "atlas/util/Unique.h"

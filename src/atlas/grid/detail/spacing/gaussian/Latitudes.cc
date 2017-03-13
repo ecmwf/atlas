@@ -14,10 +14,10 @@
 #include <limits>
 
 #include "eckit/memory/ScopedPtr.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
 #include "atlas/grid/detail/spacing/gaussian/N.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Constants.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/array/Array.h"
@@ -245,7 +245,7 @@ void legpol_quadrature(
 //-----------------------------------------------------------------------------
 
 void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], double weights[]) {
-    Log::debug<ATLAS>() << "Atlas computing Gaussian latitudes for N " << N << "\n";
+    Log::debug<Atlas>() << "Atlas computing Gaussian latitudes for N " << N << "\n";
 
     // Compute first guess for colatitudes in radians
     double z;

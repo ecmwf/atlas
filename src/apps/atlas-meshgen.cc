@@ -17,10 +17,10 @@
 #include <vector>
 #include <memory>
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
-#include "atlas/internals/AtlasTool.h"
+#include "atlas/runtime/AtlasTool.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -36,7 +36,7 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/detail/GmshIO.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/parser/Tokenizer.h"

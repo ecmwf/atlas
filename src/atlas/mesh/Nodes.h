@@ -20,6 +20,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/util/Metadata.h"
+#include "atlas/util/Bitflags.h"
 
 namespace atlas { namespace field { class Field; } }
 
@@ -32,6 +33,21 @@ namespace mesh {
 class Nodes : public eckit::Owned {
 public:
   typedef IrregularConnectivity Connectivity;
+  
+  class Topology : public util::Bitflags
+  {
+  public:
+    enum {
+      NONE     = 0,
+      GHOST    = (1<<1),
+      PERIODIC = (1<<2),
+      BC       = (1<<3),
+      WEST     = (1<<4),
+      EAST     = (1<<5),
+      NORTH    = (1<<6),
+      SOUTH    = (1<<7)
+    };
+  };
 
 public: // methods
 

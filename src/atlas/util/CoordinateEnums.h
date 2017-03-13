@@ -8,17 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_Parameters_h
-#define atlas_Parameters_h
-
-#include <cmath>
-#include <string>
-#include "atlas/internals/atlas_defines.h"
+#pragma once
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace internals {
+
 //------------------------------------------------------------------------------------------------------
 
 enum XYZ { XX = 0, YY = 1, ZZ = 2 };
@@ -29,7 +24,4 @@ enum LONLAT { LON = 0, LAT = 1 };
 
 // ----------------------------------------------------------------------------------------------------
 
-} // namespace internals
 } // namespace atlas
-
-#endif // atlas_Parameters_h

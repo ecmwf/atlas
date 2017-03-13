@@ -19,7 +19,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"
 #include "atlas/grid/Projection.h"

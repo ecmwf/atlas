@@ -14,7 +14,7 @@
 #include <vector>
 #include <iostream>
 
-#include "atlas/atlas.h"
+#include "atlas/library/atlas.h"
 #include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/option/CmdArgs.h"
@@ -22,7 +22,7 @@
 #include "eckit/option/VectorOption.h"
 #include "eckit/option/Separator.h"
 
-#include "atlas/internals/Debug.h"
+#include "atlas/runtime/Debug.h"
 
 //--------------------------------------------------------------------------------
 
