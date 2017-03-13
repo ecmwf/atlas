@@ -105,7 +105,7 @@ bool point_in_poly(const std::vector<point_t>& poly, const point_t& P) {
 
 
 struct Edge : std::pair< size_t, size_t > {
-    Edge(size_t _A, size_t _B) : pair(_A, _B) {}
+    Edge(size_t _A, size_t _B) : std::pair< size_t, size_t >(_A, _B) {}
     Edge reverse() const { return Edge(second, first); }
     struct LessThan {
         bool operator()(const Edge& e1, const Edge& e2) const {
