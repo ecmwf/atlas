@@ -14,7 +14,7 @@
 #include "eckit/log/Timer.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/library/LibAtlas.h"
+#include "atlas/library/Library.h"
 
 
 namespace atlas {

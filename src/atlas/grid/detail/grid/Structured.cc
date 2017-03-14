@@ -609,36 +609,6 @@ extern "C" {
     }
 
 
-    Structured* atlas__grid__CustomStructured_int(long nlat, double lats[], int pl[]) {
-      NOTIMP;
-        // std::vector<long> pl_vector;
-        // pl_vector.assign(pl,pl+nlat);
-        // return new CustomStructured(nlat, lats, pl_vector.data());
-    }
-
-
-    Structured* atlas__grid__CustomStructured_long(long nlat, double lats[], long pl[]) {
-      NOTIMP;
-        // return new CustomStructured(nlat, lats, pl);
-    }
-
-
-    Structured* atlas__grid__CustomStructured_lonmin_lonmax_int(long nlat, double lats[], int pl[], double lonmin[], double lonmax[]) {
-      NOTIMP;
-        // std::vector<long> pl_vector;
-        // pl_vector.assign(pl, pl+nlat);
-        // return new CustomStructured(nlat, lats, pl_vector.data(), lonmin, lonmax);
-    }
-
-
-    Structured* atlas__grid__CustomStructured_lonmin_lonmax_long(long nlat, double lats[], long pl[], double lonmin[], double lonmax[]) {
-        NOTIMP;
-        //return new CustomStructured(nlat, lats, pl, lonmin, lonmax);
-    }
-
-
-
-
 }
 
 

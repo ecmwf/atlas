@@ -36,7 +36,7 @@ END_TESTSUITE_FINALIZE
 !  use atlas_module
 !  implicit none
 
-!  type(atlas_grid_Structured) :: grid
+!  type(atlas_StructuredGrid) :: grid
 !  type(atlas_Mesh) :: mesh
 !  type(atlas_MeshGenerator) :: meshgenerator
 !   type(atlas_Output) :: gmsh
@@ -65,7 +65,7 @@ END_TESTSUITE_FINALIZE
 !  implicit none
 
 !  type(atlas_Config) :: conf
-!  type(atlas_grid_Structured) :: grid
+!  type(atlas_StructuredGrid) :: grid
 !  type(atlas_Mesh) :: mesh
 !  type(atlas_MeshGenerator) :: meshgenerator
 !   type(atlas_Output) :: gmsh
@@ -76,7 +76,7 @@ END_TESTSUITE_FINALIZE
 !  call conf%set("pl",[  2,  4,  8,  12,   8,   4,   2 ])
 !  call conf%set("lon_min",[  0., 15.,  0.,  30.,   0.,  15.,   0. ])
 
-!  grid = atlas_grid_Structured(conf)
+!  grid = atlas_StructuredGrid(conf)
 !  meshgenerator = atlas_meshgenerator_Structured()
 !  mesh = meshgenerator%generate(grid)
 ! gmsh = atlas_output_Gmsh("test_custom_structured2.msh")
@@ -94,7 +94,7 @@ END_TESTSUITE_FINALIZE
 !  implicit none
 
 !  type(atlas_Config) :: conf
-!  type(atlas_grid_Structured) :: grid
+!  type(atlas_StructuredGrid) :: grid
 !  type(atlas_Mesh) :: mesh
 !  type(atlas_MeshGenerator) :: meshgenerator
 !   type(atlas_Output) :: gmsh
@@ -112,7 +112,7 @@ END_TESTSUITE_FINALIZE
 ! CLOSE(9)
 
 !  conf = atlas_Config( atlas_PathName("custom.json") )
-!  grid = atlas_grid_Structured(conf)
+!  grid = atlas_StructuredGrid(conf)
 !  meshgenerator = atlas_meshgenerator_Structured()
 !  mesh = meshgenerator%generate(grid)
 ! gmsh = atlas_output_Gmsh("test_custom_structured3.msh")
@@ -127,7 +127,7 @@ END_TESTSUITE_FINALIZE
 TEST( test_meshgen )
   use atlas_module
   implicit none
-  type(atlas_grid_Structured) :: grid
+  type(atlas_StructuredGrid) :: grid
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Nodes) :: nodes
@@ -142,7 +142,7 @@ TEST( test_meshgen )
 
   write(*,*) "test_meshgen starting"
 
-  grid = atlas_grid_Structured("N24")
+  grid = atlas_StructuredGrid("N24")
 !  grid = atlas_grid_ShiftedLat(40,20)
 
   meshgenerator = atlas_meshgenerator_Structured()

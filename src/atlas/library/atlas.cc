@@ -52,24 +52,24 @@ void atlas_info( std::ostream& out )
 //----------------------------------------------------------------------------------------------------------------------
 
 
-void atlas_init(const eckit::Parametrisation&)
+void init(const eckit::Parametrisation&)
 {
   atlas_info( Log::debug() );
 }
 
-void atlas_init() { return atlas_init(util::NoConfig()); }
+void init() { return init(util::NoConfig()); }
 
 
 /// deprecated
-void atlas_init(int argc, char** argv)
+void init(int argc, char** argv)
 {
   Main::initialise(argc, argv);
   Main::instance().taskID(eckit::mpi::comm("world").rank());
   if( Main::instance().taskID() != 0 ) Log::reset();
-  atlas_init();
+  init();
 }
 
-void atlas_finalize()
+void finalise()
 {
 // Temporary until ECKIT-166 is fixed
 #ifdef BUG_ECKIT_166
@@ -91,13 +91,13 @@ void atlas_finalize()
 
 void atlas__atlas_init_noargs()
 {
-  atlas_init();
+  atlas::init();
 }
 
 
 void atlas__atlas_finalize()
 {
-  atlas_finalize();
+  atlas::finalise();
 }
 
 

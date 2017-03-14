@@ -16,12 +16,16 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class LibAtlas : public eckit::system::Library {
+class Library : public eckit::system::Library {
 public:
 
-    LibAtlas();
+    Library();
 
-    static const LibAtlas& instance();
+    static const Library& instance();
+
+    static void initialise(int argc, char **argv);
+
+    static void finalise();
 
 protected:
 
@@ -33,7 +37,7 @@ protected:
 
 };
 
-typedef LibAtlas Atlas;
+typedef Library Atlas;
 
 //----------------------------------------------------------------------------------------------------------------------
 

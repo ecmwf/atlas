@@ -30,12 +30,12 @@ struct AtlasFixture : public eckit::testing::Setup {
             eckit::mpi::comm("world").rank());
         if( eckit::Main::instance().taskID() != 0 )
             Log::reset();
-        atlas_init();
+        atlas::init();
     }
 
     ~AtlasFixture()
     {
-        atlas_finalize();
+        atlas::finalise();
     }
 };
 

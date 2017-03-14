@@ -35,15 +35,15 @@ END_TESTSUITE_FINALIZE
 !   use atlas_module
 !   use, intrinsic :: iso_c_binding
 !   implicit none
-!   type(atlas_grid_Structured) :: N640
-!   type(atlas_grid_ReducedGaussian) :: custom
+!   type(atlas_StructuredGrid) :: N640
+!   type(atlas_ReducedGaussianGrid) :: custom
 !   integer(c_long), pointer :: pl(:)
 !
-!   N640 = atlas_grid_Structured("N640")
+!   N640 = atlas_StructuredGrid("N640")
 !   FCTEST_CHECK_EQUAL(N640%npts(),2140702_c_long)
 !   pl => N640%pl()
 !
-!   custom = atlas_grid_ReducedGaussian( N640%N(), pl )
+!   custom = atlas_ReducedGaussianGrid( N640%N(), pl )
 !   FCTEST_CHECK_EQUAL(N640%npts(),custom%npts() )
 !
 !   call N640%final()
@@ -56,7 +56,7 @@ END_TESTSUITE_FINALIZE
 TEST( test_griddist )
   use atlas_module
   implicit none
-  type(atlas_grid_Structured) :: grid
+  type(atlas_StructuredGrid) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_Output) :: gmsh
   type(atlas_MeshGenerator) :: meshgenerator
@@ -66,8 +66,8 @@ TEST( test_griddist )
   integer, allocatable :: part(:)
   integer :: jnode
 
-  grid = atlas_grid_Structured("O16")
-  !grid = atlas_grid_Structured("ll.128x64")
+  grid = atlas_StructuredGrid("O16")
+  !grid = atlas_StructuredGrid("ll.128x64")
   !grid = atlas_grid_ShiftedLonLat(128,64)
 
   allocate( part(grid%npts()) )

@@ -1,5 +1,4 @@
-#ifndef atlas_atlas_h
-#define atlas_atlas_h
+#pragma once
 
 #include <iosfwd>
 
@@ -13,20 +12,17 @@ namespace eckit
 
 namespace atlas {
 
-// Deprecated. To be removed soon!
-void atlas_init(int argc, char **argv);
+void init(int argc, char **argv);
 
-void atlas_init();
-void atlas_init(const eckit::Parametrisation&);
-void atlas_finalize();
+void init();
+void init(const eckit::Parametrisation&);
+void finalise();
 
-
-void atlas_info(std::ostream&);
+//void atlas_info(std::ostream&);
 
 //----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-#define OSTREAM std::ostream
 extern "C"
 {
   void atlas__atlas_init_noargs();
@@ -41,12 +37,9 @@ extern "C"
   const char* atlas__display_name ();
   const char* atlas__rundir ();
   const char* atlas__workdir ();
-  void atlas__info(OSTREAM* channel);
+  void atlas__info(std::ostream* channel);
 }
-#undef OSTREAM
 
 //----------------------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
-
-#endif

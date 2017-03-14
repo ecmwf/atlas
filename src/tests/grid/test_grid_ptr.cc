@@ -35,9 +35,9 @@ namespace atlas {
 namespace test {
 
 struct GlobalFixture {
-    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
-                                  boost::unit_test::framework::master_test_suite().argv); }
-    ~GlobalFixture() { atlas_finalize(); }
+    GlobalFixture()  { atlas::init(boost::unit_test::framework::master_test_suite().argc,
+                                   boost::unit_test::framework::master_test_suite().argv); }
+    ~GlobalFixture() { atlas::finalise(); }
 };
 BOOST_GLOBAL_FIXTURE( GlobalFixture );
 

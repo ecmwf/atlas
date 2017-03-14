@@ -89,7 +89,7 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_trans_invtrans_grad )
-  type(atlas_grid_Structured) :: grid
+  type(atlas_GaussianGrid) :: grid
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
@@ -103,7 +103,7 @@ TEST( test_trans_invtrans_grad )
 
   real(c_double) :: beta
 
-  grid = atlas_grid_Structured("O32")
+  grid = atlas_StructuredGrid("O32")
   meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid)
   call meshgenerator%final()

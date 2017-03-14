@@ -11,8 +11,6 @@
 
 using atlas::array::ArrayView;
 using atlas::array::make_shape;
-using atlas::atlas_finalize;
-using atlas::atlas_init;
 using atlas::field::Field;
 using atlas::field::FieldSet;
 using atlas::field::global;
@@ -26,7 +24,7 @@ using atlas::output::Gmsh;
 
 int main(int argc, char *argv[])
 {
-    atlas_init(argc, argv);
+    atlas::init(argc, argv);
 
     // Generate global classic reduced Gaussian grid
     StructuredGrid grid( "N32" );
@@ -170,7 +168,7 @@ int main(int argc, char *argv[])
                 << "std_deviation: " << stddev << ",  "
                 << "nb_nodes: "      << N      << std::endl;
 
-    atlas_finalize();
+    atlas::finalise();
 
     return 0;
 }

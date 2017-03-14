@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_internals_AtlasTool_h
-#define atlas_internals_AtlasTool_h
+#pragma once
 
 #include <vector>
 #include <iostream>
@@ -117,9 +116,9 @@ protected:
         numberOfPositionalArguments(),
         minimumPositionalArguments());
 
-    atlas_init();
+    atlas::init();
     execute(args);
-    atlas_finalize();
+    atlas::finalise();
   }
 
   virtual void execute(const Args&) = 0;
@@ -140,7 +139,3 @@ private:
 };
 
 } // namespace atlas
-
-//----------------------------------------------------------------------------------
-
-#endif

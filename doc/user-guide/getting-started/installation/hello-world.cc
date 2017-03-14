@@ -3,9 +3,9 @@
 
 int main(int argc, char** argv)
 {
-    atlas::atlas_init(argc, argv);
+    atlas::init(argc, argv);
     atlas::Log::info() << "Hello world!" << std::endl;
-    atlas::atlas_finalize();
+    atlas::finalise();
 
     return 0;
 }

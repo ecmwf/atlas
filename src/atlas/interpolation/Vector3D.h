@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_geometry_Vector3D_h
-#define atlas_geometry_Vector3D_h
+#pragma once
 
 #include <iostream>
 #include <cmath>
@@ -125,5 +124,3 @@ Vector3D operator*(double, const Vector3D &);
 
 }  // namespace interpolation
 }  // namespace atlas
-
-#endif

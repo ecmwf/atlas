@@ -41,7 +41,7 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_nodes )
-type(atlas_grid_Structured) :: grid
+type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs
@@ -50,7 +50,7 @@ type(atlas_mesh_Nodes) :: nodes
 integer :: halo_size, nb_nodes
 halo_size = 1
 
-grid = atlas_grid_Structured("N24")
+grid = atlas_StructuredGrid("N24")
 meshgenerator = atlas_meshgenerator_Structured()
 mesh = meshgenerator%generate(grid)
 call meshgenerator%final()
@@ -136,7 +136,7 @@ END_TEST
 
 
 TEST( test_nodescolumns )
-type(atlas_grid_Structured) :: grid
+type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs
@@ -145,7 +145,7 @@ integer :: halo_size, levels
 halo_size = 1
 levels = 10
 
-grid = atlas_grid_Structured("N24")
+grid = atlas_StructuredGrid("N24")
 meshgenerator = atlas_meshgenerator_Structured()
 mesh = meshgenerator%generate(grid)
 call meshgenerator%final()
@@ -231,7 +231,7 @@ END_TEST
 
 TEST( test_collectives )
 use fckit_mpi_module
-type(atlas_grid_Structured) :: grid
+type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_NodeColumns) :: fs2d
@@ -251,7 +251,7 @@ mpi = fckit_mpi_comm()
 halo_size = 1
 levels = 10
 
-grid = atlas_grid_Structured("N24")
+grid = atlas_StructuredGrid("N24")
 meshgenerator = atlas_meshgenerator_Structured()
 mesh = meshgenerator%generate(grid)
 call meshgenerator%final()
@@ -353,7 +353,7 @@ END_TEST
 
 
 TEST( test_edges )
-type(atlas_grid_Structured) :: grid
+type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_EdgeColumns) :: fs
@@ -362,7 +362,7 @@ type(atlas_mesh_Edges) :: edges
 integer :: halo_size, nb_edges
 halo_size = 0
 
-grid = atlas_grid_Structured("N24")
+grid = atlas_StructuredGrid("N24")
 meshgenerator = atlas_meshgenerator_Structured()
 mesh = meshgenerator%generate(grid)
 FCTEST_CHECK_EQUAL( mesh%owners(), 1 )

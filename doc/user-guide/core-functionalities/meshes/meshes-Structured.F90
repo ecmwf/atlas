@@ -10,7 +10,7 @@ call atlas_init()
 
 ! Generate mesh
 meshgenerator = atlas_meshgenerator_Structured()
-grid = atlas_grid_Structured( "O32" )
+grid = atlas_StructuredGrid( "O32" )
 mesh = meshgenerator%generate(grid)
 
 gmsh_2d = atlas_output_Gmsh("mesh2d.msh")

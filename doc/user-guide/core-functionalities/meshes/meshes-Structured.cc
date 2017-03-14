@@ -5,18 +5,17 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/Config.h"
 
-using atlas::atlas_init;
-using atlas::atlas_finalize;
 using atlas::grid::Grid;
 using atlas::mesh::Mesh;
+using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::output::Gmsh;
 using atlas::util::Config;
 
 int main(int argc, char *argv[])
 {
-    atlas_init(argc, argv);
+    atlas::init(argc, argv);
 
-    atlas::meshgenerator::StructuredMeshGenerator meshgenerator;
+    StructuredMeshGenerator meshgenerator;
 
     Grid grid( "O32" );
     Mesh::Ptr mesh( meshgenerator.generate(grid) );
@@ -27,7 +26,7 @@ int main(int argc, char *argv[])
     gmsh_2d.write(*mesh);
     gmsh_3d.write(*mesh);
 
-    atlas_finalize();
+    atlas::finalise();
 
     return 0;
 }

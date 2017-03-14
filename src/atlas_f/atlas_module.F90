@@ -117,10 +117,10 @@ use atlas_Mesh_module, only: &
     & atlas_Mesh
 use atlas_Grid_module, only: &
     & atlas_Grid, &
-    & atlas_grid_Structured, &
-    & atlas_grid_CustomStructured, &
-    & atlas_grid_ReducedGaussian, &
-    & atlas_grid_RegularGaussian, &
+    & atlas_StructuredGrid, &
+    & atlas_GaussianGrid, &
+    & atlas_ReducedGaussianGrid, &
+    & atlas_RegularGaussianGrid, &
     & atlas_grid_RegularLonLat, &
     & atlas_grid_ShiftedLonLat, &
     & atlas_grid_ShiftedLon, &

@@ -272,7 +272,7 @@ END_TEST
 TEST( test_fv )
 implicit none
 
-      type(atlas_grid_Structured) :: grid
+      type(atlas_StructuredGrid) :: grid
       type(atlas_Mesh) :: mesh
       type(atlas_MeshGenerator) :: meshgenerator
       type(atlas_GridDistribution) :: griddistribution
@@ -294,7 +294,7 @@ implicit none
 
       ! Create a new Reduced Gaussian Grid based on a nloen array
       call atlas_log%info("Creating grid")
-      grid = atlas_grid_ReducedGaussian( 32, nloen(1:32) )
+      grid = atlas_ReducedGaussianGrid( 32, nloen(1:32) )
 
       ! Grid distribution: all points belong to partition 1
       allocate( part(grid%npts()) )

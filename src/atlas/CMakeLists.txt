@@ -27,8 +27,8 @@ library/atlas.h
 library/atlas.cc
 library/config.h
 library/config.cc
-library/LibAtlas.h
-library/LibAtlas.cc
+library/Library.h
+library/Library.cc
 runtime/ErrorHandling.cc
 runtime/ErrorHandling.cc
 runtime/AtlasTool.h

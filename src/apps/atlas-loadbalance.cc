@@ -79,7 +79,7 @@ public:
       do_run = false;
     }
 
-    atlas_init(argc,argv);
+    atlas::init(argc,argv);
 
     key = "";
     for( int i=0; i<argc; ++i )
@@ -135,7 +135,7 @@ void AtlasLoadbalance::run()
       std::cout << s.str() << std::endl;
     }
   }
-  atlas_finalize();
+  atlas::finalise();
 }
 
 //------------------------------------------------------------------------------------------------------

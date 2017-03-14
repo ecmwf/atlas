@@ -12,30 +12,39 @@
 /// @author Tiago Quintino
 /// @date   August 2016
 
-#include "atlas/library/LibAtlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/library/config.h"
+#include "atlas/library/atlas.h"
 
 namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-static LibAtlas libatlas;
+static Library libatlas;
 
-LibAtlas::LibAtlas() : Library( std::string("atlas") ) {}
+Library::Library() : eckit::system::Library( std::string("atlas") ) {}
 
-const LibAtlas& LibAtlas::instance() {
+const Library& Library::instance() {
     return libatlas;
 }
 
-const void* LibAtlas::addr() const {
+void Library::initialise(int argc, char **argv) {
+    return atlas::init(argc,argv);
+}
+
+void Library::finalise() {
+    return atlas::finalise();
+}
+
+const void* Library::addr() const {
     return this;
 }
 
-std::string LibAtlas::version() const {
+std::string Library::version() const {
     return atlas::version();
 }
 
-std::string LibAtlas::gitsha1(unsigned int count) const {
+std::string Library::gitsha1(unsigned int count) const {
     return atlas::git_sha1(count);
 }
 

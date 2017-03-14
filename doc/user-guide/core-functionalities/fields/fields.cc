@@ -4,8 +4,6 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/util/Metadata.h"
 
-using atlas::atlas_init;
-using atlas::atlas_finalize;
 using atlas::Log;
 using atlas::field::Field;
 using atlas::field::FieldSet;
@@ -14,7 +12,7 @@ using atlas::array::make_shape;
 
 int main(int argc, char *argv[])
 {
-    atlas_init(argc, argv);
+    atlas::init(argc, argv);
 
     // Define fields
     Field::Ptr field_pressure(
@@ -67,7 +65,7 @@ int main(int argc, char *argv[])
     Log::info() << "wind(9, 0)  = " << wind(9,0)   << std::endl;
     Log::info() << "wind(9, 1)  = " << wind(9,1)   << std::endl;
 
-    atlas_finalize();
+    atlas::finalize();
 
     return 0;
 }

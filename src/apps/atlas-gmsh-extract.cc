@@ -130,7 +130,7 @@ private:
 void gmsh_extract::run()
 {
 	if( !do_run ) return;
-	atlas_init(argc(),argv());
+	atlas::init(argc(),argv());
 	Log::debug() << "Command line:" << std::endl;
 	for( int i=0; i< argc(); ++i)
 		Log::debug() << argv(i) << std::endl;
@@ -226,7 +226,7 @@ void gmsh_extract::run()
 	}
 	if( !out_filename.empty() )
 		out_file.close();
-	atlas_finalize();
+	atlas::finalise();
 }
 
 //------------------------------------------------------------------------------------------------------

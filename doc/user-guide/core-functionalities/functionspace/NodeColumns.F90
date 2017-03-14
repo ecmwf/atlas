@@ -6,7 +6,7 @@ integer, parameter                    :: wp = c_double
 character(len=1024)                   :: string
 character(len=1024)                   :: gridID
 character(len=32)                     :: checksum
-type(atlas_grid_Structured)               :: grid
+type(atlas_StructuredGrid)               :: grid
 type(atlas_mesh)                      :: mesh
 type(atlas_meshgenerator)             :: meshgenerator
 type(atlas_Output)                    :: gmsh
@@ -48,7 +48,7 @@ call atlas_init()
 
 ! Generate global classic reduced Gaussian grid
 gridID = "N32"
-grid = atlas_grid_Structured(gridID)
+grid = atlas_StructuredGrid(gridID)
 
 ! Generate mesh associated to structured grid
 meshgenerator = atlas_meshgenerator_Structured()

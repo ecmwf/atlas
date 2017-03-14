@@ -41,10 +41,10 @@ class TestField : public Tool {
 public:
 
     TestField(int argc,char **argv): Tool(argc,argv) {
-      atlas_init();
+      atlas::init();
     }
 
-    ~TestField() {atlas_finalize();}
+    ~TestField() {atlas::finalise();}
 
     virtual void run();
 

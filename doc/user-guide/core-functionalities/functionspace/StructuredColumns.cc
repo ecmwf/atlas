@@ -8,30 +8,24 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/functionspace/StructuredColumns.h"
 
-using atlas::array::ArrayView;
-using atlas::atlas_finalize;
-using atlas::atlas_init;
-using atlas::field::Field;
-using atlas::functionspace::StructuredColumns;
 using atlas::grid::Grid;
 using atlas::mesh::Mesh;
+using atlas::meshgenerator::StructuredMeshGenerator;
+using atlas::functionspace::StructuredColumns;
+using atlas::field::Field;
+using atlas::array::ArrayView;
 using atlas::output::Gmsh;
 
 int main(int argc, char *argv[])
 {
-    atlas_init(argc, argv);
+    atlas::init(argc, argv);
 
     // Generate global reduced grid
     Grid grid( "N32" );
 
-    // Number of points in the grid
-    int const nb_nodes = grid.npts();
-
     // Generate functionspace associated to grid
-    StructuredColumns::Ptr
-        fs_rgp(new StructuredColumns(grid));
+    StructuredColumns::Ptr fs_rgp(new StructuredColumns(grid));
 
-    /* .... */
     // Variables for scalar1 field definition
     const double rpi = 2.0 * asin(1.0);
     const double deg2rad = rpi / 180.;
@@ -39,8 +33,6 @@ int main(int argc, char *argv[])
     const double zlonc = 1.0 * rpi;
     const double zrad  = 2.0 * rpi / 9.0;
     int jnode = 0;
-
-
 
     // Calculate scalar function
     Field::Ptr field_scalar1(fs_rgp->createField<double>("scalar1"));
@@ -70,7 +62,7 @@ int main(int argc, char *argv[])
     // Write field
     {
       // Generate visualisation mesh associated to grid
-      atlas::meshgenerator::StructuredMeshGenerator meshgenerator;
+      StructuredMeshGenerator meshgenerator;
       Mesh::Ptr mesh (meshgenerator.generate(grid));
 
       Gmsh gmsh("scalar1.msh");
@@ -78,6 +70,6 @@ int main(int argc, char *argv[])
       gmsh.write(*field_scalar1);
     }
 
-    atlas_finalize();
+    atlas::finalise();
     return 0;
 }

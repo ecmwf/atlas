@@ -2,7 +2,7 @@
 
 #include "atlas/library/config.h"
 
-#include "atlas/library/LibAtlas.h"
+#include "atlas/library/Library.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #include "fckit/Log.h"
@@ -12,7 +12,7 @@ namespace atlas { namespace detail { typedef fckit::Log LogBase; } }
 namespace atlas { namespace detail { typedef eckit::Log LogBase; } }
 #endif
 
-namespace atlas { 
+namespace atlas {
 
 // Use Log::debug<Atlas>() for debugging that can be switched
 // on or off by the boolean environment variable ATLAS_DEBUG
@@ -20,7 +20,7 @@ namespace atlas {
 class Log : public detail::LogBase {
 
 public:
-  
+
     typedef eckit::Channel Channel;
 
 #ifndef ATLAS_HAVE_FORTRAN

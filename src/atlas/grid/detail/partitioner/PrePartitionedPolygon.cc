@@ -324,7 +324,7 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
 
     enum {LON=0,LAT=1};
 
-    for (int r = 0; r < comm.size(); ++r) {
+    for (int r = 0; r < int(comm.size()); ++r) {
         if (mpi_rank == r) {
             std::ofstream f("partitions_poly.py", mpi_rank == 0? std::ios::trunc : std::ios::app);
 
