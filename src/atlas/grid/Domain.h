@@ -79,19 +79,11 @@ class Domain: public eckit::Owned {
         return *this;
     }
 
-    /// Comparison
-    bool operator==(const Domain& other);
-
     // -- Methods
 
     /// Generator for a global Domain
     static Domain makeGlobal() {
         return Domain(90.,0.,-90.,360.);
-    }
-
-    /// Generator for an empty Domain
-    static Domain makeEmpty()  {
-        return Domain(0.,0.,0.,0.);
     }
 
     /// Check if grid includes the North pole
@@ -116,9 +108,6 @@ class Domain: public eckit::Owned {
 
     /// Adds to the MD5 the information
     void hash(eckit::MD5&) const;
-
-    /// Check if domain does not represent any area on the globe surface
-    bool isEmpty() const;
 
     /// Checks if the point is contained in the domain
     bool contains(double lon, double lat) const;

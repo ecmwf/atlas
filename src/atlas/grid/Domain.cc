@@ -26,25 +26,11 @@ using eckit::types::is_strictly_greater;
 using eckit::types::is_approximately_greater_or_equal;
 
 
-bool Domain::operator==(const Domain& other) {
-    return is_approximately_equal(north_, other.north_)
-        && is_approximately_equal(west_,  other.west_)
-        && is_approximately_equal(south_, other.south_)
-        && is_approximately_equal(east_,  other.east_);
-}
-
-
 void Domain::hash(eckit::MD5& md5) const {
     md5.add(north_);
     md5.add(west_);
     md5.add(south_);
     md5.add(east_);
-}
-
-
-bool Domain::isEmpty() const {
-    return !is_strictly_greater(north_,south_)
-        || !is_strictly_greater(east_,west_);
 }
 
 
@@ -128,7 +114,6 @@ void Domain::print(std::ostream& os) const {
         << ",S:" << south_
         << ",E:" << east_
         << ",isGlobal=" << isGlobal()
-        << ",isEmpty="  << isEmpty()
         << "]";
 }
 
