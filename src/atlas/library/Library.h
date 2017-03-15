@@ -12,6 +12,10 @@
 
 #include "eckit/system/Library.h"
 
+namespace eckit {
+  class Parametrisation;
+}
+
 namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -21,19 +25,27 @@ public:
 
     Library();
 
-    static const Library& instance();
+    static Library& instance();
 
-    static void initialise(int argc, char **argv);
+    virtual std::string version() const override;
 
-    static void finalise();
+    virtual std::string gitsha1(unsigned int count) const override;
+    std::string gitsha1() const { return gitsha1(7); }
+
+    void initialise(int argc, char **argv);
+    void initialise(const eckit::Parametrisation&);
+    void initialise();
+    void finalise();
+    
+    struct Info {
+      friend std::ostream& operator<<(std::ostream& s, const Info& i) { i.print(s); return s; }
+      void print(std::ostream&) const;
+    };
+    Info info() const { return Info(); }
 
 protected:
 
-    const void* addr() const;
-
-    virtual std::string version() const;
-
-    virtual std::string gitsha1(unsigned int count) const;
+    virtual const void* addr() const override;
 
 };
 

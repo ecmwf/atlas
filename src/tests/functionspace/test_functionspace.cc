@@ -13,7 +13,7 @@
 
 #include "eckit/types/Types.h"
 #include "eckit/memory/ScopedPtr.h"
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/runtime/Debug.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/functionspace/NodeColumns.h"

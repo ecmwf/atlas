@@ -1,4 +1,4 @@
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
@@ -18,7 +18,7 @@ using atlas::output::Gmsh;
 
 int main(int argc, char *argv[])
 {
-    atlas::init(argc, argv);
+    atlas::Library::instance().initialise(argc, argv);
 
     // Generate global reduced grid
     Grid grid( "N32" );
@@ -70,6 +70,6 @@ int main(int argc, char *argv[])
       gmsh.write(*field_scalar1);
     }
 
-    atlas::finalise();
+    atlas::Library::instance().finalise();
     return 0;
 }

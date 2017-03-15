@@ -13,7 +13,7 @@
 
 #include "atlas/library/config.h"
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/grid.h"

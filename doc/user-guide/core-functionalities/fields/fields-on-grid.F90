@@ -17,7 +17,7 @@ type(atlas_StructuredGrid)     :: grid
 type(atlas_Field)               :: field_pressure
 real(wp), pointer               :: pressure(:)
 
-call atlas_init()
+call atlas_library%initialise()
 
 grid = atlas_StructuredGrid( "O32" )
 
@@ -25,11 +25,11 @@ field_pressure = atlas_Field("pressure", atlas_real(wp), [grid%npts()])
 call field_pressure%data(pressure)
 
 jnode = 1
-do jlat=1,grid%nlat()
-  zlat = grid%lat(jlat)
+do jlat=1,grid%ny()
+  zlat = grid%y(jlat)
   zlat = zlat * deg2rad
-  do jlon=1,grid%nlon(jlat)
-    zlon = grid%lon(jlat,jlon)
+  do jlon=1,grid%nx(jlat)
+    zlon = grid%x(jlon,jlat)
     zlon = zlon * deg2rad
 
     zdist = 2._wp * sqrt((cos(zlat) * sin((zlon - zlonc) / 2))**2 + &
@@ -54,7 +54,7 @@ call atlas_log%info(string)
 call grid%final()
 call field_pressure%final()
 
-call atlas_finalize()
+call atlas_library%finalise()
 
 end program main
 

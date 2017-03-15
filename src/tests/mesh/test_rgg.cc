@@ -15,7 +15,7 @@
 #define BOOST_TEST_MODULE TestRGG
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/library/config.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"

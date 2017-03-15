@@ -24,7 +24,7 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/filesystem/PathName.h"
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -130,7 +130,7 @@ private:
 void gmsh_extract::run()
 {
 	if( !do_run ) return;
-	atlas::init(argc(),argv());
+	atlas::Library::instance().initialise(argc(),argv());
 	Log::debug() << "Command line:" << std::endl;
 	for( int i=0; i< argc(); ++i)
 		Log::debug() << argv(i) << std::endl;
@@ -226,7 +226,7 @@ void gmsh_extract::run()
 	}
 	if( !out_filename.empty() )
 		out_file.close();
-	atlas::finalise();
+	atlas::Library::instance().finalise();
 }
 
 //------------------------------------------------------------------------------------------------------

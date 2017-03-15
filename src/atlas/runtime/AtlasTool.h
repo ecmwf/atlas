@@ -13,7 +13,7 @@
 #include <vector>
 #include <iostream>
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/option/CmdArgs.h"
@@ -116,9 +116,9 @@ protected:
         numberOfPositionalArguments(),
         minimumPositionalArguments());
 
-    atlas::init();
+    atlas::Library::instance().initialise();
     execute(args);
-    atlas::finalise();
+    atlas::Library::instance().finalise();
   }
 
   virtual void execute(const Args&) = 0;

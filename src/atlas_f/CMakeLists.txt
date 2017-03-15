@@ -101,7 +101,6 @@ else()
 
 endif()
 
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/library/atlas.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Structured.h
     MODULE    atlas_grid_Structured_c_binding
@@ -156,6 +155,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/GatherScatter.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/Checksum.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
+generate_fortran_bindings(FORTRAN_BINDINGS internals/Library.h)
 
 preprocess_fypp( atlas_f_src field/atlas_Field_module.F90 )
 ecbuild_debug_var( atlas_f_src )
@@ -204,6 +204,8 @@ ecbuild_add_library( TARGET atlas_f
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
         internals/atlas_write_to_fortran_unit.F90
+        internals/Library.h
+        internals/Library.cc
 
   PRIVATE_INCLUDES
         ${FCKIT_INCLUDE_DIRS}

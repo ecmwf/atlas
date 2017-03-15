@@ -1,4 +1,4 @@
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
@@ -24,7 +24,7 @@ using atlas::output::Gmsh;
 
 int main(int argc, char *argv[])
 {
-    atlas::init(argc, argv);
+    atlas::Library::instance().initialise(argc, argv);
 
     // Generate global classic reduced Gaussian grid
     StructuredGrid grid( "N32" );
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
                 << "std_deviation: " << stddev << ",  "
                 << "nb_nodes: "      << N      << std::endl;
 
-    atlas::finalise();
+    atlas::Library::instance().finalise();
 
     return 0;
 }

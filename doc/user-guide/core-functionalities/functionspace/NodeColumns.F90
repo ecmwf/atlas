@@ -44,7 +44,7 @@ real(wp), parameter :: zlonc = 1._wp * rpi
 real(wp), parameter :: zrad  = 2._wp * rpi / 9._wp
 real(wp)            :: zdist, zlon, zlat;
 
-call atlas_init()
+call atlas_library%initialise()
 
 ! Generate global classic reduced Gaussian grid
 gridID = "N32"
@@ -188,6 +188,6 @@ call field_tensor2%final()
 call field_global %final()
 call fields      %final()
 
-call atlas_finalize()
+call atlas_library%finalise()
 
 end program main

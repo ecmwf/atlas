@@ -15,7 +15,7 @@
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid.h"
@@ -79,7 +79,7 @@ public:
       do_run = false;
     }
 
-    atlas::init(argc,argv);
+    atlas::Library::instance().initialise(argc,argv);
 
     key = "";
     for( int i=0; i<argc; ++i )
@@ -135,7 +135,7 @@ void AtlasLoadbalance::run()
       std::cout << s.str() << std::endl;
     }
   }
-  atlas::finalise();
+  atlas::Library::instance().finalise();
 }
 
 //------------------------------------------------------------------------------------------------------

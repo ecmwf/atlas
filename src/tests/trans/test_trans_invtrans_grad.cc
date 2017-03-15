@@ -14,7 +14,7 @@
 
 #include <algorithm>
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"

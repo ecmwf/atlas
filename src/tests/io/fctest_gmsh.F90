@@ -19,14 +19,14 @@ TESTSUITE(fctest_atlas_Gmsh)
 
 TESTSUITE_INIT
   use atlas_module
-  call atlas_init()
+  call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
   use atlas_module
-  call atlas_finalize()
+  call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------

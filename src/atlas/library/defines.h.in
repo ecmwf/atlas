@@ -4,13 +4,6 @@
 // Do not use cmakedefine as this file needs to be included by fortran as well
 #endif
 
-#define ATLAS_VERSION_STR "@ATLAS_VERSION_STR@"
-#define ATLAS_VERSION     "@ATLAS_VERSION@"
-
-#define ATLAS_MAJOR_VERSION @ATLAS_MAJOR_VERSION@
-#define ATLAS_MINOR_VERSION @ATLAS_MINOR_VERSION@
-#define ATLAS_PATCH_VERSION @ATLAS_PATCH_VERSION@
-
 #if @CGAL_FOUND@
 #define CGAL_FOUND
 #endif

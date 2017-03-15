@@ -11,22 +11,22 @@
 ecbuild_generate_config_headers( DESTINATION ${INSTALL_INCLUDE_DIR}/atlas )
 
 configure_file( library/defines.h.in   library/defines.h   )
-configure_file( library/git_sha1.h.in  library/git_sha1.h   )
+configure_file( library/version.h.in   library/version.h   )
+configure_file( library/git_sha1.h.in  library/git_sha1.h  )
 
 install( FILES
   ${CMAKE_CURRENT_BINARY_DIR}/library/defines.h
-  ${CMAKE_CURRENT_BINARY_DIR}/library/config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/library/version.h
+  ${CMAKE_CURRENT_BINARY_DIR}/library/git_sha1.h
   DESTINATION
-  ${INSTALL_INCLUDE_DIR}/atlas/build )
+  ${INSTALL_INCLUDE_DIR}/atlas/build
+)
 
 ### sources
 
 
 list( APPEND atlas_srcs
-library/atlas.h
-library/atlas.cc
 library/config.h
-library/config.cc
 library/Library.h
 library/Library.cc
 runtime/ErrorHandling.cc
@@ -423,6 +423,7 @@ ecbuild_add_library( TARGET atlas
     eckit_option
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
+    "${FCKIT_LIBRARIES}"
 
   DEFINITIONS
     ${ATLAS_DEFINITIONS}

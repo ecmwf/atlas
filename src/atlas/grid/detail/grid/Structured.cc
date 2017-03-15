@@ -453,7 +453,7 @@ public:
 extern "C" {
 
 
-    long atlas__grid__Structured__nlat(Structured* This) {
+    long atlas__grid__Structured__ny(Structured* This) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             return This->ny();
@@ -462,7 +462,7 @@ extern "C" {
     }
 
 
-    long atlas__grid__Structured__nlon(Structured* This, long jlat) {
+    long atlas__grid__Structured__nx(Structured* This, long jlat) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             return This->nx(jlat);
@@ -471,16 +471,16 @@ extern "C" {
     }
 
 
-    void atlas__grid__Structured__pl(Structured* This, const long* &nlons, size_t &size) {
+    void atlas__grid__Structured__nx_array(Structured* This, const long* &nx_array, size_t &size) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
-            nlons = This->nx().data();
+            nx_array = This->nx().data();
             size  = This->nx().size();
         );
     }
 
 
-    long atlas__grid__Structured__nlonmax(Structured* This) {
+    long atlas__grid__Structured__nxmax(Structured* This) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             return This->nxmax();
@@ -489,7 +489,7 @@ extern "C" {
     }
 
 
-    long atlas__grid__Structured__nlonmin(Structured* This) {
+    long atlas__grid__Structured__nxmin(Structured* This) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
             return This->nxmin();
@@ -507,37 +507,44 @@ extern "C" {
     }
 
 
-    double atlas__grid__Structured__lat(Structured* This, long jlat) {
+    double atlas__grid__Structured__y(Structured* This, long j) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
-            return This->y(jlat);
+            return This->y(j);
         );
         return 0.;
     }
 
 
-    double atlas__grid__Structured__lon( Structured* This, long jlat, long jlon ) {
+    double atlas__grid__Structured__x( Structured* This, long i, long j ) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
-            return This->x(jlon, jlat);
+            return This->x(i,j);
         );
         return 0.;
     }
 
 
-    void atlas__grid__Structured__lonlat( Structured* This, long jlat, long jlon, double crd[] ) {
+    void atlas__grid__Structured__xy( Structured* This, long i, long j, double crd[] ) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
-            This->xy(jlon, jlat, crd);
+            This->xy(i,j, crd);
+        );
+    }
+
+    void atlas__grid__Structured__lonlat( Structured* This, long i, long j, double crd[] ) {
+        ATLAS_ERROR_HANDLING(
+            ASSERT( This );
+            This->lonlat(i,j, crd);
         );
     }
 
 
-    void atlas__grid__Structured__latitudes( Structured* This, const double* &lat, size_t &size) {
+    void atlas__grid__Structured__y_array( Structured* This, const double* &y_array, size_t &size) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
-            lat  = This->y().data();
-            size = This->y().size();
+            y_array  = This->y().data();
+            size     = This->y().size();
         );
     }
 

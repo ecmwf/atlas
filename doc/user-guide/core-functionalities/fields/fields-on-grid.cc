@@ -1,4 +1,4 @@
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
@@ -11,7 +11,7 @@ using atlas::grid::StructuredGrid;
 
 int main(int argc, char *argv[])
 {
-    atlas::init(argc, argv);
+    atlas::Library::instance().initialise(argc, argv);
 
     int jnode = 0;
     const double rpi = 2.0 * asin(1.0);
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
                 << field_pressure->bytes() * 1.e-9 << " GB"      << std::endl;
     Log::info() << "==========================================" << std::endl;
 
-    atlas::finalise();
+    atlas::Library::instance().finalise();
 
     return 0;
 }

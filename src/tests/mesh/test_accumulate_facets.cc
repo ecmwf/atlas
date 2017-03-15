@@ -13,7 +13,7 @@
 #define BOOST_TEST_MODULE test_accumulate_facets
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
 
 #include "atlas/mesh/Mesh.h"

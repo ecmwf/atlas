@@ -177,13 +177,32 @@ ENUM, bind(c)
   enumerator :: out = 16
 end ENUM
 
+type, private :: atlas_Library_type
+contains
+  procedure, public, nopass :: initialise => atlas_init
+  procedure, public, nopass :: finalise   => atlas_finalise
+  procedure, public, nopass :: version    => atlas_version
+  procedure, public, nopass :: gitsha1    => atlas_git_sha1_abbrev
+end type
+
+type(atlas_library_type), public :: atlas_library
+
+  type, private :: eckit_Library_type
+  contains
+    procedure, public, nopass :: version    => eckit_version
+    procedure, public, nopass :: gitsha1    => eckit_git_sha1_abbrev
+  end type
+
+type(eckit_library_type), public :: eckit_library
+
 ! =============================================================================
 CONTAINS
 ! =============================================================================
 
+! -----------------------------------------------------------------------------
 
 subroutine atlas_init( comm, output_unit )
-  use atlas_atlas_c_binding
+  use atlas_library_c_binding
   use iso_fortran_env, only : stdout => output_unit
   use fckit_main_module, only: main
   use fckit_mpi_module, only : fckit_mpi_comm
@@ -218,16 +237,15 @@ subroutine atlas_init( comm, output_unit )
 end subroutine
 
 
-subroutine atlas_finalize()
+
+subroutine atlas_finalise()
   use fckit_c_interop_module
-  use atlas_atlas_c_binding
+  use atlas_library_c_binding
   call atlas__atlas_finalize()
 end subroutine
 
-! -----------------------------------------------------------------------------
-
 function eckit_version()
-  use atlas_atlas_c_binding
+  use atlas_library_c_binding
   use fckit_c_interop_module
   character(len=40) :: eckit_version
   eckit_version = c_ptr_to_string(atlas__eckit_version())
@@ -235,14 +253,14 @@ end function eckit_version
 
 function eckit_git_sha1()
   use fckit_c_interop_module
-  use atlas_atlas_c_binding
+  use atlas_library_c_binding
   character(len=40) :: eckit_git_sha1
   eckit_git_sha1 = c_ptr_to_string(atlas__eckit_git_sha1())
 end function eckit_git_sha1
 
 function eckit_git_sha1_abbrev(length)
   use, intrinsic :: iso_c_binding, only: c_int
-  use atlas_atlas_c_binding
+  use atlas_library_c_binding
   use fckit_c_interop_module
   character(len=40) :: eckit_git_sha1_abbrev
   integer(c_int), optional :: length
@@ -254,14 +272,14 @@ end function eckit_git_sha1_abbrev
 
 function atlas_version()
   use fckit_c_interop_module
-  use atlas_atlas_c_binding
+  use atlas_library_c_binding
   character(len=40) :: atlas_version
   atlas_version = c_ptr_to_string(atlas__atlas_version())
 end function atlas_version
 
 function atlas_git_sha1()
   use fckit_c_interop_module
-  use atlas_atlas_c_binding
+  use atlas_library_c_binding
   character(len=40) :: atlas_git_sha1
   atlas_git_sha1 = c_ptr_to_string(atlas__atlas_git_sha1())
 end function atlas_git_sha1
@@ -269,7 +287,7 @@ end function atlas_git_sha1
 function atlas_git_sha1_abbrev(length)
   use fckit_c_interop_module
   use, intrinsic :: iso_c_binding, only: c_int
-  use atlas_atlas_c_binding
+  use atlas_library_c_binding
   character(len=40) :: atlas_git_sha1_abbrev
   integer(c_int), optional :: length
   integer(c_int) :: opt_length
@@ -277,48 +295,6 @@ function atlas_git_sha1_abbrev(length)
   if( present(length) ) opt_length = length
   atlas_git_sha1_abbrev = c_ptr_to_string(atlas__atlas_git_sha1_abbrev(opt_length))
 end function atlas_git_sha1_abbrev
-
-function atlas_run_name()
-  use fckit_c_interop_module
-  use atlas_atlas_c_binding
-  character(len=128) :: atlas_run_name
-  atlas_run_name = c_ptr_to_string(atlas__run_name())
-end function atlas_run_name
-
-function atlas_display_name()
-  use fckit_c_interop_module
-  use atlas_atlas_c_binding
-  character(len=128) :: atlas_display_name
-  atlas_display_name = c_ptr_to_string(atlas__display_name())
-end function atlas_display_name
-
-function atlas_rundir()
-  use fckit_c_interop_module
-  use atlas_atlas_c_binding
-  character(len=128) :: atlas_rundir
-  atlas_rundir = c_ptr_to_string(atlas__rundir())
-end function atlas_rundir
-
-function atlas_workdir()
-  use fckit_c_interop_module
-  use atlas_atlas_c_binding
-  character(len=128) :: atlas_workdir
-  atlas_workdir = c_ptr_to_string(atlas__workdir())
-end function atlas_workdir
-
-subroutine atlas_info(channel)
-  use atlas_atlas_c_binding
-  use fckit_log_module
-  type(logchannel), optional :: channel
-  type(logchannel) :: default_channel
-
-  if( present(channel) ) then
-    call atlas__info(channel%c_ptr())
-  else
-    default_channel = atlas_log%info_channel()
-    call atlas__info(default_channel%c_ptr())
-  endif
-end subroutine
 
 ! -----------------------------------------------------------------------------
 

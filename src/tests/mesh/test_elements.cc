@@ -20,7 +20,7 @@
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"

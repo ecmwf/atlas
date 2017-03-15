@@ -22,7 +22,7 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/runtime/Main.h"
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/grid/detail/spacing/GaussianSpacing.h"
 
 //------------------------------------------------------------------------------------------------------

@@ -27,14 +27,14 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_trans,fctest_atlas_trans_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  call atlas_init()
+  call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
   write(0,*) "FINALIZE"
-  call atlas_finalize()
+  call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
@@ -84,7 +84,7 @@ TEST( test_trans )
 !  FCTEST_CHECK_EQUAL( trans%owners(), 1 )
   FCTEST_CHECK_EQUAL( trans%nproc(), 1 )
   FCTEST_CHECK_EQUAL( trans%myproc(proc0=1), 1 )
-  FCTEST_CHECK_EQUAL( trans%ndgl(), int(grid%nlat()) )
+  FCTEST_CHECK_EQUAL( trans%ndgl(), int(grid%ny()) )
   FCTEST_CHECK_EQUAL( trans%ngptot(), int(grid%npts()) )
   FCTEST_CHECK_EQUAL( trans%ngptotg(), int(grid%npts()) )
   FCTEST_CHECK_EQUAL( trans%nsmax(), nsmax )

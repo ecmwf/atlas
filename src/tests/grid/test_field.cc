@@ -13,7 +13,7 @@
 #include "eckit/value/CompositeParams.h"
 
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/grid.h"
@@ -41,10 +41,10 @@ class TestField : public Tool {
 public:
 
     TestField(int argc,char **argv): Tool(argc,argv) {
-      atlas::init();
+      atlas::Library::instance().initialise();
     }
 
-    ~TestField() {atlas::finalise();}
+    ~TestField() {atlas::Library::instance().finalise();}
 
     virtual void run();
 

@@ -14,7 +14,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/grid/Grid.h"

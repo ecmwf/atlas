@@ -232,7 +232,7 @@ subroutine init()
   character(len=:),allocatable :: grid_uid
   type(atlas_mesh_Nodes) :: mesh_nodes
 
-  call atlas_init()
+  call atlas_library%initialise()
 
   call fckit_resource("--grid","N24",grid_uid)
   call fckit_resource("--levels",137,nlev)
@@ -282,7 +282,7 @@ subroutine finalize()
   call mesh%final()
   call grid%final()
   call meshgenerator%final()
-  call atlas_finalize()
+  call atlas_library%finalise()
 end subroutine
 
 ! -----------------------------------------------------------------------------

@@ -6,7 +6,7 @@ type(atlas_Mesh)          :: mesh
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Output)        :: gmsh_2d, gmsh_3d
 
-call atlas_init()
+call atlas_library%initialise()
 
 ! Generate mesh
 meshgenerator = atlas_meshgenerator_Structured()
@@ -27,6 +27,6 @@ call gmsh_2d%final()
 call gmsh_3d%final()
 call meshgenerator%final()
 
-call atlas_finalize()
+call atlas_library%finalise()
 
 end program main

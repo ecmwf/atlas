@@ -11,13 +11,8 @@
 
 #include "eckit/runtime/Tool.h"
 #include "eckit/config/Resource.h"
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
-
-#ifdef ATLAS_HAVE_TRANS
-#include "transi/version.h"
-#endif
-
 
 using namespace eckit;
 namespace atlas {
@@ -34,83 +29,21 @@ public:
     virtual void run();
 };
 
-std::string print(bool v)
-{
-  return v ? "ON" : "OFF";
-}
-
 void Version::run()
 {
   if( Resource<bool>("--version",false) )
   {
-    Log::info() << atlas::version() << std::endl;
+    Log::info() << atlas::Library::instance().version() << std::endl;
     return;
   }
   else if( Resource<bool>("--git",false) )
   {
-    Log::info() << atlas::git_sha1(12) << std::endl;
+    Log::info() << atlas::Library::instance().gitsha1(12) << std::endl;
     return;
   }
   else if( Resource<bool>("--info",false) )
   {
-    Log::info() << "atlas version (" << atlas::version() << "), "
-                << "git-sha1 "<< atlas::git_sha1(7) << std::endl;
-    Log::info() << std::endl;
-    Log::info() << "  Build:" << std::endl;
-    Log::info() << "    build type      : " << ATLAS_BUILD_TYPE << std::endl
-                << "    timestamp       : " << ATLAS_BUILD_TIMESTAMP << std::endl
-                << "    op. system      : " << ATLAS_OS_NAME << " (" << ATLAS_OS_STR << ")"  << std::endl
-                << "    processor       : " << ATLAS_SYS_PROCESSOR  << std::endl
-                << "    c compiler      : " << ATLAS_C_COMPILER_ID << " " << ATLAS_C_COMPILER_VERSION << std::endl
-                << "      flags         : " << ATLAS_C_FLAGS << std::endl
-                << "    c++ compiler    : " << ATLAS_CXX_COMPILER_ID << " " << ATLAS_CXX_COMPILER_VERSION << std::endl
-                << "      flags         : " << ATLAS_CXX_FLAGS << std::endl
-#ifndef EC_HAVE_FORTRAN
-                    << "    fortran         : NO " << std::endl
-#else
-                << "    fortran compiler: " << ATLAS_Fortran_COMPILER_ID << " " << ATLAS_Fortran_COMPILER_VERSION << std::endl
-                << "      flags         : " << ATLAS_Fortran_FLAGS << std::endl
-#endif
-                << std::endl;
-
-    bool feature_fortran(false);
-    bool feature_OpenMP(false);
-    bool feature_Trans(false);
-    bool feature_Tesselation(false);
-    bool feature_BoundsChecking(false);
-#ifdef ATLAS_HAVE_FORTRAN
-      feature_fortran = true;
-#endif
-#ifdef ATLAS_HAVE_OMP
-      feature_OpenMP = true;
-#endif
-#ifdef ATLAS_HAVE_TRANS
-      feature_Trans = true;
-#endif
-#ifdef ATLAS_HAVE_TESSELATION
-      feature_Tesselation = true;
-#endif
-#ifdef ATLAS_HAVE_BOUNDSCHECKING
-      feature_BoundsChecking = true;
-#endif
-    Log::info() << "  Features:" << std::endl;
-    Log::info() << "    Fortran        : " << print(feature_fortran) << std::endl
-                << "    OpenMP         : " << print(feature_OpenMP) << std::endl
-                << "    BoundsChecking : " << print(feature_BoundsChecking) << std::endl
-                << "    Trans          : " << print(feature_Trans) << std::endl
-                << "    Tesselation    : " << print(feature_Tesselation) << std::endl
-                << "    gidx_t         : " << ATLAS_BITS_GLOBAL << " bit integer" << std::endl
-                << std::endl;
-
-    Log::info() << "  Dependencies: " << std::endl;
-
-    Log::info() << "    eckit version  (" << atlas__eckit_version() << "), "
-                << "git-sha1 "<< atlas__eckit_git_sha1_abbrev(7) << std::endl;
-#ifdef ATLAS_HAVE_TRANS
-    Log::info() << "    transi version (" << transi_version() << "), "
-                << "git-sha1 "<< transi_git_sha1_abbrev(7) << std::endl;
-#endif
-
+    Log::info() << atlas::Library::instance().info() << std::endl;
     return;
   }
   else if( Resource<bool>("--help",false) )

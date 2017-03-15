@@ -21,7 +21,7 @@
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/field/State.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"

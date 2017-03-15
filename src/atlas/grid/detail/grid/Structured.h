@@ -196,8 +196,9 @@ public:
         return projection_.lonlat( xy(i,j) );
     }
 
-    void lonlat(const size_t i, const size_t j, PointLonLat &Pll) const {
-      Pll.assign( projection_.lonlat( xy(i,j) ) );
+    void lonlat(const size_t i, const size_t j, double crd[]) const {
+      xy(i,j,crd);
+      projection_.xy2lonlat(crd);
     }
 
     inline bool reduced() const {
@@ -275,16 +276,17 @@ extern "C"
     Structured* atlas__grid__regular__ShiftedLon(long nlon, long nlat);
     Structured* atlas__grid__regular__ShiftedLat(long nlon, long nlat);
 
-    void   atlas__grid__Structured__pl        (Structured* This, const long* &pl, size_t &size);
-    long   atlas__grid__Structured__nlat      (Structured* This);
-    long   atlas__grid__Structured__nlon      (Structured* This, long jlat);
-    long   atlas__grid__Structured__nlonmin   (Structured* This);
-    long   atlas__grid__Structured__nlonmax   (Structured* This);
+    void   atlas__grid__Structured__nx_array  (Structured* This, const long* &pl, size_t &size);
+    long   atlas__grid__Structured__nx        (Structured* This, long j);
+    long   atlas__grid__Structured__ny        (Structured* This);
+    long   atlas__grid__Structured__nxmin     (Structured* This);
+    long   atlas__grid__Structured__nxmax     (Structured* This);
     long   atlas__grid__Structured__npts      (Structured* This);
-    double atlas__grid__Structured__lat       (Structured* This, long jlat);
-    double atlas__grid__Structured__lon       (Structured* This, long jlat, long jlon);
-    void   atlas__grid__Structured__lonlat    (Structured* This, long jlat, long jlon, double crd[]);
-    void   atlas__grid__Structured__latitudes (Structured* This, const double* &lats, size_t &size);
+    double atlas__grid__Structured__y         (Structured* This, long j);
+    double atlas__grid__Structured__x         (Structured* This, long i, long j);
+    void   atlas__grid__Structured__xy        (Structured* This, long i, long j, double crd[]);
+    void   atlas__grid__Structured__lonlat    (Structured* This, long i, long j, double crd[]);
+    void   atlas__grid__Structured__y_array   (Structured* This, const double* &lats, size_t &size);
     int    atlas__grid__Structured__reduced   (Structured* This);
 
     long   atlas__grid__Gaussian__N           (Structured* This);

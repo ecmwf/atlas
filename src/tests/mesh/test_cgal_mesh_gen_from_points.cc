@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "atlas/library/config.h"
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/meshgenerator/DelaunayMeshGenerator.h"
@@ -33,7 +33,7 @@ using namespace atlas::output;
 
 int main(int argc, char **argv)
 {
-    atlas_init(argc,argv);
+    atlas::Library::instance().initialise(argc,argv);
     Grid grid( "L33x11" );
 
     // Build a mesh from grid
@@ -43,6 +43,6 @@ int main(int argc, char **argv)
     Gmsh gmsh("earth.msh", util::Config("coordinates","xyz") );
     gmsh.write(*mesh);
 
-    atlas_finalize();
+    atlas::Library::instance().finalise();
     return 0;
 }

@@ -4,13 +4,6 @@
 #include "atlas/library/defines.h"
 
 namespace atlas {
-  
-  const char* version();
-
-  // VVMMPP ( 10000*ATLAS_MAJOR_VERSION + 100*ATLAS_MINOR_VERSION + ATLAS_PATCH_VERSION )
-  int version_int();
-
-  const char* git_sha1(unsigned int chars=7);
 
 /// @typedef gidx_t
 /// Integer type for global indices

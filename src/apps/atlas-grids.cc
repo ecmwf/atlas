@@ -17,7 +17,7 @@
 #include <vector>
 #include <memory>
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/grid.h"
 #include "atlas/runtime/AtlasTool.h"

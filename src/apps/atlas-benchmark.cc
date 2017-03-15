@@ -40,7 +40,7 @@
 
 #include "atlas/array/Array.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
 #include "atlas/mesh/IsGhostNode.h"
@@ -259,10 +259,7 @@ void AtlasBenchmark::execute(const Args& args)
     omp_set_num_threads(omp_threads);
 
   Log::info() << "atlas-benchmark\n" << endl;
-  Log::info() << "Atlas:" << endl;
-  Log::info() << "  version:  ["<< atlas::version() << "]" << endl;
-  Log::info() << "  git:      ["<< atlas::git_sha1() << "]" << endl;
-  Log::info() << endl;
+  Log::info() << Library::instance().info() << endl;
   Log::info() << "Configuration:" << endl;
   Log::info() << "  grid: " << gridname << endl;
   Log::info() << "  nlev: " << nlev << endl;

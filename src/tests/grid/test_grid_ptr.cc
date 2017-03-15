@@ -16,7 +16,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 
-#include "atlas/library/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/util/Config.h"
 #include "atlas/runtime/Log.h"
@@ -35,9 +35,9 @@ namespace atlas {
 namespace test {
 
 struct GlobalFixture {
-    GlobalFixture()  { atlas::init(boost::unit_test::framework::master_test_suite().argc,
+    GlobalFixture()  { atlas::Library::instance().initialise(boost::unit_test::framework::master_test_suite().argc,
                                    boost::unit_test::framework::master_test_suite().argv); }
-    ~GlobalFixture() { atlas::finalise(); }
+    ~GlobalFixture() { atlas::Library::instance().finalise(); }
 };
 BOOST_GLOBAL_FIXTURE( GlobalFixture );
 

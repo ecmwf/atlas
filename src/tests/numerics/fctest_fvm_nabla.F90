@@ -237,7 +237,7 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_nabla_EdgeBasedFiniteVolume,fctest_atlas_nab
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  call atlas_init()
+  call atlas_library%initialise()
 
   config = atlas_Config()
   call config%set("radius",1.0)
@@ -277,7 +277,7 @@ TESTSUITE_FINALIZE
   call mesh%final()
   call grid%final()
   call meshgenerator%final()
-  call atlas_finalize()
+  call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
