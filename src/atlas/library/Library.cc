@@ -67,7 +67,7 @@ void Library::initialise(int argc, char **argv) {
         if( Main::instance().taskID() != 0 ) Log::reset();
         Log::debug<Atlas>() << "Atlas initialised eckit::Main.\n";
         if( eckit::mpi::comm("world").size() > 1 )
-            Log::debug<Atlas>() << 
+            Log::debug<Atlas>() <<
               "--> Only MPI rank 0 is logging. Please initialise eckit::Main \n"
               "    before to avoid this behaviour.\n";
     }
@@ -121,7 +121,7 @@ namespace {
   std::string str(const eckit::system::Library& lib) {
     std::string gitsha1 = lib.gitsha1();
     std::stringstream ss;
-    ss << lib.name() << " version (" << lib.version() << ")";
+    ss << lib.name() << " version (" << lib.version() << "),";
     if( lib.gitsha1() != "not available" ) {
       ss << "  git-sha1 " << lib.gitsha1(7);
     }
@@ -194,7 +194,7 @@ void Library::Info::print( std::ostream& out ) const {
     out << "    transi version (" << transi_version() << "), "
                 << "git-sha1 "<< transi_git_sha1_abbrev(7) << '\n';
 #endif
-  
+
 }
 
 } // namespace atlas
