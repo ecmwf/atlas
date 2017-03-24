@@ -200,8 +200,11 @@ public:
     }
 
     void xy( const size_t i, const size_t j, double xy[] ) const {
-        xy[0] = x(i,j);
-        xy[1] = y(j) ;
+        grid_->xy(i,j,xy);
+    }
+
+    void lonlat( const size_t i, const size_t j, double lonlat[] ) const {
+        grid_->lonlat(i,j,lonlat);
     }
 
     PointXY xy( const size_t i, const size_t j ) const {
