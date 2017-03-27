@@ -72,6 +72,8 @@ public:
     size_t min_pts() const {
         return min_pts_;
     }
+    
+    void print( std::ostream& ) const;
 
   private:
 
@@ -126,6 +128,11 @@ public:
     }
     size_t min_pts() const {
         return impl_->min_pts();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Distribution& distribution ) {
+      distribution.impl_->print(os);
+      return os;
     }
 
 private:

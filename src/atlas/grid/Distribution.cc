@@ -51,6 +51,20 @@ Distribution::impl_t::impl_t( size_t npts, int part[], int part0 ) {
 }
 
 
+void Distribution::impl_t::print( std::ostream& s ) const {
+  s << "Distribution( "
+    <<  "nbPoints: " << part_.size()
+    <<", nbPartitions: " <<nb_pts_.size()
+    <<", parts : [";
+  for(size_t i = 0; i < part_.size(); i++) {
+      if (i != 0)
+          s << ',';
+      s << part_[i];
+  }
+  s << ']';
+}
+
+
 
 Distribution::Distribution():
     impl_( nullptr ) {

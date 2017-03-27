@@ -334,10 +334,12 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
                      "\n" "import matplotlib.patches as patches"
                      "\n" ""
                      "\n" "from itertools import cycle"
-                     "\n" "cycol = cycle('bgrcmy').next"
+                     "\n" "import matplotlib.cm as cm"
+                     "\n" "import numpy as np"
+                     "\n" "cycol = cycle([cm.Paired(i) for i in np.linspace(0,1,12,endpoint=True)]).next"
                      "\n" ""
                      "\n" "fig = plt.figure()"
-                     "\n" "ax = fig.add_subplot(111)"
+                     "\n" "ax = fig.add_subplot(111,aspect='equal')"
                      "\n" "";
                 f << "\n"
                      "\n" "xlost = ["; for (std::vector<double>::const_iterator ix=xlost.begin(); ix!=xlost.end(); ++ix) { f << *ix << ", "; } f << "]"
@@ -367,6 +369,9 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
             if (mpi_rank == int(comm.size()) - 1) {
                 f << "\n" "ax.set_xlim(  0-5, 360+5)"
                      "\n" "ax.set_ylim(-90-5,  90+5)"
+                     "\n" "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
+                     "\n" "ax.set_yticks([-90,-45,0,45,90])"
+                     "\n" "plt.grid()"
                      "\n" "plt.show()";
             }
         }
