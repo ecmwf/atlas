@@ -20,16 +20,18 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-trans::Trans* TransPartitioner::new_trans( const Grid& grid ) const {
+namespace {
+trans::Trans* new_trans( const TransPartitioner& p, const Grid& grid ) const {
     auto t = new trans::Trans(grid,0);
-    if( nb_partitions() != size_t(t->nproc()) ) {
+    if( p.nb_partitions() != size_t(t->nproc()) ) {
         std::stringstream msg;
-        msg << "Requested to partition grid with TransPartitioner in "<<nb_partitions()<<" partitions, but "
+        msg << "Requested to partition grid with TransPartitioner in "<<p.nb_partitions()<<" partitions, but "
             "the internal Trans library could only be set-up for "<<t->nproc()<< " partitions "
             "(equal to number of MPI tasks in communicator).";
         throw eckit::BadParameter(msg.str(),Here());
     }
     return t;
+}
 }
 
 TransPartitioner::TransPartitioner() :
@@ -61,7 +63,7 @@ void TransPartitioner::partition(const Grid& grid, int part[]) const {
     if( not g )
         throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 
-    eckit::ScopedPtr<trans::Trans> t ( new_trans(grid) );
+    eckit::ScopedPtr<trans::Trans> t ( new_trans(*this,grid) );
 
     int nlonmax = g.nxmax();
 

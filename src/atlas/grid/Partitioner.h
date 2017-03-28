@@ -38,6 +38,7 @@ public:
     Partitioner( const detail::partitioner::Partitioner* );
     Partitioner( const std::string& type );
     Partitioner( const std::string& type, const size_t nb_partitions );
+    Partitioner( const Config& );
 
     void partition( const Grid& grid, int part[] ) const { partitioner_->partition(grid,part); }
 

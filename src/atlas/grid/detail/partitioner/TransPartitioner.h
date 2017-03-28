@@ -14,45 +14,34 @@
 
 namespace atlas {
 namespace grid {
-class StructuredGrid;
-class Distribution;
-}
-}
-
-namespace atlas {
-namespace trans {
-class Trans;
-}
-}
-
-
-namespace atlas {
-namespace grid {
 namespace detail {
 namespace partitioner {
 
+/// @class TransPartitioner
+/// @brief Equal regions partitioning algorithm computed by the IFS trans library
+///
+/// The user is advised to use the "EqualRegionsPartitioner" class instead. This
+/// implementation is only here to to guarantee the exact same distribution
+/// as IFS is using. The difference with "EqualRegionsPartitioner" is minimal.
+/// (a few points may be assigned to different partitions).
 class TransPartitioner: public Partitioner {
 
 public:
 
     /// @brief Constructor
-    /// This constructor allocates a new Trans, but without the computations
-    /// of the spectral coefficients (LDGRIDONLY=TRUE)
     TransPartitioner();
 
     TransPartitioner(const size_t nb_partitions );
 
     virtual ~TransPartitioner();
 
+    /// Warning: this function temporariliy allocates a new Trans, but without the computations
+    /// of the spectral coefficients (LDGRIDONLY=TRUE)
     virtual void partition(const Grid&, int part[]) const;
 
     int nb_bands() const;
 
     int nb_regions(int b) const;
-
-private:
-
-    trans::Trans* new_trans(const Grid&) const;
 
 private:
 

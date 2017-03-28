@@ -10,6 +10,7 @@
 
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
 namespace grid {
@@ -32,8 +33,23 @@ Partitioner::Partitioner( const std::string& type, const size_t nb_partitions):
     partitioner_( Factory::build(type,nb_partitions) ) {
 }
 
+namespace {
+detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Config& config ) {
+    std::string type;
+    long partitions = parallel::mpi::comm().size();
+    if( not config.get("type",type) )
+      throw eckit::BadParameter("'type' missing in configuration for Partitioner",Here());
+    config.get("partitions",partitions);
+    return Factory::build(type,partitions);
+}
+}
+
+Partitioner::Partitioner( const Config& config ):
+    partitioner_( partitioner_from_config(config) ) {
+}
+
 MatchingMeshPartitioner::MatchingMeshPartitioner() :
-    Partitioner(){
+    Partitioner() {
 }
 
 grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const mesh::Mesh& mesh, const Partitioner::Config& config ) {
