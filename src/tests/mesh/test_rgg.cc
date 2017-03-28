@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 12 partitions
   {
-    grid::detail::partitioner::EqualRegionsPartitioner partitioner(g,12);
+    grid::detail::partitioner::EqualRegionsPartitioner partitioner(12);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),    4 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0), 1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1), 5 );
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 24 partitions
   {
-    grid::detail::partitioner::EqualRegionsPartitioner partitioner(g,24);
+    grid::detail::partitioner::EqualRegionsPartitioner partitioner(24);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),     5 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 48 partitions
   {
-    grid::detail::partitioner::EqualRegionsPartitioner partitioner(g,48);
+    grid::detail::partitioner::EqualRegionsPartitioner partitioner(48);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),     7 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 96 partitions
   {
-    grid::detail::partitioner::EqualRegionsPartitioner partitioner(g,96);
+    grid::detail::partitioner::EqualRegionsPartitioner partitioner(96);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),    10 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );

@@ -28,6 +28,8 @@ namespace grid {
 
 class Distribution {
 
+  friend class Partitioner;
+
 public:
 
   class impl_t: public eckit::Owned {
@@ -36,7 +38,7 @@ public:
 
     impl_t( const Grid& );
 
-    impl_t( const Partitioner& );
+    impl_t( const Grid&, const Partitioner& );
 
     impl_t( size_t npts, int partition[], int part0 = 0 );
 
@@ -72,7 +74,7 @@ public:
     size_t min_pts() const {
         return min_pts_;
     }
-    
+
     void print( std::ostream& ) const;
 
   private:
@@ -93,7 +95,7 @@ public:
 
     Distribution( const Grid& );
 
-    Distribution( const Partitioner& );
+    Distribution( const Grid&, const Partitioner& );
 
     Distribution( size_t npts, int partition[], int part0 = 0 );
 

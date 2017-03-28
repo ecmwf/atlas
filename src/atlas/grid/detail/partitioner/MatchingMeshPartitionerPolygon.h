@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "PartitionerFromPrePartitionedMesh.h"
+#include "MatchingMeshPartitioner.h"
 
 namespace atlas {
 namespace grid {
@@ -19,15 +19,19 @@ namespace detail {
 namespace partitioner {
 
 
-class PrePartitionedPolygon : public PartitionerFromPrePartitionedMesh {
+class MatchingMeshPartitionerPolygon : public MatchingMeshPartitioner {
+
 public:
 
-    PrePartitionedPolygon(const Grid& grid) : PartitionerFromPrePartitionedMesh(grid) {}
-    PrePartitionedPolygon(const Grid& grid, const size_t nb_partitions) : PartitionerFromPrePartitionedMesh(grid, nb_partitions) {}
+  static std::string static_type() {return "polygon";}
 
-    PrePartitionedPolygon(const Grid& grid,
-      const mesh::Mesh& mesh ) :
-      PartitionerFromPrePartitionedMesh(grid,mesh) {}
+public:
+
+    MatchingMeshPartitionerPolygon() : MatchingMeshPartitioner() {}
+    MatchingMeshPartitionerPolygon(const size_t nb_partitions) : MatchingMeshPartitioner(nb_partitions) {}
+
+    MatchingMeshPartitionerPolygon( const mesh::Mesh& mesh ) :
+      MatchingMeshPartitioner(mesh) {}
 
     /**
      * @brief Create a GridDistribution, placing nodes in the same partitions as a
@@ -37,7 +41,7 @@ public:
      * @param meshSource mesh already partitioned
      * @return grid partitioner
      */
-    void partition( int part[] ) const;
+    void partition( const Grid&, int part[] ) const;
 
 };
 

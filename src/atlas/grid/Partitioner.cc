@@ -9,6 +9,7 @@
  */
 
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/detail/partitioner/Partitioner.h"
 
 namespace atlas {
 namespace grid {
@@ -23,14 +24,28 @@ Partitioner::Partitioner( const detail::partitioner::Partitioner* partitioner ):
     partitioner_( partitioner ) {
 }
 
-Partitioner::Partitioner( const std::string& type, const Grid& grid ):
-    partitioner_( Factory::build(type,grid) ) {
+Partitioner::Partitioner( const std::string& type ):
+    partitioner_( Factory::build(type) ) {
 }
 
-Partitioner::Partitioner( const std::string& type, const Grid& grid, const size_t nb_partitions):
-    partitioner_( Factory::build(type,grid,nb_partitions) ) {
+Partitioner::Partitioner( const std::string& type, const size_t nb_partitions):
+    partitioner_( Factory::build(type,nb_partitions) ) {
 }
 
+MatchingMeshPartitioner::MatchingMeshPartitioner() :
+    Partitioner(){
+}
+
+grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const mesh::Mesh& mesh, const Partitioner::Config& config ) {
+    std::string type;
+    if( not config.get("type",type) )
+      type = "polygon";
+    return MatchedPartitionerFactory::build(type,mesh);
+}
+
+MatchingMeshPartitioner::MatchingMeshPartitioner( const mesh::Mesh& mesh, const Config& config ) :
+    Partitioner( matching_mesh_partititioner(mesh,config) ) {
+}
 
 } // namespace grid
 } // namespace atlas

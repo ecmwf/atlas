@@ -26,10 +26,9 @@
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
 #endif
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
-#include "atlas/grid/detail/partitioner/PartitionerFromPrePartitionedMesh.h"
-#include "atlas/grid/detail/partitioner/PrePartitionedPolygon.h"
-#include "atlas/grid/detail/partitioner/PrePartitionedBruteForce.h"
-
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerPolygon.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
 
 namespace {
 
@@ -50,10 +49,10 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-Partitioner::Partitioner(const Grid& grid): nb_partitions_(parallel::mpi::comm().size()), grid_(grid) {
+Partitioner::Partitioner(): nb_partitions_(parallel::mpi::comm().size()) {
 }
 
-Partitioner::Partitioner(const Grid& grid, const size_t nb_partitions): nb_partitions_(nb_partitions), grid_(grid) {
+Partitioner::Partitioner(const size_t nb_partitions): nb_partitions_(nb_partitions) {
 }
 
 Partitioner::~Partitioner() {
@@ -63,8 +62,8 @@ size_t Partitioner::nb_partitions() const {
     return nb_partitions_;
 }
 
-Distribution Partitioner::distribution() const {
-    return Distribution( atlas::grid::Partitioner(this) );
+Distribution Partitioner::partition(const Grid& grid) const {
+    return Distribution( grid, atlas::grid::Partitioner(this) );
 }
 
 
@@ -131,7 +130,7 @@ bool PartitionerFactory::has(const std::string& name) {
 
 
 
-Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid) {
+Partitioner* PartitionerFactory::build(const std::string& name) {
 
     pthread_once(&once, init);
 
@@ -151,10 +150,10 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
         throw eckit::SeriousBug(std::string("No PartitionerFactory called ") + name);
     }
 
-    return (*j).second->make(grid);
+    return (*j).second->make();
 }
 
-Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid, const size_t nb_partitions ) {
+Partitioner* PartitionerFactory::build(const std::string& name, const size_t nb_partitions ) {
 
     pthread_once(&once, init);
 
@@ -174,7 +173,7 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
         throw eckit::SeriousBug(std::string("No PartitionerFactory called ") + name);
     }
 
-    return (*j).second->make(grid, nb_partitions);
+    return (*j).second->make(nb_partitions);
 }
 
 } // namespace partitioner
@@ -182,13 +181,12 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
 
 grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build(
     const std::string& type,
-    const grid::Grid& grid,
     const mesh::Mesh& partitioned ) {
 
-    if( type == "PrePartitionedPolygon" ) {
-        return new grid::detail::partitioner::PrePartitionedPolygon(grid,partitioned);
-    } else if ( type == "PrePartitionedBruteForce" ) {
-        return new grid::detail::partitioner::PrePartitionedBruteForce(grid,partitioned);
+    if( type == grid::detail::partitioner::MatchingMeshPartitionerPolygon::static_type() ) {
+        return new grid::detail::partitioner::MatchingMeshPartitionerPolygon(partitioned);
+    } else if ( type == grid::detail::partitioner::MatchingMeshPartitionerBruteForce::static_type() ) {
+        return new grid::detail::partitioner::MatchingMeshPartitionerBruteForce(partitioned);
     } else {
         NOTIMP;
     }

@@ -12,12 +12,12 @@ class CheckerboardPartitioner: public Partitioner {
 
 public:
 
-    CheckerboardPartitioner(const Grid&);
+    CheckerboardPartitioner();
 
-    CheckerboardPartitioner(const Grid&, int N);    // N is the number of parts (aka MPI tasks)
+    CheckerboardPartitioner(int N);    // N is the number of parts (aka MPI tasks)
 
-    CheckerboardPartitioner(const Grid&, int N, int nbands);
-    CheckerboardPartitioner(const Grid&, int N, int nbands, bool checkerboard);
+    CheckerboardPartitioner(int N, int nbands);
+    CheckerboardPartitioner(int N, int nbands, bool checkerboard);
 
 public:
 
@@ -32,19 +32,24 @@ public:
 
 private:
 
+    struct Checkerboard {
+      size_t nbands;  // number of bands
+      size_t nx, ny;  // grid dimensions
+    };
+
+    Checkerboard checkerboard(const Grid&) const;
+
     // Doesn't matter if nodes[] is in degrees or radians, as a sorting
     // algorithm is used internally
-    void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
+    void partition( const Checkerboard& cb, int nb_nodes, NodeInt nodes[], int part[]) const;
 
-    void configure_defaults(const Grid&);
+    virtual void partition( const Grid&, int part[] ) const;
 
-    virtual void partition( int part[] ) const;
+    void check() const;
 
 private:
 
-    size_t nparts_;  // number of parts
     size_t nbands_;  // number of bands
-    size_t nx_, ny_;  // grid dimensions
     bool checkerboard_;  // exact (true) or approximate (false) checkerboard
 
 };

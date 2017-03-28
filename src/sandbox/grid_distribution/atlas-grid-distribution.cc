@@ -114,8 +114,8 @@ void Tool::execute(const Args& args)
 
   if( parallel::mpi::comm().rank() == 0 ) {
 
-    grid::Partitioner partitioner(partitioner_type,grid,N);
-    grid::Distribution distribution = partitioner.distribution();
+    grid::Partitioner partitioner(partitioner_type,N);
+    grid::Distribution distribution = partitioner.partition(grid);
 
     Log::info() << distribution << std::endl;
 

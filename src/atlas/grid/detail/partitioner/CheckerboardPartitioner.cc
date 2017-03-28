@@ -6,7 +6,6 @@
 #include <algorithm>
 #include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
 #include "atlas/util/MicroDeg.h"
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/grid/Grid.h"
 
@@ -17,84 +16,61 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-CheckerboardPartitioner::CheckerboardPartitioner(const Grid& grid) :
-  Partitioner(grid,parallel::mpi::comm().size())
-{
-  // defaults
-  configure_defaults(grid);
-
-  // perform check
-  if (checkerboard_ && nparts_%nbands_!=0) throw eckit::BadValue("number of bands doesn't divide number of partitions",Here());
-
+CheckerboardPartitioner::CheckerboardPartitioner() :
+  Partitioner() {
+  nbands_ = 0; // to be computed later
+  checkerboard_ = true; // default
 }
 
-CheckerboardPartitioner::CheckerboardPartitioner(const Grid& grid, int N) :
-  Partitioner(grid,N)
-{
-  // defaults
-  configure_defaults(grid);
-
-  // arguments
-  nparts_=N;
-
-  // perform check
-  if (checkerboard_ && nparts_%nbands_!=0) throw eckit::BadValue("number of bands doesn't divide number of partitions",Here());
+CheckerboardPartitioner::CheckerboardPartitioner(int N) :
+  Partitioner(N) {
+  nbands_ = 0; // to be computed later
+  checkerboard_ = true; // default
 }
 
-CheckerboardPartitioner::CheckerboardPartitioner(const Grid& grid, int N, int nbands) :
-  Partitioner(grid,N)
-{
-  // defaults
-  configure_defaults(grid);
-
-  // arguments
-  nparts_=N;
-  nbands_=nbands;
-
-  // perform check
-  if (checkerboard_ && nparts_%nbands_!=0) throw eckit::BadValue("number of bands doesn't divide number of partitions",Here());
+CheckerboardPartitioner::CheckerboardPartitioner(int N, int nbands) :
+  Partitioner(N) {
+  nbands_ = nbands;
+  checkerboard_ = true; // default
 }
 
-CheckerboardPartitioner::CheckerboardPartitioner(const Grid& grid, int N, int nbands, bool checkerboard) :
-  Partitioner(grid,N)
-{
-  // defaults
-  configure_defaults(grid);
-
-  // arguments
-  nparts_=N;
-  nbands_=nbands;
-  checkerboard_=checkerboard;
-
-  // perform check
-  if (checkerboard_ && nparts_%nbands_!=0) throw eckit::BadValue("number of bands doesn't divide number of partitions",Here());
+CheckerboardPartitioner::CheckerboardPartitioner(int N, int nbands, bool checkerboard) :
+  Partitioner(N) {
+  nbands_ = nbands;
+  checkerboard_ = checkerboard;
 }
 
-void CheckerboardPartitioner::configure_defaults(const Grid& grid) {
-  // default number of parts
-  nparts_=parallel::mpi::comm().size();
+CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard(const Grid& grid) const {
 
   // grid dimensions
   const RegularGrid rg(grid);
   if ( !rg )
     throw eckit::BadValue("Checkerboard Partitioner only works for Regular grids.",Here());
 
-  nx_=rg.nx();
-  ny_=rg.ny();
+  Checkerboard cb;
 
-  // default number of bands
-  double zz=sqrt( (double) (nparts_*ny_)/nx_ );    // aim at +/-square regions
-  nbands_=(int) zz+0.5;
-  if ( nbands_ <1 ) nbands_=1;              // at least one band
-  if ( nbands_ > nparts_ ) nbands_=nparts_;  // not more bands than procs
+  cb.nx=rg.nx();
+  cb.ny=rg.ny();
+  size_t nparts = nb_partitions();
 
-  // default checkerboard
-  checkerboard_=true;
+  if( nbands_ > 0 ) {
+    cb.nbands = nbands_;
+  } else {
+    // default number of bands
+    double zz=std::sqrt( (double) (nparts*cb.ny)/cb.nx );    // aim at +/-square regions
+    cb.nbands=(int) zz+0.5;
+    if ( cb.nbands < 1      ) cb.nbands = 1;       // at least one band
+    if ( cb.nbands > nparts ) cb.nbands = nparts;  // not more bands than procs
 
-  // true checkerboard means nbands must divide nparts
-  if (checkerboard_) {
-    while ( nparts_ % nbands_ !=0 ) nbands_--;
+    // true checkerboard means nbands must divide nparts
+    if (checkerboard_) {
+      while ( nparts % cb.nbands !=0 ) cb.nbands--;
+    }
   }
+  if (checkerboard_ && nparts%cb.nbands!=0)
+    throw eckit::BadValue("number of bands doesn't divide number of partitions",Here());
+
+  return cb;
 }
 
 bool compare_Y_X(const CheckerboardPartitioner::NodeInt& node1, const CheckerboardPartitioner::NodeInt& node2)
@@ -113,11 +89,12 @@ bool compare_X_Y(const CheckerboardPartitioner::NodeInt& node1, const Checkerboa
   return false;
 }
 
-void CheckerboardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) const
+void CheckerboardPartitioner::partition( const Checkerboard& cb, int nb_nodes, NodeInt nodes[], int part[]) const
 {
-
-  size_t nparts = nparts_;
-  size_t nbands = nbands_;
+  size_t nparts = nb_partitions();
+  size_t nbands = cb.nbands;
+  size_t nx = cb.nx;
+  size_t ny = cb.ny;
   size_t remainder;
 
   /*
@@ -157,14 +134,14 @@ void CheckerboardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
     for (size_t iband=0;iband<remainder;iband++) ++ngpb[iband];
 
   } else {
-    remainder=ny_;
+    remainder=ny;
     for (size_t iband=0;iband<nbands;iband++)
     {
-      ngpb[iband]=nx_*(( ny_*npartsb[iband])/nparts);
-      remainder-=ngpb[iband]/nx_;
+      ngpb[iband]=nx*(( ny*npartsb[iband])/nparts);
+      remainder-=ngpb[iband]/nx;
     }
     // distribute remaining rows over first bands
-    for (size_t iband=0;iband<remainder;iband++) ngpb[iband]+=nx_;
+    for (size_t iband=0;iband<remainder;iband++) ngpb[iband]+=nx;
   }
 
   //for (int iband=0;iband<nbands; iband++ ) std::cout << "band " << iband << " : nparts = " << npartsb[iband] << "; ngpb = " << ngpb[iband] << std::endl;
@@ -215,28 +192,27 @@ void CheckerboardPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
       offset+=ngpp[ipart];
       ++jpart;
     }
-
-    //if (iband>0) {  sleep(eckit::mpi::size()-eckit::mpi::rank()); ASSERT(0);}
-
   }
 
 }
 
-void CheckerboardPartitioner::partition(int part[]) const
+void CheckerboardPartitioner::partition( const Grid& grid, int part[]) const
 {
-  if( nparts_ == 1 ) // trivial solution, so much faster
+  if( nb_partitions() == 1 ) // trivial solution, so much faster
   {
-    for(size_t j = 0; j < grid().size(); ++j)
+    for(size_t j = 0; j < grid.size(); ++j)
       part[j] = 0;
   }
   else
   {
-    std::vector<NodeInt> nodes(grid().size());
+    auto cb = checkerboard(grid);
+
+    std::vector<NodeInt> nodes(grid.size());
     int n(0);
 
-    for(size_t iy = 0; iy < ny_; ++iy)
+    for(size_t iy = 0; iy < cb.ny; ++iy)
     {
-      for(size_t ix = 0; ix < nx_; ++ix)
+      for(size_t ix = 0; ix < cb.nx; ++ix)
       {
         nodes[n].x = ix;
         nodes[n].y = iy;
@@ -245,7 +221,7 @@ void CheckerboardPartitioner::partition(int part[]) const
       }
     }
 
-    partition(grid().size(), nodes.data(), part);
+    partition( cb, grid.size(), nodes.data(), part);
   }
 }
 

@@ -63,17 +63,17 @@ void PartitionedMesh::partition(const grid::Grid& grid) {
 
 
     Generator::Ptr meshgen(meshgenerator::MeshGeneratorFactory::build(optionGenerator_, generatorParams_));
-    mesh_.reset(meshgen->generate(grid, partitioner_.distribution()));
+    mesh_.reset(meshgen->generate(grid, partitioner_.partition(grid)));
 }
 
 
 void PartitionedMesh::partition(const grid::Grid& grid, const PartitionedMesh& other) {
     eckit::TraceTimer<Atlas> tim("PartitionedMesh::partition(other)");
 
-    partitioner_ = Partitioner( grid::MatchedPartitionerFactory::build(optionPartitioner_,grid, *other.mesh_));
+    partitioner_ = grid::MatchingMeshPartitioner( *other.mesh_, util::Config("type",optionPartitioner_) );
 
     Generator::Ptr meshgen(meshgenerator::MeshGeneratorFactory::build(optionGenerator_, generatorParams_));
-    mesh_.reset(meshgen->generate(grid, partitioner_.distribution() ));
+    mesh_.reset(meshgen->generate(grid, partitioner_.partition(grid) ));
 }
 
 

@@ -75,9 +75,9 @@ class EqualRegionsPartitioner: public Partitioner {
 
 public:
 
-    EqualRegionsPartitioner(const Grid&);
+    EqualRegionsPartitioner();
 
-    EqualRegionsPartitioner(const Grid&, int N);
+    EqualRegionsPartitioner(int N);
 
     void where(int partition, int& band, int& sector) const;
     int nb_bands() const {
@@ -87,7 +87,7 @@ public:
         return sectors_[band];
     }
 
-    virtual void partition( int part[] ) const;
+    virtual void partition( const Grid&, int part[] ) const;
 
 public:
 

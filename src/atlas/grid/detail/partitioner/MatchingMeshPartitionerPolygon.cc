@@ -9,7 +9,7 @@
  */
 
 
-#include "PrePartitionedPolygon.h"
+#include "MatchingMeshPartitionerPolygon.h"
 
 #include <set>
 #include <utility>
@@ -38,7 +38,7 @@ namespace partitioner {
 namespace {
 
 
-PartitionerBuilder<PrePartitionedPolygon> __builder("PrePartitionedPolygon");
+PartitionerBuilder<MatchingMeshPartitionerPolygon> __builder("polygon");
 
 
 double dot_sign(
@@ -164,7 +164,7 @@ struct Poly : std::vector< size_t > {
 }  // (anonymous namespace)
 
 
-void PrePartitionedPolygon::partition( int node_partition[] ) const {
+void MatchingMeshPartitionerPolygon::partition( const Grid& grid, int node_partition[] ) const {
     eckit::mpi::Comm& comm = eckit::mpi::comm();
     const int mpi_rank = int(comm.rank());
     const int mpi_size = int(comm.size());
@@ -238,28 +238,28 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
     // Partition the target grid nodes
     // - use a polygon bounding box to quickly discard points,
     // - except when that is above/below bounding box but poles should be included
-    for( size_t j=0; j<grid().size(); ++j ) {
+    for( size_t j=0; j<grid.size(); ++j ) {
       node_partition[j] = -1;
     }
 
     // THIS IS A DIRTY HACK!
-    ASSERT( grid().domain().global() );
+    ASSERT( grid.domain().global() );
     bool includes_north_pole = (mpi_rank == 0);
     bool includes_south_pole = (mpi_rank == (int(comm.size()) - 1 ));
 
     std::vector< PointLonLat > lonlat_tgt_pts;
-    lonlat_tgt_pts.reserve(grid().size());
+    lonlat_tgt_pts.reserve(grid.size());
 
-    for( PointXY Pxy : grid() ) {
-      lonlat_tgt_pts.push_back( grid().projection().lonlat(Pxy) );
+    for( PointXY Pxy : grid ) {
+      lonlat_tgt_pts.push_back( grid.projection().lonlat(Pxy) );
     }
 
     {
-        std::stringstream msg; msg << "Partitioning " << eckit::BigNum(grid().size())
+        std::stringstream msg; msg << "Partitioning " << eckit::BigNum(grid.size())
           << " target grid points... ";
         Log::debug<Atlas>() << msg.str() << std::endl;
         eckit::TraceTimer<Atlas> timer(msg.str()+"done");
-        for (size_t i=0; i<grid().size(); ++i) {
+        for (size_t i=0; i<grid.size(); ++i) {
 
             if (i && (i % 1000 == 0)) {
                 double rate = i / timer.elapsed();
@@ -295,8 +295,8 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
 
 
     // Synchronize the partitioning and return a grid partitioner
-    comm.allReduceInPlace(node_partition, grid().size(), eckit::mpi::Operation::MAX);
-    const int min = *std::min_element(node_partition, node_partition+grid().size());
+    comm.allReduceInPlace(node_partition, grid.size(), eckit::mpi::Operation::MAX);
+    const int min = *std::min_element(node_partition, node_partition+grid.size());
 
 
     /// For debugging purposes at the moment. To be made available later, when the Mesh
@@ -304,11 +304,11 @@ void PrePartitionedPolygon::partition( int node_partition[] ) const {
     if( eckit::Resource<bool>("--polygons",false) ) {
 
     std::vector<double> x,y, xlost,ylost;
-    xlost.reserve(grid().size());
-    ylost.reserve(grid().size());
-    x.reserve(grid().size());
-    y.reserve(grid().size());
-    for (size_t i=0; i<grid().size(); ++i) {
+    xlost.reserve(grid.size());
+    ylost.reserve(grid.size());
+    x.reserve(grid.size());
+    y.reserve(grid.size());
+    for (size_t i=0; i<grid.size(); ++i) {
         if (node_partition[i] == mpi_rank) {
             x.push_back(lonlat_tgt_pts[i].lon());
             y.push_back(lonlat_tgt_pts[i].lat());

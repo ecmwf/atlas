@@ -85,11 +85,11 @@ grid/detail/partitioner/EqualRegionsPartitioner.cc
 grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
-grid/detail/partitioner/PartitionerFromPrePartitionedMesh.h
-grid/detail/partitioner/PrePartitionedBruteForce.cc
-grid/detail/partitioner/PrePartitionedBruteForce.h
-grid/detail/partitioner/PrePartitionedPolygon.cc
-grid/detail/partitioner/PrePartitionedPolygon.h
+grid/detail/partitioner/MatchingMeshPartitioner.h
+grid/detail/partitioner/MatchingMeshPartitionerPolygon.h
+grid/detail/partitioner/MatchingMeshPartitionerPolygon.cc
+grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
+grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
 

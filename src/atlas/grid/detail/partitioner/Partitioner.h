@@ -29,24 +29,19 @@ public:
 
 public:
 
-    Partitioner(const Grid& grid);
-    Partitioner(const Grid& grid, const size_t nb_partitions);
+    Partitioner();
+    Partitioner(const size_t nb_partitions);
     virtual ~Partitioner();
 
-    virtual void partition( int part[] ) const = 0;
+    virtual void partition(const Grid& grid, int part[] ) const = 0;
 
-    virtual Distribution distribution() const;
+    virtual Distribution partition(const Grid& grid) const;
 
     size_t nb_partitions() const;
-
-    const Grid& grid() const {
-        return grid_;
-    }
 
 private:
 
     size_t nb_partitions_;
-    Grid grid_;
 };
 
 
@@ -64,8 +59,8 @@ public:
      * \brief build Partitioner with factory key, constructor arguments
      * \return Partitioner
      */
-    static Partitioner* build(const std::string&, const Grid& grid);
-    static Partitioner* build(const std::string&, const Grid& grid, const size_t nb_partitions);
+    static Partitioner* build(const std::string&);
+    static Partitioner* build(const std::string&, const size_t nb_partitions);
 
     /*!
      * \brief list all registered partioner builders
@@ -76,8 +71,8 @@ public:
 private:
 
     std::string name_;
-    virtual Partitioner* make(const Grid& grid) = 0 ;
-    virtual Partitioner* make(const Grid& grid, const size_t nb_partitions) = 0 ;
+    virtual Partitioner* make() = 0 ;
+    virtual Partitioner* make(const size_t nb_partitions) = 0 ;
 
 protected:
 
@@ -90,12 +85,12 @@ protected:
 template<class T>
 class PartitionerBuilder : public PartitionerFactory {
 
-    virtual Partitioner* make(const Grid& grid) {
-        return new T(grid);
+    virtual Partitioner* make() {
+        return new T();
     }
 
-    virtual Partitioner* make(const Grid& grid, const size_t nb_partitions) {
-        return new T(grid, nb_partitions);
+    virtual Partitioner* make(const size_t nb_partitions) {
+        return new T(nb_partitions);
     }
 
 public:
@@ -113,7 +108,6 @@ public:
 
     static grid::detail::partitioner::Partitioner* build(
       const std::string& type,
-      const grid::Grid& grid,
       const mesh::Mesh& partitioned );
 };
 

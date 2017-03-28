@@ -11,6 +11,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
+#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -19,61 +20,65 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-TransPartitioner::TransPartitioner(const Grid& grid,
-                                   const trans::Trans& trans) :
-    Partitioner(grid, trans.nproc()),
-    t_( const_cast<trans::Trans*>(&trans)), owned_(false) {
-    ASSERT( t_ != NULL );
-}
-
-TransPartitioner::TransPartitioner(const Grid& grid) :
-    Partitioner(grid),
-    t_( new trans::Trans(grid,0) ), owned_(true) {
-    ASSERT( t_ != NULL );
-    ASSERT( size_t(t_->nproc()) == nb_partitions() );
-}
-
-TransPartitioner::TransPartitioner(const Grid& grid,
-                                   const size_t nb_partitions) :
-    Partitioner(grid, nb_partitions),
-    t_( new trans::Trans(grid,0) ), owned_(true) {
-    ASSERT( t_ != NULL );
-    if( nb_partitions != size_t(t_->nproc()) ) {
+trans::Trans* TransPartitioner::new_trans( const Grid& grid ) const {
+    auto t = new trans::Trans(grid,0);
+    if( nb_partitions() != size_t(t->nproc()) ) {
         std::stringstream msg;
-        msg << "Requested to partition grid with TransPartitioner in "<<nb_partitions<<" partitions, but "
-            "the internal Trans library could only be set-up for "<<t_->nproc()<< " partitions "
+        msg << "Requested to partition grid with TransPartitioner in "<<nb_partitions()<<" partitions, but "
+            "the internal Trans library could only be set-up for "<<t->nproc()<< " partitions "
             "(equal to number of MPI tasks in communicator).";
         throw eckit::BadParameter(msg.str(),Here());
+    }
+    return t;
+}
+
+TransPartitioner::TransPartitioner() :
+    Partitioner() {
+    EqualRegionsPartitioner eqreg(nb_partitions());
+    nbands_ = eqreg.nb_bands();
+    nregions_.resize(nbands_);
+    for( size_t b=0; b<nbands_; ++b ) {
+      nregions_[b] = eqreg.nb_regions(b);
+    }
+}
+
+TransPartitioner::TransPartitioner(const size_t N) :
+    Partitioner(N) {
+    EqualRegionsPartitioner eqreg(nb_partitions());
+    nbands_ = eqreg.nb_bands();
+    nregions_.resize(nbands_);
+    for( size_t b=0; b<nbands_; ++b ) {
+      nregions_[b] = eqreg.nb_regions(b);
     }
 }
 
 TransPartitioner::~TransPartitioner() {
-    if( owned_ )
-        delete t_;
 }
 
-void TransPartitioner::partition(int part[]) const {
+void TransPartitioner::partition(const Grid& grid, int part[]) const {
 
-    StructuredGrid g(grid());
+    StructuredGrid g(grid);
     if( not g )
         throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 
+    eckit::ScopedPtr<trans::Trans> t ( new_trans(grid) );
+
     int nlonmax = g.nxmax();
 
-    array::ArrayView<int,1> nloen       = t_->nloen();
-    array::ArrayView<int,1> n_regions   = t_->n_regions();
-    array::ArrayView<int,1> nfrstlat    = t_->nfrstlat();
-    array::ArrayView<int,1> nlstlat     = t_->nlstlat();
-    array::ArrayView<int,1> nptrfrstlat = t_->nptrfrstlat();
-    array::ArrayView<int,2> nsta        = t_->nsta();
-    array::ArrayView<int,2> nonl        = t_->nonl();
+    array::ArrayView<int,1> nloen       = t->nloen();
+    array::ArrayView<int,1> n_regions   = t->n_regions();
+    array::ArrayView<int,1> nfrstlat    = t->nfrstlat();
+    array::ArrayView<int,1> nlstlat     = t->nlstlat();
+    array::ArrayView<int,1> nptrfrstlat = t->nptrfrstlat();
+    array::ArrayView<int,2> nsta        = t->nsta();
+    array::ArrayView<int,2> nonl        = t->nonl();
 
 
     int i(0);
     int maxind(0);
-    std::vector<int> iglobal(t_->ndgl()*nlonmax,-1);
+    std::vector<int> iglobal(t->ndgl()*nlonmax,-1);
 
-    for( int jgl=0; jgl<t_->ndgl(); ++jgl ) {
+    for( int jgl=0; jgl<t->ndgl(); ++jgl ) {
         for( int jl=0; jl<nloen[jgl]; ++jl ) {
             ++i;
             iglobal[jgl*nlonmax+jl] = i;
@@ -81,13 +86,13 @@ void TransPartitioner::partition(int part[]) const {
         }
     }
     int iproc(0);
-    for( int ja=0; ja<t_->n_regions_NS(); ++ja ) {
+    for( int ja=0; ja<t->n_regions_NS(); ++ja ) {
         for( int jb=0; jb<n_regions[ja]; ++jb ) {
             for( int jgl=nfrstlat[ja]-1; jgl<nlstlat[ja]; ++jgl ) {
                 int igl = nptrfrstlat[ja] + jgl - nfrstlat[ja];
                 for( int jl=nsta(jb,igl)-1; jl<nsta(jb,igl)+nonl(jb,igl)-1; ++jl ) {
                     size_t ind = iglobal[jgl*nlonmax+jl] - 1;
-                    if( ind >= grid().size() ) throw eckit::OutOfRange(ind,grid().size(),Here());
+                    if( ind >= grid.size() ) throw eckit::OutOfRange(ind,grid.size(),Here());
                     part[ind] = iproc;
                 }
             }
@@ -97,13 +102,11 @@ void TransPartitioner::partition(int part[]) const {
 }
 
 int TransPartitioner::nb_bands() const {
-    ASSERT( t_!= NULL );
-    return t_->n_regions_NS();
+    return nbands_;
 }
 
 int TransPartitioner::nb_regions(int b) const {
-    ASSERT( t_!= NULL );
-    return t_->n_regions()[b];
+    return nregions_[b];
 }
 
 } // namespace partitioner

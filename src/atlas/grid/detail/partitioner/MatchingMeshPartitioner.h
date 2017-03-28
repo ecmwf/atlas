@@ -33,18 +33,18 @@ namespace detail {
 namespace partitioner {
 
 
-class PartitionerFromPrePartitionedMesh : public Partitioner {
+class MatchingMeshPartitioner : public Partitioner {
 public:
 
-    PartitionerFromPrePartitionedMesh(const Grid& grid) : Partitioner(grid) { NOTIMP; }
-    PartitionerFromPrePartitionedMesh(const Grid& grid, const size_t nb_partitions) : Partitioner(grid, nb_partitions) { NOTIMP; }
+    MatchingMeshPartitioner() : Partitioner() { NOTIMP; }
+    MatchingMeshPartitioner(const size_t nb_partitions) : Partitioner(nb_partitions) { NOTIMP; }
 
-    PartitionerFromPrePartitionedMesh(const Grid& grid, const mesh::Mesh& mesh ) :
-      Partitioner(grid, mesh.nb_partitions()),
+    MatchingMeshPartitioner(const mesh::Mesh& mesh ) :
+      Partitioner(mesh.nb_partitions()),
       prePartitionedMesh_(&mesh) {
     }
 
-    virtual ~PartitionerFromPrePartitionedMesh() {}
+    virtual ~MatchingMeshPartitioner() {}
 
 protected:
 

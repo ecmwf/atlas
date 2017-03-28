@@ -53,7 +53,7 @@ public:
         add_option(new SimpleOption<bool>       ("source-mesh-generator-angle",       "source mesh generator angle option (default false)"));
         add_option(new SimpleOption<size_t>     ("source-mesh-halo",                  "source mesh halo size (default 0)"));
 
-        add_option(new SimpleOption<std::string>("target-mesh-partitioner",           "target mesh partitioner (PrePartitionedPolygon, PrePartitionedBruteForce)"));
+        add_option(new SimpleOption<std::string>("target-mesh-partitioner",           "target mesh partitioner (polygon, brute_force)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator",             "target mesh generator (default structured)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator-triangulate", "target mesh generator triangulate option (default false)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator-angle",       "target mesh generator angle option (default false)"));
@@ -119,7 +119,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     option = args.get("target-gridname", option)? option : "O32";
     atlas::grid::Grid tgt_grid(option);
     interpolation::PartitionedMesh tgt(
-                args.get("target-mesh-partitioner",           option)? option : "PrePartitionedPolygon",
+                args.get("target-mesh-partitioner",           option)? option : "polygon",
                 args.get("target-mesh-generator",             option)? option : "structured",
                 args.get("target-mesh-generator-triangulate", trigs)?  trigs  : false,
                 args.get("target-mesh-generator-angle",       angle)?  angle  : 0. );

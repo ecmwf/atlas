@@ -26,9 +26,9 @@ Distribution::impl_t::impl_t( const Grid& grid ) :
     min_pts_(grid.size()) {
 }
 
-Distribution::impl_t::impl_t( const Partitioner& partitioner ) {
-    part_.resize(partitioner.grid().size());
-    partitioner.partition(part_.data());
+Distribution::impl_t::impl_t( const Grid& grid, const Partitioner& partitioner ) {
+    part_.resize(grid.size());
+    partitioner.partition(grid,part_.data());
     nb_partitions_ = partitioner.nb_partitions();
     nb_pts_.resize(nb_partitions_,0);
     for(size_t j = 0; j < part_.size(); ++j)
@@ -82,8 +82,8 @@ Distribution::Distribution( const Grid& grid ):
     impl_( new impl_t(grid) ) {
 }
 
-Distribution::Distribution(const Partitioner& partitioner):
-    impl_( new impl_t(partitioner) ) {
+Distribution::Distribution( const Grid& grid, const Partitioner& partitioner):
+    impl_( new impl_t(grid, partitioner) ) {
 }
 
 Distribution::Distribution(size_t npts, int part[], int part0):

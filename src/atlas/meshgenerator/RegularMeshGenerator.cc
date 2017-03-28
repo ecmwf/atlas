@@ -114,8 +114,8 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
   //if ( rg->nlat()%2 == 1 ) partitioner_factory = "equal_regions"; // Odd number of latitudes
   //if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory = "equal_regions"; // Only one part --> Trans is slower
 
-  grid::Partitioner  partitioner( partitioner_type, grid, nb_parts );
-  grid::Distribution distribution( partitioner.distribution() );
+  grid::Partitioner  partitioner( partitioner_type, nb_parts );
+  grid::Distribution distribution( partitioner.partition(grid) );
   generate( grid, distribution, mesh );
 }
 

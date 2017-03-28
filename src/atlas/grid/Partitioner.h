@@ -36,19 +36,36 @@ public:
 
     Partitioner() {}
     Partitioner( const detail::partitioner::Partitioner* );
-    Partitioner( const std::string& type, const Grid& );
-    Partitioner( const std::string& type, const Grid&, const size_t nb_partitions);
+    Partitioner( const std::string& type );
+    Partitioner( const std::string& type, const size_t nb_partitions );
 
-    void partition( int part[] ) const { partitioner_->partition(part); }
+    void partition( const Grid& grid, int part[] ) const { partitioner_->partition(grid,part); }
 
-    Distribution distribution() const { return partitioner_->distribution(); }
+    Distribution partition( const Grid& grid ) const { return Distribution(grid,*this); }
 
     size_t nb_partitions() const { return partitioner_->nb_partitions(); }
-    const Grid& grid() const { return partitioner_->grid(); }
 
 private:
 
     eckit::SharedPtr<const detail::partitioner::Partitioner> partitioner_;
+};
+
+// ------------------------------------------------------------------
+
+class MatchingMeshPartitioner: public Partitioner {
+
+public:
+
+  using Config = eckit::Parametrisation;
+
+public:
+
+  static bool exists(const std::string& type);
+
+public:
+
+    MatchingMeshPartitioner();
+    MatchingMeshPartitioner( const mesh::Mesh& mesh, const Config& config );
 };
 
 // ------------------------------------------------------------------

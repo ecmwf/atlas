@@ -9,7 +9,7 @@
  */
 
 
-#include "PrePartitionedBruteForce.h"
+#include "MatchingMeshPartitionerBruteForce.h"
 
 #include <vector>
 #include "eckit/geometry/Point2.h"
@@ -34,7 +34,7 @@ namespace partitioner {
 namespace {
 
 
-PartitionerBuilder<PrePartitionedBruteForce> __builder("PrePartitionedBruteForce");
+PartitionerBuilder<MatchingMeshPartitionerBruteForce> __builder("brute_force");
 
 
 double dot_sign(
@@ -91,7 +91,7 @@ typedef eckit::geometry::Point2 point_t;
 
 }  // (anonymous namespace)
 
-void PrePartitionedBruteForce::partition( int node_partition[] ) const {
+void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_partition[] ) const {
 
 
   eckit::mpi::Comm& comm = eckit::mpi::comm();
@@ -116,26 +116,26 @@ void PrePartitionedBruteForce::partition( int node_partition[] ) const {
   // - except when that is above/below bounding box but poles should be included
   // std::vector<int> node_partition(grid().npts(), -1);
 
-  for( size_t j=0; j<grid().size(); ++j )
+  for( size_t j=0; j<grid.size(); ++j )
     node_partition[j] = -1;
 
 
   // THIS IS A DIRTY HACK!
-  ASSERT( grid().domain().global() );
+  ASSERT( grid.domain().global() );
   bool includes_north_pole = (mpi_rank == 0);
   bool includes_south_pole = (mpi_rank == (int(comm.size()) - 1 ));
 
 
   std::vector< PointLonLat > lonlat_tgt_pts;
-  lonlat_tgt_pts.reserve(grid().size());
+  lonlat_tgt_pts.reserve(grid.size());
 
-  for( PointXY Pxy : grid() ) {
-    lonlat_tgt_pts.push_back( grid().projection().lonlat(Pxy) );
+  for( PointXY Pxy : grid ) {
+    lonlat_tgt_pts.push_back( grid.projection().lonlat(Pxy) );
   }
 
   {
       eckit::TraceTimer<Atlas> timer("Partitioning target grid...");
-      for (size_t i=0; i<grid().size(); ++i) {
+      for (size_t i=0; i<grid.size(); ++i) {
 
           if (i && (i % 1000 == 0)) {
               double rate = i / timer.elapsed();
@@ -196,8 +196,8 @@ void PrePartitionedBruteForce::partition( int node_partition[] ) const {
 
 
   // Synchronize the partitioning and return a grid partitioner
-  comm.allReduceInPlace(node_partition, grid().size(), eckit::mpi::Operation::MAX);
-  const int min = *std::min_element(node_partition, node_partition+grid().size());
+  comm.allReduceInPlace(node_partition, grid.size(), eckit::mpi::Operation::MAX);
+  const int min = *std::min_element(node_partition, node_partition+grid.size());
   if (min<0) {
       throw eckit::SeriousBug("Could not find partition for input node (partitionedMesh does not contain all points of gridToDistribute)", Here());
   }

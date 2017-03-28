@@ -17,7 +17,6 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/util/MicroDeg.h"
-#include "atlas/parallel/mpi/mpi.h"
 
 using atlas::util::microdeg;
 
@@ -361,9 +360,9 @@ void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[
     ymax[N-1]=0.5*M_PI-s_cap[s_cap.size()-2];
 }
 
-EqualRegionsPartitioner::EqualRegionsPartitioner(const Grid& grid) :
-    Partitioner(grid,parallel::mpi::comm().size()),
-    N_(parallel::mpi::comm().size()) {
+EqualRegionsPartitioner::EqualRegionsPartitioner() :
+    Partitioner(),
+    N_(nb_partitions()) {
     std::vector<double> s_cap;
     eq_caps(N_, sectors_, s_cap);
     bands_.resize(s_cap.size());
@@ -372,8 +371,8 @@ EqualRegionsPartitioner::EqualRegionsPartitioner(const Grid& grid) :
     }
 }
 
-EqualRegionsPartitioner::EqualRegionsPartitioner(const Grid& grid, int N) :
-    Partitioner(grid,N),
+EqualRegionsPartitioner::EqualRegionsPartitioner(int N) :
+    Partitioner(N),
     N_(N) {
     std::vector<double> s_cap;
     eq_caps(N_, sectors_, s_cap);
@@ -428,7 +427,7 @@ bool compare_WE_NS(const EqualRegionsPartitioner::NodeInt& node1, const EqualReg
     return false;
 }
 
-void EqualRegionsPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) const {
+void EqualRegionsPartitioner::partition( int nb_nodes, NodeInt nodes[], int part[] ) const {
     // std::clock_t init, final;
     // init=std::clock();
     // std::cout << "partition start (" << nb_nodes << " points)" << std::endl;
@@ -494,16 +493,16 @@ void EqualRegionsPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
     // std::cout << "partition stop (took " << (double)final / ((double)CLOCKS_PER_SEC) << "s)" << std::endl;
 }
 
-void EqualRegionsPartitioner::partition(int part[]) const {
+void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
     if( N_ == 1 ) { // trivial solution, so much faster
-        for(size_t j = 0; j < grid().size(); ++j)
+        for(size_t j = 0; j < grid.size(); ++j)
             part[j] = 0;
     } else {
-        std::vector<NodeInt> nodes(grid().size());
+        std::vector<NodeInt> nodes(grid.size());
         int n(0);
 
-        ASSERT( grid().projection().units() == "degrees" );
-        if( auto reduced_grid = StructuredGrid(grid()) ) {
+        ASSERT( grid.projection().units() == "degrees" );
+        if( auto reduced_grid = StructuredGrid(grid) ) {
             for(size_t jlat = 0; jlat < reduced_grid.ny(); ++jlat) {
                 for(size_t jlon = 0; jlon < reduced_grid.nx(jlat); ++jlon) {
                     nodes[n].x = microdeg(reduced_grid.x(jlon,jlat));
@@ -517,7 +516,7 @@ void EqualRegionsPartitioner::partition(int part[]) const {
             // Grid::Iterator iterator = grid().iterator();
             // PointXY point;
             // while( iterator.next(point) ) {
-            for( PointXY point : grid() ) {
+            for( PointXY point : grid ) {
               nodes[n].x = microdeg(point.x());
               nodes[n].y = microdeg(point.y());
               nodes[n].n = n;
@@ -532,7 +531,7 @@ void EqualRegionsPartitioner::partition(int part[]) const {
 //                ++n;
 //            }
         }
-        partition(grid().size(), nodes.data(), part);
+        partition(grid.size(), nodes.data(), part);
     }
 }
 

@@ -36,20 +36,15 @@ class TransPartitioner: public Partitioner {
 public:
 
     /// @brief Constructor
-    TransPartitioner(const Grid& grid,
-                     const trans::Trans& trans);
-
-    /// @brief Constructor
     /// This constructor allocates a new Trans, but without the computations
     /// of the spectral coefficients (LDGRIDONLY=TRUE)
-    TransPartitioner( const Grid& grid );
+    TransPartitioner();
 
-    TransPartitioner(const Grid& grid,
-                     const size_t nb_partitions );
+    TransPartitioner(const size_t nb_partitions );
 
     virtual ~TransPartitioner();
 
-    virtual void partition(int part[]) const;
+    virtual void partition(const Grid&, int part[]) const;
 
     int nb_bands() const;
 
@@ -57,8 +52,12 @@ public:
 
 private:
 
-    mutable trans::Trans* t_;
-    bool owned_;
+    trans::Trans* new_trans(const Grid&) const;
+
+private:
+
+    size_t nbands_;
+    std::vector<size_t> nregions_;
 };
 
 } // namespace partitioner

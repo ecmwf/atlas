@@ -91,9 +91,9 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
 
-  auto trans_partitioner = new TransPartitioner(g,trans);
+  auto trans_partitioner = new TransPartitioner();
   grid::Partitioner partitioner( trans_partitioner );
-  grid::Distribution distribution( partitioner );
+  grid::Distribution distribution( g, partitioner );
 
   // -------------- do checks -------------- //
   BOOST_CHECK_EQUAL( trans.nproc(),  parallel::mpi::comm().size() );
@@ -191,11 +191,11 @@ BOOST_AUTO_TEST_CASE( test_distribution )
 
   BOOST_TEST_CHECKPOINT("test_distribution");
 
-  grid::Distribution d_trans = grid::Partitioner( new TransPartitioner(g) ).distribution();
+  grid::Distribution d_trans = grid::Partitioner( new TransPartitioner() ).partition(g);
   BOOST_TEST_CHECKPOINT("trans distribution created");
 
 
-  grid::Distribution d_eqreg = grid::Partitioner( new EqualRegionsPartitioner(g) ).distribution();
+  grid::Distribution d_eqreg = grid::Partitioner( new EqualRegionsPartitioner() ).partition(g);
   BOOST_TEST_CHECKPOINT("eqregions distribution created");
 
   if( parallel::mpi::comm().rank() == 0 )
@@ -224,11 +224,11 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   mesh::Mesh::Ptr m_default( generate( g ) );
 
   BOOST_TEST_CHECKPOINT("trans_distribution");
-  grid::Distribution trans_distribution = grid::Partitioner( new TransPartitioner(g) ).distribution();
+  grid::Distribution trans_distribution = grid::Partitioner( new TransPartitioner() ).partition(g);
   mesh::Mesh::Ptr m_trans( generate( g, trans_distribution ) );
 
   BOOST_TEST_CHECKPOINT("eqreg_distribution");
-  grid::Distribution eqreg_distribution = grid::Partitioner( new EqualRegionsPartitioner(g) ).distribution();
+  grid::Distribution eqreg_distribution = grid::Partitioner( new EqualRegionsPartitioner() ).partition(g);
   mesh::Mesh::Ptr m_eqreg( generate( g, eqreg_distribution ) );
 
   array::ArrayView<int,1> p_default( m_default->nodes().partition() );
