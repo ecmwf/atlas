@@ -19,7 +19,7 @@
 #include <cstddef>
 #include <vector>
 #include "eckit/memory/ScopedPtr.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/detail/grid/Grid.h"
 
 
 namespace atlas {
@@ -80,7 +80,7 @@ public: // methods
     Unstructured( const Config& );
 
     /// Constructor taking a list of points
-    Unstructured( std::vector< Point >* pts );
+    Unstructured( std::vector< PointXY >* pts );
 
     /// Constructor taking a mesh
     Unstructured( const mesh::Mesh& m );
@@ -92,7 +92,9 @@ public: // methods
     virtual Spec spec() const;
 
 
-    PointXY xy(size_t n) const { return PointXY( (*points_)[n] ); }
+    PointXY xy(size_t n) const { return (*points_)[n]; }
+
+    PointLonLat lonlat(size_t n) const { return projection_.lonlat((*points_)[n]); }
 
     virtual Iterator* begin() const{ return new Iterator(*this); }
     virtual Iterator* end()   const{ return new Iterator(*this,false); }
@@ -107,7 +109,7 @@ private: // methods
 protected:
 
     /// Storage of coordinate points
-    eckit::ScopedPtr< std::vector< Point > > points_;
+    eckit::ScopedPtr< std::vector< PointXY > > points_;
 
     /// Cache for the shortName
     mutable std::string shortName_;

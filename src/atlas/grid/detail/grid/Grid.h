@@ -38,7 +38,7 @@ public:  // types
     using Spec       = eckit::Properties;
     using builder_t  = eckit::BuilderT1<Grid>;
     using ARG1       = const Config&;
-    using Point      = PointLonLat; // must be sizeof(double)*2
+    using Point      = PointXY; // must be sizeof(double)*2
     using uid_t      = std::string;
 
 

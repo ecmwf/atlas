@@ -45,9 +45,38 @@ Grid::Grid( const Config& p ) {
     grid_ = Grid::grid_t::create(p);
 }
 
+inline const UnstructuredGrid::grid_t* unstructured_grid( const Grid::grid_t *grid ) {
+    return dynamic_cast<const UnstructuredGrid::grid_t*>(grid);
+}
+
+UnstructuredGrid::UnstructuredGrid():
+    Grid(),
+    grid_( nullptr ) {
+}
+
+UnstructuredGrid::UnstructuredGrid( const Grid& grid ):
+    Grid( grid ),
+    grid_( unstructured_grid(get()) ) {
+}
+
+UnstructuredGrid::UnstructuredGrid( const Grid::grid_t* grid ):
+    Grid( grid ),
+    grid_( unstructured_grid(get()) ) {
+}
+
+UnstructuredGrid::UnstructuredGrid( const Config& grid ):
+    Grid( grid ),
+    grid_( unstructured_grid(get()) ) {
+}
+
+UnstructuredGrid::UnstructuredGrid( std::vector<PointXY>* xy ):
+    Grid( new UnstructuredGrid::grid_t(xy) ),
+    grid_( unstructured_grid(get()) ) {
+}
+
+
 inline const StructuredGrid::grid_t* structured_grid( const Grid::grid_t *grid ) {
-    const StructuredGrid::grid_t* g( dynamic_cast<const StructuredGrid::grid_t*>(grid) );
-    return g;
+    return dynamic_cast<const StructuredGrid::grid_t*>(grid);
 }
 
 StructuredGrid::StructuredGrid():

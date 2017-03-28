@@ -11,6 +11,7 @@
 #pragma once
 
 #include "atlas/grid/detail/grid/Grid.h"
+#include "atlas/grid/detail/grid/Unstructured.h"
 #include "atlas/grid/detail/grid/Structured.h"
 #include "atlas/grid/Projection.h"
 #include "atlas/grid/Domain.h"
@@ -23,6 +24,7 @@ namespace grid {
 // grid classes defined in this file
 
 class Grid;
+class UnstructuredGrid;
 class StructuredGrid;
 class RegularGrid;
 class GaussianGrid;
@@ -32,10 +34,11 @@ class RegularLonLatGrid;
 class ShiftedLonLatGrid;
 
 /*
-                                  Grid
-                                    |
-                                    |
-                             StructuredGrid
+                                             Grid
+                                               |
+                                    +----------+----------+
+                                    |                     |
+                             StructuredGrid        UnstructuredGrid
                                     |
                +--------------------+-----------------------+
                |                    |                       |
@@ -97,6 +100,50 @@ private:
 
     eckit::SharedPtr<const grid_t> grid_;
 
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class UnstructuredGrid: public Grid {
+
+public:
+
+  using grid_t = detail::grid::Unstructured;
+
+public:
+
+    UnstructuredGrid();
+    UnstructuredGrid( const Grid& );
+    UnstructuredGrid( const Config& );
+    UnstructuredGrid( const Grid::grid_t* );
+    UnstructuredGrid( std::vector<PointXY>* ); // takes ownership
+
+    operator bool() const {
+        return valid();
+    }
+
+    bool valid() const {
+        return grid_;
+    }
+
+    void xy( const size_t n, double xy[] ) const {
+      PointXY _xy = grid_->xy(n);
+      xy[0] = _xy.x();
+      xy[1] = _xy.y();
+    }
+
+    PointXY xy( const size_t n ) const {
+        return grid_->xy(n);
+    }
+
+    PointLonLat lonlat( const size_t n ) const {
+        return grid_->lonlat(n);
+    }
+
+
+private:
+
+    const grid_t* grid_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

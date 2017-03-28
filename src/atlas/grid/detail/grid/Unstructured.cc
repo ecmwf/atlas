@@ -31,7 +31,7 @@ eckit::ConcreteBuilderT1<Grid, Unstructured> builder_Unstructured(Unstructured::
 
 Unstructured::Unstructured(const mesh::Mesh& m) :
     Grid(),
-    points_ ( new std::vector< Grid::Point > (m.nodes().size() ) ) {
+    points_ ( new std::vector< PointXY > (m.nodes().size() ) ) {
 
     util::Config config_domain;
     config_domain.set("type","global");
@@ -50,10 +50,6 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
 
     for( size_t n=0; n<npts; ++n) {
         p[n].assign(lonlat(n,LON),lonlat(n,LAT));
-        lat_min = std::min( lat_min, p[n].lat() );
-        lat_max = std::max( lat_max, p[n].lat() );
-        lon_min = std::min( lon_min, p[n].lon() );
-        lon_max = std::max( lon_max, p[n].lon() );
     }
 }
 
@@ -79,19 +75,7 @@ Unstructured::Unstructured(std::vector<Point>* pts) :
 
     const std::vector<Point> &p = *points_;
     const size_t npts = p.size();
-
-    double lat_min = std::numeric_limits<double>::max();
-    double lat_max = std::numeric_limits<double>::min();
-    double lon_min = lat_min;
-    double lon_max = lat_max;
-
-    for (size_t n = 0; n < npts; ++n) {
-        lat_min = std::min( lat_min, p[n].lat() );
-        lat_max = std::max( lat_max, p[n].lat() );
-        lon_min = std::min( lon_min, p[n].lon() );
-        lon_max = std::max( lon_max, p[n].lon() );
-    }
-}
+  }
 
 
 Unstructured::~Unstructured() {
@@ -116,7 +100,7 @@ void Unstructured::hash(eckit::MD5 &md5) const {
 
     for (size_t i = 0; i < pts.size(); i++) {
         const Point &p = pts[i];
-        md5 << p.lon() << p.lat();
+        md5 << p.x() << p.y();
     }
 
 }
