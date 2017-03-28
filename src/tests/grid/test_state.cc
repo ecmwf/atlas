@@ -67,7 +67,7 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
   {
     grid::Grid grid(grid_uid);
     if (!geometry.has("ngptot")) {
-      geometry.set("ngptot", grid.npts());
+      geometry.set("ngptot", grid.size());
     }
   }
 

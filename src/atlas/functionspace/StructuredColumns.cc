@@ -53,7 +53,7 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (parallel::mpi::comm().rank() == owner ? grid_.npts() : 0);
+      size = (parallel::mpi::comm().rank() == owner ? grid_.size() : 0);
     }
   }
   return size;

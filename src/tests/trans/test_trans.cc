@@ -110,14 +110,14 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
     BOOST_CHECK_EQUAL( trans.n_regions_EW(), max_nb_regions_EW );
 
     BOOST_CHECK_EQUAL( distribution.nb_partitions(), parallel::mpi::comm().size() );
-    BOOST_CHECK_EQUAL( distribution.partition().size(), g.npts() );
+    BOOST_CHECK_EQUAL( distribution.partition().size(), g.size() );
 
     std::vector<int> npts(distribution.nb_partitions(),0);
 
-    for(size_t j = 0; j < g.npts(); ++j)
+    for(size_t j = 0; j < g.size(); ++j)
       ++npts[distribution.partition(j)];
 
-    BOOST_CHECK_EQUAL( trans.ngptotg(), g.npts() );
+    BOOST_CHECK_EQUAL( trans.ngptotg(), g.size() );
     BOOST_CHECK_EQUAL( trans.ngptot(),  npts[parallel::mpi::comm().rank()] );
     BOOST_CHECK_EQUAL( trans.ngptotmx(), *std::max_element(npts.begin(),npts.end()) );
 
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
   trans::Trans trans( g, 0 );
 
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
-  BOOST_CHECK_EQUAL( trans.ngptotg() , g.npts() );
+  BOOST_CHECK_EQUAL( trans.ngptotg() , g.size() );
 }
 
 BOOST_AUTO_TEST_CASE( test_trans_options )

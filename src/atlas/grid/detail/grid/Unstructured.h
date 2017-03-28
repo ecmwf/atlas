@@ -87,7 +87,7 @@ public: // methods
 
     virtual ~Unstructured();
 
-    virtual size_t npts() const;
+    virtual size_t size() const;
 
     virtual Spec spec() const;
 

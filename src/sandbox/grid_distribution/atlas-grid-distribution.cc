@@ -104,7 +104,7 @@ void Tool::execute(const Args& args)
 
   Log::debug() << "Domain: " << grid.domain() << std::endl;
   Log::debug() << "Periodic: " << grid.periodic() << std::endl;
-  
+
   std::string partitioner_type;
   if( not args.get("partitioner",partitioner_type) )
     partitioner_type = "equal_regions";
@@ -116,12 +116,12 @@ void Tool::execute(const Args& args)
 
     grid::Partitioner partitioner(partitioner_type,grid,N);
     grid::Distribution distribution = partitioner.distribution();
-  
+
     Log::info() << distribution << std::endl;
 
     std::vector< std::vector<double> > x(N);
     std::vector< std::vector<double> > y(N);
-    for( size_t p=0; p<N; ++p ) {
+    for( long p=0; p<N; ++p ) {
       size_t nb_pts = distribution.nb_pts()[p];
       x[p].reserve( nb_pts );
       y[p].reserve( nb_pts );
@@ -147,8 +147,8 @@ void Tool::execute(const Args& args)
          "\n" "fig = plt.figure()"
          "\n" "ax = fig.add_subplot(111,aspect='equal')"
          "\n" "";
-  
-    for( size_t p=0; p<N; ++ p ) {
+
+    for( long p=0; p<N; ++ p ) {
       f << "\n" "x = ["; for ( const double& _x : x[p] ) { f << _x << ", "; } f << "]";
       f << "\n" "y = ["; for ( const double& _y : y[p] ) { f << _y << ", "; } f << "]";
       f << "\n" "c = cycol()";

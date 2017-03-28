@@ -226,12 +226,12 @@ void CheckerboardPartitioner::partition(int part[]) const
 {
   if( nparts_ == 1 ) // trivial solution, so much faster
   {
-    for(size_t j = 0; j < grid().npts(); ++j)
+    for(size_t j = 0; j < grid().size(); ++j)
       part[j] = 0;
   }
   else
   {
-    std::vector<NodeInt> nodes(grid().npts());
+    std::vector<NodeInt> nodes(grid().size());
     int n(0);
 
     for(size_t iy = 0; iy < ny_; ++iy)
@@ -245,7 +245,7 @@ void CheckerboardPartitioner::partition(int part[]) const
       }
     }
 
-    partition(grid().npts(), nodes.data(), part);
+    partition(grid().size(), nodes.data(), part);
   }
 }
 

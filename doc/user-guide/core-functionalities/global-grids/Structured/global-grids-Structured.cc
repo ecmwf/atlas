@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     
     Log::info() << "nx first  = " << grid.nx().front() << std::endl;
     Log::info() << "ny        = " << grid.ny()         << std::endl;
-    Log::info() << "npts      = " << grid.npts()       << std::endl;
+    Log::info() << "npts      = " << grid.size()       << std::endl;
     Log::info() << "xy        = " << grid.xy(0,0)      << std::endl;
     Log::info() << "lonlat    = " << grid.lonlat(0,0) << std::endl;
 

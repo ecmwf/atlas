@@ -133,10 +133,10 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::Distribu
 
   ASSERT(!mesh.generated());
 
-  if( grid.npts() != distribution.partition().size() )
+  if( grid.size() != distribution.partition().size() )
   {
     std::stringstream msg;
-    msg << "Number of points in grid ("<<grid.npts()<<") different from "
+    msg << "Number of points in grid ("<<grid.size()<<") different from "
            "number of points in grid distribution ("<<distribution.partition().size()<<")";
     throw eckit::AssertionFailed(msg.str(),Here());
   }
@@ -196,7 +196,7 @@ void RegularMeshGenerator::generate_mesh(
   int ncells;
 
   // vector of local indices: necessary for remote indices of ghost nodes
-  std::vector<int> local_idx(rg.npts(),-1);
+  std::vector<int> local_idx(rg.size(),-1);
   std::vector<int> current_idx(nparts,0);  // index counter for each proc
 
   // determine rectangle (ix_min:ix_max) x (iy_min:iy_max) surrounding the nodes on this processor

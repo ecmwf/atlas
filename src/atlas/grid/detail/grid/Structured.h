@@ -133,7 +133,7 @@ public:
 
     virtual ~Structured();
 
-    virtual size_t npts() const {
+    virtual size_t size() const {
         return npts_;
     }
 
@@ -281,7 +281,7 @@ extern "C"
     long   atlas__grid__Structured__ny        (Structured* This);
     long   atlas__grid__Structured__nxmin     (Structured* This);
     long   atlas__grid__Structured__nxmax     (Structured* This);
-    long   atlas__grid__Structured__npts      (Structured* This);
+    long   atlas__grid__Structured__size      (Structured* This);
     double atlas__grid__Structured__y         (Structured* This, long j);
     double atlas__grid__Structured__x         (Structured* This, long i, long j);
     void   atlas__grid__Structured__xy        (Structured* This, long i, long j, double crd[]);

@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     double  zdist, zlon, zlat;
 
     StructuredGrid grid("N32");
-    const size_t nb_nodes = grid.npts();
+    const size_t nb_nodes = grid.size();
 
     Field::Ptr field_pressure(
       Field::create<double>("pressure", make_shape(nb_nodes)));

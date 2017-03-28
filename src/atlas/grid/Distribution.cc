@@ -20,14 +20,14 @@ namespace grid {
 
 Distribution::impl_t::impl_t( const Grid& grid ) :
     nb_partitions_(1),
-    part_(grid.npts(),0),
-    nb_pts_(nb_partitions_,grid.npts()),
-    max_pts_(grid.npts()),
-    min_pts_(grid.npts()) {
+    part_(grid.size(),0),
+    nb_pts_(nb_partitions_,grid.size()),
+    max_pts_(grid.size()),
+    min_pts_(grid.size()) {
 }
 
 Distribution::impl_t::impl_t( const Partitioner& partitioner ) {
-    part_.resize(partitioner.grid().npts());
+    part_.resize(partitioner.grid().size());
     partitioner.partition(part_.data());
     nb_partitions_ = partitioner.nb_partitions();
     nb_pts_.resize(nb_partitions_,0);

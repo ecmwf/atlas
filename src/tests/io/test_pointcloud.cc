@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file )
   grid::Grid grid( new grid::detail::grid::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
 
-  BOOST_CHECK_EQUAL(grid.npts(),test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid.size(),test_arrays::nb_pts);
   BOOST_CHECK_EQUAL(mesh->nodes().has_field("f_1"), true);
   BOOST_CHECK_EQUAL(mesh->nodes().has_field("f3"),  true);
 }
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_rows )
   grid::Grid grid( new grid::detail::grid::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
 
-  BOOST_CHECK_EQUAL(grid.npts(),test_arrays::nb_pts-2);
+  BOOST_CHECK_EQUAL(grid.size(),test_arrays::nb_pts-2);
   BOOST_CHECK_EQUAL(mesh->nodes().has_field("f_1"), true);
   BOOST_CHECK_EQUAL(mesh->nodes().has_field("f3"),  true);
 }
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_columns_1 )
   grid::Grid grid( new grid::detail::grid::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
 
-  BOOST_CHECK_EQUAL(grid.npts(),test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid.size(),test_arrays::nb_pts);
   BOOST_CHECK_EQUAL(mesh->nodes().has_field("f_1"), true);
   BOOST_CHECK_EQUAL(mesh->nodes().has_field("f3"),  false);
 }
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_columns_2 )
   grid::Grid grid( new grid::detail::grid::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
 
-  BOOST_CHECK_EQUAL(grid.npts(),test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid.size(),test_arrays::nb_pts);
   BOOST_CHECK_EQUAL(mesh->nodes().has_field("f_1"), false);
   BOOST_CHECK_EQUAL(mesh->nodes().has_field("f3"),  false);
 }
@@ -366,7 +366,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   grid::Grid grid( new grid::detail::grid::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
 
-  BOOST_CHECK_EQUAL(grid.npts(),test_vectors::nb_pts);
+  BOOST_CHECK_EQUAL(grid.size(),test_vectors::nb_pts);
 
   mesh::Nodes& nodes = mesh->nodes();
   BOOST_CHECK_EQUAL(nodes.has_field("my_super_field"),       true);
@@ -407,7 +407,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
 
   eckit::SharedPtr< mesh::Mesh > mesh_from_Grid (output::detail::PointCloud::read("pointcloud_Grid.txt"));
   grid::Grid grid_from_Grid( new grid::detail::grid::Unstructured(*mesh_from_Grid) );
-  
+
   BOOST_REQUIRE( grid_from_FieldSet );
   BOOST_REQUIRE( grid_from_Grid     );
 
@@ -423,11 +423,11 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   BOOST_TEST_CHECKPOINT("Part 5");
 
   // (header section)
-  BOOST_CHECK_EQUAL(grid_from_FieldSet.npts(),                                                     test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid_from_FieldSet.size(),                                                     test_arrays::nb_pts);
   BOOST_CHECK_EQUAL(mesh_from_FieldSet->nodes().has_field("my_super_field"),       true );
   BOOST_CHECK_EQUAL(mesh_from_FieldSet->nodes().has_field("_StRaNgE_FiElD_NaMe_"), false);
 
-  BOOST_CHECK_EQUAL(grid_from_Grid    .npts(),                                                     test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid_from_Grid    .size(),                                                     test_arrays::nb_pts);
   BOOST_CHECK_EQUAL(mesh_from_FieldSet->nodes().has_field("my_super_field"),       true );
   BOOST_CHECK_EQUAL(mesh_from_FieldSet->nodes().has_field("_StRaNgE_FiElD_NaMe_"), false);
 

@@ -35,7 +35,7 @@ void ExtendNodesGlobal::operator()(const atlas::grid::Grid& grid, atlas::mesh::M
 
     // virtual points
     std::vector<PointXY> extended_pts;
-    extended_pts.reserve( grid.npts() );
+    extended_pts.reserve( grid.size() );
 
     // loop over the point and keep the ones that *don't* fall in the domain
     

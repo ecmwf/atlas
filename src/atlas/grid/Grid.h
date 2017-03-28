@@ -82,7 +82,7 @@ public:
     bool operator==( const Grid& other ) const { return grid_ == other.grid_; }
     bool operator!=( const Grid& other ) const { return grid_ != other.grid_; }
 
-    size_t npts() const { return grid_->npts(); }
+    size_t size() const { return grid_->size(); }
 
     const Projection& projection() const { return grid_->projection(); }
     const Domain& domain() const { return grid_->domain(); }

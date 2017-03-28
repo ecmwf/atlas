@@ -498,10 +498,10 @@ extern "C" {
     }
 
 
-    long atlas__grid__Structured__npts(Structured* This) {
+    long atlas__grid__Structured__size(Structured* This) {
         ATLAS_ERROR_HANDLING(
             ASSERT( This );
-            return This->npts();
+            return This->size();
         );
         return 0;
     }

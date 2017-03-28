@@ -37,13 +37,6 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
     config_domain.set("type","global");
     domain_ = Domain(config_domain);
 
-    //domain_ = domain::Domain::makeGlobal();
-
-    double lat_min = std::numeric_limits<double>::max();
-    double lat_max = std::numeric_limits<double>::min();
-    double lon_min = lat_min;
-    double lon_max = lat_max;
-
     array::ArrayView<double,2> lonlat (m.nodes().lonlat());
     std::vector<Point> &p = *points_;
     const size_t npts = p.size();
@@ -56,10 +49,9 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
 
 Unstructured::Unstructured(const util::Config& p) :
     Grid() {
-     util::Config config_domain;
+    util::Config config_domain;
     config_domain.set("type","global");
     domain_ = Domain(config_domain);
-//domain_ = domain::Domain::makeGlobal();
     NOTIMP;
 }
 
@@ -67,14 +59,10 @@ Unstructured::Unstructured(const util::Config& p) :
 Unstructured::Unstructured(std::vector<Point>* pts) :
     Grid(),
     points_(pts) {
-    //domain_ = domain::Domain::makeGlobal();
-     util::Config config_domain;
+
+    util::Config config_domain;
     config_domain.set("type","global");
     domain_ = Domain(config_domain);
-
-
-    const std::vector<Point> &p = *points_;
-    const size_t npts = p.size();
   }
 
 
@@ -106,7 +94,7 @@ void Unstructured::hash(eckit::MD5 &md5) const {
 }
 
 
-size_t Unstructured::npts() const {
+size_t Unstructured::size() const {
     ASSERT(points_);
     return points_->size();
 }
@@ -121,7 +109,7 @@ Grid::Spec Unstructured::spec() const {
     cached_spec_->set("grid_type", static_type());
 
     std::unique_ptr<Iterator> it( begin() );
-    std::vector<double> coords(2*npts());
+    std::vector<double> coords(2*size());
     size_t c(0);
     PointXY xy;
     while( it->next(xy) ) {
@@ -129,14 +117,14 @@ Grid::Spec Unstructured::spec() const {
       coords[c++] = xy.y();
     }
 
-    cached_spec_->set( "lonlat", eckit::makeVectorValue<double>(coords) );
+    cached_spec_->set( "xy", eckit::makeVectorValue<double>(coords) );
 
     return *cached_spec_;
 }
 
 
 void Unstructured::print(std::ostream& os) const {
-    os << "Unstructured(Npts:" << npts() << ")";
+    os << "Unstructured(Npts:" << size() << ")";
 }
 
 

@@ -71,7 +71,7 @@ void TestField::test_constructor()
   // create some reference data for testing
 
   std::vector<double> ref_data;
-  ref_data.reserve( g.npts() );
+  ref_data.reserve( g.size() );
   for(size_t i = 0; i < ref_data.size(); ++i)
     ref_data.push_back( (double)i );
 
@@ -139,7 +139,7 @@ void TestField::test_fieldcreator()
       ("creator","IFS")
       ("nlev",137)
       ("nproma",10)
-      ("ngptot",g.npts());
+      ("ngptot",g.size());
 
   Log::info() << "Creating IFS field " << std::endl;
   field::Field::Ptr ifs (field::Field::create( util::Config

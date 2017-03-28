@@ -121,10 +121,7 @@ use atlas_Grid_module, only: &
     & atlas_GaussianGrid, &
     & atlas_ReducedGaussianGrid, &
     & atlas_RegularGaussianGrid, &
-    & atlas_grid_RegularLonLat, &
-    & atlas_grid_ShiftedLonLat, &
-    & atlas_grid_ShiftedLon, &
-    & atlas_grid_ShiftedLat
+    & atlas_RegularLonLatGrid
 use atlas_functionspace_EdgeColumns_module, only: &
     & atlas_functionspace_EdgeColumns
 use atlas_functionspace_NodeColumns_module, only: &

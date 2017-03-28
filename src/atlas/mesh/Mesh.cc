@@ -75,7 +75,7 @@ Mesh::~Mesh()
 
 mesh::Nodes& Mesh::createNodes(const Grid& grid)
 {
-  size_t nb_nodes = grid.npts();
+  size_t nb_nodes = grid.size();
   nodes().resize(nb_nodes);
 
   array::ArrayView<double,2> lonlat( nodes().lonlat() );

@@ -496,10 +496,10 @@ void EqualRegionsPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
 
 void EqualRegionsPartitioner::partition(int part[]) const {
     if( N_ == 1 ) { // trivial solution, so much faster
-        for(size_t j = 0; j < grid().npts(); ++j)
+        for(size_t j = 0; j < grid().size(); ++j)
             part[j] = 0;
     } else {
-        std::vector<NodeInt> nodes(grid().npts());
+        std::vector<NodeInt> nodes(grid().size());
         int n(0);
 
         ASSERT( grid().projection().units() == "degrees" );
@@ -532,7 +532,7 @@ void EqualRegionsPartitioner::partition(int part[]) const {
 //                ++n;
 //            }
         }
-        partition(grid().npts(), nodes.data(), part);
+        partition(grid().size(), nodes.data(), part);
     }
 }
 

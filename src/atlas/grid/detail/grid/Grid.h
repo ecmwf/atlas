@@ -89,7 +89,7 @@ public:  // methods
     /// @return number of grid points
     /// @note This methods should have constant access time, if necessary derived
     //        classes should compute it at construction
-    virtual size_t npts() const = 0;
+    virtual size_t size() const = 0;
 
     virtual std::string getOptimalMeshGenerator() const;
 

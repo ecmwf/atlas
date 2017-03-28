@@ -193,10 +193,10 @@ void StructuredMeshGenerator::generate(const grid::Grid& grid, const grid::Distr
 
   ASSERT(!mesh.generated());
 
-  if( grid.npts() != distribution.partition().size() )
+  if( grid.size() != distribution.partition().size() )
   {
     std::stringstream msg;
-    msg << "Number of points in grid ("<<grid.npts()<<") different from "
+    msg << "Number of points in grid ("<<grid.size()<<") different from "
            "number of points in grid distribution ("<<distribution.partition().size()<<")";
     throw eckit::AssertionFailed(msg.str(),Here());
   }
@@ -255,7 +255,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
     }
   } end_north:
 
-  n=rg.npts()-1;
+  n=rg.size()-1;
   int lat_south=-1;
   for( int jlat=rg.ny()-1; jlat>=0; --jlat) {
     for( int jlon=rg.nx(jlat)-1; jlon>=0; --jlon) {

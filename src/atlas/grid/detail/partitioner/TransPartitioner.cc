@@ -87,7 +87,7 @@ void TransPartitioner::partition(int part[]) const {
                 int igl = nptrfrstlat[ja] + jgl - nfrstlat[ja];
                 for( int jl=nsta(jb,igl)-1; jl<nsta(jb,igl)+nonl(jb,igl)-1; ++jl ) {
                     size_t ind = iglobal[jgl*nlonmax+jl] - 1;
-                    if( ind >= grid().npts() ) throw eckit::OutOfRange(ind,grid().npts(),Here());
+                    if( ind >= grid().size() ) throw eckit::OutOfRange(ind,grid().size(),Here());
                     part[ind] = iproc;
                 }
             }

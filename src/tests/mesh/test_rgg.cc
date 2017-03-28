@@ -384,7 +384,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   int triags[] = { 42, 13, 12, 13, 12, 14,  0,  1,  0,  1,  1,  0,  1,  0, 14, 12, 13, 11, 14, 42};
   int nb_owned = 0;
 
-  std::vector<int> all_owned    ( grid.npts()+grid.ny()+1, -1 );
+  std::vector<int> all_owned    ( grid.size()+grid.ny()+1, -1 );
 
   for(size_t p = 0; p < nb_parts; ++p)
   {
@@ -468,7 +468,7 @@ DISABLE{
       BOOST_ERROR( "node " << gid << " is not owned by anyone" );
     }
   }
-  BOOST_CHECK_EQUAL( nb_owned, grid.npts()+grid.ny() );
+  BOOST_CHECK_EQUAL( nb_owned, grid.size()+grid.ny() );
 
   BOOST_CHECK_CLOSE( area, check_area, 1e-10 );
 

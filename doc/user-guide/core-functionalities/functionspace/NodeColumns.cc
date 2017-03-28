@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
     Log::info() << "local nodes         = "
                 << fs_nodes->nb_nodes()  << std::endl;
     Log::info() << "grid points          = "
-                << grid.npts()   << std::endl;
+                << grid.size()   << std::endl;
     Log::info() << "field_global.shape(0) = "
                 << field_global->shape(0) << std::endl;
 

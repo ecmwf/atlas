@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
   nodes_fs->gather(*field,*glb_field);
 
   Log::info() << "local points = " << nodes_fs->nb_nodes() << std::endl;
-  Log::info() << "grid points = " << grid.npts() << std::endl;
+  Log::info() << "grid points = " << grid.size() << std::endl;
   Log::info() << "glb_field.shape(0) = " << glb_field->shape(0) << std::endl;
 
   BOOST_CHECK_EQUAL( glb_field->metadata().get<bool>("global"), true );

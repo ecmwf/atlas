@@ -334,6 +334,8 @@ list( APPEND atlas_util_srcs
 util/Config.h
 util/Config.cc
 util/Constants.h
+util/GaussianLatitudes.h
+util/GaussianLatitudes.cc
 util/Metadata.h
 util/Metadata.cc
 output/detail/GmshIO.h
