@@ -46,11 +46,7 @@ class ShiftedLonLatGrid;
                |                 |     |                 |     |
                +--------+--------+     +--------+--------+     +-----+
                         |                       |                    |
-               ReducedGaussianGrid     RegularGaussianGrid       LonLatGrid
-                                                                     |
-                                                         +------------------------+
-                                                         |                        |
-                                                  RegularLonLatGrid        ShiftedLonLatGrid
+               ReducedGaussianGrid     RegularGaussianGrid    RegularLonLatGrid
 */
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -391,7 +387,7 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class LonLatGrid : public RegularGrid {
+class RegularLonLatGrid : public RegularGrid {
 
 public:
 
@@ -419,6 +415,11 @@ public:
         return xy(i,j);
     }
 
+    bool standard()      const { return standard_lon() && standard_lat(); }
+    bool shifted()       const { return shifted_lon()  && shifted_lat();  }
+    bool shiftedLon()    const { return shifted_lon()  && standard_lat(); }
+    bool shiftedLat()    const { return standard_lon() && shifted_lat();  }
+
 protected:
 
     bool global_lonlat() const {
@@ -427,11 +428,11 @@ protected:
         &&   yspace().type() == "linear";
     }
 
-    bool regular_lon() const {
+    bool standard_lon() const {
         return x(0) == 0.;
     }
 
-    bool regular_lat() const {
+    bool standard_lat() const {
         return y(0) == 90.
             && ny()%2 == 1;
     }
@@ -443,44 +444,6 @@ protected:
     bool shifted_lat() const {
         return y(0) == 90.-0.5*180./ny()
             && ny()%2 == 0;
-    }
-};
-
-//---------------------------------------------------------------------------------------------------------------------
-
-class RegularLonLatGrid : public LonLatGrid {
-
-public:
-
-    using LonLatGrid::LonLatGrid;
-
-    operator bool() const {
-        return valid();
-    }
-
-    bool valid() const {
-        return LonLatGrid::valid()
-            && regular_lon()
-            && regular_lat();
-    }
-};
-
-//---------------------------------------------------------------------------------------------------------------------
-
-class ShiftedLonLatGrid : public LonLatGrid {
-
-public:
-
-    using LonLatGrid::LonLatGrid;
-
-    operator bool() const {
-        return valid();
-    }
-
-    bool valid() const {
-        return LonLatGrid::valid()
-            && shifted_lon()
-            && shifted_lat();
     }
 };
 

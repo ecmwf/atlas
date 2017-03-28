@@ -76,16 +76,17 @@ void Trans::ctor( const grid::Grid& grid, long nsmax, const Trans::Options& p ) 
   ASSERT( grid.domain().global() );
   ASSERT( not grid.projection() );
 
-  if( auto rgg = grid::ReducedGaussianGrid(grid) ) {
-    ctor_rgg(rgg.ny(), rgg.nx().data(), nsmax, p);
-  } else {
-    auto regular = grid::RegularGrid(grid);
-    if( grid::RegularLonLatGrid(grid) || grid::ShiftedLonLatGrid(grid) ) {
-      ctor_lonlat( regular.nx(), regular.ny(), nsmax, p );
-    } else {
-      throw eckit::NotImplemented("Grid type not supported for Spectral Transforms",Here());
+  if( auto gg = grid::GaussianGrid(grid) ) {
+    ctor_rgg(gg.ny(), gg.nx().data(), nsmax, p);
+    return;
+  }
+  if( auto ll = grid::RegularLonLatGrid(grid) ) {
+    if( ll.standard() || ll.shifted() ) {
+      ctor_lonlat( ll.nx(), ll.ny(), nsmax, p );
+      return;
     }
   }
+  throw eckit::NotImplemented("Grid type not supported for Spectral Transforms",Here());
 }
 
 
@@ -150,7 +151,7 @@ void Trans::ctor_lonlat(const long nlon, const long nlat, long nsmax, const Tran
 
 Trans::Options::Options() : eckit::Properties()
 {
-  set_cache(0,0);
+  set_cache(nullptr,0);
   set_split_latitudes(true);
   set_fft(FFTW);
   set_flt(false);
