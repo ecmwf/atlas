@@ -13,7 +13,7 @@
 
 ! -----------------------------------------------------------------------------
 
-module fcta_Field_fxt
+module fcta_Field_gpu_fxt
 use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
@@ -39,7 +39,7 @@ end subroutine test_res
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fcta_Field,fcta_Field_fxt)
+TESTSUITE_WITH_FIXTURE(fcta_Field_gpu,fcta_Field_gpu_fxt)
 
 ! -----------------------------------------------------------------------------
 

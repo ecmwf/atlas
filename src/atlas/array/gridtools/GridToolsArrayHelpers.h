@@ -50,13 +50,28 @@ struct check_dimension_lengths_impl {
 };
 
 template <unsigned int TotalDims, unsigned int Dim>
-struct check_dimension_lengths_impl<TotalDims, Dim, typename std::enable_if< (Dim == TotalDims-1)>::type > {
+struct check_dimension_lengths_impl<TotalDims, Dim, typename std::enable_if< (Dim == TotalDims-1) && (TotalDims > 1) >::type > {
   template <typename FirstDim>
   static void apply(ArrayShape const& shape, FirstDim first_dim) {
     if (first_dim < shape[Dim]) {
       std::stringstream err;
       err << "Attempt to resize array with original size for dimension " << Dim - 1 << " of "
           << shape[Dim - 1] << " by " << first_dim << std::endl;
+      throw eckit::BadParameter(err.str(), Here());
+    }
+  }
+};
+
+template <unsigned int TotalDims, unsigned int Dim>
+struct check_dimension_lengths_impl<TotalDims, Dim, typename std::enable_if<
+    (Dim == TotalDims-1) &&
+    (TotalDims == 1) >::type > {
+  template <typename FirstDim>
+  static void apply(ArrayShape const& shape, FirstDim first_dim) {
+    if (first_dim < shape[Dim]) {
+      std::stringstream err;
+      err << "Attempt to resize array with original size for dimension " << Dim << " of " << shape[Dim] << " by "
+          << first_dim << std::endl;
       throw eckit::BadParameter(err.str(), Here());
     }
   }

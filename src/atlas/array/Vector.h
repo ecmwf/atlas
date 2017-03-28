@@ -11,7 +11,7 @@
 #pragma once
 
 #include <cstddef>
-#include <assert.h>
+#include <cassert>
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/internals/atlas_defines.h"
 
@@ -59,7 +59,7 @@ public:
         cudaMalloc((void**)(&data_gpu_), sizeof(T*)*size_);
 
         T* buff = new T[size_];
-     
+
         for(size_t i=0; i < size(); ++i) {
           data_[i]->cloneToDevice();
           buff[i] = data_[i]->gpu_object_ptr();

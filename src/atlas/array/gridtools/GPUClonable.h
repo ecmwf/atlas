@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "atlas/internals/atlas_config.h"
+
 namespace atlas {
 namespace array {
 namespace gridtools {
@@ -17,15 +19,17 @@ namespace gridtools {
 template<typename Base>
 struct GPUClonable {
 
-    GPUClonable(Base * base_ptr) : base_ptr_(base_ptr) {
+    GPUClonable(Base * base_ptr) :
+      base_ptr_(base_ptr),
+      gpu_object_ptr_(nullptr) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
       cudaMalloc(&gpu_object_ptr_, sizeof(Base));
 #endif
     }
 
     ~GPUClonable() {
-        assert(gpu_object_ptr_);
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+        assert(gpu_object_ptr_);
         cudaFree(gpu_object_ptr_);
 #endif
     }

@@ -85,7 +85,7 @@ class MultiBlockConnectivityImpl;
 ///   - It owns the connectivity data
 ///
 /// In case ATLAS_HAVE_FORTRAN is defined (which is usually the case),
-/// the raw data will be : public eckit::Ownedstored with base 1 for Fortran interoperability.
+/// the raw data will be stored with base 1 for Fortran interoperability.
 /// The operator(row,col) will then do the conversion to base 0.
 ///
 /// In the first mode of construction, the connectivity table cannot be resized.
@@ -298,10 +298,9 @@ private:
   size_t mincols_;
 
 public:
-  array::gridtools::GPUClonable<IrregularConnectivityImpl> gpu_clone_;
-
   typedef void* ctxt_t;
   typedef void (*callback_t)(ctxt_t);
+
 private:
   friend class ConnectivityPrivateAccess;
   ctxt_t     ctxt_update_;
@@ -310,6 +309,8 @@ private:
   callback_t callback_update_;
   callback_t callback_set_;
   callback_t callback_delete_;
+  array::gridtools::GPUClonable<IrregularConnectivityImpl> gpu_clone_;
+
 };
 
 // ----------------------------------------------------------------------------------------------
@@ -441,6 +442,7 @@ private:
   void rebuild_block_connectivity();
 
 private:
+  size_t blocks_;
   array::Array* block_displs_;
   array::Array* block_cols_;
 
@@ -449,7 +451,6 @@ private:
   array::Vector<BlockConnectivityImpl*> block_;
   array::VectorView<BlockConnectivityImpl*> block_view_;
 
-  size_t blocks_;
   array::gridtools::GPUClonable<MultiBlockConnectivityImpl> gpu_clone_;
 
 };
@@ -671,7 +672,7 @@ void atlas__BlockConnectivity__delete(BlockConnectivityImpl* This);
 namespace array {
 
 //TODO HACK
-template<> inline DataType::kind_t DataType::kind<mesh::BlockConnectivityImpl*>()   { return KIND_INT64;    }
+//template<> inline DataType::kind_t DataType::kind<mesh::BlockConnectivityImpl*>()   { return KIND_INT32;    }
 
 }
 

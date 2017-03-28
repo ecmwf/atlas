@@ -32,7 +32,7 @@ namespace mesh {
 IrregularConnectivityImpl::IrregularConnectivityImpl(const std::string& name ) :
   owns_(true),
   data_{
-    array::Array::create<idx_t >(1),   // values
+    array::Array::create<idx_t >(0),   // values
     array::Array::create<size_t>(1),   // displs
     array::Array::create<size_t>(1)},  // counts
   values_view_(array::make_host_view<idx_t,  1>(*(data_[_values_]))),
@@ -49,7 +49,7 @@ IrregularConnectivityImpl::IrregularConnectivityImpl(const std::string& name ) :
   callback_set_(0),
   callback_delete_(0),
   gpu_clone_(this)
-{    
+{
     rename(name);
     displs_view_(0) = 0;
     counts_view_(0) = 0;
@@ -389,7 +389,7 @@ void IrregularConnectivityImpl::cloneFromDevice() {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->cloneFromDevice();});
     values_view_ = array::make_host_view<idx_t,  1>(*(data_[_values_]));
     displs_view_ = array::make_host_view<size_t, 1>(*(data_[_displs_]));
-    counts_view_ = array::make_host_view<size_t, 1>(*(data_[_counts_])); 
+    counts_view_ = array::make_host_view<size_t, 1>(*(data_[_counts_]));
 }
 void IrregularConnectivityImpl::syncHostDevice() const {
     std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a->syncHostDevice();});
@@ -444,12 +444,12 @@ MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, siz
 
 MultiBlockConnectivityImpl::MultiBlockConnectivityImpl(const std::string& name) :
   IrregularConnectivityImpl(name),
+  blocks_(0),
   block_displs_(array::Array::create<size_t>(1)),
   block_cols_(array::Array::create<size_t>(1)),
   block_displs_view_(array::make_view<size_t, 1>(*block_displs_)),
   block_cols_view_(array::make_view<size_t, 1>(*block_cols_)),
   block_(0),
-  blocks_(0),
   block_view_(make_host_vector_view(block_)),
   gpu_clone_(this)
 {
@@ -488,7 +488,7 @@ void MultiBlockConnectivityImpl::cloneToDevice()
 
   block_.cloneToDevice();
   block_view_ = make_device_vector_view(block_);
- 
+
   gpu_clone_.cloneToDevice();
 }
 
