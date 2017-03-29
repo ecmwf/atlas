@@ -639,7 +639,7 @@ inline void BlockConnectivityImpl::set( size_t row_idx, size_t col_idx, const id
 extern "C"
 {
 Connectivity* atlas__Connectivity__create();
-MultiBlockConnectivityImpl* atlas__MultiBlockConnectivity__create();
+MultiBlockConnectivity* atlas__MultiBlockConnectivity__create();
 const char* atlas__Connectivity__name (Connectivity* This);
 void atlas__Connectivity__rename(Connectivity* This, const char* name);
 void atlas__Connectivity__delete(Connectivity* This);
@@ -651,8 +651,8 @@ void atlas__Connectivity__add_values(Connectivity* This, size_t rows, size_t col
 void atlas__Connectivity__add_missing(Connectivity* This, size_t rows, size_t cols);
 int atlas__Connectivity__missing_value(const Connectivity* This);
 
-size_t atlas__MultiBlockConnectivity__blocks(const MultiBlockConnectivityImpl* This);
-BlockConnectivityImpl* atlas__MultiBlockConnectivity__block(MultiBlockConnectivityImpl* This, size_t block_idx);
+size_t atlas__MultiBlockConnectivity__blocks(const MultiBlockConnectivity* This);
+BlockConnectivityImpl* atlas__MultiBlockConnectivity__block(MultiBlockConnectivity* This, size_t block_idx);
 
 size_t atlas__BlockConnectivity__rows(const BlockConnectivityImpl* This);
 size_t atlas__BlockConnectivity__cols(const BlockConnectivityImpl* This);

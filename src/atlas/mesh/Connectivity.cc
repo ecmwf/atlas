@@ -994,21 +994,21 @@ int atlas__Connectivity__missing_value(const Connectivity* This)
   return This->missing_value() TO_FORTRAN;
 }
 
-MultiBlockConnectivityImpl* atlas__MultiBlockConnectivity__create()
+MultiBlockConnectivity* atlas__MultiBlockConnectivity__create()
 {
-  MultiBlockConnectivityImpl* connectivity = 0;
+  MultiBlockConnectivity* connectivity = 0;
   ATLAS_ERROR_HANDLING(
-    connectivity = new MultiBlockConnectivityImpl();
+    connectivity = new MultiBlockConnectivity();
   );
   return connectivity;
 }
 
-size_t atlas__MultiBlockConnectivity__blocks(const MultiBlockConnectivityImpl* This)
+size_t atlas__MultiBlockConnectivity__blocks(const MultiBlockConnectivity* This)
 {
   return This->blocks();
 }
 
-BlockConnectivityImpl* atlas__MultiBlockConnectivity__block(MultiBlockConnectivityImpl* This, size_t block_idx)
+BlockConnectivityImpl* atlas__MultiBlockConnectivity__block(MultiBlockConnectivity* This, size_t block_idx)
 {
   ATLAS_ERROR_HANDLING( ASSERT(This != 0 ) );
   BlockConnectivityImpl* block = &This->block(block_idx);

@@ -33,7 +33,6 @@ TEST( test_connectivity )
   integer(c_size_t), pointer :: cols(:)
   integer(c_int) :: ncols
 
-if( .false. ) then
   call fckit_log%info("test_connectivity starting")
 
   connectivity = atlas_Connectivity("hybrid")
@@ -158,7 +157,7 @@ if( .false. ) then
   FCTEST_CHECK_EQUAL(row(3),14)
 
   call connectivity%final()
-endif
+
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -179,8 +178,6 @@ TEST( test_multiblockconnectivity )
   call fckit_log%info("test_multiblockconnectivity starting")
 
   multiblock = atlas_MultiBlockConnectivity()
-
-  call fckit_log%info("initialised")
 
   FCTEST_CHECK_EQUAL( multiblock%owners(), 1 )
 
