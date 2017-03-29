@@ -26,8 +26,9 @@ namespace test {
 
 
 __global__
-void kernel_block(BlockConnectivity conn, bool* result)
+void kernel_block(BlockConnectivityImpl* conn_, bool* result)
 {
+    BlockConnectivityImpl& conn = *conn_;
 
     *result &= (conn.rows() == 2);
     *result &= (conn.cols() == 5);
@@ -38,9 +39,10 @@ void kernel_block(BlockConnectivity conn, bool* result)
 }
 
 __global__
-void kernel_irr(IrregularConnectivity conn, bool* result)
+void kernel_irr(IrregularConnectivityImpl* conn_, bool* result)
 {
 
+    IrregularConnectivityImpl& conn = *conn_;
 
     *result = true;
 
@@ -55,6 +57,33 @@ void kernel_irr(IrregularConnectivity conn, bool* result)
     *result &= (conn(0,2) == 4 IN_FORTRAN);
 
 }
+
+__global__
+void kernel_multiblock(MultiBlockConnectivityImpl* conn_, bool* result)
+{
+
+    MultiBlockConnectivityImpl& conn = *conn_;
+
+    *result = true;
+
+    *result &= (conn.blocks()== 1);
+    *result &= (conn.rows()== 2);
+    *result &= (conn.cols(0) == 3);
+    *result &= (conn.cols(1) == 3);
+    *result &= (conn.mincols() == 3);
+    *result &= (conn.maxcols() == 3);
+
+    *result &= (conn(0,0) == 1 IN_FORTRAN);
+    *result &= (conn(0,1) == 3 IN_FORTRAN);
+    *result &= (conn(0,2) == 4 IN_FORTRAN);
+
+    BlockConnectivityImpl& ablock = conn.block(0);
+    *result &= (ablock(0,0) == 1 IN_FORTRAN);
+    *result &= (ablock(0,1) == 3 IN_FORTRAN);
+    *result &= (ablock(0,2) == 4 IN_FORTRAN);
+}
+
+
 
 BOOST_AUTO_TEST_CASE( test_block_connectivity )
 {
@@ -71,12 +100,17 @@ BOOST_AUTO_TEST_CASE( test_block_connectivity )
     conn.cloneToDevice();
     BOOST_CHECK( conn.isOnDevice() );
 
-    kernel_block<<<1,1>>>(conn, result);
+    kernel_block<<<1,1>>>(conn.gpu_object_ptr(), result);
 
     cudaDeviceSynchronize();
 
     BOOST_CHECK_EQUAL( *result , true );
 
+    // copy back, although not strickly needed since the gpu copy does not modify values, 
+    // but for the sake of testing it
+
+    conn.cloneFromDevice();
+    BOOST_CHECK_EQUAL((conn)(0,4), 356 );
 }
 
 BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
@@ -96,12 +130,51 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     conn.cloneToDevice();
     BOOST_CHECK( conn.isOnDevice() );
 
-    kernel_irr<<<1,1>>>(conn, result);
+    kernel_irr<<<1,1>>>(conn.gpu_object_ptr(), result);
 
     cudaDeviceSynchronize();
 
     BOOST_CHECK_EQUAL( *result , true );
+
+    // copy back, although not strickly needed since the gpu copy does not modify values, 
+    // but for the sake of testing it
+    conn.cloneFromDevice();
+    BOOST_CHECK_EQUAL(conn(0,1), 3 IN_FORTRAN);
+
 }
+
+BOOST_AUTO_TEST_CASE( test_multiblock_connectivity )
+{
+    
+    MultiBlockConnectivity conn("mesh");
+    BOOST_CHECK_EQUAL(conn.rows(),0);
+    BOOST_CHECK_EQUAL(conn.maxcols(),0);
+
+    constexpr idx_t vals[6] = {1,3,4,3,7,8};
+    bool from_fortran = true;
+    conn.add(2, 3, vals, from_fortran);
+    
+    BOOST_CHECK(conn.block(0)(0,0) == 1);
+    bool* result;
+    cudaMallocManaged(&result, sizeof(bool));
+    *result = true;
+
+    conn.cloneToDevice();
+    BOOST_CHECK( conn.isOnDevice() );
+
+    kernel_multiblock<<<1,1>>>(conn.gpu_object_ptr(), result);
+
+    cudaDeviceSynchronize();
+
+    BOOST_CHECK_EQUAL( *result , true );
+
+    // copy back, although not strickly needed since the gpu copy does not modify values, 
+    // but for the sake of testing it
+    conn.cloneFromDevice();
+    BOOST_CHECK(conn.block(0)(0,0) == 1);
+
+}
+
 
 }
 }

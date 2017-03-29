@@ -12,11 +12,11 @@ ecbuild_add_test( TARGET atlas_test_array
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET atlas_test_table
-  BOOST
-  SOURCES  test_table.cc
-  LIBS     atlas
-)
+#ecbuild_add_test( TARGET atlas_test_table
+#  BOOST
+#  SOURCES  test_table.cc
+#  LIBS     atlas
+#)
 
 if( CMAKE_BUILD_TYPE MATCHES "DEBUG" )
   set ( CMAKE_NVCC_FLAGS "-G" )
@@ -26,6 +26,12 @@ atlas_add_cuda_test(
   TARGET atlas_test_array_kernel
   BOOST
   SOURCES test_array_kernel.cu
+  LIBS atlas
+)
+atlas_add_cuda_test(
+  TARGET atlas_test_vector_kernel
+  BOOST
+  SOURCES test_vector_kernel.cu
   LIBS atlas
 )
 

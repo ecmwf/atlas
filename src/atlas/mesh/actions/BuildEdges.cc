@@ -432,7 +432,7 @@ void build_pole_edges( Mesh& mesh )
   array::ArrayView<int,1> is_pole_edge    = array::make_view<int,1>( edges.field( "is_pole_edge" ) );
 
   mesh::HybridElements::Connectivity& edge_nodes   = edges.node_connectivity();
-  IrregularConnectivity& edge_to_elem = edges.cell_connectivity();
+  MultiBlockConnectivity& edge_to_elem = edges.cell_connectivity();
   edge_to_elem.add(nb_pole_edges,2);
 
   for(size_t edge=0; edge<nb_cell_edges; ++edge)

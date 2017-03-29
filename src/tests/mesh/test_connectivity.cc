@@ -205,7 +205,6 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     BOOST_CHECK_EQUAL(conn(0,2),1  );
     BOOST_CHECK_EQUAL(conn(1,1),4  );
     BOOST_CHECK_EQUAL(conn(2,2),76 );
-
 }
 
  BOOST_AUTO_TEST_CASE( test_block_connectivity_add ) {
@@ -360,19 +359,19 @@ Log::info() << "\n\n\ntest_multi_block_connectivity_add_block\n" << std::endl;
   BOOST_CHECK_EQUAL(mbc(1, 2,0), 11 );
 
   ATLAS_DEBUG_HERE();
-  const BlockConnectivity& b0 = mbc.block(0);
+  const BlockConnectivityImpl& b0 = mbc.block(0);
   BOOST_CHECK( b0.owns() == false );
   BOOST_CHECK_EQUAL(b0(0,2), 1  );
   BOOST_CHECK_EQUAL(b0(1,1), 4  );
   BOOST_CHECK_EQUAL(b0(2,2), 76 );
   ATLAS_DEBUG_HERE();
-  const BlockConnectivity& b1 = mbc.block(1);
+  const BlockConnectivityImpl& b1 = mbc.block(1);
   BOOST_CHECK( b1.owns() == false );
   BOOST_CHECK_EQUAL(b1(0,0), 31 );
   BOOST_CHECK_EQUAL(b1(1,1), 41 );
   BOOST_CHECK_EQUAL(b1(2,0), 11 );
 
-  IrregularConnectivity& ic = mbc;
+  MultiBlockConnectivity& ic = mbc;
   BOOST_CHECK_EQUAL(ic(0,2), 1  );
   BOOST_CHECK_EQUAL(ic(1,1), 4  );
   BOOST_CHECK_EQUAL(ic(2,2), 76 );

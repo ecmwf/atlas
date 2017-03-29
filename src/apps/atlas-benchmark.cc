@@ -368,7 +368,7 @@ void AtlasBenchmark::setup()
 
   auto edge_is_pole   = array::make_view<int,1> ( mesh->edges().field("is_pole_edge") );
   const mesh::Connectivity& node2edge = mesh->nodes().edge_connectivity();
-  const mesh::Connectivity& edge2node = mesh->edges().node_connectivity();
+  const mesh::MultiBlockConnectivity& edge2node = mesh->edges().node_connectivity();
   auto node2edge_sign = array::make_view<double,2> ( mesh->nodes().add(
       field::Field::create<double>("to_edge_sign",array::make_shape(nnodes,node2edge.maxcols()) ) ) );
 

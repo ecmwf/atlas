@@ -330,7 +330,10 @@ BOOST_AUTO_TEST_CASE(test_insert) {
   // currently we have no mechanism to invalidate the old views after an insertion into the Array
   // The original gt data store is deleted and replaced, but the former ArrayView keeps a pointer to it
   // wihtout noticing it has been deleted
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
   BOOST_CHECK_EQUAL(hv.valid(), false);
+#endif
+
   BOOST_CHECK_EQUAL(hv2.valid(), true);
 
   BOOST_CHECK_EQUAL(hv2(1, 3, 3), 1.5);
@@ -470,7 +473,11 @@ BOOST_AUTO_TEST_CASE(test_valid) {
 
     BOOST_CHECK_EQUAL(hv.valid(), true);
     ds->resize(3, 4, 5);
+
+    // Only implemented using gridtools storage for now
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
     BOOST_CHECK_EQUAL(hv.valid(), false);
+#endif
 
     delete ds;
   }

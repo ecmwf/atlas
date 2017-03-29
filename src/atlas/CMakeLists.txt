@@ -277,13 +277,14 @@ array/LocalView.h
 array/StorageView.h
 array/Vector.h
 array/helpers/ArrayInitializer.h
-array/Table.h
-array/Table.cc
-array/TableView.h
-array/TableView.cc
+#array/Table.h
+#array/Table.cc
+#array/TableView.h
+#array/TableView.cc
 )
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 list( APPEND atlas_array_srcs
+array/gridtools/GPUClonable.h
 array/gridtools/GridToolsArray.cc
 array/gridtools/GridToolsArrayHelpers.h
 array/gridtools/GridToolsArrayView.cc
@@ -438,13 +439,13 @@ ${CMAKE_CURRENT_BINARY_DIR}/internals/atlas_defines.h
 )
 
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
-  use_cuda( source_list
-    array/gridtools/GridToolsArray.cc
-    array/gridtools/GridToolsArrayView.cc
-    array/gridtools/GridToolsIndexView.cc
-    array/gridtools/GridToolsMakeView.cc
-    mesh/Connectivity.cc
-  )
+## TODO temporary disabled since I get a linking error of the nvcc intermediate step
+#  use_cuda( source_list
+#    array/gridtools/GridToolsArrayView.cc
+#    array/gridtools/GridToolsIndexView.cc
+#    array/gridtools/GridToolsMakeView.cc
+#    mesh/Connectivity.cc
+#  )
 endif()
 
 ecbuild_add_library( TARGET atlas

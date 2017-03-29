@@ -138,23 +138,23 @@ size_t atlas__mesh__Elements__end(const Elements* This)
   return This->end();
 }
 
-BlockConnectivity* atlas__mesh__Elements__node_connectivity(Elements* This)
+BlockConnectivityImpl* atlas__mesh__Elements__node_connectivity(Elements* This)
 {
-  BlockConnectivity* connectivity(0);
+  BlockConnectivityImpl* connectivity(0);
   ATLAS_ERROR_HANDLING( connectivity = &This->node_connectivity() );
   return connectivity;
 }
 
-BlockConnectivity* atlas__mesh__Elements__edge_connectivity(Elements* This)
+BlockConnectivityImpl* atlas__mesh__Elements__edge_connectivity(Elements* This)
 {
-  BlockConnectivity* connectivity(0);
+  BlockConnectivityImpl* connectivity(0);
   ATLAS_ERROR_HANDLING( connectivity = &This->edge_connectivity() );
   return connectivity;
 }
 
-BlockConnectivity* atlas__mesh__Elements__cell_connectivity(Elements* This)
+BlockConnectivityImpl* atlas__mesh__Elements__cell_connectivity(Elements* This)
 {
-  BlockConnectivity* connectivity(0);
+  BlockConnectivityImpl* connectivity(0);
   ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
   return connectivity;
 }
