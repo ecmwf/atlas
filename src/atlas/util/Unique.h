@@ -15,12 +15,14 @@
 #include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/Connectivity.h"
 #include "atlas/field/Field.h"
 #include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/MicroDeg.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 
 namespace atlas {
 namespace util {
@@ -72,7 +74,7 @@ namespace util {
       /// The assumption is that the elements exist in a lon-lat domain and don't
       //  degenerate to a line.
       /// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
-      uidx_t operator()( const array::IndexView<int,1>& elem_nodes ) const;
+      uidx_t operator()( const mesh::Connectivity::Row& elem_nodes ) const;
 
       /// @brief Compute unique positive index of element defined by node indices.
       /// The assumption is that the elements exist in a lon-lat domain and don't
@@ -150,9 +152,9 @@ inline uidx_t unique_lonlat( const double lonlat[] ) {
   return detail::uniqueT<uidx_t>( microdeg(lonlat[LON]), microdeg(lonlat[LAT]) );
 }
 
-inline uidx_t unique_lonlat( const array::ArrayView<double,1>& lonlat ) {
-  return detail::uniqueT<uidx_t>( microdeg(lonlat[LON]), microdeg(lonlat[LAT]) );
-}
+// inline uidx_t unique_lonlat( const array::ArrayView<double,1>& lonlat ) {
+//   return detail::uniqueT<uidx_t>( microdeg(lonlat[LON]), microdeg(lonlat[LAT]) );
+// }
 
 
 inline uidx_t unique_lonlat( const double elem_lonlat[], size_t npts )
@@ -175,29 +177,31 @@ inline uidx_t unique_lonlat( const double elem_lonlat[], size_t npts )
 
 
 inline UniqueLonLat::UniqueLonLat( const mesh::Mesh& mesh )
-  : nodes(&mesh.nodes())
+  : nodes(&mesh.nodes()),
+    lonlat( array::make_view<double,2> ( nodes->lonlat() ) )
 {
   ASSERT( mesh.projection().units() == "degrees" );
   update();
 }
 
 inline UniqueLonLat::UniqueLonLat( const mesh::Nodes& _nodes )
-  : nodes(&_nodes)
+  : nodes(&_nodes),
+    lonlat( array::make_view<double,2> ( nodes->lonlat() ) )
 {
   update();
 }
 
 inline uidx_t UniqueLonLat::operator()( int node ) const
 {
-  return unique_lonlat( lonlat[node] );
+  return unique_lonlat( lonlat(node,LON), lonlat(node,LAT) );
 }
 
-inline uidx_t UniqueLonLat::operator()( const array::IndexView<int,1>& elem_nodes ) const
+inline uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_nodes ) const
 {
   double centroid[2];
   centroid[LON] = 0.;
   centroid[LAT] = 0.;
-  size_t npts = elem_nodes.shape(0);
+  size_t npts = elem_nodes.size();
   for( size_t jnode=0; jnode<npts; ++jnode )
   {
     centroid[LON] += lonlat( elem_nodes(jnode), LON );
@@ -236,7 +240,7 @@ inline uidx_t UniqueLonLat::operator()( const int elem_nodes[], size_t npts ) co
 
 inline void UniqueLonLat::update()
 {
-  lonlat = array::ArrayView<double,2> ( nodes->lonlat() );
+  lonlat = array::make_view<double,2> ( nodes->lonlat() );
 }
 
 // ----------------------------------------------------------------------------

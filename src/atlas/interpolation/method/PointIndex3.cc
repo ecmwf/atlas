@@ -9,8 +9,10 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/array/ArrayView.h"
 #include "atlas/interpolation/method/PointIndex3.h"
+
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/mesh/HybridElements.h"
 
 
@@ -21,7 +23,7 @@ namespace method {
 
 ElemIndex3* create_element_centre_index(const mesh::Mesh& mesh) {
 
-    const array::ArrayView< double, 2 > centres(mesh.cells().field( "centre" ));
+    const array::ArrayView<double,2> centres = array::make_view<double,2>( mesh.cells().field( "centre" ) );
 
     std::vector< ElemIndex3::Value > p;
     p.reserve(mesh.cells().size());

@@ -22,7 +22,7 @@
 #include "atlas/mesh/detail/PeriodicTransform.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -121,7 +121,7 @@ void build_edges_parallel_fields( Mesh& mesh )
 
 field::Field& build_nodes_global_idx( mesh::Nodes& nodes )
 {
-  array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
 
   UniqueLonLat compute_uid(nodes);
 
@@ -145,7 +145,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   int nparts = parallel::mpi::comm().size();
   size_t root = 0;
 
-  array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1> ( nodes.global_index() );
 
   /*
    * Sorting following gidx will define global order of
@@ -162,8 +162,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
 
   // 1) Gather all global indices, together with location
-  array::ArrayT<uid_t> loc_id_arr(nb_nodes);
-  array::ArrayView<uid_t,1> loc_id(loc_id_arr);
+  eckit::SharedPtr<array::Array> loc_id_arr( array::Array::create<uid_t>(nb_nodes) );
+  array::ArrayView<uid_t,1> loc_id = array::make_view<uid_t,1>(*loc_id_arr);
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -182,12 +182,10 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   }
   int glb_nb_nodes = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
-  array::ArrayT<uid_t> glb_id_arr(glb_nb_nodes);
-  array::ArrayView<uid_t,1> glb_id(glb_id_arr);
+  eckit::SharedPtr<array::Array> glb_id_arr( array::Array::create<uid_t>(glb_nb_nodes) );
+  array::ArrayView<uid_t,1> glb_id = array::make_view<uid_t,1>(*glb_id_arr);
 
-
-  parallel::mpi::comm().gatherv(loc_id.begin(), loc_id.end(), glb_id.begin(), glb_id.end(), recvcounts, recvdispls, root);
-
+  parallel::mpi::comm().gatherv(loc_id.data(), loc_id.size(), glb_id.data(), recvcounts.data(), recvdispls.data(), root);
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
   for( size_t jnode=0; jnode<glb_id.shape(0); ++jnode )
@@ -214,7 +212,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
   // 3) Scatter renumbered back
 
-  parallel::mpi::comm().scatterv(glb_id.begin(), glb_id.end(), recvcounts, recvdispls, loc_id.begin(), loc_id.end(), root);
+  parallel::mpi::comm().scatterv(glb_id.data(), recvcounts.data(), recvdispls.data(), loc_id.data(), loc_id.size(), root);
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -238,11 +236,9 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     proc[jpart] = jpart;
   // <---------
 
-  array::IndexView<int,   1> ridx   ( nodes.remote_index()  );
-  array::ArrayView<int,   1> part   ( nodes.partition()   );
-  array::ArrayView<double,2> lonlat ( nodes.lonlat() );
+  array::IndexView<int,   1> ridx   = array::make_indexview<int,1>( nodes.remote_index()  );
+  array::ArrayView<int,   1> part   = array::make_view<int,1>( nodes.partition()   );
   size_t nb_nodes = nodes.size();
-
 
   int varsize=2;
 
@@ -260,7 +256,7 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     }
     else
     {
-      ASSERT( jnode < part.size() );
+      ASSERT( jnode < part.shape(0) );
       if( part(jnode) >= (int)proc.size() )
       {
         std::stringstream msg;
@@ -284,12 +280,14 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
-    array::ArrayView<uid_t,2> recv_node( recv_needed[ proc[jpart] ].data(),
-        array::make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize) );
-    for( size_t jnode=0; jnode<recv_node.shape(0); ++jnode )
+    const std::vector<uid_t>& recv_node = recv_needed[ proc[jpart] ];
+    const size_t nb_recv_nodes = recv_node.size()/varsize;
+    // array::ArrayView<uid_t,2> recv_node( make_view( Array::wrap(shape, recv_needed[ proc[jpart] ].data()) ),
+    //     array::make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize) );
+    for( size_t jnode=0; jnode<nb_recv_nodes; ++jnode )
     {
-      uid_t uid = recv_node(jnode,0);
-      int inode = recv_node(jnode,1);
+      uid_t uid = recv_node[jnode*varsize+0];
+      int inode = recv_node[jnode*varsize+1];
       if( lookup.count(uid) )
       {
         send_found[ proc[jpart] ].push_back( inode );
@@ -309,11 +307,13 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
-    array::ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
-        array::make_shape(recv_found[ proc[jpart] ].size()/2,2) );
-    for( size_t jnode=0; jnode<recv_node.shape(0); ++jnode )
+    const std::vector<int>& recv_node = recv_found[ proc[jpart] ];
+    const size_t nb_recv_nodes = recv_node.size()/2;
+    // array::ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
+    //     array::make_shape(recv_found[ proc[jpart] ].size()/2,2) );
+    for( size_t jnode=0; jnode<nb_recv_nodes; ++jnode )
     {
-      ridx( recv_node(jnode,0) ) = recv_node(jnode,1);
+      ridx( recv_node[jnode*2+0] ) = recv_node[jnode*2+1];
     }
   }
   return nodes.field("remote_idx");
@@ -338,26 +338,27 @@ field::Field& build_edges_partition( Mesh& mesh )
   size_t nparts = parallel::mpi::comm().size();
 
   mesh::HybridElements& edges = mesh.edges();
-  array::ArrayView<int,1> edge_part  ( edges.partition() );
+  array::ArrayView<int,1> edge_part = array::make_view<int,1>( edges.partition() );
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
   const mesh::HybridElements::Connectivity& edge_to_elem = edges.cell_connectivity();
 
-  array::ArrayView<int,1> is_pole_edge;
+  std::shared_ptr< array::ArrayView<int,1> > is_pole_edge;
   bool has_pole_edges = false;
   if( edges.has_field("is_pole_edge") )
   {
     has_pole_edges = true;
-    is_pole_edge = array::ArrayView<int,1>( edges.field("is_pole_edge") );
+    is_pole_edge = std::shared_ptr< array::ArrayView<int,1> > (
+      new array::ArrayView<int,1>( array::make_view<int,1>( edges.field("is_pole_edge") ) ) );
   }
 
-  array::ArrayView<int,1> node_part  ( nodes.partition() );
-  array::ArrayView<double,2> lonlat  ( nodes.lonlat() );
-  array::ArrayView<int,   1> flags   ( nodes.field("flags") );
+  array::ArrayView<int,1> node_part = array::make_view<int,1>( nodes.partition() );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
+  array::ArrayView<int,   1> flags  = array::make_view<int,1>( nodes.field("flags") );
 #ifdef DEBUGGING_PARFIELDS
-  array::ArrayView<gidx_t,   1> gidx    ( nodes.global_index() );
+  array::ArrayView<gidx_t,   1> gidx  = array::make_view<gidx_t,1>( nodes.global_index() );
 #endif
 
-  array::ArrayView<int,1>     elem_part    ( mesh.cells().partition() );
+  array::ArrayView<int,1>     elem_part = array::make_view<int,1>(mesh.cells().partition() );
 
   PeriodicTransform transform;
 
@@ -459,7 +460,7 @@ field::Field& build_edges_partition( Mesh& mesh )
 
       centroid[LON] = 0.5*(lonlat( ip1, LON ) + lonlat( ip2, LON ) );
       centroid[LAT] = 0.5*(lonlat( ip1, LAT ) + lonlat( ip2, LAT ) );
-      if( has_pole_edges && is_pole_edge(jedge) )
+      if( has_pole_edges && (*is_pole_edge)(jedge) )
       {
         centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
       }
@@ -523,12 +524,14 @@ field::Field& build_edges_partition( Mesh& mesh )
 
     for( size_t jpart=0; jpart<nparts; ++jpart )
     {
-      array::ArrayView<uid_t,2> recv_edge( recv_unknown[ jpart ].data(),
-          array::make_shape(recv_unknown[ jpart ].size()/varsize,varsize) );
-      for( size_t jedge=0; jedge<recv_edge.shape(0); ++jedge )
+      const std::vector<uid_t>& recv_edge = recv_unknown[jpart];
+      const size_t nb_recv_edges = recv_edge.size()/varsize;
+      // array::ArrayView<uid_t,2> recv_edge( recv_unknown[ jpart ].data(),
+      //     array::make_shape(recv_unknown[ jpart ].size()/varsize,varsize) );
+      for( size_t jedge=0; jedge<nb_recv_edges; ++jedge )
       {
-        uid_t uid      = recv_edge(jedge,0);
-        int    recv_idx = recv_edge(jedge,1);
+        uid_t uid      = recv_edge[jedge*varsize+0];
+        int    recv_idx = recv_edge[jedge*varsize+1];
         if( lookup.count(uid) )
         {
           send_found[ jpart ].push_back( recv_idx );
@@ -605,24 +608,25 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
 
   mesh::HybridElements& edges = mesh.edges();
 
-  array::IndexView<int,1>       edge_ridx  ( edges.remote_index() );
+  array::IndexView<int,1>       edge_ridx = array::make_indexview<int,1> ( edges.remote_index() );
 
-  const array::ArrayView<int,1> edge_part  ( edges.partition() );
+  const array::ArrayView<int,1> edge_part = array::make_view<int,1>( edges.partition() );
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
 
-  array::ArrayView<double,2> lonlat     ( nodes.lonlat() );
-  array::ArrayView<int,   1> flags      ( nodes.field("flags")       );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
+  array::ArrayView<int,   1> flags  = array::make_view<int,1>( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
-  array::ArrayView<gidx_t,   1> gidx      ( nodes.global_index()       );
-  array::ArrayView<int,   1> node_part      ( nodes.partition()       );
+  array::ArrayView<gidx_t,   1> gidx   = array::make_view<gidx_t,1>( nodes.global_index()       );
+  array::ArrayView<int,   1> node_part = array::make_view<int,1>( nodes.partition()       );
 #endif
 
-  array::ArrayView<int,1> is_pole_edge;
+  std::shared_ptr< array::ArrayView<int,1> > is_pole_edge;
   bool has_pole_edges = false;
   if( edges.has_field("is_pole_edge") )
   {
     has_pole_edges = true;
-    is_pole_edge = array::ArrayView<int,1>( edges.field("is_pole_edge") );
+    is_pole_edge = std::shared_ptr< array::ArrayView<int,1> > (
+      new array::ArrayView<int,1>( array::make_view<int,1>( edges.field("is_pole_edge") ) ) );
   }
 
   const int nb_edges = edges.size();
@@ -642,7 +646,7 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
     int ip2 = edge_nodes(jedge,1);
     centroid[LON] = 0.5*(lonlat( ip1, LON ) + lonlat( ip2, LON ) );
     centroid[LAT] = 0.5*(lonlat( ip1, LAT ) + lonlat( ip2, LAT ) );
-    if( has_pole_edges && is_pole_edge(jedge) )
+    if( has_pole_edges && (*is_pole_edge)(jedge) )
     {
       centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
     }
@@ -703,12 +707,14 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
   std::map<uid_t,int>::iterator found;
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
-    array::ArrayView<uid_t,2> recv_edge( recv_needed[ jpart ].data(),
-        array::make_shape(recv_needed[ jpart ].size()/varsize,varsize) );
-    for( size_t jedge=0; jedge<recv_edge.shape(0); ++jedge )
+    const std::vector<uid_t>& recv_edge = recv_needed[jpart];
+    const size_t nb_recv_edges = recv_edge.size()/varsize;
+    // array::ArrayView<uid_t,2> recv_edge( recv_needed[ jpart ].data(),
+    //     array::make_shape(recv_needed[ jpart ].size()/varsize,varsize) );
+    for( size_t jedge=0; jedge<nb_recv_edges; ++jedge )
     {
-      uid_t recv_uid = recv_edge(jedge,0);
-      int recv_idx = recv_edge(jedge,1);
+      uid_t recv_uid = recv_edge[jedge*varsize+0];
+      int recv_idx = recv_edge[jedge*varsize+1];
       found = lookup.find(recv_uid);
       if( found != lookup.end() )
       {
@@ -733,11 +739,13 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
   parallel::mpi::comm().allToAll(send_found, recv_found);
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
-    array::ArrayView<int,2> recv_edge( recv_found[ jpart ].data(),
-        array::make_shape(recv_found[ jpart ].size()/2,2) );
-    for( size_t jedge=0; jedge<recv_edge.shape(0); ++jedge )
+    const std::vector<int>& recv_edge = recv_found[jpart];
+    const size_t nb_recv_edges = recv_edge.size()/2;
+    // array::ArrayView<int,2> recv_edge( recv_found[ jpart ].data(),
+    //     array::make_shape(recv_found[ jpart ].size()/2,2) );
+    for( size_t jedge=0; jedge<nb_recv_edges; ++jedge )
     {
-      edge_ridx( recv_edge(jedge,0) ) = recv_edge(jedge,1);
+      edge_ridx( recv_edge[jedge*2+0] ) = recv_edge[jedge*2+1];
     }
   }
   return edges.remote_index();
@@ -752,17 +760,18 @@ field::Field& build_edges_global_idx( Mesh& mesh )
 
   mesh::HybridElements& edges = mesh.edges();
 
-  array::ArrayView<gidx_t,1> edge_gidx ( edges.global_index() );
-  edge_gidx = -1;
+  array::make_storageview<gidx_t>(edges.global_index()).assign(-1);
+  array::ArrayView<gidx_t,1> edge_gidx = array::make_view<gidx_t,1>( edges.global_index() );
 
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
-  array::ArrayView<double,2> lonlat     ( mesh.nodes().lonlat() );
-  array::ArrayView<int,1> is_pole_edge;
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh.nodes().lonlat() );
+  std::shared_ptr< array::ArrayView<int,1> > is_pole_edge;
   bool has_pole_edges = false;
   if( edges.has_field("is_pole_edge") )
   {
     has_pole_edges = true;
-    is_pole_edge = array::ArrayView<int,1>( edges.field("is_pole_edge") );
+    is_pole_edge = std::shared_ptr< array::ArrayView<int,1> > (
+      new array::ArrayView<int,1>( array::make_view<int,1>( edges.field("is_pole_edge") ) ) );
   }
 
   /*
@@ -779,7 +788,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
     {
       centroid[LON] = 0.5*(lonlat( edge_nodes(jedge,0), LON ) + lonlat( edge_nodes(jedge,1), LON ) );
       centroid[LAT] = 0.5*(lonlat( edge_nodes(jedge,0), LAT ) + lonlat( edge_nodes(jedge,1), LAT ) );
-      if( has_pole_edges && is_pole_edge(jedge) )
+      if( has_pole_edges && (*is_pole_edge)(jedge) )
       {
         centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
       }
@@ -793,8 +802,8 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   // unused //  const int ridx_base = 1;
 
   // 1) Gather all global indices, together with location
-  array::ArrayT<uid_t> loc_edge_id_arr(nb_edges);
-  array::ArrayView<uid_t,1> loc_edge_id(loc_edge_id_arr);
+  eckit::SharedPtr<array::Array> loc_edge_id_arr( array::Array::create<uid_t>(nb_edges) );
+  array::ArrayView<uid_t,1> loc_edge_id = array::make_view<uid_t,1>(*loc_edge_id_arr);
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
@@ -813,11 +822,10 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   }
   int glb_nb_edges = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
-  array::ArrayT<uid_t> glb_edge_id_arr(glb_nb_edges);
-  array::ArrayView<uid_t,1> glb_edge_id(glb_edge_id_arr);
+  eckit::SharedPtr<array::Array> glb_edge_id_arr( array::Array::create<uid_t>(glb_nb_edges) );
+  array::ArrayView<uid_t,1> glb_edge_id = array::make_view<uid_t,1>(*glb_edge_id_arr);
 
-  parallel::mpi::comm().gatherv(loc_edge_id.begin(), loc_edge_id.end(), glb_edge_id.begin(), glb_edge_id.end(), recvcounts, recvdispls, root);
-
+  parallel::mpi::comm().gatherv(loc_edge_id.data(), loc_edge_id.size(), glb_edge_id.data(), recvcounts.data(), recvdispls.data(), root);
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> edge_sort; edge_sort.reserve(glb_nb_edges);
   for( size_t jedge=0; jedge<glb_edge_id.shape(0); ++jedge )
@@ -844,7 +852,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
 
   // 3) Scatter renumbered back
 
-  parallel::mpi::comm().scatterv(glb_edge_id.begin(), glb_edge_id.end(), recvcounts, recvdispls, loc_edge_id.begin(), loc_edge_id.end(), root);
+  parallel::mpi::comm().scatterv(glb_edge_id.data(), recvcounts.data(), recvdispls.data(), loc_edge_id.data(), loc_edge_id.size(), root);
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {

@@ -108,7 +108,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     // source mesh is partitioned on its own, the target mesh uses (pre-partitioned) source mesh
 
     option = args.get("source-gridname", option)? option : "O16";
-    atlas::grid::Grid src_grid(option);
+    grid::Grid src_grid(option);
     interpolation::PartitionedMesh src(
                 args.get("source-mesh-partitioner",           option)? option : "equal_regions",
                 args.get("source-mesh-generator",             option)? option : "structured",
@@ -117,7 +117,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
 
     option = args.get("target-gridname", option)? option : "O32";
-    atlas::grid::Grid tgt_grid(option);
+    grid::Grid tgt_grid(option);
     interpolation::PartitionedMesh tgt(
                 args.get("target-mesh-partitioner",           option)? option : "polygon",
                 args.get("target-mesh-generator",             option)? option : "structured",
@@ -176,10 +176,10 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
                 c_lon = 1. * M_PI,
                 c_rad = 2. * M_PI / 9.;
 
-        atlas::array::ArrayView< double, 2 > lonlat( src.mesh().nodes().lonlat() );
-        atlas::array::ArrayView< double, 1 >
-                src_scalar_1(src_fields[0]),
-                src_scalar_2(src_fields[1]);
+        array::ArrayView< double, 2 > lonlat = array::make_view<double,2>( src.mesh().nodes().lonlat() );
+        array::ArrayView< double, 1 >
+                src_scalar_1 = array::make_view<double,1>(src_fields[0]),
+                src_scalar_2 = array::make_view<double,1>(src_fields[1]);
         for (size_t j = 0; j < src.mesh().nodes().size(); ++j) {
             const double lon = deg2rad * lonlat(j, 0);  // (lon)
             const double lat = deg2rad * lonlat(j, 1);  // (lat)

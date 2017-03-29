@@ -118,13 +118,19 @@ void MeshGenerator::generate_global_element_numbering( Mesh& mesh ) const
 
   gidx_t gid = 1+elem_displs.at( parallel::mpi::comm().rank() );
 
-  array::ArrayView<gidx_t,1> glb_idx( mesh.cells().global_index() );
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( mesh.cells().global_index() );
 
   for( size_t jelem=0; jelem<mesh.cells().size(); ++jelem )
   {
     glb_idx(jelem) = gid++;
   }
 }
+
+
+void MeshGenerator::set_projection( Mesh& mesh, const grid::Projection& p ) const {
+  mesh.setProjection(p);
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------
 

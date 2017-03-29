@@ -93,15 +93,10 @@ Distribution::Distribution(size_t npts, int part[], int part0):
 
 
 Distribution::impl_t* atlas__GridDistribution__new(int npts, int part[], int part0) {
-    Distribution::impl_t* dist = new Distribution::impl_t(npts,part,part0);
-    Log::info() << Here() << "owners = " << dist->owners() << std::endl;
-
-    return dist;
-//    return new GridDistribution::impl_t(npts,part,part0);
+    return new Distribution::impl_t(npts,part,part0);
 }
 
 void atlas__GridDistribution__delete(Distribution::impl_t* This) {
-    Log::info() << Here() << "owners = " << This->owners() << std::endl;
     delete This;
 }
 

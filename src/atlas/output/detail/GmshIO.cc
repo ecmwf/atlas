@@ -29,9 +29,10 @@
 #include "atlas/output/detail/GmshIO.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
 
 using namespace eckit;
@@ -44,7 +45,7 @@ namespace detail {
 
 namespace {
 
-static double deg = util::Constants::radiansToDegrees();
+static double rad2deg = util::Constants::radiansToDegrees();
 
 class GmshFile : public std::ofstream {
 public:
@@ -113,19 +114,21 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   size_t nlev  = field.levels();
   size_t ndata = std::min(function_space.nb_nodes(),field.shape(0));
   size_t nvars = field.stride(0)/nlev;
-  array::ArrayView<gidx_t,1> gidx ( function_space.nodes().global_index() );
-  array::ArrayView<DATATYPE,2> data ( field.data<DATATYPE>(), array::make_shape(field.shape(0),field.stride(0)) );
+  array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( function_space.nodes().global_index() );
+  array::LocalView<DATATYPE,2> data ( field.data<DATATYPE>(),
+                                      array::make_shape(field.shape(0),field.stride(0)) );
   field::Field::Ptr gidx_glb;
   field::Field::Ptr data_glb;
   if( gather )
   {
     gidx_glb.reset( function_space.createField( "gidx_glb", function_space.nodes().global_index(), field::global() ) );
     function_space.gather(function_space.nodes().global_index(),*gidx_glb);
-    gidx = array::ArrayView<gidx_t,1>( *gidx_glb );
+    gidx = array::make_view<gidx_t,1>( *gidx_glb );
 
     data_glb.reset( function_space.createField( "glb_field",field, field::global() ) );
     function_space.gather(field,*data_glb);
-    data = array::ArrayView<DATATYPE,2>( data_glb->data<DATATYPE>(), array::make_shape(data_glb->shape(0),data_glb->stride(0)) );
+    data = array::LocalView<DATATYPE,2>( data_glb->data<DATATYPE>(),
+                                         array::make_shape(data_glb->shape(0),data_glb->stride(0)) );
     ndata = std::min(function_space.nb_nodes_global(),data.shape(0));
   }
 
@@ -311,9 +314,9 @@ void write_field_nodes(
 
     //field::Field::Ptr gidxField(function_space.createField<gidx_t>("gidx"));
     //array::ArrayView<gidx_t,1>   gidx(gidxField);
-    array::ArrayView<DATATYPE,2> data(field.data<DATATYPE>(),
-                               array::make_shape(field.shape(0),
-                                          field.stride(0)));
+    array::LocalView<DATATYPE,2> data(
+        field.data<DATATYPE>(),
+        array::make_shape(field.shape(0),field.stride(0)) );
 
     field::Field::Ptr gidx_glb;
     field::Field::Ptr field_glb;
@@ -329,10 +332,9 @@ void write_field_nodes(
     {
       field_glb = function_space.createField<double>("glb_field",field::global());
       function_space.gather(field, *field_glb);
-      data = array::ArrayView<DATATYPE,2>(
-        field_glb->data<DATATYPE>(),
-        array::make_shape(field_glb->shape(0),
-        field_glb->stride(0)));
+      data = array::LocalView<DATATYPE,2>(
+          field_glb->data<DATATYPE>(),
+          array::make_shape(field_glb->shape(0),field_glb->stride(0)) );
     }
 
     size_t ndata = data.shape(0);
@@ -673,9 +675,9 @@ void GmshIO::read(const PathName& file_path, mesh::Mesh& mesh ) const
 
   nodes.add( field::Field::create<double>("xyz",array::make_shape(nb_nodes,3) ) );
 
-  array::ArrayView<double,2> coords         ( nodes.field("xyz")    );
-  array::ArrayView<gidx_t,1> glb_idx        ( nodes.global_index()  );
-  array::ArrayView<int,   1> part           ( nodes.partition()     );
+  array::ArrayView<double,2> coords   = array::make_view<double,2>( nodes.field("xyz")    );
+  array::ArrayView<gidx_t,1> glb_idx  = array::make_view<gidx_t,1>( nodes.global_index()  );
+  array::ArrayView<int,   1> part     = array::make_view<int   ,1>( nodes.partition()     );
 
   std::map<int,int> glb_to_loc;
   int g;
@@ -713,8 +715,8 @@ void GmshIO::read(const PathName& file_path, mesh::Mesh& mesh ) const
   {
     for( size_t n = 0; n < nb_nodes; ++n )
     {
-      coords(n,XX) *= deg;
-      coords(n,YY) *= deg;
+      coords(n,XX) *= rad2deg;
+      coords(n,YY) *= rad2deg;
     }
   }
   for (int i=0; i<3; ++i)
@@ -751,9 +753,9 @@ void GmshIO::read(const PathName& file_path, mesh::Mesh& mesh ) const
       }
 
       size_t nnodes_per_elem = elements->element_type().nb_nodes();
-      mesh::Elements::Connectivity& conn = elements->node_connectivity();
-      array::ArrayView<gidx_t,1> egidx ( elements->global_index() );
-      array::ArrayView<int,1> epart    ( elements->partition() );
+      mesh::BlockConnectivityImpl& conn = elements->node_connectivity();
+      array::ArrayView<gidx_t,1> egidx = array::make_view<gidx_t,1>( elements->global_index() );
+      array::ArrayView<int   ,1> epart = array::make_view<int   ,1>( elements->partition() );
 
       size_t dsize = 1+ntags+nnodes_per_elem;
       int part;
@@ -793,18 +795,18 @@ void GmshIO::read(const PathName& file_path, mesh::Mesh& mesh ) const
     mesh::Elements& triags = mesh.cells().elements( mesh.cells().add( make_element_type(TRIAG), nb_triags ) );
     mesh::Elements& edges  = mesh.edges().elements( mesh.edges().add( make_element_type(LINE),  nb_edges ) );
 
-    mesh::Elements::Connectivity& quad_nodes  = quads.node_connectivity();
-    mesh::Elements::Connectivity& triag_nodes = triags.node_connectivity();
-    mesh::Elements::Connectivity& edge_nodes  = edges.node_connectivity();
+    mesh::BlockConnectivityImpl& quad_nodes  = quads.node_connectivity();
+    mesh::BlockConnectivityImpl& triag_nodes = triags.node_connectivity();
+    mesh::BlockConnectivityImpl& edge_nodes  = edges.node_connectivity();
 
-    array::ArrayView<gidx_t,1> quad_glb_idx   ( quads.global_index() );
-    array::ArrayView<int,1> quad_part         ( quads.partition()    );
+    array::ArrayView<gidx_t,1> quad_glb_idx = array::make_view<gidx_t,1> ( quads.global_index() );
+    array::ArrayView<int   ,1> quad_part    = array::make_view<int   ,1>  ( quads.partition()    );
 
-    array::ArrayView<gidx_t,1> triag_glb_idx  ( triags.global_index() );
-    array::ArrayView<int,1> triag_part        ( triags.partition()    );
+    array::ArrayView<gidx_t,1> triag_glb_idx = array::make_view<gidx_t,1>( triags.global_index() );
+    array::ArrayView<int   ,1> triag_part    = array::make_view<int   ,1>( triags.partition()    );
 
-    array::ArrayView<gidx_t,1> edge_glb_idx   ( edges.global_index() );
-    array::ArrayView<int,1> edge_part         ( edges.partition()    );
+    array::ArrayView<gidx_t,1> edge_glb_idx = array::make_view<gidx_t,1>( edges.global_index() );
+    array::ArrayView<int   ,1> edge_part    = array::make_view<int   ,1>( edges.partition()    );
 
     // Now read all elements
     file.seekg(position,std::ios::beg);
@@ -874,8 +876,8 @@ void GmshIO::write(const mesh::Mesh& mesh, const PathName& file_path) const
   std::string nodes_field = options.get<std::string>("nodes");
 
   const mesh::Nodes& nodes    = mesh.nodes();
-  array::ArrayView<double,2> coords  ( nodes.field( nodes_field ) );
-  array::ArrayView<gidx_t,   1> glb_idx ( nodes.global_index() );
+  array::ArrayView<double,2> coords  = array::make_view<double,2>( nodes.field( nodes_field ) );
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
 
   const size_t surfdim = coords.shape(1); // nb of variables in coords
 
@@ -937,7 +939,7 @@ void GmshIO::write(const mesh::Mesh& mesh, const PathName& file_path) const
       nb_elements += hybrid.size();
       if( !include_ghost )
       {
-        const array::ArrayView<int,1> hybrid_halo( hybrid.halo() );
+        const array::ArrayView<int,1> hybrid_halo = array::make_view<int,1>( hybrid.halo() );
         for( size_t e=0; e<hybrid.size(); ++e )
         {
           if( hybrid_halo(e) ) --nb_elements;
@@ -964,10 +966,11 @@ void GmshIO::write(const mesh::Mesh& mesh, const PathName& file_path) const
         else
           NOTIMP;
 
-        const mesh::Elements::Connectivity& node_connectivity = elements.node_connectivity();
-        const array::ArrayView<gidx_t,1> elems_glb_idx = elements.view<gidx_t,1>( elements.global_index() );
-        const array::ArrayView<int,1> elems_partition = elements.view<int,1>( elements.partition() );
-        const array::ArrayView<int,1> elems_halo = elements.view<int,1>( elements.halo() );
+        const mesh::BlockConnectivityImpl& node_connectivity = elements.node_connectivity();
+
+        const array::LocalView<gidx_t,1> elems_glb_idx = elements.view<gidx_t,1>( elements.global_index() );
+        const array::LocalView<int,1> elems_partition = elements.view<int,1>( elements.partition() );
+        const array::LocalView<int,1> elems_halo = elements.view<int,1>( elements.halo() );
 
         if( binary )
         {
@@ -1010,7 +1013,7 @@ void GmshIO::write(const mesh::Mesh& mesh, const PathName& file_path) const
           {
             if( include_ghost || !elems_halo(elem) )
             {
-              file << elems_glb_idx(elem) << elem_info << elems_partition(+elem);
+              file << elems_glb_idx(elem) << elem_info << elems_partition(elem);
               for( size_t n=0; n<node_connectivity.cols(); ++n ) {
                 file << " " << glb_idx(node_connectivity(elem,n));
               }

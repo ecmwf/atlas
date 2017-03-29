@@ -13,6 +13,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
@@ -40,14 +41,16 @@ field::Field& BuildXYZField::operator()(mesh::Nodes& nodes) const
   }
   if( recompute ) {
     size_t npts = nodes.size();
-
-    array::ArrayView<double,2> lonlat( nodes.geolonlat() );
-    array::ArrayView<double,2> xyz   ( nodes.field(name_) );
+    array::ArrayView<double,2> lonlat   = array::make_view<double,2>( nodes.geolonlat()  );
+    array::ArrayView<double,2> xyz_view = array::make_view<double,2>( nodes.field(name_) );
 
     for( size_t n=0; n<npts; ++n )
     {
-      //std::cout << lonlat[n][0] << std::endl;
-      eckit::geometry::lonlat_to_3d(lonlat[n].data(),xyz[n].data());
+      double xyz[3];
+      eckit::geometry::lonlat_to_3d(lonlat(n,0),lonlat(n,1),xyz);
+      xyz_view(n,0) = xyz[0];
+      xyz_view(n,1) = xyz[1];
+      xyz_view(n,2) = xyz[2];
     }
   }
   return nodes.field(name_);

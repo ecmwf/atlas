@@ -20,8 +20,7 @@
 #include "eckit/option/SimpleOption.h"
 #include "eckit/option/VectorOption.h"
 #include "eckit/option/Separator.h"
-
-#include "atlas/runtime/Debug.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 //--------------------------------------------------------------------------------
 

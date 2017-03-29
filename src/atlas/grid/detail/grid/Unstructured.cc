@@ -37,7 +37,7 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
     config_domain.set("type","global");
     domain_ = Domain(config_domain);
 
-    array::ArrayView<double,2> lonlat (m.nodes().lonlat());
+    auto lonlat = array::make_view<double,2>(m.nodes().lonlat());
     std::vector<Point> &p = *points_;
     const size_t npts = p.size();
 

@@ -13,7 +13,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
@@ -22,27 +22,17 @@ namespace mesh {
 class IsGhostNode
 {
 public:
-  IsGhostNode( const mesh::Nodes& nodes )
+  IsGhostNode( const mesh::Nodes& nodes ) :
+    flags_( array::make_view<int,1> (nodes.field("flags")) ),
+    ghost_( array::make_view<int,1> (nodes.ghost()) )
   {
-//    part_   = array::ArrayView<int,1> (nodes.partition() );
-//    ridx_   = array::IndexView<int,1> (nodes.remote_index() );
-//    mypart_ = parallel::mpi::comm().rank();
-  flags_ = array::ArrayView<int,1> (nodes.field("flags"));
-  ghost_ = array::ArrayView<int,1> (nodes.ghost());
   }
 
   bool operator()(size_t idx) const
   {
-//    if( part_[idx] != mypart_ ) return true;
-//    if( ridx_[idx] != idx     ) return true;
-//    return false;
     return Nodes::Topology::check(flags_(idx),Nodes::Topology::GHOST);
-//    return ghost_(idx);
   }
 private:
-//  int mypart_;
-//  array::ArrayView<int,1> part_;
-//  array::IndexView<int,1> ridx_;
   array::ArrayView<int,1> flags_;
   array::ArrayView<int,1> ghost_;
 };

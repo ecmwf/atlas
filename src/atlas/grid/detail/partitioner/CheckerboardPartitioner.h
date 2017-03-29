@@ -19,7 +19,6 @@ public:
     CheckerboardPartitioner(int N, int nbands);
     CheckerboardPartitioner(int N, int nbands, bool checkerboard);
 
-private:
 
     // Node struct that holds the x and y indices (for global, it's longitude and latitude in millidegrees (integers))
     // This structure is used in sorting algorithms, and uses less memory than
@@ -29,6 +28,8 @@ private:
       int x, y;
       int n;
     };
+
+private:
 
     struct Checkerboard {
       size_t nbands;  // number of bands

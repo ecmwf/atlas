@@ -24,7 +24,6 @@ install( FILES
 
 ### sources
 
-
 list( APPEND atlas_srcs
 library/config.h
 library/Library.h
@@ -34,6 +33,10 @@ runtime/ErrorHandling.cc
 runtime/AtlasTool.h
 runtime/AtlasTool.cc
 runtime/Log.h
+parallel/mpi/mpi.cc
+parallel/mpi/mpi.h
+parallel/omp/omp.cc
+parallel/omp/omp.h
 )
 
 list( APPEND atlas_grid_srcs
@@ -41,6 +44,7 @@ list( APPEND atlas_grid_srcs
 grid.h
 grid/Grid.cc
 grid/Grid.h
+
 grid/Distribution.cc
 grid/Distribution.h
 grid/Projection.cc
@@ -180,44 +184,46 @@ list( APPEND atlas_grid_srcs
 endif()
 
 list( APPEND atlas_mesh_srcs
-mesh/Connectivity.h
 mesh/Connectivity.cc
-mesh/Elements.h
-mesh/Elements.cc
-mesh/ElementType.h
+mesh/Connectivity.h
 mesh/ElementType.cc
-mesh/Halo.h
+mesh/ElementType.h
+mesh/Elements.cc
+mesh/Elements.h
 mesh/Halo.cc
-mesh/HybridElements.h
+mesh/Halo.h
 mesh/HybridElements.cc
-mesh/Mesh.h
+mesh/HybridElements.h
 mesh/Mesh.cc
-mesh/Nodes.h
+mesh/Mesh.h
 mesh/Nodes.cc
+mesh/Nodes.h
+
 mesh/actions/ExtendNodesGlobal.h
 mesh/actions/ExtendNodesGlobal.cc
 mesh/actions/BuildDualMesh.h
-mesh/actions/BuildDualMesh.cc
-mesh/actions/BuildEdges.h
-mesh/actions/BuildEdges.cc
-mesh/actions/BuildHalo.h
-mesh/actions/BuildHalo.cc
-mesh/actions/BuildParallelFields.h
-mesh/actions/BuildParallelFields.cc
-mesh/actions/BuildPeriodicBoundaries.h
-mesh/actions/BuildPeriodicBoundaries.cc
-mesh/actions/BuildStatistics.h
-mesh/actions/BuildStatistics.cc
-mesh/actions/BuildXYZField.h
-mesh/actions/BuildXYZField.cc
-mesh/actions/BuildCellCentres.h
 mesh/actions/BuildCellCentres.cc
-mesh/actions/BuildConvexHull3D.h
+mesh/actions/BuildCellCentres.h
 mesh/actions/BuildConvexHull3D.cc
-mesh/actions/GenerateMesh.h
+mesh/actions/BuildConvexHull3D.h
+mesh/actions/BuildDualMesh.cc
+mesh/actions/BuildDualMesh.h
+mesh/actions/BuildEdges.cc
+mesh/actions/BuildEdges.h
+mesh/actions/BuildHalo.cc
+mesh/actions/BuildHalo.h
+mesh/actions/BuildParallelFields.cc
+mesh/actions/BuildParallelFields.h
+mesh/actions/BuildPeriodicBoundaries.cc
+mesh/actions/BuildPeriodicBoundaries.h
+mesh/actions/BuildStatistics.cc
+mesh/actions/BuildStatistics.h
+mesh/actions/BuildXYZField.cc
+mesh/actions/BuildXYZField.h
 mesh/actions/GenerateMesh.cc
-mesh/actions/WriteLoadBalanceReport.h
+mesh/actions/GenerateMesh.h
 mesh/actions/WriteLoadBalanceReport.cc
+
 meshgenerator/DelaunayMeshGenerator.h
 meshgenerator/DelaunayMeshGenerator.cc
 meshgenerator/MeshGenerator.cc
@@ -316,23 +322,71 @@ interpolation/method/Ray.cc
 interpolation/method/Ray.h
 )
 
+
+
 list( APPEND atlas_array_srcs
+array.h
+array_fwd.h
 array/Array.h
-array/Array.cc
+array/ArrayIdx.h
+array/ArrayLayout.h
+array/ArrayShape.h
+array/ArraySpec.cc
+array/ArraySpec.h
+array/ArrayStrides.h
 array/ArrayUtil.h
-array/ArrayUtil.cc
-array/ArrayView_iterator.h
-array/ArrayView_impl.h
-array/IndexView.h
-array/IndexView.cc
 array/ArrayView.h
-array/ArrayView.cc
 array/DataType.h
+array/IndexView.h
+array/LocalView.cc
+array/LocalView.h
+array/StorageView.h
+array/Vector.h
+array/helpers/ArrayInitializer.h
+#array/Table.h
+#array/Table.cc
+#array/TableView.h
+#array/TableView.cc
 )
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+list( APPEND atlas_array_srcs
+array/gridtools/GPUClonable.h
+array/gridtools/GridToolsArray.cc
+array/gridtools/GridToolsArrayHelpers.h
+array/gridtools/GridToolsArrayView.cc
+array/gridtools/GridToolsArrayView.h
+array/gridtools/GridToolsDataStore.h
+array/gridtools/GridToolsIndexView.cc
+array/gridtools/GridToolsIndexView.h
+array/gridtools/GridToolsMakeView.cc
+array/gridtools/GridToolsMakeView.h
+array/gridtools/GridToolsStorageView.h
+array/gridtools/GridToolsTraits.h
+)
+else()
+list( APPEND atlas_array_srcs
+array/native/NativeArray.cc
+array/native/NativeArrayView.cc
+array/native/NativeArrayView.h
+array/native/NativeDataStore.h
+array/native/NativeIndexView.cc
+array/native/NativeIndexView.h
+array/native/NativeMakeView.cc
+array/native/NativeStorageView.h
+)
+endif()
 
 list( APPEND atlas_util_srcs
-util/Config.h
+parallel/Checksum.cc
+parallel/Checksum.h
+parallel/GatherScatter.cc
+parallel/GatherScatter.h
+parallel/HaloExchange.cc
+parallel/HaloExchange.h
+runtime/ErrorHandling.cc
+runtime/ErrorHandling.cc
 util/Config.cc
+util/Config.h
 util/Constants.h
 util/GaussianLatitudes.h
 util/GaussianLatitudes.cc
@@ -342,17 +396,7 @@ output/detail/GmshIO.h
 output/detail/GmshIO.cc
 output/detail/PointCloud.h
 output/detail/PointCloud.cc
-parallel/omp/omp.h
-parallel/omp/omp.cc
 parallel/mpi/Buffer.h
-parallel/mpi/mpi.h
-parallel/mpi/mpi.cc
-parallel/Checksum.h
-parallel/Checksum.cc
-parallel/HaloExchange.h
-parallel/HaloExchange.cc
-parallel/GatherScatter.h
-parallel/GatherScatter.cc
 )
 
 list( APPEND atlas_internals_srcs
@@ -368,10 +412,53 @@ util/LonLatMicroDeg.h
 util/CoordinateEnums.h
 mesh/detail/PeriodicTransform.h
 util/Unique.h
-parallel/detail/MPLArrayView.h
+#parallel/detail/MPLArrayView.h
 )
 
 
+function( create_cuda_wrapper variable )
+set( options "" )
+set( single_value_args SOURCE )
+set( multi_value_args "" )
+cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
+
+  get_filename_component(directory ${_PAR_SOURCE} DIRECTORY)
+  get_filename_component(base      ${_PAR_SOURCE} NAME_WE)
+  get_filename_component(name      ${_PAR_SOURCE} NAME)
+  if( directory )
+    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${directory}/${base}.cu)
+  else()
+    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${base}.cu)
+  endif()
+  set(${variable} ${cuda_wrapper} PARENT_SCOPE)
+  set(content
+"
+#include \"atlas/${directory}/${name}\"
+")
+
+  file(WRITE ${cuda_wrapper} "${content}")
+
+endfunction()
+
+function( use_cuda srclist )
+  set( options "" )
+  set( single_value_args "" )
+  set( multi_value_args "" )
+  cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}" ${ARGN} )
+  set( use_cuda_srclist ${ARGN} )
+
+  ecbuild_list_exclude_pattern( LIST ${srclist} REGEX ${use_cuda_srclist} )
+
+  foreach( src ${use_cuda_srclist} )
+    create_cuda_wrapper( cuda_wrapper SOURCE ${src} )
+    list( APPEND ${srclist} ${cuda_wrapper} )
+  endforeach()
+
+  set( ${srclist} "${${srclist}}" PARENT_SCOPE )
+
+  add_custom_target( atlas_cuda SOURCES ${use_cuda_srclist} )
+
+endfunction()
 
 ### atlas c++ library
 
@@ -388,6 +475,44 @@ if( ECKIT_HAVE_MPI AND ATLAS_HAVE_MPI AND  EC_OS_NAME MATCHES "macosx" )
   link_libraries(${MPI_CXX_LIBRARIES})
 endif()
 
+if( SHORTCUT_COMPILATION )
+  unset( atlas_grid_srcs )
+  unset( atlas_mesh_srcs )
+  unset( atlas_field_srcs )
+  unset( atlas_functionspace_srcs )
+  unset( atlas_interpolation_srcs )
+  unset( atlas_numerics_srcs )
+  unset( atlas_output_srcs )
+  unset( atlas_util_srcs )
+  unset( atlas_internals_srcs )
+endif()
+
+list( APPEND source_list
+  ${atlas_srcs}
+  ${atlas_array_srcs}
+  ${atlas_grid_srcs}
+  ${atlas_mesh_srcs}
+  ${atlas_field_srcs}
+  ${atlas_functionspace_srcs}
+  ${atlas_interpolation_srcs}
+  ${atlas_numerics_srcs}
+  ${atlas_output_srcs}
+  ${atlas_util_srcs}
+  ${atlas_internals_srcs}
+  ${CMAKE_CURRENT_BINARY_DIR}/library/git_sha1.h
+  ${CMAKE_CURRENT_BINARY_DIR}/library/defines.h
+)
+
+if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+## TODO temporary disabled since I get a linking error of the nvcc intermediate step
+#  use_cuda( source_list
+#    array/gridtools/GridToolsArrayView.cc
+#    array/gridtools/GridToolsIndexView.cc
+#    array/gridtools/GridToolsMakeView.cc
+#    mesh/Connectivity.cc
+#  )
+endif()
+
 ecbuild_add_library( TARGET atlas
 
   AUTO_VERSION
@@ -399,25 +524,12 @@ ecbuild_add_library( TARGET atlas
   HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
 
   SOURCES
-    ${atlas_srcs}
-    ${atlas_array_srcs}
-    ${atlas_grid_srcs}
-    ${atlas_mesh_srcs}
-    ${atlas_field_srcs}
-    ${atlas_functionspace_srcs}
-    ${atlas_interpolation_srcs}
-    ${atlas_numerics_srcs}
-    ${atlas_output_srcs}
-    ${atlas_util_srcs}
-    ${atlas_internals_srcs}
-    ${CMAKE_CURRENT_BINARY_DIR}/library/git_sha1.h
-    ${CMAKE_CURRENT_BINARY_DIR}/library/defines.h
+    ${source_list}
 
   PRIVATE_INCLUDES
     "${CGAL_INCLUDE_DIRS}"
     "${TRANSI_INCLUDE_DIRS}"
     "${MPI_CXX_INCLUDE_DIRS}"
-
   LIBS
     eckit_geometry
     eckit_linalg
@@ -426,7 +538,7 @@ ecbuild_add_library( TARGET atlas
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
     "${FCKIT_LIBRARIES}"
-
+    "${CUDA_LIBRARIES}"
   DEFINITIONS
     ${ATLAS_DEFINITIONS}
  )

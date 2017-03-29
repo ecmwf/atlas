@@ -21,7 +21,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayUtil.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/util/Metadata.h"
 
 namespace eckit { class Parametrisation; }
@@ -93,8 +93,7 @@ public: // Destructor
 // -- Accessors
 
   /// @brief Access to raw data
-  template <typename DATA_TYPE> const DATA_TYPE* data() const  { return array_->data<DATA_TYPE>(); }
-  template <typename DATA_TYPE>       DATA_TYPE* data()        { return array_->data<DATA_TYPE>(); }
+  void* storage() { return array_->storage(); }
 
   /// @brief Internal data type of field
   array::DataType datatype() const { return array_->datatype(); }
@@ -158,6 +157,37 @@ public: // Destructor
   /// @brief Return the memory footprint of the Field
   size_t footprint() const;
 
+// -- dangerous methods
+  template <typename DATATYPE> DATATYPE const* host_data() const   { return array_->host_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       host_data()         { return array_->host_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE const* device_data() const { return array_->device_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       device_data()       { return array_->device_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE const* data() const        { return array_->host_data<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       data()              { return array_->host_data<DATATYPE>(); }
+
+// -- Methods related to host-device synchronisation, requires gridtools_storage
+  void cloneToDevice() const {
+      array_->cloneToDevice();
+  }
+  void cloneFromDevice() const {
+      array_->cloneFromDevice();
+  }
+  void syncHostDevice() const {
+      array_->syncHostDevice();
+  }
+  bool isOnHost() const {
+      return array_->isOnHost();
+  }
+  bool isOnDevice() const {
+      return array_->isOnDevice();
+  }
+  void reactivateDeviceWriteViews() const {
+      array_->reactivateDeviceWriteViews();
+  }
+  void reactivateHostWriteViews() const {
+      array_->reactivateHostWriteViews();
+  }
+
 private: // methods
 
   void print(std::ostream& os) const;
@@ -199,6 +229,8 @@ Field* Field::wrap(
 }
 
 
+//#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
+
 //----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
@@ -206,6 +238,7 @@ Field* Field::wrap(
 #define functionspace_FunctionSpace functionspace::FunctionSpace
 #define util_Metadata util::Metadata
 #define Char char
+
 
 extern "C"
 {
@@ -223,21 +256,30 @@ extern "C"
   int atlas__Field__levels (Field* This);
   double atlas__Field__bytes (Field* This);
   void atlas__Field__shapef (Field* This, int* &shape, int &rank);
-  void atlas__Field__data_int_specf (Field* This, int* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__data_long_specf (Field* This, long* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__data_float_specf (Field* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__data_double_specf (Field* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__host_data_int_specf (Field* This, int* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__host_data_long_specf (Field* This, long* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__host_data_float_specf (Field* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__host_data_double_specf (Field* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_int_specf (Field* This, int* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_long_specf (Field* This, long* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_float_specf (Field* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_double_specf (Field* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
   util_Metadata* atlas__Field__metadata (Field* This);
   functionspace_FunctionSpace* atlas__Field__functionspace (Field* This);
   void atlas__Field__rename(Field* This, const char* name);
   void atlas__Field__set_levels(Field* This, int levels);
   void atlas__Field__set_functionspace(Field* This, const functionspace_FunctionSpace* functionspace);
+  int atlas__Field__is_on_host(const Field* This);
+  int atlas__Field__is_on_device(const Field* This);
+  void atlas__Field__clone_to_device(Field* This);
+  void atlas__Field__clone_from_device(Field* This);
 }
 #undef Parametrisation
 #undef functionspace_FunctionSpace
 #undef util_Metadata
 #undef Char
 
+//#endif
 //------------------------------------------------------------------------------------------------------
 
 } // namespace field

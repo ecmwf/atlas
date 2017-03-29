@@ -11,20 +11,13 @@
 #define BOOST_TEST_MODULE TestMeshGen3D
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/library/config.h"
-
-#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/grid.h"
-#include "atlas/grid/Grid.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
-#include "atlas/parallel/mpi/mpi.h"
 
 #include "tests/AtlasFixture.h"
-
-#include "tests/AtlasFixture.h"
-
 
 using namespace atlas::output;
 using namespace atlas::meshgenerator;
@@ -38,7 +31,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
-	mesh::Mesh::Ptr m ( mesh::Mesh::create() );
+  mesh::Mesh::Ptr m ( mesh::Mesh::create() );
 
 
   util::Config opts;
@@ -49,9 +42,9 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
   // opts.set("nb_parts",1); // default = 1
   // opts.set("part",    0); // default = 0
 
-    m = generate( Grid("N24") );
+  m = generate( Grid("N24") );
 
-	Gmsh("out.msh", util::Config("coordinates","xyz") ).write(*m);
+  Gmsh("out.msh", util::Config("coordinates","xyz") ).write(*m);
 }
 
 } // namespace test

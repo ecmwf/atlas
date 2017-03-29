@@ -180,8 +180,8 @@ void MatchingMeshPartitionerPolygon::partition( const Grid& grid, int node_parti
     for (size_t t = 0; t < prePartitionedMesh_->cells().nb_types(); ++t) {
         const mesh::Elements& elements = prePartitionedMesh_->cells().elements(t);
 
-        const mesh::Elements::Connectivity& conn = elements.node_connectivity();
-        array::ArrayView< int, 1 > patch( elements.view< int, 1 >(elements.field("patch")) );
+        const mesh::BlockConnectivityImpl& conn = elements.node_connectivity();
+        auto patch = elements.view< int, 1 >(elements.field("patch"));
 
         const size_t nb_nodes = elements.nb_nodes();
         ASSERT( (nb_nodes==3 && elements.name() == "Triangle")
@@ -210,7 +210,7 @@ void MatchingMeshPartitionerPolygon::partition( const Grid& grid, int node_parti
     std::vector< point_t > polygon;
     polygon.reserve(polygon.size());
 
-    array::ArrayView< double, 2 > lonlat_src( prePartitionedMesh_->nodes().lonlat() );
+    auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_->nodes().lonlat() );
     point_t bbox_min = point_t(lonlat_src(poly[0], LON), lonlat_src(poly[0], LAT));
     point_t bbox_max = bbox_min;
 

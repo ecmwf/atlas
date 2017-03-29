@@ -13,6 +13,7 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/field/Field.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/array/MakeView.h"
 
 namespace atlas {
 namespace mesh {
@@ -61,50 +62,47 @@ const std::string& Elements::name() const
   return hybrid_elements_->element_type(type_idx_).name();
 }
 
-template<> array::ArrayView<double,1> Elements::view( const field::Field& field ) const
+template<> array::LocalView<double,1> Elements::view( const field::Field& field ) const
 {
-  return array::ArrayView<double,1>( field.data<double>()+begin(), array::make_shape(size()) );
+  return array::LocalView<double,1>( array::make_storageview<double>(field).data()+begin(), array::make_shape(size()) );
 }
 
-template<> array::ArrayView<float,1> Elements::view( const field::Field& field ) const
+template<> array::LocalView<float,1> Elements::view( const field::Field& field ) const
 {
-  return array::ArrayView<float,1>( field.data<float>()+begin(), array::make_shape(size()) );
+  return array::LocalView<float,1>( array::make_storageview<float>(field).data()+begin(), array::make_shape(size()) );
 }
 
-template<> array::ArrayView<int,1> Elements::view( const field::Field& field ) const
+template<> array::LocalView<int,1> Elements::view( const field::Field& field ) const
 {
-  return array::ArrayView<int,1>( field.data<int>()+begin(), array::make_shape(size()) );
+  return array::LocalView<int,1>( array::make_storageview<int>(field).data()+begin(), array::make_shape(size()) );
 }
 
-template<> array::ArrayView<long,1> Elements::view( const field::Field& field ) const
+template<> array::LocalView<long,1> Elements::view( const field::Field& field ) const
 {
-  return array::ArrayView<long,1>( field.data<long>()+begin(), array::make_shape(size()) );
-}
-
-
-
-template<> array::ArrayView<double,2> Elements::view( const field::Field& field ) const
-{
-  return array::ArrayView<double,2>( field.data<double>()+begin(), array::make_shape(size(),field.shape(1)) );
-}
-
-template<> array::ArrayView<float,2> Elements::view( const field::Field& field ) const
-{
-  return array::ArrayView<float,2>( field.data<float>()+begin(), array::make_shape(size(),field.shape(1)) );
-}
-
-template<> array::ArrayView<int,2> Elements::view( const field::Field& field ) const
-{
-  return array::ArrayView<int,2>( field.data<int>()+begin(), array::make_shape(size(),field.shape(1)) );
-}
-
-template<> array::ArrayView<long,2> Elements::view( const field::Field& field ) const
-{
-  return array::ArrayView<long,2>( field.data<long>()+begin(), array::make_shape(size(),field.shape(1)) );
+  return array::LocalView<long,1>( array::make_storageview<long>(field).data()+begin(), array::make_shape(size()) );
 }
 
 
 
+template<> array::LocalView<double,2> Elements::view( const field::Field& field ) const
+{
+  return array::LocalView<double,2>( array::make_storageview<double>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
+}
+
+template<> array::LocalView<float,2> Elements::view( const field::Field& field ) const
+{
+  return array::LocalView<float,2>( array::make_storageview<float>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
+}
+
+template<> array::LocalView<int,2> Elements::view( const field::Field& field ) const
+{
+  return array::LocalView<int,2>( array::make_storageview<int>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
+}
+
+template<> array::LocalView<long,2> Elements::view( const field::Field& field ) const
+{
+  return array::LocalView<long,2>( array::make_storageview<long>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
+}
 
 size_t Elements::add(const size_t nb_elements)
 {
@@ -140,23 +138,23 @@ size_t atlas__mesh__Elements__end(const Elements* This)
   return This->end();
 }
 
-BlockConnectivity* atlas__mesh__Elements__node_connectivity(Elements* This)
+BlockConnectivityImpl* atlas__mesh__Elements__node_connectivity(Elements* This)
 {
-  BlockConnectivity* connectivity(0);
+  BlockConnectivityImpl* connectivity(0);
   ATLAS_ERROR_HANDLING( connectivity = &This->node_connectivity() );
   return connectivity;
 }
 
-BlockConnectivity* atlas__mesh__Elements__edge_connectivity(Elements* This)
+BlockConnectivityImpl* atlas__mesh__Elements__edge_connectivity(Elements* This)
 {
-  BlockConnectivity* connectivity(0);
+  BlockConnectivityImpl* connectivity(0);
   ATLAS_ERROR_HANDLING( connectivity = &This->edge_connectivity() );
   return connectivity;
 }
 
-BlockConnectivity* atlas__mesh__Elements__cell_connectivity(Elements* This)
+BlockConnectivityImpl* atlas__mesh__Elements__cell_connectivity(Elements* This)
 {
-  BlockConnectivity* connectivity(0);
+  BlockConnectivityImpl* connectivity(0);
   ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
   return connectivity;
 }

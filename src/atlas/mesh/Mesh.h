@@ -47,6 +47,11 @@ namespace deprecated {
 } }
 
 namespace atlas {
+namespace meshgenerator {
+    class MeshGenerator;
+} }
+
+namespace atlas {
 namespace util {
 namespace parallel {
 namespace mpl {
@@ -121,9 +126,13 @@ public: // methods
 
     size_t nb_partitions() const;
 
-    const grid::Projection projection() const { return projection_; }
+    void cloneToDevice() const;
 
-    void setProjection(const grid::Projection&);
+    void cloneFromDevice() const;
+
+    void syncHostDevice() const;
+
+    const grid::Projection& projection() const { return projection_; }
 
 private:  // methods
 
@@ -133,6 +142,9 @@ private:  // methods
     }
 
     void createElements();
+
+    friend class meshgenerator::MeshGenerator;
+    void setProjection(const grid::Projection&);
 
 private: // members
 

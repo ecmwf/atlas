@@ -14,6 +14,7 @@
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/array.h"
 
 namespace atlas {
 namespace grid {
@@ -21,7 +22,7 @@ namespace detail {
 namespace partitioner {
 
 namespace {
-trans::Trans* new_trans( const TransPartitioner& p, const Grid& grid ) const {
+trans::Trans* new_trans( const TransPartitioner& p, const Grid& grid ) {
     auto t = new trans::Trans(grid,0);
     if( p.nb_partitions() != size_t(t->nproc()) ) {
         std::stringstream msg;
@@ -67,13 +68,13 @@ void TransPartitioner::partition(const Grid& grid, int part[]) const {
 
     int nlonmax = g.nxmax();
 
-    array::ArrayView<int,1> nloen       = t->nloen();
-    array::ArrayView<int,1> n_regions   = t->n_regions();
-    array::ArrayView<int,1> nfrstlat    = t->nfrstlat();
-    array::ArrayView<int,1> nlstlat     = t->nlstlat();
-    array::ArrayView<int,1> nptrfrstlat = t->nptrfrstlat();
-    array::ArrayView<int,2> nsta        = t->nsta();
-    array::ArrayView<int,2> nonl        = t->nonl();
+    array::LocalView<int,1> nloen       = t->nloen();
+    array::LocalView<int,1> n_regions   = t->n_regions();
+    array::LocalView<int,1> nfrstlat    = t->nfrstlat();
+    array::LocalView<int,1> nlstlat     = t->nlstlat();
+    array::LocalView<int,1> nptrfrstlat = t->nptrfrstlat();
+    array::LocalView<int,2> nsta        = t->nsta();
+    array::LocalView<int,2> nonl        = t->nonl();
 
 
     int i(0);
@@ -81,7 +82,7 @@ void TransPartitioner::partition(const Grid& grid, int part[]) const {
     std::vector<int> iglobal(t->ndgl()*nlonmax,-1);
 
     for( int jgl=0; jgl<t->ndgl(); ++jgl ) {
-        for( int jl=0; jl<nloen[jgl]; ++jl ) {
+        for( int jl=0; jl<nloen(jgl); ++jl ) {
             ++i;
             iglobal[jgl*nlonmax+jl] = i;
             maxind = std::max(maxind,jgl*nlonmax+jl);
@@ -89,9 +90,9 @@ void TransPartitioner::partition(const Grid& grid, int part[]) const {
     }
     int iproc(0);
     for( int ja=0; ja<t->n_regions_NS(); ++ja ) {
-        for( int jb=0; jb<n_regions[ja]; ++jb ) {
-            for( int jgl=nfrstlat[ja]-1; jgl<nlstlat[ja]; ++jgl ) {
-                int igl = nptrfrstlat[ja] + jgl - nfrstlat[ja];
+        for( int jb=0; jb<n_regions(ja); ++jb ) {
+            for( int jgl=nfrstlat(ja)-1; jgl<nlstlat(ja); ++jgl ) {
+                int igl = nptrfrstlat(ja) + jgl - nfrstlat(ja);
                 for( int jl=nsta(jb,igl)-1; jl<nsta(jb,igl)+nonl(jb,igl)-1; ++jl ) {
                     size_t ind = iglobal[jgl*nlonmax+jl] - 1;
                     if( ind >= grid.size() ) throw eckit::OutOfRange(ind,grid.size(),Here());

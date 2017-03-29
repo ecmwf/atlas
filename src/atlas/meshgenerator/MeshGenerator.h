@@ -66,6 +66,7 @@ public:
 protected:
 
     void generate_global_element_numbering( mesh::Mesh& mesh ) const;
+    void set_projection( mesh::Mesh&, const grid::Projection& ) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

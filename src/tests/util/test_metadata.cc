@@ -12,9 +12,9 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/library/Library.h"
-#include "atlas/runtime/Debug.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/util/Metadata.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #include "tests/AtlasFixture.h"
 

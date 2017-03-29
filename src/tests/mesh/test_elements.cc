@@ -21,6 +21,7 @@
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/library/Library.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"
@@ -105,7 +106,7 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   {
     for( size_t t=0; t<hybrid_elements.nb_types(); ++t ) {
       Elements& elements = hybrid_elements.elements(t);
-      const Elements::Connectivity& block_connectivity = elements.node_connectivity();
+      const BlockConnectivityImpl& block_connectivity = elements.node_connectivity();
       if( t==0 ) {
         BOOST_CHECK_EQUAL( block_connectivity(0,0) , 1 );
         BOOST_CHECK_EQUAL( block_connectivity(0,1) , 5 );
@@ -141,7 +142,7 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
 
       eckit::Log::info() << "name = " << elements.name() << std::endl;
       eckit::Log::info() << "nb_elements = " << elements.size() << std::endl;
-      const Elements::Connectivity& connectivity = elements.node_connectivity();
+      const BlockConnectivityImpl& connectivity = elements.node_connectivity();
       for( size_t e=0; e<elements.size(); ++e ) {
         eckit::Log::info() << "  nodes = [ ";
         for( size_t n=0; n<elements.nb_nodes(); ++n ) {
@@ -185,7 +186,7 @@ BOOST_AUTO_TEST_CASE( elements )
   elements.node_connectivity().set(0,triag1);
   eckit::Log::info() << "name = " << elements.name() << std::endl;
   eckit::Log::info() << "nb_elements = " << elements.size() << std::endl;
-  const Elements::Connectivity& connectivity = elements.node_connectivity();
+  const BlockConnectivityImpl& connectivity = elements.node_connectivity();
   for( size_t e=0; e<elements.size(); ++e ) {
     eckit::Log::info() << "  nodes = [ ";
     for( size_t n=0; n<elements.nb_nodes(); ++n ) {
@@ -203,7 +204,7 @@ BOOST_AUTO_TEST_CASE( elements )
       elements.node_connectivity().set(0,triag1);
       eckit::Log::info() << "name = " << elements.name() << std::endl;
       eckit::Log::info() << "nb_elements = " << elements.size() << std::endl;
-      const Elements::Connectivity& connectivity = elements.node_connectivity();
+      const BlockConnectivityImpl& connectivity = elements.node_connectivity();
       for( size_t e=0; e<elements.size(); ++e ) {
         eckit::Log::info() << "  nodes = [ ";
         for( size_t n=0; n<elements.nb_nodes(); ++n ) {
@@ -252,7 +253,7 @@ BOOST_AUTO_TEST_CASE( hybrid_connectivity )
 
   for( size_t b=0; b<hybrid_connectivity.blocks(); ++b )
   {
-    const BlockConnectivity& block = hybrid_connectivity.block(b);
+    const BlockConnectivityImpl& block = hybrid_connectivity.block(b);
     for( size_t r=0; r<block.rows(); ++r )
     {
       eckit::Log::info() << "  cols = [ ";
@@ -293,8 +294,10 @@ BOOST_AUTO_TEST_CASE( zero_elements )
 {
   HybridElements hybrid_elements;
   idx_t *nodes = 0;
+
   hybrid_elements.add(new Triangle(), 0, nodes );
   hybrid_elements.add(new Quadrilateral(), 0, nodes );
+
   BOOST_CHECK_EQUAL( hybrid_elements.size(), 0 );
   BOOST_CHECK_EQUAL( hybrid_elements.nb_types(), 2 );
   BOOST_CHECK_EQUAL( hybrid_elements.elements(0).size(), 0 );
@@ -316,14 +319,6 @@ BOOST_AUTO_TEST_CASE( irregularconnectivity_insert )
   size_t iregular_c[] = {2, 3, 4, 1};
   connectivity.insert(5,4,iregular_c);
 
-  for( size_t jrow=0; jrow<connectivity.rows(); ++jrow )
-  {
-    for( size_t jcol=0; jcol<connectivity.cols(jrow); ++jcol )
-    {
-      std::cout << connectivity(jrow,jcol) << " ";
-    }
-    std::cout << std::endl;
-  }
   idx_t values[]={ 1, 2, 3, 4, 13, 14, 15, -1, -1, -1, -1, -1, 16, 17, 18, 5, 6, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 9, 10, 11, 12 };
   idx_t counts[]={ 4, 3, 5, 3, 4, 2, 3, 4, 1, 4 };
 
@@ -401,6 +396,7 @@ BOOST_AUTO_TEST_CASE( multiblockconnectivity_insert )
 
 BOOST_AUTO_TEST_CASE( cells_insert )
 {
+  Log::info() << "\n\n\ncells_insert \n============ \n\n" << std::endl;
   HybridElements cells;
   idx_t c1[] = {1, 2, 3, 4,
                 5, 6, 7, 8,
@@ -410,16 +406,17 @@ BOOST_AUTO_TEST_CASE( cells_insert )
                 16, 17, 18};
   cells.add(new Triangle(), 2, c2);
 
-  BlockConnectivity& conn1 = cells.elements(0).node_connectivity();
-  BlockConnectivity& conn2 = cells.elements(1).node_connectivity();
-
   BOOST_CHECK_EQUAL( cells.elements(0).size() , 3 );
   BOOST_CHECK_EQUAL( cells.elements(1).size() , 2 );
   BOOST_CHECK_EQUAL( cells.size(), 5 );
-  BOOST_CHECK_EQUAL( conn1.rows(), 3 );
-  BOOST_CHECK_EQUAL( conn2.rows(), 2 );
+  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity().rows(), 3 );
+  BOOST_CHECK_EQUAL( cells.elements(1).node_connectivity().rows(), 2 );
 
+  Log::info() << "Update elements(0)" << std::endl;
   size_t pos0 = cells.elements(0).add(3);
+
+
+  Log::info() << "Update elements(1)" << std::endl;
   size_t pos1 = cells.elements(1).add(2);
 
   BOOST_CHECK_EQUAL( pos0, 3 );
@@ -427,8 +424,12 @@ BOOST_AUTO_TEST_CASE( cells_insert )
   BOOST_CHECK_EQUAL( cells.elements(0).size() , 6 );
   BOOST_CHECK_EQUAL( cells.elements(1).size() , 4 );
   BOOST_CHECK_EQUAL( cells.size(), 10 );
-  BOOST_CHECK_EQUAL( conn1.rows(), 6 );
-  BOOST_CHECK_EQUAL( conn2.rows(), 4 );
+  BOOST_CHECK_EQUAL( cells.node_connectivity().block(0).rows(), 6 );
+  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity().rows(), 6 );
+  BOOST_CHECK_EQUAL( cells.elements(1).node_connectivity().rows(), 4 );
+
+  const BlockConnectivityImpl& conn1 = cells.elements(0).node_connectivity();
+  const BlockConnectivityImpl& conn2 = cells.elements(1).node_connectivity();
 
   std::cout << "\nconn1\n";
   for( size_t jrow=0; jrow<conn1.rows(); ++jrow )
@@ -449,6 +450,31 @@ BOOST_AUTO_TEST_CASE( cells_insert )
     }
     std::cout << std::endl;
   }
+}
+
+BOOST_AUTO_TEST_CASE( cells_add_add )
+{
+  HybridElements cells;
+
+  cells.add(new Quadrilateral(), 3);
+  cells.add(new Triangle(),      2);
+
+  HybridElements::Connectivity& conn = cells.node_connectivity();
+
+  int nodes[] = {0,1,2,3};
+
+  conn.set(0,nodes);
+
+  BOOST_CHECK_EQUAL( conn(0,0), 0 );
+  BOOST_CHECK_EQUAL( conn(0,1), 1 );
+  BOOST_CHECK_EQUAL( conn(0,2), 2 );
+  BOOST_CHECK_EQUAL( conn(0,3), 3 );
+
+  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity()(0,0), 0 );
+  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity()(0,1), 1 );
+  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity()(0,2), 2 );
+  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity()(0,3), 3 );
+
 }
 
 

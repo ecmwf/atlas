@@ -17,6 +17,7 @@
 #include "atlas/util/Checksum.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/array/MakeView.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
@@ -82,46 +83,46 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
     int n_regions_NS = trans_->n_regions_NS();
 
     // Number of partitions per latitude band
-    array::ArrayView<int,1> n_regions = trans_->n_regions();
+    array::LocalView<int,1> n_regions = trans_->n_regions();
 
     // First latitude of latitude band
-    array::ArrayView<int,1> nfrstlat = trans_->nfrstlat();
+    array::LocalView<int,1> nfrstlat = trans_->nfrstlat();
 
     // First latitude of latitude band
-    array::ArrayView<int,1> nlstlat = trans_->nlstlat();
+    array::LocalView<int,1> nlstlat = trans_->nlstlat();
 
     // Index of latitude partition (note that if a partition
     // has two regions on a latitude - the index increases
     // by one (2 numbers)
-    array::ArrayView<int,1> nptrfrstlat = trans_->nptrfrstlat();
+    array::LocalView<int,1> nptrfrstlat = trans_->nptrfrstlat();
 
     // Starting longitudinal point per given latitude (ja)
     // Note that it is associated to nptrfrstlat
-    array::ArrayView<int,2> nsta = trans_->nsta();
+    array::LocalView<int,2> nsta = trans_->nsta();
 
     // Number of longitudinal points per given latitude (ja)
     // Note that it is associated to nptrfrstlat
-    array::ArrayView<int,2> nonl = trans_->nonl();
+    array::LocalView<int,2> nonl = trans_->nonl();
 
     size_t proc(0);
     // Loop over number of latitude bands (ja)
     for (int ja = 0; ja < n_regions_NS; ++ja)
     {
         // Loop over number of longitude bands (jb)
-        for (int jb = 0; jb < n_regions[ja]; ++jb)
+        for (int jb = 0; jb < n_regions(ja); ++jb)
         {
             if (proc == parallel::mpi::comm().rank())
             {
-                nlat_ = nlstlat[ja] - nfrstlat[ja] + 1;
+                nlat_ = nlstlat(ja) - nfrstlat(ja) + 1;
                 nlon_.resize(nlat_);
                 first_lon_.resize(nlat_);
-                first_lat_ = nfrstlat[ja]-1;
+                first_lat_ = nfrstlat(ja)-1;
 
                 // Loop over latitude points of lat band (ja) and lon band (jb)
                 size_t ilat = 0;
-                for (int jglat = first_lat_; jglat < nlstlat[ja]; ++jglat)
+                for (int jglat = first_lat_; jglat < nlstlat(ja); ++jglat)
                 {
-                    size_t igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
+                    size_t igl = nptrfrstlat(ja) + jglat - nfrstlat(ja);
                     nlon_[ilat] = nonl(jb,igl);
                     first_lon_[ilat] = nsta(jb,igl);
                     ilat++;
@@ -298,7 +299,8 @@ void StructuredColumns::gather(
             }
         }
         trans_->gathgrid(nto.size(), nto.data(),
-                         loc.data<double>(), glb.data<double>());
+                         array::make_storageview<double>(loc).data(),
+                         array::make_storageview<double>(glb).data());
     }
 
 #else
@@ -362,7 +364,8 @@ void StructuredColumns::scatter(
             }
         }
         trans_->distgrid(nfrom.size(), nfrom.data(),
-                         glb.data<double>(), loc.data<double>());
+                         array::make_storageview<double>(glb).data(),
+                         array::make_storageview<double>(loc).data());
         glb.metadata().broadcast(loc.metadata(),root);
         loc.metadata().set("global",false);
   }
@@ -438,13 +441,9 @@ std::string StructuredColumns::checksum(
 std::string StructuredColumns::checksum(
     const field::Field& field) const
 {
-    // FieldSet fieldset;
-    // fieldset.add(field);
-    // return checksum(fieldset);
-    eckit::Log::warning() << "Only local checksum implemented" << std::endl;
-    std::stringstream resultss;
-    resultss << util::checksum(field.data<double>(),field.size());
-    return resultss.str();
+    field::FieldSet fieldset;
+    fieldset.add(field);
+    return checksum(fieldset);
 }
 // ----------------------------------------------------------------------------
 

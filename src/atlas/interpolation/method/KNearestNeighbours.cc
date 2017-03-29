@@ -50,7 +50,7 @@ void KNearestNeighbours::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
     // generate 3D point coordinates
     mesh::actions::BuildXYZField("xyz")(meshTarget);
-    array::ArrayView< double, 2 > coords(meshTarget.nodes().field( "xyz" ));
+    array::ArrayView< double, 2 > coords = array::make_view<double,2>(meshTarget.nodes().field( "xyz" ));
 
     size_t inp_npts = meshSource.nodes().size();
     size_t out_npts = meshTarget.nodes().size();

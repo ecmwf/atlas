@@ -22,6 +22,7 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/array/MakeView.h"
 
 using atlas::grid::Grid;
 using atlas::grid::Projection;
@@ -78,8 +79,8 @@ mesh::Nodes& Mesh::createNodes(const Grid& grid)
   size_t nb_nodes = grid.size();
   nodes().resize(nb_nodes);
 
-  array::ArrayView<double,2> lonlat( nodes().lonlat() );
-  array::ArrayView<double,2> geolonlat( nodes().geolonlat() );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes().lonlat() );
+  array::ArrayView<double,2> geolonlat = array::make_view<double,2>( nodes().geolonlat() );
   size_t jnode(0);
   Projection projection = grid.projection();
   PointLonLat Pll;
@@ -142,6 +143,30 @@ void Mesh::setProjection(const Projection& projection) {
 
 size_t Mesh::nb_partitions() const {
   return parallel::mpi::comm().size();
+}
+
+void Mesh::cloneToDevice() const {
+  if( nodes_  ) nodes_ ->cloneToDevice();
+  if( cells_  ) cells_ ->cloneToDevice();
+  if( facets_ ) facets_->cloneToDevice();
+  if( ridges_ ) ridges_->cloneToDevice();
+  if( peaks_  ) peaks_ ->cloneToDevice();
+}
+
+void Mesh::cloneFromDevice() const {
+  if( nodes_  ) nodes_ ->cloneFromDevice();
+  if( cells_  ) cells_ ->cloneFromDevice();
+  if( facets_ ) facets_->cloneFromDevice();
+  if( ridges_ ) ridges_->cloneFromDevice();
+  if( peaks_  ) peaks_ ->cloneFromDevice();
+}
+
+void Mesh::syncHostDevice() const {
+  if( nodes_  ) nodes_ ->syncHostDevice();
+  if( cells_  ) cells_ ->syncHostDevice();
+  if( facets_ ) facets_->syncHostDevice();
+  if( ridges_ ) ridges_->syncHostDevice();
+  if( peaks_  ) peaks_ ->syncHostDevice();
 }
 
 //----------------------------------------------------------------------------------------------------------------------

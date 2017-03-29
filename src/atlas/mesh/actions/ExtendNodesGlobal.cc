@@ -38,7 +38,7 @@ void ExtendNodesGlobal::operator()(const atlas::grid::Grid& grid, atlas::mesh::M
     extended_pts.reserve( grid.size() );
 
     // loop over the point and keep the ones that *don't* fall in the domain
-    
+
     for( const PointLonLat& lonlat : O16 ) {
       PointXY xy = grid.projection().xy(lonlat);
       if( not grid.domain().contains( xy ) ) {
@@ -62,10 +62,10 @@ void ExtendNodesGlobal::operator()(const atlas::grid::Grid& grid, atlas::mesh::M
     nodes.metadata().set<size_t>("NbRealPts",nb_real_pts);
     nodes.metadata().set<size_t>("NbVirtualPts",nb_extension_pts);
 
-    array::ArrayView<double,2> xyz    ( nodes.field("xyz") );
-    array::ArrayView<double,2> xy     ( nodes.lonlat() );
-    array::ArrayView<double,2> lonlat ( nodes.geolonlat() );
-    array::ArrayView<gidx_t,1> gidx   ( nodes.global_index() );
+    array::ArrayView<double,2> xyz    = array::make_view<double,2>( nodes.field("xyz") );
+    array::ArrayView<double,2> xy     = array::make_view<double,2>( nodes.lonlat() );
+    array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.geolonlat() );
+    array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( nodes.global_index() );
 
     for(size_t i = 0; i < nb_extension_pts; ++i) {
         const size_t n = nb_real_pts + i;

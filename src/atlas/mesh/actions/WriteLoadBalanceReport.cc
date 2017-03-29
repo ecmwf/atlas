@@ -19,7 +19,6 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/mesh/IsGhostNode.h"
-#include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
 
 using atlas::mesh::IsGhostNode;

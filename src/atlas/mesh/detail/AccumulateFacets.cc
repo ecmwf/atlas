@@ -13,7 +13,6 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
-#include "atlas/array/IndexView.h"
 
 namespace atlas {
 namespace mesh {
@@ -35,7 +34,7 @@ void accumulate_facets(
   for( size_t t=0; t<cells.nb_types(); ++t )
   {
     const mesh::Elements& elements = cells.elements(t);
-    const mesh::Elements::Connectivity& elem_nodes = elements.node_connectivity();
+    const mesh::BlockConnectivityImpl& elem_nodes = elements.node_connectivity();
 
     size_t nb_elems = elements.size();
     size_t nb_nodes_in_facet = 2;

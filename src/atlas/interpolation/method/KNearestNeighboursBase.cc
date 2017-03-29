@@ -29,7 +29,7 @@ void KNearestNeighboursBase::buildPointSearchTree(mesh::Mesh& meshSource) {
 
     // generate 3D point coordinates
     mesh::actions::BuildXYZField("xyz")(meshSource);
-    array::ArrayView< double, 2 > coords(meshSource.nodes().field( "xyz" ));
+    array::ArrayView< double, 2 > coords = array::make_view<double,2>(meshSource.nodes().field( "xyz" ));
 
     std::vector<PointIndex3::Value> pidx;
     pidx.reserve(meshSource.nodes().size());

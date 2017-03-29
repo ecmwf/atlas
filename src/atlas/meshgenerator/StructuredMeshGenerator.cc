@@ -29,11 +29,10 @@
 #include "atlas/field/Field.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/Debug.h"
 
 #define DEBUG_OUTPUT 0
 
@@ -53,7 +52,7 @@ struct Region
 {
   int north;
   int south;
-  array::ArrayT<int> elems;
+  eckit::SharedPtr<array::Array> elems;
   int ntriags;
   int nquads;
   int nnodes;
@@ -219,7 +218,7 @@ void StructuredMeshGenerator::generate(const grid::Grid& grid, const grid::Distr
 #endif
 
   // clone some grid properties
-  mesh.setProjection(rg.projection());
+  set_projection(mesh,rg.projection());
 
   Region region;
   generate_region(rg,distribution,mypart,region);
@@ -292,14 +291,14 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
 
   array::ArrayShape shape = array::make_shape(region.south-region.north, 4*rg.nxmax(), 4);
 
-  region.elems.resize(shape);
-  region.elems = -1;
+  region.elems.reset( array::Array::create<int>(shape) );
+  array::make_storageview<int>(*region.elems).assign(-1);
 
   int nelems=0;
   region.nquads=0;
   region.ntriags=0;
 
-  array::ArrayView<int,3> elemview(region.elems);
+  array::ArrayView<int,3> elemview = array::make_view<int,3>(*region.elems);
 
   bool stagger = options.get<bool>("stagger");
   for (int jlat=lat_north; jlat<lat_south; ++jlat)
@@ -315,7 +314,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
 
     ilat = jlat-region.north;
 
-    array::ArrayView<int,2> lat_elems_view = elemview.at(ilat);
+    array::LocalView<int,2> lat_elems_view = elemview.at(ilat);
 
     latN = jlat;
     latS = jlat+1;
@@ -483,7 +482,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
       DEBUG_VAR(jelem);
 #endif
 
-      array::ArrayView<int,1> elem = lat_elems_view.at(jelem);
+      array::LocalView<int,1> elem = lat_elems_view.at(jelem);
 
       if( try_make_quad )
       {
@@ -892,12 +891,12 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
   mesh.nodes().resize(nnodes);
   mesh::Nodes& nodes = mesh.nodes();
 
-  array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
-  array::ArrayView<double,2> geolonlat     ( nodes.geolonlat() );
-  array::ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
-  array::ArrayView<int,   1> part          ( nodes.partition() );
-  array::ArrayView<int,   1> ghost         ( nodes.ghost() );
-  array::ArrayView<int,   1> flags         ( nodes.field("flags") );
+  array::ArrayView<double,2> lonlat  = array::make_view<double,2>( nodes.lonlat() );
+  array::ArrayView<double,2> geolonlat = array::make_view<double,2>( nodes.geolonlat() );
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
+  array::ArrayView<int,   1> part    = array::make_view<int   ,1>( nodes.partition() );
+  array::ArrayView<int,   1> ghost   = array::make_view<int   ,1>( nodes.ghost() );
+  array::ArrayView<int,   1> flags   = array::make_view<int   ,1>( nodes.field("flags") );
 
   bool stagger = options.get<bool>("stagger");
 
@@ -919,9 +918,9 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
 
       if( region.lat_end.at(jlat) < region.lat_begin.at(jlat) )
       {
-        DEBUG_VAR(jlat);
-        DEBUG_VAR(region.lat_begin[jlat]);
-        DEBUG_VAR(region.lat_end[jlat]);
+        ATLAS_DEBUG_VAR(jlat);
+        ATLAS_DEBUG_VAR(region.lat_begin[jlat]);
+        ATLAS_DEBUG_VAR(region.lat_end[jlat]);
       }
       for( int jlon=region.lat_begin.at(jlat); jlon<=region.lat_end.at(jlat); ++jlon )
       {
@@ -1093,14 +1092,14 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
   mesh.cells().add( new mesh::temporary::Triangle(),      ntriags );
 
   mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
-  array::ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
-  array::ArrayView<int,1>    cells_part(    mesh.cells().partition() );
-  array::ArrayView<int,1>    cells_patch(   mesh.cells().field("patch") );
+  array::ArrayView<gidx_t,1> cells_glb_idx = array::make_view<gidx_t,1>( mesh.cells().global_index() );
+  array::ArrayView<int,1>    cells_part    = array::make_view<int,   1>( mesh.cells().partition() );
+  array::ArrayView<int,1>    cells_patch   = array::make_view<int,   1>( mesh.cells().field("patch") );
 
   /*
    * label all patch cells a non-patch
    */
-  cells_patch = 0;
+  cells_patch.assign(0);
 
   /*
   Fill in connectivity tables with global node indices first
@@ -1123,7 +1122,7 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     int ilatS = ilat+1;
     for (int jelem=0; jelem<region.nb_lat_elems.at(jlat); ++jelem)
     {
-      const array::ArrayView<int,1> elem = array::ArrayView<int,3>(region.elems).at(ilat).at(jelem);
+      const array::LocalView<int,1> elem = array::make_view<int,3>(*region.elems).at(ilat).at(jelem);
 
       if(elem.at(2)>=0 && elem.at(3)>=0) // This is a quad
       {

@@ -20,13 +20,16 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Constants.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
+#include "atlas/array/MakeView.h"
 
 using eckit::ConcreteBuilderT0;
 using eckit::Factory;
 using eckit::ScopedPtr;
 
-using atlas::array::ArrayT;
+using atlas::array::Array;
+using atlas::array::ArrayView;
+using atlas::array::make_view;
 
 namespace atlas {
 namespace grid {
@@ -256,7 +259,9 @@ void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], do
 
 
     int kdgl = 2*N;
-    ArrayT<double> zfn(kdgl+1,kdgl+1);
+    eckit::SharedPtr<Array> zfn_ (Array::create<double>(kdgl+1,kdgl+1));
+    ArrayView<double,2> zfn = make_view<double,2>(*zfn_);
+    
     int iodd;
 
     // Belousov, Swarztrauber use zfn(0,0)=std::sqrt(2.)

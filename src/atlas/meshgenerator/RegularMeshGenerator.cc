@@ -142,7 +142,7 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::Distribu
   }
 
   // clone some grid properties
-  mesh.setProjection(rg.projection());
+  set_projection(mesh,rg.projection());
 
   generate_mesh(rg,distribution,mesh);
 }
@@ -161,8 +161,8 @@ void RegularMeshGenerator::generate_mesh(
   bool periodic_x = options.get<bool>("periodic_x") or rg.periodic() ;
   bool periodic_y = options.get<bool>("periodic_y");
 
-  Log::info() << Here() << "periodic_x = " << periodic_x << std::endl;
-  Log::info() << Here() << "periodic_y = " << periodic_y << std::endl;
+  Log::debug<Atlas>() << Here() << " periodic_x = " << periodic_x << std::endl;
+  Log::debug<Atlas>() << Here() << " periodic_y = " << periodic_y << std::endl;
 
   // for asynchronous output
 #if DEBUG_OUTPUT
@@ -346,18 +346,18 @@ void RegularMeshGenerator::generate_mesh(
   // define nodes and associated properties
   mesh.nodes().resize(nnodes);
   mesh::Nodes& nodes = mesh.nodes();
-  array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
-  array::ArrayView<double,2> geolonlat     ( nodes.geolonlat() );
-  array::ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
-  array::ArrayView<int,   1> remote_idx    ( nodes.remote_index() );
-  array::ArrayView<int,   1> part          ( nodes.partition() );
-  array::ArrayView<int,   1> ghost         ( nodes.ghost() );
-  array::ArrayView<int,   1> flags         ( nodes.field("flags") );
+  array::ArrayView<double,2> lonlat     = array::make_view<double,2>( nodes.lonlat() );
+  array::ArrayView<double,2> geolonlat  = array::make_view<double,2>( nodes.geolonlat() );
+  array::ArrayView<gidx_t,1> glb_idx    = array::make_view<gidx_t,1>( nodes.global_index() );
+  array::IndexView<int,   1> remote_idx = array::make_indexview<int,1>( nodes.remote_index() );
+  array::ArrayView<int,   1> part       = array::make_view<int,1>( nodes.partition() );
+  array::ArrayView<int,   1> ghost      = array::make_view<int,1>( nodes.ghost() );
+  array::ArrayView<int,   1> flags      = array::make_view<int,1>( nodes.field("flags") );
 
   // define cells and associated properties
   mesh.cells().add( new mesh::temporary::Quadrilateral(), ncells );
   int quad_begin  = mesh.cells().elements(0).begin();
-  array::ArrayView<int,1>    cells_part(    mesh.cells().partition() );
+  array::ArrayView<int,1>    cells_part = array::make_view<int,1>(    mesh.cells().partition() );
   mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
 
   int quad_nodes[4];

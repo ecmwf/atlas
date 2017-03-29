@@ -111,8 +111,15 @@ public: // methods
 
   Connectivity& add( mesh::Connectivity* );
 
+
   /// @brief Return the memory footprint of the Nodes
   size_t footprint() const;
+
+  void cloneToDevice() const;
+
+  void cloneFromDevice() const;
+
+  void syncHostDevice() const;
 
 private:
 

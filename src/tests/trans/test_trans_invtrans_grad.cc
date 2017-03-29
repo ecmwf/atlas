@@ -83,8 +83,8 @@ void rotated_flow_magnitude(const functionspace::NodeColumns& fs, field::Field& 
   const double pvel = USCAL/radius;
   const double deg2rad = M_PI/180.;
 
-  array::ArrayView<double,2> lonlat_deg (fs.nodes().lonlat());
-  array::ArrayView<double,1> var (field);
+  array::ArrayView<double,2> lonlat_deg = array::make_view<double,2>(fs.nodes().lonlat());
+  array::ArrayView<double,1> var        = array::make_view<double,1>(field);
 
   size_t nnodes = fs.nodes().size();
   for( size_t jnode=0; jnode<nnodes; ++jnode )

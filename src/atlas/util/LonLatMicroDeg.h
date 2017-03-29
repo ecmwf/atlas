@@ -44,7 +44,7 @@ public:
 // -- Constructors taking degrees
   LonLatMicroDeg( const double& lon, const double& lat )  { p_[LON]=microdeg(lon);         p_[LAT]=microdeg(lat); }
   LonLatMicroDeg( const double lonlat[2] )                { p_[LON]=microdeg(lonlat[LON]); p_[LAT]=microdeg(lonlat[LAT]); }
-  LonLatMicroDeg( const array::ArrayView<double,1>& lonlat ) { p_[LON]=microdeg(lonlat[LON]); p_[LAT]=microdeg(lonlat[LAT]); }
+  //LonLatMicroDeg( const array::ArrayView<double,1>& lonlat )     { p_[LON]=microdeg(lonlat[LON]); p_[LAT]=microdeg(lonlat[LAT]); }
   LonLatMicroDeg( const PointLonLat& p ) { p_[LON]=microdeg(p.lon()); p_[LAT]=microdeg(p.lat()); }
 
 // -- Methods

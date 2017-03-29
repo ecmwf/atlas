@@ -14,7 +14,6 @@
 
 #include <stdexcept>
 #include <numeric>
-#include <iostream>
 #include <sstream>
 #include "atlas/parallel/HaloExchange.h"
 

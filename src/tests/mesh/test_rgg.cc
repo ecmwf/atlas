@@ -31,11 +31,11 @@
 #include "atlas/field/Field.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Config.h"
-#include "atlas/runtime/Debug.h"
+#include "atlas/runtime/Log.h"
 
 #include "tests/AtlasFixture.h"
 
@@ -87,10 +87,10 @@ double compute_lonlat_area(mesh::Mesh& mesh)
   mesh::Nodes& nodes  = mesh.nodes();
   mesh::Elements& quads  = mesh.cells().elements(0);
   mesh::Elements& triags = mesh.cells().elements(1);
-  array::ArrayView<double,2> lonlat  ( nodes.lonlat() );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
 
-  const mesh::Elements::Connectivity& quad_nodes  = quads.node_connectivity();
-  const mesh::Elements::Connectivity& triag_nodes = triags.node_connectivity();
+  const mesh::BlockConnectivityImpl& quad_nodes  = quads.node_connectivity();
+  const mesh::BlockConnectivityImpl& triag_nodes = triags.node_connectivity();
 
   double area=0;
   for(size_t e = 0; e < quads.size(); ++e)
@@ -388,8 +388,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
   for(size_t p = 0; p < nb_parts; ++p)
   {
-
-    DEBUG_VAR(p);
+    ATLAS_DEBUG_VAR(p);
 
     meshgenerator::StructuredMeshGenerator generate ( util::Config
            ("partitioner","equal_regions")
@@ -399,14 +398,14 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
            ("3d",false) );
 
     mesh::Mesh::Ptr m( generate( grid ) );
-    DEBUG_HERE();
+    ATLAS_DEBUG_HERE();
     m->metadata().set("part",p);
     BOOST_TEST_CHECKPOINT("generated grid " << p);
-    array::ArrayView<int,1> part( m->nodes().partition() );
-    array::ArrayView<gidx_t,1> gidx( m->nodes().global_index() );
+    array::ArrayView<int   ,1> part = array::make_view<int   ,1>( m->nodes().partition() );
+    array::ArrayView<gidx_t,1> gidx = array::make_view<gidx_t,1>( m->nodes().global_index() );
 
     area += test::compute_lonlat_area(*m);
-    DEBUG_HERE();
+    ATLAS_DEBUG_HERE();
 
     DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     if( nb_parts == 20 )
@@ -416,7 +415,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
       BOOST_CHECK_EQUAL( m->cells().elements(1).size(), triags[p] );
     }
     }
-    DEBUG_HERE();
+    ATLAS_DEBUG_HERE();
 
     output::Gmsh("T63.msh").write(*m);
 
@@ -447,7 +446,6 @@ DISABLE{
     }
 
     // Test if all nodes are owned
-    array::ArrayView<gidx_t,1> glb_idx( nodes.global_index() );
     for( size_t n=0; n<nb_nodes; ++n )
     {
       if( size_t(part(n)) == p )
@@ -476,7 +474,7 @@ DISABLE{
 
 BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
 {
-  DEBUG_HERE();
+  ATLAS_DEBUG_HERE();
 
   grid::Grid grid("O8");
 
@@ -485,9 +483,9 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
   cfg.set("nb_parts",8);
   eckit::SharedPtr<meshgenerator::MeshGenerator> meshgenerator( new meshgenerator::StructuredMeshGenerator(cfg) );
   eckit::SharedPtr<mesh::Mesh> mesh ( meshgenerator->generate(grid) );
-  const array::ArrayView<int,1> part( mesh->nodes().partition() );
-  const array::ArrayView<int,1> ghost( mesh->nodes().ghost() );
-  const array::ArrayView<int,1> flags( mesh->nodes().field("flags") );
+  const array::ArrayView<int,1> part  = array::make_view<int,1>( mesh->nodes().partition() );
+  const array::ArrayView<int,1> ghost = array::make_view<int,1>( mesh->nodes().ghost() );
+  const array::ArrayView<int,1> flags = array::make_view<int,1>( mesh->nodes().field("flags") );
 
   Log::info() << "partition = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )

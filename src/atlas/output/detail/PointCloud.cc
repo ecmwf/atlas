@@ -22,6 +22,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/array/DataType.h"
 #include "atlas/output/detail/PointCloud.h"
 
@@ -90,8 +91,9 @@ mesh::Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::strin
       throw eckit::BadValue(msg+"invalid number of columns (failed: nb_columns>=2)");
 
     mesh->nodes().resize(nb_pts);
+
     mesh::Nodes& nodes = mesh->nodes();
-    array::ArrayView< double, 2 > lonlat( nodes.lonlat() );
+    array::ArrayView< double, 2 > lonlat = array::make_view<double,2>( nodes.lonlat() );
 
     // header, part 2:
     // determine columns' labels
@@ -111,7 +113,7 @@ mesh::Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::strin
     std::vector< array::ArrayView<double,1> > fields;
     for (size_t j=0; j<nb_fld; ++j)
     {
-      fields.push_back( array::ArrayView<double,1> ( nodes.add( field::Field::create<double>(vfnames[j],array::make_shape(nb_pts,1)) ) ) );
+      fields.push_back( array::make_view<double,1> ( nodes.add( field::Field::create<double>(vfnames[j],array::make_shape(nb_pts)) ) ) );
     }
 
     size_t i,j;  // (index for node/row and field/column, out of scope to check at end of loops)
@@ -157,7 +159,7 @@ void PointCloud::write(const eckit::PathName& path, const mesh::Mesh& mesh)
 
   const mesh::Nodes& nodes = mesh.nodes();
 
-  const array::ArrayView< double, 2 > lonlat(nodes.lonlat());
+  const array::ArrayView< double, 2 > lonlat = array::make_view<double,2>(nodes.lonlat());
   if (!lonlat.size())
     throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
 
@@ -173,7 +175,7 @@ void PointCloud::write(const eckit::PathName& path, const mesh::Mesh& mesh)
          field.datatype()==array::DataType::real64() )  // FIXME: no support for non-double types!
     {
       vfnames.push_back(sanitize_field_name(field.name()));
-      vfvalues.push_back(array::ArrayView< double, 1 >(field));
+      vfvalues.push_back(array::make_view< double, 1 >(field));
     }
   }
 
@@ -211,7 +213,7 @@ void PointCloud::write(const eckit::PathName& path, const field::FieldSet& field
 
   ASSERT( fieldset.size() );
 
-  array::ArrayView< double, 2 > lonlat( function_space.nodes().lonlat() );
+  array::ArrayView< double, 2 > lonlat = array::make_view<double,2>( function_space.nodes().lonlat() );
   if (!lonlat.size())
     throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
 
@@ -223,11 +225,11 @@ void PointCloud::write(const eckit::PathName& path, const field::FieldSet& field
   {
     const field::Field& field = fieldset[i];
     if ( field.shape(0)==lonlat.shape(0) &&
-         field.shape(1)==1 &&
+         field.rank()==1 &&
          field.name()!="glb_idx" )  // FIXME: no support for non-int types!
     {
       vfnames.push_back(sanitize_field_name(field.name()));
-      vfvalues.push_back(array::ArrayView< double, 1 >(field));
+      vfvalues.push_back(array::make_view< double, 1 >(field));
     }
   }
 

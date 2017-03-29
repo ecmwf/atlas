@@ -19,6 +19,7 @@
 #include "atlas/mesh/actions/BuildConvexHull3D.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
 
 using atlas::mesh::Mesh;
@@ -68,7 +69,7 @@ void DelaunayMeshGenerator::generate(const grid::Grid& g, mesh::Mesh& mesh) cons
 {
   mesh.createNodes(g);
 
-  array::ArrayView<gidx_t,1> gidx( mesh.nodes().global_index() );
+  array::ArrayView<gidx_t,1> gidx = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
   for( size_t jnode=0; jnode<mesh.nodes().size(); ++ jnode ) {
     gidx(jnode) = jnode+1;
   }

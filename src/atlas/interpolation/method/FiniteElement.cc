@@ -64,18 +64,18 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
 
     const mesh::Nodes  &i_nodes  = meshSource.nodes();
-    icoords_ = array::ArrayView<double,2>(i_nodes.field( "xyz" ));
-    ilonlat_ = array::ArrayView<double,2>(i_nodes.lonlat());
 
-    ocoords_ = array::ArrayView<double,2>(meshTarget.nodes().field("xyz"));
-    olonlat_ = array::ArrayView<double,2>(meshTarget.nodes().lonlat());
+    icoords_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(i_nodes.field( "xyz" ))          ) );
+    ilonlat_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(i_nodes.lonlat())                ) );
+    ocoords_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(meshTarget.nodes().field("xyz")) ) );
+    olonlat_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(meshTarget.nodes().lonlat())     ) );
 
     connectivity_ = &meshSource.cells().node_connectivity();
 
     size_t inp_npts  = i_nodes.size();
     size_t out_npts  = meshTarget.nodes().size();
 
-    array::ArrayView<int, 1> out_ghosts(meshTarget.nodes().ghost());
+    array::ArrayView<int, 1> out_ghosts = array::make_view<int,1>(meshTarget.nodes().ghost());
 
     size_t Nelements = meshSource.cells().size();
     const double maxFractionElemsToTry = 0.2;
@@ -108,7 +108,7 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
                 Log::debug<Atlas>() << "    " << eckit::BigNum(ip)<<" points completed (at " << rate << " points/s)..." << std::endl;
             }
 
-            Point p ( ocoords_[ip].data() ); // lookup point
+            Point p ( (*ocoords_)[ip].data() ); // lookup point
 
             size_t kpts = 1;
             bool success = false;
@@ -131,7 +131,7 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
             if (!success) {
                 failures.push_back(ip);
                 Log::debug<Atlas>() << "---------------------------------------------------------------------------\n";
-                Log::debug<Atlas>() << "Failed to project point (lon,lat)=("<<olonlat_(ip,LON)<<","<<olonlat_(ip,LAT) << ")" << '\n';
+                Log::debug<Atlas>() << "Failed to project point (lon,lat)=("<<(*olonlat_)(ip,LON)<<","<<(*olonlat_)(ip,LAT) << ")" << '\n';
                 Log::debug<Atlas>() << failures_log.str();
             }
         }
@@ -146,7 +146,7 @@ void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
         std::ostringstream msg;
         msg << "Rank " << eckit::mpi::comm().rank() << " failed to project points:\n";
         for (std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i) {
-            msg << "\t(lon,lat) = (" << olonlat_[*i][LON] << "," << olonlat_[*i][LAT] << ")\n";
+            msg << "\t(lon,lat) = (" << (*olonlat_)(*i,LON) << "," << (*olonlat_)(*i,LAT) << ")\n";
         }
 
 
@@ -167,12 +167,12 @@ Method::Triplets FiniteElement::projectPointToElements(
 
     ASSERT(elems.begin() != elems.end());
 
-    const size_t inp_points = icoords_.shape(0);
+    const size_t inp_points = icoords_->shape(0);
     size_t idx[4];
     double w[4];
 
     Triplets triplets;
-    Ray ray( ocoords_[ip].data() );
+    Ray ray( (*ocoords_)[ip].data() );
 
     for (ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc) {
 
@@ -191,9 +191,9 @@ Method::Triplets FiniteElement::projectPointToElements(
 
             /* triangle */
             element::Triag3D triag(
-                    icoords_[idx[0]].data(),
-                    icoords_[idx[1]].data(),
-                    icoords_[idx[2]].data());
+                    (*icoords_)[idx[0]].data(),
+                    (*icoords_)[idx[1]].data(),
+                    (*icoords_)[idx[2]].data());
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
@@ -217,11 +217,11 @@ Method::Triplets FiniteElement::projectPointToElements(
             }
             else if( fallback_to_2d_ ) { // fallback to 2d lonlat elements
 
-                element::Triag2D triag2d(ilonlat_[idx[0]].data(),
-                                         ilonlat_[idx[1]].data(),
-                                         ilonlat_[idx[2]].data());
+                element::Triag2D triag2d((*ilonlat_)[idx[0]].data(),
+                                         (*ilonlat_)[idx[1]].data(),
+                                         (*ilonlat_)[idx[2]].data());
 
-                is = triag2d.intersects(Vector2D::Map(olonlat_[ip].data()),edgeEpsilon);
+                is = triag2d.intersects(Vector2D::Map((*olonlat_)[ip].data()),edgeEpsilon);
 
                 if (is) {
                     // weights are the linear Lagrange function evaluated at u,v (aka barycentric coordinates)
@@ -237,10 +237,10 @@ Method::Triplets FiniteElement::projectPointToElements(
                 }
             }
             if(Log::debug<Atlas>()) {
-                failures_log << "Failed to project point " << Point(ocoords_[ip].data()) 
-                             << " to " << element::Triag2D(ilonlat_[idx[0]].data(),
-                                                           ilonlat_[idx[1]].data(),
-                                                           ilonlat_[idx[2]].data())
+                failures_log << "Failed to project point " << Point((*ocoords_)[ip].data())
+                             << " to " << element::Triag2D((*ilonlat_)[idx[0]].data(),
+                                                           (*ilonlat_)[idx[1]].data(),
+                                                           (*ilonlat_)[idx[2]].data())
                              << " with " << is << '\n';
             }
 
@@ -248,10 +248,10 @@ Method::Triplets FiniteElement::projectPointToElements(
 
             /* quadrilateral */
             element::Quad3D quad(
-                    icoords_[idx[0]].data(),
-                    icoords_[idx[1]].data(),
-                    icoords_[idx[2]].data(),
-                    icoords_[idx[3]].data() );
+                    (*icoords_)[idx[0]].data(),
+                    (*icoords_)[idx[1]].data(),
+                    (*icoords_)[idx[2]].data(),
+                    (*icoords_)[idx[3]].data() );
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
@@ -277,12 +277,12 @@ Method::Triplets FiniteElement::projectPointToElements(
             }
             else { // fallback to 2d lonlat elements
 
-                element::Quad2D quad2d(ilonlat_[idx[0]].data(),
-                                       ilonlat_[idx[1]].data(),
-                                       ilonlat_[idx[2]].data(),
-                                       ilonlat_[idx[3]].data());
+                element::Quad2D quad2d((*ilonlat_)[idx[0]].data(),
+                                       (*ilonlat_)[idx[1]].data(),
+                                       (*ilonlat_)[idx[2]].data(),
+                                       (*ilonlat_)[idx[3]].data());
 
-                is = quad2d.intersects(Vector2D::Map(olonlat_[ip].data()),edgeEpsilon);
+                is = quad2d.intersects(Vector2D::Map((*olonlat_)[ip].data()),edgeEpsilon);
 
                 if (is) {
 
@@ -300,7 +300,7 @@ Method::Triplets FiniteElement::projectPointToElements(
                 }
 
                 if( Log::debug<Atlas>() ) {
-                    failures_log << "Failed to project point " << Point(ocoords_[ip].data()) << " to " << quad2d << " with " << is << '\n';
+                    failures_log << "Failed to project point " << Point((*ocoords_)[ip].data()) << " to " << quad2d << " with " << is << '\n';
                 }
             }
 

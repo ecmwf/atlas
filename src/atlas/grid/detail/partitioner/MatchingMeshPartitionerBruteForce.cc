@@ -100,7 +100,7 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_pa
 
   // Partition bounding box
   ASSERT(prePartitionedMesh_->nodes().size());
-  array::ArrayView< double, 2 > lonlat_src( prePartitionedMesh_->nodes().lonlat() );
+  auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_->nodes().lonlat() );
 
   point_t bbox_min = point_t(lonlat_src(0, LON), lonlat_src(0, LAT));
   point_t bbox_max = bbox_min;
@@ -154,7 +154,7 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_pa
               for (size_t t=0; t<nb_types && !found; ++t) {
                   size_t idx[4];
                   const mesh::Elements& elements = elements_src.elements(t);
-                  const mesh::Elements::Connectivity& conn = elements.node_connectivity();
+                  const mesh::BlockConnectivityImpl& conn = elements.node_connectivity();
 
                   const size_t nb_nodes = elements.nb_nodes();
                   ASSERT( (nb_nodes==3 && elements.name() == "Triangle")
