@@ -166,13 +166,14 @@ Output* atlas__Output__create(const char* factory_key, Stream* stream, const eck
   return Output;
 }
 
-void atlas__Output__write_mesh(const Output* This, const Mesh* mesh, const Parametrisation* params)
+void atlas__Output__write_mesh(const Output* This, Mesh::mesh_t* mesh, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(mesh);
     ASSERT(params);
-    This->write(*mesh,*params);
+    mesh::Mesh m(mesh);
+    This->write(m,*params);
   );
 }
 void atlas__Output__write_fieldset(const Output* This, const FieldSet* fieldset, const Parametrisation* params)

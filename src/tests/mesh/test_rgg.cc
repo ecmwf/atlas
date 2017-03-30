@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
 
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 {
-  mesh::Mesh* m;
+  mesh::Mesh m;
   util::Config default_opts;
   default_opts.set("nb_parts",1);
   default_opts.set("part",0);
@@ -244,13 +244,12 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           ("include_pole",false)
           );
     m = generate( atlas::test::debug_grid() );
-    BOOST_CHECK_EQUAL( m->nodes().size(), 156 );
-    BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
-    BOOST_CHECK_EQUAL( m->cells().elements(1).size(),  32 );
-//    BOOST_CHECK_EQUAL( m->nodes().metadata().get<size_t>("nb_owned"),    156 );
-//    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
-//    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
-    delete m;
+    BOOST_CHECK_EQUAL( m.nodes().size(), 156 );
+    BOOST_CHECK_EQUAL( m.cells().elements(0).size(), 134 );
+    BOOST_CHECK_EQUAL( m.cells().elements(1).size(),  32 );
+//    BOOST_CHECK_EQUAL( m.nodes().metadata().get<size_t>("nb_owned"),    156 );
+//    BOOST_CHECK_EQUAL( m.function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
+//    BOOST_CHECK_EQUAL( m.function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
   }
 
   ENABLE {
@@ -260,13 +259,12 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           ("include_pole",false)
           );
     m = generate( atlas::test::debug_grid() );
-    BOOST_CHECK_EQUAL( m->nodes().size(), 166 );
-    BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
-    BOOST_CHECK_EQUAL( m->cells().elements(1).size(),  32 );
-//    BOOST_CHECK_EQUAL( m->nodes().metadata().get<size_t>("nb_owned"),    166 );
-//    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
-//    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
-    delete m;
+    BOOST_CHECK_EQUAL( m.nodes().size(), 166 );
+    BOOST_CHECK_EQUAL( m.cells().elements(0).size(), 134 );
+    BOOST_CHECK_EQUAL( m.cells().elements(1).size(),  32 );
+//    BOOST_CHECK_EQUAL( m.nodes().metadata().get<size_t>("nb_owned"),    166 );
+//    BOOST_CHECK_EQUAL( m.function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
+//    BOOST_CHECK_EQUAL( m.function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
   }
 
   ENABLE {
@@ -276,16 +274,15 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           ("include_pole",true)
           );
     m = generate( atlas::test::debug_grid() );
-    BOOST_CHECK_EQUAL( m->nodes().size(), 158 );
-    BOOST_CHECK_EQUAL( m->cells().elements(0).size(), 134 );
-    BOOST_CHECK_EQUAL( m->cells().elements(1).size(),  44 );
-//    BOOST_CHECK_EQUAL( m->nodes().metadata().get<size_t>("nb_owned"),    158 );
-//    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
-//    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     44 );
-    delete m;
+    BOOST_CHECK_EQUAL( m.nodes().size(), 158 );
+    BOOST_CHECK_EQUAL( m.cells().elements(0).size(), 134 );
+    BOOST_CHECK_EQUAL( m.cells().elements(1).size(),  44 );
+//    BOOST_CHECK_EQUAL( m.nodes().metadata().get<size_t>("nb_owned"),    158 );
+//    BOOST_CHECK_EQUAL( m.function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
+//    BOOST_CHECK_EQUAL( m.function_space("triags").metadata().get<size_t>("nb_owned"),     44 );
   }
 
-  mesh::Mesh* mesh;
+  mesh::Mesh mesh;
 
   ENABLE {
     meshgenerator::StructuredMeshGenerator generate(
@@ -296,14 +293,13 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=2;
     long lon[] = { 4, 6 };
     mesh = generate( test::minimal_grid(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh->nodes().size(), 24 );
-    BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 14 );
-    BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(),  4 );
+    BOOST_CHECK_EQUAL( mesh.nodes().size(), 24 );
+    BOOST_CHECK_EQUAL( mesh.cells().elements(0).size(), 14 );
+    BOOST_CHECK_EQUAL( mesh.cells().elements(1).size(),  4 );
 
     double max_lat = test::minimal_grid(nlat,lon).y().front();
-    BOOST_CHECK_CLOSE( test::compute_lonlat_area(*mesh), 2.*M_PI*2.*max_lat, 1e-8 );
-    output::Gmsh("minimal2.msh").write(*mesh);
-    delete mesh;
+    BOOST_CHECK_CLOSE( test::compute_lonlat_area(mesh), 2.*M_PI*2.*max_lat, 1e-8 );
+    output::Gmsh("minimal2.msh").write(mesh);
   }
   // 3 latitudes
   ENABLE {
@@ -315,11 +311,10 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=3;
     long lon[] = { 4, 6, 8 };
     mesh = generate( test::minimal_grid(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh->nodes().size(), 42 );
-    BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 28 );
-    BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(),  8 );
-    output::Gmsh("minimal3.msh").write(*mesh);
-    delete mesh;
+    BOOST_CHECK_EQUAL( mesh.nodes().size(), 42 );
+    BOOST_CHECK_EQUAL( mesh.cells().elements(0).size(), 28 );
+    BOOST_CHECK_EQUAL( mesh.cells().elements(1).size(),  8 );
+    output::Gmsh("minimal3.msh").write(mesh);
   }
   // 4 latitudes
   ENABLE {
@@ -331,11 +326,10 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=4;
     long lon[] = { 4, 6, 8, 10 };
     mesh = generate( test::minimal_grid(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh->nodes().size(), 64 );
-    BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 46 );
-    BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(), 12 );
-    output::Gmsh("minimal4.msh").write(*mesh);
-    delete mesh;
+    BOOST_CHECK_EQUAL( mesh.nodes().size(), 64 );
+    BOOST_CHECK_EQUAL( mesh.cells().elements(0).size(), 46 );
+    BOOST_CHECK_EQUAL( mesh.cells().elements(1).size(), 12 );
+    output::Gmsh("minimal4.msh").write(mesh);
   }
   // 5 latitudes WIP
   ENABLE {
@@ -347,11 +341,10 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=5;
     long lon[] = { 6, 10, 18, 22, 22 };
     mesh = generate( test::minimal_grid(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh->nodes().size(), 166 );
-    BOOST_CHECK_EQUAL( mesh->cells().elements(0).size(), 134 );
-    BOOST_CHECK_EQUAL( mesh->cells().elements(1).size(),  32 );
-    output::Gmsh("minimal5.msh").write(*mesh);
-    delete mesh;
+    BOOST_CHECK_EQUAL( mesh.nodes().size(), 166 );
+    BOOST_CHECK_EQUAL( mesh.cells().elements(0).size(), 134 );
+    BOOST_CHECK_EQUAL( mesh.cells().elements(1).size(),  32 );
+    output::Gmsh("minimal5.msh").write(mesh);
   }
 }
 }
@@ -397,38 +390,38 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
            ("include_pole",false)
            ("3d",false) );
 
-    mesh::Mesh::Ptr m( generate( grid ) );
+    mesh::Mesh m = generate( grid );
     ATLAS_DEBUG_HERE();
-    m->metadata().set("part",p);
+    m.metadata().set("part",p);
     BOOST_TEST_CHECKPOINT("generated grid " << p);
-    array::ArrayView<int   ,1> part = array::make_view<int   ,1>( m->nodes().partition() );
-    array::ArrayView<gidx_t,1> gidx = array::make_view<gidx_t,1>( m->nodes().global_index() );
+    array::ArrayView<int   ,1> part = array::make_view<int   ,1>( m.nodes().partition() );
+    array::ArrayView<gidx_t,1> gidx = array::make_view<gidx_t,1>( m.nodes().global_index() );
 
-    area += test::compute_lonlat_area(*m);
+    area += test::compute_lonlat_area(m);
     ATLAS_DEBUG_HERE();
 
     DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     if( nb_parts == 20 )
     {
-      BOOST_CHECK_EQUAL( m->nodes().size(), nodes[p]  );
-      BOOST_CHECK_EQUAL( m->cells().elements(0).size(), quads[p]  );
-      BOOST_CHECK_EQUAL( m->cells().elements(1).size(), triags[p] );
+      BOOST_CHECK_EQUAL( m.nodes().size(), nodes[p]  );
+      BOOST_CHECK_EQUAL( m.cells().elements(0).size(), quads[p]  );
+      BOOST_CHECK_EQUAL( m.cells().elements(1).size(), triags[p] );
     }
     }
     ATLAS_DEBUG_HERE();
 
-    output::Gmsh("T63.msh").write(*m);
+    output::Gmsh("T63.msh").write(m);
 
 
-    mesh::Nodes& nodes = m->nodes();
+    mesh::Nodes& nodes = m.nodes();
     size_t nb_nodes = nodes.size();
 
     // Test if all nodes are connected
     {
       std::vector<int> node_elem_connections( nb_nodes, 0 );
 
-      const mesh::HybridElements::Connectivity& cell_node_connectivity = m->cells().node_connectivity();
-      for( size_t jelem=0; jelem<m->cells().size(); ++jelem )
+      const mesh::HybridElements::Connectivity& cell_node_connectivity = m.cells().node_connectivity();
+      for( size_t jelem=0; jelem<m.cells().size(); ++jelem )
       {
         for( size_t jnode=0; jnode<cell_node_connectivity.cols(jelem); ++jnode )
           node_elem_connections[ cell_node_connectivity(jelem,jnode) ]++;
@@ -482,10 +475,10 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
   cfg.set("part",1);
   cfg.set("nb_parts",8);
   eckit::SharedPtr<meshgenerator::MeshGenerator> meshgenerator( new meshgenerator::StructuredMeshGenerator(cfg) );
-  eckit::SharedPtr<mesh::Mesh> mesh ( meshgenerator->generate(grid) );
-  const array::ArrayView<int,1> part  = array::make_view<int,1>( mesh->nodes().partition() );
-  const array::ArrayView<int,1> ghost = array::make_view<int,1>( mesh->nodes().ghost() );
-  const array::ArrayView<int,1> flags = array::make_view<int,1>( mesh->nodes().field("flags") );
+  mesh::Mesh mesh = meshgenerator->generate(grid);
+  const array::ArrayView<int,1> part  = array::make_view<int,1>( mesh.nodes().partition() );
+  const array::ArrayView<int,1> ghost = array::make_view<int,1>( mesh.nodes().ghost() );
+  const array::ArrayView<int,1> flags = array::make_view<int,1>( mesh.nodes().field("flags") );
 
   Log::info() << "partition = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )

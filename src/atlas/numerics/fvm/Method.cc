@@ -148,12 +148,13 @@ void Method::setup()
 
 // ------------------------------------------------------------------------------------------
 extern "C" {
-Method* atlas__numerics__fvm__Method__new (mesh::Mesh* mesh, const eckit::Parametrisation* params)
+Method* atlas__numerics__fvm__Method__new (mesh::Mesh::mesh_t* mesh, const eckit::Parametrisation* params)
 {
   Method* method(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(mesh);
-    method = new Method(*mesh,*params);
+    mesh::Mesh m(mesh);
+    method = new Method(m,*params);
   );
   return method;
 }

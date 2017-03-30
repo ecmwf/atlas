@@ -12,15 +12,13 @@
 #define BuildDualMesh_h
 
 #include "atlas/library/config.h"
+#include "atlas/mesh/Mesh.h"
 
 namespace atlas {
 
 namespace grid { class Grid; }
 
 namespace mesh {
-
-class Mesh;
-
 namespace actions {
 
 /*
@@ -61,8 +59,8 @@ void build_brick_dual_mesh(const atlas::grid::Grid& grid, Mesh& mesh );
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  void atlas__build_median_dual_mesh (Mesh* mesh);
-  void atlas__build_centroid_dual_mesh (Mesh* mesh);
+  void atlas__build_median_dual_mesh (Mesh::mesh_t* mesh);
+  void atlas__build_centroid_dual_mesh (Mesh::mesh_t* mesh);
 }
 // ------------------------------------------------------------------
 

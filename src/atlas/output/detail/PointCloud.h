@@ -52,7 +52,7 @@ namespace detail {
     * @param Grid data structure pointer to use
     * @return Grid data structure pointer
     */
-   static mesh::Mesh* read( const eckit::PathName& path );
+   static mesh::Mesh read( const eckit::PathName& path );
 
    /**
     * @brief Read PointCloud file into a Mesh
@@ -60,7 +60,7 @@ namespace detail {
     * @param vfnames names of fields to read
     * @return mesh::Mesh pointer
     */
-   static mesh::Mesh* read(const eckit::PathName& path, std::vector<std::string>& vfnames );
+   static mesh::Mesh read(const eckit::PathName& path, std::vector<std::string>& vfnames );
 
   /**
    * @brief Write Grid to PointCloud file (overwrites possibly existing file)
@@ -124,12 +124,12 @@ namespace detail {
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  PointCloud* atlas__pointcloud__new ();
-  void atlas__pointcloud__delete(PointCloud* This);
-  mesh::Mesh* atlas__pointcloud__read(PointCloud* This, char* file_path);
-  mesh::Mesh* atlas__read_pointcloud(char* file_path);
-  void atlas__write_pointcloud_fieldset(char* file_path, const field::Field* fieldset, const functionspace::FunctionSpace* functionspace);
-  void atlas__write_pointcloud_field(char* file_path, const field::Field* field, const functionspace::FunctionSpace* functionspace);
+  // PointCloud* atlas__pointcloud__new ();
+  // void atlas__pointcloud__delete(PointCloud* This);
+  // mesh::Mesh* atlas__pointcloud__read(PointCloud* This, char* file_path);
+  // mesh::Mesh* atlas__read_pointcloud(char* file_path);
+  // void atlas__write_pointcloud_fieldset(char* file_path, const field::Field* fieldset, const functionspace::FunctionSpace* functionspace);
+  // void atlas__write_pointcloud_field(char* file_path, const field::Field* field, const functionspace::FunctionSpace* functionspace);
 }
 
 } // namespace detail

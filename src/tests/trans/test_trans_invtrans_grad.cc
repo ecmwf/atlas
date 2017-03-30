@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
 
   // Output
   {
-    mesh::Mesh::Ptr mesh( meshgenerator::StructuredMeshGenerator().generate(g) );
+    mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(g);
     functionspace::StructuredColumns gp(g);
     output::Gmsh gmsh(grid_uid+"-grid.msh");
     field::Field::Ptr scalar(
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
           field::Field::wrap<double>("scalar_dNS",rgp.data()+nfld*gp.npts(),array::make_shape(gp.npts())));
     field::Field::Ptr scalar_dEW(
           field::Field::wrap<double>("scalar_dEW",rgp.data()+2*nfld*gp.npts(),array::make_shape(gp.npts())));
-    gmsh.write(*mesh);
+    gmsh.write(mesh);
     gmsh.write(*scalar,gp);
     gmsh.write(*scalar_dEW,gp);
     gmsh.write(*scalar_dNS,gp);
@@ -158,10 +158,10 @@ BOOST_AUTO_TEST_CASE( test_invtrans_grad )
 {
   std::string grid_uid("O48");
   grid::StructuredGrid g ( grid_uid );
-  mesh::Mesh::Ptr mesh( meshgenerator::StructuredMeshGenerator().generate(g) );
+  mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(g);
   long N = g.ny()/2;
   trans::Trans trans(g, 2*N-1);
-  functionspace::NodeColumns gp(*mesh);
+  functionspace::NodeColumns gp(mesh);
   functionspace::Spectral sp(trans);
 
   field::Field::Ptr scalar   ( gp.createField<double>("scalar") );
@@ -182,10 +182,10 @@ BOOST_AUTO_TEST_CASE( test_invtrans_grad )
 
   // Output
   {
-    mesh::Mesh::Ptr mesh( meshgenerator::StructuredMeshGenerator().generate(g) );
+    mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(g);
     functionspace::StructuredColumns gp(g);
     output::Gmsh gmsh(grid_uid+"-nodes.msh");
-    gmsh.write(*mesh);
+    gmsh.write(mesh);
     gmsh.write(*scalar,gp);
     gmsh.write(*grad,gp);
   }

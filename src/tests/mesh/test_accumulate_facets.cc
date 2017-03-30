@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
        ("triangulate",false)
        ("ghost_at_end",false) );
 
-  mesh::Mesh* mesh = generator.generate(grid);
+  mesh::Mesh mesh = generator.generate(grid);
 
   // storage for edge-to-node-connectivity shape=(nb_edges,2)
   std::vector< idx_t > edge_nodes_data;
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
   idx_t missing_value;
 
   // Accumulate facets of cells ( edges in 2D )
-  mesh::detail::accumulate_facets(mesh->cells(),mesh->nodes(),edge_nodes_data,edge_to_cell_data,nb_edges,nb_inner_edges,missing_value);
+  mesh::detail::accumulate_facets(mesh.cells(),mesh.nodes(),edge_nodes_data,edge_to_cell_data,nb_edges,nb_inner_edges,missing_value);
 
   idx_t edge_nodes_check[] = {
   0, 21,
@@ -423,10 +423,10 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
         ("angle",29.0)
         ("triangulate",false)
         ("ghost_at_end",false) );
-  mesh::Mesh* mesh = generator.generate(grid);
+  mesh::Mesh mesh = generator.generate(grid);
 
   // Accumulate facets of cells ( edges in 2D )
-  mesh::actions::build_edges(*mesh);
+  mesh::actions::build_edges(mesh);
 
   idx_t edge_nodes_check[] = {
   0, 21,
@@ -603,10 +603,10 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
   };
 
   {
-  const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh->edges().node_connectivity();
-  ASSERT( mesh->projection().units() == "degrees" );
-  const util::UniqueLonLat compute_uid( *mesh );
-  for( size_t jedge=0; jedge<mesh->edges().size(); ++jedge )
+  const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
+  ASSERT( mesh.projection().units() == "degrees" );
+  const util::UniqueLonLat compute_uid( mesh );
+  for( size_t jedge=0; jedge<mesh.edges().size(); ++jedge )
   {
     if( compute_uid(edge_nodes_check[2*jedge+0]) < compute_uid(edge_nodes_check[2*jedge+1]) )
     {
@@ -797,10 +797,10 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
   };
 
   {
-    const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh->cells().node_connectivity();
-    const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh->edges().cell_connectivity();
-    const util::UniqueLonLat compute_uid( *mesh );
-    for( size_t jedge=0; jedge<mesh->edges().size(); ++jedge )
+    const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
+    const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh.edges().cell_connectivity();
+    const util::UniqueLonLat compute_uid( mesh );
+    for( size_t jedge=0; jedge<mesh.edges().size(); ++jedge )
     {
       idx_t e1 = edge_to_cell_check[2*jedge+0];
       idx_t e2 = edge_to_cell_check[2*jedge+1];
@@ -821,8 +821,8 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 
 
   {
-    const MultiBlockConnectivity& elem_edge_connectivity = mesh->cells().edge_connectivity();
-    for( size_t jelem=0; jelem<mesh->cells().size(); ++jelem )
+    const MultiBlockConnectivity& elem_edge_connectivity = mesh.cells().edge_connectivity();
+    for( size_t jelem=0; jelem<mesh.cells().size(); ++jelem )
     {
       std::cout << jelem << " : " ;
       for( size_t jedge=0; jedge<elem_edge_connectivity.cols(jelem); ++jedge )
@@ -843,14 +843,14 @@ BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
       ("angle",29.0)
       ("triangulate",false)
       ("ghost_at_end",false) );
-  mesh::Mesh* mesh = generator.generate(grid);
+  mesh::Mesh mesh = generator.generate(grid);
 
   // Accumulate facets of cells ( edges in 2D )
-  mesh::actions::build_edges(*mesh);
+  mesh::actions::build_edges(mesh);
 
   {
-    const MultiBlockConnectivity& elem_edge_connectivity = mesh->cells().edge_connectivity();
-    for( size_t jelem=0; jelem<mesh->cells().size(); ++jelem )
+    const MultiBlockConnectivity& elem_edge_connectivity = mesh.cells().edge_connectivity();
+    for( size_t jelem=0; jelem<mesh.cells().size(); ++jelem )
     {
       std::cout << jelem << " : " ;
       for( size_t jedge=0; jedge<elem_edge_connectivity.cols(jelem); ++jedge )

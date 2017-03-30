@@ -46,26 +46,26 @@ BOOST_AUTO_TEST_CASE( test_broadcast_to_self )
 
   grid::Grid grid("O640");
   eckit::SharedPtr<meshgenerator::MeshGenerator> meshgen( meshgenerator::MeshGenerator::create("structured") );
-  eckit::SharedPtr<mesh::Mesh> mesh( meshgen->generate(grid) );
+  mesh::Mesh mesh = meshgen->generate(grid);
 
   Log::info() << "Footprint for mesh generated from grid " << grid.name() << std::endl;
-  Log::info() << "mesh.footprint = " << eckit::Bytes(mesh->footprint()) << std::endl;
-  Log::info() << "    .nodes.footprint = " << eckit::Bytes(mesh->nodes().footprint()) << std::endl;
-  for( size_t f=0; f<mesh->nodes().nb_fields(); ++f )
+  Log::info() << "mesh.footprint = " << eckit::Bytes(mesh.footprint()) << std::endl;
+  Log::info() << "    .nodes.footprint = " << eckit::Bytes(mesh.nodes().footprint()) << std::endl;
+  for( size_t f=0; f<mesh.nodes().nb_fields(); ++f )
   {
-    Log::info() << "          ."+mesh->nodes().field(f).name()+".footprint = " <<  eckit::Bytes(mesh->nodes().field(f).footprint()) << std::endl;
+    Log::info() << "          ."+mesh.nodes().field(f).name()+".footprint = " <<  eckit::Bytes(mesh.nodes().field(f).footprint()) << std::endl;
   }
 
-  Log::info() << "    .cells.footprint = " << eckit::Bytes(mesh->cells().footprint()) << std::endl;
+  Log::info() << "    .cells.footprint = " << eckit::Bytes(mesh.cells().footprint()) << std::endl;
 
-  for( size_t f=0; f<mesh->cells().nb_fields(); ++f )
+  for( size_t f=0; f<mesh.cells().nb_fields(); ++f )
   {
-    Log::info() << "          ."+mesh->cells().field(f).name()+".footprint = " <<  eckit::Bytes(mesh->cells().field(f).footprint()) << std::endl;
+    Log::info() << "          ."+mesh.cells().field(f).name()+".footprint = " <<  eckit::Bytes(mesh.cells().field(f).footprint()) << std::endl;
   }
 
-  Log::info() << "          .node_connectivity.footprint = " << eckit::Bytes(mesh->cells().node_connectivity().footprint() ) << std::endl;
-  Log::info() << "          .edge_connectivity.footprint = " << eckit::Bytes(mesh->cells().edge_connectivity().footprint() ) << std::endl;
-  Log::info() << "          .cell_connectivity.footprint = " << eckit::Bytes(mesh->cells().cell_connectivity().footprint() ) << std::endl;
+  Log::info() << "          .node_connectivity.footprint = " << eckit::Bytes(mesh.cells().node_connectivity().footprint() ) << std::endl;
+  Log::info() << "          .edge_connectivity.footprint = " << eckit::Bytes(mesh.cells().edge_connectivity().footprint() ) << std::endl;
+  Log::info() << "          .cell_connectivity.footprint = " << eckit::Bytes(mesh.cells().cell_connectivity().footprint() ) << std::endl;
 }
 
 // -----------------------------------------------------------------------------

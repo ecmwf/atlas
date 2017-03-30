@@ -222,19 +222,19 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   );
   trans::Trans trans(g);
 
-  mesh::Mesh::Ptr m_default( generate( g ) );
+  mesh::Mesh m_default = generate( g );
 
   BOOST_TEST_CHECKPOINT("trans_distribution");
   grid::Distribution trans_distribution = grid::Partitioner( new TransPartitioner() ).partition(g);
-  mesh::Mesh::Ptr m_trans( generate( g, trans_distribution ) );
+  mesh::Mesh m_trans = generate( g, trans_distribution );
 
   BOOST_TEST_CHECKPOINT("eqreg_distribution");
   grid::Distribution eqreg_distribution = grid::Partitioner( new EqualRegionsPartitioner() ).partition(g);
-  mesh::Mesh::Ptr m_eqreg( generate( g, eqreg_distribution ) );
+  mesh::Mesh m_eqreg = generate( g, eqreg_distribution );
 
-  array::ArrayView<int,1> p_default = array::make_view<int,1>( m_default->nodes().partition() );
-  array::ArrayView<int,1> p_trans   = array::make_view<int,1>( m_trans  ->nodes().partition() );
-  array::ArrayView<int,1> p_eqreg   = array::make_view<int,1>( m_eqreg  ->nodes().partition() );
+  array::ArrayView<int,1> p_default = array::make_view<int,1>( m_default.nodes().partition() );
+  array::ArrayView<int,1> p_trans   = array::make_view<int,1>( m_trans  .nodes().partition() );
+  array::ArrayView<int,1> p_eqreg   = array::make_view<int,1>( m_eqreg  .nodes().partition() );
 
   for( size_t j=0; j<p_default.shape(0); ++j ) {
     BOOST_CHECK_EQUAL( p_default(j), p_trans(j) );
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
 
   //mesh::Mesh::Ptr mesh ( generate(g, meshgenerator::EqualAreaPartitioner(g).distribution() ) );
 
-  output::Gmsh("N16_trans.msh").write(*m_trans);
+  output::Gmsh("N16_trans.msh").write(m_trans);
 }
 
 
@@ -256,12 +256,12 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
     ("angle",0)
     ("triangulate",false)
   );
-  mesh::Mesh::Ptr m( generate( g ) );
+  mesh::Mesh m = generate( g );
 
   trans::Trans trans(g,47);
 
 
-  SharedPtr<functionspace::NodeColumns> nodal (new functionspace::NodeColumns(*m));
+  SharedPtr<functionspace::NodeColumns> nodal (new functionspace::NodeColumns(m));
   SharedPtr<functionspace::Spectral> spectral (new functionspace::Spectral(trans));
 
   SharedPtr<field::Field> spf ( spectral->createField<double>("spf") );

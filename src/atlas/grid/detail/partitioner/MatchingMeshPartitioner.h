@@ -41,14 +41,14 @@ public:
 
     MatchingMeshPartitioner(const mesh::Mesh& mesh ) :
       Partitioner(mesh.nb_partitions()),
-      prePartitionedMesh_(&mesh) {
+      prePartitionedMesh_(mesh) {
     }
 
     virtual ~MatchingMeshPartitioner() {}
 
 protected:
 
-    const mesh::Mesh* prePartitionedMesh_;
+    const mesh::Mesh prePartitionedMesh_;
 
 };
 

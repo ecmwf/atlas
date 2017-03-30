@@ -25,7 +25,7 @@ void build_statistics( Mesh& mesh );
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  void atlas__build_statistics (Mesh* mesh);
+  void atlas__build_statistics (Mesh::mesh_t* mesh);
 }
 // ------------------------------------------------------------------
 

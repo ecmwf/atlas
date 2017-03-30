@@ -53,11 +53,11 @@ std::string sanitize_field_name(const std::string& s)
 // ------------------------------------------------------------------
 
 
-mesh::Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vfnames )
+mesh::Mesh PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vfnames )
 {
   const std::string msg("PointCloud::read: ");
 
-  mesh::Mesh* mesh = new mesh::Mesh;
+  mesh::Mesh mesh;
 
   vfnames.clear();
 
@@ -90,9 +90,9 @@ mesh::Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::strin
     if (nb_columns<2)
       throw eckit::BadValue(msg+"invalid number of columns (failed: nb_columns>=2)");
 
-    mesh->nodes().resize(nb_pts);
+    mesh.nodes().resize(nb_pts);
 
-    mesh::Nodes& nodes = mesh->nodes();
+    mesh::Nodes& nodes = mesh.nodes();
     array::ArrayView< double, 2 > lonlat = array::make_view<double,2>( nodes.lonlat() );
 
     // header, part 2:
@@ -144,7 +144,7 @@ mesh::Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::strin
 }
 
 
-mesh::Mesh* PointCloud::read(const eckit::PathName& path)
+mesh::Mesh PointCloud::read(const eckit::PathName& path)
 {
   std::vector<std::string> vfnames;
   return read(path,vfnames);
@@ -362,24 +362,24 @@ void PointCloud::write(
 // C wrapper interfaces to C++ routines
 
 
-PointCloud* atlas__pointcloud__new()
-{ return new PointCloud(); }
-
-
-void atlas__pointcloud__delete (PointCloud* This)
-{ delete This; }
-
-
-mesh::Mesh* atlas__pointcloud__read (PointCloud* This, char* file_path)
-{ return This->read(file_path); }
-
-
-mesh::Mesh* atlas__read_pointcloud (char* file_path)
-{ return PointCloud::read(file_path); }
-
-
-void atlas__write_pointcloud_fieldset (char* file_path, const field::FieldSet* fieldset, const functionspace::NodeColumns* functionspace)
-{ PointCloud::write(file_path, *fieldset, *functionspace); }
+// PointCloud* atlas__pointcloud__new()
+// { return new PointCloud(); }
+//
+//
+// void atlas__pointcloud__delete (PointCloud* This)
+// { delete This; }
+//
+//
+// mesh::Mesh* atlas__pointcloud__read (PointCloud* This, char* file_path)
+// { return This->read(file_path); }
+//
+//
+// mesh::Mesh* atlas__read_pointcloud (char* file_path)
+// { return PointCloud::read(file_path); }
+//
+//
+// void atlas__write_pointcloud_fieldset (char* file_path, const field::FieldSet* fieldset, const functionspace::NodeColumns* functionspace)
+// { PointCloud::write(file_path, *fieldset, *functionspace); }
 
 
 // ------------------------------------------------------------------

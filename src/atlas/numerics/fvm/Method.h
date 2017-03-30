@@ -53,7 +53,7 @@ private:
 
 private: // data
 
-    mesh::Mesh             &mesh_; // non-const because functionspace may modify mesh
+    mesh::Mesh             mesh_; // non-const because functionspace may modify mesh
     mesh::Halo             halo_;
     mesh::Nodes            &nodes_;
     mesh::HybridElements   &edges_;
@@ -71,7 +71,7 @@ private: // data
 
 extern "C"
 {
-  Method* atlas__numerics__fvm__Method__new (mesh::Mesh* mesh, const eckit::Parametrisation* params);
+  Method* atlas__numerics__fvm__Method__new (mesh::Mesh::mesh_t* mesh, const eckit::Parametrisation* params);
   functionspace::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This);
   functionspace::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This);
 }

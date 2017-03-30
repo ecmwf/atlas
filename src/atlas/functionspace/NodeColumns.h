@@ -8,12 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_functionspace_NodeColumnsFunctionSpace_h
-#define atlas_functionspace_NodeColumnsFunctionSpace_h
+#pragma once
 
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/Halo.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/field/Options.h"
 #include "atlas/functionspace/FunctionSpace.h"
@@ -23,7 +23,6 @@
 
 namespace atlas {
 namespace mesh {
-    class Mesh;
     class Nodes;
 }
 }
@@ -300,7 +299,7 @@ private: // methods
 
 private: // data
 
-    mesh::Mesh& mesh_; // non-const because functionspace may modify mesh
+    mesh::Mesh mesh_; // non-const because functionspace may modify mesh
     mesh::Nodes& nodes_; // non-const because functionspace may modify mesh
     mesh::Halo halo_;
     size_t nb_nodes_;
@@ -353,5 +352,3 @@ field::Field* NodeColumns::createField(
 
 } // namespace functionspace
 } // namespace atlas
-
-#endif // atlas_functionspace_NodeColumnsFunctionSpace_h

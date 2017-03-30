@@ -121,8 +121,8 @@ BOOST_AUTO_TEST_CASE( test_structured_1 )
   BOOST_CHECK_EQUAL( regular.y().back(), -90. );
 
   output::Gmsh gmsh("test_grid_ptr.msh");
-  eckit::SharedPtr<mesh::Mesh> mesh ( meshgenerator::StructuredMeshGenerator().generate(grid) );
-  gmsh.write(*mesh);
+  mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
+  gmsh.write(mesh);
 }
 
 } // namespace test

@@ -33,12 +33,12 @@ namespace actions {
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-
-extern "C"
-{
-  mesh::Mesh* atlas__generate_mesh (const grid::Grid::grid_t* grid);
-  mesh::Mesh* atlas__generate_mesh_with_distribution (const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
-}
+//
+// extern "C"
+// {
+//   mesh::Mesh::mesh_t* atlas__generate_mesh (const grid::Grid::grid_t* grid);
+//   mesh::Mesh::mesh_t* atlas__generate_mesh_with_distribution (const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
+// }
 
 // ------------------------------------------------------------------
 

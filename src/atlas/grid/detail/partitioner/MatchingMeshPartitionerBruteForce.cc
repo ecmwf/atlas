@@ -99,12 +99,12 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_pa
 
 
   // Partition bounding box
-  ASSERT(prePartitionedMesh_->nodes().size());
-  auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_->nodes().lonlat() );
+  ASSERT(prePartitionedMesh_.nodes().size());
+  auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
 
   point_t bbox_min = point_t(lonlat_src(0, LON), lonlat_src(0, LAT));
   point_t bbox_max = bbox_min;
-  for (size_t i = 1; i < prePartitionedMesh_->nodes().size(); ++i) {
+  for (size_t i = 1; i < prePartitionedMesh_.nodes().size(); ++i) {
       point_t P(lonlat_src(i, LON), lonlat_src(i, LAT));
       bbox_min = point_t::componentsMin(bbox_min, P);
       bbox_max = point_t::componentsMax(bbox_max, P);
@@ -147,7 +147,7 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_pa
           if (bbox_min[LON] <= P[LON] && P[LON] <= bbox_max[LON]
               && bbox_min[LAT] <= P[LAT] && P[LAT] <= bbox_max[LAT]) {
 
-              const mesh::Cells&  elements_src = prePartitionedMesh_->cells();
+              const mesh::Cells&  elements_src = prePartitionedMesh_.cells();
               const size_t nb_types = elements_src.nb_types();
               bool found = false;
 

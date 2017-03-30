@@ -290,8 +290,8 @@ void build_statistics( Mesh& mesh )
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-void atlas__build_statistics ( Mesh* mesh) {
-  ATLAS_ERROR_HANDLING( build_statistics(*mesh) );
+void atlas__build_statistics ( Mesh::mesh_t* mesh) {
+  ATLAS_ERROR_HANDLING( Mesh m(mesh); build_statistics(m); );
 }
 
 // ------------------------------------------------------------------

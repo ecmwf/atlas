@@ -23,7 +23,7 @@ namespace actions {
 // ------------------------------------------------------------------
 
 namespace {
-Mesh* generate_mesh(const grid::Grid& rgg)
+Mesh generate_mesh(const grid::Grid& rgg)
 {
   Log::info() << "Deprecated function [generate_mesh] used.\n"
               << "Consider using meshgenerator::Structured directly."
@@ -36,24 +36,24 @@ Mesh* generate_mesh(const grid::Grid& rgg)
 
 // ------------------------------------------------------------------
 
-
-Mesh* atlas__generate_mesh(grid::Grid::grid_t* rgg)
-{
-  ATLAS_ERROR_HANDLING( return generate_mesh( grid::Grid(rgg) ); );
-  return NULL;
-}
-
-// ------------------------------------------------------------------
-
-
-Mesh* atlas__generate_mesh_with_distribution(grid::Grid::grid_t* rgg, grid::Distribution::impl_t* distribution)
-{
-  ATLAS_ERROR_HANDLING(
-        meshgenerator::StructuredMeshGenerator generate;
-        return generate( grid::Grid(rgg), grid::Distribution(distribution) );
-  );
-  return NULL;
-}
+//
+// Mesh::mesh_t* atlas__generate_mesh(grid::Grid::grid_t* rgg)
+// {
+//   ATLAS_ERROR_HANDLING( return generate_mesh( grid::Grid(rgg) ); );
+//   return NULL;
+// }
+//
+// // ------------------------------------------------------------------
+//
+//
+// Mesh::mesh_t* atlas__generate_mesh_with_distribution(grid::Grid::grid_t* rgg, grid::Distribution::impl_t* distribution)
+// {
+//   ATLAS_ERROR_HANDLING(
+//         meshgenerator::StructuredMeshGenerator generate;
+//         return generate( grid::Grid(rgg), grid::Distribution(distribution) );
+//   );
+//   return NULL;
+// }
 
 // ------------------------------------------------------------------
 

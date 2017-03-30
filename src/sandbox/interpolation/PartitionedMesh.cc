@@ -41,14 +41,13 @@ PartitionedMesh::PartitionedMesh(
 
 
 void PartitionedMesh::writeGmsh(const std::string& fileName, const field::FieldSet* fields) {
-    ASSERT(mesh_);
 
     util::Config output_config;
     // output_config.set("coordinates", std::string("xyz"));
     output_config.set("ghost", true);
 
     output::Gmsh out(fileName, output_config);
-    out.write(*mesh_);
+    out.write(mesh_);
 
     if (fields) {
         out.write(*fields);
@@ -63,17 +62,17 @@ void PartitionedMesh::partition(const grid::Grid& grid) {
 
 
     Generator::Ptr meshgen(meshgenerator::MeshGeneratorFactory::build(optionGenerator_, generatorParams_));
-    mesh_.reset(meshgen->generate(grid, partitioner_.partition(grid)));
+    mesh_ = meshgen->generate(grid, partitioner_.partition(grid));
 }
 
 
 void PartitionedMesh::partition(const grid::Grid& grid, const PartitionedMesh& other) {
     eckit::TraceTimer<Atlas> tim("PartitionedMesh::partition(other)");
 
-    partitioner_ = grid::MatchingMeshPartitioner( *other.mesh_, util::Config("type",optionPartitioner_) );
+    partitioner_ = grid::MatchingMeshPartitioner( other.mesh_, util::Config("type",optionPartitioner_) );
 
     Generator::Ptr meshgen(meshgenerator::MeshGeneratorFactory::build(optionGenerator_, generatorParams_));
-    mesh_.reset(meshgen->generate(grid, partitioner_.partition(grid) ));
+    mesh_ = meshgen->generate(grid, partitioner_.partition(grid) );
 }
 
 

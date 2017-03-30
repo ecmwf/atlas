@@ -32,49 +32,43 @@ namespace mesh {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Mesh* Mesh::create( const eckit::Parametrisation& params )
-{
-  return new Mesh(params);
+Mesh::Mesh( const Mesh& other ) :
+    mesh_(other.mesh_) {
+}
+Mesh::Mesh( MeshImpl* mesh ) :
+    mesh_(mesh) {
+}
+Mesh::Mesh( eckit::Stream& stream ) :
+    mesh_( new MeshImpl(stream) ) {
+}
+Mesh::Mesh() :
+    mesh_( new MeshImpl() ) {
 }
 
 
-
-Mesh* Mesh::create( const Grid& grid, const eckit::Parametrisation& params )
-{
-    return new Mesh(grid,params);
-}
-
-Mesh::Mesh(eckit::Stream& s)
+MeshImpl::MeshImpl(eckit::Stream& s)
 {
     NOTIMP;
 }
 
-void Mesh::encode(eckit::Stream& s) const {
+void MeshImpl::encode(eckit::Stream& s) const {
     NOTIMP;
 }
 
-Mesh::Mesh( const eckit::Parametrisation& ):
+MeshImpl::MeshImpl():
   dimensionality_(2)
 {
   nodes_.reset( new mesh::Nodes() );
   createElements();
 }
 
-Mesh::Mesh(const Grid& grid, const eckit::Parametrisation& ) :
-   dimensionality_(2)
-{
-  nodes_.reset( new mesh::Nodes() );
-  createNodes(grid);
-  createElements();
-}
 
-
-Mesh::~Mesh()
+MeshImpl::~MeshImpl()
 {
 }
 
 
-mesh::Nodes& Mesh::createNodes(const Grid& grid)
+mesh::Nodes& MeshImpl::createNodes(const Grid& grid)
 {
   size_t nb_nodes = grid.size();
   nodes().resize(nb_nodes);
@@ -95,15 +89,15 @@ mesh::Nodes& Mesh::createNodes(const Grid& grid)
   return nodes();
 }
 
-void Mesh::prettyPrint(std::ostream& os) const
+void MeshImpl::prettyPrint(std::ostream& os) const
 {
 }
 
-void Mesh::print(std::ostream& os) const
+void MeshImpl::print(std::ostream& os) const
 {
 }
 
-size_t Mesh::footprint() const {
+size_t MeshImpl::footprint() const {
   size_t size = sizeof(*this);
 
   size += metadata_.footprint();
@@ -117,7 +111,7 @@ size_t Mesh::footprint() const {
 }
 
 
-void Mesh::createElements()
+void MeshImpl::createElements()
 {
   cells_.reset( new mesh::HybridElements() );
   facets_.reset( new mesh::HybridElements() );
@@ -128,24 +122,24 @@ void Mesh::createElements()
   else if( dimensionality_ == 3)
     edges_ = ridges_;
   else
-    throw eckit::Exception("Invalid Mesh dimensionality",Here());
+    throw eckit::Exception("Invalid MeshImpl dimensionality",Here());
 
   ASSERT( edges_.owners() == 2 );
 }
 
-bool Mesh::generated() const {
+bool MeshImpl::generated() const {
   return ! (cells_->size() == 0 && facets_->size() == 0 && ridges_->size() == 0 && peaks_->size() == 0);
 }
 
-void Mesh::setProjection(const Projection& projection) {
+void MeshImpl::setProjection(const Projection& projection) {
   projection_ = projection;
 }
 
-size_t Mesh::nb_partitions() const {
+size_t MeshImpl::nb_partitions() const {
   return parallel::mpi::comm().size();
 }
 
-void Mesh::cloneToDevice() const {
+void MeshImpl::cloneToDevice() const {
   if( nodes_  ) nodes_ ->cloneToDevice();
   if( cells_  ) cells_ ->cloneToDevice();
   if( facets_ ) facets_->cloneToDevice();
@@ -153,7 +147,7 @@ void Mesh::cloneToDevice() const {
   if( peaks_  ) peaks_ ->cloneToDevice();
 }
 
-void Mesh::cloneFromDevice() const {
+void MeshImpl::cloneFromDevice() const {
   if( nodes_  ) nodes_ ->cloneFromDevice();
   if( cells_  ) cells_ ->cloneFromDevice();
   if( facets_ ) facets_->cloneFromDevice();
@@ -161,7 +155,7 @@ void Mesh::cloneFromDevice() const {
   if( peaks_  ) peaks_ ->cloneFromDevice();
 }
 
-void Mesh::syncHostDevice() const {
+void MeshImpl::syncHostDevice() const {
   if( nodes_  ) nodes_ ->syncHostDevice();
   if( cells_  ) cells_ ->syncHostDevice();
   if( facets_ ) facets_->syncHostDevice();
@@ -173,15 +167,15 @@ void Mesh::syncHostDevice() const {
 
 // C wrapper interfaces to C++ routines
 
-Mesh* atlas__Mesh__new () {
-	return new Mesh();
+MeshImpl* atlas__Mesh__new () {
+	return new MeshImpl();
 }
 
-void atlas__Mesh__delete (Mesh* This) {
+void atlas__Mesh__delete (MeshImpl* This) {
 	delete This;
 }
 
-mesh::Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes)
+mesh::Nodes* atlas__Mesh__create_nodes (MeshImpl* This, int nb_nodes)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -191,7 +185,7 @@ mesh::Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes)
   return NULL;
 }
 
-mesh::Nodes* atlas__Mesh__nodes (Mesh* This) {
+mesh::Nodes* atlas__Mesh__nodes (MeshImpl* This) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
     return &This->nodes();
@@ -199,7 +193,7 @@ mesh::Nodes* atlas__Mesh__nodes (Mesh* This) {
   return NULL;
 }
 
-mesh::Edges* atlas__Mesh__edges (Mesh* This) {
+mesh::Edges* atlas__Mesh__edges (MeshImpl* This) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
     return &This->edges();
@@ -207,7 +201,7 @@ mesh::Edges* atlas__Mesh__edges (Mesh* This) {
   return NULL;
 }
 
-mesh::Cells* atlas__Mesh__cells (Mesh* This) {
+mesh::Cells* atlas__Mesh__cells (MeshImpl* This) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
     return &This->cells();
@@ -215,7 +209,7 @@ mesh::Cells* atlas__Mesh__cells (Mesh* This) {
   return NULL;
 }
 
-size_t atlas__Mesh__footprint (Mesh* This) {
+size_t atlas__Mesh__footprint (MeshImpl* This) {
   size_t size(0);
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );

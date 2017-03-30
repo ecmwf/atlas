@@ -457,14 +457,14 @@ void build_pole_edges( Mesh& mesh )
 //----------------------------------------------------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-void atlas__build_edges ( Mesh* mesh) {
-  ATLAS_ERROR_HANDLING( build_edges(*mesh) );
+void atlas__build_edges ( Mesh::mesh_t* mesh) {
+  ATLAS_ERROR_HANDLING( Mesh m(mesh); build_edges(m); );
 }
-void atlas__build_pole_edges ( Mesh* mesh) {
-  ATLAS_ERROR_HANDLING( build_pole_edges(*mesh) );
+void atlas__build_pole_edges ( Mesh::mesh_t* mesh) {
+  ATLAS_ERROR_HANDLING( Mesh m(mesh); build_pole_edges(m); );
 }
-void atlas__build_node_to_edge_connectivity ( Mesh* mesh) {
-  ATLAS_ERROR_HANDLING( build_node_to_edge_connectivity(*mesh) );
+void atlas__build_node_to_edge_connectivity ( Mesh::mesh_t* mesh) {
+  ATLAS_ERROR_HANDLING( Mesh m(mesh); build_node_to_edge_connectivity(m); );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

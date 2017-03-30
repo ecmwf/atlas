@@ -75,7 +75,7 @@ size_t EdgeColumns::config_size(const eckit::Parametrisation& config) const
 }
 
 EdgeColumns::EdgeColumns( mesh::Mesh& mesh )
-  : mesh_(&mesh),
+  : mesh_(mesh),
     edges_(mesh.edges()),
     nb_edges_(0),
     nb_edges_global_(0)
@@ -85,7 +85,7 @@ EdgeColumns::EdgeColumns( mesh::Mesh& mesh )
 
 EdgeColumns::EdgeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params )
   : FunctionSpace(),
-    mesh_(&mesh),
+    mesh_(mesh),
     edges_(mesh.edges()),
     nb_edges_(0),
     nb_edges_global_(0)
@@ -98,7 +98,7 @@ EdgeColumns::EdgeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit:
 
 EdgeColumns::EdgeColumns(mesh::Mesh& mesh, const mesh::Halo &halo)
   : FunctionSpace(),
-    mesh_(&mesh),
+    mesh_(mesh),
     edges_(mesh.edges()),
     nb_edges_(0),
     nb_edges_global_(0)
@@ -453,24 +453,26 @@ extern "C" {
 //------------------------------------------------------------------------------
 
 
-EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh* mesh, int halo )
+EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh::mesh_t* mesh, int halo )
 {
   EdgeColumns* edges(0);
   ATLAS_ERROR_HANDLING(
       ASSERT(mesh);
-      edges = new EdgeColumns(*mesh,mesh::Halo(halo));
+      mesh::Mesh m(mesh);
+      edges = new EdgeColumns(m,mesh::Halo(halo));
   );
   return edges;
 }
 
 //------------------------------------------------------------------------------
 
-EdgeColumns* atlas__functionspace__Edges__new_mesh ( mesh::Mesh* mesh )
+EdgeColumns* atlas__functionspace__Edges__new_mesh ( mesh::Mesh::mesh_t* mesh )
 {
   EdgeColumns* edges(0);
   ATLAS_ERROR_HANDLING(
       ASSERT(mesh);
-      edges = new EdgeColumns(*mesh);
+      mesh::Mesh m(mesh);
+      edges = new EdgeColumns(m);
   );
   return edges;
 }
@@ -498,11 +500,11 @@ int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This)
 
 //------------------------------------------------------------------------------
 
-mesh::Mesh* atlas__functionspace__Edges__mesh(EdgeColumns* This)
+mesh::Mesh::mesh_t* atlas__functionspace__Edges__mesh(EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
-        return &This->mesh();
+        return This->mesh().get();
   );
   return 0;
 }

@@ -18,6 +18,7 @@
 
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Distribution.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/util/Config.h"
 
 namespace eckit { class MD5; }
@@ -57,11 +58,11 @@ public:
     virtual void generate( const grid::Grid&, const grid::Distribution&, mesh::Mesh& ) const =0;
     virtual void generate( const grid::Grid&, mesh::Mesh& ) const =0;
 
-    mesh::Mesh* generate( const grid::Grid&, const grid::Distribution& ) const;
-    mesh::Mesh* generate( const grid::Grid& ) const;
+    mesh::Mesh generate( const grid::Grid&, const grid::Distribution& ) const;
+    mesh::Mesh generate( const grid::Grid& ) const;
 
-    mesh::Mesh* operator()( const grid::Grid&, const grid::Distribution& ) const;
-    mesh::Mesh* operator()( const grid::Grid& ) const;
+    mesh::Mesh operator()( const grid::Grid&, const grid::Distribution& ) const;
+    mesh::Mesh operator()( const grid::Grid& ) const;
 
 protected:
 
@@ -125,8 +126,8 @@ extern "C" {
 void atlas__MeshGenerator__delete(MeshGenerator* This);
 MeshGenerator* atlas__MeshGenerator__create_noconfig(const char* name);
 MeshGenerator* atlas__MeshGenerator__create(const char* name, const eckit::Parametrisation* params);
-mesh::Mesh* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator* This, const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
-mesh::Mesh* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid::Grid::grid_t* grid);
+mesh::Mesh::mesh_t* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator* This, const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
+mesh::Mesh::mesh_t* atlas__MeshGenerator__generate__grid(const MeshGenerator* This, const grid::Grid::grid_t* grid);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

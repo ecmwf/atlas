@@ -113,24 +113,24 @@ BOOST_AUTO_TEST_CASE( test_t63 )
 {
 //  mesh::Mesh::Ptr m = test::generate_mesh( T63() );
 
-  mesh::Mesh::Ptr m = test::generate_mesh( {10, 12, 14, 16, 16, 16, 16, 14, 12, 10} );
+  mesh::Mesh m = test::generate_mesh( {10, 12, 14, 16, 16, 16, 16, 14, 12, 10} );
 
-  mesh::actions::build_nodes_parallel_fields(m->nodes());
-  mesh::actions::build_periodic_boundaries(*m);
-  mesh::actions::build_halo(*m,1);
-  //mesh::actions::build_edges(*m);
-  //mesh::actions::build_pole_edges(*m);
-  //mesh::actions::build_edges_parallel_fields(m->function_space("edges"),m->nodes());
-  //mesh::actions::build_centroid_dual_mesh(*m);
-  mesh::actions::renumber_nodes_glb_idx(m->nodes());
+  mesh::actions::build_nodes_parallel_fields(m.nodes());
+  mesh::actions::build_periodic_boundaries(m);
+  mesh::actions::build_halo(m,1);
+  //mesh::actions::build_edges(m);
+  //mesh::actions::build_pole_edges(m);
+  //mesh::actions::build_edges_parallel_fields(m.function_space("edges"),m-.nodes());
+  //mesh::actions::build_centroid_dual_mesh(m);
+  mesh::actions::renumber_nodes_glb_idx(m.nodes());
 
   std::stringstream filename; filename << "T63_halo.msh";
-  Gmsh(filename.str()).write(*m);
+  Gmsh(filename.str()).write(m);
 
-//  BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
+//  BOOST_CHECK_CLOSE( test::dual_volume(m), 2.*M_PI*M_PI, 1e-6 );
 
-//  Nodes& nodes = m->nodes();
-//  FunctionSpace& edges = m->function_space("edges");
+//  Nodes& nodes = m.nodes();
+//  FunctionSpace& edges = m.function_space("edges");
 //  array::array::ArrayView<double,1> dual_volumes  ( nodes.field( "dual_volumes" ) );
 //  array::array::ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
 

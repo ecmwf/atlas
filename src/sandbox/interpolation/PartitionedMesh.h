@@ -40,8 +40,8 @@ struct PartitionedMesh {
 
     virtual ~PartitionedMesh() {}
 
-    const Mesh& mesh() const { ASSERT(mesh_); return *mesh_; }
-    Mesh&       mesh()       { ASSERT(mesh_); return *mesh_; }
+    const Mesh& mesh() const { return mesh_; }
+    Mesh&       mesh()       { return mesh_; }
 
     void writeGmsh(const std::string& fileName, const field::FieldSet* fields = NULL);
 
@@ -55,7 +55,7 @@ protected:
 
     Generator::Parameters generatorParams_;
     Partitioner partitioner_;
-    Mesh::Ptr mesh_;
+    Mesh mesh_;
 
 };
 

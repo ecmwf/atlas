@@ -73,9 +73,9 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test1 )
 {
-  mesh::Mesh::Ptr m ( mesh::Mesh::create() );
+  mesh::Mesh m;
 
-  mesh::Nodes& nodes = m->nodes();
+  mesh::Nodes& nodes = m.nodes();
   nodes.resize(10);
   array::ArrayView<double,2> lonlat   = make_view<double,2>( nodes.lonlat());
   array::ArrayView<gidx_t,1> glb_idx  = make_view<gidx_t,1>( nodes.global_index());
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE( test1 )
   lonlat(8,LON) = 360.;  lonlat(8,LAT) = 80.;    Topology::set( flags(8), Topology::BC|Topology::EAST );
   lonlat(9,LON) = 360.;  lonlat(9,LAT) =-80.;    Topology::set( flags(9), Topology::BC|Topology::EAST );
 
-  mesh::actions::build_parallel_fields(*m);
+  mesh::actions::build_parallel_fields(m);
 
   BOOST_REQUIRE( nodes.has_field("remote_idx") );
 
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE( test1 )
   BOOST_CHECK_EQUAL( loc(8) , 8 );
   BOOST_CHECK_EQUAL( loc(9) , 9 );
 
-  test::IsGhost is_ghost( m->nodes() );
+  test::IsGhost is_ghost( m.nodes() );
 
   switch ( parallel::mpi::comm().rank() )
   {
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE( test1 )
     break;
   }
 
-  mesh::actions::build_periodic_boundaries(*m);
+  mesh::actions::build_periodic_boundaries(m);
 
   // points 8 and 9 are periodic slave points of points 0 and 1
   BOOST_CHECK_EQUAL( part(8), 0 );
@@ -173,10 +173,10 @@ BOOST_AUTO_TEST_CASE( test2 )
   meshgen_options.set("angle",27.5);
   meshgen_options.set("triangulate",false);
   meshgenerator::StructuredMeshGenerator generate(meshgen_options);
-  mesh::Mesh* m = generate( grid::Grid("N32") );
-  mesh::actions::build_parallel_fields(*m);
+  mesh::Mesh m = generate( grid::Grid("N32") );
+  mesh::actions::build_parallel_fields(m);
 
-  mesh::Nodes& nodes = m->nodes();
+  mesh::Nodes& nodes = m.nodes();
 
   test::IsGhost is_ghost(nodes);
 
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   if( parallel::mpi::comm().rank() == 0 ) BOOST_CHECK_EQUAL( nb_ghost, 129 );
   if( parallel::mpi::comm().rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 0   );
 
-  mesh::actions::build_periodic_boundaries(*m);
+  mesh::actions::build_periodic_boundaries(m);
 
   int nb_periodic = -nb_ghost;
   for( size_t jnode=0; jnode<nodes.size(); ++jnode )
@@ -200,8 +200,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   if( parallel::mpi::comm().rank() == 0 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
   if( parallel::mpi::comm().rank() == 1 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
 
-  Gmsh("periodic.msh").write(*m);
-  delete m;
+  Gmsh("periodic.msh").write(m);
 }
 
 } // namespace test

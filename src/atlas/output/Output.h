@@ -142,7 +142,7 @@ class OutputBuilder : public OutputFactory {
 extern "C" {
 void atlas__Output__delete(Output* This);
 Output* atlas__Output__create(const char* factory_key, Stream* stream, const eckit::Parametrisation* params);
-void atlas__Output__write_mesh(const Output* This, const mesh::Mesh* mesh, const eckit::Parametrisation* params);
+void atlas__Output__write_mesh(const Output* This, mesh::Mesh::mesh_t* mesh, const eckit::Parametrisation* params);
 void atlas__Output__write_fieldset(const Output* This, const field::FieldSet* fieldset, const eckit::Parametrisation* params);
 void atlas__Output__write_field(const Output* This, const field::Field* field, const eckit::Parametrisation* params);
 void atlas__Output__write_fieldset_fs(const Output* This, const field::FieldSet* fieldset, const functionspace::FunctionSpace* functionspace, const eckit::Parametrisation* params);

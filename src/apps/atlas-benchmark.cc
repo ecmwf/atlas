@@ -193,7 +193,7 @@ public:
 
 private:
 
-  mesh::Mesh::Ptr mesh;
+  mesh::Mesh mesh;
   SharedPtr<functionspace::NodeColumns> nodes_fs;
 
   vector<int> pole_edges;
@@ -316,29 +316,29 @@ void AtlasBenchmark::setup()
 
   StructuredGrid grid = Grid(gridname);
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  mesh.reset( meshgenerator->generate(grid) );
+  mesh = meshgenerator->generate(grid);
 
-  build_nodes_parallel_fields(mesh->nodes());
-  build_periodic_boundaries(*mesh);
-  build_halo(*mesh,1);
-  renumber_nodes_glb_idx(mesh->nodes());
-  build_edges(*mesh);
-  build_pole_edges(*mesh);
-  build_edges_parallel_fields(*mesh);
-  build_median_dual_mesh(*mesh);
-  build_node_to_edge_connectivity(*mesh);
+  build_nodes_parallel_fields(mesh.nodes());
+  build_periodic_boundaries(mesh);
+  build_halo(mesh,1);
+  renumber_nodes_glb_idx(mesh.nodes());
+  build_edges(mesh);
+  build_pole_edges(mesh);
+  build_edges_parallel_fields(mesh);
+  build_median_dual_mesh(mesh);
+  build_node_to_edge_connectivity(mesh);
 
-  nodes_fs.reset( new functionspace::NodeColumns(*mesh,mesh::Halo(*mesh)));
+  nodes_fs.reset( new functionspace::NodeColumns(mesh,mesh::Halo(mesh)));
 
-  nnodes = mesh->nodes().size();
-  nedges = mesh->edges().size();
+  nnodes = mesh.nodes().size();
+  nedges = mesh.edges().size();
 
-  auto lonlat = array::make_view<double,2> ( mesh->nodes().lonlat() );
-  auto V      = array::make_view<double,1> ( mesh->nodes().field("dual_volumes") );
-  auto S      = array::make_view<double,2> ( mesh->edges().field("dual_normals") );
-  auto field  = array::make_view<double,2> ( mesh->nodes().add( nodes_fs->createField<double>( "field", nlev ) ) );
-  mesh->nodes().field("field").metadata().set("nb_levels",nlev);
-  mesh->nodes().field("grad").metadata().set("nb_levels",nlev);
+  auto lonlat = array::make_view<double,2> ( mesh.nodes().lonlat() );
+  auto V      = array::make_view<double,1> ( mesh.nodes().field("dual_volumes") );
+  auto S      = array::make_view<double,2> ( mesh.edges().field("dual_normals") );
+  auto field  = array::make_view<double,2> ( mesh.nodes().add( nodes_fs->createField<double>( "field", nlev ) ) );
+  mesh.nodes().field("field").metadata().set("nb_levels",nlev);
+  mesh.nodes().field("grad").metadata().set("nb_levels",nlev);
 
   double radius = 6371.22e+03; // Earth's radius
   double height = 80.e+03;     // Height of atmosphere
@@ -363,10 +363,10 @@ void AtlasBenchmark::setup()
   }
   dz = height/static_cast<double>(nlev);
 
-  auto edge_is_pole   = array::make_view<int,1> ( mesh->edges().field("is_pole_edge") );
-  const mesh::Connectivity& node2edge = mesh->nodes().edge_connectivity();
-  const mesh::MultiBlockConnectivity& edge2node = mesh->edges().node_connectivity();
-  auto node2edge_sign = array::make_view<double,2> ( mesh->nodes().add(
+  auto edge_is_pole   = array::make_view<int,1> ( mesh.edges().field("is_pole_edge") );
+  const mesh::Connectivity& node2edge = mesh.nodes().edge_connectivity();
+  const mesh::MultiBlockConnectivity& edge2node = mesh.edges().node_connectivity();
+  auto node2edge_sign = array::make_view<double,2> ( mesh.nodes().add(
       field::Field::create<double>("to_edge_sign",array::make_shape(nnodes,node2edge.maxcols()) ) ) );
 
   atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
@@ -393,7 +393,7 @@ void AtlasBenchmark::setup()
   for( int jedge=0; jedge<c; ++jedge )
     pole_edges.push_back(tmp[jedge]);
 
-  auto flags = array::make_view<int,1>( mesh->nodes().field("flags") );
+  auto flags = array::make_view<int,1>( mesh.nodes().field("flags") );
   is_ghost.reserve(nnodes);
   for(size_t jnode = 0; jnode < nnodes; ++jnode)
   {
@@ -412,14 +412,14 @@ void AtlasBenchmark::iteration()
   Timer t("iteration", Log::debug());
 
   eckit::ScopedPtr<array::Array> avgS_arr( array::Array::create<double>(nedges,nlev,2ul) );
-  const auto& node2edge = mesh->nodes().edge_connectivity();
-  const auto& edge2node = mesh->edges().node_connectivity();
-  const auto field = array::make_view<double,2>( mesh->nodes().field("field") );
-  const auto S     = array::make_view<double,2>( mesh->edges().field("dual_normals"));
-  const auto V     = array::make_view<double,1>( mesh->nodes().field("dual_volumes"));
-  const auto node2edge_sign = array::make_view<double,2> ( mesh->nodes().field("to_edge_sign") );
+  const auto& node2edge = mesh.nodes().edge_connectivity();
+  const auto& edge2node = mesh.edges().node_connectivity();
+  const auto field = array::make_view<double,2>( mesh.nodes().field("field") );
+  const auto S     = array::make_view<double,2>( mesh.edges().field("dual_normals"));
+  const auto V     = array::make_view<double,1>( mesh.nodes().field("dual_volumes"));
+  const auto node2edge_sign = array::make_view<double,2> ( mesh.nodes().field("to_edge_sign") );
 
-  auto grad = array::make_view<double,3>( mesh->nodes().field("grad") );
+  auto grad = array::make_view<double,3>( mesh.nodes().field("grad") );
   auto avgS = array::make_view<double,3>(*avgS_arr);
 
   atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
@@ -527,7 +527,7 @@ DATA_TYPE vecnorm( DATA_TYPE vec[], size_t size )
 
 double AtlasBenchmark::result()
 {
-  const auto grad = array::make_view<double,3>( mesh->nodes().field("grad") );
+  const auto grad = array::make_view<double,3>( mesh.nodes().field("grad") );
   double maxval = numeric_limits<double>::min();
   double minval = numeric_limits<double>::max();;
   double norm = 0.;
@@ -564,9 +564,9 @@ double AtlasBenchmark::result()
   {
     std::vector<long> levels( 1, 0 );
     atlas::output::Gmsh gmsh( "benchmark.msh", util::Config("levels",levels) );
-    gmsh.write( *mesh );
-    gmsh.write( mesh->nodes().field("field") );
-    gmsh.write( mesh->nodes().field("grad") );
+    gmsh.write( mesh );
+    gmsh.write( mesh.nodes().field("field") );
+    gmsh.write( mesh.nodes().field("grad") );
   }
   return norm;
 }

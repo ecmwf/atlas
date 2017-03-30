@@ -13,21 +13,13 @@
 
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/mesh/Halo.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Config.h"
 
 // ----------------------------------------------------------------------------
 // Forward declarations
-
-namespace atlas {
-namespace mesh {
-    class Mesh;
-    class HybridElements;
-    typedef HybridElements Edges;
-    typedef HybridElements Cells;
-}
-}
 
 namespace atlas {
 namespace field {
@@ -68,8 +60,8 @@ public:
     size_t nb_edges_global() const; // Only on MPI rank 0, will this be different from 0
     std::vector<size_t> nb_edges_global_foreach_rank() const;
 
-    const mesh::Mesh& mesh() const { return *mesh_.get(); }
-          mesh::Mesh& mesh()       { return *mesh_.get(); }
+    const mesh::Mesh& mesh() const { return mesh_; }
+          mesh::Mesh& mesh()       { return mesh_; }
 
     const mesh::HybridElements& edges() const { return edges_; }
           mesh::HybridElements& edges()       { return edges_; }
@@ -159,7 +151,7 @@ private: // methods
 
 private: // data
 
-    eckit::SharedPtr<mesh::Mesh> mesh_; // non-const because functionspace may modify mesh
+    mesh::Mesh mesh_; // non-const because functionspace may modify mesh
     mesh::HybridElements& edges_; // non-const because functionspace may modify mesh
     size_t nb_edges_;
     size_t nb_edges_global_;
@@ -211,11 +203,11 @@ field::Field* EdgeColumns::createField(
 
 extern "C" {
 
-EdgeColumns* atlas__functionspace__Edges__new (mesh::Mesh* mesh, int halo);
-EdgeColumns* atlas__functionspace__Edges__new_mesh (mesh::Mesh* mesh);
+EdgeColumns* atlas__functionspace__Edges__new (mesh::Mesh::mesh_t* mesh, int halo);
+EdgeColumns* atlas__functionspace__Edges__new_mesh (mesh::Mesh::mesh_t* mesh);
 void atlas__functionspace__Edges__delete (EdgeColumns* This);
 int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This);
-mesh::Mesh* atlas__functionspace__Edges__mesh(EdgeColumns* This);
+mesh::Mesh::mesh_t* atlas__functionspace__Edges__mesh(EdgeColumns* This);
 mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This);
 field::Field* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
 field::Field* atlas__functionspace__Edges__create_field_vars (const EdgeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);

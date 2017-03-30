@@ -65,32 +65,26 @@ namespace mpl {
 namespace atlas {
 namespace mesh {
 
-class Mesh : public eckit::Owned {
+class Mesh;
+class MeshImpl : public eckit::Owned {
 public: // types
 
-    typedef eckit::SharedPtr<Mesh> Ptr;
+    typedef eckit::SharedPtr<MeshImpl> Ptr;
 
 public: // methods
 
-    static Mesh* create( const eckit::Parametrisation& = util::Config() );
-    static Mesh* create( const grid::Grid&, const eckit::Parametrisation& = util::Config() );
-
-    /// @brief Construct a empty Mesh
-    explicit Mesh(const eckit::Parametrisation& = util::Config());
-
-    /// @brief Construct mesh from grid.
-    /// The mesh is global and only has a "nodes" FunctionSpace
-    Mesh(const grid::Grid&, const eckit::Parametrisation& = util::Config());
+    /// @brief Construct a empty MeshImpl
+    explicit MeshImpl();
 
     /// @brief Construct a mesh from a Stream (serialization)
-    explicit Mesh(eckit::Stream&);
+    explicit MeshImpl(eckit::Stream&);
 
     /// @brief Serialization to Stream
     void encode(eckit::Stream& s) const;
 
     /// Destructor
     /// @note No need to be virtual since this is not a base class.
-    ~Mesh();
+    ~MeshImpl();
 
     util::Metadata& metadata() { return metadata_; }
     const util::Metadata& metadata() const { return metadata_; }
@@ -136,7 +130,9 @@ public: // methods
 
 private:  // methods
 
-    friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {
+    friend class Mesh;
+
+    friend std::ostream& operator<<(std::ostream& s, const MeshImpl& p) {
         p.print(s);
         return s;
     }
@@ -165,18 +161,102 @@ private: // members
     grid::Projection projection_;
 };
 
+class Mesh {
+public:
+  
+    using mesh_t = MeshImpl;
+
+private:
+  
+    eckit::SharedPtr<MeshImpl> mesh_;
+
+public:
+  
+    // operator MeshImpl&() { return *mesh_; }
+    Mesh( const Mesh& other );
+    Mesh( MeshImpl* );
+    Mesh();
+
+    /// @brief Construct a mesh from a Stream (serialization)
+    explicit Mesh(eckit::Stream&);
+
+    /// @brief Serialization to Stream
+    void encode(eckit::Stream& s) const { return mesh_->encode(s); }
+
+    /// Destructor
+    /// @note No need to be virtual since this is not a base class.
+    ~Mesh() {}
+
+    util::Metadata& metadata() { return mesh_->metadata(); }
+    const util::Metadata& metadata() const { return mesh_->metadata(); }
+
+    void prettyPrint(std::ostream& out) const { mesh_->prettyPrint(out); }
+
+    void print(std::ostream& out) const { mesh_->print(out); }
+
+    mesh::Nodes& createNodes(const grid::Grid& g) { return mesh_->createNodes(g); }
+
+    const mesh::Nodes& nodes() const { return mesh_->nodes(); }
+          mesh::Nodes& nodes()       { return mesh_->nodes(); }
+
+    const mesh::Cells& cells() const { return mesh_->cells(); }
+          mesh::Cells& cells()       { return mesh_->cells();; }
+
+    const mesh::Edges& edges() const { return mesh_->edges(); }
+          mesh::Edges& edges()       { return mesh_->edges(); }
+
+    const mesh::HybridElements& facets() const { return mesh_->facets(); }
+          mesh::HybridElements& facets()       { return mesh_->facets(); }
+
+    const mesh::HybridElements& ridges() const { return mesh_->ridges(); }
+          mesh::HybridElements& ridges()       { return mesh_->ridges(); }
+
+    const mesh::HybridElements& peaks() const { return mesh_->peaks(); }
+          mesh::HybridElements& peaks()       { return mesh_->peaks(); }
+
+    bool generated() const { return mesh_->generated(); }
+
+    /// @brief Return the memory footprint of the mesh
+    size_t footprint() const { return mesh_->footprint(); }
+
+    size_t nb_partitions() const { return mesh_->nb_partitions(); }
+
+    void cloneToDevice() const { mesh_->cloneToDevice(); }
+
+    void cloneFromDevice() const { mesh_->cloneFromDevice(); }
+
+    void syncHostDevice() const { mesh_->syncHostDevice(); }
+
+    const grid::Projection& projection() const { return mesh_->projection(); }
+    
+    mesh_t* get() { return mesh_.get(); }
+
+private:  // methods
+
+    friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {
+        p.print(s);
+        return s;
+    }
+
+    void createElements() { mesh_->createElements(); }
+
+    friend class meshgenerator::MeshGenerator;
+    void setProjection(const grid::Projection& p) { mesh_->setProjection(p); }
+
+};
+
 //----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  Mesh* atlas__Mesh__new ();
-  void atlas__Mesh__delete (Mesh* This);
-  mesh::Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes);
-  mesh::Nodes* atlas__Mesh__nodes (Mesh* This);
-  mesh::Edges* atlas__Mesh__edges (Mesh* This);
-  mesh::Cells* atlas__Mesh__cells (Mesh* This);
-  size_t atlas__Mesh__footprint (Mesh* This);
+  Mesh::mesh_t* atlas__Mesh__new ();
+  void atlas__Mesh__delete (Mesh::mesh_t* This);
+  mesh::Nodes* atlas__Mesh__create_nodes (Mesh::mesh_t* This, int nb_nodes);
+  mesh::Nodes* atlas__Mesh__nodes (Mesh::mesh_t* This);
+  mesh::Edges* atlas__Mesh__edges (Mesh::mesh_t* This);
+  mesh::Cells* atlas__Mesh__cells (Mesh::mesh_t* This);
+  size_t atlas__Mesh__footprint (Mesh::mesh_t* This);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

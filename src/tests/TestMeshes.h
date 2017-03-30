@@ -21,13 +21,13 @@ using namespace atlas::grid;
 namespace atlas {
 namespace test {
 
-mesh::Mesh::Ptr generate_mesh( const StructuredGrid& grid )
+mesh::Mesh generate_mesh( const StructuredGrid& grid )
 {
   meshgenerator::StructuredMeshGenerator generate;
-  return mesh::Mesh::Ptr( generate( grid ) );
+  return generate( grid );
 }
 
-mesh::Mesh::Ptr generate_mesh( std::initializer_list<long> nx )
+mesh::Mesh generate_mesh( std::initializer_list<long> nx )
 {
   return generate_mesh( ReducedGaussianGrid(nx) );
 }

@@ -129,13 +129,13 @@ BOOST_AUTO_TEST_CASE( test_build )
 {
   Log::info() << "test_build" << std::endl;
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate( grid::Grid("O16") ) );
+  mesh::Mesh mesh = meshgenerator->generate( grid::Grid("O16") );
   const double R = util::Earth::radiusInMeters();
-  fvm::Method fvm(*mesh,util::Config("radius",R));
+  fvm::Method fvm(mesh,util::Config("radius",R));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   double spherical_area = 360.*180.;
-  BOOST_CHECK_CLOSE(dual_volume(*mesh),spherical_area,5.0);
+  BOOST_CHECK_CLOSE(dual_volume(mesh),spherical_area,5.0);
 
 }
 
@@ -147,11 +147,11 @@ BOOST_AUTO_TEST_CASE( test_grad )
 //  const double radius = 1.;
   grid::Grid grid(griduid());
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
-  fvm::Method fvm(*mesh, util::Config("radius",radius));
+  mesh::Mesh mesh = meshgenerator->generate(grid);
+  fvm::Method fvm(mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  size_t nnodes = mesh->nodes().size();
+  size_t nnodes = mesh.nodes().size();
   size_t nlev = 1;
 
   field::FieldSet fields;
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
   // output to gmsh
   {
     fvm.node_columns().haloExchange(fields);
-    output::Gmsh(grid.name()+".msh").write(*mesh);
+    output::Gmsh(grid.name()+".msh").write(mesh);
     output::Gmsh gmsh_fields(grid.name()+"_fields.msh");
     gmsh_fields.write(fields["scalar"]);
     gmsh_fields.write(fields["xder"]);
@@ -222,8 +222,8 @@ BOOST_AUTO_TEST_CASE( test_div )
 //  const double radius = 1.;
   grid::Grid grid(griduid());
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
-  fvm::Method fvm(*mesh, util::Config("radius",radius));
+  mesh::Mesh mesh( meshgenerator->generate(grid) );
+  fvm::Method fvm(mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   size_t nlev = 1;
@@ -252,8 +252,8 @@ BOOST_AUTO_TEST_CASE( test_curl )
 //  const double radius = 1.;
   grid::Grid grid(griduid());
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
-  fvm::Method fvm(*mesh, util::Config("radius",radius));
+  mesh::Mesh mesh( meshgenerator->generate(grid) );
+  fvm::Method fvm(mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   size_t nlev = 1;
@@ -321,8 +321,8 @@ BOOST_AUTO_TEST_CASE( test_lapl )
 //  const double radius = 1.;
   grid::Grid grid(griduid());
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
-  fvm::Method fvm(*mesh, util::Config("radius",radius));
+  mesh::Mesh mesh( meshgenerator->generate(grid) );
+  fvm::Method fvm(mesh, util::Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   size_t nlev = 1;

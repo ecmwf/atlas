@@ -199,9 +199,9 @@ void Meshgen2Gmsh::execute(const Args& args)
   SharedPtr<meshgenerator::MeshGenerator> meshgenerator (
       meshgenerator::MeshGenerator::create(meshgenerator_type,meshgenerator_config) );
 
-  SharedPtr<mesh::Mesh> mesh;
+  mesh::Mesh mesh;
   try {
-  mesh.reset( meshgenerator->generate(grid) );
+    mesh = meshgenerator->generate(grid);
   }
   catch ( eckit::BadParameter& e)
   {
@@ -211,31 +211,31 @@ void Meshgen2Gmsh::execute(const Args& args)
   }
 
   if( grid.projection().units() == "degrees" ) {
-    SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh,Halo(halo)) );
+    SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,Halo(halo)) );
   } else {
     Log::warning() << "Not yet implemented: building halo's with projections not defined in degrees" << std::endl;
     Log::warning() << "units: " << grid.projection().units() << std::endl;
   }
   if( edges )
   {
-    build_edges(*mesh);
-    build_pole_edges(*mesh);
-    build_edges_parallel_fields(*mesh);
+    build_edges(mesh);
+    build_pole_edges(mesh);
+    build_edges_parallel_fields(mesh);
     if( brick )
-      build_brick_dual_mesh(grid, *mesh);
+      build_brick_dual_mesh(grid, mesh);
     else
-      build_median_dual_mesh(*mesh);
+      build_median_dual_mesh(mesh);
   }
 
   if( stats )
-    build_statistics(*mesh);
+    build_statistics(mesh);
 
   bool torus=false;
   args.get("torus",torus);
   if( torus ) {
     dim_3d = true;
     Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
-    mesh::actions::BuildTorusXYZField("xyz")(*mesh,grid.domain(),5.,2.,grid.nxmax(),grid.ny());
+    mesh::actions::BuildTorusXYZField("xyz")(mesh,grid.domain(),5.,2.,grid.nxmax(),grid.ny());
   }
 
   atlas::output::Gmsh gmsh( path_out , Config
@@ -246,7 +246,7 @@ void Meshgen2Gmsh::execute(const Args& args)
     ("binary",binary )
   );
   Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid.name() << "\"" << std::endl;
-  gmsh.write( *mesh );
+  gmsh.write( mesh );
 }
 
 //------------------------------------------------------------------------------

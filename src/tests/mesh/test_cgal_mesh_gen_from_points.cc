@@ -38,10 +38,10 @@ int main(int argc, char **argv)
 
     // Build a mesh from grid
     DelaunayMeshGenerator generate;
-    mesh::Mesh::Ptr mesh( generate(grid) );
+    mesh::Mesh mesh = generate(grid);
 
     Gmsh gmsh("earth.msh", util::Config("coordinates","xyz") );
-    gmsh.write(*mesh);
+    gmsh.write(mesh);
 
     atlas::Library::instance().finalise();
     return 0;

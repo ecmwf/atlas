@@ -43,12 +43,12 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns_no_halo )
 {
   grid::Grid grid("O8");
-  SharedPtr<mesh::Mesh> mesh( meshgenerator::StructuredMeshGenerator().generate(grid) );
-  SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh) );
+  mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
+  SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh) );
   SharedPtr<field::Field> field( nodes_fs->createField<int>("field") );
   array::ArrayView<int,1> value = array::make_view<int,1>( *field );
-  array::ArrayView<int,1> ghost = array::make_view<int,1>( mesh->nodes().ghost() );
-  const size_t nb_nodes = mesh->nodes().size();
+  array::ArrayView<int,1> ghost = array::make_view<int,1>( mesh.nodes().ghost() );
+  const size_t nb_nodes = mesh.nodes().size();
   for( size_t j=0; j<nb_nodes; ++j )
   {
     if( ghost(j) )

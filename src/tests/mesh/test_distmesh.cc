@@ -83,22 +83,20 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   Grid grid("N16");
 
 
-  mesh::Mesh::Ptr m( generate( grid ) );
+  mesh::Mesh m( generate( grid ) );
 
-  // mesh::Mesh::Id meshid = m->id();
+//  actions::distribute_mesh(m);
 
-//  actions::distribute_mesh(*m);
+  mesh::actions::build_parallel_fields(m);
+  mesh::actions::build_periodic_boundaries(m);
+  mesh::actions::build_halo(m,1);
+  //mesh::actions::renumber_nodes_glb_idx(m.nodes());
+  mesh::actions::build_edges(m);
+  mesh::actions::build_pole_edges(m);
+  mesh::actions::build_edges_parallel_fields(m);
+  mesh::actions::build_median_dual_mesh(m);
 
-  mesh::actions::build_parallel_fields(*m);
-  mesh::actions::build_periodic_boundaries(*m);
-  mesh::actions::build_halo(*m,1);
-  //mesh::actions::renumber_nodes_glb_idx(m->nodes());
-  mesh::actions::build_edges(*m);
-  mesh::actions::build_pole_edges(*m);
-  mesh::actions::build_edges_parallel_fields(*m);
-  mesh::actions::build_median_dual_mesh(*m);
-
-  double computed_dual_volume = test::dual_volume(*m);
+  double computed_dual_volume = test::dual_volume(m);
   BOOST_CHECK_CLOSE( computed_dual_volume, 360.*180., 0.0001 );
   double difference = 360.*180. - computed_dual_volume;
   if( difference > 1e-8 )
@@ -106,17 +104,17 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
     std::cout << "difference = " << difference << std::endl;
   }
 
-  Gmsh("dist.msh").write(*m);
+  Gmsh("dist.msh").write(m);
 
-  mesh::actions::write_load_balance_report(*m,"load_balance.dat");
+  mesh::actions::write_load_balance_report(m,"load_balance.dat");
 
   // mesh::Mesh& mesh1 = mesh::Mesh::from_id(meshid);
-  mesh::Mesh& mesh1 = *m;
-  BOOST_CHECK( mesh1.nodes().size() == m->nodes().size() );
+  mesh::Mesh& mesh1 = m;
+  BOOST_CHECK( mesh1.nodes().size() == m.nodes().size() );
 
-  const array::ArrayView<int,1> part  = array::make_view<int,1>( m->nodes().partition() );
-  const array::ArrayView<int,1> ghost = array::make_view<int,1>( m->nodes().ghost() );
-  const array::ArrayView<int,1> flags = array::make_view<int,1>( m->nodes().field("flags") );
+  const array::ArrayView<int,1> part  = array::make_view<int,1>( m.nodes().partition() );
+  const array::ArrayView<int,1> ghost = array::make_view<int,1>( m.nodes().ghost() );
+  const array::ArrayView<int,1> flags = array::make_view<int,1>( m.nodes().field("flags") );
 
   Log::info() << "partition = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )

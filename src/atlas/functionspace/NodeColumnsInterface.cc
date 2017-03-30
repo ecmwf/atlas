@@ -17,16 +17,18 @@ namespace functionspace {
 // ----------------------------------------------------------------------
 
 extern "C" {
-NodeColumns* atlas__NodesFunctionSpace__new ( mesh::Mesh* mesh, int halo )
+NodeColumns* atlas__NodesFunctionSpace__new ( mesh::Mesh::mesh_t* mesh, int halo )
 {
   ASSERT(mesh);
-  return new NodeColumns(*mesh,mesh::Halo(halo));
+  mesh::Mesh m(mesh);
+  return new NodeColumns(m,mesh::Halo(halo));
 }
 
-NodeColumns* atlas__NodesFunctionSpace__new_mesh ( mesh::Mesh* mesh )
+NodeColumns* atlas__NodesFunctionSpace__new_mesh ( mesh::Mesh::mesh_t* mesh )
 {
   ASSERT(mesh);
-  return new NodeColumns(*mesh);
+  mesh::Mesh m(mesh);
+  return new NodeColumns(m);
 }
 
 void atlas__NodesFunctionSpace__delete (NodeColumns* This)
@@ -41,10 +43,10 @@ int atlas__NodesFunctionSpace__nb_nodes(const NodeColumns* This)
   return This->nb_nodes();
 }
 
-mesh::Mesh* atlas__NodesFunctionSpace__mesh(NodeColumns* This)
+mesh::Mesh::mesh_t* atlas__NodesFunctionSpace__mesh(NodeColumns* This)
 {
   ASSERT(This);
-  return &This->mesh();
+  return This->mesh().get();
 }
 
 mesh::Nodes* atlas__NodesFunctionSpace__nodes(NodeColumns* This)

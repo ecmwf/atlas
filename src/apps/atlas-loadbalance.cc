@@ -116,19 +116,19 @@ void AtlasLoadbalance::run()
   if( !grid ) return;
   SharedPtr<meshgenerator::MeshGenerator> meshgenerator (
       meshgenerator::MeshGenerator::create("structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(grid) );
+  mesh::Mesh mesh = meshgenerator->generate(grid);
 
-  SharedPtr<functionspace::NodeColumns> nodes( new functionspace::NodeColumns(*mesh,Halo(halo)) );
+  SharedPtr<functionspace::NodeColumns> nodes( new functionspace::NodeColumns(mesh,Halo(halo)) );
 
 
   if( output.size() )
   {
-    write_load_balance_report(*mesh,output);
+    write_load_balance_report(mesh,output);
   }
   else
   {
     std::stringstream s;
-    write_load_balance_report(*mesh,s);
+    write_load_balance_report(mesh,s);
 
     if( parallel::mpi::comm().rank() == 0 )
     {

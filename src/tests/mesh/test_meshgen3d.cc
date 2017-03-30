@@ -31,7 +31,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
-  mesh::Mesh::Ptr m ( mesh::Mesh::create() );
+  mesh::Mesh m;
 
 
   util::Config opts;
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
 
   m = generate( Grid("N24") );
 
-  Gmsh("out.msh", util::Config("coordinates","xyz") ).write(*m);
+  Gmsh("out.msh", util::Config("coordinates","xyz") ).write(m);
 }
 
 } // namespace test
