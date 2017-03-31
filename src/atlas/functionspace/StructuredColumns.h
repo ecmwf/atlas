@@ -146,6 +146,7 @@ class StructuredColumns: public FunctionSpace {
 
 public:
 
+  StructuredColumns();
   StructuredColumns( const FunctionSpace& );
   StructuredColumns( const grid::Grid& );
 

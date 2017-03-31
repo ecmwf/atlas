@@ -143,7 +143,7 @@ void Method::setup()
       }
     }
   }
-  edge_columns_.reset( new functionspace::EdgeColumns(mesh()) );
+  edge_columns_ = functionspace::EdgeColumns(mesh());
 }
 
 // ------------------------------------------------------------------------------------------
@@ -168,11 +168,11 @@ const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__function
   return 0;
 }
 
-functionspace::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This)
+const functionspace::detail::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
-        return &This->edge_columns();
+        return dynamic_cast<const functionspace::detail::EdgeColumns*>(This->edge_columns().get());
   );
   return 0;
 }

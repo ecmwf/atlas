@@ -128,8 +128,8 @@ void build_median_dual_mesh( Mesh& mesh )
   functionspace::NodeColumns nodes_fs(mesh, Halo(mesh));
   nodes_fs.haloExchange(nodes.field( "dual_volumes" ));
 
-  eckit::SharedPtr<functionspace::EdgeColumns> edges_fs(new functionspace::EdgeColumns(mesh, Halo(mesh)));
-  edges_fs->haloExchange(edges.field( "dual_normals" ));
+  functionspace::EdgeColumns edges_fs(mesh, Halo(mesh));
+  edges_fs.haloExchange(edges.field( "dual_normals" ));
 
   make_dual_normals_outward(mesh);
 }

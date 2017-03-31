@@ -38,6 +38,7 @@
 
 namespace atlas {
 namespace functionspace {
+namespace detail {
 
 namespace {
 
@@ -74,18 +75,18 @@ size_t EdgeColumns::config_size(const eckit::Parametrisation& config) const
   return size;
 }
 
-EdgeColumns::EdgeColumns( mesh::Mesh& mesh )
+EdgeColumns::EdgeColumns( const mesh::Mesh& mesh )
   : mesh_(mesh),
-    edges_(mesh.edges()),
+    edges_(mesh_.edges()),
     nb_edges_(0),
     nb_edges_global_(0)
 {
   constructor();
 }
 
-EdgeColumns::EdgeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params ) :
+EdgeColumns::EdgeColumns( const mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params ) :
     mesh_(mesh),
-    edges_(mesh.edges()),
+    edges_(mesh_.edges()),
     nb_edges_(0),
     nb_edges_global_(0)
 {
@@ -95,9 +96,9 @@ EdgeColumns::EdgeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit:
   constructor();
 }
 
-EdgeColumns::EdgeColumns(mesh::Mesh& mesh, const mesh::Halo &halo) :
+EdgeColumns::EdgeColumns( const mesh::Mesh& mesh, const mesh::Halo &halo) :
     mesh_(mesh),
-    edges_(mesh.edges()),
+    edges_(mesh_.edges()),
     nb_edges_(0),
     nb_edges_global_(0)
 {
@@ -775,7 +776,142 @@ void atlas__functionspace__Edges__checksum_field(
 
 // -----------------------------------------------------------------------------------
 
+} // namespace detail
 
+// -----------------------------------------------------------------------------------
+
+EdgeColumns::EdgeColumns() :
+    FunctionSpace(),
+    functionspace_(nullptr) {
+}
+
+EdgeColumns::EdgeColumns( const FunctionSpace& functionspace ) :
+    FunctionSpace(functionspace),
+    functionspace_( dynamic_cast< const detail::EdgeColumns* >( get() ) ) {
+}
+
+EdgeColumns::EdgeColumns( 
+  const mesh::Mesh& mesh,
+  const mesh::Halo& halo,
+  const eckit::Parametrisation& config ) :
+  FunctionSpace( new detail::EdgeColumns(mesh,halo,config) ),
+  functionspace_( dynamic_cast< const detail::EdgeColumns* >( get() ) ) {
+}
+
+EdgeColumns::EdgeColumns( 
+  const mesh::Mesh& mesh,
+  const mesh::Halo& halo) :
+  FunctionSpace( new detail::EdgeColumns(mesh,halo) ),
+  functionspace_( dynamic_cast< const detail::EdgeColumns* >( get() ) ) {
+}
+
+EdgeColumns::EdgeColumns( 
+  const mesh::Mesh& mesh) :
+  FunctionSpace( new detail::EdgeColumns(mesh) ),
+  functionspace_( dynamic_cast< const detail::EdgeColumns* >( get() ) ) {
+}
+  
+size_t EdgeColumns::nb_edges() const {
+  return functionspace_->nb_edges();
+}
+
+size_t EdgeColumns::nb_edges_global() const { // Only on MPI rank 0, will this be different from 0
+  return functionspace_->nb_edges_global();
+}
+
+const mesh::Mesh& EdgeColumns::mesh() const {
+  return functionspace_->mesh();
+}
+
+const mesh::HybridElements& EdgeColumns::edges() const {
+  return functionspace_->edges();
+}
+
+field::Field* EdgeColumns::createField(
+        const std::string& name,
+        array::DataType datatype,
+        const eckit::Parametrisation& config ) const {
+  return functionspace_->createField(name,datatype,config);
+}
+
+field::Field* EdgeColumns::createField(
+        const std::string& name,
+        array::DataType datatype,
+        size_t levels,
+        const eckit::Parametrisation& config ) const {
+  return functionspace_->createField(name,datatype,levels,config);
+}
+
+field::Field* EdgeColumns::createField(const std::string& name,
+                          array::DataType datatype,
+                          const std::vector<size_t>& variables,
+                          const eckit::Parametrisation& config ) const {
+  return functionspace_->createField(name,datatype,variables,config);
+}
+
+field::Field* EdgeColumns::createField(const std::string& name,
+                          array::DataType datatype,
+                          size_t levels,
+                          const std::vector<size_t>& variables,
+                          const eckit::Parametrisation& config ) const {
+  return functionspace_->createField(name,datatype,levels,variables,config);
+}
+
+field::Field* EdgeColumns::createField(const std::string& name,
+                          const field::Field& field,
+                          const eckit::Parametrisation& config ) const {
+  return functionspace_->createField(name,field,config);
+}
+
+
+
+void EdgeColumns::haloExchange( field::FieldSet& fieldset ) const {
+  functionspace_->haloExchange(fieldset);
+}
+
+void EdgeColumns::haloExchange( field::Field& field) const {
+  functionspace_->haloExchange(field);
+}
+
+const parallel::HaloExchange& EdgeColumns::halo_exchange() const {
+  return functionspace_->halo_exchange();
+}
+
+void EdgeColumns::gather( const field::FieldSet& local, field::FieldSet& global ) const {
+  functionspace_->gather(local,global);
+}
+
+void EdgeColumns::gather( const field::Field& local, field::Field& global ) const {
+  functionspace_->gather(local,global);
+}
+
+const parallel::GatherScatter& EdgeColumns::gather() const {
+  return functionspace_->gather();
+}
+
+void EdgeColumns::scatter( const field::FieldSet& global, field::FieldSet& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+void EdgeColumns::scatter( const field::Field& global, field::Field& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+const parallel::GatherScatter& EdgeColumns::scatter() const {
+  return functionspace_->scatter();
+}
+
+std::string EdgeColumns::checksum( const field::FieldSet& fieldset ) const {
+  return functionspace_->checksum(fieldset);
+}
+
+std::string EdgeColumns::checksum( const field::Field& field ) const {
+  return functionspace_->checksum(field);
+}
+
+const parallel::Checksum& EdgeColumns::checksum() const {
+  return functionspace_->checksum();
+}
 
 } // namespace functionspace
 } // namespace atlas

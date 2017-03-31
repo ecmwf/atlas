@@ -450,6 +450,11 @@ std::string StructuredColumns::checksum(
 
 // ----------------------------------------------------------------------------
 
+StructuredColumns::StructuredColumns() :
+  FunctionSpace(),
+  functionspace_(nullptr) {
+}
+
 StructuredColumns::StructuredColumns( const FunctionSpace& functionspace ) :
   FunctionSpace( functionspace ),
   functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
