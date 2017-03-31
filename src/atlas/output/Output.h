@@ -36,6 +36,7 @@ namespace field {
 namespace atlas {
 namespace functionspace {
     class FunctionSpace;
+    class FunctionSpaceImpl;
 } }
 
 namespace atlas {
@@ -191,8 +192,8 @@ const OutputImpl* atlas__Output__create(const char* factory_key, Stream* stream,
 void atlas__Output__write_mesh(const OutputImpl* This, mesh::Mesh::mesh_t* mesh, const eckit::Parametrisation* params);
 void atlas__Output__write_fieldset(const OutputImpl* This, const field::FieldSet* fieldset, const eckit::Parametrisation* params);
 void atlas__Output__write_field(const OutputImpl* This, const field::Field* field, const eckit::Parametrisation* params);
-void atlas__Output__write_fieldset_fs(const OutputImpl* This, const field::FieldSet* fieldset, const functionspace::FunctionSpace* functionspace, const eckit::Parametrisation* params);
-void atlas__Output__write_field_fs(const OutputImpl* This, const field::Field* field, const functionspace::FunctionSpace* functionspace, const eckit::Parametrisation* params);
+void atlas__Output__write_fieldset_fs(const OutputImpl* This, const field::FieldSet* fieldset, const functionspace::FunctionSpaceImpl* functionspace, const eckit::Parametrisation* params);
+void atlas__Output__write_field_fs(const OutputImpl* This, const field::Field* field, const functionspace::FunctionSpaceImpl* functionspace, const eckit::Parametrisation* params);
 }
 
 } // namespace output

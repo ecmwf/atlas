@@ -8,23 +8,22 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_functionspace_NodeColumnsFunctionSpaceInterface_h
-#define atlas_functionspace_NodeColumnsFunctionSpaceInterface_h
-
+#pragma once
 
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/Mesh.h"
 
 namespace atlas {
 namespace functionspace {
+namespace detail {
 
 extern "C" {
-NodeColumns* atlas__NodesFunctionSpace__new (mesh::Mesh::mesh_t* mesh, int halo);
-NodeColumns* atlas__NodesFunctionSpace__new_mesh (mesh::Mesh::mesh_t* mesh);
+const NodeColumns* atlas__NodesFunctionSpace__new (mesh::Mesh::mesh_t* mesh, int halo);
+const NodeColumns* atlas__NodesFunctionSpace__new_mesh (mesh::Mesh::mesh_t* mesh);
 void atlas__NodesFunctionSpace__delete (NodeColumns* This);
 int atlas__NodesFunctionSpace__nb_nodes(const NodeColumns* This);
-mesh::Mesh::mesh_t* atlas__NodesFunctionSpace__mesh(NodeColumns* This);
-mesh::Nodes* atlas__NodesFunctionSpace__nodes(NodeColumns* This);
+const mesh::Mesh::mesh_t* atlas__NodesFunctionSpace__mesh(const NodeColumns* This);
+mesh::Nodes* atlas__NodesFunctionSpace__nodes(const NodeColumns* This);
 field::Field* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
 field::Field* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
 
@@ -156,7 +155,6 @@ void atlas__NodesFunctionSpace__mean_and_stddev_per_level(const NodeColumns* Thi
 
 }
 
+} // namespace detail
 } // namespace functionspace
 } // namespace atlas
-
-#endif // atlas_functionspace_NodeColumnsFunctionSpaceInterface_h

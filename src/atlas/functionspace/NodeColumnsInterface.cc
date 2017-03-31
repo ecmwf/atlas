@@ -13,18 +13,19 @@
 
 namespace atlas {
 namespace functionspace {
+namespace detail {
 
 // ----------------------------------------------------------------------
 
 extern "C" {
-NodeColumns* atlas__NodesFunctionSpace__new ( mesh::Mesh::mesh_t* mesh, int halo )
+const NodeColumns* atlas__NodesFunctionSpace__new ( mesh::Mesh::mesh_t* mesh, int halo )
 {
   ASSERT(mesh);
   mesh::Mesh m(mesh);
   return new NodeColumns(m,mesh::Halo(halo));
 }
 
-NodeColumns* atlas__NodesFunctionSpace__new_mesh ( mesh::Mesh::mesh_t* mesh )
+const NodeColumns* atlas__NodesFunctionSpace__new_mesh ( mesh::Mesh::mesh_t* mesh )
 {
   ASSERT(mesh);
   mesh::Mesh m(mesh);
@@ -43,13 +44,13 @@ int atlas__NodesFunctionSpace__nb_nodes(const NodeColumns* This)
   return This->nb_nodes();
 }
 
-mesh::Mesh::mesh_t* atlas__NodesFunctionSpace__mesh(NodeColumns* This)
+const mesh::Mesh::mesh_t* atlas__NodesFunctionSpace__mesh(const NodeColumns* This)
 {
   ASSERT(This);
   return This->mesh().get();
 }
 
-mesh::Nodes* atlas__NodesFunctionSpace__nodes(NodeColumns* This)
+mesh::Nodes* atlas__NodesFunctionSpace__nodes(const NodeColumns* This)
 {
   ASSERT(This);
   return &This->nodes();
@@ -1205,6 +1206,7 @@ void atlas__NodesFunctionSpace__mean_and_stddev_per_level(const NodeColumns* Thi
 
 }
 
+} // namespace detail
 } // namespace functionspace
 } // namespace atlas
 

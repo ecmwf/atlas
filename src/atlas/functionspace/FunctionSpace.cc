@@ -26,9 +26,35 @@ namespace functionspace {
 
 //-----------------------------------------------------------------------------
 
+FunctionSpace::FunctionSpace() :
+  functionspace_( new NoFunctionSpace() ) {
+}
+
+FunctionSpace::FunctionSpace( const functionspace_t* functionspace ) :
+  functionspace_( functionspace ) {
+}
+
+FunctionSpace::FunctionSpace( const FunctionSpace& functionspace ) :
+  functionspace_( functionspace.functionspace_ ) {
+}
+
+std::string FunctionSpace::name() const {
+  return functionspace_->name();
+}
+
+FunctionSpace::operator bool() const {
+  return functionspace_->operator bool();
+}
+
+size_t FunctionSpace::footprint() const {
+  return functionspace_->footprint();
+}
+
+//-----------------------------------------------------------------------------
+
 // C wrapper interfaces to C++ routines
 extern "C" {
- void atlas__FunctionSpace__delete (FunctionSpace* This)
+ void atlas__FunctionSpace__delete (FunctionSpaceImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -37,7 +63,7 @@ extern "C" {
   );
 }
 
-const char* atlas__FunctionSpace__name (FunctionSpace* This) {
+const char* atlas__FunctionSpace__name (FunctionSpaceImpl* This) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
     return This->name().c_str();

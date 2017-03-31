@@ -25,7 +25,7 @@
 
 namespace atlas {
 namespace functionspace {
-
+namespace detail {
 namespace {
 void set_field_metadata(const eckit::Parametrisation& config, field::Field& field)
 {
@@ -61,15 +61,13 @@ size_t Spectral::config_size(const eckit::Parametrisation& config) const
 
 // ----------------------------------------------------------------------
 
-Spectral::Spectral(const size_t truncation)
-  : FunctionSpace(),
+Spectral::Spectral(const size_t truncation) :
     truncation_(truncation),
     trans_(0)
 {
 }
 
-Spectral::Spectral(trans::Trans& trans)
-  : FunctionSpace(),
+Spectral::Spectral(trans::Trans& trans) :
 #ifdef ATLAS_HAVE_TRANS
     truncation_(trans.nsmax()),
     trans_(&trans)
@@ -108,7 +106,7 @@ template <>
 field::Field* Spectral::createField<double>(const std::string& name, const eckit::Parametrisation& options) const {
   size_t nb_spec_coeffs = config_size(options);
   field::Field* field = field::Field::create<double>(name, array::make_shape(nb_spec_coeffs) );
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(options,*field);
   return field;
 }
@@ -117,7 +115,7 @@ template <>
 field::Field* Spectral::createField<double>(const std::string& name, size_t levels, const eckit::Parametrisation& options) const {
   size_t nb_spec_coeffs = config_size(options);
   field::Field* field = field::Field::create<double>(name, array::make_shape(nb_spec_coeffs,levels) );
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   field->set_levels(levels);
   set_field_metadata(options,*field);
   return field;
@@ -252,6 +250,78 @@ void Spectral::norm( const field::Field& field, std::vector<double>& norm_per_le
 #endif
 }
 
+} // namespace detail
+
+// ----------------------------------------------------------------------
+
+Spectral::Spectral( const FunctionSpace& functionspace ) :
+  FunctionSpace(functionspace),
+  functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
+}
+
+Spectral::Spectral( const size_t truncation ) :
+  FunctionSpace( new detail::Spectral(truncation) ),
+  functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
+}
+
+Spectral::Spectral( trans::Trans& trans ) :
+  FunctionSpace( new detail::Spectral(trans) ),
+  functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
+}
+
+size_t Spectral::nb_spectral_coefficients() const {
+  return functionspace_->nb_spectral_coefficients();
+}
+
+size_t Spectral::nb_spectral_coefficients_global() const {
+  return functionspace_->nb_spectral_coefficients_global();
+}
+
+template <>
+field::Field* Spectral::createField<double>(const std::string& name, const eckit::Parametrisation& options) const {
+  return functionspace_->createField<double>(name,options);
+}
+
+template <>
+field::Field* Spectral::createField<double>(const std::string& name, size_t levels, const eckit::Parametrisation& options) const {
+  return functionspace_->createField<double>(name,levels,options);
+}
+
+void Spectral::gather( const field::FieldSet& local_fieldset, field::FieldSet& global_fieldset ) const {
+  functionspace_->gather(local_fieldset,global_fieldset);
+}
+
+void Spectral::gather( const field::Field& local, field::Field& global ) const {
+  functionspace_->gather(local,global);
+}
+
+void Spectral::scatter( const field::FieldSet& global_fieldset, field::FieldSet& local_fieldset ) const {
+  functionspace_->scatter(global_fieldset,local_fieldset);
+}
+
+void Spectral::scatter( const field::Field& global, field::Field& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+std::string Spectral::checksum( const field::FieldSet& fieldset ) const {
+  return functionspace_->checksum(fieldset);
+}
+
+std::string Spectral::checksum( const field::Field& field ) const {
+  return functionspace_->checksum(field);
+}
+
+void Spectral::norm( const field::Field& field, double& norm, int rank ) const {
+  functionspace_->norm(field,norm,rank);
+}
+
+void Spectral::norm( const field::Field& field, double norm_per_level[], int rank ) const {
+  functionspace_->norm(field,norm_per_level,rank);
+}
+
+void Spectral::norm( const field::Field& field, std::vector<double>& norm_per_level, int rank ) const {
+  functionspace_->norm(field,norm_per_level,rank);
+}
 
 
 // ----------------------------------------------------------------------
@@ -259,23 +329,23 @@ void Spectral::norm( const field::Field& field, std::vector<double>& norm_per_le
 
 extern "C"
 {
-Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation)
+const detail::Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation)
 {
   ATLAS_ERROR_HANDLING(
-    return new Spectral(truncation);
+    return new detail::Spectral(truncation);
   );
   return 0;
 }
 
-Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans)
+const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans)
 {
   ATLAS_ERROR_HANDLING(
-    return new Spectral(*trans);
+    return new detail::Spectral(*trans);
   );
   return 0;
 }
 
-void atlas__SpectralFunctionSpace__delete (Spectral* This)
+void atlas__SpectralFunctionSpace__delete ( detail::Spectral* This )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -283,7 +353,7 @@ void atlas__SpectralFunctionSpace__delete (Spectral* This)
   );
 }
 
-field::Field* atlas__fs__Spectral__create_field_name_kind (const Spectral* This, const char* name, int kind, const eckit::Parametrisation* options)
+field::Field* atlas__fs__Spectral__create_field_name_kind (const detail::Spectral* This, const char* name, int kind, const eckit::Parametrisation* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -294,7 +364,7 @@ field::Field* atlas__fs__Spectral__create_field_name_kind (const Spectral* This,
   return 0;
 }
 
-field::Field* atlas__fs__Spectral__create_field_name_kind_lev (const Spectral* This, const char* name, int kind, int levels, const eckit::Parametrisation* options)
+field::Field* atlas__fs__Spectral__create_field_name_kind_lev (const detail::Spectral* This, const char* name, int kind, int levels, const eckit::Parametrisation* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -306,7 +376,7 @@ field::Field* atlas__fs__Spectral__create_field_name_kind_lev (const Spectral* T
 }
 
 
-void atlas__SpectralFunctionSpace__gather (const Spectral* This, const field::Field* local, field::Field* global)
+void atlas__SpectralFunctionSpace__gather (const detail::Spectral* This, const field::Field* local, field::Field* global)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -316,7 +386,7 @@ void atlas__SpectralFunctionSpace__gather (const Spectral* This, const field::Fi
   );
 }
 
-void atlas__SpectralFunctionSpace__scatter (const Spectral* This, const field::Field* global, field::Field* local)
+void atlas__SpectralFunctionSpace__scatter (const detail::Spectral* This, const field::Field* global, field::Field* local)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -326,7 +396,7 @@ void atlas__SpectralFunctionSpace__scatter (const Spectral* This, const field::F
   );
 }
 
-void atlas__SpectralFunctionSpace__gather_fieldset (const Spectral* This, const field::FieldSet* local, field::FieldSet* global)
+void atlas__SpectralFunctionSpace__gather_fieldset (const detail::Spectral* This, const field::FieldSet* local, field::FieldSet* global)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -336,7 +406,7 @@ void atlas__SpectralFunctionSpace__gather_fieldset (const Spectral* This, const 
   );
 }
 
-void atlas__SpectralFunctionSpace__scatter_fieldset (const Spectral* This, const field::FieldSet* global, field::FieldSet* local)
+void atlas__SpectralFunctionSpace__scatter_fieldset (const detail::Spectral* This, const field::FieldSet* global, field::FieldSet* local)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -346,7 +416,7 @@ void atlas__SpectralFunctionSpace__scatter_fieldset (const Spectral* This, const
   );
 }
 
-void atlas__SpectralFunctionSpace__norm(const Spectral* This, const field::Field* field, double norm[], int rank)
+void atlas__SpectralFunctionSpace__norm(const detail::Spectral* This, const field::Field* field, double norm[], int rank)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);

@@ -152,7 +152,7 @@ public: // Destructor
   size_t levels() const { return std::max(1ul,metadata().get<size_t>("levels")); }
 
   void set_functionspace(const functionspace::FunctionSpace &);
-  functionspace::FunctionSpace& functionspace() const { return *functionspace_; }
+  const functionspace::FunctionSpace& functionspace() const { return functionspace_; }
 
   /// @brief Return the memory footprint of the Field
   size_t footprint() const;
@@ -197,7 +197,7 @@ private: // members
   mutable std::string name_;
   util::Metadata metadata_;
   array::Array* array_;
-  functionspace::FunctionSpace* functionspace_;
+  functionspace::FunctionSpace functionspace_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -235,7 +235,7 @@ Field* Field::wrap(
 
 // C wrapper interfaces to C++ routines
 #define Parametrisation eckit::Parametrisation
-#define functionspace_FunctionSpace functionspace::FunctionSpace
+#define functionspace_FunctionSpace functionspace::FunctionSpaceImpl
 #define util_Metadata util::Metadata
 #define Char char
 
@@ -265,7 +265,7 @@ extern "C"
   void atlas__Field__device_data_float_specf (Field* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
   void atlas__Field__device_data_double_specf (Field* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
   util_Metadata* atlas__Field__metadata (Field* This);
-  functionspace_FunctionSpace* atlas__Field__functionspace (Field* This);
+  const functionspace_FunctionSpace* atlas__Field__functionspace (Field* This);
   void atlas__Field__rename(Field* This, const char* name);
   void atlas__Field__set_levels(Field* This, int levels);
   void atlas__Field__set_functionspace(Field* This, const functionspace_FunctionSpace* functionspace);

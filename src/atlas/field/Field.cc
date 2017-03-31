@@ -64,8 +64,6 @@ Field::Field(
     array::DataType           datatype,
     const array::ArrayShape&  shape)
 {
-  functionspace_ = new functionspace::NoFunctionSpace();
-  functionspace_->attach();
   array_ = array::Array::create(datatype,shape);
   array_->attach();
   rename(name);
@@ -75,8 +73,6 @@ Field::Field(
 
 Field::Field(const std::string& name, array::Array* array)
 {
-  functionspace_ = new functionspace::NoFunctionSpace();
-  functionspace_->attach();
   array_ = array;
   array_->attach();
   rename(name);
@@ -85,10 +81,6 @@ Field::Field(const std::string& name, array::Array* array)
 
 Field::~Field()
 {
-  functionspace_->detach();
-  if( functionspace_->owners() == 0 )
-    delete functionspace_;
-
   array_->detach();
   if( array_->owners() == 0 )
     delete array_;
@@ -96,7 +88,7 @@ Field::~Field()
 
 size_t Field::footprint() const {
   size_t size = sizeof(*this);
-  size += functionspace_->footprint();
+  size += functionspace_.footprint();
   size += array_->footprint();
   size += metadata_.footprint();
   size += name_.capacity() * sizeof(std::string::value_type);
@@ -165,19 +157,9 @@ void Field::insert(size_t idx1, size_t size1 )
 }
 
 
-void Field::set_functionspace(const functionspace::FunctionSpace &functionspace)
+void Field::set_functionspace(const functionspace::FunctionSpace& functionspace)
 {
-  functionspace_->detach();
-  if( functionspace_->owners() == 0 )
-    delete functionspace_;
-
-  functionspace_ = const_cast<functionspace::FunctionSpace*>(&functionspace);
-
-  // In case functionspace is not attached, increase owners, so that
-  // this field will not manage its lifetime.
-  if( functionspace_->owners() == 0 ) functionspace_->attach();
-
-  functionspace_->attach();
+  functionspace_ = functionspace;
 }
 
 // ------------------------------------------------------------------
@@ -363,11 +345,11 @@ int atlas__Field__has_functionspace(Field* This)
   return 0;
 }
 
-functionspace::FunctionSpace* atlas__Field__functionspace (Field* This)
+const functionspace::FunctionSpaceImpl* atlas__Field__functionspace (Field* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return &This->functionspace();
+    return This->functionspace().get();
   );
   return 0;
 }
@@ -496,12 +478,12 @@ void atlas__Field__set_levels(Field* This, int levels)
   );
 }
 
-void atlas__Field__set_functionspace(Field* This, const functionspace::FunctionSpace* functionspace)
+void atlas__Field__set_functionspace(Field* This, const functionspace::FunctionSpaceImpl* functionspace)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(functionspace);
-    This->set_functionspace(*functionspace);
+    This->set_functionspace( functionspace );
   );
 }
 

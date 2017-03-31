@@ -40,7 +40,7 @@ namespace functionspace {
 
 // ----------------------------------------------------------------------------
 
-class EdgeColumns : public FunctionSpace
+class EdgeColumns : public FunctionSpaceImpl
 {
 public:
 

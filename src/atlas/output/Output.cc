@@ -250,24 +250,24 @@ void atlas__Output__write_field(const OutputImpl* This, const Field* field, cons
     This->write(*field,*params);
   );
 }
-void atlas__Output__write_fieldset_fs(const OutputImpl* This, const FieldSet* fieldset, const FunctionSpace* functionspace, const Parametrisation* params)
+void atlas__Output__write_fieldset_fs(const OutputImpl* This, const FieldSet* fieldset, const functionspace::FunctionSpaceImpl* functionspace, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(fieldset);
     ASSERT(functionspace);
     ASSERT(params);
-    This->write(*fieldset,*functionspace,*params);
+    This->write(*fieldset,functionspace,*params);
   );
 }
-void atlas__Output__write_field_fs(const OutputImpl* This, const Field* field, const FunctionSpace* functionspace, const Parametrisation* params)
+void atlas__Output__write_field_fs(const OutputImpl* This, const Field* field, const functionspace::FunctionSpaceImpl* functionspace, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(field);
     ASSERT(functionspace);
     ASSERT(params);
-    This->write(*field,*functionspace,*params);
+    This->write(*field,functionspace,*params);
   );
 }
 

@@ -726,9 +726,9 @@ void Trans::dirtrans(
     const TransParameters& context) const
 {
   ASSERT( gpfield.functionspace() == 0 ||
-          gpfield.functionspace().cast<functionspace::StructuredColumns>() );
+          functionspace::StructuredColumns(gpfield.functionspace()) );
   ASSERT( spfield.functionspace() == 0 ||
-          spfield.functionspace().cast<functionspace::Spectral>() );
+          functionspace::Spectral(spfield.functionspace()) );
   if ( gpfield.stride(0) != spfield.stride(0) )
   {
     throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
@@ -763,7 +763,7 @@ void Trans::dirtrans(
     const field::Field& f = gpfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.functionspace() == 0 ||
-            f.functionspace().cast<functionspace::StructuredColumns>() );
+            functionspace::StructuredColumns(f.functionspace()) );
   }
 
   int trans_spnfld(0);
@@ -975,9 +975,9 @@ void Trans::invtrans(const  field::Field& spfield,
                      const TransParameters& context) const
 {
   ASSERT( gpfield.functionspace() == 0 ||
-          gpfield.functionspace().cast<functionspace::StructuredColumns>() );
+          functionspace::StructuredColumns( gpfield.functionspace() ) );
   ASSERT( spfield.functionspace() == 0 ||
-          spfield.functionspace().cast<functionspace::Spectral>() );
+          functionspace::Spectral( spfield.functionspace() ) );
   if ( gpfield.stride(0) != spfield.stride(0) )
   {
     throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
@@ -1015,7 +1015,7 @@ void Trans::invtrans(const  field::FieldSet& spfields,
     const field::Field& f = gpfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.functionspace() == 0 ||
-            f.functionspace().cast<functionspace::StructuredColumns>() );
+            functionspace::StructuredColumns( f.functionspace() ) );
   }
 
   int nb_spectral_fields(0);
@@ -1631,7 +1631,7 @@ const int* atlas__Trans__nvalue (const Trans* This, int &size)
   return 0;
 }
 
-void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspace::NodeColumns* gp, const field::FieldSet* gpfields, const Spectral* sp, field::FieldSet* spfields, const TransParameters* parameters)
+void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldSet* gpfields, const functionspace::detail::Spectral* sp, field::FieldSet* spfields, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1640,7 +1640,7 @@ void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspa
     ASSERT( sp );
     ASSERT( spfields );
     ASSERT( parameters );
-    This->dirtrans(*gp,*gpfields,*sp,*spfields,*parameters);
+    This->dirtrans(functionspace::FunctionSpace(gp),*gpfields,functionspace::FunctionSpace(sp),*spfields,*parameters);
   );
 }
 
@@ -1655,7 +1655,7 @@ void atlas__Trans__dirtrans_fieldset (const Trans* This, const field::FieldSet* 
   );
 }
 
-void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const Spectral* sp, const field::FieldSet* spfields, const functionspace::NodeColumns* gp, field::FieldSet* gpfields, const TransParameters* parameters)
+void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldSet* spfields, const functionspace::detail::NodeColumns* gp, field::FieldSet* gpfields, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1664,7 +1664,7 @@ void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const Spectral* s
     ASSERT( gp );
     ASSERT( gpfields );
     ASSERT( parameters );
-    This->invtrans(*sp,*spfields,*gp,*gpfields,*parameters);
+    This->invtrans(functionspace::FunctionSpace(sp),*spfields,functionspace::FunctionSpace(gp),*gpfields,*parameters);
   );
 }
 
@@ -1680,14 +1680,14 @@ void atlas__Trans__dirtrans_field (const Trans* This, const field::Field* gpfiel
   );
 }
 
-void atlas__Trans__dirtrans_field_nodes (const Trans* This, const functionspace::NodeColumns* gp, const field::Field* gpfield, const Spectral* sp, field::Field* spfield, const TransParameters* parameters)
+void atlas__Trans__dirtrans_field_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::Field* gpfield, const functionspace::detail::Spectral* sp, field::Field* spfield, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
     ASSERT( spfield );
     ASSERT( gpfield );
     ASSERT( parameters );
-    This->dirtrans(*gp,*gpfield,*sp,*spfield,*parameters);
+    This->dirtrans(functionspace::FunctionSpace(gp),*gpfield,functionspace::FunctionSpace(sp),*spfield,*parameters);
   );
 }
 
@@ -1713,7 +1713,7 @@ void atlas__Trans__invtrans_field (const Trans* This, const field::Field* spfiel
   );
 }
 
-void atlas__Trans__invtrans_field_nodes (const Trans* This, const Spectral* sp, const field::Field* spfield, const functionspace::NodeColumns* gp, field::Field* gpfield, const TransParameters* parameters)
+void atlas__Trans__invtrans_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::Field* spfield, const functionspace::detail::NodeColumns* gp, field::Field* gpfield, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1722,11 +1722,11 @@ void atlas__Trans__invtrans_field_nodes (const Trans* This, const Spectral* sp, 
     ASSERT( gp );
     ASSERT( gpfield );
     ASSERT( parameters );
-    This->invtrans(*sp,*spfield,*gp,*gpfield,*parameters);
+    This->invtrans(functionspace::FunctionSpace(sp),*spfield,functionspace::FunctionSpace(gp),*gpfield,*parameters);
   );
 }
 
-void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const functionspace::NodeColumns* gp, const field::Field* gpwind, const Spectral* sp, field::Field* spvor, field::Field* spdiv, const TransParameters* parameters)
+void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::Field* gpwind, const functionspace::detail::Spectral* sp, field::Field* spvor, field::Field* spdiv, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1736,11 +1736,11 @@ void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const fu
     ASSERT( spvor );
     ASSERT( spdiv );
     ASSERT( parameters );
-    This->dirtrans_wind2vordiv(*gp,*gpwind,*sp,*spvor,*spdiv,*parameters);
+    This->dirtrans_wind2vordiv(functionspace::FunctionSpace(gp),*gpwind,functionspace::FunctionSpace(sp),*spvor,*spdiv,*parameters);
   );
 }
 
-void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const Spectral* sp, const field::Field* spvor, const field::Field* spdiv, const functionspace::NodeColumns* gp, field::Field* gpwind, const TransParameters* parameters)
+void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::Field* spvor, const field::Field* spdiv, const functionspace::detail::NodeColumns* gp, field::Field* gpwind, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1750,7 +1750,7 @@ void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const Sp
     ASSERT( gp );
     ASSERT( gpwind );
     ASSERT( parameters );
-    This->invtrans_vordiv2wind(*sp,*spvor,*spdiv,*gp,*gpwind,*parameters);
+    This->invtrans_vordiv2wind(functionspace::FunctionSpace(sp),*spvor,*spdiv,functionspace::FunctionSpace(gp),*gpwind,*parameters);
   );
 }
 
@@ -1765,7 +1765,7 @@ void atlas__Trans__invtrans (const Trans* This, int nb_scalar_fields, double sca
   );
 }
 
-void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const Spectral* sp, const field::Field* spfield, const functionspace::NodeColumns* gp, field::Field* gpfield)
+void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::Field* spfield, const functionspace::detail::NodeColumns* gp, field::Field* gpfield)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1773,7 +1773,7 @@ void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const Spectral*
     ASSERT( spfield );
     ASSERT( gp );
     ASSERT( gpfield );
-    This->invtrans_grad(*sp,*spfield,*gp,*gpfield);
+    This->invtrans_grad(functionspace::FunctionSpace(sp),*spfield,functionspace::FunctionSpace(gp),*gpfield);
   );
 }
 

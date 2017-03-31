@@ -83,8 +83,7 @@ EdgeColumns::EdgeColumns( mesh::Mesh& mesh )
   constructor();
 }
 
-EdgeColumns::EdgeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params )
-  : FunctionSpace(),
+EdgeColumns::EdgeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params ) :
     mesh_(mesh),
     edges_(mesh.edges()),
     nb_edges_(0),
@@ -96,8 +95,7 @@ EdgeColumns::EdgeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit:
   constructor();
 }
 
-EdgeColumns::EdgeColumns(mesh::Mesh& mesh, const mesh::Halo &halo)
-  : FunctionSpace(),
+EdgeColumns::EdgeColumns(mesh::Mesh& mesh, const mesh::Halo &halo) :
     mesh_(mesh),
     edges_(mesh.edges()),
     nb_edges_(0),
@@ -164,7 +162,7 @@ field::Field* EdgeColumns::createField(const std::string& name,array::DataType d
 {
   size_t nb_edges = config_size(options);
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges));
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(options,*field);
   return field;
 }
@@ -174,7 +172,7 @@ field::Field* EdgeColumns::createField(const std::string& name,array::DataType d
   size_t nb_edges = config_size(options);
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges,levels));
   field->set_levels(levels);
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(options,*field);
   return field;
 }
@@ -185,7 +183,7 @@ field::Field* EdgeColumns::createField(const std::string& name,array::DataType d
   std::vector<size_t> shape(1,nb_edges);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(options,*field);
   return field;
 }
@@ -197,7 +195,7 @@ field::Field* EdgeColumns::createField(const std::string& name, array::DataType 
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
   field->set_levels(levels);
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(options,*field);
   return field;
 }
@@ -209,7 +207,7 @@ field::Field* EdgeColumns::createField(const std::string& name, const field::Fie
   field::Field* field = field::Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(options,*field);
   return field;
 }

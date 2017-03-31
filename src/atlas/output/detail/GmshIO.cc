@@ -1035,18 +1035,18 @@ void GmshIO::write(const mesh::Mesh& mesh, const PathName& file_path) const
     mesh_info = mesh_info.dirName()+"/"+mesh_info.baseName(false)+"_info.msh";
 
     //[next]  make NodesFunctionSpace accept const mesh
-    eckit::SharedPtr<functionspace::NodeColumns> function_space( new functionspace::NodeColumns(const_cast<mesh::Mesh&>(mesh)) );
+    functionspace::NodeColumns function_space( const_cast<mesh::Mesh&>(mesh) );
 
-    write(nodes.partition(),*function_space,mesh_info,std::ios_base::out);
+    write(nodes.partition(),function_space,mesh_info,std::ios_base::out);
 
     if (nodes.has_field("dual_volumes"))
     {
-      write(nodes.field("dual_volumes"),*function_space,mesh_info,std::ios_base::app);
+      write(nodes.field("dual_volumes"),function_space,mesh_info,std::ios_base::app);
     }
 
     if (nodes.has_field("dual_delta_sph"))
     {
-      write(nodes.field("dual_delta_sph"),*function_space,mesh_info,std::ios_base::app);
+      write(nodes.field("dual_delta_sph"),function_space,mesh_info,std::ios_base::app);
     }
 
     //[next] if( mesh.has_function_space("edges") )
@@ -1087,23 +1087,17 @@ void GmshIO::write(
         throw eckit::AssertionFailed(msg.str(), Here());
     }
 
-    if ( field.functionspace().cast<functionspace::NodeColumns>() )
+    if ( functionspace::NodeColumns( field.functionspace() ) )
     {
-        const functionspace::NodeColumns* functionspace =
-            field.functionspace().cast<functionspace::NodeColumns>();
-
         field::FieldSet fieldset;
         fieldset.add(field);
-        write(fieldset, *functionspace, file_path, mode);
+        write(fieldset, field.functionspace(), file_path, mode);
     }
-    else if ( field.functionspace().cast<functionspace::StructuredColumns>() )
+    else if ( functionspace::StructuredColumns(field.functionspace()) )
     {
-        const functionspace::StructuredColumns* functionspace =
-            field.functionspace().cast<functionspace::StructuredColumns>();
-
         field::FieldSet fieldset;
         fieldset.add(field);
-        write(fieldset, *functionspace, file_path, mode);
+        write(fieldset, field.functionspace(), file_path, mode);
     }
     else
     {
@@ -1260,16 +1254,16 @@ void GmshIO::write(
   const eckit::PathName& file_path,
   openmode mode) const
 {
-  if( dynamic_cast<const functionspace::NodeColumns*>(&funcspace) )
+  if( functionspace::NodeColumns(funcspace) )
     write_delegate(
       fieldset,
-      dynamic_cast<const functionspace::NodeColumns&>(funcspace),
+      functionspace::NodeColumns(funcspace),
       file_path,
       mode);
-  else if( dynamic_cast<const functionspace::StructuredColumns*>(&funcspace) )
+  else if( functionspace::StructuredColumns(funcspace) )
     write_delegate(
       fieldset,
-      dynamic_cast<const functionspace::StructuredColumns&>(funcspace),
+      functionspace::StructuredColumns(funcspace),
       file_path,
       mode);
   else
@@ -1284,16 +1278,16 @@ void GmshIO::write(
   const eckit::PathName& file_path,
   openmode mode) const
 {
-  if( dynamic_cast<const functionspace::NodeColumns*>(&funcspace) )
+  if( functionspace::NodeColumns(funcspace) )
     write_delegate(
       field,
-      dynamic_cast<const functionspace::NodeColumns&>(funcspace),
+      functionspace::NodeColumns(funcspace),
       file_path,
       mode);
-  else if( dynamic_cast<const functionspace::StructuredColumns*>(&funcspace) )
+  else if( functionspace::StructuredColumns(funcspace) )
     write_delegate(
       field,
-      dynamic_cast<const functionspace::StructuredColumns&>(funcspace),
+      functionspace::StructuredColumns(funcspace),
       file_path,
       mode);
   else
@@ -1308,7 +1302,7 @@ public:
 #define mesh_Mesh mesh::Mesh::mesh_t
 #define field_Field field::Field
 #define field_FieldSet field::FieldSet
-#define functionspace_FunctionSpace functionspace::FunctionSpace
+#define functionspace_FunctionSpace functionspace::FunctionSpaceImpl
   static mesh_Mesh* atlas__Gmsh__read(GmshIO* This, char* file_path);
   static void atlas__Gmsh__write(GmshIO* This, mesh_Mesh* mesh, char* file_path);
   static mesh_Mesh* atlas__read_gmsh(char* file_path);
@@ -1355,14 +1349,14 @@ void GmshFortranInterface::atlas__write_gmsh_mesh (mesh::Mesh::mesh_t* mesh, cha
   writer.write( m, PathName(file_path) );
 }
 
-void GmshFortranInterface::atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
+void GmshFortranInterface::atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
   GmshIO writer;
-  writer.write( *fieldset, *functionspace, PathName(file_path) );
+  writer.write( *fieldset, functionspace, PathName(file_path) );
 }
 
-void GmshFortranInterface::atlas__write_gmsh_field (field::Field* field, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
+void GmshFortranInterface::atlas__write_gmsh_field (field::Field* field, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
   GmshIO writer;
-  writer.write( *field, *functionspace, PathName(file_path) );
+  writer.write( *field, functionspace, PathName(file_path) );
 }
 
 extern "C" {
@@ -1394,11 +1388,11 @@ void atlas__write_gmsh_mesh (mesh::Mesh::mesh_t* mesh, char* file_path) {
   return GmshFortranInterface::atlas__write_gmsh_mesh(mesh,file_path);
 }
 
-void atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
+void atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
   return GmshFortranInterface::atlas__write_gmsh_fieldset(fieldset,functionspace,file_path,mode);
 }
 
-void atlas__write_gmsh_field (field::Field* field, functionspace::FunctionSpace* functionspace, char* file_path, int mode) {
+void atlas__write_gmsh_field (field::Field* field, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
   return GmshFortranInterface::atlas__write_gmsh_field(field,functionspace,file_path,mode);
 }
 

@@ -39,8 +39,8 @@ public:
   const atlas::mesh::Mesh& mesh() const { return mesh_; }
         atlas::mesh::Mesh& mesh()       { return mesh_; }
 
-  const functionspace::NodeColumns& node_columns() const { return *node_columns_; }
-        functionspace::NodeColumns& node_columns()       { return *node_columns_; }
+  const functionspace::NodeColumns& node_columns() const { return node_columns_; }
+        functionspace::NodeColumns& node_columns()       { return node_columns_; }
 
   const functionspace::EdgeColumns& edge_columns() const { return *edge_columns_; }
         functionspace::EdgeColumns& edge_columns()       { return *edge_columns_; }
@@ -57,7 +57,7 @@ private: // data
     mesh::Halo             halo_;
     mesh::Nodes            &nodes_;
     mesh::HybridElements   &edges_;
-    eckit::SharedPtr<functionspace::NodeColumns>  node_columns_;
+    functionspace::NodeColumns node_columns_;
     eckit::SharedPtr<functionspace::EdgeColumns>  edge_columns_;
 
     double radius_;
@@ -72,7 +72,7 @@ private: // data
 extern "C"
 {
   Method* atlas__numerics__fvm__Method__new (mesh::Mesh::mesh_t* mesh, const eckit::Parametrisation* params);
-  functionspace::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This);
+  const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This);
   functionspace::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This);
 }
 

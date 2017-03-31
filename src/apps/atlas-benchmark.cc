@@ -194,7 +194,7 @@ public:
 private:
 
   mesh::Mesh mesh;
-  SharedPtr<functionspace::NodeColumns> nodes_fs;
+  functionspace::NodeColumns nodes_fs;
 
   vector<int> pole_edges;
   vector<bool> is_ghost;
@@ -327,7 +327,7 @@ void AtlasBenchmark::setup()
   build_median_dual_mesh(mesh);
   build_node_to_edge_connectivity(mesh);
 
-  nodes_fs.reset( new functionspace::NodeColumns(mesh,mesh::Halo(mesh)));
+  nodes_fs = functionspace::NodeColumns(mesh,mesh::Halo(mesh));
 
   nnodes = mesh.nodes().size();
   nedges = mesh.edges().size();
@@ -335,8 +335,8 @@ void AtlasBenchmark::setup()
   auto lonlat = array::make_view<double,2> ( mesh.nodes().lonlat() );
   auto V      = array::make_view<double,1> ( mesh.nodes().field("dual_volumes") );
   auto S      = array::make_view<double,2> ( mesh.edges().field("dual_normals") );
-  auto field  = array::make_view<double,2> ( mesh.nodes().add( nodes_fs->createField<double>( "field", nlev ) ) );
-  mesh.nodes().add( nodes_fs->createField<double>( "grad", nlev, array::make_shape(3) ) );
+  auto field  = array::make_view<double,2> ( mesh.nodes().add( nodes_fs.createField<double>( "field", nlev ) ) );
+  mesh.nodes().add( nodes_fs.createField<double>( "grad", nlev, array::make_shape(3) ) );
   mesh.nodes().field("field").metadata().set("nb_levels",nlev);
   mesh.nodes().field("grad").metadata().set("nb_levels",nlev);
 
@@ -493,7 +493,7 @@ void AtlasBenchmark::iteration()
   // halo-exchange
   parallel::mpi::comm().barrier();
   Timer halo("halo-exchange", Log::debug());
-  nodes_fs->halo_exchange().execute(grad);
+  nodes_fs.halo_exchange().execute(grad);
   parallel::mpi::comm().barrier();
   t.stop();
   halo.stop();
@@ -555,7 +555,7 @@ double AtlasBenchmark::result()
 
   norm = std::sqrt(norm);
 
-  Log::info() << "  checksum: " << nodes_fs->checksum().execute( grad ) << endl;
+  Log::info() << "  checksum: " << nodes_fs.checksum().execute( grad ) << endl;
   Log::info() << "  maxval: " << setw(13) << setprecision(6) << scientific << maxval << endl;
   Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
   Log::info() << "  norm:   " << setw(13) << setprecision(6) << scientific << norm << endl;

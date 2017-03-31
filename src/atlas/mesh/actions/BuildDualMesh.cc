@@ -125,8 +125,8 @@ void build_median_dual_mesh( Mesh& mesh )
   array::make_view<double,1>(skewness).assign(0.);
   array::make_view<double,1>(alpha).assign(0.5);
 
-  eckit::SharedPtr<functionspace::NodeColumns> nodes_fs(new functionspace::NodeColumns(mesh, Halo(mesh)));
-  nodes_fs->haloExchange(nodes.field( "dual_volumes" ));
+  functionspace::NodeColumns nodes_fs(mesh, Halo(mesh));
+  nodes_fs.haloExchange(nodes.field( "dual_volumes" ));
 
   eckit::SharedPtr<functionspace::EdgeColumns> edges_fs(new functionspace::EdgeColumns(mesh, Halo(mesh)));
   edges_fs->haloExchange(edges.field( "dual_normals" ));
@@ -427,8 +427,8 @@ void build_brick_dual_mesh(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mes
 
     }
 
-    eckit::SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,Halo(mesh)) );
-    nodes_fs->haloExchange(nodes.field("dual_volumes"));
+    functionspace::NodeColumns nodes_fs( mesh,Halo(mesh) );
+    nodes_fs.haloExchange(nodes.field("dual_volumes"));
   }
   else
   {

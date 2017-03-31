@@ -76,7 +76,7 @@ Method::Method( mesh::Mesh &mesh, const eckit::Parametrisation &params ) :
 
 void Method::setup()
 {
-  node_columns_.reset( new functionspace::NodeColumns(mesh(),halo_) );
+  node_columns_ = functionspace::NodeColumns(mesh(),halo_);
   if( edges_.size() == 0 )
   {
     build_edges(mesh());
@@ -159,11 +159,11 @@ Method* atlas__numerics__fvm__Method__new (mesh::Mesh::mesh_t* mesh, const eckit
   return method;
 }
 
-functionspace::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This)
+const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
-        return &This->node_columns();
+        return dynamic_cast<const functionspace::detail::NodeColumns*>(This->node_columns().get());
   );
   return 0;
 }

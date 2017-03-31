@@ -117,7 +117,7 @@ void AtlasLoadbalance::run()
   meshgenerator::MeshGenerator meshgenerator("structured");
   mesh::Mesh mesh = meshgenerator.generate(grid);
 
-  SharedPtr<functionspace::NodeColumns> nodes( new functionspace::NodeColumns(mesh,Halo(halo)) );
+  functionspace::NodeColumns nodes(mesh,Halo(halo));
 
 
   if( output.size() )

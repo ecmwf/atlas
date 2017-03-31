@@ -128,8 +128,8 @@ extern "C"
   // void atlas__pointcloud__delete(PointCloud* This);
   // mesh::Mesh* atlas__pointcloud__read(PointCloud* This, char* file_path);
   // mesh::Mesh* atlas__read_pointcloud(char* file_path);
-  // void atlas__write_pointcloud_fieldset(char* file_path, const field::Field* fieldset, const functionspace::FunctionSpace* functionspace);
-  // void atlas__write_pointcloud_field(char* file_path, const field::Field* field, const functionspace::FunctionSpace* functionspace);
+  // void atlas__write_pointcloud_fieldset(char* file_path, const field::Field* fieldset, const functionspace::FunctionSpaceImpl* functionspace);
+  // void atlas__write_pointcloud_field(char* file_path, const field::Field* field, const functionspace::FunctionSpaceImpl* functionspace);
 }
 
 } // namespace detail

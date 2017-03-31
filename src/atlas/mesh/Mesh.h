@@ -154,15 +154,15 @@ private: // members
 
 class Mesh {
 public:
-  
+
     using mesh_t = MeshImpl;
 
 private:
-  
+
     eckit::SharedPtr<MeshImpl> mesh_;
 
 public:
-  
+
     // operator MeshImpl&() { return *mesh_; }
     Mesh( const Mesh& other );
     Mesh( MeshImpl* );
@@ -219,8 +219,9 @@ public:
     void syncHostDevice() const { mesh_->syncHostDevice(); }
 
     const grid::Projection& projection() const { return mesh_->projection(); }
-    
+
     mesh_t* get() { return mesh_.get(); }
+    const mesh_t* get() const { return mesh_.get(); }
 
 private:  // methods
 

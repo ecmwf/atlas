@@ -25,7 +25,7 @@
 
 namespace atlas {
 namespace functionspace {
-
+namespace detail {
 
 namespace {
 void set_field_metadata(const eckit::Parametrisation& config, field::Field& field)
@@ -65,7 +65,6 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
 // Constructor
 // ----------------------------------------------------------------------------
 StructuredColumns::StructuredColumns(const grid::Grid& grid) :
-  FunctionSpace(),
   grid_(grid)
 {
     if ( not grid_ )
@@ -210,7 +209,7 @@ field::Field* StructuredColumns::createField(const std::string& name, array::Dat
 #ifdef ATLAS_HAVE_TRANS
     size_t npts = config_size(options);
     field::Field* field = field::Field::create(name, datatype, array::make_shape(npts));
-    field->set_functionspace(*this);
+    field->set_functionspace(this);
     set_field_metadata(options,*field);
     return field;
 #else
@@ -242,7 +241,7 @@ field::Field* StructuredColumns::createField(
     field::Field* field = field::Field::create<double>(
                     name, array::make_shape(npts, levels));
 
-    field->set_functionspace(*this);
+    field->set_functionspace(this);
     field->set_levels(levels);
     set_field_metadata(options,*field);
     return field;
@@ -447,7 +446,55 @@ std::string StructuredColumns::checksum(
 }
 // ----------------------------------------------------------------------------
 
+} // namespace detail
 
+// ----------------------------------------------------------------------------
+
+StructuredColumns::StructuredColumns( const FunctionSpace& functionspace ) :
+  FunctionSpace( functionspace ),
+  functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
+}
+
+StructuredColumns::StructuredColumns( const grid::Grid& grid ) :
+  FunctionSpace( new detail::StructuredColumns(grid) ),
+  functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
+}
+
+field::Field* StructuredColumns::createField(const std::string& name, array::DataType datatype, const eckit::Parametrisation& options ) const
+{
+  return functionspace_->createField(name,datatype,options);
+}
+
+field::Field* StructuredColumns::createField(
+    const std::string& name, array::DataType datatype,
+    size_t levels, const eckit::Parametrisation& options) const
+{
+  return functionspace_->createField(name,datatype,levels,options);
+}
+
+void StructuredColumns::gather( const field::FieldSet& local, field::FieldSet& global ) const {
+  functionspace_->gather(local,global);
+}
+
+void StructuredColumns::gather( const field::Field& local, field::Field& global ) const {
+  functionspace_->gather(local,global);
+}
+
+void StructuredColumns::scatter( const field::FieldSet& global, field::FieldSet& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+void StructuredColumns::scatter( const field::Field& global, field::Field& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+std::string StructuredColumns::checksum( const field::FieldSet& fieldset ) const {
+  return functionspace_->checksum(fieldset);
+}
+
+std::string StructuredColumns::checksum( const field::Field& field) const {
+  return functionspace_->checksum(field);
+}
 
 
 // ----------------------------------------------------------------------------
@@ -456,15 +503,15 @@ std::string StructuredColumns::checksum(
 extern "C"
 {
 
-StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid::Grid::grid_t* grid)
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid::Grid::grid_t* grid)
 {
   ATLAS_ERROR_HANDLING(
-    return new StructuredColumns( grid::Grid(grid) );
+    return new detail::StructuredColumns( grid::Grid(grid) );
   );
   return 0;
 }
 
-void atlas__functionspace__StructuredColumns__delete (StructuredColumns* This)
+void atlas__functionspace__StructuredColumns__delete (detail::StructuredColumns* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -472,7 +519,7 @@ void atlas__functionspace__StructuredColumns__delete (StructuredColumns* This)
   );
 }
 
-field::Field* atlas__fs__StructuredColumns__create_field_name_kind (const StructuredColumns* This, const char* name, int kind, const eckit::Parametrisation* options)
+field::Field* atlas__fs__StructuredColumns__create_field_name_kind (const detail::StructuredColumns* This, const char* name, int kind, const eckit::Parametrisation* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -481,7 +528,7 @@ field::Field* atlas__fs__StructuredColumns__create_field_name_kind (const Struct
   return 0;
 }
 
-field::Field* atlas__fs__StructuredColumns__create_field_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels, const eckit::Parametrisation* options)
+field::Field* atlas__fs__StructuredColumns__create_field_name_kind_lev (const detail::StructuredColumns* This, const char* name, int kind, int levels, const eckit::Parametrisation* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -490,7 +537,7 @@ field::Field* atlas__fs__StructuredColumns__create_field_name_kind_lev (const St
   return 0;
 }
 
-void atlas__functionspace__StructuredColumns__gather (const StructuredColumns* This, const field::Field* local, field::Field* global)
+void atlas__functionspace__StructuredColumns__gather (const detail::StructuredColumns* This, const field::Field* local, field::Field* global)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -500,7 +547,7 @@ void atlas__functionspace__StructuredColumns__gather (const StructuredColumns* T
   );
 }
 
-void atlas__functionspace__StructuredColumns__scatter (const StructuredColumns* This, const field::Field* global, field::Field* local)
+void atlas__functionspace__StructuredColumns__scatter (const detail::StructuredColumns* This, const field::Field* global, field::Field* local)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -510,7 +557,7 @@ void atlas__functionspace__StructuredColumns__scatter (const StructuredColumns* 
   );
 }
 
-void atlas__fs__StructuredColumns__checksum_fieldset(const StructuredColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated)
+void atlas__fs__StructuredColumns__checksum_fieldset(const detail::StructuredColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(fieldset);
@@ -522,7 +569,7 @@ void atlas__fs__StructuredColumns__checksum_fieldset(const StructuredColumns* Th
   );
 }
 
-void atlas__fs__StructuredColumns__checksum_field(const StructuredColumns* This, const field::Field* field, char* &checksum, int &size, int &allocated)
+void atlas__fs__StructuredColumns__checksum_field(const detail::StructuredColumns* This, const field::Field* field, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(field);

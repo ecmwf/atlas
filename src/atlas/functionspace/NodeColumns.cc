@@ -42,6 +42,7 @@
 
 namespace atlas {
 namespace functionspace {
+namespace detail {
 
 namespace {
 
@@ -84,36 +85,31 @@ array::LocalView<T,1> make_surface_scalar_view(const field::Field &field)
 
 }
 
-NodeColumns::NodeColumns( mesh::Mesh& mesh )
-  : mesh_(mesh),
+NodeColumns::NodeColumns( mesh::Mesh& mesh ) :
+    mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(0),
     nb_nodes_(nodes_.size()),
-    nb_nodes_global_(0)
-{
-  constructor();
+    nb_nodes_global_(0) {
+    constructor();
 }
 
-NodeColumns::NodeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params )
-  : FunctionSpace(),
+NodeColumns::NodeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params ) :
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),
     nb_nodes_(nodes_.size()),
-    nb_nodes_global_(0)
-{
-  constructor();
+    nb_nodes_global_(0) {
+    constructor();
 }
 
-NodeColumns::NodeColumns(mesh::Mesh& mesh, const mesh::Halo &halo)
-  : FunctionSpace(),
+NodeColumns::NodeColumns(mesh::Mesh& mesh, const mesh::Halo &halo) :
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),
     nb_nodes_(nodes_.size()),
-    nb_nodes_global_(0)
-{
-  constructor();
+    nb_nodes_global_(0) {
+    constructor();
 }
 
 
@@ -296,7 +292,7 @@ field::Field* NodeColumns::createField(
 {
   size_t nb_nodes = config_nb_nodes(config);
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes));
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(config,*field);
   return field;
 }
@@ -310,7 +306,7 @@ field::Field* NodeColumns::createField(
   size_t nb_nodes = config_nb_nodes(config);
   field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes,levels));
   field->set_levels(levels);
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(config,*field);
   return field;
 }
@@ -325,7 +321,7 @@ field::Field* NodeColumns::createField(
   std::vector<size_t> shape(1,nb_nodes);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(config,*field);
   return field;
 }
@@ -342,7 +338,7 @@ field::Field* NodeColumns::createField(
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   field::Field* field = field::Field::create(name,datatype,shape);
   field->set_levels(levels);
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(config,*field);
   return field;
 }
@@ -357,7 +353,7 @@ field::Field* NodeColumns::createField(
   field::Field* field = field::Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(config,*field);
   return field;
 }
@@ -367,7 +363,7 @@ field::Field* NodeColumns::createField(
 {
   size_t nb_nodes = config_nb_nodes(config);
   field::Field* field = field::Field::create("",array::DataType::create<double>(),array::make_shape(nb_nodes));
-  field->set_functionspace(*this);
+  field->set_functionspace(this);
   set_field_metadata(config,*field);
   return field;
 }
@@ -1951,118 +1947,311 @@ void mean_and_standard_deviation_per_level( const NodeColumns& fs, const field::
 
 } // end collectives implementation
 
-template<> void NodeColumns::sum( const field::Field& field, int&    result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, long&   result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, float&  result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, double& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-
-template<> void NodeColumns::sum( const field::Field& field, std::vector<int>&    result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, std::vector<long>&   result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, std::vector<float>&  result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, std::vector<double>& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-
-
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, int&    result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, long&   result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, float&  result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, double& result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, std::vector<int>&    result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, std::vector<long>&   result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, std::vector<float>&  result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, std::vector<double>& result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-
-template<> void NodeColumns::minimum( const field::Field& field, int&    min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, long&   min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, float&  min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, double& min ) const { return detail::minimum(*this,field,min); }
-
-template<> void NodeColumns::maximum( const field::Field& field, int&    max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, long&   max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, float&  max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, double& max ) const { return detail::maximum(*this,field,max); }
-
-template<> void NodeColumns::minimum( const field::Field& field, std::vector<int>&    min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, std::vector<long>&   min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, std::vector<float>&  min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, std::vector<double>& min ) const { return detail::minimum(*this,field,min); }
-
-template<> void NodeColumns::maximum( const field::Field& field, std::vector<int>&    max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, std::vector<long>&   max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, std::vector<float>&  max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, std::vector<double>& max ) const { return detail::maximum(*this,field,max); }
-
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, int&    max, gidx_t& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, long&   max, gidx_t& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, float&  max, gidx_t& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, double& max, gidx_t& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, int&    min, gidx_t& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, long&   min, gidx_t& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, float&  min, gidx_t& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, double& min, gidx_t& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<int>&    max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<long>&   max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<float>&  max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<double>& max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<int>&    min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<long>&   min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<float>&  min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<double>& min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-
-
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, int&    min, gidx_t& glb_idx, size_t& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, long&   min, gidx_t& glb_idx, size_t& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, float&  min, gidx_t& glb_idx, size_t& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, double& min, gidx_t& glb_idx, size_t& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, int&    max, gidx_t& glb_idx, size_t& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, long&   max, gidx_t& glb_idx, size_t& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, float&  max, gidx_t& glb_idx, size_t& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, double& max, gidx_t& glb_idx, size_t& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<int>&    min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<long>&   min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<float>&  min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<double>& min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<int>&    max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<long>&   max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<float>&  max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<double>& max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
 
 
 
-template<> void NodeColumns::mean( const field::Field& field, float&  result, size_t& N ) const { return detail::mean(*this,field,result,N); }
-template<> void NodeColumns::mean( const field::Field& field, double& result, size_t& N ) const { return detail::mean(*this,field,result,N); }
+template< typename Value >
+NodeColumns::FieldStatisticsT<Value>::FieldStatisticsT(const NodeColumns* f) :
+  functionspace(*f) {
+}
 
-template<> void NodeColumns::mean( const field::Field& field, std::vector<float>&  result, size_t& N ) const { return detail::mean(*this,field,result,N); }
-template<> void NodeColumns::mean( const field::Field& field, std::vector<double>& result, size_t& N ) const { return detail::mean(*this,field,result,N); }
+template< typename Vector >
+NodeColumns::FieldStatisticsVectorT<Vector>::FieldStatisticsVectorT(const NodeColumns* f) :
+  functionspace(*f) {
+}
 
-template<> void NodeColumns::meanAndStandardDeviation( const field::Field& field, float&  mu, float&  sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
-template<> void NodeColumns::meanAndStandardDeviation( const field::Field& field, double& mu, double& sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
+NodeColumns::FieldStatistics::FieldStatistics(const NodeColumns* f) :
+  functionspace(*f) {
+}
 
-template<> void NodeColumns::meanAndStandardDeviation( const field::Field& field, std::vector<float>&  mu, std::vector<float>&  sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
-template<> void NodeColumns::meanAndStandardDeviation( const field::Field& field, std::vector<double>& mu, std::vector<double>& sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::sum( const field::Field& field, Value& result, size_t& N ) const {
+  detail::sum(functionspace,field,result,N);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::sum( const field::Field& field, Vector& result, size_t& N ) const {
+  detail::sum(functionspace,field,result,N);
+}
+
+void NodeColumns::FieldStatistics::sumPerLevel( const field::Field& field, field::Field& result, size_t& N ) const {
+  detail::sum_per_level(functionspace,field,result,N);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::orderIndependentSum( const field::Field& field, Value& result, size_t& N ) const {
+  detail::order_independent_sum(functionspace,field,result,N);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::orderIndependentSum( const field::Field& field, Vector& result, size_t& N ) const {
+  detail::order_independent_sum(functionspace,field,result,N);
+}
+
+void NodeColumns::FieldStatistics::orderIndependentSumPerLevel( const field::Field& field, field::Field& result, size_t& N ) const {
+  detail::order_independent_sum_per_level(functionspace,field,result,N);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::minimum( const field::Field& field, Value& minimum ) const {
+  detail::minimum(functionspace,field,minimum);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::maximum( const field::Field& field, Value& maximum ) const {
+  detail::maximum(functionspace,field,maximum);
+
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::minimum( const field::Field& field, Vector& minimum ) const {
+  detail::minimum(functionspace,field,minimum);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::maximum( const field::Field& field, Vector& maximum) const {
+  detail::maximum(functionspace,field,maximum);
+}
+
+void NodeColumns::FieldStatistics::minimumPerLevel( const field::Field& field, field::Field& minimum ) const {
+  detail::minimum_per_level(functionspace,field,minimum);
+}
+
+void NodeColumns::FieldStatistics::maximumPerLevel( const field::Field& field, field::Field& maximum ) const {
+  detail::maximum_per_level(functionspace,field,maximum);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::minimumAndLocation( const field::Field& field, Value& minimum, gidx_t& glb_idx ) const {
+  detail::minimum_and_location(functionspace,field,minimum,glb_idx);
+
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::maximumAndLocation( const field::Field& field, Value& maximum, gidx_t& glb_idx ) const {
+  detail::maximum_and_location(functionspace,field,maximum,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::minimumAndLocation( const field::Field& field, Value& minimum, gidx_t& glb_idx, size_t& level ) const {
+  detail::minimum_and_location(functionspace,field,minimum,glb_idx,level);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::maximumAndLocation( const field::Field& field, Value& maximum, gidx_t& glb_idx, size_t& level ) const {
+  detail::maximum_and_location(functionspace,field,maximum,glb_idx,level);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::minimumAndLocation( const field::Field& field, Vector& minimum, std::vector<gidx_t>& glb_idx ) const {
+  detail::minimum_and_location(functionspace,field,minimum,glb_idx);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::maximumAndLocation( const field::Field& field, Vector& maximum, std::vector<gidx_t>& glb_idx ) const {
+  detail::maximum_and_location(functionspace,field,maximum,glb_idx);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::minimumAndLocation( const field::Field& field, Vector& minimum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const {
+  detail::minimum_and_location(functionspace,field,minimum,glb_idx,level);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::maximumAndLocation( const field::Field& field, Vector& maximum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const {
+  detail::maximum_and_location(functionspace,field,maximum,glb_idx,level);
+}
+
+void NodeColumns::FieldStatistics::minimumAndLocationPerLevel( const field::Field& field, field::Field& column, field::Field& glb_idx ) const {
+  detail::minimum_and_location_per_level(functionspace,field,column,glb_idx);
+}
+
+void NodeColumns::FieldStatistics::maximumAndLocationPerLevel( const field::Field& field, field::Field& column, field::Field& glb_idx ) const {
+  detail::maximum_and_location_per_level(functionspace,field,column,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::mean( const field::Field& field, Value& mean, size_t& N ) const {
+  detail::mean(functionspace,field,mean,N);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::mean( const field::Field& field, Vector& mean, size_t& N ) const {
+  detail::mean(functionspace,field,mean,N);
+}
+
+void NodeColumns::FieldStatistics::meanPerLevel(const field::Field &field, field::Field &mean, size_t &N) const {
+  detail::mean_per_level(functionspace,field,mean,N);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::meanAndStandardDeviation( const field::Field& field, Value& mean, Value& stddev, size_t& N ) const {
+  detail::mean_and_standard_deviation(functionspace,field,mean,stddev,N);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::meanAndStandardDeviation( const field::Field& field, Vector& mean, Vector& stddev, size_t& N ) const {
+  detail::mean_and_standard_deviation(functionspace,field,mean,stddev,N);
+}
+
+void NodeColumns::FieldStatistics::meanAndStandardDeviationPerLevel( const field::Field& field, field::Field& mean, field::Field& stddev, size_t& N ) const {
+  detail::mean_and_standard_deviation_per_level(functionspace,field,mean,stddev,N);
+}
+
+template class NodeColumns::FieldStatisticsT<int>;
+template class NodeColumns::FieldStatisticsT<long>;
+template class NodeColumns::FieldStatisticsT<float>;
+template class NodeColumns::FieldStatisticsT<double>;
+//template class NodeColumns::FieldStatisticsT<unsigned long>;
+template class NodeColumns::FieldStatisticsVectorT< std::vector<int> >;
+template class NodeColumns::FieldStatisticsVectorT< std::vector<long> >;
+template class NodeColumns::FieldStatisticsVectorT< std::vector<float> >;
+template class NodeColumns::FieldStatisticsVectorT< std::vector<double> >;
+//template class NodeColumns::FieldStatisticsVectorT< std::vector<unsigned long> >;
+
+} // namespace detail
 
 
-void NodeColumns::sumPerLevel(const field::Field &field, field::Field &sum, size_t &N) const { return detail::sum_per_level(*this,field,sum,N); }
+NodeColumns::NodeColumns() :
+  FunctionSpace(),
+  functionspace_(nullptr) {
+}
 
-void NodeColumns::orderIndependentSumPerLevel(const field::Field &field, field::Field &sum, size_t &N) const { return detail::order_independent_sum_per_level(*this,field,sum,N); }
+NodeColumns::NodeColumns( const FunctionSpace& functionspace ) :
+  FunctionSpace( functionspace ),
+  functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
+}
 
-void NodeColumns::minimumPerLevel(const field::Field &field, field::Field &min) const { return detail::minimum_per_level(*this,field,min); }
+NodeColumns::NodeColumns( mesh::Mesh& mesh, const mesh::Halo& halo, const eckit::Parametrisation& config ) :
+  FunctionSpace( new detail::NodeColumns(mesh,halo,config) ),
+  functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
+}
 
-void NodeColumns::maximumPerLevel(const field::Field &field, field::Field &max) const { return detail::maximum_per_level(*this,field,max);}
+NodeColumns::NodeColumns( mesh::Mesh& mesh, const mesh::Halo& halo ) :
+  FunctionSpace( new detail::NodeColumns(mesh,halo) ),
+  functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
+}
 
-void NodeColumns::minimumAndLocationPerLevel(const field::Field &field, field::Field &min, field::Field &glb_idx) const { detail::minimum_and_location_per_level(*this,field,min,glb_idx); }
+NodeColumns::NodeColumns( mesh::Mesh& mesh ) :
+  FunctionSpace( new detail::NodeColumns(mesh) ),
+  functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
+}
 
-void NodeColumns::maximumAndLocationPerLevel(const field::Field &field, field::Field &max, field::Field &glb_idx) const { detail::maximum_and_location_per_level(*this,field,max,glb_idx); }
+size_t NodeColumns::nb_nodes() const {
+  return functionspace_->nb_nodes();
+}
 
-void NodeColumns::meanPerLevel(const field::Field &field, field::Field &mean, size_t &N) const { return detail::mean_per_level(*this,field,mean,N); }
+size_t NodeColumns::nb_nodes_global() const { // All MPI ranks will have same output
+  return functionspace_->nb_nodes_global();
+}
 
-void NodeColumns::meanAndStandardDeviationPerLevel(const field::Field &field, field::Field &mean, field::Field &stddev, size_t &N) const { return detail::mean_and_standard_deviation_per_level(*this,field,mean,stddev,N); }
+const mesh::Mesh& NodeColumns::mesh() const {
+  return functionspace_->mesh();
+}
+
+mesh::Nodes& NodeColumns::nodes() const{
+  return functionspace_->nodes();
+}
+
+field::Field* NodeColumns::createField(
+    const std::string& name,
+    array::DataType datatype,
+    const eckit::Parametrisation& config ) const {
+  return functionspace_->createField(name,datatype,config);
+}
+
+field::Field* NodeColumns::createField(
+    const std::string& name,
+    array::DataType, size_t levels,
+    const eckit::Parametrisation& config) const {
+  return functionspace_->createField(name,levels,config);
+}
+
+field::Field* NodeColumns::createField(
+    const std::string& name,
+    array::DataType datatype,
+    const std::vector<size_t>& variables,
+    const eckit::Parametrisation& config) const {
+  return functionspace_->createField(name,datatype,variables,config);
+}
+
+field::Field* NodeColumns::createField(
+    const std::string& name,
+    array::DataType, size_t levels,
+    const std::vector<size_t>& variables,
+    const eckit::Parametrisation& config)  const {
+  return functionspace_->createField(name,levels,variables,config);
+}
+
+field::Field* NodeColumns::createField(
+    const std::string& name,
+    const field::Field& field,
+    const eckit::Parametrisation& config ) const {
+  return functionspace_->createField(name,field,config);
+}
+
+field::Field* NodeColumns::createField(const eckit::Parametrisation& config) const {
+  return functionspace_->createField(config);
+}
+
+// -- Parallelisation aware methods
+
+const mesh::Halo& NodeColumns::halo() const {
+  return functionspace_->halo();
+}
+
+void NodeColumns::haloExchange( field::FieldSet& fieldset ) const {
+  functionspace_->haloExchange(fieldset);
+}
+
+void NodeColumns::haloExchange( field::Field& field ) const {
+  functionspace_->haloExchange(field);
+}
+
+const parallel::HaloExchange& NodeColumns::halo_exchange() const {
+  return functionspace_->halo_exchange();
+}
+
+void NodeColumns::gather( const field::FieldSet& local, field::FieldSet& global ) const {
+  functionspace_->gather(local,global);
+}
+
+void NodeColumns::gather( const field::Field& local, field::Field& global ) const {
+  functionspace_->gather(local,global);
+}
+
+const parallel::GatherScatter& NodeColumns::gather() const {
+  return functionspace_->gather();
+}
+
+void NodeColumns::scatter( const field::FieldSet& global, field::FieldSet& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+void NodeColumns::scatter( const field::Field& global, field::Field& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+const parallel::GatherScatter& NodeColumns::scatter() const {
+  return functionspace_->scatter();
+}
+
+std::string NodeColumns::checksum( const field::FieldSet& fieldset ) const {
+  return functionspace_->checksum(fieldset);
+}
+
+std::string NodeColumns::checksum( const field::Field& field ) const {
+  return functionspace_->checksum(field);
+}
+
+const parallel::Checksum& NodeColumns::checksum() const {
+  return functionspace_->checksum();
+}
+
+
+
+
+
 
 } // namespace functionspace
 } // namespace atlas
