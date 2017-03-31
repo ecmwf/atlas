@@ -73,10 +73,9 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   grid::ReducedGaussianGrid grid( {4,8,8,4} );
 
-  mesh::Mesh mesh;
   meshgenerator::StructuredMeshGenerator generator;
   //generator.options.set("3d",true);
-  generator.generate(grid,mesh);
+  mesh::Mesh mesh = generator.generate(grid);
 
   //grid.reset();
 

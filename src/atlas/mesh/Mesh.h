@@ -30,7 +30,6 @@
 namespace atlas {
 namespace grid {
     class Grid;
-    class Distribution;
 } }
 
 namespace atlas {
@@ -42,13 +41,8 @@ namespace mesh {
 } }
 
 namespace atlas {
-namespace deprecated {
-    class FunctionSpace;
-} }
-
-namespace atlas {
 namespace meshgenerator {
-    class MeshGenerator;
+    class MeshGeneratorImpl;
 } }
 
 namespace atlas {
@@ -67,9 +61,6 @@ namespace mesh {
 
 class Mesh;
 class MeshImpl : public eckit::Owned {
-public: // types
-
-    typedef eckit::SharedPtr<MeshImpl> Ptr;
 
 public: // methods
 
@@ -139,7 +130,7 @@ private:  // methods
 
     void createElements();
 
-    friend class meshgenerator::MeshGenerator;
+    friend class meshgenerator::MeshGeneratorImpl;
     void setProjection(const grid::Projection&);
 
 private: // members
@@ -240,7 +231,7 @@ private:  // methods
 
     void createElements() { mesh_->createElements(); }
 
-    friend class meshgenerator::MeshGenerator;
+    friend class meshgenerator::MeshGeneratorImpl;
     void setProjection(const grid::Projection& p) { mesh_->setProjection(p); }
 
 };

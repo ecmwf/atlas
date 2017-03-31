@@ -23,7 +23,7 @@ namespace meshgenerator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class RegularMeshGenerator : public MeshGenerator {
+class RegularMeshGenerator : public MeshGenerator::meshgenerator_t {
 
 public:
 
@@ -32,7 +32,7 @@ public:
     virtual void generate(const atlas::grid::Grid&, const grid::Distribution&, mesh::Mesh&) const;
     virtual void generate(const atlas::grid::Grid&, mesh::Mesh&) const;
 
-    using MeshGenerator::generate;
+    using MeshGenerator::meshgenerator_t::generate;
 
 private:
 

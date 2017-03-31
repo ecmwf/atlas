@@ -128,8 +128,8 @@ BOOST_AUTO_TEST_CASE( test_factory )
 BOOST_AUTO_TEST_CASE( test_build )
 {
   Log::info() << "test_build" << std::endl;
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  mesh::Mesh mesh = meshgenerator->generate( grid::Grid("O16") );
+  MeshGenerator meshgenerator ("structured" );
+  mesh::Mesh mesh = meshgenerator.generate( grid::Grid("O16") );
   const double R = util::Earth::radiusInMeters();
   fvm::Method fvm(mesh,util::Config("radius",R));
   Nabla nabla( fvm );
@@ -146,8 +146,8 @@ BOOST_AUTO_TEST_CASE( test_grad )
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   grid::Grid grid(griduid());
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  mesh::Mesh mesh = meshgenerator->generate(grid);
+  MeshGenerator meshgenerator("structured");
+  mesh::Mesh mesh = meshgenerator.generate(grid);
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla( fvm );
 
@@ -221,8 +221,8 @@ BOOST_AUTO_TEST_CASE( test_div )
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   grid::Grid grid(griduid());
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  mesh::Mesh mesh( meshgenerator->generate(grid) );
+  MeshGenerator meshgenerator("structured");
+  mesh::Mesh mesh( meshgenerator.generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla(fvm);
 
@@ -251,8 +251,8 @@ BOOST_AUTO_TEST_CASE( test_curl )
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   grid::Grid grid(griduid());
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  mesh::Mesh mesh( meshgenerator->generate(grid) );
+  MeshGenerator meshgenerator("structured");
+  mesh::Mesh mesh( meshgenerator.generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla( fvm );
 
@@ -320,8 +320,8 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   grid::Grid grid(griduid());
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  mesh::Mesh mesh( meshgenerator->generate(grid) );
+  MeshGenerator meshgenerator("structured");
+  mesh::Mesh mesh( meshgenerator.generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla( fvm );
 

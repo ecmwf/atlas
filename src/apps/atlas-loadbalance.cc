@@ -114,9 +114,8 @@ void AtlasLoadbalance::run()
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;
-  SharedPtr<meshgenerator::MeshGenerator> meshgenerator (
-      meshgenerator::MeshGenerator::create("structured") );
-  mesh::Mesh mesh = meshgenerator->generate(grid);
+  meshgenerator::MeshGenerator meshgenerator("structured");
+  mesh::Mesh mesh = meshgenerator.generate(grid);
 
   SharedPtr<functionspace::NodeColumns> nodes( new functionspace::NodeColumns(mesh,Halo(halo)) );
 

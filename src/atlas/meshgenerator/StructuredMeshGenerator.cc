@@ -42,6 +42,7 @@ using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {
 namespace meshgenerator {
+namespace detail {
 
 namespace {
 static double to_rad = M_PI/180.;
@@ -1321,5 +1322,6 @@ namespace {
 static MeshGeneratorBuilder< StructuredMeshGenerator > __Structured("structured");
 }
 
+} // namespace detail
 } // namespace meshgenerator
 } // namespace atlas

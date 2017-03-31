@@ -474,8 +474,8 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
   atlas::util::Config cfg;
   cfg.set("part",1);
   cfg.set("nb_parts",8);
-  eckit::SharedPtr<meshgenerator::MeshGenerator> meshgenerator( new meshgenerator::StructuredMeshGenerator(cfg) );
-  mesh::Mesh mesh = meshgenerator->generate(grid);
+  meshgenerator::StructuredMeshGenerator meshgenerator( cfg );
+  mesh::Mesh mesh = meshgenerator.generate(grid);
   const array::ArrayView<int,1> part  = array::make_view<int,1>( mesh.nodes().partition() );
   const array::ArrayView<int,1> ghost = array::make_view<int,1>( mesh.nodes().ghost() );
   const array::ArrayView<int,1> flags = array::make_view<int,1>( mesh.nodes().field("flags") );

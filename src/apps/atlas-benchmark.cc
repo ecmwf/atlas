@@ -315,8 +315,7 @@ void AtlasBenchmark::setup()
   Timer timer( "setup", Log::debug());
 
   StructuredGrid grid = Grid(gridname);
-  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
-  mesh = meshgenerator->generate(grid);
+  mesh = MeshGenerator( "structured" ).generate(grid);
 
   build_nodes_parallel_fields(mesh.nodes());
   build_periodic_boundaries(mesh);

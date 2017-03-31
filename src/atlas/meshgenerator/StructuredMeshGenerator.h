@@ -31,11 +31,14 @@ namespace grid {
 namespace atlas {
 namespace meshgenerator {
 
+
+namespace detail {
+
 struct Region;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class StructuredMeshGenerator : public MeshGenerator {
+class StructuredMeshGenerator : public MeshGenerator::meshgenerator_t {
 
 public:
 
@@ -44,7 +47,7 @@ public:
   virtual void generate(const grid::Grid&, const grid::Distribution&, mesh::Mesh&) const;
   virtual void generate(const grid::Grid&, mesh::Mesh&) const;
 
-  using MeshGenerator::generate;
+  using MeshGenerator::meshgenerator_t::generate;
 
 private:
 
@@ -74,6 +77,18 @@ private:
 
   util::Metadata options;
 
+};
+
+}
+
+class StructuredMeshGenerator : public MeshGenerator {
+public:
+  StructuredMeshGenerator(const eckit::Parametrisation& config = util::NoConfig()) :
+      MeshGenerator("structured",config) {
+  }
+  StructuredMeshGenerator(const MeshGenerator& m ) :
+      MeshGenerator(m) {
+  }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

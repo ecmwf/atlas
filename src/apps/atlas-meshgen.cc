@@ -196,12 +196,11 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( parallel::mpi::comm().size() > 1 || edges )
     meshgenerator_config.set("3d",false);
 
-  SharedPtr<meshgenerator::MeshGenerator> meshgenerator (
-      meshgenerator::MeshGenerator::create(meshgenerator_type,meshgenerator_config) );
+  meshgenerator::MeshGenerator meshgenerator(meshgenerator_type,meshgenerator_config);
 
   mesh::Mesh mesh;
   try {
-    mesh = meshgenerator->generate(grid);
+    mesh = meshgenerator.generate(grid);
   }
   catch ( eckit::BadParameter& e)
   {

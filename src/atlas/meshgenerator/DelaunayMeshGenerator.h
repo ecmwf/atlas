@@ -29,7 +29,7 @@ namespace meshgenerator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class DelaunayMeshGenerator : public MeshGenerator {
+class DelaunayMeshGenerator : public MeshGenerator::meshgenerator_t {
 public:
 
   DelaunayMeshGenerator();
