@@ -336,6 +336,7 @@ void AtlasBenchmark::setup()
   auto V      = array::make_view<double,1> ( mesh.nodes().field("dual_volumes") );
   auto S      = array::make_view<double,2> ( mesh.edges().field("dual_normals") );
   auto field  = array::make_view<double,2> ( mesh.nodes().add( nodes_fs->createField<double>( "field", nlev ) ) );
+  mesh.nodes().add( nodes_fs->createField<double>( "grad", nlev, array::make_shape(3) ) );
   mesh.nodes().field("field").metadata().set("nb_levels",nlev);
   mesh.nodes().field("grad").metadata().set("nb_levels",nlev);
 
@@ -562,7 +563,7 @@ double AtlasBenchmark::result()
   if( output )
   {
     std::vector<long> levels( 1, 0 );
-    atlas::output::Gmsh gmsh( "benchmark.msh", util::Config("levels",levels) );
+    atlas::output::Output gmsh = atlas::output::Gmsh( "benchmark.msh", util::Config("levels",levels) );
     gmsh.write( mesh );
     gmsh.write( mesh.nodes().field("field") );
     gmsh.write( mesh.nodes().field("grad") );

@@ -74,6 +74,10 @@ GmshFileStream::GmshFileStream(const PathName& file_path, const char* mode, int 
 
 // -----------------------------------------------------------------------------
 
+namespace detail {
+
+// -----------------------------------------------------------------------------
+
 void Gmsh::defaults()
 {
   config_.binary = false;
@@ -296,8 +300,41 @@ Gmsh* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, con
 }
 
 namespace {
-static OutputBuilder< Gmsh > __gmsh("gmsh");
+static OutputBuilder< detail::Gmsh > __gmsh("gmsh");
 }
+
+} // namespace detail
+
+
+Gmsh::Gmsh( const Output& output ) :
+  Output(output) {
+}
+
+Gmsh::Gmsh(Stream& s) :
+  Output( new detail::Gmsh(s) ) {
+}
+
+Gmsh::Gmsh(Stream& s, const eckit::Parametrisation& c) :
+  Output( new detail::Gmsh(s,c) ) {
+}
+
+Gmsh::Gmsh(const PathName& p, const std::string& mode) :
+  Output( new detail::Gmsh(p,mode) ) {
+}
+
+
+Gmsh::Gmsh(const PathName& p, const std::string& mode, const eckit::Parametrisation& c) :
+  Output( new detail::Gmsh(p,mode,c) ) {
+}
+
+Gmsh::Gmsh(const PathName& p) :
+  Output( new detail::Gmsh(p) ) {
+}
+
+Gmsh::Gmsh(const PathName& p, const eckit::Parametrisation& c) :
+  Output( new detail::Gmsh(p,c) ) {
+}
+
 
 } // namespace output
 } // namespace atlas

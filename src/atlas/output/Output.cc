@@ -48,23 +48,74 @@ namespace {
     struct force_link {
         force_link()
         {
-            load_builder<output::Gmsh>();
+            load_builder<output::detail::Gmsh>();
         }
     };
 
 }
 
-Output* Output::create(const std::string &key, Stream& stream, const eckit::Parametrisation &params)
-{
-  return OutputFactory::build(key,stream,params);
+OutputImpl::OutputImpl() {
 }
 
-Output::Output()
-{
+OutputImpl::~OutputImpl() {
 }
 
-Output::~Output() {
+Output::Output() :
+    output_( nullptr ) {
 }
+
+Output::Output( const output_t* output ) :
+    output_( output ) {
+}
+
+Output::Output( const Output& output ) :
+    output_( output.output_ ) {
+}
+
+
+Output::Output(const std::string &key, Stream& stream, const eckit::Parametrisation &params) :
+    output_( OutputFactory::build(key,stream,params) ) {
+}
+
+
+/// Write mesh file
+void Output::write(
+    const mesh::Mesh& m,
+    const eckit::Parametrisation& c ) const {
+  return output_->write(m,c);
+}
+
+/// Write field to file
+void Output::write(
+    const field::Field& f,
+    const eckit::Parametrisation& c ) const {
+  return output_->write(f,c);
+}
+
+/// Write fieldset to file using FunctionSpace
+void Output::write(
+    const field::FieldSet& f,
+    const eckit::Parametrisation& c ) const {
+  return output_->write(f,c);
+}
+
+/// Write field to file using Functionspace
+void Output::write(
+    const field::Field& f,
+    const functionspace::FunctionSpace& fs,
+    const eckit::Parametrisation& c ) const {
+  return output_->write(f,fs,c);
+}
+
+/// Write fieldset to file using FunctionSpace
+void Output::write(
+    const field::FieldSet& f,
+    const functionspace::FunctionSpace& fs,
+    const eckit::Parametrisation& c ) const {
+  return output_->write(f,fs,c);
+}
+
+
 
 OutputFactory::OutputFactory(const std::string &name):
     name_(name) {
@@ -99,7 +150,7 @@ void OutputFactory::list(std::ostream& out) {
 }
 
 
-Output *OutputFactory::build(const std::string &name, Stream& stream) {
+const OutputImpl *OutputFactory::build(const std::string &name, Stream& stream) {
 
     pthread_once(&once, init);
 
@@ -122,7 +173,7 @@ Output *OutputFactory::build(const std::string &name, Stream& stream) {
     return (*j).second->make(stream);
 }
 
-Output *OutputFactory::build(const std::string& name, Stream& stream, const eckit::Parametrisation& param) {
+const OutputImpl *OutputFactory::build(const std::string& name, Stream& stream, const eckit::Parametrisation& param) {
 
     pthread_once(&once, init);
 
@@ -147,7 +198,7 @@ Output *OutputFactory::build(const std::string& name, Stream& stream, const ecki
 
 extern "C" {
 
-void atlas__Output__delete(Output* This)
+void atlas__Output__delete(OutputImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -155,18 +206,23 @@ void atlas__Output__delete(Output* This)
   );
 }
 
-Output* atlas__Output__create(const char* factory_key, Stream* stream, const eckit::Parametrisation* params)
+const OutputImpl* atlas__Output__create(const char* factory_key, Stream* stream, const eckit::Parametrisation* params)
 {
-  Output* Output(0);
+  const OutputImpl* output(0);
   ATLAS_ERROR_HANDLING (
     // ASSERT(stream);
     ASSERT(params);
-    Output = Output::create(std::string(factory_key),*stream,*params);
+    {
+       Output o( std::string{factory_key}, *stream, *params );
+       output = o.get();
+       output->attach();
+    }
+    output->detach();
   );
-  return Output;
+  return output;
 }
 
-void atlas__Output__write_mesh(const Output* This, Mesh::mesh_t* mesh, const Parametrisation* params)
+void atlas__Output__write_mesh(const OutputImpl* This, Mesh::mesh_t* mesh, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -176,7 +232,7 @@ void atlas__Output__write_mesh(const Output* This, Mesh::mesh_t* mesh, const Par
     This->write(m,*params);
   );
 }
-void atlas__Output__write_fieldset(const Output* This, const FieldSet* fieldset, const Parametrisation* params)
+void atlas__Output__write_fieldset(const OutputImpl* This, const FieldSet* fieldset, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -185,7 +241,7 @@ void atlas__Output__write_fieldset(const Output* This, const FieldSet* fieldset,
     This->write(*fieldset,*params);
   );
 }
-void atlas__Output__write_field(const Output* This, const Field* field, const Parametrisation* params)
+void atlas__Output__write_field(const OutputImpl* This, const Field* field, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -194,7 +250,7 @@ void atlas__Output__write_field(const Output* This, const Field* field, const Pa
     This->write(*field,*params);
   );
 }
-void atlas__Output__write_fieldset_fs(const Output* This, const FieldSet* fieldset, const FunctionSpace* functionspace, const Parametrisation* params)
+void atlas__Output__write_fieldset_fs(const OutputImpl* This, const FieldSet* fieldset, const FunctionSpace* functionspace, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -204,7 +260,7 @@ void atlas__Output__write_fieldset_fs(const Output* This, const FieldSet* fields
     This->write(*fieldset,*functionspace,*params);
   );
 }
-void atlas__Output__write_field_fs(const Output* This, const Field* field, const FunctionSpace* functionspace, const Parametrisation* params)
+void atlas__Output__write_field_fs(const OutputImpl* This, const Field* field, const FunctionSpace* functionspace, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);

@@ -36,7 +36,8 @@ public:
 
 // -----------------------------------------------------------------------------
 
-class Gmsh : public Output {
+namespace detail {
+class Gmsh : public Output::output_t {
 
 public:
 
@@ -107,13 +108,29 @@ private:
 
   void defaults();
 };
+}
+
+// -----------------------------------------------------------------------------
+
+class Gmsh : public Output {
+public:
+  Gmsh( const Output& output );
+  Gmsh(Stream&);
+  Gmsh(Stream&, const eckit::Parametrisation&);
+
+  Gmsh(const PathName&, const std::string& mode);
+  Gmsh(const PathName&, const std::string& mode, const eckit::Parametrisation&);
+
+  Gmsh(const PathName&);
+  Gmsh(const PathName&, const eckit::Parametrisation&);
+};
 
 // -----------------------------------------------------------------------------
 
 extern "C" {
-  
-Gmsh* atlas__output__Gmsh__create_pathname_mode(const char* pathname, const char* mode);
-Gmsh* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, const char* mode, const eckit::Parametrisation* params);
+
+detail::Gmsh* atlas__output__Gmsh__create_pathname_mode(const char* pathname, const char* mode);
+detail::Gmsh* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, const char* mode, const eckit::Parametrisation* params);
 
 }
 
