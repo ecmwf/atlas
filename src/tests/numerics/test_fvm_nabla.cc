@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE( test_build )
   mesh::Mesh mesh = meshgenerator->generate( grid::Grid("O16") );
   const double R = util::Earth::radiusInMeters();
   fvm::Method fvm(mesh,util::Config("radius",R));
-  SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
+  Nabla nabla( fvm );
 
   double spherical_area = 360.*180.;
   BOOST_CHECK_CLOSE(dual_volume(mesh),spherical_area,5.0);
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
   mesh::Mesh mesh = meshgenerator->generate(grid);
   fvm::Method fvm(mesh, util::Config("radius",radius));
-  SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
+  Nabla nabla( fvm );
 
   size_t nnodes = mesh.nodes().size();
   size_t nlev = 1;
@@ -182,8 +182,8 @@ BOOST_AUTO_TEST_CASE( test_grad )
   rotated_flow_magnitude(fvm,fields["scalar"],0.);
   rotated_flow_magnitude(fvm,fields["rscalar"],M_PI_2*0.75);
 
-  nabla->gradient(fields["scalar"],fields["grad"]);
-  nabla->gradient(fields["rscalar"],fields["rgrad"]);
+  nabla.gradient(fields["scalar"],fields["grad"]);
+  nabla.gradient(fields["rscalar"],fields["rgrad"]);
   array::ArrayView<double,2> xder  = array::make_view<double,2>( fields["xder"] );
   array::ArrayView<double,2> yder  = array::make_view<double,2>( fields["yder"] );
   array::ArrayView<double,2> rxder = array::make_view<double,2>( fields["rxder"] );
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE( test_div )
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
   mesh::Mesh mesh( meshgenerator->generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
-  SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
+  Nabla nabla(fvm);
 
   size_t nlev = 1;
 
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE( test_div )
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
-  nabla->divergence(fields["wind"],fields["div"]);
+  nabla.divergence(fields["wind"],fields["div"]);
 
   // output to gmsh
   {
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
   mesh::Mesh mesh( meshgenerator->generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
-  SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
+  Nabla nabla( fvm );
 
   size_t nlev = 1;
 
@@ -264,10 +264,10 @@ BOOST_AUTO_TEST_CASE( test_curl )
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
-  nabla->curl(fields["wind"],fields["vor"]);
+  nabla.curl(fields["wind"],fields["vor"]);
 
   fields.add( fvm.node_columns().createField<double>("windgrad",nlev,array::make_shape(2,2)));
-  nabla->gradient(fields["wind"],fields["windgrad"]);
+  nabla.gradient(fields["wind"],fields["windgrad"]);
 
   fields.add( fvm.node_columns().createField<double>("windX") );
   fields.add( fvm.node_columns().createField<double>("windY") );
@@ -323,7 +323,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("structured") );
   mesh::Mesh mesh( meshgenerator->generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
-  SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
+  Nabla nabla( fvm );
 
   size_t nlev = 1;
 
@@ -333,7 +333,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
 
   rotated_flow_magnitude(fvm,fields["scal"],M_PI_2*0.75);
 
-  nabla->laplacian(fields["scal"],fields["lapl"]);
+  nabla.laplacian(fields["scal"],fields["lapl"]);
 
   // output to gmsh
   {

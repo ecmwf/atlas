@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_numerics_fvm_Nabla_h
-#define atlas_numerics_fvm_Nabla_h
+#pragma once
 
 #include <vector>
 #include "eckit/memory/SharedPtr.h"
@@ -27,7 +26,7 @@ namespace atlas {
 namespace numerics {
 namespace fvm {
 
-class Nabla : public atlas::numerics::Nabla {
+class Nabla : public atlas::numerics::Nabla::nabla_t {
 
 public:
   Nabla(const atlas::numerics::Method &, const eckit::Parametrisation &);
@@ -55,5 +54,3 @@ private:
 } // namespace fvm
 } // namespace numerics
 } // namespace atlas
-
-#endif // atlas_numerics_fvm_Nabla_h

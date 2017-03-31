@@ -36,7 +36,7 @@ static NablaBuilder< Nabla > __fvm_nabla("fvm");
 }
 
 Nabla::Nabla(const numerics::Method &method, const eckit::Parametrisation &p) :
-  atlas::numerics::Nabla(method,p)
+  atlas::numerics::Nabla::nabla_t(method,p)
 {
   fvm_ = dynamic_cast<const fvm::Method *>(&method);
   if( ! fvm_ )
