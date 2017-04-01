@@ -14,8 +14,7 @@
 ///
 /// This file describes the Elements class for a Mesh.
 
-#ifndef atlas_Elements_H
-#define atlas_Elements_H
+#pragma once
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
@@ -263,12 +262,12 @@ BlockConnectivityImpl* atlas__mesh__Elements__edge_connectivity(Elements* This);
 BlockConnectivityImpl* atlas__mesh__Elements__cell_connectivity(Elements* This);
 int atlas__mesh__Elements__has_field(const Elements* This, char* name);
 int atlas__mesh__Elements__nb_fields(const Elements* This);
-field::Field* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx);
-field::Field* atlas__mesh__Elements__field_by_name(Elements* This, char* name);
-field::Field* atlas__mesh__Elements__global_index(Elements* This);
-field::Field* atlas__mesh__Elements__remote_index(Elements* This);
-field::Field* atlas__mesh__Elements__partition(Elements* This);
-field::Field* atlas__mesh__Elements__halo(Elements* This);
+field::FieldImpl* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx);
+field::FieldImpl* atlas__mesh__Elements__field_by_name(Elements* This, char* name);
+field::FieldImpl* atlas__mesh__Elements__global_index(Elements* This);
+field::FieldImpl* atlas__mesh__Elements__remote_index(Elements* This);
+field::FieldImpl* atlas__mesh__Elements__partition(Elements* This);
+field::FieldImpl* atlas__mesh__Elements__halo(Elements* This);
 const ElementType* atlas__mesh__Elements__element_type(const Elements* This);
 void atlas__mesh__Elements__add(Elements* This, size_t nb_elements);
 }
@@ -277,5 +276,3 @@ void atlas__mesh__Elements__add(Elements* This, size_t nb_elements);
 
 } // namespace mesh
 } // namespace atlas
-
-#endif

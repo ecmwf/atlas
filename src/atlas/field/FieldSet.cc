@@ -28,23 +28,16 @@ void FieldSet::clear()
     fields_.clear();
 }
 
-Field& FieldSet::add(const Field& field)
+Field FieldSet::add(const Field& field)
 {
-  index_[field.name()] = fields_.size();
-  fields_.push_back( eckit::SharedPtr<Field>(const_cast<Field*>(&field)) );
-  return const_cast<Field&>(field);
-}
-
-Field& FieldSet::add(const Field* field)
-{
-  if( field->name().size() ) {
-    index_[field->name()] = fields_.size();
+  if( field.name().size() ) {
+    index_[field.name()] = fields_.size();
   } else {
     std::stringstream name; name << name_ << "["<<fields_.size()<<"]";
     index_[name.str()] = fields_.size();
   }
-  fields_.push_back( eckit::SharedPtr<Field>(const_cast<Field*>(field)) );
-  return *const_cast<Field*>(field);
+  fields_.push_back( field );
+  return field;
 }
 
 bool FieldSet::has_field(const std::string& name) const
@@ -60,7 +53,7 @@ Field& FieldSet::field(const std::string& name) const
     const std::string msg("FieldSet" + (name_.length()? " \"" + name_ + "\"" : "") + ": cannot find field \"" + name + "\"");
     throw eckit::OutOfRange(msg,Here());
   }
-  return *fields_[ index_.at(name) ];
+  return const_cast<Field&>(fields_[ index_.at(name) ]);
 }
 
 
@@ -98,11 +91,11 @@ void atlas__FieldSet__delete(FieldSet* This)
   );
 }
 
-void   atlas__FieldSet__add_field     (FieldSet* This, Field* field)
+void   atlas__FieldSet__add_field     (FieldSet* This, FieldImpl* field)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This != NULL);
-    This->add(*field);
+    This->add(field);
   );
 }
 
@@ -124,20 +117,20 @@ size_t atlas__FieldSet__size          (FieldSet* This)
   return 0;
 }
 
-Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name)
+FieldImpl* atlas__FieldSet__field_by_name (FieldSet* This, char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This != NULL);
-    return &This->field( std::string(name) );
+    return This->field( std::string(name) ).get();
   );
   return NULL;
 }
 
-Field* atlas__FieldSet__field_by_idx  (FieldSet* This, size_t idx)
+FieldImpl* atlas__FieldSet__field_by_idx  (FieldSet* This, size_t idx)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This != NULL);
-    return &This->operator[](idx);
+    return This->operator[](idx).get();
   );
   return NULL;
 }

@@ -23,6 +23,8 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 
+using atlas::field::Field;
+
 namespace {
 
     static eckit::Mutex *local_mutex = 0;
@@ -192,43 +194,47 @@ const Nabla::nabla_t* atlas__Nabla__create (const Method* method, const eckit::P
   return nabla;
 }
 
-void atlas__Nabla__gradient (const Nabla::nabla_t* This, const field::Field* scalar, field::Field* grad)
+void atlas__Nabla__gradient (const Nabla::nabla_t* This, const field::FieldImpl* scalar, field::FieldImpl* grad)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(scalar);
     ASSERT(grad);
-    This->gradient(*scalar,*grad);
+    Field fgrad(grad);
+    This->gradient(scalar,fgrad);
   );
 }
 
-void atlas__Nabla__divergence (const Nabla::nabla_t* This, const field::Field* vector, field::Field* div)
+void atlas__Nabla__divergence (const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* div)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(vector);
     ASSERT(div);
-    This->divergence(*vector,*div);
+    Field fdiv(div);
+    This->divergence(vector,fdiv);
   );
 }
 
-void atlas__Nabla__curl (const Nabla::nabla_t* This, const field::Field* vector, field::Field* curl)
+void atlas__Nabla__curl (const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* curl)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(vector);
     ASSERT(curl);
-    This->curl(*vector,*curl);
+    Field fcurl(curl);
+    This->curl(vector,fcurl);
   );
 }
 
-void atlas__Nabla__laplacian (const Nabla::nabla_t* This, const field::Field* scalar, field::Field* laplacian)
+void atlas__Nabla__laplacian (const Nabla::nabla_t* This, const field::FieldImpl* scalar, field::FieldImpl* laplacian)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(scalar);
     ASSERT(laplacian);
-    This->laplacian(*scalar,*laplacian);
+    Field flaplacian(laplacian);
+    This->laplacian(scalar,flaplacian);
   );
 }
 

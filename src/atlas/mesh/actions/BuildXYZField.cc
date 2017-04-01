@@ -36,7 +36,7 @@ field::Field& BuildXYZField::operator()(mesh::Nodes& nodes) const
 {
   bool recompute = force_recompute_;
   if( !nodes.has_field(name_) ) {
-    nodes.add( field::Field::create<double>(name_,array::make_shape(nodes.size(),3) ) );
+    nodes.add( field::Field(name_, array::make_datatype<double>(), array::make_shape(nodes.size(),3) ) );
     recompute = true;
   }
   if( recompute ) {

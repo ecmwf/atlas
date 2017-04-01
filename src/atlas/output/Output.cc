@@ -24,6 +24,7 @@
 #include "atlas/runtime/Log.h"
 
 using atlas::field::Field;
+using atlas::field::FieldImpl;
 using atlas::field::FieldSet;
 using atlas::mesh::Mesh;
 using atlas::functionspace::FunctionSpace;
@@ -241,13 +242,13 @@ void atlas__Output__write_fieldset(const OutputImpl* This, const FieldSet* field
     This->write(*fieldset,*params);
   );
 }
-void atlas__Output__write_field(const OutputImpl* This, const Field* field, const Parametrisation* params)
+void atlas__Output__write_field(const OutputImpl* This, const FieldImpl* field, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(field);
     ASSERT(params);
-    This->write(*field,*params);
+    This->write(field,*params);
   );
 }
 void atlas__Output__write_fieldset_fs(const OutputImpl* This, const FieldSet* fieldset, const functionspace::FunctionSpaceImpl* functionspace, const Parametrisation* params)
@@ -260,14 +261,14 @@ void atlas__Output__write_fieldset_fs(const OutputImpl* This, const FieldSet* fi
     This->write(*fieldset,functionspace,*params);
   );
 }
-void atlas__Output__write_field_fs(const OutputImpl* This, const Field* field, const functionspace::FunctionSpaceImpl* functionspace, const Parametrisation* params)
+void atlas__Output__write_field_fs(const OutputImpl* This, const FieldImpl* field, const functionspace::FunctionSpaceImpl* functionspace, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(field);
     ASSERT(functionspace);
     ASSERT(params);
-    This->write(*field,functionspace,*params);
+    This->write(field,functionspace,*params);
   );
 }
 

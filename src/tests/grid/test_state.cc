@@ -87,7 +87,7 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
       fieldparams.set("creator","IFS");
       fieldparams.set(geometry);
       fieldparams.set(fields[i]);
-      state.add( field::Field::create( fieldparams ) );
+      state.add( field::Field( fieldparams ) );
 
       // debug info
       std::stringstream s;
@@ -114,9 +114,9 @@ BOOST_AUTO_TEST_CASE( state )
   State state;
   BOOST_CHECK_EQUAL( state.size() , 0 );
 
-  state.add( field::Field::create<double>( "myfield", array::make_shape(10,1) ) );
-  state.add( field::Field::create<double>( "", array::make_shape(10,2) ) );
-  state.add( field::Field::create<double>( "", array::make_shape(10,3) ) );
+  state.add( field::Field( "myfield", array::make_datatype<double>(), array::make_shape(10,1) ) );
+  state.add( field::Field( "",        array::make_datatype<double>(), array::make_shape(10,2) ) );
+  state.add( field::Field( "",        array::make_datatype<double>(), array::make_shape(10,3) ) );
 
   BOOST_CHECK_EQUAL( state.size() , 3 );
   BOOST_CHECK( state.has("myfield") );

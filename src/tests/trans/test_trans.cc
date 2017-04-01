@@ -264,20 +264,20 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   functionspace::NodeColumns nodal (m);
   functionspace::Spectral spectral (trans);
 
-  SharedPtr<field::Field> spf ( spectral.createField<double>("spf") );
-  SharedPtr<field::Field> gpf ( nodal.createField<double>("gpf") );
+  field::Field spf = spectral.createField<double>("spf");
+  field::Field gpf = nodal.createField<double>("gpf");
 
 
-  BOOST_CHECK_NO_THROW( trans.dirtrans(nodal,*gpf,spectral,*spf) );
-  BOOST_CHECK_NO_THROW( trans.invtrans(spectral,*spf,nodal,*gpf) );
+  BOOST_CHECK_NO_THROW( trans.dirtrans(nodal,gpf,spectral,spf) );
+  BOOST_CHECK_NO_THROW( trans.invtrans(spectral,spf,nodal,gpf) );
 
-  field::FieldSet gpfields;   gpfields.add(*gpf);
-  field::FieldSet spfields;   spfields.add(*spf);
+  field::FieldSet gpfields;   gpfields.add(gpf);
+  field::FieldSet spfields;   spfields.add(spf);
 
   BOOST_CHECK_NO_THROW( trans.dirtrans(nodal,gpfields,spectral,spfields) );
   BOOST_CHECK_NO_THROW( trans.invtrans(spectral,spfields,nodal,gpfields) );
 
-  gpfields.add(*gpf);
+  gpfields.add(gpf);
   BOOST_CHECK_THROW(trans.dirtrans(nodal,gpfields,spectral,spfields),eckit::SeriousBug);
 
 }
@@ -293,44 +293,44 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   functionspace::Spectral          spectral   (trans);
   functionspace::StructuredColumns gridpoints (g);
 
-  SharedPtr<field::Field> spfg ( spectral.createField<double>("spf",field::global()) );
-  SharedPtr<field::Field> spf  ( spectral.createField<double>("spf") );
-  SharedPtr<field::Field> gpf  ( gridpoints.createField<double>("gpf") );
-  SharedPtr<field::Field> gpfg ( gridpoints.createField<double>("gpf", field::global()) );
+  field::Field spfg = spectral.createField<double>("spf",field::global());
+  field::Field spf  = spectral.createField<double>("spf");
+  field::Field gpf  = gridpoints.createField<double>("gpf");
+  field::Field gpfg = gridpoints.createField<double>("gpf", field::global());
 
-  array::ArrayView<double,1> spg = array::make_view<double,1>(*spfg);
+  array::ArrayView<double,1> spg = array::make_view<double,1>(spfg);
   if( parallel::mpi::comm().rank() == 0 ) {
     spg.assign(0.);
     spg(0) = 4.;
   }
 
-  BOOST_CHECK_NO_THROW( spectral.scatter(*spfg,*spf) );
+  BOOST_CHECK_NO_THROW( spectral.scatter(spfg,spf) );
 
   if( parallel::mpi::comm().rank() == 0 ) {
-    array::ArrayView<double,1> sp = array::make_view<double,1>(*spf);
+    array::ArrayView<double,1> sp = array::make_view<double,1>(spf);
     BOOST_CHECK_CLOSE( sp(0), 4., 0.001 );
     for( size_t jp=0; jp<sp.size(); ++jp ) {
       Log::debug() << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
     }
   }
 
-  BOOST_CHECK_NO_THROW( trans.invtrans(*spf,*gpf) );
+  BOOST_CHECK_NO_THROW( trans.invtrans(spf,gpf) );
 
-  BOOST_CHECK_NO_THROW( gridpoints.gather(*gpf,*gpfg) );
+  BOOST_CHECK_NO_THROW( gridpoints.gather(gpf,gpfg) );
 
   if( parallel::mpi::comm().rank() == 0 ) {
-    array::ArrayView<double,1> gpg = array::make_view<double,1>(*gpfg);
+    array::ArrayView<double,1> gpg = array::make_view<double,1>(gpfg);
     for( size_t jp=0; jp<gpg.size(); ++jp ) {
       BOOST_CHECK_CLOSE( gpg(jp), 4., 0.001 );
       Log::debug() << "gpg("<<jp << ")   :   " << gpg(jp) << std::endl;
     }
   }
 
-  BOOST_CHECK_NO_THROW( gridpoints.scatter(*gpfg,*gpf) );
+  BOOST_CHECK_NO_THROW( gridpoints.scatter(gpfg,gpf) );
 
-  BOOST_CHECK_NO_THROW( trans.dirtrans(*gpf,*spf) );
+  BOOST_CHECK_NO_THROW( trans.dirtrans(gpf,spf) );
 
-  BOOST_CHECK_NO_THROW( spectral.gather(*spf,*spfg) );
+  BOOST_CHECK_NO_THROW( spectral.gather(spf,spfg) );
 
   if( parallel::mpi::comm().rank() == 0 ) {
     BOOST_CHECK_CLOSE( spg(0), 4., 0.001 );

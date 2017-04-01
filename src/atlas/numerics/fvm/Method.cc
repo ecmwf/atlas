@@ -96,8 +96,9 @@ void Method::setup()
       if( ! nodes_.has_field("node2edge_sign") )
       {
         nodes_.add(
-              field::Field::create<double>("node2edge_sign",
-              array::make_shape(nnodes,node_edge_connectivity.maxcols()) ) );
+              field::Field("node2edge_sign",
+                array::make_datatype<double>(),
+                array::make_shape(nnodes,node_edge_connectivity.maxcols()) ) );
       }
       array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes_.field("node2edge_sign") );
 

@@ -134,7 +134,8 @@ void build_statistics( Mesh& mesh )
   if( mesh.edges().size() )
   {
     if( ! mesh.edges().has_field("arc_length") )
-      mesh.edges().add( field::Field::create<double>("arc_length",array::make_shape(mesh.edges().size())) );
+      mesh.edges().add( 
+        field::Field("arc_length", array::make_datatype<double>(), array::make_shape(mesh.edges().size())) );
     array::ArrayView<double,1> dist = array::make_view<double,1>( mesh.edges().field("arc_length") );
     const mesh::HybridElements::Connectivity &edge_nodes = mesh.edges().node_connectivity();
 
@@ -167,8 +168,10 @@ void build_statistics( Mesh& mesh )
     if( parallel::mpi::comm().size() == 1 )
       ofs.open( stats_path.localPath(), std::ofstream::app );
 
-    array::ArrayView<double,1> rho = array::make_view<double,1>( mesh.cells().add( field::Field::create<double>("stats_rho",array::make_shape(mesh.cells().size()) ) ) );
-    array::ArrayView<double,1> eta = array::make_view<double,1>( mesh.cells().add( field::Field::create<double>("stats_eta",array::make_shape(mesh.cells().size()) ) ) );
+    array::ArrayView<double,1> rho = array::make_view<double,1>( mesh.cells().add(
+       field::Field("stats_rho", array::make_datatype<double>(), array::make_shape(mesh.cells().size()) ) ) );
+    array::ArrayView<double,1> eta = array::make_view<double,1>( mesh.cells().add(
+       field::Field("stats_eta", array::make_datatype<double>(), array::make_shape(mesh.cells().size()) ) ) );
 
     for( size_t jtype=0; jtype<mesh.cells().nb_types(); ++jtype )
     {
@@ -262,7 +265,8 @@ void build_statistics( Mesh& mesh )
   if( nodes.has_field("dual_volumes") )
   {
     array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( nodes.field("dual_volumes") );
-    array::ArrayView<double,1> dual_delta_sph = array::make_view<double,1>( nodes.add( field::Field::create<double>( "dual_delta_sph", array::make_shape(nodes.size(),1) ) ) );
+    array::ArrayView<double,1> dual_delta_sph = array::make_view<double,1>( nodes.add(
+       field::Field( "dual_delta_sph", array::make_datatype<double>(), array::make_shape(nodes.size(),1) ) ) );
 
     for( size_t jnode=0; jnode<nodes.size(); ++jnode )
     {

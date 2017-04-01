@@ -71,53 +71,53 @@ public:
 // -- Field creation methods
 
     /// @brief Create a named scalar field
-    template< typename DATATYPE > field::Field* createField(
+    template< typename DATATYPE > field::Field createField(
               const std::string& name,
               const eckit::Parametrisation& = util::NoConfig() ) const;
 
-    template< typename DATATYPE > field::Field* createField(
+    template< typename DATATYPE > field::Field createField(
               const std::string& name,
               size_t levels,
               const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// @brief Create a named scalar field
-    field::Field* createField(
+    field::Field createField(
         const std::string& name,
         array::DataType,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
-    field::Field* createField(
+    field::Field createField(
         const std::string& name,
         array::DataType,
         size_t levels,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// @brief Create a named field with specified dimensions for the variables
-    template< typename DATATYPE >  field::Field* createField(
+    template< typename DATATYPE >  field::Field createField(
         const std::string& name,
         const std::vector<size_t>& variables,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
-    template< typename DATATYPE >  field::Field* createField(
+    template< typename DATATYPE >  field::Field createField(
         const std::string& name,
         size_t levels,
         const std::vector<size_t>& variables,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// @brief Create a named field with specified dimensions for the variables
-    field::Field* createField(const std::string& name,
+    field::Field createField(const std::string& name,
                               array::DataType,
                               const std::vector<size_t>& variables,
                               const eckit::Parametrisation& = util::NoConfig() ) const;
 
-    field::Field* createField(const std::string& name,
+    field::Field createField(const std::string& name,
                               array::DataType,
                               size_t levels,
                               const std::vector<size_t>& variables,
                               const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// @brief Create a named field based on other field (datatype and dimensioning)
-    field::Field* createField(const std::string& name,
+    field::Field createField(const std::string& name,
                               const field::Field&,
                               const eckit::Parametrisation& = util::NoConfig() ) const;
 
@@ -164,7 +164,7 @@ private: // data
 // -------------------------------------------------------------------
 
 template< typename DATATYPE >
-field::Field* EdgeColumns::createField(
+field::Field EdgeColumns::createField(
     const std::string& name,
     const eckit::Parametrisation& options ) const
 {
@@ -172,7 +172,7 @@ field::Field* EdgeColumns::createField(
 }
 
 template< typename DATATYPE >
-field::Field* EdgeColumns::createField(
+field::Field EdgeColumns::createField(
     const std::string& name,
     size_t levels,
     const eckit::Parametrisation& options ) const
@@ -181,7 +181,7 @@ field::Field* EdgeColumns::createField(
 }
 
 template< typename DATATYPE >
-field::Field* EdgeColumns::createField(
+field::Field EdgeColumns::createField(
     const std::string& name,
     const std::vector<size_t>& variables,
     const eckit::Parametrisation& options ) const
@@ -190,7 +190,7 @@ field::Field* EdgeColumns::createField(
 }
 
 template< typename DATATYPE >
-field::Field* EdgeColumns::createField(
+field::Field EdgeColumns::createField(
     const std::string& name,
     size_t levels,
     const std::vector<size_t>& variables,
@@ -209,29 +209,29 @@ void atlas__functionspace__Edges__delete (EdgeColumns* This);
 int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This);
 mesh::Mesh::mesh_t* atlas__functionspace__Edges__mesh(EdgeColumns* This);
 mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This);
-field::Field* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
-field::Field* atlas__functionspace__Edges__create_field_vars (const EdgeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
+field::FieldImpl* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
+field::FieldImpl* atlas__functionspace__Edges__create_field_vars (const EdgeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
 
-field::Field* atlas__functionspace__Edges__create_field_lev (const EdgeColumns* This, const char* name, int levels, int kind, const eckit::Parametrisation* options);
-field::Field* atlas__functionspace__Edges__create_field_lev_vars (const EdgeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
+field::FieldImpl* atlas__functionspace__Edges__create_field_lev (const EdgeColumns* This, const char* name, int levels, int kind, const eckit::Parametrisation* options);
+field::FieldImpl* atlas__functionspace__Edges__create_field_lev_vars (const EdgeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
 
 
-field::Field* atlas__functionspace__Edges__create_field_template (const EdgeColumns* This, const char* name, const field::Field* field_template, const eckit::Parametrisation* options);
+field::FieldImpl* atlas__functionspace__Edges__create_field_template (const EdgeColumns* This, const char* name, const field::FieldImpl* field_template, const eckit::Parametrisation* options);
 
 void atlas__functionspace__Edges__halo_exchange_fieldset(const EdgeColumns* This, field::FieldSet* fieldset);
-void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, field::Field* field);
+void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, field::FieldImpl* field);
 const parallel::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const EdgeColumns* This);
 
 void atlas__functionspace__Edges__gather_fieldset(const EdgeColumns* This, const field::FieldSet* local, field::FieldSet* global);
-void atlas__functionspace__Edges__gather_field(const EdgeColumns* This, const field::Field* local, field::Field* global);
+void atlas__functionspace__Edges__gather_field(const EdgeColumns* This, const field::FieldImpl* local, field::FieldImpl* global);
 const parallel::GatherScatter* atlas__functionspace__Edges__get_gather(const EdgeColumns* This);
 
 void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, const field::FieldSet* global, field::FieldSet* local);
-void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const field::Field* global, field::Field* local);
+void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const field::FieldImpl* global, field::FieldImpl* local);
 const parallel::GatherScatter* atlas__functionspace__Edges__get_scatter(const EdgeColumns* This);
 
 void atlas__functionspace__Edges__checksum_fieldset(const EdgeColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated);
-void atlas__functionspace__Edges__checksum_field(const EdgeColumns* This, const field::Field* field, char* &checksum, int &size, int &allocated);
+void atlas__functionspace__Edges__checksum_field(const EdgeColumns* This, const field::FieldImpl* field, char* &checksum, int &size, int &allocated);
 const parallel::Checksum* atlas__functionspace__Edges__get_checksum(const EdgeColumns* This);
 }
 
@@ -262,53 +262,53 @@ public:
 // -- Field creation methods
 
     /// @brief Create a named scalar field
-    template< typename DATATYPE > field::Field* createField(
+    template< typename DATATYPE > field::Field createField(
               const std::string& name,
               const eckit::Parametrisation& = util::NoConfig() ) const;
 
-    template< typename DATATYPE > field::Field* createField(
+    template< typename DATATYPE > field::Field createField(
               const std::string& name,
               size_t levels,
               const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// @brief Create a named scalar field
-    field::Field* createField(
+    field::Field createField(
         const std::string& name,
         array::DataType,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
-    field::Field* createField(
+    field::Field createField(
         const std::string& name,
         array::DataType,
         size_t levels,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// @brief Create a named field with specified dimensions for the variables
-    template< typename DATATYPE >  field::Field* createField(
+    template< typename DATATYPE >  field::Field createField(
         const std::string& name,
         const std::vector<size_t>& variables,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
-    template< typename DATATYPE >  field::Field* createField(
+    template< typename DATATYPE >  field::Field createField(
         const std::string& name,
         size_t levels,
         const std::vector<size_t>& variables,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// @brief Create a named field with specified dimensions for the variables
-    field::Field* createField(const std::string& name,
+    field::Field createField(const std::string& name,
                               array::DataType,
                               const std::vector<size_t>& variables,
                               const eckit::Parametrisation& = util::NoConfig() ) const;
 
-    field::Field* createField(const std::string& name,
+    field::Field createField(const std::string& name,
                               array::DataType,
                               size_t levels,
                               const std::vector<size_t>& variables,
                               const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// @brief Create a named field based on other field (datatype and dimensioning)
-    field::Field* createField(const std::string& name,
+    field::Field createField(const std::string& name,
                               const field::Field&,
                               const eckit::Parametrisation& = util::NoConfig() ) const;
 
@@ -338,14 +338,14 @@ private:
 };
 
 template< typename DATATYPE >
-field::Field* EdgeColumns::createField(
+field::Field EdgeColumns::createField(
           const std::string& name,
           const eckit::Parametrisation& config ) const {
   functionspace_->createField<DATATYPE>(name,config);
 }
 
 template< typename DATATYPE >
-field::Field* EdgeColumns::createField(
+field::Field EdgeColumns::createField(
           const std::string& name,
           size_t levels,
           const eckit::Parametrisation& config ) const {
@@ -354,7 +354,7 @@ field::Field* EdgeColumns::createField(
 
 
 template< typename DATATYPE > 
-field::Field* EdgeColumns::createField(
+field::Field EdgeColumns::createField(
     const std::string& name,
     const std::vector<size_t>& variables,
     const eckit::Parametrisation& config ) const {
@@ -362,7 +362,7 @@ field::Field* EdgeColumns::createField(
 }
 
 template< typename DATATYPE >
-field::Field* EdgeColumns::createField(
+field::Field EdgeColumns::createField(
     const std::string& name,
     size_t levels,
     const std::vector<size_t>& variables,

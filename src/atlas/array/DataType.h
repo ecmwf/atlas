@@ -179,6 +179,9 @@ inline bool operator!= (DataType::kind_t kind, DataType dt)
 template< typename DATATYPE >
 inline DataType DataType::create() { return DataType(DataType::kind<DATATYPE>()); }
 
+template< typename DATATYPE >
+inline DataType make_datatype() { return DataType(DataType::kind<DATATYPE>()); }
+
 //------------------------------------------------------------------------------------------------------
 
 } // namespace array

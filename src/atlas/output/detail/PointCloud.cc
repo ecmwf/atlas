@@ -113,7 +113,7 @@ mesh::Mesh PointCloud::read(const eckit::PathName& path, std::vector<std::string
     std::vector< array::ArrayView<double,1> > fields;
     for (size_t j=0; j<nb_fld; ++j)
     {
-      fields.push_back( array::make_view<double,1> ( nodes.add( field::Field::create<double>(vfnames[j],array::make_shape(nb_pts)) ) ) );
+      fields.push_back( array::make_view<double,1> ( nodes.add( field::Field(vfnames[j],array::make_datatype<double>(),array::make_shape(nb_pts)) ) ) );
     }
 
     size_t i,j;  // (index for node/row and field/column, out of scope to check at end of loops)

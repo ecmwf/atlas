@@ -15,7 +15,7 @@
 
 namespace eckit { class Parametrisation; }
 namespace atlas { namespace numerics { class Method; } }
-namespace atlas { namespace field { class Field; } }
+namespace atlas { namespace field { class Field; class FieldImpl; } }
 
 namespace atlas {
 namespace numerics {
@@ -109,10 +109,10 @@ extern "C" {
 
 void atlas__Nabla__delete (Nabla::nabla_t* This);
 const Nabla::nabla_t* atlas__Nabla__create (const Method* method, const eckit::Parametrisation* params);
-void atlas__Nabla__gradient (const Nabla::nabla_t* This, const field::Field* scalar, field::Field* grad);
-void atlas__Nabla__divergence (const Nabla::nabla_t* This, const field::Field* vector, field::Field* div);
-void atlas__Nabla__curl (const Nabla::nabla_t* This, const field::Field* vector, field::Field* curl);
-void atlas__Nabla__laplacian (const Nabla::nabla_t* This, const field::Field* scalar, field::Field* laplacian);
+void atlas__Nabla__gradient (const Nabla::nabla_t* This, const field::FieldImpl* scalar, field::FieldImpl* grad);
+void atlas__Nabla__divergence (const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* div);
+void atlas__Nabla__curl (const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* curl);
+void atlas__Nabla__laplacian (const Nabla::nabla_t* This, const field::FieldImpl* scalar, field::FieldImpl* laplacian);
 
 }
 

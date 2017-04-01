@@ -195,6 +195,8 @@ private:
 
   mesh::Mesh mesh;
   functionspace::NodeColumns nodes_fs;
+  field::Field scalar_field;
+  field::Field grad_field;
 
   vector<int> pole_edges;
   vector<bool> is_ghost;
@@ -329,16 +331,16 @@ void AtlasBenchmark::setup()
 
   nodes_fs = functionspace::NodeColumns(mesh,mesh::Halo(mesh));
 
+  scalar_field = nodes_fs.createField<double>( "field", nlev );
+  grad_field   = nodes_fs.createField<double>( "grad",  nlev, array::make_shape(3) );
+
   nnodes = mesh.nodes().size();
   nedges = mesh.edges().size();
 
   auto lonlat = array::make_view<double,2> ( mesh.nodes().lonlat() );
   auto V      = array::make_view<double,1> ( mesh.nodes().field("dual_volumes") );
   auto S      = array::make_view<double,2> ( mesh.edges().field("dual_normals") );
-  auto field  = array::make_view<double,2> ( mesh.nodes().add( nodes_fs.createField<double>( "field", nlev ) ) );
-  mesh.nodes().add( nodes_fs.createField<double>( "grad", nlev, array::make_shape(3) ) );
-  mesh.nodes().field("field").metadata().set("nb_levels",nlev);
-  mesh.nodes().field("grad").metadata().set("nb_levels",nlev);
+  auto field  = array::make_view<double,2> ( scalar_field );
 
   double radius = 6371.22e+03; // Earth's radius
   double height = 80.e+03;     // Height of atmosphere
@@ -367,7 +369,7 @@ void AtlasBenchmark::setup()
   const mesh::Connectivity& node2edge = mesh.nodes().edge_connectivity();
   const mesh::MultiBlockConnectivity& edge2node = mesh.edges().node_connectivity();
   auto node2edge_sign = array::make_view<double,2> ( mesh.nodes().add(
-      field::Field::create<double>("to_edge_sign",array::make_shape(nnodes,node2edge.maxcols()) ) ) );
+      field::Field("to_edge_sign",array::make_datatype<double>(),array::make_shape(nnodes,node2edge.maxcols()) ) ) );
 
   atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
   {
@@ -414,13 +416,13 @@ void AtlasBenchmark::iteration()
   eckit::ScopedPtr<array::Array> avgS_arr( array::Array::create<double>(nedges,nlev,2ul) );
   const auto& node2edge = mesh.nodes().edge_connectivity();
   const auto& edge2node = mesh.edges().node_connectivity();
-  const auto field = array::make_view<double,2>( mesh.nodes().field("field") );
+  const auto field = array::make_view<double,2>( scalar_field );
   const auto S     = array::make_view<double,2>( mesh.edges().field("dual_normals"));
   const auto V     = array::make_view<double,1>( mesh.nodes().field("dual_volumes"));
   const auto node2edge_sign = array::make_view<double,2> ( mesh.nodes().field("to_edge_sign") );
 
-  auto grad = array::make_view<double,3>( mesh.nodes().field("grad") );
-  auto avgS = array::make_view<double,3>(*avgS_arr);
+  auto grad = array::make_view<double,3>( grad_field );
+  auto avgS = array::make_view<double,3>( *avgS_arr );
 
   atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
   {

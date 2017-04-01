@@ -31,7 +31,9 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
         array::ArrayView<double,2> coords = array::make_view<double,2>( nodes.field("xyz") );
 
         size_t nb_cells = mesh.cells().size();
-        array::ArrayView<double,2> centroids = array::make_view<double,2>( mesh.cells().add( field::Field::create<double>("centre", array::make_shape(nb_cells,3))) );
+        array::ArrayView<double,2> centroids = array::make_view<double,2>( 
+          mesh.cells().add(
+           field::Field("centre", array::make_datatype<double>(), array::make_shape(nb_cells,3))) );
         const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
 
         for (size_t e=0; e<nb_cells; ++e)

@@ -48,7 +48,8 @@ field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::gr
   {
     const size_t npts = nodes.size();
     const array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
-    array::ArrayView<double,2> xyz = array::make_view<double,2>( nodes.add( field::Field::create<double>(name_,array::make_shape(npts,3) ) ) );
+    array::ArrayView<double,2> xyz = array::make_view<double,2>( nodes.add(
+       field::Field(name_,array::make_datatype<double>(),array::make_shape(npts,3) ) ) );
 
     const double pi=M_PI;
     const double c1 = 2.*pi/double(nx)*(nx-1)/(xmax-xmin);

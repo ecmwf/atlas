@@ -41,8 +41,8 @@ BOOST_AUTO_TEST_CASE( test_broadcast_to_self )
   eckit::SharedPtr<array::Array> array( array::Array::create<double>(10,2) );
   Log::info() << "array.footprint = " << eckit::Bytes(array->footprint()) << std::endl;
 
-  eckit::SharedPtr<field::Field> field( field::Field::create<double>("field",array::make_shape(10,2)));
-  Log::info() << "field.footprint = " << eckit::Bytes(field->footprint()) << std::endl;
+  field::Field field ("field",array::make_datatype<double>(),array::make_shape(10,2));
+  Log::info() << "field.footprint = " << eckit::Bytes(field.footprint()) << std::endl;
 
   grid::Grid grid("O640");
   meshgenerator::MeshGenerator meshgen( "structured" );

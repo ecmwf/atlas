@@ -140,16 +140,13 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
     mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(g);
     functionspace::StructuredColumns gp(g);
     output::Gmsh gmsh(grid_uid+"-grid.msh");
-    field::Field::Ptr scalar(
-          field::Field::wrap<double>("scalar",rgp.data(),array::make_shape(gp.npts())) );
-    field::Field::Ptr scalar_dNS(
-          field::Field::wrap<double>("scalar_dNS",rgp.data()+nfld*gp.npts(),array::make_shape(gp.npts())));
-    field::Field::Ptr scalar_dEW(
-          field::Field::wrap<double>("scalar_dEW",rgp.data()+2*nfld*gp.npts(),array::make_shape(gp.npts())));
+    field::Field scalar( "scalar",rgp.data(),array::make_shape(gp.npts()));
+    field::Field scalar_dNS("scalar_dNS",rgp.data()+nfld*gp.npts(),array::make_shape(gp.npts()));
+    field::Field scalar_dEW("scalar_dEW",rgp.data()+2*nfld*gp.npts(),array::make_shape(gp.npts()));
     gmsh.write(mesh);
-    gmsh.write(*scalar,gp);
-    gmsh.write(*scalar_dEW,gp);
-    gmsh.write(*scalar_dNS,gp);
+    gmsh.write(scalar,gp);
+    gmsh.write(scalar_dEW,gp);
+    gmsh.write(scalar_dNS,gp);
   }
 }
 
@@ -164,21 +161,21 @@ BOOST_AUTO_TEST_CASE( test_invtrans_grad )
   functionspace::NodeColumns gp(mesh);
   functionspace::Spectral sp(trans);
 
-  field::Field::Ptr scalar   ( gp.createField<double>("scalar") );
-  field::Field::Ptr scalar_sp( sp.createField<double>("scalar_sp") );
-  field::Field::Ptr grad     ( gp.createField<double>("grad",array::make_shape(2)) );
+  field::Field scalar    = gp.createField<double>("scalar");
+  field::Field scalar_sp = sp.createField<double>("scalar_sp");
+  field::Field grad      = gp.createField<double>("grad",array::make_shape(2));
 
   // Initial condition
   double beta = M_PI*0.5;
-  rotated_flow_magnitude(gp,*scalar,beta);
+  rotated_flow_magnitude(gp,scalar,beta);
 
   // Transform to spectral
-  trans.dirtrans(gp,*scalar,sp,*scalar_sp);
+  trans.dirtrans(gp,scalar,sp,scalar_sp);
 
   // Inverse transform for gradient
-  trans.invtrans_grad(sp,*scalar_sp,gp,*grad);
+  trans.invtrans_grad(sp,scalar_sp,gp,grad);
 
-  gp.haloExchange(*grad);
+  gp.haloExchange(grad);
 
   // Output
   {
@@ -186,8 +183,8 @@ BOOST_AUTO_TEST_CASE( test_invtrans_grad )
     functionspace::StructuredColumns gp(g);
     output::Gmsh gmsh(grid_uid+"-nodes.msh");
     gmsh.write(mesh);
-    gmsh.write(*scalar,gp);
-    gmsh.write(*grad,gp);
+    gmsh.write(scalar,gp);
+    gmsh.write(grad,gp);
   }
 }
 

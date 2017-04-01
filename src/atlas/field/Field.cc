@@ -20,6 +20,7 @@
 #include "atlas/field/FieldCreator.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/array/MakeView.h"
 
 namespace atlas {
@@ -28,7 +29,7 @@ namespace field {
 // -------------------------------------------------------------------------
 // Static functions
 
-Field* Field::create(const eckit::Parametrisation& params)
+FieldImpl* FieldImpl::create(const eckit::Parametrisation& params)
 {
   std::string creator_factory;
   if( params.get("creator",creator_factory) )
@@ -39,27 +40,27 @@ Field* Field::create(const eckit::Parametrisation& params)
   }
   else
     throw eckit::Exception("Could not find parameter 'creator' "
-                           "in Parametrisation for call to Field::create()");
+                           "in Parametrisation for call to FieldImpl::create()");
 
   return 0;
 }
 
-Field* Field::create(
+FieldImpl* FieldImpl::create(
     const std::string& name,
     array::DataType           datatype,
     const array::ArrayShape&  shape)
 {
-  return new Field(name,datatype,shape);
+  return new FieldImpl(name,datatype,shape);
 }
 
-Field* Field::create( const std::string& name, array::Array* array )
+FieldImpl* FieldImpl::create( const std::string& name, array::Array* array )
 {
-  return new Field(name,array);
+  return new FieldImpl(name,array);
 }
 
 // -------------------------------------------------------------------------
 
-Field::Field(
+FieldImpl::FieldImpl(
     const std::string& name,
     array::DataType           datatype,
     const array::ArrayShape&  shape)
@@ -71,7 +72,7 @@ Field::Field(
 }
 
 
-Field::Field(const std::string& name, array::Array* array)
+FieldImpl::FieldImpl(const std::string& name, array::Array* array)
 {
   array_ = array;
   array_->attach();
@@ -79,14 +80,14 @@ Field::Field(const std::string& name, array::Array* array)
   set_levels(0);
 }
 
-Field::~Field()
+FieldImpl::~FieldImpl()
 {
   array_->detach();
   if( array_->owners() == 0 )
     delete array_;
 }
 
-size_t Field::footprint() const {
+size_t FieldImpl::footprint() const {
   size_t size = sizeof(*this);
   size += functionspace_.footprint();
   size += array_->footprint();
@@ -95,7 +96,7 @@ size_t Field::footprint() const {
   return size;
 }
 
-void Field::dump(std::ostream& os) const
+void FieldImpl::dump(std::ostream& os) const
 {
   print(os);
   array_->dump(os);
@@ -120,15 +121,15 @@ std::string vector_to_str(const std::vector<T>& t)
 
 }
 
-const std::string& Field::name() const
+const std::string& FieldImpl::name() const
 {
   name_ = metadata().get<std::string>("name");
   return name_;
 }
 
-void Field::print(std::ostream& os) const
+void FieldImpl::print(std::ostream& os) const
 {
-  os << "Field[name=" << name()
+  os << "FieldImpl[name=" << name()
      << ",datatype=" << datatype().str()
      << ",size=" << size()
      << ",shape=" << vector_to_str( shape() )
@@ -140,26 +141,54 @@ void Field::print(std::ostream& os) const
      << "]";
 }
 
-std::ostream& operator<<( std::ostream& os, const Field& f)
+std::ostream& operator<<( std::ostream& os, const FieldImpl& f)
 {
   f.print(os);
   return os;
 }
 
-void Field::resize(const array::ArrayShape& shape)
+void FieldImpl::resize(const array::ArrayShape& shape)
 {
     array_->resize(shape);
 }
 
-void Field::insert(size_t idx1, size_t size1 )
+void FieldImpl::insert(size_t idx1, size_t size1 )
 {
     array_->insert(idx1,size1);
 }
 
 
-void Field::set_functionspace(const functionspace::FunctionSpace& functionspace)
+void FieldImpl::set_functionspace(const functionspace::FunctionSpace& functionspace)
 {
   functionspace_ = functionspace;
+}
+
+// ------------------------------------------------------------------
+
+Field::Field() :
+  field_(nullptr) {
+}
+
+Field::Field( const Field& field ) :
+  field_( field.field_ ) {
+}
+
+Field::Field( const FieldImpl* field ) : 
+  field_( const_cast<FieldImpl*>(field) ) {
+}
+
+Field::Field(const eckit::Parametrisation& config) :
+  field_( FieldImpl::create(config) ) {
+} 
+
+Field::Field(
+  const std::string& name, array::DataType datatype,
+  const array::ArrayShape& shape) :
+  field_( FieldImpl::create(name, datatype, shape) ) {
+}
+
+Field::Field( const std::string& name, array::Array* array ) :
+  field_( FieldImpl::create(name,array) ) {
 }
 
 // ------------------------------------------------------------------
@@ -168,7 +197,7 @@ void Field::set_functionspace(const functionspace::FunctionSpace& functionspace)
 extern "C"
 {
 
-Field* atlas__Field__wrap_int_specf(const char* name, int data[], int rank, int shapef[], int stridesf[])
+FieldImpl* atlas__Field__wrap_int_specf(const char* name, int data[], int rank, int shapef[], int stridesf[])
 {
   ATLAS_ERROR_HANDLING(
     array::ArrayShape shape(rank);
@@ -180,14 +209,20 @@ Field* atlas__Field__wrap_int_specf(const char* name, int data[], int rank, int 
       strides[j] = stridesf[jf];
       --jf;
     }
-    Field* field = Field::wrap(std::string(name),data,array::ArraySpec(shape,strides));
+    FieldImpl* field;
+    {
+      Field wrapped(std::string(name),data,array::ArraySpec(shape,strides));
+      field = wrapped.get();
+      field->attach();
+    }
+    field->detach();
     ASSERT(field);
     return field;
   );
   return 0;
 }
 
-Field* atlas__Field__wrap_long_specf(const char* name, long data[], int rank, int shapef[], int stridesf[])
+FieldImpl* atlas__Field__wrap_long_specf(const char* name, long data[], int rank, int shapef[], int stridesf[])
 {
   ATLAS_ERROR_HANDLING(
     array::ArrayShape shape(rank);
@@ -199,14 +234,20 @@ Field* atlas__Field__wrap_long_specf(const char* name, long data[], int rank, in
       strides[j] = stridesf[jf];
       --jf;
     }
-    Field* field = Field::wrap(std::string(name),data,array::ArraySpec(shape,strides));
+    FieldImpl* field;
+    {
+      Field wrapped(std::string(name),data,array::ArraySpec(shape,strides));
+      field = wrapped.get();
+      field->attach();
+    }
+    field->detach();
     ASSERT(field);
     return field;
   );
   return 0;
 }
 
-Field* atlas__Field__wrap_float_specf(const char* name, float data[], int rank, int shapef[], int stridesf[])
+FieldImpl* atlas__Field__wrap_float_specf(const char* name, float data[], int rank, int shapef[], int stridesf[])
 {
   ATLAS_ERROR_HANDLING(
     array::ArrayShape shape(rank);
@@ -218,16 +259,21 @@ Field* atlas__Field__wrap_float_specf(const char* name, float data[], int rank, 
       strides[j] = stridesf[jf];
       --jf;
     }
-    Field* field = Field::wrap(std::string(name),data,array::ArraySpec(shape,strides));
+    FieldImpl* field;
+    {
+      Field wrapped(std::string(name),data,array::ArraySpec(shape,strides));
+      field = wrapped.get();
+      field->attach();
+    }
+    field->detach();
     ASSERT(field);
     return field;
   );
   return 0;
 }
 
-Field* atlas__Field__wrap_double_specf(const char* name, double data[], int rank, int shapef[], int stridesf[])
+FieldImpl* atlas__Field__wrap_double_specf(const char* name, double data[], int rank, int shapef[], int stridesf[])
 {
-  Field* field(0);
   ATLAS_ERROR_HANDLING(
     array::ArrayShape shape(rank);
     array::ArrayStrides strides(rank);
@@ -238,29 +284,43 @@ Field* atlas__Field__wrap_double_specf(const char* name, double data[], int rank
       strides[j] = stridesf[jf];
       --jf;
     }
-    field = Field::wrap(std::string(name),data,array::ArraySpec(shape,strides));
+    FieldImpl* field;
+    {
+      Field wrapped(std::string(name),data,array::ArraySpec(shape,strides));
+      field = wrapped.get();
+      field->attach();
+    }
+    field->detach();
     ASSERT(field);
+    return field;
   );
-  return field;
+  return 0;
 }
 
-Field* atlas__Field__create(eckit::Parametrisation* params)
+FieldImpl* atlas__Field__create(eckit::Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(params);
-    Field* field = Field::create(*params);
+    FieldImpl* field;
+    {
+      Field f(*params);
+      field = f.get();
+      field->attach();
+    }
+    field->detach();
+    
     ASSERT(field);
     return field;
   );
   return 0;
 }
 
-void atlas__Field__delete (Field* This)
+void atlas__Field__delete (FieldImpl* This)
 {
   delete This;
 }
-
-const char* atlas__Field__name (Field* This)
+  
+const char* atlas__Field__name (FieldImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -269,7 +329,7 @@ const char* atlas__Field__name (Field* This)
   return 0;
 }
 
-void atlas__Field__datatype (Field* This, char* &datatype, int &size, int &allocated)
+void atlas__Field__datatype (FieldImpl* This, char* &datatype, int &size, int &allocated)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -281,7 +341,7 @@ void atlas__Field__datatype (Field* This, char* &datatype, int &size, int &alloc
   );
 }
 
-int atlas__Field__size (Field* This)
+int atlas__Field__size (FieldImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -290,7 +350,7 @@ int atlas__Field__size (Field* This)
   return 0;
 }
 
-int atlas__Field__rank (Field* This)
+int atlas__Field__rank (FieldImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -299,7 +359,7 @@ int atlas__Field__rank (Field* This)
   return 0;
 }
 
-int atlas__Field__kind (Field* This)
+int atlas__Field__kind (FieldImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -309,7 +369,7 @@ int atlas__Field__kind (Field* This)
 }
 
 
-double atlas__Field__bytes (Field* This)
+double atlas__Field__bytes (FieldImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -318,7 +378,7 @@ double atlas__Field__bytes (Field* This)
   return 0;
 }
 
-int atlas__Field__levels (Field* This)
+int atlas__Field__levels (FieldImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -327,7 +387,7 @@ int atlas__Field__levels (Field* This)
   return 0;
 }
 
-util::Metadata* atlas__Field__metadata (Field* This)
+util::Metadata* atlas__Field__metadata (FieldImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -336,7 +396,7 @@ util::Metadata* atlas__Field__metadata (Field* This)
   return 0;
 }
 
-int atlas__Field__has_functionspace(Field* This)
+int atlas__Field__has_functionspace(FieldImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -345,7 +405,7 @@ int atlas__Field__has_functionspace(Field* This)
   return 0;
 }
 
-const functionspace::FunctionSpaceImpl* atlas__Field__functionspace (Field* This)
+const functionspace::FunctionSpaceImpl* atlas__Field__functionspace (FieldImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -355,7 +415,7 @@ const functionspace::FunctionSpaceImpl* atlas__Field__functionspace (Field* This
 }
 
 
-void atlas__Field__shapef (Field* This, int* &shape, int &rank)
+void atlas__Field__shapef (FieldImpl* This, int* &shape, int &rank)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -364,7 +424,7 @@ void atlas__Field__shapef (Field* This, int* &shape, int &rank)
   );
 }
 
-void atlas__Field__host_data_int_specf (Field* This, int* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__host_data_int_specf (FieldImpl* This, int* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -375,7 +435,7 @@ void atlas__Field__host_data_int_specf (Field* This, int* &data, int &rank, int*
   );
 }
 
-void atlas__Field__host_data_long_specf (Field* This, long* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__host_data_long_specf (FieldImpl* This, long* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -386,7 +446,7 @@ void atlas__Field__host_data_long_specf (Field* This, long* &data, int &rank, in
   );
 }
 
-void atlas__Field__host_data_float_specf (Field* This, float* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__host_data_float_specf (FieldImpl* This, float* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -397,7 +457,7 @@ void atlas__Field__host_data_float_specf (Field* This, float* &data, int &rank, 
   );
 }
 
-void atlas__Field__host_data_double_specf (Field* This, double* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__host_data_double_specf (FieldImpl* This, double* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -408,7 +468,7 @@ void atlas__Field__host_data_double_specf (Field* This, double* &data, int &rank
   );
 }
 
-void atlas__Field__device_data_int_specf (Field* This, int* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__device_data_int_specf (FieldImpl* This, int* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -419,7 +479,7 @@ void atlas__Field__device_data_int_specf (Field* This, int* &data, int &rank, in
   );
 }
 
-void atlas__Field__device_data_long_specf (Field* This, long* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__device_data_long_specf (FieldImpl* This, long* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -430,7 +490,7 @@ void atlas__Field__device_data_long_specf (Field* This, long* &data, int &rank, 
   );
 }
 
-void atlas__Field__device_data_float_specf (Field* This, float* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__device_data_float_specf (FieldImpl* This, float* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -441,7 +501,7 @@ void atlas__Field__device_data_float_specf (Field* This, float* &data, int &rank
   );
 }
 
-void atlas__Field__device_data_double_specf (Field* This, double* &data, int &rank, int* &shapef, int* &stridesf)
+void atlas__Field__device_data_double_specf (FieldImpl* This, double* &data, int &rank, int* &shapef, int* &stridesf)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -452,17 +512,17 @@ void atlas__Field__device_data_double_specf (Field* This, double* &data, int &ra
   );
 }
 
-int atlas__Field__is_on_host(const Field* This)
+int atlas__Field__is_on_host(const FieldImpl* This)
 {
   return This->isOnHost();
 }
 
-int atlas__Field__is_on_device(const Field* This)
+int atlas__Field__is_on_device(const FieldImpl* This)
 {
   return This->isOnDevice();
 }
 
-void atlas__Field__rename(Field* This, const char* name)
+void atlas__Field__rename(FieldImpl* This, const char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -470,7 +530,7 @@ void atlas__Field__rename(Field* This, const char* name)
   );
 }
 
-void atlas__Field__set_levels(Field* This, int levels)
+void atlas__Field__set_levels(FieldImpl* This, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -478,7 +538,7 @@ void atlas__Field__set_levels(Field* This, int levels)
   );
 }
 
-void atlas__Field__set_functionspace(Field* This, const functionspace::FunctionSpaceImpl* functionspace)
+void atlas__Field__set_functionspace(FieldImpl* This, const functionspace::FunctionSpaceImpl* functionspace)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -487,11 +547,11 @@ void atlas__Field__set_functionspace(Field* This, const functionspace::FunctionS
   );
 }
 
-void atlas__Field__clone_to_device(Field* This)
+void atlas__Field__clone_to_device(FieldImpl* This)
 {
   This->cloneToDevice();
 }
-void atlas__Field__clone_from_device(Field* This)
+void atlas__Field__clone_from_device(FieldImpl* This)
 {
   This->cloneFromDevice();
 }

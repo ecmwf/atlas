@@ -461,14 +461,14 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
 
 void Nabla::laplacian(const field::Field& scalar, field::Field& lapl) const
 {
-  eckit::SharedPtr<field::Field> grad ( fvm_->node_columns().createField<double>(
+  field::Field grad ( fvm_->node_columns().createField<double>(
        "grad",
        scalar.levels(),
        array::make_shape(2) ) );
-  gradient(scalar,*grad);
+  gradient(scalar,grad);
   if( fvm_->node_columns().halo().size() < 2 )
-    fvm_->node_columns().haloExchange(*grad);
-  divergence(*grad,lapl);
+    fvm_->node_columns().haloExchange(grad);
+  divergence(grad,lapl);
 }
 
 

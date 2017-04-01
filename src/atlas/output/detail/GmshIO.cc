@@ -117,18 +117,18 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( function_space.nodes().global_index() );
   array::LocalView<DATATYPE,2> data ( field.data<DATATYPE>(),
                                       array::make_shape(field.shape(0),field.stride(0)) );
-  field::Field::Ptr gidx_glb;
-  field::Field::Ptr data_glb;
+  field::Field gidx_glb;
+  field::Field data_glb;
   if( gather )
   {
-    gidx_glb.reset( function_space.createField( "gidx_glb", function_space.nodes().global_index(), field::global() ) );
-    function_space.gather(function_space.nodes().global_index(),*gidx_glb);
-    gidx = array::make_view<gidx_t,1>( *gidx_glb );
+    gidx_glb = function_space.createField( "gidx_glb", function_space.nodes().global_index(), field::global() );
+    function_space.gather(function_space.nodes().global_index(),gidx_glb);
+    gidx = array::make_view<gidx_t,1>( gidx_glb );
 
-    data_glb.reset( function_space.createField( "glb_field",field, field::global() ) );
-    function_space.gather(field,*data_glb);
-    data = array::LocalView<DATATYPE,2>( data_glb->data<DATATYPE>(),
-                                         array::make_shape(data_glb->shape(0),data_glb->stride(0)) );
+    data_glb = function_space.createField( "glb_field",field, field::global() );
+    function_space.gather(field,data_glb);
+    data = array::LocalView<DATATYPE,2>( data_glb.data<DATATYPE>(),
+                                         array::make_shape(data_glb.shape(0),data_glb.stride(0)) );
     ndata = std::min(function_space.nb_nodes_global(),data.shape(0));
   }
 
@@ -318,8 +318,8 @@ void write_field_nodes(
         field.data<DATATYPE>(),
         array::make_shape(field.shape(0),field.stride(0)) );
 
-    field::Field::Ptr gidx_glb;
-    field::Field::Ptr field_glb;
+    field::Field gidx_glb;
+    field::Field field_glb;
 
     //gidx_glb.reset(function_space.createGlobalField(
     //    "gidx_glb", function_space.nodes().global_index()));
@@ -331,10 +331,10 @@ void write_field_nodes(
     if( atlas::parallel::mpi::comm().size() > 1 )
     {
       field_glb = function_space.createField<double>("glb_field",field::global());
-      function_space.gather(field, *field_glb);
+      function_space.gather(field, field_glb);
       data = array::LocalView<DATATYPE,2>(
-          field_glb->data<DATATYPE>(),
-          array::make_shape(field_glb->shape(0),field_glb->stride(0)) );
+          field_glb.data<DATATYPE>(),
+          array::make_shape(field_glb.shape(0),field_glb.stride(0)) );
     }
 
     size_t ndata = data.shape(0);
@@ -673,7 +673,7 @@ void GmshIO::read(const PathName& file_path, mesh::Mesh& mesh ) const
 
   mesh::Nodes& nodes = mesh.nodes();
 
-  nodes.add( field::Field::create<double>("xyz",array::make_shape(nb_nodes,3) ) );
+  nodes.add( field::Field("xyz",array::make_datatype<double>(),array::make_shape(nb_nodes,3) ) );
 
   array::ArrayView<double,2> coords   = array::make_view<double,2>( nodes.field("xyz")    );
   array::ArrayView<gidx_t,1> glb_idx  = array::make_view<gidx_t,1>( nodes.global_index()  );
@@ -1299,20 +1299,12 @@ void GmshIO::write(
 class GmshFortranInterface
 {
 public:
-#define mesh_Mesh mesh::Mesh::mesh_t
-#define field_Field field::Field
-#define field_FieldSet field::FieldSet
-#define functionspace_FunctionSpace functionspace::FunctionSpaceImpl
-  static mesh_Mesh* atlas__Gmsh__read(GmshIO* This, char* file_path);
-  static void atlas__Gmsh__write(GmshIO* This, mesh_Mesh* mesh, char* file_path);
-  static mesh_Mesh* atlas__read_gmsh(char* file_path);
-  static void atlas__write_gmsh_mesh(mesh_Mesh* mesh, char* file_path);
-  static void atlas__write_gmsh_fieldset(field_FieldSet* fieldset, functionspace_FunctionSpace* function_space, char* file_path, int mode);
-  static void atlas__write_gmsh_field(field_Field* field, functionspace_FunctionSpace* function_space, char* file_path, int mode);
-#undef field_Field
-#undef field_FieldSet
-#undef functionspace_NodeColumns
-#undef mesh_Mesh
+  static mesh::Mesh::mesh_t* atlas__Gmsh__read(GmshIO* This, char* file_path);
+  static void atlas__Gmsh__write(GmshIO* This, mesh::Mesh::mesh_t* mesh, char* file_path);
+  static mesh::Mesh::mesh_t* atlas__read_gmsh(char* file_path);
+  static void atlas__write_gmsh_mesh(const mesh::Mesh::mesh_t* mesh, char* file_path);
+  static void atlas__write_gmsh_fieldset(const field::FieldSet* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode);
+  static void atlas__write_gmsh_field(const field::FieldImpl* field, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode);
 };
 
 mesh::Mesh::mesh_t* GmshFortranInterface::atlas__Gmsh__read (GmshIO* This, char* file_path) {
@@ -1343,20 +1335,19 @@ mesh::Mesh::mesh_t* GmshFortranInterface::atlas__read_gmsh (char* file_path)
   return m;
 }
 
-void GmshFortranInterface::atlas__write_gmsh_mesh (mesh::Mesh::mesh_t* mesh, char* file_path) {
+void GmshFortranInterface::atlas__write_gmsh_mesh (const mesh::Mesh::mesh_t* mesh, char* file_path) {
   GmshIO writer;
-  mesh::Mesh m(mesh);
-  writer.write( m, PathName(file_path) );
+  writer.write( mesh, PathName(file_path) );
 }
 
-void GmshFortranInterface::atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
+void GmshFortranInterface::atlas__write_gmsh_fieldset (const field::FieldSet* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
   GmshIO writer;
   writer.write( *fieldset, functionspace, PathName(file_path) );
 }
 
-void GmshFortranInterface::atlas__write_gmsh_field (field::Field* field, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
+void GmshFortranInterface::atlas__write_gmsh_field (const field::FieldImpl* field, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
   GmshIO writer;
-  writer.write( *field, functionspace, PathName(file_path) );
+  writer.write( field, functionspace, PathName(file_path) );
 }
 
 extern "C" {
@@ -1384,15 +1375,15 @@ mesh::Mesh::mesh_t* atlas__read_gmsh (char* file_path) {
   return GmshFortranInterface::atlas__read_gmsh(file_path);
 }
 
-void atlas__write_gmsh_mesh (mesh::Mesh::mesh_t* mesh, char* file_path) {
+void atlas__write_gmsh_mesh (const mesh::Mesh::mesh_t* mesh, char* file_path) {
   return GmshFortranInterface::atlas__write_gmsh_mesh(mesh,file_path);
 }
 
-void atlas__write_gmsh_fieldset (field::FieldSet* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
+void atlas__write_gmsh_fieldset (const field::FieldSet* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
   return GmshFortranInterface::atlas__write_gmsh_fieldset(fieldset,functionspace,file_path,mode);
 }
 
-void atlas__write_gmsh_field (field::Field* field, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
+void atlas__write_gmsh_field (const field::FieldImpl* field, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
   return GmshFortranInterface::atlas__write_gmsh_field(field,functionspace,file_path,mode);
 }
 

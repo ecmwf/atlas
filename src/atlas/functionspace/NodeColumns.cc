@@ -285,33 +285,33 @@ size_t NodeColumns::config_levels(const eckit::Parametrisation& config) const
 }
 
 
-field::Field* NodeColumns::createField(
+field::Field NodeColumns::createField(
     const std::string& name,
     array::DataType datatype,
     const eckit::Parametrisation& config ) const
 {
   size_t nb_nodes = config_nb_nodes(config);
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes));
-  field->set_functionspace(this);
-  set_field_metadata(config,*field);
+  field::Field field = field::Field(name,datatype,array::make_shape(nb_nodes));
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
-field::Field* NodeColumns::createField(
+field::Field NodeColumns::createField(
     const std::string& name,
     array::DataType datatype,
     size_t levels,
     const eckit::Parametrisation& config) const
 {
   size_t nb_nodes = config_nb_nodes(config);
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes,levels));
-  field->set_levels(levels);
-  field->set_functionspace(this);
-  set_field_metadata(config,*field);
+  field::Field field = field::Field(name,datatype,array::make_shape(nb_nodes,levels));
+  field.set_levels(levels);
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
-field::Field* NodeColumns::createField(
+field::Field NodeColumns::createField(
     const std::string& name,
     array::DataType datatype,
     const std::vector<size_t>& variables,
@@ -320,13 +320,13 @@ field::Field* NodeColumns::createField(
   size_t nb_nodes = config_nb_nodes(config);
   std::vector<size_t> shape(1,nb_nodes);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_functionspace(this);
-  set_field_metadata(config,*field);
+  field::Field field = field::Field(name,datatype,shape);
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
-field::Field* NodeColumns::createField(
+field::Field NodeColumns::createField(
     const std::string& name,
     array::DataType datatype,
     size_t levels,
@@ -336,35 +336,35 @@ field::Field* NodeColumns::createField(
   size_t nb_nodes = config_nb_nodes(config);
   std::vector<size_t> shape(1,nb_nodes); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_levels(levels);
-  field->set_functionspace(this);
-  set_field_metadata(config,*field);
+  field::Field field = field::Field(name,datatype,shape);
+  field.set_levels(levels);
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
-field::Field* NodeColumns::createField(
+field::Field NodeColumns::createField(
     const std::string& name,
     const field::Field& other,
     const eckit::Parametrisation& config ) const
 {
   array::ArrayShape shape = other.shape();
   shape[0] = config_nb_nodes(config);
-  field::Field* field = field::Field::create(name,other.datatype(),shape);
+  field::Field field = field::Field(name,other.datatype(),shape);
   if( other.has_levels() )
-    field->set_levels(field->shape(1));
-  field->set_functionspace(this);
-  set_field_metadata(config,*field);
+    field.set_levels(field.shape(1));
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
-field::Field* NodeColumns::createField(
+field::Field NodeColumns::createField(
     const eckit::Parametrisation& config ) const
 {
   size_t nb_nodes = config_nb_nodes(config);
-  field::Field* field = field::Field::create("",array::DataType::create<double>(),array::make_shape(nb_nodes));
-  field->set_functionspace(this);
-  set_field_metadata(config,*field);
+  field::Field field = field::Field("",array::DataType::create<double>(),array::make_shape(nb_nodes));
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
@@ -827,10 +827,10 @@ template< typename DATATYPE >
 void dispatch_order_independent_sum_2d( const NodeColumns& fs , const field::Field& field, DATATYPE& result, size_t& N )
 {
   size_t root = 0;
-  field::Field::Ptr global( fs.createField("global",field, field::global() ) );
-  fs.gather(field,*global);
-  result = std::accumulate(array::make_storageview<DATATYPE>(*global).data(),
-                           array::make_storageview<DATATYPE>(*global).data()+global->size(),0.);
+  field::Field global = fs.createField("global",field, field::global() );
+  fs.gather(field,global);
+  result = std::accumulate(array::make_storageview<DATATYPE>(global).data(),
+                           array::make_storageview<DATATYPE>(global).data()+global.size(),0.);
   parallel::mpi::comm().broadcast(&result, 1, root);
   N = fs.nb_nodes_global();
 }
@@ -842,15 +842,15 @@ void dispatch_order_independent_sum( const NodeColumns& fs , const field::Field&
   {
     const array::LocalView<T,2> arr = make_leveled_scalar_view<T>(field);
 
-    field::Field::Ptr surface_field( fs.createField<T>("surface") );
-    array::LocalView<T,1> surface = make_surface_scalar_view<T>( *surface_field );
+    field::Field surface_field = fs.createField<T>("surface");
+    array::LocalView<T,1> surface = make_surface_scalar_view<T>( surface_field );
 
     for( size_t n=0; n<arr.shape(0); ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
           surface(n) += arr(n,l);
       }
     }
-    dispatch_order_independent_sum_2d( fs, *surface_field, result, N );
+    dispatch_order_independent_sum_2d( fs, surface_field, result, N );
     N *= arr.shape(1);
   }
   else
@@ -904,18 +904,18 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const field::Fiel
   size_t nvar = field.stride(0);
   result.resize(nvar);
   for( size_t j=0; j<nvar; ++j ) result[j] = 0.;
-  field::Field::Ptr global( fs.createField("global",field, field::global() ) );
-  fs.gather(field,*global);
+  field::Field global = fs.createField("global",field, field::global() );
+  fs.gather(field,global);
   if( parallel::mpi::comm().rank() == 0 ) {
-    const array::LocalView<DATATYPE,2> glb( array::make_storageview<DATATYPE>(*global).data(),
-                                            array::make_shape(global->shape(0),global->stride(0)) );
+    const array::LocalView<DATATYPE,2> glb( array::make_storageview<DATATYPE>(global).data(),
+                                            array::make_shape(global.shape(0),global.stride(0)) );
     for( size_t n=0; n<fs.nb_nodes_global(); ++n ) {
       for( size_t j=0; j<nvar; ++j ) {
         result[j] += glb(n,j);
       }
     }
   }
-  size_t root = global->metadata().get<size_t>("owner");
+  size_t root = global.metadata().get<size_t>("owner");
   parallel::mpi::comm().broadcast(result,root);
   N = fs.nb_nodes_global();
 }
@@ -928,8 +928,8 @@ void dispatch_order_independent_sum( const NodeColumns& fs, const field::Field& 
     const size_t nvar = field.stride(1);
     const array::LocalView<T,3> arr = make_leveled_view<T>(field);
 
-    field::Field::Ptr surface_field( fs.createField<T>("surface",array::make_shape(nvar)) );
-    array::LocalView<T,2> surface = surface_view<T>( *surface_field );
+    field::Field surface_field = fs.createField<T>("surface",array::make_shape(nvar));
+    array::LocalView<T,2> surface = surface_view<T>( surface_field );
 
     for( size_t n=0; n<arr.shape(0); ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
@@ -939,7 +939,7 @@ void dispatch_order_independent_sum( const NodeColumns& fs, const field::Field& 
       }
     }
 
-    dispatch_order_independent_sum_2d( fs, *surface_field, result, N );
+    dispatch_order_independent_sum_2d( fs, surface_field, result, N );
     N *= arr.shape(1);
   }
   else
@@ -1008,13 +1008,13 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const fiel
   Log::info() << sumfield << std::endl;
 
   size_t root = 0;
-  field::Field::Ptr global( fs.createField("global",field,field::global()) );
+  field::Field global = fs.createField("global",field,field::global());
 
-  Log::info() << *global << std::endl;
+  Log::info() << global << std::endl;
 
-  fs.gather(field,*global);
+  fs.gather(field,global);
   if( parallel::mpi::comm().rank() == 0 ) {
-    const array::LocalView<T,3> glb = make_leveled_view<T>(*global);
+    const array::LocalView<T,3> glb = make_leveled_view<T>(global);
 
     for( size_t n=0; n<glb.shape(0); ++n ) {
       for( size_t l=0; l<glb.shape(1); ++l ) {
@@ -1860,8 +1860,8 @@ template< typename T >
 void mean_and_standard_deviation( const NodeColumns& fs, const field::Field& field, T& mu, T& sigma, size_t& N )
 {
   mean(fs,field,mu,N);
-  field::Field::Ptr squared_diff_field( fs.createField("sqr_diff",field) );
-  array::LocalView<T,2> squared_diff = make_leveled_scalar_view<T>( *squared_diff_field );
+  field::Field squared_diff_field = fs.createField("sqr_diff",field);
+  array::LocalView<T,2> squared_diff = make_leveled_scalar_view<T>( squared_diff_field );
   array::LocalView<T,2> values = make_leveled_scalar_view<T>( field );
 
   const size_t npts = std::min(values.shape(0),fs.nb_nodes());
@@ -1870,7 +1870,7 @@ void mean_and_standard_deviation( const NodeColumns& fs, const field::Field& fie
       squared_diff(n,l) = sqr( values(n,l) - mu );
     }
   }
-  mean(fs,*squared_diff_field,sigma,N);
+  mean(fs,squared_diff_field,sigma,N);
   sigma = std::sqrt(sigma);
 }
 
@@ -1878,8 +1878,8 @@ template< typename T >
 void mean_and_standard_deviation( const NodeColumns& fs, const field::Field& field, std::vector<T>& mu, std::vector<T>& sigma, size_t& N )
 {
   mean(fs,field,mu,N);
-  field::Field::Ptr squared_diff_field( fs.createField("sqr_diff",field) );
-  array::LocalView<T,3> squared_diff = make_leveled_view<T>( *squared_diff_field );
+  field::Field squared_diff_field = fs.createField("sqr_diff",field);
+  array::LocalView<T,3> squared_diff = make_leveled_view<T>( squared_diff_field );
   array::LocalView<T,3> values = make_leveled_view<T>( field );
 
   const size_t npts = values.shape(0);
@@ -1890,7 +1890,7 @@ void mean_and_standard_deviation( const NodeColumns& fs, const field::Field& fie
       }
     }
   }
-  mean(fs,*squared_diff_field,sigma,N);
+  mean(fs,squared_diff_field,sigma,N);
   for( size_t j=0; j<sigma.size(); ++j ) {
     sigma[j] = std::sqrt(sigma[j]);
   }
@@ -1900,8 +1900,8 @@ template< typename T >
 void dispatch_mean_and_standard_deviation_per_level( const NodeColumns& fs, const field::Field& field, field::Field& mean, field::Field& stddev, size_t& N )
 {
   dispatch_mean_per_level<T>(fs,field,mean,N);
-  field::Field::Ptr squared_diff_field( fs.createField("sqr_diff",field) );
-  array::LocalView<T,3> squared_diff = make_leveled_view<T>( *squared_diff_field );
+  field::Field squared_diff_field = fs.createField("sqr_diff",field);
+  array::LocalView<T,3> squared_diff = make_leveled_view<T>( squared_diff_field );
   array::LocalView<T,3> values = make_leveled_view<T>( field );
   array::LocalView<T,2> mu( array::make_storageview<T>(mean).data(), array::make_shape(values.shape(1),values.shape(2)) );
 
@@ -1913,7 +1913,7 @@ void dispatch_mean_and_standard_deviation_per_level( const NodeColumns& fs, cons
       }
     }
   }
-  dispatch_mean_per_level<T>(fs,*squared_diff_field,stddev,N);
+  dispatch_mean_per_level<T>(fs,squared_diff_field,stddev,N);
   T* sigma = array::make_storageview<T>(stddev).data();
   const size_t size = stddev.size();
   atlas_omp_parallel_for( size_t j=0; j<size; ++j ) {
@@ -2153,21 +2153,21 @@ mesh::Nodes& NodeColumns::nodes() const{
   return functionspace_->nodes();
 }
 
-field::Field* NodeColumns::createField(
+field::Field NodeColumns::createField(
     const std::string& name,
     array::DataType datatype,
     const eckit::Parametrisation& config ) const {
   return functionspace_->createField(name,datatype,config);
 }
 
-field::Field* NodeColumns::createField(
+field::Field NodeColumns::createField(
     const std::string& name,
     array::DataType, size_t levels,
     const eckit::Parametrisation& config) const {
   return functionspace_->createField(name,levels,config);
 }
 
-field::Field* NodeColumns::createField(
+field::Field NodeColumns::createField(
     const std::string& name,
     array::DataType datatype,
     const std::vector<size_t>& variables,
@@ -2175,7 +2175,7 @@ field::Field* NodeColumns::createField(
   return functionspace_->createField(name,datatype,variables,config);
 }
 
-field::Field* NodeColumns::createField(
+field::Field NodeColumns::createField(
     const std::string& name,
     array::DataType, size_t levels,
     const std::vector<size_t>& variables,
@@ -2183,14 +2183,14 @@ field::Field* NodeColumns::createField(
   return functionspace_->createField(name,levels,variables,config);
 }
 
-field::Field* NodeColumns::createField(
+field::Field NodeColumns::createField(
     const std::string& name,
     const field::Field& field,
     const eckit::Parametrisation& config ) const {
   return functionspace_->createField(name,field,config);
 }
 
-field::Field* NodeColumns::createField(const eckit::Parametrisation& config) const {
+field::Field NodeColumns::createField(const eckit::Parametrisation& config) const {
   return functionspace_->createField(config);
 }
 

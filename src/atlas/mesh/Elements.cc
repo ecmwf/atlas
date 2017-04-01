@@ -172,63 +172,63 @@ int atlas__mesh__Elements__nb_fields(const Elements* This)
   return This->nb_fields();
 }
 
-field::Field* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx)
+field::FieldImpl* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->field(idx);
+    field = This->field(idx).get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__Elements__field_by_name(Elements* This, char* name)
+field::FieldImpl* atlas__mesh__Elements__field_by_name(Elements* This, char* name)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->field(std::string(name));
+    field = This->field(std::string(name)).get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__Elements__global_index(Elements* This)
+field::FieldImpl* atlas__mesh__Elements__global_index(Elements* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->global_index();
+    field = This->global_index().get();
   );
   return field;
 
 }
 
-field::Field* atlas__mesh__Elements__remote_index(Elements* This)
+field::FieldImpl* atlas__mesh__Elements__remote_index(Elements* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->remote_index();
+    field = This->remote_index().get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__Elements__partition(Elements* This)
+field::FieldImpl* atlas__mesh__Elements__partition(Elements* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->partition();
+    field = This->partition().get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__Elements__halo(Elements* This)
+field::FieldImpl* atlas__mesh__Elements__halo(Elements* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->halo();
+    field = This->halo().get();
   );
   return field;
 }

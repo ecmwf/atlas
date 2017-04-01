@@ -159,57 +159,57 @@ size_t EdgeColumns::nb_edges_global() const
   return nb_edges_global_;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype,const eckit::Parametrisation& options) const
+field::Field EdgeColumns::createField(const std::string& name,array::DataType datatype,const eckit::Parametrisation& options) const
 {
   size_t nb_edges = config_size(options);
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges));
-  field->set_functionspace(this);
-  set_field_metadata(options,*field);
+  field::Field field = field::Field(name,datatype,array::make_shape(nb_edges));
+  field.set_functionspace(this);
+  set_field_metadata(options,field);
   return field;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype, size_t levels,const eckit::Parametrisation& options) const
+field::Field EdgeColumns::createField(const std::string& name,array::DataType datatype, size_t levels,const eckit::Parametrisation& options) const
 {
   size_t nb_edges = config_size(options);
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_edges,levels));
-  field->set_levels(levels);
-  field->set_functionspace(this);
-  set_field_metadata(options,*field);
+  field::Field field = field::Field(name,datatype,array::make_shape(nb_edges,levels));
+  field.set_levels(levels);
+  field.set_functionspace(this);
+  set_field_metadata(options,field);
   return field;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,array::DataType datatype, const std::vector<size_t>& variables,const eckit::Parametrisation& options) const
+field::Field EdgeColumns::createField(const std::string& name,array::DataType datatype, const std::vector<size_t>& variables,const eckit::Parametrisation& options) const
 {
   size_t nb_edges = config_size(options);
   std::vector<size_t> shape(1,nb_edges);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_functionspace(this);
-  set_field_metadata(options,*field);
+  field::Field field = field::Field(name,datatype,shape);
+  field.set_functionspace(this);
+  set_field_metadata(options,field);
   return field;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables,const eckit::Parametrisation& options) const
+field::Field EdgeColumns::createField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables,const eckit::Parametrisation& options) const
 {
   size_t nb_edges = config_size(options);
   std::vector<size_t> shape(1,nb_edges); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_levels(levels);
-  field->set_functionspace(this);
-  set_field_metadata(options,*field);
+  field::Field field = field::Field(name,datatype,shape);
+  field.set_levels(levels);
+  field.set_functionspace(this);
+  set_field_metadata(options,field);
   return field;
 }
 
-field::Field* EdgeColumns::createField(const std::string& name, const field::Field& other,const eckit::Parametrisation& options) const {
+field::Field EdgeColumns::createField(const std::string& name, const field::Field& other,const eckit::Parametrisation& options) const {
   size_t nb_edges = config_size(options);
   array::ArrayShape shape = other.shape();
   shape[0] = nb_edges;
-  field::Field* field = field::Field::create(name,other.datatype(),shape);
+  field::Field field = field::Field(name,other.datatype(),shape);
   if( other.has_levels() )
-    field->set_levels(field->shape(1));
-  field->set_functionspace(this);
-  set_field_metadata(options,*field);
+    field.set_levels(field.shape(1));
+  field.set_functionspace(this);
+  set_field_metadata(options,field);
   return field;
 }
 
@@ -521,7 +521,10 @@ mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This)
 
 //------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_field (
+using field::FieldImpl;
+using field::Field;
+
+field::FieldImpl* atlas__functionspace__Edges__create_field (
     const EdgeColumns* This,
     const char* name,
     int kind,
@@ -530,14 +533,21 @@ field::Field* atlas__functionspace__Edges__create_field (
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(options);
-    return This->createField(std::string(name),array::DataType(kind));
+    FieldImpl* field;
+    {
+      Field f = This->createField(std::string(name),array::DataType(kind));
+      field = f.get();
+      field->attach();
+    }
+    field->detach();
+    return field
   );
   return 0;
 }
 
 //------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_field_vars (
+field::FieldImpl* atlas__functionspace__Edges__create_field_vars (
     const EdgeColumns* This,
     const char* name,
     int variables[],
@@ -551,17 +561,24 @@ field::Field* atlas__functionspace__Edges__create_field_vars (
     ASSERT(This);
     ASSERT(variables_size);
     ASSERT(options);
-    return This->createField(
-      std::string(name),
-      array::DataType(kind),
-      variables_to_vector(variables,variables_size,fortran_ordering) );
+    FieldImpl* field;
+    {
+      Field f = This->createField(
+        std::string(name),
+        array::DataType(kind),
+        variables_to_vector(variables,variables_size,fortran_ordering) );
+      field = f.get();
+      field->attach();
+    }
+    field->detach();
+    return field;
   );
   return 0;
 }
 
 // -----------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_field_lev (
+field::FieldImpl* atlas__functionspace__Edges__create_field_lev (
     const EdgeColumns* This,
     const char* name,
     int levels,
@@ -571,14 +588,21 @@ field::Field* atlas__functionspace__Edges__create_field_lev (
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(options);
-    return This->createField(std::string(name),array::DataType(kind),size_t(levels));
+    FieldImpl* field;
+    {
+      Field f = This->createField(std::string(name),array::DataType(kind),size_t(levels));
+      field = f.get();
+      field->attach();
+    }
+    field->detach();
+    return field;
   );
   return 0;
 }
 
 // -----------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_field_lev_vars (
+field::FieldImpl* atlas__functionspace__Edges__create_field_lev_vars (
     const EdgeColumns* This,
     const char* name,
     int levels,
@@ -592,27 +616,41 @@ field::Field* atlas__functionspace__Edges__create_field_lev_vars (
     ASSERT(This);
     ASSERT(variables_size);
     ASSERT(options);
-    return This->createField(
-      std::string(name),
-      array::DataType(kind),
-      size_t(levels),
-      variables_to_vector(variables,variables_size,fortran_ordering) );
+    FieldImpl* field;
+    {
+      Field f = This->createField(
+        std::string(name),
+        array::DataType(kind),
+        size_t(levels),
+        variables_to_vector(variables,variables_size,fortran_ordering) );
+      field = f.get();
+      field->attach();
+    }
+    field->detach();
+    return field;
   );
   return 0;
 }
 
 // -----------------------------------------------------------------------------------
 
-field::Field* atlas__functionspace__Edges__create_field_template (
+field::FieldImpl* atlas__functionspace__Edges__create_field_template (
     const EdgeColumns* This,
     const char* name,
-    const field::Field* field_template,
+    const field::FieldImpl* field_template,
     const eckit::Parametrisation* options )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(options);
-    return This->createField(std::string(name),*field_template);
+    FieldImpl* field;
+    {
+      Field f = This->createField(std::string(name),field_template);
+      field = f.get();
+      field->attach();
+    }
+    field->detach();
+    return field;
   );
   return 0;
 }
@@ -632,12 +670,13 @@ void atlas__functionspace__Edges__halo_exchange_fieldset(
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, field::Field* field)
+void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, field::FieldImpl* field)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
         ASSERT(field);
-        This->haloExchange(*field);
+        Field f(field);
+        This->haloExchange(f);
    );
 }
 
@@ -670,14 +709,16 @@ void atlas__functionspace__Edges__gather_fieldset(
 
 void atlas__functionspace__Edges__gather_field(
     const EdgeColumns* This,
-    const field::Field* local,
-    field::Field* global)
+    const field::FieldImpl* local,
+    field::FieldImpl* global)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
         ASSERT(local);
         ASSERT(global);
-        This->gather(*local,*global); );
+        const Field l(local);
+        Field g(global);
+        This->gather(l,g); );
 }
 
 // -----------------------------------------------------------------------------------
@@ -713,13 +754,15 @@ void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, cons
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const field::Field* global, field::Field* local)
+void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const field::FieldImpl* global, field::FieldImpl* local)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
         ASSERT(global);
         ASSERT(local);
-        This->scatter(*global,*local); );
+        const Field g(global);
+        Field l(local);
+        This->scatter(g,l); );
 }
 
 // -----------------------------------------------------------------------------------
@@ -757,7 +800,7 @@ void atlas__functionspace__Edges__checksum_fieldset(
 
 void atlas__functionspace__Edges__checksum_field(
     const EdgeColumns* This,
-    const field::Field* field,
+    const field::FieldImpl* field,
     char* &checksum,
     int &size,
     int &allocated)
@@ -765,7 +808,7 @@ void atlas__functionspace__Edges__checksum_field(
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(field);
-    std::string checksum_str (This->checksum(*field));
+    std::string checksum_str (This->checksum(field));
     size = checksum_str.size();
     checksum = new char[size+1]; allocated = true;
     strcpy(checksum,checksum_str.c_str());
@@ -827,14 +870,14 @@ const mesh::HybridElements& EdgeColumns::edges() const {
   return functionspace_->edges();
 }
 
-field::Field* EdgeColumns::createField(
+field::Field EdgeColumns::createField(
         const std::string& name,
         array::DataType datatype,
         const eckit::Parametrisation& config ) const {
   return functionspace_->createField(name,datatype,config);
 }
 
-field::Field* EdgeColumns::createField(
+field::Field EdgeColumns::createField(
         const std::string& name,
         array::DataType datatype,
         size_t levels,
@@ -842,14 +885,14 @@ field::Field* EdgeColumns::createField(
   return functionspace_->createField(name,datatype,levels,config);
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,
+field::Field EdgeColumns::createField(const std::string& name,
                           array::DataType datatype,
                           const std::vector<size_t>& variables,
                           const eckit::Parametrisation& config ) const {
   return functionspace_->createField(name,datatype,variables,config);
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,
+field::Field EdgeColumns::createField(const std::string& name,
                           array::DataType datatype,
                           size_t levels,
                           const std::vector<size_t>& variables,
@@ -857,7 +900,7 @@ field::Field* EdgeColumns::createField(const std::string& name,
   return functionspace_->createField(name,datatype,levels,variables,config);
 }
 
-field::Field* EdgeColumns::createField(const std::string& name,
+field::Field EdgeColumns::createField(const std::string& name,
                           const field::Field& field,
                           const eckit::Parametrisation& config ) const {
   return functionspace_->createField(name,field,config);

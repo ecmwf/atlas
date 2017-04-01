@@ -35,8 +35,8 @@ namespace mesh {
 Mesh::Mesh( const Mesh& other ) :
     mesh_(other.mesh_) {
 }
-Mesh::Mesh( MeshImpl* mesh ) :
-    mesh_(mesh) {
+Mesh::Mesh( const MeshImpl* mesh ) :
+    mesh_( const_cast<MeshImpl*>(mesh) ) {
 }
 Mesh::Mesh( eckit::Stream& stream ) :
     mesh_( new MeshImpl(stream) ) {

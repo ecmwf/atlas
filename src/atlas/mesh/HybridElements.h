@@ -14,18 +14,17 @@
 ///
 /// This file describes the HybridElements class for a Mesh.
 
-#ifndef atlas_HybridElements_H
-#define atlas_HybridElements_H
+#pragma once
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/mesh/Connectivity.h"
+#include "atlas/field/Field.h"
 #include "atlas/util/Metadata.h"
 
 namespace atlas { namespace mesh  { class Mesh; } }
 namespace atlas { namespace mesh  { class ElementType; } }
 namespace atlas { namespace mesh  { class Elements; } }
-namespace atlas { namespace field { class Field; } }
 
 namespace atlas {
 namespace mesh {
@@ -96,17 +95,17 @@ public: // methods
   const util::Metadata& metadata() const { return metadata_; }
         util::Metadata& metadata()       { return metadata_; }
 
-  const field::Field& global_index() const { return *global_index_; }
-        field::Field& global_index()       { return *global_index_; }
+  const field::Field& global_index() const { return field("glb_idx"); }
+        field::Field& global_index()       { return field("glb_idx"); }
 
-  const field::Field& remote_index() const { return *remote_index_; }
-        field::Field& remote_index()       { return *remote_index_; }
+  const field::Field& remote_index() const { return field("remote_idx"); }
+        field::Field& remote_index()       { return field("remote_idx"); }
 
-  const field::Field& partition() const { return *partition_; }
-        field::Field& partition()       { return *partition_; }
+  const field::Field& partition() const { return field("partition"); }
+        field::Field& partition()       { return field("partition"); }
 
-  const field::Field& halo() const { return *halo_; }
-        field::Field& halo()       { return *halo_; }
+  const field::Field& halo() const { return field("halo"); }
+        field::Field& halo()       { return field("halo"); }
 
 // -- Modifiers
 
@@ -131,7 +130,7 @@ public: // methods
   /// @return type_idx of the added element type
   size_t add( const Elements& );
   
-  field::Field& add( field::Field* field );
+  field::Field add( const field::Field& field );
 
   void remove_field(const std::string& name);
 
@@ -151,7 +150,7 @@ public: // methods
 
 private: // -- types
 
-  typedef std::map< std::string, eckit::SharedPtr<field::Field> > FieldMap;
+  typedef std::map< std::string, field::Field > FieldMap;
   typedef std::map< std::string, eckit::SharedPtr<Connectivity> > ConnectivityMap;
 
 private: // -- methods
@@ -185,12 +184,6 @@ private: // -- Data
 
 // -- Metadata
   util::Metadata metadata_;
-
-// -- Cached shortcuts to specific fields in fields_
-  field::Field* global_index_;
-  field::Field* remote_index_;
-  field::Field* partition_;
-  field::Field* halo_;
 
 // -- Cached shortcuts to specific connectivities in connectivities_
   Connectivity* node_connectivity_;
@@ -285,21 +278,19 @@ MultiBlockConnectivity* atlas__mesh__HybridElements__cell_connectivity(HybridEle
 size_t atlas__mesh__HybridElements__size(const HybridElements* This);
 void atlas__mesh__HybridElements__add_elements(HybridElements* This, ElementType* elementtype, size_t nb_elements);
 void atlas__mesh__HybridElements__add_elements_with_nodes(HybridElements* This, ElementType* elementtype, size_t nb_elements, int node_connectivity[], int fortran_array);
-void atlas__mesh__HybridElements__add_field(HybridElements* This, field::Field* field);
+void atlas__mesh__HybridElements__add_field(HybridElements* This, field::FieldImpl* field);
 int atlas__mesh__HybridElements__has_field(const HybridElements* This, char* name);
 int atlas__mesh__HybridElements__nb_fields(const HybridElements* This);
 int atlas__mesh__HybridElements__nb_types(const HybridElements* This);
-field::Field* atlas__mesh__HybridElements__field_by_name(HybridElements* This, char* name);
-field::Field* atlas__mesh__HybridElements__field_by_idx(HybridElements* This, size_t idx);
-field::Field* atlas__mesh__HybridElements__global_index(HybridElements* This);
-field::Field* atlas__mesh__HybridElements__remote_index(HybridElements* This);
-field::Field* atlas__mesh__HybridElements__partition(HybridElements* This);
-field::Field* atlas__mesh__HybridElements__halo(HybridElements* This);
+field::FieldImpl* atlas__mesh__HybridElements__field_by_name(HybridElements* This, char* name);
+field::FieldImpl* atlas__mesh__HybridElements__field_by_idx(HybridElements* This, size_t idx);
+field::FieldImpl* atlas__mesh__HybridElements__global_index(HybridElements* This);
+field::FieldImpl* atlas__mesh__HybridElements__remote_index(HybridElements* This);
+field::FieldImpl* atlas__mesh__HybridElements__partition(HybridElements* This);
+field::FieldImpl* atlas__mesh__HybridElements__halo(HybridElements* This);
 
 Elements* atlas__mesh__HybridElements__elements(HybridElements* This, size_t idx);
 }
 
 } // namespace mesh
 } // namespace atlas
-
-#endif

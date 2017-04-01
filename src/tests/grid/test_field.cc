@@ -59,25 +59,25 @@ public:
 
 void TestField::test_fieldcreator()
 {
-  field::Field::Ptr field ( field::Field::create( util::Config
-                                      ("creator","ArraySpec")
-                                      ("shape",array::make_shape(10,2))
-                                      ("datatype",array::DataType::real32().str())
-                                      ("name","myfield")
-                                  ));
+  field::Field field ( util::Config
+                         ("creator","ArraySpec")
+                         ("shape",array::make_shape(10,2))
+                         ("datatype",array::DataType::real32().str())
+                         ("name","myfield")
+                      );
 
-  ASSERT( field->datatype() == array::DataType::real32() );
-  ASSERT( field->name() == "myfield" );
+  ASSERT( field.datatype() == array::DataType::real32() );
+  ASSERT( field.name() == "myfield" );
 
   Grid g("O6");
 
-  field::Field::Ptr arr (field::Field::create( util::Config
-                                   ("creator","ArraySpec")
-                                   ("shape",array::make_shape(10,2))
-                               ));
-  ASSERT( arr->shape(0) == 10 );
-  ASSERT( arr->shape(1) == 2 );
-  ASSERT( arr->datatype() == array::DataType::real64() );
+  field::Field arr ( util::Config
+                         ("creator","ArraySpec")
+                         ("shape",array::make_shape(10,2))
+                   );
+  ASSERT( arr.shape(0) == 10 );
+  ASSERT( arr.shape(1) == 2 );
+  ASSERT( arr.datatype() == array::DataType::real64() );
 
 
   util::Config ifs_parameters = util::Config
@@ -87,18 +87,18 @@ void TestField::test_fieldcreator()
       ("ngptot",g.size());
 
   Log::info() << "Creating IFS field " << std::endl;
-  field::Field::Ptr ifs (field::Field::create( util::Config
-                                    (ifs_parameters)
-                                    ("name","myfield")
-                                    ("datatype",array::DataType::int32().str())
-                                    ("nvar",8)
-                               ));
+  field::Field ifs ( util::Config
+                         (ifs_parameters)
+                         ("name","myfield")
+                         ("datatype",array::DataType::int32().str())
+                         ("nvar",8)
+                   );
 
-  ATLAS_DEBUG_VAR( *ifs );
-  ASSERT( ifs->shape(0) == 36 );
-  ASSERT( ifs->shape(1) == 8 );
-  ASSERT( ifs->shape(2) == 137 );
-  ASSERT( ifs->shape(3) == 10 );
+  ATLAS_DEBUG_VAR( ifs );
+  ASSERT( ifs.shape(0) == 36 );
+  ASSERT( ifs.shape(1) == 8 );
+  ASSERT( ifs.shape(2) == 137 );
+  ASSERT( ifs.shape(3) == 10 );
 
   Log::flush();
 }
@@ -119,9 +119,9 @@ public:
 
 void TestField::test_implicit_conversion()
 {
-  SharedPtr<field::Field> field( field::Field::create<double>("tmp",array::make_shape(10,2)) );
-  const array::Array& const_array = *field;
-  array::Array& array = *field;
+  field::Field field( "tmp", array::make_datatype<double>(), array::make_shape(10,2));
+  const array::Array& const_array = field;
+  array::Array& array = field;
 
   array::ArrayView<double,2> arrv = array::make_view<double,2>(array);
   arrv(0,0) = 8.;
@@ -129,13 +129,13 @@ void TestField::test_implicit_conversion()
   const array::ArrayView<double,2> carrv = array::make_view<double,2>(const_array);
   ASSERT( carrv(0,0) == 8. );
 
-  const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(*field);
+  const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(field);
   ASSERT( cfieldv(0,0) == 8. );
 
-  take_array(*field);
-  TakeArray ta(*field);
+  take_array(field);
+  TakeArray ta(field);
 
-  const field::Field& f = *field;
+  const field::Field& f = field;
   TakeArray cta(f);
 }
 
@@ -144,20 +144,20 @@ void TestField::test_wrap_rawdata_through_array()
 {
   std::vector<double> rawdata(20,8.);
   SharedPtr<array::Array> array( array::Array::wrap(rawdata.data(),array::make_shape(10,2)) );
-  SharedPtr<field::Field> field( field::Field::create("wrapped",array.get()) );
+  field::Field field( "wrapped",array.get() );
 
   ASSERT( array->owners() == 2 );
-  const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(*field);
+  const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(field);
   ASSERT( cfieldv(9,1) == 8. );
 }
 
 void TestField::test_wrap_rawdata_direct()
 {
   std::vector<double> rawdata(20,8.);
-  SharedPtr<field::Field> field( field::Field::wrap("wrapped",rawdata.data(),array::make_shape(10,2)));
+  field::Field field( "wrapped",rawdata.data(),array::make_shape(10,2) );
 
-  ASSERT( field->array().owners() == 1 );
-  const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(*field);
+  ASSERT( field.array().owners() == 1 );
+  const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(field);
   ASSERT( cfieldv(9,1) == 8. );
 }
 

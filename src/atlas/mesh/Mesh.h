@@ -165,7 +165,7 @@ public:
 
     // operator MeshImpl&() { return *mesh_; }
     Mesh( const Mesh& other );
-    Mesh( MeshImpl* );
+    Mesh( const MeshImpl* );
     Mesh();
 
     /// @brief Construct a mesh from a Stream (serialization)

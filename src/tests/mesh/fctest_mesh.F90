@@ -37,6 +37,7 @@ END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
+
 TEST( test_mesh_nodes )
 implicit none
 
@@ -168,24 +169,46 @@ implicit none
   write(0,*) "test_field_wrapdata"
   allocate( existing_data(2,10,N) )
 
+  write(0,*) "line ", __LINE__
+
   ! Work with fields from here
   field = atlas_Field("wrapped",existing_data)
+
+  write(0,*) "line ", __LINE__
+
   FCTEST_CHECK_EQUAL( field%rank()   , 3  )
   FCTEST_CHECK_EQUAL( field%size()   , 2*10*N )
   FCTEST_CHECK_EQUAL( field%shape(1) , 2  )
   FCTEST_CHECK_EQUAL( field%shape(2) , 10 )
   FCTEST_CHECK_EQUAL( field%shape(3) , N  )
+
+  write(0,*) "line ", __LINE__
+
+  FCTEST_CHECK_EQUAL( field%owners() , 1  )
+
+  write(0,*) "line ", __LINE__
+
   call field%data(data)
+
+  write(0,*) "line ", __LINE__
+
   do j=1,N
     data(1,1,j) = j
   enddo
+  
+  write(0,*) "line ", __LINE__
+  
   call field%final()
   ! ... until here
+  write(0,*) "line ", __LINE__
 
   ! Existing data is not deleted
   do j=1,N
     FCTEST_CHECK_EQUAL( existing_data(1,1,j), real(j,c_double) )
   enddo
+  
+  write(0,*) "line ", __LINE__
+  
 END_TEST
 
 ! -----------------------------------------------------------------------------
