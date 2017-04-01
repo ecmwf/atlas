@@ -9,6 +9,7 @@
  */
 
 #include <algorithm>
+#include "eckit/memory/SharedPtr.h"
 #include "atlas/library/config.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/ElementType.h"

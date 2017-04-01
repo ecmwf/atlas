@@ -1,5 +1,6 @@
 #pragma once
 
+#include "eckit/memory/SharedPtr.h"
 #include "atlas/grid/detail/spacing/Spacing.h"
 
 //---------------------------------------------------------------------------------------------------------------------

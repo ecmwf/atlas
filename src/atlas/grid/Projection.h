@@ -1,11 +1,9 @@
 #pragma once
 
 #include <string>
-#include <array>
 #include "eckit/config/Parametrisation.h"
 #include "eckit/value/Properties.h"
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/util/Point.h"
 #include "atlas/grid/detail/projection/Projection.h"

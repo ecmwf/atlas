@@ -43,11 +43,7 @@ namespace functionspace {
 // -------------------------------------------------------------------
 
 namespace detail {
-class StructuredColumns : public FunctionSpaceImpl
-{
-public:
-
-    typedef eckit::SharedPtr<StructuredColumns> Ptr;
+class StructuredColumns : public FunctionSpaceImpl {
 
 public:
 

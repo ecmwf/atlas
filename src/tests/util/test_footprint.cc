@@ -22,7 +22,6 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/grid/Grid.h"
-#include "eckit/memory/SharedPtr.h"
 #include "eckit/log/Bytes.h"
 
 #include "tests/AtlasFixture.h"
@@ -38,8 +37,8 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_broadcast_to_self )
 {
-  eckit::SharedPtr<array::Array> array( array::Array::create<double>(10,2) );
-  Log::info() << "array.footprint = " << eckit::Bytes(array->footprint()) << std::endl;
+  array::ArrayT<double> array(10,2);
+  Log::info() << "array.footprint = " << eckit::Bytes(array.footprint()) << std::endl;
 
   field::Field field ("field",array::make_datatype<double>(),array::make_shape(10,2));
   Log::info() << "field.footprint = " << eckit::Bytes(field.footprint()) << std::endl;

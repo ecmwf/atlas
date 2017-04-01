@@ -534,8 +534,8 @@ template <typename T>
 std::string checksum_3d_field(const parallel::Checksum& checksum, const field::Field& field )
 {
   array::LocalView<T,3> values = make_leveled_view<T>(field);
-  eckit::SharedPtr<array::Array> surface_field( array::Array::create<T>( array::make_shape(values.shape(0),values.shape(2) ) ) );
-  array::ArrayView<T,2> surface = array::make_view<T,2>(*surface_field);
+  array::ArrayT<T> surface_field( values.shape(0), values.shape(2) );
+  array::ArrayView<T,2> surface = array::make_view<T,2>(surface_field);
   const size_t npts = values.shape(0);
   atlas_omp_for( size_t n=0; n<npts; ++n ) {
     for( size_t j=0; j<surface.shape(1); ++j )
@@ -545,7 +545,7 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const field::F
         surface(n,j) += values(n,l,j);
     }
   }
-  return checksum.execute( surface.data(), surface_field->stride(0) );
+  return checksum.execute( surface.data(), surface_field.stride(0) );
 }
 }
 
@@ -769,9 +769,8 @@ void dispatch_sum_per_level( const NodeColumns& fs, const field::Field& field, f
 
   atlas_omp_parallel
   {
-    eckit::SharedPtr<array::Array> sum_per_level_private(
-      array::Array::create<T>(sum_per_level.shape(0),sum_per_level.shape(1)));
-    array::ArrayView<T,2> sum_per_level_private_view = array::make_view<T,2>(*sum_per_level_private);
+    array::ArrayT<T> sum_per_level_private(sum_per_level.shape(0),sum_per_level.shape(1));
+    array::ArrayView<T,2> sum_per_level_private_view = array::make_view<T,2>(sum_per_level_private);
 
     for( size_t l=0; l<sum_per_level_private_view.shape(0); ++l ) {
       for( size_t j=0; j<sum_per_level_private_view.shape(1); ++j ) {
@@ -792,8 +791,8 @@ void dispatch_sum_per_level( const NodeColumns& fs, const field::Field& field, f
     }
     atlas_omp_critical
     {
-      for( size_t l=0; l<sum_per_level_private->shape(0); ++l ) {
-        for( size_t j=0; j<sum_per_level_private->shape(1); ++j ) {
+      for( size_t l=0; l<sum_per_level_private.shape(0); ++l ) {
+        for( size_t j=0; j<sum_per_level_private.shape(1); ++j ) {
           sum_per_level(l,j) += sum_per_level_private_view(l,j);
         }
       }
@@ -1220,8 +1219,8 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const field::Field& fiel
   const array::LocalView<T,3> arr = make_leveled_view<T>(field);
   atlas_omp_parallel
   {
-    eckit::SharedPtr<array::Array> min_private( array::Array::create<T>(min.shape(0),min.shape(1)));
-    array::ArrayView<T,2> min_private_view = array::make_view<T,2>(*min_private);
+    array::ArrayT<T> min_private( min.shape(0),min.shape(1) );
+    array::ArrayView<T,2> min_private_view = array::make_view<T,2>(min_private);
     for( size_t l=0; l<min.shape(0); ++l ) {
       for( size_t j=0; j<min.shape(1); ++j ) {
         min_private_view(l,j) = std::numeric_limits<T>::max();
@@ -1289,8 +1288,8 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const field::Field& fiel
   const array::LocalView<T,3> arr = make_leveled_view<T>(field);
   atlas_omp_parallel
   {
-    eckit::SharedPtr<array::Array> max_private( array::Array::create<T>(max.shape(0),max.shape(1)) );
-    array::ArrayView<T,2> max_private_view = array::make_view<T,2>(*max_private);
+    array::ArrayT<T> max_private(max.shape(0),max.shape(1));
+    array::ArrayView<T,2> max_private_view = array::make_view<T,2>(max_private);
 
     for( size_t l=0; l<max_private_view.shape(0); ++l ) {
       for( size_t j=0; j<max_private_view.shape(1); ++j ) {
@@ -1624,8 +1623,8 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const field
 
   atlas_omp_parallel
   {
-    eckit::SharedPtr<array::Array> min_private( array::Array::create<T>(min.shape(0),min.shape(1)) );
-    array::ArrayView<T,2> min_private_view = array::make_view<T,2>(*min_private);
+    array::ArrayT<T> min_private(min.shape(0),min.shape(1));
+    array::ArrayView<T,2> min_private_view = array::make_view<T,2>(min_private);
 
     for( size_t l=0; l<min_private_view.shape(0); ++l ) {
       for( size_t j=0; j<min_private_view.shape(1); ++j ) {
@@ -1633,8 +1632,8 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const field
       }
     }
 
-    eckit::SharedPtr<array::Array> glb_idx_private( array::Array::create<gidx_t>(glb_idx.shape(0),glb_idx.shape(1)) );
-    array::ArrayView<gidx_t,2> glb_idx_private_view = array::make_view<gidx_t,2>(*glb_idx_private);
+    array::ArrayT<T> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
+    array::ArrayView<gidx_t,2> glb_idx_private_view = array::make_view<gidx_t,2>(glb_idx_private);
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
@@ -1730,8 +1729,8 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const field
 
   atlas_omp_parallel
   {
-    eckit::SharedPtr<array::Array> max_private( array::Array::create<T>(max.shape(0),max.shape(1)) );
-    array::ArrayView<T,2> max_private_view = array::make_view<T,2>(*max_private);
+    array::ArrayT<T> max_private(max.shape(0),max.shape(1));
+    array::ArrayView<T,2> max_private_view = array::make_view<T,2>(max_private);
 
     for( size_t l=0; l<max_private_view.shape(0); ++l ) {
       for( size_t j=0; j<max_private_view.shape(1); ++j ) {
@@ -1739,8 +1738,8 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const field
       }
     }
 
-    eckit::SharedPtr<array::Array> glb_idx_private( array::Array::create<gidx_t>(glb_idx.shape(0),glb_idx.shape(1)) );
-    array::ArrayView<gidx_t,2> glb_idx_private_view = array::make_view<gidx_t,2>(*glb_idx_private);
+    array::ArrayT<T> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
+    array::ArrayView<gidx_t,2> glb_idx_private_view = array::make_view<gidx_t,2>(glb_idx_private);
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {

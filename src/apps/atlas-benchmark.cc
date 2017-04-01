@@ -96,7 +96,6 @@ using namespace atlas::functionspace;
 using namespace atlas::meshgenerator;
 using atlas::AtlasTool;
 using eckit::Timer;
-using eckit::SharedPtr;
 
 
 namespace {

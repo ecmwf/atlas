@@ -35,7 +35,6 @@
 #include "atlas/array/gridtools/GPUClonable.h"
 
 #include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
 namespace mesh {

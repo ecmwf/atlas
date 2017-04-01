@@ -350,8 +350,8 @@ template <typename T>
 std::string checksum_3d_field(const parallel::Checksum& checksum, const field::Field& field )
 {
   array::ArrayView<T,3> values = array::make_view<T,3>(field);
-  eckit::SharedPtr<array::Array> surface_field( array::Array::create<T>( array::make_shape(field.shape(0),field.shape(2) ) ) );
-  array::ArrayView<T,2> surface = array::make_view<T,2>(*surface_field);
+  array::ArrayT<T> surface_field( field.shape(0),field.shape(2) );
+  array::ArrayView<T,2> surface = array::make_view<T,2>(surface_field);
   for( size_t n=0; n<values.shape(0); ++n ) {
     for( size_t j=0; j<surface.shape(1); ++j )
     {
@@ -360,7 +360,7 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const field::F
         surface(n,j) += values(n,l,j);
     }
   }
-  return checksum.execute( surface.data(), surface_field->stride(0) );
+  return checksum.execute( surface.data(), surface_field.stride(0) );
 }
 template <typename T>
 std::string checksum_2d_field(const parallel::Checksum& checksum, const field::Field& field )

@@ -29,8 +29,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
-#include "eckit/memory/ScopedPtr.h"
-#include "eckit/memory/SharedPtr.h"
 
 #include "tests/AtlasFixture.h"
 

@@ -11,7 +11,6 @@
 #pragma once
 
 #include <vector>
-#include "eckit/memory/SharedPtr.h"
 #include "atlas/numerics/Nabla.h"
 
 namespace atlas {

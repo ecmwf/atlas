@@ -37,7 +37,6 @@ using namespace atlas;
 using namespace atlas::grid;
 using eckit::JSON;
 using eckit::Factory;
-using eckit::SharedPtr;
 
 //----------------------------------------------------------------------------------------------------------------------
 

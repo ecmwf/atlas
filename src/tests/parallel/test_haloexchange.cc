@@ -15,6 +15,8 @@
 #define BOOST_TEST_MODULE TestHaloExchange
 #include "ecbuild/boost_test_framework.h"
 
+#include "eckit/memory/SharedPtr.h"
+
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/library/config.h"
 #include "atlas/array.h"

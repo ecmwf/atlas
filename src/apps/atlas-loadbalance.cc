@@ -14,7 +14,6 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
-#include "eckit/memory/SharedPtr.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -26,7 +25,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 //------------------------------------------------------------------------------------------------------
 
-using eckit::SharedPtr;
 using eckit::Resource;
 using namespace atlas;
 using namespace atlas::mesh::actions;

@@ -13,6 +13,7 @@
 #include <iosfwd>
 #include <string>
 #include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 #include "eckit/serialisation/FileStream.h"
 #include "eckit/config/Parametrisation.h"
 #include "atlas/util/Config.h"

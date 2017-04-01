@@ -259,8 +259,8 @@ void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], do
 
 
     int kdgl = 2*N;
-    eckit::SharedPtr<Array> zfn_ (Array::create<double>(kdgl+1,kdgl+1));
-    ArrayView<double,2> zfn = make_view<double,2>(*zfn_);
+    array::ArrayT<double> zfn_(kdgl+1,kdgl+1);
+    ArrayView<double,2> zfn = make_view<double,2>(zfn_);
     
     int iodd;
 

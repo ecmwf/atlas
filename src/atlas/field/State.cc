@@ -11,18 +11,15 @@
 #include <iomanip>
 #include <string>
 #include <map>
+#include <memory>
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
-#include "eckit/memory/ScopedPtr.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/State.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-
-using eckit::SharedPtr;
-using eckit::ScopedPtr;
 
 namespace atlas {
 namespace field {
@@ -51,7 +48,7 @@ namespace {
 
 void State::initialize( const std::string& generator, const eckit::Parametrisation& params )
 {
-  ScopedPtr<StateGenerator> state_generator ( StateGeneratorFactory::build(generator, params) );
+  std::unique_ptr<StateGenerator> state_generator ( StateGeneratorFactory::build(generator, params) );
   state_generator->generate( *this, params );
 }
 

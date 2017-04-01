@@ -51,10 +51,6 @@ class NodeColumns : public FunctionSpaceImpl
 {
 public:
 
-    typedef eckit::SharedPtr<NodeColumns> Ptr;
-
-public:
-
     NodeColumns( mesh::Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
     NodeColumns( mesh::Mesh& mesh, const mesh::Halo & );
     NodeColumns( mesh::Mesh& mesh );

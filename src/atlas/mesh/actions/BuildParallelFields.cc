@@ -162,8 +162,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
 
   // 1) Gather all global indices, together with location
-  eckit::SharedPtr<array::Array> loc_id_arr( array::Array::create<uid_t>(nb_nodes) );
-  array::ArrayView<uid_t,1> loc_id = array::make_view<uid_t,1>(*loc_id_arr);
+  array::ArrayT<uid_t> loc_id_arr( nb_nodes );
+  array::ArrayView<uid_t,1> loc_id = array::make_view<uid_t,1>(loc_id_arr);
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -182,8 +182,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   }
   int glb_nb_nodes = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
-  eckit::SharedPtr<array::Array> glb_id_arr( array::Array::create<uid_t>(glb_nb_nodes) );
-  array::ArrayView<uid_t,1> glb_id = array::make_view<uid_t,1>(*glb_id_arr);
+  array::ArrayT<uid_t> glb_id_arr( glb_nb_nodes );
+  array::ArrayView<uid_t,1> glb_id = array::make_view<uid_t,1>(glb_id_arr);
 
   parallel::mpi::comm().gatherv(loc_id.data(), loc_id.size(), glb_id.data(), recvcounts.data(), recvdispls.data(), root);
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
@@ -802,8 +802,8 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   // unused //  const int ridx_base = 1;
 
   // 1) Gather all global indices, together with location
-  eckit::SharedPtr<array::Array> loc_edge_id_arr( array::Array::create<uid_t>(nb_edges) );
-  array::ArrayView<uid_t,1> loc_edge_id = array::make_view<uid_t,1>(*loc_edge_id_arr);
+  array::ArrayT<uid_t> loc_edge_id_arr(nb_edges);
+  array::ArrayView<uid_t,1> loc_edge_id = array::make_view<uid_t,1>(loc_edge_id_arr);
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
@@ -822,8 +822,8 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   }
   int glb_nb_edges = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
-  eckit::SharedPtr<array::Array> glb_edge_id_arr( array::Array::create<uid_t>(glb_nb_edges) );
-  array::ArrayView<uid_t,1> glb_edge_id = array::make_view<uid_t,1>(*glb_edge_id_arr);
+  array::ArrayT<uid_t> glb_edge_id_arr(glb_nb_edges);
+  array::ArrayView<uid_t,1> glb_edge_id = array::make_view<uid_t,1>(glb_edge_id_arr);
 
   parallel::mpi::comm().gatherv(loc_edge_id.data(), loc_edge_id.size(), glb_edge_id.data(), recvcounts.data(), recvdispls.data(), root);
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges

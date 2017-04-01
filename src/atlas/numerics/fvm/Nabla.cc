@@ -126,8 +126,8 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
   const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
 
-  eckit::SharedPtr<array::Array> avgS_arr( array::Array::create<double>( nedges,nlev,2ul ) );
-  array::ArrayView<double,3> avgS = array::make_view<double,3>(*avgS_arr);
+  array::ArrayT<double> avgS_arr( nedges,nlev,2ul );
+  array::ArrayView<double,3> avgS = array::make_view<double,3>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius;
 
@@ -207,8 +207,8 @@ void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &g
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
   const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
 
-  eckit::SharedPtr<array::Array> avgS_arr( array::Array::create<double>( nedges,nlev,2ul,2ul ) );
-  array::ArrayView<double,4> avgS = array::make_view<double,4>(*avgS_arr);
+  array::ArrayT<double> avgS_arr( nedges,nlev,2ul,2ul );
+  array::ArrayView<double,4> avgS = array::make_view<double,4>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius;
 
@@ -311,8 +311,8 @@ void Nabla::divergence(const field::Field& vector_field, field::Field& div_field
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
   const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
 
-  eckit::SharedPtr<array::Array> avgS_arr( array::Array::create<double>( nedges,nlev,2ul ) );
-  array::ArrayView<double,3> avgS = array::make_view<double,3>(*avgS_arr);
+  array::ArrayT<double> avgS_arr(nedges,nlev,2ul);
+  array::ArrayView<double,3> avgS = array::make_view<double,3>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius;
 
@@ -399,8 +399,8 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
   const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
 
-  eckit::SharedPtr<array::Array> avgS_arr( array::Array::create<double>( nedges,nlev,2ul ) );
-  array::ArrayView<double,3> avgS = array::make_view<double,3>(*avgS_arr);
+  array::ArrayT<double> avgS_arr(nedges,nlev,2ul);
+  array::ArrayView<double,3> avgS = array::make_view<double,3>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius*radius;
 

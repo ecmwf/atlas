@@ -53,7 +53,6 @@ using namespace atlas::functionspace;
 using namespace atlas::mesh;
 using atlas::util::Config;
 using eckit::PathName;
-using eckit::SharedPtr;
 
 //------------------------------------------------------------------------------
 

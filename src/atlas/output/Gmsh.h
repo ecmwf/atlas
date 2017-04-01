@@ -41,10 +41,6 @@ class Gmsh : public Output::output_t {
 
 public:
 
-  typedef eckit::SharedPtr<Gmsh> Ptr;
-
-public:
-
     Gmsh(Stream&);
     Gmsh(Stream&, const eckit::Parametrisation&);
 

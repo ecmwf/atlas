@@ -664,8 +664,8 @@ void build_centroid_dual_mesh( Mesh& mesh )
 
   build_skewness( mesh );
 
-  eckit::SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(mesh,Halo(mesh)) );
-  nodes_fs->haloExchange(nodes.field("dual_volumes"));
+  functionspace::NodeColumns nodes_fs(mesh,Halo(mesh));
+  nodes_fs.haloExchange(nodes.field("dual_volumes"));
 
   array::ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
   edges.parallelise();

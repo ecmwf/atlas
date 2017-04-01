@@ -17,7 +17,6 @@
 #pragma once
 
 #include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/array/ArrayView.h"

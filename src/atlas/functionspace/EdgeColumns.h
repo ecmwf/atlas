@@ -44,10 +44,6 @@ class EdgeColumns : public FunctionSpaceImpl
 {
 public:
 
-    typedef eckit::SharedPtr<EdgeColumns> Ptr;
-
-public:
-
     EdgeColumns( const mesh::Mesh&, const mesh::Halo &, const eckit::Parametrisation & );
     EdgeColumns( const mesh::Mesh&, const mesh::Halo & );
     EdgeColumns( const mesh::Mesh& );

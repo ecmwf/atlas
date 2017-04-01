@@ -11,6 +11,7 @@
 #include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
+#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/library/Library.h"

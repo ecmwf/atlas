@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "eckit/runtime/Main.h"
+#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/library/config.h"
 #include "atlas/grid/Partitioner.h"

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "eckit/memory/SharedPtr.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/grid/detail/grid/Unstructured.h"
 #include "atlas/grid/detail/grid/Structured.h"

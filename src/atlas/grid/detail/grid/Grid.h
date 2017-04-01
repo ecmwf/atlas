@@ -14,7 +14,6 @@
 #include <vector>
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 #include "eckit/utils/MD5.h"
 #include "eckit/value/Properties.h"
 #include "atlas/grid/Domain.h"
