@@ -10,12 +10,10 @@
 
 #pragma once
 
-#include "atlas/grid/Partitioner.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
-#include "atlas/field/FieldSet.h"
+#include "atlas/grid.h"
+#include "atlas/meshgenerator.h"
+#include "atlas/mesh.h"
+#include "atlas/field.h"
 
 
 namespace atlas {

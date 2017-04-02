@@ -71,7 +71,7 @@ private: // data
 
 extern "C"
 {
-  Method* atlas__numerics__fvm__Method__new (mesh::Mesh::mesh_t* mesh, const eckit::Parametrisation* params);
+  Method* atlas__numerics__fvm__Method__new (mesh::Mesh::Implementation* mesh, const eckit::Parametrisation* params);
   const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This);
   const functionspace::detail::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This);
 }

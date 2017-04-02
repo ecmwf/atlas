@@ -11,10 +11,10 @@
 
 #include "eckit/linalg/LinearAlgebra.h"
 
-#include "atlas/field/FieldSet.h"
-#include "atlas/functionspace/NodeColumns.h"
-#include "atlas/runtime/AtlasTool.h"
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
 #include "atlas/interpolation/method/Method.h"
+#include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
 
 #include "PartitionedMesh.h"

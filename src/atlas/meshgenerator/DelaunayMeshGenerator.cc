@@ -11,6 +11,8 @@
 #include "eckit/utils/MD5.h"
 #include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/grid/Distribution.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/Projection.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
@@ -21,6 +23,8 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/array/MakeView.h"
 
 using atlas::mesh::Mesh;
 
@@ -67,7 +71,8 @@ void DelaunayMeshGenerator::generate(const grid::Grid& grid, const grid::Distrib
 
 void DelaunayMeshGenerator::generate(const grid::Grid& g, mesh::Mesh& mesh) const
 {
-  mesh.createNodes(g);
+
+  createNodes(g,mesh);
 
   array::ArrayView<gidx_t,1> gidx = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
   for( size_t jnode=0; jnode<mesh.nodes().size(); ++ jnode ) {
@@ -77,6 +82,26 @@ void DelaunayMeshGenerator::generate(const grid::Grid& g, mesh::Mesh& mesh) cons
   mesh::actions::BuildXYZField()(mesh);
   mesh::actions::ExtendNodesGlobal()(g, mesh);    ///< does nothing if global domain
   mesh::actions::BuildConvexHull3D()(mesh);
+}
+
+void DelaunayMeshGenerator::createNodes(const grid::Grid& grid, mesh::Mesh& mesh) const
+{
+  size_t nb_nodes = grid.size();
+  mesh.nodes().resize(nb_nodes);
+
+  array::ArrayView<double,2> xy     = array::make_view<double,2>( mesh.nodes().xy() );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh.nodes().lonlat() );
+  size_t jnode(0);
+  grid::Projection projection = grid.projection();
+  PointLonLat Pll;
+  for( PointXY Pxy : grid ) {
+    xy(jnode,XX) = Pxy.x();
+    xy(jnode,YY) = Pxy.y();
+    Pll = projection.lonlat(Pxy);
+    lonlat(jnode,LON) = Pll.lon();
+    lonlat(jnode,LAT) = Pll.lat();
+    ++jnode;
+  }
 }
 
 namespace {

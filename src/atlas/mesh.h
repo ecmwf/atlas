@@ -12,7 +12,11 @@
 
 #pragma once
 
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/Partitioner.h"
-#include "atlas/grid/Domain.h"
-#include "atlas/grid/Iterator.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/Halo.h"
+#include "atlas/mesh/ElementType.h"
+#include "atlas/mesh/HybridElements.h"
+#include "atlas/mesh/Elements.h"
+#include "atlas/mesh/Connectivity.h"
+#include "atlas/mesh/IsGhostNode.h"

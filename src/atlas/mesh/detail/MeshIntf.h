@@ -8,27 +8,25 @@
  * does it submit to any jurisdiction.
  */
 
+#pragma once
+
 #include "atlas/mesh/Mesh.h"
+
+//----------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace mesh {
 
-//----------------------------------------------------------------------------------------------------------------------
-
-Mesh::Mesh() :
-    impl_( new Implementation() ) {
-}
-
-Mesh::Mesh( const Mesh& mesh ) :
-    impl_( mesh.impl_ ) {
-}
-
-Mesh::Mesh( const Implementation* impl ) :
-    impl_( const_cast<Implementation*>(impl) ) {
-}
-
-Mesh::Mesh( eckit::Stream& stream ) :
-    impl_( new Implementation(stream) ) {
+// C wrapper interfaces to C++ routines
+extern "C"
+{
+  Mesh::Implementation* atlas__Mesh__new ();
+  void atlas__Mesh__delete (Mesh::Implementation* This);
+  Nodes* atlas__Mesh__create_nodes (Mesh::Implementation* This, int nb_nodes);
+  Nodes* atlas__Mesh__nodes (Mesh::Implementation* This);
+  Edges* atlas__Mesh__edges (Mesh::Implementation* This);
+  Cells* atlas__Mesh__cells (Mesh::Implementation* This);
+  size_t atlas__Mesh__footprint (Mesh::Implementation* This);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -789,11 +789,11 @@ void build_skewness( Mesh& mesh )
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-void atlas__build_median_dual_mesh ( Mesh::mesh_t* mesh) {
+void atlas__build_median_dual_mesh ( Mesh::Implementation* mesh) {
   ATLAS_ERROR_HANDLING( Mesh m(mesh); build_median_dual_mesh(m); );
 }
 
-void atlas__build_centroid_dual_mesh ( Mesh::mesh_t* mesh) {
+void atlas__build_centroid_dual_mesh ( Mesh::Implementation* mesh) {
   ATLAS_ERROR_HANDLING( Mesh m(mesh); build_centroid_dual_mesh(m); );
 }
 // ------------------------------------------------------------------

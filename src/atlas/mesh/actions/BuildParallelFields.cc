@@ -865,14 +865,14 @@ field::Field& build_edges_global_idx( Mesh& mesh )
 //----------------------------------------------------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-void atlas__build_parallel_fields ( Mesh::mesh_t* mesh) {
+void atlas__build_parallel_fields ( Mesh::Implementation* mesh) {
   ATLAS_ERROR_HANDLING( Mesh m(mesh); build_parallel_fields(m); );
 }
 void atlas__build_nodes_parallel_fields (mesh::Nodes* nodes) {
   ATLAS_ERROR_HANDLING( build_nodes_parallel_fields(*nodes) );
 }
 
-void atlas__build_edges_parallel_fields ( Mesh::mesh_t* mesh ) {
+void atlas__build_edges_parallel_fields ( Mesh::Implementation* mesh ) {
   ATLAS_ERROR_HANDLING( Mesh m(mesh); build_edges_parallel_fields(m); );
 }
 

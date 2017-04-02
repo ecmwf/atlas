@@ -106,7 +106,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Structured.
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Distribution.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Mesh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshIntf.h
+    MODULE    atlas_mesh_c_binding
+    OUTPUT    atlas_mesh_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Nodes.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Connectivity.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/HybridElements.h)
@@ -117,7 +119,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildPeriodicBo
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildHalo.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildEdges.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildDualMesh.h)
-#generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/GenerateMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/WriteLoadBalanceReport.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/meshgenerator/MeshGenerator.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Output.h)

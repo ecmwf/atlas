@@ -224,7 +224,7 @@ const OutputImpl* atlas__Output__create(const char* factory_key, Stream* stream,
   return output;
 }
 
-void atlas__Output__write_mesh(const OutputImpl* This, Mesh::mesh_t* mesh, const Parametrisation* params)
+void atlas__Output__write_mesh(const OutputImpl* This, Mesh::Implementation* mesh, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);

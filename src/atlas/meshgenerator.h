@@ -12,7 +12,5 @@
 
 #pragma once
 
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/Partitioner.h"
-#include "atlas/grid/Domain.h"
-#include "atlas/grid/Iterator.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"

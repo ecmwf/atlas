@@ -184,6 +184,7 @@ list( APPEND atlas_grid_srcs
 endif()
 
 list( APPEND atlas_mesh_srcs
+mesh.h
 mesh/Connectivity.cc
 mesh/Connectivity.h
 mesh/ElementType.cc
@@ -196,6 +197,10 @@ mesh/HybridElements.cc
 mesh/HybridElements.h
 mesh/Mesh.cc
 mesh/Mesh.h
+mesh/detail/MeshIntf.cc
+mesh/detail/MeshIntf.h
+mesh/detail/MeshImpl.cc
+mesh/detail/MeshImpl.h
 mesh/Nodes.cc
 mesh/Nodes.h
 
@@ -220,10 +225,9 @@ mesh/actions/BuildStatistics.cc
 mesh/actions/BuildStatistics.h
 mesh/actions/BuildXYZField.cc
 mesh/actions/BuildXYZField.h
-mesh/actions/GenerateMesh.cc
-mesh/actions/GenerateMesh.h
 mesh/actions/WriteLoadBalanceReport.cc
 
+meshgenerator.h
 meshgenerator/DelaunayMeshGenerator.h
 meshgenerator/DelaunayMeshGenerator.cc
 meshgenerator/MeshGenerator.cc
@@ -244,6 +248,7 @@ output/Gmsh.cc
 )
 
 list( APPEND atlas_field_srcs
+field.h
 field/Field.h
 field/Field.cc
 field/FieldCreator.h
@@ -260,6 +265,7 @@ field/Options.h
 )
 
 list( APPEND atlas_functionspace_srcs
+functionspace.h
 functionspace/EdgeColumns.h
 functionspace/EdgeColumns.cc
 functionspace/FunctionSpace.h

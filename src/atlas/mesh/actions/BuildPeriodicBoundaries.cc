@@ -212,7 +212,7 @@ void build_periodic_boundaries( Mesh& mesh )
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-void atlas__build_periodic_boundaries ( Mesh::mesh_t* mesh) {
+void atlas__build_periodic_boundaries ( Mesh::Implementation* mesh) {
   ATLAS_ERROR_HANDLING( Mesh m(mesh); build_periodic_boundaries(m); );
 }
 // ------------------------------------------------------------------

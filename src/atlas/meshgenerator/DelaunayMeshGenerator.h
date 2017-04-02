@@ -41,8 +41,11 @@ private: // methods
 
   virtual void hash(eckit::MD5&) const;
 
-  virtual void generate(const grid::Grid& g, const grid::Distribution&, mesh::Mesh& mesh) const;
-  virtual void generate(const grid::Grid& g, mesh::Mesh& mesh) const;
+  virtual void generate(const grid::Grid&, const grid::Distribution&, mesh::Mesh&) const;
+  virtual void generate(const grid::Grid&, mesh::Mesh&) const;
+  
+  void createNodes(const grid::Grid&, mesh::Mesh&) const;
+  
 };
 
 //----------------------------------------------------------------------------------------------------------------------

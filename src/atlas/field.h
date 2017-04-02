@@ -12,7 +12,5 @@
 
 #pragma once
 
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/Partitioner.h"
-#include "atlas/grid/Domain.h"
-#include "atlas/grid/Iterator.h"
+#include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"

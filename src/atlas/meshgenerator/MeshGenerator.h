@@ -151,8 +151,8 @@ extern "C" {
 void atlas__MeshGenerator__delete(MeshGenerator::meshgenerator_t* This);
 const MeshGenerator::meshgenerator_t* atlas__MeshGenerator__create_noconfig(const char* name);
 const MeshGenerator::meshgenerator_t* atlas__MeshGenerator__create(const char* name, const eckit::Parametrisation* params);
-mesh::Mesh::mesh_t* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
-mesh::Mesh::mesh_t* atlas__MeshGenerator__generate__grid(const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid);
+mesh::Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
+mesh::Mesh::Implementation* atlas__MeshGenerator__generate__grid(const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

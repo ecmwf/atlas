@@ -32,7 +32,7 @@ void build_halo( Mesh& mesh, int nb_elems );
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  void atlas__build_halo (Mesh::mesh_t* mesh, int nb_elems);
+  void atlas__build_halo (Mesh::Implementation* mesh, int nb_elems);
 }
 // ------------------------------------------------------------------
 

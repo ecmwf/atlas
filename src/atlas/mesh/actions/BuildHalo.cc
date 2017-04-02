@@ -951,7 +951,7 @@ void build_halo(Mesh& mesh, int nb_elems )
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-void atlas__build_halo ( Mesh::mesh_t* mesh, int nb_elems ) {
+void atlas__build_halo ( Mesh::Implementation* mesh, int nb_elems ) {
 // #undef ATLAS_ERROR_HANDLING
 // #define ATLAS_ERROR_HANDLING(x) x
   ATLAS_ERROR_HANDLING( Mesh m(mesh); build_halo(m, nb_elems); );

@@ -12,7 +12,8 @@
 
 #pragma once
 
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/Partitioner.h"
-#include "atlas/grid/Domain.h"
-#include "atlas/grid/Iterator.h"
+#include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/EdgeColumns.h"
+#include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/functionspace/Spectral.h"

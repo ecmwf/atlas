@@ -8,14 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_field_Options_h
-#define atlas_field_Options_h
+#pragma once
 
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
-
-// ----------------------------------------------------------------------------
-// Forward declarations
+#include "atlas/array/DataType.h"
 
 // ----------------------------------------------------------------------------
 
@@ -74,12 +71,9 @@ public:
   {
     set("datatype",array::DataType::str_to_kind(str));
   }
-
 };
 
 // ----------------------------------------------------------------------------
 
 } // namespace field
 } // namespace atlas
-
-#endif // atlas_field_Options_h

@@ -452,7 +452,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 
 
-EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh::mesh_t* mesh, int halo )
+EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh::Implementation* mesh, int halo )
 {
   EdgeColumns* edges(0);
   ATLAS_ERROR_HANDLING(
@@ -465,7 +465,7 @@ EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh::mesh_t* mesh, int ha
 
 //------------------------------------------------------------------------------
 
-EdgeColumns* atlas__functionspace__Edges__new_mesh ( mesh::Mesh::mesh_t* mesh )
+EdgeColumns* atlas__functionspace__Edges__new_mesh ( mesh::Mesh::Implementation* mesh )
 {
   EdgeColumns* edges(0);
   ATLAS_ERROR_HANDLING(
@@ -499,7 +499,7 @@ int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This)
 
 //------------------------------------------------------------------------------
 
-mesh::Mesh::mesh_t* atlas__functionspace__Edges__mesh(EdgeColumns* This)
+mesh::Mesh::Implementation* atlas__functionspace__Edges__mesh(EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);

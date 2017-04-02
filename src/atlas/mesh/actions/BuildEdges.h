@@ -28,9 +28,9 @@ void build_node_to_edge_connectivity( Mesh& mesh );
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  void atlas__build_edges (Mesh::mesh_t* mesh);
-  void atlas__build_pole_edges (Mesh::mesh_t* mesh);
-  void atlas__build_node_to_edge_connectivity (Mesh::mesh_t* mesh);
+  void atlas__build_edges (Mesh::Implementation* mesh);
+  void atlas__build_pole_edges (Mesh::Implementation* mesh);
+  void atlas__build_node_to_edge_connectivity (Mesh::Implementation* mesh);
 }
 // ------------------------------------------------------------------
 
