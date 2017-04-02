@@ -208,7 +208,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     src_functionspace.haloExchange(src_fields);
 
     Log::info() << "Writing input to interpolation to src.msh" << std::endl;
-    src.writeGmsh("src.msh", &src_fields);
+    src.writeGmsh("src.msh", src_fields);
 
 
     Log::info() << "Interpolate forward" << std::endl;
@@ -251,11 +251,11 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     // Output results
     Log::info() << "Writing forward interpolation results to tgt.msh" << std::endl;
-    tgt.writeGmsh("tgt.msh", &tgt_fields);
+    tgt.writeGmsh("tgt.msh", tgt_fields);
 
     if( with_backward ) {
       Log::info() << "Writing backward interpolation results to src-back.msh" << std::endl;
-      src.writeGmsh("src-back.msh", &src_fields);
+      src.writeGmsh("src-back.msh", src_fields);
     }
 }
 

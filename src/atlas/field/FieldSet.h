@@ -30,18 +30,17 @@ class FieldSet;
 /**
  * @brief Represents a set of fields, where order is preserved
  */
-class FieldSet : public eckit::Owned {
+class FieldSetImpl : public eckit::Owned {
 
 public: // types
 
-  typedef eckit::SharedPtr< FieldSet > Ptr;
   typedef std::vector<Field>::iterator       iterator;
   typedef std::vector<Field>::const_iterator const_iterator;
 
 public: // methods
 
   /// Constructs an empty FieldSet
-  FieldSet(const std::string& name = "untitled");
+  FieldSetImpl(const std::string& name = "untitled");
 
   size_t size() const { return  fields_.size(); }
   bool empty()  const { return !fields_.size(); }
@@ -82,17 +81,72 @@ protected: // data
   std::map< std::string, size_t >  index_;   ///< name-to-index map, to refer fields by name
 };
 
+class FieldSet;
+
+/**
+ * @brief Represents a set of fields, where order is preserved
+ */
+class FieldSet : public eckit::Owned {
+
+public: // types
+
+  typedef std::vector<Field>::iterator       iterator;
+  typedef std::vector<Field>::const_iterator const_iterator;
+
+public: // methods
+
+  FieldSet( const std::string& name = "untitled" );
+  FieldSet( const FieldSetImpl* );
+  FieldSet( const FieldSet& );
+
+  size_t size() const { return  fieldset_->size(); }
+  bool empty()  const { return  fieldset_->empty(); }
+
+  void clear() { fieldset_->clear(); }
+
+  const std::string& name() const { return fieldset_->name(); }
+        std::string& name()       { return fieldset_->name(); }
+
+  const Field& operator[](const size_t &i) const { return fieldset_->operator[](i); }
+        Field& operator[](const size_t &i)       { return fieldset_->operator[](i); }
+
+  const Field& operator[](const std::string &name) const { return fieldset_->operator[](name); }
+        Field& operator[](const std::string &name)       { return fieldset_->operator[](name); }
+
+  const Field& field(const size_t& i) const { return fieldset_->field(i); }
+        Field& field(const size_t& i)       { return fieldset_->field(i); }
+
+  std::vector< std::string > field_names() const { return fieldset_->field_names(); }
+
+  Field add( const Field& field ) { return fieldset_->add(field); }
+
+  bool has_field(const std::string& name) const { return fieldset_->has_field(name); }
+
+  Field& field(const std::string& name) const { return fieldset_->field(name); }
+
+  iterator begin() { return fieldset_->begin(); }
+  iterator end()   { return fieldset_->end(); }
+  const_iterator begin()  const { return fieldset_->begin(); }
+  const_iterator end()    const { return fieldset_->end(); }
+  const_iterator cbegin() const { return fieldset_->begin(); }
+  const_iterator cend()   const { return fieldset_->end(); }
+
+private: // data
+
+  eckit::SharedPtr<FieldSetImpl> fieldset_;
+};
+
 
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  FieldSet* atlas__FieldSet__new           (char* name);
-  void      atlas__FieldSet__delete        (FieldSet* This);
-  void      atlas__FieldSet__add_field     (FieldSet* This, FieldImpl* field);
-  int       atlas__FieldSet__has_field     (FieldSet* This, char* name);
-  size_t    atlas__FieldSet__size          (FieldSet* This);
-  FieldImpl*    atlas__FieldSet__field_by_name (FieldSet* This, char* name);
-  FieldImpl*    atlas__FieldSet__field_by_idx  (FieldSet* This, size_t idx);
+  FieldSetImpl* atlas__FieldSet__new       (char* name);
+  void      atlas__FieldSet__delete        (FieldSetImpl* This);
+  void      atlas__FieldSet__add_field     (FieldSetImpl* This, FieldImpl* field);
+  int       atlas__FieldSet__has_field     (const FieldSetImpl* This, char* name);
+  size_t    atlas__FieldSet__size          (const FieldSetImpl* This);
+  FieldImpl*    atlas__FieldSet__field_by_name (FieldSetImpl* This, char* name);
+  FieldImpl*    atlas__FieldSet__field_by_idx  (FieldSetImpl* This, size_t idx);
 }
 
 } // namespace field

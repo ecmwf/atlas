@@ -26,6 +26,7 @@
 using atlas::field::Field;
 using atlas::field::FieldImpl;
 using atlas::field::FieldSet;
+using atlas::field::FieldSetImpl;
 using atlas::mesh::Mesh;
 using atlas::functionspace::FunctionSpace;
 using eckit::Parametrisation;
@@ -233,13 +234,13 @@ void atlas__Output__write_mesh(const OutputImpl* This, Mesh::mesh_t* mesh, const
     This->write(m,*params);
   );
 }
-void atlas__Output__write_fieldset(const OutputImpl* This, const FieldSet* fieldset, const Parametrisation* params)
+void atlas__Output__write_fieldset(const OutputImpl* This, const FieldSetImpl* fieldset, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(fieldset);
     ASSERT(params);
-    This->write(*fieldset,*params);
+    This->write(fieldset,*params);
   );
 }
 void atlas__Output__write_field(const OutputImpl* This, const FieldImpl* field, const Parametrisation* params)
@@ -251,14 +252,14 @@ void atlas__Output__write_field(const OutputImpl* This, const FieldImpl* field, 
     This->write(field,*params);
   );
 }
-void atlas__Output__write_fieldset_fs(const OutputImpl* This, const FieldSet* fieldset, const functionspace::FunctionSpaceImpl* functionspace, const Parametrisation* params)
+void atlas__Output__write_fieldset_fs(const OutputImpl* This, const FieldSetImpl* fieldset, const functionspace::FunctionSpaceImpl* functionspace, const Parametrisation* params)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(fieldset);
     ASSERT(functionspace);
     ASSERT(params);
-    This->write(*fieldset,functionspace,*params);
+    This->write(fieldset,functionspace,*params);
   );
 }
 void atlas__Output__write_field_fs(const OutputImpl* This, const FieldImpl* field, const functionspace::FunctionSpaceImpl* functionspace, const Parametrisation* params)

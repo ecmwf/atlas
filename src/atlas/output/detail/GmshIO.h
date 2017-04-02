@@ -139,7 +139,7 @@ mesh::Mesh::mesh_t* atlas__Gmsh__read(GmshIO* This, char* file_path);
 void atlas__Gmsh__write(GmshIO* This, mesh::Mesh::mesh_t* mesh, char* file_path);
 mesh::Mesh::mesh_t* atlas__read_gmsh(char* file_path);
 void atlas__write_gmsh_mesh(const mesh::Mesh::mesh_t* mesh, char* file_path);
-void atlas__write_gmsh_fieldset(const field::FieldSet* fieldset, functionspace::FunctionSpaceImpl* function_space, char* file_path, int mode);
+void atlas__write_gmsh_fieldset(const field::FieldSetImpl* fieldset, functionspace::FunctionSpaceImpl* function_space, char* file_path, int mode);
 void atlas__write_gmsh_field(const field::FieldImpl* field, functionspace::FunctionSpaceImpl* function_space, char* file_path, int mode);
 }
 

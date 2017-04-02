@@ -414,23 +414,27 @@ void atlas__SpectralFunctionSpace__scatter (const detail::Spectral* This, const 
   );
 }
 
-void atlas__SpectralFunctionSpace__gather_fieldset (const detail::Spectral* This, const field::FieldSet* local, field::FieldSet* global)
+void atlas__SpectralFunctionSpace__gather_fieldset (const detail::Spectral* This, const field::FieldSetImpl* local, field::FieldSetImpl* global)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(global);
     ASSERT(local);
-    This->gather(*local,*global);
+    const field::FieldSet l(local);
+    field::FieldSet g(global);
+    This->gather(l,g);
   );
 }
 
-void atlas__SpectralFunctionSpace__scatter_fieldset (const detail::Spectral* This, const field::FieldSet* global, field::FieldSet* local)
+void atlas__SpectralFunctionSpace__scatter_fieldset (const detail::Spectral* This, const field::FieldSetImpl* global, field::FieldSetImpl* local)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(global);
     ASSERT(local);
-    This->scatter(*global,*local);
+    const field::FieldSet g(global);
+    field::FieldSet l(local);
+    This->scatter(g,l);
   );
 }
 

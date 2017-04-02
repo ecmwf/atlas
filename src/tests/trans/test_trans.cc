@@ -241,8 +241,6 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
     BOOST_CHECK_EQUAL( p_default(j), p_eqreg(j) );
   }
 
-  //mesh::Mesh::Ptr mesh ( generate(g, meshgenerator::EqualAreaPartitioner(g).distribution() ) );
-
   output::Gmsh("N16_trans.msh").write(m_trans);
 }
 

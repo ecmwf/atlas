@@ -18,17 +18,17 @@ namespace field {
 //------------------------------------------------------------------------------------------------------
 
 
-FieldSet::FieldSet(const std::string &name) :
+FieldSetImpl::FieldSetImpl(const std::string &name) :
   name_()
 {}
 
-void FieldSet::clear()
+void FieldSetImpl::clear()
 {
     index_.clear();
     fields_.clear();
 }
 
-Field FieldSet::add(const Field& field)
+Field FieldSetImpl::add(const Field& field)
 {
   if( field.name().size() ) {
     index_[field.name()] = fields_.size();
@@ -40,13 +40,13 @@ Field FieldSet::add(const Field& field)
   return field;
 }
 
-bool FieldSet::has_field(const std::string& name) const
+bool FieldSetImpl::has_field(const std::string& name) const
 {
   return index_.count(name);
 }
 
 
-Field& FieldSet::field(const std::string& name) const
+Field& FieldSetImpl::field(const std::string& name) const
 {
   if (!has_field(name))
   {
@@ -57,7 +57,7 @@ Field& FieldSet::field(const std::string& name) const
 }
 
 
-std::vector< std::string > FieldSet::field_names() const
+std::vector< std::string > FieldSetImpl::field_names() const
 {
   std::vector< std::string > ret;
 
@@ -67,15 +67,27 @@ std::vector< std::string > FieldSet::field_names() const
   return ret;
 }
 
+FieldSet::FieldSet( const std::string& name ) : 
+    fieldset_( new FieldSetImpl(name) ) {
+}
+
+FieldSet::FieldSet( const FieldSetImpl* fieldset ) : 
+    fieldset_( const_cast<FieldSetImpl*>(fieldset) ) {
+}
+
+FieldSet::FieldSet( const FieldSet& fieldset ) : 
+    fieldset_( fieldset.fieldset_ ) {
+}
+
 //-----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C"{
 
 
-FieldSet* atlas__FieldSet__new (char* name)
+FieldSetImpl* atlas__FieldSet__new (char* name)
 {
   ATLAS_ERROR_HANDLING(
-    FieldSet* fset = new FieldSet( std::string(name) );
+    FieldSetImpl* fset = new FieldSetImpl( std::string(name) );
     fset->name() = name;
     return fset;
   );
@@ -83,7 +95,7 @@ FieldSet* atlas__FieldSet__new (char* name)
 }
 
 
-void atlas__FieldSet__delete(FieldSet* This)
+void atlas__FieldSet__delete(FieldSetImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This!= NULL );
@@ -91,7 +103,7 @@ void atlas__FieldSet__delete(FieldSet* This)
   );
 }
 
-void   atlas__FieldSet__add_field     (FieldSet* This, FieldImpl* field)
+void   atlas__FieldSet__add_field     (FieldSetImpl* This, FieldImpl* field)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This != NULL);
@@ -99,7 +111,7 @@ void   atlas__FieldSet__add_field     (FieldSet* This, FieldImpl* field)
   );
 }
 
-int    atlas__FieldSet__has_field     (FieldSet* This, char* name)
+int    atlas__FieldSet__has_field     (const FieldSetImpl* This, char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This != NULL);
@@ -108,7 +120,7 @@ int    atlas__FieldSet__has_field     (FieldSet* This, char* name)
   return 0;
 }
 
-size_t atlas__FieldSet__size          (FieldSet* This)
+size_t atlas__FieldSet__size          (const FieldSetImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This != NULL);
@@ -117,7 +129,7 @@ size_t atlas__FieldSet__size          (FieldSet* This)
   return 0;
 }
 
-FieldImpl* atlas__FieldSet__field_by_name (FieldSet* This, char* name)
+FieldImpl* atlas__FieldSet__field_by_name (FieldSetImpl* This, char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This != NULL);
@@ -126,7 +138,7 @@ FieldImpl* atlas__FieldSet__field_by_name (FieldSet* This, char* name)
   return NULL;
 }
 
-FieldImpl* atlas__FieldSet__field_by_idx  (FieldSet* This, size_t idx)
+FieldImpl* atlas__FieldSet__field_by_idx  (FieldSetImpl* This, size_t idx)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This != NULL);

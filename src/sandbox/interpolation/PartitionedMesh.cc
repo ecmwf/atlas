@@ -40,7 +40,7 @@ PartitionedMesh::PartitionedMesh(
 }
 
 
-void PartitionedMesh::writeGmsh(const std::string& fileName, const field::FieldSet* fields) {
+void PartitionedMesh::writeGmsh(const std::string& fileName, const field::FieldSet fields) {
 
     util::Config output_config;
     // output_config.set("coordinates", std::string("xyz"));
@@ -49,8 +49,8 @@ void PartitionedMesh::writeGmsh(const std::string& fileName, const field::FieldS
     output::Gmsh out(fileName, output_config);
     out.write(mesh_);
 
-    if (fields) {
-        out.write(*fields);
+    if (not fields.empty()) {
+        out.write(fields);
     }
 }
 

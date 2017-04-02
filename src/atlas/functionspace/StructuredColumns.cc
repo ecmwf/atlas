@@ -580,12 +580,12 @@ void atlas__functionspace__StructuredColumns__scatter (const detail::StructuredC
   );
 }
 
-void atlas__fs__StructuredColumns__checksum_fieldset(const detail::StructuredColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated)
+void atlas__fs__StructuredColumns__checksum_fieldset(const detail::StructuredColumns* This, const field::FieldSetImpl* fieldset, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(fieldset);
   ATLAS_ERROR_HANDLING(
-    std::string checksum_str (This->checksum(*fieldset));
+    std::string checksum_str (This->checksum(fieldset));
     size = checksum_str.size();
     checksum = new char[size+1]; allocated = true;
     strcpy(checksum,checksum_str.c_str());

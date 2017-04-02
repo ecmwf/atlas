@@ -15,6 +15,7 @@
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/field/FieldSet.h"
 
 
 namespace atlas {
@@ -43,7 +44,7 @@ struct PartitionedMesh {
     const Mesh& mesh() const { return mesh_; }
     Mesh&       mesh()       { return mesh_; }
 
-    void writeGmsh(const std::string& fileName, const field::FieldSet* fields = NULL);
+    void writeGmsh(const std::string& fileName, const field::FieldSet fields = field::FieldSet());
 
     void partition(const grid::Grid&);
     void partition(const grid::Grid&, const PartitionedMesh&);

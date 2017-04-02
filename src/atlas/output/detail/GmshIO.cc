@@ -1303,7 +1303,7 @@ public:
   static void atlas__Gmsh__write(GmshIO* This, mesh::Mesh::mesh_t* mesh, char* file_path);
   static mesh::Mesh::mesh_t* atlas__read_gmsh(char* file_path);
   static void atlas__write_gmsh_mesh(const mesh::Mesh::mesh_t* mesh, char* file_path);
-  static void atlas__write_gmsh_fieldset(const field::FieldSet* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode);
+  static void atlas__write_gmsh_fieldset(const field::FieldSetImpl* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode);
   static void atlas__write_gmsh_field(const field::FieldImpl* field, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode);
 };
 
@@ -1340,9 +1340,9 @@ void GmshFortranInterface::atlas__write_gmsh_mesh (const mesh::Mesh::mesh_t* mes
   writer.write( mesh, PathName(file_path) );
 }
 
-void GmshFortranInterface::atlas__write_gmsh_fieldset (const field::FieldSet* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
+void GmshFortranInterface::atlas__write_gmsh_fieldset (const field::FieldSetImpl* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
   GmshIO writer;
-  writer.write( *fieldset, functionspace, PathName(file_path) );
+  writer.write( fieldset, functionspace, PathName(file_path) );
 }
 
 void GmshFortranInterface::atlas__write_gmsh_field (const field::FieldImpl* field, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
@@ -1379,7 +1379,7 @@ void atlas__write_gmsh_mesh (const mesh::Mesh::mesh_t* mesh, char* file_path) {
   return GmshFortranInterface::atlas__write_gmsh_mesh(mesh,file_path);
 }
 
-void atlas__write_gmsh_fieldset (const field::FieldSet* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
+void atlas__write_gmsh_fieldset (const field::FieldSetImpl* fieldset, functionspace::FunctionSpaceImpl* functionspace, char* file_path, int mode) {
   return GmshFortranInterface::atlas__write_gmsh_fieldset(fieldset,functionspace,file_path,mode);
 }
 

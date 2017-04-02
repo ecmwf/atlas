@@ -523,6 +523,8 @@ mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This)
 
 using field::FieldImpl;
 using field::Field;
+using field::FieldSetImpl;
+using field::FieldSet;
 
 field::FieldImpl* atlas__functionspace__Edges__create_field (
     const EdgeColumns* This,
@@ -659,12 +661,13 @@ field::FieldImpl* atlas__functionspace__Edges__create_field_template (
 
 void atlas__functionspace__Edges__halo_exchange_fieldset(
     const EdgeColumns* This,
-    field::FieldSet* fieldset)
+    field::FieldSetImpl* fieldset)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(fieldset);
-    This->haloExchange(*fieldset);
+    FieldSet f(fieldset);
+    This->haloExchange(f);
   );
 }
 
@@ -695,14 +698,16 @@ const parallel::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(con
 
 void atlas__functionspace__Edges__gather_fieldset(
     const EdgeColumns* This,
-    const field::FieldSet* local,
-    field::FieldSet* global)
+    const field::FieldSetImpl* local,
+    field::FieldSetImpl* global)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
         ASSERT(local);
         ASSERT(global);
-        This->gather(*local,*global); );
+        const FieldSet l(local);
+        FieldSet g(global);
+        This->gather(l,g); );
 }
 
 // -----------------------------------------------------------------------------------
@@ -743,13 +748,15 @@ const parallel::GatherScatter* atlas__functionspace__Edges__get_scatter(const Ed
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, const field::FieldSet* global, field::FieldSet* local)
+void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, const field::FieldSetImpl* global, field::FieldSetImpl* local)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
         ASSERT(local);
         ASSERT(global);
-        This->scatter(*global,*local); );
+        const FieldSet g(global);
+        FieldSet l(local);
+        This->scatter(g,l); );
 }
 
 // -----------------------------------------------------------------------------------
@@ -781,7 +788,7 @@ const parallel::Checksum* atlas__functionspace__Edges__get_checksum(const EdgeCo
 
 void atlas__functionspace__Edges__checksum_fieldset(
     const EdgeColumns* This,
-    const field::FieldSet* fieldset,
+    const field::FieldSetImpl* fieldset,
     char* &checksum,
     int &size,
     int &allocated)
@@ -789,7 +796,7 @@ void atlas__functionspace__Edges__checksum_fieldset(
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(fieldset);
-    std::string checksum_str (This->checksum(*fieldset));
+    std::string checksum_str (This->checksum(fieldset));
     size = checksum_str.size();
     checksum = new char[size+1]; allocated = true;
     strcpy(checksum,checksum_str.c_str());

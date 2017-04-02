@@ -25,6 +25,7 @@ namespace field {
     class Field;
     class FieldImpl;
     class FieldSet;
+    class FieldSetImpl;
 }
 }
 
@@ -459,12 +460,12 @@ extern "C"
   void atlas__Trans__dirtrans_scalar (const Trans* t, int nb_fields, double scalar_fields[], double scalar_spectra[]);
   void atlas__Trans__dirtrans_wind2vordiv (const Trans* t, int nb_fields, double wind_fields[], double vorticity_spectra[], double divergence_spectra[]);
   void atlas__Trans__specnorm (const Trans* t, int nb_fields, double spectra[], double norms[], int rank);
-  void atlas__Trans__dirtrans_fieldset (const Trans* This, const field::FieldSet* gpfields, field::FieldSet* spfields, const TransParameters* parameters);
+  void atlas__Trans__dirtrans_fieldset (const Trans* This, const field::FieldSetImpl* gpfields, field::FieldSetImpl* spfields, const TransParameters* parameters);
   void atlas__Trans__dirtrans_field (const Trans* This, const field::FieldImpl* gpfield, field::FieldImpl* spfield, const TransParameters* parameters);
-  void atlas__Trans__invtrans_fieldset (const Trans* This, const field::FieldSet* spfields, field::FieldSet* gpfields, const TransParameters* parameters);
+  void atlas__Trans__invtrans_fieldset (const Trans* This, const field::FieldSetImpl* spfields, field::FieldSetImpl* gpfields, const TransParameters* parameters);
   void atlas__Trans__invtrans_field (const Trans* This, const field::FieldImpl* spfield, field::FieldImpl* gpfield, const TransParameters* parameters);
-  void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldSet* gpfields, const functionspace::detail::Spectral* sp, field::FieldSet* spfields, const TransParameters* parameters);
-  void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldSet* spfields, const functionspace::detail::NodeColumns* gp, field::FieldSet* gpfields, const TransParameters* parameters);
+  void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldSetImpl* gpfields, const functionspace::detail::Spectral* sp, field::FieldSetImpl* spfields, const TransParameters* parameters);
+  void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldSetImpl* spfields, const functionspace::detail::NodeColumns* gp, field::FieldSetImpl* gpfields, const TransParameters* parameters);
   void atlas__Trans__dirtrans_field_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldImpl* gpfield, const functionspace::detail::Spectral* sp, field::FieldImpl* spfield, const TransParameters* parameters);
   void atlas__Trans__invtrans_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldImpl* spfield, const functionspace::detail::NodeColumns* gp, field::FieldImpl* gpfield, const TransParameters* parameters);
   void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldImpl* gpwind, const functionspace::detail::Spectral* sp, field::FieldImpl* spvor, field::FieldImpl* spdiv, const TransParameters* parameters);

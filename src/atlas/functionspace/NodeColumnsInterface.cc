@@ -17,6 +17,8 @@ namespace detail {
 
   using atlas::field::FieldImpl;
   using atlas::field::Field;
+  using atlas::field::FieldSetImpl;
+  using atlas::field::FieldSet;
 
 // ----------------------------------------------------------------------
 
@@ -142,11 +144,12 @@ field::FieldImpl* atlas__NodesFunctionSpace__create_field_template (const NodeCo
 }
 
 
-void atlas__NodesFunctionSpace__halo_exchange_fieldset(const NodeColumns* This, field::FieldSet* fieldset)
+void atlas__NodesFunctionSpace__halo_exchange_fieldset(const NodeColumns* This, field::FieldSetImpl* fieldset)
 {
   ASSERT(This);
   ASSERT(fieldset);
-  ATLAS_ERROR_HANDLING( This->haloExchange(*fieldset); );
+  field::FieldSet f(fieldset);
+  ATLAS_ERROR_HANDLING( This->haloExchange(f); );
 }
 
 void atlas__NodesFunctionSpace__halo_exchange_field(const NodeColumns* This, field::FieldImpl* field)
@@ -164,12 +167,14 @@ const parallel::HaloExchange* atlas__NodesFunctionSpace__get_halo_exchange(const
   return 0;
 }
 
-void atlas__NodesFunctionSpace__gather_fieldset(const NodeColumns* This, const field::FieldSet* local, field::FieldSet* global)
+void atlas__NodesFunctionSpace__gather_fieldset(const NodeColumns* This, const field::FieldSetImpl* local, field::FieldSetImpl* global)
 {
   ASSERT(This);
   ASSERT(local);
   ASSERT(global);
-  ATLAS_ERROR_HANDLING( This->gather(*local,*global); );
+  const FieldSet l(local);
+  FieldSet g(global);
+  ATLAS_ERROR_HANDLING( This->gather(l,g); );
 }
 
 void atlas__NodesFunctionSpace__gather_field(const NodeColumns* This, const field::FieldImpl* local, field::FieldImpl* global)
@@ -196,12 +201,14 @@ const parallel::GatherScatter* atlas__NodesFunctionSpace__get_scatter(const Node
   return 0;
 }
 
-void atlas__NodesFunctionSpace__scatter_fieldset(const NodeColumns* This, const field::FieldSet* global, field::FieldSet* local)
+void atlas__NodesFunctionSpace__scatter_fieldset(const NodeColumns* This, const field::FieldSetImpl* global, field::FieldSetImpl* local)
 {
   ASSERT(This);
   ASSERT(local);
   ASSERT(global);
-  ATLAS_ERROR_HANDLING( This->scatter(*global,*local); );
+  const FieldSet g(global);
+  FieldSet l(local);
+  ATLAS_ERROR_HANDLING( This->scatter(g,l); );
 }
 
 void atlas__NodesFunctionSpace__scatter_field(const NodeColumns* This, const field::FieldImpl* global, field::FieldImpl* local)
@@ -221,12 +228,12 @@ const parallel::Checksum* atlas__NodesFunctionSpace__get_checksum(const NodeColu
   return 0;
 }
 
-void atlas__NodesFunctionSpace__checksum_fieldset(const NodeColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated)
+void atlas__NodesFunctionSpace__checksum_fieldset(const NodeColumns* This, const field::FieldSetImpl* fieldset, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(fieldset);
   ATLAS_ERROR_HANDLING(
-    std::string checksum_str (This->checksum(*fieldset));
+    std::string checksum_str (This->checksum(fieldset));
     size = checksum_str.size();
     checksum = new char[size+1]; allocated = true;
     strcpy(checksum,checksum_str.c_str());

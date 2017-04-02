@@ -13,6 +13,8 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/Mesh.h"
 
+namespace atlas { namespace field { class FieldSetImpl; } }
+
 namespace atlas {
 namespace functionspace {
 namespace detail {
@@ -33,19 +35,19 @@ field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeCo
 
 field::FieldImpl* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field::FieldImpl* field_template, const eckit::Parametrisation* options);
 
-void atlas__NodesFunctionSpace__halo_exchange_fieldset(const NodeColumns* This, field::FieldSet* fieldset);
+void atlas__NodesFunctionSpace__halo_exchange_fieldset(const NodeColumns* This, field::FieldSetImpl* fieldset);
 void atlas__NodesFunctionSpace__halo_exchange_field(const NodeColumns* This, field::FieldImpl* field);
 const parallel::HaloExchange* atlas__NodesFunctionSpace__get_halo_exchange(const NodeColumns* This);
 
-void atlas__NodesFunctionSpace__gather_fieldset(const NodeColumns* This, const field::FieldSet* local, field::FieldSet* global);
+void atlas__NodesFunctionSpace__gather_fieldset(const NodeColumns* This, const field::FieldSetImpl* local, field::FieldSetImpl* global);
 void atlas__NodesFunctionSpace__gather_field(const NodeColumns* This, const field::FieldImpl* local, field::FieldImpl* global);
 const parallel::GatherScatter* atlas__NodesFunctionSpace__get_gather(const NodeColumns* This);
 
-void atlas__NodesFunctionSpace__scatter_fieldset(const NodeColumns* This, const field::FieldSet* global, field::FieldSet* local);
+void atlas__NodesFunctionSpace__scatter_fieldset(const NodeColumns* This, const field::FieldSetImpl* global, field::FieldSetImpl* local);
 void atlas__NodesFunctionSpace__scatter_field(const NodeColumns* This, const field::FieldImpl* global, field::FieldImpl* local);
 const parallel::GatherScatter* atlas__NodesFunctionSpace__get_scatter(const NodeColumns* This);
 
-void atlas__NodesFunctionSpace__checksum_fieldset(const NodeColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated);
+void atlas__NodesFunctionSpace__checksum_fieldset(const NodeColumns* This, const field::FieldSetImpl* fieldset, char* &checksum, int &size, int &allocated);
 void atlas__NodesFunctionSpace__checksum_field(const NodeColumns* This, const field::FieldImpl* field, char* &checksum, int &size, int &allocated);
 const parallel::Checksum* atlas__NodesFunctionSpace__get_checksum(const NodeColumns* This);
 

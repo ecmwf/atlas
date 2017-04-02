@@ -142,9 +142,9 @@ extern "C"
   field::FieldImpl* atlas__fs__Spectral__create_field_name_kind(const detail::Spectral* This, const char* name, int kind, const eckit::Parametrisation* options);
   field::FieldImpl* atlas__fs__Spectral__create_field_name_kind_lev(const detail::Spectral* This, const char* name, int kind, int levels, const eckit::Parametrisation* options);
   void atlas__SpectralFunctionSpace__gather(const detail::Spectral* This, const field::FieldImpl* local, field::FieldImpl* global);
-  void atlas__SpectralFunctionSpace__gather_fieldset(const detail::Spectral* This, const field::FieldSet* local, field::FieldSet* global);
+  void atlas__SpectralFunctionSpace__gather_fieldset(const detail::Spectral* This, const field::FieldSetImpl* local, field::FieldSetImpl* global);
   void atlas__SpectralFunctionSpace__scatter(const detail::Spectral* This, const field::FieldImpl* global, field::FieldImpl* local);
-  void atlas__SpectralFunctionSpace__scatter_fieldset(const detail::Spectral* This, const field::FieldSet* global, field::FieldSet* local);
+  void atlas__SpectralFunctionSpace__scatter_fieldset(const detail::Spectral* This, const field::FieldSetImpl* global, field::FieldSetImpl* local);
   void atlas__SpectralFunctionSpace__norm(const detail::Spectral* This, const field::FieldImpl* field, double norm[], int rank);
 }
 

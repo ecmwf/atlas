@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   int nlat = 5;
   int lon[5] = {10, 12, 14, 16, 16};
 
-  mesh::Mesh::Ptr m = test::generate_mesh(nlat, lon);
+  mesh::Mesh = test::generate_mesh(nlat, lon);
 
   mesh::actions::build_parallel_fields(*m);
   mesh::actions::build_periodic_boundaries(*m);
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE( test_small )
 #if 1
 BOOST_AUTO_TEST_CASE( test_t63 )
 {
-//  mesh::Mesh::Ptr m = test::generate_mesh( T63() );
+  // mesh::Mesh m = test::generate_mesh( T63() );
 
   mesh::Mesh m = test::generate_mesh( {10, 12, 14, 16, 16, 16, 16, 14, 12, 10} );
 

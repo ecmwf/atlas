@@ -378,7 +378,7 @@ void PointCloud::write(
 // { return PointCloud::read(file_path); }
 //
 //
-// void atlas__write_pointcloud_fieldset (char* file_path, const field::FieldSet* fieldset, const functionspace::detail::NodeColumns* functionspace)
+// void atlas__write_pointcloud_fieldset (char* file_path, const field::FieldSetImpl* fieldset, const functionspace::detail::NodeColumns* functionspace)
 // { PointCloud::write(file_path, *fieldset, *functionspace); }
 
 

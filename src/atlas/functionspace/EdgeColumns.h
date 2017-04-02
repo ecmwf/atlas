@@ -214,19 +214,19 @@ field::FieldImpl* atlas__functionspace__Edges__create_field_lev_vars (const Edge
 
 field::FieldImpl* atlas__functionspace__Edges__create_field_template (const EdgeColumns* This, const char* name, const field::FieldImpl* field_template, const eckit::Parametrisation* options);
 
-void atlas__functionspace__Edges__halo_exchange_fieldset(const EdgeColumns* This, field::FieldSet* fieldset);
+void atlas__functionspace__Edges__halo_exchange_fieldset(const EdgeColumns* This, field::FieldSetImpl* fieldset);
 void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, field::FieldImpl* field);
 const parallel::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__gather_fieldset(const EdgeColumns* This, const field::FieldSet* local, field::FieldSet* global);
+void atlas__functionspace__Edges__gather_fieldset(const EdgeColumns* This, const field::FieldSetImpl* local, field::FieldSetImpl* global);
 void atlas__functionspace__Edges__gather_field(const EdgeColumns* This, const field::FieldImpl* local, field::FieldImpl* global);
 const parallel::GatherScatter* atlas__functionspace__Edges__get_gather(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, const field::FieldSet* global, field::FieldSet* local);
+void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, const field::FieldSetImpl* global, field::FieldSetImpl* local);
 void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const field::FieldImpl* global, field::FieldImpl* local);
 const parallel::GatherScatter* atlas__functionspace__Edges__get_scatter(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__checksum_fieldset(const EdgeColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated);
+void atlas__functionspace__Edges__checksum_fieldset(const EdgeColumns* This, const field::FieldSetImpl* fieldset, char* &checksum, int &size, int &allocated);
 void atlas__functionspace__Edges__checksum_field(const EdgeColumns* This, const field::FieldImpl* field, char* &checksum, int &size, int &allocated);
 const parallel::Checksum* atlas__functionspace__Edges__get_checksum(const EdgeColumns* This);
 }
