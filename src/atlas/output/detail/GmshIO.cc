@@ -753,7 +753,7 @@ void GmshIO::read(const PathName& file_path, mesh::Mesh& mesh ) const
       }
 
       size_t nnodes_per_elem = elements->element_type().nb_nodes();
-      mesh::BlockConnectivityImpl& conn = elements->node_connectivity();
+      mesh::BlockConnectivity& conn = elements->node_connectivity();
       array::ArrayView<gidx_t,1> egidx = array::make_view<gidx_t,1>( elements->global_index() );
       array::ArrayView<int   ,1> epart = array::make_view<int   ,1>( elements->partition() );
 
@@ -795,9 +795,9 @@ void GmshIO::read(const PathName& file_path, mesh::Mesh& mesh ) const
     mesh::Elements& triags = mesh.cells().elements( mesh.cells().add( make_element_type(TRIAG), nb_triags ) );
     mesh::Elements& edges  = mesh.edges().elements( mesh.edges().add( make_element_type(LINE),  nb_edges ) );
 
-    mesh::BlockConnectivityImpl& quad_nodes  = quads.node_connectivity();
-    mesh::BlockConnectivityImpl& triag_nodes = triags.node_connectivity();
-    mesh::BlockConnectivityImpl& edge_nodes  = edges.node_connectivity();
+    mesh::BlockConnectivity& quad_nodes  = quads.node_connectivity();
+    mesh::BlockConnectivity& triag_nodes = triags.node_connectivity();
+    mesh::BlockConnectivity& edge_nodes  = edges.node_connectivity();
 
     array::ArrayView<gidx_t,1> quad_glb_idx = array::make_view<gidx_t,1> ( quads.global_index() );
     array::ArrayView<int   ,1> quad_part    = array::make_view<int   ,1>  ( quads.partition()    );
@@ -966,7 +966,7 @@ void GmshIO::write(const mesh::Mesh& mesh, const PathName& file_path) const
         else
           NOTIMP;
 
-        const mesh::BlockConnectivityImpl& node_connectivity = elements.node_connectivity();
+        const mesh::BlockConnectivity& node_connectivity = elements.node_connectivity();
 
         const array::LocalView<gidx_t,1> elems_glb_idx = elements.view<gidx_t,1>( elements.global_index() );
         const array::LocalView<int,1> elems_partition = elements.view<int,1>( elements.partition() );

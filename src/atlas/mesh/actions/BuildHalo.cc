@@ -698,7 +698,7 @@ public:
       mesh::Elements& elements = mesh.cells().elements(t);
 
       // Add new elements
-      BlockConnectivityImpl &node_connectivity = elements.node_connectivity();
+      BlockConnectivity &node_connectivity = elements.node_connectivity();
       if( nb_elements_of_type[t] == 0 ) continue;
       size_t new_elems_pos = elements.add(nb_elements_of_type[t]);
 

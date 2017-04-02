@@ -180,7 +180,7 @@ void MatchingMeshPartitionerPolygon::partition( const Grid& grid, int node_parti
     for (size_t t = 0; t < prePartitionedMesh_.cells().nb_types(); ++t) {
         const mesh::Elements& elements = prePartitionedMesh_.cells().elements(t);
 
-        const mesh::BlockConnectivityImpl& conn = elements.node_connectivity();
+        const mesh::BlockConnectivity& conn = elements.node_connectivity();
         auto patch = elements.view< int, 1 >(elements.field("patch"));
 
         const size_t nb_nodes = elements.nb_nodes();

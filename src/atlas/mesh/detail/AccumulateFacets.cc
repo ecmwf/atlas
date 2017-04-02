@@ -34,7 +34,7 @@ void accumulate_facets(
   for( size_t t=0; t<cells.nb_types(); ++t )
   {
     const mesh::Elements& elements = cells.elements(t);
-    const mesh::BlockConnectivityImpl& elem_nodes = elements.node_connectivity();
+    const mesh::BlockConnectivity& elem_nodes = elements.node_connectivity();
 
     size_t nb_elems = elements.size();
     size_t nb_nodes_in_facet = 2;

@@ -26,9 +26,9 @@ namespace test {
 
 
 __global__
-void kernel_block(BlockConnectivityImpl* conn_, bool* result)
+void kernel_block(BlockConnectivity* conn_, bool* result)
 {
-    BlockConnectivityImpl& conn = *conn_;
+    BlockConnectivity& conn = *conn_;
 
     *result &= (conn.rows() == 2);
     *result &= (conn.cols() == 5);
@@ -59,10 +59,10 @@ void kernel_irr(IrregularConnectivityImpl* conn_, bool* result)
 }
 
 __global__
-void kernel_multiblock(MultiBlockConnectivityImpl* conn_, bool* result)
+void kernel_multiblock(MultiBlockConnectivity* conn_, bool* result)
 {
 
-    MultiBlockConnectivityImpl& conn = *conn_;
+    MultiBlockConnectivity& conn = *conn_;
 
     *result = true;
 
@@ -77,7 +77,7 @@ void kernel_multiblock(MultiBlockConnectivityImpl* conn_, bool* result)
     *result &= (conn(0,1) == 3 IN_FORTRAN);
     *result &= (conn(0,2) == 4 IN_FORTRAN);
 
-    BlockConnectivityImpl& ablock = conn.block(0);
+    BlockConnectivity& ablock = conn.block(0);
     *result &= (ablock(0,0) == 1 IN_FORTRAN);
     *result &= (ablock(0,1) == 3 IN_FORTRAN);
     *result &= (ablock(0,2) == 4 IN_FORTRAN);

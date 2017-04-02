@@ -154,7 +154,7 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_pa
               for (size_t t=0; t<nb_types && !found; ++t) {
                   size_t idx[4];
                   const mesh::Elements& elements = elements_src.elements(t);
-                  const mesh::BlockConnectivityImpl& conn = elements.node_connectivity();
+                  const mesh::BlockConnectivity& conn = elements.node_connectivity();
 
                   const size_t nb_nodes = elements.nb_nodes();
                   ASSERT( (nb_nodes==3 && elements.name() == "Triangle")

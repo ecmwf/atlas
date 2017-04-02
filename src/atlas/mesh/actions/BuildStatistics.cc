@@ -176,7 +176,7 @@ void build_statistics( Mesh& mesh )
     for( size_t jtype=0; jtype<mesh.cells().nb_types(); ++jtype )
     {
       const mesh::Elements& elements = mesh.cells().elements(jtype);
-      const BlockConnectivityImpl& elem_nodes = elements.node_connectivity();
+      const BlockConnectivity& elem_nodes = elements.node_connectivity();
       const size_t nb_elems = elements.size();
 
       if( elements.element_type().name() == "Triangle" )

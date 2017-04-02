@@ -572,8 +572,8 @@ private:
 };
 
 typedef ConnectivityInterface<IrregularConnectivityImpl> IrregularConnectivity;
-typedef ConnectivityInterface<BlockConnectivityImpl> BlockConnectivity;
 typedef ConnectivityInterface<MultiBlockConnectivityImpl> MultiBlockConnectivity;
+typedef BlockConnectivityImpl BlockConnectivity;
 
 typedef IrregularConnectivity Connectivity;
 
