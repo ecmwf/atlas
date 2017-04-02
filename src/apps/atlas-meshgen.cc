@@ -239,7 +239,7 @@ void Meshgen2Gmsh::execute(const Args& args)
   atlas::output::Gmsh gmsh( path_out , Config
     ("info",info)
     ("ghost",ghost)
-    ("coordinates", dim_3d ? "xyz" : "geolonlat" )
+    ("coordinates", dim_3d ? "xyz" : "xy" )
     ("edges",edges )
     ("binary",binary )
   );

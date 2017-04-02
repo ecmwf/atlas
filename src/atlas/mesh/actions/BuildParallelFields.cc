@@ -352,7 +352,7 @@ field::Field& build_edges_partition( Mesh& mesh )
   }
 
   array::ArrayView<int,1> node_part = array::make_view<int,1>( nodes.partition() );
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
+  array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
   array::ArrayView<int,   1> flags  = array::make_view<int,1>( nodes.field("flags") );
 #ifdef DEBUGGING_PARFIELDS
   array::ArrayView<gidx_t,   1> gidx  = array::make_view<gidx_t,1>( nodes.global_index() );
@@ -458,11 +458,11 @@ field::Field& build_edges_partition( Mesh& mesh )
       int pn1 = node_part( ip1 );
       int pn2 = node_part( ip2 );
 
-      centroid[LON] = 0.5*(lonlat( ip1, LON ) + lonlat( ip2, LON ) );
-      centroid[LAT] = 0.5*(lonlat( ip1, LAT ) + lonlat( ip2, LAT ) );
+      centroid[XX] = 0.5*(xy( ip1, XX ) + xy( ip2, XX ) );
+      centroid[YY] = 0.5*(xy( ip1, YY ) + xy( ip2, YY ) );
       if( has_pole_edges && (*is_pole_edge)(jedge) )
       {
-        centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
+        centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
       }
 
       transform(centroid,periodic[jedge]);
@@ -498,12 +498,12 @@ field::Field& build_edges_partition( Mesh& mesh )
         if( OWNED_UID(uid) )
         {
           double x1,y1, x2,y2, xe,ye;
-          x1 = lonlat(ip1,LON);
-          y1 = lonlat(ip1,LAT);
-          x2 = lonlat(ip2,LON);
-          y2 = lonlat(ip2,LAT);
-          xe = centroid[LON];
-          ye = centroid[LAT];
+          x1 = xy(ip1,XX);
+          y1 = xy(ip1,YY);
+          x2 = xy(ip2,XX);
+          y2 = xy(ip2,YY);
+          xe = centroid[XX];
+          ye = centroid[YY];
           DEBUG( uid << " --> " << EDGE(jedge) << "   x1,y1 - x2,y2 - xe,ye " << x1<<","<<y1
                  << " - " << x2<<","<<y2<< " - " << xe <<","<<ye<< "     part " << edge_part(jedge));
         }
@@ -613,7 +613,7 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
   const array::ArrayView<int,1> edge_part = array::make_view<int,1>( edges.partition() );
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
 
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
+  array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
   array::ArrayView<int,   1> flags  = array::make_view<int,1>( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
   array::ArrayView<gidx_t,   1> gidx   = array::make_view<gidx_t,1>( nodes.global_index()       );
@@ -644,11 +644,11 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
   {
     int ip1 = edge_nodes(jedge,0);
     int ip2 = edge_nodes(jedge,1);
-    centroid[LON] = 0.5*(lonlat( ip1, LON ) + lonlat( ip2, LON ) );
-    centroid[LAT] = 0.5*(lonlat( ip1, LAT ) + lonlat( ip2, LAT ) );
+    centroid[XX] = 0.5*(xy( ip1, XX ) + xy( ip2, XX ) );
+    centroid[YY] = 0.5*(xy( ip1, YY ) + xy( ip2, YY ) );
     if( has_pole_edges && (*is_pole_edge)(jedge) )
     {
-      centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
+      centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
     }
 
     bool needed(false);
@@ -764,7 +764,7 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   array::ArrayView<gidx_t,1> edge_gidx = array::make_view<gidx_t,1>( edges.global_index() );
 
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh.nodes().lonlat() );
+  array::ArrayView<double,2> xy = array::make_view<double,2>( mesh.nodes().xy() );
   std::shared_ptr< array::ArrayView<int,1> > is_pole_edge;
   bool has_pole_edges = false;
   if( edges.has_field("is_pole_edge") )
@@ -786,11 +786,11 @@ field::Field& build_edges_global_idx( Mesh& mesh )
   {
     if( edge_gidx(jedge) <= 0 )
     {
-      centroid[LON] = 0.5*(lonlat( edge_nodes(jedge,0), LON ) + lonlat( edge_nodes(jedge,1), LON ) );
-      centroid[LAT] = 0.5*(lonlat( edge_nodes(jedge,0), LAT ) + lonlat( edge_nodes(jedge,1), LAT ) );
+      centroid[XX] = 0.5*(xy( edge_nodes(jedge,0), XX ) + xy( edge_nodes(jedge,1), XX ) );
+      centroid[YY] = 0.5*(xy( edge_nodes(jedge,0), YY ) + xy( edge_nodes(jedge,1), YY ) );
       if( has_pole_edges && (*is_pole_edge)(jedge) )
       {
-        centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
+        centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
       }
       edge_gidx(jedge) = util::unique_lonlat(centroid);
     }

@@ -37,12 +37,12 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
     config_domain.set("type","global");
     domain_ = Domain(config_domain);
 
-    auto lonlat = array::make_view<double,2>(m.nodes().lonlat());
+    auto xy = array::make_view<double,2>(m.nodes().xy());
     std::vector<Point> &p = *points_;
     const size_t npts = p.size();
 
     for( size_t n=0; n<npts; ++n) {
-        p[n].assign(lonlat(n,LON),lonlat(n,LAT));
+        p[n].assign(xy(n,XX),xy(n,YY));
     }
 }
 

@@ -93,7 +93,7 @@ mesh::Mesh PointCloud::read(const eckit::PathName& path, std::vector<std::string
     mesh.nodes().resize(nb_pts);
 
     mesh::Nodes& nodes = mesh.nodes();
-    array::ArrayView< double, 2 > lonlat = array::make_view<double,2>( nodes.lonlat() );
+    array::ArrayView< double, 2 > xy = array::make_view<double,2>( nodes.xy() );
 
     // header, part 2:
     // determine columns' labels
@@ -124,7 +124,7 @@ mesh::Mesh PointCloud::read(const eckit::PathName& path, std::vector<std::string
       iss.str(line);
 
       //NOTE always expects (lon,lat) order, maybe make it configurable?
-      iss >> lonlat(i,LON) >> lonlat(i,LAT);;
+      iss >> xy(i,XX) >> xy(i,YY);;
       for (j=0; iss && j<nb_fld; ++j)
         iss >> fields[j](i);
       if (j<nb_fld) {

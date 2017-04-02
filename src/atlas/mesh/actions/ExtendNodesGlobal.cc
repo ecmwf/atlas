@@ -63,8 +63,8 @@ void ExtendNodesGlobal::operator()(const atlas::grid::Grid& grid, atlas::mesh::M
     nodes.metadata().set<size_t>("NbVirtualPts",nb_extension_pts);
 
     array::ArrayView<double,2> xyz    = array::make_view<double,2>( nodes.field("xyz") );
-    array::ArrayView<double,2> xy     = array::make_view<double,2>( nodes.lonlat() );
-    array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.geolonlat() );
+    array::ArrayView<double,2> xy     = array::make_view<double,2>( nodes.xy() );
+    array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
     array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( nodes.global_index() );
 
     for(size_t i = 0; i < nb_extension_pts; ++i) {

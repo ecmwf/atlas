@@ -603,7 +603,7 @@ void swap_bytes(char *array, int size, int n)
 GmshIO::GmshIO()
 {
   // which field holds the Nodes
-  options.set<std::string>("nodes", "lonlat");
+  options.set<std::string>("nodes", "xy");
 
   // Gather fields to one proc before writing
   options.set<bool>("gather", false);

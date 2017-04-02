@@ -15,6 +15,7 @@
 
 #include <map>
 #include <string>
+#include "eckit/exception/Exceptions.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/mesh/Connectivity.h"
@@ -77,11 +78,11 @@ public: // methods
   const field::Field& partition() const { return partition_; }
         field::Field& partition()       { return partition_; }
 
+  const field::Field& xy() const { return xy_; }
+        field::Field& xy()       { return xy_; }
+
   const field::Field& lonlat() const { return lonlat_; }
         field::Field& lonlat()       { return lonlat_; }
-
-  const field::Field& geolonlat() const { return geolonlat_; }
-        field::Field& geolonlat()       { return geolonlat_; }
 
   const field::Field& ghost() const { return ghost_; }
         field::Field& ghost()       { return ghost_; }
@@ -145,8 +146,8 @@ private:
   field::Field global_index_;
   field::Field remote_index_;
   field::Field partition_;
+  field::Field xy_;
   field::Field lonlat_;
-  field::Field geolonlat_;
   field::Field ghost_;
 
 // Cached shortcuts to specific connectivities in connectivities_
@@ -193,6 +194,7 @@ IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity(Nodes* This);
 IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This);
 IrregularConnectivity* atlas__mesh__Nodes__connectivity (Nodes* This, char* name);
 void atlas__mesh__Nodes__add_connectivity (Nodes* This, IrregularConnectivity* connectivity);
+field::FieldImpl* atlas__mesh__Nodes__xy(Nodes* This);
 field::FieldImpl* atlas__mesh__Nodes__lonlat(Nodes* This);
 field::FieldImpl* atlas__mesh__Nodes__global_index(Nodes* This);
 field::FieldImpl* atlas__mesh__Nodes__remote_index(Nodes* This);

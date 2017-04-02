@@ -336,7 +336,7 @@ void AtlasBenchmark::setup()
   nnodes = mesh.nodes().size();
   nedges = mesh.edges().size();
 
-  auto lonlat = array::make_view<double,2> ( mesh.nodes().lonlat() );
+  auto lonlat = array::make_view<double,2> ( mesh.nodes().xy() );
   auto V      = array::make_view<double,1> ( mesh.nodes().field("dual_volumes") );
   auto S      = array::make_view<double,2> ( mesh.edges().field("dual_normals") );
   auto field  = array::make_view<double,2> ( scalar_field );

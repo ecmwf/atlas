@@ -81,7 +81,7 @@ namespace detail {
 void Gmsh::defaults()
 {
   config_.binary = false;
-  config_.nodes = "lonlat";
+  config_.nodes = "xy";
   config_.gather = false;
   config_.ghost = false;
   config_.elements = true;
@@ -90,7 +90,7 @@ void Gmsh::defaults()
   config_.file = "output.msh";
   config_.info = false;
   config_.openmode = "w";
-  config_.coordinates = "lonlat";
+  config_.coordinates = "xy";
 }
 
 // -----------------------------------------------------------------------------

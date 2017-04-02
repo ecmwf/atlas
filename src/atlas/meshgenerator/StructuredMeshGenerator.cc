@@ -893,8 +893,8 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
   mesh.nodes().resize(nnodes);
   mesh::Nodes& nodes = mesh.nodes();
 
-  array::ArrayView<double,2> lonlat  = array::make_view<double,2>( nodes.lonlat() );
-  array::ArrayView<double,2> geolonlat = array::make_view<double,2>( nodes.geolonlat() );
+  array::ArrayView<double,2> xy  = array::make_view<double,2>( nodes.xy() );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
   array::ArrayView<int,   1> part    = array::make_view<int   ,1>( nodes.partition() );
   array::ArrayView<int,   1> ghost   = array::make_view<int   ,1>( nodes.ghost() );
@@ -986,14 +986,14 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
       //std::cout << "jlat = " << jlat << "; jlon = " << jlon << "; x = " << x << std::endl;
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nx(jlat));
 
-      lonlat(inode,LON) = x;
-      lonlat(inode,LAT) = y;
+      xy(inode,XX) = x;
+      xy(inode,YY) = y;
 
       // geographic coordinates by using projection
       double crd[] = {x,y};
       rg.projection().xy2lonlat(crd);
-      geolonlat(inode,LON) = crd[LON];
-      geolonlat(inode,LAT) = crd[LAT];
+      lonlat(inode,LON) = crd[LON];
+      lonlat(inode,LAT) = crd[LAT];
 
       glb_idx(inode)   = n+1;
       part(inode) = parts.at(n);
@@ -1022,14 +1022,14 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
       double x = rg.x(rg.nx(jlat),jlat);
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nx(jlat));
 
-      lonlat(inode,LON) = x;
-      lonlat(inode,LAT) = y;
+      xy(inode,XX) = x;
+      xy(inode,YY) = y;
 
       // geographic coordinates by using projection
       double crd[] = {x,y};
       rg.projection().xy2lonlat(crd);
-      geolonlat(inode,LON) = crd[LON];
-      geolonlat(inode,LAT) = crd[LAT];
+      lonlat(inode,LON) = crd[LON];
+      lonlat(inode,LAT) = crd[LAT];
 
 
       glb_idx(inode)   = periodic_glb.at(jlat)+1;
@@ -1049,14 +1049,14 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     jnorth = jnode;
     double y = 90.;
     double x = 180.;
-    lonlat(inode,LON) = x;
-    lonlat(inode,LAT) = y;
+    xy(inode,XX) = x;
+    xy(inode,YY) = y;
 
     // geographic coordinates by using projection
     double crd[] = {x,y};
     rg.projection().xy2lonlat(crd);
-    geolonlat(inode,LON) = crd[LON];
-    geolonlat(inode,LAT) = crd[LAT];
+    lonlat(inode,LON) = crd[LON];
+    lonlat(inode,LAT) = crd[LAT];
 
     glb_idx(inode)   = periodic_glb.at(rg.ny()-1)+2;
     part(inode)      = mypart;
@@ -1073,14 +1073,14 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     jsouth = jnode;
     double y = -90.;
     double x =  180.;
-    lonlat(inode,LON) = x;
-    lonlat(inode,LAT) = y;
+    xy(inode,XX) = x;
+    xy(inode,YY) = y;
 
     // geographic coordinates by using projection
     double crd[] = {x,y};
     rg.projection().xy2lonlat(crd);
-    geolonlat(inode,LON) = crd[LON];
-    geolonlat(inode,LAT) = crd[LAT];
+    lonlat(inode,LON) = crd[LON];
+    lonlat(inode,LAT) = crd[LAT];
 
     glb_idx(inode)   = periodic_glb.at(rg.ny()-1)+3;
     part(inode)      = mypart;

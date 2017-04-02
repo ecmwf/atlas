@@ -41,7 +41,7 @@ field::Field& BuildXYZField::operator()(mesh::Nodes& nodes) const
   }
   if( recompute ) {
     size_t npts = nodes.size();
-    array::ArrayView<double,2> lonlat   = array::make_view<double,2>( nodes.geolonlat()  );
+    array::ArrayView<double,2> lonlat   = array::make_view<double,2>( nodes.lonlat()  );
     array::ArrayView<double,2> xyz_view = array::make_view<double,2>( nodes.field(name_) );
 
     for( size_t n=0; n<npts; ++n )

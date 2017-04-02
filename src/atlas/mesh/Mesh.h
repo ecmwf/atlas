@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_Mesh_h
-#define atlas_Mesh_h
+#pragma once
 
 #include <map>
 #include <iosfwd>
@@ -152,6 +151,8 @@ private: // members
     grid::Projection projection_;
 };
 
+//----------------------------------------------------------------------------------------------------------------------
+
 class Mesh {
 public:
 
@@ -255,5 +256,3 @@ extern "C"
 
 } // namespace mesh
 } // namespace atlas
-
-#endif // atlas_Mesh_h

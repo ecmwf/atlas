@@ -190,22 +190,22 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
 {
   enum { NORTH=0, SOUTH=1 };
 
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
+  array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
   array::ArrayView<int,   1> flags  = array::make_view<int,1>( nodes.field( "flags"       ) );
   array::ArrayView<int,   1> part   = array::make_view<int,1>( nodes.partition() );
   const size_t nb_nodes = nodes.size();
 
   double min[2], max[2];
-  min[LON] =  std::numeric_limits<double>::max();
-  min[LAT] =  std::numeric_limits<double>::max();
-  max[LON] = -std::numeric_limits<double>::max();
-  max[LAT] = -std::numeric_limits<double>::max();
+  min[XX] =  std::numeric_limits<double>::max();
+  min[YY] =  std::numeric_limits<double>::max();
+  max[XX] = -std::numeric_limits<double>::max();
+  max[YY] = -std::numeric_limits<double>::max();
   for (size_t node=0; node<nb_nodes; ++node)
   {
-    min[LON] = std::min( min[LON], lonlat(node,LON) );
-    min[LAT] = std::min( min[LAT], lonlat(node,LAT) );
-    max[LON] = std::max( max[LON], lonlat(node,LON) );
-    max[LAT] = std::max( max[LAT], lonlat(node,LAT) );
+    min[XX] = std::min( min[XX], xy(node,XX) );
+    min[YY] = std::min( min[YY], xy(node,YY) );
+    max[XX] = std::max( max[XX], xy(node,XX) );
+    max[YY] = std::max( max[YY], xy(node,YY) );
   }
 
   parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
@@ -217,11 +217,11 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
   std::vector< std::set<int> > pole_nodes(2);
   for (size_t node=0; node<nb_nodes; ++node)
   {
-      if ( std::abs(lonlat(node,LAT)-max[LAT])<tol )
+      if ( std::abs(xy(node,YY)-max[YY])<tol )
       {
         pole_nodes[NORTH].insert(node);
       }
-      else if ( std::abs(lonlat(node,LAT)-min[LAT])<tol )
+      else if ( std::abs(xy(node,YY)-min[YY])<tol )
       {
         pole_nodes[SOUTH].insert(node);
       }
@@ -256,11 +256,11 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
       int node = *it;
       if( !Topology::check(flags(node),Topology::PERIODIC|Topology::GHOST) )
       {
-        int x2 = microdeg( lonlat(node,LON) + 180. );
+        int x2 = microdeg( xy(node,XX) + 180. );
         for( std::set<int>::iterator itr=pole_nodes[NS].begin(); itr!=pole_nodes[NS].end(); ++itr)
         {
           int other_node = *itr;
-          if( microdeg( lonlat(other_node,LON) ) == x2 )
+          if( microdeg( xy(other_node,XX) ) == x2 )
           {
             if( !Topology::check(flags(other_node),Topology::PERIODIC) )
             {
@@ -280,31 +280,31 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
 struct ComputeUniquePoleEdgeIndex
 {
   ComputeUniquePoleEdgeIndex( const mesh::Nodes& nodes ) :
-  lonlat( array::make_view<double,2> ( nodes.lonlat() ) )
+  xy( array::make_view<double,2> ( nodes.xy() ) )
   {
   }
 
   gidx_t operator()( const mesh::Connectivity::Row& edge_nodes ) const
   {
     double centroid[2];
-    centroid[LON] = 0.;
-    centroid[LAT] = 0.;
+    centroid[XX] = 0.;
+    centroid[YY] = 0.;
     for( size_t jnode=0; jnode<2; ++jnode )
     {
-      centroid[LON] += lonlat( edge_nodes(jnode), LON );
-      centroid[LAT] += lonlat( edge_nodes(jnode), LAT );
+      centroid[XX] += xy( edge_nodes(jnode), XX );
+      centroid[YY] += xy( edge_nodes(jnode), YY );
     }
-    centroid[LON] /= 2.;
-    centroid[LAT] /= 2.;
-    if( centroid[LAT] > 0 )
-      centroid[LAT] =  90.;
+    centroid[XX] /= 2.;
+    centroid[YY] /= 2.;
+    if( centroid[YY] > 0 )
+      centroid[YY] =  90.;
     else
-      centroid[LAT] = -90.;
+      centroid[YY] = -90.;
     /// FIXME make this into `util::unique_lonlat(centroid)` but this causes weird parallel behavior
-    return util::detail::unique32( microdeg(centroid[LON]), microdeg(centroid[LON]) );
+    return util::detail::unique32( microdeg(centroid[XX]), microdeg(centroid[XX]) );
   }
 
-  array::ArrayView<double,2> lonlat;
+  array::ArrayView<double,2> xy;
 };
 
 

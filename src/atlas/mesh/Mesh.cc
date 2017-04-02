@@ -73,17 +73,17 @@ mesh::Nodes& MeshImpl::createNodes(const Grid& grid)
   size_t nb_nodes = grid.size();
   nodes().resize(nb_nodes);
 
+  array::ArrayView<double,2> xy     = array::make_view<double,2>( nodes().xy() );
   array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes().lonlat() );
-  array::ArrayView<double,2> geolonlat = array::make_view<double,2>( nodes().geolonlat() );
   size_t jnode(0);
   Projection projection = grid.projection();
   PointLonLat Pll;
   for( PointXY Pxy : grid ) {
-    lonlat(jnode,0) = Pxy.x();
-    lonlat(jnode,1) = Pxy.y();
+    xy(jnode,0) = Pxy.x();
+    xy(jnode,1) = Pxy.y();
     Pll = projection.lonlat(Pxy);
-    geolonlat(jnode,0) = Pll.lon();
-    geolonlat(jnode,1) = Pll.lat();
+    lonlat(jnode,0) = Pll.lon();
+    lonlat(jnode,1) = Pll.lat();
     ++jnode;
   }
   return nodes();

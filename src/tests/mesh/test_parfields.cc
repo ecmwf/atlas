@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE( test1 )
 
   mesh::Nodes& nodes = m.nodes();
   nodes.resize(10);
-  array::ArrayView<double,2> lonlat   = make_view<double,2>( nodes.lonlat());
+  array::ArrayView<double,2> xy       = make_view<double,2>( nodes.xy());
   array::ArrayView<gidx_t,1> glb_idx  = make_view<gidx_t,1>( nodes.global_index());
   array::ArrayView<int   ,1> part     = make_view<int   ,1>( nodes.partition() );
   array::ArrayView<int   ,1> flags    = make_view<int   ,1>( nodes.field("flags") );
@@ -95,16 +95,16 @@ BOOST_AUTO_TEST_CASE( test1 )
   glb_idx(8) = 9;    part(8) = std::min(1,(int)parallel::mpi::comm().size()-1);
   glb_idx(9) = 10;   part(9) = std::min(1,(int)parallel::mpi::comm().size()-1);
 
-  lonlat(0,LON) = 0.;    lonlat(0,LAT) = 80.;    Topology::set( flags(0), Topology::BC|Topology::WEST );
-  lonlat(1,LON) = 0.;    lonlat(1,LAT) =-80.;    Topology::set( flags(1), Topology::BC|Topology::WEST );
-  lonlat(2,LON) = 90.;   lonlat(2,LAT) = 80.;
-  lonlat(3,LON) = 90.;   lonlat(3,LAT) =-80.;
-  lonlat(4,LON) = 180.;  lonlat(4,LAT) = 80.;
-  lonlat(5,LON) = 180.;  lonlat(5,LAT) =-80.;
-  lonlat(6,LON) = 270.;  lonlat(6,LAT) = 80.;
-  lonlat(7,LON) = 270.;  lonlat(7,LAT) =-80.;
-  lonlat(8,LON) = 360.;  lonlat(8,LAT) = 80.;    Topology::set( flags(8), Topology::BC|Topology::EAST );
-  lonlat(9,LON) = 360.;  lonlat(9,LAT) =-80.;    Topology::set( flags(9), Topology::BC|Topology::EAST );
+  xy(0,XX) = 0.;    xy(0,YY) = 80.;    Topology::set( flags(0), Topology::BC|Topology::WEST );
+  xy(1,XX) = 0.;    xy(1,YY) =-80.;    Topology::set( flags(1), Topology::BC|Topology::WEST );
+  xy(2,XX) = 90.;   xy(2,YY) = 80.;
+  xy(3,XX) = 90.;   xy(3,YY) =-80.;
+  xy(4,XX) = 180.;  xy(4,YY) = 80.;
+  xy(5,XX) = 180.;  xy(5,YY) =-80.;
+  xy(6,XX) = 270.;  xy(6,YY) = 80.;
+  xy(7,XX) = 270.;  xy(7,YY) =-80.;
+  xy(8,XX) = 360.;  xy(8,YY) = 80.;    Topology::set( flags(8), Topology::BC|Topology::EAST );
+  xy(9,XX) = 360.;  xy(9,YY) =-80.;    Topology::set( flags(9), Topology::BC|Topology::EAST );
 
   mesh::actions::build_parallel_fields(m);
 

@@ -29,8 +29,8 @@ Nodes::Nodes(): size_(0)
   global_index_ = add( Field("glb_idx",    make_datatype<gidx_t>(), make_shape(size())) );
   remote_index_ = add( Field("remote_idx", make_datatype<int   >(), make_shape(size())) );
   partition_    = add( Field("partition",  make_datatype<int   >(), make_shape(size())) );
+  xy_           = add( Field("xy",         make_datatype<double>(), make_shape(size(),2)) );
   lonlat_       = add( Field("lonlat",     make_datatype<double>(), make_shape(size(),2)) );
-  geolonlat_    = add( Field("geolonlat",  make_datatype<double>(), make_shape(size(),2)) );
   ghost_        = add( Field("ghost",      make_datatype<int   >(), make_shape(size())) );
 
   edge_connectivity_ = &add( new Connectivity("edge") );
@@ -348,6 +348,16 @@ void atlas__mesh__Nodes__add_connectivity (Nodes* This, IrregularConnectivity* c
     ASSERT(connectivity);
     This->add(connectivity);
   );
+}
+
+field::FieldImpl* atlas__mesh__Nodes__xy(Nodes* This)
+{
+  field::FieldImpl* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = This->xy().get();
+  );
+  return field;
 }
 
 field::FieldImpl* atlas__mesh__Nodes__lonlat(Nodes* This)

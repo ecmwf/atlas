@@ -174,7 +174,7 @@ void RegularMeshGenerator::generate_mesh(
   //      mesh.nodes().resize(nnodes);
   //      mesh::Nodes& nodes = mesh.nodes();
   //    following properties should be defined:
-  //      array::ArrayView<double,2> lonlat        ( nodes.lonlat() );
+  //      array::ArrayView<double,2> xy            ( nodes.xy() );
   //      array::ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
   //      array::ArrayView<int,   1> part          ( nodes.partition() );
   //      array::ArrayView<int,   1> ghost         ( nodes.ghost() );
@@ -346,8 +346,8 @@ void RegularMeshGenerator::generate_mesh(
   // define nodes and associated properties
   mesh.nodes().resize(nnodes);
   mesh::Nodes& nodes = mesh.nodes();
+  array::ArrayView<double,2> xy         = array::make_view<double,2>( nodes.xy() );
   array::ArrayView<double,2> lonlat     = array::make_view<double,2>( nodes.lonlat() );
-  array::ArrayView<double,2> geolonlat  = array::make_view<double,2>( nodes.geolonlat() );
   array::ArrayView<gidx_t,1> glb_idx    = array::make_view<gidx_t,1>( nodes.global_index() );
   array::IndexView<int,   1> remote_idx = array::make_indexview<int,1>( nodes.remote_index() );
   array::ArrayView<int,   1> part       = array::make_view<int,1>( nodes.partition() );
@@ -410,26 +410,26 @@ void RegularMeshGenerator::generate_mesh(
         }
         glb_idx(inode) = ii_glb+1;  // starting from 1
         // grid coordinates
-        double xy[2];
+        double _xy[2];
         if (iy_glb<ny) {
           // normal calculation
-          rg.xy(ix_glb,iy_glb,xy);
+          rg.xy(ix_glb,iy_glb,_xy);
         } else {
           // for periodic_y grids, iy_glb==ny lies outside the range of latitudes in the Structured grid...
           // so we extrapolate from two other points -- this is okay for regular grids with uniform spacing.
           double xy1[2], xy2[2];
           rg.xy(ix_glb, iy_glb-1, xy1);
           rg.xy(ix_glb, iy_glb-2, xy2);
-          xy[0]=2*xy1[0]-xy2[0];
-          xy[1]=2*xy1[1]-xy2[1];
+          _xy[0]=2*xy1[0]-xy2[0];
+          _xy[1]=2*xy1[1]-xy2[1];
         }
-        lonlat(inode,LON) = xy[LON];
-        lonlat(inode,LAT) = xy[LAT];
+        xy(inode,LON) = _xy[LON];
+        xy(inode,LAT) = _xy[LAT];
 
         // geographic coordinates by using projection
-        rg.projection().xy2lonlat(xy);
-        geolonlat(inode,LON) = xy[LON];
-        geolonlat(inode,LAT) = xy[LAT];
+        rg.projection().xy2lonlat(_xy);
+        lonlat(inode,LON) = _xy[LON];
+        lonlat(inode,LAT) = _xy[LAT];
 
         // part
         part(inode) = parts_SR[ii];
@@ -449,7 +449,7 @@ void RegularMeshGenerator::generate_mesh(
 #if DEBUG_OUTPUT_DETAIL
         std::cout << "[" << mypart << "] : " << "New node " << "\n\t";
         std::cout << "[" << mypart << "] : "  << "\tinode=" << inode << "; ix_glb=" << ix_glb << "; iy_glb=" << iy_glb << "; glb_idx=" << ii_glb << std::endl;
-        std::cout << "[" << mypart << "] : "  << "\tglon=" << geolonlat(inode,0) << "; glat=" << geolonlat(inode,1) << "; glb_idx=" << glb_idx(inode) << std::endl;
+        std::cout << "[" << mypart << "] : "  << "\tglon=" << lonlat(inode,0) << "; glat=" << lonlat(inode,1) << "; glb_idx=" << glb_idx(inode) << std::endl;
 #endif
       }
       ++ii;

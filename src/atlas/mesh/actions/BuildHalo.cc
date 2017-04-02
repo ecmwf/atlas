@@ -197,7 +197,7 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
 {
   Notification notes;
   mesh::Nodes& nodes         = mesh.nodes();
-  array::ArrayView<double,2> xy  = array::make_view<double,2> ( nodes.lonlat() );
+  array::ArrayView<double,2> xy  = array::make_view<double,2> ( nodes.xy() );
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1> ( nodes.global_index() );
   size_t nb_nodes = nodes.size();
 
@@ -213,8 +213,8 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
       int other = uid2node[uid];
       std::stringstream msg;
       msg << "Node uid: " << uid << "   " << glb_idx(jnode)
-          << " (" << xy(jnode,LON) <<","<< xy(jnode,LAT)<<")  has already been added as node "
-          << glb_idx(other) << " (" << xy(other,LON) <<","<< xy(other,LAT)<<")";
+          << " (" << xy(jnode,XX) <<","<< xy(jnode,YY)<<")  has already been added as node "
+          << glb_idx(other) << " (" << xy(other,XX) <<","<< xy(other,YY)<<")";
       notes.add_error(msg.str());
     }
     uid2node[uid] = jnode;
@@ -395,8 +395,8 @@ public:
 public:
   BuildHaloHelper( Mesh& _mesh ):
     mesh(_mesh),
-    xy           ( array::make_view<double,2> ( mesh.nodes().lonlat() ) ),
-    lonlat       ( array::make_view<double,2> ( mesh.nodes().geolonlat() ) ),
+    xy           ( array::make_view<double,2> ( mesh.nodes().xy() ) ),
+    lonlat       ( array::make_view<double,2> ( mesh.nodes().lonlat() ) ),
     glb_idx      ( array::make_view<gidx_t,1> ( mesh.nodes().global_index() ) ),
     part         ( array::make_view<int   ,1> ( mesh.nodes().partition() ) ),
     ridx         ( array::make_indexview<int,1> ( mesh.nodes().remote_index() ) ),
@@ -414,8 +414,8 @@ public:
   {
     compute_uid.update();
     mesh::Nodes& nodes         = mesh.nodes();
-    xy       = array::make_view<double,2> ( nodes.lonlat() );
-    lonlat   = array::make_view<double,2> ( nodes.geolonlat() );
+    xy       = array::make_view<double,2> ( nodes.xy() );
+    lonlat   = array::make_view<double,2> ( nodes.lonlat() );
     glb_idx  = array::make_view<gidx_t,1> ( nodes.global_index() );
     part     = array::make_view<int   ,1> ( nodes.partition() );
     ridx     = array::make_indexview<int   ,1> ( nodes.remote_index() );
@@ -450,8 +450,8 @@ public:
         buf.node_glb_idx[p][jnode]       = glb_idx(node);
         buf.node_part   [p][jnode]       = part   (node);
         buf.node_ridx   [p][jnode]       = ridx   (node);
-        buf.node_xy     [p][jnode*2+LON] = xy (node,LON);
-        buf.node_xy     [p][jnode*2+LAT] = xy (node,LAT);
+        buf.node_xy     [p][jnode*2+XX] = xy (node,XX);
+        buf.node_xy     [p][jnode*2+YY] = xy (node,YY);
         Topology::set(buf.node_flags[p][jnode],flags(node)|Topology::GHOST);
       }
       else
@@ -510,8 +510,8 @@ public:
         int node = found->second;
         buf.node_part   [p][jnode]      = part   (node);
         buf.node_ridx   [p][jnode]      = ridx   (node);
-        buf.node_xy [p][jnode*2+LON] = xy (node,LON);
-        buf.node_xy [p][jnode*2+LAT] = xy (node,LAT);
+        buf.node_xy [p][jnode*2+XX] = xy (node,XX);
+        buf.node_xy [p][jnode*2+YY] = xy (node,YY);
         transform(&buf.node_xy[p][jnode*2],-1);
         // Global index of node is based on UID of destination
         buf.node_glb_idx[p][jnode]      = util::unique_lonlat(&buf.node_xy [p][jnode*2]);
@@ -548,11 +548,11 @@ public:
       std::vector<double> crds(elem_nodes->cols(ielem)*2);
       for(size_t jnode=0; jnode<elem_nodes->cols(ielem); ++jnode)
       {
-        double crd[] = { xy( (*elem_nodes)(ielem,jnode),LON) , xy( (*elem_nodes)(ielem,jnode),LAT) };
+        double crd[] = { xy( (*elem_nodes)(ielem,jnode),XX) , xy( (*elem_nodes)(ielem,jnode),YY) };
         transform(crd,-1);
         buf.elem_nodes_id[p][jelemnode++] = util::unique_lonlat(crd);
-        crds[jnode*2+LON] = crd[LON];
-        crds[jnode*2+LAT] = crd[LAT];
+        crds[jnode*2+XX] = crd[XX];
+        crds[jnode*2+YY] = crd[YY];
       }
       // Global index of element is based on UID of destination
 
@@ -584,7 +584,7 @@ public:
     {
       for(size_t n = 0; n < buf.node_glb_idx[jpart].size(); ++n)
       {
-        double crd[] = { buf.node_xy[jpart][n*2+LON], buf.node_xy[jpart][n*2+LAT] };
+        double crd[] = { buf.node_xy[jpart][n*2+XX], buf.node_xy[jpart][n*2+YY] };
         bool inserted = node_uid.insert( util::unique_lonlat(crd) ).second;
         if( inserted ) {
           rfn_idx[jpart].push_back(n);
@@ -600,8 +600,8 @@ public:
     glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
     part    = array::make_view<int,   1>( nodes.partition() );
     ridx    = array::make_indexview<int,   1>( nodes.remote_index() );
-    xy      = array::make_view<double,2>( nodes.lonlat() );
-    lonlat  = array::make_view<double,2>( nodes.geolonlat() );
+    xy      = array::make_view<double,2>( nodes.xy() );
+    lonlat  = array::make_view<double,2>( nodes.lonlat() );
     ghost   = array::make_view<int,   1>( nodes.ghost() );
 
     compute_uid.update();
@@ -620,11 +620,11 @@ public:
         part   (loc_idx)    = buf.node_part    [jpart][rfn_idx[jpart][n]];
         ridx   (loc_idx)    = buf.node_ridx    [jpart][rfn_idx[jpart][n]];
         PointXY pxy( &buf.node_xy  [jpart][rfn_idx[jpart][n]*2] );
-        xy     (loc_idx,LON) = pxy.x();
-        xy     (loc_idx,LAT) = pxy.y();
+        xy     (loc_idx,XX) = pxy.x();
+        xy     (loc_idx,YY) = pxy.y();
         PointLonLat pll = mesh.projection().lonlat(pxy);
-        lonlat (loc_idx,LON) = pll.lon();
-        lonlat (loc_idx,LAT) = pll.lat();
+        lonlat (loc_idx,XX) = pll.lon();
+        lonlat (loc_idx,YY) = pll.lat();
         uid_t uid = compute_uid(loc_idx);
 
         // make sure new node was not already there
@@ -634,9 +634,9 @@ public:
           int other = found->second;
           std::stringstream msg;
           msg << "New node with uid " << uid << ":\n"  << glb_idx(loc_idx)
-              << "("<<xy(loc_idx,LON)<<","<<xy(loc_idx,LAT)<<")\n";
+              << "("<<xy(loc_idx,XX)<<","<<xy(loc_idx,YY)<<")\n";
           msg << "Existing already loc "<< other << "  :  " << glb_idx(other)
-              << "("<<xy(other,LON)<<","<<xy(other,LAT)<<")\n";
+              << "("<<xy(other,XX)<<","<<xy(other,YY)<<")\n";
           throw eckit::SeriousBug(msg.str(),Here());
         }
         uid2node[ uid ] = nb_nodes+new_node;
@@ -848,7 +848,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
   std::vector<uid_t> send_bdry_nodes_uid(bdry_nodes.size());
   for(size_t jnode = 0; jnode < bdry_nodes.size(); ++jnode)
   {
-    double crd[] = { helper.xy(bdry_nodes[jnode],LON), helper.xy(bdry_nodes[jnode],LAT) };
+    double crd[] = { helper.xy(bdry_nodes[jnode],XX), helper.xy(bdry_nodes[jnode],YY) };
     transform(crd,+1);
     // Log::info() << " crd  " << crd[0] << "  " << crd[1] <<  "       uid " << util::unique_lonlat(crd) << std::endl;
     send_bdry_nodes_uid[jnode] = util::unique_lonlat(crd);
@@ -931,7 +931,7 @@ void build_halo(Mesh& mesh, int nb_elems )
 #ifdef DEBUG_OUTPUT
     output::Gmsh gmsh2d("build-halo-mesh2d.msh",util::Config
       ("ghost",true)
-      ("coordinates","lonlat")
+      ("coordinates","xy")
     );
     output::Gmsh gmsh3d("build-halo-mesh3d.msh",util::Config
       ("ghost",true)

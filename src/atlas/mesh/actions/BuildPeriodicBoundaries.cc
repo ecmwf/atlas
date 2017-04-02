@@ -57,7 +57,7 @@ void build_periodic_boundaries( Mesh& mesh )
 
     int nb_nodes = nodes.size();
 
-    array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
+    array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
 
     // Identify my master and slave nodes on own partition
     // master nodes are at x=0,  slave nodes are at x=2pi
@@ -73,7 +73,7 @@ void build_periodic_boundaries( Mesh& mesh )
         Topology::set(flags(jnode),Topology::PERIODIC);
         if( part(jnode) == mypart )
         {
-          LonLatMicroDeg ll(lonlat(jnode,LON),lonlat(jnode,LAT));
+          LonLatMicroDeg ll(xy(jnode,XX),xy(jnode,YY));
           master_lookup[ ll.unique() ] = jnode;
           master_nodes.push_back( ll.lon() );
           master_nodes.push_back( ll.lat() );
@@ -85,7 +85,7 @@ void build_periodic_boundaries( Mesh& mesh )
         Topology::set(flags(jnode),Topology::PERIODIC);
         Topology::set(flags(jnode),Topology::GHOST);
         ghost(jnode) = 1;
-        LonLatMicroDeg ll(lonlat(jnode,LON),lonlat(jnode,LAT));
+        LonLatMicroDeg ll(xy(jnode,XX),xy(jnode,YY));
         slave_lookup[ ll.unique() ] = jnode;
         slave_nodes.push_back( ll.lon() );
         slave_nodes.push_back( ll.lat() );

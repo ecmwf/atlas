@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef BuildDualMesh_h
-#define BuildDualMesh_h
+#pragma once
 
 #include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
@@ -67,5 +66,3 @@ extern "C"
 } // namespace actions
 } // namespace mesh
 } // namespace atlas
-
-#endif // BuildDualMesh_h
