@@ -46,7 +46,7 @@ void set_field_metadata(const eckit::Parametrisation& config, field::Field& fiel
 
 size_t StructuredColumns::config_size(const eckit::Parametrisation& config) const
 {
-  size_t size = npts();
+  size_t size = this->size();
   bool global(false);
   if( config.get("global",global) )
   {
@@ -400,10 +400,10 @@ void StructuredColumns::scatter(
 // ----------------------------------------------------------------------------
 // Retrieve Global index from Local one
 // ----------------------------------------------------------------------------
-double StructuredColumns::lat(
-    size_t jlat) const
+double StructuredColumns::y(
+    size_t j) const
 {
-  return grid_.y(jlat+first_lat_);
+  return grid_.y(j+first_lat_);
 }
 // ----------------------------------------------------------------------------
 
@@ -412,11 +412,11 @@ double StructuredColumns::lat(
 // ----------------------------------------------------------------------------
 // Retrieve Global index from Local one
 // ----------------------------------------------------------------------------
-double StructuredColumns::lon(
-    size_t jlat,
-    size_t jlon) const
+double StructuredColumns::x(
+    size_t i,
+    size_t j) const
 {
-  return grid_.x(jlon+first_lon_[jlat],jlat+first_lat_);
+  return grid_.x(i+first_lon_[j],j+first_lat_);
 }
 // ----------------------------------------------------------------------------
 

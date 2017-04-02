@@ -140,9 +140,9 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
     mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(g);
     functionspace::StructuredColumns gp(g);
     output::Gmsh gmsh(grid_uid+"-grid.msh");
-    field::Field scalar( "scalar",rgp.data(),array::make_shape(gp.npts()));
-    field::Field scalar_dNS("scalar_dNS",rgp.data()+nfld*gp.npts(),array::make_shape(gp.npts()));
-    field::Field scalar_dEW("scalar_dEW",rgp.data()+2*nfld*gp.npts(),array::make_shape(gp.npts()));
+    field::Field scalar( "scalar",rgp.data(),array::make_shape(gp.size()));
+    field::Field scalar_dNS("scalar_dNS",rgp.data()+nfld*gp.size(),array::make_shape(gp.size()));
+    field::Field scalar_dEW("scalar_dEW",rgp.data()+2*nfld*gp.size(),array::make_shape(gp.size()));
     gmsh.write(mesh);
     gmsh.write(scalar,gp);
     gmsh.write(scalar_dEW,gp);

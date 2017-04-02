@@ -78,12 +78,12 @@ public:
   void scatter( const field::FieldSet&, field::FieldSet& ) const;
   void scatter( const field::Field&, field::Field& ) const;
 
-  size_t npts() const            { return npts_; }
-  size_t nlat() const            { return nlat_; }
-  size_t nlon(size_t jlat) const { return nlon_[jlat]; }
+  size_t size() const       { return npts_; }
+  size_t ny() const         { return nlat_; }
+  size_t nx(size_t j) const { return nlon_[j]; }
 
-  double lat(size_t jlat) const;
-  double lon(size_t jlat, size_t jlon) const;
+  double x(size_t i, size_t j) const;
+  double y(size_t j) const;
 
   std::string checksum( const field::FieldSet& ) const;
   std::string checksum( const field::Field& ) const;
@@ -144,12 +144,12 @@ public:
   operator bool() const { return valid(); }
   bool valid() const { return functionspace_; }
 
-  size_t npts() const            { return functionspace_->npts(); }
-  size_t nlat() const            { return functionspace_->nlat(); }
-  size_t nlon(size_t jlat) const { return functionspace_->nlon(jlat); }
+  size_t size() const            { return functionspace_->size(); }
+  size_t ny() const            { return functionspace_->ny(); }
+  size_t nx(size_t j) const { return functionspace_->nx(j); }
 
-  double lat(size_t jlat) const { return functionspace_->lat(jlat); }
-  double lon(size_t jlat, size_t jlon) const { return functionspace_->lon(jlat,jlon); }
+  double y(size_t j) const { return functionspace_->y(j); }
+  double x(size_t i, size_t j) const { return functionspace_->x(i,j); }
 
   const grid::StructuredGrid& grid() const { return functionspace_->grid(); }
 

@@ -39,13 +39,13 @@ int main(int argc, char *argv[])
     Field field_scalar1 = fs_rgp.createField<double>("scalar1");
     auto scalar1 = make_view<double,1>(field_scalar1);
 
-    for (size_t jlat = 0; jlat < fs_rgp.nlat(); ++jlat)
+    for (size_t jlat = 0; jlat < fs_rgp.ny(); ++jlat)
     {
-        for (size_t jlon = 0; jlon < fs_rgp.nlon(jlat); ++jlon)
+        for (size_t jlon = 0; jlon < fs_rgp.nx(jlat); ++jlon)
         {
-            double zlat = fs_rgp.lat(jlat);
+            double zlat = fs_rgp.y(jlat);
             zlat = zlat * deg2rad;
-            double zlon = fs_rgp.lon(jlat, jlon);
+            double zlon = fs_rgp.x(jlon, jlat);
             zlon  = zlon * deg2rad;
             double zdist = 2.0 * sqrt((cos(zlat) * sin((zlon-zlonc)/2.)) *
                           (cos(zlat) * sin((zlon-zlonc)/2.)) +
