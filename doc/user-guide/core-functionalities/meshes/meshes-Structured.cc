@@ -18,13 +18,13 @@ int main(int argc, char *argv[])
     StructuredMeshGenerator meshgenerator;
 
     Grid grid( "O32" );
-    Mesh::Ptr mesh( meshgenerator.generate(grid) );
+    Mesh mesh = meshgenerator.generate(grid);
 
     Gmsh gmsh_2d("mesh2d.msh");
     Gmsh gmsh_3d("mesh3d.msh", Config("coordinates", "xyz") );
 
-    gmsh_2d.write(*mesh);
-    gmsh_3d.write(*mesh);
+    gmsh_2d.write(mesh);
+    gmsh_3d.write(mesh);
 
     atlas::Library::instance().finalise();
 

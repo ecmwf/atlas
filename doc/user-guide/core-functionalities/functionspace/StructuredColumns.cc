@@ -14,6 +14,7 @@ using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::functionspace::StructuredColumns;
 using atlas::field::Field;
 using atlas::array::ArrayView;
+using atlas::array::make_view;
 using atlas::output::Gmsh;
 
 int main(int argc, char *argv[])
@@ -24,7 +25,7 @@ int main(int argc, char *argv[])
     Grid grid( "N32" );
 
     // Generate functionspace associated to grid
-    StructuredColumns::Ptr fs_rgp(new StructuredColumns(grid));
+    StructuredColumns fs_rgp(grid);
 
     // Variables for scalar1 field definition
     const double rpi = 2.0 * asin(1.0);
@@ -35,16 +36,16 @@ int main(int argc, char *argv[])
     int jnode = 0;
 
     // Calculate scalar function
-    Field::Ptr field_scalar1(fs_rgp->createField<double>("scalar1"));
-    ArrayView <double,1> scalar1(*field_scalar1);
+    Field field_scalar1 = fs_rgp.createField<double>("scalar1");
+    auto scalar1 = make_view<double,1>(field_scalar1);
 
-    for (size_t jlat = 0; jlat < fs_rgp->nlat(); ++jlat)
+    for (size_t jlat = 0; jlat < fs_rgp.nlat(); ++jlat)
     {
-        for (size_t jlon = 0; jlon < fs_rgp->nlon(jlat); ++jlon)
+        for (size_t jlon = 0; jlon < fs_rgp.nlon(jlat); ++jlon)
         {
-            double zlat = fs_rgp->lat(jlat);
+            double zlat = fs_rgp.lat(jlat);
             zlat = zlat * deg2rad;
-            double zlon = fs_rgp->lon(jlat, jlon);
+            double zlon = fs_rgp.lon(jlat, jlon);
             zlon  = zlon * deg2rad;
             double zdist = 2.0 * sqrt((cos(zlat) * sin((zlon-zlonc)/2.)) *
                           (cos(zlat) * sin((zlon-zlonc)/2.)) +
@@ -63,11 +64,11 @@ int main(int argc, char *argv[])
     {
       // Generate visualisation mesh associated to grid
       StructuredMeshGenerator meshgenerator;
-      Mesh::Ptr mesh (meshgenerator.generate(grid));
+      Mesh mesh = meshgenerator.generate(grid);
 
       Gmsh gmsh("scalar1.msh");
-      gmsh.write(*mesh);
-      gmsh.write(*field_scalar1);
+      gmsh.write(mesh);
+      gmsh.write(field_scalar1);
     }
 
     atlas::Library::instance().finalise();
