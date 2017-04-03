@@ -209,13 +209,13 @@ void StructuredMeshGenerator::generate(const grid::Grid& grid, const grid::Distr
 #if DEBUG_OUTPUT
     int inode=0;
     std::vector<int> parts=distribution;
-    Log::info(Here()) << "Partition : " << std::endl;
-    for (int ilat=0; ilat<rg.ny(); ilat++) {
-      for (int ilon=0; ilon<rg.nx(ilat); ilon++ ) {
-        Log::info(Here()) << std::setw(3) << parts[inode];
+    Log::info() << "Partition : " << std::endl;
+    for (size_t ilat=0; ilat<rg.ny(); ilat++) {
+      for (size_t ilon=0; ilon<rg.nx(ilat); ilon++ ) {
+        Log::info() << std::setw(3) << parts[inode];
         inode++;
       }
-      Log::info(Here()) << "\n";
+      Log::info() << std::endl;
     }
 #endif
 

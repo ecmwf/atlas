@@ -51,7 +51,7 @@ public:
         add_option(new SimpleOption<bool>       ("source-mesh-generator",             "source mesh generator (default structured)"));
         add_option(new SimpleOption<bool>       ("source-mesh-generator-triangulate", "source mesh generator triangulate option (default false)"));
         add_option(new SimpleOption<bool>       ("source-mesh-generator-angle",       "source mesh generator angle option (default false)"));
-        add_option(new SimpleOption<size_t>     ("source-mesh-halo",                  "source mesh halo size (default 0)"));
+        add_option(new SimpleOption<size_t>     ("source-mesh-halo",                  "source mesh halo size (default 1)"));
 
         add_option(new SimpleOption<std::string>("target-mesh-partitioner",           "target mesh partitioner (polygon, brute_force)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator",             "target mesh generator (default structured)"));
@@ -96,7 +96,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
         eckit::linalg::LinearAlgebra::backend(option);
     }
 
-    size_t source_mesh_halo = 0;
+    size_t source_mesh_halo = 1;
     args.get("source-mesh-halo", source_mesh_halo);
 
     size_t target_mesh_halo = 1;

@@ -58,7 +58,7 @@ void PartitionedMesh::writeGmsh(const std::string& fileName, const field::FieldS
 void PartitionedMesh::partition(const grid::Grid& grid) {
     eckit::TraceTimer<Atlas> tim("PartitionedMesh::partition()");
 
-    partitioner_ = Partitioner(optionPartitioner_, grid);
+    partitioner_ = Partitioner(optionPartitioner_);
 
 
     Generator meshgen(optionGenerator_, generatorParams_);
