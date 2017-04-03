@@ -61,13 +61,13 @@ Config::Config( const eckit::PathName& path )
   }
 }
 
-Config Config::operator&&(const Config& other) const
-{
-   Config config;
-   config.set(*this);
-   config.set(other);
-   return config;
-}
+// Config Config::operator&&(const Config& other) const
+// {
+//    Config config;
+//    config.set(*this);
+//    config.set(other);
+//    return config;
+// }
 
 Config Config::operator|(const Config& other) const
 {

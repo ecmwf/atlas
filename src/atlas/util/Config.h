@@ -60,7 +60,7 @@ public:
 
 
   // Overload operators to merge two Config objects.
-  Config operator&&(const Config& other) const;
+  //Config operator&&(const Config& other) const;
   Config operator|(const Config& other) const;
 
   /// @brief Set a key-value parameter
