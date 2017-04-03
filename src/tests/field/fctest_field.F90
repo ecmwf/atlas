@@ -35,7 +35,7 @@ END_TESTSUITE_INIT
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-  call atlas_finalize()
+  call atlas_finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------

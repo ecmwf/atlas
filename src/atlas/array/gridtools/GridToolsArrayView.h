@@ -21,22 +21,14 @@
 
 //------------------------------------------------------------------------------------------------------
 
-//#include "atlas/array/native/ArrayView_iterator.h"
-
-//------------------------------------------------------------------------------------------------------
-
 namespace atlas {
 namespace array {
 
-template< typename Value, int Rank >
-class ArrayView
-{
+template< typename Value, int Rank > class ArrayView {
 public:
 // -- Type definitions
-//  typedef ArrayView_iterator<Value,Rank>         iterator;
-//  typedef ArrayView_const_iterator<Value,Rank>   const_iterator;
-    typedef typename remove_const<Value>::type  value_type;
-
+    using value_type = typename remove_const<Value>::type;
+    using Slice = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
     using data_view_t = atlas::array::gridtools::data_view_tt<value_type, Rank>;
 
 public:
@@ -62,13 +54,24 @@ public:
 
     size_t shape(size_t idx) const { return shape_[idx]; }
 
-    LocalView<value_type,Rank-1> at(const size_t i) const {
-        assert( i < shape_[0] );
-        return LocalView<value_type,Rank-1>(
-                const_cast<value_type*>(data())+strides_[0]*i,
-                shape_+1,
-                strides_+1 );
+    const Slice operator[](size_t i) const {
+        return Slicer<Slice, Rank==1>(*this).apply(i);
     }
+
+    Slice operator[](size_t i) {
+        return Slicer<Slice, Rank==1>(*this).apply(i);
+    }
+
+    const Slice at(size_t i) const {
+        if( i>= shape(0) ) throw eckit::OutOfRange(i,shape(0),Here());
+        return Slicer<Slice, Rank==1>(*this).apply(i);
+    }
+
+    Slice at(size_t i) {
+        if( i>= shape(0) ) throw eckit::OutOfRange(i,shape(0),Here());
+        return Slicer<Slice, Rank==1>(*this).apply(i);
+    }
+
 
     data_view_t& data_view() { return gt_data_view_;}
 
@@ -85,6 +88,29 @@ public:
     void assign(const value_type& value);
 
 private:
+
+    template <typename ReturnType = Slice, bool ToScalar = false>
+    struct Slicer {
+        Slicer(ArrayView<value_type, Rank> const& av) : av_(av) {}
+        ArrayView<value_type, Rank> const& av_;
+        ReturnType apply(const size_t i) const {
+          return LocalView<value_type,Rank-1>(
+                  av_.data()+av_.strides_[0]*i,
+                  av_.shape_+1,
+                  av_.strides_+1 );
+        }
+    };
+
+    template <typename ReturnType>
+    struct Slicer<ReturnType, true> {
+        Slicer(ArrayView<value_type, Rank> const& av) : av_(av) {}
+        ArrayView<value_type, Rank> const& av_;
+        ReturnType apply(const size_t i) const {
+            return *(const_cast<value_type*>(av_.data()) + av_.strides_[0] * i);
+        }
+    };
+
+
     data_view_t gt_data_view_;
     size_t shape_[Rank];
     size_t strides_[Rank];
