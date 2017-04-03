@@ -35,7 +35,7 @@ public:
 
     virtual void partition(const Grid& grid, int part[] ) const = 0;
 
-    virtual Distribution partition(const Grid& grid) const;
+    Distribution partition(const Grid& grid) const;
 
     size_t nb_partitions() const;
 
