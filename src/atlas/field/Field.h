@@ -228,9 +228,9 @@ FieldImpl* FieldImpl::wrap(
 
 class Field {
 private:
-  
+
   eckit::SharedPtr<FieldImpl> field_;
-  
+
 public:
 
   Field();
@@ -238,11 +238,11 @@ public:
   Field( const FieldImpl* );
 
   const bool valid() const { return field_; }
-  const operator bool() const { return valid(); }
+  operator bool() const { return valid(); }
 
   FieldImpl* get() { return field_.get(); }
   const FieldImpl* get() const { return field_.get(); }
-  
+
   /// @brief Create field from parametrisation
   Field(const eckit::Parametrisation&);
 

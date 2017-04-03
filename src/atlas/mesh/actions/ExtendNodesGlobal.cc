@@ -16,6 +16,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/util/CoordinateEnums.h"
 
 
 namespace atlas {
@@ -69,12 +70,15 @@ void ExtendNodesGlobal::operator()(const atlas::grid::Grid& grid, atlas::mesh::M
 
     for(size_t i = 0; i < nb_extension_pts; ++i) {
         const size_t n = nb_real_pts + i;
-        xy(n,0) = extended_pts[i].x();
-        xy(n,1) = extended_pts[i].y();
-        PointLonLat pLL = grid.projection().lonlat(extended_pts[i]);
-        lonlat(n,0) = pLL.lon();
-        lonlat(n,1) = pLL.lat();
-        eckit::geometry::lonlat_to_3d(lonlat[n].data(),xyz[n].data());
+        PointLonLat pLL  = grid.projection().lonlat(extended_pts[i]);
+        PointXYZ    pXYZ = lonlat_to_geocentric(pLL);
+        xyz(n,XX) = pXYZ.x();
+        xyz(n,YY) = pXYZ.y();
+        xyz(n,ZZ) = pXYZ.z();
+        xy(n,XX) = extended_pts[i].x();
+        xy(n,YY) = extended_pts[i].y();
+        lonlat(n,LON) = pLL.lon();
+        lonlat(n,LAT) = pLL.lat();
         gidx(n) = n+1;
     }
 

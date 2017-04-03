@@ -244,10 +244,10 @@ public:
     EdgeColumns( const mesh::Mesh&, const mesh::Halo&, const eckit::Parametrisation& );
     EdgeColumns( const mesh::Mesh& mesh, const mesh::Halo& );
     EdgeColumns( const mesh::Mesh& mesh );
-  
+
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
-  
+
     size_t nb_edges() const;
     size_t nb_edges_global() const; // Only on MPI rank 0, will this be different from 0
 
@@ -329,7 +329,7 @@ public:
     const parallel::Checksum& checksum() const;
 
 private:
-  
+
   const detail::EdgeColumns* functionspace_;
 };
 
@@ -337,7 +337,7 @@ template< typename DATATYPE >
 field::Field EdgeColumns::createField(
           const std::string& name,
           const eckit::Parametrisation& config ) const {
-  functionspace_->createField<DATATYPE>(name,config);
+  return functionspace_->createField<DATATYPE>(name,config);
 }
 
 template< typename DATATYPE >
@@ -345,16 +345,16 @@ field::Field EdgeColumns::createField(
           const std::string& name,
           size_t levels,
           const eckit::Parametrisation& config ) const {
-  functionspace_->createField<DATATYPE>(name,levels,config);
+  return functionspace_->createField<DATATYPE>(name,levels,config);
 }
 
 
-template< typename DATATYPE > 
+template< typename DATATYPE >
 field::Field EdgeColumns::createField(
     const std::string& name,
     const std::vector<size_t>& variables,
     const eckit::Parametrisation& config ) const {
-  functionspace_->createField<DATATYPE>(name,variables,config);
+  return functionspace_->createField<DATATYPE>(name,variables,config);
 }
 
 template< typename DATATYPE >
@@ -363,7 +363,7 @@ field::Field EdgeColumns::createField(
     size_t levels,
     const std::vector<size_t>& variables,
     const eckit::Parametrisation& config ) const {
-  functionspace_->createField<DATATYPE>(name,levels,variables,config);
+  return functionspace_->createField<DATATYPE>(name,levels,variables,config);
 }
 
 
