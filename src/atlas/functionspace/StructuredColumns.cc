@@ -170,7 +170,7 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
     }
 #endif
 #else
-    npts_ = grid_.npts();
+    npts_ = grid_.size();
     nlat_ = grid_.ny();
     nlon_.resize(nlat_);
     for( size_t jlat=0; jlat<nlat_; ++jlat )
@@ -219,8 +219,8 @@ field::Field StructuredColumns::createField(const std::string& name, array::Data
           "StructuredColumns::createField currently relies"
           " on ATLAS_HAVE_TRANS for parallel fields", Here());
     }
-    field::Field field = field::Field(name, datatype, array::make_shape(grid_.npts()) );
-    field.set_functionspace(*this);
+    field::Field field = field::Field(name, datatype, array::make_shape(grid_.size()) );
+    field.set_functionspace(this);
     set_field_metadata(options,field);
     return field;
 #endif
@@ -252,10 +252,10 @@ field::Field StructuredColumns::createField(
           "StructuredColumns::createField currently relies"
           " on ATLAS_HAVE_TRANS for parallel fields", Here());
     }
-    field::Field field = field::Field::create(
-                    name, datatype, array::make_shape(grid_.npts(), levels));
+    field::Field field = field::Field(
+                    name, datatype, array::make_shape(grid_.size(), levels));
 
-    field.set_functionspace(*this);
+    field.set_functionspace(this);
     set_field_metadata(options,field);
     return field;
 #endif
