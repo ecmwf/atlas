@@ -86,7 +86,7 @@ void LinearSpacing::setup(double start, double end, long N, bool endpoint) {
 
   min_ = std::min(start,end);
   max_ = std::max(start,end);
-  
+
   start_ = start;
   end_ = end;
   N_ = N;
