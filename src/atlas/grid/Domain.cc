@@ -12,6 +12,11 @@
 
 #include "atlas/grid/detail/domain/Domain.h"
 #include "atlas/grid/detail/domain/EmptyDomain.h"
+#include "atlas/grid/detail/domain/RectangularDomain.h"
+#include "atlas/grid/detail/domain/ZonalBandDomain.h"
+#include "atlas/grid/detail/domain/GlobalDomain.h"
+
+using RD = atlas::grid::domain::RectangularDomain;
 
 namespace atlas {
 namespace grid {
@@ -30,6 +35,13 @@ Domain::Domain( const domain_t* domain):
 
 Domain::Domain( const eckit::Parametrisation& p ):
     domain_( atlas::grid::domain::Domain::create(p) ) {
+}
+
+RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, const std::string& units ) :
+  Domain( 
+    ( RD::is_global(x,y,units) ) ? new atlas::grid::domain::GlobalDomain() :
+    ( RD::is_zonal_band(x,units) ? new atlas::grid::domain::ZonalBandDomain(y) :
+    new atlas::grid::domain::RectangularDomain(x,y,units) ) ) {
 }
 
 } // namespace Grid

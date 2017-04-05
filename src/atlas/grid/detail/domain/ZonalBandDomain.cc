@@ -7,7 +7,7 @@ namespace domain {
 
 namespace {
 
-  static bool is_global(double ymin, double ymax) {
+  static bool _is_global(double ymin, double ymax) {
     const double eps = 1.e-12;
     return std::abs( (ymax-ymin) - 180. ) < eps ;
   }
@@ -37,7 +37,7 @@ ZonalBandDomain::ZonalBandDomain(const eckit::Parametrisation& params) :
 
 ZonalBandDomain::ZonalBandDomain( const Interval& interval_y ) :
   RectangularDomain( interval_x(), interval_y, units_ ) {
-  global_ = is_global(ymin(),ymax());
+  global_ = _is_global(ymin(),ymax());
   ymin_tol_ = ymin()-1.e-6;
   ymax_tol_ = ymax()+1.e-6;
 }

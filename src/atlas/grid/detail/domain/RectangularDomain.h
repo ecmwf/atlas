@@ -10,9 +10,14 @@ namespace domain {
 
 class RectangularDomain: public Domain {
 
-protected:
+public:
 
     using Interval = std::array<double,2>;
+
+public:
+
+static bool is_global( const Interval& x, const Interval& y, const std::string& units = "degrees" );
+static bool is_zonal_band( const Interval& x, const std::string& units = "degrees" );
 
 public:
 

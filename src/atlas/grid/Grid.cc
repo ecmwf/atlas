@@ -37,8 +37,11 @@ Grid::Grid( const Grid::grid_t *grid ):
     grid_( grid ) {
 }
 
-Grid::Grid( const std::string& shortname ) {
-    grid_ = Grid::grid_t::create( shortname );
+Grid::Grid( const std::string& shortname, const Domain& domain ) {
+    grid_ = Grid::grid_t::create(
+                shortname, 
+                Config("domain", domain.spec())
+            );
 }
 
 Grid::Grid( const Config& p ) {
@@ -94,8 +97,8 @@ StructuredGrid::StructuredGrid( const Grid::grid_t* grid ):
     grid_( structured_grid(get()) ) {
 }
 
-StructuredGrid::StructuredGrid( const std::string& grid ):
-    Grid( grid ),
+StructuredGrid::StructuredGrid( const std::string& grid, const Domain& domain ):
+    Grid( grid, domain ),
     grid_( structured_grid(get()) ) {
 }
 

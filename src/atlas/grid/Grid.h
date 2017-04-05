@@ -75,7 +75,7 @@ public:
     Grid();
     Grid( const Grid& );
     Grid( const grid_t* );
-    Grid( const std::string& );
+    Grid( const std::string& name, const Domain& = Domain() );
     Grid( const Config& );
 
     operator bool() const { return grid_; }
@@ -164,7 +164,7 @@ public:
     StructuredGrid();
     StructuredGrid( const Grid& );
     StructuredGrid( const Grid::grid_t* );
-    StructuredGrid( const std::string& );
+    StructuredGrid( const std::string& name, const Domain& = Domain() );
     StructuredGrid( const Config& );
 
     operator bool() const {

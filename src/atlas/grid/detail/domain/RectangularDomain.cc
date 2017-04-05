@@ -6,18 +6,9 @@ namespace atlas {
 namespace grid {
 namespace domain {
 
+using Interval = RectangularDomain::Interval;
+
 namespace {
-
-  static bool is_global(double xmin, double xmax, double ymin, double ymax, const std::string& units) {
-    return false;
-
-    // if( units != "degrees" )
-    //   return false;
-    //
-    // const double eps = 1.e-12;
-    // return std::abs( (xmax-xmin) - 360. ) < eps
-    //     && std::abs( (ymax-ymin) - 180. ) < eps ;
-  }
 
   static std::array<double,2> get_interval_x(const eckit::Parametrisation& params) {
     double xmin, xmax;
@@ -52,6 +43,31 @@ namespace {
 
 }
 
+bool RectangularDomain::is_global(
+   const Interval& x,
+   const Interval& y,
+   const std::string& units ) {
+
+  if( units != "degrees" )
+    return false;
+
+  const double eps = 1.e-12;
+  return std::abs( (x[1]-x[0]) - 360. ) < eps
+      && std::abs( (y[1]-y[0]) - 180. ) < eps ;
+}
+
+bool RectangularDomain::is_zonal_band(
+  const Interval& x,
+  const std::string& units) {
+
+  if( units != "degrees" )
+    return false;
+
+  const double eps = 1.e-12;
+  return std::abs( (x[1]-x[0]) - 360. ) < eps;
+}
+
+
 RectangularDomain::RectangularDomain(const eckit::Parametrisation& params) :
   RectangularDomain( get_interval_x(params), get_interval_y(params), get_units(params) ) {
 }
@@ -66,7 +82,7 @@ RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, cons
   // Make sure xmax>=xmin and ymax>=ymin
   if (xmin_>xmax_) std::swap(xmin_,xmax_);
   if (ymin_>ymax_) std::swap(ymin_,ymax_);
-  global_ = is_global(xmin_,xmax_,ymin_,ymax_,units_);
+  global_ = is_global( {xmin_,xmax_}, {ymin_,ymax_} ,units_);
   
   const double tol = 1.e-6;
   xmin_tol_ = xmin_-tol;

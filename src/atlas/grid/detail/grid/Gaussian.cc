@@ -122,6 +122,7 @@ public:
   }
 
   virtual const Grid::grid_t* create( const Grid::Config& config ) const {
+    
     long N;
     config.get("N",N);
 

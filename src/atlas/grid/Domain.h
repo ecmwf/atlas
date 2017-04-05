@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <array>
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/grid/detail/domain/Domain.h"
 #include "atlas/grid/Projection.h"
@@ -83,6 +84,22 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+class RectangularDomain : public Domain {
+
+public:
+  
+  using Interval=std::array<double,2>;
+
+public:
+
+  using Domain::Domain;
+  RectangularDomain( const Interval& x, const Interval& y, const std::string& units = "degrees" );
+  
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+inline std::string Domain::type() const { return domain_->type(); }
 inline bool Domain::contains(double x, double y) const { return domain_->contains(x,y); }
 inline bool Domain::contains(const PointXY& p) const { return domain_->contains(p); }
 inline  eckit::Properties Domain::spec() const { return domain_->spec(); }

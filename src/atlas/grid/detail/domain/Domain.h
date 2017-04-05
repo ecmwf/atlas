@@ -80,7 +80,6 @@ public:
 
 };
 
-
 }  // namespace domain
 }  // namespace grid
 }  // namespace atlas
