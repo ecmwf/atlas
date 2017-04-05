@@ -182,7 +182,7 @@ private:
     template < typename... Ints >
     void check_bounds_part(int dim, int idx, Ints... next_idx) const {
         if( dim < Rank ) {
-            if( idx >= shape_[dim] ) {
+            if( size_t(idx) >= shape_[dim] ) {
                 std::ostringstream msg; msg << "ArrayView index " << array_dim(dim) << " out of bounds: " << idx << " >= " << shape_[dim];
                 throw eckit::OutOfRange(msg.str(),Here());
             }
