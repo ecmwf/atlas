@@ -18,6 +18,10 @@
 #include "atlas/grid/Domain.h"
 #include "atlas/grid/Iterator.h"
 
+namespace eckit {
+  class MD5;
+}
+
 namespace atlas {
 namespace grid {
 
@@ -85,6 +89,9 @@ public:
     const Domain& domain() const { return grid_->domain(); }
     std::string name() const { return grid_->name(); }
     std::string uid() const { return grid_->uid(); }
+    
+    /// Adds to the MD5 the information that makes this Grid unique
+    void hash(eckit::MD5& md5) const { return grid_->hash(md5); }
 
     Spec spec() const { return grid_->spec(); }
 
