@@ -172,12 +172,22 @@ void Library::Info::print( std::ostream& out ) const {
 #ifdef ATLAS_HAVE_BOUNDSCHECKING
       feature_BoundsChecking = true;
 #endif
-    out << "  Features:" << '\n';
-    out << "    Fortran        : " << str(feature_fortran) << '\n'
+      std::string array_data_store = "Native";
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if GRIDTOOLS_STORAGE_BACKEND_CUDA
+      array_data_store = "GridTools-CUDA";
+#endif
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
+      array_data_store = "GridTools-host";
+#endif
+#endif
+      out << "  Features:" << '\n'
+        << "    Fortran        : " << str(feature_fortran) << '\n'
         << "    OpenMP         : " << str(feature_OpenMP) << '\n'
         << "    BoundsChecking : " << str(feature_BoundsChecking) << '\n'
         << "    Trans          : " << str(feature_Trans) << '\n'
         << "    Tesselation    : " << str(feature_Tesselation) << '\n'
+        << "    ArrayDataStore : " << array_data_store << '\n'
         << "    gidx_t         : " << ATLAS_BITS_GLOBAL << " bit integer" << '\n'
         << " \n";
 
