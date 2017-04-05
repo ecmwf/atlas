@@ -128,7 +128,7 @@ void Tool::execute(const Args& args)
     }
 
     size_t n=0;
-    for( PointXY pxy : grid ) {
+    for( PointXY pxy : grid.xy() ) {
       size_t p = distribution.partition(n++);
       x[p].push_back(pxy.x());
       y[p].push_back(pxy.y());

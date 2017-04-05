@@ -65,12 +65,35 @@ public:
     using Spec       = grid_t::Spec;
     using Domain     = grid::Domain;
     using Projection = grid::Projection;
-    using Iterator   = grid::Iterator;
-
-    using iterator = Iterator;
-    using const_iterator = iterator;
+    
+    class IterateXY {
+    public:
+      using iterator       = grid::IteratorXY;
+      using const_iterator = iterator;
+    public:
+      IterateXY(const grid_t& grid) : grid_(grid) {}
+      iterator begin() const { return grid_.xy_begin(); }
+      iterator end()   const { return grid_.xy_end(); }
+    private:
+      const grid_t& grid_;
+    };
+    
+    class IterateLonLat {
+    public:
+      using iterator       = grid::IteratorLonLat;
+      using const_iterator = iterator;
+    public:
+      IterateLonLat(const grid_t& grid) : grid_(grid) {}
+      iterator begin() const { return grid_.lonlat_begin(); }
+      iterator end()   const { return grid_.lonlat_end(); }
+    private:
+      const grid_t& grid_;
+    };
 
 public:
+  
+    IterateXY     xy()     const { return IterateXY(*grid_);     }
+    IterateLonLat lonlat() const { return IterateLonLat(*grid_); }
 
     Grid();
     Grid( const Grid& );
@@ -95,15 +118,19 @@ public:
 
     Spec spec() const { return grid_->spec(); }
 
-    iterator begin() const { return grid_->begin(); }
-    iterator end()   const { return grid_->end(); }
-
     const grid_t* get() const { return grid_.get(); }
 
 private:
 
     eckit::SharedPtr<const grid_t> grid_;
 
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class GridLonLat {
+  
+  
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -130,6 +157,7 @@ public:
         return grid_;
     }
 
+    using Grid::xy;
     void xy( const size_t n, double xy[] ) const {
       PointXY _xy = grid_->xy(n);
       xy[0] = _xy.x();
@@ -203,6 +231,7 @@ public:
         return grid_->y(j);
     }
 
+    using Grid::xy;
     void xy( const size_t i, const size_t j, double xy[] ) const {
         grid_->xy(i,j,xy);
     }

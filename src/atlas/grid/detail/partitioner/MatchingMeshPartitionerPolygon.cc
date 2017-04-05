@@ -250,7 +250,7 @@ void MatchingMeshPartitionerPolygon::partition( const Grid& grid, int node_parti
     std::vector< PointLonLat > lonlat_tgt_pts;
     lonlat_tgt_pts.reserve(grid.size());
 
-    for( PointXY Pxy : grid ) {
+    for( PointXY Pxy : grid.xy() ) {
       lonlat_tgt_pts.push_back( grid.projection().lonlat(Pxy) );
     }
 

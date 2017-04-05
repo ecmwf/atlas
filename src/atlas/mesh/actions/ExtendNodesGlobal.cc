@@ -40,7 +40,7 @@ void ExtendNodesGlobal::operator()(const atlas::grid::Grid& grid, atlas::mesh::M
 
     // loop over the point and keep the ones that *don't* fall in the domain
 
-    for( const PointLonLat& lonlat : O16 ) {
+    for( const PointLonLat& lonlat : O16.lonlat() ) {
       PointXY xy = grid.projection().xy(lonlat);
       if( not grid.domain().contains( xy ) ) {
         extended_pts.push_back(xy);

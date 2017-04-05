@@ -19,11 +19,11 @@ namespace grid {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Iterator {
+class IteratorXY {
 
 public:
 
-    Iterator( detail::grid::Grid::Iterator* iterator ):
+    IteratorXY( detail::grid::Grid::IteratorXY* iterator ):
         iterator_(iterator) {
     }
 
@@ -35,22 +35,58 @@ public:
         return iterator_->operator *();
     }
   
-    const Iterator& operator ++() {
+    const IteratorXY& operator ++() {
         iterator_->operator ++();
         return *this;
     }
 
-    bool operator ==(const Iterator &other) const {
+    bool operator ==(const IteratorXY &other) const {
         return iterator_->operator ==(*other.iterator_);
     }
     
-    bool operator !=(const Iterator &other) const {
+    bool operator !=(const IteratorXY &other) const {
         return iterator_->operator !=(*other.iterator_);
     }
 
 private:
 
-    std::unique_ptr<detail::grid::Grid::Iterator> iterator_;
+    std::unique_ptr<detail::grid::Grid::IteratorXY> iterator_;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class IteratorLonLat {
+
+public:
+
+    IteratorLonLat( detail::grid::Grid::IteratorLonLat* iterator ):
+        iterator_(iterator) {
+    }
+
+    bool next( PointLonLat& lonlat ) {
+        return iterator_->next(lonlat);
+    }
+    
+    PointLonLat operator *() const {
+        return iterator_->operator *();
+    }
+  
+    const IteratorLonLat& operator ++() {
+        iterator_->operator ++();
+        return *this;
+    }
+
+    bool operator ==(const IteratorLonLat &other) const {
+        return iterator_->operator ==(*other.iterator_);
+    }
+    
+    bool operator !=(const IteratorLonLat &other) const {
+        return iterator_->operator !=(*other.iterator_);
+    }
+
+private:
+
+    std::unique_ptr<detail::grid::Grid::IteratorLonLat> iterator_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

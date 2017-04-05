@@ -29,6 +29,8 @@ public:
     virtual eckit::Properties spec() const override;
 
     virtual std::string units() const override { return "meters"; }
+    
+    virtual void hash( eckit::MD5& ) const override;
 
 protected:
 

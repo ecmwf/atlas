@@ -1,4 +1,5 @@
 #include <cmath>
+#include "eckit/utils/MD5.h"
 #include "atlas/grid/detail/projection/Rotation.h"
 #include "atlas/util/Constants.h"
 
@@ -114,6 +115,17 @@ void Rotated::spec(eckit::Properties& s) const {
   p[1]=pole_.lat();
   s.set("projectionPole",eckit::makeVectorValue(p));
 }
+
+void Rotated::hash( eckit::MD5& md5 ) const {
+  md5.add("rotated");
+  md5.add(pole_.lon());
+  md5.add(pole_.lat());
+}
+
+void NotRotated::hash( eckit::MD5& md5 ) const {
+  md5.add("not_rotated");
+}
+
 
 }  // namespace projection
 }  // namespace grid

@@ -1,4 +1,5 @@
 #include <cmath>
+#include "eckit/utils/MD5.h"
 #include "atlas/grid/detail/projection/SchmidtProjection.h"
 #include "atlas/util/Constants.h"
 
@@ -52,6 +53,13 @@ eckit::Properties SchmidtProjectionT<Rotation>::spec() const {
   proj_spec.set("stretching_factor",c_);
   rotation_.spec(proj_spec);
   return proj_spec;
+}
+
+template <typename Rotation>
+void SchmidtProjectionT<Rotation>::hash( eckit::MD5& md5 ) const {
+  md5.add(static_type());
+  rotation_.hash(md5);
+  md5.add(c_);
 }
 
 register_BuilderT1(Projection,SchmidtProjection,SchmidtProjection::static_type());

@@ -21,5 +21,9 @@ Projection::Projection( const eckit::Parametrisation& p ):
     projection_( atlas::grid::projection::Projection::create(p) ) {
 }
 
+void Projection::hash( eckit::MD5& md5 ) const {
+    return projection_->hash(md5);
+}
+
 } // namespace Grid
 } // namespace atlas

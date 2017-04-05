@@ -316,11 +316,7 @@ void Structured::hash(eckit::MD5& md5) const {
     md5.add(xmax_.data(), sizeof(double)*xmax_.size());
 
     // also add projection information
-    Grid::Spec prop;
-    std::ostringstream s;
-    s << projection().spec();
-    prop.set("projection",s.str());
-    prop.hash(md5);
+    projection().hash(md5);
 }
 
 Grid::Spec Structured::spec() const {

@@ -94,7 +94,7 @@ void DelaunayMeshGenerator::createNodes(const grid::Grid& grid, mesh::Mesh& mesh
   size_t jnode(0);
   grid::Projection projection = grid.projection();
   PointLonLat Pll;
-  for( PointXY Pxy : grid ) {
+  for( PointXY Pxy : grid.xy() ) {
     xy(jnode,XX) = Pxy.x();
     xy(jnode,YY) = Pxy.y();
     Pll = projection.lonlat(Pxy);

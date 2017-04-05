@@ -13,6 +13,7 @@
 // Forward declarations
 namespace eckit {
 class Parametrisation;
+class MD5;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -49,6 +50,8 @@ public:
   operator bool() const;
 
   std::string type() const { return projection_->type(); }
+  
+  void hash( eckit::MD5& ) const;
 
 private:
 

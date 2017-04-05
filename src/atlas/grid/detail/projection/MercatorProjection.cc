@@ -1,4 +1,5 @@
 #include <cmath>
+#include "eckit/utils/MD5.h"
 #include "atlas/grid/detail/projection/MercatorProjection.h"
 #include "atlas/util/Constants.h"
 
@@ -70,6 +71,14 @@ eckit::Properties MercatorProjectionT<Rotation>::spec() const {
   if( radius_ != util::Earth::radiusInMeters() ) proj_spec.set("radius",radius_);
   rotation_.spec(proj_spec);
   return proj_spec;
+}
+
+template <typename Rotation>
+void MercatorProjectionT<Rotation>::hash( eckit::MD5& md5 ) const {
+  md5.add(static_type());
+  rotation_.hash(md5);
+  md5.add(lon0_);
+  md5.add(radius_);
 }
 
 register_BuilderT1(Projection,MercatorProjection,MercatorProjection::static_type());

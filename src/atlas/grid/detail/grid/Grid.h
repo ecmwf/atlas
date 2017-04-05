@@ -41,13 +41,22 @@ public:  // types
     using uid_t      = std::string;
 
 
-    class Iterator {
+    class IteratorXY {
     public:
       virtual bool next(PointXY&) =0;
       virtual const PointXY operator *() const =0;
-      virtual const Iterator& operator ++() =0;
-      virtual bool operator ==(const Iterator &other) const =0;
-      virtual bool operator !=(const Iterator &other) const =0;
+      virtual const IteratorXY& operator ++() =0;
+      virtual bool operator ==(const IteratorXY &other) const =0;
+      virtual bool operator !=(const IteratorXY &other) const =0;
+    };
+
+    class IteratorLonLat {
+    public:
+      virtual bool next(PointLonLat&) =0;
+      virtual const PointLonLat operator *() const =0;
+      virtual const IteratorLonLat& operator ++() =0;
+      virtual bool operator ==(const IteratorLonLat &other) const =0;
+      virtual bool operator !=(const IteratorLonLat &other) const =0;
     };
 
 
@@ -77,7 +86,7 @@ public:  // methods
     virtual void hash(eckit::MD5&) const = 0;
 
     /// @returns the hash of the information that makes this Grid unique
-    eckit::MD5::digest_t hash() const;
+    std::string hash() const;
 
     /// @return area represented by the grid
     const Domain& domain() const { return domain_; }
@@ -96,8 +105,10 @@ public:  // methods
 
     virtual bool same(const grid::Grid&) const;
 
-    virtual Iterator* begin() const=0;
-    virtual Iterator* end()   const=0;
+    virtual IteratorXY* xy_begin() const=0;
+    virtual IteratorXY* xy_end()   const=0;
+    virtual IteratorLonLat* lonlat_begin() const=0;
+    virtual IteratorLonLat* lonlat_end()   const=0;
 
 protected:  // methods
 

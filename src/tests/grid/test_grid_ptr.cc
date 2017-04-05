@@ -185,5 +185,20 @@ BOOST_AUTO_TEST_CASE( test_domain_global_from_rectangular )
   BOOST_CHECK_EQUAL( from_cfg.type(), std::string("global") );
 }
 
+BOOST_AUTO_TEST_CASE( test_iterator )
+{
+  Grid grid("O4");
+  
+  for( atlas::PointXY xy : grid.xy() ) {
+    Log::info() << xy << std::endl;
+  }
+
+  for( atlas::PointLonLat ll : grid.lonlat() ) {
+    Log::info() << ll << std::endl;
+  }
+
+}
+
+
 } // namespace test
 } // namespace atlas

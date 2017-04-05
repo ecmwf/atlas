@@ -4,6 +4,7 @@
 #include "eckit/value/Properties.h"
 #include "atlas/util/Point.h"
 
+namespace eckit { class MD5; }
 namespace atlas {
 namespace grid {
 namespace projection {
@@ -24,6 +25,8 @@ public:
     void spec(eckit::Properties&) const;
 
     bool rotated() const { return rotated_; }
+    
+    void hash( eckit::MD5& ) const;
 
 private:
 
@@ -51,6 +54,8 @@ public:
     void spec(eckit::Properties&) const {}
 
     bool rotated() const { return false; }
+    
+    void hash( eckit::MD5& ) const;
 };
 
 }  // namespace projection

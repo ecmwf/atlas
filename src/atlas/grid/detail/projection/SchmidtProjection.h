@@ -31,6 +31,8 @@ public:
 
     virtual std::string units() const override { return "degrees"; }
 
+    virtual void hash( eckit::MD5& ) const override;
+
 private:
 
     double c_;    // stretching factor

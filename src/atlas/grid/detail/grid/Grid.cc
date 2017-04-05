@@ -113,15 +113,13 @@ Grid::~Grid() {
 
 Grid::uid_t Grid::uid() const {
     if (uid_.empty()) {
-        std::ostringstream s;
-        s << hash();
-        uid_ = s.str();
+        uid_ = hash();
     }
     return uid_;
 }
 
 
-eckit::MD5::digest_t Grid::hash() const {
+std::string Grid::hash() const {
     if (hash_.empty()) {
         eckit::MD5 md5;
         hash(md5);

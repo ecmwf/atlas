@@ -31,6 +31,8 @@ public:
 
     virtual std::string units() const override { return "meters"; }
 
+    virtual void hash( eckit::MD5& ) const override;
+
 private:
   
     double lat1_, lat2_;     // First and second latitude at which the secant cone cuts the sphere

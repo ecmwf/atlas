@@ -7,6 +7,8 @@
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
 
+namespace eckit { class MD5; }
+
 namespace atlas {
 namespace grid {
 namespace projection {
@@ -42,6 +44,8 @@ public:
     virtual std::string units() const =0;
 
     virtual operator bool() const { return true; }
+    
+    virtual void hash( eckit::MD5& ) const=0;
 
 };
 

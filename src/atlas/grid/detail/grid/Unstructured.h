@@ -32,9 +32,9 @@ class Unstructured : public Grid {
 
 public:
 
-  class Iterator: public Grid::Iterator {
+  class IteratorXY: public Grid::IteratorXY {
   public:
-    Iterator(const Unstructured& grid, bool begin=true):
+    IteratorXY(const Unstructured& grid, bool begin=true):
         grid_(grid),
         n_( begin ? 0 : grid_.points_->size() ) {
     }
@@ -52,17 +52,55 @@ public:
         return grid_.xy(n_);
     }
 
-    virtual const Grid::Iterator& operator ++() {
+    virtual const Grid::IteratorXY& operator ++() {
         ++n_;
         return *this;
     }
 
-    virtual bool operator ==(const Grid::Iterator &other) const {
-      return n_ == static_cast<const Iterator&>(other).n_;
+    virtual bool operator ==(const Grid::IteratorXY &other) const {
+      return n_ == static_cast<const IteratorXY&>(other).n_;
     }
 
-    virtual bool operator !=(const Grid::Iterator &other) const {
-      return n_ != static_cast<const Iterator&>(other).n_;
+    virtual bool operator !=(const Grid::IteratorXY &other) const {
+      return n_ != static_cast<const IteratorXY&>(other).n_;
+    }
+
+  private:
+    const Unstructured& grid_;
+    size_t n_;
+  };
+  
+  class IteratorLonLat: public Grid::IteratorLonLat {
+  public:
+    IteratorLonLat(const Unstructured& grid, bool begin=true):
+        grid_(grid),
+        n_( begin ? 0 : grid_.points_->size() ) {
+    }
+
+    virtual bool next(PointLonLat& lonlat) {
+      if( n_ != grid_.points_->size() ) {
+        lonlat = grid_.lonlat(n_++);
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    virtual const PointLonLat operator *() const {
+        return grid_.lonlat(n_);
+    }
+
+    virtual const Grid::IteratorLonLat& operator ++() {
+        ++n_;
+        return *this;
+    }
+
+    virtual bool operator ==(const Grid::IteratorLonLat &other) const {
+      return n_ == static_cast<const IteratorLonLat&>(other).n_;
+    }
+
+    virtual bool operator !=(const Grid::IteratorLonLat &other) const {
+      return n_ != static_cast<const IteratorLonLat&>(other).n_;
     }
 
   private:
@@ -96,8 +134,10 @@ public: // methods
 
     PointLonLat lonlat(size_t n) const { return projection_.lonlat((*points_)[n]); }
 
-    virtual Iterator* begin() const{ return new Iterator(*this); }
-    virtual Iterator* end()   const{ return new Iterator(*this,false); }
+    virtual IteratorXY* xy_begin() const{ return new IteratorXY(*this); }
+    virtual IteratorXY* xy_end()   const{ return new IteratorXY(*this,false); }
+    virtual IteratorLonLat* lonlat_begin() const{ return new IteratorLonLat(*this); }
+    virtual IteratorLonLat* lonlat_end()   const{ return new IteratorLonLat(*this,false); }
 
 private: // methods
 

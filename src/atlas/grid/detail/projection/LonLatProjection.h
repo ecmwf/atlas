@@ -41,6 +41,8 @@ public:
 
   virtual operator bool() const override { return rotation_.rotated(); Log::info() << "rotated = " << rotation_.rotated();  }
 
+  virtual void hash( eckit::MD5& ) const override;
+
 private:
 
   Rotation rotation_;

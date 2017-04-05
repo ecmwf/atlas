@@ -39,9 +39,9 @@ class Structured : public Grid {
 
 public:
 
-  class Iterator: public Grid::Iterator {
+  class IteratorXY: public Grid::IteratorXY {
   public:
-    Iterator(const Structured& grid, bool begin = true):
+    IteratorXY(const Structured& grid, bool begin = true):
         grid_(grid),
         i_(0),
         j_( begin ? 0 : grid.ny() ) {
@@ -67,7 +67,7 @@ public:
         return grid_.xy(i_,j_);
     }
 
-    virtual const Grid::Iterator& operator ++() {
+    virtual const Grid::IteratorXY& operator ++() {
         ++i_;
         if( i_ == grid_.nx(j_) ) {
           ++j_;
@@ -76,12 +76,64 @@ public:
         return *this;
     }
 
-    virtual bool operator ==(const Grid::Iterator &other) const {
-        return j_ == static_cast<const Iterator&>(other).j_ && i_ == static_cast<const Iterator&>(other).i_;
+    virtual bool operator ==(const Grid::IteratorXY &other) const {
+        return j_ == static_cast<const IteratorXY&>(other).j_ && i_ == static_cast<const IteratorXY&>(other).i_;
     }
 
-    virtual bool operator !=(const Grid::Iterator &other) const {
-        return i_ != static_cast<const Iterator&>(other).i_ || j_ != static_cast<const Iterator&>(other).j_;
+    virtual bool operator !=(const Grid::IteratorXY &other) const {
+        return i_ != static_cast<const IteratorXY&>(other).i_ || j_ != static_cast<const IteratorXY&>(other).j_;
+    }
+
+
+  private:
+    const Structured& grid_;
+    size_t i_;
+    size_t j_;
+  };
+  
+  class IteratorLonLat: public Grid::IteratorLonLat {
+  public:
+    IteratorLonLat(const Structured& grid, bool begin = true):
+        grid_(grid),
+        i_(0),
+        j_( begin ? 0 : grid.ny() ) {
+    }
+
+    virtual bool next(PointLonLat& lonlat) {
+
+       if( j_<grid_.ny() && i_<grid_.nx(j_) ) {
+
+         lonlat = grid_.lonlat(i_++,j_);
+
+         if( i_==grid_.nx(j_) ) {
+           j_++;
+           i_=0;
+         }
+         return true;
+       }
+       return false;
+    }
+
+
+    virtual const PointLonLat operator *() const {
+        return grid_.lonlat(i_,j_);
+    }
+
+    virtual const Grid::IteratorLonLat& operator ++() {
+        ++i_;
+        if( i_ == grid_.nx(j_) ) {
+          ++j_;
+          i_=0;
+        }
+        return *this;
+    }
+
+    virtual bool operator ==(const Grid::IteratorLonLat &other) const {
+        return j_ == static_cast<const IteratorLonLat&>(other).j_ && i_ == static_cast<const IteratorLonLat&>(other).i_;
+    }
+
+    virtual bool operator !=(const Grid::IteratorLonLat &other) const {
+        return i_ != static_cast<const IteratorLonLat&>(other).i_ || j_ != static_cast<const IteratorLonLat&>(other).j_;
     }
 
 
@@ -209,8 +261,10 @@ public:
 
     const YSpace& yspace() const { return yspace_; }
 
-    virtual Iterator* begin() const{ return new Iterator(*this); }
-    virtual Iterator* end()   const{ return new Iterator(*this,false); }
+    virtual IteratorXY* xy_begin() const{ return new IteratorXY(*this); }
+    virtual IteratorXY* xy_end()   const{ return new IteratorXY(*this,false); }
+    virtual IteratorLonLat* lonlat_begin() const{ return new IteratorLonLat(*this); }
+    virtual IteratorLonLat* lonlat_end()   const{ return new IteratorLonLat(*this,false); }
 
 
 protected: // methods
