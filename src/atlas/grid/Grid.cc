@@ -107,8 +107,8 @@ StructuredGrid::StructuredGrid( const Config& grid ):
     grid_( structured_grid(get()) ) {
 }
 
-ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx ):
-    ReducedGaussianGrid::Grid( detail::grid::reduced_gaussian(nx) ) {
+ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Domain& domain ):
+    ReducedGaussianGrid::Grid( detail::grid::reduced_gaussian(nx,domain) ) {
 }
 
 ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<long>& nx ):

@@ -350,7 +350,7 @@ public:
 
     using Grid::Grid;
     ReducedGaussianGrid( const std::initializer_list<long>& pl );
-    ReducedGaussianGrid( const std::vector<long>& pl );
+    ReducedGaussianGrid( const std::vector<long>& pl, const Domain& domain = Domain() );
 
     operator bool() const {
         return valid();

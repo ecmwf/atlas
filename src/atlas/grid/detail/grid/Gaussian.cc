@@ -193,6 +193,17 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx ) {
   return new StructuredGrid::grid_t( Projection(), xspace(nx) , Spacing(yspace), Domain() );
 }
 
+StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx, const Domain& domain ) {
+
+  Grid::Config yspace;
+  yspace.set("type","gaussian");
+  yspace.set("start", 90.0);
+  yspace.set("end",  -90.0);
+  yspace.set("N",nx.size());
+
+  return new StructuredGrid::grid_t( Projection(), xspace(nx) , Spacing(yspace), domain );
+}
+
 
 extern "C" {
 
