@@ -30,11 +30,16 @@ namespace spacing {
 
 class LinearSpacing: public Spacing {
 
+public: 
+  
+  using Interval = std::array<double,2>;
+
 public:
 
     /// constructor
     LinearSpacing( const eckit::Parametrisation& p );
     LinearSpacing( double start, double end, long N, bool endpoint=true );
+    LinearSpacing( const Interval&, long N, bool endpoint=true );
 
     // LinearSpacing( double centre, double step, long N, bool endpoint=true );
 

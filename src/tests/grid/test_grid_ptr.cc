@@ -149,6 +149,27 @@ BOOST_AUTO_TEST_CASE( test_structured_1 )
 }
 
 
+BOOST_AUTO_TEST_CASE( test_structured_2 )
+{
+  using XSpace = grid::StructuredGrid::XSpace;
+  using YSpace = grid::StructuredGrid::YSpace;
+  using Domain = grid::StructuredGrid::Domain;
+  using Projection = grid::StructuredGrid::Projection;
+  grid::StructuredGrid grid(
+      XSpace( {0.,360.} , {2,4,6,6,4,2} , false ),
+      YSpace( grid::LinearSpacing( {90.,-90.}, 6 ) ),
+      Projection(),
+      Domain() );
+  BOOST_CHECK( grid );
+
+  output::Gmsh gmsh("test_grid_ptr_structured_2.msh");
+  mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
+  gmsh.write(mesh);
+
+}
+
+
+
 BOOST_AUTO_TEST_CASE( test_domain_rectangular )
 {
   atlas::grid::Domain domain = atlas::grid::RectangularDomain( {0,180}, {-25,25} );

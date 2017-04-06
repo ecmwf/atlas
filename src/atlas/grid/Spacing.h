@@ -62,5 +62,28 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+class LinearSpacing : public Spacing {
+
+public:
+  
+  using Interval = std::array<double,2>;
+  
+public:
+  
+  LinearSpacing( double start, double stop, long N, bool endpoint = true );
+  LinearSpacing( const Interval&, long N, bool endpoint = true );  
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class GaussianSpacing : public Spacing {
+  
+public:
+  
+  GaussianSpacing( long N );
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
 }
 }

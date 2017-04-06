@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <vector>
+#include "eckit/utils/MD5.h"
 #include "atlas/library/config.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/Grid.h"
@@ -27,7 +28,6 @@
 #define DEBUG_OUTPUT 0
 #define DEBUG_OUTPUT_DETAIL 0
 
-using namespace eckit;
 using atlas::mesh::Mesh;
 using Topology = atlas::mesh::Nodes::Topology;
 
@@ -119,7 +119,7 @@ void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
   generate( grid, distribution, mesh );
 }
 
-void RegularMeshGenerator::hash(MD5& md5) const
+void RegularMeshGenerator::hash(eckit::MD5& md5) const
 {
     md5.add("RegularMeshGenerator");
     options.hash(md5);

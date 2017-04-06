@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "eckit/memory/Factory.h"
+#include "eckit/utils/MD5.h"
 
 #include "atlas/grid.h"
 #include "atlas/mesh/Mesh.h"
@@ -29,12 +30,10 @@ namespace grid {
 
 static void checkSizeOfPoint() {
     // compile time check support C++11
-#if __cplusplus >= 201103L
-    static_assert( sizeof(Grid::Point)==2*sizeof(double), "Grid requires size of Point to be 2*double" );
-#endif
-
+    static_assert( sizeof(PointXY)==2*sizeof(double), "Grid requires size of Point to be 2*double" );
+    
     // runtime check
-    ASSERT( sizeof(Grid::Point) == 2*sizeof(double) );
+    ASSERT( sizeof(PointXY) == 2*sizeof(double) );
 }
 
 
@@ -126,16 +125,6 @@ std::string Grid::hash() const {
         hash_ = md5.digest();
     }
     return hash_;
-}
-
-
-std::string Grid::getOptimalMeshGenerator() const {
-    return "Delaunay";
-}
-
-
-bool Grid::same(const grid::Grid& g) const {
-    return uid() == g.uid();
 }
 
 Grid::Spec Grid::spec() const {

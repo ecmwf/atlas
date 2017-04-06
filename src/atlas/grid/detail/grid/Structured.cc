@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <limits>
+#include "eckit/utils/MD5.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/Point.h"
 #include "atlas/grid/Grid.h"
@@ -37,31 +38,40 @@ std::string Structured::name() const {
   return name_;
 }
 
-Structured::Structured( Projection p, XSpace* xspace, YSpace yspace, Domain domain ):
-    Structured( Structured::static_type(), p, xspace, yspace, domain ) {
+Structured::Structured( XSpace xspace, YSpace yspace, Projection p, Domain domain ):
+    Structured( Structured::static_type(), xspace, yspace, p, domain ) {
 }
 
-Structured::Structured( const std::string& name, Projection projection, XSpace* xspace, YSpace yspace, Domain domain):
+Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, Projection projection, Domain domain):
   Grid(),
-  name_(name) {
+  name_(name),
+  xspace_(xspace),
+  yspace_(yspace) {
   // Copry members
   if( projection )
     projection_ = projection;
   else
     projection_ = Projection();
-  xspace_ = std::unique_ptr<XSpace>( xspace );
-  yspace_ = yspace;
-  ASSERT( xspace_->ny == yspace_.size() );
 
   y_.assign(yspace_.begin(),yspace_.end());
-  nx_    = xspace_->nx;
-  dx_    = xspace_->dx;
-  xmin_  = xspace_->xmin;
-  xmax_  = xspace_->xmax;
+  size_t ny = y_.size();
+  
+  if( xspace_.ny() == 1 && yspace_.size() > 1 ) {
+    nx_   .resize( ny, xspace_.nx()[0]   );
+    dx_   .resize( ny, xspace_.dx()[0]   );
+    xmin_ .resize( ny, xspace_.xmin()[0] );
+    xmax_ .resize( ny, xspace_.xmax()[0] );
+  } else {
+    nx_    = xspace_.nx();
+    dx_    = xspace_.dx();
+    xmin_  = xspace_.xmin();
+    xmax_  = xspace_.xmax();
+  }
+
+  ASSERT( nx_.size() == ny );
 
   // Further setup
   nxmin_ = nxmax_ = static_cast<size_t>(nx_.front());
-  size_t ny = xspace_->ny;
   for (size_t j=1; j<ny; ++j) {
       nxmin_ = std::min(static_cast<size_t>(nx_[j]),nxmin_);
       nxmax_ = std::max(static_cast<size_t>(nx_[j]),nxmax_);
@@ -103,27 +113,116 @@ void Structured::computeDomain() {
 Structured::~Structured() {
 }
 
-Structured::XSpace::XSpace(long _ny) :
-  ny(_ny) {
-  nx.  reserve(ny);
-  xmin.reserve(ny);
-  xmax.reserve(ny);
-  dx  .reserve(ny);
+Structured::XSpace::XSpace() :
+    impl_( nullptr ){
+}
+
+Structured::XSpace::XSpace( const XSpace& xspace ) :
+    impl_( xspace.impl_ ){
 }
 
 Structured::XSpace::XSpace( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint ) :
-  ny(N.size()),
-  nx(N),
-  xmin(ny,interval[0]),
-  xmax(ny,interval[1]),
-  dx(ny) {
-  nxmin = std::numeric_limits<size_t>::max();
-  nxmax = 0;
-  double length = interval[1] - interval[0];
+    impl_( new Implementation(interval,N,endpoint) ) {
+}
+
+Structured::XSpace::XSpace( const Config& config ) :
+    impl_( new Implementation(config) ) {
+}
+
+Structured::XSpace::XSpace( const std::vector<Config>& config ) :
+    impl_( new Implementation(config) ) {
+}
+
+Structured::XSpace::Implementation::Implementation( const Config& config ) {
+  
+  Config config_xspace(config);
+
+  std::string xspace_type;
+  config_xspace.get("type",xspace_type);
+  ASSERT( xspace_type == "linear" );
+
+  std::vector<long>   v_N;
+  std::vector<double> v_start;
+  std::vector<double> v_end;
+  std::vector<double> v_length;
+  config_xspace.get("N[]",      v_N     );
+  config_xspace.get("start[]",  v_start );
+  config_xspace.get("end[]",    v_end   );
+  config_xspace.get("length[]", v_length);
+  
+  long ny =  std::max( v_N.     size(),
+             std::max( v_start. size(),
+             std::max( v_end.   size(),
+             std::max( v_length.size(),
+             1ul ))));
+  reserve(ny);
+
+  if( not v_N.     empty() ) ASSERT(v_N.     size() == ny);
+  if( not v_start. empty() ) ASSERT(v_start. size() == ny);
+  if( not v_end.   empty() ) ASSERT(v_end.   size() == ny);
+  if( not v_length.empty() ) ASSERT(v_length.size() == ny);
+
+  nxmin_ = std::numeric_limits<size_t>::max();
+  nxmax_ = 0;
+
   for( size_t j=0; j<ny; ++j ) {
-    nxmin = std::min( nxmin, size_t(nx[j]) );
-    nxmax = std::max( nxmax, size_t(nx[j]) );
-    dx[j] = endpoint ? length/double(nx[j]-1) : length/double(nx[j]);
+    if( not v_N.     empty() ) config_xspace.set("N",     v_N[j]);
+    if( not v_start. empty() ) config_xspace.set("start", v_start[j]);
+    if( not v_end.   empty() ) config_xspace.set("end",   v_end[j]);
+    if( not v_length.empty() ) config_xspace.set("length",v_length[j]);
+    spacing::LinearSpacing::Params xspace( config_xspace );
+    xmin_.push_back(xspace.start);
+    xmax_.push_back(xspace.end);
+    nx_.push_back(xspace.N);
+    dx_.push_back(xspace.step);
+    nxmin_ = std::min( nxmin_, size_t(nx_[j]) );
+    nxmax_ = std::max( nxmax_, size_t(nx_[j]) );
+  }
+}
+
+Structured::XSpace::Implementation::Implementation( const std::vector<Config>& config_list ) {
+
+    reserve( config_list.size() );
+
+    nxmin_ = std::numeric_limits<size_t>::max();
+    nxmax_ = 0;
+
+    std::string xspace_type;
+    for( size_t j=0; j<ny(); ++j ) {
+        config_list[j].get("type",xspace_type);
+        ASSERT( xspace_type == "linear" );
+        spacing::LinearSpacing::Params xspace( config_list[j] );
+        xmin_.push_back(xspace.start);
+        xmax_.push_back(xspace.end);
+        nx_.push_back(xspace.N);
+        dx_.push_back(xspace.step);
+        nxmin_ = std::min( nxmin_, size_t(nx_[j]) );
+        nxmax_ = std::max( nxmax_, size_t(nx_[j]) );
+    }
+}
+  
+void Structured::XSpace::Implementation::Implementation::reserve( long ny ) {
+  ny_ = ny;
+  nx_.  reserve(ny);
+  xmin_.reserve(ny);
+  xmax_.reserve(ny);
+  dx_  .reserve(ny);
+}
+
+
+Structured::XSpace::Implementation::Implementation( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint ) :
+  ny_(N.size()),
+  nx_(N),
+  xmin_(ny_,interval[0]),
+  xmax_(ny_,interval[1]),
+  dx_(ny_) {
+  nxmin_ = std::numeric_limits<size_t>::max();
+  nxmax_ = 0;
+  double length = interval[1] - interval[0];
+  for( size_t j=0; j<ny_; ++j ) {
+    nxmin_ = std::min( nxmin_, size_t(nx_[j]) );
+    nxmax_ = std::max( nxmax_, size_t(nx_[j]) );
+    dx_[j] = endpoint ? length/double(nx_[j]-1) : length/double(nx_[j]);
   }
 }
 
@@ -305,8 +404,6 @@ std::string Structured::type() const {
 }
 
 void Structured::hash(eckit::MD5& md5) const {
-    // Through inheritance the static_type() might differ while still being same grid
-    //md5.add(static_type());
 
     md5.add(y().data(), sizeof(double)*y().size());
     md5.add(nx().data(), sizeof(long)*ny());
@@ -327,7 +424,7 @@ Grid::Spec Structured::spec() const {
 
     // specific specs
     grid_spec.set("yspace",yspace().spec());
-    // grid_spec.set("y",eckit::makeVectorValue(latitudes()));
+
     grid_spec.set("nx[]",eckit::makeVectorValue(nx()));
     grid_spec.set("xmin",eckit::makeVectorValue(xmin_));
     grid_spec.set("xmax",eckit::makeVectorValue(xmax_));
@@ -380,62 +477,20 @@ public:
 
         const size_t ny = yspace.size();
 
-        XSpace *X = new XSpace(ny);
+        XSpace xspace;
 
+        Config config_xspace;
         std::vector<Config> config_xspace_list;
+        
         if( config.get("xspace[]",config_xspace_list) ) {
-
-            ASSERT( config_xspace_list.size() == ny );
-            std::string xspace_type;
-
-            for( size_t j=0; j<ny; ++j ) {
-                config_xspace_list[j].get("type",xspace_type);
-                ASSERT( xspace_type == "linear" );
-                spacing::LinearSpacing::Params xspace( config_xspace_list[j] );
-                X->xmin.push_back(xspace.start);
-                X->xmax.push_back(xspace.end);
-                X->nx.push_back(xspace.N);
-                X->dx.push_back(xspace.step);
-            }
-
+            xspace = XSpace( config_xspace_list );
+        } else if( config.get("xspace",config_xspace) ) {
+            xspace = XSpace( config_xspace );
         } else {
-
-            Config config_xspace;
-            if( not config.get("xspace",config_xspace) )
-              throw eckit::BadParameter("xspace missing in configuration");
-
-            std::string xspace_type;
-            config_xspace.get("type",xspace_type);
-            ASSERT( xspace_type == "linear" );
-
-            std::vector<long>   v_N;
-            std::vector<double> v_start;
-            std::vector<double> v_end;
-            std::vector<double> v_length;
-            config_xspace.get("N[]",      v_N     );
-            config_xspace.get("start[]",  v_start );
-            config_xspace.get("end[]",    v_end   );
-            config_xspace.get("length[]", v_length);
-
-            if( not v_N.     empty() ) ASSERT(v_N.     size() == ny);
-            if( not v_start. empty() ) ASSERT(v_start. size() == ny);
-            if( not v_end.   empty() ) ASSERT(v_end.   size() == ny);
-            if( not v_length.empty() ) ASSERT(v_length.size() == ny);
-
-            for( size_t j=0; j<ny; ++j ) {
-              if( not v_N.     empty() ) config_xspace.set("N",     v_N[j]);
-              if( not v_start. empty() ) config_xspace.set("start", v_start[j]);
-              if( not v_end.   empty() ) config_xspace.set("end",   v_end[j]);
-              if( not v_length.empty() ) config_xspace.set("length",v_length[j]);
-              spacing::LinearSpacing::Params xspace( config_xspace );
-              X->xmin.push_back(xspace.start);
-              X->xmax.push_back(xspace.end);
-              X->nx.push_back(xspace.N);
-              X->dx.push_back(xspace.step);
-            }
+            throw eckit::BadParameter("xspace missing in configuration");
         }
 
-        return new StructuredGrid::grid_t(projection, X, yspace, domain );
+        return new StructuredGrid::grid_t(xspace, yspace, projection, domain );
     }
 
 } structured_;

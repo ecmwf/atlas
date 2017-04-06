@@ -14,7 +14,10 @@
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Config.h"
 
-namespace eckit { class Parametrisation; }
+namespace eckit {
+  class Parametrisation;
+  class MD5;
+}
 
 namespace atlas {
 namespace mesh {

@@ -21,6 +21,7 @@
 #include "atlas/grid/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/grid/detail/grid/Gaussian.h"
+#include "atlas/grid/detail/grid/Structured.h"
 
 namespace atlas {
 namespace grid {
@@ -106,6 +107,17 @@ StructuredGrid::StructuredGrid( const Config& grid ):
     Grid( grid ),
     grid_( structured_grid(get()) ) {
 }
+
+StructuredGrid::StructuredGrid(
+    const XSpace&     xspace,
+    const YSpace&     yspace,
+    const Projection& projection,
+    const Domain&     domain
+) :
+    Grid( new detail::grid::Structured( xspace, yspace, projection, domain ) ),
+    grid_( structured_grid(get()) ) {
+}
+
 
 ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Domain& domain ):
     ReducedGaussianGrid::Grid( detail::grid::reduced_gaussian(nx,domain) ) {

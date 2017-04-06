@@ -46,19 +46,21 @@ static Spacing yspace( const Grid::Config& grid ) {
 
 }
 
-static StructuredGrid::grid_t::XSpace* xspace( const std::vector<long>& nx ) {
-  StructuredGrid::grid_t::XSpace *_xspace = new StructuredGrid::grid_t::XSpace(nx.size());
-  _xspace->nx = nx;
-  _xspace->nxmax = 0;
-  _xspace->nxmin = std::numeric_limits<size_t>::max();
-  for( size_t j=0; j<_xspace->ny; ++j ) {
-    _xspace->xmin.push_back( 0. );
-    _xspace->xmax.push_back( 360. );
-    _xspace->dx.push_back( 360./_xspace->nx[j] );
-    _xspace->nxmin = std::min( _xspace->nxmin, size_t(_xspace->nx[j]) );
-    _xspace->nxmax = std::max( _xspace->nxmax, size_t(_xspace->nx[j]) );
-  }
-  return _xspace;
+static StructuredGrid::grid_t::XSpace xspace( const std::vector<long>& nx ) {
+  return StructuredGrid::grid_t::XSpace({0.,360.},nx,false);
+  // XSpace( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint=true );
+  //
+  // _xspace->nx = nx;
+  // _xspace->nxmax = 0;
+  // _xspace->nxmin = std::numeric_limits<size_t>::max();
+  // for( size_t j=0; j<_xspace->ny; ++j ) {
+  //   _xspace->xmin.push_back( 0. );
+  //   _xspace->xmax.push_back( 360. );
+  //   _xspace->dx.push_back( 360./_xspace->nx[j] );
+  //   _xspace->nxmin = std::min( _xspace->nxmin, size_t(_xspace->nx[j]) );
+  //   _xspace->nxmax = std::max( _xspace->nxmax, size_t(_xspace->nx[j]) );
+  // }
+  // return _xspace;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -91,7 +93,7 @@ public:
     config.get("N",N);
     std::vector<long> nx(2*N);
     detail::pl::classic_gaussian::points_per_latitude_npole_spole( N, nx.data() );
-    return new StructuredGrid::grid_t( "N"+std::to_string(N), projection(config), xspace(nx) , yspace(config), domain(config) );
+    return new StructuredGrid::grid_t( "N"+std::to_string(N), xspace(nx) , yspace(config), projection(config), domain(config) );
   }
 
 } classic_gaussian_;
@@ -134,7 +136,7 @@ public:
         nx[j] = start + 4*j;
         nx[2*N-1-j] = nx[j];
     }
-    return new StructuredGrid::grid_t( "O"+std::to_string(N), projection(config), xspace(nx) , yspace(config), domain(config) );
+    return new StructuredGrid::grid_t( "O"+std::to_string(N), xspace(nx) , yspace(config), projection(config), domain(config) );
   }
 
 } octahedral_gaussian_;
@@ -168,7 +170,7 @@ public:
     long N;
     config.get("N",N);
     std::vector<long> nx(2*N,4*N);
-    return new StructuredGrid::grid_t( "F"+std::to_string(N), projection(config), xspace(nx) , yspace(config), domain(config) );
+    return new StructuredGrid::grid_t( "F"+std::to_string(N), xspace(nx) , yspace(config), projection(config), domain(config) );
   }
 
 
@@ -190,7 +192,7 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx ) {
   yspace.set("end",  -90.0);
   yspace.set("N",nx.size());
 
-  return new StructuredGrid::grid_t( Projection(), xspace(nx) , Spacing(yspace), Domain() );
+  return new StructuredGrid::grid_t( xspace(nx) , Spacing(yspace), Projection(), Domain() );
 }
 
 StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx, const Domain& domain ) {
@@ -201,7 +203,7 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx, const Dom
   yspace.set("end",  -90.0);
   yspace.set("N",nx.size());
 
-  return new StructuredGrid::grid_t( Projection(), xspace(nx) , Spacing(yspace), domain );
+  return new StructuredGrid::grid_t( xspace(nx) , Spacing(yspace), Projection(), domain );
 }
 
 

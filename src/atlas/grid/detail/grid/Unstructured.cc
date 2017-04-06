@@ -12,6 +12,7 @@
 #include "atlas/grid/detail/grid/Unstructured.h"
 
 #include <limits>
+#include "eckit/utils/MD5.h"
 #include "eckit/memory/Builder.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
@@ -38,7 +39,7 @@ Unstructured::Unstructured(const mesh::Mesh& m) :
     domain_ = Domain(config_domain);
 
     auto xy = array::make_view<double,2>(m.nodes().xy());
-    std::vector<Point> &p = *points_;
+    std::vector<PointXY> &p = *points_;
     const size_t npts = p.size();
 
     for( size_t n=0; n<npts; ++n) {
@@ -56,7 +57,7 @@ Unstructured::Unstructured(const util::Config& p) :
 }
 
 
-Unstructured::Unstructured(std::vector<Point>* pts) :
+Unstructured::Unstructured(std::vector<PointXY>* pts) :
     Grid(),
     points_(pts) {
 
@@ -83,11 +84,11 @@ Grid::uid_t Unstructured::name() const {
 void Unstructured::hash(eckit::MD5 &md5) const {
     ASSERT(points_);
 
-    const std::vector< Point > &pts = *points_;
-    md5.add(&pts[0], sizeof(Point)*pts.size());
+    const std::vector< PointXY > &pts = *points_;
+    md5.add(&pts[0], sizeof(PointXY)*pts.size());
 
     for (size_t i = 0; i < pts.size(); i++) {
-        const Point &p = pts[i];
+        const PointXY &p = pts[i];
         md5 << p.x() << p.y();
     }
     

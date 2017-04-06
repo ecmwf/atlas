@@ -60,11 +60,14 @@ class Grid {
 
 public:
 
-    using grid_t     = detail::grid::Grid;
-    using Config     = grid_t::Config;
-    using Spec       = grid_t::Spec;
-    using Domain     = grid::Domain;
-    using Projection = grid::Projection;
+    using grid_t      = detail::grid::Grid;
+    using Config      = grid_t::Config;
+    using Spec        = grid_t::Spec;
+    using Domain      = grid::Domain;
+    using Projection  = grid::Projection;
+    using PointXY     = atlas::PointXY;     // must be sizeof(double)*2
+    using PointLonLat = atlas::PointLonLat; // must be sizeof(double)*2
+    
     
     class IterateXY {
     public:
@@ -102,7 +105,7 @@ public:
     Grid( const Config& );
 
     operator bool() const { return grid_; }
-    operator const grid_t&() const { return *get(); }
+
     bool operator==( const Grid& other ) const { return grid_ == other.grid_; }
     bool operator!=( const Grid& other ) const { return grid_ != other.grid_; }
 
@@ -124,13 +127,6 @@ private:
 
     eckit::SharedPtr<const grid_t> grid_;
 
-};
-
-//---------------------------------------------------------------------------------------------------------------------
-
-class GridLonLat {
-  
-  
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -185,6 +181,7 @@ class StructuredGrid: public Grid {
 public:
 
   using grid_t = detail::grid::Structured;
+  using XSpace = grid_t::XSpace;
   using YSpace = grid_t::YSpace;
 
 public:
@@ -194,6 +191,12 @@ public:
     StructuredGrid( const Grid::grid_t* );
     StructuredGrid( const std::string& name, const Domain& = Domain() );
     StructuredGrid( const Config& );
+    StructuredGrid(
+        const XSpace&,
+        const YSpace&,
+        const Projection& = Projection(),
+        const Domain&     = Domain()
+    );
 
     operator bool() const {
         return valid();

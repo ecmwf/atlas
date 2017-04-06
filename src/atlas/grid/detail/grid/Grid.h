@@ -11,16 +11,15 @@
 #pragma once
 
 #include <string>
-#include <vector>
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
-#include "eckit/utils/MD5.h"
 #include "eckit/value/Properties.h"
 #include "atlas/grid/Domain.h"
 #include "atlas/grid/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
 
+namespace eckit { class MD5; }
 namespace atlas {
 namespace grid {
 namespace detail {
@@ -37,8 +36,8 @@ public:  // types
     using Spec       = eckit::Properties;
     using builder_t  = eckit::BuilderT1<Grid>;
     using ARG1       = const Config&;
-    using Point      = PointXY; // must be sizeof(double)*2
     using uid_t      = std::string;
+    using hash_t     = std::string;
 
 
     class IteratorXY {
@@ -99,11 +98,7 @@ public:  // methods
     //        classes should compute it at construction
     virtual size_t size() const = 0;
 
-    virtual std::string getOptimalMeshGenerator() const;
-
     virtual Spec spec() const;
-
-    virtual bool same(const grid::Grid&) const;
 
     virtual IteratorXY* xy_begin() const=0;
     virtual IteratorXY* xy_end()   const=0;
@@ -128,12 +123,12 @@ private:  // members
     mutable uid_t uid_;
 
     /// Cache the hash
-    mutable eckit::MD5::digest_t hash_;
+    mutable hash_t hash_;
 
 protected: // members
 
     Projection projection_;
-    atlas::grid::Domain     domain_;
+    Domain     domain_;
 };
 
 }  // namespace grid

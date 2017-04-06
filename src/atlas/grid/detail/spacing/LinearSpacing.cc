@@ -70,6 +70,11 @@ LinearSpacing::LinearSpacing( double start, double end, long N, bool endpoint ) 
   setup(start,end,N,endpoint);
 }
 
+LinearSpacing::LinearSpacing( const Interval& interval, long N, bool endpoint ) {
+  setup(interval[0],interval[1],N,endpoint);
+}
+
+
 void LinearSpacing::setup(double start, double end, long N, bool endpoint) {
 
   x_.resize(N);

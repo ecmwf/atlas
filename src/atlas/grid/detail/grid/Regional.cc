@@ -2,12 +2,11 @@
 
 #include "atlas/grid/detail/domain/RectangularDomain.h"
 #include "atlas/grid/detail/domain/ZonalBandDomain.h"
-#include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 
 using atlas::grid::domain::RectangularDomain;
 using atlas::grid::domain::ZonalBandDomain;
-using atlas::grid::spacing::LinearSpacing;
+using atlas::grid::LinearSpacing;
 using XSpace = atlas::grid::StructuredGrid::grid_t::XSpace;
 using YSpace = atlas::grid::StructuredGrid::YSpace;
 
@@ -232,12 +231,12 @@ public:
         throw eckit::BadParameter("Could not parse configuration for RegularRegional grid", Here());
     }
 
-    YSpace yspace( new LinearSpacing(y.min,y.max,y.N,y.endpoint) );
+    YSpace yspace( LinearSpacing(y.min,y.max,y.N,y.endpoint) );
 
     bool with_endpoint = true;
-    XSpace* xspace( new XSpace( {x.min,x.max}, std::vector<long>(y.N,x.N), with_endpoint ) );
+    XSpace xspace({x.min,x.max}, std::vector<long>(y.N,x.N), with_endpoint);
 
-    return new StructuredGrid::grid_t( projection, xspace, yspace, domain(config) );
+    return new StructuredGrid::grid_t( xspace, yspace, projection, domain(config) );
 
   }
 
@@ -283,11 +282,11 @@ public:
     if( not (config.get("ymin",y.min) or config.get("south",y.min)) ) y.min = -90.;
     if( not (config.get("ymax",y.max) or config.get("north",y.max)) ) y.max =  90.;
 
-    YSpace yspace( new LinearSpacing(y.min,y.max,y.N,true) );
+    YSpace yspace( LinearSpacing(y.min,y.max,y.N,true) );
 
-    XSpace* xspace( new XSpace( {0.,360.}, std::vector<long>(y.N,nx), false ) );
+    XSpace xspace( {0.,360.}, std::vector<long>(y.N,nx), false );
 
-    return new StructuredGrid::grid_t( projection, xspace, yspace, domain(config) );
+    return new StructuredGrid::grid_t( xspace, yspace, projection, domain(config) );
 
   }
 

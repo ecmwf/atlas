@@ -145,31 +145,88 @@ public:
 
 public:
 
-    struct XSpace {
+    class XSpace {
+      
+        class Implementation : public eckit::Owned {
 
-      XSpace(long ny);
+        public:
 
-      XSpace( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint=true );
+            Implementation( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint=true );
 
-      size_t ny;
+            Implementation( const Config& );
 
-      // Minimum number of points across parallels (constant y)
-      size_t nxmin;
+            Implementation( const std::vector<Config>& );
 
-      // Maximum number of points across parallels (constant y)
-      size_t nxmax;
+            size_t ny() const { return ny_; }
 
-      /// Number of points per latitude
-      std::vector<long> nx;
+            // Minimum number of points across parallels (constant y)
+            size_t nxmin() const { return nxmin_; }
 
-      /// Value of minimum longitude per latitude [default=0]
-      std::vector<double> xmin;
+            // Maximum number of points across parallels (constant y)
+            size_t nxmax() const { return nxmax_; }
 
-      /// Value of maximum longitude per latitude [default=0]
-      std::vector<double> xmax;
+            /// Number of points per latitude
+            const std::vector<long>& nx() const { return nx_; }
 
-      /// Value of longitude increment
-      std::vector<double> dx;
+            /// Value of minimum longitude per latitude [default=0]
+            const std::vector<double>& xmin() const { return xmin_; }
+
+            /// Value of maximum longitude per latitude [default=0]
+            const std::vector<double>& xmax() const { return xmax_; }
+
+            /// Value of longitude increment
+            const std::vector<double>& dx() const { return dx_; }
+
+        private:
+
+            void reserve( long ny );
+
+        private:
+      
+            size_t ny_;
+            size_t nxmin_;
+            size_t nxmax_;
+            std::vector<long> nx_;
+            std::vector<double> xmin_;
+            std::vector<double> xmax_;
+            std::vector<double> dx_;
+        };
+        
+    public:
+        
+        XSpace();
+        
+        XSpace( const XSpace& );
+        
+        XSpace( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint=true );
+
+        XSpace( const Config& );
+
+        XSpace( const std::vector<Config>& );
+        
+        size_t ny() const { return impl_->ny(); }
+
+        // Minimum number of points across parallels (constant y)
+        size_t nxmin() const { return impl_->nxmin(); }
+
+        // Maximum number of points across parallels (constant y)
+        size_t nxmax() const { return impl_->nxmax(); }
+
+        /// Number of points per latitude
+        const std::vector<long>& nx() const { return impl_->nx(); }
+
+        /// Value of minimum longitude per latitude [default=0]
+        const std::vector<double>& xmin() const { return impl_->xmin(); }
+
+        /// Value of maximum longitude per latitude [default=0]
+        const std::vector<double>& xmax() const { return impl_->xmax(); }
+
+        /// Value of longitude increment
+        const std::vector<double>& dx() const { return impl_->dx(); }
+
+    private:
+      
+        eckit::SharedPtr<Implementation> impl_;
     };
 
     using YSpace = Spacing;
@@ -180,8 +237,8 @@ public:
 
 public:
 
-    Structured( const std::string&, Projection, XSpace*, YSpace, Domain );
-    Structured( Projection, XSpace*, YSpace, Domain );
+    Structured( const std::string&, XSpace, YSpace, Projection, Domain );
+    Structured( XSpace, YSpace, Projection, Domain );
 
     virtual ~Structured();
 
@@ -198,10 +255,6 @@ public:
     virtual std::string name() const;
 
     virtual std::string type() const;
-
-    virtual std::string getOptimalMeshGenerator() const {
-        return "structured";
-    }
 
     inline size_t ny() const {
         return y_.size();
@@ -311,7 +364,7 @@ protected:
 
 private:
     std::string name_ = {"structured"};
-    std::unique_ptr<XSpace> xspace_;
+    XSpace xspace_;
     YSpace yspace_;
     mutable std::string type_;
 };

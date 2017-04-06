@@ -16,6 +16,7 @@
 
 #include "eckit/runtime/Main.h"
 #include "eckit/memory/SharedPtr.h"
+#include "eckit/utils/MD5.h"
 
 #include "atlas/library/config.h"
 #include "atlas/grid/Partitioner.h"
