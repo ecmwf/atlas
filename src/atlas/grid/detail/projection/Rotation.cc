@@ -25,7 +25,7 @@ Rotated::Rotated(const eckit::Parametrisation& p) {
     }
     north_pole.resize(2);
     north_pole[0] =  south_pole[0]-180.; // longitude
-    south_pole[1] = -north_pole[0];      // latitude
+    north_pole[1] = -south_pole[1];      // latitude
   }
   pole_ = PointLonLat(north_pole[0],north_pole[1]);
 
