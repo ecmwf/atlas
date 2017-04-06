@@ -98,7 +98,7 @@ public:  // methods
     //        classes should compute it at construction
     virtual size_t size() const = 0;
 
-    virtual Spec spec() const;
+    virtual Spec spec() const = 0;
 
     virtual IteratorXY* xy_begin() const=0;
     virtual IteratorXY* xy_end()   const=0;

@@ -23,6 +23,7 @@
 #include "atlas/grid/detail/domain/ZonalBandDomain.h"
 #include "atlas/grid/Domain.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace grid {
@@ -55,7 +56,7 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
 
   y_.assign(yspace_.begin(),yspace_.end());
   size_t ny = y_.size();
-  
+
   if( xspace_.ny() == 1 && yspace_.size() > 1 ) {
     nx_   .resize( ny, xspace_.nx()[0]   );
     dx_   .resize( ny, xspace_.dx()[0]   );
@@ -78,12 +79,14 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
   }
   npts_ = size_t(std::accumulate(nx_.begin(), nx_.end(), 0));
 
+
   if( not domain.empty() ) {
     crop( domain );
   }
-  computeTruePeriodicity();
-  computeDomain();
 
+  computeTruePeriodicity();
+
+  computeDomain();
 }
 
 void Structured::computeDomain() {
@@ -134,7 +137,7 @@ Structured::XSpace::XSpace( const std::vector<Config>& config ) :
 }
 
 Structured::XSpace::Implementation::Implementation( const Config& config ) {
-  
+
   Config config_xspace(config);
 
   std::string xspace_type;
@@ -149,7 +152,7 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
   config_xspace.get("start[]",  v_start );
   config_xspace.get("end[]",    v_end   );
   config_xspace.get("length[]", v_length);
-  
+
   long ny =  std::max( v_N.     size(),
              std::max( v_start. size(),
              std::max( v_end.   size(),
@@ -200,7 +203,7 @@ Structured::XSpace::Implementation::Implementation( const std::vector<Config>& c
         nxmax_ = std::max( nxmax_, size_t(nx_[j]) );
     }
 }
-  
+
 void Structured::XSpace::Implementation::Implementation::reserve( long ny ) {
   ny_ = ny;
   nx_.  reserve(ny);
@@ -226,6 +229,51 @@ Structured::XSpace::Implementation::Implementation( const std::array<double,2>& 
   }
 }
 
+
+Grid::Spec Structured::XSpace::Implementation::spec() const {
+  Grid::Spec spec;
+
+  bool same_xmin = true;
+  bool same_xmax = true;
+  bool same_nx   = true;
+
+  double xmin = xmin_[0];
+  double xmax = xmax_[0];
+  double nx   = nx_  [0];
+  double dx   = dx_  [0];
+
+  ASSERT(xmin_.size() == ny_);
+  ASSERT(xmax_.size() == ny_);
+  ASSERT(nx_  .size() == ny_);
+
+  for( size_t j=1; j<ny_; ++j ) {
+    same_xmin = same_xmin && ( xmin_[j] == xmin );
+    same_xmax = same_xmax && ( xmax_[j] == xmax );
+    same_nx   = same_nx   && ( nx_  [j] == nx   );
+  }
+
+  bool endpoint = std::abs( (xmax - xmin) - (nx+1)*dx ) < 1.e-10;
+
+  spec.set("type","linear");
+  if( same_xmin ) {
+    spec.set("start",xmin);
+  } else {
+    spec.set("start[]",eckit::makeVectorValue(xmin_));
+  }
+  if( same_xmax ) {
+    spec.set("end",xmax);
+  } else {
+    spec.set("end[]",eckit::makeVectorValue(xmax_));
+  }
+  if( same_nx ) {
+    spec.set("N",nx);
+  } else {
+    spec.set("N[]",eckit::makeVectorValue(nx_));
+  }
+  spec.set("endpoint",endpoint);
+
+  return spec;
+}
 
 
 void Structured::crop( const Domain& dom ) {
@@ -397,10 +445,7 @@ void Structured::print(std::ostream& os) const {
 }
 
 std::string Structured::type() const {
-  if( not type_.empty() ) {
-    type_ += std::string(reduced()?"reduced":"regular");
-  }
-  return type_;
+  return static_type();
 }
 
 void Structured::hash(eckit::MD5& md5) const {
@@ -410,7 +455,7 @@ void Structured::hash(eckit::MD5& md5) const {
 
     // also add lonmin and lonmax
     md5.add(xmin_.data(), sizeof(double)*xmin_.size());
-    md5.add(xmax_.data(), sizeof(double)*xmax_.size());
+    md5.add(dx_.data(),   sizeof(double)*dx_.size());
 
     // also add projection information
     projection().hash(md5);
@@ -419,16 +464,16 @@ void Structured::hash(eckit::MD5& md5) const {
 Grid::Spec Structured::spec() const {
     Grid::Spec grid_spec;
 
-    // general specs
-    grid_spec=Grid::spec();
-
-    // specific specs
-    grid_spec.set("yspace",yspace().spec());
-
-    grid_spec.set("nx[]",eckit::makeVectorValue(nx()));
-    grid_spec.set("xmin",eckit::makeVectorValue(xmin_));
-    grid_spec.set("xmax",eckit::makeVectorValue(xmax_));
-
+    if( name() == "structured" ) {
+        grid_spec.set("type", type());
+        grid_spec.set("xspace",xspace().spec());
+        grid_spec.set("yspace",yspace().spec());
+    }
+    else {
+      grid_spec.set("name",name());
+    }
+    grid_spec.set("domain",domain().spec());
+    grid_spec.set("projection",projection().spec());
     return grid_spec;
 }
 
@@ -481,7 +526,7 @@ public:
 
         Config config_xspace;
         std::vector<Config> config_xspace_list;
-        
+
         if( config.get("xspace[]",config_xspace_list) ) {
             xspace = XSpace( config_xspace_list );
         } else if( config.get("xspace",config_xspace) ) {

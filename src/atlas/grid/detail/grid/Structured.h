@@ -90,7 +90,7 @@ public:
     size_t i_;
     size_t j_;
   };
-  
+
   class IteratorLonLat: public Grid::IteratorLonLat {
   public:
     IteratorLonLat(const Structured& grid, bool begin = true):
@@ -146,7 +146,7 @@ public:
 public:
 
     class XSpace {
-      
+
         class Implementation : public eckit::Owned {
 
         public:
@@ -177,12 +177,14 @@ public:
             /// Value of longitude increment
             const std::vector<double>& dx() const { return dx_; }
 
+            Spec spec() const;
+
         private:
 
             void reserve( long ny );
 
         private:
-      
+
             size_t ny_;
             size_t nxmin_;
             size_t nxmax_;
@@ -191,19 +193,19 @@ public:
             std::vector<double> xmax_;
             std::vector<double> dx_;
         };
-        
+
     public:
-        
+
         XSpace();
-        
+
         XSpace( const XSpace& );
-        
+
         XSpace( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint=true );
 
         XSpace( const Config& );
 
         XSpace( const std::vector<Config>& );
-        
+
         size_t ny() const { return impl_->ny(); }
 
         // Minimum number of points across parallels (constant y)
@@ -224,8 +226,10 @@ public:
         /// Value of longitude increment
         const std::vector<double>& dx() const { return impl_->dx(); }
 
+        Spec spec() const { return impl_->spec(); }
+
     private:
-      
+
         eckit::SharedPtr<Implementation> impl_;
     };
 
@@ -312,6 +316,7 @@ public:
 
     bool periodic() const { return periodic_x_; }
 
+    const XSpace& xspace() const { return xspace_; }
     const YSpace& yspace() const { return yspace_; }
 
     virtual IteratorXY* xy_begin() const{ return new IteratorXY(*this); }

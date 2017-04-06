@@ -91,7 +91,7 @@ void Unstructured::hash(eckit::MD5 &md5) const {
         const PointXY &p = pts[i];
         md5 << p.x() << p.y();
     }
-    
+
     projection().hash(md5);
 }
 
@@ -108,7 +108,10 @@ Grid::Spec Unstructured::spec() const {
 
     cached_spec_.reset( new Grid::Spec );
 
-    cached_spec_->set("grid_type", static_type());
+    cached_spec_->set("type", static_type());
+
+    cached_spec_->set("domain",domain().spec());
+    cached_spec_->set("projection",projection().spec());
 
     std::unique_ptr<IteratorXY> it( xy_begin() );
     std::vector<double> coords(2*size());

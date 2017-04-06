@@ -67,8 +67,8 @@ public:
     using Projection  = grid::Projection;
     using PointXY     = atlas::PointXY;     // must be sizeof(double)*2
     using PointLonLat = atlas::PointLonLat; // must be sizeof(double)*2
-    
-    
+
+
     class IterateXY {
     public:
       using iterator       = grid::IteratorXY;
@@ -80,7 +80,7 @@ public:
     private:
       const grid_t& grid_;
     };
-    
+
     class IterateLonLat {
     public:
       using iterator       = grid::IteratorLonLat;
@@ -94,7 +94,7 @@ public:
     };
 
 public:
-  
+
     IterateXY     xy()     const { return IterateXY(*grid_);     }
     IterateLonLat lonlat() const { return IterateLonLat(*grid_); }
 
@@ -106,8 +106,8 @@ public:
 
     operator bool() const { return grid_; }
 
-    bool operator==( const Grid& other ) const { return grid_ == other.grid_; }
-    bool operator!=( const Grid& other ) const { return grid_ != other.grid_; }
+    bool operator==( const Grid& other ) const { return uid() == other.uid(); }
+    bool operator!=( const Grid& other ) const { return uid() != other.uid(); }
 
     size_t size() const { return grid_->size(); }
 
@@ -115,7 +115,7 @@ public:
     const Domain& domain() const { return grid_->domain(); }
     std::string name() const { return grid_->name(); }
     std::string uid() const { return grid_->uid(); }
-    
+
     /// Adds to the MD5 the information that makes this Grid unique
     void hash(eckit::MD5& md5) const { return grid_->hash(md5); }
 

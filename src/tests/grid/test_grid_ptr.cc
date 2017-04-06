@@ -100,11 +100,11 @@ BOOST_AUTO_TEST_CASE( test_from_string_O32_with_domain )
   BOOST_CHECK_EQUAL( structured.ny(), 32 );
   BOOST_CHECK_EQUAL( structured.periodic(), false );
   BOOST_CHECK_EQUAL( structured.nx().front(), 6 );
-  
+
   output::Gmsh gmsh("test_grid_ptr_O32_subdomain.msh");
   mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
   gmsh.write(mesh);
-  
+
 }
 
 
@@ -166,6 +166,35 @@ BOOST_AUTO_TEST_CASE( test_structured_2 )
   mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
   gmsh.write(mesh);
 
+  Log::info() << grid.spec() << std::endl;
+
+  Grid newgrid( grid.spec() );
+  Log::info() << newgrid.spec() << std::endl;
+
+  Log::info() << "original: " << grid.uid() << std::endl;
+  Log::info() << "fromspec: " << newgrid.uid() << std::endl;
+  BOOST_CHECK_EQUAL( grid, newgrid );
+}
+
+BOOST_AUTO_TEST_CASE( test_structured_3 )
+{
+  using XSpace = grid::StructuredGrid::XSpace;
+  using YSpace = grid::StructuredGrid::YSpace;
+  using Domain = grid::StructuredGrid::Domain;
+  using Projection = grid::StructuredGrid::Projection;
+  grid::StructuredGrid grid( "O32" );
+  BOOST_CHECK( grid );
+
+  Log::info() << grid.spec() << std::endl;
+
+  Grid newgrid( grid.spec() );
+  Log::info() << newgrid.spec() << std::endl;
+
+  Log::info() << "original: " << grid.uid() << std::endl;
+  Log::info() << "fromspec: " << newgrid.uid() << std::endl;
+  BOOST_CHECK_EQUAL( grid, newgrid );
+  BOOST_CHECK_EQUAL( grid.name(), "O32" );
+  BOOST_CHECK_EQUAL( newgrid.name(), "O32" );
 }
 
 
@@ -175,7 +204,7 @@ BOOST_AUTO_TEST_CASE( test_domain_rectangular )
   atlas::grid::Domain domain = atlas::grid::RectangularDomain( {0,180}, {-25,25} );
   BOOST_CHECK( not domain.global() );
   BOOST_CHECK_EQUAL( domain.type(), std::string("rectangular") );
-  
+
   util::Config domain_cfg = domain.spec();
   atlas::grid::Domain from_cfg(domain_cfg);
   Log::info() << from_cfg.spec() << std::endl;
@@ -187,7 +216,7 @@ BOOST_AUTO_TEST_CASE( test_domain_zonal_from_rectangular )
   atlas::grid::Domain domain = atlas::grid::RectangularDomain( {0,360}, {-25,25} );
   BOOST_CHECK( not domain.global() );
   BOOST_CHECK_EQUAL( domain.type(), std::string("zonal_band") );
-  
+
   util::Config domain_cfg = domain.spec();
   atlas::grid::Domain from_cfg(domain_cfg);
   Log::info() << from_cfg.spec() << std::endl;
@@ -199,7 +228,7 @@ BOOST_AUTO_TEST_CASE( test_domain_global_from_rectangular )
   atlas::grid::Domain domain = atlas::grid::RectangularDomain( {0,360}, {-90,90} );
   BOOST_CHECK( domain.global() );
   BOOST_CHECK_EQUAL( domain.type(), std::string("global") );
-  
+
   util::Config domain_cfg = domain.spec();
   atlas::grid::Domain from_cfg(domain_cfg);
   Log::info() << from_cfg.spec() << std::endl;
@@ -209,13 +238,13 @@ BOOST_AUTO_TEST_CASE( test_domain_global_from_rectangular )
 BOOST_AUTO_TEST_CASE( test_iterator )
 {
   Grid grid("O4");
-  
+
   for( atlas::PointXY xy : grid.xy() ) {
-    Log::info() << xy << std::endl;
+    //Log::info() << xy << std::endl;
   }
 
   for( atlas::PointLonLat ll : grid.lonlat() ) {
-    Log::info() << ll << std::endl;
+    //Log::info() << ll << std::endl;
   }
 
 }

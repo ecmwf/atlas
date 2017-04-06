@@ -31,7 +31,7 @@ namespace grid {
 static void checkSizeOfPoint() {
     // compile time check support C++11
     static_assert( sizeof(PointXY)==2*sizeof(double), "Grid requires size of Point to be 2*double" );
-    
+
     // runtime check
     ASSERT( sizeof(PointXY) == 2*sizeof(double) );
 }
@@ -126,24 +126,6 @@ std::string Grid::hash() const {
     }
     return hash_;
 }
-
-Grid::Spec Grid::spec() const {
-    eckit::Properties grid_spec, dom_spec, proj_spec;
-
-    // grid type
-    grid_spec.set("name", name());
-
-    // add domain specs
-    dom_spec=domain().spec();
-    grid_spec.set("domain",dom_spec);
-
-    // add projection specs
-    proj_spec=projection().spec();
-    grid_spec.set("projection",proj_spec);
-
-    return grid_spec;
-}
-
 
 }  // namespace grid
 }  // namespace detail
