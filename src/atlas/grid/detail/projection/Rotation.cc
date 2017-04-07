@@ -4,7 +4,7 @@
 #include "atlas/util/Constants.h"
 #include "atlas/runtime/Log.h"
 
-#define OLD_IMPLEMENTATION 0
+#define LAM_IMPLEMENTATION 0
 
 
 namespace atlas {
@@ -12,41 +12,42 @@ namespace grid {
 namespace projection {
 
 namespace {
-  static double D2R(const double x) {
-    return atlas::util::Constants::degreesToRadians()*x;
-  }
-  static double R2D(const double x) {
-    return atlas::util::Constants::radiansToDegrees()*x;
-  }
-  
   static double deg2rad = atlas::util::Constants::degreesToRadians();
   static double rad2deg = atlas::util::Constants::radiansToDegrees();
 }
 
+void Rotated::print( std::ostream& out ) const {
+  out << "north_pole:"<<npole_<<", south_pole:"<<spole_<<", rotation_angle:"<<angle_; 
+}
+std::ostream& operator<< (std::ostream& out, const Rotated& r) {
+  r.print(out);
+  return out;
+}
+
 Rotated::Rotated(const eckit::Parametrisation& p) {
   // get pole
-  std::vector<double> north_pole, south_pole;
-  if( not p.get("north_pole",north_pole) ) {
-    if( not p.get("south_pole",south_pole) ) {
-      throw eckit::BadParameter("north_pole or south_pole missing in Params",Here());
-    }
-    north_pole.resize(2);
-    north_pole[0] =  south_pole[0]-180.; // longitude
-    north_pole[1] = -south_pole[1];      // latitude
+  std::vector<double> pole(2);
+  if( p.get("north_pole",pole) ) {
+    npole_ = PointLonLat(pole.data());
+    spole_ = PointLonLat(npole_.lon()+180.,npole_.lat()-180.);
+    if( spole_.lat() < -90 ) spole_.lon() -= 180.;
+  } else if( p.get("south_pole",pole) ) {
+    spole_ = PointLonLat(pole.data());
+    npole_ = PointLonLat(spole_.lon()-180.,spole_.lat()+180.);
+    if( npole_.lat() > 90 ) npole_.lon() += 180.;
+  } else {
+    throw eckit::BadParameter("north_pole or south_pole missing in Params",Here());
   }
-  npole_ = PointLonLat(north_pole.data());
-  spole_ = PointLonLat(npole_.lon()+180.,-npole_.lat());
 
+  // TODO!!!!
   if( npole_.lon() == 0. && npole_.lat() == 90. ) rotated_ = false;
 
-  double latrp = D2R(90.0-npole_.lat());
+  double latrp = (90.0-npole_.lat()) * deg2rad;
   cos_latrp_ = std::cos(latrp);
   sin_latrp_ = std::sin(latrp);
   
   angle_ = 0.;
   p.get("rotation_angle",angle_);
-  
-  ATLAS_DEBUG_VAR( angle_ );
 }
 
 Rotated::Rotated( const Rotated& rhs ) {
@@ -67,8 +68,8 @@ void Rotated::rotate(double crd[]) const {
   double xt, yt, zt, x, y, z;
   double cos_lon, sin_lon, cos_lat, sin_lat;
 
-  lon = D2R(crd[0]);
-  lat = D2R(crd[1]);
+  lon = crd[0] * deg2rad;
+  lat = crd[1] * deg2rad;
   cos_lon = std::cos(lon);
   cos_lat = std::cos(lat);
   sin_lon = std::sin(lon);
@@ -85,8 +86,8 @@ void Rotated::rotate(double crd[]) const {
   zt = -sin_latrp_*x + cos_latrp_*z;
 
   // back to spherical coordinates
-  lont=R2D(std::atan2(yt,xt));
-  latt=R2D(std::asin(zt));
+  lont=std::atan2(yt,xt)) * rad2deg;
+  latt=std::asin(zt))     * rad2deg;
 
   // rotate
   crd[0]=lont+npole_.lon();
@@ -102,8 +103,8 @@ void Rotated::unrotate(double crd[]) const {
   double cos_lont, sin_lont, cos_latt, sin_latt;
 
   // unrotate
-  lont=D2R(crd[0]-npole_.lon());
-  latt=D2R(crd[1]);
+  lont=(crd[0]-npole_.lon()) * deg2rad;
+  latt=(crd[1])              * deg2rad;
 
   cos_lont  = std::cos(lont);
   cos_latt  = std::cos(latt);
@@ -121,8 +122,8 @@ void Rotated::unrotate(double crd[]) const {
   z = sin_latrp_*xt + cos_latrp_*zt;
 
   // back to spherical coordinates
-  crd[0]=R2D(std::atan2(y,x));
-  crd[1]=R2D(std::asin(z));
+  crd[0]= std::atan2(y,x) * rad2deg;
+  crd[1]= std::asin(z)    * rad2deg;
 }
 
 #else
@@ -255,7 +256,7 @@ void Rotated::unrotate(double crd[]) const {
     if      (z >  1.0) z =  1.0;
     else if (z < -1.0) z = -1.0;
     if      (std::abs(y) <  1.e-15 ) y *= 0.;
-    
+
     double lon = std::atan2(y, x) * rad2deg;
     double lat = std::asin(z)     * rad2deg;
 

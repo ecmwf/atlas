@@ -30,6 +30,9 @@ public:
 
 private:
 
+    void print( std::ostream& ) const;
+    friend std::ostream& operator<< (std::ostream&, const Rotated&);
+
     bool rotated_     = {true};
     PointLonLat npole_ = {-180., 90.}; // north_pole
     PointLonLat spole_ = {0.   ,-90.}; // south_pole

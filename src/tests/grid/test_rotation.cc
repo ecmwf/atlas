@@ -34,6 +34,8 @@ BOOST_AUTO_TEST_CASE( test_rotation )
   config.set("north_pole", std::vector<double>{-176,40} );
   Rotated rotation(config);
   
+  Log::info() << rotation << std::endl;
+  
   PointLonLat p;
   
   p = {0.,90};
@@ -41,21 +43,21 @@ BOOST_AUTO_TEST_CASE( test_rotation )
   BOOST_CHECK_CLOSE( p.lon(), -176. , eps() );
   BOOST_CHECK_CLOSE( p.lat(),   40. , eps() );
   rotation.unrotate(p.data());
-  BOOST_CHECK_SMALL( p.lon(),         eps() );
+  // p.lon() could be any value... singularity
   BOOST_CHECK_CLOSE( p.lat(),   90. , eps() );
-
+ 
   p = {0,0};
   rotation.rotate(p.data());
-  BOOST_CHECK_CLOSE( p.lon(),    4. , eps() );
-  BOOST_CHECK_CLOSE( p.lat(),   50. , eps() );
+  BOOST_CHECK_CLOSE( p.lon(), -176. , eps() );
+  BOOST_CHECK_CLOSE( p.lat(),  -50. , eps() );
   rotation.unrotate(p.data());
   BOOST_CHECK_SMALL( p.lon() , eps() );
   BOOST_CHECK_SMALL( p.lat() , eps() );
 
   p = {-180,45};
   rotation.rotate(p.data());
-  BOOST_CHECK_CLOSE( p.lon(), -176. , eps() );
-  BOOST_CHECK_CLOSE( p.lat(),   -5. , eps() );
+  BOOST_CHECK_CLOSE( p.lon(),  -176. , eps() );
+  BOOST_CHECK_CLOSE( p.lat(),    85. , eps() );
   rotation.unrotate(p.data());
   BOOST_CHECK_CLOSE( p.lon(), -180. , eps() );
   BOOST_CHECK_CLOSE( p.lat(),   45. , eps() );
