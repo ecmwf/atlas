@@ -2,10 +2,15 @@
 #include "eckit/utils/MD5.h"
 #include "atlas/grid/detail/projection/Rotation.h"
 #include "atlas/util/Constants.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/Log.h"
 
 #define LAM_IMPLEMENTATION 0
 
+// Temporary option to  MIR is validated
+#ifndef MIR_VALIDATE
+#define MIR_VALIDATE 1
+#endif
 
 namespace atlas {
 namespace grid {
@@ -48,6 +53,15 @@ Rotated::Rotated(const eckit::Parametrisation& p) {
   
   angle_ = 0.;
   p.get("rotation_angle",angle_);
+  
+  
+  const double theta = -(90.0 + spole_.lat()) * deg2rad;
+  const double phi   = -spole_.lon()          * deg2rad;
+
+  sin_theta = std::sin(theta);
+  cos_theta = std::cos(theta);
+  sin_phi   = std::sin(phi);
+  cos_phi   = std::cos(phi);
 }
 
 Rotated::Rotated( const Rotated& rhs ) {
@@ -133,20 +147,20 @@ void Rotated::rotate(double crd[]) const {
     // See: http://gis.stackexchange.com/questions/10808/lon-lat-transformation/14445
     // First convert the data point from spherical lon lat to (x',y',z') using:
 
-    double lon = crd[0] * deg2rad;
-    double lat = crd[1] * deg2rad;
+    PointLonLat L(crd);
+    L *= deg2rad;
 
-    const double cos_lon = std::cos(lon);
-    const double cos_lat = std::cos(lat);
-    const double sin_lon = std::sin(lon);
-    const double sin_lat = std::sin(lat);
+    const double cos_lon = std::cos(L.lon());
+    const double cos_lat = std::cos(L.lat());
+    const double sin_lon = std::sin(L.lon());
+    const double sin_lat = std::sin(L.lat());
 
     // cartesian coordinates
-    const double x = cos_lon * cos_lat;
-    const double y = sin_lon * cos_lat;
-    const double z = sin_lat;
+    const PointXYZ P(   cos_lon * cos_lat,
+                        sin_lon * cos_lat,
+                        sin_lat             );
 
-    // P' = Rot(z) * Rot(y) * Pv,   rotate about y axes then z
+    // Pt = Rot(z) * Rot(y) * P,   rotate about y axes then z
     // Since we're undoing the rotation described in the definition of the coordinate system,
     // we first rotate by ϑ = -(90 + spole_.lat()) around the y axis (along the rotated Greenwich meridian)
     // and then by φ = -spole_.lon() degrees around the z axis):
@@ -159,41 +173,35 @@ void Rotated::rotate(double crd[]) const {
     // yt = -cos(ϑ) sin(φ) x + cos(φ) y - sin(ϑ) sin(φ) z
     // zt = -sin(ϑ)        x            + cos(ϑ)        z
 
-    const double theta = -(90.0 + spole_.lat()) * deg2rad;
-    const double phi   = -spole_.lon()          * deg2rad;
-
-    const double sin_theta = std::sin(theta);
-    const double cos_theta = std::cos(theta);
-    const double sin_phi   = std::sin(phi);
-    const double cos_phi   = std::cos(phi);
-
-    double xt =  cos_theta*cos_phi*x    + sin_phi*y    + sin_theta*cos_phi*z;
-    double yt = -cos_theta*sin_phi*x    + cos_phi*y    - sin_theta*sin_phi*z;
-    double zt = -sin_theta        *x                   + cos_theta        *z;
+    PointXYZ Pt (  cos_theta*cos_phi*P.x()    + sin_phi*P.y()    + sin_theta*cos_phi*P.z() ,
+                  -cos_theta*sin_phi*P.x()    + cos_phi*P.y()    - sin_theta*sin_phi*P.z() ,
+                  -sin_theta        *P.x()                       + cos_theta        *P.z() );
 
     // Then convert back to 'normal' (lat,lon) using
     // Uses arc sin, to convert back to degrees, put in range -1 to 1 in case of slight rounding error
     // avoid error on calculating e.g. asin(1.00000001)
-    if      (zt >  1.0)   zt =  1.0;
-    else if (zt < -1.0)   zt = -1.0;
-    if      (std::abs(yt) <  1.e-15 ) yt *= 0.;
+    if      (Pt.z() >  1.0)                 Pt.z()  =  1.0;
+    else if (Pt.z() < -1.0)                 Pt.z()  = -1.0;
+    if      (std::abs(Pt.y()) <  1.e-15 )   Pt.y() *=  0.0;
     
+    PointLonLat Lt (  std::atan2(Pt.y(), Pt.x()) , 
+                      std::asin (Pt.z())         );
+    Lt *= rad2deg;
 
-    double lont = std::atan2(yt, xt) * rad2deg;
-    double latt = std::asin(zt)      * rad2deg;
-
+#ifdef MIR_VALIDATE
     // Still get a very small rounding error, round to 6 decimal places
-    //    latt = roundf( latt * 1000000.0 )/1000000.0;
-    //    lont = roundf( lont * 1000000.0 )/1000000.0;
+    Lt.lat() = roundf( Lt.lat() * 1000000.0 )/1000000.0;
+    Lt.lon() = roundf( Lt.lon() * 1000000.0 )/1000000.0;
+#endif
+    
+    Lt.lon() -= angle_;
 
-    lont -= angle_;
+    // Make sure longitude is in range
+    //     while ( Lt.lon() <  lonmin_) Lt.lon() += 360.0;
+    //     while ( Lt.lon() >= lonmax_) Lt.lon() -= 360.0;
 
-    // Make sure ret_lon is in range
-    while ( lont <  lonmin_) lont += 360.0;
-    while ( lont >= lonmax_) lont -= 360.0;
-
-    crd[0] = lont;
-    crd[1] = latt;
+    crd[LON] = Lt.lon();
+    crd[LAT] = Lt.lat();
 }
 
 
@@ -201,20 +209,22 @@ void Rotated::unrotate(double crd[]) const {
 
     // See: http://rbrundritt.wordpress.com/2008/10/14/conversion-between-spherical-and-cartesian-coordinates-systems/
     // First convert the data point from spherical lat lon to (x',y',z') using:
-    const double lont = (crd[0] + angle_) * deg2rad;
-    const double latt = crd[1]            * deg2rad;
+    PointLonLat Lt (  crd[LON] + angle_ ,
+                      crd[LAT]          );
+    Lt *= deg2rad;
     
     // Cartesian coordinates
-    const double cos_lont = std::cos(lont);
-    const double cos_latt = std::cos(latt);
-    const double sin_lont = std::sin(lont);
-    const double sin_latt = std::sin(latt);
-    const double xt = cos_lont * cos_latt;
-    const double yt = sin_lont * cos_latt;
-    const double zt = sin_latt;
+    const double cos_lont = std::cos(Lt.lon());
+    const double cos_latt = std::cos(Lt.lat());
+    const double sin_lont = std::sin(Lt.lon());
+    const double sin_latt = std::sin(Lt.lat());
+    
+    const PointXYZ Pt ( cos_lont * cos_latt ,
+                        sin_lont * cos_latt ,
+                        sin_latt            );
     
     // Assume right hand rule, rotate about z axes and then y
-    // P' = Rot(y) * Rot(z) * Pv
+    // P = Rot(y) * Rot(z) * Pt
     // x   (  cos(ϑ), 0, -sin(ϑ)) ( cos(φ), -sin(φ), 0) (xt)
     // y = (  0     , 1,  0     ) ( sin(φ), cos(φ),  0) (yt)
     // z   ( sin(ϑ), 0,   cos(ϑ)) ( 0     , 0     ,  1) (zt)
@@ -224,17 +234,10 @@ void Rotated::unrotate(double crd[]) const {
     // y = ( sin(φ)       ,  cos(φ)       ,  0     ).(yt)
     // z   ( sin(ϑ) cos(φ), -sin(ϑ) sin(φ),  cos(ϑ)) (zt)
 
-    const double theta = -(90.0 + spole_.lat()) * deg2rad;
-    const double phi   = -spole_.lon()          * deg2rad;
-
-    const double sin_theta = std::sin(theta);
-    const double cos_theta = std::cos(theta);
-    const double sin_phi   = std::sin(phi);
-    const double cos_phi   = std::cos(phi);
-
-    double x = cos_theta*cos_phi*xt   - cos_theta*sin_phi*yt    - sin_theta*zt;
-    double y =           sin_phi*xt   +           cos_phi*yt;
-    double z = sin_theta*cos_phi*xt   - sin_theta*sin_phi*yt    + cos_theta*zt;
+    PointXYZ P (
+        cos_theta*cos_phi*Pt.x()   - cos_theta*sin_phi*Pt.y()    - sin_theta*Pt.z() ,
+                  sin_phi*Pt.x()   +           cos_phi*Pt.y()                       ,
+        sin_theta*cos_phi*Pt.x()   - sin_theta*sin_phi*Pt.y()    + cos_theta*Pt.z() );
 
     // Then convert back to 'normal' (lat,lon)
     // z = r.cosϑ  ( r is earths radius, assume 1)
@@ -253,23 +256,26 @@ void Rotated::unrotate(double crd[]) const {
 
     // Uses arc sin, to convert back to degrees, put in range -1 to 1 in case of slight rounding error
     // avoid error on calculating e.g. asin(1.00000001)
-    if      (z >  1.0) z =  1.0;
-    else if (z < -1.0) z = -1.0;
-    if      (std::abs(y) <  1.e-15 ) y *= 0.;
+    if      (P.z() >  1.0)                P.z() =  1.0;
+    else if (P.z() < -1.0)                P.z() = -1.0;
+    if      (std::abs(P.y()) <  1.e-15 )  P.y() *= 0.;
 
-    double lon = std::atan2(y, x) * rad2deg;
-    double lat = std::asin(z)     * rad2deg;
+    PointLonLat L( std::atan2(P.y(), P.x()) ,
+                    std::asin(P.z())        );
+    L *= rad2deg;
 
+#ifdef MIR_VALIDATE
     // Still get a very small rounding error, round to 6 decimal places
-    //    ret_lat = roundf( ret_lat * 1000000.0 )/1000000.0;
-    //    ret_lon = roundf( ret_lon * 1000000.0 )/1000000.0;
+    L.lat() = roundf( L.lat() * 1000000.0 )/1000000.0;
+    L.lon() = roundf( L.lon() * 1000000.0 )/1000000.0;
+#endif
 
     // Make sure ret_lon is in range
-    // while (lon <  lonmin_) lon += 360.0;
-    // while (lon >= lonmax_) lon -= 360.0;
-    
-    crd[0] = lon;
-    crd[1] = lat;
+    //     while (L.lon() <  lonmin_) L.lon() += 360.0;
+    //     while (L.lon() >= lonmax_) L.lon() -= 360.0;
+
+    crd[0] = L.lon();
+    crd[1] = L.lat();
 }
 
 #endif

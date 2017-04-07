@@ -111,7 +111,12 @@ public:
     x_[0] = lon;
     x_[1] = lat;
   }
-
+  
+  PointLonLat& operator*=(double a) {
+    x_[0] *= a;
+    x_[1] *= a;
+    return *this;
+  }
 };
 
 

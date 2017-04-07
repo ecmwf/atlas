@@ -42,6 +42,14 @@ private:
     double lonmin_ = {-180.};
     double lonmax_ = { 180.};
     double angle_  = {   0.};
+    
+    double sin_theta;
+    double cos_theta;
+    double sin_phi;  
+    double cos_phi;  
+    
+    
+    
 };
 
 class NotRotated {
