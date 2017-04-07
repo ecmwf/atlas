@@ -1,6 +1,7 @@
 #include "atlas/grid/Projection.h"
 
 #include "eckit/config/Parametrisation.h"
+#include "atlas/grid/detail/projection/LonLatProjection.h"
 
 namespace atlas {
 namespace grid {
@@ -24,6 +25,12 @@ Projection::Projection( const eckit::Parametrisation& p ):
 void Projection::hash( eckit::MD5& md5 ) const {
     return projection_->hash(md5);
 }
+
+
+ShiftedLonLatProjection::ShiftedLonLatProjection( double lon, double lat ) :
+    Projection( new atlas::grid::projection::ShiftedLonLatProjection(lon,lat) ) {
+}
+
 
 } // namespace Grid
 } // namespace atlas

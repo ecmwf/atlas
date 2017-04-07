@@ -60,6 +60,16 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+class ShiftedLonLatProjection : Projection {
+
+public:
+
+  ShiftedLonLatProjection( double lon, double lat );
+
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
 inline void Projection::xy2lonlat(double crd[]) const { return projection_->xy2lonlat(crd); }
 inline void Projection::lonlat2xy(double crd[]) const { return projection_->lonlat2xy(crd); }
 inline PointLonLat Projection::lonlat( const PointXY& xy) const { return projection_->lonlat(xy); }
