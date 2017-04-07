@@ -128,6 +128,10 @@ Structured::XSpace::XSpace( const std::array<double,2>& interval, const std::vec
     impl_( new Implementation(interval,N,endpoint) ) {
 }
 
+Structured::XSpace::XSpace( const Spacing& spacing ) :
+    impl_( new Implementation(spacing) ) {
+}
+
 Structured::XSpace::XSpace( const Config& config ) :
     impl_( new Implementation(config) ) {
 }
@@ -227,6 +231,18 @@ Structured::XSpace::Implementation::Implementation( const std::array<double,2>& 
     nxmax_ = std::max( nxmax_, size_t(nx_[j]) );
     dx_[j] = endpoint ? length/double(nx_[j]-1) : length/double(nx_[j]);
   }
+}
+
+Structured::XSpace::Implementation::Implementation( const Spacing& spacing ) :
+  ny_(1),
+  nx_(ny_,spacing.size()),
+  xmin_(ny_,spacing.min()),
+  xmax_(ny_,spacing.max()),
+  dx_(ny_) {
+  const spacing::LinearSpacing& linspace = dynamic_cast<const spacing::LinearSpacing&>(*spacing.get());
+  dx_[0] = linspace.step();
+  nxmax_ = nx_[0];
+  nxmin_ = nx_[0];
 }
 
 

@@ -153,6 +153,8 @@ public:
 
             Implementation( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint=true );
 
+            Implementation( const Spacing& );
+
             Implementation( const Config& );
 
             Implementation( const std::vector<Config>& );
@@ -199,6 +201,8 @@ public:
         XSpace();
 
         XSpace( const XSpace& );
+
+        XSpace( const Spacing& );
 
         XSpace( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint=true );
 

@@ -54,6 +54,8 @@ public:
   std::string type() const { return spacing_.get()->type(); }
 
   Spec spec() const { return spacing_.get()->spec(); }
+  
+  const atlas::grid::spacing::Spacing* get() const { return spacing_.get(); }
 
 private:
 

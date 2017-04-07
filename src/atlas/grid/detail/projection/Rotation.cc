@@ -9,7 +9,7 @@
 
 // Temporary option to  MIR is validated
 #ifndef MIR_VALIDATE
-#define MIR_VALIDATE 1
+#define MIR_VALIDATE 0
 #endif
 
 namespace atlas {
@@ -196,10 +196,6 @@ void Rotated::rotate(double crd[]) const {
     
     Lt.lon() -= angle_;
 
-    // Make sure longitude is in range
-    //     while ( Lt.lon() <  lonmin_) Lt.lon() += 360.0;
-    //     while ( Lt.lon() >= lonmax_) Lt.lon() -= 360.0;
-
     crd[LON] = Lt.lon();
     crd[LAT] = Lt.lat();
 }
@@ -269,10 +265,6 @@ void Rotated::unrotate(double crd[]) const {
     L.lat() = roundf( L.lat() * 1000000.0 )/1000000.0;
     L.lon() = roundf( L.lon() * 1000000.0 )/1000000.0;
 #endif
-
-    // Make sure ret_lon is in range
-    //     while (L.lon() <  lonmin_) L.lon() += 360.0;
-    //     while (L.lon() >= lonmax_) L.lon() -= 360.0;
 
     crd[0] = L.lon();
     crd[1] = L.lat();
