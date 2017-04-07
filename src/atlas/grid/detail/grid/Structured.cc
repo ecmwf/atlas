@@ -86,7 +86,10 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
 
   computeTruePeriodicity();
 
-  computeDomain();
+  if( domain.global() )
+    domain_ = Domain( Grid::Config("type","global") );
+  else
+    computeDomain();
 }
 
 void Structured::computeDomain() {
