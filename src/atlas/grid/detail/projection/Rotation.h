@@ -31,10 +31,14 @@ public:
 private:
 
     bool rotated_     = {true};
-    PointLonLat pole_ = {0.,90.}; // north_pole
+    PointLonLat npole_ = {-180., 90.}; // north_pole
+    PointLonLat spole_ = {0.   ,-90.}; // south_pole
     double cos_latrp_; //  cos( 90 - pole_lat )
     double sin_latrp_; //  sin( 90 - pole_lat )
-
+    
+    double lonmin_ = {-180.};
+    double lonmax_ = { 180.};
+    double angle_  = {   0.};
 };
 
 class NotRotated {

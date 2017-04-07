@@ -104,7 +104,6 @@ Meshgen2Gmsh::Meshgen2Gmsh(int argc,char **argv): AtlasTool(argc,argv)
     +indent()+"        30: Mostly skewed quads with only triags when skewness becomes too large\n"
     +indent()+"        -1: Only triangles") );
 
-  add_option( new SimpleOption<bool>("3d","Output mesh as sphere, and generate mesh connecting East and West in case serial") );
   add_option( new SimpleOption<bool>("include_pole","Include pole point") );
   add_option( new SimpleOption<bool>("patch_pole","Patch poles with elements.") );
   add_option( new SimpleOption<bool>("ghost","Output ghost elements") );
@@ -120,6 +119,8 @@ Meshgen2Gmsh::Meshgen2Gmsh(int argc,char **argv): AtlasTool(argc,argv)
   add_option( new SimpleOption<bool>("periodic_x","periodic mesh in x-direction") );
   add_option( new SimpleOption<bool>("periodic_y","periodic mesh in y-direction") );
   add_option( new SimpleOption<bool>("torus","Output mesh as torus") );
+  add_option( new SimpleOption<bool>("lonlat","Output mesh in lon-lat coordinates") );
+  add_option( new SimpleOption<bool>("3d","Output mesh as sphere, and generate mesh connecting East and West in case serial") );
 }
 
 //-----------------------------------------------------------------------------
@@ -186,7 +187,7 @@ void Meshgen2Gmsh::execute(const Args& args)
 
   Log::debug() << "Domain: " << grid.domain() << std::endl;
   Log::debug() << "Periodic: " << grid.periodic() << std::endl;
-//  Log::debug() << "Spec: " << grid.spec() << std::endl;
+  Log::debug() << "Spec: " << grid.spec() << std::endl;
 
 
   std::string meshgenerator_type = ( RegularGrid(grid) ? "regular" : "structured" );
@@ -235,11 +236,14 @@ void Meshgen2Gmsh::execute(const Args& args)
     Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
     mesh::actions::BuildTorusXYZField("xyz")(mesh,grid.domain(),5.,2.,grid.nxmax(),grid.ny());
   }
+  
+  bool lonlat = false;
+  args.get("lonlat",lonlat);
 
   atlas::output::Gmsh gmsh( path_out , Config
     ("info",info)
     ("ghost",ghost)
-    ("coordinates", dim_3d ? "xyz" : "xy" )
+    ("coordinates", dim_3d ? "xyz" : lonlat ? "lonlat" : "xy" )
     ("edges",edges )
     ("binary",binary )
   );

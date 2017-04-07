@@ -39,3 +39,9 @@ ecbuild_add_test(   TARGET      atlas_test_field
     SOURCES     test_field.cc
     LIBS        atlas
 )
+
+ecbuild_add_test( TARGET atlas_test_rotation
+  BOOST
+  SOURCES   test_rotation.cc
+  LIBS      atlas
+)

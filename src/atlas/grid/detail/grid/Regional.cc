@@ -3,6 +3,7 @@
 #include "atlas/grid/detail/domain/RectangularDomain.h"
 #include "atlas/grid/detail/domain/ZonalBandDomain.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/runtime/Log.h"
 
 using atlas::grid::domain::RectangularDomain;
 using atlas::grid::domain::ZonalBandDomain;
@@ -67,6 +68,7 @@ struct Parse_llc_step : ConfigParser {
 
       double centre[] = {centre_lonlat[0],centre_lonlat[1]};
       p.lonlat2xy(centre);
+      ATLAS_DEBUG_VAR( PointXY(centre) );
 
       double lx = x.step * double(x.N-1);
       double ly = y.step * double(y.N-1);
