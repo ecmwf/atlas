@@ -60,7 +60,7 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class ShiftedLonLatProjection : Projection {
+class ShiftedLonLatProjection : public Projection {
 
 public:
 
