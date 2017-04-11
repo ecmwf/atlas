@@ -320,11 +320,12 @@ void Structured::crop( const Domain& dom ) {
           }
       }
       size_t cropped_ny = jmax-jmin+1;
-      std::vector<double> cropped_y   ( y_   .begin()+jmin, y_   .begin()+jmax );
-      std::vector<double> cropped_xmin( xmin_.begin()+jmin, xmin_.begin()+jmax );
-      std::vector<double> cropped_xmax( xmax_.begin()+jmin, xmax_.begin()+jmax );
-      std::vector<double> cropped_dx  ( dx_  .begin()+jmin, dx_  .begin()+jmax );
-      std::vector<long>   cropped_nx  ( nx_  .begin()+jmin, nx_  .begin()+jmax );
+      std::vector<double> cropped_y   ( y_   .begin()+jmin, y_   .begin()+jmin+cropped_ny );
+      std::vector<double> cropped_xmin( xmin_.begin()+jmin, xmin_.begin()+jmin+cropped_ny );
+      std::vector<double> cropped_xmax( xmax_.begin()+jmin, xmax_.begin()+jmin+cropped_ny );
+      std::vector<double> cropped_dx  ( dx_  .begin()+jmin, dx_  .begin()+jmin+cropped_ny );
+      std::vector<long>   cropped_nx  ( nx_  .begin()+jmin, nx_  .begin()+jmin+cropped_ny );
+      ASSERT( cropped_nx.size() == cropped_ny );
 
       size_t cropped_nxmin, cropped_nxmax;
       cropped_nxmin = cropped_nxmax = static_cast<size_t>(cropped_nx.front());
@@ -442,7 +443,7 @@ void Structured::computeTruePeriodicity() {
     // domain could be zonal band
 
     size_t j = ny()/2;
-    if( (nx_[j]-1) * dx_[j] == xmax_[j] ) {
+    if( xmin_[j] + (nx_[j]-1) * dx_[j] == xmax_[j] ) {
       periodic_x_ = false; // This would lead to duplicated points
     } else {
       // High chance to be periodic. Check anyway.

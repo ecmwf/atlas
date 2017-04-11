@@ -182,10 +182,8 @@ BOOST_AUTO_TEST_CASE( test_no_rotation )
 
   p = {0.,0.};
   r = p;
-  Log::info() << rotation.rotate(p) << std::endl;
   CHECK_EQUIVALENT( rotation.rotate(p), r );
   CHECK_EQUIVALENT( magics.  rotate(p), r );
-  Log::info() << rotation.unrotate(r) << std::endl;
   CHECK_EQUIVALENT( rotation.unrotate(r), p );
   CHECK_EQUIVALENT( magics.  unrotate(r), p );
 
