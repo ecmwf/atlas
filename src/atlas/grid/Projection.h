@@ -50,22 +50,12 @@ public:
   operator bool() const;
 
   std::string type() const { return projection_->type(); }
-  
+
   void hash( eckit::MD5& ) const;
 
 private:
 
   eckit::SharedPtr<atlas::grid::projection::Projection> projection_;
-};
-
-//---------------------------------------------------------------------------------------------------------------------
-
-class ShiftedLonLatProjection : public Projection {
-
-public:
-
-  ShiftedLonLatProjection( double lon, double lat );
-
 };
 
 //---------------------------------------------------------------------------------------------------------------------

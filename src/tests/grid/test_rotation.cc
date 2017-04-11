@@ -12,19 +12,115 @@
 #include "ecbuild/boost_test_framework.h"
 
 
+#include <cmath>
 #include "atlas/library/Library.h"
-#include "atlas/grid/detail/projection/Rotation.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Constants.h"
+#include "atlas/util/Rotation.h"
 #include "atlas/runtime/Log.h"
 #include "tests/AtlasFixture.h"
 
-using atlas::grid::projection::Rotated;
+using atlas::util::Rotation;
 using atlas::util::Config;
 
 namespace atlas {
 namespace test {
 
+
 constexpr double eps() { return 1.e-5; }
+const double d2r = atlas::util::Constants::degreesToRadians();
+const double r2d = atlas::util::Constants::radiansToDegrees();
+
+#define CHECK_EQUIVALENT( p1, p2 ) \
+  if( std::abs(p2.lat())==90.) BOOST_CHECK_CLOSE( p1.lat(), p2.lat(), eps() ); \
+  else { \
+    BOOST_CHECK_CLOSE( 10.+std::cos(p1.lon()*d2r), 10.+std::cos(p2.lon()*d2r), eps() ); \
+    BOOST_CHECK_CLOSE( 10.+std::sin(p1.lat()*d2r), 10.+std::sin(p2.lat()*d2r), eps() ); \
+  }
+
+
+class MagicsRotation {
+// For reference, this what magics uses, it appears as if it originated from fortran code
+// Strangely the definition of rotate and unrotate are switched.
+
+public:
+
+  MagicsRotation( const PointLonLat& south_pole ) :
+      south_pole_(south_pole) {
+  }
+
+  PointLonLat rotate( const PointLonLat& point ) const
+  {
+    return magics_unrotate(point); /// Switch meaning !!!
+  }
+
+  PointLonLat unrotate( const PointLonLat& point ) const
+  {
+    return magics_rotate(point);   /// Swich meaning !!!
+  }
+
+private:
+
+  PointLonLat south_pole_;
+
+  PointLonLat magics_rotate( const PointLonLat& point ) const
+  {
+     double lat_y = point.lat();
+     double lon_x = point.lon();
+
+     double sin_south_pole_lat = std::sin(d2r*(south_pole_.lat()+90.));
+     double cos_south_pole_lat = std::cos(d2r*(south_pole_.lat()+90.));
+
+     double ZXMXC = d2r*(lon_x - south_pole_.lon());
+     double sin_lon_decr_sp = std::sin(ZXMXC);
+     double cos_lon_decr_sp = std::cos(ZXMXC);
+     double sin_lat = std::sin(d2r*lat_y);
+     double cos_lat = std::cos(d2r*lat_y);
+     double ZSYROT = cos_south_pole_lat*sin_lat - sin_south_pole_lat*cos_lat*cos_lon_decr_sp;
+     ZSYROT = std::max( std::min(ZSYROT, +1.0), -1.0 );
+
+     double PYROT = std::asin(ZSYROT)*r2d;
+
+     double ZCYROT = std::cos(PYROT*d2r);
+     double ZCXROT = (cos_south_pole_lat*cos_lat*cos_lon_decr_sp + sin_south_pole_lat*sin_lat)/ZCYROT;
+     ZCXROT = std::max( std::min(ZCXROT, +1.0), -1.0 );
+     double ZSXROT = cos_lat*sin_lon_decr_sp/ZCYROT;
+
+     double PXROT = std::acos(ZCXROT)*r2d;
+
+     if( ZSXROT < 0.0)
+        PXROT = -PXROT;
+
+     return PointLonLat( PXROT, PYROT);
+  }
+
+  PointLonLat magics_unrotate( const PointLonLat& point ) const
+  {
+     double lat_y = point.lat();
+     double lon_x = point.lon();
+
+     double sin_south_pole_lat = std::sin(d2r*(south_pole_.lat()+90.));
+     double cos_south_pole_lat = std::cos(d2r*(south_pole_.lat()+90.));
+     double cos_lon = std::cos(d2r*lon_x);
+     double sin_lat = std::sin(d2r*lat_y);
+     double cos_lat = std::cos(d2r*lat_y);
+     double ZSYREG = cos_south_pole_lat*sin_lat + sin_south_pole_lat*cos_lat*cos_lon;
+     ZSYREG = std::max( std::min(ZSYREG, +1.0), -1.0 );
+     double PYREG = std::asin(ZSYREG)*r2d;
+     double ZCYREG = std::cos(PYREG*d2r);
+     double ZCXMXC = (cos_south_pole_lat*cos_lat*cos_lon - sin_south_pole_lat*sin_lat)/ZCYREG;
+     ZCXMXC = std::max( std::min(ZCXMXC, +1.0), -1.0 );
+     double ZSXMXC = cos_lat*sin_lat/ZCYREG;
+     double ZXMXC = std::acos(ZCXMXC)*r2d;
+     if( ZSXMXC < 0.0)
+        ZXMXC = -ZXMXC;
+     double PXREG = ZXMXC + south_pole_.lon();
+
+     return PointLonLat( PXREG, PYREG);
+  }
+
+
+};
 
 BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
@@ -32,35 +128,108 @@ BOOST_AUTO_TEST_CASE( test_rotation )
 {
   Config config;
   config.set("north_pole", std::vector<double>{-176,40} );
-  Rotated rotation(config);
-  
+  Rotation rotation(config);
+  MagicsRotation magics(rotation.southPole());
   Log::info() << rotation << std::endl;
-  
-  PointLonLat p;
-  
-  p = {0.,90};
-  rotation.rotate(p.data());
-  BOOST_CHECK_CLOSE( p.lon(), -176. , eps() );
-  BOOST_CHECK_CLOSE( p.lat(),   40. , eps() );
-  rotation.unrotate(p.data());
-  // p.lon() could be any value... singularity
-  BOOST_CHECK_CLOSE( p.lat(),   90. , eps() );
- 
-  p = {0,0};
-  rotation.rotate(p.data());
-  BOOST_CHECK_CLOSE( p.lon(), -176. , eps() );
-  BOOST_CHECK_CLOSE( p.lat(),  -50. , eps() );
-  rotation.unrotate(p.data());
-  BOOST_CHECK_SMALL( p.lon() , eps() );
-  BOOST_CHECK_SMALL( p.lat() , eps() );
 
-  p = {-180,45};
-  rotation.rotate(p.data());
-  BOOST_CHECK_CLOSE( p.lon(),  -176. , eps() );
-  BOOST_CHECK_CLOSE( p.lat(),    85. , eps() );
-  rotation.unrotate(p.data());
-  BOOST_CHECK_CLOSE( p.lon(), -180. , eps() );
-  BOOST_CHECK_CLOSE( p.lat(),   45. , eps() );
+  BOOST_CHECK( rotation.rotated() );
+
+  PointLonLat p, r;
+
+  p = {0.,90.};
+  r = {-176.,40.};
+  CHECK_EQUIVALENT( rotation.rotate(p), r );
+  CHECK_EQUIVALENT( magics.  rotate(p), r );
+  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+
+  p = {0.,0.};
+  r = {-176.,-50.};
+  CHECK_EQUIVALENT( rotation.rotate(p), r );
+  CHECK_EQUIVALENT( magics.  rotate(p), r );
+  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+
+
+  p = {-180.,45.};
+  r = {-176.,85.};
+  CHECK_EQUIVALENT( rotation.rotate(p), r );
+  CHECK_EQUIVALENT( magics.  rotate(p), r );
+  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+}
+
+
+
+BOOST_AUTO_TEST_CASE( test_no_rotation )
+{
+  Config config;
+  Rotation rotation(config);
+  MagicsRotation magics(rotation.southPole());
+
+  Log::info() << rotation << std::endl;
+
+  BOOST_CHECK( not rotation.rotated() );
+
+  PointLonLat p, r;
+
+  p = {0.,90.};
+  r = p;
+  CHECK_EQUIVALENT( rotation.rotate(p), r );
+  CHECK_EQUIVALENT( magics.  rotate(p), r );
+  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+
+  p = {0.,0.};
+  r = p;
+  Log::info() << rotation.rotate(p) << std::endl;
+  CHECK_EQUIVALENT( rotation.rotate(p), r );
+  CHECK_EQUIVALENT( magics.  rotate(p), r );
+  Log::info() << rotation.unrotate(r) << std::endl;
+  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+
+
+  p = {-180.,45.};
+  r = p;
+  CHECK_EQUIVALENT( rotation.rotate(p), r );
+  CHECK_EQUIVALENT( magics.  rotate(p), r );
+  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+}
+
+BOOST_AUTO_TEST_CASE( test_rotation_angle_only )
+{
+  Config config;
+  config.set("rotation_angle",-180.);
+  Rotation rotation(config);
+  MagicsRotation magics(rotation.southPole());
+
+  Log::info() << rotation << std::endl;
+
+  BOOST_CHECK( rotation.rotated() );
+
+  PointLonLat p, r;
+
+  p = {0.,90.};
+  r = {-180.,90};
+  CHECK_EQUIVALENT( rotation.rotate(p),   r );
+  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+
+  p = {0.,0.};
+  r = {-180.,0.};
+  CHECK_EQUIVALENT( rotation.rotate(p),  r );
+  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+
+  p = {270.,25.};
+  r = {90.,25.};
+  CHECK_EQUIVALENT( rotation.rotate(p),   r );
+  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+
+  p = {-180.,45.};
+  r = {-360.,45.};
+  CHECK_EQUIVALENT( rotation.rotate(p),   r );
+  CHECK_EQUIVALENT( rotation.unrotate(r), p );
 }
 
 

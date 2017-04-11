@@ -1,11 +1,12 @@
 #pragma once
 
 #include <array>
-#include "atlas/util/Point.h"
 #include "eckit/config/Parametrisation.h"
 #include "eckit/value/Properties.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
+#include "atlas/util/Rotation.h"
+#include "atlas/util/Point.h"
 
 namespace eckit { class MD5; }
 
@@ -60,6 +61,45 @@ inline PointXY Projection::xy( const PointLonLat& lonlat ) const {
   lonlat2xy(xy.data());
   return xy;
 }
+
+class Rotated : public util::Rotation {
+
+public:
+
+    Rotated( const PointLonLat& south_pole, double rotation_angle = 0. );
+    Rotated( const eckit::Parametrisation& );
+    virtual ~Rotated() {}
+    
+    static std::string classNamePrefix() { return "Rotated"; }
+    static std::string typePrefix() { return "rotated_"; }
+
+    void spec(eckit::Properties&) const;
+
+    void hash( eckit::MD5& ) const;
+};
+
+
+class NotRotated {
+
+public:
+
+    NotRotated() {}
+    NotRotated( const eckit::Parametrisation& ) {}
+    virtual ~NotRotated() {}
+    
+    static std::string classNamePrefix() { return ""; } // deliberately empty
+    static std::string typePrefix() { return ""; }      // deliberately empty
+
+    void rotate(double crd[]) const   { /* do nothing */ }
+    void unrotate(double crd[]) const { /* do nothing */ }
+    
+    bool rotated() const { return false; }
+
+    void spec(eckit::Properties&) const {}
+
+    void hash( eckit::MD5& ) const {}
+};
+
 
 }  // namespace projection
 }  // namespace grid

@@ -99,8 +99,6 @@ grid/detail/partitioner/Partitioner.h
 
 grid/detail/projection/Projection.cc
 grid/detail/projection/Projection.h
-grid/detail/projection/Rotation.cc
-grid/detail/projection/Rotation.h
 grid/detail/projection/LonLatProjection.cc
 grid/detail/projection/LonLatProjection.h
 grid/detail/projection/LambertProjection.cc
@@ -398,6 +396,8 @@ util/GaussianLatitudes.h
 util/GaussianLatitudes.cc
 util/Metadata.h
 util/Metadata.cc
+util/Rotation.h
+util/Rotation.cc
 output/detail/GmshIO.h
 output/detail/GmshIO.cc
 output/detail/PointCloud.h

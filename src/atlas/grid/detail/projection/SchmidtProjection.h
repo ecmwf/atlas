@@ -1,7 +1,6 @@
 #pragma once
 
 #include "atlas/grid/detail/projection/Projection.h"
-#include "atlas/grid/detail/projection/Rotation.h"
 
 namespace atlas {
 namespace grid {
