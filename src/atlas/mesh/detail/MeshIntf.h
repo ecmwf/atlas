@@ -22,11 +22,13 @@ extern "C"
 {
   Mesh::Implementation* atlas__Mesh__new ();
   void atlas__Mesh__delete (Mesh::Implementation* This);
-  Nodes* atlas__Mesh__create_nodes (Mesh::Implementation* This, int nb_nodes);
   Nodes* atlas__Mesh__nodes (Mesh::Implementation* This);
   Edges* atlas__Mesh__edges (Mesh::Implementation* This);
   Cells* atlas__Mesh__cells (Mesh::Implementation* This);
   size_t atlas__Mesh__footprint (Mesh::Implementation* This);
+  void atlas__Mesh__clone_to_device (Mesh::Implementation* This);
+  void atlas__Mesh__clone_from_device (Mesh::Implementation* This);
+  void atlas__Mesh__sync_host_device (Mesh::Implementation* This);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

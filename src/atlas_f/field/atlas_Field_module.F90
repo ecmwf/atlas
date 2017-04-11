@@ -106,6 +106,7 @@ contains
   procedure, public :: is_on_device
   procedure, public :: clone_to_device
   procedure, public :: clone_from_device
+  procedure, public :: sync_host_device
 
   procedure, private :: dummy
 
@@ -682,6 +683,14 @@ subroutine clone_from_device(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
   call atlas__Field__clone_from_device(this%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine sync_host_device(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  call atlas__Field__sync_host_device(this%c_ptr())
 end subroutine
 
 !-------------------------------------------------------------------------------

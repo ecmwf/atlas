@@ -422,6 +422,7 @@ extern "C"
   int atlas__Field__is_on_device(const FieldImpl* This);
   void atlas__Field__clone_to_device(FieldImpl* This);
   void atlas__Field__clone_from_device(FieldImpl* This);
+  void atlas__Field__sync_host_device(FieldImpl* This);
 }
 #undef Char
 

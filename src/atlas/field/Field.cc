@@ -555,6 +555,10 @@ void atlas__Field__clone_from_device(FieldImpl* This)
 {
   This->cloneFromDevice();
 }
+void atlas__Field__sync_host_device(FieldImpl* This)
+{
+  This->syncHostDevice();
+}
 
 
 }

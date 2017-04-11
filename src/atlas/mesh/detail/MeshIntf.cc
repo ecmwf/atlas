@@ -26,16 +26,6 @@ void atlas__Mesh__delete (Mesh::Implementation* This) {
 	delete This;
 }
 
-Nodes* atlas__Mesh__create_nodes (Mesh::Implementation* This, int nb_nodes)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    This->nodes().resize(nb_nodes);
-    return &This->nodes();
-  );
-  return nullptr;
-}
-
 Nodes* atlas__Mesh__nodes (Mesh::Implementation* This) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -67,6 +57,21 @@ size_t atlas__Mesh__footprint (Mesh::Implementation* This) {
     size = This->footprint();
   );
   return size;
+}
+
+void atlas__Mesh__clone_to_device(Mesh::Implementation* This)
+{
+  This->cloneToDevice();
+}
+
+void atlas__Mesh__clone_from_device(Mesh::Implementation* This)
+{
+  This->cloneFromDevice();
+}
+
+void atlas__Mesh__sync_host_device(Mesh::Implementation* This)
+{
+  This->syncHostDevice();
 }
 
 //----------------------------------------------------------------------------------------------------------------------

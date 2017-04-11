@@ -47,13 +47,16 @@ implicit none
 
   write(*,*) "test_function_space starting"
   mesh = atlas_Mesh()
-  nodes = mesh%create_nodes(5)
+  nodes = mesh%nodes()
   nb_nodes = nodes%size()
-  FCTEST_CHECK_EQUAL( nb_nodes, 5 )
-  FCTEST_CHECK_EQUAL( nodes%size() , 5_c_size_t  )
+  FCTEST_CHECK_EQUAL( nb_nodes, 0 )
+  FCTEST_CHECK_EQUAL( nodes%size() , 0_c_size_t  )
   FCTEST_CHECK( nodes%has_field("partition") )
   FCTEST_CHECK( nodes%has_field("remote_idx") )
   call nodes%resize(10_c_size_t)
+  nb_nodes = nodes%size()
+  FCTEST_CHECK_EQUAL( nb_nodes, 10 )
+  FCTEST_CHECK_EQUAL( nodes%size() , 10_c_size_t  )
   call atlas_log%info( nodes%str() )
 
   call mesh%final()
