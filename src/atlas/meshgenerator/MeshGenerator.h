@@ -48,14 +48,14 @@ public:
 
     virtual void hash(eckit::MD5&) const = 0;
 
-    virtual void generate( const grid::Grid&, const grid::Distribution&, Mesh& ) const =0;
-    virtual void generate( const grid::Grid&, Mesh& ) const =0;
+    virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const =0;
+    virtual void generate( const Grid&, Mesh& ) const =0;
 
-    Mesh generate( const grid::Grid&, const grid::Distribution& ) const;
-    Mesh generate( const grid::Grid& ) const;
+    Mesh generate( const Grid&, const grid::Distribution& ) const;
+    Mesh generate( const Grid& ) const;
 
-    Mesh operator()( const grid::Grid&, const grid::Distribution& ) const;
-    Mesh operator()( const grid::Grid& ) const;
+    Mesh operator()( const Grid&, const grid::Distribution& ) const;
+    Mesh operator()( const Grid& ) const;
 
 protected:
 
@@ -84,11 +84,11 @@ public:
 
     void hash(eckit::MD5&) const;
 
-    Mesh generate( const grid::Grid&, const grid::Distribution& ) const;
-    Mesh generate( const grid::Grid& ) const;
+    Mesh generate( const Grid&, const grid::Distribution& ) const;
+    Mesh generate( const Grid& ) const;
 
-    Mesh operator()( const grid::Grid&, const grid::Distribution& ) const;
-    Mesh operator()( const grid::Grid& ) const;
+    Mesh operator()( const Grid&, const grid::Distribution& ) const;
+    Mesh operator()( const Grid& ) const;
     
     const meshgenerator_t* get() const { return meshgenerator_.get(); }
 
@@ -150,8 +150,8 @@ extern "C" {
 void atlas__MeshGenerator__delete(MeshGenerator::meshgenerator_t* This);
 const MeshGenerator::meshgenerator_t* atlas__MeshGenerator__create_noconfig(const char* name);
 const MeshGenerator::meshgenerator_t* atlas__MeshGenerator__create(const char* name, const eckit::Parametrisation* params);
-Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
-Mesh::Implementation* atlas__MeshGenerator__generate__grid(const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid);
+Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator::meshgenerator_t* This, const Grid::Implementation* grid, const grid::Distribution::impl_t* distribution);
+Mesh::Implementation* atlas__MeshGenerator__generate__grid(const MeshGenerator::meshgenerator_t* This, const Grid::Implementation* grid);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

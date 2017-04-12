@@ -48,7 +48,7 @@ class StructuredColumns : public FunctionSpaceImpl {
 
 public:
 
-  StructuredColumns( const grid::Grid& );
+  StructuredColumns( const Grid& );
 
   virtual ~StructuredColumns();
 
@@ -139,7 +139,7 @@ public:
 
   StructuredColumns();
   StructuredColumns( const FunctionSpace& );
-  StructuredColumns( const grid::Grid& );
+  StructuredColumns( const Grid& );
 
   operator bool() const { return valid(); }
   bool valid() const { return functionspace_; }
@@ -208,7 +208,7 @@ inline Field StructuredColumns::createField(
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid::Grid::grid_t* grid);
+  const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid);
   void atlas__functionspace__StructuredColumns__delete (detail::StructuredColumns* This);
   field::FieldImpl* atlas__fs__StructuredColumns__create_field_name_kind (const detail::StructuredColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
   field::FieldImpl* atlas__fs__StructuredColumns__create_field_name_kind_lev (const detail::StructuredColumns* This, const char* name, int kind, int levels, const eckit::Parametrisation* options);

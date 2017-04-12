@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file )
   Mesh mesh = output::detail::PointCloud::read("pointcloud.txt");
 
   BOOST_TEST_CHECKPOINT( "Mesh created" );
-  grid::Grid grid( new grid::detail::grid::Unstructured(mesh) );
+  Grid grid( new grid::detail::grid::Unstructured(mesh) );
   BOOST_REQUIRE(grid);
 
   BOOST_CHECK_EQUAL(grid.size(),test_arrays::nb_pts);
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_rows )
   BOOST_TEST_CHECKPOINT( "Creating Mesh..." );
   Mesh mesh = output::detail::PointCloud::read("pointcloud.txt");
   BOOST_TEST_CHECKPOINT( "Creating Mesh...done" );
-  grid::Grid grid( new grid::detail::grid::Unstructured(mesh) );
+  Grid grid( new grid::detail::grid::Unstructured(mesh) );
   BOOST_REQUIRE(grid);
 
   BOOST_CHECK_EQUAL(grid.size(),test_arrays::nb_pts-2);
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_columns_1 )
                   test_arrays::nb_columns-1 ));
 
   Mesh mesh = output::detail::PointCloud::read("pointcloud.txt");
-  grid::Grid grid( new grid::detail::grid::Unstructured(mesh) );
+  Grid grid( new grid::detail::grid::Unstructured(mesh) );
   BOOST_REQUIRE(grid);
 
   BOOST_CHECK_EQUAL(grid.size(),test_arrays::nb_pts);
@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_columns_2 )
                   test_arrays::nb_columns-test_arrays::nb_fld ));
 
   Mesh mesh = output::detail::PointCloud::read("pointcloud.txt");
-  grid::Grid grid( new grid::detail::grid::Unstructured(mesh) );
+  Grid grid( new grid::detail::grid::Unstructured(mesh) );
   BOOST_REQUIRE(grid);
 
   BOOST_CHECK_EQUAL(grid.size(),test_arrays::nb_pts);
@@ -367,7 +367,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   BOOST_TEST_CHECKPOINT("Part 2");
 
   Mesh mesh = output::detail::PointCloud::read("pointcloud.txt");
-  grid::Grid grid( new grid::detail::grid::Unstructured(mesh) );
+  Grid grid( new grid::detail::grid::Unstructured(mesh) );
   BOOST_REQUIRE(grid);
 
   BOOST_CHECK_EQUAL(grid.size(),test_vectors::nb_pts);
@@ -407,10 +407,10 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   BOOST_REQUIRE_NO_THROW( output::detail::PointCloud::write("pointcloud_Grid.txt",     mesh    ) );
 
   Mesh mesh_from_FieldSet = output::detail::PointCloud::read("pointcloud_FieldSet.txt");
-  grid::Grid grid_from_FieldSet( new grid::detail::grid::Unstructured(mesh_from_FieldSet) );
+  Grid grid_from_FieldSet( new grid::detail::grid::Unstructured(mesh_from_FieldSet) );
 
   Mesh mesh_from_Grid (output::detail::PointCloud::read("pointcloud_Grid.txt"));
-  grid::Grid grid_from_Grid( new grid::detail::grid::Unstructured(mesh_from_Grid) );
+  Grid grid_from_Grid( new grid::detail::grid::Unstructured(mesh_from_Grid) );
 
   BOOST_REQUIRE( grid_from_FieldSet );
   BOOST_REQUIRE( grid_from_Grid     );

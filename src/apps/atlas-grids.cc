@@ -113,7 +113,7 @@ void AtlasGrids::execute(const Args& args)
   }
   if( list )
   {
-    std::vector<std::string> keys = Factory<Grid::grid_t>::instance().keys();
+    std::vector<std::string> keys = Factory<Grid::Implementation>::instance().keys();
     Log::info() << "usage: atlas-grids GRID [OPTION]... [--help]\n" << std::endl;
     Log::info() << "Available grids:" << std::endl;
     for(size_t i = 0; i < keys.size(); ++i)

@@ -8,7 +8,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/functionspace/StructuredColumns.h"
 
-using atlas::grid::Grid;
+using atlas::Grid;
 using atlas::Mesh;
 using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::functionspace::StructuredColumns;

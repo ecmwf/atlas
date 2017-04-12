@@ -52,7 +52,7 @@ void DelaunayMeshGenerator::hash(eckit::MD5& md5) const
     // no other settings
 }
 
-void DelaunayMeshGenerator::generate(const grid::Grid& grid, const grid::Distribution& dist, Mesh& mesh) const
+void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution& dist, Mesh& mesh) const
 {
   if( dist.nb_partitions() > 1 )
   {
@@ -69,7 +69,7 @@ void DelaunayMeshGenerator::generate(const grid::Grid& grid, const grid::Distrib
   }
 }
 
-void DelaunayMeshGenerator::generate(const grid::Grid& g, Mesh& mesh) const
+void DelaunayMeshGenerator::generate(const Grid& g, Mesh& mesh) const
 {
 
   createNodes(g,mesh);
@@ -84,7 +84,7 @@ void DelaunayMeshGenerator::generate(const grid::Grid& g, Mesh& mesh) const
   mesh::actions::BuildConvexHull3D()(mesh);
 }
 
-void DelaunayMeshGenerator::createNodes(const grid::Grid& grid, Mesh& mesh) const
+void DelaunayMeshGenerator::createNodes(const Grid& grid, Mesh& mesh) const
 {
   size_t nb_nodes = grid.size();
   mesh.nodes().resize(nb_nodes);

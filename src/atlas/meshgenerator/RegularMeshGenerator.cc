@@ -28,7 +28,6 @@
 #define DEBUG_OUTPUT 0
 #define DEBUG_OUTPUT_DETAIL 0
 
-using atlas::Mesh;
 using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {
@@ -98,7 +97,7 @@ void RegularMeshGenerator::configure_defaults()
 
 }
 
-void RegularMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
+void RegularMeshGenerator::generate(const Grid& grid, Mesh& mesh ) const
 {
     ASSERT(!mesh.generated());
 
@@ -125,7 +124,7 @@ void RegularMeshGenerator::hash(eckit::MD5& md5) const
     options.hash(md5);
 }
 
-void RegularMeshGenerator::generate(const grid::Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const
+void RegularMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const
 {
   const grid::RegularGrid rg = grid::RegularGrid(grid);
   if( !rg )

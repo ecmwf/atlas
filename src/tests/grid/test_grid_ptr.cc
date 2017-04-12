@@ -26,7 +26,7 @@
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 
-using Grid       = atlas::grid::Grid;
+using Grid       = atlas::Grid;
 using RectangularDomain = atlas::grid::RectangularDomain;
 using Structured = atlas::grid::StructuredGrid;
 using Regular    = atlas::grid::RegularGrid;

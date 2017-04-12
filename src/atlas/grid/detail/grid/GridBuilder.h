@@ -37,9 +37,9 @@ public:
 
   ~GridBuilder();
 
-  virtual const Grid::grid_t* create( const Grid::Config& ) const;
+  virtual const Grid::Implementation* create( const Grid::Config& ) const;
 
-  virtual const Grid::grid_t* create( const std::string&, const Grid::Config& = Grid::Config() ) const =0;
+  virtual const Grid::Implementation* create( const std::string&, const Grid::Config& = Grid::Config() ) const =0;
 
   std::string type() const;
 

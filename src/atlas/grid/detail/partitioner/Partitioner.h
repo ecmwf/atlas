@@ -25,7 +25,7 @@ class Partitioner : public eckit::Owned {
 
 public:
 
-  using Grid = atlas::grid::Grid;
+  using Grid = atlas::Grid;
 
 public:
 

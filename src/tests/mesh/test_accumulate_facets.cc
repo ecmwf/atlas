@@ -43,7 +43,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_accumulate_facets )
 {
-  grid::Grid grid("O2");
+  Grid grid("O2");
   meshgenerator::StructuredMeshGenerator generator( Config
        ("angle",29.0)
        ("triangulate",false)
@@ -418,7 +418,7 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
 BOOST_AUTO_TEST_CASE( test_build_edges )
 {
   idx_t missing_value = -1;
-  grid::Grid grid("O2");
+  Grid grid("O2");
   meshgenerator::StructuredMeshGenerator generator(  Config
         ("angle",29.0)
         ("triangulate",false)
@@ -838,7 +838,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 
 BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
 {
-  grid::Grid grid("O2");
+  Grid grid("O2");
   meshgenerator::StructuredMeshGenerator generator (  Config
       ("angle",29.0)
       ("triangulate",false)

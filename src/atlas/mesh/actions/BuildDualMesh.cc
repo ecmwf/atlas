@@ -399,7 +399,7 @@ void make_dual_normals_outward( Mesh& mesh )
 }
 
 
-void build_brick_dual_mesh(const atlas::grid::Grid& grid, atlas::Mesh& mesh)
+void build_brick_dual_mesh(const Grid& grid, Mesh& mesh)
 {
   auto g = grid::StructuredGrid(grid);
   if( g )

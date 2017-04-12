@@ -172,9 +172,9 @@ GridBuilder::~GridBuilder() {
     }
 }
 
-const Grid::grid_t* GridBuilder::create( const Grid::Config& config ) const {
+const Grid::Implementation* GridBuilder::create( const Grid::Config& config ) const {
 
-  eckit::Factory<Grid::grid_t>& fact = eckit::Factory<Grid::grid_t>::instance();
+  eckit::Factory<Grid::Implementation>& fact = eckit::Factory<Grid::Implementation>::instance();
 
   std::string name;
   if (config.get("name",name)) { // ignore any further configuration

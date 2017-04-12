@@ -29,7 +29,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
-  grid::Grid g( "L5" );
+  Grid g( "L5" );
   Mesh m = meshgenerator::StructuredMeshGenerator().generate(g);
   output::Gmsh("L5.msh").write(m);
 }

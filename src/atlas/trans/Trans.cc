@@ -420,7 +420,7 @@ struct UnpackSpectral
 namespace atlas {
 namespace trans {
 
-Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
+Trans::Trans(const Grid& grid, const Trans::Options& p)
 {
   size_t nsmax = 0;
   ctor(grid,nsmax,p);
@@ -433,7 +433,7 @@ Trans::Trans(const long N, const Trans::Options& p)
   ctor_rgg(pl.size(),pl.data(), nsmax, p);
 }
 
-Trans::Trans(const grid::Grid& grid, const long nsmax, const Trans::Options& p )
+Trans::Trans(const Grid& grid, const long nsmax, const Trans::Options& p )
 {
   ctor(grid,nsmax,p);
 }
@@ -449,7 +449,7 @@ Trans::~Trans()
   ::trans_delete(&trans_);
 }
 
-void Trans::ctor( const grid::Grid& grid, long nsmax, const Trans::Options& p ) {
+void Trans::ctor( const Grid& grid, long nsmax, const Trans::Options& p ) {
   ASSERT( grid.domain().global() );
   ASSERT( not grid.projection() );
 
@@ -1173,12 +1173,12 @@ void Trans::invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, const F
 
 
 
-Trans* atlas__Trans__new (const grid::Grid::grid_t* grid, int nsmax)
+Trans* atlas__Trans__new (const Grid::Implementation* grid, int nsmax)
 {
   Trans* trans(0);
   ATLAS_ERROR_HANDLING(
     ASSERT( grid );
-    trans = new Trans( grid::Grid(grid) ,nsmax);
+    trans = new Trans( Grid(grid) ,nsmax);
   );
   return trans;
 }

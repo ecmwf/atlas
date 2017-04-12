@@ -160,7 +160,7 @@ void StructuredMeshGenerator::configure_defaults()
 
 }
 
-void StructuredMeshGenerator::generate(const grid::Grid& grid, Mesh& mesh ) const
+void StructuredMeshGenerator::generate(const Grid& grid, Mesh& mesh ) const
 {
     ASSERT(!mesh.generated());
 
@@ -187,7 +187,7 @@ void StructuredMeshGenerator::hash(MD5& md5) const
     options.hash(md5);
 }
 
-void StructuredMeshGenerator::generate(const grid::Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const
+void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const
 {
   const grid::StructuredGrid rg = grid::StructuredGrid(grid);
   if( !rg )

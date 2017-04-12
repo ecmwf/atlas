@@ -41,7 +41,7 @@ struct Shift {
 
 };
 
-using XSpace = detail::grid::Structured::XSpace;
+using XSpace = StructuredGrid::XSpace;
 
 StructuredGrid::grid_t* create_lonlat(long nlon, long nlat, Shift shift, const Grid::Config& config = Grid::Config() ) {
 
@@ -120,7 +120,7 @@ public:
     os << std::left << std::setw(20) << "L<nx>x<ny> / L<gauss>" << "Regular longitude-latitude grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
@@ -143,7 +143,7 @@ public:
     return nullptr;
   }
 
-  virtual const Grid::grid_t* create( const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const Grid::Config& config ) const {
     return create_lonlat( config, Shift(false,false) );
   }
 
@@ -163,7 +163,7 @@ public:
     os << std::left << std::setw(20) << "S<nx>x<ny> / S<gauss>" << "Shifted longitude-latitude grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
@@ -186,7 +186,7 @@ public:
     return nullptr;
   }
 
-  virtual const Grid::grid_t* create( const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const Grid::Config& config ) const {
     return create_lonlat( config, Shift(true,true) );
   }
 
@@ -206,7 +206,7 @@ public:
     os << std::left << std::setw(20) << "Slon<nx>x<ny> / Slon<gauss>" << "Shifted longitude grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
@@ -229,7 +229,7 @@ public:
     return nullptr;
   }
 
-  virtual const Grid::grid_t* create( const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const Grid::Config& config ) const {
     return create_lonlat( config, Shift(true,false) );
   }
 
@@ -250,7 +250,7 @@ public:
     os << std::left << std::setw(20) << "Slat<nx>x<ny> / Slat<gauss>" << "Shifted latitude grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
@@ -273,7 +273,7 @@ public:
     return nullptr;
   }
 
-  virtual const Grid::grid_t* create( const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const Grid::Config& config ) const {
     return create_lonlat( config, Shift(false,true) );
   }
 

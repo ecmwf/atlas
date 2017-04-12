@@ -24,7 +24,7 @@
 #include "eckit/memory/Factory.h"
 
 using StructuredGrid = atlas::grid::StructuredGrid;
-using Grid       = atlas::grid::Grid;
+using Grid       = atlas::Grid;
 using Regular    = atlas::grid::RegularGrid;
 using ReducedGaussianGrid    = atlas::grid::ReducedGaussianGrid;
 

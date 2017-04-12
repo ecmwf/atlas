@@ -15,7 +15,7 @@
 
 namespace atlas {
 
-namespace grid { class Grid; }
+class Grid;
 
 namespace mesh {
 namespace actions {
@@ -52,7 +52,7 @@ void build_centroid_dual_mesh( Mesh& mesh );
  *   |       |       |       |
  *   |   #   |   #   |   #   |   #
  */
-void build_brick_dual_mesh(const atlas::grid::Grid& grid, Mesh& mesh );
+void build_brick_dual_mesh(const Grid& grid, Mesh& mesh );
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

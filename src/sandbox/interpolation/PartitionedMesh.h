@@ -38,8 +38,8 @@ struct PartitionedMesh {
 
     void writeGmsh(const std::string& fileName, const FieldSet& fields = FieldSet());
 
-    void partition(const grid::Grid&);
-    void partition(const grid::Grid&, const PartitionedMesh&);
+    void partition(const Grid&);
+    void partition(const Grid&, const PartitionedMesh&);
 
 protected:
 

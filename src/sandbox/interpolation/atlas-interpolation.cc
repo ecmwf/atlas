@@ -108,7 +108,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     // source mesh is partitioned on its own, the target mesh uses (pre-partitioned) source mesh
 
     option = args.get("source-gridname", option)? option : "O16";
-    grid::Grid src_grid(option);
+    Grid src_grid(option);
     interpolation::PartitionedMesh src(
                 args.get("source-mesh-partitioner",           option)? option : "equal_regions",
                 args.get("source-mesh-generator",             option)? option : "structured",
@@ -117,7 +117,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
 
     option = args.get("target-gridname", option)? option : "O32";
-    grid::Grid tgt_grid(option);
+    Grid tgt_grid(option);
     interpolation::PartitionedMesh tgt(
                 args.get("target-mesh-partitioner",           option)? option : "polygon",
                 args.get("target-mesh-generator",             option)? option : "structured",

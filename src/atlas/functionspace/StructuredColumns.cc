@@ -64,7 +64,7 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
-StructuredColumns::StructuredColumns(const grid::Grid& grid) :
+StructuredColumns::StructuredColumns(const Grid& grid) :
   grid_(grid)
 {
     if ( not grid_ )
@@ -460,7 +460,7 @@ StructuredColumns::StructuredColumns( const FunctionSpace& functionspace ) :
   functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
 }
 
-StructuredColumns::StructuredColumns( const grid::Grid& grid ) :
+StructuredColumns::StructuredColumns( const Grid& grid ) :
   FunctionSpace( new detail::StructuredColumns(grid) ),
   functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
 }
@@ -508,10 +508,10 @@ std::string StructuredColumns::checksum( const Field& field) const {
 extern "C"
 {
 
-const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid::Grid::grid_t* grid)
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid)
 {
   ATLAS_ERROR_HANDLING(
-    return new detail::StructuredColumns( grid::Grid(grid) );
+    return new detail::StructuredColumns( Grid(grid) );
   );
   return 0;
 }

@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   meshgen_options.set("angle",27.5);
   meshgen_options.set("triangulate",false);
   meshgenerator::StructuredMeshGenerator generate(meshgen_options);
-  Mesh m = generate( grid::Grid("N32") );
+  Mesh m = generate( Grid("N32") );
   mesh::actions::build_parallel_fields(m);
 
   mesh::Nodes& nodes = m.nodes();

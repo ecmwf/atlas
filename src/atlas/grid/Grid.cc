@@ -24,7 +24,6 @@
 #include "atlas/grid/detail/grid/Structured.h"
 
 namespace atlas {
-namespace grid {
 
 Grid::Grid():
     grid_( nullptr ) {
@@ -34,22 +33,24 @@ Grid::Grid(const Grid& grid):
     grid_( grid.grid_ ) {
 }
 
-Grid::Grid( const Grid::grid_t *grid ):
+Grid::Grid( const Grid::Implementation *grid ):
     grid_( grid ) {
 }
 
 Grid::Grid( const std::string& shortname, const Domain& domain ) {
-    grid_ = Grid::grid_t::create(
+    grid_ = Grid::Implementation::create(
                 shortname, 
                 Config("domain", domain.spec())
             );
 }
 
 Grid::Grid( const Config& p ) {
-    grid_ = Grid::grid_t::create(p);
+    grid_ = Grid::Implementation::create(p);
 }
 
-inline const UnstructuredGrid::grid_t* unstructured_grid( const Grid::grid_t *grid ) {
+namespace grid {
+
+inline const UnstructuredGrid::grid_t* unstructured_grid( const Grid::Implementation *grid ) {
     return dynamic_cast<const UnstructuredGrid::grid_t*>(grid);
 }
 
@@ -63,7 +64,7 @@ UnstructuredGrid::UnstructuredGrid( const Grid& grid ):
     grid_( unstructured_grid(get()) ) {
 }
 
-UnstructuredGrid::UnstructuredGrid( const Grid::grid_t* grid ):
+UnstructuredGrid::UnstructuredGrid( const Grid::Implementation* grid ):
     Grid( grid ),
     grid_( unstructured_grid(get()) ) {
 }
@@ -79,7 +80,7 @@ UnstructuredGrid::UnstructuredGrid( std::vector<PointXY>* xy ):
 }
 
 
-inline const StructuredGrid::grid_t* structured_grid( const Grid::grid_t *grid ) {
+inline const StructuredGrid::grid_t* structured_grid( const Grid::Implementation *grid ) {
     return dynamic_cast<const StructuredGrid::grid_t*>(grid);
 }
 
@@ -93,7 +94,7 @@ StructuredGrid::StructuredGrid( const Grid& grid ):
     grid_( structured_grid(get()) ) {
 }
 
-StructuredGrid::StructuredGrid( const Grid::grid_t* grid ):
+StructuredGrid::StructuredGrid( const Grid::Implementation* grid ):
     Grid( grid ),
     grid_( structured_grid(get()) ) {
 }
@@ -120,7 +121,7 @@ StructuredGrid::StructuredGrid(
 
 
 ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Domain& domain ):
-    ReducedGaussianGrid::Grid( detail::grid::reduced_gaussian(nx,domain) ) {
+    ReducedGaussianGrid::grid_t( detail::grid::reduced_gaussian(nx,domain) ) {
 }
 
 ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<long>& nx ):
@@ -128,5 +129,5 @@ ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<long>& nx 
 }
 
 
-} // namespace Grid
+} // namespace grid
 } // namespace atlas

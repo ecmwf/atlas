@@ -46,8 +46,8 @@ public:
 
   StructuredMeshGenerator(const eckit::Parametrisation& = util::NoConfig() );
 
-  virtual void generate(const grid::Grid&, const grid::Distribution&, Mesh&) const;
-  virtual void generate(const grid::Grid&, Mesh&) const;
+  virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const;
+  virtual void generate(const Grid&, Mesh&) const;
 
   using MeshGenerator::meshgenerator_t::generate;
 

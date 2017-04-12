@@ -46,8 +46,8 @@ static Spacing yspace( const Grid::Config& grid ) {
 
 }
 
-static StructuredGrid::grid_t::XSpace xspace( const std::vector<long>& nx ) {
-  return StructuredGrid::grid_t::XSpace({0.,360.},nx,false);
+static StructuredGrid::XSpace xspace( const std::vector<long>& nx ) {
+  return StructuredGrid::XSpace({0.,360.},nx,false);
   // XSpace( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint=true );
   //
   // _xspace->nx = nx;
@@ -75,7 +75,7 @@ public:
     os << std::left << std::setw(20) << "N<gauss>" << "Classic Gaussian grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
@@ -88,7 +88,7 @@ public:
     return nullptr;
   }
 
-  virtual const Grid::grid_t* create( const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const Grid::Config& config ) const {
     long N;
     config.get("N",N);
     std::vector<long> nx(2*N);
@@ -110,7 +110,7 @@ public:
     os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
@@ -123,7 +123,7 @@ public:
     return nullptr;
   }
 
-  virtual const Grid::grid_t* create( const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const Grid::Config& config ) const {
     
     long N;
     config.get("N",N);
@@ -153,7 +153,7 @@ public:
     os << std::left << std::setw(20) << "F<gauss>" << "Regular Gaussian grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
     int id;
     std::vector<std::string> matches;
     if( match( name, matches, id ) ) {
@@ -166,7 +166,7 @@ public:
     return nullptr;
   }
 
-  virtual const Grid::grid_t* create( const Grid::Config& config) const {
+  virtual const Grid::Implementation* create( const Grid::Config& config) const {
     long N;
     config.get("N",N);
     std::vector<long> nx(2*N,4*N);

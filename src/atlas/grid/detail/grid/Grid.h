@@ -112,7 +112,7 @@ protected:  // methods
 
 private:  // methods
 
-    friend std::ostream& operator<<(std::ostream& s, const grid::Grid& p) {
+    friend std::ostream& operator<<(std::ostream& s, const Grid& p) {
         p.print(s);
         return s;
     }

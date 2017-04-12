@@ -14,12 +14,7 @@
 
 namespace atlas {
   class Mesh;
-}
-
-namespace atlas {
-namespace grid {
-class Grid;
-}
+  class Grid;
 }
 
 namespace atlas {
@@ -39,10 +34,10 @@ private: // methods
 
   virtual void hash(eckit::MD5&) const;
 
-  virtual void generate(const grid::Grid&, const grid::Distribution&, Mesh&) const;
-  virtual void generate(const grid::Grid&, Mesh&) const;
+  virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const;
+  virtual void generate(const Grid&, Mesh&) const;
   
-  void createNodes(const grid::Grid&, Mesh&) const;
+  void createNodes(const Grid&, Mesh&) const;
   
 };
 

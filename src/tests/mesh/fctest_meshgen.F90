@@ -70,7 +70,7 @@ END_TESTSUITE_FINALIZE
 !  type(atlas_MeshGenerator) :: meshgenerator
 !   type(atlas_Output) :: gmsh
 !  conf = atlas_Config( )
-!  call conf%set("grid_type","custom_structured")
+!  call conf%set("Implementationype","custom_structured")
 !  call conf%set("nlat",7)
 !  call conf%set("latitudes",[ 90., 60., 30.,   0., -30., -60., -90. ])
 !  call conf%set("pl",[  2,  4,  8,  12,   8,   4,   2 ])
@@ -103,7 +103,7 @@ END_TESTSUITE_FINALIZE
 ! OPEN (UNIT=9 , FILE="custom.json", STATUS='REPLACE')
 ! write(9,'(A)') &
 !   &     '{' &
-!   & //  '  "grid_type" : "custom_structured",'               &
+!   & //  '  "Implementationype" : "custom_structured",'               &
 !   & //  '  "nlat"      : 7,'                                 &
 !   & //  '  "latitudes" : [ 90, 60, 30,   0, -30, -60, -90 ],' &
 !   & //  '  "pl"        : [  2,  4,  8,  12,   8,   4,   2 ],' &

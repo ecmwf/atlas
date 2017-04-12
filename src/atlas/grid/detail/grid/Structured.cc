@@ -504,9 +504,9 @@ namespace { // anonymous
 
 static class structured : public GridBuilder {
 
-  using grid_t = atlas::grid::Grid::grid_t;
+  using Implementation = atlas::Grid::Implementation;
   using Config = Grid::Config;
-  using XSpace = StructuredGrid::grid_t::XSpace;
+  using XSpace = StructuredGrid::XSpace;
 
 public:
 
@@ -516,11 +516,11 @@ public:
         os << std::left << std::setw(20) << " " << "Structured grid";
     }
 
-    virtual const grid_t* create( const std::string& name, const Config& config ) const {
+    virtual const Implementation* create( const std::string& name, const Config& config ) const {
         throw eckit::NotImplemented( "Cannot create structured grid from name", Here() );
     }
 
-    virtual const grid_t* create( const Config& config ) const {
+    virtual const Implementation* create( const Config& config ) const {
 
         Projection projection;
         Spacing    yspace;

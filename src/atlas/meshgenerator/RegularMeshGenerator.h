@@ -13,7 +13,7 @@ namespace atlas {
 
 namespace atlas {
 namespace grid {
-    //class Regular;
+    class RegularGrid;
     class Distribution;
 } }
 
@@ -28,8 +28,8 @@ public:
 
     RegularMeshGenerator(const eckit::Parametrisation& = util::NoConfig() );
 
-    virtual void generate(const atlas::grid::Grid&, const grid::Distribution&, Mesh&) const;
-    virtual void generate(const atlas::grid::Grid&, Mesh&) const;
+    virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const;
+    virtual void generate(const Grid&, Mesh&) const;
 
     using MeshGenerator::meshgenerator_t::generate;
 

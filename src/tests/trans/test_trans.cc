@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
 
   // Create grid and trans object
-  grid::Grid g( "N80" );
+  Grid g( "N80" );
 
   BOOST_CHECK_EQUAL( grid::StructuredGrid(g).ny() , 160 );
 
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 {
   BOOST_TEST_CHECKPOINT("test_trans_partitioner");
   // Create grid and trans object
-  grid::Grid g( "N80" );
+  Grid g( "N80" );
 
   trans::Trans trans( g, 0 );
 
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE( test_distspec )
 
 BOOST_AUTO_TEST_CASE( test_distribution )
 {
-  grid::Grid g( "O80" );
+  Grid g( "O80" );
 
   BOOST_TEST_CHECKPOINT("test_distribution");
 
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE( test_distribution )
 BOOST_AUTO_TEST_CASE( test_generate_mesh )
 {
   BOOST_TEST_CHECKPOINT("test_generate_mesh");
-  grid::Grid g( "O80" );
+  Grid g( "O80" );
   meshgenerator::StructuredMeshGenerator generate( atlas::util::Config
     ("angle",0)
     ("triangulate",true)
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 {
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
-  grid::Grid g( "O48" );
+  Grid g( "O48" );
   meshgenerator::StructuredMeshGenerator generate( atlas::util::Config
     ("angle",0)
     ("triangulate",false)
@@ -285,7 +285,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
 {
   BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
-  grid::Grid g( "O48" );
+  Grid g( "O48" );
   trans::Trans trans(g,47) ;
 
   functionspace::Spectral          spectral   (trans);

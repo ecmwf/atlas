@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
 
 BOOST_AUTO_TEST_CASE( test_partitioner )
 {
-  grid::Grid g( "S4x2" );
+  Grid g( "S4x2" );
 
   // 12 partitions
   {
@@ -358,7 +358,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
           //  int nlat=10;
           //  long lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
           //  test::MinimalGrid grid(nlat,lon);
-  grid::StructuredGrid grid = grid::Grid("N32");
+  grid::StructuredGrid grid = Grid("N32");
   //RegularGrid grid(128,64);
 
   /*
@@ -469,7 +469,7 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
 {
   ATLAS_DEBUG_HERE();
 
-  grid::Grid grid("O8");
+  Grid grid("O8");
 
   atlas::util::Config cfg;
   cfg.set("part",1);

@@ -67,28 +67,28 @@ MeshGeneratorImpl::MeshGeneratorImpl()
 MeshGeneratorImpl::~MeshGeneratorImpl() {
 }
 
-Mesh MeshGeneratorImpl::operator()( const grid::Grid& grid ) const
+Mesh MeshGeneratorImpl::operator()( const Grid& grid ) const
 {
   Mesh mesh;
   generate(grid,mesh);
   return mesh;
 }
 
-Mesh MeshGeneratorImpl::operator()( const grid::Grid& grid, const grid::Distribution& distribution ) const
+Mesh MeshGeneratorImpl::operator()( const Grid& grid, const grid::Distribution& distribution ) const
 {
   Mesh mesh;
   generate(grid,distribution,mesh);
   return mesh;
 }
 
-Mesh MeshGeneratorImpl::generate( const grid::Grid& grid ) const
+Mesh MeshGeneratorImpl::generate( const Grid& grid ) const
 {
   Mesh mesh;
   generate(grid,mesh);
   return mesh;
 }
 
-Mesh MeshGeneratorImpl::generate( const grid::Grid& grid, const grid::Distribution& distribution ) const
+Mesh MeshGeneratorImpl::generate( const Grid& grid, const grid::Distribution& distribution ) const
 {
   Mesh mesh;
   generate(grid,distribution,mesh);
@@ -117,19 +117,19 @@ void MeshGenerator::hash(eckit::MD5& md5) const {
     return meshgenerator_->hash(md5);
 }
 
-Mesh MeshGenerator::generate( const grid::Grid& g, const grid::Distribution& d) const {
+Mesh MeshGenerator::generate( const Grid& g, const grid::Distribution& d) const {
     return meshgenerator_->generate(g,d);
 }
 
-Mesh MeshGenerator::generate( const grid::Grid& g) const {
+Mesh MeshGenerator::generate( const Grid& g) const {
     return meshgenerator_->generate(g);
 }
 
-Mesh MeshGenerator::operator()( const grid::Grid& g, const grid::Distribution& d ) const {
+Mesh MeshGenerator::operator()( const Grid& g, const grid::Distribution& d ) const {
   return meshgenerator_->operator()(g,d);
 }
 
-Mesh MeshGenerator::operator()( const grid::Grid& g ) const {
+Mesh MeshGenerator::operator()( const Grid& g ) const {
   return meshgenerator_->operator()(g);  
 }
 
@@ -288,12 +288,12 @@ const MeshGenerator::meshgenerator_t* atlas__MeshGenerator__create(const char* n
   return meshgenerator;
 }
 
-Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist (const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution )
+Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist (const MeshGenerator::meshgenerator_t* This, const Grid::Implementation* grid, const grid::Distribution::impl_t* distribution )
 {
   ATLAS_ERROR_HANDLING(
     Mesh::Implementation* m;
     {
-      Mesh mesh = This->generate(grid::Grid(grid), grid::Distribution(distribution));
+      Mesh mesh = This->generate(Grid(grid), grid::Distribution(distribution));
       mesh.get()->attach();
       m = mesh.get();
     }
@@ -303,12 +303,12 @@ Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist (const MeshG
   return nullptr;
 }
 
-Mesh::Implementation* atlas__MeshGenerator__generate__grid (const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid )
+Mesh::Implementation* atlas__MeshGenerator__generate__grid (const MeshGenerator::meshgenerator_t* This, const Grid::Implementation* grid )
 {
   ATLAS_ERROR_HANDLING(
     Mesh::Implementation* m;
     {
-      Mesh mesh = This->generate(grid::Grid(grid));;
+      Mesh mesh = This->generate(Grid(grid));;
       mesh.get()->attach();
       m = mesh.get();
     }

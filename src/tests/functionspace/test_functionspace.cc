@@ -42,7 +42,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns_no_halo )
 {
-  grid::Grid grid("O8");
+  Grid grid("O8");
   Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
   functionspace::NodeColumns nodes_fs(mesh);
   Field field( nodes_fs.createField<int>("field") );

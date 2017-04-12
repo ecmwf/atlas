@@ -19,7 +19,7 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/parallel/mpi/mpi.h"
 
-using atlas::grid::Grid;
+using atlas::Grid;
 using atlas::grid::Projection;
 
 namespace atlas {

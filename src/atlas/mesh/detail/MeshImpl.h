@@ -21,11 +21,7 @@
 //----------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace grid {
-    class Grid;
-} }
-
-namespace atlas {
+  class Grid;
   class Mesh;
 namespace mesh {
     class Nodes;

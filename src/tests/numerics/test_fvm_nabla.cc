@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE( test_build )
 {
   Log::info() << "test_build" << std::endl;
   MeshGenerator meshgenerator ("structured" );
-  Mesh mesh = meshgenerator.generate( grid::Grid("O16") );
+  Mesh mesh = meshgenerator.generate( Grid("O16") );
   const double R = util::Earth::radiusInMeters();
   fvm::Method fvm(mesh,util::Config("radius",R));
   Nabla nabla( fvm );
@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
   Log::info() << "test_grad" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  grid::Grid grid(griduid());
+  Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh = meshgenerator.generate(grid);
   fvm::Method fvm(mesh, util::Config("radius",radius));
@@ -218,7 +218,7 @@ BOOST_AUTO_TEST_CASE( test_div )
   Log::info() << "test_div" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  grid::Grid grid(griduid());
+  Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh( meshgenerator.generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
   Log::info() << "test_curl" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  grid::Grid grid(griduid());
+  Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh( meshgenerator.generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   Log::info() << "test_lapl" << std::endl;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
-  grid::Grid grid(griduid());
+  Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh( meshgenerator.generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));

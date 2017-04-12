@@ -17,8 +17,8 @@
 #include "atlas/library/config.h"
 
 namespace atlas {
+  class Grid;
 namespace grid {
-class Grid;
 class Partitioner;
 }
 }

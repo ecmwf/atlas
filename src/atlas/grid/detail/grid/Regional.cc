@@ -8,7 +8,7 @@
 using atlas::grid::domain::RectangularDomain;
 using atlas::grid::domain::ZonalBandDomain;
 using atlas::grid::LinearSpacing;
-using XSpace = atlas::grid::StructuredGrid::grid_t::XSpace;
+using XSpace = atlas::grid::StructuredGrid::XSpace;
 using YSpace = atlas::grid::StructuredGrid::YSpace;
 
 namespace atlas {
@@ -210,12 +210,12 @@ public:
     //os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
     eckit::NotImplemented( "There are no named regional grids implemented.", Here() );
     return nullptr;
   }
 
-  virtual const Grid::grid_t* create( const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const Grid::Config& config ) const {
 
 
     // read projection subconfiguration
@@ -257,12 +257,12 @@ public:
     //os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian grid";
   }
 
-  virtual const Grid::grid_t* create( const std::string& name, const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
     eckit::NotImplemented( "There are no named zonal_band grids implemented.", Here() );
     return nullptr;
   }
 
-  virtual const Grid::grid_t* create( const Grid::Config& config ) const {
+  virtual const Grid::Implementation* create( const Grid::Config& config ) const {
 
 
     // read projection subconfiguration
