@@ -8,9 +8,8 @@
 namespace eckit { class Parametrisation; }
 
 namespace atlas {
-namespace mesh {
     class Mesh;
-} }
+}
 
 namespace atlas {
 namespace grid {
@@ -29,8 +28,8 @@ public:
 
     RegularMeshGenerator(const eckit::Parametrisation& = util::NoConfig() );
 
-    virtual void generate(const atlas::grid::Grid&, const grid::Distribution&, mesh::Mesh&) const;
-    virtual void generate(const atlas::grid::Grid&, mesh::Mesh&) const;
+    virtual void generate(const atlas::grid::Grid&, const grid::Distribution&, Mesh&) const;
+    virtual void generate(const atlas::grid::Grid&, Mesh&) const;
 
     using MeshGenerator::meshgenerator_t::generate;
 
@@ -43,7 +42,7 @@ private:
     void generate_mesh(
       const atlas::grid::RegularGrid&,
       const std::vector<int>& parts,
-      mesh::Mesh& m ) const;
+      Mesh& m ) const;
 
 private:
 

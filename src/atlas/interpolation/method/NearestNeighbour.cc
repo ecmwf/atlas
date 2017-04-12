@@ -31,7 +31,7 @@ MethodBuilder<NearestNeighbour> __builder("nearest-neighbour");
 }  // (anonymous namespace)
 
 
-void NearestNeighbour::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
+void NearestNeighbour::setup(Mesh& meshSource, Mesh& meshTarget) {
     using namespace atlas;
 
 

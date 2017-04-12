@@ -49,9 +49,9 @@ class NodeColumns : public FunctionSpaceImpl
 {
 public:
 
-    NodeColumns( mesh::Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
-    NodeColumns( mesh::Mesh& mesh, const mesh::Halo & );
-    NodeColumns( mesh::Mesh& mesh );
+    NodeColumns( Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
+    NodeColumns( Mesh& mesh, const mesh::Halo & );
+    NodeColumns( Mesh& mesh );
 
     virtual ~NodeColumns();
 
@@ -60,7 +60,7 @@ public:
     size_t nb_nodes() const;
     size_t nb_nodes_global() const; // All MPI ranks will have same output
 
-    const mesh::Mesh& mesh() const { return mesh_; }
+    const Mesh& mesh() const { return mesh_; }
 
     mesh::Nodes& nodes() const { return nodes_; }
 
@@ -290,7 +290,7 @@ private: // methods
 
 private: // data
 
-    mesh::Mesh mesh_;    // non-const because functionspace may modify mesh
+    Mesh mesh_;    // non-const because functionspace may modify mesh
     mesh::Nodes& nodes_; // non-const because functionspace may modify mesh
     mesh::Halo halo_;
     size_t nb_nodes_;
@@ -507,9 +507,9 @@ public:
 
     NodeColumns();
     NodeColumns( const FunctionSpace& );
-    NodeColumns( mesh::Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
-    NodeColumns( mesh::Mesh& mesh, const mesh::Halo & );
-    NodeColumns( mesh::Mesh& mesh );
+    NodeColumns( Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
+    NodeColumns( Mesh& mesh, const mesh::Halo & );
+    NodeColumns( Mesh& mesh );
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
@@ -517,7 +517,7 @@ public:
     size_t nb_nodes() const;
     size_t nb_nodes_global() const; // All MPI ranks will have same output
 
-    const mesh::Mesh& mesh() const;
+    const Mesh& mesh() const;
 
     mesh::Nodes& nodes() const;
 

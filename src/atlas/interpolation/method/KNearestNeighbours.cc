@@ -39,7 +39,7 @@ KNearestNeighbours::KNearestNeighbours(const Method::Config& config) : KNearestN
 }
 
 
-void KNearestNeighbours::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
+void KNearestNeighbours::setup(Mesh& meshSource, Mesh& meshTarget) {
     using namespace atlas;
 
 

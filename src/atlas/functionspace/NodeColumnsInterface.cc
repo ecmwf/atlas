@@ -22,17 +22,17 @@ namespace detail {
 // ----------------------------------------------------------------------
 
 extern "C" {
-const NodeColumns* atlas__NodesFunctionSpace__new ( mesh::Mesh::Implementation* mesh, int halo )
+const NodeColumns* atlas__NodesFunctionSpace__new ( Mesh::Implementation* mesh, int halo )
 {
   ASSERT(mesh);
-  mesh::Mesh m(mesh);
+  Mesh m(mesh);
   return new NodeColumns(m,mesh::Halo(halo));
 }
 
-const NodeColumns* atlas__NodesFunctionSpace__new_mesh ( mesh::Mesh::Implementation* mesh )
+const NodeColumns* atlas__NodesFunctionSpace__new_mesh ( Mesh::Implementation* mesh )
 {
   ASSERT(mesh);
-  mesh::Mesh m(mesh);
+  Mesh m(mesh);
   return new NodeColumns(m);
 }
 
@@ -48,7 +48,7 @@ int atlas__NodesFunctionSpace__nb_nodes(const NodeColumns* This)
   return This->nb_nodes();
 }
 
-const mesh::Mesh::Implementation* atlas__NodesFunctionSpace__mesh(const NodeColumns* This)
+const Mesh::Implementation* atlas__NodesFunctionSpace__mesh(const NodeColumns* This)
 {
   ASSERT(This);
   return This->mesh().get();

@@ -52,14 +52,14 @@ MatchingMeshPartitioner::MatchingMeshPartitioner() :
     Partitioner() {
 }
 
-grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const mesh::Mesh& mesh, const Partitioner::Config& config ) {
+grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const Mesh& mesh, const Partitioner::Config& config ) {
     std::string type;
     if( not config.get("type",type) )
       type = "polygon";
     return MatchedPartitionerFactory::build(type,mesh);
 }
 
-MatchingMeshPartitioner::MatchingMeshPartitioner( const mesh::Mesh& mesh, const Config& config ) :
+MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh, const Config& config ) :
     Partitioner( matching_mesh_partititioner(mesh,config) ) {
 }
 

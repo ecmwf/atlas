@@ -42,7 +42,7 @@ using namespace atlas::meshgenerator;
 namespace atlas {
 namespace test {
 
-double dual_volume(mesh::Mesh& mesh)
+double dual_volume(Mesh& mesh)
 {
   mesh::Nodes& nodes = mesh.nodes();
   mesh::IsGhostNode is_ghost_node(nodes);
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   int nlat = 5;
   int lon[5] = {10, 12, 14, 16, 16};
 
-  mesh::Mesh = test::generate_mesh(nlat, lon);
+  Mesh = test::generate_mesh(nlat, lon);
 
   mesh::actions::build_parallel_fields(*m);
   mesh::actions::build_periodic_boundaries(*m);
@@ -111,9 +111,9 @@ BOOST_AUTO_TEST_CASE( test_small )
 #if 1
 BOOST_AUTO_TEST_CASE( test_t63 )
 {
-  // mesh::Mesh m = test::generate_mesh( T63() );
+  // Mesh m = test::generate_mesh( T63() );
 
-  mesh::Mesh m = test::generate_mesh( {10, 12, 14, 16, 16, 16, 16, 14, 12, 10} );
+  Mesh m = test::generate_mesh( {10, 12, 14, 16, 16, 16, 16, 14, 12, 10} );
 
   mesh::actions::build_nodes_parallel_fields(m.nodes());
   mesh::actions::build_periodic_boundaries(m);

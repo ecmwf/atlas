@@ -113,7 +113,7 @@ void AtlasLoadbalance::run()
 
   if( !grid ) return;
   meshgenerator::MeshGenerator meshgenerator("structured");
-  mesh::Mesh mesh = meshgenerator.generate(grid);
+  Mesh mesh = meshgenerator.generate(grid);
 
   functionspace::NodeColumns nodes(mesh,Halo(halo));
 

@@ -64,7 +64,7 @@ namespace util {
       UniqueLonLat( const mesh::Nodes& );
 
       /// @brief Constructor, needs nodes functionspace to cache the lonlat field
-      UniqueLonLat( const mesh::Mesh& );
+      UniqueLonLat( const Mesh& );
 
       /// @brief Compute unique positive index of a node defined by node index.
       /// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
@@ -176,7 +176,7 @@ inline uidx_t unique_lonlat( const double elem_lonlat[], size_t npts )
 }
 
 
-inline UniqueLonLat::UniqueLonLat( const mesh::Mesh& mesh )
+inline UniqueLonLat::UniqueLonLat( const Mesh& mesh )
   : nodes(&mesh.nodes()),
     xy( array::make_view<double,2> ( nodes->xy() ) )
 {

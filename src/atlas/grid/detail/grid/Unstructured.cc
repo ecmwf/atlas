@@ -30,7 +30,7 @@ namespace grid {
 
 eckit::ConcreteBuilderT1<Grid, Unstructured> builder_Unstructured(Unstructured::static_type());
 
-Unstructured::Unstructured(const mesh::Mesh& m) :
+Unstructured::Unstructured(const Mesh& m) :
     Grid(),
     points_ ( new std::vector< PointXY > (m.nodes().size() ) ) {
 

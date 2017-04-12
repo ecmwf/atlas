@@ -28,7 +28,7 @@
 #define DEBUG_OUTPUT 0
 #define DEBUG_OUTPUT_DETAIL 0
 
-using atlas::mesh::Mesh;
+using atlas::Mesh;
 using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {

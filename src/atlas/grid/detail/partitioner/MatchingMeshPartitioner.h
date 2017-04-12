@@ -23,7 +23,7 @@
 
 
 namespace atlas {
-namespace mesh { class Mesh; }
+  class Mesh;
 }
 
 
@@ -39,7 +39,7 @@ public:
     MatchingMeshPartitioner() : Partitioner() { NOTIMP; }
     MatchingMeshPartitioner(const size_t nb_partitions) : Partitioner(nb_partitions) { NOTIMP; }
 
-    MatchingMeshPartitioner(const mesh::Mesh& mesh ) :
+    MatchingMeshPartitioner(const Mesh& mesh ) :
       Partitioner(mesh.nb_partitions()),
       prePartitionedMesh_(mesh) {
     }
@@ -48,7 +48,7 @@ public:
 
 protected:
 
-    const mesh::Mesh prePartitionedMesh_;
+    const Mesh prePartitionedMesh_;
 
 };
 

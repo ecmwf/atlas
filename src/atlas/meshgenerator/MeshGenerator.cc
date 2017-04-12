@@ -28,7 +28,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 
-using atlas::mesh::Mesh;
+using atlas::Mesh;
 
 namespace atlas {
 namespace meshgenerator {
@@ -117,19 +117,19 @@ void MeshGenerator::hash(eckit::MD5& md5) const {
     return meshgenerator_->hash(md5);
 }
 
-mesh::Mesh MeshGenerator::generate( const grid::Grid& g, const grid::Distribution& d) const {
+Mesh MeshGenerator::generate( const grid::Grid& g, const grid::Distribution& d) const {
     return meshgenerator_->generate(g,d);
 }
 
-mesh::Mesh MeshGenerator::generate( const grid::Grid& g) const {
+Mesh MeshGenerator::generate( const grid::Grid& g) const {
     return meshgenerator_->generate(g);
 }
 
-mesh::Mesh MeshGenerator::operator()( const grid::Grid& g, const grid::Distribution& d ) const {
+Mesh MeshGenerator::operator()( const grid::Grid& g, const grid::Distribution& d ) const {
   return meshgenerator_->operator()(g,d);
 }
 
-mesh::Mesh MeshGenerator::operator()( const grid::Grid& g ) const {
+Mesh MeshGenerator::operator()( const grid::Grid& g ) const {
   return meshgenerator_->operator()(g);  
 }
 

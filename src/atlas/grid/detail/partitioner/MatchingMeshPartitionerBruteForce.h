@@ -30,7 +30,7 @@ public:
     MatchingMeshPartitionerBruteForce() : MatchingMeshPartitioner() {}
     MatchingMeshPartitionerBruteForce(const size_t nb_partitions) : MatchingMeshPartitioner(nb_partitions) {}
 
-    MatchingMeshPartitionerBruteForce(const mesh::Mesh& mesh) :
+    MatchingMeshPartitionerBruteForce(const Mesh& mesh) :
       MatchingMeshPartitioner(mesh) {}
 
     virtual void partition( const Grid& grid, int part[] ) const;

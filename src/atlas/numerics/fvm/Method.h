@@ -17,7 +17,7 @@
 #include "atlas/numerics/Method.h"
 
 namespace eckit { class Parametrisation; }
-namespace atlas { namespace mesh { class Mesh; } }
+namespace atlas { class Mesh; }
 namespace atlas { namespace mesh { class HybridElements; } }
 namespace atlas { namespace mesh { class Nodes; } }
 
@@ -29,14 +29,14 @@ class Method : public numerics::Method {
 
 public:
 
-  Method(mesh::Mesh &, const eckit::Parametrisation &);
-  Method(mesh::Mesh &, const mesh::Halo &);
-  Method(mesh::Mesh &);
+  Method(Mesh &, const eckit::Parametrisation &);
+  Method(Mesh &, const mesh::Halo &);
+  Method(Mesh &);
 
   virtual std::string name() const { return "fvm"; }
 
-  const atlas::mesh::Mesh& mesh() const { return mesh_; }
-        atlas::mesh::Mesh& mesh()       { return mesh_; }
+  const atlas::Mesh& mesh() const { return mesh_; }
+        atlas::Mesh& mesh()       { return mesh_; }
 
   const functionspace::NodeColumns& node_columns() const { return node_columns_; }
         functionspace::NodeColumns& node_columns()       { return node_columns_; }
@@ -52,7 +52,7 @@ private:
 
 private: // data
 
-    mesh::Mesh             mesh_; // non-const because functionspace may modify mesh
+    Mesh             mesh_; // non-const because functionspace may modify mesh
     mesh::Halo             halo_;
     mesh::Nodes            &nodes_;
     mesh::HybridElements   &edges_;
@@ -70,7 +70,7 @@ private: // data
 
 extern "C"
 {
-  Method* atlas__numerics__fvm__Method__new (mesh::Mesh::Implementation* mesh, const eckit::Parametrisation* params);
+  Method* atlas__numerics__fvm__Method__new (Mesh::Implementation* mesh, const eckit::Parametrisation* params);
   const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This);
   const functionspace::detail::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This);
 }

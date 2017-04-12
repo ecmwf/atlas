@@ -8,19 +8,17 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_actions_BuildXYZField_h
-#define atlas_actions_BuildXYZField_h
+#pragma once
 
 #include <string>
 
 namespace atlas {
-namespace field {
     class Field;
-} }
+    class Mesh;
+}
 
 namespace atlas {
 namespace mesh {
-  class Mesh;
   class Nodes;
 } }
 
@@ -51,5 +49,3 @@ private:
 } // namespace actions
 } // namespace mesh
 } // namespace atlas
-
-#endif

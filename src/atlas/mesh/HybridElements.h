@@ -22,7 +22,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/util/Metadata.h"
 
-namespace atlas { namespace mesh  { class Mesh; } }
+namespace atlas { class Mesh; }
 namespace atlas { namespace mesh  { class ElementType; } }
 namespace atlas { namespace mesh  { class Elements; } }
 

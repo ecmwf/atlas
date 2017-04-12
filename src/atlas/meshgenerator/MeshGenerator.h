@@ -25,9 +25,8 @@
 namespace eckit { class MD5; }
 
 namespace atlas {
-namespace mesh {
-    class Mesh;
-} }
+  class Mesh;
+}
 
 namespace atlas {
 namespace grid {
@@ -49,19 +48,19 @@ public:
 
     virtual void hash(eckit::MD5&) const = 0;
 
-    virtual void generate( const grid::Grid&, const grid::Distribution&, mesh::Mesh& ) const =0;
-    virtual void generate( const grid::Grid&, mesh::Mesh& ) const =0;
+    virtual void generate( const grid::Grid&, const grid::Distribution&, Mesh& ) const =0;
+    virtual void generate( const grid::Grid&, Mesh& ) const =0;
 
-    mesh::Mesh generate( const grid::Grid&, const grid::Distribution& ) const;
-    mesh::Mesh generate( const grid::Grid& ) const;
+    Mesh generate( const grid::Grid&, const grid::Distribution& ) const;
+    Mesh generate( const grid::Grid& ) const;
 
-    mesh::Mesh operator()( const grid::Grid&, const grid::Distribution& ) const;
-    mesh::Mesh operator()( const grid::Grid& ) const;
+    Mesh operator()( const grid::Grid&, const grid::Distribution& ) const;
+    Mesh operator()( const grid::Grid& ) const;
 
 protected:
 
-    void generate_global_element_numbering( mesh::Mesh& mesh ) const;
-    void set_projection( mesh::Mesh&, const grid::Projection& ) const;
+    void generate_global_element_numbering( Mesh& mesh ) const;
+    void set_projection( Mesh&, const grid::Projection& ) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -85,11 +84,11 @@ public:
 
     void hash(eckit::MD5&) const;
 
-    mesh::Mesh generate( const grid::Grid&, const grid::Distribution& ) const;
-    mesh::Mesh generate( const grid::Grid& ) const;
+    Mesh generate( const grid::Grid&, const grid::Distribution& ) const;
+    Mesh generate( const grid::Grid& ) const;
 
-    mesh::Mesh operator()( const grid::Grid&, const grid::Distribution& ) const;
-    mesh::Mesh operator()( const grid::Grid& ) const;
+    Mesh operator()( const grid::Grid&, const grid::Distribution& ) const;
+    Mesh operator()( const grid::Grid& ) const;
     
     const meshgenerator_t* get() const { return meshgenerator_.get(); }
 
@@ -151,8 +150,8 @@ extern "C" {
 void atlas__MeshGenerator__delete(MeshGenerator::meshgenerator_t* This);
 const MeshGenerator::meshgenerator_t* atlas__MeshGenerator__create_noconfig(const char* name);
 const MeshGenerator::meshgenerator_t* atlas__MeshGenerator__create(const char* name, const eckit::Parametrisation* params);
-mesh::Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
-mesh::Mesh::Implementation* atlas__MeshGenerator__generate__grid(const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid);
+Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist(const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid, const grid::Distribution::impl_t* distribution);
+Mesh::Implementation* atlas__MeshGenerator__generate__grid(const MeshGenerator::meshgenerator_t* This, const grid::Grid::grid_t* grid);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

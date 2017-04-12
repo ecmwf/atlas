@@ -75,7 +75,7 @@ size_t EdgeColumns::config_size(const eckit::Parametrisation& config) const
   return size;
 }
 
-EdgeColumns::EdgeColumns( const mesh::Mesh& mesh )
+EdgeColumns::EdgeColumns( const Mesh& mesh )
   : mesh_(mesh),
     edges_(mesh_.edges()),
     nb_edges_(0),
@@ -84,7 +84,7 @@ EdgeColumns::EdgeColumns( const mesh::Mesh& mesh )
   constructor();
 }
 
-EdgeColumns::EdgeColumns( const mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params ) :
+EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params ) :
     mesh_(mesh),
     edges_(mesh_.edges()),
     nb_edges_(0),
@@ -96,7 +96,7 @@ EdgeColumns::EdgeColumns( const mesh::Mesh& mesh, const mesh::Halo &halo, const 
   constructor();
 }
 
-EdgeColumns::EdgeColumns( const mesh::Mesh& mesh, const mesh::Halo &halo) :
+EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo) :
     mesh_(mesh),
     edges_(mesh_.edges()),
     nb_edges_(0),
@@ -452,12 +452,12 @@ extern "C" {
 //------------------------------------------------------------------------------
 
 
-EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh::Implementation* mesh, int halo )
+EdgeColumns* atlas__functionspace__Edges__new ( Mesh::Implementation* mesh, int halo )
 {
   EdgeColumns* edges(0);
   ATLAS_ERROR_HANDLING(
       ASSERT(mesh);
-      mesh::Mesh m(mesh);
+      Mesh m(mesh);
       edges = new EdgeColumns(m,mesh::Halo(halo));
   );
   return edges;
@@ -465,12 +465,12 @@ EdgeColumns* atlas__functionspace__Edges__new ( mesh::Mesh::Implementation* mesh
 
 //------------------------------------------------------------------------------
 
-EdgeColumns* atlas__functionspace__Edges__new_mesh ( mesh::Mesh::Implementation* mesh )
+EdgeColumns* atlas__functionspace__Edges__new_mesh ( Mesh::Implementation* mesh )
 {
   EdgeColumns* edges(0);
   ATLAS_ERROR_HANDLING(
       ASSERT(mesh);
-      mesh::Mesh m(mesh);
+      Mesh m(mesh);
       edges = new EdgeColumns(m);
   );
   return edges;
@@ -499,7 +499,7 @@ int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This)
 
 //------------------------------------------------------------------------------
 
-mesh::Mesh::Implementation* atlas__functionspace__Edges__mesh(EdgeColumns* This)
+Mesh::Implementation* atlas__functionspace__Edges__mesh(EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -839,7 +839,7 @@ EdgeColumns::EdgeColumns( const FunctionSpace& functionspace ) :
 }
 
 EdgeColumns::EdgeColumns( 
-  const mesh::Mesh& mesh,
+  const Mesh& mesh,
   const mesh::Halo& halo,
   const eckit::Parametrisation& config ) :
   FunctionSpace( new detail::EdgeColumns(mesh,halo,config) ),
@@ -847,14 +847,14 @@ EdgeColumns::EdgeColumns(
 }
 
 EdgeColumns::EdgeColumns( 
-  const mesh::Mesh& mesh,
+  const Mesh& mesh,
   const mesh::Halo& halo) :
   FunctionSpace( new detail::EdgeColumns(mesh,halo) ),
   functionspace_( dynamic_cast< const detail::EdgeColumns* >( get() ) ) {
 }
 
 EdgeColumns::EdgeColumns( 
-  const mesh::Mesh& mesh) :
+  const Mesh& mesh) :
   FunctionSpace( new detail::EdgeColumns(mesh) ),
   functionspace_( dynamic_cast< const detail::EdgeColumns* >( get() ) ) {
 }
@@ -867,7 +867,7 @@ size_t EdgeColumns::nb_edges_global() const { // Only on MPI rank 0, will this b
   return functionspace_->nb_edges_global();
 }
 
-const mesh::Mesh& EdgeColumns::mesh() const {
+const Mesh& EdgeColumns::mesh() const {
   return functionspace_->mesh();
 }
 

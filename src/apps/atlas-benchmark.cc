@@ -192,7 +192,7 @@ public:
 
 private:
 
-  mesh::Mesh mesh;
+  Mesh mesh;
   functionspace::NodeColumns nodes_fs;
   Field scalar_field;
   Field grad_field;

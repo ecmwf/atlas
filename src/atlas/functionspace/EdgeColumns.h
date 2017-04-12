@@ -42,9 +42,9 @@ class EdgeColumns : public FunctionSpaceImpl
 {
 public:
 
-    EdgeColumns( const mesh::Mesh&, const mesh::Halo &, const eckit::Parametrisation & );
-    EdgeColumns( const mesh::Mesh&, const mesh::Halo & );
-    EdgeColumns( const mesh::Mesh& );
+    EdgeColumns( const Mesh&, const mesh::Halo &, const eckit::Parametrisation & );
+    EdgeColumns( const Mesh&, const mesh::Halo & );
+    EdgeColumns( const Mesh& );
 
     virtual ~EdgeColumns();
 
@@ -54,8 +54,8 @@ public:
     size_t nb_edges_global() const; // Only on MPI rank 0, will this be different from 0
     std::vector<size_t> nb_edges_global_foreach_rank() const;
 
-    const mesh::Mesh& mesh() const { return mesh_; }
-          mesh::Mesh& mesh()       { return mesh_; }
+    const Mesh& mesh() const { return mesh_; }
+          Mesh& mesh()       { return mesh_; }
 
     const mesh::HybridElements& edges() const { return edges_; }
           mesh::HybridElements& edges()       { return edges_; }
@@ -145,7 +145,7 @@ private: // methods
 
 private: // data
 
-    mesh::Mesh mesh_; // non-const because functionspace may modify mesh
+    Mesh mesh_; // non-const because functionspace may modify mesh
     mesh::HybridElements& edges_; // non-const because functionspace may modify mesh
     size_t nb_edges_;
     size_t nb_edges_global_;
@@ -197,11 +197,11 @@ Field EdgeColumns::createField(
 
 extern "C" {
 
-EdgeColumns* atlas__functionspace__Edges__new (mesh::Mesh::Implementation* mesh, int halo);
-EdgeColumns* atlas__functionspace__Edges__new_mesh (mesh::Mesh::Implementation* mesh);
+EdgeColumns* atlas__functionspace__Edges__new (Mesh::Implementation* mesh, int halo);
+EdgeColumns* atlas__functionspace__Edges__new_mesh (Mesh::Implementation* mesh);
 void atlas__functionspace__Edges__delete (EdgeColumns* This);
 int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This);
-mesh::Mesh::Implementation* atlas__functionspace__Edges__mesh(EdgeColumns* This);
+Mesh::Implementation* atlas__functionspace__Edges__mesh(EdgeColumns* This);
 mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This);
 field::FieldImpl* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
 field::FieldImpl* atlas__functionspace__Edges__create_field_vars (const EdgeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
@@ -239,9 +239,9 @@ public:
 
     EdgeColumns();
     EdgeColumns( const FunctionSpace& );
-    EdgeColumns( const mesh::Mesh&, const mesh::Halo&, const eckit::Parametrisation& );
-    EdgeColumns( const mesh::Mesh& mesh, const mesh::Halo& );
-    EdgeColumns( const mesh::Mesh& mesh );
+    EdgeColumns( const Mesh&, const mesh::Halo&, const eckit::Parametrisation& );
+    EdgeColumns( const Mesh& mesh, const mesh::Halo& );
+    EdgeColumns( const Mesh& mesh );
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
@@ -249,7 +249,7 @@ public:
     size_t nb_edges() const;
     size_t nb_edges_global() const; // Only on MPI rank 0, will this be different from 0
 
-    const mesh::Mesh& mesh() const;
+    const Mesh& mesh() const;
 
     const mesh::HybridElements& edges() const;
 

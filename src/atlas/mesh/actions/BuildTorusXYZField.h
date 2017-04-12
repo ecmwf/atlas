@@ -21,8 +21,8 @@ namespace atlas {
 }
 
 namespace atlas {
-namespace mesh {
   class Mesh;
+namespace mesh {
   class Nodes;
 } }
 

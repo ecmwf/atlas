@@ -9,7 +9,7 @@
 #include "atlas/functionspace/StructuredColumns.h"
 
 using atlas::grid::Grid;
-using atlas::mesh::Mesh;
+using atlas::Mesh;
 using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::functionspace::StructuredColumns;
 using atlas::Field;

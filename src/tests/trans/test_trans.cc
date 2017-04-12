@@ -222,15 +222,15 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   );
   trans::Trans trans(g);
 
-  mesh::Mesh m_default = generate( g );
+  Mesh m_default = generate( g );
 
   BOOST_TEST_CHECKPOINT("trans_distribution");
   grid::Distribution trans_distribution = grid::Partitioner( new TransPartitioner() ).partition(g);
-  mesh::Mesh m_trans = generate( g, trans_distribution );
+  Mesh m_trans = generate( g, trans_distribution );
 
   BOOST_TEST_CHECKPOINT("eqreg_distribution");
   grid::Distribution eqreg_distribution = grid::Partitioner( new EqualRegionsPartitioner() ).partition(g);
-  mesh::Mesh m_eqreg = generate( g, eqreg_distribution );
+  Mesh m_eqreg = generate( g, eqreg_distribution );
 
   array::ArrayView<int,1> p_default = array::make_view<int,1>( m_default.nodes().partition() );
   array::ArrayView<int,1> p_trans   = array::make_view<int,1>( m_trans  .nodes().partition() );
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
     ("angle",0)
     ("triangulate",false)
   );
-  mesh::Mesh m = generate( g );
+  Mesh m = generate( g );
 
   trans::Trans trans(g,47);
 

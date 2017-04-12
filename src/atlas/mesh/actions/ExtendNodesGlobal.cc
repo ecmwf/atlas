@@ -28,7 +28,7 @@ ExtendNodesGlobal::ExtendNodesGlobal( const std::string& gridname ) :
 }
 
 
-void ExtendNodesGlobal::operator()(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mesh) const {
+void ExtendNodesGlobal::operator()(const atlas::grid::Grid& grid, Mesh& mesh) const {
 
     if (grid.domain().global()) return; // don't add virtual points to global domains
 

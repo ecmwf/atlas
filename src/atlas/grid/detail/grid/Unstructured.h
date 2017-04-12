@@ -21,6 +21,9 @@
 #include "eckit/memory/ScopedPtr.h"
 #include "atlas/grid/detail/grid/Grid.h"
 
+namespace atlas { 
+    class Mesh;
+}
 
 namespace atlas {
 namespace grid {
@@ -121,7 +124,7 @@ public: // methods
     Unstructured( std::vector< PointXY >* pts );
 
     /// Constructor taking a mesh
-    Unstructured( const mesh::Mesh& m );
+    Unstructured( const Mesh& m );
 
     virtual ~Unstructured();
 

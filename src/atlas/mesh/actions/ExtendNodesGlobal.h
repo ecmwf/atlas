@@ -13,7 +13,7 @@
 #include <string>
 
 namespace atlas {
-namespace mesh { class Mesh; }
+  class Mesh;
 namespace grid { class Grid; }
 }
 
@@ -29,7 +29,7 @@ class ExtendNodesGlobal {
 public:
 
     ExtendNodesGlobal( const std::string& gridname = "O16" );
-    void operator()(const atlas::grid::Grid&, atlas::mesh::Mesh&) const;
+    void operator()(const atlas::grid::Grid&, Mesh&) const;
 
 private:
 

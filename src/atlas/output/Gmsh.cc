@@ -25,7 +25,7 @@
 
 using atlas::Field;
 using atlas::FieldSet;
-using atlas::mesh::Mesh;
+using atlas::Mesh;
 using atlas::FunctionSpace;
 using eckit::Parametrisation;
 
@@ -215,7 +215,7 @@ Gmsh::~Gmsh()
 // -----------------------------------------------------------------------------
 
 void Gmsh::write(
-        const mesh::Mesh& mesh,
+        const Mesh& mesh,
         const eckit::Parametrisation& config) const
 {
   Gmsh::Configuration c = config_;
@@ -224,7 +224,7 @@ void Gmsh::write(
   if( c.coordinates == "xyz" and not mesh.nodes().has_field("xyz") )
   {
       Log::debug<Atlas>() << "Building xyz representation for nodes" << std::endl;
-      mesh::actions::BuildXYZField("xyz")(const_cast<mesh::Mesh&>(mesh));
+      mesh::actions::BuildXYZField("xyz")(const_cast<Mesh&>(mesh));
   }
 
   writer(c).write(mesh,c.file);

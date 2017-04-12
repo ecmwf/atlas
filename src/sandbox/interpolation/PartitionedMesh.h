@@ -23,7 +23,7 @@ struct PartitionedMesh {
 
     typedef grid::Partitioner Partitioner;
     typedef meshgenerator::MeshGenerator Generator;
-    typedef mesh::Mesh                      Mesh;
+    typedef Mesh                      Mesh;
 
     PartitionedMesh(
             const std::string& partitioner,

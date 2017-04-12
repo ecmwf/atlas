@@ -6,7 +6,7 @@
 #include "atlas/util/Config.h"
 
 using atlas::grid::Grid;
-using atlas::mesh::Mesh;
+using atlas::Mesh;
 using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::output::Gmsh;
 using atlas::util::Config;

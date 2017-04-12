@@ -59,9 +59,9 @@ void renumber_nodes_glb_idx (mesh::Nodes& nodes);
 
 extern "C"
 {
-  void atlas__build_parallel_fields (mesh::Mesh::Implementation* mesh);
+  void atlas__build_parallel_fields (Mesh::Implementation* mesh);
   void atlas__build_nodes_parallel_fields (mesh::Nodes* nodes);
-  void atlas__build_edges_parallel_fields (mesh::Mesh::Implementation* mesh);
+  void atlas__build_edges_parallel_fields (Mesh::Implementation* mesh);
   void atlas__renumber_nodes_glb_idx (mesh::Nodes* nodes);
 }
 

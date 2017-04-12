@@ -41,7 +41,7 @@ using namespace atlas::grid;
 namespace atlas {
 namespace test {
 
-double dual_volume(const mesh::Mesh& mesh)
+double dual_volume(const Mesh& mesh)
 {
   const mesh::Nodes& nodes = mesh.nodes();
   int nb_nodes = nodes.size();
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE( test_build )
 {
   Log::info() << "test_build" << std::endl;
   MeshGenerator meshgenerator ("structured" );
-  mesh::Mesh mesh = meshgenerator.generate( grid::Grid("O16") );
+  Mesh mesh = meshgenerator.generate( grid::Grid("O16") );
   const double R = util::Earth::radiusInMeters();
   fvm::Method fvm(mesh,util::Config("radius",R));
   Nabla nabla( fvm );
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
 //  const double radius = 1.;
   grid::Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
-  mesh::Mesh mesh = meshgenerator.generate(grid);
+  Mesh mesh = meshgenerator.generate(grid);
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla( fvm );
 
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE( test_div )
 //  const double radius = 1.;
   grid::Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
-  mesh::Mesh mesh( meshgenerator.generate(grid) );
+  Mesh mesh( meshgenerator.generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla(fvm);
 
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
 //  const double radius = 1.;
   grid::Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
-  mesh::Mesh mesh( meshgenerator.generate(grid) );
+  Mesh mesh( meshgenerator.generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla( fvm );
 
@@ -319,7 +319,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
 //  const double radius = 1.;
   grid::Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
-  mesh::Mesh mesh( meshgenerator.generate(grid) );
+  Mesh mesh( meshgenerator.generate(grid) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla( fvm );
 

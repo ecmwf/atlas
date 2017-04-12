@@ -25,7 +25,7 @@
 namespace atlas {
   class Field;
   class FieldSet;
-namespace mesh { class Mesh; }
+  class Mesh;
 }
 
 
@@ -55,7 +55,7 @@ public:
      * @param meshSource mesh containing source elements
      * @param meshTarget mesh containing target points
      */
-    virtual void setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) = 0;
+    virtual void setup(Mesh& meshSource, Mesh& meshTarget) = 0;
 
     virtual void execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget);
     virtual void execute(const Field&    fieldSource,  Field&    fieldTarget);

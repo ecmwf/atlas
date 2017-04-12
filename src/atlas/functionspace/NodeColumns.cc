@@ -85,7 +85,7 @@ array::LocalView<T,1> make_surface_scalar_view(const Field &field)
 
 }
 
-NodeColumns::NodeColumns( mesh::Mesh& mesh ) :
+NodeColumns::NodeColumns( Mesh& mesh ) :
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(0),
@@ -94,7 +94,7 @@ NodeColumns::NodeColumns( mesh::Mesh& mesh ) :
     constructor();
 }
 
-NodeColumns::NodeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params ) :
+NodeColumns::NodeColumns( Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params ) :
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),
@@ -103,7 +103,7 @@ NodeColumns::NodeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit:
     constructor();
 }
 
-NodeColumns::NodeColumns(mesh::Mesh& mesh, const mesh::Halo &halo) :
+NodeColumns::NodeColumns(Mesh& mesh, const mesh::Halo &halo) :
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),
@@ -2121,17 +2121,17 @@ NodeColumns::NodeColumns( const FunctionSpace& functionspace ) :
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
 
-NodeColumns::NodeColumns( mesh::Mesh& mesh, const mesh::Halo& halo, const eckit::Parametrisation& config ) :
+NodeColumns::NodeColumns( Mesh& mesh, const mesh::Halo& halo, const eckit::Parametrisation& config ) :
   FunctionSpace( new detail::NodeColumns(mesh,halo,config) ),
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
 
-NodeColumns::NodeColumns( mesh::Mesh& mesh, const mesh::Halo& halo ) :
+NodeColumns::NodeColumns( Mesh& mesh, const mesh::Halo& halo ) :
   FunctionSpace( new detail::NodeColumns(mesh,halo) ),
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
 
-NodeColumns::NodeColumns( mesh::Mesh& mesh ) :
+NodeColumns::NodeColumns( Mesh& mesh ) :
   FunctionSpace( new detail::NodeColumns(mesh) ),
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
@@ -2144,7 +2144,7 @@ size_t NodeColumns::nb_nodes_global() const { // All MPI ranks will have same ou
   return functionspace_->nb_nodes_global();
 }
 
-const mesh::Mesh& NodeColumns::mesh() const {
+const Mesh& NodeColumns::mesh() const {
   return functionspace_->mesh();
 }
 

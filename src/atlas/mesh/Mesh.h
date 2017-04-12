@@ -44,7 +44,6 @@ namespace meshgenerator {
 //----------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace mesh {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -52,7 +51,11 @@ class Mesh {
 
 public:
 
-    using Implementation = detail::MeshImpl;
+    using Implementation = mesh::detail::MeshImpl;
+    using Nodes = mesh::Nodes;
+    using Cells = mesh::Cells;
+    using Edges = mesh::Edges;
+    using HybridElements = mesh::HybridElements;
 
 public:
 
@@ -125,5 +128,4 @@ private:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // namespace mesh
 } // namespace atlas

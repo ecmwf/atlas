@@ -24,9 +24,8 @@ namespace eckit {
 }
 
 namespace atlas {
-namespace mesh {
     class Mesh;
-} }
+}
 
 namespace atlas {
   class Field;
@@ -64,7 +63,7 @@ public:
 
     /// Write mesh file
     virtual void write(
-        const mesh::Mesh&,
+        const Mesh&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
     /// Write field to file
@@ -110,7 +109,7 @@ public:
 
     /// Write mesh file
     void write(
-        const mesh::Mesh&,
+        const Mesh&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write field to file
@@ -192,7 +191,7 @@ class OutputBuilder : public OutputFactory {
 extern "C" {
 void atlas__Output__delete(OutputImpl* This);
 const OutputImpl* atlas__Output__create(const char* factory_key, Stream* stream, const eckit::Parametrisation* params);
-void atlas__Output__write_mesh(const OutputImpl* This, mesh::Mesh::Implementation* mesh, const eckit::Parametrisation* params);
+void atlas__Output__write_mesh(const OutputImpl* This, Mesh::Implementation* mesh, const eckit::Parametrisation* params);
 void atlas__Output__write_fieldset(const OutputImpl* This, const field::FieldSetImpl* fieldset, const eckit::Parametrisation* params);
 void atlas__Output__write_field(const OutputImpl* This, const field::FieldImpl* field, const eckit::Parametrisation* params);
 void atlas__Output__write_fieldset_fs(const OutputImpl* This, const field::FieldSetImpl* fieldset, const functionspace::FunctionSpaceImpl* functionspace, const eckit::Parametrisation* params);

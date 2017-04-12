@@ -30,7 +30,7 @@ public:
     MatchingMeshPartitionerPolygon() : MatchingMeshPartitioner() {}
     MatchingMeshPartitionerPolygon(const size_t nb_partitions) : MatchingMeshPartitioner(nb_partitions) {}
 
-    MatchingMeshPartitionerPolygon( const mesh::Mesh& mesh ) :
+    MatchingMeshPartitionerPolygon( const Mesh& mesh ) :
       MatchingMeshPartitioner(mesh) {}
 
     /**

@@ -53,11 +53,11 @@ std::string sanitize_field_name(const std::string& s)
 // ------------------------------------------------------------------
 
 
-mesh::Mesh PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vfnames )
+Mesh PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vfnames )
 {
   const std::string msg("PointCloud::read: ");
 
-  mesh::Mesh mesh;
+  Mesh mesh;
 
   vfnames.clear();
 
@@ -144,13 +144,13 @@ mesh::Mesh PointCloud::read(const eckit::PathName& path, std::vector<std::string
 }
 
 
-mesh::Mesh PointCloud::read(const eckit::PathName& path)
+Mesh PointCloud::read(const eckit::PathName& path)
 {
   std::vector<std::string> vfnames;
   return read(path,vfnames);
 }
 
-void PointCloud::write(const eckit::PathName& path, const mesh::Mesh& mesh)
+void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
 {
   const std::string msg("PointCloud::write: ");
 

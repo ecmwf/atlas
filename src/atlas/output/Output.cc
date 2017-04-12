@@ -26,7 +26,7 @@
 using atlas::field::FieldImpl;
 using atlas::FieldSet;
 using atlas::field::FieldSetImpl;
-using atlas::mesh::Mesh;
+using atlas::Mesh;
 using atlas::FunctionSpace;
 using eckit::Parametrisation;
 
@@ -81,7 +81,7 @@ Output::Output(const std::string &key, Stream& stream, const eckit::Parametrisat
 
 /// Write mesh file
 void Output::write(
-    const mesh::Mesh& m,
+    const Mesh& m,
     const eckit::Parametrisation& c ) const {
   return output_->write(m,c);
 }
@@ -229,7 +229,7 @@ void atlas__Output__write_mesh(const OutputImpl* This, Mesh::Implementation* mes
     ASSERT(This);
     ASSERT(mesh);
     ASSERT(params);
-    mesh::Mesh m(mesh);
+    Mesh m(mesh);
     This->write(m,*params);
   );
 }

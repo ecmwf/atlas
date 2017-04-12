@@ -43,7 +43,7 @@ namespace {
   }
 }
 
-Method::Method( mesh::Mesh &mesh ) :
+Method::Method( Mesh &mesh ) :
   mesh_(mesh),
   halo_(mesh),
   nodes_(mesh.nodes()),
@@ -53,7 +53,7 @@ Method::Method( mesh::Mesh &mesh ) :
   setup();
 }
 
-Method::Method( mesh::Mesh &mesh, const mesh::Halo &halo ) :
+Method::Method( Mesh &mesh, const mesh::Halo &halo ) :
   mesh_(mesh),
   halo_(halo),
   nodes_(mesh.nodes()),
@@ -63,7 +63,7 @@ Method::Method( mesh::Mesh &mesh, const mesh::Halo &halo ) :
   setup();
 }
 
-Method::Method( mesh::Mesh &mesh, const eckit::Parametrisation &params ) :
+Method::Method( Mesh &mesh, const eckit::Parametrisation &params ) :
   mesh_(mesh),
   halo_(Method_halo(params)),
   nodes_(mesh.nodes()),
@@ -149,12 +149,12 @@ void Method::setup()
 
 // ------------------------------------------------------------------------------------------
 extern "C" {
-Method* atlas__numerics__fvm__Method__new (mesh::Mesh::Implementation* mesh, const eckit::Parametrisation* params)
+Method* atlas__numerics__fvm__Method__new (Mesh::Implementation* mesh, const eckit::Parametrisation* params)
 {
   Method* method(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(mesh);
-    mesh::Mesh m(mesh);
+    Mesh m(mesh);
     method = new Method(m,*params);
   );
   return method;

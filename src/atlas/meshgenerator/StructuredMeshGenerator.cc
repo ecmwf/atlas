@@ -39,7 +39,7 @@
 #define DEBUG_OUTPUT 0
 
 using namespace eckit;
-using atlas::mesh::Mesh;
+using atlas::Mesh;
 using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {

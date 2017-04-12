@@ -82,7 +82,7 @@ static grid::StructuredGrid minimal_grid(int N, long lon[]) {
 
 
 
-double compute_lonlat_area(mesh::Mesh& mesh)
+double compute_lonlat_area(Mesh& mesh)
 {
   mesh::Nodes& nodes  = mesh.nodes();
   mesh::Elements& quads  = mesh.cells().elements(0);
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
 
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 {
-  mesh::Mesh m;
+  Mesh m;
   util::Config default_opts;
   default_opts.set("nb_parts",1);
   default_opts.set("part",0);
@@ -282,7 +282,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 //    BOOST_CHECK_EQUAL( m.function_space("triags").metadata().get<size_t>("nb_owned"),     44 );
   }
 
-  mesh::Mesh mesh;
+  Mesh mesh;
 
   ENABLE {
     meshgenerator::StructuredMeshGenerator generate(
@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
            ("include_pole",false)
            ("3d",false) );
 
-    mesh::Mesh m = generate( grid );
+    Mesh m = generate( grid );
     ATLAS_DEBUG_HERE();
     m.metadata().set("part",p);
     BOOST_TEST_CHECKPOINT("generated grid " << p);
@@ -475,7 +475,7 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
   cfg.set("part",1);
   cfg.set("nb_parts",8);
   meshgenerator::StructuredMeshGenerator meshgenerator( cfg );
-  mesh::Mesh mesh = meshgenerator.generate(grid);
+  Mesh mesh = meshgenerator.generate(grid);
   const array::ArrayView<int,1> part  = array::make_view<int,1>( mesh.nodes().partition() );
   const array::ArrayView<int,1> ghost = array::make_view<int,1>( mesh.nodes().ghost() );
   const array::ArrayView<int,1> flags = array::make_view<int,1>( mesh.nodes().field("flags") );

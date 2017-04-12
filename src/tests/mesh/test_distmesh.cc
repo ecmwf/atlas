@@ -43,7 +43,7 @@ using namespace atlas::util;
 namespace atlas {
 namespace test {
 
-double dual_volume(mesh::Mesh& mesh)
+double dual_volume(Mesh& mesh)
 {
   mesh::Nodes& nodes = mesh.nodes();
   mesh::IsGhostNode is_ghost_node(nodes);
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   Grid grid("N16");
 
 
-  mesh::Mesh m( generate( grid ) );
+  Mesh m( generate( grid ) );
 
 //  actions::distribute_mesh(m);
 
@@ -108,8 +108,8 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 
   mesh::actions::write_load_balance_report(m,"load_balance.dat");
 
-  // mesh::Mesh& mesh1 = mesh::Mesh::from_id(meshid);
-  mesh::Mesh& mesh1 = m;
+  // Mesh& mesh1 = Mesh::from_id(meshid);
+  Mesh& mesh1 = m;
   BOOST_CHECK( mesh1.nodes().size() == m.nodes().size() );
 
   const array::ArrayView<int,1> part  = array::make_view<int,1>( m.nodes().partition() );

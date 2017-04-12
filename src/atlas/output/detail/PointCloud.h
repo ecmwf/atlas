@@ -29,7 +29,7 @@ namespace grid {
     class Unstructured;
 } }
 
-namespace atlas { namespace mesh { class Mesh; } }
+namespace atlas { class Mesh; }
 namespace atlas { namespace functionspace { class NodeColumns; } }
 
 namespace atlas {
@@ -51,22 +51,22 @@ namespace detail {
     * @param Grid data structure pointer to use
     * @return Grid data structure pointer
     */
-   static mesh::Mesh read( const eckit::PathName& path );
+   static Mesh read( const eckit::PathName& path );
 
    /**
     * @brief Read PointCloud file into a Mesh
     * @param path input file path
     * @param vfnames names of fields to read
-    * @return mesh::Mesh pointer
+    * @return Mesh pointer
     */
-   static mesh::Mesh read(const eckit::PathName& path, std::vector<std::string>& vfnames );
+   static Mesh read(const eckit::PathName& path, std::vector<std::string>& vfnames );
 
   /**
    * @brief Write Grid to PointCloud file (overwrites possibly existing file)
    * @param path output file path
    * @param grid Grid data structure
    */
-  static void write(const eckit::PathName& path, const mesh::Mesh& mesh);
+  static void write(const eckit::PathName& path, const Mesh& mesh);
 
   /**
    * @brief Write FieldSet to PointCloud file (overwrites possibly existing file)

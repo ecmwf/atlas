@@ -14,9 +14,6 @@
 #include "eckit/value/Properties.h"
 #include "eckit/config/Parametrisation.h"
 
-namespace atlas { namespace grid { class Grid; } }
-namespace atlas { namespace mesh { class Mesh; } }
-
 namespace atlas {
 namespace util {
 

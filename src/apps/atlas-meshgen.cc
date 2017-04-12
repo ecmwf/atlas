@@ -198,7 +198,7 @@ void Meshgen2Gmsh::execute(const Args& args)
 
   meshgenerator::MeshGenerator meshgenerator(meshgenerator_type,meshgenerator_config);
 
-  mesh::Mesh mesh;
+  Mesh mesh;
   try {
     mesh = meshgenerator.generate(grid);
   }

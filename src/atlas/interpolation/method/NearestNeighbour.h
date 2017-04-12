@@ -34,7 +34,7 @@ protected:
      * @param meshSource mesh containing source elements
      * @param meshTarget mesh containing target points
      */
-    void setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget);
+    void setup(Mesh& meshSource, Mesh& meshTarget);
 
 };
 

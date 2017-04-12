@@ -73,7 +73,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test1 )
 {
-  mesh::Mesh m;
+  Mesh m;
 
   mesh::Nodes& nodes = m.nodes();
   nodes.resize(10);
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   meshgen_options.set("angle",27.5);
   meshgen_options.set("triangulate",false);
   meshgenerator::StructuredMeshGenerator generate(meshgen_options);
-  mesh::Mesh m = generate( grid::Grid("N32") );
+  Mesh m = generate( grid::Grid("N32") );
   mesh::actions::build_parallel_fields(m);
 
   mesh::Nodes& nodes = m.nodes();

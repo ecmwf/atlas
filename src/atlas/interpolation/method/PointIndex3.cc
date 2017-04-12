@@ -21,7 +21,7 @@ namespace interpolation {
 namespace method {
 
 
-ElemIndex3* create_element_centre_index(const mesh::Mesh& mesh) {
+ElemIndex3* create_element_centre_index(const Mesh& mesh) {
 
     const array::ArrayView<double,2> centres = array::make_view<double,2>( mesh.cells().field( "centre" ) );
 

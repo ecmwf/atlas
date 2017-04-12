@@ -69,7 +69,7 @@ struct ElemIndex3TreeTrait {
 
 typedef PointKdTree<ElemIndex3TreeTrait> ElemIndex3;
 
-ElemIndex3* create_element_centre_index(const mesh::Mesh& mesh);
+ElemIndex3* create_element_centre_index(const Mesh& mesh);
 
 //----------------------------------------------------------------------------------------------------------------------
 

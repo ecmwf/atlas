@@ -181,7 +181,7 @@ Partitioner* PartitionerFactory::build(const std::string& name, const size_t nb_
 
 grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build(
     const std::string& type,
-    const mesh::Mesh& partitioned ) {
+    const Mesh& partitioned ) {
 
     if( type == grid::detail::partitioner::MatchingMeshPartitionerPolygon::static_type() ) {
         return new grid::detail::partitioner::MatchingMeshPartitionerPolygon(partitioned);

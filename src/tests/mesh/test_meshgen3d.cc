@@ -31,7 +31,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
-  mesh::Mesh m;
+  Mesh m;
 
 
   util::Config opts;

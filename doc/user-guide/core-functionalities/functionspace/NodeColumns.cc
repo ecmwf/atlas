@@ -19,7 +19,7 @@ using atlas::gidx_t;
 using atlas::grid::StructuredGrid;
 using atlas::Log;
 using atlas::mesh::Halo;
-using atlas::mesh::Mesh;
+using atlas::Mesh;
 using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::output::Gmsh;
 

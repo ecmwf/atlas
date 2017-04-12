@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
     // Build a mesh from grid
     DelaunayMeshGenerator generate;
-    mesh::Mesh mesh = generate(grid);
+    Mesh mesh = generate(grid);
 
     Gmsh gmsh("earth.msh", util::Config("coordinates","xyz") );
     gmsh.write(mesh);

@@ -108,7 +108,7 @@ public:
 
     static grid::detail::partitioner::Partitioner* build(
       const std::string& type,
-      const mesh::Mesh& partitioned );
+      const Mesh& partitioned );
 };
 
 // ------------------------------------------------------------------

@@ -47,7 +47,7 @@ static const double parametricEpsilon = 1e-16;
 }  // (anonymous namespace)
 
 
-void FiniteElement::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
+void FiniteElement::setup(Mesh& meshSource, Mesh& meshTarget) {
     using namespace atlas;
     eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::FiniteElement::setup()");
 

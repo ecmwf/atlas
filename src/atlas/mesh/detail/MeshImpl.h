@@ -26,8 +26,8 @@ namespace grid {
 } }
 
 namespace atlas {
+  class Mesh;
 namespace mesh {
-    class Mesh;
     class Nodes;
     class HybridElements;
     typedef HybridElements Edges;
@@ -99,7 +99,7 @@ public: // methods
 
 private:  // methods
 
-    friend class ::atlas::mesh::Mesh;
+    friend class ::atlas::Mesh;
 
     friend std::ostream& operator<<(std::ostream& s, const MeshImpl& p) {
         p.print(s);

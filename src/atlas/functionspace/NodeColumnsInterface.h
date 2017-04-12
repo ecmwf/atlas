@@ -20,11 +20,11 @@ namespace functionspace {
 namespace detail {
 
 extern "C" {
-const NodeColumns* atlas__NodesFunctionSpace__new (mesh::Mesh::Implementation* mesh, int halo);
-const NodeColumns* atlas__NodesFunctionSpace__new_mesh (mesh::Mesh::Implementation* mesh);
+const NodeColumns* atlas__NodesFunctionSpace__new (Mesh::Implementation* mesh, int halo);
+const NodeColumns* atlas__NodesFunctionSpace__new_mesh (Mesh::Implementation* mesh);
 void atlas__NodesFunctionSpace__delete (NodeColumns* This);
 int atlas__NodesFunctionSpace__nb_nodes(const NodeColumns* This);
-const mesh::Mesh::Implementation* atlas__NodesFunctionSpace__mesh(const NodeColumns* This);
+const Mesh::Implementation* atlas__NodesFunctionSpace__mesh(const NodeColumns* This);
 mesh::Nodes* atlas__NodesFunctionSpace__nodes(const NodeColumns* This);
 field::FieldImpl* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
 field::FieldImpl* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);

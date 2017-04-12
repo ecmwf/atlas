@@ -17,10 +17,10 @@
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/util/Metadata.h"
 
-namespace atlas { namespace mesh { class Mesh; } }
 namespace atlas {
     class Field;
     class FieldSet;
+    class Mesh;
 }
 
 namespace atlas { namespace array { class Array; } }
@@ -53,14 +53,14 @@ public: // methods
 
 public:
 
-  mesh::Mesh read(const eckit::PathName& file_path) const;
+  Mesh read(const eckit::PathName& file_path) const;
 
-  void read(const eckit::PathName& file_path, mesh::Mesh& mesh) const;
+  void read(const eckit::PathName& file_path, Mesh& mesh) const;
 
   /// Write mesh file
   /// Extra file with available mesh information is written to:
   ///  - filename_info.msh
-  void write(const mesh::Mesh& mesh,
+  void write(const Mesh& mesh,
              const eckit::PathName& file_path) const;
 
  /// Write field to file
@@ -134,10 +134,10 @@ private:
 extern "C" {
 GmshIO* atlas__Gmsh__new();
 void atlas__Gmsh__delete(GmshIO* This);
-mesh::Mesh::Implementation* atlas__Gmsh__read(GmshIO* This, char* file_path);
-void atlas__Gmsh__write(GmshIO* This, mesh::Mesh::Implementation* mesh, char* file_path);
-mesh::Mesh::Implementation* atlas__read_gmsh(char* file_path);
-void atlas__write_gmsh_mesh(const mesh::Mesh::Implementation* mesh, char* file_path);
+Mesh::Implementation* atlas__Gmsh__read(GmshIO* This, char* file_path);
+void atlas__Gmsh__write(GmshIO* This, Mesh::Implementation* mesh, char* file_path);
+Mesh::Implementation* atlas__read_gmsh(char* file_path);
+void atlas__write_gmsh_mesh(const Mesh::Implementation* mesh, char* file_path);
 void atlas__write_gmsh_fieldset(const field::FieldSetImpl* fieldset, functionspace::FunctionSpaceImpl* function_space, char* file_path, int mode);
 void atlas__write_gmsh_field(const field::FieldImpl* field, functionspace::FunctionSpaceImpl* function_space, char* file_path, int mode);
 }

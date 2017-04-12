@@ -54,7 +54,7 @@ public:
 
     /// Write mesh file
     virtual void write(
-        const mesh::Mesh&,
+        const Mesh&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write field to file

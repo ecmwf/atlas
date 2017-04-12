@@ -13,9 +13,7 @@
 #include "atlas/meshgenerator/MeshGenerator.h"
 
 namespace atlas {
-namespace mesh {
-class Mesh;
-}
+  class Mesh;
 }
 
 namespace atlas {
@@ -41,10 +39,10 @@ private: // methods
 
   virtual void hash(eckit::MD5&) const;
 
-  virtual void generate(const grid::Grid&, const grid::Distribution&, mesh::Mesh&) const;
-  virtual void generate(const grid::Grid&, mesh::Mesh&) const;
+  virtual void generate(const grid::Grid&, const grid::Distribution&, Mesh&) const;
+  virtual void generate(const grid::Grid&, Mesh&) const;
   
-  void createNodes(const grid::Grid&, mesh::Mesh&) const;
+  void createNodes(const grid::Grid&, Mesh&) const;
   
 };
 

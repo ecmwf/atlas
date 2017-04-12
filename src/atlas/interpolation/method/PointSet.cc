@@ -29,7 +29,7 @@ PointSet::PointSet( const std::vector< Point >& ipts ) : npts_(ipts.size())
     build(ipts);
 }
 
-PointSet::PointSet( mesh::Mesh& mesh )
+PointSet::PointSet( Mesh& mesh )
 {
     mesh::Nodes& nodes = mesh.nodes();
 

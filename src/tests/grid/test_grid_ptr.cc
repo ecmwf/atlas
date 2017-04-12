@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE( test_from_string_O32_with_domain )
   BOOST_CHECK_EQUAL( structured.nx().front(), 6 );
 
   output::Gmsh gmsh("test_grid_ptr_O32_subdomain.msh");
-  mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
+  Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
   gmsh.write(mesh);
 
 }
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE( test_structured_1 )
   BOOST_CHECK_EQUAL( regular.y().back(), -90. );
 
   output::Gmsh gmsh("test_grid_ptr.msh");
-  mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
+  Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
   gmsh.write(mesh);
 }
 
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE( test_structured_2 )
   BOOST_CHECK( grid );
 
   output::Gmsh gmsh("test_grid_ptr_structured_2.msh");
-  mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
+  Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
   gmsh.write(mesh);
 
   Log::info() << grid.spec() << std::endl;
