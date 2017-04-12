@@ -35,24 +35,11 @@
 
 #pragma once
 
-#include "atlas/library/config.h"
+
 #include <iosfwd>
-
-#ifdef ATLAS_INDEXVIEW_BOUNDS_CHECKING
-#include <eckit/exception/Exceptions.h>
-
-#define CHECK_RANK(R)\
-  if(Rank!=R) { std::ostringstream msg; msg << "IndexView  rank mismatch: Rank="<<Rank<< " != " << R; throw eckit::OutOfRange(msg.str(),Here()); }
-#define CHECK_BOUNDS_1(i)\
-  if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }
-#define CHECK_BOUNDS_2(i,j)\
-  if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i,j) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }\
-  if(j>=shape_[1]) {std::ostringstream msg; msg << "IndexView(i,j) index out of bounds: j=" << j << " >= " << shape_[1]; throw eckit::OutOfRange(msg.str(),Here()); }
-#else
-#define CHECK_RANK(R)
-#define CHECK_BOUNDS_1(i)
-#define CHECK_BOUNDS_2(i,j)
-#endif
+#include "eckit/exception/Exceptions.h"
+#include "atlas/array/ArrayUtil.h"
+#include "atlas/library/config.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -104,20 +91,81 @@ private:
 template< typename Value, int Rank >
 class IndexView {
 public:
+
+    using value_type = typename remove_const<Value>::type;
+
 #ifdef ATLAS_HAVE_FORTRAN
-  typedef detail::FortranIndex<Value> Index;
+    typedef detail::FortranIndex<Value> Index;
 #else
-  typedef Value& Index;
+    typedef Value& Index;
 #endif
 
 public:
 
-  IndexView( Value* data, const size_t shape[Rank] );
+    IndexView( Value* data, const size_t shape[Rank] );
+  
+  
+// -- Access methods
 
-  Value operator()(size_t i) const { CHECK_RANK(1); CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
-  Index operator()(size_t i)       { CHECK_RANK(1); CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
-  Value operator()(size_t i, size_t j) const { CHECK_RANK(2); CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+strides_[1]*j) FROM_FORTRAN; }
-  Index operator()(size_t i, size_t j)       { CHECK_RANK(2); CHECK_BOUNDS_2(i,j); return INDEX_REF(data_+strides_[0]*i+strides_[1]*j); }
+    template < typename... Idx >
+    Index operator()(Idx... idx) {
+        check_bounds(idx...);
+        return INDEX_REF(&data_[index(idx...)]);
+    }
+
+    template < typename... Ints >
+    const value_type operator()(Ints... idx) const {
+        return data_[index(idx...)] FROM_FORTRAN;
+    }
+
+private:
+
+// -- Private methods
+
+    template < typename... Ints >
+    constexpr int index_part(int dim, int idx, Ints... next_idx) const {
+        return dim < Rank ? idx*strides_[dim] + index_part( dim+1, next_idx..., idx ) : 0 ;
+    }
+
+    template < typename... Ints >
+    constexpr int index(Ints... idx) const {
+      return index_part(0, idx...);
+    }
+
+#ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
+    template < typename... Ints >
+    void check_bounds(Ints... idx) const {
+      ASSERT( sizeof...(idx) == Rank );
+      return check_bounds_part(0, idx...);
+    }
+#else
+    template < typename... Ints >
+    void check_bounds(Ints...) const {}
+#endif
+
+    template < typename... Ints >
+    void check_bounds_force(Ints... idx) const {
+      ASSERT( sizeof...(idx) == Rank );
+      return check_bounds_part(0, idx...);
+    }
+
+    template < typename... Ints >
+    void check_bounds_part(int dim, int idx, Ints... next_idx) const {
+        if( dim < Rank ) {
+            if( size_t(idx) >= shape_[dim] ) {
+                std::ostringstream msg; msg << "ArrayView index " << array_dim(dim) << " out of bounds: " << idx << " >= " << shape_[dim];
+                throw eckit::OutOfRange(msg.str(),Here());
+            }
+            check_bounds_part( dim+1, next_idx..., idx );
+        }
+    }
+
+    static constexpr char array_dim(size_t dim) {
+        return
+            dim == 0 ? 'i' :(
+            dim == 1 ? 'j' :(
+            '*'));
+    }
 
   size_t size() const { return shape_[0]; }
 
@@ -133,14 +181,3 @@ private:
 
 } // namespace array
 } // namespace atlas
-
-#undef CHECK_RANK
-#undef CHECK_BOUNDS
-#undef CHECK_BOUNDS_1
-#undef CHECK_BOUNDS_2
-#undef CHECK_BOUNDS_3
-#undef CHECK_BOUNDS_4
-#undef CHECK_BOUNDS_5
-#undef FROM_FORTRAN
-#undef TO_FORTRAN
-#undef INDEX_REF
