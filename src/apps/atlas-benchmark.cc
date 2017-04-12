@@ -528,7 +528,7 @@ DATA_TYPE vecnorm( DATA_TYPE vec[], size_t size )
 
 double AtlasBenchmark::result()
 {
-  const auto grad = array::make_view<double,3>( mesh.nodes().field("grad") );
+  const auto grad = array::make_view<double,3>( grad_field );
   double maxval = numeric_limits<double>::min();
   double minval = numeric_limits<double>::max();;
   double norm = 0.;
