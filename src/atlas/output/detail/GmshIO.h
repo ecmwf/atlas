@@ -74,7 +74,7 @@ public:
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
   void write(const FieldSet& fieldset,
-             const functionspace::FunctionSpace&,
+             const FunctionSpace&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 
@@ -82,7 +82,7 @@ public:
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
   void write(const Field& field,
-             const functionspace::FunctionSpace&,
+             const FunctionSpace&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
 

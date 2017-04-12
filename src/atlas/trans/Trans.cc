@@ -1641,7 +1641,7 @@ void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspa
     ASSERT( spfields );
     ASSERT( parameters );
     FieldSet fspfields(spfields);
-    This->dirtrans(functionspace::FunctionSpace(gp),gpfields,functionspace::FunctionSpace(sp),fspfields,*parameters);
+    This->dirtrans(FunctionSpace(gp),gpfields,FunctionSpace(sp),fspfields,*parameters);
   );
 }
 
@@ -1667,7 +1667,7 @@ void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const functionspa
     ASSERT( gpfields );
     ASSERT( parameters );
     FieldSet fgpfields(gpfields);
-    This->invtrans(functionspace::FunctionSpace(sp),spfields,functionspace::FunctionSpace(gp),fgpfields,*parameters);
+    This->invtrans(FunctionSpace(sp),spfields,FunctionSpace(gp),fgpfields,*parameters);
   );
 }
 
@@ -1692,7 +1692,7 @@ void atlas__Trans__dirtrans_field_nodes (const Trans* This, const functionspace:
     ASSERT( gpfield );
     ASSERT( parameters );
     Field fspfield(spfield);
-    This->dirtrans(functionspace::FunctionSpace(gp),gpfield,functionspace::FunctionSpace(sp),fspfield,*parameters);
+    This->dirtrans(FunctionSpace(gp),gpfield,FunctionSpace(sp),fspfield,*parameters);
   );
 }
 
@@ -1730,7 +1730,7 @@ void atlas__Trans__invtrans_field_nodes (const Trans* This, const functionspace:
     ASSERT( gpfield );
     ASSERT( parameters );
     Field fgpfield(gpfield);
-    This->invtrans(functionspace::FunctionSpace(sp),spfield,functionspace::FunctionSpace(gp),fgpfield,*parameters);
+    This->invtrans(FunctionSpace(sp),spfield,FunctionSpace(gp),fgpfield,*parameters);
   );
 }
 
@@ -1746,7 +1746,7 @@ void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const fu
     ASSERT( parameters );
     Field fspvor(spvor);
     Field fspdiv(spdiv);
-    This->dirtrans_wind2vordiv(functionspace::FunctionSpace(gp),gpwind,functionspace::FunctionSpace(sp),fspvor,fspdiv,*parameters);
+    This->dirtrans_wind2vordiv(FunctionSpace(gp),gpwind,FunctionSpace(sp),fspvor,fspdiv,*parameters);
   );
 }
 
@@ -1761,7 +1761,7 @@ void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const fu
     ASSERT( gpwind );
     ASSERT( parameters );
     Field fgpwind(gpwind);
-    This->invtrans_vordiv2wind(functionspace::FunctionSpace(sp),spvor,spdiv,functionspace::FunctionSpace(gp),fgpwind,*parameters);
+    This->invtrans_vordiv2wind(FunctionSpace(sp),spvor,spdiv,FunctionSpace(gp),fgpwind,*parameters);
   );
 }
 
@@ -1785,7 +1785,7 @@ void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const functions
     ASSERT( gp );
     ASSERT( gpfield );
     Field fgpfield(gpfield);
-    This->invtrans_grad(functionspace::FunctionSpace(sp),spfield,functionspace::FunctionSpace(gp),fgpfield);
+    This->invtrans_grad(FunctionSpace(sp),spfield,FunctionSpace(gp),fgpfield);
   );
 }
 

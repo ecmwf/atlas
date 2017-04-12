@@ -158,7 +158,7 @@ void FieldImpl::insert(size_t idx1, size_t size1 )
 }
 
 
-void FieldImpl::set_functionspace(const functionspace::FunctionSpace& functionspace)
+void FieldImpl::set_functionspace(const FunctionSpace& functionspace)
 {
   functionspace_ = functionspace;
 }

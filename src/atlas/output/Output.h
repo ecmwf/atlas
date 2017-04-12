@@ -37,8 +37,8 @@ namespace field {
 } }
 
 namespace atlas {
+  class FunctionSpace;
 namespace functionspace {
-    class FunctionSpace;
     class FunctionSpaceImpl;
 } }
 
@@ -80,13 +80,13 @@ public:
     /// Write field to file using Functionspace
     virtual void write(
         const Field&,
-        const functionspace::FunctionSpace&,
+        const FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
     /// Write fieldset to file using FunctionSpace
     virtual void write(
         const FieldSet&,
-        const functionspace::FunctionSpace&,
+        const FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
 };
@@ -126,13 +126,13 @@ public:
     /// Write field to file using Functionspace
     void write(
         const Field&,
-        const functionspace::FunctionSpace&,
+        const FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write fieldset to file using FunctionSpace
     void write(
         const FieldSet&,
-        const functionspace::FunctionSpace&,
+        const FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     const output_t* get() const { return output_.get(); }

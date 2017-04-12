@@ -26,7 +26,7 @@
 using atlas::Field;
 using atlas::FieldSet;
 using atlas::mesh::Mesh;
-using atlas::functionspace::FunctionSpace;
+using atlas::FunctionSpace;
 using eckit::Parametrisation;
 
 namespace atlas {
@@ -259,7 +259,7 @@ void Gmsh::write(
 
 void Gmsh::write(
     const Field& field,
-    const functionspace::FunctionSpace& functionspace,
+    const FunctionSpace& functionspace,
     const eckit::Parametrisation& config) const
 {
   Gmsh::Configuration c = config_;
@@ -272,7 +272,7 @@ void Gmsh::write(
 
 void Gmsh::write(
     const FieldSet& fields,
-    const functionspace::FunctionSpace& functionspace,
+    const FunctionSpace& functionspace,
     const eckit::Parametrisation& config) const
 {
   Gmsh::Configuration c = config_;

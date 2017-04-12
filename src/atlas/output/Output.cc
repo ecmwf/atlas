@@ -27,7 +27,7 @@ using atlas::field::FieldImpl;
 using atlas::FieldSet;
 using atlas::field::FieldSetImpl;
 using atlas::mesh::Mesh;
-using atlas::functionspace::FunctionSpace;
+using atlas::FunctionSpace;
 using eckit::Parametrisation;
 
 namespace atlas {
@@ -103,7 +103,7 @@ void Output::write(
 /// Write field to file using Functionspace
 void Output::write(
     const Field& f,
-    const functionspace::FunctionSpace& fs,
+    const FunctionSpace& fs,
     const eckit::Parametrisation& c ) const {
   return output_->write(f,fs,c);
 }
@@ -111,7 +111,7 @@ void Output::write(
 /// Write fieldset to file using FunctionSpace
 void Output::write(
     const FieldSet& f,
-    const functionspace::FunctionSpace& fs,
+    const FunctionSpace& fs,
     const eckit::Parametrisation& c ) const {
   return output_->write(f,fs,c);
 }

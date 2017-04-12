@@ -1250,7 +1250,7 @@ void GmshIO::write_delegate(
 // ----------------------------------------------------------------------------
 void GmshIO::write(
   const FieldSet& fieldset,
-  const functionspace::FunctionSpace& funcspace,
+  const FunctionSpace& funcspace,
   const eckit::PathName& file_path,
   openmode mode) const
 {
@@ -1274,7 +1274,7 @@ void GmshIO::write(
 // ----------------------------------------------------------------------------
 void GmshIO::write(
   const Field& field,
-  const functionspace::FunctionSpace& funcspace,
+  const FunctionSpace& funcspace,
   const eckit::PathName& file_path,
   openmode mode) const
 {

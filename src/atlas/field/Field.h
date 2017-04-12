@@ -146,8 +146,8 @@ public: // Destructor
   void set_levels(size_t n) { metadata().set("levels",n); }
   size_t levels() const { return std::max(1ul,metadata().get<size_t>("levels")); }
 
-  void set_functionspace(const functionspace::FunctionSpace &);
-  const functionspace::FunctionSpace& functionspace() const { return functionspace_; }
+  void set_functionspace(const FunctionSpace &);
+  const FunctionSpace& functionspace() const { return functionspace_; }
 
   /// @brief Return the memory footprint of the Field
   size_t footprint() const;
@@ -192,7 +192,7 @@ private: // members
   mutable std::string name_;
   util::Metadata metadata_;
   array::Array* array_;
-  functionspace::FunctionSpace functionspace_;
+  FunctionSpace functionspace_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -380,8 +380,8 @@ public:
   void set_levels(size_t n) { field_->set_levels(n); }
   size_t levels() const { return field_->levels(); }
 
-  void set_functionspace(const functionspace::FunctionSpace& functionspace ) { field_->set_functionspace(functionspace); }
-  const functionspace::FunctionSpace& functionspace() const { return field_->functionspace(); }
+  void set_functionspace(const FunctionSpace& functionspace ) { field_->set_functionspace(functionspace); }
+  const FunctionSpace& functionspace() const { return field_->functionspace(); }
 
   /// @brief Return the memory footprint of the Field
   size_t footprint() const { return field_->footprint(); }

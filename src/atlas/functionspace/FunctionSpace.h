@@ -62,31 +62,6 @@ inline FunctionspaceT_const *FunctionSpaceImpl::cast() const
 
 #undef FunctionspaceT_const
 #undef FunctionspaceT_nonconst
-//------------------------------------------------------------------------------------------------------
-
-class FunctionSpace {
-
-public:
-
-  using functionspace_t = FunctionSpaceImpl;
-
-private:
-
-  eckit::SharedPtr< const functionspace_t > functionspace_;
-
-public:
-
-  FunctionSpace();
-  FunctionSpace( const functionspace_t* );
-  FunctionSpace( const FunctionSpace& );
-
-  std::string name() const;
-  operator bool() const;
-  size_t footprint() const;
-
-  const functionspace_t* get() const { return functionspace_.get(); }
-};
-
 
 //------------------------------------------------------------------------------------------------------
 
@@ -113,4 +88,32 @@ extern "C"
 //------------------------------------------------------------------------------------------------------
 
 } // namespace functionspace
+
+//------------------------------------------------------------------------------------------------------
+
+class FunctionSpace {
+
+public:
+
+  using Implementation = functionspace::FunctionSpaceImpl;
+
+private:
+
+  eckit::SharedPtr< const Implementation > functionspace_;
+
+public:
+
+  FunctionSpace();
+  FunctionSpace( const Implementation* );
+  FunctionSpace( const FunctionSpace& );
+
+  std::string name() const;
+  operator bool() const;
+  size_t footprint() const;
+
+  const Implementation* get() const { return functionspace_.get(); }
+};
+
+//------------------------------------------------------------------------------------------------------
+
 } // namespace atlas

@@ -70,13 +70,13 @@ public:
     /// Write field to file using Functionspace
     virtual void write(
         const Field&,
-        const functionspace::FunctionSpace&,
+        const FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write fieldset to file using FunctionSpace
     virtual void write(
         const FieldSet&,
-        const functionspace::FunctionSpace&,
+        const FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
 public:
