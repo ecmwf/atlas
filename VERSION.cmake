@@ -6,6 +6,5 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-file ( STRINGS "VERSION.tex" ATLASVER )
-set  ( ${PROJECT_NAME}_VERSION_STR  ${ATLASVER} )
+set  ( ${PROJECT_NAME}_VERSION_STR  "0.10.0" )
 
