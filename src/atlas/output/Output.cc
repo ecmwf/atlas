@@ -23,9 +23,8 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 
-using atlas::field::Field;
 using atlas::field::FieldImpl;
-using atlas::field::FieldSet;
+using atlas::FieldSet;
 using atlas::field::FieldSetImpl;
 using atlas::mesh::Mesh;
 using atlas::functionspace::FunctionSpace;
@@ -89,21 +88,21 @@ void Output::write(
 
 /// Write field to file
 void Output::write(
-    const field::Field& f,
+    const Field& f,
     const eckit::Parametrisation& c ) const {
   return output_->write(f,c);
 }
 
 /// Write fieldset to file using FunctionSpace
 void Output::write(
-    const field::FieldSet& f,
+    const FieldSet& f,
     const eckit::Parametrisation& c ) const {
   return output_->write(f,c);
 }
 
 /// Write field to file using Functionspace
 void Output::write(
-    const field::Field& f,
+    const Field& f,
     const functionspace::FunctionSpace& fs,
     const eckit::Parametrisation& c ) const {
   return output_->write(f,fs,c);
@@ -111,7 +110,7 @@ void Output::write(
 
 /// Write fieldset to file using FunctionSpace
 void Output::write(
-    const field::FieldSet& f,
+    const FieldSet& f,
     const functionspace::FunctionSpace& fs,
     const eckit::Parametrisation& c ) const {
   return output_->write(f,fs,c);

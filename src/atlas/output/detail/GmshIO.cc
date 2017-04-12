@@ -105,7 +105,7 @@ void write_header_binary(std::ostream& out)
 
 // ----------------------------------------------------------------------------
 template< typename DATATYPE >
-void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeColumns& function_space, const field::Field& field, std::ostream& out)
+void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeColumns& function_space, const Field& field, std::ostream& out)
 {
   Log::debug<Atlas>() << "writing field " << field.name() << " defined in NodeColumns..." << std::endl;
 
@@ -117,8 +117,8 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( function_space.nodes().global_index() );
   array::LocalView<DATATYPE,2> data ( field.data<DATATYPE>(),
                                       array::make_shape(field.shape(0),field.stride(0)) );
-  field::Field gidx_glb;
-  field::Field data_glb;
+  Field gidx_glb;
+  Field data_glb;
   if( gather )
   {
     gidx_glb = function_space.createField( "gidx_glb", function_space.nodes().global_index(), field::global() );
@@ -302,7 +302,7 @@ template< typename DATATYPE >
 void write_field_nodes(
     const Metadata&                            gmsh_options,
     const functionspace::StructuredColumns& function_space,
-    const field::Field&                           field,
+    const Field&                           field,
     std::ostream&                          out)
 {
     Log::debug<Atlas>() << "writing field " << field.name() << "..." << std::endl;
@@ -318,8 +318,8 @@ void write_field_nodes(
         field.data<DATATYPE>(),
         array::make_shape(field.shape(0),field.stride(0)) );
 
-    field::Field gidx_glb;
-    field::Field field_glb;
+    Field gidx_glb;
+    Field field_glb;
 
     //gidx_glb.reset(function_space.createGlobalField(
     //    "gidx_glb", function_space.nodes().global_index()));
@@ -460,7 +460,7 @@ void write_field_nodes(
 // ----------------------------------------------------------------------------
 #if 0
 template< typename DATA_TYPE >
-void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& function_space, const field::Field& field, std::ostream& out)
+void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& function_space, const Field& field, std::ostream& out)
 {
   Log::info() << "writing field " << field.name() << "..." << std::endl;
   bool gather( gmsh_options.get<bool>("gather") );
@@ -673,7 +673,7 @@ void GmshIO::read(const PathName& file_path, mesh::Mesh& mesh ) const
 
   mesh::Nodes& nodes = mesh.nodes();
 
-  nodes.add( field::Field("xyz",array::make_datatype<double>(),array::make_shape(nb_nodes,3) ) );
+  nodes.add( Field("xyz",array::make_datatype<double>(),array::make_shape(nb_nodes,3) ) );
 
   array::ArrayView<double,2> coords   = array::make_view<double,2>( nodes.field("xyz")    );
   array::ArrayView<gidx_t,1> glb_idx  = array::make_view<gidx_t,1>( nodes.global_index()  );
@@ -1075,7 +1075,7 @@ void GmshIO::write(const mesh::Mesh& mesh, const PathName& file_path) const
 
 // ----------------------------------------------------------------------------
 void GmshIO::write(
-    const field::Field&    field,
+    const Field&    field,
     const PathName& file_path,
     openmode        mode) const
 {
@@ -1089,13 +1089,13 @@ void GmshIO::write(
 
     if ( functionspace::NodeColumns( field.functionspace() ) )
     {
-        field::FieldSet fieldset;
+        FieldSet fieldset;
         fieldset.add(field);
         write(fieldset, field.functionspace(), file_path, mode);
     }
     else if ( functionspace::StructuredColumns(field.functionspace()) )
     {
-        field::FieldSet fieldset;
+        FieldSet fieldset;
         fieldset.add(field);
         write(fieldset, field.functionspace(), file_path, mode);
     }
@@ -1117,12 +1117,12 @@ void GmshIO::write(
 
 // ----------------------------------------------------------------------------
 void GmshIO::write_delegate(
-    const field::Field&                field,
+    const Field&                field,
     const functionspace::NodeColumns& functionspace,
     const PathName&             file_path,
     openmode                    mode) const
 {
-  field::FieldSet fieldset;
+  FieldSet fieldset;
   fieldset.add(field);
   write_delegate(fieldset, functionspace, file_path, mode);
 }
@@ -1132,12 +1132,12 @@ void GmshIO::write_delegate(
 
 // ----------------------------------------------------------------------------
 void GmshIO::write_delegate(
-    const field::Field&                           field,
+    const Field&                           field,
     const functionspace::StructuredColumns& functionspace,
     const PathName&                        file_path,
     openmode                               mode) const
 {
-    field::FieldSet fieldset;
+    FieldSet fieldset;
     fieldset.add(field);
     write_delegate(fieldset, functionspace, file_path, mode);
 }
@@ -1147,7 +1147,7 @@ void GmshIO::write_delegate(
 
 // ----------------------------------------------------------------------------
 void GmshIO::write_delegate(
-    const field::FieldSet&             fieldset,
+    const FieldSet&             fieldset,
     const functionspace::NodeColumns& functionspace,
     const PathName&             file_path,
     openmode                    mode) const
@@ -1167,7 +1167,7 @@ void GmshIO::write_delegate(
     // field::Fields
     for(size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx)
     {
-        const field::Field& field = fieldset[field_idx];
+        const Field& field = fieldset[field_idx];
         Log::debug<Atlas>() << "writing field " << field.name()
                     << " to gmsh file " << file_path << std::endl;
 
@@ -1198,7 +1198,7 @@ void GmshIO::write_delegate(
 
 // ----------------------------------------------------------------------------
 void GmshIO::write_delegate(
-    const field::FieldSet& fieldset,
+    const FieldSet& fieldset,
     const functionspace::StructuredColumns& functionspace,
     const PathName& file_path, openmode mode) const
 {
@@ -1218,7 +1218,7 @@ void GmshIO::write_delegate(
     // field::Fields
     for (size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx)
     {
-        const field::Field& field = fieldset[field_idx];
+        const Field& field = fieldset[field_idx];
         Log::debug<Atlas>() << "writing field " << field.name()
                     << " to gmsh file " << file_path << std::endl;
 
@@ -1249,7 +1249,7 @@ void GmshIO::write_delegate(
 
 // ----------------------------------------------------------------------------
 void GmshIO::write(
-  const field::FieldSet& fieldset,
+  const FieldSet& fieldset,
   const functionspace::FunctionSpace& funcspace,
   const eckit::PathName& file_path,
   openmode mode) const
@@ -1273,7 +1273,7 @@ void GmshIO::write(
 
 // ----------------------------------------------------------------------------
 void GmshIO::write(
-  const field::Field& field,
+  const Field& field,
   const functionspace::FunctionSpace& funcspace,
   const eckit::PathName& file_path,
   openmode mode) const

@@ -23,9 +23,11 @@
 #include "atlas/field/Field.h"
 
 namespace atlas {
+
+  class FieldSet;
+
 namespace field {
 
-class FieldSet;
 
 /**
  * @brief Represents a set of fields, where order is preserved
@@ -81,22 +83,37 @@ protected: // data
   std::map< std::string, size_t >  index_;   ///< name-to-index map, to refer fields by name
 };
 
-class FieldSet;
+// C wrapper interfaces to C++ routines
+extern "C"
+{
+  FieldSetImpl* atlas__FieldSet__new       (char* name);
+  void      atlas__FieldSet__delete        (FieldSetImpl* This);
+  void      atlas__FieldSet__add_field     (FieldSetImpl* This, FieldImpl* field);
+  int       atlas__FieldSet__has_field     (const FieldSetImpl* This, char* name);
+  size_t    atlas__FieldSet__size          (const FieldSetImpl* This);
+  FieldImpl*    atlas__FieldSet__field_by_name (FieldSetImpl* This, char* name);
+  FieldImpl*    atlas__FieldSet__field_by_idx  (FieldSetImpl* This, size_t idx);
+}
+
+} // namespace field
+
+//---------------------------------------------------------------------------------------------------------------------
 
 /**
  * @brief Represents a set of fields, where order is preserved
  */
-class FieldSet : public eckit::Owned {
+class FieldSet {
 
 public: // types
 
-  typedef std::vector<Field>::iterator       iterator;
-  typedef std::vector<Field>::const_iterator const_iterator;
+  using Implementation = field::FieldSetImpl;
+  using iterator       = Implementation::iterator;
+  using const_iterator = Implementation::const_iterator;
 
 public: // methods
 
   FieldSet( const std::string& name = "untitled" );
-  FieldSet( const FieldSetImpl* );
+  FieldSet( const Implementation* );
   FieldSet( const FieldSet& );
 
   size_t size() const { return  fieldset_->size(); }
@@ -133,21 +150,7 @@ public: // methods
 
 private: // data
 
-  eckit::SharedPtr<FieldSetImpl> fieldset_;
+  eckit::SharedPtr<Implementation> fieldset_;
 };
 
-
-// C wrapper interfaces to C++ routines
-extern "C"
-{
-  FieldSetImpl* atlas__FieldSet__new       (char* name);
-  void      atlas__FieldSet__delete        (FieldSetImpl* This);
-  void      atlas__FieldSet__add_field     (FieldSetImpl* This, FieldImpl* field);
-  int       atlas__FieldSet__has_field     (const FieldSetImpl* This, char* name);
-  size_t    atlas__FieldSet__size          (const FieldSetImpl* This);
-  FieldImpl*    atlas__FieldSet__field_by_name (FieldSetImpl* This, char* name);
-  FieldImpl*    atlas__FieldSet__field_by_idx  (FieldSetImpl* This, size_t idx);
-}
-
-} // namespace field
 } // namespace atlas

@@ -62,44 +62,44 @@ const std::string& Elements::name() const
   return hybrid_elements_->element_type(type_idx_).name();
 }
 
-template<> array::LocalView<double,1> Elements::view( const field::Field& field ) const
+template<> array::LocalView<double,1> Elements::view( const Field& field ) const
 {
   return array::LocalView<double,1>( array::make_storageview<double>(field).data()+begin(), array::make_shape(size()) );
 }
 
-template<> array::LocalView<float,1> Elements::view( const field::Field& field ) const
+template<> array::LocalView<float,1> Elements::view( const Field& field ) const
 {
   return array::LocalView<float,1>( array::make_storageview<float>(field).data()+begin(), array::make_shape(size()) );
 }
 
-template<> array::LocalView<int,1> Elements::view( const field::Field& field ) const
+template<> array::LocalView<int,1> Elements::view( const Field& field ) const
 {
   return array::LocalView<int,1>( array::make_storageview<int>(field).data()+begin(), array::make_shape(size()) );
 }
 
-template<> array::LocalView<long,1> Elements::view( const field::Field& field ) const
+template<> array::LocalView<long,1> Elements::view( const Field& field ) const
 {
   return array::LocalView<long,1>( array::make_storageview<long>(field).data()+begin(), array::make_shape(size()) );
 }
 
 
 
-template<> array::LocalView<double,2> Elements::view( const field::Field& field ) const
+template<> array::LocalView<double,2> Elements::view( const Field& field ) const
 {
   return array::LocalView<double,2>( array::make_storageview<double>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
 }
 
-template<> array::LocalView<float,2> Elements::view( const field::Field& field ) const
+template<> array::LocalView<float,2> Elements::view( const Field& field ) const
 {
   return array::LocalView<float,2>( array::make_storageview<float>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
 }
 
-template<> array::LocalView<int,2> Elements::view( const field::Field& field ) const
+template<> array::LocalView<int,2> Elements::view( const Field& field ) const
 {
   return array::LocalView<int,2>( array::make_storageview<int>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
 }
 
-template<> array::LocalView<long,2> Elements::view( const field::Field& field ) const
+template<> array::LocalView<long,2> Elements::view( const Field& field ) const
 {
   return array::LocalView<long,2>( array::make_storageview<long>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
 }

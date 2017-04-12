@@ -11,8 +11,8 @@
 
 using atlas::array::make_view;
 using atlas::array::make_shape;
-using atlas::field::Field;
-using atlas::field::FieldSet;
+using atlas::Field;
+using atlas::FieldSet;
 using atlas::field::global;
 using atlas::functionspace::NodeColumns;
 using atlas::gidx_t;

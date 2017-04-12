@@ -58,34 +58,34 @@ public: // methods
 
 //-- Accessors
 
-  const field::Field& field(const std::string& name) const;
-        field::Field& field(const std::string& name);
+  const Field& field(const std::string& name) const;
+        Field& field(const std::string& name);
   bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
 
-  const field::Field& field(size_t) const;
-        field::Field& field(size_t);
+  const Field& field(size_t) const;
+        Field& field(size_t);
   size_t nb_fields() const { return fields_.size(); }
 
   const util::Metadata& metadata() const { return metadata_; }
         util::Metadata& metadata()       { return metadata_; }
 
-  const field::Field& global_index() const { return global_index_; }
-        field::Field& global_index()       { return global_index_; }
+  const Field& global_index() const { return global_index_; }
+        Field& global_index()       { return global_index_; }
 
-  const field::Field& remote_index() const { return remote_index_; }
-        field::Field& remote_index()       { return remote_index_; }
+  const Field& remote_index() const { return remote_index_; }
+        Field& remote_index()       { return remote_index_; }
 
-  const field::Field& partition() const { return partition_; }
-        field::Field& partition()       { return partition_; }
+  const Field& partition() const { return partition_; }
+        Field& partition()       { return partition_; }
 
-  const field::Field& xy() const { return xy_; }
-        field::Field& xy()       { return xy_; }
+  const Field& xy() const { return xy_; }
+        Field& xy()       { return xy_; }
 
-  const field::Field& lonlat() const { return lonlat_; }
-        field::Field& lonlat()       { return lonlat_; }
+  const Field& lonlat() const { return lonlat_; }
+        Field& lonlat()       { return lonlat_; }
 
-  const field::Field& ghost() const { return ghost_; }
-        field::Field& ghost()       { return ghost_; }
+  const Field& ghost() const { return ghost_; }
+        Field& ghost()       { return ghost_; }
 
   /// @brief Node to Edge connectivity table
   const Connectivity& edge_connectivity() const;
@@ -102,7 +102,7 @@ public: // methods
 
 // -- Modifiers
 
-  field::Field add( const field::Field& );
+  Field add( const Field& );
 
   void resize( size_t );
 
@@ -131,7 +131,7 @@ private:
 
 private:
 
-  typedef std::map< std::string, field::Field >  FieldMap;
+  typedef std::map< std::string, Field >  FieldMap;
   typedef std::map< std::string, eckit::SharedPtr<Connectivity> >  ConnectivityMap;
 
 private:
@@ -143,12 +143,12 @@ private:
   util::Metadata metadata_;
 
   // Cached shortcuts to specific fields in fields_
-  field::Field global_index_;
-  field::Field remote_index_;
-  field::Field partition_;
-  field::Field xy_;
-  field::Field lonlat_;
-  field::Field ghost_;
+  Field global_index_;
+  Field remote_index_;
+  Field partition_;
+  Field xy_;
+  Field lonlat_;
+  Field ghost_;
 
 // Cached shortcuts to specific connectivities in connectivities_
   Connectivity* edge_connectivity_;

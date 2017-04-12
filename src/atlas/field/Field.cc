@@ -164,34 +164,6 @@ void FieldImpl::set_functionspace(const functionspace::FunctionSpace& functionsp
 }
 
 // ------------------------------------------------------------------
-
-Field::Field() :
-  field_(nullptr) {
-}
-
-Field::Field( const Field& field ) :
-  field_( field.field_ ) {
-}
-
-Field::Field( const FieldImpl* field ) : 
-  field_( const_cast<FieldImpl*>(field) ) {
-}
-
-Field::Field(const eckit::Parametrisation& config) :
-  field_( FieldImpl::create(config) ) {
-} 
-
-Field::Field(
-  const std::string& name, array::DataType datatype,
-  const array::ArrayShape& shape) :
-  field_( FieldImpl::create(name, datatype, shape) ) {
-}
-
-Field::Field( const std::string& name, array::Array* array ) :
-  field_( FieldImpl::create(name,array) ) {
-}
-
-// ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 extern "C"
@@ -560,10 +532,47 @@ void atlas__Field__sync_host_device(FieldImpl* This)
   This->syncHostDevice();
 }
 
-
 }
+
 // ------------------------------------------------------------------
 
 } // namespace field
+
+// ------------------------------------------------------------------
+
+std::ostream& operator<<( std::ostream& os, const Field& f)
+{
+  os << (*f.field_);
+  return os;
+}
+
+Field::Field() :
+  field_(nullptr) {
+}
+
+Field::Field( const Field& field ) :
+  field_( field.field_ ) {
+}
+
+Field::Field( const Implementation* field ) : 
+  field_( const_cast<Implementation*>(field) ) {
+}
+
+Field::Field(const eckit::Parametrisation& config) :
+  field_( Implementation::create(config) ) {
+} 
+
+Field::Field(
+  const std::string& name, array::DataType datatype,
+  const array::ArrayShape& shape) :
+  field_( Implementation::create(name, datatype, shape) ) {
+}
+
+Field::Field( const std::string& name, array::Array* array ) :
+  field_( Implementation::create(name,array) ) {
+}
+
+// ------------------------------------------------------------------
+
 } // namespace atlas
 

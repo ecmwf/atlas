@@ -113,7 +113,7 @@ mesh::Mesh PointCloud::read(const eckit::PathName& path, std::vector<std::string
     std::vector< array::ArrayView<double,1> > fields;
     for (size_t j=0; j<nb_fld; ++j)
     {
-      fields.push_back( array::make_view<double,1> ( nodes.add( field::Field(vfnames[j],array::make_datatype<double>(),array::make_shape(nb_pts)) ) ) );
+      fields.push_back( array::make_view<double,1> ( nodes.add( Field(vfnames[j],array::make_datatype<double>(),array::make_shape(nb_pts)) ) ) );
     }
 
     size_t i,j;  // (index for node/row and field/column, out of scope to check at end of loops)
@@ -169,7 +169,7 @@ void PointCloud::write(const eckit::PathName& path, const mesh::Mesh& mesh)
   std::vector< array::ArrayView< double, 1 > > vfvalues;
   for(size_t i=0; i<nodes.nb_fields(); ++i)
   {
-    const field::Field& field = nodes.field(i);
+    const Field& field = nodes.field(i);
     if ( field.shape(0)==lonlat.shape(0) &&
          field.shape(1)==1 &&
          field.datatype()==array::DataType::real64() )  // FIXME: no support for non-double types!
@@ -204,7 +204,7 @@ void PointCloud::write(const eckit::PathName& path, const mesh::Mesh& mesh)
 }
 
 
-void PointCloud::write(const eckit::PathName& path, const field::FieldSet& fieldset, const functionspace::NodeColumns& function_space)
+void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::NodeColumns& function_space)
 {
   const std::string msg("PointCloud::write: ");
 
@@ -223,7 +223,7 @@ void PointCloud::write(const eckit::PathName& path, const field::FieldSet& field
   std::vector< array::ArrayView< double, 1 > > vfvalues;
   for (size_t i=0; i<fieldset.size(); ++i)
   {
-    const field::Field& field = fieldset[i];
+    const Field& field = fieldset[i];
     if ( field.shape(0)==lonlat.shape(0) &&
          field.rank()==1 &&
          field.name()!="glb_idx" )  // FIXME: no support for non-int types!

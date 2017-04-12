@@ -55,12 +55,12 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
-field::Field& build_nodes_partition ( mesh::Nodes& nodes );
-field::Field& build_nodes_remote_idx( mesh::Nodes& nodes );
-field::Field& build_nodes_global_idx( mesh::Nodes& nodes );
-field::Field& build_edges_partition ( Mesh& mesh );
-field::Field& build_edges_remote_idx( Mesh& mesh );
-field::Field& build_edges_global_idx( Mesh& mesh );
+Field& build_nodes_partition ( mesh::Nodes& nodes );
+Field& build_nodes_remote_idx( mesh::Nodes& nodes );
+Field& build_nodes_global_idx( mesh::Nodes& nodes );
+Field& build_edges_partition ( Mesh& mesh );
+Field& build_edges_remote_idx( Mesh& mesh );
+Field& build_edges_global_idx( Mesh& mesh );
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -119,7 +119,7 @@ void build_edges_parallel_fields( Mesh& mesh )
 
 //----------------------------------------------------------------------------------------------------------------------
 
-field::Field& build_nodes_global_idx( mesh::Nodes& nodes )
+Field& build_nodes_global_idx( mesh::Nodes& nodes )
 {
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
 
@@ -222,7 +222,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
 //----------------------------------------------------------------------------------------------------------------------
 
-field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
+Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 {
   size_t mypart = parallel::mpi::comm().rank();
   size_t nparts = parallel::mpi::comm().size();
@@ -321,14 +321,14 @@ field::Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 
 //----------------------------------------------------------------------------------------------------------------------
 
-field::Field& build_nodes_partition( mesh::Nodes& nodes )
+Field& build_nodes_partition( mesh::Nodes& nodes )
 {
   return nodes.partition();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-field::Field& build_edges_partition( Mesh& mesh )
+Field& build_edges_partition( Mesh& mesh )
 {
   const mesh::Nodes& nodes = mesh.nodes();
 
@@ -598,7 +598,7 @@ field::Field& build_edges_partition( Mesh& mesh )
 }
 
 
-field::Field& build_edges_remote_idx( Mesh& mesh  )
+Field& build_edges_remote_idx( Mesh& mesh  )
 {
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(mesh);
@@ -751,7 +751,7 @@ field::Field& build_edges_remote_idx( Mesh& mesh  )
   return edges.remote_index();
 }
 
-field::Field& build_edges_global_idx( Mesh& mesh )
+Field& build_edges_global_idx( Mesh& mesh )
 {
   UniqueLonLat compute_uid(mesh);
 

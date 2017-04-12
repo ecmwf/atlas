@@ -26,8 +26,8 @@ namespace parallel {
 }
 
 namespace atlas {
+  class FieldSet;
 namespace field {
-    class FieldSet;
     class FieldSetImpl;
 }
 }
@@ -55,28 +55,28 @@ public:
   virtual std::string name() const { return "StructuredColumns"; }
 
   /// @brief Create a Structured field
-  field::Field createField(
+  Field createField(
       const std::string& name,
       array::DataType,
       const eckit::Parametrisation& = util::NoConfig() ) const;
-  field::Field createField(
+  Field createField(
       const std::string& name,
       array::DataType,
       size_t levels,
       const eckit::Parametrisation& = util::NoConfig() ) const;
-  template <typename DATATYPE> field::Field createField(
+  template <typename DATATYPE> Field createField(
       const std::string& name,
       const eckit::Parametrisation& = util::NoConfig() ) const;
-  template <typename DATATYPE> field::Field createField(
+  template <typename DATATYPE> Field createField(
       const std::string& name,
       size_t levels,
       const eckit::Parametrisation& = util::NoConfig() ) const;
 
-  void gather( const field::FieldSet&, field::FieldSet& ) const;
-  void gather( const field::Field&, field::Field& ) const;
+  void gather( const FieldSet&, FieldSet& ) const;
+  void gather( const Field&, Field& ) const;
 
-  void scatter( const field::FieldSet&, field::FieldSet& ) const;
-  void scatter( const field::Field&, field::Field& ) const;
+  void scatter( const FieldSet&, FieldSet& ) const;
+  void scatter( const Field&, Field& ) const;
 
   size_t size() const       { return npts_; }
   size_t ny() const         { return nlat_; }
@@ -85,8 +85,8 @@ public:
   double x(size_t i, size_t j) const;
   double y(size_t j) const;
 
-  std::string checksum( const field::FieldSet& ) const;
-  std::string checksum( const field::Field& ) const;
+  std::string checksum( const FieldSet& ) const;
+  std::string checksum( const Field& ) const;
 
   const grid::StructuredGrid& grid() const { return grid_; }
 
@@ -114,7 +114,7 @@ private: // data
 // inline methods
 
 template <typename DATATYPE>
-inline field::Field StructuredColumns::createField(
+inline Field StructuredColumns::createField(
     const std::string& name,
     const eckit::Parametrisation& options) const
 {
@@ -122,7 +122,7 @@ inline field::Field StructuredColumns::createField(
 }
 
 template <typename DATATYPE>
-inline field::Field StructuredColumns::createField(
+inline Field StructuredColumns::createField(
     const std::string& name,
     size_t levels,
     const eckit::Parametrisation& options) const
@@ -153,31 +153,31 @@ public:
 
   const grid::StructuredGrid& grid() const { return functionspace_->grid(); }
 
-  field::Field createField(
+  Field createField(
       const std::string& name,
       array::DataType,
       const eckit::Parametrisation& = util::NoConfig() ) const;
-  field::Field createField(
+  Field createField(
       const std::string& name,
       array::DataType,
       size_t levels,
       const eckit::Parametrisation& = util::NoConfig() ) const;
-  template <typename DATATYPE> field::Field createField(
+  template <typename DATATYPE> Field createField(
       const std::string& name,
       const eckit::Parametrisation& = util::NoConfig() ) const;
-  template <typename DATATYPE> field::Field createField(
+  template <typename DATATYPE> Field createField(
       const std::string& name,
       size_t levels,
       const eckit::Parametrisation& = util::NoConfig() ) const;
 
-  void gather( const field::FieldSet&, field::FieldSet& ) const;
-  void gather( const field::Field&, field::Field& ) const;
+  void gather( const FieldSet&, FieldSet& ) const;
+  void gather( const Field&, Field& ) const;
 
-  void scatter( const field::FieldSet&, field::FieldSet& ) const;
-  void scatter( const field::Field&, field::Field& ) const;
+  void scatter( const FieldSet&, FieldSet& ) const;
+  void scatter( const Field&, Field& ) const;
 
-  std::string checksum( const field::FieldSet& ) const;
-  std::string checksum( const field::Field& ) const;
+  std::string checksum( const FieldSet& ) const;
+  std::string checksum( const Field& ) const;
 
 private:
 
@@ -188,7 +188,7 @@ private:
 // inline methods
 
 template <typename DATATYPE>
-inline field::Field StructuredColumns::createField(
+inline Field StructuredColumns::createField(
     const std::string& name,
     const eckit::Parametrisation& options) const
 {
@@ -196,7 +196,7 @@ inline field::Field StructuredColumns::createField(
 }
 
 template <typename DATATYPE>
-inline field::Field StructuredColumns::createField(
+inline Field StructuredColumns::createField(
     const std::string& name,
     size_t levels,
     const eckit::Parametrisation& options) const

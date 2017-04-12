@@ -29,12 +29,12 @@ BuildTorusXYZField::BuildTorusXYZField(const std::string& name)
 {
 }
 
-field::Field& BuildTorusXYZField::operator()(Mesh& mesh, const atlas::grid::Domain& dom, double r0, double r1, int nx, int ny) const
+Field& BuildTorusXYZField::operator()(Mesh& mesh, const atlas::grid::Domain& dom, double r0, double r1, int nx, int ny) const
 {
   return operator()(mesh.nodes(),dom,r0,r1,nx,ny);
 }
 
-field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::grid::Domain& dom, double r0, double r1, int nx, int ny) const
+Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::grid::Domain& dom, double r0, double r1, int nx, int ny) const
 {
   // fill xyz with torus coordinates. r0 and r1 are large and small radii, respectively.
 
@@ -49,7 +49,7 @@ field::Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::gr
     const size_t npts = nodes.size();
     const array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.xy() );
     array::ArrayView<double,2> xyz = array::make_view<double,2>( nodes.add(
-       field::Field(name_,array::make_datatype<double>(),array::make_shape(npts,3) ) ) );
+       Field(name_,array::make_datatype<double>(),array::make_shape(npts,3) ) ) );
 
     const double pi=M_PI;
     const double c1 = 2.*pi/double(nx)*(nx-1)/(xmax-xmin);

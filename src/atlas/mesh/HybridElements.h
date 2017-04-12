@@ -84,28 +84,28 @@ public: // methods
   const Elements& elements( size_t type_idx ) const;
         Elements& elements( size_t type_idx );
         
-  const field::Field& field(const std::string& name) const;
-        field::Field& field(const std::string& name);
+  const Field& field(const std::string& name) const;
+        Field& field(const std::string& name);
   bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
 
-  const field::Field& field(size_t) const;
-        field::Field& field(size_t);
+  const Field& field(size_t) const;
+        Field& field(size_t);
   size_t nb_fields() const { return fields_.size(); }
 
   const util::Metadata& metadata() const { return metadata_; }
         util::Metadata& metadata()       { return metadata_; }
 
-  const field::Field& global_index() const { return field("glb_idx"); }
-        field::Field& global_index()       { return field("glb_idx"); }
+  const Field& global_index() const { return field("glb_idx"); }
+        Field& global_index()       { return field("glb_idx"); }
 
-  const field::Field& remote_index() const { return field("remote_idx"); }
-        field::Field& remote_index()       { return field("remote_idx"); }
+  const Field& remote_index() const { return field("remote_idx"); }
+        Field& remote_index()       { return field("remote_idx"); }
 
-  const field::Field& partition() const { return field("partition"); }
-        field::Field& partition()       { return field("partition"); }
+  const Field& partition() const { return field("partition"); }
+        Field& partition()       { return field("partition"); }
 
-  const field::Field& halo() const { return field("halo"); }
-        field::Field& halo()       { return field("halo"); }
+  const Field& halo() const { return field("halo"); }
+        Field& halo()       { return field("halo"); }
 
 // -- Modifiers
 
@@ -130,7 +130,7 @@ public: // methods
   /// @return type_idx of the added element type
   size_t add( const Elements& );
   
-  field::Field add( const field::Field& field );
+  Field add( const Field& field );
 
   void remove_field(const std::string& name);
 
@@ -150,7 +150,7 @@ public: // methods
 
 private: // -- types
 
-  typedef std::map< std::string, field::Field > FieldMap;
+  typedef std::map< std::string, Field > FieldMap;
   typedef std::map< std::string, eckit::SharedPtr<Connectivity> > ConnectivityMap;
 
 private: // -- methods

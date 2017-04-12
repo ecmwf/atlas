@@ -164,7 +164,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     // Create source FunctionSpace and fields
 
-    field::FieldSet src_fields;
+    FieldSet src_fields;
     {
         src_fields.add( src_functionspace.createField<double>("funny_scalar_1" /*, nb_levels=10*/) );
         src_fields.add( src_functionspace.createField<double>("funny_scalar_2" /*, nb_levels=10*/) );
@@ -200,7 +200,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
         }
     }
 
-    field::FieldSet tgt_fields;
+    FieldSet tgt_fields;
     for (size_t i = 0; i < src_fields.size(); ++i) {
         tgt_fields.add( tgt_functionspace.createField<double>(src_fields[i].name()) );
     }

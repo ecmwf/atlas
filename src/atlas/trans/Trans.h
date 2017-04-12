@@ -21,10 +21,10 @@
 // Forward declarations
 
 namespace atlas {
-namespace field {
     class Field;
-    class FieldImpl;
     class FieldSet;
+namespace field {
+    class FieldImpl;
     class FieldSetImpl;
 }
 }
@@ -384,46 +384,46 @@ public:
    */
   void dirtrans(const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] ) const;
 
-  void dirtrans(const field::Field& gpfield,
-                      field::Field& spfield,
+  void dirtrans(const Field& gpfield,
+                      Field& spfield,
                 const TransParameters& = TransParameters()) const;
-  void dirtrans(const field::FieldSet& gpfields,
-                      field::FieldSet& spfields,
+  void dirtrans(const FieldSet& gpfields,
+                      FieldSet& spfields,
                 const TransParameters& = TransParameters()) const;
 
-  void dirtrans(const functionspace::NodeColumns&,    const field::Field& gpfield,
-                const functionspace::Spectral&,       field::Field& spfield,
+  void dirtrans(const functionspace::NodeColumns&,    const Field& gpfield,
+                const functionspace::Spectral&,       Field& spfield,
                 const TransParameters& = TransParameters()) const;
-  void dirtrans(const functionspace::NodeColumns&,    const field::FieldSet& gpfields,
-                const functionspace::Spectral&,       field::FieldSet& spfields,
+  void dirtrans(const functionspace::NodeColumns&,    const FieldSet& gpfields,
+                const functionspace::Spectral&,       FieldSet& spfields,
                 const TransParameters& = TransParameters()) const;
-  void dirtrans_wind2vordiv(const functionspace::NodeColumns&, const field::Field& gpwind,
-                            const functionspace::Spectral&, field::Field& spvor, field::Field& spdiv,
+  void dirtrans_wind2vordiv(const functionspace::NodeColumns&, const Field& gpwind,
+                            const functionspace::Spectral&, Field& spvor, Field& spdiv,
                             const TransParameters& = TransParameters()) const;
 
-  void invtrans(const field::Field& spfield,
-                      field::Field& gpfield,
+  void invtrans(const Field& spfield,
+                      Field& gpfield,
                 const TransParameters& = TransParameters()) const;
-  void invtrans(const field::FieldSet& spfields,
-                      field::FieldSet& gpfields,
+  void invtrans(const FieldSet& spfields,
+                      FieldSet& gpfields,
                 const TransParameters& = TransParameters()) const;
 
-  void invtrans(const functionspace::Spectral&, const field::Field& spfield,
-                const functionspace::NodeColumns&,          field::Field& gpfield,
+  void invtrans(const functionspace::Spectral&, const Field& spfield,
+                const functionspace::NodeColumns&,          Field& gpfield,
                 const TransParameters& = TransParameters()) const;
-  void invtrans(const functionspace::Spectral&, const field::FieldSet& spfields,
-                const functionspace::NodeColumns&,          field::FieldSet& gpfields,
+  void invtrans(const functionspace::Spectral&, const FieldSet& spfields,
+                const functionspace::NodeColumns&,          FieldSet& gpfields,
                 const TransParameters& = TransParameters()) const;
-  void invtrans_vordiv2wind(const functionspace::Spectral&, const field::Field& spvor, const field::Field& spdiv,
-                            const functionspace::NodeColumns&, field::Field& gpwind,
+  void invtrans_vordiv2wind(const functionspace::Spectral&, const Field& spvor, const Field& spdiv,
+                            const functionspace::NodeColumns&, Field& gpwind,
                             const TransParameters& = TransParameters()) const;
 
-  void invtrans_grad(const functionspace::Spectral& sp, const field::Field& spfield,
-                     const functionspace::NodeColumns& gp, field::Field& gradfield) const;
+  void invtrans_grad(const functionspace::Spectral& sp, const Field& spfield,
+                     const functionspace::NodeColumns& gp, Field& gradfield) const;
 
 
-  void invtrans_grad(const functionspace::Spectral& sp, const field::FieldSet& spfields,
-                     const functionspace::NodeColumns& gp, field::FieldSet& gradfields) const;
+  void invtrans_grad(const functionspace::Spectral& sp, const FieldSet& spfields,
+                     const functionspace::NodeColumns& gp, FieldSet& gradfields) const;
 
   void specnorm( const int nb_fields, const double spectra[], double norms[], int rank=0 ) const;
 

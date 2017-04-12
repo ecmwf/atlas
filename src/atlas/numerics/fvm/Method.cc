@@ -96,7 +96,7 @@ void Method::setup()
       if( ! nodes_.has_field("node2edge_sign") )
       {
         nodes_.add(
-              field::Field("node2edge_sign",
+              Field("node2edge_sign",
                 array::make_datatype<double>(),
                 array::make_shape(nnodes,node_edge_connectivity.maxcols()) ) );
       }

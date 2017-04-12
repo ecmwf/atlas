@@ -91,28 +91,28 @@ public:
   size_t end() const;
   
   
-  const field::Field& field(const std::string& name) const { return hybrid_elements_->field(name); }
-        field::Field& field(const std::string& name)   { return hybrid_elements_->field(name); }
+  const Field& field(const std::string& name) const { return hybrid_elements_->field(name); }
+        Field& field(const std::string& name)   { return hybrid_elements_->field(name); }
   bool has_field(const std::string& name) const { return hybrid_elements_->has_field(name); }
 
-  const field::Field& field(size_t idx) const { return hybrid_elements_->field(idx); }
-        field::Field& field(size_t idx) { return hybrid_elements_->field(idx); }
+  const Field& field(size_t idx) const { return hybrid_elements_->field(idx); }
+        Field& field(size_t idx) { return hybrid_elements_->field(idx); }
   size_t nb_fields() const { return hybrid_elements_->nb_fields(); }
 
-  const field::Field& global_index() const { return hybrid_elements_->global_index(); }
-        field::Field& global_index()       { return hybrid_elements_->global_index(); }
+  const Field& global_index() const { return hybrid_elements_->global_index(); }
+        Field& global_index()       { return hybrid_elements_->global_index(); }
 
-  const field::Field& remote_index() const { return hybrid_elements_->remote_index(); }
-        field::Field& remote_index()       { return hybrid_elements_->remote_index(); }
+  const Field& remote_index() const { return hybrid_elements_->remote_index(); }
+        Field& remote_index()       { return hybrid_elements_->remote_index(); }
 
-  const field::Field& partition() const { return hybrid_elements_->partition(); }
-        field::Field& partition()       { return hybrid_elements_->partition(); }
+  const Field& partition() const { return hybrid_elements_->partition(); }
+        Field& partition()       { return hybrid_elements_->partition(); }
 
-  const field::Field& halo() const { return hybrid_elements_->halo(); }
-        field::Field& halo()       { return hybrid_elements_->halo(); }
+  const Field& halo() const { return hybrid_elements_->halo(); }
+        Field& halo()       { return hybrid_elements_->halo(); }
         
   template <typename DATATYPE, int RANK>
-  array::LocalView<DATATYPE,RANK> view( const field::Field& ) const;
+  array::LocalView<DATATYPE,RANK> view( const Field& ) const;
   
   size_t add(const size_t nb_elements);
 

@@ -27,16 +27,16 @@ BuildXYZField::BuildXYZField(const std::string& name, bool force_recompute) :
     force_recompute_(force_recompute) {
 }
 
-field::Field& BuildXYZField::operator()(Mesh& mesh) const
+Field& BuildXYZField::operator()(Mesh& mesh) const
 {
   return operator()(mesh.nodes());
 }
 
-field::Field& BuildXYZField::operator()(mesh::Nodes& nodes) const
+Field& BuildXYZField::operator()(mesh::Nodes& nodes) const
 {
   bool recompute = force_recompute_;
   if( !nodes.has_field(name_) ) {
-    nodes.add( field::Field(name_, array::make_datatype<double>(), array::make_shape(nodes.size(),3) ) );
+    nodes.add( Field(name_, array::make_datatype<double>(), array::make_shape(nodes.size(),3) ) );
     recompute = true;
   }
   if( recompute ) {

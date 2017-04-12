@@ -15,12 +15,6 @@
 #include "atlas/mesh.h"
 #include "atlas/field.h"
 
-
-namespace atlas {
-namespace field { class FieldSet; }
-}
-
-
 namespace atlas {
 namespace interpolation {
 
@@ -42,7 +36,7 @@ struct PartitionedMesh {
     const Mesh& mesh() const { return mesh_; }
     Mesh&       mesh()       { return mesh_; }
 
-    void writeGmsh(const std::string& fileName, const field::FieldSet fields = field::FieldSet());
+    void writeGmsh(const std::string& fileName, const FieldSet& fields = FieldSet());
 
     void partition(const grid::Grid&);
     void partition(const grid::Grid&, const PartitionedMesh&);

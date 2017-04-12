@@ -262,15 +262,15 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   functionspace::NodeColumns nodal (m);
   functionspace::Spectral spectral (trans);
 
-  field::Field spf = spectral.createField<double>("spf");
-  field::Field gpf = nodal.createField<double>("gpf");
+  Field spf = spectral.createField<double>("spf");
+  Field gpf = nodal.createField<double>("gpf");
 
 
   BOOST_CHECK_NO_THROW( trans.dirtrans(nodal,gpf,spectral,spf) );
   BOOST_CHECK_NO_THROW( trans.invtrans(spectral,spf,nodal,gpf) );
 
-  field::FieldSet gpfields;   gpfields.add(gpf);
-  field::FieldSet spfields;   spfields.add(spf);
+  FieldSet gpfields;   gpfields.add(gpf);
+  FieldSet spfields;   spfields.add(spf);
 
   BOOST_CHECK_NO_THROW( trans.dirtrans(nodal,gpfields,spectral,spfields) );
   BOOST_CHECK_NO_THROW( trans.invtrans(spectral,spfields,nodal,gpfields) );
@@ -291,10 +291,10 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   functionspace::Spectral          spectral   (trans);
   functionspace::StructuredColumns gridpoints (g);
 
-  field::Field spfg = spectral.createField<double>("spf",field::global());
-  field::Field spf  = spectral.createField<double>("spf");
-  field::Field gpf  = gridpoints.createField<double>("gpf");
-  field::Field gpfg = gridpoints.createField<double>("gpf", field::global());
+  Field spfg = spectral.createField<double>("spf",field::global());
+  Field spf  = spectral.createField<double>("spf");
+  Field gpf  = gridpoints.createField<double>("gpf");
+  Field gpfg = gridpoints.createField<double>("gpf", field::global());
 
   array::ArrayView<double,1> spg = array::make_view<double,1>(spfg);
   if( parallel::mpi::comm().rank() == 0 ) {

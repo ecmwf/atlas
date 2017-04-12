@@ -225,23 +225,71 @@ FieldImpl* FieldImpl::wrap(
 
 //----------------------------------------------------------------------------------------------------------------------
 
+// C wrapper interfaces to C++ routines
+// #define Char char
+extern "C"
+{
+  FieldImpl* atlas__Field__wrap_int_specf(const char* name, int data[], int rank, int shapef[], int stridesf[]);
+  FieldImpl* atlas__Field__wrap_long_specf(const char* name, long data[], int rank, int shapef[], int stridesf[]);
+  FieldImpl* atlas__Field__wrap_float_specf(const char* name, float data[], int rank, int shapef[], int stridesf[]);
+  FieldImpl* atlas__Field__wrap_double_specf(const char* name, double data[], int rank, int shapef[], int stridesf[]);
+  FieldImpl* atlas__Field__create(eckit::Parametrisation* params);
+  void atlas__Field__delete (FieldImpl* This);
+  const char* atlas__Field__name (FieldImpl* This);
+  void atlas__Field__datatype (FieldImpl* This, char* &datatype, int &size, int &allocated);
+  int atlas__Field__kind (FieldImpl* This);
+  int atlas__Field__rank (FieldImpl* This);
+  int atlas__Field__size (FieldImpl* This);
+  int atlas__Field__levels (FieldImpl* This);
+  double atlas__Field__bytes (FieldImpl* This);
+  void atlas__Field__shapef (FieldImpl* This, int* &shape, int &rank);
+  void atlas__Field__host_data_int_specf (FieldImpl* This, int* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__host_data_long_specf (FieldImpl* This, long* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__host_data_float_specf (FieldImpl* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__host_data_double_specf (FieldImpl* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_int_specf (FieldImpl* This, int* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_long_specf (FieldImpl* This, long* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_float_specf (FieldImpl* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  void atlas__Field__device_data_double_specf (FieldImpl* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
+  util::Metadata* atlas__Field__metadata (FieldImpl* This);
+  const functionspace::FunctionSpaceImpl* atlas__Field__functionspace (FieldImpl* This);
+  void atlas__Field__rename(FieldImpl* This, const char* name);
+  void atlas__Field__set_levels(FieldImpl* This, int levels);
+  void atlas__Field__set_functionspace(FieldImpl* This, const functionspace::FunctionSpaceImpl* functionspace);
+  int atlas__Field__is_on_host(const FieldImpl* This);
+  int atlas__Field__is_on_device(const FieldImpl* This);
+  void atlas__Field__clone_to_device(FieldImpl* This);
+  void atlas__Field__clone_from_device(FieldImpl* This);
+  void atlas__Field__sync_host_device(FieldImpl* This);
+}
+// #undef Char
+
+//----------------------------------------------------------------------------------------------------------------------
+
+} // namespace field
+
+//----------------------------------------------------------------------------------------------------------------------
 
 class Field {
+public:
+  
+  using Implementation = field::FieldImpl;
+  
 private:
 
-  eckit::SharedPtr<FieldImpl> field_;
+  eckit::SharedPtr<Implementation> field_;
 
 public:
 
   Field();
   Field( const Field& );
-  Field( const FieldImpl* );
+  Field( const Implementation* );
 
   const bool valid() const { return field_; }
   operator bool() const { return valid(); }
 
-  FieldImpl* get() { return field_.get(); }
-  const FieldImpl* get() const { return field_.get(); }
+  Implementation* get() { return field_.get(); }
+  const Implementation* get() const { return field_.get(); }
 
   /// @brief Create field from parametrisation
   Field(const eckit::Parametrisation&);
@@ -322,7 +370,7 @@ public:
   double bytes() const { return field_->bytes(); }
 
   /// @brief Output information of field
-  friend std::ostream& operator<<( std::ostream& os, const FieldImpl& v);
+  friend std::ostream& operator<<( std::ostream& os, const Field& v);
 
   /// @brief Output information of field plus raw data
   void dump(std::ostream& os) const { field_->dump(os); }
@@ -375,7 +423,7 @@ Field::Field(
     const std::string& name,
     DATATYPE *data,
     const array::ArraySpec& spec) :
-    field_( FieldImpl::wrap(name,data,spec) ) {
+    field_( Implementation::wrap(name,data,spec) ) {
 }
 
 template<typename DATATYPE>
@@ -383,50 +431,9 @@ Field::Field(
     const std::string& name,
     DATATYPE *data,
     const array::ArrayShape& shape) :
-    field_( FieldImpl::wrap(name, data, shape) ) {
+    field_( Implementation::wrap(name, data, shape) ) {
 }
-
-
-// C wrapper interfaces to C++ routines
-#define Char char
-extern "C"
-{
-  FieldImpl* atlas__Field__wrap_int_specf(const char* name, int data[], int rank, int shapef[], int stridesf[]);
-  FieldImpl* atlas__Field__wrap_long_specf(const char* name, long data[], int rank, int shapef[], int stridesf[]);
-  FieldImpl* atlas__Field__wrap_float_specf(const char* name, float data[], int rank, int shapef[], int stridesf[]);
-  FieldImpl* atlas__Field__wrap_double_specf(const char* name, double data[], int rank, int shapef[], int stridesf[]);
-  FieldImpl* atlas__Field__create(eckit::Parametrisation* params);
-  void atlas__Field__delete (FieldImpl* This);
-  const char* atlas__Field__name (FieldImpl* This);
-  void atlas__Field__datatype (FieldImpl* This, Char* &datatype, int &size, int &allocated);
-  int atlas__Field__kind (FieldImpl* This);
-  int atlas__Field__rank (FieldImpl* This);
-  int atlas__Field__size (FieldImpl* This);
-  int atlas__Field__levels (FieldImpl* This);
-  double atlas__Field__bytes (FieldImpl* This);
-  void atlas__Field__shapef (FieldImpl* This, int* &shape, int &rank);
-  void atlas__Field__host_data_int_specf (FieldImpl* This, int* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__host_data_long_specf (FieldImpl* This, long* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__host_data_float_specf (FieldImpl* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__host_data_double_specf (FieldImpl* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__device_data_int_specf (FieldImpl* This, int* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__device_data_long_specf (FieldImpl* This, long* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__device_data_float_specf (FieldImpl* This, float* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  void atlas__Field__device_data_double_specf (FieldImpl* This, double* &field_data, int &rank, int* &field_shapef, int* &field_stridesf);
-  util::Metadata* atlas__Field__metadata (FieldImpl* This);
-  const functionspace::FunctionSpaceImpl* atlas__Field__functionspace (FieldImpl* This);
-  void atlas__Field__rename(FieldImpl* This, const char* name);
-  void atlas__Field__set_levels(FieldImpl* This, int levels);
-  void atlas__Field__set_functionspace(FieldImpl* This, const functionspace::FunctionSpaceImpl* functionspace);
-  int atlas__Field__is_on_host(const FieldImpl* This);
-  int atlas__Field__is_on_device(const FieldImpl* This);
-  void atlas__Field__clone_to_device(FieldImpl* This);
-  void atlas__Field__clone_from_device(FieldImpl* This);
-  void atlas__Field__sync_host_device(FieldImpl* This);
-}
-#undef Char
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace field
 } // namespace atlas

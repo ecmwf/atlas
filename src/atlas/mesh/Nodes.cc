@@ -17,7 +17,6 @@
 
 using atlas::array::make_datatype;
 using atlas::array::make_shape;
-using atlas::field::Field;
 
 namespace atlas {
 namespace mesh {
@@ -84,7 +83,7 @@ void Nodes::remove_field(const std::string& name)
 }
 
 
-const field::Field& Nodes::field(const std::string& name) const
+const Field& Nodes::field(const std::string& name) const
 {
   if( ! has_field(name) )
   {
@@ -95,9 +94,9 @@ const field::Field& Nodes::field(const std::string& name) const
   return fields_.find(name)->second;
 }
 
-field::Field& Nodes::field(const std::string& name)
+Field& Nodes::field(const std::string& name)
 {
-  return const_cast<field::Field&>(static_cast<const Nodes*>(this)->field(name));
+  return const_cast<Field&>(static_cast<const Nodes*>(this)->field(name));
 }
 
 void Nodes::resize( size_t size )
@@ -106,7 +105,7 @@ void Nodes::resize( size_t size )
   size_ = size;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
-    field::Field& field = it->second;
+    Field& field = it->second;
     array::ArrayShape shape = field.shape();
     shape[0] = size_;
     field.resize(shape);
@@ -124,7 +123,7 @@ void Nodes::resize( size_t size )
   }
 }
 
-const field::Field& Nodes::field(size_t idx) const
+const Field& Nodes::field(size_t idx) const
 {
   ASSERT(idx < nb_fields());
   size_t c(0);
@@ -132,7 +131,7 @@ const field::Field& Nodes::field(size_t idx) const
   {
     if( idx == c )
     {
-      const field::Field& field = it->second;
+      const Field& field = it->second;
       return field;
     }
     c++;
@@ -141,9 +140,9 @@ const field::Field& Nodes::field(size_t idx) const
   static Field f;
   return f;
 }
-field::Field& Nodes::field(size_t idx)
+Field& Nodes::field(size_t idx)
 {
-  return const_cast<field::Field&>(static_cast<const Nodes*>(this)->field(idx));
+  return const_cast<Field&>(static_cast<const Nodes*>(this)->field(idx));
 }
 
 void Nodes::print(std::ostream& os) const

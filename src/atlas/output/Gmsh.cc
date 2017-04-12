@@ -23,8 +23,8 @@
 #include "atlas/output/detail/GmshIO.h"
 #include "eckit/exception/Exceptions.h"
 
-using atlas::field::Field;
-using atlas::field::FieldSet;
+using atlas::Field;
+using atlas::FieldSet;
 using atlas::mesh::Mesh;
 using atlas::functionspace::FunctionSpace;
 using eckit::Parametrisation;
@@ -234,7 +234,7 @@ void Gmsh::write(
 // -----------------------------------------------------------------------------
 
 void Gmsh::write(
-    const field::Field& field,
+    const Field& field,
     const eckit::Parametrisation& config ) const
 {
   Gmsh::Configuration c = config_;
@@ -246,7 +246,7 @@ void Gmsh::write(
 // -----------------------------------------------------------------------------
 
 void Gmsh::write(
-    const field::FieldSet& fields,
+    const FieldSet& fields,
     const eckit::Parametrisation& config) const
 {
   Gmsh::Configuration c = config_;
@@ -258,7 +258,7 @@ void Gmsh::write(
 // -----------------------------------------------------------------------------
 
 void Gmsh::write(
-    const field::Field& field,
+    const Field& field,
     const functionspace::FunctionSpace& functionspace,
     const eckit::Parametrisation& config) const
 {
@@ -271,7 +271,7 @@ void Gmsh::write(
 // -----------------------------------------------------------------------------
 
 void Gmsh::write(
-    const field::FieldSet& fields,
+    const FieldSet& fields,
     const functionspace::FunctionSpace& functionspace,
     const eckit::Parametrisation& config) const
 {

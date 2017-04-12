@@ -15,6 +15,7 @@
 
 namespace atlas {
 namespace field {
+  
 //------------------------------------------------------------------------------------------------------
 
 
@@ -65,18 +66,6 @@ std::vector< std::string > FieldSetImpl::field_names() const
     ret.push_back(field->name());
 
   return ret;
-}
-
-FieldSet::FieldSet( const std::string& name ) : 
-    fieldset_( new FieldSetImpl(name) ) {
-}
-
-FieldSet::FieldSet( const FieldSetImpl* fieldset ) : 
-    fieldset_( const_cast<FieldSetImpl*>(fieldset) ) {
-}
-
-FieldSet::FieldSet( const FieldSet& fieldset ) : 
-    fieldset_( fieldset.fieldset_ ) {
 }
 
 //-----------------------------------------------------------------------------
@@ -152,5 +141,23 @@ FieldImpl* atlas__FieldSet__field_by_idx  (FieldSetImpl* This, size_t idx)
 //-----------------------------------------------------------------------------
 
 } // namespace field
+
+//------------------------------------------------------------------------------------------------------
+
+
+FieldSet::FieldSet( const std::string& name ) : 
+    fieldset_( new Implementation(name) ) {
+}
+
+FieldSet::FieldSet( const Implementation* fieldset ) : 
+    fieldset_( const_cast<Implementation*>(fieldset) ) {
+}
+
+FieldSet::FieldSet( const FieldSet& fieldset ) : 
+    fieldset_( fieldset.fieldset_ ) {
+}
+
+//------------------------------------------------------------------------------------------------------
+
 } // namespace atlas
 

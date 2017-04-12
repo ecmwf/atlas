@@ -23,8 +23,9 @@
 
 
 namespace atlas {
+  class Field;
+  class FieldSet;
 namespace mesh { class Mesh; }
-namespace field { class Field; class FieldSet; }
 }
 
 
@@ -56,8 +57,8 @@ public:
      */
     virtual void setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) = 0;
 
-    virtual void execute(const field::FieldSet& fieldsSource, field::FieldSet& fieldsTarget);
-    virtual void execute(const field::Field&    fieldSource,  field::Field&    fieldTarget);
+    virtual void execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget);
+    virtual void execute(const Field&    fieldSource,  Field&    fieldTarget);
 
     const Matrix& matrix() const { return matrix_; }
     Matrix&       matrix()       { return matrix_; }

@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE( test_broadcast_to_self )
   array::ArrayT<double> array(10,2);
   Log::info() << "array.footprint = " << eckit::Bytes(array.footprint()) << std::endl;
 
-  field::Field field ("field",array::make_datatype<double>(),array::make_shape(10,2));
+  Field field ("field",array::make_datatype<double>(),array::make_shape(10,2));
   Log::info() << "field.footprint = " << eckit::Bytes(field.footprint()) << std::endl;
 
   grid::Grid grid("O640");

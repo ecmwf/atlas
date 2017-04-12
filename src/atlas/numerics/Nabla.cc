@@ -23,8 +23,6 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 
-using atlas::field::Field;
-
 namespace {
 
     static eckit::Mutex *local_mutex = 0;
@@ -67,19 +65,19 @@ Nabla::Nabla( const Method& method ) :
     Nabla( method, util::NoConfig() ) {
 }
 
-void Nabla::gradient(const field::Field &scalar, field::Field &grad) const {
+void Nabla::gradient(const Field &scalar, Field &grad) const {
       nabla_->gradient(scalar,grad);
 }
 
-void Nabla::divergence(const field::Field &vector, field::Field &div) const {
+void Nabla::divergence(const Field &vector, Field &div) const {
       nabla_->divergence(vector,div);
 }
 
-void Nabla::curl(const field::Field &vector, field::Field &curl) const {
+void Nabla::curl(const Field &vector, Field &curl) const {
       nabla_->curl(vector,curl);
 }
 
-void Nabla::laplacian(const field::Field &scalar, field::Field &laplacian) const {
+void Nabla::laplacian(const Field &scalar, Field &laplacian) const {
       nabla_->laplacian(scalar,laplacian);
 }
 

@@ -68,11 +68,11 @@ HybridElements::HybridElements() :
   elements_begin_(1,0ul),
   type_idx_()
 {
-  add( field::Field("glb_idx",    make_datatype<gidx_t>(), make_shape(size())) );
-  add( field::Field("remote_idx", make_datatype<int>(),    make_shape(size())) );
-  add( field::Field("partition",  make_datatype<int>(),    make_shape(size())) );
-  add( field::Field("halo",       make_datatype<int>(),    make_shape(size())) );
-  add( field::Field("patch",      make_datatype<int>(),    make_shape(size())) );
+  add( Field("glb_idx",    make_datatype<gidx_t>(), make_shape(size())) );
+  add( Field("remote_idx", make_datatype<int>(),    make_shape(size())) );
+  add( Field("partition",  make_datatype<int>(),    make_shape(size())) );
+  add( Field("halo",       make_datatype<int>(),    make_shape(size())) );
+  add( Field("patch",      make_datatype<int>(),    make_shape(size())) );
   set_uninitialized_fields_to_zero(*this, 0);
 
   node_connectivity_ = &add( new Connectivity("node") );
@@ -84,7 +84,7 @@ HybridElements::~HybridElements()
 {
 }
 
-field::Field HybridElements::add( const field::Field& field )
+Field HybridElements::add( const Field& field )
 {
   ASSERT( field );
   ASSERT( ! field.name().empty() );
@@ -104,7 +104,7 @@ void HybridElements::resize( size_t size )
   size_ = size;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
-    field::Field& field = it->second;
+    Field& field = it->second;
     array::ArrayShape shape = field.shape();
     shape[0] = size_;
     field.resize(shape);
@@ -126,7 +126,7 @@ void HybridElements::remove_field(const std::string& name)
 }
 
 
-const field::Field& HybridElements::field(const std::string& name) const
+const Field& HybridElements::field(const std::string& name) const
 {
   if( ! has_field(name) )
   {
@@ -137,12 +137,12 @@ const field::Field& HybridElements::field(const std::string& name) const
   return fields_.find(name)->second;
 }
 
-field::Field& HybridElements::field(const std::string& name)
+Field& HybridElements::field(const std::string& name)
 {
-  return const_cast<field::Field&>(static_cast<const HybridElements*>(this)->field(name));
+  return const_cast<Field&>(static_cast<const HybridElements*>(this)->field(name));
 }
 
-const field::Field& HybridElements::field(size_t idx) const
+const Field& HybridElements::field(size_t idx) const
 {
   ASSERT(idx < nb_fields());
   size_t c(0);
@@ -150,7 +150,7 @@ const field::Field& HybridElements::field(size_t idx) const
   {
     if( idx == c )
     {
-      const field::Field& field = it->second;
+      const Field& field = it->second;
       return field;
     }
     c++;
@@ -158,9 +158,9 @@ const field::Field& HybridElements::field(size_t idx) const
   throw eckit::SeriousBug("Should not be here!",Here());
 }
 
-field::Field& HybridElements::field(size_t idx)
+Field& HybridElements::field(size_t idx)
 {
-  return const_cast<field::Field&>(static_cast<const HybridElements*>(this)->field(idx));
+  return const_cast<Field&>(static_cast<const HybridElements*>(this)->field(idx));
 }
 
 
@@ -282,7 +282,7 @@ void HybridElements::insert( size_t type_idx, size_t position, size_t nb_element
   size_+=nb_elements;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
-    field::Field& field = it->second;
+    Field& field = it->second;
     field.insert(position,nb_elements);
   }
 

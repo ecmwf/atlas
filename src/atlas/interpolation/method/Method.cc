@@ -84,7 +84,7 @@ Method* MethodFactory::build(const std::string& name, const Method::Config& conf
 }
 
 
-void Method::execute(const field::FieldSet& fieldsSource, field::FieldSet& fieldsTarget) {
+void Method::execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget) {
     eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::Method::execute()");
 
     const size_t N = fieldsSource.size();
@@ -93,8 +93,8 @@ void Method::execute(const field::FieldSet& fieldsSource, field::FieldSet& field
     for (size_t i = 0; i < fieldsSource.size(); ++i) {
         Log::debug<Atlas>() << "Method::execute() on field " << (i+1) << '/' << N << "..." << std::endl;
 
-        field::Field& src = const_cast< field::Field& >(fieldsSource[i]);
-        field::Field& tgt = const_cast< field::Field& >(fieldsTarget[i]);
+        Field& src = const_cast< Field& >(fieldsSource[i]);
+        Field& tgt = const_cast< Field& >(fieldsTarget[i]);
 
         eckit::linalg::Vector
                 v_src(src.data<double>(), src.shape(0)),
@@ -105,11 +105,11 @@ void Method::execute(const field::FieldSet& fieldsSource, field::FieldSet& field
 }
 
 
-void Method::execute(const field::Field& fieldSource, field::Field& fieldTarget) {
+void Method::execute(const Field& fieldSource, Field& fieldTarget) {
     eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::Method::execute()");
 
     eckit::linalg::Vector
-            v_src(const_cast< field::Field& >(fieldSource).data<double>(), fieldSource.shape(0)),
+            v_src(const_cast< Field& >(fieldSource).data<double>(), fieldSource.shape(0)),
             v_tgt(fieldTarget.data<double>(), fieldTarget.shape(0));
 
     eckit::linalg::LinearAlgebra::backend().spmv(matrix_, v_src, v_tgt);

@@ -194,8 +194,8 @@ private:
 
   mesh::Mesh mesh;
   functionspace::NodeColumns nodes_fs;
-  field::Field scalar_field;
-  field::Field grad_field;
+  Field scalar_field;
+  Field grad_field;
 
   vector<int> pole_edges;
   vector<bool> is_ghost;
@@ -368,7 +368,7 @@ void AtlasBenchmark::setup()
   const mesh::Connectivity& node2edge = mesh.nodes().edge_connectivity();
   const mesh::MultiBlockConnectivity& edge2node = mesh.edges().node_connectivity();
   auto node2edge_sign = array::make_view<double,2> ( mesh.nodes().add(
-      field::Field("to_edge_sign",array::make_datatype<double>(),array::make_shape(nnodes,node2edge.maxcols()) ) ) );
+      Field("to_edge_sign",array::make_datatype<double>(),array::make_shape(nnodes,node2edge.maxcols()) ) ) );
 
   atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
   {

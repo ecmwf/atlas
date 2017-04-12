@@ -7,7 +7,7 @@ using atlas::Log;
 using atlas::array::make_shape;
 using atlas::array::make_datatype;
 using atlas::array::make_view;
-using atlas::field::Field;
+using atlas::Field;
 using atlas::grid::StructuredGrid;
 
 int main(int argc, char *argv[])

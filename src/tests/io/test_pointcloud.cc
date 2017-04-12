@@ -381,7 +381,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   // check field values to a very small tolerance (relative tol. 0.001%)
   BOOST_TEST_CHECKPOINT("Part 3");
 
-  field::Field& field(nodes.field("my_super_field"));
+  Field& field(nodes.field("my_super_field"));
   BOOST_REQUIRE_EQUAL(
         /* data used to write file*/ test_vectors::nb_pts,
         /* data read from file*/     field.size() );
@@ -399,7 +399,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   // a Grid (should be exactly the same)
   BOOST_TEST_CHECKPOINT("Part 4");
 
-  field::FieldSet fieldset;
+  FieldSet fieldset;
   BOOST_CHECK_NO_THROW( fieldset.add(field) );
 
   functionspace::NodeColumns functionspace(mesh);
@@ -436,8 +436,8 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   BOOST_CHECK_EQUAL(mesh_from_FieldSet.nodes().has_field("_StRaNgE_FiElD_NaMe_"), false);
 
   // (data section: guarantee data are from different places, to make checks useful)
-  const field::Field& field_from_FieldSet(mesh_from_FieldSet.nodes().field("my_super_field"));
-  const field::Field& field_from_Grid    (mesh_from_FieldSet.nodes().field("my_super_field"));
+  const Field& field_from_FieldSet(mesh_from_FieldSet.nodes().field("my_super_field"));
+  const Field& field_from_Grid    (mesh_from_FieldSet.nodes().field("my_super_field"));
   BOOST_CHECK_NE( array::make_storageview<double>(field).data(), array::make_storageview<double>(field_from_FieldSet).data() );
   BOOST_CHECK_NE( array::make_storageview<double>(field).data(), array::make_storageview<double>(field_from_Grid)    .data() );
 

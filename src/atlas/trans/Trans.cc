@@ -26,7 +26,7 @@ using atlas::mesh::IsGhostNode;
 using atlas::functionspace::StructuredColumns;
 using atlas::functionspace::NodeColumns;
 using atlas::functionspace::Spectral;
-using atlas::field::Field;
+using atlas::Field;
 using atlas::array::ArrayView;
 using atlas::array::make_view;
 
@@ -652,32 +652,32 @@ void encode( const Trans::Options& p, eckit::Stream& s )
 
 
 
-void Trans::dirtrans(const functionspace::NodeColumns& gp, const field::Field& gpfield,
-                     const Spectral& sp, field::Field& spfield, const TransParameters& context) const
+void Trans::dirtrans(const functionspace::NodeColumns& gp, const Field& gpfield,
+                     const Spectral& sp, Field& spfield, const TransParameters& context) const
 {
-  field::FieldSet gpfields; gpfields.add(gpfield);
-  field::FieldSet spfields; spfields.add(spfield);
+  FieldSet gpfields; gpfields.add(gpfield);
+  FieldSet spfields; spfields.add(spfield);
   dirtrans(gp,gpfields,sp,spfields,context);
 }
 
 
 // --------------------------------------------------------------------------------------------
 
-void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet& gpfields,
-                     const Spectral& sp, field::FieldSet& spfields, const TransParameters& context) const
+void Trans::dirtrans(const functionspace::NodeColumns& gp,const FieldSet& gpfields,
+                     const Spectral& sp, FieldSet& spfields, const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
-    const field::Field& f = gpfields[jfld];
+    const Field& f = gpfields[jfld];
     nfld += f.stride(0);
   }
 
   int trans_spnfld(0);
   for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
-    const field::Field& f = spfields[jfld];
+    const Field& f = spfields[jfld];
     trans_spnfld += f.stride(0);
   }
 
@@ -721,8 +721,8 @@ void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet&
 // --------------------------------------------------------------------------------------------
 
 void Trans::dirtrans(
-    const field::Field& gpfield,
-          field::Field& spfield,
+    const Field& gpfield,
+          Field& spfield,
     const TransParameters& context) const
 {
   ASSERT( gpfield.functionspace() == 0 ||
@@ -752,15 +752,15 @@ void Trans::dirtrans(
 }
 
 void Trans::dirtrans(
-    const field::FieldSet& gpfields,
-          field::FieldSet& spfields,
+    const FieldSet& gpfields,
+          FieldSet& spfields,
     const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
-    const field::Field& f = gpfields[jfld];
+    const Field& f = gpfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.functionspace() == 0 ||
             functionspace::StructuredColumns(f.functionspace()) );
@@ -769,7 +769,7 @@ void Trans::dirtrans(
   int trans_spnfld(0);
   for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
-    const field::Field& f = spfields[jfld];
+    const Field& f = spfields[jfld];
     trans_spnfld += f.stride(0);
   }
 
@@ -811,29 +811,29 @@ void Trans::dirtrans(
 
 // --------------------------------------------------------------------------------------------
 
-void Trans::invtrans_grad(const Spectral& sp, const field::Field& spfield,
-                          const functionspace::NodeColumns& gp, field::Field& gradfield) const
+void Trans::invtrans_grad(const Spectral& sp, const Field& spfield,
+                          const functionspace::NodeColumns& gp, Field& gradfield) const
 {
-  field::FieldSet spfields;   spfields.  add(spfield);
-  field::FieldSet gradfields; gradfields.add(gradfield);
+  FieldSet spfields;   spfields.  add(spfield);
+  FieldSet gradfields; gradfields.add(gradfield);
   invtrans_grad(sp,spfields,gp,gradfields);
 }
 
-void Trans::invtrans_grad(const Spectral& sp, const field::FieldSet& spfields,
-                          const functionspace::NodeColumns& gp, field::FieldSet& gradfields) const
+void Trans::invtrans_grad(const Spectral& sp, const FieldSet& spfields,
+                          const functionspace::NodeColumns& gp, FieldSet& gradfields) const
 {
   // Count total number of fields and do sanity checks
   int nb_gridpoint_field(0);
   for(size_t jfld = 0; jfld < gradfields.size(); ++jfld)
   {
-    const field::Field& f = gradfields[jfld];
+    const Field& f = gradfields[jfld];
     nb_gridpoint_field += f.stride(0);
   }
 
   int nfld(0);
   for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
-    const field::Field& f = spfields[jfld];
+    const Field& f = spfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.levels() == f.stride(0) );
   }
@@ -901,11 +901,11 @@ void Trans::invtrans_grad(const Spectral& sp, const field::FieldSet& spfields,
 
 // --------------------------------------------------------------------------------------------
 
-void Trans::invtrans(const Spectral& sp, const field::Field& spfield,
-                     const functionspace::NodeColumns& gp, field::Field& gpfield, const TransParameters& context) const
+void Trans::invtrans(const Spectral& sp, const Field& spfield,
+                     const functionspace::NodeColumns& gp, Field& gpfield, const TransParameters& context) const
 {
-  field::FieldSet spfields; spfields.add(spfield);
-  field::FieldSet gpfields; gpfields.add(gpfield);
+  FieldSet spfields; spfields.add(spfield);
+  FieldSet gpfields; gpfields.add(gpfield);
   invtrans(sp,spfields,gp,gpfields,context);
 }
 
@@ -913,21 +913,21 @@ void Trans::invtrans(const Spectral& sp, const field::Field& spfield,
 // --------------------------------------------------------------------------------------------
 
 
-void Trans::invtrans(const Spectral& sp, const field::FieldSet& spfields,
-                     const functionspace::NodeColumns& gp, field::FieldSet& gpfields, const TransParameters& context) const
+void Trans::invtrans(const Spectral& sp, const FieldSet& spfields,
+                     const functionspace::NodeColumns& gp, FieldSet& gpfields, const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
-    const field::Field& f = gpfields[jfld];
+    const Field& f = gpfields[jfld];
     nfld += f.stride(0);
   }
 
   int nb_spectral_fields(0);
   for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
-    const field::Field& f = spfields[jfld];
+    const Field& f = spfields[jfld];
     nb_spectral_fields += f.stride(0);
   }
 
@@ -970,8 +970,8 @@ void Trans::invtrans(const Spectral& sp, const field::FieldSet& spfields,
 // --------------------------------------------------------------------------------------------
 
 
-void Trans::invtrans(const  field::Field& spfield,
-                            field::Field& gpfield,
+void Trans::invtrans(const  Field& spfield,
+                            Field& gpfield,
                      const TransParameters& context) const
 {
   ASSERT( gpfield.functionspace() == 0 ||
@@ -1004,15 +1004,15 @@ void Trans::invtrans(const  field::Field& spfield,
 // --------------------------------------------------------------------------------------------
 
 
-void Trans::invtrans(const  field::FieldSet& spfields,
-                            field::FieldSet& gpfields,
+void Trans::invtrans(const  FieldSet& spfields,
+                            FieldSet& gpfields,
                      const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
-    const field::Field& f = gpfields[jfld];
+    const Field& f = gpfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.functionspace() == 0 ||
             functionspace::StructuredColumns( f.functionspace() ) );
@@ -1021,7 +1021,7 @@ void Trans::invtrans(const  field::FieldSet& spfields,
   int nb_spectral_fields(0);
   for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
-    const field::Field& f = spfields[jfld];
+    const Field& f = spfields[jfld];
     nb_spectral_fields += f.stride(0);
   }
 
@@ -1066,8 +1066,8 @@ void Trans::invtrans(const  field::FieldSet& spfields,
 
 // -----------------------------------------------------------------------------------------------
 
-void Trans::dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const field::Field& gpwind,
-                                 const Spectral& sp, field::Field& spvor, field::Field&spdiv,
+void Trans::dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const Field& gpwind,
+                                 const Spectral& sp, Field& spvor, Field&spdiv,
                                  const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
@@ -1122,8 +1122,8 @@ void Trans::dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const fie
 }
 
 
-void Trans::invtrans_vordiv2wind(const Spectral& sp, const field::Field& spvor, const field::Field& spdiv,
-                                 const functionspace::NodeColumns& gp, field::Field& gpwind, const TransParameters&) const
+void Trans::invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, const Field& spdiv,
+                                 const functionspace::NodeColumns& gp, Field& gpwind, const TransParameters&) const
 {
   // Count total number of fields and do sanity checks
   size_t nfld = spvor.stride(0);
@@ -1640,7 +1640,7 @@ void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspa
     ASSERT( sp );
     ASSERT( spfields );
     ASSERT( parameters );
-    field::FieldSet fspfields(spfields);
+    FieldSet fspfields(spfields);
     This->dirtrans(functionspace::FunctionSpace(gp),gpfields,functionspace::FunctionSpace(sp),fspfields,*parameters);
   );
 }
@@ -1652,7 +1652,7 @@ void atlas__Trans__dirtrans_fieldset (const Trans* This, const field::FieldSetIm
     ASSERT( gpfields );
     ASSERT( spfields );
     ASSERT( parameters );
-    field::FieldSet fspfields(spfields);
+    FieldSet fspfields(spfields);
     This->dirtrans(gpfields,fspfields,*parameters);
   );
 }
@@ -1666,7 +1666,7 @@ void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const functionspa
     ASSERT( gp );
     ASSERT( gpfields );
     ASSERT( parameters );
-    field::FieldSet fgpfields(gpfields);
+    FieldSet fgpfields(gpfields);
     This->invtrans(functionspace::FunctionSpace(sp),spfields,functionspace::FunctionSpace(gp),fgpfields,*parameters);
   );
 }
@@ -1703,7 +1703,7 @@ void atlas__Trans__invtrans_fieldset (const Trans* This, const field::FieldSetIm
     ASSERT( spfields );
     ASSERT( gpfields );
     ASSERT( parameters );
-    field::FieldSet fgpfields(gpfields);
+    FieldSet fgpfields(gpfields);
     This->invtrans(spfields,fgpfields,*parameters);
   );
 }

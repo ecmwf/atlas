@@ -76,7 +76,7 @@ static void rotated_flow_magnitude(grid::StructuredGrid& grid, double var[], con
 
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
-void rotated_flow_magnitude(const functionspace::NodeColumns& fs, field::Field& field, const double& beta)
+void rotated_flow_magnitude(const functionspace::NodeColumns& fs, Field& field, const double& beta)
 {
   const double radius = util::Earth::radiusInMeters();
   const double USCAL = 20.;
@@ -140,9 +140,9 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
     mesh::Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(g);
     functionspace::StructuredColumns gp(g);
     output::Gmsh gmsh(grid_uid+"-grid.msh");
-    field::Field scalar( "scalar",rgp.data(),array::make_shape(gp.size()));
-    field::Field scalar_dNS("scalar_dNS",rgp.data()+nfld*gp.size(),array::make_shape(gp.size()));
-    field::Field scalar_dEW("scalar_dEW",rgp.data()+2*nfld*gp.size(),array::make_shape(gp.size()));
+    Field scalar( "scalar",rgp.data(),array::make_shape(gp.size()));
+    Field scalar_dNS("scalar_dNS",rgp.data()+nfld*gp.size(),array::make_shape(gp.size()));
+    Field scalar_dEW("scalar_dEW",rgp.data()+2*nfld*gp.size(),array::make_shape(gp.size()));
     gmsh.write(mesh);
     gmsh.write(scalar,gp);
     gmsh.write(scalar_dEW,gp);
@@ -161,9 +161,9 @@ BOOST_AUTO_TEST_CASE( test_invtrans_grad )
   functionspace::NodeColumns gp(mesh);
   functionspace::Spectral sp(trans);
 
-  field::Field scalar    = gp.createField<double>("scalar");
-  field::Field scalar_sp = sp.createField<double>("scalar_sp");
-  field::Field grad      = gp.createField<double>("grad",array::make_shape(2));
+  Field scalar    = gp.createField<double>("scalar");
+  Field scalar_sp = sp.createField<double>("scalar_sp");
+  Field grad      = gp.createField<double>("grad",array::make_shape(2));
 
   // Initial condition
   double beta = M_PI*0.5;

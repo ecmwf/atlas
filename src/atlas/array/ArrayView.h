@@ -40,7 +40,7 @@
 /// There is also an easier way to wrap Field and Array classes:
 ///
 /// Example 3:
-///     ArrayView<int,3> fieldview( field::Field );
+///     ArrayView<int,3> fieldview( Field );
 ///     ArrayView<int,2> arrayview( Array );
 ///
 /// @author Willem Deconinck

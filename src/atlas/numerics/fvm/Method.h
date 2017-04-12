@@ -9,8 +9,7 @@
  */
 
 
-#ifndef atlas_numerics_fvm_Method_h
-#define atlas_numerics_fvm_Method_h
+#pragma once
 
 #include <string>
 #include "atlas/functionspace/NodeColumns.h"
@@ -79,6 +78,3 @@ extern "C"
 } // namespace fvm
 } // namespace numerics
 } // namespace atlas
-
-
-#endif // atlas_numerics_fvm_Method_h

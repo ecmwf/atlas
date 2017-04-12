@@ -16,10 +16,8 @@
 #include "atlas/field/Field.h"
 
 namespace atlas {
-namespace field {
     class Field;
     class FieldSet;
-}
 }
 
 namespace atlas {
@@ -47,26 +45,26 @@ public:
   virtual std::string name() const { return "Spectral"; }
 
   /// @brief Create a spectral field
-  template <typename DATATYPE> field::Field createField(
+  template <typename DATATYPE> Field createField(
     const std::string& name,
     const eckit::Parametrisation& = util::NoConfig() ) const;
-  template <typename DATATYPE> field::Field createField(
+  template <typename DATATYPE> Field createField(
     const std::string& name,
     size_t levels,
     const eckit::Parametrisation& = util::NoConfig() ) const;
 
-  void gather( const field::FieldSet&, field::FieldSet& ) const;
-  void gather( const field::Field&,    field::Field& ) const;
+  void gather( const FieldSet&, FieldSet& ) const;
+  void gather( const Field&,    Field& ) const;
 
-  void scatter( const field::FieldSet&, field::FieldSet& ) const;
-  void scatter( const field::Field&,    field::Field& ) const;
+  void scatter( const FieldSet&, FieldSet& ) const;
+  void scatter( const Field&,    Field& ) const;
 
-  std::string checksum( const field::FieldSet& ) const;
-  std::string checksum( const field::Field& ) const;
+  std::string checksum( const FieldSet& ) const;
+  std::string checksum( const Field& ) const;
 
-  void norm( const field::Field&, double& norm, int rank=0 ) const;
-  void norm( const field::Field&, double norm_per_level[], int rank=0 ) const;
-  void norm( const field::Field&, std::vector<double>& norm_per_level, int rank=0 ) const;
+  void norm( const Field&, double& norm, int rank=0 ) const;
+  void norm( const Field&, double norm_per_level[], int rank=0 ) const;
+  void norm( const Field&, std::vector<double>& norm_per_level, int rank=0 ) const;
 
 public: // methods
 
@@ -102,26 +100,26 @@ public:
   bool valid() const { return functionspace_; }
 
   /// @brief Create a spectral field
-  template <typename DATATYPE> field::Field createField(
+  template <typename DATATYPE> Field createField(
     const std::string& name,
     const eckit::Parametrisation& = util::NoConfig() ) const;
-  template <typename DATATYPE> field::Field createField(
+  template <typename DATATYPE> Field createField(
     const std::string& name,
     size_t levels,
     const eckit::Parametrisation& = util::NoConfig() ) const;
 
-  void gather( const field::FieldSet&, field::FieldSet& ) const;
-  void gather( const field::Field&,    field::Field& ) const;
+  void gather( const FieldSet&, FieldSet& ) const;
+  void gather( const Field&,    Field& ) const;
 
-  void scatter( const field::FieldSet&, field::FieldSet& ) const;
-  void scatter( const field::Field&,    field::Field& ) const;
+  void scatter( const FieldSet&, FieldSet& ) const;
+  void scatter( const Field&,    Field& ) const;
 
-  std::string checksum( const field::FieldSet& ) const;
-  std::string checksum( const field::Field& ) const;
+  std::string checksum( const FieldSet& ) const;
+  std::string checksum( const Field& ) const;
 
-  void norm( const field::Field&, double& norm, int rank=0 ) const;
-  void norm( const field::Field&, double norm_per_level[], int rank=0 ) const;
-  void norm( const field::Field&, std::vector<double>& norm_per_level, int rank=0 ) const;
+  void norm( const Field&, double& norm, int rank=0 ) const;
+  void norm( const Field&, double norm_per_level[], int rank=0 ) const;
+  void norm( const Field&, std::vector<double>& norm_per_level, int rank=0 ) const;
 
   size_t nb_spectral_coefficients() const;
   size_t nb_spectral_coefficients_global() const;

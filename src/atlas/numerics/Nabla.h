@@ -15,7 +15,8 @@
 
 namespace eckit { class Parametrisation; }
 namespace atlas { namespace numerics { class Method; } }
-namespace atlas { namespace field { class Field; class FieldImpl; } }
+namespace atlas { namespace field { class FieldImpl; } }
+namespace atlas { class Field; }
 
 namespace atlas {
 namespace numerics {
@@ -26,10 +27,10 @@ public:
   NablaImpl(const Method &, const eckit::Parametrisation &);
   virtual ~NablaImpl();
 
-  virtual void gradient(const field::Field &scalar, field::Field &grad) const = 0;
-  virtual void divergence(const field::Field &vector, field::Field &div) const = 0;
-  virtual void curl(const field::Field &vector, field::Field &curl) const = 0;
-  virtual void laplacian(const field::Field &scalar, field::Field &laplacian) const = 0;
+  virtual void gradient(const Field &scalar, Field &grad) const = 0;
+  virtual void divergence(const Field &vector, Field &div) const = 0;
+  virtual void curl(const Field &vector, Field &curl) const = 0;
+  virtual void laplacian(const Field &scalar, Field &laplacian) const = 0;
 
 };
 
@@ -53,10 +54,10 @@ public:
   Nabla(const Method &);
   Nabla(const Method &, const eckit::Parametrisation &);
 
-  void gradient(const field::Field &scalar, field::Field &grad) const;
-  void divergence(const field::Field &vector, field::Field &div) const;
-  void curl(const field::Field &vector, field::Field &curl) const;
-  void laplacian(const field::Field &scalar, field::Field &laplacian) const;
+  void gradient(const Field &scalar, Field &grad) const;
+  void divergence(const Field &vector, Field &div) const;
+  void curl(const Field &vector, Field &curl) const;
+  void laplacian(const Field &scalar, Field &laplacian) const;
   
   const nabla_t* get() const { return nabla_.get(); }
 };

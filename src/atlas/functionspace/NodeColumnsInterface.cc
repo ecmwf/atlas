@@ -16,9 +16,8 @@ namespace functionspace {
 namespace detail {
 
   using atlas::field::FieldImpl;
-  using atlas::field::Field;
   using atlas::field::FieldSetImpl;
-  using atlas::field::FieldSet;
+  using atlas::FieldSet;
 
 // ----------------------------------------------------------------------
 
@@ -148,7 +147,7 @@ void atlas__NodesFunctionSpace__halo_exchange_fieldset(const NodeColumns* This, 
 {
   ASSERT(This);
   ASSERT(fieldset);
-  field::FieldSet f(fieldset);
+  FieldSet f(fieldset);
   ATLAS_ERROR_HANDLING( This->haloExchange(f); );
 }
 

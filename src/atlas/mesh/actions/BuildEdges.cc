@@ -421,7 +421,7 @@ void build_pole_edges( Mesh& mesh )
   edges.add(new mesh::temporary::Line(), nb_pole_edges, pole_edge_nodes.data() );
 
   if( ! edges.has_field("is_pole_edge") )
-    edges.add( field::Field("is_pole_edge", array::make_datatype<int>(), array::make_shape(edges.size())));
+    edges.add( Field("is_pole_edge", array::make_datatype<int>(), array::make_shape(edges.size())));
 
   array::ArrayView<int,1> node_part       = array::make_view<int,1>( nodes.partition() );
 

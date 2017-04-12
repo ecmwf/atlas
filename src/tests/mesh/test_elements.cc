@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
 
   BOOST_CHECK_EQUAL( triags_type_idx , 0 );
 
-  hybrid_elements.add(field::Field("surface",array::make_datatype<double>(),array::make_shape(hybrid_elements.size())));
+  hybrid_elements.add(Field("surface",array::make_datatype<double>(),array::make_shape(hybrid_elements.size())));
 
   std::vector<idx_t> quad_nodes(4);
   quad_nodes[0] = 0;

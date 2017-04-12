@@ -74,7 +74,7 @@ void Nabla::setup()
     pole_edges_.push_back(tmp[jedge]);
 }
 
-void Nabla::gradient(const field::Field &field, field::Field &grad_field) const
+void Nabla::gradient(const Field &field, Field &grad_field) const
 {
   if( field.has_levels() )
   {
@@ -97,7 +97,7 @@ void Nabla::gradient(const field::Field &field, field::Field &grad_field) const
   throw eckit::SeriousBug("Cannot figure out if field is a scalar or vector field",Here());
 }
 
-void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& grad_field) const
+void Nabla::gradient_of_scalar(const Field& scalar_field, Field& grad_field) const
 {
   Log::debug<Atlas>() << "Compute gradient of scalar field " << scalar_field.name() << " with fvm method" << std::endl;
   const double radius = fvm_->radius();
@@ -177,7 +177,7 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
 
 // ================================================================================
 
-void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &grad_field) const
+void Nabla::gradient_of_vector(const Field &vector_field, Field &grad_field) const
 {
   Log::debug<Atlas>() << "Compute gradient of vector field " << vector_field.name() << " with fvm method" << std::endl;
   const double radius = fvm_->radius();
@@ -284,7 +284,7 @@ void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &g
 
 // ================================================================================
 
-void Nabla::divergence(const field::Field& vector_field, field::Field& div_field) const
+void Nabla::divergence(const Field& vector_field, Field& div_field) const
 {
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
@@ -371,7 +371,7 @@ void Nabla::divergence(const field::Field& vector_field, field::Field& div_field
 }
 
 
-void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) const
+void Nabla::curl(const Field& vector_field, Field& curl_field) const
 {
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
@@ -459,9 +459,9 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
 }
 
 
-void Nabla::laplacian(const field::Field& scalar, field::Field& lapl) const
+void Nabla::laplacian(const Field& scalar, Field& lapl) const
 {
-  field::Field grad ( fvm_->node_columns().createField<double>(
+  Field grad ( fvm_->node_columns().createField<double>(
        "grad",
        scalar.levels(),
        array::make_shape(2) ) );

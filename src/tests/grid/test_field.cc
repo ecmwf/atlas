@@ -60,7 +60,7 @@ public:
 
 void TestField::test_fieldcreator()
 {
-  field::Field field ( util::Config
+  Field field ( util::Config
                          ("creator","ArraySpec")
                          ("shape",array::make_shape(10,2))
                          ("datatype",array::DataType::real32().str())
@@ -72,7 +72,7 @@ void TestField::test_fieldcreator()
 
   Grid g("O6");
 
-  field::Field arr ( util::Config
+  Field arr ( util::Config
                          ("creator","ArraySpec")
                          ("shape",array::make_shape(10,2))
                    );
@@ -88,7 +88,7 @@ void TestField::test_fieldcreator()
       ("ngptot",g.size());
 
   Log::info() << "Creating IFS field " << std::endl;
-  field::Field ifs ( util::Config
+  Field ifs ( util::Config
                          (ifs_parameters)
                          ("name","myfield")
                          ("datatype",array::DataType::int32().str())
@@ -120,7 +120,7 @@ public:
 
 void TestField::test_implicit_conversion()
 {
-  field::Field field( "tmp", array::make_datatype<double>(), array::make_shape(10,2));
+  Field field( "tmp", array::make_datatype<double>(), array::make_shape(10,2));
   const array::Array& const_array = field;
   array::Array& array = field;
 
@@ -136,7 +136,7 @@ void TestField::test_implicit_conversion()
   take_array(field);
   TakeArray ta(field);
 
-  const field::Field& f = field;
+  const Field& f = field;
   TakeArray cta(f);
 }
 
@@ -145,7 +145,7 @@ void TestField::test_wrap_rawdata_through_array()
 {
   std::vector<double> rawdata(20,8.);
   SharedPtr<array::Array> array( array::Array::wrap(rawdata.data(),array::make_shape(10,2)) );
-  field::Field field( "wrapped",array.get() );
+  Field field( "wrapped",array.get() );
 
   ASSERT( array->owners() == 2 );
   const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(field);
@@ -155,7 +155,7 @@ void TestField::test_wrap_rawdata_through_array()
 void TestField::test_wrap_rawdata_direct()
 {
   std::vector<double> rawdata(20,8.);
-  field::Field field( "wrapped",rawdata.data(),array::make_shape(10,2) );
+  Field field( "wrapped",rawdata.data(),array::make_shape(10,2) );
 
   ASSERT( field.array().owners() == 1 );
   const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(field);

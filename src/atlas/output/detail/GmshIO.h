@@ -19,10 +19,9 @@
 
 namespace atlas { namespace mesh { class Mesh; } }
 namespace atlas {
-namespace field {
     class Field;
     class FieldSet;
-} }
+}
 
 namespace atlas { namespace array { class Array; } }
 
@@ -67,14 +66,14 @@ public:
  /// Write field to file
  ///  Depending on argument "mode", the fields will be appended,
  ///  or existing file will be overwritten
- void write(const field::Field& field,
+ void write(const Field& field,
             const eckit::PathName& file_path,
             openmode mode = std::ios::out) const;
 
   /// Write fieldset to file using FunctionSpace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const field::FieldSet& fieldset,
+  void write(const FieldSet& fieldset,
              const functionspace::FunctionSpace&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
@@ -82,7 +81,7 @@ public:
   /// Write field to file using Functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const field::Field& field,
+  void write(const Field& field,
              const functionspace::FunctionSpace&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
@@ -97,7 +96,7 @@ private:
   /// Write fieldset to file using Nodes functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write_delegate(const field::FieldSet& fieldset,
+  void write_delegate(const FieldSet& fieldset,
                       const functionspace::NodeColumns&,
                       const eckit::PathName& file_path,
                       openmode mode = std::ios::out) const;
@@ -105,7 +104,7 @@ private:
   /// Write fieldset to file using StructuredColumns functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write_delegate(const field::FieldSet& fieldset,
+  void write_delegate(const FieldSet& fieldset,
                       const functionspace::StructuredColumns&,
                       const eckit::PathName& file_path,
                       openmode mode = std::ios::out) const;
@@ -113,7 +112,7 @@ private:
   /// Write field to file using Nodes functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write_delegate(const field::Field& field,
+  void write_delegate(const Field& field,
              const functionspace::NodeColumns&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;
@@ -121,7 +120,7 @@ private:
   /// Write field to file using StructuredColumns functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write_delegate(const field::Field& field,
+  void write_delegate(const Field& field,
              const functionspace::StructuredColumns&,
              const eckit::PathName& file_path,
              openmode mode = std::ios::out) const;

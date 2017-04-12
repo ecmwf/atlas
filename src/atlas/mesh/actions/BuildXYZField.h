@@ -36,8 +36,8 @@ public:
 
     explicit BuildXYZField(const std::string& name = "xyz", bool force_recompute=false);
 
-    field::Field& operator()(Mesh&) const;
-    field::Field& operator()(mesh::Nodes&) const;
+    Field& operator()(Mesh&) const;
+    Field& operator()(mesh::Nodes&) const;
 
 private:
 

@@ -12,7 +12,7 @@ using atlas::grid::Grid;
 using atlas::mesh::Mesh;
 using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::functionspace::StructuredColumns;
-using atlas::field::Field;
+using atlas::Field;
 using atlas::array::ArrayView;
 using atlas::array::make_view;
 using atlas::output::Gmsh;

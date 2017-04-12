@@ -64,7 +64,7 @@ double dual_volume(const mesh::Mesh& mesh)
 
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
-void rotated_flow(const fvm::Method& fvm, field::Field& field, const double& beta)
+void rotated_flow(const fvm::Method& fvm, Field& field, const double& beta)
 {
   const double radius = fvm.radius();
   const double USCAL = 20.;
@@ -91,7 +91,7 @@ void rotated_flow(const fvm::Method& fvm, field::Field& field, const double& bet
 
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
-void rotated_flow_magnitude(const fvm::Method& fvm, field::Field& field, const double& beta)
+void rotated_flow_magnitude(const fvm::Method& fvm, Field& field, const double& beta)
 {
   const double radius = fvm.radius();
   const double USCAL = 20.;
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
   size_t nnodes = mesh.nodes().size();
   size_t nlev = 1;
 
-  field::FieldSet fields;
+  FieldSet fields;
   fields.add( fvm.node_columns().createField<double>("scalar",nlev) );
   fields.add( fvm.node_columns().createField<double>("rscalar",nlev) );
   fields.add( fvm.node_columns().createField<double>("grad",nlev,array::make_shape(2)) );
@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE( test_div )
 
   size_t nlev = 1;
 
-  field::FieldSet fields;
+  FieldSet fields;
   fields.add( fvm.node_columns().createField<double>("wind",nlev,array::make_shape(2)) );
   fields.add( fvm.node_columns().createField<double>("div",nlev) );
 
@@ -256,7 +256,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
 
   size_t nlev = 1;
 
-  field::FieldSet fields;
+  FieldSet fields;
   fields.add( fvm.node_columns().createField<double>("wind",nlev,array::make_shape(2)) );
   fields.add( fvm.node_columns().createField<double>("vor",nlev) );
 
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
 
   size_t nlev = 1;
 
-  field::FieldSet fields;
+  FieldSet fields;
   fields.add( fvm.node_columns().createField<double>("scal",nlev) );
   fields.add( fvm.node_columns().createField<double>("lapl",nlev) );
 

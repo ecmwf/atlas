@@ -30,7 +30,7 @@
 /// }
 ///
 /// There is also an easier way to wrap Field and Array classes:
-/// IndexView<int,3> fieldview( field::Field );
+/// IndexView<int,3> fieldview( Field );
 /// IndexView<int,2> INDEXVIEW( Array );
 
 #pragma once

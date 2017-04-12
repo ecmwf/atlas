@@ -19,10 +19,9 @@ namespace eckit {
 }
 
 namespace atlas {
-namespace field {
     class Field;
     class FieldSet;
-} }
+}
 
 namespace atlas {
 namespace grid {
@@ -74,7 +73,7 @@ namespace detail {
    * @param path output file path
    * @param fieldset FieldSet data structure
    */
-  static void write(const eckit::PathName& path, const field::FieldSet& fieldset, const functionspace::NodeColumns &function_space);
+  static void write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::NodeColumns &function_space);
 
   /**
    * @brief Write lan/lon to PointCloud file (overwrites possibly existing file)

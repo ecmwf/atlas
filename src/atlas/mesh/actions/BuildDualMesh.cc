@@ -82,7 +82,7 @@ inline double sqr(double a) { return a*a; }
 
 }
 
-array::Array* build_centroids_xy( const mesh::HybridElements& , const field::Field& xy);
+array::Array* build_centroids_xy( const mesh::HybridElements& , const Field& xy);
 
 void add_centroid_dual_volume_contribution(
     Mesh& mesh,
@@ -106,16 +106,16 @@ void build_median_dual_mesh( Mesh& mesh )
 
   mesh::Nodes& nodes   = mesh.nodes();
   mesh::HybridElements& edges = mesh.edges();
-  field::Field dual_volumes = nodes.add(
-    field::Field( "dual_volumes", array::make_datatype<double>(), array::make_shape(nodes.size()) ) );
+  Field dual_volumes = nodes.add(
+    Field( "dual_volumes", array::make_datatype<double>(), array::make_shape(nodes.size()) ) );
 
   if( ! mesh.cells().has_field("centroids_xy") )
     mesh.cells().add(
-       field::Field("centroids_xy",build_centroids_xy(mesh.cells(),mesh.nodes().xy())) );
+       Field("centroids_xy",build_centroids_xy(mesh.cells(),mesh.nodes().xy())) );
 
   if( ! mesh.edges().has_field("centroids_xy") )
     mesh.edges().add(
-       field::Field("centroids_xy",build_centroids_xy(mesh.edges(),mesh.nodes().xy())) );
+       Field("centroids_xy",build_centroids_xy(mesh.edges(),mesh.nodes().xy())) );
 
   array::make_view<double,1>(dual_volumes).assign(0.);
   add_median_dual_volume_contribution_cells(mesh.cells(),mesh.edges(),mesh.nodes(),dual_volumes);
@@ -123,10 +123,10 @@ void build_median_dual_mesh( Mesh& mesh )
 
   build_dual_normals( mesh );
 
-  field::Field skewness = mesh.edges().add(
-     field::Field("skewness", array::make_datatype<double>(), array::make_shape(mesh.edges().size())));
-  field::Field alpha    = mesh.edges().add(
-     field::Field("alpha", array::make_datatype<double>(), array::make_shape(mesh.edges().size())));
+  Field skewness = mesh.edges().add(
+     Field("skewness", array::make_datatype<double>(), array::make_shape(mesh.edges().size())));
+  Field alpha    = mesh.edges().add(
+     Field("alpha", array::make_datatype<double>(), array::make_shape(mesh.edges().size())));
   array::make_view<double,1>(skewness).assign(0.);
   array::make_view<double,1>(alpha).assign(0.5);
 
@@ -141,7 +141,7 @@ void build_median_dual_mesh( Mesh& mesh )
 
 
 
-array::Array* build_centroids_xy( const mesh::HybridElements& elements, const field::Field& field_xy )
+array::Array* build_centroids_xy( const mesh::HybridElements& elements, const Field& field_xy )
 {
   const array::ArrayView<double,2> xy = array::make_view<double,2>( field_xy );
   array::Array* array_centroids = array::Array::create<double>(array::make_shape(elements.size(),2));
@@ -284,7 +284,7 @@ void build_dual_normals( Mesh& mesh )
   double xl, yl, xr, yr;
   array::ArrayView<double,2> edge_centroids = array::make_view<double,2>( edges.field("centroids_xy") );
   array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.add(
-     field::Field("dual_normals", array::make_datatype<double>(), array::make_shape(nb_edges,2)) ) );
+     Field("dual_normals", array::make_datatype<double>(), array::make_shape(nb_edges,2)) ) );
 
   const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
   const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
@@ -410,7 +410,7 @@ void build_brick_dual_mesh(const atlas::grid::Grid& grid, atlas::mesh::Mesh& mes
     mesh::Nodes& nodes   = mesh.nodes();
     array::ArrayView<double,2> xy        = array::make_view<double,2>( nodes.xy() );
     array::ArrayView<double,1> dual_volumes  = array::make_view<double,1>( nodes.add(
-       field::Field("dual_volumes", array::make_datatype<double>(), array::make_shape(nodes.size(),1) ) ) );
+       Field("dual_volumes", array::make_datatype<double>(), array::make_shape(nodes.size(),1) ) ) );
     array::ArrayView<gidx_t,1> gidx          = array::make_view<gidx_t,1>( nodes.global_index() );
 
     int c=0;
