@@ -43,13 +43,13 @@ public:
   const_iterator begin() const { return spacing_.get()->begin(); }
   const_iterator end()   const { return spacing_.get()->end();   }
 
-  const double& front() const { return spacing_.get()->front(); }
-  const double& back()  const { return spacing_.get()->back();  }
+  double front() const { return spacing_.get()->front(); }
+  double back()  const { return spacing_.get()->back();  }
 
   Interval interval() const { return spacing_.get()->interval(); }
 
-  const double min() const { return spacing_.get()->min(); }
-  const double max() const { return spacing_.get()->max(); }
+  double min() const { return spacing_.get()->min(); }
+  double max() const { return spacing_.get()->max(); }
 
   std::string type() const { return spacing_.get()->type(); }
 

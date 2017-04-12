@@ -540,7 +540,7 @@ public:
             throw eckit::BadParameter("yspace missing in configuration");
         yspace = Spacing(config_yspace);
 
-        const size_t ny = yspace.size();
+        size_t ny = yspace.size();
 
         XSpace xspace;
 

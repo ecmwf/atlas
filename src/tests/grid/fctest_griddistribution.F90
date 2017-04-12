@@ -70,11 +70,11 @@ TEST( test_griddist )
   !grid = atlas_StructuredGrid("ll.128x64")
   !grid = atlas_grid_ShiftedLonLat(128,64)
 
-  allocate( part(grid%npts()) )
-  do jnode=1,grid%npts()/3
+  allocate( part(grid%size()) )
+  do jnode=1,grid%size()/3
     part(jnode) = 1
   enddo
-  do jnode=grid%npts()/3+1,grid%npts()
+  do jnode=grid%size()/3+1,grid%size()
     part(jnode) = 1
   enddo
 

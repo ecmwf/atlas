@@ -288,28 +288,28 @@ public:
         return y_;
     }
 
-    inline double x( const size_t i, const size_t j ) const {
+    inline double x( size_t i, size_t j ) const {
         return xmin_[j] + static_cast<double>(i) * dx_[j];
     }
 
-    inline double y( const size_t j ) const {
+    inline double y( size_t j ) const {
         return y_[j];
     }
 
-    inline void xy( const size_t i, const size_t j, double crd[] ) const {
+    inline void xy( size_t i, size_t j, double crd[] ) const {
         crd[0] = x(i,j);
         crd[1] = y(j);
     }
 
-    PointXY xy( const size_t i, const size_t j ) const {
+    PointXY xy( size_t i, size_t j ) const {
         return PointXY( x(i,j), y(j) );
     }
 
-    PointLonLat lonlat( const size_t i, const size_t j ) const {
+    PointLonLat lonlat( size_t i, size_t j ) const {
         return projection_.lonlat( xy(i,j) );
     }
 
-    void lonlat(const size_t i, const size_t j, double crd[]) const {
+    void lonlat(size_t i, size_t j, double crd[]) const {
       xy(i,j,crd);
       projection_.xy2lonlat(crd);
     }

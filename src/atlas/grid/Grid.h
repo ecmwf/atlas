@@ -157,17 +157,17 @@ public:
     }
 
     using Grid::xy;
-    void xy( const size_t n, double xy[] ) const {
+    void xy( size_t n, double xy[] ) const {
       PointXY _xy = grid_->xy(n);
       xy[0] = _xy.x();
       xy[1] = _xy.y();
     }
 
-    PointXY xy( const size_t n ) const {
+    PointXY xy( size_t n ) const {
         return grid_->xy(n);
     }
 
-    PointLonLat lonlat( const size_t n ) const {
+    PointLonLat lonlat( size_t n ) const {
         return grid_->lonlat(n);
     }
 
@@ -221,7 +221,7 @@ public:
         return grid_->nx();
     }
 
-    inline const long nxmax() const {
+    inline size_t nxmax() const {
         return grid_->nxmax();
     }
 
@@ -229,28 +229,28 @@ public:
         return grid_->y();
     }
 
-    inline double x( const size_t i, const size_t j ) const {
+    inline double x( size_t i, size_t j ) const {
         return grid_->x(i,j);
     }
 
-    inline double y( const size_t j ) const {
+    inline double y( size_t j ) const {
         return grid_->y(j);
     }
 
     using Grid::xy;
-    void xy( const size_t i, const size_t j, double xy[] ) const {
+    void xy( size_t i, size_t j, double xy[] ) const {
         grid_->xy(i,j,xy);
     }
 
-    void lonlat( const size_t i, const size_t j, double lonlat[] ) const {
+    void lonlat( size_t i, size_t j, double lonlat[] ) const {
         grid_->lonlat(i,j,lonlat);
     }
 
-    PointXY xy( const size_t i, const size_t j ) const {
+    PointXY xy( size_t i, size_t j ) const {
         return PointXY( x(i,j), y(j) );
     }
 
-    PointLonLat lonlat( const size_t i, const size_t j ) const {
+    PointLonLat lonlat( size_t i, size_t j ) const {
         return grid_->lonlat(i,j);
     }
 
@@ -315,11 +315,11 @@ public:
         return nxmax();
     }
 
-    inline double x( const size_t i ) const {
+    inline double x( size_t i ) const {
         return x(i,0);
     }
 
-    PointXY xy( const size_t i, const size_t j ) const {
+    PointXY xy( size_t i, size_t j ) const {
         return PointXY( x(i), y(j ) );
     }
 };
@@ -335,15 +335,15 @@ public:
 
     long N() const { return Grid::ny()/2; }
 
-    inline double lon( const size_t i, const size_t j ) const {
+    inline double lon( size_t i, size_t j ) const {
         return Grid::x(i,j);
     }
 
-    inline double lat( const size_t j ) const {
+    inline double lat( size_t j ) const {
         return Grid::y(j);
     }
 
-    PointLonLat lonlat( const size_t i, const size_t j ) const {
+    PointLonLat lonlat( size_t i, size_t j ) const {
       return Grid::xy(i,j);
     }
 
@@ -406,15 +406,15 @@ public:
 
     using grid_t::grid_t;
 
-    inline double lon( const size_t i ) const {
+    inline double lon( size_t i ) const {
         return x(i);
     }
 
-    inline double lat( const size_t j ) const {
+    inline double lat( size_t j ) const {
         return y(j);
     }
 
-    PointLonLat lonlat( const size_t i, const size_t j ) const {
+    PointLonLat lonlat( size_t i, size_t j ) const {
       return xy(i,j);
     }
 
@@ -446,15 +446,15 @@ public:
         return RegularGrid::valid() && global_lonlat();
     }
 
-    inline double lon( const size_t i ) const {
+    inline double lon( size_t i ) const {
         return x(i);
     }
 
-    inline double lat( const size_t j ) const {
+    inline double lat( size_t j ) const {
         return y(j);
     }
 
-    PointLonLat lonlat( const size_t i, const size_t j ) const {
+    PointLonLat lonlat( size_t i, size_t j ) const {
         return xy(i,j);
     }
 

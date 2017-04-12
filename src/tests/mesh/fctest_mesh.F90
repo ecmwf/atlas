@@ -323,7 +323,7 @@ implicit none
       grid = atlas_ReducedGaussianGrid( 32, nloen(1:32) )
 
       ! Grid distribution: all points belong to partition 1
-      allocate( part(grid%npts()) )
+      allocate( part(grid%size()) )
       part(:) = 1
       griddistribution = atlas_GridDistribution(part, part0=1)
 

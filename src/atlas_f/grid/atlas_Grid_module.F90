@@ -33,10 +33,15 @@ TYPE, extends(fckit_refcounted) :: atlas_Grid
 
 !------------------------------------------------------------------------------
 contains
-  procedure :: npts => atlas_Grid__size
+  procedure :: size => atlas_Grid__size
   procedure, public :: delete => atlas_Grid__delete
   procedure, public :: copy => atlas_Grid__copy
 END TYPE atlas_Grid
+
+interface atlas_Grid
+  module procedure atlas_Grid__ctor_id
+  module procedure atlas_Grid__ctor_config
+end interface
 
 !------------------------------------------------------------------------------
 
@@ -215,6 +220,24 @@ end function
 
 ! -----------------------------------------------------------------------------
 ! Constructors
+
+function atlas_Grid__ctor_id(identifier) result(grid)
+  use fckit_c_interop_module, only: c_str
+  use atlas_grid_Structured_c_binding
+  type(atlas_Grid) :: grid
+  character(len=*), intent(in) :: identifier
+  call grid%reset_c_ptr( atlas__grid__Structured(c_str(identifier)) )
+end function
+
+function atlas_Grid__ctor_config(config) result(grid)
+  use atlas_grid_Structured_c_binding
+  use atlas_Config_module, only: atlas_Config
+  type(atlas_Grid) :: grid
+  type(atlas_Config), intent(in) :: config
+  call grid%reset_c_ptr( atlas__grid__Structured__config(config%c_ptr()) )
+end function
+
+! -----------------------------------------------------------------------------
 
 function atlas_StructuredGrid__ctor_id(identifier) result(grid)
   use fckit_c_interop_module, only: c_str

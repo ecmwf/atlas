@@ -285,7 +285,7 @@ public:
   Field( const Field& );
   Field( const Implementation* );
 
-  const bool valid() const { return field_; }
+  bool valid() const { return field_; }
   operator bool() const { return valid(); }
 
   Implementation* get() { return field_.get(); }
