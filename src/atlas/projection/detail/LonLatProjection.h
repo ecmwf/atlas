@@ -1,6 +1,6 @@
 #pragma once
 
-#include "atlas/projection/detail/Projection.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
@@ -8,11 +8,11 @@ namespace projection {
 namespace detail {
 
 template <typename Rotation>
-class LonLatProjectionT : public Projection {
+class LonLatProjectionT : public ProjectionImpl {
 
 private:
-  friend class Projection;
-  LonLatProjectionT(): Projection() {}
+  friend class ProjectionImpl;
+  LonLatProjectionT(): ProjectionImpl() {}
 
 public:
 

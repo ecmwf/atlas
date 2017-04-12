@@ -7,7 +7,7 @@ namespace detail {
 
 template <typename Rotation>
 LonLatProjectionT<Rotation>::LonLatProjectionT( const eckit::Parametrisation& config ) :
-  Projection(),
+  ProjectionImpl(),
   rotation_(config) {
 }
 
@@ -25,8 +25,8 @@ void LonLatProjectionT<Rotation>::hash( eckit::MD5& md5 ) const {
   rotation_.hash(md5);
 }
 
-register_BuilderT1(Projection,LonLatProjection,LonLatProjection::static_type());
-register_BuilderT1(Projection,RotatedLonLatProjection,RotatedLonLatProjection::static_type());
+register_BuilderT1(ProjectionImpl,LonLatProjection,LonLatProjection::static_type());
+register_BuilderT1(ProjectionImpl,RotatedLonLatProjection,RotatedLonLatProjection::static_type());
 
 }  // namespace detail
 }  // namespace projection

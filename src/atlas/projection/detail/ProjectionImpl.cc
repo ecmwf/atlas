@@ -1,5 +1,5 @@
 #include "eckit/utils/MD5.h"
-#include "atlas/projection/detail/Projection.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/projection/detail/LonLatProjection.h"
 #include "atlas/util/Config.h"
 
@@ -7,15 +7,15 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
-Projection* Projection::create() {
+ProjectionImpl* ProjectionImpl::create() {
   // default: no projection, i.e. stay in (lon,lat)-space
   return new LonLatProjection();
 }
 
-Projection* Projection::create(const eckit::Parametrisation& p) {
+ProjectionImpl* ProjectionImpl::create(const eckit::Parametrisation& p) {
   std::string projectionType;
   if (p.get("type",projectionType)) {
-    return eckit::Factory<Projection>::instance().get(projectionType).create(p);
+    return eckit::Factory<ProjectionImpl>::instance().get(projectionType).create(p);
   }
 
   // should return error here

@@ -104,7 +104,7 @@ void LambertProjection::hash( eckit::MD5& md5 ) const {
   md5.add(radius_);
 }
 
-register_BuilderT1(Projection,LambertProjection,LambertProjection::static_type());
+register_BuilderT1(ProjectionImpl,LambertProjection,LambertProjection::static_type());
 
 }  // namespace detail
 }  // namespace projection

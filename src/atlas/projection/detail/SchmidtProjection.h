@@ -1,13 +1,13 @@
 #pragma once
 
-#include "atlas/projection/detail/Projection.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 
 namespace atlas {
 namespace projection {
 namespace detail {
 
 template <typename Rotation>
-class SchmidtProjectionT: public Projection {
+class SchmidtProjectionT: public ProjectionImpl {
 
 public:
 

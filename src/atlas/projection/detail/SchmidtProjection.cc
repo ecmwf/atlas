@@ -19,7 +19,7 @@ namespace detail {
 // constructor
 template <typename Rotation>
 SchmidtProjectionT<Rotation>::SchmidtProjectionT(const eckit::Parametrisation& params) :
-  Projection(),
+  ProjectionImpl(),
   rotation_(params) {
   if( ! params.get("stretching_factor",c_) )
     throw eckit::BadParameter("stretching_factor missing in Params",Here());
@@ -62,8 +62,8 @@ void SchmidtProjectionT<Rotation>::hash( eckit::MD5& md5 ) const {
   md5.add(c_);
 }
 
-register_BuilderT1(Projection,SchmidtProjection,SchmidtProjection::static_type());
-register_BuilderT1(Projection,RotatedSchmidtProjection,RotatedSchmidtProjection::static_type());
+register_BuilderT1(ProjectionImpl,SchmidtProjection,SchmidtProjection::static_type());
+register_BuilderT1(ProjectionImpl,RotatedSchmidtProjection,RotatedSchmidtProjection::static_type());
 
 }  // namespace detail
 }  // namespace projection

@@ -6,7 +6,7 @@
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/util/Point.h"
-#include "atlas/projection/detail/Projection.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ class Projection {
   
 public:
   
-  using Implementation = projection::detail::Projection;
+  using Implementation = projection::detail::ProjectionImpl;
 
 public:
 

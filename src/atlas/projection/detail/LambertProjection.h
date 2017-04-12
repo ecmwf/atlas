@@ -1,12 +1,12 @@
 #pragma once
 
-#include "atlas/projection/detail/Projection.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 
 namespace atlas {
 namespace projection {
 namespace detail {
 
-class LambertProjection: public Projection {
+class LambertProjection: public ProjectionImpl {
 
 public:
 

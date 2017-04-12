@@ -44,8 +44,8 @@ list( APPEND atlas_grid_srcs
 projection/Projection.cc
 projection/Projection.h
 
-projection/detail/Projection.cc
-projection/detail/Projection.h
+projection/detail/ProjectionImpl.cc
+projection/detail/ProjectionImpl.h
 projection/detail/LonLatProjection.cc
 projection/detail/LonLatProjection.h
 projection/detail/LambertProjection.cc

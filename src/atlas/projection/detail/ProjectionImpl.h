@@ -14,21 +14,21 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
-class Projection : public eckit::Owned {
+class ProjectionImpl : public eckit::Owned {
 
 public:
 
     using ARG1       = const eckit::Parametrisation&;
-    using builder_t  = eckit::BuilderT1<Projection>;
+    using builder_t  = eckit::BuilderT1<ProjectionImpl>;
     static std::string className() {return "atlas.Projection";}
 
 public:
 
-    static Projection* create(); // creates the LonLatProjection
-    static Projection* create(const eckit::Parametrisation& p);
+    static ProjectionImpl* create(); // creates the LonLatProjection
+    static ProjectionImpl* create(const eckit::Parametrisation& p);
 
-    Projection() {}
-    virtual ~Projection() {} // destructor should be virtual
+    ProjectionImpl() {}
+    virtual ~ProjectionImpl() {} // destructor should be virtual
 
     virtual std::string type() const =0;
 
@@ -50,13 +50,13 @@ public:
 
 };
 
-inline PointLonLat Projection::lonlat( const PointXY& xy ) const {
+inline PointLonLat ProjectionImpl::lonlat( const PointXY& xy ) const {
   PointLonLat lonlat(xy);
   xy2lonlat(lonlat.data());
   return lonlat;
 }
 
-inline PointXY Projection::xy( const PointLonLat& lonlat ) const {
+inline PointXY ProjectionImpl::xy( const PointLonLat& lonlat ) const {
   PointXY xy(lonlat);
   lonlat2xy(xy.data());
   return xy;

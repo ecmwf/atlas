@@ -26,7 +26,7 @@ namespace detail {
 // constructors
 template <typename Rotation>
 MercatorProjectionT<Rotation>::MercatorProjectionT(const eckit::Parametrisation& params) :
-  Projection(),
+  ProjectionImpl(),
   rotation_(params) {
 
   // check presence of radius
@@ -81,8 +81,8 @@ void MercatorProjectionT<Rotation>::hash( eckit::MD5& md5 ) const {
   md5.add(radius_);
 }
 
-register_BuilderT1(Projection,MercatorProjection,MercatorProjection::static_type());
-register_BuilderT1(Projection,RotatedMercatorProjection,RotatedMercatorProjection::static_type());
+register_BuilderT1(ProjectionImpl,MercatorProjection,MercatorProjection::static_type());
+register_BuilderT1(ProjectionImpl,RotatedMercatorProjection,RotatedMercatorProjection::static_type());
 
 }  // namespace detail
 }  // namespace projection
