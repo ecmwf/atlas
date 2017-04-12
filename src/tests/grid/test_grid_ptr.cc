@@ -27,7 +27,7 @@
 #include "atlas/output/Gmsh.h"
 
 using Grid       = atlas::Grid;
-using RectangularDomain = atlas::grid::RectangularDomain;
+using RectangularDomain = atlas::RectangularDomain;
 using Structured = atlas::grid::StructuredGrid;
 using Regular    = atlas::grid::RegularGrid;
 using Config     = atlas::util::Config;
@@ -201,36 +201,36 @@ BOOST_AUTO_TEST_CASE( test_structured_3 )
 
 BOOST_AUTO_TEST_CASE( test_domain_rectangular )
 {
-  atlas::grid::Domain domain = atlas::grid::RectangularDomain( {0,180}, {-25,25} );
+  Domain domain = RectangularDomain( {0,180}, {-25,25} );
   BOOST_CHECK( not domain.global() );
   BOOST_CHECK_EQUAL( domain.type(), std::string("rectangular") );
 
   util::Config domain_cfg = domain.spec();
-  atlas::grid::Domain from_cfg(domain_cfg);
+  Domain from_cfg(domain_cfg);
   Log::info() << from_cfg.spec() << std::endl;
   BOOST_CHECK_EQUAL( from_cfg.type(), std::string("rectangular") );
 }
 
 BOOST_AUTO_TEST_CASE( test_domain_zonal_from_rectangular )
 {
-  atlas::grid::Domain domain = atlas::grid::RectangularDomain( {0,360}, {-25,25} );
+  Domain domain = RectangularDomain( {0,360}, {-25,25} );
   BOOST_CHECK( not domain.global() );
   BOOST_CHECK_EQUAL( domain.type(), std::string("zonal_band") );
 
   util::Config domain_cfg = domain.spec();
-  atlas::grid::Domain from_cfg(domain_cfg);
+  Domain from_cfg(domain_cfg);
   Log::info() << from_cfg.spec() << std::endl;
   BOOST_CHECK_EQUAL( from_cfg.type(), std::string("zonal_band") );
 }
 
 BOOST_AUTO_TEST_CASE( test_domain_global_from_rectangular )
 {
-  atlas::grid::Domain domain = atlas::grid::RectangularDomain( {0,360}, {-90,90} );
+  Domain domain = RectangularDomain( {0,360}, {-90,90} );
   BOOST_CHECK( domain.global() );
   BOOST_CHECK_EQUAL( domain.type(), std::string("global") );
 
   util::Config domain_cfg = domain.spec();
-  atlas::grid::Domain from_cfg(domain_cfg);
+  Domain from_cfg(domain_cfg);
   Log::info() << from_cfg.spec() << std::endl;
   BOOST_CHECK_EQUAL( from_cfg.type(), std::string("global") );
 }

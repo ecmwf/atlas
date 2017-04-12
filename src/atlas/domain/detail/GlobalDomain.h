@@ -1,9 +1,8 @@
 #pragma once
 
-#include "atlas/grid/detail/domain/ZonalBandDomain.h"
+#include "atlas/domain/detail/ZonalBandDomain.h"
 
 namespace atlas {
-namespace grid {
 namespace domain {
 
 class GlobalDomain: public ZonalBandDomain {
@@ -31,5 +30,4 @@ public:
 
 
 }  // namespace domain
-}  // namespace grid
 }  // namespace atlas

@@ -1,7 +1,6 @@
-#include "atlas/grid/detail/domain/GlobalDomain.h"
+#include "atlas/domain/detail/GlobalDomain.h"
 
 namespace atlas {
-namespace grid {
 namespace domain {
 
 namespace {
@@ -31,6 +30,5 @@ void GlobalDomain::print(std::ostream& os) const {
 register_BuilderT1(Domain,GlobalDomain,GlobalDomain::static_type());
 
 }  // namespace domain
-}  // namespace grid
 }  // namespace atlas
 

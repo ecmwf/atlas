@@ -15,8 +15,8 @@
 #include "atlas/mesh/actions/BuildTorusXYZField.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/grid/detail/domain/RectangularDomain.h"
-#include "atlas/grid/detail/domain/GlobalDomain.h"
+#include "atlas/domain/detail/RectangularDomain.h"
+#include "atlas/domain/detail/GlobalDomain.h"
 
 namespace atlas {
 namespace mesh {
@@ -29,16 +29,16 @@ BuildTorusXYZField::BuildTorusXYZField(const std::string& name)
 {
 }
 
-Field& BuildTorusXYZField::operator()(Mesh& mesh, const atlas::grid::Domain& dom, double r0, double r1, int nx, int ny) const
+Field& BuildTorusXYZField::operator()(Mesh& mesh, const Domain& dom, double r0, double r1, int nx, int ny) const
 {
   return operator()(mesh.nodes(),dom,r0,r1,nx,ny);
 }
 
-Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const atlas::grid::Domain& dom, double r0, double r1, int nx, int ny) const
+Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const Domain& dom, double r0, double r1, int nx, int ny) const
 {
   // fill xyz with torus coordinates. r0 and r1 are large and small radii, respectively.
 
-  auto domain = dynamic_cast<const grid::domain::RectangularDomain*>( dom.get() );
+  auto domain = dynamic_cast<const domain::RectangularDomain*>( dom.get() );
   const double xmin = domain->xmin();
   const double xmax = domain->xmax();
   const double ymin = domain->ymin();

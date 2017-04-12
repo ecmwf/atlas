@@ -1,8 +1,7 @@
-#include "atlas/grid/detail/domain/EmptyDomain.h"
+#include "atlas/domain/detail/EmptyDomain.h"
 
 
 namespace atlas {
-namespace grid {
 namespace domain {
 
 EmptyDomain::EmptyDomain() {
@@ -28,6 +27,5 @@ std::string EmptyDomain::units() const {
 register_BuilderT1(Domain,EmptyDomain,EmptyDomain::static_type());
 
 }  // namespace domain
-}  // namespace grid
 }  // namespace atlas
 

@@ -1,7 +1,5 @@
 #include "atlas/projection/Projection.h"
 
-#include "eckit/config/Parametrisation.h"
-
 namespace atlas {
 
 Projection::Projection():

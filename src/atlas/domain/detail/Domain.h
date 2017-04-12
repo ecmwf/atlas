@@ -22,7 +22,6 @@ daand:
 namespace atlas {
   class Projection;
 
-namespace grid {
 namespace domain {
 
 class Domain : public eckit::Owned {
@@ -79,5 +78,4 @@ public:
 };
 
 }  // namespace domain
-}  // namespace grid
 }  // namespace atlas

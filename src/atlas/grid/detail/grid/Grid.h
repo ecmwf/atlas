@@ -14,7 +14,7 @@
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/value/Properties.h"
-#include "atlas/grid/Domain.h"
+#include "atlas/domain/Domain.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
@@ -31,7 +31,7 @@ class Grid : public eckit::Owned {
 public:  // types
 
     using Projection = atlas::Projection;
-    using Domain     = atlas::grid::Domain;
+    using Domain     = atlas::Domain;
     using Config     = atlas::util::Config;
     using Spec       = eckit::Properties;
     using builder_t  = eckit::BuilderT1<Grid>;

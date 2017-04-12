@@ -1,8 +1,7 @@
-#include "atlas/grid/detail/domain/CircularDomain.h"
+#include "atlas/domain/detail/CircularDomain.h"
 
 
 namespace atlas {
-namespace grid {
 namespace domain {
 
 CircularDomain::CircularDomain(const std::array<double,2>& centre, const double& radius, const std::string& units ) :
@@ -58,6 +57,5 @@ void CircularDomain::print(std::ostream& os) const {
 register_BuilderT1(Domain,CircularDomain,CircularDomain::static_type());
 
 }  // namespace domain
-}  // namespace grid
 }  // namespace atlas
 

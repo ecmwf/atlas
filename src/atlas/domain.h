@@ -12,7 +12,4 @@
 
 #pragma once
 
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/Iterator.h"
-#include "atlas/grid/Partitioner.h"
-#include "atlas/grid/Distribution.h"
+#include "atlas/domain/Domain.h"

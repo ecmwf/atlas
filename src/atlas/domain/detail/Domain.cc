@@ -1,10 +1,9 @@
-#include "atlas/grid/detail/domain/Domain.h"
+#include "atlas/domain/detail/Domain.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
 #include "eckit/exception/Exceptions.h"
 
 namespace atlas {
-namespace grid {
 namespace domain {
 
 Domain *Domain::create() {
@@ -38,5 +37,4 @@ bool Domain::includesSouthPole( const Projection& proj ) const {
 }
 
 }  // namespace domain
-}  // namespace grid
 }  // namespace atlas

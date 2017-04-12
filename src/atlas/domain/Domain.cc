@@ -8,18 +8,17 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/grid/Domain.h"
+#include "atlas/domain/Domain.h"
 
-#include "atlas/grid/detail/domain/Domain.h"
-#include "atlas/grid/detail/domain/EmptyDomain.h"
-#include "atlas/grid/detail/domain/RectangularDomain.h"
-#include "atlas/grid/detail/domain/ZonalBandDomain.h"
-#include "atlas/grid/detail/domain/GlobalDomain.h"
+#include "atlas/domain/detail/Domain.h"
+#include "atlas/domain/detail/EmptyDomain.h"
+#include "atlas/domain/detail/RectangularDomain.h"
+#include "atlas/domain/detail/ZonalBandDomain.h"
+#include "atlas/domain/detail/GlobalDomain.h"
 
-using RD = atlas::grid::domain::RectangularDomain;
+using RD = atlas::domain::RectangularDomain;
 
 namespace atlas {
-namespace grid {
 
 Domain::Domain():
     domain_( new domain::EmptyDomain() ) {
@@ -29,20 +28,19 @@ Domain::Domain( const Domain& domain):
     domain_( domain.domain_ ) {
 }
 
-Domain::Domain( const domain_t* domain):
+Domain::Domain( const Implementation* domain):
     domain_( domain ) {
 }
 
 Domain::Domain( const eckit::Parametrisation& p ):
-    domain_( atlas::grid::domain::Domain::create(p) ) {
+    domain_( atlas::domain::Domain::create(p) ) {
 }
 
 RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, const std::string& units ) :
   Domain( 
-    ( RD::is_global(x,y,units) ) ? new atlas::grid::domain::GlobalDomain() :
-    ( RD::is_zonal_band(x,units) ? new atlas::grid::domain::ZonalBandDomain(y) :
-    new atlas::grid::domain::RectangularDomain(x,y,units) ) ) {
+    ( RD::is_global(x,y,units) ) ? new atlas::domain::GlobalDomain() :
+    ( RD::is_zonal_band(x,units) ? new atlas::domain::ZonalBandDomain(y) :
+    new atlas::domain::RectangularDomain(x,y,units) ) ) {
 }
 
-} // namespace Grid
 } // namespace atlas

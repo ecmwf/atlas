@@ -15,7 +15,7 @@
 #include "atlas/grid/detail/grid/Unstructured.h"
 #include "atlas/grid/detail/grid/Structured.h"
 #include "atlas/projection/Projection.h"
-#include "atlas/grid/Domain.h"
+#include "atlas/domain/Domain.h"
 #include "atlas/grid/Iterator.h"
 
 namespace eckit {
@@ -26,78 +26,78 @@ namespace atlas {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-  class Grid {
+class Grid {
 
-  public:
+public:
 
-      using Implementation = grid::detail::grid::Grid;
-      using Config         = Implementation::Config;
-      using Spec           = Implementation::Spec;
-      using Domain         = grid::Domain;
-      using Projection     = atlas::Projection;
-      using PointXY        = atlas::PointXY;     // must be sizeof(double)*2
-      using PointLonLat    = atlas::PointLonLat; // must be sizeof(double)*2
+    using Implementation = grid::detail::grid::Grid;
+    using Config         = Implementation::Config;
+    using Spec           = Implementation::Spec;
+    using Domain         = atlas::Domain;
+    using Projection     = atlas::Projection;
+    using PointXY        = atlas::PointXY;     // must be sizeof(double)*2
+    using PointLonLat    = atlas::PointLonLat; // must be sizeof(double)*2
 
 
-      class IterateXY {
-      public:
-        using iterator       = grid::IteratorXY;
-        using const_iterator = iterator;
-      public:
-        IterateXY(const Implementation& grid) : grid_(grid) {}
-        iterator begin() const { return grid_.xy_begin(); }
-        iterator end()   const { return grid_.xy_end(); }
-      private:
-        const Implementation& grid_;
-      };
+    class IterateXY {
+    public:
+      using iterator       = grid::IteratorXY;
+      using const_iterator = iterator;
+    public:
+      IterateXY(const Implementation& grid) : grid_(grid) {}
+      iterator begin() const { return grid_.xy_begin(); }
+      iterator end()   const { return grid_.xy_end(); }
+    private:
+      const Implementation& grid_;
+    };
 
-      class IterateLonLat {
-      public:
-        using iterator       = grid::IteratorLonLat;
-        using const_iterator = iterator;
-      public:
-        IterateLonLat(const Implementation& grid) : grid_(grid) {}
-        iterator begin() const { return grid_.lonlat_begin(); }
-        iterator end()   const { return grid_.lonlat_end(); }
-      private:
-        const Implementation& grid_;
-      };
+    class IterateLonLat {
+    public:
+      using iterator       = grid::IteratorLonLat;
+      using const_iterator = iterator;
+    public:
+      IterateLonLat(const Implementation& grid) : grid_(grid) {}
+      iterator begin() const { return grid_.lonlat_begin(); }
+      iterator end()   const { return grid_.lonlat_end(); }
+    private:
+      const Implementation& grid_;
+    };
 
-  public:
+public:
 
-      IterateXY     xy()     const { return IterateXY(*grid_);     }
-      IterateLonLat lonlat() const { return IterateLonLat(*grid_); }
+    IterateXY     xy()     const { return IterateXY(*grid_);     }
+    IterateLonLat lonlat() const { return IterateLonLat(*grid_); }
 
-      Grid();
-      Grid( const Grid& );
-      Grid( const Implementation* );
-      Grid( const std::string& name, const Domain& = Domain() );
-      Grid( const Config& );
+    Grid();
+    Grid( const Grid& );
+    Grid( const Implementation* );
+    Grid( const std::string& name, const Domain& = Domain() );
+    Grid( const Config& );
 
-      operator bool() const { return grid_; }
+    operator bool() const { return grid_; }
 
-      bool operator==( const Grid& other ) const { return uid() == other.uid(); }
-      bool operator!=( const Grid& other ) const { return uid() != other.uid(); }
+    bool operator==( const Grid& other ) const { return uid() == other.uid(); }
+    bool operator!=( const Grid& other ) const { return uid() != other.uid(); }
 
-      size_t size() const { return grid_->size(); }
+    size_t size() const { return grid_->size(); }
 
-      const Projection& projection() const { return grid_->projection(); }
-      const Domain& domain() const { return grid_->domain(); }
-      std::string name() const { return grid_->name(); }
-      std::string uid() const { return grid_->uid(); }
+    const Projection& projection() const { return grid_->projection(); }
+    const Domain& domain() const { return grid_->domain(); }
+    std::string name() const { return grid_->name(); }
+    std::string uid() const { return grid_->uid(); }
 
-      /// Adds to the MD5 the information that makes this Grid unique
-      void hash(eckit::MD5& md5) const { return grid_->hash(md5); }
+    /// Adds to the MD5 the information that makes this Grid unique
+    void hash(eckit::MD5& md5) const { return grid_->hash(md5); }
 
-      Spec spec() const { return grid_->spec(); }
+    Spec spec() const { return grid_->spec(); }
 
-      const Implementation* get() const { return grid_.get(); }
+    const Implementation* get() const { return grid_.get(); }
 
-  private:
+private:
 
-      eckit::SharedPtr<const Implementation> grid_;
+    eckit::SharedPtr<const Implementation> grid_;
 
-  };
+};
 
 namespace grid {
 

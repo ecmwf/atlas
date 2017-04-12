@@ -1,8 +1,7 @@
-#include "atlas/grid/detail/domain/ZonalBandDomain.h"
+#include "atlas/domain/detail/ZonalBandDomain.h"
 
 
 namespace atlas {
-namespace grid {
 namespace domain {
 
 namespace {
@@ -65,6 +64,5 @@ void ZonalBandDomain::print(std::ostream& os) const {
 register_BuilderT1(Domain,ZonalBandDomain,ZonalBandDomain::static_type());
 
 }  // namespace domain
-}  // namespace grid
 }  // namespace atlas
 

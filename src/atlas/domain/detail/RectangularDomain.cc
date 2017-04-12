@@ -1,9 +1,8 @@
 #include <utility>
-#include "atlas/grid/detail/domain/RectangularDomain.h"
+#include "atlas/domain/detail/RectangularDomain.h"
 
 
 namespace atlas {
-namespace grid {
 namespace domain {
 
 using Interval = RectangularDomain::Interval;
@@ -120,6 +119,5 @@ void RectangularDomain::print(std::ostream& os) const {
 register_BuilderT1(Domain,RectangularDomain,RectangularDomain::static_type());
 
 }  // namespace domain
-}  // namespace grid
 }  // namespace atlas
 

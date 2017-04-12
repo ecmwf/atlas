@@ -35,9 +35,6 @@ public:
   Projection( const Implementation* );
   Projection( const eckit::Parametrisation& );
 
-  // operator Implementation*() { return projection_.get(); }
-  // operator const Implementation&() const { return *projection_.get(); }
-
   void xy2lonlat(double crd[]) const;
   void lonlat2xy(double crd[]) const;
 

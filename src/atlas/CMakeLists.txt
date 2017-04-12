@@ -41,9 +41,9 @@ parallel/omp/omp.h
 
 list( APPEND atlas_grid_srcs
 
+projection.h
 projection/Projection.cc
 projection/Projection.h
-
 projection/detail/ProjectionImpl.cc
 projection/detail/ProjectionImpl.h
 projection/detail/LonLatProjection.cc
@@ -55,14 +55,28 @@ projection/detail/SchmidtProjection.h
 projection/detail/MercatorProjection.cc
 projection/detail/MercatorProjection.h
 
+domain.h
+domain/Domain.cc
+domain/Domain.h
+domain/detail/Domain.cc
+domain/detail/Domain.h
+domain/detail/RectangularDomain.h
+domain/detail/RectangularDomain.cc
+domain/detail/CircularDomain.h
+domain/detail/CircularDomain.cc
+domain/detail/EmptyDomain.h
+domain/detail/EmptyDomain.cc
+domain/detail/GlobalDomain.h
+domain/detail/GlobalDomain.cc
+domain/detail/ZonalBandDomain.h
+domain/detail/ZonalBandDomain.cc
+
 grid.h
 grid/Grid.cc
 grid/Grid.h
 
 grid/Distribution.cc
 grid/Distribution.h
-grid/Domain.cc
-grid/Domain.h
 grid/Spacing.cc
 grid/Spacing.h
 grid/Partitioner.h
@@ -83,19 +97,6 @@ grid/detail/grid/LonLat.h
 grid/detail/grid/LonLat.cc
 grid/detail/grid/Regional.h
 grid/detail/grid/Regional.cc
-
-grid/detail/domain/Domain.cc
-grid/detail/domain/Domain.h
-grid/detail/domain/RectangularDomain.h
-grid/detail/domain/RectangularDomain.cc
-grid/detail/domain/CircularDomain.h
-grid/detail/domain/CircularDomain.cc
-grid/detail/domain/EmptyDomain.h
-grid/detail/domain/EmptyDomain.cc
-grid/detail/domain/GlobalDomain.h
-grid/detail/domain/GlobalDomain.cc
-grid/detail/domain/ZonalBandDomain.h
-grid/detail/domain/ZonalBandDomain.cc
 
 grid/detail/partitioner/EqualRegionsPartitioner.cc
 grid/detail/partitioner/EqualRegionsPartitioner.h

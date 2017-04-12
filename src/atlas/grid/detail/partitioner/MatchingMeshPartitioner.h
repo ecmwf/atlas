@@ -15,7 +15,7 @@
 #include "eckit/config/Configuration.h"
 #include "eckit/memory/NonCopyable.h"
 #include "eckit/memory/ScopedPtr.h"
-#include "atlas/grid/Domain.h"
+#include "atlas/domain/Domain.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"

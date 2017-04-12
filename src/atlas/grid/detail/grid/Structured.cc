@@ -19,9 +19,9 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
-#include "atlas/grid/detail/domain/RectangularDomain.h"
-#include "atlas/grid/detail/domain/ZonalBandDomain.h"
-#include "atlas/grid/Domain.h"
+#include "atlas/domain/detail/RectangularDomain.h"
+#include "atlas/domain/detail/ZonalBandDomain.h"
+#include "atlas/domain/Domain.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/runtime/Log.h"
 

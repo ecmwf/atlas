@@ -2,10 +2,9 @@
 
 #include <iostream>
 #include <array>
-#include "atlas/grid/detail/domain/Domain.h"
+#include "atlas/domain/detail/Domain.h"
 
 namespace atlas {
-namespace grid {
 namespace domain {
 
 class RectangularDomain: public Domain {
@@ -61,5 +60,4 @@ private:
 };
 
 }  // namespace domain
-}  // namespace grid
 }  // namespace atlas

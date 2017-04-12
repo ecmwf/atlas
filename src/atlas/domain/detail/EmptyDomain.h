@@ -1,9 +1,8 @@
 #pragma once
 
-#include "atlas/grid/detail/domain/Domain.h"
+#include "atlas/domain/detail/Domain.h"
 
 namespace atlas {
-namespace grid {
 namespace domain {
 
 class EmptyDomain: public Domain {
@@ -32,5 +31,4 @@ public:
 
 
 }  // namespace domain
-}  // namespace grid
 }  // namespace atlas

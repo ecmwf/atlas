@@ -12,7 +12,7 @@
 
 #include <array>
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/grid/detail/domain/Domain.h"
+#include "atlas/domain/detail/Domain.h"
 #include "atlas/projection/Projection.h"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -25,7 +25,6 @@ class Parametrisation;
 //---------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace grid {
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -33,13 +32,13 @@ class Domain {
 
 public:
 
-    using domain_t = atlas::grid::domain::Domain;
+    using Implementation = atlas::domain::Domain;
 
 public:
 
     Domain();
     Domain( const Domain& );
-    Domain( const domain_t* );
+    Domain( const Implementation* );
     Domain( const eckit::Parametrisation& );
 
     std::string type() const;
@@ -74,27 +73,12 @@ public:
 
     std::string units() const;
 
-    const domain_t* get() const { return domain_.get(); }
+    const Implementation* get() const { return domain_.get(); }
 
 
 private:
 
-    eckit::SharedPtr<const domain_t> domain_;
-};
-
-//---------------------------------------------------------------------------------------------------------------------
-
-class RectangularDomain : public Domain {
-
-public:
-  
-  using Interval=std::array<double,2>;
-
-public:
-
-  using Domain::Domain;
-  RectangularDomain( const Interval& x, const Interval& y, const std::string& units = "degrees" );
-  
+    eckit::SharedPtr<const Implementation> domain_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -116,5 +100,17 @@ inline std::string Domain::units() const { return domain_->units(); }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-}
-}
+class RectangularDomain : public Domain {
+
+public:
+  
+  using Interval=std::array<double,2>;
+
+public:
+
+  using Domain::Domain;
+  RectangularDomain( const Interval& x, const Interval& y, const std::string& units = "degrees" );
+  
+};
+
+}  // namespace 

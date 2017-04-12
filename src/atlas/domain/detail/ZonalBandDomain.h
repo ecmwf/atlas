@@ -2,10 +2,9 @@
 
 #include <iostream>
 #include <array>
-#include "atlas/grid/detail/domain/RectangularDomain.h"
+#include "atlas/domain/detail/RectangularDomain.h"
 
 namespace atlas {
-namespace grid {
 namespace domain {
 
 class ZonalBandDomain: public RectangularDomain {
@@ -43,5 +42,4 @@ private:
 };
 
 }  // namespace domain
-}  // namespace grid
 }  // namespace atlas
