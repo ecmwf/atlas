@@ -22,7 +22,6 @@ namespace interpolation {
 struct PartitionedMesh {
 
     typedef grid::Partitioner Partitioner;
-    typedef meshgenerator::MeshGenerator Generator;
     typedef Mesh                      Mesh;
 
     PartitionedMesh(
@@ -46,7 +45,7 @@ protected:
     const std::string optionPartitioner_;
     const std::string optionGenerator_;
 
-    Generator::Parameters generatorParams_;
+    MeshGenerator::Parameters generatorParams_;
     Partitioner partitioner_;
     Mesh mesh_;
 

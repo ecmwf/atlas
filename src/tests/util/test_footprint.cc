@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE( test_broadcast_to_self )
   Log::info() << "field.footprint = " << eckit::Bytes(field.footprint()) << std::endl;
 
   Grid grid("O640");
-  meshgenerator::MeshGenerator meshgen( "structured" );
+  MeshGenerator meshgen( "structured" );
   Mesh mesh = meshgen.generate(grid);
 
   Log::info() << "Footprint for mesh generated from grid " << grid.name() << std::endl;

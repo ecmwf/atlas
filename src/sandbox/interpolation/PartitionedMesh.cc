@@ -61,7 +61,7 @@ void PartitionedMesh::partition(const Grid& grid) {
     partitioner_ = Partitioner(optionPartitioner_);
 
 
-    Generator meshgen(optionGenerator_, generatorParams_);
+    MeshGenerator meshgen(optionGenerator_, generatorParams_);
     mesh_ = meshgen.generate(grid, partitioner_.partition(grid));
 }
 
@@ -71,7 +71,7 @@ void PartitionedMesh::partition(const Grid& grid, const PartitionedMesh& other) 
 
     partitioner_ = grid::MatchingMeshPartitioner( other.mesh_, util::Config("type",optionPartitioner_) );
 
-    Generator meshgen(optionGenerator_, generatorParams_);
+    MeshGenerator meshgen(optionGenerator_, generatorParams_);
     mesh_ = meshgen.generate(grid, partitioner_.partition(grid) );
 }
 

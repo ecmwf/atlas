@@ -190,13 +190,13 @@ void Meshgen2Gmsh::execute(const Args& args)
   Log::debug() << "Spec: " << grid.spec() << std::endl;
 
 
-  std::string meshgenerator_type = ( RegularGrid(grid) ? "regular" : "structured" );
-  args.get("generator",meshgenerator_type);
+  std::string Implementationype = ( RegularGrid(grid) ? "regular" : "structured" );
+  args.get("generator",Implementationype);
   eckit::LocalConfiguration meshgenerator_config( args );
   if( parallel::mpi::comm().size() > 1 || edges )
     meshgenerator_config.set("3d",false);
 
-  meshgenerator::MeshGenerator meshgenerator(meshgenerator_type,meshgenerator_config);
+  MeshGenerator meshgenerator(Implementationype,meshgenerator_config);
 
   Mesh mesh;
   try {

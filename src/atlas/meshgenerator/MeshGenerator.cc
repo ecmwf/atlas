@@ -97,45 +97,6 @@ Mesh MeshGeneratorImpl::generate( const Grid& grid, const grid::Distribution& di
 
 //----------------------------------------------------------------------------------------------------------------------
 
-MeshGenerator::MeshGenerator() :
-    meshgenerator_( nullptr ) {
-}
-
-MeshGenerator::MeshGenerator( const meshgenerator_t* meshgenerator ) :
-    meshgenerator_( meshgenerator ) {
-}
-
-MeshGenerator::MeshGenerator( const MeshGenerator& meshgenerator ) :
-    meshgenerator_( meshgenerator.meshgenerator_ ) {
-}
-
-MeshGenerator::MeshGenerator(const std::string &key, const eckit::Parametrisation &params) :
-    meshgenerator_( MeshGeneratorFactory::build(key,params) ) {
-}
-
-void MeshGenerator::hash(eckit::MD5& md5) const { 
-    return meshgenerator_->hash(md5);
-}
-
-Mesh MeshGenerator::generate( const Grid& g, const grid::Distribution& d) const {
-    return meshgenerator_->generate(g,d);
-}
-
-Mesh MeshGenerator::generate( const Grid& g) const {
-    return meshgenerator_->generate(g);
-}
-
-Mesh MeshGenerator::operator()( const Grid& g, const grid::Distribution& d ) const {
-  return meshgenerator_->operator()(g,d);
-}
-
-Mesh MeshGenerator::operator()( const Grid& g ) const {
-  return meshgenerator_->operator()(g);  
-}
-
-
-//----------------------------------------------------------------------------------------------------------------------
-
 void MeshGeneratorImpl::generate_global_element_numbering( Mesh& mesh ) const
 {
   size_t loc_nb_elems = mesh.cells().size();
@@ -201,7 +162,7 @@ void MeshGeneratorFactory::list(std::ostream& out) {
 }
 
 
-const MeshGenerator::meshgenerator_t *MeshGeneratorFactory::build(const std::string &name) {
+const MeshGenerator::Implementation *MeshGeneratorFactory::build(const std::string &name) {
 
     pthread_once(&once, init);
 
@@ -224,7 +185,7 @@ const MeshGenerator::meshgenerator_t *MeshGeneratorFactory::build(const std::str
     return (*j).second->make();
 }
 
-const MeshGenerator::meshgenerator_t *MeshGeneratorFactory::build(const std::string& name, const eckit::Parametrisation& param) {
+const MeshGenerator::Implementation *MeshGeneratorFactory::build(const std::string& name, const eckit::Parametrisation& param) {
 
     pthread_once(&once, init);
 
@@ -251,7 +212,7 @@ const MeshGenerator::meshgenerator_t *MeshGeneratorFactory::build(const std::str
 
 extern "C" {
 
-void atlas__MeshGenerator__delete(MeshGenerator::meshgenerator_t* This)
+void atlas__MeshGenerator__delete(MeshGenerator::Implementation* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -259,9 +220,9 @@ void atlas__MeshGenerator__delete(MeshGenerator::meshgenerator_t* This)
   );
 }
 
-const MeshGenerator::meshgenerator_t* atlas__MeshGenerator__create_noconfig(const char* name)
+const MeshGenerator::Implementation* atlas__MeshGenerator__create_noconfig(const char* name)
 {
-  const MeshGenerator::meshgenerator_t* meshgenerator(0);
+  const MeshGenerator::Implementation* meshgenerator(0);
   ATLAS_ERROR_HANDLING (
   {
     MeshGenerator m( std::string{name} );
@@ -273,9 +234,9 @@ const MeshGenerator::meshgenerator_t* atlas__MeshGenerator__create_noconfig(cons
   return meshgenerator;
 }
 
-const MeshGenerator::meshgenerator_t* atlas__MeshGenerator__create(const char* name, const eckit::Parametrisation* params)
+const MeshGenerator::Implementation* atlas__MeshGenerator__create(const char* name, const eckit::Parametrisation* params)
 {
-  const MeshGenerator::meshgenerator_t* meshgenerator(0);
+  const MeshGenerator::Implementation* meshgenerator(0);
   ATLAS_ERROR_HANDLING (
     ASSERT(params);
     {
@@ -288,7 +249,7 @@ const MeshGenerator::meshgenerator_t* atlas__MeshGenerator__create(const char* n
   return meshgenerator;
 }
 
-Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist (const MeshGenerator::meshgenerator_t* This, const Grid::Implementation* grid, const grid::Distribution::impl_t* distribution )
+Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist (const MeshGenerator::Implementation* This, const Grid::Implementation* grid, const grid::Distribution::impl_t* distribution )
 {
   ATLAS_ERROR_HANDLING(
     Mesh::Implementation* m;
@@ -303,7 +264,7 @@ Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist (const MeshG
   return nullptr;
 }
 
-Mesh::Implementation* atlas__MeshGenerator__generate__grid (const MeshGenerator::meshgenerator_t* This, const Grid::Implementation* grid )
+Mesh::Implementation* atlas__MeshGenerator__generate__grid (const MeshGenerator::Implementation* This, const Grid::Implementation* grid )
 {
   ATLAS_ERROR_HANDLING(
     Mesh::Implementation* m;
@@ -323,5 +284,46 @@ Mesh::Implementation* atlas__MeshGenerator__generate__grid (const MeshGenerator:
 //----------------------------------------------------------------------------------------------------------------------
 
 } // namespace meshgenerator
+
+//----------------------------------------------------------------------------------------------------------------------
+
+MeshGenerator::MeshGenerator() :
+    meshgenerator_( nullptr ) {
+}
+
+MeshGenerator::MeshGenerator( const Implementation* meshgenerator ) :
+    meshgenerator_( meshgenerator ) {
+}
+
+MeshGenerator::MeshGenerator( const MeshGenerator& meshgenerator ) :
+    meshgenerator_( meshgenerator.meshgenerator_ ) {
+}
+
+MeshGenerator::MeshGenerator(const std::string &key, const eckit::Parametrisation &params) :
+    meshgenerator_( meshgenerator::MeshGeneratorFactory::build(key,params) ) {
+}
+
+void MeshGenerator::hash(eckit::MD5& md5) const { 
+    return meshgenerator_->hash(md5);
+}
+
+Mesh MeshGenerator::generate( const Grid& g, const grid::Distribution& d) const {
+    return meshgenerator_->generate(g,d);
+}
+
+Mesh MeshGenerator::generate( const Grid& g) const {
+    return meshgenerator_->generate(g);
+}
+
+Mesh MeshGenerator::operator()( const Grid& g, const grid::Distribution& d ) const {
+  return meshgenerator_->operator()(g,d);
+}
+
+Mesh MeshGenerator::operator()( const Grid& g ) const {
+  return meshgenerator_->operator()(g);  
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 } // namespace atlas
 
