@@ -103,7 +103,7 @@ TEST( test_trans_invtrans_grad )
 
   real(c_double) :: beta
 
-  grid = atlas_StructuredGrid("O32")
+  grid = atlas_GaussianGrid("O32")
   meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid)
   call meshgenerator%final()
