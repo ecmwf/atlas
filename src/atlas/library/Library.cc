@@ -203,6 +203,8 @@ void Library::Info::print( std::ostream& out ) const {
 #ifdef ATLAS_HAVE_TRANS
     out << "    transi version (" << transi_version() << "), "
                 << "git-sha1 "<< transi_git_sha1_abbrev(7) << '\n';
+    out << "    trans version (" << trans_version() << "), "
+                << "git-sha1 "<< trans_git_sha1_abbrev(7) << '\n';
 #endif
 
 }

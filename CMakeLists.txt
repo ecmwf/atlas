@@ -103,7 +103,7 @@ endif()
 
 ecbuild_add_option( FEATURE TRANS
                     DESCRIPTION "Support for spectral transforms"
-                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.4.0 QUIET" )
+                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.4.1 QUIET" )
 
 ### tesselation ...
 

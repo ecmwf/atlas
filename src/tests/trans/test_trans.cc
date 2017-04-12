@@ -155,8 +155,11 @@ BOOST_AUTO_TEST_CASE( test_trans_options )
 BOOST_AUTO_TEST_CASE( test_distspec )
 {
   trans::Trans::Options p;
+
+#ifdef TRANS_HAVE_IO
   if( parallel::mpi::comm().size() == 1 )
     p.set_write("cached_legendre_coeffs");
+#endif
   p.set_flt(false);
   trans::Trans trans(400, 159, p);
   BOOST_TEST_CHECKPOINT("Trans initialized");
