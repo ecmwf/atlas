@@ -1,9 +1,9 @@
 #include "eckit/utils/MD5.h"
-#include "atlas/grid/detail/projection/LonLatProjection.h"
+#include "atlas/projection/detail/LonLatProjection.h"
 
 namespace atlas {
-namespace grid {
 namespace projection {
+namespace detail {
 
 template <typename Rotation>
 LonLatProjectionT<Rotation>::LonLatProjectionT( const eckit::Parametrisation& config ) :
@@ -28,7 +28,7 @@ void LonLatProjectionT<Rotation>::hash( eckit::MD5& md5 ) const {
 register_BuilderT1(Projection,LonLatProjection,LonLatProjection::static_type());
 register_BuilderT1(Projection,RotatedLonLatProjection,RotatedLonLatProjection::static_type());
 
+}  // namespace detail
 }  // namespace projection
-}  // namespace grid
 }  // namespace atlas
 

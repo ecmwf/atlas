@@ -13,7 +13,7 @@
 #include <array>
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/grid/detail/domain/Domain.h"
-#include "atlas/grid/Projection.h"
+#include "atlas/projection/Projection.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 

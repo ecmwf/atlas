@@ -12,7 +12,7 @@
 #include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/Projection.h"
+#include "atlas/projection/Projection.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
@@ -92,7 +92,7 @@ void DelaunayMeshGenerator::createNodes(const Grid& grid, Mesh& mesh) const
   array::ArrayView<double,2> xy     = array::make_view<double,2>( mesh.nodes().xy() );
   array::ArrayView<double,2> lonlat = array::make_view<double,2>( mesh.nodes().lonlat() );
   size_t jnode(0);
-  grid::Projection projection = grid.projection();
+  Projection projection = grid.projection();
   PointLonLat Pll;
   for( PointXY Pxy : grid.xy() ) {
     xy(jnode,XX) = Pxy.x();

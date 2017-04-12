@@ -14,7 +14,7 @@
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/grid/detail/grid/Unstructured.h"
 #include "atlas/grid/detail/grid/Structured.h"
-#include "atlas/grid/Projection.h"
+#include "atlas/projection/Projection.h"
 #include "atlas/grid/Domain.h"
 #include "atlas/grid/Iterator.h"
 
@@ -34,7 +34,7 @@ namespace atlas {
       using Config         = Implementation::Config;
       using Spec           = Implementation::Spec;
       using Domain         = grid::Domain;
-      using Projection     = grid::Projection;
+      using Projection     = atlas::Projection;
       using PointXY        = atlas::PointXY;     // must be sizeof(double)*2
       using PointLonLat    = atlas::PointLonLat; // must be sizeof(double)*2
 

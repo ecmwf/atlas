@@ -18,7 +18,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/Domain.h"
-#include "atlas/grid/Projection.h"
+#include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/grid/detail/grid/Gaussian.h"
 #include "atlas/grid/detail/grid/Structured.h"

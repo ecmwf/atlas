@@ -41,14 +41,26 @@ parallel/omp/omp.h
 
 list( APPEND atlas_grid_srcs
 
+projection/Projection.cc
+projection/Projection.h
+
+projection/detail/Projection.cc
+projection/detail/Projection.h
+projection/detail/LonLatProjection.cc
+projection/detail/LonLatProjection.h
+projection/detail/LambertProjection.cc
+projection/detail/LambertProjection.h
+projection/detail/SchmidtProjection.cc
+projection/detail/SchmidtProjection.h
+projection/detail/MercatorProjection.cc
+projection/detail/MercatorProjection.h
+
 grid.h
 grid/Grid.cc
 grid/Grid.h
 
 grid/Distribution.cc
 grid/Distribution.h
-grid/Projection.cc
-grid/Projection.h
 grid/Domain.cc
 grid/Domain.h
 grid/Spacing.cc
@@ -96,17 +108,6 @@ grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
-
-grid/detail/projection/Projection.cc
-grid/detail/projection/Projection.h
-grid/detail/projection/LonLatProjection.cc
-grid/detail/projection/LonLatProjection.h
-grid/detail/projection/LambertProjection.cc
-grid/detail/projection/LambertProjection.h
-grid/detail/projection/SchmidtProjection.cc
-grid/detail/projection/SchmidtProjection.h
-grid/detail/projection/MercatorProjection.cc
-grid/detail/projection/MercatorProjection.h
 
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h

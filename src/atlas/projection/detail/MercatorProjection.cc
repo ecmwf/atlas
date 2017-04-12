@@ -1,6 +1,6 @@
 #include <cmath>
 #include "eckit/utils/MD5.h"
-#include "atlas/grid/detail/projection/MercatorProjection.h"
+#include "atlas/projection/detail/MercatorProjection.h"
 #include "atlas/util/Constants.h"
 
 /*
@@ -20,8 +20,8 @@ namespace {
 }
 
 namespace atlas {
-namespace grid {
 namespace projection {
+namespace detail {
 
 // constructors
 template <typename Rotation>
@@ -84,7 +84,7 @@ void MercatorProjectionT<Rotation>::hash( eckit::MD5& md5 ) const {
 register_BuilderT1(Projection,MercatorProjection,MercatorProjection::static_type());
 register_BuilderT1(Projection,RotatedMercatorProjection,RotatedMercatorProjection::static_type());
 
+}  // namespace detail
 }  // namespace projection
-}  // namespace grid
 }  // namespace atlas
 

@@ -122,7 +122,7 @@ void MeshGeneratorImpl::generate_global_element_numbering( Mesh& mesh ) const
 }
 
 
-void MeshGeneratorImpl::set_projection( Mesh& mesh, const grid::Projection& p ) const {
+void MeshGeneratorImpl::set_projection( Mesh& mesh, const Projection& p ) const {
   mesh.setProjection(p);
 }
 

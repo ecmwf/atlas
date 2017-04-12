@@ -1,11 +1,11 @@
 #pragma once
 
-#include "atlas/grid/detail/projection/Projection.h"
+#include "atlas/projection/detail/Projection.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
-namespace grid {
 namespace projection {
+namespace detail {
 
 template <typename Rotation>
 class LonLatProjectionT : public Projection {
@@ -52,7 +52,6 @@ typedef LonLatProjectionT<Rotated>    RotatedLonLatProjection;
 
 // --------------------------------------------------------------------------------------------------------------------
 
-
+}  // namespace detail
 }  // namespace projection
-}  // namespace grid
 }  // namespace atlas

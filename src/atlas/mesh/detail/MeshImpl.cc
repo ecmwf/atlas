@@ -20,7 +20,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 
 using atlas::Grid;
-using atlas::grid::Projection;
+using atlas::Projection;
 
 namespace atlas {
 namespace mesh {

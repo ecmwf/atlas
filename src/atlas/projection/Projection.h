@@ -6,7 +6,7 @@
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/util/Point.h"
-#include "atlas/grid/detail/projection/Projection.h"
+#include "atlas/projection/detail/Projection.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -19,21 +19,24 @@ class MD5;
 //---------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace grid {
 
 //---------------------------------------------------------------------------------------------------------------------
 
 class Projection {
+  
+public:
+  
+  using Implementation = projection::detail::Projection;
 
 public:
 
   Projection();
   Projection( const Projection& );
-  Projection( const atlas::grid::projection::Projection* );
+  Projection( const Implementation* );
   Projection( const eckit::Parametrisation& );
 
-  operator atlas::grid::projection::Projection*() { return projection_.get(); }
-  operator const atlas::grid::projection::Projection&() const { return *projection_.get(); }
+  // operator Implementation*() { return projection_.get(); }
+  // operator const Implementation&() const { return *projection_.get(); }
 
   void xy2lonlat(double crd[]) const;
   void lonlat2xy(double crd[]) const;
@@ -55,7 +58,7 @@ public:
 
 private:
 
-  eckit::SharedPtr<atlas::grid::projection::Projection> projection_;
+  eckit::SharedPtr<Implementation> projection_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -70,5 +73,5 @@ inline std::string Projection::units() const { return projection_->units(); }
 inline Projection::operator bool() const { return projection_->operator bool(); }
 
 //---------------------------------------------------------------------------------------------------------------------
-}
+
 }

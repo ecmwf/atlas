@@ -19,9 +19,8 @@
 // Forward declarations
 
 namespace atlas {
-namespace grid {
     class Projection;
-} }
+}
 
 namespace atlas {
 namespace util {
@@ -105,7 +104,7 @@ public:
 
     void syncHostDevice() const { impl_->syncHostDevice(); }
 
-    const grid::Projection& projection() const { return impl_->projection(); }
+    const Projection& projection() const { return impl_->projection(); }
 
     const Implementation* get() const { return impl_.get(); }
           Implementation* get()       { return impl_.get(); }
@@ -118,7 +117,7 @@ private:  // methods
     }
 
     friend class meshgenerator::MeshGeneratorImpl;
-    void setProjection(const grid::Projection& p) { impl_->setProjection(p); }
+    void setProjection(const Projection& p) { impl_->setProjection(p); }
 
 private:
 

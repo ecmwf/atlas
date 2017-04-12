@@ -1,10 +1,10 @@
 #pragma once
 
-#include "atlas/grid/detail/projection/Projection.h"
+#include "atlas/projection/detail/Projection.h"
 
 namespace atlas {
-namespace grid {
 namespace projection {
+namespace detail {
 
 template <typename Rotation>
 class SchmidtProjectionT: public Projection {
@@ -42,6 +42,6 @@ private:
 typedef SchmidtProjectionT<NotRotated> SchmidtProjection;
 typedef SchmidtProjectionT<Rotated>    RotatedSchmidtProjection;
 
+}  // namespace detail
 }  // namespace projection
-}  // namespace grid
 }  // namespace atlas

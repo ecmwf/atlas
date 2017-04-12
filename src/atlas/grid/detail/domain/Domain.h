@@ -20,11 +20,9 @@ daand:
 #include "atlas/util/Point.h"
 
 namespace atlas {
-namespace grid {
-namespace projection {
-class Projection;
-}
+  class Projection;
 
+namespace grid {
 namespace domain {
 
 class Domain : public eckit::Owned {
@@ -63,10 +61,10 @@ public:
 // without knowing also the projection
 
     /// Check if grid includes the North pole
-    bool includesNorthPole(const projection::Projection& ) const;
+    bool includesNorthPole(const Projection& ) const;
 
     /// Check if grid includes the South pole
-    bool includesSouthPole(const projection::Projection& ) const;
+    bool includesSouthPole(const Projection& ) const;
 
     /// Output to stream
     virtual void print(std::ostream&) const =0;

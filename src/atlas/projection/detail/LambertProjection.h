@@ -1,10 +1,10 @@
 #pragma once
 
-#include "atlas/grid/detail/projection/Projection.h"
+#include "atlas/projection/detail/Projection.h"
 
 namespace atlas {
-namespace grid {
 namespace projection {
+namespace detail {
 
 class LambertProjection: public Projection {
 
@@ -44,6 +44,6 @@ private:
     void setup();
 };
 
+}  // namespace detail
 }  // namespace projection
-}  // namespace grid
 }  // namespace atlas

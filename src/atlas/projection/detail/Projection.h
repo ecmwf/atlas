@@ -11,8 +11,8 @@
 namespace eckit { class MD5; }
 
 namespace atlas {
-namespace grid {
 namespace projection {
+namespace detail {
 
 class Projection : public eckit::Owned {
 
@@ -100,7 +100,6 @@ public:
     void hash( eckit::MD5& ) const {}
 };
 
-
+}  // namespace detail
 }  // namespace projection
-}  // namespace grid
 }  // namespace atlas

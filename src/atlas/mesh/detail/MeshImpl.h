@@ -16,7 +16,7 @@
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/util/Metadata.h"
-#include "atlas/grid/Projection.h"
+#include "atlas/projection/Projection.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -91,7 +91,7 @@ public: // methods
 
     void syncHostDevice() const;
 
-    const grid::Projection& projection() const { return projection_; }
+    const Projection& projection() const { return projection_; }
 
 private:  // methods
 
@@ -104,7 +104,7 @@ private:  // methods
 
     void createElements();
 
-    void setProjection(const grid::Projection&);
+    void setProjection(const Projection&);
 
 private: // members
 
@@ -122,7 +122,7 @@ private: // members
 
     size_t dimensionality_;
 
-    grid::Projection projection_;
+    Projection projection_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

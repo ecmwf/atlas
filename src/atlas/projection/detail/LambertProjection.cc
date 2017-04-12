@@ -1,6 +1,6 @@
 #include <cmath>
 #include "eckit/utils/MD5.h"
-#include "atlas/grid/detail/projection/LambertProjection.h"
+#include "atlas/projection/detail/LambertProjection.h"
 #include "atlas/util/Constants.h"
 
 /*
@@ -20,8 +20,9 @@ namespace {
 }
 
 namespace atlas {
-namespace grid {
 namespace projection {
+namespace detail {
+
 
 // constructors
 LambertProjection::LambertProjection(const eckit::Parametrisation& params) {
@@ -105,7 +106,6 @@ void LambertProjection::hash( eckit::MD5& md5 ) const {
 
 register_BuilderT1(Projection,LambertProjection,LambertProjection::static_type());
 
+}  // namespace detail
 }  // namespace projection
-}  // namespace grid
 }  // namespace atlas
-

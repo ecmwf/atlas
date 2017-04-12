@@ -1,11 +1,11 @@
 #include "eckit/utils/MD5.h"
-#include "atlas/grid/detail/projection/Projection.h"
-#include "atlas/grid/detail/projection/LonLatProjection.h"
+#include "atlas/projection/detail/Projection.h"
+#include "atlas/projection/detail/LonLatProjection.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {
-namespace grid {
 namespace projection {
+namespace detail {
 
 Projection* Projection::create() {
   // default: no projection, i.e. stay in (lon,lat)-space
@@ -46,7 +46,7 @@ void Rotated::hash( eckit::MD5& md5 ) const {
   md5.add(rotationAngle());
 }
 
+}  // namespace detail
 }  // namespace projection
-}  // namespace grid
 }  // namespace atlas
 

@@ -60,7 +60,7 @@ public:
 protected:
 
     void generate_global_element_numbering( Mesh& mesh ) const;
-    void set_projection( Mesh&, const grid::Projection& ) const;
+    void set_projection( Mesh&, const Projection& ) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
