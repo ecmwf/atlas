@@ -194,8 +194,8 @@ end interface
 !------------------------------------------------------------------------------
 
 interface c_idx
-  module procedure :: c_idx_32
-  module procedure :: c_idx_64
+  module procedure c_idx_32
+  module procedure c_idx_64
 end interface
 
 !------------------------------------------------------------------------------
