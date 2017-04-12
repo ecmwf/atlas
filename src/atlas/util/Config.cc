@@ -381,7 +381,6 @@ int atlas__Config__get_array_float (Config* This, const char* name, float* &valu
     size = v.size();
     value = new float[size];
     for ( size_t j = 0; j < v.size(); ++j ) {
-      ASSERT(float(v[j]) == v[j]);
       value[j] = v[j];
     }
     allocated = true;
