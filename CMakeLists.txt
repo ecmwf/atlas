@@ -122,7 +122,7 @@ endif()
 ### FIND GRIDTOOLS STORAGE
 ecbuild_add_option(
     FEATURE GRIDTOOLS_STORAGE
-    DESCRIPTION "atlas: Arrays internally use GridTools storage layer"
+    DESCRIPTION "Arrays internally use GridTools storage layer"
     REQUIRED_PACKAGES "gridtools_storage" )
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
