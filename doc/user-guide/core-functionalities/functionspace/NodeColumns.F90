@@ -117,7 +117,7 @@ call fs_nodes%gather(field_scalar1, field_global);
 write(string, *) "local nodes          = ", fs_nodes%nb_nodes()
 call atlas_log%info(string)
 
-write(string, *) "grid points          = ", grid%npts()
+write(string, *) "grid points          = ", grid%size()
 call atlas_log%info(string)
 
 write(string, *) "field_global.shape(1) = ", field_global%shape(1)

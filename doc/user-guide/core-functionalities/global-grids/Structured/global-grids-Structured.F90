@@ -14,7 +14,7 @@ call atlas_log%info(string)
 write(string, "(A,I0)") "nx first = ", grid%nx(1)
 call atlas_log%info(string)
 
-write(string, "(A,I0)") "npts = ", grid%npts()
+write(string, "(A,I0)") "npts = ", grid%size()
 call atlas_log%info(string)
 
 write(string, "(A,F8.4)") "y(1)   = ", grid%y(1)

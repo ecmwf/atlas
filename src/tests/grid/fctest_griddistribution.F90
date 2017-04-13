@@ -40,11 +40,11 @@ END_TESTSUITE_FINALIZE
 !   integer(c_long), pointer :: pl(:)
 !
 !   N640 = atlas_StructuredGrid("N640")
-!   FCTEST_CHECK_EQUAL(N640%npts(),2140702_c_long)
+!   FCTEST_CHECK_EQUAL(N640%size(),2140702_c_long)
 !   pl => N640%pl()
 !
 !   custom = atlas_ReducedGaussianGrid( N640%N(), pl )
-!   FCTEST_CHECK_EQUAL(N640%npts(),custom%npts() )
+!   FCTEST_CHECK_EQUAL(N640%size(),custom%size() )
 !
 !   call N640%final()
 !   call custom%final()

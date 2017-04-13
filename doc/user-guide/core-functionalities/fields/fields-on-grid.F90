@@ -21,7 +21,7 @@ call atlas_library%initialise()
 
 grid = atlas_StructuredGrid( "O32" )
 
-field_pressure = atlas_Field("pressure", atlas_real(wp), [grid%npts()])
+field_pressure = atlas_Field("pressure", atlas_real(wp), [grid%size()])
 call field_pressure%data(pressure)
 
 jnode = 1
