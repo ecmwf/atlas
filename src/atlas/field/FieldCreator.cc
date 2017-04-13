@@ -111,7 +111,7 @@ FieldCreator *FieldCreatorFactory::build(const std::string &name) {
 
     std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<ATLAS>() << "Looking for FieldCreatorFactory [" << name << "]" << '\n';
+    Log::debug<Atlas>() << "Looking for FieldCreatorFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';
@@ -135,7 +135,7 @@ FieldCreator *FieldCreatorFactory::build(const std::string& name, const eckit::P
 
     std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<ATLAS>() << "Looking for FieldCreatorFactory [" << name << "]" << '\n';
+    Log::debug<Atlas>() << "Looking for FieldCreatorFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';

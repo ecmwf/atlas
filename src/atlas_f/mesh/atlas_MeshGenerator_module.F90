@@ -71,9 +71,9 @@ function atlas_meshgenerator_Structured__config(config) result(meshgenerator)
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Config), intent(in), optional :: config
   if( present(config) ) then
-    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str("Structured"),config%c_ptr()))
+    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str("structured"),config%c_ptr()))
   else
-    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create_noconfig(c_str("Structured")))
+    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create_noconfig(c_str("structured")))
   endif
   call meshgenerator%return()
 end function

@@ -1,0 +1,8 @@
+{
+  "//" : "Classic Gaussian grid 'N16'",
+
+  "type" : "octahedral_gaussian",
+  "N" : 16,
+
+  "domain" : { "type": "rectangular", "ymax": 45, "ymin": -45, "xmin": 45, "xmax": 90, "units":"degrees" }
+}

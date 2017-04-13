@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_actions_BuildCellCentres_h
-#define atlas_actions_BuildCellCentres_h
+#pragma once
 
 namespace atlas {
 
@@ -30,5 +29,3 @@ public:
 } // namespace actions
 } // namespace mesh
 } // namespace atlas
-
-#endif

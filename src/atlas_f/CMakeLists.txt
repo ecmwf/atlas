@@ -11,7 +11,7 @@ function( fortranize file )
   file( WRITE "${file}" "${result}" )
 endfunction()
 
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/internals/atlas_defines.h.in
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/library/defines.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h )
 
 install( FILES
@@ -101,12 +101,14 @@ else()
 
 endif()
 
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Structured.h
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Structured.h
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/GridDistribution.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Mesh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Distribution.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshIntf.h
+    MODULE    atlas_mesh_c_binding
+    OUTPUT    atlas_mesh_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Nodes.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Connectivity.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/HybridElements.h)
@@ -117,9 +119,8 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildPeriodicBo
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildHalo.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildEdges.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildDualMesh.h)
-#generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/GenerateMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/WriteLoadBalanceReport.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/generators/MeshGenerator.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/meshgenerator/MeshGenerator.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Output.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Gmsh.h
   MODULE    atlas_output_gmsh_c_binding
@@ -149,12 +150,13 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/io/Gmsh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/detail/GmshIO.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/HaloExchange.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/GatherScatter.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/Checksum.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
+generate_fortran_bindings(FORTRAN_BINDINGS internals/Library.h)
 
 preprocess_fypp( atlas_f_src field/atlas_Field_module.F90 )
 ecbuild_debug_var( atlas_f_src )
@@ -203,6 +205,8 @@ ecbuild_add_library( TARGET atlas_f
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
         internals/atlas_write_to_fortran_unit.F90
+        internals/Library.h
+        internals/Library.cc
 
   PRIVATE_INCLUDES
         ${FCKIT_INCLUDE_DIRS}

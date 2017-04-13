@@ -1,12 +1,11 @@
-#ifndef atlas_ErrorHandling_h
-#define atlas_ErrorHandling_h
+#pragma once
 
 #include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace runtime {
 
-static const int atlas_err_cleared         =  1 ;
+static const int atlas_err_cleared         =  1  ;
 static const int atlas_err_noerr           =  0  ;
 static const int atlas_err_exception       = -1  ;
 static const int atlas_err_usererror       = -2  ;
@@ -99,5 +98,3 @@ extern "C"
   char* atlas__Error_msg ();
   void atlas__error_example();
 }
-
-#endif

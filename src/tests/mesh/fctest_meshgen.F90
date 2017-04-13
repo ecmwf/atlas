@@ -19,14 +19,14 @@ TESTSUITE(fctest_atlas_Meshgen)
 
 TESTSUITE_INIT
   use atlas_module
-  call atlas_init()
+  call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
   use atlas_module
-  call atlas_finalize()
+  call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
@@ -36,7 +36,7 @@ END_TESTSUITE_FINALIZE
 !  use atlas_module
 !  implicit none
 
-!  type(atlas_grid_Structured) :: grid
+!  type(atlas_StructuredGrid) :: grid
 !  type(atlas_Mesh) :: mesh
 !  type(atlas_MeshGenerator) :: meshgenerator
 !   type(atlas_Output) :: gmsh
@@ -65,18 +65,18 @@ END_TESTSUITE_FINALIZE
 !  implicit none
 
 !  type(atlas_Config) :: conf
-!  type(atlas_grid_Structured) :: grid
+!  type(atlas_StructuredGrid) :: grid
 !  type(atlas_Mesh) :: mesh
 !  type(atlas_MeshGenerator) :: meshgenerator
 !   type(atlas_Output) :: gmsh
 !  conf = atlas_Config( )
-!  call conf%set("grid_type","custom_structured")
+!  call conf%set("Implementationype","custom_structured")
 !  call conf%set("nlat",7)
 !  call conf%set("latitudes",[ 90., 60., 30.,   0., -30., -60., -90. ])
 !  call conf%set("pl",[  2,  4,  8,  12,   8,   4,   2 ])
 !  call conf%set("lon_min",[  0., 15.,  0.,  30.,   0.,  15.,   0. ])
 
-!  grid = atlas_grid_Structured(conf)
+!  grid = atlas_StructuredGrid(conf)
 !  meshgenerator = atlas_meshgenerator_Structured()
 !  mesh = meshgenerator%generate(grid)
 ! gmsh = atlas_output_Gmsh("test_custom_structured2.msh")
@@ -94,7 +94,7 @@ END_TESTSUITE_FINALIZE
 !  implicit none
 
 !  type(atlas_Config) :: conf
-!  type(atlas_grid_Structured) :: grid
+!  type(atlas_StructuredGrid) :: grid
 !  type(atlas_Mesh) :: mesh
 !  type(atlas_MeshGenerator) :: meshgenerator
 !   type(atlas_Output) :: gmsh
@@ -103,7 +103,7 @@ END_TESTSUITE_FINALIZE
 ! OPEN (UNIT=9 , FILE="custom.json", STATUS='REPLACE')
 ! write(9,'(A)') &
 !   &     '{' &
-!   & //  '  "grid_type" : "custom_structured",'               &
+!   & //  '  "Implementationype" : "custom_structured",'               &
 !   & //  '  "nlat"      : 7,'                                 &
 !   & //  '  "latitudes" : [ 90, 60, 30,   0, -30, -60, -90 ],' &
 !   & //  '  "pl"        : [  2,  4,  8,  12,   8,   4,   2 ],' &
@@ -112,7 +112,7 @@ END_TESTSUITE_FINALIZE
 ! CLOSE(9)
 
 !  conf = atlas_Config( atlas_PathName("custom.json") )
-!  grid = atlas_grid_Structured(conf)
+!  grid = atlas_StructuredGrid(conf)
 !  meshgenerator = atlas_meshgenerator_Structured()
 !  mesh = meshgenerator%generate(grid)
 ! gmsh = atlas_output_Gmsh("test_custom_structured3.msh")
@@ -127,7 +127,7 @@ END_TESTSUITE_FINALIZE
 TEST( test_meshgen )
   use atlas_module
   implicit none
-  type(atlas_grid_Structured) :: grid
+  type(atlas_StructuredGrid) :: grid
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Nodes) :: nodes
@@ -142,7 +142,7 @@ TEST( test_meshgen )
 
   write(*,*) "test_meshgen starting"
 
-  grid = atlas_grid_Structured("N24")
+  grid = atlas_StructuredGrid("N24")
 !  grid = atlas_grid_ShiftedLat(40,20)
 
   meshgenerator = atlas_meshgenerator_Structured()

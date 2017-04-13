@@ -8,11 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_numerics_fvm_Nabla_h
-#define atlas_numerics_fvm_Nabla_h
+#pragma once
 
 #include <vector>
-#include "eckit/memory/SharedPtr.h"
 #include "atlas/numerics/Nabla.h"
 
 namespace atlas {
@@ -21,28 +19,28 @@ namespace fvm  {
     class Method;
 } } }
 
-namespace atlas {namespace field { class Field; } }
+namespace atlas { class Field; }
 
 namespace atlas {
 namespace numerics {
 namespace fvm {
 
-class Nabla : public atlas::numerics::Nabla {
+class Nabla : public atlas::numerics::Nabla::nabla_t {
 
 public:
   Nabla(const atlas::numerics::Method &, const eckit::Parametrisation &);
   virtual ~Nabla();
 
-  void gradient(const field::Field &scalar, field::Field &grad) const;
-  void divergence(const field::Field &vector, field::Field &div) const;
-  void curl(const field::Field &vector, field::Field &curl) const;
-  void laplacian(const field::Field &scalar, field::Field &laplacian) const;
+  void gradient(const Field &scalar, Field &grad) const;
+  void divergence(const Field &vector, Field &div) const;
+  void curl(const Field &vector, Field &curl) const;
+  void laplacian(const Field &scalar, Field &laplacian) const;
 
 private:
   void setup();
 
-  void gradient_of_scalar(const field::Field &scalar, field::Field &grad) const;
-  void gradient_of_vector(const field::Field &vector, field::Field &grad) const;
+  void gradient_of_scalar(const Field &scalar, Field &grad) const;
+  void gradient_of_vector(const Field &vector, Field &grad) const;
 
 private:
 
@@ -55,5 +53,3 @@ private:
 } // namespace fvm
 } // namespace numerics
 } // namespace atlas
-
-#endif // atlas_numerics_fvm_Nabla_h

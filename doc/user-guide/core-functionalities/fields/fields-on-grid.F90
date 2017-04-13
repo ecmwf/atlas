@@ -1,7 +1,7 @@
 program main
-
 use, intrinsic :: iso_c_binding, only : c_double
 use atlas_module
+implicit none
 
 integer, parameter              :: wp = c_double
 real(wp), parameter             :: rpi = 2.0_wp * asin(1.0_wp)
@@ -11,27 +11,25 @@ real(wp)                        :: zlonc = 1._wp * rpi
 real(wp)                        :: zrad  = 2._wp * rpi / 9._wp
 real(wp)                        :: zdist, zlon, zlat
 
-integer                         :: jnode
+integer                         :: jnode, jlon, jlat
 character(len=1024)             :: string
-character(len=32)               :: gridID
-type(atlas_grid_Structured)     :: grid
+type(atlas_StructuredGrid)     :: grid
 type(atlas_Field)               :: field_pressure
 real(wp), pointer               :: pressure(:)
 
-call atlas_init()
+call atlas_library%initialise()
 
-gridID = "N32"
-grid = atlas_grid_Structured(gridID)
+grid = atlas_StructuredGrid( "O32" )
 
-field_pressure = atlas_Field("pressure", atlas_real(wp), [grid%npts()])
+field_pressure = atlas_Field("pressure", atlas_real(wp), [grid%size()])
 call field_pressure%data(pressure)
 
 jnode = 1
-do jlat=1,grid%nlat()
-  zlat = grid%lat(jlat)
+do jlat=1,grid%ny()
+  zlat = grid%y(jlat)
   zlat = zlat * deg2rad
-  do jlon=1,grid%nlon(jlat)
-    zlon = grid%lon(jlat,jlon)
+  do jlon=1,grid%nx(jlat)
+    zlon = grid%x(jlon,jlat)
     zlon = zlon * deg2rad
 
     zdist = 2._wp * sqrt((cos(zlat) * sin((zlon - zlonc) / 2))**2 + &
@@ -56,7 +54,7 @@ call atlas_log%info(string)
 call grid%final()
 call field_pressure%final()
 
-call atlas_finalize()
+call atlas_library%finalise()
 
 end program main
 

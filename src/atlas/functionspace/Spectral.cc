@@ -17,6 +17,7 @@
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/array/MakeView.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
@@ -24,9 +25,9 @@
 
 namespace atlas {
 namespace functionspace {
-
+namespace detail {
 namespace {
-void set_field_metadata(const eckit::Parametrisation& config, field::Field& field)
+void set_field_metadata(const eckit::Parametrisation& config, Field& field)
 {
   bool global(false);
   if( config.get("global",global) )
@@ -60,15 +61,13 @@ size_t Spectral::config_size(const eckit::Parametrisation& config) const
 
 // ----------------------------------------------------------------------
 
-Spectral::Spectral(const size_t truncation)
-  : FunctionSpace(),
+Spectral::Spectral(const size_t truncation) :
     truncation_(truncation),
     trans_(0)
 {
 }
 
-Spectral::Spectral(trans::Trans& trans)
-  : FunctionSpace(),
+Spectral::Spectral(trans::Trans& trans) :
 #ifdef ATLAS_HAVE_TRANS
     truncation_(trans.nsmax()),
     trans_(&trans)
@@ -104,32 +103,32 @@ size_t Spectral::nb_spectral_coefficients_global() const {
 }
 
 template <>
-field::Field* Spectral::createField<double>(const std::string& name, const eckit::Parametrisation& options) const {
+Field Spectral::createField<double>(const std::string& name, const eckit::Parametrisation& options) const {
   size_t nb_spec_coeffs = config_size(options);
-  field::Field* field = field::Field::create<double>(name, array::make_shape(nb_spec_coeffs) );
-  field->set_functionspace(*this);
-  set_field_metadata(options,*field);
+  Field field = Field(name, array::make_datatype<double>(),array::make_shape(nb_spec_coeffs) );
+  field.set_functionspace(this);
+  set_field_metadata(options,field);
   return field;
 }
 
 template <>
-field::Field* Spectral::createField<double>(const std::string& name, size_t levels, const eckit::Parametrisation& options) const {
+Field Spectral::createField<double>(const std::string& name, size_t levels, const eckit::Parametrisation& options) const {
   size_t nb_spec_coeffs = config_size(options);
-  field::Field* field = field::Field::create<double>(name, array::make_shape(nb_spec_coeffs,levels) );
-  field->set_functionspace(*this);
-  field->set_levels(levels);
-  set_field_metadata(options,*field);
+  Field field = Field(name, array::make_datatype<double>(), array::make_shape(nb_spec_coeffs,levels) );
+  field.set_functionspace(this);
+  field.set_levels(levels);
+  set_field_metadata(options,field);
   return field;
 }
 
-void Spectral::gather( const field::FieldSet& local_fieldset, field::FieldSet& global_fieldset ) const
+void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
 {
   ASSERT( trans_ );
   ASSERT(local_fieldset.size() == global_fieldset.size());
 
   for( size_t f=0; f<local_fieldset.size(); ++f ) {
 
-    const field::Field& loc = local_fieldset[f];
+    const Field& loc = local_fieldset[f];
     if( loc.datatype() != array::DataType::str<double>() )
     {
       std::stringstream err;
@@ -139,7 +138,7 @@ void Spectral::gather( const field::FieldSet& local_fieldset, field::FieldSet& g
     }
 
 #ifdef ATLAS_HAVE_TRANS
-    field::Field& glb = global_fieldset[f];
+    Field& glb = global_fieldset[f];
     size_t root=0;
     glb.metadata().get("owner",root);
     ASSERT( loc.shape(0) == nb_spectral_coefficients() );
@@ -150,31 +149,33 @@ void Spectral::gather( const field::FieldSet& local_fieldset, field::FieldSet& g
       nto.resize(loc.stride(0));
       for( size_t i=0; i<nto.size(); ++i ) nto[i] = root+1;
     }
-    trans_->gathspec(nto.size(),nto.data(),loc.data<double>(),glb.data<double>());
+    trans_->gathspec(nto.size(),nto.data(),
+                     array::make_storageview<double>(loc).data(),
+                     array::make_storageview<double>(glb).data());
 #else
 
     throw eckit::Exception("Cannot gather spectral fields because Atlas has not been compiled with TRANS support.");
 #endif
   }
 }
-void Spectral::gather( const field::Field& local, field::Field& global ) const
+void Spectral::gather( const Field& local, Field& global ) const
 {
-  field::FieldSet local_fields;
-  field::FieldSet global_fields;
+  FieldSet local_fields;
+  FieldSet global_fields;
   local_fields.add(local);
   global_fields.add(global);
   gather(local_fields,global_fields);
 }
 
-void Spectral::scatter( const field::FieldSet& global_fieldset, field::FieldSet& local_fieldset ) const
+void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const
 {
   ASSERT( trans_ );
   ASSERT(local_fieldset.size() == global_fieldset.size());
 
   for( size_t f=0; f<local_fieldset.size(); ++f ) {
 
-    const field::Field& glb = global_fieldset[f];
-    field::Field& loc = local_fieldset[f];
+    const Field& glb = global_fieldset[f];
+    Field& loc = local_fieldset[f];
     if( loc.datatype() != array::DataType::str<double>() )
     {
       std::stringstream err;
@@ -194,7 +195,9 @@ void Spectral::scatter( const field::FieldSet& global_fieldset, field::FieldSet&
       nfrom.resize(loc.stride(0));
       for( size_t i=0; i<nfrom.size(); ++i ) nfrom[i] = root+1;
     }
-    trans_->distspec(nfrom.size(),nfrom.data(),glb.data<double>(),loc.data<double>());
+    trans_->distspec(nfrom.size(),nfrom.data(),
+                     array::make_storageview<double>(glb).data(),
+                     array::make_storageview<double>(loc).data());
     glb.metadata().broadcast(loc.metadata(),root);
     loc.metadata().set("global",false);
 #else
@@ -203,27 +206,27 @@ void Spectral::scatter( const field::FieldSet& global_fieldset, field::FieldSet&
 
   }
 }
-void Spectral::scatter( const field::Field& global, field::Field& local ) const
+void Spectral::scatter( const Field& global, Field& local ) const
 {
-  field::FieldSet global_fields;
-  field::FieldSet local_fields;
+  FieldSet global_fields;
+  FieldSet local_fields;
   global_fields.add(global);
   local_fields.add(local);
   scatter(global_fields,local_fields);
 }
 
-std::string Spectral::checksum( const field::FieldSet& fieldset ) const {
+std::string Spectral::checksum( const FieldSet& fieldset ) const {
   eckit::MD5 md5;
   NOTIMP;
   return md5;
 }
-std::string Spectral::checksum( const field::Field& field ) const {
-  field::FieldSet fieldset;
+std::string Spectral::checksum( const Field& field ) const {
+  FieldSet fieldset;
   fieldset.add(field);
   return checksum(fieldset);
 }
 
-void Spectral::norm( const field::Field& field, double& norm, int rank ) const {
+void Spectral::norm( const Field& field, double& norm, int rank ) const {
 #ifdef ATLAS_HAVE_TRANS
   ASSERT( field.levels() == 1 );
   trans_->specnorm(1,field.data<double>(), &norm, rank);
@@ -231,14 +234,14 @@ void Spectral::norm( const field::Field& field, double& norm, int rank ) const {
   throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
 #endif
 }
-void Spectral::norm( const field::Field& field, double norm_per_level[], int rank ) const {
+void Spectral::norm( const Field& field, double norm_per_level[], int rank ) const {
 #ifdef ATLAS_HAVE_TRANS
   trans_->specnorm(field.levels(),field.data<double>(), norm_per_level, rank);
 #else
   throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
 #endif
 }
-void Spectral::norm( const field::Field& field, std::vector<double>& norm_per_level, int rank ) const {
+void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, int rank ) const {
 #ifdef ATLAS_HAVE_TRANS
   norm_per_level.resize( field.levels() );
   trans_->specnorm(norm_per_level.size(),field.data<double>(), norm_per_level.data(), rank);
@@ -247,6 +250,78 @@ void Spectral::norm( const field::Field& field, std::vector<double>& norm_per_le
 #endif
 }
 
+} // namespace detail
+
+// ----------------------------------------------------------------------
+
+Spectral::Spectral( const FunctionSpace& functionspace ) :
+  FunctionSpace(functionspace),
+  functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
+}
+
+Spectral::Spectral( const size_t truncation ) :
+  FunctionSpace( new detail::Spectral(truncation) ),
+  functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
+}
+
+Spectral::Spectral( trans::Trans& trans ) :
+  FunctionSpace( new detail::Spectral(trans) ),
+  functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
+}
+
+size_t Spectral::nb_spectral_coefficients() const {
+  return functionspace_->nb_spectral_coefficients();
+}
+
+size_t Spectral::nb_spectral_coefficients_global() const {
+  return functionspace_->nb_spectral_coefficients_global();
+}
+
+template <>
+Field Spectral::createField<double>(const std::string& name, const eckit::Parametrisation& options) const {
+  return functionspace_->createField<double>(name,options);
+}
+
+template <>
+Field Spectral::createField<double>(const std::string& name, size_t levels, const eckit::Parametrisation& options) const {
+  return functionspace_->createField<double>(name,levels,options);
+}
+
+void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
+  functionspace_->gather(local_fieldset,global_fieldset);
+}
+
+void Spectral::gather( const Field& local, Field& global ) const {
+  functionspace_->gather(local,global);
+}
+
+void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const {
+  functionspace_->scatter(global_fieldset,local_fieldset);
+}
+
+void Spectral::scatter( const Field& global, Field& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+std::string Spectral::checksum( const FieldSet& fieldset ) const {
+  return functionspace_->checksum(fieldset);
+}
+
+std::string Spectral::checksum( const Field& field ) const {
+  return functionspace_->checksum(field);
+}
+
+void Spectral::norm( const Field& field, double& norm, int rank ) const {
+  functionspace_->norm(field,norm,rank);
+}
+
+void Spectral::norm( const Field& field, double norm_per_level[], int rank ) const {
+  functionspace_->norm(field,norm_per_level,rank);
+}
+
+void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, int rank ) const {
+  functionspace_->norm(field,norm_per_level,rank);
+}
 
 
 // ----------------------------------------------------------------------
@@ -254,23 +329,23 @@ void Spectral::norm( const field::Field& field, std::vector<double>& norm_per_le
 
 extern "C"
 {
-Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation)
+const detail::Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation)
 {
   ATLAS_ERROR_HANDLING(
-    return new Spectral(truncation);
+    return new detail::Spectral(truncation);
   );
   return 0;
 }
 
-Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans)
+const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans)
 {
   ATLAS_ERROR_HANDLING(
-    return new Spectral(*trans);
+    return new detail::Spectral(*trans);
   );
   return 0;
 }
 
-void atlas__SpectralFunctionSpace__delete (Spectral* This)
+void atlas__SpectralFunctionSpace__delete ( detail::Spectral* This )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -278,76 +353,98 @@ void atlas__SpectralFunctionSpace__delete (Spectral* This)
   );
 }
 
-field::Field* atlas__fs__Spectral__create_field_name_kind (const Spectral* This, const char* name, int kind, const eckit::Parametrisation* options)
+field::FieldImpl* atlas__fs__Spectral__create_field_name_kind (const detail::Spectral* This, const char* name, int kind, const eckit::Parametrisation* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT( kind == array::DataType::KIND_REAL64 );
     ASSERT(options);
-    return This->createField<double>(std::string(name),*options);
+    field::FieldImpl* field;
+    {
+      Field f = This->createField<double>(std::string(name),*options);
+      field = f.get();
+      field->attach();
+    }
+    field->detach();
+    return field;
   );
   return 0;
 }
 
-field::Field* atlas__fs__Spectral__create_field_name_kind_lev (const Spectral* This, const char* name, int kind, int levels, const eckit::Parametrisation* options)
+field::FieldImpl* atlas__fs__Spectral__create_field_name_kind_lev (const detail::Spectral* This, const char* name, int kind, int levels, const eckit::Parametrisation* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT( kind == array::DataType::KIND_REAL64 );
     ASSERT(options);
-    return This->createField<double>(std::string(name),levels,*options);
+    field::FieldImpl* field;
+    {
+      Field f = This->createField<double>(std::string(name),levels,*options);
+      field = f.get();
+      field->attach();
+    }
+    field->detach();
+    return field;
   );
   return 0;
 }
 
 
-void atlas__SpectralFunctionSpace__gather (const Spectral* This, const field::Field* local, field::Field* global)
+void atlas__SpectralFunctionSpace__gather (const detail::Spectral* This, const field::FieldImpl* local, field::FieldImpl* global)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(global);
     ASSERT(local);
-    This->gather(*local,*global);
+    const Field l(local);
+    Field g(global);
+    This->gather(l,g);
   );
 }
 
-void atlas__SpectralFunctionSpace__scatter (const Spectral* This, const field::Field* global, field::Field* local)
+void atlas__SpectralFunctionSpace__scatter (const detail::Spectral* This, const field::FieldImpl* global, field::FieldImpl* local)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(global);
     ASSERT(local);
-    This->scatter(*global,*local);
+    const Field g(global);
+    Field l(local);
+    This->scatter(g,l);
   );
 }
 
-void atlas__SpectralFunctionSpace__gather_fieldset (const Spectral* This, const field::FieldSet* local, field::FieldSet* global)
+void atlas__SpectralFunctionSpace__gather_fieldset (const detail::Spectral* This, const field::FieldSetImpl* local, field::FieldSetImpl* global)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(global);
     ASSERT(local);
-    This->gather(*local,*global);
+    const FieldSet l(local);
+    FieldSet g(global);
+    This->gather(l,g);
   );
 }
 
-void atlas__SpectralFunctionSpace__scatter_fieldset (const Spectral* This, const field::FieldSet* global, field::FieldSet* local)
+void atlas__SpectralFunctionSpace__scatter_fieldset (const detail::Spectral* This, const field::FieldSetImpl* global, field::FieldSetImpl* local)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(global);
     ASSERT(local);
-    This->scatter(*global,*local);
+    const FieldSet g(global);
+    FieldSet l(local);
+    This->scatter(g,l);
   );
 }
 
-void atlas__SpectralFunctionSpace__norm(const Spectral* This, const field::Field* field, double norm[], int rank)
+void atlas__SpectralFunctionSpace__norm(const detail::Spectral* This, const field::FieldImpl* field, double norm[], int rank)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(field);
     ASSERT(norm);
-    This->norm(*field,norm,rank);
+    This->norm(field,norm,rank);
   );
 }
 

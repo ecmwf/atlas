@@ -17,7 +17,7 @@
 #include "eckit/container/KDTree.h"
 #include "eckit/geometry/Point3.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/mesh/Mesh.h"
 
 
@@ -69,7 +69,7 @@ struct ElemIndex3TreeTrait {
 
 typedef PointKdTree<ElemIndex3TreeTrait> ElemIndex3;
 
-ElemIndex3* create_element_centre_index(const mesh::Mesh& mesh);
+ElemIndex3* create_element_centre_index(const Mesh& mesh);
 
 //----------------------------------------------------------------------------------------------------------------------
 

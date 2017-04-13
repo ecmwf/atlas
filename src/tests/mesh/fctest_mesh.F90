@@ -26,16 +26,17 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_Mesh,fcta_Mesh_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  call atlas_init()
+  call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-  call atlas_finalize()
+  call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
+
 
 TEST( test_mesh_nodes )
 implicit none
@@ -46,13 +47,16 @@ implicit none
 
   write(*,*) "test_function_space starting"
   mesh = atlas_Mesh()
-  nodes = mesh%create_nodes(5)
+  nodes = mesh%nodes()
   nb_nodes = nodes%size()
-  FCTEST_CHECK_EQUAL( nb_nodes, 5 )
-  FCTEST_CHECK_EQUAL( nodes%size() , 5_c_size_t  )
+  FCTEST_CHECK_EQUAL( nb_nodes, 0 )
+  FCTEST_CHECK_EQUAL( nodes%size() , 0_c_size_t  )
   FCTEST_CHECK( nodes%has_field("partition") )
   FCTEST_CHECK( nodes%has_field("remote_idx") )
   call nodes%resize(10_c_size_t)
+  nb_nodes = nodes%size()
+  FCTEST_CHECK_EQUAL( nb_nodes, 10 )
+  FCTEST_CHECK_EQUAL( nodes%size() , 10_c_size_t  )
   call atlas_log%info( nodes%str() )
 
   call mesh%final()
@@ -168,24 +172,46 @@ implicit none
   write(0,*) "test_field_wrapdata"
   allocate( existing_data(2,10,N) )
 
+  write(0,*) "line ", __LINE__
+
   ! Work with fields from here
   field = atlas_Field("wrapped",existing_data)
+
+  write(0,*) "line ", __LINE__
+
   FCTEST_CHECK_EQUAL( field%rank()   , 3  )
   FCTEST_CHECK_EQUAL( field%size()   , 2*10*N )
   FCTEST_CHECK_EQUAL( field%shape(1) , 2  )
   FCTEST_CHECK_EQUAL( field%shape(2) , 10 )
   FCTEST_CHECK_EQUAL( field%shape(3) , N  )
+
+  write(0,*) "line ", __LINE__
+
+  FCTEST_CHECK_EQUAL( field%owners() , 1  )
+
+  write(0,*) "line ", __LINE__
+
   call field%data(data)
+
+  write(0,*) "line ", __LINE__
+
   do j=1,N
     data(1,1,j) = j
   enddo
+  
+  write(0,*) "line ", __LINE__
+  
   call field%final()
   ! ... until here
+  write(0,*) "line ", __LINE__
 
   ! Existing data is not deleted
   do j=1,N
     FCTEST_CHECK_EQUAL( existing_data(1,1,j), real(j,c_double) )
   enddo
+  
+  write(0,*) "line ", __LINE__
+  
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -272,7 +298,7 @@ END_TEST
 TEST( test_fv )
 implicit none
 
-      type(atlas_grid_Structured) :: grid
+      type(atlas_StructuredGrid) :: grid
       type(atlas_Mesh) :: mesh
       type(atlas_MeshGenerator) :: meshgenerator
       type(atlas_GridDistribution) :: griddistribution
@@ -294,10 +320,10 @@ implicit none
 
       ! Create a new Reduced Gaussian Grid based on a nloen array
       call atlas_log%info("Creating grid")
-      grid = atlas_grid_ReducedGaussian( 32, nloen(1:32) )
+      grid = atlas_ReducedGaussianGrid( 32, nloen(1:32) )
 
       ! Grid distribution: all points belong to partition 1
-      allocate( part(grid%npts()) )
+      allocate( part(grid%size()) )
       part(:) = 1
       griddistribution = atlas_GridDistribution(part, part0=1)
 

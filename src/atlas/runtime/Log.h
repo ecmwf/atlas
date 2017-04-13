@@ -1,8 +1,8 @@
 #pragma once
 
-#include "atlas/internals/atlas_defines.h"
+#include "atlas/library/config.h"
 
-#include "atlas/runtime/LibAtlas.h"
+#include "atlas/library/Library.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #include "fckit/Log.h"
@@ -12,17 +12,15 @@ namespace atlas { namespace detail { typedef fckit::Log LogBase; } }
 namespace atlas { namespace detail { typedef eckit::Log LogBase; } }
 #endif
 
-namespace atlas { 
+namespace atlas {
 
-typedef LibAtlas ATLAS;
-
-// Use Log::debug<ATLAS>() for debugging that can be switched
+// Use Log::debug<Atlas>() for debugging that can be switched
 // on or off by the boolean environment variable ATLAS_DEBUG
 
 class Log : public detail::LogBase {
 
 public:
-  
+
     typedef eckit::Channel Channel;
 
 #ifndef ATLAS_HAVE_FORTRAN
@@ -37,5 +35,12 @@ public:
   static int error_unit()  { return 0; }
 #endif
 };
-
 } // namespace atlas
+
+#define ATLAS_DEBUG(WHAT)    do{ atlas::Log::info() << "DEBUG(" << WHAT << ") @ " << Here() << std::endl; } while(0)
+#define ATLAS_DEBUG_HERE()   do{ atlas::Log::info() << "DEBUG() @ " << Here() << std::endl; } while(0)
+#define ATLAS_DEBUG_VAR(VAR) do{ atlas::Log::info() << "DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl; } while(0)
+
+#define ATLAS_DEBUG(WHAT)    do{ atlas::Log::info() << "DEBUG(" << WHAT << ") @ " << Here() << std::endl; } while(0)
+#define ATLAS_DEBUG_HERE()   do{ atlas::Log::info() << "DEBUG() @ " << Here() << std::endl; } while(0)
+#define ATLAS_DEBUG_VAR(VAR) do{ atlas::Log::info() << "DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl; } while(0)

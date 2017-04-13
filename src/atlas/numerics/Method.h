@@ -8,12 +8,10 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_numerics_Method_h
-#define atlas_numerics_Method_h
+#pragma once
 
 #include <string>
 #include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
 namespace numerics {
@@ -38,5 +36,3 @@ extern "C"
 
 } // namespace numerics
 } // namespace atlas
-
-#endif // atlas_numerics_Method_h

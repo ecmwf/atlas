@@ -8,15 +8,16 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/functionspace/StructuredColumns.h"
+
 #include "eckit/utils/MD5.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/Structured.h"
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/internals/Checksum.h"
+#include "atlas/util/Checksum.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/array/MakeView.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
@@ -24,10 +25,10 @@
 
 namespace atlas {
 namespace functionspace {
-
+namespace detail {
 
 namespace {
-void set_field_metadata(const eckit::Parametrisation& config, field::Field& field)
+void set_field_metadata(const eckit::Parametrisation& config, Field& field)
 {
   bool global(false);
   if( config.get("global",global) )
@@ -45,7 +46,7 @@ void set_field_metadata(const eckit::Parametrisation& config, field::Field& fiel
 
 size_t StructuredColumns::config_size(const eckit::Parametrisation& config) const
 {
-  size_t size = npts();
+  size_t size = this->size();
   bool global(false);
   if( config.get("global",global) )
   {
@@ -53,7 +54,7 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (parallel::mpi::comm().rank() == owner ? grid_->npts() : 0);
+      size = (parallel::mpi::comm().rank() == owner ? grid_.size() : 0);
     }
   }
   return size;
@@ -63,18 +64,17 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
-StructuredColumns::StructuredColumns(const grid::Grid& grid) :
-  FunctionSpace()
+StructuredColumns::StructuredColumns(const Grid& grid) :
+  grid_(grid)
 {
-    grid_ = dynamic_cast<const grid::Structured*>(&grid);
-    if (grid_ == NULL)
+    if ( not grid_ )
     {
       throw eckit::BadCast("Grid is not a grid::Structured type. "
                            "Cannot partition using IFS trans", Here());
     }
 
 #ifdef ATLAS_HAVE_TRANS
-    trans_ = new trans::Trans(*grid_);
+    trans_ = new trans::Trans(grid_);
 
     npts_ = trans_->ngptot();
 
@@ -82,46 +82,46 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
     int n_regions_NS = trans_->n_regions_NS();
 
     // Number of partitions per latitude band
-    array::ArrayView<int,1> n_regions = trans_->n_regions();
+    array::LocalView<int,1> n_regions = trans_->n_regions();
 
     // First latitude of latitude band
-    array::ArrayView<int,1> nfrstlat = trans_->nfrstlat();
+    array::LocalView<int,1> nfrstlat = trans_->nfrstlat();
 
     // First latitude of latitude band
-    array::ArrayView<int,1> nlstlat = trans_->nlstlat();
+    array::LocalView<int,1> nlstlat = trans_->nlstlat();
 
     // Index of latitude partition (note that if a partition
     // has two regions on a latitude - the index increases
     // by one (2 numbers)
-    array::ArrayView<int,1> nptrfrstlat = trans_->nptrfrstlat();
+    array::LocalView<int,1> nptrfrstlat = trans_->nptrfrstlat();
 
     // Starting longitudinal point per given latitude (ja)
     // Note that it is associated to nptrfrstlat
-    array::ArrayView<int,2> nsta = trans_->nsta();
+    array::LocalView<int,2> nsta = trans_->nsta();
 
     // Number of longitudinal points per given latitude (ja)
     // Note that it is associated to nptrfrstlat
-    array::ArrayView<int,2> nonl = trans_->nonl();
+    array::LocalView<int,2> nonl = trans_->nonl();
 
     size_t proc(0);
     // Loop over number of latitude bands (ja)
     for (int ja = 0; ja < n_regions_NS; ++ja)
     {
         // Loop over number of longitude bands (jb)
-        for (int jb = 0; jb < n_regions[ja]; ++jb)
+        for (int jb = 0; jb < n_regions(ja); ++jb)
         {
             if (proc == parallel::mpi::comm().rank())
             {
-                nlat_ = nlstlat[ja] - nfrstlat[ja] + 1;
+                nlat_ = nlstlat(ja) - nfrstlat(ja) + 1;
                 nlon_.resize(nlat_);
                 first_lon_.resize(nlat_);
-                first_lat_ = nfrstlat[ja]-1;
+                first_lat_ = nfrstlat(ja)-1;
 
                 // Loop over latitude points of lat band (ja) and lon band (jb)
                 size_t ilat = 0;
-                for (int jglat = first_lat_; jglat < nlstlat[ja]; ++jglat)
+                for (int jglat = first_lat_; jglat < nlstlat(ja); ++jglat)
                 {
-                    size_t igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
+                    size_t igl = nptrfrstlat(ja) + jglat - nfrstlat(ja);
                     nlon_[ilat] = nonl(jb,igl);
                     first_lon_[ilat] = nsta(jb,igl);
                     ilat++;
@@ -170,11 +170,11 @@ StructuredColumns::StructuredColumns(const grid::Grid& grid) :
     }
 #endif
 #else
-    npts_ = grid_->npts();
-    nlat_ = grid_->nlat();
+    npts_ = grid_.size();
+    nlat_ = grid_.ny();
     nlon_.resize(nlat_);
     for( size_t jlat=0; jlat<nlat_; ++jlat )
-      nlon_[jlat] = grid_->nlon(jlat);
+      nlon_[jlat] = grid_.nx(jlat);
     first_lat_ = 0;
     first_lon_.resize(nlat_,0);
 #endif
@@ -204,13 +204,13 @@ size_t StructuredColumns::footprint() const {
 // ----------------------------------------------------------------------------
 // Create Field
 // ----------------------------------------------------------------------------
-field::Field* StructuredColumns::createField(const std::string& name, array::DataType datatype, const eckit::Parametrisation& options ) const
+Field StructuredColumns::createField(const std::string& name, array::DataType datatype, const eckit::Parametrisation& options ) const
 {
 #ifdef ATLAS_HAVE_TRANS
     size_t npts = config_size(options);
-    field::Field* field = field::Field::create(name, datatype, array::make_shape(npts));
-    field->set_functionspace(*this);
-    set_field_metadata(options,*field);
+    Field field = Field(name, datatype, array::make_shape(npts));
+    field.set_functionspace(this);
+    set_field_metadata(options,field);
     return field;
 #else
     if( parallel::mpi::comm().size() > 1 )
@@ -219,9 +219,9 @@ field::Field* StructuredColumns::createField(const std::string& name, array::Dat
           "StructuredColumns::createField currently relies"
           " on ATLAS_HAVE_TRANS for parallel fields", Here());
     }
-    field::Field* field = field::Field::create(name, datatype, array::make_shape(grid_->npts()) );
-    field->set_functionspace(*this);
-    set_field_metadata(options,*field);
+    Field field = Field(name, datatype, array::make_shape(grid_.size()) );
+    field.set_functionspace(this);
+    set_field_metadata(options,field);
     return field;
 #endif
 }
@@ -232,18 +232,18 @@ field::Field* StructuredColumns::createField(const std::string& name, array::Dat
 // ----------------------------------------------------------------------------
 // Create Field with vertical levels
 // ----------------------------------------------------------------------------
-field::Field* StructuredColumns::createField(
+Field StructuredColumns::createField(
     const std::string& name, array::DataType datatype,
     size_t levels, const eckit::Parametrisation& options) const
 {
 #ifdef ATLAS_HAVE_TRANS
     size_t npts = config_size(options);
-    field::Field* field = field::Field::create<double>(
-                    name, array::make_shape(npts, levels));
+    Field field = Field(
+                    name, datatype, array::make_shape(npts, levels));
 
-    field->set_functionspace(*this);
-    field->set_levels(levels);
-    set_field_metadata(options,*field);
+    field.set_functionspace(this);
+    field.set_levels(levels);
+    set_field_metadata(options,field);
     return field;
 #else
     if( parallel::mpi::comm().size() > 1 )
@@ -252,11 +252,11 @@ field::Field* StructuredColumns::createField(
           "StructuredColumns::createField currently relies"
           " on ATLAS_HAVE_TRANS for parallel fields", Here());
     }
-    field::Field* field = field::Field::create<double>(
-                    name, array::make_shape(grid_->npts(), levels));
+    Field field = Field(
+                    name, datatype, array::make_shape(grid_.size(), levels));
 
-    field->set_functionspace(*this);
-    set_field_metadata(options,*field);
+    field.set_functionspace(this);
+    set_field_metadata(options,field);
     return field;
 #endif
 }
@@ -267,16 +267,16 @@ field::Field* StructuredColumns::createField(
 // Gather FieldSet
 // ----------------------------------------------------------------------------
 void StructuredColumns::gather(
-    const field::FieldSet& local_fieldset,
-    field::FieldSet& global_fieldset ) const
+    const FieldSet& local_fieldset,
+    FieldSet& global_fieldset ) const
 {
 #ifdef ATLAS_HAVE_TRANS
     ASSERT(local_fieldset.size() == global_fieldset.size());
 
     for( size_t f=0; f<local_fieldset.size(); ++f )
     {
-        const field::Field& loc = local_fieldset[f];
-        field::Field& glb = global_fieldset[f];
+        const Field& loc = local_fieldset[f];
+        Field& glb = global_fieldset[f];
         if( loc.datatype() != array::DataType::str<double>() )
         {
             std::stringstream err;
@@ -298,7 +298,8 @@ void StructuredColumns::gather(
             }
         }
         trans_->gathgrid(nto.size(), nto.data(),
-                         loc.data<double>(), glb.data<double>());
+                         array::make_storageview<double>(loc).data(),
+                         array::make_storageview<double>(glb).data());
     }
 
 #else
@@ -314,11 +315,11 @@ void StructuredColumns::gather(
 // Gather Field
 // ----------------------------------------------------------------------------
 void StructuredColumns::gather(
-    const field::Field& local,
-    field::Field& global) const
+    const Field& local,
+    Field& global) const
 {
-    field::FieldSet local_fields;
-    field::FieldSet global_fields;
+    FieldSet local_fields;
+    FieldSet global_fields;
     local_fields.add(local);
     global_fields.add(global);
     gather(local_fields,global_fields);
@@ -331,16 +332,16 @@ void StructuredColumns::gather(
 // Scatter FieldSet
 // ----------------------------------------------------------------------------
 void StructuredColumns::scatter(
-    const field::FieldSet& global_fieldset,
-    field::FieldSet& local_fieldset) const
+    const FieldSet& global_fieldset,
+    FieldSet& local_fieldset) const
 {
 #ifdef ATLAS_HAVE_TRANS
     ASSERT(local_fieldset.size() == global_fieldset.size());
 
     for( size_t f=0; f<local_fieldset.size(); ++f )
     {
-        const field::Field& glb = global_fieldset[f];
-        field::Field& loc = local_fieldset[f];
+        const Field& glb = global_fieldset[f];
+        Field& loc = local_fieldset[f];
         if( loc.datatype() != array::DataType::str<double>() )
         {
             std::stringstream err;
@@ -362,7 +363,8 @@ void StructuredColumns::scatter(
             }
         }
         trans_->distgrid(nfrom.size(), nfrom.data(),
-                         glb.data<double>(), loc.data<double>());
+                         array::make_storageview<double>(glb).data(),
+                         array::make_storageview<double>(loc).data());
         glb.metadata().broadcast(loc.metadata(),root);
         loc.metadata().set("global",false);
   }
@@ -379,11 +381,11 @@ void StructuredColumns::scatter(
 // Scatter Field
 // ----------------------------------------------------------------------------
 void StructuredColumns::scatter(
-    const field::Field& global,
-    field::Field& local) const
+    const Field& global,
+    Field& local) const
 {
-    field::FieldSet global_fields;
-    field::FieldSet local_fields;
+    FieldSet global_fields;
+    FieldSet local_fields;
     global_fields.add(global);
     local_fields.add(local);
     scatter(global_fields, local_fields);
@@ -398,10 +400,10 @@ void StructuredColumns::scatter(
 // ----------------------------------------------------------------------------
 // Retrieve Global index from Local one
 // ----------------------------------------------------------------------------
-double StructuredColumns::lat(
-    size_t jlat) const
+double StructuredColumns::y(
+    size_t j) const
 {
-  return grid_->lat(jlat+first_lat_);
+  return grid_.y(j+first_lat_);
 }
 // ----------------------------------------------------------------------------
 
@@ -410,11 +412,11 @@ double StructuredColumns::lat(
 // ----------------------------------------------------------------------------
 // Retrieve Global index from Local one
 // ----------------------------------------------------------------------------
-double StructuredColumns::lon(
-    size_t jlat,
-    size_t jlon) const
+double StructuredColumns::x(
+    size_t i,
+    size_t j) const
 {
-  return grid_->lon(jlat+first_lat_, jlon+first_lon_[jlat]);
+  return grid_.x(i+first_lon_[j],j+first_lat_);
 }
 // ----------------------------------------------------------------------------
 
@@ -422,7 +424,7 @@ double StructuredColumns::lon(
 // Checksum FieldSet
 // ----------------------------------------------------------------------------
 std::string StructuredColumns::checksum(
-    const field::FieldSet& fieldset) const
+    const FieldSet& fieldset) const
 {
     eckit::MD5 md5;
     NOTIMP;
@@ -436,19 +438,68 @@ std::string StructuredColumns::checksum(
 // Checksum Field
 // ----------------------------------------------------------------------------
 std::string StructuredColumns::checksum(
-    const field::Field& field) const
+    const Field& field) const
 {
-    // FieldSet fieldset;
-    // fieldset.add(field);
-    // return checksum(fieldset);
-    eckit::Log::warning() << "Only local checksum implemented" << std::endl;
-    std::stringstream resultss;
-    resultss << internals::checksum(field.data<double>(),field.size());
-    return resultss.str();
+    FieldSet fieldset;
+    fieldset.add(field);
+    return checksum(fieldset);
 }
 // ----------------------------------------------------------------------------
 
+} // namespace detail
 
+// ----------------------------------------------------------------------------
+
+StructuredColumns::StructuredColumns() :
+  FunctionSpace(),
+  functionspace_(nullptr) {
+}
+
+StructuredColumns::StructuredColumns( const FunctionSpace& functionspace ) :
+  FunctionSpace( functionspace ),
+  functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
+}
+
+StructuredColumns::StructuredColumns( const Grid& grid ) :
+  FunctionSpace( new detail::StructuredColumns(grid) ),
+  functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
+}
+
+Field StructuredColumns::createField(const std::string& name, array::DataType datatype, const eckit::Parametrisation& options ) const
+{
+  return functionspace_->createField(name,datatype,options);
+}
+
+Field StructuredColumns::createField(
+    const std::string& name, array::DataType datatype,
+    size_t levels, const eckit::Parametrisation& options) const
+{
+  return functionspace_->createField(name,datatype,levels,options);
+}
+
+void StructuredColumns::gather( const FieldSet& local, FieldSet& global ) const {
+  functionspace_->gather(local,global);
+}
+
+void StructuredColumns::gather( const Field& local, Field& global ) const {
+  functionspace_->gather(local,global);
+}
+
+void StructuredColumns::scatter( const FieldSet& global, FieldSet& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+void StructuredColumns::scatter( const Field& global, Field& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+std::string StructuredColumns::checksum( const FieldSet& fieldset ) const {
+  return functionspace_->checksum(fieldset);
+}
+
+std::string StructuredColumns::checksum( const Field& field) const {
+  return functionspace_->checksum(field);
+}
 
 
 // ----------------------------------------------------------------------------
@@ -457,15 +508,15 @@ std::string StructuredColumns::checksum(
 extern "C"
 {
 
-StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const grid::Grid* grid)
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid)
 {
   ATLAS_ERROR_HANDLING(
-    return new StructuredColumns(*grid);
+    return new detail::StructuredColumns( Grid(grid) );
   );
   return 0;
 }
 
-void atlas__functionspace__StructuredColumns__delete (StructuredColumns* This)
+void atlas__functionspace__StructuredColumns__delete (detail::StructuredColumns* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -473,62 +524,80 @@ void atlas__functionspace__StructuredColumns__delete (StructuredColumns* This)
   );
 }
 
-field::Field* atlas__fs__StructuredColumns__create_field_name_kind (const StructuredColumns* This, const char* name, int kind, const eckit::Parametrisation* options)
+field::FieldImpl* atlas__fs__StructuredColumns__create_field_name_kind (const detail::StructuredColumns* This, const char* name, int kind, const eckit::Parametrisation* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createField(std::string(name),array::DataType(kind),*options);
+    field::FieldImpl* field;
+    {
+      Field f = This->createField(std::string(name),array::DataType(kind),*options);
+      field = f.get();
+      field->attach();
+    }
+    field->detach();
+    return field;
   );
   return 0;
 }
 
-field::Field* atlas__fs__StructuredColumns__create_field_name_kind_lev (const StructuredColumns* This, const char* name, int kind, int levels, const eckit::Parametrisation* options)
+field::FieldImpl* atlas__fs__StructuredColumns__create_field_name_kind_lev (const detail::StructuredColumns* This, const char* name, int kind, int levels, const eckit::Parametrisation* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createField(std::string(name),array::DataType(kind),levels,*options);
+    field::FieldImpl* field;
+    {
+      Field f = This->createField(std::string(name),array::DataType(kind),levels,*options);
+      field = f.get();
+      field->attach();
+    }
+    field->detach();
+    return field;
   );
   return 0;
 }
 
-void atlas__functionspace__StructuredColumns__gather (const StructuredColumns* This, const field::Field* local, field::Field* global)
+void atlas__functionspace__StructuredColumns__gather (const detail::StructuredColumns* This, const field::FieldImpl* local, field::FieldImpl* global)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(global);
     ASSERT(local);
-    This->gather(*local,*global);
+    const Field l(local);
+    Field g(global);
+    This->gather(l,g);
   );
 }
 
-void atlas__functionspace__StructuredColumns__scatter (const StructuredColumns* This, const field::Field* global, field::Field* local)
+void atlas__functionspace__StructuredColumns__scatter (const detail::StructuredColumns* This, const field::FieldImpl* global, field::FieldImpl* local)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(global);
     ASSERT(local);
-    This->scatter(*global,*local);
+    const Field g(global);
+    Field l(local);
+    This->scatter(g,l);
   );
 }
 
-void atlas__fs__StructuredColumns__checksum_fieldset(const StructuredColumns* This, const field::FieldSet* fieldset, char* &checksum, int &size, int &allocated)
+void atlas__fs__StructuredColumns__checksum_fieldset(const detail::StructuredColumns* This, const field::FieldSetImpl* fieldset, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(fieldset);
   ATLAS_ERROR_HANDLING(
-    std::string checksum_str (This->checksum(*fieldset));
+    std::string checksum_str (This->checksum(fieldset));
     size = checksum_str.size();
     checksum = new char[size+1]; allocated = true;
     strcpy(checksum,checksum_str.c_str());
   );
 }
 
-void atlas__fs__StructuredColumns__checksum_field(const StructuredColumns* This, const field::Field* field, char* &checksum, int &size, int &allocated)
+void atlas__fs__StructuredColumns__checksum_field(const detail::StructuredColumns* This, const field::FieldImpl* field, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(field);
   ATLAS_ERROR_HANDLING(
-    std::string checksum_str (This->checksum(*field));
+    std::string checksum_str (This->checksum(field));
     size = checksum_str.size();
     checksum = new char[size+1]; allocated = true;
     strcpy(checksum,checksum_str.c_str());

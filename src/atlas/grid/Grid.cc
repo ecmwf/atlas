@@ -8,123 +8,126 @@
  * does it submit to any jurisdiction.
  */
 
-
 #include "atlas/grid/Grid.h"
 
+#include <limits>
 #include <vector>
-#include "eckit/memory/Factory.h"
-#include "atlas/grid/grids.h"
-#include "atlas/mesh/Mesh.h"
+#include "eckit/config/Parametrisation.h"
+#include "eckit/exception/Exceptions.h"
 
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/Spacing.h"
+#include "atlas/domain/Domain.h"
+#include "atlas/projection/Projection.h"
+#include "atlas/util/Config.h"
+#include "atlas/grid/detail/grid/Gaussian.h"
+#include "atlas/grid/detail/grid/Structured.h"
 
 namespace atlas {
+
+Grid::Grid():
+    grid_( nullptr ) {
+}
+
+Grid::Grid(const Grid& grid):
+    grid_( grid.grid_ ) {
+}
+
+Grid::Grid( const Grid::Implementation *grid ):
+    grid_( grid ) {
+}
+
+Grid::Grid( const std::string& shortname, const Domain& domain ) {
+    grid_ = Grid::Implementation::create(
+                shortname, 
+                Config("domain", domain.spec())
+            );
+}
+
+Grid::Grid( const Config& p ) {
+    grid_ = Grid::Implementation::create(p);
+}
+
 namespace grid {
 
+inline const UnstructuredGrid::grid_t* unstructured_grid( const Grid::Implementation *grid ) {
+    return dynamic_cast<const UnstructuredGrid::grid_t*>(grid);
+}
 
-static void checkSizeOfPoint() {
-    // compile time check support C++11
-#if __cplusplus >= 201103L
-    static_assert( sizeof(Grid::Point)==2*sizeof(double), "Grid requires size of Point to be 2*double" );
-#endif
+UnstructuredGrid::UnstructuredGrid():
+    Grid(),
+    grid_( nullptr ) {
+}
 
-    // runtime check
-    ASSERT( sizeof(Grid::Point) == 2*sizeof(double) );
+UnstructuredGrid::UnstructuredGrid( const Grid& grid ):
+    Grid( grid ),
+    grid_( unstructured_grid(get()) ) {
+}
+
+UnstructuredGrid::UnstructuredGrid( const Grid::Implementation* grid ):
+    Grid( grid ),
+    grid_( unstructured_grid(get()) ) {
+}
+
+UnstructuredGrid::UnstructuredGrid( const Config& grid ):
+    Grid( grid ),
+    grid_( unstructured_grid(get()) ) {
+}
+
+UnstructuredGrid::UnstructuredGrid( std::vector<PointXY>* xy ):
+    Grid( new UnstructuredGrid::grid_t(xy) ),
+    grid_( unstructured_grid(get()) ) {
 }
 
 
-std::string Grid::className() {
-    return "atlas.Grid";
+inline const StructuredGrid::grid_t* structured_grid( const Grid::Implementation *grid ) {
+    return dynamic_cast<const StructuredGrid::grid_t*>(grid);
+}
+
+StructuredGrid::StructuredGrid():
+    Grid(),
+    grid_( nullptr ) {
+}
+
+StructuredGrid::StructuredGrid( const Grid& grid ):
+    Grid( grid ),
+    grid_( structured_grid(get()) ) {
+}
+
+StructuredGrid::StructuredGrid( const Grid::Implementation* grid ):
+    Grid( grid ),
+    grid_( structured_grid(get()) ) {
+}
+
+StructuredGrid::StructuredGrid( const std::string& grid, const Domain& domain ):
+    Grid( grid, domain ),
+    grid_( structured_grid(get()) ) {
+}
+
+StructuredGrid::StructuredGrid( const Config& grid ):
+    Grid( grid ),
+    grid_( structured_grid(get()) ) {
+}
+
+StructuredGrid::StructuredGrid(
+    const XSpace&     xspace,
+    const YSpace&     yspace,
+    const Projection& projection,
+    const Domain&     domain
+) :
+    Grid( new detail::grid::Structured( xspace, yspace, projection, domain ) ),
+    grid_( structured_grid(get()) ) {
 }
 
 
-Grid* Grid::create(const eckit::Parametrisation& params) {
-    eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
+ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Domain& domain ):
+    ReducedGaussianGrid::grid_t( detail::grid::reduced_gaussian(nx,domain) ) {
+}
 
-    std::string shortName;
-    if (params.get("short_name",shortName) && fact.exists(shortName)) {
-        return fact.get(shortName).create(params);
-    }
-    std::string gridType;
-    if (params.get("grid_type", gridType) && fact.exists(gridType)) {
-        return fact.get(gridType).create(params);
-    }
-    return NULL;
+ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<long>& nx ):
+    ReducedGaussianGrid( std::vector<long>(nx) ) {
 }
 
 
-Grid* Grid::create(const Grid::uid_t& uid) {
-    return grid::grid_from_uid(uid);
-}
-
-
-Grid::Grid()
-{
-    checkSizeOfPoint();
-}
-
-Grid::~Grid() {
-}
-
-
-Grid::uid_t Grid::uniqueId() const {
-    if (uid_.empty()) {
-        std::ostringstream s;
-        s << shortName() << "." << hash();
-        uid_ = s.str();
-    }
-    return uid_;
-}
-
-
-eckit::MD5::digest_t Grid::hash() const {
-    if (hash_.empty()) {
-        eckit::MD5 md5;
-        hash(md5);
-        hash_ = md5.digest();
-    }
-    return hash_;
-}
-
-
-void Grid::fillLonLat(double array[], size_t arraySize) const {
-    const size_t size = npts()*2;
-    ASSERT(arraySize >= size);
-    copyLonLatMemory(array, size_t(sizeof(double)*size));
-}
-
-
-std::string Grid::getOptimalMeshGenerator() const {
-    return "Delaunay";
-}
-
-
-void Grid::fillLonLat(std::vector<double>& v) const {
-    v.resize(npts()*2);
-    copyLonLatMemory(&v[0], size_t(sizeof(double)*v.size()));
-}
-
-
-size_t Grid::copyLonLatMemory(double* pts, size_t size) const {
-    std::vector<Grid::Point> gpts;
-    lonlat(gpts);
-
-    size_t sizePts = 2*npts();
-
-    ASSERT(size >= sizePts);
-
-    for(size_t c = 0, i = 0; i < gpts.size(); ++i) {
-        pts[c++] = gpts[i].lon();
-        pts[c++] = gpts[i].lat();
-    }
-
-    return sizePts;
-}
-
-
-bool Grid::same(const grid::Grid& g) const {
-    return uniqueId() == g.uniqueId();
-}
-
-
-}  // namespace grid
-}  // namespace atlas
+} // namespace grid
+} // namespace atlas

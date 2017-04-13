@@ -1,0 +1,10 @@
+{
+  "//" : "Shifted lonlat grid 'S45'",
+
+  "name" : "L4",
+  "!domain" : { "type": "zonal_band", "ymax": 90, "ymin": 45 },
+  "projection" : {
+    "type" : "shifted_lonlat",
+    "shift" : [-180,0]
+  }
+}

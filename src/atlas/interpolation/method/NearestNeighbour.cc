@@ -15,7 +15,6 @@
 #include "eckit/log/Timer.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
-#include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
@@ -32,7 +31,7 @@ MethodBuilder<NearestNeighbour> __builder("nearest-neighbour");
 }  // (anonymous namespace)
 
 
-void NearestNeighbour::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
+void NearestNeighbour::setup(Mesh& meshSource, Mesh& meshTarget) {
     using namespace atlas;
 
 
@@ -43,7 +42,7 @@ void NearestNeighbour::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
 
     // generate 3D point coordinates
     mesh::actions::BuildXYZField("xyz")(meshTarget);
-    array::ArrayView< double, 2 > coords(meshTarget.nodes().field( "xyz" ));
+    array::ArrayView< double, 2 > coords = array::make_view<double,2>(meshTarget.nodes().field( "xyz" ));
 
     size_t inp_npts = meshSource.nodes().size();
     size_t out_npts = meshTarget.nodes().size();
@@ -53,12 +52,12 @@ void NearestNeighbour::setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) {
     std::vector< Triplet > weights_triplets;
     weights_triplets.reserve(out_npts);
     {
-        eckit::TraceTimer<LibAtlas> timer("atlas::interpolation::method::NearestNeighbour::setup()");
+        eckit::TraceTimer<Atlas> timer("atlas::interpolation::method::NearestNeighbour::setup()");
         for (size_t ip = 0; ip < out_npts; ++ip) {
 
             if (ip && (ip % 1000 == 0)) {
                 double rate = ip / timer.elapsed();
-                Log::debug<ATLAS>() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
+                Log::debug<Atlas>() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
             }
 
             // find the closest input point to the output point

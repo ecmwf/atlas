@@ -8,21 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
+#pragma once
 
-#ifndef atlas_interpolation_PartitionedMesh_h
-#define atlas_interpolation_PartitionedMesh_h
-
-#include "atlas/grid/partitioners/Partitioner.h"
-#include "atlas/grid/Structured.h"
-#include "atlas/mesh/generators/Structured.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
-
-
-namespace atlas {
-namespace field { class FieldSet; }
-}
-
+#include "atlas/grid.h"
+#include "atlas/meshgenerator.h"
+#include "atlas/mesh.h"
+#include "atlas/field.h"
 
 namespace atlas {
 namespace interpolation {
@@ -30,9 +21,8 @@ namespace interpolation {
 
 struct PartitionedMesh {
 
-    typedef grid::partitioners::Partitioner Partitioner;
-    typedef mesh::generators::MeshGenerator Generator;
-    typedef mesh::Mesh                      Mesh;
+    typedef grid::Partitioner Partitioner;
+    typedef Mesh                      Mesh;
 
     PartitionedMesh(
             const std::string& partitioner,
@@ -42,28 +32,25 @@ struct PartitionedMesh {
 
     virtual ~PartitionedMesh() {}
 
-    const Mesh& mesh() const { ASSERT(mesh_); return *mesh_; }
-    Mesh&       mesh()       { ASSERT(mesh_); return *mesh_; }
+    const Mesh& mesh() const { return mesh_; }
+    Mesh&       mesh()       { return mesh_; }
 
-    void writeGmsh(const std::string& fileName, const field::FieldSet* fields = NULL);
+    void writeGmsh(const std::string& fileName, const FieldSet& fields = FieldSet());
 
-    void partition(const grid::Grid&);
-    void partition(const grid::Grid&, const PartitionedMesh&);
+    void partition(const Grid&);
+    void partition(const Grid&, const PartitionedMesh&);
 
 protected:
 
     const std::string optionPartitioner_;
     const std::string optionGenerator_;
 
-    Generator::Parameters generatorParams_;
-    Partitioner::Ptr partitioner_;
-    Mesh::Ptr mesh_;
+    MeshGenerator::Parameters generatorParams_;
+    Partitioner partitioner_;
+    Mesh mesh_;
 
 };
 
 
 }  // namespace interpolation
 }  // namespace atlas
-
-
-#endif

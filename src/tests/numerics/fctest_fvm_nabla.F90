@@ -19,7 +19,7 @@ use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
 
-  type(atlas_grid_Structured) :: grid
+  type(atlas_StructuredGrid) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Nodes) :: nodes
   type(atlas_MeshGenerator) :: meshgenerator
@@ -237,13 +237,13 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_nabla_EdgeBasedFiniteVolume,fctest_atlas_nab
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  call atlas_init()
+  call atlas_library%initialise()
 
   config = atlas_Config()
   call config%set("radius",1.0)
 
   ! Setup
-  grid = atlas_grid_Structured("N24")
+  grid = atlas_StructuredGrid("N24")
   meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
   fvm  = atlas_fvm_Method(mesh,config)
@@ -277,18 +277,18 @@ TESTSUITE_FINALIZE
   call mesh%final()
   call grid%final()
   call meshgenerator%final()
-  call atlas_finalize()
+  call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
 TEST( test_fvm )
-type(atlas_grid_Structured) :: grid
+type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
 type(atlas_fvm_Method) :: fvm
 
-grid = atlas_grid_Structured("N24")
+grid = atlas_StructuredGrid("N24")
 meshgenerator = atlas_meshgenerator_Structured()
 mesh = meshgenerator%generate(grid)
 fvm  = atlas_fvm_Method(mesh)

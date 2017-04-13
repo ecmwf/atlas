@@ -30,12 +30,12 @@ namespace method {
 class FiniteElement : public Method {
 public:
 
-    FiniteElement(const Config& config) : 
+    FiniteElement(const Config& config) :
         Method(config),
         fallback_to_2d_(false) {
         config.get("fallback_to_2d",fallback_to_2d_);
     }
-    
+
     virtual ~FiniteElement() {}
 
     /**
@@ -46,7 +46,7 @@ public:
      * @param meshSource mesh containing source elements
      * @param meshTarget mesh containing target points
      */
-    void setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget);
+    void setup(Mesh& meshSource, Mesh& meshTarget);
 
 protected:
 
@@ -62,11 +62,11 @@ protected:
 
 protected:
 
-    mesh::Connectivity* connectivity_;
-    array::ArrayView<double,2> icoords_;
-    array::ArrayView<double,2> ilonlat_;
-    array::ArrayView<double,2> ocoords_;
-    array::ArrayView<double,2> olonlat_;
+    mesh::MultiBlockConnectivity* connectivity_;
+    std::unique_ptr<array::ArrayView<double,2>> icoords_;
+    std::unique_ptr<array::ArrayView<double,2>> ilonlat_;
+    std::unique_ptr<array::ArrayView<double,2>> ocoords_;
+    std::unique_ptr<array::ArrayView<double,2>> olonlat_;
     bool fallback_to_2d_;
 };
 

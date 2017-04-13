@@ -1,0 +1,22 @@
+#pragma once
+
+#define ATLAS_VERSION_STR "@ATLAS_VERSION_STR@"
+#define ATLAS_VERSION     "@ATLAS_VERSION@"
+
+#define ATLAS_MAJOR_VERSION @ATLAS_MAJOR_VERSION@
+#define ATLAS_MINOR_VERSION @ATLAS_MINOR_VERSION@
+#define ATLAS_PATCH_VERSION @ATLAS_PATCH_VERSION@
+
+namespace atlas {
+namespace library {
+
+constexpr const char* version() {
+    return ATLAS_VERSION;
+}
+
+constexpr int version_int() {
+    return 10000*ATLAS_MAJOR_VERSION + 100*ATLAS_MINOR_VERSION + 1*ATLAS_PATCH_VERSION;
+}
+
+}
+}

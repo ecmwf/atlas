@@ -8,16 +8,13 @@
  * does it submit to any jurisdiction.
  */
 
-
-/// @warning Still doesn't know about periodic BC to enlarge Halo
-
 #include <cmath>
 #include <limits>
 #include <iostream>
 #include <stdexcept>
 
 #include "eckit/log/Timer.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -25,20 +22,20 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/AccumulateFaces.h"
-#include "atlas/internals/Bitflags.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/internals/PeriodicTransform.h"
-#include "atlas/internals/Unique.h"
-#include "atlas/internals/LonLatMicroDeg.h"
-#include "atlas/internals/Functions.h"
+#include "atlas/mesh/detail/AccumulateFacets.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/mesh/detail/PeriodicTransform.h"
+#include "atlas/util/Unique.h"
+#include "atlas/util/LonLatMicroDeg.h"
+#include "atlas/util/MicroDeg.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/Buffer.h"
 
 #ifdef DEBUG_OUTPUT
 #include "atlas/output/Gmsh.h"
@@ -46,12 +43,12 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #endif
 
-using atlas::internals::accumulate_facets;
-using atlas::internals::Topology;
-using atlas::internals::PeriodicTransform;
-using atlas::internals::UniqueLonLat;
-using atlas::internals::LonLatMicroDeg;
-using atlas::internals::microdeg;
+using atlas::mesh::detail::accumulate_facets;
+using atlas::mesh::detail::PeriodicTransform;
+using atlas::util::UniqueLonLat;
+using atlas::util::LonLatMicroDeg;
+using atlas::util::microdeg;
+using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {
 namespace mesh {
@@ -99,7 +96,7 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
     node2elem[jnode].clear();
 
   const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
-  array::ArrayView<int,1> patched( mesh.cells().field("patch") );
+  array::ArrayView<int,1> patched = array::make_view<int,1>( mesh.cells().field("patch") );
 
   size_t nb_elems = mesh.cells().size();
   for (size_t elem=0; elem<nb_elems; ++elem)
@@ -119,7 +116,7 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
 {
   std::set<int> bdry_nodes_set;
 
-  std::vector< idx_t > facet_nodes_data;
+  std::vector< idx_t > facet_nodes;
   std::vector< idx_t > connectivity_facet_to_elem;
   size_t nb_facets(0);
   size_t nb_inner_facets(0);
@@ -127,22 +124,19 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
   accumulate_facets(
       /*in*/  mesh.cells(),
       /*in*/  mesh.nodes(),
-      /*out*/ facet_nodes_data, // shape(nb_facets,nb_nodes_per_facet)
+      /*out*/ facet_nodes, // shape(nb_facets,nb_nodes_per_facet)
       /*out*/ connectivity_facet_to_elem,
       /*out*/ nb_facets,
       /*out*/ nb_inner_facets,
       /*out*/ missing_value );
 
-  array::ArrayView<idx_t,2> facet_nodes(facet_nodes_data.data(), array::make_shape(nb_facets,2));
-  array::ArrayView<idx_t,2> facet_elem_connectivity(connectivity_facet_to_elem.data(), array::make_shape(nb_facets,2));
-
   for( size_t jface=0; jface<nb_facets; ++jface )
   {
-    if( facet_elem_connectivity(jface,1) == missing_value )
+    if( connectivity_facet_to_elem[jface*2+1] == missing_value )
     {
       for( size_t jnode=0; jnode<2; ++jnode) // 2 nodes per face
       {
-        bdry_nodes_set.insert(facet_nodes(jface,jnode));
+        bdry_nodes_set.insert(facet_nodes[jface*2+jnode]);
       }
     }
   }
@@ -203,11 +197,11 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
 {
   Notification notes;
   mesh::Nodes& nodes         = mesh.nodes();
-  array::ArrayView<double,2> lonlat   ( nodes.lonlat() );
-  array::ArrayView<gidx_t,1> glb_idx  ( nodes.global_index() );
+  array::ArrayView<double,2> xy  = array::make_view<double,2> ( nodes.xy() );
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1> ( nodes.global_index() );
   size_t nb_nodes = nodes.size();
 
-  UniqueLonLat compute_uid(nodes);
+  UniqueLonLat compute_uid(mesh);
 
   uid2node.clear();
   for( size_t jnode=0; jnode<nb_nodes; ++jnode )
@@ -219,8 +213,8 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
       int other = uid2node[uid];
       std::stringstream msg;
       msg << "Node uid: " << uid << "   " << glb_idx(jnode)
-          << " (" << lonlat(jnode,internals::LON) <<","<< lonlat(jnode,internals::LAT)<<")  has already been added as node "
-          << glb_idx(other) << " (" << lonlat(other,internals::LON) <<","<< lonlat(other,internals::LAT)<<")";
+          << " (" << xy(jnode,XX) <<","<< xy(jnode,YY)<<")  has already been added as node "
+          << glb_idx(other) << " (" << xy(other,XX) <<","<< xy(other,YY)<<")";
       notes.add_error(msg.str());
     }
     uid2node[uid] = jnode;
@@ -230,16 +224,14 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
 }
 
 void accumulate_elements( const Mesh& mesh,
-                          const array::ArrayView<uid_t,1>& node_uid,
+                          const parallel::mpi::BufferView<uid_t>& node_uid,
                           const Uid2Node& uid2node,
                           const Node2Elem& node2elem,
                           std::vector<int>& found_elements,
                           std::set< uid_t >& new_nodes_uid )
 {
   const mesh::HybridElements::Connectivity &elem_nodes = mesh.cells().node_connectivity();
-  const array::ArrayView<int,1> elem_part ( mesh.cells().partition() );
-  const array::ArrayView<gidx_t,1> ngidx ( mesh.nodes().global_index() );
-  const array::ArrayView<gidx_t,1> egidx ( mesh.cells().global_index() );
+  const array::ArrayView<int,1> elem_part = array::make_view<int,1>( mesh.cells().partition() );
 
   size_t nb_nodes = node_uid.size();
 
@@ -272,7 +264,7 @@ void accumulate_elements( const Mesh& mesh,
   // found_bdry_elements_set now contains elements for the nodes
   found_elements = std::vector<int>( found_elements_set.begin(), found_elements_set.end());
 
-  UniqueLonLat compute_uid(mesh.nodes());
+  UniqueLonLat compute_uid( mesh );
 
   // Collect all nodes
   new_nodes_uid.clear();
@@ -306,7 +298,7 @@ public:
 
     std::vector< std::vector<uid_t>  > node_glb_idx;
 
-    std::vector< std::vector<double> > node_lonlat;
+    std::vector< std::vector<double> > node_xy;
 
     std::vector< std::vector<uid_t>  > elem_glb_idx;
 
@@ -324,7 +316,7 @@ public:
       node_ridx.resize(parallel::mpi::comm().size());
       node_flags.resize(parallel::mpi::comm().size());
       node_glb_idx.resize(parallel::mpi::comm().size());
-      node_lonlat.resize(parallel::mpi::comm().size());
+      node_xy.resize(parallel::mpi::comm().size());
       elem_glb_idx.resize(parallel::mpi::comm().size());
       elem_nodes_id.resize(parallel::mpi::comm().size());
       elem_nodes_displs.resize(parallel::mpi::comm().size());
@@ -332,7 +324,7 @@ public:
       elem_type.resize(parallel::mpi::comm().size());
     }
 
-    void print( std::ostream& os )
+    void print( std::ostream& os ) const
     {
       os << "Nodes\n"
          << "-----\n";
@@ -357,7 +349,12 @@ public:
       }
       os << std::flush;
     }
+    friend std::ostream& operator<<(std::ostream& out, const Buffers& b) {
+      b.print(out);
+      return out;
+    }
   };
+
 
   static void all_to_all(Buffers& send, Buffers& recv)
   {
@@ -367,7 +364,7 @@ public:
       comm.allToAll(send.node_part,     recv.node_part);
       comm.allToAll(send.node_ridx,     recv.node_ridx);
       comm.allToAll(send.node_flags,    recv.node_flags);
-      comm.allToAll(send.node_lonlat,   recv.node_lonlat);
+      comm.allToAll(send.node_xy,   recv.node_xy);
       comm.allToAll(send.elem_glb_idx,  recv.elem_glb_idx);
       comm.allToAll(send.elem_nodes_id, recv.elem_nodes_id);
       comm.allToAll(send.elem_part,     recv.elem_part);
@@ -378,7 +375,7 @@ public:
 public:
 
   Mesh& mesh;
-
+  array::ArrayView<double,2> xy;
   array::ArrayView<double,2> lonlat;
   array::ArrayView<gidx_t,1> glb_idx;
   array::ArrayView<int   ,1> part;
@@ -396,26 +393,38 @@ public:
 
 
 public:
-  BuildHaloHelper( Mesh& _mesh ): mesh(_mesh),
-    compute_uid(mesh.nodes())
+  BuildHaloHelper( Mesh& _mesh ):
+    mesh(_mesh),
+    xy           ( array::make_view<double,2> ( mesh.nodes().xy() ) ),
+    lonlat       ( array::make_view<double,2> ( mesh.nodes().lonlat() ) ),
+    glb_idx      ( array::make_view<gidx_t,1> ( mesh.nodes().global_index() ) ),
+    part         ( array::make_view<int   ,1> ( mesh.nodes().partition() ) ),
+    ridx         ( array::make_indexview<int,1> ( mesh.nodes().remote_index() ) ),
+    flags        ( array::make_view<int   ,1> ( mesh.nodes().field("flags") ) ),
+    ghost        ( array::make_view<int   ,1> ( mesh.nodes().ghost() ) ),
+    elem_nodes   ( &mesh.cells().node_connectivity() ),
+    elem_part    ( array::make_view<int   ,1> ( mesh.cells().partition() ) ),
+    elem_glb_idx ( array::make_view<gidx_t,1> ( mesh.cells().global_index() ) ),
+    compute_uid(mesh)
   {
-    update();
+    // update();
   }
 
   void update()
   {
     compute_uid.update();
     mesh::Nodes& nodes         = mesh.nodes();
-    lonlat   = array::ArrayView<double,2> ( nodes.lonlat() );
-    glb_idx  = array::ArrayView<gidx_t,1> ( nodes.global_index() );
-    part     = array::ArrayView<int   ,1> ( nodes.partition() );
-    ridx     = array::IndexView<int   ,1> ( nodes.remote_index() );
-    flags    = array::ArrayView<int   ,1> ( nodes.field("flags") );
-    ghost    = array::ArrayView<int   ,1> ( nodes.ghost() );
+    xy       = array::make_view<double,2> ( nodes.xy() );
+    lonlat   = array::make_view<double,2> ( nodes.lonlat() );
+    glb_idx  = array::make_view<gidx_t,1> ( nodes.global_index() );
+    part     = array::make_view<int   ,1> ( nodes.partition() );
+    ridx     = array::make_indexview<int   ,1> ( nodes.remote_index() );
+    flags    = array::make_view<int   ,1> ( nodes.field("flags") );
+    ghost    = array::make_view<int   ,1> ( nodes.ghost() );
 
     elem_nodes   = &mesh.cells().node_connectivity();
-    elem_part    = array::ArrayView<int,1> ( mesh.cells().partition() );
-    elem_glb_idx = array::ArrayView<gidx_t,1> ( mesh.cells().global_index() );
+    elem_part    = array::make_view<int,1> ( mesh.cells().partition() );
+    elem_glb_idx = array::make_view<gidx_t,1> ( mesh.cells().global_index() );
   }
 
   template< typename NodeContainer, typename ElementContainer >
@@ -426,7 +435,7 @@ public:
     buf.node_part   [p].resize(nb_nodes);
     buf.node_ridx   [p].resize(nb_nodes);
     buf.node_flags  [p].resize(nb_nodes,Topology::NONE);
-    buf.node_lonlat [p].resize(2*nb_nodes);
+    buf.node_xy     [p].resize(2*nb_nodes);
 
     int jnode=0;
     typename NodeContainer::iterator it;
@@ -441,8 +450,8 @@ public:
         buf.node_glb_idx[p][jnode]       = glb_idx(node);
         buf.node_part   [p][jnode]       = part   (node);
         buf.node_ridx   [p][jnode]       = ridx   (node);
-        buf.node_lonlat [p][jnode*2+internals::LON] = lonlat (node,internals::LON);
-        buf.node_lonlat [p][jnode*2+internals::LAT] = lonlat (node,internals::LAT);
+        buf.node_xy     [p][jnode*2+XX] = xy (node,XX);
+        buf.node_xy     [p][jnode*2+YY] = xy (node,YY);
         Topology::set(buf.node_flags[p][jnode],flags(node)|Topology::GHOST);
       }
       else
@@ -487,7 +496,7 @@ public:
     buf.node_part   [p].resize(nb_nodes);
     buf.node_ridx   [p].resize(nb_nodes);
     buf.node_flags  [p].resize(nb_nodes,Topology::NONE);
-    buf.node_lonlat [p].resize(2*nb_nodes);
+    buf.node_xy     [p].resize(2*nb_nodes);
 
     int jnode=0;
     typename NodeContainer::iterator it;
@@ -501,11 +510,11 @@ public:
         int node = found->second;
         buf.node_part   [p][jnode]      = part   (node);
         buf.node_ridx   [p][jnode]      = ridx   (node);
-        buf.node_lonlat [p][jnode*2+internals::LON] = lonlat (node,internals::LON);
-        buf.node_lonlat [p][jnode*2+internals::LAT] = lonlat (node,internals::LAT);
-        transform(&buf.node_lonlat[p][jnode*2],-1);
+        buf.node_xy [p][jnode*2+XX] = xy (node,XX);
+        buf.node_xy [p][jnode*2+YY] = xy (node,YY);
+        transform(&buf.node_xy[p][jnode*2],-1);
         // Global index of node is based on UID of destination
-        buf.node_glb_idx[p][jnode]      = internals::unique_lonlat(&buf.node_lonlat [p][jnode*2]);
+        buf.node_glb_idx[p][jnode]      = util::unique_lonlat(&buf.node_xy [p][jnode*2]);
         Topology::set(buf.node_flags[p][jnode],newflags);
       }
       else
@@ -539,14 +548,15 @@ public:
       std::vector<double> crds(elem_nodes->cols(ielem)*2);
       for(size_t jnode=0; jnode<elem_nodes->cols(ielem); ++jnode)
       {
-        double crd[] = { lonlat( (*elem_nodes)(ielem,jnode),internals::LON) , lonlat( (*elem_nodes)(ielem,jnode),internals::LAT) };
+        double crd[] = { xy( (*elem_nodes)(ielem,jnode),XX) , xy( (*elem_nodes)(ielem,jnode),YY) };
         transform(crd,-1);
-        buf.elem_nodes_id[p][jelemnode++] = internals::unique_lonlat(crd);
-        crds[jnode*2+internals::LON] = crd[internals::LON];
-        crds[jnode*2+internals::LAT] = crd[internals::LAT];
+        buf.elem_nodes_id[p][jelemnode++] = util::unique_lonlat(crd);
+        crds[jnode*2+XX] = crd[XX];
+        crds[jnode*2+YY] = crd[YY];
       }
       // Global index of element is based on UID of destination
-      buf.elem_glb_idx[p][jelem] = internals::unique_lonlat( crds.data(), elem_nodes->cols(ielem) );
+
+      buf.elem_glb_idx[p][jelem] = util::unique_lonlat( crds.data(), elem_nodes->cols(ielem) );
     }
 
   }
@@ -574,8 +584,8 @@ public:
     {
       for(size_t n = 0; n < buf.node_glb_idx[jpart].size(); ++n)
       {
-        double crd[] = { buf.node_lonlat[jpart][n*2+internals::LON], buf.node_lonlat[jpart][n*2+internals::LAT] };
-        bool inserted = node_uid.insert( internals::unique_lonlat(crd) ).second;
+        double crd[] = { buf.node_xy[jpart][n*2+XX], buf.node_xy[jpart][n*2+YY] };
+        bool inserted = node_uid.insert( util::unique_lonlat(crd) ).second;
         if( inserted ) {
           rfn_idx[jpart].push_back(n);
         }
@@ -586,12 +596,13 @@ public:
     // Resize nodes
     // ------------
     nodes.resize( nb_nodes+nb_new_nodes );
-    flags   = array::ArrayView<int,   1>( nodes.field("flags") );
-    glb_idx = array::ArrayView<gidx_t,1>( nodes.global_index() );
-    part    = array::ArrayView<int,   1>( nodes.partition() );
-    ridx    = array::IndexView<int,   1>( nodes.remote_index() );
-    lonlat  = array::ArrayView<double,2>( nodes.lonlat() );
-    ghost   = array::ArrayView<int,   1>( nodes.ghost() );
+    flags   = array::make_view<int,   1>( nodes.field("flags") );
+    glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
+    part    = array::make_view<int,   1>( nodes.partition() );
+    ridx    = array::make_indexview<int,   1>( nodes.remote_index() );
+    xy      = array::make_view<double,2>( nodes.xy() );
+    lonlat  = array::make_view<double,2>( nodes.lonlat() );
+    ghost   = array::make_view<int,   1>( nodes.ghost() );
 
     compute_uid.update();
 
@@ -608,8 +619,12 @@ public:
         glb_idx(loc_idx)    = buf.node_glb_idx [jpart][rfn_idx[jpart][n]];
         part   (loc_idx)    = buf.node_part    [jpart][rfn_idx[jpart][n]];
         ridx   (loc_idx)    = buf.node_ridx    [jpart][rfn_idx[jpart][n]];
-        lonlat (loc_idx,internals::LON) = buf.node_lonlat  [jpart][rfn_idx[jpart][n]*2+internals::LON];
-        lonlat (loc_idx,internals::LAT) = buf.node_lonlat  [jpart][rfn_idx[jpart][n]*2+internals::LAT];
+        PointXY pxy( &buf.node_xy  [jpart][rfn_idx[jpart][n]*2] );
+        xy     (loc_idx,XX) = pxy.x();
+        xy     (loc_idx,YY) = pxy.y();
+        PointLonLat pll = mesh.projection().lonlat(pxy);
+        lonlat (loc_idx,XX) = pll.lon();
+        lonlat (loc_idx,YY) = pll.lat();
         uid_t uid = compute_uid(loc_idx);
 
         // make sure new node was not already there
@@ -619,9 +634,9 @@ public:
           int other = found->second;
           std::stringstream msg;
           msg << "New node with uid " << uid << ":\n"  << glb_idx(loc_idx)
-              << "("<<lonlat(loc_idx,internals::LON)<<","<<lonlat(loc_idx,internals::LAT)<<")\n";
+              << "("<<xy(loc_idx,XX)<<","<<xy(loc_idx,YY)<<")\n";
           msg << "Existing already loc "<< other << "  :  " << glb_idx(other)
-              << "("<<lonlat(other,internals::LON)<<","<<lonlat(other,internals::LAT)<<")\n";
+              << "("<<xy(other,XX)<<","<<xy(other,YY)<<")\n";
           throw eckit::SeriousBug(msg.str(),Here());
         }
         uid2node[ uid ] = nb_nodes+new_node;
@@ -636,7 +651,6 @@ public:
     // Elements might be duplicated from different Tasks. We need to identify unique entries
     std::set<uid_t> elem_uid;
     int nb_elems = mesh.cells().size();
-    array::ArrayView<gidx_t,1> node_glb_idx ( mesh.nodes().global_index() );
 
     for( int jelem=0; jelem<nb_elems; ++jelem )
     {
@@ -684,13 +698,13 @@ public:
       mesh::Elements& elements = mesh.cells().elements(t);
 
       // Add new elements
-      mesh::Elements::Connectivity &node_connectivity = elements.node_connectivity();
+      BlockConnectivity &node_connectivity = elements.node_connectivity();
       if( nb_elements_of_type[t] == 0 ) continue;
       size_t new_elems_pos = elements.add(nb_elements_of_type[t]);
 
-      array::ArrayView<gidx_t,1> elem_type_glb_idx = elements.view<gidx_t,1>( mesh.cells().global_index() );
-      array::ArrayView<int,   1> elem_type_part    = elements.view<int,1>( mesh.cells().partition() );
-      array::ArrayView<int,   1> elem_type_halo    = elements.view<int,1>( mesh.cells().halo() );
+      array::LocalView<gidx_t,1> elem_type_glb_idx = elements.view<gidx_t,1>( mesh.cells().global_index() );
+      array::LocalView<int,   1> elem_type_part    = elements.view<int,1>( mesh.cells().partition() );
+      array::LocalView<int,   1> elem_type_halo    = elements.view<int,1>( mesh.cells().halo() );
 
       // Copy information in new elements
       size_t new_elem(0);
@@ -755,7 +769,7 @@ void increase_halo_interior( BuildHaloHelper& helper )
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID
 
-    array::ArrayView<uid_t,1> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
+    parallel::mpi::BufferView<uid_t> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
 
     std::vector<int>  found_bdry_elems;
     std::set< uid_t > found_bdry_nodes_uid;
@@ -774,16 +788,19 @@ void increase_halo_interior( BuildHaloHelper& helper )
   helper.all_to_all(sendmesh, recvmesh);
 
   // 6) Adapt mesh
+#ifdef DEBUG_OUTPUT
+  Log::debug<Atlas>() << "recv: \n" << recvmesh << std::endl;
+#endif
   helper.add_buffers(recvmesh);
 }
 
 class PeriodicPoints {
 public:
-  PeriodicPoints(Mesh& mesh, int flag, size_t N)
+  PeriodicPoints(Mesh& mesh, int flag, size_t N) :
+    flags_( array::make_view<int,1> ( mesh.nodes().field("flags") ) )
   {
     flag_ = flag;
     N_ = N;
-    flags_ = array::ArrayView<int,1> ( mesh.nodes().field("flags") );
   }
 
   bool operator()(int j) const
@@ -796,7 +813,7 @@ private:
   int N_;
   int flag_;
   array::ArrayView<int,1> flags_;
-  
+
   friend std::ostream& operator<<(std::ostream& os, const PeriodicPoints& periodic_points) {
     os << "[";
     for( size_t j=0; j<periodic_points.flags_.shape(0); ++j ) {
@@ -805,7 +822,7 @@ private:
     os << " ]";
     return os;
   }
-  
+
 };
 
 
@@ -831,10 +848,10 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
   std::vector<uid_t> send_bdry_nodes_uid(bdry_nodes.size());
   for(size_t jnode = 0; jnode < bdry_nodes.size(); ++jnode)
   {
-    double crd[] = { helper.lonlat(bdry_nodes[jnode],internals::LON), helper.lonlat(bdry_nodes[jnode],internals::LAT) };
+    double crd[] = { helper.xy(bdry_nodes[jnode],XX), helper.xy(bdry_nodes[jnode],YY) };
     transform(crd,+1);
-    // Log::info() << " crd  " << crd[0] << "  " << crd[1] <<  "       uid " << internals::unique_lonlat(crd) << std::endl;
-    send_bdry_nodes_uid[jnode] = internals::unique_lonlat(crd);
+    // Log::info() << " crd  " << crd[0] << "  " << crd[1] <<  "       uid " << util::unique_lonlat(crd) << std::endl;
+    send_bdry_nodes_uid[jnode] = util::unique_lonlat(crd);
   }
 
   size_t size = parallel::mpi::comm().size();
@@ -847,7 +864,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID
 
-    array::ArrayView<uid_t,1> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
+    atlas::parallel::mpi::BufferView<uid_t> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
 
     std::vector<int>  found_bdry_elems;
     std::set< uid_t > found_bdry_nodes_uid;
@@ -866,7 +883,9 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
   helper.all_to_all(sendmesh, recvmesh);
 
   // 6) Adapt mesh
-
+#ifdef DEBUG_OUTPUT
+  Log::debug<Atlas>() << "recv: \n" << recvmesh << std::endl;
+#endif
   helper.add_buffers(recvmesh);
 
 }
@@ -878,12 +897,12 @@ void build_halo(Mesh& mesh, int nb_elems )
   if( halo == nb_elems )
     return;
 
-  Log::debug<ATLAS>() << "Increasing mesh halo..." << std::endl;
-  eckit::TraceTimer<ATLAS> timer("Increasing mesh halo... done");
-  
+  Log::debug<Atlas>() << "Increasing mesh halo..." << std::endl;
+  eckit::TraceTimer<Atlas> timer("Increasing mesh halo... done");
+
   for(int jhalo=halo ; jhalo<nb_elems; ++jhalo )
   {
-    Log::debug<ATLAS>() << "Increase halo " << jhalo+1 << std::endl;
+    Log::debug<Atlas>() << "Increase halo " << jhalo+1 << std::endl;
     size_t nb_nodes_before_halo_increase = mesh.nodes().size();
 
     BuildHaloHelper helper(mesh);
@@ -892,13 +911,16 @@ void build_halo(Mesh& mesh, int nb_elems )
 
     PeriodicPoints westpts(mesh,Topology::PERIODIC|Topology::WEST,nb_nodes_before_halo_increase);
 
-    // Log::debug<ATLAS>() << "  periodic west : " << westpts << std::endl;
-
+#ifdef DEBUG_OUTPUT
+    Log::debug<Atlas>() << "  periodic west : " << westpts << std::endl;
+#endif
     increase_halo_periodic( helper, westpts, WestEast(), Topology::PERIODIC|Topology::WEST|Topology::GHOST );
 
     PeriodicPoints eastpts(mesh,Topology::PERIODIC|Topology::EAST,nb_nodes_before_halo_increase);
 
-    // Log::debug<ATLAS>() << "  periodic east : " << eastpts << std::endl;
+#ifdef DEBUG_OUTPUT
+    Log::debug<Atlas>() << "  periodic east : " << eastpts << std::endl;
+#endif
 
     increase_halo_periodic( helper, eastpts, EastWest(), Topology::PERIODIC|Topology::EAST|Topology::GHOST );
 
@@ -909,7 +931,7 @@ void build_halo(Mesh& mesh, int nb_elems )
 #ifdef DEBUG_OUTPUT
     output::Gmsh gmsh2d("build-halo-mesh2d.msh",util::Config
       ("ghost",true)
-      ("coordinates","lonlat")
+      ("coordinates","xy")
     );
     output::Gmsh gmsh3d("build-halo-mesh3d.msh",util::Config
       ("ghost",true)
@@ -929,10 +951,10 @@ void build_halo(Mesh& mesh, int nb_elems )
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-void atlas__build_halo ( Mesh* mesh, int nb_elems ) {
-#undef ATLAS_ERROR_HANDLING
-#define ATLAS_ERROR_HANDLING(x) x
-  ATLAS_ERROR_HANDLING( build_halo(*mesh, nb_elems) );
+void atlas__build_halo ( Mesh::Implementation* mesh, int nb_elems ) {
+// #undef ATLAS_ERROR_HANDLING
+// #define ATLAS_ERROR_HANDLING(x) x
+  ATLAS_ERROR_HANDLING( Mesh m(mesh); build_halo(m, nb_elems); );
 }
 
 // ------------------------------------------------------------------

@@ -21,7 +21,7 @@
 namespace atlas {
 namespace field {
 
-Field* FieldCreatorIFS::createField( const eckit::Parametrisation& params ) const
+FieldImpl* FieldCreatorIFS::createField( const eckit::Parametrisation& params ) const
 {
   size_t ngptot;
   size_t nblk;
@@ -64,9 +64,9 @@ Field* FieldCreatorIFS::createField( const eckit::Parametrisation& params ) cons
 
   std::string name;
   params.get("name",name);
-  Log::debug<ATLAS>() << "Creating IFS "<<datatype.str()<<" field: "<<name<<"[nblk="<<nblk<<"][nvar="<<nvar<<"][nlev="<<nlev<<"][nproma="<<nproma<<"]\n";
+  Log::debug<Atlas>() << "Creating IFS "<<datatype.str()<<" field: "<<name<<"[nblk="<<nblk<<"][nvar="<<nvar<<"][nlev="<<nlev<<"][nproma="<<nproma<<"]\n";
 
-  return Field::create(name,datatype,s);
+  return FieldImpl::create(name,datatype,s);
 
 }
 

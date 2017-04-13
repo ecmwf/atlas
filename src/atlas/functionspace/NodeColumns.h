@@ -8,12 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_functionspace_NodeColumnsFunctionSpace_h
-#define atlas_functionspace_NodeColumnsFunctionSpace_h
+#pragma once
 
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/Halo.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/field/Options.h"
 #include "atlas/functionspace/FunctionSpace.h"
@@ -23,15 +23,12 @@
 
 namespace atlas {
 namespace mesh {
-    class Mesh;
     class Nodes;
 }
 }
 
 namespace atlas {
-namespace field {
-    class FieldSet;
-}
+  class FieldSet;
 }
 
 namespace atlas {
@@ -44,20 +41,17 @@ namespace parallel {
 
 namespace atlas {
 namespace functionspace {
+namespace detail {
 
 // ----------------------------------------------------------------------------
 
-class NodeColumns : public FunctionSpace
+class NodeColumns : public FunctionSpaceImpl
 {
 public:
 
-    typedef eckit::SharedPtr<NodeColumns> Ptr;
-
-public:
-
-    NodeColumns( mesh::Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
-    NodeColumns( mesh::Mesh& mesh, const mesh::Halo & );
-    NodeColumns( mesh::Mesh& mesh );
+    NodeColumns( Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
+    NodeColumns( Mesh& mesh, const mesh::Halo & );
+    NodeColumns( Mesh& mesh );
 
     virtual ~NodeColumns();
 
@@ -65,224 +59,220 @@ public:
 
     size_t nb_nodes() const;
     size_t nb_nodes_global() const; // All MPI ranks will have same output
-    std::vector<size_t> nb_nodes_global_foreach_rank() const;
 
-    const mesh::Mesh& mesh() const { return mesh_; }
-          mesh::Mesh& mesh()       { return mesh_; }
+    const Mesh& mesh() const { return mesh_; }
 
-    const mesh::Nodes& nodes() const { return nodes_; }
-          mesh::Nodes& nodes()       { return nodes_; }
-
-
+    mesh::Nodes& nodes() const { return nodes_; }
 
 // -- Field creation methods
 
     /// @brief Create a named scalar field
-    template< typename DATATYPE > field::Field* createField(
+    template< typename DATATYPE > Field createField(
               const std::string& name,
               const eckit::Parametrisation& = util::NoConfig()) const;
 
-    template< typename DATATYPE > field::Field* createField(
+    template< typename DATATYPE > Field createField(
               const std::string& name,
               size_t levels,
               const eckit::Parametrisation& = util::NoConfig()) const;
 
     /// @brief Create a named scalar field
-    field::Field* createField(
+    Field createField(
         const std::string& name,
         array::DataType,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
-    field::Field* createField(
+    Field createField(
         const std::string& name,
         array::DataType, size_t levels,
         const eckit::Parametrisation& = util::NoConfig()) const;
 
     /// @brief Create a named field with specified dimensions for the variables
-    template< typename DATATYPE >  field::Field* createField(
+    template< typename DATATYPE >  Field createField(
         const std::string& name,
         const std::vector<size_t>& variables,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
-    template< typename DATATYPE >  field::Field* createField(
+    template< typename DATATYPE >  Field createField(
         const std::string& name,
         size_t levels,
         const std::vector<size_t>& variables,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// @brief Create a named field with specified dimensions for the variables
-    field::Field* createField(
+    Field createField(
         const std::string& name,
         array::DataType,
         const std::vector<size_t>& variables,
         const eckit::Parametrisation& = util::NoConfig()) const;
 
-    field::Field* createField(
+    Field createField(
         const std::string& name,
         array::DataType, size_t levels,
         const std::vector<size_t>& variables,
         const eckit::Parametrisation& = util::NoConfig())  const;
 
     /// @brief Create a named field based on other field (datatype and dimensioning)
-    field::Field* createField(
+    Field createField(
         const std::string& name,
-        const field::Field&,
+        const Field&,
         const eckit::Parametrisation& = util::NoConfig()) const;
 
-    field::Field* createField(const eckit::Parametrisation&) const;
+    Field createField(const eckit::Parametrisation&) const;
 
 // -- Parallelisation aware methods
 
     const mesh::Halo& halo() const { return halo_; }
 
-    void haloExchange( field::FieldSet& ) const;
-    void haloExchange( field::Field& ) const;
+    void haloExchange( FieldSet& ) const;
+    void haloExchange( Field& ) const;
     const parallel::HaloExchange& halo_exchange() const;
 
-    void gather( const field::FieldSet&, field::FieldSet& ) const;
-    void gather( const field::Field&, field::Field& ) const;
+    void gather( const FieldSet&, FieldSet& ) const;
+    void gather( const Field&, Field& ) const;
     const parallel::GatherScatter& gather() const;
 
-    void scatter( const field::FieldSet&, field::FieldSet& ) const;
-    void scatter( const field::Field&, field::Field& ) const;
+    void scatter( const FieldSet&, FieldSet& ) const;
+    void scatter( const Field&, Field& ) const;
     const parallel::GatherScatter& scatter() const;
 
-    std::string checksum( const field::FieldSet& ) const;
-    std::string checksum( const field::Field& ) const;
+    std::string checksum( const FieldSet& ) const;
+    std::string checksum( const Field& ) const;
     const parallel::Checksum& checksum() const;
+
 
     /// @brief Compute sum of scalar field
     /// @param [out] sum    Scalar value containing the sum of the full 3D field
     /// @param [out] N      Number of values that are contained in the sum (nodes*levels)
-    template< typename DATATYPE >
-    void sum( const field::Field&, DATATYPE& sum, size_t& N ) const;
+    template< typename Value >
+    void sum( const Field&, Value& sum, size_t& N ) const;
 
-    /// @brief Compute sum of field for each variable
-    /// @param [out] sum    For each field-variable, the sum of the full 3D field
-    /// @param [out] N      Number of values that are contained in the sum (nodes*levels)
-    template< typename DATATYPE >
-    void sum( const field::Field&, std::vector<DATATYPE>& sum, size_t& N ) const;
+//    /// @brief Compute sum of field for each variable
+//    /// @param [out] sum    For each field-variable, the sum of the full 3D field
+//    /// @param [out] N      Number of values that are contained in the sum (nodes*levels)
+//    template< typename Value >
+//    void sum( const Field&, std::vector<Value>& sum, size_t& N ) const;
 
     /// @brief Compute sum of field for each vertical level separately
-    /// @param [out] sum    field::Field of dimension of input without the nodes index
+    /// @param [out] sum    Field of dimension of input without the nodes index
     /// @param [out] N      Number of nodes used to sum each level
-    void sumPerLevel( const field::Field&, field::Field& sum, size_t& N ) const;
+    void sumPerLevel( const Field&, Field& sum, size_t& N ) const;
 
     /// @brief Compute order independent sum of scalar field
     /// @param [out] sum    Scalar value containing the sum of the full 3D field
     /// @param [out] N      Number of values that are contained in the sum (nodes*levels)
-    template< typename DATATYPE >
-    void orderIndependentSum( const field::Field&, DATATYPE& sum, size_t& N ) const;
+    template< typename Value >
+    void orderIndependentSum( const Field&, Value& sum, size_t& N ) const;
 
-    /// @brief Compute order independent sum of field for each variable
-    /// @param [out] sum    For each field-variable, the sum of the full 3D field
-    /// @param [out] N      Number of values that are contained in the sum (nodes*levels)
-    template< typename DATATYPE >
-    void orderIndependentSum( const field::Field&, std::vector<DATATYPE>&, size_t& N ) const;
+//    /// @brief Compute order independent sum of field for each variable
+//    /// @param [out] sum    For each field-variable, the sum of the full 3D field
+//    /// @param [out] N      Number of values that are contained in the sum (nodes*levels)
+//    template< typename Value >
+//    void orderIndependentSum( const Field&, std::vector<Value>&, size_t& N ) const;
 
     /// @brief Compute order independent sum of field for each vertical level separately
-    /// @param [out] sum    field::Field of dimension of input without the nodes index
+    /// @param [out] sum    Field of dimension of input without the nodes index
     /// @param [out] N      Number of nodes used to sum each level
-    void orderIndependentSumPerLevel( const field::Field&, field::Field& sum, size_t& N ) const;
+    void orderIndependentSumPerLevel( const Field&, Field& sum, size_t& N ) const;
 
     /// @brief Compute minimum of scalar field
-    template< typename DATATYPE >
-    void minimum( const field::Field&, DATATYPE& minimum ) const;
+    template< typename Value >
+    void minimum( const Field&, Value& minimum ) const;
 
     /// @brief Compute maximum of scalar field
-    template< typename DATATYPE >
-    void maximum( const field::Field&, DATATYPE& maximum ) const;
+    template< typename Value >
+    void maximum( const Field&, Value& maximum ) const;
 
-    /// @brief Compute minimum of field for each field-variable
-    template< typename DATATYPE >
-    void minimum( const field::Field&, std::vector<DATATYPE>& ) const;
+//    /// @brief Compute minimum of field for each field-variable
+//    template< typename Value >
+//    void minimum( const Field&, std::vector<Value>& ) const;
 
-    /// @brief Compute maximum of field for each field-variable
-    template< typename DATATYPE >
-    void maximum( const field::Field&, std::vector<DATATYPE>& ) const;
+//    /// @brief Compute maximum of field for each field-variable
+//    template< typename Value >
+//    void maximum( const Field&, std::vector<Value>& ) const;
 
     /// @brief Compute minimum of field for each vertical level separately
-    /// @param [out] min    field::Field of dimension of input without the nodes index
-    void minimumPerLevel( const field::Field&, field::Field& min ) const;
+    /// @param [out] min    Field of dimension of input without the nodes index
+    void minimumPerLevel( const Field&, Field& min ) const;
 
     /// @brief Compute maximum of field for each vertical level separately
-    /// @param [out] max    field::Field of dimension of input without the nodes index
-    void maximumPerLevel( const field::Field&, field::Field& max ) const;
+    /// @param [out] max    Field of dimension of input without the nodes index
+    void maximumPerLevel( const Field&, Field& max ) const;
 
     /// @brief Compute minimum of scalar field, as well as the global index and level.
-    template< typename DATATYPE >
-    void minimumAndLocation( const field::Field&, DATATYPE& minimum, gidx_t& glb_idx ) const;
+    template< typename Value >
+    void minimumAndLocation( const Field&, Value& minimum, gidx_t& glb_idx ) const;
 
     /// @brief Compute maximum of scalar field, as well as the global index and level.
-    template< typename DATATYPE >
-    void maximumAndLocation( const field::Field&, DATATYPE& maximum, gidx_t& glb_idx ) const;
+    template< typename Value >
+    void maximumAndLocation( const Field&, Value& maximum, gidx_t& glb_idx ) const;
 
     /// @brief Compute minimum of scalar field, as well as the global index and level.
-    template< typename DATATYPE >
-    void minimumAndLocation( const field::Field&, DATATYPE& minimum, gidx_t& glb_idx, size_t& level ) const;
+    template< typename Value >
+    void minimumAndLocation( const Field&, Value& minimum, gidx_t& glb_idx, size_t& level ) const;
 
     /// @brief Compute maximum of scalar field, as well as the global index and level.
-    template< typename DATATYPE >
-    void maximumAndLocation( const field::Field&, DATATYPE& maximum, gidx_t& glb_idx, size_t& level ) const;
+    template< typename Value >
+    void maximumAndLocation( const Field&, Value& maximum, gidx_t& glb_idx, size_t& level ) const;
 
     /// @brief Compute minimum of field for each field-variable, as well as the global indices and levels.
-    template< typename DATATYPE >
-    void minimumAndLocation( const field::Field&, std::vector<DATATYPE>& minimum, std::vector<gidx_t>& glb_idx ) const;
+    template< typename Vector >
+    void minimumAndLocation( const Field&, Vector& minimum, std::vector<gidx_t>& glb_idx ) const;
 
     /// @brief Compute maximum of field for each field-variable, as well as the global indices and levels.
-    template< typename DATATYPE >
-    void maximumAndLocation( const field::Field&, std::vector<DATATYPE>& maximum, std::vector<gidx_t>& glb_idx ) const;
+    template< typename Vector >
+    void maximumAndLocation( const Field&, Vector& maximum, std::vector<gidx_t>& glb_idx ) const;
 
     /// @brief Compute minimum of field for each field-variable, as well as the global indices and levels.
-    template< typename DATATYPE >
-    void minimumAndLocation( const field::Field&, std::vector<DATATYPE>& minimum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const;
+    template< typename Vector >
+    void minimumAndLocation( const Field&, Vector& minimum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const;
 
     /// @brief Compute maximum of field for each field-variable, as well as the global indices and levels.
-    template< typename DATATYPE >
-    void maximumAndLocation( const field::Field&, std::vector<DATATYPE>& maximum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const;
+    template< typename Vector >
+    void maximumAndLocation( const Field&, Vector& maximum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const;
 
     /// @brief Compute minimum and its location of a field for each vertical level separately
-    void minimumAndLocationPerLevel( const field::Field&, field::Field& column, field::Field& glb_idx ) const;
+    void minimumAndLocationPerLevel( const Field&, Field& column, Field& glb_idx ) const;
 
     /// @brief Compute maximum and its location of a field for each vertical level separately
-    void maximumAndLocationPerLevel( const field::Field&, field::Field& column, field::Field& glb_idx ) const;
+    void maximumAndLocationPerLevel( const Field&, Field& column, Field& glb_idx ) const;
 
     /// @brief Compute mean value of scalar field
     /// @param [out] mean    Mean value
     /// @param [out] N       Number of value used to create the mean
-    template< typename DATATYPE >
-    void mean( const field::Field&, DATATYPE& mean, size_t& N ) const;
+    template< typename Value >
+    void mean( const Field&, Value& mean, size_t& N ) const;
 
-    /// @brief Compute mean value of field for each field-variable
-    /// @param [out] mean    Mean values for each variable
-    /// @param [out] N       Number of values used to create the means
-    template< typename DATATYPE >
-    void mean( const field::Field&, std::vector<DATATYPE>& mean, size_t& N ) const;
+//    /// @brief Compute mean value of field for each field-variable
+//    /// @param [out] mean    Mean values for each variable
+//    /// @param [out] N       Number of values used to create the means
+//    template< typename Value >
+//    void mean( const Field&, std::vector<Value>& mean, size_t& N ) const;
 
     /// @brief Compute mean values of field for vertical level separately
-    /// @param [out] mean    field::Field of dimension of input without the nodes index
+    /// @param [out] mean    Field of dimension of input without the nodes index
     /// @param [out] N       Number of values used to create the means
-    void meanPerLevel( const field::Field&, field::Field& mean, size_t& N ) const;
+    void meanPerLevel( const Field&, Field& mean, size_t& N ) const;
 
     /// @brief Compute mean value and standard deviation of scalar field
     /// @param [out] mean      Mean value
     /// @param [out] stddev    Standard deviation
     /// @param [out] N         Number of value used to create the mean
-    template< typename DATATYPE >
-    void meanAndStandardDeviation( const field::Field&, DATATYPE& mean, DATATYPE& stddev, size_t& N ) const;
+    template< typename Value >
+    void meanAndStandardDeviation( const Field&, Value& mean, Value& stddev, size_t& N ) const;
 
-    /// @brief Compute mean values and standard deviations of scalar field for each field-variable
-    /// @param [out] mean      Mean values for each field-variable
-    /// @param [out] stddev    Standard deviation for each field-variable
-    /// @param [out] N         Number of value used to create the means
-    template< typename DATATYPE >
-    void meanAndstandardDeviation( const field::Field&, std::vector<DATATYPE>& mean, std::vector<DATATYPE>& stddev, size_t& N ) const;
+//    /// @brief Compute mean values and standard deviations of scalar field for each field-variable
+//    /// @param [out] mean      Mean values for each field-variable
+//    /// @param [out] stddev    Standard deviation for each field-variable
+//    /// @param [out] N         Number of value used to create the means
+//    template< typename Value >
+//    void meanAndStandardDeviation( const Field&, std::vector<Value>& mean, std::vector<Value>& stddev, size_t& N ) const;
 
     /// @brief Compute mean values and standard deviations of field for vertical level separately
-    /// @param [out] mean      field::Field of dimension of input without the nodes index
-    /// @param [out] stddev    field::Field of dimension of input without the nodes index
+    /// @param [out] mean      Field of dimension of input without the nodes index
+    /// @param [out] stddev    Field of dimension of input without the nodes index
     /// @param [out] N         Number of values used to create the means
-    void meanAndStandardDeviationPerLevel( const field::Field&, field::Field& mean, field::Field& stddev, size_t& N ) const;
+    void meanAndStandardDeviationPerLevel( const Field&, Field& mean, Field& stddev, size_t& N ) const;
 
 private: // methods
 
@@ -300,23 +290,76 @@ private: // methods
 
 private: // data
 
-    mesh::Mesh& mesh_; // non-const because functionspace may modify mesh
+    Mesh mesh_;    // non-const because functionspace may modify mesh
     mesh::Nodes& nodes_; // non-const because functionspace may modify mesh
     mesh::Halo halo_;
     size_t nb_nodes_;
     size_t nb_nodes_global_;
-    std::vector<size_t> nb_nodes_global_foreach_rank_;
 
     eckit::SharedPtr<parallel::GatherScatter> gather_scatter_; // without ghost
     eckit::SharedPtr<parallel::HaloExchange>  halo_exchange_;
     eckit::SharedPtr<parallel::Checksum>      checksum_;
 
+private:
+
+    template< typename Value >
+    struct FieldStatisticsT {
+      FieldStatisticsT(const NodeColumns*);
+      void sum( const Field&, Value& sum, size_t& N ) const;
+      void orderIndependentSum( const Field&, Value& sum, size_t& N ) const;
+      void minimum( const Field&, Value& minimum ) const;
+      void maximum( const Field&, Value& maximum ) const;
+      void minimumAndLocation( const Field&, Value& minimum, gidx_t& glb_idx ) const;
+      void maximumAndLocation( const Field&, Value& maximum, gidx_t& glb_idx ) const;
+      void minimumAndLocation( const Field&, Value& minimum, gidx_t& glb_idx, size_t& level ) const;
+      void maximumAndLocation( const Field&, Value& maximum, gidx_t& glb_idx, size_t& level ) const;
+      void mean( const Field&, Value& mean, size_t& N ) const;
+      void meanAndStandardDeviation( const Field&, Value& mean, Value& stddev, size_t& N ) const;
+      const NodeColumns& functionspace;
+    };
+
+    template< typename Vector >
+    struct FieldStatisticsVectorT {
+      FieldStatisticsVectorT(const NodeColumns*);
+      void sum( const Field&, Vector& sum, size_t& N ) const;
+      void orderIndependentSum( const Field&, Vector&, size_t& N ) const;
+      void minimum( const Field&, Vector& ) const;
+      void maximum( const Field&, Vector& ) const;
+      void minimumAndLocation( const Field&, Vector& minimum, std::vector<gidx_t>& glb_idx ) const;
+      void maximumAndLocation( const Field&, Vector& maximum, std::vector<gidx_t>& glb_idx ) const;
+      void minimumAndLocation( const Field&, Vector& minimum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const;
+      void maximumAndLocation( const Field&, Vector& maximum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const;
+      void mean( const Field&, Vector& mean, size_t& N ) const;
+      void meanAndStandardDeviation( const Field&, Vector& mean, Vector& stddev, size_t& N ) const;
+      const NodeColumns& functionspace;
+    };
+
+    struct FieldStatistics {
+      FieldStatistics(const NodeColumns*);
+      void sumPerLevel( const Field&, Field& sum, size_t& N ) const;
+      void orderIndependentSumPerLevel( const Field&, Field& sum, size_t& N ) const;
+      void minimumPerLevel( const Field&, Field& min ) const;
+      void maximumPerLevel( const Field&, Field& max ) const;
+      void minimumAndLocationPerLevel( const Field&, Field& column, Field& glb_idx ) const;
+      void maximumAndLocationPerLevel( const Field&, Field& column, Field& glb_idx ) const;
+      void meanPerLevel( const Field&, Field& mean, size_t& N ) const;
+      void meanAndStandardDeviationPerLevel( const Field&, Field& mean, Field& stddev, size_t& N ) const;
+      const NodeColumns& functionspace;
+    };
+
+    template< typename T >
+    struct FieldStatisticsSelector {
+      using type = typename std::conditional< std::is_pod<T>::value,
+          FieldStatisticsT<T>,
+          FieldStatisticsVectorT<T>
+      >::type;
+    };
 };
 
 // -------------------------------------------------------------------
 
 template< typename DATATYPE >
-field::Field* NodeColumns::createField(
+Field NodeColumns::createField(
     const std::string& name,
     const eckit::Parametrisation& options) const
 {
@@ -324,7 +367,7 @@ field::Field* NodeColumns::createField(
 }
 
 template< typename DATATYPE >
-field::Field* NodeColumns::createField(
+Field NodeColumns::createField(
     const std::string& name,
     size_t levels,
     const eckit::Parametrisation& options) const
@@ -333,7 +376,7 @@ field::Field* NodeColumns::createField(
 }
 
 template< typename DATATYPE >
-field::Field* NodeColumns::createField(
+Field NodeColumns::createField(
     const std::string& name,
     const std::vector<size_t>& variables,
     const eckit::Parametrisation& options) const
@@ -342,7 +385,7 @@ field::Field* NodeColumns::createField(
 }
 
 template< typename DATATYPE >
-field::Field* NodeColumns::createField(
+Field NodeColumns::createField(
     const std::string& name,
     size_t levels,
     const std::vector<size_t>& variables,
@@ -351,7 +394,519 @@ field::Field* NodeColumns::createField(
     return createField(name,array::DataType::create<DATATYPE>(),levels,variables,options);
 }
 
+template< typename Value >
+void NodeColumns::sum( const Field& field, Value& sum, size_t& N ) const {
+  typename FieldStatisticsSelector<Value>::type(this).sum(field,sum,N);
+}
+
+inline void NodeColumns::sumPerLevel( const Field& field, Field& sum, size_t& N ) const {
+  FieldStatistics(this).sumPerLevel(field,sum,N);
+}
+
+template< typename Value >
+void NodeColumns::orderIndependentSum( const Field& field, Value& sum, size_t& N ) const {
+  typename FieldStatisticsSelector<Value>::type(this).orderIndependentSum(field,sum,N);
+}
+
+inline void NodeColumns::orderIndependentSumPerLevel( const Field& field, Field& sum, size_t& N ) const {
+  FieldStatistics(this).orderIndependentSumPerLevel(field,sum,N);
+}
+
+template< typename Value >
+void NodeColumns::minimum( const Field& field, Value& minimum ) const {
+  typename FieldStatisticsSelector<Value>::type(this).minimum(field,minimum);
+}
+
+template< typename Value >
+void NodeColumns::maximum( const Field& field, Value& maximum ) const {
+  typename FieldStatisticsSelector<Value>::type(this).maximum(field,maximum);
+}
+
+inline void NodeColumns::minimumPerLevel( const Field& field, Field& minimum ) const {
+  return FieldStatistics(this).minimumPerLevel(field,minimum);
+}
+
+inline void NodeColumns::maximumPerLevel( const Field& field, Field& maximum ) const {
+  FieldStatistics(this).maximumPerLevel(field,maximum);
+}
+
+template< typename Value >
+void NodeColumns::minimumAndLocation( const Field& field, Value& minimum, gidx_t& glb_idx ) const {
+  FieldStatisticsT<Value>(this).minimumAndLocation(field,minimum,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::maximumAndLocation( const Field& field, Value& maximum, gidx_t& glb_idx ) const {
+  FieldStatisticsT<Value>(this).maximumAndLocation(field,maximum,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::minimumAndLocation( const Field& field, Value& minimum, gidx_t& glb_idx, size_t& level ) const {
+  FieldStatisticsT<Value>(this).minimumAndLocation(field,minimum,glb_idx,level);
+}
+
+template< typename Value >
+void NodeColumns::maximumAndLocation( const Field& field, Value& maximum, gidx_t& glb_idx, size_t& level ) const {
+  FieldStatisticsT<Value>(this).maximumAndLocation(field,maximum,glb_idx,level);
+}
+
+template< typename Vector >
+void NodeColumns::minimumAndLocation( const Field& field, Vector& minimum, std::vector<gidx_t>& glb_idx ) const {
+  FieldStatisticsVectorT<Vector>(this).minimumAndLocation(field,minimum,glb_idx);
+}
+
+template< typename Vector >
+void NodeColumns::maximumAndLocation( const Field& field, Vector& maximum, std::vector<gidx_t>& glb_idx ) const {
+  FieldStatisticsVectorT<Vector>(this).maximumAndLocation(field,maximum,glb_idx);
+}
+
+template< typename Vector >
+void NodeColumns::minimumAndLocation( const Field& field, Vector& minimum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const {
+  FieldStatisticsVectorT<Vector>(this).minimumAndLocation(field,minimum,glb_idx,level);
+}
+
+template< typename Vector >
+void NodeColumns::maximumAndLocation( const Field& field, Vector& maximum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const {
+  FieldStatisticsVectorT<Vector>(this).maximumAndLocation(field,maximum,glb_idx,level);
+}
+
+inline void NodeColumns::minimumAndLocationPerLevel( const Field& field, Field& column, Field& glb_idx ) const {
+  FieldStatistics(this).minimumAndLocationPerLevel(field,column,glb_idx);
+}
+
+inline void NodeColumns::maximumAndLocationPerLevel( const Field& field, Field& column, Field& glb_idx ) const {
+  FieldStatistics(this).maximumAndLocationPerLevel(field,column,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::mean( const Field& field, Value& mean, size_t& N ) const {
+  typename FieldStatisticsSelector<Value>::type(this).mean(field,mean,N);
+}
+
+inline void NodeColumns::meanPerLevel( const Field& field, Field& mean, size_t& N ) const {
+  FieldStatistics(this).meanPerLevel(field,mean,N);
+}
+
+template< typename Value >
+void NodeColumns::meanAndStandardDeviation( const Field& field, Value& mean, Value& stddev, size_t& N ) const {
+  typename FieldStatisticsSelector<Value>::type(this).meanAndStandardDeviation(field,mean,stddev,N);
+}
+
+inline void NodeColumns::meanAndStandardDeviationPerLevel( const Field& field, Field& mean, Field& stddev, size_t& N ) const {
+  FieldStatistics(this).meanAndStandardDeviationPerLevel(field,mean,stddev,N);
+}
+
+} // namespace detail
+
+// -------------------------------------------------------------------
+
+class NodeColumns : public FunctionSpace
+{
+public:
+
+
+    NodeColumns();
+    NodeColumns( const FunctionSpace& );
+    NodeColumns( Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
+    NodeColumns( Mesh& mesh, const mesh::Halo & );
+    NodeColumns( Mesh& mesh );
+
+    operator bool() const { return valid(); }
+    bool valid() const { return functionspace_; }
+
+    size_t nb_nodes() const;
+    size_t nb_nodes_global() const; // All MPI ranks will have same output
+
+    const Mesh& mesh() const;
+
+    mesh::Nodes& nodes() const;
+
+// -- Field creation methods
+
+    /// @brief Create a named scalar field
+    template< typename DATATYPE > Field createField(
+              const std::string& name,
+              const eckit::Parametrisation& = util::NoConfig()) const;
+
+    template< typename DATATYPE > Field createField(
+              const std::string& name,
+              size_t levels,
+              const eckit::Parametrisation& = util::NoConfig()) const;
+
+    /// @brief Create a named scalar field
+    Field createField(
+        const std::string& name,
+        array::DataType,
+        const eckit::Parametrisation& = util::NoConfig() ) const;
+
+    Field createField(
+        const std::string& name,
+        array::DataType, size_t levels,
+        const eckit::Parametrisation& = util::NoConfig()) const;
+
+    /// @brief Create a named field with specified dimensions for the variables
+    template< typename DATATYPE >  Field createField(
+        const std::string& name,
+        const std::vector<size_t>& variables,
+        const eckit::Parametrisation& = util::NoConfig() ) const;
+
+    template< typename DATATYPE >  Field createField(
+        const std::string& name,
+        size_t levels,
+        const std::vector<size_t>& variables,
+        const eckit::Parametrisation& = util::NoConfig() ) const;
+
+    /// @brief Create a named field with specified dimensions for the variables
+    Field createField(
+        const std::string& name,
+        array::DataType,
+        const std::vector<size_t>& variables,
+        const eckit::Parametrisation& = util::NoConfig()) const;
+
+    Field createField(
+        const std::string& name,
+        array::DataType, size_t levels,
+        const std::vector<size_t>& variables,
+        const eckit::Parametrisation& = util::NoConfig())  const;
+
+    /// @brief Create a named field based on other field (datatype and dimensioning)
+    Field createField(
+        const std::string& name,
+        const Field&,
+        const eckit::Parametrisation& = util::NoConfig()) const;
+
+    Field createField(const eckit::Parametrisation&) const;
+
+// -- Parallelisation aware methods
+
+    const mesh::Halo& halo() const;
+
+    void haloExchange( FieldSet& ) const;
+    void haloExchange( Field& ) const;
+    const parallel::HaloExchange& halo_exchange() const;
+
+    void gather( const FieldSet&, FieldSet& ) const;
+    void gather( const Field&, Field& ) const;
+    const parallel::GatherScatter& gather() const;
+
+    void scatter( const FieldSet&, FieldSet& ) const;
+    void scatter( const Field&, Field& ) const;
+    const parallel::GatherScatter& scatter() const;
+
+    std::string checksum( const FieldSet& ) const;
+    std::string checksum( const Field& ) const;
+    const parallel::Checksum& checksum() const;
+
+
+    /// @brief Compute sum of scalar field
+    /// @param [out] sum    Scalar value containing the sum of the full 3D field
+    /// @param [out] N      Number of values that are contained in the sum (nodes*levels)
+    template< typename Value >
+    void sum( const Field&, Value& sum, size_t& N ) const;
+
+//    /// @brief Compute sum of field for each variable
+//    /// @param [out] sum    For each field-variable, the sum of the full 3D field
+//    /// @param [out] N      Number of values that are contained in the sum (nodes*levels)
+//    template< typename Value >
+//    void sum( const Field&, std::vector<Value>& sum, size_t& N ) const;
+
+    /// @brief Compute sum of field for each vertical level separately
+    /// @param [out] sum    Field of dimension of input without the nodes index
+    /// @param [out] N      Number of nodes used to sum each level
+    void sumPerLevel( const Field&, Field& sum, size_t& N ) const;
+
+    /// @brief Compute order independent sum of scalar field
+    /// @param [out] sum    Scalar value containing the sum of the full 3D field
+    /// @param [out] N      Number of values that are contained in the sum (nodes*levels)
+    template< typename Value >
+    void orderIndependentSum( const Field&, Value& sum, size_t& N ) const;
+
+//    /// @brief Compute order independent sum of field for each variable
+//    /// @param [out] sum    For each field-variable, the sum of the full 3D field
+//    /// @param [out] N      Number of values that are contained in the sum (nodes*levels)
+//    template< typename Value >
+//    void orderIndependentSum( const Field&, std::vector<Value>&, size_t& N ) const;
+
+    /// @brief Compute order independent sum of field for each vertical level separately
+    /// @param [out] sum    Field of dimension of input without the nodes index
+    /// @param [out] N      Number of nodes used to sum each level
+    void orderIndependentSumPerLevel( const Field&, Field& sum, size_t& N ) const;
+
+    /// @brief Compute minimum of scalar field
+    template< typename Value >
+    void minimum( const Field&, Value& minimum ) const;
+
+    /// @brief Compute maximum of scalar field
+    template< typename Value >
+    void maximum( const Field&, Value& maximum ) const;
+
+//    /// @brief Compute minimum of field for each field-variable
+//    template< typename Value >
+//    void minimum( const Field&, std::vector<Value>& ) const;
+
+//    /// @brief Compute maximum of field for each field-variable
+//    template< typename Value >
+//    void maximum( const Field&, std::vector<Value>& ) const;
+
+    /// @brief Compute minimum of field for each vertical level separately
+    /// @param [out] min    Field of dimension of input without the nodes index
+    void minimumPerLevel( const Field&, Field& min ) const;
+
+    /// @brief Compute maximum of field for each vertical level separately
+    /// @param [out] max    Field of dimension of input without the nodes index
+    void maximumPerLevel( const Field&, Field& max ) const;
+
+    /// @brief Compute minimum of scalar field, as well as the global index and level.
+    template< typename Value >
+    void minimumAndLocation( const Field&, Value& minimum, gidx_t& glb_idx ) const;
+
+    /// @brief Compute maximum of scalar field, as well as the global index and level.
+    template< typename Value >
+    void maximumAndLocation( const Field&, Value& maximum, gidx_t& glb_idx ) const;
+
+    /// @brief Compute minimum of scalar field, as well as the global index and level.
+    template< typename Value >
+    void minimumAndLocation( const Field&, Value& minimum, gidx_t& glb_idx, size_t& level ) const;
+
+    /// @brief Compute maximum of scalar field, as well as the global index and level.
+    template< typename Value >
+    void maximumAndLocation( const Field&, Value& maximum, gidx_t& glb_idx, size_t& level ) const;
+
+    /// @brief Compute minimum of field for each field-variable, as well as the global indices and levels.
+    template< typename Value >
+    void minimumAndLocation( const Field&, std::vector<Value>& minimum, std::vector<gidx_t>& glb_idx ) const;
+
+    /// @brief Compute maximum of field for each field-variable, as well as the global indices and levels.
+    template< typename Value >
+    void maximumAndLocation( const Field&, std::vector<Value>& maximum, std::vector<gidx_t>& glb_idx ) const;
+
+    /// @brief Compute minimum of field for each field-variable, as well as the global indices and levels.
+    template< typename Value >
+    void minimumAndLocation( const Field&, std::vector<Value>& minimum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const;
+
+    /// @brief Compute maximum of field for each field-variable, as well as the global indices and levels.
+    template< typename Value >
+    void maximumAndLocation( const Field&, std::vector<Value>& maximum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const;
+
+    /// @brief Compute minimum and its location of a field for each vertical level separately
+    void minimumAndLocationPerLevel( const Field&, Field& column, Field& glb_idx ) const;
+
+    /// @brief Compute maximum and its location of a field for each vertical level separately
+    void maximumAndLocationPerLevel( const Field&, Field& column, Field& glb_idx ) const;
+
+    /// @brief Compute mean value of scalar field
+    /// @param [out] mean    Mean value
+    /// @param [out] N       Number of value used to create the mean
+    template< typename Value >
+    void mean( const Field&, Value& mean, size_t& N ) const;
+
+//    /// @brief Compute mean value of field for each field-variable
+//    /// @param [out] mean    Mean values for each variable
+//    /// @param [out] N       Number of values used to create the means
+//    template< typename Value >
+//    void mean( const Field&, std::vector<Value>& mean, size_t& N ) const;
+
+    /// @brief Compute mean values of field for vertical level separately
+    /// @param [out] mean    Field of dimension of input without the nodes index
+    /// @param [out] N       Number of values used to create the means
+    void meanPerLevel( const Field&, Field& mean, size_t& N ) const;
+
+    /// @brief Compute mean value and standard deviation of scalar field
+    /// @param [out] mean      Mean value
+    /// @param [out] stddev    Standard deviation
+    /// @param [out] N         Number of value used to create the mean
+    template< typename Value >
+    void meanAndStandardDeviation( const Field&, Value& mean, Value& stddev, size_t& N ) const;
+
+//    /// @brief Compute mean values and standard deviations of scalar field for each field-variable
+//    /// @param [out] mean      Mean values for each field-variable
+//    /// @param [out] stddev    Standard deviation for each field-variable
+//    /// @param [out] N         Number of value used to create the means
+//    template< typename Value >
+//    void meanAndStandardDeviation( const Field&, std::vector<Value>& mean, std::vector<Value>& stddev, size_t& N ) const;
+
+    /// @brief Compute mean values and standard deviations of field for vertical level separately
+    /// @param [out] mean      Field of dimension of input without the nodes index
+    /// @param [out] stddev    Field of dimension of input without the nodes index
+    /// @param [out] N         Number of values used to create the means
+    void meanAndStandardDeviationPerLevel( const Field&, Field& mean, Field& stddev, size_t& N ) const;
+
+private:
+
+    const detail::NodeColumns* functionspace_;
+};
+
+// -------------------------------------------------------------------
+
+template< typename DATATYPE >
+Field NodeColumns::createField(
+    const std::string& name,
+    const eckit::Parametrisation& options) const
+{
+    return functionspace_->createField(name,array::DataType::create<DATATYPE>(),options);
+}
+
+template< typename DATATYPE >
+Field NodeColumns::createField(
+    const std::string& name,
+    size_t levels,
+    const eckit::Parametrisation& options) const
+{
+    return functionspace_->createField(name,array::DataType::create<DATATYPE>(),levels,options);
+}
+
+template< typename DATATYPE >
+Field NodeColumns::createField(
+    const std::string& name,
+    const std::vector<size_t>& variables,
+    const eckit::Parametrisation& options) const
+{
+    return functionspace_->createField(name,array::DataType::create<DATATYPE>(),variables,options);
+}
+
+template< typename DATATYPE >
+Field NodeColumns::createField(
+    const std::string& name,
+    size_t levels,
+    const std::vector<size_t>& variables,
+    const eckit::Parametrisation& options) const
+{
+    return functionspace_->createField(name,array::DataType::create<DATATYPE>(),levels,variables,options);
+}
+
+template< typename Value >
+void NodeColumns::sum( const Field& field, Value& sum, size_t& N ) const {
+  functionspace_->sum(field,sum,N);
+}
+
+//template< typename Value >
+//void NodeColumns::sum( const Field& field, std::vector<Value>& sum, size_t& N ) const {
+//  functionspace_->sum(field,sum,N);
+//}
+
+inline void NodeColumns::sumPerLevel( const Field& field, Field& sum, size_t& N ) const {
+  functionspace_->sumPerLevel(field,sum,N);
+}
+
+template< typename Value >
+void NodeColumns::orderIndependentSum( const Field& field, Value& sum, size_t& N ) const {
+  functionspace_->orderIndependentSum(field,sum,N);
+}
+
+//template< typename Value >
+//void NodeColumns::orderIndependentSum( const Field& field, std::vector<Value>& sum, size_t& N ) const {
+//  functionspace_->orderIndependentSum(field,sum,N);
+//}
+
+inline void NodeColumns::orderIndependentSumPerLevel( const Field& field, Field& sum, size_t& N ) const {
+  functionspace_->orderIndependentSumPerLevel(field,sum,N);
+}
+
+template< typename Value >
+void NodeColumns::minimum( const Field& field, Value& minimum ) const {
+  functionspace_->minimum(field,minimum);
+}
+
+template< typename Value >
+void NodeColumns::maximum( const Field& field, Value& maximum ) const {
+  functionspace_->maximum(field,maximum);
+}
+
+//template< typename Value >
+//void NodeColumns::minimum( const Field& field, std::vector<Value>& minimum ) const {
+//  functionspace_->minimum(field,minimum);
+//}
+
+//template< typename Value >
+//void NodeColumns::maximum( const Field& field, std::vector<Value>& maximum) const {
+//  functionspace_->maximum(field,maximum);
+//}
+
+inline void NodeColumns::minimumPerLevel( const Field& field, Field& minimum ) const {
+  return functionspace_->minimumPerLevel(field,minimum);
+}
+
+inline void NodeColumns::maximumPerLevel( const Field& field, Field& maximum ) const {
+  functionspace_->maximumPerLevel(field,maximum);
+}
+
+template< typename Value >
+void NodeColumns::minimumAndLocation( const Field& field, Value& minimum, gidx_t& glb_idx ) const {
+  functionspace_->minimumAndLocation(field,minimum,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::maximumAndLocation( const Field& field, Value& maximum, gidx_t& glb_idx ) const {
+  functionspace_->maximumAndLocation(field,maximum,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::minimumAndLocation( const Field& field, Value& minimum, gidx_t& glb_idx, size_t& level ) const {
+  functionspace_->minimumAndLocation(field,minimum,glb_idx,level);
+}
+
+template< typename Value >
+void NodeColumns::maximumAndLocation( const Field& field, Value& maximum, gidx_t& glb_idx, size_t& level ) const {
+  functionspace_->maximumAndLocation(field,maximum,glb_idx,level);
+}
+
+template< typename Value >
+void NodeColumns::minimumAndLocation( const Field& field, std::vector<Value>& minimum, std::vector<gidx_t>& glb_idx ) const {
+  functionspace_->minimumAndLocation(field,minimum,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::maximumAndLocation( const Field& field, std::vector<Value>& maximum, std::vector<gidx_t>& glb_idx ) const {
+  functionspace_->maximumAndLocation(field,maximum,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::minimumAndLocation( const Field& field, std::vector<Value>& minimum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const {
+  functionspace_->minimumAndLocation(field,minimum,glb_idx,level);
+}
+
+template< typename Value >
+void NodeColumns::maximumAndLocation( const Field& field, std::vector<Value>& maximum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const {
+  functionspace_->maximumAndLocation(field,maximum,glb_idx,level);
+}
+
+inline void NodeColumns::minimumAndLocationPerLevel( const Field& field, Field& column, Field& glb_idx ) const {
+  functionspace_->minimumAndLocationPerLevel(field,column,glb_idx);
+}
+
+inline void NodeColumns::maximumAndLocationPerLevel( const Field& field, Field& column, Field& glb_idx ) const {
+  functionspace_->maximumAndLocationPerLevel(field,column,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::mean( const Field& field, Value& mean, size_t& N ) const {
+  functionspace_->mean(field,mean,N);
+}
+
+//template< typename Value >
+//void NodeColumns::mean( const Field& field, std::vector<Value>& mean, size_t& N ) const {
+//  functionspace_->mean(field,mean,N);
+//}
+
+inline void NodeColumns::meanPerLevel( const Field& field, Field& mean, size_t& N ) const {
+  functionspace_->meanPerLevel(field,mean,N);
+}
+
+template< typename Value >
+void NodeColumns::meanAndStandardDeviation( const Field& field, Value& mean, Value& stddev, size_t& N ) const {
+  functionspace_->meanAndStandardDeviation(field,mean,stddev,N);
+}
+
+//template< typename Value >
+//void NodeColumns::meanAndStandardDeviation( const Field& field, std::vector<Value>& mean, std::vector<Value>& stddev, size_t& N ) const {
+//  functionspace_->meanAndStandardDeviation(field,mean,stddev,N);
+//}
+
+inline void NodeColumns::meanAndStandardDeviationPerLevel( const Field& field, Field& mean, Field& stddev, size_t& N ) const {
+  functionspace_->meanAndStandardDeviationPerLevel(field,mean,stddev,N);
+}
+
+// -------------------------------------------------------------------
+
 } // namespace functionspace
 } // namespace atlas
-
-#endif // atlas_functionspace_NodeColumnsFunctionSpace_h

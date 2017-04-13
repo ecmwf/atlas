@@ -22,8 +22,6 @@ namespace eckit {
 
 namespace atlas {
 namespace util {
-class Grid;
-class Mesh;
 
 /// @brief Parametrisation class used to construct various
 ///        atlas components
@@ -62,7 +60,7 @@ public:
 
 
   // Overload operators to merge two Config objects.
-  Config operator&&(const Config& other) const;
+  //Config operator&&(const Config& other) const;
   Config operator|(const Config& other) const;
 
   /// @brief Set a key-value parameter

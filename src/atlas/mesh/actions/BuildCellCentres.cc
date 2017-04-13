@@ -13,9 +13,9 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 
 namespace atlas {
 namespace mesh {
@@ -28,28 +28,30 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
     if( !mesh.cells().has_field("centre") ) {
 
         mesh::Nodes& nodes     = mesh.nodes();
-        array::ArrayView<double,2> coords  ( nodes.field("xyz") );
+        array::ArrayView<double,2> coords = array::make_view<double,2>( nodes.field("xyz") );
 
         size_t nb_cells = mesh.cells().size();
-        array::ArrayView<double,2> centroids ( mesh.cells().add( field::Field::create<double>("centre", array::make_shape(nb_cells,3))) );
+        array::ArrayView<double,2> centroids = array::make_view<double,2>( 
+          mesh.cells().add(
+           Field("centre", array::make_datatype<double>(), array::make_shape(nb_cells,3))) );
         const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
 
         for (size_t e=0; e<nb_cells; ++e)
         {
-            centroids(e,internals::XX) = 0.;
-            centroids(e,internals::YY) = 0.;
-            centroids(e,internals::ZZ) = 0.;
+            centroids(e,XX) = 0.;
+            centroids(e,YY) = 0.;
+            centroids(e,ZZ) = 0.;
             const size_t nb_nodes_per_elem = cell_node_connectivity.cols(e);
             const double average_coefficient = 1./static_cast<double>(nb_nodes_per_elem);
             for (size_t n=0; n<nb_nodes_per_elem; ++n)
             {
-                centroids(e,internals::XX) += coords( cell_node_connectivity(e,n), internals::XX );
-                centroids(e,internals::YY) += coords( cell_node_connectivity(e,n), internals::YY );
-                centroids(e,internals::ZZ) += coords( cell_node_connectivity(e,n), internals::ZZ );
+                centroids(e,XX) += coords( cell_node_connectivity(e,n), XX );
+                centroids(e,YY) += coords( cell_node_connectivity(e,n), YY );
+                centroids(e,ZZ) += coords( cell_node_connectivity(e,n), ZZ );
             }
-            centroids(e,internals::XX) *= average_coefficient;
-            centroids(e,internals::YY) *= average_coefficient;
-            centroids(e,internals::ZZ) *= average_coefficient;
+            centroids(e,XX) *= average_coefficient;
+            centroids(e,YY) *= average_coefficient;
+            centroids(e,ZZ) *= average_coefficient;
         }
     }
 }

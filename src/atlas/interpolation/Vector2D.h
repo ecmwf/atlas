@@ -8,13 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_geometry_Vector2D_h
-#define atlas_geometry_Vector2D_h
+#pragma once
 
 #include <iostream>
 #include <cmath>
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 #ifdef ATLAS_HAVE_EIGEN
 
@@ -119,5 +118,3 @@ Vector2D operator*(double, const Vector2D &);
 
 }  // namespace interpolation
 }  // namespace atlas
-
-#endif

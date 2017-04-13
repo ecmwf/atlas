@@ -19,14 +19,14 @@ TESTSUITE(fctest_atlas_Gmsh)
 
 TESTSUITE_INIT
   use atlas_module
-  call atlas_init()
+  call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
   use atlas_module
-  call atlas_finalize()
+  call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ END_TESTSUITE_FINALIZE
 TEST( test_gmsh )
   use atlas_module
   implicit none
-  type(atlas_grid_Structured) :: grid
+  type(atlas_StructuredGrid) :: grid
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_functionspace_NodeColumns) :: functionspace_nodes
@@ -47,7 +47,7 @@ TEST( test_gmsh )
 
   call atlas_log%info("test_gmsh starting")
 
-  grid = atlas_grid_Structured("N24")
+  grid = atlas_StructuredGrid("N24")
   meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid)
   call meshgenerator%final()

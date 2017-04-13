@@ -6,7 +6,7 @@ integer, parameter                    :: wp = c_double
 character(len=1024)                   :: string
 character(len=1024)                   :: gridID
 character(len=32)                     :: checksum
-type(atlas_grid_Structured)               :: grid
+type(atlas_StructuredGrid)               :: grid
 type(atlas_mesh)                      :: mesh
 type(atlas_meshgenerator)             :: meshgenerator
 type(atlas_Output)                    :: gmsh
@@ -44,11 +44,11 @@ real(wp), parameter :: zlonc = 1._wp * rpi
 real(wp), parameter :: zrad  = 2._wp * rpi / 9._wp
 real(wp)            :: zdist, zlon, zlat;
 
-call atlas_init()
+call atlas_library%initialise()
 
 ! Generate global classic reduced Gaussian grid
 gridID = "N32"
-grid = atlas_grid_Structured(gridID)
+grid = atlas_StructuredGrid(gridID)
 
 ! Generate mesh associated to structured grid
 meshgenerator = atlas_meshgenerator_Structured()
@@ -117,7 +117,7 @@ call fs_nodes%gather(field_scalar1, field_global);
 write(string, *) "local nodes          = ", fs_nodes%nb_nodes()
 call atlas_log%info(string)
 
-write(string, *) "grid points          = ", grid%npts()
+write(string, *) "grid points          = ", grid%size()
 call atlas_log%info(string)
 
 write(string, *) "field_global.shape(1) = ", field_global%shape(1)
@@ -188,6 +188,6 @@ call field_tensor2%final()
 call field_global %final()
 call fields      %final()
 
-call atlas_finalize()
+call atlas_library%finalise()
 
 end program main

@@ -19,14 +19,14 @@ TESTSUITE(fctest_GridDist)
 
 TESTSUITE_INIT
   use atlas_module
-  call atlas_init()
+  call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
   use atlas_module
-  call atlas_finalize()
+  call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! ----------------------------------------------------------------------------
@@ -35,20 +35,20 @@ END_TESTSUITE_FINALIZE
 !   use atlas_module
 !   use, intrinsic :: iso_c_binding
 !   implicit none
-!   type(atlas_grid_Structured) :: N640
-!   type(atlas_grid_ReducedGaussian) :: custom
+!   type(atlas_StructuredGrid) :: N640
+!   type(atlas_ReducedGaussianGrid) :: custom
 !   integer(c_long), pointer :: pl(:)
-! 
-!   N640 = atlas_grid_Structured("N640")
-!   FCTEST_CHECK_EQUAL(N640%npts(),2140702_c_long)
+!
+!   N640 = atlas_StructuredGrid("N640")
+!   FCTEST_CHECK_EQUAL(N640%size(),2140702_c_long)
 !   pl => N640%pl()
-! 
-!   custom = atlas_grid_ReducedGaussian( N640%N(), pl )
-!   FCTEST_CHECK_EQUAL(N640%npts(),custom%npts() )
-! 
+!
+!   custom = atlas_ReducedGaussianGrid( N640%N(), pl )
+!   FCTEST_CHECK_EQUAL(N640%size(),custom%size() )
+!
 !   call N640%final()
 !   call custom%final()
-! 
+!
 ! E N D _ T E S T
 
 ! -----------------------------------------------------------------------------
@@ -56,28 +56,33 @@ END_TESTSUITE_FINALIZE
 TEST( test_griddist )
   use atlas_module
   implicit none
-  type(atlas_grid_Structured) :: grid
+  type(atlas_StructuredGrid) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_Output) :: gmsh
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_GridDistribution) :: griddistribution
+  character(len=1024) :: msg
 
   integer, allocatable :: part(:)
   integer :: jnode
 
-  grid = atlas_grid_Structured("O16")
-  !grid = atlas_grid_Structured("ll.128x64")
+  grid = atlas_StructuredGrid("O16")
+  !grid = atlas_StructuredGrid("ll.128x64")
   !grid = atlas_grid_ShiftedLonLat(128,64)
 
-  allocate( part(grid%npts()) )
-  do jnode=1,grid%npts()/3
+  allocate( part(grid%size()) )
+  do jnode=1,grid%size()/3
     part(jnode) = 1
   enddo
-  do jnode=grid%npts()/3+1,grid%npts()
+  do jnode=grid%size()/3+1,grid%size()
     part(jnode) = 1
   enddo
 
   griddistribution = atlas_GridDistribution(part, part0=1)
+
+  write(msg,*) "owners fort",griddistribution%owners()
+  call atlas_log%info(msg)
+
   meshgenerator = atlas_meshgenerator_Structured()
   mesh = meshgenerator%generate(grid,griddistribution)
   call griddistribution%final()
@@ -86,6 +91,11 @@ TEST( test_griddist )
   call gmsh%write(mesh)
 
   deallocate(part)
+
+  call mesh%final()
+  call gmsh%final()
+  call grid%final()
+  call meshgenerator%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------

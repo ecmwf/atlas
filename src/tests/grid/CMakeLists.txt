@@ -28,8 +28,20 @@ ecbuild_add_test( TARGET atlas_test_grids
   LIBS      atlas
 )
 
+ecbuild_add_test( TARGET atlas_test_grid_ptr
+  BOOST
+  SOURCES   test_grid_ptr.cc
+  LIBS      atlas
+)
+
 ecbuild_add_test(   TARGET      atlas_test_field
     BOOST
     SOURCES     test_field.cc
     LIBS        atlas
+)
+
+ecbuild_add_test( TARGET atlas_test_rotation
+  BOOST
+  SOURCES   test_rotation.cc
+  LIBS      atlas
 )

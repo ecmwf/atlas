@@ -1,31 +1,23 @@
-#include "atlas/atlas.h"
-#include "atlas/grid/Structured.h"
+#include "atlas/library/Library.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/runtime/Log.h"
 
-using atlas::atlas_init;
-using atlas::atlas_finalize;
-using atlas::grid::Structured;
 using atlas::Log;
+using atlas::grid::StructuredGrid;
 
 int main(int argc, char *argv[])
 {
-    atlas_init(argc, argv);
+    atlas::Library::instance().initialise(argc, argv);
 
-    Structured::Ptr grid(Structured::create( "O32" ));
+    StructuredGrid grid( "O32" );
+    
+    Log::info() << "nx first  = " << grid.nx().front() << std::endl;
+    Log::info() << "ny        = " << grid.ny()         << std::endl;
+    Log::info() << "npts      = " << grid.size()       << std::endl;
+    Log::info() << "xy        = " << grid.xy(0,0)      << std::endl;
+    Log::info() << "lonlat    = " << grid.lonlat(0,0) << std::endl;
 
-    Log::info() << "nlat   = " << grid->nlat()  << std::endl;
-    Log::info() << "nlon   = " << grid->nlon(0) << std::endl;
-    Log::info() << "npts   = " << grid->npts()  << std::endl;
-
-    double lonlat[2];
-    grid->lonlat(0, 1, lonlat);
-
-    Log::info() << "lat    = " << grid->lat(0)   << std::endl;
-    Log::info() << "lon    = " << grid->lon(0,1) << std::endl;
-    Log::info() << "lonlat = " << lonlat[0] << "  "
-                               << lonlat[1] << std::endl;
-
-    atlas_finalize();
+    atlas::Library::instance().finalise();
     return 0;
 }
 

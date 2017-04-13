@@ -36,6 +36,7 @@ procedure, public :: has_field
 procedure, public :: metadata
 procedure, public :: str
 
+procedure, public :: xy
 procedure, public :: lonlat
 procedure, public :: global_index
 procedure, public :: remote_index
@@ -205,6 +206,15 @@ function field_by_idx_int(this,idx) result(field)
   class(atlas_mesh_Nodes), intent(in) :: this
   integer(c_int), intent(in) :: idx
   field = atlas_Field( atlas__mesh__Nodes__field_by_idx(this%c_ptr(),int(idx-1,c_size_t)) )
+  call field%return()
+end function
+
+function xy(this) result(field)
+  use atlas_nodes_c_binding
+  use atlas_Field_module, only: atlas_Field
+  type(atlas_Field) :: field
+  class(atlas_mesh_Nodes), intent(in) :: this
+  field = atlas_Field( atlas__mesh__Nodes__xy(this%c_ptr()) )
   call field%return()
 end function
 

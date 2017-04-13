@@ -44,7 +44,7 @@ public: // methods
 
     PointSet( const std::vector< Point >& ipts );
 
-    PointSet( atlas::mesh::Mesh& mesh );
+    PointSet( atlas::Mesh& mesh );
 
     ~PointSet(){ delete tree_; }
 
