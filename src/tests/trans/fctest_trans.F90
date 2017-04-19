@@ -69,7 +69,7 @@ TEST( test_trans )
 
   FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 
-  meshgenerator = atlas_meshgenerator_Structured()
+  meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid)
   call meshgenerator%final()
 

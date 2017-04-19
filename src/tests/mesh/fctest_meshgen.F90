@@ -48,7 +48,7 @@ END_TESTSUITE_FINALIZE
 !  pl      = [  2,  4,  8,  12,   8,   4,   2 ]
 !  lon_min = [  0., 15.,  0.,  30.,   0.,  15.,   0. ]
 !  grid = atlas_grid_CustomStructured(lats,pl,lon_min)
-!  meshgenerator = atlas_meshgenerator_Structured()
+!  meshgenerator = atlas_MeshGenerator()
 !  mesh = meshgenerator%generate(grid)
 ! gmsh = atlas_output_Gmsh("test_custom_structured1.msh")
 ! call gmsh%write(mesh)
@@ -77,7 +77,7 @@ END_TESTSUITE_FINALIZE
 !  call conf%set("lon_min",[  0., 15.,  0.,  30.,   0.,  15.,   0. ])
 
 !  grid = atlas_StructuredGrid(conf)
-!  meshgenerator = atlas_meshgenerator_Structured()
+!  meshgenerator = atlas_MeshGenerator()
 !  mesh = meshgenerator%generate(grid)
 ! gmsh = atlas_output_Gmsh("test_custom_structured2.msh")
 ! call gmsh%write(mesh)
@@ -113,7 +113,7 @@ END_TESTSUITE_FINALIZE
 
 !  conf = atlas_Config( atlas_PathName("custom.json") )
 !  grid = atlas_StructuredGrid(conf)
-!  meshgenerator = atlas_meshgenerator_Structured()
+!  meshgenerator = atlas_MeshGenerator()
 !  mesh = meshgenerator%generate(grid)
 ! gmsh = atlas_output_Gmsh("test_custom_structured3.msh")
 ! call gmsh%write(mesh)
@@ -145,7 +145,7 @@ TEST( test_meshgen )
   grid = atlas_StructuredGrid("N24")
 !  grid = atlas_grid_ShiftedLat(40,20)
 
-  meshgenerator = atlas_meshgenerator_Structured()
+  meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid)
   nodes = mesh%nodes()
   call meshgenerator%final()

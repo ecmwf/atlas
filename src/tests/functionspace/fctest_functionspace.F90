@@ -51,7 +51,7 @@ integer :: halo_size, nb_nodes
 halo_size = 1
 
 grid = atlas_StructuredGrid("N24")
-meshgenerator = atlas_meshgenerator_Structured()
+meshgenerator = atlas_MeshGenerator()
 mesh = meshgenerator%generate(grid)
 call meshgenerator%final()
 fs = atlas_functionspace_NodeColumns(mesh,halo_size)
@@ -146,7 +146,7 @@ halo_size = 1
 levels = 10
 
 grid = atlas_StructuredGrid("N24")
-meshgenerator = atlas_meshgenerator_Structured()
+meshgenerator = atlas_MeshGenerator()
 mesh = meshgenerator%generate(grid)
 call meshgenerator%final()
 fs = atlas_functionspace_NodeColumns(mesh,halo_size)
@@ -252,7 +252,7 @@ halo_size = 1
 levels = 10
 
 grid = atlas_StructuredGrid("N24")
-meshgenerator = atlas_meshgenerator_Structured()
+meshgenerator = atlas_MeshGenerator()
 mesh = meshgenerator%generate(grid)
 call meshgenerator%final()
 fs2d = atlas_functionspace_NodeColumns(mesh,halo_size)
@@ -363,7 +363,7 @@ integer :: halo_size, nb_edges
 halo_size = 0
 
 grid = atlas_StructuredGrid("N24")
-meshgenerator = atlas_meshgenerator_Structured()
+meshgenerator = atlas_MeshGenerator()
 mesh = meshgenerator%generate(grid)
 FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
 edges = mesh%edges()

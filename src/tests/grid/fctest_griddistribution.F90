@@ -83,7 +83,7 @@ TEST( test_griddist )
   write(msg,*) "owners fort",griddistribution%owners()
   call atlas_log%info(msg)
 
-  meshgenerator = atlas_meshgenerator_Structured()
+  meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid,griddistribution)
   call griddistribution%final()
 

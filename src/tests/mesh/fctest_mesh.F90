@@ -320,7 +320,7 @@ implicit none
 
       ! Create a new Reduced Gaussian Grid based on a nloen array
       call atlas_log%info("Creating grid")
-      grid = atlas_ReducedGaussianGrid( 32, nloen(1:32) )
+      grid = atlas_ReducedGaussianGrid( nloen(1:32) )
 
       ! Grid distribution: all points belong to partition 1
       allocate( part(grid%size()) )
@@ -328,7 +328,7 @@ implicit none
       griddistribution = atlas_GridDistribution(part, part0=1)
 
       ! Generate mesh with given grid and distribution
-      meshgenerator = atlas_meshgenerator_Structured()
+      meshgenerator = atlas_MeshGenerator()
       mesh = meshgenerator%generate(grid,griddistribution)
       call griddistribution%final()
 

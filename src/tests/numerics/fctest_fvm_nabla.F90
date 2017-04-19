@@ -244,7 +244,7 @@ TESTSUITE_INIT
 
   ! Setup
   grid = atlas_StructuredGrid("N24")
-  meshgenerator = atlas_meshgenerator_Structured()
+  meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
   fvm  = atlas_fvm_Method(mesh,config)
   node_columns = fvm%node_columns()
@@ -289,7 +289,7 @@ type(atlas_Mesh) :: mesh
 type(atlas_fvm_Method) :: fvm
 
 grid = atlas_StructuredGrid("N24")
-meshgenerator = atlas_meshgenerator_Structured()
+meshgenerator = atlas_MeshGenerator()
 mesh = meshgenerator%generate(grid)
 fvm  = atlas_fvm_Method(mesh)
 
