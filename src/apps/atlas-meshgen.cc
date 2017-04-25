@@ -17,10 +17,10 @@
 #include <vector>
 #include <memory>
 
-#include "atlas/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid/grids.h"
-#include "atlas/internals/AtlasTool.h"
+#include "atlas/grid.h"
+#include "atlas/runtime/AtlasTool.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -28,17 +28,17 @@
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/mesh/actions/BuildStatistics.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
-#include "atlas/mesh/generators/MeshGenerator.h"
+#include "atlas/mesh/actions/BuildTorusXYZField.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/detail/GmshIO.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
-#include "eckit/geometry/Point3.h"
 #include "eckit/parser/Tokenizer.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/runtime/Tool.h"
@@ -53,7 +53,6 @@ using namespace atlas::functionspace;
 using namespace atlas::mesh;
 using atlas::util::Config;
 using eckit::PathName;
-using eckit::SharedPtr;
 
 //------------------------------------------------------------------------------
 
@@ -105,7 +104,6 @@ Meshgen2Gmsh::Meshgen2Gmsh(int argc,char **argv): AtlasTool(argc,argv)
     +indent()+"        30: Mostly skewed quads with only triags when skewness becomes too large\n"
     +indent()+"        -1: Only triangles") );
 
-  add_option( new SimpleOption<bool>("3d","Output mesh as sphere, and generate mesh connecting East and West in case serial") );
   add_option( new SimpleOption<bool>("include_pole","Include pole point") );
   add_option( new SimpleOption<bool>("patch_pole","Patch poles with elements.") );
   add_option( new SimpleOption<bool>("ghost","Output ghost elements") );
@@ -116,6 +114,13 @@ Meshgen2Gmsh::Meshgen2Gmsh(int argc,char **argv): AtlasTool(argc,argv)
   add_option( new SimpleOption<bool>("stats","Write statistics file") );
   add_option( new SimpleOption<bool>("info","Write Info") );
   add_option( new SimpleOption<bool>("binary","Write binary file") );
+  add_option( new SimpleOption<std::string>("generator","Mesh generator") );
+  add_option( new SimpleOption<std::string>("partitioner","Mesh partitioner") );
+  add_option( new SimpleOption<bool>("periodic_x","periodic mesh in x-direction") );
+  add_option( new SimpleOption<bool>("periodic_y","periodic mesh in y-direction") );
+  add_option( new SimpleOption<bool>("torus","Output mesh as torus") );
+  add_option( new SimpleOption<bool>("lonlat","Output mesh in lon-lat coordinates") );
+  add_option( new SimpleOption<bool>("3d","Output mesh as sphere, and generate mesh connecting East and West in case serial") );
 }
 
 //-----------------------------------------------------------------------------
@@ -160,20 +165,17 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( edges )
     halo = std::max(halo,1l);
 
-  eckit::LocalConfiguration meshgenerator_config( args );
-  if( parallel::mpi::comm().size() > 1 || edges )
-    meshgenerator_config.set("3d",false);
-
-  SharedPtr<Structured> grid;
+  StructuredGrid grid;
   if( key.size() )
   {
-    try{ grid.reset( Structured::create(key) ); }
+    try{ grid = Grid(key); }
     catch( eckit::BadParameter& e ){}
   }
   else if( path_in.path().size() )
   {
     Log::info() << "Creating grid from file " << path_in << std::endl;
-    try{ grid.reset( Structured::create( atlas::util::Config(path_in) ) ); }
+    Log::debug() << Config(path_in) << std::endl;
+    try{ grid = Grid( Config(path_in) ); }
     catch( eckit::BadParameter& e ){}
   }
   else
@@ -182,13 +184,23 @@ void Meshgen2Gmsh::execute(const Args& args)
   }
 
   if( !grid ) return;
-  SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
-      mesh::generators::MeshGenerator::create("Structured",meshgenerator_config) );
+
+  Log::debug() << "Domain: " << grid.domain() << std::endl;
+  Log::debug() << "Periodic: " << grid.periodic() << std::endl;
+  Log::debug() << "Spec: " << grid.spec() << std::endl;
 
 
-  SharedPtr<mesh::Mesh> mesh;
+  std::string Implementationype = ( RegularGrid(grid) ? "regular" : "structured" );
+  args.get("generator",Implementationype);
+  eckit::LocalConfiguration meshgenerator_config( args );
+  if( parallel::mpi::comm().size() > 1 || edges )
+    meshgenerator_config.set("3d",false);
+
+  MeshGenerator meshgenerator(Implementationype,meshgenerator_config);
+
+  Mesh mesh;
   try {
-  mesh.reset( meshgenerator->generate(*grid) );
+    mesh = meshgenerator.generate(grid);
   }
   catch ( eckit::BadParameter& e)
   {
@@ -196,31 +208,47 @@ void Meshgen2Gmsh::execute(const Args& args)
     Log::error() << e.callStack() << std::endl;
     throw e;
   }
-  SharedPtr<functionspace::NodeColumns> nodes_fs( new functionspace::NodeColumns(*mesh,Halo(halo)) );
 
+  if( grid.projection().units() == "degrees" ) {
+    functionspace::NodeColumns nodes_fs(mesh,Halo(halo));
+  } else {
+    Log::warning() << "Not yet implemented: building halo's with projections not defined in degrees" << std::endl;
+    Log::warning() << "units: " << grid.projection().units() << std::endl;
+  }
   if( edges )
   {
-    build_edges(*mesh);
-    build_pole_edges(*mesh);
-    build_edges_parallel_fields(*mesh);
+    build_edges(mesh);
+    build_pole_edges(mesh);
+    build_edges_parallel_fields(mesh);
     if( brick )
-      build_brick_dual_mesh(*grid, *mesh);
+      build_brick_dual_mesh(grid, mesh);
     else
-      build_median_dual_mesh(*mesh);
+      build_median_dual_mesh(mesh);
   }
 
   if( stats )
-    build_statistics(*mesh);
+    build_statistics(mesh);
+
+  bool torus=false;
+  args.get("torus",torus);
+  if( torus ) {
+    dim_3d = true;
+    Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
+    mesh::actions::BuildTorusXYZField("xyz")(mesh,grid.domain(),5.,2.,grid.nxmax(),grid.ny());
+  }
+  
+  bool lonlat = false;
+  args.get("lonlat",lonlat);
 
   atlas::output::Gmsh gmsh( path_out , Config
     ("info",info)
     ("ghost",ghost)
-    ("coordinates", dim_3d ? "xyz" : "lonlat" )
+    ("coordinates", dim_3d ? "xyz" : lonlat ? "lonlat" : "xy" )
     ("edges",edges )
     ("binary",binary )
   );
-  Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid->shortName() << "\"" << std::endl;
-  gmsh.write( *mesh );
+  Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid.name() << "\"" << std::endl;
+  gmsh.write( mesh );
 }
 
 //------------------------------------------------------------------------------

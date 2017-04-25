@@ -20,13 +20,13 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/util/io/Gmsh.h"
+#include "atlas/output/detail/GmshIO.h"
 #include "eckit/exception/Exceptions.h"
 
-using atlas::field::Field;
-using atlas::field::FieldSet;
-using atlas::mesh::Mesh;
-using atlas::functionspace::FunctionSpace;
+using atlas::Field;
+using atlas::FieldSet;
+using atlas::Mesh;
+using atlas::FunctionSpace;
 using eckit::Parametrisation;
 
 namespace atlas {
@@ -74,10 +74,14 @@ GmshFileStream::GmshFileStream(const PathName& file_path, const char* mode, int 
 
 // -----------------------------------------------------------------------------
 
+namespace detail {
+
+// -----------------------------------------------------------------------------
+
 void Gmsh::defaults()
 {
   config_.binary = false;
-  config_.nodes = "lonlat";
+  config_.nodes = "xy";
   config_.gather = false;
   config_.ghost = false;
   config_.elements = true;
@@ -86,7 +90,7 @@ void Gmsh::defaults()
   config_.file = "output.msh";
   config_.info = false;
   config_.openmode = "w";
-  config_.coordinates = "lonlat";
+  config_.coordinates = "xy";
 }
 
 // -----------------------------------------------------------------------------
@@ -112,9 +116,9 @@ void merge(Gmsh::Configuration& present, const eckit::Parametrisation& update)
 
 // -----------------------------------------------------------------------------
 
-util::io::Gmsh writer(const Gmsh::Configuration& c)
+detail::GmshIO writer(const Gmsh::Configuration& c)
 {
-  util::io::Gmsh gmsh;
+  detail::GmshIO gmsh;
   Gmsh::setGmshConfiguration(gmsh,c);
   return gmsh;
 }
@@ -136,7 +140,7 @@ std::ios_base::openmode openmode(const Gmsh::Configuration& c)
 
 // -----------------------------------------------------------------------------
 
-void Gmsh::setGmshConfiguration(util::io::Gmsh& gmsh, const Gmsh::Configuration& c)
+void Gmsh::setGmshConfiguration(detail::GmshIO& gmsh, const Gmsh::Configuration& c)
 {
   gmsh.options.set("ascii", not c.binary);
   gmsh.options.set("nodes",c.nodes);
@@ -211,7 +215,7 @@ Gmsh::~Gmsh()
 // -----------------------------------------------------------------------------
 
 void Gmsh::write(
-        const mesh::Mesh& mesh,
+        const Mesh& mesh,
         const eckit::Parametrisation& config) const
 {
   Gmsh::Configuration c = config_;
@@ -219,8 +223,8 @@ void Gmsh::write(
 
   if( c.coordinates == "xyz" and not mesh.nodes().has_field("xyz") )
   {
-      Log::debug<ATLAS>() << "Building xyz representation for nodes" << std::endl;
-      mesh::actions::BuildXYZField("xyz")(const_cast<mesh::Mesh&>(mesh));
+      Log::debug<Atlas>() << "Building xyz representation for nodes" << std::endl;
+      mesh::actions::BuildXYZField("xyz")(const_cast<Mesh&>(mesh));
   }
 
   writer(c).write(mesh,c.file);
@@ -230,7 +234,7 @@ void Gmsh::write(
 // -----------------------------------------------------------------------------
 
 void Gmsh::write(
-    const field::Field& field,
+    const Field& field,
     const eckit::Parametrisation& config ) const
 {
   Gmsh::Configuration c = config_;
@@ -242,7 +246,7 @@ void Gmsh::write(
 // -----------------------------------------------------------------------------
 
 void Gmsh::write(
-    const field::FieldSet& fields,
+    const FieldSet& fields,
     const eckit::Parametrisation& config) const
 {
   Gmsh::Configuration c = config_;
@@ -254,8 +258,8 @@ void Gmsh::write(
 // -----------------------------------------------------------------------------
 
 void Gmsh::write(
-    const field::Field& field,
-    const functionspace::FunctionSpace& functionspace,
+    const Field& field,
+    const FunctionSpace& functionspace,
     const eckit::Parametrisation& config) const
 {
   Gmsh::Configuration c = config_;
@@ -267,8 +271,8 @@ void Gmsh::write(
 // -----------------------------------------------------------------------------
 
 void Gmsh::write(
-    const field::FieldSet& fields,
-    const functionspace::FunctionSpace& functionspace,
+    const FieldSet& fields,
+    const FunctionSpace& functionspace,
     const eckit::Parametrisation& config) const
 {
   Gmsh::Configuration c = config_;
@@ -296,8 +300,41 @@ Gmsh* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, con
 }
 
 namespace {
-static OutputBuilder< Gmsh > __gmsh("gmsh");
+static OutputBuilder< detail::Gmsh > __gmsh("gmsh");
 }
+
+} // namespace detail
+
+
+Gmsh::Gmsh( const Output& output ) :
+  Output(output) {
+}
+
+Gmsh::Gmsh(Stream& s) :
+  Output( new detail::Gmsh(s) ) {
+}
+
+Gmsh::Gmsh(Stream& s, const eckit::Parametrisation& c) :
+  Output( new detail::Gmsh(s,c) ) {
+}
+
+Gmsh::Gmsh(const PathName& p, const std::string& mode) :
+  Output( new detail::Gmsh(p,mode) ) {
+}
+
+
+Gmsh::Gmsh(const PathName& p, const std::string& mode, const eckit::Parametrisation& c) :
+  Output( new detail::Gmsh(p,mode,c) ) {
+}
+
+Gmsh::Gmsh(const PathName& p) :
+  Output( new detail::Gmsh(p) ) {
+}
+
+Gmsh::Gmsh(const PathName& p, const eckit::Parametrisation& c) :
+  Output( new detail::Gmsh(p,c) ) {
+}
+
 
 } // namespace output
 } // namespace atlas

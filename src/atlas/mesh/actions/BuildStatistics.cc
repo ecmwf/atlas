@@ -14,10 +14,8 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
-#include "eckit/geometry/Point2.h"
-#include "eckit/geometry/Point3.h"
 #include "eckit/filesystem/PathName.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -25,13 +23,14 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Constants.h"
+#include "atlas/util/Point.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/Checksum.h"
 
-using eckit::geometry::LLPoint2;
 using eckit::geometry::lonlat_to_3d;
 namespace atlas {
 namespace mesh {
@@ -56,7 +55,7 @@ namespace {
   *
   * @sa http://en.wikipedia.org/wiki/Law_of_haversines
   */
-double arc_in_rad(const LLPoint2& from, const LLPoint2& to) {
+double arc_in_rad(const PointLonLat& from, const PointLonLat& to) {
     double lat_arc = (from.lat() - to.lat()) * DEG_TO_RAD;
     double lon_arc = (from.lon() - to.lon()) * DEG_TO_RAD;
     double lat_H = std::sin(lat_arc * 0.5);
@@ -67,7 +66,7 @@ double arc_in_rad(const LLPoint2& from, const LLPoint2& to) {
     return 2.0 * std::asin(std::sqrt(lat_H + tmp*lon_H));
 }
 
-double quad_quality( const LLPoint2& p1, const LLPoint2& p2, const LLPoint2& p3, const LLPoint2& p4)
+double quad_quality( const PointLonLat& p1, const PointLonLat& p2, const PointLonLat& p3, const PointLonLat& p4)
 {
   // see http://geuz.org/gmsh/doc/preprints/gmsh_quad_preprint.pdf
 
@@ -130,13 +129,14 @@ void build_statistics( Mesh& mesh )
   const double radius_km = util::Earth::radiusInMeters()*1e-3;
 
   mesh::Nodes& nodes = mesh.nodes();
-  array::ArrayView<double,2> lonlat ( nodes.lonlat() );
+  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
 
   if( mesh.edges().size() )
   {
     if( ! mesh.edges().has_field("arc_length") )
-      mesh.edges().add( field::Field::create<double>("arc_length",array::make_shape(mesh.edges().size())) );
-    array::ArrayView<double,1> dist ( mesh.edges().field("arc_length") );
+      mesh.edges().add( 
+        Field("arc_length", array::make_datatype<double>(), array::make_shape(mesh.edges().size())) );
+    array::ArrayView<double,1> dist = array::make_view<double,1>( mesh.edges().field("arc_length") );
     const mesh::HybridElements::Connectivity &edge_nodes = mesh.edges().node_connectivity();
 
     const int nb_edges = mesh.edges().size();
@@ -144,8 +144,8 @@ void build_statistics( Mesh& mesh )
     {
       int ip1 = edge_nodes(jedge,0);
       int ip2 = edge_nodes(jedge,1);
-      LLPoint2 p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
-      LLPoint2 p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
+      PointLonLat p1(lonlat(ip1,LON),lonlat(ip1,LAT));
+      PointLonLat p2(lonlat(ip2,LON),lonlat(ip2,LAT));
       dist(jedge) = arc_in_rad(p1,p2)*radius_km;
     }
   }
@@ -168,13 +168,15 @@ void build_statistics( Mesh& mesh )
     if( parallel::mpi::comm().size() == 1 )
       ofs.open( stats_path.localPath(), std::ofstream::app );
 
-    array::ArrayView<double,1> rho ( mesh.cells().add( field::Field::create<double>("stats_rho",array::make_shape(mesh.cells().size()) ) ) );
-    array::ArrayView<double,1> eta ( mesh.cells().add( field::Field::create<double>("stats_eta",array::make_shape(mesh.cells().size()) ) ) );
+    array::ArrayView<double,1> rho = array::make_view<double,1>( mesh.cells().add(
+       Field("stats_rho", array::make_datatype<double>(), array::make_shape(mesh.cells().size()) ) ) );
+    array::ArrayView<double,1> eta = array::make_view<double,1>( mesh.cells().add(
+       Field("stats_eta", array::make_datatype<double>(), array::make_shape(mesh.cells().size()) ) ) );
 
     for( size_t jtype=0; jtype<mesh.cells().nb_types(); ++jtype )
     {
       const mesh::Elements& elements = mesh.cells().elements(jtype);
-      const mesh::Elements::Connectivity& elem_nodes = elements.node_connectivity();
+      const BlockConnectivity& elem_nodes = elements.node_connectivity();
       const size_t nb_elems = elements.size();
 
       if( elements.element_type().name() == "Triangle" )
@@ -185,9 +187,9 @@ void build_statistics( Mesh& mesh )
           size_t ip1 = elem_nodes(jelem,0);
           size_t ip2 = elem_nodes(jelem,1);
           size_t ip3 = elem_nodes(jelem,2);
-          LLPoint2 p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
-          LLPoint2 p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
-          LLPoint2 p3(lonlat(ip3,internals::LON),lonlat(ip3,internals::LAT));
+          PointLonLat p1(lonlat(ip1,LON),lonlat(ip1,LAT));
+          PointLonLat p2(lonlat(ip2,LON),lonlat(ip2,LAT));
+          PointLonLat p3(lonlat(ip3,LON),lonlat(ip3,LAT));
 
           double l12 = arc_in_rad(p1,p2)/DEG_TO_RAD;
           double l23 = arc_in_rad(p2,p3)/DEG_TO_RAD;
@@ -205,8 +207,8 @@ void build_statistics( Mesh& mesh )
 
           if( parallel::mpi::comm().size() == 1 )
           {
-            ofs << std::setw(idt) << rho[ielem]
-                << std::setw(idt) << eta[ielem]
+            ofs << std::setw(idt) << rho(ielem)
+                << std::setw(idt) << eta(ielem)
                 << "\n";
           }
         }
@@ -221,10 +223,10 @@ void build_statistics( Mesh& mesh )
           size_t ip3 = elem_nodes(jelem,2);
           size_t ip4 = elem_nodes(jelem,3);
 
-          LLPoint2 p1(lonlat(ip1,internals::LON),lonlat(ip1,internals::LAT));
-          LLPoint2 p2(lonlat(ip2,internals::LON),lonlat(ip2,internals::LAT));
-          LLPoint2 p3(lonlat(ip3,internals::LON),lonlat(ip3,internals::LAT));
-          LLPoint2 p4(lonlat(ip4,internals::LON),lonlat(ip4,internals::LAT));
+          PointLonLat p1(lonlat(ip1,LON),lonlat(ip1,LAT));
+          PointLonLat p2(lonlat(ip2,LON),lonlat(ip2,LAT));
+          PointLonLat p3(lonlat(ip3,LON),lonlat(ip3,LAT));
+          PointLonLat p4(lonlat(ip4,LON),lonlat(ip4,LAT));
 
           eta(ielem) = quad_quality(p1,p2,p3,p4);
 
@@ -239,8 +241,8 @@ void build_statistics( Mesh& mesh )
 
           if( parallel::mpi::comm().size() == 1 )
           {
-            ofs << std::setw(idt) << rho[ielem]
-                << std::setw(idt) << eta[ielem]
+            ofs << std::setw(idt) << rho(ielem)
+                << std::setw(idt) << eta(ielem)
                 << "\n";
           }
         }
@@ -262,12 +264,13 @@ void build_statistics( Mesh& mesh )
 
   if( nodes.has_field("dual_volumes") )
   {
-    array::ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-    array::ArrayView<double,1> dual_delta_sph  ( nodes.add( field::Field::create<double>( "dual_delta_sph", array::make_shape(nodes.size(),1) ) ) );
+    array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( nodes.field("dual_volumes") );
+    array::ArrayView<double,1> dual_delta_sph = array::make_view<double,1>( nodes.add(
+       Field( "dual_delta_sph", array::make_datatype<double>(), array::make_shape(nodes.size(),1) ) ) );
 
     for( size_t jnode=0; jnode<nodes.size(); ++jnode )
     {
-      const double lat = lonlat(jnode,internals::LAT)*DEG_TO_RAD;
+      const double lat = lonlat(jnode,LAT)*DEG_TO_RAD;
       const double hx = radius_km*std::cos(lat)*DEG_TO_RAD;
       const double hy = radius_km*DEG_TO_RAD;
       dual_delta_sph(jnode) = std::sqrt(dual_volumes(jnode)*hx*hy);
@@ -291,8 +294,8 @@ void build_statistics( Mesh& mesh )
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-void atlas__build_statistics ( Mesh* mesh) {
-  ATLAS_ERROR_HANDLING( build_statistics(*mesh) );
+void atlas__build_statistics ( Mesh::Implementation* mesh) {
+  ATLAS_ERROR_HANDLING( Mesh m(mesh); build_statistics(m); );
 }
 
 // ------------------------------------------------------------------

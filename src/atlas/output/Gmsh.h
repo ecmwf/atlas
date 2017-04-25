@@ -8,17 +8,16 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_output_Gmsh_h
-#define atlas_output_Gmsh_h
+#pragma once
 
 #include "atlas/output/Output.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {
-namespace util {
-namespace io {
-class Gmsh;
+namespace output {
+namespace detail {
+class GmshIO;
 }
 }
 }
@@ -37,11 +36,8 @@ public:
 
 // -----------------------------------------------------------------------------
 
-class Gmsh : public Output {
-
-public:
-
-  typedef eckit::SharedPtr<Gmsh> Ptr;
+namespace detail {
+class Gmsh : public Output::output_t {
 
 public:
 
@@ -58,29 +54,29 @@ public:
 
     /// Write mesh file
     virtual void write(
-        const mesh::Mesh&,
+        const Mesh&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write field to file
     virtual void write(
-        const field::Field&,
+        const Field&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write fieldset to file using FunctionSpace
     virtual void write(
-        const field::FieldSet&,
+        const FieldSet&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write field to file using Functionspace
     virtual void write(
-        const field::Field&,
-        const functionspace::FunctionSpace&,
+        const Field&,
+        const FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
     /// Write fieldset to file using FunctionSpace
     virtual void write(
-        const field::FieldSet&,
-        const functionspace::FunctionSpace&,
+        const FieldSet&,
+        const FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const;
 
 public:
@@ -99,7 +95,7 @@ public:
     std::string coordinates;
   };
 
-  static void setGmshConfiguration(util::io::Gmsh&, const Configuration& );
+  static void setGmshConfiguration(detail::GmshIO&, const Configuration& );
 
 private:
 
@@ -108,13 +104,29 @@ private:
 
   void defaults();
 };
+}
+
+// -----------------------------------------------------------------------------
+
+class Gmsh : public Output {
+public:
+  Gmsh( const Output& output );
+  Gmsh(Stream&);
+  Gmsh(Stream&, const eckit::Parametrisation&);
+
+  Gmsh(const PathName&, const std::string& mode);
+  Gmsh(const PathName&, const std::string& mode, const eckit::Parametrisation&);
+
+  Gmsh(const PathName&);
+  Gmsh(const PathName&, const eckit::Parametrisation&);
+};
 
 // -----------------------------------------------------------------------------
 
 extern "C" {
-  
-Gmsh* atlas__output__Gmsh__create_pathname_mode(const char* pathname, const char* mode);
-Gmsh* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, const char* mode, const eckit::Parametrisation* params);
+
+detail::Gmsh* atlas__output__Gmsh__create_pathname_mode(const char* pathname, const char* mode);
+detail::Gmsh* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, const char* mode, const eckit::Parametrisation* params);
 
 }
 
@@ -122,5 +134,3 @@ Gmsh* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, con
 
 } // namespace output
 } // namespace atlas
-
-#endif

@@ -14,7 +14,7 @@
 #include "eckit/log/Timer.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/runtime/LibAtlas.h"
+#include "atlas/library/Library.h"
 
 
 namespace atlas {
@@ -22,14 +22,14 @@ namespace interpolation {
 namespace method {
 
 
-void KNearestNeighboursBase::buildPointSearchTree(mesh::Mesh& meshSource) {
+void KNearestNeighboursBase::buildPointSearchTree(Mesh& meshSource) {
     using namespace atlas;
-    eckit::TraceTimer<LibAtlas> tim("atlas::interpolation::method::KNearestNeighboursBase::setup()");
+    eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::KNearestNeighboursBase::setup()");
 
 
     // generate 3D point coordinates
     mesh::actions::BuildXYZField("xyz")(meshSource);
-    array::ArrayView< double, 2 > coords(meshSource.nodes().field( "xyz" ));
+    array::ArrayView< double, 2 > coords = array::make_view<double,2>(meshSource.nodes().field( "xyz" ));
 
     std::vector<PointIndex3::Value> pidx;
     pidx.reserve(meshSource.nodes().size());

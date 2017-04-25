@@ -11,18 +11,15 @@
 #include <iomanip>
 #include <string>
 #include <map>
+#include <memory>
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
-#include "eckit/memory/ScopedPtr.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/State.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-
-using eckit::SharedPtr;
-using eckit::ScopedPtr;
 
 namespace atlas {
 namespace field {
@@ -51,7 +48,7 @@ namespace {
 
 void State::initialize( const std::string& generator, const eckit::Parametrisation& params )
 {
-  ScopedPtr<StateGenerator> state_generator ( StateGeneratorFactory::build(generator, params) );
+  std::unique_ptr<StateGenerator> state_generator ( StateGeneratorFactory::build(generator, params) );
   state_generator->generate( *this, params );
 }
 
@@ -76,32 +73,25 @@ util::Metadata& State::metadata()
   return metadata_;
 }
 
-Field& State::add( const SharedPtr<Field>& field )
+Field State::add( Field field )
 {
   ASSERT( field );
 
-  if( field->name().empty() )
+  if( field.name().empty() )
   {
     std::stringstream new_name;
     new_name << "field_" << std::setw(5) << std::setfill('0') << fields_.size();
     ASSERT( !has(new_name.str() ) );
-    field->rename(new_name.str());
+    field.rename(new_name.str());
   }
 
-  if( has(field->name()) ) {
+  if( has(field.name()) ) {
     std::stringstream msg;
-    msg << "Trying to add field '"<<field->name()<<"' to State, but State already has a field with this name.";
+    msg << "Trying to add field '"<<field.name()<<"' to State, but State already has a field with this name.";
     throw eckit::Exception(msg.str(),Here());
   }
-  fields_[field->name()] = field;
-  return *field;
-}
-
-Field& State::add( Field* field )
-{
-  ASSERT( field != NULL );
-  add( SharedPtr<Field>(field) );
-  return *field;
+  fields_[field.name()] = field;
+  return field;
 }
 
 const Field& State::field(const std::string& name) const
@@ -112,7 +102,7 @@ const Field& State::field(const std::string& name) const
     msg << "Trying to access field `"<<name<<"' in State, but no field with this name is present in State.";
     throw eckit::Exception(msg.str(),Here());
   }
-  return *fields_.find(name)->second;
+  return fields_.find(name)->second;
 }
 
 Field& State::field(const std::string& name)
@@ -130,7 +120,7 @@ const Field& State::field(const size_t idx) const
   }
   FieldMap::const_iterator it = fields_.begin();
   for(size_t i = 0; i < idx; ++i) ++it;
-  return *it->second;
+  return it->second;
 }
 
 Field& State::field(const size_t idx)
@@ -180,7 +170,7 @@ StateGenerator* StateGeneratorFactory::build(const std::string& name, const ecki
 
     std::map<std::string, StateGeneratorFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<ATLAS>() << "Looking for StateGeneratorFactory [" << name << "]" << std::endl;
+    Log::debug<Atlas>() << "Looking for StateGeneratorFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No StateGeneratorFactory for [" << name << "]" << std::endl;
@@ -260,7 +250,7 @@ void atlas__State__delete (State* This)
   delete This;
 }
 
-void atlas__State__add (State* This, Field* field)
+void atlas__State__add (State* This, FieldImpl* field)
 {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( This->add(field); );
@@ -280,19 +270,19 @@ int atlas__State__has (State* This, const char* name)
   return has_field;
 }
 
-Field* atlas__State__field_by_name (State* This, const char* name)
+FieldImpl* atlas__State__field_by_name (State* This, const char* name)
 {
   ASSERT( This );
-  Field* field(0);
-  ATLAS_ERROR_HANDLING ( field = &This->field( std::string(name) ); );
+  FieldImpl* field(0);
+  ATLAS_ERROR_HANDLING ( field = This->field( std::string(name) ).get(); );
   return field;
 }
 
-Field* atlas__State__field_by_index (State* This, int index)
+FieldImpl* atlas__State__field_by_index (State* This, int index)
 {
   ASSERT( This );
-  Field* field(0);
-  ATLAS_ERROR_HANDLING( field = &This->field( index ) );
+  FieldImpl* field(0);
+  ATLAS_ERROR_HANDLING( field = This->field( index ).get() );
   return field;
 }
 

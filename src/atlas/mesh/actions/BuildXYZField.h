@@ -8,19 +8,17 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_actions_BuildXYZField_h
-#define atlas_actions_BuildXYZField_h
+#pragma once
 
 #include <string>
 
 namespace atlas {
-namespace field {
     class Field;
-} }
+    class Mesh;
+}
 
 namespace atlas {
 namespace mesh {
-  class Mesh;
   class Nodes;
 } }
 
@@ -36,8 +34,8 @@ public:
 
     explicit BuildXYZField(const std::string& name = "xyz", bool force_recompute=false);
 
-    field::Field& operator()(Mesh&) const;
-    field::Field& operator()(mesh::Nodes&) const;
+    Field& operator()(Mesh&) const;
+    Field& operator()(mesh::Nodes&) const;
 
 private:
 
@@ -51,5 +49,3 @@ private:
 } // namespace actions
 } // namespace mesh
 } // namespace atlas
-
-#endif

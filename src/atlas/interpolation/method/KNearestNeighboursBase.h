@@ -28,11 +28,11 @@ public:
     KNearestNeighboursBase(const Config& config) : Method(config) {}
     virtual ~KNearestNeighboursBase() {}
 
-    virtual void setup(mesh::Mesh& meshSource, mesh::Mesh& meshTarget) = 0;
+    virtual void setup(Mesh& meshSource, Mesh& meshTarget) = 0;
 
 protected:
 
-    void buildPointSearchTree(mesh::Mesh& meshSource);
+    void buildPointSearchTree(Mesh& meshSource);
 
     eckit::ScopedPtr<PointIndex3> pTree_;
 

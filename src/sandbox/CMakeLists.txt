@@ -12,4 +12,5 @@ add_subdirectory( fortran_object )
 add_subdirectory( example_fortran )
 
 add_subdirectory( interpolation )
+add_subdirectory( grid_distribution )
 

@@ -14,10 +14,10 @@
 
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/internals/Bitflags.h"
+#include "atlas/util/Bitflags.h"
 #include "tests/AtlasFixture.h"
 
-using atlas::internals::Bitflags;
+using atlas::util::Bitflags;
 
 namespace atlas {
 namespace test {

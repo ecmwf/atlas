@@ -30,7 +30,7 @@ namespace field {
  * The only reference to IFS in Atlas should be here.
  * Example use:
  * \code{.cpp}
- *     Field* field = Field::create(
+ *     FieldImpl* field = Field::create(
  *         Config
  *           ("creator","IFS")  // IFS FieldCreator
  *           ("ngptot",ngptot)  // Total number of grid points
@@ -46,7 +46,7 @@ class FieldCreatorIFS: public FieldCreator
 public:
   FieldCreatorIFS() {}
   FieldCreatorIFS(const eckit::Parametrisation&) {}
-  virtual Field* createField( const eckit::Parametrisation& ) const;
+  virtual FieldImpl* createField( const eckit::Parametrisation& ) const;
 };
 
 // ------------------------------------------------------------------

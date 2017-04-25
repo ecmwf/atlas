@@ -12,8 +12,7 @@
 /// @author Pedro Maciel
 /// @date Jan 2015
 
-#ifndef atlas_FieldSet_H
-#define atlas_FieldSet_H
+#pragma once
 
 #include <vector>
 #include <iterator>
@@ -24,131 +23,26 @@
 #include "atlas/field/Field.h"
 
 namespace atlas {
+
+  class FieldSet;
+
 namespace field {
-
-class FieldSet;
-
-template <typename T> class SharedPtrVector_iterator;
-template <typename T> class SharedPtrVector_const_iterator;
-
-template< typename T>
-class SharedPtrVector_iterator : public std::iterator<std::forward_iterator_tag, T>
-{
-  friend class SharedPtrVector_const_iterator<T>;
-private:
-  typedef std::vector< eckit::SharedPtr<T> >  SharedPtrVector;
-
-  SharedPtrVector* arr_;  //!< array to be iterated
-  T* p_; //!< raw pointer
-
-public:
-
-  /// @brief constructor (to be used for end of range)
-  SharedPtrVector_iterator() : arr_(0), p_(0) {}
-
-  /// @brief constructor (to be used for begin of range)
-  SharedPtrVector_iterator(SharedPtrVector* arr) : arr_(arr) { if( arr_->size() ) p_=(*arr_)[0].get(); }
-
-  /// @brief constructor from other iterator
-  SharedPtrVector_iterator(const SharedPtrVector_iterator<T>& it) : arr_(it.arr_), p_(it.p_) {}
-
-  /// @brief pre-increment operator
-  SharedPtrVector_iterator& operator++()    { return increment(1); }
-
-  /// @brief post-increment operator
-  SharedPtrVector_iterator operator++(int)  { SharedPtrVector_iterator tmp(*this); operator++(); return tmp; }
-
-  /// @brief equals operator
-  bool operator==(const SharedPtrVector_iterator& rhs) const { return p_==rhs.p_; }
-
-  /// @brief not-equals operator
-  bool operator!=(const SharedPtrVector_iterator& rhs) const { return p_!=rhs.p_; }
-
-  /// @brief dereference operator
-  T& operator*() { return *p_; }
-
-  /// @brief dereference operator
-  T* operator->() { return p_; }
-
-private:
-  SharedPtrVector_iterator& increment(size_t d)
-  {
-    p_ += d;
-    if( d==arr_->size() )
-      p_ = 0;
-    return *this;
-  }
-
-};
-
-template< typename T>
-class SharedPtrVector_const_iterator : public std::iterator<std::forward_iterator_tag, T>
-{
-private:
-  typedef const std::vector< eckit::SharedPtr<T> >  SharedPtrVector;
-
-  SharedPtrVector* arr_;  //!< array to be iterated
-  T* p_; //!< raw pointer
-
-public:
-
-  /// @brief constructor (to be used for end of range)
-  SharedPtrVector_const_iterator() : arr_(0), p_(0) {}
-
-  /// @brief constructor (to be used for begin of range)
-  SharedPtrVector_const_iterator(SharedPtrVector* arr) : arr_(arr) { if( arr_->size() ) p_=(*arr_)[0].get(); }
-
-  /// @brief constructor from other iterator
-  SharedPtrVector_const_iterator(const SharedPtrVector_const_iterator& it) : arr_(it.arr_), p_(it.p_) {}
-
-  /// @brief constructor from other iterator
-  SharedPtrVector_const_iterator(const SharedPtrVector_iterator<T>& it) : arr_(it.arr_), p_(it.p_) {}
-
-  /// @brief pre-increment operator
-  SharedPtrVector_const_iterator& operator++()    { return increment(1); }
-
-  /// @brief post-increment operator
-  SharedPtrVector_const_iterator operator++(int)  { SharedPtrVector_const_iterator tmp(*this); operator++(); return tmp; }
-
-  /// @brief equals operator
-  bool operator==(const SharedPtrVector_const_iterator& rhs) const { return p_==rhs.p_; }
-
-  /// @brief not-equals operator
-  bool operator!=(const SharedPtrVector_const_iterator& rhs) const { return p_!=rhs.p_; }
-
-  /// @brief dereference operator
-  const T& operator*() const { return *p_; }
-
-  /// @brief dereference operator
-  const T* operator->() const { return p_; }
-
-private:
-  SharedPtrVector_const_iterator& increment(size_t d)
-  {
-    p_ += d;
-    if( d==arr_->size() )
-      p_ = 0;
-    return *this;
-  }
-
-};
 
 
 /**
- * @brief Represents a set of fields, where order is preserved (no ownership)
+ * @brief Represents a set of fields, where order is preserved
  */
-class FieldSet : public eckit::Owned {
+class FieldSetImpl : public eckit::Owned {
 
 public: // types
 
-  typedef eckit::SharedPtr< FieldSet > Ptr;
-  typedef SharedPtrVector_iterator<Field> iterator;
-  typedef SharedPtrVector_const_iterator<Field> const_iterator;
+  typedef std::vector<Field>::iterator       iterator;
+  typedef std::vector<Field>::const_iterator const_iterator;
 
 public: // methods
 
   /// Constructs an empty FieldSet
-  FieldSet(const std::string& name = "untitled");
+  FieldSetImpl(const std::string& name = "untitled");
 
   size_t size() const { return  fields_.size(); }
   bool empty()  const { return !fields_.size(); }
@@ -164,47 +58,99 @@ public: // methods
   const Field& operator[](const std::string &name) const { return field(name); }
         Field& operator[](const std::string &name)       { return field(name); }
 
-  const Field& field(const size_t& i) const { ASSERT(i<size()); return *fields_[i]; }
-        Field& field(const size_t& i)       { ASSERT(i<size()); return *fields_[i]; }
+  const Field& field(const size_t& i) const { ASSERT(i<size()); return fields_[i]; }
+        Field& field(const size_t& i)       { ASSERT(i<size()); return fields_[i]; }
 
   std::vector< std::string > field_names() const;
 
-  Field& add(const Field&);
-  Field& add(const Field*);
+  Field add(const Field&);
 
   bool has_field(const std::string& name) const;
 
   Field& field(const std::string& name) const;
 
-  iterator begin() { return iterator(&fields_); }
-  iterator end()   { return iterator(); }
-  const_iterator begin() const { return const_iterator(&fields_); }
-  const_iterator end() const   { return const_iterator(); }
-  const_iterator cbegin() const { return const_iterator(&fields_); }
-  const_iterator cend() const { return const_iterator(); }
+  iterator begin() { return fields_.begin(); }
+  iterator end()   { return fields_.end(); }
+  const_iterator begin()  const { return fields_.begin(); }
+  const_iterator end()    const { return fields_.end(); }
+  const_iterator cbegin() const { return fields_.begin(); }
+  const_iterator cend()   const { return fields_.end(); }
 
 protected: // data
 
-  std::vector< eckit::SharedPtr<Field> >  fields_;  ///< field handle storage
-  std::string                             name_;    ///< internal name
-  std::map< std::string, size_t >         index_;   ///< name-to-index map, to refer fields by name
+  std::vector< Field >             fields_;  ///< field storage
+  std::string                      name_;    ///< internal name
+  std::map< std::string, size_t >  index_;   ///< name-to-index map, to refer fields by name
 };
-
 
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  FieldSet* atlas__FieldSet__new           (char* name);
-  void      atlas__FieldSet__delete        (FieldSet* This);
-  void      atlas__FieldSet__add_field     (FieldSet* This, Field* field);
-  int       atlas__FieldSet__has_field     (FieldSet* This, char* name);
-  size_t    atlas__FieldSet__size          (FieldSet* This);
-  Field*    atlas__FieldSet__field_by_name (FieldSet* This, char* name);
-  Field*    atlas__FieldSet__field_by_idx  (FieldSet* This, size_t idx);
+  FieldSetImpl* atlas__FieldSet__new       (char* name);
+  void      atlas__FieldSet__delete        (FieldSetImpl* This);
+  void      atlas__FieldSet__add_field     (FieldSetImpl* This, FieldImpl* field);
+  int       atlas__FieldSet__has_field     (const FieldSetImpl* This, char* name);
+  size_t    atlas__FieldSet__size          (const FieldSetImpl* This);
+  FieldImpl*    atlas__FieldSet__field_by_name (FieldSetImpl* This, char* name);
+  FieldImpl*    atlas__FieldSet__field_by_idx  (FieldSetImpl* This, size_t idx);
 }
 
 } // namespace field
+
+//---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Represents a set of fields, where order is preserved
+ */
+class FieldSet {
+
+public: // types
+
+  using Implementation = field::FieldSetImpl;
+  using iterator       = Implementation::iterator;
+  using const_iterator = Implementation::const_iterator;
+
+public: // methods
+
+  FieldSet( const std::string& name = "untitled" );
+  FieldSet( const Implementation* );
+  FieldSet( const FieldSet& );
+
+  size_t size() const { return  fieldset_->size(); }
+  bool empty()  const { return  fieldset_->empty(); }
+
+  void clear() { fieldset_->clear(); }
+
+  const std::string& name() const { return fieldset_->name(); }
+        std::string& name()       { return fieldset_->name(); }
+
+  const Field& operator[](const size_t &i) const { return fieldset_->operator[](i); }
+        Field& operator[](const size_t &i)       { return fieldset_->operator[](i); }
+
+  const Field& operator[](const std::string &name) const { return fieldset_->operator[](name); }
+        Field& operator[](const std::string &name)       { return fieldset_->operator[](name); }
+
+  const Field& field(const size_t& i) const { return fieldset_->field(i); }
+        Field& field(const size_t& i)       { return fieldset_->field(i); }
+
+  std::vector< std::string > field_names() const { return fieldset_->field_names(); }
+
+  Field add( const Field& field ) { return fieldset_->add(field); }
+
+  bool has_field(const std::string& name) const { return fieldset_->has_field(name); }
+
+  Field& field(const std::string& name) const { return fieldset_->field(name); }
+
+  iterator begin() { return fieldset_->begin(); }
+  iterator end()   { return fieldset_->end(); }
+  const_iterator begin()  const { return fieldset_->begin(); }
+  const_iterator end()    const { return fieldset_->end(); }
+  const_iterator cbegin() const { return fieldset_->begin(); }
+  const_iterator cend()   const { return fieldset_->end(); }
+
+private: // data
+
+  eckit::SharedPtr<Implementation> fieldset_;
+};
+
 } // namespace atlas
-
-
-#endif

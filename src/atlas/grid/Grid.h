@@ -8,143 +8,489 @@
  * does it submit to any jurisdiction.
  */
 
-/// @author Peter Bispham
-/// @author Tiago Quintino
-/// @author Pedro Maciel
-/// @date Jan 2015
+#pragma once
 
-
-#ifndef atlas_Grid_H
-#define atlas_Grid_H
-
-#include <string>
-#include <vector>
-#include "eckit/geometry/Point2.h"
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "eckit/utils/MD5.h"
-#include "eckit/value/Properties.h"
-#include "atlas/grid/Domain.h"
+#include "atlas/grid/detail/grid/Grid.h"
+#include "atlas/grid/detail/grid/Unstructured.h"
+#include "atlas/grid/detail/grid/Structured.h"
+#include "atlas/projection/Projection.h"
+#include "atlas/domain/Domain.h"
+#include "atlas/grid/Iterator.h"
 
+namespace eckit {
+  class MD5;
+}
 
 namespace atlas {
-namespace mesh {
-class Mesh;
-}
-}
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class Grid {
+
+public:
+
+    using Implementation = grid::detail::grid::Grid;
+    using Config         = Implementation::Config;
+    using Spec           = Implementation::Spec;
+    using Domain         = atlas::Domain;
+    using Projection     = atlas::Projection;
+    using PointXY        = atlas::PointXY;     // must be sizeof(double)*2
+    using PointLonLat    = atlas::PointLonLat; // must be sizeof(double)*2
 
 
-namespace atlas {
-namespace grid {
+    class IterateXY {
+    public:
+      using iterator       = grid::IteratorXY;
+      using const_iterator = iterator;
+    public:
+      IterateXY(const Implementation& grid) : grid_(grid) {}
+      iterator begin() const { return grid_.xy_begin(); }
+      iterator end()   const { return grid_.xy_end(); }
+    private:
+      const Implementation& grid_;
+    };
 
+    class IterateLonLat {
+    public:
+      using iterator       = grid::IteratorLonLat;
+      using const_iterator = iterator;
+    public:
+      IterateLonLat(const Implementation& grid) : grid_(grid) {}
+      iterator begin() const { return grid_.lonlat_begin(); }
+      iterator end()   const { return grid_.lonlat_end(); }
+    private:
+      const Implementation& grid_;
+    };
 
-class Grid : public eckit::Owned {
+public:
 
-  public:  // types
+    IterateXY     xy()     const { return IterateXY(*grid_);     }
+    IterateLonLat lonlat() const { return IterateLonLat(*grid_); }
 
-    typedef eckit::BuilderT1<Grid> builder_t;
-    typedef const eckit::Parametrisation& ARG1;
-    typedef eckit::SharedPtr<Grid> Ptr;
-    typedef eckit::geometry::LLPoint2 Point; // must be sizeof(double)*2
-    typedef std::string uid_t;
-
-  public:  // methods
-
-    static std::string className();
-
-    static Grid* create(const eckit::Parametrisation&);
-
-    static Grid* create(const Grid::uid_t& shortName);
-
-    /// ctor (default)
     Grid();
+    Grid( const Grid& );
+    Grid( const Implementation* );
+    Grid( const std::string& name, const Domain& = Domain() );
+    Grid( const Config& );
 
-    /// dtor
-    virtual ~Grid();
+    operator bool() const { return grid_; }
 
-    /// Human readable name
-    /// @note: may not be unique, such as when reduced Gaussian grids have
-    /// the same N numbers but different distribution of latitude points
-    virtual std::string shortName() const = 0;
+    bool operator==( const Grid& other ) const { return uid() == other.uid(); }
+    bool operator!=( const Grid& other ) const { return uid() != other.uid(); }
 
-    /// Unique grid id
-    /// Computed from the shortName and the hash
-    uid_t uniqueId() const;
+    size_t size() const { return grid_->size(); }
+
+    const Projection& projection() const { return grid_->projection(); }
+    const Domain& domain() const { return grid_->domain(); }
+    std::string name() const { return grid_->name(); }
+    std::string uid() const { return grid_->uid(); }
 
     /// Adds to the MD5 the information that makes this Grid unique
-    virtual void hash(eckit::MD5&) const = 0;
+    void hash(eckit::MD5& md5) const { return grid_->hash(md5); }
 
-    /// @returns the hash of the information that makes this Grid unique
-    eckit::MD5::digest_t hash() const;
+    Spec spec() const { return grid_->spec(); }
 
-    /// @return area represented by the grid
-    virtual const Domain& domain() const = 0;
+    const Implementation* get() const { return grid_.get(); }
 
-    /// @return number of grid points
-    /// @note This methods should have constant access time, if necessary derived
-    //        classes should compute it at construction
-    virtual size_t npts() const = 0;
+private:
 
-    /// Fill provided parameter with grid points, as (lon,lat) values
-    /// @post resizes the vector
-    virtual void lonlat(std::vector<Point>&) const = 0;
-
-    /// Fills the provided vector with the (lon,lat) values
-    /// @post resizes the vector
-    void fillLonLat(std::vector<double>&) const;
-
-    /// Fills the provided array with the (lon,lat) values
-    /// @note Assumes that the input array has been allocated with correct size
-    /// @param array is an array already allocated with enough size to store all the latlon values
-    /// @param arraySize is the size of the array
-    void fillLonLat(double array[], size_t arraySize) const;
-
-    virtual std::string gridType() const = 0;
-
-    virtual std::string getOptimalMeshGenerator() const;
-
-    virtual eckit::Properties spec() const = 0;
-
-    virtual bool same(const grid::Grid&) const;
-
-  protected:  // methods
-
-    /// Fill provided memory buffer with the grid points, as (lon,lat) values
-    /// This implementation in the base Grid class is not optimal as it incurs in double copy
-    /// Derived classes should reimplement more optimised versions.
-    ///
-    /// @note Assumes that the input buffer has been allocated with correct size,
-    ///       possibly from calling method npts()
-    ///
-    /// @param pts array to be filled in with the (lon,lat) values
-    /// @param size number of doubles in array
-    ///
-    /// @return the size of bytes copyied in
-    virtual size_t copyLonLatMemory(double* pts, size_t size) const;
-
-    virtual void print(std::ostream&) const = 0;
-
-  private:  // methods
-
-    friend std::ostream& operator<<(std::ostream& s, const grid::Grid& p) {
-        p.print(s);
-        return s;
-    }
-
-  private:  // members
-
-    /// Cache the unique ID
-    mutable uid_t uid_;
-
-    /// Cache the hash
-    mutable eckit::MD5::digest_t hash_;
+    eckit::SharedPtr<const Implementation> grid_;
 
 };
 
+namespace grid {
 
-}  // namespace grid
-}  // namespace atlas
+//---------------------------------------------------------------------------------------------------------------------
+// Further grid interpretation classes defined in this file
+
+class UnstructuredGrid;
+class StructuredGrid;
+class RegularGrid;
+class GaussianGrid;
+class ReducedGaussianGrid;
+class RegularGaussianGrid;
+class RegularLonLatGrid;
+class ShiftedLonLatGrid;
+
+/*
+                                             Grid
+                                               |
+                                    +----------+----------+
+                                    |                     |
+                             StructuredGrid        UnstructuredGrid
+                                    |
+               +--------------------+-----------------------+
+               |                    |                       |
+          ReducedGrid          GaussianGrid            RegularGrid
+               |                 |     |                 |     |
+               +--------+--------+     +--------+--------+     +-----+
+                        |                       |                    |
+               ReducedGaussianGrid     RegularGaussianGrid    RegularLonLatGrid
+*/
+
+//---------------------------------------------------------------------------------------------------------------------
 
 
-#endif
+//---------------------------------------------------------------------------------------------------------------------
+
+class UnstructuredGrid: public Grid {
+
+public:
+
+  using grid_t = detail::grid::Unstructured;
+
+public:
+
+    UnstructuredGrid();
+    UnstructuredGrid( const Grid& );
+    UnstructuredGrid( const Config& );
+    UnstructuredGrid( const Grid::Implementation* );
+    UnstructuredGrid( std::vector<PointXY>* ); // takes ownership
+
+    operator bool() const {
+        return valid();
+    }
+
+    bool valid() const {
+        return grid_;
+    }
+
+    using Grid::xy;
+    void xy( size_t n, double xy[] ) const {
+      PointXY _xy = grid_->xy(n);
+      xy[0] = _xy.x();
+      xy[1] = _xy.y();
+    }
+
+    PointXY xy( size_t n ) const {
+        return grid_->xy(n);
+    }
+
+    PointLonLat lonlat( size_t n ) const {
+        return grid_->lonlat(n);
+    }
+
+
+private:
+
+    const grid_t* grid_;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class StructuredGrid: public Grid {
+
+public:
+
+  using grid_t = detail::grid::Structured;
+  using XSpace = grid_t::XSpace;
+  using YSpace = grid_t::YSpace;
+
+public:
+
+    StructuredGrid();
+    StructuredGrid( const Grid& );
+    StructuredGrid( const Grid::Implementation* );
+    StructuredGrid( const std::string& name, const Domain& = Domain() );
+    StructuredGrid( const Config& );
+    StructuredGrid(
+        const XSpace&,
+        const YSpace&,
+        const Projection& = Projection(),
+        const Domain&     = Domain()
+    );
+
+    operator bool() const {
+        return valid();
+    }
+
+    bool valid() const {
+        return grid_;
+    }
+
+    inline size_t ny() const {
+        return grid_->ny();
+    }
+
+    inline size_t nx( size_t j ) const {
+        return grid_->nx(j);
+    }
+
+    inline const std::vector<long>& nx() const {
+        return grid_->nx();
+    }
+
+    inline size_t nxmax() const {
+        return grid_->nxmax();
+    }
+
+    inline const std::vector<double>& y() const {
+        return grid_->y();
+    }
+
+    inline double x( size_t i, size_t j ) const {
+        return grid_->x(i,j);
+    }
+
+    inline double y( size_t j ) const {
+        return grid_->y(j);
+    }
+
+    using Grid::xy;
+    void xy( size_t i, size_t j, double xy[] ) const {
+        grid_->xy(i,j,xy);
+    }
+
+    void lonlat( size_t i, size_t j, double lonlat[] ) const {
+        grid_->lonlat(i,j,lonlat);
+    }
+
+    PointXY xy( size_t i, size_t j ) const {
+        return PointXY( x(i,j), y(j) );
+    }
+
+    PointLonLat lonlat( size_t i, size_t j ) const {
+        return grid_->lonlat(i,j);
+    }
+
+    inline bool reduced() const {
+        return grid_->reduced();
+    }
+
+    inline bool regular() const {
+        return not reduced();
+    }
+
+    bool periodic() const {
+        return grid_->periodic();
+    }
+
+    const YSpace& yspace() const {
+        return grid_->yspace();
+    }
+
+private:
+
+    const grid_t* grid_;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class ReducedGrid: public StructuredGrid {
+
+public:
+
+    using StructuredGrid::StructuredGrid;
+
+    operator bool() const {
+        return valid();
+    }
+
+    bool valid() const {
+        return StructuredGrid::valid() && reduced();
+    }
+
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class RegularGrid: public StructuredGrid {
+
+public:
+
+    using StructuredGrid::StructuredGrid;
+    using StructuredGrid::x;
+    using StructuredGrid::xy;
+
+    operator bool() const {
+        return valid();
+    }
+
+    bool valid() const {
+        return StructuredGrid::valid() && regular();
+    }
+
+    size_t nx() const {
+        return nxmax();
+    }
+
+    inline double x( size_t i ) const {
+        return x(i,0);
+    }
+
+    PointXY xy( size_t i, size_t j ) const {
+        return PointXY( x(i), y(j ) );
+    }
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+template< class Grid >
+class Gaussian : public Grid {
+
+public:
+
+    using Grid::Grid;
+
+    long N() const { return Grid::ny()/2; }
+
+    inline double lon( size_t i, size_t j ) const {
+        return Grid::x(i,j);
+    }
+
+    inline double lat( size_t j ) const {
+        return Grid::y(j);
+    }
+
+    PointLonLat lonlat( size_t i, size_t j ) const {
+      return Grid::xy(i,j);
+    }
+
+protected:
+
+    bool gaussian() const {
+      return Grid::domain().global()
+        &&   not Grid::projection()
+        &&   Grid::yspace().type() == "gaussian";
+    }
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class GaussianGrid : public Gaussian<StructuredGrid> {
+
+    using grid_t = Gaussian<StructuredGrid>;
+
+public:
+
+    using grid_t::grid_t;
+
+    operator bool() const {
+        return valid();
+    }
+
+    bool valid() const {
+        return StructuredGrid::valid() && gaussian();
+    }
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class ReducedGaussianGrid : public Gaussian<ReducedGrid> {
+
+    using grid_t = Gaussian<ReducedGrid>;
+
+public:
+
+    using grid_t::grid_t;
+    ReducedGaussianGrid( const std::initializer_list<long>& pl );
+    ReducedGaussianGrid( const std::vector<long>& pl, const Domain& domain = Domain() );
+
+    operator bool() const {
+        return valid();
+    }
+
+    bool valid() const {
+        return ReducedGrid::valid() && gaussian();
+    }
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class RegularGaussianGrid : public Gaussian<RegularGrid> {
+
+    using grid_t = Gaussian<RegularGrid>;
+
+public:
+
+    using grid_t::grid_t;
+
+    inline double lon( size_t i ) const {
+        return x(i);
+    }
+
+    inline double lat( size_t j ) const {
+        return y(j);
+    }
+
+    PointLonLat lonlat( size_t i, size_t j ) const {
+      return xy(i,j);
+    }
+
+    operator bool() const {
+        return valid();
+    }
+
+    bool valid() const {
+        return RegularGrid::valid() && gaussian();
+    }
+
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class RegularLonLatGrid : public RegularGrid {
+
+public:
+
+    using RegularGrid::RegularGrid;
+
+public:
+
+    operator bool() const {
+        return valid();
+    }
+
+    bool valid() const {
+        return RegularGrid::valid() && global_lonlat();
+    }
+
+    inline double lon( size_t i ) const {
+        return x(i);
+    }
+
+    inline double lat( size_t j ) const {
+        return y(j);
+    }
+
+    PointLonLat lonlat( size_t i, size_t j ) const {
+        return xy(i,j);
+    }
+
+    bool standard()      const { return standard_lon() && standard_lat(); }
+    bool shifted()       const { return shifted_lon()  && shifted_lat();  }
+    bool shiftedLon()    const { return shifted_lon()  && standard_lat(); }
+    bool shiftedLat()    const { return standard_lon() && shifted_lat();  }
+
+protected:
+
+    bool global_lonlat() const {
+      return domain().global()
+        &&   not projection()
+        &&   yspace().type() == "linear";
+    }
+
+    bool standard_lon() const {
+        return x(0) == 0.;
+    }
+
+    bool standard_lat() const {
+        return y(0) == 90.
+            && ny()%2 == 1;
+    }
+
+    bool shifted_lon() const {
+       return   x(0) == 0.5*360./nx();
+    }
+
+    bool shifted_lat() const {
+        return y(0) == 90.-0.5*180./ny()
+            && ny()%2 == 0;
+    }
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+} // namespace grid
+} // namespace atlas

@@ -19,11 +19,10 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/numerics/fvm/Method.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Constants.h"
-#include "atlas/internals/Bitflags.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 
@@ -44,7 +43,7 @@ namespace {
   }
 }
 
-Method::Method( mesh::Mesh &mesh ) :
+Method::Method( Mesh &mesh ) :
   mesh_(mesh),
   halo_(mesh),
   nodes_(mesh.nodes()),
@@ -54,7 +53,7 @@ Method::Method( mesh::Mesh &mesh ) :
   setup();
 }
 
-Method::Method( mesh::Mesh &mesh, const mesh::Halo &halo ) :
+Method::Method( Mesh &mesh, const mesh::Halo &halo ) :
   mesh_(mesh),
   halo_(halo),
   nodes_(mesh.nodes()),
@@ -64,7 +63,7 @@ Method::Method( mesh::Mesh &mesh, const mesh::Halo &halo ) :
   setup();
 }
 
-Method::Method( mesh::Mesh &mesh, const eckit::Parametrisation &params ) :
+Method::Method( Mesh &mesh, const eckit::Parametrisation &params ) :
   mesh_(mesh),
   halo_(Method_halo(params)),
   nodes_(mesh.nodes()),
@@ -77,7 +76,7 @@ Method::Method( mesh::Mesh &mesh, const eckit::Parametrisation &params ) :
 
 void Method::setup()
 {
-  node_columns_.reset( new functionspace::NodeColumns(mesh(),halo_) );
+  node_columns_ = functionspace::NodeColumns(mesh(),halo_);
   if( edges_.size() == 0 )
   {
     build_edges(mesh());
@@ -90,17 +89,18 @@ void Method::setup()
 
     // Compute sign
     {
-      const array::ArrayView<int,1> is_pole_edge   ( edges_.field("is_pole_edge") );
+      const array::ArrayView<int,1> is_pole_edge = array::make_view<int,1>( edges_.field("is_pole_edge") );
 
       const mesh::Connectivity &node_edge_connectivity = nodes_.edge_connectivity();
-      const mesh::Connectivity &edge_node_connectivity = edges_.node_connectivity();
+      const mesh::MultiBlockConnectivity &edge_node_connectivity = edges_.node_connectivity();
       if( ! nodes_.has_field("node2edge_sign") )
       {
         nodes_.add(
-              field::Field::create<double>("node2edge_sign",
-              array::make_shape(nnodes,node_edge_connectivity.maxcols()) ) );
+              Field("node2edge_sign",
+                array::make_datatype<double>(),
+                array::make_shape(nnodes,node_edge_connectivity.maxcols()) ) );
       }
-      array::ArrayView<double,2> node2edge_sign( nodes_.field("node2edge_sign") );
+      array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes_.field("node2edge_sign") );
 
       atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
       {
@@ -123,14 +123,14 @@ void Method::setup()
     // Metrics
     if (0) {
       const size_t nedges = edges_.size();
-      const array::ArrayView<double,2> lonlat_deg( nodes_.lonlat() );
-      array::ArrayView<double,1> dual_volumes ( nodes_.field("dual_volumes") );
-      array::ArrayView<double,2> dual_normals ( edges_.field("dual_normals") );
+      const array::ArrayView<double,2> lonlat_deg = array::make_view<double,2>( nodes_.lonlat() );
+      array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( nodes_.field("dual_volumes") );
+      array::ArrayView<double,2> dual_normals = array::make_view<double,2>( edges_.field("dual_normals") );
 
       const double deg2rad = M_PI/180.;
       atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
       {
-        double y  = lonlat_deg(jnode,internals::LAT) * deg2rad;
+        double y  = lonlat_deg(jnode,LAT) * deg2rad;
         double hx = radius_*std::cos(y);
         double hy = radius_;
         double G  = hx*hy;
@@ -139,40 +139,41 @@ void Method::setup()
 
       atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
       {
-        dual_normals(jedge,internals::LON) *= deg2rad;
-        dual_normals(jedge,internals::LAT) *= deg2rad;
+        dual_normals(jedge,LON) *= deg2rad;
+        dual_normals(jedge,LAT) *= deg2rad;
       }
     }
   }
-  edge_columns_.reset( new functionspace::EdgeColumns(mesh()) );
+  edge_columns_ = functionspace::EdgeColumns(mesh());
 }
 
 // ------------------------------------------------------------------------------------------
 extern "C" {
-Method* atlas__numerics__fvm__Method__new (mesh::Mesh* mesh, const eckit::Parametrisation* params)
+Method* atlas__numerics__fvm__Method__new (Mesh::Implementation* mesh, const eckit::Parametrisation* params)
 {
   Method* method(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(mesh);
-    method = new Method(*mesh,*params);
+    Mesh m(mesh);
+    method = new Method(m,*params);
   );
   return method;
 }
 
-functionspace::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This)
+const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
-        return &This->node_columns();
+        return dynamic_cast<const functionspace::detail::NodeColumns*>(This->node_columns().get());
   );
   return 0;
 }
 
-functionspace::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This)
+const functionspace::detail::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
-        return &This->edge_columns();
+        return dynamic_cast<const functionspace::detail::EdgeColumns*>(This->edge_columns().get());
   );
   return 0;
 }

@@ -18,11 +18,10 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
-#include "atlas/internals/IsGhost.h"
-#include "atlas/array/IndexView.h"
+#include "atlas/mesh/IsGhostNode.h"
 #include "atlas/runtime/ErrorHandling.h"
 
-using atlas::internals::IsGhost;
+using atlas::mesh::IsGhostNode;
 
 namespace atlas {
 namespace mesh {
@@ -63,7 +62,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 
   {
     const mesh::Nodes& nodes = mesh.nodes();
-    IsGhost is_ghost(nodes);
+    IsGhostNode is_ghost(nodes);
     size_t nb_nodes = nodes.size();
     int nowned(0);
     int nghost(0);
@@ -99,7 +98,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
   if( has_edges )
   {
     const mesh::Nodes& nodes = mesh.nodes();
-    IsGhost is_ghost(nodes);
+    IsGhostNode is_ghost(nodes);
     const mesh::HybridElements::Connectivity& edge_nodes = mesh.edges().node_connectivity();
     size_t nb_edges = mesh.edges().size();
     int nowned(0);
@@ -220,9 +219,9 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 // ------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-void atlas__write_load_balance_report (const Mesh* mesh, char* filename)
+void atlas__write_load_balance_report (Mesh::Implementation* mesh, char* filename)
 {
-  ATLAS_ERROR_HANDLING( write_load_balance_report( *mesh, std::string(filename) ) );
+  ATLAS_ERROR_HANDLING( Mesh m(mesh); write_load_balance_report( m, std::string(filename) ); );
 }
 
 // ------------------------------------------------------------------

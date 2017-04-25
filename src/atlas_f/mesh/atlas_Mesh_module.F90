@@ -32,13 +32,17 @@ TYPE, extends(fckit_refcounted) :: atlas_Mesh
 
 !------------------------------------------------------------------------------
 contains
-  procedure, public :: create_nodes => Mesh__create_nodes
+
   procedure, public :: nodes => Mesh__nodes
   procedure, public :: cells => Mesh__cells
   procedure, public :: edges => Mesh__edges
   procedure, public :: delete => atlas_Mesh__delete
   procedure, public :: copy => atlas_Mesh__copy
   procedure, public :: footprint
+  
+  procedure, public :: clone_to_device
+  procedure, public :: clone_from_device
+  procedure, public :: sync_host_device
 
 END TYPE atlas_Mesh
 
@@ -59,21 +63,15 @@ function atlas_Mesh__cptr(cptr) result(mesh)
   call mesh%reset_c_ptr( cptr )
 end function atlas_Mesh__cptr
 
+!-------------------------------------------------------------------------------
+
 function atlas_Mesh__ctor() result(mesh)
   use atlas_mesh_c_binding
   type(atlas_Mesh) :: mesh
   call mesh%reset_c_ptr( atlas__Mesh__new() )
 end function atlas_Mesh__ctor
 
-function Mesh__create_nodes(this,nb_nodes) result(nodes)
-  use atlas_mesh_c_binding
-  use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
-  type(atlas_mesh_Nodes) :: nodes
-  class(atlas_Mesh), intent(in) :: this
-  integer, intent(in) :: nb_nodes
-  call nodes%reset_c_ptr( atlas__Mesh__create_nodes(this%c_ptr(),nb_nodes) )
-  if( nodes%is_null() ) write(0,*) 'call abort()'
-end function
+!-------------------------------------------------------------------------------
 
 function Mesh__nodes(this) result(nodes)
   use atlas_mesh_c_binding
@@ -83,6 +81,8 @@ function Mesh__nodes(this) result(nodes)
   call nodes%reset_c_ptr( atlas__Mesh__nodes(this%c_ptr()) )
   if( nodes%is_null() ) write(0,*) 'call abort()'
 end function
+
+!-------------------------------------------------------------------------------
 
 function Mesh__cells(this) result(cells)
   use atlas_mesh_c_binding
@@ -94,6 +94,8 @@ function Mesh__cells(this) result(cells)
   call cells%return()
 end function
 
+!-------------------------------------------------------------------------------
+
 function Mesh__edges(this) result(edges)
   use atlas_mesh_c_binding
   use atlas_mesh_Edges_module, only: atlas_mesh_Edges
@@ -104,6 +106,8 @@ function Mesh__edges(this) result(edges)
   call edges%return()
 end function
 
+!-------------------------------------------------------------------------------
+
 subroutine atlas_Mesh__delete(this)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(inout) :: this
@@ -113,10 +117,14 @@ subroutine atlas_Mesh__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_Mesh__delete
 
+!-------------------------------------------------------------------------------
+
 subroutine atlas_Mesh__copy(this,obj_in)
   class(atlas_Mesh), intent(inout) :: this
   class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
+
+!-------------------------------------------------------------------------------
 
 function footprint(this)
   use, intrinsic :: iso_c_binding, only : c_size_t
@@ -126,6 +134,30 @@ function footprint(this)
   footprint = atlas__Mesh__footprint(this%c_ptr())
 end function
 
+!-------------------------------------------------------------------------------
+
+subroutine clone_to_device(this)
+  use atlas_mesh_c_binding
+  class(atlas_Mesh), intent(inout) :: this
+  call atlas__Mesh__clone_to_device(this%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine clone_from_device(this)
+  use atlas_mesh_c_binding
+  class(atlas_Mesh), intent(inout) :: this
+  call atlas__Mesh__clone_from_device(this%c_ptr())
+end subroutine
+
 ! ----------------------------------------------------------------------------------------
+
+subroutine sync_host_device(this)
+  use atlas_mesh_c_binding
+  class(atlas_Mesh), intent(inout) :: this
+  call atlas__Mesh__sync_host_device(this%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
 
 end module atlas_Mesh_module

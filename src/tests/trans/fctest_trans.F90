@@ -27,20 +27,20 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_trans,fctest_atlas_trans_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  call atlas_init()
+  call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
   write(0,*) "FINALIZE"
-  call atlas_finalize()
+  call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
 TEST( test_trans )
-  type(atlas_grid_Structured) :: grid
+  type(atlas_StructuredGrid) :: grid
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
@@ -65,11 +65,11 @@ TEST( test_trans )
   nlev=10
   nsmax = 21
 
-  grid = atlas_grid_Structured("O24")
+  grid = atlas_StructuredGrid("O24")
 
   FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 
-  meshgenerator = atlas_meshgenerator_Structured()
+  meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid)
   call meshgenerator%final()
 
@@ -84,9 +84,9 @@ TEST( test_trans )
 !  FCTEST_CHECK_EQUAL( trans%owners(), 1 )
   FCTEST_CHECK_EQUAL( trans%nproc(), 1 )
   FCTEST_CHECK_EQUAL( trans%myproc(proc0=1), 1 )
-  FCTEST_CHECK_EQUAL( trans%ndgl(), int(grid%nlat()) )
-  FCTEST_CHECK_EQUAL( trans%ngptot(), int(grid%npts()) )
-  FCTEST_CHECK_EQUAL( trans%ngptotg(), int(grid%npts()) )
+  FCTEST_CHECK_EQUAL( trans%ndgl(), int(grid%ny()) )
+  FCTEST_CHECK_EQUAL( trans%ngptot(), int(grid%size()) )
+  FCTEST_CHECK_EQUAL( trans%ngptotg(), int(grid%size()) )
   FCTEST_CHECK_EQUAL( trans%nsmax(), nsmax )
 
   nodes = mesh%nodes()
@@ -223,7 +223,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_trans_nomesh )
-  type(atlas_grid_Structured) :: grid
+  type(atlas_StructuredGrid) :: grid
   type(atlas_Trans) :: trans
   type(atlas_functionspace_StructuredColumns) :: gridpoints_fs
   type(atlas_functionspace_Spectral) :: spectral_fs
@@ -241,7 +241,7 @@ TEST( test_trans_nomesh )
   nlev=10
   nsmax = 21
 
-  grid = atlas_grid_Structured("O24")
+  grid = atlas_StructuredGrid("O24")
   trans = atlas_Trans(grid,nsmax)
 
   gridpoints_fs = atlas_functionspace_StructuredColumns(grid)
@@ -316,7 +316,7 @@ TEST( test_trans_nomesh )
 END_TEST
 
 TEST( test_transdwarf )
-type(atlas_grid_Structured) :: grid
+type(atlas_StructuredGrid) :: grid
 type(atlas_Trans) :: trans
 type(atlas_functionspace_StructuredColumns) :: gridpoints
 type(atlas_functionspace_Spectral) :: spectral
@@ -326,7 +326,7 @@ integer :: jfld, nfld
 character(len=10) :: fieldname
 real(c_double) :: norm
 
-grid = atlas_grid_Structured("O24")
+grid = atlas_StructuredGrid("O24")
 trans = atlas_Trans(grid,23)
 gridpoints = atlas_functionspace_StructuredColumns(grid)
 spectral = atlas_functionspace_Spectral(trans)

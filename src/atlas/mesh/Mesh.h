@@ -8,28 +8,23 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_Mesh_h
-#define atlas_Mesh_h
+#pragma once
 
-#include <map>
 #include <iosfwd>
-#include <string>
-#include <vector>
 
-#include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-
-#include "atlas/internals/atlas_config.h"
-#include "atlas/util/Metadata.h"
-#include "atlas/util/Config.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/mesh/detail/MeshImpl.h"
 
 //----------------------------------------------------------------------------------------------------------------------
+// Forward declarations
 
 namespace atlas {
-namespace grid {
-    class Grid;
-    class GridDistribution;
+    class Projection;
+}
+
+namespace atlas {
+namespace util {
+    class Metadata;
 } }
 
 namespace atlas {
@@ -41,84 +36,78 @@ namespace mesh {
 } }
 
 namespace atlas {
-namespace deprecated {
-    class FunctionSpace;
+namespace meshgenerator {
+    class MeshGeneratorImpl;
 } }
-
-namespace atlas {
-namespace util {
-namespace parallel {
-namespace mpl {
-    class HaloExchange;
-    class GatherScatter;
-    class Checksum;
-} } } }
 
 //----------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-namespace mesh {
 
-class Mesh : public eckit::Owned {
-public: // types
+//----------------------------------------------------------------------------------------------------------------------
 
-    typedef eckit::SharedPtr<Mesh> Ptr;
+class Mesh {
 
-public: // methods
+public:
 
-    static Mesh* create( const eckit::Parametrisation& = util::Config() );
-    static Mesh* create( const grid::Grid&, const eckit::Parametrisation& = util::Config() );
+    using Implementation = mesh::detail::MeshImpl;
+    using Nodes = mesh::Nodes;
+    using Cells = mesh::Cells;
+    using Edges = mesh::Edges;
+    using HybridElements = mesh::HybridElements;
 
-    /// @brief Construct a empty Mesh
-    explicit Mesh(const eckit::Parametrisation& = util::Config());
+public:
 
-    /// @brief Construct mesh from grid.
-    /// The mesh is global and only has a "nodes" FunctionSpace
-    Mesh(const grid::Grid&, const eckit::Parametrisation& = util::Config());
+    Mesh();
+    Mesh( const Mesh& );
+    Mesh( const Implementation* );
 
     /// @brief Construct a mesh from a Stream (serialization)
     explicit Mesh(eckit::Stream&);
 
     /// @brief Serialization to Stream
-    void encode(eckit::Stream& s) const;
+    void encode(eckit::Stream& s) const { return impl_->encode(s); }
 
-    /// Destructor
-    /// @note No need to be virtual since this is not a base class.
-    ~Mesh();
+    void print(std::ostream& out) const { impl_->print(out); }
 
-    util::Metadata& metadata() { return metadata_; }
-    const util::Metadata& metadata() const { return metadata_; }
+    const util::Metadata& metadata() const { return impl_->metadata(); }
+          util::Metadata& metadata()       { return impl_->metadata(); }
 
-    void prettyPrint(std::ostream&) const;
+    const Nodes& nodes() const { return impl_->nodes(); }
+          Nodes& nodes()       { return impl_->nodes(); }
 
-    void print(std::ostream&) const;
+    const Cells& cells() const { return impl_->cells(); }
+          Cells& cells()       { return impl_->cells();; }
 
-    mesh::Nodes& createNodes(const grid::Grid& g);
+    const Edges& edges() const { return impl_->edges(); }
+          Edges& edges()       { return impl_->edges(); }
 
-    const mesh::Nodes& nodes() const { return *nodes_; }
-          mesh::Nodes& nodes()       { return *nodes_; }
+    const HybridElements& facets() const { return impl_->facets(); }
+          HybridElements& facets()       { return impl_->facets(); }
 
-    const mesh::Cells& cells() const { return *cells_; }
-          mesh::Cells& cells()       { return *cells_; }
+    const HybridElements& ridges() const { return impl_->ridges(); }
+          HybridElements& ridges()       { return impl_->ridges(); }
 
-    const mesh::Edges& edges() const { return *edges_; }
-          mesh::Edges& edges()       { return *edges_; }
+    const HybridElements& peaks() const { return impl_->peaks(); }
+          HybridElements& peaks()       { return impl_->peaks(); }
 
-    const mesh::HybridElements& facets() const { return *facets_; }
-          mesh::HybridElements& facets()       { return *facets_; }
-
-    const mesh::HybridElements& ridges() const { return *ridges_; }
-          mesh::HybridElements& ridges()       { return *ridges_; }
-
-    const mesh::HybridElements& peaks() const { return *peaks_; }
-          mesh::HybridElements& peaks()       { return *peaks_; }
-
-    bool generated() const;
+    bool generated() const { return impl_->generated(); }
 
     /// @brief Return the memory footprint of the mesh
-    size_t footprint() const;
-    
-    size_t nb_partitions() const;
+    size_t footprint() const { return impl_->footprint(); }
+
+    size_t nb_partitions() const { return impl_->nb_partitions(); }
+
+    void cloneToDevice() const { impl_->cloneToDevice(); }
+
+    void cloneFromDevice() const { impl_->cloneFromDevice(); }
+
+    void syncHostDevice() const { impl_->syncHostDevice(); }
+
+    const Projection& projection() const { return impl_->projection(); }
+
+    const Implementation* get() const { return impl_.get(); }
+          Implementation* get()       { return impl_.get(); }
 
 private:  // methods
 
@@ -127,42 +116,15 @@ private:  // methods
         return s;
     }
 
-    void createElements();
+    friend class meshgenerator::MeshGeneratorImpl;
+    void setProjection(const Projection& p) { impl_->setProjection(p); }
 
-private: // members
+private:
 
-    util::Metadata   metadata_;
+    eckit::SharedPtr<Implementation> impl_;
 
-    eckit::SharedPtr<mesh::Nodes> nodes_;
-                                                      // dimensionality : 2D | 3D
-                                                      //                  --------
-    eckit::SharedPtr<mesh::HybridElements> cells_;    //                  2D | 3D
-    eckit::SharedPtr<mesh::HybridElements> facets_;   //                  1D | 2D
-    eckit::SharedPtr<mesh::HybridElements> ridges_;   //                  0D | 1D
-    eckit::SharedPtr<mesh::HybridElements> peaks_;    //                  NA | 0D
-
-    eckit::SharedPtr<mesh::HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
-
-    size_t dimensionality_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-// C wrapper interfaces to C++ routines
-extern "C"
-{
-  Mesh* atlas__Mesh__new ();
-  void atlas__Mesh__delete (Mesh* This);
-  mesh::Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes);
-  mesh::Nodes* atlas__Mesh__nodes (Mesh* This);
-  mesh::Edges* atlas__Mesh__edges (Mesh* This);
-  mesh::Cells* atlas__Mesh__cells (Mesh* This);
-  size_t atlas__Mesh__footprint (Mesh* This);
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-} // namespace mesh
 } // namespace atlas
-
-#endif // atlas_Mesh_h

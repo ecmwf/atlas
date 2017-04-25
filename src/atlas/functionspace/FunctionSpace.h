@@ -8,21 +8,21 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_FunctionSpace_h
-#define atlas_FunctionSpace_h
+#pragma once
 
 #include <string>
 #include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
 namespace functionspace {
 
-#define FunctionspaceT_nonconst typename FunctionSpace::remove_const<FunctionSpaceT>::type
-#define FunctionspaceT_const    typename FunctionSpace::add_const<FunctionSpaceT>::type
+#define FunctionspaceT_nonconst typename FunctionSpaceImpl::remove_const<FunctionSpaceT>::type
+#define FunctionspaceT_const    typename FunctionSpaceImpl::add_const<FunctionSpaceT>::type
 
 /// @brief FunctionSpace class helps to interprete Fields.
 /// @note  Abstract base class
-class FunctionSpace : public eckit::Owned
+class FunctionSpaceImpl : public eckit::Owned
 {
 private:
     template<typename T> struct remove_const          { typedef T type; };
@@ -32,8 +32,8 @@ private:
     template<typename T> struct add_const<T const> { typedef const T type; };
 
 public:
-    FunctionSpace() {}
-    virtual ~FunctionSpace() = 0;
+    FunctionSpaceImpl() {}
+    virtual ~FunctionSpaceImpl() = 0;
     virtual std::string name() const = 0;
     virtual operator bool() const { return true; }
     virtual size_t footprint() const = 0;
@@ -46,26 +46,27 @@ public:
 
 };
 
-inline FunctionSpace::~FunctionSpace() {}
+inline FunctionSpaceImpl::~FunctionSpaceImpl() {}
 
 template <typename FunctionSpaceT>
-inline FunctionspaceT_nonconst *FunctionSpace::cast()
+inline FunctionspaceT_nonconst *FunctionSpaceImpl::cast()
 {
   return dynamic_cast<FunctionspaceT_nonconst*> (this);
 }
 
 template <typename FunctionSpaceT>
-inline FunctionspaceT_const *FunctionSpace::cast() const
+inline FunctionspaceT_const *FunctionSpaceImpl::cast() const
 {
   return dynamic_cast<FunctionspaceT_const*> (this);
 }
 
 #undef FunctionspaceT_const
 #undef FunctionspaceT_nonconst
+
 //------------------------------------------------------------------------------------------------------
 
 /// @brief Dummy Functionspace class that evaluates to false
-class NoFunctionSpace : public FunctionSpace
+class NoFunctionSpace : public FunctionSpaceImpl
 {
 public:
     NoFunctionSpace() {}
@@ -80,13 +81,39 @@ public:
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-    void atlas__FunctionSpace__delete (FunctionSpace* This);
-    const char* atlas__FunctionSpace__name (FunctionSpace* This);
+    void atlas__FunctionSpace__delete (FunctionSpaceImpl* This);
+    const char* atlas__FunctionSpace__name (FunctionSpaceImpl* This);
 }
 
 //------------------------------------------------------------------------------------------------------
 
 } // namespace functionspace
-} // namespace atlas
 
-#endif // atlas_FunctionSpace_h
+//------------------------------------------------------------------------------------------------------
+
+class FunctionSpace {
+
+public:
+
+  using Implementation = functionspace::FunctionSpaceImpl;
+
+private:
+
+  eckit::SharedPtr< const Implementation > functionspace_;
+
+public:
+
+  FunctionSpace();
+  FunctionSpace( const Implementation* );
+  FunctionSpace( const FunctionSpace& );
+
+  std::string name() const;
+  operator bool() const;
+  size_t footprint() const;
+
+  const Implementation* get() const { return functionspace_.get(); }
+};
+
+//------------------------------------------------------------------------------------------------------
+
+} // namespace atlas

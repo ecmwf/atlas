@@ -1,11 +1,11 @@
-#include "atlas/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
 
 int main(int argc, char** argv)
 {
-    atlas::atlas_init(argc, argv);
+    atlas::Library::instance().initialise(argc, argv);
     atlas::Log::info() << "Hello world!" << std::endl;
-    atlas::atlas_finalize();
+    atlas::Library::instance().finalise();
 
     return 0;
 }

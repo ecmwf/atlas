@@ -8,12 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_output_Output_h
-#define atlas_output_Output_h
+#pragma once
 
 #include <iosfwd>
 #include <string>
 #include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 #include "eckit/serialisation/FileStream.h"
 #include "eckit/config/Parametrisation.h"
 #include "atlas/util/Config.h"
@@ -24,71 +24,120 @@ namespace eckit {
 }
 
 namespace atlas {
-namespace mesh {
     class Mesh;
-} }
+}
 
 namespace atlas {
-namespace field {
   class Field;
   class FieldSet;
+namespace field {
+  class FieldImpl;
+  class FieldSetImpl;
 } }
 
 namespace atlas {
+  class FunctionSpace;
 namespace functionspace {
-    class FunctionSpace;
+    class FunctionSpaceImpl;
 } }
 
 namespace atlas {
 namespace output {
-  
+
 typedef std::ostream Stream;
 typedef eckit::PathName PathName;
 
 // -----------------------------------------------------------------------------
 
-class Output : public eckit::Owned {
+class OutputImpl : public eckit::Owned {
 
 public:
 
-  typedef eckit::SharedPtr<Output> Ptr;
   typedef atlas::util::Config Parameters;
-  static Output* create(const std::string&, Stream&, const eckit::Parametrisation & = util::NoConfig() );
 
 public:
 
-    Output();
+    OutputImpl();
 
-    virtual ~Output();
+    virtual ~OutputImpl();
 
     /// Write mesh file
     virtual void write(
-        const mesh::Mesh&,
+        const Mesh&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
     /// Write field to file
     virtual void write(
-        const field::Field&,
+        const Field&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
     /// Write fieldset to file using FunctionSpace
     virtual void write(
-        const field::FieldSet&,
+        const FieldSet&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
     /// Write field to file using Functionspace
     virtual void write(
-        const field::Field&,
-        const functionspace::FunctionSpace&,
+        const Field&,
+        const FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
     /// Write fieldset to file using FunctionSpace
     virtual void write(
-        const field::FieldSet&,
-        const functionspace::FunctionSpace&,
+        const FieldSet&,
+        const FunctionSpace&,
         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 
 };
+
+class Output {
+
+public:
+
+     using output_t = OutputImpl;
+
+private:
+
+     eckit::SharedPtr<const output_t> output_;
+
+public:
+
+    Output();
+    Output(const output_t*);
+    Output(const Output&);
+    Output(const std::string&, Stream&, const eckit::Parametrisation & = util::NoConfig() );
+
+    /// Write mesh file
+    void write(
+        const Mesh&,
+        const eckit::Parametrisation& = util::NoConfig() ) const;
+
+    /// Write field to file
+    void write(
+        const Field&,
+        const eckit::Parametrisation& = util::NoConfig() ) const;
+
+    /// Write fieldset to file using FunctionSpace
+    void write(
+        const FieldSet&,
+        const eckit::Parametrisation& = util::NoConfig() ) const;
+
+    /// Write field to file using Functionspace
+    void write(
+        const Field&,
+        const FunctionSpace&,
+        const eckit::Parametrisation& = util::NoConfig() ) const;
+
+    /// Write fieldset to file using FunctionSpace
+    void write(
+        const FieldSet&,
+        const FunctionSpace&,
+        const eckit::Parametrisation& = util::NoConfig() ) const;
+
+    const output_t* get() const { return output_.get(); }
+};
+
+
 
 
 
@@ -98,14 +147,14 @@ class OutputFactory {
      * \brief build Output with factory key, and default options
      * \return mesh generator
      */
-    static Output* build(const std::string&, Stream&);
+    static const OutputImpl* build(const std::string&, Stream&);
 
     /*!
      * \brief build Output with factory key inside parametrisation,
      * and options specified in parametrisation as well
      * \return mesh generator
      */
-    static Output* build(const std::string&, Stream&, const eckit::Parametrisation&);
+    static const OutputImpl* build(const std::string&, Stream&, const eckit::Parametrisation&);
 
     /*!
      * \brief list all registered mesh generators
@@ -114,8 +163,8 @@ class OutputFactory {
 
   private:
     std::string name_;
-    virtual Output* make(Stream&) = 0 ;
-    virtual Output* make(Stream&, const eckit::Parametrisation&) = 0 ;
+    virtual const OutputImpl* make(Stream&) = 0 ;
+    virtual const OutputImpl* make(Stream&, const eckit::Parametrisation&) = 0 ;
 
   protected:
 
@@ -127,10 +176,10 @@ class OutputFactory {
 
 template<class T>
 class OutputBuilder : public OutputFactory {
-  virtual Output* make(Stream& stream) {
+  virtual const OutputImpl* make(Stream& stream) {
       return new T(stream);
   }
-  virtual Output* make(Stream& stream, const eckit::Parametrisation& param) {
+  virtual const OutputImpl* make(Stream& stream, const eckit::Parametrisation& param) {
         return new T(stream,param);
   }
   public:
@@ -140,16 +189,14 @@ class OutputBuilder : public OutputFactory {
 // -----------------------------------------------------------------------------
 
 extern "C" {
-void atlas__Output__delete(Output* This);
-Output* atlas__Output__create(const char* factory_key, Stream* stream, const eckit::Parametrisation* params);
-void atlas__Output__write_mesh(const Output* This, const mesh::Mesh* mesh, const eckit::Parametrisation* params);
-void atlas__Output__write_fieldset(const Output* This, const field::FieldSet* fieldset, const eckit::Parametrisation* params);
-void atlas__Output__write_field(const Output* This, const field::Field* field, const eckit::Parametrisation* params);
-void atlas__Output__write_fieldset_fs(const Output* This, const field::FieldSet* fieldset, const functionspace::FunctionSpace* functionspace, const eckit::Parametrisation* params);
-void atlas__Output__write_field_fs(const Output* This, const field::Field* field, const functionspace::FunctionSpace* functionspace, const eckit::Parametrisation* params);
+void atlas__Output__delete(OutputImpl* This);
+const OutputImpl* atlas__Output__create(const char* factory_key, Stream* stream, const eckit::Parametrisation* params);
+void atlas__Output__write_mesh(const OutputImpl* This, Mesh::Implementation* mesh, const eckit::Parametrisation* params);
+void atlas__Output__write_fieldset(const OutputImpl* This, const field::FieldSetImpl* fieldset, const eckit::Parametrisation* params);
+void atlas__Output__write_field(const OutputImpl* This, const field::FieldImpl* field, const eckit::Parametrisation* params);
+void atlas__Output__write_fieldset_fs(const OutputImpl* This, const field::FieldSetImpl* fieldset, const functionspace::FunctionSpaceImpl* functionspace, const eckit::Parametrisation* params);
+void atlas__Output__write_field_fs(const OutputImpl* This, const field::FieldImpl* field, const functionspace::FunctionSpaceImpl* functionspace, const eckit::Parametrisation* params);
 }
 
 } // namespace output
 } // namespace atlas
-
-#endif

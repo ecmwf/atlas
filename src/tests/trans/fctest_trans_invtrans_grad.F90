@@ -76,20 +76,20 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_trans_igrad,fctest_atlas_trans_igrad_fixture
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  call atlas_init()
+  call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
   write(0,*) "FINALIZE"
-  call atlas_finalize()
+  call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
 TEST( test_trans_invtrans_grad )
-  type(atlas_grid_Structured) :: grid
+  type(atlas_GaussianGrid) :: grid
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
@@ -103,8 +103,8 @@ TEST( test_trans_invtrans_grad )
 
   real(c_double) :: beta
 
-  grid = atlas_grid_Structured("O32")
-  meshgenerator = atlas_meshgenerator_Structured()
+  grid = atlas_GaussianGrid("O32")
+  meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid)
   call meshgenerator%final()
 

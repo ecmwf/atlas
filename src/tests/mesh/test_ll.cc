@@ -11,12 +11,12 @@
 #define BOOST_TEST_MODULE TestLL
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/grid/lonlat/RegularLonLat.h"
+#include "atlas/grid/Grid.h"
 
 #include "tests/AtlasFixture.h"
 
@@ -29,9 +29,8 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
-  grid::lonlat::RegularLonLat g(5);
-  mesh::Mesh m;
-  mesh::generators::Structured().generate(g,m);
+  Grid g( "L5" );
+  Mesh m = meshgenerator::StructuredMeshGenerator().generate(g);
   output::Gmsh("L5.msh").write(m);
 }
 

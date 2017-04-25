@@ -14,10 +14,10 @@
 #include <typeinfo>
 #include "eckit/log/Timer.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid/GridDistribution.h"
-#include "atlas/grid/partitioners/Partitioner.h"
+#include "atlas/grid/Distribution.h"
+#include "atlas/grid/Partitioner.h"
+#include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/runtime/LibAtlas.h"
 #include "atlas/runtime/Log.h"
 
 
@@ -40,43 +40,39 @@ PartitionedMesh::PartitionedMesh(
 }
 
 
-void PartitionedMesh::writeGmsh(const std::string& fileName, const field::FieldSet* fields) {
-    ASSERT(mesh_);
+void PartitionedMesh::writeGmsh(const std::string& fileName, const FieldSet& fields) {
 
     util::Config output_config;
     // output_config.set("coordinates", std::string("xyz"));
     output_config.set("ghost", true);
 
     output::Gmsh out(fileName, output_config);
-    out.write(*mesh_);
+    out.write(mesh_);
 
-    if (fields) {
-        out.write(*fields);
+    if (not fields.empty()) {
+        out.write(fields);
     }
 }
 
 
-void PartitionedMesh::partition(const grid::Grid& grid) {
-    eckit::TraceTimer<LibAtlas> tim("PartitionedMesh::partition()");
+void PartitionedMesh::partition(const Grid& grid) {
+    eckit::TraceTimer<Atlas> tim("PartitionedMesh::partition()");
 
-    partitioner_.reset(grid::partitioners::PartitionerFactory::build(optionPartitioner_, grid));
+    partitioner_ = Partitioner(optionPartitioner_);
 
-    grid::GridDistribution::Ptr dist(partitioner_->distribution());
 
-    Generator::Ptr meshgen(mesh::generators::MeshGeneratorFactory::build(optionGenerator_, generatorParams_));
-    mesh_.reset(meshgen->generate(grid, *dist));
+    MeshGenerator meshgen(optionGenerator_, generatorParams_);
+    mesh_ = meshgen.generate(grid, partitioner_.partition(grid));
 }
 
 
-void PartitionedMesh::partition(const grid::Grid& grid, const PartitionedMesh& other) {
-    eckit::TraceTimer<LibAtlas> tim("PartitionedMesh::partition(other)");
+void PartitionedMesh::partition(const Grid& grid, const PartitionedMesh& other) {
+    eckit::TraceTimer<Atlas> tim("PartitionedMesh::partition(other)");
 
-    partitioner_.reset(grid::partitioners::MatchedPartitionerFactory::build(optionPartitioner_,grid, *other.mesh_));
+    partitioner_ = grid::MatchingMeshPartitioner( other.mesh_, util::Config("type",optionPartitioner_) );
 
-    grid::GridDistribution::Ptr dist( partitioner_->distribution() );
-
-    Generator::Ptr meshgen(mesh::generators::MeshGeneratorFactory::build(optionGenerator_, generatorParams_));
-    mesh_.reset(meshgen->generate(grid, *dist));
+    MeshGenerator meshgen(optionGenerator_, generatorParams_);
+    mesh_ = meshgen.generate(grid, partitioner_.partition(grid) );
 }
 
 

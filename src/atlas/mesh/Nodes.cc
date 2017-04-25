@@ -8,11 +8,15 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/array/MakeView.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
-#include "atlas/internals/Parameters.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
+
+using atlas::array::make_datatype;
+using atlas::array::make_shape;
 
 namespace atlas {
 namespace mesh {
@@ -21,22 +25,23 @@ namespace mesh {
 
 Nodes::Nodes(): size_(0)
 {
-  global_index_ = &add( field::Field::create<gidx_t>("glb_idx",   array::make_shape(size())) );
-  remote_index_ = &add( field::Field::create<int   >("remote_idx",array::make_shape(size())) );
-  partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size())) );
-  lonlat_       = &add( field::Field::create<double>("lonlat",    array::make_shape(size(),2)) );
-  ghost_        = &add( field::Field::create<int   >("ghost",     array::make_shape(size())) );
+  global_index_ = add( Field("glb_idx",    make_datatype<gidx_t>(), make_shape(size())) );
+  remote_index_ = add( Field("remote_idx", make_datatype<int   >(), make_shape(size())) );
+  partition_    = add( Field("partition",  make_datatype<int   >(), make_shape(size())) );
+  xy_           = add( Field("xy",         make_datatype<double>(), make_shape(size(),2)) );
+  lonlat_       = add( Field("lonlat",     make_datatype<double>(), make_shape(size(),2)) );
+  ghost_        = add( Field("ghost",      make_datatype<int   >(), make_shape(size())) );
 
   edge_connectivity_ = &add( new Connectivity("edge") );
   cell_connectivity_ = &add( new Connectivity("cell") );
 
 
-  add( field::Field::create<int>("flags", array::make_shape(size(),1)) );
+  add( Field("flags", make_datatype<int>(), make_shape(size())) );
 
 
-  array::ArrayView<gidx_t,1> glb_idx( global_index() );
-  array::ArrayView<int   ,1> part( partition() );
-  array::ArrayView<int   ,1> flags( field("flags") );
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( global_index() );
+  array::ArrayView<int   ,1> part    = array::make_view<int,   1>( partition() );
+  array::ArrayView<int   ,1> flags   = array::make_view<int,   1>( field("flags") );
 
   for(size_t n=0; n<size(); ++n)
   {
@@ -52,18 +57,18 @@ Nodes::Connectivity& Nodes::add( Connectivity *connectivity )
   return *connectivity;
 }
 
-field::Field& Nodes::add( field::Field* field )
+Field Nodes::add( const Field& field )
 {
-  ASSERT( field != NULL );
-  ASSERT( ! field->name().empty() );
+  ASSERT( field );
+  ASSERT( ! field.name().empty() );
 
-  if( has_field(field->name()) ) {
+  if( has_field(field.name()) ) {
     std::stringstream msg;
-    msg << "Trying to add field '"<<field->name()<<"' to Nodes, but Nodes already has a field with this name.";
+    msg << "Trying to add field '"<<field.name()<<"' to Nodes, but Nodes already has a field with this name.";
     throw eckit::Exception(msg.str(),Here());
   }
-  fields_[field->name()] = eckit::SharedPtr<field::Field>(field);
-  return *field;
+  fields_[field.name()] = field;
+  return field;
 }
 
 void Nodes::remove_field(const std::string& name)
@@ -78,7 +83,7 @@ void Nodes::remove_field(const std::string& name)
 }
 
 
-const field::Field& Nodes::field(const std::string& name) const
+const Field& Nodes::field(const std::string& name) const
 {
   if( ! has_field(name) )
   {
@@ -86,27 +91,39 @@ const field::Field& Nodes::field(const std::string& name) const
     msg << "Trying to access field `"<<name<<"' in Nodes, but no field with this name is present in Nodes.";
     throw eckit::Exception(msg.str(),Here());
   }
-  return *fields_.find(name)->second;
+  return fields_.find(name)->second;
 }
 
-field::Field& Nodes::field(const std::string& name)
+Field& Nodes::field(const std::string& name)
 {
-  return const_cast<field::Field&>(static_cast<const Nodes*>(this)->field(name));
+  return const_cast<Field&>(static_cast<const Nodes*>(this)->field(name));
 }
 
 void Nodes::resize( size_t size )
 {
+  size_t previous_size = size_;
   size_ = size;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
-    field::Field& field = *it->second;
+    Field& field = it->second;
     array::ArrayShape shape = field.shape();
     shape[0] = size_;
     field.resize(shape);
   }
+
+  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( global_index() );
+  array::ArrayView<int   ,1> part    = array::make_view<int,   1>( partition() );
+  array::ArrayView<int   ,1> flags   = array::make_view<int,   1>( field("flags") );
+
+  for(size_t n=previous_size; n<size_; ++n)
+  {
+    glb_idx(n) = 1+n;
+    part(n) = parallel::mpi::comm().rank();
+    flags(n) = 0;
+  }
 }
 
-const field::Field& Nodes::field(size_t idx) const
+const Field& Nodes::field(size_t idx) const
 {
   ASSERT(idx < nb_fields());
   size_t c(0);
@@ -114,18 +131,18 @@ const field::Field& Nodes::field(size_t idx) const
   {
     if( idx == c )
     {
-      const field::Field& field = *it->second;
+      const Field& field = it->second;
       return field;
     }
     c++;
   }
   eckit::SeriousBug("Should not be here!",Here());
-  static field::Field* ret;
-  return *ret;
+  static Field f;
+  return f;
 }
-field::Field& Nodes::field(size_t idx)
+Field& Nodes::field(size_t idx)
 {
-  return const_cast<field::Field&>(static_cast<const Nodes*>(this)->field(idx));
+  return const_cast<Field&>(static_cast<const Nodes*>(this)->field(idx));
 }
 
 void Nodes::print(std::ostream& os) const
@@ -147,7 +164,7 @@ void Nodes::print(std::ostream& os) const
 size_t Nodes::footprint() const {
   size_t size = sizeof(*this);
   for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
-    size += (*it).second->footprint();
+    size += (*it).second.footprint();
   }
   for( ConnectivityMap::const_iterator it = connectivities_.begin(); it != connectivities_.end(); ++it ) {
     size += (*it).second->footprint();
@@ -178,7 +195,20 @@ IrregularConnectivity& Nodes::connectivity(const std::string& name)
   return *connectivities_.find(name)->second;
 }
 
+void Nodes::cloneToDevice() const {
+  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second.cloneToDevice();});
+  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->cloneToDevice();});
+}
 
+void Nodes::cloneFromDevice() const {
+  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second.cloneFromDevice();});
+  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->cloneFromDevice();});
+}
+
+void Nodes::syncHostDevice() const {
+  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second.syncHostDevice();});
+  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->syncHostDevice();});
+}
 
 //-----------------------------------------------------------------------------
 
@@ -221,7 +251,7 @@ size_t atlas__mesh__Nodes__nb_fields (Nodes* This)
   return 0;
 }
 
-void atlas__mesh__Nodes__add_field (Nodes* This, field::Field* field)
+void atlas__mesh__Nodes__add_field (Nodes* This, field::FieldImpl* field)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -247,20 +277,20 @@ int atlas__mesh__Nodes__has_field (Nodes* This, char* name)
   return 0;
 }
 
-field::Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name)
+field::FieldImpl* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return &This->field(std::string(name));
+    return This->field(std::string(name)).get();
   );
   return 0;
 }
 
-field::Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, size_t idx)
+field::FieldImpl* atlas__mesh__Nodes__field_by_idx (Nodes* This, size_t idx)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return &This->field(idx);
+    return This->field(idx).get();
   );
   return 0;
 }
@@ -319,52 +349,62 @@ void atlas__mesh__Nodes__add_connectivity (Nodes* This, IrregularConnectivity* c
   );
 }
 
-field::Field* atlas__mesh__Nodes__lonlat(Nodes* This)
+field::FieldImpl* atlas__mesh__Nodes__xy(Nodes* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->lonlat();
+    field = This->xy().get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__Nodes__global_index(Nodes* This)
+field::FieldImpl* atlas__mesh__Nodes__lonlat(Nodes* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->global_index();
+    field = This->lonlat().get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__Nodes__remote_index(Nodes* This)
+field::FieldImpl* atlas__mesh__Nodes__global_index(Nodes* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->remote_index();
+    field = This->global_index().get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__Nodes__partition(Nodes* This)
+field::FieldImpl* atlas__mesh__Nodes__remote_index(Nodes* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->partition();
+    field = This->remote_index().get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__Nodes__ghost(Nodes* This)
+field::FieldImpl* atlas__mesh__Nodes__partition(Nodes* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->ghost();
+    field = This->partition().get();
+  );
+  return field;
+}
+
+field::FieldImpl* atlas__mesh__Nodes__ghost(Nodes* This)
+{
+  field::FieldImpl* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = This->ghost().get();
   );
   return field;
 }

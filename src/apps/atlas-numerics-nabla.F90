@@ -19,7 +19,7 @@ implicit none
 
   character(len=1024) :: msg
 
-  type(atlas_grid_Structured) :: grid
+  type(atlas_StructuredGrid) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Nodes) :: nodes
   type(atlas_functionspace_NodeColumns) :: node_columns
@@ -232,7 +232,7 @@ subroutine init()
   character(len=:),allocatable :: grid_uid
   type(atlas_mesh_Nodes) :: mesh_nodes
 
-  call atlas_init()
+  call atlas_library%initialise()
 
   call fckit_resource("--grid","N24",grid_uid)
   call fckit_resource("--levels",137,nlev)
@@ -245,8 +245,8 @@ subroutine init()
   if( .not.config%get("radius",RA) ) RA = 1.0
 
   ! Setup
-  grid = atlas_grid_Structured(grid_uid)
-  meshgenerator = atlas_meshgenerator_Structured()
+  grid = atlas_StructuredGrid(grid_uid)
+  meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
   fvm  = atlas_fvm_Method(mesh,config)
   node_columns = fvm%node_columns()
@@ -282,7 +282,7 @@ subroutine finalize()
   call mesh%final()
   call grid%final()
   call meshgenerator%final()
-  call atlas_finalize()
+  call atlas_library%finalise()
 end subroutine
 
 ! -----------------------------------------------------------------------------

@@ -11,7 +11,7 @@
 #include <cmath>
 #include <string>
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 #define BOOST_TEST_MODULE test_state
 #include "ecbuild/boost_test_framework.h"
@@ -21,13 +21,14 @@
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
 
-#include "atlas/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/field/State.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
 
 #include "tests/AtlasFixture.h"
@@ -65,9 +66,9 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
   std::string grid_uid;
   if( geometry.get("grid", grid_uid) )
   {
-    eckit::ScopedPtr<grid::Grid> grid(grid::Grid::create(grid_uid));
+    Grid grid(grid_uid);
     if (!geometry.has("ngptot")) {
-      geometry.set("ngptot", grid->npts());
+      geometry.set("ngptot", grid.size());
     }
   }
 
@@ -86,7 +87,7 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
       fieldparams.set("creator","IFS");
       fieldparams.set(geometry);
       fieldparams.set(fields[i]);
-      state.add( field::Field::create( fieldparams ) );
+      state.add( Field( fieldparams ) );
 
       // debug info
       std::stringstream s;
@@ -113,9 +114,9 @@ BOOST_AUTO_TEST_CASE( state )
   State state;
   BOOST_CHECK_EQUAL( state.size() , 0 );
 
-  state.add( field::Field::create<double>( "myfield", array::make_shape(10,1) ) );
-  state.add( field::Field::create<double>( "", array::make_shape(10,2) ) );
-  state.add( field::Field::create<double>( "", array::make_shape(10,3) ) );
+  state.add( Field( "myfield", array::make_datatype<double>(), array::make_shape(10,1) ) );
+  state.add( Field( "",        array::make_datatype<double>(), array::make_shape(10,2) ) );
+  state.add( Field( "",        array::make_datatype<double>(), array::make_shape(10,3) ) );
 
   BOOST_CHECK_EQUAL( state.size() , 3 );
   BOOST_CHECK( state.has("myfield") );
@@ -198,16 +199,16 @@ BOOST_AUTO_TEST_CASE( state_create )
   Log::info() << state.field("soiltype")    << std::endl;
   Log::info() << state.field("GFL")         << std::endl;
 
-  array::ArrayView<float,4> temperature( state.field("temperature") );
+  array::ArrayView<float,4> temperature = array::make_view<float,4>( state.field("temperature") );
   temperature(0,0,0,0) = 0;
 
-  array::ArrayView<double,4> wind( state.field("wind") );
+  array::ArrayView<double,4> wind = array::make_view<double,4>( state.field("wind") );
   wind(0,0,0,0) = 0;
 
-  array::ArrayView<int,4> soiltype( state.field("soiltype") );
+  array::ArrayView<int,4> soiltype = array::make_view<int,4>( state.field("soiltype") );
   soiltype(0,0,0,0) = 0;
 
-  array::ArrayView<long,2> array( state["array"] );
+  array::ArrayView<long,2> array = array::make_view<long,2>( state["array"] );
   array(0,0) = 0;
 
 }

@@ -11,15 +11,24 @@
 #include "atlas/trans/Trans.h"
 
 #include "eckit/parser/JSON.h"
-#include "atlas/array/Array.h"
+#include "atlas/array.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/lonlat/LonLat.h"
-#include "atlas/internals/IsGhost.h"
+#include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
+
+using Topology = atlas::mesh::Nodes::Topology;
+using atlas::mesh::IsGhostNode;
+using atlas::functionspace::StructuredColumns;
+using atlas::functionspace::NodeColumns;
+using atlas::functionspace::Spectral;
+using atlas::Field;
+using atlas::array::ArrayView;
+using atlas::array::make_view;
 
 // anonymous namespace
 namespace {
@@ -33,56 +42,403 @@ void trans_check(const int code, const char* msg, const eckit::CodeLocation& loc
   }
 }
 
+struct PackNodeColumns
+{
+  ArrayView<double,2>& rgpview_;
+  IsGhostNode is_ghost;
+  size_t f;
+
+  PackNodeColumns( ArrayView<double,2>& rgpview, const NodeColumns& fs ) :
+    rgpview_(rgpview), is_ghost( fs.nodes() ), f(0) {}
+
+  void operator()(const Field& field, int components = 0) {
+    ATLAS_DEBUG_VAR(field.rank());
+    switch (field.rank()) {
+      case 1:
+        pack_1(field,components);
+        break;
+      case 2:
+        pack_2(field,components);
+        break;
+      case 3:
+        pack_3(field,components);
+        break;
+      default:
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
+      break;
+    }
+  }
+
+  void pack_1(const Field& field, int)
+  {
+    const ArrayView<double,1> gpfield = make_view<double,1>( field );
+    size_t n=0;
+    for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+    {
+      if( !is_ghost(jnode) )
+      {
+        rgpview_(f,n) = gpfield(jnode);
+        ++n;
+      }
+    }
+    ++f;
+  }
+  void pack_2(const Field& field, int)
+  {
+    const ArrayView<double,2> gpfield = make_view<double,2>( field );
+    const size_t nvars = gpfield.shape(1);
+    for( size_t jvar=0; jvar<nvars; ++jvar )
+    {
+      size_t n=0;
+      for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+      {
+        if( !is_ghost(jnode) )
+        {
+          rgpview_(f,n) = gpfield(jnode,jvar);
+          ++n;
+        }
+      }
+      ++f;
+    }
+  }
+  void pack_3(const Field& field, int components)
+  {
+    const ArrayView<double,3> gpfield = make_view<double,3>( field );
+    if( not components ) components = gpfield.shape(2);
+    ATLAS_DEBUG_VAR( components );
+    for( size_t jcomp=0; jcomp<size_t(components); ++jcomp )
+    {
+      for( size_t jlev=0; jlev<gpfield.shape(1); ++jlev )
+      {
+        size_t n = 0;
+        for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+        {
+          if( !is_ghost(jnode) )
+          {
+            rgpview_(f,n) = gpfield(jnode,jlev,jcomp);
+            ++n;
+          }
+        }
+        ++f;
+      }
+    }
+  }
+};
+
+
+struct PackStructuredColumns
+{
+  ArrayView<double,2>& rgpview_;
+  size_t f;
+
+  PackStructuredColumns( ArrayView<double,2>& rgpview ) :
+    rgpview_(rgpview), f(0) {}
+
+  void operator()(const Field& field) {
+    switch (field.rank()) {
+      case 1:
+        pack_1(field);
+        break;
+      case 2:
+        pack_2(field);
+        break;
+      default:
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
+        break;
+    }
+  }
+
+  void pack_1(const Field& field)
+  {
+    const ArrayView<double,1> gpfield = make_view<double,1>( field );
+    size_t n=0;
+    for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+    {
+      rgpview_(f,n) = gpfield(jnode);
+      ++n;
+    }
+    ++f;
+  }
+  void pack_2(const Field& field)
+  {
+    const ArrayView<double,2> gpfield = make_view<double,2>( field );
+    const size_t nvars = gpfield.shape(1);
+    for( size_t jvar=0; jvar<nvars; ++jvar )
+    {
+      size_t n=0;
+      for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+      {
+        rgpview_(f,n) = gpfield(jnode,jvar);
+        ++n;
+      }
+      ++f;
+    }
+  }
+};
+
+struct PackSpectral
+{
+  ArrayView<double,2>& rspecview_;
+  size_t f;
+  PackSpectral( ArrayView<double,2>& rspecview ) :
+    rspecview_(rspecview), f(0) {}
+
+  void operator()(const Field& field) {
+    switch (field.rank()) {
+      case 1:
+        pack_1(field);
+        break;
+      case 2:
+        pack_2(field);
+        break;
+      default:
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
+        break;
+    }
+  }
+
+  void pack_1(const Field& field)
+  {
+    const ArrayView<double,1> spfield = make_view<double,1>( field );
+
+    for( size_t jwave=0; jwave<spfield.shape(0); ++jwave )
+    {
+      rspecview_(jwave,f) = spfield(jwave);
+    }
+    ++f;
+  }
+  void pack_2(const Field& field)
+  {
+    const ArrayView<double,2> spfield = make_view<double,2>( field );
+
+    const size_t nvars = spfield.shape(1);
+
+    for( size_t jvar=0; jvar<nvars; ++jvar )
+    {
+      for( size_t jwave=0; jwave<spfield.shape(0); ++jwave )
+      {
+        rspecview_(jwave,f) = spfield(jwave,jvar);
+      }
+      ++f;
+    }
+  }
+
+};
+
+struct UnpackNodeColumns
+{
+  const ArrayView<double,2>& rgpview_;
+  IsGhostNode is_ghost;
+  size_t f;
+
+  UnpackNodeColumns( const ArrayView<double,2>& rgpview, const NodeColumns& fs ) :
+    rgpview_(rgpview), is_ghost( fs.nodes() ), f(0) {}
+
+  void operator()(Field& field, int components = 0) {
+    switch (field.rank()) {
+      case 1:
+        unpack_1(field,components);
+        break;
+      case 2:
+        unpack_2(field,components);
+        break;
+      case 3:
+        unpack_3(field,components);
+        break;
+      default:
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
+        break;
+    }
+  }
+
+  void unpack_1(Field& field, int)
+  {
+    ArrayView<double,1> gpfield = make_view<double,1>( field );
+    size_t n(0);
+    for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+    {
+      if( !is_ghost(jnode) )
+      {
+        gpfield(jnode) = rgpview_(f,n);
+        ++n;
+      }
+    }
+    ++f;
+  }
+  void unpack_2(Field& field, int)
+  {
+    ArrayView<double,2> gpfield = make_view<double,2>( field );
+    const size_t nvars = gpfield.shape(1);
+    for( size_t jvar=0; jvar<nvars; ++jvar )
+    {
+      int n=0;
+      for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+      {
+        if( !is_ghost(jnode) )
+        {
+          gpfield(jnode,jvar) = rgpview_(f,n);
+          ++n;
+        }
+      }
+      ++f;
+    }
+  }
+  void unpack_3(Field& field, int components)
+  {
+    ArrayView<double,3> gpfield = make_view<double,3>( field );
+    if( not components ) components = gpfield.shape(2);
+    for( size_t jcomp=0; jcomp<size_t(components); ++jcomp )
+    {
+      for( size_t jlev=0; jlev<gpfield.shape(1); ++jlev )
+      {
+        size_t n = 0;
+        for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+        {
+          if( !is_ghost(jnode) )
+          {
+            gpfield(jnode,jlev,jcomp) = rgpview_(f,n);
+            ++n;
+          }
+        }
+        ++f;
+      }
+    }
+  }
+};
+
+struct UnpackStructuredColumns
+{
+  const ArrayView<double,2>& rgpview_;
+  size_t f;
+
+  UnpackStructuredColumns( const ArrayView<double,2>& rgpview ) :
+    rgpview_(rgpview), f(0) {}
+
+  void operator()(Field& field) {
+    switch (field.rank()) {
+      case 1:
+        unpack_1(field);
+        break;
+      case 2:
+        unpack_2(field);
+        break;
+      default:
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
+        break;
+    }
+  }
+
+  void unpack_1(Field& field)
+  {
+    ArrayView<double,1> gpfield = make_view<double,1>( field );
+    size_t n=0;
+    for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+    {
+      gpfield(jnode) = rgpview_(f,n);
+      ++n;
+    }
+    ++f;
+  }
+  void unpack_2(Field& field)
+  {
+    ArrayView<double,2> gpfield = make_view<double,2>( field );
+    const size_t nvars = gpfield.shape(1);
+    for( size_t jvar=0; jvar<nvars; ++jvar )
+    {
+      size_t n=0;
+      for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
+      {
+        gpfield(jnode,jvar) = rgpview_(f,n);
+        ++n;
+      }
+      ++f;
+    }
+  }
+};
+
+struct UnpackSpectral
+{
+  const ArrayView<double,2>& rspecview_;
+  size_t f;
+  UnpackSpectral( const ArrayView<double,2>& rspecview ) :
+    rspecview_(rspecview), f(0) {}
+
+  void operator()(Field& field) {
+    switch (field.rank()) {
+      case 1:
+        unpack_1(field);
+        break;
+      case 2:
+        unpack_2(field);
+        break;
+      default:
+        ATLAS_DEBUG_VAR(field.rank());
+        NOTIMP;
+        break;
+    }
+  }
+
+  void unpack_1(Field& field)
+  {
+    ArrayView<double,1> spfield = make_view<double,1>( field );
+
+    for( size_t jwave=0; jwave<spfield.shape(0); ++jwave )
+    {
+      spfield(jwave) = rspecview_(jwave,f);
+    }
+    ++f;
+  }
+  void unpack_2(Field& field)
+  {
+    ArrayView<double,2> spfield = make_view<double,2>( field );
+
+    const size_t nvars = spfield.shape(1);
+
+    for( size_t jvar=0; jvar<nvars; ++jvar )
+    {
+      for( size_t jwave=0; jwave<spfield.shape(0); ++jwave )
+      {
+        spfield(jwave,jvar) = rspecview_(jwave,f);
+      }
+      ++f;
+    }
+  }
+
+};
+
+
 } // end anonymous namespace
 
 #define TRANS_CHECK( CALL ) trans_check(CALL, #CALL, Here() )
 
-using atlas::internals::Topology;
-using atlas::functionspace::NodeColumns;
-using atlas::functionspace::Spectral;
 
 namespace atlas {
 namespace trans {
 
-Trans::Trans(const grid::Grid& grid, const Trans::Options& p)
+Trans::Trans(const Grid& grid, const Trans::Options& p)
 {
-  const grid::Structured* reduced = dynamic_cast<const grid::Structured*>(&grid);
-  if( !reduced )
-    throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
   size_t nsmax = 0;
-  ctor_rgg(reduced->nlat(),reduced->pl().data(), nsmax, p);
+  ctor(grid,nsmax,p);
 }
 
-Trans::Trans(const size_t N, const Trans::Options& p)
+Trans::Trans(const long N, const Trans::Options& p)
 {
-  size_t nsmax = 0;
+  long nsmax = 0;
   std::vector<long> pl(2*N,4*N);
   ctor_rgg(pl.size(),pl.data(), nsmax, p);
 }
 
-Trans::Trans(const grid::Grid& grid, const size_t nsmax, const Trans::Options& p )
+Trans::Trans(const Grid& grid, const long nsmax, const Trans::Options& p )
 {
-  const grid::Structured* structured = dynamic_cast<const grid::Structured*>(&grid);
-  if (!structured) {
-    throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans", Here());
-  }
-
-  const grid::lonlat::LonLat* lonlat = dynamic_cast<const grid::lonlat::LonLat*>(structured);
-  if (lonlat && nsmax > 0) {
-    if( lonlat->reduced() ) {
-      throw eckit::BadParameter("Cannot transform a reduced lonlat grid");
-    }
-    else if (lonlat->shifted()(grid::lonlat::Shift::LON) != lonlat->shifted()(grid::lonlat::Shift::LAT)) {
-        throw eckit::BadParameter("Cannot transform a ShiftedLat or ShiftedLon grid");
-    }
-    ctor_lonlat( lonlat->nlonmax(), lonlat->nlat(), nsmax, p );
-  }
-  else {
-    ctor_rgg(structured->nlat(), structured->pl().data(), nsmax, p);
-  }
+  ctor(grid,nsmax,p);
 }
 
-Trans::Trans(const size_t N, const size_t nsmax, const Trans::Options& p)
+Trans::Trans(const long N, const long nsmax, const Trans::Options& p)
 {
   std::vector<long> pl(2*N,4*N);
   ctor_rgg(pl.size(),pl.data(), nsmax, p);
@@ -93,10 +449,29 @@ Trans::~Trans()
   ::trans_delete(&trans_);
 }
 
-void Trans::ctor_rgg(const size_t nlat, const long pl[], size_t nsmax, const Trans::Options& p )
+void Trans::ctor( const Grid& grid, long nsmax, const Trans::Options& p ) {
+  ASSERT( grid.domain().global() );
+  ASSERT( not grid.projection() );
+
+  if( auto gg = grid::GaussianGrid(grid) ) {
+    ctor_rgg(gg.ny(), gg.nx().data(), nsmax, p);
+    return;
+  }
+  if( auto ll = grid::RegularLonLatGrid(grid) ) {
+    if( ll.standard() || ll.shifted() ) {
+      ctor_lonlat( ll.nx(), ll.ny(), nsmax, p );
+      return;
+    }
+  }
+  throw eckit::NotImplemented("Grid type not supported for Spectral Transforms",Here());
+}
+
+
+void Trans::ctor_rgg(const long nlat, const long pl[], long nsmax, const Trans::Options& p )
 {
+  ASSERT( nsmax >= 0 );
   std::vector<int> nloen(nlat);
-  for( size_t jlat=0; jlat<nlat; ++jlat )
+  for( long jlat=0; jlat<nlat; ++jlat )
     nloen[jlat] = pl[jlat];
   TRANS_CHECK(::trans_new(&trans_));
   TRANS_CHECK(::trans_set_resol(&trans_,nlat,nloen.data()));
@@ -123,8 +498,9 @@ void Trans::ctor_rgg(const size_t nlat, const long pl[], size_t nsmax, const Tra
   TRANS_CHECK(::trans_setup(&trans_));
 }
 
-void Trans::ctor_lonlat(const size_t nlon, const size_t nlat, size_t nsmax, const Trans::Options& p )
+void Trans::ctor_lonlat(const long nlon, const long nlat, long nsmax, const Trans::Options& p )
 {
+  ASSERT( nsmax >= 0 );
   TRANS_CHECK(::trans_new(&trans_));
   TRANS_CHECK(::trans_set_resol_lonlat(&trans_,nlon,nlat));
   TRANS_CHECK(::trans_set_trunc(&trans_,nsmax));
@@ -152,7 +528,7 @@ void Trans::ctor_lonlat(const size_t nlon, const size_t nlat, size_t nsmax, cons
 
 Trans::Options::Options() : eckit::Properties()
 {
-  set_cache(0,0);
+  set_cache(nullptr,0);
   set_split_latitudes(true);
   set_fft(FFTW);
   set_flt(false);
@@ -276,33 +652,32 @@ void encode( const Trans::Options& p, eckit::Stream& s )
 
 
 
-void Trans::dirtrans(const functionspace::NodeColumns& gp, const field::Field& gpfield,
-                     const Spectral& sp, field::Field& spfield, const TransParameters& context) const
+void Trans::dirtrans(const functionspace::NodeColumns& gp, const Field& gpfield,
+                     const Spectral& sp, Field& spfield, const TransParameters& context) const
 {
-  field::FieldSet gpfields; gpfields.add(gpfield);
-  field::FieldSet spfields; spfields.add(spfield);
+  FieldSet gpfields; gpfields.add(gpfield);
+  FieldSet spfields; spfields.add(spfield);
   dirtrans(gp,gpfields,sp,spfields,context);
 }
 
 
 // --------------------------------------------------------------------------------------------
 
-
-void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet& gpfields,
-                     const Spectral& sp, field::FieldSet& spfields, const TransParameters& context) const
+void Trans::dirtrans(const functionspace::NodeColumns& gp,const FieldSet& gpfields,
+                     const Spectral& sp, FieldSet& spfields, const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
-    const field::Field& f = gpfields[jfld];
+    const Field& f = gpfields[jfld];
     nfld += f.stride(0);
   }
 
   int trans_spnfld(0);
   for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
-    const field::Field& f = spfields[jfld];
+    const Field& f = spfields[jfld];
     trans_spnfld += f.stride(0);
   }
 
@@ -314,79 +689,46 @@ void Trans::dirtrans(const functionspace::NodeColumns& gp,const field::FieldSet&
   array::ArrayT<double> rgp(nfld,ngptot());
   array::ArrayT<double> rspec(nspec2(),nfld);
 
-  array::ArrayView<double,2> rgpview (rgp);
-  array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview   = array::make_view<double,2>(rgp);
+  array::ArrayView<double,2> rspecview = array::make_view<double,2>(rspec);
 
   // Pack gridpoints
   {
-    internals::IsGhost is_ghost(gp.nodes());
-    size_t f=0;
+    PackNodeColumns pack(rgpview,gp);
     for( size_t jfld=0; jfld<gpfields.size(); ++jfld )
-    {
-      const array::ArrayView<double,2> gpfield ( gpfields[jfld].data<double>(), array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
-      const size_t nvars = gpfield.shape(1);
-      for( size_t jvar=0; jvar<nvars; ++jvar )
-      {
-        size_t n=0;
-        for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
-        {
-          if( !is_ghost(jnode) )
-          {
-            rgpview(f,n) = gpfield(jnode,jvar);
-            ++n;
-          }
-        }
-        ASSERT( (int)n == ngptot() );
-        ++f;
-      }
-    }
+      pack( gpfields[jfld]);
   }
 
   // Do transform
   {
     struct ::DirTrans_t transform = ::new_dirtrans(&trans_);
     transform.nscalar    = nfld;
-    transform.rgp        = rgp.data();
-    transform.rspscalar  = rspec.data();
+    transform.rgp        = rgp.data<double>();
+    transform.rspscalar  = rspec.data<double>();
 
     TRANS_CHECK( ::trans_dirtrans(&transform) );
   }
 
   // Unpack the spectral fields
   {
-    size_t f=0;
+    UnpackSpectral unpack(rspecview);
     for( size_t jfld=0; jfld<spfields.size(); ++jfld )
-    {
-      array::ArrayView<double,2> spfield ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
-
-      const size_t nvars = spfield.shape(1);
-
-      for( size_t jvar=0; jvar<nvars; ++jvar )
-      {
-        for( int jwave=0; jwave<nspec2(); ++jwave )
-        {
-          spfield(jwave,jvar) = rspecview(jwave,f);
-        }
-        ++f;
-      }
-    }
+      unpack(spfields[jfld]);
   }
 
 }
 
 // --------------------------------------------------------------------------------------------
 
-
-
 void Trans::dirtrans(
-    const field::Field& gpfield,
-          field::Field& spfield,
+    const Field& gpfield,
+          Field& spfield,
     const TransParameters& context) const
 {
   ASSERT( gpfield.functionspace() == 0 ||
-          gpfield.functionspace().cast<functionspace::StructuredColumns>() );
+          functionspace::StructuredColumns(gpfield.functionspace()) );
   ASSERT( spfield.functionspace() == 0 ||
-          spfield.functionspace().cast<functionspace::Spectral>() );
+          functionspace::Spectral(spfield.functionspace()) );
   if ( gpfield.stride(0) != spfield.stride(0) )
   {
     throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
@@ -397,41 +739,37 @@ void Trans::dirtrans(
   }
   const int nfld = gpfield.stride(0);
 
-  array::ArrayView<double,2> rgp   (gpfield);
-  array::ArrayView<double,2> rspec (spfield);
-
   // Do transform
   {
     struct ::DirTrans_t transform = ::new_dirtrans(&trans_);
     transform.nscalar    = nfld;
-    transform.rgp        = rgp.data();
-    transform.rspscalar  = rspec.data();
-    transform.ngpblks    = rgp.shape(0);
+    transform.rgp        = gpfield.data<double>();
+    transform.rspscalar  = spfield.data<double>();
+    transform.ngpblks    = gpfield.shape(0);
     transform.nproma     = 1;
     TRANS_CHECK( ::trans_dirtrans(&transform) );
   }
 }
 
-
 void Trans::dirtrans(
-    const field::FieldSet& gpfields,
-          field::FieldSet& spfields,
+    const FieldSet& gpfields,
+          FieldSet& spfields,
     const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
-    const field::Field& f = gpfields[jfld];
+    const Field& f = gpfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.functionspace() == 0 ||
-            f.functionspace().cast<functionspace::StructuredColumns>() );
+            functionspace::StructuredColumns(f.functionspace()) );
   }
 
   int trans_spnfld(0);
   for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
-    const field::Field& f = spfields[jfld];
+    const Field& f = spfields[jfld];
     trans_spnfld += f.stride(0);
   }
 
@@ -443,83 +781,59 @@ void Trans::dirtrans(
   array::ArrayT<double> rgp(nfld,ngptot());
   array::ArrayT<double> rspec(nspec2(),nfld);
 
-  array::ArrayView<double,2> rgpview (rgp);
-  array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview   = array::make_view<double,2>(rgp);
+  array::ArrayView<double,2> rspecview = array::make_view<double,2>(rspec);
 
   // Pack gridpoints
   {
-    size_t f=0;
+    PackStructuredColumns pack(rgpview);
     for( size_t jfld=0; jfld<gpfields.size(); ++jfld )
-    {
-      const array::ArrayView<double,2> gpfield ( gpfields[jfld].data<double>(), array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
-      const size_t nvars = gpfield.shape(1);
-      for( size_t jvar=0; jvar<nvars; ++jvar )
-      {
-        for( size_t jnode=0; jnode<gpfield.shape(0); ++jnode )
-        {
-          rgpview(f,jnode) = gpfield(jnode,jvar);
-        }
-        ++f;
-      }
-    }
+      pack(gpfields[jfld]);
   }
 
   // Do transform
   {
     struct ::DirTrans_t transform = ::new_dirtrans(&trans_);
     transform.nscalar    = nfld;
-    transform.rgp        = rgp.data();
-    transform.rspscalar  = rspec.data();
+    transform.rgp        = rgp.data<double>();
+    transform.rspscalar  = rspec.data<double>();
 
     TRANS_CHECK( ::trans_dirtrans(&transform) );
   }
 
   // Unpack the spectral fields
   {
-    size_t f=0;
+    UnpackSpectral unpack(rspecview);
     for( size_t jfld=0; jfld<spfields.size(); ++jfld )
-    {
-      array::ArrayView<double,2> spfield ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
-
-      const size_t nvars = spfield.shape(1);
-
-      for( size_t jvar=0; jvar<nvars; ++jvar )
-      {
-        for( int jwave=0; jwave<nspec2(); ++jwave )
-        {
-          spfield(jwave,jvar) = rspecview(jwave,f);
-        }
-        ++f;
-      }
-    }
+      unpack(spfields[jfld]);
   }
 }
 
 // --------------------------------------------------------------------------------------------
 
-void Trans::invtrans_grad(const Spectral& sp, const field::Field& spfield,
-                          const functionspace::NodeColumns& gp, field::Field& gradfield) const
+void Trans::invtrans_grad(const Spectral& sp, const Field& spfield,
+                          const functionspace::NodeColumns& gp, Field& gradfield) const
 {
-  field::FieldSet spfields;   spfields.  add(spfield);
-  field::FieldSet gradfields; gradfields.add(gradfield);
+  FieldSet spfields;   spfields.  add(spfield);
+  FieldSet gradfields; gradfields.add(gradfield);
   invtrans_grad(sp,spfields,gp,gradfields);
 }
 
-void Trans::invtrans_grad(const Spectral& sp, const field::FieldSet& spfields,
-                          const functionspace::NodeColumns& gp, field::FieldSet& gradfields) const
+void Trans::invtrans_grad(const Spectral& sp, const FieldSet& spfields,
+                          const functionspace::NodeColumns& gp, FieldSet& gradfields) const
 {
   // Count total number of fields and do sanity checks
   int nb_gridpoint_field(0);
   for(size_t jfld = 0; jfld < gradfields.size(); ++jfld)
   {
-    const field::Field& f = gradfields[jfld];
+    const Field& f = gradfields[jfld];
     nb_gridpoint_field += f.stride(0);
   }
 
   int nfld(0);
   for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
-    const field::Field& f = spfields[jfld];
+    const Field& f = spfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.levels() == f.stride(0) );
   }
@@ -532,34 +846,22 @@ void Trans::invtrans_grad(const Spectral& sp, const field::FieldSet& spfields,
   array::ArrayT<double> rgp(3*nfld,ngptot()); // (scalars) + (NS ders) + (EW ders)
   array::ArrayT<double> rspec(nspec2(),nfld);
 
-  array::ArrayView<double,2> rgpview (rgp);
-  array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview   = array::make_view<double,2>(rgp);
+  array::ArrayView<double,2> rspecview = array::make_view<double,2>(rspec);
 
   // Pack spectral fields
   {
-    int f=0;
+    PackSpectral pack(rspecview);
     for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
-    {
-      const array::ArrayView<double,2> field ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
-      const int nlev = field.shape(1);
-
-      for( int jlev=0; jlev<nlev; ++jlev )
-      {
-        for( int jwave=0; jwave<nspec2(); ++jwave )
-        {
-          rspecview(jwave,f) = field(jwave,jlev);
-        }
-        ++f;
-      }
-    }
+      pack(spfields[jfld]);
   }
 
   // Do transform
   {
     struct ::InvTrans_t transform = ::new_invtrans(&trans_);
     transform.nscalar     = nfld;
-    transform.rgp         = rgp.data();
-    transform.rspscalar   = rspec.data();
+    transform.rgp         = rgp.data<double>();
+    transform.rspscalar   = rspec.data<double>();
     transform.lscalarders = true;
 
     TRANS_CHECK(::trans_invtrans(&transform));
@@ -567,7 +869,7 @@ void Trans::invtrans_grad(const Spectral& sp, const field::FieldSet& spfields,
 
   // Unpack the gridpoint fields
   {
-    internals::IsGhost is_ghost( gp.nodes());
+    mesh::IsGhostNode is_ghost( gp.nodes());
     int f=nfld; // skip to where derivatives start
     for(size_t dim=0; dim<2; ++dim) {
       for(size_t jfld = 0; jfld < gradfields.size(); ++jfld)
@@ -575,7 +877,7 @@ void Trans::invtrans_grad(const Spectral& sp, const field::FieldSet& spfields,
         const size_t nlev = gradfields[jfld].levels();
         const size_t nb_nodes  = gradfields[jfld].shape(0);
 
-        array::ArrayView<double,3> field ( gradfields[jfld].data<double>(),
+        array::LocalView<double,3> field ( gradfields[jfld].data<double>(),
            array::make_shape(nb_nodes, nlev, 2 ) );
 
         for( size_t jlev=0; jlev<nlev; ++jlev )
@@ -599,11 +901,11 @@ void Trans::invtrans_grad(const Spectral& sp, const field::FieldSet& spfields,
 
 // --------------------------------------------------------------------------------------------
 
-void Trans::invtrans(const Spectral& sp, const field::Field& spfield,
-                     const functionspace::NodeColumns& gp, field::Field& gpfield, const TransParameters& context) const
+void Trans::invtrans(const Spectral& sp, const Field& spfield,
+                     const functionspace::NodeColumns& gp, Field& gpfield, const TransParameters& context) const
 {
-  field::FieldSet spfields; spfields.add(spfield);
-  field::FieldSet gpfields; gpfields.add(gpfield);
+  FieldSet spfields; spfields.add(spfield);
+  FieldSet gpfields; gpfields.add(gpfield);
   invtrans(sp,spfields,gp,gpfields,context);
 }
 
@@ -611,21 +913,21 @@ void Trans::invtrans(const Spectral& sp, const field::Field& spfield,
 // --------------------------------------------------------------------------------------------
 
 
-void Trans::invtrans(const Spectral& sp, const field::FieldSet& spfields,
-                     const functionspace::NodeColumns& gp, field::FieldSet& gpfields, const TransParameters& context) const
+void Trans::invtrans(const Spectral& sp, const FieldSet& spfields,
+                     const functionspace::NodeColumns& gp, FieldSet& gpfields, const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
-    const field::Field& f = gpfields[jfld];
+    const Field& f = gpfields[jfld];
     nfld += f.stride(0);
   }
 
   int nb_spectral_fields(0);
   for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
-    const field::Field& f = spfields[jfld];
+    const Field& f = spfields[jfld];
     nb_spectral_fields += f.stride(0);
   }
 
@@ -636,62 +938,31 @@ void Trans::invtrans(const Spectral& sp, const field::FieldSet& spfields,
   array::ArrayT<double> rgp(nfld,ngptot());
   array::ArrayT<double> rspec(nspec2(),nfld);
 
-  array::ArrayView<double,2> rgpview (rgp);
-  array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview   = array::make_view<double,2>(rgp);
+  array::ArrayView<double,2> rspecview = array::make_view<double,2>(rspec);
 
   // Pack spectral fields
   {
-    int f=0;
+    PackSpectral pack(rspecview);
     for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
-    {
-      const array::ArrayView<double,2> field ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
-      const int nvars = field.shape(1);
-
-      for( int jvar=0; jvar<nvars; ++jvar )
-      {
-        for( int jwave=0; jwave<nspec2(); ++jwave )
-        {
-          rspecview(jwave,f) = field(jwave,jvar);
-        }
-        ++f;
-      }
-    }
+      pack(spfields[jfld]);
   }
 
   // Do transform
   {
     struct ::InvTrans_t transform = ::new_invtrans(&trans_);
     transform.nscalar    = nfld;
-    transform.rgp        = rgp.data();
-    transform.rspscalar  = rspec.data();
+    transform.rgp        = rgp.data<double>();
+    transform.rspscalar  = rspec.data<double>();
 
     TRANS_CHECK(::trans_invtrans(&transform));
   }
 
   // Unpack the gridpoint fields
   {
-    internals::IsGhost is_ghost( gp.nodes());
-    int f=0;
+    UnpackNodeColumns unpack(rgpview,gp);
     for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
-    {
-      array::ArrayView<double,2> field ( gpfields[jfld].data<double>(), array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
-      const size_t nvars = field.shape(1);
-
-      for( size_t jvar=0; jvar<nvars; ++jvar )
-      {
-        int n=0;
-        for( size_t jnode=0; jnode<field.shape(0); ++jnode )
-        {
-          if( !is_ghost(jnode) )
-          {
-            field(jnode,jvar) = rgpview(f,n);
-            ++n;
-          }
-        }
-        ASSERT( n == ngptot() );
-        ++f;
-      }
-    }
+      unpack(gpfields[jfld]);
   }
 
 }
@@ -699,14 +970,14 @@ void Trans::invtrans(const Spectral& sp, const field::FieldSet& spfields,
 // --------------------------------------------------------------------------------------------
 
 
-void Trans::invtrans(const  field::Field& spfield,
-                            field::Field& gpfield,
+void Trans::invtrans(const  Field& spfield,
+                            Field& gpfield,
                      const TransParameters& context) const
 {
   ASSERT( gpfield.functionspace() == 0 ||
-          gpfield.functionspace().cast<functionspace::StructuredColumns>() );
+          functionspace::StructuredColumns( gpfield.functionspace() ) );
   ASSERT( spfield.functionspace() == 0 ||
-          spfield.functionspace().cast<functionspace::Spectral>() );
+          functionspace::Spectral( spfield.functionspace() ) );
   if ( gpfield.stride(0) != spfield.stride(0) )
   {
     throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
@@ -717,16 +988,13 @@ void Trans::invtrans(const  field::Field& spfield,
   }
   const int nfld = gpfield.stride(0);
 
-  array::ArrayView<double,2> rgp   (gpfield);
-  array::ArrayView<double,2> rspec (spfield);
-
   // Do transform
   {
     struct ::InvTrans_t transform = ::new_invtrans(&trans_);
     transform.nscalar    = nfld;
-    transform.rgp        = rgp.data();
-    transform.rspscalar  = rspec.data();
-    transform.ngpblks    = rgp.shape(0);
+    transform.rgp        = gpfield.data<double>();
+    transform.rspscalar  = spfield.data<double>();
+    transform.ngpblks    = gpfield.shape(0);
     transform.nproma     = 1;
     TRANS_CHECK( ::trans_invtrans(&transform) );
   }
@@ -736,24 +1004,24 @@ void Trans::invtrans(const  field::Field& spfield,
 // --------------------------------------------------------------------------------------------
 
 
-void Trans::invtrans(const  field::FieldSet& spfields,
-                            field::FieldSet& gpfields,
+void Trans::invtrans(const  FieldSet& spfields,
+                            FieldSet& gpfields,
                      const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
-    const field::Field& f = gpfields[jfld];
+    const Field& f = gpfields[jfld];
     nfld += f.stride(0);
     ASSERT( f.functionspace() == 0 ||
-            f.functionspace().cast<functionspace::StructuredColumns>() );
+            functionspace::StructuredColumns( f.functionspace() ) );
   }
 
   int nb_spectral_fields(0);
   for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
-    const field::Field& f = spfields[jfld];
+    const Field& f = spfields[jfld];
     nb_spectral_fields += f.stride(0);
   }
 
@@ -768,62 +1036,38 @@ void Trans::invtrans(const  field::FieldSet& spfields,
   array::ArrayT<double> rgp(nfld,ngptot());
   array::ArrayT<double> rspec(nspec2(),nfld);
 
-  array::ArrayView<double,2> rgpview (rgp);
-  array::ArrayView<double,2> rspecview (rspec);
+  array::ArrayView<double,2> rgpview   = array::make_view<double,2>(rgp);
+  array::ArrayView<double,2> rspecview = array::make_view<double,2>(rspec);
 
   // Pack spectral fields
   {
-    int f=0;
+    PackSpectral pack(rspecview);
     for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
-    {
-      const array::ArrayView<double,2> field ( spfields[jfld].data<double>(), array::make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
-      const int nvars = field.shape(1);
-
-      for( int jvar=0; jvar<nvars; ++jvar )
-      {
-        for( int jwave=0; jwave<nspec2(); ++jwave )
-        {
-          rspecview(jwave,f) = field(jwave,jvar);
-        }
-        ++f;
-      }
-    }
+      pack(spfields[jfld]);
   }
 
   // Do transform
   {
     struct ::InvTrans_t transform = ::new_invtrans(&trans_);
     transform.nscalar    = nfld;
-    transform.rgp        = rgp.data();
-    transform.rspscalar  = rspec.data();
+    transform.rgp        = rgp.data<double>();
+    transform.rspscalar  = rspec.data<double>();
 
     TRANS_CHECK(::trans_invtrans(&transform));
   }
 
   // Unpack the gridpoint fields
   {
-    int f=0;
+    UnpackStructuredColumns unpack(rgpview);
     for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
-    {
-      array::ArrayView<double,2> field ( gpfields[jfld].data<double>(), array::make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
-      const size_t nvars = field.shape(1);
-
-      for( size_t jvar=0; jvar<nvars; ++jvar )
-      {
-        for( size_t jnode=0; jnode<field.shape(0); ++jnode )
-        {
-          field(jnode,jvar) = rgpview(f,jnode);
-        }
-        ++f;
-      }
-    }
+      unpack(gpfields[jfld]);
   }
 }
 
 // -----------------------------------------------------------------------------------------------
 
-void Trans::dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const field::Field& gpwind,
-                                 const Spectral& sp, field::Field& spvor, field::Field&spdiv,
+void Trans::dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const Field& gpwind,
+                                 const Spectral& sp, Field& spvor, Field&spdiv,
                                  const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
@@ -843,39 +1087,29 @@ void Trans::dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const fie
   if( spdiv.size() == 0 ) throw eckit::SeriousBug("dirtrans: spectral divergence field is empty.");
 
   // Arrays Trans expects
-  array::ArrayT<double> rgp(2*nfld,ngptot());
-  array::ArrayView<double,2> rgpview (rgp);
+  array::ArrayT<double> rgp(2*nfld,size_t(ngptot()));
+  array::ArrayView<double,2> rgpview = array::make_view<double,2>(rgp);
 
+  ATLAS_DEBUG_VAR(gpwind.size());
+  ATLAS_DEBUG_VAR(rgp.size());
+  ATLAS_DEBUG_VAR(gpwind.stride(0));
+  ATLAS_DEBUG_VAR(2*nfld);
+  ATLAS_DEBUG_VAR(rgp.stride(0));
+
+  ATLAS_DEBUG_HERE();
   // Pack gridpoints
   {
-    internals::IsGhost is_ghost( gp.nodes() );
-    size_t f=0;
-    array::ArrayView<double,3> wind ( gpwind.data<double>(), array::make_shape(gpwind.shape(0),nfld,nwindfld/nfld) );
-    for( size_t jcomp=0; jcomp<2; ++jcomp )
-    {
-      for( size_t jfld=0; jfld<nfld; ++jfld )
-      {
-        int n = 0;
-        for( size_t jnode=0; jnode<gpwind.shape(0); ++jnode )
-        {
-          if( !is_ghost(jnode) )
-          {
-            rgpview(f,n) = wind(jnode,jfld,jcomp);
-            ++n;
-          }
-        }
-        ASSERT( n == ngptot() );
-        ++f;
-      }
-    }
-
+    PackNodeColumns pack( rgpview, gp );
+    int wind_components = 2;
+    pack(gpwind, wind_components);
   }
+  ATLAS_DEBUG_HERE();
 
   // Do transform
   {
     struct ::DirTrans_t transform = ::new_dirtrans(&trans_);
     transform.nvordiv = nfld;
-    transform.rgp     = rgp.data();
+    transform.rgp     = rgp.data<double>();
     transform.rspvor  = spvor.data<double>();
     transform.rspdiv  = spdiv.data<double>();
 
@@ -883,12 +1117,13 @@ void Trans::dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const fie
     ASSERT( transform.rspdiv );
     TRANS_CHECK( ::trans_dirtrans(&transform) );
   }
+  ATLAS_DEBUG_HERE();
 
 }
 
 
-void Trans::invtrans_vordiv2wind(const Spectral& sp, const field::Field& spvor, const field::Field& spdiv,
-                                 const functionspace::NodeColumns& gp, field::Field& gpwind, const TransParameters&) const
+void Trans::invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, const Field& spdiv,
+                                 const functionspace::NodeColumns& gp, Field& gpwind, const TransParameters&) const
 {
   // Count total number of fields and do sanity checks
   size_t nfld = spvor.stride(0);
@@ -909,14 +1144,14 @@ void Trans::invtrans_vordiv2wind(const Spectral& sp, const field::Field& spvor, 
   if( spdiv.size() == 0 ) throw eckit::SeriousBug("invtrans: spectral divergence field is empty.");
 
   // Arrays Trans expects
-  array::ArrayT<double> rgp(2*nfld,ngptot());
-  array::ArrayView<double,2> rgpview (rgp);
+  array::ArrayT<double> rgp(2*nfld,size_t(ngptot()));
+  array::ArrayView<double,2> rgpview = array::make_view<double,2>(rgp);
 
   // Do transform
   {
     struct ::InvTrans_t transform = ::new_invtrans(&trans_);
     transform.nvordiv = nfld;
-    transform.rgp     = rgp.data();
+    transform.rgp     = rgp.data<double>();
     transform.rspvor  = spvor.data<double>();
     transform.rspdiv  = spdiv.data<double>();
 
@@ -927,27 +1162,9 @@ void Trans::invtrans_vordiv2wind(const Spectral& sp, const field::Field& spvor, 
 
   // Unpack the gridpoint fields
   {
-    internals::IsGhost is_ghost( gp.nodes() );
-
-    size_t f=0;
-    array::ArrayView<double,3> wind ( gpwind.data<double>(), array::make_shape(gpwind.shape(0),nfld,nwindfld/nfld) );
-    for( size_t jcomp=0; jcomp<2; ++jcomp )
-    {
-      for( size_t jfld=0; jfld<nfld; ++jfld )
-      {
-        int n = 0;
-        for( size_t jnode=0; jnode<gpwind.shape(0); ++jnode )
-        {
-          if( !is_ghost(jnode) )
-          {
-            wind(jnode,jfld,jcomp) = rgpview(f,n);
-            ++n;
-          }
-        }
-        ASSERT( n == ngptot() );
-        ++f;
-      }
-    }
+    UnpackNodeColumns unpack( rgpview, gp );
+    int wind_components = 2;
+    unpack(gpwind,wind_components);
   }
 
 }
@@ -956,12 +1173,12 @@ void Trans::invtrans_vordiv2wind(const Spectral& sp, const field::Field& spvor, 
 
 
 
-Trans* atlas__Trans__new (const grid::Grid* grid, int nsmax)
+Trans* atlas__Trans__new (const Grid::Implementation* grid, int nsmax)
 {
   Trans* trans(0);
   ATLAS_ERROR_HANDLING(
     ASSERT( grid );
-    trans = new Trans(*grid,nsmax);
+    trans = new Trans( Grid(grid) ,nsmax);
   );
   return trans;
 }
@@ -1414,7 +1631,7 @@ const int* atlas__Trans__nvalue (const Trans* This, int &size)
   return 0;
 }
 
-void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspace::NodeColumns* gp, const field::FieldSet* gpfields, const Spectral* sp, field::FieldSet* spfields, const TransParameters* parameters)
+void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldSetImpl* gpfields, const functionspace::detail::Spectral* sp, field::FieldSetImpl* spfields, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1423,22 +1640,24 @@ void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspa
     ASSERT( sp );
     ASSERT( spfields );
     ASSERT( parameters );
-    This->dirtrans(*gp,*gpfields,*sp,*spfields,*parameters);
+    FieldSet fspfields(spfields);
+    This->dirtrans(FunctionSpace(gp),gpfields,FunctionSpace(sp),fspfields,*parameters);
   );
 }
 
-void atlas__Trans__dirtrans_fieldset (const Trans* This, const field::FieldSet* gpfields, field::FieldSet* spfields, const TransParameters* parameters)
+void atlas__Trans__dirtrans_fieldset (const Trans* This, const field::FieldSetImpl* gpfields, field::FieldSetImpl* spfields, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
     ASSERT( gpfields );
     ASSERT( spfields );
     ASSERT( parameters );
-    This->dirtrans(*gpfields,*spfields,*parameters);
+    FieldSet fspfields(spfields);
+    This->dirtrans(gpfields,fspfields,*parameters);
   );
 }
 
-void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const Spectral* sp, const field::FieldSet* spfields, const functionspace::NodeColumns* gp, field::FieldSet* gpfields, const TransParameters* parameters)
+void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldSetImpl* spfields, const functionspace::detail::NodeColumns* gp, field::FieldSetImpl* gpfields, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1447,56 +1666,61 @@ void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const Spectral* s
     ASSERT( gp );
     ASSERT( gpfields );
     ASSERT( parameters );
-    This->invtrans(*sp,*spfields,*gp,*gpfields,*parameters);
+    FieldSet fgpfields(gpfields);
+    This->invtrans(FunctionSpace(sp),spfields,FunctionSpace(gp),fgpfields,*parameters);
   );
 }
 
 
-void atlas__Trans__dirtrans_field (const Trans* This, const field::Field* gpfield, field::Field* spfield, const TransParameters* parameters)
+void atlas__Trans__dirtrans_field (const Trans* This, const field::FieldImpl* gpfield, field::FieldImpl* spfield, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
     ASSERT( spfield );
     ASSERT( gpfield );
     ASSERT( parameters );
-    This->dirtrans(*gpfield,*spfield,*parameters);
+    Field fspfield(spfield);
+    This->dirtrans(gpfield,fspfield,*parameters);
   );
 }
 
-void atlas__Trans__dirtrans_field_nodes (const Trans* This, const functionspace::NodeColumns* gp, const field::Field* gpfield, const Spectral* sp, field::Field* spfield, const TransParameters* parameters)
+void atlas__Trans__dirtrans_field_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldImpl* gpfield, const functionspace::detail::Spectral* sp, field::FieldImpl* spfield, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
     ASSERT( spfield );
     ASSERT( gpfield );
     ASSERT( parameters );
-    This->dirtrans(*gp,*gpfield,*sp,*spfield,*parameters);
+    Field fspfield(spfield);
+    This->dirtrans(FunctionSpace(gp),gpfield,FunctionSpace(sp),fspfield,*parameters);
   );
 }
 
-void atlas__Trans__invtrans_fieldset (const Trans* This, const field::FieldSet* spfields, field::FieldSet* gpfields, const TransParameters* parameters)
+void atlas__Trans__invtrans_fieldset (const Trans* This, const field::FieldSetImpl* spfields, field::FieldSetImpl* gpfields, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
     ASSERT( spfields );
     ASSERT( gpfields );
     ASSERT( parameters );
-    This->invtrans(*spfields,*gpfields,*parameters);
+    FieldSet fgpfields(gpfields);
+    This->invtrans(spfields,fgpfields,*parameters);
   );
 }
 
-void atlas__Trans__invtrans_field (const Trans* This, const field::Field* spfield, field::Field* gpfield, const TransParameters* parameters)
+void atlas__Trans__invtrans_field (const Trans* This, const field::FieldImpl* spfield, field::FieldImpl* gpfield, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
     ASSERT( spfield );
     ASSERT( gpfield );
     ASSERT( parameters );
-    This->invtrans(*spfield,*gpfield,*parameters);
+    Field fgpfield(gpfield);
+    This->invtrans(spfield,fgpfield,*parameters);
   );
 }
 
-void atlas__Trans__invtrans_field_nodes (const Trans* This, const Spectral* sp, const field::Field* spfield, const functionspace::NodeColumns* gp, field::Field* gpfield, const TransParameters* parameters)
+void atlas__Trans__invtrans_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldImpl* spfield, const functionspace::detail::NodeColumns* gp, field::FieldImpl* gpfield, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1505,11 +1729,12 @@ void atlas__Trans__invtrans_field_nodes (const Trans* This, const Spectral* sp, 
     ASSERT( gp );
     ASSERT( gpfield );
     ASSERT( parameters );
-    This->invtrans(*sp,*spfield,*gp,*gpfield,*parameters);
+    Field fgpfield(gpfield);
+    This->invtrans(FunctionSpace(sp),spfield,FunctionSpace(gp),fgpfield,*parameters);
   );
 }
 
-void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const functionspace::NodeColumns* gp, const field::Field* gpwind, const Spectral* sp, field::Field* spvor, field::Field* spdiv, const TransParameters* parameters)
+void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldImpl* gpwind, const functionspace::detail::Spectral* sp, field::FieldImpl* spvor, field::FieldImpl* spdiv, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1519,11 +1744,13 @@ void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const fu
     ASSERT( spvor );
     ASSERT( spdiv );
     ASSERT( parameters );
-    This->dirtrans_wind2vordiv(*gp,*gpwind,*sp,*spvor,*spdiv,*parameters);
+    Field fspvor(spvor);
+    Field fspdiv(spdiv);
+    This->dirtrans_wind2vordiv(FunctionSpace(gp),gpwind,FunctionSpace(sp),fspvor,fspdiv,*parameters);
   );
 }
 
-void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const Spectral* sp, const field::Field* spvor, const field::Field* spdiv, const functionspace::NodeColumns* gp, field::Field* gpwind, const TransParameters* parameters)
+void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldImpl* spvor, const field::FieldImpl* spdiv, const functionspace::detail::NodeColumns* gp, field::FieldImpl* gpwind, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1533,7 +1760,8 @@ void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const Sp
     ASSERT( gp );
     ASSERT( gpwind );
     ASSERT( parameters );
-    This->invtrans_vordiv2wind(*sp,*spvor,*spdiv,*gp,*gpwind,*parameters);
+    Field fgpwind(gpwind);
+    This->invtrans_vordiv2wind(FunctionSpace(sp),spvor,spdiv,FunctionSpace(gp),fgpwind,*parameters);
   );
 }
 
@@ -1548,7 +1776,7 @@ void atlas__Trans__invtrans (const Trans* This, int nb_scalar_fields, double sca
   );
 }
 
-void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const Spectral* sp, const field::Field* spfield, const functionspace::NodeColumns* gp, field::Field* gpfield)
+void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldImpl* spfield, const functionspace::detail::NodeColumns* gp, field::FieldImpl* gpfield)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1556,7 +1784,8 @@ void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const Spectral*
     ASSERT( spfield );
     ASSERT( gp );
     ASSERT( gpfield );
-    This->invtrans_grad(*sp,*spfield,*gp,*gpfield);
+    Field fgpfield(gpfield);
+    This->invtrans_grad(FunctionSpace(sp),spfield,FunctionSpace(gp),fgpfield);
   );
 }
 

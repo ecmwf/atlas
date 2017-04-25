@@ -8,16 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_Metadata_h
-#define atlas_Metadata_h
+#pragma once
 
 #include <string>
-#include "eckit/memory/SharedPtr.h"
 #include "eckit/value/Properties.h"
 #include "eckit/config/Parametrisation.h"
-
-namespace atlas { namespace grid { class Grid; } }
-namespace atlas { namespace mesh { class Mesh; } }
 
 namespace atlas {
 namespace util {
@@ -95,5 +90,3 @@ extern "C"
 
 } // namespace util
 } // namespace atlas
-
-#endif // Metadata_h

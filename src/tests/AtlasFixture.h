@@ -8,12 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_testing_AtlasFixture_h
-#define atlas_testing_AtlasFixture_h
+#pragma once
 
 #include "eckit/testing/Setup.h"
 
-#include "atlas/atlas.h"
+#include "atlas/library/Library.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/mpi/Comm.h"
 #include "atlas/runtime/Log.h"
@@ -24,18 +23,14 @@ namespace test {
 
 struct AtlasFixture : public eckit::testing::Setup {
 
-    AtlasFixture()
-    {
-        eckit::Main::instance().taskID(
-            eckit::mpi::comm("world").rank());
-        if( eckit::Main::instance().taskID() != 0 )
-            Log::reset();
-        atlas_init();
+    AtlasFixture() {
+        eckit::Main::instance().taskID( eckit::mpi::comm("world").rank() );
+        if( eckit::Main::instance().taskID() != 0 ) Log::reset();
+        atlas::Library::instance().initialise();
     }
 
-    ~AtlasFixture()
-    {
-        atlas_finalize();
+    ~AtlasFixture() {
+        atlas::Library::instance().finalise();
     }
 };
 
@@ -43,5 +38,3 @@ struct AtlasFixture : public eckit::testing::Setup {
 
 } // end namespace test
 } // end namespace atlas
-
-#endif // atlas_testing_AtlasFixture_h

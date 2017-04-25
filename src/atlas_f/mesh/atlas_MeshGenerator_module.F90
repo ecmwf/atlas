@@ -9,7 +9,6 @@ implicit none
 private :: fckit_refcounted
 
 public :: atlas_MeshGenerator
-public :: atlas_meshgenerator_Structured
 
 private
 
@@ -27,11 +26,7 @@ END TYPE atlas_MeshGenerator
 
 interface atlas_MeshGenerator
   module procedure atlas_MeshGenerator__cptr
-  module procedure atlas_MeshGenerator__name_config
-end interface
-
-interface atlas_meshgenerator_Structured
-  module procedure atlas_meshgenerator_Structured__config
+  module procedure atlas_MeshGenerator__config
 end interface
 
 !------------------------------------------------------------------------------
@@ -49,31 +44,21 @@ function atlas_MeshGenerator__cptr(cptr) result(MeshGenerator)
   call MeshGenerator%reset_c_ptr( cptr )
 end function
 
-function atlas_MeshGenerator__name_config(name,config) result(MeshGenerator)
-  use fckit_c_interop_module, only: c_str
-  use atlas_MeshGenerator_c_binding
-  use atlas_Config_module, only: atlas_Config
-  type(atlas_MeshGenerator) :: meshgenerator
-  character(len=*), intent(in) :: name
-  type(atlas_Config), intent(in), optional :: config
-  if( present(config) ) then
-    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str(name),config%c_ptr()))
-  else
-    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create_noconfig(c_str(name)))
-  endif
-  call meshgenerator%return()
-end function
 
-function atlas_meshgenerator_Structured__config(config) result(meshgenerator)
+function atlas_MeshGenerator__config(config) result(meshgenerator)
   use fckit_c_interop_module, only: c_str
   use atlas_MeshGenerator_c_binding
   use atlas_Config_module, only: atlas_Config
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Config), intent(in), optional :: config
+  character(len=:), allocatable :: meshgenerator_type
   if( present(config) ) then
-    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str("Structured"),config%c_ptr()))
+    if( .not. config%get("type",meshgenerator_type) ) then
+       allocate(meshgenerator_type, source='structured')
+    endif
+    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str(meshgenerator_type),config%c_ptr()))
   else
-    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create_noconfig(c_str("Structured")))
+    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create_noconfig('structured'))
   endif
   call meshgenerator%return()
 end function

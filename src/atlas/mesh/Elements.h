@@ -14,11 +14,9 @@
 ///
 /// This file describes the Elements class for a Mesh.
 
-#ifndef atlas_Elements_H
-#define atlas_Elements_H
+#pragma once
 
 #include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/array/ArrayView.h"
@@ -33,7 +31,7 @@ namespace mesh {
 /// @brief Describe elements of a single type
 class Elements : public eckit::Owned {
 public:
-  typedef atlas::mesh::BlockConnectivity Connectivity;
+  // typedef atlas::mesh::BlockConnectivity Connectivity;
 public:
 
 //-- Constructors
@@ -65,16 +63,16 @@ public:
   size_t nb_edges() const;
 
   /// @brief Element to Node connectivity table
-  const Connectivity& node_connectivity() const;
-        Connectivity& node_connectivity();
+  const BlockConnectivity &node_connectivity() const;
+        BlockConnectivity &node_connectivity();
 
   /// @brief Element to Edge connectivity table
-  const Connectivity& edge_connectivity() const;
-        Connectivity& edge_connectivity();
+  const BlockConnectivity &edge_connectivity() const;
+        BlockConnectivity &edge_connectivity();
 
   /// @brief Element to Cell connectivity table
-  const Connectivity& cell_connectivity() const;
-        Connectivity& cell_connectivity();
+  const BlockConnectivity &cell_connectivity() const;
+        BlockConnectivity &cell_connectivity();
 
   /// @brief Element type of these Elements
   const ElementType& element_type() const;
@@ -93,29 +91,29 @@ public:
   size_t end() const;
   
   
-  const field::Field& field(const std::string& name) const { return hybrid_elements_->field(name); }
-        field::Field& field(const std::string& name)   { return hybrid_elements_->field(name); }
+  const Field& field(const std::string& name) const { return hybrid_elements_->field(name); }
+        Field& field(const std::string& name)   { return hybrid_elements_->field(name); }
   bool has_field(const std::string& name) const { return hybrid_elements_->has_field(name); }
 
-  const field::Field& field(size_t idx) const { return hybrid_elements_->field(idx); }
-        field::Field& field(size_t idx) { return hybrid_elements_->field(idx); }
+  const Field& field(size_t idx) const { return hybrid_elements_->field(idx); }
+        Field& field(size_t idx) { return hybrid_elements_->field(idx); }
   size_t nb_fields() const { return hybrid_elements_->nb_fields(); }
 
-  const field::Field& global_index() const { return hybrid_elements_->global_index(); }
-        field::Field& global_index()       { return hybrid_elements_->global_index(); }
+  const Field& global_index() const { return hybrid_elements_->global_index(); }
+        Field& global_index()       { return hybrid_elements_->global_index(); }
 
-  const field::Field& remote_index() const { return hybrid_elements_->remote_index(); }
-        field::Field& remote_index()       { return hybrid_elements_->remote_index(); }
+  const Field& remote_index() const { return hybrid_elements_->remote_index(); }
+        Field& remote_index()       { return hybrid_elements_->remote_index(); }
 
-  const field::Field& partition() const { return hybrid_elements_->partition(); }
-        field::Field& partition()       { return hybrid_elements_->partition(); }
+  const Field& partition() const { return hybrid_elements_->partition(); }
+        Field& partition()       { return hybrid_elements_->partition(); }
 
-  const field::Field& halo() const { return hybrid_elements_->halo(); }
-        field::Field& halo()       { return hybrid_elements_->halo(); }
+  const Field& halo() const { return hybrid_elements_->halo(); }
+        Field& halo()       { return hybrid_elements_->halo(); }
         
   template <typename DATATYPE, int RANK>
-  array::ArrayView<DATATYPE,RANK> view( const field::Field& ) const;
-
+  array::LocalView<DATATYPE,RANK> view( const Field& ) const;
+  
   size_t add(const size_t nb_elements);
 
 private:
@@ -161,75 +159,75 @@ inline size_t Elements::nb_edges() const
 //  return *hybrid_elements_;
 //}
 
-inline const Elements::Connectivity& Elements::node_connectivity() const
+inline const BlockConnectivity& Elements::node_connectivity() const
 {
   if( hybrid_elements_->node_connectivity().blocks() ) {
     return hybrid_elements_->node_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivity dummy;
     return dummy;
   }
 }
 
-inline Elements::Connectivity& Elements::node_connectivity()
+inline BlockConnectivity& Elements::node_connectivity()
 {
   if( hybrid_elements_->node_connectivity().blocks() ) {
     return hybrid_elements_->node_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivity dummy;
     return dummy;
   }
 }
 
-inline const Elements::Connectivity& Elements::edge_connectivity() const
+inline const BlockConnectivity& Elements::edge_connectivity() const
 {
   if( hybrid_elements_->edge_connectivity().blocks() ) {
     return hybrid_elements_->edge_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivity dummy;
     return dummy;
   }
 }
 
-inline Elements::Connectivity& Elements::edge_connectivity()
+inline BlockConnectivity& Elements::edge_connectivity()
 {
   if( hybrid_elements_->edge_connectivity().blocks() ) {
     return hybrid_elements_->edge_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivity dummy;
     return dummy;
   }
 }
 
 
-inline const Elements::Connectivity& Elements::cell_connectivity() const
+inline const BlockConnectivity& Elements::cell_connectivity() const
 {
   if( hybrid_elements_->cell_connectivity().blocks() ) {
     return hybrid_elements_->cell_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivity dummy;
     return dummy;
   }
 }
 
-inline Elements::Connectivity& Elements::cell_connectivity()
+inline BlockConnectivity& Elements::cell_connectivity()
 {
   if( hybrid_elements_->cell_connectivity().blocks() ) {
     return hybrid_elements_->cell_connectivity().block(type_idx_);
   }
   else
   {
-    static Elements::Connectivity dummy;
+    static BlockConnectivity dummy;
     return dummy;
   }
 }
@@ -263,12 +261,12 @@ BlockConnectivity* atlas__mesh__Elements__edge_connectivity(Elements* This);
 BlockConnectivity* atlas__mesh__Elements__cell_connectivity(Elements* This);
 int atlas__mesh__Elements__has_field(const Elements* This, char* name);
 int atlas__mesh__Elements__nb_fields(const Elements* This);
-field::Field* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx);
-field::Field* atlas__mesh__Elements__field_by_name(Elements* This, char* name);
-field::Field* atlas__mesh__Elements__global_index(Elements* This);
-field::Field* atlas__mesh__Elements__remote_index(Elements* This);
-field::Field* atlas__mesh__Elements__partition(Elements* This);
-field::Field* atlas__mesh__Elements__halo(Elements* This);
+field::FieldImpl* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx);
+field::FieldImpl* atlas__mesh__Elements__field_by_name(Elements* This, char* name);
+field::FieldImpl* atlas__mesh__Elements__global_index(Elements* This);
+field::FieldImpl* atlas__mesh__Elements__remote_index(Elements* This);
+field::FieldImpl* atlas__mesh__Elements__partition(Elements* This);
+field::FieldImpl* atlas__mesh__Elements__halo(Elements* This);
 const ElementType* atlas__mesh__Elements__element_type(const Elements* This);
 void atlas__mesh__Elements__add(Elements* This, size_t nb_elements);
 }
@@ -277,5 +275,3 @@ void atlas__mesh__Elements__add(Elements* This, size_t nb_elements);
 
 } // namespace mesh
 } // namespace atlas
-
-#endif

@@ -42,6 +42,12 @@ else()
   set( ATLAS_HAVE_BOUNDSCHECKING 0 )
 endif()
 
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+  set( ATLAS_HAVE_GRIDTOOLS_STORAGE 1 )
+else()
+  set( ATLAS_HAVE_GRIDTOOLS_STORAGE 0 )
+endif()
+
 if( ATLAS_HAVE_MPI )
 
   set( ATLAS_MPI_C_LIBRARIES            ${MPI_CXX_LIBRARIES} )
@@ -49,14 +55,18 @@ if( ATLAS_HAVE_MPI )
 
 endif()
 
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+  include_directories( ${GRIDTOOLS_STORAGE_INCLUDE_DIRS} )
+endif()
+
+
 add_subdirectory( atlas )
 
 if( ATLAS_HAVE_FORTRAN )
-  add_subdirectory( atlas_f )
+ add_subdirectory( atlas_f )
 endif()
 
 add_subdirectory( apps )
-
 add_subdirectory( tests )
 
 if( HAVE_SANDBOX )

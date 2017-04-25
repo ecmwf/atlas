@@ -13,7 +13,7 @@ type(atlas_Field)             :: field_pressure2, field_wind2
 real(wp), pointer             :: pressure(:), wind    (:,:)
 type(atlas_FieldSet)          :: fields
 type(atlas_Metadata)          :: metadata
-call atlas_init()
+call atlas_library%initialise()
 
 ! Define fields
 field_pressure = atlas_Field(name="pressure", kind=atlas_real(wp), shape=[100])
@@ -82,5 +82,5 @@ call field_pressure%final()
 call field_wind    %final()
 call fields        %final()
 
-call atlas_finalize()
+call atlas_library%finalise()
 end program main

@@ -16,8 +16,8 @@
 
 #include <string>
 #include "eckit/memory/Owned.h"
+#include "atlas/field/Field.h"
 
-namespace atlas { namespace field {class Field; } }
 namespace eckit { class Parametrisation; }
 
 //------------------------------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ namespace field {
  * \brief Base class for creating new fields based on Parametrisation
  * Example to create field[100][3] of default type double:
  * \code{.cpp}
- *    Field* field = Field::create(
+ *    FieldImpl* field = Field::create(
  *         Config
  *           ("creator","ArraySpec")      // ArraySpec FieldCreator
  *           ("shape",array::make_shape(100,3))  // Rank 2 field with indexing [100][3]
@@ -46,7 +46,7 @@ public:
 
     virtual ~FieldCreator();
 
-    virtual Field* createField( const eckit::Parametrisation& ) const = 0;
+    virtual FieldImpl* createField( const eckit::Parametrisation& ) const = 0;
 
 };
 

@@ -14,18 +14,18 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
-#include "eckit/memory/SharedPtr.h"
-#include "atlas/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/mesh/generators/MeshGenerator.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/parallel/mpi/mpi.h"
 //------------------------------------------------------------------------------------------------------
 
-using namespace eckit;
+using eckit::Resource;
 using namespace atlas;
 using namespace atlas::mesh::actions;
 using namespace atlas::grid;
@@ -67,17 +67,17 @@ public:
         ;
     if( help )
     {
-      Log::info() << help_str << std::endl;
+      atlas::Log::info() << help_str << std::endl;
       do_run = false;
     }
 
     if( argc == 1 )
     {
-      Log::info() << "usage: atlas-loadbalance GRID [OPTION]... [--help]" << std::endl;
+      atlas::Log::info() << "usage: atlas-loadbalance GRID [OPTION]... [--help]" << std::endl;
       do_run = false;
     }
 
-    atlas_init(argc,argv);
+    atlas::Library::instance().initialise(argc,argv);
 
     key = "";
     for( int i=0; i<argc; ++i )
@@ -107,33 +107,32 @@ void AtlasLoadbalance::run()
 {
   if( !do_run ) return;
 
-  SharedPtr<Structured> grid;
-  try{ grid.reset( Structured::create(key) ); }
+  StructuredGrid grid;
+  try{ grid = Grid(key); }
   catch( eckit::BadParameter& err ){}
 
   if( !grid ) return;
-  SharedPtr<mesh::generators::MeshGenerator> meshgenerator (
-      mesh::generators::MeshGenerator::create("Structured") );
-  SharedPtr<mesh::Mesh> mesh( meshgenerator->generate(*grid) );
+  MeshGenerator meshgenerator("structured");
+  Mesh mesh = meshgenerator.generate(grid);
 
-  SharedPtr<functionspace::NodeColumns> nodes( new functionspace::NodeColumns(*mesh,Halo(halo)) );
+  functionspace::NodeColumns nodes(mesh,Halo(halo));
 
 
   if( output.size() )
   {
-    write_load_balance_report(*mesh,output);
+    write_load_balance_report(mesh,output);
   }
   else
   {
     std::stringstream s;
-    write_load_balance_report(*mesh,s);
+    write_load_balance_report(mesh,s);
 
     if( parallel::mpi::comm().rank() == 0 )
     {
       std::cout << s.str() << std::endl;
     }
   }
-  atlas_finalize();
+  atlas::Library::instance().finalise();
 }
 
 //------------------------------------------------------------------------------------------------------

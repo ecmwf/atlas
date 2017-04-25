@@ -13,8 +13,8 @@
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
-#include "atlas/internals/atlas_config.h"
-#include "atlas/internals/atlas_defines.h"
+#include "atlas/library/config.h"
+#include "atlas/library/config.h"
 #include "atlas/numerics/Nabla.h"
 #include "atlas/numerics/Method.h"
 #include "atlas/numerics/fvm/Nabla.h"
@@ -39,23 +39,49 @@ namespace {
 namespace atlas {
 namespace numerics {
 
-Nabla::Nabla(const Method &method, const eckit::Parametrisation &p)
-{
+NablaImpl::NablaImpl(const Method &method, const eckit::Parametrisation &p) {
 }
 
-Nabla::~Nabla()
-{
+NablaImpl::~NablaImpl() {
 }
 
-Nabla* Nabla::create(const Method &method)
-{
-  return Nabla::create(method,util::Config());
+Nabla::Nabla() :
+    nabla_(nullptr) {
 }
 
-Nabla* Nabla::create(const Method &method, const eckit::Parametrisation &p)
-{
-  return NablaFactory::build(method,p);
+Nabla::Nabla( const Nabla::nabla_t* nabla ) :
+    nabla_(nabla) {
 }
+
+Nabla::Nabla( const Nabla& nabla ) :
+    nabla_(nabla.nabla_) {
+}
+
+Nabla::Nabla( const Method& method, const eckit::Parametrisation& p ) :
+    nabla_( NablaFactory::build(method,p) ) {
+}
+
+Nabla::Nabla( const Method& method ) :
+    Nabla( method, util::NoConfig() ) {
+}
+
+void Nabla::gradient(const Field &scalar, Field &grad) const {
+      nabla_->gradient(scalar,grad);
+}
+
+void Nabla::divergence(const Field &vector, Field &div) const {
+      nabla_->divergence(vector,div);
+}
+
+void Nabla::curl(const Field &vector, Field &curl) const {
+      nabla_->curl(vector,curl);
+}
+
+void Nabla::laplacian(const Field &scalar, Field &laplacian) const {
+      nabla_->laplacian(scalar,laplacian);
+}
+
+
 
 namespace {
 
@@ -117,7 +143,7 @@ bool NablaFactory::has(const std::string& name)
 
 
 
-Nabla* NablaFactory::build(const Method& method, const eckit::Parametrisation& p) {
+const NablaImpl* NablaFactory::build(const Method& method, const eckit::Parametrisation& p) {
 
     pthread_once(&once, init);
 
@@ -127,7 +153,7 @@ Nabla* NablaFactory::build(const Method& method, const eckit::Parametrisation& p
 
     std::map<std::string, NablaFactory *>::const_iterator j = m->find(method.name());
 
-    Log::debug<ATLAS>() << "Looking for NablaFactory [" << method.name() << "]" << '\n';
+    Log::debug<Atlas>() << "Looking for NablaFactory [" << method.name() << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No NablaFactory for [" << method.name() << "]" << '\n';
@@ -142,7 +168,7 @@ Nabla* NablaFactory::build(const Method& method, const eckit::Parametrisation& p
 
 extern "C" {
 
-void atlas__Nabla__delete(Nabla* This)
+void atlas__Nabla__delete(Nabla::nabla_t* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -150,54 +176,63 @@ void atlas__Nabla__delete(Nabla* This)
   );
 }
 
-Nabla* atlas__Nabla__create (const Method* method, const eckit::Parametrisation* params)
+const Nabla::nabla_t* atlas__Nabla__create (const Method* method, const eckit::Parametrisation* params)
 {
-  Nabla* nabla(0);
+  const Nabla::nabla_t* nabla(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(method);
     ASSERT(params);
-    nabla = Nabla::create(*method,*params);
+    {
+      Nabla n(*method,*params);
+      nabla = n.get();
+      nabla->attach();
+    }
+    nabla->detach();
   );
   return nabla;
 }
 
-void atlas__Nabla__gradient (const Nabla* This, const field::Field* scalar, field::Field* grad)
+void atlas__Nabla__gradient (const Nabla::nabla_t* This, const field::FieldImpl* scalar, field::FieldImpl* grad)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(scalar);
     ASSERT(grad);
-    This->gradient(*scalar,*grad);
+    Field fgrad(grad);
+    This->gradient(scalar,fgrad);
   );
 }
 
-void atlas__Nabla__divergence (const Nabla* This, const field::Field* vector, field::Field* div)
+void atlas__Nabla__divergence (const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* div)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(vector);
     ASSERT(div);
-    This->divergence(*vector,*div);
+    Field fdiv(div);
+    This->divergence(vector,fdiv);
   );
 }
 
-void atlas__Nabla__curl (const Nabla* This, const field::Field* vector, field::Field* curl)
+void atlas__Nabla__curl (const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* curl)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(vector);
     ASSERT(curl);
-    This->curl(*vector,*curl);
+    Field fcurl(curl);
+    This->curl(vector,fcurl);
   );
 }
 
-void atlas__Nabla__laplacian (const Nabla* This, const field::Field* scalar, field::Field* laplacian)
+void atlas__Nabla__laplacian (const Nabla::nabla_t* This, const field::FieldImpl* scalar, field::FieldImpl* laplacian)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(scalar);
     ASSERT(laplacian);
-    This->laplacian(*scalar,*laplacian);
+    Field flaplacian(laplacian);
+    This->laplacian(scalar,flaplacian);
   );
 }
 

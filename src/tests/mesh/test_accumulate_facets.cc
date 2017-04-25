@@ -8,20 +8,20 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 #define BOOST_TEST_MODULE test_accumulate_facets
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/atlas.h"
-#include "atlas/internals/AccumulateFaces.h"
+#include "atlas/library/Library.h"
+#include "atlas/mesh/detail/AccumulateFacets.h"
 
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/actions/BuildEdges.h"
-#include "atlas/internals/Unique.h"
+#include "atlas/util/Unique.h"
 
 #include "tests/AtlasFixture.h"
 
@@ -43,13 +43,13 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_accumulate_facets )
 {
-  grid::Grid* grid = grid::Grid::create("O2");
-  mesh::generators::Structured generator( Config
+  Grid grid("O2");
+  meshgenerator::StructuredMeshGenerator generator( Config
        ("angle",29.0)
        ("triangulate",false)
        ("ghost_at_end",false) );
 
-  mesh::Mesh* mesh = generator.generate(*grid);
+  Mesh mesh = generator.generate(grid);
 
   // storage for edge-to-node-connectivity shape=(nb_edges,2)
   std::vector< idx_t > edge_nodes_data;
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
   idx_t missing_value;
 
   // Accumulate facets of cells ( edges in 2D )
-  internals::accumulate_facets(mesh->cells(),mesh->nodes(),edge_nodes_data,edge_to_cell_data,nb_edges,nb_inner_edges,missing_value);
+  mesh::detail::accumulate_facets(mesh.cells(),mesh.nodes(),edge_nodes_data,edge_to_cell_data,nb_edges,nb_inner_edges,missing_value);
 
   idx_t edge_nodes_check[] = {
   0, 21,
@@ -413,21 +413,20 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
   78, 79
   };
   BOOST_CHECK_EQUAL_COLLECTIONS( edge_to_cell_data.begin(), edge_to_cell_data.end(), edge_to_cell_check, edge_to_cell_check+2*nb_edges );
-
 }
 
 BOOST_AUTO_TEST_CASE( test_build_edges )
 {
   idx_t missing_value = -1;
-  grid::Grid* grid = grid::Grid::create("O2");
-  mesh::generators::Structured generator(  Config
+  Grid grid("O2");
+  meshgenerator::StructuredMeshGenerator generator(  Config
         ("angle",29.0)
         ("triangulate",false)
         ("ghost_at_end",false) );
-  mesh::Mesh* mesh = generator.generate(*grid);
+  Mesh mesh = generator.generate(grid);
 
   // Accumulate facets of cells ( edges in 2D )
-  mesh::actions::build_edges(*mesh);
+  mesh::actions::build_edges(mesh);
 
   idx_t edge_nodes_check[] = {
   0, 21,
@@ -604,9 +603,10 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
   };
 
   {
-  const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh->edges().node_connectivity();
-  const internals::UniqueLonLat compute_uid( mesh->nodes() );
-  for( size_t jedge=0; jedge<mesh->edges().size(); ++jedge )
+  const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
+  ASSERT( mesh.projection().units() == "degrees" );
+  const util::UniqueLonLat compute_uid( mesh );
+  for( size_t jedge=0; jedge<mesh.edges().size(); ++jedge )
   {
     if( compute_uid(edge_nodes_check[2*jedge+0]) < compute_uid(edge_nodes_check[2*jedge+1]) )
     {
@@ -797,10 +797,10 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
   };
 
   {
-    const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh->cells().node_connectivity();
-    const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh->edges().cell_connectivity();
-    const internals::UniqueLonLat compute_uid( mesh->nodes() );
-    for( size_t jedge=0; jedge<mesh->edges().size(); ++jedge )
+    const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
+    const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh.edges().cell_connectivity();
+    const util::UniqueLonLat compute_uid( mesh );
+    for( size_t jedge=0; jedge<mesh.edges().size(); ++jedge )
     {
       idx_t e1 = edge_to_cell_check[2*jedge+0];
       idx_t e2 = edge_to_cell_check[2*jedge+1];
@@ -812,6 +812,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
       }
       else
       {
+        std::cout << "jedge " << jedge << std::endl;
         BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+0] , edge_cell_connectivity(jedge,1) );
         BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+1] , edge_cell_connectivity(jedge,0) );
       }
@@ -820,8 +821,8 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 
 
   {
-    const IrregularConnectivity& elem_edge_connectivity = mesh->cells().edge_connectivity();
-    for( size_t jelem=0; jelem<mesh->cells().size(); ++jelem )
+    const MultiBlockConnectivity& elem_edge_connectivity = mesh.cells().edge_connectivity();
+    for( size_t jelem=0; jelem<mesh.cells().size(); ++jelem )
     {
       std::cout << jelem << " : " ;
       for( size_t jedge=0; jedge<elem_edge_connectivity.cols(jelem); ++jedge )
@@ -837,19 +838,19 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 
 BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
 {
-  grid::Grid* grid = grid::Grid::create("O2");
-  mesh::generators::Structured generator (  Config
+  Grid grid("O2");
+  meshgenerator::StructuredMeshGenerator generator (  Config
       ("angle",29.0)
       ("triangulate",false)
       ("ghost_at_end",false) );
-  mesh::Mesh* mesh = generator.generate(*grid);
+  Mesh mesh = generator.generate(grid);
 
   // Accumulate facets of cells ( edges in 2D )
-  mesh::actions::build_edges(*mesh);
+  mesh::actions::build_edges(mesh);
 
   {
-    const IrregularConnectivity& elem_edge_connectivity = mesh->cells().edge_connectivity();
-    for( size_t jelem=0; jelem<mesh->cells().size(); ++jelem )
+    const MultiBlockConnectivity& elem_edge_connectivity = mesh.cells().edge_connectivity();
+    for( size_t jelem=0; jelem<mesh.cells().size(); ++jelem )
     {
       std::cout << jelem << " : " ;
       for( size_t jedge=0; jedge<elem_edge_connectivity.cols(jelem); ++jedge )

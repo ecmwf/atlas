@@ -8,19 +8,16 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef ATLAS_MPI_MPI_h
-#define ATLAS_MPI_MPI_h
+#pragma once
 
 #include "eckit/mpi/Comm.h"
 
 namespace atlas {
 namespace parallel {
 namespace mpi {
-  
+
 const eckit::mpi::Comm& comm();
 
 } // namespace mpi
 } // namespace parallel
 } // namespace atlas
-
-#endif // ATLAS_MPI_MPI_h

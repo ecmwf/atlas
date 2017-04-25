@@ -9,8 +9,10 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/array/ArrayView.h"
 #include "atlas/interpolation/method/PointIndex3.h"
+
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/mesh/HybridElements.h"
 
 
@@ -19,16 +21,16 @@ namespace interpolation {
 namespace method {
 
 
-ElemIndex3* create_element_centre_index(const mesh::Mesh& mesh) {
+ElemIndex3* create_element_centre_index(const Mesh& mesh) {
 
-    const array::ArrayView< double, 2 > centres(mesh.cells().field( "centre" ));
+    const array::ArrayView<double,2> centres = array::make_view<double,2>( mesh.cells().field( "centre" ) );
 
     std::vector< ElemIndex3::Value > p;
     p.reserve(mesh.cells().size());
 
     for (size_t j = 0; j < mesh.cells().size(); ++j) {
         p.push_back(ElemIndex3::Value(
-                        ElemIndex3::Point(centres(j, internals::XX), centres(j, internals::YY), centres(j, internals::ZZ)),
+                        ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
                         ElemIndex3::Payload(j) ));
     }
 
