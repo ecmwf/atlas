@@ -111,8 +111,6 @@ FieldCreator *FieldCreatorFactory::build(const std::string &name) {
 
     std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<Atlas>() << "Looking for FieldCreatorFactory [" << name << "]" << '\n';
-
     if (j == m->end()) {
         Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';
         Log::error() << "FieldCreatorFactories are:" << '\n';
@@ -134,8 +132,6 @@ FieldCreator *FieldCreatorFactory::build(const std::string& name, const eckit::P
     static force_link static_linking;
 
     std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->find(name);
-
-    Log::debug<Atlas>() << "Looking for FieldCreatorFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';
