@@ -45,11 +45,11 @@ eckit::Properties CustomSpacing::spec() const {
   eckit::Properties spacing_specs;
   spacing_specs.set("type",static_type());
 
-  spacing_specs.set("values",eckit::makeVectorValue(x_));
-  
+  spacing_specs.set("values",eckit::toValue(x_));
+
   std::vector<double> interval = {min(),max()};
-  spacing_specs.set("interval",eckit::makeVectorValue(interval));
-  
+  spacing_specs.set("interval",eckit::toValue(interval));
+
   return spacing_specs;
 }
 

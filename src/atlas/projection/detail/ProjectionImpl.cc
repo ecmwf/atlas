@@ -34,8 +34,8 @@ Rotated::Rotated(const eckit::Parametrisation& p) :
 void Rotated::spec(eckit::Properties& s) const {
   std::vector<double> npole{ northPole().lon(), northPole().lat() };
   std::vector<double> spole{ southPole().lon(), southPole().lat() };
-  s.set("north_pole",eckit::makeVectorValue(npole));
-  s.set("south_pole",eckit::makeVectorValue(spole));
+  s.set("north_pole",eckit::toValue(npole));
+  s.set("south_pole",eckit::toValue(spole));
   s.set("rotation_angle",rotationAngle());
 }
 

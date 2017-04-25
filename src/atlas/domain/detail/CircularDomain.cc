@@ -41,7 +41,7 @@ eckit::Properties CircularDomain::spec() const {
   std::vector<double> centre(2);
   centre[0] = xc_;
   centre[1] = yc_;
-  domain_prop.set("centre",eckit::makeVectorValue(centre));
+  domain_prop.set("centre",eckit::toValue(centre));
   return domain_prop;
 }
 
