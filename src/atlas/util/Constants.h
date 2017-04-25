@@ -8,11 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_util_Constants_h
-#define atlas_util_Constants_h
+#pragma once
 
 #include <cmath>
-#include "atlas/internals/atlas_defines.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -22,13 +20,10 @@ namespace util {
 //------------------------------------------------------------------------------------------------------
 
 /// Some usefull constants
-/// @note These could be static const constants, but then the initialization would be in the .cc
-///       which would preclude constant optimization.
-///       With C++11 constexpr the constants can be initialized in the class header.
 struct Constants
 {
-    static double radiansToDegrees() { return 180. * M_1_PI; }
-    static double degreesToRadians() { return M_PI / 180; }
+    static constexpr double radiansToDegrees() { return 180. * M_1_PI; }
+    static constexpr double degreesToRadians() { return M_PI / 180.; }
 
 };
 
@@ -36,16 +31,14 @@ struct Constants
 
 struct Earth
 {
-    static double radiusInMeters() { return 6371229; }
-    static double radiusInKm()     { return radiusInMeters() / 1.0E3; }
+    static constexpr double radiusInMeters() { return 6371229.; }
+    static constexpr double radiusInKm()     { return radiusInMeters() / 1.0e3; }
 
-    static double areaInSqMeters() { return 4 * M_PI * radiusInMeters() * radiusInMeters(); }
-    static double areaInSqKm()     { return 4 * M_PI * radiusInKm() * radiusInKm(); }
+    static constexpr double areaInSqMeters() { return 4. * M_PI * radiusInMeters() * radiusInMeters(); }
+    static constexpr double areaInSqKm()     { return 4. * M_PI * radiusInKm()     * radiusInKm();     }
 };
 
 //------------------------------------------------------------------------------------------------------
 
 } // namespace util
 } // namespace atlas
-
-#endif // atlas_util_Constants_h

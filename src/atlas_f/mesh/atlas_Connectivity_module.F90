@@ -3,12 +3,15 @@ module atlas_connectivity_module
 
 use, intrinsic :: iso_c_binding, only : c_int, c_size_t, c_ptr, c_null_ptr
 use fckit_refcounted_module, only : fckit_refcounted
+use fckit_object_module, only : fckit_object
 implicit none
 
 private :: c_ptr
 private :: c_int
 private :: c_size_t
 private :: c_null_ptr
+private :: fckit_refcounted
+private :: fckit_object
 
 public :: atlas_Connectivity
 public :: atlas_MultiBlockConnectivity
@@ -65,7 +68,7 @@ end type
 ! atlas_BlockConnectivity    !
 !----------------------------!
 
-type, extends(fckit_refcounted) :: atlas_BlockConnectivity
+type, extends(fckit_object) :: atlas_BlockConnectivity
 contains
   procedure, public :: delete   => atlas_BlockConnectivity__delete
   procedure, public :: rows     => atlas_BlockConnectivity__rows
@@ -410,9 +413,9 @@ end function
 subroutine atlas_BlockConnectivity__delete(this)
   use atlas_connectivity_c_binding
   class(atlas_BlockConnectivity), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__BlockConnectivity__delete(this%c_ptr())
-  end if
+!  if ( .not. this%is_null() ) then
+!    call atlas__BlockConnectivity__delete(this%c_ptr())
+!  end if
   call this%reset_c_ptr()
 end subroutine
 

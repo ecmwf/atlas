@@ -36,7 +36,8 @@ Config::Config(std::istream& stream, const std::string &format )
     throw eckit::Exception("Not Implemented: Only json format is supported");
   }
 
-  eckit::JSONParser parser( stream );
+  bool accept_comments = true;
+  eckit::JSONParser parser( stream, accept_comments );
   set( eckit::Properties( parser.parse() ) );
 }
 
@@ -51,7 +52,8 @@ Config::Config( const eckit::PathName& path )
     if (!file.is_open()) {
       throw eckit::Exception("Unable to open json file "+std::string(path),Here());
     }
-    eckit::JSONParser parser( file );
+    bool accept_comments = true;
+    eckit::JSONParser parser( file, accept_comments );
     set( eckit::Properties( parser.parse() ) );
     file.close();
   }
@@ -61,13 +63,13 @@ Config::Config( const eckit::PathName& path )
   }
 }
 
-Config Config::operator&&(const Config& other) const
-{
-   Config config;
-   config.set(*this);
-   config.set(other);
-   return config;
-}
+// Config Config::operator&&(const Config& other) const
+// {
+//    Config config;
+//    config.set(*this);
+//    config.set(other);
+//    return config;
+// }
 
 Config Config::operator|(const Config& other) const
 {
@@ -381,7 +383,6 @@ int atlas__Config__get_array_float (Config* This, const char* name, float* &valu
     size = v.size();
     value = new float[size];
     for ( size_t j = 0; j < v.size(); ++j ) {
-      ASSERT(float(v[j]) == v[j]);
       value[j] = v[j];
     }
     allocated = true;

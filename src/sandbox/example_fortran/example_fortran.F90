@@ -19,7 +19,7 @@ enddo
 call atlas_log%info("Atlas initialized")
 call atlas_log%info("version = ["//atlas_version()//"]")
 
-call atlas_init()
+call atlas_library%initialise()
 
 call atlas_log%set_fortran_unit(6)
 
@@ -30,5 +30,5 @@ call atlas_log%info("OpenMP enabled")
 call atlas_log%debug("Here is some debugging information")
 
 write(6,'(A)') "exit"
-call atlas_finalize()
+call atlas_library%finalise()
 end program

@@ -16,19 +16,15 @@
 #include "atlas/field/Field.h"
 #include "atlas/numerics/fvm/Nabla.h"
 #include "atlas/numerics/fvm/Method.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/internals/Bitflags.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Log.h"
 
 // =======================================================
 
-using atlas::internals::Topology;
-
-#define LON internals::LON
-#define LAT internals::LAT
+using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {
 namespace numerics {
@@ -40,12 +36,12 @@ static NablaBuilder< Nabla > __fvm_nabla("fvm");
 }
 
 Nabla::Nabla(const numerics::Method &method, const eckit::Parametrisation &p) :
-  atlas::numerics::Nabla(method,p)
+  atlas::numerics::Nabla::nabla_t(method,p)
 {
   fvm_ = dynamic_cast<const fvm::Method *>(&method);
   if( ! fvm_ )
     throw eckit::BadCast("atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method",Here());
-  Log::debug() << "Nabla constructed for method " << fvm_->name()
+  Log::debug<Atlas>() << "Nabla constructed for method " << fvm_->name()
                      << " with " << fvm_->node_columns().nb_nodes_global() << " nodes total" << std::endl;
 
   setup();
@@ -62,7 +58,7 @@ void Nabla::setup()
 
   const size_t nedges = edges.size();
 
-  const array::ArrayView<int,1> edge_is_pole ( edges.field("is_pole_edge") );
+  const array::ArrayView<int,1> edge_is_pole = array::make_view<int,1>( edges.field("is_pole_edge") );
 
   // Filter pole_edges out of all edges
   std::vector<size_t> tmp(nedges);
@@ -78,7 +74,7 @@ void Nabla::setup()
     pole_edges_.push_back(tmp[jedge]);
 }
 
-void Nabla::gradient(const field::Field &field, field::Field &grad_field) const
+void Nabla::gradient(const Field &field, Field &grad_field) const
 {
   if( field.has_levels() )
   {
@@ -101,9 +97,9 @@ void Nabla::gradient(const field::Field &field, field::Field &grad_field) const
   throw eckit::SeriousBug("Cannot figure out if field is a scalar or vector field",Here());
 }
 
-void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& grad_field) const
+void Nabla::gradient_of_scalar(const Field& scalar_field, Field& grad_field) const
 {
-  Log::debug() << "Compute gradient of scalar field " << scalar_field.name() << " with fvm method" << std::endl;
+  Log::debug<Atlas>() << "Compute gradient of scalar field " << scalar_field.name() << " with fvm method" << std::endl;
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 
@@ -117,20 +113,21 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
     throw eckit::AssertionFailed("gradient field should have same number of levels",Here());
 
 
-  const array::ArrayView<double,2> scalar ( scalar_field.data<double>(), array::make_shape(nnodes,nlev)   );
-        array::ArrayView<double,3> grad   ( grad_field.  data<double>(), array::make_shape(nnodes,nlev,2) );
+  const array::LocalView<double,2> scalar ( array::make_storageview<double>(scalar_field).data(),
+                                            array::make_shape(nnodes,nlev)   );
+        array::LocalView<double,3> grad   ( array::make_storageview<double>(grad_field).data(),
+                                            array::make_shape(nnodes,nlev,2) );
 
-  const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const array::ArrayView<double,1> dual_volumes   ( nodes.field("dual_volumes") );
-  const array::ArrayView<double,2> dual_normals   ( edges.field("dual_normals") );
-  const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const array::ArrayView<double,2> lonlat_deg     = array::make_view<double,2>( nodes.lonlat() );
+  const array::ArrayView<double,1> dual_volumes   = array::make_view<double,1>( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.field("dual_normals") );
+  const array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes.field("node2edge_sign") );
 
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
-  const mesh::Connectivity& edge2node = edges.node_connectivity();
+  const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
 
-  array::ArrayT<double> avgS_arr( nedges,nlev,2 );
-  array::ArrayView<double,3> avgS(avgS_arr);
+  array::ArrayT<double> avgS_arr( nedges,nlev,2ul );
+  array::ArrayView<double,3> avgS = array::make_view<double,3>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius;
 
@@ -180,9 +177,9 @@ void Nabla::gradient_of_scalar(const field::Field& scalar_field, field::Field& g
 
 // ================================================================================
 
-void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &grad_field) const
+void Nabla::gradient_of_vector(const Field &vector_field, Field &grad_field) const
 {
-  Log::debug() << "Compute gradient of vector field " << vector_field.name() << " with fvm method" << std::endl;
+  Log::debug<Atlas>() << "Compute gradient of vector field " << vector_field.name() << " with fvm method" << std::endl;
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 
@@ -196,20 +193,22 @@ void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &g
     throw eckit::AssertionFailed("gradient field should have same number of levels",Here());
 
 
-  const array::ArrayView<double,3> vector ( vector_field.data<double>(), array::make_shape(nnodes,nlev,2)   );
-        array::ArrayView<double,4> grad   ( grad_field.  data<double>(), array::make_shape(nnodes,nlev,2,2) );
+  const array::LocalView<double,3> vector ( array::make_storageview<double>(vector_field).data(),
+                                            array::make_shape(nnodes,nlev,2)   );
+        array::LocalView<double,4> grad   ( array::make_storageview<double>(grad_field).data(),
+                                            array::make_shape(nnodes,nlev,2,2) );
 
-  const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const array::ArrayView<double,1> dual_volumes   ( nodes.field("dual_volumes") );
-  const array::ArrayView<double,2> dual_normals   ( edges.field("dual_normals") );
-  const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const array::ArrayView<double,2> lonlat_deg     = array::make_view<double,2>( nodes.lonlat() );
+  const array::ArrayView<double,1> dual_volumes   = array::make_view<double,1>( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.field("dual_normals") );
+  const array::ArrayView<int,   1> edge_is_pole   = array::make_view<int   ,1>( edges.field("is_pole_edge") );
+  const array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes.field("node2edge_sign") );
 
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
-  const mesh::Connectivity& edge2node = edges.node_connectivity();
+  const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
 
-  array::ArrayT<double> avgS_arr( nedges,nlev,2,2 );
-  array::ArrayView<double,4> avgS(avgS_arr);
+  array::ArrayT<double> avgS_arr( nedges,nlev,2ul,2ul );
+  array::ArrayView<double,4> avgS = array::make_view<double,4>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius;
 
@@ -285,7 +284,7 @@ void Nabla::gradient_of_vector(const field::Field &vector_field, field::Field &g
 
 // ================================================================================
 
-void Nabla::divergence(const field::Field& vector_field, field::Field& div_field) const
+void Nabla::divergence(const Field& vector_field, Field& div_field) const
 {
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
@@ -299,19 +298,21 @@ void Nabla::divergence(const field::Field& vector_field, field::Field& div_field
   if( div_field.levels() != nlev )
     throw eckit::AssertionFailed("divergence field should have same number of levels",Here());
 
-  const array::ArrayView<double,3> vector ( vector_field.data<double>(), array::make_shape(nnodes,nlev,2));
-        array::ArrayView<double,2> div    ( div_field   .data<double>(), array::make_shape(nnodes,nlev)  );
+  const array::LocalView<double,3> vector ( array::make_storageview<double>(vector_field).data(),
+                                            array::make_shape(nnodes,nlev,2) );
+        array::LocalView<double,2> div    ( array::make_storageview<double>(div_field).data(),
+                                            array::make_shape(nnodes,nlev)  );
 
-  const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const array::ArrayView<double,1> dual_volumes   ( nodes.field("dual_volumes") );
-  const array::ArrayView<double,2> dual_normals   ( edges.field("dual_normals") );
-  const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const array::ArrayView<double,2> lonlat_deg     = array::make_view<double,2>( nodes.lonlat() );
+  const array::ArrayView<double,1> dual_volumes   = array::make_view<double,1>( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.field("dual_normals") );
+  const array::ArrayView<int,   1> edge_is_pole   = array::make_view<int   ,1>( edges.field("is_pole_edge") );
+  const array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes.field("node2edge_sign") );
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
-  const mesh::Connectivity& edge2node = edges.node_connectivity();
+  const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
 
-  array::ArrayT<double> avgS_arr( nedges,nlev,2 );
-  array::ArrayView<double,3> avgS(avgS_arr);
+  array::ArrayT<double> avgS_arr(nedges,nlev,2ul);
+  array::ArrayView<double,3> avgS = array::make_view<double,3>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius;
 
@@ -370,7 +371,7 @@ void Nabla::divergence(const field::Field& vector_field, field::Field& div_field
 }
 
 
-void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) const
+void Nabla::curl(const Field& vector_field, Field& curl_field) const
 {
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
@@ -384,20 +385,22 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
   if( curl_field.levels() != nlev )
     throw eckit::AssertionFailed("curl field should have same number of levels",Here());
 
-  const array::ArrayView<double,3> vector ( vector_field.data<double>(), array::make_shape(nnodes,nlev,2));
-        array::ArrayView<double,2> curl   ( curl_field  .data<double>(), array::make_shape(nnodes,nlev)  );
+  const array::LocalView<double,3> vector ( array::make_storageview<double>(vector_field).data(),
+                                            array::make_shape(nnodes,nlev,2) );
+        array::LocalView<double,2> curl   ( array::make_storageview<double>(curl_field).data(),
+                                            array::make_shape(nnodes,nlev) );
 
-  const array::ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const array::ArrayView<double,1> dual_volumes   ( nodes.field("dual_volumes") );
-  const array::ArrayView<double,2> dual_normals   ( edges.field("dual_normals") );
-  const array::ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const array::ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const array::ArrayView<double,2> lonlat_deg     = array::make_view<double,2>( nodes.lonlat() );
+  const array::ArrayView<double,1> dual_volumes   = array::make_view<double,1>( nodes.field("dual_volumes") );
+  const array::ArrayView<double,2> dual_normals   = array::make_view<double,2>( edges.field("dual_normals") );
+  const array::ArrayView<int,   1> edge_is_pole   = array::make_view<int   ,1>( edges.field("is_pole_edge") );
+  const array::ArrayView<double,2> node2edge_sign = array::make_view<double,2>( nodes.field("node2edge_sign") );
 
   const mesh::Connectivity& node2edge = nodes.edge_connectivity();
-  const mesh::Connectivity& edge2node = edges.node_connectivity();
+  const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
 
-  array::ArrayT<double> avgS_arr( nedges,nlev,2 );
-  array::ArrayView<double,3> avgS(avgS_arr);
+  array::ArrayT<double> avgS_arr(nedges,nlev,2ul);
+  array::ArrayView<double,3> avgS = array::make_view<double,3>(avgS_arr);
 
   const double scale = deg2rad*deg2rad*radius*radius;
 
@@ -456,16 +459,16 @@ void Nabla::curl(const field::Field& vector_field, field::Field& curl_field) con
 }
 
 
-void Nabla::laplacian(const field::Field& scalar, field::Field& lapl) const
+void Nabla::laplacian(const Field& scalar, Field& lapl) const
 {
-  eckit::SharedPtr<field::Field> grad ( fvm_->node_columns().createField<double>(
+  Field grad ( fvm_->node_columns().createField<double>(
        "grad",
        scalar.levels(),
        array::make_shape(2) ) );
-  gradient(scalar,*grad);
+  gradient(scalar,grad);
   if( fvm_->node_columns().halo().size() < 2 )
-    fvm_->node_columns().haloExchange(*grad);
-  divergence(*grad,lapl);
+    fvm_->node_columns().haloExchange(grad);
+  divergence(grad,lapl);
 }
 
 

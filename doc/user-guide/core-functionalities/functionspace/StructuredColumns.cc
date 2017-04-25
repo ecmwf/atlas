@@ -1,43 +1,32 @@
-#include "atlas/atlas.h"
-#include "atlas/grid/grids.h"
+#include "atlas/library/Library.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/generators/Structured.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/functionspace/StructuredColumns.h"
 
-using atlas::array::ArrayView;
-// using atlas::array::make_shape;
-using atlas::atlas_finalize;
-using atlas::atlas_init;
-using atlas::field::Field;
-// using atlas::field::FieldSet;
-// using atlas::field::global;
+using atlas::Grid;
+using atlas::Mesh;
+using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::functionspace::StructuredColumns;
-// using atlas::gidx_t;
-using atlas::grid::Grid;
-// using atlas::Log;
-// using atlas::mesh::Halo;
-using atlas::mesh::Mesh;
+using atlas::Field;
+using atlas::array::ArrayView;
+using atlas::array::make_view;
 using atlas::output::Gmsh;
 
 int main(int argc, char *argv[])
 {
-    atlas_init(argc, argv);
+    atlas::Library::instance().initialise(argc, argv);
 
     // Generate global reduced grid
-    Grid::Ptr grid (Grid::create( "N32" ));
-
-    // Number of points in the grid
-    size_t const nb_nodes = grid->npts();
+    Grid grid( "N32" );
 
     // Generate functionspace associated to grid
-    StructuredColumns::Ptr
-        fs_rgp(new StructuredColumns(*grid));
+    StructuredColumns fs_rgp(grid);
 
-    /* .... */
     // Variables for scalar1 field definition
     const double rpi = 2.0 * asin(1.0);
     const double deg2rad = rpi / 180.;
@@ -46,19 +35,17 @@ int main(int argc, char *argv[])
     const double zrad  = 2.0 * rpi / 9.0;
     int jnode = 0;
 
-
-
     // Calculate scalar function
-    Field::Ptr field_scalar1(fs_rgp->createField<double>("scalar1"));
-    ArrayView <double,1> scalar1(*field_scalar1);
+    Field field_scalar1 = fs_rgp.createField<double>("scalar1");
+    auto scalar1 = make_view<double,1>(field_scalar1);
 
-    for (size_t jlat = 0; jlat < fs_rgp->nlat(); ++jlat)
+    for (size_t jlat = 0; jlat < fs_rgp.ny(); ++jlat)
     {
-        for (size_t jlon = 0; jlon < fs_rgp->nlon(jlat); ++jlon)
+        for (size_t jlon = 0; jlon < fs_rgp.nx(jlat); ++jlon)
         {
-            double zlat = fs_rgp->lat(jlat);
+            double zlat = fs_rgp.y(jlat);
             zlat = zlat * deg2rad;
-            double zlon = fs_rgp->lon(jlat, jlon);
+            double zlon = fs_rgp.x(jlon, jlat);
             zlon  = zlon * deg2rad;
             double zdist = 2.0 * sqrt((cos(zlat) * sin((zlon-zlonc)/2.)) *
                           (cos(zlat) * sin((zlon-zlonc)/2.)) +
@@ -76,14 +63,14 @@ int main(int argc, char *argv[])
     // Write field
     {
       // Generate visualisation mesh associated to grid
-      atlas::mesh::generators::Structured meshgenerator;
-      Mesh::Ptr mesh (meshgenerator.generate(*grid));
+      StructuredMeshGenerator meshgenerator;
+      Mesh mesh = meshgenerator.generate(grid);
 
       Gmsh gmsh("scalar1.msh");
-      gmsh.write(*mesh);
-      gmsh.write(*field_scalar1);
+      gmsh.write(mesh);
+      gmsh.write(field_scalar1);
     }
 
-    atlas_finalize();
+    atlas::Library::instance().finalise();
     return 0;
 }

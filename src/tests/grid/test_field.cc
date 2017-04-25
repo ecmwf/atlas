@@ -11,24 +11,26 @@
 #include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
+#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/atlas.h"
+#include "atlas/library/Library.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/grid/grids.h"
+#include "atlas/grid.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/mesh/generators/Delaunay.h"
-#include "atlas/internals/Debug.h"
+#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/field/State.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/array/DataType.h"
+#include "atlas/array/MakeView.h"
 
 using namespace std;
 using namespace eckit;
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::mesh::generators;
+using namespace atlas::meshgenerator;
 
 //-----------------------------------------------------------------------------
 
@@ -41,14 +43,13 @@ class TestField : public Tool {
 public:
 
     TestField(int argc,char **argv): Tool(argc,argv) {
-      atlas_init();
+      atlas::Library::instance().initialise();
     }
 
-    ~TestField() {atlas_finalize();}
+    ~TestField() {atlas::Library::instance().finalise();}
 
     virtual void run();
 
-    void test_constructor();
     void test_fieldcreator();
     void test_implicit_conversion();
     void test_wrap_rawdata_through_array();
@@ -57,106 +58,50 @@ public:
 
 //-----------------------------------------------------------------------------
 
-void TestField::test_constructor()
-{
-  // create a grid
-
-  Grid::Ptr g (new atlas::grid::lonlat::RegularLonLat( 20ul, 10ul ) );
-
-  ASSERT( g );
-
-  // Build a mesh from grid
-  mesh::Mesh mesh(*g);
-
-  // create some reference data for testing
-
-  std::vector<double> ref_data;
-  ref_data.reserve( g->npts() );
-  for(size_t i = 0; i < ref_data.size(); ++i)
-    ref_data.push_back( (double)i );
-
-  // now build a test field handle
-
-  std::string sname("field_name");
-
-  mesh::Nodes& nodes  = mesh.nodes();
-
-  array::ArrayView<double,1> data ( nodes.add( field::Field::create<double>( sname,array::make_shape(nodes.size(),1) ) ) );
-
-  for(size_t i = 0; i < ref_data.size(); i++)
-    data[i] = ref_data[i];
-
-  field::Field::Ptr f ( &nodes.field( sname ) );
-
-  ASSERT( f );
-
-  DEBUG_VAR( f.owners() );
-
-  ASSERT( f.owners() == 2 );
-
-  atlas::field::FieldSet fs;
-  fs.add(*f);
-
-  // iterate over the fields
-  for (field::FieldSet::const_iterator it = fs.cbegin(); it != fs.cend(); ++it)
-  {
-    array::ArrayView<double> vdata( *it );
-
-    for( size_t i = 0; i < ref_data.size(); ++i )
-    {
-      ASSERT( ref_data[i] == vdata(i) );
-    }
-  }
-}
-
-
-
-
 void TestField::test_fieldcreator()
 {
-  field::Field::Ptr field ( field::Field::create( util::Config
-                                      ("creator","ArraySpec")
-                                      ("shape",array::make_shape(10,2))
-                                      ("datatype",array::DataType::real32().str())
-                                      ("name","myfield")
-                                  ));
+  Field field ( util::Config
+                         ("creator","ArraySpec")
+                         ("shape",array::make_shape(10,2))
+                         ("datatype",array::DataType::real32().str())
+                         ("name","myfield")
+                      );
 
-  ASSERT( field->datatype() == array::DataType::real32() );
-  ASSERT( field->name() == "myfield" );
+  ASSERT( field.datatype() == array::DataType::real32() );
+  ASSERT( field.name() == "myfield" );
 
-  Grid::Ptr g (Grid::create("O6"));
+  Grid g("O6");
 
-  field::Field::Ptr arr (field::Field::create( util::Config
-                                   ("creator","ArraySpec")
-                                   ("shape",array::make_shape(10,2))
-                               ));
-  ASSERT( arr->shape(0) == 10 );
-  ASSERT( arr->shape(1) == 2 );
-  ASSERT( arr->datatype() == array::DataType::real64() );
+  Field arr ( util::Config
+                         ("creator","ArraySpec")
+                         ("shape",array::make_shape(10,2))
+                   );
+  ASSERT( arr.shape(0) == 10 );
+  ASSERT( arr.shape(1) == 2 );
+  ASSERT( arr.datatype() == array::DataType::real64() );
 
 
   util::Config ifs_parameters = util::Config
       ("creator","IFS")
       ("nlev",137)
       ("nproma",10)
-      ("ngptot",g->npts());
+      ("ngptot",g.size());
 
   Log::info() << "Creating IFS field " << std::endl;
-  field::Field::Ptr ifs (field::Field::create( util::Config
-                                    (ifs_parameters)
-                                    ("name","myfield")
-                                    ("datatype",array::DataType::int32().str())
-                                    ("nvar",8)
-                               ));
+  Field ifs ( util::Config
+                         (ifs_parameters)
+                         ("name","myfield")
+                         ("datatype",array::DataType::int32().str())
+                         ("nvar",8)
+                   );
 
-  DEBUG_VAR( *ifs );
-  ASSERT( ifs->shape(0) == 36 );
-  ASSERT( ifs->shape(1) == 8 );
-  ASSERT( ifs->shape(2) == 137 );
-  ASSERT( ifs->shape(3) == 10 );
+  ATLAS_DEBUG_VAR( ifs );
+  ASSERT( ifs.shape(0) == 36 );
+  ASSERT( ifs.shape(1) == 8 );
+  ASSERT( ifs.shape(2) == 137 );
+  ASSERT( ifs.shape(3) == 10 );
 
-  Log::debug() << std::flush;
-  Log::info() << std::flush;
+  Log::flush();
 }
 
 void take_array(const array::Array& arr)
@@ -175,23 +120,23 @@ public:
 
 void TestField::test_implicit_conversion()
 {
-  SharedPtr<field::Field> field( field::Field::create<double>("tmp",array::make_shape(10,2)) );
-  const array::Array& const_array = *field;
-  array::Array& array = *field;
+  Field field( "tmp", array::make_datatype<double>(), array::make_shape(10,2));
+  const array::Array& const_array = field;
+  array::Array& array = field;
 
-  array::ArrayView<double,2> arrv(array);
+  array::ArrayView<double,2> arrv = array::make_view<double,2>(array);
   arrv(0,0) = 8.;
 
-  const array::ArrayView<double,2> carrv(const_array);
+  const array::ArrayView<double,2> carrv = array::make_view<double,2>(const_array);
   ASSERT( carrv(0,0) == 8. );
 
-  const array::ArrayView<double,2> cfieldv(*field);
+  const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(field);
   ASSERT( cfieldv(0,0) == 8. );
 
-  take_array(*field);
-  TakeArray ta(*field);
+  take_array(field);
+  TakeArray ta(field);
 
-  const field::Field& f = *field;
+  const Field& f = field;
   TakeArray cta(f);
 }
 
@@ -200,20 +145,20 @@ void TestField::test_wrap_rawdata_through_array()
 {
   std::vector<double> rawdata(20,8.);
   SharedPtr<array::Array> array( array::Array::wrap(rawdata.data(),array::make_shape(10,2)) );
-  SharedPtr<field::Field> field( field::Field::create("wrapped",array.get()) );
+  Field field( "wrapped",array.get() );
 
   ASSERT( array->owners() == 2 );
-  const array::ArrayView<double,2> cfieldv(*field);
+  const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(field);
   ASSERT( cfieldv(9,1) == 8. );
 }
 
 void TestField::test_wrap_rawdata_direct()
 {
   std::vector<double> rawdata(20,8.);
-  SharedPtr<field::Field> field( field::Field::wrap("wrapped",rawdata.data(),array::make_shape(10,2)));
+  Field field( "wrapped",rawdata.data(),array::make_shape(10,2) );
 
-  ASSERT( field->array().owners() == 1 );
-  const array::ArrayView<double,2> cfieldv(*field);
+  ASSERT( field.array().owners() == 1 );
+  const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(field);
   ASSERT( cfieldv(9,1) == 8. );
 }
 
@@ -224,7 +169,6 @@ void TestField::test_wrap_rawdata_direct()
 
 void TestField::run()
 {
-    test_constructor();
     test_fieldcreator();
     test_implicit_conversion();
     test_wrap_rawdata_through_array();

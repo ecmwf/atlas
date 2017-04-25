@@ -20,9 +20,6 @@ set( ENABLE_OS_ENDINESS_TEST    OFF   CACHE BOOL " " )
 
 project( atlas CXX )
 
-file  ( STRINGS "VERSION.tex" ATLASVER )
-set   ( ${PROJECT_NAME}_VERSION_STR  ${ATLASVER} )
-
 include( ecbuild_system NO_POLICY_SCOPE )
 
 ecbuild_requires_macro_version( 2.5 )
@@ -38,6 +35,8 @@ ecbuild_use_package( PROJECT eckit VERSION 0.15 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
+
+ecbuild_add_cxx11_flags()
 
 ecbuild_find_python()
 
@@ -101,7 +100,7 @@ endif()
 
 ecbuild_add_option( FEATURE TRANS
                     DESCRIPTION "Support for spectral transforms"
-                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.4.0 QUIET" )
+                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.4.1 QUIET" )
 
 ### tesselation ...
 
@@ -117,6 +116,52 @@ if( HAVE_TESSELATION )
       list( APPEND CGAL_LIBRARIES CGAL::CGAL ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
     else()
       list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
+    endif()
+endif()
+
+### FIND GRIDTOOLS STORAGE
+ecbuild_add_option(
+    FEATURE GRIDTOOLS_STORAGE
+    DESCRIPTION "Arrays internally use GridTools storage layer"
+    REQUIRED_PACKAGES "gridtools_storage" )
+
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+
+  set( ENABLE_GPU "OFF" CACHE BOOL "Compile with GPU support (CUDA)" )
+
+    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
+    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
+
+    if(ENABLE_GPU)
+        set( CUDA_USE_STATIC_CUDA_RUNTIME OFF )
+        find_package(CUDA REQUIRED)
+
+        string(REPLACE "." "" CUDA_VERSION ${CUDA_VERSION})
+
+        add_definitions(-D_FORCE_INLINES) # Question to Carlos: Is this needed for nvcc only?
+
+        set(CUDA_PROPAGATE_HOST_FLAGS ON)
+        set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
+        if( NOT ${CUDA_VERSION} VERSION_GREATER "60")
+            message(FATAL_ERROR "CUDA 6.0 or lower does not support C++11 (disabling)")
+        endif()
+
+        set( CUDA_ARCH "sm_35" CACHE STRING "Compute capability for CUDA" )
+        set( CUDA_SEPARABLE_COMPILATION ON)
+
+        include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
+
+        set(CUDA_SEPARABLE_COMPILATION ON)
+        # adding the additional nvcc flags
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-arch=${CUDA_ARCH}" "-Xcudafe" "--diag_suppress=dupl_calling_convention")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-Xcudafe" "--diag_suppress=code_is_unreachable" "-Xcudafe")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=implicit_return_from_non_void_function" "-Xcudafe")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=calling_convention_not_allowed" "-Xcudafe")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=conflicting_calling_conventions")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-Xcompiler" "-fPIC")
+
+        set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
+        set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
     endif()
 endif()
 
@@ -171,6 +216,7 @@ foreach( _tpl ${ATLAS_TPLS} )
   list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
 
+ecbuild_debug_var( ATLAS_EXTRA_INCLUDE_DIRS )
 ecbuild_debug_var( ATLAS_EXTRA_LIBRARIES )
 
 

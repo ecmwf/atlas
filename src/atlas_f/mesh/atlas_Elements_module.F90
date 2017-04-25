@@ -89,7 +89,7 @@ function node_connectivity(this) result(connectivity)
   type(atlas_BlockConnectivity) :: connectivity
   connectivity = atlas_BlockConnectivity( &
       atlas__mesh__Elements__node_connectivity(this%c_ptr()) )
-  call connectivity%return()
+  !call connectivity%return()
 end function
 
 function edge_connectivity(this) result(connectivity)
@@ -99,7 +99,7 @@ function edge_connectivity(this) result(connectivity)
   type(atlas_BlockConnectivity) :: connectivity
   connectivity = atlas_BlockConnectivity( &
       atlas__mesh__Elements__edge_connectivity(this%c_ptr()) )
-  call connectivity%return()
+  !call connectivity%return()
 end function
 
 function cell_connectivity(this) result(connectivity)
@@ -109,7 +109,7 @@ function cell_connectivity(this) result(connectivity)
   type(atlas_BlockConnectivity) :: connectivity
   connectivity = atlas_BlockConnectivity( &
       atlas__mesh__Elements__cell_connectivity(this%c_ptr()) )
-  call connectivity%return()
+  !call connectivity%return()
 end function
 
 function element_type(this) result(etype)

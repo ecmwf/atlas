@@ -22,8 +22,6 @@ namespace eckit {
 
 namespace atlas {
 namespace util {
-class Grid;
-class Mesh;
 
 /// @brief Parametrisation class used to construct various
 ///        atlas components
@@ -62,7 +60,7 @@ public:
 
 
   // Overload operators to merge two Config objects.
-  Config operator&&(const Config& other) const;
+  //Config operator&&(const Config& other) const;
   Config operator|(const Config& other) const;
 
   /// @brief Set a key-value parameter
@@ -127,7 +125,6 @@ inline Config& Config::set(const std::string& name, const ValueT& value)
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-#define Char char
 extern "C"
 {
   Config* atlas__Config__new ();
@@ -153,14 +150,13 @@ extern "C"
   int atlas__Config__get_long   (Config* This, const char* name, long &value);
   int atlas__Config__get_float  (Config* This, const char* name, float &value);
   int atlas__Config__get_double (Config* This, const char* name, double &value);
-  int atlas__Config__get_string (Config* This, const char* name, Char* &value, int &size, int &allocated);
+  int atlas__Config__get_string (Config* This, const char* name, char* &value, int &size, int &allocated);
   int atlas__Config__get_array_int    (Config* This, const char* name, int* &value, int &size, int &allocated);
   int atlas__Config__get_array_long   (Config* This, const char* name, long* &value, int &size, int &allocated);
   int atlas__Config__get_array_float  (Config* This, const char* name, float* &value, int &size, int &allocated);
   int atlas__Config__get_array_double (Config* This, const char* name, double* &value, int &size, int &allocated);
-  void atlas__Config__json (Config* This, Char* &json, int &size, int &allocated);
+  void atlas__Config__json (Config* This, char* &json, int &size, int &allocated);
 }
-#undef Char
 
 // ------------------------------------------------------------------
 

@@ -9,18 +9,18 @@
  */
 
 #include <algorithm>
-#include "atlas/internals/atlas_config.h"
-#include "atlas/internals/atlas_defines.h"
+#include "eckit/memory/SharedPtr.h"
+#include "atlas/library/config.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/field/Field.h"
-#include "atlas/array/IndexView.h"
-#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "eckit/log/Bytes.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
@@ -30,8 +30,35 @@
 #define FORTRAN_BASE 0
 #endif
 
+using atlas::array::ArrayView;
+using atlas::array::IndexView;
+using atlas::array::make_view;
+using atlas::array::make_indexview;
+using atlas::array::make_datatype;
+using atlas::array::make_shape;
+
 namespace atlas {
 namespace mesh {
+
+//------------------------------------------------------------------------------------------------------
+
+namespace {
+
+static void set_uninitialized_fields_to_zero( HybridElements& elems, size_t begin )
+{
+  ArrayView<gidx_t,1> global_index = make_view<gidx_t,1>( elems.global_index() );
+  IndexView<int,1> remote_index = make_indexview<int,1>( elems.remote_index() );
+  ArrayView<int,1> partition = make_view<int,1>( elems.partition() );
+  ArrayView<int,1> halo = make_view<int,1>( elems.halo() );
+
+  for( size_t j=begin; j<elems.size(); ++j ) {
+    global_index(j) = 0;
+    remote_index(j) = 0;
+    partition(j) = 0;
+    halo(j) = 0;
+  }
+}
+}
 
 //------------------------------------------------------------------------------------------------------
 
@@ -41,10 +68,12 @@ HybridElements::HybridElements() :
   elements_begin_(1,0ul),
   type_idx_()
 {
-  global_index_ = &add( field::Field::create<gidx_t>("glb_idx",   array::make_shape(size())) );
-  remote_index_ = &add( field::Field::create<int   >("remote_idx",array::make_shape(size())) );
-  partition_    = &add( field::Field::create<int   >("partition", array::make_shape(size())) );
-  halo_         = &add( field::Field::create<int   >("halo",      array::make_shape(size())) );
+  add( Field("glb_idx",    make_datatype<gidx_t>(), make_shape(size())) );
+  add( Field("remote_idx", make_datatype<int>(),    make_shape(size())) );
+  add( Field("partition",  make_datatype<int>(),    make_shape(size())) );
+  add( Field("halo",       make_datatype<int>(),    make_shape(size())) );
+  add( Field("patch",      make_datatype<int>(),    make_shape(size())) );
+  set_uninitialized_fields_to_zero(*this, 0);
 
   node_connectivity_ = &add( new Connectivity("node") );
   edge_connectivity_ = &add( new Connectivity("edge") );
@@ -55,30 +84,34 @@ HybridElements::~HybridElements()
 {
 }
 
-field::Field& HybridElements::add( field::Field* field )
+Field HybridElements::add( const Field& field )
 {
-  ASSERT( field != NULL );
-  ASSERT( ! field->name().empty() );
+  ASSERT( field );
+  ASSERT( ! field.name().empty() );
 
-  if( has_field(field->name()) ) {
+  if( has_field(field.name()) ) {
     std::stringstream msg;
-    msg << "Trying to add field '"<<field->name()<<"' to HybridElements, but HybridElements already has a field with this name.";
+    msg << "Trying to add field '"<<field.name()<<"' to HybridElements, but HybridElements already has a field with this name.";
     throw eckit::Exception(msg.str(),Here());
   }
-  fields_[field->name()] = eckit::SharedPtr<field::Field>(field);
-  return *field;
+  fields_[field.name()] = field;
+  return field;
 }
 
 void HybridElements::resize( size_t size )
 {
+  size_t old_size = size_;
   size_ = size;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
-    field::Field& field = *it->second;
+    Field& field = it->second;
     array::ArrayShape shape = field.shape();
     shape[0] = size_;
     field.resize(shape);
   }
+
+  set_uninitialized_fields_to_zero( *this, old_size );
+
 }
 
 void HybridElements::remove_field(const std::string& name)
@@ -93,7 +126,7 @@ void HybridElements::remove_field(const std::string& name)
 }
 
 
-const field::Field& HybridElements::field(const std::string& name) const
+const Field& HybridElements::field(const std::string& name) const
 {
   if( ! has_field(name) )
   {
@@ -101,15 +134,15 @@ const field::Field& HybridElements::field(const std::string& name) const
     msg << "Trying to access field `"<<name<<"' in Nodes, but no field with this name is present in Nodes.";
     throw eckit::Exception(msg.str(),Here());
   }
-  return *fields_.find(name)->second;
+  return fields_.find(name)->second;
 }
 
-field::Field& HybridElements::field(const std::string& name)
+Field& HybridElements::field(const std::string& name)
 {
-  return const_cast<field::Field&>(static_cast<const HybridElements*>(this)->field(name));
+  return const_cast<Field&>(static_cast<const HybridElements*>(this)->field(name));
 }
 
-const field::Field& HybridElements::field(size_t idx) const
+const Field& HybridElements::field(size_t idx) const
 {
   ASSERT(idx < nb_fields());
   size_t c(0);
@@ -117,7 +150,7 @@ const field::Field& HybridElements::field(size_t idx) const
   {
     if( idx == c )
     {
-      const field::Field& field = *it->second;
+      const Field& field = it->second;
       return field;
     }
     c++;
@@ -125,9 +158,9 @@ const field::Field& HybridElements::field(size_t idx) const
   throw eckit::SeriousBug("Should not be here!",Here());
 }
 
-field::Field& HybridElements::field(size_t idx)
+Field& HybridElements::field(size_t idx)
 {
-  return const_cast<field::Field&>(static_cast<const HybridElements*>(this)->field(idx));
+  return const_cast<Field&>(static_cast<const HybridElements*>(this)->field(idx));
 }
 
 
@@ -249,7 +282,7 @@ void HybridElements::insert( size_t type_idx, size_t position, size_t nb_element
   size_+=nb_elements;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
-    field::Field& field = *it->second;
+    Field& field = it->second;
     field.insert(position,nb_elements);
   }
 
@@ -274,20 +307,37 @@ void HybridElements::clear()
   elements_.clear();
 }
 
+//-----------------------------------------------------------------------------
+
+void HybridElements::cloneToDevice() const {
+  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second.cloneToDevice();});
+  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->cloneToDevice();});
+}
+
+void HybridElements::cloneFromDevice() const {
+  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second.cloneFromDevice();});
+  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->cloneFromDevice();});
+}
+
+void HybridElements::syncHostDevice() const {
+  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second.syncHostDevice();});
+  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->syncHostDevice();});
+}
+
 
 size_t HybridElements::footprint() const {
   size_t size = sizeof(*this);
   for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
-    size += (*it).second->footprint();
+    size += (*it).second.footprint();
   }
   for( ConnectivityMap::const_iterator it = connectivities_.begin(); it != connectivities_.end(); ++it ) {
     size += (*it).second->footprint();
   }
   size += elements_size_.capacity() * sizeof(size_t);
   size += elements_begin_.capacity() * sizeof(size_t);
-  
+
   size += metadata_.footprint();
-  
+
   return size;
 }
 
@@ -360,63 +410,63 @@ int atlas__mesh__HybridElements__nb_types(const HybridElements* This)
   return This->nb_types();
 }
 
-field::Field* atlas__mesh__HybridElements__field_by_idx(HybridElements* This, size_t idx)
+field::FieldImpl* atlas__mesh__HybridElements__field_by_idx(HybridElements* This, size_t idx)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->field(idx);
+    field = This->field(idx).get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__HybridElements__field_by_name(HybridElements* This, char* name)
+field::FieldImpl* atlas__mesh__HybridElements__field_by_name(HybridElements* This, char* name)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->field(std::string(name));
+    field = This->field(std::string(name)).get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__HybridElements__global_index(HybridElements* This)
+field::FieldImpl* atlas__mesh__HybridElements__global_index(HybridElements* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->global_index();
+    field = This->global_index().get();
   );
   return field;
 
 }
 
-field::Field* atlas__mesh__HybridElements__remote_index(HybridElements* This)
+field::FieldImpl* atlas__mesh__HybridElements__remote_index(HybridElements* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->remote_index();
+    field = This->remote_index().get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__HybridElements__partition(HybridElements* This)
+field::FieldImpl* atlas__mesh__HybridElements__partition(HybridElements* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->partition();
+    field = This->partition().get();
   );
   return field;
 }
 
-field::Field* atlas__mesh__HybridElements__halo(HybridElements* This)
+field::FieldImpl* atlas__mesh__HybridElements__halo(HybridElements* This)
 {
-  field::Field* field(0);
+  field::FieldImpl* field(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(This!=0);
-    field = &This->halo();
+    field = This->halo().get();
   );
   return field;
 }
@@ -431,7 +481,7 @@ Elements* atlas__mesh__HybridElements__elements(HybridElements* This, size_t idx
   return elements;
 }
 
-void atlas__mesh__HybridElements__add_field(HybridElements*This, field::Field* field)
+void atlas__mesh__HybridElements__add_field(HybridElements*This, field::FieldImpl* field)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);

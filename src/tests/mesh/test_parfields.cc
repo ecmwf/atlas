@@ -18,29 +18,26 @@
 
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/field/Field.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/internals/Parameters.h"
-#include "atlas/grid/partitioners/EqualRegionsPartitioner.h"
-#include "atlas/grid/grids.h"
-#include "atlas/mesh/generators/Structured.h"
-#include "atlas/array/Array.h"
-#include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
-#include "atlas/internals/Bitflags.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
+#include "atlas/grid.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/array.h"
 
 #include "tests/AtlasFixture.h"
 
-using atlas::internals::Topology;
+using Topology = atlas::mesh::Nodes::Topology;
 
 using namespace atlas::array;
-using namespace atlas::internals;
 using namespace atlas::output;
-using namespace atlas::mesh::generators;
+using namespace atlas::meshgenerator;
 
 namespace atlas {
 namespace test {
@@ -48,23 +45,24 @@ namespace test {
 class IsGhost
 {
 public:
-  IsGhost( const mesh::Nodes& nodes )
+  IsGhost( const mesh::Nodes& nodes ) :
+    part_( make_view<int,1>(nodes.partition()) ),
+    ridx_( make_indexview<int,1>(nodes.remote_index()) ),
+    mypart_(parallel::mpi::comm().rank())
   {
-    part_   = array::ArrayView<int,1> (nodes.partition() );
-    ridx_   = IndexView<int,1> (nodes.remote_index() );
-    mypart_ = parallel::mpi::comm().rank();
+
   }
 
   bool operator()(size_t idx) const
   {
-    if( part_[idx] != mypart_ ) return true;
-    if( ridx_[idx] != (int)idx     ) return true;
+    if( part_(idx) != mypart_ ) return true;
+    if( ridx_(idx) != (int)idx     ) return true;
     return false;
   }
 private:
-  int mypart_;
   array::ArrayView<int,1> part_;
   IndexView<int,1> ridx_;
+  int mypart_;
 };
 
 
@@ -75,15 +73,15 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test1 )
 {
-  mesh::Mesh::Ptr m ( mesh::Mesh::create() );
+  Mesh m;
 
-  mesh::Nodes& nodes = m->nodes();
+  mesh::Nodes& nodes = m.nodes();
   nodes.resize(10);
-  array::ArrayView<double,2> lonlat ( nodes.lonlat());
-  array::ArrayView<gidx_t,1> glb_idx( nodes.global_index());
-  array::ArrayView<int,1> part ( nodes.partition() );
-  array::ArrayView<int,1> flags ( nodes.field("flags") );
-  flags = Topology::NONE;
+  array::ArrayView<double,2> xy       = make_view<double,2>( nodes.xy());
+  array::ArrayView<gidx_t,1> glb_idx  = make_view<gidx_t,1>( nodes.global_index());
+  array::ArrayView<int   ,1> part     = make_view<int   ,1>( nodes.partition() );
+  array::ArrayView<int   ,1> flags    = make_view<int   ,1>( nodes.field("flags") );
+  flags.assign(Topology::NONE);
 
   // This is typically available
   glb_idx(0) = 1;    part(0) = 0;
@@ -97,22 +95,22 @@ BOOST_AUTO_TEST_CASE( test1 )
   glb_idx(8) = 9;    part(8) = std::min(1,(int)parallel::mpi::comm().size()-1);
   glb_idx(9) = 10;   part(9) = std::min(1,(int)parallel::mpi::comm().size()-1);
 
-  lonlat(0,LON) = 0.;    lonlat(0,LAT) = 80.;    Topology::set( flags(0), Topology::BC|Topology::WEST );
-  lonlat(1,LON) = 0.;    lonlat(1,LAT) =-80.;    Topology::set( flags(1), Topology::BC|Topology::WEST );
-  lonlat(2,LON) = 90.;   lonlat(2,LAT) = 80.;
-  lonlat(3,LON) = 90.;   lonlat(3,LAT) =-80.;
-  lonlat(4,LON) = 180.;  lonlat(4,LAT) = 80.;
-  lonlat(5,LON) = 180.;  lonlat(5,LAT) =-80.;
-  lonlat(6,LON) = 270.;  lonlat(6,LAT) = 80.;
-  lonlat(7,LON) = 270.;  lonlat(7,LAT) =-80.;
-  lonlat(8,LON) = 360.;  lonlat(8,LAT) = 80.;    Topology::set( flags(8), Topology::BC|Topology::EAST );
-  lonlat(9,LON) = 360.;  lonlat(9,LAT) =-80.;    Topology::set( flags(9), Topology::BC|Topology::EAST );
+  xy(0,XX) = 0.;    xy(0,YY) = 80.;    Topology::set( flags(0), Topology::BC|Topology::WEST );
+  xy(1,XX) = 0.;    xy(1,YY) =-80.;    Topology::set( flags(1), Topology::BC|Topology::WEST );
+  xy(2,XX) = 90.;   xy(2,YY) = 80.;
+  xy(3,XX) = 90.;   xy(3,YY) =-80.;
+  xy(4,XX) = 180.;  xy(4,YY) = 80.;
+  xy(5,XX) = 180.;  xy(5,YY) =-80.;
+  xy(6,XX) = 270.;  xy(6,YY) = 80.;
+  xy(7,XX) = 270.;  xy(7,YY) =-80.;
+  xy(8,XX) = 360.;  xy(8,YY) = 80.;    Topology::set( flags(8), Topology::BC|Topology::EAST );
+  xy(9,XX) = 360.;  xy(9,YY) =-80.;    Topology::set( flags(9), Topology::BC|Topology::EAST );
 
-  mesh::actions::build_parallel_fields(*m);
+  mesh::actions::build_parallel_fields(m);
 
   BOOST_REQUIRE( nodes.has_field("remote_idx") );
 
-  IndexView<int,1> loc( nodes.remote_index() );
+  IndexView<int,1> loc = make_indexview<int,1>( nodes.remote_index() );
   BOOST_CHECK_EQUAL( loc(0) , 0 );
   BOOST_CHECK_EQUAL( loc(1) , 1 );
   BOOST_CHECK_EQUAL( loc(2) , 2 );
@@ -124,7 +122,7 @@ BOOST_AUTO_TEST_CASE( test1 )
   BOOST_CHECK_EQUAL( loc(8) , 8 );
   BOOST_CHECK_EQUAL( loc(9) , 9 );
 
-  test::IsGhost is_ghost( m->nodes() );
+  test::IsGhost is_ghost( m.nodes() );
 
   switch ( parallel::mpi::comm().rank() )
   {
@@ -154,7 +152,7 @@ BOOST_AUTO_TEST_CASE( test1 )
     break;
   }
 
-  mesh::actions::build_periodic_boundaries(*m);
+  mesh::actions::build_periodic_boundaries(m);
 
   // points 8 and 9 are periodic slave points of points 0 and 1
   BOOST_CHECK_EQUAL( part(8), 0 );
@@ -174,15 +172,11 @@ BOOST_AUTO_TEST_CASE( test2 )
   util::Config meshgen_options;
   meshgen_options.set("angle",27.5);
   meshgen_options.set("triangulate",false);
-  mesh::generators::Structured generate(meshgen_options);
-  mesh::Mesh* m = generate(
-      grid::gaussian::ClassicGaussian(32) );
-  mesh::actions::build_parallel_fields(*m);
+  meshgenerator::StructuredMeshGenerator generate(meshgen_options);
+  Mesh m = generate( Grid("N32") );
+  mesh::actions::build_parallel_fields(m);
 
-  mesh::Nodes& nodes = m->nodes();
-  IndexView<int,1> loc_idx ( nodes.remote_index() );
-  array::ArrayView<int,1> part    ( nodes.partition());
-  array::ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  mesh::Nodes& nodes = m.nodes();
 
   test::IsGhost is_ghost(nodes);
 
@@ -195,7 +189,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   if( parallel::mpi::comm().rank() == 0 ) BOOST_CHECK_EQUAL( nb_ghost, 129 );
   if( parallel::mpi::comm().rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 0   );
 
-  mesh::actions::build_periodic_boundaries(*m);
+  mesh::actions::build_periodic_boundaries(m);
 
   int nb_periodic = -nb_ghost;
   for( size_t jnode=0; jnode<nodes.size(); ++jnode )
@@ -206,8 +200,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   if( parallel::mpi::comm().rank() == 0 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
   if( parallel::mpi::comm().rank() == 1 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
 
-  Gmsh("periodic.msh").write(*m);
-  delete m;
+  Gmsh("periodic.msh").write(m);
 }
 
 } // namespace test

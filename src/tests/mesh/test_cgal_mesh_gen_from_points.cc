@@ -14,16 +14,16 @@
 #include <vector>
 #include <memory>
 
-#include "atlas/internals/atlas_config.h"
-#include "atlas/atlas.h"
+#include "atlas/library/config.h"
+#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/mesh/generators/Delaunay.h"
+#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::mesh::generators;
+using namespace atlas::meshgenerator;
 using namespace atlas::output;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -33,16 +33,16 @@ using namespace atlas::output;
 
 int main(int argc, char **argv)
 {
-    atlas_init(argc,argv);
-    Grid::Ptr grid( Grid::create( "L32x11") );
+    atlas::Library::instance().initialise(argc,argv);
+    Grid grid( "L33x11" );
 
     // Build a mesh from grid
-    Delaunay generate;
-    mesh::Mesh::Ptr mesh( generate(*grid) );
+    DelaunayMeshGenerator generate;
+    Mesh mesh = generate(grid);
 
     Gmsh gmsh("earth.msh", util::Config("coordinates","xyz") );
-    gmsh.write(*mesh);
+    gmsh.write(mesh);
 
-    atlas_finalize();
+    atlas::Library::instance().finalise();
     return 0;
 }

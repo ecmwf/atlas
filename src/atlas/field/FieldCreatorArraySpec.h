@@ -27,7 +27,7 @@ namespace field {
 /*!
  * \brief Field creator using array::ArrayShape parametrisation
  * \code{.cpp}
- *    Field* field = Field::create(
+ *    FieldImpl* field = Field::create(
  *         Config
  *           ("creator","ArraySpec")     // ArraySpec FieldCreator
  *           ("shape",array::make_shape(100,3))  // Rank 2 field with indexing [100][3]
@@ -40,7 +40,7 @@ class FieldCreatorArraySpec: public FieldCreator
 public:
   FieldCreatorArraySpec() {}
   FieldCreatorArraySpec(const eckit::Parametrisation&) {}
-  virtual Field* createField( const eckit::Parametrisation& ) const;
+  virtual FieldImpl* createField( const eckit::Parametrisation& ) const;
 };
 
 // ------------------------------------------------------------------

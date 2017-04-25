@@ -24,7 +24,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename );
 
 extern "C"
 {
-  void atlas__write_load_balance_report (Mesh* mesh, char* filename);
+  void atlas__write_load_balance_report (Mesh::Implementation* mesh, char* filename);
 }
 
 // ------------------------------------------------------------------

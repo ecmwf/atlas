@@ -8,29 +8,28 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/internals/atlas_config.h"
-#include "atlas/grid/grids.h"
-#include "atlas/mesh/generators/Structured.h"
-#include "atlas/grid/gaussian/ReducedGaussian.h"
+#include "atlas/library/config.h"
+#include "atlas/grid.h"
+#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::grid::gaussian;
+// using namespace atlas::grid::detail::grid::reduced;
 
 namespace atlas {
 namespace test {
 
-mesh::Mesh::Ptr generate_mesh( const Structured& rgg )
+Mesh generate_mesh( const StructuredGrid& grid )
 {
-  mesh::generators::Structured generate;
-  return mesh::Mesh::Ptr( generate( rgg ) );
+  meshgenerator::StructuredMeshGenerator generate;
+  return generate( grid );
 }
 
-mesh::Mesh::Ptr generate_mesh(int nlat, long lon[] )
+Mesh generate_mesh( std::initializer_list<long> nx )
 {
-  return generate_mesh( ReducedGaussian(nlat,lon) );
+  return generate_mesh( ReducedGaussianGrid(nx) );
 }
 
 

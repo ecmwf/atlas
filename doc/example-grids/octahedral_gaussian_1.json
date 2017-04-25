@@ -1,0 +1,6 @@
+{
+  "//" : "Octahedral Gaussian grid 'O16'",
+
+  "type" : "octahedral_gaussian",
+  "N" : 16
+}

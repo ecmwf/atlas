@@ -8,33 +8,58 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_numerics_Nabla_h
-#define atlas_numerics_Nabla_h
+#pragma once
 
 #include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 namespace eckit { class Parametrisation; }
 namespace atlas { namespace numerics { class Method; } }
-namespace atlas { namespace field { class Field; } }
+namespace atlas { namespace field { class FieldImpl; } }
+namespace atlas { class Field; }
 
 namespace atlas {
 namespace numerics {
 
-class Nabla : public eckit::Owned {
-public:
-
-  static Nabla* create(const Method &);
-  static Nabla* create(const Method &, const eckit::Parametrisation &);
+class NablaImpl : public eckit::Owned {
 
 public:
+  NablaImpl(const Method &, const eckit::Parametrisation &);
+  virtual ~NablaImpl();
+
+  virtual void gradient(const Field &scalar, Field &grad) const = 0;
+  virtual void divergence(const Field &vector, Field &div) const = 0;
+  virtual void curl(const Field &vector, Field &curl) const = 0;
+  virtual void laplacian(const Field &scalar, Field &laplacian) const = 0;
+
+};
+
+// ------------------------------------------------------------------
+
+class Nabla {
+
+public:
+  
+  using nabla_t = NablaImpl;
+  
+private:
+  
+  eckit::SharedPtr<const nabla_t> nabla_;
+  
+public:
+
+  Nabla();
+  Nabla( const nabla_t* );
+  Nabla( const Nabla& nabla );
+  Nabla(const Method &);
   Nabla(const Method &, const eckit::Parametrisation &);
-  virtual ~Nabla();
 
-  virtual void gradient(const field::Field &scalar, field::Field &grad) const = 0;
-  virtual void divergence(const field::Field &vector, field::Field &div) const = 0;
-  virtual void curl(const field::Field &vector, field::Field &curl) const = 0;
-  virtual void laplacian(const field::Field &scalar, field::Field &laplacian) const = 0;
-
+  void gradient(const Field &scalar, Field &grad) const;
+  void divergence(const Field &vector, Field &div) const;
+  void curl(const Field &vector, Field &curl) const;
+  void laplacian(const Field &scalar, Field &laplacian) const;
+  
+  const nabla_t* get() const { return nabla_.get(); }
 };
 
 
@@ -46,7 +71,7 @@ public:
      * \brief build Nabla with factory key, constructor arguments
      * \return Nabla
      */
-    static Nabla* build(const Method &, const eckit::Parametrisation &);
+    static const Nabla::nabla_t* build(const Method &, const eckit::Parametrisation &);
 
     /*!
      * \brief list all registered field creators
@@ -55,7 +80,7 @@ public:
     static bool has(const std::string& name);
 
 private:
-    virtual Nabla* make(const Method &, const eckit::Parametrisation &) = 0 ;
+    virtual const Nabla::nabla_t* make(const Method &, const eckit::Parametrisation &) = 0 ;
 
 protected:
     NablaFactory(const std::string&);
@@ -74,27 +99,23 @@ public:
     NablaBuilder(const std::string& name) : NablaFactory(name) {}
 
 private:
-    virtual Nabla* make(const Method &method, const eckit::Parametrisation &p) {
+    virtual const Nabla::nabla_t* make(const Method &method, const eckit::Parametrisation &p) {
         return new T(method,p);
     }
 };
 
 // ------------------------------------------------------------------
-#define Parametrisation eckit::Parametrisation
-#define field_Field field::Field
+
 extern "C" {
 
-void atlas__Nabla__delete (Nabla* This);
-Nabla* atlas__Nabla__create (const Method* method, const Parametrisation* params);
-void atlas__Nabla__gradient (const Nabla* This, const field_Field* scalar, field_Field* grad);
-void atlas__Nabla__divergence (const Nabla* This, const field_Field* vector, field_Field* div);
-void atlas__Nabla__curl (const Nabla* This, const field_Field* vector, field_Field* curl);
-void atlas__Nabla__laplacian (const Nabla* This, const field_Field* scalar, field_Field* laplacian);
+void atlas__Nabla__delete (Nabla::nabla_t* This);
+const Nabla::nabla_t* atlas__Nabla__create (const Method* method, const eckit::Parametrisation* params);
+void atlas__Nabla__gradient (const Nabla::nabla_t* This, const field::FieldImpl* scalar, field::FieldImpl* grad);
+void atlas__Nabla__divergence (const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* div);
+void atlas__Nabla__curl (const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* curl);
+void atlas__Nabla__laplacian (const Nabla::nabla_t* This, const field::FieldImpl* scalar, field::FieldImpl* laplacian);
+
 }
-#undef field_Field
-#undef Parametrisation
 
 } // namespace numerics
 } // namespace atlas
-
-#endif // atlas_numerics_Nabla_h

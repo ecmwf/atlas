@@ -12,16 +12,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "tests/TestMeshes.h"
-#include "atlas/atlas.h"
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/util/io/Gmsh.h"
-#include "atlas/internals/Debug.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/mesh/actions/BuildHalo.h"
-#include "atlas/mesh/actions/BuildEdges.h"
-#include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/output/Output.h"
 #include "atlas/output/Gmsh.h"
 
@@ -34,14 +25,13 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_gmsh_output )
 {
-  mesh::Mesh::Ptr mesh = test::generate_mesh(
-       grid::gaussian::ClassicGaussian(128) );
+  Mesh mesh = test::generate_mesh( Grid("N128") );
 
   atlas::output::GmshFileStream file("bs.msh","w");
   output::Gmsh gmsh ( "test_gmsh_output.msh", util::Config
       ("binary",true)
       ("file","test_gmsh_output.msh") );
-  gmsh.write(*mesh);
+  gmsh.write(mesh);
 }
 
 } // namespace test

@@ -11,11 +11,9 @@
 /// @author Willem Deconinck
 /// @date October 2015
 
-#ifndef atlas_ElementType_H
-#define atlas_ElementType_H
+#pragma once
 
 #include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
 namespace mesh {
@@ -156,5 +154,3 @@ const char* atlas__mesh__ElementType__name (const ElementType* This);
 
 } // namespace mesh
 } // namespace atlas
-
-#endif

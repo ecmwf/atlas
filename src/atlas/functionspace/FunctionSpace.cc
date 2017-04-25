@@ -14,11 +14,10 @@
 #include <limits>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/types/Types.h"
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/internals/Bitflags.h"
 #include "atlas/array/DataType.h"
 #include "atlas/runtime/ErrorHandling.h"
 
@@ -29,7 +28,7 @@ namespace functionspace {
 
 // C wrapper interfaces to C++ routines
 extern "C" {
- void atlas__FunctionSpace__delete (FunctionSpace* This)
+ void atlas__FunctionSpace__delete (FunctionSpaceImpl* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -38,7 +37,7 @@ extern "C" {
   );
 }
 
-const char* atlas__FunctionSpace__name (FunctionSpace* This) {
+const char* atlas__FunctionSpace__name (FunctionSpaceImpl* This) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
     return This->name().c_str();
@@ -50,5 +49,35 @@ const char* atlas__FunctionSpace__name (FunctionSpace* This) {
 // ------------------------------------------------------------------
 
 } // namespace functionspace
+
+// ------------------------------------------------------------------
+
+FunctionSpace::FunctionSpace() :
+  functionspace_( new functionspace::NoFunctionSpace() ) {
+}
+
+FunctionSpace::FunctionSpace( const Implementation* functionspace ) :
+  functionspace_( functionspace ) {
+}
+
+FunctionSpace::FunctionSpace( const FunctionSpace& functionspace ) :
+  functionspace_( functionspace.functionspace_ ) {
+}
+
+std::string FunctionSpace::name() const {
+  return functionspace_->name();
+}
+
+FunctionSpace::operator bool() const {
+  return functionspace_->operator bool();
+}
+
+size_t FunctionSpace::footprint() const {
+  return functionspace_->footprint();
+}
+
+// ------------------------------------------------------------------
+
+
 } // namespace atlas
 

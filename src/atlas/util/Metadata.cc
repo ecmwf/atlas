@@ -19,8 +19,6 @@
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
 
-#include "atlas/grid/Grid.h"
-#include "atlas/mesh/Mesh.h"
 #include "atlas/runtime/ErrorHandling.h"
 
 using std::string;
@@ -141,17 +139,6 @@ template<> Metadata& Metadata::set(const std::string& name, const std::vector<si
   return *this;
 }
 
-template<> Metadata& Metadata::set(const std::string& name, const mesh::Mesh& value)
-{
-    NOTIMP;
-  // return set(name,value.id());
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const grid::Grid& value)
-{
-    NOTIMP;
-  // return set(name,value.id());
-}
 
 template<> bool Metadata::get(const std::string& name) const
 {
@@ -312,20 +299,6 @@ template<> bool Metadata::get(const std::string& name, std::vector<float>& value
   for( size_t i=0; i<v.size(); ++i )
     value[i] = double( v[i] );
   return true;
-}
-
-template<> mesh::Mesh& Metadata::get(const std::string& name) const
-{
-    NOTIMP;
-  // if( !has(name) ) throw_exception(name);
-  // return mesh::Mesh::from_id(eckit::Properties::get(name));
-}
-
-template<> grid::Grid& Metadata::get(const std::string& name) const
-{
-    NOTIMP;
-  // if( !has(name) ) throw_exception(name);
-  // return grid::Grid::from_id(eckit::Properties::get(name));
 }
 
 template<> eckit::Properties Metadata::get(const std::string& name) const
@@ -574,30 +547,6 @@ void atlas__Metadata__get_array_double (Metadata* This, const char* name, double
     for( size_t j=0; j<v.size(); ++j ) value[j] = v[j];
     allocated = true;
   );
-}
-
-void atlas__Metadata__set_grid (Metadata* This, const char* name, grid::Grid* value)
-{
-  ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
-}
-
-void atlas__Metadata__set_mesh (Metadata* This, const char* name, mesh::Mesh* value)
-{
-  ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
-}
-
-grid::Grid* atlas__Metadata__get_grid (Metadata* This, const char* name)
-{
-  grid::Grid* value(NULL);
-  ATLAS_ERROR_HANDLING( value = &This->get<grid::Grid&>( std::string(name) ) );
-  return value;
-}
-
-mesh::Mesh* atlas__Metadata__get_mesh (Metadata* This, const char* name)
-{
-  mesh::Mesh* value(NULL);
-  ATLAS_ERROR_HANDLING( value = &This->get<mesh::Mesh&>( std::string(name) ) );
-  return value;
 }
 
 int atlas__Metadata__has (Metadata* This, const char* name)

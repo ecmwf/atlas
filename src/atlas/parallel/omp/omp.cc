@@ -11,7 +11,7 @@
 #ifndef atlas_omp_h
 #define atlas_omp_h
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 
 /// APPENDIX B from the OpenMP 3.1 standard
 /// http://www.openmp.org/mp-documents/OpenMP3.1.pdf

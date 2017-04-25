@@ -11,18 +11,19 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdarg>
+#include <limits>
 
 #include "eckit/os/BackTrace.h"
 #include "eckit/utils/MD5.h"
 
-#include "atlas/internals/atlas_config.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/internals/IsGhost.h"
+#include "atlas/mesh/IsGhostNode.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/Checksum.h"
@@ -31,6 +32,8 @@
 #include "atlas/runtime/Log.h"
 #undef atlas_omp_critical_ordered
 #define atlas_omp_critical_ordered atlas_omp_critical
+#include "atlas/array/ArrayView.h"
+
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
 #else
@@ -39,72 +42,74 @@
 
 namespace atlas {
 namespace functionspace {
+namespace detail {
 
 namespace {
 
 template <typename T>
-array::ArrayView<T,3> leveled_view(const field::Field &field)
+array::LocalView<T,3> make_leveled_view(const Field &field)
 {
   if( field.has_levels() )
-    return array::ArrayView<T,3> ( field.data<T>(), array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
+    return array::LocalView<T,3> ( array::make_storageview<T>(field).data(),
+                                   array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
   else
-    return array::ArrayView<T,3> ( field.data<T>(), array::make_shape(field.shape(0),1,field.stride(0)) );
+    return array::LocalView<T,3> ( array::make_storageview<T>(field).data(),
+                                   array::make_shape(field.shape(0),1,field.stride(0)) );
 }
 
 template <typename T>
-array::ArrayView<T,2> surface_view(const field::Field &field)
+array::LocalView<T,2> surface_view(const Field &field)
 {
-  return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),field.stride(0)) );
+  return array::LocalView<T,2> ( array::make_storageview<T>(field).data(),
+                                 array::make_shape(field.shape(0),field.stride(0)) );
 }
 
 template <typename T>
-array::ArrayView<T,2> leveled_scalar_view(const field::Field &field)
+array::LocalView<T,2> make_leveled_scalar_view(const Field &field)
 {
   if( field.has_levels() )
-    return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),field.shape(1)) );
+    return array::LocalView<T,2> ( array::make_storageview<T>(field).data(),
+                                   array::make_shape(field.shape(0),field.shape(1)) );
   else
-    return array::ArrayView<T,2> ( field.data<T>(), array::make_shape(field.shape(0),1) );
+    return array::LocalView<T,2> ( array::make_storageview<T>(field).data(),
+                                   array::make_shape(field.shape(0),1) );
 }
 
 template <typename T>
-array::ArrayView<T,1> surface_scalar_view(const field::Field &field)
+array::LocalView<T,1> make_surface_scalar_view(const Field &field)
 {
-  return array::ArrayView<T,1> ( field.data<T>(), array::make_shape(field.size()) );
+  return array::LocalView<T,1> ( array::make_storageview<T>(field).data(),
+                                 array::make_shape(field.size()) );
 }
 
 
 }
 
-NodeColumns::NodeColumns( mesh::Mesh& mesh )
-  : mesh_(mesh),
+NodeColumns::NodeColumns( Mesh& mesh ) :
+    mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(0),
     nb_nodes_(nodes_.size()),
-    nb_nodes_global_(0)
-{
-  constructor();
+    nb_nodes_global_(0) {
+    constructor();
 }
 
-NodeColumns::NodeColumns( mesh::Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params )
-  : FunctionSpace(),
+NodeColumns::NodeColumns( Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params ) :
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),
     nb_nodes_(nodes_.size()),
-    nb_nodes_global_(0)
-{
-  constructor();
+    nb_nodes_global_(0) {
+    constructor();
 }
 
-NodeColumns::NodeColumns(mesh::Mesh& mesh, const mesh::Halo &halo)
-  : FunctionSpace(),
+NodeColumns::NodeColumns(Mesh& mesh, const mesh::Halo &halo) :
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),
     nb_nodes_(nodes_.size()),
-    nb_nodes_global_(0)
-{
-  constructor();
+    nb_nodes_global_(0) {
+    constructor();
 }
 
 
@@ -124,11 +129,8 @@ void NodeColumns::constructor()
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
     mesh_.metadata().get(ss.str(),nb_nodes_);
-  }
-  field::Field& ridx = mesh_.nodes().remote_index();
-  field::Field& part = mesh_.nodes().partition();
-  halo_exchange_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,nb_nodes_);
 
+  }
   if( !nb_nodes_ ) {
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
@@ -137,15 +139,21 @@ void NodeColumns::constructor()
     }
   }
 
+  Field& part = mesh_.nodes().partition();
+  Field& ridx = mesh_.nodes().remote_index();
+  halo_exchange_->setup( array::make_view<int,1>(part).data(),
+                         array::make_view<int,1>(ridx).data(),
+                         REMOTE_IDX_BASE,nb_nodes_);
+
   {
     // Create new gather_scatter
     gather_scatter_.reset( new parallel::GatherScatter() );
 
-    field::Field& ridx = mesh_.nodes().remote_index();
-    field::Field& part = mesh_.nodes().partition();
-    field::Field& gidx = mesh_.nodes().global_index();
+    Field& ridx = mesh_.nodes().remote_index();
+    Field& part = mesh_.nodes().partition();
+    Field& gidx = mesh_.nodes().global_index();
 
-    internals::IsGhost is_ghost(mesh_.nodes());
+    mesh::IsGhostNode is_ghost(mesh_.nodes());
     std::vector<int> mask(mesh_.nodes().size());
     const size_t npts = mask.size();
     atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
@@ -156,23 +164,31 @@ void NodeColumns::constructor()
       //  mask[j] = 0;
       //}
     }
-    gather_scatter_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),nb_nodes_);
+    gather_scatter_->setup(array::make_view<int,1>(part).data(),
+                           array::make_view<int,1>(ridx).data(),
+                           REMOTE_IDX_BASE,
+                           array::make_view<gidx_t,1>(gidx).data(),
+                           mask.data(),nb_nodes_);
   }
 
   {
     // Create new checksum
     checksum_.reset( new parallel::Checksum() );
 
-    field::Field& ridx = mesh_.nodes().remote_index();
-    field::Field& part = mesh_.nodes().partition();
-    field::Field& gidx = mesh_.nodes().global_index();
-    internals::IsGhost is_ghost(mesh_.nodes());
+    Field& ridx = mesh_.nodes().remote_index();
+    Field& part = mesh_.nodes().partition();
+    Field& gidx = mesh_.nodes().global_index();
+    mesh::IsGhostNode is_ghost(mesh_.nodes());
     std::vector<int> mask(mesh_.nodes().size());
     const size_t npts = mask.size();
     atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
       mask[n] = is_ghost(n) ? 1 : 0;
     }
-    checksum_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),nb_nodes_);
+    checksum_->setup(array::make_view<int,1>(part).data(),
+                           array::make_view<int,1>(ridx).data(),
+                           REMOTE_IDX_BASE,
+                           array::make_view<gidx_t,1>(gidx).data(),
+                           mask.data(),nb_nodes_);
   }
 
   nb_nodes_global_ = gather_scatter_->glb_dof();
@@ -230,7 +246,7 @@ size_t NodeColumns::config_nb_nodes(const eckit::Parametrisation& config) const
 }
 
 namespace {
-void set_field_metadata(const eckit::Parametrisation& config, field::Field& field)
+void set_field_metadata(const eckit::Parametrisation& config, Field& field)
 {
   bool global(false);
   if( config.get("global",global) )
@@ -269,33 +285,33 @@ size_t NodeColumns::config_levels(const eckit::Parametrisation& config) const
 }
 
 
-field::Field* NodeColumns::createField(
+Field NodeColumns::createField(
     const std::string& name,
     array::DataType datatype,
     const eckit::Parametrisation& config ) const
 {
   size_t nb_nodes = config_nb_nodes(config);
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes));
-  field->set_functionspace(*this);
-  set_field_metadata(config,*field);
+  Field field = Field(name,datatype,array::make_shape(nb_nodes));
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
-field::Field* NodeColumns::createField(
+Field NodeColumns::createField(
     const std::string& name,
     array::DataType datatype,
     size_t levels,
     const eckit::Parametrisation& config) const
 {
   size_t nb_nodes = config_nb_nodes(config);
-  field::Field* field = field::Field::create(name,datatype,array::make_shape(nb_nodes,levels));
-  field->set_levels(levels);
-  field->set_functionspace(*this);
-  set_field_metadata(config,*field);
+  Field field = Field(name,datatype,array::make_shape(nb_nodes,levels));
+  field.set_levels(levels);
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
-field::Field* NodeColumns::createField(
+Field NodeColumns::createField(
     const std::string& name,
     array::DataType datatype,
     const std::vector<size_t>& variables,
@@ -304,13 +320,13 @@ field::Field* NodeColumns::createField(
   size_t nb_nodes = config_nb_nodes(config);
   std::vector<size_t> shape(1,nb_nodes);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_functionspace(*this);
-  set_field_metadata(config,*field);
+  Field field = Field(name,datatype,shape);
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
-field::Field* NodeColumns::createField(
+Field NodeColumns::createField(
     const std::string& name,
     array::DataType datatype,
     size_t levels,
@@ -320,64 +336,89 @@ field::Field* NodeColumns::createField(
   size_t nb_nodes = config_nb_nodes(config);
   std::vector<size_t> shape(1,nb_nodes); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  field::Field* field = field::Field::create(name,datatype,shape);
-  field->set_levels(levels);
-  field->set_functionspace(*this);
-  set_field_metadata(config,*field);
+  Field field = Field(name,datatype,shape);
+  field.set_levels(levels);
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
-field::Field* NodeColumns::createField(
+Field NodeColumns::createField(
     const std::string& name,
-    const field::Field& other,
+    const Field& other,
     const eckit::Parametrisation& config ) const
 {
   array::ArrayShape shape = other.shape();
   shape[0] = config_nb_nodes(config);
-  field::Field* field = field::Field::create(name,other.datatype(),shape);
+  Field field = Field(name,other.datatype(),shape);
   if( other.has_levels() )
-    field->set_levels(field->shape(1));
-  field->set_functionspace(*this);
-  set_field_metadata(config,*field);
+    field.set_levels(field.shape(1));
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
-field::Field* NodeColumns::createField(
+Field NodeColumns::createField(
     const eckit::Parametrisation& config ) const
 {
   size_t nb_nodes = config_nb_nodes(config);
-  field::Field* field = field::Field::create("",array::DataType::create<double>(),array::make_shape(nb_nodes));
-  field->set_functionspace(*this);
-  set_field_metadata(config,*field);
+  Field field = Field("",array::DataType::create<double>(),array::make_shape(nb_nodes));
+  field.set_functionspace(this);
+  set_field_metadata(config,field);
   return field;
 }
 
-void NodeColumns::haloExchange( field::FieldSet& fieldset ) const
+namespace {
+template<int RANK>
+void dispatch_haloExchange( const Field& field, const parallel::HaloExchange& halo_exchange )
+{
+  if     ( field.datatype() == array::DataType::kind<int>() ) {
+    array::ArrayView<int,RANK> view = array::make_view<int,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else if( field.datatype() == array::DataType::kind<long>() ) {
+    array::ArrayView<long,RANK> view = array::make_view<long,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else if( field.datatype() == array::DataType::kind<float>() ) {
+    array::ArrayView<float,RANK> view = array::make_view<float,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else if( field.datatype() == array::DataType::kind<double>() ) {
+    array::ArrayView<double,RANK> view = array::make_view<double,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else throw eckit::Exception("datatype not supported",Here());
+}
+}
+
+void NodeColumns::haloExchange( FieldSet& fieldset ) const
 {
   for( size_t f=0; f<fieldset.size(); ++f ) {
-    const field::Field& field = fieldset[f];
-    if     ( field.datatype() == array::DataType::kind<int>() ) {
-      array::ArrayView<int,2> view(field);
-      halo_exchange().execute( view );
+    const Field& field = fieldset[f];
+    switch( field.rank() ) {
+      case 1:
+        dispatch_haloExchange<1>(field,halo_exchange());
+        break;
+      case 2:
+        dispatch_haloExchange<2>(field,halo_exchange());
+        break;
+      case 3:
+        dispatch_haloExchange<3>(field,halo_exchange());
+        break;
+      case 4:
+        dispatch_haloExchange<4>(field,halo_exchange());
+        break;
+      default:
+        throw eckit::Exception("Rank not supported", Here());
+        break;
     }
-    else if( field.datatype() == array::DataType::kind<long>() ) {
-      array::ArrayView<long,2> view(field);
-      halo_exchange().execute( view );
-    }
-    else if( field.datatype() == array::DataType::kind<float>() ) {
-      array::ArrayView<float,2> view(field);
-      halo_exchange().execute( view );
-    }
-    else if( field.datatype() == array::DataType::kind<double>() ) {
-      array::ArrayView<double,2> view(field);
-      halo_exchange().execute( view );
-    }
-    else throw eckit::Exception("datatype not supported",Here());
   }
 }
-void NodeColumns::haloExchange( field::Field& field ) const
+
+void NodeColumns::haloExchange( Field& field ) const
 {
-  field::FieldSet fieldset;
+  FieldSet fieldset;
   fieldset.add(field);
   haloExchange(fieldset);
 }
@@ -387,45 +428,45 @@ const parallel::HaloExchange& NodeColumns::halo_exchange() const
 }
 
 
-void NodeColumns::gather( const field::FieldSet& local_fieldset, field::FieldSet& global_fieldset ) const
+void NodeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
 {
   ASSERT(local_fieldset.size() == global_fieldset.size());
 
   for( size_t f=0; f<local_fieldset.size(); ++f ) {
 
-    const field::Field& loc = local_fieldset[f];
-    field::Field& glb = global_fieldset[f];
+    const Field& loc = local_fieldset[f];
+    Field& glb = global_fieldset[f];
     const size_t nb_fields = 1;
     size_t root(0);
     glb.metadata().get("owner",root);
 
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      parallel::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
-      parallel::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
+      parallel::Field<int const> loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
+      parallel::Field<int      > glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      parallel::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
-      parallel::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
+      parallel::Field<long const> loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
+      parallel::Field<long      > glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      parallel::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
-      parallel::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
+      parallel::Field<float const> loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
+      parallel::Field<float      > glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      parallel::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
-      parallel::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
+      parallel::Field<double const> loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
+      parallel::Field<double      > glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }
 }
-void NodeColumns::gather( const field::Field& local, field::Field& global ) const
+void NodeColumns::gather( const Field& local, Field& global ) const
 {
-  field::FieldSet local_fields;
-  field::FieldSet global_fields;
+  FieldSet local_fields;
+  FieldSet global_fields;
   local_fields.add(local);
   global_fields.add(global);
   gather(local_fields,global_fields);
@@ -440,36 +481,36 @@ const parallel::GatherScatter& NodeColumns::scatter() const
 }
 
 
-void NodeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldSet& local_fieldset ) const
+void NodeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const
 {
   ASSERT(local_fieldset.size() == global_fieldset.size());
 
   for( size_t f=0; f<local_fieldset.size(); ++f ) {
 
-    const field::Field& glb = global_fieldset[f];
-    field::Field& loc = local_fieldset[f];
+    const Field& glb = global_fieldset[f];
+    Field& loc = local_fieldset[f];
     const size_t nb_fields = 1;
     size_t root(0);
     glb.metadata().get("owner",root);
 
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      parallel::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
-      parallel::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
+      parallel::Field<int const> glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
+      parallel::Field<int      > loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      parallel::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
-      parallel::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
+      parallel::Field<long const> glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
+      parallel::Field<long      > loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      parallel::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
-      parallel::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
+      parallel::Field<float const> glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
+      parallel::Field<float      > loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      parallel::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
-      parallel::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
+      parallel::Field<double const> glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
+      parallel::Field<double      > loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -479,10 +520,10 @@ void NodeColumns::scatter( const field::FieldSet& global_fieldset, field::FieldS
   }
 }
 
-void NodeColumns::scatter( const field::Field& global, field::Field& local ) const
+void NodeColumns::scatter( const Field& global, Field& local ) const
 {
-  field::FieldSet global_fields;
-  field::FieldSet local_fields;
+  FieldSet global_fields;
+  FieldSet local_fields;
   global_fields.add(global);
   local_fields.add(local);
   scatter(global_fields,local_fields);
@@ -490,12 +531,13 @@ void NodeColumns::scatter( const field::Field& global, field::Field& local ) con
 
 namespace {
 template <typename T>
-std::string checksum_3d_field(const parallel::Checksum& checksum, const field::Field& field )
+std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field )
 {
-  array::ArrayView<T,3> values = leveled_view<T>(field);
-  array::ArrayT<T> surface_field ( array::make_shape(values.shape(0),values.shape(2) ) );
-  array::ArrayView<T,2> surface(surface_field);
-  atlas_omp_for( size_t n=0; n<values.shape(0); ++n ) {
+  array::LocalView<T,3> values = make_leveled_view<T>(field);
+  array::ArrayT<T> surface_field( values.shape(0), values.shape(2) );
+  array::ArrayView<T,2> surface = array::make_view<T,2>(surface_field);
+  const size_t npts = values.shape(0);
+  atlas_omp_for( size_t n=0; n<npts; ++n ) {
     for( size_t j=0; j<surface.shape(1); ++j )
     {
       surface(n,j) = 0.;
@@ -503,14 +545,14 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const field::F
         surface(n,j) += values(n,l,j);
     }
   }
-  return checksum.execute( surface.data(), surface.stride(0) );
+  return checksum.execute( surface.data(), surface_field.stride(0) );
 }
 }
 
-std::string NodeColumns::checksum( const field::FieldSet& fieldset ) const {
+std::string NodeColumns::checksum( const FieldSet& fieldset ) const {
   eckit::MD5 md5;
   for( size_t f=0; f<fieldset.size(); ++f ) {
-    const field::Field& field=fieldset[f];
+    const Field& field=fieldset[f];
     if     ( field.datatype() == array::DataType::kind<int>() )
       md5 << checksum_3d_field<int>(checksum(),field);
     else if( field.datatype() == array::DataType::kind<long>() )
@@ -523,8 +565,8 @@ std::string NodeColumns::checksum( const field::FieldSet& fieldset ) const {
   }
   return md5;
 }
-std::string NodeColumns::checksum( const field::Field& field ) const {
-  field::FieldSet fieldset;
+std::string NodeColumns::checksum( const Field& field ) const {
+  FieldSet fieldset;
   fieldset.add(field);
   return checksum(fieldset);
 }
@@ -536,12 +578,12 @@ const parallel::Checksum& NodeColumns::checksum() const
 
 
 
-//std::string NodesFunctionSpace::checksum( const field::FieldSet& fieldset ) const {
+//std::string NodesFunctionSpace::checksum( const FieldSet& fieldset ) const {
 //  const parallel::Checksum& checksum = mesh_.checksum().get(checksum_name());
 
 //  eckit::MD5 md5;
 //  for( size_t f=0; f<fieldset.size(); ++f ) {
-//    const field::Field& field=fieldset[f];
+//    const Field& field=fieldset[f];
 //    if     ( field.datatype() == array::DataType::kind<int>() )
 //      md5 << checksum.execute( field.data<int>(), field.stride(0) );
 //    else if( field.datatype() == array::DataType::kind<long>() )
@@ -554,8 +596,8 @@ const parallel::Checksum& NodeColumns::checksum() const
 //  }
 //  return md5;
 //}
-//std::string NodesFunctionSpace::checksum( const field::Field& field ) const {
-//  field::FieldSet fieldset;
+//std::string NodesFunctionSpace::checksum( const Field& field ) const {
+//  FieldSet fieldset;
 //  fieldset.add(field);
 //  return checksum(fieldset);
 //}
@@ -567,10 +609,10 @@ namespace detail { // Collectives implementation
 
 
 template< typename T >
-void dispatch_sum( const NodeColumns& fs, const field::Field& field, T& result, size_t& N )
+void dispatch_sum( const NodeColumns& fs, const Field& field, T& result, size_t& N )
 {
-  const internals::IsGhost is_ghost(fs.nodes());
-  const array::ArrayView<T,2> arr = leveled_scalar_view<T>( field );
+  const mesh::IsGhostNode is_ghost(fs.nodes());
+  const array::LocalView<T,2> arr = make_leveled_scalar_view<T>( field );
   T local_sum = 0;
   const size_t npts = std::min(arr.shape(0),fs.nb_nodes());
   atlas_omp_pragma( omp parallel for default(shared) reduction(+:local_sum) )
@@ -585,7 +627,7 @@ void dispatch_sum( const NodeColumns& fs, const field::Field& field, T& result, 
 }
 
 template< typename T >
-void sum( const NodeColumns& fs , const field::Field& field, T& result, size_t& N )
+void sum( const NodeColumns& fs , const Field& field, T& result, size_t& N )
 {
   if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_sum(fs,field,result,N);
@@ -626,10 +668,10 @@ void sum( const NodeColumns& fs , const field::Field& field, T& result, size_t& 
 
 
 template< typename T >
-void dispatch_sum( const NodeColumns& fs, const field::Field& field, std::vector<T>& result, size_t& N )
+void dispatch_sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, size_t& N )
 {
-  const array::ArrayView<T,3> arr = leveled_view<T>(field);
-  const internals::IsGhost is_ghost(fs.nodes());
+  const array::LocalView<T,3> arr = make_leveled_view<T>(field);
+  const mesh::IsGhostNode is_ghost(fs.nodes());
   const size_t nvar = arr.shape(2);
   std::vector<T> local_sum(nvar,0);
   result.resize(nvar);
@@ -662,7 +704,7 @@ void dispatch_sum( const NodeColumns& fs, const field::Field& field, std::vector
 }
 
 template< typename T >
-void sum( const NodeColumns& fs , const field::Field& field, std::vector<T>& result, size_t& N )
+void sum( const NodeColumns& fs , const Field& field, std::vector<T>& result, size_t& N )
 {
   if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_sum(fs,field,result,N);
@@ -702,30 +744,47 @@ void sum( const NodeColumns& fs , const field::Field& field, std::vector<T>& res
 
 
 template< typename T >
-void dispatch_sum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& sum, size_t& N )
+void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& sum, size_t& N )
 {
+  mesh::IsGhostNode is_ghost(fs.nodes());
+
   array::ArrayShape shape;
   shape.reserve(field.rank()-1);
   for( size_t j=1; j<field.rank(); ++j )
     shape.push_back(field.shape(j));
   sum.resize(shape);
 
-  const array::ArrayView<T,3> arr = leveled_view<T>(field);
-  array::ArrayView<T,2> sum_per_level( sum.data<T>(), array::make_shape(sum.shape(0),sum.stride(0)) );
-  sum_per_level = 0;
-  const internals::IsGhost is_ghost(fs.nodes());
+  const array::LocalView<T,3> arr = make_leveled_view<T>(field);
+
+  array::LocalView<T,2> sum_per_level(
+    array::make_storageview<T>(sum).data(),
+    array::make_shape(sum.shape(0),sum.stride(0)) );
+
+  for( size_t l=0; l<sum_per_level.shape(0); ++l ) {
+    for( size_t j=0; j<sum_per_level.shape(1); ++j ) {
+      sum_per_level(l,j) = 0;
+    }
+  }
+
 
   atlas_omp_parallel
   {
     array::ArrayT<T> sum_per_level_private(sum_per_level.shape(0),sum_per_level.shape(1));
-    array::ArrayView<T> sum_per_level_private_view(sum_per_level_private); sum_per_level_private_view = 0.;
+    array::ArrayView<T,2> sum_per_level_private_view = array::make_view<T,2>(sum_per_level_private);
+
+    for( size_t l=0; l<sum_per_level_private_view.shape(0); ++l ) {
+      for( size_t j=0; j<sum_per_level_private_view.shape(1); ++j ) {
+        sum_per_level_private_view(l,j) = 0;
+      }
+    }
+
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n )
     {
       if( ! is_ghost(n) ) {
         for( size_t l=0; l<arr.shape(1); ++l ) {
           for( size_t j=0; j<arr.shape(2); ++j ) {
-            sum_per_level_private(l,j) += arr(n,l,j);
+            sum_per_level_private_view(l,j) += arr(n,l,j);
           }
         }
       }
@@ -734,7 +793,7 @@ void dispatch_sum_per_level( const NodeColumns& fs, const field::Field& field, f
     {
       for( size_t l=0; l<sum_per_level_private.shape(0); ++l ) {
         for( size_t j=0; j<sum_per_level_private.shape(1); ++j ) {
-          sum_per_level(l,j) += sum_per_level_private(l,j);
+          sum_per_level(l,j) += sum_per_level_private_view(l,j);
         }
       }
     }
@@ -743,10 +802,10 @@ void dispatch_sum_per_level( const NodeColumns& fs, const field::Field& field, f
   N = fs.nb_nodes_global();
 }
 
-void sum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& sum, size_t& N )
+void sum_per_level( const NodeColumns& fs, const Field& field, Field& sum, size_t& N )
 {
   if( field.datatype() != sum.datatype() ) {
-    throw eckit::Exception("field::Field and sum are not of same datatype.",Here());
+    throw eckit::Exception("Field and sum are not of same datatype.",Here());
   }
   switch( field.datatype().kind() )
   {
@@ -764,32 +823,33 @@ void sum_per_level( const NodeColumns& fs, const field::Field& field, field::Fie
 
 
 template< typename DATATYPE >
-void dispatch_order_independent_sum_2d( const NodeColumns& fs , const field::Field& field, DATATYPE& result, size_t& N )
+void dispatch_order_independent_sum_2d( const NodeColumns& fs , const Field& field, DATATYPE& result, size_t& N )
 {
   size_t root = 0;
-  field::Field::Ptr global( fs.createField("global",field, field::global() ) );
-  fs.gather(field,*global);
-  result = std::accumulate(global->data<DATATYPE>(),global->data<DATATYPE>()+global->size(),0.);
+  Field global = fs.createField("global",field, field::global() );
+  fs.gather(field,global);
+  result = std::accumulate(array::make_storageview<DATATYPE>(global).data(),
+                           array::make_storageview<DATATYPE>(global).data()+global.size(),0.);
   parallel::mpi::comm().broadcast(&result, 1, root);
   N = fs.nb_nodes_global();
 }
 
 template< typename T >
-void dispatch_order_independent_sum( const NodeColumns& fs , const field::Field& field, T& result, size_t& N )
+void dispatch_order_independent_sum( const NodeColumns& fs , const Field& field, T& result, size_t& N )
 {
   if( field.has_levels() )
   {
-    const array::ArrayView<T,2> arr = leveled_scalar_view<T>(field);
+    const array::LocalView<T,2> arr = make_leveled_scalar_view<T>(field);
 
-    field::Field::Ptr surface_field( fs.createField<T>("surface") );
-    array::ArrayView<T,1> surface = surface_scalar_view<T>( *surface_field );
+    Field surface_field = fs.createField<T>("surface");
+    array::LocalView<T,1> surface = make_surface_scalar_view<T>( surface_field );
 
     for( size_t n=0; n<arr.shape(0); ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
           surface(n) += arr(n,l);
       }
     }
-    dispatch_order_independent_sum_2d( fs, *surface_field, result, N );
+    dispatch_order_independent_sum_2d( fs, surface_field, result, N );
     N *= arr.shape(1);
   }
   else
@@ -799,7 +859,7 @@ void dispatch_order_independent_sum( const NodeColumns& fs , const field::Field&
 }
 
 template< typename T >
-void order_independent_sum( const NodeColumns& fs , const field::Field& field, T& result, size_t& N )
+void order_independent_sum( const NodeColumns& fs , const Field& field, T& result, size_t& N )
 {
   if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_order_independent_sum(fs,field,result,N);
@@ -838,36 +898,37 @@ void order_independent_sum( const NodeColumns& fs , const field::Field& field, T
 }
 
 template< typename DATATYPE >
-void dispatch_order_independent_sum_2d( const NodeColumns& fs, const field::Field& field, std::vector<DATATYPE>& result, size_t& N )
+void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& field, std::vector<DATATYPE>& result, size_t& N )
 {
   size_t nvar = field.stride(0);
   result.resize(nvar);
   for( size_t j=0; j<nvar; ++j ) result[j] = 0.;
-  field::Field::Ptr global( fs.createField("global",field, field::global() ) );
-  fs.gather(field,*global);
+  Field global = fs.createField("global",field, field::global() );
+  fs.gather(field,global);
   if( parallel::mpi::comm().rank() == 0 ) {
-    const array::ArrayView<DATATYPE,2> glb( global->data<DATATYPE>(), array::make_shape(global->shape(0),global->stride(0)) );
+    const array::LocalView<DATATYPE,2> glb( array::make_storageview<DATATYPE>(global).data(),
+                                            array::make_shape(global.shape(0),global.stride(0)) );
     for( size_t n=0; n<fs.nb_nodes_global(); ++n ) {
       for( size_t j=0; j<nvar; ++j ) {
         result[j] += glb(n,j);
       }
     }
   }
-  size_t root = global->metadata().get<size_t>("owner");
+  size_t root = global.metadata().get<size_t>("owner");
   parallel::mpi::comm().broadcast(result,root);
   N = fs.nb_nodes_global();
 }
 
 template< typename T >
-void dispatch_order_independent_sum( const NodeColumns& fs, const field::Field& field, std::vector<T>& result, size_t& N )
+void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, size_t& N )
 {
   if( field.has_levels() )
   {
     const size_t nvar = field.stride(1);
-    const array::ArrayView<T,3> arr = leveled_view<T>(field);
+    const array::LocalView<T,3> arr = make_leveled_view<T>(field);
 
-    field::Field::Ptr surface_field( fs.createField<T>("surface",array::make_shape(nvar)) );
-    array::ArrayView<T,2> surface = surface_view<T>( *surface_field );
+    Field surface_field = fs.createField<T>("surface",array::make_shape(nvar));
+    array::LocalView<T,2> surface = surface_view<T>( surface_field );
 
     for( size_t n=0; n<arr.shape(0); ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
@@ -877,7 +938,7 @@ void dispatch_order_independent_sum( const NodeColumns& fs, const field::Field& 
       }
     }
 
-    dispatch_order_independent_sum_2d( fs, *surface_field, result, N );
+    dispatch_order_independent_sum_2d( fs, surface_field, result, N );
     N *= arr.shape(1);
   }
   else
@@ -887,7 +948,7 @@ void dispatch_order_independent_sum( const NodeColumns& fs, const field::Field& 
 }
 
 template< typename T >
-void order_independent_sum( const NodeColumns& fs, const field::Field& field, std::vector<T>& result, size_t& N )
+void order_independent_sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, size_t& N )
 {
   if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_order_independent_sum(fs,field,result,N);
@@ -927,7 +988,7 @@ void order_independent_sum( const NodeColumns& fs, const field::Field& field, st
 
 
 template< typename T >
-void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& sumfield, size_t& N )
+void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Field& field, Field& sumfield, size_t& N )
 {
   array::ArrayShape shape;
   shape.reserve(field.rank()-1);
@@ -935,20 +996,24 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const fiel
     shape.push_back(field.shape(j));
   sumfield.resize(shape);
 
-  array::ArrayView<T,2> sum ( sumfield.data<T>(), array::make_shape(sumfield.shape(0),sumfield.stride(0)) );
-  sum = 0.;
-
+  array::LocalView<T,2> sum ( array::make_storageview<T>(sumfield).data(),
+                              array::make_shape(sumfield.shape(0),sumfield.stride(0)) );
+  for( size_t l=0; l<sum.shape(0); ++l ) {
+    for( size_t j=0; j<sum.shape(1); ++j ) {
+      sum(l,j) = 0.;
+    }
+  }
   Log::info() << field << std::endl;
   Log::info() << sumfield << std::endl;
 
   size_t root = 0;
-  field::Field::Ptr global( fs.createField("global",field,field::global()) );
+  Field global = fs.createField("global",field,field::global());
 
-  Log::info() << *global << std::endl;
+  Log::info() << global << std::endl;
 
-  fs.gather(field,*global);
+  fs.gather(field,global);
   if( parallel::mpi::comm().rank() == 0 ) {
-    const array::ArrayView<T,3> glb = leveled_view<T>(*global);
+    const array::LocalView<T,3> glb = make_leveled_view<T>(global);
 
     for( size_t n=0; n<glb.shape(0); ++n ) {
       for( size_t l=0; l<glb.shape(1); ++l ) {
@@ -958,14 +1023,14 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const fiel
       }
     }
   }
-  parallel::mpi::comm().broadcast(sumfield.data<T>(),sumfield.size(),root);
+  parallel::mpi::comm().broadcast( array::make_storageview<T>(sumfield).data(),sumfield.size(),root);
   N = fs.nb_nodes_global();
 }
 
-void order_independent_sum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& sum, size_t& N )
+void order_independent_sum_per_level( const NodeColumns& fs, const Field& field, Field& sum, size_t& N )
 {
   if( field.datatype() != sum.datatype() ) {
-    throw eckit::Exception("field::Field and sum are not of same datatype.",Here());
+    throw eckit::Exception("Field and sum are not of same datatype.",Here());
   }
   switch( field.datatype().kind() )
   {
@@ -982,9 +1047,9 @@ void order_independent_sum_per_level( const NodeColumns& fs, const field::Field&
 }
 
 template< typename T >
-void dispatch_minimum( const NodeColumns& fs, const field::Field& field, std::vector<T>& min )
+void dispatch_minimum( const NodeColumns& fs, const Field& field, std::vector<T>& min )
 {
-  const array::ArrayView<T,3> arr = leveled_view<T>(field);
+  const array::LocalView<T,3> arr = make_leveled_view<T>(field);
   const size_t nvar = arr.shape(2);
   min.resize(nvar);
   std::vector<T> local_minimum(nvar,std::numeric_limits<T>::max());
@@ -1011,7 +1076,7 @@ void dispatch_minimum( const NodeColumns& fs, const field::Field& field, std::ve
 }
 
 template< typename T >
-void minimum( const NodeColumns& fs, const field::Field& field, std::vector<T>& min )
+void minimum( const NodeColumns& fs, const Field& field, std::vector<T>& min )
 {
   if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_minimum(fs,field,min);
@@ -1050,9 +1115,9 @@ void minimum( const NodeColumns& fs, const field::Field& field, std::vector<T>& 
 }
 
 template< typename T >
-void dispatch_maximum( const NodeColumns& fs, const field::Field& field, std::vector<T>& max )
+void dispatch_maximum( const NodeColumns& fs, const Field& field, std::vector<T>& max )
 {
-  const array::ArrayView<T,3> arr = leveled_view<T>(field);
+  const array::LocalView<T,3> arr = make_leveled_view<T>(field);
   const size_t nvar = arr.shape(2);
   max.resize(nvar);
   std::vector<T> local_maximum(nvar,-std::numeric_limits<T>::max());
@@ -1078,7 +1143,7 @@ void dispatch_maximum( const NodeColumns& fs, const field::Field& field, std::ve
 }
 
 template< typename T >
-void maximum( const NodeColumns& fs, const field::Field& field, std::vector<T>& max )
+void maximum( const NodeColumns& fs, const Field& field, std::vector<T>& max )
 {
   if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_maximum(fs,field,max);
@@ -1117,7 +1182,7 @@ void maximum( const NodeColumns& fs, const field::Field& field, std::vector<T>& 
 }
 
 template< typename T >
-void minimum( const NodeColumns& fs, const field::Field& field, T& min )
+void minimum( const NodeColumns& fs, const Field& field, T& min )
 {
   std::vector<T> v;
   minimum(fs,field,v);
@@ -1125,7 +1190,7 @@ void minimum( const NodeColumns& fs, const field::Field& field, T& min )
 }
 
 template< typename T >
-void maximum( const NodeColumns& fs, const field::Field& field, T& max )
+void maximum( const NodeColumns& fs, const Field& field, T& max )
 {
   std::vector<T> v;
   maximum(fs,field,v);
@@ -1133,7 +1198,7 @@ void maximum( const NodeColumns& fs, const field::Field& field, T& max )
 }
 
 template< typename T >
-void dispatch_minimum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& min_field )
+void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Field& min_field )
 {
   array::ArrayShape shape;
   shape.reserve(field.rank()-1);
@@ -1141,18 +1206,32 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const field::Field& fiel
     shape.push_back(field.shape(j));
   min_field.resize(shape);
   const size_t nvar = field.stride(1);
-  array::ArrayView<T,2> min( min_field.data<T>(), array::make_shape(min_field.shape(0),min_field.stride(0)) );
-  min = std::numeric_limits<T>::max();
-  const array::ArrayView<T,3> arr = leveled_view<T>(field);
+  array::LocalView<T,2> min(
+      array::make_storageview<T>(min_field).data(),
+      array::make_shape(min_field.shape(0),min_field.stride(0)) );
+
+  for( size_t l=0; l<min.shape(0); ++l ) {
+    for( size_t j=0; j<min.shape(1); ++j ) {
+      min(l,j) = std::numeric_limits<T>::max();
+    }
+  }
+
+  const array::LocalView<T,3> arr = make_leveled_view<T>(field);
   atlas_omp_parallel
   {
-    array::ArrayT<T> min_private(min.shape(0),min.shape(1));
-    array::ArrayView<T> min_private_view(min_private); min_private_view = std::numeric_limits<T>::max();
+    array::ArrayT<T> min_private( min.shape(0),min.shape(1) );
+    array::ArrayView<T,2> min_private_view = array::make_view<T,2>(min_private);
+    for( size_t l=0; l<min.shape(0); ++l ) {
+      for( size_t j=0; j<min.shape(1); ++j ) {
+        min_private_view(l,j) = std::numeric_limits<T>::max();
+      }
+    }
+
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          min_private(l,j) = std::min(arr(n,l,j),min_private(l,j));
+          min_private_view(l,j) = std::min(arr(n,l,j),min_private_view(l,j));
         }
       }
     }
@@ -1160,18 +1239,18 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const field::Field& fiel
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          min(l,j) = std::min(min_private(l,j),min(l,j));
+          min(l,j) = std::min(min_private_view(l,j),min(l,j));
         }
       }
     }
   }
-  parallel::mpi::comm().allReduceInPlace(min_field.data<T>(), min_field.size(), eckit::mpi::min());
+  parallel::mpi::comm().allReduceInPlace(min.data(),min_field.size(),eckit::mpi::min());
 }
 
-void minimum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& min )
+void minimum_per_level( const NodeColumns& fs, const Field& field, Field& min )
 {
   if( field.datatype() != min.datatype() ) {
-    throw eckit::Exception("field::Field and min are not of same datatype.",Here());
+    throw eckit::Exception("Field and min are not of same datatype.",Here());
   }
   switch( field.datatype().kind() )
   {
@@ -1188,7 +1267,7 @@ void minimum_per_level( const NodeColumns& fs, const field::Field& field, field:
 }
 
 template< typename T >
-void dispatch_maximum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& max_field )
+void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Field& max_field )
 {
   array::ArrayShape shape;
   shape.reserve(field.rank()-1);
@@ -1196,18 +1275,33 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const field::Field& fiel
     shape.push_back(field.shape(j));
   max_field.resize(shape);
   const size_t nvar = field.stride(1);
-  array::ArrayView<T,2> max = array::ArrayView<T,2>( max_field.data<T>(), array::make_shape(max_field.shape(0),max_field.stride(0)) );
-  max = -std::numeric_limits<T>::max();
-  const array::ArrayView<T,3> arr = leveled_view<T>(field);
+  array::LocalView<T,2> max (
+      array::make_storageview<T>(max_field).data(),
+      array::make_shape(max_field.shape(0),max_field.stride(0)) );
+
+  for( size_t l=0; l<max.shape(0); ++l ) {
+    for( size_t j=0; j<max.shape(1); ++j ) {
+      max(l,j) = -std::numeric_limits<T>::max();
+    }
+  }
+
+  const array::LocalView<T,3> arr = make_leveled_view<T>(field);
   atlas_omp_parallel
   {
     array::ArrayT<T> max_private(max.shape(0),max.shape(1));
-    array::ArrayView<T> max_private_view(max_private); max_private_view = -std::numeric_limits<T>::max();
+    array::ArrayView<T,2> max_private_view = array::make_view<T,2>(max_private);
+
+    for( size_t l=0; l<max_private_view.shape(0); ++l ) {
+      for( size_t j=0; j<max_private_view.shape(1); ++j ) {
+        max_private_view(l,j) = -std::numeric_limits<T>::max();
+      }
+    }
+
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          max_private(l,j) = std::max(arr(n,l,j),max_private(l,j));
+          max_private_view(l,j) = std::max(arr(n,l,j),max_private_view(l,j));
         }
       }
     }
@@ -1215,18 +1309,18 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const field::Field& fiel
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          max(l,j) = std::max(max_private(l,j),max(l,j));
+          max(l,j) = std::max(max_private_view(l,j),max(l,j));
         }
       }
     }
   }
-  parallel::mpi::comm().allReduceInPlace(max_field.data<T>(),max_field.size(),eckit::mpi::max());
+  parallel::mpi::comm().allReduceInPlace(max.data(),max_field.size(),eckit::mpi::max());
 }
 
-void maximum_per_level( const NodeColumns& fs, const field::Field& field, field::Field& max )
+void maximum_per_level( const NodeColumns& fs, const Field& field, Field& max )
 {
   if( field.datatype() != max.datatype() ) {
-    throw eckit::Exception("field::Field and max are not of same datatype.",Here());
+    throw eckit::Exception("Field and max are not of same datatype.",Here());
   }
   switch( field.datatype().kind() )
   {
@@ -1244,9 +1338,9 @@ void maximum_per_level( const NodeColumns& fs, const field::Field& field, field:
 
 
 template< typename T >
-void dispatch_minimum_and_location( const NodeColumns& fs, const field::Field& field, std::vector<T>& min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
+void dispatch_minimum_and_location( const NodeColumns& fs, const Field& field, std::vector<T>& min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
 {
-  array::ArrayView<T,3> arr = leveled_view<T>(field);
+  array::LocalView<T,3> arr = make_leveled_view<T>(field);
   size_t nvar = arr.shape(2);
   min.resize(nvar);
   glb_idx.resize(nvar);
@@ -1288,9 +1382,9 @@ void dispatch_minimum_and_location( const NodeColumns& fs, const field::Field& f
   std::vector< std::pair<T,int> > min_and_level_loc(nvar);
   std::vector< std::pair<T,int> > min_and_gidx_glb(nvar);
   std::vector< std::pair<T,int> > min_and_level_glb(nvar);
-  const gidx_t* global_index = fs.nodes().global_index().data<gidx_t>();
+  const array::ArrayView<gidx_t,1> global_index = array::make_view<gidx_t,1>(fs.nodes().global_index());
   for( size_t j=0; j<nvar; ++j ) {
-    gidx_t glb_idx = global_index[loc_node[j]];
+    gidx_t glb_idx = global_index(loc_node[j]);
     ASSERT( glb_idx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
     min_and_gidx_loc[j] = std::make_pair(local_minimum[j],glb_idx);
     min_and_level_loc[j] = std::make_pair(local_minimum[j],loc_level[j]);
@@ -1308,7 +1402,7 @@ void dispatch_minimum_and_location( const NodeColumns& fs, const field::Field& f
 }
 
 template< typename T >
-void minimum_and_location( const NodeColumns& fs, const field::Field& field, std::vector<T>& min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
+void minimum_and_location( const NodeColumns& fs, const Field& field, std::vector<T>& min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
 {
   if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_minimum_and_location(fs,field,min,glb_idx,level);
@@ -1348,9 +1442,9 @@ void minimum_and_location( const NodeColumns& fs, const field::Field& field, std
 
 
 template< typename T >
-void dispatch_maximum_and_location( const NodeColumns& fs, const field::Field& field, std::vector<T>& max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
+void dispatch_maximum_and_location( const NodeColumns& fs, const Field& field, std::vector<T>& max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
 {
-  array::ArrayView<T,3> arr = leveled_view<T>(field);
+  array::LocalView<T,3> arr = make_leveled_view<T>(field);
   size_t nvar = arr.shape(2);
   max.resize(nvar);
   glb_idx.resize(nvar);
@@ -1392,9 +1486,9 @@ void dispatch_maximum_and_location( const NodeColumns& fs, const field::Field& f
   std::vector< std::pair<T,int> > max_and_level_loc(nvar);
   std::vector< std::pair<T,int> > max_and_gidx_glb(nvar);
   std::vector< std::pair<T,int> > max_and_level_glb(nvar);
-  const gidx_t* global_index = fs.nodes().global_index().data<gidx_t>();
+  const array::ArrayView<gidx_t,1> global_index = array::make_view<gidx_t,1>( fs.nodes().global_index() );
   for( size_t j=0; j<nvar; ++j ) {
-    gidx_t glb_idx = global_index[loc_node[j]];
+    gidx_t glb_idx = global_index(loc_node[j]);
     ASSERT( glb_idx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
     max_and_gidx_loc[j] = std::make_pair(local_maximum[j],glb_idx);
     max_and_level_loc[j] = std::make_pair(local_maximum[j],loc_level[j]);
@@ -1411,7 +1505,7 @@ void dispatch_maximum_and_location( const NodeColumns& fs, const field::Field& f
 }
 
 template< typename T >
-void maximum_and_location( const NodeColumns& fs, const field::Field& field, std::vector<T>& max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
+void maximum_and_location( const NodeColumns& fs, const Field& field, std::vector<T>& max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
 {
   if( field.datatype() == array::DataType::kind<T>() ) {
     return dispatch_maximum_and_location(fs,field,max,glb_idx,level);
@@ -1450,21 +1544,21 @@ void maximum_and_location( const NodeColumns& fs, const field::Field& field, std
 }
 
 template< typename T >
-void minimum_and_location( const NodeColumns& fs, const field::Field& field, std::vector<T>& min, std::vector<gidx_t>& glb_idx)
+void minimum_and_location( const NodeColumns& fs, const Field& field, std::vector<T>& min, std::vector<gidx_t>& glb_idx)
 {
   std::vector<size_t> level;
   minimum_and_location(fs,field,min,glb_idx,level);
 }
 
 template< typename T >
-void maximum_and_location( const NodeColumns& fs, const field::Field& field, std::vector<T>& max, std::vector<gidx_t>& glb_idx)
+void maximum_and_location( const NodeColumns& fs, const Field& field, std::vector<T>& max, std::vector<gidx_t>& glb_idx)
 {
   std::vector<size_t> level;
   maximum_and_location(fs,field,max,glb_idx,level);
 }
 
 template< typename T >
-void minimum_and_location( const NodeColumns& fs, const field::Field& field, T& min, gidx_t& glb_idx, size_t& level)
+void minimum_and_location( const NodeColumns& fs, const Field& field, T& min, gidx_t& glb_idx, size_t& level)
 {
   std::vector<T> minv;
   std::vector<gidx_t> gidxv;
@@ -1476,7 +1570,7 @@ void minimum_and_location( const NodeColumns& fs, const field::Field& field, T& 
 }
 
 template< typename T >
-void maximum_and_location( const NodeColumns& fs, const field::Field& field, T& max, gidx_t& glb_idx, size_t& level)
+void maximum_and_location( const NodeColumns& fs, const Field& field, T& max, gidx_t& glb_idx, size_t& level)
 {
   std::vector<T> maxv;
   std::vector<gidx_t> gidxv;
@@ -1488,23 +1582,23 @@ void maximum_and_location( const NodeColumns& fs, const field::Field& field, T& 
 }
 
 template< typename T >
-void minimum_and_location( const NodeColumns& fs, const field::Field& field, T& min, gidx_t& glb_idx)
+void minimum_and_location( const NodeColumns& fs, const Field& field, T& min, gidx_t& glb_idx)
 {
   size_t level;
   minimum_and_location(fs,field,min,glb_idx,level);
 }
 
 template< typename T >
-void maximum_and_location( const NodeColumns& fs, const field::Field& field, T& max, gidx_t& glb_idx)
+void maximum_and_location( const NodeColumns& fs, const Field& field, T& max, gidx_t& glb_idx)
 {
   size_t level;
   maximum_and_location(fs,field,max,glb_idx,level);
 }
 
 template< typename T >
-void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const field::Field& field, field::Field& min_field, field::Field& glb_idx_field )
+void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& min_field, Field& glb_idx_field )
 {
-  const array::ArrayView<T,3> arr = leveled_view<T>(field);
+  const array::LocalView<T,3> arr = make_leveled_view<T>(field);
   array::ArrayShape shape;
   shape.reserve(field.rank()-1);
   for( size_t j=1; j<field.rank(); ++j )
@@ -1512,22 +1606,41 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const field
   min_field.resize(shape);
   glb_idx_field.resize(shape);
   const size_t nvar = arr.shape(2);
-  array::ArrayView<T,2> min( min_field.data<T>(), array::make_shape(min_field.shape(0),min_field.stride(0)) );
-  min = std::numeric_limits<T>::max();
-  array::ArrayView<gidx_t,2> glb_idx( glb_idx_field.data<gidx_t>(), array::make_shape(glb_idx_field.shape(0),glb_idx_field.stride(0)) );
+  array::LocalView<T,2> min(
+      array::make_storageview<T>(min_field).data(),
+      array::make_shape(min_field.shape(0),min_field.stride(0)) );
+
+  for( size_t l=0; l<min.shape(0); ++l ) {
+    for( size_t j=0; j<min.shape(1); ++j ) {
+      min(l,j) = std::numeric_limits<T>::max();
+    }
+  }
+
+  array::LocalView<gidx_t,2> glb_idx(
+    array::make_storageview<gidx_t>(glb_idx_field).data(),
+    array::make_shape(glb_idx_field.shape(0),glb_idx_field.stride(0)) );
+
 
   atlas_omp_parallel
   {
     array::ArrayT<T> min_private(min.shape(0),min.shape(1));
-    array::ArrayView<T> min_private_view(min_private); min_private_view = std::numeric_limits<T>::max();
-    array::ArrayT<gidx_t> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
+    array::ArrayView<T,2> min_private_view = array::make_view<T,2>(min_private);
+
+    for( size_t l=0; l<min_private_view.shape(0); ++l ) {
+      for( size_t j=0; j<min_private_view.shape(1); ++j ) {
+        min_private_view(l,j) = std::numeric_limits<T>::max();
+      }
+    }
+
+    array::ArrayT<T> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
+    array::ArrayView<gidx_t,2> glb_idx_private_view = array::make_view<gidx_t,2>(glb_idx_private);
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
           if( arr(n,l,j) < min(l,j) ) {
-            min_private(l,j) = arr(n,l,j);
-            glb_idx_private(l,j) = n;
+            min_private_view(l,j) = arr(n,l,j);
+            glb_idx_private_view(l,j) = n;
           }
         }
       }
@@ -1536,9 +1649,9 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const field
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          if( min_private(l,j) < min(l,j) ) {
-            min(l,j) = min_private(l,j);
-            glb_idx(l,j) = glb_idx_private(l,j);
+          if( min_private_view(l,j) < min(l,j) ) {
+            min(l,j) = min_private_view(l,j);
+            glb_idx(l,j) = glb_idx_private_view(l,j);
           }
         }
       }
@@ -1547,10 +1660,10 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const field
   const size_t nlev = arr.shape(1);
   std::vector< std::pair<T,int> > min_and_gidx_loc(nlev*nvar);
   std::vector< std::pair<T,int> > min_and_gidx_glb(nlev*nvar);
-  const gidx_t* global_index = fs.nodes().global_index().data<gidx_t>();
+  const array::ArrayView<gidx_t,1> global_index = array::make_view<gidx_t,1>( fs.nodes().global_index() );
   atlas_omp_parallel_for( size_t l=0; l<nlev; ++l ) {
     for( size_t j=0; j<nvar; ++j ) {
-      gidx_t gidx = global_index[glb_idx(l,j)];
+      gidx_t gidx = global_index(glb_idx(l,j));
       ASSERT( gidx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
       min_and_gidx_loc[j+nvar*l] = std::make_pair(min(l,j),gidx);
     }
@@ -1566,13 +1679,13 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const field
   }
 }
 
-void minimum_and_location_per_level( const NodeColumns& fs, const field::Field& field, field::Field& min, field::Field& glb_idx )
+void minimum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& min, Field& glb_idx )
 {
   if( field.datatype() != min.datatype() ) {
-    throw eckit::Exception("field::Field and min are not of same datatype.",Here());
+    throw eckit::Exception("Field and min are not of same datatype.",Here());
   }
   if( glb_idx.datatype() != array::DataType::kind<gidx_t>() ) {
-    throw eckit::Exception("glb_idx field::Field is not of correct datatype",Here());
+    throw eckit::Exception("glb_idx Field is not of correct datatype",Here());
   }
   switch( field.datatype().kind() )
   {
@@ -1590,9 +1703,9 @@ void minimum_and_location_per_level( const NodeColumns& fs, const field::Field& 
 
 
 template< typename T >
-void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const field::Field& field, field::Field& max_field, field::Field& glb_idx_field )
+void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& max_field, Field& glb_idx_field )
 {
-  const array::ArrayView<T,3> arr = leveled_view<T>(field);
+  const array::LocalView<T,3> arr = make_leveled_view<T>(field);
   array::ArrayShape shape;
   shape.reserve(field.rank()-1);
   for( size_t j=1; j<field.rank(); ++j )
@@ -1600,22 +1713,40 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const field
   max_field.resize(shape);
   glb_idx_field.resize(shape);
   const size_t nvar = arr.shape(2);
-  array::ArrayView<T,2> max( max_field.data<T>(), array::make_shape(max_field.shape(0),max_field.stride(0)) );
-  max = -std::numeric_limits<T>::max();
-  array::ArrayView<gidx_t,2> glb_idx( glb_idx_field.data<gidx_t>(), array::make_shape(glb_idx_field.shape(0),glb_idx_field.stride(0)) );
+  array::LocalView<T,2> max(
+      array::make_storageview<T>(max_field).data(),
+      array::make_shape(max_field.shape(0),max_field.stride(0)) );
+
+  for( size_t l=0; l<max.shape(0); ++l ) {
+    for( size_t j=0; j<max.shape(1); ++j ) {
+      max(l,j) = -std::numeric_limits<T>::max();
+    }
+  }
+
+  array::LocalView<gidx_t,2> glb_idx(
+      array::make_storageview<gidx_t>(glb_idx_field).data(),
+      array::make_shape(glb_idx_field.shape(0),glb_idx_field.stride(0)) );
 
   atlas_omp_parallel
   {
     array::ArrayT<T> max_private(max.shape(0),max.shape(1));
-    array::ArrayView<T> max_private_view(max_private); max_private_view = -std::numeric_limits<T>::max();
-    array::ArrayT<gidx_t> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
+    array::ArrayView<T,2> max_private_view = array::make_view<T,2>(max_private);
+
+    for( size_t l=0; l<max_private_view.shape(0); ++l ) {
+      for( size_t j=0; j<max_private_view.shape(1); ++j ) {
+        max_private_view(l,j) = -std::numeric_limits<T>::max();
+      }
+    }
+
+    array::ArrayT<T> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
+    array::ArrayView<gidx_t,2> glb_idx_private_view = array::make_view<gidx_t,2>(glb_idx_private);
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
           if( arr(n,l,j) > max(l,j) ) {
-            max_private(l,j) = arr(n,l,j);
-            glb_idx(l,j) = n;
+            max_private_view(l,j) = arr(n,l,j);
+            glb_idx_private_view(l,j) = n;
           }
         }
       }
@@ -1624,9 +1755,9 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const field
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
-          if( max_private(l,j) > max(l,j) ) {
-            max(l,j) = max_private(l,j);
-            glb_idx(l,j) = glb_idx_private(l,j);
+          if( max_private_view(l,j) > max(l,j) ) {
+            max(l,j) = max_private_view(l,j);
+            glb_idx(l,j) = glb_idx_private_view(l,j);
           }
         }
       }
@@ -1636,10 +1767,10 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const field
   const size_t nlev = arr.shape(1);
   std::vector< std::pair<T,int> > max_and_gidx_loc(nlev*nvar);
   std::vector< std::pair<T,int> > max_and_gidx_glb(nlev*nvar);
-  const gidx_t* global_index = fs.nodes().global_index().data<gidx_t>();
+  const array::ArrayView<gidx_t,1> global_index = array::make_view<gidx_t,1>( fs.nodes().global_index() );
   atlas_omp_parallel_for( size_t l=0; l<nlev; ++l ) {
     for( size_t j=0; j<nvar; ++j ) {
-      gidx_t gidx = global_index[glb_idx(l,j)];
+      gidx_t gidx = global_index(glb_idx(l,j));
       ASSERT( gidx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
       max_and_gidx_loc[j+nvar*l] = std::make_pair(max(l,j),gidx);
     }
@@ -1655,13 +1786,13 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const field
   }
 }
 
-void maximum_and_location_per_level( const NodeColumns& fs, const field::Field& field, field::Field& max, field::Field& glb_idx )
+void maximum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& max, Field& glb_idx )
 {
   if( field.datatype() != max.datatype() ) {
-    throw eckit::Exception("field::Field and max are not of same datatype.",Here());
+    throw eckit::Exception("Field and max are not of same datatype.",Here());
   }
   if( glb_idx.datatype() != array::DataType::kind<gidx_t>() ) {
-    throw eckit::Exception("glb_idx field::Field is not of correct datatype",Here());
+    throw eckit::Exception("glb_idx Field is not of correct datatype",Here());
   }
   switch( field.datatype().kind() )
   {
@@ -1679,14 +1810,14 @@ void maximum_and_location_per_level( const NodeColumns& fs, const field::Field& 
 
 
 template< typename T >
-void mean( const NodeColumns& fs, const field::Field& field, T& result, size_t& N )
+void mean( const NodeColumns& fs, const Field& field, T& result, size_t& N )
 {
   sum(fs,field,result,N);
   result /= static_cast<double>(N);
 }
 
 template< typename T >
-void mean( const NodeColumns& fs, const field::Field& field, std::vector<T>& result, size_t& N )
+void mean( const NodeColumns& fs, const Field& field, std::vector<T>& result, size_t& N )
 {
   sum(fs,field,result,N);
   for( size_t j=0; j<result.size(); ++j ) {
@@ -1695,20 +1826,20 @@ void mean( const NodeColumns& fs, const field::Field& field, std::vector<T>& res
 }
 
 template< typename T >
-void dispatch_mean_per_level( const NodeColumns& fs, const field::Field& field, field::Field& mean, size_t& N )
+void dispatch_mean_per_level( const NodeColumns& fs, const Field& field, Field& mean, size_t& N )
 {
   dispatch_sum_per_level<T>(fs,field,mean,N);
-  T* rawdata = mean.data<T>();
+  T* rawdata = array::make_storageview<T>(mean).data();
   for( size_t j=0; j<mean.size(); ++j ) {
     rawdata[j] /= static_cast<double>(N);
   }
 }
 
 
-void mean_per_level( const NodeColumns& fs, const field::Field& field, field::Field& mean, size_t& N )
+void mean_per_level( const NodeColumns& fs, const Field& field, Field& mean, size_t& N )
 {
   if( field.datatype() != mean.datatype() ) {
-    throw eckit::Exception("field::Field and sum are not of same datatype.",Here());
+    throw eckit::Exception("Field and sum are not of same datatype.",Here());
   }
   switch( field.datatype().kind() )
   {
@@ -1725,12 +1856,12 @@ void mean_per_level( const NodeColumns& fs, const field::Field& field, field::Fi
 }
 
 template< typename T >
-void mean_and_standard_deviation( const NodeColumns& fs, const field::Field& field, T& mu, T& sigma, size_t& N )
+void mean_and_standard_deviation( const NodeColumns& fs, const Field& field, T& mu, T& sigma, size_t& N )
 {
   mean(fs,field,mu,N);
-  field::Field::Ptr squared_diff_field( fs.createField("sqr_diff",field) );
-  array::ArrayView<T,2> squared_diff = leveled_scalar_view<T>( *squared_diff_field );
-  array::ArrayView<T,2> values = leveled_scalar_view<T>( field );
+  Field squared_diff_field = fs.createField("sqr_diff",field);
+  array::LocalView<T,2> squared_diff = make_leveled_scalar_view<T>( squared_diff_field );
+  array::LocalView<T,2> values = make_leveled_scalar_view<T>( field );
 
   const size_t npts = std::min(values.shape(0),fs.nb_nodes());
   atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
@@ -1738,17 +1869,17 @@ void mean_and_standard_deviation( const NodeColumns& fs, const field::Field& fie
       squared_diff(n,l) = sqr( values(n,l) - mu );
     }
   }
-  mean(fs,*squared_diff_field,sigma,N);
+  mean(fs,squared_diff_field,sigma,N);
   sigma = std::sqrt(sigma);
 }
 
 template< typename T >
-void mean_and_standard_deviation( const NodeColumns& fs, const field::Field& field, std::vector<T>& mu, std::vector<T>& sigma, size_t& N )
+void mean_and_standard_deviation( const NodeColumns& fs, const Field& field, std::vector<T>& mu, std::vector<T>& sigma, size_t& N )
 {
   mean(fs,field,mu,N);
-  field::Field::Ptr squared_diff_field( fs.createField("sqr_diff",field) );
-  array::ArrayView<T,3> squared_diff = leveled_view<T>( *squared_diff_field );
-  array::ArrayView<T,3> values = leveled_view<T>( field );
+  Field squared_diff_field = fs.createField("sqr_diff",field);
+  array::LocalView<T,3> squared_diff = make_leveled_view<T>( squared_diff_field );
+  array::LocalView<T,3> values = make_leveled_view<T>( field );
 
   const size_t npts = values.shape(0);
   atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
@@ -1758,20 +1889,20 @@ void mean_and_standard_deviation( const NodeColumns& fs, const field::Field& fie
       }
     }
   }
-  mean(fs,*squared_diff_field,sigma,N);
+  mean(fs,squared_diff_field,sigma,N);
   for( size_t j=0; j<sigma.size(); ++j ) {
     sigma[j] = std::sqrt(sigma[j]);
   }
 }
 
 template< typename T >
-void dispatch_mean_and_standard_deviation_per_level( const NodeColumns& fs, const field::Field& field, field::Field& mean, field::Field& stddev, size_t& N )
+void dispatch_mean_and_standard_deviation_per_level( const NodeColumns& fs, const Field& field, Field& mean, Field& stddev, size_t& N )
 {
   dispatch_mean_per_level<T>(fs,field,mean,N);
-  field::Field::Ptr squared_diff_field( fs.createField("sqr_diff",field) );
-  array::ArrayView<T,3> squared_diff = leveled_view<T>( *squared_diff_field );
-  array::ArrayView<T,3> values = leveled_view<T>( field );
-  array::ArrayView<T,2> mu( mean.data<T>(), array::make_shape(values.shape(1),values.shape(2)) );
+  Field squared_diff_field = fs.createField("sqr_diff",field);
+  array::LocalView<T,3> squared_diff = make_leveled_view<T>( squared_diff_field );
+  array::LocalView<T,3> values = make_leveled_view<T>( field );
+  array::LocalView<T,2> mu( array::make_storageview<T>(mean).data(), array::make_shape(values.shape(1),values.shape(2)) );
 
   const size_t npts = values.shape(0);
   atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
@@ -1781,8 +1912,8 @@ void dispatch_mean_and_standard_deviation_per_level( const NodeColumns& fs, cons
       }
     }
   }
-  dispatch_mean_per_level<T>(fs,*squared_diff_field,stddev,N);
-  T* sigma = stddev.data<T>();
+  dispatch_mean_per_level<T>(fs,squared_diff_field,stddev,N);
+  T* sigma = array::make_storageview<T>(stddev).data();
   const size_t size = stddev.size();
   atlas_omp_parallel_for( size_t j=0; j<size; ++j ) {
     sigma[j] = std::sqrt(sigma[j]);
@@ -1790,13 +1921,13 @@ void dispatch_mean_and_standard_deviation_per_level( const NodeColumns& fs, cons
 }
 
 
-void mean_and_standard_deviation_per_level( const NodeColumns& fs, const field::Field& field, field::Field& mean, field::Field& stddev, size_t& N )
+void mean_and_standard_deviation_per_level( const NodeColumns& fs, const Field& field, Field& mean, Field& stddev, size_t& N )
 {
   if( field.datatype() != mean.datatype() ) {
-    throw eckit::Exception("field::Field and mean are not of same datatype.",Here());
+    throw eckit::Exception("Field and mean are not of same datatype.",Here());
   }
   if( field.datatype() != stddev.datatype() ) {
-    throw eckit::Exception("field::Field and stddev are not of same datatype.",Here());
+    throw eckit::Exception("Field and stddev are not of same datatype.",Here());
   }
   switch( field.datatype().kind() )
   {
@@ -1815,118 +1946,311 @@ void mean_and_standard_deviation_per_level( const NodeColumns& fs, const field::
 
 } // end collectives implementation
 
-template<> void NodeColumns::sum( const field::Field& field, int&    result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, long&   result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, float&  result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, double& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-
-template<> void NodeColumns::sum( const field::Field& field, std::vector<int>&    result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, std::vector<long>&   result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, std::vector<float>&  result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-template<> void NodeColumns::sum( const field::Field& field, std::vector<double>& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
-
-
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, int&    result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, long&   result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, float&  result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, double& result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, std::vector<int>&    result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, std::vector<long>&   result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, std::vector<float>&  result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-template<> void NodeColumns::orderIndependentSum( const field::Field& field, std::vector<double>& result, size_t& N ) const { return detail::order_independent_sum(*this,field,result,N); }
-
-template<> void NodeColumns::minimum( const field::Field& field, int&    min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, long&   min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, float&  min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, double& min ) const { return detail::minimum(*this,field,min); }
-
-template<> void NodeColumns::maximum( const field::Field& field, int&    max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, long&   max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, float&  max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, double& max ) const { return detail::maximum(*this,field,max); }
-
-template<> void NodeColumns::minimum( const field::Field& field, std::vector<int>&    min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, std::vector<long>&   min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, std::vector<float>&  min ) const { return detail::minimum(*this,field,min); }
-template<> void NodeColumns::minimum( const field::Field& field, std::vector<double>& min ) const { return detail::minimum(*this,field,min); }
-
-template<> void NodeColumns::maximum( const field::Field& field, std::vector<int>&    max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, std::vector<long>&   max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, std::vector<float>&  max ) const { return detail::maximum(*this,field,max); }
-template<> void NodeColumns::maximum( const field::Field& field, std::vector<double>& max ) const { return detail::maximum(*this,field,max); }
-
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, int&    max, gidx_t& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, long&   max, gidx_t& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, float&  max, gidx_t& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, double& max, gidx_t& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, int&    min, gidx_t& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, long&   min, gidx_t& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, float&  min, gidx_t& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, double& min, gidx_t& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<int>&    max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<long>&   max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<float>&  max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<double>& max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_location(*this,field,max,glb_idx); }
-
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<int>&    min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<long>&   min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<float>&  min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<double>& min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_location(*this,field,min,glb_idx); }
-
-
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, int&    min, gidx_t& glb_idx, size_t& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, long&   min, gidx_t& glb_idx, size_t& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, float&  min, gidx_t& glb_idx, size_t& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, double& min, gidx_t& glb_idx, size_t& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, int&    max, gidx_t& glb_idx, size_t& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, long&   max, gidx_t& glb_idx, size_t& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, float&  max, gidx_t& glb_idx, size_t& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, double& max, gidx_t& glb_idx, size_t& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<int>&    min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<long>&   min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<float>&  min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-template<> void NodeColumns::minimumAndLocation( const field::Field& field, std::vector<double>& min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::minimum_and_location(*this,field,min,glb_idx,level); }
-
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<int>&    max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<long>&   max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<float>&  max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
-template<> void NodeColumns::maximumAndLocation( const field::Field& field, std::vector<double>& max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const { return detail::maximum_and_location(*this,field,max,glb_idx,level); }
 
 
 
-template<> void NodeColumns::mean( const field::Field& field, float&  result, size_t& N ) const { return detail::mean(*this,field,result,N); }
-template<> void NodeColumns::mean( const field::Field& field, double& result, size_t& N ) const { return detail::mean(*this,field,result,N); }
+template< typename Value >
+NodeColumns::FieldStatisticsT<Value>::FieldStatisticsT(const NodeColumns* f) :
+  functionspace(*f) {
+}
 
-template<> void NodeColumns::mean( const field::Field& field, std::vector<float>&  result, size_t& N ) const { return detail::mean(*this,field,result,N); }
-template<> void NodeColumns::mean( const field::Field& field, std::vector<double>& result, size_t& N ) const { return detail::mean(*this,field,result,N); }
+template< typename Vector >
+NodeColumns::FieldStatisticsVectorT<Vector>::FieldStatisticsVectorT(const NodeColumns* f) :
+  functionspace(*f) {
+}
 
-template<> void NodeColumns::meanAndStandardDeviation( const field::Field& field, float&  mu, float&  sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
-template<> void NodeColumns::meanAndStandardDeviation( const field::Field& field, double& mu, double& sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
+NodeColumns::FieldStatistics::FieldStatistics(const NodeColumns* f) :
+  functionspace(*f) {
+}
 
-template<> void NodeColumns::meanAndStandardDeviation( const field::Field& field, std::vector<float>&  mu, std::vector<float>&  sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
-template<> void NodeColumns::meanAndStandardDeviation( const field::Field& field, std::vector<double>& mu, std::vector<double>& sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::sum( const Field& field, Value& result, size_t& N ) const {
+  detail::sum(functionspace,field,result,N);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::sum( const Field& field, Vector& result, size_t& N ) const {
+  detail::sum(functionspace,field,result,N);
+}
+
+void NodeColumns::FieldStatistics::sumPerLevel( const Field& field, Field& result, size_t& N ) const {
+  detail::sum_per_level(functionspace,field,result,N);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::orderIndependentSum( const Field& field, Value& result, size_t& N ) const {
+  detail::order_independent_sum(functionspace,field,result,N);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::orderIndependentSum( const Field& field, Vector& result, size_t& N ) const {
+  detail::order_independent_sum(functionspace,field,result,N);
+}
+
+void NodeColumns::FieldStatistics::orderIndependentSumPerLevel( const Field& field, Field& result, size_t& N ) const {
+  detail::order_independent_sum_per_level(functionspace,field,result,N);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::minimum( const Field& field, Value& minimum ) const {
+  detail::minimum(functionspace,field,minimum);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::maximum( const Field& field, Value& maximum ) const {
+  detail::maximum(functionspace,field,maximum);
+
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::minimum( const Field& field, Vector& minimum ) const {
+  detail::minimum(functionspace,field,minimum);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::maximum( const Field& field, Vector& maximum) const {
+  detail::maximum(functionspace,field,maximum);
+}
+
+void NodeColumns::FieldStatistics::minimumPerLevel( const Field& field, Field& minimum ) const {
+  detail::minimum_per_level(functionspace,field,minimum);
+}
+
+void NodeColumns::FieldStatistics::maximumPerLevel( const Field& field, Field& maximum ) const {
+  detail::maximum_per_level(functionspace,field,maximum);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::minimumAndLocation( const Field& field, Value& minimum, gidx_t& glb_idx ) const {
+  detail::minimum_and_location(functionspace,field,minimum,glb_idx);
+
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::maximumAndLocation( const Field& field, Value& maximum, gidx_t& glb_idx ) const {
+  detail::maximum_and_location(functionspace,field,maximum,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::minimumAndLocation( const Field& field, Value& minimum, gidx_t& glb_idx, size_t& level ) const {
+  detail::minimum_and_location(functionspace,field,minimum,glb_idx,level);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::maximumAndLocation( const Field& field, Value& maximum, gidx_t& glb_idx, size_t& level ) const {
+  detail::maximum_and_location(functionspace,field,maximum,glb_idx,level);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::minimumAndLocation( const Field& field, Vector& minimum, std::vector<gidx_t>& glb_idx ) const {
+  detail::minimum_and_location(functionspace,field,minimum,glb_idx);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::maximumAndLocation( const Field& field, Vector& maximum, std::vector<gidx_t>& glb_idx ) const {
+  detail::maximum_and_location(functionspace,field,maximum,glb_idx);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::minimumAndLocation( const Field& field, Vector& minimum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const {
+  detail::minimum_and_location(functionspace,field,minimum,glb_idx,level);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::maximumAndLocation( const Field& field, Vector& maximum, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level ) const {
+  detail::maximum_and_location(functionspace,field,maximum,glb_idx,level);
+}
+
+void NodeColumns::FieldStatistics::minimumAndLocationPerLevel( const Field& field, Field& column, Field& glb_idx ) const {
+  detail::minimum_and_location_per_level(functionspace,field,column,glb_idx);
+}
+
+void NodeColumns::FieldStatistics::maximumAndLocationPerLevel( const Field& field, Field& column, Field& glb_idx ) const {
+  detail::maximum_and_location_per_level(functionspace,field,column,glb_idx);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::mean( const Field& field, Value& mean, size_t& N ) const {
+  detail::mean(functionspace,field,mean,N);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::mean( const Field& field, Vector& mean, size_t& N ) const {
+  detail::mean(functionspace,field,mean,N);
+}
+
+void NodeColumns::FieldStatistics::meanPerLevel(const Field &field, Field &mean, size_t &N) const {
+  detail::mean_per_level(functionspace,field,mean,N);
+}
+
+template< typename Value >
+void NodeColumns::FieldStatisticsT<Value>::meanAndStandardDeviation( const Field& field, Value& mean, Value& stddev, size_t& N ) const {
+  detail::mean_and_standard_deviation(functionspace,field,mean,stddev,N);
+}
+
+template< typename Vector >
+void NodeColumns::FieldStatisticsVectorT<Vector>::meanAndStandardDeviation( const Field& field, Vector& mean, Vector& stddev, size_t& N ) const {
+  detail::mean_and_standard_deviation(functionspace,field,mean,stddev,N);
+}
+
+void NodeColumns::FieldStatistics::meanAndStandardDeviationPerLevel( const Field& field, Field& mean, Field& stddev, size_t& N ) const {
+  detail::mean_and_standard_deviation_per_level(functionspace,field,mean,stddev,N);
+}
+
+template class NodeColumns::FieldStatisticsT<int>;
+template class NodeColumns::FieldStatisticsT<long>;
+template class NodeColumns::FieldStatisticsT<float>;
+template class NodeColumns::FieldStatisticsT<double>;
+//template class NodeColumns::FieldStatisticsT<unsigned long>;
+template class NodeColumns::FieldStatisticsVectorT< std::vector<int> >;
+template class NodeColumns::FieldStatisticsVectorT< std::vector<long> >;
+template class NodeColumns::FieldStatisticsVectorT< std::vector<float> >;
+template class NodeColumns::FieldStatisticsVectorT< std::vector<double> >;
+//template class NodeColumns::FieldStatisticsVectorT< std::vector<unsigned long> >;
+
+} // namespace detail
 
 
-void NodeColumns::sumPerLevel(const field::Field &field, field::Field &sum, size_t &N) const { return detail::sum_per_level(*this,field,sum,N); }
+NodeColumns::NodeColumns() :
+  FunctionSpace(),
+  functionspace_(nullptr) {
+}
 
-void NodeColumns::orderIndependentSumPerLevel(const field::Field &field, field::Field &sum, size_t &N) const { return detail::order_independent_sum_per_level(*this,field,sum,N); }
+NodeColumns::NodeColumns( const FunctionSpace& functionspace ) :
+  FunctionSpace( functionspace ),
+  functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
+}
 
-void NodeColumns::minimumPerLevel(const field::Field &field, field::Field &min) const { return detail::minimum_per_level(*this,field,min); }
+NodeColumns::NodeColumns( Mesh& mesh, const mesh::Halo& halo, const eckit::Parametrisation& config ) :
+  FunctionSpace( new detail::NodeColumns(mesh,halo,config) ),
+  functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
+}
 
-void NodeColumns::maximumPerLevel(const field::Field &field, field::Field &max) const { return detail::maximum_per_level(*this,field,max);}
+NodeColumns::NodeColumns( Mesh& mesh, const mesh::Halo& halo ) :
+  FunctionSpace( new detail::NodeColumns(mesh,halo) ),
+  functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
+}
 
-void NodeColumns::minimumAndLocationPerLevel(const field::Field &field, field::Field &min, field::Field &glb_idx) const { detail::minimum_and_location_per_level(*this,field,min,glb_idx); }
+NodeColumns::NodeColumns( Mesh& mesh ) :
+  FunctionSpace( new detail::NodeColumns(mesh) ),
+  functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
+}
 
-void NodeColumns::maximumAndLocationPerLevel(const field::Field &field, field::Field &max, field::Field &glb_idx) const { detail::maximum_and_location_per_level(*this,field,max,glb_idx); }
+size_t NodeColumns::nb_nodes() const {
+  return functionspace_->nb_nodes();
+}
 
-void NodeColumns::meanPerLevel(const field::Field &field, field::Field &mean, size_t &N) const { return detail::mean_per_level(*this,field,mean,N); }
+size_t NodeColumns::nb_nodes_global() const { // All MPI ranks will have same output
+  return functionspace_->nb_nodes_global();
+}
 
-void NodeColumns::meanAndStandardDeviationPerLevel(const field::Field &field, field::Field &mean, field::Field &stddev, size_t &N) const { return detail::mean_and_standard_deviation_per_level(*this,field,mean,stddev,N); }
+const Mesh& NodeColumns::mesh() const {
+  return functionspace_->mesh();
+}
+
+mesh::Nodes& NodeColumns::nodes() const{
+  return functionspace_->nodes();
+}
+
+Field NodeColumns::createField(
+    const std::string& name,
+    array::DataType datatype,
+    const eckit::Parametrisation& config ) const {
+  return functionspace_->createField(name,datatype,config);
+}
+
+Field NodeColumns::createField(
+    const std::string& name,
+    array::DataType, size_t levels,
+    const eckit::Parametrisation& config) const {
+  return functionspace_->createField(name,levels,config);
+}
+
+Field NodeColumns::createField(
+    const std::string& name,
+    array::DataType datatype,
+    const std::vector<size_t>& variables,
+    const eckit::Parametrisation& config) const {
+  return functionspace_->createField(name,datatype,variables,config);
+}
+
+Field NodeColumns::createField(
+    const std::string& name,
+    array::DataType, size_t levels,
+    const std::vector<size_t>& variables,
+    const eckit::Parametrisation& config)  const {
+  return functionspace_->createField(name,levels,variables,config);
+}
+
+Field NodeColumns::createField(
+    const std::string& name,
+    const Field& field,
+    const eckit::Parametrisation& config ) const {
+  return functionspace_->createField(name,field,config);
+}
+
+Field NodeColumns::createField(const eckit::Parametrisation& config) const {
+  return functionspace_->createField(config);
+}
+
+// -- Parallelisation aware methods
+
+const mesh::Halo& NodeColumns::halo() const {
+  return functionspace_->halo();
+}
+
+void NodeColumns::haloExchange( FieldSet& fieldset ) const {
+  functionspace_->haloExchange(fieldset);
+}
+
+void NodeColumns::haloExchange( Field& field ) const {
+  functionspace_->haloExchange(field);
+}
+
+const parallel::HaloExchange& NodeColumns::halo_exchange() const {
+  return functionspace_->halo_exchange();
+}
+
+void NodeColumns::gather( const FieldSet& local, FieldSet& global ) const {
+  functionspace_->gather(local,global);
+}
+
+void NodeColumns::gather( const Field& local, Field& global ) const {
+  functionspace_->gather(local,global);
+}
+
+const parallel::GatherScatter& NodeColumns::gather() const {
+  return functionspace_->gather();
+}
+
+void NodeColumns::scatter( const FieldSet& global, FieldSet& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+void NodeColumns::scatter( const Field& global, Field& local ) const {
+  functionspace_->scatter(global,local);
+}
+
+const parallel::GatherScatter& NodeColumns::scatter() const {
+  return functionspace_->scatter();
+}
+
+std::string NodeColumns::checksum( const FieldSet& fieldset ) const {
+  return functionspace_->checksum(fieldset);
+}
+
+std::string NodeColumns::checksum( const Field& field ) const {
+  return functionspace_->checksum(field);
+}
+
+const parallel::Checksum& NodeColumns::checksum() const {
+  return functionspace_->checksum();
+}
+
+
+
+
+
 
 } // namespace functionspace
 } // namespace atlas
