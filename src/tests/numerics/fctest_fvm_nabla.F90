@@ -96,6 +96,58 @@ contains
     end subroutine Timer_resume
 
 
+    subroutine rotated_flow_magnitude( fvm, field, beta, radius )
+        type(atlas_fvm_method), intent(in) :: fvm
+        type(atlas_field), intent(inout) :: field
+        real(c_double), intent(in) :: beta
+        real(c_double), intent(in) :: radius
+
+        !real(c_double) :: radius
+        real(c_double) :: USCAL
+        real(c_double) :: pvel
+        real(c_double) :: deg2rad
+
+        type(atlas_functionspace_NodeColumns) :: fs_nodecolumns
+        type(atlas_mesh_Nodes) :: nodes
+        type(atlas_field) :: lonlat
+        real(c_double), pointer :: lonlat_deg(:,:)
+        real(c_double), pointer :: var(:,:)
+        integer :: nnodes, jnode, nlev, jlev
+        real(c_double) :: x, y, Ux, Uy
+        integer :: LON=1
+        integer :: LAT=2
+
+        !radius = fvm%radius()
+        USCAL = 20.
+        pvel = USCAL/radius
+        deg2rad = RPI/180.
+
+        fs_nodecolumns = fvm%node_columns()
+        mesh = fs_nodecolumns%mesh()
+        nodes = fs_nodecolumns%nodes()
+        lonlat = nodes%lonlat()
+        call lonlat%data(lonlat_deg)
+        call field%data(var)
+        nnodes = nodes%size()
+        nlev = field%levels()
+
+        do jnode=1,nnodes
+           x = lonlat_deg(LON,jnode) * deg2rad
+           y = lonlat_deg(LAT,jnode) * deg2rad
+           Ux =  pvel*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*cos(y)
+           Uy = -pvel*sin(x)*sin(beta)*radius
+
+           do jlev=1,nlev
+             var(jlev,jnode) = sqrt(Ux*Ux+Uy*Uy)
+           enddo
+
+        enddo
+
+
+
+    end subroutine
+
+
 SUBROUTINE FV_GRADIENT(PVAR,PGRAD)
 
 !**** *GP_DERIVATIVES* - COMPUTES GRID-POINT DERIVATIVES using FINITE VOLUME
@@ -158,6 +210,11 @@ INTEGER(KIND=JPIM) :: INODE2EDGE_SIZE
 INTEGER(KIND=JPIM) :: JNODE,JEDGE,JLEV,INEDGES,IP1,IP2,IEDGE,INODES
 REAL(KIND=JPRB) :: ZAVG,ZSIGN,ZMETRIC_X,ZMETRIC_Y
 REAL(KIND=JPRB), ALLOCATABLE :: ZAVG_S(:,:,:)
+
+REAL(KIND=JPRB) :: SCALE, DEG2RAD
+DEG2RAD = RPI/180.
+SCALE = DEG2RAD*DEG2RAD*RA
+
 !     ------------------------------------------------------------------
 
 !IF (LHOOK) CALL DR_HOOK('FV_GRADIENT',0,ZHOOK_HANDLE)
@@ -189,8 +246,8 @@ DO JEDGE=1,INEDGES
   IP2 = IEDGE2NODE(2,JEDGE)
   DO JLEV=1,NFLEVG
     ZAVG = (PVAR(JLEV,IP1)+PVAR(JLEV,IP2)) * 0.5_JPRB
-    ZAVG_S(1,JLEV,JEDGE) = ZDUAL_NORMALS(1,JEDGE)*ZAVG
-    ZAVG_S(2,JLEV,JEDGE) = ZDUAL_NORMALS(2,JEDGE)*ZAVG
+    ZAVG_S(1,JLEV,JEDGE) = ZDUAL_NORMALS(1,JEDGE)*DEG2RAD*ZAVG
+    ZAVG_S(2,JLEV,JEDGE) = ZDUAL_NORMALS(2,JEDGE)*DEG2RAD*ZAVG
   ENDDO
 ENDDO
 !$OMP END PARALLEL DO
@@ -211,8 +268,8 @@ DO JNODE=1,INODES
       PGRAD(2,JLEV,JNODE) =  PGRAD(2,JLEV,JNODE)+ZSIGN*ZAVG_S(2,JLEV,IEDGE)
     ENDDO
   ENDDO
-  ZMETRIC_X = RA/ZDUAL_VOLUMES(JNODE)
-  ZMETRIC_Y = ZMETRIC_X*COS(ZLONLAT(2,JNODE)*RPI/180.0)
+  ZMETRIC_Y = 1./(ZDUAL_VOLUMES(JNODE)*SCALE)
+  ZMETRIC_X = ZMETRIC_Y/COS(ZLONLAT(2,JNODE)*DEG2RAD)
   DO JLEV=1,NFLEVG
     PGRAD(1,JLEV,JNODE) = PGRAD(1,JLEV,JNODE)*ZMETRIC_X
     PGRAD(2,JLEV,JNODE) = PGRAD(2,JLEV,JNODE)*ZMETRIC_Y
@@ -239,8 +296,10 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_nabla_EdgeBasedFiniteVolume,fctest_atlas_nab
 TESTSUITE_INIT
   call atlas_library%initialise()
 
+  RA = 10.
+
   config = atlas_Config()
-  call config%set("radius",1.0)
+  call config%set("radius",RA)
 
   ! Setup
   grid = atlas_StructuredGrid("N24")
@@ -259,7 +318,8 @@ TESTSUITE_INIT
   call gradfield%data(grad)
   var(:,:) = 0.
 
-  RA = 1.0
+  call rotated_flow_magnitude(fvm,varfield,beta=0.5*RPI*0.75,radius=RA)
+
 
 END_TESTSUITE_INIT
 
@@ -304,6 +364,9 @@ END_TEST
 TEST( test_nabla )
 type(Timer_type) :: timer
 integer :: jiter, niter
+real(c_double) :: norm_native
+real(c_double) :: norm_fortran
+real(c_double) :: checked_value = 0.13215712584
 
 call node_columns%halo_exchange(varfield)
 
@@ -314,14 +377,25 @@ call timer%start()
 do jiter = 1,niter
 call nabla%gradient(varfield,gradfield)
 enddo
-write(0,*) timer%elapsed()
+write(0,*) "time elapsed: ", timer%elapsed()
+call node_columns%mean(gradfield,norm_native)
+write(0,*) "mean : ", norm_native
+
+FCTEST_CHECK_CLOSE( norm_native, checked_value, 1.e-6_c_double )
+
+write(0,*) ""
 
 ! Compute the gradient with Fortran routine above
 call timer%start()
 do jiter = 1,niter
 CALL FV_GRADIENT(var,grad)
 enddo
-write(0,*) timer%elapsed()
+write(0,*) "time elapsed: ", timer%elapsed()
+call node_columns%mean(gradfield,norm_fortran)
+write(0,*) "mean : ", norm_fortran
+
+FCTEST_CHECK_CLOSE( norm_fortran, checked_value, 1.e-6_c_double )
+
 END_TEST
 
 ! -----------------------------------------------------------------------------
