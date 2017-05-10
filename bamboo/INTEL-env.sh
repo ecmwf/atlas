@@ -4,6 +4,7 @@ if [[ ! $(command -v module > /dev/null 2>&1) ]]; then
 fi
 # unload modules not available for intel
 module unload grib_api
+module unload eccodes
 module unload emos
 module unload fftw
 module unload libemos
