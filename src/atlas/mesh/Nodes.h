@@ -98,6 +98,8 @@ public: // methods
   const Connectivity& connectivity(const std::string& name) const;
         Connectivity& connectivity(const std::string& name);
 
+  bool has_connectivity(std::string name) const { return connectivities_.count(name); } 
+
   size_t size() const { return size_; }
 
 // -- Modifiers

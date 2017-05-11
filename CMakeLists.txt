@@ -127,6 +127,7 @@ ecbuild_add_option(
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
   set( ENABLE_GPU "OFF" CACHE BOOL "Compile with GPU support (CUDA)" )
 
     set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
@@ -141,7 +142,7 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
         add_definitions(-D_FORCE_INLINES) # Question to Carlos: Is this needed for nvcc only?
 
         set(CUDA_PROPAGATE_HOST_FLAGS ON)
-        set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
+        set(CUDA_NVCC_FLAGS "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
         if( NOT ${CUDA_VERSION} VERSION_GREATER "60")
             message(FATAL_ERROR "CUDA 6.0 or lower does not support C++11 (disabling)")
         endif()

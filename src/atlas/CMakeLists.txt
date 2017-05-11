@@ -201,7 +201,6 @@ endif()
 
 list( APPEND atlas_mesh_srcs
 mesh.h
-mesh/Connectivity.cc
 mesh/Connectivity.h
 mesh/ElementType.cc
 mesh/ElementType.h
@@ -263,6 +262,13 @@ meshgenerator/RegularMeshGenerator.h
 mesh/actions/BuildTorusXYZField.h
 mesh/actions/BuildTorusXYZField.cc
 )
+
+if(NOT ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA) 
+list( APPEND atlas_mesh_srcs
+mesh/Connectivity.cc
+)
+endif()
+
 
 list( APPEND atlas_output_srcs
 output/Output.h
@@ -386,16 +392,22 @@ list( APPEND atlas_array_srcs
 array/gridtools/GPUClonable.h
 array/gridtools/GridToolsArray.cc
 array/gridtools/GridToolsArrayHelpers.h
-array/gridtools/GridToolsArrayView.cc
 array/gridtools/GridToolsArrayView.h
 array/gridtools/GridToolsDataStore.h
-array/gridtools/GridToolsIndexView.cc
 array/gridtools/GridToolsIndexView.h
 array/gridtools/GridToolsMakeView.cc
 array/gridtools/GridToolsMakeView.h
 array/gridtools/GridToolsStorageView.h
 array/gridtools/GridToolsTraits.h
 )
+
+if(NOT ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA) 
+list( APPEND atlas_array_srcs
+array/gridtools/GridToolsArrayView.cc
+array/gridtools/GridToolsIndexView.cc
+)
+endif()
+
 else()
 list( APPEND atlas_array_srcs
 array/native/NativeArray.cc
@@ -536,13 +548,11 @@ list( APPEND source_list
 )
 
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
-## TODO temporary disabled since I get a linking error of the nvcc intermediate step
-#  use_cuda( source_list
-#    array/gridtools/GridToolsArrayView.cc
-#    array/gridtools/GridToolsIndexView.cc
-#    array/gridtools/GridToolsMakeView.cc
-#    mesh/Connectivity.cc
-#  )
+  use_cuda( source_list
+    array/gridtools/GridToolsArrayView.cu
+    array/gridtools/GridToolsIndexView.cu
+    mesh/Connectivity.cu
+  )
 endif()
 
 ecbuild_add_library( TARGET atlas

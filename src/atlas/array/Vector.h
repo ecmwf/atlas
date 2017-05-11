@@ -12,6 +12,7 @@
 
 #include <cstddef>
 #include <cassert>
+#include <cuda_runtime.h>
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/library/config.h"
 
