@@ -22,7 +22,6 @@ namespace interpolation {
 struct PartitionedMesh {
 
     typedef grid::Partitioner Partitioner;
-    typedef Mesh                      Mesh;
 
     PartitionedMesh(
             const std::string& partitioner,
