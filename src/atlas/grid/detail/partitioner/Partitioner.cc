@@ -27,7 +27,7 @@
 #endif
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
-#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerPolygon.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
 
 namespace {
@@ -183,8 +183,8 @@ grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build(
     const std::string& type,
     const Mesh& partitioned ) {
 
-    if( type == grid::detail::partitioner::MatchingMeshPartitionerPolygon::static_type() ) {
-        return new grid::detail::partitioner::MatchingMeshPartitionerPolygon(partitioned);
+    if( type == grid::detail::partitioner::MatchingMeshPartitionerLonLatPolygon::static_type() ) {
+        return new grid::detail::partitioner::MatchingMeshPartitionerLonLatPolygon(partitioned);
     } else if ( type == grid::detail::partitioner::MatchingMeshPartitionerBruteForce::static_type() ) {
         return new grid::detail::partitioner::MatchingMeshPartitionerBruteForce(partitioned);
     } else {

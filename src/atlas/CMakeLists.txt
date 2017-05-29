@@ -101,8 +101,8 @@ grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.h
-grid/detail/partitioner/MatchingMeshPartitionerPolygon.h
-grid/detail/partitioner/MatchingMeshPartitionerPolygon.cc
+grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h
+grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
 grid/detail/partitioner/Partitioner.cc

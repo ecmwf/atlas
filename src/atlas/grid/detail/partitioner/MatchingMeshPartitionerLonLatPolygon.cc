@@ -9,7 +9,7 @@
  */
 
 
-#include "MatchingMeshPartitionerPolygon.h"
+#include "MatchingMeshPartitionerLonLatPolygon.h"
 
 #include <utility>
 #include <vector>
@@ -37,7 +37,7 @@ namespace partitioner {
 namespace {
 
 
-PartitionerBuilder<MatchingMeshPartitionerPolygon> __builder("polygon");
+PartitionerBuilder<MatchingMeshPartitionerLonLatPolygon> __builder("lonlat-polygon");
 
 
 double dot_sign(
@@ -104,7 +104,7 @@ bool point_in_poly(const std::vector<point_t>& poly, const point_t& P) {
 }  // (anonymous namespace)
 
 
-void MatchingMeshPartitionerPolygon::partition( const Grid& grid, int node_partition[] ) const {
+void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int node_partition[] ) const {
     eckit::mpi::Comm& comm = eckit::mpi::comm();
     const int mpi_rank = int(comm.rank());
     const int mpi_size = int(comm.size());

@@ -55,7 +55,7 @@ MatchingMeshPartitioner::MatchingMeshPartitioner() :
 grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const Mesh& mesh, const Partitioner::Config& config ) {
     std::string type;
     if( not config.get("type",type) )
-      type = "polygon";
+      type = "lonlat-polygon";
     return MatchedPartitionerFactory::build(type,mesh);
 }
 

@@ -39,8 +39,8 @@ class AtlasParallelInterpolation : public AtlasTool {
 public:
 
     AtlasInterpolation(int argc, char* argv[]) : AtlasTool(argc, argv) {
-        add_option(new SimpleOption<size_t>     ("log-rank",         "use specific MPI rank for logging (default 0)"));
-        add_option(new SimpleOption<bool>       ("log-statistics",   "show simple statistics on source/target (default false)"));
+        add_option(new SimpleOption<size_t>     ("log-rank",             "use specific MPI rank for logging (default 0)"));
+        add_option(new SimpleOption<bool>       ("log-statistics",       "show simple statistics on source/target (default false)"));
 
         add_option(new SimpleOption<std::string>("method",               "interpolation method (default finite-element)"));
         add_option(new SimpleOption<std::string>("backend",              "linear algebra backend"));
@@ -110,7 +110,7 @@ void AtlasInterpolation::execute(const AtlasTool::Args& args) {
     option = args.get("target-gridname", option)? option : "O32";
     Grid tgt_grid(option);
     interpolation::PartitionedMesh tgt(
-                args.get("target-mesh-partitioner",           option)? option : "polygon",
+                args.get("target-mesh-partitioner",           option)? option : "lonlat-polygon",
                 args.get("target-mesh-generator",             option)? option : "structured",
                 args.get("target-mesh-generator-triangulate", trigs)?  trigs  : false,
                 args.get("target-mesh-generator-angle",       angle)?  angle  : 0. );

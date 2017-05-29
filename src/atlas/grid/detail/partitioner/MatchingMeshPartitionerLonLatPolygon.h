@@ -19,18 +19,18 @@ namespace detail {
 namespace partitioner {
 
 
-class MatchingMeshPartitionerPolygon : public MatchingMeshPartitioner {
+class MatchingMeshPartitionerLonLatPolygon : public MatchingMeshPartitioner {
 
 public:
 
-  static std::string static_type() {return "polygon";}
+  static std::string static_type() {return "lonlat-polygon";}
 
 public:
 
-    MatchingMeshPartitionerPolygon() : MatchingMeshPartitioner() {}
-    MatchingMeshPartitionerPolygon(const size_t nb_partitions) : MatchingMeshPartitioner(nb_partitions) {}
+    MatchingMeshPartitionerLonLatPolygon() : MatchingMeshPartitioner() {}
+    MatchingMeshPartitionerLonLatPolygon(const size_t nb_partitions) : MatchingMeshPartitioner(nb_partitions) {}
 
-    MatchingMeshPartitionerPolygon( const Mesh& mesh ) :
+    MatchingMeshPartitionerLonLatPolygon( const Mesh& mesh ) :
       MatchingMeshPartitioner(mesh) {}
 
     /**
