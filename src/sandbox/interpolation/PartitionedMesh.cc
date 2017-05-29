@@ -20,6 +20,7 @@
 namespace atlas {
 namespace interpolation {
 
+
 PartitionedMesh::PartitionedMesh(
         const std::string& partitioner,
         const std::string& generator,
@@ -28,11 +29,11 @@ PartitionedMesh::PartitionedMesh(
     optionPartitioner_(partitioner),
     optionGenerator_(generator) {
 
-    generatorParams_.set("three_dimensional", false );
-    generatorParams_.set("patch_pole",        true  );
-    generatorParams_.set("include_pole",      false );
-    generatorParams_.set("triangulate",        generatorTriangulate );
-    generatorParams_.set("angle",              generatorAngle );
+    generatorParams_.set("three_dimensional", false);
+    generatorParams_.set("patch_pole",        true);
+    generatorParams_.set("include_pole",      false);
+    generatorParams_.set("triangulate",       generatorTriangulate);
+    generatorParams_.set("angle",             generatorAngle);
 }
 
 
@@ -56,7 +57,6 @@ void PartitionedMesh::partition(const Grid& grid) {
 
     partitioner_ = Partitioner(optionPartitioner_);
 
-
     MeshGenerator meshgen(optionGenerator_, generatorParams_);
     mesh_ = meshgen.generate(grid, partitioner_.partition(grid));
 }
@@ -65,7 +65,7 @@ void PartitionedMesh::partition(const Grid& grid) {
 void PartitionedMesh::partition(const Grid& grid, const PartitionedMesh& other) {
     eckit::TraceTimer<Atlas> tim("PartitionedMesh::partition(other)");
 
-    partitioner_ = grid::MatchingMeshPartitioner( other.mesh_, util::Config("type",optionPartitioner_) );
+    partitioner_ = grid::MatchingMeshPartitioner(other.mesh_, util::Config("type", optionPartitioner_));
 
     MeshGenerator meshgen(optionGenerator_, generatorParams_);
     mesh_ = meshgen.generate(grid, partitioner_.partition(grid) );

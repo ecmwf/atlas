@@ -20,6 +20,7 @@
 
 #include "PartitionedMesh.h"
 
+
 using namespace atlas;
 
 class AtlasParallelInterpolation : public AtlasTool {
@@ -37,43 +38,35 @@ class AtlasParallelInterpolation : public AtlasTool {
 
 public:
 
-    AtlasParallelInterpolation(int argc, char* argv[]) : AtlasTool(argc, argv) {
+    AtlasInterpolation(int argc, char* argv[]) : AtlasTool(argc, argv) {
         add_option(new SimpleOption<size_t>     ("log-rank",         "use specific MPI rank for logging (default 0)"));
         add_option(new SimpleOption<bool>       ("log-statistics",   "show simple statistics on source/target (default false)"));
 
-        add_option(new SimpleOption<std::string>("method",           "interpolation method (default finite-element)"));
-        add_option(new SimpleOption<std::string>("backend",          "linear algebra backend"));
+        add_option(new SimpleOption<std::string>("method",               "interpolation method (default finite-element)"));
+        add_option(new SimpleOption<std::string>("backend",              "linear algebra backend"));
+        add_option(new SimpleOption<size_t>     ("k-nearest-neighbours", "k-nearest neighbours (default 1)"));
+        add_option(new SimpleOption<bool>       ("polygons",             "Output Python script that plots partitions as polygons"));
+        add_option(new SimpleOption<bool>       ("with-backward",        "Also do backward interpolation (default false)"));
 
-        add_option(new SimpleOption<std::string>("source-gridname",  "source gridname"));
-        add_option(new SimpleOption<std::string>("target-gridname",  "target gridname"));
-
+        add_option(new SimpleOption<std::string>("source-gridname",                   "source gridname"));
         add_option(new SimpleOption<std::string>("source-mesh-partitioner",           "source mesh partitioner (equal_regions (default), ...)"));
-        add_option(new SimpleOption<std::string>       ("source-mesh-generator",             "source mesh generator (default structured)"));
+        add_option(new SimpleOption<std::string>("source-mesh-generator",             "source mesh generator (default structured)"));
         add_option(new SimpleOption<bool>       ("source-mesh-generator-triangulate", "source mesh generator triangulate option (default false)"));
-        add_option(new SimpleOption<bool>       ("source-mesh-generator-angle",       "source mesh generator angle option (default false)"));
+        add_option(new SimpleOption<double>     ("source-mesh-generator-angle",       "source mesh generator angle option (default 0.)"));
         add_option(new SimpleOption<size_t>     ("source-mesh-halo",                  "source mesh halo size (default 1)"));
 
+        add_option(new SimpleOption<std::string>("target-gridname",                   "target gridname"));
         add_option(new SimpleOption<std::string>("target-mesh-partitioner",           "target mesh partitioner (polygon, brute_force)"));
         add_option(new SimpleOption<std::string>("target-mesh-generator",             "target mesh generator (default structured)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator-triangulate", "target mesh generator triangulate option (default false)"));
-        add_option(new SimpleOption<bool>       ("target-mesh-generator-angle",       "target mesh generator angle option (default false)"));
-
+        add_option(new SimpleOption<double>     ("target-mesh-generator-angle",       "target mesh generator angle option (default 0.)"));
         add_option(new SimpleOption<size_t>     ("target-mesh-halo",                  "target mesh halo size (default 1)"));
-
-        add_option(new SimpleOption<size_t>     ("k-nearest-neighbours",              "k nearest neighbours (default 1)"));
-
-
-        add_option(new SimpleOption<bool>       ("polygons",                          "Output python script that plots partitions as polygons"));
-
-
-        add_option(new SimpleOption<bool>       ("with-backward",                     "Also do backward interpolation (default false)"));
-
     }
 
 };
 
 
-void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
+void AtlasInterpolation::execute(const AtlasTool::Args& args) {
 
     // Get user options
     std::string option;
@@ -122,20 +115,22 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
                 args.get("target-mesh-generator-triangulate", trigs)?  trigs  : false,
                 args.get("target-mesh-generator-angle",       angle)?  angle  : 0. );
 
-    Log::info() << "Partitioning source grid" << std::endl;
+    Log::info() << "Partitioning source grid, halo of " << source_mesh_halo << " elements" << std::endl;
     src.partition(src_grid);
+    functionspace::NodeColumns src_functionspace(src.mesh(), source_mesh_halo);
+    src.writeGmsh("src-mesh.msh");
 
-    Log::info() << "Partitioning target grid" << std::endl;
+    Log::info() << "Partitioning target grid, halo of " << target_mesh_halo << " elements" << std::endl;
     tgt.partition(tgt_grid, src);
-    
+
     functionspace::PointCloud pointcloud( tgt.mesh().nodes().lonlat() );
 
     Log::info() << "Increasing source mesh halo by " << source_mesh_halo << " elements." << std::endl;
     functionspace::NodeColumns src_functionspace(src.mesh(), source_mesh_halo);
+
     Log::info() << "Increasing target mesh halo by " << target_mesh_halo << " elements." << std::endl;
     functionspace::NodeColumns tgt_functionspace(tgt.mesh(), target_mesh_halo);
 
-    src.writeGmsh("src-mesh.msh");
     tgt.writeGmsh("tgt-mesh.msh");
 
     // Setup interpolator relating source & target meshes before setting a source FunctionSpace halo
@@ -148,7 +143,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     Log::info() << "Computing forward interpolator" << std::endl;
     // Interpolation interpolator_forward(interpolator_options, src_functionspace, tgt_functionspace);
 
-    
+
     Interpolation interpolator_forward(interpolator_options, src_functionspace, pointcloud);
 
     bool with_backward = false;
@@ -260,6 +255,6 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
 
 int main(int argc, char* argv[]) {
-    AtlasParallelInterpolation tool(argc, argv);
+    AtlasInterpolation tool(argc, argv);
     return tool.start();
 }
