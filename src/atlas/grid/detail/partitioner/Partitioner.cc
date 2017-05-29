@@ -8,27 +8,27 @@
  * does it submit to any jurisdiction.
  */
 
+
 #include <map>
 #include <string>
-
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
-#include "atlas/parallel/mpi/mpi.h"
-
-#include "atlas/library/config.h"
-#include "atlas/library/config.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
-#include "atlas/grid/Distribution.h"
-#include "atlas/grid/Partitioner.h"
-#include "atlas/runtime/Log.h"
-
+#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerGreatCirclePolygon.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
 #endif
-#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
-#include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
-#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
-#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
+#include "atlas/grid/Distribution.h"
+#include "atlas/grid/Partitioner.h"
+#include "atlas/library/config.h"
+#include "atlas/library/config.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
+
 
 namespace {
 
@@ -183,7 +183,9 @@ grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build(
     const std::string& type,
     const Mesh& partitioned ) {
 
-    if( type == grid::detail::partitioner::MatchingMeshPartitionerLonLatPolygon::static_type() ) {
+    if( type == grid::detail::partitioner::MatchingMeshPartitionerGreatCirclePolygon::static_type() ) {
+        return new grid::detail::partitioner::MatchingMeshPartitionerGreatCirclePolygon(partitioned);
+    } else if( type == grid::detail::partitioner::MatchingMeshPartitionerLonLatPolygon::static_type() ) {
         return new grid::detail::partitioner::MatchingMeshPartitionerLonLatPolygon(partitioned);
     } else if ( type == grid::detail::partitioner::MatchingMeshPartitionerBruteForce::static_type() ) {
         return new grid::detail::partitioner::MatchingMeshPartitionerBruteForce(partitioned);

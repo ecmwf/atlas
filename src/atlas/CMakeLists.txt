@@ -96,15 +96,17 @@ grid/detail/grid/LonLat.cc
 grid/detail/grid/Regional.h
 grid/detail/grid/Regional.cc
 
-grid/detail/partitioner/EqualRegionsPartitioner.cc
-grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
+grid/detail/partitioner/EqualRegionsPartitioner.cc
+grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.h
-grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h
-grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
-grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
+grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
+grid/detail/partitioner/MatchingMeshPartitionerGreatCirclePolygon.cc
+grid/detail/partitioner/MatchingMeshPartitionerGreatCirclePolygon.h
+grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
+grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
 

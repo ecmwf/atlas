@@ -11,7 +11,7 @@
 
 #include <memory>
 #include "eckit/linalg/LinearAlgebra.h"
-
+#include "eckit/log/Plural.h"
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
 #include "atlas/interpolation.h"
@@ -56,8 +56,8 @@ public:
         add_option(new SimpleOption<size_t>     ("source-mesh-halo",                  "source mesh halo size (default 1)"));
 
         add_option(new SimpleOption<std::string>("target-gridname",                   "target gridname"));
-        add_option(new SimpleOption<std::string>("target-mesh-partitioner",           "target mesh partitioner (polygon, brute_force)"));
-        add_option(new SimpleOption<std::string>("target-mesh-generator",             "target mesh generator (default structured)"));
+        add_option(new SimpleOption<std::string>("target-mesh-partitioner",           "target mesh partitioner (great-circle-polygon, lonlat-polygon, brute_force)"));
+        add_option(new SimpleOption<bool>       ("target-mesh-generator",             "target mesh generator (default structured)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator-triangulate", "target mesh generator triangulate option (default false)"));
         add_option(new SimpleOption<double>     ("target-mesh-generator-angle",       "target mesh generator angle option (default 0.)"));
         add_option(new SimpleOption<size_t>     ("target-mesh-halo",                  "target mesh halo size (default 1)"));
@@ -87,19 +87,16 @@ void AtlasInterpolation::execute(const AtlasTool::Args& args) {
         eckit::linalg::LinearAlgebra::backend(option);
     }
 
-    size_t source_mesh_halo = 1;
-    args.get("source-mesh-halo", source_mesh_halo);
-
-    size_t target_mesh_halo = 1;
-    args.get("target-mesh-halo", target_mesh_halo);
-    Log::debug() << "target-mesh-halo " << target_mesh_halo << std::endl;
-
 
     // Generate and partition source & target mesh
     // source mesh is partitioned on its own, the target mesh uses (pre-partitioned) source mesh
 
     option = args.get("source-gridname", option)? option : "O16";
     Grid src_grid(option);
+
+    size_t source_mesh_halo = 0;
+    args.get("source-mesh-halo", source_mesh_halo);
+
     interpolation::PartitionedMesh src(
                 args.get("source-mesh-partitioner",           option)? option : "equal_regions",
                 args.get("source-mesh-generator",             option)? option : "structured",
@@ -109,18 +106,22 @@ void AtlasInterpolation::execute(const AtlasTool::Args& args) {
 
     option = args.get("target-gridname", option)? option : "O32";
     Grid tgt_grid(option);
+
+    size_t target_mesh_halo = 0;
+    args.get("target-mesh-halo", target_mesh_halo);
+
     interpolation::PartitionedMesh tgt(
-                args.get("target-mesh-partitioner",           option)? option : "lonlat-polygon",
+                args.get("target-mesh-partitioner",           option)? option : "great-circle-polygon",
                 args.get("target-mesh-generator",             option)? option : "structured",
                 args.get("target-mesh-generator-triangulate", trigs)?  trigs  : false,
                 args.get("target-mesh-generator-angle",       angle)?  angle  : 0. );
 
-    Log::info() << "Partitioning source grid, halo of " << source_mesh_halo << " elements" << std::endl;
+    Log::info() << "Partitioning source grid, halo of " << eckit::Plural(source_mesh_halo, "element") << std::endl;
     src.partition(src_grid);
     functionspace::NodeColumns src_functionspace(src.mesh(), source_mesh_halo);
     src.writeGmsh("src-mesh.msh");
 
-    Log::info() << "Partitioning target grid, halo of " << target_mesh_halo << " elements" << std::endl;
+    Log::info() << "Partitioning target grid, halo of " << eckit::Plural(target_mesh_halo, "element") << std::endl;
     tgt.partition(tgt_grid, src);
 
     functionspace::PointCloud pointcloud( tgt.mesh().nodes().lonlat() );
