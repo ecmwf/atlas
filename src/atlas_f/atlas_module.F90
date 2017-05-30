@@ -138,8 +138,7 @@ use atlas_kinds_module, only: &
 use atlas_GridDistribution_module, only: &
     & atlas_GridDistribution
 use atlas_MeshGenerator_module, only: &
-    & atlas_MeshGenerator, &
-    & atlas_meshgenerator_Structured
+    & atlas_MeshGenerator
 use atlas_Method_module, only: &
     & atlas_Method
 use atlas_fvm_module, only: &

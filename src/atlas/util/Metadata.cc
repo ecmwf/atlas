@@ -63,7 +63,7 @@ template<> Metadata& Metadata::set(const std::string& name, const Metadata& valu
 template<> Metadata& Metadata::set(const std::string& name, const std::vector<Metadata>& value)
 {
   std::vector<eckit::Properties> properties_values(value.begin(),value.end());
-  eckit::Properties::set(name, eckit::makeVectorValue(properties_values) );
+  eckit::Properties::set(name, eckit::toValue(properties_values) );
   return *this;
 }
 
@@ -111,31 +111,31 @@ Metadata& Metadata::set(const std::string& name, const char* value)
 
 template<> Metadata& Metadata::set(const std::string& name, const std::vector<int>& value)
 {
-  eckit::Properties::set(name,eckit::makeVectorValue(value));
+  eckit::Properties::set(name,eckit::toValue(value));
   return *this;
 }
 
 template<> Metadata& Metadata::set(const std::string& name, const std::vector<long>& value)
 {
-  eckit::Properties::set(name,eckit::makeVectorValue(value));
+  eckit::Properties::set(name,eckit::toValue(value));
   return *this;
 }
 
 template<> Metadata& Metadata::set(const std::string& name, const std::vector<float>& value)
 {
-  eckit::Properties::set(name,eckit::makeVectorValue(value));
+  eckit::Properties::set(name,eckit::toValue(value));
   return *this;
 }
 
 template<> Metadata& Metadata::set(const std::string& name, const std::vector<double>& value)
 {
-  eckit::Properties::set(name,eckit::makeVectorValue(value));
+  eckit::Properties::set(name,eckit::toValue(value));
   return *this;
 }
 
 template<> Metadata& Metadata::set(const std::string& name, const std::vector<size_t>& value)
 {
-  eckit::Properties::set(name,eckit::makeVectorValue(value));
+  eckit::Properties::set(name,eckit::toValue(value));
   return *this;
 }
 

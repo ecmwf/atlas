@@ -277,17 +277,17 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
   if( same_xmin ) {
     spec.set("start",xmin);
   } else {
-    spec.set("start[]",eckit::makeVectorValue(xmin_));
+    spec.set("start[]",eckit::toValue(xmin_));
   }
   if( same_xmax ) {
     spec.set("end",xmax);
   } else {
-    spec.set("end[]",eckit::makeVectorValue(xmax_));
+    spec.set("end[]",eckit::toValue(xmax_));
   }
   if( same_nx ) {
     spec.set("N",nx);
   } else {
-    spec.set("N[]",eckit::makeVectorValue(nx_));
+    spec.set("N[]",eckit::toValue(nx_));
   }
   spec.set("endpoint",endpoint);
 

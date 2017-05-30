@@ -23,19 +23,19 @@ namespace array {
 template <typename T>
 class Vector {
 public:
-  Vector() : data_(NULL), data_gpu_(0), size_(0) {}
-  Vector(size_t N) : data_(new T[N]()), data_gpu_(0), size_(N) {}
+  Vector() : data_(nullptr), data_gpu_(nullptr), size_(0) {}
+  Vector(size_t N) : data_(new T[N]), data_gpu_(nullptr), size_(N) {}
 
   void resize_impl(size_t N) {
       if( data_gpu_ ) throw eckit::AssertionFailed("we can not resize a vector after has been cloned to device");
       assert(N >= size_);
       if (N == size_) return;
 
-      T* d_ = new T[N]();
+      T* d_ = new T[N];
       for(unsigned int c=0; c < size_; ++c) {
           d_[c] = data_[c];
       }
-      delete data_;
+      if( data_ ) delete[] data_;
       data_ = d_;
   }
 

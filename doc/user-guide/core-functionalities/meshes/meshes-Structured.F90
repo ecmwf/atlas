@@ -9,7 +9,7 @@ type(atlas_Output)        :: gmsh_2d, gmsh_3d
 call atlas_library%initialise()
 
 ! Generate mesh
-meshgenerator = atlas_meshgenerator_Structured()
+meshgenerator = atlas_MeshGenerator()
 grid = atlas_StructuredGrid( "O32" )
 mesh = meshgenerator%generate(grid)
 

@@ -48,7 +48,7 @@ TEST( test_gmsh )
   call atlas_log%info("test_gmsh starting")
 
   grid = atlas_StructuredGrid("N24")
-  meshgenerator = atlas_meshgenerator_Structured()
+  meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid)
   call meshgenerator%final()
 

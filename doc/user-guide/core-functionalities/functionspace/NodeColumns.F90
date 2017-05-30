@@ -51,7 +51,7 @@ gridID = "N32"
 grid = atlas_StructuredGrid(gridID)
 
 ! Generate mesh associated to structured grid
-meshgenerator = atlas_meshgenerator_Structured()
+meshgenerator = atlas_MeshGenerator()
 mesh          = meshgenerator%generate(grid)
 
 ! Generate functionspace associated to mesh

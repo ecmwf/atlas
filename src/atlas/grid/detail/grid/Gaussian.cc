@@ -206,27 +206,24 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx, const Dom
   return new StructuredGrid::grid_t( xspace(nx) , Spacing(yspace), Projection(), domain );
 }
 
+template <typename Int>
+inline std::vector<long> long_vector(Int nx, long ny) {
+  std::vector<long> _nx(ny);
+  for( long j=0; j<ny; ++j ) {
+    _nx[j] = nx[j];
+  }
+  return _nx;
+}
 
 extern "C" {
 
 
-    StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_int(long N, int half_pl[]) {
-      std::vector<long> nx(2*N);
-      for( long j=0; j<N; ++j ) {
-        nx[j] = half_pl[j];
-        nx[2*N-1-j] = nx[j];
-      }
-      return reduced_gaussian(nx);
+    StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_int(int nx[], long ny) {
+      return reduced_gaussian( long_vector(nx,ny) );
     }
 
-
-    StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_long(long N, long half_pl[]) {
-        std::vector<long> nx(2*N);
-        for( long j=0; j<N; ++j ) {
-          nx[j] = half_pl[j];
-          nx[2*N-1-j] = nx[j];
-        }
-        return reduced_gaussian(nx);
+    StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_long(long nx[], long ny) {
+      return reduced_gaussian( long_vector(nx,ny) );
     }
 
 }

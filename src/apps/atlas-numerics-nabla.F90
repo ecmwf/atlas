@@ -246,7 +246,7 @@ subroutine init()
 
   ! Setup
   grid = atlas_StructuredGrid(grid_uid)
-  meshgenerator = atlas_meshgenerator_Structured()
+  meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
   fvm  = atlas_fvm_Method(mesh,config)
   node_columns = fvm%node_columns()

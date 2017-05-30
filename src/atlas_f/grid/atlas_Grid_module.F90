@@ -135,10 +135,8 @@ procedure :: N         => ReducedGaussian__N
 END TYPE atlas_ReducedGaussianGrid
 
 interface atlas_ReducedGaussianGrid
-  module procedure atlas_ReducedGaussianGrid__ctor_N_int32_pl_int32
-  module procedure atlas_ReducedGaussianGrid__ctor_N_int32_pl_int64
-  module procedure atlas_ReducedGaussianGrid__ctor_N_int64_pl_int32
-  module procedure atlas_ReducedGaussianGrid__ctor_N_int64_pl_int64
+  module procedure atlas_ReducedGaussianGrid__ctor_int32
+  module procedure atlas_ReducedGaussianGrid__ctor_int64
 end interface
 
 !------------------------------------------------------------------------------
@@ -285,44 +283,22 @@ end function
 
 !-----------------------------------------------------------------------------
 
-function atlas_ReducedGaussianGrid__ctor_N_int32_pl_int32(N,pl) result(grid)
+function atlas_ReducedGaussianGrid__ctor_int32(nx) result(grid)
   use, intrinsic :: iso_c_binding, only: c_int, c_long
   use atlas_grid_Structured_c_binding
   type(atlas_ReducedGaussianGrid) :: grid
-  integer(c_int), intent(in) :: N
-  integer(c_int), intent(in)  :: pl(:)
+  integer(c_int), intent(in)  :: nx(:)
   call grid%reset_c_ptr( &
-    & atlas__grid__reduced__ReducedGaussian_int( int(N,c_long), pl) )
+    & atlas__grid__reduced__ReducedGaussian_int( nx, int(size(nx),c_long) ) )
 end function
 
-function atlas_ReducedGaussianGrid__ctor_N_int32_pl_int64(N,pl) result(grid)
+function atlas_ReducedGaussianGrid__ctor_int64(nx) result(grid)
   use, intrinsic :: iso_c_binding, only: c_int, c_long
   use atlas_grid_Structured_c_binding
   type(atlas_ReducedGaussianGrid) :: grid
-  integer(c_int), intent(in) :: N
-  integer(c_long), intent(in) :: pl(:)
+  integer(c_long), intent(in)  :: nx(:)
   call grid%reset_c_ptr( &
-    & atlas__grid__reduced__ReducedGaussian_long(int(N,c_long),pl) )
-end function
-
-function atlas_ReducedGaussianGrid__ctor_N_int64_pl_int32(N,pl) result(grid)
-  use, intrinsic :: iso_c_binding, only: c_int, c_long
-  use atlas_grid_Structured_c_binding
-  type(atlas_ReducedGaussianGrid) :: grid
-  integer(c_long), intent(in) :: N
-  integer(c_int), intent(in)  :: pl(:)
-  call grid%reset_c_ptr( &
-    & atlas__grid__reduced__ReducedGaussian_int(N, pl) )
-end function
-
-function atlas_ReducedGaussianGrid__ctor_N_int64_pl_int64(N,pl) result(grid)
-  use, intrinsic :: iso_c_binding, only: c_long
-  use atlas_grid_Structured_c_binding
-  type(atlas_ReducedGaussianGrid) :: grid
-  integer(c_long), intent(in) :: N
-  integer(c_long), intent(in) :: pl(:)
-  call grid%reset_c_ptr( &
-    & atlas__grid__reduced__ReducedGaussian_long(N,pl) )
+    & atlas__grid__reduced__ReducedGaussian_long( nx, int(size(nx),c_long) ) )
 end function
 
 !-----------------------------------------------------------------------------

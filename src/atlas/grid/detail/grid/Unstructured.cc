@@ -122,7 +122,7 @@ Grid::Spec Unstructured::spec() const {
       coords[c++] = xy.y();
     }
 
-    cached_spec_->set( "xy", eckit::makeVectorValue<double>(coords) );
+    cached_spec_->set( "xy", eckit::toValue<double>(coords) );
 
     return *cached_spec_;
 }
