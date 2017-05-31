@@ -170,11 +170,11 @@ public: // Destructor
   void syncHostDevice() const {
       array_->syncHostDevice();
   }
-  bool isOnHost() const {
-      return array_->isOnHost();
+  bool hostNeedsUpdate() const {
+      return array_->hostNeedsUpdate();
   }
-  bool isOnDevice() const {
-      return array_->isOnDevice();
+  bool deviceNeedsUpdate() const {
+      return array_->deviceNeedsUpdate();
   }
   void reactivateDeviceWriteViews() const {
       array_->reactivateDeviceWriteViews();

@@ -100,9 +100,9 @@ public:
 
   void syncHostDevice() const { data_store_->syncHostDevice(); }
 
-  bool isOnHost() const { return data_store_->isOnHost(); }
+  bool hostNeedsUpdate() const { return data_store_->hostNeedsUpdate(); }
 
-  bool isOnDevice() const { return data_store_->isOnDevice(); }
+  bool deviceNeedsUpdate() const { return data_store_->deviceNeedsUpdate(); }
 
   void reactivateDeviceWriteViews() const { data_store_->reactivateDeviceWriteViews(); }
 

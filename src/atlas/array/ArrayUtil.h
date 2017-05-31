@@ -36,8 +36,8 @@ public:
   virtual void cloneFromDevice() const = 0;
   virtual bool valid() const = 0;
   virtual void syncHostDevice() const = 0;
-  virtual bool isOnHost() const = 0;
-  virtual bool isOnDevice() const = 0;
+  virtual bool hostNeedsUpdate() const = 0;
+  virtual bool deviceNeedsUpdate() const = 0;
   virtual void reactivateDeviceWriteViews() const = 0;
   virtual void reactivateHostWriteViews() const = 0;
   virtual void* voidDataStore() = 0;

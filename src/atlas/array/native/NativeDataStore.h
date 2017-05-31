@@ -40,11 +40,11 @@ public:
     void syncHostDevice() const {
     }
 
-    bool isOnHost() const {
+    bool hostNeedsUpdate() const {
         return true;
     }
 
-    bool isOnDevice() const {
+    bool deviceNeedsUpdate() const {
         return false;
     }
 
@@ -85,11 +85,11 @@ public:
     void syncHostDevice() const {
     }
 
-    bool isOnHost() const {
+    bool hostNeedsUpdate() const {
         return true;
     }
 
-    bool isOnDevice() const {
+    bool deviceNeedsUpdate() const {
         return false;
     }
 

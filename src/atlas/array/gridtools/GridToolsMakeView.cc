@@ -43,7 +43,7 @@ make_gt_host_view(const Array& array) {
 
   data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
-  return ::gridtools::make_host_view(*ds);
+  return ::gridtools::make_host_view<::gridtools::access_mode::ReadWrite>(*ds);
 }
 
 template <typename Value, unsigned int Rank, bool ReadOnly>
@@ -54,9 +54,9 @@ make_gt_device_view(const Array& array) {
 
   data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-  return ::gridtools::make_device_view(*ds);
+  return ::gridtools::make_device_view<::gridtools::access_mode::ReadWrite>(*ds);
 #else
-  return ::gridtools::make_host_view(*ds);
+  return ::gridtools::make_host_view<::gridtools::access_mode::ReadWrite>(*ds);
 #endif
 }
 }
@@ -99,7 +99,7 @@ make_host_indexview(const Array& array) {
 
   data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
-  return IndexView<Value, Rank>(::gridtools::make_host_view(*ds));
+  return IndexView<Value, Rank>(::gridtools::make_host_view<::gridtools::access_mode::ReadWrite>(*ds));
 }
 
 // --------------------------------------------------------------------------------------------

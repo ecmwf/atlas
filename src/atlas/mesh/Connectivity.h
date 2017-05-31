@@ -264,8 +264,8 @@ public:
   virtual void cloneFromDevice();
   virtual void syncHostDevice() const;
   virtual bool valid() const;
-  virtual bool isOnHost() const;
-  virtual bool isOnDevice() const;
+  virtual bool hostNeedsUpdate() const;
+  virtual bool deviceNeedsUpdate() const;
 
   IrregularConnectivityImpl* gpu_object_ptr() {return gpu_clone_.gpu_object_ptr();}
   void dump(std::ostream& os) const;
@@ -430,8 +430,8 @@ public:
   virtual void cloneFromDevice();
   virtual void syncHostDevice() const;
   virtual bool valid() const;
-  virtual bool isOnHost() const;
-  virtual bool isOnDevice() const;
+  virtual bool hostNeedsUpdate() const;
+  virtual bool deviceNeedsUpdate() const;
 
   MultiBlockConnectivityImpl* gpu_object_ptr() {return gpu_clone_.gpu_object_ptr();}
 
@@ -553,8 +553,8 @@ public:
   void cloneFromDevice();
   void syncHostDevice() const;
   bool valid() const;
-  bool isOnHost() const;
-  bool isOnDevice() const;
+  bool hostNeedsUpdate() const;
+  bool deviceNeedsUpdate() const;
 
   bool owns() const { return owns_; }
   BlockConnectivityImpl* gpu_object_ptr() {return gpu_clone_.gpu_object_ptr();}

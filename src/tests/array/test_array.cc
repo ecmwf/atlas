@@ -37,12 +37,16 @@ CASE("test_array") {
 }
 #endif
 
+#warning fix
+//#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
+// GridTools does not support arrays with zero size
 CASE("test_array_zero_size") {
   Array* ds = Array::create<double>(0);
 
   EXPECT(ds->size() == 0);
   delete ds;
 }
+//#endif
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_create") {
@@ -211,6 +215,13 @@ CASE("test_resize") {
     Array* ds = Array::create<double>(0);
     EXPECT(ds->size() == 0);
     ds->resize(0);
+    delete ds;
+  }
+
+  {
+    Array* ds = Array::create<double>(1);
+    EXPECT(ds->size() == 1);
+    ds->resize(2);
     delete ds;
   }
 

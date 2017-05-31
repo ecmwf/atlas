@@ -29,7 +29,7 @@ public:
 // -- Type definitions
     using value_type = typename remove_const<Value>::type;
     using Slice = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
-    using data_view_t = atlas::array::gridtools::data_view_tt<value_type, Rank>;
+    using data_view_t = gridtools::data_view_tt<value_type, Rank, ::gridtools::access_mode::ReadWrite>;
 
 public:
 
@@ -39,8 +39,8 @@ public:
     value_type const* data() const { return gt_data_view_.data(); }
 
     template < typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == Rank), int>::type >
-    value_type&
     ATLAS_HOST_DEVICE
+    value_type&
     operator()(Coords... c) {
         assert(sizeof...(Coords) == Rank);
         return gt_data_view_(c...);

@@ -342,17 +342,17 @@ bool Table::valid() const {
 
 // ----------------------------------------------------------------------------
 
-bool Table::isOnHost() const {
+bool Table::hostNeedsUpdate() const {
     bool res=true;
-    std::for_each( data_.begin(), data_.end(), [&](array::Array* a){ res &= a->isOnHost();} );
+    std::for_each( data_.begin(), data_.end(), [&](array::Array* a){ res &= a->hostNeedsUpdate();} );
     return res;
 }
 
 // ----------------------------------------------------------------------------
 
-bool Table::isOnDevice() const {
+bool Table::deviceNeedsUpdate() const {
     bool res=true;
-    std::for_each( data_.begin(), data_.end(), [&](array::Array* a){ res &= a->isOnDevice();} );
+    std::for_each( data_.begin(), data_.end(), [&](array::Array* a){ res &= a->deviceNeedsUpdate();} );
     return res;
 }
 

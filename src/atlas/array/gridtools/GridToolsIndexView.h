@@ -77,7 +77,7 @@ public:
     #define FROM_FORTRAN
     #define TO_FORTRAN
 #endif
-  using data_view_t = gridtools::data_view_tt<Value, Rank>;
+  using data_view_t = gridtools::data_view_tt<Value, Rank, ::gridtools::access_mode::ReadWrite>;
 
 public:
 

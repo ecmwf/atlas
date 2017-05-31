@@ -16,10 +16,10 @@
 if( NOT GRIDTOOLS_STORAGE_FOUND )
 
   find_path( GRIDTOOLS_STORAGE_INCLUDE_DIR 
-             NAMES storage-facility.hpp
+             NAMES storage/storage-facility.hpp
              PATHS 
                 ${CMAKE_INSTALL_PREFIX}
-                ${GRIDTOOLS_STORAGE_PATH}
+                "${GRIDTOOLS_STORAGE_PATH}"
                 ENV GRIDTOOLS_STORAGE_PATH 
             PATH_SUFFIXES include
   )

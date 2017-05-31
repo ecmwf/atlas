@@ -114,10 +114,10 @@ public:
   virtual bool valid() const;
 
   /// @brief Check if data is present on host
-  virtual bool isOnHost() const;
+  virtual bool hostNeedsUpdate() const;
 
   /// @brief Check if data is present on device
-  virtual bool isOnDevice() const;
+  virtual bool deviceNeedsUpdate() const;
 
   /// @brief Print all values unformatted to output stream
   void dump(std::ostream&) const;

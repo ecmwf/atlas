@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE( test_block_connectivity )
 
     conn.add(2,5, vals2);
     conn.cloneToDevice();
-    BOOST_CHECK( conn.isOnDevice() );
+    BOOST_CHECK( !conn.deviceNeedsUpdate() );
 
     kernel_block<<<1,1>>>(conn.gpu_object_ptr(), result);
 
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
     *result = true;
 
     conn.cloneToDevice();
-    BOOST_CHECK( conn.isOnDevice() );
+    BOOST_CHECK( !conn.deviceNeedsUpdate() );
 
     kernel_irr<<<1,1>>>(conn.gpu_object_ptr(), result);
 
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE( test_multiblock_connectivity )
     *result = true;
 
     conn.cloneToDevice();
-    BOOST_CHECK( conn.isOnDevice() );
+    BOOST_CHECK( !conn.deviceNeedsUpdate() );
 
     kernel_multiblock<<<1,1>>>(conn.gpu_object_ptr(), result);
 

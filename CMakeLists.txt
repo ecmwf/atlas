@@ -140,6 +140,7 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
         string(REPLACE "." "" CUDA_VERSION ${CUDA_VERSION})
 
         add_definitions(-D_FORCE_INLINES) # Question to Carlos: Is this needed for nvcc only?
+        add_definitions(-D_USE_GPU_)
 
         set(CUDA_PROPAGATE_HOST_FLAGS ON)
         set(CUDA_NVCC_FLAGS "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")

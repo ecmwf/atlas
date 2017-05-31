@@ -486,12 +486,12 @@ void atlas__Field__device_data_double_specf (FieldImpl* This, double* &data, int
 
 int atlas__Field__is_on_host(const FieldImpl* This)
 {
-  return This->isOnHost();
+  return This->hostNeedsUpdate();
 }
 
 int atlas__Field__is_on_device(const FieldImpl* This)
 {
-  return This->isOnDevice();
+  return This->deviceNeedsUpdate();
 }
 
 void atlas__Field__rename(FieldImpl* This, const char* name)

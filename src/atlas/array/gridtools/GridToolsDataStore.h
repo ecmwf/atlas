@@ -44,12 +44,12 @@ struct GridToolsDataStore : ArrayDataStore
         data_store_->sync();
     }
 
-    bool isOnHost() const {
-        return data_store_->is_on_host();
+    bool hostNeedsUpdate() const {
+        return data_store_->host_needs_update();
     }
 
-    bool isOnDevice() const {
-        return data_store_->is_on_device();
+    bool deviceNeedsUpdate() const {
+        return data_store_->device_needs_update();
     }
 
     void reactivateDeviceWriteViews() const {

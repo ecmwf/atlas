@@ -157,7 +157,7 @@ public:
 
       check_dimension_lengths(array_.shape(), c...);
 
-      if(!array_.isOnHost()) {
+      if(!array_.hostNeedsUpdate()) {
           array_.cloneFromDevice();
       }
 
@@ -330,7 +330,7 @@ size_t ArrayT<Value>::footprint() const {
 //------------------------------------------------------------------------------
 
 template <typename Value> void ArrayT<Value>::insert(size_t idx1, size_t size1) {
-    if(!isOnHost()) {
+    if(!hostNeedsUpdate()) {
         cloneFromDevice();
     }
 
