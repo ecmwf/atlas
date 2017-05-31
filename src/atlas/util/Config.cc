@@ -15,7 +15,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/parser/JSON.h"
-#include "eckit/parser/JSONParser.h"
+#include "eckit/parser/YAMLParser.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/Config.h"
@@ -36,8 +36,7 @@ Config::Config(std::istream& stream, const std::string &format )
     throw eckit::Exception("Not Implemented: Only json format is supported");
   }
 
-  bool accept_comments = true;
-  eckit::JSONParser parser( stream, accept_comments );
+  eckit::YAMLParser parser( stream );
   set( eckit::Properties( parser.parse() ) );
 }
 
@@ -52,8 +51,7 @@ Config::Config( const eckit::PathName& path )
     if (!file.is_open()) {
       throw eckit::Exception("Unable to open json file "+std::string(path),Here());
     }
-    bool accept_comments = true;
-    eckit::JSONParser parser( file, accept_comments );
+    eckit::YAMLParser parser( file );
     set( eckit::Properties( parser.parse() ) );
     file.close();
   }
@@ -134,6 +132,10 @@ bool Config::get(const std::string &name, bool &value) const {
     return _get(name, value);
 }
 
+bool Config::get(const std::string &name, int &value) const {
+    return _get(name, value);
+}
+
 bool Config::get(const std::string &name, long &value) const {
     return _get(name, value);
 }
@@ -142,7 +144,15 @@ bool Config::get(const std::string &name, size_t &value) const {
     return _get(name, value);
 }
 
+bool Config::get(const std::string &name, float &value) const {
+    return _get(name, value);
+}
+
 bool Config::get(const std::string &name, double &value) const {
+    return _get(name, value);
+}
+
+bool Config::get(const std::string &name, std::vector<int> &value) const {
     return _get(name, value);
 }
 
@@ -150,7 +160,19 @@ bool Config::get(const std::string &name, std::vector<long> &value) const {
     return _get(name, value);
 }
 
+bool Config::get(const std::string &name, std::vector<size_t> &value) const {
+    return _get(name, value);
+}
+
+bool Config::get(const std::string &name, std::vector<float> &value) const {
+    return _get(name, value);
+}
+
 bool Config::get(const std::string &name, std::vector<double> &value) const {
+    return _get(name, value);
+}
+
+bool Config::get(const std::string &name, std::vector<std::string> &value) const {
     return _get(name, value);
 }
 
