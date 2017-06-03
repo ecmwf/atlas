@@ -271,7 +271,7 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
     same_nx   = same_nx   && ( nx_  [j] == nx   );
   }
 
-  bool endpoint = std::abs( (xmax - xmin) - (nx+1)*dx ) < 1.e-10;
+  bool endpoint = std::abs( (xmax - xmin) - (nx-1)*dx ) < 1.e-10;
 
   spec.set("type","linear");
   if( same_xmin ) {
