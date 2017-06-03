@@ -161,7 +161,7 @@ use atlas_output_module, only: &
     & atlas_Output, &
     & atlas_output_Gmsh
 
-use fckit_log_module,  only: atlas_log => log
+use fckit_log_module,  only: atlas_log => fckit_log
 
 implicit none
 
@@ -200,7 +200,7 @@ CONTAINS
 subroutine atlas_init( comm, output_unit )
   use atlas_library_c_binding
   use iso_fortran_env, only : stdout => output_unit
-  use fckit_main_module, only: main
+  use fckit_main_module, only: fckit_main
   use fckit_mpi_module, only : fckit_mpi_comm
   use atlas_mpi_module, only : atlas_mpi_set_comm
 
@@ -209,17 +209,17 @@ subroutine atlas_init( comm, output_unit )
   type(fckit_mpi_comm) :: world
   integer :: opt_output_unit
 
-  if( .not. main%ready() ) then
-    call main%init()
+  if( .not. fckit_main%ready() ) then
+    call fckit_main%init()
   endif
 
   opt_output_unit = stdout
   if( present(output_unit) ) opt_output_unit = output_unit
 
   world = fckit_mpi_comm("world")
-  call main%set_taskID(world%rank())
+  call fckit_main%set_taskID(world%rank())
 
-  if( main%taskID() == 0 ) then
+  if( fckit_main%taskID() == 0 ) then
     call atlas_log%set_fortran_unit(opt_output_unit,style=atlas_log%PREFIX)
   else
     call atlas_log%reset()

@@ -200,6 +200,15 @@ template<> std::vector<long> Metadata::get(const std::string& name) const
   return value;
 }
 
+template<> std::vector<size_t> Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  std::vector<eckit::Value> v = eckit::Properties::get(name);
+  std::vector<size_t> value;
+  value.assign(v.begin(),v.end());
+  return value;
+}
+
 template<> std::vector<float> Metadata::get(const std::string& name) const
 {
   if( !has(name) ) throw_exception(name);
@@ -216,6 +225,15 @@ template<> std::vector<double> Metadata::get(const std::string& name) const
   std::vector<eckit::Value> v = eckit::Properties::get(name);
   std::vector<double> value;
   value.assign(v.begin(),v.end());
+  return value;
+}
+
+template<> std::vector<std::string> Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  std::vector<eckit::Value> v = eckit::Properties::get(name);
+  std::vector<std::string> value;
+  for( size_t i=0; i<v.size(); ++i ) value.push_back( std::string(v[i]) );
   return value;
 }
 
@@ -283,6 +301,13 @@ template<> bool Metadata::get(const std::string& name, std::vector<long>& value)
   value.assign(v.begin(),v.end());
   return true;
 }
+template<> bool Metadata::get(const std::string& name, std::vector<size_t>& value) const
+{
+  if(!has(name)) return false;
+  std::vector<eckit::Value> v = operator[](name);
+  value.assign(v.begin(),v.end());
+  return true;
+}
 template<> bool Metadata::get(const std::string& name, std::vector<double>& value) const
 {
   if(!has(name)) return false;
@@ -290,7 +315,6 @@ template<> bool Metadata::get(const std::string& name, std::vector<double>& valu
   value.assign(v.begin(),v.end());
   return true;
 }
-
 template<> bool Metadata::get(const std::string& name, std::vector<float>& value) const
 {
   if(!has(name)) return false;
@@ -298,6 +322,15 @@ template<> bool Metadata::get(const std::string& name, std::vector<float>& value
   value.resize(v.size());
   for( size_t i=0; i<v.size(); ++i )
     value[i] = double( v[i] );
+  return true;
+}
+template<> bool Metadata::get(const std::string& name, std::vector<std::string>& value) const
+{
+  if(!has(name)) return false;
+  std::vector<eckit::Value> v = operator[](name);
+  value.resize(v.size());
+  for( size_t i=0; i<v.size(); ++i )
+    value[i] = std::string( v[i] );
   return true;
 }
 

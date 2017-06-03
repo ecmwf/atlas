@@ -79,12 +79,18 @@ public:
 
   virtual bool get(const std::string& name, std::string& value) const;
   virtual bool get(const std::string& name, bool& value) const;
+  virtual bool get(const std::string& name, int& value) const;
   virtual bool get(const std::string& name, long& value) const;
   virtual bool get(const std::string& name, size_t& value) const;
+  virtual bool get(const std::string& name, float& value) const;
   virtual bool get(const std::string& name, double& value) const;
 
+  virtual bool get(const std::string& name, std::vector<int>& value) const;
   virtual bool get(const std::string& name, std::vector<long>& value) const;
+  virtual bool get(const std::string& name, std::vector<size_t>& value) const;
+  virtual bool get(const std::string& name, std::vector<float>& value) const;
   virtual bool get(const std::string& name, std::vector<double>& value) const;
+  virtual bool get(const std::string& name, std::vector<std::string>& value) const;
 
   bool get(const std::string& name, Config& value) const;
   bool get(const std::string& name, std::vector<Config>& value) const;
@@ -171,11 +177,17 @@ public: // methods
 
     virtual bool get(const std::string& name, std::string& value) const { return false; }
     virtual bool get(const std::string& name, bool& value) const { return false; }
+    virtual bool get(const std::string& name, int& value) const { return false; }
     virtual bool get(const std::string& name, long& value) const { return false; }
     virtual bool get(const std::string& name, size_t& value) const { return false; }
+    virtual bool get(const std::string& name, float& value) const { return false; }
     virtual bool get(const std::string& name, double& value) const { return false; }
 
+    virtual bool get(const std::string& name, std::vector<std::string>& value) const { return false; }
+    virtual bool get(const std::string& name, std::vector<int>& value) const { return false; }
     virtual bool get(const std::string& name, std::vector<long>& value) const { return false; }
+    virtual bool get(const std::string& name, std::vector<size_t>& value) const { return false; }
+    virtual bool get(const std::string& name, std::vector<float>& value) const { return false; }
     virtual bool get(const std::string& name, std::vector<double>& value) const { return false; }
 
 };

@@ -258,7 +258,7 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
 
   double xmin = xmin_[0];
   double xmax = xmax_[0];
-  double nx   = nx_  [0];
+  long   nx   = nx_  [0];
   double dx   = dx_  [0];
 
   ASSERT(xmin_.size() == ny_);
