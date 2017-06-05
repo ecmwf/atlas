@@ -5,11 +5,6 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
-// Temporary option to validate MIR
-#ifndef MIR_VALIDATE
-#define MIR_VALIDATE 0
-#endif
-
 // Temporary option to activate implementation by RMI during ESCAPE
 #define OLD_IMPLEMENTATION 0
 
@@ -234,7 +229,9 @@ void Rotation::rotate(double crd[]) const {
     return;
 #endif
 
-    if( rotation_angle_only_ ) {
+    if( !rotated_ ) {
+      return;
+    } else if( rotation_angle_only_ ) {
       crd[LON] -= angle_;
       return;
     }
@@ -243,12 +240,6 @@ void Rotation::rotate(double crd[]) const {
     const PointXYZ P  = to_geocentric( L );
     const PointXYZ Pt = rotate_geocentric( P, rotate_ );
     PointLonLat Lt    = to_lonlat( Pt );
-
-#if MIR_VALIDATE
-    // Still get a very small rounding error, round to 6 decimal places
-    Lt.lat() = roundf( Lt.lat() * 1000000.0 )/1000000.0;
-    Lt.lon() = roundf( Lt.lon() * 1000000.0 )/1000000.0;
-#endif
 
     Lt.lon() -= angle_;
 
@@ -264,7 +255,9 @@ void Rotation::unrotate(double crd[]) const {
     return;
 #endif
 
-    if( rotation_angle_only_ ) {
+    if( !rotated_ ) {
+      return;
+    } else if( rotation_angle_only_ ) {
       crd[LON] += angle_;
       return;
     }
@@ -275,12 +268,6 @@ void Rotation::unrotate(double crd[]) const {
     const PointXYZ Pt = to_geocentric( Lt );
     const PointXYZ P  = rotate_geocentric( Pt, unrotate_ );
     PointLonLat L     = to_lonlat( P );
-
-#if MIR_VALIDATE
-    // Still get a very small rounding error, round to 6 decimal places
-    L.lat() = roundf( L.lat() * 1000000.0 )/1000000.0;
-    L.lon() = roundf( L.lon() * 1000000.0 )/1000000.0;
-#endif
 
     crd[0] = L.lon();
     crd[1] = L.lat();
