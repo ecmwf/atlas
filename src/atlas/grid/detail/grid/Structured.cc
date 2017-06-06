@@ -294,6 +294,33 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
   return spec;
 }
 
+namespace {
+  class Normalise {
+  public:
+    Normalise(const domain::RectangularDomain& domain) :
+      xmin_(domain.xmin()),
+      xmax_(domain.xmax()),
+      degrees_(domain.units()=="degrees") {
+    }
+
+    double operator()(double x) {
+      if( degrees_ ) {
+        if( x < xmin_ ) {
+            while (x < xmin_) x += 360.;
+        }
+        else if ( x > xmax_ ) {
+            while (x > xmax_) x -= 360.;
+        }
+      }
+      return x;
+    }
+
+  private:
+    bool degrees_;
+    double xmin_;
+    double xmax_;
+  };
+}
 
 void Structured::crop( const Domain& dom ) {
 
@@ -351,71 +378,75 @@ void Structured::crop( const Domain& dom ) {
         y_      = cropped_y;
       }
 
-      } else if ( rect_domain ) {
+    } else if ( rect_domain ) {
 
-          const double cropped_ymin = rect_domain->ymin();
-          const double cropped_ymax = rect_domain->ymax();
+        const double cropped_ymin = rect_domain->ymin();
+        const double cropped_ymax = rect_domain->ymax();
 
-          size_t jmin = ny();
-          size_t jmax = 0;
-          for( size_t j=0; j<ny(); ++j ) {
-              if( rect_domain->contains_y(y(j)) ) {
-                  jmin = std::min(j, jmin);
-                  jmax = std::max(j, jmax);
-              }
-          }
-          size_t cropped_ny = jmax-jmin+1;
-          std::vector<double> cropped_y   ( y_ .begin()+jmin, y_ .begin()+jmin+cropped_ny );
-          std::vector<double> cropped_dx  ( dx_.begin()+jmin, dx_.begin()+jmin+cropped_ny );
+        // Cropping in Y
+        size_t jmin = ny();
+        size_t jmax = 0;
+        for( size_t j=0; j<ny(); ++j ) {
+            if( rect_domain->contains_y(y(j)) ) {
+                jmin = std::min(j, jmin);
+                jmax = std::max(j, jmax);
+            }
+        }
+        size_t cropped_ny = jmax-jmin+1;
+        std::vector<double> cropped_y   ( y_ .begin()+jmin, y_ .begin()+jmin+cropped_ny );
+        std::vector<double> cropped_dx  ( dx_.begin()+jmin, dx_.begin()+jmin+cropped_ny );
 
-          std::vector<double> cropped_xmin( cropped_ny,  std::numeric_limits<double>::max() );
-          std::vector<double> cropped_xmax( cropped_ny, -std::numeric_limits<double>::max() );
-          std::vector<long>   cropped_nx  ( cropped_ny );
+        std::vector<double> cropped_xmin( cropped_ny,  std::numeric_limits<double>::max() );
+        std::vector<double> cropped_xmax( cropped_ny, -std::numeric_limits<double>::max() );
+        std::vector<long>   cropped_nx  ( cropped_ny );
 
-          for( size_t j=jmin, jcropped=0; j<=jmax; ++j, ++jcropped ) {
-              size_t n=0;
-              for( size_t i=0; i<=nx(j); ++i ) {
-                 const double _x = x(i,j);
-                 if( rect_domain->contains_x(_x) ) {
-                     cropped_xmin[jcropped] = std::min( cropped_xmin[jcropped], _x );
-                     cropped_xmax[jcropped] = std::max( cropped_xmax[jcropped], _x );
-                     ++n;
-                 }
-              }
-              cropped_nx[jcropped] = n;
-          }
+        // Cropping in X
+        Normalise normalise(*rect_domain);
+        for( size_t j=jmin, jcropped=0; j<=jmax; ++j, ++jcropped ) {
+            size_t n=0;
+            for( size_t i=0; i<nx(j); ++i ) {
+                const double _x = normalise( x(i,j) );
+                if( rect_domain->contains_x(_x) ) {
+                    cropped_xmin[jcropped] = std::min( cropped_xmin[jcropped], _x );
+                    cropped_xmax[jcropped] = std::max( cropped_xmax[jcropped], _x );
+                    ++n;
+               }
+            }
+            cropped_nx[jcropped] = n;
+        }
 
-          size_t cropped_nxmin, cropped_nxmax;
-          cropped_nxmin = cropped_nxmax = static_cast<size_t>(cropped_nx.front());
+        // Complete structures
 
-          for (size_t j=1; j<cropped_ny; ++j) {
-              cropped_nxmin = std::min(static_cast<size_t>(cropped_nx[j]),cropped_nxmin);
-              cropped_nxmax = std::max(static_cast<size_t>(cropped_nx[j]),cropped_nxmax);
-          }
-          size_t cropped_npts = size_t(std::accumulate(cropped_nx.begin(), cropped_nx.end(), 0));
+        size_t cropped_nxmin, cropped_nxmax;
+        cropped_nxmin = cropped_nxmax = static_cast<size_t>(cropped_nx.front());
 
-          Spacing cropped_yspace( new spacing::CustomSpacing(cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax}) );
+        for (size_t j=1; j<cropped_ny; ++j) {
+            cropped_nxmin = std::min(static_cast<size_t>(cropped_nx[j]),cropped_nxmin);
+            cropped_nxmax = std::max(static_cast<size_t>(cropped_nx[j]),cropped_nxmax);
+        }
+        size_t cropped_npts = size_t(std::accumulate(cropped_nx.begin(), cropped_nx.end(), 0));
 
-          // Modify grid
-          {
-            domain_ = dom;
-            yspace_ = cropped_yspace;
-            xmin_   = cropped_xmin;
-            xmax_   = cropped_xmax;
-            dx_     = cropped_dx;
-            nx_     = cropped_nx;
-            nxmin_  = cropped_nxmin;
-            nxmax_  = cropped_nxmax;
-            npts_   = cropped_npts;
-            y_      = cropped_y;
-          }
+        Spacing cropped_yspace( new spacing::CustomSpacing(cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax}) );
+
+        // Modify grid
+        {
+          domain_ = dom;
+          yspace_ = cropped_yspace;
+          xmin_   = cropped_xmin;
+          xmax_   = cropped_xmax;
+          dx_     = cropped_dx;
+          nx_     = cropped_nx;
+          nxmin_  = cropped_nxmin;
+          nxmax_  = cropped_nxmax;
+          npts_   = cropped_npts;
+          y_      = cropped_y;
+        }
     }
     else {
       std::stringstream errmsg;
       errmsg << "Cannot crop the grid with domain " << dom;
       eckit::BadParameter(errmsg.str(), Here());
     }
-
 }
 
 
