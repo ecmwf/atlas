@@ -26,187 +26,97 @@ using std::string;
 namespace atlas {
 namespace util {
 
-Config::Config() {}
+namespace {
 
-Config::Config(const eckit::Properties &p): delegate_(p) {}
-
-Config::Config(std::istream& stream, const std::string &format )
-{
-  if( format != "json" ) {
-    throw eckit::Exception("Not Implemented: Only json format is supported");
-  }
-
-  eckit::YAMLParser parser( stream );
-  set( eckit::Properties( parser.parse() ) );
+static eckit::Value yaml_from_stream(std::istream& stream){
+    eckit::YAMLParser parser( stream );
+    return parser.parse();
 }
 
-Config::Config( const eckit::PathName& path )
-{
+static eckit::Value yaml_from_path(const eckit::PathName& path){
   if( ! path.exists() ) {
     throw eckit::Exception("File "+std::string(path)+" does not exist.");
   }
-  if( path.extension() == ".json" )
-  {
-    std::ifstream file(path.localPath());
-    if (!file.is_open()) {
-      throw eckit::Exception("Unable to open json file "+std::string(path),Here());
-    }
-    eckit::YAMLParser parser( file );
-    set( eckit::Properties( parser.parse() ) );
-    file.close();
+  std::ifstream file(path.localPath());
+  if (!file.is_open()) {
+    throw eckit::Exception("Unable to open json file "+std::string(path),Here());
   }
-  else
-  {
-    throw eckit::Exception("Only files with \".json\" extension supported for now. Found: "+path.extension());
-  }
+  eckit::Value value = yaml_from_stream(file);
+  file.close();
+  return value;
 }
 
-// Config Config::operator&&(const Config& other) const
-// {
-//    Config config;
-//    config.set(*this);
-//    config.set(other);
-//    return config;
-// }
+}
+
+Config::Config() : eckit::LocalConfiguration() {}
+
+Config::Config(const eckit::Configuration &p): eckit::LocalConfiguration(p) {}
+
+Config::Config(std::istream& stream, const std::string &format ) : 
+    eckit::LocalConfiguration(yaml_from_stream(stream)) {
+}
+
+Config::Config( const eckit::PathName& path ) :
+  eckit::LocalConfiguration(yaml_from_path(path)) {
+}
+
+Config::Config( const eckit::Value& v ) : 
+  eckit::LocalConfiguration(v) {
+}
 
 Config Config::operator|(const Config& other) const
 {
-   Config config;
-   config.set(*this);
-   config.set(other);
-   return config;
+  Config config( *this );
+  config.set(other);
+  return config;
 }
 
-Config& Config::set(const eckit::Properties &p)
+Config& Config::set(const eckit::LocalConfiguration& other)
 {
-    delegate_.set(p);
-    return *this;
-}
+  eckit::ValueMap otherval = other.get();
 
-Config& Config::set(const Config &p)
-{
-  delegate_.set(p.delegate_);
-  return *this;
-}
-
-
-Config &Config::set(const std::string &name, const char *value) {
-    delegate_.set(name, value);
-    return *this;
-}
-
-Config& Config::set(const std::string& name, const Config& value )
-{
-  delegate_.set(name, value.delegate_);
+  for( eckit::ValueMap::const_iterator vit = otherval.begin(); vit != otherval.end(); ++vit )
+  {
+    root_[vit->first]=vit->second;
+  }
   return *this;
 }
 
 Config& Config::set(const std::string& name, const std::vector<Config>& values )
 {
-  std::vector<Metadata> metadatavalues(values.size());
+  std::vector<eckit::LocalConfiguration> metadatavalues(values.size());
   for( size_t i=0; i<metadatavalues.size(); ++i )
-    metadatavalues[i] = values[i].delegate_;
-  delegate_.set(name, metadatavalues);
+    metadatavalues[i] = values[i];
+  set(name, metadatavalues);
   return *this;
 }
 
-
-
-//=================================================
-// Functions overloading eckit::Parametrisation
-
-bool Config::has(const std::string &name) const {
-    return delegate_.has(name);
-}
-
-template<class T>
-bool Config::_get(const std::string &name, T &value) const {
-    return delegate_.get(name, value);
-}
-
-bool Config::get(const std::string &name, std::string &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, bool &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, int &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, long &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, size_t &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, float &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, double &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, std::vector<int> &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, std::vector<long> &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, std::vector<size_t> &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, std::vector<float> &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, std::vector<double> &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string &name, std::vector<std::string> &value) const {
-    return _get(name, value);
-}
-
-bool Config::get(const std::string& name, Config& value) const {
-  bool found = has(name);
-  if( found ) {
-    value.set( delegate_.get<eckit::Properties>(name) );
-  }
-  return found;
-}
 bool Config::get(const std::string& name, std::vector<Config>& value) const {
   bool found = has(name);
   if( found ) {
-    std::vector<eckit::Properties> properties = delegate_.get< std::vector<eckit::Properties> >(name);
+    // std::vector<eckit::LocalConfiguration> properties = delegate_.get< std::vector<eckit::LocalConfiguration> >(name);
+    std::vector<eckit::LocalConfiguration> properties = getSubConfigurations(name);
     value.resize(properties.size());
     for( size_t i=0; i<value.size(); ++i ) {
-      value[i].set( properties[i] );
+      value[i] = Config( properties[i] );
     }
   }
   return found;
 }
 
-eckit::JSON& operator<<(eckit::JSON& s, const Config& p)
-{
-  s << p.delegate_;
-  return s;
+
+Config& Config::set(const std::string& name, const eckit::Properties& other ) {
+  eckit::ValueMap otherval = eckit::Value(other);
+  for( eckit::ValueMap::const_iterator vit = otherval.begin(); vit != otherval.end(); ++vit )
+  {
+    root_[vit->first]=vit->second;
+  }
+  return *this;
 }
 
-std::ostream& operator<<(std::ostream& s, const Config& p)
-{
-  s << p.delegate_;
-  return s;
+Config::Config( const eckit::Properties& p ) :
+  eckit::LocalConfiguration( p ) {
 }
-
 
 
 //==================================================================

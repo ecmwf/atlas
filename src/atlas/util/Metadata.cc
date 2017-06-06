@@ -18,6 +18,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
+#include "eckit/utils/MD5.h"
 
 #include "atlas/runtime/ErrorHandling.h"
 
@@ -26,13 +27,10 @@ using std::string;
 namespace atlas {
 namespace util {
 
-namespace {
-    void throw_exception(const std::string& name)
-    {
+void Metadata::throw_exception(const std::string& name) const {
       std::stringstream msg;
       msg << "Could not find metadata \"" << name << "\"";
       throw eckit::OutOfRange(msg.str(),Here());
-    }
 }
 
 size_t Metadata::footprint() const
@@ -40,321 +38,6 @@ size_t Metadata::footprint() const
   // TODO
   size_t size = sizeof(*this);
   return size;
-}
-
-Metadata& Metadata::set( const eckit::Properties& p )
-{
-  eckit::Properties::set(p);
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const eckit::Properties& value)
-{
-  eckit::Properties::set(name,value);
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const Metadata& value)
-{
-  eckit::Properties::set(name,value);
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const std::vector<Metadata>& value)
-{
-  std::vector<eckit::Properties> properties_values(value.begin(),value.end());
-  eckit::Properties::set(name, eckit::toValue(properties_values) );
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const bool& value)
-{
-  eckit::Properties::set(name,value);
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const int& value)
-{
-  eckit::Properties::set(name,value);
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const long& value)
-{
-  eckit::Properties::set(name,value);
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const double& value)
-{
-  eckit::Properties::set(name,value);
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const size_t& value)
-{
-  eckit::Properties::set(name,value);
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const std::string& value)
-{
-  eckit::Properties::set(name,value);
-  return *this;
-}
-
-Metadata& Metadata::set(const std::string& name, const char* value)
-{
-  return set(name,std::string(value));
-}
-
-
-template<> Metadata& Metadata::set(const std::string& name, const std::vector<int>& value)
-{
-  eckit::Properties::set(name,eckit::toValue(value));
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const std::vector<long>& value)
-{
-  eckit::Properties::set(name,eckit::toValue(value));
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const std::vector<float>& value)
-{
-  eckit::Properties::set(name,eckit::toValue(value));
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const std::vector<double>& value)
-{
-  eckit::Properties::set(name,eckit::toValue(value));
-  return *this;
-}
-
-template<> Metadata& Metadata::set(const std::string& name, const std::vector<size_t>& value)
-{
-  eckit::Properties::set(name,eckit::toValue(value));
-  return *this;
-}
-
-
-template<> bool Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  return eckit::Properties::get(name);
-}
-
-template<> int Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  return eckit::Properties::get(name);
-}
-
-template<> long Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  return eckit::Properties::get(name);
-}
-
-template<> float Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  return double(eckit::Properties::get(name));
-}
-
-template<> double Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  return eckit::Properties::get(name);
-}
-
-template<> size_t Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  return eckit::Properties::get(name);
-}
-
-template<> std::string Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  return eckit::Properties::get(name);
-}
-
-template<> std::vector<int> Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  std::vector<eckit::Value> v = eckit::Properties::get(name);
-  std::vector<int> value;
-  value.assign(v.begin(),v.end());
-  return value;
-}
-
-template<> std::vector<long> Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  std::vector<eckit::Value> v = eckit::Properties::get(name);
-  std::vector<long> value;
-  value.assign(v.begin(),v.end());
-  return value;
-}
-
-template<> std::vector<size_t> Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  std::vector<eckit::Value> v = eckit::Properties::get(name);
-  std::vector<size_t> value;
-  value.assign(v.begin(),v.end());
-  return value;
-}
-
-template<> std::vector<float> Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  std::vector<eckit::Value> v = eckit::Properties::get(name);
-  std::vector<float> value(v.size());
-  for( size_t i=0; i<v.size(); ++i )
-    value[i] = double( v[i] );
-  return value;
-}
-
-template<> std::vector<double> Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  std::vector<eckit::Value> v = eckit::Properties::get(name);
-  std::vector<double> value;
-  value.assign(v.begin(),v.end());
-  return value;
-}
-
-template<> std::vector<std::string> Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  std::vector<eckit::Value> v = eckit::Properties::get(name);
-  std::vector<std::string> value;
-  for( size_t i=0; i<v.size(); ++i ) value.push_back( std::string(v[i]) );
-  return value;
-}
-
-template<> bool Metadata::get(const std::string& name, bool& value) const
-{
-  if( !has(name) ) return false;
-  value = eckit::Properties::get(name);
-  return true;
-}
-
-template<> bool Metadata::get(const std::string& name, int& value) const
-{
-  if( !has(name) ) return false;
-  value = eckit::Properties::get(name);
-  return true;
-}
-
-template<> bool Metadata::get(const std::string& name, long& value) const
-{
-  if( !has(name) ) return false;
-  value = eckit::Properties::get(name);
-  return true;
-}
-
-template<> bool Metadata::get(const std::string& name, float& value) const
-{
-  if( !has(name) ) return false;
-  double v = eckit::Properties::get(name);
-  value = v;
-  return true;
-}
-
-template<> bool Metadata::get(const std::string& name, double& value) const
-{
-  if( !has(name) ) return false;
-  value = eckit::Properties::get(name);
-  return true;
-}
-
-template<> bool Metadata::get(const std::string& name, size_t& value) const
-{
-  if( !has(name) ) return false;
-  value = eckit::Properties::get(name);
-  return true;
-}
-
-template<> bool Metadata::get(const std::string& name, std::string& value) const
-{
-  if( !has(name) ) return false;
-  value = std::string( eckit::Properties::get(name) );
-  return true;
-}
-
-template<> bool Metadata::get(const std::string& name, std::vector<int>& value) const
-{
-  if(!has(name)) return false;
-  std::vector<eckit::Value> v = operator[](name);
-  value.assign(v.begin(),v.end());
-  return true;
-}
-template<> bool Metadata::get(const std::string& name, std::vector<long>& value) const
-{
-  if(!has(name)) return false;
-  std::vector<eckit::Value> v = operator[](name);
-  value.assign(v.begin(),v.end());
-  return true;
-}
-template<> bool Metadata::get(const std::string& name, std::vector<size_t>& value) const
-{
-  if(!has(name)) return false;
-  std::vector<eckit::Value> v = operator[](name);
-  value.assign(v.begin(),v.end());
-  return true;
-}
-template<> bool Metadata::get(const std::string& name, std::vector<double>& value) const
-{
-  if(!has(name)) return false;
-  std::vector<eckit::Value> v = operator[](name);
-  value.assign(v.begin(),v.end());
-  return true;
-}
-template<> bool Metadata::get(const std::string& name, std::vector<float>& value) const
-{
-  if(!has(name)) return false;
-  std::vector<eckit::Value> v = operator[](name);
-  value.resize(v.size());
-  for( size_t i=0; i<v.size(); ++i )
-    value[i] = double( v[i] );
-  return true;
-}
-template<> bool Metadata::get(const std::string& name, std::vector<std::string>& value) const
-{
-  if(!has(name)) return false;
-  std::vector<eckit::Value> v = operator[](name);
-  value.resize(v.size());
-  for( size_t i=0; i<v.size(); ++i )
-    value[i] = std::string( v[i] );
-  return true;
-}
-
-template<> eckit::Properties Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  return eckit::Properties::get(name);
-}
-
-template<> std::vector<eckit::Properties> Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  eckit::ValueList v = eckit::Properties::get(name);
-  std::vector<eckit::Properties> values(v.size());
-  for( size_t i=0; i<v.size(); ++i ) {
-    values[i].set(v[i]);
-  }
-  return values;
-}
-
-
-bool Metadata::has(const std::string & name) const
-{
-  return Properties::has(name);
 }
 
 void Metadata::broadcast()
@@ -401,7 +84,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root)
     std::stringstream s;
     s << buffer;
     eckit::JSONParser parser( s );
-    dest.set( eckit::Properties( parser.parse() ) );
+    dest = Metadata( parser.parse() );
   }
 }
 
@@ -437,10 +120,34 @@ void Metadata::broadcast(Metadata& dest, const size_t root) const
     std::stringstream s;
     s << buffer;
     eckit::JSONParser parser( s );
-    dest.set( eckit::Properties( parser.parse() ) );
+    dest = Metadata( parser.parse() );
   }
 }
 
+
+void Metadata::hash(eckit::MD5& md5) const
+{
+  eckit::ValueMap map = get();
+  for( eckit::ValueMap::const_iterator vit = map.begin(); vit != map.end(); ++vit )
+  {
+    md5.add(vit->first.as<std::string>());
+    /// @note below, we assume all Values translate to std::string, this needs more verification
+    md5.add(vit->second.as<std::string>());
+  }
+}
+
+Metadata::Metadata( const eckit::Value& value ) :
+    eckit::LocalConfiguration(value) {
+}
+
+Metadata& Metadata::set(const std::string& name, const eckit::Properties& other ) {
+  eckit::ValueMap otherval = eckit::Value(other);
+  for( eckit::ValueMap::const_iterator vit = otherval.begin(); vit != otherval.end(); ++vit )
+  {
+    root_[vit->first]=vit->second;
+  }
+  return *this;
+}
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

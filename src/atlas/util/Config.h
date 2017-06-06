@@ -16,16 +16,15 @@
 #include "atlas/util/Metadata.h"
 
 namespace eckit {
-  class JSON;
   class PathName;
 }
 
 namespace atlas {
 namespace util {
 
-/// @brief Parametrisation class used to construct various
+/// @brief Configuration class used to construct various
 ///        atlas components
-class Config: public eckit::Parametrisation {
+class Config: public eckit::LocalConfiguration {
 
 public:
 
@@ -39,8 +38,8 @@ public:
   /// @brief Constructor starting from a stream
   Config( std::istream&, const std::string &format = "json" );
 
-  /// @brief Constructor starting from a Properties
-  Config( const eckit::Properties& );
+  /// @brief Constructor starting from a Configuration
+  Config( const eckit::Configuration& );
 
   /// @brief Constructor immediately setting a value.
   template<typename ValueT>
@@ -49,68 +48,40 @@ public:
 // -- Mutators
 
   /// @brief Operator that sets a key-value pair.
-  /// This is useful for chaining. Together with above constructor:
-  /// Config
-  ///   ("key1",value1)
-  ///   ("key2",value2)
-  ///   ("key3",value3);
   template<typename ValueT>
   Config operator()(const std::string& name, const ValueT& value);
-  Config operator()(const Config &c) { return set(c); }
-
 
   // Overload operators to merge two Config objects.
-  //Config operator&&(const Config& other) const;
   Config operator|(const Config& other) const;
 
   /// @brief Set a key-value parameter
-  template<typename ValueT>
-  Config& set(const std::string& name, const ValueT& value);
-  Config& set(const std::string& name, const char* value);
-  Config& set(const std::string& name, const Config& );
+  using eckit::LocalConfiguration::set;
+
   Config& set(const std::string& name, const std::vector<Config>& );
-  Config& set(const eckit::Properties&);
-  Config& set(const Config&);
+
+  Config& set(const eckit::LocalConfiguration&);
 
 // -- Accessors, overloaded from eckit::Parametrisation
 
-  /// @returns true if a parameter exists
-  virtual bool has( const std::string& name ) const;
-
-  virtual bool get(const std::string& name, std::string& value) const;
-  virtual bool get(const std::string& name, bool& value) const;
-  virtual bool get(const std::string& name, int& value) const;
-  virtual bool get(const std::string& name, long& value) const;
-  virtual bool get(const std::string& name, size_t& value) const;
-  virtual bool get(const std::string& name, float& value) const;
-  virtual bool get(const std::string& name, double& value) const;
-
-  virtual bool get(const std::string& name, std::vector<int>& value) const;
-  virtual bool get(const std::string& name, std::vector<long>& value) const;
-  virtual bool get(const std::string& name, std::vector<size_t>& value) const;
-  virtual bool get(const std::string& name, std::vector<float>& value) const;
-  virtual bool get(const std::string& name, std::vector<double>& value) const;
-  virtual bool get(const std::string& name, std::vector<std::string>& value) const;
-
-  bool get(const std::string& name, Config& value) const;
+  using eckit::LocalConfiguration::get;
   bool get(const std::string& name, std::vector<Config>& value) const;
 
-  friend eckit::JSON& operator<<(eckit::JSON&, const Config&);
-  friend std::ostream& operator<<(std::ostream&, const Config&);
+// TODO: REMOVE
+  Config( const eckit::Properties& );
+  Config& set(const std::string& name, const eckit::Properties& );
+
 private:
 
-  template<class T>
-  bool _get(const std::string &name, T &value) const;
-  Metadata delegate_;
+   Config( const eckit::Value& );
 
 };
 
 // ------------------------------------------------------------------
 
 template<typename ValueT>
-inline Config::Config(const std::string& name, const ValueT& value)
-{
-  delegate_.set(name,value);
+inline Config::Config(const std::string& name, const ValueT& value) : 
+    eckit::LocalConfiguration() {
+    set(name,value);
 }
 
 template<typename ValueT>
@@ -119,14 +90,6 @@ inline Config Config::operator()(const std::string& name, const ValueT& value)
   set(name,value);
   return *this;
 }
-
-template<typename ValueT>
-inline Config& Config::set(const std::string& name, const ValueT& value)
-{
-  delegate_.set(name,value);
-  return *this;
-}
-
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
