@@ -28,7 +28,7 @@ public:
     virtual bool global() const override { return global_; }
     virtual bool empty() const override { return (ymin() == ymax()); }
 
-    virtual eckit::Properties spec() const override;
+    virtual Spec spec() const override;
 
     virtual void print(std::ostream&) const override;
 

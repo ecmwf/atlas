@@ -95,15 +95,15 @@ bool RectangularDomain::contains(double x, double y) const {
   return contains_x(x) and contains_y(y);
 }
 
-eckit::Properties RectangularDomain::spec() const {
-  eckit::Properties domain_prop;
-  domain_prop.set("type",type());
-  domain_prop.set("xmin",xmin());
-  domain_prop.set("xmax",xmax());
-  domain_prop.set("ymin",ymin());
-  domain_prop.set("ymax",ymax());
-  domain_prop.set("units",units());
-  return domain_prop;
+RectangularDomain::Spec RectangularDomain::spec() const {
+  Spec domain_spec;
+  domain_spec.set("type",type());
+  domain_spec.set("xmin",xmin());
+  domain_spec.set("xmax",xmax());
+  domain_spec.set("ymin",ymin());
+  domain_spec.set("ymax",ymax());
+  domain_spec.set("units",units());
+  return domain_spec;
 }
 
 void RectangularDomain::print(std::ostream& os) const {

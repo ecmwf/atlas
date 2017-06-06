@@ -17,10 +17,10 @@ GlobalDomain::GlobalDomain(const eckit::Parametrisation& p) :
   GlobalDomain() {
 }
 
-eckit::Properties GlobalDomain::spec() const {
-  eckit::Properties domain_prop;
-  domain_prop.set("type",type());
-  return domain_prop;
+GlobalDomain::Spec GlobalDomain::spec() const {
+  Spec domain_spec;
+  domain_spec.set("type",type());
+  return domain_spec;
 }
 
 void GlobalDomain::print(std::ostream& os) const {

@@ -14,6 +14,7 @@
 #include <string>
 #include "eckit/config/Parametrisation.h"
 #include "atlas/util/Metadata.h"
+#include "eckit/utils/Hash.h"
 
 namespace eckit {
   class PathName;
@@ -66,13 +67,8 @@ public:
   using eckit::LocalConfiguration::get;
   bool get(const std::string& name, std::vector<Config>& value) const;
 
-// TODO: REMOVE
-  Config( const eckit::Properties& );
-  Config& set(const std::string& name, const eckit::Properties& );
 
-private:
-
-   Config( const eckit::Value& );
+  void hash(eckit::Hash&) const;
 
 };
 

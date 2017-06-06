@@ -33,6 +33,7 @@ class Domain {
 public:
 
     using Implementation = atlas::domain::Domain;
+    using Spec = atlas::domain::Domain::Spec;
 
 public:
 
@@ -49,7 +50,7 @@ public:
     bool contains(const PointXY& p) const;
 
     // Specification of grid
-    eckit::Properties spec() const;
+    Spec spec() const;
 
     /// Check if domain represents the complete globe surface
     bool global() const;
@@ -86,7 +87,7 @@ private:
 inline std::string Domain::type() const { return domain_->type(); }
 inline bool Domain::contains(double x, double y) const { return domain_->contains(x,y); }
 inline bool Domain::contains(const PointXY& p) const { return domain_->contains(p); }
-inline  eckit::Properties Domain::spec() const { return domain_->spec(); }
+inline Domain::Spec Domain::spec() const { return domain_->spec(); }
 inline bool Domain::global() const { return domain_->global(); }
 inline bool Domain::empty() const { return domain_->empty(); }
 inline bool Domain::includesNorthPole(const Projection& p) const { return domain_->includesNorthPole(p); }

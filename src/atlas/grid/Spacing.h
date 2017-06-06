@@ -2,6 +2,7 @@
 
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/grid/detail/spacing/Spacing.h"
+#include "atlas/util/Config.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -21,9 +22,10 @@ class Spacing {
 
 public:
 
-  using const_iterator = atlas::grid::spacing::Spacing::const_iterator;
-  using Interval = atlas::grid::spacing::Spacing::Interval;
-  using Spec = eckit::Properties;
+  using Implementation = atlas::grid::spacing::Spacing;
+  using const_iterator = Implementation::const_iterator;
+  using Interval = Implementation::Interval;
+  using Spec = Implementation::Spec;
 
 public:
 

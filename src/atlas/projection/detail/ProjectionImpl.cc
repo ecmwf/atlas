@@ -31,19 +31,19 @@ Rotated::Rotated(const eckit::Parametrisation& p) :
   util::Rotation(p){
 }
 
-void Rotated::spec(eckit::Properties& s) const {
+void Rotated::spec(Spec& s) const {
   std::vector<double> npole{ northPole().lon(), northPole().lat() };
   std::vector<double> spole{ southPole().lon(), southPole().lat() };
-  s.set("north_pole",eckit::toValue(npole));
-  s.set("south_pole",eckit::toValue(spole));
+  s.set("north_pole",npole);
+  s.set("south_pole",spole);
   s.set("rotation_angle",rotationAngle());
 }
 
-void Rotated::hash( eckit::MD5& md5 ) const {
-  md5.add("rotated");
-  md5.add(southPole().lon());
-  md5.add(southPole().lat());
-  md5.add(rotationAngle());
+void Rotated::hash( eckit::Hash& hsh ) const {
+  hsh.add("rotated");
+  hsh.add(southPole().lon());
+  hsh.add(southPole().lat());
+  hsh.add(rotationAngle());
 }
 
 }  // namespace detail

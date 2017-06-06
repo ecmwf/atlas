@@ -20,6 +20,7 @@ public:
 
     using const_iterator = std::vector<double>::const_iterator;
     using Interval       = std::array<double,2>;
+    using Spec        = atlas::util::Config;
 
     using ARG1      = const eckit::Parametrisation&;
     using builder_t = eckit::BuilderT1<Spacing>;
@@ -48,7 +49,7 @@ public:
     double min() const { return min_; }
     double max() const { return max_; }
     
-    virtual eckit::Properties spec() const =0;
+    virtual Spec spec() const =0;
 
 protected:
 

@@ -18,8 +18,8 @@ Projection::Projection( const eckit::Parametrisation& p ):
     projection_( Implementation::create(p) ) {
 }
 
-void Projection::hash( eckit::MD5& md5 ) const {
-    return projection_->hash(md5);
+void Projection::hash( eckit::Hash& h ) const {
+    return projection_->hash(h);
 }
 
 } // namespace atlas

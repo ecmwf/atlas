@@ -18,7 +18,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
-#include "eckit/utils/MD5.h"
+#include "eckit/utils/Hash.h"
 
 #include "atlas/runtime/ErrorHandling.h"
 
@@ -67,6 +67,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root)
   {
     std::stringstream s;
     eckit::JSON json(s);
+    json.precision(17);
     json << *this;
     buffer = s.str();
     buffer_size = buffer.size();
@@ -103,6 +104,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root) const
   {
     std::stringstream s;
     eckit::JSON json(s);
+    json.precision(17);
     json << *this;
     buffer = s.str();
     buffer_size = buffer.size();
@@ -125,28 +127,19 @@ void Metadata::broadcast(Metadata& dest, const size_t root) const
 }
 
 
-void Metadata::hash(eckit::MD5& md5) const
+void Metadata::hash(eckit::Hash& hsh) const
 {
   eckit::ValueMap map = get();
   for( eckit::ValueMap::const_iterator vit = map.begin(); vit != map.end(); ++vit )
   {
-    md5.add(vit->first.as<std::string>());
+    hsh.add(vit->first.as<std::string>());
     /// @note below, we assume all Values translate to std::string, this needs more verification
-    md5.add(vit->second.as<std::string>());
+    hsh.add(vit->second.as<std::string>());
   }
 }
 
 Metadata::Metadata( const eckit::Value& value ) :
     eckit::LocalConfiguration(value) {
-}
-
-Metadata& Metadata::set(const std::string& name, const eckit::Properties& other ) {
-  eckit::ValueMap otherval = eckit::Value(other);
-  for( eckit::ValueMap::const_iterator vit = otherval.begin(); vit != otherval.end(); ++vit )
-  {
-    root_[vit->first]=vit->second;
-  }
-  return *this;
 }
 
 // ------------------------------------------------------------------

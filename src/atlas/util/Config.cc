@@ -53,15 +53,11 @@ Config::Config() : eckit::LocalConfiguration() {}
 Config::Config(const eckit::Configuration &p): eckit::LocalConfiguration(p) {}
 
 Config::Config(std::istream& stream, const std::string &format ) : 
-    eckit::LocalConfiguration(yaml_from_stream(stream)) {
+  eckit::LocalConfiguration(yaml_from_stream(stream)) {
 }
 
 Config::Config( const eckit::PathName& path ) :
   eckit::LocalConfiguration(yaml_from_path(path)) {
-}
-
-Config::Config( const eckit::Value& v ) : 
-  eckit::LocalConfiguration(v) {
 }
 
 Config Config::operator|(const Config& other) const
@@ -94,7 +90,6 @@ Config& Config::set(const std::string& name, const std::vector<Config>& values )
 bool Config::get(const std::string& name, std::vector<Config>& value) const {
   bool found = has(name);
   if( found ) {
-    // std::vector<eckit::LocalConfiguration> properties = delegate_.get< std::vector<eckit::LocalConfiguration> >(name);
     std::vector<eckit::LocalConfiguration> properties = getSubConfigurations(name);
     value.resize(properties.size());
     for( size_t i=0; i<value.size(); ++i ) {
@@ -104,20 +99,16 @@ bool Config::get(const std::string& name, std::vector<Config>& value) const {
   return found;
 }
 
-
-Config& Config::set(const std::string& name, const eckit::Properties& other ) {
-  eckit::ValueMap otherval = eckit::Value(other);
-  for( eckit::ValueMap::const_iterator vit = otherval.begin(); vit != otherval.end(); ++vit )
+void Config::hash(eckit::Hash& hsh) const
+{
+  eckit::ValueMap map = get();
+  for( eckit::ValueMap::const_iterator vit = map.begin(); vit != map.end(); ++vit )
   {
-    root_[vit->first]=vit->second;
+    hsh.add(vit->first.as<std::string>());
+    /// @note below, we assume all Values translate to std::string, this needs more verification
+    hsh.add(vit->second.as<std::string>());
   }
-  return *this;
 }
-
-Config::Config( const eckit::Properties& p ) :
-  eckit::LocalConfiguration( p ) {
-}
-
 
 //==================================================================
 

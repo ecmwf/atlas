@@ -14,10 +14,10 @@ daand:
 #pragma once
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/value/Properties.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/Builder.h"
 #include "atlas/util/Point.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
   class Projection;
@@ -28,6 +28,7 @@ class Domain : public eckit::Owned {
 
 public:
 
+    using Spec = util::Config;
     typedef const eckit::Parametrisation& ARG1;
     typedef eckit::BuilderT1<Domain> builder_t;
     static std::string className() {return "atlas.Domain";}
@@ -48,7 +49,7 @@ public:
     }
 
     // Specification of grid
-    virtual eckit::Properties spec() const =0;
+    virtual Spec spec() const =0;
 
     /// Check if domain represents the complete globe surface
     virtual bool global() const =0;

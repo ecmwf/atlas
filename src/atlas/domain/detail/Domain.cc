@@ -1,6 +1,5 @@
 #include "atlas/domain/detail/Domain.h"
 #include "atlas/projection/Projection.h"
-#include "atlas/util/Config.h"
 #include "eckit/exception/Exceptions.h"
 
 namespace atlas {

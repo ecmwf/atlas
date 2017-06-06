@@ -11,9 +11,9 @@
 #pragma once
 
 #include <string>
-#include "eckit/value/Properties.h"
 #include "eckit/config/Parametrisation.h"
 #include "eckit/config/LocalConfiguration.h"
+#include "eckit/utils/Hash.h"
 
 namespace atlas {
 namespace util {
@@ -28,9 +28,6 @@ public:
   Metadata(const Metadata& p): eckit::LocalConfiguration(p) {}
 
   using eckit::LocalConfiguration::set;
-
-  // TODO: Remove eckit::Properties
-  Metadata& set(const std::string& name, const eckit::Properties& );
 
   template<typename ValueT>
   Metadata& set(const std::string& name, const ValueT& value) {
@@ -58,7 +55,7 @@ public:
   
   size_t footprint() const;
 
-  void hash(eckit::MD5&) const;
+  void hash(eckit::Hash&) const;
 
 private:
     void throw_exception(const std::string&) const;

@@ -13,7 +13,6 @@
 #include <string>
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
-#include "eckit/value/Properties.h"
 #include "atlas/domain/Domain.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
@@ -33,7 +32,7 @@ public:  // types
     using Projection = atlas::Projection;
     using Domain     = atlas::Domain;
     using Config     = atlas::util::Config;
-    using Spec       = eckit::Properties;
+    using Spec       = atlas::util::Config;
     using builder_t  = eckit::BuilderT1<Grid>;
     using ARG1       = const Config&;
     using uid_t      = std::string;

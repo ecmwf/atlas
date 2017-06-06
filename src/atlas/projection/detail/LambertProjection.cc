@@ -86,8 +86,8 @@ void LambertProjection::xy2lonlat(double crd[]) const {
 }
 
 // specification
-eckit::Properties LambertProjection::spec() const {
-  eckit::Properties proj_spec;
+LambertProjection::Spec LambertProjection::spec() const {
+  Spec proj_spec;
   proj_spec.set("type",static_type());
   proj_spec.set("latitude1",lat1_);
   proj_spec.set("latitude2",lat2_);
@@ -96,12 +96,12 @@ eckit::Properties LambertProjection::spec() const {
   return proj_spec;
 }
 
-void LambertProjection::hash( eckit::MD5& md5 ) const {
-  md5.add(static_type());
-  md5.add(lat1_);
-  md5.add(lat2_);
-  md5.add(lon0_);
-  md5.add(radius_);
+void LambertProjection::hash( eckit::Hash& hsh ) const {
+  hsh.add(static_type());
+  hsh.add(lat1_);
+  hsh.add(lat2_);
+  hsh.add(lon0_);
+  hsh.add(radius_);
 }
 
 register_BuilderT1(ProjectionImpl,LambertProjection,LambertProjection::static_type());

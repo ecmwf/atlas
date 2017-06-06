@@ -33,13 +33,13 @@ public:
   virtual bool strictlyRegional() const override { return false; }
 
   // specification
-  virtual eckit::Properties spec() const override;
+  virtual Spec spec() const override;
 
   virtual std::string units() const override { return "degrees"; }
 
   virtual operator bool() const override { return rotation_.rotated(); }
 
-  virtual void hash( eckit::MD5& ) const override;
+  virtual void hash( eckit::Hash& ) const override;
 
 private:
 

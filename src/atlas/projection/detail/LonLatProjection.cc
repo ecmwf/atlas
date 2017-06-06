@@ -12,17 +12,17 @@ LonLatProjectionT<Rotation>::LonLatProjectionT( const eckit::Parametrisation& co
 }
 
 template <typename Rotation>
-eckit::Properties LonLatProjectionT<Rotation>::spec() const {
-  eckit::Properties proj_spec;
+LonLatProjectionT<Rotation>::Spec LonLatProjectionT<Rotation>::spec() const {
+  Spec proj_spec;
   proj_spec.set("type",static_type());
   rotation_.spec(proj_spec);
   return proj_spec;
 }
 
 template <typename Rotation>
-void LonLatProjectionT<Rotation>::hash( eckit::MD5& md5 ) const {
-  md5.add(static_type());
-  rotation_.hash(md5);
+void LonLatProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
+  hsh.add(static_type());
+  rotation_.hash(hsh);
 }
 
 register_BuilderT1(ProjectionImpl,LonLatProjection,LonLatProjection::static_type());
