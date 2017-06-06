@@ -13,6 +13,7 @@
 #include <vector>
 #include <array>
 #include <type_traits>
+#include <utility>
 #include "atlas/library/config.h"
 #include "atlas/array_fwd.h"
 #include "atlas/array.h"
@@ -167,8 +168,14 @@ struct default_layout_t {
       > storage_info_ty;
       typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
-      storage_info_ty si(dims...);
-      data_store_t* ds = new data_store_t(si);
+      data_store_t* ds;
+      if(::gridtools::accumulate(::gridtools::multiplies(), dims...) == 0) { 
+          ds = new data_store_t();
+      }
+      else {
+          storage_info_ty si(dims...);
+          ds = new data_store_t(si);
+      }
       return ds;
   }
 
@@ -186,9 +193,16 @@ struct default_layout_t {
 
       storage_info_ty si(shape, strides);
       data_store_t* ds = new data_store_t(si, data);
+
       return ds;
   }
 
+  constexpr size_t zero(std::size_t) {return 0;}
+
+  template<size_t ... Is>
+  ArrayShape make_null_strides(::gridtools::gt_integer_sequence<size_t, Is...>) {
+      return make_strides(zero(Is)...);
+  }
 
     template < typename UInt >
     struct my_apply_gt_integer_sequence {
@@ -220,21 +234,25 @@ struct default_layout_t {
   ArraySpec make_spec(DataStore* gt_data_store_ptr, Dims...dims) {
       static_assert((::gridtools::is_data_store<DataStore>::value), "Internal Error: passing a non GT data store");
 
-      auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
-      using Layout = typename DataStore::storage_info_t::layout_t;
+      if(gt_data_store_ptr->valid()) {
+          auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
+          using Layout = typename DataStore::storage_info_t::layout_t;
 
       using seq = my_apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
 
-      return ArraySpec(
-          ArrayShape{(unsigned long)dims...},
-          seq::template apply<
+          return ArraySpec(
+              ArrayShape{(unsigned long)dims...},
+              seq::template apply<
                         ArrayStrides,
                         get_stride_component<unsigned long, typename get_pack_size<Dims...>::type>::template get_component>(
                         storage_info_ptr),
-          seq::template apply<
+              seq::template apply<
                         ArrayLayout,
                         get_layout_map_component<unsigned long, Layout>::template get_component>()
-        );
+          );
+      }
+
+      return ArraySpec( make_shape(dims...), make_null_strides(typename ::gridtools::make_gt_integer_sequence<size_t, sizeof...(dims)>::type()));
   }
 
 //------------------------------------------------------------------------------

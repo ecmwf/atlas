@@ -222,6 +222,13 @@ CASE("test_resize") {
     Array* ds = Array::create<double>(1);
     EXPECT(ds->size() == 1);
     ds->resize(2);
+    delete ds
+  }
+
+  {
+    Array* ds = Array::create<double>(0);
+    EXPECT(ds->size() == 0);
+    ds->resize(make_shape(5));
     delete ds;
   }
 
@@ -233,6 +240,7 @@ CASE("test_resize") {
       hv(1, 2, 2) = 7.5;
     }
     ds->resize(3, 4, 5);
+
     atlas::array::ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
 
     EXPECT(ds->spec().shape()[0] == 3);

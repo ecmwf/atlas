@@ -82,7 +82,10 @@ public:
 public:
 
     IndexView(data_view_t data_view) : gt_data_view_(data_view) {
-      size_ = gt_data_view_.storage_info().size();
+        if(data_view.valid())
+            size_ = gt_data_view_.storage_info().size();
+        else
+            size_ = 0;
     }
 
     template < typename... Coords >
