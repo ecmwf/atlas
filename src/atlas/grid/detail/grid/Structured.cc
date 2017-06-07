@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <limits>
+#include "eckit/types/FloatCompare.h"
 #include "eckit/utils/MD5.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/Point.h"
@@ -300,25 +301,27 @@ namespace {
     Normalise(const domain::RectangularDomain& domain) :
       xmin_(domain.xmin()),
       xmax_(domain.xmax()),
-      degrees_(domain.units()=="degrees") {
+      degrees_(domain.units()=="degrees"),
+      eps_(1e-12) {
     }
 
-    double operator()(double x) {
+    double operator()(double x) const {
       if( degrees_ ) {
-        if( x < xmin_ ) {
-            while (x < xmin_) x += 360.;
+        while (eckit::types::is_strictly_greater<double>(xmin_, x, eps_)) {
+          x += 360.;
         }
-        else if ( x > xmax_ ) {
-            while (x > xmax_) x -= 360.;
+        while (eckit::types::is_strictly_greater<double>(x, xmax_, eps_)) {
+          x -= 360.;
         }
       }
       return x;
     }
 
   private:
-    bool degrees_;
-    double xmin_;
-    double xmax_;
+    const bool degrees_;
+    const double xmin_;
+    const double xmax_;
+    const double eps_;
   };
 }
 
