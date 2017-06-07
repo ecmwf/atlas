@@ -47,7 +47,7 @@ void SchmidtProjectionT<Rotation>::lonlat2xy(double crd[]) const {
 
 // specification
 template <typename Rotation>
-SchmidtProjectionT<Rotation>::Spec SchmidtProjectionT<Rotation>::spec() const {
+typename SchmidtProjectionT<Rotation>::Spec SchmidtProjectionT<Rotation>::spec() const {
   Spec proj_spec;
   proj_spec.set("type",static_type());
   proj_spec.set("stretching_factor",c_);

@@ -64,7 +64,7 @@ void MercatorProjectionT<Rotation>::xy2lonlat(double crd[]) const {
 
 // specification
 template <typename Rotation>
-MercatorProjectionT<Rotation>::Spec MercatorProjectionT<Rotation>::spec() const {
+typename MercatorProjectionT<Rotation>::Spec MercatorProjectionT<Rotation>::spec() const {
   Spec proj_spec;
   proj_spec.set("type",static_type());
   proj_spec.set("longitude0",lon0_);

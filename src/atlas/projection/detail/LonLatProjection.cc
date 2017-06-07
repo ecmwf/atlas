@@ -12,7 +12,7 @@ LonLatProjectionT<Rotation>::LonLatProjectionT( const eckit::Parametrisation& co
 }
 
 template <typename Rotation>
-LonLatProjectionT<Rotation>::Spec LonLatProjectionT<Rotation>::spec() const {
+typename LonLatProjectionT<Rotation>::Spec LonLatProjectionT<Rotation>::spec() const {
   Spec proj_spec;
   proj_spec.set("type",static_type());
   rotation_.spec(proj_spec);
