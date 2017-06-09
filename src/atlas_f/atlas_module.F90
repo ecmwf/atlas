@@ -6,31 +6,9 @@ module atlas_module
 
 ! Purpose :
 ! -------
-!    *atlas* : Low-level API to manipulate meshes in a
-!        object-oriented fashion
+!    *atlas* : Object oriented library for flexible parallel data structures
+!              for structured grids and unstructured meshes
 !
-!        Objects of classes defined in this module don't contain
-!        any data. They only contain a pointer to a object created
-!        in a C++ equivalent object, which takes care of all the
-!        memory management. Object member functions give access to the
-!        real data.
-
-! Classes :
-! -------
-!   atlas_Mesh
-!   atlas_FunctionSpace
-!   atlas_Field
-!   atlas_FieldSet
-!   atlas_Metadata
-!   atlas_HaloExchange
-
-! Interfaces :
-! ----------
-
-! Author :
-! ------
-!   20-Nov-2013 Willem Deconinck    *ECMWF*
-
 !------------------------------------------------------------------------------
 
 use atlas_mpi_module
@@ -197,7 +175,7 @@ CONTAINS
 
 ! -----------------------------------------------------------------------------
 
-subroutine atlas_init( comm, output_unit )
+subroutine atlas_init( comm )
   use atlas_library_c_binding
   use iso_fortran_env, only : stdout => output_unit
   use fckit_main_module, only: fckit_main
@@ -205,24 +183,21 @@ subroutine atlas_init( comm, output_unit )
   use atlas_mpi_module, only : atlas_mpi_set_comm
 
   integer, intent(in), optional :: comm
-  integer, intent(in), optional :: output_unit
   type(fckit_mpi_comm) :: world
-  integer :: opt_output_unit
+  integer :: output_unit
 
   if( .not. fckit_main%ready() ) then
-    call fckit_main%init()
-  endif
+    call fckit_main%initialise()
 
-  opt_output_unit = stdout
-  if( present(output_unit) ) opt_output_unit = output_unit
+    if( fckit_main%taskID() == 0 ) then
+      call atlas_log%set_fortran_unit(stdout,style=atlas_log%PREFIX)
+    else
+      call atlas_log%reset()
+    endif
 
-  world = fckit_mpi_comm("world")
-  call fckit_main%set_taskID(world%rank())
+    call atlas_log%debug("--> Only MPI rank 0 is logging. Please initialise fckit_main"//&
+      &                  "    before to avoid this behaviour",flush=.true.);
 
-  if( fckit_main%taskID() == 0 ) then
-    call atlas_log%set_fortran_unit(opt_output_unit,style=atlas_log%PREFIX)
-  else
-    call atlas_log%reset()
   endif
 
   if( present(comm) ) then
