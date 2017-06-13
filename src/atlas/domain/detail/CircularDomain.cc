@@ -42,6 +42,10 @@ CircularDomain::Spec CircularDomain::spec() const {
   return domain_spec;
 }
 
+void CircularDomain::hash(eckit::Hash& h) const {
+  spec().hash(h);
+}
+
 std::string CircularDomain::units() const {
   return units_;
 }

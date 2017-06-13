@@ -27,6 +27,7 @@ public:
 
     virtual std::string units() const; // Not implemented
 
+    virtual void hash(eckit::Hash&) const;
 };
 
 

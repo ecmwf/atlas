@@ -6,9 +6,6 @@ daand:
   - I simply removed the original Domain.h, which only described boxes in (lon,lat)-space.
   - The Domain class has become a purely abstract class to allow for other domain shapes (circular, frame, and what not...)
   - I didn't implement hashes, (copy) constructors, comparators, etc. for now.
-
-
-
  */
 
 #pragma once
@@ -76,6 +73,7 @@ public:
 
     virtual std::string units() const =0;
 
+    virtual void hash(eckit::Hash&) const =0;
 };
 
 }  // namespace domain

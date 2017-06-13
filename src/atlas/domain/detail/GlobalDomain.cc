@@ -23,6 +23,11 @@ GlobalDomain::Spec GlobalDomain::spec() const {
   return domain_spec;
 }
 
+void GlobalDomain::hash(eckit::Hash& h) const {
+  h.add(type());
+}
+
+
 void GlobalDomain::print(std::ostream& os) const {
   os << "GlobalDomain";
 }

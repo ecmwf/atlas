@@ -43,6 +43,8 @@ public:
 
     virtual void print(std::ostream&) const override;
 
+    virtual void hash(eckit::Hash&) const override;
+
     virtual std::string units() const override { return units_; }
 
     double xmin() const { return xmin_; }

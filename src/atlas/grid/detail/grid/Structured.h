@@ -259,7 +259,7 @@ public:
 
     /**
      * Human readable name
-     * @note: may not be unique, such as when reduced Gaussian grids have the same N numbers but different distribution of latitude points
+     * Either the name is the one given at construction as a canonical named grid, or the name "structured"
      */
     virtual std::string name() const;
 
@@ -334,7 +334,6 @@ protected: // methods
 
     virtual void print(std::ostream&) const;
 
-    /// Hash of the PL array
     virtual void hash(eckit::Hash&) const;
 
     void computeTruePeriodicity();

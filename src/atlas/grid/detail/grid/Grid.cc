@@ -59,12 +59,6 @@ const Grid* Grid::create(const Config& config) {
         }
     }
 
-//*
-    // eckit::Factory<Grid>& fact = eckit::Factory<Grid>::instance();
-    // if (fact.exists(type)) {
-    //     return fact.get(type).create(config);
-    // }
-//*/
     if( name.size() ) {
       Log::info() << "name provided: " << name << std::endl;
     }

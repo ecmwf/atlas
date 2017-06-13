@@ -54,6 +54,10 @@ ZonalBandDomain::Spec ZonalBandDomain::spec() const {
   return domain_spec;
 }
 
+void ZonalBandDomain::hash(eckit::Hash& h) const {
+  spec().hash(h);
+}
+
 void ZonalBandDomain::print(std::ostream& os) const {
   os << "ZonalBandDomain["
      <<  "ymin=" << ymin()

@@ -20,6 +20,7 @@
 // Forward declarations
 namespace eckit {
 class Parametrisation;
+class Hash;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -42,14 +43,16 @@ public:
     Domain( const Implementation* );
     Domain( const eckit::Parametrisation& );
 
+    /// Type of the domain
     std::string type() const;
 
     /// Checks if the point is contained in the domain
     bool contains(double x, double y) const;
 
+    /// Checks if the point is contained in the domain
     bool contains(const PointXY& p) const;
 
-    // Specification of grid
+    // Specification of Domain
     Spec spec() const;
 
     /// Check if domain represents the complete globe surface
@@ -57,6 +60,9 @@ public:
 
     /// Check if domain does not represent any area on the globe surface
     bool empty() const;
+
+    /// Add domain to the given hash
+    void hash(eckit::Hash&) const;
 
 // Unless the domain is global, we can never be sure about these functions
 // without knowing also the projection
@@ -67,17 +73,18 @@ public:
     /// Check if grid includes the South pole
     bool includesSouthPole(const Projection& ) const;
 
-    /// Output to stream
-    void print(std::ostream&) const;
-
-    friend std::ostream& operator<<(std::ostream& s, const Domain& d);
-
+    /// String that defines units of the domain ("degrees" or "meters")
     std::string units() const;
 
+    /// Access pointer to implementation (PIMPL)
     const Implementation* get() const { return domain_.get(); }
 
-
 private:
+
+    /// Output to stream
+    void print(std::ostream&) const;
+  
+    friend std::ostream& operator<<(std::ostream& s, const Domain& d);
 
     eckit::SharedPtr<const Implementation> domain_;
 };
@@ -90,6 +97,7 @@ inline bool Domain::contains(const PointXY& p) const { return domain_->contains(
 inline Domain::Spec Domain::spec() const { return domain_->spec(); }
 inline bool Domain::global() const { return domain_->global(); }
 inline bool Domain::empty() const { return domain_->empty(); }
+inline void Domain::hash(eckit::Hash& h) const { domain_->hash(h); }
 inline bool Domain::includesNorthPole(const Projection& p) const { return domain_->includesNorthPole(p); }
 inline bool Domain::includesSouthPole(const Projection& p) const { return domain_->includesSouthPole(p); }
 inline void Domain::print(std::ostream& os) const { return domain_->print(os); }

@@ -26,6 +26,7 @@ public:
 
     virtual void print(std::ostream&) const override;
 
+    virtual void hash(eckit::Hash&) const override;
 };
 
 

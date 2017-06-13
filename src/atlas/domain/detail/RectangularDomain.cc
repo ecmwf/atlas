@@ -116,6 +116,10 @@ void RectangularDomain::print(std::ostream& os) const {
      << "]";
 }
 
+void RectangularDomain::hash(eckit::Hash& h) const {
+  spec().hash(h);
+}
+
 register_BuilderT1(Domain,RectangularDomain,RectangularDomain::static_type());
 
 }  // namespace domain

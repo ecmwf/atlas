@@ -20,6 +20,10 @@ void EmptyDomain::print(std::ostream& os) const {
   os << "EmptyDomain";
 }
 
+void EmptyDomain::hash(eckit::Hash& h) const {
+  h.add(type());
+}
+
 std::string EmptyDomain::units() const {
   NOTIMP;
 }

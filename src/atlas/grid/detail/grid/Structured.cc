@@ -512,6 +512,9 @@ void Structured::hash(eckit::Hash& h) const {
 
     // also add projection information
     projection().hash(h);
+
+    // also add domain information, even though already encoded in grid.
+    domain().hash(h);
 }
 
 Grid::Spec Structured::spec() const {
