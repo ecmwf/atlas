@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <limits>
 #include "eckit/types/FloatCompare.h"
-#include "eckit/utils/MD5.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/Point.h"
 #include "atlas/grid/Grid.h"
@@ -502,17 +501,17 @@ std::string Structured::type() const {
   return static_type();
 }
 
-void Structured::hash(eckit::MD5& md5) const {
+void Structured::hash(eckit::Hash& h) const {
 
-    md5.add(y().data(), sizeof(double)*y().size());
-    md5.add(nx().data(), sizeof(long)*ny());
+    h.add(y().data(), sizeof(double)*y().size());
+    h.add(nx().data(), sizeof(long)*ny());
 
     // also add lonmin and lonmax
-    md5.add(xmin_.data(), sizeof(double)*xmin_.size());
-    md5.add(dx_.data(),   sizeof(double)*dx_.size());
+    h.add(xmin_.data(), sizeof(double)*xmin_.size());
+    h.add(dx_.data(),   sizeof(double)*dx_.size());
 
     // also add projection information
-    projection().hash(md5);
+    projection().hash(h);
 }
 
 Grid::Spec Structured::spec() const {

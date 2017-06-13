@@ -32,10 +32,10 @@ public:
 
 private: // methods
 
-  virtual void hash(eckit::MD5&) const;
+  virtual void hash(eckit::Hash&) const override;
 
-  virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const;
-  virtual void generate(const Grid&, Mesh&) const;
+  virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const override;
+  virtual void generate(const Grid&, Mesh&) const override;
   
   void createNodes(const Grid&, Mesh&) const;
   

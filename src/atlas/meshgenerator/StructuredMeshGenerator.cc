@@ -16,7 +16,7 @@
 
 #include "eckit/runtime/Main.h"
 #include "eckit/memory/SharedPtr.h"
-#include "eckit/utils/MD5.h"
+#include "eckit/utils/Hash.h"
 
 #include "atlas/library/config.h"
 #include "atlas/grid/Partitioner.h"
@@ -181,10 +181,10 @@ void StructuredMeshGenerator::generate(const Grid& grid, Mesh& mesh ) const
   generate( grid, distribution, mesh );
 }
 
-void StructuredMeshGenerator::hash(MD5& md5) const
+void StructuredMeshGenerator::hash(Hash& h) const
 {
-    md5.add("Structured");
-    options.hash(md5);
+    h.add("Structured");
+    options.hash(h);
 }
 
 void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const

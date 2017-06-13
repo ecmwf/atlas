@@ -22,7 +22,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/Config.h"
 
-namespace eckit { class MD5; }
+namespace eckit { class Hash; }
 
 namespace atlas {
   class Mesh;
@@ -46,7 +46,7 @@ public:
 
     virtual ~MeshGeneratorImpl();
 
-    virtual void hash(eckit::MD5&) const = 0;
+    virtual void hash(eckit::Hash&) const = 0;
 
     virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const =0;
     virtual void generate( const Grid&, Mesh& ) const =0;
@@ -147,7 +147,7 @@ public:
     MeshGenerator( const MeshGenerator& );
     MeshGenerator(const std::string &, const eckit::Parametrisation & = util::NoConfig());
 
-    void hash(eckit::MD5&) const;
+    void hash(eckit::Hash&) const;
 
     Mesh generate( const Grid&, const grid::Distribution& ) const;
     Mesh generate( const Grid& ) const;

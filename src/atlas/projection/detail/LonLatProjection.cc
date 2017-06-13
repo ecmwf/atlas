@@ -1,4 +1,3 @@
-#include "eckit/utils/MD5.h"
 #include "atlas/projection/detail/LonLatProjection.h"
 
 namespace atlas {

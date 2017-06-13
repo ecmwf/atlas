@@ -16,7 +16,6 @@
 
 namespace eckit {
   class Parametrisation;
-  class MD5;
 }
 
 namespace atlas {
@@ -46,14 +45,14 @@ public:
 
   StructuredMeshGenerator(const eckit::Parametrisation& = util::NoConfig() );
 
-  virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const;
-  virtual void generate(const Grid&, Mesh&) const;
+  virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const override;
+  virtual void generate(const Grid&, Mesh&) const override;
 
   using MeshGenerator::Implementation::generate;
 
 private:
 
-  virtual void hash(eckit::MD5&) const;
+  virtual void hash(eckit::Hash&) const override;
 
   void configure_defaults();
 

@@ -19,7 +19,7 @@
 #include "atlas/grid/Iterator.h"
 
 namespace eckit {
-  class MD5;
+  class Hash;
 }
 
 namespace atlas {
@@ -86,8 +86,8 @@ public:
     std::string name() const { return grid_->name(); }
     std::string uid() const { return grid_->uid(); }
 
-    /// Adds to the MD5 the information that makes this Grid unique
-    void hash(eckit::MD5& md5) const { return grid_->hash(md5); }
+    /// Adds to the hash the information that makes this Grid unique
+    void hash(eckit::Hash& h) const { return grid_->hash(h); }
 
     Spec spec() const { return grid_->spec(); }
 

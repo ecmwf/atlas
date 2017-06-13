@@ -15,6 +15,7 @@
 #include <array>
 
 #include "eckit/memory/Builder.h"
+#include "eckit/utils/Hash.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/util/Config.h"
 
@@ -334,7 +335,7 @@ protected: // methods
     virtual void print(std::ostream&) const;
 
     /// Hash of the PL array
-    virtual void hash(eckit::MD5&) const;
+    virtual void hash(eckit::Hash&) const;
 
     void computeTruePeriodicity();
 

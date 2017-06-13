@@ -1,5 +1,4 @@
 #include <cmath>
-#include "eckit/utils/MD5.h"
 #include "atlas/projection/detail/MercatorProjection.h"
 #include "atlas/util/Constants.h"
 

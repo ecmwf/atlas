@@ -1,4 +1,3 @@
-#include "eckit/utils/MD5.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/projection/detail/LonLatProjection.h"
 #include "atlas/util/Config.h"
