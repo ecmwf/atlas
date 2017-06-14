@@ -88,11 +88,11 @@ bool point_in_poly(const std::vector<point_t>& poly, const point_t& P) {
         // intersect either:
         // - "up" on upward crossing & P left of edge, or
         // - "down" on downward crossing & P right of edge
-        if (A[LAT] <= P[LAT] && P[LAT] < B[LAT]) {
+        if (A[LON] <= P[LON] && P[LON] < B[LON]) {
             if (point_on_which_side(P, A, B) > 0) {
                 ++wn;
             }
-        } else if (B[LAT] <= P[LAT] && P[LAT] < A[LAT]) {
+        } else if (B[LON] <= P[LON] && P[LON] < A[LON]) {
             if (point_on_which_side(P, A, B) < 0) {
                 --wn;
             }
@@ -204,8 +204,8 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
     ASSERT(poly.size());
 
 
-    // Polygon point coordinates: simplify by checking aligned edges
-    // Note: indices ('poly') don't necessarily match coordinates ('polygon')
+    // Polygon point coordinates
+    // Note: indices ('poly') necessarily match coordinates ('polygon')
     // Note: the coordinates include North/South Pole (first/last partitions only)
     std::vector< point_t > polygon;
     polygon.reserve(poly.size());
@@ -220,16 +220,6 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
         bbox_min = point_t::componentsMin(bbox_min, A);
         bbox_max = point_t::componentsMax(bbox_max, A);
 
-        // if new point is aligned with existing edge (cross product ~= 0) make the edge longer
-        if ((polygon.size() >= 2)) {
-            point_t B = polygon.back();
-            point_t C = polygon[polygon.size() - 2];
-            if (eckit::types::is_approximately_equal<double>( 0, dot_sign(A[LON], A[LAT], B[LON], B[LAT], C[LON], C[LAT]) )) {
-                polygon.back() = A;
-                continue;
-            }
-        }
-
         polygon.push_back(A);
     }
     ASSERT(polygon.size() >= 2);
@@ -239,7 +229,7 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
     // - use a polygon bounding box to quickly discard points,
     // - except when that is above/below bounding box but poles should be included
     for( size_t j=0; j<grid.size(); ++j ) {
-      node_partition[j] = -1;
+        node_partition[j] = -1;
     }
 
     // THIS IS A DIRTY HACK!
@@ -251,7 +241,7 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
     lonlat_tgt_pts.reserve(grid.size());
 
     for( PointXY Pxy : grid.xy() ) {
-      lonlat_tgt_pts.push_back( grid.projection().lonlat(Pxy) );
+        lonlat_tgt_pts.push_back( grid.projection().lonlat(Pxy) );
     }
 
     {
@@ -273,19 +263,10 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
 
                 if (point_in_poly(polygon, P)) {
                     node_partition[i] = mpi_rank;
-                } else {
-
-                  if( mpi_size == 1 ) {
-                    Log::debug<Atlas>() << "point_in_poly failed for grid point " << i+1 << std::endl;
-                    Log::debug<Atlas>() << "     P " << P << std::endl;
-                    Log::debug<Atlas>() << "     bbox_min " << bbox_min << std::endl;
-                    Log::debug<Atlas>() << "     bbox_max " << bbox_max << std::endl;
-                  }
-
                 }
 
             } else if ((includes_north_pole && P[LAT] >= bbox_max[LAT])
-                    || (includes_south_pole && P[LAT] < bbox_min[LAT])) {
+                    || (includes_south_pole && P[LAT] <  bbox_min[LAT])) {
 
                 node_partition[i] = mpi_rank;
 
@@ -342,8 +323,8 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
                      "\n" "ax = fig.add_subplot(111,aspect='equal')"
                      "\n" "";
                 f << "\n"
-                     "\n" "xlost = ["; for (std::vector<double>::const_iterator ix=xlost.begin(); ix!=xlost.end(); ++ix) { f << *ix << ", "; } f << "]"
-                     "\n" "ylost = ["; for (std::vector<double>::const_iterator iy=ylost.begin(); iy!=ylost.end(); ++iy) { f << *iy << ", "; } f << "]"
+                     "\n" "xlost = ["; for (const double& ix: xlost) { f << ix << ", "; } f << "]"
+                     "\n" "ylost = ["; for (const double& iy: ylost) { f << iy << ", "; } f << "]"
                      "\n"
                      "\n" "ax.scatter(xlost, ylost, color='k', marker='o')"
                      "\n" "";
@@ -359,8 +340,8 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
                  "\n" "count_" << r << " = " << count <<
                  "\n" "count_all_" << r << " = " << count_all <<
                  "\n" ""
-                 "\n" "x_" << r << " = ["; for (std::vector<double>::const_iterator ix=x.begin(); ix!=x.end(); ++ix) { f << *ix << ", "; } f << "]"
-                 "\n" "y_" << r << " = ["; for (std::vector<double>::const_iterator iy=y.begin(); iy!=y.end(); ++iy) { f << *iy << ", "; } f << "]"
+                 "\n" "x_" << r << " = ["; for (const double& ix: x) { f << ix << ", "; } f << "]"
+                 "\n" "y_" << r << " = ["; for (const double& iy: y) { f << iy << ", "; } f << "]"
                  "\n"
                  "\n" "c = cycol()"
                  "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))"
