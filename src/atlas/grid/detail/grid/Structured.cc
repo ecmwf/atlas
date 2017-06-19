@@ -160,11 +160,11 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
   config_xspace.get("end[]",    v_end   );
   config_xspace.get("length[]", v_length);
 
-  long ny =  std::max( v_N.     size(),
-             std::max( v_start. size(),
-             std::max( v_end.   size(),
-             std::max( v_length.size(),
-             1ul ))));
+  size_t ny =  std::max( v_N.     size(),
+               std::max( v_start. size(),
+               std::max( v_end.   size(),
+               std::max( v_length.size(),
+               1ul ))));
   reserve(ny);
 
   if( not v_N.     empty() ) ASSERT(v_N.     size() == ny);
@@ -298,9 +298,9 @@ namespace {
   class Normalise {
   public:
     Normalise(const domain::RectangularDomain& domain) :
+      degrees_(domain.units()=="degrees"),
       xmin_(domain.xmin()),
       xmax_(domain.xmax()),
-      degrees_(domain.units()=="degrees"),
       eps_(1e-12) {
     }
 
@@ -575,8 +575,6 @@ public:
         if( not config.get("yspace",config_yspace) )
             throw eckit::BadParameter("yspace missing in configuration");
         yspace = Spacing(config_yspace);
-
-        size_t ny = yspace.size();
 
         XSpace xspace;
 

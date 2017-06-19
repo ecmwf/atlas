@@ -178,10 +178,6 @@ BOOST_AUTO_TEST_CASE( test_structured_2 )
 
 BOOST_AUTO_TEST_CASE( test_structured_3 )
 {
-  using XSpace = grid::StructuredGrid::XSpace;
-  using YSpace = grid::StructuredGrid::YSpace;
-  using Domain = grid::StructuredGrid::Domain;
-  using Projection = grid::StructuredGrid::Projection;
   grid::StructuredGrid grid( "O32" );
   BOOST_CHECK( grid );
 
@@ -240,13 +236,13 @@ BOOST_AUTO_TEST_CASE( test_iterator )
   Grid grid("O4");
 
   for( atlas::PointXY xy : grid.xy() ) {
-    //Log::info() << xy << std::endl;
+    Log::debug() << xy << '\n';
   }
 
   for( atlas::PointLonLat ll : grid.lonlat() ) {
-    //Log::info() << ll << std::endl;
+    Log::debug() << ll << '\n';
   }
-
+  Log::debug() << std::flush;
 }
 
 
