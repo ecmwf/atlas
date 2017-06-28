@@ -989,6 +989,7 @@ subroutine specnorm_r1_scalar(this, spectra, norm, rank)
   call atlas__Trans__specnorm(this%c_ptr(), 1, spectra, norms, rank_opt )
   norm = norms(1)
 #else
+  norm=0
   THROW_ERROR
 #endif
 end subroutine

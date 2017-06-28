@@ -31,7 +31,7 @@ ecbuild_declare_project()
 
 ### eckit
 
-ecbuild_use_package( PROJECT eckit VERSION 0.15 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 0.17 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
@@ -44,7 +44,7 @@ ecbuild_find_python()
 
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "Provide Fortran bindings"
-                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.3" )
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.4" )
 if( ATLAS_HAVE_FORTRAN )
 
   if( FCKIT_HAVE_ECKIT )
