@@ -22,10 +22,11 @@ public:
     virtual bool global() const override { return true; }
     virtual bool empty()  const override { return false; }
 
-    virtual eckit::Properties spec() const override;
+    virtual Spec spec() const override;
 
     virtual void print(std::ostream&) const override;
 
+    virtual void hash(eckit::Hash&) const override;
 };
 
 

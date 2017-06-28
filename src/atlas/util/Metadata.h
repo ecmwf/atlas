@@ -11,35 +11,38 @@
 #pragma once
 
 #include <string>
-#include "eckit/value/Properties.h"
 #include "eckit/config/Parametrisation.h"
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/utils/Hash.h"
 
 namespace atlas {
 namespace util {
 
-class Metadata: public eckit::Properties {
+class Metadata: public eckit::LocalConfiguration {
 
 public:
 
-  Metadata(): eckit::Properties() {}
+  Metadata(): eckit::LocalConfiguration() {}
 
-  Metadata(const eckit::Properties& p): eckit::Properties(p) {}
-  Metadata(const Metadata& p): eckit::Properties(p) {}
+  Metadata(const eckit::LocalConfiguration& p): eckit::LocalConfiguration(p) {}
+  Metadata(const Metadata& p): eckit::LocalConfiguration(p) {}
 
-  template<typename ValueT>
-  Metadata& set(const std::string& name, const ValueT& value);
-
-  Metadata& set(const std::string& name, const char* value);
-
-  Metadata& set( const eckit::Properties& p );
+  using eckit::LocalConfiguration::set;
 
   template<typename ValueT>
-  ValueT get(const std::string& name) const;
+  Metadata& set(const std::string& name, const ValueT& value) {
+    eckit::LocalConfiguration::set(name,value);
+    return *this;
+  }
+
+  using eckit::LocalConfiguration::get;
 
   template<typename ValueT>
-  bool get(const std::string& name, ValueT& value) const;
-
-  bool has( const std::string& name) const;
+  ValueT get(const std::string& name) const {
+    ValueT value;
+    if( not eckit::LocalConfiguration::get(name,value) ) throw_exception(name);
+    return value;
+  }
 
   friend std::ostream& operator<<(std::ostream& s, const Metadata& v) { v.print(s);  return s; }
 
@@ -51,6 +54,13 @@ public:
   void broadcast(Metadata&, const size_t root) const;
   
   size_t footprint() const;
+
+  void hash(eckit::Hash&) const;
+
+private:
+    void throw_exception(const std::string&) const;
+
+    Metadata( const eckit::Value& );
 };
 
 // ------------------------------------------------------------------

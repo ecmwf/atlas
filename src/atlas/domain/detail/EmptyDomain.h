@@ -21,12 +21,13 @@ public:
     virtual bool empty() const { return true; }
     virtual bool global() const { return false; }
 
-    virtual eckit::Properties spec() const;
+    virtual Spec spec() const;
 
     virtual void print(std::ostream&) const;
 
     virtual std::string units() const; // Not implemented
 
+    virtual void hash(eckit::Hash&) const;
 };
 
 

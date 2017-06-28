@@ -12,7 +12,6 @@
 #include "atlas/grid/detail/grid/Unstructured.h"
 
 #include <limits>
-#include "eckit/utils/MD5.h"
 #include "eckit/memory/Builder.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
@@ -81,18 +80,18 @@ Grid::uid_t Unstructured::name() const {
 }
 
 
-void Unstructured::hash(eckit::MD5 &md5) const {
+void Unstructured::hash(eckit::Hash &h) const {
     ASSERT(points_);
 
     const std::vector< PointXY > &pts = *points_;
-    md5.add(&pts[0], sizeof(PointXY)*pts.size());
+    h.add(&pts[0], sizeof(PointXY)*pts.size());
 
     for (size_t i = 0; i < pts.size(); i++) {
         const PointXY &p = pts[i];
-        md5 << p.x() << p.y();
+        h << p.x() << p.y();
     }
 
-    projection().hash(md5);
+    projection().hash(h);
 }
 
 
@@ -122,7 +121,7 @@ Grid::Spec Unstructured::spec() const {
       coords[c++] = xy.y();
     }
 
-    cached_spec_->set( "xy", eckit::makeVectorValue<double>(coords) );
+    cached_spec_->set( "xy", coords );
 
     return *cached_spec_;
 }

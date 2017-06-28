@@ -2,13 +2,12 @@
 
 #include <array>
 #include "eckit/config/Parametrisation.h"
-#include "eckit/value/Properties.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
+#include "eckit/utils/Hash.h"
 #include "atlas/util/Rotation.h"
 #include "atlas/util/Point.h"
-
-namespace eckit { class MD5; }
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace projection {
@@ -20,6 +19,7 @@ public:
 
     using ARG1       = const eckit::Parametrisation&;
     using builder_t  = eckit::BuilderT1<ProjectionImpl>;
+    using Spec       = atlas::util::Config;
     static std::string className() {return "atlas.Projection";}
 
 public:
@@ -40,13 +40,13 @@ public:
 
     virtual bool strictlyRegional() const =0;
 
-    virtual eckit::Properties spec() const =0;
+    virtual Spec spec() const =0;
 
     virtual std::string units() const =0;
 
     virtual operator bool() const { return true; }
     
-    virtual void hash( eckit::MD5& ) const=0;
+    virtual void hash( eckit::Hash& ) const=0;
 
 };
 
@@ -63,8 +63,9 @@ inline PointXY ProjectionImpl::xy( const PointLonLat& lonlat ) const {
 }
 
 class Rotated : public util::Rotation {
-
 public:
+
+    using Spec = ProjectionImpl::Spec;
 
     Rotated( const PointLonLat& south_pole, double rotation_angle = 0. );
     Rotated( const eckit::Parametrisation& );
@@ -73,15 +74,17 @@ public:
     static std::string classNamePrefix() { return "Rotated"; }
     static std::string typePrefix() { return "rotated_"; }
 
-    void spec(eckit::Properties&) const;
+    void spec(Spec&) const;
 
-    void hash( eckit::MD5& ) const;
+    void hash( eckit::Hash& ) const;
 };
 
 
 class NotRotated {
 
 public:
+
+    using Spec = ProjectionImpl::Spec;
 
     NotRotated() {}
     NotRotated( const eckit::Parametrisation& ) {}
@@ -95,9 +98,9 @@ public:
     
     bool rotated() const { return false; }
 
-    void spec(eckit::Properties&) const {}
+    void spec(Spec&) const {}
 
-    void hash( eckit::MD5& ) const {}
+    void hash( eckit::Hash& ) const {}
 };
 
 }  // namespace detail

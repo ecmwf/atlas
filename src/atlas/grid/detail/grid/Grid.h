@@ -13,13 +13,12 @@
 #include <string>
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
-#include "eckit/value/Properties.h"
 #include "atlas/domain/Domain.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
 
-namespace eckit { class MD5; }
+namespace eckit { class Hash; }
 namespace atlas {
 namespace grid {
 namespace detail {
@@ -33,7 +32,7 @@ public:  // types
     using Projection = atlas::Projection;
     using Domain     = atlas::Domain;
     using Config     = atlas::util::Config;
-    using Spec       = eckit::Properties;
+    using Spec       = atlas::util::Config;
     using builder_t  = eckit::BuilderT1<Grid>;
     using ARG1       = const Config&;
     using uid_t      = std::string;
@@ -81,8 +80,8 @@ public:  // methods
     /// Computed from the hash. Can be used to compare 2 grids.
     uid_t uid() const;
 
-    /// Adds to the MD5 the information that makes this Grid unique
-    virtual void hash(eckit::MD5&) const = 0;
+    /// Adds to the hash the information that makes this Grid unique
+    virtual void hash(eckit::Hash&) const = 0;
 
     /// @returns the hash of the information that makes this Grid unique
     std::string hash() const;

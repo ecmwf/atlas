@@ -52,8 +52,8 @@ GaussianSpacing::GaussianSpacing(const eckit::Parametrisation& params) {
 
 }
 
-eckit::Properties GaussianSpacing::spec() const {
-  eckit::Properties spacing_specs;
+GaussianSpacing::Spec GaussianSpacing::spec() const {
+  Spec spacing_specs;
   spacing_specs.set("type",static_type());
   spacing_specs.set("N",size());
   return spacing_specs;

@@ -526,7 +526,7 @@ void Trans::ctor_lonlat(const long nlon, const long nlat, long nsmax, const Tran
   TRANS_CHECK(::trans_setup(&trans_));
 }
 
-Trans::Options::Options() : eckit::Properties()
+Trans::Options::Options() : util::Config()
 {
   set_cache(nullptr,0);
   set_split_latitudes(true);
@@ -548,13 +548,6 @@ const void* Trans::Options::cache() const
 size_t Trans::Options::cachesize() const
 {
   return cachesize_;
-}
-
-void Trans::Options::print( std::ostream& s) const
-{
-  eckit::JSON js(s);
-  js.precision(16);
-  js << *this;
 }
 
 void Trans::Options::set_fft( FFT fft )
@@ -585,12 +578,12 @@ void Trans::Options::set_flt( bool flt )
 
 bool Trans::Options::split_latitudes() const
 {
-  return get("split_latitudes");
+  return getBool("split_latitudes");
 }
 
 FFT Trans::Options::fft() const
 {
-  std::string fftstr = get( "fft" );
+  std::string fftstr = getString( "fft" );
   if( fftstr == "FFTW" )
     return FFTW;
   else if( fftstr == "FFT992" )
@@ -602,7 +595,7 @@ FFT Trans::Options::fft() const
 
 bool Trans::Options::flt() const
 {
-  return get("flt");
+  return getBool("flt");
 }
 
 
@@ -613,10 +606,7 @@ void Trans::Options::set_read(const std::string& file)
 
 std::string Trans::Options::read() const
 {
-  if( has("read") )
-    return get("read");
-  else
-    return std::string();
+  return getString("read","");
 }
 
 void Trans::Options::set_write(const std::string& file)
@@ -626,25 +616,7 @@ void Trans::Options::set_write(const std::string& file)
 
 std::string Trans::Options::write() const
 {
-  if( has("write") )
-    return get("write");
-  else
-    return std::string();
-}
-
-eckit::Params::value_t getValue( const Trans::Options& p, const eckit::Params::key_t& key )
-{
-  return p.get(key);
-}
-
-void print( const Trans::Options& p, std::ostream& s )
-{
-  p.print(s);
-}
-
-void encode( const Trans::Options& p, eckit::Stream& s )
-{
-  s << p;
+  return getString("write","");
 }
 
 

@@ -2,8 +2,8 @@
 
 #include <string>
 #include "eckit/config/Parametrisation.h"
-#include "eckit/value/Properties.h"
 #include "eckit/memory/SharedPtr.h"
+#include "eckit/utils/Hash.h"
 
 #include "atlas/util/Point.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
@@ -13,7 +13,6 @@
 // Forward declarations
 namespace eckit {
 class Parametrisation;
-class MD5;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -27,6 +26,7 @@ class Projection {
 public:
   
   using Implementation = projection::detail::ProjectionImpl;
+  using Spec = Implementation::Spec;
 
 public:
 
@@ -43,7 +43,7 @@ public:
 
   bool strictlyRegional() const;
 
-  eckit::Properties spec() const;
+  Spec spec() const;
 
   std::string units() const;
 
@@ -51,7 +51,7 @@ public:
 
   std::string type() const { return projection_->type(); }
 
-  void hash( eckit::MD5& ) const;
+  void hash( eckit::Hash& ) const;
 
 private:
 
@@ -65,7 +65,7 @@ inline void Projection::lonlat2xy(double crd[]) const { return projection_->lonl
 inline PointLonLat Projection::lonlat( const PointXY& xy) const { return projection_->lonlat(xy); }
 inline PointXY Projection::xy( const PointLonLat& lonlat) const { return projection_->xy(lonlat); }
 inline bool Projection::strictlyRegional() const { return projection_->strictlyRegional(); }
-inline eckit::Properties Projection::spec() const { return projection_->spec(); }
+inline Projection::Spec Projection::spec() const { return projection_->spec(); }
 inline std::string Projection::units() const { return projection_->units(); }
 inline Projection::operator bool() const { return projection_->operator bool(); }
 

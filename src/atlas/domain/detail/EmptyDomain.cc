@@ -10,14 +10,18 @@ EmptyDomain::EmptyDomain() {
 EmptyDomain::EmptyDomain(const eckit::Parametrisation& p) {
 }
 
-eckit::Properties EmptyDomain::spec() const {
-  eckit::Properties domain_prop;
-  domain_prop.set("type",type());
-  return domain_prop;
+EmptyDomain::Spec EmptyDomain::spec() const {
+  Spec domain_spec;
+  domain_spec.set("type",type());
+  return domain_spec;
 }
 
 void EmptyDomain::print(std::ostream& os) const {
   os << "EmptyDomain";
+}
+
+void EmptyDomain::hash(eckit::Hash& h) const {
+  h.add(type());
 }
 
 std::string EmptyDomain::units() const {

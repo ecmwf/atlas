@@ -25,11 +25,11 @@ public:
     virtual bool strictlyRegional() const override { return true; }  // Mercator projection cannot be used for global grids
 
     // specification
-    virtual eckit::Properties spec() const override;
+    virtual Spec spec() const override;
 
     virtual std::string units() const override { return "meters"; }
     
-    virtual void hash( eckit::MD5& ) const override;
+    virtual void hash( eckit::Hash& ) const override;
 
 protected:
 

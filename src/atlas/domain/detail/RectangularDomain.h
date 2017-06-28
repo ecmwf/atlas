@@ -39,9 +39,11 @@ public:
     virtual bool global() const override { return global_; }
     virtual bool empty() const  override { return (xmin_ == xmax_) or (ymin_ == ymax_); }
 
-    virtual eckit::Properties spec() const override;
+    virtual Spec spec() const override;
 
     virtual void print(std::ostream&) const override;
+
+    virtual void hash(eckit::Hash&) const override;
 
     virtual std::string units() const override { return units_; }
 

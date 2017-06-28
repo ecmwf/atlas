@@ -26,11 +26,11 @@ public:
     virtual bool strictlyRegional() const override { return false; }  // schmidt is global grid
 
     // specification
-    virtual eckit::Properties spec() const override;
+    virtual Spec spec() const override;
 
     virtual std::string units() const override { return "degrees"; }
 
-    virtual void hash( eckit::MD5& ) const override;
+    virtual void hash( eckit::Hash& ) const override;
 
 private:
 

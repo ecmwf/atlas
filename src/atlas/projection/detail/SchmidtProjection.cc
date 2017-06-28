@@ -1,5 +1,4 @@
 #include <cmath>
-#include "eckit/utils/MD5.h"
 #include "atlas/projection/detail/SchmidtProjection.h"
 #include "atlas/util/Constants.h"
 
@@ -47,8 +46,8 @@ void SchmidtProjectionT<Rotation>::lonlat2xy(double crd[]) const {
 
 // specification
 template <typename Rotation>
-eckit::Properties SchmidtProjectionT<Rotation>::spec() const {
-  eckit::Properties proj_spec;
+typename SchmidtProjectionT<Rotation>::Spec SchmidtProjectionT<Rotation>::spec() const {
+  Spec proj_spec;
   proj_spec.set("type",static_type());
   proj_spec.set("stretching_factor",c_);
   rotation_.spec(proj_spec);
@@ -56,10 +55,10 @@ eckit::Properties SchmidtProjectionT<Rotation>::spec() const {
 }
 
 template <typename Rotation>
-void SchmidtProjectionT<Rotation>::hash( eckit::MD5& md5 ) const {
-  md5.add(static_type());
-  rotation_.hash(md5);
-  md5.add(c_);
+void SchmidtProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
+  hsh.add(static_type());
+  rotation_.hash(hsh);
+  hsh.add(c_);
 }
 
 register_BuilderT1(ProjectionImpl,SchmidtProjection,SchmidtProjection::static_type());

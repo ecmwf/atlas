@@ -13,7 +13,7 @@
 
 #include <algorithm>
 #include <limits>
-#include "eckit/utils/MD5.h"
+#include "eckit/types/FloatCompare.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/Point.h"
 #include "atlas/grid/Grid.h"
@@ -160,11 +160,11 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
   config_xspace.get("end[]",    v_end   );
   config_xspace.get("length[]", v_length);
 
-  long ny =  std::max( v_N.     size(),
-             std::max( v_start. size(),
-             std::max( v_end.   size(),
-             std::max( v_length.size(),
-             1ul ))));
+  size_t ny =  std::max( v_N.     size(),
+               std::max( v_start. size(),
+               std::max( v_end.   size(),
+               std::max( v_length.size(),
+               1ul ))));
   reserve(ny);
 
   if( not v_N.     empty() ) ASSERT(v_N.     size() == ny);
@@ -258,7 +258,7 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
 
   double xmin = xmin_[0];
   double xmax = xmax_[0];
-  double nx   = nx_  [0];
+  long   nx   = nx_  [0];
   double dx   = dx_  [0];
 
   ASSERT(xmin_.size() == ny_);
@@ -271,29 +271,58 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
     same_nx   = same_nx   && ( nx_  [j] == nx   );
   }
 
-  bool endpoint = std::abs( (xmax - xmin) - (nx+1)*dx ) < 1.e-10;
+  bool endpoint = std::abs( (xmax - xmin) - (nx-1)*dx ) < 1.e-10;
 
   spec.set("type","linear");
   if( same_xmin ) {
     spec.set("start",xmin);
   } else {
-    spec.set("start[]",eckit::makeVectorValue(xmin_));
+    spec.set("start[]",xmin_);
   }
   if( same_xmax ) {
     spec.set("end",xmax);
   } else {
-    spec.set("end[]",eckit::makeVectorValue(xmax_));
+    spec.set("end[]",xmax_);
   }
   if( same_nx ) {
     spec.set("N",nx);
   } else {
-    spec.set("N[]",eckit::makeVectorValue(nx_));
+    spec.set("N[]",nx_);
   }
   spec.set("endpoint",endpoint);
 
   return spec;
 }
 
+namespace {
+  class Normalise {
+  public:
+    Normalise(const domain::RectangularDomain& domain) :
+      degrees_(domain.units()=="degrees"),
+      xmin_(domain.xmin()),
+      xmax_(domain.xmax()),
+      eps_(1e-12) {
+    }
+
+    double operator()(double x) const {
+      if( degrees_ ) {
+        while (eckit::types::is_strictly_greater<double>(xmin_, x, eps_)) {
+          x += 360.;
+        }
+        while (eckit::types::is_strictly_greater<double>(x, xmax_, eps_)) {
+          x -= 360.;
+        }
+      }
+      return x;
+    }
+
+  private:
+    const bool degrees_;
+    const double xmin_;
+    const double xmax_;
+    const double eps_;
+  };
+}
 
 void Structured::crop( const Domain& dom ) {
 
@@ -351,71 +380,75 @@ void Structured::crop( const Domain& dom ) {
         y_      = cropped_y;
       }
 
-      } else if ( rect_domain ) {
+    } else if ( rect_domain ) {
 
-          const double cropped_ymin = rect_domain->ymin();
-          const double cropped_ymax = rect_domain->ymax();
+        const double cropped_ymin = rect_domain->ymin();
+        const double cropped_ymax = rect_domain->ymax();
 
-          size_t jmin = ny();
-          size_t jmax = 0;
-          for( size_t j=0; j<ny(); ++j ) {
-              if( rect_domain->contains_y(y(j)) ) {
-                  jmin = std::min(j, jmin);
-                  jmax = std::max(j, jmax);
-              }
-          }
-          size_t cropped_ny = jmax-jmin+1;
-          std::vector<double> cropped_y   ( y_ .begin()+jmin, y_ .begin()+jmin+cropped_ny );
-          std::vector<double> cropped_dx  ( dx_.begin()+jmin, dx_.begin()+jmin+cropped_ny );
+        // Cropping in Y
+        size_t jmin = ny();
+        size_t jmax = 0;
+        for( size_t j=0; j<ny(); ++j ) {
+            if( rect_domain->contains_y(y(j)) ) {
+                jmin = std::min(j, jmin);
+                jmax = std::max(j, jmax);
+            }
+        }
+        size_t cropped_ny = jmax-jmin+1;
+        std::vector<double> cropped_y   ( y_ .begin()+jmin, y_ .begin()+jmin+cropped_ny );
+        std::vector<double> cropped_dx  ( dx_.begin()+jmin, dx_.begin()+jmin+cropped_ny );
 
-          std::vector<double> cropped_xmin( cropped_ny,  std::numeric_limits<double>::max() );
-          std::vector<double> cropped_xmax( cropped_ny, -std::numeric_limits<double>::max() );
-          std::vector<long>   cropped_nx  ( cropped_ny );
+        std::vector<double> cropped_xmin( cropped_ny,  std::numeric_limits<double>::max() );
+        std::vector<double> cropped_xmax( cropped_ny, -std::numeric_limits<double>::max() );
+        std::vector<long>   cropped_nx  ( cropped_ny );
 
-          for( size_t j=jmin, jcropped=0; j<=jmax; ++j, ++jcropped ) {
-              size_t n=0;
-              for( size_t i=0; i<=nx(j); ++i ) {
-                 const double _x = x(i,j);
-                 if( rect_domain->contains_x(_x) ) {
-                     cropped_xmin[jcropped] = std::min( cropped_xmin[jcropped], _x );
-                     cropped_xmax[jcropped] = std::max( cropped_xmax[jcropped], _x );
-                     ++n;
-                 }
-              }
-              cropped_nx[jcropped] = n;
-          }
+        // Cropping in X
+        Normalise normalise(*rect_domain);
+        for( size_t j=jmin, jcropped=0; j<=jmax; ++j, ++jcropped ) {
+            size_t n=0;
+            for( size_t i=0; i<nx(j); ++i ) {
+                const double _x = normalise( x(i,j) );
+                if( rect_domain->contains_x(_x) ) {
+                    cropped_xmin[jcropped] = std::min( cropped_xmin[jcropped], _x );
+                    cropped_xmax[jcropped] = std::max( cropped_xmax[jcropped], _x );
+                    ++n;
+               }
+            }
+            cropped_nx[jcropped] = n;
+        }
 
-          size_t cropped_nxmin, cropped_nxmax;
-          cropped_nxmin = cropped_nxmax = static_cast<size_t>(cropped_nx.front());
+        // Complete structures
 
-          for (size_t j=1; j<cropped_ny; ++j) {
-              cropped_nxmin = std::min(static_cast<size_t>(cropped_nx[j]),cropped_nxmin);
-              cropped_nxmax = std::max(static_cast<size_t>(cropped_nx[j]),cropped_nxmax);
-          }
-          size_t cropped_npts = size_t(std::accumulate(cropped_nx.begin(), cropped_nx.end(), 0));
+        size_t cropped_nxmin, cropped_nxmax;
+        cropped_nxmin = cropped_nxmax = static_cast<size_t>(cropped_nx.front());
 
-          Spacing cropped_yspace( new spacing::CustomSpacing(cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax}) );
+        for (size_t j=1; j<cropped_ny; ++j) {
+            cropped_nxmin = std::min(static_cast<size_t>(cropped_nx[j]),cropped_nxmin);
+            cropped_nxmax = std::max(static_cast<size_t>(cropped_nx[j]),cropped_nxmax);
+        }
+        size_t cropped_npts = size_t(std::accumulate(cropped_nx.begin(), cropped_nx.end(), 0));
 
-          // Modify grid
-          {
-            domain_ = dom;
-            yspace_ = cropped_yspace;
-            xmin_   = cropped_xmin;
-            xmax_   = cropped_xmax;
-            dx_     = cropped_dx;
-            nx_     = cropped_nx;
-            nxmin_  = cropped_nxmin;
-            nxmax_  = cropped_nxmax;
-            npts_   = cropped_npts;
-            y_      = cropped_y;
-          }
+        Spacing cropped_yspace( new spacing::CustomSpacing(cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax}) );
+
+        // Modify grid
+        {
+          domain_ = dom;
+          yspace_ = cropped_yspace;
+          xmin_   = cropped_xmin;
+          xmax_   = cropped_xmax;
+          dx_     = cropped_dx;
+          nx_     = cropped_nx;
+          nxmin_  = cropped_nxmin;
+          nxmax_  = cropped_nxmax;
+          npts_   = cropped_npts;
+          y_      = cropped_y;
+        }
     }
     else {
       std::stringstream errmsg;
       errmsg << "Cannot crop the grid with domain " << dom;
       eckit::BadParameter(errmsg.str(), Here());
     }
-
 }
 
 
@@ -468,17 +501,20 @@ std::string Structured::type() const {
   return static_type();
 }
 
-void Structured::hash(eckit::MD5& md5) const {
+void Structured::hash(eckit::Hash& h) const {
 
-    md5.add(y().data(), sizeof(double)*y().size());
-    md5.add(nx().data(), sizeof(long)*ny());
+    h.add(y().data(), sizeof(double)*y().size());
+    h.add(nx().data(), sizeof(long)*ny());
 
     // also add lonmin and lonmax
-    md5.add(xmin_.data(), sizeof(double)*xmin_.size());
-    md5.add(dx_.data(),   sizeof(double)*dx_.size());
+    h.add(xmin_.data(), sizeof(double)*xmin_.size());
+    h.add(dx_.data(),   sizeof(double)*dx_.size());
 
     // also add projection information
-    projection().hash(md5);
+    projection().hash(h);
+
+    // also add domain information, even though already encoded in grid.
+    domain().hash(h);
 }
 
 Grid::Spec Structured::spec() const {
@@ -539,8 +575,6 @@ public:
         if( not config.get("yspace",config_yspace) )
             throw eckit::BadParameter("yspace missing in configuration");
         yspace = Spacing(config_yspace);
-
-        size_t ny = yspace.size();
 
         XSpace xspace;
 

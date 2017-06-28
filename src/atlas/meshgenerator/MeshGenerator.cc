@@ -14,7 +14,7 @@
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
-#include "eckit/utils/MD5.h"
+#include "eckit/utils/Hash.h"
 
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
@@ -303,8 +303,8 @@ MeshGenerator::MeshGenerator(const std::string &key, const eckit::Parametrisatio
     meshgenerator_( meshgenerator::MeshGeneratorFactory::build(key,params) ) {
 }
 
-void MeshGenerator::hash(eckit::MD5& md5) const { 
-    return meshgenerator_->hash(md5);
+void MeshGenerator::hash(eckit::Hash& h) const { 
+    return meshgenerator_->hash(h);
 }
 
 Mesh MeshGenerator::generate( const Grid& g, const grid::Distribution& d) const {

@@ -16,7 +16,7 @@
 
 #include "eckit/runtime/Main.h"
 #include "eckit/memory/SharedPtr.h"
-#include "eckit/utils/MD5.h"
+#include "eckit/utils/Hash.h"
 
 #include "atlas/library/config.h"
 #include "atlas/grid/Partitioner.h"
@@ -181,10 +181,10 @@ void StructuredMeshGenerator::generate(const Grid& grid, Mesh& mesh ) const
   generate( grid, distribution, mesh );
 }
 
-void StructuredMeshGenerator::hash(MD5& md5) const
+void StructuredMeshGenerator::hash(Hash& h) const
 {
-    md5.add("Structured");
-    options.hash(md5);
+    h.add("Structured");
+    options.hash(h);
 }
 
 void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const
@@ -474,7 +474,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
         // Log::info()  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
         if( (dN1S2 <= dS1N2) && (ipS1 != ipS2) ) { try_make_triangle_up = true;}
         else if( (dN1S2 >= dS1N2) && (ipN1 != ipN2) ) { try_make_triangle_down = true;}
-        else Exception("Should not try to make a quadrilateral!",Here());
+        else throw Exception("Should not try to make a quadrilateral!",Here());
       }
 // ------------------------------------------------
 // END RULES
@@ -894,8 +894,8 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
   mesh.nodes().resize(nnodes);
   mesh::Nodes& nodes = mesh.nodes();
 
-  array::ArrayView<double,2> xy  = array::make_view<double,2>( nodes.xy() );
-  array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
+  array::ArrayView<double,2> xy      = array::make_view<double,2>( nodes.xy() );
+  array::ArrayView<double,2> lonlat  = array::make_view<double,2>( nodes.lonlat() );
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
   array::ArrayView<int,   1> part    = array::make_view<int   ,1>( nodes.partition() );
   array::ArrayView<int,   1> ghost   = array::make_view<int   ,1>( nodes.ghost() );

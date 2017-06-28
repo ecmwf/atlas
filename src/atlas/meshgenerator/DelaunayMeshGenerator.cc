@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/utils/MD5.h"
+#include "eckit/utils/Hash.h"
 #include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
@@ -45,9 +45,9 @@ DelaunayMeshGenerator::DelaunayMeshGenerator(const eckit::Parametrisation& p)
 DelaunayMeshGenerator::~DelaunayMeshGenerator() {
 }
 
-void DelaunayMeshGenerator::hash(eckit::MD5& md5) const
+void DelaunayMeshGenerator::hash(eckit::Hash& h) const
 {
-    md5.add("Delaunay");
+    h.add("Delaunay");
 
     // no other settings
 }

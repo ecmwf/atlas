@@ -29,28 +29,27 @@
  */
 
 #include <limits>
-#include <cassert>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include <fstream>
 #include <cmath>
 #include <vector>
 #include <memory>
 
+#include "eckit/exception/Exceptions.h"
+#include "eckit/log/Timer.h"
+
 #include "atlas/library/Library.h"
-#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace.h"
 #include "atlas/grid.h"
+#include "atlas/meshgenerator.h"
+#include "atlas/mesh.h"
 #include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/meshgenerator/MeshGenerator.h"
-#include "atlas/mesh/HybridElements.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/output/Gmsh.h"
@@ -59,19 +58,9 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
 
-#include "eckit/config/Resource.h"
-#include "eckit/exception/Exceptions.h"
-#include "eckit/filesystem/PathName.h"
-#include "eckit/log/Timer.h"
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Factory.h"
-#include "eckit/memory/ScopedPtr.h"
-#include "eckit/parser/JSON.h"
-#include "eckit/runtime/Main.h"
-
-
 //----------------------------------------------------------------------------------------------------------------------
 
+using std::unique_ptr;
 using std::string;
 using std::stringstream;
 using std::min;
@@ -155,31 +144,6 @@ public:
     add_option( new SimpleOption<bool>("progress","Show progress bar instead of intermediate timings") );
     add_option( new SimpleOption<bool>("output","Write output in gmsh format") );
     add_option( new SimpleOption<long>("exclude","Exclude number of iterations in statistics (default=1)") );
-    // if( help )
-  //   {
-  //     stringstream help_str;
-  //     help_str <<
-  //         "NAME\n"
-  //         "       atlas-benchmark - Benchmark parallel performance\n"
-  //         "\n"
-  //         "SYNOPSIS\n"
-  //         "       atlas-benchmark [OPTIONS]...\n"
-  //         "\n"
-  //         "DESCRIPTION\n"
-  //         "       Parallel performance of gradient computation using\n"
-  //         "       Green-Gauss theorem on median-dual mesh based on\n"
-  //         "       IFS reduced Gaussian grid\n"
-  //         "\n"
-  //         "OPTIONS\n"
-  //         "\n"
-  //     << options_str.str();
-  //
-  //     if( parallel::mpi::comm().rank()==0 )
-  //     {
-  //       Log::info() << help_str.str() << std::flush;
-  //     }
-  //     do_run = false;
-  //   }
   }
 
   void setup();
@@ -412,7 +376,7 @@ void AtlasBenchmark::iteration()
 {
   Timer t("iteration", Log::debug());
 
-  eckit::ScopedPtr<array::Array> avgS_arr( array::Array::create<double>(nedges,nlev,2ul) );
+  unique_ptr<array::Array> avgS_arr( array::Array::create<double>(nedges,nlev,2ul) );
   const auto& node2edge = mesh.nodes().edge_connectivity();
   const auto& edge2node = mesh.edges().node_connectivity();
   const auto field = array::make_view<double,2>( scalar_field );

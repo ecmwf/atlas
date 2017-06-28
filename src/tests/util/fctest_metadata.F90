@@ -39,7 +39,7 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_metadata )
-use fckit_log_module, only : log, logchannel
+use fckit_log_module
 implicit none
 
   integer(c_int) :: intval
@@ -50,7 +50,7 @@ implicit none
   integer(c_int), allocatable :: arr_int32(:)
   real(c_float), allocatable :: arr_real32(:)
   type(atlas_Metadata) metadata
-  type(logchannel) :: info
+  type(fckit_logchannel) :: info
 
   write(*,*) "test_metadata starting"
 
@@ -76,10 +76,10 @@ implicit none
   call metadata%get("arr_int64",arr_int32)
   call metadata%get("arr_real64",arr_real32)
 
-  info = log%info_channel()
+  info = fckit_log%info_channel()
   call metadata%print(info)
-  call log%info("",newl=.true.)
-  call log%info(metadata%json())
+  call fckit_log%info("",newl=.true.)
+  call fckit_log%info(metadata%json())
 
   CHECK( true  .eqv. .True.  )
   CHECK( false .eqv. .False. )

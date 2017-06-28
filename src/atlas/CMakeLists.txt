@@ -19,7 +19,7 @@ install( FILES
   ${CMAKE_CURRENT_BINARY_DIR}/library/version.h
   ${CMAKE_CURRENT_BINARY_DIR}/library/git_sha1.h
   DESTINATION
-  ${INSTALL_INCLUDE_DIR}/atlas/build
+  ${INSTALL_INCLUDE_DIR}/atlas/library
 )
 
 ### sources

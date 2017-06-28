@@ -109,8 +109,8 @@ bool LinearSpacing::endpoint() const {
   return std::abs(x_.back()-max_)<1.e-12;
 }
 
-eckit::Properties LinearSpacing::spec() const {
-  eckit::Properties spacing_specs;
+LinearSpacing::Spec LinearSpacing::spec() const {
+  Spec spacing_specs;
   spacing_specs.set("type",static_type());
   spacing_specs.set("start",start_);
   spacing_specs.set("end",end_);

@@ -45,8 +45,8 @@ FocusSpacing::FocusSpacing(const eckit::Parametrisation& params) {
 
 }
 
-eckit::Properties FocusSpacing::spec() const {
-  eckit::Properties spacing_specs;
+FocusSpacing::Spec FocusSpacing::spec() const {
+  Spec spacing_specs;
   spacing_specs.set("type",static_type());
   spacing_specs.set("N",size());
   spacing_specs.set("start",start_);

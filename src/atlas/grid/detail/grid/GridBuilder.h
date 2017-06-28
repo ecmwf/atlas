@@ -35,7 +35,7 @@ public:
   GridBuilder( const std::vector<std::string>& names );
   GridBuilder( const std::string& type, const std::vector<std::string>& names );
 
-  ~GridBuilder();
+  virtual ~GridBuilder();
 
   virtual const Grid::Implementation* create( const Grid::Config& ) const;
 

@@ -46,12 +46,16 @@ bool ZonalBandDomain::contains(double x, double y) const {
   return contains_y(y);
 }
 
-eckit::Properties ZonalBandDomain::spec() const {
-  eckit::Properties domain_prop;
-  domain_prop.set("type",type());
-  domain_prop.set("ymin",ymin());
-  domain_prop.set("ymax",ymax());
-  return domain_prop;
+ZonalBandDomain::Spec ZonalBandDomain::spec() const {
+  Spec domain_spec;
+  domain_spec.set("type",type());
+  domain_spec.set("ymin",ymin());
+  domain_spec.set("ymax",ymax());
+  return domain_spec;
+}
+
+void ZonalBandDomain::hash(eckit::Hash& h) const {
+  spec().hash(h);
 }
 
 void ZonalBandDomain::print(std::ostream& os) const {

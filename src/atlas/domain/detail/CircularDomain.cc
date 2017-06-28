@@ -34,15 +34,16 @@ bool CircularDomain::contains(double x, double y) const {
   return ( xx+yy <= rr_ );
 }
 
-eckit::Properties CircularDomain::spec() const {
-  eckit::Properties domain_prop;
-  domain_prop.set("type",type());
-  domain_prop.set("radius",radius_);
-  std::vector<double> centre(2);
-  centre[0] = xc_;
-  centre[1] = yc_;
-  domain_prop.set("centre",eckit::makeVectorValue(centre));
-  return domain_prop;
+CircularDomain::Spec CircularDomain::spec() const {
+  Spec domain_spec;
+  domain_spec.set("type",type());
+  domain_spec.set("radius",radius_);
+  domain_spec.set("centre", std::vector<double>{xc_,yc_} );
+  return domain_spec;
+}
+
+void CircularDomain::hash(eckit::Hash& h) const {
+  spec().hash(h);
 }
 
 std::string CircularDomain::units() const {

@@ -19,6 +19,7 @@
 #include <cstddef>
 #include <vector>
 #include "eckit/memory/ScopedPtr.h"
+#include "eckit/utils/Hash.h"
 #include "atlas/grid/detail/grid/Grid.h"
 
 namespace atlas { 
@@ -147,7 +148,7 @@ private: // methods
     virtual void print(std::ostream&) const;
 
     /// Hash of the lonlat array + BoundingBox
-    virtual void hash(eckit::MD5&) const;
+    virtual void hash(eckit::Hash&) const;
 
 protected:
 

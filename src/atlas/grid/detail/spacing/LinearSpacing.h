@@ -51,7 +51,7 @@ public:
 
     bool endpoint() const;
 
-    virtual eckit::Properties spec() const;
+    virtual Spec spec() const;
 
 public:
 

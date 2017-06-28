@@ -41,15 +41,11 @@ CustomSpacing::CustomSpacing(const eckit::Parametrisation& params) {
   }
 }
 
-eckit::Properties CustomSpacing::spec() const {
-  eckit::Properties spacing_specs;
+CustomSpacing::Spec CustomSpacing::spec() const {
+  Spec spacing_specs;
   spacing_specs.set("type",static_type());
-
-  spacing_specs.set("values",eckit::makeVectorValue(x_));
-  
-  std::vector<double> interval = {min(),max()};
-  spacing_specs.set("interval",eckit::makeVectorValue(interval));
-  
+  spacing_specs.set("values",x_);
+  spacing_specs.set("interval",  std::vector<double>{min(),max()});
   return spacing_specs;
 }
 

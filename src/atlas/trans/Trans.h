@@ -11,8 +11,7 @@
 #pragma once
 
 #include "transi/trans.h"
-#include "eckit/value/Properties.h"
-#include "eckit/value/Params.h"
+#include "eckit/config/LocalConfiguration.h"
 #include "eckit/memory/Owned.h"
 #include "atlas/array/LocalView.h"
 #include "atlas/grid/Grid.h"
@@ -62,10 +61,9 @@ enum FFT { FFT992=TRANS_FFT992, FFTW=TRANS_FFTW };
 
 //-----------------------------------------------------------------------------
 
-class TransParameters : public eckit::Properties {
+class TransParameters : public util::Config {
 public:
   TransParameters() {}
-  TransParameters(eckit::Stream& s) : eckit::Properties(s) { }
   ~TransParameters() {}
   static const char* className() { return "atlas::trans::TransParameters"; }
 
@@ -74,24 +72,15 @@ public:
   void vorticity_divergence_fields(bool v) { set("vorticity_divergence_fields",v); }
 
   bool scalar_derivatives() const {
-    bool v = false;
-    if( has("scalar_derivatives") )
-      v = get("scalar_derivatives");
-    return v;
+    return getBool("scalar_derivatives",false);
   }
 
   bool wind_EW_derivatives() const {
-    bool v = false;
-    if( has("wind_EW_derivatives") )
-      v = get("wind_EW_derivatives");
-    return v;
+    return getBool("wind_EW_derivatives",false);
   }
 
   bool vorticity_divergence_fields() const {
-    bool v = false;
-    if( has("vorticity_divergence_fields") )
-      v = get("vorticity_divergence_fields");
-    return v;
+    return getBool("vorticity_divergence_fields",false);
   }
 
 };
@@ -104,11 +93,10 @@ private:
 
 public:
 
-  class Options : public eckit::Properties {
+  class Options : public util::Config {
   public:
 
     Options();
-    Options(eckit::Stream& s) : eckit::Properties(s) { set_cache(NULL,0); }
     ~Options() {}
     static const char* className() { return "atlas::trans::Trans::Options"; }
 
@@ -126,15 +114,6 @@ public:
     size_t cachesize() const;
     std::string read() const;
     std::string write() const;
-
-    friend std::ostream& operator<<( std::ostream& os, const Options& p) { p.print(os); return os;}
-
-  private:
-    friend eckit::Params::value_t getValue( const Options& p, const eckit::Params::key_t& key );
-    friend void print( const Options& p, std::ostream& s );
-    friend void encode( const Options& p, eckit::Stream& s );
-
-    void print( std::ostream& ) const;
 
   private: // not represented in Property internals
     const void*  cacheptr_;
