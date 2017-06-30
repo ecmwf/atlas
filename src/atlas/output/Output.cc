@@ -33,26 +33,13 @@ using eckit::Parametrisation;
 namespace atlas {
 namespace output {
 
-namespace {
+static eckit::Mutex *local_mutex = 0;
+static std::map<std::string, OutputFactory *> *m = 0;
+static pthread_once_t once = PTHREAD_ONCE_INIT;
 
-    static eckit::Mutex *local_mutex = 0;
-    static std::map<std::string, OutputFactory *> *m = 0;
-    static pthread_once_t once = PTHREAD_ONCE_INIT;
-
-    static void init() {
-        local_mutex = new eckit::Mutex();
-        m = new std::map<std::string, OutputFactory *>();
-    }
-
-    template<typename T> void load_builder() { OutputBuilder<T>("tmp"); }
-
-    struct force_link {
-        force_link()
-        {
-            load_builder<output::detail::Gmsh>();
-        }
-    };
-
+static void init() {
+    local_mutex = new eckit::Mutex();
+    m = new std::map<std::string, OutputFactory *>();
 }
 
 OutputImpl::OutputImpl() {
@@ -122,7 +109,6 @@ OutputFactory::OutputFactory(const std::string &name):
     name_(name) {
 
     pthread_once(&once, init);
-
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     ASSERT(m->find(name) == m->end());
@@ -131,17 +117,16 @@ OutputFactory::OutputFactory(const std::string &name):
 
 
 OutputFactory::~OutputFactory() {
+    pthread_once(&once, init);
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
     m->erase(name_);
 }
 
 
 void OutputFactory::list(std::ostream& out) {
+
     pthread_once(&once, init);
-
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
-
-    static force_link static_linking;
 
     const char* sep = "";
     for (std::map<std::string, OutputFactory *>::const_iterator j = m->begin() ; j != m->end() ; ++j) {
@@ -154,10 +139,7 @@ void OutputFactory::list(std::ostream& out) {
 const OutputImpl *OutputFactory::build(const std::string &name, Stream& stream) {
 
     pthread_once(&once, init);
-
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
-
-    static force_link static_linking;
 
     std::map<std::string, OutputFactory *>::const_iterator j = m->find(name);
 
@@ -177,10 +159,7 @@ const OutputImpl *OutputFactory::build(const std::string &name, Stream& stream) 
 const OutputImpl *OutputFactory::build(const std::string& name, Stream& stream, const eckit::Parametrisation& param) {
 
     pthread_once(&once, init);
-
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
-
-    static force_link static_linking;
 
     std::map<std::string, OutputFactory *>::const_iterator j = m->find(name);
 
