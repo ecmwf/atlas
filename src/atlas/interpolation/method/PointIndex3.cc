@@ -14,6 +14,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/mesh/HybridElements.h"
+#include "eckit/config/Resource.h"
 
 
 namespace atlas {
@@ -23,28 +24,31 @@ namespace method {
 
 ElemIndex3* create_element_centre_index(const Mesh& mesh) {
 
-    const array::ArrayView<double,2> centres = array::make_view<double,2>( mesh.cells().field( "centre" ) );
-#if 0
-    std::vector< ElemIndex3::Value > p;
-    p.reserve(mesh.cells().size());
+    const array::ArrayView<double, 2> centres = array::make_view<double, 2>( mesh.cells().field( "centre" ) );
 
-    for (size_t j = 0; j < mesh.cells().size(); ++j) {
-        p.push_back(ElemIndex3::Value(
-                        ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
-                        ElemIndex3::Payload(j) ));
-    }
-
+    static bool fastBuildKDTrees = eckit::Resource<bool>("$ATLAS_FAST_BUILD_KDTREES", true);
 
     ElemIndex3* tree = new ElemIndex3();
-    tree->build(p.begin(), p.end());
-#else
-    ElemIndex3* tree = new ElemIndex3();
-    for (size_t j = 0; j < mesh.cells().size(); ++j) {
-        tree->insert(ElemIndex3::Value(
-                        ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
-                        ElemIndex3::Payload(j) ));
+
+    if (fastBuildKDTrees) {
+        std::vector< ElemIndex3::Value > p;
+        p.reserve(mesh.cells().size());
+
+        for (size_t j = 0; j < mesh.cells().size(); ++j) {
+            p.push_back(ElemIndex3::Value(
+                            ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
+                            ElemIndex3::Payload(j) ));
+        }
+
+        tree->build(p.begin(), p.end());
     }
-#endif
+    else {
+        for (size_t j = 0; j < mesh.cells().size(); ++j) {
+            tree->insert(ElemIndex3::Value(
+                             ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
+                             ElemIndex3::Payload(j) ));
+        }
+    }
 
     return tree;
 }

@@ -15,6 +15,8 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/field/Field.h"
+#include "atlas/field/Field.h"
+#include "eckit/config/Resource.h"
 
 using namespace eckit;
 
@@ -37,26 +39,28 @@ PointSet::PointSet( Mesh& mesh )
 
     ASSERT( npts_ > 0 );
 
-	ASSERT( nodes.has_field("xyz") );
+    ASSERT( nodes.has_field("xyz") );
 
-    array::ArrayView<double,2> coords = array::make_view<double,2>( nodes.field("xyz") );
-
-#if 0
-    std::vector< PointIndex3::Value > pidx;
-    pidx.reserve(npts_);
-
-    for( size_t ip = 0; ip < npts_; ++ip )
-        pidx.push_back( PointIndex3::Value( PointIndex3::Point( coords(ip,0),coords(ip,1) ) , ip ) );
+    array::ArrayView<double, 2> coords = array::make_view<double, 2>( nodes.field("xyz") );
+    static bool fastBuildKDTrees = eckit::Resource<bool>("$ATLAS_FAST_BUILD_KDTREES", true);
 
     tree_ = new PointIndex3();
 
-    tree_->build(pidx.begin(), pidx.end());
-#else
-    tree_ = new PointIndex3();
-    for( size_t ip = 0; ip < npts_; ++ip )
-        tree_->insert( PointIndex3::Value( PointIndex3::Point( coords(ip,0),coords(ip,1) ) , ip ) );
+    if (fastBuildKDTrees)    {
+        std::vector< PointIndex3::Value > pidx;
+        pidx.reserve(npts_);
 
-#endif
+        for ( size_t ip = 0; ip < npts_; ++ip )
+            pidx.push_back( PointIndex3::Value( PointIndex3::Point( coords(ip, 0), coords(ip, 1) ) , ip ) );
+
+
+        tree_->build(pidx.begin(), pidx.end());
+    }
+    else {
+        for ( size_t ip = 0; ip < npts_; ++ip )
+            tree_->insert( PointIndex3::Value( PointIndex3::Point( coords(ip, 0), coords(ip, 1) ) , ip ) );
+
+    }
 }
 
 size_t PointSet::search_unique( const Point& p, size_t idx, uint32_t n  )
@@ -66,34 +70,34 @@ size_t PointSet::search_unique( const Point& p, size_t idx, uint32_t n  )
     std::vector<size_t> equals;
     equals.reserve( nearest.size() );
 
-    for( size_t i = 0; i < nearest.size(); ++i )
+    for ( size_t i = 0; i < nearest.size(); ++i )
     {
         Point np  = nearest[i].value().point();
         size_t nidx = nearest[i].value().payload();
 
 //            std::cout << "      - " << nidx << " " << np << std::endl;
 
-        if( eckit::geometry::points_equal(p,np) )
+        if ( eckit::geometry::points_equal(p, np) )
         {
 //                std::cout << "      EQUAL !!" << std::endl;
             equals.push_back(nidx);
-      }
+        }
         else
             break;
     }
 
-    if( equals.size() == nearest.size() ) /* need to increase the search to find all duplicates of this point */
+    if ( equals.size() == nearest.size() ) /* need to increase the search to find all duplicates of this point */
     {
-        return this->search_unique(p,idx,++n);
+        return this->search_unique(p, idx, ++n);
     }
     else /* stop recursion */
     {
         size_t ret = idx; /* if nothing found return same idx */
 
-        if( equals.size() >= 1 ) /* if an equal point was found return the first one */
+        if ( equals.size() >= 1 ) /* if an equal point was found return the first one */
             ret = equals[0];
 
-        for( size_t n = 1; n < equals.size(); ++n )
+        for ( size_t n = 1; n < equals.size(); ++n )
             duplicates_[ equals[n] ] = ret;
 
         return ret;
