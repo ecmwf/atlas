@@ -38,12 +38,20 @@ void KNearestNeighboursBase::buildPointSearchTree(Mesh& meshSource) {
     // build point-search tree
     pTree_.reset(new PointIndex3);
 
+#if 0
     for (size_t ip = 0; ip < meshSource.nodes().size(); ++ip) {
         PointIndex3::Point p(coords[ip].data());
         pidx.push_back(PointIndex3::Value(p, ip));
     }
 
     pTree_->build(pidx.begin(), pidx.end());
+#else
+    for (size_t ip = 0; ip < meshSource.nodes().size(); ++ip) {
+        PointIndex3::Point p(coords[ip].data());
+        pTree_->insert(PointIndex3::Value(p, ip));
+    }
+
+#endif
 }
 
 

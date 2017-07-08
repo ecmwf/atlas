@@ -41,6 +41,7 @@ PointSet::PointSet( Mesh& mesh )
 
     array::ArrayView<double,2> coords = array::make_view<double,2>( nodes.field("xyz") );
 
+#if 0
     std::vector< PointIndex3::Value > pidx;
     pidx.reserve(npts_);
 
@@ -50,6 +51,12 @@ PointSet::PointSet( Mesh& mesh )
     tree_ = new PointIndex3();
 
     tree_->build(pidx.begin(), pidx.end());
+#else
+    tree_ = new PointIndex3();
+    for( size_t ip = 0; ip < npts_; ++ip )
+        tree_->insert( PointIndex3::Value( PointIndex3::Point( coords(ip,0),coords(ip,1) ) , ip ) );
+
+#endif
 }
 
 size_t PointSet::search_unique( const Point& p, size_t idx, uint32_t n  )

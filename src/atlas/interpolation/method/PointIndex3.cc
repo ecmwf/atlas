@@ -24,7 +24,7 @@ namespace method {
 ElemIndex3* create_element_centre_index(const Mesh& mesh) {
 
     const array::ArrayView<double,2> centres = array::make_view<double,2>( mesh.cells().field( "centre" ) );
-
+#if 0
     std::vector< ElemIndex3::Value > p;
     p.reserve(mesh.cells().size());
 
@@ -37,6 +37,14 @@ ElemIndex3* create_element_centre_index(const Mesh& mesh) {
 
     ElemIndex3* tree = new ElemIndex3();
     tree->build(p.begin(), p.end());
+#else
+    ElemIndex3* tree = new ElemIndex3();
+    for (size_t j = 0; j < mesh.cells().size(); ++j) {
+        tree->insert(ElemIndex3::Value(
+                        ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
+                        ElemIndex3::Payload(j) ));
+    }
+#endif
 
     return tree;
 }
