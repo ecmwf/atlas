@@ -28,6 +28,7 @@ public:
     ArrayStrides( Base&& base ) : Base( std::forward<Base>(base) ) {}
 };
 
+inline ArrayStrides make_strides(std::initializer_list<size_t> list) { return ArrayStrides(list); }
 inline ArrayStrides make_strides(size_t size1) { return ArrayStrides{size1}; }
 inline ArrayStrides make_strides(size_t size1, size_t size2) { return ArrayStrides{size1,size2}; }
 inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3) { return ArrayStrides{size1,size2,size3}; }

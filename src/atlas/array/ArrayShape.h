@@ -27,6 +27,7 @@ public:
     ArrayShape( std::initializer_list<size_t> list ) : Base(list) {}
 };
 
+inline ArrayShape make_shape(std::initializer_list<size_t> sizes) { return ArrayShape(sizes); }
 inline ArrayShape make_shape(size_t size1) { return ArrayShape{size1}; }
 inline ArrayShape make_shape(size_t size1, size_t size2) { return ArrayShape{size1,size2}; }
 inline ArrayShape make_shape(size_t size1, size_t size2, size_t size3) { return ArrayShape{size1,size2,size3}; }

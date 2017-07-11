@@ -201,7 +201,7 @@ struct default_layout_t {
 
   template<size_t ... Is>
   ArrayShape make_null_strides(::gridtools::gt_integer_sequence<size_t, Is...>) {
-      return make_strides(zero(Is)...);
+      return make_strides({zero(Is)...});
   }
 
     template < typename UInt >
@@ -252,7 +252,7 @@ struct default_layout_t {
           );
       }
 
-      return ArraySpec( make_shape(dims...), make_null_strides(typename ::gridtools::make_gt_integer_sequence<size_t, sizeof...(dims)>::type()));
+      return ArraySpec( make_shape({dims...}), make_null_strides(typename ::gridtools::make_gt_integer_sequence<size_t, sizeof...(dims)>::type()));
   }
 
 //------------------------------------------------------------------------------
