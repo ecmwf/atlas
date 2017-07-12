@@ -236,7 +236,7 @@ void Meshgen2Gmsh::execute(const Args& args)
     Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
     mesh::actions::BuildTorusXYZField("xyz")(mesh,grid.domain(),5.,2.,grid.nxmax(),grid.ny());
   }
-  
+
   bool lonlat = false;
   args.get("lonlat",lonlat);
 
@@ -249,6 +249,8 @@ void Meshgen2Gmsh::execute(const Args& args)
   );
   Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid.name() << "\"" << std::endl;
   gmsh.write( mesh );
+
+  Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
 }
 
 //------------------------------------------------------------------------------

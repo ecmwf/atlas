@@ -38,6 +38,32 @@ namespace detail {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+class PartitionGraph : public eckit::Owned {
+public:
+  using Neighbours = std::vector<size_t>;
+public:
+  PartitionGraph();
+  PartitionGraph( size_t values[], size_t rows, size_t displs[], size_t counts[] );
+  size_t footprint() const;
+  size_t size() const;
+  Neighbours nearestNeighbours(const size_t partition) const;
+  size_t maximumNearestNeighbours() const;
+  operator bool() const;
+private:
+  void print(std::ostream&) const;
+  friend std::ostream& operator<<(std::ostream& s, const PartitionGraph& p) {
+      p.print(s);
+      return s;
+  }
+private:
+  std::vector<size_t> counts_;
+  std::vector<size_t> displs_;
+  std::vector<size_t> values_;
+  size_t maximum_nearest_neighbours_;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
 class MeshImpl : public eckit::Owned {
 
 public: // methods
@@ -83,6 +109,7 @@ public: // methods
     /// @brief Return the memory footprint of the mesh
     size_t footprint() const;
 
+    size_t partition() const;
     size_t nb_partitions() const;
 
     void cloneToDevice() const;
@@ -92,6 +119,10 @@ public: // methods
     void syncHostDevice() const;
 
     const Projection& projection() const { return projection_; }
+
+    const PartitionGraph& partitionGraph() const;
+
+    PartitionGraph::Neighbours nearestNeighbourPartitions() const;
 
 private:  // methods
 
@@ -105,6 +136,8 @@ private:  // methods
     void createElements();
 
     void setProjection(const Projection&);
+
+    void build_partition_graph() const;
 
 private: // members
 
@@ -123,6 +156,8 @@ private: // members
     size_t dimensionality_;
 
     Projection projection_;
+
+    mutable eckit::SharedPtr<PartitionGraph> partition_graph_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
