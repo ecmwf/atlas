@@ -201,6 +201,8 @@ mesh/detail/MeshIntf.cc
 mesh/detail/MeshIntf.h
 mesh/detail/MeshImpl.cc
 mesh/detail/MeshImpl.h
+mesh/detail/PartitionGraph.cc
+mesh/detail/PartitionGraph.h
 mesh/Nodes.cc
 mesh/Nodes.h
 

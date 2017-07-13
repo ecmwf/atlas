@@ -17,6 +17,7 @@
 
 #include "atlas/util/Metadata.h"
 #include "atlas/projection/Projection.h"
+#include "atlas/mesh/detail/PartitionGraph.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -35,32 +36,6 @@ namespace mesh {
 namespace atlas {
 namespace mesh {
 namespace detail {
-
-//----------------------------------------------------------------------------------------------------------------------
-
-class PartitionGraph : public eckit::Owned {
-public:
-  using Neighbours = std::vector<size_t>;
-public:
-  PartitionGraph();
-  PartitionGraph( size_t values[], size_t rows, size_t displs[], size_t counts[] );
-  size_t footprint() const;
-  size_t size() const;
-  Neighbours nearestNeighbours(const size_t partition) const;
-  size_t maximumNearestNeighbours() const;
-  operator bool() const;
-private:
-  void print(std::ostream&) const;
-  friend std::ostream& operator<<(std::ostream& s, const PartitionGraph& p) {
-      p.print(s);
-      return s;
-  }
-private:
-  std::vector<size_t> counts_;
-  std::vector<size_t> displs_;
-  std::vector<size_t> values_;
-  size_t maximum_nearest_neighbours_;
-};
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -136,8 +111,6 @@ private:  // methods
     void createElements();
 
     void setProjection(const Projection&);
-
-    void build_partition_graph() const;
 
 private: // members
 

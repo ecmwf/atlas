@@ -40,6 +40,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/parser/Tokenizer.h"
+#include "eckit/log/Bytes.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/runtime/Tool.h"
 
@@ -250,7 +251,10 @@ void Meshgen2Gmsh::execute(const Args& args)
   Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid.name() << "\"" << std::endl;
   gmsh.write( mesh );
 
-  Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
+  if( info ) {
+    Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
+    Log::info() << "Mesh partition footprint: " << eckit::Bytes(mesh.footprint()) << std::endl;
+  }
 }
 
 //------------------------------------------------------------------------------
