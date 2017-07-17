@@ -17,6 +17,7 @@
 #include "atlas/domain/detail/GlobalDomain.h"
 
 using RD = atlas::domain::RectangularDomain;
+using ZD = atlas::domain::ZonalBandDomain;
 
 namespace atlas {
 
@@ -37,10 +38,26 @@ Domain::Domain( const eckit::Parametrisation& p ):
 }
 
 RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, const std::string& units ) :
-  Domain( 
-    ( RD::is_global(x,y,units) ) ? new atlas::domain::GlobalDomain() :
-    ( RD::is_zonal_band(x,units) ? new atlas::domain::ZonalBandDomain(y) :
+  Domain(
+    ( RD::is_global(x,y,units) ) ? new atlas::domain::GlobalDomain(x[0]) :
+    ( RD::is_zonal_band(x,units) ? new atlas::domain::ZonalBandDomain(y,x[0]) :
     new atlas::domain::RectangularDomain(x,y,units) ) ) {
+}
+
+RectangularDomain::RectangularDomain( const Domain& domain ) :
+    Domain(domain),
+    domain_( dynamic_cast<const atlas::domain::RectangularDomain*>(domain.get()) ) {
+}
+
+ZonalBandDomain::ZonalBandDomain( const Interval& y ) :
+    RectangularDomain(
+    ( ZD::is_global(y) ) ? new atlas::domain::GlobalDomain() :
+    new atlas::domain::ZonalBandDomain(y) ) {
+}
+
+ZonalBandDomain::ZonalBandDomain( const Domain& domain ) :
+    RectangularDomain(domain),
+    domain_( dynamic_cast<const atlas::domain::ZonalBandDomain*>(domain.get()) ) {
 }
 
 } // namespace atlas

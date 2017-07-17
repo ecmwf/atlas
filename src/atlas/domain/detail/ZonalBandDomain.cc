@@ -30,12 +30,23 @@ namespace {
 
 constexpr char ZonalBandDomain::units_[];
 
+bool ZonalBandDomain::is_global(
+  const Interval& y ) {
+  const double eps = 1.e-12;
+  return std::abs( std::abs(y[1]-y[0]) - 180. ) < eps ;
+}
+
+
 ZonalBandDomain::ZonalBandDomain(const eckit::Parametrisation& params) :
   ZonalBandDomain( get_interval_y(params) ) {
 }
 
 ZonalBandDomain::ZonalBandDomain( const Interval& interval_y ) :
-  RectangularDomain( interval_x(), interval_y, units_ ) {
+  ZonalBandDomain( interval_y, /*west*/ 0. ) {
+}
+
+ZonalBandDomain::ZonalBandDomain( const Interval& interval_y, const double west ) :
+  RectangularDomain( {west, west+360.}, interval_y, units_ ) {
   global_ = _is_global(ymin(),ymax());
   ymin_tol_ = ymin()-1.e-6;
   ymax_tol_ = ymax()+1.e-6;

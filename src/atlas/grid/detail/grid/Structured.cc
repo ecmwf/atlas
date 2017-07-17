@@ -19,8 +19,6 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
-#include "atlas/domain/detail/RectangularDomain.h"
-#include "atlas/domain/detail/ZonalBandDomain.h"
 #include "atlas/domain/Domain.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/runtime/Log.h"
@@ -297,7 +295,7 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
 namespace {
   class Normalise {
   public:
-    Normalise(const domain::RectangularDomain& domain) :
+    Normalise(const RectangularDomain& domain) :
       degrees_(domain.units()=="degrees"),
       xmin_(domain.xmin()),
       xmax_(domain.xmax()),
@@ -331,19 +329,19 @@ void Structured::crop( const Domain& dom ) {
 
     ASSERT( dom.units() == projection().units() );
 
-    auto zonal_domain = dynamic_cast<const domain::ZonalBandDomain*>(dom.get());
-    auto rect_domain  = dynamic_cast<const domain::RectangularDomain*>(dom.get());
+    auto zonal_domain = ZonalBandDomain(dom);
+    auto rect_domain  = RectangularDomain(dom);
 
     if( zonal_domain ) {
 
-      const double cropped_ymin = rect_domain->ymin();
-      const double cropped_ymax = rect_domain->ymax();
+      const double cropped_ymin = zonal_domain.ymin();
+      const double cropped_ymax = zonal_domain.ymax();
 
       size_t jmin = ny();
       size_t jmax = 0;
       for( size_t j=0; j<ny(); ++j )
       {
-          if( zonal_domain->contains_y(y(j)) ) {
+          if( zonal_domain.contains_y(y(j)) ) {
               jmin = std::min(j, jmin);
               jmax = std::max(j, jmax);
           }
@@ -382,14 +380,14 @@ void Structured::crop( const Domain& dom ) {
 
     } else if ( rect_domain ) {
 
-        const double cropped_ymin = rect_domain->ymin();
-        const double cropped_ymax = rect_domain->ymax();
+        const double cropped_ymin = rect_domain.ymin();
+        const double cropped_ymax = rect_domain.ymax();
 
         // Cropping in Y
         size_t jmin = ny();
         size_t jmax = 0;
         for( size_t j=0; j<ny(); ++j ) {
-            if( rect_domain->contains_y(y(j)) ) {
+            if( rect_domain.contains_y(y(j)) ) {
                 jmin = std::min(j, jmin);
                 jmax = std::max(j, jmax);
             }
@@ -403,12 +401,12 @@ void Structured::crop( const Domain& dom ) {
         std::vector<long>   cropped_nx  ( cropped_ny );
 
         // Cropping in X
-        Normalise normalise(*rect_domain);
+        Normalise normalise(rect_domain);
         for( size_t j=jmin, jcropped=0; j<=jmax; ++j, ++jcropped ) {
             size_t n=0;
             for( size_t i=0; i<nx(j); ++i ) {
                 const double _x = normalise( x(i,j) );
-                if( rect_domain->contains_x(_x) ) {
+                if( rect_domain.contains_x(_x) ) {
                     cropped_xmin[jcropped] = std::min( cropped_xmin[jcropped], _x );
                     cropped_xmax[jcropped] = std::max( cropped_xmax[jcropped], _x );
                     ++n;

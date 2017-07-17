@@ -34,6 +34,12 @@ ecbuild_add_test( TARGET atlas_test_grid_ptr
   LIBS      atlas
 )
 
+ecbuild_add_test( TARGET atlas_test_domain
+  BOOST
+  SOURCES   test_domain.cc
+  LIBS      atlas
+)
+
 ecbuild_add_test(   TARGET      atlas_test_field
     BOOST
     SOURCES     test_field.cc

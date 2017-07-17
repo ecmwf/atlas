@@ -38,11 +38,12 @@ Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const Domain& dom, dou
 {
   // fill xyz with torus coordinates. r0 and r1 are large and small radii, respectively.
 
-  auto domain = dynamic_cast<const domain::RectangularDomain*>( dom.get() );
-  const double xmin = domain->xmin();
-  const double xmax = domain->xmax();
-  const double ymin = domain->ymin();
-  const double ymax = domain->ymax();
+  auto domain = RectangularDomain( dom );
+  ASSERT( domain );
+  const double xmin = domain.xmin();
+  const double xmax = domain.xmax();
+  const double ymin = domain.ymin();
+  const double ymax = domain.ymax();
 
   if( !nodes.has_field(name_) )
   {

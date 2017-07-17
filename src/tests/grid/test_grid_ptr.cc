@@ -15,8 +15,7 @@
 #define BOOST_TEST_MODULE TestGrids
 #include "ecbuild/boost_test_framework.h"
 
-
-#include "atlas/library/Library.h"
+#include "tests/AtlasFixture.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/util/Config.h"
 #include "atlas/runtime/Log.h"
@@ -26,21 +25,15 @@
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 
-using Grid       = atlas::Grid;
-using RectangularDomain = atlas::RectangularDomain;
-using Structured = atlas::grid::StructuredGrid;
-using Regular    = atlas::grid::RegularGrid;
-using Config     = atlas::util::Config;
+using Grid           = atlas::Grid;
+using StructuredGrid = atlas::grid::StructuredGrid;
+using RegularGrid    = atlas::grid::RegularGrid;
+using Config         = atlas::util::Config;
 
 namespace atlas {
 namespace test {
 
-struct GlobalFixture {
-    GlobalFixture()  { atlas::Library::instance().initialise(boost::unit_test::framework::master_test_suite().argc,
-                                   boost::unit_test::framework::master_test_suite().argv); }
-    ~GlobalFixture() { atlas::Library::instance().finalise(); }
-};
-BOOST_GLOBAL_FIXTURE( GlobalFixture );
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_from_string_L32 )
 {
@@ -49,17 +42,17 @@ BOOST_AUTO_TEST_CASE( test_from_string_L32 )
 
   grid = Grid("L32");
   BOOST_CHECK( grid );
-  BOOST_CHECK( Structured(grid) == true  );
-  BOOST_CHECK( Regular(grid)    == true  );
+  BOOST_CHECK( StructuredGrid(grid) == true  );
+  BOOST_CHECK( RegularGrid(grid)    == true  );
 
-  auto structured = Structured(grid);
+  auto structured = StructuredGrid(grid);
   BOOST_CHECK_EQUAL( structured.ny(), 65 );
   BOOST_CHECK_EQUAL( structured.periodic(), true );
   BOOST_CHECK_EQUAL( structured.nx(0), 128 );
   BOOST_CHECK_EQUAL( structured.y().front(), 90. );
   BOOST_CHECK_EQUAL( structured.y().back(), -90. );
 
-  auto regular = Regular(grid);
+  auto regular = RegularGrid(grid);
   BOOST_CHECK_EQUAL( regular.ny(), 65 );
   BOOST_CHECK_EQUAL( regular.periodic(), true );
   BOOST_CHECK_EQUAL( regular.nx(), 128 );
@@ -76,10 +69,10 @@ BOOST_AUTO_TEST_CASE( test_from_string_O32 )
   grid = Grid("O32");
   BOOST_CHECK( grid );
 
-  BOOST_CHECK_EQUAL( Structured(grid), true  );
-  BOOST_CHECK_EQUAL( Regular(grid)   , false );
+  BOOST_CHECK_EQUAL( StructuredGrid(grid), true  );
+  BOOST_CHECK_EQUAL( RegularGrid(grid)   , false );
 
-  auto structured = Structured(grid);
+  auto structured = StructuredGrid(grid);
   BOOST_CHECK_EQUAL( structured.ny(), 64 );
   BOOST_CHECK_EQUAL( structured.periodic(), true );
   BOOST_CHECK_EQUAL( structured.nx().front(), 20 );
@@ -93,10 +86,10 @@ BOOST_AUTO_TEST_CASE( test_from_string_O32_with_domain )
   grid = Grid("O32",RectangularDomain( {0,90}, {0,90} ) );
   BOOST_CHECK( grid );
 
-  BOOST_CHECK_EQUAL( Structured(grid), true  );
-  BOOST_CHECK_EQUAL( Regular(grid)   , false );
+  BOOST_CHECK_EQUAL( StructuredGrid(grid), true  );
+  BOOST_CHECK_EQUAL( RegularGrid(grid)   , false );
 
-  auto structured = Structured(grid);
+  auto structured = StructuredGrid(grid);
   BOOST_CHECK_EQUAL( structured.ny(), 32 );
   BOOST_CHECK_EQUAL( structured.periodic(), false );
   BOOST_CHECK_EQUAL( structured.nx().front(), 6 );
@@ -124,19 +117,19 @@ BOOST_AUTO_TEST_CASE( test_structured_1 )
 
   Config json_config(json);
 
-  grid = Structured( json_config );
+  grid = StructuredGrid( json_config );
   BOOST_CHECK( grid );
-  BOOST_CHECK( Structured(grid) == true  );
-  BOOST_CHECK( Regular(grid)    == true  );
+  BOOST_CHECK( StructuredGrid(grid) == true  );
+  BOOST_CHECK( RegularGrid(grid)    == true  );
 
-  auto structured = Structured(grid);
+  auto structured = StructuredGrid(grid);
   BOOST_CHECK_EQUAL( structured.ny(), 9 );
   BOOST_CHECK_EQUAL( structured.periodic(), true );
   BOOST_CHECK_EQUAL( structured.nx(0), 16 );
   BOOST_CHECK_EQUAL( structured.y().front(), 90. );
   BOOST_CHECK_EQUAL( structured.y().back(), -90. );
 
-  auto regular = Regular(grid);
+  auto regular = RegularGrid(grid);
   BOOST_CHECK_EQUAL( regular.ny(), 9 );
   BOOST_CHECK_EQUAL( regular.periodic(), true );
   BOOST_CHECK_EQUAL( regular.nx(), 16 );
@@ -151,11 +144,11 @@ BOOST_AUTO_TEST_CASE( test_structured_1 )
 
 BOOST_AUTO_TEST_CASE( test_structured_2 )
 {
-  using XSpace = grid::StructuredGrid::XSpace;
-  using YSpace = grid::StructuredGrid::YSpace;
-  using Domain = grid::StructuredGrid::Domain;
-  using Projection = grid::StructuredGrid::Projection;
-  grid::StructuredGrid grid(
+  using XSpace = StructuredGrid::XSpace;
+  using YSpace = StructuredGrid::YSpace;
+  using Domain = StructuredGrid::Domain;
+  using Projection = StructuredGrid::Projection;
+  StructuredGrid grid(
       XSpace( {0.,360.} , {2,4,6,6,4,2} , false ),
       YSpace( grid::LinearSpacing( {90.,-90.}, 6 ) ),
       Projection(),
@@ -178,7 +171,7 @@ BOOST_AUTO_TEST_CASE( test_structured_2 )
 
 BOOST_AUTO_TEST_CASE( test_structured_3 )
 {
-  grid::StructuredGrid grid( "O32" );
+  StructuredGrid grid( "O32" );
   BOOST_CHECK( grid );
 
   Log::info() << grid.spec() << std::endl;
@@ -193,43 +186,6 @@ BOOST_AUTO_TEST_CASE( test_structured_3 )
   BOOST_CHECK_EQUAL( newgrid.name(), "O32" );
 }
 
-
-
-BOOST_AUTO_TEST_CASE( test_domain_rectangular )
-{
-  Domain domain = RectangularDomain( {0,180}, {-25,25} );
-  BOOST_CHECK( not domain.global() );
-  BOOST_CHECK_EQUAL( domain.type(), std::string("rectangular") );
-
-  util::Config domain_cfg = domain.spec();
-  Domain from_cfg(domain_cfg);
-  Log::info() << from_cfg.spec() << std::endl;
-  BOOST_CHECK_EQUAL( from_cfg.type(), std::string("rectangular") );
-}
-
-BOOST_AUTO_TEST_CASE( test_domain_zonal_from_rectangular )
-{
-  Domain domain = RectangularDomain( {0,360}, {-25,25} );
-  BOOST_CHECK( not domain.global() );
-  BOOST_CHECK_EQUAL( domain.type(), std::string("zonal_band") );
-
-  util::Config domain_cfg = domain.spec();
-  Domain from_cfg(domain_cfg);
-  Log::info() << from_cfg.spec() << std::endl;
-  BOOST_CHECK_EQUAL( from_cfg.type(), std::string("zonal_band") );
-}
-
-BOOST_AUTO_TEST_CASE( test_domain_global_from_rectangular )
-{
-  Domain domain = RectangularDomain( {0,360}, {-90,90} );
-  BOOST_CHECK( domain.global() );
-  BOOST_CHECK_EQUAL( domain.type(), std::string("global") );
-
-  util::Config domain_cfg = domain.spec();
-  Domain from_cfg(domain_cfg);
-  Log::info() << from_cfg.spec() << std::endl;
-  BOOST_CHECK_EQUAL( from_cfg.type(), std::string("global") );
-}
 
 BOOST_AUTO_TEST_CASE( test_iterator )
 {

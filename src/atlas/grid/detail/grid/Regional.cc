@@ -1,12 +1,8 @@
 #include "Regional.h"
 
-#include "atlas/domain/detail/RectangularDomain.h"
-#include "atlas/domain/detail/ZonalBandDomain.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/runtime/Log.h"
 
-using atlas::domain::RectangularDomain;
-using atlas::domain::ZonalBandDomain;
 using atlas::grid::LinearSpacing;
 using XSpace = atlas::grid::StructuredGrid::XSpace;
 using YSpace = atlas::grid::StructuredGrid::YSpace;

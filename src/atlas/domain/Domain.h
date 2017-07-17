@@ -14,6 +14,8 @@
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/domain/detail/Domain.h"
 #include "atlas/projection/Projection.h"
+#include "atlas/domain/detail/RectangularDomain.h"
+#include "atlas/domain/detail/ZonalBandDomain.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -42,6 +44,8 @@ public:
     Domain( const Domain& );
     Domain( const Implementation* );
     Domain( const eckit::Parametrisation& );
+
+    operator bool() { return true; }
 
     /// Type of the domain
     std::string type() const;
@@ -83,7 +87,7 @@ private:
 
     /// Output to stream
     void print(std::ostream&) const;
-  
+
     friend std::ostream& operator<<(std::ostream& s, const Domain& d);
 
     eckit::SharedPtr<const Implementation> domain_;
@@ -112,14 +116,59 @@ inline std::string Domain::units() const { return domain_->units(); }
 class RectangularDomain : public Domain {
 
 public:
-  
+
   using Interval=std::array<double,2>;
 
 public:
 
   using Domain::Domain;
   RectangularDomain( const Interval& x, const Interval& y, const std::string& units = "degrees" );
-  
+
+  RectangularDomain( const Domain& );
+
+  operator bool() { return domain_; }
+
+  /// Checks if the x-value is contained in the domain
+  bool contains_x(double x) const { return domain_.get()->contains_x(x); }
+
+  /// Checks if the y-value is contained in the domain
+  bool contains_y(double y) const { return domain_.get()->contains_y(y); }
+
+  double xmin() const { return domain_.get()->xmin(); }
+  double xmax() const { return domain_.get()->xmax(); }
+  double ymin() const { return domain_.get()->ymin(); }
+  double ymax() const { return domain_.get()->ymax(); }
+
+private:
+
+  eckit::SharedPtr<const ::atlas::domain::RectangularDomain> domain_;
 };
 
-}  // namespace 
+//---------------------------------------------------------------------------------------------------------------------
+
+namespace domain {
+  class ZonalBandDomain;
+}
+
+class ZonalBandDomain : public RectangularDomain {
+
+public:
+
+  using Interval=std::array<double,2>;
+
+public:
+
+  using RectangularDomain::RectangularDomain;
+  ZonalBandDomain( const Interval& y );
+  ZonalBandDomain( const Domain& );
+
+  operator bool() { return domain_; }
+
+private:
+
+  eckit::SharedPtr<const ::atlas::domain::ZonalBandDomain> domain_;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+}  // namespace
