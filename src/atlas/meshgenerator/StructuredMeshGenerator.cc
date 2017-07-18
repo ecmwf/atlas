@@ -782,8 +782,8 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
   int nparts = options.get<size_t>("nb_parts");
   int n, l;
 
-  bool has_north_pole = rg.y().front() ==  90 && rg.nx().front() > 0;
-  bool has_south_pole = rg.y().back()  == -90 && rg.nx().back()  > 0;
+  bool has_point_at_north_pole = rg.y().front() ==  90 && rg.nx().front() > 0;
+  bool has_point_at_south_pole = rg.y().back()  == -90 && rg.nx().back()  > 0;
   bool three_dimensional  = options.get<bool>("3d");
   bool periodic_east_west = rg.periodic();
   bool include_periodic_ghost_points = periodic_east_west  && !three_dimensional;
@@ -791,24 +791,24 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
 
   bool include_north_pole = (mypart == 0 )
           && options.get<bool>("include_pole")
-          && !has_north_pole
-          && rg.domain().includesNorthPole(rg.projection());
+          && !has_point_at_north_pole
+          && rg.domain().containsNorthPole();
 
   bool include_south_pole = (mypart == nparts-1)
           && options.get<bool>("include_pole")
-          && !has_south_pole
-          && rg.domain().includesSouthPole(rg.projection());
+          && !has_point_at_south_pole
+          && rg.domain().containsSouthPole();
 
   bool patch_north_pole = (mypart == 0)
           && options.get<bool>("patch_pole")
-          && !has_north_pole
-          && rg.domain().includesNorthPole(rg.projection())
+          && !has_point_at_north_pole
+          && rg.domain().containsNorthPole()
           && rg.nx(1) > 0;
 
   bool patch_south_pole = (mypart == nparts-1)
           && options.get<bool>("patch_pole")
-          && !has_south_pole
-          && rg.domain().includesSouthPole(rg.projection())
+          && !has_point_at_south_pole
+          && rg.domain().containsSouthPole()
           && rg.nx(rg.ny()-2) > 0;
 
   if( three_dimensional && nparts != 1 )

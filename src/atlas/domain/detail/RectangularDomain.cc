@@ -78,16 +78,19 @@ RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, cons
   ymax_(y[1]),
   units_(units) {
 
+  unit_degrees_ = ( units_ == "degrees" ) ? true : false;
+
   // Make sure xmax>=xmin and ymax>=ymin
   if (xmin_>xmax_) std::swap(xmin_,xmax_);
   if (ymin_>ymax_) std::swap(ymin_,ymax_);
   global_ = is_global( {xmin_,xmax_}, {ymin_,ymax_} ,units_);
-  
+
   const double tol = 1.e-6;
   xmin_tol_ = xmin_-tol;
   ymin_tol_ = ymin_-tol;
   xmax_tol_ = xmax_+tol;
   ymax_tol_ = ymax_+tol;
+
 }
 
 
@@ -118,6 +121,14 @@ void RectangularDomain::print(std::ostream& os) const {
 
 void RectangularDomain::hash(eckit::Hash& h) const {
   spec().hash(h);
+}
+
+bool RectangularDomain::containsNorthPole() const {
+  return unit_degrees_ && ymax_tol_ >= 90.;
+}
+
+bool RectangularDomain::containsSouthPole() const {
+  return unit_degrees_ && ymin_tol_ <= -90.;
 }
 
 register_BuilderT1(Domain,RectangularDomain,RectangularDomain::static_type());

@@ -76,6 +76,15 @@ void ZonalBandDomain::print(std::ostream& os) const {
      << "]";
 }
 
+
+bool ZonalBandDomain::containsNorthPole() const {
+  return ymax_tol_ >= 90.;
+}
+
+bool ZonalBandDomain::containsSouthPole() const {
+  return ymin_tol_ <= -90.;
+}
+
 register_BuilderT1(Domain,ZonalBandDomain,ZonalBandDomain::static_type());
 
 }  // namespace domain

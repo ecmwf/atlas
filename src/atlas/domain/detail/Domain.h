@@ -58,10 +58,10 @@ public:
 // without knowing also the projection
 
     /// Check if grid includes the North pole
-    bool includesNorthPole(const Projection& ) const;
+    virtual bool containsNorthPole() const =0;
 
     /// Check if grid includes the South pole
-    bool includesSouthPole(const Projection& ) const;
+    virtual bool containsSouthPole() const =0;
 
     /// Output to stream
     virtual void print(std::ostream&) const =0;

@@ -46,6 +46,13 @@ public:
 
     virtual std::string units() const override { return units_; }
 
+    /// Check if grid includes the North pole
+    virtual bool containsNorthPole() const override;
+
+    /// Check if grid includes the South pole
+    virtual bool containsSouthPole() const override;
+
+
 protected:
 
     friend class ::atlas::RectangularDomain;

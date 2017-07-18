@@ -62,8 +62,6 @@ domain/detail/Domain.cc
 domain/detail/Domain.h
 domain/detail/RectangularDomain.h
 domain/detail/RectangularDomain.cc
-domain/detail/CircularDomain.h
-domain/detail/CircularDomain.cc
 domain/detail/EmptyDomain.h
 domain/detail/EmptyDomain.cc
 domain/detail/GlobalDomain.h

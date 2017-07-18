@@ -29,6 +29,12 @@ public:
 
     virtual void hash(eckit::Hash&) const override;
 
+    /// Check if grid includes the North pole
+    virtual bool containsNorthPole() const override { return true; }
+
+    /// Check if grid includes the South pole
+    virtual bool containsSouthPole() const override { return true; }
+
 private:
 
     friend class ::atlas::RectangularDomain;

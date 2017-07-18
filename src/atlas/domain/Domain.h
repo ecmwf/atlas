@@ -68,14 +68,11 @@ public:
     /// Add domain to the given hash
     void hash(eckit::Hash&) const;
 
-// Unless the domain is global, we can never be sure about these functions
-// without knowing also the projection
+    /// Check if grid includes the North pole (can only be true when units are in degrees)
+    bool containsNorthPole() const;
 
-    /// Check if grid includes the North pole
-    bool includesNorthPole(const Projection& ) const;
-
-    /// Check if grid includes the South pole
-    bool includesSouthPole(const Projection& ) const;
+    /// Check if grid includes the South pole (can only be true when units are in degrees)
+    bool containsSouthPole() const;
 
     /// String that defines units of the domain ("degrees" or "meters")
     std::string units() const;
@@ -95,21 +92,21 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-inline std::string Domain::type() const { return domain_->type(); }
-inline bool Domain::contains(double x, double y) const { return domain_->contains(x,y); }
-inline bool Domain::contains(const PointXY& p) const { return domain_->contains(p); }
-inline Domain::Spec Domain::spec() const { return domain_->spec(); }
-inline bool Domain::global() const { return domain_->global(); }
-inline bool Domain::empty() const { return domain_->empty(); }
-inline void Domain::hash(eckit::Hash& h) const { domain_->hash(h); }
-inline bool Domain::includesNorthPole(const Projection& p) const { return domain_->includesNorthPole(p); }
-inline bool Domain::includesSouthPole(const Projection& p) const { return domain_->includesSouthPole(p); }
-inline void Domain::print(std::ostream& os) const { return domain_->print(os); }
+inline std::string Domain::type() const { return domain_.get()->type(); }
+inline bool Domain::contains(double x, double y) const { return domain_.get()->contains(x,y); }
+inline bool Domain::contains(const PointXY& p) const { return domain_.get()->contains(p); }
+inline Domain::Spec Domain::spec() const { return domain_.get()->spec(); }
+inline bool Domain::global() const { return domain_.get()->global(); }
+inline bool Domain::empty() const { return domain_.get()->empty(); }
+inline void Domain::hash(eckit::Hash& h) const { domain_.get()->hash(h); }
+inline bool Domain::containsNorthPole() const { return domain_.get()->containsNorthPole(); }
+inline bool Domain::containsSouthPole() const { return domain_.get()->containsSouthPole(); }
+inline void Domain::print(std::ostream& os) const { return domain_.get()->print(os); }
 inline std::ostream& operator<<(std::ostream& os, const Domain& d) {
     d.print(os);
     return os;
 }
-inline std::string Domain::units() const { return domain_->units(); }
+inline std::string Domain::units() const { return domain_.get()->units(); }
 
 //---------------------------------------------------------------------------------------------------------------------
 
