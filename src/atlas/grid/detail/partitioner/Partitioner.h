@@ -38,6 +38,8 @@ public:
     Distribution partition(const Grid& grid) const;
 
     size_t nb_partitions() const;
+    
+    virtual std::string type() const = 0;
 
 private:
 

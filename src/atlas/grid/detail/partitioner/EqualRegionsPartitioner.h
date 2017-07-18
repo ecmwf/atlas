@@ -89,6 +89,8 @@ public:
 
     virtual void partition( const Grid&, int part[] ) const;
 
+    virtual std::string type() const { return "equal_regions"; }
+
 public:
 
     // Node struct that holds the longitude and latitude in millidegrees (integers)

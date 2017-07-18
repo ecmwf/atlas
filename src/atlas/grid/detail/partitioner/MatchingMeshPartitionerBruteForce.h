@@ -34,6 +34,8 @@ public:
       MatchingMeshPartitioner(mesh) {}
 
     virtual void partition( const Grid& grid, int part[] ) const;
+    
+    virtual std::string type() const { return static_type(); }
 
 };
 

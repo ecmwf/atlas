@@ -17,11 +17,8 @@
 #include "atlas/util/Checksum.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/GatherScatter.h"
 #include "atlas/array/MakeView.h"
-
-#ifdef ATLAS_HAVE_TRANS
-#include "atlas/trans/Trans.h"
-#endif
 
 namespace atlas {
 namespace functionspace {
@@ -65,119 +62,78 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
 // Constructor
 // ----------------------------------------------------------------------------
 StructuredColumns::StructuredColumns(const Grid& grid) :
+  StructuredColumns::StructuredColumns(grid, grid::Partitioner() ) {
+}
+
+StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& p ) :
   grid_(grid)
 {
     if ( not grid_ )
     {
-      throw eckit::BadCast("Grid is not a grid::Structured type. "
-                           "Cannot partition using IFS trans", Here());
+      throw eckit::BadCast("Grid is not a grid::Structured type", Here());
     }
 
-#ifdef ATLAS_HAVE_TRANS
-    trans_ = new trans::Trans(grid_);
-
-    npts_ = trans_->ngptot();
-
-    // Number of latitude bands
-    int n_regions_NS = trans_->n_regions_NS();
-
-    // Number of partitions per latitude band
-    array::LocalView<int,1> n_regions = trans_->n_regions();
-
-    // First latitude of latitude band
-    array::LocalView<int,1> nfrstlat = trans_->nfrstlat();
-
-    // First latitude of latitude band
-    array::LocalView<int,1> nlstlat = trans_->nlstlat();
-
-    // Index of latitude partition (note that if a partition
-    // has two regions on a latitude - the index increases
-    // by one (2 numbers)
-    array::LocalView<int,1> nptrfrstlat = trans_->nptrfrstlat();
-
-    // Starting longitudinal point per given latitude (ja)
-    // Note that it is associated to nptrfrstlat
-    array::LocalView<int,2> nsta = trans_->nsta();
-
-    // Number of longitudinal points per given latitude (ja)
-    // Note that it is associated to nptrfrstlat
-    array::LocalView<int,2> nonl = trans_->nonl();
-
-    size_t proc(0);
-    // Loop over number of latitude bands (ja)
-    for (int ja = 0; ja < n_regions_NS; ++ja)
-    {
-        // Loop over number of longitude bands (jb)
-        for (int jb = 0; jb < n_regions(ja); ++jb)
-        {
-            if (proc == parallel::mpi::comm().rank())
-            {
-                nlat_ = nlstlat(ja) - nfrstlat(ja) + 1;
-                nlon_.resize(nlat_);
-                first_lon_.resize(nlat_);
-                first_lat_ = nfrstlat(ja)-1;
-
-                // Loop over latitude points of lat band (ja) and lon band (jb)
-                size_t ilat = 0;
-                for (int jglat = first_lat_; jglat < nlstlat(ja); ++jglat)
-                {
-                    size_t igl = nptrfrstlat(ja) + jglat - nfrstlat(ja);
-                    nlon_[ilat] = nonl(jb,igl);
-                    first_lon_[ilat] = nsta(jb,igl);
-                    ilat++;
-                }
-                goto exit_outer_loop;
-            }
-            ++proc;
-        }
+    grid::Partitioner partitioner( p );
+    if( not partitioner ) {
+      if( grid_.domain().global() ) {
+        if( grid::Partitioner::exists("trans") )
+          partitioner = grid::Partitioner("trans");
+        else
+          partitioner = grid::Partitioner("equal_regions");
+      } else {
+        partitioner = grid::Partitioner("checkerboard");
+      }
     }
-    exit_outer_loop: ;
 
+    grid::Distribution distribution(grid,partitioner);
 
-#if 0
-    // COMPILED OUT
-    {
-        int localLatID;
-        int localLonID;
-        proc = 0;
-
-        // Loop over number of latitude bands (ja)
-        for (size_t ja = 0; ja < n_regions_NS; ++ja)
-        {
-            // Loop over number of longitude bands (jb)
-            for (size_t jb = 0; jb < n_regions[ja]; ++jb)
-            {
-                if (proc == parallel::mpi::comm().rank())
-                {
-                    // Loop over latitude points of lat band (ja) and lon band (jb)
-                    for (int jglat = nfrstlat[ja]-1; jglat < nlstlat[ja]; ++jglat)
-                    {
-                        int globalLatID = localLatID + nfrstlat[ja];
-                        size_t igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
-
-                        // Loop over longitude points of given latitude point
-                        // of lat band (ja) and lon band (jb) and
-                        for (int jglon = nsta(jb,igl)-1;
-                             jglon < nsta(jb,igl)+nonl(jb,igl)-1; ++jglon)
-                        {
-                            int globalLonID = nsta(jb,igl) + localLonID;
-                        }
-                    }
-                }
-                ++proc;
-            }
-        }
+    int mpi_rank = parallel::mpi::comm().rank();
+    size_t ny( 0 );
+    size_t j_begin( std::numeric_limits<size_t>::max() ) ;
+    std::vector<size_t> i_begin( grid_.ny(), std::numeric_limits<size_t>::max() );
+    std::vector<size_t> nx( grid_.ny(), 0 );
+    size_t c( 0 );
+    for( size_t j=0; j<grid_.ny(); ++j ) {
+      bool j_used(false);
+      for( size_t i=0; i<grid_.nx(j); ++i ) {
+         if( distribution.partition(c++) == mpi_rank ) {
+           j_used = true;
+           j_begin = std::min( j_begin, j );
+           i_begin[j-j_begin] = std::min( i_begin[j-j_begin], i );
+           ++nx[j-j_begin];
+         }
+      }
+      if( j_used )
+        ++ny;
     }
-#endif
-#else
-    npts_ = grid_.size();
-    nlat_ = grid_.ny();
-    nlon_.resize(nlat_);
-    for( size_t jlat=0; jlat<nlat_; ++jlat )
-      nlon_[jlat] = grid_.nx(jlat);
-    first_lat_ = 0;
-    first_lon_.resize(nlat_,0);
-#endif
+
+    // export
+    ny_ = ny;
+    j_begin_ = j_begin;
+    i_begin_.assign(i_begin.begin(),i_begin.begin()+ny);
+    nx_.assign(nx.begin(),nx.begin()+ny);
+    npts_ = 0;
+    for( size_t& n : nx_ ) npts_ += n;
+
+    gather_scatter_ = new parallel::GatherScatter();
+
+    std::vector<int>    part(npts_,mpi_rank);
+    std::vector<int>    remote_idx; remote_idx.reserve(npts_);
+    std::vector<gidx_t> global_idx; global_idx.reserve(npts_);
+
+    size_t gidx_begin=1;
+    for( size_t j=0; j<j_begin_; ++j ) {
+      gidx_begin += grid_.nx(j);
+    }
+    c = 0;
+    for( size_t j=0; j<ny_; ++j ) {
+      for( size_t i=0; i<nx_[j]; ++i ) {
+         global_idx.push_back( gidx_begin + i_begin[j] + i );
+         remote_idx.push_back( c++ );
+      }
+      gidx_begin += grid_.nx(j_begin_+j);
+    }
+    gather_scatter_->setup(part.data(), remote_idx.data(), 0, global_idx.data(), npts_ );
 }
 // ----------------------------------------------------------------------------
 
@@ -188,9 +144,6 @@ StructuredColumns::StructuredColumns(const Grid& grid) :
 // ----------------------------------------------------------------------------
 StructuredColumns::~StructuredColumns()
 {
-#ifdef ATLAS_HAVE_TRANS
-    delete trans_;
-#endif
 }
 // ----------------------------------------------------------------------------
 
@@ -206,24 +159,11 @@ size_t StructuredColumns::footprint() const {
 // ----------------------------------------------------------------------------
 Field StructuredColumns::createField(const std::string& name, array::DataType datatype, const eckit::Parametrisation& options ) const
 {
-#ifdef ATLAS_HAVE_TRANS
     size_t npts = config_size(options);
     Field field = Field(name, datatype, array::make_shape(npts));
     field.set_functionspace(this);
     set_field_metadata(options,field);
     return field;
-#else
-    if( parallel::mpi::comm().size() > 1 )
-    {
-        throw eckit::NotImplemented(
-          "StructuredColumns::createField currently relies"
-          " on ATLAS_HAVE_TRANS for parallel fields", Here());
-    }
-    Field field = Field(name, datatype, array::make_shape(grid_.size()) );
-    field.set_functionspace(this);
-    set_field_metadata(options,field);
-    return field;
-#endif
 }
 // ----------------------------------------------------------------------------
 
@@ -236,7 +176,6 @@ Field StructuredColumns::createField(
     const std::string& name, array::DataType datatype,
     size_t levels, const eckit::Parametrisation& options) const
 {
-#ifdef ATLAS_HAVE_TRANS
     size_t npts = config_size(options);
     Field field = Field(
                     name, datatype, array::make_shape(npts, levels));
@@ -245,20 +184,6 @@ Field StructuredColumns::createField(
     field.set_levels(levels);
     set_field_metadata(options,field);
     return field;
-#else
-    if( parallel::mpi::comm().size() > 1 )
-    {
-        throw eckit::NotImplemented(
-          "StructuredColumns::createField currently relies"
-          " on ATLAS_HAVE_TRANS for parallel fields", Here());
-    }
-    Field field = Field(
-                    name, datatype, array::make_shape(grid_.size(), levels));
-
-    field.set_functionspace(this);
-    set_field_metadata(options,field);
-    return field;
-#endif
 }
 // ----------------------------------------------------------------------------
 
@@ -270,42 +195,38 @@ void StructuredColumns::gather(
     const FieldSet& local_fieldset,
     FieldSet& global_fieldset ) const
 {
-#ifdef ATLAS_HAVE_TRANS
     ASSERT(local_fieldset.size() == global_fieldset.size());
 
-    for( size_t f=0; f<local_fieldset.size(); ++f )
-    {
-        const Field& loc = local_fieldset[f];
-        Field& glb = global_fieldset[f];
-        if( loc.datatype() != array::DataType::str<double>() )
-        {
-            std::stringstream err;
-            err << "Cannot gather Structured field " << loc.name()
-                << " of datatype " << loc.datatype().str() << ".";
-            err << "Only " << array::DataType::str<double>() << " supported.";
-            throw eckit::BadValue(err.str());
-        }
+    for( size_t f=0; f<local_fieldset.size(); ++f ) {
 
-        size_t root(0);
-        glb.metadata().get("owner",root);
-        std::vector<int> nto(1,root+1);
-        if( loc.rank() > 1 )
-        {
-            nto.resize(loc.stride(0));
-            for( size_t i=0; i<nto.size(); ++i )
-            {
-                nto[i] = root+1;
-            }
-        }
-        trans_->gathgrid(nto.size(), nto.data(),
-                         array::make_storageview<double>(loc).data(),
-                         array::make_storageview<double>(glb).data());
+      const Field& loc = local_fieldset[f];
+      Field& glb = global_fieldset[f];
+      const size_t nb_fields = 1;
+      size_t root(0);
+      glb.metadata().get("owner",root);
+
+      if     ( loc.datatype() == array::DataType::kind<int>() ) {
+        parallel::Field<int const> loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
+        parallel::Field<int      > glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
+        gather_scatter_->gather( &loc_field, &glb_field, nb_fields, root );
+      }
+      else if( loc.datatype() == array::DataType::kind<long>() ) {
+        parallel::Field<long const> loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
+        parallel::Field<long      > glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
+        gather_scatter_->gather( &loc_field, &glb_field, nb_fields, root );
+      }
+      else if( loc.datatype() == array::DataType::kind<float>() ) {
+        parallel::Field<float const> loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
+        parallel::Field<float      > glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
+        gather_scatter_->gather( &loc_field, &glb_field, nb_fields, root );
+      }
+      else if( loc.datatype() == array::DataType::kind<double>() ) {
+        parallel::Field<double const> loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
+        parallel::Field<double      > glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
+        gather_scatter_->gather( &loc_field, &glb_field, nb_fields, root );
+      }
+      else throw eckit::Exception("datatype not supported",Here());
     }
-
-#else
-    eckit::NotImplemented("StructuredColumns::gather currently relies "
-                          "on ATLAS_HAVE_TRANS", Here());
-#endif
 }
 // ----------------------------------------------------------------------------
 
@@ -335,43 +256,41 @@ void StructuredColumns::scatter(
     const FieldSet& global_fieldset,
     FieldSet& local_fieldset) const
 {
-#ifdef ATLAS_HAVE_TRANS
-    ASSERT(local_fieldset.size() == global_fieldset.size());
+  ASSERT(local_fieldset.size() == global_fieldset.size());
 
-    for( size_t f=0; f<local_fieldset.size(); ++f )
-    {
-        const Field& glb = global_fieldset[f];
-        Field& loc = local_fieldset[f];
-        if( loc.datatype() != array::DataType::str<double>() )
-        {
-            std::stringstream err;
-            err << "Cannot scatter Structured field " << glb.name()
-                << " of datatype " << glb.datatype().str() << ".";
-            err << "Only " << array::DataType::str<double>() << " supported.";
-            throw eckit::BadValue(err.str());
-        }
+  for( size_t f=0; f<local_fieldset.size(); ++f ) {
 
-        size_t root(0);
-        glb.metadata().get("owner",root);
-        std::vector<int> nfrom(1,root+1);
-        if( loc.rank() > 1 )
-        {
-            nfrom.resize(loc.stride(0));
-            for( size_t i=0; i<nfrom.size(); ++i)
-            {
-                nfrom[i] = root+1;
-            }
-        }
-        trans_->distgrid(nfrom.size(), nfrom.data(),
-                         array::make_storageview<double>(glb).data(),
-                         array::make_storageview<double>(loc).data());
-        glb.metadata().broadcast(loc.metadata(),root);
-        loc.metadata().set("global",false);
+    const Field& glb = global_fieldset[f];
+    Field& loc = local_fieldset[f];
+    const size_t nb_fields = 1;
+    size_t root(0);
+    glb.metadata().get("owner",root);
+
+    if     ( loc.datatype() == array::DataType::kind<int>() ) {
+      parallel::Field<int const> glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
+      parallel::Field<int      > loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
+      gather_scatter_->scatter( &glb_field, &loc_field, nb_fields, root );
+    }
+    else if( loc.datatype() == array::DataType::kind<long>() ) {
+      parallel::Field<long const> glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
+      parallel::Field<long      > loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
+      gather_scatter_->scatter( &glb_field, &loc_field, nb_fields, root );
+    }
+    else if( loc.datatype() == array::DataType::kind<float>() ) {
+      parallel::Field<float const> glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
+      parallel::Field<float      > loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
+      gather_scatter_->scatter( &glb_field, &loc_field, nb_fields, root );
+    }
+    else if( loc.datatype() == array::DataType::kind<double>() ) {
+      parallel::Field<double const> glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
+      parallel::Field<double      > loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
+      gather_scatter_->scatter( &glb_field, &loc_field, nb_fields, root );
+    }
+    else throw eckit::Exception("datatype not supported",Here());
+
+    glb.metadata().broadcast(loc.metadata(),root);
+    loc.metadata().set("global",false);
   }
-#else
-    eckit::NotImplemented("StructuredColumns::scatter currently relies "
-                          "on ATLAS_HAVE_TRANS", Here());
-#endif
 }
 // ----------------------------------------------------------------------------
 
@@ -403,7 +322,7 @@ void StructuredColumns::scatter(
 double StructuredColumns::y(
     size_t j) const
 {
-  return grid_.y(j+first_lat_);
+  return grid_.y(j+j_begin_);
 }
 // ----------------------------------------------------------------------------
 
@@ -416,7 +335,7 @@ double StructuredColumns::x(
     size_t i,
     size_t j) const
 {
-  return grid_.x(i+first_lon_[j],j+first_lat_);
+  return grid_.x(i+i_begin_[j],j+j_begin_);
 }
 // ----------------------------------------------------------------------------
 
@@ -464,6 +383,12 @@ StructuredColumns::StructuredColumns( const Grid& grid ) :
   FunctionSpace( new detail::StructuredColumns(grid) ),
   functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
 }
+
+StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& partitioner ) :
+  FunctionSpace( new detail::StructuredColumns(grid,partitioner) ),
+  functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
+}
+
 
 Field StructuredColumns::createField(const std::string& name, array::DataType datatype, const eckit::Parametrisation& options ) const
 {

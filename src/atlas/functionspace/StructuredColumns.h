@@ -15,6 +15,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Config.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/array/DataType.h"
 #include "atlas/field/Field.h"
 
@@ -50,6 +51,8 @@ public:
 
   StructuredColumns( const Grid& );
 
+  StructuredColumns( const Grid&, const grid::Partitioner& );
+
   virtual ~StructuredColumns();
 
   virtual std::string name() const { return "StructuredColumns"; }
@@ -79,8 +82,8 @@ public:
   void scatter( const Field&, Field& ) const;
 
   size_t size() const       { return npts_; }
-  size_t ny() const         { return nlat_; }
-  size_t nx(size_t j) const { return nlon_[j]; }
+  size_t ny() const         { return ny_; }
+  size_t nx(size_t j) const { return nx_[j]; }
 
   double x(size_t i, size_t j) const;
   double y(size_t j) const;
@@ -98,10 +101,10 @@ private: // methods
 private: // data
 
   size_t npts_;
-  size_t nlat_;
-  size_t first_lat_;
-  std::vector<size_t> nlon_;
-  std::vector<size_t> first_lon_;
+  size_t ny_;
+  size_t j_begin_;
+  std::vector<size_t> nx_;
+  std::vector<size_t> i_begin_;
 
   trans::Trans* trans_;
   const grid::StructuredGrid grid_;
@@ -140,6 +143,7 @@ public:
   StructuredColumns();
   StructuredColumns( const FunctionSpace& );
   StructuredColumns( const Grid& );
+  StructuredColumns( const Grid&, const grid::Partitioner& );
 
   operator bool() const { return valid(); }
   bool valid() const { return functionspace_; }

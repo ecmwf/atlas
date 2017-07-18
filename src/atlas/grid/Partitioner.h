@@ -40,11 +40,15 @@ public:
     Partitioner( const std::string& type, const size_t nb_partitions );
     Partitioner( const Config& );
 
+    operator bool() const { return partitioner_; }
+
     void partition( const Grid& grid, int part[] ) const { partitioner_->partition(grid,part); }
 
     Distribution partition( const Grid& grid ) const { return Distribution(grid,*this); }
 
     size_t nb_partitions() const { return partitioner_->nb_partitions(); }
+
+    std::string type() const { return partitioner_->type(); }
 
 private:
 

@@ -121,8 +121,8 @@ private: // members
     util::Metadata   metadata_;
 
     eckit::SharedPtr<Nodes> nodes_;
-                                                      // dimensionality : 2D | 3D
-                                                      //                  --------
+                                                // dimensionality : 2D | 3D
+                                                //                  --------
     eckit::SharedPtr<HybridElements> cells_;    //                  2D | 3D
     eckit::SharedPtr<HybridElements> facets_;   //                  1D | 2D
     eckit::SharedPtr<HybridElements> ridges_;   //                  0D | 1D
