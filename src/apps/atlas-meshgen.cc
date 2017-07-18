@@ -254,6 +254,9 @@ void Meshgen2Gmsh::execute(const Args& args)
   if( info ) {
     Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
     Log::info() << "Mesh partition footprint: " << eckit::Bytes(mesh.footprint()) << std::endl;
+    for( size_t jhalo=0; jhalo<=halo; ++jhalo ) {
+        mesh.polygon(jhalo).outputPythonScript("polygon_halo"+std::to_string(jhalo)+".py");
+    }
   }
 }
 

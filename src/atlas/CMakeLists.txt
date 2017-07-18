@@ -203,6 +203,8 @@ mesh/detail/PartitionGraph.cc
 mesh/detail/PartitionGraph.h
 mesh/Nodes.cc
 mesh/Nodes.h
+mesh/Polygon.h
+mesh/Polygon.cc
 
 mesh/actions/ExtendNodesGlobal.h
 mesh/actions/ExtendNodesGlobal.cc

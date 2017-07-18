@@ -29,113 +29,29 @@ namespace detail {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-struct Edge : std::pair< size_t, size_t > {
-    Edge(size_t _A, size_t _B) : std::pair< size_t, size_t >(_A, _B) {}
-    Edge reverse() const { return Edge(second, first); }
-    struct LessThan {
-        bool operator()(const Edge& e1, const Edge& e2) const {
-            // order ascending by 'first'
-            return (e1.first  < e2.first? true  :
-                    e1.first  > e2.first? false :
-                    e1.second < e2.second );
-        }
-    };
-};
-
-typedef std::set< Edge, Edge::LessThan > edge_set_t;
-
-struct Poly : std::vector< size_t > {
-    Poly() {}
-    Poly(edge_set_t& edges) {
-        clear();
-        reserve(edges.size() + 1);
-
-        push_back(edges.begin()->first);
-        for (edge_set_t::iterator e = edges.begin(); e != edges.end() && e->first == back();
-             e = edges.lower_bound(Edge(back(), 0))) {
-            push_back(e->second);
-            edges.erase(*e);
-        }
-
-        ASSERT(front() == back());
-    }
-    Poly& operator+=(const Poly& other) {
-        ASSERT(other.size() > 1);
-        if (empty()) {
-            return operator=(other);
-        }
-
-        difference_type N = difference_type(other.size()) - 1;
-        vector< size_t > cycle;
-        cycle.reserve(2 * size_t(N));
-        cycle.insert(cycle.end(), other.begin(), other.end() - 1);
-        cycle.insert(cycle.end(), other.begin(), other.end() - 1);
-
-        for (const_iterator c = cycle.begin(); c != cycle.begin() + N; ++c) {
-            iterator here = find(begin(), end(), *c);
-            if (here != end()) {
-                insert(here, c, c + N);
-                return *this;
-            }
-        }
-
-        throw eckit::AssertionFailed("Could not merge polygons, they are not connected", Here());
-    }
-};
-
-
 PartitionGraph* build_partition_graph(const MeshImpl& mesh ) {
 
   const eckit::mpi::Comm& comm = parallel::mpi::comm();
   const int mpi_size = int(comm.size());
 
-  // Polygon indices
-  // - extract partition boundary edges by always attempting first to
-  //   remove a reversed edge from a neighbouring element (if it exists)
-  // - polygon can have multiple cycles, but must be a connected graph
-  Poly poly;
-
-  edge_set_t edges;
-  for (size_t t = 0; t < mesh.cells().nb_types(); ++t) {
-      const Elements& elements = mesh.cells().elements(t);
-
-      const BlockConnectivity& conn = elements.node_connectivity();
-      auto patch = elements.view< int, 1 >(elements.field("patch"));
-
-      const size_t nb_nodes = elements.nb_nodes();
-
-      for (size_t j = 0; j < elements.size(); ++j) {
-          for (size_t k = 0; k < nb_nodes && (patch(j) == 0); ++k) {
-              Edge edge(size_t(conn(j, k)), size_t(conn(j, (k+1) % nb_nodes)));
-              if (!edges.erase(edge.reverse())) {
-                  edges.insert(edge);
-              }
-          }
-      }
-  }
-
-  while (!edges.empty()) {
-      poly += Poly(edges);
-  }
-  ASSERT(poly.size());
-
+  const Polygon& poly = mesh.polygon();
 
   std::vector< double > polygon;
   polygon.reserve(poly.size()*2);
 
   auto xy = array::make_view< double, 2 >( mesh.nodes().xy() );
 
-  for (size_t i = 0; i < poly.size(); ++i) {
-      polygon.push_back( xy(poly[i],XX) );
-      polygon.push_back( xy(poly[i],YY) );
+  for( idx_t node : poly ) {
+      polygon.push_back( xy(node,XX) );
+      polygon.push_back( xy(node,YY) );
   }
   ASSERT(polygon.size() >= 4);
 
   eckit::mpi::Buffer<double> recv_polygons(mpi_size);
   comm.allGatherv(polygon.begin(),polygon.end(),recv_polygons);
 
-  using Polygon = std::vector<PointXY>;
-  std::vector< Polygon > polygons(mpi_size);
+  using PolygonXY = std::vector<PointXY>;
+  std::vector< PolygonXY > polygons(mpi_size);
   for( size_t p=0; p<mpi_size; ++p ) {
     for( size_t j=0; j<recv_polygons.counts[p]/2; ++j) {
       PointXY pxy(
@@ -148,7 +64,7 @@ PartitionGraph* build_partition_graph(const MeshImpl& mesh ) {
 
   std::map< uidx_t, std::set<size_t> > uid_2_parts;
   size_t jpart=0;
-  for( const Polygon& _polygon : polygons ) {
+  for( const PolygonXY& _polygon : polygons ) {
     for( const PointXY& pxy : _polygon ) {
       PointLonLat pll = pxy;
       if( eckit::types::is_strictly_greater( 0., pll.lon() ) ) {

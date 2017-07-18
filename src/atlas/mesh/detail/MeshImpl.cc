@@ -64,6 +64,9 @@ size_t MeshImpl::footprint() const {
   if(ridges_)          size += ridges_          ->footprint();
   if(peaks_)           size += peaks_           ->footprint();
   if(partition_graph_) size += partition_graph_ ->footprint();
+  for( const auto& polygon : polygons_ ) {
+    if( polygon ) size += polygon->footprint();
+  }
 
   return size;
 }
@@ -135,6 +138,24 @@ const PartitionGraph& MeshImpl::partitionGraph() const {
 PartitionGraph::Neighbours MeshImpl::nearestNeighbourPartitions() const {
   return partitionGraph().nearestNeighbours(partition());
 }
+
+const Polygon& MeshImpl::polygon(size_t halo) const {
+  if( halo >= polygons_.size() ) {
+    polygons_.resize(halo+1);
+  }
+  if( not polygons_[halo] ) {
+
+    int mesh_halo = 0;
+    metadata().get("halo",mesh_halo);
+    if( halo > mesh_halo ) {
+      throw eckit::Exception("Mesh does not contain a halo of size "+std::to_string(halo)+".", Here());
+    }
+
+    polygons_[halo].reset( new Polygon(*this, halo) );
+  }
+  return *polygons_[halo];
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------
 

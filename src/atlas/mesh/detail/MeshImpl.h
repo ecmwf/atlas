@@ -18,6 +18,7 @@
 #include "atlas/util/Metadata.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/mesh/detail/PartitionGraph.h"
+#include "atlas/mesh/Polygon.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -25,6 +26,7 @@ namespace atlas {
   class Grid;
   class Mesh;
 namespace mesh {
+    class Polygon;
     class Nodes;
     class HybridElements;
     typedef HybridElements Edges;
@@ -99,6 +101,8 @@ public: // methods
 
     PartitionGraph::Neighbours nearestNeighbourPartitions() const;
 
+    const Polygon& polygon(size_t halo=0) const;
+
 private:  // methods
 
     friend class ::atlas::Mesh;
@@ -131,6 +135,8 @@ private: // members
     Projection projection_;
 
     mutable eckit::SharedPtr<PartitionGraph> partition_graph_;
+
+    mutable std::vector<eckit::SharedPtr<Polygon>> polygons_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

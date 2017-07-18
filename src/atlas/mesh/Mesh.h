@@ -56,6 +56,7 @@ public:
     using Edges = mesh::Edges;
     using HybridElements = mesh::HybridElements;
     using PartitionGraph = mesh::detail::PartitionGraph;
+    using Polygon = mesh::Polygon;
 
 public:
 
@@ -115,6 +116,8 @@ public:
 
     const Implementation* get() const { return impl_.get(); }
           Implementation* get()       { return impl_.get(); }
+
+    const Polygon& polygon( size_t halo = 0) { return impl_->polygon(halo); }
 
 private:  // methods
 

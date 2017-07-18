@@ -390,6 +390,7 @@ public:
   Node2Elem node_to_elem;
   Uid2Node uid2node;
   UniqueLonLat compute_uid;
+  size_t halo;
 
 
 public:
@@ -407,6 +408,8 @@ public:
     elem_glb_idx ( array::make_view<gidx_t,1> ( mesh.cells().global_index() ) ),
     compute_uid(mesh)
   {
+    halo = 0;
+    mesh.metadata().get("halo",halo);
     // update();
   }
 
@@ -715,7 +718,7 @@ public:
           size_t jelem = elems[jpart][e];
           elem_type_glb_idx(new_elems_pos+new_elem)   = buf.elem_glb_idx[jpart][jelem];
           elem_type_part   (new_elems_pos+new_elem)   = buf.elem_part[jpart][jelem];
-          elem_type_halo   (new_elems_pos+new_elem)   = 1;
+          elem_type_halo   (new_elems_pos+new_elem)   = halo+1;
           for( size_t n=0; n<node_connectivity.cols(); ++n )
             node_connectivity.set(new_elems_pos+new_elem,n ,  uid2node[ buf.elem_nodes_id[jpart][ buf.elem_nodes_displs[jpart][jelem]+n] ] );
           ++new_elem;
@@ -927,6 +930,7 @@ void build_halo(Mesh& mesh, int nb_elems )
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<jhalo+1<<"]";
     mesh.metadata().set(ss.str(),mesh.nodes().size());
+    mesh.metadata().set("halo",jhalo+1);
 
 #ifdef DEBUG_OUTPUT
     output::Gmsh gmsh2d("build-halo-mesh2d.msh",util::Config
@@ -944,8 +948,6 @@ void build_halo(Mesh& mesh, int nb_elems )
     gmsh3d.write(mesh);
 #endif
   }
-
-  mesh.metadata().set("halo",nb_elems);
 }
 
 // ------------------------------------------------------------------
