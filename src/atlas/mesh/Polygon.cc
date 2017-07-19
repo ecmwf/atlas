@@ -123,6 +123,7 @@ size_t Polygon::footprint() const
 {
     size_t size = sizeof(*this);
     size += node_list_.capacity()*sizeof(idx_t);
+    return size;
 }
 
 void Polygon::print(std::ostream & out) const
