@@ -117,21 +117,23 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
 
     gather_scatter_ = new parallel::GatherScatter();
 
-    std::vector<int>    part(npts_,mpi_rank);
+    std::vector<int>    part;       part.reserve(npts_);
     std::vector<int>    remote_idx; remote_idx.reserve(npts_);
     std::vector<gidx_t> global_idx; global_idx.reserve(npts_);
 
-    size_t gidx_begin=1;
+    size_t grid_idx=0;
     for( size_t j=0; j<j_begin_; ++j ) {
-      gidx_begin += grid_.nx(j);
+      grid_idx += grid_.nx(j);
     }
     c = 0;
     for( size_t j=0; j<ny_; ++j ) {
-      for( size_t i=0; i<nx_[j]; ++i ) {
-         global_idx.push_back( gidx_begin + i_begin[j] + i );
+      size_t k = grid_idx + i_begin[j];
+      for( size_t i=0; i<nx_[j]; ++i, ++k ) {
+         part      .push_back( distribution.partition(k) );
+         global_idx.push_back( k+1 );
          remote_idx.push_back( c++ );
       }
-      gidx_begin += grid_.nx(j_begin_+j);
+      grid_idx += grid_.nx(j_begin_+j);
     }
     gather_scatter_->setup(part.data(), remote_idx.data(), 0, global_idx.data(), npts_ );
 }

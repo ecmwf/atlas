@@ -29,5 +29,6 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
   BOOST
   SOURCES  test_structuredcolumns.cc
   LIBS     atlas
+  MPI 5
 )
 
