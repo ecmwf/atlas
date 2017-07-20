@@ -8,9 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_functionspace_functionspace__StructuredColumns_h
-#define atlas_functionspace_functionspace__StructuredColumns_h
+#pragma once
 
+#include <array>
 #include "atlas/library/config.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Config.h"
@@ -22,6 +22,7 @@
 namespace atlas {
 namespace parallel {
     class GatherScatter;
+    class HaloExchange;
     class Checksum;
 }
 }
@@ -51,7 +52,7 @@ public:
 
   StructuredColumns( const Grid& );
 
-  StructuredColumns( const Grid&, const grid::Partitioner& );
+  StructuredColumns( const Grid&, const grid::Partitioner&, const util::Config& = util::NoConfig() );
 
   virtual ~StructuredColumns();
 
@@ -81,17 +82,39 @@ public:
   void scatter( const FieldSet&, FieldSet& ) const;
   void scatter( const Field&, Field& ) const;
 
-  size_t size() const       { return npts_; }
-  size_t ny() const         { return ny_; }
-  size_t nx(size_t j) const { return nx_[j]; }
+  void haloExchange( FieldSet& ) const;
+  void haloExchange( Field& ) const;
 
-  double x(size_t i, size_t j) const;
-  double y(size_t j) const;
+
+  size_t sizeOwned() const { return size_owned_; }
+  size_t sizeHalo()  const { return size_halo_; }
+  size_t size()      const { return size_halo_; }
 
   std::string checksum( const FieldSet& ) const;
   std::string checksum( const Field& ) const;
 
   const grid::StructuredGrid& grid() const { return grid_; }
+
+  idx_t i_begin( idx_t j ) const { return i_begin_[j]; }
+  idx_t i_end  ( idx_t j ) const { return i_end_[j]; }
+
+  idx_t i_begin_halo( idx_t j ) const { return i_begin_halo_[j]; }
+  idx_t i_end_halo  ( idx_t j ) const { return i_end_halo_[j]; }
+
+  idx_t j_begin() const { return j_begin_; }
+  idx_t j_end()   const { return j_end_; }
+
+  idx_t j_begin_halo() const { return j_begin_halo_; }
+  idx_t j_end_halo()   const { return j_end_halo_;   }
+
+  idx_t index( idx_t i, idx_t j ) const {
+    return ij2gp_(i,j);
+  }
+
+  Field xy() const { return field_xy_; }
+  Field partition() const { return field_partition_; }
+  Field global_index() const { return field_global_index_; }
+  Field remote_index() const { return field_remote_index_; }
 
 private: // methods
 
@@ -100,17 +123,127 @@ private: // methods
 
 private: // data
 
-  size_t npts_;
-  size_t ny_;
-  size_t j_begin_;
-  std::vector<size_t> nx_;
-  std::vector<size_t> i_begin_;
+  size_t size_owned_;
+  size_t size_halo_;
 
-  trans::Trans* trans_;
   const grid::StructuredGrid grid_;
   parallel::GatherScatter* gather_scatter_;
+  parallel::HaloExchange* halo_exchange_;
   parallel::Checksum* checksum_;
 
+  Field field_xy_;
+  Field field_partition_;
+  Field field_global_index_;
+  Field field_remote_index_;
+
+  class Map2to1 {
+  public:
+
+    Map2to1() {
+      resize( {1,0}, {1,0} );
+    }
+
+    Map2to1( std::array<idx_t,2> i_range, std::array<idx_t,2> j_range ) {
+      resize(i_range,j_range);
+    }
+
+    void resize( std::array<idx_t,2> i_range, std::array<idx_t,2> j_range ) {
+      i_min_ = i_range[0];
+      i_max_ = i_range[1];
+      j_min_ = j_range[0];
+      j_max_ = j_range[1];
+      j_stride_ = (i_max_-i_min_+1);
+      data_.resize( (i_max_-i_min_+1)*(j_max_-j_min_+1), missing()-1 );
+    }
+
+    std::vector<idx_t> data_;
+    idx_t i_min_;
+    idx_t i_max_;
+    idx_t j_min_;
+    idx_t j_max_;
+    idx_t j_stride_;
+
+    idx_t operator()( idx_t i, idx_t j ) const {
+       return data_[ (i-i_min_) + (j-j_min_)*j_stride_ ] - 1;
+    }
+
+    void set( idx_t i, idx_t j, idx_t n ) {
+       data_[ (i-i_min_) + (j-j_min_)*j_stride_ ] = n+1;
+    }
+
+    idx_t missing() const { return std::numeric_limits<idx_t>::max(); }
+
+  private:
+
+    void print(std::ostream&) const;
+
+    friend std::ostream& operator<<(std::ostream& s, const Map2to1& p) {
+      p.print(s);
+      return s;
+    }
+  };
+
+  class IndexRange {
+  public:
+
+    IndexRange() {
+      resize(1,0);
+    }
+
+    IndexRange( idx_t min, idx_t max ) {
+      resize(min,max);
+    }
+
+    std::vector<idx_t> data_;
+    idx_t min_;
+    idx_t max_;
+
+    idx_t operator()( idx_t i ) const {
+       return data_[ i-min_ ];
+    }
+
+    idx_t& operator()( idx_t i ) {
+       return data_[ i-min_ ];
+    }
+
+    idx_t operator[]( idx_t i ) const {
+       return data_[ i-min_ ];
+    }
+
+    idx_t& operator[]( idx_t i ) {
+       return data_[ i-min_ ];
+    }
+
+    idx_t missing() const { return std::numeric_limits<idx_t>::max(); }
+
+    size_t size() const { return data_.size(); }
+
+    void resize( idx_t min, idx_t max ) {
+      min_ = min;
+      max_ = max;
+      data_.resize( max_-min_+1, missing()-1 );
+    }
+
+  private:
+
+    void print(std::ostream&) const;
+
+    friend std::ostream& operator<<(std::ostream& s, const IndexRange& p) {
+      p.print(s);
+      return s;
+    }
+
+  };
+
+  Map2to1 ij2gp_;
+  idx_t j_begin_;
+  idx_t j_end_;
+  std::vector<idx_t> i_begin_;
+  std::vector<idx_t> i_end_;
+  idx_t j_begin_halo_;
+  idx_t j_end_halo_;
+  IndexRange i_begin_halo_;
+  IndexRange i_end_halo_;
 };
 
 // -------------------------------------------------------------------
@@ -143,17 +276,14 @@ public:
   StructuredColumns();
   StructuredColumns( const FunctionSpace& );
   StructuredColumns( const Grid& );
-  StructuredColumns( const Grid&, const grid::Partitioner& );
+  StructuredColumns( const Grid&, const grid::Partitioner&, const util::Config& config = util::NoConfig() );
 
   operator bool() const { return valid(); }
   bool valid() const { return functionspace_; }
 
-  size_t size() const            { return functionspace_->size(); }
-  size_t ny() const            { return functionspace_->ny(); }
-  size_t nx(size_t j) const { return functionspace_->nx(j); }
-
-  double y(size_t j) const { return functionspace_->y(j); }
-  double x(size_t i, size_t j) const { return functionspace_->x(i,j); }
+  size_t size()      const { return functionspace_->size();     }
+  size_t sizeOwned() const { return functionspace_->sizeOwned(); }
+  size_t sizeHalo()  const { return functionspace_->sizeHalo(); }
 
   const grid::StructuredGrid& grid() const { return functionspace_->grid(); }
 
@@ -161,14 +291,17 @@ public:
       const std::string& name,
       array::DataType,
       const eckit::Parametrisation& = util::NoConfig() ) const;
+
   Field createField(
       const std::string& name,
       array::DataType,
       size_t levels,
       const eckit::Parametrisation& = util::NoConfig() ) const;
+
   template <typename DATATYPE> Field createField(
       const std::string& name,
       const eckit::Parametrisation& = util::NoConfig() ) const;
+
   template <typename DATATYPE> Field createField(
       const std::string& name,
       size_t levels,
@@ -180,8 +313,30 @@ public:
   void scatter( const FieldSet&, FieldSet& ) const;
   void scatter( const Field&, Field& ) const;
 
+  void haloExchange( FieldSet& ) const;
+  void haloExchange( Field& ) const;
+
   std::string checksum( const FieldSet& ) const;
   std::string checksum( const Field& ) const;
+
+  idx_t index( idx_t i, idx_t j ) const { return functionspace_->index(i,j); }
+
+  idx_t i_begin( idx_t j ) const { return functionspace_->i_begin(j); }
+  idx_t i_end  ( idx_t j ) const { return functionspace_->i_end(j);   }
+
+  idx_t i_begin_halo( idx_t j ) const { return functionspace_->i_begin_halo(j); }
+  idx_t i_end_halo  ( idx_t j ) const { return functionspace_->i_end_halo(j);   }
+
+  idx_t j_begin() const { return functionspace_->j_begin(); }
+  idx_t j_end()   const { return functionspace_->j_end();   }
+
+  idx_t j_begin_halo() const { return functionspace_->j_begin_halo(); }
+  idx_t j_end_halo()   const { return functionspace_->j_end_halo();   }
+
+  Field xy()           const { return functionspace_->xy();           }
+  Field partition()    const { return functionspace_->partition();    }
+  Field global_index() const { return functionspace_->global_index(); }
+  Field remote_index() const { return functionspace_->remote_index(); }
 
 private:
 
@@ -224,5 +379,3 @@ extern "C"
 
 } // namespace functionspace
 } // namespace atlas
-
-#endif // atlas_functionspace_functionspace__StructuredColumns_h

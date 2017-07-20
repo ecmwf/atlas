@@ -132,10 +132,29 @@ PartitionGraph::PartitionGraph( size_t values[], size_t rows, size_t displs[], s
   displs_.assign(displs,displs+rows);
   counts_.assign(counts,counts+rows);
   values_.assign(values,values+displs[rows-1]+counts[rows-1]);
+
+  for( size_t jpart=0; jpart<rows; ++jpart ) {
+    for( size_t neighbour : nearestNeighbours(jpart) ) {
+      bool found(false);
+      for( size_t nextneighbour : nearestNeighbours(neighbour) ) {
+        if( nextneighbour == jpart )
+          found = true;
+      }
+      if( not found ) {
+        values_.insert( values_.begin()+displs_[neighbour]+counts_[neighbour], jpart );
+        counts_[neighbour]++;
+        for( size_t j=neighbour+1; j<rows; ++j ) {
+          displs_[j]++;
+        }
+      }
+    }
+  }
+
   maximum_nearest_neighbours_ = 0;
   for( size_t n : counts_ ) {
     maximum_nearest_neighbours_ = std::max(n,maximum_nearest_neighbours_);
   }
+
 }
 
 size_t PartitionGraph::maximumNearestNeighbours() const {

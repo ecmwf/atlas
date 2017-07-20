@@ -8,6 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
+#include <iomanip>
+#include <functional>
+
 #include "atlas/functionspace/StructuredColumns.h"
 
 #include "eckit/utils/MD5.h"
@@ -15,10 +18,19 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/util/Checksum.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Debug.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"
+#include "atlas/parallel/Checksum.h"
+#include "atlas/parallel/HaloExchange.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/array/MakeView.h"
+
+#include "atlas/mesh/Mesh.h"
+
+#define IDX(i,j) "("<<i<<","<<j<<")"
 
 namespace atlas {
 namespace functionspace {
@@ -39,11 +51,86 @@ void set_field_metadata(const eckit::Parametrisation& config, Field& field)
   }
   field.metadata().set("global",global);
 }
+
+
+struct GridPoint
+{
+public:
+  idx_t i,j;
+  idx_t r;
+
+  GridPoint() {}
+  GridPoint(idx_t _i, idx_t _j) :
+    i(_i),
+    j(_j) {
+  }
+
+  bool operator < (const GridPoint& other) const
+  {
+    if( j <  other.j ) return true;
+    if( j == other.j ) return i < other.i;
+    return false;
+  }
+
+  bool operator == (const GridPoint& other) const
+  {
+    return ( j==other.j && i==other.i );
+  }
+};
+
+struct GridPointSet
+{
+public:
+  //idx_t r{0};
+  std::set<GridPoint> set;
+  bool insert(idx_t i, idx_t j) {
+    auto inserted = set.insert(GridPoint(i,j));
+    if( inserted.second ) {
+      const_cast<GridPoint&>(*inserted.first).r = set.size()-1;
+    }
+    return inserted.second;
+  }
+
+  size_t size() const { return set.size(); }
+
+  using const_iterator = std::set<GridPoint>::const_iterator;
+
+  const_iterator begin() const { return set.begin(); }
+  const_iterator end()   const { return set.end();   }
+};
+
+
 }
+
+void StructuredColumns::Map2to1::print(std::ostream& out) const {
+  for( idx_t j=j_min_; j<=j_max_; ++j ) {
+    out << std::setw(4) << j << " : ";
+    for( idx_t i=i_min_; i<=i_max_; ++i ) {
+      idx_t v = operator()(i,j);
+      if( v == missing() )
+        out << std::setw(4) << "X";
+      else
+        out << std::setw(4) << v;
+    }
+    out << '\n';
+  }
+}
+
+void StructuredColumns::IndexRange::print(std::ostream& out) const {
+  for( idx_t i=min_; i<=max_; ++i ) {
+    idx_t v = operator()(i);
+    if( v == missing() )
+      out << std::setw(4) << "X";
+    else
+      out << std::setw(4) << v;
+  }
+  out << '\n';
+}
+
 
 size_t StructuredColumns::config_size(const eckit::Parametrisation& config) const
 {
-  size_t size = this->size();
+  size_t size = size_halo_;
   bool global(false);
   if( config.get("global",global) )
   {
@@ -58,6 +145,38 @@ size_t StructuredColumns::config_size(const eckit::Parametrisation& config) cons
 }
 
 
+class DebugTimer
+{
+public:
+  DebugTimer(const std::string& msg): timer(msg+" done",Log::debug<Atlas>()), once_(true) {
+    Log::debug<Atlas>() << msg << std::endl;
+  }
+  bool once() const { return once_; }
+  void done() { once_=false; }
+  eckit::Timer timer;
+private:
+  bool once_;
+};
+
+
+class Timer
+{
+public:
+  Timer(const std::string& msg): timer(msg+" done",Log::info()), once_(true) {
+    Log::info() << msg << std::endl;
+  }
+  bool once() const { return once_; }
+  void done() { once_=false; }
+  eckit::Timer timer;
+private:
+  bool once_;
+};
+
+#define ATLAS_DEBUG_SCOPE_TIMER(msg) \
+  for( DebugTimer dtimer##__LINE__(Here().asString() + " " + msg); dtimer##__LINE__.once(); dtimer##__LINE__.done() )
+#define ATLAS_SCOPE_TIMER(msg) \
+  for( Timer itimer##__LINE__(msg); itimer##__LINE__.once(); itimer##__LINE__.done() )
+
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
@@ -65,13 +184,16 @@ StructuredColumns::StructuredColumns(const Grid& grid) :
   StructuredColumns::StructuredColumns(grid, grid::Partitioner() ) {
 }
 
-StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& p ) :
+StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& p, const util::Config& config ) :
   grid_(grid)
 {
+    Timer timer( "Generating StructuredColumns..." );
     if ( not grid_ )
     {
       throw eckit::BadCast("Grid is not a grid::Structured type", Here());
     }
+    const eckit::mpi::Comm& comm = parallel::mpi::comm();
+
 
     grid::Partitioner partitioner( p );
     if( not partitioner ) {
@@ -85,60 +207,369 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
       }
     }
 
-    grid::Distribution distribution(grid,partitioner);
+    grid::Distribution distribution;
+    ATLAS_DEBUG_SCOPE_TIMER( "Partitioning grid ..." ) {
+      distribution = grid::Distribution(grid,partitioner);
+    }
 
     int mpi_rank = parallel::mpi::comm().rank();
-    size_t ny( 0 );
-    size_t j_begin( std::numeric_limits<size_t>::max() ) ;
-    std::vector<size_t> i_begin( grid_.ny(), std::numeric_limits<size_t>::max() );
-    std::vector<size_t> nx( grid_.ny(), 0 );
+
+    j_begin_ = std::numeric_limits<idx_t>::max();
+    j_end_   = std::numeric_limits<idx_t>::min();
+    i_begin_.resize( grid_.ny(), std::numeric_limits<idx_t>::max() );
+    i_end_  .resize( grid_.ny(), std::numeric_limits<idx_t>::min() );
     size_t c( 0 );
+    size_t owned(0);
     for( size_t j=0; j<grid_.ny(); ++j ) {
-      bool j_used(false);
-      for( size_t i=0; i<grid_.nx(j); ++i ) {
-         if( distribution.partition(c++) == mpi_rank ) {
-           j_used = true;
-           j_begin = std::min( j_begin, j );
-           i_begin[j-j_begin] = std::min( i_begin[j-j_begin], i );
-           ++nx[j-j_begin];
+      for( size_t i=0; i<grid_.nx(j); ++i, ++c ) {
+         if( distribution.partition(c) == mpi_rank ) {
+           j_begin_    = std::min<idx_t>( j_begin_,    j   );
+           j_end_      = std::max<idx_t>( j_end_,      j+1 );
+           i_begin_[j] = std::min<idx_t>( i_begin_[j], i   );
+           i_end_  [j] = std::max<idx_t>( i_end_  [j], i+1 );
+           ++owned;
          }
       }
-      if( j_used )
-        ++ny;
     }
 
-    // export
-    ny_ = ny;
-    j_begin_ = j_begin;
-    i_begin_.assign(i_begin.begin(),i_begin.begin()+ny);
-    nx_.assign(nx.begin(),nx.begin()+ny);
-    npts_ = 0;
-    for( size_t& n : nx_ ) npts_ += n;
+    int halo = config.getInt("halo", 0);
 
-    gather_scatter_ = new parallel::GatherScatter();
 
-    std::vector<int>    part;       part.reserve(npts_);
-    std::vector<int>    remote_idx; remote_idx.reserve(npts_);
-    std::vector<gidx_t> global_idx; global_idx.reserve(npts_);
+    GridPointSet gridpoints;
+    for( idx_t j=j_begin_; j<j_end_; ++j ) {
+      for( idx_t i=i_begin_[j]; i<i_end_[j]; ++i ) {
+        gridpoints.insert(i,j);
+      }
+    }
 
+    ASSERT( gridpoints.size() == owned );
+
+    size_owned_ = gridpoints.size();
+
+    j_begin_halo_ = j_begin_ - halo;
+    j_end_halo_   = j_end_   + halo;
+    i_begin_halo_.resize(-halo,grid_.ny()-1+halo);
+    i_end_halo_  .resize(-halo,grid_.ny()-1+halo);
+
+
+    auto compute_i = [this](idx_t i, idx_t j) -> idx_t {
+      const idx_t nx = grid_.nx(j);
+      while( i >= nx) {
+        i -= nx;
+      }
+      while( i < 0 ) {
+        i += nx;
+      }
+      return i;
+    };
+
+    std::function<idx_t(idx_t)> compute_j;
+    compute_j = [this, &compute_j](idx_t j) -> idx_t {
+      if( j<0 ) {
+        j = (grid_.y(0)==90) ? -j : -j-1;
+      } else if( j>=grid_.ny() ) {
+        idx_t jlast = grid_.ny()-1;
+        j = (grid_.y(jlast)==-90) ? jlast-1 - (j-grid_.ny()) : jlast - (j-grid_.ny());
+      }
+      if( j < 0 or j >= grid_.ny() ) {
+        j = compute_j(j);
+      }
+      return j;
+    };
+
+    auto compute_x = [this, &compute_i, &compute_j](idx_t i, idx_t j) -> double {
+      idx_t ii,jj; double x;
+      jj = compute_j(j);
+      ii = compute_i(i,jj); // guaranteed between 0 and nx(jj)
+      const idx_t nx = grid_.nx(jj);
+      const double a = (ii-i)/nx;
+      x = grid_.x(ii,jj) - a*grid_.x(nx,jj);
+      return x;
+    };
+
+    auto compute_y = [this, &compute_j](idx_t j) -> double {
+      idx_t jj; double y;
+      jj = compute_j(j);
+      const idx_t ny = grid_.ny();
+      y  = ( j < 0 )           ?  90. + ( 90.-grid_.y(jj))
+         : ( j >= grid_.ny() ) ? -90. + (-90.-grid_.y(jj))
+         :                       grid_.y(jj);
+      return y;
+    };
+
+    std::vector<gidx_t> global_offsets(grid_.ny());
     size_t grid_idx=0;
-    for( size_t j=0; j<j_begin_; ++j ) {
+    for( size_t j=0; j<grid_.ny(); ++j ) {
+      global_offsets[j] = grid_idx;
       grid_idx += grid_.nx(j);
     }
-    c = 0;
-    for( size_t j=0; j<ny_; ++j ) {
-      size_t k = grid_idx + i_begin[j];
-      for( size_t i=0; i<nx_[j]; ++i, ++k ) {
-         part      .push_back( distribution.partition(k) );
-         global_idx.push_back( k+1 );
-         remote_idx.push_back( c++ );
-      }
-      grid_idx += grid_.nx(j_begin_+j);
-    }
-    gather_scatter_->setup(part.data(), remote_idx.data(), 0, global_idx.data(), npts_ );
-}
-// ----------------------------------------------------------------------------
 
+    auto compute_g = [this,&global_offsets, &compute_i, &compute_j](idx_t i, idx_t j) -> gidx_t {
+      idx_t ii,jj; gidx_t g;
+      jj = compute_j(j);
+      ii = compute_i(i,jj);
+      if( jj != j ) {
+        ASSERT( grid_.nx(jj)%2 == 0 ); // assert even number of points
+        ii = ( ii <  grid_.nx(jj)/2 ) ? ii + grid_.nx(jj)/2
+           : ( ii >= grid_.nx(jj)/2 ) ? ii - grid_.nx(jj)/2
+           :                            ii;
+      }
+      g = global_offsets[jj]+ii+1;
+      return g;
+    };
+
+    auto compute_p = [this,&global_offsets,&distribution,&compute_i,&compute_j](idx_t i, idx_t j) -> int {
+      idx_t ii,jj; int p;
+      jj = compute_j(j);
+      ii = compute_i(i,jj);
+      if( jj != j ) {
+        ASSERT( grid_.nx(jj)%2 == 0 ); // assert even number of points
+        ii = ( ii <  grid_.nx(jj)/2 ) ? ii + grid_.nx(jj)/2
+           : ( ii >= grid_.nx(jj)/2 ) ? ii - grid_.nx(jj)/2
+           :                            ii;
+      }
+      p = distribution.partition(global_offsets[jj]+ii);
+      return p;
+    };
+
+    if( atlas::Library::instance().debug() ) {
+      ATLAS_DEBUG_SCOPE_TIMER("Load imbalance") {
+        comm.barrier();
+      }
+    }
+
+    ATLAS_DEBUG_SCOPE_TIMER( "Compute mapping ..." )
+    {
+      idx_t imin =  std::numeric_limits<idx_t>::max();
+      idx_t imax = -std::numeric_limits<idx_t>::max();
+      idx_t jmin =  std::numeric_limits<idx_t>::max();
+      idx_t jmax = -std::numeric_limits<idx_t>::max();
+      for( idx_t j=j_begin_halo_; j<j_end_halo_; ++j ) {
+        i_begin_halo_(j) = imin;
+        i_end_halo_(j) = imax;
+      }
+      double eps = 1.e-12;
+      for( idx_t j=j_begin_; j<j_end_; ++j ) {
+        for( idx_t i : {i_begin_[j], i_end_[j]-1} ) {
+          double x = grid_.x(i,j);
+          for( idx_t jj=j-halo; jj<=j+halo; ++jj ) {
+            jmin = std::min(jmin,jj);
+            jmax = std::max(jmax,jj);
+            idx_t ii=-halo;
+            while( compute_x(ii,jj) < x-eps ) { ii++; }
+            idx_t i_minus_halo = ii-halo;
+            idx_t i_plus_halo  = ( x+eps > compute_x(ii,jj) ) ? ii+halo : ii+std::max(0,halo-1);
+            imin = std::min(imin,i_minus_halo);
+            imax = std::max(imax,i_plus_halo);
+            i_begin_halo_(jj) = std::min(i_begin_halo_(jj),i_minus_halo);
+            i_end_halo_(jj)   = std::max(i_end_halo_(jj),i_plus_halo+1);
+          }
+        }
+      }
+      for( idx_t j=j_begin_halo_; j<j_end_halo_; ++j ) {
+        for( idx_t i=i_begin_halo_(j); i<i_end_halo_(j); ++i ) {
+          gridpoints.insert(i,j);
+        }
+      }
+
+      ij2gp_.resize( {imin,imax}, {jmin,jmax} );
+
+      field_xy_ = Field("xy",array::make_datatype<double>(),array::make_shape(gridpoints.size(),2));
+      auto xy = array::make_view<double,2>(field_xy_);
+      for( const GridPoint& gp : gridpoints ) {
+        ij2gp_.set(gp.i,gp.j, gp.r);
+        xy(gp.r,XX) = compute_x(gp.i,gp.j);
+        if( gp.j >= 0 && gp.j < grid_.ny() ) {
+          xy(gp.r,YY) = grid_.y(gp.j);
+        }
+        else {
+          xy(gp.r,YY) = compute_y(gp.j);
+        }
+      }
+    }
+
+    size_halo_          = gridpoints.size();
+    field_partition_    = Field("partition",  array::make_datatype<int>(),array::make_shape(size_halo_));
+    field_global_index_ = Field("glb_idx",    array::make_datatype<gidx_t>(),array::make_shape(size_halo_));
+    field_remote_index_ = Field("remote_idx", array::make_datatype<idx_t>(),array::make_shape(size_halo_));
+
+    auto part       = array::make_view<int,   1>(field_partition_);
+    auto global_idx = array::make_view<gidx_t,1>(field_global_index_);
+    auto remote_idx = array::make_view<idx_t,   1>(field_remote_index_);
+
+
+    for( const GridPoint& gp : gridpoints ) {
+      bool in_domain(false);
+      if( gp.j>=0 && gp.j<grid_.ny() ) {
+        if( gp.i>=0 && gp.i<grid_.nx(gp.j) ) {
+          in_domain = true;
+          size_t k = global_offsets[gp.j] + gp.i;
+          part(gp.r) = distribution.partition( k );
+          global_idx(gp.r) = k+1;
+          remote_idx(gp.r) = gp.r;
+        }
+      }
+      if( not in_domain ) {
+        global_idx(gp.r) = compute_g(gp.i,gp.j);
+        part(gp.r) = compute_p(gp.i,gp.j);
+      }
+    }
+
+    if( atlas::Library::instance().debug() ) {
+      ATLAS_DEBUG_SCOPE_TIMER("Load imbalance") {
+        comm.barrier();
+      }
+    }
+
+    ATLAS_DEBUG_SCOPE_TIMER("Parallelisation ...")
+    {
+
+      auto build_partition_graph = [this]() -> std::unique_ptr<Mesh::PartitionGraph> {
+
+        const eckit::mpi::Comm& comm = parallel::mpi::comm();
+        const int mpi_size = int(comm.size());
+        const int mpi_rank = int(comm.rank());
+
+        auto p  = array::make_view< int, 1 >( this->partition() );
+
+        std::set<int> others_set;
+        others_set.insert(mpi_rank);
+        for( size_t i=size_owned_; i<size_halo_; ++i ) {
+          others_set.insert( p(i) );
+        }
+        std::vector<int> others(others_set.begin(),others_set.end());
+
+        eckit::mpi::Buffer<int> recv_others(mpi_size);
+
+        comm.allGatherv(others.begin(),others.end(),recv_others);
+
+        std::vector<size_t> counts(recv_others.counts.begin(),recv_others.counts.end());
+        std::vector<size_t> displs(recv_others.displs.begin(),recv_others.displs.end());
+        std::vector<size_t> values(recv_others.buffer.begin(),recv_others.buffer.end());
+        return std::unique_ptr<Mesh::PartitionGraph>( new Mesh::PartitionGraph( values.data(), mpi_size, displs.data(), counts.data() ) );
+      };
+
+      std::unique_ptr<Mesh::PartitionGraph> graph_ptr;
+      ATLAS_DEBUG_SCOPE_TIMER( "Building partition graph..." ) {
+        graph_ptr = build_partition_graph();
+      }
+      const Mesh::PartitionGraph& graph = *graph_ptr;
+
+      ATLAS_DEBUG_SCOPE_TIMER( "Setup parallel fields..." )
+      {
+          auto p  = array::make_view< int, 1 >( partition() );
+          auto g  = array::make_view< gidx_t, 1 >( global_index() );
+
+          const eckit::mpi::Comm& comm = parallel::mpi::comm();
+          const int mpi_size = int(comm.size());
+          const int mpi_rank = int(comm.rank());
+
+          auto neighbours = graph.nearestNeighbours(mpi_rank);
+          std::map<int,size_t> part_to_neighbour;
+          for( size_t j=0; j<neighbours.size(); ++j ) {
+            part_to_neighbour[ neighbours[j] ] = j;
+          }
+          std::vector< size_t > halo_per_neighbour(neighbours.size(),0);
+          for( size_t i=size_owned_; i<size_halo_; ++i ) {
+            halo_per_neighbour[ part_to_neighbour[p(i)] ]++;
+          }
+
+          std::vector< std::vector<gidx_t> > g_per_neighbour(neighbours.size());
+          for( size_t j=0; j<neighbours.size(); ++j ) {
+            g_per_neighbour[j].reserve( halo_per_neighbour[j] );
+          }
+          for( size_t j=size_owned_; j<size_halo_; ++j ) {
+            g_per_neighbour[ part_to_neighbour[p(j)] ].push_back( g(j) );
+          }
+          std::vector< std::vector<size_t> > r_per_neighbour(neighbours.size());
+          for( size_t j=0; j<neighbours.size(); ++j ) {
+            r_per_neighbour[j].resize( halo_per_neighbour[j] );
+          }
+
+          std::vector<eckit::mpi::Request> send_requests(neighbours.size());
+          std::vector<eckit::mpi::Request> recv_requests(neighbours.size());
+
+          std::vector<size_t> recv_size(neighbours.size());
+          int tag = 0;
+          for( size_t j=0; j<neighbours.size(); ++j ) {
+            send_requests[j] = comm.iSend( g_per_neighbour[j].size(), neighbours[j], tag );
+            recv_requests[j] = comm.iReceive( recv_size[j],           neighbours[j], tag );
+          }
+
+          for( size_t j=0; j<neighbours.size(); ++j ) {
+            comm.wait(send_requests[j]);
+          }
+
+          for( size_t j=0; j<neighbours.size(); ++j ) {
+            comm.wait(recv_requests[j]);
+          }
+
+          std::vector< std::vector<gidx_t> > recv_g_per_neighbour(neighbours.size());
+          for( size_t j=0; j<neighbours.size(); ++j ) {
+            recv_g_per_neighbour[j].resize(recv_size[j]);
+
+            send_requests[j] = comm.iSend( g_per_neighbour[j].data(), g_per_neighbour[j].size(), neighbours[j], tag );
+            recv_requests[j] = comm.iReceive( recv_g_per_neighbour[j].data(), recv_g_per_neighbour[j].size(), neighbours[j], tag );
+          }
+
+          std::vector< std::vector<size_t> > send_r_per_neighbour(neighbours.size());
+          std::map<gidx_t,size_t> g_to_r;
+          for( size_t j=0; j<size_owned_; ++j ) {
+            g_to_r[ g(j) ] = j;
+          }
+          for( size_t j=0; j<neighbours.size(); ++j ) {
+            send_r_per_neighbour[j].reserve(recv_size[j]);
+
+            comm.wait(recv_requests[j]); // wait for recv_g_per_neighbour[j]
+            for( gidx_t gidx : recv_g_per_neighbour[j] ) {
+              send_r_per_neighbour[j].push_back( g_to_r[gidx] );
+            }
+
+          }
+
+          for( size_t j=0; j<neighbours.size(); ++j ) {
+            comm.wait( send_requests[j]);
+            send_requests[j] = comm.iSend( send_r_per_neighbour[j].data(), send_r_per_neighbour[j].size(), neighbours[j], tag );
+            recv_requests[j] = comm.iReceive( r_per_neighbour[j].data(), r_per_neighbour[j].size(), neighbours[j], tag );
+          }
+
+          for( size_t j=0; j<neighbours.size(); ++j ) {
+            comm.wait( recv_requests[j]);
+          }
+
+          std::vector<size_t> counters(neighbours.size(),0);
+          for( size_t j=size_owned_; j<size_halo_; ++j ) {
+            size_t neighbour = part_to_neighbour[p(j)];
+            remote_idx(j) = r_per_neighbour[ neighbour ][ counters[neighbour]++ ];
+          }
+
+          for( size_t j=0; j<neighbours.size(); ++j ) {
+            comm.wait( send_requests[j]);
+          }
+      }
+
+      ATLAS_DEBUG_SCOPE_TIMER( "Setup gather_scatter..." )
+      {
+        gather_scatter_ = new parallel::GatherScatter();
+        gather_scatter_->setup(part.data(), remote_idx.data(), 0, global_idx.data(), size_owned_ );
+      }
+
+      ATLAS_DEBUG_SCOPE_TIMER( "Setup checksum..." )
+      {
+        checksum_ = new parallel::Checksum();
+        checksum_->setup(part.data(), remote_idx.data(), 0, global_idx.data(), size_owned_ );
+      }
+
+      ATLAS_DEBUG_SCOPE_TIMER( "Setup halo exchange..." )
+      {
+        halo_exchange_ = new parallel::HaloExchange();
+        halo_exchange_->setup(part.data(),remote_idx.data(),0,size_halo_);
+      }
+    }
+
+}
+
+// ----------------------------------------------------------------------------
 
 
 // ----------------------------------------------------------------------------
@@ -313,59 +744,120 @@ void StructuredColumns::scatter(
 }
 // ----------------------------------------------------------------------------
 
+namespace {
 
-
-
-
-
-// ----------------------------------------------------------------------------
-// Retrieve Global index from Local one
-// ----------------------------------------------------------------------------
-double StructuredColumns::y(
-    size_t j) const
+template <typename T>
+array::LocalView<T,3> make_leveled_view(const Field &field)
 {
-  return grid_.y(j+j_begin_);
+  if( field.has_levels() )
+    return array::LocalView<T,3> ( array::make_storageview<T>(field).data(),
+                                   array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
+  else
+    return array::LocalView<T,3> ( array::make_storageview<T>(field).data(),
+                                   array::make_shape(field.shape(0),1,field.stride(0)) );
 }
-// ----------------------------------------------------------------------------
 
-
-
-// ----------------------------------------------------------------------------
-// Retrieve Global index from Local one
-// ----------------------------------------------------------------------------
-double StructuredColumns::x(
-    size_t i,
-    size_t j) const
+template <typename T>
+std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field )
 {
-  return grid_.x(i+i_begin_[j],j+j_begin_);
+  array::LocalView<T,3> values = make_leveled_view<T>(field);
+  array::ArrayT<T> surface_field( values.shape(0), values.shape(2) );
+  array::ArrayView<T,2> surface = array::make_view<T,2>(surface_field);
+  const size_t npts = values.shape(0);
+  atlas_omp_for( size_t n=0; n<npts; ++n ) {
+    for( size_t j=0; j<surface.shape(1); ++j )
+    {
+      surface(n,j) = 0.;
+      for( size_t l=0; l<values.shape(1);++l )
+        surface(n,j) += values(n,l,j);
+    }
+  }
+  return checksum.execute( surface.data(), surface_field.stride(0) );
 }
-// ----------------------------------------------------------------------------
+}
 
-// ----------------------------------------------------------------------------
-// Checksum FieldSet
-// ----------------------------------------------------------------------------
-std::string StructuredColumns::checksum(
-    const FieldSet& fieldset) const
+std::string StructuredColumns::checksum( const FieldSet& fieldset ) const {
+  eckit::MD5 md5;
+  for( size_t f=0; f<fieldset.size(); ++f ) {
+    const Field& field=fieldset[f];
+    if     ( field.datatype() == array::DataType::kind<int>() )
+      md5 << checksum_3d_field<int>(*checksum_,field);
+    else if( field.datatype() == array::DataType::kind<long>() )
+      md5 << checksum_3d_field<long>(*checksum_,field);
+    else if( field.datatype() == array::DataType::kind<float>() )
+      md5 << checksum_3d_field<float>(*checksum_,field);
+    else if( field.datatype() == array::DataType::kind<double>() )
+      md5 << checksum_3d_field<double>(*checksum_,field);
+    else throw eckit::Exception("datatype not supported",Here());
+  }
+  return md5;
+}
+std::string StructuredColumns::checksum( const Field& field ) const {
+  FieldSet fieldset;
+  fieldset.add(field);
+  return checksum(fieldset);
+}
+
+
+
+
+namespace {
+template<int RANK>
+void dispatch_haloExchange( const Field& field, const parallel::HaloExchange& halo_exchange )
 {
-    eckit::MD5 md5;
-    NOTIMP;
-    return md5;
+  if     ( field.datatype() == array::DataType::kind<int>() ) {
+    array::ArrayView<int,RANK> view = array::make_view<int,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else if( field.datatype() == array::DataType::kind<long>() ) {
+    array::ArrayView<long,RANK> view = array::make_view<long,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else if( field.datatype() == array::DataType::kind<float>() ) {
+    array::ArrayView<float,RANK> view = array::make_view<float,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else if( field.datatype() == array::DataType::kind<double>() ) {
+    array::ArrayView<double,RANK> view = array::make_view<double,RANK>(field);
+    halo_exchange.execute( view );
+  }
+  else throw eckit::Exception("datatype not supported",Here());
 }
-// ----------------------------------------------------------------------------
+}
 
-
-
-// ----------------------------------------------------------------------------
-// Checksum Field
-// ----------------------------------------------------------------------------
-std::string StructuredColumns::checksum(
-    const Field& field) const
+void StructuredColumns::haloExchange( FieldSet& fieldset ) const
 {
-    FieldSet fieldset;
-    fieldset.add(field);
-    return checksum(fieldset);
+  for( size_t f=0; f<fieldset.size(); ++f ) {
+    const Field& field = fieldset[f];
+    switch( field.rank() ) {
+      case 1:
+        dispatch_haloExchange<1>(field,*halo_exchange_);
+        break;
+      case 2:
+        dispatch_haloExchange<2>(field,*halo_exchange_);
+        break;
+      case 3:
+        dispatch_haloExchange<3>(field,*halo_exchange_);
+        break;
+      case 4:
+        dispatch_haloExchange<4>(field,*halo_exchange_);
+        break;
+      default:
+        throw eckit::Exception("Rank not supported", Here());
+        break;
+    }
+  }
 }
-// ----------------------------------------------------------------------------
+
+void StructuredColumns::haloExchange( Field& field ) const
+{
+  FieldSet fieldset;
+  fieldset.add(field);
+  haloExchange(fieldset);
+}
+
+
+
 
 } // namespace detail
 
@@ -386,8 +878,8 @@ StructuredColumns::StructuredColumns( const Grid& grid ) :
   functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
 }
 
-StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& partitioner ) :
-  FunctionSpace( new detail::StructuredColumns(grid,partitioner) ),
+StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& partitioner, const util::Config& config ) :
+  FunctionSpace( new detail::StructuredColumns(grid,partitioner,config) ),
   functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
 }
 
@@ -418,6 +910,14 @@ void StructuredColumns::scatter( const FieldSet& global, FieldSet& local ) const
 
 void StructuredColumns::scatter( const Field& global, Field& local ) const {
   functionspace_->scatter(global,local);
+}
+
+void StructuredColumns::haloExchange( FieldSet& fields ) const {
+  functionspace_->haloExchange( fields );
+}
+
+void StructuredColumns::haloExchange( Field& field ) const {
+  functionspace_->haloExchange( field );
 }
 
 std::string StructuredColumns::checksum( const FieldSet& fieldset ) const {
