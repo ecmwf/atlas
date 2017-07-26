@@ -935,10 +935,10 @@ std::string StructuredColumns::checksum( const Field& field) const {
 extern "C"
 {
 
-const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid)
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid, const util::Config* config)
 {
   ATLAS_ERROR_HANDLING(
-    return new detail::StructuredColumns( Grid(grid) );
+    return new detail::StructuredColumns( Grid(grid), grid::Partitioner(), *config );
   );
   return 0;
 }
@@ -1007,6 +1007,28 @@ void atlas__functionspace__StructuredColumns__scatter (const detail::StructuredC
   );
 }
 
+void atlas__fs__StructuredColumns__halo_exchange_field (const detail::StructuredColumns* This, const field::FieldImpl* field)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(field);
+    Field f(field);
+    This->haloExchange( f );
+  );
+}
+
+void atlas__fs__StructuredColumns__halo_exchange_fieldset (const detail::StructuredColumns* This, const field::FieldSetImpl* fieldset)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(fieldset);
+    FieldSet f(fieldset);
+    This->haloExchange( f );
+  );
+}
+
+
+
 void atlas__fs__StructuredColumns__checksum_fieldset(const detail::StructuredColumns* This, const field::FieldSetImpl* fieldset, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
@@ -1029,6 +1051,39 @@ void atlas__fs__StructuredColumns__checksum_field(const detail::StructuredColumn
     checksum = new char[size+1]; allocated = true;
     strcpy(checksum,checksum_str.c_str());
   );
+}
+
+void atlas__fs__StructuredColumns__index_host (const detail::StructuredColumns* This, int* &data, int &i_min, int &i_max, int &j_min, int &j_max)
+{
+  ASSERT(This);
+  ATLAS_ERROR_HANDLING(
+    data  = const_cast<detail::StructuredColumns*>(This)->ij2gp_.data_.data();
+    i_min = This->ij2gp_.i_min_+1;
+    i_max = This->ij2gp_.i_max_+1;
+    j_min = This->ij2gp_.j_min_+1;
+    j_max = This->ij2gp_.j_max_+1;
+  );
+}
+
+int atlas__fs__StructuredColumns__j_begin (const detail::StructuredColumns* This) { return This->j_begin()+1; }
+int atlas__fs__StructuredColumns__j_end   (const detail::StructuredColumns* This) { return This->j_end();     }
+int atlas__fs__StructuredColumns__i_begin (const detail::StructuredColumns* This, int j) { return This->i_begin(j-1)+1; }
+int atlas__fs__StructuredColumns__i_end   (const detail::StructuredColumns* This, int j) { return This->i_end(j-1);     }
+int atlas__fs__StructuredColumns__j_begin_halo (const detail::StructuredColumns* This) { return This->j_begin_halo()+1; }
+int atlas__fs__StructuredColumns__j_end_halo   (const detail::StructuredColumns* This) { return This->j_end_halo();     }
+int atlas__fs__StructuredColumns__i_begin_halo (const detail::StructuredColumns* This, int j) { return This->i_begin_halo(j-1)+1; }
+int atlas__fs__StructuredColumns__i_end_halo   (const detail::StructuredColumns* This, int j) { return This->i_end_halo(j-1);     }
+
+field::FieldImpl* atlas__fs__StructuredColumns__xy (const detail::StructuredColumns* This) {
+  return This->xy().get();
+}
+
+field::FieldImpl* atlas__fs__StructuredColumns__partition (const detail::StructuredColumns* This) {
+  return This->partition().get();
+}
+
+field::FieldImpl* atlas__fs__StructuredColumns__global_index (const detail::StructuredColumns* This) {
+  return This->global_index().get();
 }
 
 }

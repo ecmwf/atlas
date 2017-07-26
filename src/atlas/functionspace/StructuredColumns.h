@@ -153,7 +153,7 @@ private: // data
       j_min_ = j_range[0];
       j_max_ = j_range[1];
       j_stride_ = (i_max_-i_min_+1);
-      data_.resize( (i_max_-i_min_+1)*(j_max_-j_min_+1), missing()-1 );
+      data_.resize( (i_max_-i_min_+1)*(j_max_-j_min_+1), missing()+1 );
     }
 
     std::vector<idx_t> data_;
@@ -171,7 +171,7 @@ private: // data
        data_[ (i-i_min_) + (j-j_min_)*j_stride_ ] = n+1;
     }
 
-    idx_t missing() const { return std::numeric_limits<idx_t>::max(); }
+    idx_t missing() const { return std::numeric_limits<idx_t>::max()-1; }
 
   private:
 
@@ -214,14 +214,14 @@ private: // data
        return data_[ i-min_ ];
     }
 
-    idx_t missing() const { return std::numeric_limits<idx_t>::max(); }
+    idx_t missing() const { return std::numeric_limits<idx_t>::max()-1; }
 
     size_t size() const { return data_.size(); }
 
     void resize( idx_t min, idx_t max ) {
       min_ = min;
       max_ = max;
-      data_.resize( max_-min_+1, missing()-1 );
+      data_.resize( max_-min_+1, missing()+1 );
     }
 
   private:
@@ -235,7 +235,6 @@ private: // data
 
   };
 
-  Map2to1 ij2gp_;
   idx_t j_begin_;
   idx_t j_end_;
   std::vector<idx_t> i_begin_;
@@ -244,6 +243,9 @@ private: // data
   idx_t j_end_halo_;
   IndexRange i_begin_halo_;
   IndexRange i_end_halo_;
+
+public:
+  Map2to1 ij2gp_;
 };
 
 // -------------------------------------------------------------------
@@ -367,7 +369,7 @@ inline Field StructuredColumns::createField(
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid);
+  const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid, const util::Config* config );
   void atlas__functionspace__StructuredColumns__delete (detail::StructuredColumns* This);
   field::FieldImpl* atlas__fs__StructuredColumns__create_field_name_kind (const detail::StructuredColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
   field::FieldImpl* atlas__fs__StructuredColumns__create_field_name_kind_lev (const detail::StructuredColumns* This, const char* name, int kind, int levels, const eckit::Parametrisation* options);
@@ -375,6 +377,22 @@ extern "C"
   void atlas__functionspace__StructuredColumns__scatter (const detail::StructuredColumns* This, const field::FieldImpl* global, field::FieldImpl* local);
   void atlas__fs__StructuredColumns__checksum_fieldset(const detail::StructuredColumns* This, const field::FieldSetImpl* fieldset, char* &checksum, int &size, int &allocated);
   void atlas__fs__StructuredColumns__checksum_field(const detail::StructuredColumns* This, const field::FieldImpl* field, char* &checksum, int &size, int &allocated);
+  void atlas__fs__StructuredColumns__halo_exchange_field (const detail::StructuredColumns* This, const field::FieldImpl* field);
+  void atlas__fs__StructuredColumns__halo_exchange_fieldset (const detail::StructuredColumns* This, const field::FieldSetImpl* fieldset);
+  void atlas__fs__StructuredColumns__index_host (const detail::StructuredColumns* This, int* &data, int &i_min, int &i_max, int &j_min, int &j_max);
+  int atlas__fs__StructuredColumns__j_begin (const detail::StructuredColumns* This);
+  int atlas__fs__StructuredColumns__j_end   (const detail::StructuredColumns* This);
+  int atlas__fs__StructuredColumns__i_begin (const detail::StructuredColumns* This, int j);
+  int atlas__fs__StructuredColumns__i_end   (const detail::StructuredColumns* This, int j);
+  int atlas__fs__StructuredColumns__j_begin_halo (const detail::StructuredColumns* This);
+  int atlas__fs__StructuredColumns__j_end_halo   (const detail::StructuredColumns* This);
+  int atlas__fs__StructuredColumns__i_begin_halo (const detail::StructuredColumns* This, int j);
+  int atlas__fs__StructuredColumns__i_end_halo   (const detail::StructuredColumns* This, int j);
+
+  field::FieldImpl* atlas__fs__StructuredColumns__xy (const detail::StructuredColumns* This);
+  field::FieldImpl* atlas__fs__StructuredColumns__partition (const detail::StructuredColumns* This);
+  field::FieldImpl* atlas__fs__StructuredColumns__global_index (const detail::StructuredColumns* This);
+
 }
 
 } // namespace functionspace

@@ -450,6 +450,45 @@ call grid%final()
 
 END_TEST
 
+TEST( test_structuredcolumns )
+type(atlas_StructuredGrid) :: grid
+type(atlas_functionspace_StructuredColumns) :: fs
+integer :: i, j
+character(len=10) str
+
+type(atlas_Field) field
+type(atlas_Field) field_xy
+real(8), pointer :: xy(:,:), x(:)
+integer, parameter :: XX=1
+
+grid = atlas_StructuredGrid("O8")
+fs = atlas_functionspace_StructuredColumns(grid,halo=2)
+
+field = fs%create_field("field",kind=atlas_real(8))
+field_xy = fs%xy()
+call field%host_data(x)
+call field_xy%host_data(xy)
+
+do j=fs%j_begin_halo(),fs%j_end_halo()
+  write(str,'(I4,A)') j, ' : '
+  call atlas_log%info(str,newl=.false.)
+  do i=fs%i_begin_halo(j),fs%i_end_halo(j)
+    write(str,'(I4)') fs%index(i,j)
+    call atlas_log%info(str,newl=.false.)
+    x(fs%index(i,j)) = xy(XX,fs%index(i,j))
+  enddo
+  call atlas_log%info("",newl=.true.)
+enddo
+
+call fs%halo_exchange(field)
+
+
+call field%final()
+call field_xy%final()
+call fs%final()
+call grid%final()
+END_TEST
+
 
 ! -----------------------------------------------------------------------------
 
