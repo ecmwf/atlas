@@ -30,5 +30,6 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
   SOURCES  test_structuredcolumns.cc
   LIBS     atlas
   MPI 5
+  CONDITION ECKIT_HAVE_MPI
 )
 
