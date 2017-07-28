@@ -6,12 +6,10 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-add_subdirectory( fortran_submodule )
-add_subdirectory( fortran_modinc )
-add_subdirectory( fortran_object )
-add_subdirectory( example_fortran )
-
-add_subdirectory( interpolation )
-add_subdirectory( interpolation-fortran )
-add_subdirectory( grid_distribution )
+ecbuild_add_executable(
+    TARGET  atlas-interpolation-fortran
+    SOURCES atlas-interpolation-fortran.F90
+    LIBS    atlas_f
+    NOINSTALL
+)
 

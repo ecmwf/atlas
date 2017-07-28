@@ -137,6 +137,8 @@ public:
       return os;
     }
 
+    const impl_t* get() const { return impl_.get(); }
+
 private:
 
     eckit::SharedPtr<const impl_t> impl_;

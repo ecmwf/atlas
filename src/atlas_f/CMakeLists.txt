@@ -106,6 +106,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Structured.
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Distribution.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Partitioner.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshIntf.h
     MODULE    atlas_mesh_c_binding
     OUTPUT    atlas_mesh_c_binding.f90 )
@@ -184,6 +185,7 @@ ecbuild_add_library( TARGET atlas_f
         field/atlas_State_module.F90
         grid/atlas_Grid_module.F90
         grid/atlas_GridDistribution_module.F90
+        grid/atlas_Partitioner_module.F90
         mesh/atlas_MeshGenerator_module.F90
         mesh/atlas_Mesh_module.F90
         mesh/atlas_mesh_Nodes_module.F90

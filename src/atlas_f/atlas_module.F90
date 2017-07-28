@@ -115,6 +115,9 @@ use atlas_kinds_module, only: &
     & ATLAS_KIND_IDX
 use atlas_GridDistribution_module, only: &
     & atlas_GridDistribution
+use atlas_Partitioner_module, only: &
+    & atlas_Partitioner, &
+    & atlas_MatchingMeshPartitioner
 use atlas_MeshGenerator_module, only: &
     & atlas_MeshGenerator
 use atlas_Method_module, only: &
