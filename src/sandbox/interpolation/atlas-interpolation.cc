@@ -48,13 +48,13 @@ public:
         add_option(new SimpleOption<std::string>("target-gridname",  "target gridname"));
 
         add_option(new SimpleOption<std::string>("source-mesh-partitioner",           "source mesh partitioner (equal_regions (default), ...)"));
-        add_option(new SimpleOption<bool>       ("source-mesh-generator",             "source mesh generator (default structured)"));
+        add_option(new SimpleOption<std::string>       ("source-mesh-generator",             "source mesh generator (default structured)"));
         add_option(new SimpleOption<bool>       ("source-mesh-generator-triangulate", "source mesh generator triangulate option (default false)"));
         add_option(new SimpleOption<bool>       ("source-mesh-generator-angle",       "source mesh generator angle option (default false)"));
         add_option(new SimpleOption<size_t>     ("source-mesh-halo",                  "source mesh halo size (default 1)"));
 
         add_option(new SimpleOption<std::string>("target-mesh-partitioner",           "target mesh partitioner (polygon, brute_force)"));
-        add_option(new SimpleOption<bool>       ("target-mesh-generator",             "target mesh generator (default structured)"));
+        add_option(new SimpleOption<std::string> ("target-mesh-generator",             "target mesh generator (default structured)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator-triangulate", "target mesh generator triangulate option (default false)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator-angle",       "target mesh generator angle option (default false)"));
 
