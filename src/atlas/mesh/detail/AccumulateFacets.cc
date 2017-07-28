@@ -35,6 +35,7 @@ void accumulate_facets(
   {
     const mesh::Elements& elements = cells.elements(t);
     const mesh::BlockConnectivity& elem_nodes = elements.node_connectivity();
+    auto patch = elements.view< int, 1 >(elements.field("patch"));
 
     size_t nb_elems = elements.size();
     size_t nb_nodes_in_facet = 2;
@@ -74,6 +75,7 @@ void accumulate_facets(
 
     for (size_t e = 0; e < nb_elems; ++e)
     {
+      if( patch(e) ) continue;
       for (size_t f=0; f<nb_facets_in_elem; ++f)
       {
         bool found_face = false;

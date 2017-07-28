@@ -227,8 +227,9 @@ void Meshgen2Gmsh::execute(const Args& args)
       build_median_dual_mesh(mesh);
   }
 
-  if( stats )
+  if( stats ) {
     build_statistics(mesh);
+  }
 
   bool torus=false;
   args.get("torus",torus);

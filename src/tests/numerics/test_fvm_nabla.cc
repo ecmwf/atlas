@@ -29,6 +29,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
+#include "atlas/grid/Partitioner.h"
 
 #include "tests/AtlasFixture.h"
 
@@ -145,7 +146,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
 //  const double radius = 1.;
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
-  Mesh mesh = meshgenerator.generate(grid);
+  Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla( fvm );
 
@@ -220,7 +221,7 @@ BOOST_AUTO_TEST_CASE( test_div )
 //  const double radius = 1.;
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
-  Mesh mesh( meshgenerator.generate(grid) );
+  Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla(fvm);
 
@@ -250,7 +251,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
 //  const double radius = 1.;
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
-  Mesh mesh( meshgenerator.generate(grid) );
+  Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla( fvm );
 
@@ -319,7 +320,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
 //  const double radius = 1.;
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
-  Mesh mesh( meshgenerator.generate(grid) );
+  Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
   fvm::Method fvm(mesh, util::Config("radius",radius));
   Nabla nabla( fvm );
 
