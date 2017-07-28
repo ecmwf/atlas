@@ -129,7 +129,7 @@ void StructuredMeshGenerator::configure_defaults()
   options.set( "include_pole", false );
 
   // This option sets the part that will be generated
-  options.set( "patch_pole", false );
+  options.set( "patch_pole", true );
 
   // This option disregards multiple poles in grid (e.g. lonlat up to poles) and connects elements
   // to the first node only. Note this option will only be looked at in case other option
