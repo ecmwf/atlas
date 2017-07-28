@@ -574,6 +574,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
 
         add_triag = false;
 
+#ifdef PARTITIONING_BEFORE_ATLAS_0_12
         int cnt_mypart = 0;
         int np[3] = {pN1, pN2, pS1};
         for( int j=0; j<3; ++j ) {
@@ -603,6 +604,18 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
             }
           }
         }
+#else
+        if( 0.5*(yN+yS) > 1e-6 )
+        {
+          if( pN1 == mypart )
+            add_triag = true;
+        }
+        else
+        {
+          if( pS1 == mypart )
+            add_triag = true;
+        }
+#endif
         if (add_triag)
         {
           ++region.ntriags;
@@ -640,7 +653,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
 
         add_triag = false;
 
-
+#ifdef PARTITIONING_BEFORE_ATLAS_0_12
         int cnt_mypart = 0;
         int np[3] = {pN1, pS1, pS2};
         for( int j=0; j<3; ++j ) {
@@ -676,6 +689,18 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
             }
           }
         }
+#else
+        if( 0.5*(yN+yS) > 1e-6 )
+        {
+          if( pN1 == mypart )
+            add_triag = true;
+        }
+        else
+        {
+          if( pS2 == mypart )
+            add_triag = true;
+        }
+#endif
 
         if (add_triag)
         {
