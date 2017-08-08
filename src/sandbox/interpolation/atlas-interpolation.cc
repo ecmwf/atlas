@@ -9,6 +9,7 @@
  */
 
 
+#include <memory>
 #include "eckit/linalg/LinearAlgebra.h"
 
 #include "atlas/field.h"
@@ -145,20 +146,20 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     Log::info() << "Computing forward interpolator" << std::endl;
 
-    interpolation::method::Method::Ptr interpolator_forward(interpolation::method::MethodFactory::build(interpolator_option, args));
+    std::unique_ptr<interpolation::method::Method> interpolator_forward(interpolation::method::MethodFactory::build(interpolator_option, args));
 
-    interpolator_forward->setup(src.mesh(), tgt.mesh());
+    interpolator_forward->setup(src_functionspace, tgt_functionspace);
 
     bool with_backward = false;
     args.get("with-backward",with_backward);
-    interpolation::method::Method::Ptr interpolator_backward;
+    std::unique_ptr<interpolation::method::Method> interpolator_backward;
 
     if( with_backward ) {
       Log::info() << "Computing backward interpolator" << std::endl;
 
-      interpolator_backward.reset( interpolation::method::MethodFactory::build(interpolator_option, args));
+      interpolator_backward = std::unique_ptr<interpolation::method::Method>(interpolation::method::MethodFactory::build(interpolator_option, args));
 
-      interpolator_backward->setup(tgt.mesh(), src.mesh());
+      interpolator_backward->setup(tgt_functionspace, src_functionspace);
     }
 
 

@@ -13,6 +13,7 @@
 
 #include <map>
 #include "eckit/exception/Exceptions.h"
+#include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Vector.h"
 #include "eckit/log/Timer.h"
 #include "eckit/thread/AutoLock.h"
@@ -21,7 +22,6 @@
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/runtime/Log.h"
-
 
 namespace atlas {
 namespace interpolation {
@@ -116,7 +116,7 @@ void Method::execute(const Field& fieldSource, Field& fieldTarget) {
 }
 
 
-void Method::normalise(Method::Triplets& triplets) {
+void Method::normalise(Triplets& triplets) {
     // sum all calculated weights for normalisation
     double sum = 0.0;
 

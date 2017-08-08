@@ -22,11 +22,13 @@
 #include "atlas/interpolation/element/Triag3D.h"
 #include "atlas/interpolation/element/Triag2D.h"
 #include "atlas/interpolation/method/Ray.h"
+#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/CoordinateEnums.h"
 
 
 namespace atlas {
@@ -46,29 +48,34 @@ static const double parametricEpsilon = 1e-16;
 
 }  // (anonymous namespace)
 
+void FiniteElement::setup(FunctionSpace& source, FunctionSpace& target) {
+    functionspace::NodeColumns src = source;
+    functionspace::NodeColumns tgt = target;
+    ASSERT(src);
+    ASSERT(tgt);
 
-void FiniteElement::setup(Mesh& meshSource, Mesh& meshTarget) {
-    using namespace atlas;
+    Mesh meshSource = src.mesh();
+    Mesh meshTarget = tgt.mesh();
+
     eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::FiniteElement::setup()");
 
 
     // generate 3D point coordinates
-    mesh::actions::BuildXYZField("xyz")(meshSource);
-    mesh::actions::BuildXYZField("xyz")(meshTarget);
+    Field source_xyz = mesh::actions::BuildXYZField("xyz")(meshSource);
+    Field target_xyz = mesh::actions::BuildXYZField("xyz")(meshTarget);
 
 
     // generate barycenters of each triangle & insert them on a kd-tree
-    mesh::actions::BuildCellCentres()(meshSource);
+    Field cell_centres = mesh::actions::BuildCellCentres("centre")(meshSource);
 
-    eckit::ScopedPtr<ElemIndex3> eTree(create_element_centre_index(meshSource));
-
+    eckit::ScopedPtr<ElemIndex3> eTree( create_element_kdtree( cell_centres ) );
 
     const mesh::Nodes  &i_nodes  = meshSource.nodes();
 
-    icoords_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(i_nodes.field( "xyz" ))          ) );
-    ilonlat_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(i_nodes.lonlat())                ) );
-    ocoords_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(meshTarget.nodes().field("xyz")) ) );
-    olonlat_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(meshTarget.nodes().lonlat())     ) );
+    icoords_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(source_xyz)) );
+    ilonlat_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(i_nodes.lonlat()) ) );
+    ocoords_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(target_xyz) ) );
+    olonlat_.reset( new array::ArrayView<double,2>( array::make_view<double,2>(meshTarget.nodes().lonlat()) ) );
 
     connectivity_ = &meshSource.cells().node_connectivity();
 
@@ -108,7 +115,7 @@ void FiniteElement::setup(Mesh& meshSource, Mesh& meshTarget) {
                 Log::debug<Atlas>() << "    " << eckit::BigNum(ip)<<" points completed (at " << rate << " points/s)..." << std::endl;
             }
 
-            Point p ( (*ocoords_)[ip].data() ); // lookup point
+            PointXYZ p ( (*ocoords_)[ip].data() ); // lookup point
 
             size_t kpts = 1;
             bool success = false;
@@ -237,7 +244,7 @@ Method::Triplets FiniteElement::projectPointToElements(
                 }
             }
             if(Log::debug<Atlas>()) {
-                failures_log << "Failed to project point " << Point((*ocoords_)[ip].data())
+                failures_log << "Failed to project point " << PointXYZ((*ocoords_)[ip].data())
                              << " to " << element::Triag2D((*ilonlat_)[idx[0]].data(),
                                                            (*ilonlat_)[idx[1]].data(),
                                                            (*ilonlat_)[idx[2]].data())
@@ -300,7 +307,7 @@ Method::Triplets FiniteElement::projectPointToElements(
                 }
 
                 if( Log::debug<Atlas>() ) {
-                    failures_log << "Failed to project point " << Point((*ocoords_)[ip].data()) << " to " << quad2d << " with " << is << '\n';
+                    failures_log << "Failed to project point " << PointXYZ((*ocoords_)[ip].data()) << " to " << quad2d << " with " << is << '\n';
                 }
             }
 

@@ -23,9 +23,13 @@ namespace actions {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void BuildCellCentres::operator()( Mesh& mesh ) const
+BuildCellCentres::BuildCellCentres( const std::string& field_name ) :
+    field_name_(field_name) {
+}
+
+Field& BuildCellCentres::operator()( Mesh& mesh ) const
 {
-    if (!mesh.cells().has_field("centre")) {
+    if (!mesh.cells().has_field(field_name_)) {
 
         mesh::Nodes& nodes = mesh.nodes();
         array::ArrayView<double, 2> coords = array::make_view<double, 2>( nodes.field("xyz") );
@@ -38,7 +42,7 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
         size_t nb_cells = mesh.cells().size();
         array::ArrayView<double, 2> centroids = array::make_view<double, 2>(
                     mesh.cells().add(
-                        Field("centre", array::make_datatype<double>(), array::make_shape(nb_cells,3))) );
+                        Field(field_name_, array::make_datatype<double>(), array::make_shape(nb_cells,3))) );
         const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
 
         for (size_t e=0; e<nb_cells; ++e)
@@ -68,6 +72,7 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
             }
         }
     }
+    return mesh.cells().field(field_name_);
 }
 
 } // namespace actions

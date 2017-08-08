@@ -26,15 +26,15 @@ public:
     KNearestNeighbours(const Config& config);
     virtual ~KNearestNeighbours() {}
 
-protected:
-
     /**
      * @brief Create an interpolant sparse matrix relating two (pre-partitioned) meshes,
      * using the k-nearest neighbours method
-     * @param meshSource mesh containing source elements
-     * @param meshTarget mesh containing target points
+     * @param source functionspace containing source elements
+     * @param target functionspace containing target points
      */
-    void setup(Mesh& meshSource, Mesh& meshTarget);
+    virtual void setup(FunctionSpace& source, FunctionSpace& target) override;
+
+protected:
 
     size_t k_;
 

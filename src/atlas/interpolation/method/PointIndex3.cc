@@ -21,20 +21,20 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
+ElemIndex3* create_element_kdtree(const Field& field_centres) {
 
-ElemIndex3* create_element_centre_index(const Mesh& mesh) {
-
-    const array::ArrayView<double, 2> centres = array::make_view<double, 2>( mesh.cells().field( "centre" ) );
+    const array::ArrayView<double, 2> centres = array::make_view<double, 2>( field_centres );
 
     static bool fastBuildKDTrees = eckit::Resource<bool>("$ATLAS_FAST_BUILD_KDTREES", true);
 
     ElemIndex3* tree = new ElemIndex3();
+    const size_t nb_cells = centres.shape(0);
 
     if (fastBuildKDTrees) {
         std::vector< ElemIndex3::Value > p;
-        p.reserve(mesh.cells().size());
+        p.reserve(nb_cells);
 
-        for (size_t j = 0; j < mesh.cells().size(); ++j) {
+        for (size_t j = 0; j < nb_cells; ++j) {
             p.push_back(ElemIndex3::Value(
                             ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
                             ElemIndex3::Payload(j) ));
@@ -43,7 +43,7 @@ ElemIndex3* create_element_centre_index(const Mesh& mesh) {
         tree->build(p.begin(), p.end());
     }
     else {
-        for (size_t j = 0; j < mesh.cells().size(); ++j) {
+        for (size_t j = 0; j < nb_cells; ++j) {
             tree->insert(ElemIndex3::Value(
                              ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
                              ElemIndex3::Payload(j) ));
@@ -51,6 +51,11 @@ ElemIndex3* create_element_centre_index(const Mesh& mesh) {
     }
 
     return tree;
+}
+
+
+ElemIndex3* create_element_centre_index(const Mesh& mesh) {
+    return create_element_kdtree( mesh.cells().field("centre") );
 }
 
 

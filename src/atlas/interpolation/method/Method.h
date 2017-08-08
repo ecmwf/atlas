@@ -9,23 +9,19 @@
  */
 
 
-#ifndef atlas_interpolation_method_Method_h
-#define atlas_interpolation_method_Method_h
+#pragma once
 
 #include <string>
 #include <vector>
 #include "eckit/config/Configuration.h"
-#include "eckit/geometry/Point3.h"
-#include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/SparseMatrix.h"
 #include "eckit/memory/NonCopyable.h"
-#include "eckit/memory/ScopedPtr.h"
 
 
 namespace atlas {
   class Field;
   class FieldSet;
-  class Mesh;
+  class FunctionSpace;
 }
 
 
@@ -37,38 +33,33 @@ namespace method {
 class Method : public eckit::NonCopyable {
 public:
 
-    typedef eckit::ScopedPtr< Method >  Ptr;
     typedef eckit::Configuration        Config;
-
-    typedef eckit::linalg::SparseMatrix Matrix;
-    typedef eckit::geometry::Point3     Point;
-    typedef eckit::linalg::Triplet      Triplet;
-    typedef std::vector< Triplet >      Triplets;
-
-    enum { LON=0, LAT=1 };
 
     Method(const Config& config) : config_(config) {}
     virtual ~Method() {}
 
     /**
-     * @brief Setup the interpolant matrix relating two (pre-partitioned) meshes
-     * @param meshSource mesh containing source elements
-     * @param meshTarget mesh containing target points
+     * @brief Setup the interpolator relating two functionspaces
+     * @param source functionspace containing source elements
+     * @param target functionspace containing target points
      */
-    virtual void setup(Mesh& meshSource, Mesh& meshTarget) = 0;
+    virtual void setup(FunctionSpace& source, FunctionSpace& target) = 0;
 
     virtual void execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget);
     virtual void execute(const Field&    fieldSource,  Field&    fieldTarget);
 
-    const Matrix& matrix() const { return matrix_; }
-    Matrix&       matrix()       { return matrix_; }
-
 protected:
+
+    typedef eckit::linalg::Triplet      Triplet;
+    typedef std::vector< Triplet >      Triplets;
+    typedef eckit::linalg::SparseMatrix Matrix;
 
     static void normalise(Triplets& triplets);
 
     const Config& config_;
 
+    // NOTE : Matrix-free or non-linear interpolation operators do not have matrices,
+    //        so do not expose here, even though only linear operators are now implemented.
     Matrix matrix_;
 
 };
@@ -101,6 +92,3 @@ private:
 }  // method
 }  // interpolation
 }  // atlas
-
-
-#endif

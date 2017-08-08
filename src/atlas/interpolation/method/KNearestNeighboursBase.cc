@@ -22,7 +22,6 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-
 void KNearestNeighboursBase::buildPointSearchTree(Mesh& meshSource) {
     using namespace atlas;
     eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::KNearestNeighboursBase::setup()");

@@ -13,6 +13,7 @@
 namespace atlas {
 
 class Mesh;
+class Field;
 
 namespace mesh {
 namespace actions {
@@ -21,9 +22,13 @@ namespace actions {
 class BuildCellCentres {
 public:
 
-    /// @note Correct only for Linear Triangles and Quadrilaterals
-    void operator()(Mesh&) const;
+    BuildCellCentres( const std::string& field_name = "centre" );
 
+    /// @note Correct only for Linear Triangles and Quadrilaterals
+    Field& operator()(Mesh&) const;
+
+private:
+    std::string field_name_;
 };
 
 } // namespace actions

@@ -28,8 +28,6 @@ public:
     KNearestNeighboursBase(const Config& config) : Method(config) {}
     virtual ~KNearestNeighboursBase() {}
 
-    virtual void setup(Mesh& meshSource, Mesh& meshTarget) = 0;
-
 protected:
 
     void buildPointSearchTree(Mesh& meshSource);

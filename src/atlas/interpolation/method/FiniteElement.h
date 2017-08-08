@@ -38,6 +38,10 @@ public:
 
     virtual ~FiniteElement() {}
 
+    virtual void setup(FunctionSpace& source, FunctionSpace& target) override;
+
+protected:
+
     /**
      * @brief Create an interpolant sparse matrix relating two (pre-partitioned) meshes,
      * using elements as per the Finite Element Method and ray-tracing to calculate
@@ -46,9 +50,7 @@ public:
      * @param meshSource mesh containing source elements
      * @param meshTarget mesh containing target points
      */
-    void setup(Mesh& meshSource, Mesh& meshTarget);
-
-protected:
+    //virtual void setup(Mesh& meshSource, Mesh& meshTarget) override;
 
     /**
      * Find in which element the point is contained by projecting (ray-tracing) the

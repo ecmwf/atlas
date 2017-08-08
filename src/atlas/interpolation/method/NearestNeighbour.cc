@@ -16,6 +16,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/functionspace/NodeColumns.h"
 
 namespace atlas {
 namespace interpolation {
@@ -31,9 +32,14 @@ MethodBuilder<NearestNeighbour> __builder("nearest-neighbour");
 }  // (anonymous namespace)
 
 
-void NearestNeighbour::setup(Mesh& meshSource, Mesh& meshTarget) {
-    using namespace atlas;
+void NearestNeighbour::setup(FunctionSpace& source, FunctionSpace& target) {
+    functionspace::NodeColumns src = source;
+    functionspace::NodeColumns tgt = target;
+    ASSERT(src);
+    ASSERT(tgt);
 
+    Mesh meshSource = src.mesh();
+    Mesh meshTarget = tgt.mesh();
 
     // build point-search tree
     buildPointSearchTree(meshSource);

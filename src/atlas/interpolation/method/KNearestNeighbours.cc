@@ -16,6 +16,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/functionspace/NodeColumns.h"
 
 
 namespace atlas {
@@ -38,10 +39,14 @@ KNearestNeighbours::KNearestNeighbours(const Method::Config& config) : KNearestN
     ASSERT(k_);
 }
 
+void KNearestNeighbours::setup(FunctionSpace& source, FunctionSpace& target) {
+    functionspace::NodeColumns src = source;
+    functionspace::NodeColumns tgt = target;
+    ASSERT(src);
+    ASSERT(tgt);
 
-void KNearestNeighbours::setup(Mesh& meshSource, Mesh& meshTarget) {
-    using namespace atlas;
-
+    Mesh meshSource = src.mesh();
+    Mesh meshTarget = tgt.mesh();
 
     // build point-search tree
     buildPointSearchTree(meshSource);
