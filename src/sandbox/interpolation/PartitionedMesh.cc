@@ -11,12 +11,8 @@
 
 #include "PartitionedMesh.h"
 
-#include <typeinfo>
 #include "eckit/log/Timer.h"
-#include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
-#include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/Log.h"
 

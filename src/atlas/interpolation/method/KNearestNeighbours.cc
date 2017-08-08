@@ -39,7 +39,7 @@ KNearestNeighbours::KNearestNeighbours(const Method::Config& config) : KNearestN
     ASSERT(k_);
 }
 
-void KNearestNeighbours::setup(FunctionSpace& source, FunctionSpace& target) {
+void KNearestNeighbours::setup(const FunctionSpace& source, const FunctionSpace& target) {
     functionspace::NodeColumns src = source;
     functionspace::NodeColumns tgt = target;
     ASSERT(src);

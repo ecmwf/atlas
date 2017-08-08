@@ -32,7 +32,7 @@ public:
      * @param source functionspace containing source elements
      * @param target functionspace containing target points
      */
-    virtual void setup(FunctionSpace& source, FunctionSpace& target) override;
+    virtual void setup(const FunctionSpace& source, const FunctionSpace& target) override;
 
 protected:
 

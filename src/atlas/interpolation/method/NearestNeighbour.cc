@@ -32,7 +32,7 @@ MethodBuilder<NearestNeighbour> __builder("nearest-neighbour");
 }  // (anonymous namespace)
 
 
-void NearestNeighbour::setup(FunctionSpace& source, FunctionSpace& target) {
+void NearestNeighbour::setup(const FunctionSpace& source, const FunctionSpace& target) {
     functionspace::NodeColumns src = source;
     functionspace::NodeColumns tgt = target;
     ASSERT(src);

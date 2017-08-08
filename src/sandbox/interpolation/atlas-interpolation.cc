@@ -140,26 +140,22 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     tgt.writeGmsh("tgt-mesh.msh");
 
     // Setup interpolator relating source & target meshes before setting a source FunctionSpace halo
-    std::string interpolator_option = "finite-element";
-    args.get("method", interpolator_option);
+    std::string interpolation_method = "finite-element";
+    args.get("method", interpolation_method);
 
+    eckit::LocalConfiguration interpolator_options(args);
+    interpolator_options.set("type",interpolation_method);
 
     Log::info() << "Computing forward interpolator" << std::endl;
-
-    std::unique_ptr<interpolation::method::Method> interpolator_forward(interpolation::method::MethodFactory::build(interpolator_option, args));
-
-    interpolator_forward->setup(src_functionspace, tgt_functionspace);
+    interpolation::InterpolationMethod interpolator_forward(interpolator_options, src_functionspace, tgt_functionspace);
 
     bool with_backward = false;
     args.get("with-backward",with_backward);
-    std::unique_ptr<interpolation::method::Method> interpolator_backward;
+    interpolation::InterpolationMethod interpolator_backward;
 
     if( with_backward ) {
       Log::info() << "Computing backward interpolator" << std::endl;
-
-      interpolator_backward = std::unique_ptr<interpolation::method::Method>(interpolation::method::MethodFactory::build(interpolator_option, args));
-
-      interpolator_backward->setup(tgt_functionspace, src_functionspace);
+      interpolator_backward = interpolation::InterpolationMethod(interpolator_options,tgt_functionspace, src_functionspace);
     }
 
 
@@ -215,13 +211,13 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     Log::info() << "Interpolate forward" << std::endl;
 
     // interpolate (matrix-field vector multiply and  synchronize results) (FIXME: necessary?)
-    interpolator_forward->execute(src_fields, tgt_fields);
+    interpolator_forward.execute(src_fields, tgt_fields);
     tgt_functionspace.haloExchange(tgt_fields);
 
     if( with_backward ) {
         Log::info() << "Interpolate backward" << std::endl;
 
-        interpolator_backward->execute(tgt_fields, src_fields);
+        interpolator_backward.execute(tgt_fields, src_fields);
         src_functionspace.haloExchange(src_fields);
     }
 

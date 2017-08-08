@@ -48,9 +48,9 @@ static const double parametricEpsilon = 1e-16;
 
 }  // (anonymous namespace)
 
-void FiniteElement::setup(FunctionSpace& source, FunctionSpace& target) {
-    functionspace::NodeColumns src = source;
-    functionspace::NodeColumns tgt = target;
+void FiniteElement::setup(const FunctionSpace& source, const FunctionSpace& target) {
+    const functionspace::NodeColumns src = source;
+    const functionspace::NodeColumns tgt = target;
     ASSERT(src);
     ASSERT(tgt);
 

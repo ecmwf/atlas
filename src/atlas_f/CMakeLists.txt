@@ -148,6 +148,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Method.h )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h
     MODULE    atlas_fvm_method_c_binding
     OUTPUT    fvm_method_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/interpolation/method/Method.h
+      MODULE    atlas_interpolation_c_binding
+      OUTPUT    interpolation_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
@@ -199,6 +202,7 @@ ecbuild_add_library( TARGET atlas_f
         numerics/atlas_Method_module.F90
         numerics/atlas_fvm_module.F90
         numerics/atlas_Nabla_module.F90
+        interpolation/atlas_Interpolation_module.F90
         parallel/atlas_mpi_module.F90
         parallel/atlas_GatherScatter_module.F90
         parallel/atlas_Checksum_module.F90

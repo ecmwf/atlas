@@ -15,13 +15,21 @@
 #include <vector>
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
-#include "eckit/memory/NonCopyable.h"
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 
 namespace atlas {
   class Field;
   class FieldSet;
   class FunctionSpace;
+  namespace functionspace {
+    class FunctionSpaceImpl;
+  }
+  namespace field {
+    class FieldImpl;
+    class FieldSetImpl;
+  }
 }
 
 
@@ -30,10 +38,10 @@ namespace interpolation {
 namespace method {
 
 
-class Method : public eckit::NonCopyable {
+class Method : public eckit::Owned {
 public:
 
-    typedef eckit::Configuration        Config;
+    typedef eckit::Parametrisation Config;
 
     Method(const Config& config) : config_(config) {}
     virtual ~Method() {}
@@ -43,10 +51,10 @@ public:
      * @param source functionspace containing source elements
      * @param target functionspace containing target points
      */
-    virtual void setup(FunctionSpace& source, FunctionSpace& target) = 0;
+    virtual void setup(const FunctionSpace& source, const FunctionSpace& target) = 0;
 
-    virtual void execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget);
-    virtual void execute(const Field&    fieldSource,  Field&    fieldTarget);
+    virtual void execute(const FieldSet& source, FieldSet& target) const;
+    virtual void execute(const Field&    source, Field&    target) const;
 
 protected:
 
@@ -89,6 +97,41 @@ private:
 };
 
 
+
 }  // method
+
+class InterpolationMethod {
+public:
+
+  using Implementation = method::Method;
+  using Config = Implementation::Config;
+
+  InterpolationMethod() {}
+  InterpolationMethod( const InterpolationMethod& );
+  InterpolationMethod( const Config&, const FunctionSpace& source, const FunctionSpace& target );
+
+  void execute(const FieldSet& source, FieldSet& target) const { get()->execute(source,target); }
+  void execute(const Field&    source, Field&    target) const { get()->execute(source,target); }
+
+  const Implementation* get() const { return implementation_.get(); }
+
+  operator bool() const { return implementation_; }
+
+private:
+
+  eckit::SharedPtr<const Implementation> implementation_;
+
+};
+
+
+extern "C" {
+
+InterpolationMethod::Implementation* atlas__Interpolation__new(const eckit::Parametrisation* config, const functionspace::FunctionSpaceImpl* source, const functionspace::FunctionSpaceImpl* target);
+void atlas__Interpolation__delete(InterpolationMethod::Implementation* This);
+void atlas__Interpolation__execute_field(InterpolationMethod::Implementation* This, const field::FieldImpl* source, field::FieldImpl* target);
+void atlas__Interpolation__execute_fieldset(InterpolationMethod::Implementation* This, const field::FieldSetImpl* source, field::FieldSetImpl* target);
+
+}
+
 }  // interpolation
 }  // atlas
