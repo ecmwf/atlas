@@ -117,7 +117,7 @@ public:
     const Implementation* get() const { return impl_.get(); }
           Implementation* get()       { return impl_.get(); }
 
-    const Polygon& polygon( size_t halo = 0) { return impl_->polygon(halo); }
+    const Polygon& polygon( size_t halo = 0) const { return impl_->polygon(halo); }
 
 private:  // methods
 

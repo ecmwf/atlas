@@ -11,9 +11,9 @@
 
 #include "MatchingMeshPartitionerPolygon.h"
 
-#include <set>
 #include <utility>
 #include <vector>
+#include "eckit/config/Resource.h"
 #include "eckit/geometry/Point2.h"
 #include "eckit/log/Plural.h"
 #include "eckit/log/Timer.h"
@@ -25,8 +25,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
-
-#include "eckit/config/Resource.h"
+#include "atlas/util/CoordinateEnums.h"
 
 
 namespace atlas {
@@ -50,7 +49,6 @@ double dot_sign(
 }
 
 
-enum {LON=0, LAT=1};
 typedef eckit::geometry::Point2 point_t;
 
 
@@ -103,64 +101,6 @@ bool point_in_poly(const std::vector<point_t>& poly, const point_t& P) {
     return wn != 0;
 }
 
-
-struct Edge : std::pair< size_t, size_t > {
-    Edge(size_t _A, size_t _B) : std::pair< size_t, size_t >(_A, _B) {}
-    Edge reverse() const { return Edge(second, first); }
-    struct LessThan {
-        bool operator()(const Edge& e1, const Edge& e2) const {
-            // order ascending by 'first'
-            return (e1.first  < e2.first? true  :
-                    e1.first  > e2.first? false :
-                    e1.second < e2.second );
-        }
-    };
-};
-
-
-typedef std::set< Edge, Edge::LessThan > edge_set_t;
-
-
-struct Poly : std::vector< size_t > {
-    Poly() {}
-    Poly(edge_set_t& edges) {
-        clear();
-        reserve(edges.size() + 1);
-
-        push_back(edges.begin()->first);
-        for (edge_set_t::iterator e = edges.begin(); e != edges.end() && e->first == back();
-             e = edges.lower_bound(Edge(back(), 0))) {
-            push_back(e->second);
-            edges.erase(*e);
-        }
-
-        ASSERT(front() == back());
-    }
-    Poly& operator+=(const Poly& other) {
-        ASSERT(other.size() > 1);
-        if (empty()) {
-            return operator=(other);
-        }
-
-        difference_type N = difference_type(other.size()) - 1;
-        vector< size_t > cycle;
-        cycle.reserve(2 * size_t(N));
-        cycle.insert(cycle.end(), other.begin(), other.end() - 1);
-        cycle.insert(cycle.end(), other.begin(), other.end() - 1);
-
-        for (const_iterator c = cycle.begin(); c != cycle.begin() + N; ++c) {
-            iterator here = find(begin(), end(), *c);
-            if (here != end()) {
-                insert(here, c, c + N);
-                return *this;
-            }
-        }
-
-        throw eckit::AssertionFailed("Could not merge polygons, they are not connected", Here());
-    }
-};
-
-
 }  // (anonymous namespace)
 
 
@@ -170,39 +110,7 @@ void MatchingMeshPartitionerPolygon::partition( const Grid& grid, int node_parti
     const int mpi_size = int(comm.size());
 
 
-    // Polygon indices
-    // - extract partition boundary edges by always attempting first to
-    //   remove a reversed edge from a neighbouring element (if it exists)
-    // - polygon can have multiple cycles, but must be a connected graph
-    Poly poly;
-
-    edge_set_t edges;
-    for (size_t t = 0; t < prePartitionedMesh_.cells().nb_types(); ++t) {
-        const mesh::Elements& elements = prePartitionedMesh_.cells().elements(t);
-
-        const mesh::BlockConnectivity& conn = elements.node_connectivity();
-        auto patch = elements.view< int, 1 >(elements.field("patch"));
-
-        const size_t nb_nodes = elements.nb_nodes();
-        ASSERT( (nb_nodes==3 && elements.name() == "Triangle")
-             || (nb_nodes==4 && elements.name() == "Quadrilateral") );
-
-        for (size_t j = 0; j < elements.size(); ++j) {
-            for (size_t k = 0; k < nb_nodes && (patch(j) == 0); ++k) {
-                Edge edge(size_t(conn(j, k)), size_t(conn(j, (k+1) % nb_nodes)));
-                ASSERT(edge.first != edge.second);
-                if (!edges.erase(edge.reverse())) {
-                    edges.insert(edge);
-                }
-            }
-        }
-    }
-
-    while (!edges.empty()) {
-        poly += Poly(edges);
-    }
-    ASSERT(poly.size());
-
+    const Mesh::Polygon& _poly = prePartitionedMesh_.polygon(0);
 
     // Polygon point coordinates: simplify by checking aligned edges
     // Note: indices ('poly') don't necessarily match coordinates ('polygon')
@@ -211,12 +119,12 @@ void MatchingMeshPartitionerPolygon::partition( const Grid& grid, int node_parti
     polygon.reserve(polygon.size());
 
     auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
-    point_t bbox_min = point_t(lonlat_src(poly[0], LON), lonlat_src(poly[0], LAT));
+    point_t bbox_min = point_t(lonlat_src(_poly[0], LON), lonlat_src(_poly[0], LAT));
     point_t bbox_max = bbox_min;
 
-    for (size_t i = 0; i < poly.size(); ++i) {
+    for (size_t i = 0; i < _poly.size(); ++i) {
 
-        point_t A(lonlat_src(poly[i], LON), lonlat_src(poly[i], LAT));
+        point_t A(lonlat_src(_poly[i], LON), lonlat_src(_poly[i], LAT));
         bbox_min = point_t::componentsMin(bbox_min, A);
         bbox_max = point_t::componentsMax(bbox_max, A);
 
@@ -296,97 +204,96 @@ void MatchingMeshPartitionerPolygon::partition( const Grid& grid, int node_parti
 
     // Synchronize the partitioning and return a grid partitioner
     comm.allReduceInPlace(node_partition, grid.size(), eckit::mpi::Operation::MAX);
-    const int min = *std::min_element(node_partition, node_partition+grid.size());
 
 
     /// For debugging purposes at the moment. To be made available later, when the Mesh
     /// contains a Polygon for its partition boundary
     if( eckit::Resource<bool>("--polygons",false) ) {
 
-    std::vector<double> x,y, xlost,ylost;
-    xlost.reserve(grid.size());
-    ylost.reserve(grid.size());
-    x.reserve(grid.size());
-    y.reserve(grid.size());
-    for (size_t i=0; i<grid.size(); ++i) {
-        if (node_partition[i] == mpi_rank) {
-            x.push_back(lonlat_tgt_pts[i].lon());
-            y.push_back(lonlat_tgt_pts[i].lat());
-        } else if (node_partition[i] == -1) {
-            xlost.push_back(lonlat_tgt_pts[i].lon());
-            ylost.push_back(lonlat_tgt_pts[i].lat());
+        std::vector<double> x,y, xlost,ylost;
+        xlost.reserve(grid.size());
+        ylost.reserve(grid.size());
+        x.reserve(grid.size());
+        y.reserve(grid.size());
+        for (size_t i=0; i<grid.size(); ++i) {
+            if (node_partition[i] == mpi_rank) {
+                x.push_back(lonlat_tgt_pts[i].lon());
+                y.push_back(lonlat_tgt_pts[i].lat());
+            } else if (node_partition[i] == -1) {
+                xlost.push_back(lonlat_tgt_pts[i].lon());
+                ylost.push_back(lonlat_tgt_pts[i].lat());
+            }
+
         }
+        size_t count = x.size();
+        size_t count_all = x.size();
+        comm.allReduceInPlace(count_all, eckit::mpi::sum());
 
-    }
-    size_t count = x.size();
-    size_t count_all = x.size();
-    comm.allReduceInPlace(count_all, eckit::mpi::sum());
+        enum {LON=0,LAT=1};
 
-    enum {LON=0,LAT=1};
+        for (int r = 0; r < int(comm.size()); ++r) {
+            if (mpi_rank == r) {
+                std::ofstream f("partitions_poly.py", mpi_rank == 0? std::ios::trunc : std::ios::app);
 
-    for (int r = 0; r < int(comm.size()); ++r) {
-        if (mpi_rank == r) {
-            std::ofstream f("partitions_poly.py", mpi_rank == 0? std::ios::trunc : std::ios::app);
-
-            if (mpi_rank == 0) {
-                f << "\n" "import matplotlib.pyplot as plt"
-                     "\n" "from matplotlib.path import Path"
-                     "\n" "import matplotlib.patches as patches"
+                if (mpi_rank == 0) {
+                    f << "\n" "import matplotlib.pyplot as plt"
+                         "\n" "from matplotlib.path import Path"
+                         "\n" "import matplotlib.patches as patches"
+                         "\n" ""
+                         "\n" "from itertools import cycle"
+                         "\n" "import matplotlib.cm as cm"
+                         "\n" "import numpy as np"
+                         "\n" "cycol = cycle([cm.Paired(i) for i in np.linspace(0,1,12,endpoint=True)]).next"
+                         "\n" ""
+                         "\n" "fig = plt.figure()"
+                         "\n" "ax = fig.add_subplot(111,aspect='equal')"
+                         "\n" "";
+                    f << "\n"
+                         "\n" "xlost = ["; for (std::vector<double>::const_iterator ix=xlost.begin(); ix!=xlost.end(); ++ix) { f << *ix << ", "; } f << "]"
+                         "\n" "ylost = ["; for (std::vector<double>::const_iterator iy=ylost.begin(); iy!=ylost.end(); ++iy) { f << *iy << ", "; } f << "]"
+                         "\n"
+                         "\n" "ax.scatter(xlost, ylost, color='k', marker='o')"
+                         "\n" "";
+                }
+                f << "\n" "verts_" << r << " = [";
+                for (size_t i = 0; i < polygon.size(); ++i) { f << "\n  (" << polygon[i][LON] << ", " << polygon[i][LAT] << "), "; }
+                f << "\n]"
                      "\n" ""
-                     "\n" "from itertools import cycle"
-                     "\n" "import matplotlib.cm as cm"
-                     "\n" "import numpy as np"
-                     "\n" "cycol = cycle([cm.Paired(i) for i in np.linspace(0,1,12,endpoint=True)]).next"
+                     "\n" "codes_" << r << " = [Path.MOVETO]"
+                     "\n" "codes_" << r << ".extend([Path.LINETO] * " << (polygon.size()-2) << ")"
+                     "\n" "codes_" << r << ".extend([Path.CLOSEPOLY])"
                      "\n" ""
-                     "\n" "fig = plt.figure()"
-                     "\n" "ax = fig.add_subplot(111,aspect='equal')"
-                     "\n" "";
-                f << "\n"
-                     "\n" "xlost = ["; for (std::vector<double>::const_iterator ix=xlost.begin(); ix!=xlost.end(); ++ix) { f << *ix << ", "; } f << "]"
-                     "\n" "ylost = ["; for (std::vector<double>::const_iterator iy=ylost.begin(); iy!=ylost.end(); ++iy) { f << *iy << ", "; } f << "]"
+                     "\n" "count_" << r << " = " << count <<
+                     "\n" "count_all_" << r << " = " << count_all <<
+                     "\n" ""
+                     "\n" "x_" << r << " = ["; for (std::vector<double>::const_iterator ix=x.begin(); ix!=x.end(); ++ix) { f << *ix << ", "; } f << "]"
+                     "\n" "y_" << r << " = ["; for (std::vector<double>::const_iterator iy=y.begin(); iy!=y.end(); ++iy) { f << *iy << ", "; } f << "]"
                      "\n"
-                     "\n" "ax.scatter(xlost, ylost, color='k', marker='o')"
+                     "\n" "c = cycol()"
+                     "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))"
+                     "\n" "ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')"
                      "\n" "";
+                if (mpi_rank == int(comm.size()) - 1) {
+                    f << "\n" "ax.set_xlim(  0-5, 360+5)"
+                         "\n" "ax.set_ylim(-90-5,  90+5)"
+                         "\n" "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
+                         "\n" "ax.set_yticks([-90,-45,0,45,90])"
+                         "\n" "plt.grid()"
+                         "\n" "plt.show()";
+                }
             }
-            f << "\n" "verts_" << r << " = [";
-            for (size_t i = 0; i < polygon.size(); ++i) { f << "\n  (" << polygon[i][LON] << ", " << polygon[i][LAT] << "), "; }
-            f << "\n]"
-                 "\n" ""
-                 "\n" "codes_" << r << " = [Path.MOVETO]"
-                 "\n" "codes_" << r << ".extend([Path.LINETO] * " << (polygon.size()-2) << ")"
-                 "\n" "codes_" << r << ".extend([Path.CLOSEPOLY])"
-                 "\n" ""
-                 "\n" "count_" << r << " = " << count <<
-                 "\n" "count_all_" << r << " = " << count_all <<
-                 "\n" ""
-                 "\n" "x_" << r << " = ["; for (std::vector<double>::const_iterator ix=x.begin(); ix!=x.end(); ++ix) { f << *ix << ", "; } f << "]"
-                 "\n" "y_" << r << " = ["; for (std::vector<double>::const_iterator iy=y.begin(); iy!=y.end(); ++iy) { f << *iy << ", "; } f << "]"
-                 "\n"
-                 "\n" "c = cycol()"
-                 "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))"
-                 "\n" "ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')"
-                 "\n" "";
-            if (mpi_rank == int(comm.size()) - 1) {
-                f << "\n" "ax.set_xlim(  0-5, 360+5)"
-                     "\n" "ax.set_ylim(-90-5,  90+5)"
-                     "\n" "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
-                     "\n" "ax.set_yticks([-90,-45,0,45,90])"
-                     "\n" "plt.grid()"
-                     "\n" "plt.show()";
-            }
+            comm.barrier();
         }
-        comm.barrier();
-    }
 
     }
 
 
     // Sanity check
     {
+      const int min = *std::min_element(node_partition, node_partition+grid.size());
       if (min<0) {
           throw eckit::SeriousBug("Could not find partition for input node (meshSource does not contain all points of gridTarget)", Here());
       }
-
     }
 
 }

@@ -49,6 +49,8 @@ public: // methods
   const_iterator begin() const { return node_list_.begin(); }
   const_iterator end()   const { return node_list_.end();   }
 
+  idx_t operator[](idx_t i) const { return node_list_[i]; }
+
 private:
 
   void print(std::ostream&) const;
