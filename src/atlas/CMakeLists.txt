@@ -300,6 +300,9 @@ list( APPEND atlas_numerics_srcs
 endif()
 
 list( APPEND atlas_interpolation_srcs
+interpolation.h
+interpolation/Interpolation.h
+interpolation/Interpolation.cc
 interpolation/Vector2D.h
 interpolation/Vector3D.h
 interpolation/element/Quad3D.cc

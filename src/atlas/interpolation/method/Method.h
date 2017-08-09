@@ -23,20 +23,11 @@ namespace atlas {
   class Field;
   class FieldSet;
   class FunctionSpace;
-  namespace functionspace {
-    class FunctionSpaceImpl;
-  }
-  namespace field {
-    class FieldImpl;
-    class FieldSetImpl;
-  }
 }
 
 
 namespace atlas {
 namespace interpolation {
-namespace method {
-
 
 class Method : public eckit::Owned {
 public:
@@ -95,43 +86,6 @@ struct MethodBuilder : public MethodFactory {
 private:
     virtual Method *make(const Method::Config& config) { return new T(config); }
 };
-
-
-
-}  // method
-
-class InterpolationMethod {
-public:
-
-  using Implementation = method::Method;
-  using Config = Implementation::Config;
-
-  InterpolationMethod() {}
-  InterpolationMethod( const InterpolationMethod& );
-  InterpolationMethod( const Config&, const FunctionSpace& source, const FunctionSpace& target );
-
-  void execute(const FieldSet& source, FieldSet& target) const { get()->execute(source,target); }
-  void execute(const Field&    source, Field&    target) const { get()->execute(source,target); }
-
-  const Implementation* get() const { return implementation_.get(); }
-
-  operator bool() const { return implementation_; }
-
-private:
-
-  eckit::SharedPtr<const Implementation> implementation_;
-
-};
-
-
-extern "C" {
-
-InterpolationMethod::Implementation* atlas__Interpolation__new(const eckit::Parametrisation* config, const functionspace::FunctionSpaceImpl* source, const functionspace::FunctionSpaceImpl* target);
-void atlas__Interpolation__delete(InterpolationMethod::Implementation* This);
-void atlas__Interpolation__execute_field(InterpolationMethod::Implementation* This, const field::FieldImpl* source, field::FieldImpl* target);
-void atlas__Interpolation__execute_fieldset(InterpolationMethod::Implementation* This, const field::FieldSetImpl* source, field::FieldSetImpl* target);
-
-}
 
 }  // interpolation
 }  // atlas

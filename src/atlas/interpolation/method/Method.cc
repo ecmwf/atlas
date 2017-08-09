@@ -25,8 +25,6 @@
 
 namespace atlas {
 namespace interpolation {
-namespace method {
-
 
 namespace {
 
@@ -130,51 +128,6 @@ void Method::normalise(Triplets& triplets) {
         triplets[j].value() *= invSum;
     }
 }
-
-
-}  // method
-
-InterpolationMethod::InterpolationMethod( const Config& config, const FunctionSpace& source, const FunctionSpace& target ) :
-  implementation_( [&]() -> Implementation* {
-     std::string type;
-     config.get("type",type);
-     Implementation* impl = method::MethodFactory::build(type,config);
-     impl->setup(source,target);
-     return impl; }()) {
-}
-
-InterpolationMethod::InterpolationMethod( const InterpolationMethod& other ) :
-  implementation_( other.implementation_ ) {
-}
-
-extern "C" {
-InterpolationMethod::Implementation* atlas__Interpolation__new(const eckit::Parametrisation* config, const functionspace::FunctionSpaceImpl* source, const functionspace::FunctionSpaceImpl* target) {
-  InterpolationMethod::Implementation* interpolator;
-  {
-    InterpolationMethod im(*config,FunctionSpace(source),FunctionSpace(target));
-    interpolator = const_cast<InterpolationMethod::Implementation*>(im.get());
-    interpolator->attach();
-  }
-  interpolator->detach();
-  return interpolator;
-}
-
-void atlas__Interpolation__delete(InterpolationMethod::Implementation* This) {
-  delete This;
-}
-
-void atlas__Interpolation__execute_field(InterpolationMethod::Implementation* This, const field::FieldImpl* source, field::FieldImpl* target) {
-  Field t(target);
-  This->execute( Field(source), t );
-}
-
-void atlas__Interpolation__execute_fieldset(InterpolationMethod::Implementation* This, const field::FieldSetImpl* source, field::FieldSetImpl* target) {
-  FieldSet t(target);
-  This->execute( FieldSet(source), t );
-}
-
-} // extern "C"
-
 
 }  // interpolation
 }  // atlas

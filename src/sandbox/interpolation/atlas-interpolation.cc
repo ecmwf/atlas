@@ -14,14 +14,13 @@
 
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
-#include "atlas/interpolation/method/Method.h"
+#include "atlas/interpolation.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
 
 #include "PartitionedMesh.h"
 
 using namespace atlas;
-
 
 class AtlasParallelInterpolation : public AtlasTool {
 
@@ -147,15 +146,15 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     interpolator_options.set("type",interpolation_method);
 
     Log::info() << "Computing forward interpolator" << std::endl;
-    interpolation::InterpolationMethod interpolator_forward(interpolator_options, src_functionspace, tgt_functionspace);
+    Interpolation interpolator_forward(interpolator_options, src_functionspace, tgt_functionspace);
 
     bool with_backward = false;
     args.get("with-backward",with_backward);
-    interpolation::InterpolationMethod interpolator_backward;
+    Interpolation interpolator_backward;
 
     if( with_backward ) {
       Log::info() << "Computing backward interpolator" << std::endl;
-      interpolator_backward = interpolation::InterpolationMethod(interpolator_options,tgt_functionspace, src_functionspace);
+      interpolator_backward = Interpolation(interpolator_options,tgt_functionspace, src_functionspace);
     }
 
 

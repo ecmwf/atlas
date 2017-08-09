@@ -148,7 +148,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Method.h )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h
     MODULE    atlas_fvm_method_c_binding
     OUTPUT    fvm_method_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/interpolation/method/Method.h
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/interpolation/Interpolation.h
       MODULE    atlas_interpolation_c_binding
       OUTPUT    interpolation_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)

@@ -87,6 +87,8 @@ use atlas_mesh_Nodes_module, only: &
     & atlas_mesh_Nodes
 use atlas_HaloExchange_module, only: &
     & atlas_HaloExchange
+use atlas_Interpolation_module, only: &
+    & atlas_Interpolation
 use atlas_GatherScatter_module, only: &
     & atlas_GatherScatter
 use atlas_Checksum_module, only: &
@@ -112,7 +114,11 @@ use atlas_Trans_module, only : &
     & atlas_Trans
 use atlas_kinds_module, only: &
     & ATLAS_KIND_GIDX, &
-    & ATLAS_KIND_IDX
+    & ATLAS_KIND_IDX, &
+    & ATLAS_KIND_REAL64, &
+    & ATLAS_KIND_REAL32, &
+    & ATLAS_KIND_INT64, &
+    & ATLAS_KIND_INT32
 use atlas_GridDistribution_module, only: &
     & atlas_GridDistribution
 use atlas_Partitioner_module, only: &

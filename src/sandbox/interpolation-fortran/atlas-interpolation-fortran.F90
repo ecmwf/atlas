@@ -1,6 +1,5 @@
 program atlas_interpolation_fortran
 use atlas_module
-use atlas_interpolation_module
 implicit none
 
 type(atlas_Grid)                      :: grid_A
@@ -45,9 +44,9 @@ interpolation_AB = atlas_Interpolation(interpolation_config,fs_A,fs_B)
 interpolation_BA = atlas_Interpolation(interpolation_config,fs_B,fs_A)
 
 ! Create fields and initialise source field
-field_A  = fs_A%create_field("A", atlas_real(8))
-field_B  = fs_B%create_field("B", atlas_real(8))
-field_A2 = fs_A%create_field("A2",atlas_real(8))
+field_A  = fs_A%create_field("A", atlas_real(atlas_kind_real64))
+field_B  = fs_B%create_field("B", atlas_real(atlas_kind_real64))
+field_A2 = fs_A%create_field("A2",atlas_real(atlas_kind_real64))
 call initialise_field_hill(fs_A, field_A)
 
 
@@ -100,13 +99,13 @@ contains
 subroutine initialise_field_hill(funcspace,field)
   type(atlas_functionspace_NodeColumns), intent(in) :: funcspace
   type(atlas_Field), intent(inout) :: field
-  real(8), parameter :: M_PI = 3.14159265358979323846
-  real(8), parameter :: deg2rad = M_PI/180._8
+  real(atlas_kind_real64), parameter :: M_PI = 3.14159265358979323846
+  real(atlas_kind_real64), parameter :: deg2rad = M_PI/180._8
   type(atlas_mesh_Nodes) :: nodes
   type(atlas_Field) :: field_lonlat
-  real(8), pointer :: value(:), lonlat(:,:)
+  real(atlas_kind_real64), pointer :: value(:), lonlat(:,:)
   integer :: jnode, nb_nodes
-  real(8) :: lon, lat, c2, c_lon, c_lat, c_rad, dist, s1, s2
+  real(atlas_kind_real64) :: lon, lat, c2, c_lon, c_lat, c_rad, dist, s1, s2
   c_lat = 0. * M_PI
   c_lon = 1. * M_PI
   c_rad = 2. * M_PI / 9.
