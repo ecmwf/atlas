@@ -8,12 +8,10 @@
  * does it submit to any jurisdiction.
  */
 
+#pragma once
 
-#ifndef atlas_interpolation_method_KNearestNeighboursBase_h
-#define atlas_interpolation_method_KNearestNeighboursBase_h
-
+#include "eckit/memory/ScopedPtr.h"
 #include "atlas/interpolation/method/Method.h"
-
 #include "atlas/interpolation/method/PointIndex3.h"
 
 
@@ -40,6 +38,3 @@ protected:
 }  // method
 }  // interpolation
 }  // atlas
-
-
-#endif

@@ -492,7 +492,8 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
           std::vector<size_t> recv_size(neighbours.size());
           int tag = 0;
           for( size_t j=0; j<neighbours.size(); ++j ) {
-            send_requests[j] = comm.iSend( g_per_neighbour[j].size(), neighbours[j], tag );
+            size_t g_per_neighbour_size = g_per_neighbour[j].size();
+            send_requests[j] = comm.iSend( g_per_neighbour_size, neighbours[j], tag );
             recv_requests[j] = comm.iReceive( recv_size[j],           neighbours[j], tag );
           }
 

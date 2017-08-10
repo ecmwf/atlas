@@ -18,6 +18,10 @@
 #include "atlas/field/Field.h"
 #include "eckit/config/Resource.h"
 
+#ifndef ECKIT_VERSION_INT
+#error ECKIT_VERSION_INT not defined
+#endif
+
 using namespace eckit;
 
 namespace atlas {
@@ -46,6 +50,10 @@ PointSet::PointSet( Mesh& mesh )
 
     tree_ = new PointIndex3();
 
+#   if ECKIT_VERSION_INT <= 1700
+      fastBuildKDTrees = true;
+#   endif
+
     if (fastBuildKDTrees)    {
         std::vector< PointIndex3::Value > pidx;
         pidx.reserve(npts_);
@@ -56,11 +64,12 @@ PointSet::PointSet( Mesh& mesh )
 
         tree_->build(pidx.begin(), pidx.end());
     }
+#   if ECKIT_VERSION_INT > 1700
     else {
         for ( size_t ip = 0; ip < npts_; ++ip )
             tree_->insert( PointIndex3::Value( PointIndex3::Point( coords(ip, 0), coords(ip, 1), coords(ip, 2) ) , ip ) );
-
     }
+#   endif
 }
 
 size_t PointSet::search_unique( const Point& p, size_t idx, uint32_t n  )
