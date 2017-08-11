@@ -9,6 +9,7 @@
  */
 
 #include <limits>
+#include "eckit/types/FloatCompare.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -50,9 +51,32 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const
             centroids(e, XX) = 0.;
             centroids(e, YY) = 0.;
             centroids(e, ZZ) = 0.;
-            size_t nb_real_nodes = 0;
 
             const size_t nb_nodes_per_elem = cell_node_connectivity.cols(e);
+
+            bool degenerate = false;
+            eckit::types::CompareApproximatelyEqual<double> approx(1.e-9);
+            for (size_t ni=0; ni<nb_nodes_per_elem && !degenerate; ++ni) {
+                const size_t i = size_t(cell_node_connectivity(e, ni));
+                const Point3 Pi(coords(i, XX), coords(i, YY), coords(i, ZZ));
+
+                for (size_t nj=ni; nj<nb_nodes_per_elem && !degenerate; ++nj) {
+                    const size_t j = size_t(cell_node_connectivity(e, nj));
+                    if (i != j) {
+                        const Point3 Pj(coords(j, XX), coords(j, YY), coords(j, ZZ));
+
+                        degenerate = approx(Pi[XX], Pj[XX])
+                                && approx(Pi[YY], Pj[YY])
+                                && approx(Pi[ZZ], Pj[ZZ]);
+                    }
+                }
+            }
+
+            if (degenerate) {
+                continue;
+            }
+
+            size_t nb_real_nodes = 0;
             for (size_t n=0; n<nb_nodes_per_elem; ++n)
             {
                 const size_t i = size_t(cell_node_connectivity(e, n));
