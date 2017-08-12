@@ -34,7 +34,7 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
         mesh::Nodes& nodes = mesh.nodes();
         array::ArrayView<double, 2> coords = array::make_view<double, 2>(nodes.field("xyz"));
 
-        size_t firstVirtualPoint = std::numeric_limits<idx_t>::max();
+        size_t firstVirtualPoint = std::numeric_limits<size_t>::max();
         if (nodes.metadata().has("NbRealPts")) {
             firstVirtualPoint = nodes.metadata().get<size_t>("NbRealPts");
         }
@@ -53,9 +53,9 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
             const size_t nb_cell_nodes = cell_node_connectivity.cols(e);
 
             // check for degenerate elements (less than three unique nodes)
-            // NOTE: this is not a proper check but works for simplex elements
-
+            // NOTE: this is not a proper check but it is very robust
             eckit::types::CompareApproximatelyEqual<double> approx(1.e-9);
+
             int nb_equal_nodes = 0;
             for (size_t ni = 0; ni < nb_cell_nodes - 1; ++ni) {
                 idx_t i = cell_node_connectivity(e, ni);
@@ -71,10 +71,12 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
                 }
             }
 
-            if (int(nb_cell_nodes) - nb_equal_nodes < 3) {
+            int nb_unique_nodes = int(nb_cell_nodes) - nb_equal_nodes;
+            if (nb_unique_nodes < 3) {
                 continue;
             }
 
+            // calculate centroid by averaging coordinates (uses only "real" nodes)
             size_t nb_real_nodes = 0;
             for (size_t n = 0; n < nb_cell_nodes; ++n) {
                 const size_t i = size_t(cell_node_connectivity(e, n));
