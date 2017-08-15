@@ -20,7 +20,7 @@
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/Constants.h"
+#include "atlas/util/Earth.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/parallel/omp/omp.h"

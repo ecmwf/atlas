@@ -388,28 +388,30 @@ array/native/NativeStorageView.h
 endif()
 
 list( APPEND atlas_util_srcs
+output/detail/GmshIO.cc
+output/detail/GmshIO.h
+output/detail/PointCloud.cc
+output/detail/PointCloud.h
 parallel/Checksum.cc
 parallel/Checksum.h
 parallel/GatherScatter.cc
 parallel/GatherScatter.h
 parallel/HaloExchange.cc
 parallel/HaloExchange.h
+parallel/mpi/Buffer.h
 runtime/ErrorHandling.cc
-runtime/ErrorHandling.cc
+runtime/ErrorHandling.h
 util/Config.cc
 util/Config.h
 util/Constants.h
-util/GaussianLatitudes.h
+util/Earth.cc
+util/Earth.h
 util/GaussianLatitudes.cc
-util/Metadata.h
+util/GaussianLatitudes.h
 util/Metadata.cc
-util/Rotation.h
+util/Metadata.h
 util/Rotation.cc
-output/detail/GmshIO.h
-output/detail/GmshIO.cc
-output/detail/PointCloud.h
-output/detail/PointCloud.cc
-parallel/mpi/Buffer.h
+util/Rotation.h
 )
 
 list( APPEND atlas_internals_srcs

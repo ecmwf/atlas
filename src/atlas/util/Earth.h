@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <cmath>
+#include "atlas/util/Constants.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -19,11 +19,13 @@ namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
-/// Some useful constants
-struct Constants
+struct Earth
 {
-    static constexpr double radiansToDegrees() { return 180. * M_1_PI; }
-    static constexpr double degreesToRadians() { return M_PI / 180.; }
+    static constexpr double radiusInMeters() { return 6371229.; }
+    static constexpr double radiusInKm()     { return radiusInMeters() / 1.0e3; }
+
+    static constexpr double areaInSqMeters() { return 4. * M_PI * radiusInMeters() * radiusInMeters(); }
+    static constexpr double areaInSqKm()     { return 4. * M_PI * radiusInKm()     * radiusInKm();     }
 };
 
 //------------------------------------------------------------------------------------------------------

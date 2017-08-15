@@ -24,7 +24,7 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/Constants.h"
+#include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"

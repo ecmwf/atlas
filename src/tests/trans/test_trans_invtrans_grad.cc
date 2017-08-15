@@ -28,7 +28,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
-#include "atlas/util/Constants.h"
+#include "atlas/util/Earth.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "transi/trans.h"
 

@@ -29,6 +29,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
+#include "atlas/util/Earth.h"
 #include "atlas/grid/Partitioner.h"
 
 #include "tests/AtlasFixture.h"
