@@ -12,6 +12,11 @@
 
 #include "atlas/util/Constants.h"
 
+namespace atlas {
+class PointLonLat;
+class PointXYZ;
+}
+
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
@@ -26,6 +31,14 @@ struct Earth
 
     static constexpr double areaInSqMeters() { return 4. * M_PI * radiusInMeters() * radiusInMeters(); }
     static constexpr double areaInSqKm()     { return 4. * M_PI * radiusInKm()     * radiusInKm();     }
+
+    // Great-circle central angle between two points, in radians
+    static double centralAngle(const PointLonLat&, const PointLonLat&);
+    static double centralAngle(const PointXYZ&, const PointXYZ&);
+
+    // Great-circle distance between two points
+    static double distanceInMeters(const PointLonLat&, const PointLonLat&);
+    static double distanceInMeters(const PointXYZ&, const PointXYZ&);
 };
 
 //------------------------------------------------------------------------------------------------------

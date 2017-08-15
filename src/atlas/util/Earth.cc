@@ -12,10 +12,94 @@
 #include "atlas/util/Earth.h"
 
 #include <cmath>
+#include "eckit/types/FloatCompare.h"
+#include "atlas/util/Constants.h"
+#include "atlas/util/Point.h"
 
 
 namespace atlas {
 namespace util {
+
+
+double Earth::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
+
+    /*
+     * Δσ = atan( ((cos(ϕ2) * sin(Δλ))^2 + (cos(ϕ1) * sin(ϕ2) - sin(ϕ1) * cos(ϕ2) * cos(Δλ))^2) /
+     *            (sin(ϕ1) * sin(ϕ2) + cos(ϕ1) * cos(ϕ2) * cos(Δλ)) )
+     *
+     * @article{doi:10.1179/sre.1975.23.176.88,
+     * author = {T. Vincenty},
+     * title = {Direct and Inverse Solutions of Geodesics on the Ellipsoid With Application of Nested Equations},
+     * journal = {Survey Review},
+     * volume = {23},
+     * number = {176},
+     * pages = {88-93},
+     * year = {1975},
+     * doi = {10.1179/sre.1975.23.176.88}
+     * }
+     */
+
+    ASSERT(-90. <= p1.lat() && p1.lat() <= 90.);
+    ASSERT(-90. <= p2.lat() && p2.lat() <= 90.);
+
+    double lambda_deg = p2.lon() - p1.lon();
+    while (lambda_deg > 180.) {
+        lambda_deg -= 360.;
+    }
+    while (lambda_deg < -180.) {
+        lambda_deg += 360.;
+    }
+
+    const double
+            phi1 = p1.lat() * Constants::degreesToRadians(),
+            phi2 = p2.lat() * Constants::degreesToRadians(),
+            lambda = lambda_deg * Constants::degreesToRadians(),
+
+            cos_phi1 = std::cos(phi1),
+            cos_phi2 = std::cos(phi2),
+            sin_phi1 = std::sin(phi1),
+            sin_phi2 = std::sin(phi2),
+            cos_lambda = std::cos(lambda),
+            sin_lambda = std::sin(lambda),
+
+            angle = std::atan2(
+                std::sqrt(std::pow(cos_phi2 * sin_lambda, 2) + std::pow(cos_phi1 * sin_phi2 - sin_phi1 * cos_phi2 * cos_lambda, 2)),
+                sin_phi1 * sin_phi2 + cos_phi1 * cos_phi2 * cos_lambda );
+
+    if (eckit::types::is_approximately_equal(angle, 0.)) {
+        return 0.;
+    }
+
+    ASSERT(angle > 0.);
+    return angle;
+}
+
+
+double Earth::centralAngle(const PointXYZ& p1, const PointXYZ& p2) {
+
+    // Δσ = 2 * asin( chord / 2 )
+
+    const double d2 = PointXYZ::distance2(p1, p2);
+    if (eckit::types::is_approximately_equal(d2, 0.)) {
+        return 0.;
+    }
+
+    const double
+            chord = std::sqrt(d2) / radiusInMeters(),
+            angle = std::asin(chord * 0.5) * 2.;
+
+    return angle;
+}
+
+
+double Earth::distanceInMeters(const PointLonLat& p1, const PointLonLat& p2) {
+    return radiusInMeters() * centralAngle(p1, p2);
+}
+
+
+double Earth::distanceInMeters(const PointXYZ& p1, const PointXYZ& p2) {
+    return radiusInMeters() * centralAngle(p1, p2);
+}
 
 
 }  // namespace util
