@@ -13,6 +13,7 @@
 
 #include <cmath>
 #include "eckit/types/FloatCompare.h"
+#include "eckit/exception/Exceptions.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Point.h"
 
@@ -99,6 +100,66 @@ double Earth::distanceInMeters(const PointLonLat& p1, const PointLonLat& p2) {
 
 double Earth::distanceInMeters(const PointXYZ& p1, const PointXYZ& p2) {
     return radiusInMeters() * centralAngle(p1, p2);
+}
+
+
+void Earth::convertGeodeticToGeocentric(const PointLonLat& p1, PointXYZ& p2, const double& height, const double& radius) {
+#if 0
+    // tests using eckit::geometry::lonlat_to_3d fail with:
+    // error: in "test_earth/test_earth_lon_p180_lat_0": check p2.y() == 0 has failed [7.8025052014847924e-10 != 0]
+    // error: in "test_earth/test_earth_lon_m180_lat_0": check p2.y() == 0 has failed [-7.8025052014847924e-10 != 0]
+    // error: in "test_earth/test_earth_lon_p90_lat_0": check p2.x() == 0 has failed [3.9012526007423962e-10 != 0]
+    // error: in "test_earth/test_earth_lon_m90_lat_0": check p2.x() == 0 has failed [3.9012526007423962e-10 != 0]
+    // error: in "test_earth/test_earth_lon_0_lat_p90": check p2.x() == 0 has failed [3.9012526007423962e-10 != 0]
+    // error: in "test_earth/test_earth_lon_0_lat_m90": check p2.x() == 0 has failed [3.9012526007423962e-10 != 0]
+
+    double xyz[3] = {0,};
+    eckit::geometry::lonlat_to_3d(p1.lon(), p1.lat(), xyz, radius, height);
+    p2.x() = xyz[eckit::geometry::XX];
+    p2.y() = xyz[eckit::geometry::YY];
+    p2.z() = xyz[eckit::geometry::ZZ];
+    return;
+#endif
+    ASSERT(radius > 0.);
+    ASSERT(-90. <= p1.lat() && p1.lat() <= 90.);
+
+    double lambda_deg = p1.lon();
+    while (lambda_deg > 180.) {
+        lambda_deg -= 360.;
+    }
+    while (lambda_deg < -180.) {
+        lambda_deg += 360.;
+    }
+
+    // See https://en.wikipedia.org/wiki/Reference_ellipsoid#Coordinates
+    // better numerical conditioning for both ϕ (poles) and λ (Greenwich/Date Line)
+    const bool lambda_conditioning = std::abs(lambda_deg) <= 90.;
+    const double
+            phi = p1.lat() * Constants::degreesToRadians(),
+            lambda = lambda_deg * Constants::degreesToRadians(),
+
+            sin_phi = std::sin(phi),
+            cos_phi = std::sqrt(1. - sin_phi * sin_phi),
+            sin_lambda =  lambda_conditioning ? std::sin(lambda) : std::sqrt(1. - std::cos(lambda) * std::cos(lambda)),
+            cos_lambda = !lambda_conditioning ? std::cos(lambda) : std::sqrt(1. - sin_lambda * sin_lambda);
+
+#if 0
+    // WGS84: first numerical eccentricity squared is e2 = 1 - (b*b)/(a*a) = 6.69437999014e-3
+    // FIXME correct a, b
+    const double
+            a = radius,
+            b = radius,
+            N_phi = a * a / std::sqrt(a * a * cos_phi * cos_phi + b * b * sin_phi * sin_phi);
+
+    p2.x() = (N_phi + height) * cos_phi * cos_lambda;
+    p2.y() = (N_phi + height) * cos_phi * sin_lambda;
+    p2.z() = (N_phi * (b * b) / (a * a) + height) * sin_phi;
+#else
+    // ignore eccentricity by setting b = a
+    p2.x() = (radius + height) * cos_phi * cos_lambda;
+    p2.y() = (radius + height) * cos_phi * sin_lambda;
+    p2.z() = (radius + height) * sin_phi;
+#endif
 }
 
 

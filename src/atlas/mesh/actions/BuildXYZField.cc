@@ -8,13 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/mesh/actions/BuildXYZField.h"
+
+#include "atlas/array/MakeView.h"
+#include "atlas/field/Field.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/actions/BuildXYZField.h"
-#include "atlas/field/Field.h"
-#include "atlas/array/ArrayView.h"
-#include "atlas/array/MakeView.h"
-#include "atlas/runtime/Log.h"
+#include "atlas/util/Earth.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace mesh {
@@ -40,17 +41,16 @@ Field& BuildXYZField::operator()(mesh::Nodes& nodes) const
     recompute = true;
   }
   if( recompute ) {
-    size_t npts = nodes.size();
-    array::ArrayView<double,2> lonlat   = array::make_view<double,2>( nodes.lonlat()  );
-    array::ArrayView<double,2> xyz_view = array::make_view<double,2>( nodes.field(name_) );
+    array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
+    array::ArrayView<double,2> xyz = array::make_view<double,2>( nodes.field(name_) );
 
-    for( size_t n=0; n<npts; ++n )
-    {
-      double xyz[3];
-      eckit::geometry::lonlat_to_3d(lonlat(n,0),lonlat(n,1),xyz);
-      xyz_view(n,0) = xyz[0];
-      xyz_view(n,1) = xyz[1];
-      xyz_view(n,2) = xyz[2];
+    PointXYZ p2;
+    for( size_t n=0; n<nodes.size(); ++n ) {
+      const PointLonLat p1(lonlat(n, 0), lonlat(n, 1));
+      util::Earth::convertGeodeticToGeocentric(p1, p2);
+      xyz(n, 0) = p2.x();
+      xyz(n, 1) = p2.y();
+      xyz(n, 2) = p2.z();
     }
   }
   return nodes.field(name_);

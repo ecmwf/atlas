@@ -31,7 +31,6 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/Checksum.h"
 
-using eckit::geometry::lonlat_to_3d;
 namespace atlas {
 namespace mesh {
 namespace actions {
@@ -56,6 +55,7 @@ namespace {
   * @sa http://en.wikipedia.org/wiki/Law_of_haversines
   */
 double arc_in_rad(const PointLonLat& from, const PointLonLat& to) {
+    // FIXME consider using atlas::util::Earth::centralAngle which is numerically more stable
     double lat_arc = (from.lat() - to.lat()) * DEG_TO_RAD;
     double lon_arc = (from.lon() - to.lon()) * DEG_TO_RAD;
     double lat_H = std::sin(lat_arc * 0.5);
@@ -64,6 +64,12 @@ double arc_in_rad(const PointLonLat& from, const PointLonLat& to) {
     lon_H *= lon_H;
     double tmp = std::cos(from.lat()*DEG_TO_RAD) * std::cos(to.lat()*DEG_TO_RAD);
     return 2.0 * std::asin(std::sqrt(lat_H + tmp*lon_H));
+}
+
+void lonlat_to_3d(const double& lon, const double& lat, double* xyz, const double& r, const double& h) {
+    PointLonLat p1(lon, lat);
+    PointXYZ p2(xyz); // (copy)
+    util::Earth::convertGeodeticToGeocentric(p1, p2, h, r);
 }
 
 double quad_quality( const PointLonLat& p1, const PointLonLat& p2, const PointLonLat& p3, const PointLonLat& p4)
