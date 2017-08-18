@@ -45,6 +45,7 @@ struct Earth
 
     // Convert geodetic coordinates to geocentric Cartesian (ECEF: Earth-centered, Earth-fixed)
     static void convertGeodeticToGeocentric(const PointLonLat&, PointXYZ&, const double& height = 0, const double& radius = radiusInMeters());
+    static void convertGeodeticToGeocentric(const PointLonLat&, PointXYZ&, const double& height, const double& radiusA, const double& radiusB);
 
 };
 

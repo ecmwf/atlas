@@ -22,6 +22,17 @@ namespace atlas {
 namespace util {
 
 
+static inline double between_m180_and_p180(double a) {
+    while (a > 180) {
+        a -= 360;
+    }
+    while (a < -180 ) {
+        a += 360;
+    }
+    return a;
+}
+
+
 double Earth::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
 
     /*
@@ -42,14 +53,7 @@ double Earth::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
 
     ASSERT(-90. <= p1.lat() && p1.lat() <= 90.);
     ASSERT(-90. <= p2.lat() && p2.lat() <= 90.);
-
-    double lambda_deg = p2.lon() - p1.lon();
-    while (lambda_deg > 180.) {
-        lambda_deg -= 360.;
-    }
-    while (lambda_deg < -180.) {
-        lambda_deg += 360.;
-    }
+    double lambda_deg = between_m180_and_p180(p2.lon() - p1.lon());
 
     const double
             phi1 = p1.lat() * Constants::degreesToRadians(),
@@ -104,6 +108,11 @@ double Earth::distanceInMeters(const PointXYZ& p1, const PointXYZ& p2) {
 
 
 void Earth::convertGeodeticToGeocentric(const PointLonLat& p1, PointXYZ& p2, const double& height, const double& radius) {
+    convertGeodeticToGeocentric(p1, p2, height, radius, radius);
+}
+
+
+void atlas::util::Earth::convertGeodeticToGeocentric(const atlas::PointLonLat& p1, atlas::PointXYZ& p2, const double& height, const double& a, const double& b) {
 #if 0
     // tests using eckit::geometry::lonlat_to_3d fail with:
     // error: in "test_earth/test_earth_poles/test_earth_north_pole": check p2.x() == 0 has failed [3.9012526007423962e-10 != 0]
@@ -121,54 +130,39 @@ void Earth::convertGeodeticToGeocentric(const PointLonLat& p1, PointXYZ& p2, con
     // error: in "test_earth/test_earth_octants/test_earth_lon_315": check PointXYZ::equal(p2[0], p2[1]) has failed
 
     double xyz[3] = {0,};
-    eckit::geometry::lonlat_to_3d(p1.lon(), p1.lat(), xyz, radius, height);
+    eckit::geometry::lonlat_to_3d(p1.lon(), p1.lat(), xyz, a, height);
     p2.x() = xyz[eckit::geometry::XX];
     p2.y() = xyz[eckit::geometry::YY];
     p2.z() = xyz[eckit::geometry::ZZ];
     return;
 #endif
-    ASSERT(radius > 0.);
+    ASSERT(a > 0.);
+    ASSERT(b > 0.);
     ASSERT(-90. <= p1.lat() && p1.lat() <= 90.);
-
-    double lambda_deg = p1.lon();
-    while (lambda_deg > 180.) {
-        lambda_deg -= 360.;
-    }
-    while (lambda_deg <= -180.) {
-        lambda_deg += 360.;
-    }
+    double lambda_deg = between_m180_and_p180(p1.lon());
 
     // See https://en.wikipedia.org/wiki/Reference_ellipsoid#Coordinates
     // better numerical conditioning for both ϕ (poles) and λ (Greenwich/Date Line)
-    const bool
-            lambda_cos_conditioning = std::abs(lambda_deg) <= 90.,
-            lambda_sin_conditioning = eckit::types::is_approximately_equal(lambda_deg, 180.);
     const double
             phi = p1.lat() * Constants::degreesToRadians(),
             lambda = lambda_deg * Constants::degreesToRadians(),
 
             sin_phi = std::sin(phi),
             cos_phi = std::sqrt(1. - sin_phi * sin_phi),
-            sin_lambda = !lambda_sin_conditioning ? std::sin(lambda) : 0.,
-            cos_lambda = !lambda_cos_conditioning ? std::cos(lambda) : std::sqrt(1. - sin_lambda * sin_lambda);
+            sin_lambda = std::abs(lambda_deg) < 180. ? std::sin(lambda) : 0.,
+            cos_lambda = std::abs(lambda_deg) >  90. ? std::cos(lambda) : std::sqrt(1. - sin_lambda * sin_lambda);
 
-#if 0
-    // WGS84: first numerical eccentricity squared is e2 = 1 - (b*b)/(a*a) = 6.69437999014e-3
-    // FIXME correct a, b
-    const double
-            a = radius,
-            b = radius,
-            N_phi = a * a / std::sqrt(a * a * cos_phi * cos_phi + b * b * sin_phi * sin_phi);
-
-    p2.x() = (N_phi + height) * cos_phi * cos_lambda;
-    p2.y() = (N_phi + height) * cos_phi * sin_lambda;
-    p2.z() = (N_phi * (b * b) / (a * a) + height) * sin_phi;
-#else
-    // ignore eccentricity by setting b = a
-    p2.x() = (radius + height) * cos_phi * cos_lambda;
-    p2.y() = (radius + height) * cos_phi * sin_lambda;
-    p2.z() = (radius + height) * sin_phi;
-#endif
+    if (a == b) {
+        // no eccentricity
+        p2.x() = (a + height) * cos_phi * cos_lambda;
+        p2.y() = (a + height) * cos_phi * sin_lambda;
+        p2.z() = (a + height) * sin_phi;
+    } else {
+        const double N_phi = a * a / std::sqrt(a * a * cos_phi * cos_phi + b * b * sin_phi * sin_phi);
+        p2.x() = (N_phi + height) * cos_phi * cos_lambda;
+        p2.y() = (N_phi + height) * cos_phi * sin_lambda;
+        p2.z() = (N_phi * (b * b) / (a * a) + height) * sin_phi;
+    }
 }
 
 
