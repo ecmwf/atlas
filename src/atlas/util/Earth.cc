@@ -113,29 +113,6 @@ void Earth::convertGeodeticToGeocentric(const PointLonLat& p1, PointXYZ& p2, con
 
 
 void atlas::util::Earth::convertGeodeticToGeocentric(const atlas::PointLonLat& p1, atlas::PointXYZ& p2, const double& height, const double& a, const double& b) {
-#if 0
-    // tests using eckit::geometry::lonlat_to_3d fail with:
-    // error: in "test_earth/test_earth_poles/test_earth_north_pole": check p2.x() == 0 has failed [3.9012526007423962e-10 != 0]
-    // error: in "test_earth/test_earth_poles/test_earth_south_pole": check p2.x() == 0 has failed [3.9012526007423962e-10 != 0]
-    // error: in "test_earth/test_earth_quadrants/test_earth_lon_0": check PointXYZ::equal(p2[0], p2[1]) has failed
-    // error: in "test_earth/test_earth_quadrants/test_earth_lon_90": check p2[0].x() == 0 has failed [3.9012526007423962e-10 != 0]
-    // error: in "test_earth/test_earth_quadrants/test_earth_lon_90": check PointXYZ::equal(p2[0], p2[1]) has failed
-    // error: in "test_earth/test_earth_quadrants/test_earth_lon_180": check p2[0].y() == 0 has failed [7.8025052014847924e-10 != 0]
-    // error: in "test_earth/test_earth_quadrants/test_earth_lon_180": check PointXYZ::equal(p2[0], p2[1]) has failed
-    // error: in "test_earth/test_earth_quadrants/test_earth_lon_270": check p2[0].x() == 0 has failed [-1.1703757802227187e-09 != 0]
-    // error: in "test_earth/test_earth_quadrants/test_earth_lon_270": check PointXYZ::equal(p2[0], p2[1]) has failed
-    // error: in "test_earth/test_earth_octants/test_earth_lon_45": check PointXYZ::equal(p2[0], p2[1]) has failed
-    // error: in "test_earth/test_earth_octants/test_earth_lon_135": check PointXYZ::equal(p2[0], p2[1]) has failed
-    // error: in "test_earth/test_earth_octants/test_earth_lon_225": check PointXYZ::equal(p2[0], p2[1]) has failed
-    // error: in "test_earth/test_earth_octants/test_earth_lon_315": check PointXYZ::equal(p2[0], p2[1]) has failed
-
-    double xyz[3] = {0,};
-    eckit::geometry::lonlat_to_3d(p1.lon(), p1.lat(), xyz, a, height);
-    p2.x() = xyz[eckit::geometry::XX];
-    p2.y() = xyz[eckit::geometry::YY];
-    p2.z() = xyz[eckit::geometry::ZZ];
-    return;
-#endif
     ASSERT(a > 0.);
     ASSERT(b > 0.);
     ASSERT(-90. <= p1.lat() && p1.lat() <= 90.);
