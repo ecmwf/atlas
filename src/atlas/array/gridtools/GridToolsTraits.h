@@ -4,12 +4,12 @@
 
 //------------------------------------------------------------------------------
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-#define ENABLE_GPU
+#define _USE_GPU_
 #endif
 #include "common/generic_metafunctions/all_integrals.hpp"
 #include "storage/storage-facility.hpp"
-#ifdef ENABLE_GPU
-#undef ENABLE_GPU
+#ifdef _USE_GPU_
+#undef _USE_GPU_
 #endif
 //------------------------------------------------------------------------------
 
