@@ -4,7 +4,9 @@
 
 //------------------------------------------------------------------------------
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#ifndef _USE_GPU_
 #define _USE_GPU_
+#endif
 #endif
 #include "common/generic_metafunctions/all_integrals.hpp"
 #include "storage/storage-facility.hpp"
