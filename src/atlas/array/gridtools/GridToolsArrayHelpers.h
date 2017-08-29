@@ -235,7 +235,7 @@ struct default_layout_t {
       static_assert((::gridtools::is_data_store<DataStore>::value), "Internal Error: passing a non GT data store");
 
       if(gt_data_store_ptr->valid()) {
-          auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
+          auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr().get();
           using Layout = typename DataStore::storage_info_t::layout_t;
 
       using seq = my_apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;

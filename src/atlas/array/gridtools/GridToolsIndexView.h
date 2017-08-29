@@ -83,7 +83,7 @@ public:
 
     IndexView(data_view_t data_view) : gt_data_view_(data_view) {
         if(data_view.valid())
-            size_ = gt_data_view_.storage_info().size();
+            size_ = gt_data_view_.storage_info().total_length();
         else
             size_ = 0;
     }

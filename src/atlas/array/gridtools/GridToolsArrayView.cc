@@ -42,7 +42,7 @@ ArrayView<Value,Rank>::ArrayView(data_view_t data_view, const Array& array) :
         std::memcpy(strides_, &(stridest[0]), sizeof(size_t)*Rank);
         std::memcpy(shape_, &(shapet[0]), sizeof(size_t)*Rank);
 
-        size_ = gt_host_view_.storage_info().size();
+        size_ = gt_host_view_.storage_info().total_length();
     }
     else {
 
