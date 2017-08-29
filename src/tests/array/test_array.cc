@@ -222,7 +222,7 @@ CASE("test_resize") {
     Array* ds = Array::create<double>(1);
     EXPECT(ds->size() == 1);
     ds->resize(2);
-    delete ds
+    delete ds;
   }
 
   {

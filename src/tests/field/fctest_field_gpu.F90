@@ -64,8 +64,8 @@ real(8) :: vres
 
 field = atlas_Field(kind=atlas_real(8),shape=[10,5])
 
-FCTEST_CHECK( field%is_on_host() )
-FCTEST_CHECK( field%is_on_device() )
+FCTEST_CHECK( .not. field%host_needs_update() )
+FCTEST_CHECK( field%device_needs_update() )
 
 call field%clone_to_device()
 call field%host_data(host)
@@ -82,7 +82,7 @@ call test_res(10,5,device_ptr, vres)
 !FCTEST_CHECK_EQUAL( val, 3.5_c_float )
 
 
-FCTEST_CHECK( field%is_on_device() )
+FCTEST_CHECK( .not. field%device_needs_update() )
 
 call field%final()
 END_TEST

@@ -256,8 +256,8 @@ extern "C"
   void atlas__Field__rename(FieldImpl* This, const char* name);
   void atlas__Field__set_levels(FieldImpl* This, int levels);
   void atlas__Field__set_functionspace(FieldImpl* This, const functionspace::FunctionSpaceImpl* functionspace);
-  int atlas__Field__is_on_host(const FieldImpl* This);
-  int atlas__Field__is_on_device(const FieldImpl* This);
+  int atlas__Field__host_needs_update(const FieldImpl* This);
+  int atlas__Field__device_needs_update(const FieldImpl* This);
   void atlas__Field__clone_to_device(FieldImpl* This);
   void atlas__Field__clone_from_device(FieldImpl* This);
   void atlas__Field__sync_host_device(FieldImpl* This);

@@ -484,12 +484,12 @@ void atlas__Field__device_data_double_specf (FieldImpl* This, double* &data, int
   );
 }
 
-int atlas__Field__is_on_host(const FieldImpl* This)
+int atlas__Field__host_needs_update(const FieldImpl* This)
 {
   return This->hostNeedsUpdate();
 }
 
-int atlas__Field__is_on_device(const FieldImpl* This)
+int atlas__Field__device_needs_update(const FieldImpl* This)
 {
   return This->deviceNeedsUpdate();
 }

@@ -31,18 +31,22 @@ ArrayView<Value,Rank>::ArrayView(data_view_t data_view, const Array& array) :
         using seq = ::gridtools::apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, Rank>::type>;
 
         constexpr static unsigned int ndims = data_view_t::data_store_t::storage_info_t::ndims;
-        data_view_t gt_host_view_ = atlas::array::gridtools::make_gt_host_view<value_type, ndims, true> ( array );
+
+        using storage_info_ty = gridtools::storage_traits::storage_info_t<0, ndims>;
+        using data_store_t    = gridtools::storage_traits::data_store_t<value_type, storage_info_ty>;
+
+        auto storage_info_ = *((reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage())))->get_storage_info_ptr());
 
         auto stridest = seq::template apply<
             std::vector<size_t>,
             atlas::array::gridtools::get_stride_component<unsigned long, ::gridtools::static_uint<Rank> >::template get_component>(
-            &(gt_host_view_.storage_info()));
-        auto shapet = seq::template apply<std::vector<size_t>, atlas::array::gridtools::get_shape_component>(&(gt_host_view_.storage_info()));
+            &(storage_info_));
+        auto shapet = seq::template apply<std::vector<size_t>, atlas::array::gridtools::get_shape_component>(&(storage_info_));
 
         std::memcpy(strides_, &(stridest[0]), sizeof(size_t)*Rank);
         std::memcpy(shape_, &(shapet[0]), sizeof(size_t)*Rank);
 
-        size_ = gt_host_view_.storage_info().total_length();
+        size_ = storage_info_.total_length();
     }
     else {
 

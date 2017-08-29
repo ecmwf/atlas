@@ -102,8 +102,8 @@ contains
 #:endfor
       & dummy
 
-  procedure, public :: is_on_host
-  procedure, public :: is_on_device
+  procedure, public :: host_needs_update
+  procedure, public :: device_needs_update
   procedure, public :: clone_to_device
   procedure, public :: clone_from_device
   procedure, public :: sync_host_device
@@ -642,27 +642,27 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-function is_on_host(this)
+function host_needs_update(this)
   use atlas_field_c_binding
-  logical :: is_on_host
+  logical :: host_needs_update
   class(atlas_Field), intent(in) :: this
-  if( atlas__Field__is_on_host(this%c_ptr()) == 1 ) then
-    is_on_host = .true.
+  if( atlas__Field__host_needs_update(this%c_ptr()) == 1 ) then
+    host_needs_update = .true.
   else
-    is_on_host = .false.
+    host_needs_update = .false.
   endif
 end function
 
 !-------------------------------------------------------------------------------
 
-function is_on_device(this)
+function device_needs_update(this)
   use atlas_field_c_binding
-  logical :: is_on_device
+  logical :: device_needs_update
   class(atlas_Field), intent(in) :: this
-  if( atlas__Field__is_on_device(this%c_ptr()) == 1 ) then
-    is_on_device = .true.
+  if( atlas__Field__device_needs_update(this%c_ptr()) == 1 ) then
+    device_needs_update = .true.
   else
-    is_on_device = .false.
+    device_needs_update = .false.
   endif
 end function
 
