@@ -29,6 +29,7 @@ struct GridToolsDataStore : ArrayDataStore
     }
 
     void cloneToDevice() const {
+        assert(data_store_);
         data_store_->clone_to_device();
     }
 
