@@ -138,7 +138,7 @@ struct default_layout_t {
       template < typename StorageInfoPtr>
       ATLAS_HOST_DEVICE constexpr static size_t apply(StorageInfoPtr a) {
           static_assert((::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type >::value ), "Error: not a storage_info");
-          return a->template dim<Idx>();
+          return a->template unaligned_dim<Idx>();
       }
   };
 
