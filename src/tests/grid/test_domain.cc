@@ -8,17 +8,18 @@
  * does it submit to any jurisdiction.
  */
 
-#include <sstream>
 #include <algorithm>
 #include <iomanip>
+#include <sstream>
 
-#define BOOST_TEST_MODULE TestGrids
+#define BOOST_TEST_MODULE TestDomain
 #include "ecbuild/boost_test_framework.h"
 
 
 #include "atlas/domain.h"
-#include "atlas/util/Config.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/Config.h"
 #include "tests/AtlasFixture.h"
 
 namespace atlas {
@@ -36,6 +37,23 @@ BOOST_AUTO_TEST_CASE( test_domain_rectangular )
   Domain from_cfg(domain_cfg);
   Log::info() << from_cfg.spec() << std::endl;
   BOOST_CHECK_EQUAL( from_cfg.type(), std::string("rectangular") );
+}
+
+BOOST_AUTO_TEST_CASE( test_domain_rectangular_tolerance )
+{
+    using grid::StructuredGrid;
+    using grid::LinearSpacing;
+
+    Domain domain = RectangularDomain( {-27, 45}, {33, 73} );
+    RectangularDomain rd = domain;
+
+    StructuredGrid::XSpace xspace( LinearSpacing( rd.xmin(), rd.xmax(), 721, true ));
+    StructuredGrid::YSpace yspace( LinearSpacing( rd.ymin(), rd.ymax(), 401 ));
+
+    StructuredGrid grid(xspace, yspace, StructuredGrid::Projection(), rd);
+
+    BOOST_CHECK_EQUAL(grid.nx(0), 721);
+    BOOST_CHECK_EQUAL(grid.ny(), 401);
 }
 
 BOOST_AUTO_TEST_CASE( test_domain_zonal_from_rectangular )

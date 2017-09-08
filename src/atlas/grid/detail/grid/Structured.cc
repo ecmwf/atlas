@@ -299,7 +299,7 @@ namespace {
       degrees_(domain.units()=="degrees"),
       xmin_(domain.xmin()),
       xmax_(domain.xmax()),
-      eps_(1e-12) {
+      eps_(1e-11) {
     }
 
     double operator()(double x) const {
