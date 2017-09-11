@@ -43,6 +43,8 @@ public:
      */
     void partition( const Grid&, int part[] ) const;
 
+    virtual std::string type() const { return static_type(); }
+
 };
 
 

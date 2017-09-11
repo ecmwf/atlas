@@ -38,7 +38,7 @@ class AtlasParallelInterpolation : public AtlasTool {
 
 public:
 
-    AtlasInterpolation(int argc, char* argv[]) : AtlasTool(argc, argv) {
+    AtlasParallelInterpolation(int argc, char* argv[]) : AtlasTool(argc, argv) {
         add_option(new SimpleOption<size_t>     ("log-rank",             "use specific MPI rank for logging (default 0)"));
         add_option(new SimpleOption<bool>       ("log-statistics",       "show simple statistics on source/target (default false)"));
 
@@ -66,7 +66,7 @@ public:
 };
 
 
-void AtlasInterpolation::execute(const AtlasTool::Args& args) {
+void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     // Get user options
     std::string option;
@@ -256,6 +256,6 @@ void AtlasInterpolation::execute(const AtlasTool::Args& args) {
 
 
 int main(int argc, char* argv[]) {
-    AtlasInterpolation tool(argc, argv);
+    AtlasParallelInterpolation tool(argc, argv);
     return tool.start();
 }
