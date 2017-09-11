@@ -8,12 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/array/MakeView.h"
 #include "atlas/mesh/Polygon.h"
+
+#include <set>
+#include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
-#include "atlas/util/CoordinateEnums.h"
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/mesh.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/util/CoordinateEnums.h"
 
 using atlas::array::make_datatype;
 using atlas::array::make_shape;

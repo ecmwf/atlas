@@ -181,19 +181,10 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int node
 
                 if (point_in_poly(polygon, P)) {
                     node_partition[i] = mpi_rank;
-                } else {
-
-                  if( mpi_size == 1 ) {
-                    Log::debug<Atlas>() << "point_in_poly failed for grid point " << i+1 << std::endl;
-                    Log::debug<Atlas>() << "     P " << P << std::endl;
-                    Log::debug<Atlas>() << "     bbox_min " << bbox_min << std::endl;
-                    Log::debug<Atlas>() << "     bbox_max " << bbox_max << std::endl;
-                  }
-
                 }
 
             } else if ((includes_north_pole && P[LAT] >= bbox_max[LAT])
-                    || (includes_south_pole && P[LAT] < bbox_min[LAT])) {
+                    || (includes_south_pole && P[LAT] <  bbox_min[LAT])) {
 
                 node_partition[i] = mpi_rank;
 
@@ -229,8 +220,6 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int node
         size_t count_all = x.size();
         comm.allReduceInPlace(count_all, eckit::mpi::sum());
 
-        enum {LON=0,LAT=1};
-
         for (int r = 0; r < int(comm.size()); ++r) {
             if (mpi_rank == r) {
                 std::ofstream f("partitions_poly.py", mpi_rank == 0? std::ios::trunc : std::ios::app);
@@ -249,8 +238,8 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int node
                          "\n" "ax = fig.add_subplot(111,aspect='equal')"
                          "\n" "";
                     f << "\n"
-                         "\n" "xlost = ["; for (std::vector<double>::const_iterator ix=xlost.begin(); ix!=xlost.end(); ++ix) { f << *ix << ", "; } f << "]"
-                         "\n" "ylost = ["; for (std::vector<double>::const_iterator iy=ylost.begin(); iy!=ylost.end(); ++iy) { f << *iy << ", "; } f << "]"
+                         "\n" "xlost = ["; for (const double& ix: xlost) { f << ix << ", "; } f << "]"
+                         "\n" "ylost = ["; for (const double& iy: ylost) { f << iy << ", "; } f << "]"
                          "\n"
                          "\n" "ax.scatter(xlost, ylost, color='k', marker='o')"
                          "\n" "";
@@ -266,8 +255,8 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int node
                      "\n" "count_" << r << " = " << count <<
                      "\n" "count_all_" << r << " = " << count_all <<
                      "\n" ""
-                     "\n" "x_" << r << " = ["; for (std::vector<double>::const_iterator ix=x.begin(); ix!=x.end(); ++ix) { f << *ix << ", "; } f << "]"
-                     "\n" "y_" << r << " = ["; for (std::vector<double>::const_iterator iy=y.begin(); iy!=y.end(); ++iy) { f << *iy << ", "; } f << "]"
+                     "\n" "x_" << r << " = ["; for (const double& ix: x) { f << ix << ", "; } f << "]"
+                     "\n" "y_" << r << " = ["; for (const double& iy: y) { f << iy << ", "; } f << "]"
                      "\n"
                      "\n" "c = cycol()"
                      "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))"
