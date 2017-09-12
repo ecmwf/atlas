@@ -116,7 +116,7 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int node
     // Note: indices ('poly') don't necessarily match coordinates ('polygon')
     // Note: the coordinates include North/South Pole (first/last partitions only)
     std::vector< point_t > polygon;
-    polygon.reserve(polygon.size());
+    polygon.reserve(_poly.size());
 
     auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
     point_t bbox_min = point_t(lonlat_src(_poly[0], LON), lonlat_src(_poly[0], LAT));
