@@ -116,30 +116,7 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int node
     // Note: indices ('poly') don't necessarily match coordinates ('polygon')
     // Note: the coordinates include North/South Pole (first/last partitions only)
     std::vector< point_t > polygon;
-    polygon.reserve(_poly.size());
-
-    auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
-    point_t bbox_min = point_t(lonlat_src(_poly[0], LON), lonlat_src(_poly[0], LAT));
-    point_t bbox_max = bbox_min;
-
-    for (size_t i = 0; i < _poly.size(); ++i) {
-
-        point_t A(lonlat_src(_poly[i], LON), lonlat_src(_poly[i], LAT));
-        bbox_min = point_t::componentsMin(bbox_min, A);
-        bbox_max = point_t::componentsMax(bbox_max, A);
-
-        // if new point is aligned with existing edge (cross product ~= 0) make the edge longer
-        if ((polygon.size() >= 2)) {
-            point_t B = polygon.back();
-            point_t C = polygon[polygon.size() - 2];
-            if (eckit::types::is_approximately_equal<double>( 0, dot_sign(A[LON], A[LAT], B[LON], B[LAT], C[LON], C[LAT]) )) {
-                polygon.back() = A;
-                continue;
-            }
-        }
-
-        polygon.push_back(A);
-    }
+    getPointCoordinates(grid, _poly, polygon);
     ASSERT(polygon.size() >= 2);
 
 
@@ -285,6 +262,36 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int node
       }
     }
 
+}
+
+
+void MatchingMeshPartitionerLonLatPolygon::getPointCoordinates(const Grid&, const Mesh::Polygon& poly, std::vector<PointLonLat>& points) const {
+    points.clear();
+    points.reserve(poly.size());
+
+    auto lonlat = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
+    PointLonLat bbox_min = PointLonLat(lonlat(poly[0], LON), lonlat(poly[0], LAT));
+    PointLonLat bbox_max = bbox_min;
+
+    for (size_t i = 0; i < poly.size(); ++i) {
+
+        PointLonLat A(lonlat(poly[i], LON), lonlat(poly[i], LAT));
+        bbox_min = PointLonLat::componentsMin(bbox_min, A);
+        bbox_max = PointLonLat::componentsMax(bbox_max, A);
+
+        // if new point is aligned with existing edge (cross product ~= 0) make the edge longer
+        if ((points.size() >= 2)) {
+            PointLonLat B = points.back();
+            PointLonLat C = points[points.size() - 2];
+            if (eckit::types::is_approximately_equal<double>( 0, dot_sign(A[LON], A[LAT], B[LON], B[LAT], C[LON], C[LAT]) )) {
+                points.back() = A;
+                continue;
+            }
+        }
+
+        points.push_back(A);
+    }
+    ASSERT(points.size() >= 2);
 }
 
 

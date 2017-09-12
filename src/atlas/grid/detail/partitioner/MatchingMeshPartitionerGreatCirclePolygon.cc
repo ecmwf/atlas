@@ -11,7 +11,6 @@
 
 #include "MatchingMeshPartitionerGreatCirclePolygon.h"
 
-#include <set>
 #include <utility>
 #include <vector>
 #include "eckit/config/Resource.h"
@@ -102,64 +101,6 @@ bool point_in_poly(const std::vector<point_t>& poly, const point_t& P) {
     return wn != 0;
 }
 
-
-struct Edge : std::pair< size_t, size_t > {
-    Edge(size_t _A, size_t _B) : std::pair< size_t, size_t >(_A, _B) {}
-    Edge reverse() const { return Edge(second, first); }
-    struct LessThan {
-        bool operator()(const Edge& e1, const Edge& e2) const {
-            // order ascending by 'first'
-            return (e1.first  < e2.first? true  :
-                    e1.first  > e2.first? false :
-                    e1.second < e2.second );
-        }
-    };
-};
-
-
-typedef std::set< Edge, Edge::LessThan > edge_set_t;
-
-
-struct Poly : std::vector< size_t > {
-    Poly() {}
-    Poly(edge_set_t& edges) {
-        clear();
-        reserve(edges.size() + 1);
-
-        push_back(edges.begin()->first);
-        for (edge_set_t::iterator e = edges.begin(); e != edges.end() && e->first == back();
-             e = edges.lower_bound(Edge(back(), 0))) {
-            push_back(e->second);
-            edges.erase(*e);
-        }
-
-        ASSERT(front() == back());
-    }
-    Poly& operator+=(const Poly& other) {
-        ASSERT(other.size() > 1);
-        if (empty()) {
-            return operator=(other);
-        }
-
-        difference_type N = difference_type(other.size()) - 1;
-        vector< size_t > cycle;
-        cycle.reserve(2 * size_t(N));
-        cycle.insert(cycle.end(), other.begin(), other.end() - 1);
-        cycle.insert(cycle.end(), other.begin(), other.end() - 1);
-
-        for (const_iterator c = cycle.begin(); c != cycle.begin() + N; ++c) {
-            iterator here = find(begin(), end(), *c);
-            if (here != end()) {
-                insert(here, c, c + N);
-                return *this;
-            }
-        }
-
-        throw eckit::AssertionFailed("Could not merge polygons, they are not connected", Here());
-    }
-};
-
-
 }  // (anonymous namespace)
 
 
@@ -169,53 +110,21 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
     const int mpi_size = int(comm.size());
 
 
-    // Polygon indices
-    // - extract partition boundary edges by always attempting first to
-    //   remove a reversed edge from a neighbouring element (if it exists)
-    // - polygon can have multiple cycles, but must be a connected graph
-    Poly poly;
-
-    edge_set_t edges;
-    for (size_t t = 0; t < prePartitionedMesh_.cells().nb_types(); ++t) {
-        const mesh::Elements& elements = prePartitionedMesh_.cells().elements(t);
-
-        const mesh::BlockConnectivity& conn = elements.node_connectivity();
-        auto patch = elements.view< int, 1 >(elements.field("patch"));
-
-        const size_t nb_nodes = elements.nb_nodes();
-        ASSERT( (nb_nodes==3 && elements.name() == "Triangle")
-             || (nb_nodes==4 && elements.name() == "Quadrilateral") );
-
-        for (size_t j = 0; j < elements.size(); ++j) {
-            for (size_t k = 0; k < nb_nodes && (patch(j) == 0); ++k) {
-                Edge edge(size_t(conn(j, k)), size_t(conn(j, (k+1) % nb_nodes)));
-                ASSERT(edge.first != edge.second);
-                if (!edges.erase(edge.reverse())) {
-                    edges.insert(edge);
-                }
-            }
-        }
-    }
-
-    while (!edges.empty()) {
-        poly += Poly(edges);
-    }
-    ASSERT(poly.size());
-
+    const Mesh::Polygon& _poly = prePartitionedMesh_.polygon(0);
 
     // Polygon point coordinates
     // Note: indices ('poly') necessarily match coordinates ('polygon')
     // Note: the coordinates include North/South Pole (first/last partitions only)
     std::vector< point_t > polygon;
-    polygon.reserve(poly.size());
+    polygon.reserve(_poly.size());
 
     auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
-    point_t bbox_min = point_t(lonlat_src(poly[0], LON), lonlat_src(poly[0], LAT));
+    point_t bbox_min = point_t(lonlat_src(_poly[0], LON), lonlat_src(_poly[0], LAT));
     point_t bbox_max = bbox_min;
 
-    for (size_t i = 0; i < poly.size(); ++i) {
+    for (size_t i = 0; i < _poly.size(); ++i) {
 
-        point_t A(lonlat_src(poly[i], LON), lonlat_src(poly[i], LAT));
+        point_t A(lonlat_src(_poly[i], LON), lonlat_src(_poly[i], LAT));
         bbox_min = point_t::componentsMin(bbox_min, A);
         bbox_max = point_t::componentsMax(bbox_max, A);
 
@@ -366,6 +275,25 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
       }
     }
 
+}
+
+
+void MatchingMeshPartitionerGreatCirclePolygon::getPointCoordinates(const Grid& grid, const Mesh::Polygon& poly, std::vector<PointLonLat>& points) const {
+    points.reserve(poly.size());
+
+    auto lonlat = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
+    PointLonLat bbox_min = PointLonLat(lonlat(poly[0], LON), lonlat(poly[0], LAT));
+    PointLonLat bbox_max = bbox_min;
+
+    for (size_t i = 0; i < poly.size(); ++i) {
+
+        PointLonLat A(lonlat(poly[i], LON), lonlat(poly[i], LAT));
+        bbox_min = PointLonLat::componentsMin(bbox_min, A);
+        bbox_max = PointLonLat::componentsMax(bbox_max, A);
+
+        points.push_back(A);
+    }
+    ASSERT(points.size() >= 2);
 }
 
 

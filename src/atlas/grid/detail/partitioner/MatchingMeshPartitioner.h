@@ -12,19 +12,14 @@
 #pragma once
 
 #include <string>
-#include "eckit/config/Configuration.h"
-#include "eckit/memory/NonCopyable.h"
-#include "eckit/memory/ScopedPtr.h"
-#include "atlas/domain/Domain.h"
-#include "atlas/grid/Distribution.h"
-#include "atlas/grid/Grid.h"
+#include <vector>
+//#include "eckit/config/Configuration.h"
+//#include "atlas/domain/Domain.h"
+//#include "atlas/grid/Distribution.h"
+//#include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
-#include "atlas/mesh/Mesh.h"
-
-
-namespace atlas {
-  class Mesh;
-}
+//#include "atlas/mesh/Mesh.h"
+#include "atlas/library/config.h"
 
 
 namespace atlas {
@@ -47,6 +42,8 @@ public:
     virtual ~MatchingMeshPartitioner() {}
 
 protected:
+
+    virtual void getPointCoordinates(const std::vector<idx_t>&, std::vector<atlas::PointLonLat>& points, bool simplifyConsequentAlignedPoints=false) const;
 
     const Mesh prePartitionedMesh_;
 
