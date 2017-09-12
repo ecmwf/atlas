@@ -8,15 +8,17 @@
  * does it submit to any jurisdiction.
  */
 
+/// @author Pedro Maciel
 /// @author Willem Deconinck
-/// @date August 2015
+/// @date September 2017
 
 #pragma once
 
 #include <vector>
 #include "eckit/memory/Owned.h"
-#include "atlas/mesh/detail/MeshImpl.h"
+#include "atlas/grid/detail/partitioner/Polygon.h"
 #include "atlas/library/config.h"
+#include "atlas/mesh/detail/MeshImpl.h"
 
 namespace atlas {
 namespace mesh {
@@ -24,10 +26,9 @@ namespace mesh {
 /**
  * \brief Polygon class that holds the boundary of a mesh partition
  */
-class Polygon : public eckit::Owned {
-public:
+class Polygon : public grid::detail::partitioner::Polygon, public eckit::Owned {
 
-  using const_iterator = std::vector<idx_t>::const_iterator;
+  typedef grid::detail::partitioner::Polygon Poly;
 
 public: // methods
 
@@ -37,7 +38,6 @@ public: // methods
   Polygon( const detail::MeshImpl& mesh, size_t halo );
 
 //-- Accessors
-  size_t size() const { return node_list_.size(); }
 
   size_t halo() const { return halo_; }
 
@@ -45,11 +45,6 @@ public: // methods
   size_t footprint() const;
 
   void outputPythonScript(const eckit::PathName&) const;
-
-  const_iterator begin() const { return node_list_.begin(); }
-  const_iterator end()   const { return node_list_.end();   }
-
-  idx_t operator[](idx_t i) const { return node_list_[i]; }
 
 private:
 
@@ -64,7 +59,6 @@ private:
 
   const detail::MeshImpl& mesh_;
   size_t halo_;
-  std::vector<idx_t> node_list_;
 
 };
 

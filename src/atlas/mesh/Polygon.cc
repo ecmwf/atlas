@@ -10,75 +10,16 @@
 
 #include "atlas/mesh/Polygon.h"
 
-#include <set>
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/CoordinateEnums.h"
 
-using atlas::array::make_datatype;
-using atlas::array::make_shape;
-
 namespace atlas {
 namespace mesh {
 
 //------------------------------------------------------------------------------------------------------
-
-struct Edge : std::pair< size_t, size_t > {
-    Edge(size_t _A, size_t _B) : std::pair< size_t, size_t >(_A, _B) {}
-    Edge reverse() const { return Edge(second, first); }
-    struct LessThan {
-        bool operator()(const Edge& e1, const Edge& e2) const {
-            // order ascending by 'first'
-            return (e1.first  < e2.first? true  :
-                    e1.first  > e2.first? false :
-                    e1.second < e2.second );
-        }
-    };
-};
-
-typedef std::set< Edge, Edge::LessThan > edge_set_t;
-
-struct Poly : std::vector< size_t > {
-    Poly() {}
-    Poly(edge_set_t& edges) {
-        clear();
-        reserve(edges.size() + 1);
-
-        push_back(edges.begin()->first);
-        for (edge_set_t::iterator e = edges.begin(); e != edges.end() && e->first == back();
-             e = edges.lower_bound(Edge(back(), 0))) {
-            push_back(e->second);
-            edges.erase(*e);
-        }
-
-        ASSERT(front() == back());
-    }
-    Poly& operator+=(const Poly& other) {
-        ASSERT(other.size() > 1);
-        if (empty()) {
-            return operator=(other);
-        }
-
-        difference_type N = difference_type(other.size()) - 1;
-        vector< size_t > cycle;
-        cycle.reserve(2 * size_t(N));
-        cycle.insert(cycle.end(), other.begin(), other.end() - 1);
-        cycle.insert(cycle.end(), other.begin(), other.end() - 1);
-
-        for (const_iterator c = cycle.begin(); c != cycle.begin() + N; ++c) {
-            iterator here = find(begin(), end(), *c);
-            if (here != end()) {
-                insert(here, c, c + N);
-                return *this;
-            }
-        }
-
-        throw eckit::AssertionFailed("Could not merge polygons, they are not connected", Here());
-    }
-};
-
 
 Polygon::Polygon(const detail::MeshImpl &mesh, size_t halo) :
   mesh_(mesh),
@@ -86,12 +27,8 @@ Polygon::Polygon(const detail::MeshImpl &mesh, size_t halo) :
   const eckit::mpi::Comm& comm = parallel::mpi::comm();
   const int mpi_size = int(comm.size());
 
-  // Polygon indices
-  // - extract partition boundary edges by always attempting first to
-  //   remove a reversed edge from a neighbouring element (if it exists)
-  // - polygon can have multiple cycles, but must be a connected graph
-  Poly poly;
-
+  // extract partition boundary edges by always attempting first to`
+  // remove a reversed edge from a neighbouring element, if any
   edge_set_t edges;
   for (size_t t = 0; t < mesh.cells().nb_types(); ++t) {
       const Elements& elements = mesh.cells().elements(t);
@@ -105,7 +42,7 @@ Polygon::Polygon(const detail::MeshImpl &mesh, size_t halo) :
       for (size_t j = 0; j < elements.size(); ++j) {
           if (field_patch(j) == 0 && field_halo(j) <= halo ) {
               for (size_t k = 0; k < nb_nodes; ++k) {
-                  Edge edge(size_t(conn(j, k)), size_t(conn(j, (k+1) % nb_nodes)));
+                  edge_t edge(size_t(conn(j, k)), size_t(conn(j, (k+1) % nb_nodes)));
                   if (!edges.erase(edge.reverse())) {
                       edges.insert(edge);
                   }
@@ -114,27 +51,23 @@ Polygon::Polygon(const detail::MeshImpl &mesh, size_t halo) :
       }
   }
 
-  while (!edges.empty()) {
-      poly += Poly(edges);
-  }
-  ASSERT(poly.size());
-  node_list_.assign(poly.begin(),poly.end());
+  ASSERT(operator+=(Poly(edges)));
 }
 
 size_t Polygon::footprint() const
 {
     size_t size = sizeof(*this);
-    size += node_list_.capacity()*sizeof(idx_t);
+    size += capacity()*sizeof(idx_t);
     return size;
 }
 
 void Polygon::print(std::ostream & out) const
 {
-    out << "polygon:{halo:"<<halo_<<",size:"<<size()<<",nodes:";
-    for(size_t j=0; j<size()-1; ++j) {
-      out << node_list_[j] << ",";
-    }
-    out << node_list_.back() << "}";
+    out << "polygon:{"
+        <<  "halo:" << halo_
+        << ",size:" << size()
+        << ",nodes:" << static_cast<Poly>(*this)
+        << "}";
 }
 
 void Polygon::outputPythonScript(const eckit::PathName& filepath) const {
@@ -146,9 +79,9 @@ void Polygon::outputPythonScript(const eckit::PathName& filepath) const {
 
   double xmin =  std::numeric_limits<double>::max();
   double xmax = -std::numeric_limits<double>::max();
-  for (size_t i = 0; i < size(); ++i) {
-    xmin = std::min(xmin, xy(node_list_[i],XX) );
-    xmax = std::max(xmax, xy(node_list_[i],XX) );
+  for (idx_t i : *this) {
+    xmin = std::min(xmin, xy(i,XX) );
+    xmax = std::max(xmax, xy(i,XX) );
   }
   comm.allReduceInPlace(xmin,eckit::mpi::min());
   comm.allReduceInPlace(xmax,eckit::mpi::max());
@@ -173,7 +106,9 @@ void Polygon::outputPythonScript(const eckit::PathName& filepath) const {
                    "\n" "";
           }
           f << "\n" "verts_" << r << " = [";
-          for (size_t i = 0; i < size(); ++i) { f << "\n  (" << xy(node_list_[i],XX) << ", " << xy(node_list_[i],YY) << "), "; }
+          for (idx_t i : *this) {
+              f << "\n  (" << xy(i,XX) << ", " << xy(i,YY) << "), ";
+          }
           f << "\n]"
                "\n" ""
                "\n" "codes_" << r << " = [Path.MOVETO]"

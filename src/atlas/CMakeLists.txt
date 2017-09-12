@@ -109,6 +109,8 @@ grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
 grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
+grid/detail/partitioner/Polygon.cc
+grid/detail/partitioner/Polygon.h
 
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h
