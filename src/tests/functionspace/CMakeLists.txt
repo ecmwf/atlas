@@ -33,3 +33,9 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
   CONDITION ECKIT_HAVE_MPI
 )
 
+ecbuild_add_test( TARGET atlas_test_pointcloud
+  BOOST
+  SOURCES  test_pointcloud.cc
+  LIBS     atlas
+)
+

@@ -12,9 +12,9 @@ ecbuild_add_test( TARGET atlas_test_gmsh
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET atlas_test_pointcloud
+ecbuild_add_test( TARGET atlas_test_pointcloud_io
   BOOST
-  SOURCES   test_pointcloud.cc
+  SOURCES   test_pointcloud_io.cc
   LIBS      atlas
 )
 

@@ -31,9 +31,7 @@ class FiniteElement : public Method {
 public:
 
     FiniteElement(const Config& config) :
-        Method(config),
-        fallback_to_2d_(false) {
-        config.get("fallback_to_2d",fallback_to_2d_);
+        Method(config) {
     }
 
     virtual ~FiniteElement() {}
@@ -50,7 +48,7 @@ protected:
      * @param meshSource mesh containing source elements
      * @param meshTarget mesh containing target points
      */
-    //virtual void setup(Mesh& meshSource, Mesh& meshTarget) override;
+    void setup(const FunctionSpace& source);
 
     /**
      * Find in which element the point is contained by projecting (ray-tracing) the
@@ -66,10 +64,10 @@ protected:
 
     mesh::MultiBlockConnectivity* connectivity_;
     std::unique_ptr<array::ArrayView<double,2>> icoords_;
-    std::unique_ptr<array::ArrayView<double,2>> ilonlat_;
     std::unique_ptr<array::ArrayView<double,2>> ocoords_;
-    std::unique_ptr<array::ArrayView<double,2>> olonlat_;
-    bool fallback_to_2d_;
+
+    Field target_xyz_;
+    Field target_ghost_;
 };
 
 

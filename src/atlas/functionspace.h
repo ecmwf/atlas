@@ -17,3 +17,4 @@
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/functionspace/Spectral.h"
+#include "atlas/functionspace/PointCloud.h"

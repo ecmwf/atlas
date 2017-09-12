@@ -91,12 +91,11 @@ void Method::execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget) const
     for (size_t i = 0; i < fieldsSource.size(); ++i) {
         Log::debug<Atlas>() << "Method::execute() on field " << (i+1) << '/' << N << "..." << std::endl;
 
-        Field& src = const_cast< Field& >(fieldsSource[i]);
-        Field& tgt = const_cast< Field& >(fieldsTarget[i]);
+        const Field& src = fieldsSource[i];
+        Field& tgt = fieldsTarget[i];
 
-        eckit::linalg::Vector
-                v_src(src.data<double>(), src.shape(0)),
-                v_tgt(tgt.data<double>(), tgt.shape(0));
+        eckit::linalg::Vector v_src( const_cast<double*>(src.data<double>()), src.shape(0) );
+        eckit::linalg::Vector v_tgt( tgt.data<double>(), tgt.shape(0) );
 
         eckit::linalg::LinearAlgebra::backend().spmv(matrix_, v_src, v_tgt);
     }

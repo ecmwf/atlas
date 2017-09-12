@@ -280,6 +280,8 @@ functionspace/StructuredColumns.h
 functionspace/StructuredColumns.cc
 functionspace/Spectral.h
 functionspace/Spectral.cc
+functionspace/PointCloud.h
+functionspace/PointCloud.cc
 )
 
 list( APPEND atlas_numerics_srcs
@@ -390,8 +392,8 @@ endif()
 list( APPEND atlas_util_srcs
 output/detail/GmshIO.cc
 output/detail/GmshIO.h
-output/detail/PointCloud.cc
-output/detail/PointCloud.h
+output/detail/PointCloudIO.cc
+output/detail/PointCloudIO.h
 parallel/Checksum.cc
 parallel/Checksum.h
 parallel/GatherScatter.cc

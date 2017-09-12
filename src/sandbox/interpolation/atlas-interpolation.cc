@@ -54,7 +54,7 @@ public:
         add_option(new SimpleOption<size_t>     ("source-mesh-halo",                  "source mesh halo size (default 1)"));
 
         add_option(new SimpleOption<std::string>("target-mesh-partitioner",           "target mesh partitioner (polygon, brute_force)"));
-        add_option(new SimpleOption<std::string> ("target-mesh-generator",             "target mesh generator (default structured)"));
+        add_option(new SimpleOption<std::string>("target-mesh-generator",             "target mesh generator (default structured)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator-triangulate", "target mesh generator triangulate option (default false)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator-angle",       "target mesh generator angle option (default false)"));
 
@@ -67,8 +67,6 @@ public:
 
 
         add_option(new SimpleOption<bool>       ("with-backward",                     "Also do backward interpolation (default false)"));
-
-        add_option(new SimpleOption<bool>       ("fallback_to_2d",             "When the ray-tracing algorithm fails, we can either increase the halo of the source grid, or try to fallback to 2d."));
 
     }
 
@@ -129,6 +127,8 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     Log::info() << "Partitioning target grid" << std::endl;
     tgt.partition(tgt_grid, src);
+    
+    functionspace::PointCloud pointcloud( tgt.mesh().nodes().lonlat() );
 
     Log::info() << "Increasing source mesh halo by " << source_mesh_halo << " elements." << std::endl;
     functionspace::NodeColumns src_functionspace(src.mesh(), source_mesh_halo);
@@ -146,7 +146,10 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     interpolator_options.set("type",interpolation_method);
 
     Log::info() << "Computing forward interpolator" << std::endl;
-    Interpolation interpolator_forward(interpolator_options, src_functionspace, tgt_functionspace);
+    // Interpolation interpolator_forward(interpolator_options, src_functionspace, tgt_functionspace);
+
+    
+    Interpolation interpolator_forward(interpolator_options, src_functionspace, pointcloud);
 
     bool with_backward = false;
     args.get("with-backward",with_backward);

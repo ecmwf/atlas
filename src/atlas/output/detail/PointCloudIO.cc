@@ -24,7 +24,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/array/DataType.h"
-#include "atlas/output/detail/PointCloud.h"
+#include "atlas/output/detail/PointCloudIO.h"
 
 namespace atlas {
 namespace output {
@@ -53,9 +53,9 @@ std::string sanitize_field_name(const std::string& s)
 // ------------------------------------------------------------------
 
 
-Mesh PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vfnames )
+Mesh PointCloudIO::read(const eckit::PathName& path, std::vector<std::string>& vfnames )
 {
-  const std::string msg("PointCloud::read: ");
+  const std::string msg("PointCloudIO::read: ");
 
   Mesh mesh;
 
@@ -76,13 +76,13 @@ Mesh PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vfn
 
     // header, part 1:
     // determine number of rows/columns
-    // (read all of line, look for "PointCloud" signature, nb_pts, nb_columns, ...)
+    // (read all of line, look for "PointCloudIO" signature, nb_pts, nb_columns, ...)
     std::getline(f,line);
     iss.str(line);
     iss >> line >> nb_pts >> nb_columns;
-    if (line!="PointCloud")
+    if (line!="PointCloudIO")
     {
-      std::stringstream errmsg; errmsg << msg << "beginning of file `"<<path<<"` not found (expected: PointCloud, got: " << line << ")";
+      std::stringstream errmsg; errmsg << msg << "beginning of file `"<<path<<"` not found (expected: PointCloudIO, got: " << line << ")";
       throw eckit::BadParameter(errmsg.str(),Here());
     }
     if (nb_pts==0)
@@ -144,15 +144,15 @@ Mesh PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vfn
 }
 
 
-Mesh PointCloud::read(const eckit::PathName& path)
+Mesh PointCloudIO::read(const eckit::PathName& path)
 {
   std::vector<std::string> vfnames;
   return read(path,vfnames);
 }
 
-void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
+void PointCloudIO::write(const eckit::PathName& path, const Mesh& mesh)
 {
-  const std::string msg("PointCloud::write: ");
+  const std::string msg("PointCloudIO::write: ");
 
   // operate in mesh function space, creating transversing data structures
   // @warning: several copy operations here
@@ -187,7 +187,7 @@ void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
   const size_t Nfld = vfvalues.size();
 
   // header
-  f << "PointCloud\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
+  f << "PointCloudIO\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
   for (size_t j=0; j<Nfld; ++j)
     f << '\t' << vfnames[j];
   f << '\n';
@@ -204,9 +204,9 @@ void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
 }
 
 
-void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::NodeColumns& function_space)
+void PointCloudIO::write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::NodeColumns& function_space)
 {
-  const std::string msg("PointCloud::write: ");
+  const std::string msg("PointCloudIO::write: ");
 
   // operate in field sets with same grid and consistent size(s), creating transversing data structures
   // @warning: several copy operations here
@@ -241,7 +241,7 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, co
       Nfld = vfvalues.size();
 
   // header
-  f << "PointCloud\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
+  f << "PointCloudIO\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
   for (size_t j=0; j<Nfld; ++j)
     f << '\t' << vfnames[j];
   f << '\n';
@@ -260,7 +260,7 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, co
 }
 
 
-void PointCloud::write(
+void PointCloudIO::write(
     const eckit::PathName& path,
     const std::vector< PointLonLat >& pts )
 {
@@ -269,7 +269,7 @@ void PointCloud::write(
     throw eckit::CantOpenFile(path.asString());
 
   // header
-  f << "PointCloud\t" << pts.size() << '\t' << 2 << "\tlon\tlat\n";
+  f << "PointCloudIO\t" << pts.size() << '\t' << 2 << "\tlon\tlat\n";
 
   // data
   for (size_t i=0; i<pts.size(); ++i)
@@ -279,13 +279,13 @@ void PointCloud::write(
 }
 
 
-void PointCloud::write(
+void PointCloudIO::write(
     const eckit::PathName& path,
     const std::vector< double >& lon, const std::vector< double >& lat,
     const std::vector< std::vector< double >* >& vfvalues,
     const std::vector< std::string >& vfnames )
 {
-  const std::string msg("PointCloud::write: ");
+  const std::string msg("PointCloudIO::write: ");
   const size_t
       Npts (lon.size()),
       Nfld (vfvalues.size());
@@ -302,7 +302,7 @@ void PointCloud::write(
     throw eckit::CantOpenFile(path.asString());
 
   // header
-  f << "PointCloud\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
+  f << "PointCloudIO\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
   for (size_t j=0; j<Nfld; ++j)
     f << '\t' << sanitize_field_name(vfnames[j]);
   f << '\n';
@@ -319,12 +319,12 @@ void PointCloud::write(
 }
 
 
-void PointCloud::write(
+void PointCloudIO::write(
     const eckit::PathName& path,
     const int& nb_pts, const double* lon, const double* lat,
     const int& nb_fld, const double** afvalues, const char** afnames )
 {
-  const std::string msg("PointCloud::write: ");
+  const std::string msg("PointCloudIO::write: ");
 
   const size_t
       Npts (nb_pts>0? nb_pts : 0),
@@ -341,7 +341,7 @@ void PointCloud::write(
     throw eckit::CantOpenFile(path.asString());
 
   // header
-  f << "PointCloud\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
+  f << "PointCloudIO\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
   for (size_t j=0; j<Nfld; ++j)
     f << '\t' << sanitize_field_name(afnames[j]);
   f << '\n';
@@ -362,24 +362,24 @@ void PointCloud::write(
 // C wrapper interfaces to C++ routines
 
 
-// PointCloud* atlas__pointcloud__new()
-// { return new PointCloud(); }
+// PointCloudIO* atlas__pointcloud__new()
+// { return new PointCloudIO(); }
 //
 //
-// void atlas__pointcloud__delete (PointCloud* This)
+// void atlas__pointcloud__delete (PointCloudIO* This)
 // { delete This; }
 //
 //
-// mesh::Mesh* atlas__pointcloud__read (PointCloud* This, char* file_path)
+// mesh::Mesh* atlas__pointcloud__read (PointCloudIO* This, char* file_path)
 // { return This->read(file_path); }
 //
 //
 // mesh::Mesh* atlas__read_pointcloud (char* file_path)
-// { return PointCloud::read(file_path); }
+// { return PointCloudIO::read(file_path); }
 //
 //
 // void atlas__write_pointcloud_fieldset (char* file_path, const field::FieldSetImpl* fieldset, const functionspace::detail::NodeColumns* functionspace)
-// { PointCloud::write(file_path, *fieldset, *functionspace); }
+// { PointCloudIO::write(file_path, *fieldset, *functionspace); }
 
 
 // ------------------------------------------------------------------

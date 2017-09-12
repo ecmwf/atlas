@@ -37,16 +37,16 @@ namespace output {
 namespace detail {
 
 /**
- * @brief PointCloud supports:
+ * @brief PointCloudIO supports:
  * - reading Mesh
  * - writing of Mesh
  * @warning only supports reading/writing doubles scalar fields
  */
- class PointCloud {
+ class PointCloudIO {
  public:
 
    /**
-    * @brief Read PointCloud file into a Mesh
+    * @brief Read PointCloudIO file into a Mesh
     * @param path input file path
     * @param Grid data structure pointer to use
     * @return Grid data structure pointer
@@ -54,7 +54,7 @@ namespace detail {
    static Mesh read( const eckit::PathName& path );
 
    /**
-    * @brief Read PointCloud file into a Mesh
+    * @brief Read PointCloudIO file into a Mesh
     * @param path input file path
     * @param vfnames names of fields to read
     * @return Mesh pointer
@@ -62,21 +62,21 @@ namespace detail {
    static Mesh read(const eckit::PathName& path, std::vector<std::string>& vfnames );
 
   /**
-   * @brief Write Grid to PointCloud file (overwrites possibly existing file)
+   * @brief Write Grid to PointCloudIO file (overwrites possibly existing file)
    * @param path output file path
    * @param grid Grid data structure
    */
   static void write(const eckit::PathName& path, const Mesh& mesh);
 
   /**
-   * @brief Write FieldSet to PointCloud file (overwrites possibly existing file)
+   * @brief Write FieldSet to PointCloudIO file (overwrites possibly existing file)
    * @param path output file path
    * @param fieldset FieldSet data structure
    */
   static void write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::NodeColumns &function_space);
 
   /**
-   * @brief Write lan/lon to PointCloud file (overwrites possibly existing file)
+   * @brief Write lan/lon to PointCloudIO file (overwrites possibly existing file)
    * @note length of vectors lat and lon should be the same
    * @param path output file path
    * @param lon vector containing longitude values
@@ -87,7 +87,7 @@ namespace detail {
       const std::vector< PointLonLat >& pts );
 
   /**
-   * @brief Write lan/lon and fields to PointCloud file (overwrites possibly existing file)
+   * @brief Write lan/lon and fields to PointCloudIO file (overwrites possibly existing file)
    * @param path output file path
    * @param nb_pts number of points in unstructured grid
    * @param lon array (of length nb_pts) pointer containing longitude
@@ -102,7 +102,7 @@ namespace detail {
       const int& nb_fld=0, const double** afvalues=NULL , const char** afnames=NULL );
 
   /**
-   * @brief Write lan/lon and fields to PointCloud file (overwrites possibly existing file)
+   * @brief Write lan/lon and fields to PointCloudIO file (overwrites possibly existing file)
    * @note length of vectors lat, lon and *vfvalues[] (each pointee) should be the same
    * @note length of vectors vfvalues and vfnames should be the same
    * @param path output file path
@@ -123,9 +123,9 @@ namespace detail {
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  // PointCloud* atlas__pointcloud__new ();
-  // void atlas__pointcloud__delete(PointCloud* This);
-  // mesh::Mesh* atlas__pointcloud__read(PointCloud* This, char* file_path);
+  // PointCloudIO* atlas__pointcloud__new ();
+  // void atlas__pointcloud__delete(PointCloudIO* This);
+  // mesh::Mesh* atlas__pointcloud__read(PointCloudIO* This, char* file_path);
   // mesh::Mesh* atlas__read_pointcloud(char* file_path);
   // void atlas__write_pointcloud_fieldset(char* file_path, const field::FieldImpl* fieldset, const functionspace::FunctionSpaceImpl* functionspace);
   // void atlas__write_pointcloud_field(char* file_path, const field::FieldImpl* field, const functionspace::FunctionSpaceImpl* functionspace);

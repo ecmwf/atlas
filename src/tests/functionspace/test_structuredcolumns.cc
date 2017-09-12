@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_StructuredColumns_halo )
        "\n" "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
        "\n" "ax.set_yticks([-90,-45,0,45,90])"
        "\n" "plt.grid()"
-       "\n" "plt.show()";
+       "\n" "plt.show()"
        "\n";
 }
 
