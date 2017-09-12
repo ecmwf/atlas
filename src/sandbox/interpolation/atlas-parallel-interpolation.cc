@@ -9,7 +9,8 @@
  */
 
 
-#include <memory>
+#include <cmath>
+#include <string>
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/log/Plural.h"
 #include "atlas/field.h"
@@ -123,37 +124,27 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     Log::info() << "Partitioning target grid, halo of " << eckit::Plural(target_mesh_halo, "element") << std::endl;
     tgt.partition(tgt_grid, src);
-
-    functionspace::PointCloud pointcloud( tgt.mesh().nodes().lonlat() );
-
-    Log::info() << "Increasing source mesh halo by " << source_mesh_halo << " elements." << std::endl;
-    functionspace::NodeColumns src_functionspace(src.mesh(), source_mesh_halo);
-
-    Log::info() << "Increasing target mesh halo by " << target_mesh_halo << " elements." << std::endl;
     functionspace::NodeColumns tgt_functionspace(tgt.mesh(), target_mesh_halo);
-
     tgt.writeGmsh("tgt-mesh.msh");
 
+
     // Setup interpolator relating source & target meshes before setting a source FunctionSpace halo
+    Log::info() << "Computing forward/backward interpolator" << std::endl;
+
     std::string interpolation_method = "finite-element";
     args.get("method", interpolation_method);
 
     eckit::LocalConfiguration interpolator_options(args);
-    interpolator_options.set("type",interpolation_method);
+    interpolator_options.set("type", interpolation_method);
 
-    Log::info() << "Computing forward interpolator" << std::endl;
-    // Interpolation interpolator_forward(interpolator_options, src_functionspace, tgt_functionspace);
-
-
-    Interpolation interpolator_forward(interpolator_options, src_functionspace, pointcloud);
-
-    bool with_backward = false;
-    args.get("with-backward",with_backward);
+    Interpolation interpolator_forward(interpolator_options, src_functionspace, tgt_functionspace);
     Interpolation interpolator_backward;
 
+    bool with_backward = false;
+    args.get("with-backward", with_backward);
     if( with_backward ) {
       Log::info() << "Computing backward interpolator" << std::endl;
-      interpolator_backward = Interpolation(interpolator_options,tgt_functionspace, src_functionspace);
+      interpolator_backward = Interpolation(interpolator_options, tgt_functionspace, src_functionspace);
     }
 
 
