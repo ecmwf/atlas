@@ -35,7 +35,7 @@ method::Intersect Triag3D::intersects(const method::Ray& r, double edgeEpsilon, 
         return isect.fail();
     }
 
-    const double invDet = (fabs(1. / det) < epsilon ? 0. : 1. / det);
+    const double invDet = 1. / det;
 
     Vector3D tvec = r.orig - v0;
     Vector3D qvec = tvec.cross(edge1);
