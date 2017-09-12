@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE( test_interpolation_finite_element )
 
   for( size_t j=0; j<pointcloud.size(); ++ j ) {
     static double interpolation_tolerance = 1.e-4;
-    Log::debug<Atlas>() << target(j) << "  " << check[j] << std::endl;
+    Log::info() << target(j) << "  " << check[j] << std::endl;
     BOOST_CHECK( eckit::types::is_approximately_equal(target(j),check[j], interpolation_tolerance ) );
   }
 
