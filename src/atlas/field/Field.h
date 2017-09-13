@@ -142,9 +142,10 @@ public: // Destructor
   void dump(std::ostream& os) const;
 
   /// Metadata that is more intrinsic to the Field, and queried often
-  bool has_levels() const { return metadata().get<size_t>("levels")!= 0; }
   void set_levels(size_t n) { metadata().set("levels",n); }
-  size_t levels() const { return std::max(1ul,metadata().get<size_t>("levels")); }
+  void set_variables(size_t n) { metadata().set("variables",n); }
+  size_t levels() const { return metadata().get<size_t>("levels"); }
+  size_t variables() const { return metadata().get<size_t>("variables"); }
 
   void set_functionspace(const FunctionSpace &);
   const FunctionSpace& functionspace() const { return functionspace_; }
@@ -376,9 +377,12 @@ public:
   void dump(std::ostream& os) const { field_->dump(os); }
 
   /// Metadata that is more intrinsic to the Field, and queried often
-  bool has_levels() const { return field_->has_levels(); }
   void set_levels(size_t n) { field_->set_levels(n); }
   size_t levels() const { return field_->levels(); }
+
+  /// Metadata that is more intrinsic to the Field, and queried often
+  void set_variables(size_t n) { field_->set_variables(n); }
+  size_t variables() const { return field_->variables(); }
 
   void set_functionspace(const FunctionSpace& functionspace ) { field_->set_functionspace(functionspace); }
   const FunctionSpace& functionspace() const { return field_->functionspace(); }

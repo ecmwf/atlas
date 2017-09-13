@@ -206,8 +206,8 @@ Field EdgeColumns::createField(const std::string& name, const Field& other,const
   array::ArrayShape shape = other.shape();
   shape[0] = nb_edges;
   Field field = Field(name,other.datatype(),shape);
-  if( other.has_levels() )
-    field.set_levels(field.shape(1));
+  if( other.levels() )
+    field.set_levels(other.levels());
   field.set_functionspace(this);
   set_field_metadata(options,field);
   return field;
@@ -376,25 +376,25 @@ std::string EdgeColumns::checksum( const FieldSet& fieldset ) const {
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const Field& field=fieldset[f];
     if     ( field.datatype() == array::DataType::kind<int>() ) {
-      if( field.has_levels() )
+      if( field.levels() )
         md5 << checksum_3d_field<int>(checksum(),field);
       else
         md5 << checksum_2d_field<int>(checksum(),field);
     }
     else if( field.datatype() == array::DataType::kind<long>() ) {
-      if( field.has_levels() )
+      if( field.levels() )
         md5 << checksum_3d_field<long>(checksum(),field);
       else
         md5 << checksum_2d_field<long>(checksum(),field);
     }
     else if( field.datatype() == array::DataType::kind<float>() ) {
-      if( field.has_levels() )
+      if( field.levels() )
         md5 << checksum_3d_field<float>(checksum(),field);
       else
         md5 << checksum_2d_field<float>(checksum(),field);
     }
     else if( field.datatype() == array::DataType::kind<double>() ) {
-      if( field.has_levels() )
+      if( field.levels() )
         md5 << checksum_3d_field<double>(checksum(),field);
       else
         md5 << checksum_2d_field<double>(checksum(),field);

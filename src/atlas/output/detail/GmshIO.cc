@@ -111,7 +111,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
 
   bool gather( gmsh_options.get<bool>("gather") );
   bool binary( !gmsh_options.get<bool>("ascii") );
-  size_t nlev  = field.levels();
+  size_t nlev  = std::max<int>(1,field.levels());
   size_t ndata = std::min(function_space.nb_nodes(),field.shape(0));
   size_t nvars = field.stride(0)/nlev;
   array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( function_space.nodes().global_index() );
@@ -121,11 +121,11 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   Field data_glb;
   if( gather )
   {
-    gidx_glb = function_space.createField( "gidx_glb", function_space.nodes().global_index(), field::global() );
+    gidx_glb = function_space.createField( field::name("gidx_glb") | field::levels(1) | field::global() );
     function_space.gather(function_space.nodes().global_index(),gidx_glb);
     gidx = array::make_view<gidx_t,1>( gidx_glb );
 
-    data_glb = function_space.createField( "glb_field",field, field::global() );
+    data_glb = function_space.createField( field::name("glb_field") | field::levels(field.levels()) | field::variables( field.variables() ) | field::global() );
     function_space.gather(field,data_glb);
     data = array::LocalView<DATATYPE,2>( data_glb.data<DATATYPE>(),
                                          array::make_shape(data_glb.shape(0),data_glb.stride(0)) );
@@ -151,7 +151,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
     if( ( gather && atlas::parallel::mpi::comm().rank() == 0 ) || !gather )
     {
       char field_lev[6] = {0, 0, 0, 0, 0, 0};
-      if( field.has_levels() )
+      if( field.levels() )
         std::sprintf(field_lev, "[%03lu]",jlev);
       double time = field.metadata().has("time") ? field.metadata().get<double>("time") : 0.;
       int step = field.metadata().has("step") ? field.metadata().get<size_t>("step") : 0 ;
@@ -309,7 +309,7 @@ void write_field_nodes(
     //bool gather(gmsh_options.get<bool>("gather"));
     bool binary(!gmsh_options.get<bool>("ascii"));
 
-    size_t nlev  = field.levels();
+    size_t nlev  = std::max<size_t>(1,field.levels());
     size_t nvars = field.stride(0) / nlev;
 
     //field::Field::Ptr gidxField(function_space.createField<gidx_t>("gidx"));
@@ -363,7 +363,7 @@ void write_field_nodes(
             size_t jlev = lev[ilev];
             char field_lev[6] = {0, 0, 0, 0, 0, 0};
 
-            if (field.has_levels())
+            if (field.levels())
             {
                 std::sprintf(field_lev, "[%03lu]", jlev);
             }

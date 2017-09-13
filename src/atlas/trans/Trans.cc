@@ -807,7 +807,7 @@ void Trans::invtrans_grad(const Spectral& sp, const FieldSet& spfields,
   {
     const Field& f = spfields[jfld];
     nfld += f.stride(0);
-    ASSERT( f.levels() == f.stride(0) );
+    ASSERT( std::max<size_t>(1,f.levels()) == f.stride(0) );
   }
 
   if( nb_gridpoint_field != 2*nfld ) // factor 2 because N-S and E-W derivatives
@@ -846,7 +846,7 @@ void Trans::invtrans_grad(const Spectral& sp, const FieldSet& spfields,
     for(size_t dim=0; dim<2; ++dim) {
       for(size_t jfld = 0; jfld < gradfields.size(); ++jfld)
       {
-        const size_t nlev = gradfields[jfld].levels();
+        const size_t nlev = std::max<size_t>(1,gradfields[jfld].levels());
         const size_t nb_nodes  = gradfields[jfld].shape(0);
 
         array::LocalView<double,3> field ( gradfields[jfld].data<double>(),

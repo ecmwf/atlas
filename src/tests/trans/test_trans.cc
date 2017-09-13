@@ -266,7 +266,7 @@ CASE( "test_spectral_fields" )
   functionspace::Spectral spectral (trans);
 
   Field spf = spectral.createField<double>("spf");
-  Field gpf = nodal.createField<double>("gpf");
+  Field gpf = nodal.createField<double>(field::name("gpf"));
 
 
   EXPECT_NO_THROW( trans.dirtrans(nodal,gpf,spectral,spf) );

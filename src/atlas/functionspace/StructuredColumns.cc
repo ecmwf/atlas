@@ -750,7 +750,7 @@ namespace {
 template <typename T>
 array::LocalView<T,3> make_leveled_view(const Field &field)
 {
-  if( field.has_levels() )
+  if( field.levels() )
     return array::LocalView<T,3> ( array::make_storageview<T>(field).data(),
                                    array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
   else

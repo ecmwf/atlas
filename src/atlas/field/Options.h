@@ -40,6 +40,15 @@ public:
   }
 };
 
+class variables : public util::Config
+{
+public:
+  variables(size_t _variables)
+  {
+    set("variables",_variables);
+  }
+};
+
 class name : public util::Config
 {
 public:
@@ -70,6 +79,19 @@ public:
   datatype(const std::string& str)
   {
     set("datatype",array::DataType::str_to_kind(str));
+  }
+  datatype(array::DataType dtype)
+  {
+    set("datatype",dtype.kind());
+  }
+};
+
+class halo : public util::Config
+{
+public:
+  halo(size_t size)
+  {
+    set("halo",size);
   }
 };
 

@@ -294,8 +294,8 @@ void AtlasBenchmark::setup()
 
   nodes_fs = functionspace::NodeColumns(mesh,mesh::Halo(mesh));
 
-  scalar_field = nodes_fs.createField<double>( "field", nlev );
-  grad_field   = nodes_fs.createField<double>( "grad",  nlev, array::make_shape(3) );
+  scalar_field = nodes_fs.createField<double>( field::name("field") | field::levels(nlev) );
+  grad_field   = nodes_fs.createField<double>( field::name("grad")  | field::levels(nlev) | field::variables(3) );
 
   nnodes = mesh.nodes().size();
   nedges = mesh.edges().size();

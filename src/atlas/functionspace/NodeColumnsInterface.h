@@ -26,14 +26,14 @@ void atlas__NodesFunctionSpace__delete (NodeColumns* This);
 int atlas__NodesFunctionSpace__nb_nodes(const NodeColumns* This);
 const Mesh::Implementation* atlas__NodesFunctionSpace__mesh(const NodeColumns* This);
 mesh::Nodes* atlas__NodesFunctionSpace__nodes(const NodeColumns* This);
-field::FieldImpl* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
+field::FieldImpl* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind, const eckit::Configuration* options);
+field::FieldImpl* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Configuration* options);
 
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev (const NodeColumns* This, const char* name, int levels, int kind, const eckit::Parametrisation* options);
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
+field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev (const NodeColumns* This, const char* name, int levels, int kind, const eckit::Configuration* options);
+field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Configuration* options);
 
 
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field::FieldImpl* field_template, const eckit::Parametrisation* options);
+field::FieldImpl* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field::FieldImpl* field_template, const eckit::Configuration* options);
 
 void atlas__NodesFunctionSpace__halo_exchange_fieldset(const NodeColumns* This, field::FieldSetImpl* fieldset);
 void atlas__NodesFunctionSpace__halo_exchange_field(const NodeColumns* This, field::FieldImpl* field);

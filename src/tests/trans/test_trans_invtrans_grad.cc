@@ -159,9 +159,9 @@ CASE( "test_invtrans_grad" )
   functionspace::NodeColumns gp(mesh);
   functionspace::Spectral sp(trans);
 
-  Field scalar    = gp.createField<double>("scalar");
   Field scalar_sp = sp.createField<double>("scalar_sp");
-  Field grad      = gp.createField<double>("grad",array::make_shape(2));
+  Field scalar    = gp.createField<double>(field::name("scalar"));
+  Field grad      = gp.createField<double>(field::name("grad") | field::variables(2) );
 
   // Initial condition
   double beta = M_PI*0.5;

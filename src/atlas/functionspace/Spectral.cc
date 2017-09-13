@@ -228,7 +228,7 @@ std::string Spectral::checksum( const Field& field ) const {
 
 void Spectral::norm( const Field& field, double& norm, int rank ) const {
 #ifdef ATLAS_HAVE_TRANS
-  ASSERT( field.levels() == 1 );
+  ASSERT( std::max<int>(1,field.levels()) == 1 );
   trans_->specnorm(1,field.data<double>(), &norm, rank);
 #else
   throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
@@ -236,14 +236,14 @@ void Spectral::norm( const Field& field, double& norm, int rank ) const {
 }
 void Spectral::norm( const Field& field, double norm_per_level[], int rank ) const {
 #ifdef ATLAS_HAVE_TRANS
-  trans_->specnorm(field.levels(),field.data<double>(), norm_per_level, rank);
+  trans_->specnorm( std::max<int>(1,field.levels()),field.data<double>(), norm_per_level, rank);
 #else
   throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
 #endif
 }
 void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, int rank ) const {
 #ifdef ATLAS_HAVE_TRANS
-  norm_per_level.resize( field.levels() );
+  norm_per_level.resize( std::max<int>(1,field.levels()) );
   trans_->specnorm(norm_per_level.size(),field.data<double>(), norm_per_level.data(), rank);
 #else
   throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");

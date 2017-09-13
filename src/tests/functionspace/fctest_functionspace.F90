@@ -77,17 +77,17 @@ FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
 field = fs%create_field("field",atlas_integer(c_int),[2,2])
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
 
 field = fs%create_field("",template)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
 field = fs%create_field("field",template)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
@@ -111,17 +111,17 @@ FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
 field = fs%create_field("field",atlas_integer(c_int),[2,2],global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
 
 field = fs%create_field("",template,global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
 field = fs%create_field("field",template,global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
@@ -172,17 +172,17 @@ FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
 field = fs%create_field("field",atlas_integer(c_int),levels,[2,2])
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
 
 field = fs%create_field("",template)
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
 field = fs%create_field("field",template)
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
@@ -206,17 +206,17 @@ FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
 field = fs%create_field("field",atlas_integer(c_int),levels,[2,2],global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
 
 field = fs%create_field("",template,global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
 field = fs%create_field("field",template,global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
@@ -240,7 +240,7 @@ type(atlas_Metadata) :: metadata
 type(fckit_mpi_comm) :: mpi
 real(c_float), pointer :: scalvalues(:)
 real(c_float), pointer :: values(:,:)
-real(c_float), pointer :: values3d(:,:,:,:)
+real(c_float), pointer :: values3d(:,:,:)
 real(c_float) :: minimum, maximum, sum, oisum, mean, stddev
 real(c_float), allocatable :: minimumv(:), maximumv(:), meanv(:), stddevv(:)
 integer :: halo_size, levels

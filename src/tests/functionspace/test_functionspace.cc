@@ -43,7 +43,7 @@ CASE( "test_functionspace_NodeColumns_no_halo" )
   Grid grid("O8");
   Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
   functionspace::NodeColumns nodes_fs(mesh);
-  Field field( nodes_fs.createField<int>("field") );
+  Field field( nodes_fs.createField<int>() );
   array::ArrayView<int,1> value = array::make_view<int,1>( field );
   array::ArrayView<int,1> ghost = array::make_view<int,1>( mesh.nodes().ghost() );
   const size_t nb_nodes = mesh.nodes().size();
@@ -81,13 +81,13 @@ CASE( "test_functionspace_NodeColumns" )
   size_t nb_levels = 10;
   //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
 
-  //BOOST_CHECK_EQUAL( nodes_fs.nb_nodes() , columns_fs.nb_nodes() );
-  //BOOST_CHECK_EQUAL( columns_fs.nb_levels() , 10 );
+  //EXPECT( nodes_fs.nb_nodes() == columns_fs.nb_nodes() );
+  //EXPECT( columns_fs.nb_levels() == 10 );
 
 
-  Field surface_scalar_field = nodes_fs.createField<double>("scalar");
-  Field surface_vector_field = nodes_fs.createField<double>("vector",array::make_shape(2));
-  Field surface_tensor_field = nodes_fs.createField<double>("tensor",array::make_shape(2,2));
+  Field surface_scalar_field = nodes_fs.createField<double>(field::name("scalar"));
+  Field surface_vector_field = nodes_fs.createField<double>(field::name("vector")|field::variables(2));
+  Field surface_tensor_field = nodes_fs.createField<double>(field::name("tensor")|field::variables(2*2));
 
   EXPECT( surface_scalar_field.name() == std::string("scalar") );
   EXPECT( surface_vector_field.name() == std::string("vector") );
@@ -99,22 +99,25 @@ CASE( "test_functionspace_NodeColumns" )
 
   EXPECT( surface_scalar_field.rank() == 1 );
   EXPECT( surface_vector_field.rank() == 2 );
-  EXPECT( surface_tensor_field.rank() == 3 );
+  EXPECT( surface_tensor_field.rank() == 2 );
+
+  EXPECT( surface_scalar_field.levels() == 0 );
+  EXPECT( surface_vector_field.levels() == 0 );
+  EXPECT( surface_tensor_field.levels() == 0 );
 
   array::ArrayView<double,1> surface_scalar = array::make_view<double,1>( surface_scalar_field );
   array::ArrayView<double,2> surface_vector = array::make_view<double,2>( surface_vector_field );
-  array::ArrayView<double,3> surface_tensor = array::make_view<double,3>( surface_tensor_field );
+  array::ArrayView<double,2> surface_tensor = array::make_view<double,2>( surface_tensor_field );
 
   EXPECT( surface_scalar.shape(0) == nodes_fs.nb_nodes() );
   EXPECT( surface_vector.shape(0) == nodes_fs.nb_nodes() );
   EXPECT( surface_tensor.shape(0) == nodes_fs.nb_nodes() );
   EXPECT( surface_vector.shape(1) == 2 );
-  EXPECT( surface_tensor.shape(1) == 2 );
-  EXPECT( surface_tensor.shape(2) == 2 );
+  EXPECT( surface_tensor.shape(1) == 2*2 );
 
-  Field columns_scalar_field = nodes_fs.createField<double>("scalar",nb_levels);
-  Field columns_vector_field = nodes_fs.createField<double>("vector",nb_levels,array::make_shape(2));
-  Field columns_tensor_field = nodes_fs.createField<double>("tensor",nb_levels,array::make_shape(2,2));
+  Field columns_scalar_field = nodes_fs.createField<double>(field::name("scalar")|field::levels(nb_levels));
+  Field columns_vector_field = nodes_fs.createField<double>(field::name("vector")|field::levels(nb_levels)|field::variables(2));
+  Field columns_tensor_field = nodes_fs.createField<double>(field::name("tensor")|field::levels(nb_levels)|field::variables(2*2));
 
   EXPECT( columns_scalar_field.name() == std::string("scalar") );
   EXPECT( columns_vector_field.name() == std::string("vector") );
@@ -126,11 +129,15 @@ CASE( "test_functionspace_NodeColumns" )
 
   EXPECT( columns_scalar_field.rank() == 2 );
   EXPECT( columns_vector_field.rank() == 3 );
-  EXPECT( columns_tensor_field.rank() == 4 );
+  EXPECT( columns_tensor_field.rank() == 3 );
+
+  EXPECT( columns_scalar_field.levels() == nb_levels );
+  EXPECT( columns_vector_field.levels() == nb_levels );
+  EXPECT( columns_tensor_field.levels() == nb_levels );
 
   array::ArrayView<double,2> columns_scalar = array::make_view<double,2>( columns_scalar_field );
   array::ArrayView<double,3> columns_vector = array::make_view<double,3>( columns_vector_field );
-  array::ArrayView<double,4> columns_tensor = array::make_view<double,4>( columns_tensor_field );
+  array::ArrayView<double,3> columns_tensor = array::make_view<double,3>( columns_tensor_field );
 
   EXPECT( columns_scalar.shape(0) == nodes_fs.nb_nodes() );
   EXPECT( columns_vector.shape(0) == nodes_fs.nb_nodes() );
@@ -139,17 +146,16 @@ CASE( "test_functionspace_NodeColumns" )
   EXPECT( columns_vector.shape(1) == nb_levels );
   EXPECT( columns_tensor.shape(1) == nb_levels );
   EXPECT( columns_vector.shape(2) == 2 );
-  EXPECT( columns_tensor.shape(2) == 2 );
-  EXPECT( columns_tensor.shape(3) == 2 );
+  EXPECT( columns_tensor.shape(2) == 2*2 );
 
-  Field field = nodes_fs.createField<int>("partition",nb_levels);
+  Field field = nodes_fs.createField<int>(field::name("partition")|field::levels(nb_levels));
   array::ArrayView<int,2> arr = array::make_view<int,2>(field);
   arr.assign(parallel::mpi::comm().rank());
   //field->dump( Log::info() );
   nodes_fs.haloExchange(field);
   //field->dump( Log::info() );
 
-  Field field2 = nodes_fs.createField<int>("partition2",nb_levels,array::make_shape(2));
+  Field field2 = nodes_fs.createField<int>(field::name("partition2")|field::levels(nb_levels)|field::variables(2));
   Log::info() << "field2.rank() = " << field2.rank() << std::endl;
   array::ArrayView<int,3> arr2 = array::make_view<int,3>(field2);
   arr2.assign(parallel::mpi::comm().rank());
@@ -161,8 +167,20 @@ CASE( "test_functionspace_NodeColumns" )
   Log::info() << nodes_fs.checksum(field) << std::endl;
 
   size_t root = parallel::mpi::comm().size()-1;
-  Field glb_field = nodes_fs.createField("partition",field,field::global(root));
+  Field glb_field = nodes_fs.createField(
+    field::name("partition") |
+    field::datatype(field.datatype()) |
+    field::levels( field.levels() ) |
+    field::variables( field.variables() ) |
+    field::global(root) );
   nodes_fs.gather(field,glb_field);
+
+  EXPECT( glb_field.rank() == field.rank() );
+  EXPECT( glb_field.levels() == nb_levels );
+  EXPECT( field.levels() == nb_levels );
+
+  Log::info() << "field = " << field << std::endl;
+  Log::info() << "global_field = " << glb_field << std::endl;
 
   Log::info() << "local points = " << nodes_fs.nb_nodes() << std::endl;
   Log::info() << "grid points = " << grid.size() << std::endl;
@@ -316,7 +334,7 @@ CASE( "test_functionspace_NodeColumns" )
     gidx_t gidx_min;
     size_t level;
 
-    EXPECT( field.has_levels() );
+    EXPECT(field.levels() == nb_levels);
 
     array::ArrayView<double,2> arr = array::make_view<double,2>( field );
     arr.assign( parallel::mpi::comm().rank()+1 );

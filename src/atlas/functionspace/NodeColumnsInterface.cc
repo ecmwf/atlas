@@ -60,13 +60,13 @@ mesh::Nodes* atlas__NodesFunctionSpace__nodes(const NodeColumns* This)
   return &This->nodes();
 }
 
-field::FieldImpl* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind, const eckit::Parametrisation* options )
+field::FieldImpl* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind, const eckit::Configuration* options )
 {
   ASSERT(This);
   ASSERT(options);
   FieldImpl* field;
   {
-    Field f = This->createField(std::string(name),array::DataType(kind),*options);
+    Field f = This->createField( field::name(name) | field::datatype(kind) | util::Config(*options) );
     field = f.get();
     field->attach();
   }
@@ -74,7 +74,7 @@ field::FieldImpl* atlas__NodesFunctionSpace__create_field (const NodeColumns* Th
   return field;
 }
 
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options)
+field::FieldImpl* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Configuration* options)
 {
   ASSERT(This);
   ASSERT(options);
@@ -86,7 +86,10 @@ field::FieldImpl* atlas__NodesFunctionSpace__create_field_vars (const NodeColumn
     variables_.assign(variables,variables+variables_size);
   FieldImpl* field;
   {
-    Field f = This->createField(std::string(name),array::DataType(kind),variables_,*options);
+    size_t nb_variables(0);
+    for( size_t v : variables_ ) nb_variables += v;
+
+    Field f = This->createField(field::name(name)|field::datatype(kind)|field::variables(nb_variables)|*options);
     field = f.get();
     field->attach();
   }
@@ -94,13 +97,13 @@ field::FieldImpl* atlas__NodesFunctionSpace__create_field_vars (const NodeColumn
   return field;
 }
 
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev (const NodeColumns* This, const char* name, int levels, int kind, const eckit::Parametrisation* options )
+field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev (const NodeColumns* This, const char* name, int levels, int kind, const eckit::Configuration* options )
 {
   ASSERT(This);
   ASSERT(options);
   FieldImpl* field;
   {
-    Field f = This->createField(std::string(name),array::DataType(kind),size_t(levels),*options);
+    Field f = This->createField(field::name(name)|field::datatype(kind)|field::levels(levels)|util::Config(*options));
     field = f.get();
     field->attach();
   }
@@ -108,7 +111,7 @@ field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev (const NodeColumns
   return field;
 }
 
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options )
+field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Configuration* options )
 {
   ASSERT(This);
   ASSERT(options);
@@ -120,7 +123,10 @@ field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeCo
     variables_.assign(variables,variables+variables_size);
   FieldImpl* field;
   {
-    Field f = This->createField(std::string(name),array::DataType(kind),size_t(levels),variables_, *options);
+    size_t nb_variables(0);
+    for( size_t v : variables_ ) nb_variables += v;
+    
+    Field f = This->createField(field::name(name)|field::datatype(kind)|field::levels(levels)|field::variables(nb_variables)|util::Config(*options));
     field = f.get();
     field->attach();
   }
@@ -128,13 +134,13 @@ field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeCo
   return field;
 }
 
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field::FieldImpl* field_template, const eckit::Parametrisation* options )
+field::FieldImpl* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field::FieldImpl* field_template, const eckit::Configuration* options )
 {
   ASSERT(This);
   ASSERT(options);
   FieldImpl* field;
   {
-    Field f = This->createField(std::string(name),field_template,*options);
+    Field f = This->createField(field::datatype(field_template->datatype())|field::name(name)|field::levels(field_template->levels())|field::variables(field_template->variables())|*options);
     field = f.get();
     field->attach();
   }
