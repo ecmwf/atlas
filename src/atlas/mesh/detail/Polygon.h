@@ -56,7 +56,8 @@ public:
 
     // -- Constructors
 
-    Polygon(const edge_set_t& = edge_set_t());
+    Polygon();
+    Polygon(const edge_set_t&);
 
     // -- Operators
 

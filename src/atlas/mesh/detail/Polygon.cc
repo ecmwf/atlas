@@ -14,6 +14,7 @@
 #include <iostream>
 #include <limits>
 #include "eckit/exception/Exceptions.h"
+#include "eckit/types/FloatCompare.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
@@ -54,6 +55,10 @@ double point_on_which_side(const PointLonLat& P, const PointLonLat& A, const Poi
 //------------------------------------------------------------------------------------------------------
 
 
+Polygon::Polygon() {
+}
+
+
 Polygon::Polygon(const Polygon::edge_set_t& edges) {
 
     // get external edges by attempting to remove reversed edges, if any
@@ -63,6 +68,7 @@ Polygon::Polygon(const Polygon::edge_set_t& edges) {
             extEdges.insert(e);
         }
     }
+    ASSERT(extEdges.size() >= 2);
 
     // set one polygon cycle, by picking next edge with first node same as second node of last edge
     clear();
@@ -143,12 +149,14 @@ bool Polygon::containsPointInLonLatGeometry(const PointLonLat& P) const {
             // intersect either:
             // - "up" on upward crossing & P left of edge, or
             // - "down" on downward crossing & P right of edge
-            if (A[LAT] <= P[LAT] && P[LAT] < B[LAT]) {
-                if (point_on_which_side(P, A, B) > 0) {
+            const bool APB = (A[LAT] <= P[LAT] && P[LAT] < B[LAT]);
+            const bool BPA = (B[LAT] <= P[LAT] && P[LAT] < A[LAT]);
+
+            if (APB || BPA) {
+                const double side = point_on_which_side(P, A, B);
+                if (APB && side > 0) {
                     ++wn;
-                }
-            } else if (B[LAT] <= P[LAT] && P[LAT] < A[LAT]) {
-                if (point_on_which_side(P, A, B) < 0) {
+                } else if (BPA && side < 0) {
                     --wn;
                 }
             }
@@ -179,14 +187,18 @@ bool Polygon::containsPointInSphericalGeometry(const PointLonLat& P) const {
             const PointLonLat& B = coordinates_[ i ];
 
             // intersect either:
-            // - "up" on upward crossing & P left of edge, or
-            // - "down" on downward crossing & P right of edge
-            if (A[LON] <= P[LON] && P[LON] < B[LON]) {
-                if (point_on_which_side(P, A, B) > 0) {
+            // - "left" on left-wards crossing & P above edge, or
+            // - "right" on right-wards crossing & P below edge
+            const bool APB = (A[LON] <= P[LON] && P[LON] < B[LON]);
+            const bool BPA = (B[LON] <= P[LON] && P[LON] < A[LON]);
+
+            if (APB || BPA) {
+                const double side = point_on_which_side(P, A, B);
+                if (eckit::types::is_approximately_equal(side, 0.)) {
+                    return true;
+                } else if (APB && side > 0) {
                     ++wn;
-                }
-            } else if (B[LON] <= P[LON] && P[LON] < A[LON]) {
-                if (point_on_which_side(P, A, B) < 0) {
+                } else if (BPA && side < 0) {
                     --wn;
                 }
             }
