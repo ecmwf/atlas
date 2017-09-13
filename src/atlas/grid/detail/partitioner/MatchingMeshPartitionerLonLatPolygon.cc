@@ -14,9 +14,8 @@
 #include <utility>
 #include <vector>
 #include "eckit/config/Resource.h"
-#include "eckit/geometry/Point2.h"
 #include "eckit/log/Plural.h"
-#include "eckit/log/Timer.h"
+#include "eckit/log/ProgressTimer.h"
 #include "eckit/mpi/Comm.h"
 #include "eckit/types/FloatCompare.h"
 #include "atlas/field/Field.h"
@@ -104,53 +103,37 @@ bool point_in_poly(const std::vector<PointLonLat>& poly, const PointLonLat& P) {
 void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int node_partition[] ) const {
     eckit::mpi::Comm& comm = eckit::mpi::comm();
     const int mpi_rank = int(comm.rank());
-    const int mpi_size = int(comm.size());
-
 
     const Mesh::Polygon& _poly = prePartitionedMesh_.polygon(0);
 
-    // Polygon point coordinates: simplify by checking aligned edges
-    // Note: indices ('poly') don't necessarily match coordinates ('polygon')
-    // Note: the coordinates include North/South Pole (first/last partitions only)
+    // Point coordinates (from polygon)
+    // - use a bounding box to quickly discard points,
+    // - except when that is above/below bounding box but poles should be included
     std::vector< PointLonLat > polygon;
     PointLonLat pointsMin;
     PointLonLat pointsMax;
-    getPointCoordinates(_poly, polygon, pointsMin, pointsMax, true);
+    getPointCoordinates(_poly, polygon, pointsMin, pointsMax, true);  // remove edge-aligned points
     ASSERT(polygon.size() >= 2);
+    ASSERT(polygon.size() <= _poly.size());
 
-
-    // Partition the target grid nodes
-    // - use a polygon bounding box to quickly discard points,
-    // - except when that is above/below bounding box but poles should be included
-    for( size_t j=0; j<grid.size(); ++j ) {
-      node_partition[j] = -1;
-    }
-
-    // THIS IS A DIRTY HACK!
+    // FIXME: THIS IS A HACK! the coordinates include North/South Pole (first/last partitions only)
     ASSERT( grid.domain().global() );
     bool includes_north_pole = (mpi_rank == 0);
     bool includes_south_pole = (mpi_rank == (int(comm.size()) - 1 ));
 
     std::vector< PointLonLat > lonlat_tgt_pts;
     lonlat_tgt_pts.reserve(grid.size());
-
     for( PointXY Pxy : grid.xy() ) {
       lonlat_tgt_pts.push_back( grid.projection().lonlat(Pxy) );
     }
 
     {
-        std::stringstream msg; msg << "Partitioning " << eckit::BigNum(grid.size())
-          << " target grid points... ";
-        Log::debug<Atlas>() << msg.str() << std::endl;
-        eckit::TraceTimer<Atlas> timer(msg.str()+"done");
+        eckit::ProgressTimer timer("Partitioning target", grid.size(), "point", double(10), atlas::Log::info());
         for (size_t i=0; i<grid.size(); ++i) {
+            ++timer;
 
-            if (i && (i % 1000 == 0)) {
-                double rate = i / timer.elapsed();
-                Log::debug<Atlas>() << "    " << eckit::BigNum(i) << " points completed (at " << rate << " points/s)" << std::endl;
-            }
-
-            PointLonLat P(lonlat_tgt_pts[i].lon(), lonlat_tgt_pts[i].lat());
+            node_partition[i] = -1;
+            const PointLonLat& P(lonlat_tgt_pts[i]);
 
             if (pointsMin[LON] <= P[LON] && P[LON] < pointsMax[LON]
              && pointsMin[LAT] <= P[LAT] && P[LAT] < pointsMax[LAT]) {
@@ -175,92 +158,15 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int node
 
     /// For debugging purposes at the moment. To be made available later, when the Mesh
     /// contains a Polygon for its partition boundary
-    if( eckit::Resource<bool>("--polygons",false) ) {
-
-        std::vector<double> x,y, xlost,ylost;
-        xlost.reserve(grid.size());
-        ylost.reserve(grid.size());
-        x.reserve(grid.size());
-        y.reserve(grid.size());
-        for (size_t i=0; i<grid.size(); ++i) {
-            if (node_partition[i] == mpi_rank) {
-                x.push_back(lonlat_tgt_pts[i].lon());
-                y.push_back(lonlat_tgt_pts[i].lat());
-            } else if (node_partition[i] == -1) {
-                xlost.push_back(lonlat_tgt_pts[i].lon());
-                ylost.push_back(lonlat_tgt_pts[i].lat());
-            }
-
-        }
-        size_t count = x.size();
-        size_t count_all = x.size();
-        comm.allReduceInPlace(count_all, eckit::mpi::sum());
-
-        for (int r = 0; r < int(comm.size()); ++r) {
-            if (mpi_rank == r) {
-                std::ofstream f("partitions_poly.py", mpi_rank == 0? std::ios::trunc : std::ios::app);
-
-                if (mpi_rank == 0) {
-                    f << "\n" "import matplotlib.pyplot as plt"
-                         "\n" "from matplotlib.path import Path"
-                         "\n" "import matplotlib.patches as patches"
-                         "\n" ""
-                         "\n" "from itertools import cycle"
-                         "\n" "import matplotlib.cm as cm"
-                         "\n" "import numpy as np"
-                         "\n" "cycol = cycle([cm.Paired(i) for i in np.linspace(0,1,12,endpoint=True)]).next"
-                         "\n" ""
-                         "\n" "fig = plt.figure()"
-                         "\n" "ax = fig.add_subplot(111,aspect='equal')"
-                         "\n" "";
-                    f << "\n"
-                         "\n" "xlost = ["; for (const double& ix: xlost) { f << ix << ", "; } f << "]"
-                         "\n" "ylost = ["; for (const double& iy: ylost) { f << iy << ", "; } f << "]"
-                         "\n"
-                         "\n" "ax.scatter(xlost, ylost, color='k', marker='o')"
-                         "\n" "";
-                }
-                f << "\n" "verts_" << r << " = [";
-                for (size_t i = 0; i < polygon.size(); ++i) { f << "\n  (" << polygon[i][LON] << ", " << polygon[i][LAT] << "), "; }
-                f << "\n]"
-                     "\n" ""
-                     "\n" "codes_" << r << " = [Path.MOVETO]"
-                     "\n" "codes_" << r << ".extend([Path.LINETO] * " << (polygon.size()-2) << ")"
-                     "\n" "codes_" << r << ".extend([Path.CLOSEPOLY])"
-                     "\n" ""
-                     "\n" "count_" << r << " = " << count <<
-                     "\n" "count_all_" << r << " = " << count_all <<
-                     "\n" ""
-                     "\n" "x_" << r << " = ["; for (const double& ix: x) { f << ix << ", "; } f << "]"
-                     "\n" "y_" << r << " = ["; for (const double& iy: y) { f << iy << ", "; } f << "]"
-                     "\n"
-                     "\n" "c = cycol()"
-                     "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))"
-                     "\n" "ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')"
-                     "\n" "";
-                if (mpi_rank == int(comm.size()) - 1) {
-                    f << "\n" "ax.set_xlim(  0-5, 360+5)"
-                         "\n" "ax.set_ylim(-90-5,  90+5)"
-                         "\n" "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
-                         "\n" "ax.set_yticks([-90,-45,0,45,90])"
-                         "\n" "plt.grid()"
-                         "\n" "plt.show()";
-                }
-            }
-            comm.barrier();
-        }
-
+    if (eckit::Resource<bool>("--polygons", false)) {
+        _poly.outputPythonScript("partitions_poly.py");
     }
-
 
     // Sanity check
-    {
-      const int min = *std::min_element(node_partition, node_partition+grid.size());
-      if (min<0) {
-          throw eckit::SeriousBug("Could not find partition for input node (meshSource does not contain all points of gridTarget)", Here());
-      }
+    const int min = *std::min_element(node_partition, node_partition+grid.size());
+    if (min<0) {
+        throw eckit::SeriousBug("Could not find partition for input node (meshSource does not contain all points of gridTarget)", Here());
     }
-
 }
 
 

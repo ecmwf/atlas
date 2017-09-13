@@ -11,10 +11,11 @@
 
 #include "MatchingMeshPartitionerBruteForce.h"
 
+#include <numeric>
 #include <vector>
 #include "eckit/geometry/Point2.h"
 #include "eckit/log/Plural.h"
-#include "eckit/log/Timer.h"
+#include "eckit/log/ProgressTimer.h"
 #include "eckit/mpi/Comm.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
@@ -23,6 +24,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/CoordinateEnums.h"
 
 
 namespace atlas {
@@ -88,60 +90,39 @@ bool point_in_quadrilateral (
 }  // (anonymous namespace)
 
 void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_partition[] ) const {
-
-
   eckit::mpi::Comm& comm = eckit::mpi::comm();
   const int mpi_rank = int(comm.rank());
 
-
-  // Partition bounding box
-  ASSERT(prePartitionedMesh_.nodes().size());
-  auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
-
-  PointLonLat bbox_min = PointLonLat(lonlat_src(0, LON), lonlat_src(0, LAT));
-  PointLonLat bbox_max = bbox_min;
-  for (size_t i = 1; i < prePartitionedMesh_.nodes().size(); ++i) {
-      PointLonLat P(lonlat_src(i, LON), lonlat_src(i, LAT));
-      bbox_min = PointLonLat::componentsMin(bbox_min, P);
-      bbox_max = PointLonLat::componentsMax(bbox_max, P);
-  }
-
-
-  // Partition the target grid nodes
-  // - use a polygon bounding box to quickly discard points,
+  // Point coordinates (full extent, using std::iota)
+  // - use a bounding box to quickly discard points,
   // - except when that is above/below bounding box but poles should be included
-  // std::vector<int> node_partition(grid().npts(), -1);
 
-  for( size_t j=0; j<grid.size(); ++j )
-    node_partition[j] = -1;
+  Mesh::Polygon::container_t nodeIndices(prePartitionedMesh_.nodes().size());
+  std::iota(nodeIndices.begin(), nodeIndices.end(), 0);
 
+  std::vector< PointLonLat > points;
+  PointLonLat pointsMin;
+  PointLonLat pointsMax;
+  getPointCoordinates(nodeIndices, points, pointsMin, pointsMax, false);
 
-  // THIS IS A DIRTY HACK!
+  // FIXME: THIS IS A HACK! the coordinates include North/South Pole (first/last partitions only)
   ASSERT( grid.domain().global() );
   bool includes_north_pole = (mpi_rank == 0);
   bool includes_south_pole = (mpi_rank == (int(comm.size()) - 1 ));
 
-
-  std::vector< PointLonLat > lonlat_tgt_pts;
-  lonlat_tgt_pts.reserve(grid.size());
-
-  for( PointXY Pxy : grid.xy() ) {
-    lonlat_tgt_pts.push_back( grid.projection().lonlat(Pxy) );
-  }
+  ASSERT(prePartitionedMesh_.nodes().size());
+  auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
 
   {
-      eckit::TraceTimer<Atlas> timer("Partitioning target grid...");
+      eckit::ProgressTimer timer("Partitioning target", grid.size(), "point", double(10), atlas::Log::info());
       for (size_t i=0; i<grid.size(); ++i) {
+          ++timer;
 
-          if (i && (i % 1000 == 0)) {
-              double rate = i / timer.elapsed();
-              Log::info() << eckit::BigNum(i) << " (at " << rate << " points/s)..." << std::endl;
-          }
+          node_partition[i] = -1;
+          const PointLonLat& P(points[i]);
 
-          const PointLonLat P(lonlat_tgt_pts[i].lon(), lonlat_tgt_pts[i].lat());
-
-          if (bbox_min[LON] <= P[LON] && P[LON] <= bbox_max[LON]
-              && bbox_min[LAT] <= P[LAT] && P[LAT] <= bbox_max[LAT]) {
+          if (pointsMin[LON] <= P[LON] && P[LON] <= pointsMax[LON]
+           && pointsMin[LAT] <= P[LAT] && P[LAT] <= pointsMax[LAT]) {
 
               const mesh::Cells&  elements_src = prePartitionedMesh_.cells();
               const size_t nb_types = elements_src.nb_types();
@@ -154,7 +135,7 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_pa
 
                   const size_t nb_nodes = elements.nb_nodes();
                   ASSERT( (nb_nodes==3 && elements.name() == "Triangle")
-                          || (nb_nodes==4 && elements.name() == "Quadrilateral") );
+                       || (nb_nodes==4 && elements.name() == "Quadrilateral") );
 
                   for (size_t j=0; j<elements.size() && !found; ++j) {
                       idx[0] = static_cast<size_t>( conn(j,0) );
@@ -181,8 +162,8 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_pa
                   }
 
               }
-          } else if ((includes_north_pole && P[LAT] > bbox_max[LAT])
-                  || (includes_south_pole && P[LAT] < bbox_min[LAT])) {
+          } else if ((includes_north_pole && P[LAT] > pointsMax[LAT])
+                  || (includes_south_pole && P[LAT] < pointsMin[LAT])) {
 
               node_partition[i] = mpi_rank;
 

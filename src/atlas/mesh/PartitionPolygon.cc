@@ -21,7 +21,7 @@ namespace mesh {
 
 //------------------------------------------------------------------------------------------------------
 
-PartitionPolygon::PartitionPolygon(const detail::MeshImpl &mesh, size_t halo) :
+PartitionPolygon::PartitionPolygon(const detail::MeshImpl& mesh, size_t halo) :
   mesh_(mesh),
   halo_(halo) {
   const eckit::mpi::Comm& comm = parallel::mpi::comm();
@@ -61,7 +61,7 @@ size_t PartitionPolygon::footprint() const
     return size;
 }
 
-void PartitionPolygon::print(std::ostream & out) const
+void PartitionPolygon::print(std::ostream& out) const
 {
     out << "polygon:{"
         <<  "halo:" << halo_
@@ -80,11 +80,15 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const
   double xmin =  std::numeric_limits<double>::max();
   double xmax = -std::numeric_limits<double>::max();
   for (idx_t i : *this) {
-    xmin = std::min(xmin, xy(i,XX) );
-    xmax = std::max(xmax, xy(i,XX) );
+    xmin = std::min(xmin, xy(i, XX) );
+    xmax = std::max(xmax, xy(i, XX) );
   }
   comm.allReduceInPlace(xmin,eckit::mpi::min());
   comm.allReduceInPlace(xmax,eckit::mpi::max());
+
+  size_t count = mesh_.nodes().size();
+  size_t count_all = count;
+  comm.allReduceInPlace(count_all, eckit::mpi::sum());
 
 
   for (int r = 0; r < mpi_size; ++r) {
@@ -103,11 +107,11 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const
                    "\n" ""
                    "\n" "fig = plt.figure()"
                    "\n" "ax = fig.add_subplot(111,aspect='equal')"
-                   "\n" "";
+                   "\n" "";              
           }
           f << "\n" "verts_" << r << " = [";
-          for (idx_t i : *this) {
-              f << "\n  (" << xy(i,XX) << ", " << xy(i,YY) << "), ";
+          for (idx_t i : static_cast<const container_t&>(*this)) {
+              f << "\n  (" << xy(i, XX) << ", " << xy(i, YY) << "), ";
           }
           f << "\n]"
                "\n" ""
@@ -115,12 +119,18 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const
                "\n" "codes_" << r << ".extend([Path.LINETO] * " << (size()-2) << ")"
                "\n" "codes_" << r << ".extend([Path.CLOSEPOLY])"
                "\n" ""
+               "\n" "count_" << r << " = " << count <<
+               "\n" "count_all_" << r << " = " << count_all <<
+               "\n" ""
+               "\n" "x_" << r << " = ["; for (size_t i=0; i<count; ++i) { f << xy(i, XX) << ", "; } f << "]"
+               "\n" "y_" << r << " = ["; for (size_t i=0; i<count; ++i) { f << xy(i, YY) << ", "; } f << "]"
+               "\n"
                "\n" "c = cycol()"
                "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))"
+               "\n" "ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')"
                "\n" "";
           if (mpi_rank == mpi_size - 1) {
-              f <<
-                   "\n" "ax.set_xlim( "<<xmin<<"-5, "<<xmax<<"+5)"
+              f << "\n" "ax.set_xlim(  0-5, 360+5)"  // ( "<<xmin<<"-5, "<<xmax<<"+5)
                    "\n" "ax.set_ylim(-90-5,  90+5)"
                    "\n" "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
                    "\n" "ax.set_yticks([-90,-45,0,45,90])"
@@ -130,7 +140,6 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const
       }
       comm.barrier();
   }
-
 }
 
 }  // namespace mesh
