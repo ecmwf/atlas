@@ -28,45 +28,9 @@ namespace atlas {
 namespace mesh {
 
 
-//------------------------------------------------------------------------------------------------------
-
-
-namespace {
-
-
-double dot_sign(
-        const double& Ax, const double& Ay,
-        const double& Bx, const double& By,
-        const double& Cx, const double& Cy ) {
-  return (Ax - Cx) * (By - Cy)
-       - (Ay - Cy) * (Bx - Cx);
-}
-
-
-/*
- * Tests if a given point is left|on|right of an infinite line.
- * @input P point to test
- * @input A, B points on infinite line
- * @return >0/=0/<0 for P left|on|right of the infinite line
- */
-double point_on_which_side(const PointLonLat& P, const PointLonLat& A, const PointLonLat& B) {
-    return dot_sign( P[LON], P[LAT],
-                     A[LON], A[LAT],
-                     B[LON], B[LAT] );
-}
-
-
-}  // (anonymous)
-
-
-//------------------------------------------------------------------------------------------------------
-
-
 PartitionPolygon::PartitionPolygon(const detail::MeshImpl& mesh, size_t halo) :
   mesh_(mesh),
   halo_(halo) {
-  const eckit::mpi::Comm& comm = parallel::mpi::comm();
-  const int mpi_size = int(comm.size());
 
   // extract partition boundary edges by always attempting first to`
   // remove a reversed edge from a neighbouring element, if any
@@ -103,19 +67,10 @@ size_t PartitionPolygon::footprint() const {
 }
 
 
-void PartitionPolygon::print(std::ostream& out) const {
-    out << "polygon:{"
-        <<  "halo:" << halo_
-        << ",size:" << size()
-        << ",nodes:" << static_cast<detail::Polygon>(*this)
-        << "}";
-}
-
-
 void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const {
   const eckit::mpi::Comm& comm = atlas::parallel::mpi::comm();
-  int mpi_rank = comm.rank();
-  int mpi_size = comm.size();
+  int mpi_rank = int(comm.rank());
+  int mpi_size = int(comm.size());
 
   auto xy = array::make_view<double,2>( mesh_.nodes().xy() );
 
@@ -185,63 +140,59 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const
 }
 
 
-bool PartitionPolygon::containsPointInLonLatGeometry(const std::vector<PointLonLat>& points, const PointLonLat& P) const {
-    ASSERT(points.size());
+void PartitionPolygon::setCoordinates() const {
+    ASSERT(size() > 2);
 
-    // winding number
-    int wn = 0;
+    const eckit::mpi::Comm& comm = atlas::parallel::mpi::comm();
+    int mpi_rank = int(comm.rank());
+    int mpi_size = int(comm.size());
 
-    // loop on polygon edges
-    for (size_t i = 1; i < points.size(); ++i) {
-        const PointLonLat& A = points[i-1];
-        const PointLonLat& B = points[ i ];
+    // Point coordinates
+    // - use a bounding box to quickly discard points,
+    // - except when that is above/below bounding box but poles should be included
 
-        // intersect either:
-        // - "up" on upward crossing & P left of edge, or
-        // - "down" on downward crossing & P right of edge
-        if (A[LAT] <= P[LAT] && P[LAT] < B[LAT]) {
-            if (point_on_which_side(P, A, B) > 0) {
-                ++wn;
-            }
-        } else if (B[LAT] <= P[LAT] && P[LAT] < A[LAT]) {
-            if (point_on_which_side(P, A, B) < 0) {
-                --wn;
+    // FIXME: THIS IS A HACK! the coordinates include North/South Pole (first/last partitions only)
+    includesNorthPole_ = (mpi_rank == 0);
+    includesSouthPole_ = (mpi_rank == mpi_size - 1);
+
+    coordinates_.clear();
+    coordinates_.reserve(size());
+
+    auto lonlat = array::make_view< double, 2 >( mesh_.nodes().lonlat() );
+    coordinatesMin_ = PointLonLat(lonlat(operator[](0), LON), lonlat(operator[](0), LAT));
+    coordinatesMax_ = coordinatesMin_;
+
+    for (size_t i = 0; i < size(); ++i) {
+
+        PointLonLat A(lonlat(operator[](i), LON), lonlat(operator[](i), LAT));
+        coordinatesMin_ = PointLonLat::componentsMin(coordinatesMin_, A);
+        coordinatesMax_ = PointLonLat::componentsMax(coordinatesMax_, A);
+
+#if 0
+        // if new point is aligned with existing edge (cross product ~= 0) make the edge longer
+        if ((coordinates_.size() >= 2) && removeAlignedPoints) {
+            PointLonLat B = coordinates_.back();
+            PointLonLat C = coordinates_[coordinates_.size() - 2];
+            if (eckit::types::is_approximately_equal<double>( 0, dot_sign(A[LON], A[LAT], B[LON], B[LAT], C[LON], C[LAT]) )) {
+                coordinates_.back() = A;
+                continue;
             }
         }
+#endif
+
+        coordinates_.push_back(A);
     }
 
-    // wn == 0 only when P is outside
-    return wn != 0;
+    ASSERT(coordinates_.size() == size());
 }
 
 
-bool PartitionPolygon::containsPointInSphericalGeometry(const std::vector<PointLonLat>& points, const PointLonLat& P) const {
-    ASSERT(points.size());
-
-    // winding number
-    int wn = 0;
-
-    // loop on polygon edges
-    for (size_t i = 1; i < points.size(); ++i) {
-        const PointLonLat& A = points[i-1];
-        const PointLonLat& B = points[ i ];
-
-        // intersect either:
-        // - "up" on upward crossing & P left of edge, or
-        // - "down" on downward crossing & P right of edge
-        if (A[LON] <= P[LON] && P[LON] < B[LON]) {
-            if (point_on_which_side(P, A, B) > 0) {
-                ++wn;
-            }
-        } else if (B[LON] <= P[LON] && P[LON] < A[LON]) {
-            if (point_on_which_side(P, A, B) < 0) {
-                --wn;
-            }
-        }
-    }
-
-    // wn == 0 only when P is outside
-    return wn != 0;
+void PartitionPolygon::print(std::ostream& out) const {
+    out << "polygon:{"
+        <<  "halo:" << halo_
+        << ",size:" << size()
+        << ",nodes:" << static_cast<const detail::Polygon&>(*this)
+        << "}";
 }
 
 

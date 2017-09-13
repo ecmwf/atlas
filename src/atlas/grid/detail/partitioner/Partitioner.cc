@@ -182,13 +182,14 @@ Partitioner* PartitionerFactory::build(const std::string& name, const size_t nb_
 grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build(
     const std::string& type,
     const Mesh& partitioned ) {
+    using namespace grid::detail::partitioner;
 
-    if( type == grid::detail::partitioner::MatchingMeshPartitionerSphericalPolygon::static_type() ) {
-        return new grid::detail::partitioner::MatchingMeshPartitionerSphericalPolygon(partitioned);
-    } else if( type == grid::detail::partitioner::MatchingMeshPartitionerLonLatPolygon::static_type() ) {
-        return new grid::detail::partitioner::MatchingMeshPartitionerLonLatPolygon(partitioned);
-    } else if ( type == grid::detail::partitioner::MatchingMeshPartitionerBruteForce::static_type() ) {
-        return new grid::detail::partitioner::MatchingMeshPartitionerBruteForce(partitioned);
+    if( type == MatchingMeshPartitionerSphericalPolygon::static_type() ) {
+        return new MatchingMeshPartitionerSphericalPolygon(partitioned);
+    } else if( type == MatchingMeshPartitionerLonLatPolygon::static_type() ) {
+        return new MatchingMeshPartitionerLonLatPolygon(partitioned);
+    } else if ( type == MatchingMeshPartitionerBruteForce::static_type() ) {
+        return new MatchingMeshPartitionerBruteForce(partitioned);
     } else {
         NOTIMP;
     }

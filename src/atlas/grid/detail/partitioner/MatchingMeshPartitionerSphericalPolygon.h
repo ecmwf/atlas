@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "MatchingMeshPartitioner.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
 
 namespace atlas {
 namespace grid {
@@ -29,19 +29,15 @@ public:
 
     MatchingMeshPartitionerSphericalPolygon() : MatchingMeshPartitioner() {}
     MatchingMeshPartitionerSphericalPolygon(const size_t nb_partitions) : MatchingMeshPartitioner(nb_partitions) {}
-
-    MatchingMeshPartitionerSphericalPolygon( const Mesh& mesh ) :
-      MatchingMeshPartitioner(mesh) {}
+    MatchingMeshPartitionerSphericalPolygon(const Mesh& mesh) : MatchingMeshPartitioner(mesh) {}
 
     /**
-     * @brief Create a GridDistribution, placing nodes in the same partitions as a
-     * given pre-partitioned mesh. The method reconstructs the partition edges polygon
-     * and tests every target grid node if it is internal to the polygon.
-     * @param gridTarget grid to be distributed
-     * @param meshSource mesh already partitioned
-     * @return grid partitioner
+     * @brief Partition a grid, using the same partitions from a pre-partitioned mesh.
+     * The method constructs a partition edges polygon to test every target grid node with.
+     * @param[in] grid grid to be partitioned
+     * @param[out] partitioning partitioning result
      */
-    void partition( const Grid&, int part[] ) const;
+    void partition(const Grid& grid, int partitioning[]) const;
 
     virtual std::string type() const { return static_type(); }
 

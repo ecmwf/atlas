@@ -8,19 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
-
 #pragma once
 
-#include <string>
 #include <vector>
-//#include "eckit/config/Configuration.h"
-//#include "atlas/domain/Domain.h"
-//#include "atlas/grid/Distribution.h"
-//#include "atlas/grid/Grid.h"
+#include "eckit/exception/Exceptions.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
-//#include "atlas/mesh/Mesh.h"
-#include "atlas/library/config.h"
-
 
 namespace atlas {
 namespace grid {
@@ -31,10 +23,17 @@ namespace partitioner {
 class MatchingMeshPartitioner : public Partitioner {
 public:
 
-    MatchingMeshPartitioner() : Partitioner() { NOTIMP; }
-    MatchingMeshPartitioner(const size_t nb_partitions) : Partitioner(nb_partitions) { NOTIMP; }
+    MatchingMeshPartitioner() :
+        Partitioner() {
+        NOTIMP;
+    }
 
-    MatchingMeshPartitioner(const Mesh& mesh ) :
+    MatchingMeshPartitioner(const size_t nb_partitions) :
+        Partitioner(nb_partitions) {
+        NOTIMP;
+    }
+
+    MatchingMeshPartitioner(const Mesh& mesh) :
       Partitioner(mesh.nb_partitions()),
       prePartitionedMesh_(mesh) {
     }
@@ -43,11 +42,10 @@ public:
 
 protected:
 
-    void getPointCoordinates(const std::vector<idx_t>&, std::vector<atlas::PointLonLat>& points, PointLonLat& pointsMin, PointLonLat& pointsMax) const;
-
     const Mesh prePartitionedMesh_;
 
 };
+
 
 }  // partitioners
 }  // detail

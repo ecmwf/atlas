@@ -19,7 +19,6 @@
 #include "atlas/library/config.h"
 #include "atlas/mesh/detail/MeshImpl.h"
 #include "atlas/mesh/detail/Polygon.h"
-#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace mesh {
@@ -33,7 +32,7 @@ public: // methods
 
     //-- Constructors
 
-    /// @brief Construct "size" Polygon
+    /// @brief Construct "size" polygon
     PartitionPolygon(const detail::MeshImpl& mesh, size_t halo);
 
     //-- Accessors
@@ -47,23 +46,7 @@ public: // methods
 
     void outputPythonScript(const eckit::PathName&) const;
 
-    /*
-     * Point-in-partition test based on winding number for a point in a polygon
-     * @note reference <a href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point in a Polygon</a>
-     * @param[in] points vertex points of a polygon (closed, where poly.front() == poly.back())
-     * @param[in] P given point
-     * @return if point is in partition
-     */
-    bool containsPointInLonLatGeometry(const std::vector<PointLonLat>&, const PointLonLat&) const;
-
-    /*
-     * Point-in-partition test based on winding number for a point in a polygon
-     * @note reference <a href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point in a Polygon</a>
-     * @param[in] points vertex points of a polygon (closed, where poly.front() == poly.back())
-     * @param[in] P given point
-     * @return if point is in partition
-     */
-    bool containsPointInSphericalGeometry(const std::vector<PointLonLat>&, const PointLonLat&) const;
+    void setCoordinates() const;
 
 private:
 
