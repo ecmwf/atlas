@@ -9,7 +9,7 @@
  */
 
 
-#include "MatchingMeshPartitionerGreatCirclePolygon.h"
+#include "MatchingMeshPartitionerSphericalPolygon.h"
 
 #include <utility>
 #include <vector>
@@ -37,7 +37,7 @@ namespace partitioner {
 namespace {
 
 
-PartitionerBuilder<MatchingMeshPartitionerGreatCirclePolygon> __builder("great-circle-polygon");
+PartitionerBuilder<MatchingMeshPartitionerSphericalPolygon> __builder("spherical-polygon");
 
 
 double dot_sign(
@@ -49,16 +49,13 @@ double dot_sign(
 }
 
 
-typedef eckit::geometry::Point2 point_t;
-
-
 /*
  * Tests if a given point is left|on|right of an infinite line.
  * @input P point to test
  * @input A, B points on infinite line
  * @return >0/=0/<0 for P left|on|right of the infinite line
  */
-double point_on_which_side(const point_t& P, const point_t& A, const point_t& B) {
+double point_on_which_side(const PointLonLat& P, const PointLonLat& A, const PointLonLat& B) {
     return dot_sign( P[LON], P[LAT],
                      A[LON], A[LAT],
                      B[LON], B[LAT] );
@@ -72,7 +69,7 @@ double point_on_which_side(const point_t& P, const point_t& A, const point_t& B)
  * @param[in] P given point
  * @return if point is in polygon
  */
-bool point_in_poly(const std::vector<point_t>& poly, const point_t& P) {
+bool point_in_poly(const std::vector<PointLonLat>& poly, const PointLonLat& P) {
     ASSERT(poly.size());
 
     // winding number
@@ -80,8 +77,8 @@ bool point_in_poly(const std::vector<point_t>& poly, const point_t& P) {
 
     // loop on polygon edges
     for (size_t i = 1; i < poly.size(); ++i) {
-        const point_t& A = poly[i-1];
-        const point_t& B = poly[ i ];
+        const PointLonLat& A = poly[i-1];
+        const PointLonLat& B = poly[ i ];
 
         // intersect either:
         // - "up" on upward crossing & P left of edge, or
@@ -104,7 +101,7 @@ bool point_in_poly(const std::vector<point_t>& poly, const point_t& P) {
 }  // (anonymous namespace)
 
 
-void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int node_partition[] ) const {
+void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int node_partition[] ) const {
     eckit::mpi::Comm& comm = eckit::mpi::comm();
     const int mpi_rank = int(comm.rank());
     const int mpi_size = int(comm.size());
@@ -115,21 +112,10 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
     // Polygon point coordinates
     // Note: indices ('poly') necessarily match coordinates ('polygon')
     // Note: the coordinates include North/South Pole (first/last partitions only)
-    std::vector< point_t > polygon;
-    polygon.reserve(_poly.size());
-
-    auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
-    point_t bbox_min = point_t(lonlat_src(_poly[0], LON), lonlat_src(_poly[0], LAT));
-    point_t bbox_max = bbox_min;
-
-    for (size_t i = 0; i < _poly.size(); ++i) {
-
-        point_t A(lonlat_src(_poly[i], LON), lonlat_src(_poly[i], LAT));
-        bbox_min = point_t::componentsMin(bbox_min, A);
-        bbox_max = point_t::componentsMax(bbox_max, A);
-
-        polygon.push_back(A);
-    }
+    std::vector< PointLonLat > polygon;
+    PointLonLat pointsMin;
+    PointLonLat pointsMax;
+    getPointCoordinates(_poly, polygon, pointsMin, pointsMax, true);
     ASSERT(polygon.size() >= 2);
 
 
@@ -164,17 +150,17 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
                 Log::debug<Atlas>() << "    " << eckit::BigNum(i) << " points completed (at " << rate << " points/s)" << std::endl;
             }
 
-            point_t P(lonlat_tgt_pts[i].lon(), lonlat_tgt_pts[i].lat());
+            PointLonLat P(lonlat_tgt_pts[i].lon(), lonlat_tgt_pts[i].lat());
 
-            if (bbox_min[LON] <= P[LON] && P[LON] < bbox_max[LON]
-             && bbox_min[LAT] <= P[LAT] && P[LAT] < bbox_max[LAT]) {
+            if (pointsMin[LON] <= P[LON] && P[LON] < pointsMax[LON]
+             && pointsMin[LAT] <= P[LAT] && P[LAT] < pointsMax[LAT]) {
 
                 if (point_in_poly(polygon, P)) {
                     node_partition[i] = mpi_rank;
                 }
 
-            } else if ((includes_north_pole && P[LAT] >= bbox_max[LAT])
-                    || (includes_south_pole && P[LAT] <  bbox_min[LAT])) {
+            } else if ((includes_north_pole && P[LAT] >= pointsMax[LAT])
+                    || (includes_south_pole && P[LAT] <  pointsMin[LAT])) {
 
                 node_partition[i] = mpi_rank;
 
@@ -275,25 +261,6 @@ void MatchingMeshPartitionerGreatCirclePolygon::partition( const Grid& grid, int
       }
     }
 
-}
-
-
-void MatchingMeshPartitionerGreatCirclePolygon::getPointCoordinates(const Grid& grid, const Mesh::Polygon& poly, std::vector<PointLonLat>& points) const {
-    points.reserve(poly.size());
-
-    auto lonlat = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
-    PointLonLat bbox_min = PointLonLat(lonlat(poly[0], LON), lonlat(poly[0], LAT));
-    PointLonLat bbox_max = bbox_min;
-
-    for (size_t i = 0; i < poly.size(); ++i) {
-
-        PointLonLat A(lonlat(poly[i], LON), lonlat(poly[i], LAT));
-        bbox_min = PointLonLat::componentsMin(bbox_min, A);
-        bbox_max = PointLonLat::componentsMax(bbox_max, A);
-
-        points.push_back(A);
-    }
-    ASSERT(points.size() >= 2);
 }
 
 

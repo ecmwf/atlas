@@ -17,7 +17,7 @@
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
-#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerGreatCirclePolygon.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
@@ -183,8 +183,8 @@ grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build(
     const std::string& type,
     const Mesh& partitioned ) {
 
-    if( type == grid::detail::partitioner::MatchingMeshPartitionerGreatCirclePolygon::static_type() ) {
-        return new grid::detail::partitioner::MatchingMeshPartitionerGreatCirclePolygon(partitioned);
+    if( type == grid::detail::partitioner::MatchingMeshPartitionerSphericalPolygon::static_type() ) {
+        return new grid::detail::partitioner::MatchingMeshPartitionerSphericalPolygon(partitioned);
     } else if( type == grid::detail::partitioner::MatchingMeshPartitionerLonLatPolygon::static_type() ) {
         return new grid::detail::partitioner::MatchingMeshPartitionerLonLatPolygon(partitioned);
     } else if ( type == grid::detail::partitioner::MatchingMeshPartitionerBruteForce::static_type() ) {

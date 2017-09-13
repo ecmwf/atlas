@@ -43,7 +43,7 @@ public:
 
 protected:
 
-    virtual void getPointCoordinates(const std::vector<idx_t>&, std::vector<atlas::PointLonLat>& points, bool simplifyConsequentAlignedPoints=false) const;
+    void getPointCoordinates(const std::vector<idx_t>&, std::vector<atlas::PointLonLat>& points, PointLonLat& pointsMin, PointLonLat& pointsMax, bool removeAlignedPoints) const;
 
     const Mesh prePartitionedMesh_;
 

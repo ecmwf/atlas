@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/mesh/Polygon.h"
+#include "atlas/mesh/PartitionPolygon.h"
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -21,7 +21,7 @@ namespace mesh {
 
 //------------------------------------------------------------------------------------------------------
 
-Polygon::Polygon(const detail::MeshImpl &mesh, size_t halo) :
+PartitionPolygon::PartitionPolygon(const detail::MeshImpl &mesh, size_t halo) :
   mesh_(mesh),
   halo_(halo) {
   const eckit::mpi::Comm& comm = parallel::mpi::comm();
@@ -51,26 +51,26 @@ Polygon::Polygon(const detail::MeshImpl &mesh, size_t halo) :
       }
   }
 
-  ASSERT(operator+=(Poly(edges)));
+  ASSERT(operator+=(detail::Polygon(edges)));
 }
 
-size_t Polygon::footprint() const
+size_t PartitionPolygon::footprint() const
 {
     size_t size = sizeof(*this);
     size += capacity()*sizeof(idx_t);
     return size;
 }
 
-void Polygon::print(std::ostream & out) const
+void PartitionPolygon::print(std::ostream & out) const
 {
     out << "polygon:{"
         <<  "halo:" << halo_
         << ",size:" << size()
-        << ",nodes:" << static_cast<Poly>(*this)
+        << ",nodes:" << static_cast<detail::Polygon>(*this)
         << "}";
 }
 
-void Polygon::outputPythonScript(const eckit::PathName& filepath) const {
+void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const {
   const eckit::mpi::Comm& comm = atlas::parallel::mpi::comm();
   int mpi_rank = comm.rank();
   int mpi_size = comm.size();

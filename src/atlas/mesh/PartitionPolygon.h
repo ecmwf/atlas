@@ -16,9 +16,9 @@
 
 #include <vector>
 #include "eckit/memory/Owned.h"
-#include "atlas/grid/detail/partitioner/Polygon.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/detail/MeshImpl.h"
+#include "atlas/mesh/detail/Polygon.h"
 
 namespace atlas {
 namespace mesh {
@@ -26,16 +26,14 @@ namespace mesh {
 /**
  * \brief Polygon class that holds the boundary of a mesh partition
  */
-class Polygon : public grid::detail::partitioner::Polygon, public eckit::Owned {
-
-  typedef grid::detail::partitioner::Polygon Poly;
+class PartitionPolygon : public detail::Polygon, public eckit::Owned {
 
 public: // methods
 
 //-- Constructors
 
   /// @brief Construct "size" Polygon
-  Polygon( const detail::MeshImpl& mesh, size_t halo );
+  PartitionPolygon( const detail::MeshImpl& mesh, size_t halo );
 
 //-- Accessors
 
@@ -50,7 +48,7 @@ private:
 
   void print(std::ostream&) const;
 
-  friend std::ostream& operator<<(std::ostream& s, const Polygon& p) {
+  friend std::ostream& operator<<(std::ostream& s, const PartitionPolygon& p) {
     p.print(s);
     return s;
   }

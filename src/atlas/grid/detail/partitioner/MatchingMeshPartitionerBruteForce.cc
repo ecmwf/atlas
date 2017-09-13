@@ -85,10 +85,6 @@ bool point_in_quadrilateral (
 }
 
 
-enum {LON=0, LAT=1};
-typedef eckit::geometry::Point2 point_t;
-
-
 }  // (anonymous namespace)
 
 void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_partition[] ) const {
@@ -102,12 +98,12 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_pa
   ASSERT(prePartitionedMesh_.nodes().size());
   auto lonlat_src = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
 
-  point_t bbox_min = point_t(lonlat_src(0, LON), lonlat_src(0, LAT));
-  point_t bbox_max = bbox_min;
+  PointLonLat bbox_min = PointLonLat(lonlat_src(0, LON), lonlat_src(0, LAT));
+  PointLonLat bbox_max = bbox_min;
   for (size_t i = 1; i < prePartitionedMesh_.nodes().size(); ++i) {
-      point_t P(lonlat_src(i, LON), lonlat_src(i, LAT));
-      bbox_min = point_t::componentsMin(bbox_min, P);
-      bbox_max = point_t::componentsMax(bbox_max, P);
+      PointLonLat P(lonlat_src(i, LON), lonlat_src(i, LAT));
+      bbox_min = PointLonLat::componentsMin(bbox_min, P);
+      bbox_max = PointLonLat::componentsMax(bbox_max, P);
   }
 
 
@@ -142,7 +138,7 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_pa
               Log::info() << eckit::BigNum(i) << " (at " << rate << " points/s)..." << std::endl;
           }
 
-          const point_t P(lonlat_tgt_pts[i].lon(), lonlat_tgt_pts[i].lat());
+          const PointLonLat P(lonlat_tgt_pts[i].lon(), lonlat_tgt_pts[i].lat());
 
           if (bbox_min[LON] <= P[LON] && P[LON] <= bbox_max[LON]
               && bbox_min[LAT] <= P[LAT] && P[LAT] <= bbox_max[LAT]) {

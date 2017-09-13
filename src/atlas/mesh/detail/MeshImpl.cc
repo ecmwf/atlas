@@ -139,7 +139,7 @@ PartitionGraph::Neighbours MeshImpl::nearestNeighbourPartitions() const {
   return partitionGraph().nearestNeighbours(partition());
 }
 
-const Polygon& MeshImpl::polygon(size_t halo) const {
+const PartitionPolygon& MeshImpl::polygon(size_t halo) const {
   if( halo >= polygons_.size() ) {
     polygons_.resize(halo+1);
   }
@@ -151,7 +151,7 @@ const Polygon& MeshImpl::polygon(size_t halo) const {
       throw eckit::Exception("Mesh does not contain a halo of size "+std::to_string(halo)+".", Here());
     }
 
-    polygons_[halo].reset( new Polygon(*this, halo) );
+    polygons_[halo].reset( new PartitionPolygon(*this, halo) );
   }
   return *polygons_[halo];
 }

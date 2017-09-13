@@ -19,18 +19,18 @@ namespace detail {
 namespace partitioner {
 
 
-class MatchingMeshPartitionerGreatCirclePolygon : public MatchingMeshPartitioner {
+class MatchingMeshPartitionerSphericalPolygon : public MatchingMeshPartitioner {
 
 public:
 
-  static std::string static_type() {return "great-circle-polygon";}
+  static std::string static_type() {return "spherical-polygon";}
 
 public:
 
-    MatchingMeshPartitionerGreatCirclePolygon() : MatchingMeshPartitioner() {}
-    MatchingMeshPartitionerGreatCirclePolygon(const size_t nb_partitions) : MatchingMeshPartitioner(nb_partitions) {}
+    MatchingMeshPartitionerSphericalPolygon() : MatchingMeshPartitioner() {}
+    MatchingMeshPartitionerSphericalPolygon(const size_t nb_partitions) : MatchingMeshPartitioner(nb_partitions) {}
 
-    MatchingMeshPartitionerGreatCirclePolygon( const Mesh& mesh ) :
+    MatchingMeshPartitionerSphericalPolygon( const Mesh& mesh ) :
       MatchingMeshPartitioner(mesh) {}
 
     /**
@@ -44,10 +44,6 @@ public:
     void partition( const Grid&, int part[] ) const;
 
     virtual std::string type() const { return static_type(); }
-
-protected:
-
-    void getPointCoordinates(const Grid&, const Mesh::Polygon&, std::vector<atlas::PointLonLat>&) const;
 
 };
 

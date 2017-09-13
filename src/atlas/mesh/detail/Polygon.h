@@ -21,9 +21,8 @@
 #include "atlas/library/config.h"
 
 namespace atlas {
-namespace grid {
+namespace mesh {
 namespace detail {
-namespace partitioner {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -79,8 +78,7 @@ public:
 
 //------------------------------------------------------------------------------------------------------
 
-}  // partitioner
 }  // detail
-}  // grid
+}  // mesh
 }  // atlas
 

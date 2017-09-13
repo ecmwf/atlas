@@ -56,7 +56,7 @@ public:
     using Edges = mesh::Edges;
     using HybridElements = mesh::HybridElements;
     using PartitionGraph = mesh::detail::PartitionGraph;
-    using Polygon = mesh::Polygon;
+    using Polygon = mesh::PartitionPolygon;
 
 public:
 

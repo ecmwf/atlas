@@ -45,10 +45,6 @@ public:
 
     virtual std::string type() const { return static_type(); }
 
-protected:
-
-    void getPointCoordinates(const Grid&, const Mesh::Polygon&, std::vector<atlas::PointLonLat>&) const;
-
 };
 
 

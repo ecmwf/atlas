@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/grid/detail/partitioner/Polygon.h"
+#include "atlas/mesh/detail/Polygon.h"
 
 #include <algorithm>
 #include <iostream>
@@ -16,9 +16,8 @@
 #include "eckit/exception/Exceptions.h"
 
 namespace atlas {
-namespace grid {
+namespace mesh {
 namespace detail {
-namespace partitioner {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -50,7 +49,7 @@ Polygon::Polygon(const Polygon::edge_set_t& edges) {
     }
 }
 
-atlas::grid::detail::partitioner::Polygon::operator bool() const {
+Polygon::operator bool() const {
     return !Polygon::empty();
 }
 
@@ -84,7 +83,7 @@ Polygon& Polygon::operator+=(const Polygon& other) {
 
 void Polygon::print(std::ostream& s) const {
     char z = '{';
-    for (auto n : static_cast<container_t>(*this)) {
+    for (auto n : static_cast<const container_t&>(*this)) {
         s << z << n;
         z = ',';
     }
@@ -93,8 +92,7 @@ void Polygon::print(std::ostream& s) const {
 
 //------------------------------------------------------------------------------------------------------
 
-}  // partitioner
 }  // detail
-}  // grid
+}  // mesh
 }  // atlas
 

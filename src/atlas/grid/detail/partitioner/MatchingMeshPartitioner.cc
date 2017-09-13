@@ -46,22 +46,22 @@ double dot_sign(
 }
 
 
-void MatchingMeshPartitioner::getPointCoordinates(const std::vector<idx_t>& poly, std::vector<atlas::PointLonLat>& points, bool simplifyConsequentAlignedPoints) const {
+void MatchingMeshPartitioner::getPointCoordinates(const std::vector<idx_t>& poly, std::vector<atlas::PointLonLat>& points, PointLonLat& pointsMin, PointLonLat& pointsMax, bool removeAlignedPoints) const {
     points.clear();
     points.reserve(poly.size());
 
     auto lonlat = array::make_view< double, 2 >( prePartitionedMesh_.nodes().lonlat() );
-    PointLonLat bbox_min = PointLonLat(lonlat(poly[0], LON), lonlat(poly[0], LAT));
-    PointLonLat bbox_max = bbox_min;
+    pointsMin = PointLonLat(lonlat(poly[0], LON), lonlat(poly[0], LAT));
+    pointsMax = pointsMin;
 
     for (size_t i = 0; i < poly.size(); ++i) {
 
         PointLonLat A(lonlat(poly[i], LON), lonlat(poly[i], LAT));
-        bbox_min = PointLonLat::componentsMin(bbox_min, A);
-        bbox_max = PointLonLat::componentsMax(bbox_max, A);
+        pointsMin = PointLonLat::componentsMin(pointsMin, A);
+        pointsMax = PointLonLat::componentsMax(pointsMax, A);
 
         // if new point is aligned with existing edge (cross product ~= 0) make the edge longer
-        if ((points.size() >= 2) && simplifyConsequentAlignedPoints) {
+        if ((points.size() >= 2) && removeAlignedPoints) {
             PointLonLat B = points.back();
             PointLonLat C = points[points.size() - 2];
             if (eckit::types::is_approximately_equal<double>( 0, dot_sign(A[LON], A[LAT], B[LON], B[LAT], C[LON], C[LAT]) )) {

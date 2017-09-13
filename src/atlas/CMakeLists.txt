@@ -104,14 +104,12 @@ grid/detail/partitioner/MatchingMeshPartitioner.cc
 grid/detail/partitioner/MatchingMeshPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
-grid/detail/partitioner/MatchingMeshPartitionerGreatCirclePolygon.cc
-grid/detail/partitioner/MatchingMeshPartitionerGreatCirclePolygon.h
 grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
 grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h
+grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.cc
+grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
-grid/detail/partitioner/Polygon.cc
-grid/detail/partitioner/Polygon.h
 
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h
@@ -200,16 +198,18 @@ mesh/HybridElements.cc
 mesh/HybridElements.h
 mesh/Mesh.cc
 mesh/Mesh.h
-mesh/detail/MeshIntf.cc
-mesh/detail/MeshIntf.h
-mesh/detail/MeshImpl.cc
-mesh/detail/MeshImpl.h
-mesh/detail/PartitionGraph.cc
-mesh/detail/PartitionGraph.h
 mesh/Nodes.cc
 mesh/Nodes.h
-mesh/Polygon.h
-mesh/Polygon.cc
+mesh/PartitionPolygon.cc
+mesh/PartitionPolygon.h
+mesh/detail/MeshImpl.cc
+mesh/detail/MeshImpl.h
+mesh/detail/MeshIntf.cc
+mesh/detail/MeshIntf.h
+mesh/detail/PartitionGraph.cc
+mesh/detail/PartitionGraph.h
+mesh/detail/Polygon.cc
+mesh/detail/Polygon.h
 
 mesh/actions/ExtendNodesGlobal.h
 mesh/actions/ExtendNodesGlobal.cc
