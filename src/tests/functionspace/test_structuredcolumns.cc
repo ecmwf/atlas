@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestFunctionSpace
-#include "ecbuild/boost_test_framework.h"
 
 #include "eckit/types/Types.h"
 #include "eckit/memory/ScopedPtr.h"
@@ -27,20 +25,21 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/MicroDeg.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
 
 using namespace eckit;
+using namespace eckit::testing;
 using namespace atlas::functionspace;
 using namespace atlas::util;
 
 namespace atlas {
 namespace test {
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-
-BOOST_AUTO_TEST_CASE( test_functionspace_StructuredColumns_no_halo )
+CASE( "test_functionspace_StructuredColumns_no_halo" )
 {
   int root=0;
   Grid grid("O8");
@@ -67,9 +66,9 @@ BOOST_AUTO_TEST_CASE( test_functionspace_StructuredColumns_no_halo )
   if( parallel::mpi::comm().rank() == root && parallel::mpi::comm().size() == 5 ) {
     std::vector<double> check{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
 
-    BOOST_CHECK_EQUAL( value_glb.size(), check.size() );
+    EXPECT( value_glb.size() == check.size() );
     for( size_t j=0; j<value_glb.size(); ++j ) {
-      BOOST_CHECK_EQUAL( value_glb(j), check[j] );
+      EXPECT( value_glb(j) == check[j] );
     }
   }
 
@@ -79,7 +78,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_StructuredColumns_no_halo )
   gmsh.write( field );
 }
 
-BOOST_AUTO_TEST_CASE( test_functionspace_StructuredColumns_halo )
+CASE( "test_functionspace_StructuredColumns_halo" )
 {
   int root=0;
 //  grid::StructuredGrid grid(
@@ -112,11 +111,11 @@ BOOST_AUTO_TEST_CASE( test_functionspace_StructuredColumns_halo )
     }
   }
 
-  BOOST_CHECK_EQUAL( fs.checksum(field), "cef2694016492d408fa157b7c59ce741" );
+  EXPECT( fs.checksum(field) == "cef2694016492d408fa157b7c59ce741" );
 
   fs.haloExchange(field);
 
-  BOOST_CHECK_EQUAL( fs.checksum(field), "cef2694016492d408fa157b7c59ce741" );
+  EXPECT( fs.checksum(field) == "cef2694016492d408fa157b7c59ce741" );
 
   eckit::PathName filepath("test_functionspace_StructuredColumns_halo_p"+std::to_string(parallel::mpi::comm().rank())+".py");
 
@@ -203,6 +202,13 @@ BOOST_AUTO_TEST_CASE( test_functionspace_StructuredColumns_halo )
        "\n";
 }
 
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

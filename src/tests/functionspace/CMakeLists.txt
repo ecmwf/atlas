@@ -19,14 +19,12 @@ if( HAVE_FCTEST )
 endif()
 
 ecbuild_add_test( TARGET atlas_test_functionspace
-  BOOST
   SOURCES  test_functionspace.cc
   LIBS     atlas
 )
 
 
 ecbuild_add_test( TARGET atlas_test_structuredcolumns
-  BOOST
   SOURCES  test_structuredcolumns.cc
   LIBS     atlas
   MPI 5
@@ -34,7 +32,6 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
 )
 
 ecbuild_add_test( TARGET atlas_test_pointcloud
-  BOOST
   SOURCES  test_pointcloud.cc
   LIBS     atlas
 )

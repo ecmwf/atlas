@@ -8,27 +8,25 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestFunctionSpace
-#include "ecbuild/boost_test_framework.h"
-
 #include "atlas/functionspace/PointCloud.h"
 
 #include "atlas/array.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
 
 using namespace eckit;
+using namespace eckit::testing;
 using namespace atlas::functionspace;
 using namespace atlas::util;
 
 namespace atlas {
 namespace test {
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-
-BOOST_AUTO_TEST_CASE( test_functionspace_PointCloud )
+CASE( "test_functionspace_PointCloud" )
 {
 
   Field points( "points", array::make_datatype<double>(), array::make_shape(10,2) );
@@ -47,10 +45,17 @@ BOOST_AUTO_TEST_CASE( test_functionspace_PointCloud )
   } );
   
   functionspace::PointCloud pointcloud( points );
-  BOOST_CHECK( pointcloud.size() == 10 );
+  EXPECT( pointcloud.size() == 10 );
 
 }
 
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}
