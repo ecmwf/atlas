@@ -13,8 +13,8 @@
 #include "atlas/interpolation/method/FiniteElement.h"
 
 #include "eckit/log/Plural.h"
+#include "eckit/log/ProgressTimer.h"
 #include "eckit/log/Seconds.h"
-#include "eckit/log/Timer.h"
 #include "eckit/mpi/Comm.h"
 #include "eckit/geometry/Point3.h"
 
@@ -142,18 +142,11 @@ void FiniteElement::setup(const FunctionSpace& source) {
     std::vector<size_t> failures;
 
     {
-        std::stringstream msg; msg << "Computing interpolation weights for " << eckit::BigNum(out_npts) << " points...";
-        Log::debug<Atlas>() << msg.str() << std::endl;
-        eckit::TraceTimer<Atlas> timerProj(msg.str()+"done");
+        eckit::ProgressTimer progress("Computing interpolation weights", out_npts, "point", double(5), Log::debug<Atlas>());
 
-        for ( size_t ip = 0; ip < out_npts; ++ip ) {
+        for ( size_t ip = 0; ip < out_npts; ++ip, ++progress ) {
             if (out_ghosts(ip)) {
                 continue;
-            }
-
-            if (ip && (ip % 1000 == 0)) {
-                double rate = ip / timerProj.elapsed();
-                Log::debug<Atlas>() << "    " << eckit::BigNum(ip)<<" points completed (at " << rate << " points/s)..." << std::endl;
             }
 
             PointXYZ p ( (*ocoords_)[ip].data() ); // lookup point
