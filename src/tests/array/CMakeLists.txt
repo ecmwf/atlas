@@ -7,13 +7,11 @@
 # does it submit to any jurisdiction.
 
 ecbuild_add_test( TARGET atlas_test_array
-  BOOST
   SOURCES  test_array.cc
   LIBS     atlas
 )
 
 #ecbuild_add_test( TARGET atlas_test_table
-#  BOOST
 #  SOURCES  test_table.cc
 #  LIBS     atlas
 #)
