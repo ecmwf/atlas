@@ -15,11 +15,52 @@
 #include "atlas/mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/CoordinateEnums.h"
+//#include "eckit/config/Resource.h"
+//#include "eckit/mpi/Comm.h"
+//#include "eckit/types/FloatCompare.h"
+//#include "atlas/grid/Grid.h"
+//#include "atlas/mesh/Elements.h"
+//#include "atlas/mesh/Mesh.h"
+//#include "atlas/mesh/Nodes.h"
+//#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace mesh {
 
+
 //------------------------------------------------------------------------------------------------------
+
+
+namespace {
+
+
+double dot_sign(
+        const double& Ax, const double& Ay,
+        const double& Bx, const double& By,
+        const double& Cx, const double& Cy ) {
+  return (Ax - Cx) * (By - Cy)
+       - (Ay - Cy) * (Bx - Cx);
+}
+
+
+/*
+ * Tests if a given point is left|on|right of an infinite line.
+ * @input P point to test
+ * @input A, B points on infinite line
+ * @return >0/=0/<0 for P left|on|right of the infinite line
+ */
+double point_on_which_side(const PointLonLat& P, const PointLonLat& A, const PointLonLat& B) {
+    return dot_sign( P[LON], P[LAT],
+                     A[LON], A[LAT],
+                     B[LON], B[LAT] );
+}
+
+
+}  // (anonymous)
+
+
+//------------------------------------------------------------------------------------------------------
+
 
 PartitionPolygon::PartitionPolygon(const detail::MeshImpl& mesh, size_t halo) :
   mesh_(mesh),
@@ -54,21 +95,22 @@ PartitionPolygon::PartitionPolygon(const detail::MeshImpl& mesh, size_t halo) :
   ASSERT(operator+=(detail::Polygon(edges)));
 }
 
-size_t PartitionPolygon::footprint() const
-{
+
+size_t PartitionPolygon::footprint() const {
     size_t size = sizeof(*this);
     size += capacity()*sizeof(idx_t);
     return size;
 }
 
-void PartitionPolygon::print(std::ostream& out) const
-{
+
+void PartitionPolygon::print(std::ostream& out) const {
     out << "polygon:{"
         <<  "halo:" << halo_
         << ",size:" << size()
         << ",nodes:" << static_cast<detail::Polygon>(*this)
         << "}";
 }
+
 
 void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const {
   const eckit::mpi::Comm& comm = atlas::parallel::mpi::comm();
@@ -141,6 +183,67 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const
       comm.barrier();
   }
 }
+
+
+bool PartitionPolygon::containsPointInLonLatGeometry(const std::vector<PointLonLat>& points, const PointLonLat& P) const {
+    ASSERT(points.size());
+
+    // winding number
+    int wn = 0;
+
+    // loop on polygon edges
+    for (size_t i = 1; i < points.size(); ++i) {
+        const PointLonLat& A = points[i-1];
+        const PointLonLat& B = points[ i ];
+
+        // intersect either:
+        // - "up" on upward crossing & P left of edge, or
+        // - "down" on downward crossing & P right of edge
+        if (A[LAT] <= P[LAT] && P[LAT] < B[LAT]) {
+            if (point_on_which_side(P, A, B) > 0) {
+                ++wn;
+            }
+        } else if (B[LAT] <= P[LAT] && P[LAT] < A[LAT]) {
+            if (point_on_which_side(P, A, B) < 0) {
+                --wn;
+            }
+        }
+    }
+
+    // wn == 0 only when P is outside
+    return wn != 0;
+}
+
+
+bool PartitionPolygon::containsPointInSphericalGeometry(const std::vector<PointLonLat>& points, const PointLonLat& P) const {
+    ASSERT(points.size());
+
+    // winding number
+    int wn = 0;
+
+    // loop on polygon edges
+    for (size_t i = 1; i < points.size(); ++i) {
+        const PointLonLat& A = points[i-1];
+        const PointLonLat& B = points[ i ];
+
+        // intersect either:
+        // - "up" on upward crossing & P left of edge, or
+        // - "down" on downward crossing & P right of edge
+        if (A[LON] <= P[LON] && P[LON] < B[LON]) {
+            if (point_on_which_side(P, A, B) > 0) {
+                ++wn;
+            }
+        } else if (B[LON] <= P[LON] && P[LON] < A[LON]) {
+            if (point_on_which_side(P, A, B) < 0) {
+                --wn;
+            }
+        }
+    }
+
+    // wn == 0 only when P is outside
+    return wn != 0;
+}
+
 
 }  // namespace mesh
 }  // namespace atlas

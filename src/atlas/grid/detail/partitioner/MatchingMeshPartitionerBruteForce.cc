@@ -103,7 +103,7 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int node_pa
   std::vector< PointLonLat > points;
   PointLonLat pointsMin;
   PointLonLat pointsMax;
-  getPointCoordinates(nodeIndices, points, pointsMin, pointsMax, false);
+  getPointCoordinates(nodeIndices, points, pointsMin, pointsMax);
 
   // FIXME: THIS IS A HACK! the coordinates include North/South Pole (first/last partitions only)
   ASSERT( grid.domain().global() );

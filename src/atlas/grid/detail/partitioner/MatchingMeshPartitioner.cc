@@ -46,7 +46,7 @@ double dot_sign(
 }
 
 
-void MatchingMeshPartitioner::getPointCoordinates(const std::vector<idx_t>& poly, std::vector<atlas::PointLonLat>& points, PointLonLat& pointsMin, PointLonLat& pointsMax, bool removeAlignedPoints) const {
+void MatchingMeshPartitioner::getPointCoordinates(const std::vector<idx_t>& poly, std::vector<atlas::PointLonLat>& points, PointLonLat& pointsMin, PointLonLat& pointsMax) const {
     points.clear();
     points.reserve(poly.size());
 
@@ -60,6 +60,7 @@ void MatchingMeshPartitioner::getPointCoordinates(const std::vector<idx_t>& poly
         pointsMin = PointLonLat::componentsMin(pointsMin, A);
         pointsMax = PointLonLat::componentsMax(pointsMax, A);
 
+#if 0
         // if new point is aligned with existing edge (cross product ~= 0) make the edge longer
         if ((points.size() >= 2) && removeAlignedPoints) {
             PointLonLat B = points.back();
@@ -69,6 +70,7 @@ void MatchingMeshPartitioner::getPointCoordinates(const std::vector<idx_t>& poly
                 continue;
             }
         }
+#endif
 
         points.push_back(A);
     }

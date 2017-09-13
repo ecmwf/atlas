@@ -42,11 +42,11 @@ public:
     AtlasParallelInterpolation(int argc, char* argv[]) : AtlasTool(argc, argv) {
         add_option(new SimpleOption<size_t>     ("log-rank",             "use specific MPI rank for logging (default 0)"));
         add_option(new SimpleOption<bool>       ("log-statistics",       "show simple statistics on source/target (default false)"));
+        add_option(new SimpleOption<bool>       ("output-polygons",      "Output Python script that plots partitions polygons"));
 
         add_option(new SimpleOption<std::string>("method",               "interpolation method (default finite-element)"));
         add_option(new SimpleOption<std::string>("backend",              "linear algebra backend"));
         add_option(new SimpleOption<size_t>     ("k-nearest-neighbours", "k-nearest neighbours (default 1)"));
-        add_option(new SimpleOption<bool>       ("polygons",             "Output Python script that plots partitions as polygons"));
         add_option(new SimpleOption<bool>       ("with-backward",        "Also do backward interpolation (default false)"));
 
         add_option(new SimpleOption<std::string>("source-gridname",                   "source gridname"));
