@@ -44,9 +44,9 @@ interpolation_AB = atlas_Interpolation(interpolation_config,fs_A,fs_B)
 interpolation_BA = atlas_Interpolation(interpolation_config,fs_B,fs_A)
 
 ! Create fields and initialise source field
-field_A  = fs_A%create_field("A", atlas_real(atlas_kind_real64))
-field_B  = fs_B%create_field("B", atlas_real(atlas_kind_real64))
-field_A2 = fs_A%create_field("A2",atlas_real(atlas_kind_real64))
+field_A  = fs_A%create_field(name="A",  kind=atlas_real(atlas_kind_real64))
+field_B  = fs_B%create_field(name="B",  kind=atlas_real(atlas_kind_real64))
+field_A2 = fs_A%create_field(name="A2", kind=atlas_real(atlas_kind_real64))
 call initialise_field_hill(fs_A, field_A)
 
 

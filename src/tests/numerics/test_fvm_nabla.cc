@@ -100,10 +100,8 @@ void rotated_flow_magnitude(const fvm::Method& fvm, Field& field, const double& 
   const double pvel = USCAL/radius;
   const double deg2rad = M_PI/180.;
   
-  ATLAS_DEBUG_VAR(field);
-
-  array::ArrayView<double,2> lonlat_deg = array::make_view<double,2> (fvm.mesh().nodes().lonlat());
-  array::ArrayView<double,2> var        = array::make_view<double,2> (field);
+  auto lonlat_deg = array::make_view<double,2> (fvm.mesh().nodes().lonlat());
+  auto var        = array::make_view<double,2> (field);
 
   size_t nnodes = fvm.mesh().nodes().size();
   for( size_t jnode=0; jnode<nnodes; ++jnode )
@@ -145,27 +143,31 @@ CASE( "test_build" )
 CASE( "test_grad" )
 {
   Log::info() << "test_grad" << std::endl;
+  size_t nlev = 1; 
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
-  fvm::Method fvm(mesh, util::Config("radius",radius));
+  fvm::Method fvm(mesh, util::Config("radius",radius) | field::levels(nlev) );
   Nabla nabla( fvm );
 
   size_t nnodes = mesh.nodes().size();
-  size_t nlev = 1;
 
   FieldSet fields;
-  fields.add( fvm.node_columns().createField<double>(field::name("scalar")  | field::levels(nlev)) );
-  fields.add( fvm.node_columns().createField<double>(field::name("rscalar") | field::levels(nlev)) );
-  fields.add( fvm.node_columns().createField<double>(field::name("grad")    | field::levels(nlev) | field::variables(2) ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("rgrad")   | field::levels(nlev) | field::variables(2) ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("xder")    | field::levels(nlev)) );
-  fields.add( fvm.node_columns().createField<double>(field::name("yder")    | field::levels(nlev)) );
-  fields.add( fvm.node_columns().createField<double>(field::name("rxder")   | field::levels(nlev)) );
-  fields.add( fvm.node_columns().createField<double>(field::name("ryder")   | field::levels(nlev)) );
+  fields.add( fvm.node_columns().createField<double>(field::name("scalar")  ) );
+  fields.add( fvm.node_columns().createField<double>(field::name("rscalar") ) );
+  fields.add( fvm.node_columns().createField<double>(field::name("grad")    | field::variables(2) ) );
+  fields.add( fvm.node_columns().createField<double>(field::name("rgrad")   | field::variables(2) ) );
+  fields.add( fvm.node_columns().createField<double>(field::name("xder")    ) );
+  fields.add( fvm.node_columns().createField<double>(field::name("yder")    ) );
+  fields.add( fvm.node_columns().createField<double>(field::name("rxder")   ) );
+  fields.add( fvm.node_columns().createField<double>(field::name("ryder")   ) );
 
+  BOOST_CHECK_EQUAL( fields["scalar"].rank() , 2 );
+  BOOST_CHECK_EQUAL( fields["grad"].  rank() , 3 );
+  BOOST_CHECK_EQUAL( fields["scalar"].levels() , nlev );
+  BOOST_CHECK_EQUAL( fields["grad"].  levels() , nlev );
   //  fields.add( fvm.createField<double>("exact_yder",nlev) );
 
 //  const double deg2rad = M_PI/180.;
@@ -186,12 +188,12 @@ CASE( "test_grad" )
 
   nabla.gradient(fields["scalar"],fields["grad"]);
   nabla.gradient(fields["rscalar"],fields["rgrad"]);
-  array::ArrayView<double,2> xder  = array::make_view<double,2>( fields["xder"] );
-  array::ArrayView<double,2> yder  = array::make_view<double,2>( fields["yder"] );
-  array::ArrayView<double,2> rxder = array::make_view<double,2>( fields["rxder"] );
-  array::ArrayView<double,2> ryder = array::make_view<double,2>( fields["ryder"] );
-  const array::ArrayView<double,3> grad  = array::make_view<double,3>( fields["grad"] );
-  const array::ArrayView<double,3> rgrad = array::make_view<double,3>( fields["rgrad"] );
+  auto xder  = array::make_view<double,2>( fields["xder"] );
+  auto yder  = array::make_view<double,2>( fields["yder"] );
+  auto rxder = array::make_view<double,2>( fields["rxder"] );
+  auto ryder = array::make_view<double,2>( fields["ryder"] );
+  const auto grad  = array::make_view<double,3>( fields["grad"] );
+  const auto rgrad = array::make_view<double,3>( fields["rgrad"] );
   for( size_t jnode=0; jnode< nnodes ; ++jnode )
   {
     for(size_t jlev = 0; jlev < nlev; ++jlev) {
@@ -220,19 +222,18 @@ CASE( "test_grad" )
 CASE( "test_div" )
 {
   Log::info() << "test_div" << std::endl;
+  size_t nlev = 1; 
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
-  fvm::Method fvm(mesh, util::Config("radius",radius));
+  fvm::Method fvm(mesh, util::Config("radius",radius) | field::levels(nlev) );
   Nabla nabla(fvm);
 
-  size_t nlev = 1;
-
   FieldSet fields;
-  fields.add( fvm.node_columns().createField<double>(field::name("wind") | field::levels(nlev) | field::variables(2) ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("div")  | field::levels(nlev) ) );
+  fields.add( fvm.node_columns().createField<double>(field::name("wind") | field::variables(2) ) );
+  fields.add( fvm.node_columns().createField<double>(field::name("div")  ) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
@@ -250,42 +251,41 @@ CASE( "test_div" )
 CASE( "test_curl" )
 {
   Log::info() << "test_curl" << std::endl;
+  size_t nlev = 1;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
-  fvm::Method fvm(mesh, util::Config("radius",radius));
+  fvm::Method fvm(mesh, util::Config("radius",radius) | field::levels(nlev) );
   Nabla nabla( fvm );
 
-  size_t nlev = 1;
-
   FieldSet fields;
-  fields.add( fvm.node_columns().createField<double>( field::name("wind") | field::levels(nlev) | field::variables(2) ) );
-  fields.add( fvm.node_columns().createField<double>( field::name("vor")  | field::levels(nlev) ) );
+  fields.add( fvm.node_columns().createField<double>( field::name("wind") | field::variables(2) ) );
+  fields.add( fvm.node_columns().createField<double>( field::name("vor")  ) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
   nabla.curl(fields["wind"],fields["vor"]);
 
-  fields.add( fvm.node_columns().createField<double>( field::name("windgrad") | field::levels(nlev) | field::variables(2*2) ) );
+  fields.add( fvm.node_columns().createField<double>( field::name("windgrad") | field::variables(2*2) ) );
   nabla.gradient(fields["wind"],fields["windgrad"]);
 
-  fields.add( fvm.node_columns().createField<double>( field::name("windX") ) );
-  fields.add( fvm.node_columns().createField<double>( field::name("windY") ) );
+  fields.add( fvm.node_columns().createField<double>( field::name("windX") | field::levels(false) ) );
+  fields.add( fvm.node_columns().createField<double>( field::name("windY") | field::levels(false) ) );
   fields.add( fvm.node_columns().createField<double>( field::name("windXgradX") ) );
   fields.add( fvm.node_columns().createField<double>( field::name("windXgradY") ) );
   fields.add( fvm.node_columns().createField<double>( field::name("windYgradX") ) );
   fields.add( fvm.node_columns().createField<double>( field::name("windYgradY") ) );
-  array::ArrayView<double,3> wind     = array::make_view<double,3>(fields["wind"]);
-  array::ArrayView<double,3> windgrad = array::make_view<double,3>(fields["windgrad"]);
+  auto wind     = array::make_view<double,3>(fields["wind"]);
+  auto windgrad = array::make_view<double,3>(fields["windgrad"]);
 
-  array::ArrayView<double,1> windX      = array::make_view<double,1>(fields["windX"]);
-  array::ArrayView<double,1> windY      = array::make_view<double,1>(fields["windY"]);
-  array::ArrayView<double,1> windXgradX = array::make_view<double,1>(fields["windXgradX"]);
-  array::ArrayView<double,1> windXgradY = array::make_view<double,1>(fields["windXgradY"]);
-  array::ArrayView<double,1> windYgradX = array::make_view<double,1>(fields["windYgradX"]);
-  array::ArrayView<double,1> windYgradY = array::make_view<double,1>(fields["windYgradY"]);
+  auto windX      = array::make_view<double,1>(fields["windX"]);
+  auto windY      = array::make_view<double,1>(fields["windY"]);
+  auto windXgradX = array::make_view<double,2>(fields["windXgradX"]);
+  auto windXgradY = array::make_view<double,2>(fields["windXgradY"]);
+  auto windYgradX = array::make_view<double,2>(fields["windYgradX"]);
+  auto windYgradY = array::make_view<double,2>(fields["windYgradY"]);
   for( size_t j=0; j<windX.size(); ++j )
   {
     static const idx_t lev0 = 0;
@@ -295,10 +295,10 @@ CASE( "test_curl" )
     static const idx_t YdY = YY*2+YY;
     windX(j) = wind(j,lev0,XX);
     windY(j) = wind(j,lev0,YY);
-    windXgradX(j) = windgrad(j,lev0,XdX);
-    windXgradY(j) = windgrad(j,lev0,XdY);
-    windYgradX(j) = windgrad(j,lev0,YdX);
-    windYgradY(j) = windgrad(j,lev0,YdY);
+    windXgradX(j,lev0) = windgrad(j,lev0,XdX);
+    windXgradY(j,lev0) = windgrad(j,lev0,XdY);
+    windYgradX(j,lev0) = windgrad(j,lev0,YdX);
+    windYgradY(j,lev0) = windgrad(j,lev0,YdY);
   }
 
   // output to gmsh
@@ -324,19 +324,18 @@ CASE( "test_curl" )
 CASE( "test_lapl" )
 {
   Log::info() << "test_lapl" << std::endl;
+  size_t nlev = 1;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
-  fvm::Method fvm(mesh, util::Config("radius",radius));
+  fvm::Method fvm(mesh, util::Config("radius",radius) | field::levels(nlev) );
   Nabla nabla( fvm );
 
-  size_t nlev = 1;
-
   FieldSet fields;
-  fields.add( fvm.node_columns().createField<double>(field::name("scal") | field::levels(nlev) ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("lapl") | field::levels(nlev) ) );
+  fields.add( fvm.node_columns().createField<double>(field::name("scal") ) );
+  fields.add( fvm.node_columns().createField<double>(field::name("lapl") ) );
 
   rotated_flow_magnitude(fvm,fields["scal"],M_PI_2*0.75);
 

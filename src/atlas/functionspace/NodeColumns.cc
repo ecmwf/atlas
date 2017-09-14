@@ -86,27 +86,18 @@ array::LocalView<T,1> make_surface_scalar_view(const Field &field)
 }
 
 NodeColumns::NodeColumns( Mesh& mesh ) :
-    mesh_(mesh),
-    nodes_(mesh_.nodes()),
-    halo_(0),
-    nb_nodes_(nodes_.size()),
-    nb_nodes_global_(0) {
-    constructor();
-}
-
-NodeColumns::NodeColumns( Mesh& mesh, const mesh::Halo &halo, const eckit::Configuration &params ) :
-    mesh_(mesh),
-    nodes_(mesh_.nodes()),
-    halo_(halo),
-    nb_nodes_(nodes_.size()),
-    nb_nodes_global_(0) {
-    constructor();
+    NodeColumns( mesh, util::NoConfig() ) {
 }
 
 NodeColumns::NodeColumns(Mesh& mesh, const mesh::Halo &halo) :
+    NodeColumns( mesh, util::Config("halo",halo.size()) ) {
+}
+
+NodeColumns::NodeColumns( Mesh& mesh, const eckit::Configuration & config ) :
     mesh_(mesh),
     nodes_(mesh_.nodes()),
-    halo_(halo),
+    halo_( mesh::Halo(config.getInt("halo",0) ) ),
+    nb_levels_( config.getInt("levels",0) ),
     nb_nodes_(nodes_.size()),
     nb_nodes_global_(0) {
     constructor();
@@ -245,9 +236,10 @@ size_t NodeColumns::config_nb_nodes(const eckit::Configuration& config) const
   return size;
 }
 
-namespace {
-void set_field_metadata(const eckit::Configuration& config, Field& field)
+void NodeColumns::set_field_metadata(const eckit::Configuration& config, Field& field) const
 {
+  field.set_functionspace(this);
+
   bool global(false);
   if( config.get("global",global) )
   {
@@ -260,15 +252,13 @@ void set_field_metadata(const eckit::Configuration& config, Field& field)
   }
   field.metadata().set("global",global);
   
-  size_t levels(0);
+  size_t levels(nb_levels_);
   config.get("levels",levels);
   field.set_levels(levels);
 
   size_t variables(0);
   config.get("variables",variables);
   field.set_variables(variables);
-
-}
 }
 
 
@@ -288,101 +278,17 @@ std::string NodeColumns::config_name(const eckit::Configuration& config) const
 
 size_t NodeColumns::config_levels(const eckit::Configuration& config) const
 {
-  size_t levels(0);
+  size_t levels(nb_levels_);
   config.get("levels",levels);
   return levels;
 }
 
-#ifndef DEPRECATE_CREATEFIELD_ARGS
-Field NodeColumns::createField(
-    const std::string& name,
-    array::DataType datatype,
-    const eckit::Configuration& config ) const
-{
-  size_t nb_nodes = config_nb_nodes(config);
-  Field field = Field(name,datatype,array::make_shape(nb_nodes));
-  field.set_functionspace(this);
-  set_field_metadata(config,field);
-  return field;
-}
-
-Field NodeColumns::createField(
-    const std::string& name,
-    array::DataType datatype,
-    size_t levels,
-    const eckit::Configuration& config) const
-{
-  size_t nb_nodes = config_nb_nodes(config);
-  Field field = Field(name,datatype,array::make_shape(nb_nodes,levels));
-  field.set_levels(levels);
-  field.set_functionspace(this);
-  set_field_metadata(config,field);
-  return field;
-}
-
-Field NodeColumns::createField(
-    const std::string& name,
-    array::DataType datatype,
-    const std::vector<size_t>& variables,
-    const eckit::Configuration& config ) const
-{
-  size_t nb_nodes = config_nb_nodes(config);
-  std::vector<size_t> shape(1,nb_nodes);
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field field = Field(name,datatype,shape);
-  field.set_functionspace(this);
-  set_field_metadata(config,field);
-  return field;
-}
-
-Field NodeColumns::createField(
-    const std::string& name,
-    array::DataType datatype,
-    size_t levels,
-    const std::vector<size_t>& variables,
-    const eckit::Configuration& config ) const
-{
-  size_t nb_nodes = config_nb_nodes(config);
-  std::vector<size_t> shape(1,nb_nodes); shape.push_back(levels);
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field field = Field(name,datatype,shape);
-  field.set_levels(levels);
-  field.set_functionspace(this);
-  set_field_metadata(config,field);
-  return field;
-}
-
-Field NodeColumns::createField(
-    const std::string& name,
-    const Field& other,
-    const eckit::Configuration& config ) const
-{
-  array::ArrayShape shape = other.shape();
-  shape[0] = config_nb_nodes(config);
-  Field field = Field(name,other.datatype(),shape);
-  if( other.levels() )
-    field.set_levels(field.shape(1));
-  field.set_functionspace(this);
-  set_field_metadata(config,field);
-  return field;
-}
-
-#endif
-
-Field NodeColumns::createField(
-    const eckit::Configuration& config ) const
-{
+array::ArrayShape NodeColumns::config_shape(const eckit::Configuration& config) const {
   array::ArrayShape shape;
 
   shape.push_back(config_nb_nodes(config));
 
-  std::string name;
-  config.get("name",name);
-
-  array::DataType::kind_t datatype(0);
-  config.get("datatype",datatype);
-
-  size_t levels(0);
+  size_t levels(nb_levels_);
   config.get("levels",levels);
   if( levels > 0 ) shape.push_back(levels);
 
@@ -390,10 +296,16 @@ Field NodeColumns::createField(
   config.get("variables",variables);
   if( variables > 0 ) shape.push_back(variables);
 
-  Field field = Field(name,array::DataType(datatype),shape);
-  field.set_functionspace(this);
- 
+  return shape;
+}
+
+Field NodeColumns::createField(
+    const eckit::Configuration& config ) const
+{
+  Field field = Field(config_name(config),config_datatype(config),config_shape(config));
+
   set_field_metadata(config,field);
+
   return field;
 }
 
@@ -2154,11 +2066,6 @@ NodeColumns::NodeColumns( const FunctionSpace& functionspace ) :
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
 
-NodeColumns::NodeColumns( Mesh& mesh, const mesh::Halo& halo, const eckit::Configuration& config ) :
-  FunctionSpace( new detail::NodeColumns(mesh,halo,config) ),
-  functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
-}
-
 NodeColumns::NodeColumns( Mesh& mesh, const mesh::Halo& halo ) :
   FunctionSpace( new detail::NodeColumns(mesh,halo) ),
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
@@ -2166,6 +2073,11 @@ NodeColumns::NodeColumns( Mesh& mesh, const mesh::Halo& halo ) :
 
 NodeColumns::NodeColumns( Mesh& mesh ) :
   FunctionSpace( new detail::NodeColumns(mesh) ),
+  functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
+}
+
+NodeColumns::NodeColumns( Mesh& mesh, const eckit::Configuration& config ) :
+  FunctionSpace( new detail::NodeColumns(mesh, config) ),
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
 
@@ -2184,46 +2096,6 @@ const Mesh& NodeColumns::mesh() const {
 mesh::Nodes& NodeColumns::nodes() const{
   return functionspace_->nodes();
 }
-
-#ifndef DEPRECATE_CREATEFIELD_ARGS
-Field NodeColumns::createField(
-    const std::string& name,
-    array::DataType datatype,
-    const eckit::Configuration& config ) const {
-  return functionspace_->createField(name,datatype,config);
-}
-
-Field NodeColumns::createField(
-    const std::string& name,
-    array::DataType, size_t levels,
-    const eckit::Configuration& config) const {
-  return functionspace_->createField(name,levels,config);
-}
-
-Field NodeColumns::createField(
-    const std::string& name,
-    array::DataType datatype,
-    const std::vector<size_t>& variables,
-    const eckit::Configuration& config) const {
-  return functionspace_->createField(name,datatype,variables,config);
-}
-
-Field NodeColumns::createField(
-    const std::string& name,
-    array::DataType, size_t levels,
-    const std::vector<size_t>& variables,
-    const eckit::Configuration& config)  const {
-  return functionspace_->createField(name,levels,variables,config);
-}
-
-Field NodeColumns::createField(
-    const std::string& name,
-    const Field& field,
-    const eckit::Configuration& config ) const {
-  return functionspace_->createField(name,field,config);
-}
-
-#endif
 
 Field NodeColumns::createField(const eckit::Configuration& config) const {
   return functionspace_->createField(config);

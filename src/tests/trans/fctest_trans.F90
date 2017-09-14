@@ -94,19 +94,19 @@ TEST( test_trans )
 
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
-  scalarfield1 = nodes_fs%create_field("scalar1",atlas_real(c_double),nlev)
+  scalarfield1 = nodes_fs%create_field(name="scalar1",kind=atlas_real(c_double),levels=nlev)
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
-  scalarfield2 = nodes_fs%create_field("scalar2",atlas_real(c_double))
+  scalarfield2 = nodes_fs%create_field(name="scalar2",kind=atlas_real(c_double))
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
   spectral_fs = atlas_functionspace_Spectral(trans)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  spectralfield1 = spectral_fs%create_field("spectral1",atlas_real(c_double),nlev)
+  spectralfield1 = spectral_fs%create_field(name="spectral1",kind=atlas_real(c_double),levels=nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  spectralfield2 = spectral_fs%create_field("spectral2",atlas_real(c_double))
+  spectralfield2 = spectral_fs%create_field(name="spectral2",kind=atlas_real(c_double))
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
   call scalarfield1%data(scal1)
@@ -158,16 +158,16 @@ TEST( test_trans )
   FCTEST_CHECK_CLOSE( spec2(4), 0._c_double, tol )
   FCTEST_CHECK_CLOSE( spec2(5), 0._c_double, tol )
 
-  windfield = nodes_fs%create_field("wind",atlas_real(c_double),nlev,(/3/))
+  windfield = nodes_fs%create_field(name="wind",kind=atlas_real(c_double),levels=nlev,variables=3)
   call windfield%data(wind)
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
-  vorfield = spectral_fs%create_field("vorticity",atlas_real(c_double),nlev)
+  vorfield = spectral_fs%create_field(name="vorticity",kind=atlas_real(c_double),levels=nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
   call vorfield%data(vor)
 
-  divfield =  spectral_fs%create_field("divergence",atlas_real(c_double),nlev)
+  divfield =  spectral_fs%create_field(name="divergence",kind=atlas_real(c_double),levels=nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
   call divfield%data(div)
@@ -188,7 +188,7 @@ TEST( test_trans )
 
   call trans%invtrans_vordiv2wind(spectral_fs,vorfield,divfield,nodes_fs,windfield)
 
-  glb_vorfield = spectral_fs%create_field("vorticity",atlas_real(c_double),nlev,global=.true.)
+  glb_vorfield = spectral_fs%create_field(name="vorticity",kind=atlas_real(c_double),levels=nlev,global=.true.)
   call spectral_fs%gather(vorfield,glb_vorfield)
   call spectral_fs%scatter(glb_vorfield,vorfield)
 
@@ -245,12 +245,12 @@ TEST( test_trans_nomesh )
   trans = atlas_Trans(grid,nsmax)
 
   gridpoints_fs = atlas_functionspace_StructuredColumns(grid)
-  scalarfield1 = gridpoints_fs%create_field("scalar1",atlas_real(c_double),nlev)
-  scalarfield2 = gridpoints_fs%create_field("scalar2",atlas_real(c_double))
+  scalarfield1 = gridpoints_fs%create_field(name="scalar1",kind=atlas_real(c_double),levels=nlev)
+  scalarfield2 = gridpoints_fs%create_field(name="scalar2",kind=atlas_real(c_double))
 
   spectral_fs = atlas_functionspace_Spectral(trans)
-  spectralfield1 = spectral_fs%create_field("spectral1",atlas_real(c_double),nlev)
-  spectralfield2 = spectral_fs%create_field("spectral2",atlas_real(c_double))
+  spectralfield1 = spectral_fs%create_field(name="spectral1",kind=atlas_real(c_double),levels=nlev)
+  spectralfield2 = spectral_fs%create_field(name="spectral2",kind=atlas_real(c_double))
 
   call scalarfield1%data(scal1)
   call scalarfield2%data(scal2)

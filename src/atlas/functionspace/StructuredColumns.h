@@ -18,6 +18,7 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/array/DataType.h"
 #include "atlas/field/Field.h"
+#include "atlas/field/Options.h"
 
 namespace atlas {
 namespace parallel {
@@ -50,9 +51,9 @@ class StructuredColumns : public FunctionSpaceImpl {
 
 public:
 
-  StructuredColumns( const Grid& );
+  StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
 
-  StructuredColumns( const Grid&, const grid::Partitioner&, const util::Config& = util::NoConfig() );
+  StructuredColumns( const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig() );
 
   virtual ~StructuredColumns();
 
@@ -60,21 +61,10 @@ public:
 
   /// @brief Create a Structured field
   Field createField(
-      const std::string& name,
-      array::DataType,
-      const eckit::Parametrisation& = util::NoConfig() ) const;
-  Field createField(
-      const std::string& name,
-      array::DataType,
-      size_t levels,
-      const eckit::Parametrisation& = util::NoConfig() ) const;
+      const eckit::Configuration& = util::NoConfig() ) const;
+
   template <typename DATATYPE> Field createField(
-      const std::string& name,
-      const eckit::Parametrisation& = util::NoConfig() ) const;
-  template <typename DATATYPE> Field createField(
-      const std::string& name,
-      size_t levels,
-      const eckit::Parametrisation& = util::NoConfig() ) const;
+      const eckit::Configuration& = util::NoConfig() ) const;
 
   void gather( const FieldSet&, FieldSet& ) const;
   void gather( const Field&, Field& ) const;
@@ -118,13 +108,19 @@ public:
 
 private: // methods
 
-  size_t config_size(const eckit::Parametrisation& config) const;
+  size_t config_size(const eckit::Configuration& config) const;
+  array::DataType config_datatype(const eckit::Configuration&) const;
+  std::string config_name(const eckit::Configuration&) const;
+  size_t config_levels(const eckit::Configuration&) const;
+  array::ArrayShape config_shape(const eckit::Configuration&) const;
+  void set_field_metadata(const eckit::Configuration&, Field& ) const;
   size_t footprint() const;
 
 private: // data
 
   size_t size_owned_;
   size_t size_halo_;
+  size_t nb_levels_;
 
   const grid::StructuredGrid grid_;
   parallel::GatherScatter* gather_scatter_;
@@ -253,21 +249,14 @@ public:
 
 template <typename DATATYPE>
 inline Field StructuredColumns::createField(
-    const std::string& name,
-    const eckit::Parametrisation& options) const
+    const eckit::Configuration& options) const
 {
-  return createField(name,array::DataType::create<DATATYPE>(),options);
+  return createField(field::datatypeT<DATATYPE>() | options);
 }
 
-template <typename DATATYPE>
-inline Field StructuredColumns::createField(
-    const std::string& name,
-    size_t levels,
-    const eckit::Parametrisation& options) const
-{
-  return createField(name,array::DataType::create<DATATYPE>(),levels,options);
-}
-}
+// -------------------------------------------------------------------
+
+} // namespace detail
 
 // -------------------------------------------------------------------
 
@@ -277,8 +266,8 @@ public:
 
   StructuredColumns();
   StructuredColumns( const FunctionSpace& );
-  StructuredColumns( const Grid& );
-  StructuredColumns( const Grid&, const grid::Partitioner&, const util::Config& config = util::NoConfig() );
+  StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
+  StructuredColumns( const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig() );
 
   operator bool() const { return valid(); }
   bool valid() const { return functionspace_; }
@@ -290,24 +279,10 @@ public:
   const grid::StructuredGrid& grid() const { return functionspace_->grid(); }
 
   Field createField(
-      const std::string& name,
-      array::DataType,
-      const eckit::Parametrisation& = util::NoConfig() ) const;
-
-  Field createField(
-      const std::string& name,
-      array::DataType,
-      size_t levels,
-      const eckit::Parametrisation& = util::NoConfig() ) const;
+      const eckit::Configuration& = util::NoConfig() ) const;
 
   template <typename DATATYPE> Field createField(
-      const std::string& name,
-      const eckit::Parametrisation& = util::NoConfig() ) const;
-
-  template <typename DATATYPE> Field createField(
-      const std::string& name,
-      size_t levels,
-      const eckit::Parametrisation& = util::NoConfig() ) const;
+      const eckit::Configuration& = util::NoConfig() ) const;
 
   void gather( const FieldSet&, FieldSet& ) const;
   void gather( const Field&, Field& ) const;
@@ -350,19 +325,9 @@ private:
 
 template <typename DATATYPE>
 inline Field StructuredColumns::createField(
-    const std::string& name,
-    const eckit::Parametrisation& options) const
+    const eckit::Configuration& options) const
 {
-  return functionspace_->createField<DATATYPE>(name,options);
-}
-
-template <typename DATATYPE>
-inline Field StructuredColumns::createField(
-    const std::string& name,
-    size_t levels,
-    const eckit::Parametrisation& options) const
-{
-  return functionspace_->createField<DATATYPE>(name,levels,options);
+  return functionspace_->createField<DATATYPE>(options);
 }
 
 // -------------------------------------------------------------------
@@ -371,8 +336,7 @@ extern "C"
 {
   const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid, const util::Config* config );
   void atlas__functionspace__StructuredColumns__delete (detail::StructuredColumns* This);
-  field::FieldImpl* atlas__fs__StructuredColumns__create_field_name_kind (const detail::StructuredColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
-  field::FieldImpl* atlas__fs__StructuredColumns__create_field_name_kind_lev (const detail::StructuredColumns* This, const char* name, int kind, int levels, const eckit::Parametrisation* options);
+  field::FieldImpl* atlas__fs__StructuredColumns__create_field (const detail::StructuredColumns* This, const eckit::Configuration* options);
   void atlas__functionspace__StructuredColumns__gather (const detail::StructuredColumns* This, const field::FieldImpl* local, field::FieldImpl* global);
   void atlas__functionspace__StructuredColumns__scatter (const detail::StructuredColumns* This, const field::FieldImpl* global, field::FieldImpl* local);
   void atlas__fs__StructuredColumns__checksum_fieldset(const detail::StructuredColumns* This, const field::FieldSetImpl* fieldset, char* &checksum, int &size, int &allocated);

@@ -35,24 +35,9 @@
 namespace atlas {
 namespace functionspace {
 namespace detail {
-
+  
 namespace {
-void set_field_metadata(const eckit::Parametrisation& config, Field& field)
-{
-  bool global(false);
-  if( config.get("global",global) )
-  {
-    if( global )
-    {
-      size_t owner(0);
-      config.get("owner",owner);
-      field.metadata().set("owner",owner);
-    }
-  }
-  field.metadata().set("global",global);
-}
-
-
+  
 struct GridPoint
 {
 public:
@@ -102,6 +87,68 @@ public:
 
 }
 
+void StructuredColumns::set_field_metadata(const eckit::Configuration& config, Field& field) const
+{
+  field.set_functionspace(this);
+
+  bool global(false);
+  if( config.get("global",global) )
+  {
+    if( global )
+    {
+      size_t owner(0);
+      config.get("owner",owner);
+      field.metadata().set("owner",owner);
+    }
+  }
+  field.metadata().set("global",global);
+
+  size_t levels(nb_levels_);
+  config.get("levels",levels);
+  field.set_levels(levels);
+
+  size_t variables(0);
+  config.get("variables",variables);
+  field.set_variables(variables);
+}
+
+array::DataType StructuredColumns::config_datatype(const eckit::Configuration& config) const
+{
+  array::DataType::kind_t kind;
+  if( ! config.get("datatype",kind) ) throw eckit::AssertionFailed("datatype missing",Here());
+  return array::DataType(kind);
+}
+
+std::string StructuredColumns::config_name(const eckit::Configuration& config) const
+{
+  std::string name;
+  config.get("name",name);
+  return name;
+}
+
+size_t StructuredColumns::config_levels(const eckit::Configuration& config) const
+{
+  size_t levels(nb_levels_);
+  config.get("levels",levels);
+  return levels;
+}
+
+array::ArrayShape StructuredColumns::config_shape(const eckit::Configuration& config) const {
+  array::ArrayShape shape;
+
+  shape.push_back(config_size(config));
+
+  size_t levels(nb_levels_);
+  config.get("levels",levels);
+  if( levels > 0 ) shape.push_back(levels);
+
+  size_t variables(0);
+  config.get("variables",variables);
+  if( variables > 0 ) shape.push_back(variables);
+
+  return shape;
+}
+
 void StructuredColumns::Map2to1::print(std::ostream& out) const {
   for( idx_t j=j_min_; j<=j_max_; ++j ) {
     out << std::setw(4) << j << " : ";
@@ -128,7 +175,7 @@ void StructuredColumns::IndexRange::print(std::ostream& out) const {
 }
 
 
-size_t StructuredColumns::config_size(const eckit::Parametrisation& config) const
+size_t StructuredColumns::config_size(const eckit::Configuration& config) const
 {
   size_t size = size_halo_;
   bool global(false);
@@ -180,13 +227,15 @@ private:
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
-StructuredColumns::StructuredColumns(const Grid& grid) :
-  StructuredColumns::StructuredColumns(grid, grid::Partitioner() ) {
+StructuredColumns::StructuredColumns(const Grid& grid, const eckit::Configuration& config) :
+  StructuredColumns::StructuredColumns(grid, grid::Partitioner(), config ) {
 }
 
-StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& p, const util::Config& config ) :
-  grid_(grid)
+StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& p, const eckit::Configuration& config ) :
+  grid_(grid),
+  nb_levels_(0)
 {
+    nb_levels_ = config_levels(config);
     Timer timer( "Generating StructuredColumns..." );
     if ( not grid_ )
     {
@@ -591,31 +640,10 @@ size_t StructuredColumns::footprint() const {
 // ----------------------------------------------------------------------------
 // Create Field
 // ----------------------------------------------------------------------------
-Field StructuredColumns::createField(const std::string& name, array::DataType datatype, const eckit::Parametrisation& options ) const
+Field StructuredColumns::createField( const eckit::Configuration& options ) const
 {
     size_t npts = config_size(options);
-    Field field = Field(name, datatype, array::make_shape(npts));
-    field.set_functionspace(this);
-    set_field_metadata(options,field);
-    return field;
-}
-// ----------------------------------------------------------------------------
-
-
-
-// ----------------------------------------------------------------------------
-// Create Field with vertical levels
-// ----------------------------------------------------------------------------
-Field StructuredColumns::createField(
-    const std::string& name, array::DataType datatype,
-    size_t levels, const eckit::Parametrisation& options) const
-{
-    size_t npts = config_size(options);
-    Field field = Field(
-                    name, datatype, array::make_shape(npts, levels));
-
-    field.set_functionspace(this);
-    field.set_levels(levels);
+    Field field( config_name(options) , config_datatype(options), config_shape(options) );
     set_field_metadata(options,field);
     return field;
 }
@@ -874,27 +902,19 @@ StructuredColumns::StructuredColumns( const FunctionSpace& functionspace ) :
   functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
 }
 
-StructuredColumns::StructuredColumns( const Grid& grid ) :
-  FunctionSpace( new detail::StructuredColumns(grid) ),
+StructuredColumns::StructuredColumns( const Grid& grid, const eckit::Configuration& config ) :
+  FunctionSpace( new detail::StructuredColumns(grid,config) ),
   functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
 }
 
-StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& partitioner, const util::Config& config ) :
+StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& partitioner, const eckit::Configuration& config ) :
   FunctionSpace( new detail::StructuredColumns(grid,partitioner,config) ),
   functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
 }
 
-
-Field StructuredColumns::createField(const std::string& name, array::DataType datatype, const eckit::Parametrisation& options ) const
+Field StructuredColumns::createField( const eckit::Configuration& options ) const
 {
-  return functionspace_->createField(name,datatype,options);
-}
-
-Field StructuredColumns::createField(
-    const std::string& name, array::DataType datatype,
-    size_t levels, const eckit::Parametrisation& options) const
-{
-  return functionspace_->createField(name,datatype,levels,options);
+  return functionspace_->createField( options );
 }
 
 void StructuredColumns::gather( const FieldSet& local, FieldSet& global ) const {
@@ -952,29 +972,13 @@ void atlas__functionspace__StructuredColumns__delete (detail::StructuredColumns*
   );
 }
 
-field::FieldImpl* atlas__fs__StructuredColumns__create_field_name_kind (const detail::StructuredColumns* This, const char* name, int kind, const eckit::Parametrisation* options)
+field::FieldImpl* atlas__fs__StructuredColumns__create_field (const detail::StructuredColumns* This, const eckit::Configuration* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     field::FieldImpl* field;
     {
-      Field f = This->createField(std::string(name),array::DataType(kind),*options);
-      field = f.get();
-      field->attach();
-    }
-    field->detach();
-    return field;
-  );
-  return 0;
-}
-
-field::FieldImpl* atlas__fs__StructuredColumns__create_field_name_kind_lev (const detail::StructuredColumns* This, const char* name, int kind, int levels, const eckit::Parametrisation* options)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    field::FieldImpl* field;
-    {
-      Field f = This->createField(std::string(name),array::DataType(kind),levels,*options);
+      Field f = This->createField(*options);
       field = f.get();
       field->attach();
     }

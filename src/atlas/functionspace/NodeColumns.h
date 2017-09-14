@@ -49,8 +49,8 @@ class NodeColumns : public FunctionSpaceImpl
 {
 public:
 
-    NodeColumns( Mesh& mesh, const mesh::Halo &, const eckit::Configuration & );
     NodeColumns( Mesh& mesh, const mesh::Halo & );
+    NodeColumns( Mesh& mesh, const eckit::Configuration & );
     NodeColumns( Mesh& mesh );
 
     virtual ~NodeColumns();
@@ -61,6 +61,8 @@ public:
     size_t nb_nodes_global() const; // All MPI ranks will have same output
 
     const Mesh& mesh() const { return mesh_; }
+    
+    size_t levels() const { return nb_levels_; }
 
     mesh::Nodes& nodes() const { return nodes_; }
 
@@ -70,63 +72,6 @@ public:
     template< typename DATATYPE > Field createField( const eckit::Configuration& = util::NoConfig()) const;
 
     Field createField(const eckit::Configuration&) const;
-
-#define DEPRECATE_CREATEFIELD_ARGS
-    
-    /// @brief Create a named scalar field
-    /// @deprecated
-#ifndef DEPRECATE_CREATEFIELD_ARGS
-    template< typename DATATYPE > Field createField(
-              const std::string& name,
-              const eckit::Configuration& = util::NoConfig()) const;
-
-    template< typename DATATYPE > Field createField(
-              const std::string& name,
-              size_t levels,
-              const eckit::Configuration& = util::NoConfig()) const;
-
-    /// @brief Create a named scalar field
-    Field createField(
-        const std::string& name,
-        array::DataType,
-        const eckit::Configuration& = util::NoConfig() ) const;
-
-    Field createField(
-        const std::string& name,
-        array::DataType, size_t levels,
-        const eckit::Configuration& = util::NoConfig()) const;
-
-    /// @brief Create a named field with specified dimensions for the variables
-    template< typename DATATYPE >  Field createField(
-        const std::string& name,
-        const std::vector<size_t>& variables,
-        const eckit::Configuration& = util::NoConfig() ) const;
-
-    template< typename DATATYPE >  Field createField(
-        const std::string& name,
-        size_t levels,
-        const std::vector<size_t>& variables,
-        const eckit::Configuration& = util::NoConfig() ) const;
-
-    /// @brief Create a named field with specified dimensions for the variables
-    Field createField(
-        const std::string& name,
-        array::DataType,
-        const std::vector<size_t>& variables,
-        const eckit::Configuration& = util::NoConfig()) const;
-
-    Field createField(
-        const std::string& name,
-        array::DataType, size_t levels,
-        const std::vector<size_t>& variables,
-        const eckit::Configuration& = util::NoConfig())  const;
-
-    /// @brief Create a named field based on other field (datatype and dimensioning)
-    Field createField(
-        const std::string& name,
-        const Field&,
-        const eckit::Configuration& = util::NoConfig()) const;
-#endif
 
 // -- Parallelisation aware methods
 
@@ -293,7 +238,9 @@ private: // methods
     array::DataType config_datatype(const eckit::Configuration&) const;
     std::string config_name(const eckit::Configuration&) const;
     size_t config_levels(const eckit::Configuration&) const;
-
+    array::ArrayShape config_shape(const eckit::Configuration&) const;
+    void set_field_metadata(const eckit::Configuration&, Field& ) const;
+    
     size_t footprint() const;
 
 private: // data
@@ -374,46 +321,6 @@ Field NodeColumns::createField( const eckit::Configuration& options ) const
     new_options.set("datatype",array::make_datatype<DATATYPE>().kind());
     return createField(new_options);
 }
-
-#ifndef DEPRECATE_CREATEFIELD_ARGS
-
-template< typename DATATYPE >
-Field NodeColumns::createField(
-    const std::string& name,
-    const eckit::Configuration& options) const
-{
-    return createField(name,array::DataType::create<DATATYPE>(),options);
-}
-
-template< typename DATATYPE >
-Field NodeColumns::createField(
-    const std::string& name,
-    size_t levels,
-    const eckit::Configuration& options) const
-{
-    return createField(name,array::DataType::create<DATATYPE>(),levels,options);
-}
-
-template< typename DATATYPE >
-Field NodeColumns::createField(
-    const std::string& name,
-    const std::vector<size_t>& variables,
-    const eckit::Configuration& options) const
-{
-    return createField(name,array::DataType::create<DATATYPE>(),variables,options);
-}
-
-template< typename DATATYPE >
-Field NodeColumns::createField(
-    const std::string& name,
-    size_t levels,
-    const std::vector<size_t>& variables,
-    const eckit::Configuration& options) const
-{
-    return createField(name,array::DataType::create<DATATYPE>(),levels,variables,options);
-}
-
-#endif
 
 template< typename Value >
 void NodeColumns::sum( const Field& field, Value& sum, size_t& N ) const {
@@ -528,9 +435,10 @@ public:
 
     NodeColumns();
     NodeColumns( const FunctionSpace& );
-    NodeColumns( Mesh& mesh, const mesh::Halo &, const eckit::Configuration & );
+
     NodeColumns( Mesh& mesh, const mesh::Halo & );
     NodeColumns( Mesh& mesh );
+    NodeColumns( Mesh& mesh, const eckit::Configuration & );
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
@@ -540,6 +448,8 @@ public:
 
     const Mesh& mesh() const;
 
+    size_t levels() const;
+
     mesh::Nodes& nodes() const;
 
 // -- Field creation methods
@@ -548,62 +458,6 @@ public:
     template< typename DATATYPE > Field createField( const eckit::Configuration& = util::NoConfig()) const;
 
     Field createField(const eckit::Configuration&) const;
-    
-#ifndef DEPRECATE_CREATEFIELD_ARGS
-
-    /// @brief Create a named scalar field
-    template< typename DATATYPE > Field createField(
-              const std::string& name,
-              const eckit::Configuration& = util::NoConfig()) const;
-
-    template< typename DATATYPE > Field createField(
-              const std::string& name,
-              size_t levels,
-              const eckit::Configuration& = util::NoConfig()) const;
-
-    /// @brief Create a named scalar field
-    Field createField(
-        const std::string& name,
-        array::DataType,
-        const eckit::Configuration& = util::NoConfig() ) const;
-
-    Field createField(
-        const std::string& name,
-        array::DataType, size_t levels,
-        const eckit::Configuration& = util::NoConfig()) const;
-
-    /// @brief Create a named field with specified dimensions for the variables
-    template< typename DATATYPE >  Field createField(
-        const std::string& name,
-        const std::vector<size_t>& variables,
-        const eckit::Configuration& = util::NoConfig() ) const;
-
-    template< typename DATATYPE >  Field createField(
-        const std::string& name,
-        size_t levels,
-        const std::vector<size_t>& variables,
-        const eckit::Configuration& = util::NoConfig() ) const;
-
-    /// @brief Create a named field with specified dimensions for the variables
-    Field createField(
-        const std::string& name,
-        array::DataType,
-        const std::vector<size_t>& variables,
-        const eckit::Configuration& = util::NoConfig()) const;
-
-    Field createField(
-        const std::string& name,
-        array::DataType, size_t levels,
-        const std::vector<size_t>& variables,
-        const eckit::Configuration& = util::NoConfig())  const;
-
-    /// @brief Create a named field based on other field (datatype and dimensioning)
-    Field createField(
-        const std::string& name,
-        const Field&,
-        const eckit::Configuration& = util::NoConfig()) const;
-
-#endif
 
 // -- Parallelisation aware methods
 
@@ -767,50 +621,13 @@ private:
 // -------------------------------------------------------------------
 
 template< typename DATATYPE >
-Field NodeColumns::createField( const eckit::Configuration& options ) const
-{
+Field NodeColumns::createField( const eckit::Configuration& options ) const {
     return functionspace_->createField<DATATYPE>(options);
 }
 
-#ifndef DEPRECATE_CREATEFIELD_ARGS
-
-template< typename DATATYPE >
-Field NodeColumns::createField(
-    const std::string& name,
-    const eckit::Configuration& options) const
-{
-    return functionspace_->createField(name,array::DataType::create<DATATYPE>(),options);
+inline size_t NodeColumns::levels() const {
+    return functionspace_->levels();
 }
-
-template< typename DATATYPE >
-Field NodeColumns::createField(
-    const std::string& name,
-    size_t levels,
-    const eckit::Configuration& options) const
-{
-    return functionspace_->createField(name,array::DataType::create<DATATYPE>(),levels,options);
-}
-
-template< typename DATATYPE >
-Field NodeColumns::createField(
-    const std::string& name,
-    const std::vector<size_t>& variables,
-    const eckit::Configuration& options) const
-{
-    return functionspace_->createField(name,array::DataType::create<DATATYPE>(),variables,options);
-}
-
-template< typename DATATYPE >
-Field NodeColumns::createField(
-    const std::string& name,
-    size_t levels,
-    const std::vector<size_t>& variables,
-    const eckit::Configuration& options) const
-{
-    return functionspace_->createField(name,array::DataType::create<DATATYPE>(),levels,variables,options);
-}
-
-#endif
 
 template< typename Value >
 void NodeColumns::sum( const Field& field, Value& sum, size_t& N ) const {

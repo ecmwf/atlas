@@ -300,6 +300,7 @@ TESTSUITE_INIT
 
   config = atlas_Config()
   call config%set("radius",RA)
+  call config%set("levels",nlev)
 
   ! Setup
   grid = atlas_StructuredGrid("N24")
@@ -310,8 +311,8 @@ TESTSUITE_INIT
   nabla = atlas_Nabla(fvm)
 
   ! Create a variable field and a gradient field
-  varfield  = node_columns%create_field("var",atlas_real(c_double),nlev)
-  gradfield = node_columns%create_field("grad",atlas_real(c_double),nlev,[2])
+  varfield  = node_columns%create_field(name="var",kind=atlas_real(c_double),levels=nlev)
+  gradfield = node_columns%create_field(name="grad",kind=atlas_real(c_double),levels=nlev,variables=2)
 
   ! Access to data
   call varfield%data(var)

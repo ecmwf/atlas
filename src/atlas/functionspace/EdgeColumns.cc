@@ -40,10 +40,10 @@ namespace atlas {
 namespace functionspace {
 namespace detail {
 
-namespace {
-
-void set_field_metadata(const eckit::Parametrisation& config, Field& field)
+void EdgeColumns::set_field_metadata(const eckit::Configuration& config, Field& field) const
 {
+  field.set_functionspace(this);
+
   bool global(false);
   if( config.get("global",global) )
   {
@@ -55,11 +55,17 @@ void set_field_metadata(const eckit::Parametrisation& config, Field& field)
     }
   }
   field.metadata().set("global",global);
+
+  size_t levels(nb_levels_);
+  config.get("levels",levels);
+  field.set_levels(levels);
+
+  size_t variables(0);
+  config.get("variables",variables);
+  field.set_variables(variables);
 }
 
-}
-
-size_t EdgeColumns::config_size(const eckit::Parametrisation& config) const
+size_t EdgeColumns::config_size(const eckit::Configuration& config) const
 {
   size_t size = nb_edges();
   bool global(false);
@@ -75,17 +81,55 @@ size_t EdgeColumns::config_size(const eckit::Parametrisation& config) const
   return size;
 }
 
-EdgeColumns::EdgeColumns( const Mesh& mesh )
-  : mesh_(mesh),
-    edges_(mesh_.edges()),
-    nb_edges_(0),
-    nb_edges_global_(0)
+array::DataType EdgeColumns::config_datatype(const eckit::Configuration& config) const
 {
-  constructor();
+  array::DataType::kind_t kind;
+  if( ! config.get("datatype",kind) ) throw eckit::AssertionFailed("datatype missing",Here());
+  return array::DataType(kind);
 }
 
-EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params ) :
+std::string EdgeColumns::config_name(const eckit::Configuration& config) const
+{
+  std::string name;
+  config.get("name",name);
+  return name;
+}
+
+size_t EdgeColumns::config_levels(const eckit::Configuration& config) const
+{
+  size_t levels(nb_levels_);
+  config.get("levels",levels);
+  return levels;
+}
+
+array::ArrayShape EdgeColumns::config_shape(const eckit::Configuration& config) const {
+  array::ArrayShape shape;
+
+  shape.push_back(config_size(config));
+
+  size_t levels(nb_levels_);
+  config.get("levels",levels);
+  if( levels > 0 ) shape.push_back(levels);
+
+  size_t variables(0);
+  config.get("variables",variables);
+  if( variables > 0 ) shape.push_back(variables);
+
+  return shape;
+}
+
+EdgeColumns::EdgeColumns( const Mesh& mesh ) :
     mesh_(mesh),
+    nb_levels_(0),
+    edges_(mesh_.edges()),
+    nb_edges_(0),
+    nb_edges_global_(0) {
+    constructor();
+}
+
+EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo, const eckit::Configuration &params ) :
+    mesh_(mesh),
+    nb_levels_(0),
     edges_(mesh_.edges()),
     nb_edges_(0),
     nb_edges_global_(0)
@@ -98,6 +142,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo, const eckit:
 
 EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo) :
     mesh_(mesh),
+    nb_levels_(0),
     edges_(mesh_.edges()),
     nb_edges_(0),
     nb_edges_global_(0)
@@ -159,56 +204,10 @@ size_t EdgeColumns::nb_edges_global() const
   return nb_edges_global_;
 }
 
-Field EdgeColumns::createField(const std::string& name,array::DataType datatype,const eckit::Parametrisation& options) const
+Field EdgeColumns::createField(const eckit::Configuration& options) const
 {
   size_t nb_edges = config_size(options);
-  Field field = Field(name,datatype,array::make_shape(nb_edges));
-  field.set_functionspace(this);
-  set_field_metadata(options,field);
-  return field;
-}
-
-Field EdgeColumns::createField(const std::string& name,array::DataType datatype, size_t levels,const eckit::Parametrisation& options) const
-{
-  size_t nb_edges = config_size(options);
-  Field field = Field(name,datatype,array::make_shape(nb_edges,levels));
-  field.set_levels(levels);
-  field.set_functionspace(this);
-  set_field_metadata(options,field);
-  return field;
-}
-
-Field EdgeColumns::createField(const std::string& name,array::DataType datatype, const std::vector<size_t>& variables,const eckit::Parametrisation& options) const
-{
-  size_t nb_edges = config_size(options);
-  std::vector<size_t> shape(1,nb_edges);
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field field = Field(name,datatype,shape);
-  field.set_functionspace(this);
-  set_field_metadata(options,field);
-  return field;
-}
-
-Field EdgeColumns::createField(const std::string& name, array::DataType datatype, size_t levels, const std::vector<size_t>& variables,const eckit::Parametrisation& options) const
-{
-  size_t nb_edges = config_size(options);
-  std::vector<size_t> shape(1,nb_edges); shape.push_back(levels);
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field field = Field(name,datatype,shape);
-  field.set_levels(levels);
-  field.set_functionspace(this);
-  set_field_metadata(options,field);
-  return field;
-}
-
-Field EdgeColumns::createField(const std::string& name, const Field& other,const eckit::Parametrisation& options) const {
-  size_t nb_edges = config_size(options);
-  array::ArrayShape shape = other.shape();
-  shape[0] = nb_edges;
-  Field field = Field(name,other.datatype(),shape);
-  if( other.levels() )
-    field.set_levels(other.levels());
-  field.set_functionspace(this);
+  Field field( config_name(options), config_datatype(options), config_shape(options) );
   set_field_metadata(options,field);
   return field;
 }
@@ -452,7 +451,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 
 
-EdgeColumns* atlas__functionspace__Edges__new ( Mesh::Implementation* mesh, int halo )
+EdgeColumns* atlas__fs__EdgeColumns__new ( Mesh::Implementation* mesh, int halo )
 {
   EdgeColumns* edges(0);
   ATLAS_ERROR_HANDLING(
@@ -465,7 +464,7 @@ EdgeColumns* atlas__functionspace__Edges__new ( Mesh::Implementation* mesh, int 
 
 //------------------------------------------------------------------------------
 
-EdgeColumns* atlas__functionspace__Edges__new_mesh ( Mesh::Implementation* mesh )
+EdgeColumns* atlas__fs__EdgeColumns__new_mesh ( Mesh::Implementation* mesh )
 {
   EdgeColumns* edges(0);
   ATLAS_ERROR_HANDLING(
@@ -478,7 +477,7 @@ EdgeColumns* atlas__functionspace__Edges__new_mesh ( Mesh::Implementation* mesh 
 
 //------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__delete (EdgeColumns* This)
+void atlas__fs__EdgeColumns__delete (EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -488,7 +487,7 @@ void atlas__functionspace__Edges__delete (EdgeColumns* This)
 
 //------------------------------------------------------------------------------
 
-int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This)
+int atlas__fs__EdgeColumns__nb_edges(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -499,7 +498,7 @@ int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This)
 
 //------------------------------------------------------------------------------
 
-Mesh::Implementation* atlas__functionspace__Edges__mesh(EdgeColumns* This)
+Mesh::Implementation* atlas__fs__EdgeColumns__mesh(EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -510,7 +509,7 @@ Mesh::Implementation* atlas__functionspace__Edges__mesh(EdgeColumns* This)
 
 //------------------------------------------------------------------------------
 
-mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This)
+mesh::Edges* atlas__fs__EdgeColumns__edges(EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
       ASSERT(This);
@@ -524,18 +523,16 @@ mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This)
 using field::FieldImpl;
 using field::FieldSetImpl;
 
-field::FieldImpl* atlas__functionspace__Edges__create_field (
+field::FieldImpl* atlas__fs__EdgeColumns__create_field (
     const EdgeColumns* This,
-    const char* name,
-    int kind,
-    const eckit::Parametrisation* options )
+    const eckit::Configuration* options )
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     ASSERT(options);
     FieldImpl* field;
     {
-      Field f = This->createField(std::string(name),array::DataType(kind));
+      Field f = This->createField( *options );
       field = f.get();
       field->attach();
     }
@@ -547,117 +544,23 @@ field::FieldImpl* atlas__functionspace__Edges__create_field (
 
 //------------------------------------------------------------------------------
 
-field::FieldImpl* atlas__functionspace__Edges__create_field_vars (
-    const EdgeColumns* This,
-    const char* name,
-    int variables[],
-    int variables_size,
-    int fortran_ordering,
-    int kind,
-    const eckit::Parametrisation* options )
+field::FieldImpl* atlas__fs__EdgeColumns__create_field_template (const EdgeColumns* This, const field::FieldImpl* field_template, const eckit::Configuration* options )
 {
-
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    ASSERT(variables_size);
-    ASSERT(options);
-    FieldImpl* field;
-    {
-      Field f = This->createField(
-        std::string(name),
-        array::DataType(kind),
-        variables_to_vector(variables,variables_size,fortran_ordering) );
-      field = f.get();
-      field->attach();
-    }
-    field->detach();
-    return field;
-  );
-  return 0;
+  ASSERT(This);
+  ASSERT(options);
+  FieldImpl* field;
+  {
+    Field f = This->createField(field::datatype(field_template->datatype())|field::levels(field_template->levels())|field::variables(field_template->variables())|*options);
+    field = f.get();
+    field->attach();
+  }
+  field->detach();
+  return field;
 }
 
 // -----------------------------------------------------------------------------------
 
-field::FieldImpl* atlas__functionspace__Edges__create_field_lev (
-    const EdgeColumns* This,
-    const char* name,
-    int levels,
-    int kind,
-    const eckit::Parametrisation* options )
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    ASSERT(options);
-    FieldImpl* field;
-    {
-      Field f = This->createField(std::string(name),array::DataType(kind),size_t(levels));
-      field = f.get();
-      field->attach();
-    }
-    field->detach();
-    return field;
-  );
-  return 0;
-}
-
-// -----------------------------------------------------------------------------------
-
-field::FieldImpl* atlas__functionspace__Edges__create_field_lev_vars (
-    const EdgeColumns* This,
-    const char* name,
-    int levels,
-    int variables[],
-    int variables_size,
-    int fortran_ordering,
-    int kind,
-    const eckit::Parametrisation* options )
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    ASSERT(variables_size);
-    ASSERT(options);
-    FieldImpl* field;
-    {
-      Field f = This->createField(
-        std::string(name),
-        array::DataType(kind),
-        size_t(levels),
-        variables_to_vector(variables,variables_size,fortran_ordering) );
-      field = f.get();
-      field->attach();
-    }
-    field->detach();
-    return field;
-  );
-  return 0;
-}
-
-// -----------------------------------------------------------------------------------
-
-field::FieldImpl* atlas__functionspace__Edges__create_field_template (
-    const EdgeColumns* This,
-    const char* name,
-    const field::FieldImpl* field_template,
-    const eckit::Parametrisation* options )
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    ASSERT(options);
-    FieldImpl* field;
-    {
-      Field f = This->createField(std::string(name),field_template);
-      field = f.get();
-      field->attach();
-    }
-    field->detach();
-    return field;
-  );
-  return 0;
-}
-
-// -----------------------------------------------------------------------------------
-
-void atlas__functionspace__Edges__halo_exchange_fieldset(
+void atlas__fs__EdgeColumns__halo_exchange_fieldset(
     const EdgeColumns* This,
     field::FieldSetImpl* fieldset)
 {
@@ -671,7 +574,7 @@ void atlas__functionspace__Edges__halo_exchange_fieldset(
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, field::FieldImpl* field)
+void atlas__fs__EdgeColumns__halo_exchange_field(const EdgeColumns* This, field::FieldImpl* field)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -683,7 +586,7 @@ void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, f
 
 // -----------------------------------------------------------------------------------
 
-const parallel::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const EdgeColumns* This)
+const parallel::HaloExchange* atlas__fs__EdgeColumns__get_halo_exchange(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -694,7 +597,7 @@ const parallel::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(con
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__gather_fieldset(
+void atlas__fs__EdgeColumns__gather_fieldset(
     const EdgeColumns* This,
     const field::FieldSetImpl* local,
     field::FieldSetImpl* global)
@@ -710,7 +613,7 @@ void atlas__functionspace__Edges__gather_fieldset(
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__gather_field(
+void atlas__fs__EdgeColumns__gather_field(
     const EdgeColumns* This,
     const field::FieldImpl* local,
     field::FieldImpl* global)
@@ -726,7 +629,7 @@ void atlas__functionspace__Edges__gather_field(
 
 // -----------------------------------------------------------------------------------
 
-const parallel::GatherScatter* atlas__functionspace__Edges__get_gather(const EdgeColumns* This)
+const parallel::GatherScatter* atlas__fs__EdgeColumns__get_gather(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -736,7 +639,7 @@ const parallel::GatherScatter* atlas__functionspace__Edges__get_gather(const Edg
 
 // -----------------------------------------------------------------------------------
 
-const parallel::GatherScatter* atlas__functionspace__Edges__get_scatter(const EdgeColumns* This)
+const parallel::GatherScatter* atlas__fs__EdgeColumns__get_scatter(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -746,7 +649,7 @@ const parallel::GatherScatter* atlas__functionspace__Edges__get_scatter(const Ed
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, const field::FieldSetImpl* global, field::FieldSetImpl* local)
+void atlas__fs__EdgeColumns__scatter_fieldset(const EdgeColumns* This, const field::FieldSetImpl* global, field::FieldSetImpl* local)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -759,7 +662,7 @@ void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, cons
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const field::FieldImpl* global, field::FieldImpl* local)
+void atlas__fs__EdgeColumns__scatter_field(const EdgeColumns* This, const field::FieldImpl* global, field::FieldImpl* local)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
@@ -772,7 +675,7 @@ void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const f
 
 // -----------------------------------------------------------------------------------
 
-const parallel::Checksum* atlas__functionspace__Edges__get_checksum(const EdgeColumns* This)
+const parallel::Checksum* atlas__fs__EdgeColumns__get_checksum(const EdgeColumns* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -784,7 +687,7 @@ const parallel::Checksum* atlas__functionspace__Edges__get_checksum(const EdgeCo
 // -----------------------------------------------------------------------------------
 
 
-void atlas__functionspace__Edges__checksum_fieldset(
+void atlas__fs__EdgeColumns__checksum_fieldset(
     const EdgeColumns* This,
     const field::FieldSetImpl* fieldset,
     char* &checksum,
@@ -803,7 +706,7 @@ void atlas__functionspace__Edges__checksum_fieldset(
 
 // -----------------------------------------------------------------------------------
 
-void atlas__functionspace__Edges__checksum_field(
+void atlas__fs__EdgeColumns__checksum_field(
     const EdgeColumns* This,
     const field::FieldImpl* field,
     char* &checksum,
@@ -841,7 +744,7 @@ EdgeColumns::EdgeColumns( const FunctionSpace& functionspace ) :
 EdgeColumns::EdgeColumns( 
   const Mesh& mesh,
   const mesh::Halo& halo,
-  const eckit::Parametrisation& config ) :
+  const eckit::Configuration& config ) :
   FunctionSpace( new detail::EdgeColumns(mesh,halo,config) ),
   functionspace_( dynamic_cast< const detail::EdgeColumns* >( get() ) ) {
 }
@@ -876,42 +779,9 @@ const mesh::HybridElements& EdgeColumns::edges() const {
 }
 
 Field EdgeColumns::createField(
-        const std::string& name,
-        array::DataType datatype,
-        const eckit::Parametrisation& config ) const {
-  return functionspace_->createField(name,datatype,config);
+        const eckit::Configuration& config ) const {
+  return functionspace_->createField(config);
 }
-
-Field EdgeColumns::createField(
-        const std::string& name,
-        array::DataType datatype,
-        size_t levels,
-        const eckit::Parametrisation& config ) const {
-  return functionspace_->createField(name,datatype,levels,config);
-}
-
-Field EdgeColumns::createField(const std::string& name,
-                          array::DataType datatype,
-                          const std::vector<size_t>& variables,
-                          const eckit::Parametrisation& config ) const {
-  return functionspace_->createField(name,datatype,variables,config);
-}
-
-Field EdgeColumns::createField(const std::string& name,
-                          array::DataType datatype,
-                          size_t levels,
-                          const std::vector<size_t>& variables,
-                          const eckit::Parametrisation& config ) const {
-  return functionspace_->createField(name,datatype,levels,variables,config);
-}
-
-Field EdgeColumns::createField(const std::string& name,
-                          const Field& field,
-                          const eckit::Parametrisation& config ) const {
-  return functionspace_->createField(name,field,config);
-}
-
-
 
 void EdgeColumns::haloExchange( FieldSet& fieldset ) const {
   functionspace_->haloExchange(fieldset);

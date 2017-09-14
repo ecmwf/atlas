@@ -265,8 +265,8 @@ CASE( "test_spectral_fields" )
   functionspace::NodeColumns nodal (m);
   functionspace::Spectral spectral (trans);
 
-  Field spf = spectral.createField<double>("spf");
-  Field gpf = nodal.createField<double>(field::name("gpf"));
+  Field spf = spectral.createField<double>(field::name("spf"));
+  Field gpf = nodal.   createField<double>(field::name("gpf"));
 
 
   EXPECT_NO_THROW( trans.dirtrans(nodal,gpf,spectral,spf) );
@@ -294,10 +294,10 @@ CASE( "test_nomesh" )
   functionspace::Spectral          spectral   (trans);
   functionspace::StructuredColumns gridpoints (g);
 
-  Field spfg = spectral.createField<double>("spf",field::global());
-  Field spf  = spectral.createField<double>("spf");
-  Field gpf  = gridpoints.createField<double>("gpf");
-  Field gpfg = gridpoints.createField<double>("gpf", field::global());
+  Field spfg = spectral.  createField<double>(field::name("spf") | field::global());
+  Field spf  = spectral.  createField<double>(field::name("spf"));
+  Field gpf  = gridpoints.createField<double>(field::name("gpf"));
+  Field gpfg = gridpoints.createField<double>(field::name("gpf") | field::global());
 
   array::ArrayView<double,1> spg = array::make_view<double,1>(spfg);
   if( parallel::mpi::comm().rank() == 0 ) {

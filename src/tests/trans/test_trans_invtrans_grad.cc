@@ -159,7 +159,7 @@ CASE( "test_invtrans_grad" )
   functionspace::NodeColumns gp(mesh);
   functionspace::Spectral sp(trans);
 
-  Field scalar_sp = sp.createField<double>("scalar_sp");
+  Field scalar_sp = sp.createField<double>(field::name("scalar_sp"));
   Field scalar    = gp.createField<double>(field::name("scalar"));
   Field grad      = gp.createField<double>(field::name("grad") | field::variables(2) );
 

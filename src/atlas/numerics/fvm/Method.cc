@@ -35,48 +35,56 @@ namespace numerics {
 namespace fvm {
 
 namespace {
-  mesh::Halo Method_halo(const eckit::Parametrisation &params)
+
+  mesh::Halo get_halo(const eckit::Parametrisation &params)
   {
     size_t halo_size(1);
     params.get("halo",halo_size);
     return mesh::Halo(halo_size);
   }
+  
+  size_t get_levels(const eckit::Parametrisation &params)
+  {
+    size_t levels(0);
+    params.get("levels",levels);
+    return levels;
+  }
+
+  double get_radius(const eckit::Parametrisation &params)
+  {
+    double radius = util::Earth::radiusInMeters();
+    params.get("radius",radius);
+    return radius;
+  }
+  
 }
 
 Method::Method( Mesh &mesh ) :
-  mesh_(mesh),
-  halo_(mesh),
-  nodes_(mesh.nodes()),
-  edges_(mesh.edges()),
-  radius_(util::Earth::radiusInMeters())
-{
+  Method::Method(mesh,util::NoConfig()) {
   setup();
 }
 
 Method::Method( Mesh &mesh, const mesh::Halo &halo ) :
-  mesh_(mesh),
-  halo_(halo),
-  nodes_(mesh.nodes()),
-  edges_(mesh.edges()),
-  radius_(util::Earth::radiusInMeters())
-{
+  Method::Method( mesh, util::Config("halo",halo.size()) ) {
   setup();
 }
 
-Method::Method( Mesh &mesh, const eckit::Parametrisation &params ) :
+Method::Method( Mesh &mesh, const eckit::Configuration &params ) :
   mesh_(mesh),
-  halo_(Method_halo(params)),
+  levels_(get_levels(params)),
+  halo_(get_halo(params)),
   nodes_(mesh.nodes()),
   edges_(mesh.edges()),
-  radius_(util::Earth::radiusInMeters())
-{
-  params.get("radius",radius_);
+  radius_(get_radius(params)) {
   setup();
 }
 
 void Method::setup()
 {
-  node_columns_ = functionspace::NodeColumns(mesh(),halo_);
+  util::Config node_columns_config;
+  node_columns_config.set("halo",halo_.size());
+  if( levels_ ) node_columns_config.set("levels",levels_);
+  node_columns_ = functionspace::NodeColumns(mesh(), node_columns_config );
   if( edges_.size() == 0 )
   {
     build_edges(mesh());
@@ -149,7 +157,7 @@ void Method::setup()
 
 // ------------------------------------------------------------------------------------------
 extern "C" {
-Method* atlas__numerics__fvm__Method__new (Mesh::Implementation* mesh, const eckit::Parametrisation* params)
+Method* atlas__numerics__fvm__Method__new (Mesh::Implementation* mesh, const eckit::Configuration* params)
 {
   Method* method(0);
   ATLAS_ERROR_HANDLING(

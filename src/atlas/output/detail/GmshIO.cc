@@ -121,11 +121,11 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   Field data_glb;
   if( gather )
   {
-    gidx_glb = function_space.createField( field::name("gidx_glb") | field::levels(1) | field::global() );
+    gidx_glb = function_space.createField<gidx_t>( field::name("gidx_glb") | field::levels(false) | field::global() );
     function_space.gather(function_space.nodes().global_index(),gidx_glb);
     gidx = array::make_view<gidx_t,1>( gidx_glb );
 
-    data_glb = function_space.createField( field::name("glb_field") | field::levels(field.levels()) | field::variables( field.variables() ) | field::global() );
+    data_glb = function_space.createField<DATATYPE>( field::name("glb_field") | field::levels(field.levels()) | field::variables( field.variables() ) | field::global() );
     function_space.gather(field,data_glb);
     data = array::LocalView<DATATYPE,2>( data_glb.data<DATATYPE>(),
                                          array::make_shape(data_glb.shape(0),data_glb.stride(0)) );
@@ -312,8 +312,6 @@ void write_field_nodes(
     size_t nlev  = std::max<size_t>(1,field.levels());
     size_t nvars = field.stride(0) / nlev;
 
-    //field::Field::Ptr gidxField(function_space.createField<gidx_t>("gidx"));
-    //array::ArrayView<gidx_t,1>   gidx(gidxField);
     array::LocalView<DATATYPE,2> data(
         field.data<DATATYPE>(),
         array::make_shape(field.shape(0),field.stride(0)) );
@@ -321,16 +319,11 @@ void write_field_nodes(
     Field gidx_glb;
     Field field_glb;
 
-    //gidx_glb.reset(function_space.createGlobalField(
-    //    "gidx_glb", function_space.nodes().global_index()));
-
-    //function_space.gather(
-    //    field.global_index(), *gidx_glb);
-    //array::ArrayView<gidx_t,1> gidx = array::ArrayView<gidx_t,1>(*gidx_glb);
-
     if( atlas::parallel::mpi::comm().size() > 1 )
     {
-      field_glb = function_space.createField<double>("glb_field",field::global());
+      field_glb = function_space.createField<DATATYPE>(
+          field::name("glb_field") | 
+          field::global() );
       function_space.gather(field, field_glb);
       data = array::LocalView<DATATYPE,2>(
           field_glb.data<DATATYPE>(),

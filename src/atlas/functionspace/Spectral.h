@@ -45,13 +45,8 @@ public:
   virtual std::string name() const { return "Spectral"; }
 
   /// @brief Create a spectral field
-  template <typename DATATYPE> Field createField(
-    const std::string& name,
-    const eckit::Parametrisation& = util::NoConfig() ) const;
-  template <typename DATATYPE> Field createField(
-    const std::string& name,
-    size_t levels,
-    const eckit::Parametrisation& = util::NoConfig() ) const;
+  Field createField( const eckit::Configuration& = util::NoConfig() ) const;
+  template <typename DATATYPE> Field createField( const eckit::Configuration& = util::NoConfig() ) const;
 
   void gather( const FieldSet&, FieldSet& ) const;
   void gather( const Field&,    Field& ) const;
@@ -73,10 +68,16 @@ public: // methods
 
 private: // methods
 
-  size_t config_size(const eckit::Parametrisation& config) const;
+  array::DataType config_datatype( const eckit::Configuration& ) const;
+  std::string config_name( const eckit::Configuration& ) const;
+  size_t config_size( const eckit::Configuration& ) const;
+  size_t config_levels( const eckit::Configuration& ) const;
+  void set_field_metadata(const eckit::Configuration&, Field& ) const;
   size_t footprint() const;
 
 private: // data
+
+  size_t nb_levels_;
 
   size_t truncation_;
 
@@ -100,13 +101,8 @@ public:
   bool valid() const { return functionspace_; }
 
   /// @brief Create a spectral field
-  template <typename DATATYPE> Field createField(
-    const std::string& name,
-    const eckit::Parametrisation& = util::NoConfig() ) const;
-  template <typename DATATYPE> Field createField(
-    const std::string& name,
-    size_t levels,
-    const eckit::Parametrisation& = util::NoConfig() ) const;
+  Field createField( const eckit::Configuration& = util::NoConfig() ) const;
+  template <typename DATATYPE> Field createField( const eckit::Configuration& = util::NoConfig() ) const;
 
   void gather( const FieldSet&, FieldSet& ) const;
   void gather( const Field&,    Field& ) const;
@@ -137,8 +133,7 @@ extern "C"
   const detail::Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation);
   const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans);
   void atlas__SpectralFunctionSpace__delete (detail::Spectral* This);
-  field::FieldImpl* atlas__fs__Spectral__create_field_name_kind(const detail::Spectral* This, const char* name, int kind, const eckit::Parametrisation* options);
-  field::FieldImpl* atlas__fs__Spectral__create_field_name_kind_lev(const detail::Spectral* This, const char* name, int kind, int levels, const eckit::Parametrisation* options);
+  field::FieldImpl* atlas__fs__Spectral__create_field(const detail::Spectral* This, const eckit::Configuration* options);
   void atlas__SpectralFunctionSpace__gather(const detail::Spectral* This, const field::FieldImpl* local, field::FieldImpl* global);
   void atlas__SpectralFunctionSpace__gather_fieldset(const detail::Spectral* This, const field::FieldSetImpl* local, field::FieldSetImpl* global);
   void atlas__SpectralFunctionSpace__scatter(const detail::Spectral* This, const field::FieldImpl* global, field::FieldImpl* local);

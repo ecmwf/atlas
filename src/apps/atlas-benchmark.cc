@@ -281,6 +281,8 @@ void AtlasBenchmark::setup()
 
   StructuredGrid grid = Grid(gridname);
   mesh = MeshGenerator( "structured" ).generate(grid);
+  
+  size_t halo = 1;
 
   build_nodes_parallel_fields(mesh.nodes());
   build_periodic_boundaries(mesh);
@@ -292,7 +294,7 @@ void AtlasBenchmark::setup()
   build_median_dual_mesh(mesh);
   build_node_to_edge_connectivity(mesh);
 
-  nodes_fs = functionspace::NodeColumns(mesh,mesh::Halo(mesh));
+  nodes_fs = functionspace::NodeColumns(mesh,field::halo(halo));
 
   scalar_field = nodes_fs.createField<double>( field::name("field") | field::levels(nlev) );
   grad_field   = nodes_fs.createField<double>( field::name("grad")  | field::levels(nlev) | field::variables(3) );

@@ -95,6 +95,15 @@ public:
   }
 };
 
+class nolevels : public util::Config
+{
+public:
+  nolevels()
+  {
+    set("nolevels",true);
+  }
+};
+
 // ----------------------------------------------------------------------------
 
 } // namespace field

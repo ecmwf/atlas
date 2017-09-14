@@ -14,6 +14,7 @@
 
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/field/Options.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
@@ -26,9 +27,11 @@
 namespace atlas {
 namespace functionspace {
 namespace detail {
-namespace {
-void set_field_metadata(const eckit::Parametrisation& config, Field& field)
+
+void Spectral::set_field_metadata(const eckit::Configuration& config, Field& field) const
 {
+  field.set_functionspace(this);
+
   bool global(false);
   if( config.get("global",global) )
   {
@@ -40,10 +43,13 @@ void set_field_metadata(const eckit::Parametrisation& config, Field& field)
     }
   }
   field.metadata().set("global",global);
-}
+  
+  field.set_levels( config_levels(config) );
+  field.set_variables(0);
 }
 
-size_t Spectral::config_size(const eckit::Parametrisation& config) const
+
+size_t Spectral::config_size(const eckit::Configuration& config) const
 {
   size_t size = nb_spectral_coefficients();
   bool global(false);
@@ -63,6 +69,7 @@ size_t Spectral::config_size(const eckit::Parametrisation& config) const
 
 Spectral::Spectral(const size_t truncation) :
     truncation_(truncation),
+    nb_levels_(0),
     trans_(0)
 {
 }
@@ -70,11 +77,12 @@ Spectral::Spectral(const size_t truncation) :
 Spectral::Spectral(trans::Trans& trans) :
 #ifdef ATLAS_HAVE_TRANS
     truncation_(trans.nsmax()),
-    trans_(&trans)
+    trans_(&trans),
 #else
     truncation_(0),
-    trans_(0)
+    trans_(0),
 #endif
+    nb_levels_(0)
 {
 }
 
@@ -102,23 +110,52 @@ size_t Spectral::nb_spectral_coefficients_global() const {
   return (truncation_+1)*(truncation_+2);
 }
 
-template <>
-Field Spectral::createField<double>(const std::string& name, const eckit::Parametrisation& options) const {
+
+array::DataType Spectral::config_datatype(const eckit::Configuration& config) const
+{
+  array::DataType::kind_t kind;
+  if( ! config.get("datatype",kind) ) throw eckit::AssertionFailed("datatype missing",Here());
+  return array::DataType(kind);
+}
+
+std::string Spectral::config_name(const eckit::Configuration& config) const
+{
+  std::string name;
+  config.get("name",name);
+  return name;
+}
+
+size_t Spectral::config_levels(const eckit::Configuration& config) const
+{
+  size_t levels(nb_levels_);
+  config.get("levels",levels);
+  return levels;
+}
+
+Field Spectral::createField(const eckit::Configuration& options) const {
+  array::ArrayShape array_shape;
+
   size_t nb_spec_coeffs = config_size(options);
-  Field field = Field(name, array::make_datatype<double>(),array::make_shape(nb_spec_coeffs) );
-  field.set_functionspace(this);
+  array_shape.push_back(nb_spec_coeffs);
+
+  size_t levels = config_levels(options);
+  if( levels ) array_shape.push_back(levels);
+
+  ATLAS_DEBUG_VAR(array_shape);
+  Field field = Field(config_name(options), config_datatype(options), array_shape );
+
   set_field_metadata(options,field);
   return field;
 }
 
 template <>
-Field Spectral::createField<double>(const std::string& name, size_t levels, const eckit::Parametrisation& options) const {
-  size_t nb_spec_coeffs = config_size(options);
-  Field field = Field(name, array::make_datatype<double>(), array::make_shape(nb_spec_coeffs,levels) );
-  field.set_functionspace(this);
-  field.set_levels(levels);
-  set_field_metadata(options,field);
-  return field;
+Field Spectral::createField<float>(const eckit::Configuration& options) const {
+  return createField( util::Config(options) | field::datatypeT<float>() );
+}
+
+template <>
+Field Spectral::createField<double>(const eckit::Configuration& options) const {
+  return createField( util::Config(options) | field::datatypeT<double>() );
 }
 
 void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
@@ -278,13 +315,13 @@ size_t Spectral::nb_spectral_coefficients_global() const {
 }
 
 template <>
-Field Spectral::createField<double>(const std::string& name, const eckit::Parametrisation& options) const {
-  return functionspace_->createField<double>(name,options);
+Field Spectral::createField<float>(const eckit::Configuration& options) const {
+  return functionspace_->createField<float>(options);
 }
 
 template <>
-Field Spectral::createField<double>(const std::string& name, size_t levels, const eckit::Parametrisation& options) const {
-  return functionspace_->createField<double>(name,levels,options);
+Field Spectral::createField<double>(const eckit::Configuration& options) const {
+  return functionspace_->createField<double>(options);
 }
 
 void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
@@ -353,33 +390,14 @@ void atlas__SpectralFunctionSpace__delete ( detail::Spectral* This )
   );
 }
 
-field::FieldImpl* atlas__fs__Spectral__create_field_name_kind (const detail::Spectral* This, const char* name, int kind, const eckit::Parametrisation* options)
+field::FieldImpl* atlas__fs__Spectral__create_field (const detail::Spectral* This, const eckit::Configuration* options)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    ASSERT( kind == array::DataType::KIND_REAL64 );
     ASSERT(options);
     field::FieldImpl* field;
     {
-      Field f = This->createField<double>(std::string(name),*options);
-      field = f.get();
-      field->attach();
-    }
-    field->detach();
-    return field;
-  );
-  return 0;
-}
-
-field::FieldImpl* atlas__fs__Spectral__create_field_name_kind_lev (const detail::Spectral* This, const char* name, int kind, int levels, const eckit::Parametrisation* options)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    ASSERT( kind == array::DataType::KIND_REAL64 );
-    ASSERT(options);
-    field::FieldImpl* field;
-    {
-      Field f = This->createField<double>(std::string(name),levels,*options);
+      Field f = This->createField( *options );
       field = f.get();
       field->attach();
     }
