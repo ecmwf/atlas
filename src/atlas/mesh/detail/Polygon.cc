@@ -102,12 +102,12 @@ Polygon& Polygon::operator+=(const Polygon& other) {
 
     // polygon can have multiple cycles, but must be connected graphs
     // Note: a 'cycle' is handled by repeating the indices, excluding (repeated) last index
+    ASSERT(other.front() == other.back());
     const difference_type N = difference_type(other.size()) - 1;
 
-    container_t cycle;
-    cycle.reserve(2 * size_t(N));
-    cycle.insert(cycle.end(), other.begin(), other.end() - 1);
-    cycle.insert(cycle.end(), other.begin(), other.end() - 1);
+    container_t cycle(2 * size_t(N));
+    std::copy(other.begin(), other.begin() + N, cycle.begin());
+    std::copy(other.begin(), other.begin() + N, cycle.begin() + N);
 
     for (const_iterator c = cycle.begin(); c != cycle.begin() + N; ++c) {
         iterator here = std::find(begin(), end(), *c);
@@ -193,7 +193,12 @@ bool Polygon::containsPointInSphericalGeometry(const PointLonLat& P) const {
             const bool BPA = (B[LON] <= P[LON] && P[LON] < A[LON]);
 
             if (APB || BPA) {
-                const double side = point_on_which_side(P, A, B);
+
+                // Test if P is left|on|right of an infinite A-B line
+                // @return >0/=0/<0 for P left|on|right of line
+                const double side = (P[LON] - B[LON]) * (A[LAT] - B[LAT])
+                                  - (P[LAT] - B[LAT]) * (A[LON] - B[LON]);
+
                 if (eckit::types::is_approximately_equal(side, 0.)) {
                     return true;
                 } else if (APB && side > 0) {
