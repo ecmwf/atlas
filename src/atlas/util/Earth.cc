@@ -22,6 +22,9 @@ namespace atlas {
 namespace util {
 
 
+//------------------------------------------------------------------------------------------------------
+
+
 static inline double between_m180_and_p180(double a) {
     while (a > 180) {
         a -= 360;
@@ -33,8 +36,47 @@ static inline double between_m180_and_p180(double a) {
 }
 
 
-double Earth::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
+//------------------------------------------------------------------------------------------------------
 
+
+PointXYZ EllipsoidOfRevolution::convertEllipticToCartesian(const atlas::PointLonLat& p, const double& a, const double& b, const double& height) {
+    ASSERT(a > 0.);
+    ASSERT(b > 0.);
+    ASSERT(-90. <= p.lat() && p.lat() <= 90.);
+
+    double lambda_deg = between_m180_and_p180(p.lon());
+
+    // See https://en.wikipedia.org/wiki/Reference_ellipsoid#Coordinates
+    // numerical conditioning for both ϕ (poles) and λ (Greenwich/Date Line)
+    const double
+            phi = p.lat() * Constants::degreesToRadians(),
+            lambda = lambda_deg * Constants::degreesToRadians(),
+
+            sin_phi = std::sin(phi),
+            cos_phi = std::sqrt(1. - sin_phi * sin_phi),
+            sin_lambda = std::abs(lambda_deg) < 180. ? std::sin(lambda) : 0.,
+            cos_lambda = std::abs(lambda_deg) >  90. ? std::cos(lambda) : std::sqrt(1. - sin_lambda * sin_lambda);
+
+    if (a == b) {
+        // no eccentricity
+        return PointXYZ(
+                    (a + height) * cos_phi * cos_lambda,
+                    (a + height) * cos_phi * sin_lambda,
+                    (a + height) * sin_phi );
+    }
+
+    const double N_phi = a * a / std::sqrt(a * a * cos_phi * cos_phi + b * b * sin_phi * sin_phi);
+    return PointXYZ(
+        (N_phi + height) * cos_phi * cos_lambda,
+        (N_phi + height) * cos_phi * sin_lambda,
+        (N_phi * (b * b) / (a * a) + height) * sin_phi );
+}
+
+
+//------------------------------------------------------------------------------------------------------
+
+
+double Sphere::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
     /*
      * Δσ = atan( ((cos(ϕ2) * sin(Δλ))^2 + (cos(ϕ1) * sin(ϕ2) - sin(ϕ1) * cos(ϕ2) * cos(Δλ))^2) /
      *            (sin(ϕ1) * sin(ϕ2) + cos(ϕ1) * cos(ϕ2) * cos(Δλ)) )
@@ -80,7 +122,8 @@ double Earth::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
 }
 
 
-double Earth::centralAngle(const PointXYZ& p1, const PointXYZ& p2) {
+double Sphere::centralAngle(const PointXYZ& p1, const PointXYZ& p2, const double& radius) {
+    ASSERT(radius > 0.);
 
     // Δσ = 2 * asin( chord / 2 )
 
@@ -90,57 +133,77 @@ double Earth::centralAngle(const PointXYZ& p1, const PointXYZ& p2) {
     }
 
     const double
-            chord = std::sqrt(d2) / radiusInMeters(),
+            chord = std::sqrt(d2) / radius,
             angle = std::asin(chord * 0.5) * 2.;
 
     return angle;
 }
 
 
-double Earth::distanceInMeters(const PointLonLat& p1, const PointLonLat& p2) {
-    return radiusInMeters() * centralAngle(p1, p2);
+double Sphere::distanceInMeters(const PointLonLat& p1, const PointLonLat& p2, const double& radius) {
+    return radius * centralAngle(p1, p2);
 }
 
 
-double Earth::distanceInMeters(const PointXYZ& p1, const PointXYZ& p2) {
-    return radiusInMeters() * centralAngle(p1, p2);
+double Sphere::distanceInMeters(const PointXYZ& p1, const PointXYZ& p2, const double& radius) {
+    return radius * centralAngle(p1, p2, radius);
 }
 
 
-void Earth::convertGeodeticToGeocentric(const PointLonLat& p1, PointXYZ& p2, const double& height, const double& radius) {
-    convertGeodeticToGeocentric(p1, p2, height, radius, radius);
+PointXYZ Sphere::convertSphericalToCartesian(const PointLonLat& p, const double& radius, const double& height) {
+    return EllipsoidOfRevolution::convertEllipticToCartesian(p, radius, radius, height);
 }
 
 
-void atlas::util::Earth::convertGeodeticToGeocentric(const atlas::PointLonLat& p1, atlas::PointXYZ& p2, const double& height, const double& a, const double& b) {
-    ASSERT(a > 0.);
-    ASSERT(b > 0.);
-    ASSERT(-90. <= p1.lat() && p1.lat() <= 90.);
-    double lambda_deg = between_m180_and_p180(p1.lon());
+PointLonLat Sphere::convertCartesianToSpherical(const PointXYZ& p, const double& radius) {
+    ASSERT(radius > 0.);
 
-    // See https://en.wikipedia.org/wiki/Reference_ellipsoid#Coordinates
-    // better numerical conditioning for both ϕ (poles) and λ (Greenwich/Date Line)
+    // numerical conditioning for both z (poles) and y
     const double
-            phi = p1.lat() * Constants::degreesToRadians(),
-            lambda = lambda_deg * Constants::degreesToRadians(),
+            x = p.x(),
+            y = eckit::types::is_approximately_equal(p.y(), 0.) ? 0. : p.y(),
+            z = std::min(radius, std::max(-radius, p.z())) / radius;
 
-            sin_phi = std::sin(phi),
-            cos_phi = std::sqrt(1. - sin_phi * sin_phi),
-            sin_lambda = std::abs(lambda_deg) < 180. ? std::sin(lambda) : 0.,
-            cos_lambda = std::abs(lambda_deg) >  90. ? std::cos(lambda) : std::sqrt(1. - sin_lambda * sin_lambda);
-
-    if (a == b) {
-        // no eccentricity
-        p2.x() = (a + height) * cos_phi * cos_lambda;
-        p2.y() = (a + height) * cos_phi * sin_lambda;
-        p2.z() = (a + height) * sin_phi;
-    } else {
-        const double N_phi = a * a / std::sqrt(a * a * cos_phi * cos_phi + b * b * sin_phi * sin_phi);
-        p2.x() = (N_phi + height) * cos_phi * cos_lambda;
-        p2.y() = (N_phi + height) * cos_phi * sin_lambda;
-        p2.z() = (N_phi * (b * b) / (a * a) + height) * sin_phi;
-    }
+    return PointLonLat(
+                Constants::radiansToDegrees() * std::atan2(y, x),
+                Constants::radiansToDegrees() * std::asin(z) );
 }
+
+
+//------------------------------------------------------------------------------------------------------
+
+
+double Earth::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
+    return Sphere::centralAngle(p1, p2);
+}
+
+
+double Earth::centralAngle(const PointXYZ& p1, const PointXYZ& p2, const double& radius) {
+    return Sphere::centralAngle(p1, p2, radius);
+}
+
+
+double Earth::distanceInMeters(const PointLonLat& p1, const PointLonLat& p2, const double& radius) {
+    return Sphere::distanceInMeters(p1, p2, radius);
+}
+
+
+double Earth::distanceInMeters(const PointXYZ& p1, const PointXYZ& p2, const double& radius) {
+    return Sphere::distanceInMeters(p1, p2, radius);
+}
+
+
+PointXYZ Earth::convertGeodeticToGeocentric(const PointLonLat& p, const double& radius, const double& height) {
+    return Sphere::convertSphericalToCartesian(p, radius, height);
+}
+
+
+PointLonLat Earth::convertGeocentricToGeodetic(const PointXYZ& p, const double& radius) {
+    return Sphere::convertCartesianToSpherical(p, radius);
+}
+
+
+//------------------------------------------------------------------------------------------------------
 
 
 }  // namespace util

@@ -1,21 +1,27 @@
+/*
+ * (C) Copyright 1996-2017 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
+#include "atlas/util/Rotation.h"
+
 #include <cmath>
 #include <iostream>
 #include "eckit/config/Parametrisation.h"
-#include "atlas/util/Rotation.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/Earth.h"
 
 // Temporary option to activate implementation by RMI during ESCAPE
 #define OLD_IMPLEMENTATION 0
 
 namespace atlas {
 namespace util {
-
-namespace {
-  static double deg2rad = atlas::util::Constants::degreesToRadians();
-  static double rad2deg = atlas::util::Constants::radiansToDegrees();
-  static double eps     = 1.e-12;
-}
 
 void Rotation::print( std::ostream& out ) const {
   out << "north_pole:"<<npole_<<", south_pole:"<<spole_<<", rotation_angle:"<<angle_;
@@ -39,8 +45,8 @@ PointLonLat Rotation::unrotate(const PointLonLat& p) const {
 
 void Rotation::precompute() {
 
-  const double theta = - (90.0 + spole_.lat()) * deg2rad;
-  const double phi   = - spole_.lon()          * deg2rad;
+  const double theta = - (90.0 + spole_.lat()) * Constants::degreesToRadians();
+  const double phi   = - spole_.lon()          * Constants::degreesToRadians();
 
   const double sin_theta = std::sin(theta);
   const double cos_theta = std::cos(theta);
@@ -84,7 +90,7 @@ void Rotation::precompute() {
   if( spole_.lon() == 0. && spole_.lat() == -90. && angle_ == 0.) rotated_ = false;
   rotation_angle_only_ = spole_.lon() == 0. && spole_.lat() == -90. && rotated_;
 
-  double latrp = (90.0-npole_.lat()) * deg2rad;
+  double latrp = (90.0-npole_.lat()) * Constants::degreesToRadians();
   cos_latrp_ = std::cos(latrp);
   sin_latrp_ = std::sin(latrp);
 }
@@ -130,8 +136,8 @@ void Rotation::rotate_old(double crd[]) const {
   double xt, yt, zt, x, y, z;
   double cos_lon, sin_lon, cos_lat, sin_lat;
 
-  lon = crd[0] * deg2rad;
-  lat = crd[1] * deg2rad;
+  lon = crd[LON] * Constants::degreesToRadians();
+  lat = crd[LAT] * Constants::degreesToRadians();
   cos_lon = std::cos(lon);
   cos_lat = std::cos(lat);
   sin_lon = std::sin(lon);
@@ -148,8 +154,8 @@ void Rotation::rotate_old(double crd[]) const {
   zt = -sin_latrp_*x + cos_latrp_*z;
 
   // back to spherical coordinates
-  lont=std::atan2(yt,xt) * rad2deg;
-  latt=std::asin(zt)     * rad2deg;
+  lont=std::atan2(yt,xt) * Constants::radiansToDegrees();
+  latt=std::asin(zt)     * Constants::radiansToDegrees();
 
   // rotate
   crd[0]=lont+npole_.lon();
@@ -165,8 +171,8 @@ void Rotation::unrotate_old(double crd[]) const {
   double cos_lont, sin_lont, cos_latt, sin_latt;
 
   // unrotate
-  lont=(crd[0]-npole_.lon()) * deg2rad;
-  latt=(crd[1])              * deg2rad;
+  lont=(crd[LON]-npole_.lon()) * Constants::degreesToRadians();
+  latt=(crd[LAT])              * Constants::degreesToRadians();
 
   cos_lont  = std::cos(lont);
   cos_latt  = std::cos(latt);
@@ -184,32 +190,8 @@ void Rotation::unrotate_old(double crd[]) const {
   z = sin_latrp_*xt + cos_latrp_*zt;
 
   // back to spherical coordinates
-  crd[0]= std::atan2(y,x) * rad2deg;
-  crd[1]= std::asin(z)    * rad2deg;
-}
-
-inline PointXYZ to_geocentric(const PointLonLat& p) {
-  // See: http://gis.stackexchange.com/questions/10808/lon-lat-transformation/14445
-  // First convert the data point from spherical lon lat to (x',y',z') using:
-  const double lon = p.lon()*deg2rad;
-  const double lat = p.lat()*deg2rad;
-  const double cos_lon = std::cos(lon);
-  const double cos_lat = std::cos(lat);
-  const double sin_lon = std::sin(lon);
-  const double sin_lat = std::sin(lat);
-  return PointXYZ( cos_lon * cos_lat ,
-                   sin_lon * cos_lat ,
-                   sin_lat           );
-}
-
-inline PointLonLat to_lonlat(const PointXYZ& p) {
-  double z = p.z();
-  if      (z >  1.0) z =  1.0;
-  else if (z < -1.0) z = -1.0;
-  double y = p.y();
-  if( std::abs(y) < eps ) y *= 0.;
-  return PointLonLat (  std::atan2(y, p.x()) *rad2deg ,
-                        std::asin (z)        *rad2deg );
+  crd[0]= std::atan2(y,x) * Constants::radiansToDegrees();
+  crd[1]= std::asin(z)    * Constants::radiansToDegrees();
 }
 
 using RotationMatrix = std::array<std::array<double,3>,3>;
@@ -237,13 +219,11 @@ void Rotation::rotate(double crd[]) const {
     }
 
     const PointLonLat L( crd );
-    const PointXYZ P  = to_geocentric( L );
+    const PointXYZ P  = Earth::convertGeodeticToGeocentric(L, 1.);
     const PointXYZ Pt = rotate_geocentric( P, rotate_ );
-    PointLonLat Lt    = to_lonlat( Pt );
+    const PointLonLat Lt    = Earth::convertGeocentricToGeodetic(Pt, 1.);
 
-    Lt.lon() -= angle_;
-
-    crd[LON] = Lt.lon();
+    crd[LON] = Lt.lon() - angle_;
     crd[LAT] = Lt.lat();
 }
 
@@ -265,12 +245,12 @@ void Rotation::unrotate(double crd[]) const {
     PointLonLat Lt ( crd );
     Lt.lon() += angle_;
 
-    const PointXYZ Pt = to_geocentric( Lt );
-    const PointXYZ P  = rotate_geocentric( Pt, unrotate_ );
-    PointLonLat L     = to_lonlat( P );
+    const PointXYZ Pt   = Earth::convertGeodeticToGeocentric(Lt, 1.);
+    const PointXYZ P    = rotate_geocentric( Pt, unrotate_ );
+    const PointLonLat L = Earth::convertGeocentricToGeodetic(P, 1.);
 
-    crd[0] = L.lon();
-    crd[1] = L.lat();
+    crd[LON] = L.lon();
+    crd[LAT] = L.lat();
 }
 
 }  // namespace util

@@ -30,8 +30,9 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/util/Point.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/Earth.h"
+#include "atlas/util/Point.h"
 
 
 namespace atlas {
@@ -41,24 +42,10 @@ namespace method {
 
 namespace {
 
-
 MethodBuilder<FiniteElement> __builder("finite-element");
-
 
 // epsilon used to scale edge tolerance when projecting ray to intesect element
 static const double parametricEpsilon = 1e-16;
-
-inline PointLonLat to_lonlat(const PointXYZ& p) {
-  static double rad2deg = 180.*M_1_PI;
-  static double eps = 1.e-12;
-  double z = p.z();
-  if      (z >  1.0) z =  1.0;
-  else if (z < -1.0) z = -1.0;
-  double y = p.y();
-  if( std::abs(y) < eps ) y *= 0.;
-  return PointLonLat (  std::atan2(y, p.x()) *rad2deg ,
-                        std::asin (z)        *rad2deg );
-}
 
 }  // (anonymous namespace)
 
@@ -84,7 +71,7 @@ void FiniteElement::setup(const FunctionSpace& source, const FunctionSpace& targ
         PointXYZ p2;
         for( size_t n=0; n<N; ++n ) {
             const PointLonLat p1(lonlat(n, 0), lonlat(n, 1));
-            util::Earth::convertGeodeticToGeocentric(p1, p2);
+            p2 = util::Earth::convertGeodeticToGeocentric(p1);
             xyz(n, 0) = p2.x();
             xyz(n, 1) = p2.y();
             xyz(n, 2) = p2.z();
@@ -172,7 +159,7 @@ void FiniteElement::setup(const FunctionSpace& source) {
             if (!success) {
                 failures.push_back(ip);
                 Log::debug<Atlas>() << "---------------------------------------------------------------------------\n";
-                PointLonLat pll = to_lonlat( p );
+                const PointLonLat pll = util::Earth::convertGeocentricToGeodetic(p);
                 Log::debug<Atlas>() << "Failed to project point (lon,lat)="<< pll << '\n';
                 Log::debug<Atlas>() << failures_log.str();
             }
@@ -188,8 +175,8 @@ void FiniteElement::setup(const FunctionSpace& source) {
         std::ostringstream msg;
         msg << "Rank " << eckit::mpi::comm().rank() << " failed to project points:\n";
         for (std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i) {
-            PointXYZ p ( (*ocoords_)[*i].data() ); // lookup point
-            PointLonLat pll = to_lonlat( p );
+            const PointXYZ p ( (*ocoords_)[*i].data() ); // lookup point
+            const PointLonLat pll = util::Earth::convertGeocentricToGeodetic(p);
             msg << "\t(lon,lat) = " << pll << "\n";
         }
 

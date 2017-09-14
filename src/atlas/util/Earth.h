@@ -24,6 +24,34 @@ namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
+struct EllipsoidOfRevolution
+{
+    // Convert elliptic coordinates to Cartesian
+    static PointXYZ convertEllipticToCartesian(const PointLonLat&, const double& radiusA, const double& radiusB, const double& height);
+};
+
+//------------------------------------------------------------------------------------------------------
+
+struct Sphere
+{
+    // Great-circle central angle between two points, in radians
+    static double centralAngle(const PointLonLat&, const PointLonLat&);
+    static double centralAngle(const PointXYZ&, const PointXYZ&, const double& radius);
+
+    // Great-circle distance between two points
+    static double distanceInMeters(const PointLonLat&, const PointLonLat&, const double& radius);
+    static double distanceInMeters(const PointXYZ&, const PointXYZ&, const double& radius);
+
+    // Convert spherical coordinates to Cartesian
+    static PointXYZ convertSphericalToCartesian(const PointLonLat&, const double& radius, const double& height);
+
+    // Convert Cartesian coordinates to spherical
+    static PointLonLat convertCartesianToSpherical(const PointXYZ&, const double& radius);
+
+};
+
+//------------------------------------------------------------------------------------------------------
+
 struct Earth
 {
     // 6371229  -- IFS
@@ -37,15 +65,17 @@ struct Earth
 
     // Great-circle central angle between two points, in radians
     static double centralAngle(const PointLonLat&, const PointLonLat&);
-    static double centralAngle(const PointXYZ&, const PointXYZ&);
+    static double centralAngle(const PointXYZ&, const PointXYZ&, const double& radius = radiusInMeters());
 
     // Great-circle distance between two points
-    static double distanceInMeters(const PointLonLat&, const PointLonLat&);
-    static double distanceInMeters(const PointXYZ&, const PointXYZ&);
+    static double distanceInMeters(const PointLonLat&, const PointLonLat&, const double& radius = radiusInMeters());
+    static double distanceInMeters(const PointXYZ&, const PointXYZ&, const double& radius = radiusInMeters());
 
     // Convert geodetic coordinates to geocentric Cartesian (ECEF: Earth-centered, Earth-fixed)
-    static void convertGeodeticToGeocentric(const PointLonLat&, PointXYZ&, const double& height = 0, const double& radius = radiusInMeters());
-    static void convertGeodeticToGeocentric(const PointLonLat&, PointXYZ&, const double& height, const double& radiusA, const double& radiusB);
+    static PointXYZ convertGeodeticToGeocentric(const PointLonLat&, const double& radius = radiusInMeters(), const double& height = 0.);
+
+    // Convert geocentric Cartesian (ECEF: Earth-centered, Earth-fixed) to geodetic coordinates
+    static PointLonLat convertGeocentricToGeodetic(const PointXYZ&, const double& radius = radiusInMeters());
 
 };
 

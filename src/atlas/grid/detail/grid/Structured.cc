@@ -15,13 +15,14 @@
 #include <limits>
 #include "eckit/types/FloatCompare.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/util/Point.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/detail/spacing/LinearSpacing.h"
-#include "atlas/grid/detail/spacing/CustomSpacing.h"
 #include "atlas/domain/Domain.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/grid/detail/spacing/CustomSpacing.h"
+#include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/Earth.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace grid {
@@ -449,19 +450,6 @@ void Structured::crop( const Domain& dom ) {
     }
 }
 
-
-namespace {
-  struct EarthCentred {
-    EarthCentred(Structured& _grid) : grid(_grid) {}
-    PointXYZ operator()(const PointXY& xy) {
-      PointLonLat lonlat = grid.projection().lonlat(xy);
-      return lonlat_to_geocentric(lonlat,radius);
-    }
-    Structured& grid;
-    double radius={1.};
-  };
-}
-
 void Structured::computeTruePeriodicity() {
 
   if( projection_.strictlyRegional() ) {
@@ -477,19 +465,19 @@ void Structured::computeTruePeriodicity() {
     if( xmin_[j] + (nx_[j]-1) * dx_[j] == xmax_[j] ) {
       periodic_x_ = false; // This would lead to duplicated points
     } else {
-      // High chance to be periodic. Check anyway.
-      EarthCentred compute_earth_centred(*this);
 
-      Point3 Pxmin = compute_earth_centred( { xmin_[j], y_[j] } );
-      Point3 Pxmax = compute_earth_centred( { xmax_[j], y_[j] } );
+      // High chance to be periodic. Check anyway.
+      const PointLonLat Pllmin = projection().lonlat(PointXY(xmin_[j], y_[j]));
+      const PointLonLat Pllmax = projection().lonlat(PointXY(xmax_[j], y_[j]));
+
+      Point3 Pxmin = util::Earth::convertGeodeticToGeocentric(Pllmin, 1.);
+      Point3 Pxmax = util::Earth::convertGeodeticToGeocentric(Pllmax, 1.);
 
       periodic_x_  = points_equal( Pxmin, Pxmax );
     }
 
   }
-
 }
-
 
 void Structured::print(std::ostream& os) const {
     os << "Structured(Name:" << name() << ")";

@@ -34,8 +34,7 @@ BOOST_AUTO_TEST_SUITE( test_earth_poles )
 BOOST_AUTO_TEST_CASE( test_earth_north_pole )
 {
   const PointLonLat p1(0., 90.);
-  PointXYZ p2;
-  Earth::convertGeodeticToGeocentric(p1, p2);
+  const PointXYZ p2 = Earth::convertGeodeticToGeocentric(p1);
 
   BOOST_CHECK_EQUAL(p2.x(), 0);
   BOOST_CHECK_EQUAL(p2.y(), 0);
@@ -45,8 +44,7 @@ BOOST_AUTO_TEST_CASE( test_earth_north_pole )
 BOOST_AUTO_TEST_CASE( test_earth_south_pole )
 {
   const PointLonLat p1(0., -90.);
-  PointXYZ p2;
-  Earth::convertGeodeticToGeocentric(p1, p2);
+  const PointXYZ p2 = Earth::convertGeodeticToGeocentric(p1);
 
   BOOST_CHECK_EQUAL(p2.x(), 0);
   BOOST_CHECK_EQUAL(p2.y(), 0);
@@ -62,9 +60,10 @@ BOOST_AUTO_TEST_SUITE( test_earth_quadrants )
 BOOST_AUTO_TEST_CASE( test_earth_lon_0 )
 {
   const PointLonLat p1[2] = {{0., 0.}, {-360., 0.}};
-  PointXYZ p2[2];
-  Earth::convertGeodeticToGeocentric(p1[0], p2[0]);
-  Earth::convertGeodeticToGeocentric(p1[1], p2[1]);
+  const PointXYZ p2[] = {
+      Earth::convertGeodeticToGeocentric(p1[0]),
+      Earth::convertGeodeticToGeocentric(p1[1])
+  };
 
   BOOST_CHECK_EQUAL(p2[0].x(), R);
   BOOST_CHECK_EQUAL(p2[0].y(), 0);
@@ -76,9 +75,10 @@ BOOST_AUTO_TEST_CASE( test_earth_lon_0 )
 BOOST_AUTO_TEST_CASE( test_earth_lon_90 )
 {
   const PointLonLat p1[2] = {{90., 0.}, {-270., 0.}};
-  PointXYZ p2[2];
-  Earth::convertGeodeticToGeocentric(p1[0], p2[0]);
-  Earth::convertGeodeticToGeocentric(p1[1], p2[1]);
+  const PointXYZ p2[] = {
+      Earth::convertGeodeticToGeocentric(p1[0]),
+      Earth::convertGeodeticToGeocentric(p1[1])
+  };
 
   BOOST_CHECK_EQUAL(p2[0].x(), 0);
   BOOST_CHECK_EQUAL(p2[0].y(), R);
@@ -90,9 +90,10 @@ BOOST_AUTO_TEST_CASE( test_earth_lon_90 )
 BOOST_AUTO_TEST_CASE( test_earth_lon_180 )
 {
   const PointLonLat p1[2] = {{180., 0.}, {-180., 0.}};
-  PointXYZ p2[2];
-  Earth::convertGeodeticToGeocentric(p1[0], p2[0]);
-  Earth::convertGeodeticToGeocentric(p1[1], p2[1]);
+  const PointXYZ p2[] = {
+      Earth::convertGeodeticToGeocentric(p1[0]),
+      Earth::convertGeodeticToGeocentric(p1[1])
+  };
 
   BOOST_CHECK_EQUAL(p2[0].x(), -R);
   BOOST_CHECK_EQUAL(p2[0].y(), 0);
@@ -104,9 +105,10 @@ BOOST_AUTO_TEST_CASE( test_earth_lon_180 )
 BOOST_AUTO_TEST_CASE( test_earth_lon_270 )
 {
   const PointLonLat p1[2] = {{270., 0.}, {-90., 0.}};
-  PointXYZ p2[2];
-  Earth::convertGeodeticToGeocentric(p1[0], p2[0]);
-  Earth::convertGeodeticToGeocentric(p1[1], p2[1]);
+  const PointXYZ p2[] = {
+      Earth::convertGeodeticToGeocentric(p1[0]),
+      Earth::convertGeodeticToGeocentric(p1[1])
+  };
 
   BOOST_CHECK_EQUAL(p2[0].x(), 0);
   BOOST_CHECK_EQUAL(p2[0].y(), -R);
@@ -127,9 +129,10 @@ const double L = R * std::sqrt(2) / 2.;
 BOOST_AUTO_TEST_CASE( test_earth_lon_45 )
 {
   const PointLonLat p1[2] = {{45., 0.}, {-315., 0.}};
-  PointXYZ p2[2];
-  Earth::convertGeodeticToGeocentric(p1[0], p2[0]);
-  Earth::convertGeodeticToGeocentric(p1[1], p2[1]);
+  const PointXYZ p2[] = {
+      Earth::convertGeodeticToGeocentric(p1[0]),
+      Earth::convertGeodeticToGeocentric(p1[1])
+  };
 
   CHECK_APPROX_EQUAL(p2[0].x(), L);
   CHECK_APPROX_EQUAL(p2[0].y(), L);
@@ -141,9 +144,10 @@ BOOST_AUTO_TEST_CASE( test_earth_lon_45 )
 BOOST_AUTO_TEST_CASE( test_earth_lon_135 )
 {
   const PointLonLat p1[2] = {{135., 0.}, {-225., 0.}};
-  PointXYZ p2[2];
-  Earth::convertGeodeticToGeocentric(p1[0], p2[0]);
-  Earth::convertGeodeticToGeocentric(p1[1], p2[1]);
+  const PointXYZ p2[] = {
+      Earth::convertGeodeticToGeocentric(p1[0]),
+      Earth::convertGeodeticToGeocentric(p1[1])
+  };
 
   CHECK_APPROX_EQUAL(p2[0].x(), -L);
   CHECK_APPROX_EQUAL(p2[0].y(), L);
@@ -155,9 +159,10 @@ BOOST_AUTO_TEST_CASE( test_earth_lon_135 )
 BOOST_AUTO_TEST_CASE( test_earth_lon_225 )
 {
   const PointLonLat p1[2] = {{225., 0.}, {-135., 0.}};
-  PointXYZ p2[2];
-  Earth::convertGeodeticToGeocentric(p1[0], p2[0]);
-  Earth::convertGeodeticToGeocentric(p1[1], p2[1]);
+  const PointXYZ p2[] = {
+      Earth::convertGeodeticToGeocentric(p1[0]),
+      Earth::convertGeodeticToGeocentric(p1[1])
+  };
 
   CHECK_APPROX_EQUAL(p2[0].x(), -L);
   CHECK_APPROX_EQUAL(p2[0].y(), -L);
@@ -169,9 +174,10 @@ BOOST_AUTO_TEST_CASE( test_earth_lon_225 )
 BOOST_AUTO_TEST_CASE( test_earth_lon_315 )
 {
   const PointLonLat p1[2] = {{315., 0.}, {-45., 0.}};
-  PointXYZ p2[2];
-  Earth::convertGeodeticToGeocentric(p1[0], p2[0]);
-  Earth::convertGeodeticToGeocentric(p1[1], p2[1]);
+  const PointXYZ p2[] = {
+      Earth::convertGeodeticToGeocentric(p1[0]),
+      Earth::convertGeodeticToGeocentric(p1[1])
+  };
 
   CHECK_APPROX_EQUAL(p2[0].x(), L);
   CHECK_APPROX_EQUAL(p2[0].y(), -L);

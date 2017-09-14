@@ -120,16 +120,4 @@ public:
   }
 };
 
-inline PointXYZ lonlat_to_geocentric( const PointLonLat& lonlat ) {
-  PointXYZ xyz;
-  util::Earth::convertGeodeticToGeocentric(lonlat, xyz);
-  return xyz;
-}
-
-inline PointXYZ lonlat_to_geocentric( const PointLonLat& lonlat, double radius ) {
-  PointXYZ xyz;
-  util::Earth::convertGeodeticToGeocentric(lonlat, xyz, 0., radius);
-  return xyz;
-}
-
 }
