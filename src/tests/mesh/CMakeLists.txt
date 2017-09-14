@@ -37,38 +37,6 @@ if( HAVE_FCTEST )
 endif()
 
 
-ecbuild_add_test( TARGET atlas_test_connectivity
-  BOOST
-  SOURCES  test_connectivity.cc
-  LIBS     atlas
-)
-
-
-ecbuild_add_test( TARGET atlas_test_elements
-  BOOST
-  SOURCES  test_elements.cc
-  LIBS     atlas
-)
-
-
-ecbuild_add_test( TARGET atlas_test_accumulate_facets
-  BOOST
-  SOURCES  test_accumulate_facets.cc
-  LIBS     atlas
-)
-
-ecbuild_add_test( TARGET atlas_test_rgg
-  BOOST
-  SOURCES  test_rgg.cc
-  LIBS     atlas
-)
-
-ecbuild_add_test( TARGET atlas_test_ll
-  BOOST
-  SOURCES  test_ll.cc
-  LIBS     atlas
-)
-
 ecbuild_add_test( TARGET atlas_test_parfields
   BOOST
   MPI        2
@@ -93,12 +61,6 @@ ecbuild_add_test( TARGET atlas_test_distmesh
   LIBS       atlas
 )
 
-ecbuild_add_test( TARGET atlas_test_meshgen3d
-  BOOST
-  SOURCES   test_meshgen3d.cc
-  LIBS      atlas
-)
-
 ecbuild_add_test(
   TARGET      atlas_test_cgal_mesh_gen_from_points
   SOURCES     test_cgal_mesh_gen_from_points.cc
@@ -111,3 +73,11 @@ atlas_add_cuda_test(
   SOURCES test_connectivity_kernel.cu
   LIBS atlas
 )
+
+foreach( test accumulate_facets connectivity elements ll meshgen3d polygon rgg )
+  ecbuild_add_test( TARGET atlas_test_${test}
+    BOOST
+    SOURCES test_${test}.cc
+    LIBS atlas
+  )
+endforeach()

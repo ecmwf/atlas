@@ -39,7 +39,7 @@ static inline double between_m180_and_p180(double a) {
 //------------------------------------------------------------------------------------------------------
 
 
-PointXYZ EllipsoidOfRevolution::convertEllipticToCartesian(const atlas::PointLonLat& p, const double& a, const double& b, const double& height) {
+PointXYZ EllipsoidOfRevolution::convertEllipsoidalToCartesian(const atlas::PointLonLat& p, const double& a, const double& b, const double& height) {
     ASSERT(a > 0.);
     ASSERT(b > 0.);
     ASSERT(-90. <= p.lat() && p.lat() <= 90.);
@@ -150,8 +150,71 @@ double Sphere::distanceInMeters(const PointXYZ& p1, const PointXYZ& p2, const do
 }
 
 
+double Sphere::greatCircleLatitudeGivenLongitude(const PointLonLat& p1, const PointLonLat& p2, const double& longitude, const double& radius) {
+    ASSERT(radius > 0.);
+    using namespace std;
+    using namespace eckit::types;
+
+    if (is_approximately_equal(p1.lat(), p2.lat())) {
+        return p1.lat();
+    }
+
+    const double
+            lambda   = Constants::degreesToRadians() * longitude,
+            lambda1  = Constants::degreesToRadians() * p1.lon(),
+            lambda12 = Constants::degreesToRadians() * between_m180_and_p180(p2.lon() - p1.lon()),
+            phi1     = Constants::degreesToRadians() * p1.lat(),
+            phi2     = Constants::degreesToRadians() * p2.lat();
+
+    // 1. solve spherical triangle using the North pole (two sides and the included angle given, SAS),
+    // 2. estimate great cicle intersection at the equator (lambda0),
+    // 3. finally solve direct geodesic problem
+    // See:
+    //   https://en.wikipedia.org/wiki/Solution_of_triangles#Two_sides_and_the_included_angle_given
+    //   https://en.wikipedia.org/wiki/Great-circle_navigation#Finding_way-points
+    static const PointLonLat NP(0., 90.);
+
+    const double
+            sin_phi1 = sin(phi1),
+            cos_phi1 = cos(phi1),
+            cos_phi2 = cos(phi2),
+
+            a = distanceInMeters(NP, p1, radius),
+            b = distanceInMeters(NP, p2, radius),
+            c = sqrt(a * a + b * b - 2 * a * b * cos(lambda12)),
+
+            a1 = acos( min(1., max(-1., (b * b + c * c - a * a) / (2. * b * c) ))),
+            cos_a1 = cos(a1),
+            sin_a1 = sin(a1);
+
+    // don't handle points at the poles nor great circles that are meridians
+    ASSERT(!is_approximately_equal(cos_phi1, 0.));
+    ASSERT(!is_approximately_equal(cos_phi2, 0.));
+    ASSERT(!is_approximately_equal(sin_a1, 0.));
+
+    const double
+            tan_s01 = is_approximately_equal(a1, M_PI_2) ? 0. : tan(phi1) / cos(a1),
+            tan_a0 = (sin_a1 * cos_phi1)
+                   / sqrt(cos_a1 * cos_a1 + sin_a1 * sin_a1 * sin_phi1 * sin_phi1),
+            sin_a0 = sin(atan(tan_a0)),
+
+            lambda01 = atan(sin_a0 * tan_s01),
+            lambda0  = lambda1 - lambda01,
+
+            tan_phi = sin(lambda - lambda0) / tan_a0,
+            phi = atan(tan_phi);
+
+
+std::cout << "    \"\\n\" \"ax.plot([" << p1.lon() << "," << lambda0 * Constants::radiansToDegrees() << "," << p2.lon() << "], [" << p1.lat() << ",0.," << p2.lat() << "], '-o')\"" << std::endl;
+
+
+
+    return Constants::radiansToDegrees() * phi;
+}
+
+
 PointXYZ Sphere::convertSphericalToCartesian(const PointLonLat& p, const double& radius, const double& height) {
-    return EllipsoidOfRevolution::convertEllipticToCartesian(p, radius, radius, height);
+    return EllipsoidOfRevolution::convertEllipsoidalToCartesian(p, radius, radius, height);
 }
 
 
@@ -190,6 +253,11 @@ double Earth::distanceInMeters(const PointLonLat& p1, const PointLonLat& p2, con
 
 double Earth::distanceInMeters(const PointXYZ& p1, const PointXYZ& p2, const double& radius) {
     return Sphere::distanceInMeters(p1, p2, radius);
+}
+
+
+double Earth::greatCircleLatitudeGivenLongitude(const PointLonLat& p1, const PointLonLat& p2, const double& longitude, const double& radius) {
+    return Sphere::greatCircleLatitudeGivenLongitude(p1, p2, longitude, radius);
 }
 
 

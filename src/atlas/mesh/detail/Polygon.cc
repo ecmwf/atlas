@@ -186,24 +186,18 @@ bool Polygon::containsPointInSphericalGeometry(const PointLonLat& P) const {
             const PointLonLat& A = coordinates_[i-1];
             const PointLonLat& B = coordinates_[ i ];
 
-            // intersect either:
-            // - "left" on left-wards crossing & P above edge, or
-            // - "right" on right-wards crossing & P below edge
+            // test if P is on/above/below of a great circle containing A,B
             const bool APB = (A[LON] <= P[LON] && P[LON] < B[LON]);
             const bool BPA = (B[LON] <= P[LON] && P[LON] < A[LON]);
 
             if (APB || BPA) {
 
-                // Test if P is left|on|right of an infinite A-B line
-                // @return >0/=0/<0 for P left|on|right of line
-                const double side = (P[LON] - B[LON]) * (A[LAT] - B[LAT])
-                                  - (P[LAT] - B[LAT]) * (A[LON] - B[LON]);
-
-                if (eckit::types::is_approximately_equal(side, 0.)) {
+                const double lat = util::Earth::greatCircleLatitudeGivenLongitude(A, B, P[LON]);
+                if (eckit::types::is_approximately_equal(P[LAT], lat)) {
                     return true;
-                } else if (APB && side > 0) {
+                } else if (APB && P[LAT] > lat) {
                     ++wn;
-                } else if (BPA && side < 0) {
+                } else if (BPA && P[LAT] < lat) {
                     --wn;
                 }
             }

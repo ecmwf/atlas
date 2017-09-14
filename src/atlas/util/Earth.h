@@ -26,8 +26,8 @@ namespace util {
 
 struct EllipsoidOfRevolution
 {
-    // Convert elliptic coordinates to Cartesian
-    static PointXYZ convertEllipticToCartesian(const PointLonLat&, const double& radiusA, const double& radiusB, const double& height);
+    // Convert ellipsoidal coordinates to Cartesian
+    static PointXYZ convertEllipsoidalToCartesian(const PointLonLat&, const double& radiusA, const double& radiusB, const double& height);
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -41,6 +41,9 @@ struct Sphere
     // Great-circle distance between two points
     static double distanceInMeters(const PointLonLat&, const PointLonLat&, const double& radius);
     static double distanceInMeters(const PointXYZ&, const PointXYZ&, const double& radius);
+
+    // Great-circle position provided two circle points and one coordinate
+    static double greatCircleLatitudeGivenLongitude(const PointLonLat&, const PointLonLat&, const double& longitude, const double& radius);
 
     // Convert spherical coordinates to Cartesian
     static PointXYZ convertSphericalToCartesian(const PointLonLat&, const double& radius, const double& height);
@@ -70,6 +73,9 @@ struct Earth
     // Great-circle distance between two points
     static double distanceInMeters(const PointLonLat&, const PointLonLat&, const double& radius = radiusInMeters());
     static double distanceInMeters(const PointXYZ&, const PointXYZ&, const double& radius = radiusInMeters());
+
+    // Great-circle position provided two circle points and one coordinate
+    static double greatCircleLatitudeGivenLongitude(const PointLonLat&, const PointLonLat&, const double& longitude, const double& radius = radiusInMeters());
 
     // Convert geodetic coordinates to geocentric Cartesian (ECEF: Earth-centered, Earth-fixed)
     static PointXYZ convertGeodeticToGeocentric(const PointLonLat&, const double& radius = radiusInMeters(), const double& height = 0.);
