@@ -24,16 +24,12 @@ namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
-struct EllipsoidOfRevolution
-{
-    // Convert ellipsoidal coordinates to Cartesian
-    static PointXYZ convertEllipsoidalToCartesian(const PointLonLat&, const double& radiusA, const double& radiusB, const double& height);
-};
-
-//------------------------------------------------------------------------------------------------------
-
 struct Sphere
 {
+    // Azimuth/course at source point directed to target point, in respect to reference point, in radians
+    static double azimuth(const PointLonLat& source, const PointLonLat& target, const PointLonLat& reference);
+    static double course(const PointLonLat& source, const PointLonLat& target);
+
     // Great-circle central angle between two points, in radians
     static double centralAngle(const PointLonLat&, const PointLonLat&);
     static double centralAngle(const PointXYZ&, const PointXYZ&, const double& radius);
@@ -42,8 +38,11 @@ struct Sphere
     static double distanceInMeters(const PointLonLat&, const PointLonLat&, const double& radius);
     static double distanceInMeters(const PointXYZ&, const PointXYZ&, const double& radius);
 
-    // Great-circle position provided two circle points and one coordinate
-    static double greatCircleLatitudeGivenLongitude(const PointLonLat&, const PointLonLat&, const double& longitude, const double& radius);
+    // Great-circle intersection at the equator, in radians (spherical coordinates)
+    static void greatCircleIntersectionAtEquator(const PointLonLat&, const PointLonLat&, double& lambda0, double& alpha0);
+
+    // Great-circle position provided two circle points and one coordinate, in degrees
+    static double greatCircleLatitudeGivenLongitude(const PointLonLat&, const PointLonLat&, const double& longitude);
 
     // Convert spherical coordinates to Cartesian
     static PointXYZ convertSphericalToCartesian(const PointLonLat&, const double& radius, const double& height);
@@ -66,6 +65,10 @@ struct Earth
     static constexpr double areaInSqMeters() { return 4. * M_PI * radiusInMeters() * radiusInMeters(); }
     static constexpr double areaInSqKm()     { return 4. * M_PI * radiusInKm()     * radiusInKm(); }
 
+    // Azimuth/course at source point directed to target point, in respect to reference point, in radians
+    static double azimuth(const PointLonLat& source, const PointLonLat& target, const PointLonLat& reference);
+    static double course(const PointLonLat& source, const PointLonLat& target);
+
     // Great-circle central angle between two points, in radians
     static double centralAngle(const PointLonLat&, const PointLonLat&);
     static double centralAngle(const PointXYZ&, const PointXYZ&, const double& radius = radiusInMeters());
@@ -74,8 +77,11 @@ struct Earth
     static double distanceInMeters(const PointLonLat&, const PointLonLat&, const double& radius = radiusInMeters());
     static double distanceInMeters(const PointXYZ&, const PointXYZ&, const double& radius = radiusInMeters());
 
-    // Great-circle position provided two circle points and one coordinate
-    static double greatCircleLatitudeGivenLongitude(const PointLonLat&, const PointLonLat&, const double& longitude, const double& radius = radiusInMeters());
+    // Great-circle intersection at the equator, in radians (spherical coordinates)
+    static void greatCircleIntersectionAtEquator(const PointLonLat&, const PointLonLat&, double& lambda0, double& alpha0);
+
+    // Great-circle position provided two circle points and one coordinate, in degrees
+    static double greatCircleLatitudeGivenLongitude(const PointLonLat&, const PointLonLat&, const double& longitude);
 
     // Convert geodetic coordinates to geocentric Cartesian (ECEF: Earth-centered, Earth-fixed)
     static PointXYZ convertGeodeticToGeocentric(const PointLonLat&, const double& radius = radiusInMeters(), const double& height = 0.);

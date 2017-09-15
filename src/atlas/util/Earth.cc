@@ -39,41 +39,35 @@ static inline double between_m180_and_p180(double a) {
 //------------------------------------------------------------------------------------------------------
 
 
-PointXYZ EllipsoidOfRevolution::convertEllipsoidalToCartesian(const atlas::PointLonLat& p, const double& a, const double& b, const double& height) {
-    ASSERT(a > 0.);
-    ASSERT(b > 0.);
-    ASSERT(-90. <= p.lat() && p.lat() <= 90.);
+double Sphere::azimuth(const PointLonLat& u, const PointLonLat& v, const PointLonLat& w) {
+    using namespace std;
 
-    double lambda_deg = between_m180_and_p180(p.lon());
-
-    // See https://en.wikipedia.org/wiki/Reference_ellipsoid#Coordinates
-    // numerical conditioning for both ϕ (poles) and λ (Greenwich/Date Line)
+    // Solve spherical triangle using law of cosines (cosine rule for sides), see:
+    //   https://en.wikipedia.org/wiki/Spherical_law_of_cosines
     const double
-            phi = p.lat() * Constants::degreesToRadians(),
-            lambda = lambda_deg * Constants::degreesToRadians(),
+            a = distanceInMeters(u, v, 1.),
+            b = distanceInMeters(u, w, 1.),
+            c = distanceInMeters(v, w, 1.),
+            cos_C = - (cos(a) * cos(b) - cos(c)) /  (sin(a) * sin(b));
 
-            sin_phi = std::sin(phi),
-            cos_phi = std::sqrt(1. - sin_phi * sin_phi),
-            sin_lambda = std::abs(lambda_deg) < 180. ? std::sin(lambda) : 0.,
-            cos_lambda = std::abs(lambda_deg) >  90. ? std::cos(lambda) : std::sqrt(1. - sin_lambda * sin_lambda);
-
-    if (a == b) {
-        // no eccentricity
-        return PointXYZ(
-                    (a + height) * cos_phi * cos_lambda,
-                    (a + height) * cos_phi * sin_lambda,
-                    (a + height) * sin_phi );
-    }
-
-    const double N_phi = a * a / std::sqrt(a * a * cos_phi * cos_phi + b * b * sin_phi * sin_phi);
-    return PointXYZ(
-        (N_phi + height) * cos_phi * cos_lambda,
-        (N_phi + height) * cos_phi * sin_lambda,
-        (N_phi * (b * b) / (a * a) + height) * sin_phi );
+    return acos( min(1., max( -1., cos_C )));
 }
 
 
-//------------------------------------------------------------------------------------------------------
+double Sphere::course(const PointLonLat& p1, const PointLonLat& p2) {
+    using namespace std;
+
+    // Solve spherical version of the inverse geodesic problem, see:
+    //  https://en.wikipedia.org/wiki/Great-circle_navigation#Course_and_distance
+    const double
+            lambda12 = Constants::degreesToRadians() * between_m180_and_p180(p2.lon() - p1.lon()),
+            phi1     = Constants::degreesToRadians() * p1.lat(),
+            phi2     = Constants::degreesToRadians() * p2.lat(),
+            a1 = atan2( sin(lambda12),
+                        cos(phi1) * tan(phi2) - sin(phi1) * cos(lambda12) );
+
+    return a1;
+}
 
 
 double Sphere::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
@@ -98,9 +92,9 @@ double Sphere::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
     double lambda_deg = between_m180_and_p180(p2.lon() - p1.lon());
 
     const double
-            phi1 = p1.lat() * Constants::degreesToRadians(),
-            phi2 = p2.lat() * Constants::degreesToRadians(),
-            lambda = lambda_deg * Constants::degreesToRadians(),
+            phi1   = Constants::degreesToRadians() * p1.lat(),
+            phi2   = Constants::degreesToRadians() * p2.lat(),
+            lambda = Constants::degreesToRadians() * lambda_deg,
 
             cos_phi1 = std::cos(phi1),
             cos_phi2 = std::cos(phi2),
@@ -150,71 +144,100 @@ double Sphere::distanceInMeters(const PointXYZ& p1, const PointXYZ& p2, const do
 }
 
 
-double Sphere::greatCircleLatitudeGivenLongitude(const PointLonLat& p1, const PointLonLat& p2, const double& longitude, const double& radius) {
-    ASSERT(radius > 0.);
+void Sphere::greatCircleIntersectionAtEquator(const PointLonLat& p1, const PointLonLat& p2, double& lambda0, double& alpha0) {
     using namespace std;
-    using namespace eckit::types;
 
-    if (is_approximately_equal(p1.lat(), p2.lat())) {
-        return p1.lat();
+    // Estimate great cicle intersection at the equator (lambda0) then solve direct geodesic problem, see:
+    //   https://en.wikipedia.org/wiki/Great-circle_navigation#Finding_way-points
+    const double
+            lambda1 = Constants::degreesToRadians() * p1.lon(),
+            phi1    = Constants::degreesToRadians() * p1.lat(),
+
+            tan_phi1 = tan(phi1),
+            alpha1 = Sphere::course(p1, p2);
+
+    const double
+            cos_alpha1 = cos(alpha1),
+            sin_alpha1 = sin(alpha1),
+            tan_alpha0 = (sin_alpha1 * cos(phi1))
+                   / sqrt(cos_alpha1 * cos_alpha1 + sin_alpha1 * sin_alpha1 * sin(phi1) * sin(phi1)),
+            tan_sigma01 = atan(tan_phi1 / cos_alpha1);
+
+    alpha0  = atan(tan_alpha0);
+    lambda0 = lambda1 - atan(sin(alpha0) * tan_sigma01);
+}
+
+
+double Sphere::greatCircleLatitudeGivenLongitude(const PointLonLat& p1, const PointLonLat& p2, const double& longitude) {
+    using namespace std;
+
+    // Estimate great cicle intersection at the equator (lambda0) then solve direct geodesic problem
+    const double
+            lambda  = Constants::degreesToRadians() * longitude,
+            lambda1 = Constants::degreesToRadians() * p1.lon(),
+            phi1    = Constants::degreesToRadians() * p1.lat();
+
+    const double a1 = course(p1, p2);
+    if (eckit::types::is_approximately_equal(a1, M_PI_2)) {
+        return atan(sin(lambda - lambda1) * tan(phi1));
     }
 
-    const double
-            lambda   = Constants::degreesToRadians() * longitude,
-            lambda1  = Constants::degreesToRadians() * p1.lon(),
-            lambda12 = Constants::degreesToRadians() * between_m180_and_p180(p2.lon() - p1.lon()),
-            phi1     = Constants::degreesToRadians() * p1.lat(),
-            phi2     = Constants::degreesToRadians() * p2.lat();
-
-    // 1. solve spherical triangle using the North pole (two sides and the included angle given, SAS),
-    // 2. estimate great cicle intersection at the equator (lambda0),
-    // 3. finally solve direct geodesic problem
-    // See:
-    //   https://en.wikipedia.org/wiki/Solution_of_triangles#Two_sides_and_the_included_angle_given
-    //   https://en.wikipedia.org/wiki/Great-circle_navigation#Finding_way-points
-    static const PointLonLat NP(0., 90.);
+    double lambda0;
+    double a0;
+    greatCircleIntersectionAtEquator(p1, p2, lambda0, a0);
 
     const double
-            sin_phi1 = sin(phi1),
-            cos_phi1 = cos(phi1),
-            cos_phi2 = cos(phi2),
+            tan_sigma = tan(lambda - lambda0) / sin(a0),
+            sigma = atan(tan_sigma),
+            sin_phi = cos(a0) * sin(sigma);
 
-            a = distanceInMeters(NP, p1, radius),
-            b = distanceInMeters(NP, p2, radius),
-            c = sqrt(a * a + b * b - 2 * a * b * cos(lambda12)),
+    const double latitude = Constants::radiansToDegrees() * (M_PI_2 - asin(sin_phi));
 
-            a1 = acos( min(1., max(-1., (b * b + c * c - a * a) / (2. * b * c) ))),
-            cos_a1 = cos(a1),
-            sin_a1 = sin(a1);
-
-    // don't handle points at the poles nor great circles that are meridians
-    ASSERT(!is_approximately_equal(cos_phi1, 0.));
-    ASSERT(!is_approximately_equal(cos_phi2, 0.));
-    ASSERT(!is_approximately_equal(sin_a1, 0.));
-
-    const double
-            tan_s01 = is_approximately_equal(a1, M_PI_2) ? 0. : tan(phi1) / cos(a1),
-            tan_a0 = (sin_a1 * cos_phi1)
-                   / sqrt(cos_a1 * cos_a1 + sin_a1 * sin_a1 * sin_phi1 * sin_phi1),
-            sin_a0 = sin(atan(tan_a0)),
-
-            lambda01 = atan(sin_a0 * tan_s01),
-            lambda0  = lambda1 - lambda01,
-
-            tan_phi = sin(lambda - lambda0) / tan_a0,
-            phi = atan(tan_phi);
+    static int i = 1;
+    std::cout << "h.append(ax.plot("
+                 "[" << p1.lon() << ", " << longitude << ", " << p2.lon() << "], "
+                 "[" << p1.lat() << ", " << latitude  << ", " << p2.lat() << "], "
+                 "'-o', label='Check " << i << "')[0])"
+              << std::endl;
+    ++i;
 
 
-std::cout << "    \"\\n\" \"ax.plot([" << p1.lon() << "," << lambda0 * Constants::radiansToDegrees() << "," << p2.lon() << "], [" << p1.lat() << ",0.," << p2.lat() << "], '-o')\"" << std::endl;
-
-
-
-    return Constants::radiansToDegrees() * phi;
+    return latitude;
 }
 
 
 PointXYZ Sphere::convertSphericalToCartesian(const PointLonLat& p, const double& radius, const double& height) {
-    return EllipsoidOfRevolution::convertEllipsoidalToCartesian(p, radius, radius, height);
+    ASSERT(radius > 0.);
+    ASSERT(-90. <= p.lat() && p.lat() <= 90.);
+
+    // See https://en.wikipedia.org/wiki/Reference_ellipsoid#Coordinates
+    // numerical conditioning for both ϕ (poles) and λ (Greenwich/Date Line)
+    const double
+            &a = radius,
+            &b = radius,
+
+            lambda_deg = between_m180_and_p180(p.lon()),
+            lambda = Constants::degreesToRadians() * lambda_deg,
+            phi    = Constants::degreesToRadians() * p.lat(),
+
+            sin_phi = std::sin(phi),
+            cos_phi = std::sqrt(1. - sin_phi * sin_phi),
+            sin_lambda = std::abs(lambda_deg) < 180. ? std::sin(lambda) : 0.,
+            cos_lambda = std::abs(lambda_deg) >  90. ? std::cos(lambda) : std::sqrt(1. - sin_lambda * sin_lambda);
+
+    if (a == b) {
+        // no eccentricity
+        return PointXYZ(
+                    (a + height) * cos_phi * cos_lambda,
+                    (a + height) * cos_phi * sin_lambda,
+                    (a + height) * sin_phi );
+    }
+
+    const double N_phi = a * a / std::sqrt(a * a * cos_phi * cos_phi + b * b * sin_phi * sin_phi);
+    return PointXYZ(
+        (N_phi + height) * cos_phi * cos_lambda,
+        (N_phi + height) * cos_phi * sin_lambda,
+        (N_phi * (b * b) / (a * a) + height) * sin_phi );
 }
 
 
@@ -234,6 +257,16 @@ PointLonLat Sphere::convertCartesianToSpherical(const PointXYZ& p, const double&
 
 
 //------------------------------------------------------------------------------------------------------
+
+
+double Earth::azimuth(const PointLonLat& source, const PointLonLat& target, const PointLonLat& reference) {
+    return Sphere::azimuth(source, target, reference);
+}
+
+
+double Earth::course(const PointLonLat& source, const PointLonLat& target) {
+    return Sphere::course(source, target);
+}
 
 
 double Earth::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
@@ -256,8 +289,13 @@ double Earth::distanceInMeters(const PointXYZ& p1, const PointXYZ& p2, const dou
 }
 
 
-double Earth::greatCircleLatitudeGivenLongitude(const PointLonLat& p1, const PointLonLat& p2, const double& longitude, const double& radius) {
-    return Sphere::greatCircleLatitudeGivenLongitude(p1, p2, longitude, radius);
+void Earth::greatCircleIntersectionAtEquator(const PointLonLat& p1, const PointLonLat& p2, double& lambda0, double& alpha0) {
+    Sphere::greatCircleIntersectionAtEquator(p1, p2, lambda0, alpha0);
+}
+
+
+double Earth::greatCircleLatitudeGivenLongitude(const PointLonLat& p1, const PointLonLat& p2, const double& longitude) {
+    return Sphere::greatCircleLatitudeGivenLongitude(p1, p2, longitude);
 }
 
 
