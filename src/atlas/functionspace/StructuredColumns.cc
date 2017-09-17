@@ -16,6 +16,7 @@
 #include "eckit/utils/MD5.h"
 
 #include "atlas/mesh/Mesh.h"
+#include "atlas/field/detail/FieldImpl.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/util/Checksum.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -647,6 +648,17 @@ Field StructuredColumns::createField( const eckit::Configuration& options ) cons
     set_field_metadata(options,field);
     return field;
 }
+
+Field StructuredColumns::createField(
+    const Field& other, 
+    const eckit::Configuration& config ) const
+{
+  return createField( 
+    option::datatype ( other.datatype()  ) |
+    option::levels   ( other.levels()    ) |
+    option::variables( other.variables() ) |
+    config );
+}
 // ----------------------------------------------------------------------------
 
 
@@ -912,11 +924,6 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
   functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {
 }
 
-Field StructuredColumns::createField( const eckit::Configuration& options ) const
-{
-  return functionspace_->createField( options );
-}
-
 void StructuredColumns::gather( const FieldSet& local, FieldSet& global ) const {
   functionspace_->gather(local,global);
 }
@@ -956,7 +963,7 @@ std::string StructuredColumns::checksum( const Field& field) const {
 extern "C"
 {
 
-const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid, const util::Config* config)
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid, const eckit::Configuration* config)
 {
   ATLAS_ERROR_HANDLING(
     return new detail::StructuredColumns( Grid(grid), grid::Partitioner(), *config );

@@ -221,6 +221,13 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
 
+fs = atlas_functionspace_NodeColumns(mesh,levels=5)
+field = fs%create_field(atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
 call fs%final()
 call mesh%final()
 call grid%final()
@@ -454,6 +461,14 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
 
+fs = atlas_functionspace_EdgeColumns(mesh,levels=5)
+field = fs%create_field(atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+
 call fs%final()
 call edges%final()
 call mesh%final()
@@ -494,7 +509,14 @@ enddo
 call fs%halo_exchange(field)
 
 
+fs = atlas_functionspace_StructuredColumns(grid,levels=5)
+field = fs%create_field(atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
+
+
 call field_xy%final()
 call fs%final()
 call grid%final()

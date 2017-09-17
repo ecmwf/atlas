@@ -64,7 +64,7 @@ END TYPE atlas_functionspace_Spectral
 
 interface atlas_functionspace_Spectral
   module procedure atlas_functionspace_Spectral__cptr
-  module procedure atlas_functionspace_Spectral__truncation
+  module procedure atlas_functionspace_Spectral__config
   module procedure atlas_functionspace_Spectral__trans
 end interface
 
@@ -88,22 +88,41 @@ subroutine atlas_functionspace_Spectral__final(this)
 end subroutine
 #endif
 
-function atlas_functionspace_Spectral__truncation(truncation) result(functionspace)
+function atlas_functionspace_Spectral__config(truncation,levels) result(this)
   use atlas_functionspace_spectral_c_binding
-  type(atlas_functionspace_Spectral) :: functionspace
-  integer(c_int), intent(in) :: truncation
-  functionspace = atlas_functionspace_Spectral__cptr( &
-    & atlas__SpectralFunctionSpace__new__truncation(truncation) )
-  call functionspace%return()
+  type(atlas_functionspace_Spectral) :: this
+  integer(c_int), intent(in)           :: truncation
+  integer(c_int), intent(in), optional :: levels
+  
+  type(atlas_Config) :: options
+  options = atlas_Config()
+
+  call options%set("truncation",truncation)
+  if( present(levels) ) call options%set("levels",levels)
+  
+  this = atlas_functionspace_Spectral__cptr( &
+    & atlas__SpectralFunctionSpace__new__config(options%c_ptr()) )
+  call options%final()
+    
+  call this%return()
 end function
 
-function atlas_functionspace_Spectral__trans(trans) result(functionspace)
+function atlas_functionspace_Spectral__trans(trans,levels) result(this)
   use atlas_functionspace_spectral_c_binding
-  type(atlas_functionspace_Spectral) :: functionspace
+  type(atlas_functionspace_Spectral) :: this
   type(atlas_Trans), intent(in) :: trans
-  functionspace = atlas_functionspace_Spectral__cptr( &
-    & atlas__SpectralFunctionSpace__new__trans(trans%c_ptr()) )
-  call functionspace%return()
+  integer(c_int), intent(in), optional :: levels
+  
+  type(atlas_Config) :: options
+  options = atlas_Config()
+
+  if( present(levels) ) call options%set("levels",levels)
+
+  this = atlas_functionspace_Spectral__cptr( &
+    & atlas__SpectralFunctionSpace__new__trans(trans%c_ptr(), options%c_ptr() ) )
+  call options%final()
+  
+  call this%return()
 end function
 
 

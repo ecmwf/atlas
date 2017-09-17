@@ -10,14 +10,14 @@
 
 #pragma once
 
-#include "atlas/library/config.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Earth.h"
 #include "atlas/array/DataType.h"
 
 // ----------------------------------------------------------------------------
 
 namespace atlas {
-namespace field {
+namespace option {
 
 // ----------------------------------------------------------------------------
 
@@ -95,16 +95,26 @@ public:
   }
 };
 
-class nolevels : public util::Config
+class radius : public util::Config
 {
 public:
-  nolevels()
+  radius(double _radius)
   {
-    set("nolevels",true);
+    set("radius",_radius);
   }
+  radius(const std::string& key = "Earth")
+  {
+    if( key == "Earth" ) {
+      set("radius",util::Earth::radiusInMeters());
+    } else {
+      NOTIMP;
+    }
+  }
+  
 };
+
 
 // ----------------------------------------------------------------------------
 
-} // namespace field
+} // namespace option
 } // namespace atlas

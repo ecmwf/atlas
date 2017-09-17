@@ -159,8 +159,8 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     FieldSet src_fields;
     {
-        src_fields.add( src_functionspace.createField<double>( field::name("funny_scalar_1") ) );
-        src_fields.add( src_functionspace.createField<double>( field::name("funny_scalar_2") ) );
+        src_fields.add( src_functionspace.createField<double>( option::name("funny_scalar_1") ) );
+        src_fields.add( src_functionspace.createField<double>( option::name("funny_scalar_2") ) );
 
         // Helper constants
         const double
@@ -195,7 +195,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     FieldSet tgt_fields;
     for (size_t i = 0; i < src_fields.size(); ++i) {
-        tgt_fields.add( tgt_functionspace.createField<double>( field::name(src_fields[i].name())) );
+        tgt_fields.add( tgt_functionspace.createField<double>( option::name(src_fields[i].name())) );
     }
 
     src_functionspace.haloExchange(src_fields);

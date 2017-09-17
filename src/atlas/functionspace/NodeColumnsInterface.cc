@@ -10,6 +10,7 @@
 
 #include "atlas/functionspace/NodeColumnsInterface.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/field/detail/FieldImpl.h"
 
 namespace atlas {
 namespace functionspace {
@@ -22,18 +23,11 @@ namespace detail {
 // ----------------------------------------------------------------------
 
 extern "C" {
-const NodeColumns* atlas__NodesFunctionSpace__new ( Mesh::Implementation* mesh, int halo )
+const NodeColumns* atlas__NodesFunctionSpace__new ( Mesh::Implementation* mesh, const eckit::Configuration* config )
 {
   ASSERT(mesh);
   Mesh m(mesh);
-  return new NodeColumns(m,mesh::Halo(halo));
-}
-
-const NodeColumns* atlas__NodesFunctionSpace__new_mesh ( Mesh::Implementation* mesh )
-{
-  ASSERT(mesh);
-  Mesh m(mesh);
-  return new NodeColumns(m);
+  return new NodeColumns(m,*config);
 }
 
 void atlas__NodesFunctionSpace__delete (NodeColumns* This)
@@ -80,7 +74,7 @@ field::FieldImpl* atlas__NodesFunctionSpace__create_field_template (const NodeCo
   ASSERT(options);
   FieldImpl* field;
   {
-    Field f = This->createField(field::datatype(field_template->datatype())|field::levels(field_template->levels())|field::variables(field_template->variables())|*options);
+    Field f = This->createField( Field(field_template), *options );
     field = f.get();
     field->attach();
   }

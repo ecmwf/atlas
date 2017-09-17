@@ -36,17 +36,20 @@ class Spectral : public FunctionSpaceImpl
 {
 public:
 
-  Spectral(const size_t truncation);
+  Spectral( const eckit::Configuration& );
 
-  Spectral(trans::Trans& );
+  Spectral(const size_t truncation, const eckit::Configuration& = util::NoConfig() );
+
+  Spectral(trans::Trans&, const eckit::Configuration& = util::NoConfig() );
 
   virtual ~Spectral();
 
   virtual std::string name() const { return "Spectral"; }
 
   /// @brief Create a spectral field
-  Field createField( const eckit::Configuration& = util::NoConfig() ) const;
-  template <typename DATATYPE> Field createField( const eckit::Configuration& = util::NoConfig() ) const;
+  using FunctionSpaceImpl::createField;
+  virtual Field createField( const eckit::Configuration& ) const;
+  virtual Field createField( const Field&, const eckit::Configuration& ) const;
 
   void gather( const FieldSet&, FieldSet& ) const;
   void gather( const Field&,    Field& ) const;
@@ -82,6 +85,7 @@ private: // data
   size_t truncation_;
 
   trans::Trans* trans_;
+  bool delete_trans_{false};
 
 };
 
@@ -93,16 +97,12 @@ class Spectral : public FunctionSpace {
 public:
 
   Spectral( const FunctionSpace& );
-  Spectral( const size_t truncation );
-  Spectral( trans::Trans& );
-
+  Spectral( const eckit::Configuration& );
+  Spectral( const size_t truncation, const eckit::Configuration& = util::NoConfig() );
+  Spectral( trans::Trans&, const eckit::Configuration& = util::NoConfig() );
 
   operator bool() const { return valid(); }
   bool valid() const { return functionspace_; }
-
-  /// @brief Create a spectral field
-  Field createField( const eckit::Configuration& = util::NoConfig() ) const;
-  template <typename DATATYPE> Field createField( const eckit::Configuration& = util::NoConfig() ) const;
 
   void gather( const FieldSet&, FieldSet& ) const;
   void gather( const Field&,    Field& ) const;
@@ -130,8 +130,8 @@ private:
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  const detail::Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation);
-  const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans);
+  const detail::Spectral* atlas__SpectralFunctionSpace__new__config ( const eckit::Configuration* config );
+  const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans,  const eckit::Configuration* config );
   void atlas__SpectralFunctionSpace__delete (detail::Spectral* This);
   field::FieldImpl* atlas__fs__Spectral__create_field(const detail::Spectral* This, const eckit::Configuration* options);
   void atlas__SpectralFunctionSpace__gather(const detail::Spectral* This, const field::FieldImpl* local, field::FieldImpl* global);

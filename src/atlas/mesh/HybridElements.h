@@ -22,6 +22,8 @@
 #include "atlas/field/Field.h"
 #include "atlas/util/Metadata.h"
 
+#include "atlas/field/detail/FieldImpl.h" // only included for Fortran interface
+
 namespace atlas { class Mesh; }
 namespace atlas { namespace mesh  { class ElementType; } }
 namespace atlas { namespace mesh  { class Elements; } }

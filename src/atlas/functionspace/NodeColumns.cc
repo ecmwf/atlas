@@ -309,6 +309,17 @@ Field NodeColumns::createField(
   return field;
 }
 
+Field NodeColumns::createField(
+    const Field& other, 
+    const eckit::Configuration& config ) const
+{
+  return createField( 
+    option::datatype ( other.datatype()  ) |
+    option::levels   ( other.levels()    ) |
+    option::variables( other.variables() ) |
+    config );
+}
+
 namespace {
 template<int RANK>
 void dispatch_haloExchange( const Field& field, const parallel::HaloExchange& halo_exchange )
@@ -767,7 +778,7 @@ template< typename DATATYPE >
 void dispatch_order_independent_sum_2d( const NodeColumns& fs , const Field& field, DATATYPE& result, size_t& N )
 {
   size_t root = 0;
-  Field global = fs.createField<DATATYPE>(field::name("global")|field::variables(field.variables())|field::levels(field.levels())|field::global() );
+  Field global = fs.createField( field , option::global() );
   fs.gather(field,global);
   result = std::accumulate(array::make_storageview<DATATYPE>(global).data(),
                            array::make_storageview<DATATYPE>(global).data()+global.size(),0.);
@@ -782,7 +793,7 @@ void dispatch_order_independent_sum( const NodeColumns& fs , const Field& field,
   {
     const array::LocalView<T,2> arr = make_leveled_scalar_view<T>(field);
 
-    Field surface_field = fs.createField<T>(field::name("surface"));
+    Field surface_field = fs.createField<T>(option::name("surface"));
     array::LocalView<T,1> surface = make_surface_scalar_view<T>( surface_field );
 
     for( size_t n=0; n<arr.shape(0); ++n ) {
@@ -844,7 +855,7 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& fiel
   size_t nvar = field.stride(0);
   result.resize(nvar);
   for( size_t j=0; j<nvar; ++j ) result[j] = 0.;
-  Field global = fs.createField<DATATYPE>(field::name("global")|field::variables(field.variables())|field::levels(field.levels())| field::global() );
+  Field global = fs.createField<DATATYPE>(option::name("global")|option::variables(field.variables())|option::levels(field.levels())| option::global() );
   fs.gather(field,global);
   if( parallel::mpi::comm().rank() == 0 ) {
     const array::LocalView<DATATYPE,2> glb( array::make_storageview<DATATYPE>(global).data(),
@@ -868,7 +879,7 @@ void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, 
     const size_t nvar = field.stride(1);
     const array::LocalView<T,3> arr = make_leveled_view<T>(field);
 
-    Field surface_field = fs.createField<T>(field::name("surface")|field::variables(nvar));
+    Field surface_field = fs.createField<T>(option::name("surface")|option::variables(nvar));
     array::LocalView<T,2> surface = surface_view<T>( surface_field );
 
     for( size_t n=0; n<arr.shape(0); ++n ) {
@@ -948,7 +959,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
   Log::info() << sumfield << std::endl;
 
   size_t root = 0;
-  Field global = fs.createField(field::datatype(field.datatype())|field::name("global")|field::variables(field.variables())|field::levels(field.levels())|field::global());
+  Field global = fs.createField(option::datatype(field.datatype())|option::name("global")|option::variables(field.variables())|option::levels(field.levels())|option::global());
 
   Log::info() << global << std::endl;
 
@@ -1801,9 +1812,9 @@ void mean_and_standard_deviation( const NodeColumns& fs, const Field& field, T& 
 {
   mean(fs,field,mu,N);
   Field squared_diff_field = fs.createField(
-    field::name("sqr_diff") |
-    field::datatype(field.datatype()) |
-    field::levels( field.levels() ) );
+    option::name("sqr_diff") |
+    option::datatype(field.datatype()) |
+    option::levels( field.levels() ) );
   
   array::LocalView<T,2> squared_diff = make_leveled_scalar_view<T>( squared_diff_field );
   array::LocalView<T,2> values       = make_leveled_scalar_view<T>( field );
@@ -1822,7 +1833,7 @@ template< typename T >
 void mean_and_standard_deviation( const NodeColumns& fs, const Field& field, std::vector<T>& mu, std::vector<T>& sigma, size_t& N )
 {
   mean(fs,field,mu,N);
-  Field squared_diff_field = fs.createField<T>(field::name("sqr_diff")|field::levels(field.levels())|field::variables(field.variables()));
+  Field squared_diff_field = fs.createField<T>(option::name("sqr_diff")|option::levels(field.levels())|option::variables(field.variables()));
   array::LocalView<T,3> squared_diff = make_leveled_view<T>( squared_diff_field );
   array::LocalView<T,3> values = make_leveled_view<T>( field );
 
@@ -1844,7 +1855,7 @@ template< typename T >
 void dispatch_mean_and_standard_deviation_per_level( const NodeColumns& fs, const Field& field, Field& mean, Field& stddev, size_t& N )
 {
   dispatch_mean_per_level<T>(fs,field,mean,N);
-  Field squared_diff_field = fs.createField<T>(field::name("sqr_diff")|field::levels(field.levels())|field::variables(field.variables()));
+  Field squared_diff_field = fs.createField<T>(option::name("sqr_diff")|option::levels(field.levels())|option::variables(field.variables()));
   array::LocalView<T,3> squared_diff = make_leveled_view<T>( squared_diff_field );
   array::LocalView<T,3> values = make_leveled_view<T>( field );
   array::LocalView<T,2> mu( array::make_storageview<T>(mean).data(), array::make_shape(values.shape(1),values.shape(2)) );
@@ -2095,10 +2106,6 @@ const Mesh& NodeColumns::mesh() const {
 
 mesh::Nodes& NodeColumns::nodes() const{
   return functionspace_->nodes();
-}
-
-Field NodeColumns::createField(const eckit::Configuration& config) const {
-  return functionspace_->createField(config);
 }
 
 // -- Parallelisation aware methods

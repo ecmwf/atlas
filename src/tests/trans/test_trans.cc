@@ -89,13 +89,13 @@ CASE( "test_trans_distribution_matches_atlas" )
 
   EXPECT( grid::StructuredGrid(g).ny() == 160 );
 
-  trans::Trans trans( g );
-
-  EXPECT( trans.nsmax() == 0 );
-
   auto trans_partitioner = new TransPartitioner();
   grid::Partitioner partitioner( trans_partitioner );
   grid::Distribution distribution( g, partitioner );
+
+  trans::Trans trans( g );
+
+  EXPECT( trans.nsmax() <= 0 );
 
   // -------------- do checks -------------- //
   EXPECT( trans.nproc() ==  parallel::mpi::comm().size() );
@@ -129,16 +129,15 @@ CASE( "test_trans_distribution_matches_atlas" )
   }
 }
 
-
 CASE( "test_trans_partitioner" )
 {
   Log::info() << "test_trans_partitioner" << std::endl;
   // Create grid and trans object
   Grid g( "N80" );
 
-  trans::Trans trans( g, 0 );
+  trans::Trans trans( g );
 
-  EXPECT( trans.nsmax() == 0 );
+  EXPECT( trans.nsmax() <= 0 );
   EXPECT( trans.ngptotg() == g.size() );
 }
 
@@ -152,7 +151,6 @@ CASE( "test_trans_options" )
   Log::info() << "trans_opts = " << opts << std::endl;
 }
 
-
 CASE( "test_distspec" )
 {
   trans::Trans::Options p;
@@ -162,7 +160,7 @@ CASE( "test_distspec" )
     p.set_write("cached_legendre_coeffs");
 #endif
   p.set_flt(false);
-  trans::Trans trans(400, 159, p);
+  trans::Trans trans( Grid("F400"), 159, p);
   Log::info() << "Trans initialized" << std::endl;
   std::vector<double> rspecg;
   std::vector<int   > nfrom;
@@ -190,6 +188,35 @@ CASE( "test_distspec" )
   Log::info() << "end test_distspec" << std::endl;
 }
 
+CASE( "test_distspec_speconly" )
+{
+  trans::Trans::Options p;
+
+  p.set_flt(false);
+  trans::Trans trans( 159, p);
+  Log::info() << "Trans initialized" << std::endl;
+  std::vector<double> rspecg;
+  std::vector<int   > nfrom;
+  int nfld;
+  Log::info() << "Read rspecg" << std::endl;
+  read_rspecg(trans,rspecg,nfrom,nfld);
+
+
+  std::vector<double> rspec(nfld*trans.nspec2());
+  std::vector<int> nto(nfld,1);
+  std::vector<double> specnorms(nfld,0);
+
+  trans.distspec( nfld, nfrom.data(), rspecg.data(), rspec.data() );
+  trans.specnorm( nfld, rspec.data(), specnorms.data() );
+
+  if( parallel::mpi::comm().rank() == 0 ) {
+    EXPECT( eckit::types::is_approximately_equal( specnorms[0], 1., 1.e-10 ));
+    EXPECT( eckit::types::is_approximately_equal( specnorms[1], 2., 1.e-10 ));
+  }
+
+  Log::info() << "end test_distspec_only" << std::endl;
+}
+
 CASE( "test_distribution" )
 {
   Grid g( "O80" );
@@ -213,7 +240,6 @@ CASE( "test_distribution" )
   }
 
 }
-
 
 CASE( "test_generate_mesh" )
 {
@@ -265,8 +291,8 @@ CASE( "test_spectral_fields" )
   functionspace::NodeColumns nodal (m);
   functionspace::Spectral spectral (trans);
 
-  Field spf = spectral.createField<double>(field::name("spf"));
-  Field gpf = nodal.   createField<double>(field::name("gpf"));
+  Field spf = spectral.createField<double>(option::name("spf"));
+  Field gpf = nodal.   createField<double>(option::name("gpf"));
 
 
   EXPECT_NO_THROW( trans.dirtrans(nodal,gpf,spectral,spf) );
@@ -294,10 +320,10 @@ CASE( "test_nomesh" )
   functionspace::Spectral          spectral   (trans);
   functionspace::StructuredColumns gridpoints (g);
 
-  Field spfg = spectral.  createField<double>(field::name("spf") | field::global());
-  Field spf  = spectral.  createField<double>(field::name("spf"));
-  Field gpf  = gridpoints.createField<double>(field::name("gpf"));
-  Field gpfg = gridpoints.createField<double>(field::name("gpf") | field::global());
+  Field spfg = spectral.  createField<double>(option::name("spf") | option::global());
+  Field spf  = spectral.  createField<double>(option::name("spf"));
+  Field gpf  = gridpoints.createField<double>(option::name("gpf"));
+  Field gpfg = gridpoints.createField<double>(option::name("gpf") | option::global());
 
   array::ArrayView<double,1> spg = array::make_view<double,1>(spfg);
   if( parallel::mpi::comm().rank() == 0 ) {

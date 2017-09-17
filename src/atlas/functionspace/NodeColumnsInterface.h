@@ -20,8 +20,7 @@ namespace functionspace {
 namespace detail {
 
 extern "C" {
-const NodeColumns* atlas__NodesFunctionSpace__new (Mesh::Implementation* mesh, int halo);
-const NodeColumns* atlas__NodesFunctionSpace__new_mesh (Mesh::Implementation* mesh);
+const NodeColumns* atlas__NodesFunctionSpace__new (Mesh::Implementation* mesh, const eckit::Configuration* config );
 void atlas__NodesFunctionSpace__delete (NodeColumns* This);
 int atlas__NodesFunctionSpace__nb_nodes(const NodeColumns* This);
 const Mesh::Implementation* atlas__NodesFunctionSpace__mesh(const NodeColumns* This);

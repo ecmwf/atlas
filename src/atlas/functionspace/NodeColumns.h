@@ -15,7 +15,7 @@
 #include "atlas/mesh/Halo.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/field/Options.h"
+#include "atlas/option.h"
 #include "atlas/functionspace/FunctionSpace.h"
 
 // ----------------------------------------------------------------------------
@@ -67,11 +67,13 @@ public:
     mesh::Nodes& nodes() const { return nodes_; }
 
 // -- Field creation methods
+    
+    using FunctionSpaceImpl::createField;
 
     /// @brief Create a field
-    template< typename DATATYPE > Field createField( const eckit::Configuration& = util::NoConfig()) const;
+    virtual Field createField(const eckit::Configuration&) const;
 
-    Field createField(const eckit::Configuration&) const;
+    virtual Field createField(const Field&, const eckit::Configuration& ) const;
 
 // -- Parallelisation aware methods
 
@@ -314,14 +316,6 @@ private:
 
 // -------------------------------------------------------------------
 
-template< typename DATATYPE >
-Field NodeColumns::createField( const eckit::Configuration& options ) const
-{
-    eckit::LocalConfiguration new_options(options);
-    new_options.set("datatype",array::make_datatype<DATATYPE>().kind());
-    return createField(new_options);
-}
-
 template< typename Value >
 void NodeColumns::sum( const Field& field, Value& sum, size_t& N ) const {
   typename FieldStatisticsSelector<Value>::type(this).sum(field,sum,N);
@@ -451,13 +445,6 @@ public:
     size_t levels() const;
 
     mesh::Nodes& nodes() const;
-
-// -- Field creation methods
-    
-    /// @brief Create a field
-    template< typename DATATYPE > Field createField( const eckit::Configuration& = util::NoConfig()) const;
-
-    Field createField(const eckit::Configuration&) const;
 
 // -- Parallelisation aware methods
 
@@ -619,11 +606,6 @@ private:
 };
 
 // -------------------------------------------------------------------
-
-template< typename DATATYPE >
-Field NodeColumns::createField( const eckit::Configuration& options ) const {
-    return functionspace_->createField<DATATYPE>(options);
-}
 
 inline size_t NodeColumns::levels() const {
     return functionspace_->levels();

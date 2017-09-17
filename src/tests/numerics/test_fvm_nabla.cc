@@ -23,6 +23,7 @@
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/numerics/Nabla.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
@@ -99,7 +100,7 @@ void rotated_flow_magnitude(const fvm::Method& fvm, Field& field, const double& 
   const double USCAL = 20.;
   const double pvel = USCAL/radius;
   const double deg2rad = M_PI/180.;
-  
+
   auto lonlat_deg = array::make_view<double,2> (fvm.mesh().nodes().lonlat());
   auto var        = array::make_view<double,2> (field);
 
@@ -143,31 +144,30 @@ CASE( "test_build" )
 CASE( "test_grad" )
 {
   Log::info() << "test_grad" << std::endl;
-  size_t nlev = 1; 
-  const double radius = util::Earth::radiusInMeters();
-//  const double radius = 1.;
+  size_t nlev = 1;
+  auto radius = option::radius("Earth");
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
-  fvm::Method fvm(mesh, util::Config("radius",radius) | field::levels(nlev) );
+  fvm::Method fvm(mesh, radius | option::levels(nlev) );
   Nabla nabla( fvm );
 
   size_t nnodes = mesh.nodes().size();
 
   FieldSet fields;
-  fields.add( fvm.node_columns().createField<double>(field::name("scalar")  ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("rscalar") ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("grad")    | field::variables(2) ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("rgrad")   | field::variables(2) ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("xder")    ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("yder")    ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("rxder")   ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("ryder")   ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("scalar")  ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("rscalar") ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("grad")    | option::variables(2) ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("rgrad")   | option::variables(2) ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("xder")    ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("yder")    ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("rxder")   ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("ryder")   ) );
 
-  BOOST_CHECK_EQUAL( fields["scalar"].rank() , 2 );
-  BOOST_CHECK_EQUAL( fields["grad"].  rank() , 3 );
-  BOOST_CHECK_EQUAL( fields["scalar"].levels() , nlev );
-  BOOST_CHECK_EQUAL( fields["grad"].  levels() , nlev );
+  EXPECT( fields["scalar"].rank()   == 2 );
+  EXPECT( fields["grad"].  rank()   == 3 );
+  EXPECT( fields["scalar"].levels() == nlev );
+  EXPECT( fields["grad"].  levels() == nlev );
   //  fields.add( fvm.createField<double>("exact_yder",nlev) );
 
 //  const double deg2rad = M_PI/180.;
@@ -222,18 +222,18 @@ CASE( "test_grad" )
 CASE( "test_div" )
 {
   Log::info() << "test_div" << std::endl;
-  size_t nlev = 1; 
+  size_t nlev = 1;
   const double radius = util::Earth::radiusInMeters();
 //  const double radius = 1.;
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
-  fvm::Method fvm(mesh, util::Config("radius",radius) | field::levels(nlev) );
+  fvm::Method fvm(mesh, util::Config("radius",radius) | option::levels(nlev) );
   Nabla nabla(fvm);
 
   FieldSet fields;
-  fields.add( fvm.node_columns().createField<double>(field::name("wind") | field::variables(2) ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("div")  ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("wind") | option::variables(2) ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("div")  ) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
@@ -257,26 +257,26 @@ CASE( "test_curl" )
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
-  fvm::Method fvm(mesh, util::Config("radius",radius) | field::levels(nlev) );
+  fvm::Method fvm(mesh, util::Config("radius",radius) | option::levels(nlev) );
   Nabla nabla( fvm );
 
   FieldSet fields;
-  fields.add( fvm.node_columns().createField<double>( field::name("wind") | field::variables(2) ) );
-  fields.add( fvm.node_columns().createField<double>( field::name("vor")  ) );
+  fields.add( fvm.node_columns().createField<double>( option::name("wind") | option::variables(2) ) );
+  fields.add( fvm.node_columns().createField<double>( option::name("vor")  ) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
   nabla.curl(fields["wind"],fields["vor"]);
 
-  fields.add( fvm.node_columns().createField<double>( field::name("windgrad") | field::variables(2*2) ) );
+  fields.add( fvm.node_columns().createField<double>( option::name("windgrad") | option::variables(2*2) ) );
   nabla.gradient(fields["wind"],fields["windgrad"]);
 
-  fields.add( fvm.node_columns().createField<double>( field::name("windX") | field::levels(false) ) );
-  fields.add( fvm.node_columns().createField<double>( field::name("windY") | field::levels(false) ) );
-  fields.add( fvm.node_columns().createField<double>( field::name("windXgradX") ) );
-  fields.add( fvm.node_columns().createField<double>( field::name("windXgradY") ) );
-  fields.add( fvm.node_columns().createField<double>( field::name("windYgradX") ) );
-  fields.add( fvm.node_columns().createField<double>( field::name("windYgradY") ) );
+  fields.add( fvm.node_columns().createField<double>( option::name("windX") | option::levels(false) ) );
+  fields.add( fvm.node_columns().createField<double>( option::name("windY") | option::levels(false) ) );
+  fields.add( fvm.node_columns().createField<double>( option::name("windXgradX") ) );
+  fields.add( fvm.node_columns().createField<double>( option::name("windXgradY") ) );
+  fields.add( fvm.node_columns().createField<double>( option::name("windYgradX") ) );
+  fields.add( fvm.node_columns().createField<double>( option::name("windYgradY") ) );
   auto wind     = array::make_view<double,3>(fields["wind"]);
   auto windgrad = array::make_view<double,3>(fields["windgrad"]);
 
@@ -330,12 +330,12 @@ CASE( "test_lapl" )
   Grid grid(griduid());
   MeshGenerator meshgenerator("structured");
   Mesh mesh = meshgenerator.generate(grid, Distribution(grid,Partitioner("equal_regions")) );
-  fvm::Method fvm(mesh, util::Config("radius",radius) | field::levels(nlev) );
+  fvm::Method fvm(mesh, util::Config("radius",radius) | option::levels(nlev) );
   Nabla nabla( fvm );
 
   FieldSet fields;
-  fields.add( fvm.node_columns().createField<double>(field::name("scal") ) );
-  fields.add( fvm.node_columns().createField<double>(field::name("lapl") ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("scal") ) );
+  fields.add( fvm.node_columns().createField<double>(option::name("lapl") ) );
 
   rotated_flow_magnitude(fvm,fields["scal"],M_PI_2*0.75);
 

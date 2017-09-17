@@ -47,8 +47,8 @@ CASE( "test_functionspace_StructuredColumns_no_halo" )
   config.set("halo",0);
   functionspace::StructuredColumns fs(grid, grid::Partitioner("equal_regions"), config );
 
-  Field field     = fs.createField<double>( field::name("field") );
-  Field field_glb = fs.createField<double>( field::name("field_global") | field::global(root));
+  Field field     = fs.createField<double>( option::name("field") );
+  Field field_glb = fs.createField<double>( option::name("field_global") | option::global(root));
 
   auto value     = array::make_view<double,1>( field );
   auto value_glb = array::make_view<double,1>( field_glb );
@@ -96,7 +96,7 @@ CASE( "test_functionspace_StructuredColumns_halo" )
   config.set("halo",halo);
   functionspace::StructuredColumns fs(grid, grid::Partitioner("equal_regions"), config );
 
-  Field field     = fs.createField<long>( field::name("field") );
+  Field field     = fs.createField<long>( option::name("field") );
 
   auto value = array::make_view<long,1>( field );
   auto xy    = array::make_view<double,2>( fs.xy() );

@@ -217,7 +217,7 @@ END TYPE atlas_functionspace_NodeColumns
 
 interface atlas_functionspace_NodeColumns
   module procedure constructor__cptr
-  module procedure constructor__mesh_halo
+  module procedure constructor
 end interface
 
 !------------------------------------------------------------------------------
@@ -228,28 +228,29 @@ contains
 
 !------------------------------------------------------------------------------
 
-function constructor__cptr(cptr) result(functionspace)
+function constructor__cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
-  type(atlas_functionspace_NodeColumns) :: functionspace
+  type(atlas_functionspace_NodeColumns) :: this
   type(c_ptr), intent(in) :: cptr
-  call functionspace%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
 end function
 
 !------------------------------------------------------------------------------
 
-function constructor__mesh_halo(mesh,halo) result(function_space)
+function constructor(mesh,halo,levels) result(this)
   use atlas_functionspace_NodeColumns_c_binding
-  type(atlas_functionspace_NodeColumns) :: function_space
+  type(atlas_functionspace_NodeColumns) :: this
   type(atlas_Mesh), intent(inout) :: mesh
   integer, intent(in), optional :: halo
-  if( present(halo) ) then
-    function_space = constructor__cptr( &
-      & atlas__NodesFunctionSpace__new(mesh%c_ptr(),halo) )
-  else
-    function_space = constructor__cptr( &
-      & atlas__NodesFunctionSpace__new_mesh(mesh%c_ptr()) )
-  endif
-  call function_space%return()
+  integer, intent(in), optional :: levels
+  type(atlas_Config) :: config
+  config = atlas_Config()
+  if( present(halo) )   call config%set("halo",halo)
+  if( present(levels) ) call config%set("levels",levels)
+  this = constructor__cptr( &
+      & atlas__NodesFunctionSpace__new(mesh%c_ptr(),config%c_ptr()) )
+  call config%final()
+  call this%return()
 end function
 
 !------------------------------------------------------------------------------

@@ -14,7 +14,7 @@
 #include "atlas/mesh/Halo.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/field/Options.h"
+#include "atlas/option.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Config.h"
 
@@ -45,7 +45,7 @@ public:
 
     EdgeColumns( const Mesh&, const mesh::Halo &, const eckit::Configuration & );
     EdgeColumns( const Mesh&, const mesh::Halo & );
-    EdgeColumns( const Mesh& );
+    EdgeColumns( const Mesh&, const eckit::Configuration& = util::NoConfig() );
 
     virtual ~EdgeColumns();
 
@@ -63,11 +63,9 @@ public:
 
 // -- Field creation methods
 
-    template< typename DATATYPE > Field createField(
-              const eckit::Configuration& = util::NoConfig() ) const;
+    virtual Field createField( const eckit::Configuration&) const;
 
-    Field createField(
-        const eckit::Configuration& = util::NoConfig() ) const;
+    virtual Field createField(const Field&, const eckit::Configuration& ) const;
 
 // -- Parallelisation aware methods
 
@@ -115,19 +113,9 @@ private: // data
 
 // -------------------------------------------------------------------
 
-template< typename DATATYPE >
-Field EdgeColumns::createField(
-    const eckit::Configuration& options ) const
-{
-    return createField( field::datatypeT<DATATYPE>() | util::Config(options) );
-}
-
-// -------------------------------------------------------------------------------
-
 extern "C" {
 
-EdgeColumns* atlas__fs__EdgeColumns__new (Mesh::Implementation* mesh, int halo);
-EdgeColumns* atlas__fs__EdgeColumns__new_mesh (Mesh::Implementation* mesh);
+EdgeColumns* atlas__fs__EdgeColumns__new (Mesh::Implementation* mesh, const eckit::Configuration* config);
 void atlas__fs__EdgeColumns__delete (EdgeColumns* This);
 int atlas__fs__EdgeColumns__nb_edges(const EdgeColumns* This);
 Mesh::Implementation* atlas__fs__EdgeColumns__mesh(EdgeColumns* This);
@@ -177,15 +165,6 @@ public:
 
     const mesh::HybridElements& edges() const;
 
-// -- Field creation methods
-
-    /// @brief Create a named scalar field
-    template< typename DATATYPE > Field createField(
-              const eckit::Configuration& = util::NoConfig() ) const;
-
-    Field createField(
-        const eckit::Configuration& = util::NoConfig() ) const;
-
 // -- Parallelisation aware methods
 
     void haloExchange( FieldSet& ) const;
@@ -208,12 +187,6 @@ private:
 
   const detail::EdgeColumns* functionspace_;
 };
-
-template< typename DATATYPE >
-Field EdgeColumns::createField(
-          const eckit::Configuration& config ) const {
-  return functionspace_->createField<DATATYPE>(config);
-}
 
 } // namespace functionspace
 } // namespace atlas

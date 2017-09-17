@@ -89,7 +89,7 @@ END TYPE atlas_functionspace_EdgeColumns
 
 interface atlas_functionspace_EdgeColumns
   module procedure constructor__cptr
-  module procedure constructor__mesh_halo
+  module procedure constructor
 end interface
 
 !------------------------------------------------------------------------------
@@ -106,19 +106,20 @@ end function
 
 !------------------------------------------------------------------------------
 
-function constructor__mesh_halo(mesh,halo) result(function_space)
-  use atlas_functionspace_EdgeColumns_c_binding
-  type(atlas_functionspace_EdgeColumns) :: function_space
-  type(atlas_Mesh), intent(inout) :: mesh
-  integer, intent(in), optional :: halo
-  if( present(halo) ) then
-    function_space = constructor__cptr( &
-      & atlas__fs__EdgeColumns__new(mesh%c_ptr(),halo) )
-  else
-    function_space = constructor__cptr( &
-      & atlas__fs__EdgeColumns__new_mesh(mesh%c_ptr()) )
-  endif
-  call function_space%return()
+function constructor(mesh,halo,levels) result(this)
+    use atlas_functionspace_EdgeColumns_c_binding
+    type(atlas_functionspace_EdgeColumns) :: this
+    type(atlas_Mesh), intent(inout) :: mesh
+    integer, intent(in), optional :: halo
+    integer, intent(in), optional :: levels
+    type(atlas_Config) :: config
+    config = atlas_Config()
+    if( present(halo) )   call config%set("halo",halo)
+    if( present(levels) ) call config%set("levels",levels)    
+    this  = constructor__cptr( &
+      & atlas__fs__EdgeColumns__new(mesh%c_ptr(),config%c_ptr()) )
+    call config%final()
+    call this%return()
 end function
 
 !------------------------------------------------------------------------------

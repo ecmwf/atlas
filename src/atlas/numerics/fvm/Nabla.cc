@@ -462,9 +462,9 @@ void Nabla::curl(const Field& vector_field, Field& curl_field) const
 void Nabla::laplacian(const Field& scalar, Field& lapl) const
 {
   Field grad ( fvm_->node_columns().createField<double>(
-       field::name("grad") |
-       field::levels(scalar.levels()) |
-       field::variables(2) ) );
+       option::name("grad") |
+       option::levels(scalar.levels()) |
+       option::variables(2) ) );
   gradient(scalar,grad);
   if( fvm_->node_columns().halo().size() < 2 )
     fvm_->node_columns().haloExchange(grad);

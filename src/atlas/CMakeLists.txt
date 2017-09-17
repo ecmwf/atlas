@@ -41,6 +41,10 @@ parallel/omp/omp.h
 
 list( APPEND atlas_grid_srcs
 
+option.h
+option/Options.h
+
+
 projection.h
 projection/Projection.cc
 projection/Projection.h
@@ -269,7 +273,8 @@ field/FieldSet.h
 field/FieldSet.cc
 field/State.h
 field/State.cc
-field/Options.h
+field/detail/FieldImpl.h
+field/detail/FieldImpl.cc
 )
 
 list( APPEND atlas_functionspace_srcs

@@ -294,10 +294,10 @@ void AtlasBenchmark::setup()
   build_median_dual_mesh(mesh);
   build_node_to_edge_connectivity(mesh);
 
-  nodes_fs = functionspace::NodeColumns(mesh,field::halo(halo));
+  nodes_fs = functionspace::NodeColumns(mesh,option::halo(halo));
 
-  scalar_field = nodes_fs.createField<double>( field::name("field") | field::levels(nlev) );
-  grad_field   = nodes_fs.createField<double>( field::name("grad")  | field::levels(nlev) | field::variables(3) );
+  scalar_field = nodes_fs.createField<double>( option::name("field") | option::levels(nlev) );
+  grad_field   = nodes_fs.createField<double>( option::name("grad")  | option::levels(nlev) | option::variables(3) );
 
   nnodes = mesh.nodes().size();
   nedges = mesh.edges().size();

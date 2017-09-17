@@ -64,7 +64,7 @@ void TransPartitioner::partition(const Grid& grid, int part[]) const {
     if( not g )
         throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 
-    trans::Trans t(grid,0);
+    trans::Trans t(grid);
     if( nb_partitions() != size_t(t.nproc()) ) {
         std::stringstream msg;
         msg << "Requested to partition grid with TransPartitioner in "<<nb_partitions()<<" partitions, but "

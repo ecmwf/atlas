@@ -18,12 +18,19 @@
 namespace atlas {
 namespace array {
 
-typedef std::vector<size_t> ArrayStrides;
+class ArrayStrides : public std::vector<size_t> {
+private:
+   using Base = std::vector<size_t>;
+public:
+    using Base::Base; // inherit constructors from std::vector<size_t>
+};
 
-inline ArrayStrides make_strides(size_t size1) { return std::vector<size_t>(1,size1); }
-inline ArrayStrides make_strides(size_t size1, size_t size2) { std::vector<size_t> v(2); v[0]=size1; v[1]=size2; return v; }
-inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3) { std::vector<size_t> v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
-inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3, size_t size4) { std::vector<size_t> v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
+// typedef std::vector<size_t> ArrayStrides;
+
+inline ArrayStrides make_strides(size_t size1) { return ArrayStrides(1,size1); }
+inline ArrayStrides make_strides(size_t size1, size_t size2) { ArrayStrides v(2); v[0]=size1; v[1]=size2; return v; }
+inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3) { ArrayStrides v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
+inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3, size_t size4) { ArrayStrides v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
 
 //------------------------------------------------------------------------------------------------------
 

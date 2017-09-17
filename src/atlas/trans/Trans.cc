@@ -422,63 +422,65 @@ namespace trans {
 
 Trans::Trans(const Grid& grid, const Trans::Options& p)
 {
-  size_t nsmax = 0;
-  ctor(grid,nsmax,p);
+  ASSERT( grid.domain().global() );
+  ASSERT( not grid.projection() );
+  size_t grid_only = -1; // triggers grid-only setup
+  ctor(grid,grid_only,p);
 }
 
-Trans::Trans(const long N, const Trans::Options& p)
+Trans::Trans(const Grid& grid, const long truncation, const Trans::Options& p )
 {
-  long nsmax = 0;
-  std::vector<long> pl(2*N,4*N);
-  ctor_rgg(pl.size(),pl.data(), nsmax, p);
+  ASSERT( grid.domain().global() );
+  ASSERT( not grid.projection() );
+  ctor( grid,truncation,p);
 }
 
-Trans::Trans(const Grid& grid, const long nsmax, const Trans::Options& p )
+Trans::Trans(const long truncation, const Trans::Options& p )
 {
-  ctor(grid,nsmax,p);
+  ctor_spectral_only(truncation,p);
 }
 
-Trans::Trans(const long N, const long nsmax, const Trans::Options& p)
-{
-  std::vector<long> pl(2*N,4*N);
-  ctor_rgg(pl.size(),pl.data(), nsmax, p);
-}
 
 Trans::~Trans()
 {
   ::trans_delete(&trans_);
 }
 
-void Trans::ctor( const Grid& grid, long nsmax, const Trans::Options& p ) {
-  ASSERT( grid.domain().global() );
-  ASSERT( not grid.projection() );
+void Trans::ctor( const Grid& grid, long truncation, const Trans::Options& p ) {
 
   if( auto gg = grid::GaussianGrid(grid) ) {
-    ctor_rgg(gg.ny(), gg.nx().data(), nsmax, p);
+    ctor_rgg(gg.ny(), gg.nx().data(), truncation, p);
     return;
   }
   if( auto ll = grid::RegularLonLatGrid(grid) ) {
     if( ll.standard() || ll.shifted() ) {
-      ctor_lonlat( ll.nx(), ll.ny(), nsmax, p );
+      ctor_lonlat( ll.nx(), ll.ny(), truncation, p );
       return;
     }
   }
   throw eckit::NotImplemented("Grid type not supported for Spectral Transforms",Here());
 }
 
-
-void Trans::ctor_rgg(const long nlat, const long pl[], long nsmax, const Trans::Options& p )
+void Trans::ctor_spectral_only(long truncation, const Trans::Options& p )
 {
-  ASSERT( nsmax >= 0 );
+  TRANS_CHECK(::trans_new(&trans_));
+  TRANS_CHECK(::trans_set_trunc(&trans_,truncation));
+  TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
+  TRANS_CHECK(::trans_setup(&trans_));
+}
+
+void Trans::ctor_rgg(const long nlat, const long pl[], long truncation, const Trans::Options& p )
+{
   std::vector<int> nloen(nlat);
   for( long jlat=0; jlat<nlat; ++jlat )
     nloen[jlat] = pl[jlat];
   TRANS_CHECK(::trans_new(&trans_));
   TRANS_CHECK(::trans_set_resol(&trans_,nlat,nloen.data()));
-  TRANS_CHECK(::trans_set_trunc(&trans_,nsmax));
+  if( truncation >= 0 )
+    TRANS_CHECK(::trans_set_trunc(&trans_,truncation));
   TRANS_CHECK(::trans_set_cache(&trans_,p.cache(),p.cachesize()));
 
-  if( !p.read().empty() )
+  if( not p.read().empty() )
   {
     if( eckit::PathName(p.read()).exists() )
     {
@@ -498,15 +500,15 @@ void Trans::ctor_rgg(const long nlat, const long pl[], long nsmax, const Trans::
   TRANS_CHECK(::trans_setup(&trans_));
 }
 
-void Trans::ctor_lonlat(const long nlon, const long nlat, long nsmax, const Trans::Options& p )
+void Trans::ctor_lonlat(const long nlon, const long nlat, long truncation, const Trans::Options& p )
 {
-  ASSERT( nsmax >= 0 );
   TRANS_CHECK(::trans_new(&trans_));
   TRANS_CHECK(::trans_set_resol_lonlat(&trans_,nlon,nlat));
-  TRANS_CHECK(::trans_set_trunc(&trans_,nsmax));
+  if( truncation >= 0 )
+    TRANS_CHECK(::trans_set_trunc(&trans_,truncation));
   TRANS_CHECK(::trans_set_cache(&trans_,p.cache(),p.cachesize()));
 
-  if( ! p.read().empty() )
+  if( not p.read().empty() )
   {
     if( eckit::PathName(p.read()).exists() )
     {
@@ -515,7 +517,7 @@ void Trans::ctor_lonlat(const long nlon, const long nlat, long nsmax, const Tran
     }
     TRANS_CHECK(::trans_set_read(&trans_,p.read().c_str()));
   }
-  if( !p.write().empty() )
+  if( not p.write().empty() )
     TRANS_CHECK(::trans_set_write(&trans_,p.write().c_str()));
 
   trans_.fft = p.fft();

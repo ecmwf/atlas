@@ -5,8 +5,6 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
-! This File contains Unit Tests for testing the
-! C++ / Fortran Interfaces to the Mesh Datastructure
 ! @author Willem Deconinck
 
 #include "fckit/fctest.h"
@@ -368,6 +366,26 @@ call gridpoints%final()
 call spectral%final()
 call trans%final()
 call grid%final()
+END_TEST
+
+TEST( test_spectral_only )
+type(atlas_functionspace_Spectral) :: spectral
+type(atlas_Field) :: field
+integer :: jfld, nfld
+character(len=10) :: fieldname
+real(c_double) :: norm
+
+spectral = atlas_functionspace_Spectral(truncation=159,levels=10)
+
+field = spectral%create_field(atlas_real(c_double))
+FCTEST_CHECK_EQUAL(field%rank(), 2)
+FCTEST_CHECK_EQUAL(field%shape(1), 10)
+
+field = spectral%create_field(kind=atlas_real(c_double),levels=0)
+FCTEST_CHECK_EQUAL(field%rank(), 1)
+
+call field%final()
+call spectral%final()
 END_TEST
 
 

@@ -13,6 +13,9 @@
 #include <string>
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
+#include "atlas/field/Field.h"
+#include "atlas/util/Config.h"
+#include "atlas/option.h"
 
 namespace atlas {
 namespace functionspace {
@@ -37,6 +40,21 @@ public:
     virtual std::string name() const = 0;
     virtual operator bool() const { return true; }
     virtual size_t footprint() const = 0;
+    
+    virtual atlas::Field createField(
+        const eckit::Configuration& ) const = 0;
+
+    virtual atlas::Field createField(
+        const atlas::Field&, 
+        const eckit::Configuration& ) const = 0;
+
+    atlas::Field createField(
+        const atlas::Field& ) const;
+
+    template <typename DATATYPE> atlas::Field createField(
+        const eckit::Configuration& ) const;
+
+    template <typename DATATYPE> atlas::Field createField() const;
 
     template <typename FunctionSpaceT>
     FunctionspaceT_nonconst *cast();
@@ -47,6 +65,19 @@ public:
 };
 
 inline FunctionSpaceImpl::~FunctionSpaceImpl() {}
+
+template <typename DATATYPE>
+inline Field FunctionSpaceImpl::createField(
+    const eckit::Configuration& options) const
+{
+  return createField( option::datatypeT<DATATYPE>() | options );
+}
+
+template <typename DATATYPE>
+inline Field FunctionSpaceImpl::createField() const
+{
+  return createField( option::datatypeT<DATATYPE>() );
+}
 
 template <typename FunctionSpaceT>
 inline FunctionspaceT_nonconst *FunctionSpaceImpl::cast()
@@ -74,6 +105,10 @@ public:
     virtual std::string name() const { return "NoFunctionSpace"; }
     virtual operator bool() const { return false; }
     virtual size_t footprint() const { return sizeof(*this); }
+    
+    virtual Field createField( const eckit::Configuration& ) const;
+    virtual Field createField( const Field&, const eckit::Configuration& ) const;
+
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -112,7 +147,21 @@ public:
   size_t footprint() const;
 
   const Implementation* get() const { return functionspace_.get(); }
+  
+  atlas::Field createField(
+      const eckit::Configuration& ) const;
+
+  atlas::Field createField(
+      const atlas::Field&, const eckit::Configuration& = util::NoConfig() ) const;
+
+  template <typename DATATYPE> Field createField(
+      const eckit::Configuration& = util::NoConfig() ) const;
 };
+
+template< typename DATATYPE >
+Field FunctionSpace::createField( const eckit::Configuration& options ) const {
+    return functionspace_->createField<DATATYPE>(options);
+}
 
 //------------------------------------------------------------------------------------------------------
 

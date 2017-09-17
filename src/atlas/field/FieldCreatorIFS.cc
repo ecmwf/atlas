@@ -13,7 +13,7 @@
 #include "eckit/config/Parametrisation.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/field/FieldCreatorIFS.h"
-#include "atlas/field/Field.h"
+#include "atlas/field/detail/FieldImpl.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/runtime/Log.h"

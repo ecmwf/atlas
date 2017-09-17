@@ -11,6 +11,7 @@
 #pragma once
 
 #include "atlas/field/Field.h"
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -34,6 +35,11 @@ public:
     const Field& lonlat() const { return lonlat_; }
     const Field& ghost() const;
     size_t size() const { return lonlat_.shape(0); }
+
+    /// @brief Create a spectral field
+    using FunctionSpaceImpl::createField;
+    virtual Field createField( const eckit::Configuration& ) const;
+    virtual Field createField( const Field&, const eckit::Configuration& ) const;
 
   private:
 

@@ -9,6 +9,7 @@
  */
 
 #include "atlas/functionspace/PointCloud.h"
+#include "atlas/array.h"
 
 namespace atlas {
 namespace functionspace {
@@ -39,6 +40,21 @@ const Field& PointCloud::ghost() const {
    array::make_view<int,1>(ghost_).assign(0);
  }
  return ghost_;
+}
+
+
+Field PointCloud::createField(const eckit::Configuration& options) const {
+  NOTIMP;
+  return Field();
+}
+
+Field PointCloud::createField(
+    const Field& other, 
+    const eckit::Configuration& config ) const
+{
+  return createField( 
+    option::datatype ( other.datatype()  ) |
+    config );
 }
 
 }

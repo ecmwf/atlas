@@ -79,16 +79,16 @@ CASE( "test_functionspace_NodeColumns" )
 
   size_t nb_levels = 10;
 
-  functionspace::NodeColumns nodes_fs(mesh,field::halo(1)|field::levels(nb_levels));
+  functionspace::NodeColumns nodes_fs(mesh,option::halo(1)|option::levels(nb_levels));
   //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
 
   //EXPECT( nodes_fs.nb_nodes() == columns_fs.nb_nodes() );
   //EXPECT( columns_fs.nb_levels() == 10 );
 
 
-  Field surface_scalar_field = nodes_fs.createField<double>(field::name("scalar")|field::levels(false));
-  Field surface_vector_field = nodes_fs.createField<double>(field::name("vector")|field::levels(false)|field::variables(2));
-  Field surface_tensor_field = nodes_fs.createField<double>(field::name("tensor")|field::levels(false)|field::variables(2*2));
+  Field surface_scalar_field = nodes_fs.createField<double>(option::name("scalar")|option::levels(false));
+  Field surface_vector_field = nodes_fs.createField<double>(option::name("vector")|option::levels(false)|option::variables(2));
+  Field surface_tensor_field = nodes_fs.createField<double>(option::name("tensor")|option::levels(false)|option::variables(2*2));
 
   EXPECT( surface_scalar_field.name() == std::string("scalar") );
   EXPECT( surface_vector_field.name() == std::string("vector") );
@@ -116,9 +116,9 @@ CASE( "test_functionspace_NodeColumns" )
   EXPECT( surface_vector.shape(1) == 2 );
   EXPECT( surface_tensor.shape(1) == 2*2 );
 
-  Field columns_scalar_field = nodes_fs.createField<double>(field::name("scalar"));
-  Field columns_vector_field = nodes_fs.createField<double>(field::name("vector")|field::variables(2));
-  Field columns_tensor_field = nodes_fs.createField<double>(field::name("tensor")|field::variables(2*2));
+  Field columns_scalar_field = nodes_fs.createField<double>(option::name("scalar"));
+  Field columns_vector_field = nodes_fs.createField<double>(option::name("vector")|option::variables(2));
+  Field columns_tensor_field = nodes_fs.createField<double>(option::name("tensor")|option::variables(2*2));
 
   EXPECT( columns_scalar_field.name() == std::string("scalar") );
   EXPECT( columns_vector_field.name() == std::string("vector") );
@@ -149,14 +149,14 @@ CASE( "test_functionspace_NodeColumns" )
   EXPECT( columns_vector.shape(2) == 2 );
   EXPECT( columns_tensor.shape(2) == 2*2 );
 
-  Field field = nodes_fs.createField<int>(field::name("partition"));
+  Field field = nodes_fs.createField<int>(option::name("partition"));
   array::ArrayView<int,2> arr = array::make_view<int,2>(field);
   arr.assign(parallel::mpi::comm().rank());
   //field->dump( Log::info() );
   nodes_fs.haloExchange(field);
   //field->dump( Log::info() );
 
-  Field field2 = nodes_fs.createField<int>(field::name("partition2")|field::variables(2));
+  Field field2 = nodes_fs.createField<int>(option::name("partition2")|option::variables(2));
   Log::info() << "field2.rank() = " << field2.rank() << std::endl;
   array::ArrayView<int,3> arr2 = array::make_view<int,3>(field2);
   arr2.assign(parallel::mpi::comm().rank());
@@ -169,11 +169,11 @@ CASE( "test_functionspace_NodeColumns" )
 
   size_t root = parallel::mpi::comm().size()-1;
   Field glb_field = nodes_fs.createField(
-    field::name("partition") |
-    field::datatype(field.datatype()) |
-    field::levels( field.levels() ) |
-    field::variables( field.variables() ) |
-    field::global(root) );
+    option::name("partition") |
+    option::datatype(field.datatype()) |
+    option::levels( field.levels() ) |
+    option::variables( field.variables() ) |
+    option::global(root) );
   nodes_fs.gather(field,glb_field);
 
   EXPECT( glb_field.rank() == field.rank() );
@@ -485,7 +485,7 @@ CASE( "test_functionspace_NodeColumns" )
 
 
   Field tmp =
-        nodes_fs.createField( field::datatypeT<double>() | field::global(0) | field::levels(10) | field::name("tmp") );
+        nodes_fs.createField( option::datatypeT<double>() | option::global(0) | option::levels(10) | option::name("tmp") );
 
 }
 
@@ -498,7 +498,7 @@ CASE( "test_SpectralFunctionSpace" )
 
   Spectral spectral_fs(truncation);
 
-  Field surface_scalar_field = spectral_fs.createField<double>( field::name("scalar") );
+  Field surface_scalar_field = spectral_fs.createField<double>( option::name("scalar") );
 
   EXPECT( surface_scalar_field.name() == std::string("scalar") );
 
@@ -510,7 +510,7 @@ CASE( "test_SpectralFunctionSpace" )
 
   EXPECT( surface_scalar.shape(0) == nspec2g );
 
-  Field columns_scalar_field = spectral_fs.createField<double>( field::name("scalar") | field::levels(nb_levels) );
+  Field columns_scalar_field = spectral_fs.createField<double>( option::name("scalar") | option::levels(nb_levels) );
 
   EXPECT( columns_scalar_field.name() == std::string("scalar") );
 
@@ -530,14 +530,14 @@ CASE( "test_SpectralFunctionSpace" )
 
 CASE( "test_SpectralFunctionSpace_trans_dist" )
 {
-  trans::Trans trans(80,159);
+  trans::Trans trans(Grid("F80"),159);
   size_t nb_levels(10);
 
   size_t nspec2 = trans.nspec2();
 
   Spectral spectral_fs( trans );
 
-  Field surface_scalar_field = spectral_fs.createField<double>( field::name("scalar") );
+  Field surface_scalar_field = spectral_fs.createField<double>( option::name("scalar") );
 
   EXPECT( surface_scalar_field.name() == std::string("scalar") );
 
@@ -551,7 +551,7 @@ CASE( "test_SpectralFunctionSpace_trans_dist" )
   // size_t surface_scalar_shape[] = { nspec2 };
   // EXPECT( eckit::testing::make_view( surface_scalar.shape(),surface_scalar.shape()+1) == eckit::testing::make_view(surface_scalar_shape,surface_scalar_shape+1) );
 
-  Field columns_scalar_field = spectral_fs.createField<double>( field::name("scalar") | field::levels(nb_levels) );
+  Field columns_scalar_field = spectral_fs.createField<double>( option::name("scalar") | option::levels(nb_levels) );
 
   EXPECT( columns_scalar_field.name() == std::string("scalar") );
 
@@ -569,14 +569,16 @@ CASE( "test_SpectralFunctionSpace_trans_dist" )
 }
 CASE( "test_SpectralFunctionSpace_trans_global" )
 {
-  trans::Trans trans(80,159);
   size_t nb_levels(10);
+  size_t truncation = 159;
 
-  size_t nspec2g = trans.nspec2g();
+  Spectral spectral_fs( truncation, option::levels(nb_levels) );
+  size_t nspec2g = spectral_fs.nb_spectral_coefficients_global();
 
-  Spectral spectral_fs( trans );
-
-  Field surface_scalar_field = spectral_fs.createField<double>(field::name("scalar") | field::global());
+  Field surface_scalar_field = spectral_fs.createField<double>(
+    option::name("scalar") |
+    option::levels(false)  |
+    option::global()       );
 
   EXPECT( surface_scalar_field.name() == std::string("scalar") );
 
@@ -589,12 +591,14 @@ CASE( "test_SpectralFunctionSpace_trans_global" )
 
   EXPECT( surface_scalar_field.metadata().get<size_t>("owner") == 0 );
 
-  array::ArrayView<double,1> surface_scalar = array::make_view<double,1>( surface_scalar_field );
+  auto surface_scalar = array::make_view<double,1>( surface_scalar_field );
 
   if( eckit::mpi::comm().rank() == 0 ) {
     EXPECT( surface_scalar.shape(0) == nspec2g );
   }
-  Field columns_scalar_field = spectral_fs.createField<double>(field::name("scalar") | field::levels(nb_levels) | field::global() );
+  Field columns_scalar_field = spectral_fs.createField<double>(
+    option::name("scalar") |
+    option::global()       );
 
   EXPECT( columns_scalar_field.name() == std::string("scalar") );
 
@@ -606,7 +610,7 @@ CASE( "test_SpectralFunctionSpace_trans_global" )
 
   EXPECT( columns_scalar_field.rank() == 2 );
 
-  array::ArrayView<double,2> columns_scalar = array::make_view<double,2>( columns_scalar_field );
+  auto columns_scalar = array::make_view<double,2>( columns_scalar_field );
 
   if( eckit::mpi::comm().rank() == 0 ) {
     EXPECT( columns_scalar.shape(0) == nspec2g );
@@ -615,13 +619,13 @@ CASE( "test_SpectralFunctionSpace_trans_global" )
 }
 CASE( "test_SpectralFunctionSpace_norm" )
 {
-  trans::Trans trans(80,159);
+  trans::Trans trans(Grid("F80"),159);
   size_t nb_levels(10);
 
   Spectral spectral_fs( trans );
 
-  Field twoD_field   = spectral_fs.createField<double>( field::name("2d"));
-  Field threeD_field = spectral_fs.createField<double>( field::name("3d") | field::levels(nb_levels) );
+  Field twoD_field   = spectral_fs.createField<double>( option::name("2d"));
+  Field threeD_field = spectral_fs.createField<double>( option::name("3d") | option::levels(nb_levels) );
 
   // Set first wave number
   {

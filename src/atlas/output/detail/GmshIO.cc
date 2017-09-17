@@ -121,11 +121,11 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   Field data_glb;
   if( gather )
   {
-    gidx_glb = function_space.createField<gidx_t>( field::name("gidx_glb") | field::levels(false) | field::global() );
+    gidx_glb = function_space.createField<gidx_t>( option::name("gidx_glb") | option::levels(false) | option::global() );
     function_space.gather(function_space.nodes().global_index(),gidx_glb);
     gidx = array::make_view<gidx_t,1>( gidx_glb );
 
-    data_glb = function_space.createField<DATATYPE>( field::name("glb_field") | field::levels(field.levels()) | field::variables( field.variables() ) | field::global() );
+    data_glb = function_space.createField<DATATYPE>( option::name("glb_field") | option::levels(field.levels()) | option::variables( field.variables() ) | option::global() );
     function_space.gather(field,data_glb);
     data = array::LocalView<DATATYPE,2>( data_glb.data<DATATYPE>(),
                                          array::make_shape(data_glb.shape(0),data_glb.stride(0)) );
@@ -322,8 +322,8 @@ void write_field_nodes(
     if( atlas::parallel::mpi::comm().size() > 1 )
     {
       field_glb = function_space.createField<DATATYPE>(
-          field::name("glb_field") | 
-          field::global() );
+          option::name("glb_field") | 
+          option::global() );
       function_space.gather(field, field_glb);
       data = array::LocalView<DATATYPE,2>(
           field_glb.data<DATATYPE>(),

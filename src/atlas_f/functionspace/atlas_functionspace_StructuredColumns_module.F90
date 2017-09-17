@@ -107,16 +107,16 @@ subroutine StructuredColumns__final(this)
 end subroutine
 #endif
 
-function StructuredColumns__grid(grid, halo) result(functionspace)
+function StructuredColumns__grid(grid, halo, levels) result(functionspace)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_functionspace_StructuredColumns) :: functionspace
   class(atlas_Grid), intent(in) :: grid
   integer, optional :: halo
+  integer, optional :: levels
   type(atlas_Config) :: config
   config = atlas_Config()
-  if( present(halo) ) then
-    call config%set("halo",halo)
-  endif
+  if( present(halo) )   call config%set("halo",halo)
+  if( present(levels) ) call config%set("levels",levels)
   functionspace = StructuredColumns__cptr( &
     & atlas__functionspace__StructuredColumns__new__grid( grid%c_ptr(), config%c_ptr() ) )
   call config%final()

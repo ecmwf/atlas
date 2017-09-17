@@ -59,7 +59,7 @@ CASE( "test_interpolation_finite_element" )
   
   Interpolation interpolation(Config("type","finite-element"),fs,pointcloud);
   
-  Field field_source = fs.createField<double>(field::name("source"));
+  Field field_source = fs.createField<double>(option::name("source"));
   Field field_target("target",array::make_datatype<double>(),array::make_shape(pointcloud.size()));
   
   auto lonlat = array::make_view<double,2>(fs.nodes().lonlat());

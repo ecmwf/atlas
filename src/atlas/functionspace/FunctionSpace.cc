@@ -48,6 +48,17 @@ const char* atlas__FunctionSpace__name (FunctionSpaceImpl* This) {
 
 // ------------------------------------------------------------------
 
+atlas::Field FunctionSpaceImpl::createField(
+    const atlas::Field& field ) const {
+  return createField( field, util::NoConfig() );
+}
+
+Field NoFunctionSpace::createField( const eckit::Configuration& ) const { NOTIMP; }
+Field NoFunctionSpace::createField( const Field&, const eckit::Configuration& ) const { NOTIMP; }
+
+
+// ------------------------------------------------------------------
+
 } // namespace functionspace
 
 // ------------------------------------------------------------------
@@ -74,6 +85,16 @@ FunctionSpace::operator bool() const {
 
 size_t FunctionSpace::footprint() const {
   return functionspace_->footprint();
+}
+
+Field FunctionSpace::createField(const eckit::Configuration& config) const {
+  return functionspace_->createField(config);
+}
+
+Field FunctionSpace::createField(
+    const Field& other, 
+    const eckit::Configuration& config ) const {
+  return functionspace_->createField(other,config);
 }
 
 // ------------------------------------------------------------------

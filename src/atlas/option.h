@@ -12,6 +12,4 @@
 
 #pragma once
 
-#include "atlas/field/Field.h"
-#include "atlas/field/FieldSet.h"
-#include "atlas/option.h"
+#include "atlas/option/Options.h"

@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     int jnode = 0;
 
     // Calculate scalar function
-    Field field_scalar1 = fs.createField<double>("scalar1");
+    Field field_scalar1 = fs.createField<double>(option::name("scalar1"));
     auto xy      = make_view<double,2>(fs.xy());
     auto scalar1 = make_view<double,1>(field_scalar1);
 

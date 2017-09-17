@@ -127,7 +127,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Gmsh.h
   MODULE    atlas_output_gmsh_c_binding
   OUTPUT    outout_Gmsh_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/State.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/Field.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/detail/FieldImpl.h
+    MODULE    atlas_field_c_binding
+    OUTPUT    field_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/FieldSet.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/FunctionSpace.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h

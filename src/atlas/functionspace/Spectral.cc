@@ -14,8 +14,9 @@
 
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/field/Options.h"
+#include "atlas/field/detail/FieldImpl.h"
 #include "atlas/functionspace/Spectral.h"
+#include "atlas/option.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/array/MakeView.h"
@@ -67,14 +68,27 @@ size_t Spectral::config_size(const eckit::Configuration& config) const
 
 // ----------------------------------------------------------------------
 
-Spectral::Spectral(const size_t truncation) :
-    truncation_(truncation),
-    nb_levels_(0),
-    trans_(0)
+Spectral::Spectral( const eckit::Configuration& config ) :
+    Spectral::Spectral( config.getUnsigned("truncation"), config )
 {
 }
 
-Spectral::Spectral(trans::Trans& trans) :
+// ----------------------------------------------------------------------
+
+Spectral::Spectral( const size_t truncation, const eckit::Configuration& config ) :
+    truncation_(truncation),
+#ifdef ATLAS_HAVE_TRANS
+    trans_( new trans::Trans(truncation_) ),
+    delete_trans_(true),
+#else
+    trans_(0),
+#endif
+    nb_levels_(0)
+{
+  config.get("levels",nb_levels_);
+}
+
+Spectral::Spectral( trans::Trans& trans, const eckit::Configuration& config ) :
 #ifdef ATLAS_HAVE_TRANS
     truncation_(trans.nsmax()),
     trans_(&trans),
@@ -84,10 +98,13 @@ Spectral::Spectral(trans::Trans& trans) :
 #endif
     nb_levels_(0)
 {
+  config.get("levels",nb_levels_);
 }
 
 Spectral::~Spectral()
 {
+  if( delete_trans_ )
+    delete trans_;
 }
 
 size_t Spectral::footprint() const {
@@ -148,15 +165,16 @@ Field Spectral::createField(const eckit::Configuration& options) const {
   return field;
 }
 
-template <>
-Field Spectral::createField<float>(const eckit::Configuration& options) const {
-  return createField( util::Config(options) | field::datatypeT<float>() );
+Field Spectral::createField(
+    const Field& other, 
+    const eckit::Configuration& config ) const
+{
+  return createField( 
+    option::datatype ( other.datatype()  ) |
+    option::levels   ( other.levels()    ) |
+    config );
 }
 
-template <>
-Field Spectral::createField<double>(const eckit::Configuration& options) const {
-  return createField( util::Config(options) | field::datatypeT<double>() );
-}
 
 void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
 {
@@ -296,13 +314,18 @@ Spectral::Spectral( const FunctionSpace& functionspace ) :
   functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
 }
 
-Spectral::Spectral( const size_t truncation ) :
-  FunctionSpace( new detail::Spectral(truncation) ),
+Spectral::Spectral( const eckit::Configuration& config ) :
+  FunctionSpace( new detail::Spectral(config) ),
   functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
 }
 
-Spectral::Spectral( trans::Trans& trans ) :
-  FunctionSpace( new detail::Spectral(trans) ),
+Spectral::Spectral( const size_t truncation, const eckit::Configuration& config ) :
+  FunctionSpace( new detail::Spectral(truncation,config) ),
+  functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
+}
+
+Spectral::Spectral( trans::Trans& trans, const eckit::Configuration& config ) :
+  FunctionSpace( new detail::Spectral(trans,config) ),
   functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
 }
 
@@ -312,16 +335,6 @@ size_t Spectral::nb_spectral_coefficients() const {
 
 size_t Spectral::nb_spectral_coefficients_global() const {
   return functionspace_->nb_spectral_coefficients_global();
-}
-
-template <>
-Field Spectral::createField<float>(const eckit::Configuration& options) const {
-  return functionspace_->createField<float>(options);
-}
-
-template <>
-Field Spectral::createField<double>(const eckit::Configuration& options) const {
-  return functionspace_->createField<double>(options);
 }
 
 void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
@@ -366,18 +379,18 @@ void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, in
 
 extern "C"
 {
-const detail::Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation)
-{
-  ATLAS_ERROR_HANDLING(
-    return new detail::Spectral(truncation);
-  );
-  return 0;
-}
+const detail::Spectral* atlas__SpectralFunctionSpace__new__config ( const eckit::Configuration* config )
+  {
+    ATLAS_ERROR_HANDLING(
+      return new detail::Spectral(*config);
+    );
+    return 0;
+  }
 
-const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans)
+const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans, const eckit::Configuration* config )
 {
   ATLAS_ERROR_HANDLING(
-    return new detail::Spectral(*trans);
+    return new detail::Spectral(*trans,*config);
   );
   return 0;
 }

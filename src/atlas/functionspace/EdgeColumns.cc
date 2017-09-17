@@ -118,13 +118,25 @@ array::ArrayShape EdgeColumns::config_shape(const eckit::Configuration& config) 
   return shape;
 }
 
-EdgeColumns::EdgeColumns( const Mesh& mesh ) :
+EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration &params ) :
     mesh_(mesh),
     nb_levels_(0),
     edges_(mesh_.edges()),
     nb_edges_(0),
-    nb_edges_global_(0) {
-    constructor();
+    nb_edges_global_(0)
+{
+  nb_levels_ = config_levels(params);
+
+  size_t mesh_halo;
+  mesh.metadata().get("halo",mesh_halo);
+
+  size_t halo = mesh_halo;
+  params.get("halo",halo);
+
+  ASSERT( mesh_halo == halo );
+  
+  
+  constructor();
 }
 
 EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo, const eckit::Configuration &params ) :
@@ -137,6 +149,9 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo, const eckit:
   size_t mesh_halo_size_;
   mesh.metadata().get("halo",mesh_halo_size_);
   ASSERT( mesh_halo_size_ == halo.size() );
+  
+  nb_levels_ = config_levels(params);
+  
   constructor();
 }
 
@@ -211,6 +226,18 @@ Field EdgeColumns::createField(const eckit::Configuration& options) const
   set_field_metadata(options,field);
   return field;
 }
+
+Field EdgeColumns::createField(
+    const Field& other, 
+    const eckit::Configuration& config ) const
+{
+  return createField( 
+    option::datatype ( other.datatype()  ) |
+    option::levels   ( other.levels()    ) |
+    option::variables( other.variables() ) |
+    config );
+}
+
 
 void EdgeColumns::haloExchange( FieldSet& fieldset ) const
 {
@@ -451,26 +478,13 @@ extern "C" {
 //------------------------------------------------------------------------------
 
 
-EdgeColumns* atlas__fs__EdgeColumns__new ( Mesh::Implementation* mesh, int halo )
+EdgeColumns* atlas__fs__EdgeColumns__new ( Mesh::Implementation* mesh, const eckit::Configuration* config )
 {
   EdgeColumns* edges(0);
   ATLAS_ERROR_HANDLING(
       ASSERT(mesh);
       Mesh m(mesh);
-      edges = new EdgeColumns(m,mesh::Halo(halo));
-  );
-  return edges;
-}
-
-//------------------------------------------------------------------------------
-
-EdgeColumns* atlas__fs__EdgeColumns__new_mesh ( Mesh::Implementation* mesh )
-{
-  EdgeColumns* edges(0);
-  ATLAS_ERROR_HANDLING(
-      ASSERT(mesh);
-      Mesh m(mesh);
-      edges = new EdgeColumns(m);
+      edges = new EdgeColumns(m,*config);
   );
   return edges;
 }
@@ -550,7 +564,7 @@ field::FieldImpl* atlas__fs__EdgeColumns__create_field_template (const EdgeColum
   ASSERT(options);
   FieldImpl* field;
   {
-    Field f = This->createField(field::datatype(field_template->datatype())|field::levels(field_template->levels())|field::variables(field_template->variables())|*options);
+    Field f = This->createField( Field(field_template), *options);
     field = f.get();
     field->attach();
   }
@@ -776,11 +790,6 @@ const Mesh& EdgeColumns::mesh() const {
 
 const mesh::HybridElements& EdgeColumns::edges() const {
   return functionspace_->edges();
-}
-
-Field EdgeColumns::createField(
-        const eckit::Configuration& config ) const {
-  return functionspace_->createField(config);
 }
 
 void EdgeColumns::haloExchange( FieldSet& fieldset ) const {

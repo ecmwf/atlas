@@ -18,7 +18,7 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/array/DataType.h"
 #include "atlas/field/Field.h"
-#include "atlas/field/Options.h"
+#include "atlas/option.h"
 
 namespace atlas {
 namespace parallel {
@@ -60,11 +60,9 @@ public:
   virtual std::string name() const { return "StructuredColumns"; }
 
   /// @brief Create a Structured field
-  Field createField(
-      const eckit::Configuration& = util::NoConfig() ) const;
+  virtual Field createField( const eckit::Configuration&) const;
 
-  template <typename DATATYPE> Field createField(
-      const eckit::Configuration& = util::NoConfig() ) const;
+  virtual Field createField(const Field&, const eckit::Configuration& ) const;
 
   void gather( const FieldSet&, FieldSet& ) const;
   void gather( const Field&, Field& ) const;
@@ -245,16 +243,6 @@ public:
 };
 
 // -------------------------------------------------------------------
-// inline methods
-
-template <typename DATATYPE>
-inline Field StructuredColumns::createField(
-    const eckit::Configuration& options) const
-{
-  return createField(field::datatypeT<DATATYPE>() | options);
-}
-
-// -------------------------------------------------------------------
 
 } // namespace detail
 
@@ -277,12 +265,6 @@ public:
   size_t sizeHalo()  const { return functionspace_->sizeHalo(); }
 
   const grid::StructuredGrid& grid() const { return functionspace_->grid(); }
-
-  Field createField(
-      const eckit::Configuration& = util::NoConfig() ) const;
-
-  template <typename DATATYPE> Field createField(
-      const eckit::Configuration& = util::NoConfig() ) const;
 
   void gather( const FieldSet&, FieldSet& ) const;
   void gather( const Field&, Field& ) const;
@@ -321,20 +303,10 @@ private:
 };
 
 // -------------------------------------------------------------------
-// inline methods
-
-template <typename DATATYPE>
-inline Field StructuredColumns::createField(
-    const eckit::Configuration& options) const
-{
-  return functionspace_->createField<DATATYPE>(options);
-}
-
-// -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid, const util::Config* config );
+  const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid (const Grid::Implementation* grid, const eckit::Configuration* config );
   void atlas__functionspace__StructuredColumns__delete (detail::StructuredColumns* This);
   field::FieldImpl* atlas__fs__StructuredColumns__create_field (const detail::StructuredColumns* This, const eckit::Configuration* options);
   void atlas__functionspace__StructuredColumns__gather (const detail::StructuredColumns* This, const field::FieldImpl* local, field::FieldImpl* global);

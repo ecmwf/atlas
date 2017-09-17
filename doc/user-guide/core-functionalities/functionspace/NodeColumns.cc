@@ -9,17 +9,12 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/functionspace/NodeColumns.h"
 
+using namespace atlas;
 using atlas::array::make_view;
 using atlas::array::make_shape;
-using atlas::Field;
-using atlas::FieldSet;
-using atlas::field::global;
 using atlas::functionspace::NodeColumns;
 using atlas::gidx_t;
 using atlas::grid::StructuredGrid;
-using atlas::Log;
-using atlas::mesh::Halo;
-using atlas::Mesh;
 using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::output::Gmsh;
 
@@ -42,15 +37,15 @@ int main(int argc, char *argv[])
     size_t nb_levels = 10;
 
     // Generate functionspace associated to mesh
-    NodeColumns fs_nodes( mesh, Halo(1) );
+    NodeColumns fs_nodes( mesh, option::levels(nb_levels) | option::halo(1) );
 
     // Note on field generation
-    Field field_scalar1 = fs_nodes.createField<double>("scalar1");
-    Field field_scalar2 = fs_nodes.createField<double>("scalar2", nb_levels);
-    Field field_vector1 = fs_nodes.createField<double>("vector1", make_shape(2));
-    Field field_vector2 = fs_nodes.createField<double>("vector2", nb_levels, make_shape(2));
-    Field field_tensor1 = fs_nodes.createField<double>("tensor1", make_shape(2,2));
-    Field field_tensor2 = fs_nodes.createField<double>("tensor2", nb_levels,make_shape(2,2));
+    Field field_scalar1 = fs_nodes.createField<double>(option::name("scalar1") | option::levels(false) );
+    Field field_scalar2 = fs_nodes.createField<double>(option::name("scalar2") );
+    Field field_vector1 = fs_nodes.createField<double>(option::name("vector1") | option::levels(false) | option::variables(2));
+    Field field_vector2 = fs_nodes.createField<double>(option::name("vector2") | option::variables(2) );
+    Field field_tensor1 = fs_nodes.createField<double>(option::name("tensor1") | option::levels(false) | option::variables(2*2));
+    Field field_tensor2 = fs_nodes.createField<double>(option::name("tensor2") | option::variables(2*2) );
     /* .... */
     // Variables for scalar1 field definition
     const double rpi = 2.0 * asin(1.0);
@@ -91,7 +86,7 @@ int main(int argc, char *argv[])
     Log::info() << checksum << std::endl;
 
     // Create a global field
-    Field field_global = fs_nodes.createField("global", field_scalar1, global());
+    Field field_global = fs_nodes.createField( field_scalar1, option::name("global") | option::global() );
     // Gather operation
     fs_nodes.gather(field_scalar1, field_global);
 
