@@ -56,10 +56,14 @@ contains
 
   procedure, private :: create_field_args
   procedure, private :: create_field_template
+  procedure, private :: deprecated_create_field_1 ! deprecated
+  procedure, private :: deprecated_create_field_2 ! deprecated
 
   generic, public :: create_field => &
     & create_field_args, &
-    & create_field_template
+    & create_field_template, &
+    & deprecated_create_field_1, &
+    & deprecated_create_field_2
 
   procedure, private :: halo_exchange_fieldset
   procedure, private :: halo_exchange_field
@@ -347,6 +351,66 @@ function create_field_template(this,template,name,global,owner) result(field)
 
   call field%return()
 end function
+
+
+!------------------------------------------------------------------------------
+
+! Deprecated versions compatible to support IFS CY45R1
+
+function deprecated_create_field_1(this,name,kind,levels,vars) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  character(len=*), intent(in)           :: name
+  integer,          intent(in)           :: kind
+  integer(c_int),   intent(in) :: levels
+  integer(c_int),   intent(in) :: vars(:)
+
+  integer(c_int) :: opt_variables
+  
+  type(atlas_Config) :: options
+  options = atlas_Config()
+  
+  call options%set("datatype",kind)
+  call options%set("name",name)
+  call options%set("levels",levels)
+  opt_variables = sum(vars)
+  call options%set("variables",opt_variables)
+
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
+
+  call options%final()
+
+  call field%return()
+end function
+
+function deprecated_create_field_2(this,require_name,kind,levels) result(field)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
+  type(atlas_Field) :: field
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  character(len=*), intent(in) :: require_name
+  integer,          intent(in) :: kind
+  integer(c_int),   intent(in) :: levels
+
+  integer(c_int) :: opt_variables
+  
+  type(atlas_Config) :: options
+  options = atlas_Config()
+  
+  call options%set("datatype",kind)
+  call options%set("name",require_name)
+  call options%set("levels",levels)
+
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
+
+  call options%final()
+
+  call field%return()
+end function
+
+!------------------------------------------------------------------------------
 
 !------------------------------------------------------------------------------
 !------------------------------------------------------------------------------
