@@ -18,7 +18,7 @@ namespace functionspace {
 
 //------------------------------------------------------------------------------------------------------
 
-namespace detail { 
+namespace detail {
 
 class PointCloud : public FunctionSpaceImpl
 {
@@ -33,7 +33,7 @@ public:
 
     const Field& lonlat() const { return lonlat_; }
     const Field& ghost() const;
-    const size_t size() const { return lonlat_.shape(0); }
+    size_t size() const { return lonlat_.shape(0); }
 
   private:
 
