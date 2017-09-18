@@ -42,10 +42,6 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_StructuredColumns
 
 contains
 
-  procedure, private :: create_field_args
-  generic, public :: create_field => &
-    & create_field_args
-
   procedure, public :: gather
   procedure, public :: scatter
 
@@ -123,36 +119,6 @@ function StructuredColumns__grid(grid, halo, levels) result(functionspace)
   call functionspace%return()
 end function
 
-function create_field_args(this,kind,name,levels,variables,global,owner) result(field)
-  use atlas_functionspace_StructuredColumns_c_binding
-  type(atlas_Field) :: field
-  class(atlas_functionspace_StructuredColumns) :: this
-
-  integer,          intent(in)           :: kind
-  character(len=*), intent(in), optional :: name
-  integer(c_int),   intent(in), optional :: levels
-  integer(c_int),   intent(in), optional :: variables
-  logical,          intent(in), optional :: global
-  integer(c_int),   intent(in), optional :: owner
-  
-  type(atlas_Config) :: options
-  options = atlas_Config()
-  
-  call options%set("datatype",kind)
-  if( present(name)   )    call options%set("name",name)
-  if( present(owner)  )    call options%set("owner",owner)
-  if( present(global) )    call options%set("global",global)
-  if( present(levels) )    call options%set("levels",levels)
-  if( present(variables) ) call options%set("variables",variables)
-
-  field = atlas_Field( atlas__fs__StructuredColumns__create_field( &
-      & this%c_ptr(),options%c_ptr()) )
-
-  call options%final()
-
-  call field%return()
-end function
-
 subroutine gather(this,local,global)
   use atlas_functionspace_StructuredColumns_c_binding
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
@@ -216,13 +182,20 @@ end subroutine
 
 subroutine copy(this,obj_in)
   use fckit_refcounted_module, only : fckit_refcounted
+  use fckit_exception_module, only : fckit_exception
   class(atlas_functionspace_StructuredColumns), intent(inout) :: this
   class(fckit_refcounted), target, intent(in) :: obj_in
+  nullify(this%index)
   select type( obj_in_concrete => obj_in )
     class is (atlas_functionspace_StructuredColumns)
       this%index => obj_in_concrete%index
     class default
   end select
+  if( .not. associated(this%index) ) then
+    call fckit_exception%abort("Could not assign StructuredColumns", &
+      & "atlas_functionspace_StructuredColumns_module.F90",__LINE__)
+  endif
+
 end subroutine
 
 function j_begin(this) result(j)

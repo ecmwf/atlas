@@ -53,13 +53,6 @@ contains
   procedure, public :: mesh
   procedure, public :: edges
 
-  procedure, private :: create_field_args
-  procedure, private :: create_field_template
-
-  generic, public :: create_field => &
-    & create_field_args, &
-    & create_field_template
-
   procedure, private :: halo_exchange_fieldset
   procedure, private :: halo_exchange_field
   generic, public :: halo_exchange => halo_exchange_field, halo_exchange_fieldset
@@ -115,7 +108,7 @@ function constructor(mesh,halo,levels) result(this)
     type(atlas_Config) :: config
     config = atlas_Config()
     if( present(halo) )   call config%set("halo",halo)
-    if( present(levels) ) call config%set("levels",levels)    
+    if( present(levels) ) call config%set("levels",levels)
     this  = constructor__cptr( &
       & atlas__fs__EdgeColumns__new(mesh%c_ptr(),config%c_ptr()) )
     call config%final()
@@ -156,63 +149,6 @@ function edges(this)
   type(atlas_mesh_Edges) :: edges
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   call edges%reset_c_ptr( atlas__fs__EdgeColumns__edges(this%c_ptr()) )
-end function
-
-!------------------------------------------------------------------------------
-
-function create_field_args(this,kind,name,levels,variables,global,owner) result(field)
-  use atlas_functionspace_EdgeColumns_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int
-  type(atlas_Field) :: field
-  class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  integer,          intent(in)           :: kind
-  character(len=*), intent(in), optional :: name
-  integer(c_int),   intent(in), optional :: levels
-  integer(c_int),   intent(in), optional :: variables
-  logical,          intent(in), optional :: global
-  integer(c_int),   intent(in), optional :: owner
-  
-  type(atlas_Config) :: options
-  options = atlas_Config()
-  
-  call options%set("datatype",kind)
-  if( present(name)   )    call options%set("name",name)
-  if( present(owner)  )    call options%set("owner",owner)
-  if( present(global) )    call options%set("global",global)
-  if( present(levels) )    call options%set("levels",levels)
-  if( present(variables) ) call options%set("variables",variables)
-
-  field = atlas_Field( atlas__fs__EdgeColumns__create_field( this%c_ptr(), options%c_ptr() ) )
-  call field%return()
-  call options%final()
-end function
-
-!------------------------------------------------------------------------------
-
-function create_field_template(this,template,name,global,owner) result(field)
-  use atlas_functionspace_EdgeColumns_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int
-  type(atlas_Field) :: field
-  class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  type(atlas_Field), intent(in) :: template
-
-  character(len=*), intent(in), optional :: name
-  logical,          intent(in), optional :: global
-  integer(c_int),   intent(in), optional :: owner
-
-  type(atlas_Config) :: options
-  options = atlas_Config()
-  
-  if( present(name)   )    call options%set("name",name)
-  if( present(owner)  )    call options%set("owner",owner)
-  if( present(global) )    call options%set("global",global)
-
-  field = atlas_Field( atlas__fs__EdgeColumns__create_field_template( &
-    & this%c_ptr(), template%c_ptr(),options%c_ptr()) )
-
-  call options%final()
-
-  call field%return()
 end function
 
 !------------------------------------------------------------------------------

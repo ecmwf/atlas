@@ -500,11 +500,9 @@ end function Field__name
 
 function Field__functionspace(this) result(functionspace)
   use atlas_field_c_binding
-  use atlas_functionspace_module
-  type(atlas_FunctionSpace) :: functionspace
+  type(fckit_refcounted) :: functionspace
   class(atlas_Field), intent(in) :: this
-  functionspace = atlas_FunctionSpace(atlas__Field__functionspace(this%c_ptr()))
-  call functionspace%return()
+  call functionspace%reset_c_ptr( atlas__Field__functionspace(this%c_ptr()) )
 end function Field__functionspace
 
 !-------------------------------------------------------------------------------
@@ -637,9 +635,8 @@ end subroutine
 
 subroutine set_functionspace(this,functionspace)
   use atlas_field_c_binding
-  use atlas_functionspace_module
   class(atlas_Field), intent(inout) :: this
-  class(atlas_FunctionSpace), intent(in) :: functionspace
+  class(fckit_refcounted), intent(in) :: functionspace
   call atlas__field__set_functionspace(this%c_ptr(),functionspace%c_ptr())
 end subroutine
 

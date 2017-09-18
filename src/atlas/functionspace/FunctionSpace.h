@@ -40,12 +40,12 @@ public:
     virtual std::string name() const = 0;
     virtual operator bool() const { return true; }
     virtual size_t footprint() const = 0;
-    
+
     virtual atlas::Field createField(
         const eckit::Configuration& ) const = 0;
 
     virtual atlas::Field createField(
-        const atlas::Field&, 
+        const atlas::Field&,
         const eckit::Configuration& ) const = 0;
 
     atlas::Field createField(
@@ -105,7 +105,7 @@ public:
     virtual std::string name() const { return "NoFunctionSpace"; }
     virtual operator bool() const { return false; }
     virtual size_t footprint() const { return sizeof(*this); }
-    
+
     virtual Field createField( const eckit::Configuration& ) const;
     virtual Field createField( const Field&, const eckit::Configuration& ) const;
 
@@ -118,6 +118,8 @@ extern "C"
 {
     void atlas__FunctionSpace__delete (FunctionSpaceImpl* This);
     const char* atlas__FunctionSpace__name (FunctionSpaceImpl* This);
+    field::FieldImpl* atlas__FunctionSpace__create_field (const FunctionSpaceImpl* This, const eckit::Configuration* options);
+    field::FieldImpl* atlas__FunctionSpace__create_field_template (const FunctionSpaceImpl* This, const field::FieldImpl* field_template, const eckit::Configuration* options);
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -147,7 +149,7 @@ public:
   size_t footprint() const;
 
   const Implementation* get() const { return functionspace_.get(); }
-  
+
   atlas::Field createField(
       const eckit::Configuration& ) const;
 

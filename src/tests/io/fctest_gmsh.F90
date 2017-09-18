@@ -13,7 +13,12 @@
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE(fctest_atlas_Gmsh)
+module fcta_test_gmsh_fxt
+use atlas_module
+contains
+end module
+
+TESTSUITE_WITH_FIXTURE(fctest_atlas_Gmsh,fcta_test_gmsh_fxt)
 
 ! -----------------------------------------------------------------------------
 
@@ -32,12 +37,10 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_gmsh )
-  use atlas_module
-  implicit none
   type(atlas_StructuredGrid) :: grid
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
-  type(atlas_functionspace_NodeColumns) :: functionspace_nodes
+  type(atlas_functionspace) :: functionspace_nodes
   type(atlas_mesh_Nodes) :: nodes
   type(atlas_Field) :: field
   type(atlas_FieldSet) :: fieldset
@@ -55,20 +58,21 @@ TEST( test_gmsh )
   gmsh = atlas_output_Gmsh("output_fctest_gmsh.msh","w",coordinates="xyz",gather=.false.,levels=[0,2])
   call gmsh%write(mesh)
 
-  functionspace_nodes = atlas_functionspace_NodeColumns(mesh,1)
+  functionspace_nodes = atlas_functionspace_NodeColumns(mesh,halo=1)
   nodes = mesh%nodes()
   field = nodes%global_index()
   call gmsh%write(field,functionspace_nodes)
   field = nodes%remote_index()
   call gmsh%write(field,functionspace_nodes)
-  
+
   fieldset = atlas_FieldSet()
   call fieldset%add( nodes%lonlat() )
   call fieldset%add( nodes%partition() )
   call gmsh%write(fieldset,functionspace_nodes)
-  
-  
-  field = functionspace_nodes%create_field(name="leveled",kind=atlas_integer(4),levels=4);
+
+
+  field = functionspace_nodes%create_field(name="leveled",kind=atlas_integer(4),levels=4)
+
   call field%data(fdata)
   do jlev=1,field%levels()
     fdata(jlev,:) = jlev
@@ -77,26 +81,26 @@ TEST( test_gmsh )
 
 
   call gmsh%write(field)
-  
+
   fieldset = atlas_FieldSet()
-  field = functionspace_nodes%create_field(name="scal1",kind=atlas_integer(4),levels=4);
+  field = functionspace_nodes%create_field(name="scal1",kind=atlas_integer(4),levels=4)
   call field%data(fdata)
   do jlev=1,field%levels()
     fdata(jlev,:) = jlev-1
   enddo
   call fieldset%add(field)
 
-  field = functionspace_nodes%create_field(name="scal2",kind=atlas_integer(4),levels=4);
+  field = functionspace_nodes%create_field(name="scal2",kind=atlas_integer(4),levels=4)
   call field%data(fdata)
   do jlev=1,field%levels()
     fdata(jlev,:) = -(jlev-1)
   enddo
   call fieldset%add(field)
-  
+
   call gmsh%write(fieldset)
-  
-  
-  END_TEST
+
+
+END_TEST
 
 
 ! -----------------------------------------------------------------------------

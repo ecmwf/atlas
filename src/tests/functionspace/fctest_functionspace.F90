@@ -479,6 +479,8 @@ END_TEST
 TEST( test_structuredcolumns )
 type(atlas_StructuredGrid) :: grid
 type(atlas_functionspace_StructuredColumns) :: fs
+type(atlas_functionspace) :: fs_base
+type(atlas_functionspace_StructuredColumns) :: fs_struct
 integer :: i, j
 character(len=10) str
 
@@ -514,6 +516,14 @@ field = fs%create_field(atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+
+
+write(0,*) "before: name = ", fs%name()
+write(0,*) "before: owners = ", fs%owners()
+fs_base = field%functionspace()
+write(0,*) "after: name = " , fs%name()
+write(0,*) "after: owners = " , fs%owners()
+
 call field%final()
 
 

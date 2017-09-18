@@ -40,10 +40,6 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_Spectral
 !------------------------------------------------------------------------------
 contains
 
-  procedure, private :: create_field_name_kind_lev
-  generic, public :: create_field => &
-    & create_field_name_kind_lev
-
   procedure, private :: gather_field
   procedure, private :: scatter_field
   procedure, private :: gather_fieldset
@@ -93,17 +89,17 @@ function atlas_functionspace_Spectral__config(truncation,levels) result(this)
   type(atlas_functionspace_Spectral) :: this
   integer(c_int), intent(in)           :: truncation
   integer(c_int), intent(in), optional :: levels
-  
+
   type(atlas_Config) :: options
   options = atlas_Config()
 
   call options%set("truncation",truncation)
   if( present(levels) ) call options%set("levels",levels)
-  
+
   this = atlas_functionspace_Spectral__cptr( &
     & atlas__SpectralFunctionSpace__new__config(options%c_ptr()) )
   call options%final()
-    
+
   call this%return()
 end function
 
@@ -112,7 +108,7 @@ function atlas_functionspace_Spectral__trans(trans,levels) result(this)
   type(atlas_functionspace_Spectral) :: this
   type(atlas_Trans), intent(in) :: trans
   integer(c_int), intent(in), optional :: levels
-  
+
   type(atlas_Config) :: options
   options = atlas_Config()
 
@@ -121,32 +117,8 @@ function atlas_functionspace_Spectral__trans(trans,levels) result(this)
   this = atlas_functionspace_Spectral__cptr( &
     & atlas__SpectralFunctionSpace__new__trans(trans%c_ptr(), options%c_ptr() ) )
   call options%final()
-  
+
   call this%return()
-end function
-
-
-function create_field_name_kind_lev(this,kind,name,levels,global,owner) result(field)
-  use atlas_functionspace_spectral_c_binding
-  type(atlas_Field) :: field
-  class(atlas_functionspace_Spectral), intent(in) :: this
-  integer(c_int),   intent(in) :: kind
-  character(len=*), intent(in), optional :: name
-  integer(c_int),   intent(in), optional :: levels
-  logical,          intent(in), optional :: global
-  integer(c_int),   intent(in), optional :: owner
-
-  type(atlas_Config) :: options
-  options = atlas_Config()
-
-  call options%set("datatype",kind)
-  if( present(name) )   call options%set("name",name)
-  if( present(levels) ) call options%set("levels",levels)
-  if( present(owner) )  call options%set("owner",owner)
-  if( present(global) ) call options%set("global",global)
-  field = atlas_Field( atlas__fs__Spectral__create_field(this%c_ptr(),options%c_ptr()) )
-  call field%return()
-  call options%final()
 end function
 
 subroutine gather_field(this,local,global)

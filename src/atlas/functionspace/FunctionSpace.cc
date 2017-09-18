@@ -17,6 +17,7 @@
 #include "atlas/library/config.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/field/Field.h"
+#include "atlas/field/detail/FieldImpl.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/array/DataType.h"
 #include "atlas/runtime/ErrorHandling.h"
@@ -44,6 +45,43 @@ const char* atlas__FunctionSpace__name (FunctionSpaceImpl* This) {
   );
   return 0;
 }
+
+field::FieldImpl* atlas__FunctionSpace__create_field (
+    const FunctionSpaceImpl* This,
+    const eckit::Configuration* options )
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(options);
+    field::FieldImpl* field;
+    {
+      Field f = This->createField( *options );
+      field = f.get();
+      field->attach();
+    }
+    field->detach();
+    return field
+  );
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+
+field::FieldImpl* atlas__FunctionSpace__create_field_template (const FunctionSpaceImpl* This, const field::FieldImpl* field_template, const eckit::Configuration* options )
+{
+  ASSERT(This);
+  ASSERT(options);
+  field::FieldImpl* field;
+  {
+    Field f = This->createField( Field(field_template), *options);
+    field = f.get();
+    field->attach();
+  }
+  field->detach();
+  return field;
+}
+
+
 }
 
 // ------------------------------------------------------------------
@@ -92,7 +130,7 @@ Field FunctionSpace::createField(const eckit::Configuration& config) const {
 }
 
 Field FunctionSpace::createField(
-    const Field& other, 
+    const Field& other,
     const eckit::Configuration& config ) const {
   return functionspace_->createField(other,config);
 }
