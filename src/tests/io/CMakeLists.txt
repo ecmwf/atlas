@@ -7,13 +7,11 @@
 # does it submit to any jurisdiction.
 
 ecbuild_add_test( TARGET atlas_test_gmsh
-  BOOST
   SOURCES  test_gmsh.cc ../TestMeshes.h
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_pointcloud_io
-  BOOST
   SOURCES   test_pointcloud_io.cc
   LIBS      atlas
 )
