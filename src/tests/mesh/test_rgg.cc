@@ -12,9 +12,6 @@
 #include <algorithm>
 #include <iomanip>
 
-#define BOOST_TEST_MODULE TestRGG
-#include "ecbuild/boost_test_framework.h"
-
 #include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/library/config.h"
@@ -36,9 +33,12 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Config.h"
 #include "atlas/runtime/Log.h"
+#include "eckit/types/FloatCompare.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
+using namespace eckit::testing;
 
 namespace atlas {
 namespace grid {
@@ -55,6 +55,8 @@ void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], do
 
 namespace atlas {
 namespace test {
+
+//-----------------------------------------------------------------------------
 
 static grid::ReducedGaussianGrid debug_grid() {
   return {
@@ -116,84 +118,84 @@ double compute_lonlat_area(Mesh& mesh)
   return area;
 }
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( test_eq_caps )
+CASE( "test_eq_caps" )
 {
   std::vector<int>    n_regions;
   std::vector<double> s_cap;
 
   grid::detail::partitioner::eq_caps(6, n_regions, s_cap);
-  BOOST_CHECK_EQUAL( n_regions.size(), 3 );
-  BOOST_CHECK_EQUAL( n_regions[0], 1 );
-  BOOST_CHECK_EQUAL( n_regions[1], 4 );
-  BOOST_CHECK_EQUAL( n_regions[2], 1 );
+  EXPECT( n_regions.size() == 3 );
+  EXPECT( n_regions[0] == 1 );
+  EXPECT( n_regions[1] == 4 );
+  EXPECT( n_regions[2] == 1 );
 
   grid::detail::partitioner::eq_caps(10, n_regions, s_cap);
-  BOOST_CHECK_EQUAL( n_regions.size(), 4 );
-  BOOST_CHECK_EQUAL( n_regions[0], 1 );
-  BOOST_CHECK_EQUAL( n_regions[1], 4 );
-  BOOST_CHECK_EQUAL( n_regions[2], 4 );
-  BOOST_CHECK_EQUAL( n_regions[3], 1 );
+  EXPECT( n_regions.size() == 4 );
+  EXPECT( n_regions[0] == 1 );
+  EXPECT( n_regions[1] == 4 );
+  EXPECT( n_regions[2] == 4 );
+  EXPECT( n_regions[3] == 1 );
 }
 
-BOOST_AUTO_TEST_CASE( test_partitioner )
+CASE( "test_partitioner" )
 {
   Grid g( "S4x2" );
 
   // 12 partitions
   {
     grid::detail::partitioner::EqualRegionsPartitioner partitioner(12);
-    BOOST_CHECK_EQUAL( partitioner.nb_bands(),    4 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(0), 1 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(1), 5 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(2), 5 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(3), 1 );
+    EXPECT( partitioner.nb_bands() ==    4 );
+    EXPECT( partitioner.nb_regions(0) == 1 );
+    EXPECT( partitioner.nb_regions(1) == 5 );
+    EXPECT( partitioner.nb_regions(2) == 5 );
+    EXPECT( partitioner.nb_regions(3) == 1 );
   }
 
   // 24 partitions
   {
     grid::detail::partitioner::EqualRegionsPartitioner partitioner(24);
-    BOOST_CHECK_EQUAL( partitioner.nb_bands(),     5 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(2), 10 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(3),  6 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(4),  1 );
+    EXPECT( partitioner.nb_bands() ==    5 );
+    EXPECT( partitioner.nb_regions(0) == 1 );
+    EXPECT( partitioner.nb_regions(1) == 6 );
+    EXPECT( partitioner.nb_regions(2) ==10 );
+    EXPECT( partitioner.nb_regions(3) == 6 );
+    EXPECT( partitioner.nb_regions(4) == 1 );
   }
 
   // 48 partitions
   {
     grid::detail::partitioner::EqualRegionsPartitioner partitioner(48);
-    BOOST_CHECK_EQUAL( partitioner.nb_bands(),     7 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(2), 11 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(3), 12 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(4), 11 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(5),  6 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(6),  1 );
+    EXPECT( partitioner.nb_bands() ==     7 );
+    EXPECT( partitioner.nb_regions(0) ==  1 );
+    EXPECT( partitioner.nb_regions(1) ==  6 );
+    EXPECT( partitioner.nb_regions(2) == 11 );
+    EXPECT( partitioner.nb_regions(3) == 12 );
+    EXPECT( partitioner.nb_regions(4) == 11 );
+    EXPECT( partitioner.nb_regions(5) ==  6 );
+    EXPECT( partitioner.nb_regions(6) ==  1 );
   }
 
   // 96 partitions
   {
     grid::detail::partitioner::EqualRegionsPartitioner partitioner(96);
-    BOOST_CHECK_EQUAL( partitioner.nb_bands(),    10 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(2), 11 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(3), 14 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(4), 16 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(5), 16 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(6), 14 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(7), 11 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(8),  6 );
-    BOOST_CHECK_EQUAL( partitioner.nb_regions(9),  1 );
+    EXPECT( partitioner.nb_bands() ==    10 );
+    EXPECT( partitioner.nb_regions(0) ==  1 );
+    EXPECT( partitioner.nb_regions(1) ==  6 );
+    EXPECT( partitioner.nb_regions(2) == 11 );
+    EXPECT( partitioner.nb_regions(3) == 14 );
+    EXPECT( partitioner.nb_regions(4) == 16 );
+    EXPECT( partitioner.nb_regions(5) == 16 );
+    EXPECT( partitioner.nb_regions(6) == 14 );
+    EXPECT( partitioner.nb_regions(7) == 11 );
+    EXPECT( partitioner.nb_regions(8) ==  6 );
+    EXPECT( partitioner.nb_regions(9) ==  1 );
   }
 
 }
 
-BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
+CASE( "test_gaussian_latitudes" )
 {
   std::vector< double > factory_latitudes;
   std::vector< double > computed_latitudes;
@@ -220,14 +222,14 @@ BOOST_AUTO_TEST_CASE( test_gaussian_latitudes )
     double wsum=0;
     for( size_t i=0; i<N; ++i )
     {
-      BOOST_CHECK_CLOSE( computed_latitudes[i] , factory_latitudes[i], 0.0000001 );
+      EXPECT( eckit::types::is_approximately_equal( computed_latitudes[i] , factory_latitudes[i], 0.0000001 ) );
       wsum += computed_weights[i];
     }
-    BOOST_CHECK_CLOSE( wsum*2. , 1. , 0.0000001 );
+    EXPECT( eckit::types::is_approximately_equal( wsum*2. , 1. , 0.0000001 ) );
   }
 }
 
-BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
+CASE( "test_rgg_meshgen_one_part" )
 {
   Mesh m;
   util::Config default_opts;
@@ -244,12 +246,12 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           ("include_pole",false)
           );
     m = generate( atlas::test::debug_grid() );
-    BOOST_CHECK_EQUAL( m.nodes().size(), 156 );
-    BOOST_CHECK_EQUAL( m.cells().elements(0).size(), 134 );
-    BOOST_CHECK_EQUAL( m.cells().elements(1).size(),  32 );
-//    BOOST_CHECK_EQUAL( m.nodes().metadata().get<size_t>("nb_owned"),    156 );
-//    BOOST_CHECK_EQUAL( m.function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
-//    BOOST_CHECK_EQUAL( m.function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
+    EXPECT( m.nodes().size() == 156 );
+    EXPECT( m.cells().elements(0).size() == 134 );
+    EXPECT( m.cells().elements(1).size() ==  32 );
+//    EXPECT( m.nodes().metadata().get<size_t>("nb_owned") ==    156 );
+//    EXPECT( m.function_space("quads" ).metadata().get<size_t>("nb_owned") ==    134 );
+//    EXPECT( m.function_space("triags").metadata().get<size_t>("nb_owned") ==     32 );
   }
 
   ENABLE {
@@ -259,12 +261,12 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           ("include_pole",false)
           );
     m = generate( atlas::test::debug_grid() );
-    BOOST_CHECK_EQUAL( m.nodes().size(), 166 );
-    BOOST_CHECK_EQUAL( m.cells().elements(0).size(), 134 );
-    BOOST_CHECK_EQUAL( m.cells().elements(1).size(),  32 );
-//    BOOST_CHECK_EQUAL( m.nodes().metadata().get<size_t>("nb_owned"),    166 );
-//    BOOST_CHECK_EQUAL( m.function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
-//    BOOST_CHECK_EQUAL( m.function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
+    EXPECT( m.nodes().size() == 166 );
+    EXPECT( m.cells().elements(0).size() == 134 );
+    EXPECT( m.cells().elements(1).size() ==  32 );
+//    EXPECT( m.nodes().metadata().get<size_t>("nb_owned") ==    166 );
+//    EXPECT( m.function_space("quads" ).metadata().get<size_t>("nb_owned") ==    134 );
+//    EXPECT( m.function_space("triags").metadata().get<size_t>("nb_owned") ==     32 );
   }
 
   ENABLE {
@@ -274,12 +276,12 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
           ("include_pole",true)
           );
     m = generate( atlas::test::debug_grid() );
-    BOOST_CHECK_EQUAL( m.nodes().size(), 158 );
-    BOOST_CHECK_EQUAL( m.cells().elements(0).size(), 134 );
-    BOOST_CHECK_EQUAL( m.cells().elements(1).size(),  44 );
-//    BOOST_CHECK_EQUAL( m.nodes().metadata().get<size_t>("nb_owned"),    158 );
-//    BOOST_CHECK_EQUAL( m.function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
-//    BOOST_CHECK_EQUAL( m.function_space("triags").metadata().get<size_t>("nb_owned"),     44 );
+    EXPECT( m.nodes().size() == 158 );
+    EXPECT( m.cells().elements(0).size() == 134 );
+    EXPECT( m.cells().elements(1).size() ==  44 );
+//    EXPECT( m.nodes().metadata().get<size_t>("nb_owned") ==    158 );
+//    EXPECT( m.function_space("quads" ).metadata().get<size_t>("nb_owned") ==    134 );
+//    EXPECT( m.function_space("triags").metadata().get<size_t>("nb_owned") ==     44 );
   }
 
   Mesh mesh;
@@ -293,12 +295,12 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=2;
     long lon[] = { 4, 6 };
     mesh = generate( test::minimal_grid(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh.nodes().size(), 24 );
-    BOOST_CHECK_EQUAL( mesh.cells().elements(0).size(), 14 );
-    BOOST_CHECK_EQUAL( mesh.cells().elements(1).size(),  4 );
+    EXPECT( mesh.nodes().size() == 24 );
+    EXPECT( mesh.cells().elements(0).size() == 14 );
+    EXPECT( mesh.cells().elements(1).size() ==  4 );
 
     double max_lat = test::minimal_grid(nlat,lon).y().front();
-    BOOST_CHECK_CLOSE( test::compute_lonlat_area(mesh), 2.*M_PI*2.*max_lat, 1e-8 );
+    EXPECT( eckit::types::is_approximately_equal(test::compute_lonlat_area(mesh), 2.*M_PI*2.*max_lat, 1e-8 ));
     output::Gmsh("minimal2.msh").write(mesh);
   }
   // 3 latitudes
@@ -311,9 +313,9 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=3;
     long lon[] = { 4, 6, 8 };
     mesh = generate( test::minimal_grid(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh.nodes().size(), 42 );
-    BOOST_CHECK_EQUAL( mesh.cells().elements(0).size(), 28 );
-    BOOST_CHECK_EQUAL( mesh.cells().elements(1).size(),  8 );
+    EXPECT( mesh.nodes().size() == 42 );
+    EXPECT( mesh.cells().elements(0).size() == 28 );
+    EXPECT( mesh.cells().elements(1).size() ==  8 );
     output::Gmsh("minimal3.msh").write(mesh);
   }
   // 4 latitudes
@@ -326,9 +328,9 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=4;
     long lon[] = { 4, 6, 8, 10 };
     mesh = generate( test::minimal_grid(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh.nodes().size(), 64 );
-    BOOST_CHECK_EQUAL( mesh.cells().elements(0).size(), 46 );
-    BOOST_CHECK_EQUAL( mesh.cells().elements(1).size(), 12 );
+    EXPECT( mesh.nodes().size() == 64 );
+    EXPECT( mesh.cells().elements(0).size() == 46 );
+    EXPECT( mesh.cells().elements(1).size() == 12 );
     output::Gmsh("minimal4.msh").write(mesh);
   }
   // 5 latitudes WIP
@@ -341,18 +343,18 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=5;
     long lon[] = { 6, 10, 18, 22, 22 };
     mesh = generate( test::minimal_grid(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh.nodes().size(), 166 );
-    BOOST_CHECK_EQUAL( mesh.cells().elements(0).size(), 134 );
-    BOOST_CHECK_EQUAL( mesh.cells().elements(1).size(),  32 );
+    EXPECT( mesh.nodes().size() == 166 );
+    EXPECT( mesh.cells().elements(0).size() == 134 );
+    EXPECT( mesh.cells().elements(1).size() ==  32 );
     output::Gmsh("minimal5.msh").write(mesh);
   }
 }
 }
 
-BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
+CASE( "test_rgg_meshgen_many_parts" )
 {
 
-  BOOST_CHECK( grid::detail::partitioner::PartitionerFactory::has("equal_regions") );
+  EXPECT( grid::detail::partitioner::PartitionerFactory::has("equal_regions") );
   size_t nb_parts = 20;
           //  Alternative grid for debugging
           //  int nlat=10;
@@ -393,7 +395,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     Mesh m = generate( grid );
     ATLAS_DEBUG_HERE();
     m.metadata().set("part",p);
-    BOOST_TEST_CHECKPOINT("generated grid " << p);
+    Log::info() << "generated grid " << p << std::endl;
     array::ArrayView<int   ,1> part = array::make_view<int   ,1>( m.nodes().partition() );
     array::ArrayView<gidx_t,1> gidx = array::make_view<gidx_t,1>( m.nodes().global_index() );
 
@@ -403,9 +405,9 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     if( nb_parts == 20 )
     {
-      BOOST_CHECK_EQUAL( m.nodes().size(), nodes[p]  );
-      BOOST_CHECK_EQUAL( m.cells().elements(0).size(), quads[p]  );
-      BOOST_CHECK_EQUAL( m.cells().elements(1).size(), triags[p] );
+      EXPECT( m.nodes().size() == nodes[p]  );
+      EXPECT( m.cells().elements(0).size() == quads[p]  );
+      EXPECT( m.cells().elements(1).size() == triags[p] );
     }
     }
     ATLAS_DEBUG_HERE();
@@ -432,7 +434,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
         {
           std::stringstream ss; ss << "part " << p << ": node_gid " << gidx(jnode) << " is not connected to any element.";
 DISABLE{
-          BOOST_ERROR( ss.str() );
+          Log::error() <<  ss.str() << std::endl;
 }
         }
       }
@@ -444,7 +446,7 @@ DISABLE{
       if( size_t(part(n)) == p )
       {
         ++nb_owned;
-        BOOST_CHECK( all_owned[ gidx(n) ] == -1 );
+        EXPECT( all_owned[ gidx(n) ] == -1 );
         if( all_owned[ gidx(n)] != -1 )
           std::cout << "node " << gidx(n) << " already visited for" << std::endl;
         all_owned[ gidx(n) ] = part(n);
@@ -456,16 +458,16 @@ DISABLE{
   {
     if( all_owned[gid] == -1 )
     {
-      BOOST_ERROR( "node " << gid << " is not owned by anyone" );
+      Log::error() << "node " << gid << " is not owned by anyone"  << std::endl;
     }
   }
-  BOOST_CHECK_EQUAL( nb_owned, grid.size()+grid.ny() );
+  EXPECT( nb_owned == grid.size()+grid.ny() );
 
-  BOOST_CHECK_CLOSE( area, check_area, 1e-10 );
+  EXPECT( eckit::types::is_approximately_equal(area, check_area, 1e-10) );
 
 }
 
-BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
+CASE( "test_meshgen_ghost_at_end" )
 {
   ATLAS_DEBUG_HERE();
 
@@ -498,11 +500,19 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
   for( size_t jnode=0; jnode<part.size(); ++jnode )
   {
     Log::info() << mesh::Nodes::Topology::check(flags(jnode),mesh::Nodes::Topology::GHOST) << " ";
-    BOOST_CHECK_EQUAL( mesh::Nodes::Topology::check(flags(jnode),mesh::Nodes::Topology::GHOST), ghost(jnode) );
+    EXPECT( mesh::Nodes::Topology::check(flags(jnode),mesh::Nodes::Topology::GHOST) == ghost(jnode) );
   }
   Log::info() << "]" << std::endl;
 
 }
 
-} // namespace test
-} // namespace atlas
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

@@ -14,9 +14,6 @@
 
 #include "atlas/library/config.h"
 
-#define BOOST_TEST_MODULE atlas_test_elements
-#include "ecbuild/boost_test_framework.h"
-
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/exception/Exceptions.h"
 
@@ -32,26 +29,19 @@
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/grid/Grid.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
-
-// ------------------------------------------------------------------
-
+using namespace eckit::testing;
 using namespace atlas::mesh;
 using namespace atlas::mesh::temporary;
 
 namespace atlas {
 namespace test {
 
+// ------------------------------------------------------------------
 
-// ===================================================================
-//                               BEGIN TESTS
-// ===================================================================
-
-
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
-
-BOOST_AUTO_TEST_CASE( hybrid_elements )
+CASE( "hybrid_elements" )
 {
   HybridElements hybrid_elements;
 
@@ -62,7 +52,7 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
 
   size_t triags_type_idx = hybrid_elements.add( new Triangle(), 2, triangle_nodes );
 
-  BOOST_CHECK_EQUAL( triags_type_idx , 0 );
+  EXPECT( triags_type_idx == 0 );
 
   hybrid_elements.add(Field("surface",array::make_datatype<double>(),array::make_shape(hybrid_elements.size())));
 
@@ -74,7 +64,7 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
 
   size_t quads_type_idx = hybrid_elements.add( new Quadrilateral(), 1, quad_nodes );
 
-  BOOST_CHECK_EQUAL( quads_type_idx , 1 );
+  EXPECT( quads_type_idx == 1 );
 
   {
     const HybridElements::Connectivity& connectivity = hybrid_elements.node_connectivity();
@@ -89,16 +79,16 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
       }
       eckit::Log::info() << "]" << std::endl;
     }
-    BOOST_CHECK_EQUAL( connectivity(0,0) , 1 );
-    BOOST_CHECK_EQUAL( connectivity(0,1) , 5 );
-    BOOST_CHECK_EQUAL( connectivity(0,2) , 3 );
-    BOOST_CHECK_EQUAL( connectivity(1,0) , 1 );
-    BOOST_CHECK_EQUAL( connectivity(1,1) , 5 );
-    BOOST_CHECK_EQUAL( connectivity(1,2) , 2 );
-    BOOST_CHECK_EQUAL( connectivity(2,0) , 0 );
-    BOOST_CHECK_EQUAL( connectivity(2,1) , 1 );
-    BOOST_CHECK_EQUAL( connectivity(2,2) , 2 );
-    BOOST_CHECK_EQUAL( connectivity(2,3) , 3 );
+    EXPECT( connectivity(0,0) == 1 );
+    EXPECT( connectivity(0,1) == 5 );
+    EXPECT( connectivity(0,2) == 3 );
+    EXPECT( connectivity(1,0) == 1 );
+    EXPECT( connectivity(1,1) == 5 );
+    EXPECT( connectivity(1,2) == 2 );
+    EXPECT( connectivity(2,0) == 0 );
+    EXPECT( connectivity(2,1) == 1 );
+    EXPECT( connectivity(2,2) == 2 );
+    EXPECT( connectivity(2,3) == 3 );
   }
 
   eckit::Log::info() << std::endl;
@@ -108,36 +98,36 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
       Elements& elements = hybrid_elements.elements(t);
       const BlockConnectivity& block_connectivity = elements.node_connectivity();
       if( t==0 ) {
-        BOOST_CHECK_EQUAL( block_connectivity(0,0) , 1 );
-        BOOST_CHECK_EQUAL( block_connectivity(0,1) , 5 );
-        BOOST_CHECK_EQUAL( block_connectivity(0,2) , 3 );
-        BOOST_CHECK_EQUAL( block_connectivity(1,0) , 1 );
-        BOOST_CHECK_EQUAL( block_connectivity(1,1) , 5 );
-        BOOST_CHECK_EQUAL( block_connectivity(1,2) , 2 );
+        EXPECT( block_connectivity(0,0) == 1 );
+        EXPECT( block_connectivity(0,1) == 5 );
+        EXPECT( block_connectivity(0,2) == 3 );
+        EXPECT( block_connectivity(1,0) == 1 );
+        EXPECT( block_connectivity(1,1) == 5 );
+        EXPECT( block_connectivity(1,2) == 2 );
       }
       if( t==1 ) {
-        BOOST_CHECK_EQUAL( block_connectivity(0,0) , 0 );
-        BOOST_CHECK_EQUAL( block_connectivity(0,1) , 1 );
-        BOOST_CHECK_EQUAL( block_connectivity(0,2) , 2 );
-        BOOST_CHECK_EQUAL( block_connectivity(0,3) , 3 );
+        EXPECT( block_connectivity(0,0) == 0 );
+        EXPECT( block_connectivity(0,1) == 1 );
+        EXPECT( block_connectivity(0,2) == 2 );
+        EXPECT( block_connectivity(0,3) == 3 );
       }
       elements.node_connectivity().set(0,quad0);
       //const_cast<Elements::Connectivity&>(block_connectivity).set(0,quad0);
       //elements.set_node_connectivity(0,quad0);
 
       if( t==0 ) {
-        BOOST_CHECK_EQUAL( block_connectivity(0,0) , 9 );
-        BOOST_CHECK_EQUAL( block_connectivity(0,1) , 8 );
-        BOOST_CHECK_EQUAL( block_connectivity(0,2) , 7 );
-        BOOST_CHECK_EQUAL( block_connectivity(1,0) , 1 );
-        BOOST_CHECK_EQUAL( block_connectivity(1,1) , 5 );
-        BOOST_CHECK_EQUAL( block_connectivity(1,2) , 2 );
+        EXPECT( block_connectivity(0,0) == 9 );
+        EXPECT( block_connectivity(0,1) == 8 );
+        EXPECT( block_connectivity(0,2) == 7 );
+        EXPECT( block_connectivity(1,0) == 1 );
+        EXPECT( block_connectivity(1,1) == 5 );
+        EXPECT( block_connectivity(1,2) == 2 );
       }
       if( t==1 ) {
-        BOOST_CHECK_EQUAL( block_connectivity(0,0) , 9 );
-        BOOST_CHECK_EQUAL( block_connectivity(0,1) , 8 );
-        BOOST_CHECK_EQUAL( block_connectivity(0,2) , 7 );
-        BOOST_CHECK_EQUAL( block_connectivity(0,3) , 6 );
+        EXPECT( block_connectivity(0,0) == 9 );
+        EXPECT( block_connectivity(0,1) == 8 );
+        EXPECT( block_connectivity(0,2) == 7 );
+        EXPECT( block_connectivity(0,3) == 6 );
       }
 
       eckit::Log::info() << "name = " << elements.name() << std::endl;
@@ -154,20 +144,20 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   }
 
   size_t nb_elements = 3;
-  BOOST_CHECK_EQUAL( hybrid_elements.size(),                  nb_elements);
-  BOOST_CHECK_EQUAL( hybrid_elements.global_index().size(),   nb_elements);
-  BOOST_CHECK_EQUAL( hybrid_elements.partition().size(),      nb_elements);
-  BOOST_CHECK_EQUAL( hybrid_elements.remote_index().size(),   nb_elements);
-  BOOST_CHECK_EQUAL( hybrid_elements.field("surface").size(), nb_elements);
-  BOOST_CHECK_EQUAL( hybrid_elements.elements(0).begin(), 0);
-  BOOST_CHECK_EQUAL( hybrid_elements.elements(0).end(),   2);
-  BOOST_CHECK_EQUAL( hybrid_elements.elements(1).begin(), 2);
-  BOOST_CHECK_EQUAL( hybrid_elements.elements(1).end(),   3);
-//  BOOST_CHECK_EQUAL( hybrid_elements.elements(0).type_idx(), 0 );
-//  BOOST_CHECK_EQUAL( hybrid_elements.elements(1).type_idx(), 1 );
+  EXPECT( hybrid_elements.size() ==                  nb_elements);
+  EXPECT( hybrid_elements.global_index().size() ==   nb_elements);
+  EXPECT( hybrid_elements.partition().size() ==      nb_elements);
+  EXPECT( hybrid_elements.remote_index().size() ==   nb_elements);
+  EXPECT( hybrid_elements.field("surface").size() == nb_elements);
+  EXPECT( hybrid_elements.elements(0).begin() == 0);
+  EXPECT( hybrid_elements.elements(0).end() ==   2);
+  EXPECT( hybrid_elements.elements(1).begin() == 2);
+  EXPECT( hybrid_elements.elements(1).end() ==   3);
+//  EXPECT( hybrid_elements.elements(0).type_idx() == 0 );
+//  EXPECT( hybrid_elements.elements(1).type_idx() == 1 );
 }
 
-BOOST_AUTO_TEST_CASE( elements )
+CASE( "elements" )
 {
   eckit::Log::info() << "\nelements" << std::endl;
 
@@ -179,9 +169,9 @@ BOOST_AUTO_TEST_CASE( elements )
 
   Elements elements( new Triangle(), 2, triangle_nodes );
 
-  BOOST_CHECK_EQUAL( elements.begin(), 0);
-  BOOST_CHECK_EQUAL( elements.end(),   2);
-//  BOOST_CHECK_EQUAL( elements.type_idx(), 0);
+  EXPECT( elements.begin() == 0);
+  EXPECT( elements.end() ==   2);
+//  EXPECT( elements.type_idx() == 0);
 
   elements.node_connectivity().set(0,triag1);
   eckit::Log::info() << "name = " << elements.name() << std::endl;
@@ -216,7 +206,7 @@ BOOST_AUTO_TEST_CASE( elements )
   }
 }
 
-BOOST_AUTO_TEST_CASE( hybrid_connectivity )
+CASE( "hybrid_connectivity" )
 {
   eckit::Log::info() << "\nhybrid_connectivity" << std::endl;
 
@@ -268,7 +258,7 @@ BOOST_AUTO_TEST_CASE( hybrid_connectivity )
 }
 
 
-BOOST_AUTO_TEST_CASE( block_connectivity )
+CASE( "block_connectivity" )
 {
   eckit::Log::info() << "\nblock_connectivity" << std::endl;
 
@@ -290,7 +280,7 @@ BOOST_AUTO_TEST_CASE( block_connectivity )
 
 }
 
-BOOST_AUTO_TEST_CASE( zero_elements )
+CASE( "zero_elements" )
 {
   HybridElements hybrid_elements;
   idx_t *nodes = 0;
@@ -298,13 +288,13 @@ BOOST_AUTO_TEST_CASE( zero_elements )
   hybrid_elements.add(new Triangle(), 0, nodes );
   hybrid_elements.add(new Quadrilateral(), 0, nodes );
 
-  BOOST_CHECK_EQUAL( hybrid_elements.size(), 0 );
-  BOOST_CHECK_EQUAL( hybrid_elements.nb_types(), 2 );
-  BOOST_CHECK_EQUAL( hybrid_elements.elements(0).size(), 0 );
-  BOOST_CHECK_EQUAL( hybrid_elements.elements(1).size(), 0 );
+  EXPECT( hybrid_elements.size() == 0 );
+  EXPECT( hybrid_elements.nb_types() == 2 );
+  EXPECT( hybrid_elements.elements(0).size() == 0 );
+  EXPECT( hybrid_elements.elements(1).size() == 0 );
 }
 
-BOOST_AUTO_TEST_CASE( irregularconnectivity_insert )
+CASE( "irregularconnectivity_insert" )
 {
   IrregularConnectivity connectivity;
   idx_t c[] = {1, 2, 3, 4,
@@ -326,15 +316,15 @@ BOOST_AUTO_TEST_CASE( irregularconnectivity_insert )
   size_t r(0);
   for( size_t jrow=0; jrow<connectivity.rows(); ++jrow )
   {
-    BOOST_CHECK_EQUAL(connectivity.cols(jrow), counts[r++]);
+    EXPECT(connectivity.cols(jrow) == counts[r++]);
     for( size_t jcol=0; jcol<connectivity.cols(jrow); ++jcol )
     {
-      BOOST_CHECK_EQUAL(connectivity(jrow,jcol), values[n++]);
+      EXPECT(connectivity(jrow,jcol) == values[n++]);
     }
   }
 }
 
-BOOST_AUTO_TEST_CASE( multiblockconnectivity_insert )
+CASE( "multiblockconnectivity_insert" )
 {
   MultiBlockConnectivity connectivity;
   idx_t c1[] = {1, 2, 3, 4,
@@ -349,10 +339,10 @@ BOOST_AUTO_TEST_CASE( multiblockconnectivity_insert )
   idx_t c2i[] = {23,24,25,
                  26,27,28};
 
-  BOOST_CHECK_EQUAL( connectivity.block(0).rows() , 3 );
-  BOOST_CHECK_EQUAL( connectivity.block(1).rows() , 2 );
-  BOOST_CHECK_EQUAL( connectivity.block(0).cols() , 4 );
-  BOOST_CHECK_EQUAL( connectivity.block(1).cols() , 3 );
+  EXPECT( connectivity.block(0).rows() == 3 );
+  EXPECT( connectivity.block(1).rows() == 2 );
+  EXPECT( connectivity.block(0).cols() == 4 );
+  EXPECT( connectivity.block(1).cols() == 3 );
 
   std::cout << "block 0" << std::endl;
   for( size_t jrow=0; jrow<connectivity.block(0).rows(); ++jrow )
@@ -367,8 +357,8 @@ BOOST_AUTO_TEST_CASE( multiblockconnectivity_insert )
   connectivity.insert(1,1,4,c1i);
   connectivity.insert(5,2,3,c2i);
 
-  BOOST_CHECK_EQUAL( connectivity.block(0).rows() , 4 );
-  BOOST_CHECK_EQUAL( connectivity.block(1).rows() , 4 );
+  EXPECT( connectivity.block(0).rows() == 4 );
+  EXPECT( connectivity.block(1).rows() == 4 );
 
   std::cout << "\nfull\n";
   for( size_t jrow=0; jrow<connectivity.rows(); ++jrow )
@@ -386,15 +376,15 @@ BOOST_AUTO_TEST_CASE( multiblockconnectivity_insert )
   size_t r(0);
   for( size_t jrow=0; jrow<connectivity.rows(); ++jrow )
   {
-    BOOST_CHECK_EQUAL(connectivity.cols(jrow), counts[r++]);
+    EXPECT(connectivity.cols(jrow) == counts[r++]);
     for( size_t jcol=0; jcol<connectivity.cols(jrow); ++jcol )
     {
-      BOOST_CHECK_EQUAL(connectivity(jrow,jcol), values[n++]);
+      EXPECT(connectivity(jrow,jcol) == values[n++]);
     }
   }
 }
 
-BOOST_AUTO_TEST_CASE( cells_insert )
+CASE( "cells_insert" )
 {
   Log::info() << "\n\n\ncells_insert \n============ \n\n" << std::endl;
   HybridElements cells;
@@ -406,11 +396,11 @@ BOOST_AUTO_TEST_CASE( cells_insert )
                 16, 17, 18};
   cells.add(new Triangle(), 2, c2);
 
-  BOOST_CHECK_EQUAL( cells.elements(0).size() , 3 );
-  BOOST_CHECK_EQUAL( cells.elements(1).size() , 2 );
-  BOOST_CHECK_EQUAL( cells.size(), 5 );
-  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity().rows(), 3 );
-  BOOST_CHECK_EQUAL( cells.elements(1).node_connectivity().rows(), 2 );
+  EXPECT( cells.elements(0).size()  == 3 );
+  EXPECT( cells.elements(1).size()  == 2 );
+  EXPECT( cells.size() == 5 );
+  EXPECT( cells.elements(0).node_connectivity().rows() == 3 );
+  EXPECT( cells.elements(1).node_connectivity().rows() == 2 );
 
   Log::info() << "Update elements(0)" << std::endl;
   size_t pos0 = cells.elements(0).add(3);
@@ -419,14 +409,14 @@ BOOST_AUTO_TEST_CASE( cells_insert )
   Log::info() << "Update elements(1)" << std::endl;
   size_t pos1 = cells.elements(1).add(2);
 
-  BOOST_CHECK_EQUAL( pos0, 3 );
-  BOOST_CHECK_EQUAL( pos1, 2 );
-  BOOST_CHECK_EQUAL( cells.elements(0).size() , 6 );
-  BOOST_CHECK_EQUAL( cells.elements(1).size() , 4 );
-  BOOST_CHECK_EQUAL( cells.size(), 10 );
-  BOOST_CHECK_EQUAL( cells.node_connectivity().block(0).rows(), 6 );
-  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity().rows(), 6 );
-  BOOST_CHECK_EQUAL( cells.elements(1).node_connectivity().rows(), 4 );
+  EXPECT( pos0 == 3 );
+  EXPECT( pos1 == 2 );
+  EXPECT( cells.elements(0).size()  == 6 );
+  EXPECT( cells.elements(1).size()  == 4 );
+  EXPECT( cells.size() == 10 );
+  EXPECT( cells.node_connectivity().block(0).rows() == 6 );
+  EXPECT( cells.elements(0).node_connectivity().rows() == 6 );
+  EXPECT( cells.elements(1).node_connectivity().rows() == 4 );
 
   const BlockConnectivity& conn1 = cells.elements(0).node_connectivity();
   const BlockConnectivity& conn2 = cells.elements(1).node_connectivity();
@@ -452,7 +442,7 @@ BOOST_AUTO_TEST_CASE( cells_insert )
   }
 }
 
-BOOST_AUTO_TEST_CASE( cells_add_add )
+CASE( "cells_add_add" )
 {
   HybridElements cells;
 
@@ -465,18 +455,25 @@ BOOST_AUTO_TEST_CASE( cells_add_add )
 
   conn.set(0,nodes);
 
-  BOOST_CHECK_EQUAL( conn(0,0), 0 );
-  BOOST_CHECK_EQUAL( conn(0,1), 1 );
-  BOOST_CHECK_EQUAL( conn(0,2), 2 );
-  BOOST_CHECK_EQUAL( conn(0,3), 3 );
+  EXPECT( conn(0,0) == 0 );
+  EXPECT( conn(0,1) == 1 );
+  EXPECT( conn(0,2) == 2 );
+  EXPECT( conn(0,3) == 3 );
 
-  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity()(0,0), 0 );
-  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity()(0,1), 1 );
-  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity()(0,2), 2 );
-  BOOST_CHECK_EQUAL( cells.elements(0).node_connectivity()(0,3), 3 );
+  EXPECT( cells.elements(0).node_connectivity()(0,0) == 0 );
+  EXPECT( cells.elements(0).node_connectivity()(0,1) == 1 );
+  EXPECT( cells.elements(0).node_connectivity()(0,2) == 2 );
+  EXPECT( cells.elements(0).node_connectivity()(0,3) == 3 );
 
 }
 
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}
