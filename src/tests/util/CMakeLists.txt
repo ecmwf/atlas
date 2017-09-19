@@ -36,6 +36,8 @@ if( HAVE_FCTEST )
 
 endif()
 
+if( ECKIT_HAVE_TESTING )
+
 ecbuild_add_test( TARGET atlas_test_flags
   SOURCES  test_flags.cc
   LIBS     atlas
@@ -68,4 +70,6 @@ ecbuild_add_test( TARGET atlas_test_earth
   SOURCES test_earth.cc
   LIBS    atlas
 )
+
+endif()
 

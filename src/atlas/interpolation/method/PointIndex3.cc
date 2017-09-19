@@ -21,8 +21,7 @@
 #undef ECKIT_VERSION_INT
 #endif
 #define ECKIT_VERSION_INT (ECKIT_MAJOR_VERSION * 10000 \
-                         + ECKIT_MINOR_VERSION * 100 \
-                         + ECKIT_PATCH_VERSION)
+                         + ECKIT_MINOR_VERSION * 100 )
 
 namespace atlas {
 namespace interpolation {
@@ -34,7 +33,7 @@ ElemIndex3* create_element_kdtree(const Field& field_centres) {
 
     static bool fastBuildKDTrees = eckit::Resource<bool>("$ATLAS_FAST_BUILD_KDTREES", true);
 
-    // If eckit version <= 0.17.0
+    // If eckit version <= 0.17
 #   if ECKIT_VERSION_INT <= 1700
     fastBuildKDTrees = true;
 #   endif
@@ -55,7 +54,7 @@ ElemIndex3* create_element_kdtree(const Field& field_centres) {
         tree->build(p.begin(), p.end());
     }
 
-    // If eckit version > 0.17.0
+    // If eckit version > 0.17
 #   if ECKIT_VERSION_INT > 1700
     else {
         for (size_t j = 0; j < nb_cells; ++j) {

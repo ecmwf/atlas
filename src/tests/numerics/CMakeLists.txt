@@ -6,11 +6,14 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if( ECKIT_HAVE_TESTING )
 
 ecbuild_add_test( TARGET atlas_test_fvm_nabla
   SOURCES   test_fvm_nabla.cc
   LIBS      atlas
 )
+
+endif()
 
 if( HAVE_FCTEST)
   add_fctest( TARGET atlas_fctest_fvm_nabla

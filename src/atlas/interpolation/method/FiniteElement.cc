@@ -13,7 +13,6 @@
 #include "atlas/interpolation/method/FiniteElement.h"
 
 #include "eckit/log/Plural.h"
-#include "eckit/log/ProgressTimer.h"
 #include "eckit/log/Seconds.h"
 #include "eckit/mpi/Comm.h"
 #include "eckit/geometry/Point3.h"
@@ -34,6 +33,14 @@
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
 
+
+#include "eckit/eckit_version.h"
+#undef ECKIT_VERSION_INT
+#define ECKIT_VERSION_INT (ECKIT_MAJOR_VERSION * 10000 \
+                         + ECKIT_MINOR_VERSION * 100 )
+#if ECKIT_VERSION_INT > 1700
+#include "eckit/log/ProgressTimer.h"
+#endif
 
 namespace atlas {
 namespace interpolation {
@@ -84,7 +91,7 @@ void FiniteElement::setup(const FunctionSpace& source, const FunctionSpace& targ
 
     setup(source);
 }
-    
+
 void FiniteElement::setup(const FunctionSpace& source) {
 
     const functionspace::NodeColumns src = source;
@@ -129,10 +136,13 @@ void FiniteElement::setup(const FunctionSpace& source) {
     std::vector<size_t> failures;
 
     {
+#if ECKIT_VERSION_INT > 1700
         eckit::ProgressTimer progress("Computing interpolation weights", out_npts, "point", double(5), Log::debug<Atlas>());
-
         for ( size_t ip = 0; ip < out_npts; ++ip, ++progress ) {
-            if (out_ghosts(ip)) {
+#else
+      for ( size_t ip = 0; ip < out_npts; ++ip ) {
+#endif
+        if (out_ghosts(ip)) {
                 continue;
             }
 

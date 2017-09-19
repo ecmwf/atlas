@@ -9,6 +9,8 @@ if( HAVE_FCTEST )
     endforeach()
 endif()
 
+if( ECKIT_HAVE_TESTING )
+
 foreach(test
         test_domain
         test_field
@@ -21,3 +23,4 @@ foreach(test
 
 endforeach()
 
+endif()

@@ -36,6 +36,8 @@ if( HAVE_FCTEST )
 
 endif()
 
+if( ECKIT_HAVE_TESTING )
+
 ecbuild_add_test( TARGET atlas_test_parfields
   MPI        2
   CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
@@ -63,13 +65,6 @@ ecbuild_add_test(
   CONDITION   HAVE_TESSELATION
   LIBS        atlas)
 
-atlas_add_cuda_test(
-  TARGET atlas_test_connectivity_kernel
-  BOOST
-  SOURCES test_connectivity_kernel.cu
-  LIBS atlas
-)
-
 foreach( test accumulate_facets connectivity elements ll meshgen3d polygon rgg )
   ecbuild_add_test( TARGET atlas_test_${test}
     BOOST
@@ -77,3 +72,13 @@ foreach( test accumulate_facets connectivity elements ll meshgen3d polygon rgg )
     LIBS atlas
   )
 endforeach()
+
+endif()
+
+atlas_add_cuda_test(
+  TARGET atlas_test_connectivity_kernel
+  BOOST
+  SOURCES test_connectivity_kernel.cu
+  LIBS atlas
+)
+
