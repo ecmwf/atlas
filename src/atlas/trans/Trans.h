@@ -50,6 +50,17 @@ namespace detail {
 }
 }
 
+namespace atlas {
+namespace grid {
+namespace detail {
+namespace partitioner {
+    class TransPartitioner;
+}
+}
+}
+}
+
+
 //-----------------------------------------------------------------------------
 
 namespace atlas {
@@ -136,6 +147,141 @@ public:
   virtual ~Trans();
   operator Trans_t*() const { return &trans_; }
 
+  size_t truncation() const { return std::max(0,trans_.nsmax); }
+  size_t nb_spectral_coefficients() const { return trans_.nspec2; }
+  size_t nb_spectral_coefficients_global() const { return trans_.nspec2g; }
+  size_t nb_gridpoints() const { return trans_.ngptot; }
+  size_t nb_gridpoints_global() const { return trans_.ngptotg; }
+
+  grid::StructuredGrid grid() const { return grid_; }
+
+
+  /*!
+   * @brief distspec
+   * @param nb_fields
+   * @param origin
+   * @param global_spectra
+   * @param spectra
+   */
+  void distspec( const int nb_fields, const int origin[], const double global_spectra[], double spectra[] ) const;
+
+  /*!
+   * @brief gathspec
+   * @param nb_fields
+   * @param destination
+   * @param spectra
+   * @param global_spectra
+   */
+  void gathspec( const int nb_fields, const int destination[], const double spectra[], double global_spectra[] ) const;
+
+  /*!
+   * @brief distgrid
+   * @param nb_fields
+   * @param origin
+   * @param global_fields
+   * @param fields
+   */
+  void distgrid( const int nb_fields, const int origin[], const double global_fields[], double fields[] ) const;
+
+  /*!
+   * @brief gathgrid
+   * @param nb_fields
+   * @param destination
+   * @param fields
+   * @param global_fields
+   */
+  void gathgrid( const int nb_fields, const int destination[], const double fields[], double global_fields[] ) const;
+
+  void invtrans( const int nb_scalar_fields, const double scalar_spectra[],
+                 const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
+                 double gp_fields[],
+                 const TransParameters& = TransParameters() ) const;
+
+  /*!
+   * @brief invtrans
+   * @param nb_fields
+   * @param scalar_spectra
+   * @param scalar_fields
+   */
+  void invtrans( const int nb_scalar_fields, const double scalar_spectra[],
+                 double gp_fields[],
+                 const TransParameters& = TransParameters() ) const;
+
+  /*!
+   * @brief Inverse transform of vorticity/divergence to wind(U/V)
+   * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
+   */
+  void invtrans( const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
+                 double gp_fields[],
+                 const TransParameters& = TransParameters()) const;
+
+  /*!
+   * @brief Direct transform of scalar fields
+   */
+  void dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[] ) const;
+
+  /*!
+   * @brief Direct transform of wind(U/V) to vorticity/divergence
+   * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
+   */
+  void dirtrans(const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] ) const;
+
+  void dirtrans(const Field& gpfield,
+                      Field& spfield,
+                const TransParameters& = TransParameters()) const;
+  void dirtrans(const FieldSet& gpfields,
+                      FieldSet& spfields,
+                const TransParameters& = TransParameters()) const;
+
+  void dirtrans(const functionspace::NodeColumns&,    const Field& gpfield,
+                const functionspace::Spectral&,       Field& spfield,
+                const TransParameters& = TransParameters()) const;
+  void dirtrans(const functionspace::NodeColumns&,    const FieldSet& gpfields,
+                const functionspace::Spectral&,       FieldSet& spfields,
+                const TransParameters& = TransParameters()) const;
+  void dirtrans_wind2vordiv(const functionspace::NodeColumns&, const Field& gpwind,
+                            const functionspace::Spectral&, Field& spvor, Field& spdiv,
+                            const TransParameters& = TransParameters()) const;
+
+  void invtrans(const Field& spfield,
+                      Field& gpfield,
+                const TransParameters& = TransParameters()) const;
+  void invtrans(const FieldSet& spfields,
+                      FieldSet& gpfields,
+                const TransParameters& = TransParameters()) const;
+
+  void invtrans(const functionspace::Spectral&, const Field& spfield,
+                const functionspace::NodeColumns&,          Field& gpfield,
+                const TransParameters& = TransParameters()) const;
+  void invtrans(const functionspace::Spectral&, const FieldSet& spfields,
+                const functionspace::NodeColumns&,          FieldSet& gpfields,
+                const TransParameters& = TransParameters()) const;
+  void invtrans_vordiv2wind(const functionspace::Spectral&, const Field& spvor, const Field& spdiv,
+                            const functionspace::NodeColumns&, Field& gpwind,
+                            const TransParameters& = TransParameters()) const;
+
+  void invtrans_grad(const functionspace::Spectral& sp, const Field& spfield,
+                     const functionspace::NodeColumns& gp, Field& gradfield) const;
+
+
+  void invtrans_grad(const functionspace::Spectral& sp, const FieldSet& spfields,
+                     const functionspace::NodeColumns& gp, FieldSet& gradfields) const;
+
+  void specnorm( const int nb_fields, const double spectra[], double norms[], int rank=0 ) const;
+
+
+private:
+
+  void ctor( const Grid&, long nsmax, const Options& );
+
+  void ctor_rgg(const long nlat, const long pl[], long nsmax, const Options& );
+
+  void ctor_lonlat(const long nlon, const long nlat, long nsmax, const Options& );
+
+  void ctor_spectral_only(long truncation, const Trans::Options& p );
+
+private:
+  friend class grid::detail::partitioner::TransPartitioner;
   int        handle()       const { return trans_.handle; }
   int        ndgl()         const { return trans_.ndgl; }
   int        nsmax()        const { return trans_.nsmax; }
@@ -285,136 +431,9 @@ public:
     return array::LocalView<int,1> (trans_.nvalue, array::make_shape(trans_.nspec2));
   }
 
-public:
-
-
-  /*!
-   * @brief distspec
-   * @param nb_fields
-   * @param origin
-   * @param global_spectra
-   * @param spectra
-   */
-  void distspec( const int nb_fields, const int origin[], const double global_spectra[], double spectra[] ) const;
-
-  /*!
-   * @brief gathspec
-   * @param nb_fields
-   * @param destination
-   * @param spectra
-   * @param global_spectra
-   */
-  void gathspec( const int nb_fields, const int destination[], const double spectra[], double global_spectra[] ) const;
-
-  /*!
-   * @brief distgrid
-   * @param nb_fields
-   * @param origin
-   * @param global_fields
-   * @param fields
-   */
-  void distgrid( const int nb_fields, const int origin[], const double global_fields[], double fields[] ) const;
-
-  /*!
-   * @brief gathgrid
-   * @param nb_fields
-   * @param destination
-   * @param fields
-   * @param global_fields
-   */
-  void gathgrid( const int nb_fields, const int destination[], const double fields[], double global_fields[] ) const;
-
-  void invtrans( const int nb_scalar_fields, const double scalar_spectra[],
-                 const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
-                 double gp_fields[],
-                 const TransParameters& = TransParameters() ) const;
-
-  /*!
-   * @brief invtrans
-   * @param nb_fields
-   * @param scalar_spectra
-   * @param scalar_fields
-   */
-  void invtrans( const int nb_scalar_fields, const double scalar_spectra[],
-                 double gp_fields[],
-                 const TransParameters& = TransParameters() ) const;
-
-  /*!
-   * @brief Inverse transform of vorticity/divergence to wind(U/V)
-   * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
-   */
-  void invtrans( const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
-                 double gp_fields[],
-                 const TransParameters& = TransParameters()) const;
-
-  /*!
-   * @brief Direct transform of scalar fields
-   */
-  void dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[] ) const;
-
-  /*!
-   * @brief Direct transform of wind(U/V) to vorticity/divergence
-   * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
-   */
-  void dirtrans(const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] ) const;
-
-  void dirtrans(const Field& gpfield,
-                      Field& spfield,
-                const TransParameters& = TransParameters()) const;
-  void dirtrans(const FieldSet& gpfields,
-                      FieldSet& spfields,
-                const TransParameters& = TransParameters()) const;
-
-  void dirtrans(const functionspace::NodeColumns&,    const Field& gpfield,
-                const functionspace::Spectral&,       Field& spfield,
-                const TransParameters& = TransParameters()) const;
-  void dirtrans(const functionspace::NodeColumns&,    const FieldSet& gpfields,
-                const functionspace::Spectral&,       FieldSet& spfields,
-                const TransParameters& = TransParameters()) const;
-  void dirtrans_wind2vordiv(const functionspace::NodeColumns&, const Field& gpwind,
-                            const functionspace::Spectral&, Field& spvor, Field& spdiv,
-                            const TransParameters& = TransParameters()) const;
-
-  void invtrans(const Field& spfield,
-                      Field& gpfield,
-                const TransParameters& = TransParameters()) const;
-  void invtrans(const FieldSet& spfields,
-                      FieldSet& gpfields,
-                const TransParameters& = TransParameters()) const;
-
-  void invtrans(const functionspace::Spectral&, const Field& spfield,
-                const functionspace::NodeColumns&,          Field& gpfield,
-                const TransParameters& = TransParameters()) const;
-  void invtrans(const functionspace::Spectral&, const FieldSet& spfields,
-                const functionspace::NodeColumns&,          FieldSet& gpfields,
-                const TransParameters& = TransParameters()) const;
-  void invtrans_vordiv2wind(const functionspace::Spectral&, const Field& spvor, const Field& spdiv,
-                            const functionspace::NodeColumns&, Field& gpwind,
-                            const TransParameters& = TransParameters()) const;
-
-  void invtrans_grad(const functionspace::Spectral& sp, const Field& spfield,
-                     const functionspace::NodeColumns& gp, Field& gradfield) const;
-
-
-  void invtrans_grad(const functionspace::Spectral& sp, const FieldSet& spfields,
-                     const functionspace::NodeColumns& gp, FieldSet& gradfields) const;
-
-  void specnorm( const int nb_fields, const double spectra[], double norms[], int rank=0 ) const;
-
-
-private:
-
-  void ctor( const Grid&, long nsmax, const Options& );
-
-  void ctor_rgg(const long nlat, const long pl[], long nsmax, const Options& );
-
-  void ctor_lonlat(const long nlon, const long nlat, long nsmax, const Options& );
-
-  void ctor_spectral_only(long truncation, const Trans::Options& p );
-
-
 private:
   mutable Trans_t trans_;
+  grid::StructuredGrid grid_;
 };
 
 //-----------------------------------------------------------------------------
@@ -425,7 +444,6 @@ extern "C"
 {
   Trans* atlas__Trans__new (const Grid::Implementation* grid, int nsmax);
   void atlas__Trans__delete (Trans* trans);
-  int atlas__Trans__handle (const Trans* trans);
   void atlas__Trans__distspec (const Trans* t, int nb_fields, int origin[], double global_spectra[], double spectra[]);
   void atlas__Trans__gathspec (const Trans* t, int nb_fields, int destination[], double spectra[], double global_spectra[]);
   void atlas__Trans__distgrid (const Trans* t, int nb_fields, int origin[], double global_fields[], double fields[]);
@@ -448,30 +466,13 @@ extern "C"
   void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldImpl* spvor, const field::FieldImpl* spdiv, const functionspace::detail::NodeColumns* gp, field::FieldImpl* gpwind, const TransParameters* parameters);
   void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldImpl* spfield, const functionspace::detail::NodeColumns* gp, field::FieldImpl* gpfield);
 
-  int atlas__Trans__nproc (const Trans* This);
-  int atlas__Trans__myproc (const Trans* This, int proc0);
-  int atlas__Trans__ndgl (const Trans* This);
-  int atlas__Trans__nsmax (const Trans* This);
-  int atlas__Trans__ngptot (const Trans* This);
-  int atlas__Trans__ngptotg (const Trans* This);
-  int atlas__Trans__ngptotmx (const Trans* This);
-  int atlas__Trans__nspec (const Trans* This);
+  int atlas__Trans__handle (const Trans* trans);
+  int atlas__Trans__truncation (const Trans* This);
   int atlas__Trans__nspec2 (const Trans* This);
   int atlas__Trans__nspec2g (const Trans* This);
-  int atlas__Trans__nspec2mx (const Trans* This);
-  int atlas__Trans__n_regions_NS (const Trans* This);
-  int atlas__Trans__n_regions_EW (const Trans* This);
-  int atlas__Trans__nump (const Trans* This);
-  const int* atlas__Trans__nloen (const Trans* This, int &size);
-  const int* atlas__Trans__n_regions (const Trans* This, int &size);
-  const int* atlas__Trans__nfrstlat (const Trans* This, int &size);
-  const int* atlas__Trans__nlstlat (const Trans* This, int &size);
-  const int* atlas__Trans__nptrfrstlat (const Trans* This, int &size);
-  const int* atlas__Trans__nsta (const Trans* This, int &sizef2, int &sizef1);
-  const int* atlas__Trans__nonl (const Trans* This, int &sizef2, int &sizef1);
-  const int* atlas__Trans__nmyms (const Trans* This, int &size);
-  const int* atlas__Trans__nasm0 (const Trans* This, int &size);
-  const int* atlas__Trans__nvalue (const Trans* This, int &size);
+  int atlas__Trans__ngptot (const Trans* This);
+  int atlas__Trans__ngptotg (const Trans* This);
+  const Grid::Implementation* atlas__Trans__grid(const Trans* This);
   TransParameters* atlas__TransParameters__new ();
   void atlas__TransParameters__delete (TransParameters* parameters);
 }

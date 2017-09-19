@@ -44,7 +44,7 @@ void Spectral::set_field_metadata(const eckit::Configuration& config, Field& fie
     }
   }
   field.metadata().set("global",global);
-  
+
   field.set_levels( config_levels(config) );
   field.set_variables(0);
 }
@@ -90,7 +90,7 @@ Spectral::Spectral( const size_t truncation, const eckit::Configuration& config 
 
 Spectral::Spectral( trans::Trans& trans, const eckit::Configuration& config ) :
 #ifdef ATLAS_HAVE_TRANS
-    truncation_(trans.nsmax()),
+    truncation_(trans.truncation()),
     trans_(&trans),
 #else
     truncation_(0),
@@ -115,14 +115,14 @@ size_t Spectral::footprint() const {
 
 size_t Spectral::nb_spectral_coefficients() const {
 #ifdef ATLAS_HAVE_TRANS
-  if( trans_ ) return trans_->nspec2();
+  if( trans_ ) return trans_->nb_spectral_coefficients();
 #endif
   return (truncation_+1)*(truncation_+2);
 }
 
 size_t Spectral::nb_spectral_coefficients_global() const {
 #ifdef ATLAS_HAVE_TRANS
-  if( trans_ ) return trans_->nspec2g();
+  if( trans_ ) return trans_->nb_spectral_coefficients_global();
 #endif
   return (truncation_+1)*(truncation_+2);
 }
@@ -158,7 +158,6 @@ Field Spectral::createField(const eckit::Configuration& options) const {
   size_t levels = config_levels(options);
   if( levels ) array_shape.push_back(levels);
 
-  ATLAS_DEBUG_VAR(array_shape);
   Field field = Field(config_name(options), config_datatype(options), array_shape );
 
   set_field_metadata(options,field);
@@ -166,10 +165,10 @@ Field Spectral::createField(const eckit::Configuration& options) const {
 }
 
 Field Spectral::createField(
-    const Field& other, 
+    const Field& other,
     const eckit::Configuration& config ) const
 {
-  return createField( 
+  return createField(
     option::datatype ( other.datatype()  ) |
     option::levels   ( other.levels()    ) |
     config );

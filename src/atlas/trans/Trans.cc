@@ -52,7 +52,6 @@ struct PackNodeColumns
     rgpview_(rgpview), is_ghost( fs.nodes() ), f(0) {}
 
   void operator()(const Field& field, int components = 0) {
-    ATLAS_DEBUG_VAR(field.rank());
     switch (field.rank()) {
       case 1:
         pack_1(field,components);
@@ -420,16 +419,16 @@ struct UnpackSpectral
 namespace atlas {
 namespace trans {
 
-Trans::Trans(const Grid& grid, const Trans::Options& p)
-{
+Trans::Trans(const Grid& grid, const Trans::Options& p) :
+  grid_(grid) {
   ASSERT( grid.domain().global() );
   ASSERT( not grid.projection() );
   size_t grid_only = -1; // triggers grid-only setup
   ctor(grid,grid_only,p);
 }
 
-Trans::Trans(const Grid& grid, const long truncation, const Trans::Options& p )
-{
+Trans::Trans(const Grid& grid, const long truncation, const Trans::Options& p ) :
+  grid_(grid) {
   ASSERT( grid.domain().global() );
   ASSERT( not grid.projection() );
   ctor( grid,truncation,p);
@@ -1166,7 +1165,10 @@ void atlas__Trans__delete (Trans* This)
 int atlas__Trans__handle (const Trans* This)
 {
   ASSERT( This );
-  ATLAS_ERROR_HANDLING( return This->handle() );
+  ATLAS_ERROR_HANDLING(
+    ::Trans_t* t = *This;
+    return t->handle;
+  );
   return 0;
 }
 
@@ -1391,80 +1393,11 @@ void atlas__Trans__specnorm (const Trans* t, int nb_fields, double spectra[], do
   );
 }
 
-
-int atlas__Trans__nproc (const Trans* This)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nproc();
-  );
-  return 0;
-}
-
-int atlas__Trans__myproc (const Trans* This, int proc0)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->myproc(proc0);
-  );
-  return 0;
-}
-
-int atlas__Trans__ndgl (const Trans* This)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->ndgl();
-  );
-  return 0;
-}
-
-int atlas__Trans__nsmax (const Trans* This)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nsmax();
-  );
-  return 0;
-}
-
-int atlas__Trans__ngptot (const Trans* This)
-{
-  ASSERT( This );
-  ATLAS_ERROR_HANDLING( return This->ngptot() );
-  return 0;
-}
-
-int atlas__Trans__ngptotg (const Trans* This)
-{
-  ASSERT( This );
-  ATLAS_ERROR_HANDLING( return This->ngptotg() );
-  return 0;
-}
-
-int atlas__Trans__ngptotmx (const Trans* This)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->ngptotmx();
-  );
-  return 0;
-}
-
-int atlas__Trans__nspec (const Trans* This)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nspec();
-  );
-  return 0;
-}
-
 int atlas__Trans__nspec2 (const Trans* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->nspec2();
+    return This->nb_spectral_coefficients();
   );
   return 0;
 }
@@ -1473,137 +1406,48 @@ int atlas__Trans__nspec2g (const Trans* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->nspec2g();
+    return This->nb_spectral_coefficients_global();
   );
   return 0;
 }
 
-int atlas__Trans__nspec2mx (const Trans* This)
+int atlas__Trans__ngptot (const Trans* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->nspec2mx();
+    return This->nb_gridpoints();
   );
   return 0;
 }
 
-int atlas__Trans__n_regions_NS (const Trans* This)
+int atlas__Trans__ngptotg (const Trans* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->n_regions_NS();
+    return This->nb_gridpoints_global();
   );
   return 0;
 }
 
-int atlas__Trans__n_regions_EW (const Trans* This)
+int atlas__Trans__truncation (const Trans* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->n_regions_EW();
+    return This->truncation();
   );
   return 0;
 }
 
-int atlas__Trans__nump (const Trans* This)
+const Grid::Implementation* atlas__Trans__grid(const Trans* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->nump();
+    ASSERT( This->grid() );
+    return This->grid().get();
   );
-  return 0;
+  return nullptr;
 }
 
-const int* atlas__Trans__nloen(const Trans* This, int& size)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nloen(size);
-  );
-  return 0;
-}
-
-const int* atlas__Trans__n_regions (const Trans* This, int& size)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->n_regions(size);
-  );
-  return 0;
-}
-
-const int* atlas__Trans__nfrstlat(const Trans* This, int& size)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nfrstlat(size);
-  );
-  return 0;
-}
-
-const int* atlas__Trans__nlstlat (const Trans* This, int& size)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nlstlat(size);
-  );
-  return 0;
-}
-
-const int* atlas__Trans__nptrfrstlat (const Trans* This, int& size)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nptrfrstlat(size);
-  );
-  return 0;
-}
-
-const int* atlas__Trans__nsta (const Trans* This, int& sizef2, int& sizef1)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nsta(sizef2,sizef1);
-  );
-  return 0;
-}
-
-const int* atlas__Trans__nonl (const Trans* This, int& sizef2, int& sizef1)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nonl(sizef2,sizef1);
-  );
-  return 0;
-}
-
-const int* atlas__Trans__nmyms (const Trans* This, int &size)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nmyms(size);
-  );
-  return 0;
-}
-
-const int* atlas__Trans__nasm0 (const Trans* This, int &size)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nasm0(size);
-  );
-  return 0;
-}
-
-
-const int* atlas__Trans__nvalue (const Trans* This, int &size)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT( This );
-    return This->nvalue(size);
-  );
-  return 0;
-}
 
 void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldSetImpl* gpfields, const functionspace::detail::Spectral* sp, field::FieldSetImpl* spfields, const TransParameters* parameters)
 {

@@ -61,10 +61,10 @@ void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<i
 {
   Log::info() << "read_rspecg ...\n";
   nfld = 2;
-  if( trans.myproc(0) == 0 )
+  if( parallel::mpi::comm().rank() == 0 )
   {
-    rspecg.resize(nfld*trans.nspec2g());
-    for( int i=0; i<trans.nspec2g(); ++i )
+    rspecg.resize(nfld*trans.nb_spectral_coefficients_global());
+    for( int i=0; i<trans.nb_spectral_coefficients_global(); ++i )
     {
       rspecg[i*nfld + 0] = (i==0 ? 1. : 0.); // scalar field 1
       rspecg[i*nfld + 1] = (i==0 ? 2. : 0.); // scalar field 2
@@ -94,12 +94,14 @@ CASE( "test_trans_distribution_matches_atlas" )
   grid::Distribution distribution( g, partitioner );
 
   trans::Trans trans( g );
+  ::Trans_t* t = trans;
 
-  EXPECT( trans.nsmax() <= 0 );
+  ATLAS_DEBUG_VAR( trans.truncation() );
+  EXPECT( trans.truncation() <= 0 );
 
   // -------------- do checks -------------- //
-  EXPECT( trans.nproc() ==  parallel::mpi::comm().size() );
-  EXPECT( trans.myproc(0) == parallel::mpi::comm().rank() );
+  EXPECT( t->nproc  ==  parallel::mpi::comm().size() );
+  EXPECT( t->myproc == parallel::mpi::comm().rank()+1 );
 
 
   if( parallel::mpi::comm().rank() == 0 ) // all tasks do the same, so only one needs to check
@@ -108,8 +110,8 @@ CASE( "test_trans_distribution_matches_atlas" )
     for( int j=0; j<trans_partitioner->nb_bands(); ++j )
       max_nb_regions_EW = std::max(max_nb_regions_EW, trans_partitioner->nb_regions(j));
 
-    EXPECT( trans.n_regions_NS() == trans_partitioner->nb_bands() );
-    EXPECT( trans.n_regions_EW() == max_nb_regions_EW );
+    EXPECT( t->n_regions_NS == trans_partitioner->nb_bands() );
+    EXPECT( t->n_regions_EW == max_nb_regions_EW );
 
     EXPECT( distribution.nb_partitions() == parallel::mpi::comm().size() );
     EXPECT( distribution.partition().size() == g.size() );
@@ -119,13 +121,13 @@ CASE( "test_trans_distribution_matches_atlas" )
     for(size_t j = 0; j < g.size(); ++j)
       ++npts[distribution.partition(j)];
 
-    EXPECT( trans.ngptotg() == g.size() );
-    EXPECT( trans.ngptot() ==  npts[parallel::mpi::comm().rank()] );
-    EXPECT( trans.ngptotmx() == *std::max_element(npts.begin(),npts.end()) );
+    EXPECT( trans.nb_gridpoints_global()  == g.size() );
+    EXPECT( trans.nb_gridpoints() ==  npts[parallel::mpi::comm().rank()] );
+    EXPECT( t->ngptotmx == *std::max_element(npts.begin(),npts.end()) );
 
-    array::LocalView<int,1> n_regions ( trans.n_regions() ) ;
+    // array::LocalView<int,1> n_regions ( trans.n_regions() ) ;
     for( int j=0; j<trans_partitioner->nb_bands(); ++j )
-      EXPECT( n_regions(j) == trans_partitioner->nb_regions(j) );
+      EXPECT( t->n_regions[j] == trans_partitioner->nb_regions(j) );
   }
 }
 
@@ -137,8 +139,8 @@ CASE( "test_trans_partitioner" )
 
   trans::Trans trans( g );
 
-  EXPECT( trans.nsmax() <= 0 );
-  EXPECT( trans.ngptotg() == g.size() );
+  EXPECT( trans.truncation() <= 0 );
+  EXPECT( trans.nb_gridpoints_global() == g.size() );
 }
 
 CASE( "test_trans_options" )
@@ -169,10 +171,10 @@ CASE( "test_distspec" )
   read_rspecg(trans,rspecg,nfrom,nfld);
 
 
-  std::vector<double> rspec(nfld*trans.nspec2());
+  std::vector<double> rspec(nfld*trans.nb_spectral_coefficients());
   std::vector<int> nto(nfld,1);
-  std::vector<double> rgp(nfld*trans.ngptot());
-  std::vector<double> rgpg(nfld*trans.ngptotg());
+  std::vector<double> rgp(nfld*trans.nb_gridpoints());
+  std::vector<double> rgpg(nfld*trans.nb_gridpoints_global());
   std::vector<double> specnorms(nfld,0);
 
   trans.distspec( nfld, nfrom.data(), rspecg.data(), rspec.data() );
@@ -202,7 +204,7 @@ CASE( "test_distspec_speconly" )
   read_rspecg(trans,rspecg,nfrom,nfld);
 
 
-  std::vector<double> rspec(nfld*trans.nspec2());
+  std::vector<double> rspec(nfld*trans.nb_spectral_coefficients());
   std::vector<int> nto(nfld,1);
   std::vector<double> specnorms(nfld,0);
 

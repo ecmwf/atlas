@@ -109,9 +109,9 @@ CASE( "test_invtrans_ifsStyle" )
   std::vector<double> rspecg;
   int nfld = 1;
 
-  std::vector<double> init_gpg(trans.ngptotg());
-  std::vector<double> init_gp (trans.ngptot ());
-  std::vector<double> init_sp (trans.nspec2 ());
+  std::vector<double> init_gpg(trans.nb_gridpoints_global());
+  std::vector<double> init_gp (trans.nb_gridpoints ());
+  std::vector<double> init_sp (trans.nb_spectral_coefficients());
   std::vector<int>    nfrom(nfld,1);
   if( parallel::mpi::comm().rank()==0) {
     double beta = M_PI*0.5;
@@ -120,7 +120,7 @@ CASE( "test_invtrans_ifsStyle" )
   trans.distgrid(nfld,nfrom.data(),init_gpg.data(),init_gp.data());
   trans.dirtrans(nfld,init_gp.data(),init_sp.data());
 
-  std::vector<double> rgp(3*nfld*trans.ngptot());
+  std::vector<double> rgp(3*nfld*trans.nb_gridpoints());
   double *no_vorticity(NULL), *no_divergence(NULL);
   int nb_vordiv(0);
   int nb_scalar(nfld);
@@ -129,7 +129,7 @@ CASE( "test_invtrans_ifsStyle" )
   trans.invtrans( nb_scalar, init_sp.data(), nb_vordiv, no_vorticity, no_divergence, rgp.data(), p );
 
   std::vector<int>    nto(nfld,1);
-  std::vector<double> rgpg(3*nfld*trans.ngptotg());
+  std::vector<double> rgpg(3*nfld*trans.nb_gridpoints_global());
 
   trans.gathgrid( nfld, nto.data(),   rgp.data(),    rgpg.data() );
 

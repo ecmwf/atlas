@@ -533,7 +533,7 @@ CASE( "test_SpectralFunctionSpace_trans_dist" )
   trans::Trans trans(Grid("F80"),159);
   size_t nb_levels(10);
 
-  size_t nspec2 = trans.nspec2();
+  size_t nspec2 = trans.nb_spectral_coefficients();
 
   Spectral spectral_fs( trans );
 
