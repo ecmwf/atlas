@@ -17,7 +17,7 @@ foreach(test
         test_rotation
         test_state)
 
-    ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc BOOST LIBS atlas )
+    ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas )
 
 endforeach()
 

@@ -26,8 +26,12 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
 
+#include "eckit/testing/Test.h"
+#include "tests/AtlasTestEnvironment.h"
+
 using namespace std;
 using namespace eckit;
+using namespace eckit::testing;
 using namespace atlas;
 using namespace atlas::grid;
 using namespace atlas::meshgenerator;
@@ -39,26 +43,23 @@ namespace  test {
 
 //-----------------------------------------------------------------------------
 
-class TestField : public Tool {
+void take_array(const array::Array& arr)
+{
+  EXPECT( arr.size() == 20 );
+}
+
+class TakeArray
+{
 public:
-
-    TestField(int argc,char **argv): Tool(argc,argv) {
-      atlas::Library::instance().initialise();
-    }
-
-    ~TestField() {atlas::Library::instance().finalise();}
-
-    virtual void run();
-
-    void test_fieldcreator();
-    void test_implicit_conversion();
-    void test_wrap_rawdata_through_array();
-    void test_wrap_rawdata_direct();
+  TakeArray(const array::Array& arr)
+  {
+    EXPECT( arr.size() == 20 );
+  }
 };
 
 //-----------------------------------------------------------------------------
 
-void TestField::test_fieldcreator()
+CASE("test_fieldcreator")
 {
   Field field ( util::Config
                          ("creator","ArraySpec")
@@ -67,8 +68,8 @@ void TestField::test_fieldcreator()
                          ("name","myfield")
                       );
 
-  ASSERT( field.datatype() == array::DataType::real32() );
-  ASSERT( field.name() == "myfield" );
+  EXPECT( field.datatype() == array::DataType::real32() );
+  EXPECT( field.name() == "myfield" );
 
   Grid g("O6");
 
@@ -76,9 +77,9 @@ void TestField::test_fieldcreator()
                          ("creator","ArraySpec")
                          ("shape",array::make_shape(10,2))
                    );
-  ASSERT( arr.shape(0) == 10 );
-  ASSERT( arr.shape(1) == 2 );
-  ASSERT( arr.datatype() == array::DataType::real64() );
+  EXPECT( arr.shape(0) == 10 );
+  EXPECT( arr.shape(1) == 2 );
+  EXPECT( arr.datatype() == array::DataType::real64() );
 
 
   util::Config ifs_parameters = util::Config
@@ -96,29 +97,16 @@ void TestField::test_fieldcreator()
                    );
 
   ATLAS_DEBUG_VAR( ifs );
-  ASSERT( ifs.shape(0) == 36 );
-  ASSERT( ifs.shape(1) == 8 );
-  ASSERT( ifs.shape(2) == 137 );
-  ASSERT( ifs.shape(3) == 10 );
+  EXPECT( ifs.shape(0) == 36 );
+  EXPECT( ifs.shape(1) == 8 );
+  EXPECT( ifs.shape(2) == 137 );
+  EXPECT( ifs.shape(3) == 10 );
 
   Log::flush();
 }
 
-void take_array(const array::Array& arr)
-{
-  ASSERT( arr.size() == 20 );
-}
 
-class TakeArray
-{
-public:
-  TakeArray(const array::Array& arr)
-  {
-    ASSERT( arr.size() == 20 );
-  }
-};
-
-void TestField::test_implicit_conversion()
+CASE( "test_implicit_conversion" )
 {
   Field field( "tmp", array::make_datatype<double>(), array::make_shape(10,2));
   const array::Array& const_array = field;
@@ -128,10 +116,10 @@ void TestField::test_implicit_conversion()
   arrv(0,0) = 8.;
 
   const array::ArrayView<double,2> carrv = array::make_view<double,2>(const_array);
-  ASSERT( carrv(0,0) == 8. );
+  EXPECT( carrv(0,0) == 8. );
 
   const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(field);
-  ASSERT( cfieldv(0,0) == 8. );
+  EXPECT( cfieldv(0,0) == 8. );
 
   take_array(field);
   TakeArray ta(field);
@@ -141,49 +129,34 @@ void TestField::test_implicit_conversion()
 }
 
 
-void TestField::test_wrap_rawdata_through_array()
+CASE( "test_wrap_rawdata_through_array" )
 {
   std::vector<double> rawdata(20,8.);
   SharedPtr<array::Array> array( array::Array::wrap(rawdata.data(),array::make_shape(10,2)) );
   Field field( "wrapped",array.get() );
 
-  ASSERT( array->owners() == 2 );
+  EXPECT( array->owners() == 2 );
   const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(field);
-  ASSERT( cfieldv(9,1) == 8. );
+  EXPECT( cfieldv(9,1) == 8. );
 }
 
-void TestField::test_wrap_rawdata_direct()
+CASE( "test_wrap_rawdata_direct" )
 {
   std::vector<double> rawdata(20,8.);
   Field field( "wrapped",rawdata.data(),array::make_shape(10,2) );
 
-  ASSERT( field.array().owners() == 1 );
+  EXPECT( field.array().owners() == 1 );
   const array::ArrayView<double,2> cfieldv = array::make_view<double,2>(field);
-  ASSERT( cfieldv(9,1) == 8. );
-}
-
-
-
-
-//-----------------------------------------------------------------------------
-
-void TestField::run()
-{
-    test_fieldcreator();
-    test_implicit_conversion();
-    test_wrap_rawdata_through_array();
-    test_wrap_rawdata_direct();
+  EXPECT( cfieldv(9,1) == 8. );
 }
 
 //-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
 
-//-----------------------------------------------------------------------------
 
-int main(int argc,char **argv)
-{
-    atlas::test::TestField t(argc,argv);
-    return t.start();
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
 }

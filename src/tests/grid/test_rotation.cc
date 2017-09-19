@@ -8,36 +8,39 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestRotation
-#include "ecbuild/boost_test_framework.h"
-
-
 #include <cmath>
 #include "atlas/library/Library.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Rotation.h"
 #include "atlas/runtime/Log.h"
-#include "tests/AtlasFixture.h"
+#include "eckit/types/FloatCompare.h"
+
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
 using atlas::util::Rotation;
 using atlas::util::Config;
 
+using namespace eckit::testing;
+
 namespace atlas {
 namespace test {
 
+//-----------------------------------------------------------------------------
 
 constexpr double eps() { return 1.e-5; }
 const double d2r = atlas::util::Constants::degreesToRadians();
 const double r2d = atlas::util::Constants::radiansToDegrees();
 
-#define CHECK_EQUIVALENT( p1, p2 ) \
-  if( std::abs(p2.lat())==90.) BOOST_CHECK_CLOSE( p1.lat(), p2.lat(), eps() ); \
+#define EXPECT_EQUIVALENT( p1, p2 ) \
+  if( std::abs(p2.lat())==90.) EXPECT( eckit::types::is_approximately_equal( p1.lat(), p2.lat(), eps() ) ) ; \
   else { \
-    BOOST_CHECK_CLOSE( 10.+std::cos(p1.lon()*d2r), 10.+std::cos(p2.lon()*d2r), eps() ); \
-    BOOST_CHECK_CLOSE( 10.+std::sin(p1.lat()*d2r), 10.+std::sin(p2.lat()*d2r), eps() ); \
+    EXPECT ( eckit::types::is_approximately_equal( 10.+std::cos(p1.lon()*d2r), 10.+std::cos(p2.lon()*d2r), eps() ) ); \
+    EXPECT ( eckit::types::is_approximately_equal( 10.+std::sin(p1.lat()*d2r), 10.+std::sin(p2.lat()*d2r), eps() ) ); \
   }
 
+//-----------------------------------------------------------------------------
 
 class MagicsRotation {
 // For reference, this what magics uses, it appears as if it originated from fortran code
@@ -122,9 +125,9 @@ private:
 
 };
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( test_rotation )
+CASE( "test_rotation" )
 {
   Config config;
   config.set("north_pole", std::vector<double>{-176,40} );
@@ -132,36 +135,36 @@ BOOST_AUTO_TEST_CASE( test_rotation )
   MagicsRotation magics(rotation.southPole());
   Log::info() << rotation << std::endl;
 
-  BOOST_CHECK( rotation.rotated() );
+  EXPECT( rotation.rotated() );
 
   PointLonLat p, r;
 
   p = {0.,90.};
   r = {-176.,40.};
-  CHECK_EQUIVALENT( rotation.rotate(p), r );
-  CHECK_EQUIVALENT( magics.  rotate(p), r );
-  CHECK_EQUIVALENT( rotation.unrotate(r), p );
-  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+  EXPECT_EQUIVALENT( rotation.rotate(p), r );
+  EXPECT_EQUIVALENT( magics.  rotate(p), r );
+  EXPECT_EQUIVALENT( rotation.unrotate(r), p );
+  EXPECT_EQUIVALENT( magics.  unrotate(r), p );
 
   p = {0.,0.};
   r = {-176.,-50.};
-  CHECK_EQUIVALENT( rotation.rotate(p), r );
-  CHECK_EQUIVALENT( magics.  rotate(p), r );
-  CHECK_EQUIVALENT( rotation.unrotate(r), p );
-  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+  EXPECT_EQUIVALENT( rotation.rotate(p), r );
+  EXPECT_EQUIVALENT( magics.  rotate(p), r );
+  EXPECT_EQUIVALENT( rotation.unrotate(r), p );
+  EXPECT_EQUIVALENT( magics.  unrotate(r), p );
 
 
   p = {-180.,45.};
   r = {-176.,85.};
-  CHECK_EQUIVALENT( rotation.rotate(p), r );
-  CHECK_EQUIVALENT( magics.  rotate(p), r );
-  CHECK_EQUIVALENT( rotation.unrotate(r), p );
-  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+  EXPECT_EQUIVALENT( rotation.rotate(p), r );
+  EXPECT_EQUIVALENT( magics.  rotate(p), r );
+  EXPECT_EQUIVALENT( rotation.unrotate(r), p );
+  EXPECT_EQUIVALENT( magics.  unrotate(r), p );
 }
 
 
 
-BOOST_AUTO_TEST_CASE( test_no_rotation )
+CASE( "test_no_rotation" )
 {
   Config config;
   Rotation rotation(config);
@@ -169,34 +172,34 @@ BOOST_AUTO_TEST_CASE( test_no_rotation )
 
   Log::info() << rotation << std::endl;
 
-  BOOST_CHECK( not rotation.rotated() );
+  EXPECT( not rotation.rotated() );
 
   PointLonLat p, r;
 
   p = {0.,90.};
   r = p;
-  CHECK_EQUIVALENT( rotation.rotate(p), r );
-  CHECK_EQUIVALENT( magics.  rotate(p), r );
-  CHECK_EQUIVALENT( rotation.unrotate(r), p );
-  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+  EXPECT_EQUIVALENT( rotation.rotate(p), r );
+  EXPECT_EQUIVALENT( magics.  rotate(p), r );
+  EXPECT_EQUIVALENT( rotation.unrotate(r), p );
+  EXPECT_EQUIVALENT( magics.  unrotate(r), p );
 
   p = {0.,0.};
   r = p;
-  CHECK_EQUIVALENT( rotation.rotate(p), r );
-  CHECK_EQUIVALENT( magics.  rotate(p), r );
-  CHECK_EQUIVALENT( rotation.unrotate(r), p );
-  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+  EXPECT_EQUIVALENT( rotation.rotate(p), r );
+  EXPECT_EQUIVALENT( magics.  rotate(p), r );
+  EXPECT_EQUIVALENT( rotation.unrotate(r), p );
+  EXPECT_EQUIVALENT( magics.  unrotate(r), p );
 
 
   p = {-180.,45.};
   r = p;
-  CHECK_EQUIVALENT( rotation.rotate(p), r );
-  CHECK_EQUIVALENT( magics.  rotate(p), r );
-  CHECK_EQUIVALENT( rotation.unrotate(r), p );
-  CHECK_EQUIVALENT( magics.  unrotate(r), p );
+  EXPECT_EQUIVALENT( rotation.rotate(p), r );
+  EXPECT_EQUIVALENT( magics.  rotate(p), r );
+  EXPECT_EQUIVALENT( rotation.unrotate(r), p );
+  EXPECT_EQUIVALENT( magics.  unrotate(r), p );
 }
 
-BOOST_AUTO_TEST_CASE( test_rotation_angle_only )
+CASE( "test_rotation_angle_only" )
 {
   Config config;
   config.set("rotation_angle",-180.);
@@ -205,31 +208,38 @@ BOOST_AUTO_TEST_CASE( test_rotation_angle_only )
 
   Log::info() << rotation << std::endl;
 
-  BOOST_CHECK( rotation.rotated() );
+  EXPECT( rotation.rotated() );
 
   PointLonLat p, r;
 
   p = {0.,90.};
   r = {-180.,90};
-  CHECK_EQUIVALENT( rotation.rotate(p),   r );
-  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+  EXPECT_EQUIVALENT( rotation.rotate(p),   r );
+  EXPECT_EQUIVALENT( rotation.unrotate(r), p );
 
   p = {0.,0.};
   r = {-180.,0.};
-  CHECK_EQUIVALENT( rotation.rotate(p),  r );
-  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+  EXPECT_EQUIVALENT( rotation.rotate(p),  r );
+  EXPECT_EQUIVALENT( rotation.unrotate(r), p );
 
   p = {270.,25.};
   r = {90.,25.};
-  CHECK_EQUIVALENT( rotation.rotate(p),   r );
-  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+  EXPECT_EQUIVALENT( rotation.rotate(p),   r );
+  EXPECT_EQUIVALENT( rotation.unrotate(r), p );
 
   p = {-180.,45.};
   r = {-360.,45.};
-  CHECK_EQUIVALENT( rotation.rotate(p),   r );
-  CHECK_EQUIVALENT( rotation.unrotate(r), p );
+  EXPECT_EQUIVALENT( rotation.rotate(p),   r );
+  EXPECT_EQUIVALENT( rotation.unrotate(r), p );
 }
 
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}
