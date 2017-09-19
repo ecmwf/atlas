@@ -8,26 +8,26 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestMetadata
-#include "ecbuild/boost_test_framework.h"
-
 #include "atlas/library/Library.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/parallel/mpi/mpi.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
+
 
 
 using namespace eckit;
+using namespace eckit::testing;
 using namespace atlas::util;
 
 namespace atlas {
 namespace test {
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( test_broadcast_to_self )
+CASE( "test_broadcast_to_self" )
 {
   Metadata metadata;
   if( parallel::mpi::comm().rank() == 0 )
@@ -38,15 +38,15 @@ BOOST_AUTO_TEST_CASE( test_broadcast_to_self )
   // broadcast
   metadata.broadcast();
   
-  BOOST_CHECK( metadata.has("paramID") );
+  EXPECT( metadata.has("paramID") );
   if( metadata.has("paramID") )
-    BOOST_CHECK_EQUAL( metadata.get<int>("paramID"), 128 );
+    EXPECT( metadata.get<int>("paramID") == 128 );
   
 }
 
 // -----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( test_broadcast_to_other )
+CASE( "test_broadcast_to_other" )
 {
   size_t root = 0;
   Metadata global;
@@ -60,15 +60,21 @@ BOOST_AUTO_TEST_CASE( test_broadcast_to_other )
   // broadcast
   global.broadcast(local);
   
-  BOOST_CHECK( local.has("paramID") );
+  EXPECT( local.has("paramID") );
   if( local.has("paramID") )
-    BOOST_CHECK_EQUAL( local.get<int>("paramID"), 128 );
+    EXPECT( local.get<int>("paramID") == 128 );
   
   if( parallel::mpi::comm().rank() != root )
-    BOOST_CHECK( ! global.has("paramID") );
+    EXPECT( ! global.has("paramID") );
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

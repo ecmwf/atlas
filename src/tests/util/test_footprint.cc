@@ -8,9 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestFootprint
-#include "ecbuild/boost_test_framework.h"
-
 #include "atlas/library/Library.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/Array.h"
@@ -24,18 +21,20 @@
 #include "atlas/grid/Grid.h"
 #include "eckit/log/Bytes.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
 
 using namespace eckit;
+using namespace eckit::testing;
 using namespace atlas::util;
 
 namespace atlas {
 namespace test {
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( test_broadcast_to_self )
+CASE( "test_broadcast_to_self" )
 {
   array::ArrayT<double> array(10,2);
   Log::info() << "array.footprint = " << eckit::Bytes(array.footprint()) << std::endl;
@@ -67,7 +66,13 @@ BOOST_AUTO_TEST_CASE( test_broadcast_to_self )
   Log::info() << "          .cell_connectivity.footprint = " << eckit::Bytes(mesh.cells().cell_connectivity().footprint() ) << std::endl;
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}
