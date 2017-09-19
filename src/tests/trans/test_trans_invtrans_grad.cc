@@ -9,9 +9,6 @@
  */
 
 
-#define BOOST_TEST_MODULE atlas_test_trans_invtrans_grad
-#include "ecbuild/boost_test_framework.h"
-
 #include <algorithm>
 
 #include "atlas/library/Library.h"
@@ -32,21 +29,24 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "transi/trans.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
-using namespace eckit;
+using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
 
-struct AtlasTransFixture : public AtlasFixture {
-       AtlasTransFixture() {
+//-----------------------------------------------------------------------------
+
+struct AtlasTransEnvironment : public AtlasTestEnvironment {
+       AtlasTransEnvironment(int argc, char * argv[]) : AtlasTestEnvironment(argc, argv) {
          if( parallel::mpi::comm().size() == 1 )
            trans_use_mpi(false);
          trans_init();
        }
 
-      ~AtlasTransFixture() {
+      ~AtlasTransEnvironment() {
          trans_finalize();
        }
 };
@@ -97,17 +97,15 @@ void rotated_flow_magnitude(const functionspace::NodeColumns& fs, Field& field, 
   }
 }
 
+//-----------------------------------------------------------------------------
 
-BOOST_GLOBAL_FIXTURE( AtlasTransFixture );
-
-
-BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
+CASE( "test_invtrans_ifsStyle" )
 {
   std::string grid_uid("O80");
   grid::StructuredGrid g (grid_uid);
   long N = g.ny()/2;
   trans::Trans trans(g,2*N-1);
-  BOOST_TEST_CHECKPOINT("Trans initialized");
+  Log::info() << "Trans initialized" << std::endl;
   std::vector<double> rspecg;
   int nfld = 1;
 
@@ -151,7 +149,7 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
 }
 
 
-BOOST_AUTO_TEST_CASE( test_invtrans_grad )
+CASE( "test_invtrans_grad" )
 {
   std::string grid_uid("O48");
   grid::StructuredGrid g ( grid_uid );
@@ -188,5 +186,13 @@ BOOST_AUTO_TEST_CASE( test_invtrans_grad )
   }
 }
 
-} // namespace test
-} // namespace atlas
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTransEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}
