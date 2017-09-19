@@ -8,9 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestFunctionSpace
-#include "ecbuild/boost_test_framework.h"
-
 #include <cmath>
 
 #include "eckit/types/FloatCompare.h"
@@ -24,20 +21,20 @@
 #include "atlas/interpolation.h"
 #include "atlas/util/CoordinateEnums.h"
 
-#include "tests/AtlasFixture.h"
-
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
 using namespace eckit;
+using namespace eckit::testing;
 using namespace atlas::functionspace;
 using namespace atlas::util;
 
 namespace atlas {
 namespace test {
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-
-BOOST_AUTO_TEST_CASE( test_interpolation_finite_element )
+CASE( "test_interpolation_finite_element" )
 {
 
   Grid grid("O64");
@@ -90,15 +87,18 @@ BOOST_AUTO_TEST_CASE( test_interpolation_finite_element )
   for( size_t j=0; j<pointcloud.size(); ++ j ) {
     static double interpolation_tolerance = 1.e-4;
     Log::info() << target(j) << "  " << check[j] << std::endl;
-    BOOST_CHECK( eckit::types::is_approximately_equal(target(j),check[j], interpolation_tolerance ) );
+    EXPECT( eckit::types::is_approximately_equal(target(j),check[j], interpolation_tolerance ) );
   }
-
-    
-    
-  
 
 }
 
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

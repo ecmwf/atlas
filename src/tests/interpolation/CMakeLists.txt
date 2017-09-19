@@ -8,13 +8,11 @@
 
 ecbuild_add_test( TARGET atlas_test_Quad3D
   CONDITION ECKIT_HAVE_EIGEN
-  BOOST
   SOURCES   test_Quad3D.cc
   LIBS      atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_interpolation_finite_element
-  BOOST
   SOURCES   test_interpolation_finite_element.cc
   LIBS      atlas
 )

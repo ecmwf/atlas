@@ -9,23 +9,29 @@
  */
 
 
-#define BOOST_TEST_MODULE atlas_test_geometry
-#include "ecbuild/boost_test_framework.h"
-
 #include "atlas/interpolation/method/Ray.h"
 #include "atlas/interpolation/element/Quad3D.h"
 #include "atlas/util/Point.h"
+
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
+#include "eckit/types/FloatCompare.h"
 
 using atlas::interpolation::element::Quad3D;
 using atlas::interpolation::method::Intersect;
 using atlas::interpolation::method::Ray;
 using atlas::PointXYZ;
 
+using namespace eckit::testing;
+
+namespace atlas {
+namespace test {
+
 //----------------------------------------------------------------------------------------------------------------------
 
 const double relative_error = 0.0001;
 
-BOOST_AUTO_TEST_CASE( test_quad_area )
+CASE( "test_quad_area" )
 {
     PointXYZ v0(0.,0.,0.);
     PointXYZ v1(1.,0.,0.);
@@ -34,11 +40,11 @@ BOOST_AUTO_TEST_CASE( test_quad_area )
 
     Quad3D quad1(v0.data(),v1.data(),v2.data(),v3.data());
 
-    BOOST_CHECK( quad1.validate() );
+    EXPECT( quad1.validate() );
 
     double area = quad1.area();
 
-    BOOST_CHECK_CLOSE( area, 1.0, relative_error );
+    EXPECT ( eckit::types::is_approximately_equal( area, 1.0, relative_error ) );
 
     PointXYZ c0(-2.,-2.,3.); // 4
     PointXYZ c1( 3.,-2.,3.); // 6
@@ -47,14 +53,14 @@ BOOST_AUTO_TEST_CASE( test_quad_area )
 
     Quad3D quad2(c0.data(),c1.data(),c2.data(),c3.data());
 
-    BOOST_CHECK( quad2.validate() );
+    EXPECT( quad2.validate() );
 
     area = quad2.area();
 
-    BOOST_CHECK_CLOSE( area, 12.5, relative_error );
+    EXPECT ( eckit::types::is_approximately_equal( area, 12.5, relative_error ) );
 }
 
-BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_refquad )
+CASE( "test_quadrilateral_intersection_refquad" )
 {
   PointXYZ v0(0.,0.,0.);
   PointXYZ v1(1.,0.,0.);
@@ -63,7 +69,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_refquad )
 
   Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
-  BOOST_CHECK( quad.validate() );
+  EXPECT( quad.validate() );
 
   PointXYZ orig(0.25,0.25,1.);
   PointXYZ dir (0.,0.,-1.);
@@ -72,12 +78,12 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_refquad )
 
   Intersect isect = quad.intersects(ray);
 
-  BOOST_CHECK( isect );
-  BOOST_CHECK_CLOSE( isect.u, 0.25, relative_error );
-  BOOST_CHECK_CLOSE( isect.v, 0.25, relative_error );
+  EXPECT( isect );
+  EXPECT ( eckit::types::is_approximately_equal( isect.u, 0.25, relative_error ) );
+  EXPECT ( eckit::types::is_approximately_equal( isect.v, 0.25, relative_error ) );
 }
 
-BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_doublequad )
+CASE( "test_quadrilateral_intersection_doublequad" )
 {
   PointXYZ v0(0.,0.,0.);
   PointXYZ v1(2.,0.,0.);
@@ -86,7 +92,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_doublequad )
 
   Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
-  BOOST_CHECK( quad.validate() );
+  EXPECT( quad.validate() );
 
   PointXYZ orig(0.5,0.5,1.);
   PointXYZ dir (0.,0.,-1.);
@@ -95,12 +101,12 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_doublequad )
 
   Intersect isect = quad.intersects(ray);
 
-  BOOST_CHECK( isect );
-  BOOST_CHECK_CLOSE( isect.u, 0.25, relative_error );
-  BOOST_CHECK_CLOSE( isect.v, 0.25, relative_error );
+  EXPECT( isect );
+  EXPECT ( eckit::types::is_approximately_equal( isect.u, 0.25, relative_error ) );
+  EXPECT ( eckit::types::is_approximately_equal( isect.v, 0.25, relative_error ) );
 }
 
-BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_rotatedquad )
+CASE( "test_quadrilateral_intersection_rotatedquad" )
 {
   PointXYZ v0( 0.,-1.,0.);
   PointXYZ v1( 1., 0.,0.);
@@ -109,7 +115,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_rotatedquad )
 
   Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
-  BOOST_CHECK( quad.validate() );
+  EXPECT( quad.validate() );
 
   PointXYZ orig(0.,0.,1.);
   PointXYZ dir (0.,0.,-1.);
@@ -118,12 +124,12 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_rotatedquad )
 
   Intersect isect = quad.intersects(ray);
 
-  BOOST_CHECK( isect );
-  BOOST_CHECK_CLOSE( isect.u, 0.5, relative_error );
-  BOOST_CHECK_CLOSE( isect.v, 0.5, relative_error );
+  EXPECT( isect );
+  EXPECT ( eckit::types::is_approximately_equal( isect.u, 0.5, relative_error ) );
+  EXPECT ( eckit::types::is_approximately_equal( isect.v, 0.5, relative_error ) );
 }
 
-BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_slopequad )
+CASE( "test_quadrilateral_intersection_slopequad" )
 {
   PointXYZ v0( 2., 0.,2.);
   PointXYZ v1( 2., 0.,0.);
@@ -132,7 +138,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_slopequad )
 
   Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
-  BOOST_CHECK( quad.validate() );
+  EXPECT( quad.validate() );
 
   PointXYZ orig(2.,2.,1.);
   PointXYZ dir (-1.,-1.,0.);
@@ -141,12 +147,12 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_slopequad )
 
   Intersect isect = quad.intersects(ray);
 
-  BOOST_CHECK( isect );
-  BOOST_CHECK_CLOSE( isect.u, 0.5, relative_error );
-  BOOST_CHECK_CLOSE( isect.v, 0.5, relative_error );
+  EXPECT( isect );
+  EXPECT ( eckit::types::is_approximately_equal( isect.u, 0.5, relative_error ) );
+  EXPECT ( eckit::types::is_approximately_equal( isect.v, 0.5, relative_error ) );
 }
 
-BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect )
+CASE( "test_quadrilateral_intersection_nointersect" )
 {
   PointXYZ v0( 0.,-1.,0.);
   PointXYZ v1( 1., 0.,0.);
@@ -155,7 +161,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect )
 
   Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
-  BOOST_CHECK( quad.validate() );
+  EXPECT( quad.validate() );
 
   PointXYZ orig(2.,2.,1.);
   PointXYZ dir (0.,0.,-1.);
@@ -163,10 +169,10 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect )
   Ray ray(orig.data(),dir.data());
 
   Intersect isect = quad.intersects(ray);
-  BOOST_CHECK( ! isect );
+  EXPECT( ! isect );
 }
 
-BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect_aimoff )
+CASE( "test_quadrilateral_intersection_nointersect_aimoff" )
 {
   PointXYZ v0( 0.,-1.,0.);
   PointXYZ v1( 1., 0.,0.);
@@ -175,7 +181,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect_aimoff )
 
   Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
-  BOOST_CHECK( quad.validate() );
+  EXPECT( quad.validate() );
 
   PointXYZ orig(0.,0.,1.);
   PointXYZ dir (0.,1.,0.); // aim off
@@ -183,10 +189,10 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect_aimoff )
   Ray ray(orig.data(),dir.data());
 
   Intersect isect = quad.intersects(ray);
-  BOOST_CHECK( ! isect );
+  EXPECT( ! isect );
 }
 
-BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_corners )
+CASE( "test_quadrilateral_intersection_corners" )
 {
   PointXYZ v0( 0.0,-2.0, 0.);
   PointXYZ v1( 2.5, 0.0, 0.);
@@ -195,7 +201,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_corners )
 
   Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
-  BOOST_CHECK( quad.validate() );
+  EXPECT( quad.validate() );
 
   std::vector<PointXYZ> corners;
   corners.push_back( PointXYZ( 0.0,-2.0, 1.) );
@@ -218,9 +224,19 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_corners )
 
       Intersect isect = quad.intersects(ray);
 
-      BOOST_CHECK( isect );
-      BOOST_CHECK_CLOSE( isect.u, uvs[i].first , relative_error );
-      BOOST_CHECK_CLOSE( isect.v, uvs[i].second, relative_error );
+      EXPECT( isect );
+      EXPECT ( eckit::types::is_approximately_equal( isect.u, uvs[i].first , relative_error ) );
+      EXPECT ( eckit::types::is_approximately_equal( isect.v, uvs[i].second, relative_error ) );
   }
 }
 
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}
