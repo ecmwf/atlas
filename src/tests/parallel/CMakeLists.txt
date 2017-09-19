@@ -8,7 +8,6 @@
 
 
 ecbuild_add_test( TARGET atlas_test_haloexchange
-  BOOST
   MPI        3
   CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_haloexchange.cc
@@ -16,7 +15,6 @@ ecbuild_add_test( TARGET atlas_test_haloexchange
 )
 
 ecbuild_add_test( TARGET atlas_test_gather
-  BOOST
   MPI        3
   CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_gather.cc
