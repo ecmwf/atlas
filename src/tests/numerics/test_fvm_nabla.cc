@@ -8,9 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestNablaEdgeBasedFiniteVolume
-#include "ecbuild/boost_test_framework.h"
-
 #include <cmath>
 #include <iostream>
 
@@ -32,16 +29,19 @@
 #include "atlas/util/Earth.h"
 #include "atlas/grid/Partitioner.h"
 
-#include "tests/AtlasFixture.h"
-
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
 using namespace eckit;
+using namespace eckit::testing;
 using namespace atlas::numerics;
 using namespace atlas::meshgenerator;
 using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
+
+//-----------------------------------------------------------------------------
 
 double dual_volume(const Mesh& mesh)
 {
@@ -118,14 +118,14 @@ void rotated_flow_magnitude(const fvm::Method& fvm, Field& field, const double& 
 static std::string griduid() { return "Slat80"; }
 
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( test_factory )
+CASE( "test_factory" )
 {
-  BOOST_CHECK( NablaFactory::has("fvm") );
+  EXPECT( NablaFactory::has("fvm") );
 }
 
-BOOST_AUTO_TEST_CASE( test_build )
+CASE( "test_build" )
 {
   Log::info() << "test_build" << std::endl;
   MeshGenerator meshgenerator ("structured" );
@@ -135,12 +135,12 @@ BOOST_AUTO_TEST_CASE( test_build )
   Nabla nabla( fvm );
 
   double spherical_area = 360.*180.;
-  BOOST_CHECK_CLOSE(dual_volume(mesh),spherical_area,5.0);
+  EXPECT(eckit::types::is_approximately_equal(dual_volume(mesh),spherical_area,5.0));
 
 }
 
 
-BOOST_AUTO_TEST_CASE( test_grad )
+CASE( "test_grad" )
 {
   Log::info() << "test_grad" << std::endl;
   const double radius = util::Earth::radiusInMeters();
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
 }
 
 
-BOOST_AUTO_TEST_CASE( test_div )
+CASE( "test_div" )
 {
   Log::info() << "test_div" << std::endl;
   const double radius = util::Earth::radiusInMeters();
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE( test_div )
   }
 }
 
-BOOST_AUTO_TEST_CASE( test_curl )
+CASE( "test_curl" )
 {
   Log::info() << "test_curl" << std::endl;
   const double radius = util::Earth::radiusInMeters();
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
 
 }
 
-BOOST_AUTO_TEST_CASE( test_lapl )
+CASE( "test_lapl" )
 {
   Log::info() << "test_lapl" << std::endl;
   const double radius = util::Earth::radiusInMeters();
@@ -343,7 +343,13 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   }
 }
 
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
 
 
-} // namespace test
-} // namespace atlas
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

@@ -8,7 +8,6 @@
 
 
 ecbuild_add_test( TARGET atlas_test_fvm_nabla
-  BOOST
   SOURCES   test_fvm_nabla.cc
   LIBS      atlas
 )
