@@ -24,37 +24,6 @@ namespace detail {
 //------------------------------------------------------------------------------------------------------
 
 
-namespace {
-
-
-double dot_sign(
-        const double& Ax, const double& Ay,
-        const double& Bx, const double& By,
-        const double& Cx, const double& Cy ) {
-  return (Ax - Cx) * (By - Cy)
-       - (Ay - Cy) * (Bx - Cx);
-}
-
-
-/*
- * Tests if a given point is left|on|right of an infinite line.
- * @input P point to test
- * @input A, B points on infinite line
- * @return >0/=0/<0 for P left|on|right of the infinite line
- */
-double point_on_which_side(const PointLonLat& P, const PointLonLat& A, const PointLonLat& B) {
-    return dot_sign( P[LON], P[LAT],
-                     A[LON], A[LAT],
-                     B[LON], B[LAT] );
-}
-
-
-}  // (anonymous)
-
-
-//------------------------------------------------------------------------------------------------------
-
-
 Polygon::Polygon() {
 }
 
@@ -128,87 +97,6 @@ void Polygon::print(std::ostream& s) const {
         z = ',';
     }
     s << '}';
-}
-
-
-bool Polygon::containsPointInLonLatGeometry(const PointLonLat& P) const {
-    ASSERT(coordinates_.size() >= 2);
-
-    // check first bounding box
-    if (coordinatesMin_[LON] <= P[LON] && P[LON] < coordinatesMax_[LON]
-     && coordinatesMin_[LAT] <= P[LAT] && P[LAT] < coordinatesMax_[LAT]) {
-
-        // winding number
-        int wn = 0;
-
-        // loop on polygon edges
-        for (size_t i = 1; i < coordinates_.size(); ++i) {
-            const PointLonLat& A = coordinates_[i-1];
-            const PointLonLat& B = coordinates_[ i ];
-
-            // intersect either:
-            // - "up" on upward crossing & P left of edge, or
-            // - "down" on downward crossing & P right of edge
-            const bool APB = (A[LAT] <= P[LAT] && P[LAT] < B[LAT]);
-            const bool BPA = (B[LAT] <= P[LAT] && P[LAT] < A[LAT]);
-
-            if (APB || BPA) {
-                const double side = point_on_which_side(P, A, B);
-                if (APB && side > 0) {
-                    ++wn;
-                } else if (BPA && side < 0) {
-                    --wn;
-                }
-            }
-        }
-
-        // wn == 0 only when P is outside
-        return wn != 0;
-    }
-
-    return ((includesNorthPole_ && P[LAT] >= coordinatesMax_[LAT])
-         || (includesSouthPole_ && P[LAT] <  coordinatesMin_[LAT]));
-}
-
-
-bool Polygon::containsPointInSphericalGeometry(const PointLonLat& P) const {
-    ASSERT(coordinates_.size() >= 2);
-
-    // check first bounding box
-    if (coordinatesMin_[LON] <= P[LON] && P[LON] < coordinatesMax_[LON]
-     && coordinatesMin_[LAT] <= P[LAT] && P[LAT] < coordinatesMax_[LAT]) {
-
-        // winding number
-        int wn = 0;
-
-        // loop on polygon edges
-        for (size_t i = 1; i < coordinates_.size(); ++i) {
-            const PointLonLat& A = coordinates_[i-1];
-            const PointLonLat& B = coordinates_[ i ];
-
-            // test if P is on/above/below of a great circle containing A,B
-            const bool APB = (A[LON] <= P[LON] && P[LON] < B[LON]);
-            const bool BPA = (B[LON] <= P[LON] && P[LON] < A[LON]);
-
-            if (APB || BPA) {
-
-                const double lat = util::Earth::greatCircleLatitudeGivenLongitude(A, B, P[LON]);
-                if (eckit::types::is_approximately_equal(P[LAT], lat)) {
-                    return true;
-                } else if (APB && P[LAT] > lat) {
-                    ++wn;
-                } else if (BPA && P[LAT] < lat) {
-                    --wn;
-                }
-            }
-        }
-
-        // wn == 0 only when P is outside
-        return wn != 0;
-    }
-
-    return ((includesNorthPole_ && P[LAT] >= coordinatesMax_[LAT])
-         || (includesSouthPole_ && P[LAT] <  coordinatesMin_[LAT]));
 }
 
 

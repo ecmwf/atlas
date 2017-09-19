@@ -46,8 +46,6 @@ public: // methods
 
     void outputPythonScript(const eckit::PathName&) const;
 
-    void setCoordinates() const;
-
 private:
 
     void print(std::ostream&) const;

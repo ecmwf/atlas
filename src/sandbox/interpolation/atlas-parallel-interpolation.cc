@@ -11,6 +11,7 @@
 
 #include <cmath>
 #include <string>
+#include "eckit/config/Resource.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/log/Plural.h"
 #include "atlas/field.h"
@@ -126,6 +127,12 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     tgt.partition(tgt_grid, src);
     functionspace::NodeColumns tgt_functionspace(tgt.mesh(), target_mesh_halo);
     tgt.writeGmsh("tgt-mesh.msh");
+
+
+    /// For debugging purposes
+    if (eckit::Resource<bool>("--output-polygons", false)) {
+        src.mesh().polygon(0).outputPythonScript("polygons.py");
+    }
 
 
     // Setup interpolator relating source & target meshes before setting a source FunctionSpace halo

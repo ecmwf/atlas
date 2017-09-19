@@ -209,6 +209,8 @@ mesh/detail/PartitionGraph.cc
 mesh/detail/PartitionGraph.h
 mesh/detail/Polygon.cc
 mesh/detail/Polygon.h
+mesh/detail/PolygonCoordinates.cc
+mesh/detail/PolygonCoordinates.h
 
 mesh/actions/ExtendNodesGlobal.h
 mesh/actions/ExtendNodesGlobal.cc

@@ -140,53 +140,6 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const
 }
 
 
-void PartitionPolygon::setCoordinates() const {
-    ASSERT(size() > 2);
-
-    const eckit::mpi::Comm& comm = atlas::parallel::mpi::comm();
-    int mpi_rank = int(comm.rank());
-    int mpi_size = int(comm.size());
-
-    // Point coordinates
-    // - use a bounding box to quickly discard points,
-    // - except when that is above/below bounding box but poles should be included
-
-    // FIXME: THIS IS A HACK! the coordinates include North/South Pole (first/last partitions only)
-    includesNorthPole_ = (mpi_rank == 0);
-    includesSouthPole_ = (mpi_rank == mpi_size - 1);
-
-    coordinates_.clear();
-    coordinates_.reserve(size());
-
-    auto lonlat = array::make_view< double, 2 >( mesh_.nodes().lonlat() );
-    coordinatesMin_ = PointLonLat(lonlat(operator[](0), LON), lonlat(operator[](0), LAT));
-    coordinatesMax_ = coordinatesMin_;
-
-    for (size_t i = 0; i < size(); ++i) {
-
-        PointLonLat A(lonlat(operator[](i), LON), lonlat(operator[](i), LAT));
-        coordinatesMin_ = PointLonLat::componentsMin(coordinatesMin_, A);
-        coordinatesMax_ = PointLonLat::componentsMax(coordinatesMax_, A);
-
-#if 0
-        // if new point is aligned with existing edge (cross product ~= 0) make the edge longer
-        if ((coordinates_.size() >= 2) && removeAlignedPoints) {
-            PointLonLat B = coordinates_.back();
-            PointLonLat C = coordinates_[coordinates_.size() - 2];
-            if (eckit::types::is_approximately_equal<double>( 0, dot_sign(A[LON], A[LAT], B[LON], B[LAT], C[LON], C[LAT]) )) {
-                coordinates_.back() = A;
-                continue;
-            }
-        }
-#endif
-
-        coordinates_.push_back(A);
-    }
-
-    ASSERT(coordinates_.size() == size());
-}
-
-
 void PartitionPolygon::print(std::ostream& out) const {
     out << "polygon:{"
         <<  "halo:" << halo_

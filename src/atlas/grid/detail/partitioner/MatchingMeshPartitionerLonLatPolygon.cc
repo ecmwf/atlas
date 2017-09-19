@@ -14,8 +14,10 @@
 #include <vector>
 #include "eckit/config/Resource.h"
 #include "eckit/log/ProgressTimer.h"
-#include "eckit/mpi/Comm.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/detail/PolygonCoordinates.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 
 
@@ -31,34 +33,38 @@ PartitionerBuilder<MatchingMeshPartitionerLonLatPolygon> __builder("lonlat-polyg
 
 
 void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int partitioning[] ) const {
-    eckit::mpi::Comm& comm = eckit::mpi::comm();
+    const eckit::mpi::Comm& comm = atlas::parallel::mpi::comm();
     const int mpi_rank = int(comm.rank());
+    const int mpi_size = int(comm.size());
 
     ASSERT( grid.domain().global() );
-    const Mesh::Polygon& poly = prePartitionedMesh_.polygon(0);
-    poly.setCoordinates();
+
+    // FIXME: THIS IS A HACK! the coordinates include North/South Pole (first/last partitions only)
+    bool includesNorthPole = (mpi_rank == 0);
+    bool includesSouthPole = (mpi_rank == mpi_size - 1);
+
+    const mesh::detail::PolygonCoordinates poly(
+                prePartitionedMesh_.polygon(0),
+                prePartitionedMesh_.nodes().lonlat(),
+                includesNorthPole,
+                includesSouthPole );
 
     {
-        eckit::ProgressTimer timer("Partitioning target", grid.size(), "point", double(10), atlas::Log::info());
+        eckit::ProgressTimer timer("Partitioning", grid.size(), "point", double(10), atlas::Log::info());
         size_t i = 0;
 
-        for (PointXY Pxy : grid.xy()) {
+        for (const PointXY Pxy : grid.xy()) {
             ++timer;
             const PointLonLat P = grid.projection().lonlat(Pxy);
             partitioning[i++] = poly.containsPointInLonLatGeometry(P) ? mpi_rank : -1;
         }
-
-        // Synchronize partitioning, do a sanity check
-        comm.allReduceInPlace(partitioning, grid.size(), eckit::mpi::Operation::MAX);
-        const int min = *std::min_element(partitioning, partitioning+grid.size());
-        if (min<0) {
-            throw eckit::SeriousBug("Could not find partition for target node (source mesh does not contain all target grid points)", Here());
-        }
     }
 
-    /// For debugging purposes
-    if (eckit::Resource<bool>("--output-polygons", false)) {
-        poly.outputPythonScript("polygons.py");
+    // Synchronize partitioning, do a sanity check
+    comm.allReduceInPlace(partitioning, grid.size(), eckit::mpi::Operation::MAX);
+    const int min = *std::min_element(partitioning, partitioning+grid.size());
+    if (min<0) {
+        throw eckit::SeriousBug("Could not find partition for target node (source mesh does not contain all target grid points)", Here());
     }
 }
 

@@ -19,7 +19,6 @@
 #include <utility>
 #include <vector>
 #include "atlas/library/config.h"
-#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace mesh {
@@ -69,40 +68,12 @@ public:
 
     void print(std::ostream&) const;
 
-    /*
-     * Point-in-partition test based on winding number for a point in a polygon
-     * @note reference <a href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point in a Polygon</a>
-     * @param[in] points vertex points of a polygon (closed, where poly.front() == poly.back())
-     * @param[in] P given point
-     * @return if point is in partition
-     */
-    bool containsPointInLonLatGeometry(const PointLonLat&) const;
-
-    /*
-     * Point-in-partition test based on winding number for a point in a polygon
-     * @note reference <a href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point in a Polygon</a>
-     * @param[in] points vertex points of a polygon (closed, where poly.front() == poly.back())
-     * @param[in] P given point
-     * @return if point is in partition
-     */
-    bool containsPointInSphericalGeometry(const PointLonLat&) const;
-
     // -- Friends
 
     friend std::ostream& operator<<(std::ostream& s, const Polygon& p) {
         p.print(s);
         return s;
     }
-
-protected:
-
-    // -- Members
-
-    mutable PointLonLat coordinatesMin_;
-    mutable PointLonLat coordinatesMax_;
-    mutable std::vector< PointLonLat > coordinates_;
-    mutable bool includesNorthPole_;
-    mutable bool includesSouthPole_;
 
 };
 
