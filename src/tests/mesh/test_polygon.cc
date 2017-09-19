@@ -8,29 +8,22 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestPolygon
-#include "ecbuild/boost_test_framework.h"
-#include "tests/AtlasFixture.h"
-
 #include <algorithm>
 #include <cmath>
 #include <utility>
+#include "eckit/testing/Test.h"
 #include "atlas/mesh/detail/Polygon.h"
 #include "atlas/mesh/detail/PolygonCoordinates.h"
 #include "atlas/util/Point.h"
 
+#include "tests/AtlasTestEnvironment.h"
+
+using namespace eckit::testing;
+
 namespace atlas {
 namespace test {
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
-
-BOOST_AUTO_TEST_SUITE( test_polygon )
-
-// -----------------------------------------------------------------------------
-
-BOOST_AUTO_TEST_SUITE( test_polygon_coordinates )
-
-BOOST_AUTO_TEST_CASE( test_polygon_something )
+CASE( "test_polygon_something" )
 {
     using mesh::detail::PolygonCoordinates;
     using p = PointLonLat;
@@ -132,15 +125,16 @@ BOOST_AUTO_TEST_CASE( test_polygon_something )
          point_inside_t(p(118.8, -32.0080), false),
          point_inside_t(p(118.8, -35.9951), true)
      }) {
-        BOOST_CHECK_EQUAL(poly.containsPointInSphericalGeometry(P.first), P.second);
+        EXPECT( poly.containsPointInSphericalGeometry(P.first) == P.second );
     }
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-// -----------------------------------------------------------------------------
-
-BOOST_AUTO_TEST_SUITE_END()
 
 } // namespace test
 } // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}
