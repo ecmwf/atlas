@@ -29,7 +29,6 @@ Polygon::Polygon() {
 
 
 Polygon::Polygon(const Polygon::edge_set_t& edges) {
-
     // get external edges by attempting to remove reversed edges, if any
     edge_set_t extEdges;
     for (const edge_t& e : edges) {

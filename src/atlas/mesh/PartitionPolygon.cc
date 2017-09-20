@@ -27,14 +27,11 @@
 namespace atlas {
 namespace mesh {
 
-
-PartitionPolygon::PartitionPolygon(const detail::MeshImpl& mesh, size_t halo) :
-  mesh_(mesh),
-  halo_(halo) {
-
+namespace {
+detail::Polygon::edge_set_t compute_edges(const detail::MeshImpl& mesh, size_t halo) {
   // extract partition boundary edges by always attempting first to`
   // remove a reversed edge from a neighbouring element, if any
-  edge_set_t edges;
+  detail::Polygon::edge_set_t edges;
   for (size_t t = 0; t < mesh.cells().nb_types(); ++t) {
       const Elements& elements = mesh.cells().elements(t);
 
@@ -47,7 +44,7 @@ PartitionPolygon::PartitionPolygon(const detail::MeshImpl& mesh, size_t halo) :
       for (size_t j = 0; j < elements.size(); ++j) {
           if (field_patch(j) == 0 && field_halo(j) <= halo ) {
               for (size_t k = 0; k < nb_nodes; ++k) {
-                  edge_t edge(size_t(conn(j, k)), size_t(conn(j, (k+1) % nb_nodes)));
+                  detail::Polygon::edge_t edge( conn(j,k), conn(j, (k+1) % nb_nodes));
                   if (!edges.erase(edge.reverse())) {
                       edges.insert(edge);
                   }
@@ -55,8 +52,14 @@ PartitionPolygon::PartitionPolygon(const detail::MeshImpl& mesh, size_t halo) :
           }
       }
   }
+  return edges;
+}
+}
 
-  ASSERT(operator+=(detail::Polygon(edges)));
+PartitionPolygon::PartitionPolygon(const detail::MeshImpl& mesh, size_t halo) :
+  detail::Polygon( compute_edges(mesh,halo) ),
+  mesh_(mesh),
+  halo_(halo) {
 }
 
 
@@ -104,7 +107,7 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const
                    "\n" ""
                    "\n" "fig = plt.figure()"
                    "\n" "ax = fig.add_subplot(111,aspect='equal')"
-                   "\n" "";              
+                   "\n" "";
           }
           f << "\n" "verts_" << r << " = [";
           for (idx_t i : static_cast<const container_t&>(*this)) {

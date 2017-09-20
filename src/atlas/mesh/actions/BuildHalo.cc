@@ -112,7 +112,7 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
 }
 
 
-void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
+void accumulate_partition_bdry_nodes_old( Mesh& mesh, std::vector<int>& bdry_nodes )
 {
   std::set<int> bdry_nodes_set;
 
@@ -143,13 +143,22 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
   bdry_nodes = std::vector<int>( bdry_nodes_set.begin(), bdry_nodes_set.end());
 }
 
+
+void accumulate_partition_bdry_nodes( Mesh& mesh, size_t halo, std::vector<int>& bdry_nodes )
+{
+#ifdef OLD
+  accumulate_partition_bdry_nodes_old(mesh,bdry_nodes);
+#else
+  const Mesh::Polygon& polygon = mesh.polygon(halo);
+  bdry_nodes = std::vector<int>( polygon.begin(), polygon.end() );
+#endif
+}
+
 template< typename Predicate >
 std::vector<int> filter_nodes(std::vector<int> nodes, const Predicate& predicate )
 {
   std::vector<int> filtered; filtered.reserve(nodes.size());
-  for( size_t jnode=0; jnode<nodes.size(); ++jnode )
-  {
-    int inode = nodes[jnode];
+  for( int inode : nodes ) {
     if( predicate(inode) )
       filtered.push_back(inode);
   }
@@ -753,7 +762,7 @@ void increase_halo_interior( BuildHaloHelper& helper )
 
   // 1) Find boundary nodes of this partition:
 
-  accumulate_partition_bdry_nodes(helper.mesh,helper.bdry_nodes);
+  accumulate_partition_bdry_nodes(helper.mesh,helper.halo,helper.bdry_nodes);
   const std::vector<int>& bdry_nodes = helper.bdry_nodes;
 
   // 2) Communicate uid of these boundary nodes to other partitions
@@ -842,7 +851,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
   // 1) Find boundary nodes of this partition:
 
   if( ! helper.bdry_nodes.size() )
-    accumulate_partition_bdry_nodes(helper.mesh,helper.bdry_nodes);
+    accumulate_partition_bdry_nodes(helper.mesh,helper.halo,helper.bdry_nodes);
 
   std::vector<int> bdry_nodes = filter_nodes(helper.bdry_nodes,periodic_points);
 
