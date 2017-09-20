@@ -76,10 +76,10 @@ TEST( test_trans )
 
   trans = atlas_Trans(grid,truncation)
   FCTEST_CHECK_EQUAL( grid%owners(), 2 )
-  
+
   FCTEST_CHECK_EQUAL( trans%nb_gridpoints(), int(grid%size()) )
   FCTEST_CHECK_EQUAL( trans%nb_gridpoints_global(), int(grid%size()) )
-  
+
   trans_grid = trans%grid()
   FCTEST_CHECK_EQUAL( trans_grid%owners(), 3 )
 
