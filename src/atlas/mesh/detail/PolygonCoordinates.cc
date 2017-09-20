@@ -33,8 +33,8 @@ namespace {
 
 
 double cross_product_analog(const PointLonLat& A, const PointLonLat& B, const PointLonLat& C) {
-  return (A[LON] - C[LON]) * (B[LAT] - C[LAT])
-       - (A[LAT] - C[LAT]) * (B[LON] - C[LON]);
+  return (A.lon() - C.lon()) * (B.lat() - C.lat())
+       - (A.lat() - C.lat()) * (B.lon() - C.lon());
 }
 
 
@@ -114,8 +114,8 @@ bool PolygonCoordinates::containsPointInLonLatGeometry(const PointLonLat& P) con
     ASSERT(coordinates_.size() >= 2);
 
     // check first bounding box
-    if (coordinatesMin_[LON] <= P[LON] && P[LON] < coordinatesMax_[LON]
-     && coordinatesMin_[LAT] <= P[LAT] && P[LAT] < coordinatesMax_[LAT]) {
+    if (coordinatesMin_.lon() <= P.lon() && P.lon() < coordinatesMax_.lon()
+     && coordinatesMin_.lat() <= P.lat() && P.lat() < coordinatesMax_.lat()) {
 
         // winding number
         int wn = 0;
@@ -129,8 +129,8 @@ bool PolygonCoordinates::containsPointInLonLatGeometry(const PointLonLat& P) con
             // tests if P is left|on|right of a directed A-B infinite line, by intersecting either:
             // - "up" on upward crossing & P left of edge, or
             // - "down" on downward crossing & P right of edge
-            const bool APB = (A[LAT] <= P[LAT] && P[LAT] < B[LAT]);
-            const bool BPA = (B[LAT] <= P[LAT] && P[LAT] < A[LAT]);
+            const bool APB = (A.lat() <= P.lat() && P.lat() < B.lat());
+            const bool BPA = (B.lat() <= P.lat() && P.lat() < A.lat());
 
             if (APB != BPA) {
                 const double side = cross_product_analog(P, A, B);
@@ -146,8 +146,8 @@ bool PolygonCoordinates::containsPointInLonLatGeometry(const PointLonLat& P) con
         return wn != 0;
     }
 
-    return ((includesNorthPole_ && P[LAT] >= coordinatesMax_[LAT])
-         || (includesSouthPole_ && P[LAT] <  coordinatesMin_[LAT]));
+    return ((includesNorthPole_ && P.lat() >= coordinatesMax_.lat())
+         || (includesSouthPole_ && P.lat() <  coordinatesMin_.lat()));
 }
 
 
@@ -155,8 +155,8 @@ bool PolygonCoordinates::containsPointInSphericalGeometry(const PointLonLat& P) 
     ASSERT(coordinates_.size() >= 2);
 
     // check first bounding box
-    if (coordinatesMin_[LON] <= P[LON] && P[LON] < coordinatesMax_[LON]
-     && coordinatesMin_[LAT] <= P[LAT] && P[LAT] < coordinatesMax_[LAT]) {
+    if (coordinatesMin_.lon() <= P.lon() && P.lon() < coordinatesMax_.lon()
+     && coordinatesMin_.lat() <= P.lat() && P.lat() < coordinatesMax_.lat()) {
 
         // winding number
         int wn = 0;
@@ -167,19 +167,19 @@ bool PolygonCoordinates::containsPointInSphericalGeometry(const PointLonLat& P) 
             const PointLonLat& B = coordinates_[ i ];
 
             // test if P is on/above/below of a great circle containing A,B
-            const bool APB = (A[LON] <= P[LON] && P[LON] < B[LON]);
-            const bool BPA = (B[LON] <= P[LON] && P[LON] < A[LON]);
+            const bool APB = (A.lon() <= P.lon() && P.lon() < B.lon());
+            const bool BPA = (B.lon() <= P.lon() && P.lon() < A.lon());
 
             if (APB != BPA) {
-                PointLonLat p(P[LON], std::numeric_limits<double>::quiet_NaN());
+                PointLonLat p(P.lon(), std::numeric_limits<double>::quiet_NaN());
                 util::Earth::greatCircleLatitudeGivenLongitude(A, B, p);
 
                 ASSERT(!std::isnan(p.lat()));
-                if (eckit::types::is_approximately_equal(P[LAT], p.lat())) {
+                if (eckit::types::is_approximately_equal(P.lat(), p.lat())) {
                     return true;
                 }
 
-                wn += (P[LAT] > p.lat() ? -1:1) * (APB ? -1:1);
+                wn += (P.lat() > p.lat() ? -1:1) * (APB ? -1:1);
             }
         }
 
@@ -187,8 +187,8 @@ bool PolygonCoordinates::containsPointInSphericalGeometry(const PointLonLat& P) 
         return wn != 0;
     }
 
-    return ((includesNorthPole_ && P[LAT] >= coordinatesMax_[LAT])
-         || (includesSouthPole_ && P[LAT] <  coordinatesMin_[LAT]));
+    return ((includesNorthPole_ && P.lat() >= coordinatesMax_.lat())
+         || (includesSouthPole_ && P.lat() <  coordinatesMin_.lat()));
 }
 
 

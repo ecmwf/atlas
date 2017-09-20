@@ -21,6 +21,15 @@ namespace option {
 
 // ----------------------------------------------------------------------------
 
+class type : public util::Config
+{
+public:
+  type( const std::string& _type )
+  {
+    set("type",_type);
+  }
+};
+
 class global : public util::Config
 {
 public:
@@ -110,7 +119,7 @@ public:
       NOTIMP;
     }
   }
-  
+
 };
 
 

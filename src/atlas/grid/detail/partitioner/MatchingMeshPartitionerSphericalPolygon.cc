@@ -48,6 +48,8 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
 
     ASSERT( grid.domain().global() );
 
+    Log::debug<Atlas>() << "MatchingMeshPartitionerSphericalPolygon::partition" << std::endl;
+
     // FIXME: THIS IS A HACK! the coordinates include North/South Pole (first/last partitions only)
     bool includesNorthPole = (mpi_rank == 0);
     bool includesSouthPole = (mpi_rank == mpi_size - 1);

@@ -141,17 +141,14 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     std::string interpolation_method = "finite-element";
     args.get("method", interpolation_method);
 
-    eckit::LocalConfiguration interpolator_options(args);
-    interpolator_options.set("type", interpolation_method);
-
-    Interpolation interpolator_forward(interpolator_options, src_functionspace, tgt_functionspace);
+    Interpolation interpolator_forward( option::type(interpolation_method), src_functionspace, tgt_functionspace);
     Interpolation interpolator_backward;
 
     bool with_backward = false;
     args.get("with-backward", with_backward);
     if( with_backward ) {
       Log::info() << "Computing backward interpolator" << std::endl;
-      interpolator_backward = Interpolation(interpolator_options, tgt_functionspace, src_functionspace);
+      interpolator_backward = Interpolation( option::type(interpolation_method), tgt_functionspace, src_functionspace);
     }
 
 
