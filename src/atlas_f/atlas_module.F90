@@ -13,13 +13,13 @@ module atlas_module
 
 use atlas_mpi_module
 
-use atlas_FunctionSpace_module, only: &
-    & atlas_FunctionSpace
 use atlas_Field_module, only: &
     & atlas_Field, &
     & atlas_real, &
     & atlas_integer, &
     & atlas_logical
+use atlas_FunctionSpace_module, only: &
+    & atlas_FunctionSpace
 use atlas_FieldSet_module, only: &
     & atlas_FieldSet
 use atlas_State_module, only: &
