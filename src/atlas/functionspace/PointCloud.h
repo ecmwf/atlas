@@ -63,7 +63,7 @@ public:
 
   const Field& lonlat() const { return functionspace_->lonlat(); }
   const Field& ghost() const { return functionspace_->ghost(); }
-  const size_t size() const { return functionspace_->size(); }
+  size_t size() const { return functionspace_->size(); }
 
 private:
 
