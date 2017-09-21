@@ -43,6 +43,13 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #endif
 
+#define ATLAS_103
+// #define ATLAS_103_SORT
+
+#ifndef ATLAS_103
+#warning ATLAS-103 proposed solution deactivated
+#endif
+
 using atlas::mesh::detail::accumulate_facets;
 using atlas::mesh::detail::PeriodicTransform;
 using atlas::util::UniqueLonLat;
@@ -62,9 +69,6 @@ class BuildHaloHelper;
 
 void increase_halo( Mesh& mesh );
 void increase_halo_interior( BuildHaloHelper& );
-
-
-
 
 class EastWest: public PeriodicTransform
 {
@@ -146,11 +150,17 @@ void accumulate_partition_bdry_nodes_old( Mesh& mesh, std::vector<int>& bdry_nod
 
 void accumulate_partition_bdry_nodes( Mesh& mesh, size_t halo, std::vector<int>& bdry_nodes )
 {
-#ifdef OLD
+#ifndef ATLAS_103
+  /* deprecated */
   accumulate_partition_bdry_nodes_old(mesh,bdry_nodes);
 #else
   const Mesh::Polygon& polygon = mesh.polygon(halo);
   bdry_nodes = std::vector<int>( polygon.begin(), polygon.end() );
+#endif
+
+#ifdef ATLAS_103_SORT
+  /* not required */
+  std::sort(bdry_nodes.begin(),bdry_nodes.end());
 #endif
 }
 
@@ -373,7 +383,7 @@ public:
       comm.allToAll(send.node_part,     recv.node_part);
       comm.allToAll(send.node_ridx,     recv.node_ridx);
       comm.allToAll(send.node_flags,    recv.node_flags);
-      comm.allToAll(send.node_xy,   recv.node_xy);
+      comm.allToAll(send.node_xy,       recv.node_xy);
       comm.allToAll(send.elem_glb_idx,  recv.elem_glb_idx);
       comm.allToAll(send.elem_nodes_id, recv.elem_nodes_id);
       comm.allToAll(send.elem_part,     recv.elem_part);
@@ -746,6 +756,53 @@ public:
 };
 
 
+
+namespace {
+void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>& send, atlas::parallel::mpi::Buffer<uid_t,1>& recv, const bool& periodic = false ) {
+#ifndef ATLAS_103
+  /* deprecated */
+  parallel::mpi::comm().allGatherv(send.begin(), send.end(), recv);
+#else
+  Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
+  if( periodic ) {
+    // add own rank to neighbours to allow periodicity with self (pole caps)
+    size_t rank = parallel::mpi::comm().rank();
+    neighbours.insert( std::upper_bound( neighbours.begin(), neighbours.end(), rank ), rank );
+  }
+  
+  const size_t mpi_size = parallel::mpi::comm().size();
+  const int counts_tag = 0;
+  const int buffer_tag = 1;
+  
+  int sendcnt = send.size();
+  for( size_t to : neighbours ) {
+    parallel::mpi::comm().send(sendcnt,to,counts_tag);
+  }
+  recv.counts.assign(0,mpi_size);
+  for( size_t from : neighbours ) {
+    parallel::mpi::comm().receive(recv.counts[from],from,counts_tag);
+  }
+  for( size_t to : neighbours ) {
+    parallel::mpi::comm().send(send.data(),send.size(),to,buffer_tag);
+  }
+  recv.displs[0] = 0;
+  recv.cnt = recv.counts[0];
+  for(size_t jpart = 1; jpart < mpi_size; ++jpart) {
+      recv.displs[jpart] = recv.displs[jpart-1] + recv.counts[jpart-1];
+      recv.cnt += recv.counts[jpart];
+  }
+  recv.buffer.resize(recv.cnt);
+
+  for( size_t from : neighbours ) {
+    parallel::mpi::comm().receive(recv.buffer.data()+recv.displs[from],recv.counts[from],from,buffer_tag);
+  }
+#endif
+}
+}
+
+
+
+
 void increase_halo_interior( BuildHaloHelper& helper )
 {
   helper.update();
@@ -774,10 +831,18 @@ void increase_halo_interior( BuildHaloHelper& helper )
   size_t size = parallel::mpi::comm().size();
   atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(size);
 
-  parallel::mpi::comm().allGatherv(send_bdry_nodes_uid.begin(), send_bdry_nodes_uid.end(), recv_bdry_nodes_uid_from_parts);
+  gather_bdry_nodes( helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts );
 
+#ifndef ATLAS_103
+  /* deprecated */
   for (size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
+#else
+  const Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
+  Log::info() << helper.mesh.partitionGraph() << std::endl;
+  for (size_t jpart : neighbours)
+#endif
   {
+    
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID
 
@@ -868,10 +933,19 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
   size_t size = parallel::mpi::comm().size();
   atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(size);
+  
+  gather_bdry_nodes( helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts, /* periodic = */ true );
 
-  parallel::mpi::comm().allGatherv(send_bdry_nodes_uid.begin(), send_bdry_nodes_uid.end(), recv_bdry_nodes_uid_from_parts);
-
+#ifndef ATLAS_103
+  /* deprecated */
   for (size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
+#else
+  Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
+  // add own rank to neighbours to allow periodicity with self (pole caps)
+  size_t rank = parallel::mpi::comm().rank();
+  neighbours.insert( std::upper_bound( neighbours.begin(), neighbours.end(), rank ), rank );
+  for (size_t jpart : neighbours)
+#endif
   {
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID

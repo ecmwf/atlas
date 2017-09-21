@@ -21,6 +21,7 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/MicroDeg.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/LocalView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/MakeView.h"
 
@@ -45,7 +46,7 @@ namespace util {
   /// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
   uidx_t unique_lonlat( const double& lon, const double& lat );
   uidx_t unique_lonlat( const double lonlat[] );
-  uidx_t unique_lonlat( const array::ArrayView<double,1>& lonlat );
+  uidx_t unique_lonlat( const array::LocalView<double,1>& lonlat );
 
   /// @brief Compute unique positive index from lon-lat coordinates in degrees.
   /// coordinates are stored in order:
@@ -152,9 +153,9 @@ inline uidx_t unique_lonlat( const double lonlat[] ) {
   return detail::uniqueT<uidx_t>( microdeg(lonlat[LON]), microdeg(lonlat[LAT]) );
 }
 
-// inline uidx_t unique_lonlat( const array::ArrayView<double,1>& lonlat ) {
-//   return detail::uniqueT<uidx_t>( microdeg(lonlat[LON]), microdeg(lonlat[LAT]) );
-// }
+inline uidx_t unique_lonlat( const array::LocalView<double,1>& lonlat ) {
+  return unique_lonlat( lonlat.data() );
+}
 
 
 inline uidx_t unique_lonlat( const double elem_lonlat[], size_t npts )
