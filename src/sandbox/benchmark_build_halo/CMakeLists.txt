@@ -6,12 +6,10 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-add_subdirectory( fortran_submodule )
-add_subdirectory( fortran_modinc )
-add_subdirectory( fortran_object )
-add_subdirectory( example_fortran )
+ecbuild_add_executable(
+    TARGET  atlas-benchmark-build-halo
+    SOURCES atlas-benchmark-build-halo.cc
+    LIBS    atlas
+    NOINSTALL
+)
 
-add_subdirectory( interpolation )
-add_subdirectory( interpolation-fortran )
-add_subdirectory( grid_distribution )
-add_subdirectory( benchmark_build_halo )
