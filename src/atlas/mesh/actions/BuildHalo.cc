@@ -769,22 +769,33 @@ void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>
     size_t rank = parallel::mpi::comm().rank();
     neighbours.insert( std::upper_bound( neighbours.begin(), neighbours.end(), rank ), rank );
   }
-  
+
   const size_t mpi_size = parallel::mpi::comm().size();
   const int counts_tag = 0;
   const int buffer_tag = 1;
-  
+
+  std::vector<eckit::mpi::Request> counts_requests; counts_requests.reserve(neighbours.size());
+  std::vector<eckit::mpi::Request> buffer_requests; buffer_requests.reserve(neighbours.size());
+
   int sendcnt = send.size();
   for( size_t to : neighbours ) {
-    parallel::mpi::comm().send(sendcnt,to,counts_tag);
+    parallel::mpi::comm().iSend( sendcnt, to, counts_tag );
   }
+
   recv.counts.assign(0,mpi_size);
+
   for( size_t from : neighbours ) {
-    parallel::mpi::comm().receive(recv.counts[from],from,counts_tag);
+    counts_requests.push_back( parallel::mpi::comm().iReceive( recv.counts[from], from, counts_tag ) );
   }
+
   for( size_t to : neighbours ) {
-    parallel::mpi::comm().send(send.data(),send.size(),to,buffer_tag);
+    parallel::mpi::comm().iSend(send.data(),send.size(),to, buffer_tag );
   }
+
+  for( auto request : counts_requests ) {
+    parallel::mpi::comm().wait( request );
+  }
+
   recv.displs[0] = 0;
   recv.cnt = recv.counts[0];
   for(size_t jpart = 1; jpart < mpi_size; ++jpart) {
@@ -794,7 +805,13 @@ void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>
   recv.buffer.resize(recv.cnt);
 
   for( size_t from : neighbours ) {
-    parallel::mpi::comm().receive(recv.buffer.data()+recv.displs[from],recv.counts[from],from,buffer_tag);
+    buffer_requests.push_back(
+          parallel::mpi::comm().iReceive( recv.buffer.data()+recv.displs[from],
+                                          recv.counts[from], from, buffer_tag) );
+  }
+
+  for( auto request : buffer_requests ) {
+    parallel::mpi::comm().wait( request );
   }
 #endif
 }
@@ -842,7 +859,7 @@ void increase_halo_interior( BuildHaloHelper& helper )
   for (size_t jpart : neighbours)
 #endif
   {
-    
+
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID
 
@@ -933,7 +950,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
   size_t size = parallel::mpi::comm().size();
   atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(size);
-  
+
   gather_bdry_nodes( helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts, /* periodic = */ true );
 
 #ifndef ATLAS_103
