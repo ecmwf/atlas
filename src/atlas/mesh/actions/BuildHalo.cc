@@ -855,7 +855,6 @@ void increase_halo_interior( BuildHaloHelper& helper )
   for (size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
 #else
   const Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
-  Log::info() << helper.mesh.partitionGraph() << std::endl;
   for (size_t jpart : neighbours)
 #endif
   {
