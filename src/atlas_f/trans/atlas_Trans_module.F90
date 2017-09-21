@@ -205,42 +205,72 @@ function handle( this )
   use atlas_trans_c_binding
   integer :: handle
   class(atlas_Trans) :: this
+#ifdef ATLAS_HAVE_TRANS
   handle = atlas__Trans__handle (this%c_ptr())
+#else
+  THROW_ERROR
+  handle = 0
+#endif
 end function
 
 function truncation( this )
   use atlas_trans_c_binding
   integer :: truncation
   class(atlas_Trans) :: this
+#ifdef ATLAS_HAVE_TRANS
   truncation = atlas__Trans__truncation (this%c_ptr())
+#else
+  THROW_ERROR
+  truncation = 0
+#endif
 end function
 
 function nb_spectral_coefficients( this )
   use atlas_trans_c_binding
   integer :: nb_spectral_coefficients
   class(atlas_Trans) :: this
+#ifdef ATLAS_HAVE_TRANS
   nb_spectral_coefficients = atlas__Trans__nspec2 (this%c_ptr())
+#else
+  THROW_ERROR
+  nb_spectral_coefficients = 0
+#endif
 end function
 
 function nb_spectral_coefficients_global( this )
   use atlas_trans_c_binding
   integer :: nb_spectral_coefficients_global
   class(atlas_Trans) :: this
+#ifdef ATLAS_HAVE_TRANS
   nb_spectral_coefficients_global = atlas__Trans__nspec2g (this%c_ptr())
+#else
+  THROW_ERROR
+  nb_spectral_coefficients_global = 0
+#endif
 end function
 
 function nb_gridpoints( this )
   use atlas_trans_c_binding
   integer :: nb_gridpoints
   class(atlas_Trans) :: this
+#ifdef ATLAS_HAVE_TRANS
   nb_gridpoints = atlas__Trans__ngptot (this%c_ptr())
+#else
+  THROW_ERROR
+  nb_gridpoints = 0
+#endif
 end function
 
 function nb_gridpoints_global( this )
   use atlas_trans_c_binding
   integer :: nb_gridpoints_global
   class(atlas_Trans) :: this
+#ifdef ATLAS_HAVE_TRANS
   nb_gridpoints_global = atlas__Trans__ngptotg (this%c_ptr())
+#else
+  THROW_ERROR
+  nb_gridpoints_global = 0
+#endif
 end function
 
 function grid( this )
@@ -248,8 +278,13 @@ function grid( this )
   use atlas_grid_module
   class(atlas_Trans) :: this
   type(atlas_StructuredGrid) :: grid
+#ifdef ATLAS_HAVE_TRANS
   grid = atlas_StructuredGrid( atlas__Trans__grid(this%c_ptr()) )
   call grid%return()
+#else
+  THROW_ERROR
+  call grid%return()
+#endif
 end function
 
 subroutine dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields, parameters)
