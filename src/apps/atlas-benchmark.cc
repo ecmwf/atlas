@@ -51,12 +51,16 @@
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/runtime/AtlasTool.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
+
+#define ATLAS_TIME(msg) \
+  for( atlas::Timer itimer##__LINE__(msg); not itimer##__LINE__.finished(); itimer##__LINE__.finish() )
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -84,8 +88,6 @@ using namespace atlas::mesh::actions;
 using namespace atlas::functionspace;
 using namespace atlas::meshgenerator;
 using atlas::AtlasTool;
-using eckit::Timer;
-
 
 namespace {
   void usage(const std::string& tool) {
@@ -128,6 +130,8 @@ struct TimerStats
   double avg;
   int cnt;
 };
+
+//----------------------------------------------------------------------------------------------------------------------
 
 class AtlasBenchmark: public AtlasTool {
 
@@ -188,6 +192,8 @@ public:
 
 void AtlasBenchmark::execute(const Args& args)
 {
+  Timer::Log set_channel( Log::info() );
+
   nlev = 137;
   args.get("nlev",nlev);
   gridname = "N64";
@@ -224,7 +230,7 @@ void AtlasBenchmark::execute(const Args& args)
 
   Log::info() << "Timings:" << endl;
 
-  setup();
+  ATLAS_TIME("setup") { setup(); }
 
   Log::info() << "  Executing " << niter << " iterations: \n";
   if( progress )
@@ -277,24 +283,18 @@ void AtlasBenchmark::execute(const Args& args)
 
 void AtlasBenchmark::setup()
 {
-  Timer timer( "setup", Log::debug());
-
-  StructuredGrid grid = Grid(gridname);
-  mesh = MeshGenerator( "structured" ).generate(grid);
-  
   size_t halo = 1;
 
-  build_nodes_parallel_fields(mesh.nodes());
-  build_periodic_boundaries(mesh);
-  build_halo(mesh,1);
-  renumber_nodes_glb_idx(mesh.nodes());
-  build_edges(mesh);
-  build_pole_edges(mesh);
-  build_edges_parallel_fields(mesh);
-  build_median_dual_mesh(mesh);
-  build_node_to_edge_connectivity(mesh);
+  StructuredGrid grid;
+  ATLAS_TIME( "Create grid" ) {  grid = Grid(gridname); }
+  ATLAS_TIME( "Create mesh" ) {  mesh = MeshGenerator( "structured" ).generate(grid); }
 
-  nodes_fs = functionspace::NodeColumns(mesh,option::halo(halo));
+  ATLAS_TIME( "Create node_fs") { nodes_fs = functionspace::NodeColumns(mesh,option::halo(halo)); }
+  ATLAS_TIME( "build_edges" )                     { build_edges(mesh); }
+  ATLAS_TIME( "build_pole_edges" )                { build_pole_edges(mesh); }
+  ATLAS_TIME( "build_edges_parallel_fiels" )      { build_edges_parallel_fields(mesh); }
+  ATLAS_TIME( "build_median_dual_mesh" )          { build_median_dual_mesh(mesh); }
+  ATLAS_TIME( "build_node_to_edge_connectivity" ) { build_node_to_edge_connectivity(mesh); }
 
   scalar_field = nodes_fs.createField<double>( option::name("field") | option::levels(nlev) );
   grad_field   = nodes_fs.createField<double>( option::name("grad")  | option::levels(nlev) | option::variables(3) );
@@ -366,17 +366,13 @@ void AtlasBenchmark::setup()
   {
     is_ghost.push_back( Topology::check(flags(jnode),Topology::GHOST) );
   }
-
-
-  Log::info() << "  setup: " << timer.elapsed() << endl;
-
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::iteration()
 {
-  Timer t("iteration", Log::debug());
+  Timer t("iteration");
 
   unique_ptr<array::Array> avgS_arr( array::Array::create<double>(nedges,nlev,2ul) );
   const auto& node2edge = mesh.nodes().edge_connectivity();
@@ -458,12 +454,11 @@ void AtlasBenchmark::iteration()
   }
 
   // halo-exchange
-  parallel::mpi::comm().barrier();
-  Timer halo("halo-exchange", Log::debug());
+  Timer halo("halo-exchange");
   nodes_fs.halo_exchange().execute(grad);
-  parallel::mpi::comm().barrier();
-  t.stop();
-  halo.stop();
+  halo.finish();
+
+  t.finish();
 
   if( iter >= exclude )
   {

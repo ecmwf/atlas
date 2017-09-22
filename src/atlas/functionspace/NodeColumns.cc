@@ -30,6 +30,7 @@
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Timer.h"
 #undef atlas_omp_critical_ordered
 #define atlas_omp_critical_ordered atlas_omp_critical
 #include "atlas/array/ArrayView.h"
@@ -100,6 +101,7 @@ NodeColumns::NodeColumns( Mesh& mesh, const eckit::Configuration & config ) :
     nb_levels_( config.getInt("levels",0) ),
     nb_nodes_(nodes_.size()),
     nb_nodes_global_(0) {
+    Timer scope_timer(__FUNCTION__);
     constructor();
 }
 
@@ -130,13 +132,18 @@ void NodeColumns::constructor()
     }
   }
 
-  Field& part = mesh_.nodes().partition();
-  Field& ridx = mesh_.nodes().remote_index();
-  halo_exchange_->setup( array::make_view<int,1>(part).data(),
-                         array::make_view<int,1>(ridx).data(),
-                         REMOTE_IDX_BASE,nb_nodes_);
+  {
+    Timer t( "HaloExchange" );
+    Field& part = mesh_.nodes().partition();
+    Field& ridx = mesh_.nodes().remote_index();
+    halo_exchange_->setup( array::make_view<int,1>(part).data(),
+                           array::make_view<int,1>(ridx).data(),
+                           REMOTE_IDX_BASE,nb_nodes_);
+  }
 
   {
+    Timer t( "GatherScatter");
+
     // Create new gather_scatter
     gather_scatter_.reset( new parallel::GatherScatter() );
 
@@ -163,6 +170,8 @@ void NodeColumns::constructor()
   }
 
   {
+    Timer t( "Checksum" );
+
     // Create new checksum
     checksum_.reset( new parallel::Checksum() );
 

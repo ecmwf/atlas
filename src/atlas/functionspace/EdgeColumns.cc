@@ -27,6 +27,7 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/array/MakeView.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
@@ -171,6 +172,8 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo) :
 
 void EdgeColumns::constructor()
 {
+  Timer scope_timer("EdgeColumns()");
+
   nb_edges_ = mesh().edges().size();
 
   gather_scatter_.reset(new parallel::GatherScatter());
@@ -181,22 +184,31 @@ void EdgeColumns::constructor()
   const Field& remote_index = edges().remote_index();
   const Field& global_index = edges().global_index();
 
-  halo_exchange_->setup(
+  {
+    Timer t( "Setup halo_exchange" );
+    halo_exchange_->setup(
         array::make_view<int,1>(partition).data(),
         array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
         nb_edges_);
+  }
 
-  gather_scatter_->setup(
+  {
+    Timer t( "Setup gather_scatter" );
+    gather_scatter_->setup(
         array::make_view<int,1>(partition).data(),
         array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
         array::make_view<gidx_t,1>(global_index).data(),
         nb_edges_);
+  }
 
-  checksum_->setup(
+  {
+    Timer t( "Setup checksum" );
+    checksum_->setup(
         array::make_view<int,1>(partition).data(),
         array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
         array::make_view<gidx_t,1>(global_index).data(),
         nb_edges_);
+  }
 
   nb_edges_global_ =  gather_scatter_->glb_dof();
 }

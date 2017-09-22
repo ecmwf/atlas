@@ -34,6 +34,7 @@
 #include "atlas/array.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/mpi/Buffer.h"
 
@@ -93,6 +94,8 @@ typedef std::vector< std::vector<idx_t> > Node2Elem;
 
 void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
 {
+  Timer t(__FUNCTION__);
+
   const mesh::Nodes& nodes  = mesh.nodes();
 
   node2elem.resize(nodes.size());
@@ -118,6 +121,8 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
 
 void accumulate_partition_bdry_nodes_old( Mesh& mesh, std::vector<int>& bdry_nodes )
 {
+  Timer t(__FUNCTION__);
+
   std::set<int> bdry_nodes_set;
 
   std::vector< idx_t > facet_nodes;
@@ -154,6 +159,7 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, size_t halo, std::vector<int>&
   /* deprecated */
   accumulate_partition_bdry_nodes_old(mesh,bdry_nodes);
 #else
+  Timer t(__FUNCTION__);
   const Mesh::Polygon& polygon = mesh.polygon(halo);
   bdry_nodes = std::vector<int>( polygon.begin(), polygon.end() );
 #endif
@@ -214,6 +220,7 @@ private:
 typedef std::map<uid_t,int> Uid2Node;
 void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
 {
+  Timer t(__FUNCTION__);
   Notification notes;
   mesh::Nodes& nodes         = mesh.nodes();
   array::ArrayView<double,2> xy  = array::make_view<double,2> ( nodes.xy() );
@@ -249,6 +256,7 @@ void accumulate_elements( const Mesh& mesh,
                           std::vector<int>& found_elements,
                           std::set< uid_t >& new_nodes_uid )
 {
+  Timer t(__FUNCTION__);
   const mesh::HybridElements::Connectivity &elem_nodes = mesh.cells().node_connectivity();
   const array::ArrayView<int,1> elem_part = array::make_view<int,1>( mesh.cells().partition() );
 
@@ -377,6 +385,7 @@ public:
 
   static void all_to_all(Buffers& send, Buffers& recv)
   {
+      Timer t("all_to_all");
       const eckit::mpi::Comm& comm = parallel::mpi::comm();
 
       comm.allToAll(send.node_glb_idx,  recv.node_glb_idx);
@@ -513,6 +522,8 @@ public:
   template< typename NodeContainer, typename ElementContainer >
   void fill_sendbuffer(Buffers& buf,const NodeContainer& nodes_uid, const ElementContainer& elems, const PeriodicTransform& transform, int newflags, const int p)
   {
+    Timer t(__FUNCTION__);
+
     int nb_nodes = nodes_uid.size();
     buf.node_glb_idx[p].resize(nb_nodes);
     buf.node_part   [p].resize(nb_nodes);
@@ -586,6 +597,8 @@ public:
 
   void add_nodes(Buffers& buf)
   {
+    Timer t(__FUNCTION__);
+
     mesh::Nodes& nodes = mesh.nodes();
     int nb_nodes = nodes.size();
 
@@ -670,6 +683,8 @@ public:
 
   void add_elements(Buffers& buf)
   {
+    Timer t(__FUNCTION__);
+
     // Elements might be duplicated from different Tasks. We need to identify unique entries
     std::set<uid_t> elem_uid;
     int nb_elems = mesh.cells().size();
@@ -761,8 +776,11 @@ namespace {
 void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>& send, atlas::parallel::mpi::Buffer<uid_t,1>& recv, const bool& periodic = false ) {
 #ifndef ATLAS_103
   /* deprecated */
+  Timer t("gather_bdry_nodes old way");
+
   parallel::mpi::comm().allGatherv(send.begin(), send.end(), recv);
 #else
+  Timer t(__FUNCTION__);
   Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
   if( periodic ) {
     // add own rank to neighbours to allow periodicity with self (pole caps)
@@ -994,6 +1012,8 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
 void build_halo(Mesh& mesh, int nb_elems )
 {
+  Timer scope_timer(__FUNCTION__);
+
   int halo = 0;
   mesh.metadata().get("halo",halo);
   if( halo == nb_elems )

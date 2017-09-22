@@ -10,6 +10,6 @@ ecbuild_add_executable(
     TARGET  atlas-benchmark-build-halo
     SOURCES atlas-benchmark-build-halo.cc
     LIBS    atlas
-    NOINSTALL
+#    NOINSTALL
 )
 

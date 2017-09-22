@@ -15,6 +15,7 @@
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/parallel/GatherScatter.h"
 
 namespace atlas {
@@ -115,7 +116,9 @@ void GatherScatter::setup( const int part[],
     }
   }
 
-  parallel::mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
+  {
+    Timer t( Here() ); parallel::mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
+  }
 
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
 
@@ -126,8 +129,11 @@ void GatherScatter::setup( const int part[],
   }
   std::vector<gidx_t> recvnodes(glbcnt_);
 
-  parallel::mpi::comm().allGatherv(sendnodes.begin(), sendnodes.begin() + loccnt_,
-                                recvnodes.data(), glbcounts_.data(), glbdispls_.data());
+  {
+    Timer t( Here() );
+    parallel::mpi::comm().allGatherv(sendnodes.begin(), sendnodes.begin() + loccnt_,
+                                     recvnodes.data(), glbcounts_.data(), glbdispls_.data());
+  }
 
   // Load recvnodes in sorting structure
   size_t nb_recv_nodes = glbcnt_/nvar;
@@ -142,9 +148,11 @@ void GatherScatter::setup( const int part[],
   recvnodes.clear();
 
   // Sort on "g" member, and remove duplicates
+  {
+  Timer t("sorting");
   std::sort(node_sort.begin(), node_sort.end());
   node_sort.erase( std::unique( node_sort.begin(), node_sort.end() ), node_sort.end() );
-
+  }
   glbcounts_.assign(nproc,0);
   glbdispls_.assign(nproc,0);
   for( size_t n=0; n<node_sort.size(); ++n )

@@ -29,6 +29,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/parallel/Checksum.h"
 
 using atlas::functionspace::NodeColumns;
@@ -42,6 +43,8 @@ namespace {
 
 void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2] )
 {
+  Timer scope_timer(__FUNCTION__);
+
   array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
   const int nb_nodes = nodes.size();
   min[XX] =  std::numeric_limits<double>::max();
@@ -96,13 +99,12 @@ void add_median_dual_volume_contribution_poles(
     const mesh::HybridElements& edges,
     const mesh::Nodes& nodes,
     array::Array& array_dual_volumes );
-void build_dual_normals_old( Mesh& mesh );
 void build_dual_normals( Mesh& mesh );
-void build_skewness(Mesh& mesh );
 void make_dual_normals_outward( Mesh& mesh );
 
 void build_median_dual_mesh( Mesh& mesh )
 {
+  Timer scope_timer(__FUNCTION__);
 
   mesh::Nodes& nodes   = mesh.nodes();
   mesh::HybridElements& edges = mesh.edges();
@@ -131,10 +133,16 @@ void build_median_dual_mesh( Mesh& mesh )
   array::make_view<double,1>(alpha).assign(0.5);
 
   functionspace::NodeColumns nodes_fs(mesh, Halo(mesh));
-  nodes_fs.haloExchange(nodes.field( "dual_volumes" ));
+  {
+    Timer t("halo-exchange dual_volumes");
+    nodes_fs.haloExchange(nodes.field( "dual_volumes" ));
+  }
 
   functionspace::EdgeColumns edges_fs(mesh, Halo(mesh));
-  edges_fs.haloExchange(edges.field( "dual_normals" ));
+  {
+    Timer t("halo-exchange dual_normals");
+    edges_fs.haloExchange(edges.field( "dual_normals" ));
+  }
 
   make_dual_normals_outward(mesh);
 }
@@ -171,6 +179,8 @@ void add_median_dual_volume_contribution_cells(
     const mesh::Nodes& nodes,
     array::Array& array_dual_volumes )
 {
+  Timer scope_timer(__FUNCTION__);
+
   array::ArrayView<double,1> dual_volumes = array::make_view<double,1> ( array_dual_volumes );
 
   const array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
@@ -217,6 +227,8 @@ void add_median_dual_volume_contribution_poles(
     const mesh::Nodes& nodes,
     array::Array& array_dual_volumes )
 {
+  Timer scope_timer(__FUNCTION__);
+
   array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( array_dual_volumes );
   const array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
   const array::ArrayView<double,2> edge_centroids = array::make_view<double,2>( edges.field("centroids_xy") );
@@ -272,6 +284,8 @@ void add_median_dual_volume_contribution_poles(
 
 void build_dual_normals( Mesh& mesh )
 {
+  Timer scope_timer(__FUNCTION__);
+
   array::ArrayView<double,2> elem_centroids = array::make_view<double,2>( mesh.cells().field("centroids_xy") );
 
   mesh::Nodes&  nodes = mesh.nodes();
@@ -373,6 +387,7 @@ void build_dual_normals( Mesh& mesh )
 
 void make_dual_normals_outward( Mesh& mesh )
 {
+  Timer scope_timer(__FUNCTION__);
   mesh::Nodes&  nodes = mesh.nodes();
   array::ArrayView<double,2> node_xy = array::make_view<double,2>( nodes.xy() );
 
@@ -450,343 +465,6 @@ void build_centroid_dual_mesh( Mesh& mesh )
   NOTIMP;
   // This requires code below which has not been ported yet
 }
-
-#if TO_BE_PORTED_TO_ATLAS_V_0_6
-
-void build_dual_normals( Mesh& mesh )
-{
-
-  std::vector< array::ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
-  for (size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
-  {
-    deprecated::FunctionSpace& func_space = mesh.function_space(func_space_idx);
-    if( func_space.has_field("centroids") )
-      elem_centroids[func_space_idx] = array::ArrayView<double,2>( func_space.field("centroids") );
-  }
-
-  mesh::Nodes&  nodes = mesh.nodes();
-  array::ArrayView<double,2> node_xy( nodes.xy() );
-  double min[2], max[2];
-  global_bounding_box( nodes, min, max );
-  double tol = 1.e-6;
-
-  double xl, yl, xr, yr;
-  deprecated::FunctionSpace&  edges = mesh.function_space("edges");
-  array::IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
-  array::IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
-  array::ArrayView<double,2> edge_centroids( edges.field("centroids") );
-  array::ArrayView<double,2> dual_normals  ( edges.create_field<double>("dual_normals",2) );
-  int nb_edges = edges.shape(0);
-
-  std::map<int,std::vector<int> > node_to_bdry_edge;
-  for(int edge=0; edge<nb_edges; ++edge)
-  {
-    if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,3) < 0)
-    {
-      node_to_bdry_edge[ edge_nodes(edge,0) ].push_back(edge);
-      node_to_bdry_edge[ edge_nodes(edge,1) ].push_back(edge);
-    }
-  }
-
-  for (int edge=0; edge<nb_edges; ++edge)
-  {
-    if( edge_to_elem(edge,0) < 0 )
-    {
-      // this is a pole edge
-      // only compute for one node
-      for (int n=0; n<2; ++n)
-      {
-        int node = edge_nodes(edge,n);
-        std::vector<int>& bdry_edges = node_to_bdry_edge[node];
-        double x[2];
-        int cnt=0;
-        for (size_t jedge = 0; jedge < bdry_edges.size(); ++jedge)
-        {
-          int bdry_edge = bdry_edges[jedge];
-          if ( std::abs(edge_centroids(bdry_edge,YY)-max[YY])<tol )
-          {
-            edge_centroids(edge,YY) = 90.;
-            x[cnt] = edge_centroids(bdry_edge,XX);
-            ++cnt;
-          }
-          else if ( std::abs(edge_centroids(bdry_edge,YY)-min[YY])<tol )
-          {
-            edge_centroids(edge,YY) = -90.;
-            x[cnt] = edge_centroids(bdry_edge,XX);
-            ++cnt;
-          }
-        }
-        if (cnt == 2 )
-        {
-          dual_normals(edge,XX) = 0;
-          if (node_xy(node,YY) < 0.)
-            dual_normals(edge,YY) = -std::abs(x[1]-x[0]);
-          else if (node_xy(node,YY) > 0.)
-            dual_normals(edge,YY) = std::abs(x[1]-x[0]);
-
-          //std::cout << "pole dual_normal = " << dual_normals(YY,edge) << std::endl;
-          break;
-        }
-      }
-    }
-    else
-    {
-      int left_func_space_idx  = edge_to_elem(edge,0);
-      int left_elem            = edge_to_elem(edge,1);
-      int right_func_space_idx = edge_to_elem(edge,2);
-      int right_elem           = edge_to_elem(edge,3);
-      xl = elem_centroids[left_func_space_idx](left_elem,XX);
-      yl = elem_centroids[left_func_space_idx](left_elem,YY);
-      if( right_elem < 0 )
-      {
-        xr = edge_centroids(edge,XX);
-        yr = edge_centroids(edge,YY);;
-        if ( std::abs(yr-max[YY])<tol )
-          yr = 90.;
-        else if( std::abs(yr-min[YY])<tol )
-          yr = -90.;
-      }
-      else
-      {
-        xr = elem_centroids[right_func_space_idx](right_elem,XX);
-        yr = elem_centroids[right_func_space_idx](right_elem,YY);
-      }
-
-      dual_normals(edge,XX) =  yl-yr;
-      dual_normals(edge,YY) = -xl+xr;
-    }
-  }
-}
-
-void add_centroid_dual_volume_contribution(
-    Mesh& mesh,
-    array::ArrayView<double,1>& dual_volumes )
-{
-  mesh::Nodes& nodes = mesh.nodes();
-  deprecated::FunctionSpace& edges = mesh.function_space("edges");
-  array::ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
-  array::ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
-  array::IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
-  array::ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
-  array::IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
-  array::ArrayView<double,2> node_xy   ( nodes.xy() );
-  std::vector< array::ArrayView<double,2> > elem_centroids(mesh.nb_function_spaces());
-  for(size_t f = 0; f < mesh.nb_function_spaces(); ++f)
-  {
-    deprecated::FunctionSpace& elements = mesh.function_space(f);
-    if( elements.metadata().get<long>("type") == Entity::ELEMS )
-    {
-      elem_centroids[f] = array::ArrayView<double,2>( elements.field("centroids") );
-    }
-  }
-  double tol = 1.e-6;
-  double min[2], max[2];
-  global_bounding_box( nodes, min, max );
-
-  int nb_edges = edges.shape(0);
-
-  // special ordering for bit-identical results
-  std::vector<Node> ordering(nb_edges);
-  for (int edge=0; edge<nb_edges; ++edge)
-  {
-    ordering[edge] = Node( util::unique_lonlat(edge_centroids[edge]), edge );
-  }
-  std::sort( ordering.data(), ordering.data()+nb_edges );
-
-
-  for(int jedge=0; jedge<nb_edges; ++jedge)
-  {
-    int edge = ordering[jedge].i;
-    if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,2) >= 0 )
-    {
-      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),XX);
-      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),YY);
-      double x1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),XX);
-      double y1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),YY);
-      for( int jnode=0; jnode<2; ++jnode )
-      {
-        int node = edge_nodes(edge,jnode);
-        double x2 = node_xy( node, XX );
-        double y2 = node_xy( node, YY );
-        double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
-        dual_volumes(node) += triag_area;
-      }
-    }
-    else if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,2) < 0  )
-    {
-      // This is a boundary edge
-      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),XX);
-      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),YY);
-      double x1 = x0;
-      double y1 = 0;
-      double y_edge = edge_centroids(edge,YY);
-      if ( std::abs(y_edge-max[YY])<tol )
-        y1 = 90.;
-      else if ( std::abs(y_edge-min[YY])<tol )
-        y1 = -90.;
-
-      if( y1 != 0. )
-      {
-        for( int jnode=0; jnode<2; ++jnode )
-        {
-          int node = edge_nodes(edge,jnode);
-          double x2 = node_xy( node, XX );
-          double y2 = node_xy( node, YY );
-          double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
-          dual_volumes(node) += triag_area;
-          double x3 = x2;
-          double y3 = y1;
-          triag_area = std::abs( x3*(y1-y2)+x1*(y2-y3)+x2*(y3-y1) )*0.5;
-          dual_volumes(node) += triag_area;
-        }
-      }
-    }
-  }
-}
-
-void build_centroid_dual_mesh( Mesh& mesh )
-{
-  mesh::Nodes& nodes   = mesh.nodes();
-  array::ArrayView<double,2> xy        ( nodes.xy() );
-  array::ArrayView<double,1> dual_volumes  ( nodes.add( field::Field::create<double>( "dual_volumes", array::make_shape(nodes.size(),1) ) ) );
-
-  deprecated::FunctionSpace& quads       = mesh.function_space( "quads" );
-  deprecated::FunctionSpace& triags      = mesh.function_space( "triags" );
-  deprecated::FunctionSpace& edges       = mesh.function_space( "edges" );
-
-  build_centroids(quads,  xy);
-  build_centroids(triags, xy);
-  build_centroids(edges,  xy);
-
-  add_centroid_dual_volume_contribution( mesh, dual_volumes );
-
-  build_dual_normals_old( mesh );
-
-  build_skewness( mesh );
-
-  functionspace::NodeColumns nodes_fs(mesh,Halo(mesh));
-  nodes_fs.haloExchange(nodes.field("dual_volumes"));
-
-  array::ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
-  edges.parallelise();
-  edges.halo_exchange().execute(dual_normals);
-}
-
-
-
-void build_centroids( deprecated::FunctionSpace& func_space, array::ArrayView<double,2>& xy)
-{
-  if( !func_space.has_field("centroids") )
-  {
-    int nb_elems = func_space.shape(0);
-    array::IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
-    int nb_nodes_per_elem = elem_nodes.shape(1);
-    array::ArrayView<double,2> elem_centroids( func_space.create_field<double>( "centroids", 2 ) );
-    for (size_t e=0; e<nb_elems; ++e)
-    {
-      elem_centroids(e,XX) = 0.;
-      elem_centroids(e,YY) = 0.;
-      for (int n=0; n<nb_nodes_per_elem; ++n)
-      {
-        elem_centroids(e,XX) += xy( elem_nodes(e,n), XX );
-        elem_centroids(e,YY) += xy( elem_nodes(e,n), YY );
-      }
-      elem_centroids(e,XX) /= static_cast<double>(nb_nodes_per_elem);
-      elem_centroids(e,YY) /= static_cast<double>(nb_nodes_per_elem);
-    }
-  }
-}
-
-void build_skewness( Mesh& mesh )
-{
-  std::vector< array::ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
-  for (size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
-  {
-    deprecated::FunctionSpace& func_space = mesh.function_space(func_space_idx);
-    if( func_space.has_field("centroids") )
-      elem_centroids[func_space_idx] = array::ArrayView<double,2>( func_space.field("centroids") );
-  }
-
-  mesh::Nodes&  nodes = mesh.nodes();
-  array::ArrayView<double,2> node_xy( nodes.xy() );
-  double min[2], max[2];
-  global_bounding_box( nodes, min, max );
-  double tol = 1.e-6;
-
-  double x1, y1, x2, y2, xc1, yc1, xc2, yc2, xi, yi;
-  deprecated::FunctionSpace&  edges = mesh.function_space("edges");
-  array::IndexView<int   ,2> edge_to_elem  ( edges.field("to_elem"  ) );
-  array::IndexView<int   ,2> edge_nodes    ( edges.field("nodes"    ) );
-  array::ArrayView<double,2> edge_centroids( edges.field("centroids") );
-  array::ArrayView<double,1> skewness      ( edges.create_field<double>("skewness",1) );
-  array::ArrayView<double,1> alpha         ( edges.create_field<double>("alpha",1) );
-  int nb_edges = edges.shape(0);
-
-  // special ordering for bit-identical results
-  std::vector<Node> ordering(nb_edges);
-  for (int edge=0; edge<nb_edges; ++edge)
-  {
-    ordering[edge] = Node( util::unique_lonlat(edge_centroids[edge]), edge );
-  }
-  std::sort( ordering.data(), ordering.data()+nb_edges );
-
-
-  for(int jedge=0; jedge<nb_edges; ++jedge)
-  {
-    int edge = ordering[jedge].i;
-    if( edge_to_elem(edge,0) < 0 )
-    {
-      // this is a pole edge
-      // only compute for one node
-      skewness(edge) = 0.;
-    }
-    else
-    {
-      int left_func_space_idx  = edge_to_elem(edge,0);
-      int left_elem            = edge_to_elem(edge,1);
-      int right_func_space_idx = edge_to_elem(edge,2);
-      int right_elem           = edge_to_elem(edge,3);
-      xc1 = elem_centroids[left_func_space_idx](left_elem,XX);
-      yc1 = elem_centroids[left_func_space_idx](left_elem,YY);
-      if( right_elem < 0 )
-      {
-        xc2 = edge_centroids(edge,XX);
-        yc2 = edge_centroids(edge,YY);
-        if ( std::abs(yc2-max[YY])<tol )
-          yc2 = 90.;
-        else if( std::abs(yc2-min[YY])<tol )
-          yc2 = -90.;
-      }
-      else
-      {
-        xc2 = elem_centroids[right_func_space_idx](right_elem,XX);
-        yc2 = elem_centroids[right_func_space_idx](right_elem,YY);
-      }
-
-      x1 = node_xy(edge_nodes(edge,0),XX);
-      y1 = node_xy(edge_nodes(edge,0),YY);
-      x2 = node_xy(edge_nodes(edge,1),XX);
-      y2 = node_xy(edge_nodes(edge,1),YY);
-
-      xi = ( x1*(xc2*(-y2 + yc1) + xc1*(y2 - yc2))
-             + x2*(xc2*(y1 - yc1) + xc1*(-y1 + yc2)) ) /
-           (-((xc1 - xc2)*(y1 - y2)) + (x1 - x2)*(yc1 - yc2));
-      yi = ( xc2*(y1 - y2)*yc1 + x1*y2*yc1
-             - xc1*y1*yc2 - x1*y2*yc2 + xc1*y2*yc2
-             + x2*y1*(-yc1 + yc2))/
-             (-((xc1 - xc2)*(y1 - y2)) + (x1 - x2)*(yc1 - yc2));
-      double r1 = 0;
-      double r2 = sqrt( sqr(x2-x1) + sqr(y2-y1) );
-      double rs = sqrt( sqr(xi-x1) + sqr(yi-y1) );
-      skewness(edge) = (r1-2.*rs+r2)/(r2-r1);
-      alpha(edge) = 0.5*(skewness(edge)+1.);
-    }
-  }
-}
-#endif
-
-
-
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
