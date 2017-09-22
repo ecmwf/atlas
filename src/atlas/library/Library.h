@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <iosfwd>
+#include <string>
 #include "eckit/system/Library.h"
 
 namespace eckit {
@@ -43,9 +45,23 @@ public:
     };
     Info info() const { return Info(); }
 
+    class Timer {
+    public:
+        bool barriers() const;
+        std::ostream& channel() const;
+    private:
+        friend class Library;
+        bool barriers_{false};
+        std::ostream* channel_;
+    };
+
+    const Timer& timer() const { return timer_; }
+
 protected:
 
     virtual const void* addr() const override;
+
+    Timer timer_;
 
 };
 

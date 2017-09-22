@@ -22,8 +22,10 @@
 #endif
 
 #include "eckit/runtime/Main.h"
+#include "eckit/log/Log.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
+#include "eckit/utils/Translator.h"
 
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
@@ -37,6 +39,25 @@ using eckit::Main;
 using eckit::LocalPathName;
 
 namespace atlas {
+
+
+//----------------------------------------------------------------------------------------------------------------------
+
+namespace {
+  std::string str(bool v) {
+    return v ? "ON" : "OFF";
+  }
+
+  std::string str(const eckit::system::Library& lib) {
+    std::string gitsha1 = lib.gitsha1();
+    std::stringstream ss;
+    ss << lib.name() << " version (" << lib.version() << "),";
+    if( lib.gitsha1() != "not available" ) {
+      ss << "  git-sha1 " << lib.gitsha1(7);
+    }
+    return ss.str();
+  }
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -75,8 +96,13 @@ void Library::initialise(int argc, char **argv) {
 }
 
 void Library::initialise(const eckit::Parametrisation& config) {
-    std::ostream& out = Log::debug<Atlas>();
 
+    // Timer configuration
+    config.get("timer.barriers",timer_.barriers_);
+    timer_.channel_ = &Log::debug<Atlas>();
+
+    // Summary
+    std::ostream& out = Log::debug<Atlas>();
     out << "Executable        [" << Main::instance().name() << "]\n";
     out << " \n";
     out << "  current dir     [" << PathName(LocalPathName::cwd()).fullName() << "]\n";
@@ -86,12 +112,24 @@ void Library::initialise(const eckit::Parametrisation& config) {
     out << "    size          [" << parallel::mpi::comm().size() << "] \n";
     out << "    rank          [" << parallel::mpi::comm().rank() << "] \n";
     out << " \n";
+    out << "  TIMERS\n";
+    out << "    barrier       [" << str(timer().barriers()) << "] \n";
+    out << " \n";
     out << atlas::Library::instance().info();
     out << std::flush;
 }
 
 void Library::initialise() {
-    initialise( util::NoConfig() );
+    util::Config timer_config;
+
+    if (::getenv("ATLAS_TIMER_BARRIERS")) {
+      bool var = eckit::Translator<std::string, bool>()(::getenv("ATLAS_TIMER_BARRIERS"));
+      timer_config.set("barriers",var);
+    }
+
+    util::Config config;
+    config.set("timer",timer_config);
+    initialise( config );
 }
 
 void Library::finalise() {
@@ -111,22 +149,12 @@ void Library::finalise() {
     Log::flush();
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+bool Library::Timer::barriers() const {
+    return barriers_;
+}
 
-namespace {
-  std::string str(bool v) {
-    return v ? "ON" : "OFF";
-  }
-
-  std::string str(const eckit::system::Library& lib) {
-    std::string gitsha1 = lib.gitsha1();
-    std::stringstream ss;
-    ss << lib.name() << " version (" << lib.version() << "),";
-    if( lib.gitsha1() != "not available" ) {
-      ss << "  git-sha1 " << lib.gitsha1(7);
-    }
-    return ss.str();
-  }
+std::ostream& Library::Timer::channel() const {
+    return *channel_;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
