@@ -26,9 +26,6 @@ namespace util {
 
 struct Sphere
 {
-    // Azimuth at source point directed to target point, in respect to reference point, in radians
-    static double azimuth(const PointLonLat& source, const PointLonLat& target, const PointLonLat& reference);
-
     // Great-circle central angle between two points, in radians
     static double centralAngle(const PointLonLat&, const PointLonLat&);
     static double centralAngle(const PointXYZ&, const PointXYZ&, const double& radius);
@@ -60,9 +57,6 @@ struct Earth
 
     static constexpr double areaInSqMeters() { return 4. * M_PI * radiusInMeters() * radiusInMeters(); }
     static constexpr double areaInSqKm()     { return 4. * M_PI * radiusInKm()     * radiusInKm(); }
-
-    // Azimuth at source point directed to target point, in respect to reference point, in radians
-    static double azimuth(const PointLonLat& source, const PointLonLat& target, const PointLonLat& reference);
 
     // Great-circle central angle between two points, in radians
     static double centralAngle(const PointLonLat&, const PointLonLat&);

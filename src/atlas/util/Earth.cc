@@ -39,21 +39,6 @@ static inline double between_m180_and_p180(double a) {
 //------------------------------------------------------------------------------------------------------
 
 
-double Sphere::azimuth(const PointLonLat& u, const PointLonLat& v, const PointLonLat& w) {
-    using namespace std;
-
-    // Solve spherical triangle using law of cosines (cosine rule for sides), see:
-    //   https://en.wikipedia.org/wiki/Spherical_law_of_cosines
-    const double
-            a = distanceInMeters(u, v, 1.),
-            b = distanceInMeters(u, w, 1.),
-            c = distanceInMeters(v, w, 1.),
-            cos_C = - (cos(a) * cos(b) - cos(c)) /  (sin(a) * sin(b));
-
-    return acos( min(1., max( -1., cos_C )));
-}
-
-
 double Sphere::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
     using namespace std;
 
@@ -198,11 +183,6 @@ PointLonLat Sphere::convertCartesianToSpherical(const PointXYZ& p, const double&
 
 
 //------------------------------------------------------------------------------------------------------
-
-
-double Earth::azimuth(const PointLonLat& source, const PointLonLat& target, const PointLonLat& reference) {
-    return Sphere::azimuth(source, target, reference);
-}
 
 
 double Earth::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
