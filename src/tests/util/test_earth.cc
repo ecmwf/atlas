@@ -177,23 +177,6 @@ CASE( "test_earth_lon_315" )
   EXPECT(PointXYZ::equal(p2[0], p2[1]));
 }
 
-CASE( "test_earth_azimuth" )
-{
-    const PointLonLat
-            u( 0.,  0.),
-            v(90.,  0.),
-            w( 0., 90.);
-
-    const double
-            a = Earth::azimuth(w, u, v),
-            b = Earth::azimuth(v, w, u),
-            c = Earth::azimuth(u, v, w);
-
-    EXPECT( eckit::types::is_approximately_equal( a, M_PI_2 ) );
-    EXPECT( eckit::types::is_approximately_equal( b, M_PI_2 ) );
-    EXPECT( eckit::types::is_approximately_equal( c, M_PI_2 ) );
-}
-
 CASE( "test_earth_great_circle_latitude_given_longitude" )
 {
     // latitude at Valparaíso-Shanghai mid-point
