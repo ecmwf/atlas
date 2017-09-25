@@ -103,8 +103,10 @@ Spectral::Spectral( trans::Trans& trans, const eckit::Configuration& config ) :
 
 Spectral::~Spectral()
 {
+#ifdef ATLAS_HAVE_TRANS
   if( delete_trans_ )
     delete trans_;
+#endif
 }
 
 size_t Spectral::footprint() const {
