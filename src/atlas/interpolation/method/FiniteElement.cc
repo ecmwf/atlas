@@ -18,9 +18,7 @@
 #include "eckit/geometry/Point3.h"
 
 #include "atlas/interpolation/element/Quad3D.h"
-#include "atlas/interpolation/element/Quad2D.h"
 #include "atlas/interpolation/element/Triag3D.h"
-#include "atlas/interpolation/element/Triag2D.h"
 #include "atlas/interpolation/method/Ray.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
