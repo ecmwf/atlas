@@ -60,7 +60,7 @@
 #include "atlas/parallel/omp/omp.h"
 
 #define ATLAS_TIME(msg) \
-  for( atlas::Timer itimer##__LINE__(msg); not itimer##__LINE__.finished(); itimer##__LINE__.finish() )
+  for( atlas::Timer itimer##__LINE__(msg); itimer##__LINE__.running(); itimer##__LINE__.stop() )
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -121,7 +121,7 @@ struct TimerStats
   string str()
   {
     stringstream stream;
-    stream << name << ": min, max, avg -- " << min << ", " << max << ", " << avg;
+    stream << name << ": min, max, avg -- " << fixed << setprecision(5) << min << ", " << fixed << setprecision(5) << max << ", " << fixed << setprecision(5) << avg;
     return stream.str();
   }
   string name;
@@ -283,6 +283,8 @@ void AtlasBenchmark::execute(const Args& args)
 
 void AtlasBenchmark::setup()
 {
+  Timer::Log set_channel( Log::debug<Atlas>() );
+
   size_t halo = 1;
 
   StructuredGrid grid;
@@ -456,9 +458,9 @@ void AtlasBenchmark::iteration()
   // halo-exchange
   Timer halo("halo-exchange");
   nodes_fs.halo_exchange().execute(grad);
-  halo.finish();
+  halo.stop();
 
-  t.finish();
+  t.stop();
 
   if( iter >= exclude )
   {

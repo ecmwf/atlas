@@ -33,6 +33,7 @@
 #include "atlas/library/Library.h"
 #include "atlas/library/version.h"
 #include "atlas/library/git_sha1.h"
+#include "atlas/runtime/Timer.h"
 
 using eckit::PathName;
 using eckit::Main;
@@ -62,6 +63,7 @@ namespace {
 //----------------------------------------------------------------------------------------------------------------------
 
 static Library libatlas;
+
 
 Library::Library() : eckit::system::Library( std::string("atlas") ) {}
 
