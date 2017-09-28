@@ -21,12 +21,27 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
+class BuildHalo {
+public:
+  BuildHalo( Mesh& mesh ) : mesh_(mesh) {}
+  void operator()(int nb_elems);
+public:
+  std::vector<gidx_t> periodic_local_index_;
+
+private:
+  Mesh& mesh_;
+};
+
+
 /// @brief Enlarge each partition of the mesh with a halo of elements
 /// @param [inout] mesh      The mesh to enlarge
 /// @param [in]    nb_elems  Size of the halo
 /// @author Willem Deconinck
 /// @date June 2014
-void build_halo( Mesh& mesh, int nb_elems );
+inline void build_halo( Mesh& mesh, int nb_elems ) {
+  BuildHalo f(mesh);
+  f( nb_elems );
+}
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

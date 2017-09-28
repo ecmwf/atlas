@@ -38,13 +38,14 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/mpi/Buffer.h"
 
+//#define DEBUG_OUTPUT
 #ifdef DEBUG_OUTPUT
 #include "atlas/output/Gmsh.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #endif
 
-#define ATLAS_103
+// #define ATLAS_103
 // #define ATLAS_103_SORT
 
 #ifndef ATLAS_103
@@ -74,20 +75,18 @@ void increase_halo_interior( BuildHaloHelper& );
 class EastWest: public PeriodicTransform
 {
 public:
-	EastWest()
-	{
-		x_translation_ = -360.;
-	}
+  EastWest() {
+    x_translation_ = -360.;
+  }
 };
 
 
 class WestEast: public PeriodicTransform
 {
 public:
-	WestEast()
-	{
-		x_translation_ = 360.;
-	}
+  WestEast() {
+    x_translation_ = 360.;
+  }
 };
 
 typedef std::vector< std::vector<idx_t> > Node2Elem;
@@ -99,8 +98,10 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
   const mesh::Nodes& nodes  = mesh.nodes();
 
   node2elem.resize(nodes.size());
-  for( size_t jnode=0; jnode<node2elem.size(); ++jnode )
+  for( size_t jnode=0; jnode<node2elem.size(); ++jnode ) {
     node2elem[jnode].clear();
+    node2elem[jnode].reserve(12);
+  }
 
   const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
   array::ArrayView<int,1> patched = array::make_view<int,1>( mesh.cells().field("patch") );
@@ -127,6 +128,10 @@ void accumulate_partition_bdry_nodes_old( Mesh& mesh, std::vector<int>& bdry_nod
 
   std::vector< idx_t > facet_nodes;
   std::vector< idx_t > connectivity_facet_to_elem;
+
+  facet_nodes.reserve(mesh.nodes().size()*4);
+  connectivity_facet_to_elem.reserve(facet_nodes.capacity()*2);
+
   size_t nb_facets(0);
   size_t nb_inner_facets(0);
   idx_t missing_value;
@@ -382,7 +387,6 @@ public:
     }
   };
 
-
   static void all_to_all(Buffers& send, Buffers& recv)
   {
 
@@ -401,8 +405,13 @@ public:
       comm.allToAll(send.elem_nodes_displs, recv.elem_nodes_displs);
   }
 
+  struct Status {
+    std::vector<gidx_t> new_periodic_ghost_points;
+  } status;
+
 public:
 
+  BuildHalo& builder_;
   Mesh& mesh;
   array::ArrayView<double,2> xy;
   array::ArrayView<double,2> lonlat;
@@ -423,7 +432,8 @@ public:
 
 
 public:
-  BuildHaloHelper( Mesh& _mesh ):
+  BuildHaloHelper( BuildHalo& builder, Mesh& _mesh ):
+    builder_( builder ),
     mesh(_mesh),
     xy           ( array::make_view<double,2> ( mesh.nodes().xy() ) ),
     lonlat       ( array::make_view<double,2> ( mesh.nodes().lonlat() ) ),
@@ -596,7 +606,7 @@ public:
   }
 
 
-  void add_nodes(Buffers& buf)
+  void add_nodes(Buffers& buf, bool periodic )
   {
     Timer t(__FUNCTION__);
 
@@ -604,11 +614,29 @@ public:
     int nb_nodes = nodes.size();
 
     // Nodes might be duplicated from different Tasks. We need to identify unique entries
-    std::set<uid_t> node_uid;
-    for( int jnode=0; jnode<nb_nodes; ++jnode )
+    std::vector<uid_t> node_uid(nb_nodes);
+    std::set<uid_t> new_node_uid;
     {
-      node_uid.insert( compute_uid(jnode) );
+      Timer scoped("compute node_uid");
+      for( int jnode=0; jnode<nb_nodes; ++jnode ) {
+        node_uid[jnode] = compute_uid(jnode);
+      }
+      std::sort(node_uid.begin(),node_uid.end());
     }
+    auto node_already_exists = [&node_uid,&new_node_uid]( uid_t uid ) -> bool
+    {
+      std::vector<uid_t>::iterator it = std::lower_bound( node_uid.begin(), node_uid.end(), uid );
+      bool not_found = ( it == node_uid.end() || uid < *it );
+      if( not_found ) {
+        bool inserted = new_node_uid.insert( uid ).second;
+        return not inserted;
+      } else {
+        return true;
+      }
+    };
+
+
+
     std::vector< std::vector<int> > rfn_idx(parallel::mpi::comm().size());
     for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
     {
@@ -621,8 +649,7 @@ public:
       for(size_t n = 0; n < buf.node_glb_idx[jpart].size(); ++n)
       {
         double crd[] = { buf.node_xy[jpart][n*2+XX], buf.node_xy[jpart][n*2+YY] };
-        bool inserted = node_uid.insert( util::unique_lonlat(crd) ).second;
-        if( inserted ) {
+        if( not node_already_exists( util::unique_lonlat(crd) ) ) {
           rfn_idx[jpart].push_back(n);
         }
       }
@@ -661,39 +688,57 @@ public:
         PointLonLat pll = mesh.projection().lonlat(pxy);
         lonlat (loc_idx,XX) = pll.lon();
         lonlat (loc_idx,YY) = pll.lat();
-        uid_t uid = compute_uid(loc_idx);
+
+        if( periodic )
+          status.new_periodic_ghost_points.push_back( loc_idx );
 
         // make sure new node was not already there
-        Uid2Node::iterator found = uid2node.find(uid);
-        if( found != uid2node.end() )
         {
-          int other = found->second;
-          std::stringstream msg;
-          msg << "New node with uid " << uid << ":\n"  << glb_idx(loc_idx)
-              << "("<<xy(loc_idx,XX)<<","<<xy(loc_idx,YY)<<")\n";
-          msg << "Existing already loc "<< other << "  :  " << glb_idx(other)
-              << "("<<xy(other,XX)<<","<<xy(other,YY)<<")\n";
-          throw eckit::SeriousBug(msg.str(),Here());
+          uid_t uid = compute_uid(loc_idx);
+          Uid2Node::iterator found = uid2node.find(uid);
+          if( found != uid2node.end() )
+          {
+            int other = found->second;
+            std::stringstream msg;
+            msg << "New node with uid " << uid << ":\n"  << glb_idx(loc_idx)
+                << "("<<xy(loc_idx,XX)<<","<<xy(loc_idx,YY)<<")\n";
+            msg << "Existing already loc "<< other << "  :  " << glb_idx(other)
+                << "("<<xy(other,XX)<<","<<xy(other,YY)<<")\n";
+            throw eckit::SeriousBug(msg.str(),Here());
+          }
+          uid2node[ uid ] = nb_nodes+new_node;
         }
-        uid2node[ uid ] = nb_nodes+new_node;
         ++new_node;
       }
     }
   }
-
 
   void add_elements(Buffers& buf)
   {
     Timer t(__FUNCTION__);
 
     // Elements might be duplicated from different Tasks. We need to identify unique entries
-    std::set<uid_t> elem_uid;
     int nb_elems = mesh.cells().size();
-
-    for( int jelem=0; jelem<nb_elems; ++jelem )
+//    std::set<uid_t> elem_uid;
+    std::vector<uid_t> elem_uid(nb_elems);
+    std::set<uid_t> new_elem_uid;
     {
-      elem_uid.insert( compute_uid(elem_nodes->row(jelem)) );
+      Timer scoped("compute elem_uid");
+      for( int jelem=0; jelem<nb_elems; ++jelem ) {
+        elem_uid[jelem] = compute_uid(elem_nodes->row(jelem));
+      }
+      std::sort( elem_uid.begin(), elem_uid.end() );
     }
+    auto element_already_exists = [&elem_uid,&new_elem_uid]( uid_t uid ) -> bool {
+      std::vector<uid_t>::iterator it = std::lower_bound( elem_uid.begin(), elem_uid.end(), uid );
+      bool not_found = ( it == elem_uid.end() || uid < *it );
+      if( not_found ) {
+        bool inserted = new_elem_uid.insert( uid ).second;
+        return not inserted;
+      } else {
+        return true;
+      }
+    };
 
     std::vector< std::vector<int> > received_new_elems(parallel::mpi::comm().size());
     for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
@@ -706,9 +751,7 @@ public:
     {
       for(size_t e = 0; e < buf.elem_glb_idx[jpart].size(); ++e)
       {
-        bool inserted = elem_uid.insert( buf.elem_glb_idx[jpart][e] ).second;
-        if( inserted )
-        {
+        if( element_already_exists( buf.elem_glb_idx[jpart][e]) == false ) {
           received_new_elems[jpart].push_back(e);
         }
       }
@@ -762,9 +805,9 @@ public:
     }
   }
 
-  void add_buffers(Buffers& buf)
+  void add_buffers(Buffers& buf, bool periodic = false )
   {
-    add_nodes(buf);
+    add_nodes(buf, periodic );
     add_elements(buf);
     update();
   }
@@ -774,7 +817,7 @@ public:
 
 
 namespace {
-void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>& send, atlas::parallel::mpi::Buffer<uid_t,1>& recv, const bool& periodic = false ) {
+void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>& send, atlas::parallel::mpi::Buffer<uid_t,1>& recv, bool periodic = false ) {
 #ifndef ATLAS_103
   /* deprecated */
   Timer t("gather_bdry_nodes old way");
@@ -945,8 +988,11 @@ private:
 void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& periodic_points, const PeriodicTransform& transform, int newflags)
 {
   helper.update();
-  build_lookup_node2elem(helper.mesh,helper.node_to_elem);
-  build_lookup_uid2node(helper.mesh,helper.uid2node);
+  //if (helper.node_to_elem.size() == 0 ) !!! NOT ALLOWED !!! (atlas_test_halo will fail)
+    build_lookup_node2elem(helper.mesh,helper.node_to_elem);
+
+  //if( helper.uid2node.size() == 0 ) !!! NOT ALLOWED !!! (atlas_test_halo will fail)
+    build_lookup_uid2node(helper.mesh,helper.uid2node);
 
   // All buffers needed to move elements and nodes
   BuildHaloHelper::Buffers sendmesh(helper.mesh);
@@ -1013,16 +1059,17 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 #ifdef DEBUG_OUTPUT
   Log::debug<Atlas>() << "recv: \n" << recvmesh << std::endl;
 #endif
-  helper.add_buffers(recvmesh);
+  helper.add_buffers(recvmesh, /* periodic = */ true );
 
 }
 
-void build_halo(Mesh& mesh, int nb_elems )
+void BuildHalo::operator () ( int nb_elems )
 {
   Timer scope_timer(__FUNCTION__);
 
   int halo = 0;
-  mesh.metadata().get("halo",halo);
+  mesh_.metadata().get("halo",halo);
+
   if( halo == nb_elems )
     return;
 
@@ -1032,31 +1079,45 @@ void build_halo(Mesh& mesh, int nb_elems )
   for(int jhalo=halo ; jhalo<nb_elems; ++jhalo )
   {
     Log::debug<Atlas>() << "Increase halo " << jhalo+1 << std::endl;
-    size_t nb_nodes_before_halo_increase = mesh.nodes().size();
+    size_t nb_nodes_before_halo_increase = mesh_.nodes().size();
 
-    BuildHaloHelper helper(mesh);
+    BuildHaloHelper helper(*this,mesh_);
 
-    increase_halo_interior( helper );
+    {
+      Timer scope_timer( "increase_halo_interior" );
+      increase_halo_interior( helper );
+    }
 
-    PeriodicPoints westpts(mesh,Topology::PERIODIC|Topology::WEST,nb_nodes_before_halo_increase);
+    PeriodicPoints westpts(mesh_,Topology::PERIODIC|Topology::WEST,nb_nodes_before_halo_increase);
 
 #ifdef DEBUG_OUTPUT
     Log::debug<Atlas>() << "  periodic west : " << westpts << std::endl;
 #endif
-    increase_halo_periodic( helper, westpts, WestEast(), Topology::PERIODIC|Topology::WEST|Topology::GHOST );
+    {
+      Timer scope_timer( "increase_halo_periodic West" );
+      increase_halo_periodic( helper, westpts, WestEast(), Topology::PERIODIC|Topology::WEST|Topology::GHOST );
+    }
 
-    PeriodicPoints eastpts(mesh,Topology::PERIODIC|Topology::EAST,nb_nodes_before_halo_increase);
+    PeriodicPoints eastpts(mesh_,Topology::PERIODIC|Topology::EAST,nb_nodes_before_halo_increase);
 
 #ifdef DEBUG_OUTPUT
     Log::debug<Atlas>() << "  periodic east : " << eastpts << std::endl;
 #endif
+    {
+      Timer scope_timer( "increase_halo_periodic East" );
+      increase_halo_periodic( helper, eastpts, EastWest(), Topology::PERIODIC|Topology::EAST|Topology::GHOST );
+    }
 
-    increase_halo_periodic( helper, eastpts, EastWest(), Topology::PERIODIC|Topology::EAST|Topology::GHOST );
+    mesh_.nodes().global_index().metadata().set("complete",false);
+
+    for( gidx_t p : helper.status.new_periodic_ghost_points ) {
+      periodic_local_index_.push_back( p );
+    }
 
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<jhalo+1<<"]";
-    mesh.metadata().set(ss.str(),mesh.nodes().size());
-    mesh.metadata().set("halo",jhalo+1);
+    mesh_.metadata().set(ss.str(),mesh_.nodes().size());
+    mesh_.metadata().set("halo",jhalo+1);
 
 #ifdef DEBUG_OUTPUT
     output::Gmsh gmsh2d("build-halo-mesh2d.msh",util::Config
@@ -1067,11 +1128,11 @@ void build_halo(Mesh& mesh, int nb_elems )
       ("ghost",true)
       ("coordinates","xyz")
     );
-    renumber_nodes_glb_idx (mesh.nodes());
-    BuildXYZField("xyz",true)(mesh.nodes());
-    mesh.metadata().set("halo",jhalo+1);
-    gmsh2d.write(mesh);
-    gmsh3d.write(mesh);
+    renumber_nodes_glb_idx (mesh_.nodes());
+    BuildXYZField("xyz",true)(mesh_.nodes());
+    mesh_.metadata().set("halo",jhalo+1);
+    gmsh2d.write(mesh_);
+    gmsh3d.write(mesh_);
 #endif
   }
 }

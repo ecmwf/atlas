@@ -914,6 +914,7 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
       }
     }
   }
+  int max_glb_idx = n;
 
 
   mesh.nodes().resize(nnodes);
@@ -1115,6 +1116,14 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     Topology::set(flags(inode),Topology::SOUTH);
     ++jnode;
   }
+
+  nodes.global_index().metadata().set("complete",true);
+  nodes.global_index().metadata().set("min",1);
+  nodes.global_index().metadata().set("max",max_glb_idx);
+
+
+  // Now handle elements
+  // -------------------
 
   mesh.cells().add( new mesh::temporary::Quadrilateral(), nquads  );
   mesh.cells().add( new mesh::temporary::Triangle(),      ntriags );
