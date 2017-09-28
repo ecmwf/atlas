@@ -12,7 +12,6 @@
 
 #include "MatchingMeshPartitioner.h"
 
-
 namespace atlas {
 namespace grid {
 namespace detail {
@@ -23,17 +22,17 @@ class MatchingMeshPartitionerBruteForce : public MatchingMeshPartitioner {
 
 public:
 
-    static std::string static_type() {return "brute_force";}
+    static std::string static_type() {return "brute-force";}
 
 public:
 
     MatchingMeshPartitionerBruteForce() : MatchingMeshPartitioner() {}
     MatchingMeshPartitionerBruteForce(const size_t nb_partitions) : MatchingMeshPartitioner(nb_partitions) {}
+    MatchingMeshPartitionerBruteForce(const Mesh& mesh) : MatchingMeshPartitioner(mesh) {}
 
-    MatchingMeshPartitionerBruteForce(const Mesh& mesh) :
-      MatchingMeshPartitioner(mesh) {}
-
-    virtual void partition( const Grid& grid, int part[] ) const;
+    virtual void partition(const Grid& grid, int partitioning[]) const;
+    
+    virtual std::string type() const { return static_type(); }
 
 };
 

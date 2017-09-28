@@ -86,6 +86,7 @@ END TYPE atlas_StructuredGrid
 interface atlas_StructuredGrid
   module procedure atlas_StructuredGrid__ctor_id
   module procedure atlas_StructuredGrid__ctor_config
+  module procedure atlas_StructuredGrid__ctor_cptr
 end interface
 
 !------------------------------------------------------------------------------
@@ -251,6 +252,15 @@ function atlas_StructuredGrid__ctor_config(config) result(grid)
   type(atlas_StructuredGrid) :: grid
   type(atlas_Config), intent(in) :: config
   call grid%reset_c_ptr( atlas__grid__Structured__config(config%c_ptr()) )
+end function
+
+function atlas_StructuredGrid__ctor_cptr(cptr) result(grid)
+  use fckit_c_interop_module, only: c_str
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  use atlas_grid_Structured_c_binding
+  type(atlas_StructuredGrid) :: grid
+  type(c_ptr), intent(in) :: cptr
+  call grid%reset_c_ptr( cptr )
 end function
 
 !-----------------------------------------------------------------------------

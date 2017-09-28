@@ -11,6 +11,7 @@
 #include "atlas/mesh/detail/MeshImpl.h"
 
 #include "eckit/exception/Exceptions.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
@@ -57,11 +58,15 @@ size_t MeshImpl::footprint() const {
   size_t size = sizeof(*this);
 
   size += metadata_.footprint();
-  if(nodes_)  size += nodes_ ->footprint();
-  if(cells_)  size += cells_ ->footprint();
-  if(facets_) size += facets_->footprint();
-  if(ridges_) size += ridges_->footprint();
-  if(peaks_)  size += peaks_ ->footprint();
+  if(nodes_)           size += nodes_           ->footprint();
+  if(cells_)           size += cells_           ->footprint();
+  if(facets_)          size += facets_          ->footprint();
+  if(ridges_)          size += ridges_          ->footprint();
+  if(peaks_)           size += peaks_           ->footprint();
+  if(partition_graph_) size += partition_graph_ ->footprint();
+  for( const auto& polygon : polygons_ ) {
+    if( polygon ) size += polygon->footprint();
+  }
 
   return size;
 }
@@ -95,6 +100,10 @@ size_t MeshImpl::nb_partitions() const {
   return parallel::mpi::comm().size();
 }
 
+size_t MeshImpl::partition() const {
+  return parallel::mpi::comm().rank();
+}
+
 void MeshImpl::cloneToDevice() const {
   if( nodes_  ) nodes_ ->cloneToDevice();
   if( cells_  ) cells_ ->cloneToDevice();
@@ -119,7 +128,37 @@ void MeshImpl::syncHostDevice() const {
   if( peaks_  ) peaks_ ->syncHostDevice();
 }
 
+const PartitionGraph& MeshImpl::partitionGraph() const {
+  if( not partition_graph_ ) {
+    partition_graph_.reset( build_partition_graph(*this) );
+  }
+  return *partition_graph_;
+}
+
+PartitionGraph::Neighbours MeshImpl::nearestNeighbourPartitions() const {
+  return partitionGraph().nearestNeighbours(partition());
+}
+
+const PartitionPolygon& MeshImpl::polygon(size_t halo) const {
+  if( halo >= polygons_.size() ) {
+    polygons_.resize(halo+1);
+  }
+  if( not polygons_[halo] ) {
+
+    int mesh_halo = 0;
+    metadata().get("halo",mesh_halo);
+    if( halo > mesh_halo ) {
+      throw eckit::Exception("Mesh does not contain a halo of size "+std::to_string(halo)+".", Here());
+    }
+
+    polygons_[halo].reset( new PartitionPolygon(*this, halo) );
+  }
+  return *polygons_[halo];
+}
+
+
 //----------------------------------------------------------------------------------------------------------------------
+
 
 } // namespace detail
 } // namespace mesh

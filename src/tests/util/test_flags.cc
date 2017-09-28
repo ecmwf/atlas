@@ -8,23 +8,23 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestFlags
-
 #include <iostream>
 
-#include "ecbuild/boost_test_framework.h"
-
 #include "atlas/util/Bitflags.h"
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
+
+using namespace eckit::testing;
+
 
 using atlas::util::Bitflags;
 
 namespace atlas {
 namespace test {
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( test_Flags )
+CASE( "test_Flags" )
 {
   int b1 = (1<<0);
   int b2 = (1<<1);
@@ -33,16 +33,24 @@ BOOST_AUTO_TEST_CASE( test_Flags )
 
 	int bits = b1 | b2;
 	std::cout << Bitflags::bitstr(bits) << std::endl;
-	BOOST_CHECK_EQUAL( bits , 3);
+	EXPECT( bits  == 3);
 
-	BOOST_CHECK_EQUAL( Bitflags::check(bits, b1 ) , true );
-	BOOST_CHECK_EQUAL( Bitflags::check(bits, b2 ) , true );
-	BOOST_CHECK_EQUAL( Bitflags::check(bits, b3 ) , false );
-	BOOST_CHECK_EQUAL( Bitflags::check_all(bits, b1|b2 ) , true );
-	BOOST_CHECK_EQUAL( Bitflags::check_all(bits, b1|b3 ) , false );
-	BOOST_CHECK_EQUAL( Bitflags::check_any(bits, b1|b3 ) , true );
-	BOOST_CHECK_EQUAL( Bitflags::check_any(bits, b3|b4 ) , false );
+	EXPECT( Bitflags::check(bits, b1 ));
+	EXPECT( Bitflags::check(bits, b2 ));
+	EXPECT(!Bitflags::check(bits, b3 ));
+	EXPECT( Bitflags::check_all(bits, b1|b2 ));
+	EXPECT(!Bitflags::check_all(bits, b1|b3 ));
+	EXPECT( Bitflags::check_any(bits, b1|b3 ));
+	EXPECT(!Bitflags::check_any(bits, b3|b4 ));
 }
 
-} // namespace test
-} // namespace atlas
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

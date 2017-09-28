@@ -38,17 +38,9 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_StructuredColumns
 !   August-2015 Willem Deconinck     *ECMWF*
 
 !------------------------------------------------------------------------------
-contains
+  integer(c_int), pointer, public :: index(:,:)
 
-  procedure, private :: create_field_name_kind
-  procedure, private :: create_field_name_kind_lev
-  procedure, private :: create_field_kind
-  procedure, private :: create_field_kind_lev
-  generic, public :: create_field => &
-    & create_field_name_kind, &
-    & create_field_name_kind_lev, &
-    & create_field_kind, &
-    & create_field_kind_lev
+contains
 
   procedure, public :: gather
   procedure, public :: scatter
@@ -57,10 +49,30 @@ contains
   procedure, private :: checksum_field
   generic, public :: checksum => checksum_fieldset, checksum_field
 
+  procedure, private :: halo_exchange_fieldset
+  procedure, private :: halo_exchange_field
+  generic, public :: halo_exchange => halo_exchange_fieldset, halo_exchange_field
+
+  procedure :: copy
+
+  procedure :: j_begin
+  procedure :: j_end
+  procedure :: i_begin
+  procedure :: i_end
+  procedure :: j_begin_halo
+  procedure :: j_end_halo
+  procedure :: i_begin_halo
+  procedure :: i_end_halo
+
+  procedure :: xy
+  procedure :: partition
+  procedure :: global_index
 
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_functionspace_StructuredColumns__final
 #endif
+
+  procedure, private :: set_index
 
 END TYPE atlas_functionspace_StructuredColumns
 
@@ -76,10 +88,11 @@ end interface
 contains
 !========================================================
 
-function StructuredColumns__cptr(cptr) result(functionspace)
-  type(atlas_functionspace_StructuredColumns) :: functionspace
+function StructuredColumns__cptr(cptr) result(this)
+  type(atlas_functionspace_StructuredColumns) :: this
   type(c_ptr), intent(in) :: cptr
-  call functionspace%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
+  call this%set_index()
 end function
 
 
@@ -90,109 +103,20 @@ subroutine StructuredColumns__final(this)
 end subroutine
 #endif
 
-function StructuredColumns__grid(grid) result(functionspace)
+function StructuredColumns__grid(grid, halo, levels) result(functionspace)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_functionspace_StructuredColumns) :: functionspace
   class(atlas_Grid), intent(in) :: grid
+  integer, optional :: halo
+  integer, optional :: levels
+  type(atlas_Config) :: config
+  config = atlas_Config()
+  if( present(halo) )   call config%set("halo",halo)
+  if( present(levels) ) call config%set("levels",levels)
   functionspace = StructuredColumns__cptr( &
-    & atlas__functionspace__StructuredColumns__new__grid( grid%c_ptr()) )
+    & atlas__functionspace__StructuredColumns__new__grid( grid%c_ptr(), config%c_ptr() ) )
+  call config%final()
   call functionspace%return()
-end function
-
-function create_field_name_kind(this,name,kind,global,owner) result(field)
-  use atlas_functionspace_StructuredColumns_c_binding
-  type(atlas_Field) :: field
-  class(atlas_functionspace_StructuredColumns) :: this
-  character(len=*), intent(in) :: name
-  integer(c_int), intent(in) :: kind
-  logical, optional, intent(in) :: global
-  integer(c_int), optional, intent(in) :: owner
-  logical :: opt_global
-  integer(c_int) :: opt_owner
-  type(atlas_Config) :: options
-  opt_owner = 0
-  if( present(owner) ) opt_owner = owner
-  opt_global = .false.
-  if( present(global) ) opt_global = global
-  options = atlas_Config()
-  call options%set("global",opt_global)
-  call options%set("owner",opt_owner)
-  field = atlas_Field( atlas__fs__StructuredColumns__create_field_name_kind( &
-      & this%c_ptr(),c_str(name),kind,options%c_ptr()) )
-  call field%return()
-  call options%final()
-end function
-
-function create_field_name_kind_lev(this,name,kind,levels,global,owner) result(field)
-  use atlas_functionspace_StructuredColumns_c_binding
-  type(atlas_Field) :: field
-  class(atlas_functionspace_StructuredColumns), intent(in) :: this
-  character(len=*), intent(in) :: name
-  integer(c_int), intent(in) :: kind
-  integer, intent(in) :: levels
-  logical, optional, intent(in) :: global
-  integer(c_int), optional, intent(in) :: owner
-  logical :: opt_global
-  integer(c_int) :: opt_owner
-  type(atlas_Config) :: options
-  opt_owner = 0
-  if( present(owner) ) opt_owner = owner
-  opt_global = .false.
-  if( present(global) ) opt_global = global
-  options = atlas_Config()
-  call options%set("global",opt_global)
-  call options%set("owner",opt_owner)
-  field = atlas_Field( atlas__fs__StructuredColumns__create_field_name_kind_lev( &
-      & this%c_ptr(),c_str(name),kind,levels,options%c_ptr()) )
-  call field%return()
-  call options%final()
-end function
-
-function create_field_kind(this,kind,global,owner) result(field)
-  use atlas_functionspace_StructuredColumns_c_binding
-  type(atlas_Field) :: field
-  class(atlas_functionspace_StructuredColumns) :: this
-  integer(c_int), intent(in) :: kind
-  logical, optional, intent(in) :: global
-  integer(c_int), optional, intent(in) :: owner
-  logical :: opt_global
-  integer(c_int) :: opt_owner
-  type(atlas_Config) :: options
-  opt_owner = 0
-  if( present(owner) ) opt_owner = owner
-  opt_global = .false.
-  if( present(global) ) opt_global = global
-  options = atlas_Config()
-  call options%set("global",opt_global)
-  call options%set("owner",opt_owner)
-  field = atlas_Field( atlas__fs__StructuredColumns__create_field_name_kind( &
-      & this%c_ptr(),c_str(""),kind,options%c_ptr()) )
-  call field%return()
-  call options%final()
-end function
-
-function create_field_kind_lev(this,kind,levels,global,owner) result(field)
-  use atlas_functionspace_StructuredColumns_c_binding
-  type(atlas_Field) :: field
-  class(atlas_functionspace_StructuredColumns), intent(in) :: this
-  integer(c_int), intent(in) :: kind
-  integer, intent(in) :: levels
-  logical, optional, intent(in) :: global
-  integer(c_int), optional, intent(in) :: owner
-  logical :: opt_global
-  integer(c_int) :: opt_owner
-  type(atlas_Config) :: options
-  opt_owner = 0
-  if( present(owner) ) opt_owner = owner
-  opt_global = .false.
-  if( present(global) ) opt_global = global
-  options = atlas_Config()
-  call options%set("global",opt_global)
-  call options%set("owner",opt_owner)
-  field = atlas_Field( atlas__fs__StructuredColumns__create_field_name_kind_lev( &
-      & this%c_ptr(),c_str(""),kind,levels,options%c_ptr()) )
-  call field%return()
-  call options%final()
 end function
 
 subroutine gather(this,local,global)
@@ -239,6 +163,151 @@ function checksum_field(this,field) result(checksum)
   checksum = c_ptr_to_string(checksum_cptr)
   if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
 end function
+
+subroutine set_index(this)
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer
+  use atlas_functionspace_StructuredColumns_c_binding
+  class(atlas_functionspace_StructuredColumns), intent(inout) :: this
+  type(c_ptr) :: index_cptr
+  integer(c_int), pointer :: index_fptr(:)
+  integer(c_int) :: i_min, i_max, j_min, j_max
+  integer(c_int) :: size
+  integer(c_int) :: ni, nj
+  call atlas__fs__StructuredColumns__index_host( this%c_ptr(), index_cptr, i_min, i_max, j_min, j_max )
+  ni = i_max-i_min+1;
+  nj = j_max-j_min+1;
+  call c_f_pointer( index_cptr, index_fptr, (/ni*nj/) )
+  this%index(i_min:i_max,j_min:j_max) => index_fptr(:)
+end subroutine
+
+subroutine copy(this,obj_in)
+  use fckit_refcounted_module, only : fckit_refcounted
+  use fckit_exception_module, only : fckit_exception
+  class(atlas_functionspace_StructuredColumns), intent(inout) :: this
+  class(fckit_refcounted), target, intent(in) :: obj_in
+  nullify(this%index)
+  select type( obj_in_concrete => obj_in )
+    class is (atlas_functionspace_StructuredColumns)
+      this%index => obj_in_concrete%index
+    class default
+  end select
+  if( .not. associated(this%index) ) then
+    call fckit_exception%abort("Could not assign StructuredColumns", &
+      & "atlas_functionspace_StructuredColumns_module.F90",__LINE__)
+  endif
+
+end subroutine
+
+function j_begin(this) result(j)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_functionspace_StructuredColumns_c_binding
+  integer(c_int) :: j
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  j = atlas__fs__StructuredColumns__j_begin(this%c_ptr())
+end function
+
+function j_end(this) result(j)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_functionspace_StructuredColumns_c_binding
+  integer(c_int) :: j
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  j = atlas__fs__StructuredColumns__j_end(this%c_ptr())
+end function
+
+function i_begin(this,j) result(i)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_functionspace_StructuredColumns_c_binding
+  integer(c_int) :: i
+  integer(c_int), intent(in) :: j
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  i = atlas__fs__StructuredColumns__i_begin(this%c_ptr(),j)
+end function
+
+function i_end(this,j) result(i)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_functionspace_StructuredColumns_c_binding
+  integer(c_int) :: i
+  integer(c_int), intent(in) :: j
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  i = atlas__fs__StructuredColumns__i_end(this%c_ptr(),j)
+end function
+
+
+function j_begin_halo(this) result(j)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_functionspace_StructuredColumns_c_binding
+  integer(c_int) :: j
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  j = atlas__fs__StructuredColumns__j_begin_halo(this%c_ptr())
+end function
+
+function j_end_halo(this) result(j)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_functionspace_StructuredColumns_c_binding
+  integer(c_int) :: j
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  j = atlas__fs__StructuredColumns__j_end_halo(this%c_ptr())
+end function
+
+function i_begin_halo(this,j) result(i)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_functionspace_StructuredColumns_c_binding
+  integer(c_int) :: i
+  integer(c_int), intent(in) :: j
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  i = atlas__fs__StructuredColumns__i_begin_halo(this%c_ptr(),j)
+end function
+
+function i_end_halo(this,j) result(i)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_functionspace_StructuredColumns_c_binding
+  integer(c_int) :: i
+  integer(c_int), intent(in) :: j
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  i = atlas__fs__StructuredColumns__i_end_halo(this%c_ptr(),j)
+end function
+
+function xy(this) result(field)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  field = atlas_Field( atlas__fs__StructuredColumns__xy(this%c_ptr()) )
+  call field%return()
+end function
+
+function partition(this) result(field)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  field = atlas_Field( atlas__fs__StructuredColumns__partition(this%c_ptr()) )
+  call field%return()
+end function
+
+
+function global_index(this) result(field)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  field = atlas_Field( atlas__fs__StructuredColumns__global_index(this%c_ptr()) )
+  call field%return()
+end function
+
+subroutine halo_exchange_fieldset(this,fieldset)
+  use atlas_functionspace_StructuredColumns_c_binding
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  type(atlas_FieldSet), intent(inout) :: fieldset
+  call atlas__fs__StructuredColumns__halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine halo_exchange_field(this,field)
+  use atlas_functionspace_StructuredColumns_c_binding
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  type(atlas_Field), intent(inout) :: field
+  call atlas__fs__StructuredColumns__halo_exchange_field(this%c_ptr(),field%c_ptr())
+end subroutine
+
 
 end module atlas_functionspace_StructuredColumns_module
 

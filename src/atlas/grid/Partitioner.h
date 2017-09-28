@@ -27,6 +27,7 @@ class Partitioner {
 public:
 
   using Config = eckit::Parametrisation;
+  using Implementation = detail::partitioner::Partitioner;
 
 public:
 
@@ -35,10 +36,12 @@ public:
 public:
 
     Partitioner() {}
-    Partitioner( const detail::partitioner::Partitioner* );
+    Partitioner( const Implementation* );
     Partitioner( const std::string& type );
     Partitioner( const std::string& type, const size_t nb_partitions );
     Partitioner( const Config& );
+
+    operator bool() const { return partitioner_; }
 
     void partition( const Grid& grid, int part[] ) const { partitioner_->partition(grid,part); }
 
@@ -46,9 +49,13 @@ public:
 
     size_t nb_partitions() const { return partitioner_->nb_partitions(); }
 
+    std::string type() const { return partitioner_->type(); }
+
+    Implementation const* get() const { return partitioner_.get(); }
+
 private:
 
-    eckit::SharedPtr<const detail::partitioner::Partitioner> partitioner_;
+    eckit::SharedPtr<const Implementation> partitioner_;
 };
 
 // ------------------------------------------------------------------
@@ -70,6 +77,15 @@ public:
 };
 
 // ------------------------------------------------------------------
+
+
+extern "C" {
+    Partitioner::Implementation* atlas__grid__Partitioner__new( const Partitioner::Config* config );
+    Partitioner::Implementation* atlas__grid__MatchingMeshPartitioner__new( const Mesh::Implementation* mesh, const Partitioner::Config* config );
+    void atlas__grid__Partitioner__delete(Partitioner::Implementation* This);
+    Distribution::impl_t* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This, const Grid::Implementation* grid );
+}
+
 
 } // namespace grid
 } // namespace atlas

@@ -12,9 +12,6 @@
 #include <algorithm>
 #include <iomanip>
 
-#define BOOST_TEST_MODULE TestGrids
-#include "ecbuild/boost_test_framework.h"
-
 #include "atlas/library/Library.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid.h"
@@ -22,17 +19,24 @@
 #include "atlas/util/Config.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
+#include "eckit/types/FloatCompare.h"
+
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
 using StructuredGrid = atlas::grid::StructuredGrid;
 using Grid       = atlas::Grid;
 using Regular    = atlas::grid::RegularGrid;
 using ReducedGaussianGrid    = atlas::grid::ReducedGaussianGrid;
 
+using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
 
-BOOST_AUTO_TEST_CASE( test_factory )
+//-----------------------------------------------------------------------------
+
+CASE( "test_factory" )
 {
   StructuredGrid structured = Grid("N80");
 
@@ -43,13 +47,13 @@ BOOST_AUTO_TEST_CASE( test_factory )
 
 }
 
-BOOST_AUTO_TEST_CASE( test_regular_gg )
+CASE( "test_regular_gg" )
 {
   Regular grid( "F32" );
 
-  BOOST_CHECK_EQUAL(grid.ny(), 64);
-  BOOST_CHECK_EQUAL(grid.size(), 8192);
-  // BOOST_CHECK_EQUAL(grid.type(),"regular_gaussian");
+  EXPECT(grid.ny() == 64);
+  EXPECT(grid.size() == 8192);
+  // EXPECT(grid.type() == "regular_gaussian");
 
   // Full Gaussian Grid
 
@@ -57,39 +61,39 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   config.set("type","regular_gaussian");
   config.set("N",32);
   grid = Grid(config);
-  BOOST_CHECK_EQUAL(grid.size(), 8192);
-  // BOOST_CHECK_EQUAL(grid.type(),"regular_gaussian");
+  EXPECT(grid.size() == 8192);
+  // EXPECT(grid.type() == "regular_gaussian");
 
 
 
 }
 
-BOOST_AUTO_TEST_CASE( test_reduced_gg )
+CASE( "test_reduced_gg" )
 {
   StructuredGrid grid;
 
   grid = Grid( "N32" );
-  BOOST_CHECK_EQUAL(grid.ny(),64);
-  BOOST_CHECK_EQUAL(grid.size(),6114);
+  EXPECT(grid.ny() == 64);
+  EXPECT(grid.size() == 6114);
 
   grid = grid::ReducedGaussianGrid( {4,6,8,8,6,4} );
 
-  BOOST_CHECK_EQUAL(grid.ny(),6);
-  BOOST_CHECK_EQUAL(grid.size(),8+12+16);
+  EXPECT(grid.ny() == 6);
+  EXPECT(grid.size() == 8+12+16);
 }
 
-BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
+CASE( "test_reduced_gg_ifs" )
 {
   StructuredGrid grid( "N32" );
 
-  // BOOST_CHECK_EQUAL(grid.N(),    32);
-  BOOST_CHECK_EQUAL(grid.ny(), 64);
-  BOOST_CHECK_EQUAL(grid.size(), 6114);
-  // BOOST_CHECK_EQUAL(grid.type(),"classic_gaussian");
+  // EXPECT(grid.N() ==    32);
+  EXPECT(grid.ny() == 64);
+  EXPECT(grid.size() == 6114);
+  // EXPECT(grid.type() == "classic_gaussian");
 
 }
 
-BOOST_AUTO_TEST_CASE( test_regular_ll )
+CASE( "test_regular_ll" )
 {
   // Constructor for N=8
   size_t nlon = 32;
@@ -97,14 +101,14 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   std::stringstream name; name << "Slat" << nlon << "x" << nlat;
   Regular grid( name.str() );
 
-  BOOST_CHECK_EQUAL(grid.nx(), nlon);
-  BOOST_CHECK_EQUAL(grid.ny(), nlat);
-  BOOST_CHECK_EQUAL(grid.size(), 512);
-  // BOOST_CHECK_EQUAL(grid.type(),"shifted_lat");
-  BOOST_CHECK_EQUAL(grid.y(0), 90.-0.5*(180./16.));
-  BOOST_CHECK_EQUAL(grid.y(grid.ny()-1), -90.+0.5*(180./16.));
-  BOOST_CHECK_EQUAL(grid.x(0), 0.);
-  BOOST_CHECK_EQUAL(grid.x(grid.nx()-1), 360.-360./32.);
+  EXPECT(grid.nx() == nlon);
+  EXPECT(grid.ny() == nlat);
+  EXPECT(grid.size() == 512);
+  // EXPECT(grid.type() == "shifted_lat");
+  EXPECT(grid.y(0) == 90.-0.5*(180./16.));
+  EXPECT(grid.y(grid.ny()-1) == -90.+0.5*(180./16.));
+  EXPECT(grid.x(0) == 0.);
+  EXPECT(grid.x(grid.nx()-1) == 360.-360./32.);
 
   // Construct using builders/factories
 
@@ -114,37 +118,45 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   config1.set("nx",32);
   config1.set("ny",16);
   grid = Grid(config1);
-  BOOST_CHECK_EQUAL(grid.size(), 512);
-  // BOOST_CHECK_EQUAL(gridptr->type(),"shifted_lat");
+  EXPECT(grid.size() == 512);
+  // EXPECT(gridptr->type() == "shifted_lat");
 
   Grid::Config config2;
   config2.set("type","shifted_lat");
   config2.set("N",8);
   grid = Grid(config2);
-  BOOST_CHECK_EQUAL(grid.size(), 512);
-  // BOOST_CHECK_EQUAL(gridptr->type(),"shifted_lat");
+  EXPECT(grid.size() == 512);
+  // EXPECT(gridptr->type() == "shifted_lat");
 
   Regular ll_poles( "L4x3" );
-  BOOST_CHECK_EQUAL( ll_poles.nx(), 4);
-  BOOST_CHECK_EQUAL( ll_poles.ny(), 3);
+  EXPECT( ll_poles.nx() == 4);
+  EXPECT( ll_poles.ny() == 3);
 
   Regular ll_nopoles( "Slat4x2" );
-  BOOST_CHECK_EQUAL( ll_nopoles.nx(), 4);
-  BOOST_CHECK_EQUAL( ll_nopoles.ny(), 2);
-  BOOST_CHECK_CLOSE( ll_nopoles.y(0), 45., 1.e-5);
-  BOOST_CHECK_CLOSE( ll_nopoles.y(1), -45. , 1.e-5);
-  BOOST_CHECK_CLOSE( ll_nopoles.x(0), 0. , 1.e-5);
-  BOOST_CHECK_CLOSE( ll_nopoles.x(1), 90. , 1.e-5);
+  EXPECT( ll_nopoles.nx() == 4);
+  EXPECT( ll_nopoles.ny() == 2);
+  EXPECT( eckit::types::is_approximately_equal( ll_nopoles.y(0), 45.) ); // tolerance was previously 1.e-5
+  EXPECT( eckit::types::is_approximately_equal( ll_nopoles.y(1), -45. ) ); // tolerance was previously 1.e-5
+  EXPECT( eckit::types::is_approximately_equal( ll_nopoles.x(0), 0. ) ); // tolerance was previously 1.e-5
+  EXPECT( eckit::types::is_approximately_equal( ll_nopoles.x(1), 90. ) ); // tolerance was previously 1.e-5
 
 }
 
-BOOST_AUTO_TEST_CASE( test_reducedgaussian )
+CASE( "test_reducedgaussian" )
 {
   StructuredGrid N640( "N640" );
-  BOOST_CHECK_EQUAL(N640.size(),2140702);
+  EXPECT(N640.size() == 2140702);
   ReducedGaussianGrid custom( N640.nx() );
-  BOOST_CHECK_EQUAL(N640.size(),custom.size());
+  EXPECT(N640.size() == custom.size());
 }
 
-} // namespace test
-} // namespace atlas
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

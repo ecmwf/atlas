@@ -14,6 +14,7 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
 
 using atlas::array::make_datatype;
 using atlas::array::make_shape;
@@ -37,7 +38,6 @@ Nodes::Nodes(): size_(0)
 
 
   add( Field("flags", make_datatype<int>(), make_shape(size())) );
-
 
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( global_index() );
   array::ArrayView<int   ,1> part    = array::make_view<int,   1>( partition() );

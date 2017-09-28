@@ -21,10 +21,18 @@
 
 #include "eckit/log/Timer.h"
 #include "eckit/types/FloatCompare.h"
+#include "eckit/config/Resource.h"
 
 #include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/mesh/Mesh.h"
 
+#include "eckit/eckit_version.h"
+
+#ifdef ECKIT_VERSION_INT
+#undef ECKIT_VERSION_INT
+#endif
+#define ECKIT_VERSION_INT (ECKIT_MAJOR_VERSION * 10000 \
+                         + ECKIT_MINOR_VERSION * 100 )
 
 namespace atlas {
 namespace interpolation {
@@ -100,15 +108,30 @@ protected: // methods
     template < typename V >
     void build( const V& ipts )
     {
-        std::vector< PointIndex3::Value > pidx;
-        pidx.reserve(npts_);
-
-        for( size_t ip = 0; ip < npts_; ++ip )
-            pidx.push_back( PointIndex3::Value( PointIndex3::Point( ipts[ip] ), ip ) );
-
+        static bool fastBuildKDTrees = eckit::Resource<bool>("$ATLAS_FAST_BUILD_KDTREES", true);
         tree_ = new PointIndex3();
 
-        tree_->build(pidx.begin(), pidx.end());
+#       if ECKIT_VERSION_INT <= 1700
+          fastBuildKDTrees = true;
+#       endif
+
+        if(fastBuildKDTrees){
+            std::vector< PointIndex3::Value > pidx;
+            pidx.reserve(npts_);
+
+            for( size_t ip = 0; ip < npts_; ++ip ){
+                pidx.push_back( PointIndex3::Value( PointIndex3::Point( ipts[ip] ), ip ) );
+            }
+
+            tree_->build(pidx.begin(), pidx.end());
+        }
+#       if ECKIT_VERSION_INT > 1700
+        else {
+            for( size_t ip = 0; ip < npts_; ++ip ) {
+                tree_->insert(PointIndex3::Value( PointIndex3::Point( ipts[ip] ), ip ) );
+            }
+        }
+#       endif
     }
 
     size_t search_unique( const Point& p, size_t idx, uint32_t n  );

@@ -10,16 +10,25 @@
 
 #pragma once
 
-#include "atlas/library/config.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Earth.h"
 #include "atlas/array/DataType.h"
 
 // ----------------------------------------------------------------------------
 
 namespace atlas {
-namespace field {
+namespace option {
 
 // ----------------------------------------------------------------------------
+
+class type : public util::Config
+{
+public:
+  type( const std::string& _type )
+  {
+    set("type",_type);
+  }
+};
 
 class global : public util::Config
 {
@@ -37,6 +46,15 @@ public:
   levels(size_t _levels)
   {
     set("levels",_levels);
+  }
+};
+
+class variables : public util::Config
+{
+public:
+  variables(size_t _variables)
+  {
+    set("variables",_variables);
   }
 };
 
@@ -71,9 +89,41 @@ public:
   {
     set("datatype",array::DataType::str_to_kind(str));
   }
+  datatype(array::DataType dtype)
+  {
+    set("datatype",dtype.kind());
+  }
 };
+
+class halo : public util::Config
+{
+public:
+  halo(size_t size)
+  {
+    set("halo",size);
+  }
+};
+
+class radius : public util::Config
+{
+public:
+  radius(double _radius)
+  {
+    set("radius",_radius);
+  }
+  radius(const std::string& key = "Earth")
+  {
+    if( key == "Earth" ) {
+      set("radius",util::Earth::radiusInMeters());
+    } else {
+      NOTIMP;
+    }
+  }
+
+};
+
 
 // ----------------------------------------------------------------------------
 
-} // namespace field
+} // namespace option
 } // namespace atlas

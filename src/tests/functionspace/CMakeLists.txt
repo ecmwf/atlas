@@ -18,10 +18,25 @@ if( HAVE_FCTEST )
 
 endif()
 
+if( ECKIT_HAVE_TESTING )
+
 ecbuild_add_test( TARGET atlas_test_functionspace
-  BOOST
   SOURCES  test_functionspace.cc
   LIBS     atlas
 )
 
+
+ecbuild_add_test( TARGET atlas_test_structuredcolumns
+  SOURCES  test_structuredcolumns.cc
+  LIBS     atlas
+  MPI 5
+  CONDITION ECKIT_HAVE_MPI
+)
+
+ecbuild_add_test( TARGET atlas_test_pointcloud
+  SOURCES  test_pointcloud.cc
+  LIBS     atlas
+)
+
+endif()
 

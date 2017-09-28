@@ -10,6 +10,7 @@
 
 #include "atlas/functionspace/NodeColumnsInterface.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/field/detail/FieldImpl.h"
 
 namespace atlas {
 namespace functionspace {
@@ -22,18 +23,11 @@ namespace detail {
 // ----------------------------------------------------------------------
 
 extern "C" {
-const NodeColumns* atlas__NodesFunctionSpace__new ( Mesh::Implementation* mesh, int halo )
+const NodeColumns* atlas__NodesFunctionSpace__new ( Mesh::Implementation* mesh, const eckit::Configuration* config )
 {
   ASSERT(mesh);
   Mesh m(mesh);
-  return new NodeColumns(m,mesh::Halo(halo));
-}
-
-const NodeColumns* atlas__NodesFunctionSpace__new_mesh ( Mesh::Implementation* mesh )
-{
-  ASSERT(mesh);
-  Mesh m(mesh);
-  return new NodeColumns(m);
+  return new NodeColumns(m,*config);
 }
 
 void atlas__NodesFunctionSpace__delete (NodeColumns* This)
@@ -60,13 +54,13 @@ mesh::Nodes* atlas__NodesFunctionSpace__nodes(const NodeColumns* This)
   return &This->nodes();
 }
 
-field::FieldImpl* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const char* name, int kind, const eckit::Parametrisation* options )
+field::FieldImpl* atlas__NodesFunctionSpace__create_field (const NodeColumns* This, const eckit::Configuration* options )
 {
   ASSERT(This);
   ASSERT(options);
   FieldImpl* field;
   {
-    Field f = This->createField(std::string(name),array::DataType(kind),*options);
+    Field f = This->createField( util::Config(*options) );
     field = f.get();
     field->attach();
   }
@@ -74,67 +68,13 @@ field::FieldImpl* atlas__NodesFunctionSpace__create_field (const NodeColumns* Th
   return field;
 }
 
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_vars (const NodeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options)
-{
-  ASSERT(This);
-  ASSERT(options);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size,variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  FieldImpl* field;
-  {
-    Field f = This->createField(std::string(name),array::DataType(kind),variables_,*options);
-    field = f.get();
-    field->attach();
-  }
-  field->detach();
-  return field;
-}
-
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev (const NodeColumns* This, const char* name, int levels, int kind, const eckit::Parametrisation* options )
+field::FieldImpl* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const field::FieldImpl* field_template, const eckit::Configuration* options )
 {
   ASSERT(This);
   ASSERT(options);
   FieldImpl* field;
   {
-    Field f = This->createField(std::string(name),array::DataType(kind),size_t(levels),*options);
-    field = f.get();
-    field->attach();
-  }
-  field->detach();
-  return field;
-}
-
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_lev_vars (const NodeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options )
-{
-  ASSERT(This);
-  ASSERT(options);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size,variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  FieldImpl* field;
-  {
-    Field f = This->createField(std::string(name),array::DataType(kind),size_t(levels),variables_, *options);
-    field = f.get();
-    field->attach();
-  }
-  field->detach();
-  return field;
-}
-
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_template (const NodeColumns* This, const char* name, const field::FieldImpl* field_template, const eckit::Parametrisation* options )
-{
-  ASSERT(This);
-  ASSERT(options);
-  FieldImpl* field;
-  {
-    Field f = This->createField(std::string(name),field_template,*options);
+    Field f = This->createField( Field(field_template), *options );
     field = f.get();
     field->attach();
   }

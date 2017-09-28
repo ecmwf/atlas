@@ -8,27 +8,27 @@
  * does it submit to any jurisdiction.
  */
 
+
 #include <map>
 #include <string>
-
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
-#include "atlas/parallel/mpi/mpi.h"
-
-#include "atlas/library/config.h"
-#include "atlas/library/config.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
-#include "atlas/grid/Distribution.h"
-#include "atlas/grid/Partitioner.h"
-#include "atlas/runtime/Log.h"
-
+#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
 #endif
-#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
-#include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
-#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerPolygon.h"
-#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
+#include "atlas/grid/Distribution.h"
+#include "atlas/grid/Partitioner.h"
+#include "atlas/library/config.h"
+#include "atlas/library/config.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
+
 
 namespace {
 
@@ -182,11 +182,14 @@ Partitioner* PartitionerFactory::build(const std::string& name, const size_t nb_
 grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build(
     const std::string& type,
     const Mesh& partitioned ) {
+    using namespace grid::detail::partitioner;
 
-    if( type == grid::detail::partitioner::MatchingMeshPartitionerPolygon::static_type() ) {
-        return new grid::detail::partitioner::MatchingMeshPartitionerPolygon(partitioned);
-    } else if ( type == grid::detail::partitioner::MatchingMeshPartitionerBruteForce::static_type() ) {
-        return new grid::detail::partitioner::MatchingMeshPartitionerBruteForce(partitioned);
+    if( type == MatchingMeshPartitionerSphericalPolygon::static_type() ) {
+        return new MatchingMeshPartitionerSphericalPolygon(partitioned);
+    } else if( type == MatchingMeshPartitionerLonLatPolygon::static_type() ) {
+        return new MatchingMeshPartitionerLonLatPolygon(partitioned);
+    } else if ( type == MatchingMeshPartitionerBruteForce::static_type() ) {
+        return new MatchingMeshPartitionerBruteForce(partitioned);
     } else {
         NOTIMP;
     }

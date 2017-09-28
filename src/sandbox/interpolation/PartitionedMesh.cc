@@ -11,18 +11,15 @@
 
 #include "PartitionedMesh.h"
 
-#include <typeinfo>
 #include "eckit/log/Timer.h"
-#include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
-#include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/Log.h"
 
 
 namespace atlas {
 namespace interpolation {
+
 
 PartitionedMesh::PartitionedMesh(
         const std::string& partitioner,
@@ -32,18 +29,18 @@ PartitionedMesh::PartitionedMesh(
     optionPartitioner_(partitioner),
     optionGenerator_(generator) {
 
-    generatorParams_.set("three_dimensional", false );
-    generatorParams_.set("patch_pole",        true  );
-    generatorParams_.set("include_pole",      false );
-    generatorParams_.set("triangulate",        generatorTriangulate );
-    generatorParams_.set("angle",              generatorAngle );
+    generatorParams_.set("three_dimensional", false);
+    generatorParams_.set("patch_pole",        true);
+    generatorParams_.set("include_pole",      false);
+    generatorParams_.set("triangulate",       generatorTriangulate);
+    generatorParams_.set("angle",             generatorAngle);
 }
 
 
 void PartitionedMesh::writeGmsh(const std::string& fileName, const FieldSet& fields) {
 
     util::Config output_config;
-    // output_config.set("coordinates", std::string("xyz"));
+    output_config.set("coordinates", std::string("xyz"));
     output_config.set("ghost", true);
 
     output::Gmsh out(fileName, output_config);
@@ -60,7 +57,6 @@ void PartitionedMesh::partition(const Grid& grid) {
 
     partitioner_ = Partitioner(optionPartitioner_);
 
-
     MeshGenerator meshgen(optionGenerator_, generatorParams_);
     mesh_ = meshgen.generate(grid, partitioner_.partition(grid));
 }
@@ -69,7 +65,7 @@ void PartitionedMesh::partition(const Grid& grid) {
 void PartitionedMesh::partition(const Grid& grid, const PartitionedMesh& other) {
     eckit::TraceTimer<Atlas> tim("PartitionedMesh::partition(other)");
 
-    partitioner_ = grid::MatchingMeshPartitioner( other.mesh_, util::Config("type",optionPartitioner_) );
+    partitioner_ = grid::MatchingMeshPartitioner(other.mesh_, util::Config("type", optionPartitioner_));
 
     MeshGenerator meshgen(optionGenerator_, generatorParams_);
     mesh_ = meshgen.generate(grid, partitioner_.partition(grid) );

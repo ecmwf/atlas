@@ -41,6 +41,10 @@ parallel/omp/omp.h
 
 list( APPEND atlas_grid_srcs
 
+option.h
+option/Options.h
+
+
 projection.h
 projection/Projection.cc
 projection/Projection.h
@@ -62,8 +66,6 @@ domain/detail/Domain.cc
 domain/detail/Domain.h
 domain/detail/RectangularDomain.h
 domain/detail/RectangularDomain.cc
-domain/detail/CircularDomain.h
-domain/detail/CircularDomain.cc
 domain/detail/EmptyDomain.h
 domain/detail/EmptyDomain.cc
 domain/detail/GlobalDomain.h
@@ -98,15 +100,17 @@ grid/detail/grid/LonLat.cc
 grid/detail/grid/Regional.h
 grid/detail/grid/Regional.cc
 
-grid/detail/partitioner/EqualRegionsPartitioner.cc
-grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
+grid/detail/partitioner/EqualRegionsPartitioner.cc
+grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.h
-grid/detail/partitioner/MatchingMeshPartitionerPolygon.h
-grid/detail/partitioner/MatchingMeshPartitionerPolygon.cc
-grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
+grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
+grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
+grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h
+grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.cc
+grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
 
@@ -197,12 +201,20 @@ mesh/HybridElements.cc
 mesh/HybridElements.h
 mesh/Mesh.cc
 mesh/Mesh.h
-mesh/detail/MeshIntf.cc
-mesh/detail/MeshIntf.h
-mesh/detail/MeshImpl.cc
-mesh/detail/MeshImpl.h
 mesh/Nodes.cc
 mesh/Nodes.h
+mesh/PartitionPolygon.cc
+mesh/PartitionPolygon.h
+mesh/detail/MeshImpl.cc
+mesh/detail/MeshImpl.h
+mesh/detail/MeshIntf.cc
+mesh/detail/MeshIntf.h
+mesh/detail/PartitionGraph.cc
+mesh/detail/PartitionGraph.h
+mesh/detail/Polygon.cc
+mesh/detail/Polygon.h
+mesh/detail/PolygonCoordinates.cc
+mesh/detail/PolygonCoordinates.h
 
 mesh/actions/ExtendNodesGlobal.h
 mesh/actions/ExtendNodesGlobal.cc
@@ -261,7 +273,8 @@ field/FieldSet.h
 field/FieldSet.cc
 field/State.h
 field/State.cc
-field/Options.h
+field/detail/FieldImpl.h
+field/detail/FieldImpl.cc
 )
 
 list( APPEND atlas_functionspace_srcs
@@ -278,6 +291,8 @@ functionspace/StructuredColumns.h
 functionspace/StructuredColumns.cc
 functionspace/Spectral.h
 functionspace/Spectral.cc
+functionspace/PointCloud.h
+functionspace/PointCloud.cc
 )
 
 list( APPEND atlas_numerics_srcs
@@ -298,6 +313,9 @@ list( APPEND atlas_numerics_srcs
 endif()
 
 list( APPEND atlas_interpolation_srcs
+interpolation.h
+interpolation/Interpolation.h
+interpolation/Interpolation.cc
 interpolation/Vector2D.h
 interpolation/Vector3D.h
 interpolation/element/Quad3D.cc
@@ -383,28 +401,30 @@ array/native/NativeStorageView.h
 endif()
 
 list( APPEND atlas_util_srcs
+output/detail/GmshIO.cc
+output/detail/GmshIO.h
+output/detail/PointCloudIO.cc
+output/detail/PointCloudIO.h
 parallel/Checksum.cc
 parallel/Checksum.h
 parallel/GatherScatter.cc
 parallel/GatherScatter.h
 parallel/HaloExchange.cc
 parallel/HaloExchange.h
+parallel/mpi/Buffer.h
 runtime/ErrorHandling.cc
-runtime/ErrorHandling.cc
+runtime/ErrorHandling.h
 util/Config.cc
 util/Config.h
 util/Constants.h
-util/GaussianLatitudes.h
+util/Earth.cc
+util/Earth.h
 util/GaussianLatitudes.cc
-util/Metadata.h
+util/GaussianLatitudes.h
 util/Metadata.cc
-util/Rotation.h
+util/Metadata.h
 util/Rotation.cc
-output/detail/GmshIO.h
-output/detail/GmshIO.cc
-output/detail/PointCloud.h
-output/detail/PointCloud.cc
-parallel/mpi/Buffer.h
+util/Rotation.h
 )
 
 list( APPEND atlas_internals_srcs

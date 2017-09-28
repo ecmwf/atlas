@@ -76,7 +76,7 @@ void Nabla::setup()
 
 void Nabla::gradient(const Field &field, Field &grad_field) const
 {
-  if( field.has_levels() )
+  if( field.levels() )
   {
     if( field.rank() == 2 )
       return gradient_of_scalar(field,grad_field);
@@ -108,8 +108,8 @@ void Nabla::gradient_of_scalar(const Field& scalar_field, Field& grad_field) con
 
   const size_t nnodes = nodes.size();
   const size_t nedges = edges.size();
-  const size_t nlev = scalar_field.levels();
-  if( grad_field.levels() != nlev )
+  const size_t nlev = scalar_field.levels() ? scalar_field.levels() : 1;
+  if( (grad_field.levels() ? grad_field.levels() : 1) != nlev )
     throw eckit::AssertionFailed("gradient field should have same number of levels",Here());
 
 
@@ -462,9 +462,9 @@ void Nabla::curl(const Field& vector_field, Field& curl_field) const
 void Nabla::laplacian(const Field& scalar, Field& lapl) const
 {
   Field grad ( fvm_->node_columns().createField<double>(
-       "grad",
-       scalar.levels(),
-       array::make_shape(2) ) );
+       option::name("grad") |
+       option::levels(scalar.levels()) |
+       option::variables(2) ) );
   gradient(scalar,grad);
   if( fvm_->node_columns().halo().size() < 2 )
     fvm_->node_columns().haloExchange(grad);

@@ -6,14 +6,13 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if( ECKIT_HAVE_TESTING )
 ecbuild_add_test( TARGET atlas_test_array
-  BOOST
   SOURCES  test_array.cc
   LIBS     atlas
 )
-
+endif()
 #ecbuild_add_test( TARGET atlas_test_table
-#  BOOST
 #  SOURCES  test_table.cc
 #  LIBS     atlas
 #)

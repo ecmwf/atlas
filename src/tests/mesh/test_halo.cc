@@ -12,9 +12,6 @@
 #include <algorithm>
 #include <iomanip>
 
-#define BOOST_TEST_MODULE TestHalo
-#include "ecbuild/boost_test_framework.h"
-
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/library/config.h"
 #include "tests/TestMeshes.h"
@@ -31,10 +28,12 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/mesh/IsGhostNode.h"
+#include "eckit/types/FloatCompare.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
-
+using namespace eckit::testing;
 using namespace atlas::output;
 using namespace atlas::util;
 using namespace atlas::meshgenerator;
@@ -62,10 +61,8 @@ double dual_volume(Mesh& mesh)
   return area;
 }
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
-
 #if 0
-BOOST_AUTO_TEST_CASE( test_small )
+CASE( "test_small" )
 {
   int nlat = 5;
   int lon[5] = {10, 12, 14, 16, 16};
@@ -85,10 +82,10 @@ BOOST_AUTO_TEST_CASE( test_small )
     switch( parallel::mpi::comm().rank() ) // with 5 tasks
     {
     case 0:
-      BOOST_CHECK_EQUAL( ridx(9),  9  );
-      BOOST_CHECK_EQUAL( gidx(9),  10 );
-      BOOST_CHECK_EQUAL( ridx(30), 9 );
-      BOOST_CHECK_EQUAL( gidx(30), 875430066 ); // hashed unique idx
+      EXPECT( ridx(9) ==  9  );
+      EXPECT( gidx(9) ==  10 );
+      EXPECT( ridx(30) == 9 );
+      EXPECT( gidx(30) == 875430066 ); // hashed unique idx
       break;
     }
   }
@@ -101,7 +98,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   mesh::actions::build_edges(*m);
   mesh::actions::build_median_dual_mesh(*m);
 
-  BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
+  EXPECT( eckit::types::is_approximately_equal( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 ));
 
   std::stringstream filename; filename << "small_halo_p" << parallel::mpi::comm().rank() << ".msh";
   Gmsh(filename.str()).write(*m);
@@ -109,7 +106,7 @@ BOOST_AUTO_TEST_CASE( test_small )
 #endif
 
 #if 1
-BOOST_AUTO_TEST_CASE( test_t63 )
+CASE( "test_t63" )
 {
   // Mesh m = test::generate_mesh( T63() );
 
@@ -127,7 +124,7 @@ BOOST_AUTO_TEST_CASE( test_t63 )
   std::stringstream filename; filename << "T63_halo.msh";
   Gmsh(filename.str()).write(m);
 
-//  BOOST_CHECK_CLOSE( test::dual_volume(m), 2.*M_PI*M_PI, 1e-6 );
+//  EXPECT( eckit::types::is_approximately_equal( test::dual_volume(m), 2.*M_PI*M_PI, 1e-6 ));
 
 //  Nodes& nodes = m.nodes();
 //  FunctionSpace& edges = m.function_space("edges");
@@ -143,7 +140,13 @@ BOOST_AUTO_TEST_CASE( test_t63 )
 
 }
 #endif
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
 
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

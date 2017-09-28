@@ -44,7 +44,7 @@ public:
     double front() const { return x_.front(); }
     double back()  const { return x_.back();  }
 
-    Interval interval() const { return {min_,max_}; }
+    Interval interval() const { return {{min_,max_}}; }
 
     double min() const { return min_; }
     double max() const { return max_; }

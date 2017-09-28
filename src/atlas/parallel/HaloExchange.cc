@@ -137,12 +137,13 @@ void HaloExchange::setup( const int part[],
   for( int jj=0; jj<sendcnt_; ++jj )
     sendmap_[jj] = recv_requests[jj];
 
-//   std::cout << myproc << "  :  sendmap_  = ";
+//   std::cout << Here() << std::endl;
+//   std::cout << myproc << "  :  sendmap_[size="<<sendmap_.size()<<"]  = ";
 //   for( int i=0; i< sendmap_.size(); ++i)
 //     std::cout << sendmap_[i] << " ";
 //   std::cout << std::endl;
 
-//   std::cout << myproc << "  :  recvmap_  = ";
+//   std::cout << myproc << "  :  recvmap_[size="<<recvmap_.size()<<"]  = ";
 //   for( int i=0; i< recvmap_.size(); ++i)
 //     std::cout << recvmap_[i] << " ";
 //   std::cout << std::endl;

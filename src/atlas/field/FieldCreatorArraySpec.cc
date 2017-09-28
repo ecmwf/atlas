@@ -12,7 +12,7 @@
 #include <sstream>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Parametrisation.h"
-#include "atlas/field/Field.h"
+#include "atlas/field/detail/FieldImpl.h"
 #include "atlas/field/FieldCreatorArraySpec.h"
 #include "atlas/array/DataType.h"
 

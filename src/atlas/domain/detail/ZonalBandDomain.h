@@ -2,16 +2,26 @@
 
 #include <iostream>
 #include <array>
+#include "atlas/domain/Domain.h"
 #include "atlas/domain/detail/RectangularDomain.h"
+
+namespace atlas {
+  class RectangularDomain;
+  class ZonalBandDomain;
+}
 
 namespace atlas {
 namespace domain {
 
-class ZonalBandDomain: public RectangularDomain {
+class ZonalBandDomain: public atlas::domain::RectangularDomain {
 
 protected:
 
     static constexpr char units_[] = "degrees";
+
+public:
+
+    static bool is_global( const Interval& y );
 
 public:
 
@@ -31,10 +41,22 @@ public:
     virtual Spec spec() const override;
 
     virtual void print(std::ostream&) const override;
-    
+
     virtual void hash(eckit::Hash&) const override;
 
     virtual std::string units() const override { return units_; }
+
+    /// Check if grid includes the North pole
+    virtual bool containsNorthPole() const override;
+
+    /// Check if grid includes the South pole
+    virtual bool containsSouthPole() const override;
+
+
+protected:
+
+    friend class ::atlas::RectangularDomain;
+    ZonalBandDomain( const Interval&, const double west );
 
 private:
 

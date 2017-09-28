@@ -14,31 +14,62 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/mesh/HybridElements.h"
+#include "eckit/config/Resource.h"
+#include "eckit/eckit_version.h"
 
+#ifdef ECKIT_VERSION_INT
+#undef ECKIT_VERSION_INT
+#endif
+#define ECKIT_VERSION_INT (ECKIT_MAJOR_VERSION * 10000 \
+                         + ECKIT_MINOR_VERSION * 100 )
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
+ElemIndex3* create_element_kdtree(const Field& field_centres) {
 
-ElemIndex3* create_element_centre_index(const Mesh& mesh) {
+    const array::ArrayView<double, 2> centres = array::make_view<double, 2>( field_centres );
 
-    const array::ArrayView<double,2> centres = array::make_view<double,2>( mesh.cells().field( "centre" ) );
+    static bool fastBuildKDTrees = eckit::Resource<bool>("$ATLAS_FAST_BUILD_KDTREES", true);
 
-    std::vector< ElemIndex3::Value > p;
-    p.reserve(mesh.cells().size());
-
-    for (size_t j = 0; j < mesh.cells().size(); ++j) {
-        p.push_back(ElemIndex3::Value(
-                        ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
-                        ElemIndex3::Payload(j) ));
-    }
-
+    // If eckit version <= 0.17
+#   if ECKIT_VERSION_INT <= 1700
+    fastBuildKDTrees = true;
+#   endif
 
     ElemIndex3* tree = new ElemIndex3();
-    tree->build(p.begin(), p.end());
+    const size_t nb_cells = centres.shape(0);
 
+    if (fastBuildKDTrees) {
+        std::vector< ElemIndex3::Value > p;
+        p.reserve(nb_cells);
+
+        for (size_t j = 0; j < nb_cells; ++j) {
+            p.push_back(ElemIndex3::Value(
+                            ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
+                            ElemIndex3::Payload(j) ));
+        }
+
+        tree->build(p.begin(), p.end());
+    }
+
+    // If eckit version > 0.17
+#   if ECKIT_VERSION_INT > 1700
+    else {
+        for (size_t j = 0; j < nb_cells; ++j) {
+            tree->insert(ElemIndex3::Value(
+                             ElemIndex3::Point(centres(j, XX), centres(j, YY), centres(j, ZZ)),
+                             ElemIndex3::Payload(j) ));
+        }
+    }
+#   endif
     return tree;
+}
+
+
+ElemIndex3* create_element_centre_index(const Mesh& mesh) {
+    return create_element_kdtree( mesh.cells().field("centre") );
 }
 
 

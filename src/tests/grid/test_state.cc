@@ -13,9 +13,6 @@
 
 #include "atlas/library/config.h"
 
-#define BOOST_TEST_MODULE test_state
-#include "ecbuild/boost_test_framework.h"
-
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/parser/JSON.h"
@@ -31,9 +28,12 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
 using namespace atlas::field;
+using namespace atlas::field;
+using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
@@ -105,45 +105,41 @@ StateGeneratorBuilder<MyStateGenerator> __MyStateGenerator("MyStateGenerator");
 //                               BEGIN TESTS
 // ===================================================================
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
-
-BOOST_AUTO_TEST_SUITE( test_state )
-
-BOOST_AUTO_TEST_CASE( state )
+CASE( "state" )
 {
   State state;
-  BOOST_CHECK_EQUAL( state.size() , 0 );
+  EXPECT( state.size() == 0 );
 
   state.add( Field( "myfield", array::make_datatype<double>(), array::make_shape(10,1) ) );
   state.add( Field( "",        array::make_datatype<double>(), array::make_shape(10,2) ) );
   state.add( Field( "",        array::make_datatype<double>(), array::make_shape(10,3) ) );
 
-  BOOST_CHECK_EQUAL( state.size() , 3 );
-  BOOST_CHECK( state.has("myfield") );
-  BOOST_CHECK( state.has("field_00001") );
-  BOOST_CHECK( state.has("field_00002") );
+  EXPECT( state.size() == 3 );
+  EXPECT( state.has("myfield") );
+  EXPECT( state.has("field_00001") );
+  EXPECT( state.has("field_00002") );
 
-  BOOST_CHECK_EQUAL( state.field(0).name(), std::string("field_00001") );
-  BOOST_CHECK_EQUAL( state.field(1).name(), std::string("field_00002") );
-  BOOST_CHECK_EQUAL( state.field(2).name(), std::string("myfield") );
+  EXPECT( state.field(0).name() == std::string("field_00001") );
+  EXPECT( state.field(1).name() == std::string("field_00002") );
+  EXPECT( state.field(2).name() == std::string("myfield") );
 
   state.remove("myfield");
-  BOOST_CHECK_EQUAL( state.size() , 2 );
-  BOOST_CHECK( ! state.has("myfield") );
+  EXPECT( state.size()  == 2 );
+  EXPECT( ! state.has("myfield") );
 
   state.remove("field_00002");
-  BOOST_CHECK_EQUAL( state.size() , 1 );
-  BOOST_CHECK( ! state.has("field_00002") );
+  EXPECT( state.size() == 1 );
+  EXPECT( ! state.has("field_00002") );
 
 }
 
-BOOST_AUTO_TEST_CASE( state_generator )
+CASE( "state_generator" )
 {
-  BOOST_CHECK( StateGeneratorFactory::has("MyStateGenerator") );
+  EXPECT( StateGeneratorFactory::has("MyStateGenerator") );
   eckit::ScopedPtr<StateGenerator> stategenerator ( StateGeneratorFactory::build("MyStateGenerator") );
 }
 
-BOOST_AUTO_TEST_CASE( state_create )
+CASE( "state_create" )
 {
 
   util::Config p;
@@ -190,9 +186,9 @@ BOOST_AUTO_TEST_CASE( state_create )
 
   State state ( "MyStateGenerator",p );
 
-  BOOST_CHECK( state.has("temperature") );
-  BOOST_CHECK( state.has("wind") );
-  BOOST_CHECK( state.has("soiltype") );
+  EXPECT( state.has("temperature") );
+  EXPECT( state.has("wind") );
+  EXPECT( state.has("soiltype") );
 
   Log::info() << state.field("temperature") << std::endl;
   Log::info() << state.field("wind")        << std::endl;
@@ -213,7 +209,13 @@ BOOST_AUTO_TEST_CASE( state_create )
 
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

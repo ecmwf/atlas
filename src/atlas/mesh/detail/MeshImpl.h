@@ -17,6 +17,8 @@
 
 #include "atlas/util/Metadata.h"
 #include "atlas/projection/Projection.h"
+#include "atlas/mesh/detail/PartitionGraph.h"
+#include "atlas/mesh/PartitionPolygon.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -24,6 +26,7 @@ namespace atlas {
   class Grid;
   class Mesh;
 namespace mesh {
+    class PartitionPolygon;
     class Nodes;
     class HybridElements;
     typedef HybridElements Edges;
@@ -83,6 +86,7 @@ public: // methods
     /// @brief Return the memory footprint of the mesh
     size_t footprint() const;
 
+    size_t partition() const;
     size_t nb_partitions() const;
 
     void cloneToDevice() const;
@@ -92,6 +96,12 @@ public: // methods
     void syncHostDevice() const;
 
     const Projection& projection() const { return projection_; }
+
+    const PartitionGraph& partitionGraph() const;
+
+    PartitionGraph::Neighbours nearestNeighbourPartitions() const;
+
+    const PartitionPolygon& polygon(size_t halo=0) const;
 
 private:  // methods
 
@@ -111,8 +121,8 @@ private: // members
     util::Metadata   metadata_;
 
     eckit::SharedPtr<Nodes> nodes_;
-                                                      // dimensionality : 2D | 3D
-                                                      //                  --------
+                                                // dimensionality : 2D | 3D
+                                                //                  --------
     eckit::SharedPtr<HybridElements> cells_;    //                  2D | 3D
     eckit::SharedPtr<HybridElements> facets_;   //                  1D | 2D
     eckit::SharedPtr<HybridElements> ridges_;   //                  0D | 1D
@@ -123,6 +133,10 @@ private: // members
     size_t dimensionality_;
 
     Projection projection_;
+
+    mutable eckit::SharedPtr<PartitionGraph> partition_graph_;
+
+    mutable std::vector<eckit::SharedPtr<PartitionPolygon>> polygons_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

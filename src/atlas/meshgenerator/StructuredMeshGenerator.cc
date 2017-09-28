@@ -129,7 +129,7 @@ void StructuredMeshGenerator::configure_defaults()
   options.set( "include_pole", false );
 
   // This option sets the part that will be generated
-  options.set( "patch_pole", false );
+  options.set( "patch_pole", true );
 
   // This option disregards multiple poles in grid (e.g. lonlat up to poles) and connects elements
   // to the first node only. Note this option will only be looked at in case other option
@@ -574,6 +574,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
 
         add_triag = false;
 
+#ifdef PARTITIONING_BEFORE_ATLAS_0_12
         int cnt_mypart = 0;
         int np[3] = {pN1, pN2, pS1};
         for( int j=0; j<3; ++j ) {
@@ -603,6 +604,18 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
             }
           }
         }
+#else
+        if( 0.5*(yN+yS) > 1e-6 )
+        {
+          if( pN1 == mypart )
+            add_triag = true;
+        }
+        else
+        {
+          if( pS1 == mypart )
+            add_triag = true;
+        }
+#endif
         if (add_triag)
         {
           ++region.ntriags;
@@ -640,7 +653,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
 
         add_triag = false;
 
-
+#ifdef PARTITIONING_BEFORE_ATLAS_0_12
         int cnt_mypart = 0;
         int np[3] = {pN1, pS1, pS2};
         for( int j=0; j<3; ++j ) {
@@ -676,6 +689,18 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
             }
           }
         }
+#else
+        if( 0.5*(yN+yS) > 1e-6 )
+        {
+          if( pN1 == mypart )
+            add_triag = true;
+        }
+        else
+        {
+          if( pS2 == mypart )
+            add_triag = true;
+        }
+#endif
 
         if (add_triag)
         {
@@ -782,8 +807,8 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
   int nparts = options.get<size_t>("nb_parts");
   int n, l;
 
-  bool has_north_pole = rg.y().front() ==  90 && rg.nx().front() > 0;
-  bool has_south_pole = rg.y().back()  == -90 && rg.nx().back()  > 0;
+  bool has_point_at_north_pole = rg.y().front() ==  90 && rg.nx().front() > 0;
+  bool has_point_at_south_pole = rg.y().back()  == -90 && rg.nx().back()  > 0;
   bool three_dimensional  = options.get<bool>("3d");
   bool periodic_east_west = rg.periodic();
   bool include_periodic_ghost_points = periodic_east_west  && !three_dimensional;
@@ -791,24 +816,24 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
 
   bool include_north_pole = (mypart == 0 )
           && options.get<bool>("include_pole")
-          && !has_north_pole
-          && rg.domain().includesNorthPole(rg.projection());
+          && !has_point_at_north_pole
+          && rg.domain().containsNorthPole();
 
   bool include_south_pole = (mypart == nparts-1)
           && options.get<bool>("include_pole")
-          && !has_south_pole
-          && rg.domain().includesSouthPole(rg.projection());
+          && !has_point_at_south_pole
+          && rg.domain().containsSouthPole();
 
   bool patch_north_pole = (mypart == 0)
           && options.get<bool>("patch_pole")
-          && !has_north_pole
-          && rg.domain().includesNorthPole(rg.projection())
+          && !has_point_at_north_pole
+          && rg.domain().containsNorthPole()
           && rg.nx(1) > 0;
 
   bool patch_south_pole = (mypart == nparts-1)
           && options.get<bool>("patch_pole")
-          && !has_south_pole
-          && rg.domain().includesSouthPole(rg.projection())
+          && !has_point_at_south_pole
+          && rg.domain().containsSouthPole()
           && rg.nx(rg.ny()-2) > 0;
 
   if( three_dimensional && nparts != 1 )

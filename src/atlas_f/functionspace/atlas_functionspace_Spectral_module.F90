@@ -40,16 +40,6 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_Spectral
 !------------------------------------------------------------------------------
 contains
 
-  procedure, private :: create_field_name_kind
-  procedure, private :: create_field_name_kind_lev
-  procedure, private :: create_field_kind
-  procedure, private :: create_field_kind_lev
-  generic, public :: create_field => &
-    & create_field_name_kind, &
-    & create_field_name_kind_lev, &
-    & create_field_kind, &
-    & create_field_kind_lev
-
   procedure, private :: gather_field
   procedure, private :: scatter_field
   procedure, private :: gather_fieldset
@@ -70,7 +60,7 @@ END TYPE atlas_functionspace_Spectral
 
 interface atlas_functionspace_Spectral
   module procedure atlas_functionspace_Spectral__cptr
-  module procedure atlas_functionspace_Spectral__truncation
+  module procedure atlas_functionspace_Spectral__config
   module procedure atlas_functionspace_Spectral__trans
 end interface
 
@@ -94,114 +84,41 @@ subroutine atlas_functionspace_Spectral__final(this)
 end subroutine
 #endif
 
-function atlas_functionspace_Spectral__truncation(truncation) result(functionspace)
+function atlas_functionspace_Spectral__config(truncation,levels) result(this)
   use atlas_functionspace_spectral_c_binding
-  type(atlas_functionspace_Spectral) :: functionspace
-  integer(c_int), intent(in) :: truncation
-  functionspace = atlas_functionspace_Spectral__cptr( &
-    & atlas__SpectralFunctionSpace__new__truncation(truncation) )
-  call functionspace%return()
+  type(atlas_functionspace_Spectral) :: this
+  integer(c_int), intent(in)           :: truncation
+  integer(c_int), intent(in), optional :: levels
+
+  type(atlas_Config) :: options
+  options = atlas_Config()
+
+  call options%set("truncation",truncation)
+  if( present(levels) ) call options%set("levels",levels)
+
+  this = atlas_functionspace_Spectral__cptr( &
+    & atlas__SpectralFunctionSpace__new__config(options%c_ptr()) )
+  call options%final()
+
+  call this%return()
 end function
 
-function atlas_functionspace_Spectral__trans(trans) result(functionspace)
+function atlas_functionspace_Spectral__trans(trans,levels) result(this)
   use atlas_functionspace_spectral_c_binding
-  type(atlas_functionspace_Spectral) :: functionspace
+  type(atlas_functionspace_Spectral) :: this
   type(atlas_Trans), intent(in) :: trans
-  functionspace = atlas_functionspace_Spectral__cptr( &
-    & atlas__SpectralFunctionSpace__new__trans(trans%c_ptr()) )
-  call functionspace%return()
-end function
+  integer(c_int), intent(in), optional :: levels
 
-function create_field_name_kind(this,name,kind,global,owner) result(field)
-  use atlas_functionspace_spectral_c_binding
-  type(atlas_Field) :: field
-  class(atlas_functionspace_Spectral) :: this
-  character(len=*), intent(in) :: name
-  integer(c_int), intent(in) :: kind
-  logical, optional, intent(in) :: global
-  integer(c_int), optional, intent(in) :: owner
-  logical :: opt_global
-  integer(c_int) :: opt_owner
   type(atlas_Config) :: options
-  opt_owner = 0
-  if( present(owner) ) opt_owner = owner
-  opt_global = .false.
-  if( present(global) ) opt_global = global
   options = atlas_Config()
-  call options%set("global",opt_global)
-  call options%set("owner",opt_owner)
-  field = atlas_Field( atlas__fs__Spectral__create_field_name_kind(this%c_ptr(),c_str(name),kind,options%c_ptr()) )
-  call field%return()
-  call options%final()
-end function
 
-function create_field_name_kind_lev(this,name,kind,levels,global,owner) result(field)
-  use atlas_functionspace_spectral_c_binding
-  type(atlas_Field) :: field
-  class(atlas_functionspace_Spectral), intent(in) :: this
-  character(len=*), intent(in) :: name
-  integer(c_int), intent(in) :: kind
-  integer, intent(in) :: levels
-  logical, optional, intent(in) :: global
-  integer(c_int), optional, intent(in) :: owner
-  logical :: opt_global
-  integer(c_int) :: opt_owner
-  type(atlas_Config) :: options
-  opt_owner = 0
-  if( present(owner) ) opt_owner = owner
-  opt_global = .false.
-  if( present(global) ) opt_global = global
-  options = atlas_Config()
-  call options%set("global",opt_global)
-  call options%set("owner",opt_owner)
-  field = atlas_Field( atlas__fs__Spectral__create_field_name_kind_lev(this%c_ptr(),c_str(name),kind,levels,options%c_ptr()) )
-  call field%return()
-  call options%final()
-end function
+  if( present(levels) ) call options%set("levels",levels)
 
-function create_field_kind(this,kind,global,owner) result(field)
-  use atlas_functionspace_spectral_c_binding
-  type(atlas_Field) :: field
-  class(atlas_functionspace_Spectral) :: this
-  integer(c_int), intent(in) :: kind
-  logical, optional, intent(in) :: global
-  integer(c_int), optional, intent(in) :: owner
-  logical :: opt_global
-  integer(c_int) :: opt_owner
-  type(atlas_Config) :: options
-  opt_owner = 0
-  if( present(owner) ) opt_owner = owner
-  opt_global = .false.
-  if( present(global) ) opt_global = global
-  options = atlas_Config()
-  call options%set("global",opt_global)
-  call options%set("owner",opt_owner)
-  field = atlas_Field( atlas__fs__Spectral__create_field_name_kind(this%c_ptr(),c_str(""),kind,options%c_ptr()) )
-  call field%return()
+  this = atlas_functionspace_Spectral__cptr( &
+    & atlas__SpectralFunctionSpace__new__trans(trans%c_ptr(), options%c_ptr() ) )
   call options%final()
-end function
 
-function create_field_kind_lev(this,kind,levels,global,owner) result(field)
-  use atlas_functionspace_spectral_c_binding
-  type(atlas_Field) :: field
-  class(atlas_functionspace_Spectral), intent(in) :: this
-  integer(c_int), intent(in) :: kind
-  integer, intent(in) :: levels
-  logical, optional, intent(in) :: global
-  integer(c_int), optional, intent(in) :: owner
-  logical :: opt_global
-  integer(c_int) :: opt_owner
-  type(atlas_Config) :: options
-  opt_owner = 0
-  if( present(owner) ) opt_owner = owner
-  opt_global = .false.
-  if( present(global) ) opt_global = global
-  options = atlas_Config()
-  call options%set("global",opt_global)
-  call options%set("owner",opt_owner)
-  field = atlas_Field( atlas__fs__Spectral__create_field_name_kind_lev(this%c_ptr(),c_str(""),kind,levels,options%c_ptr()) )
-  call field%return()
-  call options%final()
+  call this%return()
 end function
 
 subroutine gather_field(this,local,global)

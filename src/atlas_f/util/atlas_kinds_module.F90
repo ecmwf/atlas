@@ -5,16 +5,20 @@
 module atlas_kinds_module
 
 use, intrinsic :: iso_c_binding, only: &
-  & c_int, c_long
+  & c_int, c_long, c_double, c_float
 
 implicit none
 private
 
-private :: c_long, c_int
+private :: c_long, c_int, c_double, c_float
 
 public :: ATLAS_KIND_GIDX
 public :: ATLAS_KIND_IDX
 
+public :: ATLAS_KIND_REAL64
+public :: ATLAS_KIND_REAL32
+public :: ATLAS_KIND_INT64
+public :: ATLAS_KIND_INT32
 
 
 #if ATLAS_BITS_GLOBAL == 32
@@ -26,6 +30,11 @@ integer, parameter :: ATLAS_KIND_GIDX = c_long
 #endif
 
 integer, parameter :: ATLAS_KIND_IDX = c_int
+
+integer, parameter :: ATLAS_KIND_REAL64 = c_double
+integer, parameter :: ATLAS_KIND_REAL32 = c_float
+integer, parameter :: ATLAS_KIND_INT64  = c_long
+integer, parameter :: ATLAS_KIND_INT32  = c_int
 
 ENUM, bind(c)
   enumerator :: openmode

@@ -40,6 +40,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/parser/Tokenizer.h"
+#include "eckit/log/Bytes.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/runtime/Tool.h"
 
@@ -210,7 +211,7 @@ void Meshgen2Gmsh::execute(const Args& args)
   }
 
   if( grid.projection().units() == "degrees" ) {
-    functionspace::NodeColumns nodes_fs(mesh,Halo(halo));
+    functionspace::NodeColumns nodes_fs(mesh,option::halo(halo));
   } else {
     Log::warning() << "Not yet implemented: building halo's with projections not defined in degrees" << std::endl;
     Log::warning() << "units: " << grid.projection().units() << std::endl;
@@ -226,8 +227,9 @@ void Meshgen2Gmsh::execute(const Args& args)
       build_median_dual_mesh(mesh);
   }
 
-  if( stats )
+  if( stats ) {
     build_statistics(mesh);
+  }
 
   bool torus=false;
   args.get("torus",torus);
@@ -236,7 +238,7 @@ void Meshgen2Gmsh::execute(const Args& args)
     Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
     mesh::actions::BuildTorusXYZField("xyz")(mesh,grid.domain(),5.,2.,grid.nxmax(),grid.ny());
   }
-  
+
   bool lonlat = false;
   args.get("lonlat",lonlat);
 
@@ -249,6 +251,14 @@ void Meshgen2Gmsh::execute(const Args& args)
   );
   Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid.name() << "\"" << std::endl;
   gmsh.write( mesh );
+
+  if( info ) {
+    Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
+    Log::info() << "Mesh partition footprint: " << eckit::Bytes(mesh.footprint()) << std::endl;
+    for( size_t jhalo=0; jhalo<=halo; ++jhalo ) {
+        mesh.polygon(jhalo).outputPythonScript("polygon_halo"+std::to_string(jhalo)+".py");
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

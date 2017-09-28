@@ -9,9 +9,6 @@
  */
 
 
-#define BOOST_TEST_MODULE atlas_test_trans
-#include "ecbuild/boost_test_framework.h"
-
 #include <algorithm>
 
 #include "atlas/library/Library.h"
@@ -33,36 +30,41 @@
 #include "atlas/array/MakeView.h"
 #include "transi/trans.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
 using namespace eckit;
+using namespace eckit::testing;
 using atlas::grid::detail::partitioner::TransPartitioner;
 using atlas::grid::detail::partitioner::EqualRegionsPartitioner;
 
 namespace atlas {
 namespace test {
 
-struct AtlasTransFixture : public AtlasFixture {
-       AtlasTransFixture() {
+//-----------------------------------------------------------------------------
+
+struct AtlasTransEnvironment : public AtlasTestEnvironment {
+       AtlasTransEnvironment(int argc, char * argv[]) : AtlasTestEnvironment(argc, argv) {
          if( parallel::mpi::comm().size() == 1 )
            trans_use_mpi(false);
          trans_init();
        }
 
-      ~AtlasTransFixture() {
+      ~AtlasTransEnvironment() {
          trans_finalize();
        }
 };
 
+//-----------------------------------------------------------------------------
 
 void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int &nfld )
 {
   Log::info() << "read_rspecg ...\n";
   nfld = 2;
-  if( trans.myproc(0) == 0 )
+  if( parallel::mpi::comm().rank() == 0 )
   {
-    rspecg.resize(nfld*trans.nspec2g());
-    for( int i=0; i<trans.nspec2g(); ++i )
+    rspecg.resize(nfld*trans.nb_spectral_coefficients_global());
+    for( int i=0; i<trans.nb_spectral_coefficients_global(); ++i )
     {
       rspecg[i*nfld + 0] = (i==0 ? 1. : 0.); // scalar field 1
       rspecg[i*nfld + 1] = (i==0 ? 2. : 0.); // scalar field 2
@@ -75,30 +77,31 @@ void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<i
   Log::info() << "read_rspecg ... done" << std::endl;
 }
 
+//-----------------------------------------------------------------------------
 
-BOOST_GLOBAL_FIXTURE( AtlasTransFixture );
-
-BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
+CASE( "test_trans_distribution_matches_atlas" )
 {
-  BOOST_CHECK( grid::Partitioner::exists("trans") );
+  EXPECT( grid::Partitioner::exists("trans") );
 
 
   // Create grid and trans object
   Grid g( "N80" );
 
-  BOOST_CHECK_EQUAL( grid::StructuredGrid(g).ny() , 160 );
-
-  trans::Trans trans( g );
-
-  BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
+  EXPECT( grid::StructuredGrid(g).ny() == 160 );
 
   auto trans_partitioner = new TransPartitioner();
   grid::Partitioner partitioner( trans_partitioner );
   grid::Distribution distribution( g, partitioner );
 
+  trans::Trans trans( g );
+  ::Trans_t* t = trans;
+
+  ATLAS_DEBUG_VAR( trans.truncation() );
+  EXPECT( trans.truncation() <= 0 );
+
   // -------------- do checks -------------- //
-  BOOST_CHECK_EQUAL( trans.nproc(),  parallel::mpi::comm().size() );
-  BOOST_CHECK_EQUAL( trans.myproc(0), parallel::mpi::comm().rank() );
+  EXPECT( t->nproc  ==  parallel::mpi::comm().size() );
+  EXPECT( t->myproc == parallel::mpi::comm().rank()+1 );
 
 
   if( parallel::mpi::comm().rank() == 0 ) // all tasks do the same, so only one needs to check
@@ -107,41 +110,40 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
     for( int j=0; j<trans_partitioner->nb_bands(); ++j )
       max_nb_regions_EW = std::max(max_nb_regions_EW, trans_partitioner->nb_regions(j));
 
-    BOOST_CHECK_EQUAL( trans.n_regions_NS(), trans_partitioner->nb_bands() );
-    BOOST_CHECK_EQUAL( trans.n_regions_EW(), max_nb_regions_EW );
+    EXPECT( t->n_regions_NS == trans_partitioner->nb_bands() );
+    EXPECT( t->n_regions_EW == max_nb_regions_EW );
 
-    BOOST_CHECK_EQUAL( distribution.nb_partitions(), parallel::mpi::comm().size() );
-    BOOST_CHECK_EQUAL( distribution.partition().size(), g.size() );
+    EXPECT( distribution.nb_partitions() == parallel::mpi::comm().size() );
+    EXPECT( distribution.partition().size() == g.size() );
 
     std::vector<int> npts(distribution.nb_partitions(),0);
 
     for(size_t j = 0; j < g.size(); ++j)
       ++npts[distribution.partition(j)];
 
-    BOOST_CHECK_EQUAL( trans.ngptotg(), g.size() );
-    BOOST_CHECK_EQUAL( trans.ngptot(),  npts[parallel::mpi::comm().rank()] );
-    BOOST_CHECK_EQUAL( trans.ngptotmx(), *std::max_element(npts.begin(),npts.end()) );
+    EXPECT( trans.nb_gridpoints_global()  == g.size() );
+    EXPECT( trans.nb_gridpoints() ==  npts[parallel::mpi::comm().rank()] );
+    EXPECT( t->ngptotmx == *std::max_element(npts.begin(),npts.end()) );
 
-    array::LocalView<int,1> n_regions ( trans.n_regions() ) ;
+    // array::LocalView<int,1> n_regions ( trans.n_regions() ) ;
     for( int j=0; j<trans_partitioner->nb_bands(); ++j )
-      BOOST_CHECK_EQUAL( n_regions(j) , trans_partitioner->nb_regions(j) );
+      EXPECT( t->n_regions[j] == trans_partitioner->nb_regions(j) );
   }
 }
 
-
-BOOST_AUTO_TEST_CASE( test_trans_partitioner )
+CASE( "test_trans_partitioner" )
 {
-  BOOST_TEST_CHECKPOINT("test_trans_partitioner");
+  Log::info() << "test_trans_partitioner" << std::endl;
   // Create grid and trans object
   Grid g( "N80" );
 
-  trans::Trans trans( g, 0 );
+  trans::Trans trans( g );
 
-  BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
-  BOOST_CHECK_EQUAL( trans.ngptotg() , g.size() );
+  EXPECT( trans.truncation() <= 0 );
+  EXPECT( trans.nb_gridpoints_global() == g.size() );
 }
 
-BOOST_AUTO_TEST_CASE( test_trans_options )
+CASE( "test_trans_options" )
 {
   trans::Trans::Options opts;
   opts.set_fft(trans::FFTW);
@@ -151,8 +153,7 @@ BOOST_AUTO_TEST_CASE( test_trans_options )
   Log::info() << "trans_opts = " << opts << std::endl;
 }
 
-
-BOOST_AUTO_TEST_CASE( test_distspec )
+CASE( "test_distspec" )
 {
   trans::Trans::Options p;
 
@@ -161,19 +162,19 @@ BOOST_AUTO_TEST_CASE( test_distspec )
     p.set_write("cached_legendre_coeffs");
 #endif
   p.set_flt(false);
-  trans::Trans trans(400, 159, p);
-  BOOST_TEST_CHECKPOINT("Trans initialized");
+  trans::Trans trans( Grid("F400"), 159, p);
+  Log::info() << "Trans initialized" << std::endl;
   std::vector<double> rspecg;
   std::vector<int   > nfrom;
   int nfld;
-  BOOST_TEST_CHECKPOINT("Read rspecg");
+  Log::info() << "Read rspecg" << std::endl;
   read_rspecg(trans,rspecg,nfrom,nfld);
 
 
-  std::vector<double> rspec(nfld*trans.nspec2());
+  std::vector<double> rspec(nfld*trans.nb_spectral_coefficients());
   std::vector<int> nto(nfld,1);
-  std::vector<double> rgp(nfld*trans.ngptot());
-  std::vector<double> rgpg(nfld*trans.ngptotg());
+  std::vector<double> rgp(nfld*trans.nb_gridpoints());
+  std::vector<double> rgpg(nfld*trans.nb_gridpoints_global());
   std::vector<double> specnorms(nfld,0);
 
   trans.distspec( nfld, nfrom.data(), rspecg.data(), rspec.data() );
@@ -182,42 +183,69 @@ BOOST_AUTO_TEST_CASE( test_distspec )
   trans.gathgrid( nfld, nto.data(),   rgp.data(),    rgpg.data() );
 
   if( parallel::mpi::comm().rank() == 0 ) {
-    BOOST_CHECK_CLOSE( specnorms[0], 1., 1.e-10 );
-    BOOST_CHECK_CLOSE( specnorms[1], 2., 1.e-10 );
+    EXPECT( eckit::types::is_approximately_equal( specnorms[0], 1., 1.e-10 ));
+    EXPECT( eckit::types::is_approximately_equal( specnorms[1], 2., 1.e-10 ));
   }
 
-  BOOST_TEST_CHECKPOINT("end test_distspec");
+  Log::info() << "end test_distspec" << std::endl;
 }
 
-BOOST_AUTO_TEST_CASE( test_distribution )
+CASE( "test_distspec_speconly" )
+{
+  trans::Trans::Options p;
+
+  p.set_flt(false);
+  trans::Trans trans( 159, p);
+  Log::info() << "Trans initialized" << std::endl;
+  std::vector<double> rspecg;
+  std::vector<int   > nfrom;
+  int nfld;
+  Log::info() << "Read rspecg" << std::endl;
+  read_rspecg(trans,rspecg,nfrom,nfld);
+
+
+  std::vector<double> rspec(nfld*trans.nb_spectral_coefficients());
+  std::vector<int> nto(nfld,1);
+  std::vector<double> specnorms(nfld,0);
+
+  trans.distspec( nfld, nfrom.data(), rspecg.data(), rspec.data() );
+  trans.specnorm( nfld, rspec.data(), specnorms.data() );
+
+  if( parallel::mpi::comm().rank() == 0 ) {
+    EXPECT( eckit::types::is_approximately_equal( specnorms[0], 1., 1.e-10 ));
+    EXPECT( eckit::types::is_approximately_equal( specnorms[1], 2., 1.e-10 ));
+  }
+
+  Log::info() << "end test_distspec_only" << std::endl;
+}
+
+CASE( "test_distribution" )
 {
   Grid g( "O80" );
 
-  BOOST_TEST_CHECKPOINT("test_distribution");
+  Log::info() << "test_distribution" << std::endl;
 
   grid::Distribution d_trans = grid::Partitioner( new TransPartitioner() ).partition(g);
-  BOOST_TEST_CHECKPOINT("trans distribution created");
+  Log::info() << "trans distribution created" << std::endl;
 
 
   grid::Distribution d_eqreg = grid::Partitioner( new EqualRegionsPartitioner() ).partition(g);
-  BOOST_TEST_CHECKPOINT("eqregions distribution created");
+  Log::info() << "eqregions distribution created" << std::endl;
 
   if( parallel::mpi::comm().rank() == 0 )
   {
-    BOOST_CHECK_EQUAL( d_trans.nb_partitions(), d_eqreg.nb_partitions() );
-    BOOST_CHECK_EQUAL( d_trans.max_pts(), d_eqreg.max_pts() );
-    BOOST_CHECK_EQUAL( d_trans.min_pts(), d_eqreg.min_pts() );
+    EXPECT( d_trans.nb_partitions() == d_eqreg.nb_partitions() );
+    EXPECT( d_trans.max_pts() == d_eqreg.max_pts() );
+    EXPECT( d_trans.min_pts() == d_eqreg.min_pts() );
 
-    BOOST_CHECK_EQUAL_COLLECTIONS( d_trans.nb_pts().begin(), d_trans.nb_pts().end(),
-                                   d_eqreg.nb_pts().begin(), d_eqreg.nb_pts().end() );
+    EXPECT( d_trans.nb_pts() == d_eqreg.nb_pts() );
   }
 
 }
 
-
-BOOST_AUTO_TEST_CASE( test_generate_mesh )
+CASE( "test_generate_mesh" )
 {
-  BOOST_TEST_CHECKPOINT("test_generate_mesh");
+  Log::info() << "test_generate_mesh" << std::endl;
   Grid g( "O80" );
   meshgenerator::StructuredMeshGenerator generate( atlas::util::Config
     ("angle",0)
@@ -227,11 +255,11 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
 
   Mesh m_default = generate( g );
 
-  BOOST_TEST_CHECKPOINT("trans_distribution");
+  Log::info() << "trans_distribution" << std::endl;
   grid::Distribution trans_distribution = grid::Partitioner( new TransPartitioner() ).partition(g);
   Mesh m_trans = generate( g, trans_distribution );
 
-  BOOST_TEST_CHECKPOINT("eqreg_distribution");
+  Log::info() << "eqreg_distribution" << std::endl;
   grid::Distribution eqreg_distribution = grid::Partitioner( new EqualRegionsPartitioner() ).partition(g);
   Mesh m_eqreg = generate( g, eqreg_distribution );
 
@@ -240,17 +268,17 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   array::ArrayView<int,1> p_eqreg   = array::make_view<int,1>( m_eqreg  .nodes().partition() );
 
   for( size_t j=0; j<p_default.shape(0); ++j ) {
-    BOOST_CHECK_EQUAL( p_default(j), p_trans(j) );
-    BOOST_CHECK_EQUAL( p_default(j), p_eqreg(j) );
+    EXPECT( p_default(j) == p_trans(j) );
+    EXPECT( p_default(j) == p_eqreg(j) );
   }
 
   output::Gmsh("N16_trans.msh").write(m_trans);
 }
 
 
-BOOST_AUTO_TEST_CASE( test_spectral_fields )
+CASE( "test_spectral_fields" )
 {
-  BOOST_TEST_CHECKPOINT("test_spectral_fields");
+  Log::info() << "test_spectral_fields" << std::endl;
 
   Grid g( "O48" );
   meshgenerator::StructuredMeshGenerator generate( atlas::util::Config
@@ -265,28 +293,28 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   functionspace::NodeColumns nodal (m);
   functionspace::Spectral spectral (trans);
 
-  Field spf = spectral.createField<double>("spf");
-  Field gpf = nodal.createField<double>("gpf");
+  Field spf = spectral.createField<double>(option::name("spf"));
+  Field gpf = nodal.   createField<double>(option::name("gpf"));
 
 
-  BOOST_CHECK_NO_THROW( trans.dirtrans(nodal,gpf,spectral,spf) );
-  BOOST_CHECK_NO_THROW( trans.invtrans(spectral,spf,nodal,gpf) );
+  EXPECT_NO_THROW( trans.dirtrans(nodal,gpf,spectral,spf) );
+  EXPECT_NO_THROW( trans.invtrans(spectral,spf,nodal,gpf) );
 
   FieldSet gpfields;   gpfields.add(gpf);
   FieldSet spfields;   spfields.add(spf);
 
-  BOOST_CHECK_NO_THROW( trans.dirtrans(nodal,gpfields,spectral,spfields) );
-  BOOST_CHECK_NO_THROW( trans.invtrans(spectral,spfields,nodal,gpfields) );
+  EXPECT_NO_THROW( trans.dirtrans(nodal,gpfields,spectral,spfields) );
+  EXPECT_NO_THROW( trans.invtrans(spectral,spfields,nodal,gpfields) );
 
   gpfields.add(gpf);
-  BOOST_CHECK_THROW(trans.dirtrans(nodal,gpfields,spectral,spfields),eckit::SeriousBug);
+  EXPECT_THROWS_AS(trans.dirtrans(nodal,gpfields,spectral,spfields),eckit::SeriousBug);
 
 }
 
 
-BOOST_AUTO_TEST_CASE( test_nomesh )
+CASE( "test_nomesh" )
 {
-  BOOST_TEST_CHECKPOINT("test_spectral_fields");
+  Log::info() << "test_spectral_fields" << std::endl;
 
   Grid g( "O48" );
   trans::Trans trans(g,47) ;
@@ -294,10 +322,10 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   functionspace::Spectral          spectral   (trans);
   functionspace::StructuredColumns gridpoints (g);
 
-  Field spfg = spectral.createField<double>("spf",field::global());
-  Field spf  = spectral.createField<double>("spf");
-  Field gpf  = gridpoints.createField<double>("gpf");
-  Field gpfg = gridpoints.createField<double>("gpf", field::global());
+  Field spfg = spectral.  createField<double>(option::name("spf") | option::global());
+  Field spf  = spectral.  createField<double>(option::name("spf"));
+  Field gpf  = gridpoints.createField<double>(option::name("gpf"));
+  Field gpfg = gridpoints.createField<double>(option::name("gpf") | option::global());
 
   array::ArrayView<double,1> spg = array::make_view<double,1>(spfg);
   if( parallel::mpi::comm().rank() == 0 ) {
@@ -305,39 +333,46 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
     spg(0) = 4.;
   }
 
-  BOOST_CHECK_NO_THROW( spectral.scatter(spfg,spf) );
+  EXPECT_NO_THROW( spectral.scatter(spfg,spf) );
 
   if( parallel::mpi::comm().rank() == 0 ) {
     array::ArrayView<double,1> sp = array::make_view<double,1>(spf);
-    BOOST_CHECK_CLOSE( sp(0), 4., 0.001 );
+    EXPECT( eckit::types::is_approximately_equal( sp(0), 4., 0.001 ));
     for( size_t jp=0; jp<sp.size(); ++jp ) {
       Log::debug() << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
     }
   }
 
-  BOOST_CHECK_NO_THROW( trans.invtrans(spf,gpf) );
+  EXPECT_NO_THROW( trans.invtrans(spf,gpf) );
 
-  BOOST_CHECK_NO_THROW( gridpoints.gather(gpf,gpfg) );
+  EXPECT_NO_THROW( gridpoints.gather(gpf,gpfg) );
 
   if( parallel::mpi::comm().rank() == 0 ) {
     array::ArrayView<double,1> gpg = array::make_view<double,1>(gpfg);
     for( size_t jp=0; jp<gpg.size(); ++jp ) {
-      BOOST_CHECK_CLOSE( gpg(jp), 4., 0.001 );
+      EXPECT( eckit::types::is_approximately_equal( gpg(jp), 4., 0.001 ));
       Log::debug() << "gpg("<<jp << ")   :   " << gpg(jp) << std::endl;
     }
   }
 
-  BOOST_CHECK_NO_THROW( gridpoints.scatter(gpfg,gpf) );
+  EXPECT_NO_THROW( gridpoints.scatter(gpfg,gpf) );
 
-  BOOST_CHECK_NO_THROW( trans.dirtrans(gpf,spf) );
+  EXPECT_NO_THROW( trans.dirtrans(gpf,spf) );
 
-  BOOST_CHECK_NO_THROW( spectral.gather(spf,spfg) );
+  EXPECT_NO_THROW( spectral.gather(spf,spfg) );
 
   if( parallel::mpi::comm().rank() == 0 ) {
-    BOOST_CHECK_CLOSE( spg(0), 4., 0.001 );
+    EXPECT( eckit::types::is_approximately_equal( spg(0), 4., 0.001 ));
   }
 }
 
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTransEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

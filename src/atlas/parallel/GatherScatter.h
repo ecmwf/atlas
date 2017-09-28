@@ -91,8 +91,6 @@ public:
 
 class GatherScatter: public eckit::Owned {
 
-public: // types
-  typedef eckit::SharedPtr<GatherScatter> Ptr;
 public:
   GatherScatter();
   GatherScatter(const std::string& name);
@@ -107,12 +105,7 @@ public: // methods
   /// @param [in] remote_idx   List of local indices on remote partitions
   /// @param [in] base         values of remote_idx start at "base"
   /// @param [in] glb_idx      List of global indices
-  /// @param [in] max_glb_idx  maximum glb index we want to gather.
-  ///                          To gather everything, set to val > max value in domain
   /// @param [in] parsize      size of given lists
-  /// @param [in] include_ghost    Warning: setting this to true breaks scatter
-  ///                              functionality. This feature allows to check periodic
-  ///                              halo values in output when TRUE
   void setup( const int part[],
               const int remote_idx[], const int base,
               const gidx_t glb_idx[],

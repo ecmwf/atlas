@@ -8,22 +8,22 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestGmsh
-#include "ecbuild/boost_test_framework.h"
-
 #include "tests/TestMeshes.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/output/Output.h"
 #include "atlas/output/Gmsh.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
+
+using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( test_gmsh_output )
+CASE( "test_gmsh_output" )
 {
   Mesh mesh = test::generate_mesh( Grid("N128") );
 
@@ -34,5 +34,13 @@ BOOST_AUTO_TEST_CASE( test_gmsh_output )
   gmsh.write(mesh);
 }
 
-} // namespace test
-} // namespace atlas
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

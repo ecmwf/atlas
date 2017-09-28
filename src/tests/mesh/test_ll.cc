@@ -8,9 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestLL
-#include "ecbuild/boost_test_framework.h"
-
 #include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
@@ -18,23 +15,32 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/grid/Grid.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
+
+using namespace eckit::testing;
 
 
 namespace atlas {
 namespace test {
 
+//-----------------------------------------------------------------------------
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
-
-BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
+CASE( "test_ll_meshgen_one_part" )
 {
   Grid g( "L5" );
   Mesh m = meshgenerator::StructuredMeshGenerator().generate(g);
   output::Gmsh("L5.msh").write(m);
 }
 
-} // namespace test
-} // namespace atlas
+//-----------------------------------------------------------------------------
 
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}
 

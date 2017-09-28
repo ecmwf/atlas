@@ -53,15 +53,59 @@ MatchingMeshPartitioner::MatchingMeshPartitioner() :
 }
 
 grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const Mesh& mesh, const Partitioner::Config& config ) {
-    std::string type;
-    if( not config.get("type",type) )
-      type = "polygon";
+    std::string type ("lonlat-polygon");
+    config.get("type",type);
     return MatchedPartitionerFactory::build(type,mesh);
 }
 
 MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh, const Config& config ) :
     Partitioner( matching_mesh_partititioner(mesh,config) ) {
 }
+
+extern "C" {
+
+detail::partitioner::Partitioner* atlas__grid__Partitioner__new( const Partitioner::Config* config)
+{
+    detail::partitioner::Partitioner* p;
+    {
+      Partitioner partitioner(*config);
+      p = const_cast<detail::partitioner::Partitioner*>(partitioner.get());
+      p->attach();
+    }
+    p->detach();
+    return p;
+}
+
+detail::partitioner::Partitioner* atlas__grid__MatchingMeshPartitioner__new( const Mesh::Implementation* mesh, const Partitioner::Config* config )
+{
+    detail::partitioner::Partitioner* p;
+    {
+      MatchingMeshPartitioner partitioner( Mesh(mesh), *config );
+      p = const_cast<detail::partitioner::Partitioner*>(partitioner.get());
+      p->attach();
+    }
+    p->detach();
+    return p;
+}
+
+Distribution::impl_t* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This, const Grid::Implementation* grid )
+{
+  Distribution::impl_t* d;
+  {
+    Distribution distribution = This->partition( Grid(grid) );
+    d = const_cast<Distribution::impl_t*>(distribution.get());
+    d->attach();
+  }
+  d->detach();
+  return d;
+}
+
+void atlas__grid__Partitioner__delete(detail::partitioner::Partitioner* This)
+{
+    delete This;
+}
+
+} // extern "C"
 
 } // namespace grid
 } // namespace atlas

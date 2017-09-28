@@ -1,47 +1,26 @@
 
 if( HAVE_FCTEST )
+    foreach(test
+            fctest_griddistribution
+            fctest_state)
 
-  add_fctest( TARGET atlas_fctest_griddistribution
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_griddistribution.F90
-    LIBS            atlas_f
-  )
+        add_fctest( TARGET atlas_${test} SOURCES ${test}.F90 LINKER_LANGUAGE Fortran LIBS atlas_f )
 
-  add_fctest( TARGET atlas_fctest_state
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_state.F90
-    LIBS            atlas_f
-  )
-
+    endforeach()
 endif()
 
-ecbuild_add_test( TARGET atlas_test_state
-  BOOST
-  SOURCES  test_state.cc
-  LIBS     atlas
-)
+if( ECKIT_HAVE_TESTING )
 
+foreach(test
+        test_domain
+        test_field
+        test_grid_ptr
+        test_grids
+        test_rotation
+        test_state)
 
-ecbuild_add_test( TARGET atlas_test_grids
-  BOOST
-  SOURCES   test_grids.cc
-  LIBS      atlas
-)
+    ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas )
 
-ecbuild_add_test( TARGET atlas_test_grid_ptr
-  BOOST
-  SOURCES   test_grid_ptr.cc
-  LIBS      atlas
-)
+endforeach()
 
-ecbuild_add_test(   TARGET      atlas_test_field
-    BOOST
-    SOURCES     test_field.cc
-    LIBS        atlas
-)
-
-ecbuild_add_test( TARGET atlas_test_rotation
-  BOOST
-  SOURCES   test_rotation.cc
-  LIBS      atlas
-)
+endif()

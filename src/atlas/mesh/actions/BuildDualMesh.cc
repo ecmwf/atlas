@@ -178,6 +178,7 @@ void add_median_dual_volume_contribution_cells(
   const array::ArrayView<double,2> edge_centroids = array::make_view<double,2>( edges.field("centroids_xy") );
   const mesh::HybridElements::Connectivity& cell_edge_connectivity = cells.edge_connectivity();
   const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
+  auto patch = array::make_view<int,1>(cells.field("patch"));
 
   // special ordering for bit-identical results
   size_t nb_cells = cells.size();
@@ -189,18 +190,19 @@ void add_median_dual_volume_contribution_cells(
 
   for (size_t jcell=0; jcell<nb_cells; ++jcell)
   {
-    size_t icell = ordering[jcell].i;
+    idx_t icell = ordering[jcell].i;
+    if( patch(icell) ) continue;
     double x0 = cell_centroids(icell,XX);
     double y0 = cell_centroids(icell,YY);
 
     for (size_t jedge=0; jedge<cell_edge_connectivity.cols(icell); ++jedge)
     {
-      size_t iedge = cell_edge_connectivity(icell,jedge);
+      idx_t iedge = cell_edge_connectivity(icell,jedge);
       double x1 = edge_centroids(iedge,XX);
       double y1 = edge_centroids(iedge,YY);
       for( size_t jnode=0; jnode<2; ++jnode )
       {
-        size_t inode = edge_node_connectivity(iedge,jnode);
+        idx_t inode = edge_node_connectivity(iedge,jnode);
         double x2 = xy(inode,XX);
         double y2 = xy(inode,YY);
         double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;

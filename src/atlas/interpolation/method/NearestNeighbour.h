@@ -31,10 +31,10 @@ protected:
     /**
      * @brief Create an interpolant sparse matrix relating two (pre-partitioned) meshes,
      * using nearest neighbour method
-     * @param meshSource mesh containing source elements
-     * @param meshTarget mesh containing target points
+     * @param source functionspace containing source elements
+     * @param target functionspace containing target points
      */
-    void setup(Mesh& meshSource, Mesh& meshTarget);
+    virtual void setup(const FunctionSpace& source, const FunctionSpace& target) override;
 
 };
 

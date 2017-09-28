@@ -59,69 +59,69 @@ nodes = fs%nodes()
 nb_nodes = fs%nb_nodes()
 write(msg,*) "nb_nodes = ",nb_nodes; call atlas_log%info(msg)
 
-field = fs%create_field("",atlas_real(c_float))
+field = fs%create_field(atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("field",atlas_real(c_float))
+field = fs%create_field(name="field",kind=atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("",atlas_real(c_float),[2])
+field = fs%create_field(atlas_real(c_float),variables=2)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",atlas_integer(c_int),[2,2])
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+field = fs%create_field(name="field",kind=atlas_integer(c_int),variables=2*2)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
 
-field = fs%create_field("",template)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+field = fs%create_field(template)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",template)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+field = fs%create_field(template,name="field")
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
 
 
-field = fs%create_field("",atlas_real(c_float),global=.True.)
+field = fs%create_field(atlas_real(c_float),global=.True.)
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("field",atlas_real(c_float),global=.True.)
+field = fs%create_field(name="field",kind=atlas_real(c_float),global=.True.)
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("",atlas_real(c_float),[2],global=.True.)
+field = fs%create_field(atlas_real(c_float),variables=2,global=.True.)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",atlas_integer(c_int),[2,2],global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+field = fs%create_field(name="field",kind=atlas_integer(c_int),variables=2*2,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
 
-field = fs%create_field("",template,global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+field = fs%create_field(template,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",template,global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+field = fs%create_field(template,name="field",global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
@@ -154,72 +154,79 @@ fs = atlas_functionspace_NodeColumns(mesh,halo_size)
 !levels = fs%nb_levels()
 write(msg,*) "nb_levels = ",levels; call atlas_log%info(msg)
 
-field = fs%create_field("",atlas_real(c_float),levels)
+field = fs%create_field(atlas_real(c_float),levels=levels)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("field",atlas_real(c_float),levels)
+field = fs%create_field(name="field",kind=atlas_real(c_float),levels=levels)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("",atlas_real(c_float),levels,[2])
+field = fs%create_field(atlas_real(c_float),levels=levels,variables=2)
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",atlas_integer(c_int),levels,[2,2])
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+field = fs%create_field(name="field",kind=atlas_integer(c_int),levels=levels,variables=2*2)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
 
-field = fs%create_field("",template)
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+field = fs%create_field(template)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",template)
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+field = fs%create_field(template,name="field")
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
 
 
-field = fs%create_field("",atlas_real(c_float),levels,global=.True.)
+field = fs%create_field(atlas_real(c_float),levels=levels,global=.True.)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("field",atlas_real(c_float),levels,global=.True.)
+field = fs%create_field(name="field",kind=atlas_real(c_float),levels=levels,global=.True.)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("",atlas_real(c_float),levels,[2],global=.True.)
+field = fs%create_field(atlas_real(c_float),levels=levels,variables=2,global=.True.)
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",atlas_integer(c_int),levels,[2,2],global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+field = fs%create_field(name="field",kind=atlas_integer(c_int),levels=levels,variables=2*2,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
 
-field = fs%create_field("",template,global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+field = fs%create_field(template,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",template,global=.True.)
-FCTEST_CHECK_EQUAL( field%rank() , 4 )
+field = fs%create_field(template,name="field",global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
+
+fs = atlas_functionspace_NodeColumns(mesh,levels=5)
+field = fs%create_field(atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
 
 call fs%final()
 call mesh%final()
@@ -240,7 +247,7 @@ type(atlas_Metadata) :: metadata
 type(fckit_mpi_comm) :: mpi
 real(c_float), pointer :: scalvalues(:)
 real(c_float), pointer :: values(:,:)
-real(c_float), pointer :: values3d(:,:,:,:)
+real(c_float), pointer :: values3d(:,:,:)
 real(c_float) :: minimum, maximum, sum, oisum, mean, stddev
 real(c_float), allocatable :: minimumv(:), maximumv(:), meanv(:), stddevv(:)
 integer :: halo_size, levels
@@ -257,9 +264,9 @@ mesh = meshgenerator%generate(grid)
 call meshgenerator%final()
 fs2d = atlas_functionspace_NodeColumns(mesh,halo_size)
 
-field  = fs2d%create_field(atlas_real(c_float),[2])
+field  = fs2d%create_field(kind=atlas_real(c_float),variables=2)
 global = fs2d%create_field(field,global=.True.)
-scal   = fs2d%create_field(atlas_real(c_float))
+scal   = fs2d%create_field(kind=atlas_real(c_float))
 
 write(msg,*) "field:  rank",field%rank(), " shape [",field%shape(), "] size ", field%size();  call atlas_log%info(msg)
 write(msg,*) "global: rank",global%rank()," shape [",global%shape(),"] size ", global%size(); call atlas_log%info(msg)
@@ -323,7 +330,7 @@ call field%final()
 call global%final()
 
 
-field  = fs2d%create_field(atlas_real(c_float),levels,[2,3])
+field  = fs2d%create_field(kind=atlas_real(c_float),levels=levels,variables=2*3)
 global = fs2d%create_field(field,global=.True.,owner=mpi%size()-1)
 
 write(msg,*) "field:  rank",field%rank(), " shape [",field%shape(), "] size ", field%size();  call atlas_log%info(msg)
@@ -376,78 +383,153 @@ FCTEST_CHECK_EQUAL( edges%owners(), 3 )
 nb_edges = fs%nb_edges()
 write(msg,*) "nb_edges = ",nb_edges; call atlas_log%info(msg)
 
-field = fs%create_field("",atlas_real(c_float))
+field = fs%create_field(atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("field",atlas_real(c_float))
+field = fs%create_field(name="field",kind=atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("",atlas_real(c_float),[2])
+field = fs%create_field(atlas_real(c_float),variables=2)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",atlas_integer(c_int),[2,2])
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+field = fs%create_field(name="field",kind=atlas_integer(c_int),variables=2*2)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
 
-field = fs%create_field("",template)
+field = fs%create_field(name="field",template=template)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+call field%final()
+call template%final()
+
+field = fs%create_field(atlas_real(c_float),levels=10,variables=2)
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",template)
+field = fs%create_field(name="field",kind=atlas_integer(c_int),variables=2*2,levels=10)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+template = field
+
+field = fs%create_field(name="field",template=template)
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
 
 
-field = fs%create_field(atlas_real(c_float),global=.true.)
+field = fs%create_field(kind=atlas_real(c_float),global=.true.)
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field("field",atlas_real(c_float),global=.true.)
+field = fs%create_field(name="field", kind=atlas_real(c_float),global=.true.)
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field(atlas_real(c_float),[2],global=.true.)
+field = fs%create_field(kind=atlas_real(c_float),variables=2,global=.true.)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",atlas_integer(c_int),[2,2],global=.true.)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+field = fs%create_field(name="field",kind=atlas_integer(c_int),variables=2*2,global=.true.)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
 
 field = fs%create_field(template,global=.true.)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call field%final()
 
-field = fs%create_field("field",template,global=.true.)
-FCTEST_CHECK_EQUAL( field%rank() , 3 )
+field = fs%create_field(template,name="field",global=.true.)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
+
+fs = atlas_functionspace_EdgeColumns(mesh,levels=5)
+field = fs%create_field(atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
 
 call fs%final()
 call edges%final()
 call mesh%final()
 call grid%final()
 
+END_TEST
+
+TEST( test_structuredcolumns )
+type(atlas_StructuredGrid) :: grid
+type(atlas_functionspace_StructuredColumns) :: fs
+type(atlas_functionspace) :: fs_base
+type(atlas_functionspace_StructuredColumns) :: fs_struct
+integer :: i, j
+character(len=10) str
+
+type(atlas_Field) field
+type(atlas_Field) field_xy
+real(8), pointer :: xy(:,:), x(:)
+integer, parameter :: XX=1
+
+grid = atlas_StructuredGrid("O8")
+fs = atlas_functionspace_StructuredColumns(grid,halo=2)
+
+field = fs%create_field(name="field",kind=atlas_real(8))
+field_xy = fs%xy()
+call field%host_data(x)
+call field_xy%host_data(xy)
+
+do j=fs%j_begin_halo(),fs%j_end_halo()
+  write(str,'(I4,A)') j, ' : '
+  call atlas_log%info(str,newl=.false.)
+  do i=fs%i_begin_halo(j),fs%i_end_halo(j)
+    write(str,'(I4)') fs%index(i,j)
+    call atlas_log%info(str,newl=.false.)
+    x(fs%index(i,j)) = xy(XX,fs%index(i,j))
+  enddo
+  call atlas_log%info("",newl=.true.)
+enddo
+
+call fs%halo_exchange(field)
+
+
+fs = atlas_functionspace_StructuredColumns(grid,levels=5)
+field = fs%create_field(atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+
+
+write(0,*) "before: name = ", fs%name()
+write(0,*) "before: owners = ", fs%owners()
+fs_base = field%functionspace()
+write(0,*) "after: name = " , fs%name()
+write(0,*) "after: owners = " , fs%owners()
+
+call field%final()
+
+
+call field_xy%final()
+call fs%final()
+call grid%final()
 END_TEST
 
 

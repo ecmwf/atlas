@@ -64,7 +64,7 @@ class GaussianLatitudes : public eckit::Owned {
     double lat[] = {LATS} ;\
     lats_.assign(lat,lat+N);\
   }\
-  
+
 DECLARE_GAUSSIAN_LATITUDES(16);
 DECLARE_GAUSSIAN_LATITUDES(24);
 DECLARE_GAUSSIAN_LATITUDES(32);

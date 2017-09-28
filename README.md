@@ -35,7 +35,6 @@ Recommended:
 
 - OpenMP --- Shared memory parallelisation
 - fkit --- Unit testing for Fortran
-- boost_unit_test --- Unit testing for C++
 
 
 Installation

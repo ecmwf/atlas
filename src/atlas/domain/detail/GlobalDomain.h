@@ -1,6 +1,7 @@
 #pragma once
 
 #include "atlas/domain/detail/ZonalBandDomain.h"
+#include "atlas/domain/Domain.h"
 
 namespace atlas {
 namespace domain {
@@ -27,6 +28,18 @@ public:
     virtual void print(std::ostream&) const override;
 
     virtual void hash(eckit::Hash&) const override;
+
+    /// Check if grid includes the North pole
+    virtual bool containsNorthPole() const override { return true; }
+
+    /// Check if grid includes the South pole
+    virtual bool containsSouthPole() const override { return true; }
+
+private:
+
+    friend class ::atlas::RectangularDomain;
+    GlobalDomain(const double west);
+
 };
 
 

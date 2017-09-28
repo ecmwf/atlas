@@ -29,6 +29,8 @@ public:
       int n;
     };
 
+    virtual std::string type() const { return "checkerboard"; }
+
 private:
 
     struct Checkerboard {

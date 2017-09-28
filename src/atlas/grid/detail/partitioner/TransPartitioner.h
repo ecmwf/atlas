@@ -42,6 +42,8 @@ public:
     int nb_bands() const;
 
     int nb_regions(int b) const;
+    
+    virtual std::string type() const { return "trans"; }
 
 private:
 

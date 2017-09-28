@@ -26,8 +26,9 @@ if( HAVE_FCTEST )
 
 endif()
 
+if( ECKIT_HAVE_TESTING )
+
 ecbuild_add_test( TARGET atlas_test_trans
-  BOOST
   MPI      4
   SOURCES   test_trans.cc
   CONDITION ATLAS_HAVE_TRANS AND ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
@@ -35,15 +36,16 @@ ecbuild_add_test( TARGET atlas_test_trans
 )
 
 ecbuild_add_test( TARGET atlas_test_trans_serial
-  BOOST
   SOURCES   test_trans.cc
   CONDITION ATLAS_HAVE_TRANS
   LIBS      atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_trans_invtrans_grad
-  BOOST
   SOURCES   test_trans_invtrans_grad.cc
   CONDITION ATLAS_HAVE_TRANS
   LIBS      atlas
 )
+
+endif()
+

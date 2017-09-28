@@ -20,6 +20,7 @@
 #include <array>
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
+#include "atlas/util/Earth.h"
 
 namespace atlas {
 
@@ -118,18 +119,5 @@ public:
     return *this;
   }
 };
-
-
-inline PointXYZ lonlat_to_geocentric( const PointLonLat& lonlat ) {
-  PointXYZ xyz;
-  eckit::geometry::lonlat_to_3d(lonlat.data(),xyz.data());
-  return xyz;
-}
-
-inline PointXYZ lonlat_to_geocentric( const PointLonLat& lonlat, double radius ) {
-  PointXYZ xyz;
-  eckit::geometry::lonlat_to_3d(lonlat.data(),xyz.data(), radius, 0);
-  return xyz;
-}
 
 }

@@ -7,8 +7,8 @@
 # does it submit to any jurisdiction.
 
 ecbuild_add_executable(
-    TARGET  atlas-interpolation
-    SOURCES atlas-interpolation.cc
+    TARGET  atlas-parallel-interpolation
+    SOURCES atlas-parallel-interpolation.cc
             PartitionedMesh.h
             PartitionedMesh.cc
     LIBS    atlas

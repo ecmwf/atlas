@@ -1,18 +1,17 @@
+#include <cmath>
 #include "atlas/library/Library.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/field/Field.h"
-#include "atlas/array/ArrayView.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
+#include "atlas/grid.h"
+#include "atlas/field.h"
+#include "atlas/array.h"
+#include "atlas/mesh.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/functionspace.h"
+#include "atlas/util/CoordinateEnums.h"
 
-using atlas::Grid;
-using atlas::Mesh;
+using namespace atlas;
 using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::functionspace::StructuredColumns;
-using atlas::Field;
 using atlas::array::ArrayView;
 using atlas::array::make_view;
 using atlas::output::Gmsh;
@@ -25,36 +24,34 @@ int main(int argc, char *argv[])
     Grid grid( "N32" );
 
     // Generate functionspace associated to grid
-    StructuredColumns fs_rgp(grid);
+    StructuredColumns fs(grid);
 
     // Variables for scalar1 field definition
-    const double rpi = 2.0 * asin(1.0);
-    const double deg2rad = rpi / 180.;
-    const double zlatc = 0.0 * rpi;
-    const double zlonc = 1.0 * rpi;
-    const double zrad  = 2.0 * rpi / 9.0;
+    const double deg2rad = M_PI / 180.;
+    const double zlatc = 0.0 * M_PI;
+    const double zlonc = 1.0 * M_PI;
+    const double zrad  = 2.0 * M_PI / 9.0;
     int jnode = 0;
 
     // Calculate scalar function
-    Field field_scalar1 = fs_rgp.createField<double>("scalar1");
+    Field field_scalar1 = fs.createField<double>(option::name("scalar1"));
+    auto xy      = make_view<double,2>(fs.xy());
     auto scalar1 = make_view<double,1>(field_scalar1);
 
-    for (size_t jlat = 0; jlat < fs_rgp.ny(); ++jlat)
+    for (idx_t j = fs.j_begin(); j < fs.j_end(); ++j)
     {
-        for (size_t jlon = 0; jlon < fs_rgp.nx(jlat); ++jlon)
+        for (idx_t i = fs.i_begin(j); i < fs.i_end(j); ++i)
         {
-            double zlat = fs_rgp.y(jlat);
-            zlat = zlat * deg2rad;
-            double zlon = fs_rgp.x(jlon, jlat);
-            zlon  = zlon * deg2rad;
-            double zdist = 2.0 * sqrt((cos(zlat) * sin((zlon-zlonc)/2.)) *
-                          (cos(zlat) * sin((zlon-zlonc)/2.)) +
-                           sin((zlat-zlatc)/2.) * sin((zlat-zlatc)/2.));
+            double zlon = xy( fs.index(i,j), XX ) * deg2rad;
+            double zlat = xy( fs.index(i,j), YY ) * deg2rad;
+            double zdist = 2.0 * std::sqrt((cos(zlat) * std::sin((zlon-zlonc)/2.)) *
+                          (std::cos(zlat) * std::sin((zlon-zlonc)/2.)) +
+                           std::sin((zlat-zlatc)/2.) * std::sin((zlat-zlatc)/2.));
 
             scalar1(jnode) = 0.0;
             if (zdist < zrad)
             {
-                scalar1(jnode) = 0.5 * (1. + cos(rpi*zdist/zrad));
+                scalar1(jnode) = 0.5 * (1. + std::cos(M_PI*zdist/zrad));
             }
             ++jnode;
         }
@@ -71,6 +68,6 @@ int main(int argc, char *argv[])
       gmsh.write(field_scalar1);
     }
 
-    atlas::Library::instance().finalise();
+    Library::instance().finalise();
     return 0;
 }

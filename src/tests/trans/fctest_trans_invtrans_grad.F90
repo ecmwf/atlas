@@ -113,9 +113,9 @@ TEST( test_trans_invtrans_grad )
   nodes_fs    = atlas_functionspace_NodeColumns(mesh,0)
   spectral_fs = atlas_functionspace_Spectral(trans)
 
-  scalar = nodes_fs%create_field("scalar",atlas_real(c_double))
-  grad   = nodes_fs%create_field("grad",atlas_real(c_double),[2])
-  scalar_sp = spectral_fs%create_field("spectral_sp",atlas_real(c_double))
+  scalar = nodes_fs%create_field(name="scalar",kind=atlas_real(c_double))
+  grad   = nodes_fs%create_field(name="grad",kind=atlas_real(c_double),variables=2)
+  scalar_sp = spectral_fs%create_field(name="spectral_sp",kind=atlas_real(c_double))
 
   beta = pi*0.5;
   call rotated_flow_magnitude(nodes_fs,scalar,beta)

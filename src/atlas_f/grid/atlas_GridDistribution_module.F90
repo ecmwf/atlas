@@ -42,6 +42,7 @@ END TYPE atlas_GridDistribution
 !------------------------------------------------------------------------------
 
 interface atlas_GridDistribution
+  module procedure atlas_GridDistribution__cptr
   module procedure atlas_GridDistribution__ctor
 end interface
 
@@ -51,17 +52,26 @@ contains
 ! -----------------------------------------------------------------------------
 ! GridDistribution routines
 
-function atlas_GridDistribution__ctor( part, part0 ) result(griddistribution)
+function atlas_GridDistribution__cptr( cptr ) result(this)
+  use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_distribution_c_binding
-  type(atlas_GridDistribution) :: griddistribution
+  type(atlas_GridDistribution) :: this
+  type(c_ptr) :: cptr
+  call this%reset_c_ptr( cptr );
+end function
+
+function atlas_GridDistribution__ctor( part, part0 ) result(this)
+  use atlas_distribution_c_binding
+  type(atlas_GridDistribution) :: this
   integer, intent(in) :: part(:)
   integer, intent(in), optional :: part0
   integer:: npts, opt_part0
   opt_part0 = 0
   if( present(part0) ) opt_part0 = part0
   npts = size(part)
-  call griddistribution%reset_c_ptr( atlas__GridDistribution__new(npts, part, opt_part0) );
-end function atlas_GridDistribution__ctor
+  this = atlas_GridDistribution__cptr( atlas__GridDistribution__new(npts, part, opt_part0) )
+  call this%return()
+end function
 
 
 subroutine atlas_GridDistribution__final( this )

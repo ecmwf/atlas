@@ -316,7 +316,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
       ridx( recv_node[jnode*2+0] ) = recv_node[jnode*2+1];
     }
   }
-  return nodes.field("remote_idx");
+  return nodes.remote_index();
 }
 
 //----------------------------------------------------------------------------------------------------------------------

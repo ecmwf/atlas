@@ -129,6 +129,10 @@ void build_element_to_edge_connectivity( Mesh& mesh )
   // Verify that all edges have been found
   for( size_t jcell=0; jcell<mesh.cells().size(); ++jcell )
   {
+    // If this is a patched element (over the pole), there were no edges created, so skip the check.
+    auto patch = array::make_view<int,1>(mesh.cells().field("patch"));
+    if( patch(jcell) ) continue;
+
     for( size_t jcol=0; jcol<cell_edge_connectivity.cols(jcell); ++jcol )
     {
       if( cell_edge_connectivity(jcell,jcol) == cell_edge_connectivity.missing_value() )
@@ -279,6 +283,8 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
 
 struct ComputeUniquePoleEdgeIndex
 {
+  // Already assumes that the edges cross the pole
+
   ComputeUniquePoleEdgeIndex( const mesh::Nodes& nodes ) :
   xy( array::make_view<double,2> ( nodes.xy() ) )
   {
@@ -301,7 +307,7 @@ struct ComputeUniquePoleEdgeIndex
     else
       centroid[YY] = -90.;
     /// FIXME make this into `util::unique_lonlat(centroid)` but this causes weird parallel behavior
-    return util::detail::unique32( microdeg(centroid[XX]), microdeg(centroid[XX]) );
+    return util::detail::unique32( microdeg(centroid[XX]), microdeg(centroid[YY]) );
   }
 
   array::ArrayView<double,2> xy;

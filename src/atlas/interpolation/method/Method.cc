@@ -13,6 +13,7 @@
 
 #include <map>
 #include "eckit/exception/Exceptions.h"
+#include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Vector.h"
 #include "eckit/log/Timer.h"
 #include "eckit/thread/AutoLock.h"
@@ -22,11 +23,8 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/runtime/Log.h"
 
-
 namespace atlas {
 namespace interpolation {
-namespace method {
-
 
 namespace {
 
@@ -84,7 +82,7 @@ Method* MethodFactory::build(const std::string& name, const Method::Config& conf
 }
 
 
-void Method::execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget) {
+void Method::execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget) const {
     eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::Method::execute()");
 
     const size_t N = fieldsSource.size();
@@ -93,19 +91,18 @@ void Method::execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget) {
     for (size_t i = 0; i < fieldsSource.size(); ++i) {
         Log::debug<Atlas>() << "Method::execute() on field " << (i+1) << '/' << N << "..." << std::endl;
 
-        Field& src = const_cast< Field& >(fieldsSource[i]);
-        Field& tgt = const_cast< Field& >(fieldsTarget[i]);
+        const Field& src = fieldsSource[i];
+        Field& tgt = fieldsTarget[i];
 
-        eckit::linalg::Vector
-                v_src(src.data<double>(), src.shape(0)),
-                v_tgt(tgt.data<double>(), tgt.shape(0));
+        eckit::linalg::Vector v_src( const_cast<double*>(src.data<double>()), src.shape(0) );
+        eckit::linalg::Vector v_tgt( tgt.data<double>(), tgt.shape(0) );
 
         eckit::linalg::LinearAlgebra::backend().spmv(matrix_, v_src, v_tgt);
     }
 }
 
 
-void Method::execute(const Field& fieldSource, Field& fieldTarget) {
+void Method::execute(const Field& fieldSource, Field& fieldTarget) const {
     eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::Method::execute()");
 
     eckit::linalg::Vector
@@ -116,7 +113,7 @@ void Method::execute(const Field& fieldSource, Field& fieldTarget) {
 }
 
 
-void Method::normalise(Method::Triplets& triplets) {
+void Method::normalise(Triplets& triplets) {
     // sum all calculated weights for normalisation
     double sum = 0.0;
 
@@ -131,8 +128,6 @@ void Method::normalise(Method::Triplets& triplets) {
     }
 }
 
-
-}  // method
 }  // interpolation
 }  // atlas
 

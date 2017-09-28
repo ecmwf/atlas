@@ -8,9 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestFunctionSpace
-#include "ecbuild/boost_test_framework.h"
-
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 #include "eckit/types/Types.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "atlas/library/Library.h"
@@ -28,24 +27,23 @@
 #include "atlas/trans/Trans.h"
 #endif
 
-#include "tests/AtlasFixture.h"
-
 
 using namespace eckit;
 using namespace atlas::functionspace;
 using namespace atlas::util;
+using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns_no_halo )
+CASE( "test_functionspace_NodeColumns_no_halo" )
 {
   Grid grid("O8");
   Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(grid);
   functionspace::NodeColumns nodes_fs(mesh);
-  Field field( nodes_fs.createField<int>("field") );
+  Field field( nodes_fs.createField<int>() );
   array::ArrayView<int,1> value = array::make_view<int,1>( field );
   array::ArrayView<int,1> ghost = array::make_view<int,1>( mesh.nodes().ghost() );
   const size_t nb_nodes = mesh.nodes().size();
@@ -63,11 +61,11 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns_no_halo )
   nodes_fs.haloExchange(field);
   for( size_t j=0; j<nb_nodes; ++j )
   {
-    BOOST_CHECK_EQUAL( value(j), 1 );
+    EXPECT( value(j) == 1 );
   }
 }
 
-BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
+CASE( "test_functionspace_NodeColumns" )
 {
   //ScopedPtr<grid::Grid> grid( Grid::create("O2") );
 
@@ -79,79 +77,86 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   //grid.reset();
 
-  functionspace::NodeColumns nodes_fs(mesh,mesh::Halo(1));
   size_t nb_levels = 10;
+
+  functionspace::NodeColumns nodes_fs(mesh,option::halo(1)|option::levels(nb_levels));
   //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
 
-  //BOOST_CHECK_EQUAL( nodes_fs.nb_nodes() , columns_fs.nb_nodes() );
-  //BOOST_CHECK_EQUAL( columns_fs.nb_levels() , 10 );
+  //EXPECT( nodes_fs.nb_nodes() == columns_fs.nb_nodes() );
+  //EXPECT( columns_fs.nb_levels() == 10 );
 
 
-  Field surface_scalar_field = nodes_fs.createField<double>("scalar");
-  Field surface_vector_field = nodes_fs.createField<double>("vector",array::make_shape(2));
-  Field surface_tensor_field = nodes_fs.createField<double>("tensor",array::make_shape(2,2));
+  Field surface_scalar_field = nodes_fs.createField<double>(option::name("scalar")|option::levels(false));
+  Field surface_vector_field = nodes_fs.createField<double>(option::name("vector")|option::levels(false)|option::variables(2));
+  Field surface_tensor_field = nodes_fs.createField<double>(option::name("tensor")|option::levels(false)|option::variables(2*2));
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.name() , std::string("scalar") );
-  BOOST_CHECK_EQUAL( surface_vector_field.name() , std::string("vector") );
-  BOOST_CHECK_EQUAL( surface_tensor_field.name() , std::string("tensor") );
+  EXPECT( surface_scalar_field.name() == std::string("scalar") );
+  EXPECT( surface_vector_field.name() == std::string("vector") );
+  EXPECT( surface_tensor_field.name() == std::string("tensor") );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.size() , nodes_fs.nb_nodes() );
-  BOOST_CHECK_EQUAL( surface_vector_field.size() , nodes_fs.nb_nodes()*2 );
-  BOOST_CHECK_EQUAL( surface_tensor_field.size() , nodes_fs.nb_nodes()*2*2 );
+  EXPECT( surface_scalar_field.size() == nodes_fs.nb_nodes() );
+  EXPECT( surface_vector_field.size() == nodes_fs.nb_nodes()*2 );
+  EXPECT( surface_tensor_field.size() == nodes_fs.nb_nodes()*2*2 );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.rank() , 1 );
-  BOOST_CHECK_EQUAL( surface_vector_field.rank() , 2 );
-  BOOST_CHECK_EQUAL( surface_tensor_field.rank() , 3 );
+  EXPECT( surface_scalar_field.rank() == 1 );
+  EXPECT( surface_vector_field.rank() == 2 );
+  EXPECT( surface_tensor_field.rank() == 2 );
+
+  EXPECT( surface_scalar_field.levels() == 0 );
+  EXPECT( surface_vector_field.levels() == 0 );
+  EXPECT( surface_tensor_field.levels() == 0 );
 
   array::ArrayView<double,1> surface_scalar = array::make_view<double,1>( surface_scalar_field );
   array::ArrayView<double,2> surface_vector = array::make_view<double,2>( surface_vector_field );
-  array::ArrayView<double,3> surface_tensor = array::make_view<double,3>( surface_tensor_field );
+  array::ArrayView<double,2> surface_tensor = array::make_view<double,2>( surface_tensor_field );
 
-  BOOST_CHECK_EQUAL( surface_scalar.shape(0), nodes_fs.nb_nodes() );
-  BOOST_CHECK_EQUAL( surface_vector.shape(0), nodes_fs.nb_nodes() );
-  BOOST_CHECK_EQUAL( surface_tensor.shape(0), nodes_fs.nb_nodes() );
-  BOOST_CHECK_EQUAL( surface_vector.shape(1), 2 );
-  BOOST_CHECK_EQUAL( surface_tensor.shape(1), 2 );
-  BOOST_CHECK_EQUAL( surface_tensor.shape(2), 2 );
+  EXPECT( surface_scalar.shape(0) == nodes_fs.nb_nodes() );
+  EXPECT( surface_vector.shape(0) == nodes_fs.nb_nodes() );
+  EXPECT( surface_tensor.shape(0) == nodes_fs.nb_nodes() );
+  EXPECT( surface_vector.shape(1) == 2 );
+  EXPECT( surface_tensor.shape(1) == 2*2 );
 
-  Field columns_scalar_field = nodes_fs.createField<double>("scalar",nb_levels);
-  Field columns_vector_field = nodes_fs.createField<double>("vector",nb_levels,array::make_shape(2));
-  Field columns_tensor_field = nodes_fs.createField<double>("tensor",nb_levels,array::make_shape(2,2));
+  Field columns_scalar_field = nodes_fs.createField<double>(option::name("scalar"));
+  Field columns_vector_field = nodes_fs.createField<double>(option::name("vector")|option::variables(2));
+  Field columns_tensor_field = nodes_fs.createField<double>(option::name("tensor")|option::variables(2*2));
 
-  BOOST_CHECK_EQUAL( columns_scalar_field.name() , std::string("scalar") );
-  BOOST_CHECK_EQUAL( columns_vector_field.name() , std::string("vector") );
-  BOOST_CHECK_EQUAL( columns_tensor_field.name() , std::string("tensor") );
+  EXPECT( columns_scalar_field.name() == std::string("scalar") );
+  EXPECT( columns_vector_field.name() == std::string("vector") );
+  EXPECT( columns_tensor_field.name() == std::string("tensor") );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field.size() , nodes_fs.nb_nodes()*nb_levels );
-  BOOST_CHECK_EQUAL( columns_vector_field.size() , nodes_fs.nb_nodes()*nb_levels*2 );
-  BOOST_CHECK_EQUAL( columns_tensor_field.size() , nodes_fs.nb_nodes()*nb_levels*2*2 );
+  EXPECT( columns_scalar_field.size() == nodes_fs.nb_nodes()*nb_levels );
+  EXPECT( columns_vector_field.size() == nodes_fs.nb_nodes()*nb_levels*2 );
+  EXPECT( columns_tensor_field.size() == nodes_fs.nb_nodes()*nb_levels*2*2 );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field.rank() , 2 );
-  BOOST_CHECK_EQUAL( columns_vector_field.rank() , 3 );
-  BOOST_CHECK_EQUAL( columns_tensor_field.rank() , 4 );
+  EXPECT( columns_scalar_field.rank() == 2 );
+  EXPECT( columns_vector_field.rank() == 3 );
+  EXPECT( columns_tensor_field.rank() == 3 );
+
+  EXPECT( columns_scalar_field.levels() == nb_levels );
+  EXPECT( columns_vector_field.levels() == nb_levels );
+  EXPECT( columns_tensor_field.levels() == nb_levels );
 
   array::ArrayView<double,2> columns_scalar = array::make_view<double,2>( columns_scalar_field );
   array::ArrayView<double,3> columns_vector = array::make_view<double,3>( columns_vector_field );
-  array::ArrayView<double,4> columns_tensor = array::make_view<double,4>( columns_tensor_field );
+  array::ArrayView<double,3> columns_tensor = array::make_view<double,3>( columns_tensor_field );
 
-  BOOST_CHECK_EQUAL( columns_scalar.shape(0), nodes_fs.nb_nodes() );
-  BOOST_CHECK_EQUAL( columns_vector.shape(0), nodes_fs.nb_nodes() );
-  BOOST_CHECK_EQUAL( columns_tensor.shape(0), nodes_fs.nb_nodes() );
-  BOOST_CHECK_EQUAL( columns_scalar.shape(1), nb_levels );
-  BOOST_CHECK_EQUAL( columns_vector.shape(1), nb_levels );
-  BOOST_CHECK_EQUAL( columns_tensor.shape(1), nb_levels );
-  BOOST_CHECK_EQUAL( columns_vector.shape(2), 2 );
-  BOOST_CHECK_EQUAL( columns_tensor.shape(2), 2 );
-  BOOST_CHECK_EQUAL( columns_tensor.shape(3), 2 );
+  EXPECT( columns_scalar.shape(0) == nodes_fs.nb_nodes() );
+  EXPECT( columns_vector.shape(0) == nodes_fs.nb_nodes() );
+  EXPECT( columns_tensor.shape(0) == nodes_fs.nb_nodes() );
+  EXPECT( columns_scalar.shape(1) == nb_levels );
+  EXPECT( columns_vector.shape(1) == nb_levels );
+  EXPECT( columns_tensor.shape(1) == nb_levels );
+  EXPECT( columns_vector.shape(2) == 2 );
+  EXPECT( columns_tensor.shape(2) == 2*2 );
 
-  Field field = nodes_fs.createField<int>("partition",nb_levels);
+  Field field = nodes_fs.createField<int>(option::name("partition"));
   array::ArrayView<int,2> arr = array::make_view<int,2>(field);
   arr.assign(parallel::mpi::comm().rank());
   //field->dump( Log::info() );
   nodes_fs.haloExchange(field);
   //field->dump( Log::info() );
 
-  Field field2 = nodes_fs.createField<int>("partition2",nb_levels,array::make_shape(2));
+  Field field2 = nodes_fs.createField<int>(option::name("partition2")|option::variables(2));
   Log::info() << "field2.rank() = " << field2.rank() << std::endl;
   array::ArrayView<int,3> arr2 = array::make_view<int,3>(field2);
   arr2.assign(parallel::mpi::comm().rank());
@@ -163,15 +168,27 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
   Log::info() << nodes_fs.checksum(field) << std::endl;
 
   size_t root = parallel::mpi::comm().size()-1;
-  Field glb_field = nodes_fs.createField("partition",field,field::global(root));
+  Field glb_field = nodes_fs.createField(
+    option::name("partition") |
+    option::datatype(field.datatype()) |
+    option::levels( field.levels() ) |
+    option::variables( field.variables() ) |
+    option::global(root) );
   nodes_fs.gather(field,glb_field);
+
+  EXPECT( glb_field.rank() == field.rank() );
+  EXPECT( glb_field.levels() == nb_levels );
+  EXPECT( field.levels() == nb_levels );
+
+  Log::info() << "field = " << field << std::endl;
+  Log::info() << "global_field = " << glb_field << std::endl;
 
   Log::info() << "local points = " << nodes_fs.nb_nodes() << std::endl;
   Log::info() << "grid points = " << grid.size() << std::endl;
   Log::info() << "glb_field.shape(0) = " << glb_field.shape(0) << std::endl;
 
-  BOOST_CHECK_EQUAL( glb_field.metadata().get<bool>("global"), true );
-  BOOST_CHECK_EQUAL( glb_field.metadata().get<int>("owner"),  root );
+  EXPECT( glb_field.metadata().get<bool>("global") == true );
+  EXPECT( glb_field.metadata().get<int>("owner") ==  root );
 
   //glb_field->dump( Log::info() );
 
@@ -180,7 +197,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   arr.assign(-1);
   nodes_fs.scatter(glb_field,field);
-  BOOST_CHECK_EQUAL( field.metadata().get<int>("test_broadcast"), 123 );
+  EXPECT( field.metadata().get<int>("test_broadcast") == 123 );
   nodes_fs.haloExchange(field);
   //field->dump( Log::info() );
 
@@ -194,7 +211,6 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
 
   Log::info() << "Testing collectives for nodes scalar field" << std::endl;
-  BOOST_TEST_CHECKPOINT("Testing collectives for nodes scalar field");
   {
     const Field& field = surface_scalar_field;
     const functionspace::NodeColumns fs = nodes_fs;
@@ -211,17 +227,17 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
   array::ArrayView<double,1> sfc_arr = array::make_view<double,1>( field );
   sfc_arr.assign( parallel::mpi::comm().rank()+1 );
   fs.maximum(surface_scalar_field,max);
-  BOOST_CHECK_EQUAL( max, double(parallel::mpi::comm().size()) );
+  EXPECT( max == double(parallel::mpi::comm().size()) );
 
   fs.minimum(surface_scalar_field,min);
-  BOOST_CHECK_EQUAL( min, 1 );
+  EXPECT( min == 1 );
 
   fs.maximumAndLocation(field,max,gidx_max);
-  BOOST_CHECK_EQUAL( max, double(parallel::mpi::comm().size()) );
+  EXPECT( max == double(parallel::mpi::comm().size()) );
   Log::info() << "global index for maximum: " << gidx_max << std::endl;
 
   fs.minimumAndLocation(field,min,gidx_min);
-  BOOST_CHECK_EQUAL( min, 1 );
+  EXPECT( min == 1 );
   Log::info() << "global index for minimum: " << gidx_min << std::endl;
 
   fs.orderIndependentSum(field,sum,N);
@@ -252,7 +268,6 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
 
   Log::info() << "Testing collectives for nodes vector field" << std::endl;
-  BOOST_TEST_CHECKPOINT("Testing collectives for nodes vector field");
   {
     const Field& field = surface_vector_field;
     const functionspace::NodeColumns fs = nodes_fs;
@@ -266,22 +281,22 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
     std::vector<gidx_t> gidx_max;
     std::vector<gidx_t> gidx_min;
 
-    array::ArrayView<double,2> vec_arr = array::make_view<double,2>( field );
+    auto vec_arr = array::make_view<double,2>( field );
     vec_arr.assign( parallel::mpi::comm().rank()+1 );
-    fs.maximum(field,max);
-    std::vector<double> check_max(field.stride(0),parallel::mpi::comm().size());
-    BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
+    fs.maximum(field, max);
+    std::vector<double> check_max(field.stride(0), parallel::mpi::comm().size());
+    EXPECT( max == check_max );
 
     fs.minimum(field,min);
-    std::vector<double> check_min(field.stride(0),1);
-    BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
+    std::vector<double> check_min(field.stride(0), 1);
+    EXPECT( min == check_min );
 
-    fs.maximumAndLocation(field,max,gidx_max);
-    BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
+    fs.maximumAndLocation(field,max, gidx_max);
+    EXPECT( max == check_max );
     Log::info() << "global index for maximum: " << gidx_max << std::endl;
 
-    fs.minimumAndLocation(field,min,gidx_min);
-    BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
+    fs.minimumAndLocation(field,min, gidx_min);
+    EXPECT( min == check_min );
     Log::info() << "global index for minimum: " << gidx_min << std::endl;
 
     fs.orderIndependentSum(field,sum,N);
@@ -307,8 +322,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
   }
 
   Log::info() << "Testing collectives for columns scalar field" << std::endl;
-  BOOST_TEST_CHECKPOINT("Testing collectives for columns scalar field");
-  if(1){
+  if(1) {
     const Field& field = columns_scalar_field;
     const functionspace::NodeColumns fs = nodes_fs;
     double max;
@@ -321,23 +335,23 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
     gidx_t gidx_min;
     size_t level;
 
-    BOOST_CHECK_EQUAL(field.has_levels(),true);
+    EXPECT(field.levels() == nb_levels);
 
     array::ArrayView<double,2> arr = array::make_view<double,2>( field );
     arr.assign( parallel::mpi::comm().rank()+1 );
     fs.maximum(field,max);
-    BOOST_CHECK_EQUAL( max, double(parallel::mpi::comm().size()) );
+    EXPECT( max == double(parallel::mpi::comm().size()) );
 
     fs.minimum(field,min);
-    BOOST_CHECK_EQUAL( min, 1 );
+    EXPECT( min == 1 );
 
     fs.maximumAndLocation(field,max,gidx_max,level);
-    BOOST_CHECK_EQUAL( max, double(parallel::mpi::comm().size()) );
+    EXPECT( max == double(parallel::mpi::comm().size()) );
     Log::info() << "global index for maximum: " << gidx_max << std::endl;
     Log::info() << "level for maximum: " << level << std::endl;
 
     fs.minimumAndLocation(field,min,gidx_min,level);
-    BOOST_CHECK_EQUAL( min, 1 );
+    EXPECT( min == 1 );
     Log::info() << "global index for minimum: " << gidx_min << std::endl;
     Log::info() << "level for minimum: " << level << std::endl;
 
@@ -388,8 +402,8 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
   }
 
-  BOOST_TEST_CHECKPOINT("Testing collectives for columns vector field");
-  if(1){
+  Log::info() << "Testing collectives for columns vector field" << std::endl;
+  if(1) {
     const Field& field = columns_vector_field;
     const functionspace::NodeColumns fs = nodes_fs;
     size_t nvar = field.stride(1);
@@ -407,18 +421,18 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
     vec_arr.assign( parallel::mpi::comm().rank()+1 );
     fs.maximum(field,max);
     std::vector<double> check_max(nvar,parallel::mpi::comm().size());
-    BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
+    EXPECT( max == check_max );
 
     fs.minimum(field,min);
     std::vector<double> check_min(nvar,1);
-    BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
+    EXPECT( min == check_min );
 
     fs.maximumAndLocation(field,max,gidx_max,levels);
-    BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
+    EXPECT( max == check_max );
     Log::info() << "global index for maximum: " << gidx_max << std::endl;
 
     fs.minimumAndLocation(field,min,gidx_min,levels);
-    BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
+    EXPECT( min == check_min );
     Log::info() << "global index for minimum: " << gidx_min << std::endl;
 
     fs.orderIndependentSum(field,sum,N);
@@ -471,12 +485,12 @@ BOOST_AUTO_TEST_CASE( test_functionspace_NodeColumns )
 
 
   Field tmp =
-        nodes_fs.createField( field::datatypeT<double>() | field::global(0) | field::levels(10) | field::name("tmp") );
+        nodes_fs.createField( option::datatypeT<double>() | option::global(0) | option::levels(10) | option::name("tmp") );
 
 }
 
 
-BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
+CASE( "test_SpectralFunctionSpace" )
 {
   size_t truncation = 159;
   size_t nb_levels = 10;
@@ -484,138 +498,142 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
 
   Spectral spectral_fs(truncation);
 
-  Field surface_scalar_field = spectral_fs.createField<double>("scalar");
+  Field surface_scalar_field = spectral_fs.createField<double>( option::name("scalar") );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.name() , std::string("scalar") );
+  EXPECT( surface_scalar_field.name() == std::string("scalar") );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.size() , nspec2g );
+  EXPECT( surface_scalar_field.size() == nspec2g );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.rank() , 1 );
+  EXPECT( surface_scalar_field.rank() == 1 );
 
-  array::ArrayView<double,1> surface_scalar = array::make_view<double,1>( surface_scalar_field );
+  auto surface_scalar = array::make_view<double,1>( surface_scalar_field );
 
-  BOOST_CHECK_EQUAL( surface_scalar.shape(0), nspec2g );
+  EXPECT( surface_scalar.shape(0) == nspec2g );
 
-  Field columns_scalar_field = spectral_fs.createField<double>("scalar",nb_levels);
+  Field columns_scalar_field = spectral_fs.createField<double>( option::name("scalar") | option::levels(nb_levels) );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field.name() , std::string("scalar") );
+  EXPECT( columns_scalar_field.name() == std::string("scalar") );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field.size() , nspec2g*nb_levels );
+  EXPECT( columns_scalar_field.size() == nspec2g*nb_levels );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field.rank() , 2 );
+  EXPECT( columns_scalar_field.rank() == 2 );
 
-  array::ArrayView<double,2> columns_scalar = array::make_view<double,2>( columns_scalar_field );
+  auto columns_scalar = array::make_view<double,2>( columns_scalar_field );
 
-  BOOST_CHECK_EQUAL( columns_scalar.shape(0), nspec2g );
-  BOOST_CHECK_EQUAL( columns_scalar.shape(1), nb_levels );
+  EXPECT( columns_scalar.shape(0) == nspec2g );
+  EXPECT( columns_scalar.shape(1) == nb_levels );
 
 }
 
 
 #ifdef ATLAS_HAVE_TRANS
 
-BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
+CASE( "test_SpectralFunctionSpace_trans_dist" )
 {
-  trans::Trans trans(80,159);
+  trans::Trans trans(Grid("F80"),159);
   size_t nb_levels(10);
 
-  size_t nspec2 = trans.nspec2();
+  size_t nspec2 = trans.nb_spectral_coefficients();
 
   Spectral spectral_fs( trans );
 
-  Field surface_scalar_field = spectral_fs.createField<double>("scalar");
+  Field surface_scalar_field = spectral_fs.createField<double>( option::name("scalar") );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.name() , std::string("scalar") );
+  EXPECT( surface_scalar_field.name() == std::string("scalar") );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.size() , nspec2 );
+  EXPECT( surface_scalar_field.size() == nspec2 );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.rank() , 1 );
+  EXPECT( surface_scalar_field.rank() == 1 );
 
-  array::ArrayView<double,1> surface_scalar = array::make_view<double,1>( surface_scalar_field );
+  auto surface_scalar = array::make_view<double,1>( surface_scalar_field );
 
-  BOOST_CHECK_EQUAL( surface_scalar.shape(0), nspec2 );
+  EXPECT( surface_scalar.shape(0) == nspec2 );
   // size_t surface_scalar_shape[] = { nspec2 };
-  // BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
+  // EXPECT( eckit::testing::make_view( surface_scalar.shape(),surface_scalar.shape()+1) == eckit::testing::make_view(surface_scalar_shape,surface_scalar_shape+1) );
 
-  Field columns_scalar_field = spectral_fs.createField<double>("scalar",nb_levels);
+  Field columns_scalar_field = spectral_fs.createField<double>( option::name("scalar") | option::levels(nb_levels) );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field.name() , std::string("scalar") );
+  EXPECT( columns_scalar_field.name() == std::string("scalar") );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field.size() , nspec2*nb_levels );
+  EXPECT( columns_scalar_field.size() == nspec2*nb_levels );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field.rank() , 2 );
+  EXPECT( columns_scalar_field.rank() == 2 );
 
-  array::ArrayView<double,2> columns_scalar = array::make_view<double,2>( columns_scalar_field );
+  auto columns_scalar = array::make_view<double,2>( columns_scalar_field );
 
-  BOOST_CHECK_EQUAL(columns_scalar.shape(0), nspec2);
-  BOOST_CHECK_EQUAL(columns_scalar.shape(1), nb_levels);
+  EXPECT(columns_scalar.shape(0) == nspec2);
+  EXPECT(columns_scalar.shape(1) == nb_levels);
   // size_t columns_scalar_shape[] = { nspec2, nb_levels };
-  // BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
+  // EXPECT(eckit::testing::make_view(columns_scalar.shape(),columns_scalar.shape()+2) == eckit::testing::make_view(columns_scalar_shape,columns_scalar_shape+2));
 
 }
-BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
+CASE( "test_SpectralFunctionSpace_trans_global" )
 {
-  trans::Trans trans(80,159);
   size_t nb_levels(10);
+  size_t truncation = 159;
 
-  size_t nspec2g = trans.nspec2g();
+  Spectral spectral_fs( truncation, option::levels(nb_levels) );
+  size_t nspec2g = spectral_fs.nb_spectral_coefficients_global();
 
-  Spectral spectral_fs( trans );
+  Field surface_scalar_field = spectral_fs.createField<double>(
+    option::name("scalar") |
+    option::levels(false)  |
+    option::global()       );
 
-  Field surface_scalar_field = spectral_fs.createField<double>("scalar",field::global());
-
-  BOOST_CHECK_EQUAL( surface_scalar_field.name() , std::string("scalar") );
+  EXPECT( surface_scalar_field.name() == std::string("scalar") );
 
   if( eckit::mpi::comm().rank() == 0 )
-    BOOST_CHECK_EQUAL( surface_scalar_field.size() , nspec2g );
+    EXPECT( surface_scalar_field.size() == nspec2g );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.rank() , 1 );
+  EXPECT( surface_scalar_field.rank() == 1 );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.metadata().get<bool>("global"), true );
+  EXPECT( surface_scalar_field.metadata().get<bool>("global") );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field.metadata().get<size_t>("owner"), 0 );
+  EXPECT( surface_scalar_field.metadata().get<size_t>("owner") == 0 );
 
-  array::ArrayView<double,1> surface_scalar = array::make_view<double,1>( surface_scalar_field );
+  auto surface_scalar = array::make_view<double,1>( surface_scalar_field );
 
   if( eckit::mpi::comm().rank() == 0 ) {
-    BOOST_CHECK_EQUAL( surface_scalar.shape(0), nspec2g );
+    EXPECT( surface_scalar.shape(0) == nspec2g );
   }
-  Field columns_scalar_field = spectral_fs.createField<double>("scalar",nb_levels,field::global());
+  Field columns_scalar_field = spectral_fs.createField<double>(
+    option::name("scalar") |
+    option::global()       );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field.name() , std::string("scalar") );
+  EXPECT( columns_scalar_field.name() == std::string("scalar") );
 
   if( eckit::mpi::comm().rank() == 0 ) {
-    BOOST_CHECK_EQUAL( columns_scalar_field.size() , nspec2g*nb_levels );
+    EXPECT( columns_scalar_field.size() == nspec2g*nb_levels );
   } else {
-    BOOST_CHECK_EQUAL( columns_scalar_field.size() , 0 );
+    EXPECT( columns_scalar_field.size() == 0 );
   }
 
-  BOOST_CHECK_EQUAL( columns_scalar_field.rank() , 2 );
+  EXPECT( columns_scalar_field.rank() == 2 );
 
-  array::ArrayView<double,2> columns_scalar = array::make_view<double,2>( columns_scalar_field );
+  auto columns_scalar = array::make_view<double,2>( columns_scalar_field );
 
   if( eckit::mpi::comm().rank() == 0 ) {
-    BOOST_CHECK_EQUAL( columns_scalar.shape(0), nspec2g );
-    BOOST_CHECK_EQUAL( columns_scalar.shape(1), nb_levels );
+    EXPECT( columns_scalar.shape(0) == nspec2g );
+    EXPECT( columns_scalar.shape(1) == nb_levels );
   }
 }
-BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_norm )
+CASE( "test_SpectralFunctionSpace_norm" )
 {
-  trans::Trans trans(80,159);
+  trans::Trans trans(Grid("F80"),159);
   size_t nb_levels(10);
 
   Spectral spectral_fs( trans );
 
-  Field twoD_field   = spectral_fs.createField<double>("2d");
-  Field threeD_field = spectral_fs.createField<double>("3d",nb_levels);
+  Field twoD_field   = spectral_fs.createField<double>( option::name("2d"));
+  Field threeD_field = spectral_fs.createField<double>( option::name("3d") | option::levels(nb_levels) );
 
   // Set first wave number
   {
-    array::ArrayView<double,1> twoD = array::make_view<double,1>( twoD_field );
+    auto twoD = array::make_view<double,1>( twoD_field );
     twoD.assign(0.);
     if( parallel::mpi::comm().rank() == 0 ) twoD(0) = 1.;
 
-    array::ArrayView<double,2> threeD = array::make_view<double,2>( threeD_field );
+    auto threeD = array::make_view<double,2>( threeD_field );
     threeD.assign(0.);
     for( size_t jlev=0; jlev<nb_levels; ++jlev) {
       if( parallel::mpi::comm().rank() == 0 ) threeD(0,jlev) = jlev;
@@ -629,14 +647,23 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_norm )
   spectral_fs.norm(threeD_field,threeD_norms);
 
   if( eckit::mpi::comm().rank() == 0 ) {
-    BOOST_CHECK_CLOSE( twoD_norm, 1.0, 1.e-10 );
+    EXPECT( eckit::types::is_approximately_equal(twoD_norm, 1.0) );  // before is_approximately_equal tolerance was 1.e-10
     for( size_t jlev=0; jlev<nb_levels; ++jlev) {
-      BOOST_CHECK_CLOSE( threeD_norms[jlev], double(jlev), 1.e-10 );
+      EXPECT( eckit::types::is_approximately_equal(threeD_norms[jlev], double(jlev)) );  // before is_approximately_equal tolerance was 1.e-10
     }
   }
 }
 
 #endif
 
-} // namespace test
-} // namespace atlas
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}
+

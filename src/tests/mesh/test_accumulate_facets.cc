@@ -10,9 +10,6 @@
 
 #include "atlas/library/config.h"
 
-#define BOOST_TEST_MODULE test_accumulate_facets
-#include "ecbuild/boost_test_framework.h"
-
 #include "atlas/library/Library.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
 
@@ -23,25 +20,20 @@
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/util/Unique.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
-
-// ------------------------------------------------------------------
-
+using namespace eckit::testing;
 using namespace atlas::mesh;
 using namespace atlas::util;
 
 namespace atlas {
 namespace test {
 
-// ===================================================================
-//                               BEGIN TESTS
-// ===================================================================
+//-----------------------------------------------------------------------------
 
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
-
-BOOST_AUTO_TEST_CASE( test_accumulate_facets )
+CASE( "test_accumulate_facets" )
 {
   Grid grid("O2");
   meshgenerator::StructuredMeshGenerator generator( Config
@@ -237,7 +229,7 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
   88, 89,
   89, 67
   };
-  BOOST_CHECK_EQUAL_COLLECTIONS( edge_nodes_data.begin(), edge_nodes_data.end(), edge_nodes_check, edge_nodes_check+2*nb_edges );
+  EXPECT( edge_nodes_data == make_view(edge_nodes_check, edge_nodes_check+2*nb_edges) );
 
   idx_t edge_to_cell_check[] = {
   0, missing_value,
@@ -412,10 +404,10 @@ BOOST_AUTO_TEST_CASE( test_accumulate_facets )
   78, missing_value,
   78, 79
   };
-  BOOST_CHECK_EQUAL_COLLECTIONS( edge_to_cell_data.begin(), edge_to_cell_data.end(), edge_to_cell_check, edge_to_cell_check+2*nb_edges );
+  EXPECT( edge_to_cell_data == make_view(edge_to_cell_check, edge_to_cell_check+2*nb_edges) );
 }
 
-BOOST_AUTO_TEST_CASE( test_build_edges )
+CASE( "test_build_edges" )
 {
   idx_t missing_value = -1;
   Grid grid("O2");
@@ -604,19 +596,19 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 
   {
   const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
-  ASSERT( mesh.projection().units() == "degrees" );
+  EXPECT( mesh.projection().units() == "degrees" );
   const util::UniqueLonLat compute_uid( mesh );
   for( size_t jedge=0; jedge<mesh.edges().size(); ++jedge )
   {
     if( compute_uid(edge_nodes_check[2*jedge+0]) < compute_uid(edge_nodes_check[2*jedge+1]) )
     {
-      BOOST_CHECK_EQUAL( edge_nodes_check[2*jedge+0] , edge_node_connectivity(jedge,0) );
-      BOOST_CHECK_EQUAL( edge_nodes_check[2*jedge+1] , edge_node_connectivity(jedge,1) );
+      EXPECT( edge_nodes_check[2*jedge+0] == edge_node_connectivity(jedge,0) );
+      EXPECT( edge_nodes_check[2*jedge+1] == edge_node_connectivity(jedge,1) );
     }
     else
     {
-      BOOST_CHECK_EQUAL( edge_nodes_check[2*jedge+0] , edge_node_connectivity(jedge,1) );
-      BOOST_CHECK_EQUAL( edge_nodes_check[2*jedge+1] , edge_node_connectivity(jedge,0) );
+      EXPECT( edge_nodes_check[2*jedge+0] == edge_node_connectivity(jedge,1) );
+      EXPECT( edge_nodes_check[2*jedge+1] == edge_node_connectivity(jedge,0) );
     }
   }
   }
@@ -807,14 +799,14 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
       if( e2 == edge_cell_connectivity.missing_value() ||
           compute_uid(cell_node_connectivity.row(e1)) < compute_uid(cell_node_connectivity.row(e2)) )
       {
-        BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+0] , edge_cell_connectivity(jedge,0) );
-        BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+1] , edge_cell_connectivity(jedge,1) );
+        EXPECT( edge_to_cell_check[2*jedge+0] == edge_cell_connectivity(jedge,0) );
+        EXPECT( edge_to_cell_check[2*jedge+1] == edge_cell_connectivity(jedge,1) );
       }
       else
       {
         std::cout << "jedge " << jedge << std::endl;
-        BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+0] , edge_cell_connectivity(jedge,1) );
-        BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+1] , edge_cell_connectivity(jedge,0) );
+        EXPECT( edge_to_cell_check[2*jedge+0] == edge_cell_connectivity(jedge,1) );
+        EXPECT( edge_to_cell_check[2*jedge+1] == edge_cell_connectivity(jedge,0) );
       }
     }
   }
@@ -836,7 +828,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges )
 }
 
 
-BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
+CASE( "test_build_edges_triangles_only" )
 {
   Grid grid("O2");
   meshgenerator::StructuredMeshGenerator generator (  Config
@@ -862,5 +854,13 @@ BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
   }
 }
 
-} // namespace test
-} // namespace atlas
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

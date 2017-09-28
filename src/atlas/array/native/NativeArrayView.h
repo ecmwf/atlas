@@ -165,6 +165,8 @@ public:
 
     void assign(const value_type& value);
 
+    void assign(const std::initializer_list<value_type>& list);
+
     void dump(std::ostream& os) const;
 
 private:

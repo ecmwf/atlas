@@ -5,8 +5,6 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
-! This File contains Unit Tests for testing the
-! C++ / Fortran Interfaces to the Mesh Datastructure
 ! @author Willem Deconinck
 
 #include "fckit/fctest.h"
@@ -41,6 +39,7 @@ END_TESTSUITE_FINALIZE
 
 TEST( test_trans )
   type(atlas_StructuredGrid) :: grid
+  type(atlas_StructuredGrid) :: trans_grid
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
@@ -55,7 +54,7 @@ TEST( test_trans )
   type(atlas_FieldSet)      :: spectralfields
   real(c_double), pointer :: scal1(:,:), scal2(:), spec1(:,:), spec2(:), wind(:,:,:), vor(:,:), div(:,:)
   real(c_double), allocatable :: check(:)
-  integer :: nlev, nsmax, jn, in, jlev
+  integer :: nlev, truncation, jn, in, jlev
   integer, pointer :: nvalue(:)
   type(atlas_Field) :: glb_vorfield
 
@@ -63,7 +62,7 @@ TEST( test_trans )
 
   tol = 1.e-8
   nlev=10
-  nsmax = 21
+  truncation = 21
 
   grid = atlas_StructuredGrid("O24")
 
@@ -75,38 +74,37 @@ TEST( test_trans )
 
   FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
 
-  trans = atlas_Trans(grid,nsmax)
+  trans = atlas_Trans(grid,truncation)
+  FCTEST_CHECK_EQUAL( grid%owners(), 2 )
+
+  FCTEST_CHECK_EQUAL( trans%nb_gridpoints(), int(grid%size()) )
+  FCTEST_CHECK_EQUAL( trans%nb_gridpoints_global(), int(grid%size()) )
+
+  trans_grid = trans%grid()
+  FCTEST_CHECK_EQUAL( trans_grid%owners(), 3 )
 
   FCTEST_CHECK( .not. trans%is_null() )
-  !FCTEST_CHECK_EQUAL( trans%owners(), 1 )
-  !FCTEST_CHECK_EQUAL( trans%owners(), 1 )
-!  FCTEST_CHECK_EQUAL( trans%owners(), 1 )
-!  FCTEST_CHECK_EQUAL( trans%owners(), 1 )
-  FCTEST_CHECK_EQUAL( trans%nproc(), 1 )
-  FCTEST_CHECK_EQUAL( trans%myproc(proc0=1), 1 )
-  FCTEST_CHECK_EQUAL( trans%ndgl(), int(grid%ny()) )
-  FCTEST_CHECK_EQUAL( trans%ngptot(), int(grid%size()) )
-  FCTEST_CHECK_EQUAL( trans%ngptotg(), int(grid%size()) )
-  FCTEST_CHECK_EQUAL( trans%nsmax(), nsmax )
+  FCTEST_CHECK_EQUAL( trans%truncation(), truncation )
+  FCTEST_CHECK_EQUAL( trans%nb_spectral_coefficients(), (truncation+1)*(truncation+2) )
 
   nodes = mesh%nodes()
   nodes_fs = atlas_functionspace_NodeColumns(mesh,0)
 
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
-  scalarfield1 = nodes_fs%create_field("scalar1",atlas_real(c_double),nlev)
+  scalarfield1 = nodes_fs%create_field(name="scalar1",kind=atlas_real(c_double),levels=nlev)
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
-  scalarfield2 = nodes_fs%create_field("scalar2",atlas_real(c_double))
+  scalarfield2 = nodes_fs%create_field(name="scalar2",kind=atlas_real(c_double))
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
   spectral_fs = atlas_functionspace_Spectral(trans)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  spectralfield1 = spectral_fs%create_field("spectral1",atlas_real(c_double),nlev)
+  spectralfield1 = spectral_fs%create_field(name="spectral1",kind=atlas_real(c_double),levels=nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  spectralfield2 = spectral_fs%create_field("spectral2",atlas_real(c_double))
+  spectralfield2 = spectral_fs%create_field(name="spectral2",kind=atlas_real(c_double))
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
   call scalarfield1%data(scal1)
@@ -158,37 +156,25 @@ TEST( test_trans )
   FCTEST_CHECK_CLOSE( spec2(4), 0._c_double, tol )
   FCTEST_CHECK_CLOSE( spec2(5), 0._c_double, tol )
 
-  windfield = nodes_fs%create_field("wind",atlas_real(c_double),nlev,(/3/))
+  windfield = nodes_fs%create_field(name="wind",kind=atlas_real(c_double),levels=nlev,variables=3)
   call windfield%data(wind)
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
-  vorfield = spectral_fs%create_field("vorticity",atlas_real(c_double),nlev)
+  vorfield = spectral_fs%create_field(name="vorticity",kind=atlas_real(c_double),levels=nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
   call vorfield%data(vor)
 
-  divfield =  spectral_fs%create_field("divergence",atlas_real(c_double),nlev)
+  divfield =  spectral_fs%create_field(name="divergence",kind=atlas_real(c_double),levels=nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
   call divfield%data(div)
 
   call trans%dirtrans_wind2vordiv(nodes_fs,windfield,spectral_fs,vorfield,divfield)
 
-  nvalue => trans%nvalue()
-  FCTEST_CHECK_EQUAL( size(nvalue), trans%nspec2() )
-
-  do jlev=1,nlev
-    do jn=1,trans%nspec2()
-      in = nvalue(jn)
-      if( in > 5 ) then
-        vor(jlev,jn) = 0
-      endif
-    enddo
-  enddo
-
   call trans%invtrans_vordiv2wind(spectral_fs,vorfield,divfield,nodes_fs,windfield)
 
-  glb_vorfield = spectral_fs%create_field("vorticity",atlas_real(c_double),nlev,global=.true.)
+  glb_vorfield = spectral_fs%create_field(name="vorticity",kind=atlas_real(c_double),levels=nlev,global=.true.)
   call spectral_fs%gather(vorfield,glb_vorfield)
   call spectral_fs%scatter(glb_vorfield,vorfield)
 
@@ -233,24 +219,24 @@ TEST( test_trans_nomesh )
   type(atlas_FieldSet)      :: spectralfields
   real(c_double), pointer :: scal1(:,:), scal2(:), spec1(:,:), spec2(:)
   real(c_double), allocatable :: check(:)
-  integer :: nlev, nsmax, jn, in, jlev
+  integer :: nlev, truncation, jn, in, jlev
   integer, pointer :: nvalue(:)
   real(c_double) :: tol
 
   tol = 1.e-8
   nlev=10
-  nsmax = 21
+  truncation = 21
 
   grid = atlas_StructuredGrid("O24")
-  trans = atlas_Trans(grid,nsmax)
+  trans = atlas_Trans(grid,truncation)
 
   gridpoints_fs = atlas_functionspace_StructuredColumns(grid)
-  scalarfield1 = gridpoints_fs%create_field("scalar1",atlas_real(c_double),nlev)
-  scalarfield2 = gridpoints_fs%create_field("scalar2",atlas_real(c_double))
+  scalarfield1 = gridpoints_fs%create_field(name="scalar1",kind=atlas_real(c_double),levels=nlev)
+  scalarfield2 = gridpoints_fs%create_field(name="scalar2",kind=atlas_real(c_double))
 
   spectral_fs = atlas_functionspace_Spectral(trans)
-  spectralfield1 = spectral_fs%create_field("spectral1",atlas_real(c_double),nlev)
-  spectralfield2 = spectral_fs%create_field("spectral2",atlas_real(c_double))
+  spectralfield1 = spectral_fs%create_field(name="spectral1",kind=atlas_real(c_double),levels=nlev)
+  spectralfield2 = spectral_fs%create_field(name="spectral2",kind=atlas_real(c_double))
 
   call scalarfield1%data(scal1)
   call scalarfield2%data(scal2)
@@ -368,6 +354,26 @@ call gridpoints%final()
 call spectral%final()
 call trans%final()
 call grid%final()
+END_TEST
+
+TEST( test_spectral_only )
+type(atlas_functionspace_Spectral) :: spectral
+type(atlas_Field) :: field
+integer :: jfld, nfld
+character(len=10) :: fieldname
+real(c_double) :: norm
+
+spectral = atlas_functionspace_Spectral(truncation=159,levels=10)
+
+field = spectral%create_field(atlas_real(c_double))
+FCTEST_CHECK_EQUAL(field%rank(), 2)
+FCTEST_CHECK_EQUAL(field%shape(1), 10)
+
+field = spectral%create_field(kind=atlas_real(c_double),levels=0)
+FCTEST_CHECK_EQUAL(field%rank(), 1)
+
+call field%final()
+call spectral%final()
 END_TEST
 
 

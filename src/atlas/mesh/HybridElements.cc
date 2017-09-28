@@ -50,12 +50,14 @@ static void set_uninitialized_fields_to_zero( HybridElements& elems, size_t begi
   IndexView<int,1> remote_index = make_indexview<int,1>( elems.remote_index() );
   ArrayView<int,1> partition = make_view<int,1>( elems.partition() );
   ArrayView<int,1> halo = make_view<int,1>( elems.halo() );
+  ArrayView<int,1> patch = make_view<int,1>( elems.field("patch") );
 
   for( size_t j=begin; j<elems.size(); ++j ) {
     global_index(j) = 0;
     remote_index(j) = 0;
     partition(j) = 0;
     halo(j) = 0;
+    patch(j) = 0;
   }
 }
 }

@@ -25,14 +25,6 @@
 			"shell_cmd": "\"python\" -u \"$file\""
 		}
 	],
-	"cmake":
-	{
-		"build_folder": "${project_path}/../../build/atlas",
-		"command_line_overrides":
-		{
-			"DEVELOPER_MODE": 1
-		}
-	},
 	"folders":
 	[
 		{
@@ -46,5 +38,16 @@
 			"follow_symlinks": true,
 			"path": "."
 		}
-	]
+	],
+	"settings":
+	{
+		"cmake":
+		{
+			"build_folder": "${project_path}/../../build/atlas",
+			"command_line_overrides":
+			{
+				"DEVELOPER_MODE": 1
+			}
+		}
+	}
 }

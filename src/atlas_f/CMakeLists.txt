@@ -106,6 +106,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Structured.
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Distribution.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Partitioner.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshIntf.h
     MODULE    atlas_mesh_c_binding
     OUTPUT    atlas_mesh_c_binding.f90 )
@@ -126,7 +127,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Gmsh.h
   MODULE    atlas_output_gmsh_c_binding
   OUTPUT    outout_Gmsh_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/State.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/Field.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/detail/FieldImpl.h
+    MODULE    atlas_field_c_binding
+    OUTPUT    field_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/FieldSet.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/FunctionSpace.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h
@@ -147,6 +150,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Method.h )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h
     MODULE    atlas_fvm_method_c_binding
     OUTPUT    fvm_method_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/interpolation/Interpolation.h
+      MODULE    atlas_interpolation_c_binding
+      OUTPUT    interpolation_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
@@ -184,6 +190,7 @@ ecbuild_add_library( TARGET atlas_f
         field/atlas_State_module.F90
         grid/atlas_Grid_module.F90
         grid/atlas_GridDistribution_module.F90
+        grid/atlas_Partitioner_module.F90
         mesh/atlas_MeshGenerator_module.F90
         mesh/atlas_Mesh_module.F90
         mesh/atlas_mesh_Nodes_module.F90
@@ -197,6 +204,7 @@ ecbuild_add_library( TARGET atlas_f
         numerics/atlas_Method_module.F90
         numerics/atlas_fvm_module.F90
         numerics/atlas_Nabla_module.F90
+        interpolation/atlas_Interpolation_module.F90
         parallel/atlas_mpi_module.F90
         parallel/atlas_GatherScatter_module.F90
         parallel/atlas_Checksum_module.F90

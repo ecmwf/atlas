@@ -29,7 +29,7 @@ class Method : public numerics::Method {
 
 public:
 
-  Method(Mesh &, const eckit::Parametrisation &);
+  Method(Mesh &, const eckit::Configuration &);
   Method(Mesh &, const mesh::Halo &);
   Method(Mesh &);
 
@@ -37,6 +37,8 @@ public:
 
   const atlas::Mesh& mesh() const { return mesh_; }
         atlas::Mesh& mesh()       { return mesh_; }
+        
+  size_t levels() const { return levels_; }
 
   const functionspace::NodeColumns& node_columns() const { return node_columns_; }
         functionspace::NodeColumns& node_columns()       { return node_columns_; }
@@ -52,7 +54,8 @@ private:
 
 private: // data
 
-    Mesh             mesh_; // non-const because functionspace may modify mesh
+    Mesh                   mesh_; // non-const because functionspace may modify mesh
+    size_t                 levels_;
     mesh::Halo             halo_;
     mesh::Nodes            &nodes_;
     mesh::HybridElements   &edges_;
@@ -70,7 +73,7 @@ private: // data
 
 extern "C"
 {
-  Method* atlas__numerics__fvm__Method__new (Mesh::Implementation* mesh, const eckit::Parametrisation* params);
+  Method* atlas__numerics__fvm__Method__new (Mesh::Implementation* mesh, const eckit::Configuration* params);
   const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes (Method* This);
   const functionspace::detail::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges (Method* This);
 }

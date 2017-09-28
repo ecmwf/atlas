@@ -55,6 +55,8 @@ public:
     using Cells = mesh::Cells;
     using Edges = mesh::Edges;
     using HybridElements = mesh::HybridElements;
+    using PartitionGraph = mesh::detail::PartitionGraph;
+    using Polygon = mesh::PartitionPolygon;
 
 public:
 
@@ -96,6 +98,8 @@ public:
     /// @brief Return the memory footprint of the mesh
     size_t footprint() const { return impl_->footprint(); }
 
+    size_t partition() const { return impl_->partition(); }
+
     size_t nb_partitions() const { return impl_->nb_partitions(); }
 
     void cloneToDevice() const { impl_->cloneToDevice(); }
@@ -106,8 +110,14 @@ public:
 
     const Projection& projection() const { return impl_->projection(); }
 
+    const PartitionGraph& partitionGraph() const { return impl_->partitionGraph(); }
+
+    PartitionGraph::Neighbours nearestNeighbourPartitions() const { return impl_->nearestNeighbourPartitions(); }
+
     const Implementation* get() const { return impl_.get(); }
           Implementation* get()       { return impl_.get(); }
+
+    const Polygon& polygon( size_t halo = 0) const { return impl_->polygon(halo); }
 
 private:  // methods
 

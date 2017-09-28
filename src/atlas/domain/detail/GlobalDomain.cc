@@ -4,16 +4,20 @@ namespace atlas {
 namespace domain {
 
 namespace {
-  constexpr std::array<double,2> yrange() { 
+  constexpr std::array<double,2> yrange() {
     return { -90., 90. };
   }
+}
+
+GlobalDomain::GlobalDomain(const double west) :
+  ZonalBandDomain( yrange(), west ) {
 }
 
 GlobalDomain::GlobalDomain() :
   ZonalBandDomain( yrange() ) {
 }
 
-GlobalDomain::GlobalDomain(const eckit::Parametrisation& p) : 
+GlobalDomain::GlobalDomain(const eckit::Parametrisation& p) :
   GlobalDomain() {
 }
 

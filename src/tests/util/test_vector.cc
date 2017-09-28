@@ -8,16 +8,19 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestArray
-#include "ecbuild/boost_test_framework.h"
 #include "atlas/array/Vector.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
+using namespace eckit::testing;
 using namespace atlas::array;
 
 namespace atlas {
 namespace test {
 
-BOOST_AUTO_TEST_CASE(test_vector) {
+//-----------------------------------------------------------------------------
+
+CASE("test_vector") {
     Vector<int> vec(3);
 
     VectorView<int> vec_view = make_host_vector_view(vec);
@@ -26,10 +29,10 @@ BOOST_AUTO_TEST_CASE(test_vector) {
     vec_view[1] = -3;
     vec_view[2] = 1;
 
-    BOOST_CHECK_EQUAL( vec_view.size(),3);
-    BOOST_CHECK_EQUAL( vec_view[0],3);
-    BOOST_CHECK_EQUAL( vec_view[1],-3);
-    BOOST_CHECK_EQUAL( vec_view[2],1);
+    EXPECT( vec_view.size() == 3);
+    EXPECT( vec_view[0] == 3);
+    EXPECT( vec_view[1] == -3);
+    EXPECT( vec_view[2] == 1);
 
     vec.resize(5);
 
@@ -38,13 +41,21 @@ BOOST_AUTO_TEST_CASE(test_vector) {
     vec_viewb[3] = 5;
     vec_viewb[4] = 6;
 
-    BOOST_CHECK_EQUAL( vec_viewb[0],3);
-    BOOST_CHECK_EQUAL( vec_viewb[1],-3);
-    BOOST_CHECK_EQUAL( vec_viewb[2],1);
-    BOOST_CHECK_EQUAL( vec_viewb[3],5);
-    BOOST_CHECK_EQUAL( vec_viewb[4],6);
+    EXPECT( vec_viewb[0] == 3);
+    EXPECT( vec_viewb[1] == -3);
+    EXPECT( vec_viewb[2] == 1);
+    EXPECT( vec_viewb[3] == 5);
+    EXPECT( vec_viewb[4] == 6);
 
 }
 
-}
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
 }

@@ -36,28 +36,25 @@ if( HAVE_FCTEST )
 
 endif()
 
+if( ECKIT_HAVE_TESTING )
+
 ecbuild_add_test( TARGET atlas_test_flags
-  BOOST
   SOURCES  test_flags.cc
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_indexview
-  BOOST
   SOURCES  test_indexview.cc
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_vector
-  BOOST
   SOURCES  test_vector.cc
   LIBS     atlas
   CONDITION ATLAS_HAVE_GRIDTOOLS_STORAGE
 )
 
-
 ecbuild_add_test( TARGET atlas_test_metadata
-  BOOST
   MPI        4
   CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_metadata.cc
@@ -65,8 +62,14 @@ ecbuild_add_test( TARGET atlas_test_metadata
 )
 
 ecbuild_add_test( TARGET atlas_test_footprint
-  BOOST
   SOURCES test_footprint.cc
   LIBS    atlas
 )
+
+ecbuild_add_test( TARGET atlas_test_earth
+  SOURCES test_earth.cc
+  LIBS    atlas
+)
+
+endif()
 

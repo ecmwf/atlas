@@ -1,6 +1,7 @@
 #include <cmath>
 #include "atlas/projection/detail/LambertProjection.h"
 #include "atlas/util/Constants.h"
+#include "atlas/util/Earth.h"
 
 /*
 Projection formula's for Lambert projection from "Map Projections: A Working Manual"

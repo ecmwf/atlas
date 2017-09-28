@@ -10,8 +10,6 @@
 
 #include <sstream>
 #include <algorithm>
-#define BOOST_TEST_MODULE TestDistributeMesh
-#include "ecbuild/boost_test_framework.h"
 
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/library/Library.h"
@@ -31,10 +29,12 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/mesh/IsGhostNode.h"
 #include "atlas/runtime/Log.h"
+#include "eckit/types/FloatCompare.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
-
+using namespace eckit::testing;
 using namespace atlas;
 using namespace atlas::output;
 using namespace atlas::meshgenerator;
@@ -42,6 +42,9 @@ using namespace atlas::util;
 
 namespace atlas {
 namespace test {
+
+//-----------------------------------------------------------------------------
+
 
 double dual_volume(Mesh& mesh)
 {
@@ -66,9 +69,10 @@ double dual_volume(Mesh& mesh)
   return area;
 }
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( test_distribute_t63 )
+
+CASE( "test_distribute_t63" )
 {
   // Every task builds full mesh
 //  meshgenerator::StructuredMeshGenerator generate( util::Config
@@ -97,7 +101,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   mesh::actions::build_median_dual_mesh(m);
 
   double computed_dual_volume = test::dual_volume(m);
-  BOOST_CHECK_CLOSE( computed_dual_volume, 360.*180., 0.0001 );
+  EXPECT( eckit::types::is_approximately_equal(  computed_dual_volume, 360.*180., 0.0001 ) );
   double difference = 360.*180. - computed_dual_volume;
   if( difference > 1e-8 )
   {
@@ -110,7 +114,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 
   // Mesh& mesh1 = Mesh::from_id(meshid);
   Mesh& mesh1 = m;
-  BOOST_CHECK( mesh1.nodes().size() == m.nodes().size() );
+  EXPECT( mesh1.nodes().size() == m.nodes().size() );
 
   const array::ArrayView<int,1> part  = array::make_view<int,1>( m.nodes().partition() );
   const array::ArrayView<int,1> ghost = array::make_view<int,1>( m.nodes().ghost() );
@@ -134,12 +138,18 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   for( size_t jnode=0; jnode<part.size(); ++jnode )
   {
     Log::info() << mesh::Nodes::Topology::check(flags(jnode),mesh::Nodes::Topology::GHOST) << " ";
-    BOOST_CHECK_EQUAL( mesh::Nodes::Topology::check(flags(jnode),mesh::Nodes::Topology::GHOST), ghost(jnode) );
+    EXPECT( mesh::Nodes::Topology::check(flags(jnode),mesh::Nodes::Topology::GHOST) == ghost(jnode) );
   }
   Log::info() << "]" << std::endl;
 
 }
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
 
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

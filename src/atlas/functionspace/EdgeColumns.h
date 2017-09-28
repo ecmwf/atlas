@@ -14,6 +14,7 @@
 #include "atlas/mesh/Halo.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/option.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Config.h"
 
@@ -42,9 +43,9 @@ class EdgeColumns : public FunctionSpaceImpl
 {
 public:
 
-    EdgeColumns( const Mesh&, const mesh::Halo &, const eckit::Parametrisation & );
+    EdgeColumns( const Mesh&, const mesh::Halo &, const eckit::Configuration & );
     EdgeColumns( const Mesh&, const mesh::Halo & );
-    EdgeColumns( const Mesh& );
+    EdgeColumns( const Mesh&, const eckit::Configuration& = util::NoConfig() );
 
     virtual ~EdgeColumns();
 
@@ -60,62 +61,11 @@ public:
     const mesh::HybridElements& edges() const { return edges_; }
           mesh::HybridElements& edges()       { return edges_; }
 
-
-
 // -- Field creation methods
 
-    /// @brief Create a named scalar field
-    template< typename DATATYPE > Field createField(
-              const std::string& name,
-              const eckit::Parametrisation& = util::NoConfig() ) const;
+    virtual Field createField( const eckit::Configuration&) const;
 
-    template< typename DATATYPE > Field createField(
-              const std::string& name,
-              size_t levels,
-              const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// @brief Create a named scalar field
-    Field createField(
-        const std::string& name,
-        array::DataType,
-        const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    Field createField(
-        const std::string& name,
-        array::DataType,
-        size_t levels,
-        const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// @brief Create a named field with specified dimensions for the variables
-    template< typename DATATYPE >  Field createField(
-        const std::string& name,
-        const std::vector<size_t>& variables,
-        const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    template< typename DATATYPE >  Field createField(
-        const std::string& name,
-        size_t levels,
-        const std::vector<size_t>& variables,
-        const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// @brief Create a named field with specified dimensions for the variables
-    Field createField(const std::string& name,
-                              array::DataType,
-                              const std::vector<size_t>& variables,
-                              const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    Field createField(const std::string& name,
-                              array::DataType,
-                              size_t levels,
-                              const std::vector<size_t>& variables,
-                              const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// @brief Create a named field based on other field (datatype and dimensioning)
-    Field createField(const std::string& name,
-                              const Field&,
-                              const eckit::Parametrisation& = util::NoConfig() ) const;
-
-
+    virtual Field createField(const Field&, const eckit::Configuration& ) const;
 
 // -- Parallelisation aware methods
 
@@ -140,12 +90,18 @@ private: // methods
     std::string gather_scatter_name() const;
     std::string checksum_name() const;
     void constructor();
-    size_t config_size(const eckit::Parametrisation& config) const;
+    size_t config_size(const eckit::Configuration& config) const;
+    array::DataType config_datatype(const eckit::Configuration&) const;
+    std::string config_name(const eckit::Configuration&) const;
+    size_t config_levels(const eckit::Configuration&) const;
+    array::ArrayShape config_shape(const eckit::Configuration&) const;
+    void set_field_metadata(const eckit::Configuration&, Field& ) const;
     size_t footprint() const;
 
 private: // data
 
     Mesh mesh_; // non-const because functionspace may modify mesh
+    size_t nb_levels_;
     mesh::HybridElements& edges_; // non-const because functionspace may modify mesh
     size_t nb_edges_;
     size_t nb_edges_global_;
@@ -157,76 +113,32 @@ private: // data
 
 // -------------------------------------------------------------------
 
-template< typename DATATYPE >
-Field EdgeColumns::createField(
-    const std::string& name,
-    const eckit::Parametrisation& options ) const
-{
-    return createField(name,array::DataType::create<DATATYPE>(),options);
-}
-
-template< typename DATATYPE >
-Field EdgeColumns::createField(
-    const std::string& name,
-    size_t levels,
-    const eckit::Parametrisation& options ) const
-{
-    return createField(name,array::DataType::create<DATATYPE>(),levels,options);
-}
-
-template< typename DATATYPE >
-Field EdgeColumns::createField(
-    const std::string& name,
-    const std::vector<size_t>& variables,
-    const eckit::Parametrisation& options ) const
-{
-    return createField(name,array::DataType::create<DATATYPE>(),variables,options);
-}
-
-template< typename DATATYPE >
-Field EdgeColumns::createField(
-    const std::string& name,
-    size_t levels,
-    const std::vector<size_t>& variables,
-    const eckit::Parametrisation& options ) const
-{
-    return createField(name,array::DataType::create<DATATYPE>(),levels,variables,options);
-}
-
-// -------------------------------------------------------------------------------
-
 extern "C" {
 
-EdgeColumns* atlas__functionspace__Edges__new (Mesh::Implementation* mesh, int halo);
-EdgeColumns* atlas__functionspace__Edges__new_mesh (Mesh::Implementation* mesh);
-void atlas__functionspace__Edges__delete (EdgeColumns* This);
-int atlas__functionspace__Edges__nb_edges(const EdgeColumns* This);
-Mesh::Implementation* atlas__functionspace__Edges__mesh(EdgeColumns* This);
-mesh::Edges* atlas__functionspace__Edges__edges(EdgeColumns* This);
-field::FieldImpl* atlas__functionspace__Edges__create_field (const EdgeColumns* This, const char* name, int kind, const eckit::Parametrisation* options);
-field::FieldImpl* atlas__functionspace__Edges__create_field_vars (const EdgeColumns* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
-
-field::FieldImpl* atlas__functionspace__Edges__create_field_lev (const EdgeColumns* This, const char* name, int levels, int kind, const eckit::Parametrisation* options);
-field::FieldImpl* atlas__functionspace__Edges__create_field_lev_vars (const EdgeColumns* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind, const eckit::Parametrisation* options);
+EdgeColumns* atlas__fs__EdgeColumns__new (Mesh::Implementation* mesh, const eckit::Configuration* config);
+void atlas__fs__EdgeColumns__delete (EdgeColumns* This);
+int atlas__fs__EdgeColumns__nb_edges(const EdgeColumns* This);
+Mesh::Implementation* atlas__fs__EdgeColumns__mesh(EdgeColumns* This);
+mesh::Edges* atlas__fs__EdgeColumns__edges(EdgeColumns* This);
+field::FieldImpl* atlas__fs__EdgeColumns__create_field (const EdgeColumns* This, const eckit::Configuration* options);
+field::FieldImpl* atlas__fs__EdgeColumns__create_field_template (const EdgeColumns* This, const field::FieldImpl* field_template, const eckit::Configuration* options);
 
 
-field::FieldImpl* atlas__functionspace__Edges__create_field_template (const EdgeColumns* This, const char* name, const field::FieldImpl* field_template, const eckit::Parametrisation* options);
+void atlas__fs__EdgeColumns__halo_exchange_fieldset(const EdgeColumns* This, field::FieldSetImpl* fieldset);
+void atlas__fs__EdgeColumns__halo_exchange_field(const EdgeColumns* This, field::FieldImpl* field);
+const parallel::HaloExchange* atlas__fs__EdgeColumns__get_halo_exchange(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__halo_exchange_fieldset(const EdgeColumns* This, field::FieldSetImpl* fieldset);
-void atlas__functionspace__Edges__halo_exchange_field(const EdgeColumns* This, field::FieldImpl* field);
-const parallel::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const EdgeColumns* This);
+void atlas__fs__EdgeColumns__gather_fieldset(const EdgeColumns* This, const field::FieldSetImpl* local, field::FieldSetImpl* global);
+void atlas__fs__EdgeColumns__gather_field(const EdgeColumns* This, const field::FieldImpl* local, field::FieldImpl* global);
+const parallel::GatherScatter* atlas__fs__EdgeColumns__get_gather(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__gather_fieldset(const EdgeColumns* This, const field::FieldSetImpl* local, field::FieldSetImpl* global);
-void atlas__functionspace__Edges__gather_field(const EdgeColumns* This, const field::FieldImpl* local, field::FieldImpl* global);
-const parallel::GatherScatter* atlas__functionspace__Edges__get_gather(const EdgeColumns* This);
+void atlas__fs__EdgeColumns__scatter_fieldset(const EdgeColumns* This, const field::FieldSetImpl* global, field::FieldSetImpl* local);
+void atlas__fs__EdgeColumns__scatter_field(const EdgeColumns* This, const field::FieldImpl* global, field::FieldImpl* local);
+const parallel::GatherScatter* atlas__fs__EdgeColumns__get_scatter(const EdgeColumns* This);
 
-void atlas__functionspace__Edges__scatter_fieldset(const EdgeColumns* This, const field::FieldSetImpl* global, field::FieldSetImpl* local);
-void atlas__functionspace__Edges__scatter_field(const EdgeColumns* This, const field::FieldImpl* global, field::FieldImpl* local);
-const parallel::GatherScatter* atlas__functionspace__Edges__get_scatter(const EdgeColumns* This);
-
-void atlas__functionspace__Edges__checksum_fieldset(const EdgeColumns* This, const field::FieldSetImpl* fieldset, char* &checksum, int &size, int &allocated);
-void atlas__functionspace__Edges__checksum_field(const EdgeColumns* This, const field::FieldImpl* field, char* &checksum, int &size, int &allocated);
-const parallel::Checksum* atlas__functionspace__Edges__get_checksum(const EdgeColumns* This);
+void atlas__fs__EdgeColumns__checksum_fieldset(const EdgeColumns* This, const field::FieldSetImpl* fieldset, char* &checksum, int &size, int &allocated);
+void atlas__fs__EdgeColumns__checksum_field(const EdgeColumns* This, const field::FieldImpl* field, char* &checksum, int &size, int &allocated);
+const parallel::Checksum* atlas__fs__EdgeColumns__get_checksum(const EdgeColumns* This);
 }
 
 } // namespace detail
@@ -239,7 +151,7 @@ public:
 
     EdgeColumns();
     EdgeColumns( const FunctionSpace& );
-    EdgeColumns( const Mesh&, const mesh::Halo&, const eckit::Parametrisation& );
+    EdgeColumns( const Mesh&, const mesh::Halo&, const eckit::Configuration& );
     EdgeColumns( const Mesh& mesh, const mesh::Halo& );
     EdgeColumns( const Mesh& mesh );
 
@@ -252,61 +164,6 @@ public:
     const Mesh& mesh() const;
 
     const mesh::HybridElements& edges() const;
-
-// -- Field creation methods
-
-    /// @brief Create a named scalar field
-    template< typename DATATYPE > Field createField(
-              const std::string& name,
-              const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    template< typename DATATYPE > Field createField(
-              const std::string& name,
-              size_t levels,
-              const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// @brief Create a named scalar field
-    Field createField(
-        const std::string& name,
-        array::DataType,
-        const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    Field createField(
-        const std::string& name,
-        array::DataType,
-        size_t levels,
-        const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// @brief Create a named field with specified dimensions for the variables
-    template< typename DATATYPE >  Field createField(
-        const std::string& name,
-        const std::vector<size_t>& variables,
-        const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    template< typename DATATYPE >  Field createField(
-        const std::string& name,
-        size_t levels,
-        const std::vector<size_t>& variables,
-        const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// @brief Create a named field with specified dimensions for the variables
-    Field createField(const std::string& name,
-                              array::DataType,
-                              const std::vector<size_t>& variables,
-                              const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    Field createField(const std::string& name,
-                              array::DataType,
-                              size_t levels,
-                              const std::vector<size_t>& variables,
-                              const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// @brief Create a named field based on other field (datatype and dimensioning)
-    Field createField(const std::string& name,
-                              const Field&,
-                              const eckit::Parametrisation& = util::NoConfig() ) const;
-
-
 
 // -- Parallelisation aware methods
 
@@ -330,40 +187,6 @@ private:
 
   const detail::EdgeColumns* functionspace_;
 };
-
-template< typename DATATYPE >
-Field EdgeColumns::createField(
-          const std::string& name,
-          const eckit::Parametrisation& config ) const {
-  return functionspace_->createField<DATATYPE>(name,config);
-}
-
-template< typename DATATYPE >
-Field EdgeColumns::createField(
-          const std::string& name,
-          size_t levels,
-          const eckit::Parametrisation& config ) const {
-  return functionspace_->createField<DATATYPE>(name,levels,config);
-}
-
-
-template< typename DATATYPE >
-Field EdgeColumns::createField(
-    const std::string& name,
-    const std::vector<size_t>& variables,
-    const eckit::Parametrisation& config ) const {
-  return functionspace_->createField<DATATYPE>(name,variables,config);
-}
-
-template< typename DATATYPE >
-Field EdgeColumns::createField(
-    const std::string& name,
-    size_t levels,
-    const std::vector<size_t>& variables,
-    const eckit::Parametrisation& config ) const {
-  return functionspace_->createField<DATATYPE>(name,levels,variables,config);
-}
-
 
 } // namespace functionspace
 } // namespace atlas

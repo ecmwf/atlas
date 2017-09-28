@@ -16,6 +16,7 @@
 #include "eckit/runtime/Main.h"
 #include "eckit/mpi/Comm.h"
 #include "atlas/runtime/Log.h"
+#include "eckit/config/Resource.h"
 
 namespace atlas {
 namespace test {
@@ -25,7 +26,10 @@ struct AtlasFixture : public eckit::testing::Setup {
 
     AtlasFixture() {
         eckit::Main::instance().taskID( eckit::mpi::comm("world").rank() );
-        if( eckit::Main::instance().taskID() != 0 ) Log::reset();
+        if( eckit::mpi::comm("world").size() != 1 ) {
+          long logtask = eckit::Resource<long>("--logtask;$ATLAS_TEST_LOGTASK",0);
+          if( eckit::Main::instance().taskID() != logtask ) Log::reset();
+        }
         atlas::Library::instance().initialise();
     }
 

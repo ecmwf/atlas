@@ -297,13 +297,18 @@ Gmsh* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, con
   ATLAS_ERROR_HANDLING( gmsh = new Gmsh(std::string(pathname),std::string(mode), *params ) );
   return gmsh;
 }
-}
 
-namespace {
+} // extern C
+
 static OutputBuilder< detail::Gmsh > __gmsh("gmsh");
+
+void force_link_atlas_output_detail_gmsh(void*) {
+    force_link_atlas_output_detail_gmsh(&__gmsh);
 }
 
 } // namespace detail
+
+//----------------------------------------------------------------------------------------------------------------------
 
 
 Gmsh::Gmsh( const Output& output ) :

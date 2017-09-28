@@ -68,7 +68,7 @@ TEST( test_gmsh )
   call gmsh%write(fieldset,functionspace_nodes)
   
   
-  field = functionspace_nodes%create_field("leveled",atlas_integer(4),4);
+  field = functionspace_nodes%create_field(name="leveled",kind=atlas_integer(4),levels=4);
   call field%data(fdata)
   do jlev=1,field%levels()
     fdata(jlev,:) = jlev
@@ -79,14 +79,14 @@ TEST( test_gmsh )
   call gmsh%write(field)
   
   fieldset = atlas_FieldSet()
-  field = functionspace_nodes%create_field("scal1",atlas_integer(4),4);
+  field = functionspace_nodes%create_field(name="scal1",kind=atlas_integer(4),levels=4);
   call field%data(fdata)
   do jlev=1,field%levels()
     fdata(jlev,:) = jlev-1
   enddo
   call fieldset%add(field)
 
-  field = functionspace_nodes%create_field("scal2",atlas_integer(4),4);
+  field = functionspace_nodes%create_field(name="scal2",kind=atlas_integer(4),levels=4);
   call field%data(fdata)
   do jlev=1,field%levels()
     fdata(jlev,:) = -(jlev-1)

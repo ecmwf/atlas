@@ -11,9 +11,6 @@
 #include <sstream>
 #include <algorithm>
 
-#define BOOST_TEST_MODULE TestBuildParallelFields
-#include "ecbuild/boost_test_framework.h"
-
 #include "atlas/parallel/mpi/mpi.h"
 
 #include "atlas/mesh/actions/BuildParallelFields.h"
@@ -31,16 +28,21 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
+
 
 using Topology = atlas::mesh::Nodes::Topology;
 
+using namespace eckit::testing;
 using namespace atlas::array;
 using namespace atlas::output;
 using namespace atlas::meshgenerator;
 
 namespace atlas {
 namespace test {
+
+//-----------------------------------------------------------------------------
 
 class IsGhost
 {
@@ -69,9 +71,9 @@ private:
 #define DISABLE if(0)
 #define ENABLE if(1)
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture );
+//-----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( test1 )
+CASE( "test1" )
 {
   Mesh m;
 
@@ -108,66 +110,66 @@ BOOST_AUTO_TEST_CASE( test1 )
 
   mesh::actions::build_parallel_fields(m);
 
-  BOOST_REQUIRE( nodes.has_field("remote_idx") );
+  EXPECT( nodes.has_field("remote_idx") );
 
   IndexView<int,1> loc = make_indexview<int,1>( nodes.remote_index() );
-  BOOST_CHECK_EQUAL( loc(0) , 0 );
-  BOOST_CHECK_EQUAL( loc(1) , 1 );
-  BOOST_CHECK_EQUAL( loc(2) , 2 );
-  BOOST_CHECK_EQUAL( loc(3) , 3 );
-  BOOST_CHECK_EQUAL( loc(4) , 4 );
-  BOOST_CHECK_EQUAL( loc(5) , 5 );
-  BOOST_CHECK_EQUAL( loc(6) , 6 );
-  BOOST_CHECK_EQUAL( loc(7) , 7 );
-  BOOST_CHECK_EQUAL( loc(8) , 8 );
-  BOOST_CHECK_EQUAL( loc(9) , 9 );
+  EXPECT( loc(0) == 0 );
+  EXPECT( loc(1) == 1 );
+  EXPECT( loc(2) == 2 );
+  EXPECT( loc(3) == 3 );
+  EXPECT( loc(4) == 4 );
+  EXPECT( loc(5) == 5 );
+  EXPECT( loc(6) == 6 );
+  EXPECT( loc(7) == 7 );
+  EXPECT( loc(8) == 8 );
+  EXPECT( loc(9) == 9 );
 
   test::IsGhost is_ghost( m.nodes() );
 
   switch ( parallel::mpi::comm().rank() )
   {
   case 0:
-    BOOST_CHECK_EQUAL( is_ghost(0), false );
-    BOOST_CHECK_EQUAL( is_ghost(1), false );
-    BOOST_CHECK_EQUAL( is_ghost(2), false );
-    BOOST_CHECK_EQUAL( is_ghost(3), false );
-    BOOST_CHECK_EQUAL( is_ghost(4), false );
-    BOOST_CHECK_EQUAL( is_ghost(5), true );
-    BOOST_CHECK_EQUAL( is_ghost(6), true );
-    BOOST_CHECK_EQUAL( is_ghost(7), true );
-    BOOST_CHECK_EQUAL( is_ghost(8), true );
-    BOOST_CHECK_EQUAL( is_ghost(9), true );
+    EXPECT( is_ghost(0) == false );
+    EXPECT( is_ghost(1) == false );
+    EXPECT( is_ghost(2) == false );
+    EXPECT( is_ghost(3) == false );
+    EXPECT( is_ghost(4) == false );
+    EXPECT( is_ghost(5) == true );
+    EXPECT( is_ghost(6) == true );
+    EXPECT( is_ghost(7) == true );
+    EXPECT( is_ghost(8) == true );
+    EXPECT( is_ghost(9) == true );
     break;
   case 1:
-    BOOST_CHECK_EQUAL( is_ghost(0), true );
-    BOOST_CHECK_EQUAL( is_ghost(1), true );
-    BOOST_CHECK_EQUAL( is_ghost(2), true );
-    BOOST_CHECK_EQUAL( is_ghost(3), true );
-    BOOST_CHECK_EQUAL( is_ghost(4), true );
-    BOOST_CHECK_EQUAL( is_ghost(5), false );
-    BOOST_CHECK_EQUAL( is_ghost(6), false );
-    BOOST_CHECK_EQUAL( is_ghost(7), false );
-    BOOST_CHECK_EQUAL( is_ghost(8), false );
-    BOOST_CHECK_EQUAL( is_ghost(9), false );
+    EXPECT( is_ghost(0) == true );
+    EXPECT( is_ghost(1) == true );
+    EXPECT( is_ghost(2) == true );
+    EXPECT( is_ghost(3) == true );
+    EXPECT( is_ghost(4) == true );
+    EXPECT( is_ghost(5) == false );
+    EXPECT( is_ghost(6) == false );
+    EXPECT( is_ghost(7) == false );
+    EXPECT( is_ghost(8) == false );
+    EXPECT( is_ghost(9) == false );
     break;
   }
 
   mesh::actions::build_periodic_boundaries(m);
 
   // points 8 and 9 are periodic slave points of points 0 and 1
-  BOOST_CHECK_EQUAL( part(8), 0 );
-  BOOST_CHECK_EQUAL( part(9), 0 );
-  BOOST_CHECK_EQUAL( loc(8), 0 );
-  BOOST_CHECK_EQUAL( loc(9), 1 );
+  EXPECT( part(8) == 0 );
+  EXPECT( part(9) == 0 );
+  EXPECT( loc(8) == 0 );
+  EXPECT( loc(9) == 1 );
   if( parallel::mpi::comm().rank() == 1 )
   {
-    BOOST_CHECK_EQUAL( is_ghost(8), true );
-    BOOST_CHECK_EQUAL( is_ghost(9), true );
+    EXPECT( is_ghost(8) == true );
+    EXPECT( is_ghost(9) == true );
   }
 
 }
 
-BOOST_AUTO_TEST_CASE( test2 )
+CASE( "test2" )
 {
   util::Config meshgen_options;
   meshgen_options.set("angle",27.5);
@@ -186,8 +188,8 @@ BOOST_AUTO_TEST_CASE( test2 )
     if( is_ghost(jnode) ) ++nb_ghost;
   }
 
-  if( parallel::mpi::comm().rank() == 0 ) BOOST_CHECK_EQUAL( nb_ghost, 129 );
-  if( parallel::mpi::comm().rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 0   );
+  if( parallel::mpi::comm().rank() == 0 ) EXPECT( nb_ghost == 129 );
+  if( parallel::mpi::comm().rank() == 1 ) EXPECT( nb_ghost == 0   );
 
   mesh::actions::build_periodic_boundaries(m);
 
@@ -197,11 +199,19 @@ BOOST_AUTO_TEST_CASE( test2 )
     if( is_ghost(jnode) ) ++nb_periodic;
   }
 
-  if( parallel::mpi::comm().rank() == 0 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
-  if( parallel::mpi::comm().rank() == 1 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
+  if( parallel::mpi::comm().rank() == 0 ) EXPECT( nb_periodic == 32 );
+  if( parallel::mpi::comm().rank() == 1 ) EXPECT( nb_periodic == 32 );
 
   Gmsh("periodic.msh").write(m);
 }
 
-} // namespace test
-} // namespace atlas
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

@@ -37,31 +37,13 @@ TYPE, extends(fckit_refcounted) :: atlas_Trans
 
 !------------------------------------------------------------------------------
 contains
-  procedure :: handle       => atlas_Trans__handle
-  procedure :: nproc        => atlas_Trans__nproc
-  procedure :: myproc       => atlas_Trans__myproc
-  procedure :: ndgl         => atlas_Trans__ndgl
-  procedure :: nsmax        => atlas_Trans__nsmax
-  procedure :: ngptot       => atlas_Trans__ngptot
-  procedure :: ngptotg      => atlas_Trans__ngptotg
-  procedure :: ngptotmx     => atlas_Trans__ngptotmx
-  procedure :: nspec        => atlas_Trans__nspec
-  procedure :: nspec2       => atlas_Trans__nspec2
-  procedure :: nspec2g      => atlas_Trans__nspec2g
-  procedure :: nspec2mx     => atlas_Trans__nspec2mx
-  procedure :: n_regions_NS => atlas_Trans__n_regions_NS
-  procedure :: n_regions_EW => atlas_Trans__n_regions_EW
-  procedure :: nloen        => atlas_Trans__nloen
-  procedure :: n_regions    => atlas_Trans__n_regions
-  procedure :: nfrstlat     => atlas_Trans__nfrstlat
-  procedure :: nlstlat      => atlas_Trans__nlstlat
-  procedure :: nptrfrstlat  => atlas_Trans__nptrfrstlat
-  procedure :: nsta         => atlas_Trans__nsta
-  procedure :: nonl         => atlas_Trans__nonl
-  procedure :: nmyms        => atlas_Trans__nmyms
-  procedure :: nasm0        => atlas_Trans__nasm0
-  procedure :: nump         => atlas_Trans__nump
-  procedure :: nvalue       => atlas_Trans__nvalue
+  procedure :: handle
+  procedure :: grid
+  procedure :: truncation
+  procedure :: nb_spectral_coefficients
+  procedure :: nb_spectral_coefficients_global
+  procedure :: nb_gridpoints
+  procedure :: nb_gridpoints_global
 
   procedure, private :: dirtrans_field_nodes
   procedure, private :: dirtrans_field
@@ -219,371 +201,56 @@ subroutine atlas_TransParameters__copy(this,obj_in)
   class(fckit_refcounted), target, intent(in) :: obj_in
 end subroutine
 
-function atlas_Trans__handle( this ) result(handle)
+function handle( this )
   use atlas_trans_c_binding
   integer :: handle
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
   handle = atlas__Trans__handle (this%c_ptr())
-#else
-  THROW_ERROR
-  handle = 0
-#endif
 end function
 
-
-function atlas_Trans__nproc( this ) result(nproc)
+function truncation( this )
   use atlas_trans_c_binding
-  integer :: nproc
+  integer :: truncation
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  nproc = atlas__Trans__nproc (this%c_ptr())
-#else
-  THROW_ERROR
-  nproc = 0
-#endif
+  truncation = atlas__Trans__truncation (this%c_ptr())
 end function
 
-
-function atlas_Trans__myproc( this, proc0 ) result(myproc)
+function nb_spectral_coefficients( this )
   use atlas_trans_c_binding
-  integer :: myproc
+  integer :: nb_spectral_coefficients
   class(atlas_Trans) :: this
-  integer, intent(in) :: proc0
-#ifdef ATLAS_HAVE_TRANS
-  myproc = atlas__Trans__myproc (this%c_ptr(),proc0)
-#else
-  myproc = 0
-#endif
+  nb_spectral_coefficients = atlas__Trans__nspec2 (this%c_ptr())
 end function
 
-function atlas_Trans__ndgl( this ) result(ndgl)
+function nb_spectral_coefficients_global( this )
   use atlas_trans_c_binding
-  integer :: ndgl
+  integer :: nb_spectral_coefficients_global
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  ndgl = atlas__Trans__ndgl (this%c_ptr())
-#else
-  THROW_ERROR
-  ndgl = 0
-#endif
+  nb_spectral_coefficients_global = atlas__Trans__nspec2g (this%c_ptr())
 end function
 
-function atlas_Trans__nsmax( this ) result(nsmax)
+function nb_gridpoints( this )
   use atlas_trans_c_binding
-  integer :: nsmax
+  integer :: nb_gridpoints
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  nsmax = atlas__Trans__nsmax (this%c_ptr())
-#else
-  nsmax = 0
-#endif
+  nb_gridpoints = atlas__Trans__ngptot (this%c_ptr())
 end function
 
-function atlas_Trans__ngptot( this ) result(ngptot)
+function nb_gridpoints_global( this )
   use atlas_trans_c_binding
-  integer :: ngptot
+  integer :: nb_gridpoints_global
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  ngptot = atlas__Trans__ngptot (this%c_ptr())
-#else
-  THROW_ERROR
-  ngptot = 0
-#endif
+  nb_gridpoints_global = atlas__Trans__ngptotg (this%c_ptr())
 end function
 
-function atlas_Trans__ngptotg( this ) result(ngptotg)
+function grid( this )
   use atlas_trans_c_binding
-  integer :: ngptotg
+  use atlas_grid_module
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  ngptotg = atlas__Trans__ngptotg (this%c_ptr())
-#else
-  THROW_ERROR
-  ngptotg = 0
-#endif
+  type(atlas_StructuredGrid) :: grid
+  grid = atlas_StructuredGrid( atlas__Trans__grid(this%c_ptr()) )
+  call grid%return()
 end function
-
-function atlas_Trans__ngptotmx( this ) result(ngptotmx)
-  use atlas_trans_c_binding
-  integer :: ngptotmx
-  class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  ngptotmx = atlas__Trans__ngptotmx (this%c_ptr())
-#else
-  THROW_ERROR
-  ngptotmx = 0
-#endif
-end function
-
-
-function atlas_Trans__nspec( this ) result(nspec)
-  use atlas_trans_c_binding
-  integer :: nspec
-  class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  nspec = atlas__Trans__nspec (this%c_ptr())
-#else
-  nspec = 0
-#endif
-end function
-
-function atlas_Trans__nspec2( this ) result(nspec2)
-  use atlas_trans_c_binding
-  integer :: nspec2
-  class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  nspec2 = atlas__Trans__nspec2 (this%c_ptr())
-#else
-  nspec2 = 0
-#endif
-end function
-
-function atlas_Trans__nspec2g( this ) result(nspec2g)
-  use atlas_trans_c_binding
-  integer :: nspec2g
-  class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  nspec2g = atlas__Trans__nspec2g (this%c_ptr())
-#else
-  nspec2g = 0
-#endif
-end function
-
-function atlas_Trans__nspec2mx( this ) result(nspec2mx)
-  use atlas_trans_c_binding
-  integer :: nspec2mx
-  class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  nspec2mx = atlas__Trans__nspec2mx (this%c_ptr())
-#else
-  nspec2mx = 0
-#endif
-end function
-
-
-function atlas_Trans__n_regions_NS( this ) result(n_regions_NS)
-  use atlas_trans_c_binding
-  integer :: n_regions_NS
-  class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  n_regions_NS = atlas__Trans__n_regions_NS (this%c_ptr())
-#else
-  THROW_ERROR
-  n_regions_NS = 0
-#endif
-end function
-
-
-function atlas_Trans__n_regions_EW( this ) result(n_regions_EW)
-  use atlas_trans_c_binding
-  integer :: n_regions_EW
-  class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  n_regions_EW = atlas__Trans__n_regions_EW (this%c_ptr())
-#else
-  THROW_ERROR
-  n_regions_EW = 0
-#endif
-end function
-
-function atlas_Trans__nump( this ) result(nump)
-  use atlas_trans_c_binding
-  integer :: nump
-  class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
-  nump = atlas__Trans__nump (this%c_ptr())
-#else
-  THROW_ERROR
-  nump = 0
-#endif
-end function
-
-function atlas_Trans__nloen(this) result(nloen)
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
-  integer(c_int), pointer :: nloen(:)
-  class(atlas_Trans), intent(in) :: this
-#ifdef ATLAS_HAVE_TRANS
-  type(c_ptr) :: nloen_c_ptr
-  integer(c_int) :: size
-  nloen_c_ptr =  atlas__Trans__nloen(this%c_ptr(), size)
-  call c_f_pointer ( nloen_c_ptr , nloen , (/size/) )
-#else
-  THROW_ERROR
-  if ( .not. associated(nloen) ) then
-    allocate(nloen(0) )
-  endif
-#endif
-end function atlas_Trans__nloen
-
-function atlas_Trans__n_regions(this) result(n_regions)
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
-  integer(c_int), pointer :: n_regions(:)
-  class(atlas_Trans), intent(in) :: this
-#ifdef ATLAS_HAVE_TRANS
-  type(c_ptr) :: n_regions_c_ptr
-  integer(c_int) :: size
-  n_regions_c_ptr =  atlas__Trans__n_regions(this%c_ptr(), size)
-  call c_f_pointer ( n_regions_c_ptr , n_regions , (/size/) )
-#else
-  THROW_ERROR
-  if ( .not. associated(n_regions) ) then
-    allocate(n_regions(0) )
-  endif
-#endif
-end function atlas_Trans__n_regions
-
-
-function atlas_Trans__nfrstlat(this) result(nfrstlat)
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
-  integer(c_int), pointer :: nfrstlat(:)
-  class(atlas_Trans), intent(in) :: this
-#ifdef ATLAS_HAVE_TRANS
-  type(c_ptr) :: nfrstlat_c_ptr
-  integer(c_int) :: size
-  nfrstlat_c_ptr =  atlas__Trans__nfrstlat(this%c_ptr(), size)
-  call c_f_pointer ( nfrstlat_c_ptr , nfrstlat , (/size/) )
-#else
-  THROW_ERROR
-  if ( .not. associated(nfrstlat) ) then
-    allocate(nfrstlat(0) )
-  endif
-#endif
-end function atlas_Trans__nfrstlat
-
-function atlas_Trans__nlstlat(this) result(nlstlat)
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_f_pointer
-  integer(c_int), pointer :: nlstlat(:)
-  class(atlas_Trans), intent(in) :: this
-#ifdef ATLAS_HAVE_TRANS
-  type(c_ptr) :: nlstlat_c_ptr
-  integer(c_int) :: size
-  nlstlat_c_ptr =  atlas__Trans__nlstlat(this%c_ptr(), size)
-  call c_f_pointer ( nlstlat_c_ptr , nlstlat , (/size/) )
-#else
-  THROW_ERROR
-  if ( .not. associated(nlstlat) ) then
-    allocate(nlstlat(0) )
-  endif
-#endif
-end function atlas_Trans__nlstlat
-
-
-function atlas_Trans__nptrfrstlat(this) result(nptrfrstlat)
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
-  integer(c_int), pointer :: nptrfrstlat(:)
-  class(atlas_Trans), intent(in) :: this
-#ifdef ATLAS_HAVE_TRANS
-  type(c_ptr) :: nptrfrstlat_c_ptr
-  integer(c_int) :: size
-  nptrfrstlat_c_ptr =  atlas__Trans__nptrfrstlat(this%c_ptr(), size)
-  call c_f_pointer ( nptrfrstlat_c_ptr , nptrfrstlat , (/size/) )
-#else
-  THROW_ERROR
-  if ( .not. associated(nptrfrstlat) ) then
-    allocate(nptrfrstlat(0) )
-  endif
-#endif
-end function atlas_Trans__nptrfrstlat
-
-
-function atlas_Trans__nsta(this) result(nsta)
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
-  integer(c_int), pointer :: nsta(:,:)
-  class(atlas_Trans), intent(in) :: this
-#ifdef ATLAS_HAVE_TRANS
-  type(c_ptr) :: nsta_c_ptr
-  integer(c_int) :: sizef1
-  integer(c_int) :: sizef2
-  nsta_c_ptr =  atlas__Trans__nsta(this%c_ptr(), sizef2, sizef1)
-  call c_f_pointer ( nsta_c_ptr , nsta , (/sizef1,sizef2/) )
-#else
-  THROW_ERROR
-  if ( .not. associated(nsta) ) then
-    allocate(nsta(0,0) )
-  endif
-#endif
-end function atlas_Trans__nsta
-
-function atlas_Trans__nonl(this) result(nonl)
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
-  integer(c_int), pointer :: nonl(:,:)
-  class(atlas_Trans), intent(in) :: this
-#ifdef ATLAS_HAVE_TRANS
-  type(c_ptr) :: nonl_c_ptr
-  integer(c_int) :: sizef1
-  integer(c_int) :: sizef2
-  nonl_c_ptr =  atlas__Trans__nonl(this%c_ptr(), sizef2, sizef1)
-  call c_f_pointer ( nonl_c_ptr , nonl , (/sizef1,sizef2/) )
-#else
-  THROW_ERROR
-  if ( .not. associated(nonl) ) then
-    allocate(nonl(0,0) )
-  endif
-#endif
-end function atlas_Trans__nonl
-
-
-function atlas_Trans__nmyms(this) result(nmyms)
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
-  integer(c_int), pointer :: nmyms(:)
-  class(atlas_Trans), intent(in) :: this
-#ifdef ATLAS_HAVE_TRANS
-  type(c_ptr) :: nmyms_c_ptr
-  integer(c_int) :: size
-  nmyms_c_ptr =  atlas__Trans__nptrfrstlat(this%c_ptr(), size)
-  call c_f_pointer ( nmyms_c_ptr , nmyms , (/size/) )
-#else
-  THROW_ERROR
-  if ( .not. associated(nmyms) ) then
-    allocate(nmyms(0) )
-  endif
-#endif
-end function atlas_Trans__nmyms
-
-function atlas_Trans__nasm0(this) result(nasm0)
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
-  integer(c_int), pointer :: nasm0(:)
-  class(atlas_Trans), intent(in) :: this
-#ifdef ATLAS_HAVE_TRANS
-  type(c_ptr) :: nasm0_c_ptr
-  integer(c_int) :: size
-  nasm0_c_ptr =  atlas__Trans__nasm0(this%c_ptr(), size)
-  call c_f_pointer ( nasm0_c_ptr , nasm0 , (/size/) )
-#else
-  THROW_ERROR
-  if ( .not. associated(nasm0) ) then
-    allocate(nasm0(0) )
-  endif
-#endif
-end function atlas_Trans__nasm0
-
-function atlas_Trans__nvalue(this) result(nvalue)
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
-  integer(c_int), pointer :: nvalue(:)
-  class(atlas_Trans), intent(in) :: this
-#ifdef ATLAS_HAVE_TRANS
-  type(c_ptr) :: nvalue_c_ptr
-  integer(c_int) :: size
-  nvalue_c_ptr =  atlas__Trans__nvalue(this%c_ptr(), size)
-  call c_f_pointer ( nvalue_c_ptr , nvalue , (/size/) )
-#else
-  THROW_ERROR
-  if ( .not. associated(nvalue) ) then
-    allocate(nvalue(0) )
-  endif
-#endif
-end function atlas_Trans__nvalue
 
 subroutine dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields, parameters)
   use atlas_trans_c_binding

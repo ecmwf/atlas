@@ -9,18 +9,21 @@
  */
 
 
+#include <cmath>
+#include <string>
+#include "eckit/config/Resource.h"
 #include "eckit/linalg/LinearAlgebra.h"
-
+#include "eckit/log/Plural.h"
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
-#include "atlas/interpolation/method/Method.h"
+#include "atlas/interpolation.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
 
 #include "PartitionedMesh.h"
 
-using namespace atlas;
 
+using namespace atlas;
 
 class AtlasParallelInterpolation : public AtlasTool {
 
@@ -38,38 +41,28 @@ class AtlasParallelInterpolation : public AtlasTool {
 public:
 
     AtlasParallelInterpolation(int argc, char* argv[]) : AtlasTool(argc, argv) {
-        add_option(new SimpleOption<size_t>     ("log-rank",         "use specific MPI rank for logging (default 0)"));
-        add_option(new SimpleOption<bool>       ("log-statistics",   "show simple statistics on source/target (default false)"));
+        add_option(new SimpleOption<size_t>     ("log-rank",             "use specific MPI rank for logging (default 0)"));
+        add_option(new SimpleOption<bool>       ("log-statistics",       "show simple statistics on source/target (default false)"));
+        add_option(new SimpleOption<bool>       ("output-polygons",      "Output Python script that plots partitions polygons"));
 
-        add_option(new SimpleOption<std::string>("method",           "interpolation method (default finite-element)"));
-        add_option(new SimpleOption<std::string>("backend",          "linear algebra backend"));
+        add_option(new SimpleOption<std::string>("method",               "interpolation method (default finite-element)"));
+        add_option(new SimpleOption<std::string>("backend",              "linear algebra backend"));
+        add_option(new SimpleOption<size_t>     ("k-nearest-neighbours", "k-nearest neighbours (default 1)"));
+        add_option(new SimpleOption<bool>       ("with-backward",        "Also do backward interpolation (default false)"));
 
-        add_option(new SimpleOption<std::string>("source-gridname",  "source gridname"));
-        add_option(new SimpleOption<std::string>("target-gridname",  "target gridname"));
-
+        add_option(new SimpleOption<std::string>("source-gridname",                   "source gridname"));
         add_option(new SimpleOption<std::string>("source-mesh-partitioner",           "source mesh partitioner (equal_regions (default), ...)"));
-        add_option(new SimpleOption<bool>       ("source-mesh-generator",             "source mesh generator (default structured)"));
+        add_option(new SimpleOption<std::string>("source-mesh-generator",             "source mesh generator (default structured)"));
         add_option(new SimpleOption<bool>       ("source-mesh-generator-triangulate", "source mesh generator triangulate option (default false)"));
-        add_option(new SimpleOption<bool>       ("source-mesh-generator-angle",       "source mesh generator angle option (default false)"));
+        add_option(new SimpleOption<double>     ("source-mesh-generator-angle",       "source mesh generator angle option (default 0.)"));
         add_option(new SimpleOption<size_t>     ("source-mesh-halo",                  "source mesh halo size (default 1)"));
 
-        add_option(new SimpleOption<std::string>("target-mesh-partitioner",           "target mesh partitioner (polygon, brute_force)"));
+        add_option(new SimpleOption<std::string>("target-gridname",                   "target gridname"));
+        add_option(new SimpleOption<std::string>("target-mesh-partitioner",           "target mesh partitioner (spherical-polygon, lonlat-polygon, brute-force)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator",             "target mesh generator (default structured)"));
         add_option(new SimpleOption<bool>       ("target-mesh-generator-triangulate", "target mesh generator triangulate option (default false)"));
-        add_option(new SimpleOption<bool>       ("target-mesh-generator-angle",       "target mesh generator angle option (default false)"));
-
+        add_option(new SimpleOption<double>     ("target-mesh-generator-angle",       "target mesh generator angle option (default 0.)"));
         add_option(new SimpleOption<size_t>     ("target-mesh-halo",                  "target mesh halo size (default 1)"));
-
-        add_option(new SimpleOption<size_t>     ("k-nearest-neighbours",              "k nearest neighbours (default 1)"));
-
-
-        add_option(new SimpleOption<bool>       ("polygons",                          "Output python script that plots partitions as polygons"));
-
-
-        add_option(new SimpleOption<bool>       ("with-backward",                     "Also do backward interpolation (default false)"));
-
-        add_option(new SimpleOption<bool>       ("fallback_to_2d",             "When the ray-tracing algorithm fails, we can either increase the halo of the source grid, or try to fallback to 2d."));
-
     }
 
 };
@@ -96,19 +89,16 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
         eckit::linalg::LinearAlgebra::backend(option);
     }
 
-    size_t source_mesh_halo = 1;
-    args.get("source-mesh-halo", source_mesh_halo);
-
-    size_t target_mesh_halo = 1;
-    args.get("target-mesh-halo", target_mesh_halo);
-    Log::debug() << "target-mesh-halo " << target_mesh_halo << std::endl;
-
 
     // Generate and partition source & target mesh
     // source mesh is partitioned on its own, the target mesh uses (pre-partitioned) source mesh
 
     option = args.get("source-gridname", option)? option : "O16";
     Grid src_grid(option);
+
+    size_t source_mesh_halo = 0;
+    args.get("source-mesh-halo", source_mesh_halo);
+
     interpolation::PartitionedMesh src(
                 args.get("source-mesh-partitioner",           option)? option : "equal_regions",
                 args.get("source-mesh-generator",             option)? option : "structured",
@@ -118,47 +108,47 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     option = args.get("target-gridname", option)? option : "O32";
     Grid tgt_grid(option);
+
+    size_t target_mesh_halo = 0;
+    args.get("target-mesh-halo", target_mesh_halo);
+
     interpolation::PartitionedMesh tgt(
-                args.get("target-mesh-partitioner",           option)? option : "polygon",
+                args.get("target-mesh-partitioner",           option)? option : "spherical-polygon",
                 args.get("target-mesh-generator",             option)? option : "structured",
                 args.get("target-mesh-generator-triangulate", trigs)?  trigs  : false,
                 args.get("target-mesh-generator-angle",       angle)?  angle  : 0. );
 
-    Log::info() << "Partitioning source grid" << std::endl;
+    Log::info() << "Partitioning source grid, halo of " << eckit::Plural(source_mesh_halo, "element") << std::endl;
     src.partition(src_grid);
-
-    Log::info() << "Partitioning target grid" << std::endl;
-    tgt.partition(tgt_grid, src);
-
-    Log::info() << "Increasing source mesh halo by " << source_mesh_halo << " elements." << std::endl;
     functionspace::NodeColumns src_functionspace(src.mesh(), source_mesh_halo);
-    Log::info() << "Increasing target mesh halo by " << target_mesh_halo << " elements." << std::endl;
-    functionspace::NodeColumns tgt_functionspace(tgt.mesh(), target_mesh_halo);
-
     src.writeGmsh("src-mesh.msh");
+
+    Log::info() << "Partitioning target grid, halo of " << eckit::Plural(target_mesh_halo, "element") << std::endl;
+    tgt.partition(tgt_grid, src);
+    functionspace::NodeColumns tgt_functionspace(tgt.mesh(), target_mesh_halo);
     tgt.writeGmsh("tgt-mesh.msh");
 
+
+    /// For debugging purposes
+    if (eckit::Resource<bool>("--output-polygons", false)) {
+        src.mesh().polygon(0).outputPythonScript("polygons.py");
+    }
+
+
     // Setup interpolator relating source & target meshes before setting a source FunctionSpace halo
-    std::string interpolator_option = "finite-element";
-    args.get("method", interpolator_option);
+    Log::info() << "Computing forward/backward interpolator" << std::endl;
 
+    std::string interpolation_method = "finite-element";
+    args.get("method", interpolation_method);
 
-    Log::info() << "Computing forward interpolator" << std::endl;
-
-    interpolation::method::Method::Ptr interpolator_forward(interpolation::method::MethodFactory::build(interpolator_option, args));
-
-    interpolator_forward->setup(src.mesh(), tgt.mesh());
+    Interpolation interpolator_forward( option::type(interpolation_method), src_functionspace, tgt_functionspace);
+    Interpolation interpolator_backward;
 
     bool with_backward = false;
-    args.get("with-backward",with_backward);
-    interpolation::method::Method::Ptr interpolator_backward;
-
+    args.get("with-backward", with_backward);
     if( with_backward ) {
       Log::info() << "Computing backward interpolator" << std::endl;
-
-      interpolator_backward.reset( interpolation::method::MethodFactory::build(interpolator_option, args));
-
-      interpolator_backward->setup(tgt.mesh(), src.mesh());
+      interpolator_backward = Interpolation( option::type(interpolation_method), tgt_functionspace, src_functionspace);
     }
 
 
@@ -166,8 +156,8 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     FieldSet src_fields;
     {
-        src_fields.add( src_functionspace.createField<double>("funny_scalar_1" /*, nb_levels=10*/) );
-        src_fields.add( src_functionspace.createField<double>("funny_scalar_2" /*, nb_levels=10*/) );
+        src_fields.add( src_functionspace.createField<double>( option::name("funny_scalar_1") ) );
+        src_fields.add( src_functionspace.createField<double>( option::name("funny_scalar_2") ) );
 
         // Helper constants
         const double
@@ -202,7 +192,7 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     FieldSet tgt_fields;
     for (size_t i = 0; i < src_fields.size(); ++i) {
-        tgt_fields.add( tgt_functionspace.createField<double>(src_fields[i].name()) );
+        tgt_fields.add( tgt_functionspace.createField<double>( option::name(src_fields[i].name())) );
     }
 
     src_functionspace.haloExchange(src_fields);
@@ -214,13 +204,13 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     Log::info() << "Interpolate forward" << std::endl;
 
     // interpolate (matrix-field vector multiply and  synchronize results) (FIXME: necessary?)
-    interpolator_forward->execute(src_fields, tgt_fields);
+    interpolator_forward.execute(src_fields, tgt_fields);
     tgt_functionspace.haloExchange(tgt_fields);
 
     if( with_backward ) {
         Log::info() << "Interpolate backward" << std::endl;
 
-        interpolator_backward->execute(tgt_fields, src_fields);
+        interpolator_backward.execute(tgt_fields, src_fields);
         src_functionspace.haloExchange(src_fields);
     }
 

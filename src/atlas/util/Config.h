@@ -75,7 +75,7 @@ public:
 // ------------------------------------------------------------------
 
 template<typename ValueT>
-inline Config::Config(const std::string& name, const ValueT& value) : 
+inline Config::Config(const std::string& name, const ValueT& value) :
     eckit::LocalConfiguration() {
     set(name,value);
 }
@@ -125,7 +125,7 @@ extern "C"
 
 // ------------------------------------------------------------------
 
-class NoConfig: public eckit::Parametrisation {
+class NoConfig: public Config {
 
 public: // methods
 

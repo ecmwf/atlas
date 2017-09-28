@@ -8,9 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestFunctionSpace
-#include "ecbuild/boost_test_framework.h"
-
 #include <map>
 
 #include "eckit/memory/Owned.h"
@@ -21,7 +18,7 @@
 #include "atlas/mpi/mpi.h"
 #include "atlas/util/Debug.h"
 // #include "atlas/Mesh.h"
-#include "atlas/array.h""
+#include "atlas/array.h"
 #include "atlas/util/IndexView.h"
 // #include "atlas/actions/BuildParallelFields.h"
 // #include "atlas/actions/BuildPeriodicBoundaries.h"
@@ -30,11 +27,16 @@
 // #include "atlas/actions/BuildDualMesh.h"
 
 #include "eckit/maths/Matrix.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
+using namespace eckit::testing;
 using namespace eckit::maths;
 
 namespace atlas {
 namespace test {
+
+//-----------------------------------------------------------------------------
 
   template< int NDIM >
   class Mononomial
@@ -758,14 +760,9 @@ namespace test {
     }
   };
 
-// ====================================================================================
+//-----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE( int_mpi )
-{
-  eckit::mpi::init();
-}
-
-BOOST_AUTO_TEST_CASE( test_functionspace )
+CASE( "test_functionspace" )
 {
   ElementType::Ptr point( new Point );
   ElementType::Ptr quad( new QuadP1 );
@@ -791,15 +788,15 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
   fs.set_nproma( 4 );
   fs.set_nb_levels(100);
   const ElementType& triags = fs.add_elements("TriagP1",2);
-  BOOST_CHECK_EQUAL( fs.nb_element_types(), 1 );
-  BOOST_CHECK_EQUAL( fs.N_max() , 3 );
-  BOOST_CHECK_EQUAL( fs.N_min() , 3 );
-  BOOST_CHECK_EQUAL( fs.nb_elements() , 2 );
+  EXPECT( fs.nb_element_types()== 1 );
+  EXPECT( fs.N_max() == 3 );
+  EXPECT( fs.N_min() == 3 );
+  EXPECT( fs.nb_elements() == 2 );
   const ElementType& quads  = fs.add_elements("QuadP1",2);
-  BOOST_CHECK_EQUAL( fs.nb_element_types(), 2 );
-  BOOST_CHECK_EQUAL( fs.N_max() , 4 );
-  BOOST_CHECK_EQUAL( fs.N_min() , 3 );
-  BOOST_CHECK_EQUAL( fs.nb_elements() , 4 );
+  EXPECT( fs.nb_element_types()== 2 );
+  EXPECT( fs.N_max() == 4 );
+  EXPECT( fs.N_min() == 3 );
+  EXPECT( fs.nb_elements() == 4 );
 
   /// Allocate array for all connectivity across all elements
   atlas::array::ArrayT<int> element_node_connectivity(fs.nb_elements(),fs.N_max());
@@ -827,28 +824,28 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
 
   /// Access the data
   atlas::IndexView<int,2> triag_node_connectivity = make_IndexView(element_node_connectivity,fs,0);
-  BOOST_CHECK_EQUAL( triag_node_connectivity.shape(0), 2 );
-  BOOST_CHECK_EQUAL( triag_node_connectivity.shape(1), 3 );
-  BOOST_CHECK_EQUAL( triag_node_connectivity(0,0), 1 );
-  BOOST_CHECK_EQUAL( triag_node_connectivity(0,1), 2 );
-  BOOST_CHECK_EQUAL( triag_node_connectivity(0,2), 3 );
-  BOOST_CHECK_EQUAL( triag_node_connectivity(1,0), 11 );
-  BOOST_CHECK_EQUAL( triag_node_connectivity(1,1), 12 );
-  BOOST_CHECK_EQUAL( triag_node_connectivity(1,2), 13 );
+  EXPECT( triag_node_connectivity.shape(0) == 2 );
+  EXPECT( triag_node_connectivity.shape(1) == 3 );
+  EXPECT( triag_node_connectivity(0,0) == 1 );
+  EXPECT( triag_node_connectivity(0,1) == 2 );
+  EXPECT( triag_node_connectivity(0,2) == 3 );
+  EXPECT( triag_node_connectivity(1,0) == 11 );
+  EXPECT( triag_node_connectivity(1,1) == 12 );
+  EXPECT( triag_node_connectivity(1,2) == 13 );
 
   BOOST_CHECK_THROW( triag_node_connectivity(0,3), eckit::OutOfRange ); // should fail (OUT OF RANGE)
 
   atlas::IndexView<int,2> quad_node_connectivity = make_IndexView(element_node_connectivity,fs,1);
-  BOOST_CHECK_EQUAL( quad_node_connectivity.shape(0), 2 );
-  BOOST_CHECK_EQUAL( quad_node_connectivity.shape(1), 4 );
-  BOOST_CHECK_EQUAL( quad_node_connectivity(0,0), 21 );
-  BOOST_CHECK_EQUAL( quad_node_connectivity(0,1), 22 );
-  BOOST_CHECK_EQUAL( quad_node_connectivity(0,2), 23 );
-  BOOST_CHECK_EQUAL( quad_node_connectivity(0,3), 24 );
-  BOOST_CHECK_EQUAL( quad_node_connectivity(1,0), 31 );
-  BOOST_CHECK_EQUAL( quad_node_connectivity(1,1), 32 );
-  BOOST_CHECK_EQUAL( quad_node_connectivity(1,2), 33 );
-  BOOST_CHECK_EQUAL( quad_node_connectivity(1,3), 34 );
+  EXPECT( quad_node_connectivity.shape(0 == 2 );
+  EXPECT( quad_node_connectivity.shape(1 == 4 );
+  EXPECT( quad_node_connectivity(0,0 == 21 );
+  EXPECT( quad_node_connectivity(0,1 == 22 );
+  EXPECT( quad_node_connectivity(0,2 == 23 );
+  EXPECT( quad_node_connectivity(0,3 == 24 );
+  EXPECT( quad_node_connectivity(1,0 == 31 );
+  EXPECT( quad_node_connectivity(1,1 == 32 );
+  EXPECT( quad_node_connectivity(1,2 == 33 );
+  EXPECT( quad_node_connectivity(1,3 == 34 );
 
   NewFunctionSpace edges;
   // edges.set_nodes( nodes );
@@ -856,28 +853,28 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
 
   atlas::array::ArrayT<double> press_ifs(fs.nproma(),fs.nb_levels(),nodes.nblk());
   atlas::array::ArrayT<double> press = fs.create_field<double>(IDX_LEVEL,IDX_NODE);
-  BOOST_CHECK_EQUAL( press.size(), fs.nb_levels()*fs.nb_nodes() );
+  EXPECT( press.size() == fs.nb_levels()*fs.nb_nodes() );
 
   atlas::array::ArrayT<double> wind_uv = fs.create_field<double>(2,IDX_LEVEL,IDX_NODE);
-  BOOST_CHECK_EQUAL( wind_uv.size(), 2*fs.nb_levels()*fs.nb_nodes() );
+  EXPECT( wind_uv.size() == 2*fs.nb_levels()*fs.nb_nodes() );
 
-  BOOST_CHECK_EQUAL( fs.nproma(), 4);
-  BOOST_CHECK_EQUAL( fs.nblk(), 2);
-  BOOST_CHECK_EQUAL( fs.nb_nodes(), 8);
+  EXPECT( fs.nproma() == 4);
+  EXPECT( fs.nblk() == 2);
+  EXPECT( fs.nb_nodes() == 8);
   atlas::array::ArrayT<double> wind_uv_ifs = fs.create_field<double>(IDX_NPROMA,IDX_LEVEL,2,IDX_BLK);
-  BOOST_CHECK_EQUAL( wind_uv_ifs.size(), 2*fs.nb_levels()*fs.nb_nodes() );
+  EXPECT( wind_uv_ifs.size() == 2*fs.nb_levels()*fs.nb_nodes() );
 
-  BOOST_CHECK_EQUAL( wind_uv_ifs.rank(), 4);
-  BOOST_CHECK_EQUAL( wind_uv_ifs.shape(0), fs.nproma() );
-  BOOST_CHECK_EQUAL( wind_uv_ifs.shape(1), fs.nb_levels() );
-  BOOST_CHECK_EQUAL( wind_uv_ifs.shape(2), 2 );
-  BOOST_CHECK_EQUAL( wind_uv_ifs.shape(3), fs.nblk() );
+  EXPECT( wind_uv_ifs.rank() == 4);
+  EXPECT( wind_uv_ifs.shape(0) == fs.nproma() );
+  EXPECT( wind_uv_ifs.shape(1) == fs.nb_levels() );
+  EXPECT( wind_uv_ifs.shape(2) == 2 );
+  EXPECT( wind_uv_ifs.shape(3) == fs.nblk() );
 
 }
 
 
 
-BOOST_AUTO_TEST_CASE( test_polynomial )
+CASE( "test_polynomial" )
 {
   typedef Polynomial<2> polynomial_type;
   typedef polynomial_type::monomial_type monomial_type;
@@ -909,14 +906,14 @@ BOOST_AUTO_TEST_CASE( test_polynomial )
 
 
   Matrix<int> m;
-//  BOOST_CHECK( m.data_ == NULL );
-//  BOOST_CHECK( m.nr_ == 0 );
-//  BOOST_CHECK( m.nc_ == 0 );
+//  EXPECT( m.data_ == NULL );
+//  EXPECT( m.nr_ == 0 );
+//  EXPECT( m.nc_ == 0 );
   m.resize(2,3);
 
-  BOOST_CHECK_EQUAL(m.size(),6);
-  BOOST_CHECK_EQUAL(m.rows(),2);
-  BOOST_CHECK_EQUAL(m.cols(),3);
+  EXPECT(m.size() == 6);
+  EXPECT(m.rows() == 2);
+  EXPECT(m.cols() == 3);
 
   m(0,0) = 0;   m(0,1) = 2;   m(0,2) = 4;
   m(1,0) = 1;   m(1,1) = 3;   m(1,2) = 5;
@@ -952,10 +949,13 @@ BOOST_AUTO_TEST_CASE( test_polynomial )
 
 }
 
-BOOST_AUTO_TEST_CASE( finalize_mpi )
-{
-  eckit::mpi::finalize();
-}
+//-----------------------------------------------------------------------------
 
-} // namespace test
-} // namespace atlas
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

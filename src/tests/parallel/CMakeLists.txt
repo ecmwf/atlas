@@ -6,9 +6,9 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if( ECKIT_HAVE_TESTING )
 
-ecbuild_add_test( TARGET atlas_test_haloexchange
-  BOOST
+  ecbuild_add_test( TARGET atlas_test_haloexchange
   MPI        3
   CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_haloexchange.cc
@@ -16,9 +16,10 @@ ecbuild_add_test( TARGET atlas_test_haloexchange
 )
 
 ecbuild_add_test( TARGET atlas_test_gather
-  BOOST
   MPI        3
   CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_gather.cc
   LIBS       atlas
 )
+
+endif()

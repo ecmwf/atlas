@@ -9,9 +9,6 @@
  */
 
 
-#define BOOST_TEST_MODULE atlas_test_trans_invtrans_grad
-#include "ecbuild/boost_test_framework.h"
-
 #include <algorithm>
 
 #include "atlas/library/Library.h"
@@ -28,25 +25,28 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
-#include "atlas/util/Constants.h"
+#include "atlas/util/Earth.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "transi/trans.h"
 
-#include "tests/AtlasFixture.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
-using namespace eckit;
+using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
 
-struct AtlasTransFixture : public AtlasFixture {
-       AtlasTransFixture() {
+//-----------------------------------------------------------------------------
+
+struct AtlasTransEnvironment : public AtlasTestEnvironment {
+       AtlasTransEnvironment(int argc, char * argv[]) : AtlasTestEnvironment(argc, argv) {
          if( parallel::mpi::comm().size() == 1 )
            trans_use_mpi(false);
          trans_init();
        }
 
-      ~AtlasTransFixture() {
+      ~AtlasTransEnvironment() {
          trans_finalize();
        }
 };
@@ -97,23 +97,21 @@ void rotated_flow_magnitude(const functionspace::NodeColumns& fs, Field& field, 
   }
 }
 
+//-----------------------------------------------------------------------------
 
-BOOST_GLOBAL_FIXTURE( AtlasTransFixture );
-
-
-BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
+CASE( "test_invtrans_ifsStyle" )
 {
   std::string grid_uid("O80");
   grid::StructuredGrid g (grid_uid);
   long N = g.ny()/2;
   trans::Trans trans(g,2*N-1);
-  BOOST_TEST_CHECKPOINT("Trans initialized");
+  Log::info() << "Trans initialized" << std::endl;
   std::vector<double> rspecg;
   int nfld = 1;
 
-  std::vector<double> init_gpg(trans.ngptotg());
-  std::vector<double> init_gp (trans.ngptot ());
-  std::vector<double> init_sp (trans.nspec2 ());
+  std::vector<double> init_gpg(trans.nb_gridpoints_global());
+  std::vector<double> init_gp (trans.nb_gridpoints ());
+  std::vector<double> init_sp (trans.nb_spectral_coefficients());
   std::vector<int>    nfrom(nfld,1);
   if( parallel::mpi::comm().rank()==0) {
     double beta = M_PI*0.5;
@@ -122,7 +120,7 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
   trans.distgrid(nfld,nfrom.data(),init_gpg.data(),init_gp.data());
   trans.dirtrans(nfld,init_gp.data(),init_sp.data());
 
-  std::vector<double> rgp(3*nfld*trans.ngptot());
+  std::vector<double> rgp(3*nfld*trans.nb_gridpoints());
   double *no_vorticity(NULL), *no_divergence(NULL);
   int nb_vordiv(0);
   int nb_scalar(nfld);
@@ -131,7 +129,7 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
   trans.invtrans( nb_scalar, init_sp.data(), nb_vordiv, no_vorticity, no_divergence, rgp.data(), p );
 
   std::vector<int>    nto(nfld,1);
-  std::vector<double> rgpg(3*nfld*trans.ngptotg());
+  std::vector<double> rgpg(3*nfld*trans.nb_gridpoints_global());
 
   trans.gathgrid( nfld, nto.data(),   rgp.data(),    rgpg.data() );
 
@@ -151,7 +149,7 @@ BOOST_AUTO_TEST_CASE( test_invtrans_ifsStyle )
 }
 
 
-BOOST_AUTO_TEST_CASE( test_invtrans_grad )
+CASE( "test_invtrans_grad" )
 {
   std::string grid_uid("O48");
   grid::StructuredGrid g ( grid_uid );
@@ -161,9 +159,9 @@ BOOST_AUTO_TEST_CASE( test_invtrans_grad )
   functionspace::NodeColumns gp(mesh);
   functionspace::Spectral sp(trans);
 
-  Field scalar    = gp.createField<double>("scalar");
-  Field scalar_sp = sp.createField<double>("scalar_sp");
-  Field grad      = gp.createField<double>("grad",array::make_shape(2));
+  Field scalar_sp = sp.createField<double>(option::name("scalar_sp"));
+  Field scalar    = gp.createField<double>(option::name("scalar"));
+  Field grad      = gp.createField<double>(option::name("grad") | option::variables(2) );
 
   // Initial condition
   double beta = M_PI*0.5;
@@ -188,5 +186,13 @@ BOOST_AUTO_TEST_CASE( test_invtrans_grad )
   }
 }
 
-} // namespace test
-} // namespace atlas
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTransEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
+}

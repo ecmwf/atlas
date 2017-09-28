@@ -55,21 +55,33 @@ meshgenerator = atlas_MeshGenerator()
 mesh          = meshgenerator%generate(grid)
 
 ! Generate functionspace associated to mesh
-fs_nodes      = atlas_functionspace_NodeColumns(mesh, halo_size)
+fs_nodes      = atlas_functionspace_NodeColumns(mesh, halo=halo_size, levels=nb_levels)
 
 ! Note on field generation
-field_scalar1 = fs_nodes%create_field("scalar1", &
-               & atlas_real(wp))
-field_scalar2 = fs_nodes%create_field("scalar2", &
-               atlas_real(wp), nb_levels)
-field_vector1 = fs_nodes%create_field("vector1", &
-               & atlas_real(wp), [2])
-field_vector2 = fs_nodes%create_field("vector2", &
-               atlas_real(wp), nb_levels, [2])
-field_tensor1 = fs_nodes%create_field("tensor1", &
-               & atlas_real(wp), [2,2])
-field_tensor2 = fs_nodes%create_field("tensor2", &
-               atlas_real(wp), nb_levels, [2,2])
+field_scalar1 = fs_nodes%create_field( &
+               & name="scalar1", &
+               & kind=atlas_real(wp), &
+               & levels=0 )
+field_scalar2 = fs_nodes%create_field( &
+               & name="scalar2", &
+               & kind=atlas_real(wp) )
+field_vector1 = fs_nodes%create_field( &
+               & name="vector1", &
+               & kind=atlas_real(wp), &
+               & variables=2 )
+field_vector2 = fs_nodes%create_field( &
+               & name="vector2", &
+               & kind=atlas_real(wp), &
+               & variables=2 )
+field_tensor1 = fs_nodes%create_field( &
+               & name="tensor1", &
+               & kind=atlas_real(wp), &
+               & levels=0, &
+               & variables=2*2 )
+field_tensor2 = fs_nodes%create_field( &
+               & name="tensor2", &
+               & kind=atlas_real(wp), &
+               & variables=2*2 )
 !........!
 ! Number of nodes in the mesh
 ! (different from number of points on a grid!)
@@ -109,7 +121,7 @@ write(string, *) checksum
 call atlas_log%info(string)
 
 ! Create a global field
-field_global = fs_nodes%create_field("global", field_scalar1, global=.true.)
+field_global = fs_nodes%create_field(name="global", template=field_scalar1, global=.true.)
 
 ! Gather operation
 call fs_nodes%gather(field_scalar1, field_global);

@@ -24,91 +24,63 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/field/Field.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/Constants.h"
+#include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/Checksum.h"
 
-using eckit::geometry::lonlat_to_3d;
 namespace atlas {
 namespace mesh {
 namespace actions {
 
-static const double DEG_TO_RAD = M_PI/180.;
-
 namespace {
 
-/** @brief Computes the arc, in radian, between two positions.
-  *
-  * The result is equal to <code>Distance(from,to)/EARTH_RADIUS_IN_METERS</code>
-  *    <code>= 2*asin(sqrt(h(d/EARTH_RADIUS_IN_METERS )))</code>
-  *
-  * where:<ul>
-  *    <li>d is the distance in meters between 'from' and 'to' positions.</li>
-  *    <li>h is the haversine function: <code>h(x)=sin²(x/2)</code></li>
-  * </ul>
-  *
-  * The haversine formula gives:
-  *    <code>h(d/R) = h(from.lat-to.lat)+h(from.lon-to.lon)+cos(from.lat)*cos(to.lat)</code>
-  *
-  * @sa http://en.wikipedia.org/wiki/Law_of_haversines
-  */
-double arc_in_rad(const PointLonLat& from, const PointLonLat& to) {
-    double lat_arc = (from.lat() - to.lat()) * DEG_TO_RAD;
-    double lon_arc = (from.lon() - to.lon()) * DEG_TO_RAD;
-    double lat_H = std::sin(lat_arc * 0.5);
-    lat_H *= lat_H;
-    double lon_H = std::sin(lon_arc * 0.5);
-    lon_H *= lon_H;
-    double tmp = std::cos(from.lat()*DEG_TO_RAD) * std::cos(to.lat()*DEG_TO_RAD);
-    return 2.0 * std::asin(std::sqrt(lat_H + tmp*lon_H));
+void tri_quality(double& eta, double& rho, const PointLonLat& p1, const PointLonLat& p2, const PointLonLat& p3)
+{
+  // see http://www.gidhome.com/component/manual/referencemanual/preprocessing/mesh_menu/mesh_quality
+
+  double l12 = util::Constants::radiansToDegrees() * util::Earth::centralAngle(p1, p2);
+  double l23 = util::Constants::radiansToDegrees() * util::Earth::centralAngle(p2, p3);
+  double l31 = util::Constants::radiansToDegrees() * util::Earth::centralAngle(p3, p1);
+
+  double s = 0.5*(l12 + l23 + l31);
+  double area = std::sqrt(s * (s - l12) * (s - l23) * (s - l31));
+
+  eta = (4*area*std::sqrt(3.))/( std::pow(l12,2)+std::pow(l23,2)+std::pow(l31,2) );
+
+  double min_length = std::min(std::min(l12,l23),l31);
+  double max_length = std::max(std::max(l12,l23),l31);
+
+  rho = min_length / max_length;
 }
 
-double quad_quality( const PointLonLat& p1, const PointLonLat& p2, const PointLonLat& p3, const PointLonLat& p4)
+void quad_quality(double& eta, double& rho, const PointLonLat& p1, const PointLonLat& p2, const PointLonLat& p3, const PointLonLat& p4)
 {
   // see http://geuz.org/gmsh/doc/preprints/gmsh_quad_preprint.pdf
 
-  double xyz1[3];
-  double xyz2[3];
-  double xyz3[3];
-  double xyz4[3];
+  const PointXYZ xyz[] {
+      util::Earth::convertGeodeticToGeocentric(p1, 1.),
+      util::Earth::convertGeodeticToGeocentric(p2, 1.),
+      util::Earth::convertGeodeticToGeocentric(p3, 1.),
+      util::Earth::convertGeodeticToGeocentric(p4, 1.)
+  };
 
-  lonlat_to_3d(p1.lon(),p1.lat(),xyz1,1.,0.);
-  lonlat_to_3d(p2.lon(),p2.lat(),xyz2,1.,0.);
-  lonlat_to_3d(p3.lon(),p3.lat(),xyz3,1.,0.);
-  lonlat_to_3d(p4.lon(),p4.lat(),xyz4,1.,0.);
+  PointXYZ l2m1(PointXYZ::sub(xyz[1], xyz[0]));
+  PointXYZ l3m2(PointXYZ::sub(xyz[2], xyz[1]));
+  PointXYZ l4m3(PointXYZ::sub(xyz[3], xyz[2]));
+  PointXYZ l1m4(PointXYZ::sub(xyz[0], xyz[3]));
 
-  double l2m1[3];
-  l2m1[0] = xyz2[0]-xyz1[0];
-  l2m1[2] = xyz2[1]-xyz1[1];
-  l2m1[1] = xyz2[2]-xyz1[2];
+  double norm_l2m1 = PointXYZ::norm(l2m1);
+  double norm_l3m2 = PointXYZ::norm(l3m2);
+  double norm_l4m3 = PointXYZ::norm(l4m3);
+  double norm_l1m4 = PointXYZ::norm(l1m4);
 
-  double l3m2[3];
-  l3m2[0] = xyz3[0]-xyz2[0];
-  l3m2[2] = xyz3[1]-xyz2[1];
-  l3m2[1] = xyz3[2]-xyz2[2];
-
-  double l4m3[3];
-  l4m3[0] = xyz4[0]-xyz3[0];
-  l4m3[2] = xyz4[1]-xyz3[1];
-  l4m3[1] = xyz4[2]-xyz3[2];
-
-  double l1m4[3];
-  l1m4[0] = xyz1[0]-xyz4[0];
-  l1m4[2] = xyz1[1]-xyz4[1];
-  l1m4[1] = xyz1[2]-xyz4[2];
-
-  double norm_l2m1 = std::sqrt( l2m1[0]*l2m1[0] + l2m1[1]*l2m1[1] + l2m1[2]*l2m1[2] );
-  double norm_l3m2 = std::sqrt( l3m2[0]*l3m2[0] + l3m2[1]*l3m2[1] + l3m2[2]*l3m2[2] );
-  double norm_l4m3 = std::sqrt( l4m3[0]*l4m3[0] + l4m3[1]*l4m3[1] + l4m3[2]*l4m3[2] );
-  double norm_l1m4 = std::sqrt( l1m4[0]*l1m4[0] + l1m4[1]*l1m4[1] + l1m4[2]*l1m4[2] );
-
-  double dot_l4m1_l2m1 = -l1m4[0]*l2m1[0]-l1m4[1]*l2m1[1]-l1m4[2]*l2m1[2];
-  double dot_l1m2_l3m2 = -l2m1[0]*l3m2[0]-l2m1[1]*l3m2[1]-l2m1[2]*l3m2[2];
-  double dot_l2m3_l4m3 = -l3m2[0]*l4m3[0]-l3m2[1]*l4m3[1]-l3m2[2]*l4m3[2];
-  double dot_l3m4_l1m4 = -l4m3[0]*l1m4[0]-l4m3[1]*l1m4[1]-l4m3[2]*l1m4[2];
+  double dot_l4m1_l2m1 = - PointXYZ::dot(l1m4, l2m1);
+  double dot_l1m2_l3m2 = - PointXYZ::dot(l2m1, l3m2);
+  double dot_l2m3_l4m3 = - PointXYZ::dot(l3m2, l4m3);
+  double dot_l3m4_l1m4 = - PointXYZ::dot(l4m3, l1m4);
 
   // Angles at each quad corner
   double a1 = std::acos( dot_l4m1_l2m1 / ( norm_l1m4 * norm_l2m1 ) );
@@ -119,22 +91,30 @@ double quad_quality( const PointLonLat& p1, const PointLonLat& p2, const PointLo
   double max_inner = std::max( std::max( std::max(
     std::abs(M_PI_2-a1), std::abs(M_PI_2-a2) ), std::abs(M_PI_2-a3) ), std::abs(M_PI_2-a4));
 
-  return std::max(1. - M_2_PI*max_inner, 0.);
+  eta = std::max(1. - M_2_PI*max_inner, 0.);
+
+  double l12 = util::Earth::centralAngle(p1, p2);
+  double l23 = util::Earth::centralAngle(p2, p3);
+  double l34 = util::Earth::centralAngle(p3, p4);
+  double l41 = util::Earth::centralAngle(p4, p1);
+
+  double min_length = std::min(std::min(std::min(l12,l23),l34),l41);
+  double max_length = std::max(std::max(std::max(l12,l23),l34),l41);
+
+  rho = min_length / max_length;
 }
 
 }
 
 void build_statistics( Mesh& mesh )
 {
-  const double radius_km = util::Earth::radiusInMeters()*1e-3;
-
   mesh::Nodes& nodes = mesh.nodes();
   array::ArrayView<double,2> lonlat = array::make_view<double,2>( nodes.lonlat() );
 
   if( mesh.edges().size() )
   {
     if( ! mesh.edges().has_field("arc_length") )
-      mesh.edges().add( 
+      mesh.edges().add(
         Field("arc_length", array::make_datatype<double>(), array::make_shape(mesh.edges().size())) );
     array::ArrayView<double,1> dist = array::make_view<double,1>( mesh.edges().field("arc_length") );
     const mesh::HybridElements::Connectivity &edge_nodes = mesh.edges().node_connectivity();
@@ -146,7 +126,7 @@ void build_statistics( Mesh& mesh )
       int ip2 = edge_nodes(jedge,1);
       PointLonLat p1(lonlat(ip1,LON),lonlat(ip1,LAT));
       PointLonLat p2(lonlat(ip2,LON),lonlat(ip2,LAT));
-      dist(jedge) = arc_in_rad(p1,p2)*radius_km;
+      dist(jedge) = util::Earth::distanceInMeters(p1, p2) * 1e-3;
     }
   }
 
@@ -191,19 +171,7 @@ void build_statistics( Mesh& mesh )
           PointLonLat p2(lonlat(ip2,LON),lonlat(ip2,LAT));
           PointLonLat p3(lonlat(ip3,LON),lonlat(ip3,LAT));
 
-          double l12 = arc_in_rad(p1,p2)/DEG_TO_RAD;
-          double l23 = arc_in_rad(p2,p3)/DEG_TO_RAD;
-          double l31 = arc_in_rad(p3,p1)/DEG_TO_RAD;
-
-          double min_length = std::min(std::min(l12,l23),l31);
-          double max_length = std::max(std::max(l12,l23),l31);
-          rho(ielem) = min_length/max_length;
-
-          double s = 0.5*(l12 + l23 + l31);
-          double area = std::sqrt(s * (s - l12) * (s - l23) * (s - l31));
-
-          // see http://www.gidhome.com/component/manual/referencemanual/preprocessing/mesh_menu/mesh_quality
-          eta(ielem) = (4*area*std::sqrt(3.))/( std::pow(l12,2)+std::pow(l23,2)+std::pow(l31,2) );
+          tri_quality(eta(ielem), rho(ielem), p1, p2, p3);
 
           if( parallel::mpi::comm().size() == 1 )
           {
@@ -228,16 +196,7 @@ void build_statistics( Mesh& mesh )
           PointLonLat p3(lonlat(ip3,LON),lonlat(ip3,LAT));
           PointLonLat p4(lonlat(ip4,LON),lonlat(ip4,LAT));
 
-          eta(ielem) = quad_quality(p1,p2,p3,p4);
-
-          double l12 = arc_in_rad(p1,p2);
-          double l23 = arc_in_rad(p2,p3);
-          double l34 = arc_in_rad(p3,p4);
-          double l41 = arc_in_rad(p4,p1);
-
-          double min_length = std::min(std::min(std::min(l12,l23),l34),l41);
-          double max_length = std::max(std::max(std::max(l12,l23),l34),l41);
-          rho(ielem) = min_length/max_length;
+          quad_quality(eta(ielem), rho(ielem), p1, p2, p3, p4);
 
           if( parallel::mpi::comm().size() == 1 )
           {
@@ -270,9 +229,9 @@ void build_statistics( Mesh& mesh )
 
     for( size_t jnode=0; jnode<nodes.size(); ++jnode )
     {
-      const double lat = lonlat(jnode,LAT)*DEG_TO_RAD;
-      const double hx = radius_km*std::cos(lat)*DEG_TO_RAD;
-      const double hy = radius_km*DEG_TO_RAD;
+      const double lat = util::Constants::degreesToRadians() * lonlat(jnode,LAT);
+      const double hx  = util::Constants::degreesToRadians() * util::Earth::radiusInKm() * std::cos(lat);
+      const double hy  = util::Constants::degreesToRadians() * util::Earth::radiusInKm();
       dual_delta_sph(jnode) = std::sqrt(dual_volumes(jnode)*hx*hy);
     }
 

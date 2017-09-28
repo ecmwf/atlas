@@ -15,15 +15,14 @@
 #include <limits>
 #include "eckit/types/FloatCompare.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/util/Point.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/detail/spacing/LinearSpacing.h"
-#include "atlas/grid/detail/spacing/CustomSpacing.h"
-#include "atlas/domain/detail/RectangularDomain.h"
-#include "atlas/domain/detail/ZonalBandDomain.h"
 #include "atlas/domain/Domain.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/grid/detail/spacing/CustomSpacing.h"
+#include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/Earth.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace grid {
@@ -297,11 +296,11 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
 namespace {
   class Normalise {
   public:
-    Normalise(const domain::RectangularDomain& domain) :
+    Normalise(const RectangularDomain& domain) :
       degrees_(domain.units()=="degrees"),
       xmin_(domain.xmin()),
       xmax_(domain.xmax()),
-      eps_(1e-12) {
+      eps_(1e-11) {
     }
 
     double operator()(double x) const {
@@ -331,19 +330,19 @@ void Structured::crop( const Domain& dom ) {
 
     ASSERT( dom.units() == projection().units() );
 
-    auto zonal_domain = dynamic_cast<const domain::ZonalBandDomain*>(dom.get());
-    auto rect_domain  = dynamic_cast<const domain::RectangularDomain*>(dom.get());
+    auto zonal_domain = ZonalBandDomain(dom);
+    auto rect_domain  = RectangularDomain(dom);
 
     if( zonal_domain ) {
 
-      const double cropped_ymin = rect_domain->ymin();
-      const double cropped_ymax = rect_domain->ymax();
+      const double cropped_ymin = zonal_domain.ymin();
+      const double cropped_ymax = zonal_domain.ymax();
 
       size_t jmin = ny();
       size_t jmax = 0;
       for( size_t j=0; j<ny(); ++j )
       {
-          if( zonal_domain->contains_y(y(j)) ) {
+          if( zonal_domain.contains_y(y(j)) ) {
               jmin = std::min(j, jmin);
               jmax = std::max(j, jmax);
           }
@@ -382,14 +381,14 @@ void Structured::crop( const Domain& dom ) {
 
     } else if ( rect_domain ) {
 
-        const double cropped_ymin = rect_domain->ymin();
-        const double cropped_ymax = rect_domain->ymax();
+        const double cropped_ymin = rect_domain.ymin();
+        const double cropped_ymax = rect_domain.ymax();
 
         // Cropping in Y
         size_t jmin = ny();
         size_t jmax = 0;
         for( size_t j=0; j<ny(); ++j ) {
-            if( rect_domain->contains_y(y(j)) ) {
+            if( rect_domain.contains_y(y(j)) ) {
                 jmin = std::min(j, jmin);
                 jmax = std::max(j, jmax);
             }
@@ -403,12 +402,12 @@ void Structured::crop( const Domain& dom ) {
         std::vector<long>   cropped_nx  ( cropped_ny );
 
         // Cropping in X
-        Normalise normalise(*rect_domain);
+        Normalise normalise(rect_domain);
         for( size_t j=jmin, jcropped=0; j<=jmax; ++j, ++jcropped ) {
             size_t n=0;
             for( size_t i=0; i<nx(j); ++i ) {
                 const double _x = normalise( x(i,j) );
-                if( rect_domain->contains_x(_x) ) {
+                if( rect_domain.contains_x(_x) ) {
                     cropped_xmin[jcropped] = std::min( cropped_xmin[jcropped], _x );
                     cropped_xmax[jcropped] = std::max( cropped_xmax[jcropped], _x );
                     ++n;
@@ -451,19 +450,6 @@ void Structured::crop( const Domain& dom ) {
     }
 }
 
-
-namespace {
-  struct EarthCentred {
-    EarthCentred(Structured& _grid) : grid(_grid) {}
-    PointXYZ operator()(const PointXY& xy) {
-      PointLonLat lonlat = grid.projection().lonlat(xy);
-      return lonlat_to_geocentric(lonlat,radius);
-    }
-    Structured& grid;
-    double radius={1.};
-  };
-}
-
 void Structured::computeTruePeriodicity() {
 
   if( projection_.strictlyRegional() ) {
@@ -479,19 +465,19 @@ void Structured::computeTruePeriodicity() {
     if( xmin_[j] + (nx_[j]-1) * dx_[j] == xmax_[j] ) {
       periodic_x_ = false; // This would lead to duplicated points
     } else {
-      // High chance to be periodic. Check anyway.
-      EarthCentred compute_earth_centred(*this);
 
-      Point3 Pxmin = compute_earth_centred( { xmin_[j], y_[j] } );
-      Point3 Pxmax = compute_earth_centred( { xmax_[j], y_[j] } );
+      // High chance to be periodic. Check anyway.
+      const PointLonLat Pllmin = projection().lonlat(PointXY(xmin_[j], y_[j]));
+      const PointLonLat Pllmax = projection().lonlat(PointXY(xmax_[j], y_[j]));
+
+      Point3 Pxmin = util::Earth::convertGeodeticToGeocentric(Pllmin, 1.);
+      Point3 Pxmax = util::Earth::convertGeodeticToGeocentric(Pllmax, 1.);
 
       periodic_x_  = points_equal( Pxmin, Pxmax );
     }
 
   }
-
 }
-
 
 void Structured::print(std::ostream& os) const {
     os << "Structured(Name:" << name() << ")";
