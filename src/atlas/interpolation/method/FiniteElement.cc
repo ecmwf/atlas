@@ -52,7 +52,7 @@ namespace {
 MethodBuilder<FiniteElement> __builder("finite-element");
 
 // epsilon used to scale edge tolerance when projecting ray to intesect element
-static const double parametricEpsilon = 1e-16;
+static const double parametricEpsilon = 1e-15;
 
 }  // (anonymous namespace)
 

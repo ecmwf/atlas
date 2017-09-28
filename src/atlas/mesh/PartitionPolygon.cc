@@ -70,7 +70,7 @@ size_t PartitionPolygon::footprint() const {
 }
 
 
-void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const {
+void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath, const eckit::Configuration& config) const {
   const eckit::mpi::Comm& comm = atlas::parallel::mpi::comm();
   int mpi_rank = int(comm.rank());
   int mpi_size = int(comm.size());
@@ -96,7 +96,10 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const
           std::ofstream f(filepath.asString().c_str(), mpi_rank == 0? std::ios::trunc : std::ios::app);
 
           if (mpi_rank == 0) {
-              f << "\n" "import matplotlib.pyplot as plt"
+              f << "\n" "# Configuration option to plot nodes"
+                   "\n" "plot_nodes = " + std::string( ( config.getBool("nodes",false) ? "True" : "False" ) ) +
+                   "\n"
+                   "\n" "import matplotlib.pyplot as plt"
                    "\n" "from matplotlib.path import Path"
                    "\n" "import matplotlib.patches as patches"
                    "\n" ""
@@ -127,10 +130,11 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath) const
                "\n"
                "\n" "c = cycol()"
                "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))"
-               "\n" "ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')"
+               "\n" "if plot_nodes:"
+               "\n" "    ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')"
                "\n" "";
           if (mpi_rank == mpi_size - 1) {
-              f << "\n" "ax.set_xlim(  0-5, 360+5)"  // ( "<<xmin<<"-5, "<<xmax<<"+5)
+              f << "\n" "ax.set_xlim( "<<xmin<<"-5, "<<xmax<<"+5)"
                    "\n" "ax.set_ylim(-90-5,  90+5)"
                    "\n" "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
                    "\n" "ax.set_yticks([-90,-45,0,45,90])"

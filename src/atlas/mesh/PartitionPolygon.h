@@ -19,6 +19,7 @@
 #include "atlas/library/config.h"
 #include "atlas/mesh/detail/MeshImpl.h"
 #include "atlas/mesh/detail/Polygon.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace mesh {
@@ -44,7 +45,7 @@ public: // methods
     /// @brief Return the memory footprint of the Polygon
     size_t footprint() const;
 
-    void outputPythonScript(const eckit::PathName&) const;
+    void outputPythonScript(const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const;
 
 private:
 
