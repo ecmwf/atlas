@@ -354,6 +354,7 @@ array/ArrayShape.h
 array/ArraySpec.cc
 array/ArraySpec.h
 array/ArrayStrides.h
+array/ArrayUtil.cc
 array/ArrayUtil.h
 array/ArrayView.h
 array/DataType.h

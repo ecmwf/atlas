@@ -37,7 +37,6 @@
 
 
 #include <iosfwd>
-#include "eckit/exception/Exceptions.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/library/config.h"
 
@@ -73,6 +72,7 @@ public:
 private:
   Value* idx_;
 };
+
 }
 
 
@@ -103,8 +103,8 @@ public:
 public:
 
     IndexView( Value* data, const size_t shape[Rank] );
-  
-  
+
+
 // -- Access methods
 
     template < typename... Idx >
@@ -122,21 +122,26 @@ private:
 
 // -- Private methods
 
-    template < typename... Ints >
-    constexpr int index_part(int dim, int idx, Ints... next_idx) const {
-        return dim < Rank ? idx*strides_[dim] + index_part( dim+1, next_idx..., idx ) : 0 ;
+    template < int Dim, typename Int, typename... Ints >
+    constexpr int index_part(Int idx, Ints... next_idx) const {
+        return idx*strides_[Dim] + index_part<Dim+1>( next_idx... );
+    }
+
+    template < int Dim, typename Int >
+    constexpr int index_part(Int last_idx) const {
+        return last_idx*strides_[Dim];
     }
 
     template < typename... Ints >
     constexpr int index(Ints... idx) const {
-      return index_part(0, idx...);
+        return index_part<0>(idx...);
     }
 
 #ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
     template < typename... Ints >
     void check_bounds(Ints... idx) const {
-      ASSERT( sizeof...(idx) == Rank );
-      return check_bounds_part(0, idx...);
+        static_assert ( sizeof...(idx) == Rank , "Expected number of indices is different from rank of array" );
+        return check_bounds_part<0>(idx...);
     }
 #else
     template < typename... Ints >
@@ -145,26 +150,23 @@ private:
 
     template < typename... Ints >
     void check_bounds_force(Ints... idx) const {
-      ASSERT( sizeof...(idx) == Rank );
-      return check_bounds_part(0, idx...);
+        static_assert ( sizeof...(idx) == Rank , "Expected number of indices is different from rank of array" );
+        return check_bounds_part<0>(idx...);
     }
 
-    template < typename... Ints >
-    void check_bounds_part(int dim, int idx, Ints... next_idx) const {
-        if( dim < Rank ) {
-            if( size_t(idx) >= shape_[dim] ) {
-                std::ostringstream msg; msg << "ArrayView index " << array_dim(dim) << " out of bounds: " << idx << " >= " << shape_[dim];
-                throw eckit::OutOfRange(msg.str(),Here());
-            }
-            check_bounds_part( dim+1, next_idx..., idx );
+    template < int Dim, typename Int, typename... Ints >
+    void check_bounds_part(Int idx, Ints... next_idx) const {
+        if( size_t(idx) >= shape_[Dim] ) {
+            throw_OutOfRange( "IndexView", array_dim<Dim>(), idx, shape_[Dim] );
         }
+        check_bounds_part<Dim+1>( next_idx... );
     }
 
-    static constexpr char array_dim(size_t dim) {
-        return
-            dim == 0 ? 'i' :(
-            dim == 1 ? 'j' :(
-            '*'));
+    template < int Dim, typename Int >
+    void check_bounds_part(Int last_idx) const {
+        if( size_t(last_idx) >= shape_[Dim] ) {
+            throw_OutOfRange( "IndexView", array_dim<Dim>(), last_idx, shape_[Dim] );
+        }
     }
 
   size_t size() const { return shape_[0]; }

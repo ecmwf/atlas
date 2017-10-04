@@ -8,8 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/array/LocalView.h"
+#include <iostream>
 #include "eckit/exception/Exceptions.h"
+#include "atlas/array/LocalView.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -40,9 +41,6 @@ for( size_t j=0; j<size(); ++ j )
 os << "]";
 }
 
-
-template <int Dim>
-static char array_dim();
 
 //------------------------------------------------------------------------------------------------------
 
