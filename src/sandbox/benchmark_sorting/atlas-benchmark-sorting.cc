@@ -146,6 +146,7 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
 
 
   ATLAS_DEBUG_VAR( points_to_edit );
+  ATLAS_DEBUG_VAR( points_to_edit.size() );
 
   Timer total_timer("distrubuted_sort");
 
@@ -258,6 +259,8 @@ Tool::Tool(int argc,char **argv): AtlasTool(argc,argv)
 
 void Tool::execute(const Args& args)
 {
+  Timer t("main");
+
   key = "";
   args.get("grid",key);
 
@@ -280,7 +283,7 @@ void Tool::execute(const Args& args)
   Log::debug() << "Domain: "   << grid.domain() << std::endl;
   Log::debug() << "Periodic: " << grid.periodic() << std::endl;
 
-  MeshGenerator meshgenerator("structured");
+  MeshGenerator meshgenerator("structured", Config("partitioner","equal_regions") );
 
   size_t halo = args.getLong("halo",0);
   bool do_all = args.getBool("do-all",false);

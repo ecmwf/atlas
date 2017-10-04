@@ -31,6 +31,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
@@ -189,6 +190,8 @@ void StructuredMeshGenerator::hash(Hash& h) const
 
 void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const
 {
+  Timer t(__FUNCTION__);
+
   const grid::StructuredGrid rg = grid::StructuredGrid(grid);
   if( !rg )
     throw eckit::BadCast("Grid could not be cast to a Structured",Here());
@@ -232,6 +235,8 @@ void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distributio
 
 void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, const std::vector<int>& parts, int mypart, Region& region) const
 {
+  Timer t(__FUNCTION__);
+
   double max_angle          = options.get<double>("angle");
   bool   triangulate_quads  = options.get<bool>("triangulate");
   bool   three_dimensional  = options.get<bool>("3d");
@@ -799,7 +804,7 @@ struct GhostNode {
 
 void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, const std::vector<int>& parts, const Region& region, Mesh& mesh) const
 {
-
+  Timer t(__FUNCTION__);
 
   ASSERT(!mesh.generated());
 

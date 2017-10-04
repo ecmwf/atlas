@@ -15,6 +15,7 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array.h"
+#include "atlas/runtime/Timer.h"
 
 namespace atlas {
 namespace grid {
@@ -45,6 +46,8 @@ TransPartitioner::~TransPartitioner() {
 }
 
 void TransPartitioner::partition(const Grid& grid, int part[]) const {
+
+    Timer timer("TransPartitioner::partition");
 
     StructuredGrid g(grid);
     if( not g )

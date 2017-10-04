@@ -43,7 +43,7 @@ public:
 
     operator bool() const { return partitioner_; }
 
-    void partition( const Grid& grid, int part[] ) const { partitioner_->partition(grid,part); }
+    void partition( const Grid& grid, int part[] ) const;
 
     Distribution partition( const Grid& grid ) const { return Distribution(grid,*this); }
 

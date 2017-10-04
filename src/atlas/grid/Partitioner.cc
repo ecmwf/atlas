@@ -11,6 +11,7 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Timer.h"
 
 namespace atlas {
 namespace grid {
@@ -48,8 +49,13 @@ Partitioner::Partitioner( const Config& config ):
     partitioner_( partitioner_from_config(config) ) {
 }
 
+void Partitioner::partition(const Grid &grid, int part[]) const {
+  Timer t(__FUNCTION__);
+  partitioner_->partition(grid,part);
+}
+
 MatchingMeshPartitioner::MatchingMeshPartitioner() :
-    Partitioner() {
+  Partitioner() {
 }
 
 grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const Mesh& mesh, const Partitioner::Config& config ) {
