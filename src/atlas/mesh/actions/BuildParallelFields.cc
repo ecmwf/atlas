@@ -91,7 +91,7 @@ struct Node
 
 void build_parallel_fields( Mesh& mesh )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
   build_nodes_parallel_fields( mesh.nodes() );
 }
 
@@ -99,7 +99,7 @@ void build_parallel_fields( Mesh& mesh )
 
 void build_nodes_parallel_fields( mesh::Nodes& nodes )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
   bool parallel = false;
   nodes.metadata().get("parallel",parallel);
   if( ! parallel )
@@ -115,7 +115,7 @@ void build_nodes_parallel_fields( mesh::Nodes& nodes )
 
 void build_edges_parallel_fields( Mesh& mesh )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
   build_edges_partition ( mesh );
   build_edges_remote_idx( mesh );
   build_edges_global_idx( mesh );
@@ -125,7 +125,7 @@ void build_edges_parallel_fields( Mesh& mesh )
 
 Field& build_nodes_global_idx( mesh::Nodes& nodes )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
 
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
 
@@ -141,7 +141,7 @@ Field& build_nodes_global_idx( mesh::Nodes& nodes )
 
 void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
 
 // TODO: ATLAS-14: fix renumbering of EAST periodic boundary points
 // --> Those specific periodic points at the EAST boundary are not checked for uid,
@@ -232,7 +232,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
 Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
   size_t mypart = parallel::mpi::comm().rank();
   size_t nparts = parallel::mpi::comm().size();
 
@@ -332,7 +332,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 
 Field& build_nodes_partition( mesh::Nodes& nodes )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
   return nodes.partition();
 }
 
@@ -340,7 +340,7 @@ Field& build_nodes_partition( mesh::Nodes& nodes )
 
 Field& build_edges_partition( Mesh& mesh )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
 
   const mesh::Nodes& nodes = mesh.nodes();
 
@@ -612,7 +612,7 @@ Field& build_edges_partition( Mesh& mesh )
 
 Field& build_edges_remote_idx( Mesh& mesh  )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
 
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(mesh);
@@ -767,7 +767,7 @@ Field& build_edges_remote_idx( Mesh& mesh  )
 
 Field& build_edges_global_idx( Mesh& mesh )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
 
   UniqueLonLat compute_uid(mesh);
 

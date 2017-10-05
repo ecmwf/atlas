@@ -11,13 +11,13 @@
 
 #include "atlas/interpolation/method/KNearestNeighboursBase.h"
 
-#include "eckit/log/Timer.h"
+#include "eckit/config/Resource.h"
+#include "eckit/eckit_version.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/library/Library.h"
-#include "eckit/config/Resource.h"
+#include "atlas/runtime/Timer.h"
 
-#include "eckit/eckit_version.h"
 
 #ifdef ECKIT_VERSION_INT
 #undef ECKIT_VERSION_INT

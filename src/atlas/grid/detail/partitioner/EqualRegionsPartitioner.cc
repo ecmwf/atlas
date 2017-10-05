@@ -430,7 +430,7 @@ bool compare_WE_NS(const EqualRegionsPartitioner::NodeInt& node1, const EqualReg
 
 void EqualRegionsPartitioner::partition( int nb_nodes, NodeInt nodes[], int part[] ) const {
 
-    Timer t("EqualRegionsPartitioner::partition");
+    ATLAS_TIME( "EqualRegionsPartitioner::partition" );
 
 
     // std::clock_t init, final;

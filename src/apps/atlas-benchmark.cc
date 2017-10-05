@@ -59,9 +59,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
 
-#define ATLAS_TIME(msg) \
-  for( atlas::Timer itimer##__LINE__(msg); itimer##__LINE__.running(); itimer##__LINE__.stop() )
-
 //----------------------------------------------------------------------------------------------------------------------
 
 using std::unique_ptr;
@@ -230,7 +227,7 @@ void AtlasBenchmark::execute(const Args& args)
 
   Log::info() << "Timings:" << endl;
 
-  ATLAS_TIME("setup") { setup(); }
+  ATLAS_TIME_SCOPE("setup") { setup(); }
 
   Log::info() << "  Executing " << niter << " iterations: \n";
   if( progress )
@@ -288,15 +285,15 @@ void AtlasBenchmark::setup()
   size_t halo = 1;
 
   StructuredGrid grid;
-  ATLAS_TIME( "Create grid" ) {  grid = Grid(gridname); }
-  ATLAS_TIME( "Create mesh" ) {  mesh = MeshGenerator( "structured" ).generate(grid); }
+  ATLAS_TIME_SCOPE( "Create grid" ) {  grid = Grid(gridname); }
+  ATLAS_TIME_SCOPE( "Create mesh" ) {  mesh = MeshGenerator( "structured" ).generate(grid); }
 
-  ATLAS_TIME( "Create node_fs") { nodes_fs = functionspace::NodeColumns(mesh,option::halo(halo)); }
-  ATLAS_TIME( "build_edges" )                     { build_edges(mesh); }
-  ATLAS_TIME( "build_pole_edges" )                { build_pole_edges(mesh); }
-  ATLAS_TIME( "build_edges_parallel_fiels" )      { build_edges_parallel_fields(mesh); }
-  ATLAS_TIME( "build_median_dual_mesh" )          { build_median_dual_mesh(mesh); }
-  ATLAS_TIME( "build_node_to_edge_connectivity" ) { build_node_to_edge_connectivity(mesh); }
+  ATLAS_TIME_SCOPE( "Create node_fs") { nodes_fs = functionspace::NodeColumns(mesh,option::halo(halo)); }
+  ATLAS_TIME_SCOPE( "build_edges" )                     { build_edges(mesh); }
+  ATLAS_TIME_SCOPE( "build_pole_edges" )                { build_pole_edges(mesh); }
+  ATLAS_TIME_SCOPE( "build_edges_parallel_fiels" )      { build_edges_parallel_fields(mesh); }
+  ATLAS_TIME_SCOPE( "build_median_dual_mesh" )          { build_median_dual_mesh(mesh); }
+  ATLAS_TIME_SCOPE( "build_node_to_edge_connectivity" ) { build_node_to_edge_connectivity(mesh); }
 
   scalar_field = nodes_fs.createField<double>( option::name("field") | option::levels(nlev) );
   grad_field   = nodes_fs.createField<double>( option::name("grad")  | option::levels(nlev) | option::variables(3) );
@@ -374,7 +371,7 @@ void AtlasBenchmark::setup()
 
 void AtlasBenchmark::iteration()
 {
-  Timer t("iteration");
+  Timer t( Here() );
 
   unique_ptr<array::Array> avgS_arr( array::Array::create<double>(nedges,nlev,2ul) );
   const auto& node2edge = mesh.nodes().edge_connectivity();
@@ -456,7 +453,7 @@ void AtlasBenchmark::iteration()
   }
 
   // halo-exchange
-  Timer halo("halo-exchange");
+  Timer halo( Here(), "halo-exchange");
   nodes_fs.halo_exchange().execute(grad);
   halo.stop();
 

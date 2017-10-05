@@ -47,7 +47,7 @@ TransPartitioner::~TransPartitioner() {
 
 void TransPartitioner::partition(const Grid& grid, int part[]) const {
 
-    Timer timer("TransPartitioner::partition");
+    ATLAS_TIME( "TransPartitioner::partition" );
 
     StructuredGrid g(grid);
     if( not g )

@@ -12,10 +12,10 @@
 #include "atlas/interpolation/method/NearestNeighbour.h"
 
 #include "eckit/log/Plural.h"
-#include "eckit/log/Timer.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/functionspace/NodeColumns.h"
 
 namespace atlas {
@@ -58,7 +58,7 @@ void NearestNeighbour::setup(const FunctionSpace& source, const FunctionSpace& t
     std::vector< Triplet > weights_triplets;
     weights_triplets.reserve(out_npts);
     {
-        eckit::TraceTimer<Atlas> timer("atlas::interpolation::method::NearestNeighbour::setup()");
+        Timer timer( Here(), "atlas::interpolation::method::NearestNeighbour::setup()" );
         for (size_t ip = 0; ip < out_npts; ++ip) {
 
             if (ip && (ip % 1000 == 0)) {

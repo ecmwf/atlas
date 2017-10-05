@@ -116,8 +116,9 @@ void GatherScatter::setup( const int part[],
     }
   }
 
+  ATLAS_TIME_SCOPE("allGather[ counts ]")
   {
-    Timer t( Here() ); parallel::mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
+    parallel::mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
   }
 
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
@@ -129,8 +130,8 @@ void GatherScatter::setup( const int part[],
   }
   std::vector<gidx_t> recvnodes(glbcnt_);
 
+  ATLAS_TIME_SCOPE("allGatherv [glb nodes]")
   {
-    Timer t( Here() );
     parallel::mpi::comm().allGatherv(sendnodes.begin(), sendnodes.begin() + loccnt_,
                                      recvnodes.data(), glbcounts_.data(), glbdispls_.data());
   }
@@ -148,8 +149,8 @@ void GatherScatter::setup( const int part[],
   recvnodes.clear();
 
   // Sort on "g" member, and remove duplicates
+  ATLAS_TIME_SCOPE("sorting")
   {
-  Timer t("sorting");
   std::sort(node_sort.begin(), node_sort.end());
   node_sort.erase( std::unique( node_sort.begin(), node_sort.end() ), node_sort.end() );
   }

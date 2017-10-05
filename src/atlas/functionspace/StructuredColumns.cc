@@ -22,6 +22,7 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Debug.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/Checksum.h"
@@ -192,39 +193,6 @@ size_t StructuredColumns::config_size(const eckit::Configuration& config) const
   return size;
 }
 
-
-class DebugTimer
-{
-public:
-  DebugTimer(const std::string& msg): timer(msg+" done",Log::debug<Atlas>()), once_(true) {
-    Log::debug<Atlas>() << msg << std::endl;
-  }
-  bool once() const { return once_; }
-  void done() { once_=false; }
-  eckit::Timer timer;
-private:
-  bool once_;
-};
-
-
-class Timer
-{
-public:
-  Timer(const std::string& msg): timer(msg+" done",Log::info()), once_(true) {
-    Log::info() << msg << std::endl;
-  }
-  bool once() const { return once_; }
-  void done() { once_=false; }
-  eckit::Timer timer;
-private:
-  bool once_;
-};
-
-#define ATLAS_DEBUG_SCOPE_TIMER(msg) \
-  for( DebugTimer dtimer##__LINE__(Here().asString() + " " + msg); dtimer##__LINE__.once(); dtimer##__LINE__.done() )
-#define ATLAS_SCOPE_TIMER(msg) \
-  for( Timer itimer##__LINE__(msg); itimer##__LINE__.once(); itimer##__LINE__.done() )
-
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
@@ -236,8 +204,8 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
   grid_(grid),
   nb_levels_(0)
 {
+    ATLAS_TIME( "Generating StructuredColumns..." );
     nb_levels_ = config_levels(config);
-    Timer timer( "Generating StructuredColumns..." );
     if ( not grid_ )
     {
       throw eckit::BadCast("Grid is not a grid::Structured type", Here());
@@ -258,7 +226,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     }
 
     grid::Distribution distribution;
-    ATLAS_DEBUG_SCOPE_TIMER( "Partitioning grid ..." ) {
+    ATLAS_TIME_SCOPE( "Partitioning grid ..." ) {
       distribution = grid::Distribution(grid,partitioner);
     }
 
@@ -383,12 +351,12 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     };
 
     if( atlas::Library::instance().debug() ) {
-      ATLAS_DEBUG_SCOPE_TIMER("Load imbalance") {
+      ATLAS_TIME_SCOPE("Load imbalance") {
         comm.barrier();
       }
     }
 
-    ATLAS_DEBUG_SCOPE_TIMER( "Compute mapping ..." )
+    ATLAS_TIME_SCOPE( "Compute mapping ..." )
     {
       idx_t imin =  std::numeric_limits<idx_t>::max();
       idx_t imax = -std::numeric_limits<idx_t>::max();
@@ -465,13 +433,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
       }
     }
 
-    if( atlas::Library::instance().debug() ) {
-      ATLAS_DEBUG_SCOPE_TIMER("Load imbalance") {
-        comm.barrier();
-      }
-    }
-
-    ATLAS_DEBUG_SCOPE_TIMER("Parallelisation ...")
+    ATLAS_TIME_SCOPE("Parallelisation ...")
     {
 
       auto build_partition_graph = [this]() -> std::unique_ptr<Mesh::PartitionGraph> {
@@ -500,12 +462,12 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
       };
 
       std::unique_ptr<Mesh::PartitionGraph> graph_ptr;
-      ATLAS_DEBUG_SCOPE_TIMER( "Building partition graph..." ) {
+      ATLAS_TIME_SCOPE( "Building partition graph..." ) {
         graph_ptr = build_partition_graph();
       }
       const Mesh::PartitionGraph& graph = *graph_ptr;
 
-      ATLAS_DEBUG_SCOPE_TIMER( "Setup parallel fields..." )
+      ATLAS_TIME_SCOPE( "Setup parallel fields..." )
       {
           auto p  = array::make_view< int, 1 >( partition() );
           auto g  = array::make_view< gidx_t, 1 >( global_index() );
@@ -599,19 +561,19 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
           }
       }
 
-      ATLAS_DEBUG_SCOPE_TIMER( "Setup gather_scatter..." )
+      ATLAS_TIME_SCOPE( "Setup gather_scatter..." )
       {
         gather_scatter_ = new parallel::GatherScatter();
         gather_scatter_->setup(part.data(), remote_idx.data(), 0, global_idx.data(), size_owned_ );
       }
 
-      ATLAS_DEBUG_SCOPE_TIMER( "Setup checksum..." )
+      ATLAS_TIME_SCOPE( "Setup checksum..." )
       {
         checksum_ = new parallel::Checksum();
         checksum_->setup(part.data(), remote_idx.data(), 0, global_idx.data(), size_owned_ );
       }
 
-      ATLAS_DEBUG_SCOPE_TIMER( "Setup halo exchange..." )
+      ATLAS_TIME_SCOPE( "Setup halo exchange..." )
       {
         halo_exchange_ = new parallel::HaloExchange();
         halo_exchange_->setup(part.data(),remote_idx.data(),0,size_halo_);

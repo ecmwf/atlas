@@ -19,11 +19,11 @@
 #include <stdint.h>
 #include <vector>
 
-#include "eckit/log/Timer.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/config/Resource.h"
 
 #include "atlas/interpolation/method/PointIndex3.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/mesh/Mesh.h"
 
 #include "eckit/eckit_version.h"
@@ -61,7 +61,7 @@ public: // methods
     template < typename POINT_T >
     void list_unique_points( std::vector< POINT_T >& opts )
     {
-        eckit::Timer t("Finding unique points");
+        ATLAS_TIME( "Finding unique points" );
 
         ASSERT( opts.empty() );
 

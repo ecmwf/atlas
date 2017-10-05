@@ -53,38 +53,6 @@ using eckit::PathName;
 //------------------------------------------------------------------------------
 namespace atlas {
 
-struct TimerStats
-{
-  TimerStats(const std::string& _name = "timer")
-  {
-    max = -1;
-    min = -1;
-    avg = 0;
-    cnt = 0;
-    name = _name;
-  }
-  void update(Timer& timer)
-  {
-    double t = timer.elapsed();
-    if( min < 0 ) min = t;
-    if( max < 0 ) max = t;
-    min = std::min(min, t);
-    max = std::max(max, t);
-    avg = (avg*cnt+t)/(cnt+1);
-    ++cnt;
-  }
-  std::string str()
-  {
-    std::stringstream stream;
-    stream << name << ": min, max, avg -- " << std::fixed << std::setprecision(5) << min << ", " << std::fixed << std::setprecision(5) << max << ", " << std::fixed << std::setprecision(5) << avg;
-    return stream.str();
-  }
-  std::string name;
-  double max;
-  double min;
-  double avg;
-  int cnt;
-};
 
 struct Node
 {
@@ -101,14 +69,11 @@ struct Node
   }
 };
 
-
-
-
-
 //------------------------------------------------------------------------------
 
 void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_halo, mesh::Nodes& nodes, bool do_all )
 {
+  ATLAS_TIME();
 // TODO: ATLAS-14: fix renumbering of EAST periodic boundary points
 // --> Those specific periodic points at the EAST boundary are not checked for uid,
 //     and could receive different gidx for different tasks
@@ -148,7 +113,7 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   ATLAS_DEBUG_VAR( points_to_edit );
   ATLAS_DEBUG_VAR( points_to_edit.size() );
 
-  Timer total_timer("distrubuted_sort");
+  ATLAS_TIME( "distributed_sort" );
 
   /*
    * Sorting following gidx will define global order of
@@ -184,8 +149,7 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
     node_sort.push_back( Node(glb_idx_gathered[jnode],jnode) );
   }
 
-  {
-    Timer total_timer("local_sort");
+  ATLAS_TIME_SCOPE( "local_sort" ) {
     std::sort(node_sort.begin(), node_sort.end());
   }
 
@@ -259,7 +223,7 @@ Tool::Tool(int argc,char **argv): AtlasTool(argc,argv)
 
 void Tool::execute(const Args& args)
 {
-  Timer t("main");
+  Timer t( Here(), "main");
 
   key = "";
   args.get("grid",key);
@@ -290,33 +254,27 @@ void Tool::execute(const Args& args)
 
   ATLAS_DEBUG_VAR( do_all );
 
-  size_t iterations = 1;
-  TimerStats timer_stats;
+  size_t iterations = 5;
   parallel::mpi::comm().barrier();
-  Mesh mesh = meshgenerator.generate(grid);
+  
+  for( size_t j=0; j<7; ++j ) {
+    ATLAS_TIME("outer_iteration");
+    Mesh mesh = meshgenerator.generate(grid);
 
+    atlas::mesh::actions::build_periodic_boundaries(mesh);
 
-  atlas::mesh::actions::build_periodic_boundaries(mesh);
+    Log::info() << "building halo" << std::endl;
+    atlas::mesh::actions::BuildHalo build_halo(mesh);
+    build_halo(halo);
 
-  Log::info() << "building halo" << std::endl;
-  atlas::mesh::actions::BuildHalo build_halo(mesh);
-  build_halo(halo);
-
-  Timer::Barrier set_barrier(true);
-  Timer::Log set_channel( Log::info() );
-  for( size_t i=0; i<iterations; ++i )
-  {
-    Timer timer;
-    refactored_renumber_nodes_glb_idx(build_halo,mesh.nodes(),do_all);
-    timer.stop();
-    Log::info() << "iteration " << std::setw(2) << i << " : " << std::setprecision(5) << std::fixed << timer.elapsed() << " seconds"<< std::endl;
-    timer_stats.update(timer);
+    Timer::Barrier set_barrier(true);
+    Timer::Log set_channel( Log::info() );
+    for( size_t i=0; i<iterations; ++i ) {
+      refactored_renumber_nodes_glb_idx(build_halo,mesh.nodes(),do_all);
+    }
   }
-  Log::info() << "Timer Statistics:\n"
-              << "  min: " << std::setprecision(5) << std::fixed << timer_stats.min
-              << "  max: " << std::setprecision(5) << std::fixed << timer_stats.max
-              << "  avg: " << std::setprecision(5) << std::fixed << timer_stats.avg << std::endl;
-
+  t.stop();
+  Timer::Report::report( Config("decimals",2) );
 }
 
 //------------------------------------------------------------------------------

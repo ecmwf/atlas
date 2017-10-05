@@ -43,17 +43,17 @@ implicit none
 
 
 
-  type :: Timer_type
+  type :: timer_type
   private
     integer*8 :: clck_counts_start, clck_counts_stop, clck_rate
     integer*8 :: counted = 0
     logical :: paused = .True.
   contains
-    procedure, public :: start   => Timer_start
-    procedure, public :: pause   => Timer_pause
-    procedure, public :: resume  => Timer_resume
-    procedure, public :: elapsed => Timer_elapsed
-  end type Timer_type
+    procedure, public :: start   => timer_start
+    procedure, public :: pause   => timer_pause
+    procedure, public :: resume  => timer_resume
+    procedure, public :: elapsed => timer_elapsed
+  end type timer_type
 
 
 
@@ -61,9 +61,9 @@ implicit none
 
 contains
 
-    function Timer_elapsed(self) result(time)
+    function timer_elapsed(self) result(time)
         use, intrinsic :: iso_c_binding, only : c_double
-        class(Timer_type), intent(inout) :: self
+        class(timer_type), intent(inout) :: self
         real(c_double) :: time
         if (.not. self%paused) then
             call system_clock ( self%clck_counts_stop, self%clck_rate )
@@ -73,27 +73,27 @@ contains
         else
             time = 0.
         end if
-      end function Timer_elapsed
+      end function timer_elapsed
 
-    subroutine Timer_start(self)
-        class(Timer_type), intent(inout) :: self
+    subroutine timer_start(self)
+        class(timer_type), intent(inout) :: self
         call system_clock ( self%clck_counts_start, self%clck_rate )
         self%paused = .False.
         self%counted = 0
-    end subroutine Timer_start
+    end subroutine timer_start
 
-    subroutine Timer_pause(self)
-        class(Timer_type), intent(inout) :: self
+    subroutine timer_pause(self)
+        class(timer_type), intent(inout) :: self
         call system_clock ( self%clck_counts_stop, self%clck_rate )
         self%counted = self%counted + self%clck_counts_stop - self%clck_counts_start
         self%paused = .True.
-    end subroutine Timer_pause
+    end subroutine timer_pause
 
-    subroutine Timer_resume(self)
-        class(Timer_type), intent(inout) :: self
+    subroutine timer_resume(self)
+        class(timer_type), intent(inout) :: self
         call system_clock ( self%clck_counts_start, self%clck_rate )
         self%paused = .False.
-    end subroutine Timer_resume
+    end subroutine timer_resume
 
 
     subroutine rotated_flow_magnitude( fvm, field, beta, radius )
@@ -363,7 +363,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_nabla )
-type(Timer_type) :: timer
+type(timer_type) :: ATLAS_TIME();
 integer :: jiter, niter
 real(c_double) :: norm_native
 real(c_double) :: norm_fortran
@@ -374,11 +374,11 @@ call node_columns%halo_exchange(varfield)
 niter = 5
 
 ! Compute the gradient
-call timer%start()
+call ATLAS_TIME();%start()
 do jiter = 1,niter
 call nabla%gradient(varfield,gradfield)
 enddo
-write(0,*) "time elapsed: ", timer%elapsed()
+write(0,*) "time elapsed: ", ATLAS_TIME();%elapsed()
 call node_columns%mean(gradfield,norm_native)
 write(0,*) "mean : ", norm_native
 
@@ -387,11 +387,11 @@ FCTEST_CHECK_CLOSE( norm_native, checked_value, 1.e-6_c_double )
 write(0,*) ""
 
 ! Compute the gradient with Fortran routine above
-call timer%start()
+call ATLAS_TIME();%start()
 do jiter = 1,niter
 CALL FV_GRADIENT(var,grad)
 enddo
-write(0,*) "time elapsed: ", timer%elapsed()
+write(0,*) "time elapsed: ", ATLAS_TIME();%elapsed()
 call node_columns%mean(gradfield,norm_fortran)
 write(0,*) "mean : ", norm_fortran
 

@@ -135,8 +135,8 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration &params )
   params.get("halo",halo);
 
   ASSERT( mesh_halo == halo );
-  
-  
+
+
   constructor();
 }
 
@@ -150,9 +150,9 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo, const eckit:
   size_t mesh_halo_size_;
   mesh.metadata().get("halo",mesh_halo_size_);
   ASSERT( mesh_halo_size_ == halo.size() );
-  
+
   nb_levels_ = config_levels(params);
-  
+
   constructor();
 }
 
@@ -172,7 +172,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo) :
 
 void EdgeColumns::constructor()
 {
-  Timer scope_timer("EdgeColumns()");
+  ATLAS_TIME("EdgeColumns()");
 
   nb_edges_ = mesh().edges().size();
 
@@ -184,16 +184,16 @@ void EdgeColumns::constructor()
   const Field& remote_index = edges().remote_index();
   const Field& global_index = edges().global_index();
 
+  ATLAS_TIME_SCOPE("Setup halo_exchange")
   {
-    Timer t( "Setup halo_exchange" );
     halo_exchange_->setup(
         array::make_view<int,1>(partition).data(),
         array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
         nb_edges_);
   }
 
+  ATLAS_TIME_SCOPE("Setup gather_scatter")
   {
-    Timer t( "Setup gather_scatter" );
     gather_scatter_->setup(
         array::make_view<int,1>(partition).data(),
         array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
@@ -201,8 +201,8 @@ void EdgeColumns::constructor()
         nb_edges_);
   }
 
+  ATLAS_TIME_SCOPE("Setup checksum")
   {
-    Timer t( "Setup checksum" );
     checksum_->setup(
         array::make_view<int,1>(partition).data(),
         array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
@@ -240,10 +240,10 @@ Field EdgeColumns::createField(const eckit::Configuration& options) const
 }
 
 Field EdgeColumns::createField(
-    const Field& other, 
+    const Field& other,
     const eckit::Configuration& config ) const
 {
-  return createField( 
+  return createField(
     option::datatype ( other.datatype()  ) |
     option::levels   ( other.levels()    ) |
     option::variables( other.variables() ) |
@@ -767,7 +767,7 @@ EdgeColumns::EdgeColumns( const FunctionSpace& functionspace ) :
     functionspace_( dynamic_cast< const detail::EdgeColumns* >( get() ) ) {
 }
 
-EdgeColumns::EdgeColumns( 
+EdgeColumns::EdgeColumns(
   const Mesh& mesh,
   const mesh::Halo& halo,
   const eckit::Configuration& config ) :
@@ -775,19 +775,19 @@ EdgeColumns::EdgeColumns(
   functionspace_( dynamic_cast< const detail::EdgeColumns* >( get() ) ) {
 }
 
-EdgeColumns::EdgeColumns( 
+EdgeColumns::EdgeColumns(
   const Mesh& mesh,
   const mesh::Halo& halo) :
   FunctionSpace( new detail::EdgeColumns(mesh,halo) ),
   functionspace_( dynamic_cast< const detail::EdgeColumns* >( get() ) ) {
 }
 
-EdgeColumns::EdgeColumns( 
+EdgeColumns::EdgeColumns(
   const Mesh& mesh) :
   FunctionSpace( new detail::EdgeColumns(mesh) ),
   functionspace_( dynamic_cast< const detail::EdgeColumns* >( get() ) ) {
 }
-  
+
 size_t EdgeColumns::nb_edges() const {
   return functionspace_->nb_edges();
 }

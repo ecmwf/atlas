@@ -3,6 +3,8 @@
 #include "atlas/atlas_ecbuild_config.h"
 #include "atlas/library/defines.h"
 
+#define ATLAS_HAVE_TIMINGS 1
+
 namespace atlas {
 
 /// @typedef gidx_t

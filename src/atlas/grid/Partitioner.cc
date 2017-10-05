@@ -50,7 +50,7 @@ Partitioner::Partitioner( const Config& config ):
 }
 
 void Partitioner::partition(const Grid &grid, int part[]) const {
-  Timer t(__FUNCTION__);
+  ATLAS_TIME();
   partitioner_->partition(grid,part);
 }
 

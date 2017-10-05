@@ -12,7 +12,6 @@
 #include <vector>
 #include <memory>
 #include <iostream>
-#include "eckit/log/Timer.h"
 #include "eckit/log/BigNum.h"
 #include "eckit/memory/ScopedPtr.h"
 
@@ -42,6 +41,7 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #endif
 
 #include "atlas/grid/Grid.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -69,7 +69,7 @@ namespace actions {
 
 static Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
 {
-    Timer t("Convex hull");
+    ATLAS_TIME();
 
     Polyhedron_3* poly = new Polyhedron_3();
 
@@ -88,9 +88,9 @@ static Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >
 
 static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
-    bool ensure_outward_normals = true;
+    ATLAS_TIME();
 
-    Timer t ("Creating atlas data structure");
+    bool ensure_outward_normals = true;
 
     mesh::Nodes& nodes = mesh.nodes();
 
@@ -193,7 +193,7 @@ void BuildConvexHull3D::operator()( Mesh& mesh ) const
     if( mesh.cells().size() )
         return;
 
-    Timer t ("grid tesselation");
+    ATLAS_TIME();
 
     // remove duplicate points
 

@@ -101,7 +101,7 @@ NodeColumns::NodeColumns( Mesh& mesh, const eckit::Configuration & config ) :
     nb_levels_( config.getInt("levels",0) ),
     nb_nodes_(nodes_.size()),
     nb_nodes_global_(0) {
-    Timer scope_timer(__FUNCTION__);
+    ATLAS_TIME();
     constructor();
 }
 
@@ -132,8 +132,8 @@ void NodeColumns::constructor()
     }
   }
 
+  ATLAS_TIME_SCOPE("HaloExchange")
   {
-    Timer t( "HaloExchange" );
     Field& part = mesh_.nodes().partition();
     Field& ridx = mesh_.nodes().remote_index();
     halo_exchange_->setup( array::make_view<int,1>(part).data(),
@@ -141,9 +141,8 @@ void NodeColumns::constructor()
                            REMOTE_IDX_BASE,nb_nodes_);
   }
 
+  ATLAS_TIME_SCOPE("GatherScatter")
   {
-    Timer t( "GatherScatter");
-
     // Create new gather_scatter
     gather_scatter_.reset( new parallel::GatherScatter() );
 
@@ -169,8 +168,8 @@ void NodeColumns::constructor()
                            mask.data(),nb_nodes_);
   }
 
+  ATLAS_TIME_SCOPE("Checksum")
   {
-    Timer t( "Checksum" );
 
     // Create new checksum
     checksum_.reset( new parallel::Checksum() );
@@ -260,7 +259,7 @@ void NodeColumns::set_field_metadata(const eckit::Configuration& config, Field& 
     }
   }
   field.metadata().set("global",global);
-  
+
   size_t levels(nb_levels_);
   config.get("levels",levels);
   field.set_levels(levels);
@@ -319,10 +318,10 @@ Field NodeColumns::createField(
 }
 
 Field NodeColumns::createField(
-    const Field& other, 
+    const Field& other,
     const eckit::Configuration& config ) const
 {
-  return createField( 
+  return createField(
     option::datatype ( other.datatype()  ) |
     option::levels   ( other.levels()    ) |
     option::variables( other.variables() ) |
@@ -1824,7 +1823,7 @@ void mean_and_standard_deviation( const NodeColumns& fs, const Field& field, T& 
     option::name("sqr_diff") |
     option::datatype(field.datatype()) |
     option::levels( field.levels() ) );
-  
+
   array::LocalView<T,2> squared_diff = make_leveled_scalar_view<T>( squared_diff_field );
   array::LocalView<T,2> values       = make_leveled_scalar_view<T>( field );
 

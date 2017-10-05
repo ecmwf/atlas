@@ -43,7 +43,7 @@ namespace {
 
 void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2] )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
 
   array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
   const int nb_nodes = nodes.size();
@@ -104,7 +104,7 @@ void make_dual_normals_outward( Mesh& mesh );
 
 void build_median_dual_mesh( Mesh& mesh )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
 
   mesh::Nodes& nodes   = mesh.nodes();
   mesh::HybridElements& edges = mesh.edges();
@@ -134,13 +134,13 @@ void build_median_dual_mesh( Mesh& mesh )
 
   functionspace::NodeColumns nodes_fs(mesh, Halo(mesh));
   {
-    Timer t("halo-exchange dual_volumes");
+    ATLAS_TIME("halo-exchange dual_volumes");
     nodes_fs.haloExchange(nodes.field( "dual_volumes" ));
   }
 
   functionspace::EdgeColumns edges_fs(mesh, Halo(mesh));
   {
-    Timer t("halo-exchange dual_normals");
+    ATLAS_TIME( "halo-exchange dual_normals" );
     edges_fs.haloExchange(edges.field( "dual_normals" ));
   }
 
@@ -179,7 +179,7 @@ void add_median_dual_volume_contribution_cells(
     const mesh::Nodes& nodes,
     array::Array& array_dual_volumes )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
 
   array::ArrayView<double,1> dual_volumes = array::make_view<double,1> ( array_dual_volumes );
 
@@ -227,7 +227,7 @@ void add_median_dual_volume_contribution_poles(
     const mesh::Nodes& nodes,
     array::Array& array_dual_volumes )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
 
   array::ArrayView<double,1> dual_volumes = array::make_view<double,1>( array_dual_volumes );
   const array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
@@ -284,7 +284,7 @@ void add_median_dual_volume_contribution_poles(
 
 void build_dual_normals( Mesh& mesh )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
 
   array::ArrayView<double,2> elem_centroids = array::make_view<double,2>( mesh.cells().field("centroids_xy") );
 
@@ -387,7 +387,7 @@ void build_dual_normals( Mesh& mesh )
 
 void make_dual_normals_outward( Mesh& mesh )
 {
-  Timer scope_timer(__FUNCTION__);
+  ATLAS_TIME();
   mesh::Nodes&  nodes = mesh.nodes();
   array::ArrayView<double,2> node_xy = array::make_view<double,2>( nodes.xy() );
 

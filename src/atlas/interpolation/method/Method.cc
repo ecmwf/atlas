@@ -22,6 +22,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Timer.h"
 
 namespace atlas {
 namespace interpolation {
@@ -83,7 +84,7 @@ Method* MethodFactory::build(const std::string& name, const Method::Config& conf
 
 
 void Method::execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget) const {
-    eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::Method::execute()");
+    ATLAS_TIME( "atlas::interpolation::method::Method::execute()" );
 
     const size_t N = fieldsSource.size();
     ASSERT(N == fieldsTarget.size());
@@ -103,7 +104,7 @@ void Method::execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget) const
 
 
 void Method::execute(const Field& fieldSource, Field& fieldTarget) const {
-    eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::Method::execute()");
+    ATLAS_TIME( "atlas::interpolation::method::Method::execute()" );
 
     eckit::linalg::Vector
             v_src(const_cast< Field& >(fieldSource).data<double>(), fieldSource.shape(0)),

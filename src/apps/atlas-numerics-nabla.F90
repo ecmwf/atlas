@@ -44,23 +44,23 @@ implicit none
   real(JPRB), parameter :: RPI = 2.0_JPRB*asin(1.0_JPRB)
   real(JPRB) :: RA
 
-  type :: Timer_type
+  type :: timer_type
   private
     integer*8 :: clck_counts_start, clck_counts_stop, clck_rate
     integer*8 :: counted = 0
     logical :: paused = .True.
   contains
-    procedure, public :: start   => Timer_start
-    procedure, public :: pause   => Timer_pause
-    procedure, public :: resume  => Timer_resume
-    procedure, public :: elapsed => Timer_elapsed
-  end type Timer_type
+    procedure, public :: start   => timer_start
+    procedure, public :: pause   => timer_pause
+    procedure, public :: resume  => timer_resume
+    procedure, public :: elapsed => timer_elapsed
+  end type timer_type
 
 contains
 
-    function Timer_elapsed(self) result(time)
+    function timer_elapsed(self) result(time)
         use, intrinsic :: iso_c_binding, only : c_double
-        class(Timer_type), intent(inout) :: self
+        class(timer_type), intent(inout) :: self
         real(c_double) :: time
         if (.not. self%paused) then
             call system_clock ( self%clck_counts_stop, self%clck_rate )
@@ -70,27 +70,27 @@ contains
         else
             time = 0.
         end if
-      end function Timer_elapsed
+      end function timer_elapsed
 
-    subroutine Timer_start(self)
-        class(Timer_type), intent(inout) :: self
+    subroutine timer_start(self)
+        class(timer_type), intent(inout) :: self
         call system_clock ( self%clck_counts_start, self%clck_rate )
         self%paused = .False.
         self%counted = 0
-    end subroutine Timer_start
+    end subroutine timer_start
 
-    subroutine Timer_pause(self)
-        class(Timer_type), intent(inout) :: self
+    subroutine timer_pause(self)
+        class(timer_type), intent(inout) :: self
         call system_clock ( self%clck_counts_stop, self%clck_rate )
         self%counted = self%counted + self%clck_counts_stop - self%clck_counts_start
         self%paused = .True.
-    end subroutine Timer_pause
+    end subroutine timer_pause
 
-    subroutine Timer_resume(self)
-        class(Timer_type), intent(inout) :: self
+    subroutine timer_resume(self)
+        class(timer_type), intent(inout) :: self
         call system_clock ( self%clck_counts_start, self%clck_rate )
         self%paused = .False.
-    end subroutine Timer_resume
+    end subroutine timer_resume
 
 SUBROUTINE FV_GRADIENT(PVAR,PGRAD)
 
@@ -289,7 +289,7 @@ end subroutine
 
 subroutine run()
 use fckit_mpi_module
-type(Timer_type) :: timer
+type(timer_type) :: ATLAS_TIME();
 type(fckit_mpi_comm) :: mpi
 integer :: jiter, jouter
 real(c_double) :: timing_cpp, timing_f90, timing
@@ -306,9 +306,9 @@ do jouter=1,nouter
 ! Compute the gradient
 timing = 1.e10
 do jiter = 1,niter
-    call timer%start()
+    call ATLAS_TIME();%start()
     call nabla%gradient(varfield,gradfield)
-    timing = min(timing,timer%elapsed())
+    timing = min(timing,ATLAS_TIME();%elapsed())
 enddo
 timing_cpp = timing
 write(msg,*) "timing_cpp = ", timing_cpp
@@ -320,9 +320,9 @@ endif
 ! Compute the gradient with Fortran routine above
 timing = 1.e10
 do jiter = 1,niter
-  call timer%start()
+  call ATLAS_TIME();%start()
   call FV_GRADIENT(var,grad)
-  timing = min(timing,timer%elapsed())
+  timing = min(timing,ATLAS_TIME();%elapsed())
 enddo
 timing_f90 = timing
 write(msg,*) "timing_f90 = ", timing_f90

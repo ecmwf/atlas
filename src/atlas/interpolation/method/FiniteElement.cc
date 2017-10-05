@@ -27,6 +27,7 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
@@ -55,7 +56,7 @@ static const double parametricEpsilon = 1e-15;
 }  // (anonymous namespace)
 
 void FiniteElement::setup(const FunctionSpace& source, const FunctionSpace& target) {
-    eckit::TraceTimer<Atlas> tim("atlas::interpolation::method::FiniteElement::setup()");
+    ATLAS_TIME( "atlas::interpolation::method::FiniteElement::setup()" );
 
     if( functionspace::NodeColumns tgt = target ) {
 

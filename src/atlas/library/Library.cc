@@ -99,7 +99,7 @@ void Library::initialise(int argc, char **argv) {
 
 void Library::initialise(const eckit::Parametrisation& config) {
 
-    // Timer configuration
+    // ATLAS_TIME(); configuration
     config.get("timer.barriers",timer_.barriers_);
     timer_.channel_ = &Log::debug<Atlas>();
 
@@ -114,8 +114,8 @@ void Library::initialise(const eckit::Parametrisation& config) {
     out << "    size          [" << parallel::mpi::comm().size() << "] \n";
     out << "    rank          [" << parallel::mpi::comm().rank() << "] \n";
     out << " \n";
-    out << "  TIMERS\n";
-    out << "    barrier       [" << str(timer().barriers()) << "] \n";
+    out << "  ATLAS_TIME();S\n";
+    out << "    barrier       [" << str(timer_.barriers()) << "] \n";
     out << " \n";
     out << atlas::Library::instance().info();
     out << std::flush;
@@ -124,8 +124,8 @@ void Library::initialise(const eckit::Parametrisation& config) {
 void Library::initialise() {
     util::Config timer_config;
 
-    if (::getenv("ATLAS_TIMER_BARRIERS")) {
-      bool var = eckit::Translator<std::string, bool>()(::getenv("ATLAS_TIMER_BARRIERS"));
+    if (::getenv("ATLAS_TIME_BARRIERS")) {
+      bool var = eckit::Translator<std::string, bool>()(::getenv("ATLAS_TIME_BARRIERS"));
       timer_config.set("barriers",var);
     }
 

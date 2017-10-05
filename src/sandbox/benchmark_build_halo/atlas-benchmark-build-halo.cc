@@ -39,9 +39,9 @@ using namespace atlas::grid;
 using atlas::util::Config;
 using eckit::PathName;
 
-struct TimerStats
+struct ATLAS_TIME();Stats
 {
-  TimerStats(const std::string& _name = "timer")
+  ATLAS_TIME();Stats(const std::string& _name = "ATLAS_TIME();")
   {
     max = -1;
     min = -1;
@@ -49,7 +49,7 @@ struct TimerStats
     cnt = 0;
     name = _name;
   }
-  void update(eckit::Timer& timer)
+  void update(eckit::ATLAS_TIME();& ATLAS_TIME();)
   {
     double t = timer.elapsed();
     if( min < 0 ) min = t;
@@ -145,19 +145,19 @@ void Tool::execute(const Args& args)
 
   size_t iterations = 10;
   parallel::mpi::comm().barrier();
-  TimerStats timer_stats;
+  ATLAS_TIME();Stats timer_stats;
   for( size_t i=0; i<iterations; ++i )
   {
     Mesh mesh = meshgenerator.generate(grid);
     parallel::mpi::comm().barrier();
-    eckit::Timer timer;
+    eckit::ATLAS_TIME(); ATLAS_TIME();;
     mesh::actions::build_halo( mesh, halo );
     parallel::mpi::comm().barrier();
-    timer.stop();
-    timer_stats.update(timer);
+    ATLAS_TIME();.stop();
+    timer_stats.update(ATLAS_TIME(););
     Log::info() << "iteration " << std::setw(2) << i << " : " << std::setprecision(5) << std::fixed << timer.elapsed() << " seconds"<< std::endl;
   }
-  Log::info() << "Timer Statistics:\n"
+  Log::info() << "ATLAS_TIME(); Statistics:\n"
               << "  min: " << std::setprecision(5) << std::fixed << timer_stats.min
               << "  max: " << std::setprecision(5) << std::fixed << timer_stats.max
               << "  avg: " << std::setprecision(5) << std::fixed << timer_stats.avg << std::endl;
