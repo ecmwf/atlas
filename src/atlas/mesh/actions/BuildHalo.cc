@@ -911,7 +911,7 @@ void increase_halo_interior( BuildHaloHelper& helper )
 
   gather_bdry_nodes( helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts );
 
-  Timer::Barrier timer_barriers(false);
+  Timer::Barriers timer_barriers(false);
 
 #ifndef ATLAS_103
   /* deprecated */
@@ -1020,7 +1020,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
   gather_bdry_nodes( helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts, /* periodic = */ true );
 
-  Timer::Barrier set_barrier(false);
+  Timer::Barriers set_barrier(false);
 
 #ifndef ATLAS_103
   /* deprecated */
@@ -1071,7 +1071,7 @@ void BuildHalo::operator () ( int nb_elems )
 
   if( halo == nb_elems )
     return;
-  
+
   ATLAS_TIME( "Increasing mesh halo" );
 
   for(int jhalo=halo ; jhalo<nb_elems; ++jhalo )

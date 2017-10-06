@@ -189,7 +189,7 @@ public:
 
 void AtlasBenchmark::execute(const Args& args)
 {
-  Timer::Log set_channel( Log::info() );
+  Timer::Logging set_channel( Log::info() );
 
   nlev = 137;
   args.get("nlev",nlev);
@@ -280,7 +280,7 @@ void AtlasBenchmark::execute(const Args& args)
 
 void AtlasBenchmark::setup()
 {
-  Timer::Log set_channel( Log::debug<Atlas>() );
+  Timer::Logging set_channel( Log::debug<Atlas>() );
 
   size_t halo = 1;
 

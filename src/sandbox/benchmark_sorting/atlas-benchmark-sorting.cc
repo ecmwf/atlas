@@ -256,7 +256,7 @@ void Tool::execute(const Args& args)
 
   size_t iterations = 5;
   parallel::mpi::comm().barrier();
-  
+
   for( size_t j=0; j<7; ++j ) {
     ATLAS_TIME("outer_iteration");
     Mesh mesh = meshgenerator.generate(grid);
@@ -267,14 +267,16 @@ void Tool::execute(const Args& args)
     atlas::mesh::actions::BuildHalo build_halo(mesh);
     build_halo(halo);
 
-    Timer::Barrier set_barrier(true);
-    Timer::Log set_channel( Log::info() );
+    Timer::Barriers set_barrier(true);
+    Timer::Logging set_channel( Log::info() );
     for( size_t i=0; i<iterations; ++i ) {
       refactored_renumber_nodes_glb_idx(build_halo,mesh.nodes(),do_all);
     }
   }
   t.stop();
-  Timer::Report::report( Config("decimals",2) );
+  Log::info() << Timer::report( Config
+                                  ("decimals",5)
+                                  ("depth",4) );
 }
 
 //------------------------------------------------------------------------------

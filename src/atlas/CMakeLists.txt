@@ -33,6 +33,16 @@ runtime/ErrorHandling.cc
 runtime/AtlasTool.h
 runtime/AtlasTool.cc
 runtime/Log.h
+runtime/Timer.h
+runtime/timer/TimerT.h
+runtime/timer/TimerNesting.cc
+runtime/timer/TimerNesting.h
+runtime/timer/TimerBarriers.cc
+runtime/timer/TimerBarriers.h
+runtime/timer/TimerLogging.cc
+runtime/timer/TimerLogging.h
+runtime/timer/Timings.h
+runtime/timer/Timings.cc
 parallel/mpi/mpi.cc
 parallel/mpi/mpi.h
 parallel/omp/omp.cc
@@ -422,6 +432,9 @@ util/Metadata.cc
 util/Metadata.h
 util/Rotation.cc
 util/Rotation.h
+util/detail/CallStack.h
+util/detail/CallStack.cc
+util/detail/BlackMagic.h
 )
 
 list( APPEND atlas_internals_srcs

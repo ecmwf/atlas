@@ -20,13 +20,13 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
-#include "eckit/log/Timer.h"
 
 #include "atlas/grid.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/mesh.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Timer.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "atlas/output/detail/GmshIO.h"
@@ -38,39 +38,6 @@ using namespace atlas;
 using namespace atlas::grid;
 using atlas::util::Config;
 using eckit::PathName;
-
-struct ATLAS_TIME();Stats
-{
-  ATLAS_TIME();Stats(const std::string& _name = "ATLAS_TIME();")
-  {
-    max = -1;
-    min = -1;
-    avg = 0;
-    cnt = 0;
-    name = _name;
-  }
-  void update(eckit::ATLAS_TIME();& ATLAS_TIME();)
-  {
-    double t = timer.elapsed();
-    if( min < 0 ) min = t;
-    if( max < 0 ) max = t;
-    min = std::min(min, t);
-    max = std::max(max, t);
-    avg = (avg*cnt+t)/(cnt+1);
-    ++cnt;
-  }
-  std::string str()
-  {
-    std::stringstream stream;
-    stream << name << ": min, max, avg -- " << min << ", " << max << ", " << avg;
-    return stream.str();
-  }
-  std::string name;
-  double max;
-  double min;
-  double avg;
-  int cnt;
-};
 
 //------------------------------------------------------------------------------
 
@@ -145,22 +112,13 @@ void Tool::execute(const Args& args)
 
   size_t iterations = 10;
   parallel::mpi::comm().barrier();
-  ATLAS_TIME();Stats timer_stats;
   for( size_t i=0; i<iterations; ++i )
   {
     Mesh mesh = meshgenerator.generate(grid);
-    parallel::mpi::comm().barrier();
-    eckit::ATLAS_TIME(); ATLAS_TIME();;
     mesh::actions::build_halo( mesh, halo );
     parallel::mpi::comm().barrier();
-    ATLAS_TIME();.stop();
-    timer_stats.update(ATLAS_TIME(););
-    Log::info() << "iteration " << std::setw(2) << i << " : " << std::setprecision(5) << std::fixed << timer.elapsed() << " seconds"<< std::endl;
   }
-  Log::info() << "ATLAS_TIME(); Statistics:\n"
-              << "  min: " << std::setprecision(5) << std::fixed << timer_stats.min
-              << "  max: " << std::setprecision(5) << std::fixed << timer_stats.max
-              << "  avg: " << std::setprecision(5) << std::fixed << timer_stats.avg << std::endl;
+  Log::info() << Timer::report() << std::endl;
 
 }
 
