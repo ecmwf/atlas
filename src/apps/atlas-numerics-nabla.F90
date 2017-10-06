@@ -289,7 +289,7 @@ end subroutine
 
 subroutine run()
 use fckit_mpi_module
-type(timer_type) :: ATLAS_TIME();
+type(timer_type) :: timer;
 type(fckit_mpi_comm) :: mpi
 integer :: jiter, jouter
 real(c_double) :: timing_cpp, timing_f90, timing
@@ -306,9 +306,9 @@ do jouter=1,nouter
 ! Compute the gradient
 timing = 1.e10
 do jiter = 1,niter
-    call ATLAS_TIME();%start()
+    call timer%start()
     call nabla%gradient(varfield,gradfield)
-    timing = min(timing,ATLAS_TIME();%elapsed())
+    timing = min(timing,timer%elapsed())
 enddo
 timing_cpp = timing
 write(msg,*) "timing_cpp = ", timing_cpp
@@ -320,9 +320,9 @@ endif
 ! Compute the gradient with Fortran routine above
 timing = 1.e10
 do jiter = 1,niter
-  call ATLAS_TIME();%start()
+  call timer%start()
   call FV_GRADIENT(var,grad)
-  timing = min(timing,ATLAS_TIME();%elapsed())
+  timing = min(timing,timer%elapsed())
 enddo
 timing_f90 = timing
 write(msg,*) "timing_f90 = ", timing_f90

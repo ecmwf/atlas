@@ -363,7 +363,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_nabla )
-type(timer_type) :: ATLAS_TIME();
+type(timer_type) :: timer;
 integer :: jiter, niter
 real(c_double) :: norm_native
 real(c_double) :: norm_fortran
@@ -374,11 +374,11 @@ call node_columns%halo_exchange(varfield)
 niter = 5
 
 ! Compute the gradient
-call ATLAS_TIME();%start()
+call timer%start()
 do jiter = 1,niter
 call nabla%gradient(varfield,gradfield)
 enddo
-write(0,*) "time elapsed: ", ATLAS_TIME();%elapsed()
+write(0,*) "time elapsed: ", timer%elapsed()
 call node_columns%mean(gradfield,norm_native)
 write(0,*) "mean : ", norm_native
 
@@ -387,11 +387,11 @@ FCTEST_CHECK_CLOSE( norm_native, checked_value, 1.e-6_c_double )
 write(0,*) ""
 
 ! Compute the gradient with Fortran routine above
-call ATLAS_TIME();%start()
+call timer%start()
 do jiter = 1,niter
 CALL FV_GRADIENT(var,grad)
 enddo
-write(0,*) "time elapsed: ", ATLAS_TIME();%elapsed()
+write(0,*) "time elapsed: ", timer%elapsed()
 call node_columns%mean(gradfield,norm_fortran)
 write(0,*) "mean : ", norm_fortran
 
