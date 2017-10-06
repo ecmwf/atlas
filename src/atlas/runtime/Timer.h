@@ -21,21 +21,46 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 
-#if ATLAS_HAVE_TIMINGS
-#define ATLAS_TIME(...)       ATLAS_TIME_( __ATLAS__NARG(__VA_ARGS__), ##__VA_ARGS__ )
-#define ATLAS_TIME_SCOPE(...) ATLAS_TIME_SCOPE_( __ATLAS__NARG(__VA_ARGS__), ##__VA_ARGS__ )
-#else
-#define ATLAS_TIME(...)
-#define ATLAS_TIME_SCOPE(...)
-#endif
+//-----------------------------------------------------------------------------------------------------------
 
 #define __ATLAS__REVERSE 5, 4, 3, 2, 1, 0
 #define __ATLAS__ARGN(_1, _2, _3, _4, _5, N, ...) N
-#define __ATLAS__NARG_(dummy, ...)  __ATLAS__ARGN(__VA_ARGS__)
-#define __ATLAS__NARG(...)          __ATLAS__NARG_(dummy, ##__VA_ARGS__, __ATLAS__REVERSE)
+#define __ATLAS__NARG__(dummy, ...)  __ATLAS__ARGN(__VA_ARGS__)
+#define __ATLAS__NARG_(...)          __ATLAS__NARG__(dummy, ##__VA_ARGS__, __ATLAS__REVERSE)
 #define __ATLAS__SPLICE(a,b)        __ATLAS__SPLICE_1(a,b)
 #define __ATLAS__SPLICE_1(a,b)      __ATLAS__SPLICE_2(a,b)
 #define __ATLAS__SPLICE_2(a,b)      a##b
+
+
+#define __ATLAS__ARG16(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, ...) _15
+#define __ATLAS__HAS_COMMA(...) __ATLAS__ARG16(__VA_ARGS__, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+#define __ATLAS__TRIGGER_PARENTHESIS(...) ,
+#define __ATLAS__ISEMPTY(...)                                                                      \
+__ATLAS__ISEMPTY_(                                                                                 \
+  /* test if there is just one argument, eventually an empty one */                                \
+  __ATLAS__HAS_COMMA(__VA_ARGS__),                                                                 \
+  /* test if _TRIGGER_PARENTHESIS_ together with the argument adds a comma */                      \
+  __ATLAS__HAS_COMMA(__ATLAS__TRIGGER_PARENTHESIS __VA_ARGS__),                                    \
+  /* test if the argument together with a parenthesis adds a comma */                              \
+  __ATLAS__HAS_COMMA(__VA_ARGS__ (/*empty*/)),                                                     \
+  /* test if placing it between __ATLAS__TRIGGER_PARENTHESIS and the parenthesis adds a comma */   \
+  __ATLAS__HAS_COMMA(__ATLAS__TRIGGER_PARENTHESIS __VA_ARGS__ (/*empty*/))                         \
+)
+
+#define __ATLAS__PASTE5(_0, _1, _2, _3, _4) _0 ## _1 ## _2 ## _3 ## _4
+#define __ATLAS__ISEMPTY_(_0, _1, _2, _3) __ATLAS__HAS_COMMA(__ATLAS__PASTE5(__ATLAS__IS_EMPTY_CASE_, _0, _1, _2, _3))
+#define __ATLAS__IS_EMPTY_CASE_0001 ,
+
+#define __ATLAS__CALL_NARG_1(...) 0
+#define __ATLAS__CALL_NARG_0 __ATLAS__NARG_
+#define __ATLAS__NARG(...) __ATLAS__SPLICE( __ATLAS__CALL_NARG_, __ATLAS__ISEMPTY( __VA_ARGS__ ) ) (__VA_ARGS__)
+
+//-----------------------------------------------------------------------------------------------------------
+
+#if ATLAS_HAVE_TIMINGS
+
+#define ATLAS_TIME(...)       ATLAS_TIME_( __ATLAS__NARG(__VA_ARGS__), ##__VA_ARGS__ )
+#define ATLAS_TIME_SCOPE(...) ATLAS_TIME_SCOPE_( __ATLAS__NARG(__VA_ARGS__), ##__VA_ARGS__ )
 
 #define ATLAS_TIME_SCOPE_(N, ...) __ATLAS__SPLICE( ATLAS_TIME_SCOPE_, N)(__VA_ARGS__)
 #define ATLAS_TIME_SCOPE_0() \
@@ -50,6 +75,13 @@
 #define ATLAS_TIME_(N, ...)  __ATLAS__SPLICE( ATLAS_TIME_, N)(__VA_ARGS__)
 #define ATLAS_TIME_0()       ::atlas::Timer __ATLAS__SPLICE( timer, __LINE__ ) (Here());
 #define ATLAS_TIME_1(title)  ::atlas::Timer __ATLAS__SPLICE( timer, __LINE__ ) (Here(),title);
+
+#else
+
+#define ATLAS_TIME(...)
+#define ATLAS_TIME_SCOPE(...)
+
+#endif
 
 
 namespace atlas {
@@ -381,11 +413,11 @@ private:
             long indent   = config.getLong("indent",4);
             long max_nest = config.getLong("depth",0);
             long decimals = config.getLong("decimals",5);
-            
-            auto digits_before_decimal = [](double x) -> int { 
+
+            auto digits_before_decimal = [](double x) -> int {
               return std::floor(std::log10(std::trunc( std::max(1.,x)) ) )+1;
             };
-            auto digits = [](long x) -> long { 
+            auto digits = [](long x) -> long {
               return std::floor(std::log10( std::max(1l,x) ) )+1l;
             };
 
@@ -402,22 +434,22 @@ private:
             }
             size_t max_count_length          = digits(max_count);
             size_t max_digits_before_decimal = digits_before_decimal(max_seconds);
-            
-            auto print_time = [max_digits_before_decimal,decimals](double x) -> std::string { 
+
+            auto print_time = [max_digits_before_decimal,decimals](double x) -> std::string {
               std::stringstream out;
               char unit = 's';
               if( std::floor(x) >= 60 ) {
                 x/=60.;
                 unit = 'm';
               }
-              out << std::right 
+              out << std::right
                   << std::fixed
                   << std::setprecision(decimals)
                   << std::setw(max_digits_before_decimal+decimals+1)
                   << x << unit;
               return out.str();
             };
-            
+
 
             for( size_t j=0; j<size(); ++ j ) {
 
@@ -428,7 +460,7 @@ private:
               const auto& title  = titles_[j];
               const auto& loc    = locations_[j];
               const auto& nest   = nest_[j];
-              
+
               if( (not max_nest) or (nest <= max_nest) ) {
 
                 std::string sep("  |  ");
