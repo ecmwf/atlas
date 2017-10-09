@@ -19,6 +19,7 @@
 #include "atlas/util/detail/CallStack.h"
 #include "atlas/util/Config.h"
 #include "atlas/runtime/Debug.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -40,8 +41,8 @@ private:
     std::vector<eckit::CodeLocation>  locations_;
     std::vector<long>                 nest_;
     std::vector<CallStack>            stack_;
-    std::map<std::string,size_t> index_;
-    
+    std::map<size_t,size_t> index_;
+
     std::map<std::string, std::vector<size_t> > labels_;
 
     TimingsRegistry() {
@@ -69,8 +70,8 @@ private:
 };
 
 size_t TimingsRegistry::add( const CallStack& stack, const std::string& title, const Timings::Labels& labels ) {
-    std::stringstream ss; ss << stack;
-    std::string key = ss.str();
+
+    size_t key = stack.hash();
     auto it = index_.find( key );
     if( it == index_.end() ) {
       size_t idx = size();
@@ -80,10 +81,10 @@ size_t TimingsRegistry::add( const CallStack& stack, const std::string& title, c
       min_timings_.emplace_back( 0 );
       max_timings_.emplace_back( 0 );
       titles_.emplace_back( title );
-      locations_.emplace_back( stack.front() );
+      locations_.emplace_back( stack.loc() );
       nest_.emplace_back( stack.size() );
       stack_.emplace_back( stack );
-      
+
       for( const auto& label: labels ) {
         labels_[label].emplace_back(idx);
       }
@@ -128,7 +129,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     auto digits = [](long x) -> long {
       return std::floor(std::log10( std::max(1l,x) ) )+1l;
     };
-    
+
     std::vector<size_t> excluded_timers_vector;
     for( auto label: labels_ ) {
       auto name = label.first;
@@ -140,14 +141,14 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
       }
     }
     std::set<size_t> excluded_timers(excluded_timers_vector.begin(),excluded_timers_vector.end());
-    
-    
+
+
     auto excluded = [&](size_t i) -> bool {
       if( depth and nest_[i] > depth )
         return true;
       return excluded_timers.count(i);
     };
-    
+
     std::vector<long> excluded_nest_stored(size());
     long excluded_nest=size();
     for( size_t j=0; j<size(); ++j ) {
@@ -169,8 +170,8 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
       }
     }
 
-    
-    
+
+
 
     size_t max_title_length(0);
     size_t max_location_length(0);
@@ -228,7 +229,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
           << sep << print_line(max_location_length);
       return ss.str();
     };
-    
+
     std::string sept("─┬─");
     std::string seph("─┼─");
     std::string sep (" │ ");
@@ -236,7 +237,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
 
 
     out << print_horizontal( sept ) << std::endl;
-    out << std::left << std::setw(max_title_length + digits(size()) + 3) << "Timers" 
+    out << std::left << std::setw(max_title_length + digits(size()) + 3) << "Timers"
         << sep << std::setw(max_count_length) << "cnt"
         << sep << std::setw(max_digits_before_decimal+decimals+2ul) << "tot"
         << sep << std::setw(max_digits_before_decimal+decimals+2ul) << "avg"
@@ -259,7 +260,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
         auto this_it = this_stack.rbegin();
         auto next_it = next_stack.rbegin();
         for( size_t i=0; this_it!=this_stack.rend() && next_it!=next_stack.rend(); ++i, ++this_it, ++next_it ) {
-          if( this_it->asString() == next_it->asString() ) {
+          if( *this_it == *next_it ) {
             active[i] = active[i] or false;
           } else {
             active[i] = true;
@@ -284,7 +285,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
           out << "└";
         for( size_t j=1; j<indent; ++j )
           out << "─";
-      
+
 
         prefix_[j] = out.str();
       }
@@ -292,13 +293,16 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
 
     for( size_t j=0; j<size(); ++j ) {
 
-      const auto& tot    = tot_timings_[j];
-      const auto& min    = min_timings_[j];
-      const auto& max    = max_timings_[j];
-      const auto& count  = counts_[j];
-      const auto& title  = titles_[j];
-      const auto& loc    = locations_[j];
-      const auto& nest   = nest_[j];
+      auto& tot    = tot_timings_[j];
+      auto& min    = min_timings_[j];
+      auto& max    = max_timings_[j];
+      auto& count  = counts_[j];
+      auto& title  = titles_[j];
+      auto& loc    = locations_[j];
+      auto& nest   = nest_[j];
+
+      //parallel::mpi::comm().allReduceInPlace(min,eckit::mpi::min());
+      //parallel::mpi::comm().allReduceInPlace(max,eckit::mpi::max());
 
       if( not excluded(j) ) {
 
@@ -315,9 +319,9 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
       }
 
     }
-    
+
     out << print_horizontal(sepf) << std::endl;
-    
+
     std::string sepc = "───";
     // std::string sep (" │ ");
 

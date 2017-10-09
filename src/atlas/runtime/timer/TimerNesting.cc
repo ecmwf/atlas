@@ -15,7 +15,7 @@
 namespace atlas {
 namespace runtime {
 namespace timer {
-  
+
 
 class TimerNestingState {
   using CallStack = util::detail::CallStack;
