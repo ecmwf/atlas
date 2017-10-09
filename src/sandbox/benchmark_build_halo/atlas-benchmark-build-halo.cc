@@ -111,7 +111,6 @@ void Tool::execute(const Args& args)
   size_t halo = args.getLong("halo",1);
 
   size_t iterations = 10;
-  parallel::mpi::comm().barrier();
   for( size_t i=0; i<iterations; ++i )
   {
     Mesh mesh = meshgenerator.generate(grid);

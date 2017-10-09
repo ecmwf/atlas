@@ -12,6 +12,7 @@
 #define atlas_Config_h
 
 #include <string>
+#include <initializer_list>
 #include "eckit/config/Parametrisation.h"
 #include "atlas/util/Metadata.h"
 #include "eckit/utils/Hash.h"
@@ -52,6 +53,8 @@ public:
   template<typename ValueT>
   Config operator()(const std::string& name, const ValueT& value);
 
+  Config operator()(const std::string& name, const std::initializer_list<std::string>& value);
+
   // Overload operators to merge two Config objects.
   Config operator|(const Config& other) const;
 
@@ -86,6 +89,13 @@ inline Config Config::operator()(const std::string& name, const ValueT& value)
   set(name,value);
   return *this;
 }
+
+inline Config Config::operator()(const std::string& name, const std::initializer_list<std::string>& value)
+{
+  set(name, std::vector<std::string>(value.begin(),value.end()));
+  return *this;
+}
+
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

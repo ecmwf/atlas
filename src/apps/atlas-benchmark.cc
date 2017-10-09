@@ -145,6 +145,7 @@ public:
     add_option( new SimpleOption<bool>("progress","Show progress bar instead of intermediate timings") );
     add_option( new SimpleOption<bool>("output","Write output in gmsh format") );
     add_option( new SimpleOption<long>("exclude","Exclude number of iterations in statistics (default=1)") );
+    add_option( new SimpleOption<bool>("details","Show detailed timers (default=false)") );
   }
 
   void setup();
@@ -189,7 +190,8 @@ public:
 
 void AtlasBenchmark::execute(const Args& args)
 {
-  Timer::Logging set_channel( Log::info() );
+  Timer timer( Here(),"atlas-benchmark");
+  // Timer::Logging set_channel( Log::info() );
 
   nlev = 137;
   args.get("nlev",nlev);
@@ -225,9 +227,10 @@ void AtlasBenchmark::execute(const Args& args)
   Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
   Log::info() << endl;
 
+
   Log::info() << "Timings:" << endl;
 
-  ATLAS_TIME_SCOPE("setup") { setup(); }
+  ATLAS_TIME_SCOPE("setup",{"atlas-benchmark-setup"}) { setup(); }
 
   Log::info() << "  Executing " << niter << " iterations: \n";
   if( progress )
@@ -255,6 +258,7 @@ void AtlasBenchmark::execute(const Args& args)
     }
     iteration();
   }
+  timer.stop();
 
 
   Log::info() << "Iteration timer Statistics:\n"
@@ -266,6 +270,15 @@ void AtlasBenchmark::execute(const Args& args)
               << "  max: " << setprecision(5) << fixed << haloexchange_timer.max
               << "  avg: " << setprecision(5) << fixed << haloexchange_timer.avg
               << " ( "<< setprecision(2) << haloexchange_timer.avg/iteration_timer.avg*100. << "% )" << endl;
+
+  util::Config report_config;
+  report_config.set("indent",4);
+  if( not args.getBool("details",false) )
+    report_config.set("exclude", std::vector<std::string>{
+      "halo-exchange",
+      "atlas-benchmark-setup/*"
+    });
+  Log::info() << timer.report( report_config ) << std::endl;
 
   Log::info() << endl;
   Log::info() << "Results:" << endl;
@@ -280,8 +293,6 @@ void AtlasBenchmark::execute(const Args& args)
 
 void AtlasBenchmark::setup()
 {
-  Timer::Logging set_channel( Log::debug<Atlas>() );
-
   size_t halo = 1;
 
   StructuredGrid grid;
@@ -372,7 +383,7 @@ void AtlasBenchmark::setup()
 void AtlasBenchmark::iteration()
 {
   Timer t( Here() );
-
+  Timer compute( Here(), "compute" );
   unique_ptr<array::Array> avgS_arr( array::Array::create<double>(nedges,nlev,2ul) );
   const auto& node2edge = mesh.nodes().edge_connectivity();
   const auto& edge2node = mesh.edges().node_connectivity();
@@ -451,6 +462,7 @@ void AtlasBenchmark::iteration()
     if( nlev == 1 )
       grad(jnode,0,ZZ) = 0.;
   }
+  compute.stop();
 
   // halo-exchange
   Timer halo( Here(), "halo-exchange");
@@ -509,10 +521,12 @@ double AtlasBenchmark::result()
       }
     }
   }
-
-  parallel::mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
-  parallel::mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
-  parallel::mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());
+  {
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+    parallel::mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
+    parallel::mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
+    parallel::mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());
+  }
 
   norm = std::sqrt(norm);
 

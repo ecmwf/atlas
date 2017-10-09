@@ -59,7 +59,7 @@
 namespace atlas {
 
 struct TimerTraits {
-    using Barriers = runtime::timer::TimerBarriers;
+    using Barriers = runtime::timer::TimerNoBarriers;
     using Logging  = runtime::timer::TimerLogging;
     using Timings  = runtime::timer::Timings;
     using Nesting  = runtime::timer::TimerNesting;
@@ -90,14 +90,19 @@ public:
   for( ::atlas::Timer __ATLAS__SPLICE( timer, __LINE__ ) (Here());\
     __ATLAS__SPLICE( timer, __LINE__ ) .running(); \
     __ATLAS__SPLICE( timer, __LINE__ ) .stop() )
-#define ATLAS_TIME_SCOPE_1(title) \
-  for( ::atlas::Timer __ATLAS__SPLICE( timer, __LINE__ ) (Here(),title);\
+#define ATLAS_TIME_SCOPE_1(arg1) \
+  for( ::atlas::Timer __ATLAS__SPLICE( timer, __LINE__ ) (Here(),arg1);\
+    __ATLAS__SPLICE( timer, __LINE__ ) .running(); \
+    __ATLAS__SPLICE( timer, __LINE__ ) .stop() )
+#define ATLAS_TIME_SCOPE_2(arg1,arg2) \
+  for( ::atlas::Timer __ATLAS__SPLICE( timer, __LINE__ ) (Here(),arg1,arg2);\
     __ATLAS__SPLICE( timer, __LINE__ ) .running(); \
     __ATLAS__SPLICE( timer, __LINE__ ) .stop() )
 
-#define ATLAS_TIME_(N, ...)  __ATLAS__SPLICE( ATLAS_TIME_, N)(__VA_ARGS__)
-#define ATLAS_TIME_0()       ::atlas::Timer __ATLAS__SPLICE( timer, __LINE__ ) (Here());
-#define ATLAS_TIME_1(title)  ::atlas::Timer __ATLAS__SPLICE( timer, __LINE__ ) (Here(),title);
+#define ATLAS_TIME_(N, ...) __ATLAS__SPLICE( ATLAS_TIME_, N)(__VA_ARGS__)
+#define ATLAS_TIME_0()           ::atlas::Timer __ATLAS__SPLICE( timer, __LINE__ ) (Here());
+#define ATLAS_TIME_1(arg1)       ::atlas::Timer __ATLAS__SPLICE( timer, __LINE__ ) (Here(),arg1);
+#define ATLAS_TIME_2(arg1,arg2)  ::atlas::Timer __ATLAS__SPLICE( timer, __LINE__ ) (Here(),arg1,arg2);
 
 #endif
 

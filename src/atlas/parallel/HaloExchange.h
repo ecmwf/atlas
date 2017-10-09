@@ -22,6 +22,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/exception/Exceptions.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/Statistics.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/runtime/Log.h"
@@ -117,6 +118,8 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
     throw eckit::SeriousBug("HaloExchange was not setup",Here());
   }
 
+  ATLAS_TIME("HaloExchange",{"halo-exchange"});
+
   int tag=1;
   size_t var_size = std::accumulate(var_shape,var_shape+var_rank,1,std::multiplies<size_t>());
   int send_size  = sendcnt_ * var_size;
@@ -140,13 +143,15 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
     recv_displs[jproc] = recvdispls_[jproc]*var_size;
   }
 
-
-  /// Let MPI know what we like to receive
-  for(int jproc=0; jproc < nproc; ++jproc)
+  ATLAS_MPI_STATS( parallel::mpi::Collective::IRECEIVE )
   {
-    if(recv_counts[jproc] > 0)
+    /// Let MPI know what we like to receive
+    for(int jproc=0; jproc < nproc; ++jproc)
     {
-        recv_req[jproc] = parallel::mpi::comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
+      if(recv_counts[jproc] > 0)
+      {
+          recv_req[jproc] = parallel::mpi::comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
+      }
     }
   }
 
@@ -154,20 +159,28 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   pack_send_buffer(field,var_strides,var_shape,var_rank,send_buffer.data());
 
   /// Send
-  for(int jproc=0; jproc < nproc; ++jproc)
+  ATLAS_MPI_STATS( parallel::mpi::Collective::ISEND )
   {
-    if(send_counts[jproc] > 0)
+    for(int jproc=0; jproc < nproc; ++jproc)
     {
-        send_req[jproc] = parallel::mpi::comm().iSend(&send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag);
+      if(send_counts[jproc] > 0)
+      {
+          send_req[jproc] = parallel::mpi::comm().iSend(
+              &send_buffer[send_displs[jproc]], 
+              send_counts[jproc], jproc, tag);
+      }
     }
   }
 
   /// Wait for receiving to finish
-  for (int jproc=0; jproc < nproc; ++jproc)
+  ATLAS_MPI_STATS( parallel::mpi::Collective::WAIT, "mpi-wait receive" )
   {
-    if( recvcounts_[jproc] > 0)
+    for (int jproc=0; jproc < nproc; ++jproc)
     {
-        parallel::mpi::comm().wait(recv_req[jproc]);
+      if( recvcounts_[jproc] > 0)
+      {
+          parallel::mpi::comm().wait(recv_req[jproc]);
+      }
     }
   }
 
@@ -175,11 +188,14 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   unpack_recv_buffer(recv_buffer.data(),field,var_strides,var_shape,var_rank);
 
   /// Wait for sending to finish
-  for (int jproc=0; jproc < nproc; ++jproc)
+  ATLAS_MPI_STATS( parallel::mpi::Collective::WAIT, "mpi-wait send" )
   {
-    if( sendcounts_[jproc] > 0)
+    for (int jproc=0; jproc < nproc; ++jproc)
     {
-        parallel::mpi::comm().wait(send_req[jproc]);
+      if( sendcounts_[jproc] > 0)
+      {
+          parallel::mpi::comm().wait(send_req[jproc]);
+      }
     }
   }
 }
@@ -191,6 +207,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
                                      size_t var_rank,
                                      DATA_TYPE send_buffer[] ) const
 {
+  ATLAS_TIME();
   size_t ibuf = 0;
   size_t send_stride = var_strides[0]*var_shape[0];
 
@@ -266,6 +283,7 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
                                        const size_t var_shape[],
                                        size_t var_rank ) const
 {
+  ATLAS_TIME();
 //  bool field_changed = false;
 //  DATA_TYPE tmp;
   size_t ibuf = 0;

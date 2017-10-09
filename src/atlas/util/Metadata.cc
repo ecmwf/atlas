@@ -72,13 +72,19 @@ void Metadata::broadcast(Metadata& dest, const size_t root)
     buffer = s.str();
     buffer_size = buffer.size();
   }
-
-  atlas::parallel::mpi::comm().broadcast(buffer_size,root);
+  
+  {
+    parallel::mpi::Statistics stats( Here(), "broadcast", parallel::mpi::Collective::BROADCAST );
+    atlas::parallel::mpi::comm().broadcast(buffer_size,root);
+  }
   if( atlas::parallel::mpi::comm().rank() != root ) {
     buffer.resize(buffer_size);
   }
 
-  atlas::parallel::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
+  {
+    parallel::mpi::Statistics stats( Here(), "broadcast", parallel::mpi::Collective::BROADCAST );
+    atlas::parallel::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
+  }
 
   if( not (&dest==this && atlas::parallel::mpi::comm().rank() == root ) )
   {
@@ -110,12 +116,18 @@ void Metadata::broadcast(Metadata& dest, const size_t root) const
     buffer_size = buffer.size();
   }
 
-  atlas::parallel::mpi::comm().broadcast(buffer_size,root);
+  {
+    parallel::mpi::Statistics stats( Here(), "broadcast", parallel::mpi::Collective::BROADCAST );
+    atlas::parallel::mpi::comm().broadcast(buffer_size,root);
+  }
   if( atlas::parallel::mpi::comm().rank() != root ) {
     buffer.resize(buffer_size);
   }
 
-  atlas::parallel::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
+  {
+    parallel::mpi::Statistics stats( Here(), "broadcast", parallel::mpi::Collective::BROADCAST );
+    atlas::parallel::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
+  }
 
   // Fill in dest
   {

@@ -582,7 +582,10 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, T& result, size_t&
         local_sum += arr(n,l);
     }
   }
-  parallel::mpi::comm().allReduce(local_sum, result, eckit::mpi::sum());
+  { 
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+    parallel::mpi::comm().allReduce(local_sum, result, eckit::mpi::sum());
+  }
   N = fs.nb_nodes_global() * arr.shape(1);
 }
 
@@ -658,7 +661,10 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, std::vector<T>& re
     }
   }
 
-  parallel::mpi::comm().allReduce(local_sum, result, eckit::mpi::sum());
+  {
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+    parallel::mpi::comm().allReduce(local_sum, result, eckit::mpi::sum());
+  }
 
   N = fs.nb_nodes_global() * arr.shape(1);
 }
@@ -758,7 +764,10 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
       }
     }
   }
-  parallel::mpi::comm().allReduceInPlace(sum_per_level.data(), sum.size(), eckit::mpi::sum());
+  {
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+    parallel::mpi::comm().allReduceInPlace(sum_per_level.data(), sum.size(), eckit::mpi::sum());
+  }
   N = fs.nb_nodes_global();
 }
 
@@ -790,7 +799,11 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs , const Field& fie
   fs.gather(field,global);
   result = std::accumulate(array::make_storageview<DATATYPE>(global).data(),
                            array::make_storageview<DATATYPE>(global).data()+global.size(),0.);
-  parallel::mpi::comm().broadcast(&result, 1, root);
+
+  {
+    parallel::mpi::Statistics stats( Here(), "broadcast", parallel::mpi::Collective::BROADCAST );
+    parallel::mpi::comm().broadcast(&result, 1, root);
+  }
   N = fs.nb_nodes_global();
 }
 
@@ -875,7 +888,10 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& fiel
     }
   }
   size_t root = global.metadata().get<size_t>("owner");
-  parallel::mpi::comm().broadcast(result,root);
+  {
+    parallel::mpi::Statistics stats( Here(), "broadcast", parallel::mpi::Collective::BROADCAST );
+    parallel::mpi::comm().broadcast(result,root);
+  }
   N = fs.nb_nodes_global();
 }
 
@@ -983,7 +999,10 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
       }
     }
   }
-  parallel::mpi::comm().broadcast( array::make_storageview<T>(sumfield).data(),sumfield.size(),root);
+  {
+    parallel::mpi::Statistics stats( Here(), "broadcast", parallel::mpi::Collective::BROADCAST );
+    parallel::mpi::comm().broadcast( array::make_storageview<T>(sumfield).data(),sumfield.size(),root);
+  }
   N = fs.nb_nodes_global();
 }
 
@@ -1032,7 +1051,10 @@ void dispatch_minimum( const NodeColumns& fs, const Field& field, std::vector<T>
     }
   }
 
-  parallel::mpi::comm().allReduce(local_minimum, min, eckit::mpi::min());
+  {
+    parallel::mpi::comm().allReduce(local_minimum, min, eckit::mpi::min());
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+  }
 }
 
 template< typename T >
@@ -1099,7 +1121,10 @@ void dispatch_maximum( const NodeColumns& fs, const Field& field, std::vector<T>
       }
     }
   }
-  parallel::mpi::comm().allReduce(local_maximum, max, eckit::mpi::max());
+  {
+    parallel::mpi::comm().allReduce(local_maximum, max, eckit::mpi::max());
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+  }
 }
 
 template< typename T >
@@ -1204,7 +1229,10 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
       }
     }
   }
-  parallel::mpi::comm().allReduceInPlace(min.data(),min_field.size(),eckit::mpi::min());
+  {
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+    parallel::mpi::comm().allReduceInPlace(min.data(),min_field.size(),eckit::mpi::min());
+  }
 }
 
 void minimum_per_level( const NodeColumns& fs, const Field& field, Field& min )
@@ -1274,7 +1302,10 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
       }
     }
   }
-  parallel::mpi::comm().allReduceInPlace(max.data(),max_field.size(),eckit::mpi::max());
+  {
+    parallel::mpi::comm().allReduceInPlace(max.data(),max_field.size(),eckit::mpi::max());
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+  }
 }
 
 void maximum_per_level( const NodeColumns& fs, const Field& field, Field& max )
@@ -1349,9 +1380,12 @@ void dispatch_minimum_and_location( const NodeColumns& fs, const Field& field, s
     min_and_gidx_loc[j] = std::make_pair(local_minimum[j],glb_idx);
     min_and_level_loc[j] = std::make_pair(local_minimum[j],loc_level[j]);
   }
-
-  parallel::mpi::comm().allReduce(min_and_gidx_loc, min_and_gidx_glb, eckit::mpi::minloc());
-  parallel::mpi::comm().allReduce(min_and_level_loc,min_and_level_glb,eckit::mpi::minloc());
+  
+  {
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+    parallel::mpi::comm().allReduce(min_and_gidx_loc, min_and_gidx_glb, eckit::mpi::minloc());
+    parallel::mpi::comm().allReduce(min_and_level_loc,min_and_level_glb,eckit::mpi::minloc());
+  }
 
   for( size_t j=0; j<nvar; ++j ) {
     min[j]     = min_and_gidx_glb[j].first;
@@ -1454,8 +1488,11 @@ void dispatch_maximum_and_location( const NodeColumns& fs, const Field& field, s
     max_and_level_loc[j] = std::make_pair(local_maximum[j],loc_level[j]);
   }
 
-  parallel::mpi::comm().allReduce(max_and_gidx_loc, max_and_gidx_glb, eckit::mpi::maxloc());
-  parallel::mpi::comm().allReduce(max_and_level_loc,max_and_level_glb,eckit::mpi::maxloc());
+  {
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+    parallel::mpi::comm().allReduce(max_and_gidx_loc, max_and_gidx_glb, eckit::mpi::maxloc());
+    parallel::mpi::comm().allReduce(max_and_level_loc,max_and_level_glb,eckit::mpi::maxloc());
+  }
 
   for( size_t j=0; j<nvar; ++j ) {
     max[j]     = max_and_gidx_glb[j].first;
@@ -1629,7 +1666,10 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
     }
   }
 
-  parallel::mpi::comm().allReduce(min_and_gidx_loc,min_and_gidx_glb,eckit::mpi::minloc());
+  {
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+    parallel::mpi::comm().allReduce(min_and_gidx_loc,min_and_gidx_glb,eckit::mpi::minloc());
+  }
 
   atlas_omp_parallel_for( size_t l=0; l<nlev; ++l ) {
     for( size_t j=0; j<nvar; ++j ) {
@@ -1736,7 +1776,10 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
     }
   }
 
-  parallel::mpi::comm().allReduce(max_and_gidx_loc,max_and_gidx_glb,eckit::mpi::maxloc());
+  {
+    parallel::mpi::comm().allReduce(max_and_gidx_loc,max_and_gidx_glb,eckit::mpi::maxloc());
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+  }
 
   atlas_omp_parallel_for( size_t l=0; l<nlev; ++l ) {
     for( size_t j=0; j<nvar; ++j ) {

@@ -17,6 +17,7 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Timer.h"
 #include "atlas/parallel/GatherScatter.h"
+#include "atlas/parallel/mpi/Statistics.h"
 
 namespace atlas {
 namespace parallel {
@@ -116,8 +117,8 @@ void GatherScatter::setup( const int part[],
     }
   }
 
-  ATLAS_TIME_SCOPE("allGather[ counts ]")
   {
+    parallel::mpi::Statistics stats( Here(), "allGather", parallel::mpi::Collective::ALLGATHER );
     parallel::mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
   }
 
@@ -130,8 +131,8 @@ void GatherScatter::setup( const int part[],
   }
   std::vector<gidx_t> recvnodes(glbcnt_);
 
-  ATLAS_TIME_SCOPE("allGatherv [glb nodes]")
   {
+    parallel::mpi::Statistics stats( Here(), "allGatherv", parallel::mpi::Collective::ALLGATHER );
     parallel::mpi::comm().allGatherv(sendnodes.begin(), sendnodes.begin() + loccnt_,
                                      recvnodes.data(), glbcounts_.data(), glbdispls_.data());
   }
@@ -151,8 +152,8 @@ void GatherScatter::setup( const int part[],
   // Sort on "g" member, and remove duplicates
   ATLAS_TIME_SCOPE("sorting")
   {
-  std::sort(node_sort.begin(), node_sort.end());
-  node_sort.erase( std::unique( node_sort.begin(), node_sort.end() ), node_sort.end() );
+    std::sort(node_sort.begin(), node_sort.end());
+    node_sort.erase( std::unique( node_sort.begin(), node_sort.end() ), node_sort.end() );
   }
   glbcounts_.assign(nproc,0);
   glbdispls_.assign(nproc,0);

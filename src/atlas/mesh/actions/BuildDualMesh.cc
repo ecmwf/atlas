@@ -59,9 +59,12 @@ void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2]
     max[XX] = std::max( max[XX], xy(node,XX) );
     max[YY] = std::max( max[YY], xy(node,YY) );
   }
-
-  parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
-  parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
+  
+  {
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+    parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
+    parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
+  }
 }
 
 struct Node

@@ -44,7 +44,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #endif
 
-// #define ATLAS_103
+#define ATLAS_103
 // #define ATLAS_103_SORT
 
 #ifndef ATLAS_103
@@ -820,8 +820,10 @@ void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>
 #ifndef ATLAS_103
   /* deprecated */
   ATLAS_TIME( "gather_bdry_nodes old way" );
-
-  parallel::mpi::comm().allGatherv(send.begin(), send.end(), recv);
+  {
+    parallel::mpi::Statistics stats( Here(), "allGather", parallel::mpi::Collective::ALLGATHER );
+    parallel::mpi::comm().allGatherv(send.begin(), send.end(), recv);
+  }
 #else
   ATLAS_TIME();
   Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
@@ -911,7 +913,6 @@ void increase_halo_interior( BuildHaloHelper& helper )
 
   gather_bdry_nodes( helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts );
 
-  Timer::Barriers timer_barriers(false);
 
 #ifndef ATLAS_103
   /* deprecated */
@@ -939,8 +940,6 @@ void increase_halo_interior( BuildHaloHelper& helper )
     // 4) Fill node and element buffers to send back
     helper.fill_sendbuffer(sendmesh, found_bdry_nodes_uid, found_bdry_elems, jpart);
   }
-
-  timer_barriers.restore();
 
   // 5) Now communicate all buffers
   helper.all_to_all(sendmesh, recvmesh);
@@ -1019,8 +1018,6 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
   atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(size);
 
   gather_bdry_nodes( helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts, /* periodic = */ true );
-
-  Timer::Barriers set_barrier(false);
 
 #ifndef ATLAS_103
   /* deprecated */

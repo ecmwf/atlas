@@ -103,7 +103,10 @@ void MeshGeneratorImpl::generate_global_element_numbering( Mesh& mesh ) const
   std::vector<size_t> elem_counts( parallel::mpi::comm().size() );
   std::vector<int> elem_displs( parallel::mpi::comm().size() );
 
-  parallel::mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
+  {
+    parallel::mpi::Statistics stats( Here(), "allGather", parallel::mpi::Collective::ALLGATHER );
+    parallel::mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
+  }
 
   elem_displs.at(0) = 0;
   for(size_t jpart = 1; jpart < parallel::mpi::comm().size(); ++jpart)

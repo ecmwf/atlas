@@ -22,6 +22,7 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/Statistics.h"
 
 using Topology = atlas::mesh::Nodes::Topology;
 using atlas::util::LonLatMicroDeg;
@@ -102,7 +103,10 @@ void build_periodic_boundaries( Mesh& mesh )
       int sendcnt = slave_nodes.size();
       std::vector< int > recvcounts( parallel::mpi::comm().size() );
 
-      parallel::mpi::comm().allGather(sendcnt, recvcounts.begin(), recvcounts.end());
+      {
+        parallel::mpi::Statistics stats( Here(), "allGather", parallel::mpi::Collective::ALLGATHER );
+        parallel::mpi::comm().allGather(sendcnt, recvcounts.begin(), recvcounts.end());
+      }
 
       std::vector<int> recvdispls( parallel::mpi::comm().size() );
       recvdispls[0] = 0;
@@ -114,7 +118,10 @@ void build_periodic_boundaries( Mesh& mesh )
       }
       std::vector<int> recvbuf(recvcnt);
 
-      parallel::mpi::comm().allGatherv(slave_nodes.begin(), slave_nodes.end(), recvbuf.begin(), recvcounts.data(), recvdispls.data());
+      {
+        parallel::mpi::Statistics stats( Here(), "allGather", parallel::mpi::Collective::ALLGATHER );
+        parallel::mpi::comm().allGatherv(slave_nodes.begin(), slave_nodes.end(), recvbuf.begin(), recvcounts.data(), recvdispls.data());
+      }
 
       PeriodicTransform transform;
       for( size_t jproc=0; jproc<parallel::mpi::comm().size(); ++jproc )
@@ -178,11 +185,14 @@ void build_periodic_boundaries( Mesh& mesh )
     }
 
     // Communicate
-    parallel::mpi::comm().allToAll( send_slave_idx,      recv_slave_idx      );
-    parallel::mpi::comm().allToAll( send_master_part,    recv_master_part    );
-    parallel::mpi::comm().allToAll( send_master_ridx,    recv_master_ridx     );
-    //  parallel::mpi::comm().allToAll( send_slave_part,     recv_slave_part    );
-    //  parallel::mpi::comm().allToAll( send_slave_loc,      recv_slave_ridx    );
+    {
+      parallel::mpi::Statistics stats( Here(), "allToAll", parallel::mpi::Collective::ALLTOALL );
+      parallel::mpi::comm().allToAll( send_slave_idx,      recv_slave_idx      );
+      parallel::mpi::comm().allToAll( send_master_part,    recv_master_part    );
+      parallel::mpi::comm().allToAll( send_master_ridx,    recv_master_ridx     );
+      //  parallel::mpi::comm().allToAll( send_slave_part,     recv_slave_part    );
+      //  parallel::mpi::comm().allToAll( send_slave_loc,      recv_slave_ridx    );      
+    }
 
     // Fill in periodic
     // unused // int nb_recv_master = 0;

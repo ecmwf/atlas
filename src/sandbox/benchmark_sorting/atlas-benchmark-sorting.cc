@@ -129,7 +129,10 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   std::vector<int> recvcounts(parallel::mpi::comm().size());
   std::vector<int> recvdispls(parallel::mpi::comm().size());
 
-  parallel::mpi::comm().gather(nb_nodes, recvcounts, root);
+  {
+    parallel::mpi::Statistics stats( Here(), "gather", parallel::mpi::Collective::GATHER );
+    parallel::mpi::comm().gather(nb_nodes, recvcounts, root);
+  }
 
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
@@ -139,7 +142,10 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   int glb_nb_nodes = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
   std::vector<gidx_t> glb_idx_gathered( glb_nb_nodes );
-  parallel::mpi::comm().gatherv(glb_idx.data(), glb_idx.size(), glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), root);
+  {
+    parallel::mpi::Statistics stats( Here(), "gather", parallel::mpi::Collective::GATHER );
+    parallel::mpi::comm().gatherv(glb_idx.data(), glb_idx.size(), glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), root);
+  }
 
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
@@ -170,8 +176,10 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   }
 
   // 3) Scatter renumbered back
-
-  parallel::mpi::comm().scatterv(glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), glb_idx.data(), glb_idx.size(), root);
+  {
+    parallel::mpi::Statistics stats( Here(), "scatter", parallel::mpi::Collective::SCATTER );
+    parallel::mpi::comm().scatterv(glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), glb_idx.data(), glb_idx.size(), root);
+  }
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -254,10 +262,10 @@ void Tool::execute(const Args& args)
 
   ATLAS_DEBUG_VAR( do_all );
 
-  size_t iterations = 5;
+  size_t iterations = 1;
   parallel::mpi::comm().barrier();
 
-  for( size_t j=0; j<7; ++j ) {
+  for( size_t j=0; j<1; ++j ) {
     ATLAS_TIME("outer_iteration");
     Mesh mesh = meshgenerator.generate(grid);
 
@@ -275,8 +283,10 @@ void Tool::execute(const Args& args)
   }
   t.stop();
   Log::info() << Timer::report( Config
-                                  ("decimals",5)
-                                  ("depth",4) );
+                                  ("indent",2)
+                                  ("decimals",2)
+                                  // ("depth",5)
+                              );
 }
 
 //------------------------------------------------------------------------------

@@ -12,7 +12,9 @@
 
 #include <iosfwd>
 #include <string>
-#include "eckit/log/Timer.h"
+#include <vector>
+#include <string>
+#include "atlas/runtime/timer/StopWatch.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -34,6 +36,7 @@ class TimerT {
 public:
     using Barriers         = typename TimerTraits::Barriers;
     using Logging          = typename TimerTraits::Logging;
+    using Labels           = std::vector<std::string>;
 
 public: // static methods
 
@@ -42,8 +45,11 @@ public: // static methods
 
 public:
 
-    TimerT( const eckit::CodeLocation&, const std::string& msg, std::ostream& out = Logging::channel() );
+    TimerT( const eckit::CodeLocation&, const std::string& title, std::ostream& out = Logging::channel() );
     TimerT( const eckit::CodeLocation&, std::ostream& out = Logging::channel() );
+
+    TimerT( const eckit::CodeLocation&, const std::string& title, const Labels&, std::ostream& out = Logging::channel() );
+    TimerT( const eckit::CodeLocation&, const Labels&, std::ostream& out = Logging::channel() );
 
     ~TimerT();
 
@@ -52,6 +58,10 @@ public:
     void start();
 
     void stop();
+
+    void pause();
+
+    void resume();
 
     double elapsed() const;
 
@@ -71,22 +81,24 @@ private: // member functions
 
 private: // member data
 
-    mutable eckit::Timer timer_;
+    bool running_{true};
+    StopWatch stopwatch_;
     eckit::CodeLocation loc_;
     std::ostream& out_;
-    std::string msg_;
+    std::string title_;
     Identifier id_;
     Nesting nesting_;
+    Labels labels_;
 };
 
 //-----------------------------------------------------------------------------------------------------------
 // Definitions
 
 template< typename TimerTraits >
-inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const std::string& msg, std::ostream& out ) :
+inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const std::string& title, std::ostream& out ) :
   loc_(loc),
   out_(out),
-  msg_(msg),
+  title_(title),
   nesting_(loc) {
   start();
 }
@@ -95,8 +107,28 @@ template< typename TimerTraits >
 inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, std::ostream& out ) :
   loc_(loc),
   out_(out),
-  msg_( loc_ ? loc_.func() : "" ),
+  title_( loc_ ? loc_.func() : ""),
   nesting_(loc_) {
+  start();
+}
+
+template< typename TimerTraits >
+inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const std::string& title, const Labels& labels, std::ostream& out ) :
+  loc_(loc),
+  out_(out),
+  title_(title),
+  nesting_(loc),
+  labels_(labels) {
+  start();
+}
+
+template< typename TimerTraits >
+inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const Labels& labels, std::ostream& out ) :
+  loc_(loc),
+  out_(out),
+  title_( loc_ ? loc_.func() : "" ),
+  nesting_(loc_),
+  labels_(labels) {
   start();
 }
 
@@ -112,51 +144,68 @@ inline void TimerT<TimerTraits>::barrier() const {
 
 template< typename TimerTraits >
 inline void TimerT<TimerTraits>::registerTimer() {
-    id_ = Timings::add( nesting_, msg_ );
+    id_ = Timings::add( nesting_, title_ + (Barriers::state() ? " [b]" : ""), labels_ );
 }
 
 template< typename TimerTraits >
 inline void TimerT<TimerTraits>::updateTimings() const {
-    Timings::update( id_, timer_.elapsed() );
+  Timings::update( id_, stopwatch_.elapsed() );
 }
 
 template< typename TimerTraits >
 inline bool TimerT<TimerTraits>::running() const {
-    return timer_.running();
+    return running_;
 }
 
 template< typename TimerTraits >
 inline void TimerT<TimerTraits>::start() {
-    timer_.stop();
     registerTimer();
-    out_ << msg_ << " ..." << std::endl;
+    out_ << title_ << " ..." << std::endl;
     barrier();
-    timer_.start();
+    stopwatch_.start();
 }
 
 template< typename TimerTraits >
 inline void TimerT<TimerTraits>::stop() {
     if( running() ) {
         barrier();
-        timer_.stop();
+        stopwatch_.stop();
+        nesting_.stop();
         updateTimings();
-        out_ << msg_ << " ... done : " << timer_.elapsed() << "s" << std::endl;
+        out_ << title_ << " ... done : " << stopwatch_.elapsed() << "s" << std::endl;
+        running_ = false;
     }
 }
 
 template< typename TimerTraits >
+inline void TimerT<TimerTraits>::pause() {
+    if( running() ) {
+      barrier();
+      stopwatch_.stop();
+      nesting_.stop();
+    }
+}
+
+template< typename TimerTraits >
+inline void TimerT<TimerTraits>::resume() {
+    barrier();
+    nesting_.start();
+    stopwatch_.start();
+}
+
+template< typename TimerTraits >
 inline double TimerT<TimerTraits>::elapsed() const {
-    return timer_.elapsed();
+    return stopwatch_.elapsed();
 }
 
 template< typename TimerTraits >
 inline std::string TimerT<TimerTraits>::report() {
-    return Timings::report();
+    return Timings::report() + Barriers::report();
 }
 
 template< typename TimerTraits >
 inline std::string TimerT<TimerTraits>::report( const eckit::Configuration& config ) {
-    return Timings::report(config);
+  return Timings::report(config) + Barriers::report();
 }
 
 //-----------------------------------------------------------------------------------------------------------

@@ -212,8 +212,11 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
     max[YY] = std::max( max[YY], xy(node,YY) );
   }
 
-  parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
-  parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
+  {
+    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+    parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
+    parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
+  }
 
   double tol = 1e-6;
 
@@ -368,44 +371,6 @@ void build_edges( Mesh& mesh )
       edge_to_elem_data[edge*2+0] = e2;
       edge_to_elem_data[edge*2+1] = e1;
     }
-    // if( e2 == cell_nodes.missing_value()  ||
-    //     compute_uid(cell_nodes.row(e1)) > compute_uid(cell_nodes.row(e2)) )
-    // {
-    //   // BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+0] , edge_cell_connectivity(jedge,0) );
-    //   // BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+1] , edge_cell_connectivity(jedge,1) );
-    // }
-    // else
-    // {
-    //   edge_to_elem_data[edge*2+0] = e2;
-    //   edge_to_elem_data[edge*2+1] = e1;
-    //
-    //   // BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+0] , edge_cell_connectivity(jedge,1) );
-    //   // BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+1] , edge_cell_connectivity(jedge,0) );
-    // }
-
-
-    // if( e1 == cell_nodes.missing_value() && e2 != cell_nodes.missing_value() )
-    // {
-    //   edge_to_elem_data[edge*2+0] = e2;
-    //   edge_to_elem_data[edge*2+1] = e1;
-    // }
-    // else if( (e1 != cell_nodes.missing_value() && e2 != cell_nodes.missing_value() ) &&
-    //          (compute_uid(cell_nodes.row(e1)) > compute_uid(cell_nodes.row(e2)) ) )
-    // {
-    //   // Swap order to ensure bit-reproducibility
-    //   edge_to_elem_data[edge*2+0] = e2;
-    //   edge_to_elem_data[edge*2+1] = e1;
-    // }
-
-    // if( e2 != cell_nodes.missing_value() )
-    // {
-    //   // Swap order to ensure bit-reproducibility
-    //   if( compute_uid(cell_nodes.row(e1)) > compute_uid(cell_nodes.row(e2)) )
-    //   {
-    //     edge_to_elem_data[edge*2+0] = e2;
-    //     edge_to_elem_data[edge*2+1] = e1;
-    //   }
-    // }
   }
 
   mesh.edges().cell_connectivity().add( nb_edges, 2, edge_to_elem_data.data() );

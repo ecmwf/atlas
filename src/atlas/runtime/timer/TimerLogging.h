@@ -10,9 +10,7 @@
 
 #pragma once
 
-#include <iostream>
-#include "eckit/log/Channel.h"
-#include "atlas/library/Library.h"
+#include <iosfwd>
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -20,51 +18,33 @@ namespace atlas {
 namespace runtime {
 namespace timer {
 
+class TimerNoLogging {
+public:
+
+    TimerNoLogging( bool state );
+
+    TimerNoLogging( std::ostream& channel );
+
+public: // static method
+    static std::ostream& channel();
+
+};
 
 class TimerLogging {
-private:
-    class State {
-    private:
-        std::ostream* channel_;
-
-        State() {
-            channel_ = &atlas::Library::instance().timer().channel();
-        }
-
-    public:
-
-        static eckit::Channel& empty_channel() {
-            static eckit::Channel channel;
-            return channel;
-        }
-
-        static State& instance() {
-            static State channel;
-            return channel;
-        }
-
-        operator std::ostream&() { return *channel_; }
-        operator std::ostream*() { return channel_; }
-
-        void set( std::ostream& channel ) { channel_ = &channel; }
-        void set( bool state ) { if( state == false ) channel_ = &empty_channel(); }
-    };
-
-    std::ostream* previous_state_;
-
 public:
-    TimerLogging( bool state ) :
-        previous_state_( State::instance() ) {
-        State::instance().set( state );
-    }
-    TimerLogging( std::ostream& channel ) :
-        previous_state_( State::instance() ) {
-        State::instance().set( channel );
-    }
-    ~TimerLogging() {
-          State::instance().set( *previous_state_ );
-    }
-    static std::ostream& channel() { return State::instance(); }
+
+    TimerLogging( bool state );
+
+    TimerLogging( std::ostream& channel );
+    
+    ~TimerLogging();
+
+public: // static method
+    static std::ostream& channel();
+    
+private:
+  std::ostream* previous_state_;
+
 };
 
 } // namespace timer

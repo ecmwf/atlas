@@ -16,6 +16,7 @@
 #include <numeric>
 #include <sstream>
 #include "atlas/parallel/HaloExchange.h"
+#include "atlas/parallel/mpi/Statistics.h"
 
 namespace atlas {
 namespace parallel {
@@ -64,6 +65,8 @@ void HaloExchange::setup( const int part[],
                           const int remote_idx[], const int base,
                           const size_t parsize )
 {
+  ATLAS_TIME("HaloExchange::setup");
+  
   parsize_ = parsize;
   sendcounts_.resize(nproc); sendcounts_.assign(nproc,0);
   recvcounts_.resize(nproc); recvcounts_.assign(nproc,0);
@@ -87,8 +90,10 @@ void HaloExchange::setup( const int part[],
   /*
     Find the amount of nodes this proc has to send to each other proc
   */
-
-  parallel::mpi::comm().allToAll(recvcounts_, sendcounts_);
+  {
+    ATLAS_MPI_STATS( parallel::mpi::Collective::ALLTOALL )
+    parallel::mpi::comm().allToAll(recvcounts_, sendcounts_);
+  }
 
   sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
 //  std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
@@ -126,9 +131,11 @@ void HaloExchange::setup( const int part[],
   */
 
   std::vector<int> recv_requests(sendcnt_);
-
-  parallel::mpi::comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(),
-                               recv_requests.data(), sendcounts_.data(), senddispls_.data());
+  {
+    ATLAS_MPI_STATS( parallel::mpi::Collective::ALLTOALL )
+    parallel::mpi::comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(),
+                                    recv_requests.data(), sendcounts_.data(), senddispls_.data());
+  }
 
   /*
     What needs to be sent to other procs is asked by remote_idx, which is local here

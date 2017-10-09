@@ -10,6 +10,9 @@
 
 #pragma once
 
+#include <vector>
+#include <string>
+
 //-----------------------------------------------------------------------------------------------------------
 
 namespace eckit { class Configuration; }
@@ -23,10 +26,11 @@ class Timings {
 public:
     using CallStack = util::detail::CallStack;
     using Identifier = size_t;
+    using Labels = std::vector<std::string>;
 
 public: // static methods
 
-    static Identifier add( const CallStack& stack, const std::string& title );
+    static Identifier add( const CallStack& stack, const std::string& title, const Labels& );
 
     static void update( const Identifier& id, double seconds );
 

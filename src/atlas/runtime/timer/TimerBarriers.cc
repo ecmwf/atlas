@@ -8,7 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
+#include <sstream>
 #include "TimerBarriers.h"
+#include "atlas/library/Library.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/timer/StopWatch.h"
+
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -16,6 +21,79 @@ namespace atlas {
 namespace runtime {
 namespace timer {
 
+class TimerBarriersState {
+private:
+    TimerBarriersState() {
+        barriers_ = atlas::Library::instance().timer().barriers();
+    }
+    bool barriers_;
+    StopWatch stopwatch_;
+public:
+    TimerBarriersState(TimerBarriersState const&)           = delete;
+    void operator=(TimerBarriersState const&)  = delete;
+    static TimerBarriersState& instance() {
+        static TimerBarriersState state;
+        return state;
+    }
+    operator bool() const {
+        return barriers_;
+    }
+    void set( bool state ) {
+        barriers_ = state;
+    }
+    StopWatch& stopwatch() { return stopwatch_; }
+    
+    std::string report() const {
+      std::stringstream out;
+      double time = stopwatch_.elapsed();
+      if( time ) {
+        out << "Total time spent in mpi barriers due to load imbalance : " << time << "s" << std::endl;
+      }
+      return out.str();
+    }
+};
+
+TimerBarriers::TimerBarriers(bool state) :
+  previous_state_( TimerBarriersState::instance() ) {
+  TimerBarriersState::instance().set(state);
+}
+
+TimerBarriers::~TimerBarriers() {
+  restore();
+}
+
+void TimerBarriers::restore() {
+  TimerBarriersState::instance().set( previous_state_ );
+}
+
+bool TimerBarriers::state() {
+  return TimerBarriersState::instance();
+}
+
+void TimerBarriers::execute() {
+  if( state() ) {
+    TimerBarriersState::instance().stopwatch().start();
+    parallel::mpi::comm().barrier();
+    TimerBarriersState::instance().stopwatch().stop();
+  }
+}
+
+double TimerBarriers::time() {
+  return TimerBarriersState::instance().stopwatch().elapsed();
+}
+
+double TimerNoBarriers::time() {
+  return TimerBarriersState::instance().stopwatch().elapsed();
+}
+
+std::string TimerBarriers::report() {
+  return TimerBarriersState::instance().report();
+}
+
+std::string TimerNoBarriers::report() {
+  return TimerBarriersState::instance().report();
+}
+  
 } // namespace timer
 } // namespace runtime
 } // namespace atlas

@@ -20,44 +20,18 @@ namespace timer {
 
 
 class TimerNesting {
-private:
-    using CallStack = util::detail::CallStack;
-    class State {
-    private:
-        State() {}
-        CallStack stack_;
-    public:
-        State(State const&)           = delete;
-        void operator=(State const&)  = delete;
-        static State& instance() {
-            static State state;
-            return state;
-        }
-        operator CallStack() const {
-            return stack_;
-        }
-        CallStack& push( const eckit::CodeLocation& loc ) {
-            stack_.push_front(loc);
-            return stack_;
-        }
-        CallStack& pop() {
-            stack_.pop_front();
-            return stack_;
-        }
-    };
-
-    long depth_;
-    CallStack stack_;
-
 public:
-    TimerNesting( const eckit::CodeLocation& loc ) :
-        stack_( State::instance().push( loc ) ) {
-    }
-    ~TimerNesting() {
-        State::instance().pop();
-    }
+    using CallStack = util::detail::CallStack;
+    TimerNesting( const eckit::CodeLocation& );
+    ~TimerNesting();
     operator long() const { return stack_.size(); }
     operator CallStack() const { return stack_; }
+    void stop();
+    void start();
+private:
+    CallStack stack_;
+    eckit::CodeLocation loc_;
+    bool running_{true};
 };
 
 

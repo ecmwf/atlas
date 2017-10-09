@@ -9,9 +9,7 @@
  */
 
 #pragma once
-
-#include "atlas/library/Library.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include <string>
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -19,47 +17,31 @@ namespace atlas {
 namespace runtime {
 namespace timer {
 
-class TimerBarriers {
-private:
-    class State {
-    private:
-        State() {
-            barriers_ = atlas::Library::instance().timer().barriers();
-        }
-        bool barriers_;
-    public:
-        State(State const&)           = delete;
-        void operator=(State const&)  = delete;
-        static State& instance() {
-            static State state;
-            return state;
-        }
-        operator bool() const {
-            return barriers_;
-        }
-        void set( bool state ) {
-            barriers_ = state;
-        }
-    };
-
-    bool previous_state_;
-
+class TimerNoBarriers {
 public:
-    TimerBarriers(bool state) :
-        previous_state_( State::instance() ) {
-        State::instance().set(state);
-    }
-    ~TimerBarriers() {
-        restore();
-    }
-    void restore() {
-        State::instance().set( previous_state_ );
-    }
-    static bool state() { return State::instance(); }
-    static void execute() {
-      if( state() )
-          parallel::mpi::comm().barrier();
-    }
+    TimerNoBarriers(bool state) {}
+    void restore() {}
+
+public: // static methods
+    static bool state() { return false; }
+    static void execute() {}
+    static double time();
+    static std::string report();
+};
+
+class TimerBarriers {
+public:
+    TimerBarriers(bool state);
+    ~TimerBarriers();
+    void restore();
+
+public: // static methods
+    static bool state();
+    static void execute();
+    static double time();
+    static std::string report();
+private:
+    bool previous_state_;
 };
 
 } // namespace timer

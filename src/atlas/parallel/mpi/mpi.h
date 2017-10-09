@@ -11,6 +11,7 @@
 #pragma once
 
 #include "eckit/mpi/Comm.h"
+#include "atlas/parallel/mpi/Statistics.h"
 
 namespace atlas {
 namespace parallel {
