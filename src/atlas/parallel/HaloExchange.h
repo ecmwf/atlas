@@ -143,8 +143,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
     recv_displs[jproc] = recvdispls_[jproc]*var_size;
   }
 
-  ATLAS_MPI_STATS( parallel::mpi::Collective::IRECEIVE )
-  {
+  ATLAS_MPI_STATS( IRECEIVE ) {
     /// Let MPI know what we like to receive
     for(int jproc=0; jproc < nproc; ++jproc)
     {
@@ -159,8 +158,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   pack_send_buffer(field,var_strides,var_shape,var_rank,send_buffer.data());
 
   /// Send
-  ATLAS_MPI_STATS( parallel::mpi::Collective::ISEND )
-  {
+  ATLAS_MPI_STATS( ISEND ) {
     for(int jproc=0; jproc < nproc; ++jproc)
     {
       if(send_counts[jproc] > 0)
@@ -173,8 +171,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   }
 
   /// Wait for receiving to finish
-  ATLAS_MPI_STATS( parallel::mpi::Collective::WAIT, "mpi-wait receive" )
-  {
+  ATLAS_MPI_STATS( WAIT, "mpi-wait receive" ) {
     for (int jproc=0; jproc < nproc; ++jproc)
     {
       if( recvcounts_[jproc] > 0)
@@ -188,8 +185,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   unpack_recv_buffer(recv_buffer.data(),field,var_strides,var_shape,var_rank);
 
   /// Wait for sending to finish
-  ATLAS_MPI_STATS( parallel::mpi::Collective::WAIT, "mpi-wait send" )
-  {
+  ATLAS_MPI_STATS( WAIT, "mpi-wait send" ) {
     for (int jproc=0; jproc < nproc; ++jproc)
     {
       if( sendcounts_[jproc] > 0)

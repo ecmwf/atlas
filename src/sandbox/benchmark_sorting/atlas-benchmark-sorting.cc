@@ -129,8 +129,9 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   std::vector<int> recvcounts(parallel::mpi::comm().size());
   std::vector<int> recvdispls(parallel::mpi::comm().size());
 
-  ATLAS_MPI_STATS( parallel::mpi::Collective::GATHER )
+  ATLAS_MPI_STATS( GATHER ) {
     parallel::mpi::comm().gather(nb_nodes, recvcounts, root);
+  }
 
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
@@ -140,8 +141,9 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   int glb_nb_nodes = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
   std::vector<gidx_t> glb_idx_gathered( glb_nb_nodes );
-  ATLAS_MPI_STATS( parallel::mpi::Collective::GATHER )
+  ATLAS_MPI_STATS( GATHER ) {
     parallel::mpi::comm().gatherv(glb_idx.data(), glb_idx.size(), glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), root);
+  }
 
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
@@ -172,8 +174,9 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   }
 
   // 3) Scatter renumbered back
-  ATLAS_MPI_STATS( parallel::mpi::Collective::SCATTER )
+  ATLAS_MPI_STATS( SCATTER ) {
     parallel::mpi::comm().scatterv(glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), glb_idx.data(), glb_idx.size(), root);
+  }
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {

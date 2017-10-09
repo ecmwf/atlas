@@ -821,8 +821,9 @@ void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>
   /* deprecated */
   ATLAS_TIME( "gather_bdry_nodes old way" );
   {
-    ATLAS_MPI_STATS( parallel::mpi::Collective::ALLGATHER )
+    ATLAS_MPI_STATS( ALLGATHER ) {
       parallel::mpi::comm().allGatherv(send.begin(), send.end(), recv);
+    }
   }
 #else
   ATLAS_TIME();

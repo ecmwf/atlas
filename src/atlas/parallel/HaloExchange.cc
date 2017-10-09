@@ -90,8 +90,7 @@ void HaloExchange::setup( const int part[],
   /*
     Find the amount of nodes this proc has to send to each other proc
   */
-  {
-    ATLAS_MPI_STATS( parallel::mpi::Collective::ALLTOALL )
+  ATLAS_MPI_STATS( ALLTOALL ) {
     parallel::mpi::comm().allToAll(recvcounts_, sendcounts_);
   }
 
@@ -131,8 +130,7 @@ void HaloExchange::setup( const int part[],
   */
 
   std::vector<int> recv_requests(sendcnt_);
-  {
-    ATLAS_MPI_STATS( parallel::mpi::Collective::ALLTOALL )
+  ATLAS_MPI_STATS( ALLTOALL ) {
     parallel::mpi::comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(),
                                     recv_requests.data(), sendcounts_.data(), senddispls_.data());
   }

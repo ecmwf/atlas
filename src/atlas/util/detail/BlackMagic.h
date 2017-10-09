@@ -12,6 +12,8 @@
 /// Splice a and b together
 #define __ATLAS__SPLICE(a,b)
 
+#define __ATLAS_STRINGIFY(a) a
+
 //-----------------------------------------------------------------------------------------------------------
 // Details
 

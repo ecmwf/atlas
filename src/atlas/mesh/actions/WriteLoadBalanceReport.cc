@@ -76,8 +76,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 
     /// @note this could be improved by packing the 3 integers in a vector, and doing only comm() call
 
-    ATLAS_MPI_STATS( parallel::mpi::Collective::GATHER )
-    {
+    ATLAS_MPI_STATS( GATHER ) {
       parallel::mpi::comm().gather(nb_nodes, nb_total_nodes, root);
       parallel::mpi::comm().gather(nowned,   nb_owned_nodes, root);
       parallel::mpi::comm().gather(nghost,   nb_ghost_nodes, root);

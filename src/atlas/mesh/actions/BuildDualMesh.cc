@@ -60,7 +60,7 @@ void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2]
     max[YY] = std::max( max[YY], xy(node,YY) );
   }
 
-  ATLAS_MPI_STATS( parallel::mpi::Collective::ALLREDUCE ) {
+  ATLAS_MPI_STATS( ALLREDUCE ) {
     parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
     parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
   }
