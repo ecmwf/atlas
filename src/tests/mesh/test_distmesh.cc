@@ -63,10 +63,8 @@ double dual_volume(Mesh& mesh)
   }
 
 
-  {
-    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::ALLREDUCE )
     parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
-  }
 
   return area;
 }

@@ -166,7 +166,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
       if(send_counts[jproc] > 0)
       {
           send_req[jproc] = parallel::mpi::comm().iSend(
-              &send_buffer[send_displs[jproc]], 
+              &send_buffer[send_displs[jproc]],
               send_counts[jproc], jproc, tag);
       }
     }

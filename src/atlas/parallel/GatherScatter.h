@@ -276,10 +276,8 @@ void GatherScatter::gather( parallel::Field<DATA_TYPE const> lfields[],
 
     /// Gather
 
-    {
-      parallel::mpi::Statistics stats( Here(), "gather", parallel::mpi::Collective::GATHER );
+    ATLAS_MPI_STATS( parallel::mpi::Collective::GATHER )
       parallel::mpi::comm().gatherv(loc_buffer, glb_buffer, glb_counts, glb_displs, root);
-    }
 
     /// Unpack
     if( myproc == root )
@@ -338,10 +336,8 @@ void GatherScatter::scatter( parallel::Field<DATA_TYPE const> gfields[],
 
     /// Scatter
 
-    {
-      parallel::mpi::Statistics stats( Here(), "scatter", parallel::mpi::Collective::SCATTER );
+    ATLAS_MPI_STATS( parallel::mpi::Collective::SCATTER )
       parallel::mpi::comm().scatterv(glb_buffer.begin(), glb_buffer.end(), glb_counts, glb_displs, loc_buffer.begin(), loc_buffer.end(), root);
-    }
 
     /// Unpack
     unpack_recv_buffer(locmap_,loc_buffer.data(),lfields[jfield]);

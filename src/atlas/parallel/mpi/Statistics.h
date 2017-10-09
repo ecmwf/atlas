@@ -14,25 +14,18 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Timer.h"
 
+#define ATLAS_MPI_STATS(...)
+
 #if ATLAS_HAVE_TIMINGS
 
 #include "atlas/util/detail/BlackMagic.h"
 
 #undef ATLAS_MPI_STATS
-#define ATLAS_MPI_STATS(...) ATLAS_MPI_STATS_( __ATLAS__NARG(__VA_ARGS__), ##__VA_ARGS__ )
-
-#define ATLAS_MPI_STATS_(N, ...) __ATLAS__SPLICE( ATLAS_MPI_STATS_, N)(__VA_ARGS__)
-#define ATLAS_MPI_STATS_1(Collective) \
+#define ATLAS_MPI_STATS(...) \
   for( ::atlas::parallel::mpi::Statistics __ATLAS__SPLICE( stats, __LINE__ ) \
-    /*args=*/(Here(), ::atlas::parallel::mpi::name(Collective), Collective);\
+    /*args=*/(Here(), __VA_ARGS__ );\
     __ATLAS__SPLICE( stats, __LINE__ ) .running(); \
     __ATLAS__SPLICE( stats, __LINE__ ) .stop() )
-#define ATLAS_MPI_STATS_2(Collective,title) \
-      for( ::atlas::parallel::mpi::Statistics __ATLAS__SPLICE( stats, __LINE__ ) \
-        /*args=*/(Here(), title, Collective);\
-        __ATLAS__SPLICE( stats, __LINE__ ) .running(); \
-        __ATLAS__SPLICE( stats, __LINE__ ) .stop() )
-
 #endif
 
 
@@ -49,7 +42,7 @@ struct CollectiveTimerTraits {
 
 
 enum class Collective {
-  BROADCAST, 
+  BROADCAST,
   ALLREDUCE,
   ALLGATHER,
   ALLTOALL,
@@ -85,9 +78,11 @@ static const std::string& name(Collective c) {
 class Statistics : public runtime::timer::TimerT< CollectiveTimerTraits > {
     using Base = runtime::timer::TimerT< CollectiveTimerTraits >;
 public:
-    Statistics( const eckit::CodeLocation& loc, const std::string& msg, Collective c ) :
-      Base( loc, msg, make_labels(c), Logging::channel() ) {
-      
+    Statistics( const eckit::CodeLocation& loc, Collective c ) :
+      Base( loc, name(c), make_labels(c), Logging::channel() ) {
+    }
+    Statistics( const eckit::CodeLocation& loc, Collective c, const std::string& title ) :
+      Base( loc, title, make_labels(c), Logging::channel() ) {
     }
 private:
     static std::vector<std::string> make_labels( Collective c) {

@@ -181,10 +181,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   std::vector<int> recvcounts(parallel::mpi::comm().size());
   std::vector<int> recvdispls(parallel::mpi::comm().size());
 
-  {
-    parallel::mpi::Statistics stats( Here(), "gather", parallel::mpi::Collective::GATHER );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::GATHER )
     parallel::mpi::comm().gather(nb_nodes, recvcounts, root);
-  }
 
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
@@ -196,10 +194,9 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   array::ArrayT<uid_t> glb_id_arr( glb_nb_nodes );
   array::ArrayView<uid_t,1> glb_id = array::make_view<uid_t,1>(glb_id_arr);
 
-  {
-    parallel::mpi::Statistics stats( Here(), "gather", parallel::mpi::Collective::GATHER );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::GATHER )
     parallel::mpi::comm().gatherv(loc_id.data(), loc_id.size(), glb_id.data(), recvcounts.data(), recvdispls.data(), root);
-  }
+
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
   for( size_t jnode=0; jnode<glb_id.shape(0); ++jnode )
@@ -225,10 +222,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   }
 
   // 3) Scatter renumbered back
-  {
-    parallel::mpi::Statistics stats( Here(), "scatter", parallel::mpi::Collective::SCATTER );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::SCATTER )
     parallel::mpi::comm().scatterv(glb_id.data(), recvcounts.data(), recvdispls.data(), loc_id.data(), loc_id.size(), root);
-  }
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -290,10 +285,8 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     }
   }
 
-  {
-    parallel::mpi::Statistics stats( Here(), "allToAll", parallel::mpi::Collective::ALLTOALL );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::ALLTOALL )
     parallel::mpi::comm().allToAll(send_needed, recv_needed);
-  }
 
   std::vector< std::vector<int> > send_found( parallel::mpi::comm().size() );
   std::vector< std::vector<int> > recv_found( parallel::mpi::comm().size() );
@@ -323,10 +316,8 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     }
   }
 
-  {
-    parallel::mpi::Statistics stats( Here(), "allToAll", parallel::mpi::Collective::ALLTOALL );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::ALLTOALL )
     parallel::mpi::comm().allToAll(send_found, recv_found);
-  }
 
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
@@ -537,10 +528,8 @@ Field& build_edges_partition( Mesh& mesh )
 
     }
 
-    {
-      parallel::mpi::Statistics stats( Here(), "allToAll", parallel::mpi::Collective::ALLTOALL );
+    ATLAS_MPI_STATS( parallel::mpi::Collective::ALLTOALL )
       parallel::mpi::comm().allToAll(send_unknown, recv_unknown);
-    }
 
     // So now we have identified all possible edges with wrong partition.
     // We still need to check if it is actually wrong. This can be achieved
@@ -568,10 +557,8 @@ Field& build_edges_partition( Mesh& mesh )
       }
     }
 
-    {
-      parallel::mpi::Statistics stats( Here(), "allToAll", parallel::mpi::Collective::ALLTOALL );
+    ATLAS_MPI_STATS( parallel::mpi::Collective::ALLTOALL )
       parallel::mpi::comm().allToAll(send_found, recv_found);
-    }
 
     for( size_t jpart=0; jpart<nparts; ++jpart )
     {
@@ -733,10 +720,9 @@ Field& build_edges_remote_idx( Mesh& mesh  )
 #ifdef DEBUGGING_PARFIELDS
   varsize=6;
 #endif
-  {
-    parallel::mpi::Statistics stats( Here(), "allToAll", parallel::mpi::Collective::ALLTOALL );
+
+  ATLAS_MPI_STATS( parallel::mpi::Collective::ALLTOALL )
     parallel::mpi::comm().allToAll(send_needed, recv_needed);
-  }
 
   std::vector< std::vector<int> > send_found( parallel::mpi::comm().size() );
   std::vector< std::vector<int> > recv_found( parallel::mpi::comm().size() );
@@ -773,10 +759,10 @@ Field& build_edges_remote_idx( Mesh& mesh  )
       }
     }
   }
-  {
-    parallel::mpi::Statistics stats( Here(), "allToAll", parallel::mpi::Collective::ALLTOALL );
+
+  ATLAS_MPI_STATS( parallel::mpi::Collective::ALLTOALL )
     parallel::mpi::comm().allToAll(send_found, recv_found);
-  }
+
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
     const std::vector<int>& recv_edge = recv_found[jpart];
@@ -855,10 +841,8 @@ Field& build_edges_global_idx( Mesh& mesh )
   std::vector<int> recvcounts(parallel::mpi::comm().size());
   std::vector<int> recvdispls(parallel::mpi::comm().size());
 
-  {
-    parallel::mpi::Statistics stats( Here(), "gather", parallel::mpi::Collective::GATHER );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::GATHER )
     parallel::mpi::comm().gather(nb_edges, recvcounts, root);
-  }
 
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
@@ -870,10 +854,9 @@ Field& build_edges_global_idx( Mesh& mesh )
   array::ArrayT<uid_t> glb_edge_id_arr(glb_nb_edges);
   array::ArrayView<uid_t,1> glb_edge_id = array::make_view<uid_t,1>(glb_edge_id_arr);
 
-  {
-    parallel::mpi::Statistics stats( Here(), "gather", parallel::mpi::Collective::GATHER );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::GATHER )
     parallel::mpi::comm().gatherv(loc_edge_id.data(), loc_edge_id.size(), glb_edge_id.data(), recvcounts.data(), recvdispls.data(), root);
-  }
+
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> edge_sort; edge_sort.reserve(glb_nb_edges);
   for( size_t jedge=0; jedge<glb_edge_id.shape(0); ++jedge )
@@ -899,10 +882,8 @@ Field& build_edges_global_idx( Mesh& mesh )
   }
 
   // 3) Scatter renumbered back
-  {
-    parallel::mpi::Statistics stats( Here(), "scatter", parallel::mpi::Collective::SCATTER );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::SCATTER )
     parallel::mpi::comm().scatterv(glb_edge_id.data(), recvcounts.data(), recvdispls.data(), loc_edge_id.data(), loc_edge_id.size(), root);
-  }
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {

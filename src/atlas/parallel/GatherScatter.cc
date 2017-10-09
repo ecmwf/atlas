@@ -117,10 +117,8 @@ void GatherScatter::setup( const int part[],
     }
   }
 
-  {
-    parallel::mpi::Statistics stats( Here(), "allGather", parallel::mpi::Collective::ALLGATHER );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::ALLGATHER )
     parallel::mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
-  }
 
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
 
@@ -131,11 +129,9 @@ void GatherScatter::setup( const int part[],
   }
   std::vector<gidx_t> recvnodes(glbcnt_);
 
-  {
-    parallel::mpi::Statistics stats( Here(), "allGatherv", parallel::mpi::Collective::ALLGATHER );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::ALLGATHER )
     parallel::mpi::comm().allGatherv(sendnodes.begin(), sendnodes.begin() + loccnt_,
                                      recvnodes.data(), glbcounts_.data(), glbdispls_.data());
-  }
 
   // Load recvnodes in sorting structure
   size_t nb_recv_nodes = glbcnt_/nvar;

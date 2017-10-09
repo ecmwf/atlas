@@ -521,8 +521,7 @@ double AtlasBenchmark::result()
       }
     }
   }
-  {
-    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::ALLREDUCE ) {
     parallel::mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
     parallel::mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
     parallel::mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());

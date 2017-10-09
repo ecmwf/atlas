@@ -66,7 +66,7 @@ void HaloExchange::setup( const int part[],
                           const size_t parsize )
 {
   ATLAS_TIME("HaloExchange::setup");
-  
+
   parsize_ = parsize;
   sendcounts_.resize(nproc); sendcounts_.assign(nproc,0);
   recvcounts_.resize(nproc); recvcounts_.assign(nproc,0);

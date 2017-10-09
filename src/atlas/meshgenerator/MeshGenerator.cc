@@ -103,10 +103,8 @@ void MeshGeneratorImpl::generate_global_element_numbering( Mesh& mesh ) const
   std::vector<size_t> elem_counts( parallel::mpi::comm().size() );
   std::vector<int> elem_displs( parallel::mpi::comm().size() );
 
-  {
-    parallel::mpi::Statistics stats( Here(), "allGather", parallel::mpi::Collective::ALLGATHER );
+  ATLAS_MPI_STATS( parallel::mpi::Collective::ALLGATHER )
     parallel::mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
-  }
 
   elem_displs.at(0) = 0;
   for(size_t jpart = 1; jpart < parallel::mpi::comm().size(); ++jpart)
@@ -306,7 +304,7 @@ MeshGenerator::MeshGenerator(const std::string &key, const eckit::Parametrisatio
     meshgenerator_( meshgenerator::MeshGeneratorFactory::build(key,params) ) {
 }
 
-void MeshGenerator::hash(eckit::Hash& h) const { 
+void MeshGenerator::hash(eckit::Hash& h) const {
     return meshgenerator_->hash(h);
 }
 
@@ -323,7 +321,7 @@ Mesh MeshGenerator::operator()( const Grid& g, const grid::Distribution& d ) con
 }
 
 Mesh MeshGenerator::operator()( const Grid& g ) const {
-  return meshgenerator_->operator()(g);  
+  return meshgenerator_->operator()(g);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

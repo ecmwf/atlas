@@ -57,11 +57,9 @@ double dual_volume(Mesh& mesh)
       area += dual_volumes(node);
     }
   }
-  
-  {
-    parallel::mpi::Statistics stats( Here(), "allReduce", parallel::mpi::Collective::ALLREDUCE );
+
+  ATLAS_MPI_STATS( parallel::mpi::Collective::ALLREDUCE )
     parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
-  }
 
   return area;
 }
@@ -132,7 +130,7 @@ CASE( "test_t63" )
 //  EXPECT( eckit::types::is_approximately_equal( test::dual_volume(m), 2.*M_PI*M_PI, 1e-6 ));
 
   auto lonlat = array::make_view<double,2>( m.nodes().lonlat() );
-  
+
   std::vector<uidx_t> check;
   switch( parallel::mpi::comm().rank() ) {
   case 0: check = {
