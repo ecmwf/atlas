@@ -12,6 +12,7 @@
 #include <regex>
 #include <string>
 #include <cmath>
+#include <limits>
 
 #include "Timings.h"
 #include "eckit/config/Configuration.h"
@@ -37,6 +38,7 @@ private:
     std::vector<double>               tot_timings_;
     std::vector<double>               min_timings_;
     std::vector<double>               max_timings_;
+    std::vector<double>               var_timings_;
     std::vector<std::string>          titles_;
     std::vector<eckit::CodeLocation>  locations_;
     std::vector<long>                 nest_;
@@ -78,8 +80,9 @@ size_t TimingsRegistry::add( const CallStack& stack, const std::string& title, c
       index_[key] = idx;
       counts_.emplace_back( 0 );
       tot_timings_.emplace_back( 0 );
-      min_timings_.emplace_back( 0 );
+      min_timings_.emplace_back( std::numeric_limits<double>::max() );
       max_timings_.emplace_back( 0 );
+      var_timings_.emplace_back( 0 );
       titles_.emplace_back( title );
       locations_.emplace_back( stack.loc() );
       nest_.emplace_back( stack.size() );
@@ -97,10 +100,16 @@ size_t TimingsRegistry::add( const CallStack& stack, const std::string& title, c
 }
 
 void TimingsRegistry::update( size_t idx, double seconds ) {
-    counts_[idx] += 1;
+
+    auto sqr = [](double x) { return x*x; };
+    double n = counts_[idx]+1;
+    double avg_nm1 = tot_timings_[idx] / std::max(n,1.);
+    double var_nm1 = var_timings_[idx];
+    var_timings_[idx] = counts_[idx] == 0 ? 0. : (n-2.)/(n-1.) * var_nm1 + 1./n * sqr(seconds-avg_nm1);
+    min_timings_[idx] = std::min( seconds, min_timings_[idx] );
+    max_timings_[idx] = std::max( seconds, max_timings_[idx] );
     tot_timings_[idx] += seconds;
-    min_timings_[idx] = counts_[idx] == 1 ? seconds : std::min( seconds, min_timings_[idx] );
-    max_timings_[idx] = counts_[idx] == 1 ? seconds : std::max( seconds, max_timings_[idx] );
+    counts_[idx]      += 1;
 }
 
 size_t TimingsRegistry::size() const { return counts_.size(); }
@@ -226,6 +235,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
           << sep << print_line(max_digits_before_decimal+decimals+2)
           << sep << print_line(max_digits_before_decimal+decimals+2)
           << sep << print_line(max_digits_before_decimal+decimals+2)
+          << sep << print_line(max_digits_before_decimal+decimals+2)
           << sep << print_line(max_location_length);
       return ss.str();
     };
@@ -241,6 +251,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
         << sep << std::setw(max_count_length) << "cnt"
         << sep << std::setw(max_digits_before_decimal+decimals+2ul) << "tot"
         << sep << std::setw(max_digits_before_decimal+decimals+2ul) << "avg"
+        << sep << std::setw(max_digits_before_decimal+decimals+2ul) << "std"
         << sep << std::setw(max_digits_before_decimal+decimals+2ul) << "min"
         << sep << std::setw(max_digits_before_decimal+decimals+2ul) << "max"
         << sep << "location"
@@ -300,6 +311,8 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
       auto& title  = titles_[j];
       auto& loc    = locations_[j];
       auto& nest   = nest_[j];
+      auto  std    = std::sqrt( var_timings_[j] );
+      auto  avg    = tot/double(count);
 
       //parallel::mpi::comm().allReduceInPlace(min,eckit::mpi::min());
       //parallel::mpi::comm().allReduceInPlace(max,eckit::mpi::max());
@@ -310,7 +323,8 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
             << std::left << std::setw(max_title_length-nest*indent) << title
             << sep << std::string(header ? "" : "count: ") << std::left  << std::setw(max_count_length) << count
             << sep << std::string(header ? "" : "tot: "  ) << print_time(tot)
-            << sep << std::string(header ? "" : "avg: "  ) << print_time(tot/double(count))
+            << sep << std::string(header ? "" : "avg: "  ) << print_time(avg)
+            << sep << std::string(header ? "" : "std: "  ) << print_time(std)
             << sep << std::string(header ? "" : "min: "  ) << print_time(min)
             << sep << std::string(header ? "" : "max: "  ) << print_time(max)
             << sep << filter_filepath(loc.file()) << " +"<<loc.line()
