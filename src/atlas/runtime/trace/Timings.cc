@@ -113,6 +113,22 @@ void TimingsRegistry::update( size_t idx, double seconds ) {
 size_t TimingsRegistry::size() const { return counts_.size(); }
 
 void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& config ) {
+    auto box_horizontal = [](int n) {
+      std::string s; s.reserve(2*n);
+      for( size_t i=0; i<n; ++i ) s += "\u2500";
+      return s;
+    };
+    std::string box_corner_tl("\u250c");
+    std::string box_corner_tr("\u2510");
+    std::string box_corner_bl("\u2514");
+    std::string box_corner_br("\u2518");
+    std::string box_vertical ("\u2502");
+    std::string box_T_down   ("\u252C");
+    std::string box_T_up     ("\u2534");
+    std::string box_T_right  ("\u251C");
+    std::string box_T_left   ("\u2524");
+    std::string box_cross    ("\u253C");
+
     long indent   = config.getLong("indent",2);
     long depth = config.getLong("depth",0);
     long decimals = config.getLong("decimals",5);
@@ -218,13 +234,10 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
       return out.str();
     };
 
-    auto print_line = [](size_t length) -> std::string {
-      std::stringstream ss;
-      for( size_t i=0; i<length; ++i ) {
-        ss << "─";
-      }
-      return ss.str();
+    auto print_line = [&](size_t length) -> std::string {
+      return box_horizontal(length);
     };
+
     auto print_horizontal = [&](const std::string& sep) -> std::string {
       std::stringstream ss;
       ss  << print_line(max_title_length  + digits(size()) + 3)
@@ -238,10 +251,10 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
       return ss.str();
     };
 
-    std::string sept("─┬─");
-    std::string seph("─┼─");
-    std::string sep (" │ ");
-    std::string sepf("─┴─");
+    std::string sept = box_horizontal(1)+box_T_down+box_horizontal(1);
+    std::string seph = box_horizontal(1)+box_cross+box_horizontal(1);
+    std::string sep  = std::string(" ") +box_vertical+std::string(" ");
+    std::string sepf = box_horizontal(1)+box_T_up+box_horizontal(1);
 
 
     out << print_horizontal( sept ) << std::endl;
@@ -282,18 +295,18 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
         std::stringstream out;
         for( long i=0; i<nest-1; ++i ) {
           if(active[i])
-            out << "│";
+            out << box_vertical;
           else
             out << " ";
           for( size_t j=1; j<indent; ++j )
             out << " ";
         }
         if( active[nest-1] )
-          out << "├";
+          out << box_T_right;
         else
-          out << "└";
+          out << box_corner_bl;
         for( size_t j=1; j<indent; ++j )
-          out << "─";
+          out << box_horizontal(1);
 
 
         prefix_[j] = out.str();
@@ -334,8 +347,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
 
     out << print_horizontal(sepf) << std::endl;
 
-    std::string sepc = "───";
-    // std::string sep (" │ ");
+    std::string sepc = box_horizontal(3);
 
     out << "\n";
     out << print_horizontal(sepc) << std::endl;
