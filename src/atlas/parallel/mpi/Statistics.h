@@ -33,8 +33,8 @@ namespace parallel {
 namespace mpi {
 
 struct StatisticsTimerTraits {
-    using Barriers = runtime::timer::TimerBarriers;
-    using Tracing  = runtime::timer::TimerTracingNone;
+    using Barriers = runtime::trace::Barriers;
+    using Tracing  = runtime::trace::NoLogging;
 };
 
 
@@ -72,8 +72,8 @@ static const std::string& name(StatisticsEnum c) {
   return names[ static_cast<size_t>(c) ];
 }
 
-class Statistics : public runtime::timer::TimerT< StatisticsTimerTraits > {
-    using Base = runtime::timer::TimerT< StatisticsTimerTraits >;
+class Statistics : public runtime::trace::TraceT< StatisticsTimerTraits > {
+    using Base = runtime::trace::TraceT< StatisticsTimerTraits >;
 public:
     Statistics( const eckit::CodeLocation& loc, StatisticsEnum c ) :
       Base( loc, name(c), make_labels(c) ) {

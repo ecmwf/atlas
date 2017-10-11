@@ -18,7 +18,7 @@
 #include "eckit/config/Configuration.h"
 #include "eckit/filesystem/PathName.h"
 #include "atlas/util/Config.h"
-#include "atlas/runtime/timer/CallStack.h"
+#include "atlas/runtime/trace/CallStack.h"
 #include "atlas/runtime/Debug.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -26,7 +26,7 @@
 
 namespace atlas {
 namespace runtime {
-namespace timer {
+namespace trace {
 
 class TimingsRegistry {
 
@@ -394,7 +394,7 @@ std::string Timings::report( const Configuration& config ) {
 }
 
 
-} // namespace timer
+} // namespace trace
 } // namespace runtime
 } // namespace atlas
 

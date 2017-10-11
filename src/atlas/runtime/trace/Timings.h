@@ -20,7 +20,7 @@ namespace eckit { class CodeLocation; }
 
 namespace atlas {
 namespace runtime {
-namespace timer {
+namespace trace {
 
 class CallStack;
 
@@ -44,7 +44,7 @@ public: // static methods
 };
 
 
-} // namespace timer
+} // namespace trace
 } // namespace runtime
 } // namespace atlas
 

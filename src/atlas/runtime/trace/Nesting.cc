@@ -8,24 +8,24 @@
  * does it submit to any jurisdiction.
  */
 
-#include "TimerNesting.h"
+#include "Nesting.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace runtime {
-namespace timer {
+namespace trace {
 
 
-class TimerNestingState {
+class NestingState {
 private:
-  TimerNestingState() {}
+  NestingState() {}
   CallStack stack_;
 public:
-  TimerNestingState(TimerNestingState const&)           = delete;
-  void operator=(TimerNestingState const&)  = delete;
-  static TimerNestingState& instance() {
-    static TimerNestingState state;
+  NestingState(NestingState const&)           = delete;
+  void operator=(NestingState const&)  = delete;
+  static NestingState& instance() {
+    static NestingState state;
     return state;
   }
   operator CallStack() const {
@@ -40,30 +40,30 @@ public:
   }
 };
 
-TimerNesting::TimerNesting( const eckit::CodeLocation& loc ) :
+Nesting::Nesting( const eckit::CodeLocation& loc ) :
   loc_(loc),
-  stack_( TimerNestingState::instance().push( loc ) ) {
+  stack_( NestingState::instance().push( loc ) ) {
 }
 
-TimerNesting::~TimerNesting() {
+Nesting::~Nesting() {
   stop();
 }
 
-void TimerNesting::stop() {
+void Nesting::stop() {
   if( running_ ) {
-    TimerNestingState::instance().pop();
+    NestingState::instance().pop();
     running_ = false;
   }
 }
 
-void TimerNesting::start() {
+void Nesting::start() {
   if( not running_ ) {
-    TimerNestingState::instance().push( loc_ );
+    NestingState::instance().push( loc_ );
     running_ = true;
   }
 }
 
-} // namespace timer
+} // namespace trace
 } // namespace runtime
 } // namespace atlas
 

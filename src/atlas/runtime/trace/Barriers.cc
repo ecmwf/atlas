@@ -9,30 +9,30 @@
  */
 
 #include <sstream>
-#include "TimerBarriers.h"
+#include "Barriers.h"
 #include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/timer/StopWatch.h"
+#include "atlas/runtime/trace/StopWatch.h"
 
 
 //-----------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace runtime {
-namespace timer {
+namespace trace {
 
-class TimerBarriersState {
+class BarriersState {
 private:
-    TimerBarriersState() {
+    BarriersState() {
         barriers_ = atlas::Library::instance().barriers();
     }
     bool barriers_;
     StopWatch stopwatch_;
 public:
-    TimerBarriersState(TimerBarriersState const&)           = delete;
-    void operator=(TimerBarriersState const&)  = delete;
-    static TimerBarriersState& instance() {
-        static TimerBarriersState state;
+    BarriersState(BarriersState const&)           = delete;
+    void operator=(BarriersState const&)  = delete;
+    static BarriersState& instance() {
+        static BarriersState state;
         return state;
     }
     operator bool() const {
@@ -53,48 +53,48 @@ public:
     }
 };
 
-TimerBarriers::TimerBarriers(bool state) :
-  previous_state_( TimerBarriersState::instance() ) {
-  TimerBarriersState::instance().set(state);
+Barriers::Barriers(bool state) :
+  previous_state_( BarriersState::instance() ) {
+  BarriersState::instance().set(state);
 }
 
-TimerBarriers::~TimerBarriers() {
+Barriers::~Barriers() {
   restore();
 }
 
-void TimerBarriers::restore() {
-  TimerBarriersState::instance().set( previous_state_ );
+void Barriers::restore() {
+  BarriersState::instance().set( previous_state_ );
 }
 
-bool TimerBarriers::state() {
-  return TimerBarriersState::instance();
+bool Barriers::state() {
+  return BarriersState::instance();
 }
 
-void TimerBarriers::execute() {
+void Barriers::execute() {
   if( state() ) {
-    TimerBarriersState::instance().stopwatch().start();
+    BarriersState::instance().stopwatch().start();
     parallel::mpi::comm().barrier();
-    TimerBarriersState::instance().stopwatch().stop();
+    BarriersState::instance().stopwatch().stop();
   }
 }
 
-double TimerBarriers::time() {
-  return TimerBarriersState::instance().stopwatch().elapsed();
+double Barriers::time() {
+  return BarriersState::instance().stopwatch().elapsed();
 }
 
-double TimerBarriersNone::time() {
-  return TimerBarriersState::instance().stopwatch().elapsed();
+double NoBarriers::time() {
+  return BarriersState::instance().stopwatch().elapsed();
 }
 
-std::string TimerBarriers::report() {
-  return TimerBarriersState::instance().report();
+std::string Barriers::report() {
+  return BarriersState::instance().report();
 }
 
-std::string TimerBarriersNone::report() {
-  return TimerBarriersState::instance().report();
+std::string NoBarriers::report() {
+  return BarriersState::instance().report();
 }
   
-} // namespace timer
+} // namespace trace
 } // namespace runtime
 } // namespace atlas
 

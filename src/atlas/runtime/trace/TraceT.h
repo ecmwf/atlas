@@ -14,9 +14,9 @@
 #include <string>
 #include <vector>
 #include <string>
-#include "atlas/runtime/timer/StopWatch.h"
-#include "atlas/runtime/timer/Timings.h"
-#include "atlas/runtime/timer/TimerNesting.h"
+#include "atlas/runtime/trace/StopWatch.h"
+#include "atlas/runtime/trace/Timings.h"
+#include "atlas/runtime/trace/Nesting.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -29,15 +29,15 @@ namespace eckit {
 
 namespace atlas {
 namespace runtime {
-namespace timer {
+namespace trace {
 
 //-----------------------------------------------------------------------------------------------------------
 
-template< typename TimerTraits >
-class TimerT {
+template< typename TraceTraits >
+class TraceT {
 public:
-    using Barriers         = typename TimerTraits::Barriers;
-    using Tracing          = typename TimerTraits::Tracing;
+    using Barriers         = typename TraceTraits::Barriers;
+    using Tracing          = typename TraceTraits::Tracing;
     using Labels           = std::vector<std::string>;
 
 public: // static methods
@@ -47,11 +47,11 @@ public: // static methods
 
 public:
 
-    TimerT( const eckit::CodeLocation& );
-    TimerT( const eckit::CodeLocation&, const std::string& title );
-    TimerT( const eckit::CodeLocation&, const std::string& title, const Labels& );
+    TraceT( const eckit::CodeLocation& );
+    TraceT( const eckit::CodeLocation&, const std::string& title );
+    TraceT( const eckit::CodeLocation&, const std::string& title, const Labels& );
 
-    ~TimerT();
+    ~TraceT();
 
     bool running() const;
 
@@ -67,9 +67,7 @@ public:
 
 private: // types
 
-    using Nesting    = timer::TimerNesting;
-    using Timings    = timer::Timings;
-    using Identifier = timer::Timings::Identifier;
+    using Identifier = Timings::Identifier;
 
 private: // member functions
 
@@ -93,24 +91,24 @@ private: // member data
 //-----------------------------------------------------------------------------------------------------------
 // Definitions
 
-template< typename TimerTraits >
-inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const std::string& title ) :
+template< typename TraceTraits >
+inline TraceT<TraceTraits>::TraceT( const eckit::CodeLocation& loc, const std::string& title ) :
   loc_(loc),
   title_(title),
   nesting_(loc) {
   start();
 }
 
-template< typename TimerTraits >
-inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc ) :
+template< typename TraceTraits >
+inline TraceT<TraceTraits>::TraceT( const eckit::CodeLocation& loc ) :
   loc_(loc),
   title_( loc_ ? loc_.func() : ""),
   nesting_(loc_) {
   start();
 }
 
-template< typename TimerTraits >
-inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const std::string& title, const Labels& labels ) :
+template< typename TraceTraits >
+inline TraceT<TraceTraits>::TraceT( const eckit::CodeLocation& loc, const std::string& title, const Labels& labels ) :
   loc_(loc),
   title_(title),
   nesting_(loc),
@@ -118,41 +116,41 @@ inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const std::s
   start();
 }
 
-template< typename TimerTraits >
-inline TimerT<TimerTraits>::~TimerT() {
+template< typename TraceTraits >
+inline TraceT<TraceTraits>::~TraceT() {
     stop();
 }
 
-template< typename TimerTraits >
-inline void TimerT<TimerTraits>::barrier() const {
+template< typename TraceTraits >
+inline void TraceT<TraceTraits>::barrier() const {
     Barriers::execute();
 }
 
-template< typename TimerTraits >
-inline void TimerT<TimerTraits>::registerTimer() {
+template< typename TraceTraits >
+inline void TraceT<TraceTraits>::registerTimer() {
     id_ = Timings::add( loc_, nesting_, title_ + (Barriers::state() ? " [b]" : ""), labels_ );
 }
 
-template< typename TimerTraits >
-inline void TimerT<TimerTraits>::updateTimings() const {
+template< typename TraceTraits >
+inline void TraceT<TraceTraits>::updateTimings() const {
   Timings::update( id_, stopwatch_.elapsed() );
 }
 
-template< typename TimerTraits >
-inline bool TimerT<TimerTraits>::running() const {
+template< typename TraceTraits >
+inline bool TraceT<TraceTraits>::running() const {
     return running_;
 }
 
-template< typename TimerTraits >
-inline void TimerT<TimerTraits>::start() {
+template< typename TraceTraits >
+inline void TraceT<TraceTraits>::start() {
     registerTimer();
     Tracing::start( title_ );
     barrier();
     stopwatch_.start();
 }
 
-template< typename TimerTraits >
-inline void TimerT<TimerTraits>::stop() {
+template< typename TraceTraits >
+inline void TraceT<TraceTraits>::stop() {
     if( running_ ) {
         barrier();
         stopwatch_.stop();
@@ -163,8 +161,8 @@ inline void TimerT<TimerTraits>::stop() {
     }
 }
 
-template< typename TimerTraits >
-inline void TimerT<TimerTraits>::pause() {
+template< typename TraceTraits >
+inline void TraceT<TraceTraits>::pause() {
     if( running_ ) {
       barrier();
       stopwatch_.stop();
@@ -172,8 +170,8 @@ inline void TimerT<TimerTraits>::pause() {
     }
 }
 
-template< typename TimerTraits >
-inline void TimerT<TimerTraits>::resume() {
+template< typename TraceTraits >
+inline void TraceT<TraceTraits>::resume() {
     if( running_ ) {
       barrier();
       nesting_.start();
@@ -181,23 +179,23 @@ inline void TimerT<TimerTraits>::resume() {
     }
 }
 
-template< typename TimerTraits >
-inline double TimerT<TimerTraits>::elapsed() const {
+template< typename TraceTraits >
+inline double TraceT<TraceTraits>::elapsed() const {
     return stopwatch_.elapsed();
 }
 
-template< typename TimerTraits >
-inline std::string TimerT<TimerTraits>::report() {
+template< typename TraceTraits >
+inline std::string TraceT<TraceTraits>::report() {
     return Timings::report() + Barriers::report();
 }
 
-template< typename TimerTraits >
-inline std::string TimerT<TimerTraits>::report( const eckit::Configuration& config ) {
+template< typename TraceTraits >
+inline std::string TraceT<TraceTraits>::report( const eckit::Configuration& config ) {
   return Timings::report(config) + Barriers::report();
 }
 
 //-----------------------------------------------------------------------------------------------------------
 
-} // timer
+} // trace
 } // runtime
 } // atlas

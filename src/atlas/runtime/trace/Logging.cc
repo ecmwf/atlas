@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "TimerTracing.h"
+#include "Logging.h"
 
 #include <iostream>
 #include "eckit/log/Channel.h"
@@ -18,15 +18,15 @@
 
 namespace atlas {
 namespace runtime {
-namespace timer {
+namespace trace {
 
 //-----------------------------------------------------------------------------------------------------------
 
-class TimerTracingState {
+class LoggingState {
 private:
     std::ostream* channel_;
 
-    TimerTracingState() {
+    LoggingState() {
         channel_ = &atlas::Library::instance().traceChannel();
     }
 
@@ -37,8 +37,8 @@ public:
         return channel;
     }
 
-    static TimerTracingState& instance() {
-        static TimerTracingState channel;
+    static LoggingState& instance() {
+        static LoggingState channel;
         return channel;
     }
 
@@ -51,52 +51,52 @@ public:
 
 //-----------------------------------------------------------------------------------------------------------
 
-TimerTracing::TimerTracing( bool state ) :
-    previous_state_( TimerTracingState::instance() ) {
-    TimerTracingState::instance().set( state );
+Logging::Logging( bool state ) :
+    previous_state_( LoggingState::instance() ) {
+    LoggingState::instance().set( state );
 }
 
-TimerTracing::TimerTracing( std::ostream& channel ) :
-    previous_state_( TimerTracingState::instance() ) {
-    TimerTracingState::instance().set( channel );
+Logging::Logging( std::ostream& channel ) :
+    previous_state_( LoggingState::instance() ) {
+    LoggingState::instance().set( channel );
 }
 
-TimerTracing::~TimerTracing() {
-      TimerTracingState::instance().set( *previous_state_ );
+Logging::~Logging() {
+      LoggingState::instance().set( *previous_state_ );
 }
 
-std::ostream& TimerTracing::channel() {
-  return TimerTracingState::instance();
+std::ostream& Logging::channel() {
+  return LoggingState::instance();
 }
 
-bool TimerTracing::enabled() {
-  return TimerTracingState::instance();
+bool Logging::enabled() {
+  return LoggingState::instance();
 }
-void TimerTracing::start( const std::string& title ) {
+void Logging::start( const std::string& title ) {
   if( enabled() )
     channel() << title << " ..." << std::endl;
 }
 
-void TimerTracing::stop( const std::string& title, double seconds ) {
+void Logging::stop( const std::string& title, double seconds ) {
   if( enabled() )
     channel() << title << " ... done : " << seconds << "s" << std::endl;
 }
 //-----------------------------------------------------------------------------------------------------------
 
-std::ostream& TimerTracingNone::channel() {
-  return TimerTracingState::empty_channel();
+std::ostream& NoLogging::channel() {
+  return LoggingState::empty_channel();
 }
 
 //-----------------------------------------------------------------------------------------------------------
 
-void TimerTracingResult::stop( const std::string& title, double seconds ) {
+void LoggingResult::stop( const std::string& title, double seconds ) {
   if( enabled() )
     channel() << title << " : " << seconds << "s" << std::endl;
 }
 
 //-----------------------------------------------------------------------------------------------------------
 
-} // namespace timer
+} // namespace trace
 } // namespace runtime
 } // namespace atlas
 

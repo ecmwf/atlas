@@ -16,15 +16,15 @@
 
 namespace atlas {
 namespace runtime {
-namespace timer {
+namespace trace {
 
 //-----------------------------------------------------------------------------------------------------------
 
 // Class used to avoid any printing before and after a timer
-class TimerTracingNone {
+class NoLogging {
 public:
-    TimerTracingNone( bool state );
-    TimerTracingNone( std::ostream& channel );
+    NoLogging( bool state );
+    NoLogging( std::ostream& channel );
 
 public: // static methods
     static std::ostream& channel();
@@ -39,11 +39,11 @@ public: // static methods
 // Example print:
 //     timer-name ...
 //     timer-name ... done : 5s
-class TimerTracing {
+class Logging {
 public:
-    TimerTracing( bool state );
-    TimerTracing( std::ostream& channel );
-    virtual ~TimerTracing();
+    Logging( bool state );
+    Logging( std::ostream& channel );
+    virtual ~Logging();
 
 public: // static methods
     static std::ostream& channel();
@@ -60,9 +60,9 @@ private:
 // Class used to print message only upon end of a timer
 // Example print:
 //     timer-name : 5s
-class TimerTracingResult : public TimerTracing {
+class LoggingResult : public Logging {
 public:
-    using TimerTracing::TimerTracing;
+    using Logging::Logging;
 
 public: // static methods
     static void start( const std::string& ) {}
@@ -71,7 +71,7 @@ public: // static methods
 
 //-----------------------------------------------------------------------------------------------------------
 
-} // namespace timer
+} // namespace trace
 } // namespace runtime
 } // namespace atlas
 

@@ -6,7 +6,7 @@
 
 namespace atlas {
 namespace runtime {
-namespace timer {
+namespace trace {
 
 void CallStack::push_front( const eckit::CodeLocation& loc ) {
   stack_.push_front( std::hash<std::string>{}(loc.asString()) );
@@ -24,6 +24,6 @@ size_t CallStack::hash() const {
   return hash_;
 }
 
-} // namespace timer
+} // namespace trace
 } // namespace runtime
 } // namespace atlas

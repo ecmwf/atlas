@@ -9,32 +9,42 @@
  */
 
 #pragma once
-
-#include "eckit/log/CodeLocation.h"
-#include "atlas/runtime/timer/CallStack.h"
+#include <string>
 
 //-----------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace runtime {
-namespace timer {
+namespace trace {
 
-
-class TimerNesting {
+class NoBarriers {
 public:
-    TimerNesting( const eckit::CodeLocation& );
-    ~TimerNesting();
-    operator CallStack() const { return stack_; }
-    void stop();
-    void start();
-private:
-    CallStack stack_;
-    eckit::CodeLocation loc_;
-    bool running_{true};
+    NoBarriers(bool state) {}
+    void restore() {}
+
+public: // static methods
+    static bool state() { return false; }
+    static void execute() {}
+    static double time();
+    static std::string report();
 };
 
+class Barriers {
+public:
+    Barriers(bool state);
+    ~Barriers();
+    void restore();
 
-} // namespace timer
+public: // static methods
+    static bool state();
+    static void execute();
+    static double time();
+    static std::string report();
+private:
+    bool previous_state_;
+};
+
+} // namespace trace
 } // namespace runtime
 } // namespace atlas
 

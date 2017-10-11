@@ -6,7 +6,7 @@ namespace eckit { class CodeLocation; }
 
 namespace atlas {
 namespace runtime {
-namespace timer {
+namespace trace {
 
 /// @class CallStack
 /// Instances of CallStack can keep track of nested eckit::CodeLocations
@@ -38,6 +38,6 @@ private:
 
 };
 
-} // namespace timer
+} // namespace trace
 } // namespace runtime
 } // namespace atlas

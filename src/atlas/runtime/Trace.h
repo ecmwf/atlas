@@ -11,13 +11,13 @@
 #pragma once
 
 #include "atlas/library/config.h"
-#include "atlas/runtime/timer/TimerT.h"
-#include "atlas/runtime/timer/TimerBarriers.h"
-#include "atlas/runtime/timer/TimerTracing.h"
+#include "atlas/runtime/trace/TraceT.h"
+#include "atlas/runtime/trace/Barriers.h"
+#include "atlas/runtime/trace/Logging.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
-/// Create scoped timer objects
+/// Create scoped trace objects
 ///
 /// Example:
 ///
@@ -57,12 +57,12 @@
 namespace atlas {
 
 struct TraceTraits {
-    using Barriers = runtime::timer::TimerBarriersNone;
-    using Tracing  = runtime::timer::TimerTracing;
+    using Barriers = runtime::trace::NoBarriers;
+    using Tracing  = runtime::trace::Logging;
 };
 
-class Trace : public runtime::timer::TimerT< TraceTraits > {
-    using Base = runtime::timer::TimerT< TraceTraits >;
+class Trace : public runtime::trace::TraceT< TraceTraits > {
+    using Base = runtime::trace::TraceT< TraceTraits >;
 public:
     using Base::Base;
 };
