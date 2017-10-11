@@ -16,16 +16,16 @@
 
 #define ATLAS_TRACE_MPI(...)
 
-#if ATLAS_HAVE_TRACE
+//#if ATLAS_HAVE_TRACE
 
-#include "atlas/util/detail/BlackMagic.h"
+//#include "atlas/util/detail/BlackMagic.h"
 
-#undef ATLAS_TRACE_MPI
-#define ATLAS_TRACE_MPI(...) ATLAS_TRACE_MPI_( ::atlas::parallel::mpi::Statistics, Here(), ##__VA_ARGS__ )
-#define ATLAS_TRACE_MPI_( Type, loc, enum_var, ... ) \
-  __ATLAS_TYPE_SCOPE( Type, loc, ::atlas::parallel::mpi::StatisticsEnum::__ATLAS_STRINGIFY(enum_var), ##__VA_ARGS__ )
+//#undef ATLAS_TRACE_MPI
+//#define ATLAS_TRACE_MPI(...) ATLAS_TRACE_MPI_( ::atlas::parallel::mpi::Statistics, Here(), ##__VA_ARGS__ )
+//#define ATLAS_TRACE_MPI_( Type, loc, enum_var, ... ) \
+//  __ATLAS_TYPE_SCOPE( Type, loc, ::atlas::parallel::mpi::StatisticsEnum::__ATLAS_STRINGIFY(enum_var), ##__VA_ARGS__ )
 
-#endif
+//#endif
 
 
 namespace atlas {

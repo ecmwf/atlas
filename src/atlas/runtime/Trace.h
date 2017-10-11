@@ -79,8 +79,13 @@ public:
 #undef ATLAS_TRACE
 #undef ATLAS_TRACE_SCOPE
 
-#define ATLAS_TRACE(...)       __ATLAS_TYPE(       ::atlas::Trace, Here(), ##__VA_ARGS__ )
-#define ATLAS_TRACE_SCOPE(...) __ATLAS_TYPE_SCOPE( ::atlas::Trace, Here(), ##__VA_ARGS__ )
+#define ATLAS_TRACE(...) __ATLAS_SPLICE( __ATLAS_TRACE_, __ATLAS_ISEMPTY( __VA_ARGS__ ) ) (__VA_ARGS__)
+#define __ATLAS_TRACE_1(...) __ATLAS_TYPE( ::atlas::Trace, Here() )
+#define __ATLAS_TRACE_0(...) __ATLAS_TYPE( ::atlas::Trace, Here(), __VA_ARGS__ )
+
+#define ATLAS_TRACE_SCOPE(...) __ATLAS_SPLICE( __ATLAS_TRACE_SCOPE_, __ATLAS_ISEMPTY( __VA_ARGS__ ) ) (__VA_ARGS__)
+#define __ATLAS_TRACE_SCOPE_1(...) __ATLAS_TYPE_SCOPE( ::atlas::Trace, Here() )
+#define __ATLAS_TRACE_SCOPE_0(...) __ATLAS_TYPE_SCOPE( ::atlas::Trace, Here(), __VA_ARGS__ )
 
 #endif
 

@@ -57,36 +57,24 @@ __ATLAS_ISEMPTY_(                                                               
 #define __ATLAS_CALL_NARG_1(...) 0
 #define __ATLAS_CALL_NARG_0 __ATLAS_NARG_
 #define __ATLAS_NARG(...) __ATLAS_SPLICE( __ATLAS_CALL_NARG_, __ATLAS_ISEMPTY( __VA_ARGS__ ) ) (__VA_ARGS__)
-    
-#define __ATLAS_TYPE( Type, ... )       __ATLAS_TYPE_(       __ATLAS_NARG(__VA_ARGS__), Type, ##__VA_ARGS__ )
-#define __ATLAS_TYPE_SCOPE( Type, ... ) __ATLAS_TYPE_SCOPE_( __ATLAS_NARG(__VA_ARGS__), Type, ##__VA_ARGS__ )
 
-#define __ATLAS_TYPE_( N, ... )       __ATLAS_SPLICE( __ATLAS_TYPE_,       N )( __VA_ARGS__ )
-#define __ATLAS_TYPE_SCOPE_( N, ... ) __ATLAS_SPLICE( __ATLAS_TYPE_SCOPE_, N )( __VA_ARGS__ )
 
-#define __ATLAS_TYPE_0( Type )                   Type __ATLAS_SPLICE( __variable_, __LINE__ ) ( );
-#define __ATLAS_TYPE_1( Type, arg1 )             Type __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1 );
-#define __ATLAS_TYPE_2( Type, arg1, arg2 )       Type __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1, arg2 );
-#define __ATLAS_TYPE_3( Type, arg1, arg2, arg3 ) Type __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1, arg2, arg3 );
+#define __ATLAS_ARGS_OR_DUMMY(...) __ATLAS_SPLICE( __ATLAS_ARGS_OR_DUMMY_, __ATLAS_ISEMPTY( __VA_ARGS__ ) ) ( __VA_ARGS__)
+#define __ATLAS_ARGS_OR_DUMMY_0(...)  __VA_ARGS__
+#define __ATLAS_ARGS_OR_DUMMY_1(...)  0
 
-#define __ATLAS_TYPE_SCOPE_0( Type ) \
+#define __ATLAS_TYPE(Type,...) __ATLAS_SPLICE( __ATLAS_TYPE_, __ATLAS_ISEMPTY( __VA_ARGS__ ) ) ( Type, __ATLAS_ARGS_OR_DUMMY(__VA_ARGS__) )
+#define __ATLAS_TYPE_1( Type, dummy )   Type __ATLAS_SPLICE( __variable_, __LINE__ )
+#define __ATLAS_TYPE_0( Type, ...   )   Type __ATLAS_SPLICE( __variable_, __LINE__ ) (__VA_ARGS__)
+
+#define __ATLAS_TYPE_SCOPE(Type,...) __ATLAS_SPLICE( __ATLAS_TYPE_SCOPE_, __ATLAS_ISEMPTY( __VA_ARGS__ ) ) ( Type, __ATLAS_ARGS_OR_DUMMY(__VA_ARGS__) )
+#define __ATLAS_TYPE_SCOPE_1( Type, dummy ) \
   for( Type \
-      __ATLAS_SPLICE( __variable_, __LINE__ ) ( );\
+      __ATLAS_SPLICE( __variable_, __LINE__ );\
       __ATLAS_SPLICE( __variable_, __LINE__ ) .running(); \
       __ATLAS_SPLICE( __variable_, __LINE__ ) .stop() )
-#define __ATLAS_TYPE_SCOPE_1( Type, arg1 ) \
+#define __ATLAS_TYPE_SCOPE_0( Type, ...   ) \
   for( Type \
-      __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1 ); \
+      __ATLAS_SPLICE( __variable_, __LINE__ ) (__VA_ARGS__); \
       __ATLAS_SPLICE( __variable_, __LINE__ ) .running(); \
       __ATLAS_SPLICE( __variable_, __LINE__ ) .stop() )
-#define __ATLAS_TYPE_SCOPE_2( Type , arg1, arg2 ) \
-  for( Type \
-      __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1, arg2 );\
-      __ATLAS_SPLICE( __variable_, __LINE__ ) .running(); \
-      __ATLAS_SPLICE( __variable_, __LINE__ ) .stop() )
-#define __ATLAS_TYPE_SCOPE_3( Type , arg1, arg2, arg3 ) \
-  for( Type \
-      __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1, arg2, arg3 );\
-      __ATLAS_SPLICE( __variable_, __LINE__ ) .running(); \
-      __ATLAS_SPLICE( __variable_, __LINE__ ) .stop() )
-    
