@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "atlas/util/detail/CallStack.h"
+#include "eckit/log/CodeLocation.h"
+#include "atlas/runtime/timer/CallStack.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -21,10 +22,8 @@ namespace timer {
 
 class TimerNesting {
 public:
-    using CallStack = util::detail::CallStack;
     TimerNesting( const eckit::CodeLocation& );
     ~TimerNesting();
-    operator long() const { return stack_.size(); }
     operator CallStack() const { return stack_; }
     void stop();
     void start();

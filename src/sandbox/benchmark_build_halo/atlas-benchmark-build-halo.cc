@@ -26,7 +26,7 @@
 #include "atlas/mesh.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "atlas/output/detail/GmshIO.h"
@@ -117,7 +117,7 @@ void Tool::execute(const Args& args)
     mesh::actions::build_halo( mesh, halo );
     parallel::mpi::comm().barrier();
   }
-  Log::info() << Timer::report() << std::endl;
+  Log::info() << Trace::report() << std::endl;
 
 }
 

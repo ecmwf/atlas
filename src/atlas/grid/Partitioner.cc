@@ -11,7 +11,7 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 
 namespace atlas {
 namespace grid {
@@ -50,7 +50,7 @@ Partitioner::Partitioner( const Config& config ):
 }
 
 void Partitioner::partition(const Grid &grid, int part[]) const {
-  ATLAS_TIME();
+  ATLAS_TRACE();
   partitioner_->partition(grid,part);
 }
 

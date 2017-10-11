@@ -16,7 +16,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/functionspace/NodeColumns.h"
 
 
@@ -66,7 +66,7 @@ void KNearestNeighbours::setup(const FunctionSpace& source, const FunctionSpace&
     std::vector< Triplet > weights_triplets;
     weights_triplets.reserve(out_npts * k_);
     {
-        Timer timer(Here(),"atlas::interpolation::method::NearestNeighbour::setup()");
+        Trace timer(Here(),"atlas::interpolation::method::NearestNeighbour::setup()");
 
         std::vector<double> weights;
 
@@ -74,7 +74,7 @@ void KNearestNeighbours::setup(const FunctionSpace& source, const FunctionSpace&
 
             if (ip && (ip % 1000 == 0)) {
                 double rate = ip / timer.elapsed();
-                Log::debug<Atlas>() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
+                Log::debug() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
             }
 
             // find the closest input points to the output point

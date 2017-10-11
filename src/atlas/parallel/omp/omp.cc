@@ -259,7 +259,7 @@ double omp_get_wtime(void)
 {
  throw eckit::NotImplemented("omp_get_wtime()\n"
                              "This function does not provide a working"
-                             "wallclock ATLAS_TIME();. Replace it with a version"
+                             "wallclock ATLAS_TRACE();. Replace it with a version"
                              "customized for the target machine", Here() );
  return 0.0;
 }

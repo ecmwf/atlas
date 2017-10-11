@@ -17,9 +17,9 @@ namespace atlas {
 namespace runtime {
 namespace timer {
 
-class TimerNoBarriers {
+class TimerBarriersNone {
 public:
-    TimerNoBarriers(bool state) {}
+    TimerBarriersNone(bool state) {}
     void restore() {}
 
 public: // static methods

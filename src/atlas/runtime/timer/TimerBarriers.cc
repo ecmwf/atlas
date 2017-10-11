@@ -24,7 +24,7 @@ namespace timer {
 class TimerBarriersState {
 private:
     TimerBarriersState() {
-        barriers_ = atlas::Library::instance().timer().barriers();
+        barriers_ = atlas::Library::instance().barriers();
     }
     bool barriers_;
     StopWatch stopwatch_;
@@ -82,7 +82,7 @@ double TimerBarriers::time() {
   return TimerBarriersState::instance().stopwatch().elapsed();
 }
 
-double TimerNoBarriers::time() {
+double TimerBarriersNone::time() {
   return TimerBarriersState::instance().stopwatch().elapsed();
 }
 
@@ -90,7 +90,7 @@ std::string TimerBarriers::report() {
   return TimerBarriersState::instance().report();
 }
 
-std::string TimerNoBarriers::report() {
+std::string TimerBarriersNone::report() {
   return TimerBarriersState::instance().report();
 }
   

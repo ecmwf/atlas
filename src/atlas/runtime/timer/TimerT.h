@@ -15,6 +15,8 @@
 #include <vector>
 #include <string>
 #include "atlas/runtime/timer/StopWatch.h"
+#include "atlas/runtime/timer/Timings.h"
+#include "atlas/runtime/timer/TimerNesting.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -35,7 +37,7 @@ template< typename TimerTraits >
 class TimerT {
 public:
     using Barriers         = typename TimerTraits::Barriers;
-    using Logging          = typename TimerTraits::Logging;
+    using Tracing          = typename TimerTraits::Tracing;
     using Labels           = std::vector<std::string>;
 
 public: // static methods
@@ -45,11 +47,9 @@ public: // static methods
 
 public:
 
-    TimerT( const eckit::CodeLocation&, const std::string& title, std::ostream& out = Logging::channel() );
-    TimerT( const eckit::CodeLocation&, std::ostream& out = Logging::channel() );
-
-    TimerT( const eckit::CodeLocation&, const std::string& title, const Labels&, std::ostream& out = Logging::channel() );
-    TimerT( const eckit::CodeLocation&, const Labels&, std::ostream& out = Logging::channel() );
+    TimerT( const eckit::CodeLocation& );
+    TimerT( const eckit::CodeLocation&, const std::string& title );
+    TimerT( const eckit::CodeLocation&, const std::string& title, const Labels& );
 
     ~TimerT();
 
@@ -67,9 +67,9 @@ public:
 
 private: // types
 
-    using Nesting    = typename TimerTraits::Nesting;
-    using Timings    = typename TimerTraits::Timings;
-    using Identifier = typename Timings::Identifier;
+    using Nesting    = timer::TimerNesting;
+    using Timings    = timer::Timings;
+    using Identifier = timer::Timings::Identifier;
 
 private: // member functions
 
@@ -84,7 +84,6 @@ private: // member data
     bool running_{true};
     StopWatch stopwatch_;
     eckit::CodeLocation loc_;
-    std::ostream& out_;
     std::string title_;
     Identifier id_;
     Nesting nesting_;
@@ -95,39 +94,26 @@ private: // member data
 // Definitions
 
 template< typename TimerTraits >
-inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const std::string& title, std::ostream& out ) :
+inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const std::string& title ) :
   loc_(loc),
-  out_(out),
   title_(title),
   nesting_(loc) {
   start();
 }
 
 template< typename TimerTraits >
-inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, std::ostream& out ) :
+inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc ) :
   loc_(loc),
-  out_(out),
   title_( loc_ ? loc_.func() : ""),
   nesting_(loc_) {
   start();
 }
 
 template< typename TimerTraits >
-inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const std::string& title, const Labels& labels, std::ostream& out ) :
+inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const std::string& title, const Labels& labels ) :
   loc_(loc),
-  out_(out),
   title_(title),
   nesting_(loc),
-  labels_(labels) {
-  start();
-}
-
-template< typename TimerTraits >
-inline TimerT<TimerTraits>::TimerT( const eckit::CodeLocation& loc, const Labels& labels, std::ostream& out ) :
-  loc_(loc),
-  out_(out),
-  title_( loc_ ? loc_.func() : "" ),
-  nesting_(loc_),
   labels_(labels) {
   start();
 }
@@ -144,7 +130,7 @@ inline void TimerT<TimerTraits>::barrier() const {
 
 template< typename TimerTraits >
 inline void TimerT<TimerTraits>::registerTimer() {
-    id_ = Timings::add( nesting_, title_ + (Barriers::state() ? " [b]" : ""), labels_ );
+    id_ = Timings::add( loc_, nesting_, title_ + (Barriers::state() ? " [b]" : ""), labels_ );
 }
 
 template< typename TimerTraits >
@@ -160,26 +146,26 @@ inline bool TimerT<TimerTraits>::running() const {
 template< typename TimerTraits >
 inline void TimerT<TimerTraits>::start() {
     registerTimer();
-    out_ << title_ << " ..." << std::endl;
+    Tracing::start( title_ );
     barrier();
     stopwatch_.start();
 }
 
 template< typename TimerTraits >
 inline void TimerT<TimerTraits>::stop() {
-    if( running() ) {
+    if( running_ ) {
         barrier();
         stopwatch_.stop();
         nesting_.stop();
         updateTimings();
-        out_ << title_ << " ... done : " << stopwatch_.elapsed() << "s" << std::endl;
+        Tracing::stop( title_, stopwatch_.elapsed() );
         running_ = false;
     }
 }
 
 template< typename TimerTraits >
 inline void TimerT<TimerTraits>::pause() {
-    if( running() ) {
+    if( running_ ) {
       barrier();
       stopwatch_.stop();
       nesting_.stop();
@@ -188,9 +174,11 @@ inline void TimerT<TimerTraits>::pause() {
 
 template< typename TimerTraits >
 inline void TimerT<TimerTraits>::resume() {
-    barrier();
-    nesting_.start();
-    stopwatch_.start();
+    if( running_ ) {
+      barrier();
+      nesting_.start();
+      stopwatch_.start();
+    }
 }
 
 template< typename TimerTraits >

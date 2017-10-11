@@ -146,7 +146,7 @@ const OutputImpl *OutputFactory::build(const std::string &name, Stream& stream) 
 
     std::map<std::string, OutputFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<Atlas>() << "Looking for OutputFactory [" << name << "]" << std::endl;
+    Log::debug() << "Looking for OutputFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No OutputFactory for [" << name << "]" << std::endl;
@@ -166,7 +166,7 @@ const OutputImpl *OutputFactory::build(const std::string& name, Stream& stream, 
 
     std::map<std::string, OutputFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<Atlas>() << "Looking for OutputFactory [" << name << "]" << std::endl;
+    Log::debug() << "Looking for OutputFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No OutputFactory for [" << name << "]" << std::endl;

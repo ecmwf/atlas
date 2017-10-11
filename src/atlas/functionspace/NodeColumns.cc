@@ -30,7 +30,7 @@
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #undef atlas_omp_critical_ordered
 #define atlas_omp_critical_ordered atlas_omp_critical
 #include "atlas/array/ArrayView.h"
@@ -101,7 +101,7 @@ NodeColumns::NodeColumns( Mesh& mesh, const eckit::Configuration & config ) :
     nb_levels_( config.getInt("levels",0) ),
     nb_nodes_(nodes_.size()),
     nb_nodes_global_(0) {
-    ATLAS_TIME();
+    ATLAS_TRACE();
     constructor();
 }
 
@@ -132,7 +132,7 @@ void NodeColumns::constructor()
     }
   }
 
-  ATLAS_TIME_SCOPE("HaloExchange")
+  ATLAS_TRACE_SCOPE("HaloExchange")
   {
     Field& part = mesh_.nodes().partition();
     Field& ridx = mesh_.nodes().remote_index();
@@ -141,7 +141,7 @@ void NodeColumns::constructor()
                            REMOTE_IDX_BASE,nb_nodes_);
   }
 
-  ATLAS_TIME_SCOPE("GatherScatter")
+  ATLAS_TRACE_SCOPE("GatherScatter")
   {
     // Create new gather_scatter
     gather_scatter_.reset( new parallel::GatherScatter() );
@@ -168,7 +168,7 @@ void NodeColumns::constructor()
                            mask.data(),nb_nodes_);
   }
 
-  ATLAS_TIME_SCOPE("Checksum")
+  ATLAS_TRACE_SCOPE("Checksum")
   {
 
     // Create new checksum
@@ -582,7 +582,7 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, T& result, size_t&
         local_sum += arr(n,l);
     }
   }
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduce(local_sum, result, eckit::mpi::sum());
   }
 
@@ -661,7 +661,7 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, std::vector<T>& re
     }
   }
 
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduce(local_sum, result, eckit::mpi::sum());
   }
 
@@ -763,7 +763,7 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
       }
     }
   }
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduceInPlace(sum_per_level.data(), sum.size(), eckit::mpi::sum());
   }
   N = fs.nb_nodes_global();
@@ -798,7 +798,7 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs , const Field& fie
   result = std::accumulate(array::make_storageview<DATATYPE>(global).data(),
                            array::make_storageview<DATATYPE>(global).data()+global.size(),0.);
 
-  ATLAS_MPI_STATS( BROADCAST ) {
+  ATLAS_TRACE_MPI( BROADCAST ) {
     parallel::mpi::comm().broadcast(&result, 1, root);
   }
   N = fs.nb_nodes_global();
@@ -885,7 +885,7 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& fiel
     }
   }
   size_t root = global.metadata().get<size_t>("owner");
-  ATLAS_MPI_STATS( BROADCAST ) {
+  ATLAS_TRACE_MPI( BROADCAST ) {
     parallel::mpi::comm().broadcast(result,root);
   }
   N = fs.nb_nodes_global();
@@ -995,7 +995,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
       }
     }
   }
-  ATLAS_MPI_STATS( BROADCAST ) {
+  ATLAS_TRACE_MPI( BROADCAST ) {
     parallel::mpi::comm().broadcast( array::make_storageview<T>(sumfield).data(),sumfield.size(),root);
   }
   N = fs.nb_nodes_global();
@@ -1046,7 +1046,7 @@ void dispatch_minimum( const NodeColumns& fs, const Field& field, std::vector<T>
     }
   }
 
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduce(local_minimum, min, eckit::mpi::min());
   }
 }
@@ -1115,7 +1115,7 @@ void dispatch_maximum( const NodeColumns& fs, const Field& field, std::vector<T>
       }
     }
   }
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduce(local_maximum, max, eckit::mpi::max());
   }
 }
@@ -1222,7 +1222,7 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
       }
     }
   }
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduceInPlace(min.data(),min_field.size(),eckit::mpi::min());
   }
 }
@@ -1294,7 +1294,7 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
       }
     }
   }
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduceInPlace(max.data(),max_field.size(),eckit::mpi::max());
   }
 }
@@ -1372,7 +1372,7 @@ void dispatch_minimum_and_location( const NodeColumns& fs, const Field& field, s
     min_and_level_loc[j] = std::make_pair(local_minimum[j],loc_level[j]);
   }
 
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduce(min_and_gidx_loc, min_and_gidx_glb, eckit::mpi::minloc());
     parallel::mpi::comm().allReduce(min_and_level_loc,min_and_level_glb,eckit::mpi::minloc());
   }
@@ -1478,7 +1478,7 @@ void dispatch_maximum_and_location( const NodeColumns& fs, const Field& field, s
     max_and_level_loc[j] = std::make_pair(local_maximum[j],loc_level[j]);
   }
 
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduce(max_and_gidx_loc, max_and_gidx_glb, eckit::mpi::maxloc());
     parallel::mpi::comm().allReduce(max_and_level_loc,max_and_level_glb,eckit::mpi::maxloc());
   }
@@ -1655,7 +1655,7 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
     }
   }
 
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduce(min_and_gidx_loc,min_and_gidx_glb,eckit::mpi::minloc());
   }
 
@@ -1764,7 +1764,7 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
     }
   }
 
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduce(max_and_gidx_loc,max_and_gidx_glb,eckit::mpi::maxloc());
   }
 

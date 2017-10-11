@@ -103,7 +103,7 @@ void MeshGeneratorImpl::generate_global_element_numbering( Mesh& mesh ) const
   std::vector<size_t> elem_counts( parallel::mpi::comm().size() );
   std::vector<int> elem_displs( parallel::mpi::comm().size() );
 
-  ATLAS_MPI_STATS( ALLGATHER ) {
+  ATLAS_TRACE_MPI( ALLGATHER ) {
     parallel::mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
   }
 
@@ -174,7 +174,7 @@ const MeshGenerator::Implementation *MeshGeneratorFactory::build(const std::stri
 
     std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<Atlas>() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
+    Log::debug() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No MeshGeneratorFactory for [" << name << "]" << std::endl;
@@ -197,7 +197,7 @@ const MeshGenerator::Implementation *MeshGeneratorFactory::build(const std::stri
 
     std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<Atlas>() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
+    Log::debug() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No MeshGeneratorFactory for [" << name << "]" << std::endl;

@@ -7,48 +7,86 @@
 // Public
 
 /// Returns the number of passed arguments
-#define __ATLAS__NARG(...)
+#define __ATLAS_NARG(...)
 
 /// Splice a and b together
-#define __ATLAS__SPLICE(a,b)
+#define __ATLAS_SPLICE(a,b)
 
 #define __ATLAS_STRINGIFY(a) a
+
+#define __ATLAS_TYPE( Type, ... )
+#define __ATLAS_TYPE_SCOPE( Type, ... )
 
 //-----------------------------------------------------------------------------------------------------------
 // Details
 
 // Undefine these, to be redefined further down.
-#undef __ATLAS__NARG
-#undef __ATLAS__SPLICE
+#undef __ATLAS_NARG
+#undef __ATLAS_SPLICE
+#undef __ATLAS_TYPE
+#undef __ATLAS_TYPE_SCOPE
 
-#define __ATLAS__REVERSE 5, 4, 3, 2, 1, 0
-#define __ATLAS__ARGN(_1, _2, _3, _4, _5, N, ...) N
-#define __ATLAS__NARG__(dummy, ...)  __ATLAS__ARGN(__VA_ARGS__)
-#define __ATLAS__NARG_(...)          __ATLAS__NARG__(dummy, ##__VA_ARGS__, __ATLAS__REVERSE)
-#define __ATLAS__SPLICE(a,b)         __ATLAS__SPLICE_1(a,b)
-#define __ATLAS__SPLICE_1(a,b)       __ATLAS__SPLICE_2(a,b)
-#define __ATLAS__SPLICE_2(a,b)       a##b
+#define __ATLAS_REVERSE 5, 4, 3, 2, 1, 0
+#define __ATLAS_ARGN(_1, _2, _3, _4, _5, N, ...) N
+#define __ATLAS_NARG__(dummy, ...)  __ATLAS_ARGN(__VA_ARGS__)
+#define __ATLAS_NARG_(...)          __ATLAS_NARG__(dummy, ##__VA_ARGS__, __ATLAS_REVERSE)
+#define __ATLAS_SPLICE(a,b)         __ATLAS_SPLICE_1(a,b)
+#define __ATLAS_SPLICE_1(a,b)       __ATLAS_SPLICE_2(a,b)
+#define __ATLAS_SPLICE_2(a,b)       a##b
 
 
-#define __ATLAS__ARG16(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, ...) _15
-#define __ATLAS__HAS_COMMA(...) __ATLAS__ARG16(__VA_ARGS__, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
-#define __ATLAS__TRIGGER_PARENTHESIS(...) ,
-#define __ATLAS__ISEMPTY(...)                                                                      \
-__ATLAS__ISEMPTY_(                                                                                 \
+#define __ATLAS_ARG16(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, ...) _15
+#define __ATLAS_HAS_COMMA(...) __ATLAS_ARG16(__VA_ARGS__, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+#define __ATLAS_TRIGGER_PARENTHESIS(...) ,
+#define __ATLAS_ISEMPTY(...)                                                                      \
+__ATLAS_ISEMPTY_(                                                                                 \
   /* test if there is just one argument, eventually an empty one */                                \
-  __ATLAS__HAS_COMMA(__VA_ARGS__),                                                                 \
+  __ATLAS_HAS_COMMA(__VA_ARGS__),                                                                 \
   /* test if _TRIGGER_PARENTHESIS_ together with the argument adds a comma */                      \
-  __ATLAS__HAS_COMMA(__ATLAS__TRIGGER_PARENTHESIS __VA_ARGS__),                                    \
+  __ATLAS_HAS_COMMA(__ATLAS_TRIGGER_PARENTHESIS __VA_ARGS__),                                    \
   /* test if the argument together with a parenthesis adds a comma */                              \
-  __ATLAS__HAS_COMMA(__VA_ARGS__ (/*empty*/)),                                                     \
-  /* test if placing it between __ATLAS__TRIGGER_PARENTHESIS and the parenthesis adds a comma */   \
-  __ATLAS__HAS_COMMA(__ATLAS__TRIGGER_PARENTHESIS __VA_ARGS__ (/*empty*/))                         \
+  __ATLAS_HAS_COMMA(__VA_ARGS__ (/*empty*/)),                                                     \
+  /* test if placing it between __ATLAS_TRIGGER_PARENTHESIS and the parenthesis adds a comma */   \
+  __ATLAS_HAS_COMMA(__ATLAS_TRIGGER_PARENTHESIS __VA_ARGS__ (/*empty*/))                         \
 )
 
-#define __ATLAS__PASTE5(_0, _1, _2, _3, _4) _0 ## _1 ## _2 ## _3 ## _4
-#define __ATLAS__ISEMPTY_(_0, _1, _2, _3) __ATLAS__HAS_COMMA(__ATLAS__PASTE5(__ATLAS__IS_EMPTY_CASE_, _0, _1, _2, _3))
-#define __ATLAS__IS_EMPTY_CASE_0001 ,
+#define __ATLAS_PASTE5(_0, _1, _2, _3, _4) _0 ## _1 ## _2 ## _3 ## _4
+#define __ATLAS_ISEMPTY_(_0, _1, _2, _3) __ATLAS_HAS_COMMA(__ATLAS_PASTE5(__ATLAS_IS_EMPTY_CASE_, _0, _1, _2, _3))
+#define __ATLAS_IS_EMPTY_CASE_0001 ,
 
-#define __ATLAS__CALL_NARG_1(...) 0
-#define __ATLAS__CALL_NARG_0 __ATLAS__NARG_
-#define __ATLAS__NARG(...) __ATLAS__SPLICE( __ATLAS__CALL_NARG_, __ATLAS__ISEMPTY( __VA_ARGS__ ) ) (__VA_ARGS__)
+#define __ATLAS_CALL_NARG_1(...) 0
+#define __ATLAS_CALL_NARG_0 __ATLAS_NARG_
+#define __ATLAS_NARG(...) __ATLAS_SPLICE( __ATLAS_CALL_NARG_, __ATLAS_ISEMPTY( __VA_ARGS__ ) ) (__VA_ARGS__)
+    
+#define __ATLAS_TYPE( Type, ... )       __ATLAS_TYPE_(       __ATLAS_NARG(__VA_ARGS__), Type, ##__VA_ARGS__ )
+#define __ATLAS_TYPE_SCOPE( Type, ... ) __ATLAS_TYPE_SCOPE_( __ATLAS_NARG(__VA_ARGS__), Type, ##__VA_ARGS__ )
+
+#define __ATLAS_TYPE_( N, ... )       __ATLAS_SPLICE( __ATLAS_TYPE_,       N )( __VA_ARGS__ )
+#define __ATLAS_TYPE_SCOPE_( N, ... ) __ATLAS_SPLICE( __ATLAS_TYPE_SCOPE_, N )( __VA_ARGS__ )
+
+#define __ATLAS_TYPE_0( Type )                   Type __ATLAS_SPLICE( __variable_, __LINE__ ) ( );
+#define __ATLAS_TYPE_1( Type, arg1 )             Type __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1 );
+#define __ATLAS_TYPE_2( Type, arg1, arg2 )       Type __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1, arg2 );
+#define __ATLAS_TYPE_3( Type, arg1, arg2, arg3 ) Type __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1, arg2, arg3 );
+
+#define __ATLAS_TYPE_SCOPE_0( Type ) \
+  for( Type \
+      __ATLAS_SPLICE( __variable_, __LINE__ ) ( );\
+      __ATLAS_SPLICE( __variable_, __LINE__ ) .running(); \
+      __ATLAS_SPLICE( __variable_, __LINE__ ) .stop() )
+#define __ATLAS_TYPE_SCOPE_1( Type, arg1 ) \
+  for( Type \
+      __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1 ); \
+      __ATLAS_SPLICE( __variable_, __LINE__ ) .running(); \
+      __ATLAS_SPLICE( __variable_, __LINE__ ) .stop() )
+#define __ATLAS_TYPE_SCOPE_2( Type , arg1, arg2 ) \
+  for( Type \
+      __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1, arg2 );\
+      __ATLAS_SPLICE( __variable_, __LINE__ ) .running(); \
+      __ATLAS_SPLICE( __variable_, __LINE__ ) .stop() )
+#define __ATLAS_TYPE_SCOPE_3( Type , arg1, arg2, arg3 ) \
+  for( Type \
+      __ATLAS_SPLICE( __variable_, __LINE__ ) ( arg1, arg2, arg3 );\
+      __ATLAS_SPLICE( __variable_, __LINE__ ) .running(); \
+      __ATLAS_SPLICE( __variable_, __LINE__ ) .stop() )
+    

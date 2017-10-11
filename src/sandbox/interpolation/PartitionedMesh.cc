@@ -14,7 +14,7 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 
 
 namespace atlas {
@@ -53,7 +53,7 @@ void PartitionedMesh::writeGmsh(const std::string& fileName, const FieldSet& fie
 
 
 void PartitionedMesh::partition(const Grid& grid) {
-    ATLAS_TIME( "PartitionedMesh::partition()" );
+    ATLAS_TRACE( "PartitionedMesh::partition()" );
 
     partitioner_ = Partitioner(optionPartitioner_);
 
@@ -63,7 +63,7 @@ void PartitionedMesh::partition(const Grid& grid) {
 
 
 void PartitionedMesh::partition(const Grid& grid, const PartitionedMesh& other) {
-    ATLAS_TIME( "PartitionedMesh::partition(other)" );
+    ATLAS_TRACE( "PartitionedMesh::partition(other)" );
 
     partitioner_ = grid::MatchingMeshPartitioner(other.mesh_, util::Config("type", optionPartitioner_));
 

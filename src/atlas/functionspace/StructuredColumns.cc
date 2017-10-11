@@ -22,7 +22,7 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Debug.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/Checksum.h"
@@ -204,7 +204,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
   grid_(grid),
   nb_levels_(0)
 {
-    ATLAS_TIME( "Generating StructuredColumns..." );
+    ATLAS_TRACE( "Generating StructuredColumns..." );
     nb_levels_ = config_levels(config);
     if ( not grid_ )
     {
@@ -226,7 +226,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     }
 
     grid::Distribution distribution;
-    ATLAS_TIME_SCOPE( "Partitioning grid ..." ) {
+    ATLAS_TRACE_SCOPE( "Partitioning grid ..." ) {
       distribution = grid::Distribution(grid,partitioner);
     }
 
@@ -351,12 +351,12 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     };
 
     if( atlas::Library::instance().debug() ) {
-      ATLAS_TIME_SCOPE("Load imbalance") {
+      ATLAS_TRACE_SCOPE("Load imbalance") {
         comm.barrier();
       }
     }
 
-    ATLAS_TIME_SCOPE( "Compute mapping ..." )
+    ATLAS_TRACE_SCOPE( "Compute mapping ..." )
     {
       idx_t imin =  std::numeric_limits<idx_t>::max();
       idx_t imax = -std::numeric_limits<idx_t>::max();
@@ -433,7 +433,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
       }
     }
 
-    ATLAS_TIME_SCOPE("Parallelisation ...")
+    ATLAS_TRACE_SCOPE("Parallelisation ...")
     {
 
       auto build_partition_graph = [this]() -> std::unique_ptr<Mesh::PartitionGraph> {
@@ -462,12 +462,12 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
       };
 
       std::unique_ptr<Mesh::PartitionGraph> graph_ptr;
-      ATLAS_TIME_SCOPE( "Building partition graph..." ) {
+      ATLAS_TRACE_SCOPE( "Building partition graph..." ) {
         graph_ptr = build_partition_graph();
       }
       const Mesh::PartitionGraph& graph = *graph_ptr;
 
-      ATLAS_TIME_SCOPE( "Setup parallel fields..." )
+      ATLAS_TRACE_SCOPE( "Setup parallel fields..." )
       {
           auto p  = array::make_view< int, 1 >( partition() );
           auto g  = array::make_view< gidx_t, 1 >( global_index() );
@@ -561,19 +561,19 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
           }
       }
 
-      ATLAS_TIME_SCOPE( "Setup gather_scatter..." )
+      ATLAS_TRACE_SCOPE( "Setup gather_scatter..." )
       {
         gather_scatter_ = new parallel::GatherScatter();
         gather_scatter_->setup(part.data(), remote_idx.data(), 0, global_idx.data(), size_owned_ );
       }
 
-      ATLAS_TIME_SCOPE( "Setup checksum..." )
+      ATLAS_TRACE_SCOPE( "Setup checksum..." )
       {
         checksum_ = new parallel::Checksum();
         checksum_->setup(part.data(), remote_idx.data(), 0, global_idx.data(), size_owned_ );
       }
 
-      ATLAS_TIME_SCOPE( "Setup halo exchange..." )
+      ATLAS_TRACE_SCOPE( "Setup halo exchange..." )
       {
         halo_exchange_ = new parallel::HaloExchange();
         halo_exchange_->setup(part.data(),remote_idx.data(),0,size_halo_);

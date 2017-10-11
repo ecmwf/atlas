@@ -51,7 +51,7 @@
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/runtime/AtlasTool.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/Checksum.h"
@@ -105,7 +105,7 @@ struct TimerStats
     cnt = 0;
     name = _name;
   }
-  void update(Timer& timer)
+  void update(Trace& timer)
   {
     double t = timer.elapsed();
     if( min < 0 ) min = t;
@@ -190,7 +190,7 @@ public:
 
 void AtlasBenchmark::execute(const Args& args)
 {
-  Timer timer( Here(),"atlas-benchmark");
+  Trace timer( Here(),"atlas-benchmark");
   // Timer::Logging set_channel( Log::info() );
 
   nlev = 137;
@@ -217,7 +217,7 @@ void AtlasBenchmark::execute(const Args& args)
     omp_set_num_threads(omp_threads);
 
   Log::info() << "atlas-benchmark\n" << endl;
-  Log::info() << Library::instance().info() << endl;
+  Log::info() << Library::instance().information() << endl;
   Log::info() << "Configuration:" << endl;
   Log::info() << "  grid: " << gridname << endl;
   Log::info() << "  nlev: " << nlev << endl;
@@ -230,7 +230,7 @@ void AtlasBenchmark::execute(const Args& args)
 
   Log::info() << "Timings:" << endl;
 
-  ATLAS_TIME_SCOPE("setup",{"atlas-benchmark-setup"}) { setup(); }
+  ATLAS_TRACE_SCOPE("setup",{"atlas-benchmark-setup"}) { setup(); }
 
   Log::info() << "  Executing " << niter << " iterations: \n";
   if( progress )
@@ -296,15 +296,15 @@ void AtlasBenchmark::setup()
   size_t halo = 1;
 
   StructuredGrid grid;
-  ATLAS_TIME_SCOPE( "Create grid" ) {  grid = Grid(gridname); }
-  ATLAS_TIME_SCOPE( "Create mesh" ) {  mesh = MeshGenerator( "structured" ).generate(grid); }
+  ATLAS_TRACE_SCOPE( "Create grid" ) {  grid = Grid(gridname); }
+  ATLAS_TRACE_SCOPE( "Create mesh" ) {  mesh = MeshGenerator( "structured" ).generate(grid); }
 
-  ATLAS_TIME_SCOPE( "Create node_fs") { nodes_fs = functionspace::NodeColumns(mesh,option::halo(halo)); }
-  ATLAS_TIME_SCOPE( "build_edges" )                     { build_edges(mesh); }
-  ATLAS_TIME_SCOPE( "build_pole_edges" )                { build_pole_edges(mesh); }
-  ATLAS_TIME_SCOPE( "build_edges_parallel_fiels" )      { build_edges_parallel_fields(mesh); }
-  ATLAS_TIME_SCOPE( "build_median_dual_mesh" )          { build_median_dual_mesh(mesh); }
-  ATLAS_TIME_SCOPE( "build_node_to_edge_connectivity" ) { build_node_to_edge_connectivity(mesh); }
+  ATLAS_TRACE_SCOPE( "Create node_fs") { nodes_fs = functionspace::NodeColumns(mesh,option::halo(halo)); }
+  ATLAS_TRACE_SCOPE( "build_edges" )                     { build_edges(mesh); }
+  ATLAS_TRACE_SCOPE( "build_pole_edges" )                { build_pole_edges(mesh); }
+  ATLAS_TRACE_SCOPE( "build_edges_parallel_fiels" )      { build_edges_parallel_fields(mesh); }
+  ATLAS_TRACE_SCOPE( "build_median_dual_mesh" )          { build_median_dual_mesh(mesh); }
+  ATLAS_TRACE_SCOPE( "build_node_to_edge_connectivity" ) { build_node_to_edge_connectivity(mesh); }
 
   scalar_field = nodes_fs.createField<double>( option::name("field") | option::levels(nlev) );
   grad_field   = nodes_fs.createField<double>( option::name("grad")  | option::levels(nlev) | option::variables(3) );
@@ -382,8 +382,8 @@ void AtlasBenchmark::setup()
 
 void AtlasBenchmark::iteration()
 {
-  Timer t( Here() );
-  Timer compute( Here(), "compute" );
+  Trace t( Here() );
+  Trace compute( Here(), "compute" );
   unique_ptr<array::Array> avgS_arr( array::Array::create<double>(nedges,nlev,2ul) );
   const auto& node2edge = mesh.nodes().edge_connectivity();
   const auto& edge2node = mesh.edges().node_connectivity();
@@ -465,7 +465,7 @@ void AtlasBenchmark::iteration()
   compute.stop();
 
   // halo-exchange
-  Timer halo( Here(), "halo-exchange");
+  Trace halo( Here(), "halo-exchange");
   nodes_fs.halo_exchange().execute(grad);
   halo.stop();
 
@@ -521,7 +521,7 @@ double AtlasBenchmark::result()
       }
     }
   }
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
     parallel::mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
     parallel::mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());

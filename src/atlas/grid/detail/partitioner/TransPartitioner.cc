@@ -15,7 +15,7 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 
 namespace atlas {
 namespace grid {
@@ -47,7 +47,7 @@ TransPartitioner::~TransPartitioner() {
 
 void TransPartitioner::partition(const Grid& grid, int part[]) const {
 
-    ATLAS_TIME( "TransPartitioner::partition" );
+    ATLAS_TRACE( "TransPartitioner::partition" );
 
     StructuredGrid g(grid);
     if( not g )

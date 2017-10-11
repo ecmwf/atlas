@@ -26,7 +26,7 @@
 #include "atlas/mesh.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 #include "atlas/output/detail/GmshIO.h"
@@ -73,7 +73,7 @@ struct Node
 
 void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_halo, mesh::Nodes& nodes, bool do_all )
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
 // TODO: ATLAS-14: fix renumbering of EAST periodic boundary points
 // --> Those specific periodic points at the EAST boundary are not checked for uid,
 //     and could receive different gidx for different tasks
@@ -113,7 +113,7 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   ATLAS_DEBUG_VAR( points_to_edit );
   ATLAS_DEBUG_VAR( points_to_edit.size() );
 
-  ATLAS_TIME( "distributed_sort" );
+  ATLAS_TRACE( "distributed_sort" );
 
   /*
    * Sorting following gidx will define global order of
@@ -129,7 +129,7 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   std::vector<int> recvcounts(parallel::mpi::comm().size());
   std::vector<int> recvdispls(parallel::mpi::comm().size());
 
-  ATLAS_MPI_STATS( GATHER ) {
+  ATLAS_TRACE_MPI( GATHER ) {
     parallel::mpi::comm().gather(nb_nodes, recvcounts, root);
   }
 
@@ -141,7 +141,7 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   int glb_nb_nodes = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
   std::vector<gidx_t> glb_idx_gathered( glb_nb_nodes );
-  ATLAS_MPI_STATS( GATHER ) {
+  ATLAS_TRACE_MPI( GATHER ) {
     parallel::mpi::comm().gatherv(glb_idx.data(), glb_idx.size(), glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), root);
   }
 
@@ -153,7 +153,7 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
     node_sort.push_back( Node(glb_idx_gathered[jnode],jnode) );
   }
 
-  ATLAS_TIME_SCOPE( "local_sort" ) {
+  ATLAS_TRACE_SCOPE( "local_sort" ) {
     std::sort(node_sort.begin(), node_sort.end());
   }
 
@@ -174,7 +174,7 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   }
 
   // 3) Scatter renumbered back
-  ATLAS_MPI_STATS( SCATTER ) {
+  ATLAS_TRACE_MPI( SCATTER ) {
     parallel::mpi::comm().scatterv(glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), glb_idx.data(), glb_idx.size(), root);
   }
 
@@ -228,7 +228,7 @@ Tool::Tool(int argc,char **argv): AtlasTool(argc,argv)
 
 void Tool::execute(const Args& args)
 {
-  Timer t( Here(), "main");
+  Trace t( Here(), "main");
 
   key = "";
   args.get("grid",key);
@@ -263,7 +263,7 @@ void Tool::execute(const Args& args)
   parallel::mpi::comm().barrier();
 
   for( size_t j=0; j<1; ++j ) {
-    ATLAS_TIME("outer_iteration");
+    ATLAS_TRACE("outer_iteration");
     Mesh mesh = meshgenerator.generate(grid);
 
     atlas::mesh::actions::build_periodic_boundaries(mesh);
@@ -272,14 +272,14 @@ void Tool::execute(const Args& args)
     atlas::mesh::actions::BuildHalo build_halo(mesh);
     build_halo(halo);
 
-    Timer::Barriers set_barrier(true);
-    Timer::Logging set_channel( Log::info() );
+    Trace::Barriers set_barrier(true);
+    Trace::Tracing  set_channel( Log::info() );
     for( size_t i=0; i<iterations; ++i ) {
       refactored_renumber_nodes_glb_idx(build_halo,mesh.nodes(),do_all);
     }
   }
   t.stop();
-  Log::info() << Timer::report( Config
+  Log::info() << Trace::report( Config
                                   ("indent",2)
                                   ("decimals",2)
                                   // ("depth",5)

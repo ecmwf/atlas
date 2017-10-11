@@ -23,7 +23,7 @@
 #include "eckit/config/Resource.h"
 
 #include "atlas/interpolation/method/PointIndex3.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/mesh/Mesh.h"
 
 #include "eckit/eckit_version.h"
@@ -61,7 +61,7 @@ public: // methods
     template < typename POINT_T >
     void list_unique_points( std::vector< POINT_T >& opts )
     {
-        ATLAS_TIME( "Finding unique points" );
+        ATLAS_TRACE( "Finding unique points" );
 
         ASSERT( opts.empty() );
 

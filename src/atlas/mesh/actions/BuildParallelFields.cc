@@ -25,7 +25,7 @@
 #include "atlas/array.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"
 
@@ -91,7 +91,7 @@ struct Node
 
 void build_parallel_fields( Mesh& mesh )
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
   build_nodes_parallel_fields( mesh.nodes() );
 }
 
@@ -99,7 +99,7 @@ void build_parallel_fields( Mesh& mesh )
 
 void build_nodes_parallel_fields( mesh::Nodes& nodes )
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
   bool parallel = false;
   nodes.metadata().get("parallel",parallel);
   if( ! parallel )
@@ -115,7 +115,7 @@ void build_nodes_parallel_fields( mesh::Nodes& nodes )
 
 void build_edges_parallel_fields( Mesh& mesh )
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
   build_edges_partition ( mesh );
   build_edges_remote_idx( mesh );
   build_edges_global_idx( mesh );
@@ -125,7 +125,7 @@ void build_edges_parallel_fields( Mesh& mesh )
 
 Field& build_nodes_global_idx( mesh::Nodes& nodes )
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
 
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( nodes.global_index() );
 
@@ -141,7 +141,7 @@ Field& build_nodes_global_idx( mesh::Nodes& nodes )
 
 void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
 
 // TODO: ATLAS-14: fix renumbering of EAST periodic boundary points
 // --> Those specific periodic points at the EAST boundary are not checked for uid,
@@ -181,7 +181,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   std::vector<int> recvcounts(parallel::mpi::comm().size());
   std::vector<int> recvdispls(parallel::mpi::comm().size());
 
-  ATLAS_MPI_STATS( GATHER ) {
+  ATLAS_TRACE_MPI( GATHER ) {
     parallel::mpi::comm().gather(nb_nodes, recvcounts, root);
   }
 
@@ -195,7 +195,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   array::ArrayT<uid_t> glb_id_arr( glb_nb_nodes );
   array::ArrayView<uid_t,1> glb_id = array::make_view<uid_t,1>(glb_id_arr);
 
-  ATLAS_MPI_STATS( GATHER ) {
+  ATLAS_TRACE_MPI( GATHER ) {
     parallel::mpi::comm().gatherv(loc_id.data(), loc_id.size(), glb_id.data(), recvcounts.data(), recvdispls.data(), root);
   }
 
@@ -224,7 +224,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   }
 
   // 3) Scatter renumbered back
-  ATLAS_MPI_STATS( SCATTER ) {
+  ATLAS_TRACE_MPI( SCATTER ) {
     parallel::mpi::comm().scatterv(glb_id.data(), recvcounts.data(), recvdispls.data(), loc_id.data(), loc_id.size(), root);
   }
 
@@ -238,7 +238,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
 Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
   size_t mypart = parallel::mpi::comm().rank();
   size_t nparts = parallel::mpi::comm().size();
 
@@ -288,7 +288,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     }
   }
 
-  ATLAS_MPI_STATS( ALLTOALL ) {
+  ATLAS_TRACE_MPI( ALLTOALL ) {
     parallel::mpi::comm().allToAll(send_needed, recv_needed);
   }
 
@@ -320,7 +320,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     }
   }
 
-  ATLAS_MPI_STATS( ALLTOALL ) {
+  ATLAS_TRACE_MPI( ALLTOALL ) {
     parallel::mpi::comm().allToAll(send_found, recv_found);
   }
 
@@ -342,7 +342,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 
 Field& build_nodes_partition( mesh::Nodes& nodes )
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
   return nodes.partition();
 }
 
@@ -350,7 +350,7 @@ Field& build_nodes_partition( mesh::Nodes& nodes )
 
 Field& build_edges_partition( Mesh& mesh )
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
 
   const mesh::Nodes& nodes = mesh.nodes();
 
@@ -533,7 +533,7 @@ Field& build_edges_partition( Mesh& mesh )
 
     }
 
-    ATLAS_MPI_STATS( ALLTOALL ) {
+    ATLAS_TRACE_MPI( ALLTOALL ) {
       parallel::mpi::comm().allToAll(send_unknown, recv_unknown);
     }
 
@@ -563,7 +563,7 @@ Field& build_edges_partition( Mesh& mesh )
       }
     }
 
-    ATLAS_MPI_STATS( ALLTOALL ) {
+    ATLAS_TRACE_MPI( ALLTOALL ) {
       parallel::mpi::comm().allToAll(send_found, recv_found);
     }
 
@@ -626,7 +626,7 @@ Field& build_edges_partition( Mesh& mesh )
 
 Field& build_edges_remote_idx( Mesh& mesh  )
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
 
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(mesh);
@@ -728,7 +728,7 @@ Field& build_edges_remote_idx( Mesh& mesh  )
   varsize=6;
 #endif
 
-  ATLAS_MPI_STATS( ALLTOALL ) {
+  ATLAS_TRACE_MPI( ALLTOALL ) {
     parallel::mpi::comm().allToAll(send_needed, recv_needed);
   }
 
@@ -768,7 +768,7 @@ Field& build_edges_remote_idx( Mesh& mesh  )
     }
   }
 
-  ATLAS_MPI_STATS( ALLTOALL ) {
+  ATLAS_TRACE_MPI( ALLTOALL ) {
     parallel::mpi::comm().allToAll(send_found, recv_found);
   }
 
@@ -788,7 +788,7 @@ Field& build_edges_remote_idx( Mesh& mesh  )
 
 Field& build_edges_global_idx( Mesh& mesh )
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
 
   UniqueLonLat compute_uid(mesh);
 
@@ -850,7 +850,7 @@ Field& build_edges_global_idx( Mesh& mesh )
   std::vector<int> recvcounts(parallel::mpi::comm().size());
   std::vector<int> recvdispls(parallel::mpi::comm().size());
 
-  ATLAS_MPI_STATS( GATHER ) {
+  ATLAS_TRACE_MPI( GATHER ) {
     parallel::mpi::comm().gather(nb_edges, recvcounts, root);
   }
 
@@ -864,7 +864,7 @@ Field& build_edges_global_idx( Mesh& mesh )
   array::ArrayT<uid_t> glb_edge_id_arr(glb_nb_edges);
   array::ArrayView<uid_t,1> glb_edge_id = array::make_view<uid_t,1>(glb_edge_id_arr);
 
-  ATLAS_MPI_STATS( GATHER ) {
+  ATLAS_TRACE_MPI( GATHER ) {
     parallel::mpi::comm().gatherv(loc_edge_id.data(), loc_edge_id.size(),
                                   glb_edge_id.data(), recvcounts.data(), recvdispls.data(), root);
   }
@@ -894,7 +894,7 @@ Field& build_edges_global_idx( Mesh& mesh )
   }
 
   // 3) Scatter renumbered back
-  ATLAS_MPI_STATS( SCATTER ) {
+  ATLAS_TRACE_MPI( SCATTER ) {
     parallel::mpi::comm().scatterv(glb_edge_id.data(), recvcounts.data(), recvdispls.data(),
                                    loc_edge_id.data(), loc_edge_id.size(), root);
   }

@@ -223,7 +223,7 @@ void Gmsh::write(
 
   if( c.coordinates == "xyz" and not mesh.nodes().has_field("xyz") )
   {
-      Log::debug<Atlas>() << "Building xyz representation for nodes" << std::endl;
+      Log::debug() << "Building xyz representation for nodes" << std::endl;
       mesh::actions::BuildXYZField("xyz")(const_cast<Mesh&>(mesh));
   }
 

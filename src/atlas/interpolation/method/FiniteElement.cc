@@ -27,7 +27,7 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
@@ -56,7 +56,7 @@ static const double parametricEpsilon = 1e-15;
 }  // (anonymous namespace)
 
 void FiniteElement::setup(const FunctionSpace& source, const FunctionSpace& target) {
-    ATLAS_TIME( "atlas::interpolation::method::FiniteElement::setup()" );
+    ATLAS_TRACE( "atlas::interpolation::method::FiniteElement::setup()" );
 
     if( functionspace::NodeColumns tgt = target ) {
 
@@ -136,7 +136,7 @@ void FiniteElement::setup(const FunctionSpace& source) {
 
     {
 #if ECKIT_VERSION_INT > 1700
-        eckit::ProgressTimer progress("Computing interpolation weights", out_npts, "point", double(5), Log::debug<Atlas>());
+        eckit::ProgressTimer progress("Computing interpolation weights", out_npts, "point", double(5), Log::debug());
         for ( size_t ip = 0; ip < out_npts; ++ip, ++progress ) {
 #else
       for ( size_t ip = 0; ip < out_npts; ++ip ) {
@@ -167,14 +167,14 @@ void FiniteElement::setup(const FunctionSpace& source) {
 
             if (!success) {
                 failures.push_back(ip);
-                Log::debug<Atlas>() << "---------------------------------------------------------------------------\n";
+                Log::debug() << "---------------------------------------------------------------------------\n";
                 const PointLonLat pll = util::Earth::convertGeocentricToGeodetic(p);
-                Log::debug<Atlas>() << "Failed to project point (lon,lat)="<< pll << '\n';
-                Log::debug<Atlas>() << failures_log.str();
+                Log::debug() << "Failed to project point (lon,lat)="<< pll << '\n';
+                Log::debug() << failures_log.str();
             }
         }
     }
-    Log::debug<Atlas>() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
+    Log::debug() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
 
 
     eckit::mpi::comm().barrier();

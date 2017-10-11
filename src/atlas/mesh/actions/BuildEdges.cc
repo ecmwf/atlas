@@ -212,7 +212,7 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
     max[YY] = std::max( max[YY], xy(node,YY) );
   }
 
-  ATLAS_MPI_STATS( ALLREDUCE ) {
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
     parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
     parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
   }

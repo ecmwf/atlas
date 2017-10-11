@@ -153,7 +153,7 @@ const NablaImpl* NablaFactory::build(const Method& method, const eckit::Parametr
 
     std::map<std::string, NablaFactory *>::const_iterator j = m->find(method.name());
 
-    Log::debug<Atlas>() << "Looking for NablaFactory [" << method.name() << "]" << '\n';
+    Log::debug() << "Looking for NablaFactory [" << method.name() << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No NablaFactory for [" << method.name() << "]" << '\n';

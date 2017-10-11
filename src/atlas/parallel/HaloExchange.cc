@@ -65,7 +65,7 @@ void HaloExchange::setup( const int part[],
                           const int remote_idx[], const int base,
                           const size_t parsize )
 {
-  ATLAS_TIME("HaloExchange::setup");
+  ATLAS_TRACE("HaloExchange::setup");
 
   parsize_ = parsize;
   sendcounts_.resize(nproc); sendcounts_.assign(nproc,0);
@@ -90,7 +90,7 @@ void HaloExchange::setup( const int part[],
   /*
     Find the amount of nodes this proc has to send to each other proc
   */
-  ATLAS_MPI_STATS( ALLTOALL ) {
+  ATLAS_TRACE_MPI( ALLTOALL ) {
     parallel::mpi::comm().allToAll(recvcounts_, sendcounts_);
   }
 
@@ -130,7 +130,7 @@ void HaloExchange::setup( const int part[],
   */
 
   std::vector<int> recv_requests(sendcnt_);
-  ATLAS_MPI_STATS( ALLTOALL ) {
+  ATLAS_TRACE_MPI( ALLTOALL ) {
     parallel::mpi::comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(),
                                     recv_requests.data(), sendcounts_.data(), senddispls_.data());
   }

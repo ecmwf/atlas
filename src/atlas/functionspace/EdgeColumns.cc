@@ -27,7 +27,7 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/array/MakeView.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
@@ -172,7 +172,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo) :
 
 void EdgeColumns::constructor()
 {
-  ATLAS_TIME("EdgeColumns()");
+  ATLAS_TRACE("EdgeColumns()");
 
   nb_edges_ = mesh().edges().size();
 
@@ -184,7 +184,7 @@ void EdgeColumns::constructor()
   const Field& remote_index = edges().remote_index();
   const Field& global_index = edges().global_index();
 
-  ATLAS_TIME_SCOPE("Setup halo_exchange")
+  ATLAS_TRACE_SCOPE("Setup halo_exchange")
   {
     halo_exchange_->setup(
         array::make_view<int,1>(partition).data(),
@@ -192,7 +192,7 @@ void EdgeColumns::constructor()
         nb_edges_);
   }
 
-  ATLAS_TIME_SCOPE("Setup gather_scatter")
+  ATLAS_TRACE_SCOPE("Setup gather_scatter")
   {
     gather_scatter_->setup(
         array::make_view<int,1>(partition).data(),
@@ -201,7 +201,7 @@ void EdgeColumns::constructor()
         nb_edges_);
   }
 
-  ATLAS_TIME_SCOPE("Setup checksum")
+  ATLAS_TRACE_SCOPE("Setup checksum")
   {
     checksum_->setup(
         array::make_view<int,1>(partition).data(),

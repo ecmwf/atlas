@@ -14,25 +14,27 @@ namespace atlas { namespace detail { typedef eckit::Log LogBase; } }
 
 namespace atlas {
 
-// Use Log::debug<Atlas>() for debugging that can be switched
-// on or off by the boolean environment variable ATLAS_DEBUG
-
 class Log : public detail::LogBase {
 
 public:
 
     typedef eckit::Channel Channel;
+    
+    static std::ostream& info()  { return atlas::Library::instance().infoChannel();  }
+    static std::ostream& trace() { return atlas::Library::instance().traceChannel(); }
+    static std::ostream& debug() { return atlas::Library::instance().debugChannel(); }
 
 #ifndef ATLAS_HAVE_FORTRAN
-  enum Style {
-    SIMPLE=0,PREFIX=1,TIMESTAMP=2
-  };
-  static void addFortranUnit(int unit, Style=PREFIX, const char* prefix="") { /*NOTIMP*/ }
-  static void setFortranUnit(int unit, Style=PREFIX, const char* prefix="") { /*NOTIMP*/ }
+    // Stubs for what fckit::Log provides
+    enum Style {
+      SIMPLE=0,PREFIX=1,TIMESTAMP=2
+    };
+    static void addFortranUnit(int unit, Style=PREFIX, const char* prefix="") { /*NOTIMP*/ }
+    static void setFortranUnit(int unit, Style=PREFIX, const char* prefix="") { /*NOTIMP*/ }
 
-  // Fortran unit numbers
-  static int output_unit() { return 6; }
-  static int error_unit()  { return 0; }
+    // Fortran unit numbers
+    static int output_unit() { return 6; }
+    static int error_unit()  { return 0; }
 #endif
 };
 } // namespace atlas

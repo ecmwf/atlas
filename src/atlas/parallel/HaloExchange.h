@@ -118,7 +118,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
     throw eckit::SeriousBug("HaloExchange was not setup",Here());
   }
 
-  ATLAS_TIME("HaloExchange",{"halo-exchange"});
+  ATLAS_TRACE("HaloExchange",{"halo-exchange"});
 
   int tag=1;
   size_t var_size = std::accumulate(var_shape,var_shape+var_rank,1,std::multiplies<size_t>());
@@ -143,7 +143,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
     recv_displs[jproc] = recvdispls_[jproc]*var_size;
   }
 
-  ATLAS_MPI_STATS( IRECEIVE ) {
+  ATLAS_TRACE_MPI( IRECEIVE ) {
     /// Let MPI know what we like to receive
     for(int jproc=0; jproc < nproc; ++jproc)
     {
@@ -158,7 +158,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   pack_send_buffer(field,var_strides,var_shape,var_rank,send_buffer.data());
 
   /// Send
-  ATLAS_MPI_STATS( ISEND ) {
+  ATLAS_TRACE_MPI( ISEND ) {
     for(int jproc=0; jproc < nproc; ++jproc)
     {
       if(send_counts[jproc] > 0)
@@ -171,7 +171,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   }
 
   /// Wait for receiving to finish
-  ATLAS_MPI_STATS( WAIT, "mpi-wait receive" ) {
+  ATLAS_TRACE_MPI( WAIT, "mpi-wait receive" ) {
     for (int jproc=0; jproc < nproc; ++jproc)
     {
       if( recvcounts_[jproc] > 0)
@@ -185,7 +185,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   unpack_recv_buffer(recv_buffer.data(),field,var_strides,var_shape,var_rank);
 
   /// Wait for sending to finish
-  ATLAS_MPI_STATS( WAIT, "mpi-wait send" ) {
+  ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
     for (int jproc=0; jproc < nproc; ++jproc)
     {
       if( sendcounts_[jproc] > 0)
@@ -203,7 +203,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
                                      size_t var_rank,
                                      DATA_TYPE send_buffer[] ) const
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
   size_t ibuf = 0;
   size_t send_stride = var_strides[0]*var_shape[0];
 
@@ -279,7 +279,7 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
                                        const size_t var_shape[],
                                        size_t var_rank ) const
 {
-  ATLAS_TIME();
+  ATLAS_TRACE();
 //  bool field_changed = false;
 //  DATA_TYPE tmp;
   size_t ibuf = 0;

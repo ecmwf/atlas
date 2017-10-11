@@ -12,6 +12,7 @@
 
 #include <iosfwd>
 #include <string>
+#include <memory>
 #include "eckit/system/Library.h"
 
 namespace eckit {
@@ -39,30 +40,26 @@ public:
     void initialise();
     void finalise();
     
-    struct Info {
-      friend std::ostream& operator<<(std::ostream& s, const Info& i) { i.print(s); return s; }
+    struct Information {
+      friend std::ostream& operator<<(std::ostream& s, const Information& i) { i.print(s); return s; }
       void print(std::ostream&) const;
     };
-    Info info() const { return Info(); }
+    Information information() const { return Information(); }
 
-    class Timer {
-    public:
-        bool barriers() const;
-        std::ostream& channel() const;
-    private:
-        friend class Library;
-        bool barriers_{false};
-        std::ostream* channel_;
-    };
-
-    const Timer& timer() const { return timer_; }
+    std::ostream& infoChannel() const;
+    std::ostream& traceChannel() const;
+    bool trace() const { return trace_; }
+    bool barriers() const { return barriers_; }
 
 protected:
 
     virtual const void* addr() const override;
 
-    Timer timer_;
-
+    bool info_{true};
+    bool trace_{false};
+    bool barriers_{false};
+    mutable std::unique_ptr<std::ostream> trace_channel_;
+    mutable std::unique_ptr<std::ostream> info_channel_;
 };
 
 typedef Library Atlas;

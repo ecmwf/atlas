@@ -170,7 +170,7 @@ StateGenerator* StateGeneratorFactory::build(const std::string& name, const ecki
 
     std::map<std::string, StateGeneratorFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<Atlas>() << "Looking for StateGeneratorFactory [" << name << "]" << std::endl;
+    Log::debug() << "Looking for StateGeneratorFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
         Log::error() << "No StateGeneratorFactory for [" << name << "]" << std::endl;

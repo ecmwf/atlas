@@ -26,6 +26,8 @@
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "eckit/utils/Translator.h"
+#include "eckit/log/PrefixTarget.h"
+#include "eckit/log/OStreamTarget.h"
 
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
@@ -33,7 +35,7 @@
 #include "atlas/library/Library.h"
 #include "atlas/library/version.h"
 #include "atlas/library/git_sha1.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 
 using eckit::PathName;
 using eckit::Main;
@@ -88,23 +90,37 @@ void Library::initialise(int argc, char **argv) {
         Main::initialise(argc, argv);
         Main::instance().taskID( eckit::mpi::comm("world").rank() );
         if( Main::instance().taskID() != 0 ) Log::reset();
-        Log::debug<Atlas>() << "Atlas initialised eckit::Main.\n";
+        Log::debug() << "Atlas initialised eckit::Main.\n";
         if( eckit::mpi::comm("world").size() > 1 )
-            Log::debug<Atlas>() <<
+            Log::debug() <<
               "--> Only MPI rank 0 is logging. Please initialise eckit::Main \n"
               "    before to avoid this behaviour.\n";
     }
     initialise();
 }
 
+namespace{
+  bool getEnv( const std::string& env, bool default_value ) {
+      if (::getenv( env.c_str() ) ) {
+        return eckit::Translator<std::string, bool>()(::getenv( env.c_str() ));
+      }
+      return default_value;
+  }
+}
 void Library::initialise(const eckit::Parametrisation& config) {
 
-    // Timer configuration
-    config.get("timer.barriers",timer_.barriers_);
-    timer_.channel_ = &Log::debug<Atlas>();
+    if( not config.get("trace",info_) ) {
+      info_ = getEnv("ATLAS_INFO",info_);
+    }
+    if( not config.get("trace",trace_) ) {
+      trace_ = getEnv("ATLAS_TRACE",trace_);
+    }
+    if( not config.get("barriers",barriers_) ) {
+      barriers_ = getEnv("ATLAS_BARRIERS",barriers_);
+    }
 
     // Summary
-    std::ostream& out = Log::debug<Atlas>();
+    std::ostream& out = Log::debug();
     out << "Executable        [" << Main::instance().name() << "]\n";
     out << " \n";
     out << "  current dir     [" << PathName(LocalPathName::cwd()).fullName() << "]\n";
@@ -113,25 +129,17 @@ void Library::initialise(const eckit::Parametrisation& config) {
     out << "    communicator  [" << parallel::mpi::comm() << "] \n";
     out << "    size          [" << parallel::mpi::comm().size() << "] \n";
     out << "    rank          [" << parallel::mpi::comm().rank() << "] \n";
+    out << "    barriers      [" << barriers() << "] \n";
     out << " \n";
-    out << "  Timer\n";
-    out << "    barriers      [" << str(timer_.barriers()) << "] \n";
+    out << "  trace           [" << str(trace()) << "] \n";
+    out << "  debug           [" << str(debug()) << "] \n";
     out << " \n";
-    out << atlas::Library::instance().info();
+    out << atlas::Library::instance().information();
     out << std::flush;
 }
 
 void Library::initialise() {
-    util::Config timer_config;
-
-    if (::getenv("ATLAS_TIMER_BARRIERS")) {
-      bool var = eckit::Translator<std::string, bool>()(::getenv("ATLAS_TIMER_BARRIERS"));
-      timer_config.set("barriers",var);
-    }
-
-    util::Config config;
-    config.set("timer",timer_config);
-    initialise( config );
+  initialise( util::NoConfig() );
 }
 
 void Library::finalise() {
@@ -147,21 +155,41 @@ void Library::finalise() {
     }
 #endif
 
-    Log::debug<Atlas>() << "Atlas finalised\n";
+    // Make sure that these specialised channels that wrap Log::info() are 
+    // destroyed before Log::info gets destroyed.
+    // Just in case someone still tries to log, we reset to empty channels.
+    trace_channel_.reset( new eckit::Channel() );
+
+    Log::debug() << "Atlas finalised" << std::endl;
+
     Log::flush();
 }
 
-bool Library::Timer::barriers() const {
-    return barriers_;
+std::ostream& Library::traceChannel() const {
+  if( trace_channel_ ) return *trace_channel_;
+  if( trace_ ) {
+    trace_channel_.reset( new eckit::Channel(
+      new eckit::PrefixTarget("ATLAS_TRACE", new eckit::OStreamTarget(eckit::Log::info())))); 
+  } else {
+    trace_channel_.reset( new eckit::Channel() );
+  }
+  return *trace_channel_;
 }
 
-std::ostream& Library::Timer::channel() const {
-    return *channel_;
+std::ostream& Library::infoChannel() const {
+  if( info_channel_ ) return *info_channel_;
+  if( info_ ) {
+    return eckit::Log::info();
+  } else {
+    info_channel_.reset( new eckit::Channel() );
+  }
+  return *trace_channel_;
 }
+
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void Library::Info::print( std::ostream& out ) const {
+void Library::Information::print( std::ostream& out ) const {
     out << "atlas version (" << atlas::Library::instance().version() << "), "
         << "git-sha1 "<< atlas::Library::instance().gitsha1(7) << '\n';
     out << " \n";

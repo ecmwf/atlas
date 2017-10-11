@@ -16,27 +16,30 @@
 //-----------------------------------------------------------------------------------------------------------
 
 namespace eckit { class Configuration; }
-namespace atlas { namespace util { namespace detail { class CallStack; } } }
+namespace eckit { class CodeLocation; }
 
 namespace atlas {
 namespace runtime {
 namespace timer {
 
+class CallStack;
+
 class Timings {
 public:
-    using CallStack = util::detail::CallStack;
+    using Configuration = eckit::Configuration;
+    using CodeLocation = eckit::CodeLocation;
     using Identifier = size_t;
     using Labels = std::vector<std::string>;
 
 public: // static methods
 
-    static Identifier add( const CallStack& stack, const std::string& title, const Labels& );
+    static Identifier add( const CodeLocation&, const CallStack&, const std::string& title, const Labels& );
 
     static void update( const Identifier& id, double seconds );
 
     static std::string report();
 
-    static std::string report( const eckit::Configuration& );
+    static std::string report( const Configuration& );
 
 };
 

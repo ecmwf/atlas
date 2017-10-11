@@ -140,7 +140,7 @@ Partitioner* PartitionerFactory::build(const std::string& name) {
 
     std::map<std::string, PartitionerFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<Atlas>() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+    Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
@@ -163,7 +163,7 @@ Partitioner* PartitionerFactory::build(const std::string& name, const size_t nb_
 
     std::map<std::string, PartitionerFactory *>::const_iterator j = m->find(name);
 
-    Log::debug<Atlas>() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+    Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';

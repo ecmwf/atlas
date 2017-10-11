@@ -15,7 +15,7 @@
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/Statistics.h"
 
@@ -117,7 +117,7 @@ void GatherScatter::setup( const int part[],
     }
   }
 
-  ATLAS_MPI_STATS( ALLGATHER ) {
+  ATLAS_TRACE_MPI( ALLGATHER ) {
     parallel::mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
   }
 
@@ -130,7 +130,7 @@ void GatherScatter::setup( const int part[],
   }
   std::vector<gidx_t> recvnodes(glbcnt_);
 
-  ATLAS_MPI_STATS( ALLGATHER ) {
+  ATLAS_TRACE_MPI( ALLGATHER ) {
     parallel::mpi::comm().allGatherv(sendnodes.begin(), sendnodes.begin() + loccnt_,
                                      recvnodes.data(), glbcounts_.data(), glbdispls_.data());
   }
@@ -148,7 +148,7 @@ void GatherScatter::setup( const int part[],
   recvnodes.clear();
 
   // Sort on "g" member, and remove duplicates
-  ATLAS_TIME_SCOPE("sorting")
+  ATLAS_TRACE_SCOPE("sorting")
   {
     std::sort(node_sort.begin(), node_sort.end());
     node_sort.erase( std::unique( node_sort.begin(), node_sort.end() ), node_sort.end() );

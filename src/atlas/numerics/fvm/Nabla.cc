@@ -41,7 +41,7 @@ Nabla::Nabla(const numerics::Method &method, const eckit::Parametrisation &p) :
   fvm_ = dynamic_cast<const fvm::Method *>(&method);
   if( ! fvm_ )
     throw eckit::BadCast("atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method",Here());
-  Log::debug<Atlas>() << "Nabla constructed for method " << fvm_->name()
+  Log::debug() << "Nabla constructed for method " << fvm_->name()
                      << " with " << fvm_->node_columns().nb_nodes_global() << " nodes total" << std::endl;
 
   setup();
@@ -99,7 +99,7 @@ void Nabla::gradient(const Field &field, Field &grad_field) const
 
 void Nabla::gradient_of_scalar(const Field& scalar_field, Field& grad_field) const
 {
-  Log::debug<Atlas>() << "Compute gradient of scalar field " << scalar_field.name() << " with fvm method" << std::endl;
+  Log::debug() << "Compute gradient of scalar field " << scalar_field.name() << " with fvm method" << std::endl;
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 
@@ -179,7 +179,7 @@ void Nabla::gradient_of_scalar(const Field& scalar_field, Field& grad_field) con
 
 void Nabla::gradient_of_vector(const Field &vector_field, Field &grad_field) const
 {
-  Log::debug<Atlas>() << "Compute gradient of vector field " << vector_field.name() << " with fvm method" << std::endl;
+  Log::debug() << "Compute gradient of vector field " << vector_field.name() << " with fvm method" << std::endl;
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 

@@ -17,7 +17,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/util/MicroDeg.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 
 using atlas::util::microdeg;
 
@@ -430,7 +430,7 @@ bool compare_WE_NS(const EqualRegionsPartitioner::NodeInt& node1, const EqualReg
 
 void EqualRegionsPartitioner::partition( int nb_nodes, NodeInt nodes[], int part[] ) const {
 
-    ATLAS_TIME( "EqualRegionsPartitioner::partition" );
+    ATLAS_TRACE( "EqualRegionsPartitioner::partition" );
 
 
     // std::clock_t init, final;

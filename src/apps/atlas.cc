@@ -43,7 +43,7 @@ void Version::run()
   }
   else if( Resource<bool>("--info",false) )
   {
-    Log::info() << atlas::Library::instance().info() << std::endl;
+    Log::info() << atlas::Library::instance().information() << std::endl;
     return;
   }
   else if( Resource<bool>("--help",false) )

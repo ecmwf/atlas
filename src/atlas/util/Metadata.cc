@@ -73,7 +73,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root)
     buffer_size = buffer.size();
   }
 
-  ATLAS_MPI_STATS( BROADCAST ) {
+  ATLAS_TRACE_MPI( BROADCAST ) {
     atlas::parallel::mpi::comm().broadcast(buffer_size,root);
   }
 
@@ -81,7 +81,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root)
     buffer.resize(buffer_size);
   }
 
-  ATLAS_MPI_STATS( BROADCAST ) {
+  ATLAS_TRACE_MPI( BROADCAST ) {
     atlas::parallel::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
   }
 
@@ -115,7 +115,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root) const
     buffer_size = buffer.size();
   }
 
-  ATLAS_MPI_STATS( BROADCAST ) {
+  ATLAS_TRACE_MPI( BROADCAST ) {
     atlas::parallel::mpi::comm().broadcast(buffer_size,root);
   }
 
@@ -123,7 +123,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root) const
     buffer.resize(buffer_size);
   }
 
-  ATLAS_MPI_STATS( BROADCAST ) {
+  ATLAS_TRACE_MPI( BROADCAST ) {
     atlas::parallel::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
   }
 

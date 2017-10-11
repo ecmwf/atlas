@@ -19,24 +19,48 @@ namespace timer {
 //-----------------------------------------------------------------------------------------------------------
   
 class StopWatch {
+public:
+  StopWatch();
+  StopWatch(double elapsed);
+  void start();
+  void stop();
+  void reset();
+  double elapsed() const;
 private:
   std::chrono::duration<double> elapsed_{0};
   std::chrono::steady_clock::time_point start_;
-public:
-  void start() {
-    start_ = std::chrono::steady_clock::now();
-  }
-  void stop() { 
-    elapsed_ += (std::chrono::steady_clock::now() - start_);
-  }
-  void reset() {
-    elapsed_ = std::chrono::seconds::zero();
-    start_ = std::chrono::steady_clock::now();
-  }
-  double elapsed() const {
-    return elapsed_.count();
-  }
+  bool running_{false};
 };
+
+//-----------------------------------------------------------------------------------------------------------
+
+inline StopWatch::StopWatch() {
+}
+
+inline StopWatch::StopWatch(double elapsed) :
+  elapsed_(elapsed) {
+}
+
+inline void StopWatch::start() {
+  start_ = std::chrono::steady_clock::now();
+  running_ = true;
+}
+
+inline void StopWatch::stop() { 
+  if( running_ ) {
+    elapsed_ += (std::chrono::steady_clock::now() - start_);
+    running_ = false;
+  }
+}
+
+inline void StopWatch::reset() {
+  elapsed_ = std::chrono::seconds::zero();
+  start_ = std::chrono::steady_clock::now();
+}
+
+inline double StopWatch::elapsed() const {
+  return elapsed_.count();
+}
 
 //-----------------------------------------------------------------------------------------------------------
 

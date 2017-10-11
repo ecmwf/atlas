@@ -2,14 +2,14 @@
 #include <functional>
 
 #include "CallStack.h"
+#include "eckit/log/CodeLocation.h"
 
 namespace atlas {
-namespace util {
-namespace detail {
+namespace runtime {
+namespace timer {
 
 void CallStack::push_front( const eckit::CodeLocation& loc ) {
   stack_.push_front( std::hash<std::string>{}(loc.asString()) );
-  loc_ = loc;
 }
 
 void CallStack::pop_front() {
@@ -24,6 +24,6 @@ size_t CallStack::hash() const {
   return hash_;
 }
 
-} // namespace detail
-} // namespace util
+} // namespace timer
+} // namespace runtime
 } // namespace atlas

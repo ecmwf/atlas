@@ -103,7 +103,7 @@ void build_periodic_boundaries( Mesh& mesh )
       int sendcnt = slave_nodes.size();
       std::vector< int > recvcounts( parallel::mpi::comm().size() );
 
-      ATLAS_MPI_STATS( ALLGATHER ) {
+      ATLAS_TRACE_MPI( ALLGATHER ) {
         parallel::mpi::comm().allGather(sendcnt, recvcounts.begin(), recvcounts.end());
       }
 
@@ -117,7 +117,7 @@ void build_periodic_boundaries( Mesh& mesh )
       }
       std::vector<int> recvbuf(recvcnt);
 
-      ATLAS_MPI_STATS( ALLGATHER ) {
+      ATLAS_TRACE_MPI( ALLGATHER ) {
         parallel::mpi::comm().allGatherv(slave_nodes.begin(), slave_nodes.end(), recvbuf.begin(), recvcounts.data(), recvdispls.data());
       }
 
@@ -183,7 +183,7 @@ void build_periodic_boundaries( Mesh& mesh )
     }
 
     // Communicate
-    ATLAS_MPI_STATS( ALLTOALL ) {
+    ATLAS_TRACE_MPI( ALLTOALL ) {
       parallel::mpi::comm().allToAll( send_slave_idx,      recv_slave_idx      );
       parallel::mpi::comm().allToAll( send_master_part,    recv_master_part    );
       parallel::mpi::comm().allToAll( send_master_ridx,    recv_master_ridx     );

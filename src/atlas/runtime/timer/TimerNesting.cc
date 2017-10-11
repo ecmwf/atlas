@@ -18,7 +18,6 @@ namespace timer {
 
 
 class TimerNestingState {
-  using CallStack = util::detail::CallStack;
 private:
   TimerNestingState() {}
   CallStack stack_;
@@ -47,20 +46,21 @@ TimerNesting::TimerNesting( const eckit::CodeLocation& loc ) :
 }
 
 TimerNesting::~TimerNesting() {
-  if( running_ )
-    stop();
+  stop();
 }
 
 void TimerNesting::stop() {
-  if( running_ )
+  if( running_ ) {
     TimerNestingState::instance().pop();
-  running_ = false;
+    running_ = false;
+  }
 }
 
 void TimerNesting::start() {
-  if( not running_ )
+  if( not running_ ) {
     TimerNestingState::instance().push( loc_ );
-  running_ = true;
+    running_ = true;
+  }
 }
 
 } // namespace timer

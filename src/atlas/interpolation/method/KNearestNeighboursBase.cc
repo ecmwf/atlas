@@ -16,7 +16,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/library/Library.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 
 
 #ifdef ECKIT_VERSION_INT

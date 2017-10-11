@@ -22,7 +22,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 
 namespace atlas {
 namespace interpolation {
@@ -84,13 +84,13 @@ Method* MethodFactory::build(const std::string& name, const Method::Config& conf
 
 
 void Method::execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget) const {
-    ATLAS_TIME( "atlas::interpolation::method::Method::execute()" );
+    ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
     const size_t N = fieldsSource.size();
     ASSERT(N == fieldsTarget.size());
 
     for (size_t i = 0; i < fieldsSource.size(); ++i) {
-        Log::debug<Atlas>() << "Method::execute() on field " << (i+1) << '/' << N << "..." << std::endl;
+        Log::debug() << "Method::execute() on field " << (i+1) << '/' << N << "..." << std::endl;
 
         const Field& src = fieldsSource[i];
         Field& tgt = fieldsTarget[i];
@@ -104,7 +104,7 @@ void Method::execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget) const
 
 
 void Method::execute(const Field& fieldSource, Field& fieldTarget) const {
-    ATLAS_TIME( "atlas::interpolation::method::Method::execute()" );
+    ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
     eckit::linalg::Vector
             v_src(const_cast< Field& >(fieldSource).data<double>(), fieldSource.shape(0)),

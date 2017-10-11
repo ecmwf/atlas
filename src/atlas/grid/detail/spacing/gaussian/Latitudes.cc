@@ -248,7 +248,7 @@ void legpol_quadrature(
 //-----------------------------------------------------------------------------
 
 void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], double weights[]) {
-    Log::debug<Atlas>() << "Atlas computing Gaussian latitudes for N " << N << "\n";
+    Log::debug() << "Atlas computing Gaussian latitudes for N " << N << "\n";
 
     // Compute first guess for colatitudes in radians
     double z;

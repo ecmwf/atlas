@@ -160,8 +160,8 @@ void RegularMeshGenerator::generate_mesh(
   bool periodic_x = options.get<bool>("periodic_x") or rg.periodic() ;
   bool periodic_y = options.get<bool>("periodic_y");
 
-  Log::debug<Atlas>() << Here() << " periodic_x = " << periodic_x << std::endl;
-  Log::debug<Atlas>() << Here() << " periodic_y = " << periodic_y << std::endl;
+  Log::debug() << Here() << " periodic_x = " << periodic_x << std::endl;
+  Log::debug() << Here() << " periodic_y = " << periodic_y << std::endl;
 
   // for asynchronous output
 #if DEBUG_OUTPUT

@@ -41,7 +41,7 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #endif
 
 #include "atlas/grid/Grid.h"
-#include "atlas/runtime/Timer.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -69,7 +69,7 @@ namespace actions {
 
 static Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
 {
-    ATLAS_TIME();
+    ATLAS_TRACE();
 
     Polyhedron_3* poly = new Polyhedron_3();
 
@@ -88,7 +88,7 @@ static Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >
 
 static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
-    ATLAS_TIME();
+    ATLAS_TRACE();
 
     bool ensure_outward_normals = true;
 
@@ -193,7 +193,7 @@ void BuildConvexHull3D::operator()( Mesh& mesh ) const
     if( mesh.cells().size() )
         return;
 
-    ATLAS_TIME();
+    ATLAS_TRACE();
 
     // remove duplicate points
 

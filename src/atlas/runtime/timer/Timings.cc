@@ -17,8 +17,8 @@
 #include "Timings.h"
 #include "eckit/config/Configuration.h"
 #include "eckit/filesystem/PathName.h"
-#include "atlas/util/detail/CallStack.h"
 #include "atlas/util/Config.h"
+#include "atlas/runtime/timer/CallStack.h"
 #include "atlas/runtime/Debug.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -29,8 +29,6 @@ namespace runtime {
 namespace timer {
 
 class TimingsRegistry {
-
-  using CallStack = Timings::CallStack;
 
 private:
 
@@ -57,7 +55,7 @@ public:
         return registry;
     }
 
-    size_t add( const CallStack& stack, const std::string& title, const Timings::Labels& );
+    size_t add( const eckit::CodeLocation&, const CallStack& stack, const std::string& title, const Timings::Labels& );
 
     void update( size_t idx, double seconds );
 
@@ -71,7 +69,7 @@ private:
 
 };
 
-size_t TimingsRegistry::add( const CallStack& stack, const std::string& title, const Timings::Labels& labels ) {
+size_t TimingsRegistry::add( const eckit::CodeLocation& loc, const CallStack& stack, const std::string& title, const Timings::Labels& labels ) {
 
     size_t key = stack.hash();
     auto it = index_.find( key );
@@ -84,7 +82,7 @@ size_t TimingsRegistry::add( const CallStack& stack, const std::string& title, c
       max_timings_.emplace_back( 0 );
       var_timings_.emplace_back( 0 );
       titles_.emplace_back( title );
-      locations_.emplace_back( stack.loc() );
+      locations_.emplace_back( loc );
       nest_.emplace_back( stack.size() );
       stack_.emplace_back( stack );
 
@@ -377,8 +375,8 @@ std::string TimingsRegistry::filter_filepath( const std::string& filepath ) cons
   // return filepath;
 }
 
-Timings::Identifier Timings::add( const CallStack& stack, const std::string& title, const Labels& labels ) {
-    return TimingsRegistry::instance().add( stack, title, labels );
+Timings::Identifier Timings::add( const CodeLocation& loc, const CallStack& stack, const std::string& title, const Labels& labels ) {
+    return TimingsRegistry::instance().add( loc, stack, title, labels );
 }
 
 void Timings::update( const Identifier& id, double seconds ) {
@@ -389,7 +387,7 @@ std::string Timings::report() {
   return report( util::NoConfig() );
 }
 
-std::string Timings::report( const eckit::Configuration& config ) {
+std::string Timings::report( const Configuration& config ) {
     std::stringstream out;
     TimingsRegistry::instance().report( out, config );
     return out.str();
