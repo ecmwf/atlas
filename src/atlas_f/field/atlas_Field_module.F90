@@ -203,6 +203,7 @@ subroutine access_host_data_${dtype}$_r${rank}$(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
+  nullify(field)
   call atlas__Field__host_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -216,6 +217,7 @@ subroutine access_device_data_${dtype}$_r${rank}$(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
+  nullify(field)
   call atlas__Field__device_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -236,6 +238,7 @@ subroutine access_host_data_${dtype}$_r${rank}$_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
+  nullify(field)
   call atlas__Field__host_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -250,6 +253,7 @@ subroutine access_device_data_${dtype}$_r${rank}$_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
+  nullify(field)
   call atlas__Field__device_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
