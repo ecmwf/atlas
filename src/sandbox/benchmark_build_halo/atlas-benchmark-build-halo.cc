@@ -48,7 +48,7 @@ class Tool : public AtlasTool {
     return "Tool to generate a python script that plots the grid-distribution of a given grid";
   }
   virtual std::string usage() {
-    return name() + " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT [--help]";
+    return name() + " --grid=name [OPTION]... OUTPUT [--help]";
   }
 
 public:
@@ -67,21 +67,21 @@ private:
 
 Tool::Tool(int argc,char **argv): AtlasTool(argc,argv)
 {
-  add_option( new SimpleOption<std::string>("grid.name","Grid unique identifier\n"
+  add_option( new SimpleOption<std::string>("grid","Grid unique identifier\n"
     +indent()+"     Example values: N80, F40, O24, L32") );
-  add_option( new SimpleOption<PathName>("grid.json","Grid described by json file") );
-  add_option( new SimpleOption<long>("halo","Number of halos") );
+  add_option( new SimpleOption<long>("halo","Number of halos (default=1") );
 }
 
 //-----------------------------------------------------------------------------
 
 void Tool::execute(const Args& args)
 {
+  Trace timer(Here(), displayName() );
   key = "";
-  args.get("grid.name",key);
+  args.get("grid",key);
 
   std::string path_in_str = "";
-  if( args.get("grid.json",path_in_str) ) path_in = path_in_str;
+  if( args.get("grid",path_in_str) ) path_in = path_in_str;
 
   StructuredGrid grid;
   if( key.size() )
@@ -89,24 +89,18 @@ void Tool::execute(const Args& args)
     try{ grid = Grid(key); }
     catch( eckit::BadParameter& e ){}
   }
-  else if( path_in.path().size() )
-  {
-    Log::info() << "Creating grid from file " << path_in << std::endl;
-    Log::debug() << Config(path_in) << std::endl;
-    try{ grid = Grid( Config(path_in) ); }
-    catch( eckit::BadParameter& e ){}
-  }
   else
   {
     Log::error() << "No grid specified." << std::endl;
   }
+
 
   if( !grid ) return;
 
   Log::debug() << "Domain: "   << grid.domain() << std::endl;
   Log::debug() << "Periodic: " << grid.periodic() << std::endl;
 
-  MeshGenerator meshgenerator("structured");
+  MeshGenerator meshgenerator("structured", util::Config("partitioner","equal_regions"));
 
   size_t halo = args.getLong("halo",1);
 
@@ -117,6 +111,7 @@ void Tool::execute(const Args& args)
     mesh::actions::build_halo( mesh, halo );
     parallel::mpi::comm().barrier();
   }
+  timer.stop();
   Log::info() << Trace::report() << std::endl;
 
 }
