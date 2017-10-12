@@ -16,16 +16,18 @@
 
 #define ATLAS_TRACE_MPI(...)
 
-//#if ATLAS_HAVE_TRACE
+#if ATLAS_HAVE_TRACE
 
-//#include "atlas/util/detail/BlackMagic.h"
+#include "atlas/util/detail/BlackMagic.h"
 
-//#undef ATLAS_TRACE_MPI
-//#define ATLAS_TRACE_MPI(...) ATLAS_TRACE_MPI_( ::atlas::parallel::mpi::Statistics, Here(), ##__VA_ARGS__ )
-//#define ATLAS_TRACE_MPI_( Type, loc, enum_var, ... ) \
-//  __ATLAS_TYPE_SCOPE( Type, loc, ::atlas::parallel::mpi::StatisticsEnum::__ATLAS_STRINGIFY(enum_var), ##__VA_ARGS__ )
+#undef ATLAS_TRACE_MPI
+#define ATLAS_TRACE_MPI(...) ATLAS_TRACE_MPI_( ::atlas::parallel::mpi::Statistics, Here(), __VA_ARGS__ )
+#define ATLAS_TRACE_MPI_( Type, location, operation, ... ) __ATLAS_TYPE_SCOPE( \
+  Type, location, __ATLAS_TRACE_MPI_ENUM(operation) __ATLAS_COMMA_ARGS(__VA_ARGS__) )
 
-//#endif
+#define __ATLAS_TRACE_MPI_ENUM(operation) ::atlas::parallel::mpi::Operation::__ATLAS_STRINGIFY(operation)
+
+#endif
 
 
 namespace atlas {
@@ -38,7 +40,7 @@ struct StatisticsTimerTraits {
 };
 
 
-enum class StatisticsEnum {
+enum class Operation {
   BROADCAST,
   ALLREDUCE,
   ALLGATHER,
@@ -54,8 +56,8 @@ enum class StatisticsEnum {
   _COUNT_
 };
 
-static const std::string& name(StatisticsEnum c) {
-  static std::array<std::string, static_cast<size_t>(StatisticsEnum::_COUNT_)> names {
+static const std::string& name(Operation c) {
+  static std::array<std::string, static_cast<size_t>(Operation::_COUNT_)> names {
     "mpi.broadcast",
     "mpi.allreduce",
     "mpi.allgather",
@@ -75,14 +77,14 @@ static const std::string& name(StatisticsEnum c) {
 class Statistics : public runtime::trace::TraceT< StatisticsTimerTraits > {
     using Base = runtime::trace::TraceT< StatisticsTimerTraits >;
 public:
-    Statistics( const eckit::CodeLocation& loc, StatisticsEnum c ) :
+    Statistics( const eckit::CodeLocation& loc, Operation c ) :
       Base( loc, name(c), make_labels(c) ) {
     }
-    Statistics( const eckit::CodeLocation& loc, StatisticsEnum c, const std::string& title ) :
+    Statistics( const eckit::CodeLocation& loc, Operation c, const std::string& title ) :
       Base( loc, title, make_labels(c) ) {
     }
 private:
-    static std::vector<std::string> make_labels( StatisticsEnum c) {
+    static std::vector<std::string> make_labels( Operation c) {
       return {"mpi", name(c)};
     }
 };

@@ -54,10 +54,13 @@ __ATLAS_ISEMPTY_(                                                               
 #define __ATLAS_ISEMPTY_(_0, _1, _2, _3) __ATLAS_HAS_COMMA(__ATLAS_PASTE5(__ATLAS_IS_EMPTY_CASE_, _0, _1, _2, _3))
 #define __ATLAS_IS_EMPTY_CASE_0001 ,
 
+#define __ATLAS_NARG(...) __ATLAS_SPLICE( __ATLAS_CALL_NARG_, __ATLAS_ISEMPTY( __VA_ARGS__ ) ) (__VA_ARGS__)
 #define __ATLAS_CALL_NARG_1(...) 0
 #define __ATLAS_CALL_NARG_0 __ATLAS_NARG_
-#define __ATLAS_NARG(...) __ATLAS_SPLICE( __ATLAS_CALL_NARG_, __ATLAS_ISEMPTY( __VA_ARGS__ ) ) (__VA_ARGS__)
 
+#define __ATLAS_COMMA_ARGS(...) __ATLAS_SPLICE( __ATLAS_COMMA_ARGS_, __ATLAS_ISEMPTY(__VA_ARGS__) ) (__VA_ARGS__)
+#define __ATLAS_COMMA_ARGS_1(...)
+#define __ATLAS_COMMA_ARGS_0(...) , __VA_ARGS__
 
 #define __ATLAS_ARGS_OR_DUMMY(...) __ATLAS_SPLICE( __ATLAS_ARGS_OR_DUMMY_, __ATLAS_ISEMPTY( __VA_ARGS__ ) ) ( __VA_ARGS__)
 #define __ATLAS_ARGS_OR_DUMMY_0(...)  __VA_ARGS__
@@ -68,13 +71,9 @@ __ATLAS_ISEMPTY_(                                                               
 #define __ATLAS_TYPE_0( Type, ...   )   Type __ATLAS_SPLICE( __variable_, __LINE__ ) (__VA_ARGS__)
 
 #define __ATLAS_TYPE_SCOPE(Type,...) __ATLAS_SPLICE( __ATLAS_TYPE_SCOPE_, __ATLAS_ISEMPTY( __VA_ARGS__ ) ) ( Type, __ATLAS_ARGS_OR_DUMMY(__VA_ARGS__) )
-#define __ATLAS_TYPE_SCOPE_1( Type, dummy ) \
-  for( Type \
-      __ATLAS_SPLICE( __variable_, __LINE__ );\
-      __ATLAS_SPLICE( __variable_, __LINE__ ) .running(); \
-      __ATLAS_SPLICE( __variable_, __LINE__ ) .stop() )
-#define __ATLAS_TYPE_SCOPE_0( Type, ...   ) \
-  for( Type \
-      __ATLAS_SPLICE( __variable_, __LINE__ ) (__VA_ARGS__); \
-      __ATLAS_SPLICE( __variable_, __LINE__ ) .running(); \
-      __ATLAS_SPLICE( __variable_, __LINE__ ) .stop() )
+#define __ATLAS_TYPE_SCOPE_1( Type, ... ) \
+  for( bool __ATLAS_SPLICE( __done_, __LINE__ )=false; __ATLAS_SPLICE( __done_, __LINE__ )!=true; ) \
+  for( Type __ATLAS_SPLICE( __variable_, __LINE__ ); __ATLAS_SPLICE( __done_, __LINE__ )!=true; __ATLAS_SPLICE( __done_, __LINE__ )=true )
+#define __ATLAS_TYPE_SCOPE_0( Type, ... ) \
+  for( bool __ATLAS_SPLICE( __done_, __LINE__ )=false; __ATLAS_SPLICE( __done_, __LINE__ )!=true; ) \
+  for( Type __ATLAS_SPLICE( __variable_, __LINE__ )(__VA_ARGS__); __ATLAS_SPLICE( __done_, __LINE__ )!=true; __ATLAS_SPLICE( __done_, __LINE__ )=true )

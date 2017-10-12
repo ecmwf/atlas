@@ -21,7 +21,6 @@
 #include "atlas/util/Checksum.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/runtime/Debug.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"

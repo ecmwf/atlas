@@ -22,7 +22,6 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/Debug.h"
 #include "atlas/runtime/Log.h"
 
 #define DEBUG_OUTPUT 0

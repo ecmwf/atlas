@@ -443,7 +443,6 @@ mesh/detail/AccumulateFacets.cc
 util/Bitflags.h
 util/Checksum.h
 util/Checksum.cc
-runtime/Debug.h
 util/MicroDeg.h
 mesh/IsGhostNode.h
 util/LonLatMicroDeg.h

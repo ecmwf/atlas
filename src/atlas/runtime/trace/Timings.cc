@@ -19,7 +19,6 @@
 #include "eckit/filesystem/PathName.h"
 #include "atlas/util/Config.h"
 #include "atlas/runtime/trace/CallStack.h"
-#include "atlas/runtime/Debug.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 //-----------------------------------------------------------------------------------------------------------
@@ -349,10 +348,11 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
 
     std::string sepc = box_horizontal(3);
 
-    out << "\n";
-    out << print_horizontal(sepc) << std::endl;
-    out << "Timers accumulated by label" << std::endl;
-    out << print_horizontal(sepc) << std::endl;
+    out << std::left << box_horizontal(40) << sept << box_horizontal(5) << sept << box_horizontal(12) << "\n";
+    out << std::left << std::setw(40) << "Timers accumulated by label"
+        << sep << std::left << std::setw(5) << "count"
+        << sep << "time" << std::endl;
+    out << std::left << box_horizontal(40) << seph << box_horizontal(5) << seph << box_horizontal(12) << "\n";
     for( auto label : labels_ ) {
       auto name = label.first;
       auto timers = label.second;
@@ -363,11 +363,11 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
         count += counts_[j];
       }
       out << std::left << std::setw(40) << name
+          << sep << std::left  << std::setw(5) << count
           << sep << print_time(tot)
-          << sep << std::string(header ? "" : "count: ") << std::left  << std::setw(max_count_length) << count
           << std::endl;
     }
-    out << print_horizontal(sepc) << std::endl;
+    out << std::left << box_horizontal(40) << sepf << box_horizontal(5) << sepf << box_horizontal(12) << "\n";
 }
 
 
