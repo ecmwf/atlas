@@ -12,11 +12,6 @@
 
 #include "atlas/library/config.h"
 
-// Temporary until ECKIT-166 is fixed
-#ifdef BUG_ECKIT_166
-#include <mpi.h>
-#endif
-
 #ifdef ATLAS_HAVE_TRANS
 #include "transi/version.h"
 #endif
@@ -143,20 +138,8 @@ void Library::initialise() {
 }
 
 void Library::finalise() {
-// Temporary until ECKIT-166 is fixed
-#ifdef BUG_ECKIT_166
-    const bool using_mpi = (::getenv("OMPI_COMM_WORLD_SIZE") || ::getenv("ALPS_APP_PE"));
-    if( using_mpi ) {
-      int finalized = 1;
-      MPI_Finalized(&finalized);
-      if( not finalized ) {
-        MPI_Finalize();
-      }
-    }
-#endif
-
-    // Make sure that these specialised channels that wrap Log::info() are 
-    // destroyed before Log::info gets destroyed.
+    // Make sure that these specialised channels that wrap Log::info() are
+    // destroyed before eckit::Log::info gets destroyed.
     // Just in case someone still tries to log, we reset to empty channels.
     trace_channel_.reset( new eckit::Channel() );
 
@@ -169,7 +152,7 @@ std::ostream& Library::traceChannel() const {
   if( trace_channel_ ) return *trace_channel_;
   if( trace_ ) {
     trace_channel_.reset( new eckit::Channel(
-      new eckit::PrefixTarget("ATLAS_TRACE", new eckit::OStreamTarget(eckit::Log::info())))); 
+      new eckit::PrefixTarget("ATLAS_TRACE", new eckit::OStreamTarget(eckit::Log::info()))));
   } else {
     trace_channel_.reset( new eckit::Channel() );
   }

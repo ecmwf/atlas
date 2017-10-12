@@ -44,7 +44,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #endif
 
-// #define ATLAS_103
+#define ATLAS_103
 // #define ATLAS_103_SORT
 
 #ifndef ATLAS_103

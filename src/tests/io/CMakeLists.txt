@@ -6,8 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( ECKIT_HAVE_TESTING )
-
 ecbuild_add_test( TARGET atlas_test_gmsh
   SOURCES  test_gmsh.cc ../TestMeshes.h
   LIBS     atlas
@@ -17,8 +15,6 @@ ecbuild_add_test( TARGET atlas_test_pointcloud_io
   SOURCES   test_pointcloud_io.cc
   LIBS      atlas
 )
-
-endif()
 
 if( HAVE_FCTEST )
 

@@ -507,11 +507,6 @@ if( NOT ATLAS_HAVE_TRANS )
   unset( TRANSI_LIBRARIES )
 endif()
 
-if( ECKIT_HAVE_MPI AND ATLAS_HAVE_MPI AND  EC_OS_NAME MATCHES "macosx" )
-  list( APPEND ATLAS_DEFINITIONS BUG_ECKIT_166 )
-  link_libraries(${MPI_CXX_LIBRARIES})
-endif()
-
 if( SHORTCUT_COMPILATION )
   unset( atlas_grid_srcs )
   unset( atlas_mesh_srcs )

@@ -9,8 +9,6 @@ if( HAVE_FCTEST )
     endforeach()
 endif()
 
-if( ECKIT_HAVE_TESTING )
-
 foreach(test
         test_domain
         test_field
@@ -22,5 +20,3 @@ foreach(test
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas )
 
 endforeach()
-
-endif()

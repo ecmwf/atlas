@@ -14,6 +14,7 @@
 #include <vector>
 #include "eckit/geometry/Point2.h"
 #include "eckit/mpi/Comm.h"
+#include "eckit/log/ProgressTimer.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
@@ -22,17 +23,6 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-
-#include "eckit/eckit_version.h"
-#undef ECKIT_VERSION_INT
-#define ECKIT_VERSION_INT (ECKIT_MAJOR_VERSION * 10000 \
-                         + ECKIT_MINOR_VERSION * 100 )
-#if ECKIT_VERSION_INT > 1700
-#include "eckit/log/ProgressTimer.h"
-#define IF_ECKIT_VERSION_SUPPORTS_IT( args ) args
-#else
-#define IF_ECKIT_VERSION_SUPPORTS_IT( args )
-#endif
 
 namespace atlas {
 namespace grid {
@@ -120,9 +110,9 @@ void MatchingMeshPartitionerBruteForce::partition(const Grid& grid, int partitio
   }
 
   {
-      IF_ECKIT_VERSION_SUPPORTS_IT( eckit::ProgressTimer timer("Partitioning target", grid.size(), "point", double(10), atlas::Log::info()); )
-      for (size_t i=0; i<grid.size(); ++i) {
-          IF_ECKIT_VERSION_SUPPORTS_IT( ++timer; )
+      eckit::ProgressTimer timer("Partitioning target", grid.size(), "point",
+                                 double(10), atlas::Log::info());
+      for (size_t i=0; i<grid.size(); ++i, ++ timer) {
 
           partitioning[i] = -1;
           const PointLonLat& P(coordinates[i]);

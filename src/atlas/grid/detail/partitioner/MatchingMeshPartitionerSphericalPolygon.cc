@@ -12,23 +12,12 @@
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h"
 
 #include <vector>
-#include "eckit/config/Resource.h"
+#include "eckit/log/ProgressTimer.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/detail/PolygonCoordinates.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
-
-#include "eckit/eckit_version.h"
-#undef ECKIT_VERSION_INT
-#define ECKIT_VERSION_INT (ECKIT_MAJOR_VERSION * 10000 \
-                         + ECKIT_MINOR_VERSION * 100 )
-#if ECKIT_VERSION_INT > 1700
-#include "eckit/log/ProgressTimer.h"
-#define IF_ECKIT_VERSION_SUPPORTS_IT( args ) args
-#else
-#define IF_ECKIT_VERSION_SUPPORTS_IT( args )
-#endif
 
 namespace atlas {
 namespace grid {
@@ -61,11 +50,12 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
                 includesSouthPole );
 
     {
-        IF_ECKIT_VERSION_SUPPORTS_IT( eckit::ProgressTimer timer("Partitioning", grid.size(), "point", double(10), atlas::Log::info()); )
+        eckit::ProgressTimer timer("Partitioning", grid.size(), "point",
+                                   double(10), atlas::Log::info());
         size_t i = 0;
 
         for (const PointXY Pxy : grid.xy()) {
-            IF_ECKIT_VERSION_SUPPORTS_IT( ++timer; )
+            ++timer;
             const PointLonLat P = grid.projection().lonlat(Pxy);
             partitioning[i++] = poly.containsPointInSphericalGeometry(P) ? mpi_rank : -1;
         }

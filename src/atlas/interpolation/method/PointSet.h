@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_interpolation_method_PointSet_h
-#define atlas_interpolation_method_PointSet_h
+#pragma once
 
 #include <cassert>
 #include <fstream>
@@ -25,14 +24,6 @@
 #include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/mesh/Mesh.h"
-
-#include "eckit/eckit_version.h"
-
-#ifdef ECKIT_VERSION_INT
-#undef ECKIT_VERSION_INT
-#endif
-#define ECKIT_VERSION_INT (ECKIT_MAJOR_VERSION * 10000 \
-                         + ECKIT_MINOR_VERSION * 100 )
 
 namespace atlas {
 namespace interpolation {
@@ -111,10 +102,6 @@ protected: // methods
         static bool fastBuildKDTrees = eckit::Resource<bool>("$ATLAS_FAST_BUILD_KDTREES", true);
         tree_ = new PointIndex3();
 
-#       if ECKIT_VERSION_INT <= 1700
-          fastBuildKDTrees = true;
-#       endif
-
         if(fastBuildKDTrees){
             std::vector< PointIndex3::Value > pidx;
             pidx.reserve(npts_);
@@ -125,13 +112,11 @@ protected: // methods
 
             tree_->build(pidx.begin(), pidx.end());
         }
-#       if ECKIT_VERSION_INT > 1700
         else {
             for( size_t ip = 0; ip < npts_; ++ip ) {
                 tree_->insert(PointIndex3::Value( PointIndex3::Point( ipts[ip] ), ip ) );
             }
         }
-#       endif
     }
 
     size_t search_unique( const Point& p, size_t idx, uint32_t n  );
@@ -162,6 +147,3 @@ private:
 } // namespace method
 } // namespace interpolation
 } // namespace atlas
-
-#endif
-

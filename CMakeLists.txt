@@ -31,14 +31,8 @@ ecbuild_declare_project()
 
 ### eckit
 
-ecbuild_use_package( PROJECT eckit VERSION 0.17 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 0.18 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
-
-set( ECKIT_HAVE_TESTING ON )
-if( ECKIT_VERSION VERSION_LESS 0.18 )
-  set( ECKIT_HAVE_TESTING OFF )
-  ecbuild_warn("Atlas C++ unit tests are disabled because (eckit version < 0.18)")
-endif()
 
 # options & dependencies
 
