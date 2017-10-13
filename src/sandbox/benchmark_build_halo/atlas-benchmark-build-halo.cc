@@ -107,6 +107,7 @@ void Tool::execute(const Args& args)
   size_t iterations = 10;
   for( size_t i=0; i<iterations; ++i )
   {
+    ATLAS_TRACE("iteration");
     Mesh mesh = meshgenerator.generate(grid);
     mesh::actions::build_halo( mesh, halo );
     parallel::mpi::comm().barrier();

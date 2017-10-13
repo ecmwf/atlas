@@ -44,7 +44,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #endif
 
-#define ATLAS_103
+// #define ATLAS_103
 // #define ATLAS_103_SORT
 
 #ifndef ATLAS_103
@@ -388,20 +388,21 @@ public:
 
   static void all_to_all(Buffers& send, Buffers& recv)
   {
-
-      ATLAS_TRACE( "all_to_all" );
+      ATLAS_TRACE();
       const eckit::mpi::Comm& comm = parallel::mpi::comm();
 
-      comm.allToAll(send.node_glb_idx,  recv.node_glb_idx);
-      comm.allToAll(send.node_part,     recv.node_part);
-      comm.allToAll(send.node_ridx,     recv.node_ridx);
-      comm.allToAll(send.node_flags,    recv.node_flags);
-      comm.allToAll(send.node_xy,       recv.node_xy);
-      comm.allToAll(send.elem_glb_idx,  recv.elem_glb_idx);
-      comm.allToAll(send.elem_nodes_id, recv.elem_nodes_id);
-      comm.allToAll(send.elem_part,     recv.elem_part);
-      comm.allToAll(send.elem_type,     recv.elem_type);
-      comm.allToAll(send.elem_nodes_displs, recv.elem_nodes_displs);
+      ATLAS_TRACE_MPI( ALLTOALL ) {
+        comm.allToAll(send.node_glb_idx,  recv.node_glb_idx);
+        comm.allToAll(send.node_part,     recv.node_part);
+        comm.allToAll(send.node_ridx,     recv.node_ridx);
+        comm.allToAll(send.node_flags,    recv.node_flags);
+        comm.allToAll(send.node_xy,       recv.node_xy);
+        comm.allToAll(send.elem_glb_idx,  recv.elem_glb_idx);
+        comm.allToAll(send.elem_nodes_id, recv.elem_nodes_id);
+        comm.allToAll(send.elem_part,     recv.elem_part);
+        comm.allToAll(send.elem_type,     recv.elem_type);
+        comm.allToAll(send.elem_nodes_displs, recv.elem_nodes_displs);
+      }
   }
 
   struct Status {
@@ -471,6 +472,8 @@ public:
   template< typename NodeContainer, typename ElementContainer >
   void fill_sendbuffer(Buffers& buf,const NodeContainer& nodes_uid, const ElementContainer& elems, const int p)
   {
+    ATLAS_TRACE();
+
     int nb_nodes = nodes_uid.size();
     buf.node_glb_idx[p].resize(nb_nodes);
     buf.node_part   [p].resize(nb_nodes);
@@ -817,12 +820,13 @@ public:
 
 namespace {
 void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>& send, atlas::parallel::mpi::Buffer<uid_t,1>& recv, bool periodic = false ) {
+  auto& comm = parallel::mpi::comm();
 #ifndef ATLAS_103
   /* deprecated */
   ATLAS_TRACE( "gather_bdry_nodes old way" );
   {
     ATLAS_TRACE_MPI( ALLGATHER ) {
-      parallel::mpi::comm().allGatherv(send.begin(), send.end(), recv);
+      comm.allGatherv(send.begin(), send.end(), recv);
     }
   }
 #else
@@ -830,11 +834,11 @@ void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>
   Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
   if( periodic ) {
     // add own rank to neighbours to allow periodicity with self (pole caps)
-    size_t rank = parallel::mpi::comm().rank();
+    size_t rank = comm.rank();
     neighbours.insert( std::upper_bound( neighbours.begin(), neighbours.end(), rank ), rank );
   }
 
-  const size_t mpi_size = parallel::mpi::comm().size();
+  const size_t mpi_size = comm.size();
   const int counts_tag = 0;
   const int buffer_tag = 1;
 
@@ -842,22 +846,30 @@ void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>
   std::vector<eckit::mpi::Request> buffer_requests; buffer_requests.reserve(neighbours.size());
 
   int sendcnt = send.size();
-  for( size_t to : neighbours ) {
-    parallel::mpi::comm().iSend( sendcnt, to, counts_tag );
+  ATLAS_TRACE_MPI(ISEND) {
+    for( size_t to : neighbours ) {
+      count_requests.push_back( comm.iSend( sendcnt, to, counts_tag ) );
+    }
   }
 
   recv.counts.assign(0,mpi_size);
 
-  for( size_t from : neighbours ) {
-    counts_requests.push_back( parallel::mpi::comm().iReceive( recv.counts[from], from, counts_tag ) );
+  ATLAS_TRACE_MPI(IRECEIVE) {
+    for( size_t from : neighbours ) {
+      counts_requests.push_back( comm.iReceive( recv.counts[from], from, counts_tag ) );
+    }
   }
 
-  for( size_t to : neighbours ) {
-    parallel::mpi::comm().iSend(send.data(),send.size(),to, buffer_tag );
+  ATLAS_TRACE_MPI(ISEND) {
+    for( size_t to : neighbours ) {
+      buffer_requests.push_back( comm.iSend(send.data(),send.size(),to, buffer_tag ) );
+    }
   }
 
-  for( auto request : counts_requests ) {
-    parallel::mpi::comm().wait( request );
+  ATLAS_TRACE_MPI(WAIT) {
+    for( auto request : counts_requests ) {
+      comm.wait( request );
+    }
   }
 
   recv.displs[0] = 0;
@@ -868,14 +880,18 @@ void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>
   }
   recv.buffer.resize(recv.cnt);
 
-  for( size_t from : neighbours ) {
-    buffer_requests.push_back(
-          parallel::mpi::comm().iReceive( recv.buffer.data()+recv.displs[from],
-                                          recv.counts[from], from, buffer_tag) );
+  ATLAS_TRACE_MPI( IRECEIVE ) {
+    for( size_t from : neighbours ) {
+      buffer_requests.push_back(
+            comm.iReceive( recv.buffer.data()+recv.displs[from],
+                           recv.counts[from], from, buffer_tag) );
+    }
   }
 
-  for( auto request : buffer_requests ) {
-    parallel::mpi::comm().wait( request );
+  ATLAS_TRACE_MPI( WAIT ) {
+    for( auto request : buffer_requests ) {
+      comm.wait( request );
+    }
   }
 #endif
 }

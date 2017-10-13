@@ -196,3 +196,4 @@ int main(int argc, char **argv) {
     atlas::test::AtlasTransEnvironment env( argc, argv );
     return run_tests ( argc, argv, false );
 }
+

@@ -78,8 +78,7 @@ struct Node
   }
   gidx_t g;
   gidx_t i;
-  bool operator < (const Node& other) const
-  {
+  bool operator < (const Node& other) const {
     return ( g<other.g );
   }
 };
@@ -131,10 +130,10 @@ Field& build_nodes_global_idx( mesh::Nodes& nodes )
 
   UniqueLonLat compute_uid(nodes);
 
-  for( size_t jnode=0; jnode<glb_idx.shape(0); ++jnode )
-  {
-    if( glb_idx(jnode) <= 0 )
+  for( size_t jnode=0; jnode<glb_idx.shape(0); ++jnode ) {
+    if( glb_idx(jnode) <= 0 ) {
       glb_idx(jnode) = compute_uid(jnode);
+    }
   }
   return nodes.global_index();
 }
@@ -162,10 +161,10 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
    * other edges
    */
   int nb_nodes = glb_idx.shape(0);
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
-  {
-    if( glb_idx(jnode) <= 0 )
+  for( int jnode=0; jnode<nb_nodes; ++jnode ) {
+    if( glb_idx(jnode) <= 0 ) {
       glb_idx(jnode) = compute_uid(jnode);
+    }
   }
 
 
@@ -173,8 +172,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   array::ArrayT<uid_t> loc_id_arr( nb_nodes );
   array::ArrayView<uid_t,1> loc_id = array::make_view<uid_t,1>(loc_id_arr);
 
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
-  {
+  for( int jnode=0; jnode<nb_nodes; ++jnode ) {
     loc_id(jnode) = glb_idx(jnode);
   }
 
@@ -186,8 +184,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   }
 
   recvdispls[0]=0;
-  for (int jpart=1; jpart<nparts; ++jpart) // start at 1
-  {
+  for (int jpart=1; jpart<nparts; ++jpart) { // start at 1
     recvdispls[jpart]=recvcounts[jpart-1]+recvdispls[jpart-1];
   }
   int glb_nb_nodes = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
@@ -201,22 +198,21 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
-  for( size_t jnode=0; jnode<glb_id.shape(0); ++jnode )
-  {
-    node_sort.push_back( Node(glb_id(jnode),jnode) );
+  ATLAS_TRACE_SCOPE("sort global indices") {
+    for( size_t jnode=0; jnode<glb_id.shape(0); ++jnode ) {
+      node_sort.push_back( Node(glb_id(jnode),jnode) );
+    }
+    std::sort(node_sort.begin(), node_sort.end());
   }
-  std::sort(node_sort.begin(), node_sort.end());
 
   // Assume edge gid start
   uid_t gid=0;
   for( size_t jnode=0; jnode<node_sort.size(); ++jnode )
   {
-    if( jnode == 0 )
-    {
+    if( jnode == 0 ) {
       ++gid;
     }
-    else if( node_sort[jnode].g != node_sort[jnode-1].g )
-    {
+    else if( node_sort[jnode].g != node_sort[jnode-1].g ) {
       ++gid;
     }
     int inode = node_sort[jnode].i;
@@ -228,8 +224,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
     parallel::mpi::comm().scatterv(glb_id.data(), recvcounts.data(), recvdispls.data(), loc_id.data(), loc_id.size(), root);
   }
 
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
-  {
+  for( int jnode=0; jnode<nb_nodes; ++jnode ) {
     glb_idx(jnode) = loc_id(jnode);
   }
 }
@@ -330,8 +325,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     const size_t nb_recv_nodes = recv_node.size()/2;
     // array::ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
     //     array::make_shape(recv_found[ proc[jpart] ].size()/2,2) );
-    for( size_t jnode=0; jnode<nb_recv_nodes; ++jnode )
-    {
+    for( size_t jnode=0; jnode<nb_recv_nodes; ++jnode ) {
       ridx( recv_node[jnode*2+0] ) = recv_node[jnode*2+1];
     }
   }
