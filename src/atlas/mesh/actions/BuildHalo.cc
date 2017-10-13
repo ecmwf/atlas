@@ -265,6 +265,7 @@ void accumulate_elements( const Mesh& mesh,
   const array::ArrayView<int,1> elem_part = array::make_view<int,1>( mesh.cells().partition() );
 
   size_t nb_nodes = node_uid.size();
+  const size_t mpi_rank = parallel::mpi::comm().rank();
 
   std::set< int > found_elements_set;
 
@@ -284,7 +285,7 @@ void accumulate_elements( const Mesh& mesh,
       for(size_t jelem = 0; jelem < node2elem[inode].size(); ++jelem)
       {
         int e = node2elem[inode][jelem];
-        if( size_t(elem_part(e)) == atlas::parallel::mpi::comm().rank() )
+        if( size_t(elem_part(e)) == mpi_rank )
         {
           found_elements_set.insert( e );
         }
@@ -343,24 +344,27 @@ public:
 
     Buffers(Mesh& mesh)
     {
-      node_part.resize(parallel::mpi::comm().size());
-      node_ridx.resize(parallel::mpi::comm().size());
-      node_flags.resize(parallel::mpi::comm().size());
-      node_glb_idx.resize(parallel::mpi::comm().size());
-      node_xy.resize(parallel::mpi::comm().size());
-      elem_glb_idx.resize(parallel::mpi::comm().size());
-      elem_nodes_id.resize(parallel::mpi::comm().size());
-      elem_nodes_displs.resize(parallel::mpi::comm().size());
-      elem_part.resize(parallel::mpi::comm().size());
-      elem_type.resize(parallel::mpi::comm().size());
+      const size_t mpi_size = parallel::mpi::comm().size();
+
+      node_part.resize(mpi_size);
+      node_ridx.resize(mpi_size);
+      node_flags.resize(mpi_size);
+      node_glb_idx.resize(mpi_size);
+      node_xy.resize(mpi_size);
+      elem_glb_idx.resize(mpi_size);
+      elem_nodes_id.resize(mpi_size);
+      elem_nodes_displs.resize(mpi_size);
+      elem_part.resize(mpi_size);
+      elem_type.resize(mpi_size);
     }
 
     void print( std::ostream& os ) const
     {
+      const size_t mpi_size = parallel::mpi::comm().size();
       os << "Nodes\n"
          << "-----\n";
       size_t n(0);
-      for( size_t jpart=0; jpart<parallel::mpi::comm().size(); ++jpart )
+      for( size_t jpart=0; jpart<mpi_size; ++jpart )
       {
         for( size_t jnode=0; jnode<node_glb_idx[jpart].size(); ++jnode )
         {
@@ -371,7 +375,7 @@ public:
       os << "Cells\n"
          << "-----\n";
       size_t e(0);
-      for( size_t jpart=0; jpart<parallel::mpi::comm().size(); ++jpart )
+      for( size_t jpart=0; jpart<mpi_size; ++jpart )
       {
         for( size_t jelem=0; jelem<elem_glb_idx[jpart].size(); ++jelem )
         {
@@ -612,6 +616,8 @@ public:
   {
     ATLAS_TRACE();
 
+    const size_t mpi_size = parallel::mpi::comm().size();
+
     mesh::Nodes& nodes = mesh.nodes();
     int nb_nodes = nodes.size();
 
@@ -638,15 +644,14 @@ public:
     };
 
 
-
-    std::vector< std::vector<int> > rfn_idx(parallel::mpi::comm().size());
-    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
+    std::vector< std::vector<int> > rfn_idx(mpi_size);
+    for(size_t jpart = 0; jpart < mpi_size; ++jpart)
     {
       rfn_idx[jpart].reserve(buf.node_glb_idx[jpart].size());
     }
 
     int nb_new_nodes=0;
-    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
+    for(size_t jpart = 0; jpart < mpi_size; ++jpart)
     {
       for(size_t n = 0; n < buf.node_glb_idx[jpart].size(); ++n)
       {
@@ -674,7 +679,7 @@ public:
     // Add new nodes
     // -------------
     int new_node=0;
-    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
+    for(size_t jpart = 0; jpart < mpi_size; ++jpart)
     {
       for(size_t n = 0; n < rfn_idx[jpart].size(); ++n)
       {
@@ -719,6 +724,8 @@ public:
   {
     ATLAS_TRACE();
 
+    const size_t mpi_size = parallel::mpi::comm().size();
+
     // Elements might be duplicated from different Tasks. We need to identify unique entries
     int nb_elems = mesh.cells().size();
 //    std::set<uid_t> elem_uid;
@@ -742,14 +749,14 @@ public:
       }
     };
 
-    std::vector< std::vector<int> > received_new_elems(parallel::mpi::comm().size());
-    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
+    std::vector< std::vector<int> > received_new_elems( mpi_size );
+    for(size_t jpart = 0; jpart < mpi_size; ++jpart)
     {
       received_new_elems[jpart].reserve(buf.elem_glb_idx[jpart].size());
     }
 
     size_t nb_new_elems(0);
-    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
+    for(size_t jpart = 0; jpart < mpi_size; ++jpart)
     {
       for(size_t e = 0; e < buf.elem_glb_idx[jpart].size(); ++e)
       {
@@ -762,10 +769,10 @@ public:
 
     std::vector< std::vector< std::vector<int> > >
         elements_of_type( mesh.cells().nb_types(),
-                          std::vector< std::vector<int> >( parallel::mpi::comm().size() ) );
+                          std::vector< std::vector<int> >( mpi_size ) );
     std::vector<size_t> nb_elements_of_type( mesh.cells().nb_types(), 0 );
 
-    for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
+    for(size_t jpart = 0; jpart < mpi_size ; ++jpart)
     {
       for(size_t jelem = 0; jelem < received_new_elems[jpart].size(); ++jelem)
       {
@@ -791,7 +798,7 @@ public:
 
       // Copy information in new elements
       size_t new_elem(0);
-      for(size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
+      for(size_t jpart = 0; jpart < mpi_size ; ++jpart)
       {
         for(size_t e = 0; e < elems[jpart].size(); ++e)
         {
@@ -925,15 +932,15 @@ void increase_halo_interior( BuildHaloHelper& helper )
   for(size_t jnode = 0; jnode < bdry_nodes.size(); ++jnode)
     send_bdry_nodes_uid[jnode] = helper.compute_uid(bdry_nodes[jnode]);
 
-  size_t size = parallel::mpi::comm().size();
-  atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(size);
+  size_t mpi_size = parallel::mpi::comm().size();
+  atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(mpi_size);
 
   gather_bdry_nodes( helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts );
 
 
 #ifndef ATLAS_103
   /* deprecated */
-  for (size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
+  for (size_t jpart = 0; jpart < mpi_size; ++jpart)
 #else
   const Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
   for (size_t jpart : neighbours)
@@ -1031,14 +1038,14 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
     send_bdry_nodes_uid[jnode] = util::unique_lonlat(crd);
   }
 
-  size_t size = parallel::mpi::comm().size();
-  atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(size);
+  size_t mpi_size = parallel::mpi::comm().size();
+  atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(mpi_size);
 
   gather_bdry_nodes( helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts, /* periodic = */ true );
 
 #ifndef ATLAS_103
   /* deprecated */
-  for (size_t jpart = 0; jpart < parallel::mpi::comm().size(); ++jpart)
+  for (size_t jpart = 0; jpart < mpi_size; ++jpart)
 #else
   Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
   // add own rank to neighbours to allow periodicity with self (pole caps)
