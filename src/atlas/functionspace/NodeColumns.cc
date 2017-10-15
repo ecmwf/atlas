@@ -12,33 +12,38 @@
 #include <cmath>
 #include <cstdarg>
 #include <limits>
+#include <functional>
 
 #include "eckit/os/BackTrace.h"
 #include "eckit/utils/MD5.h"
 
+#include "atlas/array/ArrayView.h"
+#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/library/config.h"
+#include "atlas/mesh/actions/BuildHalo.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
+#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
+#include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/mesh/actions/BuildHalo.h"
-#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/functionspace/NodeColumns.h"
-#include "atlas/mesh/IsGhostNode.h"
-#include "atlas/parallel/HaloExchange.h"
-#include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/Checksum.h"
+#include "atlas/parallel/GatherScatter.h"
+#include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/detail/Cache.h"
+
+
 #undef atlas_omp_critical_ordered
 #define atlas_omp_critical_ordered atlas_omp_critical
-#include "atlas/array/ArrayView.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
 #else
 #define REMOTE_IDX_BASE 0
 #endif
+
 
 namespace atlas {
 namespace functionspace {
@@ -98,22 +103,121 @@ array::LocalView<T,2> make_per_level_view(const Field &field)
 
 }
 
+
+class NodeColumnsHaloExchangeCache : public util::Cache<std::string,parallel::HaloExchange> {
+private:
+  using Base = util::Cache<std::string,parallel::HaloExchange>;
+  NodeColumnsHaloExchangeCache() {}
+public:
+  static NodeColumnsHaloExchangeCache& instance() {
+    static NodeColumnsHaloExchangeCache inst;
+    return inst;
+  }
+  value_type* get( const Mesh& mesh, long halo ) {
+    creator_type creator = std::bind( &NodeColumnsHaloExchangeCache::create, mesh, halo );
+    std::ostringstream key ;
+    key << "mesh[address="<<mesh.get()<<"],halo="<<halo;
+    return Base::get( key.str(), creator );
+  }
+private:
+  static value_type* create( const Mesh& mesh, long halo ) {
+
+    value_type* value = new value_type();
+
+    std::ostringstream ss;
+    ss << "nb_nodes_including_halo["<<halo<<"]";
+    size_t nb_nodes(mesh.nodes().size());
+    mesh.metadata().get(ss.str(),nb_nodes);
+
+    value->setup( array::make_view<int,1>(mesh.nodes().partition()).data(),
+                           array::make_view<int,1>(mesh.nodes().remote_index()).data(),
+                           REMOTE_IDX_BASE,nb_nodes);
+
+    return value;
+  }
+};
+
+class NodeColumnsGatherScatterCache : public util::Cache<std::string,parallel::GatherScatter> {
+private:
+  using Base = util::Cache<std::string,parallel::GatherScatter>;
+  NodeColumnsGatherScatterCache() {}
+public:
+  static NodeColumnsGatherScatterCache& instance() {
+    static NodeColumnsGatherScatterCache inst;
+    return inst;
+  }
+  value_type* get( const Mesh& mesh ) {
+    creator_type creator = std::bind( &NodeColumnsGatherScatterCache::create, mesh );
+    std::ostringstream key ;
+    key << "mesh.nodes[address="<<mesh.get()<<"]";
+    return Base::get( key.str(), creator );
+  }
+private:
+  static value_type* create( const Mesh& mesh ) {
+
+    value_type* value = new value_type();
+
+    mesh::IsGhostNode is_ghost(mesh.nodes());
+    std::vector<int> mask(mesh.nodes().size());
+    const size_t npts = mask.size();
+    atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
+      mask[n] = is_ghost(n) ? 1 : 0;
+
+      // --> This would add periodic west-bc to the gather, but means that global-sums, means, etc are computed wrong
+      //if( mask[j] == 1 && internals::Topology::check(flags(j),internals::Topology::BC) ) {
+      //  mask[j] = 0;
+      //}
+    }
+
+    value->setup(array::make_view<int,1>(mesh.nodes().partition()).data(),
+                 array::make_view<int,1>(mesh.nodes().remote_index()).data(),
+                 REMOTE_IDX_BASE,
+                 array::make_view<gidx_t,1>(mesh.nodes().global_index()).data(),
+                 mask.data(),mesh.nodes().size());
+    return value;
+  }
+};
+
+class NodeColumnsChecksumCache : public util::Cache<std::string,parallel::Checksum> {
+private:
+  using Base = util::Cache<std::string,parallel::Checksum>;
+  NodeColumnsChecksumCache() {}
+public:
+  static NodeColumnsChecksumCache& instance() {
+    static NodeColumnsChecksumCache inst;
+    return inst;
+  }
+  value_type* get( const Mesh& mesh ) {
+    creator_type creator = std::bind( &NodeColumnsChecksumCache::create, mesh );
+    std::ostringstream key ;
+    key << "mesh[address="<<mesh.get()<<"]";
+    return Base::get( key.str(), creator );
+  }
+private:
+  static value_type* create( const Mesh& mesh ) {
+    value_type* value = new value_type();
+    eckit::SharedPtr<parallel::GatherScatter> gather( NodeColumnsGatherScatterCache::instance().get(mesh) );
+    value->setup( gather );
+    return value;
+  }
+};
+
 NodeColumns::NodeColumns( Mesh mesh ) :
     NodeColumns( mesh, util::NoConfig() ) {
-}
-
-NodeColumns::NodeColumns(Mesh mesh, const mesh::Halo &halo) :
-    NodeColumns( mesh, util::Config("halo",halo.size()) ) {
 }
 
 NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration & config ) :
     mesh_(mesh),
     nodes_(mesh_.nodes()),
-    halo_( mesh::Halo(config.getInt("halo",0) ) ),
     nb_levels_( config.getInt("levels",0) ),
     nb_nodes_(nodes_.size()),
     nb_nodes_global_(0) {
     ATLAS_TRACE();
+    if( config.has("halo") ) {
+      halo_ = mesh::Halo(config.getInt("halo") );
+    } else {
+      halo_ = mesh::Halo(mesh);
+    }
     constructor();
 }
 
@@ -123,7 +227,6 @@ void NodeColumns::constructor()
   mesh::actions::build_nodes_parallel_fields( mesh_.nodes() );
   mesh::actions::build_periodic_boundaries(mesh_);
 
-  gather_scatter_.reset(new parallel::GatherScatter());
   halo_exchange_.reset(new parallel::HaloExchange());
   checksum_.reset(new parallel::Checksum());
 
@@ -144,65 +247,19 @@ void NodeColumns::constructor()
     }
   }
 
-  ATLAS_TRACE_SCOPE("HaloExchange")
-  {
-    Field& part = mesh_.nodes().partition();
-    Field& ridx = mesh_.nodes().remote_index();
-    halo_exchange_->setup( array::make_view<int,1>(part).data(),
-                           array::make_view<int,1>(ridx).data(),
-                           REMOTE_IDX_BASE,nb_nodes_);
+  ATLAS_TRACE_SCOPE("HaloExchange") {
+    halo_exchange_.reset( NodeColumnsHaloExchangeCache::instance().get(mesh_,halo_.size()) );
   }
 
-  ATLAS_TRACE_SCOPE("GatherScatter")
-  {
-    // Create new gather_scatter
-    gather_scatter_.reset( new parallel::GatherScatter() );
-
-    Field& ridx = mesh_.nodes().remote_index();
-    Field& part = mesh_.nodes().partition();
-    Field& gidx = mesh_.nodes().global_index();
-
-    mesh::IsGhostNode is_ghost(mesh_.nodes());
-    std::vector<int> mask(mesh_.nodes().size());
-    const size_t npts = mask.size();
-    atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
-      mask[n] = is_ghost(n) ? 1 : 0;
-
-      // --> This would add periodic west-bc to the gather, but means that global-sums, means, etc are computed wrong
-      //if( mask[j] == 1 && internals::Topology::check(flags(j),internals::Topology::BC) ) {
-      //  mask[j] = 0;
-      //}
-    }
-    gather_scatter_->setup(array::make_view<int,1>(part).data(),
-                           array::make_view<int,1>(ridx).data(),
-                           REMOTE_IDX_BASE,
-                           array::make_view<gidx_t,1>(gidx).data(),
-                           mask.data(),nb_nodes_);
+  ATLAS_TRACE_SCOPE("GatherScatter") {
+    gather_scatter_.reset( NodeColumnsGatherScatterCache::instance().get(mesh_) );
   }
 
-  ATLAS_TRACE_SCOPE("Checksum")
-  {
-
-    // Create new checksum
-    checksum_.reset( new parallel::Checksum() );
-
-    Field& ridx = mesh_.nodes().remote_index();
-    Field& part = mesh_.nodes().partition();
-    Field& gidx = mesh_.nodes().global_index();
-    mesh::IsGhostNode is_ghost(mesh_.nodes());
-    std::vector<int> mask(mesh_.nodes().size());
-    const size_t npts = mask.size();
-    atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
-      mask[n] = is_ghost(n) ? 1 : 0;
-    }
-    checksum_->setup(array::make_view<int,1>(part).data(),
-                           array::make_view<int,1>(ridx).data(),
-                           REMOTE_IDX_BASE,
-                           array::make_view<gidx_t,1>(gidx).data(),
-                           mask.data(),nb_nodes_);
+  ATLAS_TRACE_SCOPE("Checksum") {
+    checksum_.reset( NodeColumnsChecksumCache::instance().get(mesh_) );
   }
 
-  nb_nodes_global_ = gather_scatter_->glb_dof();
+  nb_nodes_global_ = gather().glb_dof();
 }
 
 NodeColumns::~NodeColumns() {}
@@ -224,25 +281,10 @@ size_t NodeColumns::nb_nodes() const
 
 size_t NodeColumns::nb_nodes_global() const
 {
+  if( nb_nodes_global_>=0 ) return nb_nodes_global_;
+  nb_nodes_global_ = gather().glb_dof();
   return nb_nodes_global_;
 }
-
-std::string NodeColumns::halo_name() const
-{
-  std::stringstream ss; ss << "nodes_" << halo_.size();
-  return ss.str();
-}
-
-std::string NodeColumns::gather_scatter_name() const
-{
-  return "nodes_gather_scatter";
-}
-
-std::string NodeColumns::checksum_name() const
-{
-  return "nodes_checksum";
-}
-
 
 size_t NodeColumns::config_nb_nodes(const eckit::Configuration& config) const
 {
@@ -453,10 +495,14 @@ void NodeColumns::gather( const Field& local, Field& global ) const
 }
 const parallel::GatherScatter& NodeColumns::gather() const
 {
+  if (gather_scatter_) return *gather_scatter_;
+  gather_scatter_.reset( NodeColumnsGatherScatterCache::instance().get( mesh_ ) );
   return *gather_scatter_;
 }
 const parallel::GatherScatter& NodeColumns::scatter() const
 {
+  if (gather_scatter_) return *gather_scatter_;
+  gather_scatter_.reset( NodeColumnsGatherScatterCache::instance().get( mesh_ ) );
   return *gather_scatter_;
 }
 
@@ -2139,18 +2185,22 @@ NodeColumns::NodeColumns( const FunctionSpace& functionspace ) :
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
 
-NodeColumns::NodeColumns( Mesh mesh, const mesh::Halo& halo ) :
-  FunctionSpace( new detail::NodeColumns(mesh,halo) ),
-  functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
+
+namespace {
+detail::NodeColumns* make_functionspace( Mesh mesh, const eckit::Configuration& config ) {
+  ATLAS_DEBUG_VAR( mesh.get() );
+  ATLAS_DEBUG_VAR( config );
+  return new detail::NodeColumns(mesh, config);
+}
 }
 
 NodeColumns::NodeColumns( Mesh mesh ) :
-  FunctionSpace( new detail::NodeColumns(mesh) ),
+  FunctionSpace( make_functionspace(mesh,util::NoConfig()) ),
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
 
 NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
-  FunctionSpace( new detail::NodeColumns(mesh, config) ),
+  FunctionSpace( make_functionspace(mesh, config) ),
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
 
@@ -2223,9 +2273,6 @@ std::string NodeColumns::checksum( const Field& field ) const {
 const parallel::Checksum& NodeColumns::checksum() const {
   return functionspace_->checksum();
 }
-
-
-
 
 
 

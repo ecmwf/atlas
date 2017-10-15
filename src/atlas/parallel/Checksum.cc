@@ -32,8 +32,8 @@ void Checksum::setup( const int part[],
                       const int parsize )
 {
   parsize_ = parsize;
-  gather_.setup(part,remote_idx,base,
-                glb_idx,parsize);
+  gather_.reset( new GatherScatter() );
+  gather_->setup(part,remote_idx,base,glb_idx,parsize);
   is_setup_ = true;
 }
 
@@ -43,10 +43,17 @@ void Checksum::setup( const int part[],
                       const gidx_t glb_idx[], const int mask[], const int parsize )
 {
   parsize_ = parsize;
-  gather_.setup(part,remote_idx,base,
-                glb_idx,mask,parsize);
+  gather_.reset( new GatherScatter() );
+  gather_->setup(part,remote_idx,base,glb_idx,mask,parsize);
   is_setup_ = true;
 }
+
+void Checksum::setup( const eckit::SharedPtr<GatherScatter>& gather ) {
+  gather_ = gather;
+  parsize_ = gather->parsize_;
+  is_setup_ = true;
+}
+
 
 /////////////////////
 

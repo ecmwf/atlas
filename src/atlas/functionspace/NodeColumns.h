@@ -49,7 +49,6 @@ class NodeColumns : public FunctionSpaceImpl
 {
 public:
 
-    NodeColumns( Mesh mesh, const mesh::Halo & );
     NodeColumns( Mesh mesh, const eckit::Configuration & );
     NodeColumns( Mesh mesh );
 
@@ -234,9 +233,6 @@ public:
 
 private: // methods
 
-    std::string halo_name() const;
-    std::string gather_scatter_name() const;
-    std::string checksum_name() const;
     void constructor();
 
     size_t config_nb_nodes(const eckit::Configuration&) const;
@@ -254,12 +250,12 @@ private: // data
     mesh::Nodes& nodes_; // non-const because functionspace may modify mesh
     mesh::Halo halo_;
     size_t nb_nodes_;
-    size_t nb_nodes_global_;
+    mutable long nb_nodes_global_{-1};
     size_t nb_levels_;
 
-    eckit::SharedPtr<parallel::GatherScatter> gather_scatter_; // without ghost
-    eckit::SharedPtr<parallel::HaloExchange>  halo_exchange_;
-    eckit::SharedPtr<parallel::Checksum>      checksum_;
+    mutable eckit::SharedPtr<parallel::GatherScatter> gather_scatter_; // without ghost
+    mutable eckit::SharedPtr<parallel::HaloExchange>  halo_exchange_;
+    mutable eckit::SharedPtr<parallel::Checksum>      checksum_;
 
 private:
 
@@ -433,7 +429,6 @@ public:
     NodeColumns();
     NodeColumns( const FunctionSpace& );
 
-    NodeColumns( Mesh mesh, const mesh::Halo & );
     NodeColumns( Mesh mesh );
     NodeColumns( Mesh mesh, const eckit::Configuration & );
 
@@ -621,11 +616,6 @@ void NodeColumns::sum( const Field& field, Value& sum, size_t& N ) const {
   functionspace_->sum(field,sum,N);
 }
 
-//template< typename Value >
-//void NodeColumns::sum( const Field& field, std::vector<Value>& sum, size_t& N ) const {
-//  functionspace_->sum(field,sum,N);
-//}
-
 inline void NodeColumns::sumPerLevel( const Field& field, Field& sum, size_t& N ) const {
   functionspace_->sumPerLevel(field,sum,N);
 }
@@ -634,11 +624,6 @@ template< typename Value >
 void NodeColumns::orderIndependentSum( const Field& field, Value& sum, size_t& N ) const {
   functionspace_->orderIndependentSum(field,sum,N);
 }
-
-//template< typename Value >
-//void NodeColumns::orderIndependentSum( const Field& field, std::vector<Value>& sum, size_t& N ) const {
-//  functionspace_->orderIndependentSum(field,sum,N);
-//}
 
 inline void NodeColumns::orderIndependentSumPerLevel( const Field& field, Field& sum, size_t& N ) const {
   functionspace_->orderIndependentSumPerLevel(field,sum,N);
@@ -653,16 +638,6 @@ template< typename Value >
 void NodeColumns::maximum( const Field& field, Value& maximum ) const {
   functionspace_->maximum(field,maximum);
 }
-
-//template< typename Value >
-//void NodeColumns::minimum( const Field& field, std::vector<Value>& minimum ) const {
-//  functionspace_->minimum(field,minimum);
-//}
-
-//template< typename Value >
-//void NodeColumns::maximum( const Field& field, std::vector<Value>& maximum) const {
-//  functionspace_->maximum(field,maximum);
-//}
 
 inline void NodeColumns::minimumPerLevel( const Field& field, Field& minimum ) const {
   return functionspace_->minimumPerLevel(field,minimum);
@@ -725,11 +700,6 @@ void NodeColumns::mean( const Field& field, Value& mean, size_t& N ) const {
   functionspace_->mean(field,mean,N);
 }
 
-//template< typename Value >
-//void NodeColumns::mean( const Field& field, std::vector<Value>& mean, size_t& N ) const {
-//  functionspace_->mean(field,mean,N);
-//}
-
 inline void NodeColumns::meanPerLevel( const Field& field, Field& mean, size_t& N ) const {
   functionspace_->meanPerLevel(field,mean,N);
 }
@@ -738,11 +708,6 @@ template< typename Value >
 void NodeColumns::meanAndStandardDeviation( const Field& field, Value& mean, Value& stddev, size_t& N ) const {
   functionspace_->meanAndStandardDeviation(field,mean,stddev,N);
 }
-
-//template< typename Value >
-//void NodeColumns::meanAndStandardDeviation( const Field& field, std::vector<Value>& mean, std::vector<Value>& stddev, size_t& N ) const {
-//  functionspace_->meanAndStandardDeviation(field,mean,stddev,N);
-//}
 
 inline void NodeColumns::meanAndStandardDeviationPerLevel( const Field& field, Field& mean, Field& stddev, size_t& N ) const {
   functionspace_->meanAndStandardDeviationPerLevel(field,mean,stddev,N);

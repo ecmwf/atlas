@@ -120,12 +120,12 @@ void AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     Log::info() << "Partitioning source grid, halo of " << eckit::Plural(source_mesh_halo, "element") << std::endl;
     src.partition(src_grid);
-    functionspace::NodeColumns src_functionspace(src.mesh(), source_mesh_halo);
+    functionspace::NodeColumns src_functionspace(src.mesh(), option::halo(source_mesh_halo));
     src.writeGmsh("src-mesh.msh");
 
     Log::info() << "Partitioning target grid, halo of " << eckit::Plural(target_mesh_halo, "element") << std::endl;
     tgt.partition(tgt_grid, src);
-    functionspace::NodeColumns tgt_functionspace(tgt.mesh(), target_mesh_halo);
+    functionspace::NodeColumns tgt_functionspace(tgt.mesh(), option::halo(target_mesh_halo));
     tgt.writeGmsh("tgt-mesh.msh");
 
 

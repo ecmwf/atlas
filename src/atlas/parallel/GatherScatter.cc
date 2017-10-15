@@ -98,6 +98,8 @@ void GatherScatter::setup( const int part[],
                            const int remote_idx[], const int base,
                            const gidx_t glb_idx[], const int mask[], const size_t parsize )
 {
+  ATLAS_TRACE("GatherScatter::setup");
+
   parsize_ = parsize;
 
   glbcounts_.resize(nproc); glbcounts_.assign(nproc,0);

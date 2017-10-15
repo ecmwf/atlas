@@ -10,25 +10,28 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 
 #include "eckit/utils/MD5.h"
 
-#include "atlas/library/config.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/HybridElements.h"
-#include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/mesh/actions/BuildHalo.h"
-#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/functionspace/EdgeColumns.h"
+#include "atlas/library/config.h"
+#include "atlas/mesh/actions/BuildHalo.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
+#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/IsGhostNode.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/parallel/Checksum.h"
+#include "atlas/parallel/GatherScatter.h"
+#include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/parallel/HaloExchange.h"
-#include "atlas/parallel/GatherScatter.h"
-#include "atlas/parallel/Checksum.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
-#include "atlas/array/MakeView.h"
+#include "atlas/util/detail/Cache.h"
+
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -63,6 +66,82 @@ array::LocalView<T,3> make_leveled_view(const Field &field)
 }
 }
 
+class EdgeColumnsHaloExchangeCache : public util::Cache<std::string,parallel::HaloExchange> {
+private:
+  using Base = util::Cache<std::string,parallel::HaloExchange>;
+  EdgeColumnsHaloExchangeCache() {}
+public:
+  static EdgeColumnsHaloExchangeCache& instance() {
+    static EdgeColumnsHaloExchangeCache inst;
+    return inst;
+  }
+  value_type* get( const Mesh& mesh ) {
+    creator_type creator = std::bind( &EdgeColumnsHaloExchangeCache::create, mesh );
+    std::ostringstream key ;
+    key << "mesh[address="<<mesh.get()<<"]";
+    return Base::get( key.str(), creator );
+  }
+private:
+  static value_type* create( const Mesh& mesh ) {
+    value_type* value = new value_type();
+    value->setup( array::make_view<int,1>(mesh.edges().partition()).data(),
+                  array::make_view<int,1>(mesh.edges().remote_index()).data(),
+                  REMOTE_IDX_BASE,
+                  mesh.edges().size());
+    return value;
+  }
+};
+
+class EdgeColumnsGatherScatterCache : public util::Cache<std::string,parallel::GatherScatter> {
+private:
+  using Base = util::Cache<std::string,parallel::GatherScatter>;
+  EdgeColumnsGatherScatterCache() {}
+public:
+  static EdgeColumnsGatherScatterCache& instance() {
+    static EdgeColumnsGatherScatterCache inst;
+    return inst;
+  }
+  value_type* get( const Mesh& mesh ) {
+    creator_type creator = std::bind( &EdgeColumnsGatherScatterCache::create, mesh );
+    std::ostringstream key ;
+    key << "mesh[address="<<mesh.get()<<"]";
+    return Base::get( key.str(), creator );
+  }
+private:
+  static value_type* create( const Mesh& mesh ) {
+    value_type* value = new value_type();
+    value->setup(array::make_view<int,1>(mesh.edges().partition()).data(),
+                 array::make_view<int,1>(mesh.edges().remote_index()).data(),
+                 REMOTE_IDX_BASE,
+                 array::make_view<gidx_t,1>(mesh.edges().global_index()).data(),
+                 mesh.edges().size());
+    return value;
+  }
+};
+
+class EdgeColumnsChecksumCache : public util::Cache<std::string,parallel::Checksum> {
+private:
+  using Base = util::Cache<std::string,parallel::Checksum>;
+  EdgeColumnsChecksumCache() {}
+public:
+  static EdgeColumnsChecksumCache& instance() {
+    static EdgeColumnsChecksumCache inst;
+    return inst;
+  }
+  value_type* get( const Mesh& mesh ) {
+    creator_type creator = std::bind( &EdgeColumnsChecksumCache::create, mesh );
+    std::ostringstream key ;
+    key << "mesh[address="<<mesh.get()<<"]";
+    return Base::get( key.str(), creator );
+  }
+private:
+  static value_type* create( const Mesh& mesh ) {
+    value_type* value = new value_type();
+    eckit::SharedPtr<parallel::GatherScatter> gather( EdgeColumnsGatherScatterCache::instance().get(mesh) );
+    value->setup( gather );
+    return value;
+  }
+};
 
 void EdgeColumns::set_field_metadata(const eckit::Configuration& config, Field& field) const
 {
@@ -159,7 +238,6 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration &params )
 
   ASSERT( mesh_halo == halo );
 
-
   constructor();
 }
 
@@ -197,43 +275,19 @@ void EdgeColumns::constructor()
 {
   ATLAS_TRACE("EdgeColumns()");
 
+  ATLAS_TRACE_SCOPE("HaloExchange") {
+    halo_exchange_.reset( EdgeColumnsHaloExchangeCache::instance().get( mesh_ ) );
+  }
+
+  ATLAS_TRACE_SCOPE("Setup gather_scatter") {
+    gather_scatter_.reset( EdgeColumnsGatherScatterCache::instance().get( mesh_ ) );
+  }
+
+  ATLAS_TRACE_SCOPE("Setup checksum") {
+    checksum_.reset( EdgeColumnsChecksumCache::instance().get( mesh_ ) );
+  }
+
   nb_edges_ = mesh().edges().size();
-
-  gather_scatter_.reset(new parallel::GatherScatter());
-  halo_exchange_.reset(new parallel::HaloExchange());
-  checksum_.reset(new parallel::Checksum());
-
-  const Field& partition    = edges().partition();
-  const Field& remote_index = edges().remote_index();
-  const Field& global_index = edges().global_index();
-
-  ATLAS_TRACE_SCOPE("Setup halo_exchange")
-  {
-    halo_exchange_->setup(
-        array::make_view<int,1>(partition).data(),
-        array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
-        nb_edges_);
-  }
-
-  ATLAS_TRACE_SCOPE("Setup gather_scatter")
-  {
-    gather_scatter_->setup(
-        array::make_view<int,1>(partition).data(),
-        array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
-        array::make_view<gidx_t,1>(global_index).data(),
-        nb_edges_);
-  }
-
-  ATLAS_TRACE_SCOPE("Setup checksum")
-  {
-    checksum_->setup(
-        array::make_view<int,1>(partition).data(),
-        array::make_view<int,1>(remote_index).data(),REMOTE_IDX_BASE,
-        array::make_view<gidx_t,1>(global_index).data(),
-        nb_edges_);
-  }
-
-  nb_edges_global_ =  gather_scatter_->glb_dof();
 }
 
 EdgeColumns::~EdgeColumns() {}
@@ -255,6 +309,8 @@ size_t EdgeColumns::nb_edges() const
 
 size_t EdgeColumns::nb_edges_global() const
 {
+  if( nb_edges_global_ >= 0 ) return nb_edges_global_;
+  nb_edges_global_ = gather().glb_dof();
   return nb_edges_global_;
 }
 
@@ -305,6 +361,8 @@ void EdgeColumns::haloExchange( Field& field ) const
 }
 const parallel::HaloExchange& EdgeColumns::halo_exchange() const
 {
+  if (halo_exchange_) return *halo_exchange_;
+  halo_exchange_.reset( EdgeColumnsHaloExchangeCache::instance().get( mesh_ ) );
   return *halo_exchange_;
 }
 
@@ -354,10 +412,16 @@ void EdgeColumns::gather( const Field& local, Field& global ) const
 }
 const parallel::GatherScatter& EdgeColumns::gather() const
 {
+  if( gather_scatter_ )
+    return *gather_scatter_;
+  gather_scatter_.reset( EdgeColumnsGatherScatterCache::instance().get( mesh_ ) );
   return *gather_scatter_;
 }
 const parallel::GatherScatter& EdgeColumns::scatter() const
 {
+  if( gather_scatter_ )
+    return *gather_scatter_;
+  gather_scatter_.reset( EdgeColumnsGatherScatterCache::instance().get( mesh_ ) );
   return *gather_scatter_;
 }
 
@@ -475,6 +539,8 @@ std::string EdgeColumns::checksum( const Field& field ) const {
 
 const parallel::Checksum& EdgeColumns::checksum() const
 {
+  if (checksum_) return *checksum_;
+  checksum_.reset( EdgeColumnsChecksumCache::instance().get( mesh_ ) );
   return *checksum_;
 }
 

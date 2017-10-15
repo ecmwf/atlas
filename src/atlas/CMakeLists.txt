@@ -467,6 +467,7 @@ util/Rotation.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/detail/BlackMagic.h
+util/detail/Cache.h
 )
 
 list( APPEND atlas_internals_srcs

@@ -62,6 +62,9 @@ public: // methods
   void setup( const int part[],
               const int remote_idx[], const int base,
               const gidx_t glb_idx[], const int mask[], const int parsize );
+              
+  /// @brief Setup
+  void setup( const eckit::SharedPtr<GatherScatter>& );
 
   template <typename DATA_TYPE>
   std::string execute( const DATA_TYPE lfield[],
@@ -82,7 +85,7 @@ public: // methods
 
 private: // data
   std::string name_;
-  GatherScatter gather_;
+  eckit::SharedPtr<GatherScatter> gather_;
   bool is_setup_;
   size_t parsize_;
 };
@@ -107,10 +110,10 @@ std::string Checksum::execute( const DATA_TYPE data[],
     local_checksums[pp] = util::checksum(data+pp*var_size,var_size);
   }
 
-  std::vector<util::checksum_t> global_checksums( parallel::mpi::comm().rank() == root ? gather_.glb_dof() : 0 );
+  std::vector<util::checksum_t> global_checksums( parallel::mpi::comm().rank() == root ? gather_->glb_dof() : 0 );
   parallel::Field<util::checksum_t const> loc(local_checksums.data(),1);
   parallel::Field<util::checksum_t> glb(global_checksums.data(),1);
-  gather_.gather(&loc,&glb,1);
+  gather_->gather(&loc,&glb,1);
 
   util::checksum_t glb_checksum = util::checksum(
                                                 global_checksums.data(),

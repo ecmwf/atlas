@@ -89,8 +89,6 @@ public:
 
 private: // methods
 
-    std::string gather_scatter_name() const;
-    std::string checksum_name() const;
     void constructor();
     size_t config_size(const eckit::Configuration& config) const;
     array::DataType config_datatype(const eckit::Configuration&) const;
@@ -106,11 +104,10 @@ private: // data
     size_t nb_levels_;
     mesh::HybridElements& edges_; // non-const because functionspace may modify mesh
     size_t nb_edges_;
-    size_t nb_edges_global_;
-
-    eckit::SharedPtr<parallel::GatherScatter> gather_scatter_; // without ghost
-    eckit::SharedPtr<parallel::HaloExchange>  halo_exchange_;
-    eckit::SharedPtr<parallel::Checksum>      checksum_;
+    mutable long nb_edges_global_{-1};
+    mutable eckit::SharedPtr<parallel::GatherScatter> gather_scatter_; // without ghost
+    mutable eckit::SharedPtr<parallel::HaloExchange>  halo_exchange_;
+    mutable eckit::SharedPtr<parallel::Checksum>      checksum_;
 };
 
 // -------------------------------------------------------------------

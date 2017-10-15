@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/exception/Exceptions.h"
 #include "atlas/mesh/Halo.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/Metadata.h"
@@ -20,6 +21,12 @@ Halo::Halo(const Mesh& mesh)
   size_=0;
   mesh.metadata().get("halo",size_);
 }
+
+long Halo::size() const {
+  ASSERT( size_>=0 );
+  return size_;
+}
+
 
 } // namespace mesh
 } // namespace atlas

@@ -258,7 +258,7 @@ private: // data
 
   bool is_setup_;
 
-  size_t parsize_;
+  size_t parsize_; friend class Checksum;
 
 
   int glb_cnt(size_t root) const { return myproc==root ? glbcnt_ : 0 ; }

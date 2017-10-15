@@ -135,7 +135,7 @@ void build_median_dual_mesh( Mesh& mesh )
   array::make_view<double,1>(skewness).assign(0.);
   array::make_view<double,1>(alpha).assign(0.5);
 
-  functionspace::NodeColumns nodes_fs(mesh, Halo(mesh));
+  functionspace::NodeColumns nodes_fs(mesh );
   {
     ATLAS_TRACE("halo-exchange dual_volumes");
     nodes_fs.haloExchange(nodes.field( "dual_volumes" ));
@@ -146,7 +146,6 @@ void build_median_dual_mesh( Mesh& mesh )
     ATLAS_TRACE( "halo-exchange dual_normals" );
     edges_fs.haloExchange(edges.field( "dual_normals" ));
   }
-
   make_dual_normals_outward(mesh);
 }
 
@@ -454,7 +453,7 @@ void build_brick_dual_mesh(const Grid& grid, Mesh& mesh)
 
     }
 
-    functionspace::NodeColumns nodes_fs( mesh,Halo(mesh) );
+    functionspace::NodeColumns nodes_fs( mesh );
     nodes_fs.haloExchange(nodes.field("dual_volumes"));
   }
   else

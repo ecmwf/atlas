@@ -8,8 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_mesh_Halo_h
-#define atlas_mesh_Halo_h
+#pragma once
 
 #include <cstddef>
 
@@ -25,14 +24,13 @@ namespace mesh {
 class Halo
 {
 public:
+  Halo() {}
   Halo(const Mesh& mesh);
-  Halo(const size_t size) : size_(size) {}
-  size_t size() const { return size_; }
+  Halo(const long size) : size_(size) {}
+  long size() const;
 private:
-  size_t size_;
+  long size_{-1};
 };
 
 } // namespace mesh
 } // namespace atlas
-
-#endif // atlas_mesh_Halo_h
