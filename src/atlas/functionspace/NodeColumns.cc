@@ -113,7 +113,7 @@ public:
     static NodeColumnsHaloExchangeCache inst;
     return inst;
   }
-  value_type* get( const Mesh& mesh, long halo ) {
+  eckit::SharedPtr<value_type> get( const Mesh& mesh, long halo ) {
     creator_type creator = std::bind( &NodeColumnsHaloExchangeCache::create, mesh, halo );
     std::ostringstream key ;
     key << "mesh[address="<<mesh.get()<<"],halo="<<halo;
@@ -146,7 +146,7 @@ public:
     static NodeColumnsGatherScatterCache inst;
     return inst;
   }
-  value_type* get( const Mesh& mesh ) {
+  eckit::SharedPtr<value_type> get( const Mesh& mesh ) {
     creator_type creator = std::bind( &NodeColumnsGatherScatterCache::create, mesh );
     std::ostringstream key ;
     key << "mesh.nodes[address="<<mesh.get()<<"]";
@@ -187,7 +187,7 @@ public:
     static NodeColumnsChecksumCache inst;
     return inst;
   }
-  value_type* get( const Mesh& mesh ) {
+  eckit::SharedPtr<value_type> get( const Mesh& mesh ) {
     creator_type creator = std::bind( &NodeColumnsChecksumCache::create, mesh );
     std::ostringstream key ;
     key << "mesh[address="<<mesh.get()<<"]";
@@ -210,8 +210,7 @@ NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration & config ) :
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     nb_levels_( config.getInt("levels",0) ),
-    nb_nodes_(nodes_.size()),
-    nb_nodes_global_(0) {
+    nb_nodes_(nodes_.size()) {
     ATLAS_TRACE();
     if( config.has("halo") ) {
       halo_ = mesh::Halo(config.getInt("halo") );
@@ -226,9 +225,6 @@ void NodeColumns::constructor()
 {
   mesh::actions::build_nodes_parallel_fields( mesh_.nodes() );
   mesh::actions::build_periodic_boundaries(mesh_);
-
-  halo_exchange_.reset(new parallel::HaloExchange());
-  checksum_.reset(new parallel::Checksum());
 
   if( halo_.size() > 0)
   {
@@ -247,19 +243,19 @@ void NodeColumns::constructor()
     }
   }
 
-  ATLAS_TRACE_SCOPE("HaloExchange") {
-    halo_exchange_.reset( NodeColumnsHaloExchangeCache::instance().get(mesh_,halo_.size()) );
-  }
+//   ATLAS_TRACE_SCOPE("HaloExchange") {
+//     halo_exchange_.reset( NodeColumnsHaloExchangeCache::instance().get(mesh_,halo_.size()) );
+//   }
 
-  ATLAS_TRACE_SCOPE("GatherScatter") {
-    gather_scatter_.reset( NodeColumnsGatherScatterCache::instance().get(mesh_) );
-  }
+//   ATLAS_TRACE_SCOPE("GatherScatter") {
+//     gather_scatter_.reset( NodeColumnsGatherScatterCache::instance().get(mesh_) );
+//   }
 
-  ATLAS_TRACE_SCOPE("Checksum") {
-    checksum_.reset( NodeColumnsChecksumCache::instance().get(mesh_) );
-  }
+//   ATLAS_TRACE_SCOPE("Checksum") {
+//     checksum_.reset( NodeColumnsChecksumCache::instance().get(mesh_) );
+//   }
 
-  nb_nodes_global_ = gather().glb_dof();
+//   nb_nodes_global_ = gather().glb_dof();
 }
 
 NodeColumns::~NodeColumns() {}
@@ -445,7 +441,9 @@ void NodeColumns::haloExchange( Field& field, bool on_device ) const
 }
 const parallel::HaloExchange& NodeColumns::halo_exchange() const
 {
-  return *halo_exchange_;;
+  if ( halo_exchange_ ) return *halo_exchange_;
+  halo_exchange_ = NodeColumnsHaloExchangeCache::instance().get( mesh_, halo_.size() );
+  return *halo_exchange_;
 }
 
 
@@ -496,13 +494,13 @@ void NodeColumns::gather( const Field& local, Field& global ) const
 const parallel::GatherScatter& NodeColumns::gather() const
 {
   if (gather_scatter_) return *gather_scatter_;
-  gather_scatter_.reset( NodeColumnsGatherScatterCache::instance().get( mesh_ ) );
+  gather_scatter_ = NodeColumnsGatherScatterCache::instance().get( mesh_ );
   return *gather_scatter_;
 }
 const parallel::GatherScatter& NodeColumns::scatter() const
 {
   if (gather_scatter_) return *gather_scatter_;
-  gather_scatter_.reset( NodeColumnsGatherScatterCache::instance().get( mesh_ ) );
+  gather_scatter_ = NodeColumnsGatherScatterCache::instance().get( mesh_ );
   return *gather_scatter_;
 }
 
@@ -599,6 +597,8 @@ std::string NodeColumns::checksum( const Field& field ) const {
 
 const parallel::Checksum& NodeColumns::checksum() const
 {
+  if (checksum_) return *checksum_;
+  checksum_ = NodeColumnsChecksumCache::instance().get( mesh_ );
   return *checksum_;
 }
 

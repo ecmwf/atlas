@@ -135,7 +135,7 @@ void build_median_dual_mesh( Mesh& mesh )
   array::make_view<double,1>(skewness).assign(0.);
   array::make_view<double,1>(alpha).assign(0.5);
 
-  functionspace::NodeColumns nodes_fs(mesh );
+  functionspace::NodeColumns nodes_fs(mesh);
   {
     ATLAS_TRACE("halo-exchange dual_volumes");
     nodes_fs.haloExchange(nodes.field( "dual_volumes" ));

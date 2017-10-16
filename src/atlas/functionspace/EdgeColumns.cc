@@ -75,7 +75,7 @@ public:
     static EdgeColumnsHaloExchangeCache inst;
     return inst;
   }
-  value_type* get( const Mesh& mesh ) {
+  eckit::SharedPtr<value_type> get( const Mesh& mesh ) {
     creator_type creator = std::bind( &EdgeColumnsHaloExchangeCache::create, mesh );
     std::ostringstream key ;
     key << "mesh[address="<<mesh.get()<<"]";
@@ -101,7 +101,7 @@ public:
     static EdgeColumnsGatherScatterCache inst;
     return inst;
   }
-  value_type* get( const Mesh& mesh ) {
+  eckit::SharedPtr<value_type> get( const Mesh& mesh ) {
     creator_type creator = std::bind( &EdgeColumnsGatherScatterCache::create, mesh );
     std::ostringstream key ;
     key << "mesh[address="<<mesh.get()<<"]";
@@ -128,7 +128,7 @@ public:
     static EdgeColumnsChecksumCache inst;
     return inst;
   }
-  value_type* get( const Mesh& mesh ) {
+  eckit::SharedPtr<value_type> get( const Mesh& mesh ) {
     creator_type creator = std::bind( &EdgeColumnsChecksumCache::create, mesh );
     std::ostringstream key ;
     key << "mesh[address="<<mesh.get()<<"]";
@@ -225,8 +225,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration &params )
     mesh_(mesh),
     nb_levels_(0),
     edges_(mesh_.edges()),
-    nb_edges_(0),
-    nb_edges_global_(0)
+    nb_edges_(0)
 {
   nb_levels_ = config_levels(params);
 
@@ -245,8 +244,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo, const eckit:
     mesh_(mesh),
     nb_levels_(0),
     edges_(mesh_.edges()),
-    nb_edges_(0),
-    nb_edges_global_(0)
+    nb_edges_(0)
 {
   size_t mesh_halo_size_;
   mesh.metadata().get("halo",mesh_halo_size_);
@@ -261,8 +259,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo &halo) :
     mesh_(mesh),
     nb_levels_(0),
     edges_(mesh_.edges()),
-    nb_edges_(0),
-    nb_edges_global_(0)
+    nb_edges_(0)
 {
   size_t mesh_halo_size_;
   mesh.metadata().get("halo",mesh_halo_size_);
@@ -275,19 +272,20 @@ void EdgeColumns::constructor()
 {
   ATLAS_TRACE("EdgeColumns()");
 
-  ATLAS_TRACE_SCOPE("HaloExchange") {
-    halo_exchange_.reset( EdgeColumnsHaloExchangeCache::instance().get( mesh_ ) );
-  }
-
-  ATLAS_TRACE_SCOPE("Setup gather_scatter") {
-    gather_scatter_.reset( EdgeColumnsGatherScatterCache::instance().get( mesh_ ) );
-  }
-
-  ATLAS_TRACE_SCOPE("Setup checksum") {
-    checksum_.reset( EdgeColumnsChecksumCache::instance().get( mesh_ ) );
-  }
-
   nb_edges_ = mesh().edges().size();
+
+//  ATLAS_TRACE_SCOPE("HaloExchange") {
+//    halo_exchange_ = EdgeColumnsHaloExchangeCache::instance().get( mesh_ );
+//  }
+
+//  ATLAS_TRACE_SCOPE("Setup gather_scatter") {
+//    gather_scatter_.reset( EdgeColumnsGatherScatterCache::instance().get( mesh_ ) );
+//  }
+
+  // ATLAS_TRACE_SCOPE("Setup checksum") {
+  //   checksum_.reset( EdgeColumnsChecksumCache::instance().get( mesh_ ) );
+  // }
+
 }
 
 EdgeColumns::~EdgeColumns() {}
@@ -362,7 +360,7 @@ void EdgeColumns::haloExchange( Field& field ) const
 const parallel::HaloExchange& EdgeColumns::halo_exchange() const
 {
   if (halo_exchange_) return *halo_exchange_;
-  halo_exchange_.reset( EdgeColumnsHaloExchangeCache::instance().get( mesh_ ) );
+  halo_exchange_ = EdgeColumnsHaloExchangeCache::instance().get( mesh_ );
   return *halo_exchange_;
 }
 
@@ -414,14 +412,14 @@ const parallel::GatherScatter& EdgeColumns::gather() const
 {
   if( gather_scatter_ )
     return *gather_scatter_;
-  gather_scatter_.reset( EdgeColumnsGatherScatterCache::instance().get( mesh_ ) );
+  gather_scatter_ = EdgeColumnsGatherScatterCache::instance().get( mesh_ );
   return *gather_scatter_;
 }
 const parallel::GatherScatter& EdgeColumns::scatter() const
 {
   if( gather_scatter_ )
     return *gather_scatter_;
-  gather_scatter_.reset( EdgeColumnsGatherScatterCache::instance().get( mesh_ ) );
+  gather_scatter_ = EdgeColumnsGatherScatterCache::instance().get( mesh_ );
   return *gather_scatter_;
 }
 
@@ -540,7 +538,7 @@ std::string EdgeColumns::checksum( const Field& field ) const {
 const parallel::Checksum& EdgeColumns::checksum() const
 {
   if (checksum_) return *checksum_;
-  checksum_.reset( EdgeColumnsChecksumCache::instance().get( mesh_ ) );
+  checksum_ = EdgeColumnsChecksumCache::instance().get( mesh_ ) ;
   return *checksum_;
 }
 
