@@ -13,6 +13,7 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
+#include "atlas/runtime/Trace.h"
 
 namespace atlas {
 namespace mesh {
@@ -27,10 +28,20 @@ void accumulate_facets(
     size_t &nb_inner_facets,
     idx_t &missing_value )
 {
+  ATLAS_TRACE();
   missing_value = -1;
   std::vector< std::vector<idx_t> > node_to_facet(nodes.size());
+  for( size_t j=0; j<node_to_facet.size(); ++ j ){
+    node_to_facet[j].reserve(6);
+  }
   nb_facets=0;
   nb_inner_facets=0;
+  if( connectivity_facet_to_elem.size() == 0 ) {
+    connectivity_facet_to_elem.reserve(6*cells.size());
+  }
+  if( facet_nodes_data.size() == 0 ) {
+    facet_nodes_data.reserve(6*cells.size());
+  }
   for( size_t t=0; t<cells.nb_types(); ++t )
   {
     const mesh::Elements& elements = cells.elements(t);
@@ -115,13 +126,13 @@ void accumulate_facets(
 
         if (found_face == false)
         {
-          connectivity_facet_to_elem.push_back( elements.begin()+e     );
+          connectivity_facet_to_elem.emplace_back( elements.begin()+e     );
           // if 2nd element stays missing_value, it is a bdry face
-          connectivity_facet_to_elem.push_back( missing_value );
+          connectivity_facet_to_elem.emplace_back( missing_value );
           for (size_t n = 0; n < nb_nodes_in_facet; ++n)
           {
-            node_to_facet[facet_nodes[n]].push_back(nb_facets);
-            facet_nodes_data.push_back(facet_nodes[n]);
+            node_to_facet[facet_nodes[n]].emplace_back(nb_facets);
+            facet_nodes_data.emplace_back(facet_nodes[n]);
           }
           ++nb_facets;
         }

@@ -18,6 +18,9 @@
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/util/MicroDeg.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/mpi/Buffer.h"
 
 using atlas::util::microdeg;
 
@@ -449,7 +452,7 @@ void EqualRegionsPartitioner::partition( int nb_nodes, NodeInt nodes[], int part
     already by construction in this order, but then sorting is really fast
     */
 
-    std::sort( nodes, nodes+nb_nodes, compare_NS_WE);
+//    std::sort( nodes, nodes+nb_nodes, compare_NS_WE);
 
     /*
     For every band, now sort from west to east, and north to south. Inside every band
@@ -503,40 +506,197 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
         for(size_t j = 0; j < grid.size(); ++j)
             part[j] = 0;
     } else {
-        std::vector<NodeInt> nodes(grid.size());
-        int n(0);
+
+        ATLAS_TRACE("EqualRegionsPartitioner::partition");
 
         ASSERT( grid.projection().units() == "degrees" );
-        if( auto reduced_grid = StructuredGrid(grid) ) {
-            for(size_t jlat = 0; jlat < reduced_grid.ny(); ++jlat) {
-                for(size_t jlon = 0; jlon < reduced_grid.nx(jlat); ++jlon) {
-                    nodes[n].x = microdeg(reduced_grid.x(jlon,jlat));
-                    nodes[n].y = microdeg(reduced_grid.y(jlat));
-                    nodes[n].n = n;
-                    ++n;
-                }
-            }
-        } else {
 
-            // Grid::Iterator iterator = grid().iterator();
-            // PointXY point;
-            // while( iterator.next(point) ) {
-            for( PointXY point : grid.xy() ) {
-              nodes[n].x = microdeg(point.x());
-              nodes[n].y = microdeg(point.y());
-              nodes[n].n = n;
-              ++n;
+        const auto& comm = parallel::mpi::comm();
+        int mpi_rank = comm.rank();
+
+        std::vector<NodeInt> nodes(grid.size());
+        std::vector<int> recv_buffer(3*grid.size());
+        long nb_workers = comm.size();
+
+        /*
+        Sort nodes from north to south, and west to east. Now we can easily split
+        the points in bands. Note, for StructuredGrid, this should not be necessary, as it is
+        already by construction in this order, but then sorting is really fast
+        */
+
+        ATLAS_TRACE_SCOPE("sort all") {
+          std::vector<eckit::mpi::Request> requests;
+
+          for( long w=0; w<nb_workers; ++w ) {
+
+            long w_begin = w     * grid.size()/N_;
+            long w_end   = (w+1) * grid.size()/N_;
+            if( w==nb_workers-1 ) w_end = grid.size();
+            //Log::info() << Here() << "  " << w << " : " << w_begin << " -> " << w_end << std::endl;
+
+
+            if( mpi_rank==0 ) {
+              requests.push_back( comm.iReceive(
+                                    recv_buffer.data()+3*w_begin,
+                                    3*(w_end-w_begin),
+                                    /* source= */ w, /* tag= */ 0 ) );
             }
-//            std::vector<PointLonLat> points;
-//            grid().lonlat(points);
-//            for(size_t j = 0; j < grid().npts(); ++j) {
-//                nodes[n].x = microdeg(points[j].lon());
-//                nodes[n].y = microdeg(points[j].lat());
-//                nodes[n].n = n;
-//                ++n;
-//            }
+
+            if( w == mpi_rank ) {
+              std::vector<NodeInt> w_nodes(w_end-w_begin);
+
+              ATLAS_TRACE_SCOPE("create one bit") {
+                int i(0);
+                int j(0);
+                for( PointXY point : grid.xy() ) {
+                  if( i >= w_begin && i < w_end ) {
+                    w_nodes[j].x = microdeg(point.x());
+                    w_nodes[j].y = microdeg(point.y());
+                    w_nodes[j].n = i;
+                    ++j;
+                  }
+                  ++i;
+                }
+              }
+              ATLAS_TRACE_SCOPE("sort one bit") {
+                std::sort(w_nodes.begin(),w_nodes.end(), compare_NS_WE );
+              }
+              ATLAS_TRACE_SCOPE("send to rank0") {
+                std::vector<int> send_buffer(3*(w_end-w_begin));
+                for( int j=0; j<w_nodes.size(); ++j ) {
+                  send_buffer[j*3+0] = w_nodes[j].x;
+                  send_buffer[j*3+1] = w_nodes[j].y;
+                  send_buffer[j*3+2] = w_nodes[j].n;
+                }
+                comm.send( send_buffer.data(), 3*(w_end-w_begin),
+                           /* dest= */ 0, /* tag= */ 0 );
+              }
+            }
+          }
+          ATLAS_TRACE_MPI( WAIT ) {
+            for( auto request : requests ) {
+              comm.wait( request );
+            }
+          }
+          ATLAS_TRACE_SCOPE("merge sorted") {
+            for( long w=0; w<nb_workers; ++w ) {
+              long w_begin = w     * grid.size()/N_;
+              long w_end   = (w+1) * grid.size()/N_;
+              if( w==nb_workers-1 ) w_end = grid.size();
+
+              for( int i=w_begin; i<w_end; ++i ) {
+                nodes[i].x = recv_buffer[3*i+0];
+                nodes[i].y = recv_buffer[3*i+1];
+                nodes[i].n = recv_buffer[3*i+2];
+              }
+              if( w != 0 ) {
+                std::inplace_merge( nodes.begin(), nodes.begin()+w_begin, nodes.begin()+w_end, compare_NS_WE );
+              }
+            }
+          }
+          for( int i=0; i<grid.size(); ++i ) {
+            recv_buffer[3*i+0] = nodes[i].x;
+            recv_buffer[3*i+1] = nodes[i].y;
+            recv_buffer[3*i+2] = nodes[i].n;
+          }
+          ATLAS_TRACE_MPI( BROADCAST ) {
+            comm.broadcast( recv_buffer, /* root= */0 );
+          }
+          for( int i=0; i<grid.size(); ++i ) {
+            nodes[i].x = recv_buffer[3*i+0];
+            nodes[i].y = recv_buffer[3*i+1];
+            nodes[i].n = recv_buffer[3*i+2];
+          }
         }
-        partition(grid.size(), nodes.data(), part);
+
+
+        /*
+        For every band, now sort from west to east, and north to south. Inside every band
+        we can now easily split nodes in sectors.
+        */
+
+        ATLAS_TRACE_SCOPE( "sort bands" ) {
+          std::vector<eckit::mpi::Request> requests;
+
+          int nb_parts = N_;
+          int nb_nodes = grid.size();
+          int chunk_size = nb_nodes/nb_parts;
+          int chunk_remainder = nb_nodes - chunk_size*nb_parts;
+          int remainder = chunk_remainder;
+          std::vector<int> count;
+          count.reserve(nb_parts);
+          int end=0;
+          for( int band=0; band<nb_bands(); ++band ) {
+
+              int begin = end;
+              for( int p=0; p<nb_regions(band); ++p ) {
+                  count.push_back( chunk_size + (remainder-->0?1:0) );
+                  end += count.back();
+              }
+
+              int w;
+              if( nb_workers >= nb_bands() ) {
+                w = band;
+              } else {
+                NOTIMP;
+              }
+
+              if( mpi_rank==0 ) {
+                requests.push_back( comm.iReceive(
+                                      recv_buffer.data()+3*begin,
+                                      3*(end-begin),
+                                      /* source= */ w, /* tag= */ 0 ) );
+              }
+
+              if( w == mpi_rank ) {
+                  std::sort( nodes.data()+begin, nodes.data()+end, compare_WE_NS );
+                  std::vector<int> send_buffer(3*(end-begin));
+                  for( int j=0; j<end-begin; ++j ) {
+                    send_buffer[j*3+0] = nodes[begin+j].x;
+                    send_buffer[j*3+1] = nodes[begin+j].y;
+                    send_buffer[j*3+2] = nodes[begin+j].n;
+                  }
+                  comm.send( send_buffer.data(), 3*(end-begin),
+                             /* dest= */ 0, /* tag= */ 0 );
+              }
+          }
+          ATLAS_TRACE_MPI( WAIT ) {
+            for( auto request : requests ) {
+              comm.wait( request );
+            }
+          }
+
+          /*
+          Create list that tells in original node numbering which part the node belongs to
+          */
+          remainder = chunk_remainder;
+          end = 0;
+          for( int p=0; p<nb_parts; ++p) {
+              int begin = end;
+              end = begin + count[p];
+              for( int i=begin; i<end; ++i ) {
+                  int n = recv_buffer[3*i+2];
+                  part[ n ] = p;
+              }
+          }
+          ATLAS_TRACE_MPI( BROADCAST ) {
+            comm.broadcast(part,nb_nodes,0);
+          }
+
+        }
+
+//        for( int i=0; i<grid.size(); ++i ) {
+//          recv_buffer[3*i+0] = nodes[i].x;
+//          recv_buffer[3*i+1] = nodes[i].y;
+//          recv_buffer[3*i+2] = nodes[i].n;
+//        }
+//        comm.broadcast( recv_buffer, /* root= */0 );
+//        for( int i=0; i<grid.size(); ++i ) {
+//          nodes[i].x = recv_buffer[3*i+0];
+//          nodes[i].y = recv_buffer[3*i+1];
+//          nodes[i].n = recv_buffer[3*i+2];
+//        }
+
     }
 }
 

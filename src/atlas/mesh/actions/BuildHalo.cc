@@ -237,8 +237,8 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
   for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {
     uid_t uid = compute_uid(jnode);
-
-    if( uid2node.count(uid) > 0 )
+    bool inserted = uid2node.insert( std::make_pair(uid,jnode) ).second;
+    if( not inserted )
     {
       int other = uid2node[uid];
       std::stringstream msg;
@@ -247,7 +247,6 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
           << glb_idx(other) << " (" << xy(other,XX) <<","<< xy(other,YY)<<")";
       notes.add_error(msg.str());
     }
-    uid2node[uid] = jnode;
   }
   if( notes.error() )
     throw eckit::SeriousBug(notes.str(),Here());

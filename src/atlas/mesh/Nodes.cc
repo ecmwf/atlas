@@ -117,10 +117,11 @@ void Nodes::resize( size_t size )
   array::ArrayView<int   ,1> part    = array::make_view<int,   1>( partition() );
   array::ArrayView<int   ,1> flags   = array::make_view<int,   1>( field("flags") );
 
+  const int mpi_rank = parallel::mpi::comm().rank();
   for(size_t n=previous_size; n<size_; ++n)
   {
     glb_idx(n) = 1+n;
-    part(n) = parallel::mpi::comm().rank();
+    part(n) = mpi_rank;;
     flags(n) = 0;
   }
 }

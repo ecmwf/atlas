@@ -65,6 +65,7 @@ struct Sort
 
 void build_element_to_edge_connectivity( Mesh& mesh )
 {
+  ATLAS_TRACE();
   mesh::HybridElements::Connectivity& cell_edge_connectivity = mesh.cells().edge_connectivity();
   cell_edge_connectivity.clear();
 
@@ -91,12 +92,12 @@ void build_element_to_edge_connectivity( Mesh& mesh )
   }
 
   // Sort edges for bit-reproducibility
-  std::vector<Sort> edge_sort(nb_edges);
+  std::vector<Sort> edge_sort; edge_sort.reserve(nb_edges);
   {
     UniqueLonLat compute_uid( mesh );
 
     for( size_t jedge=0; jedge<nb_edges; ++jedge )
-      edge_sort[jedge] = Sort( compute_uid(edge_node_connectivity.row(jedge)), jedge );
+      edge_sort.emplace_back( Sort( compute_uid(edge_node_connectivity.row(jedge)), jedge ) );
 
     std::sort( edge_sort.data(), edge_sort.data()+nb_edges );
   }
