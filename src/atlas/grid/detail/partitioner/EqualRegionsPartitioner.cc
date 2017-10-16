@@ -546,17 +546,30 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
               std::vector<NodeInt> w_nodes(w_end-w_begin);
 
               ATLAS_TRACE_SCOPE("create one bit") {
-                int i(0);
                 int j(0);
-                for( PointXY point : grid.xy() ) {
-                  if( i >= w_begin && i < w_end ) {
+                auto filter = [](long n, long begin, long end) {
+                  return (n>=begin && n<end);
+                };
+
+                auto pred = std::bind( filter, std::placeholders::_1, w_begin, w_end );
+                int i = 0;
+                for( PointXY point : grid.xy( /*pred*/ ) ) {
+                  //Log::info() << "loop i = " << i << std::endl;
+                  if( i >= w_begin && i < w_end ) { /// TODO : Remove this if and let predicate deal with it
+//                  if( not( i >= w_begin && i < w_end ) ) {
+//                    std::cout << Here() << "ERROR " << w << " : i = " << i << " must be in range [" << w_begin << " , " <<w_end << "]" << std::endl;
+//                    ASSERT(false);
+//                  }
                     w_nodes[j].x = microdeg(point.x());
                     w_nodes[j].y = microdeg(point.y());
                     w_nodes[j].n = i;
                     ++j;
+
                   }
                   ++i;
                 }
+//                Log::info() << Here() << "  " << w << " --> i , j : " << i << " , " << j << std::endl;
+
               }
               ATLAS_TRACE_SCOPE("sort one bit") {
                 std::sort(w_nodes.begin(),w_nodes.end(), compare_NS_WE );

@@ -92,6 +92,73 @@ public:
     size_t j_;
   };
 
+
+  class IteratorXYPredicated: public Grid::IteratorXY {
+  public:
+    IteratorXYPredicated(const Structured& grid, Grid::IteratorXY::Predicate p, bool begin = true):
+        grid_(grid),
+        p_(p),
+        i_(0),
+        j_( begin ? 0 : grid.ny() ),
+        n_(0),
+        size_(grid.size()) {
+    }
+
+    virtual bool next(PointXY& xy) {
+       NOTIMP;
+
+       if( j_<grid_.ny() && i_<grid_.nx(j_) ) {
+
+         xy = grid_.xy(i_++,j_);
+
+         if( i_==grid_.nx(j_) ) {
+           j_++;
+           i_=0;
+         }
+         return true;
+       }
+       return false;
+    }
+
+
+    virtual const PointXY operator *() const {
+        return grid_.xy(i_,j_);
+    }
+
+    virtual const Grid::IteratorXY& operator ++() {
+        do {
+          ++i_;
+          if( i_ == grid_.nx(j_) ) {
+            ++j_;
+            i_=0;
+          }
+          ++n_;
+          if( n_ == size_ ) return *this;
+        } while( not p_(n_) );
+        return *this;
+    }
+
+    virtual bool operator ==(const Grid::IteratorXY &other) const {
+        return j_ == static_cast<const IteratorXYPredicated&>(other).j_ && i_ == static_cast<const IteratorXYPredicated&>(other).i_;
+    }
+
+    virtual bool operator !=(const Grid::IteratorXY &other) const {
+        return i_ != static_cast<const IteratorXYPredicated&>(other).i_ || j_ != static_cast<const IteratorXYPredicated&>(other).j_;
+    }
+
+
+  private:
+    Grid::IteratorXY::Predicate p_;
+    const Structured& grid_;
+    size_t i_;
+    size_t j_;
+    size_t n_;
+    size_t size_;
+  };
+
+
+
+
   class IteratorLonLat: public Grid::IteratorLonLat {
   public:
     IteratorLonLat(const Structured& grid, bool begin = true):
@@ -328,6 +395,9 @@ public:
     virtual IteratorXY* xy_end()   const{ return new IteratorXY(*this,false); }
     virtual IteratorLonLat* lonlat_begin() const{ return new IteratorLonLat(*this); }
     virtual IteratorLonLat* lonlat_end()   const{ return new IteratorLonLat(*this,false); }
+
+    virtual IteratorXYPredicated* xy_begin(IteratorXY::Predicate p) const { return new IteratorXYPredicated(*this,p); }
+    virtual IteratorXYPredicated* xy_end(IteratorXY::Predicate p) const { return new IteratorXYPredicated(*this,p,false); }
 
 
 protected: // methods

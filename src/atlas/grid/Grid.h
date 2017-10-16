@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <functional>
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/grid/detail/grid/Unstructured.h"
@@ -43,12 +44,16 @@ public:
     public:
       using iterator       = grid::IteratorXY;
       using const_iterator = iterator;
+      using Predicate = std::function< bool(long) >;
     public:
+      IterateXY(const Implementation& grid, Predicate p) : grid_(grid), p_(p), use_p_(true) {}
       IterateXY(const Implementation& grid) : grid_(grid) {}
-      iterator begin() const { return grid_.xy_begin(); }
-      iterator end()   const { return grid_.xy_end(); }
+      iterator begin() const { return use_p_ ? grid_.xy_begin(p_) : grid_.xy_begin(); }
+      iterator end()   const { return use_p_ ? grid_.xy_end(p_)   : grid_.xy_end();   }
     private:
       const Implementation& grid_;
+      Predicate p_;
+      bool use_p_{false};
     };
 
     class IterateLonLat {
@@ -65,6 +70,7 @@ public:
 
 public:
 
+    IterateXY     xy( IterateXY::Predicate p ) const { return IterateXY(*grid_,p); }
     IterateXY     xy()     const { return IterateXY(*grid_);     }
     IterateLonLat lonlat() const { return IterateLonLat(*grid_); }
 

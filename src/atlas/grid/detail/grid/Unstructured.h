@@ -148,6 +148,8 @@ public: // methods
     virtual IteratorXY* xy_end()   const{ return new IteratorXY(*this,false); }
     virtual IteratorLonLat* lonlat_begin() const{ return new IteratorLonLat(*this); }
     virtual IteratorLonLat* lonlat_end()   const{ return new IteratorLonLat(*this,false); }
+    virtual IteratorXY* xy_begin(IteratorXY::Predicate p) const { return xy_begin(); }
+    virtual IteratorXY* xy_end(IteratorXY::Predicate p) const { return xy_end(); }
 
 private: // methods
 

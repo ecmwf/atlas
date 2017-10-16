@@ -30,11 +30,11 @@ public:
     bool next( PointXY& xy ) {
         return iterator_->next(xy);
     }
-    
+
     PointXY operator *() const {
         return iterator_->operator *();
     }
-  
+
     const IteratorXY& operator ++() {
         iterator_->operator ++();
         return *this;
@@ -43,7 +43,7 @@ public:
     bool operator ==(const IteratorXY &other) const {
         return iterator_->operator ==(*other.iterator_);
     }
-    
+
     bool operator !=(const IteratorXY &other) const {
         return iterator_->operator !=(*other.iterator_);
     }
@@ -66,11 +66,11 @@ public:
     bool next( PointLonLat& lonlat ) {
         return iterator_->next(lonlat);
     }
-    
+
     PointLonLat operator *() const {
         return iterator_->operator *();
     }
-  
+
     const IteratorLonLat& operator ++() {
         iterator_->operator ++();
         return *this;
@@ -79,7 +79,7 @@ public:
     bool operator ==(const IteratorLonLat &other) const {
         return iterator_->operator ==(*other.iterator_);
     }
-    
+
     bool operator !=(const IteratorLonLat &other) const {
         return iterator_->operator !=(*other.iterator_);
     }

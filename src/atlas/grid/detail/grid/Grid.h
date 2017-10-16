@@ -11,6 +11,7 @@
 #pragma once
 
 #include <string>
+#include <functional>
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
 #include "atlas/domain/Domain.h"
@@ -41,6 +42,7 @@ public:  // types
 
     class IteratorXY {
     public:
+      using Predicate = std::function<bool(long)>;
       virtual bool next(PointXY&) =0;
       virtual const PointXY operator *() const =0;
       virtual const IteratorXY& operator ++() =0;
@@ -101,6 +103,8 @@ public:  // methods
 
     virtual IteratorXY* xy_begin() const=0;
     virtual IteratorXY* xy_end()   const=0;
+    virtual IteratorXY* xy_begin(IteratorXY::Predicate p) const=0;
+    virtual IteratorXY* xy_end(IteratorXY::Predicate p)   const=0;
     virtual IteratorLonLat* lonlat_begin() const=0;
     virtual IteratorLonLat* lonlat_end()   const=0;
 
