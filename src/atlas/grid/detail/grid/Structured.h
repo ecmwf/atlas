@@ -102,7 +102,18 @@ public:
         j_( begin ? 0 : grid.ny() ),
         n_(0),
         size_(grid.size()) {
+        if( begin ) {
+            while( not p_(n_) && n_<size_ ) {
+                ++i_;
+                if( i_ == grid_.nx(j_) ) {
+                    ++j_;
+                    i_=0;
+                }
+                ++n_;
+            }
+        }
     }
+
 
     virtual bool next(PointXY& xy) {
        NOTIMP;

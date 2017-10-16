@@ -200,6 +200,27 @@ CASE( "test_iterator" )
   Log::debug() << std::flush;
 }
 
+CASE( "test_iterator_with_predicate" )
+{
+  Grid grid("O4");
+
+  auto filter = [](long n) {
+    bool b = (n>=5 && n<10);
+    if( b ) Log::debug() << "n = " << n << std::endl;
+    return b;
+  };
+
+  // auto pred = std::bind( filter, std::placeholders::_1, w_begin, w_end );
+
+  int i(0);
+  for( atlas::PointXY xy : grid.xy(filter) ) {
+    Log::debug() << i++ << "  " << xy <<  std::endl;
+  }
+  EXPECT( i == 5 );
+
+  Log::debug() << std::flush;
+}
+
 //-----------------------------------------------------------------------------
 
 }  // namespace test
