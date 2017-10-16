@@ -297,7 +297,7 @@ void AtlasBenchmark::setup()
 
   StructuredGrid grid;
   ATLAS_TRACE_SCOPE( "Create grid" ) {  grid = Grid(gridname); }
-  ATLAS_TRACE_SCOPE( "Create mesh" ) {  mesh = MeshGenerator( "structured" ).generate(grid); }
+  ATLAS_TRACE_SCOPE( "Create mesh" ) {  mesh = MeshGenerator( "structured", util::Config("partitioner","equal_regions") ).generate(grid); }
 
   ATLAS_TRACE_SCOPE( "Create node_fs") { nodes_fs = functionspace::NodeColumns(mesh,option::halo(halo)); }
   ATLAS_TRACE_SCOPE( "build_edges" )                     { build_edges(mesh); }
