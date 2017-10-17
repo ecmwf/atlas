@@ -513,6 +513,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
 
         const auto& comm = parallel::mpi::comm();
         int mpi_rank = comm.rank();
+        int mpi_size = comm.size();
 
         std::vector<NodeInt> nodes(grid.size());
         int* nodes_buffer = reinterpret_cast<int*>(nodes.data());
@@ -545,23 +546,25 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
             ATLAS_TRACE("sort all");
             std::vector<eckit::mpi::Request> requests;
 
-            for( long w=0; w<nb_workers; ++w ) {
-  
-                long w_begin = w     * grid.size()/N_;
-                long w_end   = (w+1) * grid.size()/N_;
+            for( int w=0; w<nb_workers; ++w ) {
+
+                int w_begin = w     * grid.size()/N_;
+                int w_end   = (w+1) * grid.size()/N_;
                 if( w==nb_workers-1 ) w_end = grid.size();
                 size_t w_size = w_end - w_begin;
-    
+
+                int work_rank = std::min(w,mpi_size-1);
+
                 if( mpi_rank==0 ) {
                   requests.push_back( comm.iReceive(
                                         nodes_buffer+3*w_begin, 3*w_size,
-                                        /* source= */ w, /* tag= */ 0 ) );
+                                        /* source= */ work_rank, /* tag= */ 0 ) );
                 }
-    
-                if( w == mpi_rank ) {
+
+                if( mpi_rank == work_rank ) {
                     std::vector<NodeInt> w_nodes(w_size);
                     int* w_nodes_buffer = reinterpret_cast<int*>(w_nodes.data());
-      
+
                     ATLAS_TRACE_SCOPE("create one bit") {
                         if( true ) // optimized experimental when true (still need to benchmark)
                         {
@@ -606,9 +609,9 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                 }
             }
             ATLAS_TRACE_SCOPE("merge sorted") {
-                for( long w=0; w<nb_workers; ++w ) {
-                    long w_begin = w     * grid.size()/N_;
-                    long w_end   = (w+1) * grid.size()/N_;
+                for( int w=0; w<nb_workers; ++w ) {
+                    int w_begin = w     * grid.size()/N_;
+                    int w_end   = (w+1) * grid.size()/N_;
                     if( w==nb_workers-1 ) w_end = grid.size();
                     if( w != 0 ) {
                         std::inplace_merge( nodes.begin(), nodes.begin()+w_begin, nodes.begin()+w_end, compare_NS_WE );
@@ -638,7 +641,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
             std::vector<int> displs; displs.reserve(nb_parts);
             std::vector<int> b_count; b_count.reserve(nb_bands());
             std::vector<int> b_displs; b_displs.reserve(nb_bands());
-          
+
             {
                 int end = 0;
                 for( int band=0; band<nb_bands(); ++band ) {
@@ -654,25 +657,29 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                     b_count.push_back(b_size);
                 }
             }
-          
+
             int w(0);
             for( int band=0; band<nb_bands(); ++band ) {
                 int w0 = w;
+                int w0_work_rank = std::min(w0,mpi_size-1);
+
                 for( int p=0; p<nb_regions(band); ++p ) {
                     int w_begin = displs[w];
                     int w_size  = count[w];
                     int w_end   = w_begin + w_size;
-                    if( mpi_rank==w0 ) {
+                    int work_rank = std::min(w,mpi_size-1);
+
+                    if( mpi_rank==w0_work_rank ) {
                       requests.push_back( comm.iReceive( nodes_buffer+3*w_begin, 3*w_size,
-                                                         /* source= */ w, /* tag= */ 0 ) );
+                                                         /* source= */ work_rank, /* tag= */ 0 ) );
                     }
-                    if( w == mpi_rank ) {
+                    if( work_rank == mpi_rank ) {
                       ATLAS_TRACE_SCOPE("sort one bit") {
                          // std::cout << w << "sorting " << w_size << std::endl;
                          std::sort( nodes.data()+w_begin, nodes.data()+w_end, compare_WE_NS );
                       }
                       comm.send( nodes_buffer+3*w_begin, 3*w_size,
-                                 /* dest= */ w0, /* tag= */ 0 );
+                                 /* dest= */ w0_work_rank, /* tag= */ 0 );
                     }
                     ++w;
                 }
@@ -688,11 +695,13 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                 int w0 = w;
                 int w0_begin = b_displs[band];
                 int w0_size = b_count[band];
+                int w0_work_rank = std::min(w0,mpi_size-1);
+
                 for( int p=0; p<nb_regions(band); ++p ) {
                     int w_begin = displs[w];
                     int w_size  = count[w];
                     int w_end   = w_begin + w_size;
-                    if( mpi_rank == w0 && w != w0 ) {
+                    if( w != w0 && mpi_rank == w0_work_rank ) {
                         ATLAS_TRACE("merge sort");
                         std::inplace_merge( nodes.begin()+w0_begin, nodes.begin()+w_begin, nodes.begin()+w_end, compare_WE_NS );
                     }
@@ -700,9 +709,9 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                 }
                 if( mpi_rank == 0 ) {
                     requests.push_back( comm.iReceive( nodes_buffer+3*w0_begin, 3*w0_size,
-                                                       /* source= */ w0, /* tag= */ 0 ) );
+                                                       /* source= */ w0_work_rank, /* tag= */ 0 ) );
                 }
-                if( mpi_rank == w0 ) {
+                if( mpi_rank == w0_work_rank ) {
                     comm.send( nodes_buffer+3*w0_begin, 3*w0_size, /* dest= */ 0, /* tag= */ 0 );
                 }
             }

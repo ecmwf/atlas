@@ -31,7 +31,7 @@ ecbuild_declare_project()
 
 ### eckit
 
-ecbuild_use_package( PROJECT eckit VERSION 0.18 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 0.18.1 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
