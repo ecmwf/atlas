@@ -121,7 +121,6 @@ CASE( "test_t63" )
   //mesh::actions::build_pole_edges(m);
   //mesh::actions::build_edges_parallel_fields(m.function_space("edges"),m-.nodes());
   //mesh::actions::build_centroid_dual_mesh(m);
-  mesh::actions::renumber_nodes_glb_idx(m.nodes());
 
   std::stringstream filename; filename << "T63_halo.msh";
   Gmsh(filename.str(),util::Config("ghost",true)).write(m);

@@ -71,7 +71,7 @@ struct Node
 
 //------------------------------------------------------------------------------
 
-void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_halo, mesh::Nodes& nodes, bool do_all )
+void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& build_halo, mesh::Nodes& nodes, bool do_all )
 {
   ATLAS_TRACE();
 // TODO: ATLAS-14: fix renumbering of EAST periodic boundary points
@@ -89,7 +89,7 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
   Log::info() << std::endl;
   Log::info() << "min = " << nodes.global_index().metadata().getLong("min") << std::endl;
   Log::info() << "max = " << nodes.global_index().metadata().getLong("max") << std::endl;
-  Log::info() << "complete = " << nodes.global_index().metadata().getBool("complete") << std::endl;
+  Log::info() << "human_readable = " << nodes.global_index().metadata().getBool("human_readable") << std::endl;
   gidx_t glb_idx_max = 0;
 
   std::vector<int> points_to_edit;
@@ -157,7 +157,6 @@ void refactored_renumber_nodes_glb_idx( const mesh::actions::BuildHalo& build_ha
     std::sort(node_sort.begin(), node_sort.end());
   }
 
-  // Assume edge gid start
   gidx_t gid=glb_idx_max;
   for( size_t jnode=0; jnode<node_sort.size(); ++jnode )
   {
@@ -275,7 +274,7 @@ void Tool::execute(const Args& args)
     Trace::Barriers set_barrier(true);
     Trace::Tracing  set_channel( Log::info() );
     for( size_t i=0; i<iterations; ++i ) {
-      refactored_renumber_nodes_glb_idx(build_halo,mesh.nodes(),do_all);
+      make_nodes_global_index_human_readable(build_halo,mesh.nodes(),do_all);
     }
   }
   t.stop();

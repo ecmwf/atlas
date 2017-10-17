@@ -13,29 +13,30 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "atlas/array.h"
+#include "atlas/array/IndexView.h"
+#include "atlas/field/Field.h"
 #include "atlas/library/config.h"
-#include "atlas/runtime/Log.h"
+#include "atlas/mesh/Elements.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/HybridElements.h"
-#include "atlas/mesh/Elements.h"
 #include "atlas/mesh/actions/BuildHalo.h"
-#include "atlas/field/Field.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
-#include "atlas/util/CoordinateEnums.h"
 #include "atlas/mesh/detail/PeriodicTransform.h"
-#include "atlas/util/Unique.h"
-#include "atlas/util/LonLatMicroDeg.h"
-#include "atlas/util/MicroDeg.h"
 #include "atlas/parallel/mpi/Buffer.h"
-#include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
-#include "atlas/array.h"
+#include "atlas/parallel/mpi/Buffer.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/parallel/mpi/Buffer.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/LonLatMicroDeg.h"
+#include "atlas/util/MicroDeg.h"
+#include "atlas/util/Unique.h"
+
 
 //#define DEBUG_OUTPUT
 #ifdef DEBUG_OUTPUT
@@ -61,6 +62,144 @@ using Topology = atlas::mesh::Nodes::Topology;
 namespace atlas {
 namespace mesh {
 namespace actions {
+
+struct Node
+{
+  Node(gidx_t gid, int idx)
+  {
+    g = gid;
+    i = idx;
+  }
+  gidx_t g;
+  gidx_t i;
+  bool operator < (const Node& other) const
+  {
+    return ( g<other.g );
+  }
+};
+
+void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& build_halo, mesh::Nodes& nodes, bool do_all )
+{
+  ATLAS_TRACE();
+// TODO: ATLAS-14: fix renumbering of EAST periodic boundary points
+// --> Those specific periodic points at the EAST boundary are not checked for uid,
+//     and could receive different gidx for different tasks
+
+
+  // unused // int mypart = parallel::mpi::comm().rank();
+  int nparts = parallel::mpi::comm().size();
+  size_t root = 0;
+
+  array::ArrayView<gidx_t,1> nodes_glb_idx = array::make_view<gidx_t,1> ( nodes.global_index() );
+  //nodes_glb_idx.dump( Log::info() );
+  Log::info() << "min = " << nodes.global_index().metadata().getLong("min") << std::endl;
+  Log::info() << "max = " << nodes.global_index().metadata().getLong("max") << std::endl;
+  Log::info() << "human_readable = " << nodes.global_index().metadata().getBool("human_readable") << std::endl;
+  gidx_t glb_idx_max = 0;
+
+  std::vector<int> points_to_edit;
+
+  if( do_all ) {
+    points_to_edit.resize(nodes_glb_idx.size());
+    for( size_t i=0; i<nodes_glb_idx.size(); ++i )
+      points_to_edit[i] = i;
+  } else {
+    glb_idx_max = nodes.global_index().metadata().getLong("max",0);
+    points_to_edit.resize( build_halo.periodic_local_index_.size() );
+    for( size_t i=0; i<points_to_edit.size(); ++i )
+      points_to_edit[i] = build_halo.periodic_local_index_[i];
+  }
+
+  std::vector<gidx_t> glb_idx(points_to_edit.size());
+  int nb_nodes = glb_idx.size();
+  for( size_t i=0; i<nb_nodes; ++i )
+    glb_idx[i] = nodes_glb_idx(points_to_edit[i]);
+
+
+  ATLAS_DEBUG_VAR( points_to_edit );
+  ATLAS_DEBUG_VAR( points_to_edit.size() );
+
+  /*
+   * Sorting following gidx will define global order of
+   * gathered fields. Special care needs to be taken for
+   * pole edges, as their centroid might coincide with
+   * other edges
+   */
+  // Try to recover
+//  {
+//    UniqueLonLat compute_uid(nodes);
+//    for( int jnode=0; jnode<nb_nodes; ++jnode ) {
+//      if( glb_idx(jnode) <= 0 ) {
+//        glb_idx(jnode) = compute_uid(jnode);
+//      }
+//    }
+//  }
+
+
+  // 1) Gather all global indices, together with location
+
+  std::vector<int> recvcounts(parallel::mpi::comm().size());
+  std::vector<int> recvdispls(parallel::mpi::comm().size());
+
+  ATLAS_TRACE_MPI( GATHER ) {
+    parallel::mpi::comm().gather(nb_nodes, recvcounts, root);
+  }
+  int glb_nb_nodes = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
+
+  recvdispls[0]=0;
+  for (int jpart=1; jpart<nparts; ++jpart) { // start at 1
+    recvdispls[jpart]=recvcounts[jpart-1]+recvdispls[jpart-1];
+  }
+
+  std::vector<gidx_t> glb_idx_gathered( glb_nb_nodes );
+  ATLAS_TRACE_MPI( GATHER ) {
+    parallel::mpi::comm().gatherv(glb_idx.data(), glb_idx.size(),
+                                  glb_idx_gathered.data(),
+                                  recvcounts.data(), recvdispls.data(), root);
+  }
+
+
+  // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
+  std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
+  for( size_t jnode=0; jnode<glb_idx_gathered.size(); ++jnode ) {
+    node_sort.push_back( Node(glb_idx_gathered[jnode],jnode) );
+  }
+
+  ATLAS_TRACE_SCOPE( "sort on rank 0" ) {
+    std::sort(node_sort.begin(), node_sort.end());
+  }
+
+  gidx_t gid=glb_idx_max+1;
+  for( size_t jnode=0; jnode<node_sort.size(); ++jnode )
+  {
+    if( jnode > 0 && node_sort[jnode].g != node_sort[jnode-1].g ) {
+      ++gid;
+    }
+    int inode = node_sort[jnode].i;
+    glb_idx_gathered[inode] = gid;
+  }
+
+  // 3) Scatter renumbered back
+  ATLAS_TRACE_MPI( SCATTER ) {
+    parallel::mpi::comm().scatterv(glb_idx_gathered.data(),
+                                   recvcounts.data(), recvdispls.data(),
+                                   glb_idx.data(), glb_idx.size(), root);
+  }
+
+  for( int jnode=0; jnode<nb_nodes; ++jnode ) {
+    nodes_glb_idx(points_to_edit[jnode]) = glb_idx[jnode];
+  }
+
+  //nodes_glb_idx.dump( Log::info() );
+  //Log::info() << std::endl;
+  nodes.global_index().metadata().set("human_readable",true);
+
+}
+
+// -------------------------------------------------------------------------------------
+
+
+
 
 
 typedef gidx_t uid_t;
@@ -630,8 +769,7 @@ public:
       }
       std::sort(node_uid.begin(),node_uid.end());
     }
-    auto node_already_exists = [&node_uid,&new_node_uid]( uid_t uid ) -> bool
-    {
+    auto node_already_exists = [&node_uid,&new_node_uid]( uid_t uid ) {
       std::vector<uid_t>::iterator it = std::lower_bound( node_uid.begin(), node_uid.end(), uid );
       bool not_found = ( it == node_uid.end() || uid < *it );
       if( not_found ) {
@@ -1094,6 +1232,7 @@ void BuildHalo::operator () ( int nb_elems )
   if( halo == nb_elems )
     return;
 
+
   ATLAS_TRACE( "Increasing mesh halo" );
 
   for(int jhalo=halo ; jhalo<nb_elems; ++jhalo )
@@ -1126,8 +1265,6 @@ void BuildHalo::operator () ( int nb_elems )
       increase_halo_periodic( helper, eastpts, EastWest(), Topology::PERIODIC|Topology::EAST|Topology::GHOST );
     }
 
-    mesh_.nodes().global_index().metadata().set("complete",false);
-
     for( gidx_t p : helper.status.new_periodic_ghost_points ) {
       periodic_local_index_.push_back( p );
     }
@@ -1136,6 +1273,7 @@ void BuildHalo::operator () ( int nb_elems )
     ss << "nb_nodes_including_halo["<<jhalo+1<<"]";
     mesh_.metadata().set(ss.str(),mesh_.nodes().size());
     mesh_.metadata().set("halo",jhalo+1);
+    mesh_.nodes().global_index().metadata().set("human_readable",false);
 
 #ifdef DEBUG_OUTPUT
     output::Gmsh gmsh2d("build-halo-mesh2d.msh",util::Config
@@ -1153,6 +1291,10 @@ void BuildHalo::operator () ( int nb_elems )
     gmsh3d.write(mesh_);
 #endif
   }
+
+  make_nodes_global_index_human_readable( *this, mesh_.nodes(), /*do_all*/ false );
+//  renumber_nodes_glb_idx (mesh_.nodes());
+
 }
 
 // ------------------------------------------------------------------

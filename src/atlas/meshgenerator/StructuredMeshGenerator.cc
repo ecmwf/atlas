@@ -1123,7 +1123,7 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     ++jnode;
   }
 
-  nodes.global_index().metadata().set("complete",true);
+  nodes.global_index().metadata().set("human_readable",true);
   nodes.global_index().metadata().set("min",1);
   nodes.global_index().metadata().set("max",max_glb_idx);
 

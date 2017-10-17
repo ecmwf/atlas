@@ -269,7 +269,6 @@ void NodeColumns::constructor()
   if( halo_.size() > 0)
   {
     mesh::actions::build_halo(mesh_,halo_.size());
-    mesh::actions::renumber_nodes_glb_idx(mesh_.nodes());
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
     mesh_.metadata().get(ss.str(),nb_nodes_);

@@ -117,7 +117,11 @@ void build_edges_parallel_fields( Mesh& mesh )
   ATLAS_TRACE();
   build_edges_partition ( mesh );
   build_edges_remote_idx( mesh );
-  build_edges_global_idx( mesh );
+  /*
+   * We turn following off. It is expensive and we don't really care about a nice contiguous
+   * ordering.
+   */
+  // build_edges_global_idx( mesh );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -140,6 +144,13 @@ Field& build_nodes_global_idx( mesh::Nodes& nodes )
 
 void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 {
+  bool human_readable(false);
+  nodes.global_index().metadata().get("human_readable",human_readable);
+  if( human_readable ) {
+    /* nothing to be done */
+    return;
+  }
+
   ATLAS_TRACE();
 
 // TODO: ATLAS-14: fix renumbering of EAST periodic boundary points
@@ -227,6 +238,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   for( int jnode=0; jnode<nb_nodes; ++jnode ) {
     glb_idx(jnode) = loc_id(jnode);
   }
+  nodes.global_index().metadata().set("human_readable",true);
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -617,7 +630,6 @@ Field& build_edges_partition( Mesh& mesh )
   return edges.partition();
 }
 
-
 Field& build_edges_remote_idx( Mesh& mesh  )
 {
   ATLAS_TRACE();
@@ -830,7 +842,6 @@ Field& build_edges_global_idx( Mesh& mesh )
   /*
    * REMOTE INDEX BASE = 1
    */
-  // unused //  const int ridx_base = 1;
 
   // 1) Gather all global indices, together with location
   array::ArrayT<uid_t> loc_edge_id_arr(nb_edges);
@@ -872,7 +883,7 @@ Field& build_edges_global_idx( Mesh& mesh )
   std::sort(edge_sort.begin(), edge_sort.end());
 
   // Assume edge gid start
-  uid_t gid=200000;
+  uid_t gid(0);
   for( size_t jedge=0; jedge<edge_sort.size(); ++jedge )
   {
     if( jedge == 0 )

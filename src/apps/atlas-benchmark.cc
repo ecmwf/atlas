@@ -538,10 +538,10 @@ double AtlasBenchmark::result()
   if( output )
   {
     std::vector<long> levels( 1, 0 );
-    atlas::output::Output gmsh = atlas::output::Gmsh( "benchmark.msh", util::Config("levels",levels) );
+    atlas::output::Output gmsh = atlas::output::Gmsh( "benchmark.msh", util::Config("levels",levels)("ghost",true) );
     gmsh.write( mesh );
-    gmsh.write( mesh.nodes().field("field") );
-    gmsh.write( mesh.nodes().field("grad") );
+    gmsh.write( scalar_field );
+    gmsh.write( grad_field );
   }
   return norm;
 }
