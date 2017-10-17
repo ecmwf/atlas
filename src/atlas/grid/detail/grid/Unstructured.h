@@ -74,6 +74,59 @@ public:
     size_t n_;
   };
 
+  class IteratorXYPredicated: public Grid::IteratorXY {
+  public:
+    IteratorXYPredicated(const Unstructured& grid, Grid::IteratorXY::Predicate p, bool begin=true):
+        grid_(grid),
+        p_(p),
+        size_(grid_.points_->size()),
+        n_( begin ? 0 : grid_.points_->size() ) {
+
+        if( begin) {
+
+        }
+    }
+
+    virtual bool next(PointXY& xy) {
+      NOTIMP;
+      if( n_ != grid_.points_->size() ) {
+        xy = grid_.xy(n_++);
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    virtual const PointXY operator *() const {
+        return grid_.xy(n_);
+    }
+
+    virtual const Grid::IteratorXY& operator ++() {
+        do {
+          ++n_;
+          if( n_ == size_ ) return *this;
+        } while( not p_(n_) );
+        return *this;
+    }
+
+    virtual bool operator ==(const Grid::IteratorXY &other) const {
+      return n_ == static_cast<const IteratorXYPredicated&>(other).n_;
+    }
+
+    virtual bool operator !=(const Grid::IteratorXY &other) const {
+      return n_ != static_cast<const IteratorXYPredicated&>(other).n_;
+    }
+
+  private:
+    const Unstructured& grid_;
+    Grid::IteratorXY::Predicate p_;
+    size_t n_;
+    size_t size_;
+  };
+
+
+
+
   class IteratorLonLat: public Grid::IteratorLonLat {
   public:
     IteratorLonLat(const Unstructured& grid, bool begin=true):
@@ -148,8 +201,8 @@ public: // methods
     virtual IteratorXY* xy_end()   const{ return new IteratorXY(*this,false); }
     virtual IteratorLonLat* lonlat_begin() const{ return new IteratorLonLat(*this); }
     virtual IteratorLonLat* lonlat_end()   const{ return new IteratorLonLat(*this,false); }
-    virtual IteratorXY* xy_begin(IteratorXY::Predicate p) const { return xy_begin(); }
-    virtual IteratorXY* xy_end(IteratorXY::Predicate p) const { return xy_end(); }
+    virtual IteratorXYPredicated* xy_begin(IteratorXY::Predicate p) const { return new IteratorXYPredicated(*this,p); }
+    virtual IteratorXYPredicated* xy_end(IteratorXY::Predicate p) const { return new IteratorXYPredicated(*this,p,false);  }
 
 private: // methods
 
