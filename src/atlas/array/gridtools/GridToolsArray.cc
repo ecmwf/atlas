@@ -157,9 +157,8 @@ public:
 
       check_dimension_lengths(array_.shape(), c...);
 
-      if(!array_.hostNeedsUpdate()) {
-          array_.cloneFromDevice();
-      }
+      if(array_.valid()) 
+          array_.syncHostDevice();
 
       Array* resized = Array::create<Value>(ArrayShape{(unsigned int)c...});
 
