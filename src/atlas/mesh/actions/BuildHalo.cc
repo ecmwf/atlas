@@ -103,7 +103,7 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
   }
 
   const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
-  array::ArrayView<int,1> patched = array::make_view<int,1>( mesh.cells().field("patch") );
+  auto patched = array::make_view<int,1>( mesh.cells().field("patch") );
 
   size_t nb_elems = mesh.cells().size();
   for (size_t elem=0; elem<nb_elems; ++elem)
@@ -792,9 +792,10 @@ public:
       if( nb_elements_of_type[t] == 0 ) continue;
       size_t new_elems_pos = elements.add(nb_elements_of_type[t]);
 
-      array::LocalView<gidx_t,1> elem_type_glb_idx = elements.view<gidx_t,1>( mesh.cells().global_index() );
-      array::LocalView<int,   1> elem_type_part    = elements.view<int,1>( mesh.cells().partition() );
-      array::LocalView<int,   1> elem_type_halo    = elements.view<int,1>( mesh.cells().halo() );
+      auto elem_type_glb_idx = elements.view<gidx_t,1>( mesh.cells().global_index() );
+      auto elem_type_part    = elements.view<int,1>( mesh.cells().partition() );
+      auto elem_type_halo    = elements.view<int,1>( mesh.cells().halo() );
+      auto elem_type_patch   = elements.view<int,1>( mesh.cells().field("patch") );
 
       // Copy information in new elements
       size_t new_elem(0);
@@ -806,6 +807,7 @@ public:
           elem_type_glb_idx(new_elems_pos+new_elem)   = buf.elem_glb_idx[jpart][jelem];
           elem_type_part   (new_elems_pos+new_elem)   = buf.elem_part[jpart][jelem];
           elem_type_halo   (new_elems_pos+new_elem)   = halo+1;
+          elem_type_patch  (new_elems_pos+new_elem)   = 0;
           for( size_t n=0; n<node_connectivity.cols(); ++n )
             node_connectivity.set(new_elems_pos+new_elem,n ,  uid2node[ buf.elem_nodes_id[jpart][ buf.elem_nodes_displs[jpart][jelem]+n] ] );
           ++new_elem;

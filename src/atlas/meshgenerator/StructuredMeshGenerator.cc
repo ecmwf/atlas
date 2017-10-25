@@ -1183,6 +1183,7 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
         node_connectivity.set( jcell, quad_nodes );
         cells_glb_idx(jcell) = jcell+1;
         cells_part(jcell)    = mypart;
+        cells_patch(jcell) = 0;
       }
       else // This is a triag
       {
@@ -1212,6 +1213,7 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
         node_connectivity.set( jcell, triag_nodes );
         cells_glb_idx(jcell) = jcell+1;
         cells_part(jcell) = mypart;
+        cells_patch(jcell) = 0;
       }
     }
   }
@@ -1232,6 +1234,7 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
       node_connectivity.set( jcell, triag_nodes );
       cells_glb_idx(jcell) = jcell+1;
       cells_part(jcell) = mypart;
+      cells_patch(jcell) = 0;
     }
   }
   else if (patch_north_pole )

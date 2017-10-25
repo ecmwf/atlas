@@ -18,14 +18,20 @@
 namespace atlas {
 namespace array {
 
-typedef std::vector<size_t> ArrayShape;
+class ArrayShape : public std::vector<size_t> {
+private:
+   using Base = std::vector<size_t>;
+public:
+    ArrayShape() {}
+    ArrayShape( Base&& base ) : Base( std::forward<Base>(base) ) {}
+    ArrayShape( std::initializer_list<size_t> list ) : Base(list) {}
+};
 
-inline ArrayShape make_shape() { return std::vector<size_t>(); }
-inline ArrayShape make_shape(size_t size1) { return std::vector<size_t>(1,size1); }
-inline ArrayShape make_shape(size_t size1, size_t size2) { std::vector<size_t> v(2); v[0]=size1; v[1]=size2; return v; }
-inline ArrayShape make_shape(size_t size1, size_t size2, size_t size3) { std::vector<size_t> v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
-inline ArrayShape make_shape(size_t size1, size_t size2, size_t size3, size_t size4) { std::vector<size_t> v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
-inline ArrayShape make_shape(size_t size1, size_t size2, size_t size3, size_t size4, size_t size5) { std::vector<size_t> v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; v[4]=size5; return v; }
+inline ArrayShape make_shape(size_t size1) { return ArrayShape{size1}; }
+inline ArrayShape make_shape(size_t size1, size_t size2) { return ArrayShape{size1,size2}; }
+inline ArrayShape make_shape(size_t size1, size_t size2, size_t size3) { return ArrayShape{size1,size2,size3}; }
+inline ArrayShape make_shape(size_t size1, size_t size2, size_t size3, size_t size4) { return ArrayShape{size1,size2,size3,size4}; }
+inline ArrayShape make_shape(size_t size1, size_t size2, size_t size3, size_t size4, size_t size5) { return ArrayShape{size1,size2,size3,size4,size5}; }
 
 //------------------------------------------------------------------------------------------------------
 

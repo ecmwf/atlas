@@ -12,6 +12,7 @@
 
 #include <stddef.h>
 #include <vector>
+#include <initializer_list>
 
 //------------------------------------------------------------------------------------------------------
 
@@ -22,15 +23,16 @@ class ArrayStrides : public std::vector<size_t> {
 private:
    using Base = std::vector<size_t>;
 public:
-    using Base::Base; // inherit constructors from std::vector<size_t>
+    ArrayStrides() {}
+    ArrayStrides( std::initializer_list<size_t> list) : Base(list) {}
+    ArrayStrides( Base&& base ) : Base( std::forward<Base>(base) ) {}
 };
 
-// typedef std::vector<size_t> ArrayStrides;
-
-inline ArrayStrides make_strides(size_t size1) { return ArrayStrides(1,size1); }
-inline ArrayStrides make_strides(size_t size1, size_t size2) { ArrayStrides v(2); v[0]=size1; v[1]=size2; return v; }
-inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3) { ArrayStrides v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
-inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3, size_t size4) { ArrayStrides v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
+inline ArrayStrides make_strides(size_t size1) { return ArrayStrides{size1}; }
+inline ArrayStrides make_strides(size_t size1, size_t size2) { return ArrayStrides{size1,size2}; }
+inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3) { return ArrayStrides{size1,size2,size3}; }
+inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3, size_t size4) { return ArrayStrides{size1,size2,size3,size4}; }
+inline ArrayStrides make_strides(size_t size1, size_t size2, size_t size3, size_t size4, size_t size5) { return ArrayStrides{size1,size2,size3,size4,size5}; }
 
 //------------------------------------------------------------------------------------------------------
 

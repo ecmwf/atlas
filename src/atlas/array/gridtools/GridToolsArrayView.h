@@ -63,12 +63,16 @@ public:
     }
 
     const Slice at(size_t i) const {
-        if( i>= shape(0) ) throw eckit::OutOfRange(i,shape(0),Here());
+        if( i>= shape(0) ) {
+          throw_OutOfRange( "ArrayView::at", 'i', i, shape(0) );
+        }
         return Slicer<Slice, Rank==1>(*this).apply(i);
     }
 
     Slice at(size_t i) {
-        if( i>= shape(0) ) throw eckit::OutOfRange(i,shape(0),Here());
+        if( i>= shape(0) ) {
+          throw_OutOfRange( "ArrayView::at", 'i', i, shape(0) );
+        }
         return Slicer<Slice, Rank==1>(*this).apply(i);
     }
 

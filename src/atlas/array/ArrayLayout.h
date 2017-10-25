@@ -22,13 +22,16 @@ class ArrayLayout : public std::vector<size_t> {
 private:
    using Base = std::vector<size_t>;
 public:
-    using Base::Base; // inherit constructors from std::vector<size_t>
+    ArrayLayout() {}
+    ArrayLayout( std::initializer_list<size_t> list ) : Base(list) {}
+    ArrayLayout( Base&& base ) : Base( std::forward<Base>(base) ) {}
 };
 
-inline ArrayLayout make_layout(size_t size1) { return ArrayLayout(1,size1); }
-inline ArrayLayout make_layout(size_t size1, size_t size2) { ArrayLayout v(2); v[0]=size1; v[1]=size2; return v; }
-inline ArrayLayout make_layout(size_t size1, size_t size2, size_t size3) { ArrayLayout v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
-inline ArrayLayout make_layout(size_t size1, size_t size2, size_t size3, size_t size4) { ArrayLayout v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
+inline ArrayLayout make_layout(size_t size1) { return ArrayLayout{size1}; }
+inline ArrayLayout make_layout(size_t size1, size_t size2) { return ArrayLayout{size1,size2}; }
+inline ArrayLayout make_layout(size_t size1, size_t size2, size_t size3) { return ArrayLayout{size1,size2,size3}; }
+inline ArrayLayout make_layout(size_t size1, size_t size2, size_t size3, size_t size4) { return ArrayLayout{size1,size2,size3,size4}; }
+inline ArrayLayout make_layout(size_t size1, size_t size2, size_t size3, size_t size4, size_t size5) { return ArrayLayout{size1,size2,size3,size4,size5}; }
 
 //------------------------------------------------------------------------------------------------------
 

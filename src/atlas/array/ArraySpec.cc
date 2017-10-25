@@ -16,8 +16,8 @@ namespace atlas {
 namespace array {
 
 ArraySpec::ArraySpec():
-    size_(0),
-    rank_(0),
+    size_(),
+    rank_(),
     contiguous_(true),
     default_layout_(true)
 {

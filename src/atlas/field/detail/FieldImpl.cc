@@ -172,8 +172,8 @@ extern "C"
 FieldImpl* atlas__Field__wrap_int_specf(const char* name, int data[], int rank, int shapef[], int stridesf[])
 {
   ATLAS_ERROR_HANDLING(
-    array::ArrayShape shape(rank);
-    array::ArrayStrides strides(rank);
+    array::ArrayShape shape; shape.resize(rank);
+    array::ArrayStrides strides; strides.resize(rank);
     size_t jf = rank-1;
     for( int j=0; j<rank; ++j )
     {
@@ -197,8 +197,8 @@ FieldImpl* atlas__Field__wrap_int_specf(const char* name, int data[], int rank, 
 FieldImpl* atlas__Field__wrap_long_specf(const char* name, long data[], int rank, int shapef[], int stridesf[])
 {
   ATLAS_ERROR_HANDLING(
-    array::ArrayShape shape(rank);
-    array::ArrayStrides strides(rank);
+    array::ArrayShape shape; shape.resize(rank);
+    array::ArrayStrides strides; strides.resize(rank);
     size_t jf = rank-1;
     for( int j=0; j<rank; ++j )
     {
@@ -222,8 +222,8 @@ FieldImpl* atlas__Field__wrap_long_specf(const char* name, long data[], int rank
 FieldImpl* atlas__Field__wrap_float_specf(const char* name, float data[], int rank, int shapef[], int stridesf[])
 {
   ATLAS_ERROR_HANDLING(
-    array::ArrayShape shape(rank);
-    array::ArrayStrides strides(rank);
+    array::ArrayShape shape; shape.resize(rank);
+    array::ArrayStrides strides; strides.resize(rank);
     size_t jf = rank-1;
     for( int j=0; j<rank; ++j )
     {
@@ -247,8 +247,8 @@ FieldImpl* atlas__Field__wrap_float_specf(const char* name, float data[], int ra
 FieldImpl* atlas__Field__wrap_double_specf(const char* name, double data[], int rank, int shapef[], int stridesf[])
 {
   ATLAS_ERROR_HANDLING(
-    array::ArrayShape shape(rank);
-    array::ArrayStrides strides(rank);
+    array::ArrayShape shape; shape.resize(rank);
+    array::ArrayStrides strides; strides.resize(rank);
     size_t jf = rank-1;
     for( int j=0; j<rank; ++j )
     {

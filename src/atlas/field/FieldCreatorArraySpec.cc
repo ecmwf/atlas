@@ -54,7 +54,7 @@ FieldImpl* FieldCreatorArraySpec::createField( const eckit::Parametrisation& par
 
   std::string name;
   params.get("name",name);
-  return FieldImpl::create(name,datatype,s);
+  return FieldImpl::create( name,datatype,array::ArrayShape( std::move(s) ) );
 }
 
 namespace {

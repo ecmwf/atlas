@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <string>
 #include "atlas/array/ArrayShape.h"
 #include "atlas/array/ArrayStrides.h"
 #include "atlas/array/ArrayLayout.h"

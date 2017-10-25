@@ -197,6 +197,32 @@ struct default_layout_t {
   }
 
 
+    template < typename UInt >
+    struct my_apply_gt_integer_sequence {
+        template < typename Container, template < UInt T > class Lambda, typename... ExtraTypes >
+        ATLAS_HOST_DEVICE static constexpr Container apply(ExtraTypes const &... args_) {
+            static_assert((boost::is_same< Container, Container >::value),
+                "ERROR: apply_gt_integer_sequence only accepts a gt_integer_sequence type. Check the call");
+            return Container(args_...);
+        }
+    };
+
+    template < typename UInt, UInt... Indices >
+    struct my_apply_gt_integer_sequence< ::gridtools::gt_integer_sequence< UInt, Indices... > > {
+
+        /**
+           @brief duplicated interface for the case in which the container is an aggregator
+         */
+        template < typename Container,
+            template < UInt T > class Lambda,
+            typename... ExtraTypes >
+        ATLAS_HOST_DEVICE static constexpr Container apply(ExtraTypes const &... args_) {
+            return Container{Lambda< Indices >::apply(args_...)...};
+        }
+     };
+
+
+
   template<typename DataStore, typename ... Dims>
   ArraySpec make_spec(DataStore* gt_data_store_ptr, Dims...dims) {
       static_assert((::gridtools::is_data_store<DataStore>::value), "Internal Error: passing a non GT data store");
@@ -204,8 +230,7 @@ struct default_layout_t {
       auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
       using Layout = typename DataStore::storage_info_t::Layout;
 
-      using seq =
-          ::gridtools::apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
+      using seq = my_apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
 
       return ArraySpec(
           ArrayShape{(unsigned long)dims...},
