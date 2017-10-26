@@ -57,6 +57,10 @@ public: // methods
   template <typename DATA_TYPE, int RANK>
   void execute( array::ArrayView<DATA_TYPE,RANK>& field ) const;
 
+  template <typename DATA_TYPE, int RANK>
+  void execute( array::ArrayView<DATA_TYPE,RANK>&& field ) const;
+
+
 private: // methods
 
   void create_mappings( std::vector<int>& send_map, std::vector<int>& recv_map, size_t nb_vars ) const;
@@ -406,6 +410,11 @@ void HaloExchange::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
   }
 }
 
+template <typename DATA_TYPE, int RANK>
+void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>&& field ) const
+{
+    execute(field);
+}
 template <typename DATA_TYPE, int RANK>
 void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>& field ) const
 {

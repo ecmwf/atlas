@@ -329,45 +329,48 @@ Field NodeColumns::createField(
 }
 
 namespace {
+
+template<typename DATA_TYPE, int RANK>
+array::ArrayView<DATA_TYPE,RANK> get_field_view(const Field& field, bool on_device)
+{
+  return on_device ? array::make_device_view<DATA_TYPE,RANK>(field) : array::make_view<DATA_TYPE,RANK>(field);
+}
+
 template<int RANK>
-void dispatch_haloExchange( const Field& field, const parallel::HaloExchange& halo_exchange )
+void dispatch_haloExchange( const Field& field, const parallel::HaloExchange& halo_exchange, bool on_device )
 {
   if     ( field.datatype() == array::DataType::kind<int>() ) {
-    array::ArrayView<int,RANK> view = array::make_view<int,RANK>(field);
-    halo_exchange.execute( view );
+    halo_exchange.execute( get_field_view<int, RANK>(field, on_device) );
   }
   else if( field.datatype() == array::DataType::kind<long>() ) {
-    array::ArrayView<long,RANK> view = array::make_view<long,RANK>(field);
-    halo_exchange.execute( view );
+    halo_exchange.execute( get_field_view<long, RANK>(field, on_device) );
   }
   else if( field.datatype() == array::DataType::kind<float>() ) {
-    array::ArrayView<float,RANK> view = array::make_view<float,RANK>(field);
-    halo_exchange.execute( view );
+    halo_exchange.execute( get_field_view<float, RANK>(field, on_device) );
   }
   else if( field.datatype() == array::DataType::kind<double>() ) {
-    array::ArrayView<double,RANK> view = array::make_view<double,RANK>(field);
-    halo_exchange.execute( view );
+    halo_exchange.execute( get_field_view<double, RANK>(field, on_device) );
   }
   else throw eckit::Exception("datatype not supported",Here());
 }
 }
 
-void NodeColumns::haloExchange( FieldSet& fieldset ) const
+void NodeColumns::haloExchange( FieldSet& fieldset, bool on_device ) const
 {
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const Field& field = fieldset[f];
     switch( field.rank() ) {
       case 1:
-        dispatch_haloExchange<1>(field,halo_exchange());
+        dispatch_haloExchange<1>(field,halo_exchange(), on_device);
         break;
       case 2:
-        dispatch_haloExchange<2>(field,halo_exchange());
+        dispatch_haloExchange<2>(field,halo_exchange(), on_device);
         break;
       case 3:
-        dispatch_haloExchange<3>(field,halo_exchange());
+        dispatch_haloExchange<3>(field,halo_exchange(), on_device);
         break;
       case 4:
-        dispatch_haloExchange<4>(field,halo_exchange());
+        dispatch_haloExchange<4>(field,halo_exchange(), on_device);
         break;
       default:
         throw eckit::Exception("Rank not supported", Here());
@@ -376,11 +379,11 @@ void NodeColumns::haloExchange( FieldSet& fieldset ) const
   }
 }
 
-void NodeColumns::haloExchange( Field& field ) const
+void NodeColumns::haloExchange( Field& field, bool on_device ) const
 {
   FieldSet fieldset;
   fieldset.add(field);
-  haloExchange(fieldset);
+  haloExchange(fieldset, on_device);
 }
 const parallel::HaloExchange& NodeColumns::halo_exchange() const
 {
@@ -2152,12 +2155,12 @@ const mesh::Halo& NodeColumns::halo() const {
   return functionspace_->halo();
 }
 
-void NodeColumns::haloExchange( FieldSet& fieldset ) const {
-  functionspace_->haloExchange(fieldset);
+void NodeColumns::haloExchange( FieldSet& fieldset, bool on_device ) const {
+  functionspace_->haloExchange(fieldset, on_device);
 }
 
-void NodeColumns::haloExchange( Field& field ) const {
-  functionspace_->haloExchange(field);
+void NodeColumns::haloExchange( Field& field, bool on_device ) const {
+  functionspace_->haloExchange(field, on_device);
 }
 
 const parallel::HaloExchange& NodeColumns::halo_exchange() const {
