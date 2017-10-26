@@ -8,9 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestArrayKernel
 #include <cuda_runtime.h>
-#include "ecbuild/boost_test_framework.h"
+#include "eckit/testing/Test.h"
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
@@ -27,7 +26,7 @@ void kernel_ex(ArrayView<Value, RANK> dv)
     dv(3, 3, 3) += 1;
 }
 
-BOOST_AUTO_TEST_CASE( test_array )
+CASE( "test_array" )
 {
    Array* ds = Array::create<double>(4ul, 4ul, 4ul);
    ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
@@ -50,4 +49,9 @@ BOOST_AUTO_TEST_CASE( test_array )
 }
 
 }
+}
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
 }
