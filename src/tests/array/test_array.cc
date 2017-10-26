@@ -205,6 +205,20 @@ CASE("test_resize_throw") {
   delete ds;
 }
 
+CASE("test_copy_ctr") {
+  Array* ds = Array::create<int>(3, 2);
+  atlas::array::ArrayView<int, 2> hv = make_host_view<int, 2>(*ds);
+  hv(2, 1) = 4;
+  hv(1, 1) = 7;
+
+  atlas::array::ArrayView<int, 2> hv2(hv);
+
+  EXPECT(hv2(2, 1) == 4);
+  EXPECT(hv2(1, 1) == 7);
+
+  delete ds;
+}
+
 CASE("test_resize") {
 
   {
