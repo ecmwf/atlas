@@ -25,6 +25,7 @@
 #include "atlas/parallel/mpi/Statistics.h"
 
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/SVector.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
@@ -73,10 +74,10 @@ private: // methods
                          const size_t var_strides[],
                          const size_t var_shape[],
                          size_t var_rank,
-                         DATA_TYPE send_buffer[] ) const;
+                         array::SVector<DATA_TYPE>& send_buffer ) const;
 
   template< typename DATA_TYPE>
-  void unpack_recv_buffer(const DATA_TYPE recv_buffer[],
+  void unpack_recv_buffer(const array::SVector<DATA_TYPE>& recv_buffer,
                           DATA_TYPE field[],
                           const size_t var_strides[],
                           const size_t var_shape[],
@@ -97,7 +98,7 @@ private: // data
   std::vector<int>  senddispls_;
   std::vector<int>  recvcounts_;
   std::vector<int>  recvdispls_;
-  std::vector<int>  sendmap_;
+  array::SVector<int>  sendmap_;
   std::vector<int>  recvmap_;
   int parsize_;
 
@@ -125,8 +126,8 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   int send_size  = sendcnt_ * var_size;
   int recv_size  = recvcnt_ * var_size;
 
-  std::vector<DATA_TYPE  > send_buffer(send_size);
-  std::vector<DATA_TYPE  > recv_buffer(recv_size);
+  array::SVector<DATA_TYPE  > send_buffer(send_size);
+  array::SVector<DATA_TYPE  > recv_buffer(recv_size);
   std::vector<int        > send_displs(nproc    );
   std::vector<int        > recv_displs(nproc    );
   std::vector<int        > send_counts(nproc    );
@@ -155,7 +156,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   }
 
   /// Pack
-  pack_send_buffer(field,var_strides,var_shape,var_rank,send_buffer.data());
+  pack_send_buffer(field,var_strides,var_shape,var_rank,send_buffer);
 
   /// Send
   ATLAS_TRACE_MPI( ISEND ) {
@@ -182,7 +183,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   }
 
   /// Unpack
-  unpack_recv_buffer(recv_buffer.data(),field,var_strides,var_shape,var_rank);
+  unpack_recv_buffer(recv_buffer,field,var_strides,var_shape,var_rank);
 
   /// Wait for sending to finish
   ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
@@ -201,7 +202,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
                                      const size_t var_strides[],
                                      const size_t var_shape[],
                                      size_t var_rank,
-                                     DATA_TYPE send_buffer[] ) const
+                                     array::SVector<DATA_TYPE>& send_buffer ) const
 {
   ATLAS_TRACE();
   size_t ibuf = 0;
@@ -273,7 +274,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
 }
 
 template<typename DATA_TYPE>
-void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
+void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buffer,
                                        DATA_TYPE field[],
                                        const size_t var_strides[],
                                        const size_t var_shape[],
