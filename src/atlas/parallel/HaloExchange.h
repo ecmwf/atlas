@@ -215,12 +215,16 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& fi
   switch( var_rank )
   {
   case 1:
+#ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     for(int p=0; p < sendcnt_; ++p)
     {
       const size_t pp = send_stride*sendmap_[p];
       for( size_t i=0; i<var_shape[0]; ++i )
         send_buffer[ibuf++] = field.data()[pp+i*var_strides[0]];
     }
+#else
+    pack_send_cuda(field,  var_strides, var_shape, var_rank, send_buffer);
+#endif
     break;
   case 2:
     for(int p=0; p < sendcnt_; ++p)

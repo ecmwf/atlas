@@ -8,12 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestSVectorKernel
-#include <cuda_runtime.h>
-#include "ecbuild/boost_test_framework.h"
+#include "atlas/library/config.h"
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 #include "atlas/array/SVector.h"
 
 using namespace atlas::array;
+using namespace eckit::testing;
+
 
 namespace atlas {
 namespace test {
@@ -29,17 +31,17 @@ void kernel_exe(array::SVector<int> list_ints, int offset, bool* result )
     list_ints[offset+1]++;
 }
 
-BOOST_AUTO_TEST_CASE( test_svector )
+CASE( "test_svector" )
 {
     SVector<int> list_ints(2);
 
     list_ints[0] = 3;
     list_ints[1] = 4;
 
-    BOOST_CHECK_EQUAL( list_ints[0] , 3 );
-    BOOST_CHECK_EQUAL( list_ints[1] , 4 );
+    EXPECT( list_ints[0] == 3 );
+    EXPECT( list_ints[1] == 4 );
 
-    BOOST_CHECK_EQUAL( list_ints.size(), 2);
+    EXPECT( list_ints.size() == 2);
 
     bool *result;
     cudaError_t err = cudaMallocManaged(&result, sizeof(bool));
@@ -55,27 +57,27 @@ BOOST_AUTO_TEST_CASE( test_svector )
     if(err != cudaSuccess)
         throw eckit::AssertionFailed("failed to execute kernel");
 
-    BOOST_CHECK( *result );
-    BOOST_CHECK_EQUAL( list_ints[0], 4);
-    BOOST_CHECK_EQUAL( list_ints[1], 5);
+    EXPECT( *result );
+    EXPECT( list_ints[0] == 4);
+    EXPECT( list_ints[1] == 5);
 
 }
 
-BOOST_AUTO_TEST_CASE( test_svector_resize )
+CASE( "test_svector_resize" )
 {
     SVector<int> list_ints(2);
 
     list_ints[0] = 3;
     list_ints[1] = 4;
 
-    BOOST_CHECK_EQUAL( list_ints[0] , 3 );
-    BOOST_CHECK_EQUAL( list_ints[1] , 4 );
+    EXPECT( list_ints[0] == 3 );
+    EXPECT( list_ints[1] == 4 );
 
-    BOOST_CHECK_EQUAL( list_ints.size(), 2);
+    EXPECT( list_ints.size() == 2);
 
     list_ints.resize(5);
 
-    BOOST_CHECK_EQUAL( list_ints.size(), 5);
+    EXPECT( list_ints.size() == 5);
 
     bool *result;
     cudaError_t err = cudaMallocManaged(&result, sizeof(bool));
@@ -95,9 +97,9 @@ BOOST_AUTO_TEST_CASE( test_svector_resize )
     if(err != cudaSuccess)
         throw eckit::AssertionFailed("failed to execute kernel");
 
-    BOOST_CHECK( *result );
-    BOOST_CHECK_EQUAL( list_ints[3], 4);
-    BOOST_CHECK_EQUAL( list_ints[4], 5);
+    EXPECT( *result );
+    EXPECT( list_ints[3] == 4);
+    EXPECT( list_ints[4] == 5);
 
 }
 
