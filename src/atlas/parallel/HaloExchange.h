@@ -81,6 +81,12 @@ private: // methods
                          array::SVector<DATA_TYPE>& send_buffer ) const;
 
   template< typename DATA_TYPE, int RANK>
+  void pack_send_cuda( const array::ArrayView<DATA_TYPE, RANK>& field,
+                                       const size_t var_strides[],
+                                       const size_t var_shape[],
+                                       size_t var_rank,
+                                       array::SVector<DATA_TYPE>& send_buffer ) const;
+  template< typename DATA_TYPE, int RANK>
   void unpack_recv_buffer(const array::SVector<DATA_TYPE>& recv_buffer,
                           array::ArrayView<DATA_TYPE, RANK>& field,
                           const size_t var_strides[],
@@ -200,6 +206,29 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_
     }
   }
 }
+
+#ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#ifdef __CUDACC__
+__global__ void pack_kernel() {
+
+}
+
+template<typename DATA_TYPE, int RANK>
+void HaloExchange::pack_send_cuda( const array::ArrayView<DATA_TYPE, RANK>& field,
+                                     const size_t var_strides[],
+                                     const size_t var_shape[],
+                                     size_t var_rank,
+                                     array::SVector<DATA_TYPE>& send_buffer ) const
+{
+    const unsigned int block_size_x = 32;
+    const unsigned int block_size_y = 4;
+    dim3 threads(block_size_x, block_size_y);
+    dim3 blocks((sendcnt_+block_size_x-1)/block_size_x, (var_shape[0]+block_size_y-1)/block_size_y);
+
+    pack_kernel<<<blocks,threads>>>();
+}
+#endif
+#endif
 
 template<typename DATA_TYPE, int RANK>
 void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& field,
