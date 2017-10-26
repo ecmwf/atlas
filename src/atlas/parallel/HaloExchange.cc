@@ -174,43 +174,43 @@ void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[
 }
 
 void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_extents[], int var_rank) {
-  std::vector<size_t> vstrides(var_rank);
-  std::vector<size_t> vextents(var_rank);
-  for(int n = 0; n < var_rank; ++n) {
-    vstrides[n] = var_strides[n];
-    vextents[n] = var_extents[n];
-  }
-  This->execute(field,vstrides.data(),vextents.data(),var_rank);
+//  std::vector<size_t> vstrides(var_rank);
+//  std::vector<size_t> vextents(var_rank);
+//  for(int n = 0; n < var_rank; ++n) {
+//    vstrides[n] = var_strides[n];
+//    vextents[n] = var_extents[n];
+//  }
+//  This->execute(field,vstrides.data(),vextents.data(),var_rank);
 }
 
 void atlas__HaloExchange__execute_strided_long (HaloExchange* This, long field[], int var_strides[], int var_extents[], int var_rank) {
-  std::vector<size_t> vstrides(var_rank);
-  std::vector<size_t> vextents(var_rank);
-  for(int n = 0; n < var_rank; ++n) {
-    vstrides[n] = var_strides[n];
-    vextents[n] = var_extents[n];
-  }
-  This->execute(field,vstrides.data(),vextents.data(),var_rank);
+//  std::vector<size_t> vstrides(var_rank);
+//  std::vector<size_t> vextents(var_rank);
+//  for(int n = 0; n < var_rank; ++n) {
+//    vstrides[n] = var_strides[n];
+//    vextents[n] = var_extents[n];
+//  }
+//  This->execute(field,vstrides.data(),vextents.data(),var_rank);
 }
 
 void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field[], int var_strides[], int var_extents[], int var_rank) {
-  std::vector<size_t> vstrides(var_rank);
-  std::vector<size_t> vextents(var_rank);
-  for(int n = 0; n < var_rank; ++n) {
-    vstrides[n] = var_strides[n];
-    vextents[n] = var_extents[n];
-  }
-  This->execute(field,vstrides.data(),vextents.data(),var_rank);
+//  std::vector<size_t> vstrides(var_rank);
+//  std::vector<size_t> vextents(var_rank);
+//  for(int n = 0; n < var_rank; ++n) {
+//    vstrides[n] = var_strides[n];
+//    vextents[n] = var_extents[n];
+//  }
+//  This->execute(field,vstrides.data(),vextents.data(),var_rank);
 }
 
 void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double field[], int var_strides[], int var_extents[], int var_rank) {
-  std::vector<size_t> vstrides(var_rank);
-  std::vector<size_t> vextents(var_rank);
-  for(int n = 0; n < var_rank; ++n) {
-    vstrides[n] = var_strides[n];
-    vextents[n] = var_extents[n];
-  }
-  This->execute(field,vstrides.data(),vextents.data(),var_rank);
+//  std::vector<size_t> vstrides(var_rank);
+//  std::vector<size_t> vextents(var_rank);
+//  for(int n = 0; n < var_rank; ++n) {
+//    vstrides[n] = var_strides[n];
+//    vextents[n] = var_extents[n];
+//  }
+//  This->execute(field,vstrides.data(),vextents.data(),var_rank);
 }
 
 void atlas__HaloExchange__execute_int (HaloExchange* This, int field[], int nb_vars ) {
