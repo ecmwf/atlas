@@ -174,6 +174,8 @@ void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[
 }
 
 void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_extents[], int var_rank) {
+    throw eckit::AssertionFailed("Call not supported");
+
 //  std::vector<size_t> vstrides(var_rank);
 //  std::vector<size_t> vextents(var_rank);
 //  for(int n = 0; n < var_rank; ++n) {
@@ -184,6 +186,8 @@ void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], 
 }
 
 void atlas__HaloExchange__execute_strided_long (HaloExchange* This, long field[], int var_strides[], int var_extents[], int var_rank) {
+    throw eckit::AssertionFailed("Call not supported");
+
 //  std::vector<size_t> vstrides(var_rank);
 //  std::vector<size_t> vextents(var_rank);
 //  for(int n = 0; n < var_rank; ++n) {
@@ -194,6 +198,8 @@ void atlas__HaloExchange__execute_strided_long (HaloExchange* This, long field[]
 }
 
 void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field[], int var_strides[], int var_extents[], int var_rank) {
+    throw eckit::AssertionFailed("Call not supported");
+
 //  std::vector<size_t> vstrides(var_rank);
 //  std::vector<size_t> vextents(var_rank);
 //  for(int n = 0; n < var_rank; ++n) {
@@ -204,6 +210,8 @@ void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field
 }
 
 void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double field[], int var_strides[], int var_extents[], int var_rank) {
+    throw eckit::AssertionFailed("Call not supported");
+
 //  std::vector<size_t> vstrides(var_rank);
 //  std::vector<size_t> vextents(var_rank);
 //  for(int n = 0; n < var_rank; ++n) {

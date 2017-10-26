@@ -48,8 +48,8 @@ public: // methods
               const int remote_idx[], const int base,
               size_t size );
 
-  template <typename DATA_TYPE>
-  void execute( DATA_TYPE field[], const size_t var_strides[], const size_t var_shape[], size_t var_rank ) const;
+  template <typename DATA_TYPE, int RANK>
+  void execute( array::ArrayView<DATA_TYPE, RANK>& field, const size_t var_strides[], const size_t var_shape[], size_t var_rank ) const;
 
   template <typename DATA_TYPE>
   void execute( DATA_TYPE field[], size_t nb_vars ) const;
@@ -111,8 +111,8 @@ private: // data
 };
 
 
-template<typename DATA_TYPE>
-void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const size_t var_shape[], size_t var_rank ) const
+template<typename DATA_TYPE, int RANK>
+void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_t var_strides[], const size_t var_shape[], size_t var_rank ) const
 {
   if( ! is_setup_ )
   {
@@ -125,6 +125,8 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   size_t var_size = std::accumulate(var_shape,var_shape+var_rank,1,std::multiplies<size_t>());
   int send_size  = sendcnt_ * var_size;
   int recv_size  = recvcnt_ * var_size;
+
+  DATA_TYPE * data = field.data();
 
   array::SVector<DATA_TYPE  > send_buffer(send_size);
   array::SVector<DATA_TYPE  > recv_buffer(recv_size);
@@ -156,7 +158,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   }
 
   /// Pack
-  pack_send_buffer(field,var_strides,var_shape,var_rank,send_buffer);
+  pack_send_buffer(data,var_strides,var_shape,var_rank,send_buffer);
 
   /// Send
   ATLAS_TRACE_MPI( ISEND ) {
@@ -183,7 +185,7 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   }
 
   /// Unpack
-  unpack_recv_buffer(recv_buffer,field,var_strides,var_shape,var_rank);
+  unpack_recv_buffer(recv_buffer,data,var_strides,var_shape,var_rank);
 
   /// Wait for sending to finish
   ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
@@ -197,8 +199,8 @@ void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const 
   }
 }
 
-template<typename DATA_TYPE>
-void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
+template<typename DATA_TYPE, int RANK>
+void HaloExchange::pack_send_buffer( const DATA_TYPE field,
                                      const size_t var_strides[],
                                      const size_t var_shape[],
                                      size_t var_rank,
@@ -371,9 +373,11 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
 template<typename DATA_TYPE>
 void HaloExchange::execute( DATA_TYPE field[], size_t nb_vars ) const
 {
-  size_t strides[] = {1};
-  size_t shape[] = {nb_vars};
-  execute( field, strides, shape, 1);
+    throw eckit::AssertionFailed("Call not supported");
+
+//  size_t strides[] = {1};
+//  size_t shape[] = {nb_vars};
+//  execute( field, strides, shape, 1);
 }
 
 
@@ -411,7 +415,7 @@ void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>& field ) const
   if( true ){
     std::vector<size_t> varstrides, varshape;
     var_info( field, varstrides, varshape );
-    execute( field.data(), varstrides.data(), varshape.data(), varstrides.size() );
+    execute( field, varstrides.data(), varshape.data(), varstrides.size() );
   }
   else
   {
