@@ -69,16 +69,16 @@ private: // methods
   size_t index(size_t i, size_t j, size_t ni, size_t nj) const { return( i + ni*j ); }
 
 
-  template< typename DATA_TYPE>
-  void pack_send_buffer( const DATA_TYPE field[],
+  template< typename DATA_TYPE, int RANK>
+  void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& field,
                          const size_t var_strides[],
                          const size_t var_shape[],
                          size_t var_rank,
                          array::SVector<DATA_TYPE>& send_buffer ) const;
 
-  template< typename DATA_TYPE>
+  template< typename DATA_TYPE, int RANK>
   void unpack_recv_buffer(const array::SVector<DATA_TYPE>& recv_buffer,
-                          DATA_TYPE field[],
+                          array::ArrayView<DATA_TYPE, RANK>& field,
                           const size_t var_strides[],
                           const size_t var_shape[],
                           size_t var_rank ) const;
@@ -126,8 +126,6 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_
   int send_size  = sendcnt_ * var_size;
   int recv_size  = recvcnt_ * var_size;
 
-  DATA_TYPE * data = field.data();
-
   array::SVector<DATA_TYPE  > send_buffer(send_size);
   array::SVector<DATA_TYPE  > recv_buffer(recv_size);
   std::vector<int        > send_displs(nproc    );
@@ -158,7 +156,7 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_
   }
 
   /// Pack
-  pack_send_buffer(data,var_strides,var_shape,var_rank,send_buffer);
+  pack_send_buffer(field,var_strides,var_shape,var_rank,send_buffer);
 
   /// Send
   ATLAS_TRACE_MPI( ISEND ) {
@@ -185,7 +183,7 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_
   }
 
   /// Unpack
-  unpack_recv_buffer(recv_buffer,data,var_strides,var_shape,var_rank);
+  unpack_recv_buffer(recv_buffer,field,var_strides,var_shape,var_rank);
 
   /// Wait for sending to finish
   ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
@@ -200,7 +198,7 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_
 }
 
 template<typename DATA_TYPE, int RANK>
-void HaloExchange::pack_send_buffer( const DATA_TYPE field,
+void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& field,
                                      const size_t var_strides[],
                                      const size_t var_shape[],
                                      size_t var_rank,
@@ -217,7 +215,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field,
     {
       const size_t pp = send_stride*sendmap_[p];
       for( size_t i=0; i<var_shape[0]; ++i )
-        send_buffer[ibuf++] = field[pp+i*var_strides[0]];
+        send_buffer[ibuf++] = field.data()[pp+i*var_strides[0]];
     }
     break;
   case 2:
@@ -228,7 +226,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field,
       {
         for( size_t j=0; j<var_shape[1]; ++j )
         {
-          send_buffer[ibuf++] = field[pp+i*var_strides[0]+j*var_strides[1]];
+          send_buffer[ibuf++] = field.data()[pp+i*var_strides[0]+j*var_strides[1]];
         }
       }
     }
@@ -244,7 +242,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field,
           for( size_t k=0; k<var_shape[2]; ++k )
           {
             send_buffer[ibuf++] =
-              field[ pp+i*var_strides[0]+j*var_strides[1]+k*var_strides[2]];
+              field.data()[ pp+i*var_strides[0]+j*var_strides[1]+k*var_strides[2]];
           }
         }
       }
@@ -263,7 +261,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field,
            for( size_t l=0; l<var_shape[3]; ++l )
            {
             send_buffer[ibuf++] =
-              field[ pp+i*var_strides[0]+j*var_strides[1]+k*var_strides[2]+l*var_strides[3]];
+              field.data()[ pp+i*var_strides[0]+j*var_strides[1]+k*var_strides[2]+l*var_strides[3] ];
            }
           }
         }
@@ -275,9 +273,9 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field,
   }
 }
 
-template<typename DATA_TYPE>
+template<typename DATA_TYPE, int RANK>
 void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buffer,
-                                       DATA_TYPE field[],
+                                       array::ArrayView<DATA_TYPE,RANK>& field,
                                        const size_t var_strides[],
                                        const size_t var_shape[],
                                        size_t var_rank ) const
@@ -297,7 +295,7 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
       for( size_t i=0; i<var_shape[0]; ++i)
       {
 //        tmp = field[ pp + i*var_strides[0] ];
-        field[ pp + i*var_strides[0] ] = recv_buffer[ibuf++];
+        field.data()[ pp + i*var_strides[0] ] = recv_buffer[ibuf++];
 //        if( tmp != field[ pp + i*var_strides[0] ] )
 //          field_changed = true;
       }
@@ -312,7 +310,7 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
         for( size_t j=0; j<var_shape[1]; ++j )
         {
 //          tmp = field[ pp + i*var_strides[0] + j*var_strides[1] ];
-          field[ pp + i*var_strides[0] + j*var_strides[1] ]
+          field.data()[ pp + i*var_strides[0] + j*var_strides[1] ]
               = recv_buffer[ibuf++];
 //          if( field[ pp + i*var_strides[0] + j*var_strides[1] ] != tmp )
 //            field_changed = true;
@@ -331,7 +329,7 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
           for( size_t k=0; k<var_shape[2]; ++k )
           {
 //            tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ];
-            field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ]
+            field.data()[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ]
                 = recv_buffer[ibuf++];
 //            if( field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ] != tmp )
 //              field_changed = true;
@@ -353,7 +351,7 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
            for( size_t l=0; l<var_shape[3]; ++l )
            {
 //            tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] +l*var_strides[3] ];
-            field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] + l*var_strides[3] ]
+            field.data()[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] + l*var_strides[3] ]
                 = recv_buffer[ibuf++];
 //            if( field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] +l*var_strides[3] ] != tmp )
 //              field_changed = true;
