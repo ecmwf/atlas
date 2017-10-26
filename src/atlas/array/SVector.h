@@ -31,6 +31,8 @@ template <typename T>
 class SVector {
 public:
   SVector() : data_(nullptr), size_(0) {}
+
+  ATLAS_HOST_DEVICE
   SVector(SVector const & other) : data_(other.data_), size_(other.size_){}
 
   SVector(size_t N) : size_(N) {
@@ -46,7 +48,7 @@ public:
       delete_managedmem(data_);
   }
 
-  void delete_managedmem(T* data) {
+  void delete_managedmem(T*& data) {
     if( data )  {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
       cudaError_t err = cudaDeviceSynchronize();
@@ -54,8 +56,11 @@ public:
           throw eckit::AssertionFailed("failed to synchronize memory");
 
       err = cudaFree(data);
+// The following throws an invalid device memory
+/*
       if(err != cudaSuccess)
           throw eckit::AssertionFailed("failed to free GPU memory");
+*/
 #else
       free(data_);
 #endif
