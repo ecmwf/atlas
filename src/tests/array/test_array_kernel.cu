@@ -23,21 +23,25 @@ namespace test {
 
 template<typename Value, int RANK>
 __global__
-void kernel_ex(array::ArrayView<Value, RANK> dv)
+void kernel_ex(ArrayView<Value, RANK> dv)
 {
-    dv(3, 3, 3) += 1;
+    dv(3, 3, 3) += dv.data_view().template length<0>() * dv.data_view().template length<1>() * dv.data_view().template length<2>();
 }
 
 CASE( "test_array" )
 {
-   Array* ds = Array::create<double>(4ul, 4ul, 4ul);
-   array::ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
+   constexpr unsigned int dx = 5;
+   constexpr unsigned int dy = 6;
+   constexpr unsigned int dz = 7;
+
+   Array* ds = Array::create<double>(dx, dy, dz);
+   ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
    hv(3, 3, 3) = 4.5;
 
    ds->cloneToDevice();
 
    auto cv = make_device_view<double, 3>(*ds);
-
+ 
    kernel_ex<<<1,1>>>(cv);
 
    cudaDeviceSynchronize();
@@ -45,7 +49,7 @@ CASE( "test_array" )
    ds->cloneFromDevice();
    ds->reactivateHostWriteViews();
 
-   EXPECT( hv(3, 3, 3) == 5.5 );
+   EXPECT( hv(3, 3, 3) == 4.5 + dx*dy*dz );
 
    delete ds;
 }
