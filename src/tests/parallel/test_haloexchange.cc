@@ -256,60 +256,60 @@ CASE("test_haloexchange") {
       }
     }
 
-    SECTION( "test_rank2_l1" )
-    {
-      array::ArrayT<POD> arr(f.N,3,2);
-      array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-      for( int p=0; p<f.N; ++p )
-      {
-        for( size_t i=0; i<3; ++i )
-        {
-          arrv(p,i,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
-          arrv(p,i,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
-        }
-      }
+//    SECTION( "test_rank2_l1" )
+//    {
+//      array::ArrayT<POD> arr(f.N,3,2);
+//      array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
+//      for( int p=0; p<f.N; ++p )
+//      {
+//        for( size_t i=0; i<3; ++i )
+//        {
+//          arrv(p,i,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
+//          arrv(p,i,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
+//        }
+//      }
 
-      size_t strides[] = {6,1};
-      size_t shape[] = {1,2};
-      f.halo_exchange.execute(arrv,strides,shape,2);
+//      size_t strides[] = {6,1};
+//      size_t shape[] = {1,2};
+//      f.halo_exchange.execute(arrv,strides,shape,2);
 
-      switch( parallel::mpi::comm().rank() )
-      {
-        case 0:
-        {
-          POD arr_c[] = { -9,9,   0, 0,    0,  0,  // halo
-                          -1,1, -10,10, -100,100,  // core
-                          -2,2, -20,20, -200,200,  // core
-                          -3,3, -30,30, -300,300,  // core
-                          -4,4,   0, 0,    0,  0}; // halo
-          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-          break;
-        }
-        case 1:
-        {
-          POD arr_c[] = { -3,3,   0, 0,    0,  0,  // halo
-                          -4,4, -40,40, -400,400,  // core
-                          -5,5, -50,50, -500,500,  // core
-                          -6,6, -60,60, -600,600,  // core
-                          -7,7,   0, 0,    0,  0,  // halo
-                          -8,8,   0, 0,    0,  0}; // halo
-          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-          break;
-        }
-        case 2:
-        {
-          POD arr_c[] = { -5,5,   0, 0,    0,  0,  // halo
-                          -6,6,   0, 0,    0,  0,  // halo
-                          -7,7, -70,70, -700,700,  // core
-                          -8,8, -80,80, -800,800,  // core
-                          -9,9, -90,90, -900,900,  // core
-                          -1,1,   0, 0,    0,  0,  // halo
-                          -2,2,   0, 0,    0,  0}; // halo
-          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-          break;
-        }
-      }
-    }
+//      switch( parallel::mpi::comm().rank() )
+//      {
+//        case 0:
+//        {
+//          POD arr_c[] = { -9,9,   0, 0,    0,  0,  // halo
+//                          -1,1, -10,10, -100,100,  // core
+//                          -2,2, -20,20, -200,200,  // core
+//                          -3,3, -30,30, -300,300,  // core
+//                          -4,4,   0, 0,    0,  0}; // halo
+//          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+//          break;
+//        }
+//        case 1:
+//        {
+//          POD arr_c[] = { -3,3,   0, 0,    0,  0,  // halo
+//                          -4,4, -40,40, -400,400,  // core
+//                          -5,5, -50,50, -500,500,  // core
+//                          -6,6, -60,60, -600,600,  // core
+//                          -7,7,   0, 0,    0,  0,  // halo
+//                          -8,8,   0, 0,    0,  0}; // halo
+//          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+//          break;
+//        }
+//        case 2:
+//        {
+//          POD arr_c[] = { -5,5,   0, 0,    0,  0,  // halo
+//                          -6,6,   0, 0,    0,  0,  // halo
+//                          -7,7, -70,70, -700,700,  // core
+//                          -8,8, -80,80, -800,800,  // core
+//                          -9,9, -90,90, -900,900,  // core
+//                          -1,1,   0, 0,    0,  0,  // halo
+//                          -2,2,   0, 0,    0,  0}; // halo
+//          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+//          break;
+//        }
+//      }
+//    }
 
     SECTION( "test_rank2_l2_v2" )
     {

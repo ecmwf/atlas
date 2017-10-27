@@ -209,8 +209,18 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_
 
 #ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 #ifdef __CUDACC__
-__global__ void pack_kernel() {
+template<typename DATA_TYPE, int RANK>
+__global__ void pack_kernel(int sendcnt, array::SVector<int> sendmap,
+         const array::ArrayView<DATA_TYPE, RANK> field, array::SVector<DATA_TYPE> send_buffer) {
 
+    const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
+    const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
+
+    if(p >= sendcnt || i >= field.data_view().template length<1>() ) return;
+
+    const size_t buff_idx = field.data_view().template length<1>() * p + i;
+
+    send_buffer[buff_idx] = field.data(p, i);
 }
 
 template<typename DATA_TYPE, int RANK>
@@ -225,10 +235,88 @@ void HaloExchange::pack_send_cuda( const array::ArrayView<DATA_TYPE, RANK>& fiel
     dim3 threads(block_size_x, block_size_y);
     dim3 blocks((sendcnt_+block_size_x-1)/block_size_x, (var_shape[0]+block_size_y-1)/block_size_y);
 
-    pack_kernel<<<blocks,threads>>>();
+    pack_kernel<<<blocks,threads>>>(sendcnt_, sendmap_, field, send_buffer);
 }
 #endif
 #endif
+
+template<int RANK>
+struct halo_packer;
+
+template<>
+struct halo_packer<1>
+{
+    template<typename DATA_TYPE>
+    static void pack(const unsigned int sendcnt, array::SVector<int> const & sendmap,
+                     const array::ArrayView<DATA_TYPE, 1>& field, array::SVector<DATA_TYPE>& send_buffer )
+    {
+      size_t ibuf = 0;
+      for(int p=0; p < sendcnt; ++p)
+      {
+        const size_t pp = sendmap[p];
+        send_buffer[ibuf++] = field(pp);
+      }
+    }
+};
+
+template<>
+struct halo_packer<2>
+{
+    template<typename DATA_TYPE>
+    static void pack(const unsigned int sendcnt, array::SVector<int> const & sendmap, const array::ArrayView<DATA_TYPE, 2>& field, array::SVector<DATA_TYPE>& send_buffer )
+    {
+      size_t ibuf = 0;
+
+      for(int p=0; p < sendcnt; ++p)
+      {
+        const size_t pp = sendmap[p];
+        for( size_t i=0; i< field.data_view().template length<1>(); ++i ) {
+          send_buffer[ibuf++] = field(pp, i);
+        }
+      }
+    }
+};
+
+template<>
+struct halo_packer<3>
+{
+    template<typename DATA_TYPE>
+    static void pack(const unsigned int sendcnt, array::SVector<int> const & sendmap, const array::ArrayView<DATA_TYPE, 3>& field, array::SVector<DATA_TYPE>& send_buffer )
+    {
+      size_t ibuf = 0;
+      for(int p=0; p < sendcnt; ++p)
+      {
+        const size_t pp = sendmap[p];
+        for( size_t i=0; i< field.data_view().template length<1>(); ++i ) {
+          for( size_t j=0; j< field.data_view().template length<2>(); ++j ) {
+              send_buffer[ibuf++] = field(pp, i,j);
+          }
+        }
+      }
+    }
+};
+
+template<>
+struct halo_packer<4>
+{
+    template<typename DATA_TYPE>
+    static void pack(const unsigned int sendcnt, array::SVector<int> const & sendmap, const array::ArrayView<DATA_TYPE, 4>& field, array::SVector<DATA_TYPE>& send_buffer )
+    {
+        size_t ibuf = 0;
+        for(int p=0; p < sendcnt; ++p)
+        {
+          const size_t pp = sendmap[p];
+          for( size_t i=0; i< field.data_view().template length<1>(); ++i ) {
+            for( size_t j=0; j< field.data_view().template length<2>(); ++j ) {
+                for( size_t k=0; k< field.data_view().template length<3>(); ++k ) {
+
+                send_buffer[ibuf++] = field(pp,i,j,k);
+                }
+            }
+          }
+        }
+    }
+};
 
 template<typename DATA_TYPE, int RANK>
 void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& field,
@@ -241,69 +329,24 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& fi
   size_t ibuf = 0;
   size_t send_stride = var_strides[0]*var_shape[0];
 
-  switch( var_rank )
+  switch( RANK )
   {
   case 1:
-#ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    for(int p=0; p < sendcnt_; ++p)
-    {
-      const size_t pp = send_stride*sendmap_[p];
-      for( size_t i=0; i<var_shape[0]; ++i )
-        send_buffer[ibuf++] = field.data()[pp+i*var_strides[0]];
-    }
-#else
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     pack_send_cuda(field,  var_strides, var_shape, var_rank, send_buffer);
+#else
+    halo_packer<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
 #endif
+    std::cout << parallel::mpi::comm().rank() << " END IF " << std::endl;
     break;
   case 2:
-    for(int p=0; p < sendcnt_; ++p)
-    {
-      const size_t pp = send_stride*sendmap_[p];
-      for( size_t i=0; i<var_shape[0]; ++i )
-      {
-        for( size_t j=0; j<var_shape[1]; ++j )
-        {
-          send_buffer[ibuf++] = field.data()[pp+i*var_strides[0]+j*var_strides[1]];
-        }
-      }
-    }
+    halo_packer<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
     break;
   case 3:
-    for(int p=0; p < sendcnt_; ++p)
-    {
-      const size_t pp = send_stride*sendmap_[p];
-      for( size_t i=0; i<var_shape[0]; ++i )
-      {
-        for( size_t j=0; j<var_shape[1]; ++j )
-        {
-          for( size_t k=0; k<var_shape[2]; ++k )
-          {
-            send_buffer[ibuf++] =
-              field.data()[ pp+i*var_strides[0]+j*var_strides[1]+k*var_strides[2]];
-          }
-        }
-      }
-    }
+    halo_packer<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
     break;
   case 4:
-    for(int p=0; p < sendcnt_; ++p)
-    {
-      const size_t pp = send_stride*sendmap_[p];
-      for( size_t i=0; i<var_shape[0]; ++i )
-      {
-        for( size_t j=0; j<var_shape[1]; ++j )
-        {
-          for( size_t k=0; k<var_shape[2]; ++k )
-          {
-           for( size_t l=0; l<var_shape[3]; ++l )
-           {
-            send_buffer[ibuf++] =
-              field.data()[ pp+i*var_strides[0]+j*var_strides[1]+k*var_strides[2]+l*var_strides[3] ];
-           }
-          }
-        }
-      }
-    }
+    halo_packer<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
     break;
   default:
     NOTIMP;
