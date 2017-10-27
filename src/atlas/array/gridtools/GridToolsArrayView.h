@@ -78,6 +78,7 @@ public:
 
 
     data_view_t& data_view() { return gt_data_view_;}
+    data_view_t const & data_view() const { return gt_data_view_;}
 
     size_t rank() const { return Rank; }
     size_t size() const { return size_; }
