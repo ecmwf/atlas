@@ -23,7 +23,7 @@ namespace test {
 
 template<typename Value, int RANK>
 __global__
-void kernel_ex(ArrayView<Value, RANK> dv)
+void kernel_ex(array::ArrayView<Value, RANK> dv)
 {
     dv(3, 3, 3) += dv.data_view().template length<0>() * dv.data_view().template length<1>() * dv.data_view().template length<2>();
 }
@@ -35,7 +35,7 @@ CASE( "test_array" )
    constexpr unsigned int dz = 7;
 
    Array* ds = Array::create<double>(dx, dy, dz);
-   ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
+   array::ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
    hv(3, 3, 3) = 4.5;
 
    ds->cloneToDevice();
