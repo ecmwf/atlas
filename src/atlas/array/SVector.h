@@ -31,6 +31,8 @@ template <typename T>
 class SVector {
 public:
   SVector() : data_(nullptr), size_(0) {}
+
+  ATLAS_HOST_DEVICE
   SVector(SVector const & other) : data_(other.data_), size_(other.size_){}
 
   SVector(size_t N) : size_(N) {
