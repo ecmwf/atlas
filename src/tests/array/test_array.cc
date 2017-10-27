@@ -219,6 +219,26 @@ CASE("test_copy_ctr") {
   delete ds;
 }
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+CASE("test_copy_gt_ctr") {
+  Array* ds = Array::create<int>(3, 2);
+  atlas::array::ArrayView<int, 2> hv = make_host_view<int, 2>(*ds);
+  hv(2, 1) = 4;
+  hv(1, 1) = 7;
+
+  atlas::array::ArrayView<int, 2> hv2(hv);
+
+  EXPECT(hv2(2, 1) == 4);
+  EXPECT(hv2(1, 1) == 7);
+
+  auto dims = hv.data_view().storage_info().dims();
+  EXPECT(dims[0] == 3);
+  EXPECT(dims[1] == 2);
+
+  delete ds;
+}
+#endif
+
 CASE("test_resize") {
 
   {
