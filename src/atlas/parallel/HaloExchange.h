@@ -109,7 +109,7 @@ private: // data
   std::vector<int>  recvcounts_;
   std::vector<int>  recvdispls_;
   array::SVector<int>  sendmap_;
-  std::vector<int>  recvmap_;
+  array::SVector<int>  recvmap_;
   int parsize_;
 
   int nproc;
@@ -261,6 +261,27 @@ struct halo_packer_impl<0, CurrentDim> {
     }
 };
 
+template<int Cnt, int CurrentDim>
+struct halo_unpacker_impl {
+    template<typename DATA_TYPE, int RANK, typename ... Idx>
+    static void apply(size_t& buf_idx, const size_t node_idx, array::ArrayView<DATA_TYPE, RANK>& field,
+                      array::SVector<DATA_TYPE> const & recv_buffer, Idx... idxs) {
+        for( size_t i=0; i< field.data_view().template length<CurrentDim>(); ++i ) {
+            halo_unpacker_impl<Cnt-1, CurrentDim+1>::apply(buf_idx, node_idx, field, recv_buffer, idxs..., i);
+        }
+    }
+};
+
+template<int CurrentDim>
+struct halo_unpacker_impl<0, CurrentDim> {
+    template<typename DATA_TYPE, int RANK, typename ...Idx>
+    static void apply(size_t& buf_idx, size_t node_idx, array::ArrayView<DATA_TYPE, RANK>& field,
+                     array::SVector<DATA_TYPE> const & recv_buffer, Idx...idxs)
+    {
+      field(node_idx, idxs...) = recv_buffer[buf_idx++];
+    }
+};
+
 template<int RANK>
 struct halo_packer {
     template<typename DATA_TYPE>
@@ -274,6 +295,19 @@ struct halo_packer {
         halo_packer_impl<RANK-1,1>::apply(ibuf, pp, field, send_buffer);
       }
     }
+
+    template<typename DATA_TYPE>
+    static void unpack(const unsigned int recvcnt, array::SVector<int> const & recvmap,
+                     array::ArrayView<DATA_TYPE, RANK>& field, array::SVector<DATA_TYPE> const & recv_buffer )
+    {
+      size_t ibuf = 0;
+      for(int p=0; p < recvcnt; ++p)
+      {
+        const size_t pp = recvmap[p];
+        halo_unpacker_impl<RANK-1,1>::apply(ibuf, pp, field, recv_buffer);
+      }
+    }
+
 };
 
 template<typename DATA_TYPE, int RANK>
@@ -302,91 +336,11 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
                                        size_t var_rank ) const
 {
   ATLAS_TRACE();
-//  bool field_changed = false;
-//  DATA_TYPE tmp;
   size_t ibuf = 0;
   size_t recv_stride = var_strides[0]*var_shape[0];
 
-  switch( var_rank )
-  {
-  case 1:
-    for(int p=0; p < recvcnt_; ++p)
-    {
-      const size_t pp = recv_stride*recvmap_[p];
-      for( size_t i=0; i<var_shape[0]; ++i)
-      {
-//        tmp = field[ pp + i*var_strides[0] ];
-        field.data()[ pp + i*var_strides[0] ] = recv_buffer[ibuf++];
-//        if( tmp != field[ pp + i*var_strides[0] ] )
-//          field_changed = true;
-      }
-    }
-    break;
-  case 2:
-    for(int p=0; p < recvcnt_; ++p)
-    {
-      const size_t pp = recv_stride*recvmap_[p];
-      for( size_t i=0; i<var_shape[0]; ++i )
-      {
-        for( size_t j=0; j<var_shape[1]; ++j )
-        {
-//          tmp = field[ pp + i*var_strides[0] + j*var_strides[1] ];
-          field.data()[ pp + i*var_strides[0] + j*var_strides[1] ]
-              = recv_buffer[ibuf++];
-//          if( field[ pp + i*var_strides[0] + j*var_strides[1] ] != tmp )
-//            field_changed = true;
-        }
-      }
-    }
-    break;
-  case 3:
-    for(int p=0; p < recvcnt_; ++p)
-    {
-      const size_t pp = recv_stride*recvmap_[p];
-      for( size_t i=0; i<var_shape[0]; ++i )
-      {
-        for( size_t j=0; j<var_shape[1]; ++j )
-        {
-          for( size_t k=0; k<var_shape[2]; ++k )
-          {
-//            tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ];
-            field.data()[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ]
-                = recv_buffer[ibuf++];
-//            if( field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ] != tmp )
-//              field_changed = true;
-          }
-        }
-      }
-    }
-    break;
-  case 4:
-    for(int p=0; p < recvcnt_; ++p)
-    {
-      const size_t pp = recv_stride*recvmap_[p];
-      for( size_t i=0; i<var_shape[0]; ++i )
-      {
-        for( size_t j=0; j<var_shape[1]; ++j )
-        {
-          for( size_t k=0; k<var_shape[2]; ++k )
-          {
-           for( size_t l=0; l<var_shape[3]; ++l )
-           {
-//            tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] +l*var_strides[3] ];
-            field.data()[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] + l*var_strides[3] ]
-                = recv_buffer[ibuf++];
-//            if( field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] +l*var_strides[3] ] != tmp )
-//              field_changed = true;
-           }
-          }
-        }
-      }
-    }
-    break;
-  default:
-    NOTIMP;
-  }
-//  if( !field_changed )
-//    std::cout << "WARNING: halo-exchange did not change field" << std::endl;
+  halo_packer<RANK>::unpack(recvcnt_, recvmap_, field, recv_buffer);
+
 }
 
 template<typename DATA_TYPE>
