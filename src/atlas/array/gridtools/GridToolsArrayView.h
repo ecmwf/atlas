@@ -33,6 +33,7 @@ public:
 
 public:
 
+    ATLAS_HOST_DEVICE
     ArrayView( const ArrayView& other );
     ArrayView(data_view_t data_view, const Array& array);
     value_type* data() { return gt_data_view_.data(); }
@@ -76,7 +77,7 @@ public:
         return Slicer<Slice, Rank==1>(*this).apply(i);
     }
 
-
+    ATLAS_HOST_DEVICE
     data_view_t& data_view() { return gt_data_view_;}
     data_view_t const & data_view() const { return gt_data_view_;}
 

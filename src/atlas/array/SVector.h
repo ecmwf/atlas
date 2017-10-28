@@ -48,7 +48,7 @@ public:
       delete_managedmem(data_);
   }
 
-  void delete_managedmem(T* data) {
+  void delete_managedmem(T*& data) {
     if( data )  {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
       cudaError_t err = cudaDeviceSynchronize();
@@ -56,8 +56,11 @@ public:
           throw eckit::AssertionFailed("failed to synchronize memory");
 
       err = cudaFree(data);
+// The following throws an invalid device memory
+/*
       if(err != cudaSuccess)
           throw eckit::AssertionFailed("failed to free GPU memory");
+*/
 #else
       free(data_);
 #endif

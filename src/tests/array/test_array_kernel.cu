@@ -25,19 +25,36 @@ template<typename Value, int RANK>
 __global__
 void kernel_ex(array::ArrayView<Value, RANK> dv)
 {
-    dv(3, 3, 3) += 1;
+    dv(3, 3, 3) += dv.data_view().template length<0>() * dv.data_view().template length<1>() * dv.data_view().template length<2>();
+}
+
+template<typename Value, int RANK>
+__global__
+void loop_kernel_ex(array::ArrayView<Value, RANK> dv)
+{
+    for(int i=0; i < dv.data_view().template length<0>(); i++) {
+      for(int j=0; j < dv.data_view().template length<1>(); j++) {
+        for(int k=0; k < dv.data_view().template length<2>(); k++) {
+          dv(i,j,k) += i*10+j*100+k*1000;
+        }
+      }
+    }
 }
 
 CASE( "test_array" )
 {
-   Array* ds = Array::create<double>(4ul, 4ul, 4ul);
+   constexpr unsigned int dx = 5;
+   constexpr unsigned int dy = 6;
+   constexpr unsigned int dz = 7;
+
+   Array* ds = Array::create<double>(dx, dy, dz);
    array::ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
    hv(3, 3, 3) = 4.5;
 
    ds->cloneToDevice();
 
    auto cv = make_device_view<double, 3>(*ds);
-
+ 
    kernel_ex<<<1,1>>>(cv);
 
    cudaDeviceSynchronize();
@@ -45,11 +62,48 @@ CASE( "test_array" )
    ds->cloneFromDevice();
    ds->reactivateHostWriteViews();
 
-   EXPECT( hv(3, 3, 3) == 5.5 );
+   EXPECT( hv(3, 3, 3) == 4.5 + dx*dy*dz );
 
    delete ds;
 }
 
+CASE( "test_array_loop" )
+{
+   constexpr unsigned int dx = 5;
+   constexpr unsigned int dy = 6;
+   constexpr unsigned int dz = 7;
+
+   Array* ds = Array::create<double>(dx, dy, dz);
+   array::ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
+   for(int i=0; i < dx; i++) {
+     for(int j=0; j < dy; j++) {
+       for(int k=0; k < dz; k++) {
+         hv(i,j,k) = 0;
+       }
+     }
+   }
+  
+   ds->cloneToDevice();
+
+   auto cv = make_device_view<double, 3>(*ds);
+ 
+   loop_kernel_ex<<<1,1>>>(cv);
+
+   cudaDeviceSynchronize();
+
+   ds->cloneFromDevice();
+   ds->reactivateHostWriteViews();
+
+   for(int i=0; i < dx; i++) {
+     for(int j=0; j < dy; j++) {
+       for(int k=0; k < dz; k++) {
+         EXPECT( hv(i,j,k) == i*10+j*100+k*1000 );
+       }
+     }
+   }
+
+   delete ds;
+}
 }
 }
 

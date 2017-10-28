@@ -27,14 +27,14 @@ public:
   void reset();
   double elapsed() const;
 private:
-  std::chrono::duration<double> elapsed_{0};
+  std::chrono::duration<double> elapsed_;
   std::chrono::steady_clock::time_point start_;
   bool running_{false};
 };
 
 //-----------------------------------------------------------------------------------------------------------
 
-inline StopWatch::StopWatch() {
+inline StopWatch::StopWatch() : elapsed_(0) {
 }
 
 inline StopWatch::StopWatch(double elapsed) :
