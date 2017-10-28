@@ -240,81 +240,39 @@ void HaloExchange::pack_send_cuda( const array::ArrayView<DATA_TYPE, RANK>& fiel
 #endif
 #endif
 
-template<int RANK>
-struct halo_packer;
+template<int Cnt, int CurrentDim>
+struct halo_packer_impl {
+    template<typename DATA_TYPE, int RANK, typename ... Idx>
+    static void apply(size_t& buf_idx, const size_t node_idx, const array::ArrayView<DATA_TYPE, RANK>& field,
+                      array::SVector<DATA_TYPE>& send_buffer, Idx... idxs) {
+        for( size_t i=0; i< field.data_view().template length<CurrentDim>(); ++i ) {
+            halo_packer_impl<Cnt-1, CurrentDim+1>::apply(buf_idx, node_idx, field, send_buffer, idxs..., i);
+        }
+    }
+};
 
-template<>
-struct halo_packer<1>
-{
+template<int CurrentDim>
+struct halo_packer_impl<0, CurrentDim> {
+    template<typename DATA_TYPE, int RANK, typename ...Idx>
+    static void apply(size_t& buf_idx, size_t node_idx, const array::ArrayView<DATA_TYPE, RANK>& field,
+                     array::SVector<DATA_TYPE>& send_buffer, Idx...idxs)
+    {
+      send_buffer[buf_idx++] = field(node_idx, idxs...);
+    }
+};
+
+template<int RANK>
+struct halo_packer {
     template<typename DATA_TYPE>
     static void pack(const unsigned int sendcnt, array::SVector<int> const & sendmap,
-                     const array::ArrayView<DATA_TYPE, 1>& field, array::SVector<DATA_TYPE>& send_buffer )
+                     const array::ArrayView<DATA_TYPE, RANK>& field, array::SVector<DATA_TYPE>& send_buffer )
     {
       size_t ibuf = 0;
       for(int p=0; p < sendcnt; ++p)
       {
         const size_t pp = sendmap[p];
-        send_buffer[ibuf++] = field(pp);
+        halo_packer_impl<RANK-1,1>::apply(ibuf, pp, field, send_buffer);
       }
-    }
-};
-
-template<>
-struct halo_packer<2>
-{
-    template<typename DATA_TYPE>
-    static void pack(const unsigned int sendcnt, array::SVector<int> const & sendmap, const array::ArrayView<DATA_TYPE, 2>& field, array::SVector<DATA_TYPE>& send_buffer )
-    {
-      size_t ibuf = 0;
-
-      for(int p=0; p < sendcnt; ++p)
-      {
-        const size_t pp = sendmap[p];
-        for( size_t i=0; i< field.data_view().template length<1>(); ++i ) {
-          send_buffer[ibuf++] = field(pp, i);
-        }
-      }
-    }
-};
-
-template<>
-struct halo_packer<3>
-{
-    template<typename DATA_TYPE>
-    static void pack(const unsigned int sendcnt, array::SVector<int> const & sendmap, const array::ArrayView<DATA_TYPE, 3>& field, array::SVector<DATA_TYPE>& send_buffer )
-    {
-      size_t ibuf = 0;
-      for(int p=0; p < sendcnt; ++p)
-      {
-        const size_t pp = sendmap[p];
-        for( size_t i=0; i< field.data_view().template length<1>(); ++i ) {
-          for( size_t j=0; j< field.data_view().template length<2>(); ++j ) {
-              send_buffer[ibuf++] = field(pp, i,j);
-          }
-        }
-      }
-    }
-};
-
-template<>
-struct halo_packer<4>
-{
-    template<typename DATA_TYPE>
-    static void pack(const unsigned int sendcnt, array::SVector<int> const & sendmap, const array::ArrayView<DATA_TYPE, 4>& field, array::SVector<DATA_TYPE>& send_buffer )
-    {
-        size_t ibuf = 0;
-        for(int p=0; p < sendcnt; ++p)
-        {
-          const size_t pp = sendmap[p];
-          for( size_t i=0; i< field.data_view().template length<1>(); ++i ) {
-            for( size_t j=0; j< field.data_view().template length<2>(); ++j ) {
-                for( size_t k=0; k< field.data_view().template length<3>(); ++k ) {
-
-                send_buffer[ibuf++] = field(pp,i,j,k);
-                }
-            }
-          }
-        }
     }
 };
 
