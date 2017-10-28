@@ -287,28 +287,11 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& fi
   size_t ibuf = 0;
   size_t send_stride = var_strides[0]*var_shape[0];
 
-  switch( RANK )
-  {
-  case 1:
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     pack_send_cuda(field,  var_strides, var_shape, var_rank, send_buffer);
 #else
     halo_packer<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
 #endif
-    std::cout << parallel::mpi::comm().rank() << " END IF " << std::endl;
-    break;
-  case 2:
-    halo_packer<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
-    break;
-  case 3:
-    halo_packer<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
-    break;
-  case 4:
-    halo_packer<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
-    break;
-  default:
-    NOTIMP;
-  }
 }
 
 template<typename DATA_TYPE, int RANK>
