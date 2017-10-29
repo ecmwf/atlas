@@ -431,6 +431,7 @@ parallel/Checksum.h
 parallel/GatherScatter.cc
 parallel/GatherScatter.h
 parallel/HaloExchange.h
+parallel/HaloExchange.cc
 parallel/mpi/Buffer.h
 runtime/ErrorHandling.cc
 runtime/ErrorHandling.h
@@ -447,14 +448,6 @@ util/Rotation.cc
 util/Rotation.h
 util/detail/BlackMagic.h
 )
-
-if(NOT ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA)
-list( APPEND atlas_util_srcs
-parallel/HaloExchange.cc
-)
-endif()
-
-
 
 list( APPEND atlas_internals_srcs
 mesh/detail/AccumulateFacets.h
@@ -555,11 +548,14 @@ list( APPEND source_list
 )
 
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+  list( APPEND source_list
+    parallel/HaloExchangeCUDA.h
+  )
   use_cuda( source_list
     array/gridtools/GridToolsArrayView.cu
     array/gridtools/GridToolsIndexView.cu
     mesh/Connectivity.cu
-    parallel/HaloExchange.cu
+    parallel/HaloExchangeCUDA.cu
   )
 endif()
 

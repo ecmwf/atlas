@@ -28,6 +28,11 @@
 #include "atlas/array/SVector.h"
 #include "atlas/runtime/Log.h"
 
+#ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#include "atlas/parallel/HaloExchangeCUDA.h"
+#endif
+
+
 namespace atlas {
 namespace parallel {
 
@@ -80,12 +85,6 @@ private: // methods
                          size_t var_rank,
                          array::SVector<DATA_TYPE>& send_buffer ) const;
 
-  template< typename DATA_TYPE, int RANK>
-  void pack_send_cuda( const array::ArrayView<DATA_TYPE, RANK>& field,
-                                       const size_t var_strides[],
-                                       const size_t var_shape[],
-                                       size_t var_rank,
-                                       array::SVector<DATA_TYPE>& send_buffer ) const;
   template< typename DATA_TYPE, int RANK>
   void unpack_recv_buffer(const array::SVector<DATA_TYPE>& recv_buffer,
                           array::ArrayView<DATA_TYPE, RANK>& field,
@@ -207,39 +206,6 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_
   }
 }
 
-#ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-#ifdef __CUDACC__
-template<typename DATA_TYPE, int RANK>
-__global__ void pack_kernel(int sendcnt, array::SVector<int> sendmap,
-         const array::ArrayView<DATA_TYPE, RANK> field, array::SVector<DATA_TYPE> send_buffer) {
-
-    const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
-    const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
-
-    if(p >= sendcnt || i >= field.data_view().template length<1>() ) return;
-
-    const size_t buff_idx = field.data_view().template length<1>() * p + i;
-
-    send_buffer[buff_idx] = field.data(p, i);
-}
-
-template<typename DATA_TYPE, int RANK>
-void HaloExchange::pack_send_cuda( const array::ArrayView<DATA_TYPE, RANK>& field,
-                                     const size_t var_strides[],
-                                     const size_t var_shape[],
-                                     size_t var_rank,
-                                     array::SVector<DATA_TYPE>& send_buffer ) const
-{
-    const unsigned int block_size_x = 32;
-    const unsigned int block_size_y = 4;
-    dim3 threads(block_size_x, block_size_y);
-    dim3 blocks((sendcnt_+block_size_x-1)/block_size_x, (var_shape[0]+block_size_y-1)/block_size_y);
-
-    pack_kernel<<<blocks,threads>>>(sendcnt_, sendmap_, field, send_buffer);
-}
-#endif
-#endif
-
 template<int Cnt, int CurrentDim>
 struct halo_packer_impl {
     template<typename DATA_TYPE, int RANK, typename ... Idx>
@@ -322,7 +288,7 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& fi
   size_t send_stride = var_strides[0]*var_shape[0];
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    pack_send_cuda(field,  var_strides, var_shape, var_rank, send_buffer);
+    pack_send_cuda(sendcnt_, sendmap_, field, send_buffer);
 #else
     halo_packer<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
 #endif
