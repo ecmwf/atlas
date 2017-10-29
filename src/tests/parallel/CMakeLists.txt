@@ -20,10 +20,10 @@ ecbuild_add_test( TARGET atlas_test_gather
   LIBS       atlas
 )
 
-atlas_add_cuda_test(
-  TARGET atlas_test_haloexchange_kernel
+ecbuild_add_test(
+  TARGET atlas_test_haloexchange_gpu
   BOOST
-  SOURCES test_haloexchange_kernel.cu
+  SOURCES test_haloexchange_gpu.cc
   LIBS atlas
 )
 
