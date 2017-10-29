@@ -53,9 +53,6 @@ public: // methods
               const int remote_idx[], const int base,
               size_t size );
 
-  template <typename DATA_TYPE, int RANK>
-  void execute( array::ArrayView<DATA_TYPE, RANK>& field, const size_t var_strides[], const size_t var_shape[], size_t var_rank ) const;
-
   template <typename DATA_TYPE>
   void execute( DATA_TYPE field[], size_t nb_vars ) const;
 
@@ -80,17 +77,11 @@ private: // methods
 
   template< typename DATA_TYPE, int RANK>
   void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& field,
-                         const size_t var_strides[],
-                         const size_t var_shape[],
-                         size_t var_rank,
                          array::SVector<DATA_TYPE>& send_buffer ) const;
 
   template< typename DATA_TYPE, int RANK>
   void unpack_recv_buffer(const array::SVector<DATA_TYPE>& recv_buffer,
-                          array::ArrayView<DATA_TYPE, RANK>& field,
-                          const size_t var_strides[],
-                          const size_t var_shape[],
-                          size_t var_rank ) const;
+                          array::ArrayView<DATA_TYPE, RANK>& field) const;
 
   template<typename DATA_TYPE, int RANK>
   void var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
@@ -119,9 +110,18 @@ private: // data
 
 };
 
+template<int cnt, typename DATA_TYPE, int RANK>
+constexpr typename boost::enable_if_c< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK>& field) {
+    return 1;
+}
+
+template<int cnt, typename DATA_TYPE, int RANK>
+constexpr typename boost::disable_if_c< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK>& field) {
+    return get_var_size<cnt+1>(field) * field.template length<cnt>();
+}
 
 template<typename DATA_TYPE, int RANK>
-void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_t var_strides[], const size_t var_shape[], size_t var_rank ) const
+void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field) const
 {
   if( ! is_setup_ )
   {
@@ -131,7 +131,7 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_
   ATLAS_TRACE("HaloExchange",{"halo-exchange"});
 
   int tag=1;
-  size_t var_size = std::accumulate(var_shape,var_shape+var_rank,1,std::multiplies<size_t>());
+  size_t var_size = get_var_size<1>(field);
   int send_size  = sendcnt_ * var_size;
   int recv_size  = recvcnt_ * var_size;
 
@@ -165,7 +165,7 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_
   }
 
   /// Pack
-  pack_send_buffer(field,var_strides,var_shape,var_rank,send_buffer);
+  pack_send_buffer(field,send_buffer);
 
   /// Send
   ATLAS_TRACE_MPI( ISEND ) {
@@ -192,7 +192,7 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field, const size_
   }
 
   /// Unpack
-  unpack_recv_buffer(recv_buffer,field,var_strides,var_shape,var_rank);
+  unpack_recv_buffer(recv_buffer,field);
 
   /// Wait for sending to finish
   ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
@@ -278,14 +278,10 @@ struct halo_packer {
 
 template<typename DATA_TYPE, int RANK>
 void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& field,
-                                     const size_t var_strides[],
-                                     const size_t var_shape[],
-                                     size_t var_rank,
                                      array::SVector<DATA_TYPE>& send_buffer ) const
 {
   ATLAS_TRACE();
   size_t ibuf = 0;
-  size_t send_stride = var_strides[0]*var_shape[0];
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     pack_send_cuda(sendcnt_, sendmap_, field, send_buffer);
@@ -296,14 +292,10 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& fi
 
 template<typename DATA_TYPE, int RANK>
 void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buffer,
-                                       array::ArrayView<DATA_TYPE,RANK>& field,
-                                       const size_t var_strides[],
-                                       const size_t var_shape[],
-                                       size_t var_rank ) const
+                                       array::ArrayView<DATA_TYPE,RANK>& field) const
 {
   ATLAS_TRACE();
   size_t ibuf = 0;
-  size_t recv_stride = var_strides[0]*var_shape[0];
 
   halo_packer<RANK>::unpack(recvcnt_, recvmap_, field, recv_buffer);
 
@@ -351,22 +343,6 @@ template <typename DATA_TYPE, int RANK>
 void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>&& field ) const
 {
     execute(field);
-}
-template <typename DATA_TYPE, int RANK>
-void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>& field ) const
-{
-  //if( field.shape(0) == parsize_)
-  if( true ){
-    std::vector<size_t> varstrides, varshape;
-    var_info( field, varstrides, varshape );
-    execute( field, varstrides.data(), varshape.data(), varstrides.size() );
-  }
-  else
-  {
-    Log::error() << "Passed field with rank " << RANK << " and shape(0) " << field.shape(0) << std::endl;
-    Log::error() << "parsize_ = " << parsize_ << std::endl;
-    NOTIMP; // Need to implement with parallel ranks > 1
-  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------

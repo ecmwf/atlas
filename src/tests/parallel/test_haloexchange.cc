@@ -116,7 +116,8 @@ CASE("test_haloexchange") {
         arrv(j) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j] );
       }
 
-      f.halo_exchange.execute(arrv,strides,shape,1);
+      f.halo_exchange.execute(arrv);
+//      f.halo_exchange.execute(arrv,strides,shape,1);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -140,7 +141,8 @@ CASE("test_haloexchange") {
 
       size_t strides[] = {1};
       size_t shape[] = {2};
-      f.halo_exchange.execute(arrv,strides,shape,1);
+      f.halo_exchange.execute(arrv);
+//      f.halo_exchange.execute(arrv,strides,shape,1);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -216,7 +218,8 @@ CASE("test_haloexchange") {
 
       size_t strides[] = {2,1};
       size_t shape[] = {3,2};
-      f.halo_exchange.execute(arrv,strides,shape,2);
+      f.halo_exchange.execute(arrv);
+//      f.halo_exchange.execute(arrv,strides,shape,2);
 
       switch( parallel::mpi::comm().rank() )
       {

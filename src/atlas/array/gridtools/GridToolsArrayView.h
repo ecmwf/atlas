@@ -77,6 +77,11 @@ public:
         return Slicer<Slice, Rank==1>(*this).apply(i);
     }
 
+    template<unsigned int Dim>
+    size_t length() const {
+        return gt_data_view_.template length<Dim>();
+    }
+
     ATLAS_HOST_DEVICE
     data_view_t& data_view() { return gt_data_view_;}
     ATLAS_HOST_DEVICE
