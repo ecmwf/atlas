@@ -139,10 +139,7 @@ CASE("test_haloexchange") {
         arrv(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
       }
 
-      size_t strides[] = {1};
-      size_t shape[] = {2};
       f.halo_exchange.execute(arrv);
-//      f.halo_exchange.execute(arrv,strides,shape,1);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -427,22 +424,20 @@ CASE("test_haloexchange") {
 
     SECTION( "test_rank0_ArrayView" )
     {
-        //TODO FIRST
-//      array::ArraySpec spec(array::make_shape(1), array::make_strides(f.N));
-//      eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(f.gidx.data(), spec ) );
-//      array::ArrayView<POD,1> arrv = array::make_view<POD,1>(*arr);
+      eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(f.gidx.data(), array::make_shape(f.N) ) );
+      array::ArrayView<POD,1> arrv = array::make_view<POD,1>(*arr);
 
-//      f.halo_exchange.execute(arrv);
+      f.halo_exchange.execute(arrv);
 
-//      switch( parallel::mpi::comm().rank() )
-//      {
-//        case 0: { POD gidx_c[] = { 9, 1, 2, 3, 4};
-//          EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
-//        case 1: { POD gidx_c[] = { 3, 4, 5, 6, 7, 8};
-//          EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
-//        case 2: { POD gidx_c[] = { 5, 6, 7, 8, 9, 1, 2};
-//          EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
-//      }
+      switch( parallel::mpi::comm().rank() )
+      {
+        case 0: { POD gidx_c[] = { 9, 1, 2, 3, 4};
+          EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
+        case 1: { POD gidx_c[] = { 3, 4, 5, 6, 7, 8};
+          EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
+        case 2: { POD gidx_c[] = { 5, 6, 7, 8, 9, 1, 2};
+          EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
+      }
     }
 
 
