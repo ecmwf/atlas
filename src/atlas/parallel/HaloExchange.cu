@@ -8,14 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/parallel/HaloExchangeCUDA.h"
 
-namespace atlas {
-namespace parallel {
+#include "atlas/parallel/HaloExchange.cc"
 
-#ifdef __CUDACC__
-
-#endif
-
-} // namespace parallel
-} // namespace atlas

@@ -17,9 +17,18 @@ namespace parallel {
 
 #ifdef __CUDACC__
 template<typename DATA_TYPE, int RANK>
-__global__
-void pack_kernel(int sendcnt, array::SVector<int> sendmap,
-         const array::ArrayView<DATA_TYPE, RANK> field, array::SVector<DATA_TYPE> send_buffer);
+__global__ void pack_kernel(int sendcnt, array::SVector<int> sendmap,
+         const array::ArrayView<DATA_TYPE, RANK> field, array::SVector<DATA_TYPE> send_buffer) {
+
+    const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
+    const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
+
+    if(p >= sendcnt || i >= field.data_view().template length<1>() ) return;
+
+    const size_t buff_idx = field.data_view().template length<1>() * p + i;
+
+    send_buffer[buff_idx] = field(p, i);
+}
 #endif
 
 template<typename DATA_TYPE, int RANK>
