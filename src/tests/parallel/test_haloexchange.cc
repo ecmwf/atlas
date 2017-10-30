@@ -165,18 +165,17 @@ CASE("test_haloexchange") {
 
       eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(arrv_t.data(),
                        array::ArraySpec{array::make_shape(f.N, 1), array::make_strides(2, 1) } ) );
-      array::ArrayView<POD,2> arrv = array::make_view<POD,2>(*arr);
 
       f.halo_exchange.template execute<POD,2>(*arr, false);
 
       switch( parallel::mpi::comm().rank() )
       {
         case 0: { POD arr_c[] = { 90,0, 10,100, 20,200, 30,300, 40,0 };
-          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+          EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
         case 1: { POD arr_c[] = { 30,0, 40,400, 50,500, 60,600, 70,0, 80,0};
-          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+          EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
         case 2: { POD arr_c[] = { 50,0, 60,0, 70,700, 80,800, 90,900, 10,0, 20,0};
-          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+          EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
       }
     }
 
@@ -197,7 +196,6 @@ CASE("test_haloexchange") {
 
         eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(&(arrv_t(0,1)),
                          array::ArraySpec{array::make_shape(f.N, 1), array::make_strides(2, 1) } ) );
-        array::ArrayView<POD,2> arrv = array::make_view<POD,2>(*arr);
 
         f.halo_exchange.template execute<POD,2>(*arr, false);
 
@@ -280,7 +278,6 @@ CASE("test_haloexchange") {
 
       eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(arrv_t.data(),
                        array::ArraySpec{array::make_shape(f.N, 1, 2), array::make_strides(6, 2, 1) } ) );
-      array::ArrayView<POD,3> arrv = array::make_view<POD,3>(*arr);
 
       f.halo_exchange.template execute<POD,3>(*arr, false);
 
@@ -338,7 +335,6 @@ CASE("test_haloexchange") {
 
       eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(&arrv_t(0,1,1),
                        array::ArraySpec{array::make_shape(f.N, 1, 1), array::make_strides(6, 2, 1) } ) );
-      array::ArrayView<POD,3> arrv = array::make_view<POD,3>(*arr);
 
       f.halo_exchange.template execute<POD,3>(*arr, false);
 
@@ -395,7 +391,6 @@ CASE("test_haloexchange") {
 
       eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(&arrv_t(0,0,1),
                        array::ArraySpec{array::make_shape(f.N, 3, 1), array::make_strides(6, 2, 2) } ) );
-      array::ArrayView<POD,3> arrv = array::make_view<POD,3>(*arr);
 
       f.halo_exchange.template execute<POD,3>(*arr, false);
 

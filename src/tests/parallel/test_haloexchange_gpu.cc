@@ -100,7 +100,6 @@ CASE("test_haloexchange_gpu") {
       size_t shape[] = {2};
 
       arr.syncHostDevice();
-      array::ArrayView<POD,2> arrvd = array::make_device_view<POD,2>(arr);
 
       f.halo_exchange.template execute<POD,2>(arr, true);
 
