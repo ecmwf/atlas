@@ -90,7 +90,7 @@ CASE("test_haloexchange_gpu") {
     SECTION( "test_rank1" )
     {
       array::ArrayT<POD> arr(f.N,2);
-      array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
+      array::ArrayView<POD,2> arrv = array::make_host_view<POD,2>(arr);
       for( int j=0; j<f.N; ++j ) {
         arrv(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
         arrv(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
@@ -98,7 +98,11 @@ CASE("test_haloexchange_gpu") {
 
       size_t strides[] = {1};
       size_t shape[] = {2};
-      f.halo_exchange.execute(arrv,strides,shape,1);
+
+      arr.syncHostDevice();
+      array::ArrayView<POD,2> arrvd = array::make_device_view<POD,2>(arr);
+
+      f.halo_exchange.execute(arrvd);
 
       switch( parallel::mpi::comm().rank() )
       {
