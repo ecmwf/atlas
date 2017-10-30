@@ -96,9 +96,6 @@ CASE("test_haloexchange_gpu") {
         arrv(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
       }
 
-      size_t strides[] = {1};
-      size_t shape[] = {2};
-
       arr.syncHostDevice();
 
       f.halo_exchange.template execute<POD,2>(arr, true);
