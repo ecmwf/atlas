@@ -117,7 +117,6 @@ CASE("test_haloexchange") {
       }
 
       f.halo_exchange.execute(arrv);
-//      f.halo_exchange.execute(arrv,strides,shape,1);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -152,52 +151,67 @@ CASE("test_haloexchange") {
       }
     }
 
-//    SECTION( "test_rank1_strided_v1" )
-//    {
-//      array::ArrayT<POD> arr(f.N,2);
-//      array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
-//      for( int j=0; j<f.N; ++j ) {
-//        arrv(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
-//        arrv(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
-//      }
+    SECTION( "test_rank1_strided_v1" )
+    {
+      //create a 2d field from the gidx data, with two components per grid point
+      array::ArrayT<POD> arr_t(f.N,2);
+      array::ArrayView<POD,2> arrv_t = array::make_view<POD,2>(arr_t);
+      for( int j=0; j<f.N; ++j ) {
+         arrv_t(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+         arrv_t(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
+      }
 
-//      size_t strides[] = {2};
-//      size_t shape[] = {1};
-//      f.halo_exchange.execute(arrv,strides,shape,1);
+      // create a wrap array where we fake the strides in a way that the second dimension
+      // (number of components) contains only one component but the associated stride is 2
+      // (i.e. we are only selecting and exchanging the first component of the field)
 
-//      switch( parallel::mpi::comm().rank() )
-//      {
-//        case 0: { POD arr_c[] = { 90,0, 10,100, 20,200, 30,300, 40,0 };
-//          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
-//        case 1: { POD arr_c[] = { 30,0, 40,400, 50,500, 60,600, 70,0, 80,0};
-//          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
-//        case 2: { POD arr_c[] = { 50,0, 60,0, 70,700, 80,800, 90,900, 10,0, 20,0};
-//          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
-//      }
-//    }
+      eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(arrv_t.data(),
+                       array::ArraySpec{array::make_shape(f.N, 1), array::make_strides(2, 1) } ) );
+      array::ArrayView<POD,2> arrv = array::make_view<POD,2>(*arr);
+
+      f.halo_exchange.execute(arrv);
+
+      switch( parallel::mpi::comm().rank() )
+      {
+        case 0: { POD arr_c[] = { 90,0, 10,100, 20,200, 30,300, 40,0 };
+          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        case 1: { POD arr_c[] = { 30,0, 40,400, 50,500, 60,600, 70,0, 80,0};
+          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        case 2: { POD arr_c[] = { 50,0, 60,0, 70,700, 80,800, 90,900, 10,0, 20,0};
+          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+      }
+    }
 
     SECTION( "test_rank1_strided_v2" )
     {
-//      array::ArrayT<POD> arr(f.N,2);
-//      array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
-//      for( int j=0; j<f.N; ++j ) {
-//        arrv(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
-//        arrv(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
-//      }
 
-//      size_t strides[] = {2};
-//      size_t shape[] = {1};
-//      f.halo_exchange.execute(&arrv(0,1),strides,shape,1);
+        //create a 2d field from the gidx data, with two components per grid point
+        array::ArrayT<POD> arr_t(f.N,2);
+        array::ArrayView<POD,2> arrv_t = array::make_view<POD,2>(arr_t);
+        for( int j=0; j<f.N; ++j ) {
+           arrv_t(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+           arrv_t(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
+        }
 
-//      switch( parallel::mpi::comm().rank() )
-//      {
-//        case 0: { POD arr_c[] = { 0,900, 10,100, 20,200, 30,300, 0,400 };
-//          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
-//        case 1: { POD arr_c[] = { 0,300, 40,400, 50,500, 60,600, 0,700, 0,800};
-//          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
-//        case 2: { POD arr_c[] = { 0,500, 0,600, 70,700, 80,800, 90,900, 0,100, 0,200};
-//          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
-//      }
+        // create a wrap array where we fake the strides in a way that the second dimension
+        // (number of components) contains only one component but the associated stride is 2
+        // (i.e. we are only selecting and exchanging the first component of the field)
+
+        eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(&(arrv_t(0,1)),
+                         array::ArraySpec{array::make_shape(f.N, 1), array::make_strides(2, 1) } ) );
+        array::ArrayView<POD,2> arrv = array::make_view<POD,2>(*arr);
+
+        f.halo_exchange.execute(arrv);
+
+        switch( parallel::mpi::comm().rank() )
+        {
+            case 0: { POD arr_c[] = { 0,900, 10,100, 20,200, 30,300, 0,400 };
+              EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+            case 1: { POD arr_c[] = { 0,300, 40,400, 50,500, 60,600, 0,700, 0,800};
+              EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+            case 2: { POD arr_c[] = { 0,500, 0,600, 70,700, 80,800, 90,900, 0,100, 0,200};
+              EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        }
     }
 
     SECTION( "test_rank2" )
@@ -216,7 +230,6 @@ CASE("test_haloexchange") {
       size_t strides[] = {2,1};
       size_t shape[] = {3,2};
       f.halo_exchange.execute(arrv);
-//      f.halo_exchange.execute(arrv,strides,shape,2);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -256,60 +269,62 @@ CASE("test_haloexchange") {
       }
     }
 
-//    SECTION( "test_rank2_l1" )
-//    {
-//      array::ArrayT<POD> arr(f.N,3,2);
-//      array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
-//      for( int p=0; p<f.N; ++p )
-//      {
-//        for( size_t i=0; i<3; ++i )
-//        {
-//          arrv(p,i,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
-//          arrv(p,i,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
-//        }
-//      }
+    SECTION( "test_rank2_l1" )
+    {
+      array::ArrayT<POD> arr_t(f.N,3,2);
+      array::ArrayView<POD,3> arrv_t = array::make_view<POD,3>(arr_t);
+      for( int p=0; p<f.N; ++p )
+      {
+        for( size_t i=0; i<3; ++i )
+        {
+          arrv_t(p,i,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
+          arrv_t(p,i,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
+        }
+      }
 
-//      size_t strides[] = {6,1};
-//      size_t shape[] = {1,2};
-//      f.halo_exchange.execute(arrv,strides,shape,2);
+      eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(arrv_t.data(),
+                       array::ArraySpec{array::make_shape(f.N, 1, 2), array::make_strides(6, 2, 1) } ) );
+      array::ArrayView<POD,3> arrv = array::make_view<POD,3>(*arr);
 
-//      switch( parallel::mpi::comm().rank() )
-//      {
-//        case 0:
-//        {
-//          POD arr_c[] = { -9,9,   0, 0,    0,  0,  // halo
-//                          -1,1, -10,10, -100,100,  // core
-//                          -2,2, -20,20, -200,200,  // core
-//                          -3,3, -30,30, -300,300,  // core
-//                          -4,4,   0, 0,    0,  0}; // halo
-//          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-//          break;
-//        }
-//        case 1:
-//        {
-//          POD arr_c[] = { -3,3,   0, 0,    0,  0,  // halo
-//                          -4,4, -40,40, -400,400,  // core
-//                          -5,5, -50,50, -500,500,  // core
-//                          -6,6, -60,60, -600,600,  // core
-//                          -7,7,   0, 0,    0,  0,  // halo
-//                          -8,8,   0, 0,    0,  0}; // halo
-//          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-//          break;
-//        }
-//        case 2:
-//        {
-//          POD arr_c[] = { -5,5,   0, 0,    0,  0,  // halo
-//                          -6,6,   0, 0,    0,  0,  // halo
-//                          -7,7, -70,70, -700,700,  // core
-//                          -8,8, -80,80, -800,800,  // core
-//                          -9,9, -90,90, -900,900,  // core
-//                          -1,1,   0, 0,    0,  0,  // halo
-//                          -2,2,   0, 0,    0,  0}; // halo
-//          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-//          break;
-//        }
-//      }
-//    }
+      f.halo_exchange.execute(arrv);
+
+      switch( parallel::mpi::comm().rank() )
+      {
+        case 0:
+        {
+          POD arr_c[] = { -9,9,   0, 0,    0,  0,  // halo
+                          -1,1, -10,10, -100,100,  // core
+                          -2,2, -20,20, -200,200,  // core
+                          -3,3, -30,30, -300,300,  // core
+                          -4,4,   0, 0,    0,  0}; // halo
+          EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+          break;
+        }
+        case 1:
+        {
+          POD arr_c[] = { -3,3,   0, 0,    0,  0,  // halo
+                          -4,4, -40,40, -400,400,  // core
+                          -5,5, -50,50, -500,500,  // core
+                          -6,6, -60,60, -600,600,  // core
+                          -7,7,   0, 0,    0,  0,  // halo
+                          -8,8,   0, 0,    0,  0}; // halo
+          EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+          break;
+        }
+        case 2:
+        {
+          POD arr_c[] = { -5,5,   0, 0,    0,  0,  // halo
+                          -6,6,   0, 0,    0,  0,  // halo
+                          -7,7, -70,70, -700,700,  // core
+                          -8,8, -80,80, -800,800,  // core
+                          -9,9, -90,90, -900,900,  // core
+                          -1,1,   0, 0,    0,  0,  // halo
+                          -2,2,   0, 0,    0,  0}; // halo
+          EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+          break;
+        }
+      }
+    }
 
     SECTION( "test_rank2_l2_v2" )
     {
