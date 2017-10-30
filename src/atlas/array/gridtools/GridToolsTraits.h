@@ -1,18 +1,9 @@
 #pragma once
 
 #include "atlas/library/config.h"
+#include "gridtools/common/generic_metafunctions/all_integrals.hpp"
+#include "gridtools/storage/storage-facility.hpp"
 
-//------------------------------------------------------------------------------
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-#ifndef _USE_GPU_
-#define _USE_GPU_
-#endif
-#endif
-#include "common/generic_metafunctions/all_integrals.hpp"
-#include "storage/storage-facility.hpp"
-#ifdef _USE_GPU_
-#undef _USE_GPU_
-#endif
 //------------------------------------------------------------------------------
 
 namespace atlas {

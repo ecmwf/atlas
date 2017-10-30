@@ -584,3 +584,7 @@ ecbuild_add_library( TARGET atlas
   DEFINITIONS
     ${ATLAS_DEFINITIONS}
  )
+
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+  target_link_libraries( atlas gridtools_storage )
+endif()

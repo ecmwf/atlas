@@ -127,44 +127,16 @@ ecbuild_add_option(
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
-  set( ENABLE_GPU "OFF" CACHE BOOL "Compile with GPU support (CUDA)" )
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
 
-    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
-    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
+  if( GRIDTOOLS_HAVE_CUDA )
+    ecbuild_info( "Gridtools found with CUDA support" )
+    set( CUDA_NVCC_FLAGS "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}" )
+    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
+    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
+  endif()
 
-    if(ENABLE_GPU)
-        set( CUDA_USE_STATIC_CUDA_RUNTIME OFF )
-        find_package(CUDA REQUIRED)
-
-        string(REPLACE "." "" CUDA_VERSION ${CUDA_VERSION})
-
-        add_definitions(-D_FORCE_INLINES) # Question to Carlos: Is this needed for nvcc only?
-        add_definitions(-D_USE_GPU_)
-
-        set(CUDA_PROPAGATE_HOST_FLAGS ON)
-        set(CUDA_NVCC_FLAGS "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
-        if( NOT ${CUDA_VERSION} VERSION_GREATER "60")
-            message(FATAL_ERROR "CUDA 6.0 or lower does not support C++11 (disabling)")
-        endif()
-
-        set( CUDA_ARCH "sm_35" CACHE STRING "Compute capability for CUDA" )
-        set( CUDA_SEPARABLE_COMPILATION ON)
-
-        include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
-
-        set(CUDA_SEPARABLE_COMPILATION ON)
-        # adding the additional nvcc flags
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-arch=${CUDA_ARCH}" "-Xcudafe" "--diag_suppress=dupl_calling_convention")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-Xcudafe" "--diag_suppress=code_is_unreachable" "-Xcudafe")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=implicit_return_from_non_void_function" "-Xcudafe")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=calling_convention_not_allowed" "-Xcudafe")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=conflicting_calling_conventions")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-Xcompiler" "-fPIC")
-
-        set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
-        set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
-    endif()
 endif()
 
 ### Eigen

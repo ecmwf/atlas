@@ -55,11 +55,6 @@ if( ATLAS_HAVE_MPI )
 
 endif()
 
-if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
-  include_directories( ${GRIDTOOLS_STORAGE_INCLUDE_DIRS} )
-endif()
-
-
 add_subdirectory( atlas )
 
 if( ATLAS_HAVE_FORTRAN )
