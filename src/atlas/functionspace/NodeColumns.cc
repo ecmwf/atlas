@@ -337,19 +337,19 @@ array::ArrayView<DATA_TYPE,RANK> get_field_view(const Field& field, bool on_devi
 }
 
 template<int RANK>
-void dispatch_haloExchange( const Field& field, const parallel::HaloExchange& halo_exchange, bool on_device )
+void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exchange, bool on_device )
 {
   if     ( field.datatype() == array::DataType::kind<int>() ) {
-    halo_exchange.execute( get_field_view<int, RANK>(field, on_device) );
+    halo_exchange.template execute<int, RANK>( field.array(), on_device );
   }
   else if( field.datatype() == array::DataType::kind<long>() ) {
-    halo_exchange.execute( get_field_view<long, RANK>(field, on_device) );
+    halo_exchange.template execute<long, RANK>( field.array(), on_device );
   }
   else if( field.datatype() == array::DataType::kind<float>() ) {
-    halo_exchange.execute( get_field_view<float, RANK>(field, on_device) );
+    halo_exchange.template execute<float, RANK>( field.array(), on_device );
   }
   else if( field.datatype() == array::DataType::kind<double>() ) {
-    halo_exchange.execute( get_field_view<double, RANK>(field, on_device) );
+    halo_exchange.template execute<double, RANK>( field.array(), on_device );
   }
   else throw eckit::Exception("datatype not supported",Here());
 }
@@ -358,7 +358,7 @@ void dispatch_haloExchange( const Field& field, const parallel::HaloExchange& ha
 void NodeColumns::haloExchange( FieldSet& fieldset, bool on_device ) const
 {
   for( size_t f=0; f<fieldset.size(); ++f ) {
-    const Field& field = fieldset[f];
+    Field& field = fieldset[f];
     switch( field.rank() ) {
       case 1:
         dispatch_haloExchange<1>(field,halo_exchange(), on_device);

@@ -222,15 +222,15 @@ void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double fie
 }
 
 void atlas__HaloExchange__execute_int (HaloExchange* This, int field[], int nb_vars ) {
-  This->execute(field,nb_vars);
+//  This->execute(field,nb_vars);
 }
 
 void atlas__HaloExchange__execute_float (HaloExchange* This, float field[], int nb_vars ) {
-  This->execute(field,nb_vars);
+//  This->execute(field,nb_vars);
 }
 
 void atlas__HaloExchange__execute_double (HaloExchange* This, double field[], int nb_vars ) {
-  This->execute(field,nb_vars);
+//  This->execute(field,nb_vars);
 }
 
 /////////////////////

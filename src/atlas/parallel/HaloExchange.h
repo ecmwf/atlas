@@ -53,14 +53,14 @@ public: // methods
               const int remote_idx[], const int base,
               size_t size );
 
-  template <typename DATA_TYPE>
-  void execute( DATA_TYPE field[], size_t nb_vars ) const;
+//  template <typename DATA_TYPE>
+//  void execute( DATA_TYPE field[], size_t nb_vars ) const;
 
   template <typename DATA_TYPE, int RANK>
-  void execute( array::ArrayView<DATA_TYPE,RANK>& field ) const;
+  void execute( array::Array& field, bool on_device ) const;
 
-  template <typename DATA_TYPE, int RANK>
-  void execute( array::ArrayView<DATA_TYPE,RANK>&& field ) const;
+//  template <typename DATA_TYPE, int RANK>
+//  void execute( array::ArrayView<DATA_TYPE,RANK>&& field ) const;
 
 
 private: // methods
@@ -121,7 +121,7 @@ constexpr typename boost::disable_if_c< (cnt == RANK), size_t >::type get_var_si
 }
 
 template<typename DATA_TYPE, int RANK>
-void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field) const
+void HaloExchange::execute(array::Array& field, bool on_device) const
 {
   if( ! is_setup_ )
   {
@@ -130,8 +130,10 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field) const
 
   ATLAS_TRACE("HaloExchange",{"halo-exchange"});
 
+  auto field_hv = array::make_host_view<DATA_TYPE, RANK, true>(field);
+
   int tag=1;
-  size_t var_size = get_var_size<1>(field);
+  size_t var_size = get_var_size<1>(field_hv);
   int send_size  = sendcnt_ * var_size;
   int recv_size  = recvcnt_ * var_size;
 
@@ -164,8 +166,11 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field) const
     }
   }
 
+  auto field_dv = on_device ? array::make_device_view<DATA_TYPE, RANK>(field) :
+      array::make_host_view<DATA_TYPE, RANK>(field);
+
   /// Pack
-  pack_send_buffer(field,send_buffer);
+  pack_send_buffer(field_dv,send_buffer);
 
   /// Send
   ATLAS_TRACE_MPI( ISEND ) {
@@ -192,7 +197,7 @@ void HaloExchange::execute(array::ArrayView<DATA_TYPE, RANK>& field) const
   }
 
   /// Unpack
-  unpack_recv_buffer(recv_buffer,field);
+  unpack_recv_buffer(recv_buffer,field_dv);
 
   /// Wait for sending to finish
   ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
@@ -301,15 +306,15 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
 
 }
 
-template<typename DATA_TYPE>
-void HaloExchange::execute( DATA_TYPE field[], size_t nb_vars ) const
-{
-    throw eckit::AssertionFailed("Call not supported");
+//template<typename DATA_TYPE>
+//void HaloExchange::execute( DATA_TYPE field[], size_t nb_vars ) const
+//{
+//    throw eckit::AssertionFailed("Call not supported");
 
 //  size_t strides[] = {1};
 //  size_t shape[] = {nb_vars};
 //  execute( field, strides, shape, 1);
-}
+//}
 
 
 template<typename DATA_TYPE, int RANK>
@@ -339,11 +344,11 @@ void HaloExchange::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
   }
 }
 
-template <typename DATA_TYPE, int RANK>
-void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>&& field ) const
-{
-    execute(field);
-}
+//template <typename DATA_TYPE, int RANK>
+//void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>&& field ) const
+//{
+//    execute(field);
+//}
 
 //----------------------------------------------------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

@@ -114,7 +114,7 @@ CASE("test_haloexchange") {
         arrv(j) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j] );
       }
 
-      f.halo_exchange.execute(arrv);
+      f.halo_exchange.template execute<POD,1>(arr, false);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -136,7 +136,7 @@ CASE("test_haloexchange") {
         arrv(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
       }
 
-      f.halo_exchange.execute(arrv);
+      f.halo_exchange.template execute<POD,2>(arr, false);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -167,7 +167,7 @@ CASE("test_haloexchange") {
                        array::ArraySpec{array::make_shape(f.N, 1), array::make_strides(2, 1) } ) );
       array::ArrayView<POD,2> arrv = array::make_view<POD,2>(*arr);
 
-      f.halo_exchange.execute(arrv);
+      f.halo_exchange.template execute<POD,2>(*arr, false);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -199,7 +199,7 @@ CASE("test_haloexchange") {
                          array::ArraySpec{array::make_shape(f.N, 1), array::make_strides(2, 1) } ) );
         array::ArrayView<POD,2> arrv = array::make_view<POD,2>(*arr);
 
-        f.halo_exchange.execute(arrv);
+        f.halo_exchange.template execute<POD,2>(*arr, false);
 
         switch( parallel::mpi::comm().rank() )
         {
@@ -225,7 +225,7 @@ CASE("test_haloexchange") {
         }
       }
 
-      f.halo_exchange.execute(arrv);
+      f.halo_exchange.template execute<POD,3>(arr, false);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -282,7 +282,7 @@ CASE("test_haloexchange") {
                        array::ArraySpec{array::make_shape(f.N, 1, 2), array::make_strides(6, 2, 1) } ) );
       array::ArrayView<POD,3> arrv = array::make_view<POD,3>(*arr);
 
-      f.halo_exchange.execute(arrv);
+      f.halo_exchange.template execute<POD,3>(*arr, false);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -340,7 +340,7 @@ CASE("test_haloexchange") {
                        array::ArraySpec{array::make_shape(f.N, 1, 1), array::make_strides(6, 2, 1) } ) );
       array::ArrayView<POD,3> arrv = array::make_view<POD,3>(*arr);
 
-      f.halo_exchange.execute(arrv);
+      f.halo_exchange.template execute<POD,3>(*arr, false);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -397,7 +397,7 @@ CASE("test_haloexchange") {
                        array::ArraySpec{array::make_shape(f.N, 3, 1), array::make_strides(6, 2, 2) } ) );
       array::ArrayView<POD,3> arrv = array::make_view<POD,3>(*arr);
 
-      f.halo_exchange.execute(arrv);
+      f.halo_exchange.template execute<POD,3>(*arr, false);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -442,7 +442,7 @@ CASE("test_haloexchange") {
       eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(f.gidx.data(), array::make_shape(f.N) ) );
       array::ArrayView<POD,1> arrv = array::make_view<POD,1>(*arr);
 
-      f.halo_exchange.execute(arrv);
+      f.halo_exchange.template execute<POD,1>(*arr, false);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -469,7 +469,7 @@ CASE("test_haloexchange") {
       // size_t strides[] = {1};
       // BOOST_CHECK_EQUAL_COLLECTIONS( arrv.strides()+1,arrv.strides()+2, strides,strides+1);
 
-      f.halo_exchange.execute(arrv);
+      f.halo_exchange.template execute<POD,2>(arr, false);
 
       switch( parallel::mpi::comm().rank() )
       {
@@ -500,7 +500,7 @@ CASE("test_haloexchange") {
       // size_t strides[] = {2,1};
       // BOOST_CHECK_EQUAL_COLLECTIONS( arrv.strides()+1,arrv.strides()+3, strides,strides+2);
 
-      f.halo_exchange.execute(arrv);
+      f.halo_exchange.template execute<POD,3>(arr, false);
 
       switch( parallel::mpi::comm().rank() )
       {

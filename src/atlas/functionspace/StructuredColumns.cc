@@ -805,23 +805,19 @@ std::string StructuredColumns::checksum( const Field& field ) const {
 
 namespace {
 template<int RANK>
-void dispatch_haloExchange( const Field& field, const parallel::HaloExchange& halo_exchange )
+void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exchange )
 {
   if     ( field.datatype() == array::DataType::kind<int>() ) {
-    array::ArrayView<int,RANK> view = array::make_view<int,RANK>(field);
-    halo_exchange.execute( view );
+    halo_exchange.template execute<int, RANK>( field.array(), false);
   }
   else if( field.datatype() == array::DataType::kind<long>() ) {
-    array::ArrayView<long,RANK> view = array::make_view<long,RANK>(field);
-    halo_exchange.execute( view );
+    halo_exchange.template execute<long, RANK>( field.array(), false );
   }
   else if( field.datatype() == array::DataType::kind<float>() ) {
-    array::ArrayView<float,RANK> view = array::make_view<float,RANK>(field);
-    halo_exchange.execute( view );
+    halo_exchange.template execute<float, RANK>( field.array(), false );
   }
   else if( field.datatype() == array::DataType::kind<double>() ) {
-    array::ArrayView<double,RANK> view = array::make_view<double,RANK>(field);
-    halo_exchange.execute( view );
+    halo_exchange.template execute<double, RANK>( field.array(), false );
   }
   else throw eckit::Exception("datatype not supported",Here());
 }
@@ -830,7 +826,7 @@ void dispatch_haloExchange( const Field& field, const parallel::HaloExchange& ha
 void StructuredColumns::haloExchange( FieldSet& fieldset ) const
 {
   for( size_t f=0; f<fieldset.size(); ++f ) {
-    const Field& field = fieldset[f];
+    Field& field = fieldset[f];
     switch( field.rank() ) {
       case 1:
         dispatch_haloExchange<1>(field,*halo_exchange_);

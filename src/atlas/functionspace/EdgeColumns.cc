@@ -254,22 +254,18 @@ Field EdgeColumns::createField(
 void EdgeColumns::haloExchange( FieldSet& fieldset ) const
 {
   for( size_t f=0; f<fieldset.size(); ++f ) {
-    const Field& field = fieldset[f];
+    Field& field = fieldset[f];
     if     ( field.datatype() == array::DataType::kind<int>() ) {
-      array::ArrayView<int,2> view = array::make_view<int,2>(field);
-      halo_exchange().execute( view );
+      halo_exchange().template execute<int,2>( field.array(), false );
     }
     else if( field.datatype() == array::DataType::kind<long>() ) {
-      array::ArrayView<long,2> view = array::make_view<long,2>(field);
-      halo_exchange().execute( view );
+      halo_exchange().template execute<long,2>( field.array(), false );
     }
     else if( field.datatype() == array::DataType::kind<float>() ) {
-      array::ArrayView<float,2> view = array::make_view<float,2>(field);
-      halo_exchange().execute( view );
+      halo_exchange().template execute<float,2>( field.array(), false );
     }
     else if( field.datatype() == array::DataType::kind<double>() ) {
-      array::ArrayView<double,2> view = array::make_view<double,2>(field);
-      halo_exchange().execute( view );
+      halo_exchange().template execute<double,2>( field.array(), false );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }
