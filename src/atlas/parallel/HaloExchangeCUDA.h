@@ -29,6 +29,21 @@ __global__ void pack_kernel(int sendcnt, array::SVector<int> sendmap,
 
     send_buffer[buff_idx] = field(p, i);
 }
+
+template<typename DATA_TYPE, int RANK>
+__global__ void unpack_kernel(int sendcnt, array::SVector<int> recvmap,
+         const array::SVector<DATA_TYPE> recv_buffer, array::ArrayView<DATA_TYPE, RANK> field) {
+
+    const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
+    const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
+
+    if(p >= sendcnt || i >= field.data_view().template length<1>() ) return;
+
+    const size_t buff_idx = field.data_view().template length<1>() * p + i;
+
+    field(p, i) = send_buffer[buff_idx];
+}
+
 #endif
 
 template<int RANK>
@@ -58,7 +73,7 @@ struct halo_packer_cuda {
     dim3 threads(block_size_x, block_size_y);
     dim3 blocks((sendcnt+block_size_x-1)/block_size_x, (field.data_view().template length<1>()+block_size_y-1)/block_size_y);
 
-    unpack_kernel<<<blocks,threads>>>(sendcnt, recvmap, field, recv_buffer);
+    unpack_kernel<<<blocks,threads>>>(sendcnt, recvmap, recv_buffer, field);
 #endif
   }
 
