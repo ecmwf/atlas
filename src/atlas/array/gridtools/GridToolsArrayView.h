@@ -24,7 +24,7 @@
 namespace atlas {
 namespace array {
 
-template< typename Value, int Rank, bool ReadOnly > class ArrayView {
+template< typename Value, int Rank, bool ReadOnly = false > class ArrayView {
 public:
 // -- Type definitions
     using value_type = typename remove_const<Value>::type;
@@ -78,7 +78,7 @@ public:
     }
 
     template<unsigned int Dim>
-    size_t length() const {
+    size_t shape() const {
         return gt_data_view_.template length<Dim>();
     }
 

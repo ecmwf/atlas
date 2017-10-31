@@ -63,7 +63,7 @@ namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank, bool ReadOnly> class ArrayView {
+template <typename Value, int Rank, bool ReadOnly = false> class ArrayView {
 public:
 
 // -- Type definitions
@@ -145,6 +145,9 @@ public:
         }
         return Slicer<Slice, Rank==1>(*this).apply(i);
     }
+
+    template<unsigned int Dim>
+    size_t shape() const { return shape(Dim);}
 
     size_t size() const { return size_;}
 

@@ -27,7 +27,7 @@ class ArrayT;
 template <typename Value>
 class StorageView;
 
-template <typename Value, int RANK, bool ReadOnly = false>
+template <typename Value, int RANK, bool ReadOnly>
 class ArrayView;
 
 template <typename Value, int RANK>

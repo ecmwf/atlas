@@ -24,6 +24,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/mpi/Statistics.h"
 
+#include "atlas/array_fwd.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/SVector.h"
 #include "atlas/runtime/Log.h"
@@ -57,7 +58,7 @@ public: // methods
 //  void execute( DATA_TYPE field[], size_t nb_vars ) const;
 
   template <typename DATA_TYPE, int RANK>
-  void execute( array::Array& field, bool on_device ) const;
+  void execute( array::Array& field, bool on_device = false) const;
 
 //  template <typename DATA_TYPE, int RANK>
 //  void execute( array::ArrayView<DATA_TYPE,RANK>&& field ) const;
@@ -117,7 +118,7 @@ constexpr typename std::enable_if< (cnt == RANK), size_t >::type get_var_size( a
 
 template<int cnt, typename DATA_TYPE, int RANK, bool ReadOnly>
 constexpr typename std::enable_if< (cnt != RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, ReadOnly>& field) {
-    return get_var_size<cnt+1>(field) * field.template length<cnt>();
+    return get_var_size<cnt+1>(field) * field.template shape<cnt>();
 }
 
 template<typename DATA_TYPE, int RANK>
@@ -218,7 +219,7 @@ struct halo_packer_impl {
     template<typename DATA_TYPE, int RANK, typename ... Idx>
     static void apply(size_t& buf_idx, const size_t node_idx, const array::ArrayView<DATA_TYPE, RANK>& field,
                       array::SVector<DATA_TYPE>& send_buffer, Idx... idxs) {
-        for( size_t i=0; i< field.data_view().template length<CurrentDim>(); ++i ) {
+        for( size_t i=0; i< field.template shape<CurrentDim>(); ++i ) {
             halo_packer_impl<Cnt-1, CurrentDim+1>::apply(buf_idx, node_idx, field, send_buffer, idxs..., i);
         }
     }
@@ -239,7 +240,7 @@ struct halo_unpacker_impl {
     template<typename DATA_TYPE, int RANK, typename ... Idx>
     static void apply(size_t& buf_idx, const size_t node_idx, array::ArrayView<DATA_TYPE, RANK>& field,
                       array::SVector<DATA_TYPE> const & recv_buffer, Idx... idxs) {
-        for( size_t i=0; i< field.data_view().template length<CurrentDim>(); ++i ) {
+        for( size_t i=0; i< field.template shape<CurrentDim>(); ++i ) {
             halo_unpacker_impl<Cnt-1, CurrentDim+1>::apply(buf_idx, node_idx, field, recv_buffer, idxs..., i);
         }
     }
