@@ -13,6 +13,7 @@
 #include "atlas/array/MakeView.h"
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
+#include "eckit/memory/SharedPtr.h"
 
 using namespace atlas::array;
 using namespace eckit::testing;
@@ -73,6 +74,7 @@ CASE("test_make_view") {
   delete ds;
 }
 #endif
+
 
 CASE("test_localview") {
   Array* ds = Array::create<double>(8ul, 4ul, 2ul);
@@ -530,6 +532,42 @@ CASE("test_valid") {
 
     delete ds;
   }
+}
+
+CASE("test_wrap") {
+
+    array::ArrayT<int> arr_t(3,2);
+    EXPECT(arr_t.shape(0) == 3);
+    EXPECT(arr_t.stride(0) == 2);
+    EXPECT(arr_t.shape(1) == 2);
+    EXPECT(arr_t.stride(1) == 1);
+    EXPECT(arr_t.rank() == 2);
+
+    array::ArrayView<int,2> arrv_t = array::make_view<int,2>(arr_t);
+    for(size_t i=0; i < arrv_t.shape(0); ++i)
+    {
+      for(size_t j=0; j < arrv_t.shape(1); ++j)
+      {
+          arrv_t(i,j) = i*10+j-1;
+      }
+    }
+
+    eckit::SharedPtr<array::Array> arr ( array::Array::wrap<int>(arrv_t.data(),
+                     array::ArraySpec{array::make_shape(3), array::make_strides(2) } ) );
+
+    EXPECT(arr->shape(0) == 3);
+    EXPECT(arr->stride(0) == 2);
+    EXPECT(arr->rank() == 1);
+
+    auto view = make_host_view<int, 1, true>(*arr);
+
+    EXPECT(view.shape(0) == 3);
+    EXPECT(view.stride(0) == 2);
+    EXPECT(view.rank() == 1);
+
+    EXPECT(view(0) == -1);
+    EXPECT(view(1) == 9);
+    EXPECT(view(2) == 19);
 }
 
 //-----------------------------------------------------------------------------

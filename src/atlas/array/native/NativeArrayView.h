@@ -91,6 +91,16 @@ public:
         }
     }
 
+    ArrayView( const value_type* data, const ArrayShape& shape, const ArrayStrides& strides ) :
+        data_(const_cast<value_type*>(data)) {
+        size_ = 1;
+        for( int j=0; j<Rank; ++j ) {
+            shape_[j] = shape[j];
+            strides_[j] = strides[j];
+            size_ *= shape_[j];
+        }
+    }
+
     ArrayView( const value_type* data, const size_t shape[] ) :
         data_(const_cast<value_type*>(data)) {
         size_ = 1;
@@ -121,6 +131,7 @@ public:
 
     template < typename... Ints >
     const value_type& operator()(Ints... idx) const {
+
         return data_[index(idx...)];
     }
 

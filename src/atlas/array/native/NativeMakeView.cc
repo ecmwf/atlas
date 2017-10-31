@@ -33,7 +33,7 @@ namespace {
 template <typename Value, unsigned int Rank, bool ReadOnly>
 ArrayView<Value, Rank, ReadOnly>
 make_host_view(const Array& array) {
-    return ArrayView<Value, Rank, ReadOnly>((const Value*)(array.storage()),array.shape());
+    return ArrayView<Value, Rank, ReadOnly>((const Value*)(array.storage()),array.shape(), array.strides());
 }
 
 
