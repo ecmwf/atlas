@@ -27,22 +27,22 @@ class ArrayT;
 template <typename Value>
 class StorageView;
 
-template <typename Value, int RANK>
+template <typename Value, int RANK, bool ReadOnly = false>
 class ArrayView;
 
 template <typename Value, int RANK>
 class IndexView;
 
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
-ArrayView<Value, NDims>
+ArrayView<Value, NDims, ReadOnly>
 make_view(const Array& array);
 
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
-ArrayView<Value, NDims>
+ArrayView<Value, NDims, ReadOnly>
 make_host_view(const Array& array);
 
 template <typename Value, unsigned int NDims, bool ReadOnly = false>
-ArrayView<Value, NDims>
+ArrayView<Value, NDims, ReadOnly>
 make_device_view(const Array& array);
 
 template <typename Value, unsigned int NDims, bool ReadOnly = false>

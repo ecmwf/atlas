@@ -110,13 +110,13 @@ private: // data
 
 };
 
-template<int cnt, typename DATA_TYPE, int RANK>
-constexpr typename boost::enable_if_c< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK>& field) {
+template<int cnt, typename DATA_TYPE, int RANK, bool ReadOnly>
+constexpr typename boost::enable_if_c< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, ReadOnly>& field) {
     return 1;
 }
 
-template<int cnt, typename DATA_TYPE, int RANK>
-constexpr typename boost::disable_if_c< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK>& field) {
+template<int cnt, typename DATA_TYPE, int RANK, bool ReadOnly>
+constexpr typename boost::disable_if_c< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, ReadOnly>& field) {
     return get_var_size<cnt+1>(field) * field.template length<cnt>();
 }
 
@@ -169,6 +169,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   auto field_dv = on_device ? array::make_device_view<DATA_TYPE, RANK>(field) :
       array::make_host_view<DATA_TYPE, RANK>(field);
 
+
   /// Pack
   pack_send_buffer(field_dv,send_buffer);
 
@@ -209,6 +210,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
       }
     }
   }
+
 }
 
 template<int Cnt, int CurrentDim>

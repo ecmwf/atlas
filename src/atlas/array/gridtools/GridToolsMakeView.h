@@ -17,11 +17,11 @@ namespace array {
 namespace gridtools {
 
 template <typename Value, unsigned int Rank, bool ReadOnly = false>
-data_view_tt<Value, Rank>
+data_view_tt<Value, Rank, get_access_mode(ReadOnly) >
 make_gt_host_view(const Array& array);
 
 template <typename Value, unsigned int Rank, bool ReadOnly = false>
-data_view_tt<Value, Rank>
+data_view_tt<Value, Rank, get_access_mode(ReadOnly) >
 make_gt_device_view(const Array& array);
 
 } // namespace gridtools

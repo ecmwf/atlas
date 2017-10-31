@@ -38,7 +38,7 @@ using data_view_tt = ::gridtools::data_view<
           gridtools::storage_traits::storage_info_t<0, Rank> >,
           AccessMode>;
 
-constexpr ::gridtools::access_mode get_access_mode(bool readonly) {
+inline constexpr ::gridtools::access_mode get_access_mode(bool readonly) {
    return readonly ? ::gridtools::access_mode::ReadOnly : ::gridtools::access_mode::ReadWrite;
 }
 
