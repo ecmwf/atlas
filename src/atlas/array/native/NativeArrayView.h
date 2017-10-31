@@ -63,7 +63,7 @@ namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank> class ArrayView {
+template <typename Value, int Rank, bool ReadOnly> class ArrayView {
 public:
 
 // -- Type definitions
@@ -227,8 +227,8 @@ private:
 
     template <typename ReturnType = Slice, bool ToScalar = false>
     struct Slicer {
-        Slicer(ArrayView<value_type, Rank> const& av) : av_(av) {}
-        ArrayView<value_type, Rank> const& av_;
+        Slicer(ArrayView<value_type, Rank, ReadOnly> const& av) : av_(av) {}
+        ArrayView<value_type, Rank, ReadOnly> const& av_;
         ReturnType apply(const size_t i) const {
             return LocalView<value_type, Rank - 1>(av_.data_ + av_.strides_[0] * i, av_.shape_.data() + 1, av_.strides_.data() + 1);
         }
@@ -236,8 +236,8 @@ private:
 
     template <typename ReturnType>
     struct Slicer<ReturnType, true> {
-        Slicer(ArrayView<value_type, Rank> const& av) : av_(av) {}
-        ArrayView<value_type, Rank> const& av_;
+        Slicer(ArrayView<value_type, Rank, ReadOnly> const& av) : av_(av) {}
+        ArrayView<value_type, Rank, ReadOnly> const& av_;
         ReturnType apply(const size_t i) const {
             return *(av_.data_ + av_.strides_[0] * i);
         }

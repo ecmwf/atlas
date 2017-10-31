@@ -31,14 +31,14 @@ namespace {
 //------------------------------------------------------------------------------
 
 template <typename Value, unsigned int Rank, bool ReadOnly>
-ArrayView<Value, Rank>
+ArrayView<Value, Rank, ReadOnly>
 make_host_view(const Array& array) {
-    return ArrayView<Value, Rank>((const Value*)(array.storage()),array.shape());
+    return ArrayView<Value, Rank, ReadOnly>((const Value*)(array.storage()),array.shape());
 }
 
 
 template <typename Value, unsigned int Rank, bool ReadOnly>
-ArrayView<Value, Rank>
+ArrayView<Value, Rank, ReadOnly>
 make_device_view(const Array& array) {
     return make_host_view<Value,Rank,ReadOnly>(array);
 }
@@ -74,7 +74,7 @@ make_indexview(const Array& array) {
 
 
 template <typename Value, unsigned int Rank, bool ReadOnly>
-ArrayView<Value, Rank>
+ArrayView<Value, Rank, ReadOnly>
 make_view(const Array& array) {
     check_metadata<Value, Rank>(array);
     return make_host_view<Value, Rank, ReadOnly>(array);
@@ -98,38 +98,38 @@ make_storageview(const Array& array) {
 namespace atlas {
 namespace array {
 #define EXPLICIT_TEMPLATE_INSTANTIATION(RANK) \
-template ArrayView<int,RANK> make_view<int,RANK,true >(const Array&);\
-template ArrayView<int,RANK> make_view<int,RANK,false>(const Array&);\
-template ArrayView<long,RANK> make_view<long,RANK,true >(const Array&);\
-template ArrayView<long,RANK> make_view<long,RANK,false>(const Array&);\
-template ArrayView<long unsigned,RANK> make_view<long unsigned,RANK,true >(const Array&);\
-template ArrayView<long unsigned,RANK> make_view<long unsigned,RANK,false>(const Array&);\
-template ArrayView<float,RANK> make_view<float,RANK,true >(const Array&);\
-template ArrayView<float,RANK> make_view<float,RANK,false>(const Array&);\
-template ArrayView<double,RANK> make_view<double,RANK,true >(const Array&);\
-template ArrayView<double,RANK> make_view<double,RANK,false>(const Array&);\
+template ArrayView<int,RANK,true> make_view<int,RANK,true >(const Array&);\
+template ArrayView<int,RANK,false> make_view<int,RANK,false>(const Array&);\
+template ArrayView<long,RANK,true> make_view<long,RANK,true >(const Array&);\
+template ArrayView<long,RANK,false> make_view<long,RANK,false>(const Array&);\
+template ArrayView<long unsigned,RANK,true> make_view<long unsigned,RANK,true >(const Array&);\
+template ArrayView<long unsigned,RANK,false> make_view<long unsigned,RANK,false>(const Array&);\
+template ArrayView<float,RANK,true> make_view<float,RANK,true >(const Array&);\
+template ArrayView<float,RANK,false> make_view<float,RANK,false>(const Array&);\
+template ArrayView<double,RANK,true> make_view<double,RANK,true >(const Array&);\
+template ArrayView<double,RANK,false> make_view<double,RANK,false>(const Array&);\
 \
-template ArrayView<int,RANK> make_host_view<int,RANK,true >(const Array&);\
-template ArrayView<int,RANK> make_host_view<int,RANK,false>(const Array&);\
-template ArrayView<long,RANK> make_host_view<long,RANK,true >(const Array&);\
-template ArrayView<long,RANK> make_host_view<long,RANK,false>(const Array&);\
-template ArrayView<long unsigned,RANK> make_host_view<long unsigned,RANK,true >(const Array&);\
-template ArrayView<long unsigned,RANK> make_host_view<long unsigned,RANK,false>(const Array&);\
-template ArrayView<float,RANK> make_host_view<float,RANK,true >(const Array&);\
-template ArrayView<float,RANK> make_host_view<float,RANK,false>(const Array&);\
-template ArrayView<double,RANK> make_host_view<double,RANK,true >(const Array&);\
-template ArrayView<double,RANK> make_host_view<double,RANK,false>(const Array&);\
+template ArrayView<int,RANK,true> make_host_view<int,RANK,true >(const Array&);\
+template ArrayView<int,RANK,false> make_host_view<int,RANK,false>(const Array&);\
+template ArrayView<long,RANK,true> make_host_view<long,RANK,true >(const Array&);\
+template ArrayView<long,RANK,false> make_host_view<long,RANK,false>(const Array&);\
+template ArrayView<long unsigned,RANK,true> make_host_view<long unsigned,RANK,true >(const Array&);\
+template ArrayView<long unsigned,RANK,false> make_host_view<long unsigned,RANK,false>(const Array&);\
+template ArrayView<float,RANK,true> make_host_view<float,RANK,true >(const Array&);\
+template ArrayView<float,RANK,false> make_host_view<float,RANK,false>(const Array&);\
+template ArrayView<double,RANK,true> make_host_view<double,RANK,true >(const Array&);\
+template ArrayView<double,RANK,false> make_host_view<double,RANK,false>(const Array&);\
 \
-template ArrayView<int,RANK> make_device_view<int,RANK,true >(const Array&);\
-template ArrayView<int,RANK> make_device_view<int,RANK,false>(const Array&);\
-template ArrayView<long,RANK> make_device_view<long,RANK,true >(const Array&);\
-template ArrayView<long,RANK> make_device_view<long,RANK,false>(const Array&);\
-template ArrayView<long unsigned,RANK> make_device_view<long unsigned,RANK,true >(const Array&);\
-template ArrayView<long unsigned,RANK> make_device_view<long unsigned,RANK,false>(const Array&);\
-template ArrayView<float,RANK> make_device_view<float,RANK,true >(const Array&);\
-template ArrayView<float,RANK> make_device_view<float,RANK,false>(const Array&);\
-template ArrayView<double,RANK> make_device_view<double,RANK,true >(const Array&);\
-template ArrayView<double,RANK> make_device_view<double,RANK,false>(const Array&);\
+template ArrayView<int,RANK,true> make_device_view<int,RANK,true >(const Array&);\
+template ArrayView<int,RANK,false> make_device_view<int,RANK,false>(const Array&);\
+template ArrayView<long,RANK,true> make_device_view<long,RANK,true >(const Array&);\
+template ArrayView<long,RANK,false> make_device_view<long,RANK,false>(const Array&);\
+template ArrayView<long unsigned,RANK,true> make_device_view<long unsigned,RANK,true >(const Array&);\
+template ArrayView<long unsigned,RANK,false> make_device_view<long unsigned,RANK,false>(const Array&);\
+template ArrayView<float,RANK,true> make_device_view<float,RANK,true >(const Array&);\
+template ArrayView<float,RANK,false> make_device_view<float,RANK,false>(const Array&);\
+template ArrayView<double,RANK,true> make_device_view<double,RANK,true >(const Array&);\
+template ArrayView<double,RANK,false> make_device_view<double,RANK,false>(const Array&);\
 
 template IndexView<int,1> make_indexview<int,1,true >(const Array&);\
 template IndexView<int,1> make_indexview<int,1,false>(const Array&);\

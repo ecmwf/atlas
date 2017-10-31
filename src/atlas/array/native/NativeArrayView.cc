@@ -19,8 +19,8 @@ namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank>
-void ArrayView<Value,Rank>::assign(const value_type& value) {
+template <typename Value, int Rank, bool ReadOnly>
+void ArrayView<Value,Rank,ReadOnly>::assign(const value_type& value) {
     ASSERT( contiguous() );
     value_type* raw_data = data();
     for( size_t j=0; j<size_; ++j ) {
@@ -30,8 +30,8 @@ void ArrayView<Value,Rank>::assign(const value_type& value) {
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank>
-void ArrayView<Value,Rank>::assign(const std::initializer_list<value_type>& list) {
+template <typename Value, int Rank, bool ReadOnly>
+void ArrayView<Value,Rank,ReadOnly>::assign(const std::initializer_list<value_type>& list) {
     ASSERT( contiguous() );
     ASSERT( list.size() == size_ );
     value_type* raw_data = data();
@@ -43,8 +43,8 @@ void ArrayView<Value,Rank>::assign(const std::initializer_list<value_type>& list
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank>
-void ArrayView<Value,Rank>::dump(std::ostream& os) const {
+template <typename Value, int Rank, bool ReadOnly>
+void ArrayView<Value,Rank,ReadOnly>::dump(std::ostream& os) const {
 ASSERT( contiguous() );
 const value_type* data_ = data();
 os << "size: " << size() << " , values: ";
@@ -65,11 +65,16 @@ os << "]";
 namespace atlas {
 namespace array {
 #define EXPLICIT_TEMPLATE_INSTANTIATION(Rank) \
-template class ArrayView<int,Rank>;\
-template class ArrayView<long,Rank>;\
-template class ArrayView<long unsigned,Rank>;\
-template class ArrayView<float,Rank>;\
-template class ArrayView<double,Rank>;\
+template class ArrayView<int,Rank,true>;\
+template class ArrayView<int,Rank,false>;\
+template class ArrayView<long,Rank,true>;\
+template class ArrayView<long,Rank,false>;\
+template class ArrayView<long unsigned,Rank,true>;\
+template class ArrayView<long unsigned,Rank,false>;\
+template class ArrayView<float,Rank,true>;\
+template class ArrayView<float,Rank,false>;\
+template class ArrayView<double,Rank,true>;\
+template class ArrayView<double,Rank,false>;\
 
 // For each NDims in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION(1)
