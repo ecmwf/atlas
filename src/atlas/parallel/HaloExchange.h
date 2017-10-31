@@ -238,8 +238,8 @@ struct halo_packer_impl<0, CurrentDim> {
 template<int Cnt, int CurrentDim>
 struct halo_unpacker_impl {
     template<typename DATA_TYPE, int RANK, typename ... Idx>
-    static void apply(size_t& buf_idx, const size_t node_idx, array::ArrayView<DATA_TYPE, RANK>& field,
-                      array::SVector<DATA_TYPE> const & recv_buffer, Idx... idxs) {
+    static void apply(size_t& buf_idx, const size_t node_idx, array::SVector<DATA_TYPE> const & recv_buffer, 
+                      array::ArrayView<DATA_TYPE, RANK>& field, Idx... idxs) {
         for( size_t i=0; i< field.template shape<CurrentDim>(); ++i ) {
             halo_unpacker_impl<Cnt-1, CurrentDim+1>::apply(buf_idx, node_idx, field, recv_buffer, idxs..., i);
         }
@@ -249,8 +249,8 @@ struct halo_unpacker_impl {
 template<int CurrentDim>
 struct halo_unpacker_impl<0, CurrentDim> {
     template<typename DATA_TYPE, int RANK, typename ...Idx>
-    static void apply(size_t& buf_idx, size_t node_idx, array::ArrayView<DATA_TYPE, RANK>& field,
-                     array::SVector<DATA_TYPE> const & recv_buffer, Idx...idxs)
+    static void apply(size_t& buf_idx, size_t node_idx, array::SVector<DATA_TYPE> const & recv_buffer,
+                     array::ArrayView<DATA_TYPE, RANK>& field, Idx...idxs)
     {
       field(node_idx, idxs...) = recv_buffer[buf_idx++];
     }
@@ -272,13 +272,13 @@ struct halo_packer {
 
     template<typename DATA_TYPE>
     static void unpack(const unsigned int recvcnt, array::SVector<int> const & recvmap,
-                     array::ArrayView<DATA_TYPE, RANK>& field, array::SVector<DATA_TYPE> const & recv_buffer )
+                     array::SVector<DATA_TYPE> const & recv_buffer, array::ArrayView<DATA_TYPE, RANK>& field )
     {
       size_t ibuf = 0;
       for(int p=0; p < recvcnt; ++p)
       {
         const size_t pp = recvmap[p];
-        halo_unpacker_impl<RANK-1,1>::apply(ibuf, pp, field, recv_buffer);
+        halo_unpacker_impl<RANK-1,1>::apply(ibuf, pp, recv_buffer, field);
       }
     }
 
@@ -303,7 +303,7 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
   ATLAS_TRACE();
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    halo_packer_cuda<RANK>::unpack(sendcnt_, recvmap_, field, recv_buffer);
+    halo_packer_cuda<RANK>::unpack(sendcnt_, recvmap_, recv_buffer, field);
 #else
     halo_packer<RANK>::unpack(recvcnt_, recvmap_, recv_buffer, field);
 #endif
