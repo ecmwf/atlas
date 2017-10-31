@@ -111,12 +111,12 @@ private: // data
 };
 
 template<int cnt, typename DATA_TYPE, int RANK, bool ReadOnly>
-constexpr typename boost::enable_if_c< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, ReadOnly>& field) {
+constexpr typename std::enable_if< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, ReadOnly>& field) {
     return 1;
 }
 
 template<int cnt, typename DATA_TYPE, int RANK, bool ReadOnly>
-constexpr typename boost::disable_if_c< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, ReadOnly>& field) {
+constexpr typename std::enable_if< (cnt != RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, ReadOnly>& field) {
     return get_var_size<cnt+1>(field) * field.template length<cnt>();
 }
 
