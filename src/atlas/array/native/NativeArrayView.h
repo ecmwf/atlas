@@ -80,43 +80,13 @@ public:
         shape_(other.shape_),
         strides_(other.strides_) {
     }
-
-    ArrayView( const value_type* data, const size_t shape[], const size_t strides[] ) :
-        data_(const_cast<value_type*>(data)) {
-        size_ = 1;
-        for( int j=0; j<Rank; ++j ) {
-            shape_[j] = shape[j];
-            strides_[j] = strides[j];
-            size_ *= shape_[j];
-        }
-    }
-
+    
     ArrayView( const value_type* data, const ArrayShape& shape, const ArrayStrides& strides ) :
         data_(const_cast<value_type*>(data)) {
         size_ = 1;
         for( int j=0; j<Rank; ++j ) {
             shape_[j] = shape[j];
             strides_[j] = strides[j];
-            size_ *= shape_[j];
-        }
-    }
-
-    ArrayView( const value_type* data, const size_t shape[] ) :
-        data_(const_cast<value_type*>(data)) {
-        size_ = 1;
-        for( int j=Rank-1; j>=0; --j ) {
-            shape_[j] = shape[j];
-            strides_[j] = size_;
-            size_ *= shape_[j];
-        }
-    }
-
-    ArrayView( const value_type* data, const ArrayShape& shape ) :
-        data_(const_cast<value_type*>(data)) {
-        size_ = 1;
-        for( int j=Rank-1; j>=0; --j ) {
-            shape_[j]   = shape[j];
-            strides_[j] = size_;
             size_ *= shape_[j];
         }
     }
