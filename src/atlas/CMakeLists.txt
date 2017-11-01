@@ -382,6 +382,7 @@ array/LocalView.h
 array/StorageView.h
 array/Vector.h
 array/helpers/ArrayInitializer.h
+array/helpers/ArrayAssigner.h
 #array/Table.h
 #array/Table.cc
 #array/TableView.h
@@ -496,8 +497,6 @@ function( use_cuda srclist )
   cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}" ${ARGN} )
   set( use_cuda_srclist ${ARGN} )
 
-  ecbuild_list_exclude_pattern( LIST ${srclist} REGEX ${use_cuda_srclist} )
-
   foreach( src ${use_cuda_srclist} )
     create_cuda_wrapper( cuda_wrapper SOURCE ${src} )
     list( APPEND ${srclist} ${cuda_wrapper} )
@@ -586,5 +585,5 @@ ecbuild_add_library( TARGET atlas
  )
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
-  target_link_libraries( atlas gridtools_storage )
+  target_link_libraries( atlas gridtools::storage )
 endif()

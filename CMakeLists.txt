@@ -121,18 +121,19 @@ endif()
 
 ### FIND GRIDTOOLS STORAGE
 ecbuild_add_option(
-    FEATURE GRIDTOOLS_STORAGE
-    DESCRIPTION "Arrays internally use GridTools storage layer"
-    REQUIRED_PACKAGES "gridtools_storage" )
+  FEATURE GRIDTOOLS_STORAGE
+  DESCRIPTION "Arrays internally use GridTools storage layer"
+  REQUIRED_PACKAGES "gridtools_storage" )
+
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+
 
   set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
   set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
 
   if( GRIDTOOLS_HAVE_CUDA )
     ecbuild_info( "Gridtools found with CUDA support" )
-    set( CUDA_NVCC_FLAGS "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}" )
     set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
     set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
   endif()

@@ -300,13 +300,13 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
   array::ArrayShape shape = array::make_shape(region.south-region.north, 4*rg.nxmax(), 4);
 
   region.elems.reset( array::Array::create<int>(shape) );
-  array::make_storageview<int>(*region.elems).assign(-1);
 
   int nelems=0;
   region.nquads=0;
   region.ntriags=0;
 
   array::ArrayView<int,3> elemview = array::make_view<int,3>(*region.elems);
+  elemview.assign(-1);
 
   bool stagger = options.get<bool>("stagger");
   for (int jlat=lat_north; jlat<lat_south; ++jlat)

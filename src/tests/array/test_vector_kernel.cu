@@ -8,13 +8,18 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestArrayKernel
 #include <cuda_runtime.h>
-#include "ecbuild/boost_test_framework.h"
 #include "atlas/array/Vector.h"
 #include "atlas/array/gridtools/GPUClonable.h"
+#include "atlas/array.h"
+#include "atlas/array/MakeView.h"
+#include "atlas/runtime/Log.h"
+
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
 using namespace atlas::array;
+using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
@@ -42,7 +47,7 @@ void kernel_ex(VectorView<int_gpu*>* list_ints )
     }
 }
 
-BOOST_AUTO_TEST_CASE( test_resize )
+CASE( "test_resize" )
 {
     Vector<int_gpu*> list_ints(2);
 
@@ -50,24 +55,24 @@ BOOST_AUTO_TEST_CASE( test_resize )
     list_ints_h[0] = new int_gpu(3);
     list_ints_h[1] = new int_gpu(4);
 
-    BOOST_CHECK_EQUAL( list_ints_h[0]->val_ , 3 );
-    BOOST_CHECK_EQUAL( list_ints_h[1]->val_ , 4 );
+    EXPECT( list_ints_h[0]->val_ == 3 );
+    EXPECT( list_ints_h[1]->val_ == 4 );
 
     list_ints.resize(6);
-    BOOST_CHECK_EQUAL( list_ints_h.is_valid(list_ints) , false );
+    EXPECT( list_ints_h.is_valid(list_ints) == false );
   
     VectorView<int_gpu*> list_ints_h2 = make_host_vector_view(list_ints);
  
 
-    BOOST_CHECK_EQUAL( list_ints_h2[0]->val_ , 3 );
-    BOOST_CHECK_EQUAL( list_ints_h2[1]->val_ , 4 );
-    BOOST_CHECK_EQUAL( list_ints_h2.size() , 6 );
+    EXPECT( list_ints_h2[0]->val_ == 3 );
+    EXPECT( list_ints_h2[1]->val_ == 4 );
+    EXPECT( list_ints_h2.size()   == 6 );
 
 }
 
 
 
-BOOST_AUTO_TEST_CASE( test_vector_kernel )
+CASE( "test_vector_kernel" )
 {
     Vector<int_gpu*> list_ints(4);
 
@@ -91,11 +96,16 @@ BOOST_AUTO_TEST_CASE( test_vector_kernel )
     if( cudaPeekAtLastError() != cudaSuccess) std::cout << "ERROR " << std::endl;
     list_ints.cloneFromDevice();
 
-    BOOST_CHECK_EQUAL( list_ints_h[0]->val_ , 8 );
+    EXPECT( list_ints_h[0]->val_ == 8 );
 
-    BOOST_CHECK_THROW( list_ints.resize(6), eckit::AssertionFailed );
-
-}
+    EXPECT_THROWS_AS( list_ints.resize(6), eckit::AssertionFailed );
 
 }
+
+}
+}
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
 }

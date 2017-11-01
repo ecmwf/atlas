@@ -20,7 +20,6 @@
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
-#include "atlas/array/helpers/ArrayInitializer.h"
 #include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------

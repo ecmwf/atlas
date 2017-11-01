@@ -8,34 +8,36 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestArrayKernel
 #include <cuda_runtime.h>
-#include "ecbuild/boost_test_framework.h"
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
 
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
+
 using namespace atlas::array;
+using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
 
 template<typename Value, int RANK>
 __global__
-void kernel_ex(ArrayView<Value, RANK> dv)
+void kernel_ex(array::ArrayView<Value, RANK> dv)
 {
     dv(3, 3, 3) += 1;
 }
 
-BOOST_AUTO_TEST_CASE( test_array )
+CASE( "test_array" )
 {
-   Array* ds = Array::create<double>(4ul, 4ul, 4ul);
-   ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
+   array::Array* ds = Array::create<double>(4ul, 4ul, 4ul);
+   array::ArrayView<double,3> hv = array::make_host_view<double, 3>(*ds);
    hv(3, 3, 3) = 4.5;
 
    ds->cloneToDevice();
 
-   auto cv = make_device_view<double, 3>(*ds);
+   auto cv = array::make_device_view<double, 3>(*ds);
 
    kernel_ex<<<1,1>>>(cv);
 
@@ -44,10 +46,15 @@ BOOST_AUTO_TEST_CASE( test_array )
    ds->cloneFromDevice();
    ds->reactivateHostWriteViews();
 
-   BOOST_CHECK_EQUAL( hv(3, 3, 3) , 5.5 );
+   EXPECT( hv(3, 3, 3) == 5.5 );
 
    delete ds;
 }
 
 }
+}
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return run_tests ( argc, argv, false );
 }

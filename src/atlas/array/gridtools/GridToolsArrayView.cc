@@ -8,12 +8,36 @@
  * does it submit to any jurisdiction.
  */
 
+#include <cassert>
 #include "atlas/array/gridtools/GridToolsArrayView.h"
 #include "atlas/array/gridtools/GridToolsArrayHelpers.h"
+#include "atlas/array/helpers/ArrayInitializer.h"
+#include "atlas/array/helpers/ArrayAssigner.h"
 #include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace array {
+
+template< typename T >
+struct private_vector {
+
+    ATLAS_HOST_DEVICE private_vector( std::initializer_list<T> list ) {
+        data_ = new T( list.size() );
+        size_t i(0);
+        for( const T v : list ) {
+            data_[i++] = v;
+        }
+    }
+    ATLAS_HOST_DEVICE ~private_vector() {
+        delete data_;
+    }
+
+    ATLAS_HOST_DEVICE const T* data() const {
+        return data_;
+    }
+
+    T* data_;
+};
 
 template< typename Value, int Rank >
 ArrayView<Value,Rank>::ArrayView( const ArrayView& other ) :
@@ -38,13 +62,15 @@ ArrayView<Value,Rank>::ArrayView(data_view_t data_view, const Array& array) :
         auto storage_info_ = *((reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage())))->get_storage_info_ptr());
 
         auto stridest = seq::template apply<
-            std::vector<size_t>,
+            private_vector<size_t>,
             atlas::array::gridtools::get_stride_component<unsigned long, ::gridtools::static_uint<Rank> >::template get_component>(
             &(storage_info_));
-        auto shapet = seq::template apply<std::vector<size_t>, atlas::array::gridtools::get_shape_component>(&(storage_info_));
+        auto shapet = seq::template apply<
+            private_vector<size_t>,
+            atlas::array::gridtools::get_shape_component>(&(storage_info_));
 
-        std::memcpy(strides_, &(stridest[0]), sizeof(size_t)*Rank);
-        std::memcpy(shape_, &(shapet[0]), sizeof(size_t)*Rank);
+        std::memcpy(strides_, stridest.data(), sizeof(size_t)*Rank);
+        std::memcpy(shape_, shapet.data(), sizeof(size_t)*Rank);
 
         size_ = storage_info_.total_length();
     }
@@ -64,11 +90,7 @@ bool ArrayView<Value,Rank>::valid() const {
 
 template< typename Value, int Rank >
 void ArrayView<Value,Rank>::assign(const value_type& value) {
-    ASSERT( contiguous() );
-    value_type* raw_data = data();
-    for( size_t j=0; j<size_; ++j ) {
-        raw_data[j] = value;
-    }
+    helpers::array_assigner<Value,Rank>::apply(*this,value);
 }
 
 template <typename Value, int Rank>

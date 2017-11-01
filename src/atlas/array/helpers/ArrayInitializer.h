@@ -75,14 +75,13 @@ struct array_initializer_impl<Value, Rank, Rank> {
 
 template <unsigned int Rank>
 struct array_initializer {
-  template <typename... DimIndex>
-  static void apply(Array const& orig, Array& array_resized, DimIndex... idxs) {
+  static void apply(Array const& orig, Array& array_resized) {
     switch (orig.datatype().kind()) {
-      case DataType::KIND_REAL64: return array_initializer_impl<double,        Rank, 0>::apply(orig, array_resized, idxs...);
-      case DataType::KIND_REAL32: return array_initializer_impl<float,         Rank, 0>::apply(orig, array_resized, idxs...);
-      case DataType::KIND_INT32:  return array_initializer_impl<int,           Rank, 0>::apply(orig, array_resized, idxs...);
-      case DataType::KIND_INT64:  return array_initializer_impl<long,          Rank, 0>::apply(orig, array_resized, idxs...);
-      case DataType::KIND_UINT64: return array_initializer_impl<unsigned long, Rank, 0>::apply(orig, array_resized, idxs...);
+      case DataType::KIND_REAL64: return array_initializer_impl<double,        Rank, 0>::apply(orig, array_resized);
+      case DataType::KIND_REAL32: return array_initializer_impl<float,         Rank, 0>::apply(orig, array_resized);
+      case DataType::KIND_INT32:  return array_initializer_impl<int,           Rank, 0>::apply(orig, array_resized);
+      case DataType::KIND_INT64:  return array_initializer_impl<long,          Rank, 0>::apply(orig, array_resized);
+      case DataType::KIND_UINT64: return array_initializer_impl<unsigned long, Rank, 0>::apply(orig, array_resized);
       default: {
         std::stringstream err;
         err << "data kind " << orig.datatype().kind() << " not recognised.";
@@ -140,10 +139,10 @@ template<unsigned int Rank, unsigned int PartDim>
 struct array_initializer_partitioned_impl {
   static void apply( Array const& orig, Array& dest, unsigned int pos, unsigned int offset) {
       switch (orig.datatype().kind()) {
-        case DataType::KIND_REAL64: return array_initializer_partitioned_val_impl<double, Rank, 0, PartDim>::apply(orig, dest, pos, offset);
-        case DataType::KIND_REAL32: return array_initializer_partitioned_val_impl<float, Rank, 0, PartDim>::apply(orig, dest,pos, offset );
-        case DataType::KIND_INT32:  return array_initializer_partitioned_val_impl<int, Rank, 0, PartDim>::apply(orig, dest, pos, offset);
-        case DataType::KIND_INT64:  return array_initializer_partitioned_val_impl<long, Rank, 0, PartDim>::apply(orig, dest, pos, offset);
+        case DataType::KIND_REAL64: return array_initializer_partitioned_val_impl<double,        Rank, 0, PartDim>::apply(orig, dest, pos, offset);
+        case DataType::KIND_REAL32: return array_initializer_partitioned_val_impl<float,         Rank, 0, PartDim>::apply(orig, dest, pos, offset);
+        case DataType::KIND_INT32:  return array_initializer_partitioned_val_impl<int,           Rank, 0, PartDim>::apply(orig, dest, pos, offset);
+        case DataType::KIND_INT64:  return array_initializer_partitioned_val_impl<long,          Rank, 0, PartDim>::apply(orig, dest, pos, offset);
         case DataType::KIND_UINT64: return array_initializer_partitioned_val_impl<unsigned long, Rank, 0, PartDim>::apply(orig, dest, pos, offset);
         default: {
           std::stringstream err;

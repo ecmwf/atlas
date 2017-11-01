@@ -109,18 +109,18 @@ CASE("test_localview") {
 CASE("test_array_shape") {
   ArrayShape as{2, 3};
   Array* ds = Array::create<double>(as);
-  auto hv = atlas::array::gridtools::make_gt_host_view<double, 2>(*ds);
+  auto gt_hv = atlas::array::gridtools::make_gt_host_view<double, 2>(*ds);
   atlas::array::ArrayView<double, 2> atlas_hv = make_host_view<double, 2>(*ds);
 
-  hv(1, 1) = 4.5;
+  gt_hv(1, 1) = 4.5;
 
-  EXPECT(hv(1, 1) == 4.5);
+  EXPECT(gt_hv(1, 1) == 4.5);
   EXPECT(atlas_hv(1, 1) == 4.5);
 
   EXPECT(ds->size() == 6);
   EXPECT(ds->rank() == 2);
-  EXPECT(ds->stride(0) == 3);
-  EXPECT(ds->stride(1) == 1);
+  EXPECT(ds->stride(0) == gt_hv.storage_info().stride<0>());
+  EXPECT(ds->stride(1) == gt_hv.storage_info().stride<1>());
   EXPECT(ds->contiguous() == true);
 
   delete ds;
@@ -506,6 +506,6 @@ CASE("test_valid") {
 
 int main(int argc, char **argv) {
     atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return eckit::testing::run_tests ( argc, argv, false );
 }
 

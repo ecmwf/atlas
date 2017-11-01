@@ -142,7 +142,10 @@ void IrregularConnectivityImpl::clear()
   }
   else
   {
-      std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a=0;});
+      data_[_values_] = nullptr;
+      data_[_displs_] = nullptr;
+      data_[_counts_] = nullptr;
+//std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a=0;});
   }
   maxcols_ = 0;
   mincols_ = std::numeric_limits<size_t>::max();
