@@ -290,7 +290,7 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& fi
 {
   ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    halo_packer_cuda<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
+    halo_packer_cuda<DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
 #else
     halo_packer<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
 #endif
@@ -303,7 +303,7 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
   ATLAS_TRACE();
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    halo_packer_cuda<RANK>::unpack(sendcnt_, recvmap_, recv_buffer, field);
+    halo_packer_cuda<DATA_TYPE, RANK>::unpack(sendcnt_, recvmap_, recv_buffer, field);
 #else
     halo_packer<RANK>::unpack(recvcnt_, recvmap_, recv_buffer, field);
 #endif
