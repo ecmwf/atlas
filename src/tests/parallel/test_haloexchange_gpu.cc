@@ -84,12 +84,22 @@ struct Fixture {
 //-----------------------------------------------------------------------------
 
 template<typename DATA_TYPE, int Rank>
-bool validate(array::ArrayView<DATA_TYPE, Rank> arrv, DATA_TYPE arr_c[]);
+struct validate; 
 
 template<typename DATA_TYPE>
-bool validate(array::ArrayView<DATA_TYPE, 2> arrv, DATA_TYPE arr_c[]) {
+struct validate<DATA_TYPE, 2> {
 
-}
+  static bool apply(array::ArrayView<DATA_TYPE,2>& arrv, DATA_TYPE arr_c[] ) {
+    int strides[2];
+    strides[0] = 1;
+    strides[1] = arrv.template shape<1>();
+    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
+      for(size_t j = 0; j < arrv.template shape<1>(); ++j) {
+        EXPECT(arrv(i,j) == arr_c[i*strides[1] + j*strides[0]]);
+      }
+    }
+  }
+};
 
 CASE("test_haloexchange_gpu") {
   SETUP("Fixture") {
@@ -109,18 +119,15 @@ CASE("test_haloexchange_gpu") {
       f.halo_exchange.template execute<POD,2>(arr, true);
 
       arr.syncHostDevice();
-std::cout << arrv(0,0) << " " << arrv(0,1) << " " << arrv(1,0) << " " << arrv(1,1) << " " << arrv(2,0) << " " <<
-          arrv(2,1) << " " << arrv(3,0) << " " << arrv(3,1) << " " << arrv(4,0) << " " << arrv(4,1) << std::endl;
 
       switch( parallel::mpi::comm().rank() )
       {
         case 0: { POD arr_c[] = { 90,900, 10,100, 20,200, 30,300, 40,400 };
-          EXPECT(validate(arrv, arr_c));
-          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+          validate<POD,2>::apply(arrv, arr_c); break; }
         case 1: { POD arr_c[] = { 30,300, 40,400, 50,500, 60,600, 70,700, 80,800};
-          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+          validate<POD,2>::apply(arrv, arr_c); break; }
         case 2: { POD arr_c[] = { 50,500, 60,600, 70,700, 80,800, 90,900, 10,100, 20,200};
-          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+          validate<POD,2>::apply(arrv, arr_c); break; }
       }
     }
   }
