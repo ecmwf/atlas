@@ -105,6 +105,27 @@ CASE("test_haloexchange_gpu") {
   SETUP("Fixture") {
     Fixture f;
 
+    SECTION( "test_rank0_arrview" )
+    {
+      array::ArrayT<POD> arr(f.N);
+      array::ArrayView<POD,1> arrv = array::make_view<POD,1>(arr);
+      for( int j=0; j<f.N; ++j ) {
+        arrv(j) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j] );
+      }
+
+      f.halo_exchange.template execute<POD,1>(arr, false);
+
+      switch( parallel::mpi::comm().rank() )
+      {
+        case 0: { POD gidx_c[] = { 9, 1, 2, 3, 4};
+          EXPECT( make_view(arrv.data(), arrv.data()+f.N) == make_view(gidx_c,gidx_c+f.N)); break; }
+        case 1: { POD gidx_c[] = { 3, 4, 5, 6, 7, 8};
+          EXPECT( make_view(arrv.data(), arrv.data()+f.N) == make_view(gidx_c,gidx_c+f.N)); break; }
+        case 2: { POD gidx_c[] = { 5, 6, 7, 8, 9, 1, 2};
+          EXPECT( make_view(arrv.data(), arrv.data()+f.N) == make_view(gidx_c,gidx_c+f.N)); break; }
+      }
+    }
+
     SECTION( "test_rank1" )
     {
       array::ArrayT<POD> arr(f.N,2);

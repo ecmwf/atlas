@@ -15,7 +15,7 @@ namespace atlas {
 namespace parallel {
 
 template<typename DATA_TYPE, int RANK>
-__global__ void pack_kernel2d(const int sendcnt,  const array::SVector<int> sendmap, 
+__global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendmap,
          const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer, const typename std::enable_if<RANK==2, int>::type = 0) {
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
@@ -29,9 +29,19 @@ __global__ void pack_kernel2d(const int sendcnt,  const array::SVector<int> send
 }
 
 template<typename DATA_TYPE, int RANK>
-__global__ void pack_kernel2d(const int sendcnt, const array::SVector<int> sendmap,
+__global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap,
          const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer,
-                            typename std::enable_if<RANK!=2, int>::type* = 0) {
+                            typename std::enable_if<RANK==1, int>::type* = 0) {
+    const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
+
+    if(p >= sendcnt) return;
+    send_buffer[p] = field(sendmap[p]);
+}
+
+template<typename DATA_TYPE, int RANK>
+__global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap,
+         const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer,
+                            typename std::enable_if<(RANK>2), int>::type* = 0) {
 }
 
 template<typename DATA_TYPE, int RANK>
@@ -53,21 +63,20 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
          const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
-                            typename std::enable_if<RANK!=2, int>::type* = 0) {
+                            typename std::enable_if<RANK==1, int>::type* = 0) {
+
+    const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
+
+    if(p >= recvcnt) return;
+
+    field(recvmap[p]) = recv_buffer[p];
+
 }
 
-template<typename DATA_TYPE>
-void halo_packer_cuda<DATA_TYPE, 1>::pack( const int sendcnt, array::SVector<int> const & sendmap,
-                   const array::ArrayView<DATA_TYPE, 1, true>& hfield, const array::ArrayView<DATA_TYPE, 1>& dfield, 
-                   array::SVector<DATA_TYPE>& send_buffer )
-{
-}
-
-template<typename DATA_TYPE>
-void halo_packer_cuda<DATA_TYPE, 1>::unpack(const int sendcnt, array::SVector<int> const & recvmap,
-                   const array::SVector<DATA_TYPE> &recv_buffer ,
-                   const array::ArrayView<DATA_TYPE, 1, true> &hfield, array::ArrayView<DATA_TYPE, 1> &dfield)
-{
+template<typename DATA_TYPE, int RANK>
+__global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
+         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
+                            typename std::enable_if<(RANK>2), int>::type* = 0) {
 }
 
 template<typename DATA_TYPE, int RANK>
@@ -82,7 +91,7 @@ void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<
   dim3 blocks((sendcnt+block_size_x-1)/block_size_x, (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y);
   cudaDeviceSynchronize();
 
-  pack_kernel2d<DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap, dfield, (send_buffer.data()));
+  pack_kernel<DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap, dfield, (send_buffer.data()));
 
   cudaDeviceSynchronize();
   cudaError_t err = cudaGetLastError();
@@ -90,6 +99,27 @@ void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<
     throw eckit::Exception("Error launching GPU packing kernel");
 
 }
+
+template<typename DATA_TYPE>
+void halo_packer_cuda<DATA_TYPE, 1>::pack( const int sendcnt, array::SVector<int> const & sendmap,
+                   const array::ArrayView<DATA_TYPE, 1, true>& hfield, const array::ArrayView<DATA_TYPE, 1>& dfield,
+                   array::SVector<DATA_TYPE>& send_buffer )
+{
+  const unsigned int block_size_x = 32;
+
+  dim3 threads(block_size_x, 1);
+  dim3 blocks((sendcnt+block_size_x-1)/block_size_x, 1);
+  cudaDeviceSynchronize();
+
+  pack_kernel<DATA_TYPE, 1><<<blocks,threads>>>(sendcnt, sendmap, dfield, (send_buffer.data()));
+
+  cudaDeviceSynchronize();
+  cudaError_t err = cudaGetLastError();
+  if (err != cudaSuccess)
+    throw eckit::Exception("Error launching GPU packing kernel");
+
+}
+
 
 template<typename DATA_TYPE, int RANK>
 void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
@@ -100,6 +130,39 @@ void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector
   const unsigned int block_size_y = 4;
   dim3 threads(block_size_x, block_size_y);
   dim3 blocks((recvcnt+block_size_x-1)/block_size_x, (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y);
+
+  cudaDeviceSynchronize();
+  cudaError_t err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
+    throw eckit::Exception(msg);
+  }
+
+  unpack_kernel<<<blocks,threads>>>(recvcnt, recvmap, recv_buffer.data(), dfield);
+
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    std::string msg = std::string("Error launching GPU packing kernel")+ cudaGetErrorString(err);
+    throw eckit::Exception(msg);
+  }
+
+  cudaDeviceSynchronize();
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
+    throw eckit::Exception(msg);
+  }
+}
+
+template<typename DATA_TYPE>
+void halo_packer_cuda<DATA_TYPE, 1>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
+                   const array::SVector<DATA_TYPE> &recv_buffer ,
+                   const array::ArrayView<DATA_TYPE, 1, true> &hfield, array::ArrayView<DATA_TYPE, 1> &dfield)
+{
+  const unsigned int block_size_x = 32;
+
+  dim3 threads(block_size_x, 1);
+  dim3 blocks((recvcnt+block_size_x-1)/block_size_x, 1);
 
   cudaDeviceSynchronize();
   cudaError_t err = cudaGetLastError();
