@@ -77,12 +77,14 @@ private: // methods
 
 
   template< typename DATA_TYPE, int RANK>
-  void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& field,
+  void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, true>& hfield,
+                         const array::ArrayView<DATA_TYPE, RANK>& dfield,
                          array::SVector<DATA_TYPE>& send_buffer ) const;
 
   template< typename DATA_TYPE, int RANK>
   void unpack_recv_buffer(const array::SVector<DATA_TYPE>& recv_buffer,
-                          array::ArrayView<DATA_TYPE, RANK>& field) const;
+                          const array::ArrayView<DATA_TYPE, RANK,true>& hfield,
+                          array::ArrayView<DATA_TYPE, RANK>& dfield) const;
 
   template<typename DATA_TYPE, int RANK>
   void var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
@@ -156,23 +158,53 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
     recv_displs[jproc] = recvdispls_[jproc]*var_size;
   }
 
+  auto field_dv = on_device ? array::make_device_view<DATA_TYPE, RANK>(field) :
+      array::make_host_view<DATA_TYPE, RANK>(field);
+
+#ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+  DATA_TYPE* recv_ptr;
+  if(on_device) {
+    cudaMallocManaged(&recv_ptr, recv_size * sizeof(DATA_TYPE));
+    memcpy(recv_ptr, &(recv_buffer[0]), recv_size*sizeof(DATA_TYPE));
+    cudaDeviceSynchronize();
+  }
+  else {
+      DATA_TYPE* recv_ptr = &recv_buffer[0];
+  }
+#else
+  DATA_TYPE* recv_ptr = &recv_buffer[0];
+#endif
+
   ATLAS_TRACE_MPI( IRECEIVE ) {
     /// Let MPI know what we like to receive
     for(int jproc=0; jproc < nproc; ++jproc)
     {
       if(recv_counts[jproc] > 0)
       {
-          recv_req[jproc] = parallel::mpi::comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
+          recv_req[jproc] = parallel::mpi::comm().iReceive(recv_ptr/*&recv_buffer[recv_displs[jproc]]*/, recv_counts[jproc], jproc, tag);
       }
     }
   }
 
-  auto field_dv = on_device ? array::make_device_view<DATA_TYPE, RANK>(field) :
-      array::make_host_view<DATA_TYPE, RANK>(field);
-
-
   /// Pack
-  pack_send_buffer(field_dv,send_buffer);
+  pack_send_buffer(field_hv, field_dv,send_buffer);
+
+  cudaDeviceSynchronize();
+
+ #ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+  DATA_TYPE* send_ptr;
+  if(on_device) {
+    cudaMallocManaged(&send_ptr, send_size * sizeof(DATA_TYPE));
+// HACK this does not work
+//    memcpy(send_ptr, &(send_buffer[0]), send_size*sizeof(DATA_TYPE));
+    cudaDeviceSynchronize();
+  }
+  else {
+      DATA_TYPE* send_ptr = &send_buffer[0];
+  }
+#else
+  DATA_TYPE* send_ptr = &send_buffer[0];
+#endif
 
   /// Send
   ATLAS_TRACE_MPI( ISEND ) {
@@ -180,9 +212,11 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
     {
       if(send_counts[jproc] > 0)
       {
-          send_req[jproc] = parallel::mpi::comm().iSend(
-              &send_buffer[send_displs[jproc]],
+         send_req[jproc] = parallel::mpi::comm().iSend(
+              send_ptr/*&send_buffer[send_displs[jproc]]*/,
               send_counts[jproc], jproc, tag);
+         cudaDeviceSynchronize();
+
       }
     }
   }
@@ -199,7 +233,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   }
 
   /// Unpack
-  unpack_recv_buffer(recv_buffer,field_dv);
+  unpack_recv_buffer(recv_buffer, field_hv, field_dv);
 
   /// Wait for sending to finish
   ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
@@ -285,27 +319,29 @@ struct halo_packer {
 };
 
 template<typename DATA_TYPE, int RANK>
-void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& field,
+void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, true>& hfield,
+                                     const array::ArrayView<DATA_TYPE, RANK>& dfield,
                                      array::SVector<DATA_TYPE>& send_buffer ) const
 {
   ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    halo_packer_cuda<DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
+    halo_packer_cuda<DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, hfield, dfield, send_buffer);
 #else
-    halo_packer<RANK>::pack(sendcnt_, sendmap_, field, send_buffer);
+    halo_packer<RANK>::pack(sendcnt_, sendmap_, hfield, send_buffer);
 #endif
 }
 
 template<typename DATA_TYPE, int RANK>
 void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buffer,
-                                       array::ArrayView<DATA_TYPE,RANK>& field) const
+                                       const array::ArrayView<DATA_TYPE, RANK, true>& hfield,
+                                       array::ArrayView<DATA_TYPE,RANK>& dfield) const
 {
   ATLAS_TRACE();
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    halo_packer_cuda<DATA_TYPE, RANK>::unpack(sendcnt_, recvmap_, recv_buffer, field);
+    halo_packer_cuda<DATA_TYPE, RANK>::unpack(sendcnt_, recvmap_, recv_buffer, hfield, dfield);
 #else
-    halo_packer<RANK>::unpack(recvcnt_, recvmap_, recv_buffer, field);
+    halo_packer<RANK>::unpack(recvcnt_, recvmap_, recv_buffer, ffield);
 #endif
 
 }
