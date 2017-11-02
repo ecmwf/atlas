@@ -29,6 +29,22 @@ __global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendma
 }
 
 template<typename DATA_TYPE, int RANK>
+__global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendmap,
+         const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer, const typename std::enable_if<RANK==3, int>::type = 0) {
+    const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
+    const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
+
+    if(p >= sendcnt || i >= field.data_view().template length<1>() ) return;
+
+    size_t buff_idx = field.data_view().template length<2>() * p + field.data_view().template length<1>() * i;
+
+    for(size_t varid=0; varid < field.data_view().template length<2>(); ++varid) {
+        send_buffer[buff_idx++] = field(sendmap[p], i, varid);
+    }
+
+}
+
+template<typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap,
          const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer,
                             typename std::enable_if<RANK==1, int>::type* = 0) {
@@ -41,7 +57,7 @@ __global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap
 template<typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap,
          const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer,
-                            typename std::enable_if<(RANK>2), int>::type* = 0) {
+                            typename std::enable_if<(RANK>3), int>::type* = 0) {
 }
 
 template<typename DATA_TYPE, int RANK>
@@ -63,20 +79,35 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
          const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
-                            typename std::enable_if<RANK==1, int>::type* = 0) {
+                            typename std::enable_if<RANK==3, int>::type* = 0) {
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
+    const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
 
-    if(p >= recvcnt) return;
+    if(p >= recvcnt || i >= field.data_view().template length<1>() ) return;
 
-    field(recvmap[p]) = recv_buffer[p];
+    size_t buff_idx = field.data_view().template length<2>() * p + field.data_view().template length<1>() * i;
 
+    for(size_t varid=0; varid < field.data_view().template length<2>(); ++varid) {
+        field(recvmap[p], i, varid) = recv_buffer[buff_idx++];
+    }
 }
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
          const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
-                            typename std::enable_if<(RANK>2), int>::type* = 0) {
+                            typename std::enable_if<RANK==1, int>::type* = 0) {
+
+    const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
+
+    if(p >= recvcnt) return;
+    field(recvmap[p]) = recv_buffer[p];
+}
+
+template<typename DATA_TYPE, int RANK>
+__global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
+         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
+                            typename std::enable_if<(RANK>3), int>::type* = 0) {
 }
 
 template<typename DATA_TYPE, int RANK>

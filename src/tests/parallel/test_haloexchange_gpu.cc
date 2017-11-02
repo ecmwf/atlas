@@ -151,6 +151,63 @@ CASE("test_haloexchange_gpu") {
           validate<POD,2>::apply(arrv, arr_c); break; }
       }
     }
+
+    SECTION( "test_rank2" )
+    {
+      array::ArrayT<POD> arr(f.N,3,2);
+      array::ArrayView<POD,3> arrv = array::make_host_view<POD,3>(arr);
+      for( int p=0; p<f.N; ++p )
+      {
+        for( size_t i=0; i<3; ++i )
+        {
+          arrv(p,i,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
+          arrv(p,i,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
+        }
+      }
+
+      arr.syncHostDevice();
+
+      f.halo_exchange.template execute<POD,3>(arr, true);
+
+      arr.syncHostDevice();
+
+      switch( parallel::mpi::comm().rank() )
+      {
+        case 0:
+        {
+          int arr_c[] = { -9,9, -90,90, -900,900,
+                          -1,1, -10,10, -100,100,
+                          -2,2, -20,20, -200,200,
+                          -3,3, -30,30, -300,300,
+                          -4,4, -40,40, -400,400};
+          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+          break;
+        }
+        case 1:
+        {
+          int arr_c[] = { -3,3, -30,30, -300,300,
+                          -4,4, -40,40, -400,400,
+                          -5,5, -50,50, -500,500,
+                          -6,6, -60,60, -600,600,
+                          -7,7, -70,70, -700,700,
+                          -8,8, -80,80, -800,800};
+          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+          break;
+        }
+        case 2:
+        {
+          int arr_c[] = { -5,5, -50,50, -500,500,
+                          -6,6, -60,60, -600,600,
+                          -7,7, -70,70, -700,700,
+                          -8,8, -80,80, -800,800,
+                          -9,9, -90,90, -900,900,
+                          -1,1, -10,10, -100,100,
+                          -2,2, -20,20, -200,200};
+          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+          break;
+        }
+      }
+    }
   }
 }
 
