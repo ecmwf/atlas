@@ -68,6 +68,7 @@ public:
     }
   }
   T* data() { return data_; }
+  T const * data() const { return data_; }
 
   ATLAS_HOST_DEVICE
   T& operator()(const size_t idx) { return data_[idx]; }

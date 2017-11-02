@@ -181,7 +181,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
     {
       if(recv_counts[jproc] > 0)
       {
-          recv_req[jproc] = parallel::mpi::comm().iReceive(recv_ptr/*&recv_buffer[recv_displs[jproc]]*/, recv_counts[jproc], jproc, tag);
+          recv_req[jproc] = parallel::mpi::comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
       }
     }
   }
@@ -195,8 +195,11 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   DATA_TYPE* send_ptr;
   if(on_device) {
     cudaMallocManaged(&send_ptr, send_size * sizeof(DATA_TYPE));
+    cudaDeviceSynchronize();
+
+//std::cout << "HACK " << send_buffer[0] << std::endl;
 // HACK this does not work
-//    memcpy(send_ptr, &(send_buffer[0]), send_size*sizeof(DATA_TYPE));
+    memcpy(send_ptr, &(send_buffer[0]), send_size*sizeof(DATA_TYPE));
     cudaDeviceSynchronize();
   }
   else {
@@ -213,7 +216,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
       if(send_counts[jproc] > 0)
       {
          send_req[jproc] = parallel::mpi::comm().iSend(
-              send_ptr/*&send_buffer[send_displs[jproc]]*/,
+              &send_buffer[send_displs[jproc]],
               send_counts[jproc], jproc, tag);
          cudaDeviceSynchronize();
 
