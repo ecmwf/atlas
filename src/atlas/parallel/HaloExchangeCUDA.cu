@@ -16,43 +16,43 @@ namespace parallel {
 
 template<typename DATA_TYPE, int RANK>
 __global__ void pack_kernel2d(const int sendcnt,  const array::SVector<int> sendmap, 
-         const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE& send_buffer, const typename std::enable_if<RANK==2, int>::type = 0) {
+         const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer, const typename std::enable_if<RANK==2, int>::type = 0) {
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
-/*
+
     if(p >= sendcnt || i >= field.data_view().template length<1>() ) return;
 
     const size_t buff_idx = field.data_view().template length<1>() * p + i;
 
     send_buffer[buff_idx] = field(sendmap[p], i);
-*/
+
 }
 
 template<typename DATA_TYPE, int RANK>
 __global__ void pack_kernel2d(const int sendcnt, const array::SVector<int> sendmap,
-         const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE& send_buffer,
+         const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer,
                             typename std::enable_if<RANK!=2, int>::type* = 0) {
 }
 
 template<typename DATA_TYPE, int RANK>
-__global__ void unpack_kernel(const int sendcnt, const array::SVector<int> recvmap,
-         const DATA_TYPE& recv_buffer, const array::ArrayView<DATA_TYPE, RANK, false> field,
+__global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
+         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
                             typename std::enable_if<RANK==2, int>::type* = 0) {
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
-/*
-    if(p >= sendcnt || i >= field.data_view().template length<1>() ) return;
+
+    if(p >= recvcnt || i >= field.data_view().template length<1>() ) return;
 
     const size_t buff_idx = field.data_view().template length<1>() * p + i;
 
     field(recvmap[p], i) = recv_buffer[buff_idx];
-*/
+
 }
 
 template<typename DATA_TYPE, int RANK>
-__global__ void unpack_kernel(const int sendcnt, const array::SVector<int> recvmap,
-         const DATA_TYPE& recv_buffer, const array::ArrayView<DATA_TYPE, RANK, false> field,
+__global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
+         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
                             typename std::enable_if<RANK!=2, int>::type* = 0) {
 }
 
@@ -82,14 +82,7 @@ void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<
   dim3 blocks((sendcnt+block_size_x-1)/block_size_x, (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y);
   cudaDeviceSynchronize();
 
-std::cout << "HACK " << send_buffer[0] << std::endl;
-  cudaDeviceSynchronize();
-
-  pack_kernel2d<DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap, dfield, *(send_buffer.data()));
-
-  cudaDeviceSynchronize();
-std::cout << "HACK " << send_buffer[0] << std::endl;
-  cudaDeviceSynchronize();
+  pack_kernel2d<DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap, dfield, (send_buffer.data()));
 
   cudaDeviceSynchronize();
   cudaError_t err = cudaGetLastError();
@@ -99,14 +92,14 @@ std::cout << "HACK " << send_buffer[0] << std::endl;
 }
 
 template<typename DATA_TYPE, int RANK>
-void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int sendcnt, array::SVector<int> const & recvmap,
+void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
                    const array::SVector<DATA_TYPE> &recv_buffer ,
                    const array::ArrayView<DATA_TYPE, RANK, true> &hfield, array::ArrayView<DATA_TYPE, RANK> &dfield)
 {
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = 4;
   dim3 threads(block_size_x, block_size_y);
-  dim3 blocks((sendcnt+block_size_x-1)/block_size_x, (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y);
+  dim3 blocks((recvcnt+block_size_x-1)/block_size_x, (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y);
 
   cudaDeviceSynchronize();
   cudaError_t err = cudaGetLastError();
@@ -115,7 +108,7 @@ void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int sendcnt, array::SVector
     throw eckit::Exception(msg);
   }
 
-  unpack_kernel<<<blocks,threads>>>(sendcnt, recvmap, *(recv_buffer.data()), dfield);
+  unpack_kernel<<<blocks,threads>>>(recvcnt, recvmap, recv_buffer.data(), dfield);
 
   err = cudaGetLastError();
   if (err != cudaSuccess) {

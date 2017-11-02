@@ -310,9 +310,9 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
   ATLAS_TRACE();
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    halo_packer_cuda<DATA_TYPE, RANK>::unpack(sendcnt_, recvmap_, recv_buffer, hfield, dfield);
+    halo_packer_cuda<DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, hfield, dfield);
 #else
-    halo_packer<RANK>::unpack(recvcnt_, recvmap_, recv_buffer, ffield);
+    halo_packer<RANK>::unpack(recvcnt_, recvmap_, recv_buffer, hfield);
 #endif
 
 }
