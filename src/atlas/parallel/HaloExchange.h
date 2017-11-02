@@ -161,20 +161,6 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   auto field_dv = on_device ? array::make_device_view<DATA_TYPE, RANK>(field) :
       array::make_host_view<DATA_TYPE, RANK>(field);
 
-#ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-  DATA_TYPE* recv_ptr;
-  if(on_device) {
-    cudaMallocManaged(&recv_ptr, recv_size * sizeof(DATA_TYPE));
-    memcpy(recv_ptr, &(recv_buffer[0]), recv_size*sizeof(DATA_TYPE));
-    cudaDeviceSynchronize();
-  }
-  else {
-      DATA_TYPE* recv_ptr = &recv_buffer[0];
-  }
-#else
-  DATA_TYPE* recv_ptr = &recv_buffer[0];
-#endif
-
   ATLAS_TRACE_MPI( IRECEIVE ) {
     /// Let MPI know what we like to receive
     for(int jproc=0; jproc < nproc; ++jproc)
@@ -190,24 +176,6 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   pack_send_buffer(field_hv, field_dv,send_buffer);
 
   cudaDeviceSynchronize();
-
- #ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-  DATA_TYPE* send_ptr;
-  if(on_device) {
-    cudaMallocManaged(&send_ptr, send_size * sizeof(DATA_TYPE));
-    cudaDeviceSynchronize();
-
-//std::cout << "HACK " << send_buffer[0] << std::endl;
-// HACK this does not work
-    memcpy(send_ptr, &(send_buffer[0]), send_size*sizeof(DATA_TYPE));
-    cudaDeviceSynchronize();
-  }
-  else {
-      DATA_TYPE* send_ptr = &send_buffer[0];
-  }
-#else
-  DATA_TYPE* send_ptr = &send_buffer[0];
-#endif
 
   /// Send
   ATLAS_TRACE_MPI( ISEND ) {
