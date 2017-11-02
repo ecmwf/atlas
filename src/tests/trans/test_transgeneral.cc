@@ -34,6 +34,7 @@
 #include "eckit/testing/Test.h"
 
 #include <iomanip>
+#include <chrono>
 
 using namespace eckit;
 using namespace eckit::testing;
@@ -231,6 +232,47 @@ double spectral_transform_point(
 
 
 //-----------------------------------------------------------------------------
+// Routine to compute the spectral transform by using a local Fourier transformation
+// for a grid (same latitude for all longitudes, allows to compute Legendre functions
+// once for all longitudes)
+//
+// Author:
+// Andreas Mueller *ECMWF*
+//
+void spectral_transform_grid(
+        const size_t knsmax,               // truncation + 1 (in)
+        const size_t knsmaxFT,             // truncation + 1 for Fourier transformation (in)
+        array::ArrayView<double,1>& lats,  // vector of (unique) latitudes in degree (in)
+        array::ArrayView<double,1>& lons,  // vector of (unique) longitudes in degree (in)
+        array::ArrayView<double,1>& rspecg,// spectral data, size (knsmax+1)*knsmax (in)
+        array::ArrayView<double,2>& rgp)   // resulting grid point data (out)
+{
+    int N = (knsmax+2)*(knsmax+1)/2, k = 0;
+    atlas::array::ArrayT<double> zlfpol_(N);
+    atlas::array::ArrayView<double,1> zlfpol = make_view<double,1>(zlfpol_);
+
+    auto start = std::chrono::high_resolution_clock::now();
+    for( int jlat=0; jlat<lats.size(); ++jlat ) {
+
+        // compute associated Legendre functions:
+        compute_legendre(knsmax, lats(jlat), zlfpol);
+
+        for( int jlon=0; jlon<lons.size(); ++jlon ) {
+            // perform spectral transform:
+            rgp(jlon,jlat) = spectral_transform_point(knsmax, knsmaxFT, lons(jlon), zlfpol, rspecg);
+            k++;
+        }
+    }
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+
+    Log::info() << "performed " << k << " spectral transforms" << std::endl;
+    Log::info() << "took " << elapsed.count() << " seconds" << std::endl;
+
+}
+
+
+//-----------------------------------------------------------------------------
 
 CASE( "test_transgeneral_legendrepolynomials" )
 {
@@ -337,6 +379,33 @@ CASE( "test_transgeneral_pointtrans" )
 
   // output result:
   out << "result: " << result << std::endl;
+
+}
+
+//-----------------------------------------------------------------------------
+
+CASE( "test_transgeneral_gridtrans" )
+{
+  std::ostream& out = Log::info();
+  Log::info() << "test_transgeneral_gridtrans" << std::endl;
+
+  int trp1 = 1280; // truncation + 1
+  int N = (trp1+2)*(trp1+1)/2;
+
+  atlas::array::ArrayT<double> rspecg_(2*N);
+  atlas::array::ArrayView<double,1> rspecg = make_view<double,1>(rspecg_);
+
+  int nlats = 100, nlons = 100;
+  atlas::array::ArrayT<double> lats_(nlats);
+  atlas::array::ArrayView<double,1> lats = make_view<double,1>(lats_);
+  atlas::array::ArrayT<double> lons_(nlons);
+  atlas::array::ArrayView<double,1> lons = make_view<double,1>(lons_);
+
+  atlas::array::ArrayT<double> rgp_(nlons, nlats);
+  atlas::array::ArrayView<double,2> rgp = make_view<double,2>(rgp_);
+
+  // perform spectral transform:
+  spectral_transform_grid(trp1, trp1, lats, lons, rspecg, rgp);
 
 }
 
