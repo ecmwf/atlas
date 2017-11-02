@@ -115,6 +115,26 @@ struct validate<DATA_TYPE, 2> {
   }
 };
 
+
+template<typename DATA_TYPE>
+struct validate<DATA_TYPE, 3> {
+
+  static bool apply(array::ArrayView<DATA_TYPE,3>& arrv, DATA_TYPE arr_c[] ) {
+    int strides[3];
+    strides[0] = 1;
+    strides[1] = arrv.template shape<2>();
+    strides[2] = arrv.template shape<1>()*strides[1];
+
+    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
+      for(size_t j = 0; j < arrv.template shape<1>(); ++j) {
+        for(size_t k = 0; k < arrv.template shape<2>(); ++k) {
+        EXPECT(arrv(i,j,k) == arr_c[i*strides[2] + j*strides[1] + k*strides[0]]);
+        }
+      }
+    }
+  }
+};
+
 CASE("test_haloexchange_gpu") {
   SETUP("Fixture") {
     Fixture f;
@@ -144,6 +164,7 @@ CASE("test_haloexchange_gpu") {
       }
       cudaDeviceSynchronize();
     }
+
 
     SECTION( "test_rank1" )
     {
@@ -194,39 +215,37 @@ CASE("test_haloexchange_gpu") {
       {
         case 0:
         {
-          int arr_c[] = { -9,9, -90,90, -900,900,
+          POD arr_c[] = { -9,9, -90,90, -900,900,
                           -1,1, -10,10, -100,100,
                           -2,2, -20,20, -200,200,
                           -3,3, -30,30, -300,300,
                           -4,4, -40,40, -400,400};
-          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-          break;
+          validate<POD,3>::apply(arrv, arr_c); break; 
         }
         case 1:
         {
-          int arr_c[] = { -3,3, -30,30, -300,300,
+          POD arr_c[] = { -3,3, -30,30, -300,300,
                           -4,4, -40,40, -400,400,
                           -5,5, -50,50, -500,500,
                           -6,6, -60,60, -600,600,
                           -7,7, -70,70, -700,700,
                           -8,8, -80,80, -800,800};
-          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-          break;
+          validate<POD,3>::apply(arrv, arr_c); break;
         }
         case 2:
         {
-          int arr_c[] = { -5,5, -50,50, -500,500,
+          POD arr_c[] = { -5,5, -50,50, -500,500,
                           -6,6, -60,60, -600,600,
                           -7,7, -70,70, -700,700,
                           -8,8, -80,80, -800,800,
                           -9,9, -90,90, -900,900,
                           -1,1, -10,10, -100,100,
                           -2,2, -20,20, -200,200};
-          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-          break;
+          validate<POD,3>::apply(arrv, arr_c); break; 
         }
       }
     }
+
   }
 }
 

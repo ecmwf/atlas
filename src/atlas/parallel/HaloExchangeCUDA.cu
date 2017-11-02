@@ -37,7 +37,7 @@ __global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendma
 
     if(p >= sendcnt || i >= field.data_view().template length<1>() ) return;
 
-    size_t buff_idx = field.data_view().template length<2>() * p + field.data_view().template length<1>() * i;
+    size_t buff_idx = field.data_view().template length<2>() * field.data_view().template length<1>() * p + field.data_view().template length<2>() * i;
 
     for(size_t varid=0; varid < field.data_view().template length<2>(); ++varid) {
         send_buffer[buff_idx++] = field(sendmap[p], i, varid);
@@ -87,7 +87,7 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
 
     if(p >= recvcnt || i >= field.data_view().template length<1>() ) return;
 
-    size_t buff_idx = field.data_view().template length<2>() * p + field.data_view().template length<1>() * i;
+    size_t buff_idx = field.data_view().template length<2>() * field.data_view().template length<1>() * p + field.data_view().template length<2>() * i;
 
     for(size_t varid=0; varid < field.data_view().template length<2>(); ++varid) {
         field(recvmap[p], i, varid) = recv_buffer[buff_idx++];
