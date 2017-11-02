@@ -10,6 +10,7 @@
 
 #include "HaloExchangeCUDA.h"
 #include <boost/utility/enable_if.hpp>
+#include <stdio.h>
 
 namespace atlas {
 namespace parallel {
@@ -47,7 +48,7 @@ __global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendma
 template<typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap,
          const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer,
-                            typename std::enable_if<RANK==1, int>::type* = 0) {
+                            const typename std::enable_if<RANK==1, int>::type = 0) {
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
 
     if(p >= sendcnt) return;
@@ -57,13 +58,13 @@ __global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap
 template<typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap,
          const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer,
-                            typename std::enable_if<(RANK>3), int>::type* = 0) {
+                            const typename std::enable_if<(RANK>3), int>::type = 0) {
 }
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
          const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
-                            typename std::enable_if<RANK==2, int>::type* = 0) {
+                            const typename std::enable_if<RANK==2, int>::type = 0) {
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
@@ -79,7 +80,7 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
          const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
-                            typename std::enable_if<RANK==3, int>::type* = 0) {
+                            const typename std::enable_if<RANK==3, int>::type = 0) {
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
@@ -96,7 +97,7 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
          const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
-                            typename std::enable_if<RANK==1, int>::type* = 0) {
+                            const typename std::enable_if<RANK==1, int>::type = 0) {
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
 
