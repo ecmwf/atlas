@@ -87,6 +87,20 @@ template<typename DATA_TYPE, int Rank>
 struct validate; 
 
 template<typename DATA_TYPE>
+struct validate<DATA_TYPE, 1> {
+
+  static bool apply(array::ArrayView<DATA_TYPE,1>& arrv, DATA_TYPE arr_c[] ) {
+    int strides[1];
+    strides[0] = 1;
+    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
+std::cout << parallel::mpi::comm().rank() << "] VAL " << arrv(i) <<  " " << i << " " << arr_c[i*strides[0]] << std::endl;
+        EXPECT(arrv(i) == arr_c[i*strides[0]]);
+      
+    }
+  }
+};
+
+template<typename DATA_TYPE>
 struct validate<DATA_TYPE, 2> {
 
   static bool apply(array::ArrayView<DATA_TYPE,2>& arrv, DATA_TYPE arr_c[] ) {
@@ -108,22 +122,27 @@ CASE("test_haloexchange_gpu") {
     SECTION( "test_rank0_arrview" )
     {
       array::ArrayT<POD> arr(f.N);
-      array::ArrayView<POD,1> arrv = array::make_view<POD,1>(arr);
+      array::ArrayView<POD,1> arrv = array::make_host_view<POD,1>(arr);
       for( int j=0; j<f.N; ++j ) {
         arrv(j) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j] );
       }
 
-      f.halo_exchange.template execute<POD,1>(arr, false);
+      arr.syncHostDevice();
+
+      f.halo_exchange.template execute<POD,1>(arr, true);
+
+      arr.syncHostDevice();
 
       switch( parallel::mpi::comm().rank() )
       {
-        case 0: { POD gidx_c[] = { 9, 1, 2, 3, 4};
-          EXPECT( make_view(arrv.data(), arrv.data()+f.N) == make_view(gidx_c,gidx_c+f.N)); break; }
-        case 1: { POD gidx_c[] = { 3, 4, 5, 6, 7, 8};
-          EXPECT( make_view(arrv.data(), arrv.data()+f.N) == make_view(gidx_c,gidx_c+f.N)); break; }
-        case 2: { POD gidx_c[] = { 5, 6, 7, 8, 9, 1, 2};
-          EXPECT( make_view(arrv.data(), arrv.data()+f.N) == make_view(gidx_c,gidx_c+f.N)); break; }
+        case 0: { POD arr_c[] = { 9, 1, 2, 3, 4};
+          validate<POD,1>::apply(arrv, arr_c); break; }
+        case 1: { POD arr_c[] = { 3, 4, 5, 6, 7, 8};
+          validate<POD,1>::apply(arrv, arr_c); break; }
+        case 2: { POD arr_c[] = { 5, 6, 7, 8, 9, 1, 2};
+          validate<POD,1>::apply(arrv, arr_c); break; }
       }
+      cudaDeviceSynchronize();
     }
 
     SECTION( "test_rank1" )
@@ -151,6 +170,7 @@ CASE("test_haloexchange_gpu") {
           validate<POD,2>::apply(arrv, arr_c); break; }
       }
     }
+
   }
 }
 
