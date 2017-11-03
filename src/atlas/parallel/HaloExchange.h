@@ -74,12 +74,12 @@ private: // methods
   size_t index(size_t i, size_t j, size_t ni, size_t nj) const { return( i + ni*j ); }
 
 
-  template< typename DATA_TYPE, int RANK>
+  template< int ParallelDim, typename DATA_TYPE, int RANK>
   void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
                          const array::ArrayView<DATA_TYPE, RANK>& dfield,
                          array::SVector<DATA_TYPE>& send_buffer ) const;
 
-  template< typename DATA_TYPE, int RANK>
+  template< int ParallelDim, typename DATA_TYPE, int RANK>
   void unpack_recv_buffer(const array::SVector<DATA_TYPE>& recv_buffer,
                           const array::ArrayView<DATA_TYPE, RANK,array::Intent::ReadOnly>& hfield,
                           array::ArrayView<DATA_TYPE, RANK>& dfield) const;
@@ -124,7 +124,8 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   auto field_hv = array::make_host_view<DATA_TYPE, RANK, array::Intent::ReadOnly>(field);
 
   int tag=1;
-  size_t var_size = array::get_var_size< array::get_parallel_dim<ParallelDim>(field_hv) >(field_hv);
+  constexpr int parallelDim = array::get_parallel_dim<ParallelDim>(field_hv);
+  size_t var_size = array::get_var_size< parallelDim >(field_hv);
   int send_size  = sendcnt_ * var_size;
   int recv_size  = recvcnt_ * var_size;
 
@@ -161,7 +162,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   }
 
   /// Pack
-  pack_send_buffer(field_hv, field_dv,send_buffer);
+  pack_send_buffer<parallelDim>(field_hv, field_dv,send_buffer);
 
   /// Send
   ATLAS_TRACE_MPI( ISEND ) {
@@ -188,7 +189,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   }
 
   /// Unpack
-  unpack_recv_buffer(recv_buffer, field_hv, field_dv);
+  unpack_recv_buffer<parallelDim>(recv_buffer, field_hv, field_dv);
 
   /// Wait for sending to finish
   ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
@@ -273,7 +274,7 @@ struct halo_packer {
 
 };
 
-template<typename DATA_TYPE, int RANK>
+template<int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
                                      const array::ArrayView<DATA_TYPE, RANK>& dfield,
                                      array::SVector<DATA_TYPE>& send_buffer ) const
@@ -286,7 +287,7 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, arr
 #endif
 }
 
-template<typename DATA_TYPE, int RANK>
+template<int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buffer,
                                        const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
                                        array::ArrayView<DATA_TYPE,RANK>& dfield) const
