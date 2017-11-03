@@ -18,18 +18,19 @@
 #include "atlas/array/LocalView.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array/gridtools/GridToolsMakeView.h"
+#include "atlas/array/ArrayViewDefs.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
 
-template< typename Value, int Rank, bool ReadOnly = false > class ArrayView {
+template< typename Value, int Rank, Intent AccessMode = Intent::ReadWrite > class ArrayView {
 public:
 // -- Type definitions
     using value_type = typename remove_const<Value>::type;
     using Slice = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
-    using data_view_t = gridtools::data_view_tt<value_type, Rank, gridtools::get_access_mode(ReadOnly)>;
+    using data_view_t = gridtools::data_view_tt<value_type, Rank, gridtools::get_access_mode(AccessMode)>;
 
 public:
 
@@ -105,8 +106,8 @@ private:
 
     template <typename ReturnType = Slice, bool ToScalar = false>
     struct Slicer {
-        Slicer(ArrayView<value_type, Rank, ReadOnly> const& av) : av_(av) {}
-        ArrayView<value_type, Rank, ReadOnly> const& av_;
+        Slicer(ArrayView<value_type, Rank, AccessMode> const& av) : av_(av) {}
+        ArrayView<value_type, Rank, AccessMode> const& av_;
         ReturnType apply(const size_t i) const {
           return LocalView<value_type,Rank-1>(
                   av_.data()+av_.strides_[0]*i,
@@ -117,8 +118,8 @@ private:
 
     template <typename ReturnType>
     struct Slicer<ReturnType, true> {
-        Slicer(ArrayView<value_type, Rank, ReadOnly> const& av) : av_(av) {}
-        ArrayView<value_type, Rank, ReadOnly> const& av_;
+        Slicer(ArrayView<value_type, Rank, AccessMode> const& av) : av_(av) {}
+        ArrayView<value_type, Rank, AccessMode> const& av_;
         ReturnType apply(const size_t i) const {
             return *(const_cast<value_type*>(av_.data()) + av_.strides_[0] * i);
         }

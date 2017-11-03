@@ -10,6 +10,8 @@
 #endif
 #include "common/generic_metafunctions/all_integrals.hpp"
 #include "storage/storage-facility.hpp"
+#include "atlas/array/ArrayViewDefs.h"
+
 #ifdef _USE_GPU_
 #undef _USE_GPU_
 #endif
@@ -38,8 +40,8 @@ using data_view_tt = ::gridtools::data_view<
           gridtools::storage_traits::storage_info_t<0, Rank> >,
           AccessMode>;
 
-inline constexpr ::gridtools::access_mode get_access_mode(bool readonly) {
-   return readonly ? ::gridtools::access_mode::ReadOnly : ::gridtools::access_mode::ReadWrite;
+inline constexpr ::gridtools::access_mode get_access_mode(Intent kind) {
+   return (kind == Intent::ReadOnly) ? ::gridtools::access_mode::ReadOnly : ::gridtools::access_mode::ReadWrite;
 }
 
 //------------------------------------------------------------------------------

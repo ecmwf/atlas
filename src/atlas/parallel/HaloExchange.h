@@ -73,13 +73,13 @@ private: // methods
 
 
   template< typename DATA_TYPE, int RANK>
-  void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, true>& hfield,
+  void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
                          const array::ArrayView<DATA_TYPE, RANK>& dfield,
                          array::SVector<DATA_TYPE>& send_buffer ) const;
 
   template< typename DATA_TYPE, int RANK>
   void unpack_recv_buffer(const array::SVector<DATA_TYPE>& recv_buffer,
-                          const array::ArrayView<DATA_TYPE, RANK,true>& hfield,
+                          const array::ArrayView<DATA_TYPE, RANK,array::Intent::ReadOnly>& hfield,
                           array::ArrayView<DATA_TYPE, RANK>& dfield) const;
 
   template<typename DATA_TYPE, int RANK>
@@ -109,13 +109,13 @@ private: // data
 
 };
 
-template<int cnt, typename DATA_TYPE, int RANK, bool ReadOnly>
-constexpr typename std::enable_if< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, ReadOnly>& field) {
+template<int cnt, typename DATA_TYPE, int RANK, array::Intent AccessMode>
+constexpr typename std::enable_if< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, AccessMode>& field) {
     return 1;
 }
 
-template<int cnt, typename DATA_TYPE, int RANK, bool ReadOnly>
-constexpr typename std::enable_if< (cnt != RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, ReadOnly>& field) {
+template<int cnt, typename DATA_TYPE, int RANK, array::Intent AccessMode>
+constexpr typename std::enable_if< (cnt != RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, AccessMode>& field) {
     return get_var_size<cnt+1>(field) * field.template shape<cnt>();
 }
 
@@ -129,7 +129,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
 
   ATLAS_TRACE("HaloExchange",{"halo-exchange"});
 
-  auto field_hv = array::make_host_view<DATA_TYPE, RANK, true>(field);
+  auto field_hv = array::make_host_view<DATA_TYPE, RANK, array::Intent::ReadOnly>(field);
 
   int tag=1;
   size_t var_size = get_var_size<1>(field_hv);
@@ -214,7 +214,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
 template<int Cnt, int CurrentDim>
 struct halo_packer_impl {
     template<typename DATA_TYPE, int RANK, typename ... Idx>
-    static void apply(size_t& buf_idx, const size_t node_idx, const array::ArrayView<DATA_TYPE, RANK, true>& field,
+    static void apply(size_t& buf_idx, const size_t node_idx, const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& field,
                       array::SVector<DATA_TYPE>& send_buffer, Idx... idxs) {
         for( size_t i=0; i< field.template shape<CurrentDim>(); ++i ) {
             halo_packer_impl<Cnt-1, CurrentDim+1>::apply(buf_idx, node_idx, field, send_buffer, idxs..., i);
@@ -225,7 +225,7 @@ struct halo_packer_impl {
 template<int CurrentDim>
 struct halo_packer_impl<0, CurrentDim> {
     template<typename DATA_TYPE, int RANK, typename ...Idx>
-    static void apply(size_t& buf_idx, size_t node_idx, const array::ArrayView<DATA_TYPE, RANK, true>& field,
+    static void apply(size_t& buf_idx, size_t node_idx, const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& field,
                      array::SVector<DATA_TYPE>& send_buffer, Idx...idxs)
     {
       send_buffer[buf_idx++] = field(node_idx, idxs...);
@@ -257,7 +257,7 @@ template<int RANK>
 struct halo_packer {
     template<typename DATA_TYPE>
     static void pack(const unsigned int sendcnt, array::SVector<int> const & sendmap,
-                     const array::ArrayView<DATA_TYPE, RANK, true>& field, array::SVector<DATA_TYPE>& send_buffer )
+                     const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& field, array::SVector<DATA_TYPE>& send_buffer )
     {
       size_t ibuf = 0;
       for(int p=0; p < sendcnt; ++p)
@@ -282,7 +282,7 @@ struct halo_packer {
 };
 
 template<typename DATA_TYPE, int RANK>
-void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, true>& hfield,
+void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
                                      const array::ArrayView<DATA_TYPE, RANK>& dfield,
                                      array::SVector<DATA_TYPE>& send_buffer ) const
 {
@@ -296,7 +296,7 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, tru
 
 template<typename DATA_TYPE, int RANK>
 void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buffer,
-                                       const array::ArrayView<DATA_TYPE, RANK, true>& hfield,
+                                       const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
                                        array::ArrayView<DATA_TYPE,RANK>& dfield) const
 {
   ATLAS_TRACE();

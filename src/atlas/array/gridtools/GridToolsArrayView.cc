@@ -15,8 +15,8 @@
 namespace atlas {
 namespace array {
 
-template< typename Value, int Rank, bool ReadOnly >
-ArrayView<Value,Rank,ReadOnly>::ArrayView( const ArrayView& other ) :
+template< typename Value, int Rank, Intent AccessMode >
+ArrayView<Value,Rank,AccessMode>::ArrayView( const ArrayView& other ) :
     gt_data_view_(other.gt_data_view_), data_store_orig_(other.data_store_orig_), array_(other.array_) {
     std::memcpy(shape_,other.shape_,sizeof(size_t)*Rank);
     std::memcpy(strides_,other.strides_,sizeof(size_t)*Rank);
@@ -24,8 +24,8 @@ ArrayView<Value,Rank,ReadOnly>::ArrayView( const ArrayView& other ) :
     // TODO: check compatibility
 }
 
-template< typename Value, int Rank, bool ReadOnly >
-ArrayView<Value,Rank, ReadOnly>::ArrayView(data_view_t data_view, const Array& array) :
+template< typename Value, int Rank, Intent AccessMode >
+ArrayView<Value,Rank, AccessMode>::ArrayView(data_view_t data_view, const Array& array) :
     gt_data_view_(data_view), data_store_orig_(array.data_store()), array_(&array) {
     if(data_view.valid()) {
         using seq = ::gridtools::apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, Rank>::type>;
@@ -57,13 +57,13 @@ ArrayView<Value,Rank, ReadOnly>::ArrayView(data_view_t data_view, const Array& a
     }
 }
 
-template< typename Value, int Rank, bool ReadOnly>
-bool ArrayView<Value,Rank, ReadOnly>::valid() const {
+template< typename Value, int Rank, Intent AccessMode>
+bool ArrayView<Value,Rank, AccessMode>::valid() const {
     return gt_data_view_.valid() && (array_->data_store() == data_store_orig_);
 }
 
-template< typename Value, int Rank, bool ReadOnly >
-void ArrayView<Value,Rank,ReadOnly>::assign(const value_type& value) {
+template< typename Value, int Rank, Intent AccessMode >
+void ArrayView<Value,Rank,AccessMode>::assign(const value_type& value) {
     ASSERT( contiguous() );
     value_type* raw_data = data();
     for( size_t j=0; j<size_; ++j ) {
@@ -71,8 +71,8 @@ void ArrayView<Value,Rank,ReadOnly>::assign(const value_type& value) {
     }
 }
 
-template <typename Value, int Rank, bool ReadOnly>
-void ArrayView<Value,Rank,ReadOnly>::assign(const std::initializer_list<value_type>& list) {
+template <typename Value, int Rank, Intent AccessMode>
+void ArrayView<Value,Rank,AccessMode>::assign(const std::initializer_list<value_type>& list) {
     ASSERT( contiguous() );
     ASSERT( list.size() == size_ );
     value_type* raw_data = data();
@@ -82,8 +82,8 @@ void ArrayView<Value,Rank,ReadOnly>::assign(const std::initializer_list<value_ty
     }
 }
 
-template< typename Value, int Rank, bool ReadOnly >
-void ArrayView<Value,Rank,ReadOnly>::dump(std::ostream& os) const {
+template< typename Value, int Rank, Intent AccessMode >
+void ArrayView<Value,Rank,AccessMode>::dump(std::ostream& os) const {
     ASSERT( contiguous() );
     const value_type* data_ = data();
     os << "size: " << size() << " , values: ";
@@ -103,16 +103,16 @@ void ArrayView<Value,Rank,ReadOnly>::dump(std::ostream& os) const {
 namespace atlas {
 namespace array {
 #define EXPLICIT_TEMPLATE_INSTANTIATION(Rank) \
-template class ArrayView<int,Rank,true>;\
-template class ArrayView<int,Rank,false>;\
-template class ArrayView<long,Rank,true>;\
-template class ArrayView<long,Rank,false>;\
-template class ArrayView<long unsigned,Rank,true>;\
-template class ArrayView<long unsigned,Rank,false>;\
-template class ArrayView<float,Rank,true>;\
-template class ArrayView<float,Rank,false>;\
-template class ArrayView<double,Rank,true>;\
-template class ArrayView<double,Rank,false>;\
+template class ArrayView<int,Rank,Intent::ReadOnly>;\
+template class ArrayView<int,Rank,Intent::ReadWrite>;\
+template class ArrayView<long,Rank,Intent::ReadOnly>;\
+template class ArrayView<long,Rank,Intent::ReadWrite>;\
+template class ArrayView<long unsigned,Rank,Intent::ReadOnly>;\
+template class ArrayView<long unsigned,Rank,Intent::ReadWrite>;\
+template class ArrayView<float,Rank,Intent::ReadOnly>;\
+template class ArrayView<float,Rank,Intent::ReadWrite>;\
+template class ArrayView<double,Rank,Intent::ReadOnly>;\
+template class ArrayView<double,Rank,Intent::ReadWrite>;\
 
 // For each NDims in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION(1)
