@@ -171,8 +171,6 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   /// Pack
   pack_send_buffer(field_hv, field_dv,send_buffer);
 
-  cudaDeviceSynchronize();
-
   /// Send
   ATLAS_TRACE_MPI( ISEND ) {
     for(int jproc=0; jproc < nproc; ++jproc)
@@ -182,8 +180,6 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
          send_req[jproc] = parallel::mpi::comm().iSend(
               &send_buffer[send_displs[jproc]],
               send_counts[jproc], jproc, tag);
-         cudaDeviceSynchronize();
-
       }
     }
   }
@@ -218,7 +214,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
 template<int Cnt, int CurrentDim>
 struct halo_packer_impl {
     template<typename DATA_TYPE, int RANK, typename ... Idx>
-    static void apply(size_t& buf_idx, const size_t node_idx, const array::ArrayView<DATA_TYPE, RANK>& field,
+    static void apply(size_t& buf_idx, const size_t node_idx, const array::ArrayView<DATA_TYPE, RANK, true>& field,
                       array::SVector<DATA_TYPE>& send_buffer, Idx... idxs) {
         for( size_t i=0; i< field.template shape<CurrentDim>(); ++i ) {
             halo_packer_impl<Cnt-1, CurrentDim+1>::apply(buf_idx, node_idx, field, send_buffer, idxs..., i);
@@ -229,7 +225,7 @@ struct halo_packer_impl {
 template<int CurrentDim>
 struct halo_packer_impl<0, CurrentDim> {
     template<typename DATA_TYPE, int RANK, typename ...Idx>
-    static void apply(size_t& buf_idx, size_t node_idx, const array::ArrayView<DATA_TYPE, RANK>& field,
+    static void apply(size_t& buf_idx, size_t node_idx, const array::ArrayView<DATA_TYPE, RANK, true>& field,
                      array::SVector<DATA_TYPE>& send_buffer, Idx...idxs)
     {
       send_buffer[buf_idx++] = field(node_idx, idxs...);
@@ -242,7 +238,7 @@ struct halo_unpacker_impl {
     static void apply(size_t& buf_idx, const size_t node_idx, array::SVector<DATA_TYPE> const & recv_buffer, 
                       array::ArrayView<DATA_TYPE, RANK>& field, Idx... idxs) {
         for( size_t i=0; i< field.template shape<CurrentDim>(); ++i ) {
-            halo_unpacker_impl<Cnt-1, CurrentDim+1>::apply(buf_idx, node_idx, field, recv_buffer, idxs..., i);
+            halo_unpacker_impl<Cnt-1, CurrentDim+1>::apply(buf_idx, node_idx, recv_buffer, field, idxs..., i);
         }
     }
 };
@@ -261,7 +257,7 @@ template<int RANK>
 struct halo_packer {
     template<typename DATA_TYPE>
     static void pack(const unsigned int sendcnt, array::SVector<int> const & sendmap,
-                     const array::ArrayView<DATA_TYPE, RANK>& field, array::SVector<DATA_TYPE>& send_buffer )
+                     const array::ArrayView<DATA_TYPE, RANK, true>& field, array::SVector<DATA_TYPE>& send_buffer )
     {
       size_t ibuf = 0;
       for(int p=0; p < sendcnt; ++p)
@@ -308,7 +304,7 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     halo_packer_cuda<DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, hfield, dfield);
 #else
-    halo_packer<RANK>::unpack(recvcnt_, recvmap_, recv_buffer, hfield);
+    halo_packer<RANK>::unpack(recvcnt_, recvmap_, recv_buffer, dfield);
 #endif
 
 }
@@ -323,33 +319,6 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
 //  execute( field, strides, shape, 1);
 //}
 
-
-template<typename DATA_TYPE, int RANK>
-void HaloExchange::var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
-                             std::vector<size_t>& varstrides,
-                             std::vector<size_t>& varshape ) const
-{
-  int rank = std::max(1,RANK-1) ;
-  varstrides.resize(rank);
-  varshape.resize(rank);
-
-  if( RANK>1 )
-  {
-    size_t stride=1;
-    for( int j=RANK-1; j>0; --j ) {
-      varstrides[j-1] = stride;
-      varshape[j-1] = arr.shape(j);
-      stride *= varshape[j-1];
-    }
-//    varstrides.assign(arr.strides()+1,arr.strides()+RANK);
-//    varshape.assign(arr.shape()+1,arr.shape()+RANK);
-  }
-  else
-  {
-    varstrides[0] = 1;
-    varshape[0] = 1;
-  }
-}
 
 //template <typename DATA_TYPE, int RANK>
 //void HaloExchange::execute( array::ArrayView<DATA_TYPE,RANK>&& field ) const
