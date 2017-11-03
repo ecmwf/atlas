@@ -25,6 +25,9 @@
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
 
+#include <iostream>
+#include <utility>
+
 using namespace eckit::testing;
 
 /// POD: Type to test
@@ -142,7 +145,7 @@ size_t eval_idx(size_t pos, std::array<size_t, Rank>& strides, FirstDim first)
 template<int Rank, typename FirstDim, typename ... Int>
 size_t eval_idx(size_t pos, std::array<size_t, Rank>& strides, FirstDim first, Int...dims )
 {
-    return first*strides[pos] + eval_idx<Rank>((size_t)pos++, strides, dims...);
+    return first*strides[pos] + eval_idx<Rank>((size_t)pos+1, strides, dims...);
 }
 
 template<typename DATA_TYPE, int Rank, int Dim>
@@ -153,7 +156,6 @@ struct validate_impl<DATA_TYPE, Rank, 0> {
     template<typename ... Int>
     static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, DATA_TYPE arr_c[], std::array<size_t, Rank>& strides, Int... dims ) {
         EXPECT(arrv(dims...) == arr_c[eval_idx<Rank>((size_t)0, strides, dims...)]);
-//        EXPECT(arrv(i,j,k) == arr_c[i*strides[0] + j*strides[1] + k*strides[2]]);
     }
 };
 
@@ -182,6 +184,7 @@ struct compute_strides {
     template <typename DATA_TYPE, int Rank>
     static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, std::array<size_t, (unsigned int)Rank>& strides) {
         strides[Dim-1] = strides[Dim]*arrv.template shape<(unsigned int)Dim>();
+        compute_strides<Dim-1>::apply(arrv,strides);
 
     }
 };
@@ -204,7 +207,7 @@ struct validate {
 CASE("test_haloexchange_gpu") {
   SETUP("Fixture") {
     Fixture f;
-
+/*
     SECTION( "test_rank0_arrview" )
     {
       array::ArrayT<POD> arr(f.N);
@@ -257,7 +260,7 @@ CASE("test_haloexchange_gpu") {
           validate<POD,2>::apply(arrv, arr_c); break; }
       }
     }
-
+*/
     SECTION( "test_rank2" )
     {
       array::ArrayT<POD> arr(f.N,3,2);
@@ -311,7 +314,6 @@ CASE("test_haloexchange_gpu") {
         }
       }
     }
-
   }
 }
 
