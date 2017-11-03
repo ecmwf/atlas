@@ -529,5 +529,5 @@ ecbuild_add_library( TARGET atlas
  )
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
-  target_link_libraries( atlas gridtools::gridtools_storage )
+  target_link_libraries( atlas gridtools::storage )
 endif()
