@@ -83,56 +83,103 @@ struct Fixture {
 
 //-----------------------------------------------------------------------------
 
+//template<typename DATA_TYPE, int Rank>
+//struct validate;
+
+//template<typename DATA_TYPE>
+//struct validate<DATA_TYPE, 1> {
+
+//  static bool apply(array::ArrayView<DATA_TYPE,1>& arrv, DATA_TYPE arr_c[] ) {
+//    int strides[1];
+//    strides[0] = 1;
+//    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
+//      EXPECT(arrv(i) == arr_c[i*strides[0]]);
+//    }
+//  }
+//};
+
+//template<typename DATA_TYPE>
+//struct validate<DATA_TYPE, 2> {
+
+//  static bool apply(array::ArrayView<DATA_TYPE,2>& arrv, DATA_TYPE arr_c[] ) {
+//    int strides[2];
+//    strides[0] = arrv.template shape<1>();
+//    strides[1] = 1;
+//    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
+//      for(size_t j = 0; j < arrv.template shape<1>(); ++j) {
+//        EXPECT(arrv(i,j) == arr_c[i*strides[0] + j*strides[1]]);
+//      }
+//    }
+//  }
+//};
+
+
+//template<typename DATA_TYPE>
+//struct validate<DATA_TYPE, 3> {
+
+//  static bool apply(array::ArrayView<DATA_TYPE,3>& arrv, DATA_TYPE arr_c[] ) {
+//    int strides[3];
+//    strides[0] = arrv.template shape<1>()*strides[1];
+//    strides[1] = arrv.template shape<2>();
+//    strides[2] = 1;
+
+//    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
+//      for(size_t j = 0; j < arrv.template shape<1>(); ++j) {
+//        for(size_t k = 0; k < arrv.template shape<2>(); ++k) {
+//        EXPECT(arrv(i,j,k) == arr_c[i*strides[0] + j*strides[1] + k*strides[2]]);
+//        }
+//      }
+//    }
+//  }
+//};
+
+template<int Rank, typename FirstDim>
+size_t eval_idx(size_t pos, std::array<size_t, Rank>& strides, FirstDim first)
+{
+    return first*strides[pos];
+}
+
+template<int Rank, typename FirstDim, typename ... Int>
+size_t eval_idx(size_t pos, std::array<size_t, Rank>& strides, FirstDim first, Int...dims )
+{
+    return first*strides[pos] + eval_idx<Rank>((size_t)pos++, strides, dims...);
+}
+
+template<typename DATA_TYPE, int Rank, int Dim>
+struct validate_impl;
+
 template<typename DATA_TYPE, int Rank>
-struct validate; 
-
-template<typename DATA_TYPE>
-struct validate<DATA_TYPE, 1> {
-
-  static bool apply(array::ArrayView<DATA_TYPE,1>& arrv, DATA_TYPE arr_c[] ) {
-    int strides[1];
-    strides[0] = 1;
-    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
-std::cout << parallel::mpi::comm().rank() << "] VAL " << arrv(i) <<  " " << i << " " << arr_c[i*strides[0]] << std::endl;
-        EXPECT(arrv(i) == arr_c[i*strides[0]]);
-      
+struct validate_impl<DATA_TYPE, Rank, 0> {
+    template<typename ... Int>
+    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, DATA_TYPE arr_c[], std::array<size_t, Rank>& strides, Int... dims ) {
+        EXPECT(arrv(dims...) == arr_c[eval_idx<Rank>((size_t)0, strides, dims...)]);
+//        EXPECT(arrv(i,j,k) == arr_c[i*strides[0] + j*strides[1] + k*strides[2]]);
     }
-  }
 };
 
-template<typename DATA_TYPE>
-struct validate<DATA_TYPE, 2> {
+template<typename DATA_TYPE, int Rank, int Dim>
+struct validate_impl {
 
-  static bool apply(array::ArrayView<DATA_TYPE,2>& arrv, DATA_TYPE arr_c[] ) {
-    int strides[2];
-    strides[0] = 1;
-    strides[1] = arrv.template shape<1>();
-    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
-      for(size_t j = 0; j < arrv.template shape<1>(); ++j) {
-        EXPECT(arrv(i,j) == arr_c[i*strides[1] + j*strides[0]]);
-      }
-    }
-  }
-};
-
-
-template<typename DATA_TYPE>
-struct validate<DATA_TYPE, 3> {
-
-  static bool apply(array::ArrayView<DATA_TYPE,3>& arrv, DATA_TYPE arr_c[] ) {
-    int strides[3];
-    strides[0] = 1;
-    strides[1] = arrv.template shape<2>();
-    strides[2] = arrv.template shape<1>()*strides[1];
-
-    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
-      for(size_t j = 0; j < arrv.template shape<1>(); ++j) {
-        for(size_t k = 0; k < arrv.template shape<2>(); ++k) {
-        EXPECT(arrv(i,j,k) == arr_c[i*strides[2] + j*strides[1] + k*strides[0]]);
+    template<typename ... Int>
+    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, DATA_TYPE arr_c[], std::array<size_t, Rank>& strides, Int... dims ) {
+        strides[Dim-1] = strides[Dim]*arrv.template shape<(unsigned int)Dim>();
+        for(size_t cnt = 0; cnt < arrv.template shape<Rank-Dim>(); ++cnt) {
+            validate_impl<DATA_TYPE, Rank, Dim-1>::apply(arrv, arr_c, strides, dims..., cnt);
         }
-      }
     }
-  }
+};
+
+template<typename DATA_TYPE, int Rank>
+struct validate {
+
+    static bool apply(array::ArrayView<DATA_TYPE,Rank>& arrv, DATA_TYPE arr_c[] ) {
+        std::array<size_t, Rank> strides;
+        strides[Rank-1] = 1;
+        for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
+            validate_impl<DATA_TYPE, Rank, Rank-1>::apply(arrv, arr_c, strides, i);
+        }
+    }
+
 };
 
 CASE("test_haloexchange_gpu") {
