@@ -168,20 +168,21 @@ struct validate_impl {
     }
 };
 
-template<int Rank>
-struct  comput_strides;
+template<int Dim>
+struct  compute_strides;
 
 template<>
-struct comput_strides<0> {
-    template <typename DATA_TYPE>
-    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, std::array<size_t, Rank>& strides) {}
+struct compute_strides<0> {
+    template <typename DATA_TYPE, int Rank>
+    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, std::array<size_t, (unsigned int)Rank>& strides) {}
 };
 
-template<int Rank>
-struct comput_strides {
-    template <typename DATA_TYPE>
-    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, std::array<size_t, Rank>& strides) {
-        strides[Rank-1] = strides[Rank]*arrv.template shape<(unsigned int)Rank>();
+template<int Dim>
+struct compute_strides {
+    template <typename DATA_TYPE, int Rank>
+    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, std::array<size_t, (unsigned int)Rank>& strides) {
+        strides[Dim-1] = strides[Dim]*arrv.template shape<(unsigned int)Dim>();
+
     }
 };
 
