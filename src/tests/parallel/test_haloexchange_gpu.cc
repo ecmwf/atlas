@@ -162,10 +162,26 @@ struct validate_impl {
 
     template<typename ... Int>
     static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, DATA_TYPE arr_c[], std::array<size_t, Rank>& strides, Int... dims ) {
-        strides[Dim-1] = strides[Dim]*arrv.template shape<(unsigned int)Dim>();
         for(size_t cnt = 0; cnt < arrv.template shape<Rank-Dim>(); ++cnt) {
             validate_impl<DATA_TYPE, Rank, Dim-1>::apply(arrv, arr_c, strides, dims..., cnt);
         }
+    }
+};
+
+template<int Rank>
+struct  comput_strides;
+
+template<>
+struct comput_strides<0> {
+    template <typename DATA_TYPE>
+    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, std::array<size_t, Rank>& strides) {}
+};
+
+template<int Rank>
+struct comput_strides {
+    template <typename DATA_TYPE>
+    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, std::array<size_t, Rank>& strides) {
+        strides[Rank-1] = strides[Rank]*arrv.template shape<(unsigned int)Rank>();
     }
 };
 
@@ -175,6 +191,8 @@ struct validate {
     static bool apply(array::ArrayView<DATA_TYPE,Rank>& arrv, DATA_TYPE arr_c[] ) {
         std::array<size_t, Rank> strides;
         strides[Rank-1] = 1;
+        compute_strides<Rank-1>::apply(arrv, strides);
+
         for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
             validate_impl<DATA_TYPE, Rank, Rank-1>::apply(arrv, arr_c, strides, i);
         }
