@@ -124,7 +124,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   auto field_hv = array::make_host_view<DATA_TYPE, RANK, array::Intent::ReadOnly>(field);
 
   int tag=1;
-  size_t var_size = array::get_var_size<0>(field_hv);
+  size_t var_size = array::get_var_size< array::get_parallel_dim<ParallelDim>(field_hv) >(field_hv);
   int send_size  = sendcnt_ * var_size;
   int recv_size  = recvcnt_ * var_size;
 

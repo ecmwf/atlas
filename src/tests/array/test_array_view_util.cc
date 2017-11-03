@@ -34,6 +34,21 @@ CASE("test_var_size") {
     EXPECT( get_var_size<3>(arrv) == 140);
 
     delete ds;
+}
+
+CASE("test_get_parallel_dim") {
+
+    Array* ds = Array::create<double>(4ul, 5ul, 7ul, 9ul);
+
+    auto arrv = make_host_view<double, 4>(*ds);
+    EXPECT(ds->size() == 1260);
+
+    EXPECT( get_parallel_dim<FirstDim>(arrv) == 0);
+    EXPECT( get_parallel_dim<LastDim>(arrv) == 3);
+    EXPECT( get_parallel_dim<Dim<1>>(arrv) == 1);
+    EXPECT( get_parallel_dim<Dim<2>>(arrv) == 2);
+
+    delete ds;
 
 }
 
