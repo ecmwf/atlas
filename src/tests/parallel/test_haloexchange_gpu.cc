@@ -25,9 +25,6 @@
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
 
-#include <iostream>
-#include <utility>
-
 using namespace eckit::testing;
 
 /// POD: Type to test
@@ -85,56 +82,6 @@ struct Fixture {
 };
 
 //-----------------------------------------------------------------------------
-
-//template<typename DATA_TYPE, int Rank>
-//struct validate;
-
-//template<typename DATA_TYPE>
-//struct validate<DATA_TYPE, 1> {
-
-//  static bool apply(array::ArrayView<DATA_TYPE,1>& arrv, DATA_TYPE arr_c[] ) {
-//    int strides[1];
-//    strides[0] = 1;
-//    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
-//      EXPECT(arrv(i) == arr_c[i*strides[0]]);
-//    }
-//  }
-//};
-
-//template<typename DATA_TYPE>
-//struct validate<DATA_TYPE, 2> {
-
-//  static bool apply(array::ArrayView<DATA_TYPE,2>& arrv, DATA_TYPE arr_c[] ) {
-//    int strides[2];
-//    strides[0] = arrv.template shape<1>();
-//    strides[1] = 1;
-//    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
-//      for(size_t j = 0; j < arrv.template shape<1>(); ++j) {
-//        EXPECT(arrv(i,j) == arr_c[i*strides[0] + j*strides[1]]);
-//      }
-//    }
-//  }
-//};
-
-
-//template<typename DATA_TYPE>
-//struct validate<DATA_TYPE, 3> {
-
-//  static bool apply(array::ArrayView<DATA_TYPE,3>& arrv, DATA_TYPE arr_c[] ) {
-//    int strides[3];
-//    strides[0] = arrv.template shape<1>()*strides[1];
-//    strides[1] = arrv.template shape<2>();
-//    strides[2] = 1;
-
-//    for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
-//      for(size_t j = 0; j < arrv.template shape<1>(); ++j) {
-//        for(size_t k = 0; k < arrv.template shape<2>(); ++k) {
-//        EXPECT(arrv(i,j,k) == arr_c[i*strides[0] + j*strides[1] + k*strides[2]]);
-//        }
-//      }
-//    }
-//  }
-//};
 
 template<int Rank, typename FirstDim>
 size_t eval_idx(size_t pos, std::array<size_t, Rank>& strides, FirstDim first)
@@ -207,7 +154,7 @@ struct validate {
 CASE("test_haloexchange_gpu") {
   SETUP("Fixture") {
     Fixture f;
-/*
+
     SECTION( "test_rank0_arrview" )
     {
       array::ArrayT<POD> arr(f.N);
@@ -260,7 +207,7 @@ CASE("test_haloexchange_gpu") {
           validate<POD,2>::apply(arrv, arr_c); break; }
       }
     }
-*/
+
     SECTION( "test_rank2" )
     {
       array::ArrayT<POD> arr(f.N,3,2);

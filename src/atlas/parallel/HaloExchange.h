@@ -60,10 +60,6 @@ public: // methods
   template <typename DATA_TYPE, int RANK>
   void execute( array::Array& field, bool on_device = false) const;
 
-//  template <typename DATA_TYPE, int RANK>
-//  void execute( array::ArrayView<DATA_TYPE,RANK>&& field ) const;
-
-
 private: // methods
 
   void create_mappings( std::vector<int>& send_map, std::vector<int>& recv_map, size_t nb_vars ) const;

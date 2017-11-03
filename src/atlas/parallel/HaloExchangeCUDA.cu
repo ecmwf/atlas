@@ -9,8 +9,6 @@
  */
 
 #include "HaloExchangeCUDA.h"
-#include <boost/utility/enable_if.hpp>
-#include <stdio.h>
 
 namespace atlas {
 namespace parallel {
