@@ -21,6 +21,12 @@ ecbuild_add_test( TARGET atlas_test_svector
   LIBS     atlas
 )
 
+ecbuild_add_test( TARGET atlas_test_array_view_util
+  SOURCES  test_array_view_util.cc
+  LIBS     atlas
+)
+
+
 if( CMAKE_BUILD_TYPE MATCHES "DEBUG" )
   set ( CMAKE_NVCC_FLAGS "-G" )
 endif()

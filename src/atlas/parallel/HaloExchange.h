@@ -28,6 +28,8 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/SVector.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/array/ArrayViewDefs.h"
+#include "atlas/array/ArrayViewUtil.h"
 
 #ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 #include "atlas/parallel/HaloExchangeCUDA.h"
@@ -57,7 +59,7 @@ public: // methods
 //  template <typename DATA_TYPE>
 //  void execute( DATA_TYPE field[], size_t nb_vars ) const;
 
-  template <typename DATA_TYPE, int RANK>
+  template<typename DATA_TYPE, int RANK, typename ParallelDim = array::FirstDim >
   void execute( array::Array& field, bool on_device = false) const;
 
 private: // methods
@@ -109,17 +111,7 @@ private: // data
 
 };
 
-template<int cnt, typename DATA_TYPE, int RANK, array::Intent AccessMode>
-constexpr typename std::enable_if< (cnt == RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, AccessMode>& field) {
-    return 1;
-}
-
-template<int cnt, typename DATA_TYPE, int RANK, array::Intent AccessMode>
-constexpr typename std::enable_if< (cnt != RANK), size_t >::type get_var_size( array::ArrayView<DATA_TYPE, RANK, AccessMode>& field) {
-    return get_var_size<cnt+1>(field) * field.template shape<cnt>();
-}
-
-template<typename DATA_TYPE, int RANK>
+template<typename DATA_TYPE, int RANK, typename ParallelDim>
 void HaloExchange::execute(array::Array& field, bool on_device) const
 {
   if( ! is_setup_ )
@@ -132,7 +124,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   auto field_hv = array::make_host_view<DATA_TYPE, RANK, array::Intent::ReadOnly>(field);
 
   int tag=1;
-  size_t var_size = get_var_size<1>(field_hv);
+  size_t var_size = array::get_var_size<0>(field_hv);
   int send_size  = sendcnt_ * var_size;
   int recv_size  = recvcnt_ * var_size;
 

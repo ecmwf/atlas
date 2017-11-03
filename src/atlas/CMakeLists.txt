@@ -375,6 +375,8 @@ array/ArrayStrides.h
 array/ArrayUtil.cc
 array/ArrayUtil.h
 array/ArrayView.h
+array/ArrayViewUtil.h
+array/ArrayViewDefs.h
 array/DataType.h
 array/IndexView.h
 array/LocalView.cc

@@ -9,11 +9,26 @@
  */
 
 #pragma once
+#include <utility>
 
 namespace atlas {
 namespace array {
 
   enum class Intent {ReadOnly, ReadWrite};
+
+  template<int cDim>
+  struct Dim{
+      static constexpr int cdim = cDim;
+  };
+
+  struct LastDim{};
+  struct FirstDim{};
+
+  template <typename T> struct is_dim_policy : std::false_type {};
+  template<int cDim> struct is_dim_policy<Dim<cDim> > : std::true_type {};
+
+  template<> struct is_dim_policy<LastDim> : std::true_type {};
+  template<> struct is_dim_policy<FirstDim> : std::true_type {};
 
 } // namespace array
 } // namespace atlas
