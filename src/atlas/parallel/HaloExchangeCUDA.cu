@@ -115,10 +115,12 @@ void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<
                    array::SVector<DATA_TYPE>& send_buffer )
 {
   const unsigned int block_size_x = 32;
-  const unsigned int block_size_y = 4;
+  const unsigned int block_size_y = (RANK==1) ? 1 : 4;
+
+  unsigned int nblocks_y = (RANK==1) ? 1 : (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y;
 
   dim3 threads(block_size_x, block_size_y);
-  dim3 blocks((sendcnt+block_size_x-1)/block_size_x, (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y);
+  dim3 blocks((sendcnt+block_size_x-1)/block_size_x, nblocks_y);
   cudaDeviceSynchronize();
 
   pack_kernel<DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap, dfield, (send_buffer.data()));
@@ -129,27 +131,6 @@ void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<
     throw eckit::Exception("Error launching GPU packing kernel");
 
 }
-
-template<typename DATA_TYPE>
-void halo_packer_cuda<DATA_TYPE, 1>::pack( const int sendcnt, array::SVector<int> const & sendmap,
-                   const array::ArrayView<DATA_TYPE, 1, array::Intent::ReadOnly>& hfield, const array::ArrayView<DATA_TYPE, 1>& dfield,
-                   array::SVector<DATA_TYPE>& send_buffer )
-{
-  const unsigned int block_size_x = 32;
-
-  dim3 threads(block_size_x, 1);
-  dim3 blocks((sendcnt+block_size_x-1)/block_size_x, 1);
-  cudaDeviceSynchronize();
-
-  pack_kernel<DATA_TYPE, 1><<<blocks,threads>>>(sendcnt, sendmap, dfield, (send_buffer.data()));
-
-  cudaDeviceSynchronize();
-  cudaError_t err = cudaGetLastError();
-  if (err != cudaSuccess)
-    throw eckit::Exception("Error launching GPU packing kernel");
-
-}
-
 
 template<typename DATA_TYPE, int RANK>
 void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
