@@ -138,42 +138,12 @@ void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector
                    const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly> &hfield, array::ArrayView<DATA_TYPE, RANK> &dfield)
 {
   const unsigned int block_size_x = 32;
-  const unsigned int block_size_y = 4;
+  const unsigned int block_size_y = (RANK==1) ? 1 : 4;
+
+  unsigned int nblocks_y = (RANK==1) ? 1 : (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y;
+
   dim3 threads(block_size_x, block_size_y);
-  dim3 blocks((recvcnt+block_size_x-1)/block_size_x, (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y);
-
-  cudaDeviceSynchronize();
-  cudaError_t err = cudaGetLastError();
-  if (err != cudaSuccess) {
-    std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
-    throw eckit::Exception(msg);
-  }
-
-  unpack_kernel<<<blocks,threads>>>(recvcnt, recvmap, recv_buffer.data(), dfield);
-
-  err = cudaGetLastError();
-  if (err != cudaSuccess) {
-    std::string msg = std::string("Error launching GPU packing kernel")+ cudaGetErrorString(err);
-    throw eckit::Exception(msg);
-  }
-
-  cudaDeviceSynchronize();
-  err = cudaGetLastError();
-  if (err != cudaSuccess) {
-    std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
-    throw eckit::Exception(msg);
-  }
-}
-
-template<typename DATA_TYPE>
-void halo_packer_cuda<DATA_TYPE, 1>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
-                   const array::SVector<DATA_TYPE> &recv_buffer ,
-                   const array::ArrayView<DATA_TYPE, 1, array::Intent::ReadOnly> &hfield, array::ArrayView<DATA_TYPE, 1> &dfield)
-{
-  const unsigned int block_size_x = 32;
-
-  dim3 threads(block_size_x, 1);
-  dim3 blocks((recvcnt+block_size_x-1)/block_size_x, 1);
+  dim3 blocks((sendcnt+block_size_x-1)/block_size_x, nblocks_y);
 
   cudaDeviceSynchronize();
   cudaError_t err = cudaGetLastError();
