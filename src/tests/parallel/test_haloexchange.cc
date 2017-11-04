@@ -534,6 +534,74 @@ CASE("test_haloexchange") {
         }
       }
     }
+
+    SECTION( "test_rank1_paralleldim_1" )
+    {
+      array::ArrayT<POD> arr(2,f.N);
+      array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
+      for( int j=0; j<f.N; ++j ) {
+        arrv(0,j) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+        arrv(1,j) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
+      }
+
+      f.halo_exchange.template execute<POD,2, array::LastDim>(arr, false);
+
+      switch( parallel::mpi::comm().rank() )
+      {
+        case 0: { POD arr_c[] = { 90, 10, 20 , 30 , 40, 900, 100, 200, 300, 400 }; //90,900, 10,100, 20,200, 30,300, 40,400 };
+          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        case 1: { POD arr_c[] = { 30,40,50,60,70,80, 300,400,500,600,700,800};
+          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        case 2: { POD arr_c[] = { 50,60,70,80,90,10,20, 500,600,700,800,900,100,200};
+          EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+      }
+    }
+
+    SECTION( "test_rank2_paralleldim_2" )
+    {
+      array::ArrayT<POD> arr(3,f.N,2);
+      array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
+      for( int p=0; p<f.N; ++p )
+      {
+        for( size_t i=0; i<3; ++i )
+        {
+          arrv(i,p,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
+          arrv(i,p,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
+        }
+      }
+
+      f.halo_exchange.template execute<POD,3, array::Dim<1> >(arr, false);
+
+      switch( parallel::mpi::comm().rank() )
+      {
+        case 0:
+        {
+          int arr_c[] = { -9,9, -1,1, -2,2, -3,3, -4,4,
+                          -90,90, -10,10, -20,20, -30,30, -40,40,
+                          -900,900, -100,100, -200,200, -300,300, -400,400};
+
+          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+          break;
+        }
+        case 1:
+        {
+          int arr_c[] = { -3,3, -4,4, -5,5, -6,6, -7,7, -8,8,
+                          -30,30, -40,40, -50,50, -60,60, -70,70, -80,80,
+                          -300,300, -400,400, -500,500, -600,600, -700,700, -800,800};
+          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+          break;
+        }
+        case 2:
+        {
+          int arr_c[] = { -5,5, -6,6, -7,7, -8,8, -9,9, -1,1, -2,2,
+                          -50,50, -60,60, -70,70, -80,80, -90,90, -10,10, -20,20,
+                          -500,500, -600,600, -700,700, -800,800, -900,900, -100,100, -200,200};
+          EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+          break;
+        }
+      }
+    }
+
   }
 }
 

@@ -221,8 +221,7 @@ struct halo_packer_impl<ParallelDim, Cnt, ParallelDim>
     template<typename DATA_TYPE, int RANK, typename ... Idx>
     static void apply(size_t& buf_idx, const size_t node_idx, const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& field,
                       array::SVector<DATA_TYPE>& send_buffer, Idx... idxs) {
-        //TODO node should be inserted in the right place accordim to parallel dim
-      halo_packer_impl<ParallelDim, Cnt-1, ParallelDim+1>::apply(buf_idx, node_idx, field, send_buffer, idxs...);
+      halo_packer_impl<ParallelDim, Cnt-1, ParallelDim+1>::apply(buf_idx, node_idx, field, send_buffer, idxs...,node_idx);
     }
 };
 
@@ -232,7 +231,7 @@ struct halo_packer_impl<ParallelDim, 0, CurrentDim> {
     static void apply(size_t& buf_idx, size_t node_idx, const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& field,
                      array::SVector<DATA_TYPE>& send_buffer, Idx...idxs)
     {
-      send_buffer[buf_idx++] = field(node_idx, idxs...);
+      send_buffer[buf_idx++] = field(idxs...);
     }
 };
 
@@ -252,7 +251,7 @@ struct halo_unpacker_impl<ParallelDim, Cnt, ParallelDim> {
     template<typename DATA_TYPE, int RANK, typename ... Idx>
     static void apply(size_t& buf_idx, const size_t node_idx, array::SVector<DATA_TYPE> const & recv_buffer,
                       array::ArrayView<DATA_TYPE, RANK>& field, Idx... idxs) {
-        halo_unpacker_impl<ParallelDim, Cnt-1, ParallelDim+1>::apply(buf_idx, node_idx, recv_buffer, field, idxs...);
+        halo_unpacker_impl<ParallelDim, Cnt-1, ParallelDim+1>::apply(buf_idx, node_idx, recv_buffer, field, idxs...,node_idx);
     }
 };
 
@@ -262,7 +261,7 @@ struct halo_unpacker_impl<ParallelDim, 0, CurrentDim> {
     static void apply(size_t& buf_idx, size_t node_idx, array::SVector<DATA_TYPE> const & recv_buffer,
                      array::ArrayView<DATA_TYPE, RANK>& field, Idx...idxs)
     {
-      field(node_idx, idxs...) = recv_buffer[buf_idx++];
+      field(idxs...) = recv_buffer[buf_idx++];
     }
 };
 
