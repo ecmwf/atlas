@@ -15,7 +15,7 @@ namespace parallel {
 
 template<typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendmap,
-         const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer, const typename std::enable_if<RANK==2, int>::type = 0) {
+         const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer, const typename std::enable_if<RANK==2, int>::type = 0) {
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -29,7 +29,7 @@ __global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendma
 
 template<typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendmap,
-         const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer, const typename std::enable_if<RANK==3, int>::type = 0) {
+         const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer, const typename std::enable_if<RANK==3, int>::type = 0) {
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -45,7 +45,7 @@ __global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendma
 
 template<typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap,
-         const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer,
+         const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer,
                             const typename std::enable_if<RANK==1, int>::type = 0) {
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -55,13 +55,13 @@ __global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap
 
 template<typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap,
-         const array::ArrayView<DATA_TYPE, RANK, false> field, DATA_TYPE* send_buffer,
+         const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer,
                             const typename std::enable_if<(RANK>3), int>::type = 0) {
 }
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
-         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
+         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
                             const typename std::enable_if<RANK==2, int>::type = 0) {
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
@@ -77,7 +77,7 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
-         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
+         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
                             const typename std::enable_if<RANK==3, int>::type = 0) {
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
@@ -94,7 +94,7 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
-         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
+         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
                             const typename std::enable_if<RANK==1, int>::type = 0) {
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
@@ -105,13 +105,13 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
-         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, false> field,
+         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
                             typename std::enable_if<(RANK>3), int>::type* = 0) {
 }
 
 template<typename DATA_TYPE, int RANK>
 void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<int> const & sendmap,
-                   const array::ArrayView<DATA_TYPE, RANK, true>& hfield, const array::ArrayView<DATA_TYPE, RANK>& dfield, 
+                   const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield, const array::ArrayView<DATA_TYPE, RANK>& dfield,
                    array::SVector<DATA_TYPE>& send_buffer )
 {
   const unsigned int block_size_x = 32;
@@ -132,7 +132,7 @@ void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<
 
 template<typename DATA_TYPE>
 void halo_packer_cuda<DATA_TYPE, 1>::pack( const int sendcnt, array::SVector<int> const & sendmap,
-                   const array::ArrayView<DATA_TYPE, 1, true>& hfield, const array::ArrayView<DATA_TYPE, 1>& dfield,
+                   const array::ArrayView<DATA_TYPE, 1, array::Intent::ReadOnly>& hfield, const array::ArrayView<DATA_TYPE, 1>& dfield,
                    array::SVector<DATA_TYPE>& send_buffer )
 {
   const unsigned int block_size_x = 32;
@@ -154,7 +154,7 @@ void halo_packer_cuda<DATA_TYPE, 1>::pack( const int sendcnt, array::SVector<int
 template<typename DATA_TYPE, int RANK>
 void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
                    const array::SVector<DATA_TYPE> &recv_buffer ,
-                   const array::ArrayView<DATA_TYPE, RANK, true> &hfield, array::ArrayView<DATA_TYPE, RANK> &dfield)
+                   const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly> &hfield, array::ArrayView<DATA_TYPE, RANK> &dfield)
 {
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = 4;
@@ -187,7 +187,7 @@ void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector
 template<typename DATA_TYPE>
 void halo_packer_cuda<DATA_TYPE, 1>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
                    const array::SVector<DATA_TYPE> &recv_buffer ,
-                   const array::ArrayView<DATA_TYPE, 1, true> &hfield, array::ArrayView<DATA_TYPE, 1> &dfield)
+                   const array::ArrayView<DATA_TYPE, 1, array::Intent::ReadOnly> &hfield, array::ArrayView<DATA_TYPE, 1> &dfield)
 {
   const unsigned int block_size_x = 32;
 
