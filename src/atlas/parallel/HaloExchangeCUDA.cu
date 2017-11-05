@@ -32,7 +32,8 @@ __global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const si
 
 template<typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const size_t sendmap_size,
-         const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer, const typename std::enable_if<RANK==3, int>::type = 0) {
+         const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer,
+         const typename std::enable_if<RANK==3, int>::type = 0) {
     const array::SVector<int> sendmap(const_cast<int*>(sendmap_ptr), sendmap_size);
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
@@ -89,47 +90,6 @@ struct get_buffer_index<2>{
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
-         const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size,
-         array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
-         const typename std::enable_if<RANK==2, int>::type = 0) {
-
-    const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
-    const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
-
-    const size_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
-    const size_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
-
-    if(node_cnt >= recvcnt || var1_idx >= field.data_view().template length<1>() ) return;
-
-    const size_t node_idx = recvmap[node_cnt];
-
-    size_t buff_idx = get_buffer_index<RANK>::apply(field, node_cnt, var1_idx);
-
-    halo_unpacker_impl<0, (RANK>=3) ? (RANK-2) : 0, (RANK-1)>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,var1_idx);
-}
-
-template<typename DATA_TYPE, int RANK>
-__global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
-         const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
-         array::Intent::ReadWrite> field, const typename std::enable_if<RANK==3, int>::type = 0) {
-
-    const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
-    const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
-
-    const size_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
-    const size_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
-
-    if(node_cnt >= recvcnt || var1_idx >= field.data_view().template length<1>() ) return;
-
-    const size_t node_idx = recvmap[node_cnt];
-
-    size_t buff_idx = get_buffer_index<RANK>::apply(field, node_cnt, var1_idx);
-
-    halo_unpacker_impl<0, (RANK>=3) ? (RANK-2) : 0, (RANK-1)>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,var1_idx);
-}
-
-template<typename DATA_TYPE, int RANK>
-__global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
          const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
          array::Intent::ReadWrite> field, const typename std::enable_if<RANK==1, int>::type = 0) {
 
@@ -147,8 +107,22 @@ __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const s
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
-         const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
-                            typename std::enable_if<(RANK>3), int>::type* = 0) {
+         const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
+         array::Intent::ReadWrite> field, const typename std::enable_if<RANK>=2, int>::type = 0) {
+
+    const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
+    const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
+
+    const size_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
+    const size_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
+
+    if(node_cnt >= recvcnt || var1_idx >= field.data_view().template length<1>() ) return;
+
+    const size_t node_idx = recvmap[node_cnt];
+
+    size_t buff_idx = get_buffer_index<RANK>::apply(field, node_cnt, var1_idx);
+
+    halo_unpacker_impl<0, (RANK>=3) ? (RANK-2) : 0, 2>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,var1_idx);
 }
 
 template<int RANK>
