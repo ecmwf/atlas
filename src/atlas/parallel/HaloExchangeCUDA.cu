@@ -8,14 +8,16 @@
  * does it submit to any jurisdiction.
  */
 
-#include "HaloExchangeCUDA.h"
+#include "atlas/parallel/HaloExchangeCUDA.h"
+#include "atlas/array/SVector.h"
 
 namespace atlas {
 namespace parallel {
 
 template<typename DATA_TYPE, int RANK>
-__global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendmap,
+__global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const size_t sendmap_size,
          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer, const typename std::enable_if<RANK==2, int>::type = 0) {
+    const array::SVector<int> sendmap(const_cast<int*>(sendmap_ptr), sendmap_size);
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -28,8 +30,10 @@ __global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendma
 }
 
 template<typename DATA_TYPE, int RANK>
-__global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendmap,
+__global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const size_t sendmap_size,
          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer, const typename std::enable_if<RANK==3, int>::type = 0) {
+    const array::SVector<int> sendmap(const_cast<int*>(sendmap_ptr), sendmap_size);
+
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -44,9 +48,11 @@ __global__ void pack_kernel(const int sendcnt,  const array::SVector<int> sendma
 }
 
 template<typename DATA_TYPE, int RANK>
-__global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap,
+__global__ void pack_kernel(const int sendcnt, const int* sendmap_ptr, const size_t sendmap_size,
          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer,
                             const typename std::enable_if<RANK==1, int>::type = 0) {
+    const array::SVector<int> sendmap(const_cast<int*>(sendmap_ptr), sendmap_size);
+
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
 
     if(p >= sendcnt) return;
@@ -54,15 +60,17 @@ __global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap
 }
 
 template<typename DATA_TYPE, int RANK>
-__global__ void pack_kernel(const int sendcnt, const array::SVector<int> sendmap,
+__global__ void pack_kernel(const int sendcnt, const int* sendmap, const size_t sendmap_size,
          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer,
                             const typename std::enable_if<(RANK>3), int>::type = 0) {
 }
 
 template<typename DATA_TYPE, int RANK>
-__global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
+__global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
          const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
                             const typename std::enable_if<RANK==2, int>::type = 0) {
+
+    const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
@@ -76,9 +84,11 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
 }
 
 template<typename DATA_TYPE, int RANK>
-__global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
+__global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
          const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
                             const typename std::enable_if<RANK==3, int>::type = 0) {
+
+    const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
@@ -93,9 +103,11 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
 }
 
 template<typename DATA_TYPE, int RANK>
-__global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
+__global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
          const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
                             const typename std::enable_if<RANK==1, int>::type = 0) {
+
+    const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -104,7 +116,7 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
 }
 
 template<typename DATA_TYPE, int RANK>
-__global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvmap,
+__global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
          const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
                             typename std::enable_if<(RANK>3), int>::type* = 0) {
 }
@@ -140,7 +152,7 @@ void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<
   dim3 blocks((sendcnt+block_size_x-1)/block_size_x, nblocks_y);
   cudaDeviceSynchronize();
 
-  pack_kernel<DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap, dfield, (send_buffer.data()));
+  pack_kernel<DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap.data(), sendmap.size(), dfield, (send_buffer.data()));
 
   cudaDeviceSynchronize();
   cudaError_t err = cudaGetLastError();
@@ -169,7 +181,7 @@ void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector
     throw eckit::Exception(msg);
   }
 
-  unpack_kernel<<<blocks,threads>>>(recvcnt, recvmap, recv_buffer.data(), dfield);
+  unpack_kernel<<<blocks,threads>>>(recvcnt, recvmap.data(), recvmap.size(), recv_buffer.data(), dfield);
 
   err = cudaGetLastError();
   if (err != cudaSuccess) {

@@ -21,8 +21,10 @@ namespace atlas {
 namespace test {
 
 __global__
-void kernel_exe(array::SVector<int> list_ints, int offset, bool* result )
+void kernel_exe(int* list_ints_ptr, size_t size, int offset, bool* result )
 {
+    SVector<int> list_ints(list_ints_ptr, size);
+   
     *result = *result && (list_ints[offset] == 3);
     *result = *result && (list_ints[offset+1] == 4);
 
@@ -50,7 +52,7 @@ CASE( "test_svector" )
         throw eckit::AssertionFailed("failed to allocate GPU memory");
 
     *result=true;
-    kernel_exe<<<1,1>>>(list_ints, 0, result);
+    kernel_exe<<<1,1>>>(list_ints.data(), list_ints.size(), 0, result);
     cudaDeviceSynchronize();
     
     err = cudaGetLastError();
@@ -90,7 +92,7 @@ CASE( "test_svector_resize" )
     list_ints[3] = 3;
     list_ints[4] = 4;
 
-    kernel_exe<<<1,1>>>(list_ints, 3, result);
+    kernel_exe<<<1,1>>>(list_ints.data(), list_ints.size(), 3, result);
     cudaDeviceSynchronize();
 
     err = cudaGetLastError();

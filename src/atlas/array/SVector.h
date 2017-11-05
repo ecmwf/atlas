@@ -30,10 +30,13 @@ namespace array {
 template <typename T>
 class SVector {
 public:
-  SVector() : data_(nullptr), size_(0) {}
+  SVector() : data_(nullptr), size_(0), externally_allocated_(false) {}
 
   ATLAS_HOST_DEVICE
-  SVector(SVector const & other) : data_(other.data_), size_(other.size_){}
+  SVector(SVector const & other) : data_(other.data_), size_(other.size_), externally_allocated_(other.externally_allocated_){}
+
+  ATLAS_HOST_DEVICE
+  SVector(T* data, size_t size): data_(data), size_(size) {}
 
   SVector(size_t N) : size_(N) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
@@ -44,8 +47,12 @@ public:
     data_ = (T*)malloc(N*sizeof(T));
 #endif
   }
+  ATLAS_HOST_DEVICE
   ~SVector(){
+#ifndef __CUDA_ARCH__
+    if(!externally_allocated_)
       delete_managedmem(data_);
+#endif
   }
 
   void delete_managedmem(T*& data) {
@@ -57,10 +64,10 @@ public:
 
       err = cudaFree(data);
 // The following throws an invalid device memory
-/*
+
       if(err != cudaSuccess)
           throw eckit::AssertionFailed("failed to free GPU memory");
-*/
+
 #else
       free(data_);
 #endif
@@ -71,14 +78,26 @@ public:
   T const * data() const { return data_; }
 
   ATLAS_HOST_DEVICE
-  T& operator()(const size_t idx) { return data_[idx]; }
+  T& operator()(const size_t idx) { 
+    assert(data_ && idx < size_);
+    return data_[idx]; 
+  }
   ATLAS_HOST_DEVICE
-  T const& operator()(const size_t idx) const { return data_[idx]; }
+  T const& operator()(const size_t idx) const { 
+    assert(data_ && idx < size_);
+    return data_[idx]; 
+  }
 
   ATLAS_HOST_DEVICE
-  T& operator[](const size_t idx) { return data_[idx]; }
+  T& operator[](const size_t idx) { 
+    assert(data_ && idx < size_);
+    return data_[idx]; 
+  }
   ATLAS_HOST_DEVICE
-  T const& operator[](const size_t idx) const { return data_[idx]; }
+  T const& operator[](const size_t idx) const { 
+    assert(data_ && idx < size_);
+    return data_[idx]; 
+  }
 
   ATLAS_HOST_DEVICE
   size_t size() const { return size_; }
@@ -111,6 +130,7 @@ public:
 private:
   T* data_;
   size_t size_;
+  bool externally_allocated_;
 };
 
 //------------------------------------------------------------------------------
