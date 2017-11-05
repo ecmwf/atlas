@@ -27,18 +27,6 @@ struct halo_packer_cuda {
                        array::ArrayView<DATA_TYPE, RANK>& dhfield );
 };
 
-template<typename DATA_TYPE>
-struct halo_packer_cuda<DATA_TYPE,1> {
-    static void pack( const int sendcnt, array::SVector<int> const & sendmap,
-                       const array::ArrayView<DATA_TYPE, 1, array::Intent::ReadOnly>& hfield,  const array::ArrayView<DATA_TYPE, 1>& dfield, 
-                                              array::SVector<DATA_TYPE>& send_buffer );
-
-    static void unpack( const int sendcnt, array::SVector<int> const & recvmap,
-                       const array::SVector<DATA_TYPE>& recv_buffer, const array::ArrayView<DATA_TYPE, 1, array::Intent::ReadOnly>& hfield,
-                       array::ArrayView<DATA_TYPE, 1>& dfield);
-};
-
-
 } // namespace paralllel
 } // namespace atlas
 

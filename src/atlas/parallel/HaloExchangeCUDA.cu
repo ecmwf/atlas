@@ -109,6 +109,23 @@ __global__ void unpack_kernel(const int recvcnt, const array::SVector<int> recvm
                             typename std::enable_if<(RANK>3), int>::type* = 0) {
 }
 
+template<int RANK>
+struct get_n_cuda_blocks
+{
+  template<typename DATA_TYPE>
+  static unsigned int apply(const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield, const unsigned int block_size_y) {
+      return (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y;
+  }
+};
+
+template<>
+struct get_n_cuda_blocks<1> {
+    template<typename DATA_TYPE>
+    static unsigned int apply(const array::ArrayView<DATA_TYPE, 1, array::Intent::ReadOnly>& hfield, const unsigned int block_size_y) {
+        return 1;
+    }
+};
+
 template<typename DATA_TYPE, int RANK>
 void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<int> const & sendmap,
                    const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield, const array::ArrayView<DATA_TYPE, RANK>& dfield,
@@ -117,7 +134,7 @@ void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = (RANK==1) ? 1 : 4;
 
-  unsigned int nblocks_y = (RANK==1) ? 1 : (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y;
+  unsigned int nblocks_y = get_n_cuda_blocks<RANK>::apply(hfield, block_size_y);
 
   dim3 threads(block_size_x, block_size_y);
   dim3 blocks((sendcnt+block_size_x-1)/block_size_x, nblocks_y);
@@ -140,10 +157,10 @@ void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = (RANK==1) ? 1 : 4;
 
-  unsigned int nblocks_y = (RANK==1) ? 1 : (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y;
+  unsigned int nblocks_y = get_n_cuda_blocks<RANK>::apply(hfield, block_size_y);
 
   dim3 threads(block_size_x, block_size_y);
-  dim3 blocks((sendcnt+block_size_x-1)/block_size_x, nblocks_y);
+  dim3 blocks((recvcnt+block_size_x-1)/block_size_x, nblocks_y);
 
   cudaDeviceSynchronize();
   cudaError_t err = cudaGetLastError();
