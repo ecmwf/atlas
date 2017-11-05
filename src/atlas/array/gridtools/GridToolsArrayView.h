@@ -79,6 +79,7 @@ public:
     }
 
     template<unsigned int Dim>
+    ATLAS_HOST_DEVICE
     size_t shape() const {
         return gt_data_view_.template length<Dim>();
     }

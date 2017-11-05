@@ -23,6 +23,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/mpi/Statistics.h"
+#include "atlas/parallel/HaloExchangeImpl.h"
 
 #include "atlas/array_fwd.h"
 #include "atlas/array/ArrayView.h"
@@ -203,67 +204,6 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   }
 
 }
-
-template<int ParallelDim, int Cnt, int CurrentDim>
-struct halo_packer_impl {
-    template<typename DATA_TYPE, int RANK, typename ... Idx>
-    static void apply(size_t& buf_idx, const size_t node_idx, const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& field,
-                      array::SVector<DATA_TYPE>& send_buffer, Idx... idxs) {
-      for( size_t i=0; i< field.template shape<CurrentDim>(); ++i ) {
-        halo_packer_impl<ParallelDim, Cnt-1, CurrentDim+1>::apply(buf_idx, node_idx, field, send_buffer, idxs..., i);
-      }
-    }
-};
-
-template<int ParallelDim, int Cnt>
-struct halo_packer_impl<ParallelDim, Cnt, ParallelDim>
-{
-    template<typename DATA_TYPE, int RANK, typename ... Idx>
-    static void apply(size_t& buf_idx, const size_t node_idx, const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& field,
-                      array::SVector<DATA_TYPE>& send_buffer, Idx... idxs) {
-      halo_packer_impl<ParallelDim, Cnt-1, ParallelDim+1>::apply(buf_idx, node_idx, field, send_buffer, idxs...,node_idx);
-    }
-};
-
-template<int ParallelDim, int CurrentDim>
-struct halo_packer_impl<ParallelDim, 0, CurrentDim> {
-    template<typename DATA_TYPE, int RANK, typename ...Idx>
-    static void apply(size_t& buf_idx, size_t node_idx, const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& field,
-                     array::SVector<DATA_TYPE>& send_buffer, Idx...idxs)
-    {
-      send_buffer[buf_idx++] = field(idxs...);
-    }
-};
-
-template<int ParallelDim, int Cnt, int CurrentDim>
-struct halo_unpacker_impl {
-    template<typename DATA_TYPE, int RANK, typename ... Idx>
-    static void apply(size_t& buf_idx, const size_t node_idx, array::SVector<DATA_TYPE> const & recv_buffer, 
-                      array::ArrayView<DATA_TYPE, RANK>& field, Idx... idxs) {
-        for( size_t i=0; i< field.template shape<CurrentDim>(); ++i ) {
-            halo_unpacker_impl<ParallelDim, Cnt-1, CurrentDim+1>::apply(buf_idx, node_idx, recv_buffer, field, idxs..., i);
-        }
-    }
-};
-
-template<int ParallelDim, int Cnt>
-struct halo_unpacker_impl<ParallelDim, Cnt, ParallelDim> {
-    template<typename DATA_TYPE, int RANK, typename ... Idx>
-    static void apply(size_t& buf_idx, const size_t node_idx, array::SVector<DATA_TYPE> const & recv_buffer,
-                      array::ArrayView<DATA_TYPE, RANK>& field, Idx... idxs) {
-        halo_unpacker_impl<ParallelDim, Cnt-1, ParallelDim+1>::apply(buf_idx, node_idx, recv_buffer, field, idxs...,node_idx);
-    }
-};
-
-template<int ParallelDim, int CurrentDim>
-struct halo_unpacker_impl<ParallelDim, 0, CurrentDim> {
-    template<typename DATA_TYPE, int RANK, typename ...Idx>
-    static void apply(size_t& buf_idx, size_t node_idx, array::SVector<DATA_TYPE> const & recv_buffer,
-                     array::ArrayView<DATA_TYPE, RANK>& field, Idx...idxs)
-    {
-      field(idxs...) = recv_buffer[buf_idx++];
-    }
-};
 
 template<int ParallelDim, int RANK>
 struct halo_packer {

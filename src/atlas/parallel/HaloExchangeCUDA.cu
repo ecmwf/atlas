@@ -9,6 +9,7 @@
  */
 
 #include "atlas/parallel/HaloExchangeCUDA.h"
+#include "atlas/parallel/HaloExchangeImpl.h"
 #include "atlas/array/SVector.h"
 
 namespace atlas {
@@ -67,57 +68,65 @@ __global__ void pack_kernel(const int sendcnt, const int* sendmap, const size_t 
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
-         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
-                            const typename std::enable_if<RANK==2, int>::type = 0) {
+         const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size,
+         array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
+         const typename std::enable_if<RANK==2, int>::type = 0) {
 
     const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
+    const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
 
     if(p >= recvcnt || i >= field.data_view().template length<1>() ) return;
 
-    const size_t buff_idx = field.data_view().template length<1>() * p + i;
+    const size_t node_idx = recvmap[p];
 
-    field(recvmap[p], i) = recv_buffer[buff_idx];
+    size_t buff_idx = field.data_view().template length<1>() * p + i;
 
+    halo_unpacker_impl<0, 0, 1>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,i);
 }
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
-         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
-                            const typename std::enable_if<RANK==3, int>::type = 0) {
+         const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
+         array::Intent::ReadWrite> field, const typename std::enable_if<RANK==3, int>::type = 0) {
 
     const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
+    const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
 
     const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
     const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
 
     if(p >= recvcnt || i >= field.data_view().template length<1>() ) return;
+
+    const size_t node_idx = recvmap[p];
 
     size_t buff_idx = field.data_view().template length<2>() * field.data_view().template length<1>() * p + field.data_view().template length<2>() * i;
 
-    for(size_t varid=0; varid < field.data_view().template length<2>(); ++varid) {
-        field(recvmap[p], i, varid) = recv_buffer[buff_idx++];
-    }
+    halo_unpacker_impl<0, 1, 2>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,i);
 }
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
-         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
-                            const typename std::enable_if<RANK==1, int>::type = 0) {
+         const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
+         array::Intent::ReadWrite> field, const typename std::enable_if<RANK==1, int>::type = 0) {
 
     const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
+    const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
 
-    const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
+    size_t p = blockIdx.x*blockDim.x + threadIdx.x;
 
     if(p >= recvcnt) return;
-    field(recvmap[p]) = recv_buffer[p];
+
+    const size_t node_idx = recvmap[p];
+
+    halo_unpacker_impl<0, 0, 1>::apply(p, node_idx, recv_buffer, field,node_idx);
 }
 
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
-         const DATA_TYPE* recv_buffer, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
+         const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field,
                             typename std::enable_if<(RANK>3), int>::type* = 0) {
 }
 
@@ -151,13 +160,23 @@ void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<
   dim3 threads(block_size_x, block_size_y);
   dim3 blocks((sendcnt+block_size_x-1)/block_size_x, nblocks_y);
   cudaDeviceSynchronize();
+  cudaError_t err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
+    throw eckit::Exception(msg);
+  }
 
   pack_kernel<DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap.data(), sendmap.size(), dfield, (send_buffer.data()));
+  err = cudaGetLastError();
+  if (err != cudaSuccess)
+    throw eckit::Exception("Error launching GPU packing kernel");
 
   cudaDeviceSynchronize();
-  cudaError_t err = cudaGetLastError();
-  if (err != cudaSuccess) 
-    throw eckit::Exception("Error launching GPU packing kernel");
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
+    throw eckit::Exception(msg);
+  }
 
 }
 
@@ -181,7 +200,7 @@ void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector
     throw eckit::Exception(msg);
   }
 
-  unpack_kernel<<<blocks,threads>>>(recvcnt, recvmap.data(), recvmap.size(), recv_buffer.data(), dfield);
+  unpack_kernel<<<blocks,threads>>>(recvcnt, recvmap.data(), recvmap.size(), recv_buffer.data(), recv_buffer.size(), dfield);
 
   err = cudaGetLastError();
   if (err != cudaSuccess) {

@@ -434,6 +434,7 @@ parallel/GatherScatter.cc
 parallel/GatherScatter.h
 parallel/HaloExchange.cc
 parallel/HaloExchange.h
+parallel/HaloExchangeImpl.h
 parallel/mpi/Buffer.h
 runtime/ErrorHandling.cc
 runtime/ErrorHandling.h
