@@ -66,6 +66,27 @@ __global__ void pack_kernel(const int sendcnt, const int* sendmap, const size_t 
                             const typename std::enable_if<(RANK>3), int>::type = 0) {
 }
 
+template<int RANK>
+struct get_buffer_index{
+    template<typename DATA_TYPE>
+    ATLAS_HOST_DEVICE
+    static size_t apply(array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field,
+                           const size_t node_cnt, const size_t var1_idx) {
+        return field.data_view().template length<RANK-1>() * field.data_view().template length<RANK-2>() * node_cnt +
+                field.data_view().template length<RANK-1>() * var1_idx;
+    }
+};
+
+template<>
+struct get_buffer_index<2>{
+    template<typename DATA_TYPE>
+    ATLAS_HOST_DEVICE
+    static size_t apply(array::ArrayView<DATA_TYPE, 2, array::Intent::ReadWrite>& field,
+                           const size_t node_cnt, const size_t var1_idx) {
+        return field.data_view().template length<1>() * node_cnt + var1_idx;
+    }
+};
+
 template<typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
          const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size,
@@ -75,16 +96,16 @@ __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const s
     const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
     const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
 
-    const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
-    const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
+    const size_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
+    const size_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
 
-    if(p >= recvcnt || i >= field.data_view().template length<1>() ) return;
+    if(node_cnt >= recvcnt || var1_idx >= field.data_view().template length<1>() ) return;
 
-    const size_t node_idx = recvmap[p];
+    const size_t node_idx = recvmap[node_cnt];
 
-    size_t buff_idx = field.data_view().template length<1>() * p + i;
+    size_t buff_idx = get_buffer_index<RANK>::apply(field, node_cnt, var1_idx);
 
-    halo_unpacker_impl<0, 0, 1>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,i);
+    halo_unpacker_impl<0, (RANK>=3) ? (RANK-2) : 0, (RANK-1)>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,var1_idx);
 }
 
 template<typename DATA_TYPE, int RANK>
@@ -95,16 +116,16 @@ __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const s
     const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
     const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
 
-    const size_t p = blockIdx.x*blockDim.x + threadIdx.x;
-    const size_t i = blockIdx.y*blockDim.y + threadIdx.y;
+    const size_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
+    const size_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
 
-    if(p >= recvcnt || i >= field.data_view().template length<1>() ) return;
+    if(node_cnt >= recvcnt || var1_idx >= field.data_view().template length<1>() ) return;
 
-    const size_t node_idx = recvmap[p];
+    const size_t node_idx = recvmap[node_cnt];
 
-    size_t buff_idx = field.data_view().template length<2>() * field.data_view().template length<1>() * p + field.data_view().template length<2>() * i;
+    size_t buff_idx = get_buffer_index<RANK>::apply(field, node_cnt, var1_idx);
 
-    halo_unpacker_impl<0, 1, 2>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,i);
+    halo_unpacker_impl<0, (RANK>=3) ? (RANK-2) : 0, (RANK-1)>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,var1_idx);
 }
 
 template<typename DATA_TYPE, int RANK>
@@ -121,7 +142,7 @@ __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const s
 
     const size_t node_idx = recvmap[p];
 
-    halo_unpacker_impl<0, 0, 1>::apply(p, node_idx, recv_buffer, field,node_idx);
+    halo_unpacker_impl<0, (RANK>=3) ? (RANK-2) : 0, (RANK-1)>::apply(p, node_idx, recv_buffer, field,node_idx);
 }
 
 template<typename DATA_TYPE, int RANK>
