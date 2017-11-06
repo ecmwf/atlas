@@ -209,7 +209,7 @@ template<int ParallelDim, int RANK>
 struct halo_packer {
     template<typename DATA_TYPE>
     static void pack(const unsigned int sendcnt, array::SVector<int> const & sendmap,
-                     const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& field, array::SVector<DATA_TYPE>& send_buffer )
+                     const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field, array::SVector<DATA_TYPE>& send_buffer )
     {
       size_t ibuf = 0;
       for(int node_cnt=0; node_cnt < sendcnt; ++node_cnt)
@@ -242,7 +242,7 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, arr
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     halo_packer_cuda<DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, hfield, dfield, send_buffer);
 #else
-    halo_packer<ParallelDim, RANK>::pack(sendcnt_, sendmap_, hfield, send_buffer);
+    halo_packer<ParallelDim, RANK>::pack(sendcnt_, sendmap_, dfield, send_buffer);
 #endif
 }
 
