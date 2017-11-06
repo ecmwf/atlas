@@ -41,6 +41,74 @@ std::vector<T> vec( const T (&list)[N] )
   return std::vector<T>(list,list+N);
 }
 
+template<int Rank, typename FirstDim>
+size_t eval_idx(size_t pos, std::array<size_t, Rank>& strides, FirstDim first)
+{
+    return first*strides[pos];
+}
+
+template<int Rank, typename FirstDim, typename ... Int>
+size_t eval_idx(size_t pos, std::array<size_t, Rank>& strides, FirstDim first, Int...dims )
+{
+    return first*strides[pos] + eval_idx<Rank>((size_t)pos+1, strides, dims...);
+}
+
+template<typename DATA_TYPE, int Rank, int Dim>
+struct validate_impl;
+
+template<typename DATA_TYPE, int Rank>
+struct validate_impl<DATA_TYPE, Rank, 0> {
+    template<typename ... Int>
+    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, DATA_TYPE arr_c[], std::array<size_t, Rank>& strides, Int... dims ) {
+        EXPECT(arrv(dims...) == arr_c[eval_idx<Rank>((size_t)0, strides, dims...)]);
+    }
+};
+
+template<typename DATA_TYPE, int Rank, int Dim>
+struct validate_impl {
+
+    template<typename ... Int>
+    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, DATA_TYPE arr_c[], std::array<size_t, Rank>& strides, Int... dims ) {
+        for(size_t cnt = 0; cnt < arrv.template shape<Rank-Dim>(); ++cnt) {
+            validate_impl<DATA_TYPE, Rank, Dim-1>::apply(arrv, arr_c, strides, dims..., cnt);
+        }
+    }
+};
+
+template<int Dim>
+struct  compute_strides;
+
+template<>
+struct compute_strides<0> {
+    template <typename DATA_TYPE, int Rank>
+    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, std::array<size_t, (unsigned int)Rank>& strides) {}
+};
+
+template<int Dim>
+struct compute_strides {
+    template <typename DATA_TYPE, int Rank>
+    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, std::array<size_t, (unsigned int)Rank>& strides) {
+        strides[Dim-1] = strides[Dim]*arrv.template shape<(unsigned int)Dim>();
+        compute_strides<Dim-1>::apply(arrv,strides);
+
+    }
+};
+
+template<typename DATA_TYPE, int Rank>
+struct validate {
+
+    static bool apply(array::ArrayView<DATA_TYPE,Rank>& arrv, DATA_TYPE arr_c[] ) {
+        std::array<size_t, Rank> strides;
+        strides[Rank-1] = 1;
+        compute_strides<Rank-1>::apply(arrv, strides);
+
+        for(size_t i = 0; i < arrv.template shape<0>(); ++i) {
+            validate_impl<DATA_TYPE, Rank, Rank-1>::apply(arrv, arr_c, strides, i);
+        }
+    }
+
+};
+
 struct Fixture {
   Fixture(bool on_device) : on_device_(on_device)
   {
@@ -99,12 +167,12 @@ void test_rank0_arrview(Fixture& f) {
 
     switch( parallel::mpi::comm().rank() )
     {
-      case 0: { POD gidx_c[] = { 9, 1, 2, 3, 4};
-        EXPECT( make_view(arrv.data(), arrv.data()+f.N) == make_view(gidx_c,gidx_c+f.N)); break; }
-      case 1: { POD gidx_c[] = { 3, 4, 5, 6, 7, 8};
-        EXPECT( make_view(arrv.data(), arrv.data()+f.N) == make_view(gidx_c,gidx_c+f.N)); break; }
-      case 2: { POD gidx_c[] = { 5, 6, 7, 8, 9, 1, 2};
-        EXPECT( make_view(arrv.data(), arrv.data()+f.N) == make_view(gidx_c,gidx_c+f.N)); break; }
+      case 0: { POD arr_c[] = { 9, 1, 2, 3, 4};
+        validate<POD,1>::apply(arrv, arr_c); break; }
+      case 1: { POD arr_c[] = { 3, 4, 5, 6, 7, 8};
+        validate<POD,1>::apply(arrv, arr_c); break; }
+      case 2: { POD arr_c[] = { 5, 6, 7, 8, 9, 1, 2};
+        validate<POD,1>::apply(arrv, arr_c); break; }
     }
 }
 
@@ -125,11 +193,11 @@ void test_rank1(Fixture& f) {
     switch( parallel::mpi::comm().rank() )
     {
       case 0: { POD arr_c[] = { 90,900, 10,100, 20,200, 30,300, 40,400 };
-        EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        validate<POD,2>::apply(arrv, arr_c); break; }
       case 1: { POD arr_c[] = { 30,300, 40,400, 50,500, 60,600, 70,700, 80,800};
-        EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        validate<POD,2>::apply(arrv, arr_c); break; }
       case 2: { POD arr_c[] = { 50,500, 60,600, 70,700, 80,800, 90,900, 10,100, 20,200};
-        EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        validate<POD,2>::apply(arrv, arr_c); break; }
     }
 }
 
@@ -193,7 +261,7 @@ void test_rank1_strided_v2(Fixture& f) {
 
 void test_rank2(Fixture& f) {
     array::ArrayT<POD> arr(f.N,3,2);
-    array::ArrayView<POD,3> arrv = array::make_view<POD,3>(arr);
+    array::ArrayView<POD,3> arrv = array::make_host_view<POD,3>(arr);
     for( int p=0; p<f.N; ++p )
     {
       for( size_t i=0; i<3; ++i )
@@ -213,37 +281,31 @@ void test_rank2(Fixture& f) {
     {
       case 0:
       {
-        int arr_c[] = { -9,9, -90,90, -900,900,
+        POD arr_c[] = { -9,9, -90,90, -900,900,
                         -1,1, -10,10, -100,100,
                         -2,2, -20,20, -200,200,
                         -3,3, -30,30, -300,300,
                         -4,4, -40,40, -400,400};
-        EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-        break;
-      }
+        validate<POD,3>::apply(arrv, arr_c); break; }
       case 1:
       {
-        int arr_c[] = { -3,3, -30,30, -300,300,
+        POD arr_c[] = { -3,3, -30,30, -300,300,
                         -4,4, -40,40, -400,400,
                         -5,5, -50,50, -500,500,
                         -6,6, -60,60, -600,600,
                         -7,7, -70,70, -700,700,
                         -8,8, -80,80, -800,800};
-        EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-        break;
-      }
+        validate<POD,3>::apply(arrv, arr_c); break; }
       case 2:
       {
-        int arr_c[] = { -5,5, -50,50, -500,500,
+        POD arr_c[] = { -5,5, -50,50, -500,500,
                         -6,6, -60,60, -600,600,
                         -7,7, -70,70, -700,700,
                         -8,8, -80,80, -800,800,
                         -9,9, -90,90, -900,900,
                         -1,1, -10,10, -100,100,
                         -2,2, -20,20, -200,200};
-        EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
-        break;
-      }
+        validate<POD,3>::apply(arrv, arr_c); break; }
     }
 }
 
