@@ -78,12 +78,12 @@ private: // methods
   template< int ParallelDim, typename DATA_TYPE, int RANK>
   void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
                          const array::ArrayView<DATA_TYPE, RANK>& dfield,
-                         array::SVector<DATA_TYPE>& send_buffer ) const;
+                         array::SVector<DATA_TYPE>& send_buffer, const bool on_device ) const;
 
   template< int ParallelDim, typename DATA_TYPE, int RANK>
   void unpack_recv_buffer(const array::SVector<DATA_TYPE>& recv_buffer,
                           const array::ArrayView<DATA_TYPE, RANK,array::Intent::ReadOnly>& hfield,
-                          array::ArrayView<DATA_TYPE, RANK>& dfield) const;
+                          array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device) const;
 
   template<typename DATA_TYPE, int RANK>
   void var_info( const array::ArrayView<DATA_TYPE,RANK>& arr,
@@ -163,7 +163,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   }
 
   /// Pack
-  pack_send_buffer<parallelDim>(field_hv, field_dv,send_buffer);
+  pack_send_buffer<parallelDim>(field_hv, field_dv,send_buffer, on_device);
 
   /// Send
   ATLAS_TRACE_MPI( ISEND ) {
@@ -190,7 +190,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
   }
 
   /// Unpack
-  unpack_recv_buffer<parallelDim>(recv_buffer, field_hv, field_dv);
+  unpack_recv_buffer<parallelDim>(recv_buffer, field_hv, field_dv, on_device);
 
   /// Wait for sending to finish
   ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
@@ -236,11 +236,14 @@ struct halo_packer {
 template<int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
                                      const array::ArrayView<DATA_TYPE, RANK>& dfield,
-                                     array::SVector<DATA_TYPE>& send_buffer ) const
+                                     array::SVector<DATA_TYPE>& send_buffer, const bool on_device ) const
 {
   ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    halo_packer_cuda<DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, hfield, dfield, send_buffer);
+    if(on_device)
+        halo_packer_cuda<DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, hfield, dfield, send_buffer);
+    else
+        halo_packer<ParallelDim, RANK>::pack(sendcnt_, sendmap_, dfield, send_buffer);
 #else
     halo_packer<ParallelDim, RANK>::pack(sendcnt_, sendmap_, dfield, send_buffer);
 #endif
@@ -249,12 +252,15 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, arr
 template<int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buffer,
                                        const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
-                                       array::ArrayView<DATA_TYPE,RANK>& dfield) const
+                                       array::ArrayView<DATA_TYPE,RANK>& dfield, const bool on_device) const
 {
   ATLAS_TRACE();
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    halo_packer_cuda<DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, hfield, dfield);
+    if(on_device)
+        halo_packer_cuda<DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, hfield, dfield);
+    else
+        halo_packer<ParallelDim, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, dfield);
 #else
     halo_packer<ParallelDim, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, dfield);
 #endif
