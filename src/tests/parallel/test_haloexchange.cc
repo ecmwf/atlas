@@ -498,7 +498,6 @@ void test_rank2_paralleldim2(Fixture& f) {
 CASE("test_haloexchange") {
   SETUP("HaloExchanges_cpu") {
     Fixture f(false);
-
     SECTION( "test_rank0_arrview" )
     {
         test_rank0_arrview(f);
@@ -553,12 +552,8 @@ CASE("test_haloexchange") {
     {
         test_rank2_paralleldim2(f);
     }
-
-  }
-
 #ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-  SETUP("HaloExchanges_gpu") {
-    Fixture f(true);
+    f.on_device_ = true;
 
     SECTION( "test_rank0_arrview" )
     {
@@ -574,8 +569,8 @@ CASE("test_haloexchange") {
     {
         test_rank2(f);
     }
-  }
 #endif
+  }
 
 }
 
