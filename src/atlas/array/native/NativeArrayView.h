@@ -130,6 +130,11 @@ public:
     template<unsigned int Dim>
     size_t shape() const { return shape(Dim);}
 
+    template<unsigned int Dim>
+    size_t stride() const {
+        return stride(Dim);
+    }
+
     size_t size() const { return size_;}
 
     size_t rank() const { return Rank; }
