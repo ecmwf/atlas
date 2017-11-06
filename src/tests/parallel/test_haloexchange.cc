@@ -222,11 +222,11 @@ void test_rank1_strided_v1(Fixture& f) {
     switch( parallel::mpi::comm().rank() )
     {
       case 0: { POD arr_c[] = { 90,0, 10,100, 20,200, 30,300, 40,0 };
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        validate<POD,2>::apply(arrv_t, arr_c); break; }
       case 1: { POD arr_c[] = { 30,0, 40,400, 50,500, 60,600, 70,0, 80,0};
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        validate<POD,2>::apply(arrv_t, arr_c); break; }
       case 2: { POD arr_c[] = { 50,0, 60,0, 70,700, 80,800, 90,900, 10,0, 20,0};
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        validate<POD,2>::apply(arrv_t, arr_c); break; }
     }
 }
 
@@ -251,11 +251,11 @@ void test_rank1_strided_v2(Fixture& f) {
     switch( parallel::mpi::comm().rank() )
     {
         case 0: { POD arr_c[] = { 0,900, 10,100, 20,200, 30,300, 0,400 };
-          EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+            validate<POD,2>::apply(arrv_t, arr_c); break; }
         case 1: { POD arr_c[] = { 0,300, 40,400, 50,500, 60,600, 0,700, 0,800};
-          EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+            validate<POD,2>::apply(arrv_t, arr_c); break; }
         case 2: { POD arr_c[] = { 0,500, 0,600, 70,700, 80,800, 90,900, 0,100, 0,200};
-          EXPECT(make_view(arrv_t.data(),arrv_t.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+            validate<POD,2>::apply(arrv_t, arr_c); break; }
     }
 }
 
@@ -335,7 +335,7 @@ void test_rank2_l1(Fixture& f) {
                         -2,2, -20,20, -200,200,  // core
                         -3,3, -30,30, -300,300,  // core
                         -4,4,   0, 0,    0,  0}; // halo
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv_t, arr_c);
         break;
       }
       case 1:
@@ -346,7 +346,7 @@ void test_rank2_l1(Fixture& f) {
                         -6,6, -60,60, -600,600,  // core
                         -7,7,   0, 0,    0,  0,  // halo
                         -8,8,   0, 0,    0,  0}; // halo
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv_t, arr_c);
         break;
       }
       case 2:
@@ -358,7 +358,7 @@ void test_rank2_l1(Fixture& f) {
                         -9,9, -90,90, -900,900,  // core
                         -1,1,   0, 0,    0,  0,  // halo
                         -2,2,   0, 0,    0,  0}; // halo
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv_t, arr_c);
         break;
       }
     }
@@ -391,7 +391,7 @@ void test_rank2_l2_v2(Fixture& f) {
                         -2,2, -20,20, -200,200,  // core
                         -3,3, -30,30, -300,300,  // core
                         0,0,   0,40,    0,  0}; // halo
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv_t, arr_c);
         break;
       }
       case 1:
@@ -402,7 +402,7 @@ void test_rank2_l2_v2(Fixture& f) {
                         -6,6, -60,60, -600,600,  // core
                         0,0,   0,70,    0,  0,  // halo
                         0,0,   0,80,    0,  0}; // halo
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv_t, arr_c);
         break;
       }
       case 2:
@@ -414,7 +414,7 @@ void test_rank2_l2_v2(Fixture& f) {
                         -9,9, -90,90, -900,900,  // core
                         0,0,   0,10,    0,  0,  // halo
                         0,0,   0,20,    0,  0}; // halo
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv_t, arr_c);
         break;
       }
     }
@@ -446,7 +446,7 @@ void test_rank2_v2(Fixture& f) {
                         -2,2, -20,20, -200,200,  // core
                         -3,3, -30,30, -300,300,  // core
                         0,4,   0,40,    0,400}; // halo
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv_t, arr_c);
         break;
       }
       case 1:
@@ -457,7 +457,7 @@ void test_rank2_v2(Fixture& f) {
                         -6,6, -60,60, -600,600,  // core
                         0,7,   0,70,    0,700,  // halo
                         0,8,   0,80,    0,800}; // halo
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv_t, arr_c);
         break;
       }
       case 2:
@@ -469,7 +469,7 @@ void test_rank2_v2(Fixture& f) {
                         -9,9, -90,90, -900,900,  // core
                         0,1,   0,10,    0,100,  // halo
                         0,2,   0,20,    0,200}; // halo
-        EXPECT(make_view(arrv_t.data(),arrv_t.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv_t, arr_c);
         break;
       }
     }
@@ -483,12 +483,12 @@ void test_rank0_wrap(Fixture& f) {
 
     switch( parallel::mpi::comm().rank() )
     {
-      case 0: { POD gidx_c[] = { 9, 1, 2, 3, 4};
-        EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
-      case 1: { POD gidx_c[] = { 3, 4, 5, 6, 7, 8};
-        EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
-      case 2: { POD gidx_c[] = { 5, 6, 7, 8, 9, 1, 2};
-        EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
+      case 0: { POD arr_c[] = { 9, 1, 2, 3, 4};
+        validate<POD,1>::apply(arrv, arr_c); break; }
+      case 1: { POD arr_c[] = { 3, 4, 5, 6, 7, 8};
+        validate<POD,1>::apply(arrv, arr_c); break; }
+      case 2: { POD arr_c[] = { 5, 6, 7, 8, 9, 1, 2};
+        validate<POD,1>::apply(arrv, arr_c); break; }
     }
 }
 
@@ -505,11 +505,11 @@ void test_rank1_paralleldim1(Fixture& f) {
     switch( parallel::mpi::comm().rank() )
     {
       case 0: { POD arr_c[] = { 90, 10, 20 , 30 , 40, 900, 100, 200, 300, 400 }; //90,900, 10,100, 20,200, 30,300, 40,400 };
-        EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        validate<POD,2>::apply(arrv, arr_c); break; }
       case 1: { POD arr_c[] = { 30,40,50,60,70,80, 300,400,500,600,700,800};
-        EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        validate<POD,2>::apply(arrv, arr_c); break; }
       case 2: { POD arr_c[] = { 50,60,70,80,90,10,20, 500,600,700,800,900,100,200};
-        EXPECT(make_view(arrv.data(),arrv.data()+2*f.N) == make_view(arr_c,arr_c+2*f.N)); break; }
+        validate<POD,2>::apply(arrv, arr_c); break; }
     }
 }
 
@@ -531,27 +531,27 @@ void test_rank2_paralleldim2(Fixture& f) {
     {
       case 0:
       {
-        int arr_c[] = { -9,9, -1,1, -2,2, -3,3, -4,4,
+        POD arr_c[] = { -9,9, -1,1, -2,2, -3,3, -4,4,
                         -90,90, -10,10, -20,20, -30,30, -40,40,
                         -900,900, -100,100, -200,200, -300,300, -400,400};
 
-        EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv, arr_c);
         break;
       }
       case 1:
       {
-        int arr_c[] = { -3,3, -4,4, -5,5, -6,6, -7,7, -8,8,
+        POD arr_c[] = { -3,3, -4,4, -5,5, -6,6, -7,7, -8,8,
                         -30,30, -40,40, -50,50, -60,60, -70,70, -80,80,
                         -300,300, -400,400, -500,500, -600,600, -700,700, -800,800};
-        EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv, arr_c);
         break;
       }
       case 2:
       {
-        int arr_c[] = { -5,5, -6,6, -7,7, -8,8, -9,9, -1,1, -2,2,
+        POD arr_c[] = { -5,5, -6,6, -7,7, -8,8, -9,9, -1,1, -2,2,
                         -50,50, -60,60, -70,70, -80,80, -90,90, -10,10, -20,20,
                         -500,500, -600,600, -700,700, -800,800, -900,900, -100,100, -200,200};
-        EXPECT(make_view(arrv.data(),arrv.data()+6*f.N) == make_view(arr_c,arr_c+6*f.N));
+        validate<POD,3>::apply(arrv, arr_c);
         break;
       }
     }
