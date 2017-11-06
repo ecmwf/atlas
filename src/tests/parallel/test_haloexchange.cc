@@ -87,25 +87,6 @@ CASE("test_haloexchange") {
   SETUP("Fixture") {
     Fixture f;
 
-
-
-    SECTION( "test_rank0" )
-    {
-//      size_t strides[] = {1};
-//      size_t shape[] = {1};
-//      f.halo_exchange.execute(f.gidx.data(),strides,shape,1);
-
-//      switch( parallel::mpi::comm().rank() )
-//      {
-//        case 0: { POD gidx_c[] = { 9, 1, 2, 3, 4};
-//          EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
-//        case 1: { POD gidx_c[] = { 3, 4, 5, 6, 7, 8};
-//          EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
-//        case 2: { POD gidx_c[] = { 5, 6, 7, 8, 9, 1, 2};
-//          EXPECT(f.gidx == make_view(gidx_c,gidx_c+f.N)); break; }
-//      }
-    }
-
     SECTION( "test_rank0_arrview" )
     {
       array::ArrayT<POD> arr(f.N);
