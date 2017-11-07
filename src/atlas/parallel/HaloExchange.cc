@@ -95,8 +95,6 @@ void HaloExchange::setup( const int part[],
   }
 
   sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
-//  std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
-//  std::cout << myproc << ":  recvcnt = " << recvcnt_ << std::endl;
 
   recvdispls_[0]=0;
   senddispls_[0]=0;
@@ -141,17 +139,6 @@ void HaloExchange::setup( const int part[],
   sendmap_.resize(sendcnt_);
   for( int jj=0; jj<sendcnt_; ++jj )
     sendmap_[jj] = recv_requests[jj];
-
-//   std::cout << Here() << std::endl;
-//   std::cout << myproc << "  :  sendmap_[size="<<sendmap_.size()<<"]  = ";
-//   for( int i=0; i< sendmap_.size(); ++i)
-//     std::cout << sendmap_[i] << " ";
-//   std::cout << std::endl;
-
-//   std::cout << myproc << "  :  recvmap_[size="<<recvmap_.size()<<"]  = ";
-//   for( int i=0; i< recvmap_.size(); ++i)
-//     std::cout << recvmap_[i] << " ";
-//   std::cout << std::endl;
 
   is_setup_ = true;
 }

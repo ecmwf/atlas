@@ -34,6 +34,7 @@ public:
 
 public:
 
+    using return_type = typename std::conditional< (AccessMode == Intent::ReadWrite), value_type, value_type const>::type;
     ATLAS_HOST_DEVICE
     ArrayView( const ArrayView& other );
     ArrayView(data_view_t data_view, const Array& array);
@@ -42,7 +43,7 @@ public:
 
     template < typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == Rank), int>::type >
     ATLAS_HOST_DEVICE
-    value_type&
+    return_type&
     operator()(Coords... c) {
         assert(sizeof...(Coords) == Rank);
         return gt_data_view_(c...);
@@ -51,6 +52,7 @@ public:
     template <typename... Coords, typename = typename boost::enable_if_c<(sizeof...(Coords) == Rank), int>::type>
     ATLAS_HOST_DEVICE
     value_type const& operator()(Coords... c) const {
+        assert(sizeof...(Coords) == Rank);
         return gt_data_view_(c...);
     }
 
