@@ -240,8 +240,11 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, arr
 {
   ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    if(on_device)
+    if(on_device) {
+        if(ParallelDim != 0)
+            throw eckit::Exception("Selecting parallel dimension for GPU backend not supported yet");
         halo_packer_cuda<DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, hfield, dfield, send_buffer);
+    }
     else
         halo_packer<ParallelDim, RANK>::pack(sendcnt_, sendmap_, dfield, send_buffer);
 #else
@@ -257,8 +260,12 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
   ATLAS_TRACE();
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    if(on_device)
+    if(on_device) {
+        if(ParallelDim != 0)
+            throw eckit::Exception("Selecting parallel dimension for GPU backend not supported yet");
+
         halo_packer_cuda<DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, hfield, dfield);
+    }
     else
         halo_packer<ParallelDim, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, dfield);
 #else
