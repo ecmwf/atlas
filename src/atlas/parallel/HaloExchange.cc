@@ -17,6 +17,7 @@
 #include <sstream>
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/Statistics.h"
+#include "atlas/array/Array.h"
 
 namespace atlas {
 namespace parallel {
@@ -161,63 +162,87 @@ void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[
 }
 
 void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_extents[], int var_rank) {
-    throw eckit::AssertionFailed("Call not supported");
+    array::ArrayShape shape;
+    shape.resize(var_rank);
+    shape.assign(var_extents, var_extents+var_rank);
 
-//  std::vector<size_t> vstrides(var_rank);
-//  std::vector<size_t> vextents(var_rank);
-//  for(int n = 0; n < var_rank; ++n) {
-//    vstrides[n] = var_strides[n];
-//    vextents[n] = var_extents[n];
-//  }
-//  This->execute(field,vstrides.data(),vextents.data(),var_rank);
+    array::ArrayStrides strides;
+    strides.resize(var_rank);
+    strides.assign(var_strides, var_strides+var_rank);
+
+    eckit::SharedPtr<array::Array> arr ( array::Array::wrap<int>(field,
+        array::ArraySpec{shape, strides}) );
+
+    switch(var_rank) {
+        case 1: {This->execute<int,1>(*arr); break;}
+        case 2: {This->execute<int,2>(*arr); break;}
+        case 3: {This->execute<int,3>(*arr); break;}
+        case 4: {This->execute<int,4>(*arr); break;}
+        default: throw eckit::AssertionFailed("Rank not supported in halo exchange");
+    }
 }
 
 void atlas__HaloExchange__execute_strided_long (HaloExchange* This, long field[], int var_strides[], int var_extents[], int var_rank) {
-    throw eckit::AssertionFailed("Call not supported");
+    array::ArrayShape shape;
+    shape.resize(var_rank);
+    shape.assign(var_extents, var_extents+var_rank);
 
-//  std::vector<size_t> vstrides(var_rank);
-//  std::vector<size_t> vextents(var_rank);
-//  for(int n = 0; n < var_rank; ++n) {
-//    vstrides[n] = var_strides[n];
-//    vextents[n] = var_extents[n];
-//  }
-//  This->execute(field,vstrides.data(),vextents.data(),var_rank);
+    array::ArrayStrides strides;
+    strides.resize(var_rank);
+    strides.assign(var_strides, var_strides+var_rank);
+
+    eckit::SharedPtr<array::Array> arr ( array::Array::wrap<long>(field,
+        array::ArraySpec{shape, strides}) );
+
+    switch(var_rank) {
+        case 1: {This->execute<long,1>(*arr); break;}
+        case 2: {This->execute<long,2>(*arr); break;}
+        case 3: {This->execute<long,3>(*arr); break;}
+        case 4: {This->execute<long,4>(*arr); break;}
+        default: throw eckit::AssertionFailed("Rank not supported in halo exchange");
+    }
 }
 
 void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field[], int var_strides[], int var_extents[], int var_rank) {
-    throw eckit::AssertionFailed("Call not supported");
+    array::ArrayShape shape;
+    shape.resize(var_rank);
+    shape.assign(var_extents, var_extents+var_rank);
 
-//  std::vector<size_t> vstrides(var_rank);
-//  std::vector<size_t> vextents(var_rank);
-//  for(int n = 0; n < var_rank; ++n) {
-//    vstrides[n] = var_strides[n];
-//    vextents[n] = var_extents[n];
-//  }
-//  This->execute(field,vstrides.data(),vextents.data(),var_rank);
+    array::ArrayStrides strides;
+    strides.resize(var_rank);
+    strides.assign(var_strides, var_strides+var_rank);
+
+    eckit::SharedPtr<array::Array> arr ( array::Array::wrap<float>(field,
+        array::ArraySpec{shape, strides}) );
+
+    switch(var_rank) {
+        case 1: {This->execute<float,1>(*arr); break;}
+        case 2: {This->execute<float,2>(*arr); break;}
+        case 3: {This->execute<float,3>(*arr); break;}
+        case 4: {This->execute<float,4>(*arr); break;}
+        default: throw eckit::AssertionFailed("Rank not supported in halo exchange");
+    }
 }
 
 void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double field[], int var_strides[], int var_extents[], int var_rank) {
-    throw eckit::AssertionFailed("Call not supported");
+    array::ArrayShape shape;
+    shape.resize(var_rank);
+    shape.assign(var_extents, var_extents+var_rank);
 
-//  std::vector<size_t> vstrides(var_rank);
-//  std::vector<size_t> vextents(var_rank);
-//  for(int n = 0; n < var_rank; ++n) {
-//    vstrides[n] = var_strides[n];
-//    vextents[n] = var_extents[n];
-//  }
-//  This->execute(field,vstrides.data(),vextents.data(),var_rank);
-}
+    array::ArrayStrides strides;
+    strides.resize(var_rank);
+    strides.assign(var_strides, var_strides+var_rank);
 
-void atlas__HaloExchange__execute_int (HaloExchange* This, int field[], int nb_vars ) {
-//  This->execute(field,nb_vars);
-}
+    eckit::SharedPtr<array::Array> arr ( array::Array::wrap<double>(field,
+        array::ArraySpec{shape, strides}) );
 
-void atlas__HaloExchange__execute_float (HaloExchange* This, float field[], int nb_vars ) {
-//  This->execute(field,nb_vars);
-}
-
-void atlas__HaloExchange__execute_double (HaloExchange* This, double field[], int nb_vars ) {
-//  This->execute(field,nb_vars);
+    switch(var_rank) {
+        case 1: {This->execute<double,1>(*arr); break;}
+        case 2: {This->execute<double,2>(*arr); break;}
+        case 3: {This->execute<double,3>(*arr); break;}
+        case 4: {This->execute<double,4>(*arr); break;}
+        default: throw eckit::AssertionFailed("Rank not supported in halo exchange");
+    }
 }
 
 /////////////////////

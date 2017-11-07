@@ -58,6 +58,8 @@ public:
 
     size_t shape(size_t idx) const { return shape_[idx]; }
 
+    size_t stride(size_t idx) const { return strides_[idx]; }
+
     const Slice operator[](size_t i) const {
         return Slicer<Slice, Rank==1>(*this).apply(i);
     }

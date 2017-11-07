@@ -20,10 +20,3 @@ ecbuild_add_test( TARGET atlas_test_gather
   LIBS       atlas
 )
 
-ecbuild_add_test( TARGET atlas_test_haloexchange_gpu
-  MPI        3
-  CONDITION ECKIT_HAVE_MPI
-  SOURCES test_haloexchange_gpu.cc
-  LIBS atlas
-)
-

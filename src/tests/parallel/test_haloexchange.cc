@@ -612,6 +612,35 @@ void test_rank2_paralleldim2(Fixture& f) {
     }
 }
 
+void test_rank1_cinterface(Fixture& f) {
+
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
+    array::ArrayT<POD> arr(f.N,2);
+    array::ArrayView<POD,2> arrv = array::make_host_view<POD,2>(arr);
+    for( int j=0; j<f.N; ++j ) {
+      arrv(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+      arrv(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
+    }
+
+    arr.syncHostDevice();
+
+    int shapes[2] = {(int)arrv.shape(0), (int)arrv.shape(1)};
+    int strides[2] = {(int)arrv.stride(0), (int)arrv.stride(1)};
+
+    atlas__HaloExchange__execute_strided_double(&(f.halo_exchange), arrv.data(), &(strides[0]), &(shapes[0]), 2);
+
+    switch( parallel::mpi::comm().rank() )
+    {
+      case 0: { POD arr_c[] = { 90,900, 10,100, 20,200, 30,300, 40,400 };
+        validate<POD,2>::apply(arrv, arr_c); break; }
+      case 1: { POD arr_c[] = { 30,300, 40,400, 50,500, 60,600, 70,700, 80,800};
+        validate<POD,2>::apply(arrv, arr_c); break; }
+      case 2: { POD arr_c[] = { 50,500, 60,600, 70,700, 80,800, 90,900, 10,100, 20,200};
+        validate<POD,2>::apply(arrv, arr_c); break; }
+    }
+#endif
+}
+
 CASE("test_haloexchange") {
   SETUP("HaloExchanges_cpu") {
     Fixture f(false);
@@ -669,6 +698,10 @@ CASE("test_haloexchange") {
     SECTION( "test_rank2_paralleldim_2" )
     {
         test_rank2_paralleldim2(f);
+    }
+    SECTION( "test_rank1_cinterface" )
+    {
+        test_rank1_cinterface(f);
     }
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
