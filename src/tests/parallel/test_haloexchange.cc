@@ -217,8 +217,7 @@ void test_rank1_strided_v1(Fixture& f) {
     // (i.e. we are only selecting and exchanging the first component of the field)
 
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(
-        (f.on_device_ ? array::make_device_view<POD,2, array::Intent::ReadOnly>(arr_t).data() : 
-                     arrv_t.data()),
+        arrv_t.data(),
         array::ArraySpec{array::make_shape(f.N, 1), 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
         array::make_strides(32, 1) } 
@@ -227,9 +226,11 @@ void test_rank1_strided_v1(Fixture& f) {
 #endif
     ) );
 
+    arr->syncHostDevice();
+
     f.halo_exchange.template execute<POD,2>(*arr, f.on_device_);
 
-    arr_t.syncHostDevice();
+    arr->syncHostDevice();
 
     switch( parallel::mpi::comm().rank() )
     {
@@ -240,10 +241,10 @@ void test_rank1_strided_v1(Fixture& f) {
       case 2: { POD arr_c[] = { 50,0, 60,0, 70,700, 80,800, 90,900, 10,0, 20,0};
         validate<POD,2>::apply(arrv_t, arr_c); break; }
     }
+
 }
 
 void test_rank1_strided_v2(Fixture& f) {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
     //create a 2d field from the gidx data, with two components per grid point
     array::ArrayT<POD> arr_t(f.N,2);
     array::ArrayView<POD,2> arrv_t = array::make_host_view<POD,2>(arr_t);
@@ -259,7 +260,13 @@ void test_rank1_strided_v2(Fixture& f) {
     // (i.e. we are only selecting and exchanging the first component of the field)
 
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(&(arrv_t(0,1)),
-                     array::ArraySpec{array::make_shape(f.N, 1), array::make_strides(2, 1) } ) );
+                     array::ArraySpec{array::make_shape(f.N, 1), 
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+                     array::make_strides(32, 1) 
+#else
+                     array::make_strides(2, 1) 
+#endif
+    } ) );
 
     f.halo_exchange.template execute<POD,2>(*arr, false);
 
@@ -272,7 +279,6 @@ void test_rank1_strided_v2(Fixture& f) {
         case 2: { POD arr_c[] = { 0,500, 0,600, 70,700, 80,800, 90,900, 0,100, 0,200};
             validate<POD,2>::apply(arrv_t, arr_c); break; }
     }
-#endif
 }
 
 void test_rank2(Fixture& f) {
@@ -339,8 +345,7 @@ void test_rank2_l1(Fixture& f) {
     arr_t.syncHostDevice();
 
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(
-         (f.on_device_ ? array::make_device_view<POD,2, array::Intent::ReadOnly>(arr_t).data() :
-                     arrv_t.data()),
+         arrv_t.data(),
          array::ArraySpec{array::make_shape(f.N, 1, 2), 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
          array::make_strides(96,32, 1) 
@@ -349,6 +354,8 @@ void test_rank2_l1(Fixture& f) {
 #endif
 
     } ) );
+
+    arr_t.syncHostDevice();
 
     f.halo_exchange.template execute<POD,3>(*arr, false);
 
@@ -396,7 +403,7 @@ void test_rank2_l2_v2(Fixture& f) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
     // Test rank 2 halo-exchange
     array::ArrayT<POD> arr_t(f.N,3,2);
-    array::ArrayView<POD,3> arrv_t = array::make_view<POD,3>(arr_t);
+    array::ArrayView<POD,3> arrv_t = array::make_host_view<POD,3>(arr_t);
     for( int p=0; p<f.N; ++p )
     {
       for( size_t i=0; i<3; ++i )
@@ -407,9 +414,15 @@ void test_rank2_l2_v2(Fixture& f) {
     }
 
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(&arrv_t(0,1,1),
-                     array::ArraySpec{array::make_shape(f.N, 1, 1), array::make_strides(6, 2, 1) } ) );
+                     array::ArraySpec{array::make_shape(f.N, 1, 1), 
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+                     array::make_strides(192, 32, 1) 
+#else
+                     array::make_strides(6, 2, 1)
+#endif
+    } ) );
 
-    f.halo_exchange.template execute<POD,3>(*arr, false);
+    f.halo_exchange.template execute<POD,3>(*arr, f.on_device_);
 
     switch( parallel::mpi::comm().rank() )
     {
@@ -464,9 +477,15 @@ void test_rank2_v2(Fixture& f) {
     }
 
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(&arrv_t(0,0,1),
-                     array::ArraySpec{array::make_shape(f.N, 3, 1), array::make_strides(6, 2, 2) } ) );
+                     array::ArraySpec{array::make_shape(f.N, 3, 1), 
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+                     array::make_strides(192, 32, 2) 
+#else
+                     array::make_strides(6, 2, 2) 
+#endif
+    } ) );
 
-    f.halo_exchange.template execute<POD,3>(*arr, false);
+    f.halo_exchange.template execute<POD,3>(*arr, f.on_device_);
 
     switch( parallel::mpi::comm().rank() )
     {
@@ -511,7 +530,11 @@ void test_rank0_wrap(Fixture& f) {
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(f.gidx.data(), array::make_shape(f.N) ) );
     array::ArrayView<POD,1> arrv = array::make_view<POD,1>(*arr);
 
-    f.halo_exchange.template execute<POD,1>(*arr, false);
+    arr->syncHostDevice();
+
+    f.halo_exchange.template execute<POD,1>(*arr, f.on_device_);
+
+    arr->syncHostDevice();
 
     switch( parallel::mpi::comm().rank() )
     {
@@ -622,7 +645,7 @@ CASE("test_haloexchange") {
     {
         test_rank2_l1(f);
     }
-/*
+
     SECTION( "test_rank2_l2_v2" )
     {
         test_rank2_l2_v2(f);
@@ -647,6 +670,7 @@ CASE("test_haloexchange") {
     {
         test_rank2_paralleldim2(f);
     }
+
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     f.on_device_ = true;
 
@@ -664,8 +688,14 @@ CASE("test_haloexchange") {
     {
         test_rank2(f);
     }
+    SECTION( "test_rank0_wrap" )
+    {
+        test_rank0_wrap(f);
+    }
+
+
 #endif
-*/
+
   }
 
 }
